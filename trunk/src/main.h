@@ -1143,6 +1143,18 @@ ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
 boolean lives_setenv(const char *name, const char *value);
 boolean lives_fsync(int fd);
 void lives_sync(void);
+int lives_rmdir(const char *dir, boolean force);
+int lives_rmdir_with_parents(const char *dir);
+int lives_rm(const char *file);
+int lives_rmglob(const char *files);
+int lives_cp(const char *from, const char *to);
+int lives_cp_keep_perms(const char *from, const char *to);
+int lives_mv(const char *from, const char *to);
+int lives_touch(const char *tfile);
+int lives_chmod(const char *target, const char *mode);
+int lives_cat(const char *from, const char *to, boolean append);
+int lives_echo(const char *text, const char *to, boolean append);
+
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2);
 
@@ -1229,6 +1241,7 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
 void save_clip_value(int which, lives_clip_details_t, void *val);
 boolean check_frame_count(int idx);
+void count_opening_frames(void);
 void get_frame_count(int idx);
 void get_frames_sizes(int fileno, int frame_to_test);
 int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps);
@@ -1280,21 +1293,6 @@ int lives_list_strcmp_index(LiVESList *list, livesconstpointer data);
 lives_cancel_t check_for_bad_ffmpeg(void);
 
 //callbacks.c
-void lives_exit(int signum);
-void lives_notify(int msgnumber,const char *msgstring);
-const char *get_set_name(void);
-void count_opening_frames(void);
-void on_fileread_clicked(LiVESFileChooser *, livespointer widget);
-boolean dirchange_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
-void on_effects_paused(LiVESButton *, livespointer user_data);
-void on_cancel_keep_button_clicked(LiVESButton *, livespointer user_data);
-void on_cleardisk_activate(LiVESWidget *, livespointer user_data);
-void on_cleardisk_advanced_clicked(LiVESWidget *, livespointer user_data);
-void popup_lmap_errors(LiVESMenuItem *, livespointer);
-void on_filesel_button_clicked(LiVESButton *, livespointer user_data);
-void switch_clip(int type, int newclip, boolean force);
-void on_details_button_clicked(void);
-
 
 
 // paramspecial.c

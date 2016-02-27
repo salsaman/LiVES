@@ -1797,7 +1797,7 @@ static void detach_stream(lives_clip_data_t *cdata) {
 
   avcodec_close(priv->vidst->codec);
 
-  if (priv->picture!=NULL) av_frame_free(&priv->picture);
+  if (priv->picture!=NULL) av_frame_unref(&priv->picture);
 
   priv->ctx=NULL;
   priv->codec=NULL;
@@ -2301,7 +2301,7 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
     clone->ainterleaf=TRUE;
   }
 
-  if (dpriv->picture!=NULL) av_frame_free(&dpriv->picture);
+  if (dpriv->picture!=NULL) av_frame_unref(&dpriv->picture);
   dpriv->picture=NULL;
 
   dpriv->last_frame=-1;
@@ -2392,7 +2392,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->asigned=TRUE;
   cdata->ainterleaf=TRUE;
 
-  if (priv->picture!=NULL) av_frame_free(&priv->picture);
+  if (priv->picture!=NULL) av_frame_unref(&priv->picture);
   priv->picture=NULL;
 
   return cdata;
@@ -2489,7 +2489,7 @@ static void matroska_clear_queue(MatroskaDemuxContext *matroska) {
   if (matroska->packets) {
     int n;
     for (n = 0; n < matroska->num_packets; n++) {
-      av_free_packet(matroska->packets[n]);
+      av_packet_unref(matroska->packets[n]);
       free(matroska->packets[n]);
     }
     av_freep(&matroska->packets);

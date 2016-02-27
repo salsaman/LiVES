@@ -842,7 +842,7 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 
   fclose(pf);
   if (!num_saves) // don't keep the empty file
-    unlink(filename);
+    lives_rm(filename);
 
   if (subt->last_time <= -1.)
     fseek(subt->tfile, savepos, SEEK_SET);
@@ -925,7 +925,7 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 
   fclose(pf);
   if (!num_saves) // don't keep the empty file
-    unlink(filename);
+    lives_rm(filename);
 
   if (subt->last_time <= -1.)
     fseek(subt->tfile, savepos, SEEK_SET);

@@ -198,7 +198,7 @@ int get_frame_event_frame(weed_plant_t *event, int layer) {
 }
 
 void unlink_event(weed_plant_t *event_list, weed_plant_t *event) {
-  // unlink event from event_list
+  // lives_rm event from event_list
   // don't forget to adjust "timecode" before re-inserting !
   weed_plant_t *prev_event=get_prev_event(event);
   weed_plant_t *next_event=get_next_event(event);
@@ -3978,7 +3978,7 @@ filterinit2:
     if (mainw->multitrack==NULL||!mainw->multitrack->pr_audio) {
       com=lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->undo_start,
                               cfile->undo_end,get_image_ext_for_type(cfile->img_type));
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
       mainw->error=FALSE;
       mainw->com_failed=FALSE;
       mainw->cancelled=CANCEL_NONE;
@@ -4305,7 +4305,7 @@ boolean render_to_clip(boolean new_clip) {
       mainw->com_failed=FALSE;
       mainw->error=FALSE;
       mainw->cancelled=CANCEL_NONE;
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
       lives_system(com,FALSE);
       lives_free(com);
       if (mainw->com_failed) return FALSE;

@@ -6614,7 +6614,7 @@ boolean lives_osc_cb_ping(void *context, int arglen, const void *vargs, OSCTimeT
 
 
 boolean lives_osc_cb_getsetname(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  lives_status_send(get_set_name());
+  lives_status_send(mainw->set_name);
   return TRUE;
 }
 

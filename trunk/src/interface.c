@@ -1203,6 +1203,8 @@ _entryw *create_rename_dialog(int type) {
 
   // type 7 = rename track in mt
 
+  // type 8 = export theme
+  
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
@@ -1230,6 +1232,8 @@ _entryw *create_rename_dialog(int type) {
     title=lives_strdup(_("LiVES: - Choose a Working Directory"));
   } else if (type==7) {
     title=lives_strdup(_("LiVES: - Rename Current Track"));
+  } else if (type==8) {
+    title=lives_strdup(_("LiVES: - Enter a name for your theme"));
   }
 
   renamew->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
@@ -1274,7 +1278,7 @@ _entryw *create_rename_dialog(int type) {
 
   if (type==3) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height*4);
-  } else if (type!=6&&type!=7&&type!=1) {
+  } else if (type==2||type==4||type==5) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*2);
   } else {
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*4);
@@ -1285,6 +1289,8 @@ _entryw *create_rename_dialog(int type) {
     label = lives_standard_label_new(_("New name "));
   } else if (type==2||type==3||type==4||type==5) {
     label = lives_standard_label_new(_("Set name "));
+  } else if (type==8) {
+    label = lives_standard_label_new(_("Theme name "));
   } else {
     label = lives_standard_label_new("");
   }
@@ -1365,7 +1371,7 @@ _entryw *create_rename_dialog(int type) {
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
 
-  if (type!=4&&type!=2&&type!=5&&type!=3) {
+  if (type==1||type>5) {
     lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),
                          renamew);

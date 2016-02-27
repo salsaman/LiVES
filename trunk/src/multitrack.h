@@ -844,6 +844,7 @@ int get_clip_for_block(track_rect *block);
 
 
 // timeline functions
+boolean resize_timeline(lives_mt *);
 void mt_tl_move_relative(lives_mt *, double pos_rel);
 void mt_tl_move(lives_mt *, double pos_abs);
 void set_timeline_end_secs(lives_mt *, double secs);

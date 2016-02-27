@@ -89,10 +89,6 @@ static int renumbered_clips[MAX_FILES+1];
 static double lfps[MAX_FILES+1]; ///< table of layout fps
 static void **pchain; ///< param chain for currently being edited filter
 
-static lives_colRGB48_t audcol;
-static lives_colRGB48_t vidcol;
-static lives_colRGB48_t fxcol;
-
 static int xachans,xarate,xasamps,xse;
 static boolean ptaud;
 static int btaud;
@@ -559,10 +555,10 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
     cpixels=lives_pixbuf_get_pixels(pixbuf);
     for (j=0; j<height; j++) {
       for (k=0; k<width; k++) {
-        cpixels[0]=audcol.red;
-        cpixels[1]=audcol.green;
-        cpixels[2]=audcol.blue;
-        cpixels[3]=0xFF;
+        cpixels[0]=palette->audcol.red>>8;
+        cpixels[1]=palette->audcol.green>>8;
+        cpixels[2]=palette->audcol.blue>>8;
+        cpixels[3]=palette->audcol.alpha>>8;
         cpixels+=4;
       }
       cpixels+=(trow-width*4);
@@ -574,10 +570,10 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
     cpixels=lives_pixbuf_get_pixels(pixbuf);
     for (j=0; j<height; j++) {
       for (k=0; k<width; k++) {
-        cpixels[0]=vidcol.red;
-        cpixels[1]=vidcol.green;
-        cpixels[2]=vidcol.blue;
-        cpixels[3]=0xFF;
+        cpixels[0]=palette->vidcol.red>>8;
+        cpixels[1]=palette->vidcol.green>>8;
+        cpixels[2]=palette->vidcol.blue>>8;
+        cpixels[3]=palette->vidcol.alpha>>8;
         cpixels+=4;
       }
       cpixels+=(trow-width*4);
@@ -589,10 +585,10 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
     cpixels=lives_pixbuf_get_pixels(pixbuf);
     for (j=0; j<height; j++) {
       for (k=0; k<width; k++) {
-        cpixels[0]=fxcol.red;
-        cpixels[1]=fxcol.green;
-        cpixels[2]=fxcol.blue;
-        cpixels[3]=0xFF;
+        cpixels[0]=palette->fxcol.red>>8;
+        cpixels[1]=palette->fxcol.green>>8;
+        cpixels[2]=palette->fxcol.blue>>8;
+        cpixels[3]=palette->fxcol.alpha>>8;
         cpixels+=4;
       }
       cpixels+=(trow-width*4);
@@ -884,11 +880,11 @@ void recover_layout_cancelled(boolean is_startup) {
 
   if (is_startup) mainw->recoverable_layout=FALSE;
 
-  unlink(eload_file);
+  lives_rm(eload_file);
   lives_free(eload_file);
 
   eload_file=lives_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),capable->mainpid);
-  unlink(eload_file);
+  lives_rm(eload_file);
   lives_free(eload_file);
 
   if (is_startup) do_after_crash_warning();
@@ -906,35 +902,18 @@ static void mt_load_recovery_layout(lives_mt *mt) {
   mainw->event_list=mt->event_list=load_event_list(mt,eload_file);
   mt->auto_reloading=FALSE;
   if (mt->event_list!=NULL) {
-    unlink(eload_file);
-    unlink(aload_file);
+    lives_rm(eload_file);
+    lives_rm(aload_file);
     mt_init_tracks(mt,TRUE);
     remove_markers(mt->event_list);
     save_mt_autoback(mt,0);
   } else {
     // failed to load
     // keep the faulty layout for forensic purposes
-    char *com;
     char *uldir=lives_build_filename(prefs->tmpdir,"unrecoverable_layouts",LIVES_DIR_SEPARATOR_S,NULL);
-
     lives_mkdir_with_parents(uldir,S_IRWXU);
-
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->mv_cmd,eload_file,uldir);
-#else
-    com=lives_strdup_printf("mv.exe \"%s\" \"%s\"",eload_file,uldir);
-#endif
-    lives_system(com,TRUE);
-    lives_free(com);
-
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->mv_cmd,aload_file,uldir);
-#else
-    com=lives_strdup_printf("mv.exe \"%s\" \"%s\"",aload_file,uldir);
-#endif
-    lives_system(com,TRUE);
-    lives_free(com);
-
+    lives_mv(eload_file,uldir);
+    lives_mv(aload_file,uldir);
     mt->fps=prefs->mt_def_fps;
     lives_free(uldir);
   }
@@ -1084,7 +1063,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
   case BLOCK_UNSELECTED:
 
     if (BLOCK_DRAW_TYPE==BLOCK_DRAW_SIMPLE) {
-      lives_painter_set_source_rgb(cr,(double)vidcol.red/65535.,(double)vidcol.green/65535.,(double)vidcol.blue/65535.);
+      lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->vidcol);
       lives_painter_new_path(cr);
       lives_painter_rectangle(cr,offset_start, 0, offset_end-offset_start, lives_widget_get_allocation_height(eventbox));
 
@@ -1144,7 +1123,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
               lives_painter_paint(cr);
             } else {
               if (i+width>offset_end) width=offset_end-i;
-              lives_painter_set_source_rgb(cr,(double)vidcol.red/65535.,(double)vidcol.green/65535.,(double)vidcol.blue/65535.);
+              lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->vidcol);
               lives_painter_new_path(cr);
               lives_painter_rectangle(cr,i,0,width,lives_widget_get_allocation_height(eventbox));
               lives_painter_fill(cr);
@@ -1167,7 +1146,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
         }
         if (thumbnail!=NULL) lives_object_unref(thumbnail);
       } else {
-        lives_painter_set_source_rgb(cr,(double)audcol.red/65535.,(double)audcol.green/65535.,(double)audcol.blue/65535.);
+        lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->audcol);
         lives_painter_new_path(cr);
         lives_painter_rectangle(cr,offset_start,0,offset_end-offset_start,lives_widget_get_allocation_height(eventbox));
         lives_painter_fill(cr);
@@ -2143,12 +2122,16 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
   LiVESWidget *ahbox;
   LiVESWidget *xeventbox,*aeventbox;
 
+  LiVESWidgetColor col;
+  
   boolean expanded;
 
   int rows=0;
   int aud_tracks=0;
   int hidden;
 
+  lives_rgba_to_widget_color(&col,&palette->mt_evbox);
+  
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),(double)prefs->max_disp_vtracks);
   lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),(double)(mt->num_video_tracks*2-1));
 
@@ -2264,7 +2247,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                            LIVES_GUI_CALLBACK(on_track_release),
                            (livespointer)mt);
 
-      lives_widget_set_bg_color(LIVES_WIDGET(mt->audio_draws->data), LIVES_WIDGET_STATE_NORMAL, &palette->white);
+      lives_widget_set_bg_color(LIVES_WIDGET(mt->audio_draws->data), LIVES_WIDGET_STATE_NORMAL, &col);
       lives_widget_set_app_paintable(LIVES_WIDGET(mt->audio_draws->data),TRUE);
       lives_signal_connect(LIVES_GUI_OBJECT(mt->audio_draws->data), LIVES_WIDGET_EXPOSE_EVENT,
                            LIVES_GUI_CALLBACK(expose_track_event),
@@ -2277,7 +2260,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                            (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                            (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
-        lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+        lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &col);
         lives_widget_set_app_paintable(xeventbox,TRUE);
         lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_EXPOSE_EVENT,
                              LIVES_GUI_CALLBACK(mt_expose_audtrack_event),
@@ -2290,7 +2273,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                              (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                              (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
-          lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+          lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &col);
           lives_widget_set_app_paintable(xeventbox,TRUE);
           lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_EXPOSE_EVENT,
                                LIVES_GUI_CALLBACK(mt_expose_audtrack_event),
@@ -2326,7 +2309,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       ahbox=lives_event_box_new();
 
       // seems to need doing twice...
-      lives_widget_set_bg_color(LIVES_WIDGET(eventbox), LIVES_WIDGET_STATE_NORMAL, &palette->white);
+      lives_widget_set_bg_color(LIVES_WIDGET(eventbox), LIVES_WIDGET_STATE_NORMAL, &col);
 
 #ifdef ENABLE_GIW
       if (prefs->lamp_buttons) {
@@ -2377,7 +2360,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                            LIVES_GUI_CALLBACK(track_ebox_pressed),
                            (livespointer)mt);
 
-      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &col);
       lives_widget_set_app_paintable(eventbox,TRUE);
       lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_EXPOSE_EVENT,
                            LIVES_GUI_CALLBACK(expose_track_event),
@@ -2420,7 +2403,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
           hbox=lives_hbox_new(FALSE,widget_opts.packing_width);
           ahbox=lives_event_box_new();
 
-          lives_widget_set_bg_color(LIVES_WIDGET(aeventbox), LIVES_WIDGET_STATE_NORMAL, &palette->white);
+          lives_widget_set_bg_color(LIVES_WIDGET(aeventbox), LIVES_WIDGET_STATE_NORMAL, &col);
 
           lives_container_add(LIVES_CONTAINER(labelbox), hbox);
           lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
@@ -2460,7 +2443,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                                LIVES_GUI_CALLBACK(on_track_release),
                                (livespointer)mt);
 
-          lives_widget_set_bg_color(aeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+          lives_widget_set_bg_color(aeventbox, LIVES_WIDGET_STATE_NORMAL, &col);
           lives_widget_set_app_paintable(aeventbox,TRUE);
           lives_signal_connect(LIVES_GUI_OBJECT(aeventbox), LIVES_WIDGET_EXPOSE_EVENT,
                                LIVES_GUI_CALLBACK(expose_track_event),
@@ -2485,7 +2468,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                                  (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                                  (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
-              lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+              lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &col);
               lives_widget_set_app_paintable(xeventbox,TRUE);
               lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_EXPOSE_EVENT,
                                    LIVES_GUI_CALLBACK(mt_expose_audtrack_event),
@@ -2508,7 +2491,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                                    (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                                    (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
-                lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+                lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &col);
                 lives_widget_set_app_paintable(xeventbox,TRUE);
                 lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_EXPOSE_EVENT,
                                      LIVES_GUI_CALLBACK(mt_expose_audtrack_event),
@@ -5834,264 +5817,275 @@ static char *get_tab_name(uint32_t tab) {
 
 
 void set_mt_colours(lives_mt *mt) {
+  
+  lives_widget_set_bg_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->mt_timecode_bg);
+  lives_widget_set_base_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->mt_timecode_bg);
+  lives_widget_set_text_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->mt_timecode_fg);
 
-  lives_widget_set_bg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color(mt->timecode, LIVES_WIDGET_STATE_INSENSITIVE, &palette->mt_timecode_bg);
+  lives_widget_set_base_color(mt->timecode, LIVES_WIDGET_STATE_INSENSITIVE, &palette->mt_timecode_bg);
+  lives_widget_set_text_color(mt->timecode, LIVES_WIDGET_STATE_INSENSITIVE, &palette->mt_timecode_fg);
+ 
+  if (palette->style&STYLE_1) {
 
-  lives_widget_set_bg_color(mt->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  lives_widget_set_bg_color(mt->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  lives_widget_set_bg_color(mt->scroll_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->scroll_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  lives_widget_set_bg_color(mt->dumlabel1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mt->dumlabel2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mt->scroll_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->scroll_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  lives_widget_set_bg_color(mt->preview_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->preview_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mt->preview_frame)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->dumlabel1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mt->dumlabel2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-  lives_widget_set_bg_color(mt->top_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->top_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->preview_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->preview_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mt->preview_frame)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  lives_widget_set_bg_color(mt->grav_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->grav_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->top_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->top_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  lives_widget_set_bg_color(mt->mm_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->mm_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->grav_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->grav_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  lives_widget_set_bg_color(mt->ins_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->ins_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->mm_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->mm_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  lives_widget_set_fg_color(mt->l_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_fg_color(mt->r_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->ins_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->ins_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  set_child_colour(mt->in_out_box, FALSE);
+    lives_widget_set_fg_color(mt->l_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mt->r_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  if (palette->style&STYLE_4) {
-    lives_widget_show(mt->hseparator);
-    lives_widget_set_fg_color(mt->hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_bg_color(mt->hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    if (mt->hseparator2!=NULL) {
-      lives_widget_show(mt->hseparator2);
-      lives_widget_set_fg_color(mt->hseparator2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-      lives_widget_set_bg_color(mt->hseparator2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    set_child_colour(mt->in_out_box, FALSE);
+
+    if (palette->style&STYLE_4) {
+      lives_widget_show(mt->hseparator);
+      lives_widget_set_fg_color(mt->hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_bg_color(mt->hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      if (mt->hseparator2!=NULL) {
+	lives_widget_show(mt->hseparator2);
+	lives_widget_set_fg_color(mt->hseparator2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+	lives_widget_set_bg_color(mt->hseparator2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      }
+    } else {
+      lives_widget_hide(mt->hseparator);
+      if (mt->hseparator2!=NULL) {
+	lives_widget_hide(mt->hseparator2);
+      }
     }
-  } else {
-    lives_widget_hide(mt->hseparator);
-    if (mt->hseparator2!=NULL) {
-      lives_widget_hide(mt->hseparator2);
+
+    lives_widget_set_bg_color(mt->in_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mt->out_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    // for gtk+2.x (At least) this sets the amixer button
+    lives_widget_set_bg_color(mt->amixb_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->amixb_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    lives_widget_set_bg_color(LIVES_WIDGET(mt->sep1), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(LIVES_WIDGET(mt->sep1), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    if (mt->sep2!=NULL) {
+      lives_widget_set_bg_color(LIVES_WIDGET(mt->sep2), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(LIVES_WIDGET(mt->sep2), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
     }
-  }
 
-  lives_widget_set_bg_color(mt->in_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mt->out_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    if (mt->sep3!=NULL) {
+      lives_widget_set_bg_color(LIVES_WIDGET(mt->sep3), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(LIVES_WIDGET(mt->sep3), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
 
-  // for gtk+2.x (At least) this sets the amixer button
-  lives_widget_set_bg_color(mt->amixb_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->amixb_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    if (mt->sep4!=NULL) {
+      lives_widget_set_bg_color(LIVES_WIDGET(mt->sep4), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(LIVES_WIDGET(mt->sep4), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
 
-  lives_widget_set_bg_color(LIVES_WIDGET(mt->sep1), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(LIVES_WIDGET(mt->sep1), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->btoolbarx, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->btoolbarx, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  if (mt->sep2!=NULL) {
-    lives_widget_set_bg_color(LIVES_WIDGET(mt->sep2), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(LIVES_WIDGET(mt->sep2), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
+    lives_widget_set_bg_color(mt->btoolbary, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->btoolbary, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  if (mt->sep3!=NULL) {
-    lives_widget_set_bg_color(LIVES_WIDGET(mt->sep3), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(LIVES_WIDGET(mt->sep3), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
-
-  if (mt->sep4!=NULL) {
-    lives_widget_set_bg_color(LIVES_WIDGET(mt->sep4), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(LIVES_WIDGET(mt->sep4), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
-
-  lives_widget_set_bg_color(mt->btoolbarx, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->btoolbarx, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-  lives_widget_set_bg_color(mt->btoolbary, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->btoolbary, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-  lives_widget_set_fg_color(mt->tlx_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mt->tlx_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->tlx_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->tlx_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
 #if GTK_CHECK_VERSION(3,0,0)
-  // m & b for gtk 3.x
-  lives_widget_set_fg_color(mt->time_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  lives_widget_set_bg_color(mt->time_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  lives_widget_set_bg_color(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    // m & b for gtk 3.x
+    lives_widget_set_fg_color(mt->time_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->time_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 #else
-  // normal for gtk 2.x
-  lives_widget_set_fg_color(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_fg_color(mt->time_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mt->time_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    // normal for gtk 2.x
+    lives_widget_set_fg_color(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mt->time_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->time_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 #endif
 
-  if (mt->tl_label!=NULL)
-    lives_widget_set_fg_color(mt->tl_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    if (mt->tl_label!=NULL)
+      lives_widget_set_fg_color(mt->tl_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  // needed for gtk+ 2.x
-  lives_widget_set_bg_color(lives_widget_get_parent(mt->insa_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(lives_widget_get_parent(mt->insa_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  lives_widget_set_bg_color(mt->insa_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->insa_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    // needed for gtk+ 2.x
+    lives_widget_set_bg_color(lives_widget_get_parent(mt->insa_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(lives_widget_get_parent(mt->insa_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->insa_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->insa_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  lives_widget_set_bg_color(lives_widget_get_parent(mt->overlap_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(lives_widget_get_parent(mt->overlap_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  lives_widget_set_bg_color(mt->overlap_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->overlap_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(lives_widget_get_parent(mt->overlap_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(lives_widget_get_parent(mt->overlap_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->overlap_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->overlap_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  lives_widget_set_bg_color(mt->preview_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mt->preview_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-  lives_widget_set_bg_color(mt->btoolbar2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->btoolbar2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->btoolbar2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->btoolbar2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  lives_widget_set_bg_color(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  lives_widget_set_bg_color(mt->eview_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->eview_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-
-  lives_widget_set_bg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-  if (mt->ins_label!=NULL) {
-    lives_widget_set_bg_color(mt->ins_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mt->ins_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
-
-  if (mt->mm_label!=NULL) {
-    lives_widget_set_bg_color(mt->mm_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mt->mm_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
-
-  lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_normal)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_normal)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-  lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_left)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_left)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-  lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_right)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_right)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-  lives_widget_set_bg_color(mt->hpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_bg_color(mt->nb, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->nb, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_text_color(mt->nb, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-
-  lives_widget_set_bg_color(mt->nb, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->nb, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore);
-
-  lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->clip_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_bg_color(mt->fx_base_box, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->fx_base_box, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-  lives_widget_set_bg_color(mt->context_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->context_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-
-  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mt->context_frame)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-
-  // gtk+ 2.x
-  if ((mt->poly_state==POLY_FX_STACK||mt->poly_state==POLY_EFFECTS||mt->poly_state==POLY_TRANS||mt->poly_state==POLY_COMP) \
-      &&LIVES_IS_BIN(mt->fx_list_scroll)&&lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll))!=NULL)
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  set_child_colour(mt->context_box,FALSE);
-
-  lives_widget_set_bg_color(mt->vpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->vpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-
-  lives_widget_set_bg_color(mt->tl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->tl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-
-  lives_widget_set_bg_color(LIVES_WIDGET(mt->timeline_table_header), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  if (palette->style&STYLE_3) {
-    lives_widget_set_fg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mt->timeline_eb, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_bg_color(mt->timeline_reg, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mt->timeline_eb, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-    lives_widget_set_fg_color(mt->timeline_reg, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  } else {
-    lives_widget_set_bg_color(mt->timeline_reg, LIVES_WIDGET_STATE_NORMAL, &palette->white);
-    lives_widget_set_fg_color(mt->timeline_reg, LIVES_WIDGET_STATE_NORMAL, &palette->black);
-  }
-
-  lives_widget_set_fg_color(mt->amixer_button, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-  // BG color is set by eventbox (gtk+ 2.x), this is for gtk+3.x
-  lives_widget_set_fg_color(mt->amix_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  lives_widget_set_bg_color(mt->amix_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->eview_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->eview_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
 
-  lives_widget_set_bg_color(mt->btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  lives_widget_set_fg_color(mt->btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    if (mt->ins_label!=NULL) {
+      lives_widget_set_bg_color(mt->ins_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(mt->ins_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
 
-  if (palette->style&STYLE_2) {
+    if (mt->mm_label!=NULL) {
+      lives_widget_set_bg_color(mt->mm_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(mt->mm_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
+
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_normal)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_normal)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_left)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_left)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_right)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_right)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    lives_widget_set_bg_color(mt->hpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_bg_color(mt->nb, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->nb, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_text_color(mt->nb, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+    lives_widget_set_bg_color(mt->nb, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->nb, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore);
+
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->clip_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_bg_color(mt->fx_base_box, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->fx_base_box, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    lives_widget_set_bg_color(mt->context_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->context_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+    lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mt->context_frame)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+    // gtk+ 2.x
+    if ((mt->poly_state==POLY_FX_STACK||mt->poly_state==POLY_EFFECTS||mt->poly_state==POLY_TRANS||mt->poly_state==POLY_COMP) \
+	&&LIVES_IS_BIN(mt->fx_list_scroll)&&lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll))!=NULL)
+      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    set_child_colour(mt->context_box,FALSE);
+
+    lives_widget_set_bg_color(mt->vpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->vpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+    lives_widget_set_bg_color(mt->tl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->tl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+    lives_widget_set_bg_color(LIVES_WIDGET(mt->timeline_table_header), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    if (palette->style&STYLE_3) {
+      lives_widget_set_fg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(mt->timeline_eb, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_bg_color(mt->timeline_reg, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(mt->timeline_eb, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+      lives_widget_set_fg_color(mt->timeline_reg, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    } else {
+      lives_widget_set_bg_color(mt->timeline_reg, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+      lives_widget_set_fg_color(mt->timeline_reg, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+    }
+
+    lives_widget_set_fg_color(mt->amixer_button, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    // BG color is set by eventbox (gtk+ 2.x), this is for gtk+3.x
+    lives_widget_set_fg_color(mt->amix_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->amix_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+
+
+    lives_widget_set_bg_color(mt->btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+
+    lives_widget_set_fg_color(mt->btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    if (palette->style&STYLE_2) {
 #if !GTK_CHECK_VERSION(3,0,0)
-    lives_widget_set_base_color(mt->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_base_color(mt->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
-    lives_widget_set_base_color(mt->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_base_color(mt->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
-    lives_widget_set_text_color(mt->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_text_color(mt->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_fore);
-    lives_widget_set_text_color(mt->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_text_color(mt->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_fore);
+      lives_widget_set_base_color(mt->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_base_color(mt->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
+      lives_widget_set_base_color(mt->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_base_color(mt->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
+      lives_widget_set_text_color(mt->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_text_color(mt->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_fore);
+      lives_widget_set_text_color(mt->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_text_color(mt->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_fore);
 #endif
+    }
+
+    lives_widget_set_fg_color(mt->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_fg_color(mt->nb_label1, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+    lives_widget_set_bg_color(mt->nb_label1, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->nb_label1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->nb_label1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_fg_color(mt->nb_label2, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+    lives_widget_set_bg_color(mt->nb_label2, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->nb_label2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->nb_label2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_fg_color(mt->nb_label3, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+    lives_widget_set_bg_color(mt->nb_label3, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->nb_label3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->nb_label3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_fg_color(mt->nb_label4, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+    lives_widget_set_bg_color(mt->nb_label4, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->nb_label4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->nb_label4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_fg_color(mt->nb_label5, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+    lives_widget_set_bg_color(mt->nb_label5, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->nb_label5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->nb_label5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_fg_color(mt->nb_label6, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+    lives_widget_set_bg_color(mt->nb_label6, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->nb_label6, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->nb_label6, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_fg_color(mt->nb_label7, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+    lives_widget_set_bg_color(mt->nb_label7, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
-
-  lives_widget_set_fg_color(mt->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mt->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_fg_color(mt->nb_label1, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
-  lives_widget_set_bg_color(mt->nb_label1, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->nb_label1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mt->nb_label1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_fg_color(mt->nb_label2, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
-  lives_widget_set_bg_color(mt->nb_label2, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->nb_label2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mt->nb_label2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_fg_color(mt->nb_label3, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
-  lives_widget_set_bg_color(mt->nb_label3, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->nb_label3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mt->nb_label3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_fg_color(mt->nb_label4, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
-  lives_widget_set_bg_color(mt->nb_label4, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->nb_label4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mt->nb_label4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_fg_color(mt->nb_label5, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
-  lives_widget_set_bg_color(mt->nb_label5, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->nb_label5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mt->nb_label5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_fg_color(mt->nb_label6, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
-  lives_widget_set_bg_color(mt->nb_label6, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->nb_label6, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mt->nb_label6, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_fg_color(mt->nb_label7, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
-  lives_widget_set_bg_color(mt->nb_label7, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_widget_set_fg_color(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
+  
 }
 
 
@@ -6192,15 +6186,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   if (prefs->gui_monitor==0) scr_width=mainw->scr_width;
   else scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
-
-  audcol.blue=audcol.red=16384;
-  audcol.green=65535;
-
-  vidcol.green=audcol.red=16384;
-  vidcol.blue=65535;
-
-  fxcol.red=65535;
-  fxcol.green=fxcol.blue=0;
 
   if (mainw->sl_undo_mem==NULL) {
     mt->undo_mem=(uint8_t *)lives_try_malloc(prefs->mt_undo_buf*1024*1024);
@@ -7974,14 +7959,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->tc_func=lives_signal_connect_after(LIVES_WIDGET_OBJECT(mt->timecode),LIVES_WIDGET_FOCUS_OUT_EVENT,
                                          LIVES_GUI_CALLBACK(after_timecode_changed), (livespointer) mt);
 
-  lives_widget_set_bg_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->black);
-  lives_widget_set_base_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->black);
-  lives_widget_set_text_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->light_green);
-
-  lives_widget_set_bg_color(mt->timecode, LIVES_WIDGET_STATE_INSENSITIVE, &palette->black);
-  lives_widget_set_base_color(mt->timecode, LIVES_WIDGET_STATE_INSENSITIVE, &palette->black);
-  lives_widget_set_text_color(mt->timecode, LIVES_WIDGET_STATE_INSENSITIVE, &palette->light_green);
-
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt->insa_checkbutton),mt->opts.insert_audio);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mt->insa_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -8901,9 +8878,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   else if (mt->opts.grav_mode==GRAV_MODE_LEFT) on_grav_mode_changed(LIVES_MENU_ITEM(mt->grav_left),(livespointer)mt);
   else if (mt->opts.grav_mode==GRAV_MODE_RIGHT) on_grav_mode_changed(LIVES_MENU_ITEM(mt->grav_right),(livespointer)mt);
 
-  if (palette->style&STYLE_1) {
-    set_mt_colours(mt);
-  }
+  set_mt_colours(mt);
 
   mt_sensitise(mt);
   mt->is_ready=TRUE;
@@ -15894,7 +15869,7 @@ boolean on_render_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mt->pr_audio=TRUE;
     had_audio=mt->has_audio_file;
     if (had_audio) {
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
       mainw->error=FALSE;
       mainw->cancelled=CANCEL_NONE;
       com=lives_strdup_printf("%s backup_audio \"%s\"",prefs->backend_sync,cfile->handle);
@@ -16123,16 +16098,7 @@ boolean on_render_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       // remove subdir
       do_threaded_dialog(_("Cleaning up..."),FALSE);
       curtmpdir=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
-#ifndef IS_MINGW
-      com=lives_strdup_printf("%s -rf \"%s/\"*",capable->rm_cmd,curtmpdir);
-#else
-      com=lives_strdup_printf("DEL /q \"%s/\"*",curtmpdir);
-      lives_system(com,TRUE);
-      lives_free(com);
-      com=lives_strdup_printf("RMDIR \"%s/\"*",curtmpdir);
-#endif
-      lives_system(com,TRUE);
-      lives_free(com);
+      lives_rmdir(curtmpdir,TRUE);
       end_threaded_dialog();
     }
 
@@ -17836,7 +17802,7 @@ void draw_region(lives_mt *mt) {
   }
 
   cr = lives_painter_create_from_widget(mt->timeline_reg);
-  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+  lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->mt_timeline_reg); ///< opaque black
   lives_painter_rectangle(cr,(start-mt->tl_min)*lives_widget_get_allocation_width(mt->timeline)/(mt->tl_max-mt->tl_min),
                           0,
                           (end-start)*lives_widget_get_allocation_width(mt->timeline)/(mt->tl_max-mt->tl_min),
@@ -17870,7 +17836,7 @@ static boolean expose_timeline_reg_event(LiVESWidget *timeline, LiVESXEventExpos
 
   if (cairo==NULL) cr=lives_painter_create_from_widget(timeline);
 
-  lives_painter_set_source_rgb(cr,0.,0.,1.);
+  lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->mt_mark);
 
   while (tl_marks!=NULL) {
     time=strtod((char *)tl_marks->data,NULL);
@@ -18561,7 +18527,7 @@ static void add_mark_at(lives_mt *mt, double time) {
 
   cr = lives_painter_create_from_widget(mt->timeline_reg);
 
-  lives_painter_set_source_rgb(cr,0.,0.,1.);
+  lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->mt_mark);
 
   lives_painter_move_to(cr,offset,1);
   lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(mt->timeline_reg)-2);
@@ -19254,7 +19220,6 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
   char *new_entry;
   char *map_name=NULL,*ldir=NULL;
   char *string;
-  char *com;
 
   uint32_t size=0;
 
@@ -19371,18 +19336,12 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
     if (size==0||!written) {
       LIVES_DEBUG("Removing layout map file: ");
       LIVES_DEBUG(map_name);
-      unlink(map_name);
+      lives_rm(map_name);
     }
 
     LIVES_DEBUG("Removing layout dir: ");
     LIVES_DEBUG(ldir);
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,ldir);
-#else
-    com=lives_strdup_printf("rmdir.exe \"%s\" 2>NUL",ldir);
-#endif
-    lives_system(com,TRUE);
-    lives_free(com);
+    lives_rmdir(ldir,FALSE);
   }
 
   if (write_to_file) {
@@ -19539,7 +19498,6 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
   char *layout_name;
   char *esave_dir;
   char *esave_file;
-  char *com;
 
   char xlayout_name[PATH_MAX];
 
@@ -19623,22 +19581,10 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
 
   if (esave_file==NULL||!check_storage_space(NULL,FALSE)) {
     char *cdir;
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,esave_dir);
-#else
-    com=lives_strdup_printf("rmdir.exe \"%s\" 2>NUL",esave_dir);
-#endif
-    lives_system(com,TRUE);
-    lives_free(com);
+    lives_rmdir(esave_dir,FALSE);
 
     cdir=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,cdir);
-#else
-    com=lives_strdup_printf("rmdir.exe \"%s\" 2>NUL",cdir);
-#endif
-    lives_system(com,TRUE);
-    lives_free(com);
+    lives_rmdir(cdir,FALSE);
 
     lives_free(esave_file);
     lives_free(esave_dir);
@@ -21148,7 +21094,6 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
   char *eload_dir;
   char *eload_file;
   char *startdir=NULL;
-  char *com;
 
   boolean needs_idlefunc=FALSE;
 
@@ -21197,22 +21142,10 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
     // this will fail if there are any files in the directories
 
     char *cdir;
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,eload_dir);
-#else
-    com=lives_strdup_printf("rmdir.exe \"%s\" 2>NUL",eload_dir);
-#endif
-    lives_system(com,TRUE);
-    lives_free(com);
+    lives_rmdir(eload_dir,FALSE);
 
     cdir=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,cdir);
-#else
-    com=lives_strdup_printf("rmdir.exe \"%s\" 2>NUL",cdir);
-#endif
-    lives_system(com,TRUE);
-    lives_free(com);
+    lives_rmdir(cdir,FALSE);
   }
 
   lives_free(eload_dir);
@@ -21686,7 +21619,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
             weed_set_string_value(event_list,"needs_set",(tmp=F2U8(new_set_name)));
             lives_free(tmp);
             // save the event_list with the same name
-            unlink((char *)map->data);
+            lives_rm((char *)map->data);
 
             do {
               retval2=0;
@@ -21717,18 +21650,14 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
       // update entries in mainw->current_layouts_map
       tmp=lives_build_filename(prefs->tmpdir,new_set_name,"layouts",(char *)map->data+chlen,NULL);
       if (lives_file_test(tmp,LIVES_FILE_TEST_EXISTS)) {
-        char *com;
         // prevent duplication of layouts
         lives_free(tmp);
 #ifndef IS_MINGW
         tmp=lives_strdup_printf("%s/%s/layouts/%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
-        com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->mv_cmd,(char *)map->data,tmp);
 #else
         tmp=lives_strdup_printf("%s\\%s\\layouts\\%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
-        com=lives_strdup_printf("mv.exe \"%s\" \"%s\"",(char *)map->data,tmp);
 #endif
-        lives_system(com,FALSE);
-        lives_free(com);
+        lives_mv((const char *)map->data,tmp);
       }
       lives_free((livespointer)map->data);
       map->data=tmp;

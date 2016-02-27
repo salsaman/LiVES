@@ -66,7 +66,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
   outfile=lives_strdup_printf("%s/smogplugin.%d",prefs->tmpdir,capable->mainpid);
 #endif
 
-  unlink(outfile);
+  lives_rm(outfile);
 
   com=lives_strconcat(command," > \"",outfile,"\"",NULL);
 
@@ -81,7 +81,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
           bytes=read(outfile_fd,&buffer,65535);
           if (bytes<0) bytes=0;
           close(outfile_fd);
-          unlink(outfile);
+          lives_rm(outfile);
           memset(buffer+bytes,0,1);
         }
         msg=lives_strdup_printf(_("\nPlugin error: %s failed with code %d"),command,error/256);
@@ -98,7 +98,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
     }
     lives_free(outfile);
     threaded_dialog_spin(0.);
-    unlink(outfile);
+    lives_rm(outfile);
     return list;
   }
   lives_free(com);
@@ -129,7 +129,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
     } else {
       bytes=read(outfile_fd,&buffer,65535);
       close(outfile_fd);
-      unlink(outfile);
+      lives_rm(outfile);
 
       if (bytes<0) {
         retval=do_read_failed_error_s_with_retry(outfile,NULL,NULL);
@@ -140,7 +140,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
     }
   } while (retval==LIVES_RESPONSE_RETRY);
 
-  unlink(outfile);
+  lives_rm(outfile);
   lives_free(outfile);
 
   if (retval==LIVES_RESPONSE_CANCEL) {
@@ -366,7 +366,7 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
   double dblzero=0.;
 
   if (mainw->vpp==NULL) {
-    unlink(vpp_file);
+    lives_rm(vpp_file);
     return;
   }
 
@@ -505,7 +505,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
                 mainw->vpp->name);
           do_error_dialog(msg);
           lives_free(msg);
-          unlink(vpp_file);
+          lives_rm(vpp_file);
           d_print_failed();
           close(fd);
           return;
@@ -1029,12 +1029,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     LiVESWidget *vbox=lives_vbox_new(FALSE, 0);
     LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V/2, vbox);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
-
-#ifndef IS_MINGW
     com=lives_strdup_printf("%s -e \"%s\"",capable->echo_cmd,(*tmpvpp->get_init_rfx)());
-#else
-    com=lives_strdup_printf("echo.exe -e \"%s\"",(*tmpvpp->get_init_rfx)());
-#endif
     plugin_run_param_window(com,LIVES_VBOX(vbox),&(vppa->rfx));
     lives_free(com);
     if (tmpvpp->extra_argv!=NULL&&tmpvpp->extra_argc>0) {
@@ -3736,7 +3731,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     res=system(com);
     lives_free(com);
 
-    unlink(rfxfile);
+    lives_rm(rfxfile);
     lives_free(rfxfile);
 
     if (res==0) {
@@ -3780,7 +3775,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
       } while (retval==LIVES_RESPONSE_RETRY);
 
-      unlink(rfxfile);
+      lives_rm(rfxfile);
       lives_free(rfxfile);
 
       if (retval==LIVES_RESPONSE_CANCEL) return NULL;
@@ -3815,7 +3810,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       }
 
       rfxfile=lives_build_filename(prefs->tmpdir,rfx_scrapname,NULL);
-      unlink(rfxfile);
+      lives_rm(rfxfile);
       lives_free(rfxfile);
 
       if (ret_rfx!=NULL) {

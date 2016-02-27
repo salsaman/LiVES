@@ -212,6 +212,23 @@ typedef enum {
 } lives_storage_status_t;
 
 
+#define THEME_DETAIL_NORMAL_FORE "normal_fore"
+#define THEME_DETAIL_NORMAL_BACK "normal_back"
+#define THEME_DETAIL_ALT_FORE "alt_fore"
+#define THEME_DETAIL_ALT_BACK "alt_back"
+#define THEME_DETAIL_INFO_TEXT "info_text"
+#define THEME_DETAIL_INFO_BASE "info_base"
+#define THEME_DETAIL_AUDCOL "audcol"
+#define THEME_DETAIL_VIDCOL "vidcol"
+#define THEME_DETAIL_FXCOL "fxcol"
+#define THEME_DETAIL_MT_TLREG "mt_tlreg"
+#define THEME_DETAIL_MT_MARK "mt_mark"
+#define THEME_DETAIL_MT_EVBOX "mt_evbox"
+#define THEME_DETAIL_MT_TCFG "mt_timecode_fg"
+#define THEME_DETAIL_MT_TCBG "mt_timecode_bg"
+#define THEME_DETAIL_FRAME_SURROUND "frame_surround"
+#define THEME_DETAIL_CE_SEL "ce_sel"
+#define THEME_DETAIL_CE_UNSEL "ce_unsel"
 
 /// set in set_palette_colours()
 typedef struct {
@@ -236,15 +253,36 @@ typedef struct {
   LiVESWidgetColor grey60;
   LiVESWidgetColor dark_orange;
   LiVESWidgetColor fade_colour;
+
+  LiVESWidgetColor banner_fade_text;
+
+  // set via theme API
+  
+  
   LiVESWidgetColor normal_back;
   LiVESWidgetColor normal_fore;
 
   LiVESWidgetColor menu_and_bars;
   LiVESWidgetColor menu_and_bars_fore;
-  LiVESWidgetColor banner_fade_text;
   LiVESWidgetColor info_text;
   LiVESWidgetColor info_base;
 
+  LiVESWidgetColor mt_timecode_bg;
+  LiVESWidgetColor mt_timecode_fg;
+
+  lives_colRGBA64_t audcol;
+  lives_colRGBA64_t vidcol;
+  lives_colRGBA64_t fxcol;
+  lives_colRGBA64_t mt_timeline_reg;
+
+  lives_colRGBA64_t frame_surround;
+  lives_colRGBA64_t mt_mark;
+  lives_colRGBA64_t mt_evbox;
+
+  lives_colRGBA64_t ce_sel;
+  lives_colRGBA64_t ce_unsel;
+
+  
 } _palette;
 
 /// screen details
@@ -700,6 +738,8 @@ typedef struct {
   LiVESWidget *close;
   LiVESWidget *import_proj;
   LiVESWidget *export_proj;
+  LiVESWidget *import_theme;
+  LiVESWidget *export_theme;
   LiVESWidget *sw_sound;
   LiVESWidget *clear_ds;
   LiVESWidget *ccpd_sound;

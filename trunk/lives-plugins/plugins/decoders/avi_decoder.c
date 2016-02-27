@@ -588,7 +588,7 @@ resync:
     }
 
     /*    if(!avi->non_interleaved && priv->avpkt.pos >= 0 && ast->seek_pos > priv->avpkt.pos){
-      av_free_packet(&priv->avpkt);
+      av_packet_unref(&priv->avpkt);
       goto resync;
       }*/
 
@@ -670,7 +670,7 @@ static void detach_stream(lives_clip_data_t *cdata) {
     av_free(priv->ctx);
   }
 
-  if (priv->picture!=NULL) av_frame_free(priv->picture);
+  if (priv->picture!=NULL) av_frame_unref(priv->picture);
 
   priv->ctx=NULL;
   priv->picture=NULL;

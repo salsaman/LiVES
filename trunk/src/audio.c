@@ -2753,7 +2753,7 @@ boolean apply_rte_audio_init(void) {
 
 void apply_rte_audio_end(boolean del) {
   close(audio_fd);
-  if (del) unlink(audio_file);
+  if (del) lives_rm(audio_file);
   lives_free(audio_file);
 }
 
@@ -3162,7 +3162,7 @@ void stop_audio_stream(void) {
     }
 
     lives_killpg(astream_pgid,LIVES_SIGKILL);
-    unlink(astream_name);
+    lives_rm(astream_name);
     lives_free(astream_name);
 
     // astreamer should remove cooked stream
@@ -3183,8 +3183,8 @@ void clear_audio_stream(void) {
   char *astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
   char *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
   char *astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
-  unlink(astream_name);
-  unlink(astream_name_out);
+  lives_rm(astream_name);
+  lives_rm(astream_name_out);
   lives_free(astname);
   lives_free(astream_name);
   lives_free(astname_out);

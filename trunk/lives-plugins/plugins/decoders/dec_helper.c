@@ -14,7 +14,10 @@ double get_fps(const char *uri) {
   FILE *fp;
   int rc;
   double ret = -1.;
+
   const char *binary;
+  const char *dummy;
+
   char buffer[1024];
   char cmd[1024];
 
@@ -33,7 +36,8 @@ found_player:
   snprintf(cmd,1024,"LANGUAGE=en LANG=en %s \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS",binary,uri);
   fp = popen(cmd,"r");
 
-  fgets(buffer,1024,fp);
+  dummy=fgets(buffer,1024,fp);
+  dummy=dummy; // stop compiler complaining
   if (!(strncmp(buffer,"ID_VIDEO_FPS=",13))) {
     ret = strtod(buffer+13,NULL);
   }

@@ -154,7 +154,6 @@ void del_frame_index(lives_clip_t *sfile) {
   // only done once all
 
   char *idxfile;
-  char *com;
 
   register int i;
 
@@ -171,16 +170,7 @@ void del_frame_index(lives_clip_t *sfile) {
 
   if (sfile!=clipboard) {
     idxfile=lives_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
-
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s -f \"%s\"",capable->rm_cmd,idxfile);
-#else
-    com=lives_strdup_printf("rm.exe -f \"%s\"",idxfile);
-#endif
-
-    lives_system(com,FALSE);
-    lives_free(com);
-
+    lives_rm(idxfile);
     lives_free(idxfile);
   }
 
@@ -522,7 +512,7 @@ void clean_images_from_virtual(lives_clip_t *sfile, int oldframes) {
   // should be threadsafe
 
   register int i;
-  char *iname=NULL,*com;
+  char *iname=NULL;
 
   if (sfile==NULL||sfile->frame_index==NULL) return;
 
@@ -533,14 +523,7 @@ void clean_images_from_virtual(lives_clip_t *sfile, int oldframes) {
 
     if ((i<sfile->frames&&sfile->frame_index[i]!=-1)||i>=sfile->frames) {
       iname=make_image_file_name(sfile,i,get_image_ext_for_type(sfile->img_type));
-
-#ifndef IS_MINGW
-      com=lives_strdup_printf("%s -f \"%s\"",capable->rm_cmd,iname);
-#else
-      com=lives_strdup_printf("rm.exe -f \"%s\"",iname);
-#endif
-      lives_system(com,FALSE);
-      lives_free(com);
+      lives_rm(iname);
     }
   }
 }

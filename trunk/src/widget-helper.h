@@ -93,6 +93,13 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 boolean widget_helper_init(void);
 
 boolean widget_color_to_lives_rgba(lives_colRGBA64_t *, LiVESWidgetColor *);
+boolean lives_rgba_to_widget_color(LiVESWidgetColor *, lives_colRGBA64_t *);
+
+void lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr, lives_colRGBA64_t *col);
+void lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr, lives_colRGB48_t *col);
+
+boolean lives_rgba_equal(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);
+void lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);
 
 
 // object funcs.

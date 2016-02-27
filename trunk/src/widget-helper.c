@@ -8372,6 +8372,23 @@ boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
 
 
 
+LIVES_INLINE void lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr, lives_colRGB48_t *col) {
+  lives_painter_set_source_rgb(cr,
+			       (double)col->red/65535.,
+			       (double)col->green/65535.,
+			       (double)col->blue/65535.
+			       );
+}
+
+
+LIVES_INLINE void lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr, lives_colRGBA64_t *col) {
+  lives_painter_set_source_rgb(cr,
+			       (double)col->red/65535.,
+			       (double)col->green/65535.,
+			       (double)col->blue/65535.
+			       );
+}
+
 
 LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 #ifdef GUI_GTK
@@ -9044,4 +9061,31 @@ LIVES_INLINE boolean widget_color_to_lives_rgba(lives_colRGBA64_t *lcolor, LiVES
 }
 
 
+LIVES_INLINE boolean lives_rgba_to_widget_color(LiVESWidgetColor *color, lives_colRGBA64_t *lcolor) {
+#ifdef GUI_GTK
+  color->red=LIVES_WIDGET_COLOR_SCALE_65535(lcolor->red);
+  color->green=LIVES_WIDGET_COLOR_SCALE_65535(lcolor->green);
+  color->blue=LIVES_WIDGET_COLOR_SCALE_65535(lcolor->blue);
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
+  color->alpha=LIVES_WIDGET_COLOR_SCALE_65535(lcolor->alpha);
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_rgba_equal(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2) {
+  if (col1->red==col2->red&&col1->green==col2->green&&col1->blue==col2->blue&&col1->alpha==col2->alpha) return TRUE;
+  return FALSE;
+}
+
+
+LIVES_INLINE void lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2) {
+  col1->red=col2->red;
+  col1->green=col2->green;
+  col1->blue=col2->blue;
+  col1->alpha=col2->alpha;
+}
 

@@ -1,6 +1,6 @@
 // paramspecial.c
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -24,6 +24,7 @@
 #include "support.h"
 #include "paramwindow.h"
 #include "framedraw.h"
+#include "callbacks.h"
 
 static lives_special_aspect_t aspect;
 static lives_special_framedraw_rect_t framedraw;

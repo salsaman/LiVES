@@ -167,7 +167,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
   lives_free(tmp);
 
   mainw->com_failed=FALSE;
-  unlink(cfile->info_file);
+  lives_rm(cfile->info_file);
   lives_system(com,FALSE);
   lives_free(com);
 
@@ -442,7 +442,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
             // check if we have audio
             read_file_details(file_name,FALSE);
-            unlink(cfile->info_file);
+            lives_rm(cfile->info_file);
 
             if (mainw->com_failed) return 0;
 
@@ -461,7 +461,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               cfile->op_dir=lives_filename_from_utf8((tmp=get_dir(file_name)),-1,NULL,NULL,NULL);
               lives_free(tmp);
 
-              unlink(cfile->info_file);
+              lives_rm(cfile->info_file);
               lives_system(com,FALSE);
               lives_free(com);
               tmp=NULL;
@@ -627,7 +627,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
         return 0;
       }
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
 
       // we must set this before calling add_file_info
       cfile->opening=TRUE;
@@ -740,7 +740,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       com=lives_strdup_printf("%s open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
                               (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),withsound,
                               prefs->image_ext,start,frames,mainw->file_open_params);
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
       lives_system(com,FALSE);
       lives_free(com);
       lives_free(tmp);
@@ -890,14 +890,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         }
       }
       if (subtype!=SUBTITLE_TYPE_NONE) {
-#ifndef IS_MINGW
-        com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->cp_cmd,isubfname,subfname);
-#else
-        com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",isubfname,subfname);
-#endif
         mainw->com_failed=FALSE;
-        lives_system(com,FALSE);
-        lives_free(com);
+        lives_cp(isubfname,subfname);
         if (!mainw->com_failed)
           subtitles_init(cfile,subfname,subtype);
         lives_free(subfname);
@@ -988,7 +982,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
       mainw->current_file=mainw->img_concat_clip;
 
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
 
       mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
@@ -1139,7 +1133,7 @@ boolean get_handle_from_info_file(int index) {
     return FALSE;
   }
 
-  unlink(mainw->first_info_file);
+  lives_rm(mainw->first_info_file);
 
   if (!strncmp(mainw->msg,"error|",6)) {
     handle_backend_errors();
@@ -1531,7 +1525,7 @@ void save_file(int clip, int start, int end, const char *filename) {
                             start,end,aud_start,aud_end,nfile->arate,nfile->achans,nfile->asampsize,
                             !(nfile->signed_endian&AFORM_UNSIGNED),!(nfile->signed_endian&AFORM_BIG_ENDIAN),sfile->handle);
 
-    unlink(nfile->info_file);
+    lives_rm(nfile->info_file);
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
     lives_free(com);
@@ -1681,7 +1675,7 @@ void save_file(int clip, int start, int end, const char *filename) {
                             start,end,aud_start,aud_end,sfile->arate,sfile->achans,sfile->asampsize,
                             !(sfile->signed_endian&AFORM_UNSIGNED),!(sfile->signed_endian&AFORM_BIG_ENDIAN));
 
-    unlink(sfile->info_file);
+    lives_rm(sfile->info_file);
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
     lives_free(com);
@@ -1879,7 +1873,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   mainw->effects_paused=FALSE;
   cfile->nokeep=TRUE;
 
-  unlink(cfile->info_file);
+  lives_rm(cfile->info_file);
   mainw->write_failed=FALSE;
   save_file_comments(current_file);
 
@@ -1917,7 +1911,7 @@ void save_file(int clip, int start, int end, const char *filename) {
 #endif
 
       close(new_stderr);
-      unlink(new_stderr_name);
+      lives_rm(new_stderr_name);
       lives_free(new_stderr_name);
       lives_free(redir);
     }
@@ -1949,7 +1943,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       delete mainw->iochan;
 #endif
       close(new_stderr);
-      unlink(new_stderr_name);
+      lives_rm(new_stderr_name);
       lives_free(new_stderr_name);
       lives_free(redir);
     }
@@ -2086,7 +2080,7 @@ void save_file(int clip, int start, int end, const char *filename) {
         com=lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\" 1",prefs->backend,sfile->handle,1,sfile->frames,
                                 get_image_ext_for_type(sfile->img_type));
 
-        unlink(sfile->info_file);
+        lives_rm(sfile->info_file);
         lives_system(com,FALSE);
 
         do_progress_dialog(TRUE,FALSE,_("Clearing letterbox"));
@@ -2636,16 +2630,12 @@ void play_file(void) {
       }
 
       stfile=lives_build_filename(prefs->tmpdir,cfile->handle,".stoploop",NULL);
-      unlink(stfile);
+      lives_rm(stfile);
 
       if (cfile->achans>0||(!cfile->is_loaded&&!mainw->is_generating)) {
         if (loop) {
           lives_free(com3);
-#ifndef IS_MINGW
-          com3=lives_strdup_printf("%s \"%s\" 2>/dev/null;",capable->touch_cmd,stfile);
-#else
-          com3=lives_strdup_printf("touch.exe \"%s\" 2>NUL;",stfile);
-#endif
+          com3=lives_strdup_printf("%s \"%s\" 2>\"%s\" 1>&2",capable->touch_cmd,stfile,prefs->cmd_log);
         }
 
         if (cfile->achans>0) {
@@ -2665,7 +2655,7 @@ void play_file(void) {
 
       lives_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);
       lives_free(stfile);
-      if (cfile->clip_type==CLIP_TYPE_DISK) unlink(cfile->info_file);
+      if (cfile->clip_type==CLIP_TYPE_DISK) lives_rm(cfile->info_file);
 
       // PLAY
 
@@ -3588,7 +3578,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
     // commit audio
     mainw->cancelled=CANCEL_NONE;
-    unlink(cfile->info_file);
+    lives_rm(cfile->info_file);
 
     com=lives_strdup_printf("%s commit_audio \"%s\" 1",prefs->backend,cfile->handle);
     lives_system(com, TRUE);
@@ -3762,7 +3752,7 @@ boolean save_file_comments(int fileno) {
   char *comment_file=lives_strdup_printf("%s/%s/.comment",prefs->tmpdir,cfile->handle);
   lives_clip_t *sfile=mainw->files[fileno];
 
-  unlink(comment_file);
+  lives_rm(comment_file);
 
   do {
     retval=0;
@@ -3988,7 +3978,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   // TODO
   mainw->current_file=clip;
 
-  unlink(cfile->info_file);
+  lives_rm(cfile->info_file);
   cfile->nopreview=TRUE;
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -4014,7 +4004,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
     // using restore details in the 'wrong' way here...it will also clear files
     com=lives_strdup_printf("%s restore_details %s",prefs->backend,cfile->handle);
-    unlink(cfile->info_file);
+    lives_rm(cfile->info_file);
 
     lives_system(com,FALSE);
     // auto-d
@@ -4614,7 +4604,7 @@ ulong restore_file(const char *file_name) {
                           (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
 
   mainw->com_failed=FALSE;
-  unlink(cfile->info_file);
+  lives_rm(cfile->info_file);
 
   lives_system(com,FALSE);
 
@@ -4745,7 +4735,7 @@ int save_event_frames(void) {
   int nevents;
 
   if (cfile->event_list==NULL) {
-    unlink(hdrfile);
+    lives_rm(hdrfile);
     return -1;
   }
 
@@ -5470,7 +5460,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   if (!auto_recover) {
     if (!do_yesno_dialog
         (_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
-      unlink(recovery_file);
+      lives_rm(recovery_file);
 
       if (mainw->multitrack!=NULL) {
         mt_sensitise(mainw->multitrack);
@@ -5720,7 +5710,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         cfile->end=cfile->frames;
         cfile->is_loaded=TRUE;
         cfile->changed=TRUE;
-        unlink(cfile->info_file);
+        lives_rm(cfile->info_file);
         set_main_title(cfile->name,0);
 
         if (mainw->multitrack==NULL) {
@@ -5805,14 +5795,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
 
 void add_to_recovery_file(const char *handle) {
-#ifndef IS_MINGW
-  char *com=lives_strdup_printf("%s \"%s\" >> \"%s\"",capable->echo_cmd,handle,mainw->recovery_file);
-#else
-  char *com=lives_strdup_printf("echo.exe \"%s\" >> \"%s\"",handle,mainw->recovery_file);
-#endif
   mainw->com_failed=FALSE;
-  lives_system(com,FALSE);
-  lives_free(com);
+  lives_echo(handle,mainw->recovery_file,TRUE);
 
   if (mainw->com_failed) {
     mainw->com_failed=FALSE;
@@ -5838,7 +5822,7 @@ void rewrite_recovery_file(void) {
   register int i;
 
   if (clist==NULL) {
-    unlink(mainw->recovery_file);
+    lives_rm(mainw->recovery_file);
     return;
   }
 
@@ -5869,7 +5853,7 @@ void rewrite_recovery_file(void) {
 
   } while (retval==LIVES_RESPONSE_RETRY);
 
-  if (!opened) unlink(mainw->recovery_file);
+  if (!opened) lives_rm(mainw->recovery_file);
   else if (recovery_fd>=0) close(recovery_fd);
 
   if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL)
@@ -5898,7 +5882,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   com=lives_strdup_printf("%s get_recovery_file %d %d %s recovery> \"%s\"",prefs->backend_sync,luid,lgid,
                           capable->myname,info_file);
 
-  unlink(info_file);
+  lives_rm(info_file);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   lives_free(com);
@@ -5918,14 +5902,14 @@ boolean check_for_recovery_files(boolean auto_recover) {
     }
     close(info_fd);
   }
-  unlink(info_file);
+  lives_rm(info_file);
   lives_free(info_file);
 
   if (recpid==0) return FALSE;
 
   retval=recover_files((recovery_file=lives_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,luid,
                                       lgid,recpid)),auto_recover);
-  unlink(recovery_file);
+  lives_rm(recovery_file);
   lives_free(recovery_file);
 
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -5944,27 +5928,14 @@ boolean check_for_recovery_files(boolean auto_recover) {
   recovery_file=lives_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
   if (lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
     // move files temporarily to stop them being cleansed
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" \"%s/.layout.%d.%d.%d\"",capable->mv_cmd,recovery_file,prefs->tmpdir,luid,
-                            lgid,lpid);
-#else
-    com=lives_strdup_printf("mv.exe \"%s\" \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
-                            lgid,lpid);
-#endif
-    lives_system(com,FALSE);
-    lives_free(com);
-    recovery_numbering_file=lives_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,
-                            lgid,recpid);
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",capable->mv_cmd,recovery_numbering_file,prefs->tmpdir,
-                            luid,lgid,lpid);
-#else
-    com=lives_strdup_printf("mv.exe \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
-                            luid,lgid,lpid);
-#endif
-    lives_system(com,FALSE);
-    lives_free(com);
+    char *xfile=lives_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
+    lives_mv(recovery_file,xfile);
+    lives_free(xfile);
+    recovery_numbering_file=lives_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
+    xfile=lives_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
+    lives_mv(recovery_numbering_file,xfile);
     lives_free(recovery_numbering_file);
+    lives_free(xfile);
     mainw->recoverable_layout=TRUE;
   } else {
     if (mainw->scrap_file!=-1) close_scrap_file();
@@ -5979,29 +5950,15 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_free(com);
 
   if (mainw->recoverable_layout) {
-    recovery_file=lives_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" \"%s/layout.%d.%d.%d\"",capable->mv_cmd,recovery_file,prefs->tmpdir,luid,
-                            lgid,lpid);
-#else
-    com=lives_strdup_printf("mv.exe \"%s\" \"%s/layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
-                            lgid,lpid);
-#endif
-    lives_system(com,FALSE);
-    lives_free(com);
-    lives_free(recovery_file);
-
-    recovery_numbering_file=lives_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s \"%s\" \"%s/layout_numbering.%d.%d.%d\"",capable->mv_cmd,recovery_numbering_file,prefs->tmpdir,luid,
-                            lgid,lpid);
-#else
-    com=lives_strdup_printf("mv.exe \"%s\" \"%s/layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,luid,
-                            lgid,lpid);
-#endif
-    lives_system(com,FALSE);
-    lives_free(com);
+    // move files back
+    char *xfile=lives_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
+    lives_mv(xfile,recovery_file);
+    lives_free(xfile);
+    recovery_numbering_file=lives_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
+    xfile=lives_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
+    lives_mv(xfile,recovery_numbering_file);
     lives_free(recovery_numbering_file);
+    lives_free(xfile);
   }
 
   rewrite_recovery_file();

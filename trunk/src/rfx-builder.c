@@ -3757,7 +3757,7 @@ LiVESList *get_script_section(const char *section, const char *file, boolean str
     return NULL;
   }
   fclose(script_file);
-  unlink(outfile);
+  lives_rm(outfile);
   lives_free(outfile);
   return list;
 }
@@ -3876,18 +3876,8 @@ void on_delete_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     d_print(_("Deleting rfx script %s..."),rfx_script_file);
 
-    if (!(ret=unlink(rfx_script_file))) {
-      char *com;
-#ifndef IS_MINGW
-      com=lives_strdup_printf("%s -rf \"%s\"",capable->rm_cmd,rfx_script_dir);
-#else
-      com=lives_strdup_printf("DEL /q \"%s\"",rfx_script_dir);
-      lives_system(com,TRUE);
-      lives_free(com);
-      com=lives_strdup_printf("RMDIR \"%s\"",rfx_script_dir);
-#endif
-      lives_system(com,TRUE);
-      lives_free(com);
+    if (!(ret=lives_rm(rfx_script_file))) {
+      lives_rmdir(rfx_script_dir,TRUE);
       d_print_done();
       on_rebuild_rfx_activate(NULL,NULL);
     } else {
@@ -3953,13 +3943,13 @@ void on_promote_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (failed) {
-    rmdir(rfx_dir_to);
+    lives_rmdir(rfx_dir_to,FALSE);
     d_print_failed();
     msg=lives_strdup_printf(_("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d (%s)\n"),
                             rfx_script_from,rfx_script_to,errno,strerror(errno));
     do_error_dialog(msg);
     lives_free(msg);
-  } else rmdir(rfx_dir_from);
+  } else lives_rmdir(rfx_dir_from,FALSE);
 
   if (rfx_script_from!=NULL) {
     lives_free(rfx_dir_from);
@@ -3976,7 +3966,7 @@ void on_export_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   char *script_name=prompt_for_script_name(NULL,status);
   char *rfx_script_from,*filename;
-  char *com,*tmp,*tmp2;
+  char *tmp,*tmp2;
 
   if (script_name==NULL||!strlen(script_name)) return;  // user cancelled
 
@@ -3989,18 +3979,14 @@ void on_export_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   d_print(_("Copying %s to %s..."),rfx_script_from,filename);
 
-#ifndef IS_MINGW
-  com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->cp_cmd,(tmp=lives_filename_from_utf8(rfx_script_from,-1,NULL,NULL,NULL)),
-                          (tmp2=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)));
-#else
-  com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",(tmp=lives_filename_from_utf8(rfx_script_from,-1,NULL,NULL,NULL)),
-                          (tmp2=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)));
-#endif
-  if (system(com)) d_print_failed();
+  mainw->com_failed=FALSE;
+  lives_cp((tmp=lives_filename_from_utf8(rfx_script_from,-1,NULL,NULL,NULL)),
+	   (tmp2=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)));
+
+  if (mainw->com_failed) d_print_failed();
   else d_print_done();
   lives_free(tmp);
   lives_free(tmp2);
-  lives_free(com);
   lives_free(rfx_script_from);
   lives_free(filename);
   lives_free(script_name);
@@ -4011,7 +3997,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   short status=(short)LIVES_POINTER_TO_INT(user_data);
   char *rfx_script_to,*rfx_dir_to;
-  char *com,*tmp,*tmp2,*tmpx;
+  char *tmp,*tmp2,*tmpx;
   char basename[PATH_MAX];
 
   char *filename=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,_("LiVES: Import Script from..."),NULL);
@@ -4066,21 +4052,17 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   d_print(_("Copying %s to %s..."),filename,rfx_script_to);
 
-#ifndef IS_MINGW
-  com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->cp_cmd,(tmp=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)),
-                          (tmp2=lives_filename_from_utf8(rfx_script_to,-1,NULL,NULL,NULL)));
-#else
-  com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",(tmp=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)),
-                          (tmp2=lives_filename_from_utf8(rfx_script_to,-1,NULL,NULL,NULL)));
-#endif
+  mainw->com_failed=FALSE;
+  lives_cp((tmp=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)),
+	   (tmp2=lives_filename_from_utf8(rfx_script_to,-1,NULL,NULL,NULL)));
+
   lives_free(tmp);
   lives_free(tmp2);
-  if (system(com)) d_print_failed();
+  if (mainw->com_failed) d_print_failed();
   else {
     d_print_done();
     on_rebuild_rfx_activate(NULL,NULL);
   }
-  lives_free(com);
   lives_free(rfx_script_to);
   lives_free(filename);
 }

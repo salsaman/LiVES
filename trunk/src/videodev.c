@@ -1,5 +1,5 @@
 // LiVES - videodev input
-// (c) G. Finch 2010 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -11,6 +11,7 @@
 
 #include "videodev.h"
 #include "interface.h"
+#include "callbacks.h"
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed-palettes.h>

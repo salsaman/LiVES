@@ -47,7 +47,7 @@ static void instopen_toggled(LiVESToggleButton *t1, LiVESWidget *button) {
 }
 
 
-void get_pref(const char *key, char *val, int maxlen) {
+static int get_pref_inner(const char *filename, const char *key, char *val, int maxlen) {
   FILE *valfile;
   char *vfile;
   char *com;
@@ -57,21 +57,28 @@ void get_pref(const char *key, char *val, int maxlen) {
 
   memset(val,0,maxlen);
 
-  if (mainw->cached_list!=NULL) {
-    char *prefval=get_val_from_cached_list(key,maxlen);
-    if (prefval!=NULL) {
-      lives_snprintf(val,maxlen,"%s",prefval);
-      lives_free(prefval);
+
+  if (filename==NULL) {
+    if (mainw->cached_list!=NULL) {
+      char *prefval=get_val_from_cached_list(key,maxlen);
+      if (prefval!=NULL) {
+	lives_snprintf(val,maxlen,"%s",prefval);
+	lives_free(prefval);
+      }
+      return LIVES_RESPONSE_NONE;
     }
-    return;
+    com=lives_strdup_printf("%s get_pref \"%s\" %d %d",prefs->backend_sync,key,lives_getuid(),capable->mainpid);
   }
+  else {
+    com=lives_strdup_printf("%s get_clip_value \"%s\" %d %d \"%s\"",prefs->backend_sync,key,
+                            lives_getuid(),capable->mainpid,filename);
 
-  com=lives_strdup_printf("%s get_pref \"%s\" %d %d",prefs->backend_sync,key,lives_getuid(),capable->mainpid);
-
+  }
+  
   if (system(com)) {
     tempdir_warning();
     lives_free(com);
-    return;
+    return LIVES_RESPONSE_INVALID;
   }
 
 #ifndef IS_MINGW
@@ -118,10 +125,21 @@ void get_pref(const char *key, char *val, int maxlen) {
 
   lives_free(vfile);
   lives_free(com);
+
+  return retval;
 }
 
 
+void get_pref(const char *key, char *val, int maxlen) {
+  get_pref_inner(NULL,key,val,maxlen);
+}
 
+int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen) {
+  return get_pref_inner(filename,key,val,maxlen);
+}
+
+
+  
 void get_pref_utf8(const char *key, char *val, int maxlen) {
   // get a pref in locale encoding, then convert it to utf8
   char *tmp;
@@ -246,6 +264,46 @@ double get_double_pref(const char *key) {
   return strtod(buffer,NULL);
 }
 
+
+boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
+  char buffer[64];
+  char **array;
+  
+  get_pref(key,buffer,64);
+  if (strlen(buffer)==0) return FALSE;
+  if (get_token_count(buffer,' ')<4) return FALSE;
+
+  array=lives_strsplit(buffer," ",4);
+  lcol->red=atoi(array[0]);
+  lcol->green=atoi(array[1]);
+  lcol->blue=atoi(array[2]);
+  lcol->alpha=atoi(array[3]);
+  lives_strfreev(array);
+  
+  return TRUE;
+}
+
+
+boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol) {
+  char buffer[64];
+  char **array;
+  
+  get_pref_from_file(themefile,key,buffer,64);
+  if (strlen(buffer)==0) return FALSE;
+  if (get_token_count(buffer,' ')<4) return FALSE;
+
+  array=lives_strsplit(buffer," ",4);
+  lcol->red=atoi(array[0]);
+  lcol->green=atoi(array[1]);
+  lcol->blue=atoi(array[2]);
+  lcol->alpha=atoi(array[3]);
+  lives_strfreev(array);
+  
+  return TRUE;
+}
+
+
+
 void delete_pref(const char *key) {
   char *com=lives_strdup_printf("%s delete_pref \"%s\"",prefs->backend_sync,key);
   if (system(com)) {
@@ -340,6 +398,74 @@ void set_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA
   lives_system(com,FALSE);
 
   lives_free(com); lives_free(myval);
+}
+
+
+
+void set_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
+  char *com;
+  char *myval;
+
+  myval=lives_strdup_printf("%d %d %d %d",lcol->red,lcol->green,lcol->blue,lcol->alpha);
+  com=lives_strdup_printf("%s set_pref \"%s\" \"%s\"",prefs->backend_sync,key,myval);
+  lives_system(com,FALSE);
+
+  lives_free(com); lives_free(myval);
+}
+
+
+
+
+void set_palette_prefs(void) {
+  lives_colRGBA64_t lcol;
+
+  lcol.red=palette->style;
+  lcol.green=lcol.blue=lcol.alpha=0;
+  
+  set_colour_pref(THEME_DETAIL_STYLE,&lcol);
+
+  set_pref(THEME_DETAIL_SEPWIN_IMAGE,mainw->sepimg_path);
+  set_pref(THEME_DETAIL_FRAMEBLANK_IMAGE,mainw->frameblank_path);
+
+  widget_color_to_lives_rgba(&lcol,&palette->normal_fore);
+  set_colour_pref(THEME_DETAIL_NORMAL_FORE,&lcol);
+
+  widget_color_to_lives_rgba(&lcol,&palette->normal_back);
+  set_colour_pref(THEME_DETAIL_NORMAL_BACK,&lcol);
+
+  widget_color_to_lives_rgba(&lcol,&palette->menu_and_bars_fore);
+  set_colour_pref(THEME_DETAIL_ALT_FORE,&lcol);
+
+  widget_color_to_lives_rgba(&lcol,&palette->menu_and_bars);
+  set_colour_pref(THEME_DETAIL_ALT_BACK,&lcol);
+
+  widget_color_to_lives_rgba(&lcol,&palette->info_text);
+  set_colour_pref(THEME_DETAIL_INFO_TEXT,&lcol);
+
+  widget_color_to_lives_rgba(&lcol,&palette->info_base);
+  set_colour_pref(THEME_DETAIL_INFO_BASE,&lcol);
+
+  widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_fg);
+  set_colour_pref(THEME_DETAIL_MT_TCFG,&lcol);
+
+  widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_bg);
+  set_colour_pref(THEME_DETAIL_MT_TCBG,&lcol);
+
+  set_colour_pref(THEME_DETAIL_AUDCOL,&palette->audcol);
+  set_colour_pref(THEME_DETAIL_VIDCOL,&palette->vidcol);
+  set_colour_pref(THEME_DETAIL_FXCOL,&palette->fxcol);
+      
+  set_colour_pref(THEME_DETAIL_MT_TLREG,&palette->mt_timeline_reg);
+  set_colour_pref(THEME_DETAIL_MT_MARK,&palette->mt_mark);
+  set_colour_pref(THEME_DETAIL_MT_EVBOX,&palette->mt_evbox);
+
+  set_colour_pref(THEME_DETAIL_FRAME_SURROUND,&palette->frame_surround);
+
+  set_colour_pref(THEME_DETAIL_CE_SEL,&palette->ce_sel);
+  set_colour_pref(THEME_DETAIL_CE_UNSEL,&palette->ce_unsel);
+
+  set_pref(THEME_DETAIL_SEPWIN_IMAGE,mainw->sepimg_path);
+  set_pref(THEME_DETAIL_FRAMEBLANK_IMAGE,mainw->frameblank_path);
 }
 
 
@@ -1276,9 +1402,7 @@ boolean apply_prefs(boolean skip_warn) {
       lives_snprintf(prefs->theme,64,"%s",theme);
       lives_snprintf(future_prefs->theme,64,"%s",theme);
       set_pref("gui_theme",future_prefs->theme);
-      set_palette_colours();
-      memset(mainw->sepimg_path,0,1);
-      memset(mainw->frameblank_path,0,1);
+      set_palette_colours(TRUE);
       load_theme_images();
       mainw->prefs_changed|=PREFS_COLOURS_CHANGED|PREFS_IMAGES_CHANGED;
     } else {
@@ -5095,6 +5219,8 @@ void on_prefs_close_clicked(LiVESButton *button, livespointer user_data) {
 void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   boolean needs_restart;
 
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,prefsw->prefs_dialog);
+  
   // Apply preferences
   needs_restart = apply_prefs(FALSE);
 
@@ -5124,6 +5250,13 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   }
 
 
+  if ((mainw->prefs_changed & PREFS_IMAGES_CHANGED)||
+      (mainw->prefs_changed & PREFS_XCOLOURS_CHANGED)||
+      (mainw->prefs_changed & PREFS_COLOURS_CHANGED)) {
+    // set details in prefs
+    set_palette_prefs();
+  }
+  
   if (mainw->prefs_changed & PREFS_IMAGES_CHANGED) {
     load_theme_images();
     if (prefs->show_gui) {
@@ -5142,6 +5275,7 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   if (mainw->prefs_changed & PREFS_XCOLOURS_CHANGED) {
+    // minor colours changed
     if (mainw->multitrack!=NULL) {
       resize_timeline(mainw->multitrack);
       set_mt_colours(mainw->multitrack);
@@ -5152,6 +5286,7 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   if (mainw->prefs_changed & PREFS_COLOURS_CHANGED) {
+    // major coulours changed
     // force reshow of window
     set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars, \
                 &palette->info_base,&palette->info_text);
@@ -5173,6 +5308,8 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   mainw->prefs_changed = 0;
+
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
 }
 

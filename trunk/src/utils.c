@@ -4552,22 +4552,16 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
 
 
 boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
-  FILE *valfile;
   time_t old_time=0,new_time=0;
   struct stat mystat;
 
-  char *vfile;
   char *lives_header=NULL;
   char *old_header;
-  char *com;
   char *val;
   char *key;
   char *tmp;
 
-  int alarm_handle;
-  int retval2=0;
-
-  boolean timeout;
+  int retval2=LIVES_RESPONSE_NONE;
 
   if (mainw->cached_list==NULL) {
 
@@ -4602,67 +4596,10 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     lives_free(key);
     if (val==NULL) return FALSE;
   } else {
-    com=lives_strdup_printf("%s get_clip_value \"%s\" %d %d \"%s\"",prefs->backend_sync,key,
-                            lives_getuid(),capable->mainpid,lives_header);
+    val=(char *)lives_malloc(maxlen);
+    retval2=get_pref_from_file(lives_header,key,val,maxlen);
     lives_free(lives_header);
     lives_free(key);
-
-    val=(char *)lives_malloc(maxlen);
-    memset(val,0,maxlen);
-
-    threaded_dialog_spin(0.);
-
-    if (lives_system(com,TRUE)) {
-      tempdir_warning();
-      threaded_dialog_spin(0.);
-      lives_free(com);
-      return FALSE;
-    }
-
-#ifndef IS_MINGW
-    vfile=lives_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
-#else
-    vfile=lives_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
-#endif
-
-    do {
-      retval2=0;
-      timeout=FALSE;
-      mainw->read_failed=FALSE;
-
-      alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-
-      do {
-        if (!((valfile=fopen(vfile,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-          if (!timeout) {
-            if (!(mainw==NULL)) {
-              weed_plant_t *frame_layer=mainw->frame_layer;
-              mainw->frame_layer=NULL;
-              lives_widget_context_update();
-              mainw->frame_layer=frame_layer;
-            }
-            lives_usleep(prefs->sleep_time);
-          } else break;
-        }
-      } while (!valfile);
-
-      lives_alarm_clear(alarm_handle);
-
-      if (timeout) {
-        retval2=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
-      } else {
-        mainw->read_failed=FALSE;
-        lives_fgets(val,maxlen,valfile);
-        fclose(valfile);
-        lives_rm(vfile);
-        if (mainw->read_failed) {
-          retval2=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
-        }
-      }
-    } while (retval2==LIVES_RESPONSE_RETRY);
-
-    lives_free(vfile);
-    lives_free(com);
   }
 
   if (retval2==LIVES_RESPONSE_CANCEL) {

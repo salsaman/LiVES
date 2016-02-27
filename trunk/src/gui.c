@@ -60,15 +60,8 @@ void load_theme_images(void) {
   // TODO - set palette in here ?
   LiVESError *error=NULL;
   LiVESPixbuf *pixbuf;
-  char *tmp;
 
   int width,height;
-
-  if (!strlen(mainw->sepimg_path)) {
-    tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,prefs->theme,"main.jpg",NULL);
-    lives_snprintf(mainw->sepimg_path,PATH_MAX,"%s",tmp);
-    lives_free(tmp);
-  }
 
   pixbuf=lives_pixbuf_new_from_file(mainw->sepimg_path,&error);
 
@@ -98,12 +91,6 @@ void load_theme_images(void) {
     lives_widget_queue_draw(mainw->sep_image);
 
     // imframe
-
-    if (!strlen(mainw->frameblank_path)) {
-      tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,prefs->theme,"frame.jpg",NULL);
-      lives_snprintf(mainw->frameblank_path,PATH_MAX,"%s",tmp);
-      lives_free(tmp);
-    }
 
     pixbuf=lives_pixbuf_new_from_file(mainw->frameblank_path,&error);
 

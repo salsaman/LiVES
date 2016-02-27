@@ -673,12 +673,15 @@ void pref_factory_bitmapped(int prefidx, int bitfield, boolean newval);
 
 
 void get_pref(const char *key, char *val, int maxlen);
+int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen);
 void get_pref_utf8(const char *key, char *val, int maxlen);
 void get_pref_default(const char *key, char *val, int maxlen);
 boolean get_boolean_pref(const char *key);
 double get_double_pref(const char *key);
 int get_int_pref(const char *key);
 LiVESList *get_list_pref(const char *key);
+boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol);
+boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol);
 void set_pref(const char *key, const char *value);
 void delete_pref(const char *key);
 void set_boolean_pref(const char *key, boolean value);
@@ -686,9 +689,12 @@ void set_double_pref(const char *key, double value);
 void set_int_pref(const char *key, int value);
 void set_int64_pref(const char *key, int64_t value);
 void set_list_pref(const char *key, LiVESList *values);
+void set_colour_pref(const char *key, lives_colRGBA64_t *lcol);
 void set_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol);
 boolean apply_prefs(boolean skip_warnings);
 void save_future_prefs(void);
+
+void set_palette_prefs(void);
 
 // permissions
 

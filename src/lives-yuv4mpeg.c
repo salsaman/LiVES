@@ -263,7 +263,7 @@ void lives_yuv_stream_stop_read(lives_yuv4m_t *yuv4mpeg) {
   if (yuv4mpeg->fd!=-1) close(yuv4mpeg->fd);
 
   if (yuv4mpeg->filename!=NULL) {
-    unlink(yuv4mpeg->filename);
+    lives_rm(yuv4mpeg->filename);
     lives_free(yuv4mpeg->filename);
   }
 
@@ -457,14 +457,8 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     // fake is tmpdir/handle/audiodump.pcm
     audio_fake=lives_build_filename(prefs->tmpdir,cfile->handle,"audiodump.pcm",NULL);
 
-
-#ifndef IS_MINGW
     // fake file will go away when we close the current clip
-    lives_system((tmp=lives_strdup_printf("%s -s \"%s\" \"%s\" >/dev/null 2>&1",capable->ln_cmd,
-                                          audio_real,audio_fake)),TRUE);
-#else
-    // TODO
-#endif
+    lives_ln(audio_real,audio_fake);
 
     lives_free(audio_real);
     lives_free(audio_fake);
@@ -660,7 +654,7 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   cfile->deinterlace=mainw->open_deint;
 
-  unlink(fifofile);
+  lives_rm(fifofile);
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
 
   if (!tvcardw->use_advanced) {
@@ -774,7 +768,7 @@ void on_live_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->current_file=new_file;
   cfile->deinterlace=mainw->open_deint;
 
-  unlink(fifofile);
+  lives_rm(fifofile);
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
 
   com=lives_strdup_printf("%s open_fw_card \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cardno,cache,fifofile);

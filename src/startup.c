@@ -66,9 +66,6 @@ boolean do_tempdir_query(void) {
   boolean ok=FALSE;
 
   char *dirname;
-#ifndef IS_MINGW
-  char *com;
-#endif
 
 top:
 
@@ -118,13 +115,13 @@ top:
       if (is_writeable_dir(dirname)) {
         freesp=get_fs_free(dirname);
         if (!prompt_new_dir(dirname,freesp,TRUE)) {
-          rmdir(dirname);
+          lives_rmdir(dirname,FALSE);
           lives_free(dirname);
           continue;
         }
       } else {
         if (!prompt_new_dir(dirname,0,FALSE)) {
-          rmdir(dirname);
+          lives_rmdir(dirname,FALSE);
           lives_free(dirname);
           continue;
         }
@@ -144,9 +141,7 @@ top:
   }
 
 #ifndef IS_MINGW
-  com=lives_strdup_printf("%s 777 \"%s\" 2>/dev/null",capable->chmod_cmd,dirname);
-  lives_system(com,FALSE);
-  lives_free(com);
+  lives_chmod(dirname,"777");
 #endif
 
   lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",dirname);
@@ -616,7 +611,7 @@ boolean do_startup_tests(boolean tshoot) {
 
     info_fd=-1;
 
-    unlink(cfile->info_file);
+    lives_rm(cfile->info_file);
 
     // write 1 second of silence
     afile=lives_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL);
@@ -674,7 +669,7 @@ boolean do_startup_tests(boolean tshoot) {
         lives_sync();
 
         fsize=sget_file_size(afile);
-        unlink(afile);
+        lives_rm(afile);
         lives_free(afile);
 
         if (fsize==0) {
@@ -796,7 +791,7 @@ boolean do_startup_tests(boolean tshoot) {
 
     info_fd=-1;
 
-    unlink(cfile->info_file);
+    lives_rm(cfile->info_file);
 
     rname=get_resource("vidtest.avi");
 

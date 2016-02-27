@@ -396,6 +396,12 @@ static boolean pre_init(void) {
 
   prefs->gui_monitor=-1;
 
+#ifndef IS_MINGW
+    lives_snprintf(prefs->cmd_log,PATH_MAX,"/dev/null");
+#else
+    lives_snprintf(prefs->cmd_log,PATH_MAX,"NUL");
+#endif
+
   // set to allow multiple locking by the same thread
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr,PTHREAD_MUTEX_RECURSIVE);
@@ -493,6 +499,8 @@ static boolean pre_init(void) {
   prefs->show_splash=TRUE;
 
   // from here onwards we can use get_pref() and friends  //////
+
+
   cache_file_contents(capable->rcfile);
 
   get_pref("gui_theme",prefs->theme,64);
@@ -1253,6 +1261,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->max_disp_vtracks=get_int_pref("max_disp_vtracks");
 
+    
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -1942,7 +1951,6 @@ void do_start_messages(void) {
 
 // TODO - allow user definable themes
 void set_palette_colours(void) {
-
   // set configurable colours and theme colours for the app
   lives_color_parse("black", &palette->black);
   lives_color_parse("white", &palette->white);
@@ -1970,6 +1978,10 @@ void set_palette_colours(void) {
   lives_widget_color_copy(&palette->banner_fade_text,&palette->white);
   palette->style=STYLE_PLAIN;
 
+
+  // TODO: load from file
+
+  
   // STYLE_PLAIN will overwrite this
   if (!(strcmp(prefs->theme,"pinks"))) {
 
@@ -2072,6 +2084,40 @@ void set_palette_colours(void) {
       }
     }
   }
+
+  // defaults for NO theme
+  palette->frame_surround.red=palette->frame_surround.green=palette->frame_surround.blue=palette->frame_surround.alpha=65535;
+
+  palette->audcol.blue=palette->audcol.red=16384;
+  palette->audcol.green=palette->audcol.alpha=65535;
+
+  palette->vidcol.red=0;
+  palette->vidcol.green=16384;
+  palette->vidcol.blue=palette->vidcol.alpha=65535;
+
+  palette->fxcol.red=palette->fxcol.alpha=65535;
+  palette->fxcol.green=palette->fxcol.blue=0;
+
+  palette->mt_mark.red=palette->mt_mark.green=0;
+  palette->mt_mark.blue=palette->mt_mark.alpha=65535;
+
+  palette->mt_timeline_reg.red=palette->mt_timeline_reg.green=palette->mt_timeline_reg.blue=0;
+  palette->mt_timeline_reg.alpha=65535;
+
+  palette->mt_evbox.red=palette->mt_evbox.green=palette->mt_evbox.blue=palette->mt_evbox.alpha=65535;
+
+  if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+    palette->ce_unsel.red=palette->ce_unsel.green=palette->ce_unsel.blue=0;
+  } else {
+    palette->ce_unsel.red=palette->ce_unsel.green=palette->ce_unsel.blue=6554;
+  }
+  palette->ce_unsel.alpha=65535;
+
+  palette->ce_sel.red=palette->ce_sel.green=palette->ce_sel.blue=palette->ce_sel.alpha=65535;
+
+  lives_widget_color_copy(&palette->mt_timecode_bg,&palette->black);
+  lives_widget_color_copy(&palette->mt_timecode_fg,&palette->light_green);
+
 }
 
 
@@ -2124,15 +2170,25 @@ capability *get_capabilities(void) {
   capable->mainpid=lives_getpid();
 
 #ifndef IS_MINGW
-  get_location("touch", capable->touch_cmd, PATH_MAX);
   get_location("rm", capable->rm_cmd, PATH_MAX);
-  get_location("mv", capable->mv_cmd, PATH_MAX);
+  get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
   get_location("cp", capable->cp_cmd, PATH_MAX);
+  get_location("mv", capable->mv_cmd, PATH_MAX);
+  get_location("touch", capable->touch_cmd, PATH_MAX);
   get_location("ln", capable->ln_cmd, PATH_MAX);
   get_location("chmod", capable->chmod_cmd, PATH_MAX);
   get_location("cat", capable->cat_cmd, PATH_MAX);
   get_location("echo", capable->echo_cmd, PATH_MAX);
-  get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
+#else
+  lives_snprintf(capable->rm_cmd,PATH_MAX,"rm.exe");
+  lives_snprintf(capable->rmdir_cmd,PATH_MAX,"rmdir.exe");
+  lives_snprintf(capable->cp_cmd,PATH_MAX,"cp.exe");
+  lives_snprintf(capable->mv_cmd,PATH_MAX,"mv.exe");
+  lives_snprintf(capable->touch_cmd,PATH_MAX,"touch.exe");
+  // no ln_cmd !!!!
+  lives_snprintf(capable->chmod_cmd,PATH_MAX,"chmod.exe");
+  lives_snprintf(capable->cat_cmd,PATH_MAX,"cat.exe");
+  lives_snprintf(capable->echo_cmd,PATH_MAX,"echo.exe");
 #endif
 
   // required
@@ -2191,7 +2247,7 @@ capability *get_capabilities(void) {
 #else
   safer_bfile=lives_strdup_printf("%s"LIVES_DIR_SEPARATOR_S"smogrify.%d.%d",capable->system_tmpdir,lives_getuid(),lives_getgid());
 #endif
-  unlink(safer_bfile);
+  lives_rm(safer_bfile);
 
   // check that we can write to /tmp
   if (!check_file(safer_bfile,FALSE)) return capable;
@@ -2261,7 +2317,7 @@ capability *get_capabilities(void) {
   lives_fgets(buffer,8192,bootfile);
   fclose(bootfile);
 
-  unlink(safer_bfile);
+  lives_rm(safer_bfile);
   lives_free(safer_bfile);
 
   if (mainw->read_failed) return capable;
@@ -2913,7 +2969,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -3710,7 +3766,7 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
     int cy=(rheight-height)/2;
 
     if (prefs->funky_widgets) {
-      lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
       lives_painter_rectangle(cr,cx-1,cy-1,
                               width+2,
                               height+2);

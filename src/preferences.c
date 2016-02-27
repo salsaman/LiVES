@@ -109,7 +109,7 @@ void get_pref(const char *key, char *val, int maxlen) {
       mainw->read_failed=FALSE;
       lives_fgets(val,maxlen,valfile);
       fclose(valfile);
-      unlink(vfile);
+      lives_rm(vfile);
       if (mainw->read_failed) {
         retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
       }
@@ -211,7 +211,7 @@ void get_pref_default(const char *key, char *val, int maxlen) {
       mainw->read_failed=FALSE;
       lives_fgets(val,maxlen,valfile);
       fclose(valfile);
-      unlink(vfile);
+      lives_rm(vfile);
       if (mainw->read_failed) {
         retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
       }
@@ -329,6 +329,18 @@ void set_list_pref(const char *key, LiVESList *values) {
 }
 
 
+
+
+void set_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol) {
+  char *com;
+  char *myval;
+
+  myval=lives_strdup_printf("%d %d %d %d",lcol->red,lcol->green,lcol->blue,lcol->alpha);
+  com=lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend_sync,themefile,key,myval);
+  lives_system(com,FALSE);
+
+  lives_free(com); lives_free(myval);
+}
 
 
 
@@ -538,8 +550,9 @@ boolean apply_prefs(boolean skip_warn) {
   char *audio_codec=NULL;
   char *pb_quality = lives_combo_get_active_text(LIVES_COMBO(prefsw->pbq_combo));
 
-  LiVESWidgetColor colf,colb,colf2,colb2,coli,colt;
-
+  LiVESWidgetColor colf,colb,colf2,colb2,coli,colt,col,coltcfg,coltcbg;
+  lives_colRGBA64_t lcol;
+  
   int pbq=PB_QUALITY_MED;
   int idx;
 
@@ -758,28 +771,107 @@ boolean apply_prefs(boolean skip_warn) {
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_infob),&coli);
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_infot),&colt);
 
-  if (!lives_widget_color_equal(&colf,&palette->normal_fore)||
-      !lives_widget_color_equal(&colb,&palette->normal_back)||
-      !lives_widget_color_equal(&colf2,&palette->menu_and_bars_fore)||
-      !lives_widget_color_equal(&colb2,&palette->menu_and_bars)||
-      !lives_widget_color_equal(&coli,&palette->info_text)||
-      !lives_widget_color_equal(&colb,&palette->info_base)||
-      (pstyle2!=(palette->style&STYLE_2))||
-      (pstyle3!=(palette->style&STYLE_3))||
-      (pstyle4!=(palette->style&STYLE_4))
-     ) {
-    lives_widget_color_copy(&palette->normal_fore,&colf);
-    lives_widget_color_copy(&palette->normal_back,&colb);
-    lives_widget_color_copy(&palette->menu_and_bars_fore,&colf2);
-    lives_widget_color_copy(&palette->menu_and_bars,&colb2);
-    lives_widget_color_copy(&palette->info_base,&coli);
-    lives_widget_color_copy(&palette->info_text,&colt);
+  if (lives_ascii_strcasecmp(future_prefs->theme,"none")) {
+    if (!lives_widget_color_equal(&colf,&palette->normal_fore)||
+	!lives_widget_color_equal(&colb,&palette->normal_back)||
+	!lives_widget_color_equal(&colf2,&palette->menu_and_bars_fore)||
+	!lives_widget_color_equal(&colb2,&palette->menu_and_bars)||
+	!lives_widget_color_equal(&coli,&palette->info_text)||
+	!lives_widget_color_equal(&colb,&palette->info_base)||
+	(pstyle2!=(palette->style&STYLE_2))||
+	(pstyle3!=(palette->style&STYLE_3))||
+	(pstyle4!=(palette->style&STYLE_4))
+	) {
+      lives_widget_color_copy(&palette->normal_fore,&colf);
+      lives_widget_color_copy(&palette->normal_back,&colb);
+      lives_widget_color_copy(&palette->menu_and_bars_fore,&colf2);
+      lives_widget_color_copy(&palette->menu_and_bars,&colb2);
+      lives_widget_color_copy(&palette->info_base,&coli);
+      lives_widget_color_copy(&palette->info_text,&colt);
 
-    palette->style=STYLE_1|(pstyle2*STYLE_2)|(pstyle3*STYLE_3)|(pstyle4*STYLE_4);
-    mainw->prefs_changed|=PREFS_COLOURS_CHANGED;
+      palette->style=STYLE_1|(pstyle2*STYLE_2)|(pstyle3*STYLE_3)|(pstyle4*STYLE_4);
+      mainw->prefs_changed|=PREFS_COLOURS_CHANGED;
 
+    }
+  }
+  
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_cesel),&col);
+  widget_color_to_lives_rgba(&lcol,&col);
+  if (!lives_rgba_equal(&lcol,&palette->ce_sel)) {
+    lives_rgba_copy(&palette->ce_sel,&lcol);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
   }
 
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_ceunsel),&col);
+  widget_color_to_lives_rgba(&lcol,&col);
+  if (!lives_rgba_equal(&lcol,&palette->ce_unsel)) {
+    lives_rgba_copy(&palette->ce_unsel,&lcol);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
+  }
+
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_fsur),&col);
+  widget_color_to_lives_rgba(&lcol,&col);
+  if (!lives_rgba_equal(&lcol,&palette->frame_surround)) {
+    lives_rgba_copy(&palette->frame_surround,&lcol);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
+  }
+
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_tcfg),&coltcfg);
+  if (!lives_widget_color_equal(&coltcfg,&palette->mt_timecode_fg)) {
+    lives_widget_color_copy(&palette->mt_timecode_fg,&coltcfg);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
+  }
+
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_tcbg),&coltcbg);
+  if (!lives_widget_color_equal(&coltcbg,&palette->mt_timecode_bg)) {
+    lives_widget_color_copy(&palette->mt_timecode_bg,&coltcbg);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
+  }
+
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_mtmark),&col);
+  widget_color_to_lives_rgba(&lcol,&col);
+  if (!lives_rgba_equal(&lcol,&palette->mt_mark)) {
+    lives_rgba_copy(&palette->mt_mark,&lcol);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
+  }
+
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_evbox),&col);
+  widget_color_to_lives_rgba(&lcol,&col);
+  if (!lives_rgba_equal(&lcol,&palette->mt_evbox)) {
+    lives_rgba_copy(&palette->mt_evbox,&lcol);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
+  }
+
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_tlreg),&col);
+  widget_color_to_lives_rgba(&lcol,&col);
+  if (!lives_rgba_equal(&lcol,&palette->mt_timeline_reg)) {
+    lives_rgba_copy(&palette->mt_timeline_reg,&lcol);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
+  }
+
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_vidcol),&col);
+  widget_color_to_lives_rgba(&lcol,&col);
+  if (!lives_rgba_equal(&lcol,&palette->vidcol)) {
+    lives_rgba_copy(&palette->vidcol,&lcol);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
+  }
+
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_audcol),&col);
+  widget_color_to_lives_rgba(&lcol,&col);
+  if (!lives_rgba_equal(&lcol,&palette->audcol)) {
+    lives_rgba_copy(&palette->audcol,&lcol);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
+  }
+
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_fxcol),&col);
+  widget_color_to_lives_rgba(&lcol,&col);
+  if (!lives_rgba_equal(&lcol,&palette->fxcol)) {
+    lives_rgba_copy(&palette->fxcol,&lcol);
+    mainw->prefs_changed|=PREFS_XCOLOURS_CHANGED;
+  }
+
+
+  
   if (capable->has_encoder_plugins) {
     audio_codec = lives_combo_get_active_text(LIVES_COMBO(prefsw->acodec_combo));
 
@@ -3947,7 +4039,7 @@ _prefsw *create_prefs_dialog(void) {
 
   //
   frame = lives_frame_new(NULL);
-  label = lives_standard_label_new(_("Current Theme Details"));
+  label = lives_standard_label_new(_("Main Theme Details"));
   lives_frame_set_label_widget(LIVES_FRAME(frame), label);
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_themes), frame, TRUE, TRUE, widget_opts.packing_height);
@@ -4051,7 +4143,81 @@ _prefsw *create_prefs_dialog(void) {
 
 
 
+  frame = lives_frame_new(NULL);
+  label = lives_standard_label_new(_("Extended Theme Details"));
+  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
 
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_themes), frame, TRUE, TRUE, widget_opts.packing_height);
+
+  vbox=lives_vbox_new(FALSE, 0);
+  lives_container_add(LIVES_CONTAINER(frame), vbox);
+  lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width);
+
+  ///////////////////
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  prefsw->cbutton_cesel = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Selected frames/audio (clip editor)"))),
+							  TRUE,FALSE,&palette->ce_sel,NULL,NULL,NULL,NULL);
+
+  
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  prefsw->cbutton_ceunsel = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Unselected frames/audio (clip editor)"))),
+							  TRUE,FALSE,&palette->ce_unsel,NULL,NULL,NULL,NULL);
+
+  
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  prefsw->cbutton_evbox = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Track background (multitrack)"))),
+							   TRUE,FALSE,&palette->mt_evbox,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  prefsw->cbutton_vidcol = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Video block (multitrack)"))),
+							   TRUE,FALSE,&palette->vidcol,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  prefsw->cbutton_audcol = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Audio block (multitrack)"))),
+							   TRUE,FALSE,&palette->audcol,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  prefsw->cbutton_fxcol = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Effects block (multitrack)"))),
+							  TRUE,FALSE,&palette->fxcol,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  prefsw->cbutton_mtmark = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Timeline mark (multitrack)"))),
+							   TRUE,FALSE,&palette->mt_mark,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  prefsw->cbutton_tlreg = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Timeline selection (multitrack)"))),
+							  TRUE,FALSE,&palette->mt_timeline_reg,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  widget_color_to_lives_rgba(&rgba,&palette->mt_timecode_bg);
+  prefsw->cbutton_tcbg = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Timecode background (multitrack)"))),
+							 TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  widget_color_to_lives_rgba(&rgba,&palette->mt_timecode_fg);
+  prefsw->cbutton_tcfg = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Timecode foreground (multitrack)"))),
+							 TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+
+  
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  prefsw->cbutton_fsur = lives_standard_color_button_new(LIVES_BOX(hbox),(tmp=lives_strdup(_("Frame surround"))),
+							 TRUE,FALSE,&palette->frame_surround,NULL,NULL,NULL,NULL);
+
+  
+  
+
+  
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_themes.png", NULL);
   pixbuf_themes = lives_pixbuf_new_from_file(icon, NULL);
   lives_free(icon);
@@ -4490,6 +4656,28 @@ _prefsw *create_prefs_dialog(void) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infob), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mtmark), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_evbox), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tlreg), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fsur), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcbg), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcfg), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_cesel), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_ceunsel), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_vidcol), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_audcol), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fxcol), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
   if (prefsw->theme_style2!=NULL)
     lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style2), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -4924,9 +5112,13 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   if (mainw->prefs_changed & PREFS_THEME_CHANGED) {
-    do_blocking_info_dialog(_("Theme changes will not take effect until the next time you start LiVES."));
+    lives_widget_set_sensitive(mainw->export_theme,FALSE);
+    do_blocking_info_dialog(_("Disabling the theme will not take effect until the next time you start LiVES."));
   }
+  else
+    lives_widget_set_sensitive(mainw->export_theme,TRUE);
 
+  
   if (mainw->prefs_changed & PREFS_JACK_CHANGED) {
     do_blocking_info_dialog(_("Jack options will not take effect until the next time you start LiVES."));
   }
@@ -4949,6 +5141,15 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
 
+  if (mainw->prefs_changed & PREFS_XCOLOURS_CHANGED) {
+    if (mainw->multitrack!=NULL) {
+      resize_timeline(mainw->multitrack);
+      set_mt_colours(mainw->multitrack);
+    }
+    else {
+      lives_widget_queue_draw(mainw->LiVES);
+    }
+  }
 
   if (mainw->prefs_changed & PREFS_COLOURS_CHANGED) {
     // force reshow of window

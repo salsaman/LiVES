@@ -1202,6 +1202,19 @@ if (defined($ARGV[0])) {
 
 
 
+	if ($command eq "create_package") {
+	    my $com="tar czf \"$ARGV[1]\" -C \"$ARGV[2]\" .";
+
+	    my $smerr=smog_system($com);
+            if ($smerr) {
+                sig_system_error("$com",$smerr);
+                exit 1;
+            };
+
+            exit 0;
+	}
+
+
 ####################################################################
         if ($^O ne "MSWin32") {
 # run the rest in background

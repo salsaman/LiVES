@@ -18,6 +18,7 @@
 #include "resample.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
+#include "callbacks.h"
 
 extern void reset_frame_and_clip_index(void);
 
@@ -1010,7 +1011,7 @@ static void cancel_process(boolean visible) {
   }
   if (mainw->current_file>-1&&cfile->clip_type==CLIP_TYPE_DISK&&((mainw->cancelled!=CANCEL_NO_MORE_PREVIEW&&
       mainw->cancelled!=CANCEL_USER)||!cfile->opening)) {
-    unlink(cfile->info_file);
+    lives_rm(cfile->info_file);
   }
 }
 
@@ -1984,7 +1985,7 @@ finish:
   //play/operation ended
   if (visible) {
     if (cfile->clip_type==CLIP_TYPE_DISK&&(mainw->cancelled!=CANCEL_NO_MORE_PREVIEW||!cfile->opening)) {
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
     }
     if (mainw->preview_box!=NULL&&!mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton,
           _("Play all"));
@@ -2141,7 +2142,7 @@ boolean do_auto_dialog(const char *text, int type) {
     mainw->read_failed=FALSE;
     lives_fgets(mainw->msg,512,infofile);
     fclose(infofile);
-    if (cfile->clip_type==CLIP_TYPE_DISK) unlink(cfile->info_file);
+    if (cfile->clip_type==CLIP_TYPE_DISK) lives_rm(cfile->info_file);
 
     while (!lives_alarm_get(alarm_handle)) {
       lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));

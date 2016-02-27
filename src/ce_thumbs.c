@@ -1,6 +1,6 @@
 // ce_thumbs.c
 // LiVES
-// (c) G. Finch 2013 <salsaman@gmail.com>
+// (c) G. Finch 2013 - 2016 <salsaman@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -18,6 +18,7 @@
 #include "effects.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
+#include "callbacks.h"
 
 static LiVESWidget **fxcombos;
 static LiVESWidget **pscrolls;

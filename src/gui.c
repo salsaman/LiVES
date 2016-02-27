@@ -19,6 +19,7 @@
 #include "startup.h"
 #include "ce_thumbs.h"
 
+
 #ifdef ENABLE_GIW_3
 #include "giw/giwtimeline.h"
 #endif
@@ -453,6 +454,8 @@ void create_LiVES(void) {
   mute_audio_closure=NULL;
   ping_pong_closure=NULL;
 
+  mainw->LiVES = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+
   ////////////////////////////////////
 
   mainw->double_size=FALSE;
@@ -513,7 +516,6 @@ void create_LiVES(void) {
   lives_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map=NULL;
 
-  mainw->LiVES = lives_window_new(LIVES_WINDOW_TOPLEVEL);
   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),FALSE);
 
 
@@ -1464,6 +1466,18 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->export_proj);
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
 
+
+  lives_menu_add_separator(LIVES_MENU(advanced_menu));
+
+  mainw->import_theme = lives_menu_item_new_with_mnemonic(_("_Import Theme (.tar.gz)..."));
+  lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->import_theme);
+
+  mainw->export_theme = lives_menu_item_new_with_mnemonic(_("E_xport Theme (.tar.gz)..."));
+  lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->export_theme);
+  lives_widget_set_sensitive(mainw->export_theme,(palette->style&STYLE_1));
+
+  // VJ menu
+  
   mainw->vj_menu = lives_menu_item_new_with_mnemonic(_("_VJ"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), mainw->vj_menu);
 
@@ -2347,6 +2361,12 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->export_proj), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_export_proj_activate),
                        NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->export_theme), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_export_theme_activate),
+                       NULL);
+  /*  lives_signal_connect(LIVES_GUI_OBJECT(mainw->import_theme), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_import_theme_activate),
+                       NULL);*/
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->clear_ds), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_cleardisk_activate),
                        NULL);

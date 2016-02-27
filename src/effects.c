@@ -1,6 +1,6 @@
 // effects.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2014
+// (c) G. Finch 2003 - 2016
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -29,6 +29,7 @@
 #include "cvirtual.h"
 #include "resample.h"
 #include "ce_thumbs.h"
+#include "callbacks.h"
 
 
 //////////// Effects ////////////////
@@ -208,7 +209,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     lives_free(tmp);
   }
 
-  if (!mainw->keep_pre) unlink(cfile->info_file);
+  if (!mainw->keep_pre) lives_rm(cfile->info_file);
 
   if (!mainw->internal_messaging&&!mainw->keep_pre) {
     if (cfile->frame_index_back!=NULL) {
@@ -431,7 +432,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     char *com=lives_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\"",prefs->backend_sync, cfile->handle,cfile->progress_start,
                                   cfile->progress_end,get_image_ext_for_type(cfile->img_type));
 
-    unlink(cfile->info_file);
+    lives_rm(cfile->info_file);
     mainw->cancelled=CANCEL_NONE;
     lives_system(com,FALSE);
     lives_free(com);
@@ -797,7 +798,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
       else {
         char *com=lives_strdup_printf("%s undo_audio %s",prefs->backend_sync,cfile->handle);
         mainw->com_failed=FALSE;
-        unlink(cfile->info_file);
+        lives_rm(cfile->info_file);
         lives_system(com,FALSE);
         lives_free(com);
       }

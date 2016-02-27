@@ -11302,7 +11302,7 @@ void insert_blank_frames(int sfileno, int nframes, int after) {
   LiVESError *error=NULL;
   char oname[PATH_MAX];
   char nname[PATH_MAX];
-  char *com,*tmp;
+  char *tmp;
 
   register int i;
 
@@ -11317,14 +11317,7 @@ void insert_blank_frames(int sfileno, int nframes, int after) {
       lives_snprintf(oname,PATH_MAX,"%s",tmp);
       lives_free(tmp);
       mainw->com_failed=FALSE;
-#ifndef IS_MINGW
-      com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->mv_cmd,oname,nname);
-#else
-      com=lives_strdup_printf("mv.exe \"%s\" \"%s\"",oname,nname);
-#endif
-      lives_system(com,FALSE);
-      lives_free(com);
-
+      lives_mv(oname,nname);
       if (mainw->com_failed) {
         return;
       }

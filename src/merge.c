@@ -1,6 +1,6 @@
 // merge.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2015 (salsaman@gmail.com)
+// (c) G. Finch 2003 - 2016 (salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -17,6 +17,7 @@
 #include "effects.h"
 #include "resample.h"
 #include "support.h"
+#include "callbacks.h"
 
 _merge_opts *merge_opts;
 

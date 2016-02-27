@@ -24,7 +24,7 @@
 #include "interface.h"
 #include "audio.h"
 #include "resample.h"
-
+#include "callbacks.h"
 
 static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
@@ -291,8 +291,8 @@ int lives_system(const char *com, boolean allow_error) {
   int retval;
   boolean cnorm=FALSE;
 
-  // TODO - use g_spawn ?
-
+  //g_print("doing: %s\n",com);
+  
   if (mainw->is_ready&&!mainw->is_exiting&&
       ((mainw->multitrack==NULL&&mainw->cursor_style==LIVES_CURSOR_NORMAL)||
        (mainw->multitrack!=NULL&&mainw->multitrack->cursor_style==LIVES_CURSOR_NORMAL))) {
@@ -1825,7 +1825,7 @@ void init_clipboard(void) {
 
     mainw->com_failed=FALSE;
     com=lives_strdup_printf("%s delete_all \"%s\"",prefs->backend,clipboard->handle);
-    unlink(clipboard->info_file);
+    lives_rm(clipboard->info_file);
     lives_system(com,FALSE);
     lives_free(com);
 
@@ -2118,7 +2118,7 @@ boolean check_for_lock_file(const char *set_name, int type) {
   char *com=lives_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d >\"%s\"",prefs->backend_sync,set_name,capable->myname,
                                 capable->mainpid,info_file);
 
-  unlink(info_file);
+  lives_rm(info_file);
   threaded_dialog_spin(0.);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -2148,13 +2148,13 @@ boolean check_for_lock_file(const char *set_name, int type) {
       if (msg!=NULL) {
         lives_free(msg);
       }
-      unlink(info_file);
+      lives_rm(info_file);
       lives_free(info_file);
       return FALSE;
     }
   }
   close(info_fd);
-  unlink(info_file);
+  lives_rm(info_file);
   lives_free(info_file);
 
   return TRUE;
@@ -2269,6 +2269,14 @@ boolean check_frame_count(int idx) {
 }
 
 
+void count_opening_frames(void) {
+  int cframes=cfile->frames;
+  get_frame_count(mainw->current_file);
+  mainw->opening_frames=cfile->frames;
+  cfile->frames=cframes;
+}
+
+
 
 void get_frame_count(int idx) {
   // sets mainw->files[idx]->frames with current framecount
@@ -2313,7 +2321,7 @@ void get_frame_count(int idx) {
     }
   } while (retval==LIVES_RESPONSE_RETRY);
 
-  unlink(info_file);
+  lives_rm(info_file);
   lives_free(info_file);
 }
 
@@ -2529,7 +2537,6 @@ void remove_layout_files(LiVESList *map) {
 
   char **array;
 
-  char *com;
   char *fname,*fdir;
 
   boolean is_current;
@@ -2567,14 +2574,7 @@ void remove_layout_files(LiVESList *map) {
       d_print(_("Removing layout %s\n"),fname);
 
       if (!is_current) {
-#ifndef IS_MINGW
-        com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rm_cmd,fname);
-#else
-        com=lives_strdup_printf("rm.exe \"%s\" 2>NUL",fname);
-#endif
-        lives_system(com,TRUE);
-        lives_free(com);
-
+	lives_rm(fname);
 
         // if no more layouts in parent dir, we can delete dir
 
@@ -2586,30 +2586,18 @@ void remove_layout_files(LiVESList *map) {
 
           mainw->com_failed=FALSE;
           // touch a file in tpmdir, so we cannot remove tmpdir itself
-#ifndef IS_MINGW
-          com=lives_strdup_printf("%s \"%s\" >/dev/null 2>&1",capable->touch_cmd,protect_file);
-#else
-          com=lives_strdup_printf("touch.exe \"%s\" >NUL 2>&1",protect_file);
-#endif
-          lives_system(com,FALSE);
-          lives_free(com);
+	  lives_touch(protect_file);
 
           if (!mainw->com_failed) {
             // ok, the "touch" worked
             // now we call rmdir -p : remove directory + any empty parents
             fdir=lives_path_get_dirname(fname);
-#ifndef IS_MINGW
-            com=lives_strdup_printf("%s -p \"%s\" 2>/dev/null",capable->rmdir_cmd,fdir);
-#else
-            com=lives_strdup_printf("rmdir.exe /p \"%s\" 2>NUL",fdir);
-#endif
-            lives_system(com,TRUE);
-            lives_free(com);
+	    lives_rmdir_with_parents(fdir);
             lives_free(fdir);
           }
 
           // remove the file we touched to clean up
-          unlink(protect_file);
+          lives_rm(protect_file);
           lives_free(protect_file);
         }
 
@@ -2742,11 +2730,8 @@ void get_play_times(void) {
     if (mainw->video_drawable!=NULL) {
       lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
 
-      if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-        lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-      } else {
-        lives_painter_set_source_rgb(cr, .1, .1, .1); ///< opaque grey
-      }
+      // unselected
+      lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_unsel);
 
       lives_painter_rectangle(cr,0,0,
                               cfile->video_time/cfile->total_time*allocwidth-1,
@@ -2754,7 +2739,9 @@ void get_play_times(void) {
 
       lives_painter_fill(cr);
 
-      lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+
+      // selected
+      lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_sel);
 
       lives_painter_rectangle(cr,offset_left, 0,
                               offset_right-offset_left,
@@ -2786,11 +2773,8 @@ void get_play_times(void) {
     if (mainw->laudio_drawable!=NULL) {
       lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
 
-      if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-        lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-      } else {
-        lives_painter_set_source_rgb(cr, .1, .1, .1); ///< opaque grey
-      }
+      // unselected
+      lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_unsel);
 
       lives_painter_rectangle(cr,0,0,
                               cfile->laudio_time/cfile->total_time*allocwidth-1,
@@ -2800,7 +2784,7 @@ void get_play_times(void) {
 
       if (offset_left<cfile->laudio_time/cfile->total_time*allocwidth) {
 
-        lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_sel);
 
         lives_painter_rectangle(cr,offset_left, 0,
                                 offset_right-offset_left,
@@ -2817,11 +2801,8 @@ void get_play_times(void) {
       if (mainw->raudio_drawable!=NULL) {
         lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
 
-        if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-          lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-        } else {
-          lives_painter_set_source_rgb(cr, .1, .1, .1); ///< opaque grey
-        }
+	// unselected
+	lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_unsel);
 
         lives_painter_rectangle(cr,0,0,
                                 cfile->raudio_time/cfile->total_time*allocwidth-1,
@@ -2831,7 +2812,7 @@ void get_play_times(void) {
 
         if (offset_left<cfile->laudio_time/cfile->total_time*allocwidth) {
 
-          lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_sel);
 
           lives_painter_rectangle(cr,offset_left, 0,
                                   offset_right-offset_left,
@@ -2850,119 +2831,7 @@ void get_play_times(void) {
   // playback cursors
   if (mainw->playing_file>-1) {
     if (cfile->frames>0) {
-      offset=(mainw->actual_frame-.5)/cfile->fps;
-      offset/=cfile->total_time/allocwidth;
-      if (mainw->video_drawable!=NULL) {
-        lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
-
-        lives_painter_set_line_width(cr,1.);
-
-        if (offset>=offset_left&&offset<=offset_right) {
-          lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-          lives_painter_move_to(cr, offset, 0);
-          lives_painter_line_to(cr, offset, prefs->bar_height);
-        } else {
-          lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-          lives_painter_move_to(cr, offset, 0);
-          lives_painter_line_to(cr, offset, prefs->bar_height);
-        }
-        lives_painter_stroke(cr);
-
-        if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-          lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-          lives_painter_move_to(cr, offset, prefs->bar_height);
-          lives_painter_line_to(cr, offset, allocheight);
-        } else {
-          lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-          lives_painter_move_to(cr, offset, prefs->bar_height);
-          lives_painter_line_to(cr, offset, allocheight);
-        }
-
-        lives_painter_stroke(cr);
-
-        lives_painter_destroy(cr);
-
-      }
-      lives_ruler_set_value(LIVES_RULER(mainw->hruler),offset*cfile->total_time/allocwidth);
-      lives_widget_queue_draw(mainw->hruler);
-    }
-    if (cfile->achans>0&&cfile->is_loaded&&prefs->audio_src!=AUDIO_SRC_EXT) {
-      if (is_realtime_aplayer(prefs->audio_player)&&(mainw->event_list==NULL||!mainw->preview)) {
-#ifdef ENABLE_JACK
-        if (mainw->jackd!=NULL&&prefs->audio_player==AUD_PLAYER_JACK) {
-          offset=allocwidth*((double)mainw->jackd->seek_pos/cfile->arate/cfile->achans/
-                             cfile->asampsize*8)/cfile->total_time;
-        }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-        if (mainw->pulsed!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE) {
-          offset=allocwidth*((double)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/
-                             cfile->asampsize*8)/cfile->total_time;
-        }
-#endif
-      } else offset=allocwidth*(mainw->aframeno-.5)/cfile->fps/cfile->total_time;
-      if (mainw->laudio_drawable!=NULL) {
-        lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
-
-        lives_painter_set_line_width(cr,1.);
-
-        if (offset>=offset_left&&offset<=offset_right) {
-          lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-          lives_painter_move_to(cr, offset, 0);
-          lives_painter_line_to(cr, offset, prefs->bar_height);
-        } else {
-          lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-          lives_painter_move_to(cr, offset, 0);
-          lives_painter_line_to(cr, offset, prefs->bar_height);
-        }
-        lives_painter_stroke(cr);
-
-        if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-          lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-          lives_painter_move_to(cr, offset, prefs->bar_height);
-          lives_painter_line_to(cr, offset, allocheight);
-        } else {
-          lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-          lives_painter_move_to(cr, offset, prefs->bar_height);
-          lives_painter_line_to(cr, offset, allocheight);
-        }
-        lives_painter_stroke(cr);
-
-        lives_painter_destroy(cr);
-      }
-
-      if (cfile->achans>1) {
-        if (mainw->raudio_drawable!=NULL) {
-          lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
-
-          lives_painter_set_line_width(cr,1.);
-
-          if (offset>=offset_left&&offset<=offset_right) {
-            lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-            lives_painter_move_to(cr, offset, 0);
-            lives_painter_line_to(cr, offset, prefs->bar_height);
-          } else {
-            lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-            lives_painter_move_to(cr, offset, 0);
-            lives_painter_line_to(cr, offset, prefs->bar_height);
-          }
-          lives_painter_stroke(cr);
-
-          if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-            lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-            lives_painter_move_to(cr, offset, prefs->bar_height);
-            lives_painter_line_to(cr, offset, allocheight);
-          } else {
-            lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-            lives_painter_move_to(cr, offset, prefs->bar_height);
-            lives_painter_line_to(cr, offset, allocheight);
-          }
-          lives_painter_stroke(cr);
-
-          lives_painter_destroy(cr);
-
-        }
-      }
+      draw_little_bars((mainw->actual_frame-1.)/cfile->fps);
     }
     if (cfile->frames==0) {
       lives_ruler_set_value(LIVES_RULER(mainw->hruler),offset*cfile->total_time/allocwidth);
@@ -3079,7 +2948,9 @@ void get_play_times(void) {
 void draw_little_bars(double ptrtime) {
   //draw the vertical player bars
   double allocheight=lives_widget_get_allocation_height(mainw->video_draw)-prefs->bar_height;
-  double offset=ptrtime/cfile->total_time*lives_widget_get_allocation_width(mainw->vidbar);
+  double allocwidth=lives_widget_get_allocation_width(mainw->video_draw);
+  double offset=ptrtime/cfile->total_time*allocwidth;
+
   int frame;
 
   if (!prefs->show_gui) return;
@@ -3121,8 +2992,25 @@ void draw_little_bars(double ptrtime) {
     }
   }
 
-  if (mainw->playing_file>-1) return;
-
+  if (mainw->playing_file>-1) {
+    if (cfile->achans>0&&cfile->is_loaded&&prefs->audio_src!=AUDIO_SRC_EXT) {
+      if (is_realtime_aplayer(prefs->audio_player)&&(mainw->event_list==NULL||!mainw->preview)) {
+#ifdef ENABLE_JACK
+        if (mainw->jackd!=NULL&&prefs->audio_player==AUD_PLAYER_JACK) {
+          offset=allocwidth*((double)mainw->jackd->seek_pos/cfile->arate/cfile->achans/
+                             cfile->asampsize*8)/cfile->total_time;
+        }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+        if (mainw->pulsed!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE) {
+          offset=allocwidth*((double)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/
+                             cfile->asampsize*8)/cfile->total_time;
+        }
+#endif
+      } else offset=allocwidth*(mainw->aframeno-.5)/cfile->fps/cfile->total_time;
+    }
+  }
+  
   if (cfile->achans>0) {
     if (mainw->laudio_drawable!=NULL) {
       lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
@@ -3788,7 +3676,7 @@ boolean after_foreign_play(void) {
                                   get_image_ext_for_type(cfile->img_type),cfile->fps,cfile->arate,
                                   cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),
                                   !(cfile->signed_endian&AFORM_BIG_ENDIAN));
-          unlink(cfile->info_file);
+          lives_rm(cfile->info_file);
           mainw->com_failed=FALSE;
           lives_system(com,FALSE);
 
@@ -3805,7 +3693,7 @@ boolean after_foreign_play(void) {
         } else lives_strfreev(array);
       }
       close(capture_fd);
-      unlink(capfile);
+      lives_rm(capfile);
     }
   }
 
@@ -3932,12 +3820,154 @@ boolean check_file(const char *file_name, boolean check_existing) {
 
   close(check);
   if (!exists) {
-    unlink(lfile_name);
+    lives_rm(lfile_name);
   }
   lives_free(lfile_name);
   return TRUE;
 }
 
+
+
+int lives_rmdir(const char *dir, boolean force) {
+  char *com;
+  char *frc;
+
+  int retval;
+  
+  if (force) frc=lives_strdup("f");
+  else frc=lives_strdup("");
+#ifndef IS_MINGW
+  com=lives_strdup_printf("%s -r%s \"%s/\" >\"%s\" 2>&1",capable->rm_cmd,frc,dir,prefs->cmd_log);
+#else
+  com=lives_strdup_printf("START /MIN /b %s -r%s \"%s/\" >\"%s\" 2>&1",capable->rm_cmd,frc,dir,prefs->cmd_log);
+#endif
+  retval=lives_system(com,TRUE);
+  lives_free(frc);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_rmdir_with_parents(const char *dir) {
+  char *com=lives_strdup_printf("%s -p \"%s\" >\"%s\" 2>&1",capable->rmdir_cmd,dir,prefs->cmd_log);
+  int retval=lives_system(com,TRUE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_rm(const char *file) {
+  char *com;
+  int retval;
+  
+#ifndef IS_MINGW
+  com=lives_strdup_printf("%s -f \"%s\" >\"%s\" 2>&1",capable->rm_cmd,file,prefs->cmd_log);
+#else
+  com=lives_strdup_printf("START /MIN /b %s -f \"%s\" >\"%s\" 2>&1",capable->rm_cmd,file,prefs->cmd_log);
+#endif
+  retval=lives_system(com,TRUE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_rmglob(const char *files) {
+  char *com;
+  int retval;
+#ifndef IS_MINGW
+  com=lives_strdup_printf("%s \"%s\"* >\"%s\" 2>&1",capable->rm_cmd,files,prefs->cmd_log);
+#else
+  com=lives_strdup_printf("DEL \"%s*\" >\"%s\" 2>&1",files,prefs->cmd_log);
+#endif
+  retval=lives_system(com,TRUE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_cp(const char *from, const char *to) {
+  char *com=lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1",capable->cp_cmd,from,to,prefs->cmd_log);
+  int retval=lives_system(com,FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_cp_keep_perms(const char *from, const char *to) {
+  char *com=lives_strdup_printf("%s -a \"%s\" \"%s/\" >\"%s\" 2>&1",capable->cp_cmd,from,to,prefs->cmd_log);
+  int retval=lives_system(com,FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_mv(const char *from, const char *to) {
+  char *com=lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1",capable->mv_cmd,from,to,prefs->cmd_log);
+  int retval=lives_system(com,FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_touch(const char *tfile) {
+  char *com=lives_strdup_printf("%s \"%s\" >\"%s\" 2>&1",capable->touch_cmd,tfile,prefs->cmd_log);
+  int retval=lives_system(com,FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_ln(const char *from, const char *to) {
+  char *com;
+  int retval;
+#ifndef IS_MINGW
+  com=lives_strdup_printf("%s -s \"%s\" \"%s\" >\"%s\" 2>&1",capable->ln_cmd,from,to,prefs->cmd_log);
+  retval=lives_system(com,FALSE);
+  lives_free(com);
+#else
+  // TODO
+  retval=-1;
+#endif
+  return retval;
+}
+
+
+int lives_chmod(const char *target, const char *mode) {
+  char *com=lives_strdup_printf("%s %s \"%s\" >\"%s\" 2>&1",capable->chmod_cmd,mode,target,prefs->cmd_log);
+  int retval=lives_system(com,FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_cat(const char *from, const char *to, boolean append) {
+  char *com;
+  char *op;
+  int retval;
+
+  if (append) op=">";
+  else op=">>";
+
+  com=lives_strdup_printf("%s \"%s\" %s \"%s\" >\"%s\" 2>&1",capable->cat_cmd,op,from,to,prefs->cmd_log);
+  retval=lives_system(com,FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_echo(const char *text, const char *to, boolean append) {
+  char *com;
+  char *op;
+  int retval;
+
+  if (append) op=">";
+  else op=">>";
+
+  com=lives_strdup_printf("%s \"%s\" %s \"%s\" >\"%s\" 2>&1",capable->echo_cmd,op,text,to,prefs->cmd_log);
+  retval=lives_system(com,FALSE);
+  lives_free(com);
+  return retval;
+}
 
 
 boolean check_dir_access(const char *dir) {
@@ -3951,7 +3981,6 @@ boolean check_dir_access(const char *dir) {
   boolean exists=lives_file_test(dir, LIVES_FILE_TEST_EXISTS);
   boolean is_OK=FALSE;
 
-  char *com;
   char *testfile;
 
   if (!exists) {
@@ -3961,19 +3990,13 @@ boolean check_dir_access(const char *dir) {
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
 
   testfile=lives_build_filename(dir,"livestst.txt",NULL);
-#ifndef IS_MINGW
-  com=lives_strdup_printf("%s \"%s\"",capable->touch_cmd,testfile);
-#else
-  com=lives_strdup_printf("touch.exe \"%s\"",testfile);
-#endif
-  lives_system(com,TRUE);
-  lives_free(com);
+  lives_touch(testfile);
   if ((is_OK=lives_file_test(testfile, LIVES_FILE_TEST_EXISTS))) {
-    unlink(testfile);
+    lives_rm(testfile);
   }
   lives_free(testfile);
   if (!exists) {
-    rmdir(dir);
+    lives_rmdir(dir,FALSE);
   }
   return is_OK;
 }
@@ -4631,7 +4654,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
         mainw->read_failed=FALSE;
         lives_fgets(val,maxlen,valfile);
         fclose(valfile);
-        unlink(vfile);
+        lives_rm(vfile);
         if (mainw->read_failed) {
           retval2=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
         }
@@ -5162,6 +5185,7 @@ boolean is_writeable_dir(const char *dir) {
   struct statvfs sbuf;
 #else
   char *com;
+  char *tfile;
 #endif
 
   if (!lives_file_test(dir,LIVES_FILE_TEST_IS_DIR)) {
@@ -5177,12 +5201,9 @@ boolean is_writeable_dir(const char *dir) {
   if (sbuf.f_flag&ST_RDONLY) return FALSE;
 #else
   mainw->com_failed=FALSE;
-  com=lives_strdup_printf("touch.exe \"%s\\xxxxfile.txt\"",dir);
-  lives_system(com,TRUE);
-  lives_free(com);
-  com=lives_strdup_printf("%s\\xxxxfile.txt",dir);
-  unlink(com);
-  lives_free(com);
+  tfile=lives_strdup_printf("%s\\xxxxfile.txt",dir);
+  lives_touch(tfile);
+  lives_rm(com);
   if (mainw->com_failed) return FALSE;
 #endif
   return TRUE;
@@ -5224,7 +5245,7 @@ uint64_t get_fs_free(const char *dir) {
 #endif
 
 getfserr:
-  if (must_delete) rmdir(dir);
+  if (must_delete) lives_rmdir(dir,FALSE);
 
   return bytes;
 }

@@ -14,7 +14,8 @@
 #define PREFS_JACK_CHANGED (1<<1)
 #define PREFS_TEMPDIR_CHANGED (1<<2)
 #define PREFS_COLOURS_CHANGED (1<<3)
-#define PREFS_IMAGES_CHANGED (1<<4)
+#define PREFS_XCOLOURS_CHANGED (1<<4)
+#define PREFS_IMAGES_CHANGED (1<<5)
 
 typedef struct {
   char bgcolour[256];
@@ -106,7 +107,7 @@ typedef struct {
 #define WARN_MASK_NO_PULSE_CONNECT (1<<25)
 
 #define WARN_MASK_LAYOUT_WIPE (1<<26)
-
+  char cmd_log[PATH_MAX];
   char effect_command[256];
   char video_open_command[256];
   char audio_play_command[256];
@@ -496,6 +497,19 @@ typedef struct {
   LiVESWidget *theme_style2;
   LiVESWidget *theme_style3;
   LiVESWidget *theme_style4;
+
+  LiVESWidget *cbutton_fsur;
+  LiVESWidget *cbutton_evbox;
+  LiVESWidget *cbutton_mtmark;
+  LiVESWidget *cbutton_tlreg;
+  LiVESWidget *cbutton_tcfg;
+  LiVESWidget *cbutton_tcbg;
+  LiVESWidget *cbutton_vidcol;
+  LiVESWidget *cbutton_audcol;
+  LiVESWidget *cbutton_fxcol;
+  LiVESWidget *cbutton_cesel;
+  LiVESWidget *cbutton_ceunsel;
+
   LiVESWidget *check_midi;
   LiVESWidget *ins_speed;
   LiVESWidget *jpeg;
@@ -629,6 +643,8 @@ void on_prefs_close_clicked(LiVESButton *, livespointer);
 
 void on_prefs_revert_clicked(LiVESButton *, livespointer);
 
+void on_prefs_apply_clicked(LiVESButton *, livespointer user_data);
+
 void set_vpp(boolean set_in_prefs);
 
 void on_prefDomainChanged(LiVESTreeSelection *, livespointer);
@@ -670,6 +686,7 @@ void set_double_pref(const char *key, double value);
 void set_int_pref(const char *key, int value);
 void set_int64_pref(const char *key, int64_t value);
 void set_list_pref(const char *key, LiVESList *values);
+void set_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol);
 boolean apply_prefs(boolean skip_warnings);
 void save_future_prefs(void);
 

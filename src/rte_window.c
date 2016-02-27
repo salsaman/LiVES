@@ -508,19 +508,19 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
   // if we have default values, save them
   if (has_key_defaults()) {
     if (!save_keymap2_file(keymap_file2)) {
-      unlink(keymap_file2);
+      lives_rm(keymap_file2);
       retval=LIVES_RESPONSE_CANCEL;
     }
-  } else unlink(keymap_file2);
+  } else lives_rm(keymap_file2);
 
 
   // if we have data connections, save them
   if (mainw->pconx!=NULL||mainw->cconx!=NULL) {
     if (!save_keymap3_file(keymap_file3)) {
-      unlink(keymap_file3);
+      lives_rm(keymap_file3);
       retval=LIVES_RESPONSE_CANCEL;
     }
-  } else unlink(keymap_file3);
+  } else lives_rm(keymap_file3);
 
 
   lives_free(keymap_file3);
@@ -2790,7 +2790,7 @@ void load_default_keymap(void) {
   char *dir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
   char *keymap_file=lives_build_filename(dir,"default.keymap",NULL);
   char *keymap_template=lives_build_filename(prefs->prefix_dir,DATA_DIR,"default.keymap",NULL);
-  char *com,*tmp;
+  char *tmp;
 
   int retval;
 
@@ -2806,14 +2806,8 @@ void load_default_keymap(void) {
         lives_mkdir_with_parents(dir,S_IRWXU);
       }
 
-#ifndef IS_MINGW
-      com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->cp_cmd,keymap_template,keymap_file);
-#else
-      com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",keymap_template,keymap_file);
-#endif
+      lives_cp(keymap_template,keymap_file);
 
-      lives_system(com,TRUE); // allow this to fail - we will check for errors below
-      lives_free(com);
     }
     if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
       // give up

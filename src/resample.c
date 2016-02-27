@@ -172,7 +172,7 @@ boolean auto_resample_resize(int width,int height,double fps,int fps_num,int fps
           cfile->progress_start=1;
           cfile->progress_end=cfile->frames;
 
-          unlink(cfile->info_file);
+          lives_rm(cfile->info_file);
           mainw->com_failed=FALSE;
           lives_system(com,FALSE);
           lives_free(com);
@@ -369,7 +369,7 @@ boolean auto_resample_resize(int width,int height,double fps,int fps_num,int fps
 
         cfile->undo1_dbl=cfile->fps;
 
-        unlink(cfile->info_file);
+        lives_rm(cfile->info_file);
         mainw->com_failed=FALSE;
         lives_system(com,FALSE);
         lives_free(com);
@@ -820,7 +820,7 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
     if (cfile->arps!=cfile->arate) {
       double audio_stretch=(double)cfile->arps/(double)cfile->arate;
       // pb rate != real rate - stretch to pb rate and resample
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
       com=lives_strdup_printf("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",prefs->backend,
                               cfile->handle,cfile->arps,
                               cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,cfile->achans,cfile->asampsize,
@@ -832,14 +832,14 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
       lives_free(com);
       cfile->arate=cfile->arps=arps;
     } else {
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
       com=lives_strdup_printf("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d",prefs->backend,
                               cfile->handle,cfile->arps,
                               cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,achans,asampsize,asigned,aendian);
       mainw->com_failed=FALSE;
       mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
       lives_system(com,FALSE);
       check_backend_return(cfile);
       if (mainw->com_failed) return;
@@ -2035,7 +2035,7 @@ int reorder_frames(int rwidth, int rheight) {
     cfile->event_list=NULL;
   }
 
-  unlink(cfile->info_file);
+  lives_rm(cfile->info_file);
   mainw->error=FALSE;
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -2104,7 +2104,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
                           perf_start,cfile->frames,perf_end,
                           get_image_ext_for_type(cfile->img_type),leave_bak);
 
-  unlink(cfile->info_file);
+  lives_rm(cfile->info_file);
   mainw->com_failed=FALSE;
   lives_system(com,TRUE);
   if (mainw->com_failed) return cfile->frames;
@@ -2151,7 +2151,7 @@ boolean resample_clipboard(double new_fps) {
     // copy .mgk to .img_ext and .img_ext to .bak (i.e redo the resample)
     com=lives_strdup_printf("%s redo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,1,new_frames,
                             get_image_ext_for_type(cfile->img_type));
-    unlink(cfile->info_file);
+    lives_rm(cfile->info_file);
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
 
@@ -2181,7 +2181,7 @@ boolean resample_clipboard(double new_fps) {
       mainw->current_file=0;
       com=lives_strdup_printf("%s undo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,old_frames+1,cfile->frames,
                               get_image_ext_for_type(cfile->img_type));
-      unlink(cfile->info_file);
+      lives_rm(cfile->info_file);
       lives_system(com,FALSE);
       cfile->progress_start=old_frames+1;
       cfile->progress_end=cfile->frames;

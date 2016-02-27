@@ -1,0 +1,68 @@
+
+<normal_fore>
+65535 65535 65535 65535
+</normal_fore>
+
+<normal_back>
+16448 16448 16448 65535
+</normal_back>
+
+<alt_fore>
+65535 65535 65535 65535
+</alt_fore>
+
+<alt_back>
+39321 39321 39321 65535
+</alt_back>
+
+<info_text>
+65535 65535 65535 65535
+</info_text>
+
+<info_base>
+6682 6682 6682 65535
+</info_base>
+
+<mt_timecode_fg>
+17219 52685 32896 65535
+</mt_timecode_fg>
+
+<mt_timecode_bg>
+0 0 0 65535
+</mt_timecode_bg>
+
+<audcol>
+16384 65535 16384 65535
+</audcol>
+
+<vidcol>
+0 16384 65535 65535
+</vidcol>
+
+<fxcol>
+65535 0 0 65535
+</fxcol>
+
+<mt_tlreg>
+0 0 0 65535
+</mt_tlreg>
+
+<mt_mark>
+0 0 65535 65535
+</mt_mark>
+
+<mt_evbox>
+65535 65535 65535 65535
+</mt_evbox>
+
+<frame_surround>
+65535 65535 65535 65535
+</frame_surround>
+
+<ce_sel>
+65535 65535 65535 65535
+</ce_sel>
+
+<ce_unsel>
+6554 6554 6554 65535
+</ce_unsel>

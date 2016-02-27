@@ -3371,6 +3371,12 @@ void do_do_not_close_d(void) {
   lives_free(msg);
 }
 
+void do_bad_theme_error(const char *themefile) {
+  char *msg=lives_strdup_printf(_("\nThe theme file %s has missing elements.\nThe theme could not be loaded correctly.\n"),themefile);
+  do_error_dialog(msg);
+  lives_free(msg);
+}
+
 
 void do_set_noclips_error(const char *setname) {
   char *msg=lives_strdup_printf(_("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),

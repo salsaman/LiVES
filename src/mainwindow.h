@@ -211,13 +211,16 @@ typedef enum {
   LIVES_STORAGE_STATUS_OFFLINE
 } lives_storage_status_t;
 
-
+#define THEME_DETAIL_STYLE "theme_style"
+#define THEME_DETAIL_SEPWIN_IMAGE "sepwin_image"
+#define THEME_DETAIL_FRAMEBLANK_IMAGE "frameblank_image"
 #define THEME_DETAIL_NORMAL_FORE "normal_fore"
 #define THEME_DETAIL_NORMAL_BACK "normal_back"
 #define THEME_DETAIL_ALT_FORE "alt_fore"
 #define THEME_DETAIL_ALT_BACK "alt_back"
 #define THEME_DETAIL_INFO_TEXT "info_text"
 #define THEME_DETAIL_INFO_BASE "info_base"
+
 #define THEME_DETAIL_AUDCOL "audcol"
 #define THEME_DETAIL_VIDCOL "vidcol"
 #define THEME_DETAIL_FXCOL "fxcol"
@@ -230,6 +233,7 @@ typedef enum {
 #define THEME_DETAIL_CE_SEL "ce_sel"
 #define THEME_DETAIL_CE_UNSEL "ce_unsel"
 
+
 /// set in set_palette_colours()
 typedef struct {
   int style;
@@ -241,17 +245,16 @@ typedef struct {
 
   LiVESWidgetColor white;
   LiVESWidgetColor black;
-  LiVESWidgetColor light_blue;
-  LiVESWidgetColor light_yellow;
   LiVESWidgetColor pink;
   LiVESWidgetColor light_red;
-  LiVESWidgetColor dark_red;
   LiVESWidgetColor light_green;
+  LiVESWidgetColor dark_red;
+  LiVESWidgetColor dark_orange;
+
   LiVESWidgetColor grey20;
   LiVESWidgetColor grey25;
   LiVESWidgetColor grey45;
   LiVESWidgetColor grey60;
-  LiVESWidgetColor dark_orange;
   LiVESWidgetColor fade_colour;
 
   LiVESWidgetColor banner_fade_text;

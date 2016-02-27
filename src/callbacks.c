@@ -1481,6 +1481,8 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *file_name,*tmp,*tmp2,*com,*fname;
   char *sepimg_ext,*frameimg_ext,*sepimg,*frameimg;
   char *dfile,*themefile;
+
+  boolean set_opt=FALSE;
   
   int response;
 
@@ -1522,11 +1524,23 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 #ifndef IS_MINGW
     dfile=lives_strdup_printf("%s/theme%d/",prefs->tmpdir,capable->mainpid);
     themefile=lives_strdup_printf("%s/header.theme",dfile);
+#ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3,0,0)
+    lives_free(themefile);
+    themefile=lives_strdup_printf("%s/header.theme_gtk2",dfile);
+#endif
+#endif
     sepimg=lives_strdup_printf("%s/main.%s",dfile,sepimg_ext);
     frameimg=lives_strdup_printf("%s/frame.%s",dfile,frameimg_ext);
 #else
     dfile=lives_strdup_printf("%s\\theme%d\\",prefs->tmpdir,capable->mainpid);
     themefile=lives_strdup_printf("%s\\header.theme",dfile);
+#ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3,0,0)
+    lives_free(themefile);
+    themefile=lives_strdup_printf("%s\\header.theme_gtk2",dfile);
+#endif
+#endif
     sepimg=lives_strdup_printf("%s\\main.%s",dfile,sepimg_ext);
     frameimg=lives_strdup_printf("%s\\frame.%s",dfile,frameimg_ext);
 #endif
@@ -1536,6 +1550,11 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     
     lives_mkdir_with_parents(dfile,S_IRWXU);
 
+    lcol.red=palette->style;
+    lcol.green=lcol.blue=lcol.alpha=0;
+    
+    set_theme_colour_pref(themefile,THEME_DETAIL_STYLE,&lcol);
+    
     widget_color_to_lives_rgba(&lcol,&palette->normal_fore);
     set_theme_colour_pref(themefile,THEME_DETAIL_NORMAL_FORE,&lcol);
 
@@ -1554,24 +1573,27 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     widget_color_to_lives_rgba(&lcol,&palette->info_base);
     set_theme_colour_pref(themefile,THEME_DETAIL_INFO_BASE,&lcol);
 
-    widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_fg);
-    set_theme_colour_pref(themefile,THEME_DETAIL_MT_TCFG,&lcol);
 
-    widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_bg);
-    set_theme_colour_pref(themefile,THEME_DETAIL_MT_TCBG,&lcol);
+    if (set_opt) {
+      widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_fg);
+      set_theme_colour_pref(themefile,THEME_DETAIL_MT_TCFG,&lcol);
 
-    set_theme_colour_pref(themefile,THEME_DETAIL_AUDCOL,&palette->audcol);
-    set_theme_colour_pref(themefile,THEME_DETAIL_VIDCOL,&palette->vidcol);
-    set_theme_colour_pref(themefile,THEME_DETAIL_FXCOL,&palette->fxcol);
+      widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_bg);
+      set_theme_colour_pref(themefile,THEME_DETAIL_MT_TCBG,&lcol);
 
-    set_theme_colour_pref(themefile,THEME_DETAIL_MT_TLREG,&palette->mt_timeline_reg);
-    set_theme_colour_pref(themefile,THEME_DETAIL_MT_MARK,&palette->mt_mark);
-    set_theme_colour_pref(themefile,THEME_DETAIL_MT_EVBOX,&palette->mt_evbox);
+      set_theme_colour_pref(themefile,THEME_DETAIL_AUDCOL,&palette->audcol);
+      set_theme_colour_pref(themefile,THEME_DETAIL_VIDCOL,&palette->vidcol);
+      set_theme_colour_pref(themefile,THEME_DETAIL_FXCOL,&palette->fxcol);
 
-    set_theme_colour_pref(themefile,THEME_DETAIL_FRAME_SURROUND,&palette->frame_surround);
+      set_theme_colour_pref(themefile,THEME_DETAIL_MT_TLREG,&palette->mt_timeline_reg);
+      set_theme_colour_pref(themefile,THEME_DETAIL_MT_MARK,&palette->mt_mark);
+      set_theme_colour_pref(themefile,THEME_DETAIL_MT_EVBOX,&palette->mt_evbox);
 
-    set_theme_colour_pref(themefile,THEME_DETAIL_CE_SEL,&palette->ce_sel);
-    set_theme_colour_pref(themefile,THEME_DETAIL_CE_UNSEL,&palette->ce_unsel);
+      set_theme_colour_pref(themefile,THEME_DETAIL_FRAME_SURROUND,&palette->frame_surround);
+
+      set_theme_colour_pref(themefile,THEME_DETAIL_CE_SEL,&palette->ce_sel);
+      set_theme_colour_pref(themefile,THEME_DETAIL_CE_UNSEL,&palette->ce_unsel);
+    }
     
     lives_free(themefile);
 

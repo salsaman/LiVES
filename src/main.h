@@ -958,6 +958,7 @@ void do_autolives_needs_clips_error(void);
 void do_pulse_lost_conn_error(void);
 void do_jack_lost_conn_error(void);
 void do_cd_error_dialog(void);
+void do_bad_theme_error(const char *themefile);
 
 boolean process_one(boolean visible);
 void do_threaded_dialog(char *translated_text, boolean has_cancel);
@@ -1070,7 +1071,7 @@ void do_quick_switch(int new_file);
 void switch_audio_clip(int new_file, boolean activate);
 void resize(double scale);
 void do_start_messages(void);
-void set_palette_colours(void);
+void set_palette_colours(boolean force_reload);
 void set_main_title(const char *filename, int or_untitled_number);
 void set_record(void);
 

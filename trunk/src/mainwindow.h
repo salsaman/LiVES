@@ -48,6 +48,8 @@
 
 /////// GUI related constants /////////////////////////////////////////////////////////
 
+#define LIVES_STD_TEXT "LiVES: - "
+
 // parameters for resizing the image frames, and for capture
 #define V_RESIZE_ADJUST ((W_PACKING_WIDTH+2)*3)
 #define H_RESIZE_ADJUST ((W_PACKING_HEIGHT+2)*2)

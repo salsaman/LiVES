@@ -1404,6 +1404,9 @@ boolean apply_prefs(boolean skip_warn) {
       set_pref("gui_theme",future_prefs->theme);
       widget_opts.apply_theme=TRUE;
       set_palette_colours(TRUE);
+      if (mainw->multitrack!=NULL) {
+	if (mainw->multitrack->frame_pixbuf==mainw->imframe) mainw->multitrack->frame_pixbuf=NULL;
+      }
       load_theme_images();
       mainw->prefs_changed|=PREFS_COLOURS_CHANGED|PREFS_IMAGES_CHANGED;
     } else {
@@ -4334,7 +4337,7 @@ _prefsw *create_prefs_dialog(void) {
   if (!lives_ascii_strcasecmp(future_prefs->theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(prefsw->frameblank_entry,FALSE);
 
-  filebutton = lives_standard_file_button_new(FALSE,NULL);
+  filebutton = lives_standard_file_button_new(FALSE,prefs->def_image_dir);
   lives_box_pack_start(LIVES_BOX(hbox), filebutton, FALSE, FALSE, widget_opts.packing_width);
   if (!lives_ascii_strcasecmp(future_prefs->theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(filebutton,FALSE);
@@ -4356,7 +4359,7 @@ _prefsw *create_prefs_dialog(void) {
   if (!lives_ascii_strcasecmp(future_prefs->theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(prefsw->sepimg_entry,FALSE);
 
-  filebutton = lives_standard_file_button_new(FALSE,NULL);
+  filebutton = lives_standard_file_button_new(FALSE,prefs->def_image_dir);
   lives_box_pack_start(LIVES_BOX(hbox), filebutton, FALSE, FALSE, widget_opts.packing_width);
   if (!lives_ascii_strcasecmp(future_prefs->theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(filebutton,FALSE);

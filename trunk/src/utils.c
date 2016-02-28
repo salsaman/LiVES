@@ -3834,15 +3834,14 @@ int lives_rmdir(const char *dir, boolean force) {
 
   int retval;
   
-  if (force) frc=lives_strdup("f");
-  else frc=lives_strdup("");
+  if (force) frc="f";
+  else frc="";
 #ifndef IS_MINGW
   com=lives_strdup_printf("%s -r%s \"%s/\" >\"%s\" 2>&1",capable->rm_cmd,frc,dir,prefs->cmd_log);
 #else
   com=lives_strdup_printf("START /MIN /b %s -r%s \"%s/\" >\"%s\" 2>&1",capable->rm_cmd,frc,dir,prefs->cmd_log);
 #endif
   retval=lives_system(com,TRUE);
-  lives_free(frc);
   lives_free(com);
   return retval;
 }

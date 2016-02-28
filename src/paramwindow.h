@@ -17,6 +17,7 @@ typedef struct {
 #define RFX_TEXT_MAGIC 80 ///< length at which entry turns into textview
 #define RFX_DEF_NUM_MAX 1000000. ///< default param max when not defined
 
+#define RFX_TEXT_SCROLL_HEIGHT ((int)(80.*widget_opts.scale)) ///< height of textview scrolled window
 
 #define GIW_KNOB_WIDTH ((int)(40.*widget_opts.scale))
 #define GIW_KNOB_HEIGHT ((int)(40.*widget_opts.scale))

@@ -7947,19 +7947,6 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 
   swchild=lives_bin_get_child(LIVES_BIN(scrolledwindow));
 
-#ifdef GTK
-  if (GTK_IS_VIEWPORT(swchild))
-    gtk_viewport_set_shadow_type(GTK_VIEWPORT(swchild),LIVES_SHADOW_IN);
-
-  if (width!=0&&height!=0) {
-#if !GTK_CHECK_VERSION(3,0,0)
-    lives_widget_set_size_request(scrolledwindow, width, height);
-#else
-    if (height!=-1) gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scrolledwindow),height);
-    if (width!=-1) gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(scrolledwindow),width);
-#endif
-  }
-#endif
 #ifdef GUI_QT
   lives_widget_set_size_request(scrolledwindow, width, height);
 #endif
@@ -7974,6 +7961,20 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   }
 
   if (LIVES_IS_CONTAINER(child)) lives_container_set_border_width(LIVES_CONTAINER(child), widget_opts.border_width>>1);
+
+#ifdef GUI_GTK
+  if (GTK_IS_VIEWPORT(swchild))
+    gtk_viewport_set_shadow_type(GTK_VIEWPORT(swchild),LIVES_SHADOW_IN);
+
+  if (width!=0&&height!=0) {
+#if !GTK_CHECK_VERSION(3,0,0)
+    lives_widget_set_size_request(scrolledwindow, width, height);
+#else
+    if (height!=-1) gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scrolledwindow),height);
+    if (width!=-1) gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(scrolledwindow),width);
+#endif
+  }
+#endif
 
   return scrolledwindow;
 }

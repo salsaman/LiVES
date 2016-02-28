@@ -706,7 +706,7 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   LiVESWidget *scrolledwindow;
   LiVESWidget *okbutton;
 
-  char *mytitle=lives_strdup(title);
+  char *mytitle=lives_strdup_printf("%s%s",LIVES_STD_TEXT,title);
   char *mytext=NULL;
   char *tmp;
 
@@ -2544,7 +2544,6 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   widget_opts.apply_theme=FALSE;
   scrollw = lives_standard_scrolled_window_new(DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT,vbox);
-  lives_widget_set_size_request(scrollw,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
   widget_opts.apply_theme=woat;
 
   lives_container_add(LIVES_CONTAINER(dialog_vbox), scrollw);

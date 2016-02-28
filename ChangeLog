@@ -2,10 +2,10 @@ Version 2.6.1
 -------------
 Play selections should function even after switching clips, restarting playback.
 Add encoded files to global "recently used files".
-Implement custom themes / colours in Preferences (in progress).
+Implement new theming engine, custom themes / colours in Preferences (in progress).
 Minor compilation fix for gtk+ 2.x
 Fix bug in finding of "Next filter map" in multitrack.
-
+Fix showing of textbuffer parameters in effect windows (regression).
 
 
 

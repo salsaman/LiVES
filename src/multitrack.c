@@ -4135,14 +4135,12 @@ static boolean in_out_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *eve
 static void do_clip_context(lives_mt *mt, LiVESXEventButton *event, lives_clip_t *sfile) {
   // pop up a context menu when clip is right clicked on
 
-  // unfinished...
-
   LiVESWidget *edit_start_end,*edit_clipedit,*close_clip,*show_clipinfo;
   LiVESWidget *menu=lives_menu_new();
 
   if (!mainw->interactive) return;
 
-  lives_menu_set_title(LIVES_MENU(menu),_("LiVES: Selected clip"));
+  lives_menu_set_title(LIVES_MENU(menu),_("Selected Clip"));
 
   if (sfile->frames>0) {
     edit_start_end = lives_menu_item_new_with_mnemonic(_("_Adjust start and end points"));
@@ -10438,8 +10436,7 @@ void do_effect_context(lives_mt *mt, LiVESXEventButton *event) {
 
   int error;
 
-  lives_menu_set_title(LIVES_MENU(menu),_("LiVES: Selected effect"));
-
+  lives_menu_set_title(LIVES_MENU(menu),_("Selected Effect"));
 
   fhash=weed_get_string_value(mt->selected_init_event,"filter",&error);
   filter=get_weed_filter(weed_get_idx_for_hashname(fhash,TRUE));
@@ -13257,8 +13254,6 @@ static void mouse_select_move(LiVESWidget *widget, LiVESXEventMotion *event, liv
 void do_block_context(lives_mt *mt, LiVESXEventButton *event, track_rect *block) {
   // pop up a context menu when a selected block is right clicked on
 
-  // unfinished...
-
   LiVESWidget *delete_block;
   LiVESWidget *split_here;
   LiVESWidget *list_fx_here;
@@ -13271,7 +13266,7 @@ void do_block_context(lives_mt *mt, LiVESXEventButton *event, track_rect *block)
   //mouse_select_end(NULL,mt);
   if (!mainw->interactive) return;
 
-  lives_menu_set_title(LIVES_MENU(menu),_("LiVES: Selected block/frame"));
+  lives_menu_set_title(LIVES_MENU(menu),_("Selected Block/Frame"));
 
   selblock = lives_menu_item_new_with_mnemonic(_("_Select this block"));
   lives_container_add(LIVES_CONTAINER(menu), selblock);
@@ -13338,10 +13333,9 @@ void do_block_context(lives_mt *mt, LiVESXEventButton *event, track_rect *block)
 void do_track_context(lives_mt *mt, LiVESXEventButton *event, double timesecs, int track) {
   // pop up a context menu when track is right clicked on
 
-  // unfinished...
-
   LiVESWidget *insert_here,*avol;
   LiVESWidget *menu=lives_menu_new();
+
   boolean has_something=FALSE;
   boolean needs_idlefunc=FALSE;
 
@@ -13355,7 +13349,7 @@ void do_track_context(lives_mt *mt, LiVESXEventButton *event, double timesecs, i
 
   mouse_select_end(NULL,event,mt);
 
-  lives_menu_set_title(LIVES_MENU(menu),_("LiVES: Selected frame"));
+  lives_menu_set_title(LIVES_MENU(menu),_("Selected Frame"));
 
   if (mt->file_selected>0&&((track<0&&mainw->files[mt->file_selected]->achans>0&&
                              mainw->files[mt->file_selected]->laudio_time>0.)||
@@ -22257,7 +22251,7 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
   LiVESWidget *close_button;
   LiVESWidget *reset_button;
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
-
+  
   int nachans=lives_list_length(mt->audio_draws);
 
   int winsize_h,scr_width=mainw->scr_width;
@@ -22292,7 +22286,8 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
     lives_widget_set_bg_color(amixerw, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(amixerw, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  lives_window_set_title(LIVES_WINDOW(amixerw), _("LiVES: Multitrack audio mixer"));
+
+  lives_window_set_title(LIVES_WINDOW(amixerw),_("Multitrack Audio Mixer"));
 
   top_vbox = lives_vbox_new(FALSE, 0);
 

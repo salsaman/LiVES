@@ -519,8 +519,6 @@ void create_LiVES(void) {
 
   if (capable->smog_version_correct) lives_window_set_decorated(LIVES_WINDOW(mainw->LiVES),prefs->open_decorated);
 
-  lives_window_set_title(LIVES_WINDOW(mainw->LiVES), "LiVES");
-
   mainw->vbox1 = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->vbox1);
 
@@ -3610,23 +3608,34 @@ void disable_record(void) {
 
 void play_window_set_title(void) {
   char *xtrabit;
-  char *title;
+  char *title=NULL;
 
+  if (mainw->play_window==NULL) return;
+  
   if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
   else xtrabit=lives_strdup("");
 
   if (mainw->playing_file>-1) {
-    title=lives_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-    lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
+    if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->fs)
+      lives_window_set_title(LIVES_WINDOW(mainw->play_window),_("Streaming"));
+    else {
+      title=lives_strdup_printf(_("Play Window%s"),xtrabit);
+      lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
+    }
   } else {
+    char *otit=widget_opts.title_prefix;
     title=lives_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
-                              ((mainw->multitrack==NULL?mainw->LiVES:
-                                mainw->multitrack->window))),
-                              xtrabit);
+							    ((mainw->multitrack==NULL?mainw->LiVES:
+							      mainw->multitrack->window))),
+			      xtrabit);
+    widget_opts.title_prefix="";
     lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
+    widget_opts.title_prefix=otit;
   }
-  lives_free(title);
+
+  if (title!=NULL) lives_free(title);
   lives_free(xtrabit);
+
 }
 
 
@@ -3946,8 +3955,7 @@ void resize_play_window(void) {
           // * leave this alone !
           lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
 
-          if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY))
-            lives_window_set_title(LIVES_WINDOW(mainw->play_window),_("LiVES: - Streaming"));
+	  play_window_set_title();
 
           lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
           lives_widget_queue_resize(mainw->play_window);

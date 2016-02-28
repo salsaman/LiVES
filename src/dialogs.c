@@ -171,7 +171,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
 
-  char *textx,*form_text,*pad,*mytext,*tmp;
+  char *textx,*form_text,*pad,*mytext;
 
   mytext=lives_strdup(text); // because of translation issues
 
@@ -179,9 +179,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   case LIVES_DIALOG_WARN:
     dialog = lives_message_dialog_new(NULL,(LiVESDialogFlags)0,
                                       LIVES_MESSAGE_WARNING,LIVES_BUTTONS_NONE,NULL);
-    tmp=lives_strdup_printf(_("%sWarning !"),LIVES_STD_TEXT);
-    lives_window_set_title(LIVES_WINDOW(dialog),tmp);
-    lives_free(tmp);
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Warning !"));
     okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
     lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -192,9 +190,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   case LIVES_DIALOG_ERROR:
     dialog = lives_message_dialog_new(NULL,(LiVESDialogFlags)0,
                                       LIVES_MESSAGE_ERROR,LIVES_BUTTONS_NONE,NULL);
-    tmp=lives_strdup_printf(_("%sError !"),LIVES_STD_TEXT);
-    lives_window_set_title(LIVES_WINDOW(dialog),tmp);
-    lives_free(tmp);
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Error !"));
     okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
     lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -204,9 +200,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   case LIVES_DIALOG_INFO:
     dialog = lives_message_dialog_new(NULL,(LiVESDialogFlags)0,
                                       LIVES_MESSAGE_INFO,LIVES_BUTTONS_NONE,NULL);
-    tmp=lives_strdup_printf(_("%sInformation"),LIVES_STD_TEXT);
-    lives_window_set_title(LIVES_WINDOW(dialog),tmp);
-    lives_free(tmp);
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Information"));
     okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
     lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -223,9 +217,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
       add_clear_ds_button(LIVES_DIALOG(dialog));
     }
 
-    tmp=lives_strdup_printf(_("%sWarning !"),LIVES_STD_TEXT);
-    lives_window_set_title(LIVES_WINDOW(dialog),tmp);
-    lives_free(tmp);
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Warning !"));
     cancelbutton = lives_button_new_from_stock(LIVES_STOCK_LABEL_CANCEL,NULL);
     lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
     okbutton = lives_button_new_from_stock(LIVES_STOCK_LABEL_OK,NULL);
@@ -234,9 +226,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   case LIVES_DIALOG_YESNO:
     dialog = lives_message_dialog_new(transient,(LiVESDialogFlags)0,LIVES_MESSAGE_QUESTION,LIVES_BUTTONS_NONE,NULL);
-    tmp=lives_strdup_printf(_("%sQuestion"),LIVES_STD_TEXT);
-    lives_window_set_title(LIVES_WINDOW(dialog),tmp);
-    lives_free(tmp);
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Question"));
     cancelbutton = lives_button_new_from_stock(LIVES_STOCK_NO,NULL);
     lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_NO);
     okbutton = lives_button_new_from_stock(LIVES_STOCK_YES,NULL);
@@ -245,9 +235,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
     dialog = lives_message_dialog_new(transient,(LiVESDialogFlags)0,LIVES_MESSAGE_ERROR,LIVES_BUTTONS_NONE,NULL);
-    tmp=lives_strdup_printf(_("%sFile Error"),LIVES_STD_TEXT);
-    lives_window_set_title(LIVES_WINDOW(dialog),tmp);
-    lives_free(tmp);
+    lives_window_set_title(LIVES_WINDOW(dialog), _("File Error"));
     abortbutton = lives_button_new_from_stock(LIVES_STOCK_QUIT,_("_Abort"));
     lives_dialog_add_action_widget(LIVES_DIALOG(dialog), abortbutton, LIVES_RESPONSE_ABORT);
     cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
@@ -2788,13 +2776,10 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
   char tmp_label[256];
-  char *tmp;
   
   procw=(xprocess *)(lives_calloc(1,sizeof(xprocess)));
 
-  tmp=lives_strdup_printf(_("%sProcessing..."),LIVES_STD_TEXT);
-  procw->processing = lives_standard_dialog_new(tmp,FALSE,-1,-1);
-  lives_free(tmp);
+  procw->processing = lives_standard_dialog_new(_("Processing..."),FALSE,-1,-1);
   
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), mainw->accel_group);
 

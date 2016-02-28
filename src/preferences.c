@@ -2409,7 +2409,7 @@ _prefsw *create_prefs_dialog(void) {
   mainw->prefs_need_restart = FALSE;
 
   // Create new modal dialog window and set some attributes
-  prefsw->prefs_dialog = lives_standard_dialog_new(_("LiVES: - Preferences"),FALSE,PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
+  prefsw->prefs_dialog = lives_standard_dialog_new(_("Preferences"),FALSE,PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
   lives_window_add_accel_group(LIVES_WINDOW(prefsw->prefs_dialog), accel_group);
 
   lives_window_set_default_size(LIVES_WINDOW(prefsw->prefs_dialog), PREF_WIN_WIDTH, PREF_WIN_HEIGHT);

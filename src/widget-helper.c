@@ -1417,12 +1417,16 @@ LIVES_INLINE LiVESWidget *lives_window_new(LiVESWindowType wintype) {
 
 LIVES_INLINE boolean lives_window_set_title(LiVESWindow *window, const char *title) {
 #ifdef GUI_GTK
-  gtk_window_set_title(window,title);
+  char *ntitle=lives_strdup_printf("%s%s",widget_opts.title_prefix,title);
+  gtk_window_set_title(window,ntitle);
+  lives_free(ntitle);
   return TRUE;
 #endif
 #ifdef GUI_QT
-  QString qs = QString::fromUtf8(title);
+  char *ntitle=lives_strdup_printf("%s%s",widget_opts.title_prefix,title);
+  QString qs = QString::fromUtf8(ntitle);
   window->setWindowTitle(qs);
+  lives_free(ntitle);
   return TRUE;
 #endif
   return FALSE;
@@ -6319,12 +6323,16 @@ LIVES_INLINE boolean lives_image_menu_item_set_image(LiVESImageMenuItem *item, L
 LIVES_INLINE boolean lives_menu_set_title(LiVESMenu *menu, const char *title) {
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3,10,0)
-  gtk_menu_set_title(menu,title);
+  char *ntitle=lives_strdup_printf("%s%s",widget_opts.title_prefix,title);
+  gtk_menu_set_title(menu,ntitle);
+  lives_free(ntitle);
   return TRUE;
 #endif
 #endif
 #ifdef GUI_QT
+  char *ntitle=lives_strdup_printf("%s%s",widget_opts.title_prefix,title);
   menu->setTitle(QString::fromUtf8(title));
+  lives_free(ntitle);
   return TRUE;
 #endif
   return FALSE;
@@ -7008,11 +7016,15 @@ LIVES_INLINE boolean lives_color_button_set_color(LiVESColorButton *button, cons
 
 LIVES_INLINE boolean lives_color_button_set_title(LiVESColorButton *button, const char *title) {
 #ifdef GUI_GTK
+  char *ntitle=lives_strdup_printf("%s%s",widget_opts.title_prefix,title);
   gtk_color_button_set_title(button,title);
+  lives_free(ntitle);
   return TRUE;
 #endif
 #ifdef GUI_QT
+  char *ntitle=lives_strdup_printf("%s%s",widget_opts.title_prefix,title);
   button->set_title(title);
+  lives_free(ntitle);
   return TRUE;
 #endif
   return FALSE;
@@ -7948,7 +7960,8 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   swchild=lives_bin_get_child(LIVES_BIN(scrolledwindow));
 
 #ifdef GUI_QT
-  lives_widget_set_size_request(scrolledwindow, width, height);
+  if (width>-1||height>-1) 
+    lives_widget_set_size_request(scrolledwindow, width, height);
 #endif
 
   if (widget_opts.apply_theme) {
@@ -7968,7 +7981,8 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 
   if (width!=0&&height!=0) {
 #if !GTK_CHECK_VERSION(3,0,0)
-    lives_widget_set_size_request(scrolledwindow, width, height);
+    if (width>-1||height>-1) 
+      lives_widget_set_size_request(scrolledwindow, width, height);
 #else
     if (height!=-1) gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scrolledwindow),height);
     if (width!=-1) gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(scrolledwindow),width);
@@ -8212,7 +8226,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boole
   } else labelcname=lives_standard_label_new(name);
 
   lives_color_button_set_use_alpha(LIVES_COLOR_BUTTON(cbutton),use_alpha);
-  lives_color_button_set_title(LIVES_COLOR_BUTTON(cbutton),_("LiVES: - Select Colour"));
+  lives_color_button_set_title(LIVES_COLOR_BUTTON(cbutton),_("Select Colour"));
   lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton),&colr);
 
 #if !LIVES_WIDGET_COLOR_HAS_ALPHA

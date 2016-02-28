@@ -470,6 +470,8 @@ static boolean pre_init(void) {
   palette=(_palette *)(lives_malloc(sizeof(_palette)));
 
   widget_helper_init();
+
+  widget_opts.title_prefix=lives_strdup(_("LiVES: - "));
   
   prefs->show_gui=TRUE;
   prefs->show_splash=FALSE;
@@ -3460,11 +3462,15 @@ static void lives_init(_ign_opts *ign_opts) {
       title=lives_strdup_printf(_("LiVES-%s: <No File>"),LiVES_VERSION);
     }
 
+    tmp=widget_opts.title_prefix;
+    widget_opts.title_prefix="";
     lives_window_set_title(LIVES_WINDOW(mainw->LiVES), title);
-
-    if (mainw->playing_file==-1&&mainw->play_window!=NULL) lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
+    widget_opts.title_prefix=tmp;
 
     lives_free(title);
+
+    if (mainw->playing_file==-1&&mainw->play_window!=NULL) play_window_set_title();
+
   }
 
 
@@ -7429,9 +7435,7 @@ void load_frame_image(int frame) {
       mainw->play_end=cfile->frames;
 
       if (mainw->play_window!=NULL) {
-	char *title=lives_strdup(_("LiVES: - Play Window"));
-	lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-	lives_free(title);
+	play_window_set_title();
 	if (mainw->double_size&&!mainw->fs&&(ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
 	  // for single size sepwin, we resize frames to fit the window
 	  mainw->must_resize=TRUE;

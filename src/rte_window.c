@@ -1,6 +1,6 @@
 // rte_window.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2014
+// (c) G. Finch 2005 - 2016
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1688,7 +1688,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 
   filter_version=weed_get_int_value(filter,"version",&weed_error);
 
-  tmp=lives_strdup_printf(_("LiVES: Information for %s"),filter_name);
+  tmp=lives_strdup_printf(_("Information for %s"),filter_name);
 
   dialog=lives_standard_dialog_new(tmp,FALSE,RTE_INFO_WIDTH,RTE_INFO_HEIGHT);
 
@@ -2204,7 +2204,7 @@ LiVESWidget *create_rte_window(void) {
     lives_widget_set_bg_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_text_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  lives_window_set_title(LIVES_WINDOW(rte_window), _("LiVES: Real time effect mapping"));
+  lives_window_set_title(LIVES_WINDOW(rte_window), _("Real Time Effect Mapping"));
   lives_window_add_accel_group(LIVES_WINDOW(rte_window), mainw->accel_group);
 
   table = lives_table_new(prefs->rte_keys_virtual, modes+1, FALSE);

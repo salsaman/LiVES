@@ -131,9 +131,9 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
 
   if (script_name==NULL) {
-    title=lives_strdup(_("LiVES: - New Test RFX"));
+    title=lives_strdup(_("New Test RFX"));
   } else {
-    title=lives_strdup(_("LiVES: - Edit Test RFX"));
+    title=lives_strdup(_("Edit Test RFX"));
   }
 
   winsize_h=(PREF_RFXDIALOG_W<mainw->scr_width-SCR_WIDTH_SAFETY/5.)?PREF_RFXDIALOG_W:mainw->scr_width-SCR_WIDTH_SAFETY/5.;
@@ -533,16 +533,16 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
 
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
-    title=lives_strdup(_("LiVES: - RFX Requirements"));
+    title=lives_strdup(_("RFX Requirements"));
     rfxbuilder->onum_reqs=rfxbuilder->num_reqs;
   } else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAMS) {
-    title=lives_strdup(_("LiVES: - RFX Parameters"));
+    title=lives_strdup(_("RFX Parameters"));
     rfxbuilder->onum_params=rfxbuilder->num_params;
   } else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
-    title=lives_strdup(_("LiVES: - RFX Parameter Window Hints"));
+    title=lives_strdup(_("RFX Parameter Window Hints"));
     rfxbuilder->onum_paramw_hints=rfxbuilder->num_paramw_hints;
   } else if (rfxbuilder->table_type==RFX_TABLE_TYPE_TRIGGERS) {
-    title=lives_strdup(_("LiVES: - RFX Triggers"));
+    title=lives_strdup(_("RFX Triggers"));
     rfxbuilder->onum_triggers=rfxbuilder->num_triggers;
   }
 
@@ -978,7 +978,7 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
-  dialog = lives_standard_dialog_new(_("LiVES: - RFX Properties"),FALSE,-1,-1);
+  dialog = lives_standard_dialog_new(_("RFX Properties"),FALSE,-1,-1);
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
 
   if (prefs->show_gui) {
@@ -1944,9 +1944,9 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   char *tmp,*tmp2,*title;
 
   if (pnum<0) {
-    title=lives_strdup(_("LiVES: - New RFX Parameter"));
+    title=lives_strdup(_("New RFX Parameter"));
   } else {
-    title=lives_strdup(_("LiVES: - Edit RFX Parameter"));
+    title=lives_strdup(_("Edit RFX Parameter"));
   }
 
   dialog = lives_standard_dialog_new(title,TRUE,-1,-1);
@@ -2520,9 +2520,9 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
   char *title;
 
   if (pnum<0) {
-    title=lives_strdup(_("LiVES: - New RFX Parameter Window Hint"));
+    title=lives_strdup(_("New RFX Parameter Window Hint"));
   } else {
-    title=lives_strdup(_("LiVES: - Edit RFX Parameter Window Hint"));
+    title=lives_strdup(_("Edit RFX Parameter Window Hint"));
   }
 
   dialog = lives_standard_dialog_new(title,TRUE,-1,-1);
@@ -2714,9 +2714,9 @@ LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder) {
   register int i;
 
   if (tnum<0) {
-    title=lives_strdup(_("LiVES: - New RFX Trigger"));
+    title=lives_strdup(_("New RFX Trigger"));
   } else {
-    title=lives_strdup(_("LiVES: - Edit RFX Trigger"));
+    title=lives_strdup(_("Edit RFX Trigger"));
   }
 
   dialog = lives_standard_dialog_new(title,TRUE,PREF_RFXDIALOG_W,PREF_RFXDIALOG_H);
@@ -2839,21 +2839,21 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
 
   if (button==LIVES_BUTTON(rfxbuilder->pre_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_PRE;
-    lives_window_set_title(LIVES_WINDOW(dialog), _("LiVES: - Pre Loop Code"));
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Pre Loop Code"));
     lives_text_view_set_text(LIVES_TEXT_VIEW(rfxbuilder->code_textview),
                              rfxbuilder->pre_code,-1);
   }
 
   else if (button==LIVES_BUTTON(rfxbuilder->loop_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_LOOP;
-    lives_window_set_title(LIVES_WINDOW(dialog), _("LiVES: - Loop Code"));
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Loop Code"));
     lives_text_view_set_text(LIVES_TEXT_VIEW(rfxbuilder->code_textview),
                              rfxbuilder->loop_code,-1);
   }
 
   else if (button==LIVES_BUTTON(rfxbuilder->post_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_POST;
-    lives_window_set_title(LIVES_WINDOW(dialog), _("LiVES: - Post Loop Code"));
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Post Loop Code"));
     lives_text_view_set_text(LIVES_TEXT_VIEW(rfxbuilder->code_textview),
                              rfxbuilder->post_code,-1);
   }
@@ -2866,7 +2866,7 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
 
       rfxbuilder->codetype=RFX_CODE_TYPE_STRDEF;
       lives_window_set_title(LIVES_WINDOW(dialog), (tmpx=lives_strdup_printf
-                             (_("LiVES: - Default text (max length %d)"),maxlen)));
+                             (_("Default text (max length %d)"),maxlen)));
       lives_free(tmpx);
       lives_text_view_set_wrap_mode(LIVES_TEXT_VIEW(rfxbuilder->code_textview),LIVES_WRAP_WORD);
 
@@ -2878,7 +2878,7 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
       register int i;
 
       rfxbuilder->codetype=RFX_CODE_TYPE_STRING_LIST;
-      lives_window_set_title(LIVES_WINDOW(dialog), (tmpx=lives_strdup(_("LiVES: - Enter values, one per line"))));
+      lives_window_set_title(LIVES_WINDOW(dialog), (tmpx=lives_strdup(_("Enter values, one per line"))));
       lives_free(tmpx);
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].list!=NULL) {
         for (i=0; i<lives_list_length(rfxbuilder->copy_params[rfxbuilder->edit_param].list); i++) {
@@ -3970,7 +3970,7 @@ void on_export_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (script_name==NULL||!strlen(script_name)) return;  // user cancelled
 
-  filename = choose_file(NULL,script_name,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,_("LiVES: - Export Script to..."),NULL);
+  filename = choose_file(NULL,script_name,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,_("Export Script"),NULL);
 
   if (filename==NULL) return;
 
@@ -4000,7 +4000,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *tmp,*tmp2,*tmpx;
   char basename[PATH_MAX];
 
-  char *filename=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,_("LiVES: Import Script from..."),NULL);
+  char *filename=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,_("Import Script"),NULL);
 
   if (filename==NULL) return;
 
@@ -4137,7 +4137,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
   add_fill_to_box(LIVES_BOX(vbox));
 
   if (copy_mode) {
-    lives_window_set_title(LIVES_WINDOW(dialog), _("LiVES: - Copy RFX Script"));
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Copy RFX Script"));
 
     status_combo = lives_standard_combo_new(_("_From type:    "),TRUE,status_list,LIVES_BOX(hbox),NULL);
 
@@ -4154,12 +4154,12 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
     }
   } else {
     if (status==RFX_STATUS_RENAME) {
-      lives_window_set_title(LIVES_WINDOW(dialog), _("LiVES: - Rename test RFX Script"));
+      lives_window_set_title(LIVES_WINDOW(dialog), _("Rename Test RFX Script"));
       label = lives_standard_label_new(_("From script: "));
       rename_mode=TRUE;
       status=RFX_STATUS_TEST;
     } else {
-      lives_window_set_title(LIVES_WINDOW(dialog), _("LiVES: - RFX Script name"));
+      lives_window_set_title(LIVES_WINDOW(dialog), _("RFX Script Name"));
       label = lives_standard_label_new(_("Script name: "));
     }
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);

@@ -1,6 +1,6 @@
 // stream.c
 // LiVES
-// (c) G. Finch 2008 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2008 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1095,7 +1095,7 @@ lives_pandh_w *create_pandh_dialog(int type) {
 
   char *tmp,*tmp2;
 
-  pandhw->dialog = lives_standard_dialog_new(_("LiVES: - Receive LiVES stream"),TRUE,-1,-1);
+  pandhw->dialog = lives_standard_dialog_new(_("Receive LiVES Stream"),TRUE,-1,-1);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(pandhw->dialog),LIVES_WINDOW(mainw->LiVES));

@@ -93,8 +93,8 @@ void create_merge_dialog(void) {
   height=scrh-SCR_HEIGHT_SAFETY;
   width=scrw-SCR_WIDTH_SAFETY;
 
-  merge_opts->merge_dialog = lives_standard_dialog_new(_("LiVES: - Merge"),FALSE,width,height);
-
+  merge_opts->merge_dialog = lives_standard_dialog_new(_("Merge"),FALSE,width,height);
+  
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(merge_opts->merge_dialog), accel_group);
 

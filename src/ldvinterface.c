@@ -19,12 +19,12 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   LiVESWidget *vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
-
+  
   struct _dvgrabw *dvgrabw=(struct _dvgrabw *)lives_malloc(sizeof(struct _dvgrabw));
 
   dvgrabw->filename=NULL;
 
-  dvgrabw->dialog = lives_standard_dialog_new(_("LiVES: DVGrab"),FALSE,-1,-1);
+  dvgrabw->dialog = lives_standard_dialog_new(_("DVGrab"),FALSE,-1,-1);
   dvgrabw->playing=FALSE;
 
   if (prefs->show_gui) {

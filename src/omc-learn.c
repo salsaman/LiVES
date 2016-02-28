@@ -1,6 +1,6 @@
 // omc-learn.c
 // LiVES (lives-exe)
-// (c) G. Finch 2008 - 2015
+// (c) G. Finch 2008 - 2016
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1325,7 +1325,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   winsize_h=scr_width-SCR_WIDTH_SAFETY;
   winsize_v=scr_height-SCR_HEIGHT_SAFETY;
 
-  omclw->dialog = lives_standard_dialog_new(_("LiVES: OMC learner"),FALSE,winsize_h,winsize_v);
+  omclw->dialog = lives_standard_dialog_new(_("OMC Learner"),FALSE,winsize_h,winsize_v);
 
   omclw->top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(omclw->dialog));
 

@@ -4679,6 +4679,8 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 
   LiVESAccelGroup *accel_group;
 
+  char *tmp;
+  
   int scr_width,scr_height;
 
   int winsize_h;
@@ -4720,11 +4722,13 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
   }
 
-  winsize_h=scr_width-200;
-  winsize_v=scr_height-200;
+  winsize_h=scr_width-SCR_WIDTH_SAFETY*2;
+  winsize_v=scr_height-SCR_HEIGHT_SAFETY;
 
-  conxw.conx_dialog=lives_standard_dialog_new(_("LiVES: - Parameter and Alpha Channel Connections"),FALSE,winsize_h,winsize_v);
-
+  tmp=lives_strdup_printf(_("%sParameter and Alpha Channel Connections"),LIVES_STD_TEXT);
+  conxw.conx_dialog=lives_standard_dialog_new(tmp,FALSE,winsize_h,winsize_v);
+  lives_free(tmp);
+			  
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(conxw.conx_dialog), accel_group);
 

@@ -67,7 +67,7 @@
 #define MIN_SEPWIN_HEIGHT 36
 
 /// sepwin/screen size safety margins in pixels
-#define SCR_HEIGHT_SAFETY ((int)(100.*widget_opts.scale))
+#define SCR_HEIGHT_SAFETY ((int)(200.*widget_opts.scale))
 #define SCR_WIDTH_SAFETY ((int)(100.*widget_opts.scale))
 
 /// default size for generators
@@ -118,8 +118,6 @@
 /// size of the fx dialog windows scrollwindow
 #define RFX_WINSIZE_H ((int)(mainw->scr_width>=1024?(820.*widget_opts.scale):640))
 #define RFX_WINSIZE_V ((int)(480.*widget_opts.scale))
-
-#define RFX_TEXT_SCROLL_HEIGHT ((int)(80.*widget_opts.scale)) ///< height of textview scrolled window
 
 #define DEF_BUTTON_WIDTH ((int)(80.*widget_opts.scale))
 

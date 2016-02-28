@@ -559,14 +559,14 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_widget_context_update();
 
-  if (filesel_type==LIVES_FILE_SELECTION_UNDEFINED)
-    dirname=choose_file(fname,NULL,filt,
+  if (filesel_type==LIVES_FILE_SELECTION_UNDEFINED) {
+    dirname=choose_file(is_dir?fname:def_dir,is_dir?NULL:fname,filt,
                         is_dir?LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER:
                         (fname==def_dir&&def_dir!=NULL&&!strcmp(def_dir,LIVES_DEVICE_DIR))?LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE:
                         LIVES_FILE_CHOOSER_ACTION_OPEN,
                         NULL,NULL);
-  else {
-    LiVESWidget *chooser=choose_file_with_preview(fname,NULL,filt,filesel_type);
+  } else {
+    LiVESWidget *chooser=choose_file_with_preview(def_dir,fname,filt,filesel_type);
     int resp=lives_dialog_run(LIVES_DIALOG(chooser));
 
     end_fs_preview();
@@ -1502,7 +1502,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     renamew=NULL;
     lives_free(tmp);
     lives_widget_context_update();
-  } while (!is_legal_set_name(theme_name,FALSE));
+  } while (!is_legal_set_name(theme_name,TRUE));
 
   fname=lives_strdup_printf("%s.tar.gz",theme_name);
   

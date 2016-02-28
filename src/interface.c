@@ -716,7 +716,7 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   textwindow=(text_window *)lives_malloc(sizeof(text_window));
 
-  textwindow->dialog = lives_standard_dialog_new((tmp=lives_strconcat("LiVES: - ",mytitle,NULL)),FALSE,DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
+  textwindow->dialog = lives_standard_dialog_new((tmp=lives_strconcat(LIVES_STD_TEXT,mytitle,NULL)),FALSE,DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
   lives_free(tmp);
 
   if (prefs->show_gui) {
@@ -2150,11 +2150,13 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   }
 
   if (fname!=NULL) {
-    gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser),fname); // utf-8
-    if (fname!=NULL&&dir!=NULL) {
-      char *ffname=lives_build_filename(dir,fname,NULL);
-      gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser),ffname); // must be dir and file
-      lives_free(ffname);
+    if (act==LIVES_FILE_CHOOSER_ACTION_SAVE||act==LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) { // prevent assertion in gtk+
+      gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser),fname); // utf-8
+      if (fname!=NULL&&dir!=NULL) {
+	char *ffname=lives_build_filename(dir,fname,NULL);
+	gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser),ffname); // must be dir and file
+	lives_free(ffname);
+      }
     }
   }
 

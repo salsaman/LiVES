@@ -1194,7 +1194,7 @@ _entryw *create_rename_dialog(int type) {
   // type 7 = rename track in mt
 
   // type 8 = export theme
-  
+
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
@@ -2141,9 +2141,9 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     if (act==LIVES_FILE_CHOOSER_ACTION_SAVE||act==LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) { // prevent assertion in gtk+
       gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser),fname); // utf-8
       if (fname!=NULL&&dir!=NULL) {
-	char *ffname=lives_build_filename(dir,fname,NULL);
-	gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser),ffname); // must be dir and file
-	lives_free(ffname);
+        char *ffname=lives_build_filename(dir,fname,NULL);
+        gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser),ffname); // must be dir and file
+        lives_free(ffname);
       }
     }
   }

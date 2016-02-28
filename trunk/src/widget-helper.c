@@ -7960,7 +7960,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   swchild=lives_bin_get_child(LIVES_BIN(scrolledwindow));
 
 #ifdef GUI_QT
-  if (width>-1||height>-1) 
+  if (width>-1||height>-1)
     lives_widget_set_size_request(scrolledwindow, width, height);
 #endif
 
@@ -7981,7 +7981,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 
   if (width!=0&&height!=0) {
 #if !GTK_CHECK_VERSION(3,0,0)
-    if (width>-1||height>-1) 
+    if (width>-1||height>-1)
       lives_widget_set_size_request(scrolledwindow, width, height);
 #else
     if (height!=-1) gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scrolledwindow),height);
@@ -8394,19 +8394,19 @@ boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
 
 LIVES_INLINE void lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr, lives_colRGB48_t *col) {
   lives_painter_set_source_rgb(cr,
-			       (double)col->red/65535.,
-			       (double)col->green/65535.,
-			       (double)col->blue/65535.
-			       );
+                               (double)col->red/65535.,
+                               (double)col->green/65535.,
+                               (double)col->blue/65535.
+                              );
 }
 
 
 LIVES_INLINE void lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr, lives_colRGBA64_t *col) {
   lives_painter_set_source_rgb(cr,
-			       (double)col->red/65535.,
-			       (double)col->green/65535.,
-			       (double)col->blue/65535.
-			       );
+                               (double)col->red/65535.,
+                               (double)col->green/65535.,
+                               (double)col->blue/65535.
+                              );
 }
 
 

@@ -218,13 +218,13 @@ boolean config_event(LiVESWidget *, LiVESXEventConfigure *, livespointer);
 
 void changed_fps_during_pb(LiVESSpinButton *, livespointer);
 
-boolean on_mouse_scroll(LiVESWidget *, LiVESXEventScroll  *, livespointer);
+boolean on_mouse_scroll(LiVESWidget *, LiVESXEventScroll *, livespointer);
 
-boolean on_mouse_sel_update(LiVESWidget *, LiVESXEventMotion  *, livespointer);
+boolean on_mouse_sel_update(LiVESWidget *, LiVESXEventMotion *, livespointer);
 
-boolean on_mouse_sel_reset(LiVESWidget *, LiVESXEventButton  *, livespointer);
+boolean on_mouse_sel_reset(LiVESWidget *, LiVESXEventButton *, livespointer);
 
-boolean on_mouse_sel_start(LiVESWidget *, LiVESXEventButton  *, livespointer);
+boolean on_mouse_sel_start(LiVESWidget *, LiVESXEventButton *, livespointer);
 
 void on_load_cdtrack_activate(LiVESMenuItem *, livespointer);
 
@@ -338,9 +338,9 @@ boolean on_hrule_enter(LiVESWidget *, LiVESXEventCrossing *, livespointer);
 
 boolean on_hrule_update(LiVESWidget *, LiVESXEventMotion *, livespointer);
 
-boolean on_hrule_reset(LiVESWidget *, LiVESXEventButton  *, livespointer);
+boolean on_hrule_reset(LiVESWidget *, LiVESXEventButton *, livespointer);
 
-boolean on_hrule_set(LiVESWidget *, LiVESXEventButton  *, livespointer);
+boolean on_hrule_set(LiVESWidget *, LiVESXEventButton *, livespointer);
 
 void on_rewind_activate(LiVESMenuItem *, livespointer);
 

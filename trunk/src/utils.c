@@ -292,7 +292,7 @@ int lives_system(const char *com, boolean allow_error) {
   boolean cnorm=FALSE;
 
   //g_print("doing: %s\n",com);
-  
+
   if (mainw->is_ready&&!mainw->is_exiting&&
       ((mainw->multitrack==NULL&&mainw->cursor_style==LIVES_CURSOR_NORMAL)||
        (mainw->multitrack!=NULL&&mainw->multitrack->cursor_style==LIVES_CURSOR_NORMAL))) {
@@ -2574,7 +2574,7 @@ void remove_layout_files(LiVESList *map) {
       d_print(_("Removing layout %s\n"),fname);
 
       if (!is_current) {
-	lives_rm(fname);
+        lives_rm(fname);
 
         // if no more layouts in parent dir, we can delete dir
 
@@ -2586,13 +2586,13 @@ void remove_layout_files(LiVESList *map) {
 
           mainw->com_failed=FALSE;
           // touch a file in tpmdir, so we cannot remove tmpdir itself
-	  lives_touch(protect_file);
+          lives_touch(protect_file);
 
           if (!mainw->com_failed) {
             // ok, the "touch" worked
             // now we call rmdir -p : remove directory + any empty parents
             fdir=lives_path_get_dirname(fname);
-	    lives_rmdir_with_parents(fdir);
+            lives_rmdir_with_parents(fdir);
             lives_free(fdir);
           }
 
@@ -2784,7 +2784,7 @@ void get_play_times(void) {
 
       if (offset_left<cfile->laudio_time/cfile->total_time*allocwidth) {
 
-	lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_sel);
+        lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_sel);
 
         lives_painter_rectangle(cr,offset_left, 0,
                                 offset_right-offset_left,
@@ -2801,8 +2801,8 @@ void get_play_times(void) {
       if (mainw->raudio_drawable!=NULL) {
         lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
 
-	// unselected
-	lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_unsel);
+        // unselected
+        lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_unsel);
 
         lives_painter_rectangle(cr,0,0,
                                 cfile->raudio_time/cfile->total_time*allocwidth-1,
@@ -2812,7 +2812,7 @@ void get_play_times(void) {
 
         if (offset_left<cfile->laudio_time/cfile->total_time*allocwidth) {
 
-	  lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_sel);
+          lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_sel);
 
           lives_painter_rectangle(cr,offset_left, 0,
                                   offset_right-offset_left,
@@ -3010,7 +3010,7 @@ void draw_little_bars(double ptrtime) {
       } else offset=allocwidth*(mainw->aframeno-.5)/cfile->fps/cfile->total_time;
     }
   }
-  
+
   if (cfile->achans>0) {
     if (mainw->laudio_drawable!=NULL) {
       lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
@@ -3833,7 +3833,7 @@ int lives_rmdir(const char *dir, boolean force) {
   char *frc;
 
   int retval;
-  
+
   if (force) frc="f";
   else frc="";
 #ifndef IS_MINGW
@@ -3858,7 +3858,7 @@ int lives_rmdir_with_parents(const char *dir) {
 int lives_rm(const char *file) {
   char *com;
   int retval;
-  
+
 #ifndef IS_MINGW
   com=lives_strdup_printf("%s -f \"%s\" >\"%s\" 2>&1",capable->rm_cmd,file,prefs->cmd_log);
 #else

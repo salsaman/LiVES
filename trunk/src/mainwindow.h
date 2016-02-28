@@ -258,8 +258,8 @@ typedef struct {
   LiVESWidgetColor banner_fade_text;
 
   // set via theme API
-  
-  
+
+
   LiVESWidgetColor normal_back;
   LiVESWidgetColor normal_fore;
 
@@ -283,7 +283,7 @@ typedef struct {
   lives_colRGBA64_t ce_sel;
   lives_colRGBA64_t ce_unsel;
 
-  
+
 } _palette;
 
 /// screen details

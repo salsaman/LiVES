@@ -7912,11 +7912,12 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   scrolledwindow = lives_scrolled_window_new(NULL, NULL);
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
 
-  if (widget_opts.apply_theme) {
+  if (widget_opts.expand!=LIVES_EXPAND_NONE) {
     lives_widget_set_hexpand(scrolledwindow,TRUE);
     lives_widget_set_vexpand(scrolledwindow,TRUE);
-    lives_container_set_border_width(LIVES_CONTAINER(scrolledwindow), widget_opts.border_width);
   }
+
+  lives_container_set_border_width(LIVES_CONTAINER(scrolledwindow), widget_opts.border_width);
 
   if (child!=NULL) {
 
@@ -7965,10 +7966,14 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(swchild, LIVES_WIDGET_STATE_NORMAL);
+  }
+
+  if (widget_opts.expand!=LIVES_EXPAND_NONE) {
     lives_widget_set_hexpand(swchild,TRUE);
     lives_widget_set_vexpand(swchild,TRUE);
-    if (LIVES_IS_CONTAINER(child)) lives_container_set_border_width(LIVES_CONTAINER(child), widget_opts.border_width>>1);
   }
+
+  if (LIVES_IS_CONTAINER(child)) lives_container_set_border_width(LIVES_CONTAINER(child), widget_opts.border_width>>1);
 
   return scrolledwindow;
 }

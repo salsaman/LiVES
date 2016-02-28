@@ -2054,6 +2054,9 @@ void create_LiVES(void) {
 
 #ifdef ENABLE_GIW_3
   mainw->hruler=giw_timeline_new(LIVES_ORIENTATION_HORIZONTAL);
+  // need to set this even if theme is none
+  lives_widget_set_bg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 #else
   mainw->hruler = lives_standard_hruler_new();
 #endif
@@ -2079,6 +2082,10 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, TRUE, TRUE, 0);
 
   mainw->video_draw = lives_drawing_area_new();
+  // need to set this even if theme is none
+  lives_widget_set_bg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
   lives_widget_set_app_paintable(mainw->video_draw,TRUE);
   lives_widget_set_size_request(mainw->video_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, TRUE, TRUE, 0);
@@ -2089,6 +2096,11 @@ void create_LiVES(void) {
 
   mainw->laudio_draw = lives_drawing_area_new();
   lives_widget_set_app_paintable(mainw->laudio_draw,TRUE);
+
+  // need to set this even if theme is none
+  lives_widget_set_bg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
   lives_widget_set_size_request(mainw->laudio_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudio_draw, TRUE, TRUE, 0);
 
@@ -2098,6 +2110,9 @@ void create_LiVES(void) {
 
   mainw->raudio_draw = lives_drawing_area_new();
   lives_widget_set_app_paintable(mainw->raudio_draw,TRUE);
+  // need to set this even if theme is none
+  lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_size_request(mainw->raudio_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, TRUE, TRUE, 0);
 

@@ -8975,10 +8975,14 @@ void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer u
 #if GTK_CHECK_VERSION(3,0,0)
 boolean expose_vid_event(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   LiVESXEventExpose *event=NULL;
+  boolean dest_cr=FALSE;
 #else
 boolean expose_vid_event(LiVESWidget *widget, LiVESXEventExpose *event) {
+  lives_painter_t *cr=lives_painter_create_from_widget(mainw->video_draw);
+  boolean dest_cr=TRUE;
 #endif
 
+  int ex,ey,ew,eh;
   int width;
 
   if (mainw->recoverable_layout) return FALSE;
@@ -8993,8 +8997,18 @@ boolean expose_vid_event(LiVESWidget *widget, LiVESXEventExpose *event) {
     return FALSE;
   }
 
-  if ((event!=NULL&&event->count>0)) return TRUE;
 
+  if (event!=NULL) {
+    if (event->count>0) return TRUE;
+    ex=event->area.x;
+    ey=event->area.y;
+    ew=event->area.width;
+    eh=event->area.height;
+  } else {
+    ex=ey=0;
+    ew=lives_widget_get_allocation_width(mainw->video_draw);
+    eh=lives_widget_get_allocation_height(mainw->video_draw);
+  }
 
 
   if (mainw->video_drawable!=NULL) {
@@ -9013,6 +9027,7 @@ boolean expose_vid_event(LiVESWidget *widget, LiVESXEventExpose *event) {
                             LIVES_PAINTER_CONTENT_COLOR,
                             lives_widget_get_allocation_width(mainw->video_draw),
                             lives_widget_get_allocation_height(mainw->video_draw));
+
     block_expose();
     get_play_times();
     unblock_expose();
@@ -9021,14 +9036,19 @@ boolean expose_vid_event(LiVESWidget *widget, LiVESXEventExpose *event) {
   }
 
   if (mainw->current_file==-1) {
-    lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
+    lives_painter_t *cr2=lives_painter_create(mainw->video_drawable);
 
-    lives_painter_render_background(mainw->video_draw,cr,0,0,
+    lives_painter_render_background(mainw->video_draw,cr2,0,0,
                                     lives_widget_get_allocation_width(mainw->video_draw),
                                     lives_widget_get_allocation_height(mainw->video_draw));
-    lives_painter_destroy(cr);
+    lives_painter_destroy(cr2);
   }
 
+  lives_painter_set_source_surface(cr, mainw->video_drawable,0.,0.);
+  lives_painter_rectangle(cr,ex,ey,ew,eh);
+  lives_painter_fill(cr);
+
+  if (dest_cr) lives_painter_destroy(cr);
 
   return TRUE;
 
@@ -9037,7 +9057,6 @@ boolean expose_vid_event(LiVESWidget *widget, LiVESXEventExpose *event) {
 
 static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   int width;
-
 
   if (mainw->laudio_drawable!=NULL) {
     // check if a resize happened
@@ -9074,6 +9093,10 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
                                     lives_widget_get_allocation_height(mainw->video_draw));
     lives_painter_destroy(cr);
   }
+
+  lives_painter_set_source_surface(cr, mainw->laudio_drawable,0.,0.);
+  lives_painter_rectangle(cr,ex,ey,ew,eh);
+  lives_painter_fill(cr);
 
 
 }
@@ -9121,6 +9144,10 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
   if (1||mainw->current_file==-1) mainw->blank_raudio_drawable=mainw->raudio_drawable;
   else cfile->raudio_drawable=mainw->raudio_drawable;
+
+  lives_painter_set_source_surface(cr, mainw->raudio_drawable,0.,0.);
+  lives_painter_rectangle(cr,ex,ey,ew,eh);
+  lives_painter_fill(cr);
 
 }
 

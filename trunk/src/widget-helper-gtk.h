@@ -15,7 +15,6 @@
 #define GTK_RADIO_MENU_BUG // a bug where gtk_radio_menu_item_set_active() does not update visually
 #define GTK_SUBMENU_SENS_BUG // a bug where setting a menuitem insensitive fails if it has a submenu
 #define GTK_TEXT_VIEW_CSS_BUG // a bug where named textviews cannot be set by CSS
-#define GTK_RENDER_BACKGROUND_BUG // a bug where bg of custom widgets is not rendered
 #define GTK_TEXT_VIEW_DRAW_BUG // a bug where textview crashes if too much text in it
 
 

@@ -7990,7 +7990,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  widget_opts.apply_theme=TRUE;
+  if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
 
   mt->overlap_label=widget_opts.last_label;
 
@@ -9611,6 +9611,9 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
 #ifdef ENABLE_GIW_3
     mt->timeline=giw_timeline_new(LIVES_ORIENTATION_HORIZONTAL);
     giw_timeline_set_unit(GIW_TIMELINE(mt->timeline),GIW_TIME_UNIT_SMH);
+    // need to set this even if theme is none
+    lives_widget_set_bg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 #else
     mt->timeline=lives_standard_hruler_new();
 #endif

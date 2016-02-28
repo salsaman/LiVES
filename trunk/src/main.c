@@ -390,6 +390,23 @@ static boolean pre_init(void) {
 
   mainw=(mainwindow *)(calloc(1,sizeof(mainwindow))); // must not use lives_malloc() yet !
   mainw->is_ready=mainw->fatal=FALSE;
+  
+  // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
+  mainw->string_constants[LIVES_STRING_CONSTANT_ANY]=lives_strdup(_("Any"));
+  // TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
+  mainw->string_constants[LIVES_STRING_CONSTANT_NONE]=lives_strdup(_("None"));
+  // TRANSLATORS: text saying "recommended", for plugin names, etc.
+  mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]=lives_strdup(_("recommended"));
+  // TRANSLATORS: text saying "disabled", (as in "not enabled")
+  mainw->string_constants[LIVES_STRING_CONSTANT_DISABLED]=lives_strdup(_("disabled !"));
+  // TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
+  mainw->string_constants[LIVES_STRING_CONSTANT_CL]=lives_strdup(_("**The current layout**"));
+  // TRANSLATORS: adjective for "Built in" type effects
+  mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN]=lives_strdup(_("Builtin"));
+  // TRANSLATORS: adjective for "Custom" type effects
+  mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM]=lives_strdup(_("Custom"));
+  // TRANSLATORS: adjective for "Test" type effects
+  mainw->string_constants[LIVES_STRING_CONSTANT_TEST]=lives_strdup(_("Test"));
 
   prefs=(_prefs *)lives_malloc(sizeof(_prefs));
   future_prefs=(_future_prefs *)lives_malloc(sizeof(_future_prefs));
@@ -453,7 +470,7 @@ static boolean pre_init(void) {
   palette=(_palette *)(lives_malloc(sizeof(_palette)));
 
   widget_helper_init();
-
+  
   prefs->show_gui=TRUE;
   prefs->show_splash=FALSE;
   prefs->show_playwin=TRUE;
@@ -507,6 +524,8 @@ static boolean pre_init(void) {
   if (!strlen(prefs->theme)) {
     lives_snprintf(prefs->theme,64,"none");
   }
+  lives_snprintf(future_prefs->theme,64,"%s",prefs->theme);
+  
   // get some prefs we need to set menu options
   future_prefs->show_recent=prefs->show_recent=get_boolean_pref("show_recent_files");
 
@@ -952,23 +971,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->pulsed=mainw->pulsed_read=NULL;
 
   mainw->suppress_dprint=FALSE;
-
-  // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
-  mainw->string_constants[LIVES_STRING_CONSTANT_ANY]=lives_strdup(_("Any"));
-  // TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
-  mainw->string_constants[LIVES_STRING_CONSTANT_NONE]=lives_strdup(_("None"));
-  // TRANSLATORS: text saying "recommended", for plugin names, etc.
-  mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]=lives_strdup(_("recommended"));
-  // TRANSLATORS: text saying "disabled", (as in "not enabled")
-  mainw->string_constants[LIVES_STRING_CONSTANT_DISABLED]=lives_strdup(_("disabled !"));
-  // TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
-  mainw->string_constants[LIVES_STRING_CONSTANT_CL]=lives_strdup(_("**The current layout**"));
-  // TRANSLATORS: adjective for "Built in" type effects
-  mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN]=lives_strdup(_("Builtin"));
-  // TRANSLATORS: adjective for "Custom" type effects
-  mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM]=lives_strdup(_("Custom"));
-  // TRANSLATORS: adjective for "Test" type effects
-  mainw->string_constants[LIVES_STRING_CONSTANT_TEST]=lives_strdup(_("Test"));
 
   mainw->opening_frames=-1;
 
@@ -1957,50 +1959,113 @@ static void lives_init(_ign_opts *ign_opts) {
   
     boolean is_OK=TRUE;
 
+    lcol.alpha=65535;
     
     // set configurable colours and theme colours for the app
-    lives_color_parse("black", &palette->black);
-    lives_color_parse("white", &palette->white);
+    lcol.red=lcol.green=lcol.blue=0;
+    lives_rgba_to_widget_color(&palette->black,&lcol);
 
-    lives_color_parse("salmon", &palette->light_red);
-    lives_color_parse("SeaGreen3", &palette->light_green);
-    lives_color_parse("dark red", &palette->dark_red);
-    lives_color_parse("DarkOrange4", &palette->dark_orange);
+    lcol.red=lcol.green=lcol.blue=65535;
+    lives_rgba_to_widget_color(&palette->white,&lcol);
+
+    // salmon
+    lcol.red=64250;
+    lcol.green=64250;
+    lcol.blue=64250;
+    lives_rgba_to_widget_color(&palette->light_red,&lcol);
+
+    // SeaGreen3
+    lcol.red=17219;
+    lcol.green=52685;
+    lcol.blue=32896;
+    lives_rgba_to_widget_color(&palette->light_green,&lcol);
+
+    // dark red
+    lcol.red=35723;
+    lcol.green=0;
+    lcol.blue=0;
+    lives_rgba_to_widget_color(&palette->dark_red,&lcol);
+
+    // darkorange4
+    lcol.red=35723;
+    lcol.green=17733;
+    lcol.blue=0;
+    lives_rgba_to_widget_color(&palette->dark_orange,&lcol);
 
     lives_widget_color_copy(&palette->fade_colour,&palette->black);
     lives_widget_color_copy(&palette->banner_fade_text,&palette->white);
 
     palette->style=STYLE_PLAIN;
 
-    // if we dont find stuff in prefs then we must reload
-    if (!get_colour_pref(THEME_DETAIL_STYLE,&lcol)) {
+    // defaults 
+    palette->frame_surround.red=palette->frame_surround.green=palette->frame_surround.blue=palette->frame_surround.alpha=65535;
+
+    palette->audcol.blue=palette->audcol.red=16384;
+    palette->audcol.green=palette->audcol.alpha=65535;
+
+    palette->vidcol.red=0;
+    palette->vidcol.green=16384;
+    palette->vidcol.blue=palette->vidcol.alpha=65535;
+
+    palette->fxcol.red=palette->fxcol.alpha=65535;
+    palette->fxcol.green=palette->fxcol.blue=0;
+
+    palette->mt_mark.red=palette->mt_mark.green=0;
+    palette->mt_mark.blue=palette->mt_mark.alpha=65535;
+
+    palette->mt_timeline_reg.red=palette->mt_timeline_reg.green=palette->mt_timeline_reg.blue=0;
+    palette->mt_timeline_reg.alpha=65535;
+
+    palette->mt_evbox.red=palette->mt_evbox.green=palette->mt_evbox.blue=palette->mt_evbox.alpha=65535;
+
+    if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+      palette->ce_unsel.red=palette->ce_unsel.green=palette->ce_unsel.blue=0;
+    } else {
+      palette->ce_unsel.red=palette->ce_unsel.green=palette->ce_unsel.blue=6554;
+    }
+    palette->ce_unsel.alpha=65535;
+
+    palette->ce_sel.red=palette->ce_sel.green=palette->ce_sel.blue=palette->ce_sel.alpha=65535;
+
+    lives_widget_color_copy(&palette->mt_timecode_bg,&palette->black);
+    lives_widget_color_copy(&palette->mt_timecode_fg,&palette->light_green);
+
+    lcol.red=0;
+    
+    // if theme is not "none" we dont find stuff in prefs then we must reload
+    if (lives_ascii_strcasecmp(future_prefs->theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])&&
+	!get_colour_pref(THEME_DETAIL_STYLE,&lcol)) {
       force_reload=TRUE;
     }
     else {
       // pull our colours from normal prefs
       palette->style=lcol.red;
 
-      get_pref(THEME_DETAIL_SEPWIN_IMAGE,mainw->sepimg_path,PATH_MAX);
-      get_pref(THEME_DETAIL_FRAMEBLANK_IMAGE,mainw->frameblank_path,PATH_MAX);
+      if (lives_ascii_strcasecmp(future_prefs->theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
+	get_pref(THEME_DETAIL_SEPWIN_IMAGE,mainw->sepimg_path,PATH_MAX);
+	get_pref(THEME_DETAIL_FRAMEBLANK_IMAGE,mainw->frameblank_path,PATH_MAX);
 
-      get_colour_pref(THEME_DETAIL_NORMAL_FORE,&lcol);
-      lives_rgba_to_widget_color(&palette->normal_fore,&lcol);
+	get_colour_pref(THEME_DETAIL_NORMAL_FORE,&lcol);
+	lives_rgba_to_widget_color(&palette->normal_fore,&lcol);
 
-      get_colour_pref(THEME_DETAIL_NORMAL_BACK,&lcol);
-      lives_rgba_to_widget_color(&palette->normal_back,&lcol);
+	get_colour_pref(THEME_DETAIL_NORMAL_BACK,&lcol);
+	lives_rgba_to_widget_color(&palette->normal_back,&lcol);
 
-      get_colour_pref(THEME_DETAIL_ALT_FORE,&lcol);
-      lives_rgba_to_widget_color(&palette->menu_and_bars_fore,&lcol);
+	get_colour_pref(THEME_DETAIL_ALT_FORE,&lcol);
+	lives_rgba_to_widget_color(&palette->menu_and_bars_fore,&lcol);
 
-      get_colour_pref(THEME_DETAIL_ALT_BACK,&lcol);
-      lives_rgba_to_widget_color(&palette->menu_and_bars,&lcol);
+	get_colour_pref(THEME_DETAIL_ALT_BACK,&lcol);
+	lives_rgba_to_widget_color(&palette->menu_and_bars,&lcol);
 
-      get_colour_pref(THEME_DETAIL_INFO_TEXT,&lcol);
-      lives_rgba_to_widget_color(&palette->info_text,&lcol);
+	get_colour_pref(THEME_DETAIL_INFO_TEXT,&lcol);
+	lives_rgba_to_widget_color(&palette->info_text,&lcol);
 
-      get_colour_pref(THEME_DETAIL_INFO_BASE,&lcol);
-      lives_rgba_to_widget_color(&palette->info_base,&lcol);
+	get_colour_pref(THEME_DETAIL_INFO_BASE,&lcol);
+	lives_rgba_to_widget_color(&palette->info_base,&lcol);
+      }
 
+      // extended colours
+      
       get_colour_pref(THEME_DETAIL_MT_TCFG,&lcol);
       lives_rgba_to_widget_color(&palette->mt_timecode_fg,&lcol);
 
@@ -2106,39 +2171,6 @@ static void lives_init(_ign_opts *ign_opts) {
       else lives_rgba_to_widget_color(&palette->info_base,&lcol);
 
   
-      // defaults 
-      palette->frame_surround.red=palette->frame_surround.green=palette->frame_surround.blue=palette->frame_surround.alpha=65535;
-
-      palette->audcol.blue=palette->audcol.red=16384;
-      palette->audcol.green=palette->audcol.alpha=65535;
-
-      palette->vidcol.red=0;
-      palette->vidcol.green=16384;
-      palette->vidcol.blue=palette->vidcol.alpha=65535;
-
-      palette->fxcol.red=palette->fxcol.alpha=65535;
-      palette->fxcol.green=palette->fxcol.blue=0;
-
-      palette->mt_mark.red=palette->mt_mark.green=0;
-      palette->mt_mark.blue=palette->mt_mark.alpha=65535;
-
-      palette->mt_timeline_reg.red=palette->mt_timeline_reg.green=palette->mt_timeline_reg.blue=0;
-      palette->mt_timeline_reg.alpha=65535;
-
-      palette->mt_evbox.red=palette->mt_evbox.green=palette->mt_evbox.blue=palette->mt_evbox.alpha=65535;
-
-      if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	palette->ce_unsel.red=palette->ce_unsel.green=palette->ce_unsel.blue=0;
-      } else {
-	palette->ce_unsel.red=palette->ce_unsel.green=palette->ce_unsel.blue=6554;
-      }
-      palette->ce_unsel.alpha=65535;
-
-      palette->ce_sel.red=palette->ce_sel.green=palette->ce_sel.blue=palette->ce_sel.alpha=65535;
-
-      lives_widget_color_copy(&palette->mt_timecode_bg,&palette->black);
-      lives_widget_color_copy(&palette->mt_timecode_fg,&palette->light_green);
-
       if (!is_OK) {
 	do_bad_theme_error(themefile);
 	lives_free(themefile);

@@ -70,7 +70,7 @@ void lives_exit(int signum) {
 
   if (mainw->is_ready) {
     char *com;
-    
+
     lives_close_all_file_buffers();
 
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
@@ -108,7 +108,7 @@ void lives_exit(int signum) {
       // tell non-realtime audio players (sox or mplayer) to stop
       if (!is_realtime_aplayer(prefs->audio_player)&&mainw->aud_file_to_kill>-1&&mainw->files[mainw->aud_file_to_kill]!=NULL) {
         char *lsname=lives_build_filename(prefs->tmpdir,mainw->files[mainw->aud_file_to_kill]->handle,NULL);
-	lives_touch(lsname);
+        lives_touch(lsname);
         lives_free(lsname);
         com=lives_strdup_printf("%s stop_audio \"%s\"",prefs->backend,mainw->files[mainw->aud_file_to_kill]->handle);
         lives_system(com,TRUE);
@@ -336,19 +336,19 @@ void lives_exit(int signum) {
         char *sdname=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
 
         // note, FORCE is FALSE
-	lives_rmdir(sdname,FALSE);
+        lives_rmdir(sdname,FALSE);
         lives_free(sdname);
         threaded_dialog_spin(0.);
       } else {
         char *dname=lives_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
 
         // note, FORCE is FALSE
-	lives_rmdir(dname,FALSE);
+        lives_rmdir(dname,FALSE);
         lives_free(dname);
         threaded_dialog_spin(0.);
 
         dname=lives_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
-	lives_rm(dname);
+        lives_rm(dname);
         lives_free(dname);
         threaded_dialog_spin(0.);
       }
@@ -1228,7 +1228,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
         // delete layout directory
         laydir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
-	lives_rmdir(laydir,FALSE);
+        lives_rmdir(laydir,FALSE);
         lives_free(laydir);
       }
       recover_layout_cancelled(FALSE);
@@ -1483,7 +1483,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *dfile,*themefile;
 
   boolean set_opt=FALSE;
-  
+
   int response;
 
   do {
@@ -1505,150 +1505,150 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   } while (!is_legal_set_name(theme_name,TRUE));
 
   fname=lives_strdup_printf("%s.tar.gz",theme_name);
-  
+
   file_name=choose_file(capable->home_dir,fname,filt,
-			LIVES_FILE_CHOOSER_ACTION_SAVE,_("Choose a directory to export to"),NULL);
+                        LIVES_FILE_CHOOSER_ACTION_SAVE,_("Choose a directory to export to"),NULL);
 
   lives_free(fname);
-  
+
   if (file_name==NULL) {
     return;
   }
 
 
   // create a header.theme file in tmp, then zip it up with the images
-  
+
   sepimg_ext=get_extension(mainw->sepimg_path);
   frameimg_ext=get_extension(mainw->frameblank_path);
-  
+
 #ifndef IS_MINGW
-    dfile=lives_strdup_printf("%s/theme%d/",prefs->tmpdir,capable->mainpid);
-    themefile=lives_strdup_printf("%s/header.theme",dfile);
+  dfile=lives_strdup_printf("%s/theme%d/",prefs->tmpdir,capable->mainpid);
+  themefile=lives_strdup_printf("%s/header.theme",dfile);
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3,0,0)
-    lives_free(themefile);
-    themefile=lives_strdup_printf("%s/header.theme_gtk2",dfile);
+  lives_free(themefile);
+  themefile=lives_strdup_printf("%s/header.theme_gtk2",dfile);
 #endif
 #endif
-    sepimg=lives_strdup_printf("%s/main.%s",dfile,sepimg_ext);
-    frameimg=lives_strdup_printf("%s/frame.%s",dfile,frameimg_ext);
+  sepimg=lives_strdup_printf("%s/main.%s",dfile,sepimg_ext);
+  frameimg=lives_strdup_printf("%s/frame.%s",dfile,frameimg_ext);
 #else
-    dfile=lives_strdup_printf("%s\\theme%d\\",prefs->tmpdir,capable->mainpid);
-    themefile=lives_strdup_printf("%s\\header.theme",dfile);
+  dfile=lives_strdup_printf("%s\\theme%d\\",prefs->tmpdir,capable->mainpid);
+  themefile=lives_strdup_printf("%s\\header.theme",dfile);
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3,0,0)
-    lives_free(themefile);
-    themefile=lives_strdup_printf("%s\\header.theme_gtk2",dfile);
+  lives_free(themefile);
+  themefile=lives_strdup_printf("%s\\header.theme_gtk2",dfile);
 #endif
 #endif
-    sepimg=lives_strdup_printf("%s\\main.%s",dfile,sepimg_ext);
-    frameimg=lives_strdup_printf("%s\\frame.%s",dfile,frameimg_ext);
+  sepimg=lives_strdup_printf("%s\\main.%s",dfile,sepimg_ext);
+  frameimg=lives_strdup_printf("%s\\frame.%s",dfile,frameimg_ext);
 #endif
 
-    lives_free(sepimg_ext);
-    lives_free(frameimg_ext);
-    
-    lives_mkdir_with_parents(dfile,S_IRWXU);
+  lives_free(sepimg_ext);
+  lives_free(frameimg_ext);
 
-    lcol.red=palette->style;
-    lcol.green=lcol.blue=lcol.alpha=0;
-    
-    set_theme_colour_pref(themefile,THEME_DETAIL_STYLE,&lcol);
-    
-    widget_color_to_lives_rgba(&lcol,&palette->normal_fore);
-    set_theme_colour_pref(themefile,THEME_DETAIL_NORMAL_FORE,&lcol);
+  lives_mkdir_with_parents(dfile,S_IRWXU);
 
-    widget_color_to_lives_rgba(&lcol,&palette->normal_back);
-    set_theme_colour_pref(themefile,THEME_DETAIL_NORMAL_BACK,&lcol);
+  lcol.red=palette->style;
+  lcol.green=lcol.blue=lcol.alpha=0;
 
-    widget_color_to_lives_rgba(&lcol,&palette->menu_and_bars_fore);
-    set_theme_colour_pref(themefile,THEME_DETAIL_ALT_FORE,&lcol);
+  set_theme_colour_pref(themefile,THEME_DETAIL_STYLE,&lcol);
 
-    widget_color_to_lives_rgba(&lcol,&palette->menu_and_bars);
-    set_theme_colour_pref(themefile,THEME_DETAIL_ALT_BACK,&lcol);
+  widget_color_to_lives_rgba(&lcol,&palette->normal_fore);
+  set_theme_colour_pref(themefile,THEME_DETAIL_NORMAL_FORE,&lcol);
 
-    widget_color_to_lives_rgba(&lcol,&palette->info_text);
-    set_theme_colour_pref(themefile,THEME_DETAIL_INFO_TEXT,&lcol);
+  widget_color_to_lives_rgba(&lcol,&palette->normal_back);
+  set_theme_colour_pref(themefile,THEME_DETAIL_NORMAL_BACK,&lcol);
 
-    widget_color_to_lives_rgba(&lcol,&palette->info_base);
-    set_theme_colour_pref(themefile,THEME_DETAIL_INFO_BASE,&lcol);
+  widget_color_to_lives_rgba(&lcol,&palette->menu_and_bars_fore);
+  set_theme_colour_pref(themefile,THEME_DETAIL_ALT_FORE,&lcol);
+
+  widget_color_to_lives_rgba(&lcol,&palette->menu_and_bars);
+  set_theme_colour_pref(themefile,THEME_DETAIL_ALT_BACK,&lcol);
+
+  widget_color_to_lives_rgba(&lcol,&palette->info_text);
+  set_theme_colour_pref(themefile,THEME_DETAIL_INFO_TEXT,&lcol);
+
+  widget_color_to_lives_rgba(&lcol,&palette->info_base);
+  set_theme_colour_pref(themefile,THEME_DETAIL_INFO_BASE,&lcol);
 
 
-    if (set_opt) {
-      widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_fg);
-      set_theme_colour_pref(themefile,THEME_DETAIL_MT_TCFG,&lcol);
+  if (set_opt) {
+    widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_fg);
+    set_theme_colour_pref(themefile,THEME_DETAIL_MT_TCFG,&lcol);
 
-      widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_bg);
-      set_theme_colour_pref(themefile,THEME_DETAIL_MT_TCBG,&lcol);
+    widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_bg);
+    set_theme_colour_pref(themefile,THEME_DETAIL_MT_TCBG,&lcol);
 
-      set_theme_colour_pref(themefile,THEME_DETAIL_AUDCOL,&palette->audcol);
-      set_theme_colour_pref(themefile,THEME_DETAIL_VIDCOL,&palette->vidcol);
-      set_theme_colour_pref(themefile,THEME_DETAIL_FXCOL,&palette->fxcol);
+    set_theme_colour_pref(themefile,THEME_DETAIL_AUDCOL,&palette->audcol);
+    set_theme_colour_pref(themefile,THEME_DETAIL_VIDCOL,&palette->vidcol);
+    set_theme_colour_pref(themefile,THEME_DETAIL_FXCOL,&palette->fxcol);
 
-      set_theme_colour_pref(themefile,THEME_DETAIL_MT_TLREG,&palette->mt_timeline_reg);
-      set_theme_colour_pref(themefile,THEME_DETAIL_MT_MARK,&palette->mt_mark);
-      set_theme_colour_pref(themefile,THEME_DETAIL_MT_EVBOX,&palette->mt_evbox);
+    set_theme_colour_pref(themefile,THEME_DETAIL_MT_TLREG,&palette->mt_timeline_reg);
+    set_theme_colour_pref(themefile,THEME_DETAIL_MT_MARK,&palette->mt_mark);
+    set_theme_colour_pref(themefile,THEME_DETAIL_MT_EVBOX,&palette->mt_evbox);
 
-      set_theme_colour_pref(themefile,THEME_DETAIL_FRAME_SURROUND,&palette->frame_surround);
+    set_theme_colour_pref(themefile,THEME_DETAIL_FRAME_SURROUND,&palette->frame_surround);
 
-      set_theme_colour_pref(themefile,THEME_DETAIL_CE_SEL,&palette->ce_sel);
-      set_theme_colour_pref(themefile,THEME_DETAIL_CE_UNSEL,&palette->ce_unsel);
-    }
-    
-    lives_free(themefile);
+    set_theme_colour_pref(themefile,THEME_DETAIL_CE_SEL,&palette->ce_sel);
+    set_theme_colour_pref(themefile,THEME_DETAIL_CE_UNSEL,&palette->ce_unsel);
+  }
 
-    tmp=lives_strdup_printf(_("Exporting theme as %s..."),file_name);
-    d_print(tmp);
-    lives_free(tmp);
-    
-    // copy images for packaging
-    mainw->com_failed=FALSE;
-    lives_cp(mainw->sepimg_path,sepimg);
-    lives_free(sepimg);
+  lives_free(themefile);
 
-    if (mainw->com_failed) {
-      lives_rmdir(dfile,TRUE);
-      lives_free(frameimg);
-      lives_free(file_name);
-      lives_free(dfile);
-      d_print_failed();
-      return;
-    }
+  tmp=lives_strdup_printf(_("Exporting theme as %s..."),file_name);
+  d_print(tmp);
+  lives_free(tmp);
 
-    lives_cp(mainw->frameblank_path,frameimg);
-    lives_free(frameimg);
+  // copy images for packaging
+  mainw->com_failed=FALSE;
+  lives_cp(mainw->sepimg_path,sepimg);
+  lives_free(sepimg);
 
-    if (mainw->com_failed) {
-      lives_rmdir(dfile,TRUE);
-      lives_free(file_name);
-      lives_free(dfile);
-      d_print_failed();
-      return;
-    }
-
-    
-    com=lives_strdup_printf("%s create_package \"%s\" \"%s\"",prefs->backend_sync,
-			    (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
-			    (tmp2=lives_filename_from_utf8(dfile,-1,NULL,NULL,NULL)));
-    
-    lives_free(tmp);
-    lives_free(tmp2);
-    lives_free(file_name);
-
-    mainw->com_failed=FALSE;
-
-    lives_system(com,TRUE);
-    lives_free(com);
-
+  if (mainw->com_failed) {
     lives_rmdir(dfile,TRUE);
+    lives_free(frameimg);
+    lives_free(file_name);
     lives_free(dfile);
+    d_print_failed();
+    return;
+  }
 
-    if (mainw->com_failed) {
-      d_print_failed();
-      return;
-    }
+  lives_cp(mainw->frameblank_path,frameimg);
+  lives_free(frameimg);
 
-    d_print_done();
+  if (mainw->com_failed) {
+    lives_rmdir(dfile,TRUE);
+    lives_free(file_name);
+    lives_free(dfile);
+    d_print_failed();
+    return;
+  }
+
+
+  com=lives_strdup_printf("%s create_package \"%s\" \"%s\"",prefs->backend_sync,
+                          (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
+                          (tmp2=lives_filename_from_utf8(dfile,-1,NULL,NULL,NULL)));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+  lives_free(file_name);
+
+  mainw->com_failed=FALSE;
+
+  lives_system(com,TRUE);
+  lives_free(com);
+
+  lives_rmdir(dfile,TRUE);
+  lives_free(dfile);
+
+  if (mainw->com_failed) {
+    d_print_failed();
+    return;
+  }
+
+  d_print_done();
 
 }
 
@@ -1855,7 +1855,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         }
         // delete layout directory
         esave_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
-	lives_rmdir(esave_dir,FALSE);
+        lives_rmdir(esave_dir,FALSE);
         lives_free(esave_dir);
       }
     }
@@ -4730,7 +4730,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           // user answered "yes" - delete
           // clear _old_layout maps
           char *dfile=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
-	  lives_rm(dfile);
+          lives_rm(dfile);
           lives_free(dfile);
         }
       }
@@ -4808,7 +4808,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     else {
       char *oldval,*newval;
-      
+
       mainw->write_failed=FALSE;
       cliplist=mainw->cliplist;
 
@@ -4840,17 +4840,17 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             mainw->com_failed=FALSE;
 
 #ifndef IS_MINGW
-	    oldval=lives_strdup_printf("%s/%s",prefs->tmpdir,mainw->files[i]->handle);
-	    newval=lives_strdup_printf("%s/%s",prefs->tmpdir,new_handle);
+            oldval=lives_strdup_printf("%s/%s",prefs->tmpdir,mainw->files[i]->handle);
+            newval=lives_strdup_printf("%s/%s",prefs->tmpdir,new_handle);
 #else
-	    oldval=lives_strdup_printf("%s\\%s",prefs->tmpdir,mainw->files[i]->handle);
-	    newval=lives_strdup_printf("%s\\%s",prefs->tmpdir,new_handle);
+            oldval=lives_strdup_printf("%s\\%s",prefs->tmpdir,mainw->files[i]->handle);
+            newval=lives_strdup_printf("%s\\%s",prefs->tmpdir,new_handle);
 #endif
-	    
-	    lives_mv(oldval,newval);
-	    lives_free(oldval);
-	    lives_free(newval);
-	    
+
+            lives_mv(oldval,newval);
+            lives_free(oldval);
+            lives_free(newval);
+
             if (mainw->com_failed) {
               end_threaded_dialog();
               lives_free(ordfile);
@@ -6925,7 +6925,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
         resize_play_window();
 
-	play_window_set_title();
+        play_window_set_title();
 
         if (mainw->opwx>-1) {
           //opwx and opwy were stored when we first switched to full screen
@@ -7056,7 +7056,7 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (mainw->sep_win) {
       if (prefs->sepwin_type==SEPWIN_TYPE_STICKY) {
         resize_play_window();
-	play_window_set_title();
+        play_window_set_title();
       } else {
         if (mainw->play_window!=NULL) {
           kill_play_window();
@@ -7242,7 +7242,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           mainw->pheight=mainw->vpp->fheight;
 
           if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) {
-	    play_window_set_title();
+            play_window_set_title();
             unfade_background();
           }
 
@@ -7349,7 +7349,7 @@ void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       }
     } else {
       if (!(mainw->play_window==NULL)) {
-	play_window_set_title();
+        play_window_set_title();
       }
     }
   } else {
@@ -7359,7 +7359,7 @@ void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         if (mainw->playing_file==-1) {
           kill_play_window();
         } else {
-	  play_window_set_title();
+          play_window_set_title();
         }
       }
     }

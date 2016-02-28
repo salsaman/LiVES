@@ -2123,7 +2123,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
   LiVESWidget *xeventbox,*aeventbox;
 
   LiVESWidgetColor col;
-  
+
   boolean expanded;
 
   int rows=0;
@@ -2131,7 +2131,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
   int hidden;
 
   lives_rgba_to_widget_color(&col,&palette->mt_evbox);
-  
+
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),(double)prefs->max_disp_vtracks);
   lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),(double)(mt->num_video_tracks*2-1));
 
@@ -5815,7 +5815,7 @@ static char *get_tab_name(uint32_t tab) {
 
 
 void set_mt_colours(lives_mt *mt) {
-  
+
   lives_widget_set_bg_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->mt_timecode_bg);
   lives_widget_set_base_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->mt_timecode_bg);
   lives_widget_set_text_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->mt_timecode_fg);
@@ -5823,7 +5823,7 @@ void set_mt_colours(lives_mt *mt) {
   lives_widget_set_bg_color(mt->timecode, LIVES_WIDGET_STATE_INSENSITIVE, &palette->mt_timecode_bg);
   lives_widget_set_base_color(mt->timecode, LIVES_WIDGET_STATE_INSENSITIVE, &palette->mt_timecode_bg);
   lives_widget_set_text_color(mt->timecode, LIVES_WIDGET_STATE_INSENSITIVE, &palette->mt_timecode_fg);
- 
+
   if (palette->style&STYLE_1) {
 
     lives_widget_set_bg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -5867,14 +5867,14 @@ void set_mt_colours(lives_mt *mt) {
       lives_widget_set_fg_color(mt->hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
       lives_widget_set_bg_color(mt->hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
       if (mt->hseparator2!=NULL) {
-	lives_widget_show(mt->hseparator2);
-	lives_widget_set_fg_color(mt->hseparator2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-	lives_widget_set_bg_color(mt->hseparator2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+        lives_widget_show(mt->hseparator2);
+        lives_widget_set_fg_color(mt->hseparator2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+        lives_widget_set_bg_color(mt->hseparator2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
       }
     } else {
       lives_widget_hide(mt->hseparator);
       if (mt->hseparator2!=NULL) {
-	lives_widget_hide(mt->hseparator2);
+        lives_widget_hide(mt->hseparator2);
       }
     }
 
@@ -5993,7 +5993,7 @@ void set_mt_colours(lives_mt *mt) {
 
     // gtk+ 2.x
     if ((mt->poly_state==POLY_FX_STACK||mt->poly_state==POLY_EFFECTS||mt->poly_state==POLY_TRANS||mt->poly_state==POLY_COMP) \
-	&&LIVES_IS_BIN(mt->fx_list_scroll)&&lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll))!=NULL)
+        &&LIVES_IS_BIN(mt->fx_list_scroll)&&lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll))!=NULL)
       lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
     lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -6083,7 +6083,7 @@ void set_mt_colours(lives_mt *mt) {
     lives_widget_set_fg_color(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_bg_color(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
-  
+
 }
 
 
@@ -22251,7 +22251,7 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
   LiVESWidget *close_button;
   LiVESWidget *reset_button;
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
-  
+
   int nachans=lives_list_length(mt->audio_draws);
 
   int winsize_h,scr_width=mainw->scr_width;

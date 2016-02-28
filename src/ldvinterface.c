@@ -19,7 +19,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   LiVESWidget *vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
-  
+
   struct _dvgrabw *dvgrabw=(struct _dvgrabw *)lives_malloc(sizeof(struct _dvgrabw));
 
   dvgrabw->filename=NULL;

@@ -2446,7 +2446,7 @@ void play_file(void) {
 
         if (mainw->multitrack==NULL||mainw->fs) {
           resize_play_window();
-	  play_window_set_title();
+          play_window_set_title();
         }
 
         // needed

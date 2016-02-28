@@ -2115,11 +2115,11 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   LiVESWidget *cancelbutton;
   LiVESSList *radiobutton_group = NULL;
   LiVESAccelGroup *accel_group;
-  
+
   render_choice=RENDER_CHOICE_PREVIEW;
 
   e_rec_dialog = lives_standard_dialog_new(_("Events Recorded"),FALSE,-1,-1);
-  
+
   if (prefs->show_gui) lives_window_set_transient_for(LIVES_WINDOW(e_rec_dialog),LIVES_WINDOW(mainw->LiVES));
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(e_rec_dialog));
@@ -4815,7 +4815,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   winsize_v=scr_height-SCR_HEIGHT_SAFETY;
 
   event_dialog = lives_standard_dialog_new(_("Event List"),FALSE,winsize_h,winsize_v);
-  
+
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(event_dialog), accel_group);
 

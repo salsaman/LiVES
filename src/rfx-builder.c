@@ -3981,7 +3981,7 @@ void on_export_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mainw->com_failed=FALSE;
   lives_cp((tmp=lives_filename_from_utf8(rfx_script_from,-1,NULL,NULL,NULL)),
-	   (tmp2=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)));
+           (tmp2=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)));
 
   if (mainw->com_failed) d_print_failed();
   else d_print_done();
@@ -4054,7 +4054,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mainw->com_failed=FALSE;
   lives_cp((tmp=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)),
-	   (tmp2=lives_filename_from_utf8(rfx_script_to,-1,NULL,NULL,NULL)));
+           (tmp2=lives_filename_from_utf8(rfx_script_to,-1,NULL,NULL,NULL)));
 
   lives_free(tmp);
   lives_free(tmp2);

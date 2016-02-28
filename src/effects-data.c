@@ -4724,7 +4724,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   winsize_v=scr_height-SCR_HEIGHT_SAFETY;
 
   conxw.conx_dialog=lives_standard_dialog_new(_("Parameter and Alpha Channel Connections"),FALSE,winsize_h,winsize_v);
-			  
+
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(conxw.conx_dialog), accel_group);
 

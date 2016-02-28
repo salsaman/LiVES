@@ -1462,7 +1462,7 @@ void create_LiVES(void) {
   lives_widget_set_sensitive(mainw->export_theme,(palette->style&STYLE_1));
 
   // VJ menu
-  
+
   mainw->vj_menu = lives_menu_item_new_with_mnemonic(_("_VJ"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), mainw->vj_menu);
 
@@ -3611,7 +3611,7 @@ void play_window_set_title(void) {
   char *title=NULL;
 
   if (mainw->play_window==NULL) return;
-  
+
   if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
   else xtrabit=lives_strdup("");
 
@@ -3625,9 +3625,9 @@ void play_window_set_title(void) {
   } else {
     char *otit=widget_opts.title_prefix;
     title=lives_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
-							    ((mainw->multitrack==NULL?mainw->LiVES:
-							      mainw->multitrack->window))),
-			      xtrabit);
+                              ((mainw->multitrack==NULL?mainw->LiVES:
+                                mainw->multitrack->window))),
+                              xtrabit);
     widget_opts.title_prefix="";
     lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
     widget_opts.title_prefix=otit;
@@ -3955,7 +3955,7 @@ void resize_play_window(void) {
           // * leave this alone !
           lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
 
-	  play_window_set_title();
+          play_window_set_title();
 
           lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
           lives_widget_queue_resize(mainw->play_window);

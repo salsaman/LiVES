@@ -2776,11 +2776,11 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
   char tmp_label[256];
-  
+
   procw=(xprocess *)(lives_calloc(1,sizeof(xprocess)));
 
   procw->processing = lives_standard_dialog_new(_("Processing..."),FALSE,-1,-1);
-  
+
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), mainw->accel_group);
 
   if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(procw->processing),LIVES_WINDOW(mainw->LiVES));

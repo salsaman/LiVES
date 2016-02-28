@@ -854,11 +854,9 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
     if (rfx->status==RFX_STATUS_WEED||no_process||(rfx->num_in_channels==0&&rfx->props&RFX_PROPS_BATCHG)) scrw=RFX_WINSIZE_H;
 
-    txt=lives_strdup_printf("LiVES: - %s",_(rfx->menu_text));
     widget_opts.non_modal=TRUE;
-    fx_dialog[didx] = lives_standard_dialog_new(txt,FALSE,scrw,RFX_WINSIZE_V);
+    fx_dialog[didx] = lives_standard_dialog_new(_(rfx->menu_text),FALSE,scrw,RFX_WINSIZE_V);
     widget_opts.non_modal=FALSE;
-    lives_free(txt);
   }
 
   if (rfx->status==RFX_STATUS_WEED&&rfx->is_template) is_defaults=TRUE;

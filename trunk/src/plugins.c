@@ -893,7 +893,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   pversion=(tmpvpp->version)();
 
-  title=lives_strdup_printf("LiVES: - %s",pversion);
+  title=lives_strdup_printf("%s",pversion);
 
   vppa->dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
   lives_free(title);
@@ -1458,8 +1458,9 @@ void vid_playback_plugin_exit(void) {
   mainw->stream_ticks=-1;
 
   if (mainw->playing_file>-1&&mainw->fs&&mainw->sep_win) lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
-  if (mainw->play_window!=NULL)
-    lives_window_set_title(LIVES_WINDOW(mainw->play_window),_("LiVES: - Play Window"));
+  if (mainw->play_window!=NULL) {
+    play_window_set_title();
+  }
 }
 
 
@@ -2584,7 +2585,7 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   decoder_plugin=mainw->decoder_list;
 
-  dialog = lives_standard_dialog_new(_("LiVES: - Decoder Plugins"),FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
+  dialog = lives_standard_dialog_new(_("Decoder Plugins"),FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
 
   if (prefs->show_gui) {
     if (prefsw!=NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(prefsw->prefs_dialog));

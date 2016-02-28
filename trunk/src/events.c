@@ -2115,11 +2115,11 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   LiVESWidget *cancelbutton;
   LiVESSList *radiobutton_group = NULL;
   LiVESAccelGroup *accel_group;
-
+  
   render_choice=RENDER_CHOICE_PREVIEW;
 
-  e_rec_dialog = lives_standard_dialog_new(_("LiVES: - Events recorded"),FALSE,-1,-1);
-
+  e_rec_dialog = lives_standard_dialog_new(_("Events Recorded"),FALSE,-1,-1);
+  
   if (prefs->show_gui) lives_window_set_transient_for(LIVES_WINDOW(e_rec_dialog),LIVES_WINDOW(mainw->LiVES));
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(e_rec_dialog));
@@ -4814,8 +4814,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   winsize_h=scr_width-SCR_WIDTH_SAFETY;
   winsize_v=scr_height-SCR_HEIGHT_SAFETY;
 
-  event_dialog = lives_standard_dialog_new(_("LiVES: Event list"),FALSE,winsize_h,winsize_v);
-
+  event_dialog = lives_standard_dialog_new(_("Event List"),FALSE,winsize_h,winsize_v);
+  
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(event_dialog), accel_group);
 
@@ -5339,9 +5339,9 @@ render_details *create_render_details(int type) {
 
 
   if (type==3||type==4) {
-    title=lives_strdup(_("LiVES: Multitrack details"));
-  } else if (type==1) title=lives_strdup(_("LiVES: Encoding details"));
-  else title=lives_strdup(_("LiVES: New clip details"));
+    title=lives_strdup(_("Multitrack Details"));
+  } else if (type==1) title=lives_strdup(_("Encoding Details"));
+  else title=lives_strdup(_("New Clip Details"));
 
   height=scrh-SCR_HEIGHT_SAFETY;
   width=scrw-SCR_WIDTH_SAFETY;

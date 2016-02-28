@@ -1,6 +1,6 @@
 // resample.c
 // LiVES
-// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1212,13 +1212,13 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     char *title=NULL;
 
     if (type==1) {
-      title=lives_strdup(_("LiVES: - Resample Audio"));
+      title=lives_strdup(_("Resample Audio"));
     } else if (type==2) {
-      title=lives_strdup(_("LiVES: - Insert Silence"));
+      title=lives_strdup(_("Insert Silence"));
     } else if (type==5||type==11||type==6||type==7) {
-      title=lives_strdup(_("LiVES: - New Clip Audio"));
+      title=lives_strdup(_("New Clip Audio"));
     } else if (type==9||type==8) {
-      title=lives_strdup(_("LiVES: - External Clip Settings"));
+      title=lives_strdup(_("External Clip Settings"));
     }
 
     resaudw->dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
@@ -1668,9 +1668,9 @@ void create_new_pb_speed(short type) {
   char *title=NULL;
 
   if (type==1) {
-    title=lives_strdup(_("LiVES: - Change playback speed"));
+    title=lives_strdup(_("Change Playback Speed"));
   } else {
-    title=lives_strdup(_("LiVES: - Resample Video"));
+    title=lives_strdup(_("Resample Video"));
   }
 
   new_pb_speed = lives_standard_dialog_new(title,FALSE,-1,-1);

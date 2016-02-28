@@ -6807,7 +6807,6 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char buff[PATH_MAX];
   LiVESWidget *fs_img;
   char *fnamex;
-  char *title,*xtrabit;
 
   if (mainw->current_file>-1&&!cfile->frames&&mainw->multitrack==NULL) return;
 
@@ -6926,13 +6925,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
         resize_play_window();
 
-        if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-        else xtrabit=lives_strdup("");
-        title=lives_strdup_printf(_("%sPlay Window%s"),LIVES_STD_TEXT,xtrabit);
-        if (mainw->play_window!=NULL)
-          lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-        lives_free(title);
-        lives_free(xtrabit);
+	play_window_set_title();
 
         if (mainw->opwx>-1) {
           //opwx and opwy were stored when we first switched to full screen
@@ -7062,16 +7055,8 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     if (mainw->sep_win) {
       if (prefs->sepwin_type==SEPWIN_TYPE_STICKY) {
-        char *title,*xtrabit;
         resize_play_window();
-
-        if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-        else xtrabit=lives_strdup("");
-        title=lives_strdup_printf(_("%sPlay Window%s"),LIVES_STD_TEXT,xtrabit);
-        if (mainw->play_window!=NULL)
-          lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-        lives_free(title);
-        lives_free(xtrabit);
+	play_window_set_title();
       } else {
         if (mainw->play_window!=NULL) {
           kill_play_window();
@@ -7257,9 +7242,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           mainw->pheight=mainw->vpp->fheight;
 
           if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) {
-	    char *tmp=lives_strdup_printf(_("%sStreaming"),LIVES_STD_TEXT);
-            lives_window_set_title(LIVES_WINDOW(mainw->play_window),tmp);
-	    lives_free(tmp);
+	    play_window_set_title();
             unfade_background();
           }
 
@@ -7357,7 +7340,6 @@ void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // type is SEPWIN_TYPE_STICKY (shown even when not playing)
   // or SEPWIN_TYPE_NON_STICKY (shown only when playing)
 
-  char *title,*xtrabit;
 
   if (prefs->sepwin_type==SEPWIN_TYPE_NON_STICKY) {
     prefs->sepwin_type=SEPWIN_TYPE_STICKY;
@@ -7367,12 +7349,7 @@ void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       }
     } else {
       if (!(mainw->play_window==NULL)) {
-        if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-        else xtrabit=lives_strdup("");
-        title=lives_strdup_printf(_("%sPlay Window%s"),LIVES_STD_TEXT,xtrabit);
-        lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-        lives_free(title);
-        lives_free(xtrabit);
+	play_window_set_title();
       }
     }
   } else {
@@ -7382,15 +7359,7 @@ void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         if (mainw->playing_file==-1) {
           kill_play_window();
         } else {
-          if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-          else xtrabit=lives_strdup("");
-          title=lives_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
-                                    ((mainw->multitrack==NULL?mainw->LiVES:
-                                      mainw->multitrack->window))),xtrabit);
-          if (mainw->play_window!=NULL)
-            lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
-          lives_free(title);
-          lives_free(xtrabit);
+	  play_window_set_title();
         }
       }
     }
@@ -7765,7 +7734,7 @@ void on_load_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // try to repaint the screen, as it may take a few seconds to get a directory listing
   lives_widget_context_update();
 
-  ttl=lives_strdup_printf(_("%sLoad Subtitles"),LIVES_STD_TEXT);
+  ttl=lives_strdup(_("Load Subtitles"));
 
   if (strlen(mainw->vid_load_dir)) {
     subfile=choose_file(mainw->vid_load_dir,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,ttl,NULL);
@@ -7904,8 +7873,6 @@ void on_load_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   char **filt=LIVES_AUDIO_LOAD_FILTER;
 
-  char *tmp;
-  
   int resp;
 
   if (mainw->multitrack!=NULL) {
@@ -7918,10 +7885,8 @@ void on_load_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   }
 
-  tmp=lives_strdup_printf(_("%sSelect Audio File"),LIVES_STD_TEXT);
-  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,tmp,filt,
+  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("Select Audio File"),filt,
                                    LIVES_FILE_SELECTION_AUDIO_ONLY);
-  lives_free(tmp);
 
   resp=lives_dialog_run(LIVES_DIALOG(chooser));
 
@@ -10033,8 +9998,6 @@ boolean frame_context(LiVESWidget *widget, LiVESXEventButton *event, livespointe
   LiVESWidget *save_frame_as;
   LiVESWidget *menu;
 
-  char *tmp;
-  
   int frame=0;
 
   if (!mainw->interactive) return FALSE;
@@ -10066,9 +10029,7 @@ boolean frame_context(LiVESWidget *widget, LiVESXEventButton *event, livespointe
   }
 
   menu=lives_menu_new();
-  tmp=lives_strdup_printf("%sSelected Frame",LIVES_STD_TEXT);
-  lives_menu_set_title(LIVES_MENU(menu),tmp);
-  lives_free(tmp);
+  lives_menu_set_title(LIVES_MENU(menu),_("Selected Frame"));
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -10802,10 +10763,8 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->xlays=NULL;
   }
 
-  tmp=lives_strdup_printf(_("%sAppend Audio File"),LIVES_STD_TEXT);
-  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,tmp,filt,
+  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("Append Audio File"),filt,
                                    LIVES_FILE_SELECTION_AUDIO_ONLY);
-  lives_free(tmp);
 
   resp=lives_dialog_run(LIVES_DIALOG(chooser));
 

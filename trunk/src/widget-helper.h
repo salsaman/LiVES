@@ -865,6 +865,7 @@ typedef struct {
   LiVESJustification justify; // justify for labels
   LiVESJustification default_justify;
   char **image_filter; /// NULL or NULL terminated list of image extensions which can be loaded
+  char *title_prefix; // Text which is prepended to window titles, etc.
 } widget_opts_t;
 
 
@@ -888,7 +889,8 @@ const widget_opts_t def_widget_opts = {
   NULL, // last_label
   LIVES_JUSTIFY_LEFT, // justify
   LIVES_JUSTIFY_LEFT, // default justify
-  NULL // image_filter
+  NULL, // image_filter
+  "" // title_prefix
 };
 
 #else

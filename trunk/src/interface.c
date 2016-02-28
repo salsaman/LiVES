@@ -166,7 +166,7 @@ xprocess *create_processing(const char *text) {
   char tmp_label[256];
 
   widget_opts.non_modal=TRUE;
-  procw->processing = lives_standard_dialog_new(_("LiVES: - Processing..."),FALSE,-1,-1);
+  procw->processing = lives_standard_dialog_new(_("Processing..."),FALSE,-1,-1);
   widget_opts.non_modal=FALSE;
 
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), accel_group);
@@ -347,9 +347,9 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   char *title;
 
   if (mainw->multitrack==NULL)
-    title=lives_strdup_printf(_("LiVES: - %s"),cfile->name);
+    title=lives_strdup(_(cfile->name));
   else
-    title=lives_strdup(_("LiVES: - Multitrack details"));
+    title=lives_strdup(_("Multitrack Details"));
 
   filew->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
   lives_free(title);
@@ -597,7 +597,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
   char *labeltext,*tmp,*tmp2;
 
-  dialog = lives_standard_dialog_new(_("LiVES: - Encoding options"),FALSE,-1,-1);
+  dialog = lives_standard_dialog_new(_("Encoding Options"),FALSE,-1,-1);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(mainw->LiVES));
@@ -706,18 +706,11 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   LiVESWidget *scrolledwindow;
   LiVESWidget *okbutton;
 
-  char *mytitle=lives_strdup_printf("%s%s",LIVES_STD_TEXT,title);
-  char *mytext=NULL;
-  char *tmp;
-
   boolean woat;
-
-  if (text!=NULL) mytext=lives_strdup(text);
 
   textwindow=(text_window *)lives_malloc(sizeof(text_window));
 
-  textwindow->dialog = lives_standard_dialog_new((tmp=lives_strconcat(LIVES_STD_TEXT,mytitle,NULL)),FALSE,DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
-  lives_free(tmp);
+  textwindow->dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(textwindow->dialog),mainw->multitrack==NULL?
@@ -745,11 +738,11 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
     lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
   }
 
-  if (mytext!=NULL) {
-    lives_text_view_set_text(LIVES_TEXT_VIEW(textwindow->textview), mytext, -1);
+  if (text!=NULL) {
+    lives_text_view_set_text(LIVES_TEXT_VIEW(textwindow->textview), text, -1);
   }
 
-  if (mytext!=NULL||mainw->iochan!=NULL) {
+  if (text!=NULL||mainw->iochan!=NULL) {
     LiVESWidget *savebutton;
 
     okbutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
@@ -768,9 +761,6 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
                          textwindow);
 
   }
-
-  if (mytitle!=NULL) lives_free(mytitle);
-  if (mytext!=NULL) lives_free(mytext);
 
   if (prefs->show_gui)
     lives_widget_show_all(textwindow->dialog);
@@ -799,7 +789,7 @@ _insertw *create_insert_dialog(void) {
 
   _insertw *insertw=(_insertw *)(lives_malloc(sizeof(_insertw)));
 
-  insertw->insert_dialog = lives_standard_dialog_new(_("LiVES: - Insert"),FALSE,-1,-1);
+  insertw->insert_dialog = lives_standard_dialog_new(_("Insert"),FALSE,-1,-1);
 
   lives_window_add_accel_group(LIVES_WINDOW(insertw->insert_dialog), accel_group);
 
@@ -963,7 +953,7 @@ LiVESWidget *create_opensel_dialog(void) {
   boolean no_gui=widget_opts.no_gui;
 
   widget_opts.no_gui=TRUE; // work around bugs in gtk+
-  opensel_dialog = lives_standard_dialog_new(_("LiVES: - Open Selection"),FALSE,-1,-1);
+  opensel_dialog = lives_standard_dialog_new(_("Open Selection"),FALSE,-1,-1);
   widget_opts.no_gui=no_gui;
 
   if (prefs->show_gui) {
@@ -1062,9 +1052,9 @@ _entryw *create_location_dialog(int type) {
   char *title,*tmp,*tmp2;
 
   if (type==1)
-    title=lives_strdup(_("LiVES: - Open Location"));
+    title=lives_strdup(_("Open Location"));
   else
-    title=lives_strdup(_("LiVES: - Open Youtube Clip"));
+    title=lives_strdup(_("Open Youtube Clip"));
 
   locw->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
 
@@ -1223,17 +1213,17 @@ _entryw *create_rename_dialog(int type) {
   renamew->setlist=NULL;
 
   if (type==1) {
-    title=lives_strdup(_("LiVES: - Rename Clip"));
+    title=lives_strdup(_("Rename Clip"));
   } else if (type==2||type==4||type==5) {
-    title=lives_strdup(_("LiVES: - Enter Set Name to Save as"));
+    title=lives_strdup(_("Enter Set Name to Save as"));
   } else if (type==3) {
-    title=lives_strdup(_("LiVES: - Enter a Set Name to Reload"));
+    title=lives_strdup(_("Enter a Set Name to Reload"));
   } else if (type==6) {
-    title=lives_strdup(_("LiVES: - Choose a Working Directory"));
+    title=lives_strdup(_("Choose a Working Directory"));
   } else if (type==7) {
-    title=lives_strdup(_("LiVES: - Rename Current Track"));
+    title=lives_strdup(_("Rename Current Track"));
   } else if (type==8) {
-    title=lives_strdup(_("LiVES: - Enter a name for your theme"));
+    title=lives_strdup(_("Enter a name for your theme"));
   }
 
   renamew->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
@@ -1456,7 +1446,7 @@ LiVESWidget *create_combo_dialog(int type, livespointer user_data) {
   LiVESList *list=(LiVESList *)user_data;
 
   if (type==1) {
-    title=lives_strdup(_("LiVES:- Select input device"));
+    title=lives_strdup(_("Select input device"));
   }
 
   combo_dialog = lives_standard_dialog_new(title,TRUE,-1,-1);
@@ -1536,15 +1526,15 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
 
   if (type==0) {
-    title=lives_strdup(_("LiVES:- Load CD Track"));
+    title=lives_strdup(_("Load CD Track"));
   } else if (type==1) {
-    title=lives_strdup(_("LiVES:- Select DVD Title/Chapter"));
+    title=lives_strdup(_("Select DVD Title/Chapter"));
   } else if (type==2) {
-    title=lives_strdup(_("LiVES:- Select VCD Title"));
+    title=lives_strdup(_("Select VCD Title"));
   } else if (type==3) {
-    title=lives_strdup(_("LiVES:- Change Maximum Visible Tracks"));
+    title=lives_strdup(_("Change Maximum Visible Tracks"));
   } else {
-    title=lives_strdup(_("LiVES:- Device details"));
+    title=lives_strdup(_("Device details"));
   }
 
   cd_dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
@@ -1830,9 +1820,9 @@ aud_dialog_t *create_audfade_dialog(int type) {
   aud_dialog_t *audd=(aud_dialog_t *)lives_malloc(sizeof(aud_dialog_t));
 
   if (type==0) {
-    title=lives_strdup(_("LiVES:- Fade Audio In"));
+    title=lives_strdup(_("Fade Audio In"));
   } else {
-    title=lives_strdup(_("LiVES:- Fade Audio Out"));
+    title=lives_strdup(_("Fade Audio Out"));
   }
 
   audd->dialog = lives_standard_dialog_new(title,TRUE,-1,-1);
@@ -1921,7 +1911,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
   _commentsw *commentsw=(_commentsw *)(lives_malloc(sizeof(_commentsw)));
 
-  commentsw->comments_dialog = lives_standard_dialog_new(_("LiVES: - File Comments (optional)"),TRUE,-1,-1);
+  commentsw->comments_dialog = lives_standard_dialog_new(_("File Comments (Optional)"),TRUE,-1,-1);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(commentsw->comments_dialog),LIVES_WINDOW(mainw->LiVES));
@@ -2098,18 +2088,16 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   int response;
   register int i;
 
-
   if (title==NULL) {
     if (act==LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE) {
-      mytitle=lives_strdup(_("LiVES: - choose a device"));
+      mytitle=lives_strdup_printf(_("%sChoose a Device"),widget_opts.title_prefix);
       act=LIVES_FILE_CHOOSER_ACTION_OPEN;
     } else if (act==LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
-      mytitle=lives_strdup(_("LiVES: - choose a directory"));
+      mytitle=lives_strdup_printf(_("%sChoose a Directory"),widget_opts.title_prefix);
     } else {
-      mytitle=lives_strdup(_("LiVES: - choose a file"));
+      mytitle=lives_strdup_printf(_("%sChoose a File"),widget_opts.title_prefix);
     }
-  } else mytitle=lives_strdup(title);
-
+  } else mytitle=lives_strdup_printf("%s%s",widget_opts.title_prefix,title);
 
 
 #ifdef GUI_GTK
@@ -2386,7 +2374,7 @@ _entryw *create_cds_dialog(int type) {
 
   cdsw->warn_checkbutton=NULL;
 
-  cdsw->dialog = lives_standard_dialog_new(_("LiVES: - Cancel/Discard/Save"),FALSE,-1,-1);
+  cdsw->dialog = lives_standard_dialog_new(_("Cancel/Discard/Save"),FALSE,-1,-1);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(cdsw->dialog), accel_group);
@@ -2530,7 +2518,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   char *tmp,*tmp2;
 
-  dialog = lives_standard_dialog_new(_("LiVES: - Disk Recovery Options"),FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
+  dialog = lives_standard_dialog_new(_("Disk Recovery Options"),FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(mainw->LiVES));

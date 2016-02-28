@@ -1165,10 +1165,10 @@ void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
   frame=LIVES_POINTER_TO_INT(user_data);
 
   if (frame>0)
-    ttl=lives_strdup_printf(_("LiVES: Save Frame %d as..."),frame);
+    ttl=lives_strdup_printf(_("Save Frame %d"),frame);
 
   else
-    ttl=lives_strdup(_("LiVES: Save Frame as..."));
+    ttl=lives_strdup(_("Save Frame"));
 
 
   filename=choose_file(strlen(mainw->image_dir)?mainw->image_dir:NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,ttl,NULL);
@@ -1302,7 +1302,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   }
 
   if (filename==NULL) {
-    char *ttl=lives_strdup(_("LiVES: Save Clip as..."));
+    char *ttl=lives_strdup(_("Save Clip"));
     do {
       n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,ttl,hbox);
       if (n_file_name==NULL) return;
@@ -2445,15 +2445,8 @@ void play_file(void) {
         }
 
         if (mainw->multitrack==NULL||mainw->fs) {
-          char *xtrabit,*title;
           resize_play_window();
-          if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-          else xtrabit=lives_strdup("");
-          title=lives_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-          if (mainw->play_window!=NULL)
-            lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-          lives_free(title);
-          lives_free(xtrabit);
+	  play_window_set_title();
         }
 
         // needed
@@ -2478,17 +2471,7 @@ void play_file(void) {
     if (mainw->play_window!=NULL) {
       hide_cursor(lives_widget_get_xwindow(mainw->play_window));
       lives_widget_set_app_paintable(mainw->play_window,TRUE);
-      if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->fs)
-        lives_window_set_title(LIVES_WINDOW(mainw->play_window),_("LiVES: - Streaming"));
-      else {
-        char *title,*xtrabit;
-        if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-        else xtrabit=lives_strdup("");
-        title=lives_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-        lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-        lives_free(title);
-        lives_free(xtrabit);
-      }
+      play_window_set_title();
     }
 
     if (!mainw->foreign&&!mainw->sep_win) {

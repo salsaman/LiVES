@@ -160,6 +160,8 @@ static void add_clear_ds_adv(LiVESBox *box) {
 // the type of message box here is with 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/CANCEL/RETRY)
 // if a single OK button is needed, use create_info_error_dialog() in inteface.c instead
 
+
+
 LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESWindow *transient,
                                    int warn_mask_number, boolean is_blocking) {
   LiVESWidget *dialog;
@@ -169,7 +171,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   LiVESWidget *okbutton=NULL;
   LiVESWidget *abortbutton=NULL;
 
-  LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
+  LiVESAccelGroup *accel_group=NULL;
 
   char *textx,*form_text,*pad,*mytext;
 
@@ -233,6 +235,11 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_YES);
     break;
 
+  case LIVES_DIALOG_QUESTION:
+    dialog = lives_message_dialog_new(transient,(LiVESDialogFlags)0,LIVES_MESSAGE_QUESTION,LIVES_BUTTONS_NONE,NULL);
+    // caller will set title and buttons
+    break;
+
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
     dialog = lives_message_dialog_new(transient,(LiVESDialogFlags)0,LIVES_MESSAGE_ERROR,LIVES_BUTTONS_NONE,NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("File Error"));
@@ -251,13 +258,11 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   lives_window_set_default_size(LIVES_WINDOW(dialog), MIN_MSGBOX_WIDTH, -1);
 
-  lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
 
   if (widget_opts.apply_theme&&(palette->style&STYLE_1)) {
     lives_dialog_set_has_separator(LIVES_DIALOG(dialog),FALSE);
     lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
-
 
   lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
   lives_window_set_resizable(LIVES_WINDOW(dialog), FALSE);
@@ -315,16 +320,23 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
                          NULL);
   }
 
-  if (cancelbutton != NULL) {
+  if (okbutton!=NULL||cancelbutton!=NULL) {
+    accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
+    lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
+  }
+  
+  if (cancelbutton!=NULL) {
     lives_widget_set_can_focus(cancelbutton,TRUE);
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
   }
 
-  lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                               LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
-  if (mainw->iochan==NULL) {
+  if (okbutton!=NULL) {
+    lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+				 LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  }
+  
+  if (mainw->iochan==NULL&&okbutton!=NULL) {
     lives_widget_set_can_focus_and_default(okbutton);
     lives_widget_grab_default(okbutton);
     lives_widget_grab_focus(okbutton);
@@ -345,6 +357,12 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   return dialog;
 }
 
+
+LIVES_INLINE LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *parent) {
+  LiVESWidget *dialog=create_message_dialog(LIVES_DIALOG_QUESTION,text,parent,0,TRUE);
+  lives_window_set_title(LIVES_WINDOW(dialog),title);
+  return dialog;
+}
 
 
 boolean do_warning_dialog(const char *text) {

@@ -5550,7 +5550,10 @@ void mt_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 static void set_mt_title(lives_mt *mt) {
   char *wtxt=lives_strdup_printf(_("LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"),LiVES_VERSION,cfile->hsize,cfile->vsize,cfile->bpp,
                                  cfile->fps);
+  char *oldtit=widget_opts.title_prefix;
+  widget_opts.title_prefix="";
   lives_window_set_title(LIVES_WINDOW(mt->window), wtxt);
+  widget_opts.title_prefix=oldtit;
   lives_free(wtxt);
 }
 

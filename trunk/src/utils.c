@@ -144,7 +144,21 @@ LIVES_INLINE int sidhash(char *strsid) {
 #endif
 
 
+LIVES_INLINE int lives_open3(const char *pathname, int flags, mode_t mode) {
+  int fd=open(pathname,flags,mode);
+#ifdef IS_MINGW
+  if (fd>=0) setmode(fd,O_BINARY);
+#endif
+  return fd;
+}
 
+LIVES_INLINE int lives_open2(const char *pathname, int flags) {
+  int fd=open(pathname,flags);
+#ifdef IS_MINGW
+  if (fd>=0) setmode(fd,O_BINARY);
+#endif
+  return fd;
+}
 
 
 LIVES_INLINE int lives_getuid(void) {
@@ -550,7 +564,7 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
 
 static int lives_open_real_buffered(const char *pathname, int flags, int mode, boolean isread) {
   lives_file_buffer_t *fbuff;
-  int fd=open(pathname,flags,mode);
+  int fd=lives_open3(pathname,flags,mode);
   if (fd>=0) {
     fbuff=(lives_file_buffer_t *)lives_malloc(sizeof(lives_file_buffer_t));
     fbuff->fd=fd;
@@ -2355,7 +2369,7 @@ void get_dirname(char *filename) {
   // get directory name from a file
   //filename should point to char[PATH_MAX]
 
-  lives_snprintf(filename,PATH_MAX,"%s%s",(tmp=lives_path_get_dirname(filename)),LIVES_DIR_SEPARATOR_S);
+  lives_snprintf(filename,PATH_MAX,"%s%s",(tmp=lives_path_get_dirname(filename)),LIVES_DIR_SEP);
   if (!strcmp(tmp,".")) {
     char *tmp1=lives_get_current_dir(),*tmp2=lives_build_filename(tmp1,filename+2,NULL);
     lives_free(tmp1);
@@ -2425,10 +2439,10 @@ boolean ensure_isdir(char *fname) {
   size_t offs=slen-1;
   char *tmp;
 
-  while (offs>=0&&!strcmp(fname+offs,LIVES_DIR_SEPARATOR_S)) offs--;
+  while (offs>=0&&!strcmp(fname+offs,LIVES_DIR_SEP)) offs--;
   if (offs==slen-2) return FALSE;
   memset(fname+offs+1,0,1);
-  tmp=lives_strdup_printf("%s%s",fname,LIVES_DIR_SEPARATOR_S);
+  tmp=lives_strdup_printf("%s%s",fname,LIVES_DIR_SEP);
   lives_snprintf(fname,PATH_MAX,"%s",tmp);
   lives_free(tmp);
   return TRUE;
@@ -3967,6 +3981,72 @@ int lives_echo(const char *text, const char *to, boolean append) {
   lives_free(com);
   return retval;
 }
+
+
+
+void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
+  char *com;
+#ifndef IS_MINGW
+  if (kill_parent)
+    com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,dirname);
+  else
+    com=lives_strdup_printf("%s stopsubsubs \"%s\" 2>/dev/null",prefs->backend_sync,dirname);
+  lives_system(com,TRUE);
+#else
+  // get pid from backend
+  FILE *rfile;
+  ssize_t rlen;
+  char val[16];
+  int pid;
+  com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,dirname);
+  rfile=popen(com,"r");
+  rlen=fread(val,1,16,rfile);
+  pclose(rfile);
+  memset(val+rlen,0,1);
+  if (strcmp(val)," ") {
+    pid=atoi(val);
+    lives_win32_kill_subprocesses(pid,kill_parent);
+  }
+#endif
+
+  lives_free(com);
+}
+
+
+
+
+void lives_suspend_resume_process(const char *dirname, boolean suspend) {
+  char *com;
+#ifndef IS_MINGW
+  if (!suspend)
+    com=lives_strdup_printf("%s stopsubsub \"%s\" SIGCONT 2>/dev/null",prefs->backend_sync,dirname);
+  else
+    com=lives_strdup_printf("%s stopsubsub \"%s\" SIGTSTP 2>/dev/null",prefs->backend_sync,dirname);
+  lives_system(com,TRUE);
+#else
+  FILE *rfile;
+  ssize_t rlen;
+  char val[16];
+
+  // get pid from backend
+  com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,dirname);
+  rfile=popen(com,"r");
+  rlen=fread(val,1,16,rfile);
+  pclose(rfile);
+  memset(val+rlen,0,1);
+  pid=atoi(val);
+
+  lives_win32_suspend_resume_process(pid,suspend);
+#endif
+  lives_free(com);
+
+  com=lives_strdup_printf("%s resume \"%s\"",prefs->backend_sync,dirname);
+  lives_system(com,FALSE);
+  lives_free(com);
+}
+
+
+
 
 
 boolean check_dir_access(const char *dir) {

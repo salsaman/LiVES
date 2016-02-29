@@ -223,16 +223,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         if (pulsed->is_opening) filename=lives_build_filename(prefs->tmpdir,mainw->files[new_file]->handle,
                                            "audiodump.pcm",NULL);
         else filename=lives_build_filename(prefs->tmpdir,mainw->files[new_file]->handle,"audio",NULL);
-        pulsed->fd=open(filename,O_RDONLY);
+        pulsed->fd=lives_open2(filename,O_RDONLY);
         if (pulsed->fd==-1) {
           // dont show gui errors - we are running in realtime thread
           LIVES_ERROR("pulsed: error opening");
           LIVES_ERROR(filename);
           pulsed->playing_file=-1;
         } else {
-#ifdef IS_MINGW
-          setmode(pulsed->fd, O_BINARY);
-#endif
           pulsed->seek_pos=0;
           pulsed->playing_file=new_file;
           pulsed->audio_ticks=mainw->currticks;

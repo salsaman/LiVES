@@ -119,26 +119,7 @@ void lives_exit(int signum) {
     // stop any background processing for the current clip
     if (mainw->current_file>-1) {
       if (cfile->handle!=NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-#ifndef IS_MINGW
-        com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
-        lives_system(com,TRUE);
-#else
-        // get pid from backend
-        FILE *rfile;
-        ssize_t rlen;
-        char val[16];
-        int pid;
-        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-        rfile=popen(com,"r");
-        rlen=fread(val,1,16,rfile);
-        pclose(rfile);
-        memset(val+rlen,0,1);
-        pid=atoi(val);
-
-        lives_win32_kill_subprocesses(pid,TRUE);
-#endif
-        lives_free(com);
-
+        lives_kill_subprocesses(cfile->handle,TRUE);
       }
     }
 
@@ -266,13 +247,6 @@ void lives_exit(int signum) {
             (mainw->multitrack!=NULL&&i==mainw->multitrack->render_file)) {
           // close all open clips, except for ones we want to retain
 
-#ifdef IS_MINGW
-          FILE *rfile;
-          ssize_t rlen;
-          char val[16];
-          int pid;
-#endif
-
 #ifdef HAVE_YUV4MPEG
           if (mainw->files[i]->clip_type==CLIP_TYPE_YUV4MPEG) {
             lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
@@ -287,16 +261,8 @@ void lives_exit(int signum) {
 #endif
           threaded_dialog_spin(0.);
 #ifdef IS_MINGW
-          // kill any active processes: for other OSes the backend does this
-          // get pid from backend
-          com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-          rfile=popen(com,"r");
-          rlen=fread(val,1,16,rfile);
-          pclose(rfile);
-          memset(val+rlen,0,1);
-          pid=atoi(val);
-
-          lives_win32_kill_subprocesses(pid,TRUE);
+          // for other OS the backend does this
+          lives_kill_subprocesses(mainw->files[i]->handle,TRUE);
 #endif
           com=lives_strdup_printf("%s close \"%s\"",prefs->backend,mainw->files[i]->handle);
           lives_system(com,FALSE);
@@ -604,20 +570,11 @@ void on_filesel_complex_clicked(LiVESButton *button, LiVESEntry *entry) {
 
   on_filesel_button_clicked(NULL,entry);
 
-  // TODO - dirsep
-#ifndef IS_MINGW
-  if (strcmp(file_name+strlen(file_name)-1,"/")) {
-    lives_strappend(file_name,PATH_MAX,"/");
+  if (strcmp(file_name+strlen(file_name)-1,LIVES_DIR_SEP)) {
+    lives_strappend(file_name,PATH_MAX,LIVES_DIR_SEP);
   }
-  if (strlen(file_name)<chklen+2||strncmp(file_name+strlen(file_name)-chklen-2,"/"LIVES_TMP_NAME"/",chklen-2))
-    lives_strappend(file_name,PATH_MAX,LIVES_TMP_NAME"/");
-#else
-  if (strcmp(file_name+strlen(file_name)-1,"\\")) {
-    lives_strappend(file_name,PATH_MAX,"\\");
-  }
-  if (strlen(file_name)<chklen-2||strncmp(file_name+strlen(file_name)-chklen-2,"\\"LIVES_TMP_NAME"\\",chklen-2))
-    lives_strappend(file_name,PATH_MAX,LIVES_TMP_NAME"\\");
-#endif
+  if (strlen(file_name)<chklen+2||strncmp(file_name+strlen(file_name)-chklen-2,LIVES_DIR_SEP LIVES_TMP_NAME LIVES_DIR_SEP,chklen-2))
+    lives_strappend(file_name,PATH_MAX,LIVES_TMP_NAME LIVES_DIR_SEP);
 
   lives_entry_set_text(entry,file_name);
 
@@ -925,20 +882,7 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
     } else {
       if (current_file==-1) {
 #ifdef IS_MINGW
-        // kill any active processes: for other OSes the backend does this
-        // get pid from backend
-        FILE *rfile;
-        ssize_t rlen;
-        char val[16];
-        int pid;
-        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-        rfile=popen(com,"r");
-        rlen=fread(val,1,16,rfile);
-        pclose(rfile);
-        memset(val+rlen,0,1);
-        pid=atoi(val);
-
-        lives_win32_kill_subprocesses(pid,TRUE);
+        lives_kill_subprocesses(cfile->handle,TRUE);
 #endif
         // we made a temp file so close it
         com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
@@ -1004,14 +948,6 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
 
 void on_stop_clicked(LiVESMenuItem *menuitem, livespointer user_data) {
   // 'enough' button for open, open location, and record audio
-  char *com;
-
-#ifdef IS_MINGW
-  FILE *rfile;
-  ssize_t rlen;
-  char val[16];
-  int pid;
-#endif
 
 #ifdef ENABLE_JACK
   if (mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use) {
@@ -1026,21 +962,7 @@ void on_stop_clicked(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 #endif
 
-#ifndef IS_MINGW
-  com=lives_strdup_printf("%s stopsubsubs \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
-  lives_system(com,TRUE);
-#else
-  // get pid from backend
-  com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-  rfile=popen(com,"r");
-  rlen=fread(val,1,16,rfile);
-  pclose(rfile);
-  memset(val+rlen,0,1);
-  pid=atoi(val);
-
-  lives_win32_kill_subprocesses(pid,FALSE);
-#endif
-  lives_free(com);
+  lives_kill_subprocesses(cfile->handle,FALSE);
 
   if (mainw->current_file>-1&&cfile!=NULL&&cfile->proc_ptr!=NULL) {
     lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
@@ -1049,34 +971,10 @@ void on_stop_clicked(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
   }
 
-
   // resume to allow return
   if (mainw->effects_paused) {
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s stopsubsub \"%s\" SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
-    lives_system(com,TRUE);
-#else
-    FILE *rfile;
-    ssize_t rlen;
-    char val[16];
-
-    // get pid from backend
-    com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-    rfile=popen(com,"r");
-    rlen=fread(val,1,16,rfile);
-    pclose(rfile);
-    memset(val+rlen,0,1);
-    pid=atoi(val);
-
-    lives_win32_suspend_resume_process(pid,FALSE);
-#endif
-    lives_free(com);
-
-    com=lives_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
-    lives_system(com,FALSE);
-    lives_free(com);
+    lives_suspend_resume_process(cfile->handle,FALSE);
   }
-
 
 }
 
@@ -1309,7 +1207,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  info_fd=open(info_file,O_RDONLY);
+  info_fd=lives_open2(info_file,O_RDONLY);
 
   if (info_fd>=0&&((bytes=read(info_fd,mainw->msg,256))>0)) {
     close(info_fd);
@@ -1333,7 +1231,9 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (lives_file_test(set_dir,LIVES_FILE_TEST_IS_DIR)) {
     msg=lives_strdup_printf(
-          _("\nA set called %s already exists.\nIn order to import this project, you must rename or delete the existing set.\nYou can do this by File|Reload Set, and giving the set name\n%s\nthen File|Close/Save all Clips and provide a new set name or discard it.\nOnce you have done this, you will be able to import the new project.\n"),
+          _("\nA set called %s already exists.\nIn order to import this project, you must rename or delete the existing set.\n"
+            "You can do this by File|Reload Set, and giving the set name\n%s\nthen File|Close/Save all Clips and provide a new set name or discard it.\n"
+            "Once you have done this, you will be able to import the new project.\n"),
           new_set,new_set);
     do_blocking_error_dialog(msg);
     lives_free(msg);
@@ -1521,29 +1421,16 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   sepimg_ext=get_extension(mainw->sepimg_path);
   frameimg_ext=get_extension(mainw->frameblank_path);
 
-#ifndef IS_MINGW
-  dfile=lives_strdup_printf("%s/theme%d/",prefs->tmpdir,capable->mainpid);
-  themefile=lives_strdup_printf("%s/header.theme",dfile);
+  dfile=lives_strdup_printf("%s"LIVES_DIR_SEP"theme%d"LIVES_DIR_SEP,prefs->tmpdir,capable->mainpid);
+  themefile=lives_strdup_printf("%s"LIVES_DIR_SEP"header.theme",dfile);
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3,0,0)
   lives_free(themefile);
-  themefile=lives_strdup_printf("%s/header.theme_gtk2",dfile);
+  themefile=lives_strdup_printf("%s"LIVES_DIR_SEP"header.theme_gtk2",dfile);
 #endif
 #endif
-  sepimg=lives_strdup_printf("%s/main.%s",dfile,sepimg_ext);
-  frameimg=lives_strdup_printf("%s/frame.%s",dfile,frameimg_ext);
-#else
-  dfile=lives_strdup_printf("%s\\theme%d\\",prefs->tmpdir,capable->mainpid);
-  themefile=lives_strdup_printf("%s\\header.theme",dfile);
-#ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
-  lives_free(themefile);
-  themefile=lives_strdup_printf("%s\\header.theme_gtk2",dfile);
-#endif
-#endif
-  sepimg=lives_strdup_printf("%s\\main.%s",dfile,sepimg_ext);
-  frameimg=lives_strdup_printf("%s\\frame.%s",dfile,frameimg_ext);
-#endif
+  sepimg=lives_strdup_printf("%s"LIVES_DIR_SEP"main.%s",dfile,sepimg_ext);
+  frameimg=lives_strdup_printf("%s"LIVES_DIR_SEP"frame.%s",dfile,frameimg_ext);
 
   lives_free(sepimg_ext);
   lives_free(frameimg_ext);
@@ -2669,19 +2556,7 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!do_progress_dialog(TRUE,TRUE,_("Copying to the clipboard"))) {
 #ifdef IS_MINGW
     // kill any active processes: for other OSes the backend does this
-    // get pid from backend
-    FILE *rfile;
-    ssize_t rlen;
-    char val[16];
-    int pid;
-    com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-    rfile=popen(com,"r");
-    rlen=fread(val,1,16,rfile);
-    pclose(rfile);
-    memset(val+rlen,0,1);
-    pid=atoi(val);
-
-    lives_win32_kill_subprocesses(pid,TRUE);
+    lives_kill_subprocesses(cfile->handle,TRUE);
 #endif
 
     // close clipboard, it is invalid
@@ -4839,13 +4714,8 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             // move the files
             mainw->com_failed=FALSE;
 
-#ifndef IS_MINGW
-            oldval=lives_strdup_printf("%s/%s",prefs->tmpdir,mainw->files[i]->handle);
-            newval=lives_strdup_printf("%s/%s",prefs->tmpdir,new_handle);
-#else
-            oldval=lives_strdup_printf("%s\\%s",prefs->tmpdir,mainw->files[i]->handle);
-            newval=lives_strdup_printf("%s\\%s",prefs->tmpdir,new_handle);
-#endif
+            oldval=lives_strdup_printf("%s"LIVES_DIR_SEP"%s",prefs->tmpdir,mainw->files[i]->handle);
+            newval=lives_strdup_printf("%s"LIVES_DIR_SEP"%s",prefs->tmpdir,new_handle);
 
             lives_mv(oldval,newval);
             lives_free(oldval);
@@ -4860,11 +4730,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             got_new_handle=TRUE;
 
             lives_snprintf(mainw->files[i]->handle,256,"%s",new_handle);
-#ifndef IS_MINGW
-            dfile=lives_build_filename(prefs->tmpdir,mainw->files[i]->handle,".status",NULL);
-#else
-            dfile=lives_build_filename(prefs->tmpdir,mainw->files[i]->handle,"status",NULL);
-#endif
+            dfile=lives_build_filename(prefs->tmpdir,mainw->files[i]->handle,LIVES_STATUS_FILE_NAME,NULL);
             lives_snprintf(mainw->files[i]->info_file,PATH_MAX,"%s",dfile);
             lives_free(dfile);
           }
@@ -4900,7 +4766,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (got_new_handle&&!strlen(old_set)) migrate_layouts(NULL,mainw->set_name);
 
   if (strlen(old_set)&&strcmp(old_set,mainw->set_name)) {
-    layout_map_dir=lives_build_filename(prefs->tmpdir,old_set,"layouts",LIVES_DIR_SEPARATOR_S,NULL);
+    layout_map_dir=lives_build_filename(prefs->tmpdir,old_set,"layouts",LIVES_DIR_SEP,NULL);
     layout_map_file=lives_build_filename(layout_map_dir,"layout.map",NULL);
     // update details for layouts - needs_set, current_layout_map and affected_layout_map
     if (lives_file_test(layout_map_file,LIVES_FILE_TEST_EXISTS)) {
@@ -4944,7 +4810,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (!mainw->was_set&&!strcmp(old_set,mainw->set_name)) {
     // set name was set by export or save layout, now we need to update our layout map
-    layout_map_dir=lives_build_filename(prefs->tmpdir,old_set,"layouts",LIVES_DIR_SEPARATOR_S,NULL);
+    layout_map_dir=lives_build_filename(prefs->tmpdir,old_set,"layouts",LIVES_DIR_SEP,NULL);
     layout_map_file=lives_build_filename(layout_map_dir,"layout.map",NULL);
     if (lives_file_test(layout_map_file,LIVES_FILE_TEST_EXISTS)) save_layout_map(NULL,NULL,NULL,layout_map_dir);
     mainw->was_set=TRUE;
@@ -5229,11 +5095,7 @@ boolean reload_set(const char *set_name) {
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
       // lock the set
-#ifndef IS_MINGW
-      tfile=lives_strdup_printf("%s/%s/lock.%d",prefs->tmpdir,set_name,capable->mainpid);
-#else
-      tfile=lives_strdup_printf("%s\\%s\\lock.%d",prefs->tmpdir,set_name,capable->mainpid);
-#endif
+      tfile=lives_strdup_printf("%s"LIVES_DIR_SEP"%s"LIVES_DIR_SEP"lock.%d",prefs->tmpdir,set_name,capable->mainpid);
       lives_touch(tfile);
       lives_free(tfile);
     }
@@ -5941,27 +5803,9 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
   end_fs_preview();
 
   if (mainw->in_fs_preview) {
-
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s stopsubsub thm%d 2>/dev/null",prefs->backend_sync,pid);
-    lives_system(com,TRUE);
-#else
-    // get pid from backend
-    FILE *rfile;
-    ssize_t rlen;
-    char val[16];
-    int xpid;
-    com=lives_strdup_printf("%s get_pid_for_handle thm%d",prefs->backend_sync,pid);
-    rfile=popen(com,"r");
-    rlen=fread(val,1,16,rfile);
-    pclose(rfile);
-    memset(val+rlen,0,1);
-    xpid=atoi(val);
-    if (xpid!=0)
-      lives_win32_kill_subprocesses(xpid,TRUE);
-#endif
-    lives_free(com);
-
+    dfile=lives_strdup_printf("thm%d",pid);
+    lives_kill_subprocesses(dfile,TRUE);
+    lives_free(dfile);
     lives_widget_context_update();
   }
 
@@ -5979,12 +5823,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
   }
 
-
-#ifndef IS_MINGW
-  info_file=lives_strdup_printf("%s/thm%d/.status",prefs->tmpdir,capable->mainpid);
-#else
-  info_file=lives_strdup_printf("%s/thm%d/status",prefs->tmpdir,capable->mainpid);
-#endif
+  info_file=lives_strdup_printf("%s/thm%d/%s",prefs->tmpdir,capable->mainpid,LIVES_STATUS_FILE_NAME);
   lives_rm(info_file);
 
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
@@ -6089,19 +5928,10 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       return;
     }
 
-#ifndef IS_MINGW
-    dfile=lives_strdup_printf("%s/fsp%d/",prefs->tmpdir,capable->mainpid);
-#else
-    dfile=lives_strdup_printf("%s\\fsp%d\\",prefs->tmpdir,capable->mainpid);
-#endif
-
+    dfile=lives_strdup_printf("%s"LIVES_DIR_SEP"fsp%d"LIVES_DIR_SEP,prefs->tmpdir,capable->mainpid);
     lives_mkdir_with_parents(dfile,S_IRWXU);
 
-#ifndef IS_MINGW
-    info_file=lives_strdup_printf("%s.status",dfile);
-#else
-    info_file=lives_strdup_printf("%sstatus",dfile);
-#endif
+    info_file=lives_strdup_printf("%s%s",dfile,LIVES_STATUS_FILE_NAME);
 
     lives_free(dfile);
 
@@ -6475,25 +6305,10 @@ void end_fs_preview(void) {
   if (pixbuf!=NULL) lives_object_unref(pixbuf);
 
   if (mainw->in_fs_preview) {
-#ifndef IS_MINGW
-    com=lives_strdup_printf("%s stopsubsub fsp%d 2>/dev/null",prefs->backend_sync,capable->mainpid);
-    lives_system(com,TRUE);
-#else
-    // get pid from backend
-    FILE *rfile;
-    ssize_t rlen;
-    char val[16];
-    int pid;
-    com=lives_strdup_printf("%s get_pid_for_handle fsp%d",prefs->backend_sync,capable->mainpid);
-    rfile=popen(com,"r");
-    rlen=fread(val,1,16,rfile);
-    pclose(rfile);
-    memset(val+rlen,0,1);
-    pid=atoi(val);
+    char *tmp=lives_strdup_printf("fsp%d",capable->mainpid);
+    lives_kill_subprocesses(tmp,TRUE);
+    lives_free(tmp);
 
-    lives_win32_kill_subprocesses(pid,TRUE);
-#endif
-    lives_free(com);
     com=lives_strdup_printf("%s close fsp%d",prefs->backend,capable->mainpid);
     lives_system(com,TRUE);
     lives_free(com);
@@ -6589,9 +6404,13 @@ void on_cancel_opensel_clicked(LiVESButton  *button, livespointer user_data) {
 
 void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) {
   // Cancel/Keep from progress dialog
-  char *com=NULL;
-  uint32_t keep_frames=0;
   FILE *infofile;
+
+  char *com=NULL;
+
+  uint32_t keep_frames=0;
+
+  boolean killprocs=FALSE;
 
   if (cfile->opening&&mainw->effects_paused) {
     on_stop_clicked(NULL,NULL);
@@ -6619,11 +6438,7 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
       return;
     } else if (mainw->cancel_type==CANCEL_KILL) {
       // kill processes and subprocesses working on cfile
-#ifndef IS_MINGW
-      com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
-#else
-      com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-#endif
+      killprocs=TRUE;
     }
 
     if (!cfile->opening&&!mainw->internal_messaging) {
@@ -6631,26 +6446,8 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
       // otherwise, come here
 
       // kill off the background process
-      if (com!=NULL) {
-#ifndef IS_MINGW
-        lives_system(com,TRUE);
-#else
-        // get pid from backend
-        FILE *rfile;
-        ssize_t rlen;
-        char val[16];
-        int pid;
-
-        rfile=popen(com,"r");
-        rlen=fread(val,1,16,rfile);
-        pclose(rfile);
-        memset(val+rlen,0,1);
-        lives_free(com);
-        com=NULL;
-        pid=atoi(val);
-
-        lives_win32_kill_subprocesses(pid,TRUE);
-#endif
+      if (killprocs) {
+        lives_kill_subprocesses(cfile->handle,TRUE);
       }
 
       // resume for next time
@@ -6702,26 +6499,7 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
 
       lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
       if (!mainw->internal_messaging) {
-#ifndef IS_MINGW
-        com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
-        lives_system(com,TRUE);
-#else
-        // get pid from backend
-        FILE *rfile;
-        ssize_t rlen;
-        char val[16];
-        int pid;
-        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-        rfile=popen(com,"r");
-        rlen=fread(val,1,16,rfile);
-        pclose(rfile);
-        memset(val+rlen,0,1);
-        pid=atoi(val);
-
-        lives_win32_kill_subprocesses(pid,TRUE);
-#endif
-        lives_free(com);
-
+        lives_kill_subprocesses(cfile->handle,TRUE);
         com=lives_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
         lives_system(com,FALSE);
         lives_free(com);
@@ -6752,31 +6530,9 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
       // no frames there, nothing to keep
       d_print_cancelled();
 
-#ifndef IS_MINGW
-      com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
-#else
-      com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-#endif
+
       if (!mainw->internal_messaging&&!mainw->is_rendering) {
-
-#ifndef IS_MINGW
-        lives_system(com,TRUE);
-#else
-        // get pid from backend
-        FILE *rfile;
-        ssize_t rlen;
-        char val[16];
-        int pid;
-        rfile=popen(com,"r");
-        rlen=fread(val,1,16,rfile);
-        pclose(rfile);
-        memset(val+rlen,0,1);
-        pid=atoi(val);
-
-        lives_win32_kill_subprocesses(pid,TRUE);
-#endif
-        lives_free(com);
-
+        lives_kill_subprocesses(cfile->handle,TRUE);
         com=lives_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
         lives_system(com,FALSE);
       }
@@ -9271,35 +9027,13 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
 void on_effects_paused(LiVESButton *button, livespointer user_data) {
   char *com=NULL;
   int64_t xticks;
-#ifdef IS_MINGW
-  int pid;
-#endif
 
   if (mainw->iochan!=NULL||cfile->opening) {
     // pause during encoding (if we start using mainw->iochan for other things, this will
     // need changing...)
 
     if (!mainw->effects_paused) {
-#ifndef IS_MINGW
-      com=lives_strdup_printf("%s stopsubsub \"%s\" SIGTSTP 2>/dev/null",prefs->backend_sync,cfile->handle);
-      lives_system(com,TRUE);
-#else
-      FILE *rfile;
-      ssize_t rlen;
-      char val[16];
-
-      // get pid from backend
-      com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-      rfile=popen(com,"r");
-      rlen=fread(val,1,16,rfile);
-      pclose(rfile);
-      memset(val+rlen,0,1);
-      pid=atoi(val);
-
-      lives_win32_suspend_resume_process(pid,TRUE);
-#endif
-      lives_free(com);
-      com=NULL;
+      lives_suspend_resume_process(cfile->handle,TRUE);
 
       if (!cfile->opening) {
         lives_button_set_label(LIVES_BUTTON(button),_("Resume"));
@@ -9309,26 +9043,7 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
     }
 
     else {
-#ifndef IS_MINGW
-      com=lives_strdup_printf("%s stopsubsub \"%s\" SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
-      lives_system(com,TRUE);
-#else
-      FILE *rfile;
-      ssize_t rlen;
-      char val[16];
-
-      // get pid from backend
-      com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-      rfile=popen(com,"r");
-      rlen=fread(val,1,16,rfile);
-      pclose(rfile);
-      memset(val+rlen,0,1);
-      pid=atoi(val);
-
-      lives_win32_suspend_resume_process(pid,FALSE);
-#endif
-      lives_free(com);
-      com=NULL;
+      lives_suspend_resume_process(cfile->handle,FALSE);
 
       if (!cfile->opening) {
         lives_button_set_label(LIVES_BUTTON(button),_("Paus_e"));

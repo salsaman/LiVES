@@ -271,8 +271,6 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define LIVES_FILE_TEST_IS_DIR G_FILE_TEST_IS_DIR
 #define LIVES_FILE_TEST_IS_REGULAR G_FILE_TEST_IS_REGULAR
 
-#define LIVES_DIR_SEPARATOR_S G_DIR_SEPARATOR_S
-
 typedef GtkJustification LiVESJustification;
 
 #define LIVES_JUSTIFY_LEFT   GTK_JUSTIFY_LEFT

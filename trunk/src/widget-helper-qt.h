@@ -426,12 +426,6 @@ LIVES_INLINE char *lives_filename_from_utf8(const char *ostr, ssize_t len, size_
 }
 
 
-#ifndef IS_MINGW
-#define LIVES_DIR_SEPARATOR_S "/"
-#else
-#define LIVES_DIR_SEPARATOR_S "\\"
-#endif
-
 char *L2U8(const char *local_string) {
 #ifndef IS_MINGW
   QString qs = QString::fromLocal8Bit(local_string);

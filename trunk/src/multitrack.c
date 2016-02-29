@@ -757,9 +757,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
     fd=lives_creat_buffered(asave_file,DEF_FILE_PERMS);
     if (fd>=0) {
-#ifdef IS_MINGW
-      setmode(fd,O_BINARY);
-#endif
+
       add_markers(mt,mt->event_list,FALSE);
       do_threaded_dialog(_("Auto backup"),FALSE);
 
@@ -910,7 +908,7 @@ static void mt_load_recovery_layout(lives_mt *mt) {
   } else {
     // failed to load
     // keep the faulty layout for forensic purposes
-    char *uldir=lives_build_filename(prefs->tmpdir,"unrecoverable_layouts",LIVES_DIR_SEPARATOR_S,NULL);
+    char *uldir=lives_build_filename(prefs->tmpdir,"unrecoverable_layouts",LIVES_DIR_SEP,NULL);
     lives_mkdir_with_parents(uldir,S_IRWXU);
     lives_mv(eload_file,uldir);
     lives_mv(aload_file,uldir);
@@ -17876,7 +17874,7 @@ static float get_float_audio_val_at_time(int fnum, double secs, int chnum, int c
     // does not make sense to use buffer reads, as we may read very sparsely from the file
     if (afd!=-1) close(afd);
     filename=lives_build_filename(prefs->tmpdir,afile->handle,"audio",NULL);
-    afd=open(filename,O_RDONLY);
+    afd=lives_open2(filename,O_RDONLY);
     aofile=fnum;
   }
 
@@ -17885,10 +17883,6 @@ static float get_float_audio_val_at_time(int fnum, double secs, int chnum, int c
     mainw->read_failed=TRUE;
     return 0.;
   }
-
-#ifdef IS_MINGW
-  setmode(afd,O_BINARY);
-#endif
 
   apos+=afile->asampsize/8*chnum;
 
@@ -19087,7 +19081,7 @@ LiVESList *load_layout_map(void) {
 
   do {
     retval=0;
-    fd=open(lmap_name,O_RDONLY);
+    fd=lives_open2(lmap_name,O_RDONLY);
     if (fd<0) {
       retval=do_read_failed_error_s_with_retry(lmap_name,NULL,NULL);
     } else {
@@ -19551,7 +19545,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     set_new_set_name(mt);
   } else return FALSE;
 
-  esave_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",LIVES_DIR_SEPARATOR_S,NULL);
+  esave_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",LIVES_DIR_SEP,NULL);
   lives_mkdir_with_parents(esave_dir,S_IRWXU);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -19613,9 +19607,6 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     fd=lives_creat_buffered(esave_file,DEF_FILE_PERMS);
 
     if (fd>=0) {
-#ifdef IS_MINGW
-      setmode(fd,O_BINARY);
-#endif
       do_threaded_dialog(_("Saving layout"),FALSE);
 
       retval=save_event_list_inner(mt,fd,event_list,NULL);
@@ -21099,7 +21090,7 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
     return NULL;
   }
 
-  eload_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",LIVES_DIR_SEPARATOR_S,NULL);
+  eload_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",LIVES_DIR_SEP,NULL);
 
   mainw->com_failed=FALSE;
   lives_mkdir_with_parents(eload_dir,S_IRWXU);
@@ -21202,10 +21193,6 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
     return NULL;
   }
 
-#ifdef IS_MINGW
-  setmode(fd, O_BINARY);
-#endif
-
   event_list_free_undos(mt);
 
   if (mainw->event_list!=NULL) {
@@ -21292,9 +21279,6 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
           // resave with corrections/updates
           fd=lives_creat_buffered(eload_file,DEF_FILE_PERMS);
           if (fd>=0) {
-#ifdef IS_MINGW
-            setmode(fd,O_BINARY);
-#endif
             retval=save_event_list_inner(NULL,fd,event_list,NULL);
             lives_close_buffered(fd);
           }
@@ -21622,9 +21606,6 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
               retval2=0;
               fd=lives_creat_buffered((char *)map->data,DEF_FILE_PERMS);
               if (fd>=0) {
-#ifdef IS_MINGW
-                setmode(fd,O_BINARY);
-#endif
                 retval=save_event_list_inner(NULL,fd,event_list,NULL);
               }
               if (fd<0||!retval) {
@@ -21649,11 +21630,8 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
       if (lives_file_test(tmp,LIVES_FILE_TEST_EXISTS)) {
         // prevent duplication of layouts
         lives_free(tmp);
-#ifndef IS_MINGW
-        tmp=lives_strdup_printf("%s/%s/layouts/%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
-#else
-        tmp=lives_strdup_printf("%s\\%s\\layouts\\%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
-#endif
+        tmp=lives_strdup_printf("%s"LIVES_DIR_SEP"%s"LIVES_DIR_SEP"layouts"LIVES_DIR_SEP"%s-%s",
+                                prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
         lives_mv((const char *)map->data,tmp);
       }
       lives_free((livespointer)map->data);

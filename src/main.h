@@ -879,6 +879,7 @@ int do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWi
 LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESWindow *transient,
                                    int warn_mask_number, boolean is_blocking);
 
+LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *parent);
 
 void do_system_failed_error(const char *com, int retval, const char *addinfo);
 int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;

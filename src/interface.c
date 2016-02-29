@@ -1909,10 +1909,19 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
   LiVESWidget *hbox;
   LiVESWidget *buttond;
 
+  char *extrabit,*title;
+  
   _commentsw *commentsw=(_commentsw *)(lives_malloc(sizeof(_commentsw)));
 
-  commentsw->comments_dialog = lives_standard_dialog_new(_("File Comments (Optional)"),TRUE,-1,-1);
+  if (filename!=NULL) extrabit=lives_strdup(_(" (Optional)"));
+  else extrabit=lives_strdup("");
 
+  title=lives_strdup_printf(_("File Comments%s"),extrabit);
+  
+  commentsw->comments_dialog = lives_standard_dialog_new(title,TRUE,-1,-1);
+  lives_free(title);
+  lives_free(extrabit);
+  
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(commentsw->comments_dialog),LIVES_WINDOW(mainw->LiVES));
   }
@@ -1966,7 +1975,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
-  if (sfile!=NULL) {
+  if (filename!=NULL) {
     // options
     vbox = lives_vbox_new(FALSE, 0);
 
@@ -2366,58 +2375,51 @@ _entryw *create_cds_dialog(int type) {
   LiVESWidget *cancelbutton;
   LiVESWidget *discardbutton;
   LiVESWidget *savebutton;
-  LiVESWidget *label=NULL;
   LiVESWidget *hbox;
+
   LiVESAccelGroup *accel_group;
 
+  char *labeltext=NULL;
+  
   _entryw *cdsw=(_entryw *)(lives_malloc(sizeof(_entryw)));
 
   cdsw->warn_checkbutton=NULL;
 
-  cdsw->dialog = lives_standard_dialog_new(_("Cancel/Discard/Save"),FALSE,-1,-1);
-
-  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-  lives_window_add_accel_group(LIVES_WINDOW(cdsw->dialog), accel_group);
-
-  if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(cdsw->dialog),LIVES_WINDOW(mainw->LiVES));
-    else lives_window_set_transient_for(LIVES_WINDOW(cdsw->dialog),LIVES_WINDOW(mainw->multitrack->window));
-  }
-
-  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cdsw->dialog));
-
-  widget_opts.justify=LIVES_JUSTIFY_CENTER;
   if (type==0) {
     if (strlen(mainw->multitrack->layout_name)==0) {
-      label = lives_standard_label_new(
-                _("You are about to leave multitrack mode.\nThe current layout has not been saved.\nWhat would you like to do ?\n"));
+      labeltext=lives_strdup(
+		 _("You are about to leave multitrack mode.\nThe current layout has not been saved.\nWhat would you like to do ?\n"));
     } else {
-      label = lives_standard_label_new(
-                _("You are about to leave multitrack mode.\nThe current layout has been changed since the last save.\nWhat would you like to do ?\n"));
+      labeltext=lives_strdup(
+			     _("You are about to leave multitrack mode.\nThe current layout has been changed since the last save.\nWhat would you like to do ?\n"));
     }
   } else if (type==1) {
-    if (!mainw->only_close) label = lives_standard_label_new(
-                                        _("You are about to exit LiVES.\nThe current clip set can be saved.\nWhat would you like to do ?\n"));
-    else label = lives_standard_label_new(_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
+    if (!mainw->only_close) labeltext=lives_strdup(
+						   _("You are about to exit LiVES.\nThe current clip set can be saved.\nWhat would you like to do ?\n"));
+    else labeltext=lives_strdup(_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
   } else if (type==2||type==3) {
     if ((mainw->multitrack!=NULL&&mainw->multitrack->changed)||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed)) {
-      label = lives_standard_label_new(_("The current layout has not been saved.\nWhat would you like to do ?\n"));
+      labeltext=lives_strdup(_("The current layout has not been saved.\nWhat would you like to do ?\n"));
     } else {
-      label = lives_standard_label_new(_("The current layout has *not* been changed since it was last saved.\nWhat would you like to do ?\n"));
+      labeltext=lives_strdup(_("The current layout has *not* been changed since it was last saved.\nWhat would you like to do ?\n"));
     }
   } else if (type==4) {
     if (mainw->multitrack!=NULL&&mainw->multitrack->changed) {
-      label = lives_standard_label_new(
+      labeltext=lives_strdup(
                 _("The current layout contains generated frames and cannot be retained.\nYou may wish to render it before exiting multitrack mode.\n"));
     } else {
-      label = lives_standard_label_new(
+      labeltext=lives_strdup(
                 _("You are about to leave multitrack mode.\nThe current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
     }
   }
-  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
+  cdsw->dialog = create_question_dialog(_("Cancel/Discard/Save"),labeltext,
+					mainw->multitrack!=NULL?LIVES_WINDOW(mainw->multitrack->window):
+					LIVES_WINDOW(mainw->LiVES));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cdsw->dialog));
 
+  if (labeltext!=NULL) lives_free(labeltext);
+  
   if (type==1) {
     LiVESWidget *checkbutton;
 
@@ -2452,6 +2454,9 @@ _entryw *create_cds_dialog(int type) {
   if (type==0&&!(prefs->warning_mask&WARN_MASK_EXIT_MT)) {
     add_warn_check(LIVES_BOX(dialog_vbox),WARN_MASK_EXIT_MT);
   }
+
+  accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
+  lives_window_add_accel_group(LIVES_WINDOW(cdsw->dialog), accel_group);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(cdsw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);

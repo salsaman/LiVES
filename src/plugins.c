@@ -60,11 +60,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
 
   threaded_dialog_spin(0.);
 
-#ifndef IS_MINGW
-  outfile=lives_strdup_printf("%s/.smogplugin.%d",prefs->tmpdir,capable->mainpid);
-#else
-  outfile=lives_strdup_printf("%s/smogplugin.%d",prefs->tmpdir,capable->mainpid);
-#endif
+  outfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGPLUGIN_FILE_NAME".%d",prefs->tmpdir,capable->mainpid);
 
   lives_rm(outfile);
 
@@ -77,7 +73,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
       char *msg2;
       lives_free(com);
       if (mainw->is_ready) {
-        if ((outfile_fd=open(outfile,O_RDONLY))>-1) {
+        if ((outfile_fd=lives_open2(outfile,O_RDONLY))>-1) {
           bytes=read(outfile_fd,&buffer,65535);
           if (bytes<0) bytes=0;
           close(outfile_fd);
@@ -115,7 +111,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
 
     alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
 
-    while ((outfile_fd=open(outfile,O_RDONLY))==-1&&!(timeout=lives_alarm_get(alarm_handle))) {
+    while ((outfile_fd=lives_open2(outfile,O_RDONLY))==-1&&!(timeout=lives_alarm_get(alarm_handle))) {
       lives_usleep(prefs->sleep_time);
     }
 
@@ -370,16 +366,12 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
     return;
   }
 
-  if ((fd=open(vpp_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
+  if ((fd=lives_open3(vpp_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
     msg=lives_strdup_printf(_("\n\nUnable to write video playback plugin defaults file\n%s\nError code %d\n"),vpp_file,errno);
     LIVES_ERROR(msg);
     lives_free(msg);
     return;
   }
-
-#ifdef IS_MINGW
-  setmode(fd, O_BINARY);
-#endif
 
   msg=lives_strdup_printf(_("Updating video playback plugin defaults in %s\n"),vpp_file);
   LIVES_INFO(msg);
@@ -444,7 +436,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
 
   do {
     retval=0;
-    if ((fd=open(vpp_file,O_RDONLY))==-1) {
+    if ((fd=lives_open2(vpp_file,O_RDONLY))==-1) {
       retval=do_read_failed_error_s_with_retry(vpp_file,lives_strerror(errno),NULL);
       if (retval==LIVES_RESPONSE_CANCEL) {
         mainw->vpp=NULL;
@@ -452,10 +444,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
       }
     } else {
       do {
-
-#ifdef IS_MINGW
-        setmode(fd, O_BINARY);
-#endif
+        // only do this loop once, so we can use break to escape it
 
         mainw->read_failed=FALSE;
         msg=lives_strdup("LiVES vpp defaults file version 2\n");
@@ -1157,11 +1146,8 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   // TODO - if in_use, get fixed_fps,fwidth,fheight,palette,argc and argv from a file
   // TODO - dirsep
 
-#ifndef IS_MINGW
-  char *plugname=lives_strdup_printf("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
-#else
-  char *plugname=lives_strdup_printf("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
-#endif
+  char *plugname=lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
+
   void *handle=dlopen(plugname,RTLD_LAZY);
   boolean OK=TRUE;
   char *msg,*tmp;
@@ -2132,11 +2118,7 @@ static LiVESList *load_decoders(void) {
   lives_decoder_sys_t *dplug;
   char *decplugdir=lives_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
   LiVESList *dlist=NULL;
-#ifndef IS_MINGW
-  LiVESList *decoder_plugins_o=get_plugin_list(PLUGIN_DECODERS,TRUE,decplugdir,"-so");
-#else
-  LiVESList *decoder_plugins_o=get_plugin_list(PLUGIN_DECODERS,TRUE,decplugdir,"-dll");
-#endif
+  LiVESList *decoder_plugins_o=get_plugin_list(PLUGIN_DECODERS,TRUE,decplugdir,"-"DLL_NAME);
   LiVESList *decoder_plugins=decoder_plugins_o;
 
   char *blacklist[2]= {
@@ -2428,11 +2410,7 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
 
   dplug->name=NULL;
 
-#ifndef IS_MINGW
-  plugname=lives_strdup_printf("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
-#else
-  plugname=lives_strdup_printf("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
-#endif
+  plugname=lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
 
   dplug->handle=dlopen(plugname,RTLD_LAZY);
   lives_free(plugname);
@@ -3724,11 +3702,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
 
     // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
-#ifndef IS_MINGW
-    com=lives_strdup_printf("\"%s\" \"%s\" \"%s\" >/dev/null",RFX_BUILDER,rfxfile,prefs->tmpdir);
-#else
-    com=lives_strdup_printf("\"%s\" \"%s\" \"%s\" >NUL",RFX_BUILDER,rfxfile,prefs->tmpdir);
-#endif
+    com=lives_strdup_printf("\"%s\" \"%s\" \"%s\" >%s",RFX_BUILDER,rfxfile,prefs->tmpdir,LIVES_DEVNULL);
+
     res=system(com);
     lives_free(com);
 

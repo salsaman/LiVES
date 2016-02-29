@@ -1,6 +1,6 @@
 // yuv4mpeg.c
 // LiVES
-// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -59,7 +59,7 @@ static lives_yuv4m_t *lives_yuv4mpeg_alloc(void) {
 
 static void *y4open_thread(void *arg) {
   y4data *thread_data=(y4data *)arg;
-  int fd=open(thread_data->filename,O_RDONLY);
+  int fd=lives_open2(thread_data->filename,O_RDONLY);
   thread_data->fd=fd;
   pthread_exit(NULL);
 }

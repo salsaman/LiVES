@@ -1002,7 +1002,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 #ifdef DEBUG_ARENDER
     g_print("writing to %s\n",outfilename);
 #endif
-    out_fd=open(outfilename,O_WRONLY|O_CREAT|O_SYNC,S_IRUSR|S_IWUSR);
+    out_fd=lives_open3(outfilename,O_WRONLY|O_CREAT|O_SYNC,S_IRUSR|S_IWUSR);
     lives_free(outfilename);
 
     if (out_fd<0) {
@@ -1011,10 +1011,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       mainw->write_failed=TRUE;
       return 0l;
     }
-
-#ifdef IS_MINGW
-    setmode(out_fd, O_BINARY);
-#endif
 
     cur_size=get_file_size(out_fd);
 
@@ -1088,16 +1084,13 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         in_fd[track]=storedfds[track];
       } else {
         if (track<NSTOREDFDS&&storedfds[track]>-1) close(storedfds[track]);
-        in_fd[track]=open(infilename,O_RDONLY);
+        in_fd[track]=lives_open2(infilename,O_RDONLY);
         if (in_fd[track]<0) {
           if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
           mainw->read_failed_file=lives_strdup(infilename);
           mainw->read_failed=TRUE;
         }
 
-#ifdef IS_MINGW
-        setmode(in_fd[track], O_BINARY);
-#endif
         if (track<NSTOREDFDS) {
           storedfds[track]=in_fd[track];
           storedfnames[track]=lives_strdup(infilename);
@@ -1419,7 +1412,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     char *outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
     do {
       retval=0;
-      mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
+      mainw->aud_rec_fd=lives_open3(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
       if (mainw->aud_rec_fd<0) {
         retval=do_write_failed_error_s_with_retry(outfilename,lives_strerror(errno),NULL);
         if (retval==LIVES_RESPONSE_CANCEL) {
@@ -1439,10 +1432,6 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     mainw->jackd_read->frames_written=0;
   }
 
-
-#ifdef IS_MINGW
-  setmode(mainw->aud_rec_fd, O_BINARY);
-#endif
 
   if (rec_type==RECA_EXTERNAL||rec_type==RECA_GENERATED) {
     int asigned;
@@ -1572,7 +1561,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     char *outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
     do {
       retval=0;
-      mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
+      mainw->aud_rec_fd=lives_open3(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
       if (mainw->aud_rec_fd<0) {
         retval=do_write_failed_error_s_with_retry(outfilename,lives_strerror(errno),NULL);
         if (retval==LIVES_RESPONSE_CANCEL) {
@@ -1591,10 +1580,6 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     mainw->pulsed_read->playing_file=fileno;
     mainw->pulsed_read->frames_written=0;
   }
-
-#ifdef IS_MINGW
-  setmode(mainw->aud_rec_fd, O_BINARY);
-#endif
 
   if (rec_type==RECA_EXTERNAL||rec_type==RECA_GENERATED) {
     int asigned;
@@ -2407,7 +2392,7 @@ static void *cache_my_audio(void *arg) {
         filename=lives_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,mainw->files[cbuffer->fileno]->handle);
       else filename=lives_strdup_printf("%s/%s/audio",prefs->tmpdir,mainw->files[cbuffer->fileno]->handle);
 
-      cbuffer->_fd=open(filename,O_RDONLY);
+      cbuffer->_fd=lives_open2(filename,O_RDONLY);
       if (cbuffer->_fd==-1) {
         lives_printerr("audio cache thread: error opening %s\n",filename);
         cbuffer->in_achans=0;
@@ -2415,10 +2400,6 @@ static void *cache_my_audio(void *arg) {
         cbuffer->is_ready=TRUE;
         continue;
       }
-
-#ifdef IS_MINGW
-      setmode(cbuffer->_fd, O_BINARY);
-#endif
 
       lives_free(filename);
     }
@@ -2731,13 +2712,9 @@ boolean apply_rte_audio_init(void) {
   audio_pos=(double)((cfile->start-1)*cfile->arate*cfile->achans*cfile->asampsize/8)/cfile->fps;
   audio_file=lives_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL);
 
-  audio_fd=open(audio_file,O_RDWR|O_CREAT,DEF_FILE_PERMS);
+  audio_fd=lives_open3(audio_file,O_RDWR|O_CREAT,DEF_FILE_PERMS);
 
   if (audio_fd==-1) return FALSE;
-
-#ifdef IS_MINGW
-  setmode(audio_fd,O_BINARY);
-#endif
 
   if (audio_pos>cfile->afilesize) {
     off64_t audio_end_pos=(double)((cfile->start-1)*cfile->arate*cfile->achans*cfile->asampsize/8)/cfile->fps;
@@ -3097,16 +3074,12 @@ boolean start_audio_stream(void) {
 
   do {
     // wait for other thread to create stream (or timeout)
-    afd=open(astream_name,O_WRONLY|O_SYNC);
+    afd=lives_open2(astream_name,O_WRONLY|O_SYNC);
     if (afd!=-1) break;
     lives_usleep(prefs->sleep_time);
   } while (!(timeout=lives_alarm_get(alarm_handle)));
 
   lives_alarm_clear(alarm_handle);
-
-#ifdef IS_MINGW
-  setmode(afd, O_BINARY);
-#endif
 
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
@@ -3119,10 +3092,6 @@ boolean start_audio_stream(void) {
     mainw->jackd->astream_fd=afd;
 #endif
   }
-
-#ifdef IS_MINGW
-  setmode(afd, O_BINARY);
-#endif
 
   lives_free(astream_name);
   lives_free(astream_name_out);

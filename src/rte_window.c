@@ -564,9 +564,6 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
       retval=do_abort_cancel_retry_dialog(msg,LIVES_WINDOW(rte_window));
       lives_free(msg);
     } else {
-#ifdef IS_MINGW
-      setmode(fd, O_BINARY);
-#endif
       msg=lives_strdup("LiVES filter defaults file version 1.1\n");
       mainw->write_failed=FALSE;
       lives_write_buffered(fd,msg,strlen(msg),TRUE);
@@ -596,9 +593,6 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
       retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,lives_strerror(errno),LIVES_WINDOW(rte_window));
       lives_free(msg);
     } else {
-#ifdef IS_MINGW
-      setmode(fd, O_BINARY);
-#endif
       msg=lives_strdup("LiVES generator default sizes file version 2\n");
       mainw->write_failed=FALSE;
       lives_write_buffered(fd,msg,strlen(msg),TRUE);
@@ -650,9 +644,6 @@ void load_rte_defs(void) {
       if ((fd=lives_open_buffered_rdonly(prefs->fxdefsfile))==-1) {
         retval=do_read_failed_error_s_with_retry(prefs->fxdefsfile,lives_strerror(errno),NULL);
       } else {
-#ifdef IS_MINGW
-        setmode(fd, O_BINARY);
-#endif
         mainw->read_failed=FALSE;
         d_print(_("Loading real time effect defaults from %s..."),prefs->fxdefsfile);
 
@@ -695,9 +686,6 @@ void load_rte_defs(void) {
         retval=do_read_failed_error_s_with_retry(prefs->fxsizesfile,lives_strerror(errno),NULL);
         if (retval==LIVES_RESPONSE_CANCEL) return;
       } else {
-#ifdef IS_MINGW
-        setmode(fd, O_BINARY);
-#endif
         d_print(_("Loading generator default sizes from %s..."),prefs->fxsizesfile);
 
         msg=lives_strdup("LiVES generator default sizes file version 2\n");
@@ -804,9 +792,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
     if ((kfd=lives_open_buffered_rdonly(fname))==-1) {
       retval=do_read_failed_error_s_with_retry(fname,lives_strerror(errno),NULL);
     } else {
-#ifdef IS_MINGW
-      setmode(fd, O_BINARY);
-#endif
+
       mainw->read_failed=FALSE;
 
       bytes=lives_read_le_buffered(kfd,&version,4,TRUE);
@@ -1322,13 +1308,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     retval=0;
 
     if (keymap_file2!=NULL) {
-      if ((kfd=lives_open_buffered_rdonly(keymap_file))==-1) has_error=TRUE;
-#ifdef IS_MINGW
-      else {
-        setmode(kfd, O_BINARY);
-      }
-#endif
-
+      if ((kfd=lives_open_buffered_rdonly(keymap_file))<0) has_error=TRUE;
     } else {
       if (!(kfile=fopen(keymap_file,"r"))) {
         has_error=TRUE;

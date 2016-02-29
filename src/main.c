@@ -413,11 +413,7 @@ static boolean pre_init(void) {
 
   prefs->gui_monitor=-1;
 
-#ifndef IS_MINGW
-  lives_snprintf(prefs->cmd_log,PATH_MAX,"/dev/null");
-#else
-  lives_snprintf(prefs->cmd_log,PATH_MAX,"NUL");
-#endif
+  lives_snprintf(prefs->cmd_log,PATH_MAX,LIVES_DEVNULL);
 
   // set to allow multiple locking by the same thread
   pthread_mutexattr_init(&mattr);
@@ -1275,7 +1271,7 @@ static void lives_init(_ign_opts *ign_opts) {
       randres=-1;
 
       // try to get randomness from /dev/urandom
-      randfd=open("/dev/urandom",O_RDONLY);
+      randfd=lives_open2("/dev/urandom",O_RDONLY);
 
       if (randfd>-1) {
         randres=read(randfd,&rseed,sizint);
@@ -1291,7 +1287,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       randres=-1;
 
-      randfd=open("/dev/urandom",O_RDONLY);
+      randfd=lives_open2("/dev/urandom",O_RDONLY);
 
       if (randfd>-1) {
         randres=read(randfd,&rseed,sizint);
@@ -2324,11 +2320,7 @@ capability *get_capabilities(void) {
   capable->has_gconftool_2=FALSE;
   capable->has_xdg_screensaver=FALSE;
 
-#ifndef IS_MINGW
-  safer_bfile=lives_strdup_printf("%s"LIVES_DIR_SEPARATOR_S".smogrify.%d.%d",capable->system_tmpdir,lives_getuid(),lives_getgid());
-#else
-  safer_bfile=lives_strdup_printf("%s"LIVES_DIR_SEPARATOR_S"smogrify.%d.%d",capable->system_tmpdir,lives_getuid(),lives_getgid());
-#endif
+  safer_bfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_BFILE_NAME".%d.%d",capable->system_tmpdir,lives_getuid(),lives_getgid());
   lives_rm(safer_bfile);
 
   // check that we can write to /tmp
@@ -2341,23 +2333,16 @@ capability *get_capabilities(void) {
   if ((tmp=lives_find_program_in_path("smogrify"))==NULL) return capable;
   lives_free(tmp);
 
-  lives_snprintf(string,256,"%s report \"%s\" 2>/dev/null",prefs->backend_sync,
-                 (tmp=lives_filename_from_utf8(safer_bfile,-1,NULL,NULL,NULL)));
-
-  lives_free(tmp);
-
-  lives_snprintf(string,256,"%s report \"%s\" 2>/dev/null",prefs->backend_sync,
-                 (tmp=lives_filename_from_utf8(safer_bfile,-1,NULL,NULL,NULL)));
 #else
 
   lives_snprintf(prefs->backend_sync,PATH_MAX,"perl \"%s\\smogrify\"",prefs->prefix_dir);
   lives_snprintf(prefs->backend,PATH_MAX,"START /MIN /B perl \"%s\\smogrify\"",prefs->prefix_dir);
 
-  lives_snprintf(string,256,"%s report \"%s\" 2>NUL",prefs->backend_sync,
-                 (tmp=lives_filename_from_utf8(safer_bfile,-1,NULL,NULL,NULL)));
-
 #endif
 
+  lives_snprintf(string,256,"%s report \"%s\" 2>%s",prefs->backend_sync,
+                 (tmp=lives_filename_from_utf8(safer_bfile,-1,NULL,NULL,NULL)),
+                 LIVES_DEVNULL);
 
   lives_free(tmp);
 
@@ -2550,8 +2535,9 @@ capability *get_capabilities(void) {
 
 void print_notice() {
   lives_printerr("\nLiVES %s\n",LiVES_VERSION);
-  lives_printerr("Copyright 2002-2015 Gabriel Finch (salsaman@gmail.com) and others.\n");
-  lives_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; see the file COPYING for details.\n\n");
+  lives_printerr("Copyright 2002-2016 Gabriel Finch (salsaman@gmail.com) and others.\n");
+  lives_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\nunder certain conditions;"
+                 "see the file COPYING for details.\n\n");
 }
 
 
@@ -2589,7 +2575,9 @@ void print_opthelp(void) {
 #ifdef ENABLE_JACK
   lives_printerr("%s",_(", sox or jack\n"));
   lives_printerr("%s",
-                 _("-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack transport client, 2 = jack transport master, 4 = start jack transport server, 8 = pause audio when video paused, 16 = start jack audio server] \n"));
+                 _("-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack transport client,"
+                   "2 = jack transport master, 4 = start jack transport server, 8 = pause audio when video paused,"
+                   "16 = start jack audio server] \n"));
 #else
   lives_printerr("%s",_(" or sox\n"));
 #endif
@@ -3067,11 +3055,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->libthread=gtk_thread;
   mainw->id=id;
 
-#ifndef IS_MINGW
-  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,capable->mainpid);
-#else
-  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEPARATOR_S"info.%d",prefs->tmpdir,capable->mainpid);
-#endif
+  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d",prefs->tmpdir,capable->mainpid);
 
   // what's my name ?
   capable->myname_full=lives_find_program_in_path(argv[0]);
@@ -5537,11 +5521,7 @@ void load_frame_image(int frame) {
     }
 
     if (was_preview) {
-#ifndef IS_MINGW
-      info_file=lives_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
-#else
-      info_file=lives_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
-#endif
+      info_file=lives_build_filename(prefs->tmpdir,cfile->handle,LIVES_STATUS_FILE_NAME,NULL);
       // preview
       if (prefs->safer_preview&&cfile->proc_ptr!=NULL&&cfile->proc_ptr->frames_done>0&&
           frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start)) {
@@ -6677,21 +6657,10 @@ void load_frame_image(int frame) {
       if (cfile->op_dir!=NULL) lives_free(cfile->op_dir);
 
       if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&!mainw->only_close) {
+
 #ifdef IS_MINGW
         // kill any active processes: for other OSes the backend does this
-        // get pid from backend
-        FILE *rfile;
-        ssize_t rlen;
-        char val[16];
-        int pid;
-        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-        rfile=popen(com,"r");
-        rlen=fread(val,1,16,rfile);
-        pclose(rfile);
-        memset(val+rlen,0,1);
-        pid=atoi(val);
-        lives_win32_kill_subprocesses(pid,TRUE);
-
+        lives_kill_subprocesses(cfile->handle,TRUE);
 #endif
 
         com=lives_strdup_printf("%s close \"%s\"",prefs->backend_sync,cfile->handle);
@@ -7368,11 +7337,7 @@ void load_frame_image(int frame) {
     // reset old info file
     if (cfile!=NULL) {
       char *tmp;
-#ifndef IS_MINGW
-      tmp=lives_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
-#else
-      tmp=lives_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
-#endif
+      tmp=lives_build_filename(prefs->tmpdir,cfile->handle,LIVES_STATUS_FILE_NAME,NULL);
       lives_snprintf(cfile->info_file,PATH_MAX,"%s",tmp);
       lives_free(tmp);
     }

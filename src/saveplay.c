@@ -494,26 +494,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                 // cancelled
 
                 if (mainw->cancelled!=CANCEL_ERROR) {
-#ifndef IS_MINGW
-                  // clean up our temp files
-                  com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
-                  lives_system(com,TRUE);
-#else
-                  // get pid from backend
-                  FILE *rfile;
-                  ssize_t rlen;
-                  char val[16];
-                  int pid;
-                  com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-                  rfile=popen(com,"r");
-                  rlen=fread(val,1,16,rfile);
-                  pclose(rfile);
-                  memset(val+rlen,0,1);
-                  pid=atoi(val);
-
-                  lives_win32_kill_subprocesses(pid,TRUE);
-#endif
-                  lives_free(com);
+                  lives_kill_subprocesses(cfile->handle,TRUE);
                 }
 
                 if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
@@ -780,12 +761,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     if (cfile->ext_src==NULL&&mainw->toy_type!=LIVES_TOY_TV) {
       if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
         // user cancelled or switched to another clip
-#ifdef IS_MINGW
-        FILE *rfile;
-        ssize_t rlen;
-        char val[16];
-        int pid;
-#endif
 
         lives_free(msgstr);
 
@@ -801,21 +776,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
         // cancelled
         // clean up our temp files
-#ifndef IS_MINGW
-        com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
-        lives_system(com,TRUE);
-#else
-        // get pid from backend
-        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-        rfile=popen(com,"r");
-        rlen=fread(val,1,16,rfile);
-        pclose(rfile);
-        memset(val+rlen,0,1);
-        pid=atoi(val);
+        lives_kill_subprocesses(cfile->handle,TRUE);
 
-        lives_win32_kill_subprocesses(pid,TRUE);
-#endif
-        lives_free(com);
         if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
         mainw->file_open_params=NULL;
         close_current_file(old_file);
@@ -1223,11 +1185,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   const char *n_file_name;
   char *fps_string;
   char *extra_params=NULL;
-#ifndef IS_MINGW
-  char *redir=lives_strdup("1>&2 2>/dev/null");
-#else
-  char *redir=lives_strdup("1>&2 2>NUL");
-#endif
+  char *redir=lives_strdup("1>&2 2>"LIVES_DEVNULL);
   char *new_stderr_name=NULL;
   char *mesg,*bit,*tmp;
   char *com;
@@ -1536,19 +1494,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     if (mainw->com_failed) {
 #ifdef IS_MINGW
       // kill any active processes: for other OSes the backend does this
-      // get pid from backend
-      FILE *rfile;
-      ssize_t rlen;
-      char val[16];
-      int pid;
-      com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-      rfile=popen(com,"r");
-      rlen=fread(val,1,16,rfile);
-      pclose(rfile);
-      memset(val+rlen,0,1);
-      pid=atoi(val);
-
-      lives_win32_kill_subprocesses(pid,TRUE);
+      lives_kill_subprocesses(cfile->handle,TRUE);
 #endif
       lives_system(lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle),TRUE);
       lives_free(cfile);
@@ -1567,19 +1513,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     if (!(do_progress_dialog(TRUE,TRUE,_("Linking selection")))) {
 #ifdef IS_MINGW
       // kill any active processes: for other OSes the backend does this
-      // get pid from backend
-      FILE *rfile;
-      ssize_t rlen;
-      char val[16];
-      int pid;
-      com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-      rfile=popen(com,"r");
-      rlen=fread(val,1,16,rfile);
-      pclose(rfile);
-      memset(val+rlen,0,1);
-      pid=atoi(val);
-
-      lives_win32_kill_subprocesses(pid,TRUE);
+      lives_kill_subprocesses(cfile->handle,TRUE);
 #endif
       lives_system((tmp=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
       lives_free(tmp);
@@ -1618,20 +1552,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   if (!check_encoder_restrictions(FALSE,FALSE,save_all)) {
     if (!save_all&&!safe_symlinks) {
 #ifdef IS_MINGW
-      // kill any active processes: for other OSes the backend does this
-      // get pid from backend
-      FILE *rfile;
-      ssize_t rlen;
-      char val[16];
-      int pid;
-      com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,nfile->handle);
-      rfile=popen(com,"r");
-      rlen=fread(val,1,16,rfile);
-      pclose(rfile);
-      memset(val+rlen,0,1);
-      pid=atoi(val);
-
-      lives_win32_kill_subprocesses(pid,TRUE);
+      lives_kill_subprocesses(nfile->handle,TRUE);
 #endif
       lives_system((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
       lives_free(com);
@@ -1778,24 +1699,19 @@ void save_file(int clip, int start, int end, const char *filename) {
 
   if (prefs->show_gui) {
     // open a file for stderr
-
-#ifndef IS_MINGW
-    new_stderr_name=lives_build_filename(prefs->tmpdir,cfile->handle,".debug_out",NULL);
-#else
-    new_stderr_name=lives_build_filename(prefs->tmpdir,cfile->handle,"debug_out",NULL);
-#endif
+    new_stderr_name=lives_build_filename(prefs->tmpdir,cfile->handle,LIVES_ENC_DEBUG_FILE_NAME,NULL);
     lives_free(redir);
 
     do {
       retval=0;
-      new_stderr=open(new_stderr_name,O_CREAT|O_RDONLY|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
+      new_stderr=lives_open3(new_stderr_name,O_CREAT|O_RDONLY|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
       if (new_stderr<0) {
         retval=do_write_failed_error_s_with_retry(new_stderr_name,lives_strerror(errno),NULL);
         if (retval==LIVES_RESPONSE_CANCEL) redir=lives_strdup("1>&2");
       } else {
 
 #ifdef IS_MINGW
-        setmode(new_stderr,O_BINARY);
+
 #ifdef GUI_GTK
         mainw->iochan=g_io_channel_win32_new_fd(new_stderr);
 #endif
@@ -1959,22 +1875,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       mainw->no_switch_dprint=FALSE;
       lives_free(full_file_name);
       if (!save_all&&!safe_symlinks) {
-#ifdef IS_MINGW
-        // kill any active processes: for other OSes the backend does this
-        // get pid from backend
-        FILE *rfile;
-        ssize_t rlen;
-        char val[16];
-        int pid;
-        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-        rfile=popen(com,"r");
-        rlen=fread(val,1,16,rfile);
-        pclose(rfile);
-        memset(val+rlen,0,1);
-        pid=atoi(val);
-
-        lives_win32_kill_subprocesses(pid,TRUE);
-#endif
+        lives_kill_subprocesses(cfile->handle,TRUE);
         lives_system((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
         lives_free(com);
         lives_free(cfile);
@@ -2017,22 +1918,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       mainw->no_switch_dprint=FALSE;
       lives_free(full_file_name);
       if (!save_all&&!safe_symlinks) {
-#ifdef IS_MINGW
-        // kill any active processes: for other OSes the backend does this
-        // get pid from backend
-        FILE *rfile;
-        ssize_t rlen;
-        char val[16];
-        int pid;
-        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-        rfile=popen(com,"r");
-        rlen=fread(val,1,16,rfile);
-        pclose(rfile);
-        memset(val+rlen,0,1);
-        pid=atoi(val);
-
-        lives_win32_kill_subprocesses(pid,TRUE);
-#endif
+        lives_kill_subprocesses(cfile->handle,TRUE);
         lives_system((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
         lives_free(com);
         lives_free(cfile);
@@ -2127,20 +2013,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     } else {
       if (!safe_symlinks) {
 #ifdef IS_MINGW
-        // kill any active processes: for other OSes the backend does this
-        // get pid from backend
-        FILE *rfile;
-        ssize_t rlen;
-        char val[16];
-        int pid;
-        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,nfile->handle);
-        rfile=popen(com,"r");
-        rlen=fread(val,1,16,rfile);
-        pclose(rfile);
-        memset(val+rlen,0,1);
-        pid=atoi(val);
-
-        lives_win32_kill_subprocesses(pid,TRUE);
+        lives_kill_subprocesses(nfile->handle,TRUE);
 #endif
         lives_system((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
         lives_free(com);
@@ -2630,11 +2503,7 @@ void play_file(void) {
 
       lives_free(stfile);
 
-#ifndef IS_MINGW
-      stfile=lives_build_filename(prefs->tmpdir,cfile->handle,".status.play",NULL);
-#else
-      stfile=lives_build_filename(prefs->tmpdir,cfile->handle,"status.play",NULL);
-#endif
+      stfile=lives_build_filename(prefs->tmpdir,cfile->handle,LIVES_STATUS_FILE_NAME".play",NULL);
 
       lives_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);
       lives_free(stfile);
@@ -3019,11 +2888,7 @@ void play_file(void) {
   }
 
   if (mainw->current_file>-1) {
-#ifndef IS_MINGW
-    stfile=lives_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
-#else
-    stfile=lives_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
-#endif
+    stfile=lives_build_filename(prefs->tmpdir,cfile->handle,LIVES_STATUS_FILE_NAME,NULL);
     lives_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);
     lives_free(stfile);
   }
@@ -3493,11 +3358,7 @@ void create_cfile(void) {
   lives_snprintf(cfile->undo_text,32,"%s",_("_Undo"));
   lives_snprintf(cfile->redo_text,32,"%s",_("_Redo"));
 
-#ifndef IS_MINGW
-  stfile=lives_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
-#else
-  stfile=lives_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
-#endif
+  stfile=lives_build_filename(prefs->tmpdir,cfile->handle,LIVES_STATUS_FILE_NAME,NULL);
 
   lives_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);
   lives_free(stfile);
@@ -4340,7 +4201,7 @@ boolean read_headers(const char *file_name) {
     memset(version,0,32);
     memset(buff,0,1024);
 
-    header_fd=open(old_hdrfile,O_RDONLY);
+    header_fd=lives_open2(old_hdrfile,O_RDONLY);
 
     if (header_fd<0) {
       retval=do_read_failed_error_s_with_retry(old_hdrfile,lives_strerror(errno),NULL);
@@ -4525,7 +4386,7 @@ void open_set_file(const char *set_name, int clipnum) {
 
     do {
       retval=0;
-      if ((set_fd=open(setfile,O_RDONLY))>-1) {
+      if ((set_fd=lives_open2(setfile,O_RDONLY))>-1) {
         // get perf_start
         if ((nlen=lives_read_le(set_fd,&pb_fps,4,TRUE))>0) {
           cfile->pb_fps=pb_fps/1000.;
@@ -4910,13 +4771,9 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   void **pdata;
 
-  fd=open(oname,O_RDONLY);
+  fd=lives_open2(oname,O_RDONLY);
 
   if (fd==-1) return FALSE;
-
-#ifdef IS_MINGW
-  setmode(fd,O_BINARY);
-#endif
 
   bytes=lives_read_le(fd,&palette,4,TRUE);
   if (bytes<sizint) return FALSE;
@@ -5037,16 +4894,12 @@ int save_to_scrap_file(weed_plant_t *layer) {
   flags|=O_NOATIME;
 #endif
 
-  fd=open(oname,flags,S_IRUSR|S_IWUSR);
+  fd=lives_open3(oname,flags,S_IRUSR|S_IWUSR);
 
   if (fd==-1) {
     lives_free(oname);
     return mainw->files[mainw->scrap_file]->frames;
   }
-
-#ifdef IS_MINGW
-  setmode(fd,O_BINARY);
-#endif
 
   mainw->write_failed=FALSE;
 
@@ -5875,7 +5728,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
     return FALSE;
   }
 
-  info_fd=open(info_file,O_RDONLY);
+  info_fd=lives_open2(info_file,O_RDONLY);
   if (info_fd>-1) {
     if ((bytes=read(info_fd,mainw->msg,256))>0) {
       memset(mainw->msg+bytes,0,1);

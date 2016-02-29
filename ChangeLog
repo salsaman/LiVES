@@ -6,7 +6,7 @@ Implement new theming engine, custom themes / colours in Preferences (in progres
 Minor compilation fix for gtk+ 2.x
 Fix bug in finding of "Next filter map" in multitrack.
 Fix showing of textbuffer parameters in effect windows (regression).
-
+Updated translation to Ukranian (thanks Yuri Churnoivan).
 
 
 

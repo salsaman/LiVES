@@ -80,11 +80,7 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
     return LIVES_RESPONSE_INVALID;
   }
 
-#ifndef IS_MINGW
-  vfile=lives_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
-#else
-  vfile=lives_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
-#endif
+  vfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGVAL_FILE_NAME".%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
 
   do {
     retval=0;
@@ -193,11 +189,8 @@ void get_pref_default(const char *key, char *val, int maxlen) {
     return;
   }
 
-#ifndef IS_MINGW
-  vfile=lives_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
-#else
-  vfile=lives_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
-#endif
+  vfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGVAL_FILE_NAME".%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
+
 
   do {
     retval=0;
@@ -1131,11 +1124,13 @@ boolean apply_prefs(boolean skip_warn) {
         tmp=lives_filename_to_utf8(tmpdir,-1,NULL,NULL,NULL);
 #ifndef IS_MINGW
         msg=lives_strdup_printf(
-              _("Unable to create or write to the new temporary directory.\nYou may need to create it as the root user first, e.g:\n\nsudo mkdir -p %s; sudo chmod 777 %s\n\nThe directory will not be changed now.\n"),
+              _("Unable to create or write to the new temporary directory.\nYou may need to create it as the root user first, e.g:\n\nsudo mkdir -p %s; "
+                "sudo chmod 777 %s\n\nThe directory will not be changed now.\n"),
               tmp,tmp);
 #else
         msg=lives_strdup_printf(
-              _("Unable to create or write to the new temporary directory.\n%s\nPlease try another directory or contact your system administrator.\n\nThe directory will not be changed now.\n"),
+              _("Unable to create or write to the new temporary directory.\n%s\nPlease try another directory or contact your system administrator."
+                "\n\nThe directory will not be changed now.\n"),
               tmp);
 #endif
 
@@ -3024,11 +3019,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
-#ifndef IS_MINGW
-  vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-so");
-#else
-  vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-dll");
-#endif
+  vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-"DLL_NAME);
   vid_playback_plugins = lives_list_prepend(vid_playback_plugins, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
   widget_opts.expand=LIVES_EXPAND_EXTRA;

@@ -1,6 +1,6 @@
 // effects-weed.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2014 (salsaman@gmail.com)
+// (c) G. Finch 2005 - 2016 (salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -5014,12 +5014,7 @@ void weed_load_all(void) {
     for (plugin_idx=0; plugin_idx<listlen; plugin_idx++) {
       threaded_dialog_spin(0.);
       plugin_name=(char *)lives_list_nth_data(weed_plugin_list,plugin_idx);
-#ifndef IS_MINGW
-      if (!strncmp(plugin_name+strlen(plugin_name)-3,".so",3))
-#else
-      if (!strncmp(plugin_name+strlen(plugin_name)-4,".dll",4))
-#endif
-      {
+      if (!strncmp(plugin_name+strlen(plugin_name)-strlen(DLL_NAME)-1,"."DLL_NAME,strlen(DLL_NAME)+1)) {
         plugin_path=lives_build_filename(dirs[i],plugin_name,NULL);
         load_weed_plugin(plugin_name,plugin_path,dirs[i]);
         lives_free(plugin_name);
@@ -5041,11 +5036,8 @@ void weed_load_all(void) {
         lives_free(subdir_path);
         continue;
       }
-#ifndef IS_MINGW
-      weed_plugin_sublist=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,subdir_path,"so");
-#else
-      weed_plugin_sublist=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,subdir_path,"dll");
-#endif
+
+      weed_plugin_sublist=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,subdir_path,DLL_NAME);
 
       for (plugin_idx=0; plugin_idx<lives_list_length(weed_plugin_sublist); plugin_idx++) {
         plugin_name=(char *)lives_list_nth_data(weed_plugin_sublist,plugin_idx);

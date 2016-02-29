@@ -104,6 +104,7 @@ typedef PROCESS_INFORMATION *lives_pgid_t;
 #endif
 #endif
 
+
 #else // IS_MINGW
 
 #ifdef GUI_GTK
@@ -117,6 +118,7 @@ typedef PROCESS_INFORMATION *lives_pgid_t;
 
 typedef pid_t lives_pid_t;
 typedef int lives_pgid_t;
+
 
 #endif // IS_MINGW
 
@@ -174,6 +176,17 @@ typedef int lives_pgid_t;
 
 
 #ifndef IS_MINGW
+#define LIVES_DIR_SEP "/"
+#define LIVES_STATUS_FILE_NAME ".status"
+#define LIVES_INFO_FILE_NAME ".info"
+#define LIVES_BFILE_NAME ".smogrify"
+#define LIVES_SMOGPLUGIN_FILE_NAME ".smogplugin"
+#define LIVES_SMOGVAL_FILE_NAME ".smogval"
+#define LIVES_ENC_DEBUG_FILE_NAME ".debug_out"
+#define LIVES_DEVNULL "/dev/null"
+
+#define DLL_NAME "so"
+
 #define DOC_DIR "/share/doc/lives-"
 
 #define THEME_DIR "/share/lives/themes/"
@@ -187,6 +200,17 @@ typedef int lives_pgid_t;
 #define LIVES_TMP_NAME "livestmp"
 
 #else // IS_MINGW
+#define LIVES_DIR_SEP "\\"
+#define LIVES_STATUS_FILE_NAME "status"
+#define LIVES_INFO_FILE_NAME "info"
+#define LIVES_BFILE_NAME "smogrify"
+#define LIVES_SMOGPLUGIN_FILE_NAME "smogplugin"
+#define LIVES_SMOGVAL_FILE_NAME "smogval"
+#define LIVES_ENC_DEBUG_FILE_NAME "debug_out"
+#define LIVES_DEVNULL "NUL"
+
+#define DLL_NAME "dll"
+
 #define DOC_DIR "\\Documents/"
 
 #define THEME_DIR "\\Themes/"
@@ -219,7 +243,7 @@ typedef int lives_pgid_t;
 #endif
 #endif
 
-#define DEF_FILE_PERMS S_IRUSR|S_IWUSR // must be at least S_IRUSR|S_IWUSR
+#define DEF_FILE_PERMS (S_IRUSR|S_IWUSR) // must be at least S_IRUSR|S_IWUSR
 #define DEF_FILE_UMASK (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)^( DEF_FILE_PERMS )
 
 /// LiVES will show a warning if this (MBytes) is exceeded on load
@@ -1112,6 +1136,8 @@ boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);
 lives_pid_t lives_fork(const char *com);
+int lives_open3(const char *pathname, int flags, mode_t mode);
+int lives_open2(const char *pathname, int flags);
 int lives_open_buffered_rdonly(const char *pathname);
 int lives_creat_buffered(const char *pathname, int mode);
 int lives_close_buffered(int fd);
@@ -1132,6 +1158,8 @@ pid_t lives_getpid(void);
 int lives_getgid(void);
 int lives_getuid(void);
 void lives_freep(void **ptr);
+void lives_kill_subprocesses(const char *dirname, boolean kill_parent);
+void lives_suspend_resume_process(const char *dirname, boolean suspend);
 #ifdef IS_MINGW
 boolean lives_win32_suspend_resume_process(DWORD pid, boolean suspend);
 boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent);

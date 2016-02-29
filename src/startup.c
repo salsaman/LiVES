@@ -79,8 +79,8 @@ top:
     }
     dirname=lives_strdup(lives_entry_get_text(LIVES_ENTRY(tdentry->entry)));
 
-    if (strcmp(dirname+strlen(dirname)-1,LIVES_DIR_SEPARATOR_S)) {
-      char *tmp=lives_strdup_printf("%s%s",dirname,LIVES_DIR_SEPARATOR_S);
+    if (strcmp(dirname+strlen(dirname)-1,LIVES_DIR_SEP)) {
+      char *tmp=lives_strdup_printf("%s%s",dirname,LIVES_DIR_SEP);
       lives_free(dirname);
       dirname=tmp;
     }
@@ -150,11 +150,7 @@ top:
   set_pref("tempdir",prefs->tmpdir);
   set_pref("session_tempdir",prefs->tmpdir);
 
-#ifndef IS_MINGW
-  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,capable->mainpid);
-#else
-  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEPARATOR_S"info.%d",prefs->tmpdir,capable->mainpid);
-#endif
+  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d",prefs->tmpdir,capable->mainpid);
 
   lives_free(dirname);
   return TRUE;
@@ -615,7 +611,7 @@ boolean do_startup_tests(boolean tshoot) {
 
     // write 1 second of silence
     afile=lives_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL);
-    out_fd=open(afile,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
+    out_fd=lives_open3(afile,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
 
     if (out_fd<0) mainw->write_failed=TRUE;
     else mainw->write_failed=FALSE;
@@ -627,9 +623,6 @@ boolean do_startup_tests(boolean tshoot) {
         fail_test(table,1,tmp);
         lives_free(tmp);
       } else {
-#ifdef IS_MINGW
-        setmode(out_fd, O_BINARY);
-#endif
         lives_write(out_fd,abuff,176400,TRUE);
         close(out_fd);
         lives_free(abuff);

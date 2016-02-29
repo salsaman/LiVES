@@ -1,6 +1,6 @@
 // ldvgrab.c
 // LiVES
-// (c) G. Finch 2006 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2006 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -272,7 +272,7 @@ boolean rec(s_cam *cam) {
                             (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
                             (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
 #else
-    com=lives_strdup_printf("dvgrab.exe -format raw %s\"%s/%s\" >NUL 2>&1 &",splits,
+    com=lives_strdup_printf("dvgrab.exe -format raw %s\"%s\\%s\" >NUL 2>&1 &",splits,
                             (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
                             (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
 #endif
@@ -290,7 +290,7 @@ boolean rec(s_cam *cam) {
                           (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
                           (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
 #else
-  com=lives_strdup_printf("dvgrab.exe -format mpeg2 %s\"%s/%s\" >NUL 2>&1 &",splits,
+  com=lives_strdup_printf("dvgrab.exe -format mpeg2 %s\"%s\\%s\" >NUL 2>&1 &",splits,
                           (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
                           (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
 #endif

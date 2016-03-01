@@ -198,7 +198,7 @@ void catch_sigint(int signum) {
         signal(LIVES_SIGABRT, SIG_DFL);
         lives_printerr("%s",
                        _("\nUnfortunately LiVES crashed.\nPlease report this bug at http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
-			 "Thanks. Recovery should be possible if you restart LiVES.\n"));
+                         "Thanks. Recovery should be possible if you restart LiVES.\n"));
         lives_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, and the LiVES version ("
                               LiVES_VERSION ")\n"));
 
@@ -2646,7 +2646,7 @@ static boolean lives_startup(livespointer data) {
       char *tmp2;
       char *err=lives_strdup_printf(
                   _("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n"
-		    "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),
+                    "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),
                   (tmp=lives_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR,(tmp2=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,
                       NULL)));
       lives_free(tmp2);
@@ -2670,7 +2670,7 @@ static boolean lives_startup(livespointer data) {
       if (!capable->has_smogrify) {
         char *err=lives_strdup(
                     _("\n`smogrify` must be in your path, and be executable\n\n"
-		      "Please review the README file which came with this package\nbefore running LiVES.\n"));
+                      "Please review the README file which came with this package\nbefore running LiVES.\n"));
         startup_message_fatal(err);
         lives_free(err);
       } else {
@@ -2685,7 +2685,7 @@ static boolean lives_startup(livespointer data) {
           if (!capable->can_write_to_config) {
             char *err=lives_strdup_printf(
                         _("\nLiVES was unable to write to its configuration file\n%s\n\n"
-			  "Please check the file permissions for this file and directory\nand try again.\n"),
+                          "Please check the file permissions for this file and directory\nand try again.\n"),
                         (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
             lives_free(tmp);
             startup_message_fatal(err);
@@ -2710,7 +2710,7 @@ static boolean lives_startup(livespointer data) {
               if (!capable->smog_version_correct) {
                 startup_message_fatal(
                   _("\nAn incorrect version of smogrify was found in your path.\n\n"
-		    "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
+                    "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
               } else {
 #ifndef IS_MINGW
                 if ((!capable->has_sox_sox||!capable->has_sox_play)&&!capable->has_mplayer&&!capable->has_mplayer2&&!capable->has_mpv) {
@@ -2751,8 +2751,8 @@ static boolean lives_startup(livespointer data) {
                     if (!capable->has_encoder_plugins) {
                       char *err=lives_strdup_printf(
                                   _("\nLiVES was unable to find any encoder plugins.\n"
-				    "Please check that you have them installed correctly in\n%s%s%s/\n"
-				    "You will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),
+                                    "Please check that you have them installed correctly in\n%s%s%s/\n"
+                                    "You will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),
                                   prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
                       lives_free(tmp);
                       startup_message_nonfatal_dismissable(err,WARN_MASK_NO_ENCODERS);
@@ -3938,8 +3938,8 @@ void load_start_image(int frame) {
     }
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(layer,"clip",mainw->current_file);
-    weed_set_int_value(layer,"frame",frame);
+    weed_set_int_value(layer,WEED_LEAF_CLIP,mainw->current_file);
+    weed_set_int_value(layer,WEED_LEAF_FRAME,frame);
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,cfile->hsize,cfile->vsize,
                            WEED_PALETTE_RGB24)) {
       interp=get_interp_value(prefs->pb_quality);
@@ -3997,8 +3997,8 @@ void load_start_image(int frame) {
     }
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(layer,"clip",mainw->current_file);
-    weed_set_int_value(layer,"frame",frame);
+    weed_set_int_value(layer,WEED_LEAF_CLIP,mainw->current_file);
+    weed_set_int_value(layer,WEED_LEAF_FRAME,frame);
 
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,width,height,WEED_PALETTE_RGB24)) {
       interp=get_interp_value(prefs->pb_quality);
@@ -4110,8 +4110,8 @@ void load_end_image(int frame) {
     }
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(layer,"clip",mainw->current_file);
-    weed_set_int_value(layer,"frame",frame);
+    weed_set_int_value(layer,WEED_LEAF_CLIP,mainw->current_file);
+    weed_set_int_value(layer,WEED_LEAF_FRAME,frame);
 
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,cfile->hsize,cfile->vsize,
                            WEED_PALETTE_RGB24)) {
@@ -4165,8 +4165,8 @@ void load_end_image(int frame) {
     }
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(layer,"clip",mainw->current_file);
-    weed_set_int_value(layer,"frame",frame);
+    weed_set_int_value(layer,WEED_LEAF_CLIP,mainw->current_file);
+    weed_set_int_value(layer,WEED_LEAF_FRAME,frame);
 
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,width,height,WEED_PALETTE_RGB24)) {
       interp=get_interp_value(prefs->pb_quality);
@@ -4322,8 +4322,8 @@ void load_preview_image(boolean update_always) {
       }
     }
 
-    weed_set_int_value(layer,"clip",mainw->current_file);
-    weed_set_int_value(layer,"frame",mainw->preview_frame);
+    weed_set_int_value(layer,WEED_LEAF_CLIP,mainw->current_file);
+    weed_set_int_value(layer,WEED_LEAF_FRAME,mainw->preview_frame);
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,mainw->pwidth,mainw->pheight,
                            WEED_PALETTE_RGB24)) {
       LiVESInterpType interp=get_interp_value(prefs->pb_quality);
@@ -4721,8 +4721,8 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
 boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc, int width, int height,
                            int target_palette) {
   // pull a frame from an external source into a layer
-  // the "clip" and "frame" leaves must be set in layer
-  // tc is used instead of "frame" for some sources (e.g. generator plugins)
+  // the WEED_LEAF_CLIP and WEED_LEAF_FRAME leaves must be set in layer
+  // tc is used instead of WEED_LEAF_FRAME for some sources (e.g. generator plugins)
   // image_ext is used if the source is an image file (eg. "jpg" or "png")
   // width and height are hints only, the caller should resize if necessary
   // target_palette is also a hint
@@ -4738,8 +4738,8 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
   int *rowstrides;
 
   int error;
-  int clip=weed_get_int_value(layer,"clip",&error);
-  int frame=weed_get_int_value(layer,"frame",&error);
+  int clip=weed_get_int_value(layer,WEED_LEAF_CLIP,&error);
+  int frame=weed_get_int_value(layer,WEED_LEAF_FRAME,&error);
   int clip_type;
 #ifdef HAVE_POSIX_FADVISE
   int fd;
@@ -4747,7 +4747,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 
   boolean is_thread=FALSE;
 
-  if (weed_plant_has_leaf(layer,"host_pthread")) is_thread=TRUE;
+  if (weed_plant_has_leaf(layer,WEED_LEAF_HOST_PTHREAD)) is_thread=TRUE;
 
   weed_set_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,NULL);
 
@@ -4795,8 +4795,8 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         boolean res=TRUE;
 
         lives_decoder_t *dplug;
-        if (weed_plant_has_leaf(layer,"host_decoder")) {
-          dplug=(lives_decoder_t *)weed_get_voidptr_value(layer,"host_decoder",&error);
+        if (weed_plant_has_leaf(layer,WEED_LEAF_HOST_DECODER)) {
+          dplug=(lives_decoder_t *)weed_get_voidptr_value(layer,WEED_LEAF_HOST_DECODER,&error);
         } else dplug=(lives_decoder_t *)sfile->ext_src;
         if (dplug==NULL||dplug->cdata==NULL) return FALSE;
         if (target_palette!=dplug->cdata->current_palette) {
@@ -4873,7 +4873,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) {
           if (!is_thread) {
             deinterlace_frame(layer,tc);
-          } else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
+          } else weed_set_boolean_value(layer,WEED_LEAF_HOST_DEINTERLACE,WEED_TRUE);
         }
         mainw->osc_block=FALSE;
         return res;
@@ -4917,7 +4917,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
     if (sfile->deinterlace) {
       if (!is_thread) {
         deinterlace_frame(layer,tc);
-      } else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
+      } else weed_set_boolean_value(layer,WEED_LEAF_HOST_DEINTERLACE,WEED_TRUE);
     }
     mainw->osc_block=FALSE;
     return TRUE;
@@ -4928,7 +4928,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
     if (sfile->deinterlace) {
       if (!is_thread) {
         deinterlace_frame(layer,tc);
-      } else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
+      } else weed_set_boolean_value(layer,WEED_LEAF_HOST_DEINTERLACE,WEED_TRUE);
     }
     mainw->osc_block=FALSE;
     return TRUE;
@@ -4967,8 +4967,8 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 
 boolean pull_frame(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc) {
   // pull a frame from an external source into a layer
-  // the "clip" and "frame" leaves must be set in layer
-  // tc is used instead of "frame" for some sources (e.g. generator plugins)
+  // the WEED_LEAF_CLIP and WEED_LEAF_FRAME leaves must be set in layer
+  // tc is used instead of WEED_LEAF_FRAME for some sources (e.g. generator plugins)
   // image_ext is used if the source is an image file (eg. "jpg" or "png")
 
   return pull_frame_at_size(layer,image_ext,tc,0,0,WEED_PALETTE_END);
@@ -4984,21 +4984,21 @@ void check_layer_ready(weed_plant_t *layer) {
   lives_clip_t *sfile;
 
   if (layer==NULL) return;
-  if (weed_plant_has_leaf(layer,"host_pthread")) {
-    pthread_t *frame_thread=(pthread_t *)weed_get_voidptr_value(layer,"host_pthread",&error);
+  if (weed_plant_has_leaf(layer,WEED_LEAF_HOST_PTHREAD)) {
+    pthread_t *frame_thread=(pthread_t *)weed_get_voidptr_value(layer,WEED_LEAF_HOST_PTHREAD,&error);
     pthread_join(*frame_thread,NULL);
-    weed_leaf_delete(layer,"host_pthread");
+    weed_leaf_delete(layer,WEED_LEAF_HOST_PTHREAD);
     free(frame_thread);
 
-    if (weed_plant_has_leaf(layer,"host_deinterlace")&&weed_get_boolean_value(layer,"host_deinterlace",&error)==WEED_TRUE) {
+    if (weed_plant_has_leaf(layer,WEED_LEAF_HOST_DEINTERLACE)&&weed_get_boolean_value(layer,WEED_LEAF_HOST_DEINTERLACE,&error)==WEED_TRUE) {
       int error;
-      weed_timecode_t tc=weed_get_int64_value(layer,"host_tc",&error);
+      weed_timecode_t tc=weed_get_int64_value(layer,WEED_LEAF_HOST_TC,&error);
       deinterlace_frame(layer,tc);
-      weed_set_boolean_value(layer,"host_deinterlace",WEED_FALSE);
+      weed_set_boolean_value(layer,WEED_LEAF_HOST_DEINTERLACE,WEED_FALSE);
     }
 
-    clip=weed_get_int_value(layer,"clip",&error);
-    frame=weed_get_int_value(layer,"frame",&error);
+    clip=weed_get_int_value(layer,WEED_LEAF_CLIP,&error);
+    frame=weed_get_int_value(layer,WEED_LEAF_FRAME,&error);
 
     if (clip!=-1) {
       sfile=mainw->files[clip];
@@ -5035,7 +5035,7 @@ static void *pft_thread(void *in) {
 
 void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode_t tc) {
   // pull a frame from an external source into a layer
-  // the "clip" and "frame" leaves must be set in layer
+  // the WEED_LEAF_CLIP and WEED_LEAF_FRAME leaves must be set in layer
 
   // done in a threaded fashion
 
@@ -5049,9 +5049,9 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
   pft_priv_data *in=(pft_priv_data *)lives_malloc(sizeof(pft_priv_data));
   pthread_t *frame_thread=(pthread_t *)calloc(sizeof(pthread_t),1);
 
-  weed_set_int64_value(layer,"host_tc",tc);
-  weed_set_boolean_value(layer,"host_deinterlace",WEED_FALSE);
-  weed_set_voidptr_value(layer,"host_pthread",(void *)frame_thread);
+  weed_set_int64_value(layer,WEED_LEAF_HOST_TC,tc);
+  weed_set_boolean_value(layer,WEED_LEAF_HOST_DEINTERLACE,WEED_FALSE);
+  weed_set_voidptr_value(layer,WEED_LEAF_HOST_PTHREAD,(void *)frame_thread);
   in->img_ext=img_ext;
   in->layer=layer;
   in->tc=tc;
@@ -5064,7 +5064,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc,
                                        int width, int height, LiVESInterpType interp) {
   // return a correctly sized (Gdk)Pixbuf (RGB24 for jpeg, RGBA32 for png) for the given clip and frame
-  // tc is used instead of "frame" for some sources (e.g. generator plugins)
+  // tc is used instead of WEED_LEAF_FRAME for some sources (e.g. generator plugins)
   // image_ext is used if the source is an image file (eg. "jpg" or "png")
   // pixbuf will be sized to width x height pixels using interp
 
@@ -5072,8 +5072,8 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
   weed_plant_t *layer=weed_plant_new(WEED_PLANT_CHANNEL);
   int palette;
 
-  weed_set_int_value(layer,"clip",clip);
-  weed_set_int_value(layer,"frame",frame);
+  weed_set_int_value(layer,WEED_LEAF_CLIP,clip);
+  weed_set_int_value(layer,WEED_LEAF_FRAME,frame);
 
   if (!strcmp(image_ext,LIVES_FILE_EXT_PNG)) palette=WEED_PALETTE_RGBA32;
   else palette=WEED_PALETTE_RGB24;
@@ -5620,8 +5620,8 @@ void load_frame_image(int frame) {
         if (mainw->clip_index[0]==mainw->scrap_file&&mainw->clip_index[0]>-1&&mainw->num_tracks==1) {
           // do not apply fx, just pull frame
           mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
-          weed_set_int_value(mainw->frame_layer,"clip",mainw->clip_index[0]);
-          weed_set_int_value(mainw->frame_layer,"frame",mainw->frame_index[0]);
+          weed_set_int_value(mainw->frame_layer,WEED_LEAF_CLIP,mainw->clip_index[0]);
+          weed_set_int_value(mainw->frame_layer,WEED_LEAF_FRAME,mainw->frame_index[0]);
           if (!pull_frame(mainw->frame_layer,get_image_ext_for_type(cfile->img_type),tc)) {
             weed_plant_free(mainw->frame_layer);
             mainw->frame_layer=NULL;
@@ -5644,8 +5644,8 @@ void load_frame_image(int frame) {
 
           for (i=0; i<mainw->num_tracks; i++) {
             layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
-            weed_set_int_value(layers[i],"clip",mainw->clip_index[i]);
-            weed_set_int_value(layers[i],"frame",mainw->frame_index[i]);
+            weed_set_int_value(layers[i],WEED_LEAF_CLIP,mainw->clip_index[i]);
+            weed_set_int_value(layers[i],WEED_LEAF_FRAME,mainw->frame_index[i]);
             weed_set_int_value(layers[i],WEED_LEAF_CURRENT_PALETTE,(mainw->clip_index[i]==-1||
                                mainw->files[mainw->clip_index[i]]->img_type==
                                IMG_TYPE_JPEG)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);
@@ -5682,7 +5682,7 @@ void load_frame_image(int frame) {
             if (nclip>0) {
               img_ext=get_image_ext_for_type(mainw->files[nclip]->img_type);
               // set alt src in layer
-              weed_set_voidptr_value(layers[i],"host_decoder",(void *)mainw->track_decoders[i]);
+              weed_set_voidptr_value(layers[i],WEED_LEAF_HOST_DECODER,(void *)mainw->track_decoders[i]);
               pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
             } else {
               weed_set_voidptr_value(layers[i],WEED_LEAF_PIXEL_DATA,NULL);
@@ -5710,8 +5710,8 @@ void load_frame_image(int frame) {
         // normal playback in the clip editor, or applying a non-realtime effect
         if (!mainw->preview||cfile->clip_type==CLIP_TYPE_FILE||lives_file_test(fname_next,LIVES_FILE_TEST_EXISTS)) {
           mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
-          weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
-          weed_set_int_value(mainw->frame_layer,"frame",mainw->actual_frame);
+          weed_set_int_value(mainw->frame_layer,WEED_LEAF_CLIP,mainw->current_file);
+          weed_set_int_value(mainw->frame_layer,WEED_LEAF_FRAME,mainw->actual_frame);
           if (img_ext==NULL) img_ext=get_image_ext_for_type(cfile->img_type);
 
           if (mainw->preview&&mainw->frame_layer==NULL&&(mainw->event_list==NULL||cfile->opening)) {

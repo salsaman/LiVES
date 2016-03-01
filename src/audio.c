@@ -861,13 +861,13 @@ static void audio_process_events_to(weed_timecode_t tc) {
     switch (hint) {
 
     case WEED_EVENT_HINT_FILTER_INIT: {
-      weed_plant_t *deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
+      weed_plant_t *deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,WEED_LEAF_DEINIT_EVENT,&error);
       if (get_event_timecode(deinit_event)<tc) break;
       process_events(event,TRUE,ctc);
     }
     break;
     case WEED_EVENT_HINT_FILTER_DEINIT: {
-      weed_plant_t *init_event=(weed_plant_t *)weed_get_voidptr_value(event,"init_event",&error);
+      weed_plant_t *init_event=(weed_plant_t *)weed_get_voidptr_value(event,WEED_LEAF_INIT_EVENT,&error);
       if (weed_plant_has_leaf(init_event,WEED_LEAF_HOST_TAG)) {
         process_events(event,TRUE,ctc);
       }
@@ -1731,9 +1731,9 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
 
 
   int error,atrack;
-  int num_aclips=weed_leaf_num_elements(event,"audio_clips");
-  int *aclips=weed_get_int_array(event,"audio_clips",&error);
-  double *aseeks=weed_get_double_array(event,"audio_seeks",&error);
+  int num_aclips=weed_leaf_num_elements(event,WEED_LEAF_AUDIO_CLIPS);
+  int *aclips=weed_get_int_array(event,WEED_LEAF_AUDIO_CLIPS,&error);
+  double *aseeks=weed_get_double_array(event,WEED_LEAF_AUDIO_SEEKS,&error);
   int naudstate=0;
   lives_audio_track_state_t *atstate=NULL;
 
@@ -1795,7 +1795,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
     if (WEED_EVENT_IS_FILTER_MAP(event)) {
       mainw->afilter_map=mainw->filter_map=event;
     } else if (WEED_EVENT_IS_FILTER_INIT(event)) {
-      deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
+      deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,WEED_LEAF_DEINIT_EVENT,&error);
       if (get_event_timecode(deinit_event)>=fill_tc) {
         // this effect should be activated
         process_events(event,FALSE,get_event_timecode(event));
@@ -1891,7 +1891,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     if (avels!=NULL) lives_free(avels);
     if (aseeks!=NULL) lives_free(aseeks);
 
-    if (mainw->multitrack!=NULL) nfiles=weed_leaf_num_elements(mainw->multitrack->avol_init_event,"in_tracks");
+    if (mainw->multitrack!=NULL) nfiles=weed_leaf_num_elements(mainw->multitrack->avol_init_event,WEED_LEAF_IN_TRACKS);
 
     else nfiles=1;
 

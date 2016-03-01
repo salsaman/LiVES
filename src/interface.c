@@ -599,7 +599,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
   dialog=create_question_dialog(_("Encoding Options"),text1,LIVES_WINDOW(mainw->LiVES));
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-  
+
   if (opt_resize) {
     if (text2!=NULL) labeltext=lives_strdup(_("<------------- (Check the box to re_size as suggested)"));
     else labeltext=lives_strdup(_("<------------- (Check the box to use the _size recommendation)"));
@@ -888,7 +888,7 @@ _insertw *create_insert_dialog(void) {
                      (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
   add_fill_to_box(LIVES_BOX(dialog_vbox));
-  
+
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(insertw->insert_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
@@ -1545,7 +1545,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
 
   if (type==1||type==4) ph_mult=2;
-  
+
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width*5);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*ph_mult);
 
@@ -1906,18 +1906,18 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
   LiVESWidget *buttond;
 
   char *extrabit,*title;
-  
+
   _commentsw *commentsw=(_commentsw *)(lives_malloc(sizeof(_commentsw)));
 
   if (filename!=NULL) extrabit=lives_strdup(_(" (Optional)"));
   else extrabit=lives_strdup("");
 
   title=lives_strdup_printf(_("File Comments%s"),extrabit);
-  
+
   commentsw->comments_dialog = lives_standard_dialog_new(title,TRUE,-1,-1);
   lives_free(title);
   lives_free(extrabit);
-  
+
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(commentsw->comments_dialog),LIVES_WINDOW(mainw->LiVES));
   }
@@ -2376,7 +2376,7 @@ _entryw *create_cds_dialog(int type) {
   LiVESAccelGroup *accel_group;
 
   char *labeltext=NULL;
-  
+
   _entryw *cdsw=(_entryw *)(lives_malloc(sizeof(_entryw)));
 
   cdsw->warn_checkbutton=NULL;
@@ -2384,14 +2384,14 @@ _entryw *create_cds_dialog(int type) {
   if (type==0) {
     if (strlen(mainw->multitrack->layout_name)==0) {
       labeltext=lives_strdup(
-		 _("You are about to leave multitrack mode.\nThe current layout has not been saved.\nWhat would you like to do ?\n"));
+                  _("You are about to leave multitrack mode.\nThe current layout has not been saved.\nWhat would you like to do ?\n"));
     } else {
       labeltext=lives_strdup(
-			     _("You are about to leave multitrack mode.\nThe current layout has been changed since the last save.\nWhat would you like to do ?\n"));
+                  _("You are about to leave multitrack mode.\nThe current layout has been changed since the last save.\nWhat would you like to do ?\n"));
     }
   } else if (type==1) {
     if (!mainw->only_close) labeltext=lives_strdup(
-						   _("You are about to exit LiVES.\nThe current clip set can be saved.\nWhat would you like to do ?\n"));
+                                          _("You are about to exit LiVES.\nThe current clip set can be saved.\nWhat would you like to do ?\n"));
     else labeltext=lives_strdup(_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
   } else if (type==2||type==3) {
     if ((mainw->multitrack!=NULL&&mainw->multitrack->changed)||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed)) {
@@ -2401,16 +2401,16 @@ _entryw *create_cds_dialog(int type) {
     }
   } else if (type==4) {
     labeltext=lives_strdup(
-			   _("You are about to leave multitrack mode.\nThe current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
+                _("You are about to leave multitrack mode.\nThe current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
   }
 
   cdsw->dialog = create_question_dialog(_("Cancel/Discard/Save"),labeltext,
-					mainw->multitrack!=NULL?LIVES_WINDOW(mainw->multitrack->window):
-					LIVES_WINDOW(mainw->LiVES));
+                                        mainw->multitrack!=NULL?LIVES_WINDOW(mainw->multitrack->window):
+                                        LIVES_WINDOW(mainw->LiVES));
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cdsw->dialog));
 
   if (labeltext!=NULL) lives_free(labeltext);
-  
+
   if (type==1) {
     LiVESWidget *checkbutton;
 

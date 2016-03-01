@@ -1134,11 +1134,11 @@ void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
   defname=lives_strdup_printf("frame%08d.%s",frame,get_image_ext_for_type(cfile->img_type));
-  
+
   filename=choose_file(strlen(mainw->image_dir)?mainw->image_dir:NULL,defname,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,ttl,NULL);
 
   lives_free(defname);
-  
+
   lives_free(filt[0]);
   lives_free(ttl);
 

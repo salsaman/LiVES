@@ -27,9 +27,10 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#define WEED_EVENT_API_VERSION 110
+#define WEED_EVENT_API_VERSION 120
 #define WEED_EVENT_API_VERSION_100
 #define WEED_EVENT_API_VERSION_110
+#define WEED_EVENT_API_VERSION_120
 
 #define WEED_PLANT_EVENT 256
 #define WEED_PLANT_EVENT_LIST 257
@@ -42,6 +43,9 @@ extern "C"
 #define WEED_EVENT_HINT_PARAM_CHANGE 5
 #define WEED_EVENT_HINT_MARKER 6
 
+#define WEED_AUDIO_LITTLE_ENDIAN 0
+#define WEED_AUDIO_BIG_ENDIAN 1
+  
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

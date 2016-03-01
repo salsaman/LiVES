@@ -324,7 +324,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
     lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
   }
-  
+
   if (cancelbutton!=NULL) {
     lives_widget_set_can_focus(cancelbutton,TRUE);
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
@@ -333,9 +333,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   if (okbutton!=NULL) {
     lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-				 LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+                                 LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
   }
-  
+
   if (mainw->iochan==NULL&&okbutton!=NULL) {
     lives_widget_set_can_focus_and_default(okbutton);
     lives_widget_grab_default(okbutton);
@@ -2182,7 +2182,7 @@ void too_many_files(void) {
 void tempdir_warning(void) {
   char *tmp,*com=lives_strdup_printf(
                    _("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\n"
-		     "Please make sure you can write to this directory."),
+                     "Please make sure you can write to this directory."),
                    (tmp=lives_filename_to_utf8(prefs->tmpdir,-1,NULL,NULL,NULL)));
   lives_free(tmp);
   if (mainw!=NULL&&mainw->is_ready) {
@@ -2551,24 +2551,22 @@ void do_rendered_fx_dialog(void) {
 void do_audio_import_error(void) {
   char *msg=lives_strdup(_("Sorry, unknown audio type.\n\n (Filenames must end in"));
   char *tmp;
-  
+
   register int i=0;
-  
+
   while (LIVES_AUDIO_LOAD_FILTER[i]!=NULL) {
     if (LIVES_AUDIO_LOAD_FILTER[i+1]==NULL) {
       tmp=lives_strdup_printf("%s or .%s)",msg,LIVES_AUDIO_LOAD_FILTER[i]+2);
-    }
-    else if (i==0) {
+    } else if (i==0) {
       tmp=lives_strdup_printf("%s .%s)",msg,LIVES_AUDIO_LOAD_FILTER[i]+2);
-    }
-    else {
+    } else {
       tmp=lives_strdup_printf("%s, .%s)",msg,LIVES_AUDIO_LOAD_FILTER[i]+2);
     }
     lives_free(msg);
     msg=tmp;
     i++;
   }
-  
+
   do_error_dialog(msg);
   lives_free(msg);
   d_print(_("failed (unknown type)\n"));
@@ -3336,7 +3334,7 @@ void do_card_in_use_error(void) {
 void do_dev_busy_error(const char *devstr) {
   char *msg=lives_strdup_printf(
               _("\nThe device %s is in use or unavailable.\n- Check the device permissions\n- Check if this device is in use by another program.\n"
-		"- Check if the device actually exists.\n"),
+                "- Check if the device actually exists.\n"),
               devstr);
   do_blocking_error_dialog(msg);
   lives_free(msg);
@@ -3351,15 +3349,13 @@ void do_invalid_subs_error(void) {
   char *msg=lives_strdup(_("\nLiVES currently only supports subtitles of type"));
   char *tmp;
   register int i=0;
-  
+
   while (LIVES_SUBS_FILTER[i]!=NULL) {
     if (LIVES_SUBS_FILTER[i+1]==NULL) {
       tmp=lives_strdup_printf("%s or .%s\n",msg,LIVES_SUBS_FILTER[i]+2);
-    }
-    else if (i>0) {
+    } else if (i>0) {
       tmp=lives_strdup_printf("%s, .%s)",msg,LIVES_SUBS_FILTER[i]+2);
-    }
-    else {
+    } else {
       tmp=lives_strdup_printf("%s .%s)",msg,LIVES_SUBS_FILTER[i]+2);
     }
     lives_free(msg);

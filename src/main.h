@@ -504,6 +504,11 @@ typedef enum {
 
 #include "pangotext.h"
 
+#define WEED_LEAF_HOST_DEINTERLACE "host_deinterlace" // frame needs deinterlacing
+#define WEED_LEAF_HOST_TC "host_tc" // timecode for deinterlace
+#define WEED_LEAF_HOST_DECODER "host_decoder" // pointer to decoder for a layer
+#define WEED_LEAF_HOST_PTHREAD "host_pthread" // thread for a layer
+
 /// corresponds to one clip in the GUI
 typedef struct {
   // basic info (saved during backup)

@@ -43,9 +43,34 @@ typedef enum {
   FX_LIST_HASHNAME,
 } lives_fx_list_t;
 
+#define WEED_LEAF_TYPE "type"
 #define WEED_LEAF_PLUGIN_INFO "plugin_info"
 #define WEED_LEAF_FILTERS "filters"
+#define WEED_LEAF_MAINTAINER "maintainer"
 #define WEED_LEAF_HOST_INFO "host_info"
+
+// filter_class
+#define WEED_LEAF_INIT_FUNC "init_func"
+#define WEED_LEAF_DEINIT_FUNC "deinit_func"
+#define WEED_LEAF_PROCESS_FUNC "process_func"
+#define WEED_LEAF_DISPLAY_FUNC "display_func"
+#define WEED_LEAF_INTERPOLATE_FUNC "interpolate_func"
+#define WEED_LEAF_TARGET_FPS "target_fps"
+#define WEED_LEAF_GUI "gui"
+#define WEED_LEAF_DESCRIPTION "description"
+#define WEED_LEAF_AUTHOR "author"
+#define WEED_LEAF_EXTRA_AUTHORS "extra_authors"
+#define WEED_LEAF_URL "url"
+#define WEED_LEAF_ICON "icon"
+#define WEED_LEAF_LICENSE "license"
+#define WEED_LEAF_VERSION "version"
+
+// instance
+#define WEED_LEAF_FILTER_CLASS "filter_class"
+#define WEED_LEAF_TIMECODE "timecode"
+#define WEED_LEAF_FPS "fps"
+
+// channels / chan template
 #define WEED_LEAF_PIXEL_DATA "pixel_data"
 #define WEED_LEAF_WIDTH "width"
 #define WEED_LEAF_HEIGHT "height"
@@ -55,64 +80,75 @@ typedef enum {
 #define WEED_LEAF_YUV_SUBSPACE "YUV_subspace"
 #define WEED_LEAF_YUV_SAMPLING "YUV_sampling"
 #define WEED_LEAF_YUV_CLAMPING "YUV_clamping"
-#define WEED_LEAF_IN_PARAMETERS "in_parameters"
-#define WEED_LEAF_OUT_PARAMETERS "out_parameters"
 #define WEED_LEAF_IN_CHANNELS "in_channels"
 #define WEED_LEAF_OUT_CHANNELS "out_channels"
-#define WEED_LEAF_VALUE "value"
-#define WEED_LEAF_FPS "fps"
-#define WEED_LEAF_TARGET_FPS "target_fps"
-#define WEED_LEAF_FILTER_CLASS "filter_class"
-#define WEED_LEAF_TIMECODE "timecode"
-#define WEED_LEAF_FLAGS "flags"
-#define WEED_LEAF_HINT "hint"
-#define WEED_LEAF_GUI "gui"
-#define WEED_LEAF_DESCRIPTION "description"
-#define WEED_LEAF_AUTHOR "author"
-#define WEED_LEAF_EXTRA_AUTHORS "extra_authors"
-#define WEED_LEAF_WRAP "wrap"
-#define WEED_LEAF_HIDDEN "hidden"
-#define WEED_LEAF_DISPLAY_VALUE "display_value"
-#define WEED_LEAF_GROUP "group"
-#define WEED_LEAF_TYPE "type"
-#define WEED_LEAF_NAME "name"
-#define WEED_LEAF_DEFAULT "default"
-#define WEED_LEAF_MIN "min"
-#define WEED_LEAF_MAX "max"
-#define WEED_LEAF_IGNORE "ignore"
-#define WEED_LEAF_VERSION "version"
-#define WEED_LEAF_COPY_VALUE_TO "copy_value_to"
-#define WEED_LEAF_NEW_DEFAULT "new_default"
-#define WEED_LEAF_COLORSPACE "colorspace"
-#define WEED_LEAF_IS_AUDIO "is_audio"
 #define WEED_LEAF_IN_CHANNEL_TEMPLATES "in_channel_templates"
 #define WEED_LEAF_OUT_CHANNEL_TEMPLATES "out_channel_templates"
-#define WEED_LEAF_IN_PARAMETER_TEMPLATES "in_parameter_templates"
-#define WEED_LEAF_OUT_PARAMETER_TEMPLATES "out_parameter_templates"
 #define WEED_LEAF_OFFSET "offset"
 #define WEED_LEAF_HSTEP "hstep"
 #define WEED_LEAF_VSTEP "vstep"
 #define WEED_LEAF_MAXWIDTH "maxwidth"
 #define WEED_LEAF_MAXHEIGHT "maxheight"
-#define WEED_LEAF_TRANSITION "transition"
-#define WEED_LEAF_IS_VOLUME_MASTER "is_volume_master"
 #define WEED_LEAF_OPTIONAL "optional"
 #define WEED_LEAF_DISABLED "disabled"
 #define WEED_LEAF_ALIGNMENT "alignment"
 #define WEED_LEAF_TEMPLATE "template"
+#define WEED_LEAF_PIXEL_ASPECT_RATIO "pixel_aspect_ratio"
+#define WEED_LEAF_ROWSTRIDE_ALIGNMENT_HINT "rowstride_alignment_hint"
+#define WEED_LEAF_MAX_REPEATS "max_repeats"
+
+// params / param tmpl
+#define WEED_LEAF_IN_PARAMETERS "in_parameters"
+#define WEED_LEAF_OUT_PARAMETERS "out_parameters"
+#define WEED_LEAF_VALUE "value"
+#define WEED_LEAF_FLAGS "flags"
+#define WEED_LEAF_HINT "hint"
+#define WEED_LEAF_GROUP "group"
+#define WEED_LEAF_NAME "name"
+#define WEED_LEAF_DEFAULT "default"
+#define WEED_LEAF_MIN "min"
+#define WEED_LEAF_MAX "max"
+#define WEED_LEAF_IGNORE "ignore"
+#define WEED_LEAF_NEW_DEFAULT "new_default"
+#define WEED_LEAF_COLORSPACE "colorspace"
+#define WEED_LEAF_IN_PARAMETER_TEMPLATES "in_parameter_templates"
+#define WEED_LEAF_OUT_PARAMETER_TEMPLATES "out_parameter_templates"
+#define WEED_LEAF_TRANSITION "transition"
+#define WEED_LEAF_IS_VOLUME_MASTER "is_volume_master"
+
+
+// audio
+#define WEED_LEAF_IS_AUDIO "is_audio"
 #define WEED_LEAF_AUDIO_DATA "audio_data"
 #define WEED_LEAF_AUDIO_DATA_LENGTH "audio_data_length"
 #define WEED_LEAF_AUDIO_RATE "audio_rate"
 #define WEED_LEAF_AUDIO_CHANNELS "audio_channels"
 #define WEED_LEAF_AUDIO_INTERLEAF "audio_interleaf"
-#define WEED_LEAF_PIXEL_ASPECT_RATIO "pixel_aspect_ratio"
-#define WEED_LEAF_ROWSTRIDE_ALIGNMENT_HINT "rowstride_alignment_hint"
-#define WEED_LEAF_MAX_REPEATS "max_repeats"
-#define WEED_LEAF_INIT_FUNC "init_func"
-#define WEED_LEAF_DEINIT_FUNC "deinit_func"
-#define WEED_LEAF_PROCESS_FUNC "process_func"
-#define WEED_LEAF_DISPLAY_FUNC "display_func"
-#define WEED_LEAF_INTERPOLATE_FUNC "interpolate_func"
+
+// param gui
+#define WEED_LEAF_WRAP "wrap"
+#define WEED_LEAF_MAXCHARS "maxchars"
+#define WEED_LEAF_LABEL "label"
+#define WEED_LEAF_DECIMALS "decimals"
+#define WEED_LEAF_STEP_SIZE "step_size"
+#define WEED_LEAF_CHOICES "choices"
+#define WEED_LEAF_USE_MNEMONIC "use_mnemonic"
+#define WEED_LEAF_HIDDEN "hidden"
+#define WEED_LEAF_DISPLAY_VALUE "display_value"
+#define WEED_LEAF_COPY_VALUE_TO "copy_value_to"
+
+// plugin gui: layout
+#define WEED_LEAF_LAYOUT_SCHEME "layout_scheme"
+#define WEED_LEAF_RFX_STRINGS "rfx_strings"
+#define WEED_LEAF_RFX_DELIM "rfx_delim"
+
+
+// plugin specific values
+#define WEED_LEAF_PLUGIN_UNSTABLE "plugin_unstable" // plugin hint to host
+
+
+// internal values
+#define WEED_LEAF_HOST_AUDIO_PLAYER "host_audio_player" // exported to plugins
 
 #define WEED_LEAF_HOST_ORIG_PDATA "host_orig_pdata" // set if we "steal" an alpha channel to chain
 #define WEED_LEAF_HOST_MENU_HIDE "host_menu_hide" // hide from menus
@@ -123,6 +159,7 @@ typedef enum {
 #define WEED_LEAF_HOST_TAG "host_tag" // internal key mapping (for higher keys)
 #define WEED_LEAF_HOST_KEY "host_key" // internal key mapping
 #define WEED_LEAF_HOST_MODE "host_mode" // internal mode mapping
+#define WEED_LEAF_HOST_INPLACE "host_inplace" // inplace effect
 #define WEED_LEAF_HOST_DISABLED "host_disabled" // channel is disabled
 #define WEED_LEAF_HOST_TEMP_DISABLED "host_temp_disabled" // channel is temp disabled
 #define WEED_LEAF_HOST_REFS "host_refs" // host ref counting
@@ -136,8 +173,13 @@ typedef enum {
 #define WEED_LEAF_HOST_HANDLE "host_handle" // dll handle
 #define WEED_LEAF_HOST_FILTER_LIST "host_filter_list" // host usable filters
 
-#define WEED_LEAF_PLUGIN_UNSTABLE "plugin_unstable" // plugin hint to host
+#define WEED_LEAF_HOST_INSTANCE "host_instance" // special value for text widgets
+#define WEED_LEAF_HOST_IDX "host_idx" // special value for text widgets
 
+// layer only values
+
+#define WEED_LEAF_CLIP "clip"
+#define WEED_LEAF_FRAME "frame"
 
 
 

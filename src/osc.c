@@ -4388,7 +4388,7 @@ boolean lives_osc_cb_pgui_countchoices(void *context, int arglen, const void *va
 
   ptmpl=weed_filter_in_paramtmpl(filter,pnum,TRUE);
 
-  if (weed_plant_has_leaf(ptmpl,"choices")) val=weed_leaf_num_elements(ptmpl,"choices");
+  if (weed_plant_has_leaf(ptmpl,WEED_LEAF_CHOICES)) val=weed_leaf_num_elements(ptmpl,WEED_LEAF_CHOICES);
 
   retval=lives_strdup_printf("%d",val);
 
@@ -4447,10 +4447,10 @@ boolean lives_osc_cb_pgui_getchoice(void *context, int arglen, const void *vargs
 
   ptmpl=weed_filter_in_paramtmpl(filter,pnum,TRUE);
 
-  if (weed_plant_has_leaf(ptmpl,"choices")) {
-    int nc=weed_leaf_num_elements(ptmpl,"choices");
+  if (weed_plant_has_leaf(ptmpl,WEED_LEAF_CHOICES)) {
+    int nc=weed_leaf_num_elements(ptmpl,WEED_LEAF_CHOICES);
     if (cc<nc) {
-      char **choices=weed_get_string_array(ptmpl,"choices",&error);
+      char **choices=weed_get_string_array(ptmpl,WEED_LEAF_CHOICES,&error);
       register int i;
       for (i=0; i<nc; i++) {
         if (i==cc) {
@@ -5152,7 +5152,8 @@ boolean lives_osc_cb_rte_getnochannels(void *context, int arglen, const void *va
   plant=rte_keymode_get_instance(effect_key,rte_key_getmode(effect_key));
 
   // handle compound fx
-  if (plant!=NULL) while (weed_plant_has_leaf(plant,WEED_LEAF_HOST_NEXT_INSTANCE)) plant=weed_get_plantptr_value(plant,WEED_LEAF_HOST_NEXT_INSTANCE,&error);
+  if (plant!=NULL) while (weed_plant_has_leaf(plant,WEED_LEAF_HOST_NEXT_INSTANCE)) plant=weed_get_plantptr_value(plant,
+          WEED_LEAF_HOST_NEXT_INSTANCE,&error);
   else plant=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
   if (plant==NULL) return lives_osc_notify_failure();
 
@@ -5715,7 +5716,8 @@ boolean lives_osc_cb_rte_gethasparamdef(void *context, int arglen, const void *v
     lives_status_send(get_omc_const("LIVES_DEFAULT_OVERRIDDEN"));
     return TRUE;
   }
-  if (!weed_plant_has_leaf(ptmpl,WEED_LEAF_DEFAULT)||weed_leaf_num_elements(ptmpl,WEED_LEAF_DEFAULT)==0) lives_status_send(get_omc_const("LIVES_FALSE"));
+  if (!weed_plant_has_leaf(ptmpl,WEED_LEAF_DEFAULT)||
+      weed_leaf_num_elements(ptmpl,WEED_LEAF_DEFAULT)==0) lives_status_send(get_omc_const("LIVES_FALSE"));
   else lives_status_send(get_omc_const("LIVES_TRUE"));
 
   return TRUE;
@@ -5763,7 +5765,8 @@ boolean lives_osc_cb_rte_getohasparamdef(void *context, int arglen, const void *
   ptmpl=out_ptmpls[pnum];
   lives_free(out_ptmpls);
 
-  if (!weed_plant_has_leaf(ptmpl,WEED_LEAF_HOST_DEFAULT)&&!weed_plant_has_leaf(ptmpl,WEED_LEAF_DEFAULT)) lives_status_send(get_omc_const("LIVES_FALSE"));
+  if (!weed_plant_has_leaf(ptmpl,WEED_LEAF_HOST_DEFAULT)&&
+      !weed_plant_has_leaf(ptmpl,WEED_LEAF_DEFAULT)) lives_status_send(get_omc_const("LIVES_FALSE"));
   else lives_status_send(get_omc_const("LIVES_TRUE"));
 
   return TRUE;
@@ -6929,7 +6932,7 @@ static struct {
   { "/effect_key/mode/set",		"set",	(osc_cb)lives_osc_cb_rte_setmode,		        43	},
   { "/effect_key/mode/get",		"get",	(osc_cb)lives_osc_cb_rte_getmode,		        43	},
   { "/effect_key/mode/next",		"next",	(osc_cb)lives_osc_cb_rte_nextmode,		        43	},
-  { "/effect_key/mode/previous",		"previous",	(osc_cb)lives_osc_cb_rte_prevmode,		        43	},
+  { "/effect_key/mode/previous",	"previous",	(osc_cb)lives_osc_cb_rte_prevmode,		        43	},
   { "/effect_key/name/get",		"get",	(osc_cb)lives_osc_cb_rte_get_keyfxname,		        44	},
   { "/effect_key/maxmode/get",		"get",	(osc_cb)lives_osc_cb_rte_getmodespk,		        45	},
   { "/effect_key/state/get",		"get",	(osc_cb)lives_osc_cb_rte_getstate,		        56	},

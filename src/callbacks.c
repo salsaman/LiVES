@@ -1547,15 +1547,15 @@ void on_backup_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *defname,*text;
 
   defname=lives_strdup_printf("%s.%s",cfile->name,LIVES_FILE_EXT_BACKUP);
-  
+
   text=lives_strdup_printf(_("Backup as %s File"),LIVES_FILE_EXT_BACKUP);
-  
+
   file_name=choose_file(strlen(mainw->proj_save_dir)?mainw->proj_save_dir:NULL,defname,filt,
-			LIVES_FILE_CHOOSER_ACTION_SAVE,text,NULL);
+                        LIVES_FILE_CHOOSER_ACTION_SAVE,text,NULL);
 
   lives_free(text);
   lives_free(defname);
-  
+
   if (file_name==NULL) return;
 
   backup_file(mainw->current_file,1,cfile->frames,file_name);
@@ -1574,10 +1574,10 @@ void on_restore_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   text=lives_strdup_printf(_("Restore %s File"),LIVES_FILE_EXT_BACKUP);
 
   file_name=choose_file(strlen(mainw->proj_load_dir)?mainw->proj_load_dir:NULL,text,filt,
-			LIVES_FILE_CHOOSER_ACTION_OPEN,text,NULL);
+                        LIVES_FILE_CHOOSER_ACTION_OPEN,text,NULL);
 
   lives_free(text);
-  
+
   if (file_name==NULL) return;
 
   restore_file(file_name);

@@ -1635,11 +1635,15 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   char *filter_author;
   char *filter_extra_authors=NULL;
   char *filter_description;
+  char *url;
+  char *license;
   char *tmp;
   char *type;
   char *plugin_name;
 
   boolean has_desc=FALSE;
+  boolean has_url=FALSE;
+  boolean has_license=FALSE;
 
   int filter_version;
   int weed_error;
@@ -1660,10 +1664,20 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   filter=rte_keymode_get_filter(key+1,mode);
   filter_name=weed_get_string_value(filter,WEED_LEAF_NAME,&weed_error);
   filter_author=weed_get_string_value(filter,WEED_LEAF_AUTHOR,&weed_error);
-  if (weed_plant_has_leaf(filter,WEED_LEAF_EXTRA_AUTHORS)) filter_extra_authors=weed_get_string_value(filter,WEED_LEAF_EXTRA_AUTHORS,&weed_error);
+  if (weed_plant_has_leaf(filter,WEED_LEAF_EXTRA_AUTHORS)) filter_extra_authors=weed_get_string_value(filter,WEED_LEAF_EXTRA_AUTHORS,
+        &weed_error);
   if (weed_plant_has_leaf(filter,WEED_LEAF_DESCRIPTION)) {
     filter_description=weed_get_string_value(filter,WEED_LEAF_DESCRIPTION,&weed_error);
     has_desc=TRUE;
+  }
+  if (weed_plant_has_leaf(filter,WEED_LEAF_URL)) {
+    url=weed_get_string_value(filter,WEED_LEAF_URL,&weed_error);
+    has_url=TRUE;
+  }
+
+  if (weed_plant_has_leaf(filter,WEED_LEAF_LICENSE)) {
+    license=weed_get_string_value(filter,WEED_LEAF_LICENSE,&weed_error);
+    has_license=TRUE;
   }
 
   filter_version=weed_get_int_value(filter,WEED_LEAF_VERSION,&weed_error);
@@ -1698,9 +1712,16 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
   }
 
+  if (has_url) {
+    label = lives_standard_label_new((tmp=lives_strdup_printf(_("URL: %s"),url)));
+    lives_free(tmp);
+    lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
+  }
+
   label = lives_standard_label_new((tmp=lives_strdup_printf(_("Version: %d"),filter_version)));
   lives_free(tmp);
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
+
 
   if (has_desc) {
     hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
@@ -1724,6 +1745,12 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(hbox), textview, TRUE, TRUE, widget_opts.packing_height);
   }
 
+  if (has_license) {
+    label = lives_standard_label_new((tmp=lives_strdup_printf(_("License: %s"),license)));
+    lives_free(tmp);
+    lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
+  }
+
 
   ok_button = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), ok_button, LIVES_RESPONSE_OK);
@@ -1741,6 +1768,8 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   lives_free(filter_author);
   if (filter_extra_authors!=NULL) lives_free(filter_extra_authors);
   if (has_desc) lives_free(filter_description);
+  if (has_url) lives_free(url);
+  if (has_license) lives_free(license);
   lives_free(plugin_name);
   lives_free(type);
 
@@ -1853,7 +1882,8 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
     weed_plant_t *ninst=inst;
     do {
       weed_instance_ref(ninst);
-    } while (weed_plant_has_leaf(ninst,WEED_LEAF_HOST_NEXT_INSTANCE)&&(ninst=weed_get_plantptr_value(ninst,WEED_LEAF_HOST_NEXT_INSTANCE,&error))!=NULL);
+    } while (weed_plant_has_leaf(ninst,WEED_LEAF_HOST_NEXT_INSTANCE)&&
+             (ninst=weed_get_plantptr_value(ninst,WEED_LEAF_HOST_NEXT_INSTANCE,&error))!=NULL);
   }
 
 
@@ -2609,7 +2639,8 @@ void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
         weed_set_int_array(ptmpl,WEED_LEAF_HOST_DEFAULT,1,(int *)rfx->params[i].value);
         break;
       case LIVES_PARAM_NUM:
-        if (weed_leaf_seed_type(ptmpl,WEED_LEAF_DEFAULT)==WEED_SEED_DOUBLE) weed_set_double_array(ptmpl,WEED_LEAF_HOST_DEFAULT,1,(double *)rfx->params[i].value);
+        if (weed_leaf_seed_type(ptmpl,WEED_LEAF_DEFAULT)==WEED_SEED_DOUBLE) weed_set_double_array(ptmpl,WEED_LEAF_HOST_DEFAULT,1,
+              (double *)rfx->params[i].value);
         else weed_set_int_array(ptmpl,WEED_LEAF_HOST_DEFAULT,1,(int *)rfx->params[i].value);
         break;
       case LIVES_PARAM_BOOL:

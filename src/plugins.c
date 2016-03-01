@@ -3287,9 +3287,9 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         rpar[i].max=(double)weed_get_int_value(wtmpl,WEED_LEAF_MAX,&error);
         if (weed_plant_has_leaf(wtmpl,WEED_LEAF_WRAP)&&weed_get_boolean_value(wtmpl,WEED_LEAF_WRAP,&error)==WEED_TRUE) rpar[i].wrap=TRUE;
         if (gui!=NULL) {
-          if (weed_plant_has_leaf(gui,"choices")) {
-            listlen=weed_leaf_num_elements(gui,"choices");
-            list=weed_get_string_array(gui,"choices",&error);
+          if (weed_plant_has_leaf(gui,WEED_LEAF_CHOICES)) {
+            listlen=weed_leaf_num_elements(gui,WEED_LEAF_CHOICES);
+            list=weed_get_string_array(gui,WEED_LEAF_CHOICES,&error);
             for (j=0; j<listlen; j++) {
               gtk_list=lives_list_append(gtk_list,lives_strdup(list[j]));
               lives_free(list[j]);
@@ -3300,8 +3300,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
             gtk_list=NULL;
             rpar[i].type=LIVES_PARAM_STRING_LIST;
             rpar[i].max=listlen;
-          } else if (weed_plant_has_leaf(gui,"step_size"))
-            rpar[i].step_size=(double)weed_get_int_value(gui,"step_size",&error);
+          } else if (weed_plant_has_leaf(gui,WEED_LEAF_STEP_SIZE))
+            rpar[i].step_size=(double)weed_get_int_value(gui,WEED_LEAF_STEP_SIZE,&error);
           if (rpar[i].step_size==0.) rpar[i].step_size=1.;
         }
         break;
@@ -3324,8 +3324,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         rpar[i].step_size=0.;
         rpar[i].dp=2;
         if (gui!=NULL) {
-          if (weed_plant_has_leaf(gui,"step_size")) rpar[i].step_size=weed_get_double_value(gui,"step_size",&error);
-          if (weed_plant_has_leaf(gui,"decimals")) rpar[i].dp=weed_get_int_value(gui,"decimals",&error);
+          if (weed_plant_has_leaf(gui,WEED_LEAF_STEP_SIZE)) rpar[i].step_size=weed_get_double_value(gui,WEED_LEAF_STEP_SIZE,&error);
+          if (weed_plant_has_leaf(gui,WEED_LEAF_DECIMALS)) rpar[i].dp=weed_get_int_value(gui,WEED_LEAF_DECIMALS,&error);
         }
         if (rpar[i].step_size==0.) {
           if (rpar[i].max-rpar[i].min>1.) rpar[i].step_size=1.;
@@ -3346,8 +3346,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         rpar[i].value=lives_strdup(string);
         lives_free(string);
         rpar[i].max=0.;
-        if (gui!=NULL&&weed_plant_has_leaf(gui,"maxchars")) {
-          rpar[i].max=(double)weed_get_int_value(gui,"maxchars",&error);
+        if (gui!=NULL&&weed_plant_has_leaf(gui,WEED_LEAF_MAXCHARS)) {
+          rpar[i].max=(double)weed_get_int_value(gui,WEED_LEAF_MAXCHARS,&error);
           if (rpar[i].max<0.) rpar[i].max=0.;
         }
         break;
@@ -3480,13 +3480,13 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       // gui part /////////////////////
 
       if (gui!=NULL) {
-        if (weed_plant_has_leaf(gui,"label")) {
-          string=weed_get_string_value(gui,"label",&error);
+        if (weed_plant_has_leaf(gui,WEED_LEAF_LABEL)) {
+          string=weed_get_string_value(gui,WEED_LEAF_LABEL,&error);
           lives_free(rpar[i].label);
           rpar[i].label=lives_strdup(string);
           lives_free(string);
         }
-        if (weed_plant_has_leaf(gui,"use_mnemonic")) rpar[i].use_mnemonic=weed_get_boolean_value(gui,"use_mnemonic",&error);
+        if (weed_plant_has_leaf(gui,WEED_LEAF_USE_MNEMONIC)) rpar[i].use_mnemonic=weed_get_boolean_value(gui,WEED_LEAF_USE_MNEMONIC,&error);
         if (weed_plant_has_leaf(gui,WEED_LEAF_HIDDEN))
           rpar[i].hidden|=((weed_get_boolean_value(gui,WEED_LEAF_HIDDEN,&error)==WEED_TRUE)*HIDDEN_GUI);
         if (weed_plant_has_leaf(gui,WEED_LEAF_DISPLAY_FUNC)) {
@@ -3588,26 +3588,26 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         if (!weed_plant_has_leaf(filter,WEED_LEAF_GUI)) continue;
         gui=weed_get_plantptr_value(filter,WEED_LEAF_GUI,&error);
 
-        if (!weed_plant_has_leaf(gui,"layout_scheme")) continue;
+        if (!weed_plant_has_leaf(gui,WEED_LEAF_LAYOUT_SCHEME)) continue;
 
-        string=weed_get_string_value(gui,"layout_scheme",&error);
+        string=weed_get_string_value(gui,WEED_LEAF_LAYOUT_SCHEME,&error);
         if (strcmp(string,"RFX")) {
           lives_free(string);
           continue;
         }
         lives_free(string);
 
-        if (!weed_plant_has_leaf(gui,"rfx_delim")) continue;
-        delim=weed_get_string_value(gui,"rfx_delim",&error);
+        if (!weed_plant_has_leaf(gui,WEED_LEAF_RFX_DELIM)) continue;
+        delim=weed_get_string_value(gui,WEED_LEAF_RFX_DELIM,&error);
         lives_snprintf(rfx->delim,2,"%s",delim);
         lives_free(delim);
 
-        if (!weed_plant_has_leaf(gui,"rfx_strings")) continue;
+        if (!weed_plant_has_leaf(gui,WEED_LEAF_RFX_STRINGS)) continue;
 
-        num_hints=weed_leaf_num_elements(gui,"rfx_strings");
+        num_hints=weed_leaf_num_elements(gui,WEED_LEAF_RFX_STRINGS);
 
         if (num_hints==0) continue;
-        rfx_strings=weed_get_string_array(gui,"rfx_strings",&error);
+        rfx_strings=weed_get_string_array(gui,WEED_LEAF_RFX_STRINGS,&error);
 
         for (i=0; i<num_hints; i++) {
           hints=lives_list_append(hints,lives_strdup(rfx_strings[i]));

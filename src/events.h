@@ -10,6 +10,69 @@
 #ifndef HAS_LIVES_EVENTS_H
 #define HAS_LIVES_EVENTS_H
 
+// event_list
+#define WEED_LEAF_WEED_EVENT_API_VERSION "weed_event_api_version"
+#define WEED_LEAF_AUDIO_SIGNED "audio_signed"
+#define WEED_LEAF_AUDIO_ENDIAN "audio_endian"
+#define WEED_LEAF_AUDIO_SAMPLE_SIZE "audio_sample_size"
+#define WEED_LEAF_AUDIO_VOLUME_TRACKS "audio_volume_tracks"
+#define WEED_LEAF_AUDIO_VOLUME_VALUES "audio_volume_values"
+#define WEED_LEAF_TRACK_LABEL_TRACKS "track_label_tracks"
+#define WEED_LEAF_TRACK_LABEL_VALUES "track_label_values"
+
+
+// frame event
+#define WEED_LEAF_FRAMES "frames"
+#define WEED_LEAF_CLIPS "clips"
+#define WEED_LEAF_AUDIO_CLIPS "audio_clips"
+#define WEED_LEAF_AUDIO_SEEKS "audio_seeks"
+
+// init_event
+#define WEED_LEAF_FILTER "filter"
+#define WEED_LEAF_IN_COUNT "in_count"
+#define WEED_LEAF_OUT_COUNT "out_count"
+#define WEED_LEAF_IN_TRACKS "in_tracks"
+#define WEED_LEAF_OUT_TRACKS "out_tracks"
+#define WEED_LEAF_EVENT_ID "event_id"
+
+// deinit
+#define WEED_LEAF_INIT_EVENT "init_event"
+
+
+// filter map
+#define WEED_LEAF_INIT_EVENTS "init_events"
+
+// param change
+#define WEED_LEAF_INDEX "index"
+
+
+
+// internal
+// event_list
+#define WEED_LEAF_NEXT "next"
+#define WEED_LEAF_PREVIOUS "previous"
+#define WEED_LEAF_FIRST "first"
+#define WEED_LEAF_LAST "last"
+#define WEED_LEAF_NEEDS_SET "needs_set"
+
+// param change
+#define WEED_LEAF_NEXT_CHANGE "next_change"
+#define WEED_LEAF_PREV_CHANGE "prev_change"
+
+// init_event
+#define WEED_LEAF_DEINIT_EVENT "deinit_event"
+
+// marker
+#define WEED_LEAF_LIVES_TYPE "lives_type"
+#define WEED_LEAF_TRACKS "tracks"
+
+// misc
+#define WEED_LEAF_PTRSIZE "ptrsize"
+
+#define WEED_LEAF_HOST_AUDIO_TRANSITION "host_audio_transition"
+
+
+
 weed_plant_t *append_frame_event(weed_plant_t *event_list, weed_timecode_t tc, int numframes,
                                  int *clips, int *frames) WARN_UNUSED;
 weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t tc,

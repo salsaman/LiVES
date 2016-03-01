@@ -2197,16 +2197,16 @@ static void write_fx_tag(const char *string, int nfixed, lives_omc_match_node_t 
 
         filter=rte_keymode_get_filter(oval0,mode);
 
-        ntmpls=weed_leaf_num_elements(filter,"in_parameter_templates");
+        ntmpls=weed_leaf_num_elements(filter,WEED_LEAF_IN_PARAMETER_TEMPLATES);
 
-        ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+        ptmpls=weed_get_plantptr_array(filter,WEED_LEAF_IN_PARAMETER_TEMPLATES,&error);
         for (k=0; k<ntmpls; k++) {
           ptmpl=ptmpls[k];
-          if (weed_plant_has_leaf(ptmpl,"host_internal_connection")) continue;
-          hint=weed_get_int_value(ptmpl,"hint",&error);
-          flags=weed_get_int_value(ptmpl,"flags",&error);
+          if (weed_plant_has_leaf(ptmpl,WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
+          hint=weed_get_int_value(ptmpl,WEED_LEAF_HINT,&error);
+          flags=weed_get_int_value(ptmpl,WEED_LEAF_FLAGS,&error);
           if (flags&WEED_PARAMETER_VARIABLE_ELEMENTS) flags^=WEED_PARAMETER_VARIABLE_ELEMENTS;
-          if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,"default")==1) {
+          if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,WEED_LEAF_DEFAULT)==1) {
             if (oval1==0) {
               if (hint==WEED_HINT_INTEGER) {
                 // **int
@@ -2304,14 +2304,14 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
         if (macro==25 && i==1 && mainw->vpp!=NULL && mainw->vpp->play_params!=NULL && oval0<mainw->vpp->num_play_params) {
           // auto scale for playback plugin params
 
-          weed_plant_t *ptmpl=weed_get_plantptr_value((weed_plant_t *)pp_get_param(mainw->vpp->play_params,oval0),"template",&error);
-          hint=weed_get_int_value(ptmpl,"hint",&error);
-          if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&weed_leaf_num_elements(ptmpl,"default")==1) {
+          weed_plant_t *ptmpl=weed_get_plantptr_value((weed_plant_t *)pp_get_param(mainw->vpp->play_params,oval0),WEED_LEAF_TEMPLATE,&error);
+          hint=weed_get_int_value(ptmpl,WEED_LEAF_HINT,&error);
+          if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&weed_leaf_num_elements(ptmpl,WEED_LEAF_DEFAULT)==1) {
             if (hint==WEED_HINT_INTEGER) {
               int omin=mnode->min[j];
               int omax=mnode->max[j];
-              int mini=weed_get_int_value(ptmpl,"min",&error);
-              int maxi=weed_get_int_value(ptmpl,"max",&error);
+              int mini=weed_get_int_value(ptmpl,WEED_LEAF_MIN,&error);
+              int maxi=weed_get_int_value(ptmpl,WEED_LEAF_MAX,&error);
 
               int oval=(int)((double)(vals[j]-omin)/(double)(omax-omin)*(double)(maxi-mini))+mini;
               OSC_writeIntArg(&obuf,oval);
@@ -2319,8 +2319,8 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
               // float
               int omin=mnode->min[j];
               int omax=mnode->max[j];
-              double minf=weed_get_double_value(ptmpl,"min",&error);
-              double maxf=weed_get_double_value(ptmpl,"max",&error);
+              double minf=weed_get_double_value(ptmpl,WEED_LEAF_MIN,&error);
+              double maxf=weed_get_double_value(ptmpl,WEED_LEAF_MAX,&error);
 
               double oval=(double)(vals[j]-omin)/(double)(omax-omin)*(maxf-minf)+minf;
               OSC_writeFloatArg(&obuf,(float)oval);
@@ -2338,21 +2338,21 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
 
             filter=rte_keymode_get_filter(oval0,mode);
 
-            ntmpls=weed_leaf_num_elements(filter,"in_parameter_templates");
+            ntmpls=weed_leaf_num_elements(filter,WEED_LEAF_IN_PARAMETER_TEMPLATES);
 
-            ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+            ptmpls=weed_get_plantptr_array(filter,WEED_LEAF_IN_PARAMETER_TEMPLATES,&error);
             for (k=0; k<ntmpls; k++) {
               ptmpl=ptmpls[k];
-              if (weed_plant_has_leaf(ptmpl,"host_internal_connection")) continue;
-              hint=weed_get_int_value(ptmpl,"hint",&error);
-              flags=weed_get_int_value(ptmpl,"flags",&error);
-              if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,"default")==1) {
+              if (weed_plant_has_leaf(ptmpl,WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
+              hint=weed_get_int_value(ptmpl,WEED_LEAF_HINT,&error);
+              flags=weed_get_int_value(ptmpl,WEED_LEAF_FLAGS,&error);
+              if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,WEED_LEAF_DEFAULT)==1) {
                 if (oval1==0) {
                   if (hint==WEED_HINT_INTEGER) {
                     int omin=mnode->min[j];
                     int omax=mnode->max[j];
-                    int mini=weed_get_int_value(ptmpl,"min",&error);
-                    int maxi=weed_get_int_value(ptmpl,"max",&error);
+                    int mini=weed_get_int_value(ptmpl,WEED_LEAF_MIN,&error);
+                    int maxi=weed_get_int_value(ptmpl,WEED_LEAF_MAX,&error);
 
                     int oval=(int)((double)(vals[j]-omin)/(double)(omax-omin)*(double)(maxi-mini))+mini;
                     OSC_writeIntArg(&obuf,oval);
@@ -2360,8 +2360,8 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
                     // float
                     int omin=mnode->min[j];
                     int omax=mnode->max[j];
-                    double minf=weed_get_double_value(ptmpl,"min",&error);
-                    double maxf=weed_get_double_value(ptmpl,"max",&error);
+                    double minf=weed_get_double_value(ptmpl,WEED_LEAF_MIN,&error);
+                    double maxf=weed_get_double_value(ptmpl,WEED_LEAF_MAX,&error);
 
                     double oval=(double)(vals[j]-omin)/(double)(omax-omin)*(maxf-minf)+minf;
                     OSC_writeFloatArg(&obuf,(float)oval);

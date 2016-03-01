@@ -151,7 +151,7 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
 
     pthread_create(&y4thread,NULL,y4open_thread,(void *)&thread_data);
 
-    alarm_handle=lives_alarm_set(LIVE_SHORTEST_TIMEOUT);
+    alarm_handle=lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
     d_print("");
     d_print(_("Waiting for yuv4mpeg frames..."));
@@ -290,10 +290,10 @@ void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
 
   if (!yuv4mpeg->ready) lives_yuv_stream_start_read(sfile);
 
-  weed_set_int_value(layer,"width",sfile->hsize);
-  weed_set_int_value(layer,"height",sfile->vsize);
-  weed_set_int_value(layer,"current_palette",WEED_PALETTE_YUV420P);
-  weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
+  weed_set_int_value(layer,WEED_LEAF_WIDTH,sfile->hsize);
+  weed_set_int_value(layer,WEED_LEAF_HEIGHT,sfile->vsize);
+  weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_YUV420P);
+  weed_set_int_value(layer,WEED_LEAF_YUV_SUBSPACE,WEED_YUV_SUBSPACE_YCBCR);
 
   create_empty_pixel_data(layer,TRUE,TRUE);
 
@@ -301,7 +301,7 @@ void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
     return;
   }
 
-  yuv4mpeg->pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
+  yuv4mpeg->pixel_data=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
 
   // create a thread to open the stream header
 
@@ -329,7 +329,7 @@ void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
   lives_free(yuv4mpeg->pixel_data);
   yuv4mpeg->pixel_data=NULL;
 
-  weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_MPEG);
+  weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,WEED_YUV_SAMPLING_MPEG);
 
   return;
 }

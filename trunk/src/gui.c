@@ -710,7 +710,7 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
-  mainw->backup = lives_menu_item_new_with_mnemonic(_("_Backup Clip as .lv1..."));
+  mainw->backup = lives_menu_item_new_with_mnemonic(_("_Backup Clip as ."LIVES_FILE_EXT_BACKUP"..."));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->backup);
   lives_widget_set_sensitive(mainw->backup, FALSE);
 
@@ -718,7 +718,7 @@ void create_LiVES(void) {
                                LIVES_KEY_b, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
-  mainw->restore = lives_menu_item_new_with_mnemonic(_("_Restore Clip from .lv1..."));
+  mainw->restore = lives_menu_item_new_with_mnemonic(_("_Restore Clip from ."LIVES_FILE_EXT_BACKUP"..."));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->restore);
 
   lives_widget_add_accelerator(mainw->restore, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -1444,20 +1444,20 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(advanced_menu));
 
-  mainw->import_proj = lives_menu_item_new_with_mnemonic(_("_Import Project (.lv2)..."));
+  mainw->import_proj = lives_menu_item_new_with_mnemonic(_("_Import Project (."LIVES_FILE_EXT_PROJECT")..."));
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->import_proj);
 
-  mainw->export_proj = lives_menu_item_new_with_mnemonic(_("E_xport Project (.lv2)..."));
+  mainw->export_proj = lives_menu_item_new_with_mnemonic(_("E_xport Project (."LIVES_FILE_EXT_PROJECT")..."));
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->export_proj);
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
 
 
   lives_menu_add_separator(LIVES_MENU(advanced_menu));
 
-  mainw->import_theme = lives_menu_item_new_with_mnemonic(_("_Import Theme (.tar.gz)..."));
+  mainw->import_theme = lives_menu_item_new_with_mnemonic(_("_Import Theme (."LIVES_FILE_EXT_TAR_GZ")..."));
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->import_theme);
 
-  mainw->export_theme = lives_menu_item_new_with_mnemonic(_("E_xport Theme (.tar.gz)..."));
+  mainw->export_theme = lives_menu_item_new_with_mnemonic(_("E_xport Theme (."LIVES_FILE_EXT_TAR_GZ")..."));
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->export_theme);
   lives_widget_set_sensitive(mainw->export_theme,(palette->style&STYLE_1));
 

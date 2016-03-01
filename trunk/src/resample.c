@@ -190,9 +190,9 @@ boolean auto_resample_resize(int width,int height,double fps,int fps_num,int fps
           rs_builtin=FALSE;
           resize_rfx=mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx;
           first_out=get_enabled_channel((weed_plant_t *)resize_rfx->source,0,FALSE);
-          ctmpl=weed_get_plantptr_value(first_out,"template",&error);
-          weed_set_int_value(ctmpl,"host_width",width);
-          weed_set_int_value(ctmpl,"host_height",height);
+          ctmpl=weed_get_plantptr_value(first_out,WEED_LEAF_TEMPLATE,&error);
+          weed_set_int_value(ctmpl,WEED_LEAF_HOST_WIDTH,width);
+          weed_set_int_value(ctmpl,WEED_LEAF_HOST_HEIGHT,height);
         }
 
         cfile->nokeep=TRUE;
@@ -385,9 +385,9 @@ boolean auto_resample_resize(int width,int height,double fps,int fps_num,int fps
         rs_builtin=FALSE;
         resize_rfx=mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx;
         first_out=get_enabled_channel((weed_plant_t *)resize_rfx->source,0,FALSE);
-        ctmpl=weed_get_plantptr_value(first_out,"template",&error);
-        weed_set_int_value(ctmpl,"host_width",width);
-        weed_set_int_value(ctmpl,"host_height",height);
+        ctmpl=weed_get_plantptr_value(first_out,WEED_LEAF_TEMPLATE,&error);
+        weed_set_int_value(ctmpl,WEED_LEAF_HOST_WIDTH,width);
+        weed_set_int_value(ctmpl,WEED_LEAF_HOST_HEIGHT,height);
       }
 
       cfile->nokeep=TRUE;
@@ -483,7 +483,7 @@ quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
   weed_add_plant_flags(out_list,WEED_LEAF_READONLY_PLUGIN);
   weed_set_voidptr_value(out_list,"first",NULL);
   weed_set_voidptr_value(out_list,"last",NULL);
-  weed_set_double_value(out_list,"fps",qfps);
+  weed_set_double_value(out_list,WEED_LEAF_FPS,qfps);
 
   last_frame_event=get_last_frame_event(in_list);
 

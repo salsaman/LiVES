@@ -386,13 +386,13 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
       int param_number,copyto;
       int error;
       char *nval;
-      char *cval=weed_get_string_value(mainw->rte_textparm,"value",&error);
+      char *cval=weed_get_string_value(mainw->rte_textparm,WEED_LEAF_VALUE,&error);
       if (unicode==8&&strlen(cval)>0) {
         memset(cval+strlen(cval)-1,0,1); // delete 1 char
         nval=lives_strdup(cval);
       } else nval=lives_strdup_printf("%s%c",cval,(unsigned char)unicode); // append 1 char
       lives_free(cval);
-      weed_set_string_value(mainw->rte_textparm,"value",nval);
+      weed_set_string_value(mainw->rte_textparm,WEED_LEAF_VALUE,nval);
       inst=weed_get_plantptr_value(mainw->rte_textparm,"host_instance",&error);
       param_number=weed_get_int_value(mainw->rte_textparm,"host_idx",&error);
       copyto=set_copy_to(inst,param_number,TRUE);

@@ -11,6 +11,7 @@
 #include "htmsocket.h"
 #include "support.h"
 #include "interface.h"
+#include "effects-weed.h"
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -809,22 +810,22 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 
     width=height=0;
 
-    if (weed_plant_has_leaf(layer,"height")) height=weed_get_int_value(layer,"height",&error);
-    if (weed_plant_has_leaf(layer,"width")) width=weed_get_int_value(layer,"width",&error);
+    if (weed_plant_has_leaf(layer,WEED_LEAF_HEIGHT)) height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
+    if (weed_plant_has_leaf(layer,WEED_LEAF_WIDTH)) width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
 
     if (lstream->hsize!=width||lstream->vsize!=height) {
       weed_layer_pixel_data_free(layer);
     }
 
-    if (!weed_plant_has_leaf(layer,"pixel_data")||weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) {
-      weed_set_int_value(layer,"width",lstream->hsize);
-      weed_set_int_value(layer,"height",lstream->vsize);
-      weed_set_int_value(layer,"current_palette",lstream->palette);
-      weed_set_int_value(layer,"YUV_clamping",lstream->YUV_clamping);
+    if (!weed_plant_has_leaf(layer,WEED_LEAF_PIXEL_DATA)||weed_get_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,&error)==NULL) {
+      weed_set_int_value(layer,WEED_LEAF_WIDTH,lstream->hsize);
+      weed_set_int_value(layer,WEED_LEAF_HEIGHT,lstream->vsize);
+      weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,lstream->palette);
+      weed_set_int_value(layer,WEED_LEAF_YUV_CLAMPING,lstream->YUV_clamping);
       create_empty_pixel_data(layer,FALSE,TRUE);
     }
 
-    pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
+    pixel_data=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
 
     switch (lstream->palette) {
     case WEED_PALETTE_RGB24:

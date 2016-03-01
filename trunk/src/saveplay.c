@@ -230,7 +230,7 @@ ulong deduce_file(const char *file_name, double start, int end) {
     mainw->opening_loc=FALSE;
   } else {
     lives_snprintf(short_file_name,PATH_MAX,"%s",file_name);
-    if (!(strcmp(file_name+strlen(file_name)-4,".lv1"))) {
+    if (!(strcmp(file_name+strlen(file_name)-4,"."LIVES_FILE_EXT_BACKUP))) {
       uid=restore_file(file_name);
     } else {
       uid=open_file_sel(file_name,start,end);
@@ -1119,7 +1119,7 @@ void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
   // save a single frame from a clip
   char *filt[2];
   char *ttl;
-  char *filename;
+  char *filename,*defname;
 
   filt[0]=lives_strdup_printf("*.%s",get_image_ext_for_type(cfile->img_type));
   filt[1]=NULL;
@@ -1133,8 +1133,12 @@ void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
     ttl=lives_strdup(_("Save Frame"));
 
 
-  filename=choose_file(strlen(mainw->image_dir)?mainw->image_dir:NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,ttl,NULL);
+  defname=lives_strdup_printf("frame%08d.%s",frame,get_image_ext_for_type(cfile->img_type));
+  
+  filename=choose_file(strlen(mainw->image_dir)?mainw->image_dir:NULL,defname,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,ttl,NULL);
 
+  lives_free(defname);
+  
   lives_free(filt[0]);
   lives_free(ttl);
 
@@ -3768,7 +3772,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   int current_file=mainw->current_file;
 
   if (strrchr(file_name,'.')==NULL) {
-    lives_snprintf(full_file_name,PATH_MAX,"%s.lv1",file_name);
+    lives_snprintf(full_file_name,PATH_MAX,"%s.%s",file_name,LIVES_FILE_EXT_BACKUP);
     allow_over=FALSE;
   } else {
     lives_snprintf(full_file_name,PATH_MAX,"%s",file_name);
@@ -4778,37 +4782,37 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
   bytes=lives_read_le(fd,&palette,4,TRUE);
   if (bytes<sizint) return FALSE;
 
-  weed_set_int_value(layer,"current_palette",palette);
+  weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,palette);
 
   if (weed_palette_is_yuv_palette(palette)) {
 
     bytes=lives_read_le(fd,&clamping,4,TRUE);
     if (bytes<4) return FALSE;
 
-    weed_set_int_value(layer,"YUV_clamping",clamping);
+    weed_set_int_value(layer,WEED_LEAF_YUV_CLAMPING,clamping);
 
     bytes=lives_read_le(fd,&subspace,4,TRUE);
     if (bytes<4) return FALSE;
 
-    weed_set_int_value(layer,"YUV_subspace",subspace);
+    weed_set_int_value(layer,WEED_LEAF_YUV_SUBSPACE,subspace);
 
     bytes=lives_read_le(fd,&sampling,4,TRUE);
     if (bytes<4) return FALSE;
 
-    weed_set_int_value(layer,"YUV_sampling",sampling);
+    weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,sampling);
   }
 
 
   bytes=lives_read_le(fd,&width,4,TRUE);
   if (bytes<4) return FALSE;
 
-  weed_set_int_value(layer,"width",width);
+  weed_set_int_value(layer,WEED_LEAF_WIDTH,width);
 
 
   bytes=lives_read_le(fd,&height,4,TRUE);
   if (bytes<4) return FALSE;
 
-  weed_set_int_value(layer,"height",height);
+  weed_set_int_value(layer,WEED_LEAF_HEIGHT,height);
 
 
   nplanes=weed_palette_get_numplanes(palette);
@@ -4823,7 +4827,7 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
     }
   }
 
-  weed_set_int_array(layer,"rowstrides",nplanes,rowstrides);
+  weed_set_int_array(layer,WEED_LEAF_ROWSTRIDES,nplanes,rowstrides);
 
   pdata=(void **)lives_malloc(nplanes*sizeof(void *));
 
@@ -4831,7 +4835,7 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
     pdata[i]=NULL;
   }
 
-  weed_set_voidptr_array(layer,"pixel_data",nplanes,pdata);
+  weed_set_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,nplanes,pdata);
 
   for (i=0; i<nplanes; i++) {
     tsize=rowstrides[i]*height*weed_palette_get_plane_ratio_vertical(palette,i);
@@ -4846,7 +4850,7 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   lives_free(rowstrides);
 
-  weed_set_voidptr_array(layer,"pixel_data",nplanes,pdata);
+  weed_set_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,nplanes,pdata);
   lives_free(pdata);
 
 
@@ -4904,7 +4908,7 @@ int save_to_scrap_file(weed_plant_t *layer) {
   mainw->write_failed=FALSE;
 
   // write current_palette, rowstrides and height
-  palette=weed_get_int_value(layer,"current_palette",&error);
+  palette=weed_get_int_value(layer,WEED_LEAF_CURRENT_PALETTE,&error);
   lives_write_le(fd,&palette,4,TRUE);
 
   if (mainw->write_failed) {
@@ -4913,31 +4917,31 @@ int save_to_scrap_file(weed_plant_t *layer) {
   }
 
   if (weed_palette_is_yuv_palette(palette)) {
-    if (weed_plant_has_leaf(layer,"YUV_clamping")) {
-      clamping=weed_get_int_value(layer,"YUV_clamping",&error);
+    if (weed_plant_has_leaf(layer,WEED_LEAF_YUV_CLAMPING)) {
+      clamping=weed_get_int_value(layer,WEED_LEAF_YUV_CLAMPING,&error);
     } else clamping=WEED_YUV_CLAMPING_CLAMPED;
     lives_write_le(fd,&clamping,4,TRUE);
 
-    if (weed_plant_has_leaf(layer,"YUV_subspace")) {
-      subspace=weed_get_int_value(layer,"YUV_subspace",&error);
+    if (weed_plant_has_leaf(layer,WEED_LEAF_YUV_SUBSPACE)) {
+      subspace=weed_get_int_value(layer,WEED_LEAF_YUV_SUBSPACE,&error);
     } else subspace=WEED_YUV_SUBSPACE_YUV;
     lives_write_le(fd,&subspace,4,TRUE);
 
-    if (weed_plant_has_leaf(layer,"YUV_sampling")) {
-      sampling=weed_get_int_value(layer,"YUV_sampling",&error);
+    if (weed_plant_has_leaf(layer,WEED_LEAF_YUV_SAMPLING)) {
+      sampling=weed_get_int_value(layer,WEED_LEAF_YUV_SAMPLING,&error);
     } else sampling=WEED_YUV_SAMPLING_DEFAULT;
     lives_write_le(fd,&sampling,4,TRUE);
   }
 
-  width=weed_get_int_value(layer,"width",&error);
+  width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
   lives_write_le(fd,&width,4,TRUE);
 
-  height=weed_get_int_value(layer,"height",&error);
+  height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
   lives_write_le(fd,&height,4,TRUE);
 
   nplanes=weed_palette_get_numplanes(palette);
 
-  rowstrides=weed_get_int_array(layer,"rowstrides",&error);
+  rowstrides=weed_get_int_array(layer,WEED_LEAF_ROWSTRIDES,&error);
 
   for (i=0; i<nplanes; i++) {
     lives_write_le(fd,&rowstrides[i],4,TRUE);
@@ -4946,7 +4950,7 @@ int save_to_scrap_file(weed_plant_t *layer) {
 
   // now write pixel_data planes
 
-  pdata=weed_get_voidptr_array(layer,"pixel_data",&error);
+  pdata=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
 
   for (i=0; i<nplanes; i++) {
     lives_write(fd,pdata[i],rowstrides[i]*height*weed_palette_get_plane_ratio_vertical(palette,i),TRUE);

@@ -308,9 +308,9 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       // set out_channel dimensions for resizers / generators
       int error;
       weed_plant_t *first_out=get_enabled_channel((weed_plant_t *)rfx->source,0,FALSE);
-      weed_plant_t *first_ot=weed_get_plantptr_value(first_out,"template",&error);
-      weed_set_int_value(first_out,"width",weed_get_int_value(first_ot,"host_width",&error));
-      weed_set_int_value(first_out,"height",weed_get_int_value(first_ot,"host_height",&error));
+      weed_plant_t *first_ot=weed_get_plantptr_value(first_out,WEED_LEAF_TEMPLATE,&error);
+      weed_set_int_value(first_out,WEED_LEAF_WIDTH,weed_get_int_value(first_ot,WEED_LEAF_HOST_WIDTH,&error));
+      weed_set_int_value(first_out,WEED_LEAF_HEIGHT,weed_get_int_value(first_ot,WEED_LEAF_HOST_HEIGHT,&error));
     }
   }
 
@@ -405,9 +405,9 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     } else {
       int error;
       weed_plant_t *first_out=get_enabled_channel((weed_plant_t *)rfx->source,0,FALSE);
-      weed_plant_t *first_ot=weed_get_plantptr_value(first_out,"template",&error);
-      cfile->hsize=weed_get_int_value(first_ot,"host_width",&error);
-      cfile->vsize=weed_get_int_value(first_ot,"host_height",&error);
+      weed_plant_t *first_ot=weed_get_plantptr_value(first_out,WEED_LEAF_TEMPLATE,&error);
+      cfile->hsize=weed_get_int_value(first_ot,WEED_LEAF_HOST_WIDTH,&error);
+      cfile->vsize=weed_get_int_value(first_ot,WEED_LEAF_HOST_HEIGHT,&error);
     }
 
     if (rfx->num_in_channels>0) {
@@ -659,7 +659,7 @@ lives_render_error_t realfx_progress(boolean reset) {
     layer=on_rte_apply(layer, 0, 0, (weed_timecode_t)frameticks);
 
     if (!has_video_filters(TRUE)||resize_instance!=NULL) {
-      layer_palette=weed_get_int_value(layer,"current_palette",&weed_error);
+      layer_palette=weed_get_int_value(layer,WEED_LEAF_CURRENT_PALETTE,&weed_error);
 
       if (resize_instance==NULL) resize_layer(layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST,layer_palette,0);
 
@@ -953,7 +953,7 @@ deint1:
 
   weed_apply_instance(deint_instance,init_event,layers,0,0,tc);
 
-  if (weed_plant_has_leaf(deint_instance,"host_next_instance")) next_inst=weed_get_plantptr_value(deint_instance,"host_next_instance",&error);
+  if (weed_plant_has_leaf(deint_instance,WEED_LEAF_HOST_NEXT_INSTANCE)) next_inst=weed_get_plantptr_value(deint_instance,WEED_LEAF_HOST_NEXT_INSTANCE,&error);
   else next_inst=NULL;
 
   weed_call_deinit_func(deint_instance);

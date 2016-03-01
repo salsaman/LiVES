@@ -868,7 +868,7 @@ static void audio_process_events_to(weed_timecode_t tc) {
     break;
     case WEED_EVENT_HINT_FILTER_DEINIT: {
       weed_plant_t *init_event=(weed_plant_t *)weed_get_voidptr_value(event,"init_event",&error);
-      if (weed_plant_has_leaf(init_event,"host_tag")) {
+      if (weed_plant_has_leaf(init_event,WEED_LEAF_HOST_TAG)) {
         process_events(event,TRUE,ctc);
       }
     }
@@ -2582,35 +2582,35 @@ getaud1:
   channel=get_enabled_channel(inst,0,FALSE);
 
   if (channel!=NULL) {
-    ctmpl=weed_get_plantptr_value(channel,"template",&error);
+    ctmpl=weed_get_plantptr_value(channel,WEED_LEAF_TEMPLATE,&error);
 
-    if (weed_plant_has_leaf(ctmpl,"audio_rate")&&weed_get_int_value(ctmpl,"audio_rate",&error)!=arate) {
+    if (weed_plant_has_leaf(ctmpl,WEED_LEAF_AUDIO_RATE)&&weed_get_int_value(ctmpl,WEED_LEAF_AUDIO_RATE,&error)!=arate) {
       // TODO - resample if audio rate is wrong
       return FALSE;
     }
 
-    if (weed_plant_has_leaf(ctmpl,"audio_interleaf")) aint=weed_get_boolean_value(ctmpl,"audio_interleaf",&error);
-    if (weed_plant_has_leaf(ctmpl,"audio_channels")) xnchans=weed_get_int_value(ctmpl,"audio_channels",&error);
+    if (weed_plant_has_leaf(ctmpl,WEED_LEAF_AUDIO_INTERLEAF)) aint=weed_get_boolean_value(ctmpl,WEED_LEAF_AUDIO_INTERLEAF,&error);
+    if (weed_plant_has_leaf(ctmpl,WEED_LEAF_AUDIO_CHANNELS)) xnchans=weed_get_int_value(ctmpl,WEED_LEAF_AUDIO_CHANNELS,&error);
 
     // stop video thread from possibly interpolating/deiniting
     if (pthread_mutex_trylock(&mainw->interp_mutex)) return FALSE;
 
 
     // make sure values match, else we need to reinit the plugin
-    if (xnchans!=weed_get_int_value(channel,"audio_channels",&error)||
-        arate!=weed_get_int_value(channel,"audio_rate",&error)||
-        weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint) {
+    if (xnchans!=weed_get_int_value(channel,WEED_LEAF_AUDIO_CHANNELS,&error)||
+        arate!=weed_get_int_value(channel,WEED_LEAF_AUDIO_RATE,&error)||
+        weed_get_boolean_value(channel,WEED_LEAF_AUDIO_INTERLEAF,&error)!=aint) {
       // reinit plugin
       mainw->agen_needs_reinit=TRUE;
     }
 
-    weed_set_int_value(channel,"audio_channels",xnchans);
-    weed_set_int_value(channel,"audio_rate",arate);
-    weed_set_boolean_value(channel,"audio_interleaf",aint);
-    weed_set_int_value(channel,"audio_data_length",nsamps);
-    weed_set_voidptr_value(channel,"audio_data",fbuffer);
+    weed_set_int_value(channel,WEED_LEAF_AUDIO_CHANNELS,xnchans);
+    weed_set_int_value(channel,WEED_LEAF_AUDIO_RATE,arate);
+    weed_set_boolean_value(channel,WEED_LEAF_AUDIO_INTERLEAF,aint);
+    weed_set_int_value(channel,WEED_LEAF_AUDIO_DATA_LENGTH,nsamps);
+    weed_set_voidptr_value(channel,WEED_LEAF_AUDIO_DATA,fbuffer);
 
-    weed_set_double_value(inst,"fps",cfile->pb_fps);
+    weed_set_double_value(inst,WEED_LEAF_FPS,cfile->pb_fps);
 
     if (mainw->agen_needs_reinit) {
       // allow main thread to complete the reinit so we do not delay; just return silence
@@ -2619,7 +2619,7 @@ getaud1:
       return FALSE;
     }
 
-    weed_set_int64_value(channel,"timecode",tc);
+    weed_set_int64_value(channel,WEED_LEAF_TIMECODE,tc);
   }
 
 
@@ -2640,7 +2640,7 @@ getaud1:
 
 
 
-  weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
+  weed_leaf_get(filter,WEED_LEAF_PROCESS_FUNC,0,(void *)&process_func_ptr_ptr);
   process_func=process_func_ptr_ptr[0];
 
   if ((*process_func)(inst,tc)==WEED_ERROR_PLUGIN_INVALID) {
@@ -2658,9 +2658,9 @@ getaud1:
     lives_memcpy(&fbuffer[nsamps],fbuffer,nsamps*sizeof(float));
   }
 
-  if (weed_plant_has_leaf(inst,"host_next_instance")) {
+  if (weed_plant_has_leaf(inst,WEED_LEAF_HOST_NEXT_INSTANCE)) {
     // handle compound fx
-    inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+    inst=weed_get_plantptr_value(inst,WEED_LEAF_HOST_NEXT_INSTANCE,&error);
     goto getaud1;
   }
 
@@ -2912,26 +2912,26 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   register int i;
 
   if (abuf->samples_filled==0) {
-    weed_set_int_value(achan,"audio_data_length",0);
-    weed_set_voidptr_value(achan,"audio_data",NULL);
+    weed_set_int_value(achan,WEED_LEAF_AUDIO_DATA_LENGTH,0);
+    weed_set_voidptr_value(achan,WEED_LEAF_AUDIO_DATA,NULL);
     return FALSE;
   }
 
-  ctmpl=weed_get_plantptr_value(achan,"template",&error);
+  ctmpl=weed_get_plantptr_value(achan,WEED_LEAF_TEMPLATE,&error);
 
-  if (weed_plant_has_leaf(achan,"audio_rate")) trate=weed_get_int_value(achan,"audio_rate",&error);
-  else if (weed_plant_has_leaf(ctmpl,"audio_rate")) trate=weed_get_int_value(ctmpl,"audio_rate",&error);
+  if (weed_plant_has_leaf(achan,WEED_LEAF_AUDIO_RATE)) trate=weed_get_int_value(achan,WEED_LEAF_AUDIO_RATE,&error);
+  else if (weed_plant_has_leaf(ctmpl,WEED_LEAF_AUDIO_RATE)) trate=weed_get_int_value(ctmpl,WEED_LEAF_AUDIO_RATE,&error);
   else trate=DEFAULT_AUDIO_RATE;
 
-  if (weed_plant_has_leaf(achan,"audio_channels")) tchans=weed_get_int_value(achan,"audio_channels",&error);
-  else if (weed_plant_has_leaf(ctmpl,"audio_channels")) tchans=weed_get_int_value(ctmpl,"audio_channels",&error);
+  if (weed_plant_has_leaf(achan,WEED_LEAF_AUDIO_CHANNELS)) tchans=weed_get_int_value(achan,WEED_LEAF_AUDIO_CHANNELS,&error);
+  else if (weed_plant_has_leaf(ctmpl,WEED_LEAF_AUDIO_CHANNELS)) tchans=weed_get_int_value(ctmpl,WEED_LEAF_AUDIO_CHANNELS,&error);
   else tchans=DEFAULT_AUDIO_CHANS;
 
-  if (weed_plant_has_leaf(achan,"audio_interleaf")) tinter=weed_get_boolean_value(achan,"audio_interleaf",&error);
-  else if (weed_plant_has_leaf(ctmpl,"audio_interleaf")) tinter=weed_get_boolean_value(ctmpl,"audio_interleaf",&error);
+  if (weed_plant_has_leaf(achan,WEED_LEAF_AUDIO_INTERLEAF)) tinter=weed_get_boolean_value(achan,WEED_LEAF_AUDIO_INTERLEAF,&error);
+  else if (weed_plant_has_leaf(ctmpl,WEED_LEAF_AUDIO_INTERLEAF)) tinter=weed_get_boolean_value(ctmpl,WEED_LEAF_AUDIO_INTERLEAF,&error);
   else tinter=FALSE;
 
-  if (weed_plant_has_leaf(ctmpl,"audio_data_length")) tlen=weed_get_int_value(ctmpl,"audio_data_length",&error);
+  if (weed_plant_has_leaf(ctmpl,WEED_LEAF_AUDIO_DATA_LENGTH)) tlen=weed_get_int_value(ctmpl,WEED_LEAF_AUDIO_DATA_LENGTH,&error);
   else tlen=0;
 
 #ifdef DEBUG_AFB
@@ -2977,7 +2977,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
   samps=abuf->samples_filled;
 
-  // push to achan "audio_data", taking into account "audio_data_length", "audio_interleaf", "audio_channels"
+  // push to achan WEED_LEAF_AUDIO_DATA, taking into account WEED_LEAF_AUDIO_DATA_LENGTH, WEED_LEAF_AUDIO_INTERLEAF, WEED_LEAF_AUDIO_CHANNELS
 
   alen=samps;
   if (alen>tlen&&tlen>0) alen=tlen;
@@ -2990,13 +2990,13 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   dst=lives_malloc(alen*tchans*sizeof(float));
 
   // set channel values
-  weed_set_voidptr_value(achan,"audio_data",dst);
-  weed_set_boolean_value(achan,"audio_interleaf",tinter);
-  weed_set_int_value(achan,"audio_data_length",alen);
-  weed_set_int_value(achan,"audio_channels",tchans);
-  weed_set_int_value(achan,"audio_rate",trate);
+  weed_set_voidptr_value(achan,WEED_LEAF_AUDIO_DATA,dst);
+  weed_set_boolean_value(achan,WEED_LEAF_AUDIO_INTERLEAF,tinter);
+  weed_set_int_value(achan,WEED_LEAF_AUDIO_DATA_LENGTH,alen);
+  weed_set_int_value(achan,WEED_LEAF_AUDIO_CHANNELS,tchans);
+  weed_set_int_value(achan,WEED_LEAF_AUDIO_RATE,trate);
 
-  // copy data from abuf->bufferf[] to "audio_data"
+  // copy data from abuf->bufferf[] to WEED_LEAF_AUDIO_DATA
   for (i=0; i<tchans; i++) {
     src=abuf->bufferf[i%abuf->out_achans]+offs;
     if (!tinter) {

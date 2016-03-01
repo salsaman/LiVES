@@ -197,7 +197,8 @@ void catch_sigint(int signum) {
         signal(LIVES_SIGSEGV, SIG_DFL);
         signal(LIVES_SIGABRT, SIG_DFL);
         lives_printerr("%s",
-                       _("\nUnfortunately LiVES crashed.\nPlease report this bug at http://sourceforge.net/tracker/?group_id=64341&atid=507139\nThanks. Recovery should be possible if you restart LiVES.\n"));
+                       _("\nUnfortunately LiVES crashed.\nPlease report this bug at http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
+			 "Thanks. Recovery should be possible if you restart LiVES.\n"));
         lives_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, and the LiVES version ("
                               LiVES_VERSION ")\n"));
 
@@ -2644,7 +2645,8 @@ static boolean lives_startup(livespointer data) {
       // non-fatal errors
       char *tmp2;
       char *err=lives_strdup_printf(
-                  _("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),
+                  _("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n"
+		    "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),
                   (tmp=lives_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR,(tmp2=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,
                       NULL)));
       lives_free(tmp2);
@@ -2667,7 +2669,8 @@ static boolean lives_startup(livespointer data) {
     } else {
       if (!capable->has_smogrify) {
         char *err=lives_strdup(
-                    _("\n`smogrify` must be in your path, and be executable\n\nPlease review the README file which came with this package\nbefore running LiVES.\n"));
+                    _("\n`smogrify` must be in your path, and be executable\n\n"
+		      "Please review the README file which came with this package\nbefore running LiVES.\n"));
         startup_message_fatal(err);
         lives_free(err);
       } else {
@@ -2681,7 +2684,8 @@ static boolean lives_startup(livespointer data) {
         } else {
           if (!capable->can_write_to_config) {
             char *err=lives_strdup_printf(
-                        _("\nLiVES was unable to write to its configuration file\n%s\n\nPlease check the file permissions for this file and directory\nand try again.\n"),
+                        _("\nLiVES was unable to write to its configuration file\n%s\n\n"
+			  "Please check the file permissions for this file and directory\nand try again.\n"),
                         (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
             lives_free(tmp);
             startup_message_fatal(err);
@@ -2705,7 +2709,8 @@ static boolean lives_startup(livespointer data) {
             } else {
               if (!capable->smog_version_correct) {
                 startup_message_fatal(
-                  _("\nAn incorrect version of smogrify was found in your path.\n\nPlease review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
+                  _("\nAn incorrect version of smogrify was found in your path.\n\n"
+		    "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
               } else {
 #ifndef IS_MINGW
                 if ((!capable->has_sox_sox||!capable->has_sox_play)&&!capable->has_mplayer&&!capable->has_mplayer2&&!capable->has_mpv) {
@@ -2745,7 +2750,9 @@ static boolean lives_startup(livespointer data) {
                     }
                     if (!capable->has_encoder_plugins) {
                       char *err=lives_strdup_printf(
-                                  _("\nLiVES was unable to find any encoder plugins.\nPlease check that you have them installed correctly in\n%s%s%s/\nYou will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),
+                                  _("\nLiVES was unable to find any encoder plugins.\n"
+				    "Please check that you have them installed correctly in\n%s%s%s/\n"
+				    "You will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),
                                   prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
                       lives_free(tmp);
                       startup_message_nonfatal_dismissable(err,WARN_MASK_NO_ENCODERS);
@@ -4232,7 +4239,7 @@ void load_preview_image(boolean update_always) {
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       LiVESError *error=NULL;
-      char *tmp=lives_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
+      char *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
       mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
       if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       lives_free(tmp);
@@ -4507,10 +4514,10 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   *rowstrides = png_get_rowbytes(png_ptr, info_ptr);
 
 
-  weed_set_int_value(layer,"width",width);
-  weed_set_int_value(layer,"height",height);
-  weed_set_int_value(layer,"rowstrides",*rowstrides);
-  weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
+  weed_set_int_value(layer,WEED_LEAF_WIDTH,width);
+  weed_set_int_value(layer,WEED_LEAF_HEIGHT,height);
+  weed_set_int_value(layer,WEED_LEAF_ROWSTRIDES,*rowstrides);
+  weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGBA32);
 
 
   // here we allocate ourselves, instead of calling create_empty_pixel data - in case rowbytes is different
@@ -4520,7 +4527,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   framesize=CEIL(*rowstrides*height,32);
 
   ptr=mem=(unsigned char *)lives_malloc(framesize+64);
-  weed_set_voidptr_value(layer, "pixel_data", mem);
+  weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, mem);
 
   // libpng needs pointers to each row
   row_ptrs=(unsigned char **)lives_malloc(height*sizeof(unsigned char *));
@@ -4546,11 +4553,11 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
     alpha_unpremult(layer,TRUE);
   } else {
     int flags=0,error;
-    if (weed_plant_has_leaf(layer,"flags"))
-      flags=weed_get_int_value(layer,"flags",&error);
+    if (weed_plant_has_leaf(layer,WEED_LEAF_FLAGS))
+      flags=weed_get_int_value(layer,WEED_LEAF_FLAGS,&error);
 
     flags|=WEED_CHANNEL_ALPHA_PREMULT;
-    weed_set_int_value(layer,"flags",flags);
+    weed_set_int_value(layer,WEED_LEAF_FLAGS,flags);
   }
 
 
@@ -4649,8 +4656,8 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   if (lives_pixbuf_get_has_alpha(pixbuf)) {
     /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own. We need to hence reset it back to opaque */
     lives_pixbuf_set_opaque(pixbuf);
-    weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
-  } else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
+    weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGBA32);
+  } else weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGB24);
 
   if (!pixbuf_to_layer(layer,pixbuf)) lives_object_unref(pixbuf);
 
@@ -4692,7 +4699,7 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
 
   /////////// use plugin //////////////
 
-  size=weed_get_int_value(layer,"width",&error)/32;
+  size=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error)/32;
 
   col_white.red=col_white.green=col_white.blue=col_white.alpha=65535;
   col_black_a.red=col_black_a.green=col_black_a.blue=0;
@@ -4742,7 +4749,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 
   if (weed_plant_has_leaf(layer,"host_pthread")) is_thread=TRUE;
 
-  weed_set_voidptr_value(layer,"pixel_data",NULL);
+  weed_set_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,NULL);
 
   mainw->osc_block=TRUE; // block OSC until we are done
 
@@ -4762,17 +4769,17 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
     // frame number can be 0 during rendering
     if (frame==0) {
       mainw->osc_block=FALSE;
-      if ((width==0||height==0)&&weed_plant_has_leaf(layer,"width")&&weed_plant_has_leaf(layer,"height")) {
-        width=weed_get_int_value(layer,"width",&error);
-        height=weed_get_int_value(layer,"height",&error);
+      if ((width==0||height==0)&&weed_plant_has_leaf(layer,WEED_LEAF_WIDTH)&&weed_plant_has_leaf(layer,WEED_LEAF_HEIGHT)) {
+        width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
+        height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
       }
       if (width==0) width=4;
       if (height==0) height=4;
-      weed_set_int_value(layer,"width",width);
-      weed_set_int_value(layer,"height",height);
-      if (!weed_plant_has_leaf(layer,"current_palette")) {
-        if (image_ext==NULL||!strcmp(image_ext,LIVES_FILE_EXT_JPG)) weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
-        else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
+      weed_set_int_value(layer,WEED_LEAF_WIDTH,width);
+      weed_set_int_value(layer,WEED_LEAF_HEIGHT,height);
+      if (!weed_plant_has_leaf(layer,WEED_LEAF_CURRENT_PALETTE)) {
+        if (image_ext==NULL||!strcmp(image_ext,LIVES_FILE_EXT_JPG)) weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGB24);
+        else weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGBA32);
       }
       create_empty_pixel_data(layer,TRUE,TRUE);
       return TRUE;
@@ -4831,21 +4838,21 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
           height=dplug->cdata->height;
         }
 
-        weed_set_int_value(layer,"width",width);
-        weed_set_int_value(layer,"height",height);
-        weed_set_int_value(layer,"current_palette",dplug->cdata->current_palette);
+        weed_set_int_value(layer,WEED_LEAF_WIDTH,width);
+        weed_set_int_value(layer,WEED_LEAF_HEIGHT,height);
+        weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,dplug->cdata->current_palette);
 
         if (weed_palette_is_yuv_palette(dplug->cdata->current_palette)) {
-          weed_set_int_value(layer,"YUV_sampling",dplug->cdata->YUV_sampling);
-          weed_set_int_value(layer,"YUV_clamping",dplug->cdata->YUV_clamping);
-          weed_set_int_value(layer,"YUV_subspace",dplug->cdata->YUV_subspace);
+          weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,dplug->cdata->YUV_sampling);
+          weed_set_int_value(layer,WEED_LEAF_YUV_CLAMPING,dplug->cdata->YUV_clamping);
+          weed_set_int_value(layer,WEED_LEAF_YUV_SUBSPACE,dplug->cdata->YUV_subspace);
         }
 
         create_empty_pixel_data(layer,FALSE,TRUE);
 
 
-        pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
-        rowstrides=weed_get_int_array(layer,"rowstrides",&error);
+        pixel_data=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
+        rowstrides=weed_get_int_array(layer,WEED_LEAF_ROWSTRIDES,&error);
 
         // try to pull frame from decoder plugin
         if (!(*dplug->decoder->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),
@@ -4936,7 +4943,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
     // never free it
     vlayer=weed_layer_new_from_generator((weed_plant_t *)sfile->ext_src,tc);
     weed_layer_copy(layer,vlayer); // layer is non-NULL, so copy by reference
-    weed_set_voidptr_value(vlayer,"pixel_data",NULL);
+    weed_set_voidptr_value(vlayer,WEED_LEAF_PIXEL_DATA,NULL);
     mainw->osc_block=FALSE;
     return TRUE;
   default:
@@ -5639,7 +5646,7 @@ void load_frame_image(int frame) {
             layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
             weed_set_int_value(layers[i],"clip",mainw->clip_index[i]);
             weed_set_int_value(layers[i],"frame",mainw->frame_index[i]);
-            weed_set_int_value(layers[i],"current_palette",(mainw->clip_index[i]==-1||
+            weed_set_int_value(layers[i],WEED_LEAF_CURRENT_PALETTE,(mainw->clip_index[i]==-1||
                                mainw->files[mainw->clip_index[i]]->img_type==
                                IMG_TYPE_JPEG)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);
 
@@ -5678,7 +5685,7 @@ void load_frame_image(int frame) {
               weed_set_voidptr_value(layers[i],"host_decoder",(void *)mainw->track_decoders[i]);
               pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
             } else {
-              weed_set_voidptr_value(layers[i],"pixel_data",NULL);
+              weed_set_voidptr_value(layers[i],WEED_LEAF_PIXEL_DATA,NULL);
             }
           }
           layers[i]=NULL;
@@ -5850,8 +5857,8 @@ void load_frame_image(int frame) {
         size_ok=TRUE;
       } else {
         check_layer_ready(mainw->frame_layer);
-        if ((weed_get_int_value(mainw->frame_layer,"height",&weed_error)==cfile->vsize)&&
-            (weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
+        if ((weed_get_int_value(mainw->frame_layer,WEED_LEAF_HEIGHT,&weed_error)==cfile->vsize)&&
+            (weed_get_int_value(mainw->frame_layer,WEED_LEAF_WIDTH,&weed_error)*
              weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)))==cfile->hsize) {
           size_ok=TRUE;
         }
@@ -5924,8 +5931,8 @@ void load_frame_image(int frame) {
         if (mainw->clip_index[0]==mainw->scrap_file&&mainw->num_tracks==1) {
           // scrap file playback - use original clip size
           check_layer_ready(mainw->frame_layer);
-          lb_width=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
-          lb_height=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
+          lb_width=weed_get_int_value(mainw->frame_layer,WEED_LEAF_WIDTH,&weed_error);
+          lb_height=weed_get_int_value(mainw->frame_layer,WEED_LEAF_HEIGHT,&weed_error);
         } else {
           // playing from event list, use original clip size
           lb_width=mainw->files[mainw->clip_index[0]]->hsize;
@@ -5968,7 +5975,7 @@ void load_frame_image(int frame) {
       // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
       compact_rowstrides(frame_layer);
 
-      pd_array=weed_get_voidptr_array(frame_layer,"pixel_data",&weed_error);
+      pd_array=weed_get_voidptr_array(frame_layer,WEED_LEAF_PIXEL_DATA,&weed_error);
 
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
 
@@ -5980,9 +5987,9 @@ void load_frame_image(int frame) {
         return_layer=weed_layer_new(retwidth,retheight,NULL,mainw->vpp->palette);
 
         if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
-          weed_set_int_value(return_layer,"YUV_clamping",mainw->vpp->YUV_clamping);
-          weed_set_int_value(return_layer,"YUV_subspace",mainw->vpp->YUV_subspace);
-          weed_set_int_value(return_layer,"YUV_sampling",mainw->vpp->YUV_sampling);
+          weed_set_int_value(return_layer,WEED_LEAF_YUV_CLAMPING,mainw->vpp->YUV_clamping);
+          weed_set_int_value(return_layer,WEED_LEAF_YUV_SUBSPACE,mainw->vpp->YUV_subspace);
+          weed_set_int_value(return_layer,WEED_LEAF_YUV_SAMPLING,mainw->vpp->YUV_sampling);
         }
 
         create_empty_pixel_data(return_layer,FALSE,TRUE);
@@ -5990,7 +5997,7 @@ void load_frame_image(int frame) {
         // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
         compact_rowstrides(return_layer);
 
-        retdata=weed_get_voidptr_array(return_layer,"pixel_data",&weed_error);
+        retdata=weed_get_voidptr_array(return_layer,WEED_LEAF_PIXEL_DATA,&weed_error);
 
       }
 
@@ -6003,8 +6010,8 @@ void load_frame_image(int frame) {
         if (mainw->cconx!=NULL) cconx_chain_data(-2,0);
       }
 
-      if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
-                                       weed_get_int_value(mainw->frame_layer,"height",&weed_error),
+      if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,WEED_LEAF_WIDTH,&weed_error),
+                                       weed_get_int_value(mainw->frame_layer,WEED_LEAF_HEIGHT,&weed_error),
                                        mainw->currticks-mainw->stream_ticks,pd_array,retdata,mainw->vpp->play_params)) {
         vid_playback_plugin_exit();
         if (return_layer!=NULL) weed_layer_free(return_layer);
@@ -6018,10 +6025,10 @@ void load_frame_image(int frame) {
       }
 
       if (return_layer!=NULL) {
-        int width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
-                      weed_get_int_value(return_layer,"width",&weed_error));
-        int height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
-                       weed_get_int_value(return_layer,"height",&weed_error));
+        int width=MIN(weed_get_int_value(frame_layer,WEED_LEAF_WIDTH,&weed_error),
+                      weed_get_int_value(return_layer,WEED_LEAF_WIDTH,&weed_error));
+        int height=MIN(weed_get_int_value(mainw->frame_layer,WEED_LEAF_HEIGHT,&weed_error),
+                       weed_get_int_value(return_layer,WEED_LEAF_HEIGHT,&weed_error));
         resize_layer(return_layer,width,height,LIVES_INTERP_FAST,WEED_PALETTE_END,0);
 
         save_to_scrap_file(return_layer);
@@ -6117,8 +6124,8 @@ void load_frame_image(int frame) {
           mainw->pwidth=(mainw->pwidth-H_RESIZE_ADJUST)*4+H_RESIZE_ADJUST;
           mainw->pheight=(mainw->pheight-V_RESIZE_ADJUST)*4+H_RESIZE_ADJUST;
 
-          if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
-          if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
+          if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,WEED_LEAF_WIDTH,&weed_error);
+          if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,WEED_LEAF_HEIGHT,&weed_error);
 
         }
 
@@ -6126,8 +6133,8 @@ void load_frame_image(int frame) {
 
         check_layer_ready(mainw->frame_layer);
 
-        if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
-        if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
+        if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,WEED_LEAF_WIDTH,&weed_error);
+        if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,WEED_LEAF_HEIGHT,&weed_error);
       }
 
     }
@@ -6176,7 +6183,7 @@ void load_frame_image(int frame) {
       }
 
       // resize_layer can change palette
-      layer_palette=weed_get_int_value(frame_layer,"current_palette",&weed_error);
+      layer_palette=weed_get_int_value(frame_layer,WEED_LEAF_CURRENT_PALETTE,&weed_error);
 
       if (frame_layer==mainw->frame_layer && !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) &&
           ((weed_palette_is_rgb_palette(layer_palette) &&
@@ -6187,9 +6194,9 @@ void load_frame_image(int frame) {
         frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
       }
 
-      pwidth=weed_get_int_value(frame_layer,"width",&weed_error)*
+      pwidth=weed_get_int_value(frame_layer,WEED_LEAF_WIDTH,&weed_error)*
              weed_palette_get_pixels_per_macropixel(layer_palette);
-      pheight=weed_get_int_value(frame_layer,"height",&weed_error);
+      pheight=weed_get_int_value(frame_layer,WEED_LEAF_HEIGHT,&weed_error);
 
       if (mainw->fs&&(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) {
         mainw->vpp->fwidth=mainw->scr_width;
@@ -6229,9 +6236,9 @@ void load_frame_image(int frame) {
         return_layer=weed_layer_new(retwidth,retheight,NULL,mainw->vpp->palette);
 
         if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
-          weed_set_int_value(return_layer,"YUV_clamping",mainw->vpp->YUV_clamping);
-          weed_set_int_value(return_layer,"YUV_subspace",mainw->vpp->YUV_subspace);
-          weed_set_int_value(return_layer,"YUV_sampling",mainw->vpp->YUV_sampling);
+          weed_set_int_value(return_layer,WEED_LEAF_YUV_CLAMPING,mainw->vpp->YUV_clamping);
+          weed_set_int_value(return_layer,WEED_LEAF_YUV_SUBSPACE,mainw->vpp->YUV_subspace);
+          weed_set_int_value(return_layer,WEED_LEAF_YUV_SAMPLING,mainw->vpp->YUV_sampling);
         }
 
         create_empty_pixel_data(return_layer,FALSE,TRUE);
@@ -6239,7 +6246,7 @@ void load_frame_image(int frame) {
         // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
         compact_rowstrides(return_layer);
 
-        retdata=weed_get_voidptr_array(return_layer,"pixel_data",&weed_error);
+        retdata=weed_get_voidptr_array(return_layer,WEED_LEAF_PIXEL_DATA,&weed_error);
       }
 
       // chain any data to the playback plugin
@@ -6251,10 +6258,10 @@ void load_frame_image(int frame) {
         if (mainw->cconx!=NULL) cconx_chain_data(-2,0);
       }
 
-      if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
-                                       weed_get_int_value(frame_layer,"height",&weed_error),
+      if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,WEED_LEAF_WIDTH,&weed_error),
+                                       weed_get_int_value(frame_layer,WEED_LEAF_HEIGHT,&weed_error),
                                        mainw->currticks-mainw->stream_ticks,
-                                       (pd_array=weed_get_voidptr_array(frame_layer,"pixel_data",&weed_error)),
+                                       (pd_array=weed_get_voidptr_array(frame_layer,WEED_LEAF_PIXEL_DATA,&weed_error)),
                                        retdata,mainw->vpp->play_params)) {
         vid_playback_plugin_exit();
         if (return_layer!=NULL) {
@@ -6270,10 +6277,10 @@ void load_frame_image(int frame) {
       }
 
       if (return_layer!=NULL) {
-        int width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
-                      weed_get_int_value(return_layer,"width",&weed_error));
-        int height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
-                       weed_get_int_value(return_layer,"height",&weed_error));
+        int width=MIN(weed_get_int_value(frame_layer,WEED_LEAF_WIDTH,&weed_error),
+                      weed_get_int_value(return_layer,WEED_LEAF_WIDTH,&weed_error));
+        int height=MIN(weed_get_int_value(mainw->frame_layer,WEED_LEAF_HEIGHT,&weed_error),
+                       weed_get_int_value(return_layer,WEED_LEAF_HEIGHT,&weed_error));
         resize_layer(return_layer,width,height,LIVES_INTERP_FAST,WEED_PALETTE_END,0);
 
         save_to_scrap_file(return_layer);
@@ -6345,9 +6352,9 @@ void load_frame_image(int frame) {
         mainw->pheight=lives_widget_get_allocation_height(mainw->play_image)-widget_opts.border_width*2;
     }
 
-    pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
+    pwidth=weed_get_int_value(mainw->frame_layer,WEED_LEAF_WIDTH,&weed_error)*
            weed_palette_get_pixels_per_macropixel(layer_palette);
-    pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error)*
+    pheight=weed_get_int_value(mainw->frame_layer,WEED_LEAF_HEIGHT,&weed_error)*
             weed_palette_get_pixels_per_macropixel(layer_palette);
 
     if (pwidth!=mainw->pwidth||pheight!=mainw->pheight||lb_width!=0) {

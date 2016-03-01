@@ -89,8 +89,7 @@ void lives_exit(int signum) {
     }
 
     if (mainw->multitrack!=NULL&&!mainw->only_close) {
-      if (mainw->multitrack->undo_mem!=NULL) lives_free(mainw->multitrack->undo_mem);
-      mainw->multitrack->undo_mem=NULL;
+      lives_freep((void **)&mainw->multitrack->undo_mem);
     }
 
     if (mainw->multi_opts.set&&!mainw->only_close&&mainw->multi_opts.aparam_view_list!=NULL) {
@@ -127,6 +126,7 @@ void lives_exit(int signum) {
     mainw->current_file=-1;
 
     if (!mainw->only_close) {
+      // shut down audio players
 #ifdef HAVE_PULSE_AUDIO
       pthread_mutex_lock(&mainw->abuf_mutex);
       if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed);
@@ -150,6 +150,7 @@ void lives_exit(int signum) {
     if (mainw->vpp!=NULL&&!mainw->only_close) {
       if (!mainw->leave_recovery) {
         if (mainw->write_vpp_file) {
+	  // save video playback plugin parameters
           char *vpp_file=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"vpp_defaults",NULL);
           save_vpp_defaults(mainw->vpp,vpp_file);
         }
@@ -199,10 +200,7 @@ void lives_exit(int signum) {
 
         cfile->event_list=cfile->event_list_back=NULL;
 
-        if (cfile->layout_map!=NULL) {
-          lives_list_free_strings(cfile->layout_map);
-          lives_list_free(cfile->layout_map);
-        }
+	lives_list_free_all(&cfile->layout_map);
 
         if (cfile->laudio_drawable!=NULL) {
           lives_painter_surface_destroy(cfile->laudio_drawable);
@@ -223,12 +221,7 @@ void lives_exit(int signum) {
           mainw->files[i]->ext_src=NULL;
           threaded_dialog_spin(0.);
         }
-
-        if (mainw->files[i]->frame_index!=NULL) {
-          lives_free(mainw->files[i]->frame_index);
-          mainw->files[i]->frame_index=NULL;
-        }
-
+	lives_freep((void **)&mainw->files[i]->frame_index);
         cfile->layout_map=NULL;
 
       }
@@ -387,19 +380,12 @@ void lives_exit(int signum) {
     }
   }
 
-  if (mainw->current_layouts_map!=NULL) {
-    lives_list_free_strings(mainw->current_layouts_map);
-    lives_list_free(mainw->current_layouts_map);
-    mainw->current_layouts_map=NULL;
-  }
+  lives_list_free_all(&mainw->current_layouts_map);
 
   if (capable->smog_version_correct&&!mainw->startup_error) {
     if (capable->has_encoder_plugins) {
       LiVESList *dummy_list=plugin_request("encoders",prefs->encoder.name,"finalise");
-      if (dummy_list!=NULL) {
-        lives_list_free_strings(dummy_list);
-        lives_list_free(dummy_list);
-      }
+      lives_list_free_all(&dummy_list);
     }
 
     weed_unload_all();
@@ -431,16 +417,16 @@ void lives_exit(int signum) {
     }
   }
 
-  if (prefs->fxdefsfile!=NULL) lives_free(prefs->fxdefsfile);
-  if (prefs->fxsizesfile!=NULL) lives_free(prefs->fxsizesfile);
+  lives_freep((void **)&prefs->fxdefsfile);
+  lives_freep((void **)&prefs->fxsizesfile);
 
-  if (prefs->wm!=NULL) lives_free(prefs->wm);
+  lives_freep((void **)&prefs->wm);
 
-  if (mainw->recovery_file!=NULL) lives_free(mainw->recovery_file);
+  lives_freep((void **)&mainw->recovery_file);
 
-  for (i=0; i<NUM_LIVES_STRING_CONSTANTS; i++) if (mainw->string_constants[i]!=NULL) lives_free(mainw->string_constants[i]);
+  for (i=0; i<NUM_LIVES_STRING_CONSTANTS; i++) lives_freep((void **)&mainw->string_constants[i]);
 
-  for (i=0; i<mainw->n_screen_areas; i++) lives_free(mainw->screen_areas[i].name);
+  for (i=0; i<mainw->n_screen_areas; i++) lives_freep((void **)&mainw->screen_areas[i].name);
 
   if (mainw->video_drawable!=NULL) {
     lives_painter_surface_destroy(mainw->video_drawable);
@@ -454,23 +440,19 @@ void lives_exit(int signum) {
     lives_painter_surface_destroy(mainw->raudio_drawable);
   }
 
-  if (mainw->foreign_visual!=NULL) lives_free(mainw->foreign_visual);
-  if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
-  if (mainw->write_failed_file!=NULL) lives_free(mainw->write_failed_file);
-  if (mainw->bad_aud_file!=NULL) lives_free(mainw->bad_aud_file);
+  lives_freep((void **)&mainw->foreign_visual);
+  lives_freep((void **)&mainw->read_failed_file);
+  lives_freep((void **)&mainw->write_failed_file);
+  lives_freep((void **)&mainw->bad_aud_file);
 
   unload_decoder_plugins();
 
-  if (mainw->multitrack!=NULL) lives_free(mainw->multitrack);
-  mainw->multitrack=NULL;
+  lives_freep((void **)&mainw->multitrack);
   mainw->is_ready=FALSE;
 
-  if (mainw->mgeom!=NULL) lives_free(mainw->mgeom);
+  lives_freep((void **)&mainw->mgeom);
 
-  if (prefs->disabled_decoders!=NULL) {
-    lives_list_free_strings(prefs->disabled_decoders);
-    lives_list_free(prefs->disabled_decoders);
-  }
+  lives_list_free_all(&prefs->disabled_decoders);
 
   if (mainw->fonts_array!=NULL) lives_strfreev(mainw->fonts_array);
 #ifdef USE_SWSCALE
@@ -478,7 +460,7 @@ void lives_exit(int signum) {
 #endif
 
 #ifdef ENABLE_NLS
-  if (trString!=NULL) lives_free(trString);
+  lives_freep((void **)&trString);
 #endif
 
   tmp=lives_strdup_printf("%d",signum);
@@ -751,7 +733,7 @@ void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (get_token_count(file,'\n')>1) {
     char **array=lives_strsplit(file,"\n",2);
     lives_snprintf(file,PATH_MAX,"%s",array[0]);
-    if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
+    lives_freep((void **)&mainw->file_open_params);
     mainw->file_open_params=lives_strdup(array[1]);
     lives_strfreev(array);
   }
@@ -783,7 +765,7 @@ void on_location_select(LiVESButton *button, livespointer user_data) {
   lives_free(locw);
 
   mainw->opening_loc=TRUE;
-  if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
+  lives_freep((void **)&mainw->file_open_params);
   if (prefs->no_bandwidth) {
     mainw->file_open_params=lives_strdup("nobandwidth");
   } else mainw->file_open_params=lives_strdup("sendbandwidth");
@@ -888,8 +870,7 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
         com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
         lives_system(com,TRUE);
         lives_free(com);
-        lives_free(cfile);
-        cfile=NULL;
+        lives_freep((void **)&cfile);
         mainw->current_file=-1;
       }
 
@@ -921,8 +902,7 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
     com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
     lives_system(com,TRUE);
     lives_free(com);
-    lives_free(cfile);
-    cfile=NULL;
+    lives_freep((void **)&cfile);
     mainw->current_file=-1;
   }
 
@@ -1032,11 +1012,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_free(extra);
       if (!do_warning_dialog(warn)) {
         lives_free(warn);
-        if (mainw->xlays!=NULL) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
-        }
+	lives_list_free_all(&mainw->xlays);
 
         if (mainw->multitrack!=NULL) {
           mainw->current_file=mainw->multitrack->render_file;
@@ -1048,11 +1024,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_free(warn);
       add_lmap_error(LMAP_ERROR_CLOSE_FILE,cfile->name,cfile->layout_map,0,1,0.,acurrent);
       lmap_errors=TRUE;
-      if (mainw->xlays!=NULL) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
-      }
+      lives_list_free_all(&mainw->xlays);
     }
   }
   if (!lmap_errors) {
@@ -1267,8 +1239,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
   lives_system(com,TRUE);
   lives_free(com);
-  lives_free(cfile);
-  cfile=NULL;
+  lives_freep((void **)&cfile);
   if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
   mainw->current_file=-1;
   sensitize();
@@ -1309,8 +1280,7 @@ void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       }
       lives_snprintf(new_set_name,128,"%s",(tmp=U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
       lives_widget_destroy(renamew->dialog);
-      lives_free(renamew);
-      renamew=NULL;
+      lives_freep((void **)&renamew);
       lives_free(tmp);
       lives_widget_context_update();
     } while (!is_legal_set_name(new_set_name,FALSE));
@@ -1392,14 +1362,12 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_show_all(renamew->dialog);
     response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
     if (response==LIVES_RESPONSE_CANCEL) {
-      lives_free(renamew);
-      renamew=NULL;
+      lives_freep((void **)&renamew);
       return;
     }
     lives_snprintf(theme_name,128,"%s",(tmp=U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
     lives_widget_destroy(renamew->dialog);
-    lives_free(renamew);
-    renamew=NULL;
+    lives_freep((void **)&renamew);
     lives_free(tmp);
     lives_widget_context_update();
   } while (!is_legal_set_name(theme_name,TRUE));
@@ -2872,9 +2840,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
           lives_free(insertw);
         }
         mainw->error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,
@@ -2882,23 +2848,17 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
                          cfile->fps)>=insert_start);
       has_lmap_error=TRUE;
       mainw->error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
     } else {
       if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=
             layout_frame_is_affected(mainw->current_file,1))!=NULL) {
         if (!do_layout_alter_frames_warning()) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
           return;
         }
         add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                        cfile->stored_layout_frame>0);
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         has_lmap_error=TRUE;
       }
     }
@@ -2920,9 +2880,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
           lives_free(insertw);
         }
         mainw->error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,
@@ -2932,17 +2890,13 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
       if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
           (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
         if (!do_layout_alter_audio_warning()) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
           return;
         }
         add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                        cfile->stored_layout_audio>0.);
         has_lmap_error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
       }
     }
   }
@@ -3512,9 +3466,7 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if ((mainw->xlays=layout_frame_is_affected(mainw->current_file,cfile->end-frames_cut))!=NULL) {
         if (!do_warning_dialog
             (_("\nDeletion will cause missing frames in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
           return;
         }
         add_lmap_error(LMAP_ERROR_DELETE_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,
@@ -3522,9 +3474,7 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
                            cfile->stored_layout_fps,cfile->fps)>=
                        (cfile->end-frames_cut));
         has_lmap_error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
       }
     }
 
@@ -3532,18 +3482,14 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,(cfile->end-frames_cut)/cfile->fps))!=NULL) {
         if (!do_warning_dialog
             (_("\nDeletion will cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
           return;
         }
         add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,
                        (cfile->end-frames_cut-1.)/cfile->fps,(cfile->end-frames_cut-1.)/
                        cfile->fps<cfile->stored_layout_audio);
         has_lmap_error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
       }
     }
 
@@ -3551,18 +3497,14 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if ((mainw->xlays=layout_frame_is_affected(mainw->current_file,cfile->start))!=NULL) {
         if (!do_warning_dialog
             (_("\nDeletion will cause frames to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
           return;
         }
         add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,
                        cfile->start,0.,cfile->start<=count_resampled_frames(cfile->stored_layout_frame,
                            cfile->stored_layout_fps,cfile->fps));
         has_lmap_error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
       }
     }
 
@@ -3570,50 +3512,39 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,(cfile->start-1.)/cfile->fps))!=NULL) {
         if (!do_warning_dialog
             (_("\nDeletion will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
           return;
         }
         add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,
                        (cfile->start-1.)/cfile->fps,(cfile->start-1.)/cfile->fps<=cfile->stored_layout_audio);
         has_lmap_error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
       }
     }
 
     if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&
         (mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
       if (!do_layout_alter_frames_warning()) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                      cfile->stored_layout_frame>0);
       has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
+
     }
 
     if (mainw->ccpd_with_sound&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
         (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
       if (!do_layout_alter_audio_warning()) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                      cfile->stored_layout_audio>0.);
       has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
     }
   }
 
@@ -4195,9 +4126,7 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
 
     lives_list_free(ofmt);
     if (prefs->acodec_list!=NULL) {
-      lives_list_free_strings(prefs->acodec_list);
-      lives_list_free(prefs->acodec_list);
-      prefs->acodec_list=NULL;
+      lives_list_free_all(&prefs->acodec_list);
     }
     prefs->acodec_list = lives_list_append(prefs->acodec_list, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
 
@@ -4254,14 +4183,10 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
     }
 
     dummy_list = plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "init");
-    if (dummy_list != NULL) {
-      lives_list_free_strings(dummy_list);
-      lives_list_free(dummy_list);
-    }
+    lives_list_free_all(&dummy_list);
     return;
   }
-  lives_list_free_strings(dummy_list);
-  lives_list_free(dummy_list);
+  lives_list_free_all(&dummy_list);
 
   lives_snprintf(future_prefs->encoder.name,51,"%s",new_encoder_name);
   lives_free(new_encoder_name);
@@ -4291,8 +4216,7 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
     return;
   }
   prefs->encoder.capabilities = atoi((char *)lives_list_nth_data(encoder_capabilities,0));
-  lives_list_free_strings(encoder_capabilities);
-  lives_list_free(encoder_capabilities);
+  lives_list_free_all(&encoder_capabilities);
 
   // fill list with new formats
   if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS,future_prefs->encoder.name,"get_formats"))!=NULL) {
@@ -4347,8 +4271,7 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
     on_encoder_ofmt_changed(NULL, rdet);
     lives_strfreev(array);
     if (ofmt_all!=NULL) {
-      lives_list_free_strings(ofmt_all);
-      lives_list_free(ofmt_all);
+      lives_list_free_all(&ofmt_all);
     }
   }
 }
@@ -4882,13 +4805,11 @@ char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // need to clean up renamew
   lives_widget_destroy(renamew->dialog);
   lives_widget_context_update();
-  lives_free(renamew);
-  renamew=NULL;
+  lives_freep((void **)&renamew);
 
   if (resp==LIVES_RESPONSE_OK) {
     if (!is_legal_set_name(set_name,TRUE)) {
-      lives_free(set_name);
-      set_name=NULL;
+      lives_freep((void **)&set_name);
     } else {
       if (user_data==NULL) {
         reload_set(set_name);
@@ -4969,9 +4890,7 @@ boolean reload_set(const char *set_name) {
     }
 
     if (mainw->cached_list!=NULL) {
-      lives_list_free_strings(mainw->cached_list);
-      lives_list_free(mainw->cached_list);
-      mainw->cached_list=NULL;
+      lives_list_free_all(&mainw->cached_list);
     }
 
     if (orderfile==NULL) {
@@ -5154,9 +5073,7 @@ boolean reload_set(const char *set_name) {
     }
 
     if (mainw->cached_list!=NULL) {
-      lives_list_free_strings(mainw->cached_list);
-      lives_list_free(mainw->cached_list);
-      mainw->cached_list=NULL;
+      lives_list_free_all(&mainw->cached_list);
     }
 
     if (prefs->autoload_subs) {
@@ -5328,8 +5245,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
   lives_system(com,FALSE);
   lives_free(com);
-  lives_free(cfile);
-  cfile=NULL;
+  lives_freep((void **)&cfile);
   if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file)
     mainw->first_free_file=mainw->current_file;
 
@@ -6125,7 +6041,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     lives_free(info_file);
   }
 
-  if (file_open_params!=NULL) lives_free(file_open_params);
+  lives_freep((void **)&file_open_params);
 }
 
 
@@ -6175,8 +6091,7 @@ void on_ok_file_open_clicked(LiVESFileChooser *chooser, LiVESSList *fnames) {
     if (fnames==NULL) return;
 
     if (fnames->data==NULL) {
-      lives_list_free_strings((LiVESList *)fnames);
-      lives_slist_free(fnames);
+      lives_list_free_all((LiVESList **)&fnames);
       return;
     }
 
@@ -6468,7 +6383,7 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
 
       // resume for next time
       if (mainw->effects_paused) {
-        if (com!=NULL) lives_free(com);
+        lives_freep((void **)&com);
         com=lives_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
         lives_system(com,FALSE);
       }
@@ -6556,7 +6471,7 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
     }
   }
 
-  if (com!=NULL) lives_free(com);
+  lives_freep((void **)&com);
 }
 
 
@@ -7696,9 +7611,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
     if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
       if (!do_warning_dialog(
             _("\nLoading new audio may cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n."))) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         if (mainw->multitrack!=NULL) {
           mt_sensitise(mainw->multitrack);
           mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
@@ -7708,18 +7621,14 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
       add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                      cfile->stored_layout_frame>0.);
       has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
     }
   }
 
   if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))) {
     if (!do_layout_alter_audio_warning()) {
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       if (mainw->multitrack!=NULL) {
         mt_sensitise(mainw->multitrack);
         mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
@@ -7729,9 +7638,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
     add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                    cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   mainw->noswitch=TRUE;
@@ -8064,34 +7971,26 @@ void on_load_cdtrack_ok_clicked(LiVESButton *button, livespointer user_data) {
       if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
         if (!do_warning_dialog(
               _("\nLoading new audio may cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n."))) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
           return;
         }
         add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                        cfile->stored_layout_audio>0.);
         has_lmap_error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
       }
     }
 
     if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
         (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
       if (!do_layout_alter_audio_warning()) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                      cfile->stored_layout_audio>0.);
       has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
     }
   }
 
@@ -8330,7 +8229,7 @@ void on_load_vcd_ok_clicked(LiVESButton *button, livespointer         user_data)
   lives_general_button_clicked(button,NULL);
   if (LIVES_POINTER_TO_INT(user_data)==1) {
     lives_snprintf(file_name,PATH_MAX,"dvd://%d",(int)mainw->fx1_val);
-    if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
+    lives_freep((void **)&mainw->file_open_params);
     mainw->file_open_params=lives_strdup_printf("-chapter %d -aid %d",(int)mainw->fx2_val,(int)mainw->fx3_val);
   } else {
     lives_snprintf(file_name,PATH_MAX,"vcd://%d",(int)mainw->fx1_val);
@@ -9145,7 +9044,7 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
       lives_system(com,FALSE);
     }
   }
-  if (com!=NULL) lives_free(com);
+  lives_freep((void **)&com);
   mainw->effects_paused=!mainw->effects_paused;
 
 }
@@ -10116,8 +10015,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_widget_destroy(resaudw->dialog);
   lives_widget_context_update();
-  if (resaudw!=NULL) lives_free(resaudw);
-  resaudw=NULL;
+  lives_freep((void **)&resaudw);
 
   if (prefs->rec_desktop_audio&&mainw->rec_arate<=0&&((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||
       (prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
@@ -10204,8 +10102,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
   lives_system(com,TRUE);
   lives_free(com);
-  lives_free(cfile);
-  cfile=NULL;
+  lives_freep((void **)&cfile);
   if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
 
   mainw->current_file=curr_file;
@@ -10263,7 +10160,7 @@ void on_capture2_activate(void) {
 
   retval=prepare_to_play_foreign();
 
-  if (mainw->foreign_visual!=NULL) lives_free(mainw->foreign_visual);
+  lives_freep((void **)&mainw->foreign_visual);
 
   if (!retval) exit(2);
 
@@ -10351,10 +10248,7 @@ void on_encoder_ofmt_changed(LiVESCombo *combo, livespointer user_data) {
         counter++;
       }
     }
-    if (ofmt_all!=NULL) {
-      lives_list_free_strings(ofmt_all);
-      lives_list_free(ofmt_all);
-    }
+    lives_list_free_all(&ofmt_all);
     lives_free(new_fmt);
 
     if (rdet!=NULL&&prefsw==NULL) {
@@ -10482,16 +10376,12 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_layout_alter_audio_warning()) {
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                    cfile->stored_layout_audio>0.);
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("Append Audio File"),filt,
@@ -10657,34 +10547,26 @@ void on_trim_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (end<cfile->laudio_time&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,end))!=NULL) {
       if (!do_warning_dialog
           (_("\nDeletion will cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,end,
                      cfile->stored_layout_audio>end);
       has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
     }
   }
 
   if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_layout_alter_audio_warning()) {
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                    cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   if (end>cfile->laudio_time&&end>cfile->raudio_time)
@@ -10802,17 +10684,13 @@ void on_fade_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (!do_layout_alter_audio_warning()) {
         lives_free(msg2);
         lives_free(utxt);
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                      cfile->stored_layout_audio>0.);
       has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
     }
 
     if (!aud_d->is_sel)
@@ -10868,7 +10746,7 @@ void on_fade_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   sensitize();
 
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
-  if (aud_d!=NULL) lives_free(aud_d);
+  lives_freep((void **)&aud_d);
 
 }
 
@@ -10893,34 +10771,26 @@ boolean on_del_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
           if (!do_warning_dialog
               (_("\nDeletion will cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-            lives_list_free_strings(mainw->xlays);
-            lives_list_free(mainw->xlays);
-            mainw->xlays=NULL;
+            lives_list_free_all(&mainw->xlays);
             return FALSE;
           }
           add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                          cfile->stored_layout_audio>0.);
           has_lmap_error=TRUE;
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
         }
       }
 
       if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
           (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
         if (!do_layout_alter_audio_warning()) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
           return FALSE;
         }
         add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                        cfile->stored_layout_audio>0.);
         has_lmap_error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
       }
 
       if (!cfile->frames) {
@@ -10940,17 +10810,13 @@ boolean on_del_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,end))!=NULL) {
           if (!do_warning_dialog
               (_("\nDeletion will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-            lives_list_free_strings(mainw->xlays);
-            lives_list_free(mainw->xlays);
-            mainw->xlays=NULL;
+            lives_list_free_all(&mainw->xlays);
             return FALSE;
           }
           add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,start,
                          cfile->stored_layout_audio>end);
           has_lmap_error=TRUE;
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
         }
       }
 
@@ -10958,34 +10824,26 @@ boolean on_del_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,start))!=NULL) {
           if (!do_warning_dialog
               (_("\nDeletion will cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-            lives_list_free_strings(mainw->xlays);
-            lives_list_free(mainw->xlays);
-            mainw->xlays=NULL;
+            lives_list_free_all(&mainw->xlays);
             return FALSE;
           }
           add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,start,
                          cfile->stored_layout_audio>start);
           has_lmap_error=TRUE;
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
         }
       }
 
       if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
           (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
         if (!do_layout_alter_audio_warning()) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
           return FALSE;
         }
         add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                        cfile->stored_layout_audio>0.);
         has_lmap_error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
       }
 
     }
@@ -11103,17 +10961,13 @@ void on_recaudsel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_layout_alter_audio_warning()) {
       has_lmap_error_recsel=FALSE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                    cfile->stored_layout_audio>0.);
     has_lmap_error_recsel=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   mainw->rec_end_time=(cfile->end-cfile->start+1.)/cfile->fps;
@@ -11189,8 +11043,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
   cfile->signed_endian=get_signed_endian(asigned,aendian);
   lives_widget_destroy(resaudw->dialog);
   lives_widget_context_update();
-  if (resaudw!=NULL) lives_free(resaudw);
-  resaudw=NULL;
+  lives_freep((void **)&resaudw);
 
   if (cfile->arate<=0) {
     do_audrate_error_dialog();
@@ -11305,9 +11158,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
 
 
     mainw->read_failed=mainw->write_failed=FALSE;
-    if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
-    mainw->read_failed_file=NULL;
-
+    lives_freep((void **)&mainw->read_failed_file);
 
     // copy audio from old clip to current
     render_audio_segment(1,&(mainw->current_file),old_file,&vel,&aud_start,ins_pt,
@@ -11333,8 +11184,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
 
     if (mainw->read_failed) {
       do_read_failed_error_s(mainw->read_failed_file,NULL);
-      if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
-      mainw->read_failed_file=NULL;
+      lives_freep((void **)&mainw->read_failed_file);
       if (!prefs->conserve_space&&type==1&&!backr) {
         // try to recover backup
         com=lives_strdup_printf("%s undo_audio \"%s\"",prefs->backend_sync,mainw->files[old_file]->handle);
@@ -11420,36 +11270,28 @@ boolean on_ins_silence_activate(LiVESMenuItem *menuitem, livespointer user_data)
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)) {
       if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,start))!=NULL) {
         if (!do_warning_dialog(_("\nInsertion will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-          lives_list_free_strings(mainw->xlays);
-          lives_list_free(mainw->xlays);
-          mainw->xlays=NULL;
+          lives_list_free_all(&mainw->xlays);
           if (has_new_audio) cfile->achans=cfile->arate=cfile->asampsize=cfile->arps=0;
           return FALSE;
         }
         add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,start,
                        cfile->stored_layout_audio>start);
         has_lmap_error=TRUE;
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
       }
     }
 
     if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)
         &&(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
       if (!do_layout_alter_audio_warning()) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         if (has_new_audio) cfile->achans=cfile->arate=cfile->asampsize=cfile->arps=0;
         return FALSE;
       }
       add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,start,
                      cfile->stored_layout_audio>0.);
       has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
     }
 
     d_print(""); // force switchtext
@@ -11535,8 +11377,7 @@ void on_ins_silence_details_clicked(LiVESButton *button, livespointer user_data)
   cfile->signed_endian=get_signed_endian(asigned,aendian);
   lives_widget_destroy(resaudw->dialog);
   lives_widget_context_update();
-  if (resaudw!=NULL) lives_free(resaudw);
-  resaudw=NULL;
+  lives_freep((void **)&resaudw);
   if (cfile->arate<=0) {
     do_audrate_error_dialog();
     cfile->achans=cfile->arate=cfile->arps=cfile->asampsize=0;

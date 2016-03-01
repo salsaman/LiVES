@@ -5382,8 +5382,7 @@ void event_list_free_undos(lives_mt *mt) {
 void stored_event_list_free_undos(void) {
   if (mainw->stored_layout_undos!=NULL) lives_list_free(mainw->stored_layout_undos);
   mainw->stored_layout_undos=NULL;
-  if (mainw->sl_undo_mem!=NULL) lives_free(mainw->sl_undo_mem);
-  mainw->sl_undo_mem=NULL;
+  lives_freep((void **)&mainw->sl_undo_mem);
   mainw->sl_undo_buffer_used=0;
   mainw->sl_undo_offset=0;
 }
@@ -6369,10 +6368,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.pertrack_audio=ptaud;
     mt->opts.back_audio_tracks=btaud;
     lives_free(rdet->encoder_name);
-    lives_free(rdet);
-    rdet=NULL;
-    if (resaudw!=NULL) lives_free(resaudw);
-    resaudw=NULL;
+    lives_freep((void **)&rdet);
+    lives_freep((void **)&resaudw);
   }
 
   if (force_backing_tracks>mt->opts.back_audio_tracks) mt->opts.back_audio_tracks=force_backing_tracks;
@@ -7923,7 +7920,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   // must do this here to set cfile->hsize, cfile->vsize; and we must have created aparam_submenu and insa_eventbox and insa_checkbutton
   msg=set_values_from_defs(mt,!prefs->mt_enter_prompt||(mainw->recoverable_layout&&prefs->startup_interface==STARTUP_CE));
-  if (msg!=NULL) lives_free(msg);
+  lives_freep((void **)&msg);
 
   // play buttons
 
@@ -9096,8 +9093,8 @@ boolean used_in_current_layout(lives_mt *mt, int file) {
 
     if (layout_map[file]>0||layout_map_audio[file]>0.) retval=TRUE;
 
-    if (layout_map!=NULL) lives_free(layout_map);
-    if (layout_map_audio!=NULL) lives_free(layout_map_audio);
+    lives_freep((void **)&layout_map);
+    lives_freep((void **)&layout_map_audio);
   }
 
   return retval;
@@ -9185,8 +9182,8 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
         }
       }
 
-      if (layout_map!=NULL) lives_free(layout_map);
-      if (layout_map_audio!=NULL) lives_free(layout_map_audio);
+      lives_freep((void **)&layout_map);
+      lives_freep((void **)&layout_map_audio);
     }
   }
 
@@ -9215,8 +9212,8 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   if (mt->poly_state==POLY_PARAMS) polymorph(mt,POLY_CLIPS);
 
-  if (mt->undo_mem!=NULL) lives_free(mt->undo_mem);
-  mt->undo_mem=NULL;
+  lives_freep((void **)&mt->undo_mem);
+
   if (mt->undos!=NULL) lives_list_free(mt->undos);
 
   if (mt->selected_tracks!=NULL) lives_list_free(mt->selected_tracks);
@@ -9765,12 +9762,12 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
         if (weed_get_int_value(event,WEED_LEAF_LIVES_TYPE,&error)==EVENT_MARKER_BLOCK_START) {
           block_marker_tc=get_event_timecode(event);
           block_marker_num_tracks=weed_leaf_num_elements(event,WEED_LEAF_TRACKS);
-          if (block_marker_tracks!=NULL) lives_free(block_marker_tracks);
+          lives_freep((void **)&block_marker_tracks);
           block_marker_tracks=weed_get_int_array(event,WEED_LEAF_TRACKS,&error);
         } else if (weed_get_int_value(event,WEED_LEAF_LIVES_TYPE,&error)==EVENT_MARKER_BLOCK_UNORDERED) {
           block_marker_uo_tc=get_event_timecode(event);
           block_marker_uo_num_tracks=weed_leaf_num_elements(event,WEED_LEAF_TRACKS);
-          if (block_marker_uo_tracks!=NULL) lives_free(block_marker_uo_tracks);
+          lives_freep((void **)&block_marker_uo_tracks);
           block_marker_uo_tracks=weed_get_int_array(event,WEED_LEAF_TRACKS,&error);
         }
       } else if (WEED_EVENT_IS_FILTER_INIT(event)) {
@@ -9961,8 +9958,8 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
       event=get_next_event(event);
     }
     if (!mt->was_undo_redo) remove_end_blank_frames(mt->event_list,TRUE);
-    if (block_marker_tracks!=NULL) lives_free(block_marker_tracks);
-    if (block_marker_uo_tracks!=NULL) lives_free(block_marker_uo_tracks);
+    lives_freep((void **)&block_marker_tracks);
+    lives_freep((void **)&block_marker_uo_tracks);
 
     if (cfile->achans>0&&mt->opts.back_audio_tracks>0) lives_widget_show(mt->view_audio);
 
@@ -10989,10 +10986,8 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
     if (response==LIVES_RESPONSE_CANCEL) {
       lives_free(rdet->encoder_name);
-      lives_free(rdet);
-      rdet=NULL;
-      if (resaudw!=NULL) lives_free(resaudw);
-      resaudw=NULL;
+      lives_freep((void **)&rdet);
+      lives_freep((void **)&resaudw);
       return FALSE;
     }
   }
@@ -12565,6 +12560,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
       }
     }
     if (pchain!=NULL&&poly!=POLY_PARAMS) {
+      // no freep !
       lives_free(pchain);
       pchain=NULL;
     }
@@ -15431,6 +15427,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   insert_filter_init_event_at(mt->event_list,start_event,mt->init_event);
 
   if (pchain!=NULL) {
+    // no freep !
     lives_free(pchain);
     pchain=NULL;
   }
@@ -17555,8 +17552,8 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
             shortcut1=get_prev_frame_event(shortcut1);
           }
         }
-        if (clips!=NULL) lives_free(clips);
-        if (frames!=NULL) lives_free(frames);
+        lives_freep((void **)&clips);
+        lives_freep((void **)&frames);
         break; // do not allow overwriting in this mode
       }
       rep_clips=clips;
@@ -17567,8 +17564,8 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
     if (sfile->event_list!=NULL&&event==NULL) {
       if (rep_clips!=clips&&rep_clips!=NULL) lives_free(rep_clips);
       if (rep_frames!=frames&&rep_frames!=NULL) lives_free(rep_frames);
-      if (clips!=NULL) lives_free(clips);
-      if (frames!=NULL) lives_free(frames);
+      lives_freep((void **)&clips);
+      lives_freep((void **)&frames);
       break; // insert finished: ran out of frames in resampled clip
     }
     last_offset=offset_start;
@@ -17613,8 +17610,8 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
       }
     }
 
-    if (clips!=NULL) lives_free(clips);
-    if (frames!=NULL) lives_free(frames);
+    lives_freep((void **)&clips);
+    lives_freep((void **)&frames);
 
     if (direction==DIRECTION_POSITIVE) {
       last_tc+=U_SEC/mt->fps;
@@ -19447,7 +19444,7 @@ boolean set_new_set_name(lives_mt *mt) {
     response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
     if (response==LIVES_RESPONSE_CANCEL) {
       lives_widget_destroy(renamew->dialog);
-      lives_free(renamew);
+      lives_freep((void **)&renamew);
       mainw->cancelled=CANCEL_USER;
       if (mt!=NULL) {
         mt->idlefunc=0;
@@ -19458,7 +19455,7 @@ boolean set_new_set_name(lives_mt *mt) {
     }
     lives_snprintf(new_set_name,128,"%s",(tmp=U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
     lives_widget_destroy(renamew->dialog);
-    lives_free(renamew);
+    lives_freep((void **)&renamew);
     lives_free(tmp);
     lives_widget_context_update();
   } while (!is_legal_set_name(new_set_name,FALSE));
@@ -19662,8 +19659,8 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
 
   lives_free(esave_file);
   lives_free(esave_dir);
-  if (layout_map!=NULL) lives_free(layout_map);
-  if (layout_map_audio!=NULL) lives_free(layout_map_audio);
+  lives_freep((void **)&layout_map);
+  lives_freep((void **)&layout_map_audio);
 
   if (mainw->was_set) recover_layout_cancelled(FALSE);
 
@@ -20169,9 +20166,8 @@ static char *add_missing_atrack_closers(weed_plant_t *event_list, double fps, ch
   lives_free(aclips);
   lives_free(aseeks);
 
-  lives_list_free_strings(atrack_list);
-  lives_list_free(atrack_list);
-  atrack_list=NULL;
+  lives_list_free_all(&atrack_list);
+
   return ebuf;
 }
 
@@ -21700,7 +21696,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
     }
     map=map->next;
   }
-  if (changefrom!=NULL) lives_free(changefrom);
+  lives_freep((void **)&changefrom);
 }
 
 
@@ -21845,10 +21841,8 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (response==LIVES_RESPONSE_CANCEL) {
     lives_widget_destroy(rdet->dialog);
     lives_free(rdet->encoder_name);
-    lives_free(rdet);
-    rdet=NULL;
-    if (resaudw!=NULL) lives_free(resaudw);
-    resaudw=NULL;
+    lives_freep((void **)&rdet);
+    lives_freep((void **)&resaudw);
     return;
   }
 
@@ -21859,10 +21853,8 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         do_mt_no_audchan_error();
         lives_widget_destroy(rdet->dialog);
         lives_free(rdet->encoder_name);
-        lives_free(rdet);
-        rdet=NULL;
-        if (resaudw!=NULL) lives_free(resaudw);
-        resaudw=NULL;
+        lives_freep((void **)&rdet);
+        lives_freep((void **)&resaudw);
         return;
       }
       slist=slist->next;
@@ -21907,12 +21899,9 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mt->user_asamps=xasamps;
   mt->user_signed_endian=xse;
 
-
   lives_free(rdet->encoder_name);
-  lives_free(rdet);
-  rdet=NULL;
-  if (resaudw!=NULL) lives_free(resaudw);
-  resaudw=NULL;
+  lives_freep((void **)&rdet);
+  lives_freep((void **)&resaudw);
 
   msg=set_values_from_defs(mt,FALSE);
   if (msg!=NULL) {

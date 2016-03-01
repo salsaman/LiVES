@@ -1,6 +1,6 @@
 // rfx-builder.c
 // LiVES
-// (c) G. Finch 2004 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -3406,16 +3406,14 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
   }
   tmp=(char *)lives_list_nth_data(list,0);
   if (strlen(tmp)<2) {
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
     lives_snprintf(mainw->msg,512,"%s",(_("Bad script version.\n")));
     return FALSE;
   }
 
   version=lives_strdup(tmp+1);
   if (make_version_hash(version)>make_version_hash(RFX_VERSION)) {
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
     lives_free(version);
     lives_snprintf(mainw->msg,512,"%s",(_("Bad script version.\n")));
     return FALSE;
@@ -3425,16 +3423,14 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
   memset(tmp+1,0,1);
   lives_free(rfxbuilder->field_delim);
   rfxbuilder->field_delim=lives_strdup(tmp);
-  lives_list_free_strings(list);
-  lives_list_free(list);
+  lives_list_free_all(&list);
 
   if (!(list=get_script_section("name",script_file,TRUE))) {
     lives_snprintf(mainw->msg,512,"%s",(_("No <name> section found in script.\n")));
     return FALSE;
   }
   lives_entry_set_text(LIVES_ENTRY(rfxbuilder->name_entry),(char *)lives_list_nth_data(list,0));
-  lives_list_free_strings(list);
-  lives_list_free(list);
+  lives_list_free_all(&list);
 
   if (!(list=get_script_section("version",script_file,TRUE))) {
     lives_snprintf(mainw->msg,512,"%s",(_("No <version> section found in script.\n")));
@@ -3442,8 +3438,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
   }
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_version),
                               (double)atoi((char *)lives_list_nth_data(list,0)));
-  lives_list_free_strings(list);
-  lives_list_free(list);
+  lives_list_free_all(&list);
 
   if (!(list=get_script_section("author",script_file,TRUE))) {
     lives_snprintf(mainw->msg,512,"%s",(_("No <author> section found in script.\n")));
@@ -3455,9 +3450,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
     lives_entry_set_text(LIVES_ENTRY(rfxbuilder->url_entry),array[1]);
   }
   lives_strfreev(array);
-  lives_list_free_strings(list);
-  lives_list_free(list);
-
+  lives_list_free_all(&list);
 
   if (!(list=get_script_section("description",script_file,TRUE))) {
     lives_snprintf(mainw->msg,512,"%s",(_("No <description> section found in script.\n")));
@@ -3465,13 +3458,11 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
   }
   if (get_token_count((char *)lives_list_nth_data(list,0),(int)rfxbuilder->field_delim[0])<4) {
     lives_snprintf(mainw->msg,512,(_("Bad description. (%s)\n")),(char *)lives_list_nth_data(list,0));
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
     return FALSE;
   }
   array=lives_strsplit((char *)lives_list_nth_data(list,0),rfxbuilder->field_delim,-1);
-  lives_list_free_strings(list);
-  lives_list_free(list);
+  lives_list_free_all(&list);
   lives_entry_set_text(LIVES_ENTRY(rfxbuilder->menu_text_entry),array[0]);
   lives_entry_set_text(LIVES_ENTRY(rfxbuilder->action_desc_entry),array[1]);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_min_frames),(double)atoi(array[2]));
@@ -3502,8 +3493,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
     if (!strncmp((char *)lives_list_nth_data(list,0),"0x",2)||!strncmp((char *)lives_list_nth_data(list,0),"0x",2)) {
       rfxbuilder->props=hextodec((char *)lives_list_nth_data(list,0)+2);
     } else rfxbuilder->props=atoi((char *)lives_list_nth_data(list,0));
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
   }
   if (rfxbuilder->props<0) rfxbuilder->props=0;
 
@@ -3667,8 +3657,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
       }
       lives_strfreev(array);
     }
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
   }
 
   if ((list=get_script_section("pre",script_file,FALSE))) {
@@ -3677,8 +3666,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
       lives_free(rfxbuilder->pre_code);
       rfxbuilder->pre_code=tmp;
     }
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
   }
 
   if ((list=get_script_section("loop",script_file,FALSE))) {
@@ -3687,8 +3675,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
       lives_free(rfxbuilder->loop_code);
       rfxbuilder->loop_code=tmp;
     }
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
   }
 
   if ((list=get_script_section("post",script_file,FALSE))) {
@@ -3697,8 +3684,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
       lives_free(rfxbuilder->post_code);
       rfxbuilder->post_code=tmp;
     }
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
   }
 
   return TRUE;
@@ -4143,8 +4129,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
 
     status_combo_entry = lives_combo_get_entry(LIVES_COMBO(status_combo));
 
-    lives_list_free_strings(status_list);
-    lives_list_free(status_list);
+    lives_list_free_all(&status_list);
 
     label = lives_standard_label_new(_("   Script:    "));
     lives_widget_show(label);
@@ -4278,8 +4263,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
           lives_free(rfx_script_to);
         }
         if (nmlist!=NULL) {
-          lives_list_free_strings(nmlist);
-          lives_list_free(nmlist);
+          lives_list_free_all(&nmlist);
         }
         lives_free(xname);
       }
@@ -4297,8 +4281,7 @@ void populate_script_combo(LiVESCombo *script_combo, lives_rfx_status_t status) 
   if (list!=NULL) {
     lives_combo_set_active_index(script_combo,0);
     lives_widget_set_sensitive(copy_script_okbutton,TRUE);
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
   } else {
     lives_combo_set_active_string(script_combo,"");
     lives_widget_set_sensitive(copy_script_okbutton,FALSE);
@@ -4554,8 +4537,7 @@ void add_rfx_effects(void) {
         continue;
       }
       def=lives_strdup((char *)lives_list_nth_data(define,0));
-      lives_list_free_strings(define);
-      lives_list_free(define);
+      lives_list_free_all(&define);
 
       if (strlen(def)<2) {
 #ifdef DEBUG_RENDER_FX
@@ -4596,29 +4578,24 @@ void add_rfx_effects(void) {
       }
       lives_free(plugin_name);
       if (props!=NULL) {
-        lives_list_free_strings(props);
-        lives_list_free(props);
+        lives_list_free_all(&props);
         props=NULL;
       }
       if (description!=NULL) {
-        lives_list_free_strings(description);
-        lives_list_free(description);
+        lives_list_free_all(&description);
         description=NULL;
       }
       lives_free(def);
     }
 
     if (rfx_builtin_list!=NULL) {
-      lives_list_free_strings(rfx_builtin_list);
-      lives_list_free(rfx_builtin_list);
+      lives_list_free_all(&rfx_builtin_list);
     }
     if (rfx_custom_list!=NULL) {
-      lives_list_free_strings(rfx_custom_list);
-      lives_list_free(rfx_custom_list);
+      lives_list_free_all(&rfx_custom_list);
     }
     if (rfx_test_list!=NULL) {
-      lives_list_free_strings(rfx_test_list);
-      lives_list_free(rfx_test_list);
+      lives_list_free_all(&rfx_test_list);
     }
     lives_free(type);
   }

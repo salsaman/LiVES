@@ -242,8 +242,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     case ASERVER_CMD_FILE_CLOSE:
       if (pulsed->fd>=0) close(pulsed->fd);
       pulsed->fd=-1;
-      if (pulsed->aPlayPtr->data!=NULL) lives_free(pulsed->aPlayPtr->data);
-      pulsed->aPlayPtr->data=NULL;
+      lives_freep((void **)&pulsed->aPlayPtr->data);
       pulsed->aPlayPtr->max_size=0;
       pulsed->aPlayPtr->size=0;
       pulsed->playing_file=-1;
@@ -263,7 +262,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     default:
       msg->data=NULL;
     }
-    if (msg->data!=NULL) lives_free((livespointer)msg->data);
+    lives_freep((void **)&msg->data);
     msg->command=ASERVER_CMD_PROCESSED;
     if (msg->next==NULL) pulsed->msgq=NULL;
     else pulsed->msgq = msg->next;
@@ -629,7 +628,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                                     pulsed->out_achans,16,0,(capable->byte_order==LIVES_LITTLE_ENDIAN),FALSE,1.0);
             }
 
-            if (fbuffer!=NULL) lives_free(fbuffer);
+            lives_freep((void **)&fbuffer);
             free(fp);
 
             if (mainw->record&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
@@ -710,8 +709,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       }
 
       if (needs_free&&pulsed->sound_buffer!=pulsed->aPlayPtr->data&&pulsed->sound_buffer!=NULL) {
-        lives_free(pulsed->sound_buffer);
-        pulsed->sound_buffer=NULL;
+        lives_freep((void **)&pulsed->sound_buffer);
       }
     }
 
@@ -1377,7 +1375,7 @@ void pulse_aud_pb_ready(int fileno) {
       boolean timeout;
       int alarm_handle;
 
-      if (tmpfilename!=NULL) lives_free(tmpfilename);
+      lives_freep((void **)&tmpfilename);
       mainw->pulsed->in_achans=sfile->achans;
       mainw->pulsed->in_asamps=sfile->asampsize;
       mainw->pulsed->in_arate=sfile->arate;

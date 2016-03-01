@@ -438,8 +438,7 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
   if (sfile->subt->last_time!=-1. && xtime>sfile->subt->last_time) {
     // past end of subtitles
-    if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-    sfile->subt->text=NULL;
+    lives_freep((void **)&sfile->subt->text);
     sfile->subt->current=NULL;
     return TRUE;
   }
@@ -452,14 +451,13 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
   while (index_ptr) {
     if (index_ptr->start_time > xtime) {
-      if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-      sfile->subt->text=NULL;
+      lives_freep((void **)&sfile->subt->text);
       sfile->subt->current = NULL;
       return (TRUE);
     }
     if (index_ptr->end_time >= xtime) {
       sfile->subt->current = index_ptr;
-      if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
+      lives_freep((void **)&sfile->subt->text);
       sfile->subt->text=srt_read_text(sfile->subt->tfile,sfile->subt->current);
       return (TRUE);
     }
@@ -482,8 +480,7 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
     if (!fgets(data,sizeof(data), pf)) {
       // EOF
-      if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-      sfile->subt->text=NULL;
+      lives_freep((void **)&sfile->subt->text);
       sfile->subt->current=NULL;
       sub_get_last_time(sfile->subt);
       return FALSE;
@@ -536,13 +533,12 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
       if (node) {
         if (node->start_time > xtime) {
-          if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-          sfile->subt->text=NULL;
+          lives_freep((void **)&sfile->subt->text);
           sfile->subt->current = NULL;
           return TRUE;
         }
         if (node->end_time >= xtime) {
-          if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
+          lives_freep((void **)&sfile->subt->text);
           sfile->subt->current = node;
           sfile->subt->text=srt_read_text(sfile->subt->tfile,sfile->subt->current);
           return TRUE;
@@ -556,8 +552,7 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
   // EOF
   sfile->subt->current=NULL;
-  if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-  sfile->subt->text=NULL;
+  lives_freep((void **)&sfile->subt->text);
   sub_get_last_time(sfile->subt);
   return FALSE;
 }
@@ -588,8 +583,7 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
 
   if (sfile->subt->last_time!=-1. && xtime>sfile->subt->last_time) {
     // past end of subtitles
-    if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-    sfile->subt->text=NULL;
+    lives_freep((void **)&sfile->subt->text);
     sfile->subt->current=NULL;
     return TRUE;
   }
@@ -602,14 +596,13 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
 
   while (index_ptr) {
     if (index_ptr->start_time > xtime) {
-      if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-      sfile->subt->text=NULL;
+      lives_freep((void **)&sfile->subt->text);
       sfile->subt->current = NULL;
       return (TRUE);
     }
     if (index_ptr->end_time >= xtime) {
       sfile->subt->current = index_ptr;
-      if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
+      lives_freep((void **)&sfile->subt->text);
       sfile->subt->text=sub_read_text(sfile->subt->tfile,sfile->subt->current);
       return (TRUE);
     }
@@ -687,13 +680,12 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
 
       if (node) {
         if (node->start_time > xtime) {
-          if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-          sfile->subt->text=NULL;
+          lives_freep((void **)&sfile->subt->text);
           sfile->subt->current = NULL;
           return TRUE;
         }
         if (node->end_time >= xtime) {
-          if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
+          lives_freep((void **)&sfile->subt->text);
           sfile->subt->current = node;
           sfile->subt->text=sub_read_text(sfile->subt->tfile,sfile->subt->current);
           return TRUE;
@@ -706,8 +698,7 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
 
   // EOF
   sfile->subt->current=NULL;
-  if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-  sfile->subt->text=NULL;
+  lives_freep((void **)&sfile->subt->text);
   sub_get_last_time(sfile->subt);
   return TRUE;
 }
@@ -726,14 +717,13 @@ void subtitles_free(lives_clip_t *sfile) {
 
     sfile->subt->index = (lives_subtitle_t *)sfile->subt->index->next;
 
-    if (to_delete->style != NULL) lives_free(to_delete->style);
-    lives_free(to_delete);
+    lives_freep((void **)&to_delete->style);
+    lives_freep((void **)&to_delete);
   }
 
-  if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
+  lives_freep((void **)&sfile->subt->text);
+  lives_freep((void **)&sfile->subt);
 
-  lives_free(sfile->subt);
-  sfile->subt=NULL;
 }
 
 

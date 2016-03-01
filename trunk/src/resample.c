@@ -671,16 +671,12 @@ static void on_reorder_activate(int rwidth, int rheight) {
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_layout_alter_frames_warning()) {
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   cfile->old_frames=cfile->frames;
@@ -792,17 +788,13 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&(mainw->xlays=layout_audio_is_affected
       (mainw->current_file,0.))) {
     if (!do_layout_alter_audio_warning()) {
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                    cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   // store old values for undo/redo
@@ -1836,17 +1828,13 @@ void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
     if ((mainw->xlays=layout_frame_is_affected(mainw->current_file,new_frames))!=NULL) {
       if (!do_warning_dialog(
             _("\nSpeeding up the clip will cause missing frames in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_DELETE_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,new_frames,0.,
                      new_frames<=count_resampled_frames(cfile->stored_layout_frame,cfile->stored_layout_fps,cfile->fps));
       has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
     }
   }
 
@@ -1855,17 +1843,13 @@ void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
     if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,(new_frames-1.)/cfile->fps))!=NULL) {
       if (!do_warning_dialog(
             _("\nSpeeding up the clip will cause missing audio in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,(new_frames-1.)/cfile->fps,
                      (new_frames-1.)/cfile->fps<cfile->stored_layout_audio);
       has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
     }
   }
 
@@ -1873,62 +1857,48 @@ void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
       (mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_warning_dialog(
           _("\nChanging the speed will cause frames to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       return;
     }
     add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   if (mainw->fx1_bool&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)&&
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_warning_dialog(
           _("\nChanging the speed will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-      lives_list_free_strings(mainw->xlays);
+      lives_list_free_all(&mainw->xlays);
       lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
       return;
     }
     add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&
       (mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_layout_alter_frames_warning()) {
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   if (mainw->fx1_bool&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_layout_alter_audio_warning()) {
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   if (button==NULL) {

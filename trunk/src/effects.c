@@ -828,16 +828,12 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=
           layout_frame_is_affected(mainw->current_file,1))!=NULL) {
       if (!do_layout_alter_frames_warning()) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                      cfile->stored_layout_frame>0);
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       has_lmap_error=TRUE;
     }
 
@@ -845,17 +841,13 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
         (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
       if (!do_layout_alter_audio_warning()) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
         return;
       }
       add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
                      cfile->stored_layout_audio>0.);
       has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
     }
   }
 

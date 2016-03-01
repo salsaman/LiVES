@@ -89,8 +89,7 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
       }
       lives_strfreev(array);
     }
-    lives_list_free_strings(onchange);
-    lives_list_free(onchange);
+    lives_list_free_all(&onchange);
   }
   lives_free(type);
 
@@ -244,26 +243,19 @@ void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   if (menuitem!=NULL&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&rfx->num_in_channels>0&&
       (mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_layout_alter_frames_warning()) {
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
+      lives_list_free_all(&mainw->xlays);
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,
                    0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
+    lives_list_free_all(&mainw->xlays);
   }
 
   // do onchange|init
   if (menuitem!=NULL) {
     LiVESList *retvals=do_onchange_init(rfx);
-    if (retvals!=NULL) {
-      lives_list_free_strings(retvals);
-      lives_list_free(retvals);
-    }
+    lives_list_free_all(&retvals);
   }
   if (rfx->min_frames>-1) {
     do_effect(rfx,FALSE);
@@ -720,10 +712,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     if (didx==0&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&
         (mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
       if (!do_layout_alter_frames_warning()) {
-        lives_list_free_strings(mainw->xlays);
-        lives_list_free(mainw->xlays);
-
-        mainw->xlays=NULL;
+        lives_list_free_all(&mainw->xlays);
       }
     }
   }
@@ -757,10 +746,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
         mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
 
-      if (retvals!=NULL) {
-        lives_list_free_strings(retvals);
-        lives_list_free(retvals);
-      }
+      lives_list_free_all(&retvals);
 
       return;
     }
@@ -776,17 +762,11 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   if (!no_process&&rfx->num_in_channels>0) {
     // check we have a real clip open
     if (mainw->current_file<=0) {
-      if (retvals!=NULL) {
-        lives_list_free_strings(retvals);
-        lives_list_free(retvals);
-      }
+      lives_list_free_all(&retvals);
       return;
     }
     if (cfile->end-cfile->start+1<rfx->min_frames) {
-      if (retvals!=NULL) {
-        lives_list_free_strings(retvals);
-        lives_list_free(retvals);
-      }
+      lives_list_free_all(&retvals);
       txt=lives_strdup_printf(_("\nYou must select at least %d frames to use this effect.\n\n"),rfx->min_frames);
       do_blocking_error_dialog(txt);
       lives_free(txt);
@@ -1004,8 +984,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   if (retvals!=NULL) {
     // now apply visually anything we got from onchange_init
     param_demarshall(rfx,retvals,TRUE,TRUE);
-    lives_list_free_strings(retvals);
-    lives_list_free(retvals);
+    lives_list_free_all(&retvals);
   }
 
 
@@ -1162,8 +1141,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
         }
         lives_strfreev(array);
       }
-      lives_list_free_strings(onchange);
-      lives_list_free(onchange);
+      lives_list_free_all(&onchange);
     }
     hints=plugin_request_by_line(type,rfx->name,"get_param_window");
     lives_free(type);
@@ -1183,8 +1161,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
         add_to_special((char *)lives_list_nth_data(hints,i)+8,rfx);
       }
     }
-    lives_list_free_strings(hints);
-    lives_list_free(hints);   // no longer needed
+    lives_list_free_all(&hints);
     lives_free(lstring);
     lives_free(sstring);
   }
@@ -1263,10 +1240,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     }
     lives_strfreev(array);
   }
-  if (layout!=NULL) {
-    lives_list_free_strings(layout);
-    lives_list_free(layout);
-  }
+  lives_list_free_all(&layout);
 
   // add any unused parameters
   for (i=0; i<rfx->num_params; i++) {
@@ -1860,10 +1834,7 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
   if (get_bool_param(param->value)!=old_bool&&param->onchange) {
     param->change_blocked=TRUE;
     retvals=do_onchange(LIVES_WIDGET_OBJECT(togglebutton), rfx);
-    if (retvals!=NULL) {
-      lives_list_free_strings(retvals);
-      lives_list_free(retvals);
-    }
+    lives_list_free_all(&retvals);
     lives_widget_context_update();
     param->change_blocked=FALSE;
   }
@@ -1981,10 +1952,7 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
       param->onchange) {
     param->change_blocked=TRUE;
     retvals=do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
-    if (retvals!=NULL) {
-      lives_list_free_strings(retvals);
-      lives_list_free(retvals);
-    }
+    lives_list_free_all(&retvals);
     lives_widget_context_update();
     param->change_blocked=FALSE;
   }
@@ -2191,10 +2159,7 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   if (new_red!=old_value.red&&param->onchange) {
     param->change_blocked=TRUE;
     retvals=do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
-    if (retvals!=NULL) {
-      lives_list_free_strings(retvals);
-      lives_list_free(retvals);
-    }
+    lives_list_free_all(&retvals);
     lives_widget_context_update();
     param->change_blocked=FALSE;
   }
@@ -2264,10 +2229,7 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   if (new_green!=old_value.green&&param->onchange) {
     param->change_blocked=TRUE;
     retvals=do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
-    if (retvals!=NULL) {
-      lives_list_free_strings(retvals);
-      lives_list_free(retvals);
-    }
+    lives_list_free_all(&retvals);
     lives_widget_context_update();
     param->change_blocked=FALSE;
   }
@@ -2334,10 +2296,7 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   if (new_blue!=old_value.blue&&param->onchange) {
     param->change_blocked=TRUE;
     retvals=do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
-    if (retvals!=NULL) {
-      lives_list_free_strings(retvals);
-      lives_list_free(retvals);
-    }
+    lives_list_free_all(&retvals);
     lives_widget_context_update();
     param->change_blocked=FALSE;
   }
@@ -2390,10 +2349,7 @@ void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   if (new_alpha!=old_value.alpha&&param->onchange) {
     param->change_blocked=TRUE;
     retvals=do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
-    if (retvals!=NULL) {
-      lives_list_free_strings(retvals);
-      lives_list_free(retvals);
-    }
+    lives_list_free_all(&retvals);
     lives_widget_context_update();
     param->change_blocked=FALSE;
   }
@@ -2528,10 +2484,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
   if (strcmp(old_text,(char *)param->value)&&param->onchange) {
     param->change_blocked=TRUE;
     retvals=do_onchange(LIVES_WIDGET_OBJECT(textwidget), rfx);
-    if (retvals!=NULL) {
-      lives_list_free_strings(retvals);
-      lives_list_free(retvals);
-    }
+    lives_list_free_all(&retvals);
     lives_widget_context_update();
     param->change_blocked=FALSE;
   }
@@ -2630,10 +2583,7 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
   if (old_index!=new_index&&param->onchange) {
     param->change_blocked=TRUE;
     retvals=do_onchange(LIVES_WIDGET_OBJECT(combo), rfx);
-    if (retvals!=NULL) {
-      lives_list_free_strings(retvals);
-      lives_list_free(retvals);
-    }
+    lives_list_free_all(&retvals);
     lives_widget_context_update();
     param->change_blocked=FALSE;
   }
@@ -3258,8 +3208,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
         list=lives_list_append(list,lives_strdup_printf("%d",mini));
         list=lives_list_append(list,lives_strdup_printf("%d",maxi));
         set_param_from_list(list,&rfx->params[i],0,TRUE,TRUE);
-        lives_list_free_strings(list);
-        lives_list_free(list);
+        lives_list_free_all(&list);
 
         break;
       case WEED_HINT_FLOAT:
@@ -3288,8 +3237,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
         lives_free(pattern);
 
         set_param_from_list(list,&rfx->params[i],0,TRUE,TRUE);
-        lives_list_free_strings(list);
-        lives_list_free(list);
+        lives_list_free_all(&list);
 
         break;
       case WEED_HINT_SWITCH:
@@ -3299,8 +3247,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
 
         list=lives_list_append(list,lives_strdup_printf("%d",vali));
         set_param_from_list(list,&rfx->params[i],0,FALSE,TRUE);
-        lives_list_free_strings(list);
-        lives_list_free(list);
+        lives_list_free_all(&list);
 
         break;
       case WEED_HINT_TEXT:
@@ -3315,8 +3262,8 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
           lives_free(valss[j]);
         }
         lives_free(valss);
-        lives_list_free_strings(list);
-        lives_list_free(list);
+        lives_list_free_all(&list);
+
         break;
       case WEED_HINT_COLOR:
         cspace=weed_get_int_value(paramtmpl,WEED_LEAF_COLORSPACE,&error);
@@ -3363,8 +3310,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
 
             set_param_from_list(list,&rfx->params[i],0,FALSE,TRUE);
 
-            lives_list_free_strings(list);
-            lives_list_free(list);
+            lives_list_free_all(&list);
             lives_free(colsis);
             if (maxis!=NULL) lives_free(maxis);
             if (minis!=NULL) lives_free(minis);
@@ -3403,8 +3349,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
             list=lives_list_append(list,lives_strdup_printf("%.2f",colsd[2]));
             set_param_from_list(list,&rfx->params[i],0,FALSE,TRUE);
 
-            lives_list_free_strings(list);
-            lives_list_free(list);
+            lives_list_free_all(&list);
             lives_free(colsds);
             if (maxds!=NULL) lives_free(maxds);
             if (minds!=NULL) lives_free(minds);

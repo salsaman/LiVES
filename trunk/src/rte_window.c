@@ -1298,8 +1298,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     lives_free(keymap_file);
     keymap_file=keymap_file2;
   } else {
-    lives_free(keymap_file2);
-    keymap_file2=NULL;
+    lives_freep((void **)&keymap_file2);
   }
 
   d_print(_("Loading default keymap from %s..."),keymap_file);
@@ -1398,7 +1397,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       if (!strcmp(array[0],"defaults")) {
         lives_strfreev(array);
         array=lives_strsplit(line,"|",2);
-        if (prefs->fxdefsfile!=NULL) lives_free(prefs->fxdefsfile);
+        lives_freep((void **)&prefs->fxdefsfile);
         prefs->fxdefsfile=lives_strdup(array[1]);
         lives_strfreev(array);
         continue;
@@ -1407,7 +1406,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       if (!strcmp(array[0],"sizes")) {
         lives_strfreev(array);
         array=lives_strsplit(line,"|",2);
-        if (prefs->fxsizesfile!=NULL) lives_free(prefs->fxsizesfile);
+        lives_freep((void **)&prefs->fxsizesfile);
         prefs->fxsizesfile=lives_strdup(array[1]);
         lives_strfreev(array);
         continue;
@@ -1566,14 +1565,12 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
 
   if (keymap_file2==NULL) {
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
 
     if (update>0) {
       d_print(_("update required.\n"));
       on_save_keymap_clicked(NULL,new_list);
-      lives_list_free_strings(new_list);
-      lives_list_free(new_list);
+      lives_list_free_all(&new_list);
       on_load_keymap_clicked(NULL,NULL);
     } else d_print_done();
   } else {
@@ -1766,7 +1763,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_free(filter_name);
   lives_free(filter_author);
-  if (filter_extra_authors!=NULL) lives_free(filter_extra_authors);
+  lives_freep((void **)&filter_extra_authors);
   if (has_desc) lives_free(filter_description);
   if (has_url) lives_free(url);
   if (has_license) lives_free(license);
@@ -1914,23 +1911,9 @@ static boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *even
     old_rte_keys_virtual=prefs->rte_keys_virtual;
     lives_widget_hide(rte_window);
   } else {
-    if (hash_list!=NULL) {
-      lives_list_free_strings(hash_list);
-      lives_list_free(hash_list);
-      hash_list=NULL;
-    }
-
-    if (name_list!=NULL) {
-      lives_list_free_strings(name_list);
-      lives_list_free(name_list);
-      name_list=NULL;
-    }
-
-    if (name_type_list!=NULL) {
-      lives_list_free_strings(name_type_list);
-      lives_list_free(name_type_list);
-      name_type_list=NULL;
-    }
+    lives_list_free_all(&hash_list);
+    lives_list_free_all(&name_list);
+    lives_list_free_all(&name_type_list);
 
     lives_free(key_checks);
     lives_free(key_grabs);
@@ -2094,8 +2077,7 @@ static LiVESTreeModel *rte_window_fx_model(void) {
     if ((pkgstring=strstr(fxname,": "))!=NULL) {
       // package effect
       if (pkg!=NULL&&strncmp(pkg,fxname,strlen(pkg))) {
-        lives_free(pkg);
-        pkg=NULL;
+        lives_freep((void **)&pkg);
         lives_tree_store_append(tstore, &iter1, NULL);   /* Acquire an iterator */
         lives_tree_store_set(tstore,&iter1,NAME_TYPE_COLUMN,list->data,NAME_COLUMN,fxname,
                              HASH_COLUMN,lives_list_nth_data(hash_list,fx_idx),-1);
@@ -2115,8 +2097,7 @@ static LiVESTreeModel *rte_window_fx_model(void) {
       lives_tree_store_set(tstore,&iter2,NAME_TYPE_COLUMN,list->data,NAME_COLUMN,fxname,
                            HASH_COLUMN,lives_list_nth_data(hash_list,fx_idx),-1);
     } else {
-      if (pkg!=NULL) lives_free(pkg);
-      pkg=NULL;
+      if (pkg!=NULL) lives_freep((void **)&pkg);
       lives_tree_store_append(tstore, &iter1, NULL);   /* Acquire an iterator */
       lives_tree_store_set(tstore,&iter1,NAME_TYPE_COLUMN,list->data,NAME_COLUMN,fxname,
                            HASH_COLUMN,lives_list_nth_data(hash_list,fx_idx),-1);
@@ -2128,7 +2109,7 @@ static LiVESTreeModel *rte_window_fx_model(void) {
     fx_idx++;
   }
 
-  if (pkg!=NULL) lives_free(pkg);
+  lives_freep((void **)&pkg);
 
   return (LiVESTreeModel *)tstore;
 }

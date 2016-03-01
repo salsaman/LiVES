@@ -74,10 +74,8 @@ static void pv_sel_changed(LiVESFileChooser *chooser, livespointer user_data) {
     lives_widget_set_sensitive(pbutton,FALSE);
   } else lives_widget_set_sensitive(pbutton,TRUE);
 
-  if (slist!=NULL) {
-    lives_list_free_strings((LiVESList *)slist);
-    lives_slist_free(slist);
-  }
+  lives_list_free_all((LiVESList **)&slist);
+
 }
 
 

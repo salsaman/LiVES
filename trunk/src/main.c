@@ -246,8 +246,7 @@ void get_monitors(void) {
   int nscreens,nmonitors;
   register int i,j,idx=0;
 
-  if (mainw->mgeom!=NULL) lives_free(mainw->mgeom);
-  mainw->mgeom=NULL;
+  lives_freep((void **)&mainw->mgeom);
 
   dlist=dislist=gdk_display_manager_list_displays(gdk_display_manager_get());
 
@@ -1405,8 +1404,7 @@ static void lives_init(_ign_opts *ign_opts) {
       if ((encoders=get_plugin_list(PLUGIN_ENCODERS,TRUE,NULL,NULL))!=NULL) {
 #endif
         capable->has_encoder_plugins=TRUE;
-        lives_list_free_strings(encoders);
-        lives_list_free(encoders);
+        lives_list_free_all(&encoders);
       }
 
       memset(prefs->encoder.of_name,0,1);
@@ -1450,8 +1448,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
           set_pref("output_type",prefs->encoder.of_name);
 
-          lives_list_free_strings(ofmt_all);
-          lives_list_free(ofmt_all);
+          lives_list_free_all(&ofmt_all);
         }
       }
 
@@ -1475,14 +1472,11 @@ static void lives_init(_ign_opts *ign_opts) {
         LiVESList *ofmt_all,*dummy_list;
 
         dummy_list=plugin_request("encoders",prefs->encoder.name,"init");
-        if (dummy_list!=NULL) {
-          lives_list_free_strings(dummy_list);
-          lives_list_free(dummy_list);
-        }
+	lives_list_free_all(&dummy_list);
+
         if (!((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"get_capabilities"))==NULL)) {
           prefs->encoder.capabilities=atoi((char *)lives_list_nth_data(encoder_capabilities,0));
-          lives_list_free_strings(encoder_capabilities);
-          lives_list_free(encoder_capabilities);
+          lives_list_free_all(&encoder_capabilities);
           if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
             // get any restrictions for the current format
             for (i=0; i<lives_list_length(ofmt_all); i++) {
@@ -1498,8 +1492,7 @@ static void lives_init(_ign_opts *ign_opts) {
                 lives_strfreev(array);
               }
             }
-            lives_list_free_strings(ofmt_all);
-            lives_list_free(ofmt_all);
+            lives_list_free_all(&ofmt_all);
           }
         }
       }
@@ -2854,11 +2847,7 @@ static boolean lives_startup(livespointer data) {
 
   do_start_messages();
 
-  if (mainw->cached_list!=NULL) {
-    lives_list_free_strings(mainw->cached_list);
-    lives_list_free(mainw->cached_list);
-    mainw->cached_list=NULL;
-  }
+  lives_list_free_all(&mainw->cached_list);
 
   if (!prefs->show_gui) lives_widget_hide(mainw->LiVES);
 
@@ -5523,8 +5512,7 @@ void load_frame_image(int frame) {
         lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
         lives_widget_queue_draw(mainw->framecounter);
       }
-      lives_free(framecount);
-      framecount=NULL;
+      lives_freep((void **)&framecount);
     }
 
     if (was_preview) {
@@ -5534,7 +5522,7 @@ void load_frame_image(int frame) {
           frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start)) {
         mainw->cancelled=CANCEL_PREVIEW_FINISHED;
         mainw->noswitch=noswitch;
-        if (framecount!=NULL) lives_free(framecount);
+        lives_freep((void **)&framecount);
         return;
       }
 
@@ -5544,7 +5532,7 @@ void load_frame_image(int frame) {
         fname_next=make_image_file_name(cfile,frame+1,prefs->image_ext);
 
         if (!mainw->fs&&prefs->show_framecount&&!mainw->is_rendering) {
-          if (framecount!=NULL) lives_free(framecount);
+          lives_freep((void **)&framecount);
           if (cfile->frames>0&&cfile->frames!=123456789) {
             framecount=lives_strdup_printf("%9d/%d",frame,cfile->frames);
           } else {
@@ -5552,8 +5540,7 @@ void load_frame_image(int frame) {
           }
           lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
           lives_widget_queue_draw(mainw->framecounter);
-          lives_free(framecount);
-          framecount=NULL;
+          lives_freep((void **)&framecount);
         }
         if (mainw->toy_type!=LIVES_TOY_NONE) {
           // TODO - move into toys.c
@@ -5586,7 +5573,7 @@ void load_frame_image(int frame) {
     if ((mainw->actual_frame<1||mainw->actual_frame>cfile->frames)&&
         (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
       mainw->noswitch=noswitch;
-      if (framecount!=NULL) lives_free(framecount);
+      lives_freep((void **)&framecount);
       return;
     }
 
@@ -5703,7 +5690,7 @@ void load_frame_image(int frame) {
         if (mainw->internal_messaging) {
           // this happens if we are calling from multitrack, or apply rte.  We get our mainw->frame_layer and exit.
           mainw->noswitch=noswitch;
-          if (framecount!=NULL) lives_free(framecount);
+          lives_freep((void **)&framecount);
           return;
         }
       } else {
@@ -5741,7 +5728,7 @@ void load_frame_image(int frame) {
             lives_free(fname_next);
             lives_free(info_file);
             mainw->noswitch=noswitch;
-            if (framecount!=NULL) lives_free(framecount);
+            lives_freep((void **)&framecount);
             check_layer_ready(mainw->frame_layer);
             return;
           }
@@ -5758,14 +5745,14 @@ void load_frame_image(int frame) {
 
         if (mainw->internal_messaging) {
           mainw->noswitch=noswitch;
-          if (framecount!=NULL) lives_free(framecount);
+          lives_freep((void **)&framecount);
           check_layer_ready(mainw->frame_layer);
           return;
         }
 
         if (mainw->frame_layer==NULL&&(!mainw->preview||(mainw->multitrack!=NULL&&!cfile->opening))) {
           mainw->noswitch=noswitch;
-          if (framecount!=NULL) lives_free(framecount);
+          lives_freep((void **)&framecount);
           return;
         }
 
@@ -5812,7 +5799,7 @@ void load_frame_image(int frame) {
             if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
             mainw->frame_layer=NULL;
             mainw->noswitch=noswitch;
-            if (framecount!=NULL) lives_free(framecount);
+            lives_freep((void **)&framecount);
             return;
           } else if (mainw->preview||cfile->opening) lives_widget_context_update();
         }
@@ -5829,7 +5816,7 @@ void load_frame_image(int frame) {
       if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
       mainw->frame_layer=NULL;
       mainw->noswitch=noswitch;
-      if (framecount!=NULL) lives_free(framecount);
+      lives_freep((void **)&framecount);
       return;
     }
 
@@ -6039,7 +6026,7 @@ void load_frame_image(int frame) {
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
         load_frame_cleanup(noswitch);
-        if (framecount!=NULL) lives_free(framecount);
+        lives_freep((void **)&framecount);
         return;
       }
 
@@ -6291,7 +6278,7 @@ void load_frame_image(int frame) {
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
         load_frame_cleanup(noswitch);
-        if (framecount!=NULL) lives_free(framecount);
+        lives_freep((void **)&framecount);
         return;
       }
     }
@@ -6305,7 +6292,7 @@ void load_frame_image(int frame) {
 
     if ((mainw->sep_win&&!prefs->show_playwin)||(!mainw->sep_win&&!prefs->show_gui)) {
       load_frame_cleanup(noswitch);
-      if (framecount!=NULL) lives_free(framecount);
+      lives_freep((void **)&framecount);
       return;
     }
 
@@ -6415,7 +6402,7 @@ void load_frame_image(int frame) {
                                           mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
     lives_free(tmp);
 
-    if (framecount!=NULL) lives_free(framecount);
+    lives_freep((void **)&framecount);
     return;
   }
 
@@ -6492,7 +6479,7 @@ void load_frame_image(int frame) {
       if (frame==mainw->rec_vid_frames) mainw->cancelled=CANCEL_KEEP;
 
     }
-    if (framecount!=NULL) lives_free(framecount);
+    lives_freep((void **)&framecount);
   }
 
 
@@ -6658,10 +6645,10 @@ void load_frame_image(int frame) {
         lives_free(cwd);
       }
 
-      if (cfile->frame_index!=NULL) lives_free(cfile->frame_index);
-      if (cfile->frame_index_back!=NULL) lives_free(cfile->frame_index_back);
+      lives_freep((void **)&cfile->frame_index);
+      lives_freep((void **)&cfile->frame_index_back);
 
-      if (cfile->op_dir!=NULL) lives_free(cfile->op_dir);
+      lives_freep((void **)&cfile->op_dir);
 
       if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&!mainw->only_close) {
 
@@ -6677,10 +6664,7 @@ void load_frame_image(int frame) {
         if (cfile->event_list_back!=NULL) event_list_free(cfile->event_list_back);
         if (cfile->event_list!=NULL) event_list_free(cfile->event_list);
 
-        if (cfile->layout_map!=NULL) {
-          lives_list_free_strings(cfile->layout_map);
-          lives_list_free(cfile->layout_map);
-        }
+	lives_list_free_all(&cfile->layout_map);
 
       }
 
@@ -6708,8 +6692,7 @@ void load_frame_image(int frame) {
         lives_painter_surface_destroy(cfile->raudio_drawable);
       }
 
-      lives_free(cfile);
-      cfile=NULL;
+      lives_freep((void **)&cfile);
 
       if (mainw->multitrack!=NULL&&mainw->current_file!=mainw->multitrack->render_file) {
         mt_delete_clips(mainw->multitrack,mainw->current_file);
@@ -6943,8 +6926,7 @@ void load_frame_image(int frame) {
           // switch while opening - come out of processing dialog
           if (!(mainw->files[old_file]->proc_ptr==NULL)) {
             lives_widget_destroy(mainw->files[old_file]->proc_ptr->processing);
-            lives_free(mainw->files[old_file]->proc_ptr);
-            mainw->files[old_file]->proc_ptr=NULL;
+            lives_freep((void **)&mainw->files[old_file]->proc_ptr);
           }
         }
       }

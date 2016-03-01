@@ -997,6 +997,7 @@ weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
       event_list=append_filter_deinit_event(event_list,last_tc,init_events[i],pchains[i]);
       init_events[i]=NULL;
       if (pchains[i]!=NULL) lives_free(pchains[i]);
+      pchains[i]=NULL;
       needs_filter_map=TRUE;
     }
   }
@@ -1655,7 +1656,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 
   lives_free(procvals);
   if (xinst!=NULL) lives_free(xinst);
-  if (dthreads!=NULL) lives_free(dthreads);
+  lives_freep((void **)&dthreads);
 
   if (got_invalid) return FILTER_ERROR_MUST_RELOAD;
 
@@ -1821,7 +1822,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   if (get_enabled_channel(inst,0,TRUE)==NULL) {
     // we process generators elsewhere
-    lives_free(in_channels);
+    if (in_channels!=NULL) lives_free(in_channels);
     if (out_channels!=NULL) lives_free(out_channels);
     return FILTER_ERROR_NO_IN_CHANNELS;
   }
@@ -3124,7 +3125,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
     layer=layers[i];
     if (weed_plant_has_leaf(channel,WEED_LEAF_AUDIO_DATA)) {
       float *audio_data=(float *)weed_get_voidptr_value(layer,WEED_LEAF_AUDIO_DATA,&error);
-      if (audio_data!=NULL) lives_free(audio_data);
+      lives_freep((void **)&audio_data);
     }
     weed_set_voidptr_value(layer,WEED_LEAF_AUDIO_DATA,weed_get_voidptr_value(channel,WEED_LEAF_AUDIO_DATA,&error));
   }
@@ -3404,8 +3405,6 @@ audinst1:
     weed_set_boolean_value(instance,WEED_LEAF_HOST_INITED,WEED_TRUE);
     retval=FILTER_INFO_REINITED;
   }
-
-
 
   if (in_channels!=NULL) lives_free(in_channels);
   if (out_channels!=NULL) lives_free(out_channels);
@@ -4915,8 +4914,7 @@ static void make_fx_defs_menu(void) {
           // add to submenu
           menu=pkg_submenu;
         } else {
-          if (pkg!=NULL) lives_free(pkg);
-          pkg=NULL;
+          lives_freep((void **)&pkg);
           menu=mainw->rte_defs;
         }
 
@@ -5066,17 +5064,11 @@ void weed_load_all(void) {
         load_weed_plugin(plugin_name,plugin_path,subdir_path);
         lives_free(plugin_path);
       }
-      if (weed_plugin_sublist!=NULL) {
-        lives_list_free_strings(weed_plugin_sublist);
-        lives_list_free(weed_plugin_sublist);
-      }
+      lives_list_free_all(&weed_plugin_sublist);
       lives_free(subdir_path);
       threaded_dialog_spin(0.);
     }
-    if (weed_plugin_list!=NULL) {
-      lives_list_free_strings(weed_plugin_list);
-      lives_list_free(weed_plugin_list);
-    }
+    lives_list_free_all(&weed_plugin_list);
   }
 
   lives_strfreev(dirs);
@@ -5809,10 +5801,7 @@ void load_compound_fx(void) {
     threaded_dialog_spin(0.);
   }
 
-  if (compound_plugin_list!=NULL) {
-    lives_list_free_strings(compound_plugin_list);
-    lives_list_free(compound_plugin_list);
-  }
+  lives_list_free_all(&compound_plugin_list);
 
   threaded_dialog_spin(0.);
   lives_free(lives_compound_plugin_path);
@@ -5828,10 +5817,7 @@ void load_compound_fx(void) {
     threaded_dialog_spin(0.);
   }
 
-  if (compound_plugin_list!=NULL) {
-    lives_list_free_strings(compound_plugin_list);
-    lives_list_free(compound_plugin_list);
-  }
+  lives_list_free_all(&compound_plugin_list);
 
   if (num_weed_filters>onum_filters) {
     d_print(_("Successfully loaded %d compound filters\n"),num_weed_filters-onum_filters);
@@ -6559,6 +6545,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 
   }
 
+  // cannot use lives_freep, since it is already a void **
   if (inp!=NULL) lives_free(inp);
 
   if (filters!=NULL) {
@@ -7222,6 +7209,7 @@ deinit3:
     mainw->event_list=append_filter_deinit_event(mainw->event_list,mainw->currticks,init_events[hotkey],pchains[hotkey]);
     init_events[hotkey]=NULL;
     if (pchains[hotkey]!=NULL) lives_free(pchains[hotkey]);
+    pchains[hotkey]=NULL;
     rteval=mainw->rte;
     new_rte=GU641<<(hotkey);
     if (rteval&new_rte) rteval^=new_rte;
@@ -7240,7 +7228,10 @@ void deinit_render_effects(void) {
   for (i=FX_KEYS_MAX_VIRTUAL; i<FX_KEYS_MAX; i++) {
     if (key_to_instance[i][0]!=NULL) {
       weed_deinit_effect(i);
-      if (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering) lives_free(pchains[i]);
+      if (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&pchains[i]!=NULL) {
+	lives_free(pchains[i]);
+	pchains[i]=NULL;
+      }
     }
   }
 }
@@ -7375,7 +7366,7 @@ weed_plant_t *weed_layer_new_from_generator(weed_plant_t *inst, weed_timecode_t 
 
   if (achan!=NULL) {
     void *abuf=weed_get_voidptr_value(achan,WEED_LEAF_AUDIO_DATA,&error);
-    if (abuf!=NULL) lives_free(abuf);
+    lives_freep((void **)&abuf);
   }
 
   lives_chdir(cwd,FALSE);
@@ -8395,8 +8386,7 @@ void weed_set_blend_factor(int hotkey) {
     list=lives_list_append(list,lives_strdup_printf("%d",maxi));
     update_pwindow(hotkey,pnum,list);
     if (mainw->ce_thumbs) ce_thumbs_update_params(hotkey,pnum,list);
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
 
     break;
   case WEED_HINT_FLOAT:
@@ -8412,8 +8402,7 @@ void weed_set_blend_factor(int hotkey) {
     list=lives_list_append(list,lives_strdup_printf("%.4f",maxd));
     update_pwindow(hotkey,pnum,list);
     if (mainw->ce_thumbs) ce_thumbs_update_params(hotkey,pnum,list);
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
 
     break;
   case WEED_HINT_SWITCH:
@@ -8425,8 +8414,7 @@ void weed_set_blend_factor(int hotkey) {
     list=lives_list_append(list,lives_strdup_printf("%d",vali));
     update_pwindow(hotkey,pnum,list);
     if (mainw->ce_thumbs) ce_thumbs_update_params(hotkey,pnum,list);
-    lives_list_free_strings(list);
-    lives_list_free(list);
+    lives_list_free_all(&list);
 
     break;
   }
@@ -9543,12 +9531,12 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
           if (npc[j]!=NULL) got_npc++;
         }
         if (got_npc==num_values) {
-          if (ign!=NULL) lives_free(ign);
+          lives_freep((void **)&ign);
           break;
         }
       }
       pchange=(weed_plant_t *)weed_get_voidptr_value(pchange,WEED_LEAF_NEXT_CHANGE,&error);
-      if (ign!=NULL) lives_free(ign);
+      lives_freep((void **)&ign);
     }
   }
 
@@ -10177,7 +10165,7 @@ static void weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, bo
       *mem+=vlen;
     }
     lives_free(value);
-    if (valuer!=value) lives_free(valuer);
+    lives_freep((void **)&valuer);
   }
 
   // write errors will be checked for by the calling function
@@ -10284,7 +10272,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
   if (mem==NULL) {
     if (lives_read_le_buffered(fd,&st,4,TRUE)<4) {
-      if (mykey!=NULL) lives_free(mykey);
+      lives_freep((void **)&mykey);
       return -4;
     }
   } else {
@@ -10307,7 +10295,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
   if (mem==NULL) {
     if (lives_read_le_buffered(fd,&ne,4,TRUE)<4) {
-      if (mykey!=NULL) lives_free(mykey);
+      lives_freep((void **)&mykey);
       return -4;
     }
   } else {
@@ -10332,7 +10320,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       if (bytes<4) {
         for (--i; i>=0; lives_free(values[i--]));
         lives_free(values);
-        if (mykey!=NULL) lives_free(mykey);
+        lives_freep((void **)&mykey);
         return -4;
       }
     } else {
@@ -10356,7 +10344,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       if (bytes<vlen) {
         for (--i; i>=0; lives_free(values[i--]));
         lives_free(values);
-        if (mykey!=NULL) lives_free(mykey);
+        lives_freep((void **)&mykey);
         return -4;
       }
     } else {
@@ -10605,7 +10593,7 @@ boolean read_filter_defaults(int fd) {
 
     for (i=0; i<ntoread; i++) {
       if (lives_read_le_buffered(fd,&pnum,4,TRUE)<4) {
-        if (ptmpls!=NULL) lives_free(ptmpls);
+	if (ptmpls!=NULL) lives_free(ptmpls);
         break;
       }
 

@@ -933,9 +933,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     lives_entry_set_width_chars(LIVES_ENTRY(lives_combo_get_entry(LIVES_COMBO(combo))), 14);
 
 
-    lives_list_free_strings(fps_list_strings);
-    lives_list_free(fps_list_strings);
-    fps_list_strings=NULL;
+    lives_list_free_all(&fps_list_strings);
     lives_strfreev(array);
 
     if (tmpvpp->fixed_fps_numer>0) {
@@ -1008,8 +1006,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     if (ctext==NULL) ctext=lives_strdup(weed_palette_get_name(tmpvpp->palette));
     lives_entry_set_text(LIVES_ENTRY(vppa->pal_entry),ctext);
     lives_free(ctext);
-    lives_list_free_strings(pal_list_strings);
-    lives_list_free(pal_list_strings);
+    lives_list_free_all(&pal_list_strings);
   }
 
   // extra params
@@ -1026,8 +1023,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       LiVESList *plist=argv_to_marshalled_list(vppa->rfx,tmpvpp->extra_argc,tmpvpp->extra_argv);
       param_demarshall(vppa->rfx,plist,FALSE,FALSE); // set defaults
       param_demarshall(vppa->rfx,plist,FALSE,TRUE); // update widgets
-      lives_list_free_strings(plist);
-      lives_list_free(plist);
+      lives_list_free_all(&plist);
     }
   } else {
     vppa->rfx=NULL;
@@ -1106,7 +1102,7 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
       weed_plant_free(vpp->play_params[i]);
     }
 
-    if (vpp->play_params!=NULL) lives_free(vpp->play_params);
+    lives_freep((void **)&vpp->play_params);
 
     lives_free(vpp);
   }
@@ -1645,8 +1641,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
             lives_snprintf(prefs->encoder.of_restrict,128,"none");
           }
           prefs->encoder.of_allowed_acodecs=atoi(array[2]);
-          lives_list_free_strings(ofmt_all);
-          lives_list_free(ofmt_all);
+          lives_list_free_all(&ofmt_all);
           lives_strfreev(array);
           break;
         }
@@ -2085,9 +2080,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext) 
         encoders=lives_list_delete_link(encoders,list);
       }
 
-      lives_list_free_strings(encoder_capabilities);
-      lives_list_free(encoder_capabilities);
-
+      lives_list_free_all(&encoder_capabilities);
     }
 
     list=listnext;
@@ -2248,8 +2241,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
     decoder_plugin=decoder_plugin->next;
   }
   if (decoder_plugin==NULL) {
-    lives_free(dplug);
-    dplug=NULL;
+    lives_freep((void **)&dplug);
   }
 
   return dplug;
@@ -2370,9 +2362,7 @@ void close_decoder_plugin(lives_decoder_t *dplug) {
 static void unload_decoder_plugin(lives_decoder_sys_t *dplug) {
   if (dplug->module_unload!=NULL)(*dplug->module_unload)();
 
-  if (dplug->name!=NULL) {
-    lives_free(dplug->name);
-  }
+  lives_freep((void **)&dplug->name);
 
   dlclose(dplug->handle);
   lives_free(dplug);
@@ -2505,10 +2495,7 @@ static void dpa_ok_clicked(LiVESButton *button, livespointer user_data) {
       apply_button_set_enabled(NULL,NULL);
   }
 
-  if (future_prefs->disabled_decoders!=NULL) {
-    lives_list_free_strings(future_prefs->disabled_decoders);
-    lives_list_free(future_prefs->disabled_decoders);
-  }
+  lives_list_free_all(&future_prefs->disabled_decoders);
 
   future_prefs->disabled_decoders=future_prefs->disabled_decoders_new;
 
@@ -2523,10 +2510,7 @@ static void dpa_cancel_clicked(LiVESButton *button, livespointer user_data) {
     lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
 
-  if (future_prefs->disabled_decoders_new!=NULL) {
-    lives_list_free_strings(future_prefs->disabled_decoders_new);
-    lives_list_free(future_prefs->disabled_decoders_new);
-  }
+  lives_list_free_all(&future_prefs->disabled_decoders_new);
 
 
 }
@@ -2672,7 +2656,7 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
     return;
   }
 
-  if (dir!=NULL) lives_free(dir);
+  lives_freep((void **)&dir);
 
   // if the command fails we just give a warning
   lives_system(com,FALSE);
@@ -2848,8 +2832,7 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
     cparam->onchange=FALSE;
     lives_strfreev(param_array);
   }
-  lives_list_free_strings(parameter_list);
-  lives_list_free(parameter_list);
+  lives_list_free_all(&parameter_list);
   threaded_dialog_spin(0.);
 }
 
@@ -2938,15 +2921,14 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 #endif
               min_val=i;
             }
-            if (tmp!=NULL) lives_free(tmp);
+            lives_freep((void **)&tmp);
           }
         }
       }
       rfx_copy(&in[min_val],&mainw->rendered_fx[sorted++],FALSE);
       used[min_val-1]=TRUE;
 #ifdef GUI_GTK
-      if (min_string!=NULL) lives_free(min_string);
-      min_string=NULL;
+      lives_freep((void **)&min_string);
 #endif
     }
 
@@ -2978,14 +2960,11 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     for (i=0; i<rfx->num_params; i++) {
       if (rfx->params[i].type==LIVES_PARAM_UNDISPLAYABLE) continue;
       lives_free(rfx->params[i].name);
-      if (rfx->params[i].def!=NULL) lives_free(rfx->params[i].def);
-      if (rfx->params[i].value!=NULL) lives_free(rfx->params[i].value);
-      if (rfx->params[i].label!=NULL) lives_free(rfx->params[i].label);
-      if (rfx->params[i].desc!=NULL) lives_free(rfx->params[i].desc);
-      if (rfx->params[i].list!=NULL) {
-        lives_list_free_strings(rfx->params[i].list);
-        lives_list_free(rfx->params[i].list);
-      }
+      lives_freep((void **)&rfx->params[i].def);
+      lives_freep((void **)&rfx->params[i].value);
+      lives_freep((void **)&rfx->params[i].label);
+      lives_freep((void **)&rfx->params[i].desc);
+      lives_list_free_all(&rfx->params[i].list);
     }
   }
 
@@ -2994,9 +2973,9 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   void rfx_free(lives_rfx_t *rfx) {
     if (mainw->vrfx_update==rfx) mainw->vrfx_update=NULL;
 
-    if (rfx->name!=NULL) lives_free(rfx->name);
-    if (rfx->menu_text!=NULL) lives_free(rfx->menu_text);
-    if (rfx->action_desc!=NULL) lives_free(rfx->action_desc);
+    lives_freep((void **)&rfx->name);
+    lives_freep((void **)&rfx->menu_text);
+    lives_freep((void **)&rfx->action_desc);
 
     if (rfx->params!=NULL) {
       rfx_params_free(rfx);
@@ -3016,8 +2995,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     for (i=0; i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test; i++) {
       rfx_free(&mainw->rendered_fx[i]);
     }
-    lives_free(mainw->rendered_fx);
-    mainw->rendered_fx=NULL;
+    lives_freep((void **)&mainw->rendered_fx);
   }
 
 
@@ -3454,10 +3432,10 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
           set_colRGB24_param(rpar[i].value,(short)cols[0],(short)cols[1],(short)cols[2]);
           lives_free(cols);
 
-          if (maxi!=NULL) lives_free(maxi);
-          if (mini!=NULL) lives_free(mini);
-          if (maxd!=NULL) lives_free(maxd);
-          if (mind!=NULL) lives_free(mind);
+          lives_freep((void **)&maxi);
+          lives_freep((void **)&mini);
+          lives_freep((void **)&maxd);
+          lives_freep((void **)&mind);
           break;
         }
         break;
@@ -3619,7 +3597,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
       }
 
-      if (filters!=NULL) lives_free(filters);
+      lives_freep((void **)&filters);
 
     }
 

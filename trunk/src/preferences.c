@@ -1158,10 +1158,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   // disabled_decoders
   if (string_lists_differ(prefs->disabled_decoders,future_prefs->disabled_decoders)) {
-    if (prefs->disabled_decoders!=NULL) {
-      lives_list_free_strings(prefs->disabled_decoders);
-      lives_list_free(prefs->disabled_decoders);
-    }
+    lives_list_free_all(&prefs->disabled_decoders);
     prefs->disabled_decoders=lives_list_copy_strings(future_prefs->disabled_decoders);
     if (prefs->disabled_decoders!=NULL) set_list_pref("disabled_decoders",prefs->disabled_decoders);
     else delete_pref("disabled_decoders");
@@ -3040,8 +3037,7 @@ _prefsw *create_prefs_dialog(void) {
     lives_combo_set_active_index(LIVES_COMBO(pp_combo), 0);
     lives_widget_set_sensitive(advbutton, FALSE);
   }
-  lives_list_free_strings(vid_playback_plugins);
-  lives_list_free(vid_playback_plugins);
+  lives_list_free_all(&vid_playback_plugins);
 
   lives_signal_connect_after(LIVES_WIDGET_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(after_vpp_changed),
                              (livespointer) advbutton);
@@ -3397,8 +3393,7 @@ _prefsw *create_prefs_dialog(void) {
 
   if (encoders!=NULL) {
     lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
-    lives_list_free_strings(encoders);
-    lives_list_free(encoders);
+    lives_list_free_all(&encoders);
   }
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_encoding));
@@ -3430,15 +3425,10 @@ _prefsw *create_prefs_dialog(void) {
 
     if (ofmt!=NULL) {
       lives_combo_set_active_string(LIVES_COMBO(prefsw->ofmt_combo), prefs->encoder.of_desc);
-      lives_list_free_strings(ofmt);
-      lives_list_free(ofmt);
+      lives_list_free_all(&ofmt);
     }
 
-    if (ofmt_all!=NULL) {
-      lives_list_free_strings(ofmt_all);
-      lives_list_free(ofmt_all);
-    }
-
+    lives_list_free_all(&ofmt_all);
 
     widget_opts.expand=LIVES_EXPAND_EXTRA;
     prefsw->acodec_combo = lives_standard_combo_new(_("Audio codec"),FALSE,NULL,LIVES_BOX(prefsw->vbox_right_encoding),NULL);
@@ -4165,8 +4155,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_combo_set_active_string(LIVES_COMBO(prefsw->theme_combo), theme);
   //---
   lives_free(theme);
-  lives_list_free_strings(themes);
-  lives_list_free(themes);
+  lives_list_free_all(&themes);
 
   //
   frame = lives_frame_new(NULL);
@@ -5315,9 +5304,7 @@ _prefsw *create_prefs_dialog(void) {
                        NULL);
 
 
-  lives_list_free_strings(audp);
-  lives_list_free(audp);
-
+  lives_list_free_all(&audp);
 
 
   if (prefs_current_page==-1) {
@@ -5354,21 +5341,11 @@ void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
  * Closes preferences dialog window
  */
 void on_prefs_close_clicked(LiVESButton *button, livespointer user_data) {
-  if (prefs->acodec_list!=NULL) {
-    lives_list_free_strings(prefs->acodec_list);
-    lives_list_free(prefs->acodec_list);
-  }
-  prefs->acodec_list=NULL;
+  lives_list_free_all(&prefs->acodec_list);
   lives_free(prefsw->audp_name);
   lives_free(prefsw->orig_audp_name);
-
-  lives_free(resaudw);
-  resaudw=NULL;
-
-  if (future_prefs->disabled_decoders!=NULL) {
-    lives_list_free_strings(future_prefs->disabled_decoders);
-    lives_list_free(future_prefs->disabled_decoders);
-  }
+  lives_freep((void **)&resaudw);
+  lives_list_free_all(&future_prefs->disabled_decoders);
 
   lives_general_button_clicked(button, user_data);
 
@@ -5522,11 +5499,7 @@ void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
   }
   memset(future_prefs->vpp_name, 0, 64);
 
-  if (prefs->acodec_list != NULL) {
-    lives_list_free_strings(prefs->acodec_list);
-    lives_list_free(prefs->acodec_list);
-  }
-  prefs->acodec_list = NULL;
+  lives_list_free_all(&prefs->acodec_list);
 
   if (prefsw->pbq_list != NULL) {
     lives_list_free(prefsw->pbq_list);
@@ -5536,10 +5509,7 @@ void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
   lives_free(prefsw->audp_name);
   lives_free(prefsw->orig_audp_name);
 
-  if (future_prefs->disabled_decoders != NULL) {
-    lives_list_free_strings(future_prefs->disabled_decoders);
-    lives_list_free(future_prefs->disabled_decoders);
-  }
+  lives_list_free_all(&future_prefs->disabled_decoders);
 
   lives_general_button_clicked(button, prefsw);
 

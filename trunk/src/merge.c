@@ -207,8 +207,7 @@ void create_merge_dialog(void) {
   if (retvals!=NULL) {
     // now apply visually anything we got from onchange_init
     //param_demarshall (rfx,retvals,TRUE,TRUE);
-    lives_list_free_strings(retvals);
-    lives_list_free(retvals);
+    lives_list_free_all(&retvals);
   }
 
   // done !
@@ -288,8 +287,7 @@ void on_trans_method_changed(LiVESCombo *combo, livespointer user_data) {
   if (retvals!=NULL) {
     // now apply visually anything we got from onchange_init
     param_demarshall(rfx,retvals,TRUE,TRUE);
-    lives_list_free_strings(retvals);
-    lives_list_free(retvals);
+    lives_list_free_all(&retvals);
   }
 
   merge_opts->align_start=!merge_opts->align_start;
@@ -321,8 +319,7 @@ void on_merge_cancel_clicked(LiVESButton *button, livespointer user_data) {
   mainw->last_transition_loop_to_fit=merge_opts->loop_to_fit;
   mainw->last_transition_ins_frames=merge_opts->ins_frames;
   mainw->last_transition_align_start=merge_opts->align_start;
-  lives_list_free_strings(merge_opts->trans_list);
-  lives_list_free(merge_opts->trans_list);
+  lives_list_free_all(&merge_opts->trans_list);
   lives_free(merge_opts->list_to_rfx_index);
   lives_free(merge_opts);
 }

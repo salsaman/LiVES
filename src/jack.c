@@ -340,7 +340,7 @@ static int audio_process(nframes_t nframes, void *arg) {
     default:
       msg->data=NULL;
     }
-    if (msg->data!=NULL) lives_free((char *)msg->data);
+    lives_freep((void **)&msg->data);
     msg->command=ASERVER_CMD_PROCESSED;
     if (msg->next==NULL) jackd->msgq=NULL;
     else jackd->msgq = msg->next;
@@ -774,7 +774,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                     }
                   }
                   nbytes=numFramesToWrite*jackd->num_output_channels*4;
-                  if (oinbuf!=NULL) lives_free(oinbuf);
+                  lives_freep((void **)&oinbuf);
                 }
                 rbytes=numFramesToWrite*jackd->num_output_channels*2;
                 audio_stream(xbuf,rbytes,jackd->astream_fd);
@@ -782,7 +782,7 @@ static int audio_process(nframes_t nframes, void *arg) {
               }
             }
 
-            if (fbuffer!=NULL) lives_free(fbuffer);
+            lives_freep((void **)&fbuffer);
 
           } else {
             if (mainw->audio_frame_buffer!=NULL&&prefs->audio_src!=AUDIO_SRC_EXT) {
@@ -1849,7 +1849,7 @@ void jack_aud_pb_ready(int fileno) {
       boolean timeout;
       int alarm_handle;
 
-      if (tmpfilename!=NULL) lives_free(tmpfilename);
+      lives_freep((void **)&tmpfilename);
       mainw->jackd->num_input_channels=sfile->achans;
       mainw->jackd->bytes_per_channel=sfile->asampsize/8;
       mainw->jackd->sample_in_rate=sfile->arate;

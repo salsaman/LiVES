@@ -94,8 +94,7 @@ boolean load_frame_index(int fileno) {
 
   if (sfile==NULL||sfile->frame_index!=NULL) return FALSE;
 
-  if (sfile->frame_index!=NULL) lives_free(sfile->frame_index);
-  sfile->frame_index=NULL;
+  lives_freep((void **)&sfile->frame_index);
 
   fname=lives_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
 
@@ -167,8 +166,7 @@ void del_frame_index(lives_clip_t *sfile) {
     lives_free(idxfile);
   }
 
-  if (sfile->frame_index!=NULL) lives_free(sfile->frame_index);
-  sfile->frame_index=NULL;
+  lives_freep((void **)&sfile->frame_index);
 }
 
 
@@ -331,7 +329,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
         }
       } while (retval==LIVES_RESPONSE_RETRY);
 
-      if (oname!=NULL) lives_free(oname);
+      lives_freep((void **)&oname);
 
       if (pbr==NULL) {
         if (pixbuf!=NULL) lives_object_unref(pixbuf);
@@ -383,7 +381,7 @@ void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_ind
 
   register int i,j=start-1;
 
-  if (sfile->frame_index_back!=NULL) lives_free(sfile->frame_index_back);
+  lives_freep((void **)&sfile->frame_index_back);
 
   sfile->frame_index_back=sfile->frame_index;
   sfile->frame_index=NULL;
@@ -424,7 +422,7 @@ void delete_frames_from_virtual(int sfileno, int start, int end) {
   lives_clip_t *sfile=mainw->files[sfileno];
   int nframes=sfile->frames,frames=end-start+1;
 
-  if (sfile->frame_index_back!=NULL) lives_free(sfile->frame_index_back);
+  lives_freep((void **)&sfile->frame_index_back);
 
   sfile->frame_index_back=sfile->frame_index;
   sfile->frame_index=NULL;
@@ -474,7 +472,7 @@ void restore_frame_index_back(int sfileno) {
 
   lives_clip_t *sfile=mainw->files[sfileno];
 
-  if (sfile->frame_index!=NULL) lives_free(sfile->frame_index);
+  lives_freep((void **)&sfile->frame_index);
 
   sfile->frame_index=sfile->frame_index_back;
   sfile->frame_index_back=NULL;

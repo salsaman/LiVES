@@ -255,8 +255,7 @@ void start_ce_thumb_mode(void) {
     fxcombos[i]=lives_standard_combo_new(NULL,FALSE,fxlist,LIVES_BOX(hbox),NULL);
 
     if (fxlist!=NULL) {
-      lives_list_free_strings(fxlist);
-      lives_list_free(fxlist);
+      lives_list_free_all(&fxlist);
       lives_combo_set_active_index(LIVES_COMBO(fxcombos[i]),rte_key_getmode(i+1));
     } else {
       lives_widget_set_sensitive(key_checks[i],FALSE);
@@ -659,8 +658,7 @@ void ce_thumbs_reset_combo(int key) {
   lives_combo_populate(LIVES_COMBO(fxcombos[key]),fxlist);
   if (fxlist!=NULL) {
     lives_widget_set_sensitive(key_checks[key],TRUE);
-    lives_list_free_strings(fxlist);
-    lives_list_free(fxlist);
+    lives_list_free_all(&fxlist);
     mode=rte_key_getmode(key+1);
     ce_thumbs_set_mode_combo(key,mode);
     if (rte_keymode_get_instance(key+1,mode)!=NULL) ce_thumbs_add_param_box(key,TRUE);

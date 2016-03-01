@@ -8400,8 +8400,7 @@ boolean widget_helper_init(void) {
       dlist=dlist->next;
     }
     widget_opts.image_filter[i]=NULL;
-    lives_list_free_strings(xlist);
-    lives_list_free(xlist);
+    lives_list_free_all(&xlist);
   }
 
   return TRUE;

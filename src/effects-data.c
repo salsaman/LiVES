@@ -1,6 +1,6 @@
 // effects-data.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2013 (salsaman@gmail.com)
+// (c) G. Finch 2005 - 2016 (salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -3144,9 +3144,7 @@ static void dfxc_changed(LiVESWidget *combo, livespointer user_data) {
   if (cidx==0) lives_widget_set_sensitive(conxwp->acbutton,TRUE);
   lives_widget_set_sensitive(conxwp->ccombo[ours],TRUE);
 
-  lives_list_free_strings(clist);
-  lives_list_free(clist);
-
+  lives_list_free_all(&clist);
 
 }
 
@@ -3278,9 +3276,7 @@ static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
 
   lives_widget_set_sensitive(conxwp->pcombo[ours],TRUE);
 
-  lives_list_free_strings(plist);
-  lives_list_free(plist);
-
+  lives_list_free_all(&plist);
 
 }
 

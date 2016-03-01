@@ -1,6 +1,6 @@
 // audio.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2014
+// (c) G. Finch 2005 - 2016
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -50,8 +50,7 @@ void audio_free_fnames(void) {
 
   for (i=0; i<NSTOREDFDS; i++) {
     if (storedfnames!=NULL) {
-      lives_free(storedfnames[i]);
-      storedfnames[i]=NULL;
+      lives_freep((void **)&storedfnames[i]);
       if (storedfds[i]>-1) close(storedfds[i]);
       storedfds[i]=-1;
     }
@@ -150,6 +149,7 @@ void init_audio_frame_buffer(short aplayer) {
 
 void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
   // function should be called to clear samples
+  // cannot use lives_freep
   register int i;
   if (abuf!=NULL) {
     if (abuf->bufferf!=NULL) {
@@ -1006,7 +1006,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     lives_free(outfilename);
 
     if (out_fd<0) {
-      if (mainw->write_failed_file!=NULL) lives_free(mainw->write_failed_file);
+      lives_freep((void **)&mainw->write_failed_file);
       mainw->write_failed_file=lives_strdup(outfilename);
       mainw->write_failed=TRUE;
       return 0l;
@@ -1086,7 +1086,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         if (track<NSTOREDFDS&&storedfds[track]>-1) close(storedfds[track]);
         in_fd[track]=lives_open2(infilename,O_RDONLY);
         if (in_fd[track]<0) {
-          if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
+          lives_freep((void **)&mainw->read_failed_file);
           mainw->read_failed_file=lives_strdup(infilename);
           mainw->read_failed=TRUE;
         }
@@ -1285,7 +1285,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         weed_apply_audio_effects(mainw->afilter_map,chunk_float_buffer,nbtracks,
                                  out_achans,blocksize,out_arate,tc,vis);
 
-        if (vis!=NULL) lives_free(vis);
+        lives_freep((void **)&vis);
 
       }
 
@@ -1332,7 +1332,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
     xsamples=zsamples;
   }
-
 
 
   if (xsamples>0) {
@@ -1716,7 +1715,7 @@ static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ost
     }
   }
 
-  if (ostate!=NULL) lives_free(ostate);
+  lives_freep((void **)&ostate);
 
   return audstate;
 }
@@ -1887,9 +1886,9 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     event=st_event;
     last_tc=get_event_timecode(event);
 
-    if (from_files!=NULL) lives_free(from_files);
-    if (avels!=NULL) lives_free(avels);
-    if (aseeks!=NULL) lives_free(aseeks);
+    lives_freep((void **)&from_files);
+    lives_freep((void **)&avels);
+    lives_freep((void **)&aseeks);
 
     if (mainw->multitrack!=NULL) nfiles=weed_leaf_num_elements(mainw->multitrack->avol_init_event,WEED_LEAF_IN_TRACKS);
 
@@ -1962,8 +1961,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       tc+=(U_SEC/cfile->fps*!is_blank_frame(event,FALSE));
 
       mainw->read_failed=FALSE;
-      if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
-      mainw->read_failed_file=NULL;
+      lives_freep((void **)&mainw->read_failed_file);
 
       render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
 
@@ -2001,8 +1999,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // flush the rest of the audio
 
     mainw->read_failed=FALSE;
-    if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
-    mainw->read_failed_file=NULL;
+    lives_freep((void **)&mainw->read_failed_file);
 
     render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
     for (i=0; i<nfiles; i++) {
@@ -2216,7 +2213,6 @@ static void *cache_my_audio(void *arg) {
     cbuffer->eof=FALSE;
 
     // TODO - if out_asamps changed, we need to free all buffers and set _cachans==0
-
     if (cbuffer->out_asamps!=cbuffer->_casamps) {
       if (cbuffer->bufferf!=NULL) {
         // free float channels
@@ -2373,6 +2369,7 @@ static void *cache_my_audio(void *arg) {
     default:
       break;
     }
+
 
     // update _cinterleaf, etc.
     cbuffer->_cin_interleaf=cbuffer->in_interleaf;
@@ -2783,11 +2780,10 @@ boolean apply_rte_audio(int nframes) {
 
     if (mainw->read_failed) {
       do_read_failed_error_s(audio_file,NULL);
-      if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
-      mainw->read_failed_file=NULL;
+      lives_freep((void **)&mainw->read_failed_file);
       lives_free(fltbuf);
       lives_free(in_buff);
-      if (shortbuf!=NULL) lives_free(shortbuf);
+      lives_freep((void **)&shortbuf);
       return FALSE;
     }
 

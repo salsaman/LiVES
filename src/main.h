@@ -1163,7 +1163,7 @@ char *lives_fgets(char *s, int size, FILE *stream);
 pid_t lives_getpid(void);
 int lives_getgid(void);
 int lives_getuid(void);
-void lives_freep(void **ptr);
+boolean lives_freep(void **ptr);
 void lives_kill_subprocesses(const char *dirname, boolean kill_parent);
 void lives_suspend_resume_process(const char *dirname, boolean suspend);
 #ifdef IS_MINGW
@@ -1283,6 +1283,7 @@ int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps)
 boolean int_array_contains_value(int *array, int num_elems, int value);
 boolean check_for_lock_file(const char *set_name, int type);
 void lives_list_free_strings(LiVESList *list);
+void lives_list_free_all(LiVESList **list);
 
 boolean create_event_space(int length_in_eventsb);
 void add_to_recent(const char *filename, double start, int frames, const char *file_open_params);

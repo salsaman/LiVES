@@ -870,13 +870,15 @@ int lives_chdir(const char *path, boolean allow_fail) {
 
 
 
-LIVES_INLINE void lives_freep(void **ptr) {
+LIVES_INLINE boolean lives_freep(void **ptr) {
   // free a pointer and nullify it, only if it is non-null to start with
   // pass the address of the pointer in
   if (ptr!=NULL&&*ptr!=NULL) {
     lives_free(*ptr);
     *ptr=NULL;
+    return TRUE;
   }
+  return FALSE;
 }
 
 
@@ -1830,8 +1832,7 @@ void init_clipboard(void) {
     cfile->cb_src=current_file;
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
-      if (cfile->frame_index!=NULL) lives_free(cfile->frame_index);
-      cfile->frame_index=NULL;
+      lives_freep((void **)&cfile->frame_index);
       close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
       cfile->ext_src=NULL;
       cfile->clip_type=CLIP_TYPE_DISK;
@@ -4475,15 +4476,19 @@ LIVES_INLINE void lives_list_free_strings(LiVESList *list) {
 }
 
 
+LIVES_INLINE void lives_list_free_all(LiVESList **list) {
+  if (*list==NULL) return;
+  lives_list_free_strings(*list);
+  lives_list_free(*list);
+  *list=NULL;
+}
+  
+
 boolean cache_file_contents(const char *filename) {
   FILE *hfile;
   char buff[65536];
 
-  if (mainw->cached_list!=NULL) {
-    lives_list_free_strings(mainw->cached_list);
-    lives_list_free(mainw->cached_list);
-    mainw->cached_list=NULL;
-  }
+  lives_list_free_all(&mainw->cached_list);
 
   if (!(hfile=fopen(filename,"r"))) return FALSE;
   while (fgets(buff,65536,hfile)!=NULL) {

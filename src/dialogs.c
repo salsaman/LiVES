@@ -414,7 +414,7 @@ boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_n
   } while (response==LIVES_RESPONSE_RETRY);
 
   lives_widget_context_update();
-  if (mytext!=NULL) lives_free(mytext);
+  lives_freep((void **)&mytext);
 
   return (response==LIVES_RESPONSE_OK);
 }
@@ -440,7 +440,7 @@ boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_num
   } while (response==LIVES_RESPONSE_RETRY);
 
   lives_widget_context_update();
-  if (mytext!=NULL) lives_free(mytext);
+  lives_freep((void **)&mytext);
 
   return (response==LIVES_RESPONSE_YES);
 }
@@ -507,7 +507,7 @@ int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
 
   } while (response==LIVES_RESPONSE_ABORT);
 
-  if (mytext!=NULL) lives_free(mytext);
+  lives_freep((void **)&mytext);
   return response;
 }
 
@@ -829,7 +829,7 @@ void pump_io_chan(LiVESIOChannel *iochan) {
     }
   }
 
-  if (str_return!=NULL) lives_free(str_return);
+  lives_freep((void **)&str_return);
 
 }
 
@@ -956,7 +956,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
             on_cancel_keep_button_clicked(NULL,NULL); // press the cancel button
           }
           mainw->cancelled=CANCEL_ERROR;
-          if (sfile!=NULL) lives_freep((void **)&sfile->op_dir);
+          if (sfile!=NULL) lives_free(sfile->op_dir);
           lives_free(pausstr);
           return FALSE;
         }
@@ -1578,7 +1578,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
     cfile->proc_ptr=create_processing(mytext);
-    if (mytext!=NULL) lives_free(mytext);
+    lives_freep((void **)&mytext);
 
     lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar),.01);
 
@@ -2077,7 +2077,7 @@ boolean do_auto_dialog(const char *text, int type) {
 
   proc_ptr=create_processing(mytext);
 
-  if (mytext!=NULL) lives_free(mytext);
+  lives_freep((void **)&mytext);
   lives_widget_hide(proc_ptr->stop_button);
   lives_window_set_modal(LIVES_WINDOW(proc_ptr->processing), TRUE);
 
@@ -2480,10 +2480,10 @@ boolean do_comments_dialog(int fileno, char *filename) {
             continue;
           }
         }
-        if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
+        lives_freep((void **)&mainw->subt_save_file);
         mainw->subt_save_file=lives_strdup(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
       } else {
-        if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
+        lives_freep((void **)&mainw->subt_save_file);
         mainw->subt_save_file=NULL;
       }
     }

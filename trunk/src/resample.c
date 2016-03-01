@@ -481,8 +481,8 @@ quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
 
   out_list=weed_plant_new(WEED_PLANT_EVENT_LIST);
   weed_add_plant_flags(out_list,WEED_LEAF_READONLY_PLUGIN);
-  weed_set_voidptr_value(out_list,"first",NULL);
-  weed_set_voidptr_value(out_list,"last",NULL);
+  weed_set_voidptr_value(out_list,WEED_LEAF_FIRST,NULL);
+  weed_set_voidptr_value(out_list,WEED_LEAF_LAST,NULL);
   weed_set_double_value(out_list,WEED_LEAF_FPS,qfps);
 
   last_frame_event=get_last_frame_event(in_list);
@@ -534,9 +534,9 @@ quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
         needs_audio=TRUE;
         if (aclips!=NULL) lives_free(aclips);
         if (aseeks!=NULL) lives_free(aseeks);
-        num_aclips=weed_leaf_num_elements(event,"audio_clips");
-        aclips=weed_get_int_array(event,"audio_clips",&error);
-        aseeks=weed_get_double_array(event,"audio_seeks",&error);
+        num_aclips=weed_leaf_num_elements(event,WEED_LEAF_AUDIO_CLIPS);
+        aclips=weed_get_int_array(event,WEED_LEAF_AUDIO_CLIPS,&error);
+        aseeks=weed_get_double_array(event,WEED_LEAF_AUDIO_SEEKS,&error);
       }
       in_tc=get_event_timecode(event);
       if ((next_frame_event=get_next_frame_event(event))!=NULL) {
@@ -559,9 +559,9 @@ quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
       if (out_clips!=NULL) lives_free(out_clips);
       if (out_frames!=NULL) lives_free(out_frames);
 
-      numframes=weed_leaf_num_elements(event,"clips");
-      out_clips=weed_get_int_array(event,"clips",&error);
-      out_frames=weed_get_int_array(event,"frames",&error);
+      numframes=weed_leaf_num_elements(event,WEED_LEAF_CLIPS);
+      out_clips=weed_get_int_array(event,WEED_LEAF_CLIPS,&error);
+      out_frames=weed_get_int_array(event,WEED_LEAF_FRAMES,&error);
       if (last_audio_event==event&&needs_audio) add_audio=TRUE;
       if (error==WEED_ERROR_MEMORY_ALLOCATION) {
         do_memory_error_dialog();
@@ -582,9 +582,9 @@ quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
             if (out_clips!=NULL) lives_free(out_clips);
             if (out_frames!=NULL) lives_free(out_frames);
 
-            numframes=weed_leaf_num_elements(event,"clips");
-            out_clips=weed_get_int_array(event,"clips",&error);
-            out_frames=weed_get_int_array(event,"frames",&error);
+            numframes=weed_leaf_num_elements(event,WEED_LEAF_CLIPS);
+            out_clips=weed_get_int_array(event,WEED_LEAF_CLIPS,&error);
+            out_frames=weed_get_int_array(event,WEED_LEAF_FRAMES,&error);
             if (last_audio_event==event&&needs_audio) add_audio=TRUE;
             if (error==WEED_ERROR_MEMORY_ALLOCATION) {
               do_memory_error_dialog();
@@ -600,13 +600,13 @@ quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
             return NULL;
           }
           if (add_audio) {
-            weed_set_int_array(shortcut,"audio_clips",num_aclips,aclips);
-            weed_set_double_array(shortcut,"audio_seeks",num_aclips,aseeks);
+            weed_set_int_array(shortcut,WEED_LEAF_AUDIO_CLIPS,num_aclips,aclips);
+            weed_set_double_array(shortcut,WEED_LEAF_AUDIO_SEEKS,num_aclips,aseeks);
             needs_audio=add_audio=FALSE;
           }
           nearest_tc=LONG_MAX;
           if (is_first) {
-            weed_set_voidptr_value(out_list,"first",get_last_event(out_list));
+            weed_set_voidptr_value(out_list,WEED_LEAF_FIRST,get_last_event(out_list));
             is_first=FALSE;
           }
         }
@@ -639,16 +639,16 @@ quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
       if (out_clips!=NULL) lives_free(out_clips);
       if (out_frames!=NULL) lives_free(out_frames);
 
-      numframes=weed_leaf_num_elements(event,"clips");
-      out_clips=weed_get_int_array(event,"clips",&error);
-      out_frames=weed_get_int_array(event,"frames",&error);
+      numframes=weed_leaf_num_elements(event,WEED_LEAF_CLIPS);
+      out_clips=weed_get_int_array(event,WEED_LEAF_CLIPS,&error);
+      out_frames=weed_get_int_array(event,WEED_LEAF_FRAMES,&error);
 
       if (insert_frame_event_at(out_list,0.,numframes,out_clips,out_frames,NULL)==NULL) {
         do_memory_error_dialog();
         event_list_free(out_list);
         return NULL;
       }
-      if (get_first_event(out_list)==NULL) weed_set_voidptr_value(out_list,"first",get_last_event(out_list));
+      if (get_first_event(out_list)==NULL) weed_set_voidptr_value(out_list,WEED_LEAF_FIRST,get_last_event(out_list));
     }
   }
 

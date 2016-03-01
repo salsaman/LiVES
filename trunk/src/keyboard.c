@@ -393,8 +393,8 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
       } else nval=lives_strdup_printf("%s%c",cval,(unsigned char)unicode); // append 1 char
       lives_free(cval);
       weed_set_string_value(mainw->rte_textparm,WEED_LEAF_VALUE,nval);
-      inst=weed_get_plantptr_value(mainw->rte_textparm,"host_instance",&error);
-      param_number=weed_get_int_value(mainw->rte_textparm,"host_idx",&error);
+      inst=weed_get_plantptr_value(mainw->rte_textparm,WEED_LEAF_HOST_INSTANCE,&error);
+      param_number=weed_get_int_value(mainw->rte_textparm,WEED_LEAF_HOST_IDX,&error);
       copyto=set_copy_to(inst,param_number,TRUE);
       if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
         // if we are recording, add this change to our event_list

@@ -503,7 +503,8 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
 
   do {
     weed_instance_ref(ninst);
-  } while (weed_plant_has_leaf(ninst,WEED_LEAF_HOST_NEXT_INSTANCE)&&(ninst=weed_get_plantptr_value(ninst,WEED_LEAF_HOST_NEXT_INSTANCE,&error))!=NULL);
+  } while (weed_plant_has_leaf(ninst,WEED_LEAF_HOST_NEXT_INSTANCE)&&
+           (ninst=weed_get_plantptr_value(ninst,WEED_LEAF_HOST_NEXT_INSTANCE,&error))!=NULL);
 
 
   // here we just check if we have any params to display

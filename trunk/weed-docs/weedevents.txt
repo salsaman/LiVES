@@ -33,11 +33,14 @@ since optional.
 18/03/2015
 Removed "first" and "last" since these do not need to be saved to disk. Added "track_label_tracks" and "track_label_values".
 
+29/02/2016
+Added WEED_AUDIO_LITTLE_ENDIAN and WEED_AUDIO_BIG_ENDIAN symbols.
 
-(C) Gabriel "Salsaman" Finch 2005 - 2015
+
+(C) Gabriel "Salsaman" Finch 2005 - 2016
 
 == WEED_EVENT_API_VERSION ==
-This is defined as 110 for this version of the specification. This
+This is defined as 120 for this version of the specification. This
 number will be increased for future revisions of the spec. if a
 function or a symbol is changed or added.
 
@@ -66,7 +69,7 @@ event list for all tracks/channels.
 '''Mandatory leaves''':[[BR]]
  
  * "weed_event_api_version" : WEED_SEED_INT : API version of this
-   spec. (currently 110) [as of version 110]
+   spec. (currently 120) [as of version 120]
 
  * "fps" : WEED_SEED_DOUBLE : framerate of timeline; all events in the
    timeline MUST be quantised to this rate. An "fps" of 0 indicates
@@ -91,7 +94,7 @@ event list for all tracks/channels.
  * "audio_signed" : WEED_SEED_BOOLEAN : WEED_TRUE means signed,
    WEED_FALSE, unsigned
 
- * "audio_endian" : WEED_SEED_INT : 0 == little endian, 1 == big
+ * "audio_endian" : WEED_SEED_INT : May be WEED_AUDIO_LITTLE_ENDIAN (0) or WEED_AUDIO_BIG_ENDIAN (1)
    endian, other values are invalid
 
  * "audio_volume_tracks" : WEED_SEED_INT : an array that maps "audio_volume_values" to tracks. Track
@@ -214,7 +217,7 @@ equal.
    extension); this may require audio rendering.
 
    Audio continues playing at the specified velocity until the audio
-   is marked off (clip_number <= 0), or the end of the audio file is
+      is marked off (clip_number <= 0), or the end of the audio file is
    reached, i.e. values are sparse: only "on", "off", "seek" and "velocity" changes need to
    be recorded.
 
@@ -362,8 +365,9 @@ The weed-events.h header currently contains the following definitions:
 
 #define WEED_EVENT_API_VERSION_100
 #define WEED_EVENT_API_VERSION_110
+#define WEED_EVENT_API_VERSION_120
 
-#define WEED_EVENT_API_VERSION 110
+#define WEED_EVENT_API_VERSION 120
 
 
 Summary:
@@ -378,3 +382,7 @@ Summary:
  * WEED_EVENT_HINT_MARKER
 
 
+
+== ENDIAN ==
+* WEED_AUDIO_LITTLE_ENDIAN
+* WEED_AUDIO_BIG_ENDIAN

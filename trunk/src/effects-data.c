@@ -1462,7 +1462,8 @@ boolean pconx_chain_data_internal(weed_plant_t *inst) {
       autoscale=FALSE;
       if (weed_plant_has_leaf(in_params[i],WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE)&&
           weed_get_boolean_value(in_params[i],WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE,&error)==WEED_TRUE) autoscale=TRUE;
-      if (pconx_convert_value_data(inst,i,in_params[i],-1,weed_get_plantptr_value(in_params[i],WEED_LEAF_HOST_INTERNAL_CONNECTION,&error),autoscale)) {
+      if (pconx_convert_value_data(inst,i,in_params[i],-1,weed_get_plantptr_value(in_params[i],WEED_LEAF_HOST_INTERNAL_CONNECTION,&error),
+                                   autoscale)) {
 
         copyto=set_copy_to(inst,i,TRUE);
 
@@ -3253,7 +3254,8 @@ static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
         if (stype==WEED_SEED_INT) {
           range=lives_strdup_printf("Range: %d to %d",weed_get_int_value(param,WEED_LEAF_MIN,&error),weed_get_int_value(param,WEED_LEAF_MAX,&error));
         } else if (stype==WEED_SEED_DOUBLE) {
-          range=lives_strdup_printf("Range: %f to %f",weed_get_double_value(param,WEED_LEAF_MIN,&error),weed_get_double_value(param,WEED_LEAF_MAX,&error));
+          range=lives_strdup_printf("Range: %f to %f",weed_get_double_value(param,WEED_LEAF_MIN,&error),weed_get_double_value(param,WEED_LEAF_MAX,
+                                    &error));
         } else range=lives_strdup("");
       } else range=lives_strdup("");
 
@@ -4362,7 +4364,8 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
             if (stype==WEED_SEED_INT) {
               range=lives_strdup_printf("Range: %d to %d",weed_get_int_value(param,WEED_LEAF_MIN,&error),weed_get_int_value(param,WEED_LEAF_MAX,&error));
             } else if (stype==WEED_SEED_DOUBLE) {
-              range=lives_strdup_printf("Range: %f to %f",weed_get_double_value(param,WEED_LEAF_MIN,&error),weed_get_double_value(param,WEED_LEAF_MAX,&error));
+              range=lives_strdup_printf("Range: %f to %f",weed_get_double_value(param,WEED_LEAF_MIN,&error),weed_get_double_value(param,WEED_LEAF_MAX,
+                                        &error));
             } else range=lives_strdup("");
           } else range=lives_strdup("");
 

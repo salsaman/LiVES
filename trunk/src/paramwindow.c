@@ -337,7 +337,8 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
       if (trans<nparams) break;
       trans-=nparams;
     }
-  } while (weed_plant_has_leaf(inst,WEED_LEAF_HOST_NEXT_INSTANCE)&&(inst=weed_get_plantptr_value(inst,WEED_LEAF_HOST_NEXT_INSTANCE,&error))!=NULL);
+  } while (weed_plant_has_leaf(inst,WEED_LEAF_HOST_NEXT_INSTANCE)&&
+           (inst=weed_get_plantptr_value(inst,WEED_LEAF_HOST_NEXT_INSTANCE,&error))!=NULL);
 
   in_params=weed_get_plantptr_array(inst,WEED_LEAF_IN_PARAMETERS,&error);
   tparam=in_params[trans];
@@ -381,8 +382,8 @@ static void after_transaudio_toggled(LiVESToggleButton *togglebutton, livespoint
   weed_plant_t *init_event=mainw->multitrack->init_event;
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(togglebutton)))
-    weed_set_boolean_value(init_event,"host_audio_transition",WEED_TRUE);
-  else weed_set_boolean_value(init_event,"host_audio_transition",WEED_FALSE);
+    weed_set_boolean_value(init_event,WEED_LEAF_HOST_AUDIO_TRANSITION,WEED_TRUE);
+  else weed_set_boolean_value(init_event,WEED_LEAF_HOST_AUDIO_TRANSITION,WEED_FALSE);
 
 }
 
@@ -438,8 +439,8 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
     lives_free(tmp);
     lives_free(tmp2);
 
-    if (!weed_plant_has_leaf(mainw->multitrack->init_event,"host_audio_transition")||
-        weed_get_boolean_value(mainw->multitrack->init_event,"host_audio_transition",&error)==WEED_FALSE)
+    if (!weed_plant_has_leaf(mainw->multitrack->init_event,WEED_LEAF_HOST_AUDIO_TRANSITION)||
+        weed_get_boolean_value(mainw->multitrack->init_event,WEED_LEAF_HOST_AUDIO_TRANSITION,&error)==WEED_FALSE)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),FALSE);
     else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), TRUE);
 
@@ -3273,8 +3274,8 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
 
         if (weed_plant_has_leaf(paramtmpl,WEED_LEAF_GUI)) {
           weed_plant_t *gui=weed_get_plantptr_value(paramtmpl,WEED_LEAF_GUI,&error);
-          if (weed_plant_has_leaf(gui,"decimals")) {
-            int dp=weed_get_int_value(gui,"decimals",&error);
+          if (weed_plant_has_leaf(gui,WEED_LEAF_DECIMALS)) {
+            int dp=weed_get_int_value(gui,WEED_LEAF_DECIMALS,&error);
             lives_free(pattern);
             pattern=lives_strdup_printf("%%.%df",dp);
           }

@@ -645,8 +645,8 @@ lives_render_error_t realfx_progress(boolean reset) {
     mainw->rowstride_alignment=mainw->rowstride_alignment_hint;
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(layer,"clip",mainw->current_file);
-    weed_set_int_value(layer,"frame",i);
+    weed_set_int_value(layer,WEED_LEAF_CLIP,mainw->current_file);
+    weed_set_int_value(layer,WEED_LEAF_FRAME,i);
 
     frameticks=(i-cfile->start+1.)/cfile->fps*U_SECL;
 
@@ -899,8 +899,8 @@ weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_
   if (resize_instance!=NULL) {
     lives_filter_error_t filter_error;
     weed_plant_t *init_event=weed_plant_new(WEED_PLANT_EVENT);
-    weed_set_int_value(init_event,"in_tracks",0);
-    weed_set_int_value(init_event,"out_tracks",0);
+    weed_set_int_value(init_event,WEED_LEAF_IN_TRACKS,0);
+    weed_set_int_value(init_event,WEED_LEAF_OUT_TRACKS,0);
 
     filter_error=weed_apply_instance(resize_instance,init_event,layers,0,0,tc);
     filter_error=filter_error; // stop compiler complaining
@@ -946,14 +946,15 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
   layers[0]=layer;
 
   init_event=weed_plant_new(WEED_PLANT_EVENT);
-  weed_set_int_value(init_event,"in_tracks",0);
-  weed_set_int_value(init_event,"out_tracks",0);
+  weed_set_int_value(init_event,WEED_LEAF_IN_TRACKS,0);
+  weed_set_int_value(init_event,WEED_LEAF_OUT_TRACKS,0);
 
 deint1:
 
   weed_apply_instance(deint_instance,init_event,layers,0,0,tc);
 
-  if (weed_plant_has_leaf(deint_instance,WEED_LEAF_HOST_NEXT_INSTANCE)) next_inst=weed_get_plantptr_value(deint_instance,WEED_LEAF_HOST_NEXT_INSTANCE,&error);
+  if (weed_plant_has_leaf(deint_instance,WEED_LEAF_HOST_NEXT_INSTANCE)) next_inst=weed_get_plantptr_value(deint_instance,
+        WEED_LEAF_HOST_NEXT_INSTANCE,&error);
   else next_inst=NULL;
 
   weed_call_deinit_func(deint_instance);
@@ -999,8 +1000,8 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   blend_tc=ntc;
 
   mainw->blend_layer=weed_plant_new(WEED_PLANT_CHANNEL);
-  weed_set_int_value(mainw->blend_layer,"clip",mainw->blend_file);
-  weed_set_int_value(mainw->blend_layer,"frame",blend_file->frameno);
+  weed_set_int_value(mainw->blend_layer,WEED_LEAF_CLIP,mainw->blend_file);
+  weed_set_int_value(mainw->blend_layer,WEED_LEAF_FRAME,blend_file->frameno);
 
   pull_frame_threaded(mainw->blend_layer,get_image_ext_for_type(blend_file->img_type),tc);
 

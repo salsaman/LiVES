@@ -178,7 +178,8 @@ boolean lives_widget_queue_draw(LiVESWidget *);
 boolean lives_widget_queue_draw_area(LiVESWidget *, int x, int y, int width, int height);
 boolean lives_widget_queue_resize(LiVESWidget *);
 boolean lives_widget_set_size_request(LiVESWidget *, int width, int height);
-
+boolean lives_widget_set_minimum_size(LiVESWidget *widget, int width, int height);
+boolean lives_widget_set_maximum_size(LiVESWidget *widget, int width, int height);
 boolean lives_widget_reparent(LiVESWidget *, LiVESWidget *new_parent);
 
 boolean lives_widget_set_app_paintable(LiVESWidget *widget, boolean paintable);

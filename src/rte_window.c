@@ -891,10 +891,10 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
           // check ocnum
           filter=rte_keymode_get_filter(okey+1,omode);
-          nochans=weed_leaf_num_elements(filter,"out_channel_templates");
+          nochans=weed_leaf_num_elements(filter,WEED_LEAF_OUT_CHANNEL_TEMPLATES);
           if (ocnum>=nochans) is_valid2=FALSE;
           else {
-            ochans=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+            ochans=weed_get_plantptr_array(filter,WEED_LEAF_OUT_CHANNEL_TEMPLATES,&error);
             if (!has_alpha_palette(ochans[ocnum])) is_valid2=FALSE;
             lives_free(ochans);
           }
@@ -975,10 +975,10 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
             // check icnum
             filter=rte_keymode_get_filter(ikey+1,imode);
-            nichans=weed_leaf_num_elements(filter,"in_channel_templates");
+            nichans=weed_leaf_num_elements(filter,WEED_LEAF_IN_CHANNEL_TEMPLATES);
             if (icnum>=nichans) is_valid2=FALSE;
             else {
-              ichans=weed_get_plantptr_array(filter,"in_channel_templates",&error);
+              ichans=weed_get_plantptr_array(filter,WEED_LEAF_IN_CHANNEL_TEMPLATES,&error);
               if (!has_alpha_palette(ichans[icnum])) is_valid2=FALSE;
               lives_free(ichans);
             }
@@ -1098,7 +1098,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
           // check opnum
           filter=rte_keymode_get_filter(okey+1,omode);
-          noparams=weed_leaf_num_elements(filter,"out_parameter_templates");
+          noparams=weed_leaf_num_elements(filter,WEED_LEAF_OUT_PARAMETER_TEMPLATES);
           if (opnum>=noparams) is_valid2=FALSE;
 
           bytes=lives_read_le_buffered(kfd,&nconns,4,TRUE);
@@ -1176,12 +1176,12 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
             // check ipnum
             filter=rte_keymode_get_filter(ikey+1,imode);
-            niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+            niparams=weed_leaf_num_elements(filter,WEED_LEAF_IN_PARAMETER_TEMPLATES);
             if (ipnum>=niparams) is_valid2=FALSE;
             else {
               if (ipnum>=0) {
-                iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-                if (weed_plant_has_leaf(iparams[ipnum],"host_internal_connection")) is_valid2=FALSE;
+                iparams=weed_get_plantptr_array(filter,WEED_LEAF_IN_PARAMETER_TEMPLATES,&error);
+                if (weed_plant_has_leaf(iparams[ipnum],WEED_LEAF_HOST_INTERNAL_CONNECTION)) is_valid2=FALSE;
                 lives_free(iparams);
               }
             }
@@ -1658,15 +1658,15 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 
   plugin_name=rte_keymode_get_plugin_name(key+1,mode);
   filter=rte_keymode_get_filter(key+1,mode);
-  filter_name=weed_get_string_value(filter,"name",&weed_error);
-  filter_author=weed_get_string_value(filter,"author",&weed_error);
-  if (weed_plant_has_leaf(filter,"extra_authors")) filter_extra_authors=weed_get_string_value(filter,"extra_authors",&weed_error);
-  if (weed_plant_has_leaf(filter,"description")) {
-    filter_description=weed_get_string_value(filter,"description",&weed_error);
+  filter_name=weed_get_string_value(filter,WEED_LEAF_NAME,&weed_error);
+  filter_author=weed_get_string_value(filter,WEED_LEAF_AUTHOR,&weed_error);
+  if (weed_plant_has_leaf(filter,WEED_LEAF_EXTRA_AUTHORS)) filter_extra_authors=weed_get_string_value(filter,WEED_LEAF_EXTRA_AUTHORS,&weed_error);
+  if (weed_plant_has_leaf(filter,WEED_LEAF_DESCRIPTION)) {
+    filter_description=weed_get_string_value(filter,WEED_LEAF_DESCRIPTION,&weed_error);
     has_desc=TRUE;
   }
 
-  filter_version=weed_get_int_value(filter,"version",&weed_error);
+  filter_version=weed_get_int_value(filter,WEED_LEAF_VERSION,&weed_error);
 
   tmp=lives_strdup_printf(_("Information for %s"),filter_name);
 
@@ -1853,7 +1853,7 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
     weed_plant_t *ninst=inst;
     do {
       weed_instance_ref(ninst);
-    } while (weed_plant_has_leaf(ninst,"host_next_instance")&&(ninst=weed_get_plantptr_value(ninst,"host_next_instance",&error))!=NULL);
+    } while (weed_plant_has_leaf(ninst,WEED_LEAF_HOST_NEXT_INSTANCE)&&(ninst=weed_get_plantptr_value(ninst,WEED_LEAF_HOST_NEXT_INSTANCE,&error))!=NULL);
   }
 
 
@@ -1870,7 +1870,7 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   on_fx_pre_activate(rfx,1,NULL);
 
   // record the key so we know whose parameters to record later
-  weed_set_int_value((weed_plant_t *)rfx->source,"host_key",key);
+  weed_set_int_value((weed_plant_t *)rfx->source,WEED_LEAF_HOST_KEY,key);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"key",LIVES_INT_TO_POINTER(key));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"mode",LIVES_INT_TO_POINTER(mode));
@@ -2046,12 +2046,12 @@ static LiVESTreeModel *rte_window_fx_model(void) {
 
   while (list!=NULL) {
     weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname((char *)lives_list_nth_data(hash_list,fx_idx),TRUE));
-    int filter_flags=weed_get_int_value(filter,"flags",&error);
-    if ((weed_plant_has_leaf(filter,"plugin_unstable")&&weed_get_boolean_value(filter,"plugin_unstable",&error)==
+    int filter_flags=weed_get_int_value(filter,WEED_LEAF_FLAGS,&error);
+    if ((weed_plant_has_leaf(filter,WEED_LEAF_PLUGIN_UNSTABLE)&&weed_get_boolean_value(filter,WEED_LEAF_PLUGIN_UNSTABLE,&error)==
          WEED_TRUE&&!prefs->unstable_fx)||((enabled_in_channels(filter,FALSE)>1&&
                                             !has_video_chans_in(filter,FALSE))||
-                                           (weed_plant_has_leaf(filter,"host_menu_hide")&&
-                                            weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_TRUE)
+                                           (weed_plant_has_leaf(filter,WEED_LEAF_HOST_MENU_HIDE)&&
+                                            weed_get_boolean_value(filter,WEED_LEAF_HOST_MENU_HIDE,&error)==WEED_TRUE)
                                            ||(filter_flags&WEED_FILTER_IS_CONVERTER))) {
       list = list->next;
       fx_idx++;
@@ -2603,17 +2603,17 @@ void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
         update_weed_color_value(filter,i,rgbp->red,rgbp->green,rgbp->blue,0);
         break;
       case LIVES_PARAM_STRING:
-        weed_set_string_value(ptmpl,"host_default",(char *)rfx->params[i].value);
+        weed_set_string_value(ptmpl,WEED_LEAF_HOST_DEFAULT,(char *)rfx->params[i].value);
         break;
       case LIVES_PARAM_STRING_LIST:
-        weed_set_int_array(ptmpl,"host_default",1,(int *)rfx->params[i].value);
+        weed_set_int_array(ptmpl,WEED_LEAF_HOST_DEFAULT,1,(int *)rfx->params[i].value);
         break;
       case LIVES_PARAM_NUM:
-        if (weed_leaf_seed_type(ptmpl,"default")==WEED_SEED_DOUBLE) weed_set_double_array(ptmpl,"host_default",1,(double *)rfx->params[i].value);
-        else weed_set_int_array(ptmpl,"host_default",1,(int *)rfx->params[i].value);
+        if (weed_leaf_seed_type(ptmpl,WEED_LEAF_DEFAULT)==WEED_SEED_DOUBLE) weed_set_double_array(ptmpl,WEED_LEAF_HOST_DEFAULT,1,(double *)rfx->params[i].value);
+        else weed_set_int_array(ptmpl,WEED_LEAF_HOST_DEFAULT,1,(int *)rfx->params[i].value);
         break;
       case LIVES_PARAM_BOOL:
-        weed_set_boolean_array(ptmpl,"host_default",1,(int *)rfx->params[i].value);
+        weed_set_boolean_array(ptmpl,WEED_LEAF_HOST_DEFAULT,1,(int *)rfx->params[i].value);
         break;
       default:
         break;
@@ -2668,9 +2668,9 @@ void rte_reset_defs_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
     if (is_generic_defs) {
       // for generic, reset from plugin supplied defs
-      ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+      ptmpls=weed_get_plantptr_array(filter,WEED_LEAF_IN_PARAMETER_TEMPLATES,&error);
       for (i=0; i<rfx->num_params; i++) {
-        if (weed_plant_has_leaf(ptmpls[i],"host_default")) weed_leaf_delete(ptmpls[i],"host_default");
+        if (weed_plant_has_leaf(ptmpls[i],WEED_LEAF_HOST_DEFAULT)) weed_leaf_delete(ptmpls[i],WEED_LEAF_HOST_DEFAULT);
       }
       lives_free(ptmpls);
     }
@@ -2692,12 +2692,12 @@ resetdefs1:
     xinp[x]=NULL;
     poffset+=ninpar;
 
-    weed_set_plantptr_array(inst,"in_parameters",weed_flagset_array_count(xinp,TRUE),xinp);
+    weed_set_plantptr_array(inst,WEED_LEAF_IN_PARAMETERS,weed_flagset_array_count(xinp,TRUE),xinp);
     lives_free(xinp);
 
-    if (weed_plant_has_leaf(inst,"host_next_instance")) {
+    if (weed_plant_has_leaf(inst,WEED_LEAF_HOST_NEXT_INSTANCE)) {
       // handle compound fx
-      inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+      inst=weed_get_plantptr_value(inst,WEED_LEAF_HOST_NEXT_INSTANCE,&error);
       add_pcons=TRUE;
       goto resetdefs1;
     }
@@ -2718,14 +2718,14 @@ resetdefs1:
   }
 
   if (is_generic_defs) {
-    if (weed_plant_has_leaf(filter,"host_fps")) weed_leaf_delete(filter,"host_fps");
+    if (weed_plant_has_leaf(filter,WEED_LEAF_HOST_FPS)) weed_leaf_delete(filter,WEED_LEAF_HOST_FPS);
 
-    if (weed_plant_has_leaf(filter,"out_channel_templates")) {
-      ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error);
-      nchans=weed_leaf_num_elements(filter,"out_channel_templates");
+    if (weed_plant_has_leaf(filter,WEED_LEAF_OUT_CHANNEL_TEMPLATES)) {
+      ctmpls=weed_get_plantptr_array(filter,WEED_LEAF_OUT_CHANNEL_TEMPLATES,&error);
+      nchans=weed_leaf_num_elements(filter,WEED_LEAF_OUT_CHANNEL_TEMPLATES);
       for (i=0; i<nchans; i++) {
-        if (weed_plant_has_leaf(ctmpls[i],"host_width")) weed_leaf_delete(ctmpls[i],"host_width");
-        if (weed_plant_has_leaf(ctmpls[i],"host_height")) weed_leaf_delete(ctmpls[i],"host_height");
+        if (weed_plant_has_leaf(ctmpls[i],WEED_LEAF_HOST_WIDTH)) weed_leaf_delete(ctmpls[i],WEED_LEAF_HOST_WIDTH);
+        if (weed_plant_has_leaf(ctmpls[i],WEED_LEAF_HOST_HEIGHT)) weed_leaf_delete(ctmpls[i],WEED_LEAF_HOST_HEIGHT);
       }
     }
   } else {

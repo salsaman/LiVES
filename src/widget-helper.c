@@ -798,6 +798,37 @@ LIVES_INLINE boolean lives_widget_set_size_request(LiVESWidget *widget, int widt
 }
 
 
+
+LIVES_INLINE boolean lives_widget_set_minimum_size(LiVESWidget *widget, int width, int height) {
+#ifdef GUI_GTK
+  GdkGeometry geom;
+  GdkWindowHints mask;
+  geom.min_width=width;
+  geom.min_height=height;
+  mask=GDK_HINT_MIN_SIZE;
+  gtk_window_set_geometry_hints(GTK_WINDOW(gtk_widget_get_toplevel(widget)),widget,&geom,mask);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *widget, int width, int height) {
+#ifdef GUI_GTK
+  GdkGeometry geom;
+  GdkWindowHints mask;
+  geom.max_width=width;
+  geom.max_height=height;
+  mask=GDK_HINT_MAX_SIZE;
+  gtk_window_set_geometry_hints(GTK_WINDOW(gtk_widget_get_toplevel(widget)),widget,&geom,mask);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+
 LIVES_INLINE boolean lives_widget_process_updates(LiVESWidget *widget, boolean upd_children) {
 #ifdef GUI_GTK
   GdkWindow *window=lives_widget_get_xwindow(widget);
@@ -7824,7 +7855,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   dialog = lives_dialog_new();
 
-  lives_widget_set_size_request(dialog, width, height);
+  lives_widget_set_minimum_size(dialog, width, height);
 
   if (title!=NULL)
     lives_window_set_title(LIVES_WINDOW(dialog), title);
@@ -7961,7 +7992,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 
 #ifdef GUI_QT
   if (width>-1||height>-1)
-    lives_widget_set_size_request(scrolledwindow, width, height);
+    lives_widget_set_minimum_size(scrolledwindow, width, height);
 #endif
 
   if (widget_opts.apply_theme) {
@@ -7982,7 +8013,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   if (width!=0&&height!=0) {
 #if !GTK_CHECK_VERSION(3,0,0)
     if (width>-1||height>-1)
-      lives_widget_set_size_request(scrolledwindow, width, height);
+      lives_widget_set_minimum_size(scrolledwindow, width, height);
 #else
     if (height!=-1) gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scrolledwindow),height);
     if (width!=-1) gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(scrolledwindow),width);

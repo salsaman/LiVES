@@ -12,6 +12,7 @@
 #include "videodev.h"
 #include "interface.h"
 #include "callbacks.h"
+#include "effects-weed.h"
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed-palettes.h>
@@ -144,21 +145,21 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
   void *odata=ldev->buffer1.data;
   int error;
 
-  weed_set_int_value(layer,"width",sfile->hsize/
+  weed_set_int_value(layer,WEED_LEAF_WIDTH,sfile->hsize/
                      weed_palette_get_pixels_per_macropixel(ldev->current_palette));
 
-  weed_set_int_value(layer,"height",sfile->vsize);
-  weed_set_int_value(layer,"current_palette",ldev->current_palette);
-  weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR); // TODO - handle bt.709
-  weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_DEFAULT); // TODO - use ldev->YUV_sampling
-  weed_set_int_value(layer,"YUV_clamping",ldev->YUV_clamping);
+  weed_set_int_value(layer,WEED_LEAF_HEIGHT,sfile->vsize);
+  weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,ldev->current_palette);
+  weed_set_int_value(layer,WEED_LEAF_YUV_SUBSPACE,WEED_YUV_SUBSPACE_YCBCR); // TODO - handle bt.709
+  weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,WEED_YUV_SAMPLING_DEFAULT); // TODO - use ldev->YUV_sampling
+  weed_set_int_value(layer,WEED_LEAF_YUV_CLAMPING,ldev->YUV_clamping);
 
   create_empty_pixel_data(layer,TRUE,TRUE);
 
   if (ldev->buffer_type==UNICAP_BUFFER_TYPE_USER) {
 
     if (weed_palette_get_numplanes(ldev->current_palette)==1||ldev->is_really_grey) {
-      ldev->buffer1.data=(unsigned char *)weed_get_voidptr_value(layer,"pixel_data",&error);
+      ldev->buffer1.data=(unsigned char *)weed_get_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,&error);
     }
 
     unicap_queue_buffer(ldev->handle, &ldev->buffer1);
@@ -184,13 +185,13 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
     else returned_buffer=&ldev->buffer2;
   }
 
-  pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
+  pixel_data=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
 
   if (weed_palette_get_numplanes(ldev->current_palette)>1&&!ldev->is_really_grey) {
     pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize*sfile->vsize, ldev->current_palette);
   } else {
     if (ldev->buffer_type==UNICAP_BUFFER_TYPE_SYSTEM) {
-      int rowstride=weed_get_int_value(layer,"rowstrides",&error);
+      int rowstride=weed_get_int_value(layer,WEED_LEAF_ROWSTRIDES,&error);
       size_t bsize=rowstride*sfile->vsize;
       if (bsize>returned_buffer->buffer_size) {
 #ifdef DEBUG_UNICAP

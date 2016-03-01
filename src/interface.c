@@ -597,19 +597,9 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
   char *labeltext,*tmp,*tmp2;
 
-  dialog = lives_standard_dialog_new(_("Encoding Options"),FALSE,-1,-1);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(mainw->LiVES));
-  }
-
+  dialog=create_question_dialog(_("Encoding Options"),text1,LIVES_WINDOW(mainw->LiVES));
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-
-  widget_opts.justify=LIVES_JUSTIFY_CENTER;
-  label = lives_standard_label_new(text1);
-  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
-
+  
   if (opt_resize) {
     if (text2!=NULL) labeltext=lives_strdup(_("<------------- (Check the box to re_size as suggested)"));
     else labeltext=lives_strdup(_("<------------- (Check the box to use the _size recommendation)"));
@@ -824,7 +814,7 @@ _insertw *create_insert_dialog(void) {
   table = lives_table_new(2, 3, FALSE);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
   lives_table_set_col_spacings(LIVES_TABLE(table), widget_opts.packing_width*4);
-  lives_table_set_row_spacings(LIVES_TABLE(table), widget_opts.packing_height);
+  lives_table_set_row_spacings(LIVES_TABLE(table), widget_opts.packing_height*2);
 
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -897,6 +887,8 @@ _insertw *create_insert_dialog(void) {
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
+  add_fill_to_box(LIVES_BOX(dialog_vbox));
+  
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(insertw->insert_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
@@ -1524,6 +1516,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
   char *label_text=NULL,*title;
 
+  int ph_mult=4;
 
   if (type==0) {
     title=lives_strdup(_("Load CD Track"));
@@ -1540,8 +1533,6 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   cd_dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
   lives_free(title);
 
-  //lives_window_set_default_size (LIVES_WINDOW (cd_dialog), 300, 240);
-
   if (prefs->show_gui) {
     if (type==0||type==1||type==2||type==4||type==5) {
       lives_window_set_transient_for(LIVES_WINDOW(cd_dialog),LIVES_WINDOW(mainw->LiVES));
@@ -1552,8 +1543,11 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cd_dialog));
 
+
+  if (type==1||type==4) ph_mult=2;
+  
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width*5);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*ph_mult);
 
   if (type==0) {
     label_text=lives_strdup_printf(_("Track to load (from %s)"),prefs->cdplay_device);
@@ -1596,7 +1590,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   if (type==1||type==4) {
 
     hbox = lives_hbox_new(FALSE, widget_opts.packing_width*5);
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*ph_mult);
 
     if (type==1) {
       spinbutton = lives_standard_spin_button_new(_("Chapter  "), FALSE, mainw->fx2_val,
@@ -1616,7 +1610,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
     if (type==1) {
       hbox = lives_hbox_new(FALSE, widget_opts.packing_width*5);
-      lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+      lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*ph_mult);
 
       spinbutton = lives_standard_spin_button_new(_("Audio ID  "), FALSE, mainw->fx3_val,
                    128., 159., 1., 1., 0,
@@ -1744,6 +1738,8 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cd_dialog),"tvcard_data",tvcardw);
 
   }
+
+  add_fill_to_box(LIVES_BOX(dialog_vbox));
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(cd_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -2401,16 +2397,11 @@ _entryw *create_cds_dialog(int type) {
     if ((mainw->multitrack!=NULL&&mainw->multitrack->changed)||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed)) {
       labeltext=lives_strdup(_("The current layout has not been saved.\nWhat would you like to do ?\n"));
     } else {
-      labeltext=lives_strdup(_("The current layout has *not* been changed since it was last saved.\nWhat would you like to do ?\n"));
+      labeltext=lives_strdup(_("The current layout has *NOT BEEN CHANGED* since it was last saved.\nWhat would you like to do ?\n"));
     }
   } else if (type==4) {
-    if (mainw->multitrack!=NULL&&mainw->multitrack->changed) {
-      labeltext=lives_strdup(
-                _("The current layout contains generated frames and cannot be retained.\nYou may wish to render it before exiting multitrack mode.\n"));
-    } else {
-      labeltext=lives_strdup(
-                _("You are about to leave multitrack mode.\nThe current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
-    }
+    labeltext=lives_strdup(
+			   _("You are about to leave multitrack mode.\nThe current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
   }
 
   cdsw->dialog = create_question_dialog(_("Cancel/Discard/Save"),labeltext,

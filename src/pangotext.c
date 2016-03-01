@@ -23,6 +23,7 @@
 
 #include "main.h"
 #include "pangotext.h"
+#include "effects-weed.h"
 
 #ifdef GUI_GTK
 #include <pango/pangocairo.h>
@@ -251,8 +252,8 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   int width, height, error;
 
-  width=weed_get_int_value(layer,"width",&error);
-  height=weed_get_int_value(layer,"height",&error);
+  width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
+  height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
 
   // do cairo and pango things
 

@@ -503,7 +503,7 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
 
   do {
     weed_instance_ref(ninst);
-  } while (weed_plant_has_leaf(ninst,"host_next_instance")&&(ninst=weed_get_plantptr_value(ninst,"host_next_instance",&error))!=NULL);
+  } while (weed_plant_has_leaf(ninst,WEED_LEAF_HOST_NEXT_INSTANCE)&&(ninst=weed_get_plantptr_value(ninst,WEED_LEAF_HOST_NEXT_INSTANCE,&error))!=NULL);
 
 
   // here we just check if we have any params to display
@@ -546,7 +546,7 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   on_fx_pre_activate(rfx,1,vbox);
 
   // record the key so we know whose parameters to record later
-  weed_set_int_value((weed_plant_t *)rfx->source,"host_key",key);
+  weed_set_int_value((weed_plant_t *)rfx->source,WEED_LEAF_HOST_KEY,key);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pscrolls[key]),"pinned",LIVES_INT_TO_POINTER(FALSE));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pscrolls[key]),"update",LIVES_INT_TO_POINTER(FALSE));

@@ -1184,7 +1184,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
-  char *filt[]= {"*.lv2",NULL};
+  char *filt[]= {"*."LIVES_FILE_EXT_PROJECT,NULL};
   char *proj_file=choose_file(NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
   char *info_file;
   char *new_set;
@@ -1288,7 +1288,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char *filt[]= {"*.lv2",NULL};
+  char *filt[]= {"*."LIVES_FILE_EXT_PROJECT,NULL};
   char *def_file;
   char *proj_file;
   char *com,*tmp;
@@ -1331,7 +1331,7 @@ void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (mainw->multitrack!=NULL&&!mainw->multitrack->changed) recover_layout_cancelled(FALSE);
   }
 
-  def_file=lives_strdup_printf("%s.lv2",mainw->set_name);
+  def_file=lives_strdup_printf("%s.%s",mainw->set_name,LIVES_FILE_EXT_PROJECT);
   proj_file=choose_file(NULL,def_file,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
   lives_free(def_file);
 
@@ -1374,7 +1374,7 @@ void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_colRGBA64_t lcol;
 
-  char *filt[]= {"*.tar.gz",NULL};
+  char *filt[]= {"*."LIVES_FILE_EXT_TAR_GZ,NULL};
 
   char theme_name[128];
 
@@ -1404,7 +1404,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_context_update();
   } while (!is_legal_set_name(theme_name,TRUE));
 
-  fname=lives_strdup_printf("%s.tar.gz",theme_name);
+  fname=lives_strdup_printf("%s.%s",theme_name,LIVES_FILE_EXT_TAR_GZ);
 
   file_name=choose_file(capable->home_dir,fname,filt,
                         LIVES_FILE_CHOOSER_ACTION_SAVE,_("Choose a directory to export to"),NULL);
@@ -1542,10 +1542,20 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_backup_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char *filt[]= {"*.lv1",NULL};
-  char *file_name = choose_file(strlen(mainw->proj_save_dir)?mainw->proj_save_dir:NULL,NULL,filt,
-                                LIVES_FILE_CHOOSER_ACTION_SAVE,_("Backup as .lv1 file"),NULL);
+  char *filt[]= {"*."LIVES_FILE_EXT_BACKUP,NULL};
+  char *file_name;
+  char *defname,*text;
 
+  defname=lives_strdup_printf("%s.%s",cfile->name,LIVES_FILE_EXT_BACKUP);
+  
+  text=lives_strdup_printf(_("Backup as %s File"),LIVES_FILE_EXT_BACKUP);
+  
+  file_name=choose_file(strlen(mainw->proj_save_dir)?mainw->proj_save_dir:NULL,defname,filt,
+			LIVES_FILE_CHOOSER_ACTION_SAVE,text,NULL);
+
+  lives_free(text);
+  lives_free(defname);
+  
   if (file_name==NULL) return;
 
   backup_file(mainw->current_file,1,cfile->frames,file_name);
@@ -1558,10 +1568,16 @@ void on_backup_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_restore_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char *filt[]= {"*.lv1",NULL};
-  char *file_name = choose_file(strlen(mainw->proj_load_dir)?mainw->proj_load_dir:NULL,NULL,filt,
-                                LIVES_FILE_CHOOSER_ACTION_OPEN,_("Restore .lv1 file"),NULL);
+  char *filt[]= {"*."LIVES_FILE_EXT_BACKUP,NULL};
+  char *file_name,*text;
 
+  text=lives_strdup_printf(_("Restore %s File"),LIVES_FILE_EXT_BACKUP);
+
+  file_name=choose_file(strlen(mainw->proj_load_dir)?mainw->proj_load_dir:NULL,text,filt,
+			LIVES_FILE_CHOOSER_ACTION_OPEN,text,NULL);
+
+  lives_free(text);
+  
   if (file_name==NULL) return;
 
   restore_file(file_name);
@@ -1955,7 +1971,7 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     do_progress_dialog(TRUE,FALSE,_("Undoing"));
 
     if (cfile->undo_action!=UNDO_ATOMIC_RESAMPLE_RESIZE) {
-      audfile=lives_strdup_printf("%s/%s/audio.bak",prefs->tmpdir,cfile->handle);
+      audfile=lives_strdup_printf("%s/%s/audio.%s",prefs->tmpdir,cfile->handle,LIVES_FILE_EXT_BAK);
       if (lives_file_test(audfile, LIVES_FILE_TEST_EXISTS)) {
         // restore overwritten audio
         com=lives_strdup_printf("%s undo_audio \"%s\"",prefs->backend_sync,cfile->handle);
@@ -6321,7 +6337,7 @@ void end_fs_preview(void) {
 
 void on_save_textview_clicked(LiVESButton *button, livespointer user_data) {
   LiVESTextView *textview=(LiVESTextView *)user_data;
-  char *filt[]= {"*.txt",NULL};
+  char *filt[]= {"*."LIVES_FILE_EXT_TEXT,NULL};
   int fd;
   char *btext;
   char *save_file;
@@ -10367,7 +10383,7 @@ void on_encoder_ofmt_changed(LiVESCombo *combo, livespointer user_data) {
 
 void on_export_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
-  char *filt[]= {"*.wav",NULL};
+  char *filt[]= {"*."LIVES_FILE_EXT_WAV,NULL};
   char *filename,*file_name;
   char *com,*tmp;
 
@@ -10385,7 +10401,7 @@ void on_export_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (filename==NULL) return;
-  file_name=ensure_extension(filename,".wav");
+  file_name=ensure_extension(filename,"."LIVES_FILE_EXT_WAV);
   lives_free(filename);
 
   if (!check_file(file_name,FALSE)) {

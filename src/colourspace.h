@@ -1,6 +1,6 @@
 // colourspace.h
 // LiVES
-// (c) G. Finch 2004 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -8,6 +8,9 @@
 
 #ifndef HAS_LIVES_COLOURSPACE_H
 #define HAS_LIVES_COLOURSPACE_H
+
+#define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_pixel_data_contiguous"
+#define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
 
 #define SCREEN_GAMMA 2.2
 

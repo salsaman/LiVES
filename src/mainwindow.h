@@ -318,6 +318,13 @@ enum {
 #define LIVES_FILE_EXT_MGK "mgk"
 #define LIVES_FILE_EXT_PRE "pre"
 #define LIVES_FILE_EXT_SCRAP "scrap"
+#define LIVES_FILE_EXT_TEXT "txt"
+#define LIVES_FILE_EXT_BAK "bak"
+
+#define LIVES_FILE_EXT_BACKUP "lv1"
+#define LIVES_FILE_EXT_PROJECT "lv2"
+
+#define LIVES_FILE_EXT_TAR_GZ "tar.gz"
 
 #define LIVES_FILE_EXT_SRT "srt"
 #define LIVES_FILE_EXT_SUB "sub"

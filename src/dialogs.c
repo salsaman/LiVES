@@ -2181,7 +2181,8 @@ void too_many_files(void) {
 
 void tempdir_warning(void) {
   char *tmp,*com=lives_strdup_printf(
-                   _("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\nPlease make sure you can write to this directory."),
+                   _("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\n"
+		     "Please make sure you can write to this directory."),
                    (tmp=lives_filename_to_utf8(prefs->tmpdir,-1,NULL,NULL,NULL)));
   lives_free(tmp);
   if (mainw!=NULL&&mainw->is_ready) {
@@ -2548,7 +2549,28 @@ void do_rendered_fx_dialog(void) {
 
 
 void do_audio_import_error(void) {
-  do_error_dialog(_("Sorry, unknown audio type.\n\n (Filenames must end in .mp3, .ogg, .wav, .mod, .xm or .it)"));
+  char *msg=lives_strdup(_("Sorry, unknown audio type.\n\n (Filenames must end in"));
+  char *tmp;
+  
+  register int i=0;
+  
+  while (LIVES_AUDIO_LOAD_FILTER[i]!=NULL) {
+    if (LIVES_AUDIO_LOAD_FILTER[i+1]==NULL) {
+      tmp=lives_strdup_printf("%s or .%s)",msg,LIVES_AUDIO_LOAD_FILTER[i]+2);
+    }
+    else if (i==0) {
+      tmp=lives_strdup_printf("%s .%s)",msg,LIVES_AUDIO_LOAD_FILTER[i]+2);
+    }
+    else {
+      tmp=lives_strdup_printf("%s, .%s)",msg,LIVES_AUDIO_LOAD_FILTER[i]+2);
+    }
+    lives_free(msg);
+    msg=tmp;
+    i++;
+  }
+  
+  do_error_dialog(msg);
+  lives_free(msg);
   d_print(_("failed (unknown type)\n"));
 }
 
@@ -3313,7 +3335,8 @@ void do_card_in_use_error(void) {
 
 void do_dev_busy_error(const char *devstr) {
   char *msg=lives_strdup_printf(
-              _("\nThe device %s is in use or unavailable.\n- Check the device permissions\n- Check if this device is in use by another program.\n- Check if the device actually exists.\n"),
+              _("\nThe device %s is in use or unavailable.\n- Check the device permissions\n- Check if this device is in use by another program.\n"
+		"- Check if the device actually exists.\n"),
               devstr);
   do_blocking_error_dialog(msg);
   lives_free(msg);
@@ -3325,7 +3348,27 @@ boolean do_existing_subs_warning(void) {
 }
 
 void do_invalid_subs_error(void) {
-  do_error_dialog(_("\nLiVES currently only supports subtitles of type .srt and .sub.\n"));
+  char *msg=lives_strdup(_("\nLiVES currently only supports subtitles of type"));
+  char *tmp;
+  register int i=0;
+  
+  while (LIVES_SUBS_FILTER[i]!=NULL) {
+    if (LIVES_SUBS_FILTER[i+1]==NULL) {
+      tmp=lives_strdup_printf("%s or .%s\n",msg,LIVES_SUBS_FILTER[i]+2);
+    }
+    else if (i>0) {
+      tmp=lives_strdup_printf("%s, .%s)",msg,LIVES_SUBS_FILTER[i]+2);
+    }
+    else {
+      tmp=lives_strdup_printf("%s .%s)",msg,LIVES_SUBS_FILTER[i]+2);
+    }
+    lives_free(msg);
+    msg=tmp;
+    i++;
+  }
+
+  do_error_dialog(msg);
+  lives_free(msg);
 }
 
 boolean do_erase_subs_warning(void) {

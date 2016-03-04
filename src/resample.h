@@ -1,6 +1,6 @@
 // resample.h
 // LiVES
-// (c) G. Finch 2004 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -63,7 +63,7 @@ void create_new_pb_speed(short type);
 ///
 /// type 1 : show current and new,
 /// type 2 : show new
-_resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox);
+_resaudw *create_resaudw(short type, render_details *, LiVESWidget *top_vbox);
 
 void on_change_speed_activate(LiVESMenuItem *, livespointer);
 void on_change_speed_ok_clicked(LiVESButton *, livespointer);

@@ -236,7 +236,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
     txt4=lives_strdup(_(", but you do not have jackd installed. You may wish to install jackd first before running LiVES.\n\n"));
   } else {
     txt4=lives_strdup(
-           _(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack, you can restart and try with another audio player instead.\n\n"));
+           _(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack,"
+	     "you can restart and try with another audio player instead.\n\n"));
   }
 #endif
 
@@ -596,7 +597,7 @@ boolean do_startup_tests(boolean tshoot) {
   // test if sox can convert raw 44100 -> wav 22050
   add_test(table,1,_("Checking if sox can convert audio"),success);
 
-  if (!tshoot) set_pref(PREF_DEFAULT_IMAGE_FORMAT,"png");
+  if (!tshoot) set_pref(PREF_DEFAULT_IMAGE_FORMAT,LIVES_IMAGE_TYPE_PNG);
   lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_PNG);
 
   get_temp_handle(mainw->first_free_file,TRUE);
@@ -872,7 +873,7 @@ boolean do_startup_tests(boolean tshoot) {
       pass_test(table,5);
       if (!success3) {
         if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG)) imgext_switched=TRUE;
-        set_pref(PREF_DEFAULT_IMAGE_FORMAT,"jpeg");
+        set_pref(PREF_DEFAULT_IMAGE_FORMAT,LIVES_IMAGE_TYPE_JPEG);
         lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_JPG);
       }
     } else {

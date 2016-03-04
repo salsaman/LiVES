@@ -1277,10 +1277,10 @@ boolean apply_prefs(boolean skip_warn) {
 
   // jpeg/png
   if (strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)&&ext_jpeg) {
-    set_pref(PREF_DEFAULT_IMAGE_FORMAT,"jpeg");
+    set_pref(PREF_DEFAULT_IMAGE_FORMAT,LIVES_IMAGE_TYPE_JPEG);
     lives_snprintf(prefs->image_ext,16,LIVES_FILE_EXT_JPG);
   } else if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)&&!ext_jpeg) {
-    set_pref(PREF_DEFAULT_IMAGE_FORMAT,"png");
+    set_pref(PREF_DEFAULT_IMAGE_FORMAT,LIVES_IMAGE_TYPE_PNG);
     lives_snprintf(prefs->image_ext,16,LIVES_FILE_EXT_PNG);
   }
 

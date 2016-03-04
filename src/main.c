@@ -1156,7 +1156,7 @@ static void lives_init(_ign_opts *ign_opts) {
     mainw->ext_playback=mainw->ext_keyboard=FALSE;
 
     get_pref(PREF_DEFAULT_IMAGE_FORMAT,buff,256);
-    if (!strcmp(buff,"jpeg")) lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_JPG);
+    if (!strcmp(buff,LIVES_IMAGE_TYPE_JPEG)) lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_JPG);
     else lives_snprintf(prefs->image_ext,16,"%s",buff);
 
     prefs->loop_recording=TRUE;

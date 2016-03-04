@@ -946,8 +946,7 @@ static void on_resaudw_achans_changed(LiVESWidget *widg, livespointer user_data)
 
 
 
-void
-on_resaudw_asamps_changed(LiVESWidget *irrelevant, livespointer rubbish) {
+void on_resaudw_asamps_changed(LiVESWidget *irrelevant, livespointer rubbish) {
   if (atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)))==8) {
     lives_widget_set_sensitive(resaudw->rb_bigend,FALSE);
     lives_widget_set_sensitive(resaudw->rb_littleend,FALSE);
@@ -967,9 +966,7 @@ on_resaudw_asamps_changed(LiVESWidget *irrelevant, livespointer rubbish) {
 
 
 
-void
-on_resample_video_activate(LiVESMenuItem     *menuitem,
-                           livespointer         user_data) {
+void on_resample_video_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // change speed from the menu
   create_new_pb_speed(2);
   mainw->fx1_val=cfile->fps;
@@ -1795,9 +1792,7 @@ void create_new_pb_speed(short type) {
 
 
 
-void
-on_change_speed_activate(LiVESMenuItem     *menuitem,
-                         livespointer         user_data) {
+void on_change_speed_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // change speed from the menu
   create_new_pb_speed(1);
   mainw->fx1_bool=mainw->fx2_bool=FALSE;

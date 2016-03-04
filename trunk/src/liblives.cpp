@@ -550,7 +550,7 @@ namespace lives {
 
 
 #ifndef DOXYGEN_SKIP
-  bool livesApp::setPref(int prefidx, bool val) const {
+  bool livesApp::setPref(const char *prefidx, bool val) const {
     if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
     spinning = true;
     msg_id = lives_random();
@@ -570,7 +570,7 @@ namespace lives {
     return true;
   }
 
-  bool livesApp::setPref(int prefidx, int val) const {
+  bool livesApp::setPref(const char *prefidx, int val) const {
     if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
     spinning = true;
     msg_id = lives_random();
@@ -590,7 +590,7 @@ namespace lives {
     return true;
   }
 
-  bool livesApp::setPref(int prefidx, int bitfield, bool val) const {
+  bool livesApp::setPref(const char *prefidx, int bitfield, bool val) const {
     if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
     spinning = true;
     msg_id = lives_random();

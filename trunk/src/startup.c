@@ -59,7 +59,6 @@ static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable
 
 
 boolean do_tempdir_query(void) {
-  _entryw *tdentry;
   uint64_t freesp;
 
   int response;
@@ -69,15 +68,14 @@ boolean do_tempdir_query(void) {
 
 top:
 
-  tdentry=create_rename_dialog(6);
+  renamew=create_rename_dialog(6);
 
   while (!ok) {
-    response=lives_dialog_run(LIVES_DIALOG(tdentry->dialog));
+    response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
 
-    if (response==LIVES_RESPONSE_CANCEL) {
-      return FALSE;
-    }
-    dirname=lives_strdup(lives_entry_get_text(LIVES_ENTRY(tdentry->entry)));
+    if (response==LIVES_RESPONSE_CANCEL) return FALSE;
+
+    dirname=lives_strdup(lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
 
     if (strcmp(dirname+strlen(dirname)-1,LIVES_DIR_SEP)) {
       char *tmp=lives_strdup_printf("%s%s",dirname,LIVES_DIR_SEP);
@@ -131,8 +129,8 @@ top:
     ok=TRUE;
   }
 
-  lives_widget_destroy(tdentry->dialog);
-  lives_free(tdentry);
+  lives_widget_destroy(renamew->dialog);
+  lives_freep((void **)&renamew);
 
   mainw->com_failed=FALSE;
 
@@ -147,7 +145,7 @@ top:
   lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",dirname);
   lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 
-  set_pref("tempdir",prefs->tmpdir);
+  set_pref(PREF_WORKING_DIR,prefs->tmpdir);
   set_pref("session_tempdir",prefs->tmpdir);
 
   lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d",prefs->tmpdir,capable->mainpid);
@@ -169,19 +167,19 @@ static void on_init_aplayer_toggled(LiVESToggleButton *tbutton, livespointer use
 
   switch (audp) {
   case AUD_PLAYER_PULSE:
-    set_pref("audio_player","pulse");
+    set_pref(PREF_AUDIO_PLAYER,"pulse");
     break;
   case AUD_PLAYER_JACK:
-    set_pref("audio_player","jack");
+    set_pref(PREF_AUDIO_PLAYER,"jack");
     break;
   case AUD_PLAYER_SOX:
-    set_pref("audio_player","sox");
+    set_pref(PREF_AUDIO_PLAYER,"sox");
     break;
   case AUD_PLAYER_MPLAYER:
-    set_pref("audio_player","mplayer");
+    set_pref(PREF_AUDIO_PLAYER,"mplayer");
     break;
   case AUD_PLAYER_MPLAYER2:
-    set_pref("audio_player","mplayer2");
+    set_pref(PREF_AUDIO_PLAYER,"mplayer2");
     break;
   }
 
@@ -291,7 +289,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton0),TRUE);
-    set_pref("audio_player","pulse");
+    set_pref(PREF_AUDIO_PLAYER,"pulse");
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -312,7 +310,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   if (prefs->audio_player==AUD_PLAYER_JACK||!capable->has_pulse_audio||prefs->audio_player==-1) {
     prefs->audio_player=AUD_PLAYER_JACK;
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1),TRUE);
-    set_pref("audio_player","jack");
+    set_pref(PREF_AUDIO_PLAYER,"jack");
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton1), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -333,7 +331,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
     if (prefs->audio_player==AUD_PLAYER_SOX) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton2),TRUE);
-      set_pref("audio_player","sox");
+      set_pref(PREF_AUDIO_PLAYER,"sox");
     }
 
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -353,7 +351,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
     if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton3),TRUE);
-      set_pref("audio_player","mplayer");
+      set_pref(PREF_AUDIO_PLAYER,"mplayer");
     }
 
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton3), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -373,7 +371,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
     if (prefs->audio_player==AUD_PLAYER_MPLAYER2) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton4),TRUE);
-      set_pref("audio_player","mplayer2");
+      set_pref(PREF_AUDIO_PLAYER,"mplayer2");
     }
 
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton4), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -598,7 +596,7 @@ boolean do_startup_tests(boolean tshoot) {
   // test if sox can convert raw 44100 -> wav 22050
   add_test(table,1,_("Checking if sox can convert audio"),success);
 
-  if (!tshoot) set_pref("default_image_format","png");
+  if (!tshoot) set_pref(PREF_DEFAULT_IMAGE_FORMAT,"png");
   lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_PNG);
 
   get_temp_handle(mainw->first_free_file,TRUE);
@@ -874,7 +872,7 @@ boolean do_startup_tests(boolean tshoot) {
       pass_test(table,5);
       if (!success3) {
         if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG)) imgext_switched=TRUE;
-        set_pref("default_image_format","jpeg");
+        set_pref(PREF_DEFAULT_IMAGE_FORMAT,"jpeg");
         lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_JPG);
       }
     } else {

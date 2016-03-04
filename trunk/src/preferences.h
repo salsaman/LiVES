@@ -659,22 +659,55 @@ void prefsw_set_rec_after_settings(_vid_playback_plugin *);
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 
-// factories
-enum {
-  PREF_REC_EXT_AUDIO,
-  PREF_AUDIO_OPTS,
-  PREF_SEPWIN_STICKY,
-  PREF_MT_EXIT_RENDER
-};
+// factories (pseudo prefs), called from cpp binding
 
-void pref_factory_bool(int prefidx, boolean newval);
-void pref_factory_int(int prefidx, int newval);
-void pref_factory_bitmapped(int prefidx, int bitfield, boolean newval);
+#define PREF_REC_EXT_AUDIO "rec_ext_audio"
+#define PREF_AUDIO_OPTS "audio_opts"
+#define PREF_SEPWIN_STICKY "sepwin_sticky"
+#define PREF_MT_EXIT_RENDER "mt_exit_render"
+
+// normal prefs
+
+#define PREF_AUDIO_SRC "audio_src"
+
+#define PREF_WORKING_DIR "tempdir"
+
+#define PREF_AUDIO_PLAYER "audio_player"
+#define PREF_AUDIO_PLAY_COMMAND "audio_play_command"
+
+#define PREF_DEFAULT_IMAGE_FORMAT "default_image_format"
+
+#define PREF_VIDEO_OPEN_COMMAND "video_open_command"
+
+#define PREF_GUI_THEME "gui_theme"
+
+#define PREF_ENCODER "encoder"
+
+#define PREF_AR_LAYOUT "ar_layout"
+#define PREF_AR_CLIPSET "ar_clipset"
+
+#define PREF_VID_SAVE_DIR "vid_save_dir"
+#define PREF_VID_LOAD_DIR "vid_load_dir"
+
+#define PREF_IMAGE_DIR "image_dir"
+#define PREF_AUDIO_DIR "audio_dir"
+
+#define PREF_RECENT1 "recent1"
+#define PREF_RECENT2 "recent2"
+#define PREF_RECENT3 "recent3"
+#define PREF_RECENT4 "recent4"
 
 
-void get_pref(const char *key, char *val, int maxlen);
+
+
+void pref_factory_bool(const char *prefidx, boolean newval);
+void pref_factory_int(const char *prefidx, int newval);
+void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval);
+
+
+int get_pref(const char *key, char *val, int maxlen);
 int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen);
-void get_pref_utf8(const char *key, char *val, int maxlen);
+int get_pref_utf8(const char *key, char *val, int maxlen);
 void get_pref_default(const char *key, char *val, int maxlen);
 boolean get_boolean_pref(const char *key);
 double get_double_pref(const char *key);
@@ -690,6 +723,7 @@ void set_int_pref(const char *key, int value);
 void set_int64_pref(const char *key, int64_t value);
 void set_list_pref(const char *key, LiVESList *values);
 void set_colour_pref(const char *key, lives_colRGBA64_t *lcol);
+void set_theme_pref(const char *themefile, const char *key, const char *value);
 void set_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol);
 boolean apply_prefs(boolean skip_warnings);
 void save_future_prefs(void);

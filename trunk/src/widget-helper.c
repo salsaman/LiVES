@@ -9011,8 +9011,7 @@ void lives_general_button_clicked(LiVESButton *button, livespointer data_to_free
   // destroy the button top-level and free data
   lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
   lives_widget_context_update();
-
-  if (data_to_free!=NULL) lives_free(data_to_free);
+  lives_freep((void **)&data_to_free);
 }
 
 

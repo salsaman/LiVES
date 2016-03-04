@@ -518,7 +518,7 @@ static boolean pre_init(void) {
 
   cache_file_contents(capable->rcfile);
 
-  get_pref("gui_theme",prefs->theme,64);
+  get_pref(PREF_GUI_THEME,prefs->theme,64);
   if (!strlen(prefs->theme)) {
     lives_snprintf(prefs->theme,64,"none");
   }
@@ -573,7 +573,7 @@ static boolean pre_init(void) {
   get_pref("cdplay_device",prefs->cdplay_device,256);
   prefs->warning_mask=(uint32_t)get_int_pref("lives_warning_mask");
 
-  get_pref("audio_player",buff,256);
+  get_pref(PREF_AUDIO_PLAYER,buff,256);
 
   if (!strcmp(buff,"mplayer"))
     prefs->audio_player=AUD_PLAYER_MPLAYER;
@@ -589,7 +589,7 @@ static boolean pre_init(void) {
   if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_pulse_audio) {
     prefs->audio_player=AUD_PLAYER_PULSE;
     lives_snprintf(prefs->aplayer,512,"%s","pulse");
-    set_pref("audio_player","pulse");
+    set_pref(PREF_AUDIO_PLAYER,"pulse");
   } else {
 #endif
 
@@ -599,7 +599,7 @@ static boolean pre_init(void) {
     if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_jackd) {
       prefs->audio_player=AUD_PLAYER_JACK;
       lives_snprintf(prefs->aplayer,512,"%s","jack");
-      set_pref("audio_player","jack");
+      set_pref(PREF_AUDIO_PLAYER,"jack");
     }
 #endif
 
@@ -906,7 +906,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->rec_opts|=(REC_FPS+REC_FRAMES);
 
-  prefs->audio_src=get_int_pref("audio_src");
+  prefs->audio_src=get_int_pref(PREF_AUDIO_SRC);
 
   if (!((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
     prefs->audio_src=AUDIO_SRC_INT;
@@ -1155,7 +1155,7 @@ static void lives_init(_ign_opts *ign_opts) {
     mainw->vpp=NULL;
     mainw->ext_playback=mainw->ext_keyboard=FALSE;
 
-    get_pref("default_image_format",buff,256);
+    get_pref(PREF_DEFAULT_IMAGE_FORMAT,buff,256);
     if (!strcmp(buff,"jpeg")) lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_JPG);
     else lives_snprintf(prefs->image_ext,16,"%s",buff);
 
@@ -1164,7 +1164,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->ocp=get_int_pref("open_compression_percent");
 
     // we set the theme here in case it got reset to 'none'
-    set_pref("gui_theme",prefs->theme);
+    set_pref(PREF_GUI_THEME,prefs->theme);
     lives_snprintf(future_prefs->theme,64,"%s",prefs->theme);
 
     prefs->stop_screensaver=get_boolean_pref("stop_screensaver");
@@ -1317,25 +1317,25 @@ static void lives_init(_ign_opts *ign_opts) {
         mainw->vpp=open_vid_playback_plugin(buff,TRUE);
       }
 
-      get_pref("video_open_command",prefs->video_open_command,256);
+      get_pref(PREF_VIDEO_OPEN_COMMAND,prefs->video_open_command,256);
 
       if (!ign_opts->ign_aplayer) {
-        get_pref("audio_play_command",prefs->audio_play_command,256);
+        get_pref(PREF_AUDIO_PLAY_COMMAND,prefs->audio_play_command,256);
       }
 
       if (!strlen(prefs->video_open_command)&&capable->has_mplayer) {
         get_location("mplayer",prefs->video_open_command,256);
-        set_pref("video_open_command",prefs->video_open_command);
+        set_pref(PREF_VIDEO_OPEN_COMMAND,prefs->video_open_command);
       }
 
       if (!strlen(prefs->video_open_command)&&capable->has_mplayer2) {
         get_location("mplayer2",prefs->video_open_command,256);
-        set_pref("video_open_command",prefs->video_open_command);
+        set_pref(PREF_VIDEO_OPEN_COMMAND,prefs->video_open_command);
       }
 
       if (!strlen(prefs->video_open_command)&&capable->has_mpv) {
         get_location("mpv",prefs->video_open_command,256);
-        set_pref("video_open_command",prefs->video_open_command);
+        set_pref(PREF_VIDEO_OPEN_COMMAND,prefs->video_open_command);
       }
 
 
@@ -1381,12 +1381,12 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->auto_nobord=get_boolean_pref("auto_cut_borders");
 
       if (!ign_opts->ign_clipset) {
-        get_pref("ar_clipset",prefs->ar_clipset_name,128);
+        get_pref(PREF_AR_CLIPSET,prefs->ar_clipset_name,128);
         if (strlen(prefs->ar_clipset_name)) prefs->ar_clipset=TRUE;
         else prefs->ar_clipset=FALSE;
       }
 
-      get_pref("ar_layout",prefs->ar_layout_name,PATH_MAX);
+      get_pref(PREF_AR_LAYOUT,prefs->ar_layout_name,PATH_MAX);
       if (strlen(prefs->ar_layout_name)) prefs->ar_layout=TRUE;
       else prefs->ar_layout=FALSE;
 
@@ -1421,7 +1421,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
         if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
 
-          set_pref("encoder",prefs->encoder.name);
+          set_pref(PREF_ENCODER,prefs->encoder.name);
 
           for (i=0; i<lives_list_length(ofmt_all); i++) {
             if (get_token_count((char *)lives_list_nth_data(ofmt_all,i),'|')>2) {
@@ -1453,7 +1453,7 @@ static void lives_init(_ign_opts *ign_opts) {
       }
 
       if (!strlen(prefs->encoder.of_name)) {
-        get_pref("encoder",prefs->encoder.name,51);
+        get_pref(PREF_ENCODER,prefs->encoder.name,51);
         get_pref("output_type",prefs->encoder.of_name,51);
       }
 
@@ -1497,7 +1497,7 @@ static void lives_init(_ign_opts *ign_opts) {
         }
       }
 
-      get_pref_utf8("vid_load_dir",prefs->def_vid_load_dir,PATH_MAX);
+      get_pref_utf8(PREF_VID_LOAD_DIR,prefs->def_vid_load_dir,PATH_MAX);
       if (!strlen(prefs->def_vid_load_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2,14,0)
@@ -1506,12 +1506,12 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-        set_pref("vid_load_dir",prefs->def_vid_load_dir);
+        set_pref(PREF_VID_LOAD_DIR,prefs->def_vid_load_dir);
       }
       lives_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",prefs->def_vid_load_dir);
       ensure_isdir(mainw->vid_load_dir);
 
-      get_pref_utf8("vid_save_dir",prefs->def_vid_save_dir,PATH_MAX);
+      get_pref_utf8(PREF_VID_SAVE_DIR,prefs->def_vid_save_dir,PATH_MAX);
       if (!strlen(prefs->def_vid_save_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2,14,0)
@@ -1520,14 +1520,14 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-        set_pref("vid_save_dir",prefs->def_vid_save_dir);
+        set_pref(PREF_VID_SAVE_DIR,prefs->def_vid_save_dir);
       }
       lives_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",prefs->def_vid_save_dir);
       ensure_isdir(mainw->vid_save_dir);
 
       lives_snprintf(mainw->vid_dl_dir,PATH_MAX,"%s",mainw->vid_save_dir);
 
-      get_pref_utf8("audio_dir",prefs->def_audio_dir,PATH_MAX);
+      get_pref_utf8(PREF_AUDIO_DIR,prefs->def_audio_dir,PATH_MAX);
       if (!strlen(prefs->def_audio_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2,14,0)
@@ -1536,12 +1536,12 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_snprintf(prefs->def_audio_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-        set_pref("audio_dir",prefs->def_audio_dir);
+        set_pref(PREF_AUDIO_DIR,prefs->def_audio_dir);
       }
       lives_snprintf(mainw->audio_dir,PATH_MAX,"%s",prefs->def_audio_dir);
       ensure_isdir(mainw->audio_dir);
 
-      get_pref_utf8("image_dir",prefs->def_image_dir,PATH_MAX);
+      get_pref_utf8(PREF_IMAGE_DIR,prefs->def_image_dir,PATH_MAX);
       if (!strlen(prefs->def_image_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2,14,0)
@@ -1550,7 +1550,7 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_snprintf(prefs->def_image_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-        set_pref("image_dir",prefs->def_image_dir);
+        set_pref(PREF_IMAGE_DIR,prefs->def_image_dir);
       }
       lives_snprintf(mainw->image_dir,PATH_MAX,"%s",prefs->def_image_dir);
       ensure_isdir(mainw->image_dir);
@@ -1948,7 +1948,8 @@ void set_palette_colours(boolean force_reload) {
   lives_colRGBA64_t lcol;
 
   char *themedir,*themefile,*tmp;
-
+  char *pstyle=NULL;
+  
   boolean is_OK=TRUE;
 
   lcol.alpha=65535;
@@ -2126,6 +2127,15 @@ void set_palette_colours(boolean force_reload) {
     lives_free(themedir);
 
     // mandatory for themes
+
+    if (!is_OK||get_pref_from_file(themefile,THEME_DETAIL_STYLE,pstyle,128)!=LIVES_RESPONSE_NONE) {
+      is_OK=FALSE;
+    }
+    else {
+      palette->style=atoi(pstyle);
+    }
+    lives_freep((void **)&pstyle);
+    
     if (!is_OK||!get_theme_colour_pref(themefile,THEME_DETAIL_STYLE,&lcol)) {
       is_OK=FALSE;
     } else palette->style=lcol.red;
@@ -2878,7 +2888,7 @@ static boolean lives_startup(livespointer data) {
     splash_msg(msg,1.);
     lives_free(msg);
     if (!reload_set(prefs->ar_clipset_name) || mainw->current_file==-1) {
-      set_pref("ar_clipset","");
+      set_pref(PREF_AR_CLIPSET,"");
       prefs->ar_clipset=FALSE;
     }
   }
@@ -3245,14 +3255,14 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef ENABLE_JACK
             prefs->audio_player=AUD_PLAYER_JACK;
             lives_snprintf(prefs->aplayer,512,"%s","jack");
-            set_pref("audio_player","jack");
+            set_pref(PREF_AUDIO_PLAYER,"jack");
             apl_valid=TRUE;
 #endif
           }
           if (!strcmp(buff,"pulse")) {
 #ifdef HAVE_PULSE_AUDIO
             prefs->audio_player=AUD_PLAYER_PULSE;
-            set_pref("audio_player","pulse");
+            set_pref(PREF_AUDIO_PLAYER,"pulse");
             lives_snprintf(prefs->aplayer,512,"%s","pulse");
             apl_valid=TRUE;
 #endif

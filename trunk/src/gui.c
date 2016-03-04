@@ -658,21 +658,21 @@ void create_LiVES(void) {
 
   // since we are still initialising, we need to check if we can read prefs
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
-    get_pref_utf8("recent1",buff,32768);
+    get_pref_utf8(PREF_RECENT1,buff,32768);
   }
   mainw->recent1 = lives_menu_item_new_with_label(buff);
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
-    get_pref_utf8("recent2",buff,32768);
+    get_pref_utf8(PREF_RECENT2,buff,32768);
   }
   mainw->recent2 = lives_menu_item_new_with_label(buff);
 
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
-    get_pref_utf8("recent3",buff,32768);
+    get_pref_utf8(PREF_RECENT3,buff,32768);
   }
   mainw->recent3 = lives_menu_item_new_with_label(buff);
 
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
-    get_pref_utf8("recent4",buff,32768);
+    get_pref_utf8(PREF_RECENT4,buff,32768);
   }
   mainw->recent4 = lives_menu_item_new_with_label(buff);
 
@@ -1085,7 +1085,7 @@ void create_LiVES(void) {
 
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showsubs),prefs->show_subtitles);
 
-  mainw->letter = lives_check_menu_item_new_with_mnemonic(_("Letterbox mode"));
+  mainw->letter = lives_check_menu_item_new_with_mnemonic(_("Letterbox Mode"));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->letter);
 
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->letter),prefs->letterbox);
@@ -1415,11 +1415,11 @@ void create_LiVES(void) {
     lives_widget_set_sensitive(mainw->edit_test_rfx,FALSE);
   }
 
-  mainw->open_lives2lives = lives_menu_item_new_with_mnemonic(_("Receive _LiVES stream from..."));
+  mainw->open_lives2lives = lives_menu_item_new_with_mnemonic(_("Receive _LiVES Stream from..."));
 
   lives_menu_add_separator(LIVES_MENU(advanced_menu));
 
-  mainw->send_lives2lives = lives_menu_item_new_with_mnemonic(_("_Send LiVES stream to..."));
+  mainw->send_lives2lives = lives_menu_item_new_with_mnemonic(_("_Send LiVES Stream to..."));
 
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->send_lives2lives);
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->open_lives2lives);
@@ -1490,11 +1490,11 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(vj_menu));
 
-  mainw->vj_reset=lives_menu_item_new_with_mnemonic(_("_Reset all playback speeds and positions"));
+  mainw->vj_reset=lives_menu_item_new_with_mnemonic(_("_Reset All Playback Speeds and Positions"));
   lives_container_add(LIVES_CONTAINER(vj_menu), mainw->vj_reset);
   lives_widget_set_tooltip_text(mainw->vj_reset,(_("Reset all playback positions to frame 1, and reset all playback frame rates.")));
 
-  midi_submenu = lives_menu_item_new_with_mnemonic(_("_MIDI/joystick interface"));
+  midi_submenu = lives_menu_item_new_with_mnemonic(_("_MIDI/Joystick Interface"));
 
 #ifdef ENABLE_OSC
   lives_container_add(LIVES_CONTAINER(vj_menu), midi_submenu);
@@ -1503,15 +1503,15 @@ void create_LiVES(void) {
   midi_menu=lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(midi_submenu), midi_menu);
 
-  mainw->midi_learn = lives_menu_item_new_with_mnemonic(_("_MIDI/joystick learner..."));
+  mainw->midi_learn = lives_menu_item_new_with_mnemonic(_("_MIDI/Joystick Learner..."));
 
   lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_learn);
 
-  mainw->midi_save = lives_menu_item_new_with_mnemonic(_("_Save device mapping..."));
+  mainw->midi_save = lives_menu_item_new_with_mnemonic(_("_Save Device Mapping..."));
 
   lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_save);
 
-  midi_load = lives_menu_item_new_with_mnemonic(_("_Load device mapping..."));
+  midi_load = lives_menu_item_new_with_mnemonic(_("_Load Device Mapping..."));
 
   lives_container_add(LIVES_CONTAINER(midi_menu), midi_load);
 
@@ -1555,19 +1555,19 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
-  donate = lives_menu_item_new_with_mnemonic(_("_Donate to the project !"));
+  donate = lives_menu_item_new_with_mnemonic(_("_Donate to the Project !"));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), donate);
 
-  email_author = lives_menu_item_new_with_mnemonic(_("_Email the author"));
+  email_author = lives_menu_item_new_with_mnemonic(_("_Email the Author"));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), email_author);
 
-  report_bug = lives_menu_item_new_with_mnemonic(_("Report a _bug"));
+  report_bug = lives_menu_item_new_with_mnemonic(_("Report a _Bug"));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), report_bug);
 
-  suggest_feature = lives_menu_item_new_with_mnemonic(_("Suggest a _feature"));
+  suggest_feature = lives_menu_item_new_with_mnemonic(_("Suggest a _Feature"));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), suggest_feature);
 
-  help_translate = lives_menu_item_new_with_mnemonic(_("Assist with _translating"));
+  help_translate = lives_menu_item_new_with_mnemonic(_("Assist with _Translating"));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), help_translate);
 
   lives_menu_add_separator(LIVES_MENU(menuitem_menu));

@@ -5039,7 +5039,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       renderer = lives_cell_renderer_text_new();
       column = lives_tree_view_column_new_with_attributes(NULL,
                renderer,
-               "text", TITLE_COLUMN,
+               LIVES_TREE_VIEW_COLUMN_TEXT, TITLE_COLUMN,
                NULL);
 
       lives_tree_view_append_column(LIVES_TREE_VIEW(tree), column);
@@ -5047,7 +5047,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       renderer = lives_cell_renderer_text_new();
       column = lives_tree_view_column_new_with_attributes("Keys",
                renderer,
-               "text", KEY_COLUMN,
+               LIVES_TREE_VIEW_COLUMN_TEXT, KEY_COLUMN,
                NULL);
       lives_tree_view_append_column(LIVES_TREE_VIEW(tree), column);
 
@@ -5055,7 +5055,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       renderer = lives_cell_renderer_text_new();
       column = lives_tree_view_column_new_with_attributes("Values",
                renderer,
-               "text", VALUE_COLUMN,
+               LIVES_TREE_VIEW_COLUMN_TEXT, VALUE_COLUMN,
                NULL);
       lives_tree_view_append_column(LIVES_TREE_VIEW(tree), column);
 
@@ -5469,7 +5469,7 @@ render_details *create_render_details(int type) {
 
   widget_opts.expand=LIVES_EXPAND_EXTRA;
 
-  label = lives_standard_label_new(_("Target Encoder"));
+  label = lives_standard_label_new(_("Target encoder"));
   lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, 0);
 
   if (!specified) {

@@ -875,9 +875,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         lives_strappend(msg,256,_("\n\nYou may need to install mplayer to open this file.\n"));
       } else {
         if (capable->has_mplayer) {
-          get_location("mplayer",loc,256);
+          get_location(AUDIO_PLAYER_MPLAYER,loc,256);
         } else if (capable->has_mplayer2) {
-          get_location("mplayer2",loc,256);
+          get_location(AUDIO_PLAYER_MPLAYER2,loc,256);
         } else if (capable->has_mpv) {
           get_location("mpv",loc,256);
         }
@@ -1139,9 +1139,7 @@ void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_snprintf(mainw->image_dir,PATH_MAX,"%s",filename);
   get_dirname(mainw->image_dir);
   if (prefs->save_directories) {
-    char *tmp;
-    set_pref(PREF_IMAGE_DIR,(tmp=lives_filename_from_utf8(mainw->image_dir,-1,NULL,NULL,NULL)));
-    lives_free(tmp);
+    set_pref_utf8(PREF_IMAGE_DIR,mainw->image_dir);
   }
 
 }
@@ -1259,8 +1257,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     lives_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",n_file_name);
     get_dirname(mainw->vid_save_dir);
     if (prefs->save_directories) {
-      set_pref(PREF_VID_SAVE_DIR,(tmp=lives_filename_from_utf8(mainw->vid_save_dir,-1,NULL,NULL,NULL)));
-      lives_free(tmp);
+      set_pref_utf8(PREF_VID_SAVE_DIR,mainw->vid_save_dir);
     }
     lives_free(ttl);
   } else n_file_name=filename;
@@ -1312,7 +1309,8 @@ void save_file(int clip, int start, int end, const char *filename) {
     }
   } else if (!mainw->osc_auto&&sfile->orig_file_name) {
     char *warn=lives_strdup(
-                 _("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n\nDo you still wish to continue ?"));
+                 _("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n"
+		   "\nDo you still wish to continue ?"));
     if (!do_yesno_dialog_with_check(warn,WARN_MASK_SAVE_QUALITY)) {
       lives_free(warn);
       lives_free(full_file_name);

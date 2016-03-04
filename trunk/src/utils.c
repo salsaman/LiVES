@@ -3270,8 +3270,8 @@ boolean switch_aud_to_jack(void) {
 #endif
   }
   prefs->audio_player=AUD_PLAYER_JACK;
-  set_pref(PREF_AUDIO_PLAYER,"jack");
-  lives_snprintf(prefs->aplayer,512,"%s","jack");
+  set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_JACK);
+  lives_snprintf(prefs->aplayer,512,"%s",AUDIO_PLAYER_JACK);
 
   if (mainw->is_ready&&mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL)
     mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
@@ -3309,8 +3309,8 @@ boolean switch_aud_to_pulse(void) {
       lives_widget_show(mainw->recaudio_submenu);
 
       prefs->audio_player=AUD_PLAYER_PULSE;
-      set_pref(PREF_AUDIO_PLAYER,"pulse");
-      lives_snprintf(prefs->aplayer,512,"%s","pulse");
+      set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_PULSE);
+      lives_snprintf(prefs->aplayer,512,"%s",AUDIO_PLAYER_PULSE);
 
       if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL)
         mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
@@ -3346,9 +3346,9 @@ boolean switch_aud_to_pulse(void) {
 
 void switch_aud_to_sox(boolean set_in_prefs) {
   prefs->audio_player=AUD_PLAYER_SOX;
-  get_pref_default("sox_command",prefs->audio_play_command,256);
-  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER,"sox");
-  lives_snprintf(prefs->aplayer,512,"%s","sox");
+  get_pref_default(PREF_SOX_COMMAND,prefs->audio_play_command,256);
+  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_SOX);
+  lives_snprintf(prefs->aplayer,512,"%s",AUDIO_PLAYER_SOX);
   set_pref(PREF_AUDIO_PLAY_COMMAND,prefs->audio_play_command);
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
@@ -3400,9 +3400,9 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
   }
 
   prefs->audio_player=AUD_PLAYER_MPLAYER;
-  get_pref_default("mplayer_audio_command",prefs->audio_play_command,256);
-  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER,"mplayer");
-  lives_snprintf(prefs->aplayer,512,"%s","mplayer");
+  get_pref_default(PREF_MPLAYER_AUDIO_COMMAND,prefs->audio_play_command,256);
+  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_MPLAYER);
+  lives_snprintf(prefs->aplayer,512,"%s",AUDIO_PLAYER_MPLAYER);
   set_pref(PREF_AUDIO_PLAY_COMMAND,prefs->audio_play_command);
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
@@ -3453,9 +3453,9 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
   }
 
   prefs->audio_player=AUD_PLAYER_MPLAYER2;
-  get_pref_default("mplayer2_audio_command",prefs->audio_play_command,256); // TODO
-  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER,"mplayer2"); // TODO
-  lives_snprintf(prefs->aplayer,512,"%s","mplayer2");
+  get_pref_default(PREF_MPLAYER2_AUDIO_COMMAND,prefs->audio_play_command,256);
+  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_MPLAYER2);
+  lives_snprintf(prefs->aplayer,512,"%s",AUDIO_PLAYER_MPLAYER2);
   set_pref(PREF_AUDIO_PLAY_COMMAND,prefs->audio_play_command);
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
@@ -4258,25 +4258,21 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
         get_menu_text(mainw->recent3,buff);
         set_menu_text(mainw->recent4,buff,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent4,buff,FALSE);
-        set_pref(PREF_RECENT4,(tmp=U82F(buff)));
-        lives_free(tmp);
+        set_pref_utf8(PREF_RECENT4,buff);
 
         get_menu_text(mainw->recent2,buff);
         set_menu_text(mainw->recent3,buff,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent3,buff,FALSE);
-        set_pref(PREF_RECENT3,(tmp=U82F(buff)));
-        lives_free(tmp);
+        set_pref_utf8(PREF_RECENT3,buff);
 
         get_menu_text(mainw->recent1,buff);
         set_menu_text(mainw->recent2,buff,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-        set_pref(PREF_RECENT2,(tmp=U82F(buff)));
-        lives_free(tmp);
+        set_pref_utf8(PREF_RECENT2,buff);
 
         set_menu_text(mainw->recent1,file,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-        set_pref(PREF_RECENT1,(tmp=U82F(file)));
-        lives_free(tmp);
+        set_pref_utf8(PREF_RECENT1,buff);
       } else {
         // #3 in list
         get_menu_text(mainw->recent2,buff);

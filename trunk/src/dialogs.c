@@ -52,7 +52,7 @@ void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_dat
 
   if (lives_toggle_button_get_active(togglebutton)) prefs->warning_mask|=LIVES_POINTER_TO_INT(user_data);
   else prefs->warning_mask^=LIVES_POINTER_TO_INT(user_data);
-  set_int_pref("lives_warning_mask",prefs->warning_mask);
+  set_int_pref(PREF_LIVES_WARNING_MASK,prefs->warning_mask);
 
   if ((tbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(togglebutton),"auto"))!=NULL) {
     // this is for the cds window - disable autoreload if we are not gonna show this window

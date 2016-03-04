@@ -1,6 +1,6 @@
 // audio.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2009
+// (c) G. Finch 2005 - 2016
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 

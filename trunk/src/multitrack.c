@@ -5643,7 +5643,7 @@ void mt_set_autotrans(int idx) {
 
   // set pref
   atrans_hash=make_weed_hashname(prefs->atrans_fx,FALSE,FALSE);
-  set_pref("current_autotrans",atrans_hash);
+  set_pref(PREF_CURRENT_AUTOTRANS,atrans_hash);
   lives_free(atrans_hash);
 }
 
@@ -10958,19 +10958,19 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
       prefs->mt_enter_prompt=FALSE;
       set_boolean_pref("mt_enter_prompt",prefs->mt_enter_prompt);
       prefs->mt_def_width=rdet->width;
-      set_int_pref("mt_def_width",prefs->mt_def_width);
+      set_int_pref(PREF_MT_DEF_WIDTH,prefs->mt_def_width);
       prefs->mt_def_height=rdet->height;
-      set_int_pref("mt_def_height",prefs->mt_def_height);
+      set_int_pref(PREF_MT_DEF_HEIGHT,prefs->mt_def_height);
       prefs->mt_def_fps=rdet->fps;
-      set_double_pref("mt_def_fps",prefs->mt_def_fps);
+      set_double_pref(PREF_MT_DEF_FPS,prefs->mt_def_fps);
       prefs->mt_def_arate=xarate;
-      set_int_pref("mt_def_arate",prefs->mt_def_arate);
+      set_int_pref(PREF_MT_DEF_ARATE,prefs->mt_def_arate);
       prefs->mt_def_achans=xachans;
-      set_int_pref("mt_def_achans",prefs->mt_def_achans);
+      set_int_pref(PREF_MT_DEF_ACHANS,prefs->mt_def_achans);
       prefs->mt_def_asamps=xasamps;
-      set_int_pref("mt_def_asamps",prefs->mt_def_asamps);
+      set_int_pref(PREF_MT_DEF_ASAMPS,prefs->mt_def_asamps);
       prefs->mt_def_signed_endian=xse;
-      set_int_pref("mt_def_signed_endian",prefs->mt_def_signed_endian);
+      set_int_pref(PREF_MT_DEF_SIGNED_ENDIAN,prefs->mt_def_signed_endian);
       prefs->mt_pertrack_audio=ptaud;
       set_boolean_pref("mt_pertrack_audio",prefs->mt_pertrack_audio);
       prefs->mt_backaudio=btaud;
@@ -21864,19 +21864,19 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     prefs->mt_enter_prompt=FALSE;
     set_boolean_pref("mt_enter_prompt",prefs->mt_enter_prompt);
     prefs->mt_def_width=rdet->width;
-    set_int_pref("mt_def_width",prefs->mt_def_width);
+    set_int_pref(PREF_MT_DEF_WIDTH,prefs->mt_def_width);
     prefs->mt_def_height=rdet->height;
-    set_int_pref("mt_def_height",prefs->mt_def_height);
+    set_int_pref(PREF_MT_DEF_HEIGHT,prefs->mt_def_height);
     prefs->mt_def_fps=rdet->fps;
-    set_double_pref("mt_def_fps",prefs->mt_def_fps);
+    set_double_pref(PREF_MT_DEF_FPS,prefs->mt_def_fps);
     prefs->mt_def_arate=xarate;
-    set_int_pref("mt_def_arate",prefs->mt_def_arate);
+    set_int_pref(PREF_MT_DEF_ARATE,prefs->mt_def_arate);
     prefs->mt_def_achans=xachans;
-    set_int_pref("mt_def_achans",prefs->mt_def_achans);
+    set_int_pref(PREF_MT_DEF_ACHANS,prefs->mt_def_achans);
     prefs->mt_def_asamps=xasamps;
-    set_int_pref("mt_def_asamps",prefs->mt_def_asamps);
+    set_int_pref(PREF_MT_DEF_ASAMPS,prefs->mt_def_asamps);
     prefs->mt_def_signed_endian=xse;
-    set_int_pref("mt_def_signed_endian",prefs->mt_def_signed_endian);
+    set_int_pref(PREF_MT_DEF_SIGNED_ENDIAN,prefs->mt_def_signed_endian);
     prefs->mt_pertrack_audio=ptaud;
     set_boolean_pref("mt_pertrack_audio",prefs->mt_pertrack_audio);
     prefs->mt_backaudio=btaud;

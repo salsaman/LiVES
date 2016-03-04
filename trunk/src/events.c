@@ -3756,7 +3756,7 @@ lives_render_error_t render_events(boolean reset) {
         // sig_progress...
         lives_snprintf(mainw->msg,256,"%d",progress++);
 
-        if (prefs->ocp==-1) prefs->ocp=get_int_pref("open_compression_percent");
+        if (prefs->ocp==-1) prefs->ocp=get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
 
         if (cfile->old_frames==0) {
           tmp=make_image_file_name(cfile,out_frame,get_image_ext_for_type(cfile->img_type));

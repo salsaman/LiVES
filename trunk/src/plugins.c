@@ -1202,7 +1202,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if (!OK) {
     char *msg=lives_strdup_printf
               (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"),plugname);
-    set_pref("vid_playback_plugin","none");
+    set_pref(PREF_VID_PLAYBACK_PLUGIN,"none");
     do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):
                                          LIVES_WINDOW(mainw->LiVES));
     lives_free(msg);

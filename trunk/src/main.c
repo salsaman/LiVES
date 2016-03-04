@@ -1168,7 +1168,7 @@ static void lives_init(_ign_opts *ign_opts) {
     lives_snprintf(future_prefs->theme,64,"%s",prefs->theme);
 
     prefs->stop_screensaver=get_boolean_pref(PREF_STOP_SCREENSAVER);
-    prefs->open_maximised=get_boolean_pref("open_maximised");
+    prefs->open_maximised=get_boolean_pref(PREF_OPEN_MAXIMISED);
     future_prefs->show_tool=prefs->show_tool=get_boolean_pref(PREF_SHOW_TOOLBAR);
     memset(future_prefs->vpp_name,0,64);
     future_prefs->vpp_argv=NULL;
@@ -1219,7 +1219,7 @@ static void lives_init(_ign_opts *ign_opts) {
     if (prefs->nfx_threads==0) prefs->nfx_threads=capable->ncpus;
     future_prefs->nfx_threads=prefs->nfx_threads;
 
-    prefs->stream_audio_out=get_boolean_pref("stream_audio_out");
+    prefs->stream_audio_out=get_boolean_pref(PREF_STREAM_AUDIO_OUT);
 
     prefs->unstable_fx=FALSE;
 
@@ -1243,17 +1243,17 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->alpha_post=FALSE; ///< allow pre-multiplied alpha internally
 
-    prefs->auto_trim_audio=get_boolean_pref("auto_trim_pad_audio");
+    prefs->auto_trim_audio=get_boolean_pref(PREF_AUTO_TRIM_PAD_AUDIO);
 
     prefs->force64bit=FALSE;
 
 #if LIVES_HAS_GRID_WIDGET
-    prefs->ce_thumb_mode=get_boolean_pref("ce_thumb_mode");
+    prefs->ce_thumb_mode=get_boolean_pref(PREF_CE_THUMB_MODE);
 #else
     prefs->ce_thumb_mode=FALSE;
 #endif
 
-    prefs->show_button_images=get_boolean_pref("show_button_icons");
+    prefs->show_button_images=get_boolean_pref(PREF_SHOW_BUTTON_ICONS);
 
     prefs->push_audio_to_gens=TRUE;
 
@@ -1308,7 +1308,7 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->midi_rpt=get_int_pref(PREF_MIDI_RPT);
       if (prefs->midi_rpt==0) prefs->midi_rpt=DEF_MIDI_RPT;
 
-      prefs->mouse_scroll_clips=get_boolean_pref("mouse_scroll_clips");
+      prefs->mouse_scroll_clips=get_boolean_pref(PREF_MOUSE_SCROLL_CLIPS);
 
       prefs->mt_auto_back=get_int_pref(PREF_MT_AUTO_BACK);
 
@@ -1370,15 +1370,15 @@ static void lives_init(_ign_opts *ign_opts) {
       if (prefs->mt_def_arate==0) prefs->mt_def_arate=DEFAULT_AUDIO_RATE;
       if (prefs->mt_def_asamps==0) prefs->mt_def_asamps=DEFAULT_AUDIO_SAMPS;
 
-      prefs->mt_exit_render=get_boolean_pref("mt_exit_render");
-      prefs->render_prompt=get_boolean_pref("render_prompt");
+      prefs->mt_exit_render=get_boolean_pref(PREF_MT_EXIT_RENDER);
+      prefs->render_prompt=get_boolean_pref(PREF_RENDER_PROMPT);
 
       prefs->mt_pertrack_audio=get_boolean_pref(PREF_MT_PERTRACK_AUDIO);
       prefs->mt_backaudio=get_int_pref(PREF_MT_BACKAUDIO);
 
-      prefs->instant_open=get_boolean_pref("instant_open");
-      prefs->auto_deint=get_boolean_pref("auto_deinterlace");
-      prefs->auto_nobord=get_boolean_pref("auto_cut_borders");
+      prefs->instant_open=get_boolean_pref(PREF_INSTANT_OPEN);
+      prefs->auto_deint=get_boolean_pref(PREF_AUTO_DEINTERLACE);
+      prefs->auto_nobord=get_boolean_pref(PREF_AUTO_CUT_BORDERS);
 
       if (!ign_opts->ign_clipset) {
         get_pref(PREF_AR_CLIPSET,prefs->ar_clipset_name,128);
@@ -1390,7 +1390,7 @@ static void lives_init(_ign_opts *ign_opts) {
       if (strlen(prefs->ar_layout_name)) prefs->ar_layout=TRUE;
       else prefs->ar_layout=FALSE;
 
-      prefs->rec_desktop_audio=get_boolean_pref("rec_desktop_audio");
+      prefs->rec_desktop_audio=get_boolean_pref(PREF_REC_DESKTOP_AUDIO);
 
       future_prefs->startup_interface=get_int_pref(PREF_STARTUP_INTERFACE);
       if (!ign_opts->ign_stmode) {
@@ -1564,14 +1564,14 @@ static void lives_init(_ign_opts *ign_opts) {
       ensure_isdir(mainw->proj_load_dir);
       lives_snprintf(mainw->proj_save_dir,PATH_MAX,"%s",mainw->proj_load_dir);
 
-      prefs->show_player_stats=get_boolean_pref("show_player_stats");
+      prefs->show_player_stats=get_boolean_pref(PREF_SHOW_PLAYER_STATS);
 
       prefs->dl_bandwidth=get_int_pref(PREF_DL_BANDWIDTH_K);
-      prefs->fileselmax=get_boolean_pref("filesel_maximised");
+      prefs->fileselmax=get_boolean_pref(PREF_FILESEL_MAXIMISED);
 
-      prefs->midisynch=get_boolean_pref("midisynch");
+      prefs->midisynch=get_boolean_pref(PREF_MIDISYNCH);
       if (prefs->midisynch&&!capable->has_midistartstop) {
-        set_boolean_pref("midisynch",FALSE);
+        set_boolean_pref(PREF_MIDISYNCH,FALSE);
         prefs->midisynch=FALSE;
       }
 
@@ -1579,18 +1579,18 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->discard_tv=FALSE;
 
       // conserve disk space ?
-      prefs->conserve_space=get_boolean_pref("conserve_space");
-      prefs->ins_resample=get_boolean_pref("insert_resample");
+      prefs->conserve_space=get_boolean_pref(PREF_CONSERVE_SPACE);
+      prefs->ins_resample=get_boolean_pref(PREF_INSERT_RESAMPLE);
 
       // need better control of audio channels first
       prefs->pause_during_pb=FALSE;
 
       // should we always use the last directory ?
       // TODO - add to GUI
-      prefs->save_directories=get_boolean_pref("save_directories");
-      prefs->antialias=get_boolean_pref("antialias");
+      prefs->save_directories=get_boolean_pref(PREF_SAVE_DIRECTORIES);
+      prefs->antialias=get_boolean_pref(PREF_ANTIALIAS);
 
-      prefs->concat_images=get_boolean_pref("concat_images");
+      prefs->concat_images=get_boolean_pref(PREF_CONCAT_IMAGES);
 
       prefs->safer_preview=TRUE;
 

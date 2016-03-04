@@ -1714,7 +1714,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (mainw->multitrack!=NULL&&!mainw->only_close) mt_memory_free();
-  else if (mainw->multitrack!=NULL) wipe_layout(mainw->multitrack);;
+  else if (mainw->multitrack!=NULL) wipe_layout(mainw->multitrack);
 
   mainw->was_set=mainw->leave_files=mainw->leave_recovery=FALSE;
 
@@ -5132,8 +5132,10 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
 
   mainw->add_clear_ds_adv=TRUE; ///< auto reset by do_warning_dialog()
   if (!do_warning_dialog(
-        _("LiVES will attempt to recover some disk space.\nYou should ONLY run this if you have no other copies of LiVES running on this machine.\nClick OK to proceed.\n"))) {
-    mainw->next_ds_warn_level=ds_warn_level;;
+        _("LiVES will attempt to recover some disk space.\n"
+	  "You should ONLY run this if you have no other copies of LiVES running on this machine.\n"
+	  "Click OK to proceed.\n"))) {
+    mainw->next_ds_warn_level=ds_warn_level;
     return;
   }
 
@@ -5263,7 +5265,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
     if (user_data!=NULL) lives_widget_set_sensitive(lives_widget_get_toplevel(LIVES_WIDGET(user_data)),FALSE);
   } else d_print_failed();
 
-  mainw->next_ds_warn_level=ds_warn_level;;
+  mainw->next_ds_warn_level=ds_warn_level;
 
 }
 
@@ -5284,7 +5286,7 @@ void on_cleardisk_advanced_clicked(LiVESWidget *widget, livespointer user_data) 
     if (response==LIVES_RESPONSE_RETRY) prefs->clear_disk_opts=0;
   } while (response==LIVES_RESPONSE_RETRY);
 
-  set_int_pref("clear_disk_opts",prefs->clear_disk_opts);
+  set_int_pref(PREF_CLEAR_DISK_OPTS,prefs->clear_disk_opts);
 }
 
 
@@ -9160,7 +9162,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
     }
 
     if (ointernal_messaging) {
-      lives_system("sync;sync;sync",TRUE);
+      lives_sync(); lives_sync(); lives_sync();
     }
     current_file=mainw->current_file;
     resize(1);

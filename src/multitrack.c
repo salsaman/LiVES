@@ -2019,7 +2019,7 @@ static boolean on_mt_timeline_scroll(LiVESWidget *widget, LiVESXEventScroll *eve
   cval=lives_adjustment_get_value(lives_range_get_adjustment(LIVES_RANGE(mt->scrollbar)));
 
   if (event->direction==LIVES_SCROLL_UP) {
-    if (--cval<0) return FALSE;;
+    if (--cval<0) return FALSE;
   } else if (event->direction==LIVES_SCROLL_DOWN) {
     if (++cval>=lives_list_length(mt->video_draws)) return FALSE;
   }
@@ -10940,7 +10940,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     xasamps=(int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
 
     if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
-      xse=AFORM_UNSIGNED;;
+      xse=AFORM_UNSIGNED;
     }
 
     if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
@@ -10956,7 +10956,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
     if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rdet->always_checkbutton))) {
       prefs->mt_enter_prompt=FALSE;
-      set_boolean_pref("mt_enter_prompt",prefs->mt_enter_prompt);
+      set_boolean_pref(PREF_MT_ENTER_PROMPT,prefs->mt_enter_prompt);
       prefs->mt_def_width=rdet->width;
       set_int_pref(PREF_MT_DEF_WIDTH,prefs->mt_def_width);
       prefs->mt_def_height=rdet->height;
@@ -10972,13 +10972,13 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
       prefs->mt_def_signed_endian=xse;
       set_int_pref(PREF_MT_DEF_SIGNED_ENDIAN,prefs->mt_def_signed_endian);
       prefs->mt_pertrack_audio=ptaud;
-      set_boolean_pref("mt_pertrack_audio",prefs->mt_pertrack_audio);
+      set_boolean_pref(PREF_MT_PERTRACK_AUDIO,prefs->mt_pertrack_audio);
       prefs->mt_backaudio=btaud;
-      set_int_pref("mt_backaudio",prefs->mt_backaudio);
+      set_int_pref(PREF_MT_BACKAUDIO,prefs->mt_backaudio);
     } else {
       if (!prefs->mt_enter_prompt) {
         prefs->mt_enter_prompt=TRUE;
-        set_boolean_pref("mt_enter_prompt",prefs->mt_enter_prompt);
+        set_boolean_pref(PREF_MT_ENTER_PROMPT,prefs->mt_enter_prompt);
       }
     }
 
@@ -21770,7 +21770,7 @@ void mt_change_disp_tracks_ok(LiVESButton *button, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   lives_general_button_clicked(button,NULL);
   prefs->max_disp_vtracks=mainw->fx1_val;
-  set_int_pref("max_disp_vtracks",prefs->max_disp_vtracks);
+  set_int_pref(PREF_MAX_DISP_VTRACKS,prefs->max_disp_vtracks);
   scroll_tracks(mt,mt->top_track,FALSE);
 }
 
@@ -21826,7 +21826,7 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   xasamps=(int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
-    xse=AFORM_UNSIGNED;;
+    xse=AFORM_UNSIGNED;
   } else cfile->signed_endian=0;
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
     xse|=AFORM_BIG_ENDIAN;
@@ -21862,7 +21862,7 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rdet->always_checkbutton))) {
     prefs->mt_enter_prompt=FALSE;
-    set_boolean_pref("mt_enter_prompt",prefs->mt_enter_prompt);
+    set_boolean_pref(PREF_MT_ENTER_PROMPT,prefs->mt_enter_prompt);
     prefs->mt_def_width=rdet->width;
     set_int_pref(PREF_MT_DEF_WIDTH,prefs->mt_def_width);
     prefs->mt_def_height=rdet->height;
@@ -21878,13 +21878,13 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     prefs->mt_def_signed_endian=xse;
     set_int_pref(PREF_MT_DEF_SIGNED_ENDIAN,prefs->mt_def_signed_endian);
     prefs->mt_pertrack_audio=ptaud;
-    set_boolean_pref("mt_pertrack_audio",prefs->mt_pertrack_audio);
+    set_boolean_pref(PREF_MT_PERTRACK_AUDIO,prefs->mt_pertrack_audio);
     prefs->mt_backaudio=btaud;
-    set_int_pref("mt_backaudio",prefs->mt_backaudio);
+    set_int_pref(PREF_MT_BACKAUDIO,prefs->mt_backaudio);
   } else {
     if (!prefs->mt_enter_prompt) {
       prefs->mt_enter_prompt=TRUE;
-      set_boolean_pref("mt_enter_prompt",prefs->mt_enter_prompt);
+      set_boolean_pref(PREF_MT_ENTER_PROMPT,prefs->mt_enter_prompt);
     }
   }
 

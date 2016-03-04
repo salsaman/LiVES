@@ -525,7 +525,7 @@ static boolean pre_init(void) {
   lives_snprintf(future_prefs->theme,64,"%s",prefs->theme);
 
   // get some prefs we need to set menu options
-  future_prefs->show_recent=prefs->show_recent=get_boolean_pref("show_recent_files");
+  future_prefs->show_recent=prefs->show_recent=get_boolean_pref(PREF_SHOW_RECENT_FILES);
 
 #ifndef IS_MINGW
   get_pref(PREF_PREFIX_DIR,prefs->prefix_dir,PATH_MAX);
@@ -613,7 +613,7 @@ static boolean pre_init(void) {
   mainw->mgeom=NULL;
   prefs->virt_height=1;
 
-  prefs->force_single_monitor=get_boolean_pref("force_single_monitor");
+  prefs->force_single_monitor=get_boolean_pref(PREF_FORCE_SINGLE_MONITOR);
 
   get_monitors();
 
@@ -626,7 +626,7 @@ static boolean pre_init(void) {
 
   for (i=0; i<MAX_EXT_CNTL; i++) mainw->ext_cntl[i]=FALSE;
 
-  prefs->omc_dev_opts=get_int_pref("omc_dev_opts");
+  prefs->omc_dev_opts=get_int_pref(PREF_OMC_DEV_OPTS);
 
   get_pref_utf8(PREF_OMC_JS_FNAME,prefs->omc_js_fname,256);
 
@@ -889,7 +889,7 @@ static void lives_init(_ign_opts *ign_opts) {
 #ifdef ENABLE_OSC
     if (!mainw->foreign) {
       prefs->osc_udp_port=get_int_pref(PREF_OSC_PORT);
-      future_prefs->osc_start=prefs->osc_start=get_boolean_pref("osc_start");
+      future_prefs->osc_start=prefs->osc_start=get_boolean_pref(PREF_OSC_START);
     } else {
       future_prefs->osc_start=prefs->osc_start=FALSE;
     }
@@ -1146,7 +1146,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
 
-    int pb_quality=get_int_pref("pb_quality");
+    int pb_quality=get_int_pref(PREF_PB_QUALITY);
 
     prefs->pb_quality=PB_QUALITY_MED;
     if (pb_quality==PB_QUALITY_LOW) prefs->pb_quality=PB_QUALITY_LOW;
@@ -1167,9 +1167,9 @@ static void lives_init(_ign_opts *ign_opts) {
     set_pref(PREF_GUI_THEME,prefs->theme);
     lives_snprintf(future_prefs->theme,64,"%s",prefs->theme);
 
-    prefs->stop_screensaver=get_boolean_pref("stop_screensaver");
+    prefs->stop_screensaver=get_boolean_pref(PREF_STOP_SCREENSAVER);
     prefs->open_maximised=get_boolean_pref("open_maximised");
-    future_prefs->show_tool=prefs->show_tool=get_boolean_pref("show_toolbar");
+    future_prefs->show_tool=prefs->show_tool=get_boolean_pref(PREF_SHOW_TOOLBAR);
     memset(future_prefs->vpp_name,0,64);
     future_prefs->vpp_argv=NULL;
 
@@ -1207,15 +1207,15 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->safe_symlinks=FALSE; // set to TRUE for dynebolic and other live CDs
 
-    prefs->ce_maxspect=get_boolean_pref("ce_maxspect");;
+    prefs->ce_maxspect=get_boolean_pref(PREF_CE_MAXSPECT);
 
-    prefs->rec_stop_gb=get_int_pref("rec_stop_gb");
+    prefs->rec_stop_gb=get_int_pref(PREF_REC_STOP_GB);
 
     if (prefs->max_modes_per_key==0) prefs->max_modes_per_key=8;
 
     get_pref(PREF_DEF_AUTOTRANS,prefs->def_autotrans,256);
 
-    prefs->nfx_threads=get_int_pref("nfx_threads");
+    prefs->nfx_threads=get_int_pref(PREF_NFX_THREADS);
     if (prefs->nfx_threads==0) prefs->nfx_threads=capable->ncpus;
     future_prefs->nfx_threads=prefs->nfx_threads;
 
@@ -1237,7 +1237,7 @@ static void lives_init(_ign_opts *ign_opts) {
     if (!strlen(buff)) prefs->ds_crit_level=DEF_DS_CRIT_LEVEL;
     else prefs->ds_crit_level=strtol(buff,NULL,10);
 
-    prefs->clear_disk_opts=get_int_pref("clear_disk_opts");
+    prefs->clear_disk_opts=get_int_pref(PREF_CLEAR_DISK_OPTS);
 
     prefs->force_system_clock=FALSE;  ///< prefer soundcard timing
 
@@ -1259,7 +1259,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->perm_audio_reader=TRUE;
 
-    prefs->max_disp_vtracks=get_int_pref("max_disp_vtracks");
+    prefs->max_disp_vtracks=get_int_pref(PREF_MAX_DISP_VTRACKS);
 
 
     //////////////////////////////////////////////////////////////////
@@ -1300,17 +1300,17 @@ static void lives_init(_ign_opts *ign_opts) {
 
       fastsrand(rseed);
 
-      prefs->midi_check_rate=get_int_pref("midi_check_rate");
+      prefs->midi_check_rate=get_int_pref(PREF_MIDI_CHECK_RATE);
       if (prefs->midi_check_rate==0) prefs->midi_check_rate=DEF_MIDI_CHECK_RATE;
 
       if (prefs->midi_check_rate<1) prefs->midi_check_rate=1;
 
-      prefs->midi_rpt=get_int_pref("midi_rpt");
+      prefs->midi_rpt=get_int_pref(PREF_MIDI_RPT);
       if (prefs->midi_rpt==0) prefs->midi_rpt=DEF_MIDI_RPT;
 
       prefs->mouse_scroll_clips=get_boolean_pref("mouse_scroll_clips");
 
-      prefs->mt_auto_back=get_int_pref("mt_auto_back");
+      prefs->mt_auto_back=get_int_pref(PREF_MT_AUTO_BACK);
 
       get_pref(PREF_VID_PLAYBACK_PLUGIN,buff,256);
       if (strlen(buff)&&strcmp(buff,"(null)")&&strcmp(buff,"none")) {
@@ -1339,12 +1339,12 @@ static void lives_init(_ign_opts *ign_opts) {
       }
 
 
-      prefs->warn_file_size=get_int_pref("warn_file_size");
+      prefs->warn_file_size=get_int_pref(PREF_WARN_FILE_SIZE);
       if (prefs->warn_file_size==0) {
         prefs->warn_file_size=WARN_FILE_SIZE;
       }
 
-      prefs->rte_keys_virtual=get_int_pref("rte_keys_virtual");
+      prefs->rte_keys_virtual=get_int_pref(PREF_RTE_KEYS_VIRTUAL);
       if (prefs->rte_keys_virtual<FX_KEYS_PHYSICAL) prefs->rte_keys_virtual=FX_KEYS_PHYSICAL;
       if (prefs->rte_keys_virtual>FX_KEYS_MAX_VIRTUAL) prefs->rte_keys_virtual=FX_KEYS_MAX_VIRTUAL;
 
@@ -1352,9 +1352,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
       prefs->move_effects=TRUE;
 
-      prefs->mt_undo_buf=get_int_pref("mt_undo_buf");
+      prefs->mt_undo_buf=get_int_pref(PREF_MT_UNDO_BUF);
 
-      prefs->mt_enter_prompt=get_boolean_pref("mt_enter_prompt");
+      prefs->mt_enter_prompt=get_boolean_pref(PREF_MT_ENTER_PROMPT);
 
       prefs->mt_def_width=get_int_pref(PREF_MT_DEF_WIDTH);
       prefs->mt_def_height=get_int_pref(PREF_MT_DEF_HEIGHT);
@@ -1373,8 +1373,8 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->mt_exit_render=get_boolean_pref("mt_exit_render");
       prefs->render_prompt=get_boolean_pref("render_prompt");
 
-      prefs->mt_pertrack_audio=get_boolean_pref("mt_pertrack_audio");
-      prefs->mt_backaudio=get_int_pref("mt_backaudio");
+      prefs->mt_pertrack_audio=get_boolean_pref(PREF_MT_PERTRACK_AUDIO);
+      prefs->mt_backaudio=get_int_pref(PREF_MT_BACKAUDIO);
 
       prefs->instant_open=get_boolean_pref("instant_open");
       prefs->auto_deint=get_boolean_pref("auto_deinterlace");
@@ -1392,7 +1392,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       prefs->rec_desktop_audio=get_boolean_pref("rec_desktop_audio");
 
-      future_prefs->startup_interface=get_int_pref("startup_interface");
+      future_prefs->startup_interface=get_int_pref(PREF_STARTUP_INTERFACE);
       if (!ign_opts->ign_stmode) {
         prefs->startup_interface=future_prefs->startup_interface;
       }
@@ -1457,7 +1457,7 @@ static void lives_init(_ign_opts *ign_opts) {
         get_pref(PREF_OUTPUT_TYPE,prefs->encoder.of_name,51);
       }
 
-      future_prefs->encoder.audio_codec=prefs->encoder.audio_codec=get_int_pref("encoder_acodec");
+      future_prefs->encoder.audio_codec=prefs->encoder.audio_codec=get_int_pref(PREF_ENCODER_ACODEC);
       prefs->encoder.capabilities=0;
       prefs->encoder.of_allowed_acodecs=AUDIO_CODEC_UNKNOWN;
 
@@ -1566,7 +1566,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       prefs->show_player_stats=get_boolean_pref("show_player_stats");
 
-      prefs->dl_bandwidth=get_int_pref("dl_bandwidth_K");
+      prefs->dl_bandwidth=get_int_pref(PREF_DL_BANDWIDTH_K);
       prefs->fileselmax=get_boolean_pref("filesel_maximised");
 
       prefs->midisynch=get_boolean_pref("midisynch");
@@ -1644,7 +1644,7 @@ static void lives_init(_ign_opts *ign_opts) {
       load_default_keymap();
       threaded_dialog_spin(0.);
 
-      prefs->audio_opts=get_int_pref("audio_opts");
+      prefs->audio_opts=get_int_pref(PREF_AUDIO_OPTS);
 #ifdef ENABLE_JACK
       lives_snprintf(prefs->jack_aserver,256,"%s/.jackdrc",capable->home_dir);
       lives_snprintf(prefs->jack_tserver,256,"%s/.jackdrc",capable->home_dir);

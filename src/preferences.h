@@ -746,10 +746,31 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 /////////////////// integer32 values
 #define PREF_STARTUP_PHASE "startup_phase"
 
+#define PREF_STARTUP_INTERFACE "startup_interface"
+
 #define PREF_LIVES_WARNING_MASK "lives_warning_mask"
 #define PREF_OPEN_COMPRESSION_PERCENT "open_compression_percent"
 
+#define PREF_PB_QUALITY "pb_quality"
+
+#define PREF_REC_STOP_GB "rec_stop-gb"
+
+#define PREF_NFX_THREADS "nfx_threads"
+
+#define PREF_CLEAR_DISK_OPTS "clear_disk_opts"
+
+#define PREF_MAX_DISP_VTRACKS "max_disp_vtracks"
+
+#define PREF_RTE_KEYS_VIRTUAL "rte_keys_virtual"
+
 #define PREF_JACK_OPTS "jack_opts"
+
+#define PREF_MIDI_CHECK_RATE "midi_check_rate"
+#define PREF_MIDI_RPT "midi_rpt"
+
+#define PREF_ENCODER_ACODEC "encoder_acodec"
+
+#define PREF_AUDIO_OPTS "audio_opts"
 
 #define PREF_RECORD_OPTS "record_opts"
 
@@ -762,6 +783,32 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_MT_DEF_ACHANS "mt_def_achans"
 #define PREF_MT_DEF_ASAMPS "mt_def_asamps"
 #define PREF_MT_DEF_SIGNED_ENDIAN "mt_def_signed_endian"
+
+#define PREF_MT_AUTO_BACK "mt_auto_back"
+#define PREF_MT_UNDO_BUF "mt_undo_buf"
+
+#define PREF_MT_BACKAUDIO "mt_backaudio"
+
+#define PREF_WARN_FILE_SIZE "warn_file_size"
+
+#define PREF_DL_BANDWIDTH_K "dl_bandwidth_K"
+
+
+////////// boolean values
+#define PREF_SHOW_RECENT_FILES "show_recent_files"
+#define PREF_FORCE_SINGLE_MONITOR "force_single_monitor"
+#define PREF_STOP_SCREENSAVER "stop_screensaver"
+#define PREF_MT_ENTER_PROMPT "mt_enter_prompt"
+#define PREF_MT_PERTRACK_AUDIO "mt_pertrack_audio"
+#define PREF_OSC_START "osc_start"
+#define PREF_SHOW_TOOLBAR "show_toolbar"
+#define PREF_CE_MAXSPECT "ce_maxspect"
+
+
+
+
+
+
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

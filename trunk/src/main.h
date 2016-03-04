@@ -486,7 +486,6 @@ typedef enum {
 } lives_image_type_t;
 
 
-
 #define AFORM_SIGNED 0
 #define AFORM_LITTLE_ENDIAN 0
 

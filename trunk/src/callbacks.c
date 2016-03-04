@@ -5351,7 +5351,8 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
     lives_snprintf(buff,512,_("\nExternal: %s\nInternal: %s (%d bpp) / %s\n"),cfile->type,
                    (tmp=lives_strdup((cfile->clip_type==CLIP_TYPE_YUV4MPEG||
                                       cfile->clip_type==CLIP_TYPE_VIDEODEV)?(_("buffered")):
-                                     (cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp,"pcm");
+                                     (cfile->img_type==IMG_TYPE_JPEG?LIVES_IMAGE_TYPE_JPEG:LIVES_IMAGE_TYPE_PNG))),
+		   cfile->bpp,LIVES_AUDIO_TYPE_PCM);
     lives_free(tmp);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_type),buff, -1);
     // fps

@@ -313,6 +313,14 @@ enum {
 };
 
 
+// image types (string)
+#define LIVES_IMAGE_TYPE_JPEG "jpeg"
+#define LIVES_IMAGE_TYPE_PNG "png"
+
+// audio types (string)
+#define LIVES_AUDIO_TYPE_PCM "pcm"
+
+
 // file extensions
 #define LIVES_FILE_EXT_PNG "png"
 #define LIVES_FILE_EXT_JPG "jpg"

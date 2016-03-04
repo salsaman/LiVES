@@ -202,14 +202,13 @@ void lives_exit(int signum) {
 
 	lives_list_free_all(&cfile->layout_map);
 
-        if (cfile->laudio_drawable!=NULL) {
+	if (cfile->laudio_drawable!=NULL) {
           lives_painter_surface_destroy(cfile->laudio_drawable);
         }
 
         if (cfile->raudio_drawable!=NULL) {
           lives_painter_surface_destroy(cfile->raudio_drawable);
         }
-
 
         if ((mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK)&&mainw->files[i]->ext_src!=NULL) {
           // must do this before we move it
@@ -225,8 +224,8 @@ void lives_exit(int signum) {
         cfile->layout_map=NULL;
 
       }
-    }
-
+    
+  
     lives_chdir(cwd,FALSE);
     lives_free(cwd);
 
@@ -272,18 +271,6 @@ void lives_exit(int signum) {
             save_frame_index(i);
           }
           lives_freep((void **)&mainw->files[i]->op_dir);
-          if (!mainw->only_close) {
-            if ((mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK)&&mainw->files[i]->ext_src!=NULL) {
-              char *ppath=lives_build_filename(prefs->tmpdir,mainw->files[i]->handle,NULL);
-              cwd=lives_get_current_dir();
-              lives_chdir(ppath,FALSE);
-              lives_free(ppath);
-              close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
-              mainw->files[i]->ext_src=NULL;
-
-              lives_chdir(cwd,FALSE);
-              lives_free(cwd);
-            }
           }
         }
       }
@@ -615,7 +602,7 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_context_update();
 
   if (prefs->save_directories) {
-    set_pref("vid_load_dir",(tmp=lives_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
+    set_pref(PREF_VID_LOAD_DIR,(tmp=lives_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
     lives_free(tmp);
   }
 
@@ -1140,7 +1127,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (prefs->ar_clipset&&!strcmp(prefs->ar_clipset_name,mainw->set_name)) {
       prefs->ar_clipset=FALSE;
       memset(prefs->ar_clipset_name,0,1);
-      set_pref("ar_clipset","");
+      set_pref(PREF_AR_CLIPSET,"");
     }
     memset(mainw->set_name,0,1);
     mainw->was_set=FALSE;
@@ -1266,25 +1253,23 @@ void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (strlen(mainw->set_name)==0) {
     int response;
-    char new_set_name[128];
+    char new_set_name[MAX_SET_NAME_LEN];
     do {
       // prompt for a set name, advise user to save set
       renamew=create_rename_dialog(5);
       lives_widget_show_all(renamew->dialog);
       response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
       if (response==LIVES_RESPONSE_CANCEL) {
-        lives_widget_destroy(renamew->dialog);
-        lives_free(renamew);
         mainw->cancelled=CANCEL_USER;
         return;
       }
-      lives_snprintf(new_set_name,128,"%s",(tmp=U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
+      lives_snprintf(new_set_name,MAX_SET_NAME_LEN,"%s",(tmp=U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
       lives_widget_destroy(renamew->dialog);
       lives_freep((void **)&renamew);
       lives_free(tmp);
       lives_widget_context_update();
     } while (!is_legal_set_name(new_set_name,FALSE));
-    lives_snprintf(mainw->set_name,128,"%s",new_set_name);
+    lives_snprintf(mainw->set_name,MAX_SET_NAME_LEN,"%s",new_set_name);
   }
 
   if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
@@ -1351,9 +1336,8 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *file_name,*tmp,*tmp2,*com,*fname;
   char *sepimg_ext,*frameimg_ext,*sepimg,*frameimg;
   char *dfile,*themefile;
-
-  boolean set_opt=FALSE;
-
+  char *pstyle;
+  
   int response;
 
   do {
@@ -1361,10 +1345,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     renamew=create_rename_dialog(8);
     lives_widget_show_all(renamew->dialog);
     response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
-    if (response==LIVES_RESPONSE_CANCEL) {
-      lives_freep((void **)&renamew);
-      return;
-    }
+    if (response==LIVES_RESPONSE_CANCEL) return;
     lives_snprintf(theme_name,128,"%s",(tmp=U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
     lives_widget_destroy(renamew->dialog);
     lives_freep((void **)&renamew);
@@ -1405,11 +1386,12 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_mkdir_with_parents(dfile,S_IRWXU);
 
-  lcol.red=palette->style;
-  lcol.green=lcol.blue=lcol.alpha=0;
-
-  set_theme_colour_pref(themefile,THEME_DETAIL_STYLE,&lcol);
-
+  set_theme_pref(themefile,THEME_DETAIL_NAME,theme_name);
+  
+  pstyle=lives_strdup_printf("%d",palette->style);
+  set_theme_pref(themefile,THEME_DETAIL_STYLE,pstyle);
+  lives_free(pstyle);
+  
   widget_color_to_lives_rgba(&lcol,&palette->normal_fore);
   set_theme_colour_pref(themefile,THEME_DETAIL_NORMAL_FORE,&lcol);
 
@@ -1429,7 +1411,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   set_theme_colour_pref(themefile,THEME_DETAIL_INFO_BASE,&lcol);
 
 
-  if (set_opt) {
+  if (mainw->fx1_bool) {
     widget_color_to_lives_rgba(&lcol,&palette->mt_timecode_fg);
     set_theme_colour_pref(themefile,THEME_DETAIL_MT_TCFG,&lcol);
 
@@ -1667,8 +1649,8 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           lives_widget_destroy(cdsw->dialog);
           lives_free(cdsw);
 
-          if (prefs->ar_clipset) set_pref("ar_clipset",set_name);
-          else set_pref("ar_clipset","");
+          if (prefs->ar_clipset) set_pref(PREF_AR_CLIPSET,set_name);
+          else set_pref(PREF_AR_CLIPSET,"");
           mainw->no_exit=FALSE;
           mainw->leave_recovery=FALSE;
           on_save_set_activate(NULL,(tmp=U82F(set_name)));
@@ -1697,7 +1679,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_destroy(cdsw->dialog);
     lives_free(cdsw);
 
-    set_pref("ar_clipset","");
+    set_pref(PREF_AR_CLIPSET,"");
     prefs->ar_clipset=FALSE;
 
     if (mainw->multitrack!=NULL) {
@@ -4256,7 +4238,7 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
 
       if (prefsw==NULL&&strcmp(prefs->encoder.name,future_prefs->encoder.name)) {
         lives_snprintf(prefs->encoder.name,51,"%s",future_prefs->encoder.name);
-        set_pref("encoder",prefs->encoder.name);
+        set_pref(PREF_ENCODER,prefs->encoder.name);
         lives_snprintf(prefs->encoder.of_restrict,1024,"%s",future_prefs->encoder.of_restrict);
         prefs->encoder.of_allowed_acodecs=future_prefs->encoder.of_allowed_acodecs;
       }
@@ -4444,7 +4426,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESList *cliplist;
 
   char new_handle[256];
-  char new_set_name[128];
+  char new_set_name[MAX_SET_NAME_LEN];
 
   char *old_set=lives_strdup(mainw->set_name);
   char *layout_map_file,*layout_map_dir,*new_clips_dir,*current_clips_dir;
@@ -4498,22 +4480,18 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       renamew=create_rename_dialog(2);
       lives_widget_show_all(renamew->dialog);
       response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
-      if (response==LIVES_RESPONSE_CANCEL) {
-        lives_widget_destroy(renamew->dialog);
-        lives_free(renamew);
-        return FALSE;
-      }
-      lives_snprintf(new_set_name,128,"%s",(tmp=U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
+      if (response==LIVES_RESPONSE_CANCEL) return FALSE;
+      lives_snprintf(new_set_name,MAX_SET_NAME_LEN,"%s",(tmp=U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
       lives_widget_destroy(renamew->dialog);
       lives_free(renamew);
       lives_widget_context_update();
     } while (!is_legal_set_name(new_set_name,TRUE));
-  } else lives_snprintf(new_set_name,128,"%s",(char *)user_data);
+  } else lives_snprintf(new_set_name,MAX_SET_NAME_LEN,"%s",(char *)user_data);
 
   lives_widget_queue_draw(mainw->LiVES);
   lives_widget_context_update();
 
-  lives_snprintf(mainw->set_name,128,"%s",new_set_name);
+  lives_snprintf(mainw->set_name,MAX_SET_NAME_LEN,"%s",new_set_name);
 
   if (strcmp(mainw->set_name,old_set)) {
     // THE USER CHANGED the set name
@@ -4529,7 +4507,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_free(new_clips_dir);
       if (mainw->osc_auto==0) {
         if (!do_set_duplicate_warning(mainw->set_name)) {
-          lives_snprintf(mainw->set_name,128,"%s",old_set);
+          lives_snprintf(mainw->set_name,MAX_SET_NAME_LEN,"%s",old_set);
           return FALSE;
         }
       } else if (mainw->osc_auto==1) return FALSE;
@@ -4573,7 +4551,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           LIVES_ERROR("Could not create directory");
           LIVES_ERROR(dfile);
           d_print_file_error_failed();
-          lives_snprintf(mainw->set_name,128,"%s",old_set);
+          lives_snprintf(mainw->set_name,MAX_SET_NAME_LEN,"%s",old_set);
           lives_free(dfile);
           end_threaded_dialog();
           return FALSE;
@@ -4591,7 +4569,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         LIVES_ERROR("Could not create directory");
         LIVES_ERROR(dfile);
         d_print_file_error_failed();
-        lives_snprintf(mainw->set_name,128,"%s",old_set);
+        lives_snprintf(mainw->set_name,MAX_SET_NAME_LEN,"%s",old_set);
         lives_free(dfile);
         end_threaded_dialog();
         return FALSE;
@@ -4950,7 +4928,7 @@ boolean reload_set(const char *set_name) {
         reset_clipmenu();
         lives_widget_set_sensitive(mainw->vj_load_set, FALSE);
 
-        lives_snprintf(mainw->set_name,128,"%s",set_name);
+        lives_snprintf(mainw->set_name,MAX_SET_NAME_LEN,"%s",set_name);
 
         // MUST set set_name before calling this
         recover_layout_map(MAX_FILES);
@@ -6103,7 +6081,7 @@ void on_ok_file_open_clicked(LiVESFileChooser *chooser, LiVESSList *fnames) {
     lives_widget_context_update();
 
     if (prefs->save_directories) {
-      set_pref("vid_load_dir",(tmp=lives_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
+      set_pref(PREF_VID_LOAD_DIR,(tmp=lives_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
       lives_free(tmp);
     }
 
@@ -7879,7 +7857,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
 
 
   if (prefs->save_directories) {
-    set_pref("audio_dir",mainw->audio_dir);
+    set_pref(PREF_AUDIO_DIR,mainw->audio_dir);
   }
   if (!prefs->conserve_space) {
     cfile->undo_action=UNDO_NEW_AUDIO;
@@ -9667,7 +9645,7 @@ boolean frame_context(LiVESWidget *widget, LiVESXEventButton *event, livespointe
   }
 
   if (cfile->frames>0||mainw->multitrack!=NULL) {
-    save_frame_as = lives_menu_item_new_with_mnemonic(_("_Save frame as..."));
+    save_frame_as = lives_menu_item_new_with_mnemonic(_("_Save Frame as..."));
     lives_signal_connect(LIVES_GUI_OBJECT(save_frame_as), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(save_frame),
                          LIVES_INT_TO_POINTER(frame));

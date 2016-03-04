@@ -2188,7 +2188,7 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
 
   // should be in FILESYSTEM encoding
 
-  // may not be longer than 128 chars
+  // may not be longer than MAX_SET_NAME_LEN chars
 
   // iff allow_dupes is FALSE then we disallow the name of any existing set (has a subdirectory in the working directory)
 
@@ -2203,8 +2203,8 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
     return FALSE;
   }
 
-  if (slen>128) {
-    if (!mainw->osc_auto) do_blocking_error_dialog(_("\nSet names may not be longer than 128 characters.\n"));
+  if (slen>MAX_SET_NAME_LEN) {
+    if (!mainw->osc_auto) do_blocking_error_dialog(_("\nSet names may not be longer than ""MAX_SET_NAME_LEN"" characters.\n"));
     return FALSE;
   }
 
@@ -2645,7 +2645,7 @@ void remove_layout_files(LiVESList *map) {
 
         // and we dont want to try reloading this next time
         prefs->ar_layout=FALSE;
-        set_pref("ar_layout","");
+        set_pref(PREF_AR_LAYOUT,"");
         memset(prefs->ar_layout_name,0,1);
       }
       lives_free(fname);
@@ -3270,7 +3270,7 @@ boolean switch_aud_to_jack(void) {
 #endif
   }
   prefs->audio_player=AUD_PLAYER_JACK;
-  set_pref("audio_player","jack");
+  set_pref(PREF_AUDIO_PLAYER,"jack");
   lives_snprintf(prefs->aplayer,512,"%s","jack");
 
   if (mainw->is_ready&&mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL)
@@ -3309,7 +3309,7 @@ boolean switch_aud_to_pulse(void) {
       lives_widget_show(mainw->recaudio_submenu);
 
       prefs->audio_player=AUD_PLAYER_PULSE;
-      set_pref("audio_player","pulse");
+      set_pref(PREF_AUDIO_PLAYER,"pulse");
       lives_snprintf(prefs->aplayer,512,"%s","pulse");
 
       if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL)
@@ -3347,9 +3347,9 @@ boolean switch_aud_to_pulse(void) {
 void switch_aud_to_sox(boolean set_in_prefs) {
   prefs->audio_player=AUD_PLAYER_SOX;
   get_pref_default("sox_command",prefs->audio_play_command,256);
-  if (set_in_prefs) set_pref("audio_player","sox");
+  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER,"sox");
   lives_snprintf(prefs->aplayer,512,"%s","sox");
-  set_pref("audio_play_command",prefs->audio_play_command);
+  set_pref(PREF_AUDIO_PLAY_COMMAND,prefs->audio_play_command);
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label!=NULL) lives_widget_hide(mainw->vol_label);
@@ -3401,9 +3401,9 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
 
   prefs->audio_player=AUD_PLAYER_MPLAYER;
   get_pref_default("mplayer_audio_command",prefs->audio_play_command,256);
-  if (set_in_prefs) set_pref("audio_player","mplayer");
+  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER,"mplayer");
   lives_snprintf(prefs->aplayer,512,"%s","mplayer");
-  set_pref("audio_play_command",prefs->audio_play_command);
+  set_pref(PREF_AUDIO_PLAY_COMMAND,prefs->audio_play_command);
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label!=NULL) lives_widget_hide(mainw->vol_label);
@@ -3454,9 +3454,9 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
 
   prefs->audio_player=AUD_PLAYER_MPLAYER2;
   get_pref_default("mplayer2_audio_command",prefs->audio_play_command,256); // TODO
-  if (set_in_prefs) set_pref("audio_player","mplayer2"); // TODO
+  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER,"mplayer2"); // TODO
   lives_snprintf(prefs->aplayer,512,"%s","mplayer2");
-  set_pref("audio_play_command",prefs->audio_play_command);
+  set_pref(PREF_AUDIO_PLAY_COMMAND,prefs->audio_play_command);
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label!=NULL) lives_widget_hide(mainw->vol_label);
@@ -4258,42 +4258,42 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
         get_menu_text(mainw->recent3,buff);
         set_menu_text(mainw->recent4,buff,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent4,buff,FALSE);
-        set_pref("recent4",(tmp=U82F(buff)));
+        set_pref(PREF_RECENT4,(tmp=U82F(buff)));
         lives_free(tmp);
 
         get_menu_text(mainw->recent2,buff);
         set_menu_text(mainw->recent3,buff,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent3,buff,FALSE);
-        set_pref("recent3",(tmp=U82F(buff)));
+        set_pref(PREF_RECENT3,(tmp=U82F(buff)));
         lives_free(tmp);
 
         get_menu_text(mainw->recent1,buff);
         set_menu_text(mainw->recent2,buff,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-        set_pref("recent2",(tmp=U82F(buff)));
+        set_pref(PREF_RECENT2,(tmp=U82F(buff)));
         lives_free(tmp);
 
         set_menu_text(mainw->recent1,file,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-        set_pref("recent1",(tmp=U82F(file)));
+        set_pref(PREF_RECENT1,(tmp=U82F(file)));
         lives_free(tmp);
       } else {
         // #3 in list
         get_menu_text(mainw->recent2,buff);
         set_menu_text(mainw->recent3,buff,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent3,buff,FALSE);
-        set_pref("recent3",(tmp=U82F(buff)));
+        set_pref(PREF_RECENT3,(tmp=U82F(buff)));
         lives_free(tmp);
 
         get_menu_text(mainw->recent1,buff);
         set_menu_text(mainw->recent2,buff,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-        set_pref("recent2",(tmp=U82F(buff)));
+        set_pref(PREF_RECENT2,(tmp=U82F(buff)));
         lives_free(tmp);
 
         set_menu_text(mainw->recent1,file,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-        set_pref("recent1",(tmp=U82F(file)));
+        set_pref(PREF_RECENT1,(tmp=U82F(file)));
         lives_free(tmp);
       }
     } else {
@@ -4301,12 +4301,12 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
       get_menu_text(mainw->recent1,buff);
       set_menu_text(mainw->recent2,buff,FALSE);
       if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-      set_pref("recent2",(tmp=U82F(buff)));
+      set_pref(PREF_RECENT2,(tmp=U82F(buff)));
       lives_free(tmp);
 
       set_menu_text(mainw->recent1,file,FALSE);
       if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-      set_pref("recent1",(tmp=U82F(file)));
+      set_pref(PREF_RECENT1,(tmp=U82F(file)));
       lives_free(tmp);
     }
   } else {

@@ -210,6 +210,7 @@ typedef enum {
   LIVES_STORAGE_STATUS_OFFLINE
 } lives_storage_status_t;
 
+#define THEME_DETAIL_NAME "theme_name"
 #define THEME_DETAIL_STYLE "theme_style"
 #define THEME_DETAIL_SEPWIN_IMAGE "sepwin_image"
 #define THEME_DETAIL_FRAMEBLANK_IMAGE "frameblank_image"
@@ -381,6 +382,7 @@ typedef struct {
   LiVESSList *clips_group;
 
   /// sets
+#define MAX_SET_NAME_LEN 128
   char set_name[256];   // actually 128 is the (soft) limit now, filesystem encoding
 
   // playback

@@ -705,7 +705,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   renderer = lives_cell_renderer_text_new();
   column = lives_tree_view_column_new_with_attributes(NULL,
            renderer,
-           "text", TITLE2_COLUMN,
+           LIVES_TREE_VIEW_COLUMN_TEXT, TITLE2_COLUMN,
            NULL);
 
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
@@ -727,7 +727,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   //  renderer = lives_cell_renderer_text_new ();
   column = lives_tree_view_column_new_with_attributes(_("value"),
            renderer,
-           "text", VALUE2_COLUMN,
+           LIVES_TREE_VIEW_COLUMN_TEXT, VALUE2_COLUMN,
            NULL);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
 
@@ -1094,7 +1094,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   renderer = lives_cell_renderer_text_new();
   column = lives_tree_view_column_new_with_attributes(NULL,
            renderer,
-           "text", TITLE_COLUMN,
+           LIVES_TREE_VIEW_COLUMN_TEXT, TITLE_COLUMN,
            NULL);
 
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
@@ -1102,7 +1102,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   renderer = lives_cell_renderer_text_new();
   column = lives_tree_view_column_new_with_attributes(_("value"),
            renderer,
-           "text", VALUE_COLUMN,
+           LIVES_TREE_VIEW_COLUMN_TEXT, VALUE_COLUMN,
            NULL);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
@@ -1119,7 +1119,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   renderer = lives_cell_renderer_text_new();
   column = lives_tree_view_column_new_with_attributes(_("range"),
            renderer,
-           "text", RANGE_COLUMN,
+           LIVES_TREE_VIEW_COLUMN_TEXT, RANGE_COLUMN,
            NULL);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
@@ -1140,7 +1140,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
   column = lives_tree_view_column_new_with_attributes(_("+ offset1"),
            renderer,
-           "text", OFFS1_COLUMN,
+           LIVES_TREE_VIEW_COLUMN_TEXT, OFFS1_COLUMN,
            NULL);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
@@ -1160,7 +1160,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
   column = lives_tree_view_column_new_with_attributes(_("* scale"),
            renderer,
-           "text", SCALE_COLUMN,
+           LIVES_TREE_VIEW_COLUMN_TEXT, SCALE_COLUMN,
            NULL);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
@@ -1180,7 +1180,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
   column = lives_tree_view_column_new_with_attributes(_("+ offset2"),
            renderer,
-           "text", OFFS2_COLUMN,
+           LIVES_TREE_VIEW_COLUMN_TEXT, OFFS2_COLUMN,
            NULL);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 

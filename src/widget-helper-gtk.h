@@ -435,6 +435,9 @@ typedef GtkTreeViewColumnSizing LiVESTreeViewColumnSizing;
 #define LIVES_TREE_VIEW_COLUMN_AUTOSIZE GTK_TREE_VIEW_COLUMN_AUTOSIZE
 #define LIVES_TREE_VIEW_COLUMN_FIXED GTK_TREE_VIEW_COLUMN_FIXED
 
+#define LIVES_TREE_VIEW_COLUMN_TEXT "text"
+#define LIVES_TREE_VIEW_COLUMN_PIXBUF "pixbuf"
+
 
 typedef GtkCellRenderer                   LiVESCellRenderer;
 typedef GtkTreeModel                      LiVESTreeModel;

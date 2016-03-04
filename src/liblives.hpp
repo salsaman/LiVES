@@ -657,9 +657,9 @@ namespace lives {
     void invalidate();
     void setClosures(closureList cl);
     
-    bool setPref(int prefidx, bool val) const;
-    bool setPref(int prefidx, int val) const;
-    bool setPref(int prefidx, int bitfield, bool val) const;
+    bool setPref(const char *prefidx, bool val) const;
+    bool setPref(const char *prefidx, int val) const;
+    bool setPref(const char *prefidx, int bitfield, bool val) const;
 
 #endif
 

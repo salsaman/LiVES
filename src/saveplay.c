@@ -1140,7 +1140,7 @@ void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
   get_dirname(mainw->image_dir);
   if (prefs->save_directories) {
     char *tmp;
-    set_pref("image_dir",(tmp=lives_filename_from_utf8(mainw->image_dir,-1,NULL,NULL,NULL)));
+    set_pref(PREF_IMAGE_DIR,(tmp=lives_filename_from_utf8(mainw->image_dir,-1,NULL,NULL,NULL)));
     lives_free(tmp);
   }
 
@@ -1259,7 +1259,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     lives_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",n_file_name);
     get_dirname(mainw->vid_save_dir);
     if (prefs->save_directories) {
-      set_pref("vid_save_dir",(tmp=lives_filename_from_utf8(mainw->vid_save_dir,-1,NULL,NULL,NULL)));
+      set_pref(PREF_VID_SAVE_DIR,(tmp=lives_filename_from_utf8(mainw->vid_save_dir,-1,NULL,NULL,NULL)));
       lives_free(tmp);
     }
     lives_free(ttl);

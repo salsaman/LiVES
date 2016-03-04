@@ -83,7 +83,7 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
   vfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGVAL_FILE_NAME".%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
 
   do {
-    retval=0;
+    retval=LIVES_RESPONSE_NONE;
     alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     timeout=FALSE;
     mainw->read_failed=FALSE;
@@ -125,9 +125,10 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
 }
 
 
-void get_pref(const char *key, char *val, int maxlen) {
-  get_pref_inner(NULL,key,val,maxlen);
+int get_pref(const char *key, char *val, int maxlen) {
+  return get_pref_inner(NULL,key,val,maxlen);
 }
+
 
 int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen) {
   return get_pref_inner(filename,key,val,maxlen);
@@ -135,13 +136,14 @@ int get_pref_from_file(const char *filename, const char *key, char *val, int max
 
 
 
-void get_pref_utf8(const char *key, char *val, int maxlen) {
+int get_pref_utf8(const char *key, char *val, int maxlen) {
   // get a pref in locale encoding, then convert it to utf8
   char *tmp;
-  get_pref(key,val,maxlen);
+  int retval=get_pref(key,val,maxlen);
   tmp=lives_filename_to_utf8(val,-1,NULL,NULL,NULL);
   lives_snprintf(val,maxlen,"%s",tmp);
   lives_free(tmp);
+  return retval;
 }
 
 
@@ -154,7 +156,7 @@ LiVESList *get_list_pref(const char *key) {
 
   LiVESList *retlist=NULL;
 
-  get_pref(key,buf,65535);
+  if (get_pref(key,buf,65535)!=LIVES_RESPONSE_NONE) return NULL;
   if (!strlen(buf)) return NULL;
 
   nvals=get_token_count(buf,'\n');
@@ -237,6 +239,7 @@ void get_pref_default(const char *key, char *val, int maxlen) {
 
 boolean get_boolean_pref(const char *key) {
   char buffer[16];
+  buffer[0]=0;
   get_pref(key,buffer,16);
   if (!strcmp(buffer,"true")) return TRUE;
   return FALSE;
@@ -244,6 +247,7 @@ boolean get_boolean_pref(const char *key) {
 
 int get_int_pref(const char *key) {
   char buffer[64];
+  buffer[0]=0;
   get_pref(key,buffer,64);
   if (strlen(buffer)==0) return 0;
   return atoi(buffer);
@@ -251,6 +255,7 @@ int get_int_pref(const char *key) {
 
 double get_double_pref(const char *key) {
   char buffer[64];
+  buffer[0]=0;
   get_pref(key,buffer,64);
   if (strlen(buffer)==0) return 0.;
   return strtod(buffer,NULL);
@@ -261,7 +266,7 @@ boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
   char buffer[64];
   char **array;
 
-  get_pref(key,buffer,64);
+  if (get_pref(key,buffer,64)!=LIVES_RESPONSE_NONE) return FALSE;
   if (strlen(buffer)==0) return FALSE;
   if (get_token_count(buffer,' ')<4) return FALSE;
 
@@ -280,7 +285,7 @@ boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colR
   char buffer[64];
   char **array;
 
-  get_pref_from_file(themefile,key,buffer,64);
+  if (get_pref_from_file(themefile,key,buffer,64)!=LIVES_RESPONSE_NONE) return FALSE;
   if (strlen(buffer)==0) return FALSE;
   if (get_token_count(buffer,' ')<4) return FALSE;
 
@@ -306,6 +311,15 @@ void delete_pref(const char *key) {
 
 void set_pref(const char *key, const char *value) {
   char *com=lives_strdup_printf("%s set_pref \"%s\" \"%s\"",prefs->backend_sync,key,value);
+  if (system(com)) {
+    tempdir_warning();
+  }
+  lives_free(com);
+}
+
+
+void set_theme_pref(const char *themefile, const char *key, const char *value) {
+  char *com=lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend_sync,themefile,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -558,14 +572,17 @@ static void set_temp_label_text(LiVESLabel *label) {
 
 
 
-void pref_factory_bool(int prefidx, boolean newval) {
+void pref_factory_bool(const char *prefidx, boolean newval) {
+  // this is called from lbindings.c which in turn is called from liblives.cpp
 
-  switch (prefidx) {
-  case PREF_REC_EXT_AUDIO: {
+  // can also be called from other places
+
+  
+  if (!strcmp(prefidx,PREF_REC_EXT_AUDIO)) {
     boolean rec_ext_audio=newval;
     if (rec_ext_audio&&prefs->audio_src==AUDIO_SRC_INT) {
       prefs->audio_src=AUDIO_SRC_EXT;
-      set_int_pref("audio_src",AUDIO_SRC_EXT);
+      set_int_pref(PREF_AUDIO_SRC,AUDIO_SRC_EXT);
 
       if (mainw->playing_file==-1) {
         if (prefs->audio_player==AUD_PLAYER_JACK) {
@@ -588,7 +605,7 @@ void pref_factory_bool(int prefidx, boolean newval) {
 
     } else if (!rec_ext_audio&&prefs->audio_src==AUDIO_SRC_EXT) {
       prefs->audio_src=AUDIO_SRC_INT;
-      set_int_pref("audio_src",AUDIO_SRC_INT);
+      set_int_pref(PREF_AUDIO_SRC,AUDIO_SRC_INT);
 
       mainw->aud_rec_fd=-1;
       if (prefs->perm_audio_reader) {
@@ -605,32 +622,27 @@ void pref_factory_bool(int prefidx, boolean newval) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio),prefs->audio_src==AUDIO_SRC_EXT);
 
   }
-  break;
-  case PREF_SEPWIN_STICKY: {
+  if (!strcmp(prefidx,PREF_SEPWIN_STICKY)) {
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sticky),newval);
   }
-  break;
-  case PREF_MT_EXIT_RENDER: {
+  if (!strcmp(prefidx,PREF_MT_EXIT_RENDER)) {
     prefs->mt_exit_render=newval;
     if (prefsw!=NULL)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
   }
-  break;
-  default:
-    break;
-  }
+
+
 }
 
 
-void pref_factory_int(int prefidx, int newval) {
+void pref_factory_int(const char *prefidx, int newval) {
   // TODO
 }
 
 
 
-void pref_factory_bitmapped(int prefidx, int bitfield, boolean newval) {
-  switch (prefidx) {
-  case PREF_AUDIO_OPTS: {
+void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval) {
+  if (!strcmp(prefidx,PREF_MT_EXIT_RENDER)) {
     if (newval&&!(prefs->audio_opts&bitfield)) prefs->audio_opts&=bitfield;
     else if (!newval&&(prefs->audio_opts&bitfield)) prefs->audio_opts^=bitfield;
     if (prefsw!=NULL) {
@@ -640,10 +652,7 @@ void pref_factory_bitmapped(int prefidx, int bitfield, boolean newval) {
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aclips),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)?TRUE:FALSE);
     }
   }
-  break;
-  default:
-    break;
-  }
+
 }
 
 
@@ -1255,10 +1264,10 @@ boolean apply_prefs(boolean skip_warn) {
 
   // jpeg/png
   if (strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)&&ext_jpeg) {
-    set_pref("default_image_format","jpeg");
+    set_pref(PREF_DEFAULT_IMAGE_FORMAT,"jpeg");
     lives_snprintf(prefs->image_ext,16,LIVES_FILE_EXT_JPG);
   } else if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)&&!ext_jpeg) {
-    set_pref("default_image_format","png");
+    set_pref(PREF_DEFAULT_IMAGE_FORMAT,"png");
     lives_snprintf(prefs->image_ext,16,LIVES_FILE_EXT_PNG);
   }
 
@@ -1291,7 +1300,7 @@ boolean apply_prefs(boolean skip_warn) {
   // encoder
   if (strcmp(prefs->encoder.name,future_prefs->encoder.name)) {
     lives_snprintf(prefs->encoder.name,51,"%s",future_prefs->encoder.name);
-    set_pref("encoder",prefs->encoder.name);
+    set_pref(PREF_ENCODER,prefs->encoder.name);
     lives_snprintf(prefs->encoder.of_restrict,1024,"%s",future_prefs->encoder.of_restrict);
     prefs->encoder.of_allowed_acodecs=future_prefs->encoder.of_allowed_acodecs;
   }
@@ -1327,7 +1336,7 @@ boolean apply_prefs(boolean skip_warn) {
   // video open command
   if (strcmp(prefs->video_open_command,video_open_command)) {
     lives_snprintf(prefs->video_open_command,256,"%s",video_open_command);
-    set_pref("video_open_command",prefs->video_open_command);
+    set_pref(PREF_VIDEO_OPEN_COMMAND,prefs->video_open_command);
   }
 
   //playback plugin
@@ -1336,7 +1345,7 @@ boolean apply_prefs(boolean skip_warn) {
   // audio play command
   if (strcmp(prefs->audio_play_command,audio_play_command)) {
     lives_snprintf(prefs->audio_play_command,256,"%s",audio_play_command);
-    set_pref("audio_play_command",prefs->audio_play_command);
+    set_pref(PREF_AUDIO_PLAY_COMMAND,prefs->audio_play_command);
   }
 
   // cd play device
@@ -1351,7 +1360,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(prefs->def_vid_load_dir,def_vid_load_dir)) {
     lives_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s/",def_vid_load_dir);
     get_dirname(prefs->def_vid_load_dir);
-    set_pref("vid_load_dir",prefs->def_vid_load_dir);
+    set_pref(PREF_VID_LOAD_DIR,prefs->def_vid_load_dir);
     lives_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",prefs->def_vid_load_dir);
   }
 
@@ -1359,7 +1368,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(prefs->def_vid_save_dir,def_vid_save_dir)) {
     lives_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s/",def_vid_save_dir);
     get_dirname(prefs->def_vid_save_dir);
-    set_pref("vid_save_dir",prefs->def_vid_save_dir);
+    set_pref(PREF_VID_SAVE_DIR,prefs->def_vid_save_dir);
     lives_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",prefs->def_vid_save_dir);
   }
 
@@ -1367,7 +1376,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(prefs->def_audio_dir,def_audio_dir)) {
     lives_snprintf(prefs->def_audio_dir,PATH_MAX,"%s/",def_audio_dir);
     get_dirname(prefs->def_audio_dir);
-    set_pref("audio_dir",prefs->def_audio_dir);
+    set_pref(PREF_AUDIO_DIR,prefs->def_audio_dir);
     lives_snprintf(mainw->audio_dir,PATH_MAX,"%s",prefs->def_audio_dir);
   }
 
@@ -1375,7 +1384,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(prefs->def_image_dir,def_image_dir)) {
     lives_snprintf(prefs->def_image_dir,PATH_MAX,"%s/",def_image_dir);
     get_dirname(prefs->def_image_dir);
-    set_pref("image_dir",prefs->def_image_dir);
+    set_pref(PREF_IMAGE_DIR,prefs->def_image_dir);
     lives_snprintf(mainw->image_dir,PATH_MAX,"%s",prefs->def_image_dir);
   }
 
@@ -1394,7 +1403,7 @@ boolean apply_prefs(boolean skip_warn) {
     if (strcmp(theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
       lives_snprintf(prefs->theme,64,"%s",theme);
       lives_snprintf(future_prefs->theme,64,"%s",theme);
-      set_pref("gui_theme",future_prefs->theme);
+      set_pref(PREF_GUI_THEME,future_prefs->theme);
       widget_opts.apply_theme=TRUE;
       set_palette_colours(TRUE);
       if (mainw->multitrack!=NULL) {
@@ -1404,7 +1413,7 @@ boolean apply_prefs(boolean skip_warn) {
       mainw->prefs_changed|=PREFS_COLOURS_CHANGED|PREFS_IMAGES_CHANGED;
     } else {
       lives_snprintf(future_prefs->theme,64,"none");
-      set_pref("gui_theme",future_prefs->theme);
+      set_pref(PREF_GUI_THEME,future_prefs->theme);
       delete_pref(THEME_DETAIL_STYLE);
       delete_pref(THEME_DETAIL_SEPWIN_IMAGE);
       delete_pref(THEME_DETAIL_FRAMEBLANK_IMAGE);
@@ -1778,14 +1787,14 @@ void save_future_prefs(void) {
 
   // show_recent is a special case, future prefs has our original value
   if (!prefs->show_recent&&future_prefs->show_recent) {
-    set_pref("recent1","");
-    set_pref("recent2","");
-    set_pref("recent3","");
-    set_pref("recent4","");
+    set_pref(PREF_RECENT1,"");
+    set_pref(PREF_RECENT2,"");
+    set_pref(PREF_RECENT3,"");
+    set_pref(PREF_RECENT4,"");
   }
 
   if (strncmp(future_prefs->tmpdir,"NULL",4)) {
-    set_pref("tempdir",future_prefs->tmpdir);
+    set_pref(PREF_WORKING_DIR,future_prefs->tmpdir);
   }
   if (prefs->show_tool!=future_prefs->show_tool) {
     set_boolean_pref("show_toolbar",future_prefs->show_tool);
@@ -2139,8 +2148,8 @@ static void pref_init_list(LiVESWidget *list) {
   renderer = lives_cell_renderer_text_new();
   pixbufRenderer = lives_cell_renderer_pixbuf_new();
 
-  column1 = lives_tree_view_column_new_with_attributes("List Icons", pixbufRenderer, "pixbuf", LIST_ICON, NULL);
-  column2 = lives_tree_view_column_new_with_attributes("List Items", renderer, "text", LIST_ITEM, NULL);
+  column1 = lives_tree_view_column_new_with_attributes("List Icons", pixbufRenderer, LIVES_TREE_VIEW_COLUMN_PIXBUF, LIST_ICON, NULL);
+  column2 = lives_tree_view_column_new_with_attributes("List Items", renderer, LIVES_TREE_VIEW_COLUMN_TEXT, LIST_ITEM, NULL);
   lives_tree_view_append_column(LIVES_TREE_VIEW(list), column1);
   lives_tree_view_append_column(LIVES_TREE_VIEW(list), column2);
   lives_tree_view_column_set_sizing(column2, LIVES_TREE_VIEW_COLUMN_FIXED);

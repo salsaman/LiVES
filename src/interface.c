@@ -41,8 +41,12 @@ void add_suffix_check(LiVESBox *box, const char *ext) {
 
 
 static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
+  char *tmp,*tmp2;
   LiVESWidget *hbox=lives_hbox_new(FALSE, 0);
-  LiVESWidget *checkbutton = lives_standard_check_button_new(_("Apply _Deinterlace"),TRUE,LIVES_BOX(hbox),NULL);
+  LiVESWidget *checkbutton = lives_standard_check_button_new((tmp=lives_strdup(_("Apply _Deinterlace"))),TRUE,LIVES_BOX(hbox),
+							     (tmp2=lives_strdup( _("If this is set, frames will be deinterlaced as they are imported."))));
+  lives_free(tmp);
+  lives_free(tmp2);
 
   if (LIVES_IS_HBOX(for_deint)) {
     LiVESWidget *filler;
@@ -57,7 +61,6 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_boolean_toggled),
                              &mainw->open_deint);
-  lives_widget_set_tooltip_text(checkbutton,_("If this is set, frames will be deinterlaced as they are imported."));
 
   lives_widget_show_all(LIVES_WIDGET(for_deint));
 
@@ -1190,6 +1193,7 @@ _entryw *create_rename_dialog(int type) {
   LiVESWidget *label;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
+  LiVESWidget *checkbutton;
   LiVESWidget *set_combo;
   LiVESWidget *dirbutton1;
   LiVESWidget *dirimage1;
@@ -1213,7 +1217,7 @@ _entryw *create_rename_dialog(int type) {
   } else if (type==7) {
     title=lives_strdup(_("Rename Current Track"));
   } else if (type==8) {
-    title=lives_strdup(_("Enter a name for your theme"));
+    title=lives_strdup(_("Enter a Name for Your Theme"));
   }
 
   renamew->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
@@ -1329,6 +1333,20 @@ _entryw *create_rename_dialog(int type) {
 
   }
 
+  if (type==8) {
+    mainw->fx1_bool=FALSE;
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*4);
+
+    checkbutton = lives_standard_check_button_new(_("Save extended colors"),TRUE,LIVES_BOX(hbox),NULL);
+    
+    lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+			       LIVES_GUI_CALLBACK(on_boolean_toggled),
+			       &mainw->fx1_bool);
+  }
+
+
+  
 
   lives_entry_set_activates_default(LIVES_ENTRY(renamew->entry), TRUE);
   lives_entry_set_width_chars(LIVES_ENTRY(renamew->entry),RW_ENTRY_DISPWIDTH);
@@ -1351,7 +1369,7 @@ _entryw *create_rename_dialog(int type) {
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
 
-  if (type==1||type>5) {
+  if (type!=3) {
     lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),
                          renamew);

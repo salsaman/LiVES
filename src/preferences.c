@@ -318,6 +318,18 @@ void set_pref(const char *key, const char *value) {
 }
 
 
+void set_pref_utf8(const char *key, const char *value) {
+  // convert to locale encoding
+  char *tmp=U82F(value);
+  char *com=lives_strdup_printf("%s set_pref \"%s\" \"%s\"",prefs->backend_sync,key,tmp);
+  if (system(com)) {
+    tempdir_warning();
+  }
+  lives_free(com);
+  lives_free(tmp);
+}
+
+
 void set_theme_pref(const char *themefile, const char *key, const char *value) {
   char *com=lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend_sync,themefile,key,value);
   if (system(com)) {
@@ -337,6 +349,7 @@ void set_int_pref(const char *key, int value) {
 
 
 void set_int64_pref(const char *key, int64_t value) {
+  // not used
   char *com=lives_strdup_printf("%s set_pref \"%s\" %"PRId64,prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
@@ -487,14 +500,14 @@ void set_vpp(boolean set_in_prefs) {
         if (mainw->ext_playback) vid_playback_plugin_exit();
         close_vid_playback_plugin(mainw->vpp);
         mainw->vpp=NULL;
-        if (set_in_prefs) set_pref("vid_playback_plugin","none");
+        if (set_in_prefs) set_pref(PREF_VID_PLAYBACK_PLUGIN,"none");
       }
     } else {
       _vid_playback_plugin *vpp;
       if ((vpp=open_vid_playback_plugin(future_prefs->vpp_name,TRUE))!=NULL) {
         mainw->vpp=vpp;
         if (set_in_prefs) {
-          set_pref("vid_playback_plugin",mainw->vpp->name);
+          set_pref(PREF_VID_PLAYBACK_PLUGIN,mainw->vpp->name);
           if (!mainw->ext_playback)
             do_error_dialog_with_check_transient
             (_("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"),
@@ -1016,11 +1029,11 @@ boolean apply_prefs(boolean skip_warn) {
   lives_free(tmp);
 
   if (audp==NULL) memset(audio_player,0,1);
-  else if (!strncmp(audp,"mplayer",7)) lives_snprintf(audio_player,256,"mplayer");
-  else if (!strncmp(audp,"mplayer2",8)) lives_snprintf(audio_player,256,"mplayer2");
-  else if (!strncmp(audp,"jack",4)) lives_snprintf(audio_player,256,"jack");
-  else if (!strncmp(audp,"sox",3)) lives_snprintf(audio_player,256,"sox");
-  else if (!strncmp(audp,"pulse audio",11)) lives_snprintf(audio_player,256,"pulse");
+  else if (!strncmp(audp,AUDIO_PLAYER_MPLAYER,7)) lives_snprintf(audio_player,256,AUDIO_PLAYER_MPLAYER);
+  else if (!strncmp(audp,AUDIO_PLAYER_MPLAYER2,8)) lives_snprintf(audio_player,256,AUDIO_PLAYER_MPLAYER2);
+  else if (!strncmp(audp,AUDIO_PLAYER_JACK,4)) lives_snprintf(audio_player,256,AUDIO_PLAYER_JACK);
+  else if (!strncmp(audp,AUDIO_PLAYER_SOX,3)) lives_snprintf(audio_player,256,AUDIO_PLAYER_SOX);
+  else if (!strncmp(audp,"pulse audio",11)) lives_snprintf(audio_player,256,AUDIO_PLAYER_PULSE);
 
   lives_free(audp);
 
@@ -1093,17 +1106,17 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   if (strcmp(wp_path,prefs->weed_plugin_path)) {
-    set_pref("weed_plugin_path",wp_path);
+    set_pref(PREF_WEED_PLUGIN_PATH,wp_path);
     lives_snprintf(prefs->weed_plugin_path,PATH_MAX,"%s",wp_path);
   }
 
   if (strcmp(frei0r_path,prefs->frei0r_path)) {
-    set_pref("frei0r_path",frei0r_path);
+    set_pref(PREF_FREI0R_PATH,frei0r_path);
     lives_snprintf(prefs->frei0r_path,PATH_MAX,"%s",frei0r_path);
   }
 
   if (strcmp(ladspa_path,prefs->ladspa_path)) {
-    set_pref("ladspa_path",ladspa_path);
+    set_pref(PREF_LADSPA_PATH,ladspa_path);
     lives_snprintf(prefs->ladspa_path,PATH_MAX,"%s",ladspa_path);
   }
 
@@ -1218,7 +1231,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (capable->nmonitors>1) {
     if (gui_monitor!=prefs->gui_monitor||play_monitor!=prefs->play_monitor) {
       char *str=lives_strdup_printf("%d,%d",gui_monitor,play_monitor);
-      set_pref("monitors",str);
+      set_pref(PREF_MONITORS,str);
       prefs->gui_monitor=gui_monitor;
       prefs->play_monitor=play_monitor;
 
@@ -1311,7 +1324,7 @@ boolean apply_prefs(boolean skip_warn) {
     lives_snprintf(prefs->encoder.of_restrict,1024,"%s",future_prefs->encoder.of_restrict);
     lives_snprintf(prefs->encoder.of_desc,128,"%s",future_prefs->encoder.of_desc);
     prefs->encoder.of_allowed_acodecs=future_prefs->encoder.of_allowed_acodecs;
-    set_pref("output_type",prefs->encoder.of_name);
+    set_pref(PREF_OUTPUT_TYPE,prefs->encoder.of_name);
   }
 
   if (prefs->encoder.audio_codec!=future_prefs->encoder.audio_codec) {
@@ -1351,7 +1364,7 @@ boolean apply_prefs(boolean skip_warn) {
   // cd play device
   if (strcmp(prefs->cdplay_device,cdplay_device)) {
     lives_snprintf(prefs->cdplay_device,256,"%s",cdplay_device);
-    set_pref("cdplay_device",prefs->cdplay_device);
+    set_pref(PREF_CDPLAY_DEVICE,prefs->cdplay_device);
   }
 
   lives_free(cdplay_device);
@@ -1360,7 +1373,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(prefs->def_vid_load_dir,def_vid_load_dir)) {
     lives_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s/",def_vid_load_dir);
     get_dirname(prefs->def_vid_load_dir);
-    set_pref(PREF_VID_LOAD_DIR,prefs->def_vid_load_dir);
+    set_pref_utf8(PREF_VID_LOAD_DIR,prefs->def_vid_load_dir);
     lives_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",prefs->def_vid_load_dir);
   }
 
@@ -1368,7 +1381,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(prefs->def_vid_save_dir,def_vid_save_dir)) {
     lives_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s/",def_vid_save_dir);
     get_dirname(prefs->def_vid_save_dir);
-    set_pref(PREF_VID_SAVE_DIR,prefs->def_vid_save_dir);
+    set_pref_utf8(PREF_VID_SAVE_DIR,prefs->def_vid_save_dir);
     lives_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",prefs->def_vid_save_dir);
   }
 
@@ -1376,7 +1389,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(prefs->def_audio_dir,def_audio_dir)) {
     lives_snprintf(prefs->def_audio_dir,PATH_MAX,"%s/",def_audio_dir);
     get_dirname(prefs->def_audio_dir);
-    set_pref(PREF_AUDIO_DIR,prefs->def_audio_dir);
+    set_pref_utf8(PREF_AUDIO_DIR,prefs->def_audio_dir);
     lives_snprintf(mainw->audio_dir,PATH_MAX,"%s",prefs->def_audio_dir);
   }
 
@@ -1384,7 +1397,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(prefs->def_image_dir,def_image_dir)) {
     lives_snprintf(prefs->def_image_dir,PATH_MAX,"%s/",def_image_dir);
     get_dirname(prefs->def_image_dir);
-    set_pref(PREF_IMAGE_DIR,prefs->def_image_dir);
+    set_pref_utf8(PREF_IMAGE_DIR,prefs->def_image_dir);
     lives_snprintf(mainw->image_dir,PATH_MAX,"%s",prefs->def_image_dir);
   }
 
@@ -1392,7 +1405,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(prefs->def_proj_dir,def_proj_dir)) {
     lives_snprintf(prefs->def_proj_dir,PATH_MAX,"%s/",def_proj_dir);
     get_dirname(prefs->def_proj_dir);
-    set_pref("proj_dir",prefs->def_proj_dir);
+    set_pref_utf8(PREF_PROJ_DIR,prefs->def_proj_dir);
     lives_snprintf(mainw->proj_load_dir,PATH_MAX,"%s",prefs->def_proj_dir);
     lives_snprintf(mainw->proj_save_dir,PATH_MAX,"%s",prefs->def_proj_dir);
   }
@@ -1432,7 +1445,7 @@ boolean apply_prefs(boolean skip_warn) {
   // default fps
   if (prefs->default_fps!=default_fps) {
     prefs->default_fps=default_fps;
-    set_double_pref("default_fps",prefs->default_fps);
+    set_double_pref(PREF_DEFAULT_FPS,prefs->default_fps);
   }
 
   // virtual rte keys
@@ -1460,13 +1473,13 @@ boolean apply_prefs(boolean skip_warn) {
   if (ds_warn_level!=prefs->ds_warn_level) {
     prefs->ds_warn_level=ds_warn_level;
     mainw->next_ds_warn_level=prefs->ds_warn_level;
-    set_int64_pref("ds_warn_level",ds_warn_level);
+    set_int64_pref(PREF_DS_WARN_LEVEL,ds_warn_level);
   }
 
 
   if (ds_crit_level!=prefs->ds_crit_level) {
     prefs->ds_crit_level=ds_crit_level;
-    set_int64_pref("ds_crit_level",ds_crit_level);
+    set_int64_pref(PREF_DS_CRIT_LEVEL,ds_crit_level);
   }
 
 
@@ -1535,19 +1548,19 @@ boolean apply_prefs(boolean skip_warn) {
     (_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"),
      TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):LIVES_WINDOW(mainw->LiVES));
   } else {
-    if (prefs->audio_player==AUD_PLAYER_JACK&&strcmp(audio_player,"jack")) {
+    if (prefs->audio_player==AUD_PLAYER_JACK&&strcmp(audio_player,AUDIO_PLAYER_JACK)) {
       do_error_dialog_with_check_transient
       (_("\nSwitching audio players requires restart (jackd must not be running)\n"),
        TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):LIVES_WINDOW(mainw->LiVES));
     }
 
     // switch to sox
-    if (!(strcmp(audio_player,"sox"))&&prefs->audio_player!=AUD_PLAYER_SOX) {
+    if (!(strcmp(audio_player,AUDIO_PLAYER_SOX))&&prefs->audio_player!=AUD_PLAYER_SOX) {
       switch_aud_to_sox(TRUE);
     }
 
     // switch to jack
-    else if (!(strcmp(audio_player,"jack"))&&prefs->audio_player!=AUD_PLAYER_JACK) {
+    else if (!(strcmp(audio_player,AUDIO_PLAYER_JACK))&&prefs->audio_player!=AUD_PLAYER_JACK) {
       // may fail
       if (!switch_aud_to_jack()) {
         do_jack_noopen_warn();
@@ -1556,12 +1569,12 @@ boolean apply_prefs(boolean skip_warn) {
     }
 
     // switch to mplayer audio
-    else if (!(strcmp(audio_player,"mplayer"))&&prefs->audio_player!=AUD_PLAYER_MPLAYER) {
+    else if (!(strcmp(audio_player,AUDIO_PLAYER_MPLAYER))&&prefs->audio_player!=AUD_PLAYER_MPLAYER) {
       switch_aud_to_mplayer(TRUE);
     }
 
     // switch to pulse audio
-    else if (!(strcmp(audio_player,"pulse"))&&prefs->audio_player!=AUD_PLAYER_PULSE) {
+    else if (!(strcmp(audio_player,AUDIO_PLAYER_PULSE))&&prefs->audio_player!=AUD_PLAYER_PULSE) {
       if (!capable->has_pulse_audio) {
         do_error_dialog_with_check_transient
         (_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"),
@@ -1575,7 +1588,7 @@ boolean apply_prefs(boolean skip_warn) {
     }
 
     // switch to mplayer2 audio
-    else if (!(strcmp(audio_player,"mplayer2"))&&prefs->audio_player!=AUD_PLAYER_MPLAYER2) {
+    else if (!(strcmp(audio_player,AUDIO_PLAYER_MPLAYER2))&&prefs->audio_player!=AUD_PLAYER_MPLAYER2) {
       switch_aud_to_mplayer2(TRUE);
     }
     //
@@ -1595,7 +1608,7 @@ boolean apply_prefs(boolean skip_warn) {
 #ifdef OMC_JS_IMPL
   if (strcmp(omc_js_fname,prefs->omc_js_fname)) {
     lives_snprintf(prefs->omc_js_fname,256,"%s",omc_js_fname);
-    set_pref("omc_js_fname",omc_js_fname);
+    set_pref_utf8(PREF_OMC_JS_FNAME,omc_js_fname);
   }
   if (omc_js_enable!=((prefs->omc_dev_opts&OMC_DEV_JS)/OMC_DEV_JS)) {
     if (omc_js_enable) {
@@ -1613,7 +1626,7 @@ boolean apply_prefs(boolean skip_warn) {
 #ifdef OMC_MIDI_IMPL
   if (strcmp(omc_midi_fname,prefs->omc_midi_fname)) {
     lives_snprintf(prefs->omc_midi_fname,256,"%s",omc_midi_fname);
-    set_pref("omc_midi_fname",omc_midi_fname);
+    set_pref_utf8(PREF_OMC_MIDI_FNAME,omc_midi_fname);
   }
 
   if (midicr!=prefs->midi_check_rate) {
@@ -1696,7 +1709,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
   if (mt_def_fps!=prefs->mt_def_fps) {
     prefs->mt_def_fps=mt_def_fps;
-    set_double_pref("mt_def_fps",mt_def_fps);
+    set_double_pref(PREF_MT_DEF_FPS,mt_def_fps);
   }
   if (!mt_enable_audio) mt_def_achans=0;
   if (mt_def_achans!=prefs->mt_def_achans) {
@@ -2021,7 +2034,7 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
   }
 
 #ifdef RT_AUDIO
-  if (!strncmp(audp,"jack",4)||!strncmp(audp,"pulse",5)) {
+  if (!strncmp(audp,AUDIO_PLAYER_JACK,4)||!strncmp(audp,AUDIO_PLAYER_PULSE,5)) {
     lives_widget_set_sensitive(prefsw->checkbutton_aclips,TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_afollow,TRUE);
   } else {
@@ -2031,7 +2044,7 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
     lives_widget_set_sensitive(prefsw->rextaudio,FALSE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio),FALSE);
   }
-  if (!strncmp(audp,"jack",4)) {
+  if (!strncmp(audp,AUDIO_PLAYER_JACK,4)) {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon,TRUE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),TRUE);
@@ -2411,10 +2424,10 @@ _prefsw *create_prefs_dialog(void) {
   mainw->prefs_need_restart = FALSE;
 
   // Create new modal dialog window and set some attributes
-  prefsw->prefs_dialog = lives_standard_dialog_new(_("Preferences"),FALSE,PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
+  prefsw->prefs_dialog = lives_standard_dialog_new(_("Preferences"),FALSE,PREFWIN_WIDTH,PREFWIN_HEIGHT);
   lives_window_add_accel_group(LIVES_WINDOW(prefsw->prefs_dialog), accel_group);
 
-  lives_window_set_default_size(LIVES_WINDOW(prefsw->prefs_dialog), PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
+  lives_window_set_default_size(LIVES_WINDOW(prefsw->prefs_dialog),PREFWIN_WIDTH,PREFWIN_HEIGHT);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),LIVES_WINDOW(mainw->LiVES));
@@ -3107,21 +3120,21 @@ _prefsw *create_prefs_dialog(void) {
 #ifdef ENABLE_JACK
   if (!has_ap_rec) audp = lives_list_append(audp, lives_strdup_printf("jack (%s)",
                             mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
-  else audp = lives_list_append(audp, lives_strdup_printf("jack"));
+  else audp = lives_list_append(audp, lives_strdup_printf(AUDIO_PLAYER_JACK));
   has_ap_rec=TRUE;
 #endif
 
   if (capable->has_sox_play) {
-    if (has_ap_rec) audp = lives_list_append(audp, lives_strdup("sox"));
+    if (has_ap_rec) audp = lives_list_append(audp, lives_strdup(AUDIO_PLAYER_SOX));
     else audp = lives_list_append(audp, lives_strdup_printf("sox (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
   }
 
   if (capable->has_mplayer) {
-    audp = lives_list_append(audp, lives_strdup("mplayer"));
+    audp = lives_list_append(audp, lives_strdup(AUDIO_PLAYER_MPLAYER));
   }
 
   if (capable->has_mplayer2) {
-    audp = lives_list_append(audp, lives_strdup("mplayer2"));
+    audp = lives_list_append(audp, lives_strdup(AUDIO_PLAYER_MPLAYER2));
   }
 
   widget_opts.expand=LIVES_EXPAND_EXTRA;
@@ -3146,18 +3159,18 @@ _prefsw *create_prefs_dialog(void) {
   if (prefs->audio_player==AUD_PLAYER_JACK) {
     if (!has_ap_rec)
       prefsw->audp_name=lives_strdup_printf("jack (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
-    else prefsw->audp_name=lives_strdup_printf("jack");
+    else prefsw->audp_name=lives_strdup_printf(AUDIO_PLAYER_JACK);
   }
   has_ap_rec=TRUE;
 #endif
 
   if (prefs->audio_player==AUD_PLAYER_SOX) {
     if (!has_ap_rec) prefsw->audp_name=lives_strdup_printf("sox (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
-    else prefsw->audp_name=lives_strdup_printf("sox");
+    else prefsw->audp_name=lives_strdup_printf(AUDIO_PLAYER_SOX);
   }
 
   if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
-    prefsw->audp_name=lives_strdup(_("mplayer"));
+    prefsw->audp_name=lives_strdup(_(AUDIO_PLAYER_MPLAYER));
   }
   // ---
   if (prefsw->audp_name!=NULL)
@@ -3168,7 +3181,7 @@ _prefsw *create_prefs_dialog(void) {
   //---
 
   if (prefs->audio_player==AUD_PLAYER_MPLAYER2) {
-    prefsw->audp_name=lives_strdup(_("mplayer2"));
+    prefsw->audp_name=lives_strdup(_(AUDIO_PLAYER_MPLAYER2));
   }
   // ---
   prefsw->audio_command_entry = lives_standard_entry_new(_("Audio play _command"),TRUE,"",-1,255,LIVES_BOX(vbox),NULL);

@@ -602,8 +602,7 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_context_update();
 
   if (prefs->save_directories) {
-    set_pref(PREF_VID_LOAD_DIR,(tmp=lives_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
-    lives_free(tmp);
+    set_pref_utf8(PREF_VID_LOAD_DIR,mainw->vid_load_dir);
   }
 
   mainw->cancelled=CANCEL_NONE;
@@ -6059,7 +6058,6 @@ void on_ok_file_open_clicked(LiVESFileChooser *chooser, LiVESSList *fnames) {
   // this is also called from drag target
 
   LiVESSList *ofnames;
-  char *tmp;
 
   if (chooser!=NULL) {
     fnames=lives_file_chooser_get_filenames(chooser);
@@ -6081,8 +6079,7 @@ void on_ok_file_open_clicked(LiVESFileChooser *chooser, LiVESSList *fnames) {
     lives_widget_context_update();
 
     if (prefs->save_directories) {
-      set_pref(PREF_VID_LOAD_DIR,(tmp=lives_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
-      lives_free(tmp);
+      set_pref_utf8(PREF_VID_LOAD_DIR,mainw->vid_load_dir);
     }
 
     mainw->cancelled=CANCEL_NONE;
@@ -7857,7 +7854,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
 
 
   if (prefs->save_directories) {
-    set_pref(PREF_AUDIO_DIR,mainw->audio_dir);
+    set_pref_utf8(PREF_AUDIO_DIR,mainw->audio_dir);
   }
   if (!prefs->conserve_space) {
     cfile->undo_action=UNDO_NEW_AUDIO;
@@ -10236,7 +10233,7 @@ void on_encoder_ofmt_changed(LiVESCombo *combo, livespointer user_data) {
         lives_snprintf(prefs->encoder.of_desc,128,"%s",future_prefs->encoder.of_desc);
         lives_snprintf(prefs->encoder.of_restrict,1024,"%s",future_prefs->encoder.of_restrict);
         prefs->encoder.of_allowed_acodecs=future_prefs->encoder.of_allowed_acodecs;
-        set_pref("output_type",prefs->encoder.of_name);
+        set_pref(PREF_OUTPUT_TYPE,prefs->encoder.of_name);
       }
     }
     set_acodec_list_from_allowed(prefsw,rdet);

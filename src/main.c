@@ -343,7 +343,7 @@ void get_monitors(void) {
 
   if (capable->nmonitors>1) {
 
-    get_pref("monitors",buff,256);
+    get_pref(PREF_MONITORS,buff,256);
 
     if (strlen(buff)==0||get_token_count(buff,',')==1) {
       prefs->gui_monitor=1;
@@ -475,7 +475,7 @@ static boolean pre_init(void) {
   prefs->sepwin_type=1;
   prefs->show_framecount=TRUE;
   prefs->audio_player=AUD_PLAYER_SOX;
-  lives_snprintf(prefs->aplayer,512,"%s","sox");
+  lives_snprintf(prefs->aplayer,512,"%s",AUDIO_PLAYER_SOX);
   prefs->open_decorated=TRUE;
 
 #ifdef ENABLE_GIW
@@ -528,7 +528,7 @@ static boolean pre_init(void) {
   future_prefs->show_recent=prefs->show_recent=get_boolean_pref("show_recent_files");
 
 #ifndef IS_MINGW
-  get_pref("prefix_dir",prefs->prefix_dir,PATH_MAX);
+  get_pref(PREF_PREFIX_DIR,prefs->prefix_dir,PATH_MAX);
 
   if (!strlen(prefs->prefix_dir)) {
     if (strcmp(PREFIX,"NONE")) {
@@ -542,11 +542,11 @@ static boolean pre_init(void) {
   if (ensure_isdir(prefs->prefix_dir)) needs_update=TRUE;
 
 
-  if (needs_update) set_pref("prefix_dir",prefs->prefix_dir);
+  if (needs_update) set_pref(PREF_PREFIX_DIR,prefs->prefix_dir);
 
   needs_update=FALSE;
 
-  get_pref("lib_dir",prefs->lib_dir,PATH_MAX);
+  get_pref(PREF_LIB_DIR,prefs->lib_dir,PATH_MAX);
 
   if (!strlen(prefs->lib_dir)) {
 
@@ -555,7 +555,7 @@ static boolean pre_init(void) {
   }
 
   if (ensure_isdir(prefs->lib_dir)) needs_update=TRUE;
-  if (needs_update) set_pref("lib_dir",prefs->lib_dir);
+  if (needs_update) set_pref(PREF_LIB_DIR,prefs->lib_dir);
 
 #else
   lives_snprintf(prefs->lib_dir,PATH_MAX,"%s",prefs->prefix_dir);
@@ -570,26 +570,26 @@ static boolean pre_init(void) {
 
   set_palette_colours(FALSE);
 
-  get_pref("cdplay_device",prefs->cdplay_device,256);
-  prefs->warning_mask=(uint32_t)get_int_pref("lives_warning_mask");
+  get_pref(PREF_CDPLAY_DEVICE,prefs->cdplay_device,256);
+  prefs->warning_mask=(uint32_t)get_int_pref(PREF_LIVES_WARNING_MASK);
 
   get_pref(PREF_AUDIO_PLAYER,buff,256);
 
-  if (!strcmp(buff,"mplayer"))
+  if (!strcmp(buff,AUDIO_PLAYER_MPLAYER))
     prefs->audio_player=AUD_PLAYER_MPLAYER;
-  if (!strcmp(buff,"mplayer2"))
+  if (!strcmp(buff,AUDIO_PLAYER_MPLAYER2))
     prefs->audio_player=AUD_PLAYER_MPLAYER2;
-  if (!strcmp(buff,"jack"))
+  if (!strcmp(buff,AUDIO_PLAYER_JACK))
     prefs->audio_player=AUD_PLAYER_JACK;
-  if (!strcmp(buff,"pulse"))
+  if (!strcmp(buff,AUDIO_PLAYER_PULSE))
     prefs->audio_player=AUD_PLAYER_PULSE;
   lives_snprintf(prefs->aplayer,512,"%s",buff);
 
 #ifdef HAVE_PULSE_AUDIO
   if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_pulse_audio) {
     prefs->audio_player=AUD_PLAYER_PULSE;
-    lives_snprintf(prefs->aplayer,512,"%s","pulse");
-    set_pref(PREF_AUDIO_PLAYER,"pulse");
+    lives_snprintf(prefs->aplayer,512,"%s",AUDIO_PLAYER_PULSE);
+    set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_PULSE);
   } else {
 #endif
 
@@ -598,8 +598,8 @@ static boolean pre_init(void) {
 #ifdef ENABLE_JACK
     if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_jackd) {
       prefs->audio_player=AUD_PLAYER_JACK;
-      lives_snprintf(prefs->aplayer,512,"%s","jack");
-      set_pref(PREF_AUDIO_PLAYER,"jack");
+      lives_snprintf(prefs->aplayer,512,"%s",AUDIO_PLAYER_JACK);
+      set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_JACK);
     }
 #endif
 
@@ -607,7 +607,7 @@ static boolean pre_init(void) {
   }
 #endif
 
-  future_prefs->jack_opts=get_int_pref("jack_opts");
+  future_prefs->jack_opts=get_int_pref(PREF_JACK_OPTS);
   prefs->jack_opts=future_prefs->jack_opts;
 
   mainw->mgeom=NULL;
@@ -628,7 +628,7 @@ static boolean pre_init(void) {
 
   prefs->omc_dev_opts=get_int_pref("omc_dev_opts");
 
-  get_pref_utf8("omc_js_fname",prefs->omc_js_fname,256);
+  get_pref_utf8(PREF_OMC_JS_FNAME,prefs->omc_js_fname,256);
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
@@ -643,7 +643,7 @@ static boolean pre_init(void) {
 #endif
 #endif
 
-  get_pref_utf8("omc_midi_fname",prefs->omc_midi_fname,256);
+  get_pref_utf8(PREF_OMC_MIDI_FNAME,prefs->omc_midi_fname,256);
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
 #ifndef IS_MINGW
@@ -888,7 +888,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->osc_udp_port=0;
 #ifdef ENABLE_OSC
     if (!mainw->foreign) {
-      prefs->osc_udp_port=get_int_pref("osc_port");
+      prefs->osc_udp_port=get_int_pref(PREF_OSC_PORT);
       future_prefs->osc_start=prefs->osc_start=get_boolean_pref("osc_start");
     } else {
       future_prefs->osc_start=prefs->osc_start=FALSE;
@@ -897,11 +897,11 @@ static void lives_init(_ign_opts *ign_opts) {
   }
 
   prefs->ignore_tiny_fps_diffs=1;
-  prefs->rec_opts=get_int_pref("record_opts");
+  prefs->rec_opts=get_int_pref(PREF_RECORD_OPTS);
 
   if (prefs->rec_opts==-1) {
     prefs->rec_opts=REC_FPS|REC_FRAMES|REC_EFFECTS|REC_CLIPS|REC_AUDIO;
-    set_int_pref("record_opts",prefs->rec_opts);
+    set_int_pref(PREF_RECORD_OPTS,prefs->rec_opts);
   }
 
   prefs->rec_opts|=(REC_FPS+REC_FRAMES);
@@ -1161,7 +1161,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->loop_recording=TRUE;
     prefs->no_bandwidth=FALSE;
-    prefs->ocp=get_int_pref("open_compression_percent");
+    prefs->ocp=get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
 
     // we set the theme here in case it got reset to 'none'
     set_pref(PREF_GUI_THEME,prefs->theme);
@@ -1187,7 +1187,7 @@ static void lives_init(_ign_opts *ign_opts) {
       lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
     }
 
-    prefs->default_fps=get_double_pref("default_fps");
+    prefs->default_fps=get_double_pref(PREF_DEFAULT_FPS);
     if (prefs->default_fps<1.) prefs->default_fps=1.;
     if (prefs->default_fps>FPS_MAX) prefs->default_fps=FPS_MAX;
 
@@ -1213,7 +1213,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     if (prefs->max_modes_per_key==0) prefs->max_modes_per_key=8;
 
-    get_pref("def_autotrans",prefs->def_autotrans,256);
+    get_pref(PREF_DEF_AUTOTRANS,prefs->def_autotrans,256);
 
     prefs->nfx_threads=get_int_pref("nfx_threads");
     if (prefs->nfx_threads==0) prefs->nfx_threads=capable->ncpus;
@@ -1223,17 +1223,17 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->unstable_fx=FALSE;
 
-    prefs->disabled_decoders=get_list_pref("disabled_decoders");
+    prefs->disabled_decoders=get_list_pref(PREF_DISABLED_DECODERS);
 
     prefs->enc_letterbox=FALSE;
 
-    get_pref("ds_warn_level",buff,256);
+    get_pref(PREF_DS_WARN_LEVEL,buff,256);
     if (!strlen(buff)) prefs->ds_warn_level=DEF_DS_WARN_LEVEL;
     else prefs->ds_warn_level=strtol(buff,NULL,10);
 
     mainw->next_ds_warn_level=prefs->ds_warn_level;
 
-    get_pref("ds_crit_level",buff,256);
+    get_pref(PREF_DS_CRIT_LEVEL,buff,256);
     if (!strlen(buff)) prefs->ds_crit_level=DEF_DS_CRIT_LEVEL;
     else prefs->ds_crit_level=strtol(buff,NULL,10);
 
@@ -1312,7 +1312,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       prefs->mt_auto_back=get_int_pref("mt_auto_back");
 
-      get_pref("vid_playback_plugin",buff,256);
+      get_pref(PREF_VID_PLAYBACK_PLUGIN,buff,256);
       if (strlen(buff)&&strcmp(buff,"(null)")&&strcmp(buff,"none")) {
         mainw->vpp=open_vid_playback_plugin(buff,TRUE);
       }
@@ -1356,13 +1356,13 @@ static void lives_init(_ign_opts *ign_opts) {
 
       prefs->mt_enter_prompt=get_boolean_pref("mt_enter_prompt");
 
-      prefs->mt_def_width=get_int_pref("mt_def_width");
-      prefs->mt_def_height=get_int_pref("mt_def_height");
-      prefs->mt_def_fps=get_double_pref("mt_def_fps");
-      prefs->mt_def_arate=get_int_pref("mt_def_arate");
-      prefs->mt_def_achans=get_int_pref("mt_def_achans");
-      prefs->mt_def_asamps=get_int_pref("mt_def_asamps");
-      prefs->mt_def_signed_endian=get_int_pref("mt_def_signed_endian");
+      prefs->mt_def_width=get_int_pref(PREF_MT_DEF_WIDTH);
+      prefs->mt_def_height=get_int_pref(PREF_MT_DEF_HEIGHT);
+      prefs->mt_def_fps=get_double_pref(PREF_MT_DEF_FPS);
+      prefs->mt_def_arate=get_int_pref(PREF_MT_DEF_ARATE);
+      prefs->mt_def_achans=get_int_pref(PREF_MT_DEF_ACHANS);
+      prefs->mt_def_asamps=get_int_pref(PREF_MT_DEF_ASAMPS);
+      prefs->mt_def_signed_endian=get_int_pref(PREF_MT_DEF_SIGNED_ENDIAN);
 
       if (prefs->mt_def_width==0) prefs->mt_def_width=DEFAULT_FRAME_HSIZE;
       if (prefs->mt_def_height==0) prefs->mt_def_height=DEFAULT_FRAME_VSIZE;
@@ -1446,7 +1446,7 @@ static void lives_init(_ign_opts *ign_opts) {
             }
           }
 
-          set_pref("output_type",prefs->encoder.of_name);
+          set_pref(PREF_OUTPUT_TYPE,prefs->encoder.of_name);
 
           lives_list_free_all(&ofmt_all);
         }
@@ -1454,7 +1454,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       if (!strlen(prefs->encoder.of_name)) {
         get_pref(PREF_ENCODER,prefs->encoder.name,51);
-        get_pref("output_type",prefs->encoder.of_name,51);
+        get_pref(PREF_OUTPUT_TYPE,prefs->encoder.of_name,51);
       }
 
       future_prefs->encoder.audio_codec=prefs->encoder.audio_codec=get_int_pref("encoder_acodec");
@@ -1506,7 +1506,7 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-        set_pref(PREF_VID_LOAD_DIR,prefs->def_vid_load_dir);
+        set_pref_utf8(PREF_VID_LOAD_DIR,prefs->def_vid_load_dir);
       }
       lives_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",prefs->def_vid_load_dir);
       ensure_isdir(mainw->vid_load_dir);
@@ -1520,7 +1520,7 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-        set_pref(PREF_VID_SAVE_DIR,prefs->def_vid_save_dir);
+        set_pref_utf8(PREF_VID_SAVE_DIR,prefs->def_vid_save_dir);
       }
       lives_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",prefs->def_vid_save_dir);
       ensure_isdir(mainw->vid_save_dir);
@@ -1536,7 +1536,7 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_snprintf(prefs->def_audio_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-        set_pref(PREF_AUDIO_DIR,prefs->def_audio_dir);
+        set_pref_utf8(PREF_AUDIO_DIR,prefs->def_audio_dir);
       }
       lives_snprintf(mainw->audio_dir,PATH_MAX,"%s",prefs->def_audio_dir);
       ensure_isdir(mainw->audio_dir);
@@ -1550,15 +1550,15 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_snprintf(prefs->def_image_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-        set_pref(PREF_IMAGE_DIR,prefs->def_image_dir);
+        set_pref_utf8(PREF_IMAGE_DIR,prefs->def_image_dir);
       }
       lives_snprintf(mainw->image_dir,PATH_MAX,"%s",prefs->def_image_dir);
       ensure_isdir(mainw->image_dir);
 
-      get_pref_utf8("proj_dir",prefs->def_proj_dir,PATH_MAX);
+      get_pref_utf8(PREF_PROJ_DIR,prefs->def_proj_dir,PATH_MAX);
       if (!strlen(prefs->def_proj_dir)) {
         lives_snprintf(prefs->def_proj_dir,PATH_MAX,"%s",capable->home_dir);
-        set_pref("proj_dir",prefs->def_proj_dir);
+        set_pref_utf8(PREF_PROJ_DIR,prefs->def_proj_dir);
       }
       lives_snprintf(mainw->proj_load_dir,PATH_MAX,"%s",prefs->def_proj_dir);
       ensure_isdir(mainw->proj_load_dir);
@@ -1600,7 +1600,7 @@ static void lives_init(_ign_opts *ign_opts) {
       needs_free=FALSE;
       weed_plugin_path=getenv("WEED_PLUGIN_PATH");
       if (weed_plugin_path==NULL) {
-        get_pref("weed_plugin_path",prefs->weed_plugin_path,PATH_MAX);
+        get_pref(PREF_WEED_PLUGIN_PATH,prefs->weed_plugin_path,PATH_MAX);
         if (strlen(prefs->weed_plugin_path)==0) weed_plugin_path=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN,NULL);
         else weed_plugin_path=lives_strdup(prefs->weed_plugin_path);
         lives_setenv("WEED_PLUGIN_PATH",weed_plugin_path);
@@ -1612,7 +1612,7 @@ static void lives_init(_ign_opts *ign_opts) {
       needs_free=FALSE;
       frei0r_path=getenv("FREI0R_PATH");
       if (frei0r_path==NULL) {
-        get_pref("frei0r_path",prefs->frei0r_path,PATH_MAX);
+        get_pref(PREF_FREI0R_PATH,prefs->frei0r_path,PATH_MAX);
         if (strlen(prefs->frei0r_path)==0) frei0r_path=lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
               capable->home_dir);
         else frei0r_path=lives_strdup(prefs->frei0r_path);
@@ -1625,7 +1625,7 @@ static void lives_init(_ign_opts *ign_opts) {
       needs_free=FALSE;
       ladspa_path=getenv("LADSPA_PATH");
       if (ladspa_path==NULL||strlen(ladspa_path)==0) {
-        get_pref("ladspa_path",prefs->ladspa_path,PATH_MAX);
+        get_pref(PREF_LADSPA_PATH,prefs->ladspa_path,PATH_MAX);
         if (strlen(prefs->ladspa_path)==0) ladspa_path=lives_build_filename(prefs->lib_dir,"ladspa",NULL);
         else ladspa_path=lives_strdup(prefs->ladspa_path);
         lives_setenv("LADSPA_PATH",ladspa_path);
@@ -1651,7 +1651,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
 #endif
 
-      get_pref("current_autotrans",buff,256);
+      get_pref(PREF_CURRENT_AUTOTRANS,buff,256);
       if (strlen(buff)==0) prefs->atrans_fx=-1;
       else prefs->atrans_fx=weed_get_idx_for_hashname(buff,FALSE);
 
@@ -1662,7 +1662,7 @@ static void lives_init(_ign_opts *ign_opts) {
           lives_exit(0);
         }
         prefs->startup_phase=2;
-        set_int_pref("startup_phase",2);
+        set_int_pref(PREF_STARTUP_PHASE,2);
       }
 
 
@@ -1672,7 +1672,7 @@ static void lives_init(_ign_opts *ign_opts) {
           lives_exit(0);
         }
         prefs->startup_phase=3;
-        set_int_pref("startup_phase",3);
+        set_int_pref(PREF_STARTUP_PHASE,3);
       }
 
 
@@ -1690,10 +1690,10 @@ static void lives_init(_ign_opts *ign_opts) {
           }
           if (prefs->audio_player==AUD_PLAYER_JACK) future_prefs->jack_opts=prefs->jack_opts=JACK_OPTS_START_ASERVER;
           else future_prefs->jack_opts=prefs->jack_opts=0;
-          set_int_pref("jack_opts",prefs->jack_opts);
+          set_int_pref(PREF_JACK_OPTS,prefs->jack_opts);
 
           prefs->startup_phase=4;
-          set_int_pref("startup_phase",4);
+          set_int_pref(PREF_STARTUP_PHASE,4);
         }
 
 #ifdef ENABLE_JACK
@@ -1712,7 +1712,7 @@ static void lives_init(_ign_opts *ign_opts) {
               do_jack_noopen_warn2();
             }
             future_prefs->jack_opts=0; // jack is causing hassle, get rid of it
-            set_int_pref("jack_opts",0);
+            set_int_pref(PREF_JACK_OPTS,0);
             lives_exit(0);
           }
         }
@@ -1798,14 +1798,14 @@ static void lives_init(_ign_opts *ign_opts) {
       char *txt;
 
       splash_end();
-      set_int_pref("startup_phase",5);
+      set_int_pref(PREF_STARTUP_PHASE,5);
       prefs->startup_phase=5;
       do_startup_interface_query();
       txt=get_new_install_msg();
       startup_message_info(txt);
       lives_free(txt);
 
-      set_int_pref("startup_phase",100); // tell backend to delete this
+      set_int_pref(PREF_STARTUP_PHASE,100); // tell backend to delete this
       prefs->startup_phase=100;
     }
 
@@ -2433,10 +2433,10 @@ capability *get_capabilities(void) {
 
   if (!capable->can_write_to_tempdir) return capable;
 
-  get_location("mplayer",string,256);
+  get_location(AUDIO_PLAYER_MPLAYER,string,256);
   if (strlen(string)) capable->has_mplayer=TRUE;
 
-  get_location("mplayer2",string,256);
+  get_location(AUDIO_PLAYER_MPLAYER2,string,256);
   if (strlen(string)) capable->has_mplayer2=TRUE;
 
 #ifdef ALLOW_MPV
@@ -2462,7 +2462,7 @@ capability *get_capabilities(void) {
   get_location("play",string,256);
   if (strlen(string)) capable->has_sox_play=TRUE;
 
-  get_location("sox",string,256);
+  get_location(AUDIO_PLAYER_SOX,string,256);
   if (strlen(string)) capable->has_sox_sox=TRUE;
 
   get_location("dvgrab",string,256);
@@ -3156,7 +3156,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           // override tempdir setting
           lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",optarg);
           lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
-          set_pref("session_tempdir",prefs->tmpdir);
+          set_pref(PREF_SESSION_TEMPDIR,prefs->tmpdir);
 
           if (lives_mkdir_with_parents(prefs->tmpdir,S_IRWXU)==-1) {
             if (!check_dir_access(prefs->tmpdir)) {
@@ -3239,31 +3239,31 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
           lives_snprintf(buff,256,"%s",optarg);
           // override aplayer default
-          if (!strcmp(buff,"sox")) {
+          if (!strcmp(buff,AUDIO_PLAYER_SOX)) {
             switch_aud_to_sox(TRUE);
             apl_valid=TRUE;
           }
-          if (!strcmp(buff,"mplayer")) {
+          if (!strcmp(buff,AUDIO_PLAYER_MPLAYER)) {
             switch_aud_to_mplayer(TRUE);
             apl_valid=TRUE;
           }
-          if (!strcmp(buff,"mplayer2")) {
+          if (!strcmp(buff,AUDIO_PLAYER_MPLAYER2)) {
             switch_aud_to_mplayer2(TRUE);
             apl_valid=TRUE;
           }
-          if (!strcmp(buff,"jack")) {
+          if (!strcmp(buff,AUDIO_PLAYER_JACK)) {
 #ifdef ENABLE_JACK
             prefs->audio_player=AUD_PLAYER_JACK;
-            lives_snprintf(prefs->aplayer,512,"%s","jack");
-            set_pref(PREF_AUDIO_PLAYER,"jack");
+            lives_snprintf(prefs->aplayer,512,"%s",AUDIO_PLAYER_JACK);
+            set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_JACK);
             apl_valid=TRUE;
 #endif
           }
-          if (!strcmp(buff,"pulse")) {
+          if (!strcmp(buff,AUDIO_PLAYER_PULSE)) {
 #ifdef HAVE_PULSE_AUDIO
             prefs->audio_player=AUD_PLAYER_PULSE;
-            set_pref(PREF_AUDIO_PLAYER,"pulse");
-            lives_snprintf(prefs->aplayer,512,"%s","pulse");
+            set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_PULSE);
+            lives_snprintf(prefs->aplayer,512,"%s",AUDIO_PLAYER_PULSE);
             apl_valid=TRUE;
 #endif
           }

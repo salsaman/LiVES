@@ -37,6 +37,16 @@ typedef struct {
 #define AUD_PLAYER_PULSE 4
 #define AUD_PLAYER_MPLAYER2 5
 
+  // string forms
+#define AUDIO_PLAYER_SOX "sox"
+#define AUDIO_PLAYER_JACK "jack"
+#define AUDIO_PLAYER_PULSE "pulse"
+
+#define AUDIO_PLAYER_MPLAYER "mplayer"
+#define AUDIO_PLAYER_MPLAYER2 "mplayer2"
+
+
+
   char aplayer[512]; // name, eg. "jack","pulse","sox","mplayer","mplayer2"
 
   /// frame quantisation type
@@ -383,8 +393,8 @@ enum {
 };
 
 
-#define PREF_WIN_WIDTH (mainw->scr_width*.9)
-#define PREF_WIN_HEIGHT (mainw->scr_height*.9)
+#define PREFWIN_WIDTH (mainw->scr_width*.9)
+#define PREFWIN_HEIGHT (mainw->scr_height*.9)
 
 #define DS_WARN_CRIT_MAX 1000000. ///< MB.
 
@@ -666,14 +676,30 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_SEPWIN_STICKY "sepwin_sticky"
 #define PREF_MT_EXIT_RENDER "mt_exit_render"
 
+
+
 // normal prefs
 
-#define PREF_AUDIO_SRC "audio_src"
+/////////////////// string values
 
 #define PREF_WORKING_DIR "tempdir"
+#define PREF_PREFIX_DIR "prefix_dir" // readonly
+#define PREF_LIB_DIR "lib_dir" // readonly
+
+#define PREF_SESSION_TEMPDIR "session_tempdir"
 
 #define PREF_AUDIO_PLAYER "audio_player"
 #define PREF_AUDIO_PLAY_COMMAND "audio_play_command"
+
+#define PREF_AUDIO_SRC "audio_src"
+
+#define PREF_MONITORS "monitors"
+
+#define PREF_LADSPA_PATH "ladspa_path"
+#define PREF_WEED_PLUGIN_PATH "weed_plugin_path"
+#define PREF_FREI0R_PATH "frei0r_path"
+
+#define PREF_VID_PLAYBACK_PLUGIN "vid_playback_plugin"
 
 #define PREF_DEFAULT_IMAGE_FORMAT "default_image_format"
 
@@ -682,21 +708,78 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_GUI_THEME "gui_theme"
 
 #define PREF_ENCODER "encoder"
+#define PREF_OUTPUT_TYPE "output_type"
+
+#define PREF_CDPLAY_DEVICE "cdplay_device"
 
 #define PREF_AR_LAYOUT "ar_layout"
 #define PREF_AR_CLIPSET "ar_clipset"
 
-#define PREF_VID_SAVE_DIR "vid_save_dir"
-#define PREF_VID_LOAD_DIR "vid_load_dir"
+#define PREF_CURRENT_AUTOTRANS "current_autotrans"
+#define PREF_DEF_AUTOTRANS "def_autotrans"  // readonly
+
+
+////////////////////// utf8 values
+
+#define PREF_OMC_MIDI_FNAME "omc_midi_fname"
+#define PREF_OMC_JS_FNAME "omc_js_fname"
 
 #define PREF_IMAGE_DIR "image_dir"
 #define PREF_AUDIO_DIR "audio_dir"
+
+#define PREF_PROJ_DIR "proj_dir"
+
+#define PREF_VID_SAVE_DIR "vid_save_dir"
+#define PREF_VID_LOAD_DIR "vid_load_dir"
 
 #define PREF_RECENT1 "recent1"
 #define PREF_RECENT2 "recent2"
 #define PREF_RECENT3 "recent3"
 #define PREF_RECENT4 "recent4"
 
+
+/////////////////// integer64 values
+#define PREF_DS_WARN_LEVEL "ds_warn_level"
+#define PREF_DS_CRIT_LEVEL "ds_crit_level"
+
+
+/////////////////// integer32 values
+#define PREF_STARTUP_PHASE "startup_phase"
+
+#define PREF_LIVES_WARNING_MASK "lives_warning_mask"
+#define PREF_OPEN_COMPRESSION_PERCENT "open_compression_percent"
+
+#define PREF_JACK_OPTS "jack_opts"
+
+#define PREF_RECORD_OPTS "record_opts"
+
+#define PREF_OMC_DEV_OPTS "omc_dev_opts"
+#define PREF_OSC_PORT "osc_port"
+
+#define PREF_MT_DEF_WIDTH "mt_def_width"
+#define PREF_MT_DEF_HEIGHT "mt_def_height"
+#define PREF_MT_DEF_ARATE "mt_def_arate"
+#define PREF_MT_DEF_ACHANS "mt_def_achans"
+#define PREF_MT_DEF_ASAMPS "mt_def_asamps"
+#define PREF_MT_DEF_SIGNED_ENDIAN "mt_def_signed_endian"
+
+////////// double values
+#define PREF_MT_DEF_FPS "mt_def_fps"
+
+#define PREF_DEFAULT_FPS "default_fps"
+
+
+
+////////// list values
+#define PREF_DISABLED_DECODERS "disabled_decoders"
+
+
+
+// defaults (readonly)
+/////////////// string values
+#define PREF_SOX_COMMAND "sox_command"
+#define PREF_MPLAYER_AUDIO_COMMAND "mplayer_audio_command"
+#define PREF_MPLAYER2_AUDIO_COMMAND "mplayer2_audio_command"
 
 
 
@@ -716,6 +799,7 @@ LiVESList *get_list_pref(const char *key);
 boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol);
 boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol);
 void set_pref(const char *key, const char *value);
+void set_pref_utf8(const char *key, const char *value);
 void delete_pref(const char *key);
 void set_boolean_pref(const char *key, boolean value);
 void set_double_pref(const char *key, double value);

@@ -146,7 +146,7 @@ top:
   lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 
   set_pref(PREF_WORKING_DIR,prefs->tmpdir);
-  set_pref("session_tempdir",prefs->tmpdir);
+  set_pref(PREF_SESSION_TEMPDIR,prefs->tmpdir);
 
   lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d",prefs->tmpdir,capable->mainpid);
 
@@ -167,19 +167,19 @@ static void on_init_aplayer_toggled(LiVESToggleButton *tbutton, livespointer use
 
   switch (audp) {
   case AUD_PLAYER_PULSE:
-    set_pref(PREF_AUDIO_PLAYER,"pulse");
+    set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_PULSE);
     break;
   case AUD_PLAYER_JACK:
-    set_pref(PREF_AUDIO_PLAYER,"jack");
+    set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_JACK);
     break;
   case AUD_PLAYER_SOX:
-    set_pref(PREF_AUDIO_PLAYER,"sox");
+    set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_SOX);
     break;
   case AUD_PLAYER_MPLAYER:
-    set_pref(PREF_AUDIO_PLAYER,"mplayer");
+    set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_MPLAYER);
     break;
   case AUD_PLAYER_MPLAYER2:
-    set_pref(PREF_AUDIO_PLAYER,"mplayer2");
+    set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_MPLAYER2);
     break;
   }
 
@@ -289,7 +289,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton0),TRUE);
-    set_pref(PREF_AUDIO_PLAYER,"pulse");
+    set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_PULSE);
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -310,7 +310,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   if (prefs->audio_player==AUD_PLAYER_JACK||!capable->has_pulse_audio||prefs->audio_player==-1) {
     prefs->audio_player=AUD_PLAYER_JACK;
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1),TRUE);
-    set_pref(PREF_AUDIO_PLAYER,"jack");
+    set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_JACK);
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton1), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -331,7 +331,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
     if (prefs->audio_player==AUD_PLAYER_SOX) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton2),TRUE);
-      set_pref(PREF_AUDIO_PLAYER,"sox");
+      set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_SOX);
     }
 
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -351,7 +351,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
     if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton3),TRUE);
-      set_pref(PREF_AUDIO_PLAYER,"mplayer");
+      set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_MPLAYER);
     }
 
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton3), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -371,7 +371,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
     if (prefs->audio_player==AUD_PLAYER_MPLAYER2) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton4),TRUE);
-      set_pref(PREF_AUDIO_PLAYER,"mplayer2");
+      set_pref(PREF_AUDIO_PLAYER,AUDIO_PLAYER_MPLAYER2);
     }
 
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton4), LIVES_WIDGET_TOGGLED_SIGNAL,

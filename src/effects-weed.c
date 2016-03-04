@@ -621,16 +621,16 @@ void update_host_info(weed_plant_t *inst) {
 
   switch (prefs->audio_player) {
   case AUD_PLAYER_MPLAYER:
-    weed_set_string_value(hinfo,WEED_LEAF_HOST_AUDIO_PLAYER,"mplayer");
+    weed_set_string_value(hinfo,WEED_LEAF_HOST_AUDIO_PLAYER,AUDIO_PLAYER_MPLAYER);
     break;
   case AUD_PLAYER_MPLAYER2:
-    weed_set_string_value(hinfo,WEED_LEAF_HOST_AUDIO_PLAYER,"mplayer2");
+    weed_set_string_value(hinfo,WEED_LEAF_HOST_AUDIO_PLAYER,AUDIO_PLAYER_MPLAYER2);
     break;
   case AUD_PLAYER_SOX:
-    weed_set_string_value(hinfo,WEED_LEAF_HOST_AUDIO_PLAYER,"sox");
+    weed_set_string_value(hinfo,WEED_LEAF_HOST_AUDIO_PLAYER,AUDIO_PLAYER_SOX);
     break;
   case AUD_PLAYER_JACK:
-    weed_set_string_value(hinfo,WEED_LEAF_HOST_AUDIO_PLAYER,"jack");
+    weed_set_string_value(hinfo,WEED_LEAF_HOST_AUDIO_PLAYER,AUDIO_PLAYER_JACK);
     break;
   case AUD_PLAYER_PULSE:
     weed_set_string_value(hinfo,WEED_LEAF_HOST_AUDIO_PLAYER,"pulseaudio");

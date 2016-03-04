@@ -1088,12 +1088,12 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (mouse_scroll!=(prefs->mouse_scroll_clips)) {
     prefs->mouse_scroll_clips=mouse_scroll;
-    set_boolean_pref("mouse_scroll_clips",mouse_scroll);
+    set_boolean_pref(PREF_MOUSE_SCROLL_CLIPS,mouse_scroll);
   }
 
   if (show_button_icons!=(prefs->show_button_images)) {
     prefs->show_button_images=show_button_icons;
-    set_boolean_pref("show_button_icons",show_button_icons);
+    set_boolean_pref(PREF_SHOW_BUTTON_ICONS,show_button_icons);
   }
 
   if (ce_maxspect!=(prefs->ce_maxspect)) {
@@ -1196,7 +1196,7 @@ boolean apply_prefs(boolean skip_warn) {
   // antialias
   if (prefs->antialias!=antialias) {
     prefs->antialias=antialias;
-    set_boolean_pref("antialias",antialias);
+    set_boolean_pref(PREF_ANTIALIAS,antialias);
   }
 
   // fx_threads
@@ -1209,13 +1209,13 @@ boolean apply_prefs(boolean skip_warn) {
   // open maximised
   if (prefs->open_maximised!=open_maximised) {
     prefs->open_maximised=open_maximised;
-    set_boolean_pref("open_maximised",open_maximised);
+    set_boolean_pref(PREF_OPEN_MAXIMISED,open_maximised);
   }
 
   // filesel maximised
   if (prefs->fileselmax!=fs_maximised) {
     prefs->fileselmax=fs_maximised;
-    set_boolean_pref("filesel_maximised",fs_maximised);
+    set_boolean_pref(PREF_FILESEL_MAXIMISED,fs_maximised);
   }
 
 
@@ -1241,19 +1241,19 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (ce_thumbs!=prefs->ce_thumb_mode) {
     prefs->ce_thumb_mode=ce_thumbs;
-    set_boolean_pref("ce_thumb_mode",ce_thumbs);
+    set_boolean_pref(PREF_CE_THUMB_MODE,ce_thumbs);
   }
 
 
   // fps stats
   if (prefs->show_player_stats!=show_player_stats) {
     prefs->show_player_stats=show_player_stats;
-    set_boolean_pref("show_player_stats",show_player_stats);
+    set_boolean_pref(PREF_SHOW_PLAYER_STATS,show_player_stats);
   }
 
   if (prefs->stream_audio_out!=stream_audio_out) {
     prefs->stream_audio_out=stream_audio_out;
-    set_boolean_pref("stream_audio_out",stream_audio_out);
+    set_boolean_pref(PREF_STREAM_AUDIO_OUT,stream_audio_out);
   }
 
   // show recent
@@ -1272,7 +1272,7 @@ boolean apply_prefs(boolean skip_warn) {
   // midi synch
   if (prefs->midisynch!=midisynch) {
     prefs->midisynch=midisynch;
-    set_boolean_pref("midisynch",midisynch);
+    set_boolean_pref(PREF_MIDISYNCH,midisynch);
   }
 
   // jpeg/png
@@ -1286,27 +1286,27 @@ boolean apply_prefs(boolean skip_warn) {
 
   // instant open
   if (prefs->instant_open!=instant_open) {
-    set_boolean_pref("instant_open",(prefs->instant_open=instant_open));
+    set_boolean_pref(PREF_INSTANT_OPEN,(prefs->instant_open=instant_open));
   }
 
   // auto deinterlace
   if (prefs->auto_deint!=auto_deint) {
-    set_boolean_pref("auto_deinterlace",(prefs->auto_deint=auto_deint));
+    set_boolean_pref(PREF_AUTO_DEINTERLACE,(prefs->auto_deint=auto_deint));
   }
 
   // auto deinterlace
   if (prefs->auto_trim_audio!=auto_trim) {
-    set_boolean_pref("auto_trim_pad_audio",(prefs->auto_trim_audio=auto_trim));
+    set_boolean_pref(PREF_AUTO_TRIM_PAD_AUDIO,(prefs->auto_trim_audio=auto_trim));
   }
 
   // auto border cut
   if (prefs->auto_nobord!=auto_nobord) {
-    set_boolean_pref("auto_cut_borders",(prefs->auto_nobord=auto_nobord));
+    set_boolean_pref(PREF_AUTO_CUT_BORDERS,(prefs->auto_nobord=auto_nobord));
   }
 
   // concat images
   if (prefs->concat_images!=concat_images) {
-    set_boolean_pref("concat_images",(prefs->concat_images=concat_images));
+    set_boolean_pref(PREF_CONCAT_IMAGES,(prefs->concat_images=concat_images));
   }
 
 
@@ -1466,7 +1466,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (ins_speed==prefs->ins_resample) {
     prefs->ins_resample=!ins_speed;
-    set_boolean_pref("insert_resample",prefs->ins_resample);
+    set_boolean_pref(PREF_INSERT_RESAMPLE,prefs->ins_resample);
   }
 
 
@@ -1539,7 +1539,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (rec_desk_audio!=prefs->rec_desktop_audio) {
     prefs->rec_desktop_audio=rec_desk_audio;
-    set_boolean_pref("rec_desktop_audio",rec_desk_audio);
+    set_boolean_pref(PREF_REC_DESKTOP_AUDIO,rec_desk_audio);
   }
 #endif
 
@@ -1681,12 +1681,12 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (mt_exit_render!=prefs->mt_exit_render) {
     prefs->mt_exit_render=mt_exit_render;
-    set_boolean_pref("mt_exit_render",mt_exit_render);
+    set_boolean_pref(PREF_MT_EXIT_RENDER,mt_exit_render);
   }
 
   if (render_prompt!=prefs->render_prompt) {
     prefs->render_prompt=render_prompt;
-    set_boolean_pref("render_prompt",render_prompt);
+    set_boolean_pref(PREF_RENDER_PROMPT,render_prompt);
   }
 
   if (mt_pertrack_audio!=prefs->mt_pertrack_audio) {

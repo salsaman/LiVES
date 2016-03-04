@@ -799,14 +799,30 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_FORCE_SINGLE_MONITOR "force_single_monitor"
 #define PREF_STOP_SCREENSAVER "stop_screensaver"
 #define PREF_MT_ENTER_PROMPT "mt_enter_prompt"
+#define PREF_MT_EXIT_RENDER "mt_exit_render"
+#define PREF_RENDER_PROMPT "render_prompt"
 #define PREF_MT_PERTRACK_AUDIO "mt_pertrack_audio"
 #define PREF_OSC_START "osc_start"
 #define PREF_SHOW_TOOLBAR "show_toolbar"
 #define PREF_CE_MAXSPECT "ce_maxspect"
-
-
-
-
+#define PREF_OPEN_MAXIMISED "open_maximised"
+#define PREF_AUTO_TRIM_PAD_AUDIO "auto_trim_pad_audio"
+#define PREF_MOUSE_SCROLL_CLIPS "mouse_scroll_clips"
+#define PREF_SHOW_BUTTON_ICONS "show_button_icons"
+#define PREF_STREAM_AUDIO_OUT "stream_audio_out"
+#define PREF_CE_THUMB_MODE "ce_thumb_mode"
+#define PREF_ANTIALIAS "antialias"
+#define PREF_FILESEL_MAXIMISED "filesel_maximised"
+#define PREF_SHOW_PLAYER_STATS "show_player_stats"
+#define PREF_INSTANT_OPEN "instant_open"
+#define PREF_MIDISYNCH "midisynch"
+#define PREF_AUTO_DEINTERLACE "auto_deinterlace"
+#define PREF_AUTO_CUT_BORDERS "auto_cut_borders"
+#define PREF_REC_DESKTOP_AUDIO "rec_desktop_audio"
+#define PREF_INSERT_RESAMPLE "insert_resample"
+#define PREF_CONCAT_IMAGES "concat_images"
+#define PREF_SAVE_DIRECTORIES "save_directories"
+#define PREF_CONSERVE_SPACE "conserve_space"
 
 
 

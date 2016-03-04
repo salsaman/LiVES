@@ -4231,7 +4231,7 @@ boolean render_to_clip(boolean new_clip) {
       rendaud=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton));
 
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
-        xse=AFORM_UNSIGNED;;
+        xse=AFORM_UNSIGNED;
       } else xse=AFORM_SIGNED;
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
         xse|=AFORM_BIG_ENDIAN;

@@ -1043,7 +1043,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (rec_opts!=prefs->rec_opts) {
     prefs->rec_opts=rec_opts;
-    set_int_pref("record_opts",prefs->rec_opts);
+    set_int_pref(PREF_RECORD_OPTS,prefs->rec_opts);
   }
 
   pref_factory_bool(PREF_REC_EXT_AUDIO, rec_ext_audio);
@@ -1063,27 +1063,27 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (warn_mask!=prefs->warning_mask) {
     prefs->warning_mask=warn_mask;
-    set_int_pref("lives_warning_mask",prefs->warning_mask);
+    set_int_pref(PREF_LIVES_WARNING_MASK,prefs->warning_mask);
   }
 
   if (fsize_to_warn!=(prefs->warn_file_size)) {
     prefs->warn_file_size=fsize_to_warn;
-    set_int_pref("warn_file_size",fsize_to_warn);
+    set_int_pref(PREF_WARN_FILE_SIZE,fsize_to_warn);
   }
 
   if (dl_bwidth!=(prefs->dl_bandwidth)) {
     prefs->dl_bandwidth=dl_bwidth;
-    set_int_pref("dl_bandwidth_K",dl_bwidth);
+    set_int_pref(PREF_DL_BANDWIDTH_K,dl_bwidth);
   }
 
   if (ocp!=(prefs->ocp)) {
     prefs->ocp=ocp;
-    set_int_pref("open_compression_percent",ocp);
+    set_int_pref(PREF_OPEN_COMPRESSION_PERCENT,ocp);
   }
 
   if (show_tool!=(future_prefs->show_tool)) {
     future_prefs->show_tool=prefs->show_tool=show_tool;
-    set_boolean_pref("show_toolbar",show_tool);
+    set_boolean_pref(PREF_SHOW_TOOLBAR,show_tool);
   }
 
   if (mouse_scroll!=(prefs->mouse_scroll_clips)) {
@@ -1098,7 +1098,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (ce_maxspect!=(prefs->ce_maxspect)) {
     prefs->ce_maxspect=ce_maxspect;
-    set_boolean_pref("ce_maxspect",ce_maxspect);
+    set_boolean_pref(PREF_CE_MAXSPECT,ce_maxspect);
     if (mainw->current_file>-1) {
       int current_file=mainw->current_file;
       switch_to_file((mainw->current_file=0),current_file);
@@ -1182,15 +1182,15 @@ boolean apply_prefs(boolean skip_warn) {
   if (string_lists_differ(prefs->disabled_decoders,future_prefs->disabled_decoders)) {
     lives_list_free_all(&prefs->disabled_decoders);
     prefs->disabled_decoders=lives_list_copy_strings(future_prefs->disabled_decoders);
-    if (prefs->disabled_decoders!=NULL) set_list_pref("disabled_decoders",prefs->disabled_decoders);
-    else delete_pref("disabled_decoders");
+    if (prefs->disabled_decoders!=NULL) set_list_pref(PREF_DISABLED_DECODERS,prefs->disabled_decoders);
+    else delete_pref(PREF_DISABLED_DECODERS);
   }
 
 
   // stop xscreensaver
   if (prefs->stop_screensaver!=stop_screensaver) {
     prefs->stop_screensaver=stop_screensaver;
-    set_boolean_pref("stop_screensaver",prefs->stop_screensaver);
+    set_boolean_pref(PREF_STOP_SCREENSAVER,prefs->stop_screensaver);
   }
 
   // antialias
@@ -1203,7 +1203,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (!fx_threads) nfx_threads=1;
   if (prefs->nfx_threads!=nfx_threads) {
     future_prefs->nfx_threads=nfx_threads;
-    set_int_pref("nfx_threads",nfx_threads);
+    set_int_pref(PREF_NFX_THREADS,nfx_threads);
   }
 
   // open maximised
@@ -1223,7 +1223,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (forcesmon!=prefs->force_single_monitor) {
     prefs->force_single_monitor=forcesmon;
-    set_boolean_pref("force_single_monitor",forcesmon);
+    set_boolean_pref(PREF_FORCE_SINGLE_MONITOR,forcesmon);
     get_monitors();
     if (capable->nmonitors==0) resize_widgets_for_monitor(TRUE);
   }
@@ -1259,7 +1259,7 @@ boolean apply_prefs(boolean skip_warn) {
   // show recent
   if (prefs->show_recent!=show_recent) {
     prefs->show_recent=show_recent;
-    set_boolean_pref("show_recent_files",show_recent);
+    set_boolean_pref(PREF_SHOW_RECENT_FILES,show_recent);
     if (prefs->show_recent) {
       lives_widget_show(mainw->recent_menu);
       if (mainw->multitrack!=NULL) lives_widget_show(mainw->multitrack->recent_menu);
@@ -1330,7 +1330,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (prefs->encoder.audio_codec!=future_prefs->encoder.audio_codec) {
     prefs->encoder.audio_codec=future_prefs->encoder.audio_codec;
     if (prefs->encoder.audio_codec<AUDIO_CODEC_UNKNOWN) {
-      set_int_pref("encoder_acodec",prefs->encoder.audio_codec);
+      set_int_pref(PREF_ENCODER_ACODEC,prefs->encoder.audio_codec);
     }
   }
 
@@ -1343,7 +1343,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (pbq!=prefs->pb_quality) {
     prefs->pb_quality=pbq;
-    set_int_pref("pb_quality",pbq);
+    set_int_pref(PREF_PB_QUALITY,pbq);
   }
 
   // video open command
@@ -1454,14 +1454,14 @@ boolean apply_prefs(boolean skip_warn) {
     refresh_rte_window();
 
     prefs->rte_keys_virtual=rte_keys_virtual;
-    set_int_pref("rte_keys_virtual",prefs->rte_keys_virtual);
+    set_int_pref(PREF_RTE_KEYS_VIRTUAL,prefs->rte_keys_virtual);
   }
 
 
   if (prefs->rec_stop_gb!=rec_gb) {
     // disk free level at which we must stop recording
     prefs->rec_stop_gb=rec_gb;
-    set_int_pref("rec_stop_gb",prefs->rec_stop_gb);
+    set_int_pref(PREF_REC_STOP_GB,prefs->rec_stop_gb);
   }
 
   if (ins_speed==prefs->ins_resample) {
@@ -1501,25 +1501,25 @@ boolean apply_prefs(boolean skip_warn) {
   }
   if (osc_start) {
     if (!future_prefs->osc_start) {
-      set_boolean_pref("osc_start",TRUE);
+      set_boolean_pref(PREF_OSC_START,TRUE);
       future_prefs->osc_start=TRUE;
     }
   } else {
     if (future_prefs->osc_start) {
-      set_boolean_pref("osc_start",FALSE);
+      set_boolean_pref(PREF_OSC_START,FALSE);
       future_prefs->osc_start=FALSE;
     }
   }
   if (prefs->osc_udp_port!=osc_udp_port) {
     prefs->osc_udp_port=osc_udp_port;
-    set_int_pref("osc_port",osc_udp_port);
+    set_int_pref(PREF_OSC_PORT,osc_udp_port);
   }
 #endif
 
 #ifdef RT_AUDIO
   if (prefs->audio_opts!=audio_opts) {
     prefs->audio_opts=audio_opts;
-    set_int_pref("audio_opts",audio_opts);
+    set_int_pref(PREF_AUDIO_OPTS,audio_opts);
 
 #ifdef ENABLE_JACK
     if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->loop_cont) {
@@ -1597,7 +1597,7 @@ boolean apply_prefs(boolean skip_warn) {
 
 #ifdef ENABLE_JACK
   if (future_prefs->jack_opts!=jack_opts) {
-    set_int_pref("jack_opts",jack_opts);
+    set_int_pref(PREF_JACK_OPTS,jack_opts);
     future_prefs->jack_opts=prefs->jack_opts=jack_opts;
   }
 #endif
@@ -1631,12 +1631,12 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (midicr!=prefs->midi_check_rate) {
     prefs->midi_check_rate=midicr;
-    set_int_pref("midi_check_rate",prefs->midi_check_rate);
+    set_int_pref(PREF_MIDI_CHECK_RATE,prefs->midi_check_rate);
   }
 
   if (midirpt!=prefs->midi_rpt) {
     prefs->midi_rpt=midirpt;
-    set_int_pref("midi_rpt",prefs->midi_rpt);
+    set_int_pref(PREF_MIDI_RPT,prefs->midi_rpt);
   }
 
   if (omc_midi_enable!=((prefs->omc_dev_opts&OMC_DEV_MIDI)/OMC_DEV_MIDI)) {
@@ -1671,12 +1671,12 @@ boolean apply_prefs(boolean skip_warn) {
   if (needs_midi_restart) midi_open();
 
 #endif
-  if (set_omc_dev_opts) set_int_pref("omc_dev_opts",prefs->omc_dev_opts);
+  if (set_omc_dev_opts) set_int_pref(PREF_OMC_DEV_OPTS,prefs->omc_dev_opts);
 #endif
 
   if (mt_enter_prompt!=prefs->mt_enter_prompt) {
     prefs->mt_enter_prompt=mt_enter_prompt;
-    set_boolean_pref("mt_enter_prompt",mt_enter_prompt);
+    set_boolean_pref(PREF_MT_ENTER_PROMPT,mt_enter_prompt);
   }
 
   if (mt_exit_render!=prefs->mt_exit_render) {
@@ -1691,21 +1691,21 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (mt_pertrack_audio!=prefs->mt_pertrack_audio) {
     prefs->mt_pertrack_audio=mt_pertrack_audio;
-    set_boolean_pref("mt_pertrack_audio",mt_pertrack_audio);
+    set_boolean_pref(PREF_MT_PERTRACK_AUDIO,mt_pertrack_audio);
   }
 
   if (mt_backaudio!=prefs->mt_backaudio) {
     prefs->mt_backaudio=mt_backaudio;
-    set_int_pref("mt_backaudio",mt_backaudio);
+    set_int_pref(PREF_MT_BACKAUDIO,mt_backaudio);
   }
 
   if (mt_def_width!=prefs->mt_def_width) {
     prefs->mt_def_width=mt_def_width;
-    set_int_pref("mt_def_width",mt_def_width);
+    set_int_pref(PREF_MT_DEF_WIDTH,mt_def_width);
   }
   if (mt_def_height!=prefs->mt_def_height) {
     prefs->mt_def_height=mt_def_height;
-    set_int_pref("mt_def_height",mt_def_height);
+    set_int_pref(PREF_MT_DEF_HEIGHT,mt_def_height);
   }
   if (mt_def_fps!=prefs->mt_def_fps) {
     prefs->mt_def_fps=mt_def_fps;
@@ -1714,19 +1714,19 @@ boolean apply_prefs(boolean skip_warn) {
   if (!mt_enable_audio) mt_def_achans=0;
   if (mt_def_achans!=prefs->mt_def_achans) {
     prefs->mt_def_achans=mt_def_achans;
-    set_int_pref("mt_def_achans",mt_def_achans);
+    set_int_pref(PREF_MT_DEF_ACHANS,mt_def_achans);
   }
   if (mt_def_asamps!=prefs->mt_def_asamps) {
     prefs->mt_def_asamps=mt_def_asamps;
-    set_int_pref("mt_def_asamps",mt_def_asamps);
+    set_int_pref(PREF_MT_DEF_ASAMPS,mt_def_asamps);
   }
   if (mt_def_arate!=prefs->mt_def_arate) {
     prefs->mt_def_arate=mt_def_arate;
-    set_int_pref("mt_def_arate",mt_def_arate);
+    set_int_pref(PREF_MT_DEF_ARATE,mt_def_arate);
   }
   if (mt_def_signed_endian!=prefs->mt_def_signed_endian) {
     prefs->mt_def_signed_endian=mt_def_signed_endian;
-    set_int_pref("mt_def_signed_endian",mt_def_signed_endian);
+    set_int_pref(PREF_MT_DEF_SIGNED_ENDIAN,mt_def_signed_endian);
   }
 
   if (mt_undo_buf!=prefs->mt_undo_buf) {
@@ -1759,7 +1759,7 @@ boolean apply_prefs(boolean skip_warn) {
         }
       }
       prefs->mt_undo_buf=mt_undo_buf;
-      set_int_pref("mt_undo_buf",mt_undo_buf);
+      set_int_pref(PREF_MT_UNDO_BUF,mt_undo_buf);
     }
   }
 
@@ -1768,23 +1768,23 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (mt_autoback_time!=prefs->mt_auto_back) {
     prefs->mt_auto_back=mt_autoback_time;
-    set_int_pref("mt_auto_back",mt_autoback_time);
+    set_int_pref(PREF_MT_AUTO_BACK,mt_autoback_time);
   }
 
   if (max_disp_vtracks!=prefs->max_disp_vtracks) {
     prefs->max_disp_vtracks=max_disp_vtracks;
-    set_int_pref("max_disp_vtracks",max_disp_vtracks);
+    set_int_pref(PREF_MAX_DISP_VTRACKS,max_disp_vtracks);
     if (mainw->multitrack!=NULL) scroll_tracks(mainw->multitrack,mainw->multitrack->top_track,FALSE);
   }
 
   if (startup_ce&&future_prefs->startup_interface!=STARTUP_CE) {
     future_prefs->startup_interface=STARTUP_CE;
-    set_int_pref("startup_interface",STARTUP_CE);
+    set_int_pref(PREF_STARTUP_INTERFACE,STARTUP_CE);
     if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL)
       write_backup_layout_numbering(mainw->multitrack);
   } else if (!startup_ce&&future_prefs->startup_interface!=STARTUP_MT) {
     future_prefs->startup_interface=STARTUP_MT;
-    set_int_pref("startup_interface",STARTUP_MT);
+    set_int_pref(PREF_STARTUP_INTERFACE,STARTUP_MT);
     if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL)
       write_backup_layout_numbering(mainw->multitrack);
   }
@@ -1810,7 +1810,7 @@ void save_future_prefs(void) {
     set_pref(PREF_WORKING_DIR,future_prefs->tmpdir);
   }
   if (prefs->show_tool!=future_prefs->show_tool) {
-    set_boolean_pref("show_toolbar",future_prefs->show_tool);
+    set_boolean_pref(PREF_SHOW_TOOLBAR,future_prefs->show_tool);
   }
 
 
@@ -1835,7 +1835,7 @@ void rdet_acodec_changed(LiVESCombo *acodec_combo, livespointer user_data) {
   if (prefs->encoder.audio_codec!=future_prefs->encoder.audio_codec) {
     prefs->encoder.audio_codec=future_prefs->encoder.audio_codec;
     if (prefs->encoder.audio_codec<AUDIO_CODEC_UNKNOWN) {
-      set_int_pref("encoder_acodec",prefs->encoder.audio_codec);
+      set_int_pref(PREF_ENCODER_ACODEC,prefs->encoder.audio_codec);
     }
   }
 }
@@ -2882,7 +2882,7 @@ _prefsw *create_prefs_dialog(void) {
                              LIVES_BOX(hbox),NULL);
 
 
-  if (prefs->ocp==-1) prefs->ocp=get_int_pref("open_compression_percent");
+  if (prefs->ocp==-1) prefs->ocp=get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);

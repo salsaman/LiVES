@@ -9970,19 +9970,32 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   // create a weed layer from a pixbuf
   // layer "pixel_data" is then either shared with with the pixbuf pixels, or set to NULL
 
-  int error;
   LiVESPixbuf *pixbuf;
+
+  uint8_t *pixel_data,*pixels,*end;
+
+  boolean cheat=FALSE,done;
+
+  int error;
   int palette;
   int width;
   int height;
   int irowstride;
   int rowstride,orowstride;
-  uint8_t *pixel_data,*pixels,*end;
-  boolean cheat=FALSE,done;
   int n_channels;
 
   if (layer==NULL) return NULL;
 
+  if (weed_plant_has_leaf(layer,WEED_LEAF_HOST_PIXBUF_SRC)) {
+    // our layer pixel_data originally came from a pixbuf, so just free the layer and return the pixbuf
+    pixbuf=(LiVESPixbuf *)weed_get_voidptr_value(layer,WEED_LEAF_HOST_PIXBUF_SRC,&error);
+    weed_set_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,NULL);
+    weed_leaf_delete(layer,WEED_LEAF_HOST_PIXBUF_SRC);
+    return pixbuf;
+  }
+
+  // otherwise we need to steal or copy the pixel_data
+  
   palette=weed_get_int_value(layer,WEED_LEAF_CURRENT_PALETTE,&error);
   width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
   height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
@@ -9998,10 +10011,13 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
     case WEED_PALETTE_YUV888:
 #ifndef GUI_QT
       if (irowstride==get_rowstride_value(width*3)) {
+	// rowstrides are OK, we can just steal the pixel_data
         pixbuf=lives_pixbuf_cheat(FALSE, width, height, pixel_data);
+	weed_set_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,NULL);
         cheat=TRUE;
       } else
 #endif
+	// otherwise we need to copy the data
         pixbuf=lives_pixbuf_new(FALSE, width, height);
       n_channels=3;
       break;
@@ -10017,10 +10033,13 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
     case WEED_PALETTE_YUVA8888:
 #ifndef GUI_QT
       if (irowstride==get_rowstride_value(width*4)) {
+	// rowstrides are OK, we can just steal the pixel_data
         pixbuf=lives_pixbuf_cheat(TRUE, width, height, pixel_data);
+	weed_set_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,NULL);
         cheat=TRUE;
       } else
 #endif
+	// otherwise we need to copy the data
         pixbuf=lives_pixbuf_new(TRUE, width, height);
       n_channels=4;
       break;
@@ -10037,6 +10056,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   } while (!done);
 
   if (!cheat) {
+    // copy the pixel data
     boolean done=FALSE;
     pixels=lives_pixbuf_get_pixels(pixbuf);
     orowstride=lives_pixbuf_get_rowstride(pixbuf);
@@ -10057,10 +10077,9 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
 
     weed_layer_pixel_data_free(layer);
 
-    // indicates that the pixel data was copied, not shared
-    weed_set_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,NULL);
   }
 
+  
 #ifdef TEST_GAMMA
   register int j,k;
 
@@ -10102,7 +10121,7 @@ LIVES_INLINE boolean weed_palette_is_resizable(int pal, int clamped, boolean in_
   if (in_out&&sws_isSupportedInput(weed_palette_to_avi_pix_fmt(pal,&clamped))) return TRUE;
   else if (sws_isSupportedOutput(weed_palette_to_avi_pix_fmt(pal,&clamped))) return TRUE;
 #endif
-  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_BGR24||
+  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGR24||
       pal==WEED_PALETTE_BGRA32) return TRUE;
   return FALSE;
 }
@@ -10309,8 +10328,6 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   LiVESPixbuf *pixbuf=NULL;
   LiVESPixbuf *new_pixbuf=NULL;
 
-  boolean keep_in_pixel_data=FALSE;
-  boolean is_contiguous=FALSE;
   boolean retval=TRUE;
 
   int error;
@@ -10370,14 +10387,6 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   }
 #endif
 
-  if (weed_plant_has_leaf(layer,WEED_LEAF_HOST_ORIG_PDATA)&&weed_get_boolean_value(layer,WEED_LEAF_HOST_ORIG_PDATA,&error)==WEED_TRUE) {
-    // host_orig_pdata is set if this is an alpha channel we "stole" from another layer
-    keep_in_pixel_data=TRUE;
-  }
-
-  if (weed_plant_has_leaf(layer,WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS) &&
-      weed_get_boolean_value(layer,WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS,&error)==WEED_TRUE)
-    is_contiguous=TRUE;
 
   // if we cannot scale YUV888 (unclamped) or YUVA8888 (unclamped) directly, pretend they are RGB24 and RGBA32
   if (palette==WEED_PALETTE_YUV888&&iclamped==WEED_YUV_CLAMPING_UNCLAMPED
@@ -10397,19 +10406,19 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       weed_palette_is_resizable(opal_hint, oclamp_hint, FALSE)) {
     struct SwsContext *swscale;
 
-    enum PixelFormat ipixfmt,opixfmt;
-
-    void **pd_array;
+    weed_plant_t *old_layer;
+    
     void **in_pixel_data,**out_pixel_data;
+
+    int *irowstrides,*orowstrides;
 
     boolean store_ctx=FALSE;
 
-    int *irowstrides,*orowstrides;
-    int *ir_array,*or_array;
+    enum PixelFormat ipixfmt,opixfmt;
 
     int flags;
 
-    register int i;
+    old_layer=weed_plant_copy(layer);
 
     av_log_set_level(AV_LOG_FATAL);
 
@@ -10422,19 +10431,11 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     ipixfmt=weed_palette_to_avi_pix_fmt(palette,&iclamped);
     opixfmt=weed_palette_to_avi_pix_fmt(opal_hint,&oclamp_hint);
 
-    in_pixel_data=(void **)lives_malloc0(4*sizeof(void *));
-    irowstrides=(int *)lives_malloc0(4*sizint);
+    // get current values
+    in_pixel_data=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
+    irowstrides=weed_get_int_array(layer,WEED_LEAF_ROWSTRIDES,&error);
 
-    pd_array=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
-    ir_array=weed_get_int_array(layer,WEED_LEAF_ROWSTRIDES,&error);
-
-    for (i=0; i<weed_palette_get_numplanes(palette); i++) {
-      in_pixel_data[i]=pd_array[i];
-      irowstrides[i]=ir_array[i];
-    }
-
-    lives_free(pd_array);
-    lives_free(ir_array);
+    // set new values
 
     if (palette!=opal_hint) {
       width*=weed_palette_get_pixels_per_macropixel(palette); // desired width is in macropixels
@@ -10450,22 +10451,10 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 
     create_empty_pixel_data(layer,FALSE,TRUE);
 
-    out_pixel_data=(void **)lives_malloc0(4*sizeof(void *));
-    orowstrides=(int *)lives_malloc0(4*sizint);
-
-    pd_array=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
-    or_array=weed_get_int_array(layer,WEED_LEAF_ROWSTRIDES,&error);
-
-    for (i=0; i<weed_palette_get_numplanes(opal_hint); i++) {
-      out_pixel_data[i]=pd_array[i];
-      orowstrides[i]=or_array[i];
-    }
-
-    lives_free(pd_array);
-    lives_free(or_array);
-
+    out_pixel_data=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
+    orowstrides=weed_get_int_array(layer,WEED_LEAF_ROWSTRIDES,&error);
+    
     width*=weed_palette_get_pixels_per_macropixel(opal_hint);
-
     iwidth*=weed_palette_get_pixels_per_macropixel(palette); // input width is in macropixels
 
     if ((swscale=swscale_find_context(iwidth,iheight,width,height,ipixfmt,opixfmt,flags))==NULL) {
@@ -10481,13 +10470,8 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       if (store_ctx) swscale_add_context(iwidth,iheight,width,height,ipixfmt,opixfmt,flags,swscale);
     }
 
-    if (!keep_in_pixel_data) {
-      for (i=0; i<weed_palette_get_numplanes(palette); i++) {
-        // TODO : pixbuf clear
-        lives_free(in_pixel_data[i]);
-        if (is_contiguous) break;
-      }
-    } else weed_leaf_delete(layer,WEED_LEAF_HOST_ORIG_PDATA);
+    // this will properly free() in_pixel_data
+    weed_layer_free(old_layer);
 
     lives_free(out_pixel_data);
 
@@ -10501,9 +10485,10 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 #endif
 
   switch (palette) {
+    // anything with 3 or 4 channels (alpha must be last)
+
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
-  case WEED_PALETTE_ARGB32:
   case WEED_PALETTE_RGBA32:
   case WEED_PALETTE_BGRA32:
 
@@ -10521,10 +10506,8 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       weed_set_int_value(layer,WEED_LEAF_HEIGHT,lives_pixbuf_get_height(new_pixbuf));
       weed_set_int_value(layer,WEED_LEAF_ROWSTRIDES,lives_pixbuf_get_rowstride(new_pixbuf));
     }
-
-    if (weed_get_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,&error)!=NULL && keep_in_pixel_data) {
-      ;; // TODO - check this
-    } else lives_object_unref(pixbuf);
+    
+    lives_object_unref(pixbuf);
 
     break;
   default:
@@ -11276,6 +11259,7 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
     }
   }
 }
+
 
 void weed_layer_free(weed_plant_t *layer) {
   if (layer==NULL) return;

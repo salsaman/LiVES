@@ -2520,7 +2520,7 @@ char *repl_tmpdir(const char *entry, boolean fwd) {
   // fwd FALSE replaces "tmpdir" with "/tmp/foo"
 
 
-  char *string=lives_strdup(entry);;
+  char *string=lives_strdup(entry);
 
   if (fwd) {
     if (!strncmp(entry,prefs->tmpdir,strlen(prefs->tmpdir))) {

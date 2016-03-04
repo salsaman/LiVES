@@ -1000,7 +1000,7 @@ void do_startup_interface_query(void) {
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton1)))
     future_prefs->startup_interface=prefs->startup_interface=STARTUP_MT;
 
-  set_int_pref("startup_interface",prefs->startup_interface);
+  set_int_pref(PREF_STARTUP_INTERFACE,prefs->startup_interface);
 
   lives_widget_destroy(dialog);
 

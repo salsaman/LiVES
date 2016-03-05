@@ -1402,13 +1402,13 @@ void create_LiVES(void) {
   }
 
   if (mainw->num_rendered_effects_test>0) {
-    lives_widget_set_sensitive(mainw->run_test_rfx_menu,TRUE);
+    if (mainw->run_test_rfx_menu!=NULL) lives_widget_set_sensitive(mainw->run_test_rfx_menu,TRUE);
     lives_widget_set_sensitive(mainw->promote_test_rfx,TRUE);
     lives_widget_set_sensitive(mainw->delete_test_rfx,TRUE);
     lives_widget_set_sensitive(mainw->rename_test_rfx,TRUE);
     lives_widget_set_sensitive(mainw->edit_test_rfx,TRUE);
   } else {
-    lives_widget_set_sensitive(mainw->run_test_rfx_menu,FALSE);
+    if (mainw->run_test_rfx_menu!=NULL) lives_widget_set_sensitive(mainw->run_test_rfx_menu,FALSE);
     lives_widget_set_sensitive(mainw->promote_test_rfx,FALSE);
     lives_widget_set_sensitive(mainw->delete_test_rfx,FALSE);
     lives_widget_set_sensitive(mainw->rename_test_rfx,FALSE);

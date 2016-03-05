@@ -98,9 +98,13 @@ static pthread_t cthreads[MAX_FX_THREADS];
 static boolean unal_inited=FALSE;
 
 LIVES_INLINE __attribute__((__const__)) int get_rowstride_value(int rowstride) {
+#ifdef GUI_GTK
   // from gdk-pixbuf.c
   /* Always align rows to 32-bit boundaries */
   return (rowstride + 3) & ~3;
+#else
+  return rowstride;
+#endif
 }
 
 
@@ -111,8 +115,8 @@ LIVES_INLINE __attribute__((__const__)) int get_last_rowstride_value(int width, 
 #else
   return width * nchans;
 #endif
-
 }
+
 
 static void lives_free_buffer(uint8_t *pixels, livespointer data) {
   lives_free(pixels);
@@ -286,9 +290,6 @@ static inline void update_gamma_lut(double gamma) {
 
 #endif
 
-#define FP_BITS 16 /// max fp bits
-#define SCALE_FACTOR (1<<FP_BITS)
-
 static void init_RGB_to_YUV_tables(void) {
   register int i;
 
@@ -322,14 +323,14 @@ static void init_RGB_to_YUV_tables(void) {
 		       * CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
     Cb_Gc[i] = myround(-fac * (1.-KB_YCBCR-KR_YCBCR)  * (double)i
 		       * CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
-    Cb_Bc[i] = myround((0.500 * (double)i
+    Cb_Bc[i] = myround((0.5 * (double)i
 			* CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
 
 
     
     fac = .5 / (1. - KR_YCBCR); // .7133
     
-    Cr_Rc[i] = myround((0.500 * (double)i
+    Cr_Rc[i] = myround((0.5 * (double)i
 			* CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
     Cr_Gc[i] = myround(-fac * (1.-KB_YCBCR-KR_YCBCR) * (double)i
                        * CLAMP_FACTOR_UV * SCALE_FACTOR);
@@ -360,14 +361,14 @@ static void init_RGB_to_YUV_tables(void) {
 		       * SCALE_FACTOR); // -.16736
     Cb_Gu[i] = myround(-fac * (1.-KB_YCBCR-KR_YCBCR)  * (double)i
 		       * SCALE_FACTOR); // -.331264
-    Cb_Bu[i] = myround((0.500 * (double)i
+    Cb_Bu[i] = myround((0.5 * (double)i
 			+ UV_BIAS) * SCALE_FACTOR);
 
 
     
     fac = .5 / (1. - KR_YCBCR); // .7133
     
-    Cr_Ru[i] = myround((0.500 * (double)i
+    Cr_Ru[i] = myround((0.5 * (double)i
 			+ UV_BIAS) * SCALE_FACTOR);
     Cr_Gu[i] = myround(-fac * (1.-KB_YCBCR-KR_YCBCR) * (double)i
 		       * SCALE_FACTOR);
@@ -409,14 +410,14 @@ static void init_RGB_to_YUV_tables(void) {
 			* CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
     HCb_Gc[i] = myround(-fac * (1.-KB_BT701-KR_BT701)  * (double)i
 			* CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
-    HCb_Bc[i] = myround((0.500 * (double)i
+    HCb_Bc[i] = myround((0.5 * (double)i
 			 * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
 
 
     
     fac = .5 / (1. - KR_BT701); // .635
     
-    HCr_Rc[i] = myround((0.500 * (double)i
+    HCr_Rc[i] = myround((0.5 * (double)i
 			 * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
     HCr_Gc[i] = myround(-fac * (1.-KB_BT701-KR_BT701) * (double)i
 			* CLAMP_FACTOR_UV * SCALE_FACTOR);
@@ -449,14 +450,14 @@ static void init_RGB_to_YUV_tables(void) {
 			* SCALE_FACTOR); // -.16736
     HCb_Gu[i] = myround(-fac * (1.-KB_BT701-KR_BT701)  * (double)i
 			* SCALE_FACTOR); // -.331264
-    HCb_Bu[i] = myround((0.500 * (double)i
+    HCb_Bu[i] = myround((0.5 * (double)i
 			 + UV_BIAS) * SCALE_FACTOR);
 
 
     
     fac = .5 / (1. - KR_BT701); // .635
     
-    HCr_Ru[i] = myround((0.500 * (double)i
+    HCr_Ru[i] = myround((0.5 * (double)i
 			 + UV_BIAS) * SCALE_FACTOR);
     HCr_Gu[i] = myround(-fac * (1.-KB_BT701-KR_BT701) * (double)i
 			* SCALE_FACTOR);
@@ -643,10 +644,10 @@ static void init_unal(void) {
       al[i][j]=(float)j*(float)i/255.;
 
       // clamped versions
-      unalcy[i][j]=((j-YUV_CLAMP_MIN)*255./(Y_CLAMP_MAX-YUV_CLAMP_MIN))*255./(float)i;
-      alcy[i][j]=((j-YUV_CLAMP_MIN)*255./(Y_CLAMP_MAX-YUV_CLAMP_MIN))*(float)i/255.;
-      unalcuv[i][j]=((j-YUV_CLAMP_MIN)*255./(UV_CLAMP_MAX-YUV_CLAMP_MIN))*255./(float)i;
-      alcuv[i][j]=((j-YUV_CLAMP_MIN)*255./(UV_CLAMP_MAX-YUV_CLAMP_MIN))*(float)i/255.;
+      unalcy[i][j]=((j-YUV_CLAMP_MIN)/(Y_CLAMP_MAX-YUV_CLAMP_MIN))/(float)i;
+      alcy[i][j]=((j-YUV_CLAMP_MIN)/(Y_CLAMP_MAX-YUV_CLAMP_MIN))*(float)i;
+      unalcuv[i][j]=((j-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN))/(float)i;
+      alcuv[i][j]=((j-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN))*(float)i;
 
     }
   }

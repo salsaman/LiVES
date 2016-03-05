@@ -5270,7 +5270,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   mainw->suppress_dprint=TRUE;
 
   while (1) {
-    g_print("here1 %s\n",recovery_file);
     
     threaded_dialog_spin(0.);
     is_scrap=FALSE;
@@ -5296,9 +5295,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
 
 
-
     memset(buff+strlen(buff)-strlen("\n"),0,1);
-    g_print("opening %s\n",buff);
 
     if (!strcmp(buff+strlen(buff)-1,"*")) {
       // set to be opened

@@ -219,6 +219,8 @@ const char *module_check_init(void) {
     return error;
   }
 
+  XInitThreads();
+  
   pbo_available=FALSE;
 
   if (GL_ARB_pixel_buffer_object) {

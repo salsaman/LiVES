@@ -1,5 +1,6 @@
 Version 2.6.1
 -------------
+Fix flickering in multi threaded palette conversion.
 Play selections should function even after switching clips, restarting playback.
 Add encoded files to global "recently used files".
 Implement new theming engine, allow custom themes / colours in Preferences (in progress).

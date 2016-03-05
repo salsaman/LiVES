@@ -2330,7 +2330,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     else iclamping=WEED_YUV_CLAMPING_CLAMPED;
 
     if (oclamping==-1||(channel_flags&WEED_CHANNEL_PALETTE_CAN_VARY)) {
-      if (weed_plant_has_leaf(chantmpl,WEED_LEAF_YUV_CLAMPING)) oclamping=(weed_get_int_value(chantmpl,WEED_LEAF_YUV_CLAMPING,&error));
+      if (weed_plant_has_leaf(chantmpl,WEED_LEAF_YUV_CLAMPING)) {
+	oclamping=(weed_get_int_value(chantmpl,WEED_LEAF_YUV_CLAMPING,&error));
+      }
       else oclamping=iclamping;
     }
 

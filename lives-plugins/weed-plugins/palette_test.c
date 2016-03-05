@@ -71,8 +71,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
-    weed_set_int_value(in_chantmpls[0],"YUV_clamping",WEED_YUV_CLAMPING_UNCLAMPED);
-    weed_set_int_value(out_chantmpls[0],"YUV_clamping",WEED_YUV_CLAMPING_UNCLAMPED);
+    weed_set_int_value(in_chantmpls[0],"YUV_clamping",WEED_YUV_CLAMPING_CLAMPED);
+    weed_set_int_value(out_chantmpls[0],"YUV_clamping",WEED_YUV_CLAMPING_CLAMPED);
 
     gui=weed_filter_class_get_gui(filter_class);
     weed_set_boolean_value(gui,"hidden",WEED_TRUE);

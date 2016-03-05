@@ -5249,6 +5249,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
   }
 
+  
   do {
     retval=0;
     rfile=fopen(recovery_file,"r");
@@ -5269,7 +5270,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   mainw->suppress_dprint=TRUE;
 
   while (1) {
-
+    g_print("here1 %s\n",recovery_file);
+    
     threaded_dialog_spin(0.);
     is_scrap=FALSE;
     is_ascrap=FALSE;
@@ -5293,7 +5295,10 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       break;
     }
 
+
+
     memset(buff+strlen(buff)-strlen("\n"),0,1);
+    g_print("opening %s\n",buff);
 
     if (!strcmp(buff+strlen(buff)-1,"*")) {
       // set to be opened

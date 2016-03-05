@@ -3977,7 +3977,7 @@ int lives_echo(const char *text, const char *to, boolean append) {
   if (append) op=">";
   else op=">>";
 
-  com=lives_strdup_printf("%s \"%s\" %s \"%s\" >\"%s\" 2>&1",capable->echo_cmd,text,op,to,prefs->cmd_log);
+  com=lives_strdup_printf("%s \"%s\" %s \"%s\" 2>\"%s\"",capable->echo_cmd,text,op,to,prefs->cmd_log);
   retval=lives_system(com,FALSE);
   lives_free(com);
   return retval;

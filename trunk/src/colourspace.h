@@ -14,6 +14,31 @@
 
 #define SCREEN_GAMMA 2.2
 
+
+// rgb / yuv conversion factors ////////////
+#define KR_YCBCR 0.299
+#define KB_YCBCR 0.114
+
+#define KR_BT701 0.2126
+#define KB_BT701 0.0722
+
+#define YUV_CLAMP_MIN 16.
+#define YUV_CLAMP_MINI 16
+
+#define Y_CLAMP_MAX 235. 
+
+#define UV_CLAMP_MAX 240.
+#define UV_CLAMP_MAXI 240
+
+#define CLAMP_FACTOR_Y ((Y_CLAMP_MAX-YUV_CLAMP_MIN)/255.) // unclamped -> clamped
+#define CLAMP_FACTOR_UV ((UV_CLAMP_MAX-YUV_CLAMP_MIN)/255.) // unclamped -> clamped
+
+#define UV_BIAS 128.
+
+/////////////////////////////////////////////
+
+
+
 typedef struct {
   uint8_t u0;
   uint8_t y0;

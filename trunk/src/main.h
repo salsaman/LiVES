@@ -258,8 +258,6 @@ typedef int lives_pgid_t;
 
 #define ENABLE_DVD_GRAB
 
-#define FP_BITS 16 /// max fp bits [apparently 16 is faster]
-
 #ifdef HAVE_MJPEGTOOLS
 #define HAVE_YUV4MPEG
 #endif

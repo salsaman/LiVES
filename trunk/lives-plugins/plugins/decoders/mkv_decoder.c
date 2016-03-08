@@ -1,5 +1,5 @@
 // LiVES - mkv decoder plugin
-// (c) G. Finch 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2011 - 2016 <salsaman@gmail.com>
 
 /*
  * This file is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
-const char *plugin_version="LiVES mkv decoder version 1.2";
+const char *plugin_version="LiVES mkv decoder version 1.3";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -901,7 +901,7 @@ static int matroska_merge_packets(AVPacket *out, AVPacket *in) {
   out->data = newdata;
   memcpy(out->data+out->size, in->data, in->size);
   out->size += in->size;
-  av_destruct_packet(in);
+  av_packet_unref(in);
   av_free(in);
   return 0;
 }

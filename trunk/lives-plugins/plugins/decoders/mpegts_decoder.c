@@ -1,5 +1,5 @@
 // LiVES - mpegts decoder plugin
-// (c) G. Finch 2012 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2016 <salsaman@gmail.com>
 
 /*
  * This file is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include <endian.h>
 #endif
 
-const char *plugin_version="LiVES mpegts decoder version 1.2a";
+const char *plugin_version="LiVES mpegts decoder version 1.3";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -1023,7 +1023,10 @@ static int mpegts_set_stream_info(lives_clip_data_t *cdata, AVStream *st, PESCon
 static void new_pes_packet(PESContext *pes, AVPacket *pkt) {
   av_init_packet(pkt);
 
+#if !HAVE_AVPACKET_UNREF
   pkt->destruct = av_destruct_packet;
+#endif
+
   pkt->data = pes->buffer;
   pkt->size = pes->data_index;
 

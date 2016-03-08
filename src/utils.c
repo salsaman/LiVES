@@ -4236,7 +4236,7 @@ int lives_list_strcmp_index(LiVESList *list, livesconstpointer data) {
 
 void add_to_recent(const char *filename, double start, int frames, const char *extra_params) {
   char buff[PATH_MAX];
-  char *file,*tmp;
+  char *file;
 
   if (frames>0) {
     if (extra_params==NULL||(strlen(extra_params)==0)) file=lives_strdup_printf("%s|%.2f|%d",filename,start,frames);
@@ -4270,38 +4270,33 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
 
         set_menu_text(mainw->recent1,file,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-        set_pref_utf8(PREF_RECENT1,buff);
+        set_pref_utf8(PREF_RECENT1,file);
       } else {
         // #3 in list
         get_menu_text(mainw->recent2,buff);
         set_menu_text(mainw->recent3,buff,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent3,buff,FALSE);
-        set_pref(PREF_RECENT3,(tmp=U82F(buff)));
-        lives_free(tmp);
+        set_pref_utf8(PREF_RECENT3,buff);
 
         get_menu_text(mainw->recent1,buff);
         set_menu_text(mainw->recent2,buff,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-        set_pref(PREF_RECENT2,(tmp=U82F(buff)));
-        lives_free(tmp);
+        set_pref_utf8(PREF_RECENT2,buff);
 
         set_menu_text(mainw->recent1,file,FALSE);
         if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-        set_pref(PREF_RECENT1,(tmp=U82F(file)));
-        lives_free(tmp);
+        set_pref_utf8(PREF_RECENT1,file);
       }
     } else {
       // #2 in list
       get_menu_text(mainw->recent1,buff);
       set_menu_text(mainw->recent2,buff,FALSE);
       if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-      set_pref(PREF_RECENT2,(tmp=U82F(buff)));
-      lives_free(tmp);
+      set_pref_utf8(PREF_RECENT2,buff);
 
       set_menu_text(mainw->recent1,file,FALSE);
       if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-      set_pref(PREF_RECENT1,(tmp=U82F(file)));
-      lives_free(tmp);
+      set_pref_utf8(PREF_RECENT1,file);
     }
   } else {
     // I'm number 1, so why change ;-)

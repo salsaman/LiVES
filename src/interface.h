@@ -18,6 +18,10 @@ boolean do_audio_choice_dialog(short startup_phase);
 
 void do_layout_recover_dialog(void);
 
+void do_keys_window(void);
+
+void do_mt_keys_window(void);
+
 LiVESWidget *create_cleardisk_advanced_dialog(void);
 
 typedef struct {
@@ -78,6 +82,7 @@ typedef struct {
   LiVESWidget *clear_button;
   LiVESWidget *delete_button;
   LiVESWidget *textview;
+  LiVESWidget *table;
 } text_window;
 
 text_window *create_text_window(const char *title_part, const char *text, LiVESTextBuffer *);

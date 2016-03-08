@@ -2440,6 +2440,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     rowstrides_changed=rowstrides_differ(numplanes,rowstrides,nchr,channel_rows);
     lives_free(channel_rows);
+    lives_free(rowstrides);
 
     if (((rowstrides_changed&&(channel_flags&WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))||
          (((incwidth!=width)||(incheight!=height))&&(channel_flags&WEED_CHANNEL_REINIT_ON_SIZE_CHANGE))))

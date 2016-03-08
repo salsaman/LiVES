@@ -8,7 +8,8 @@ Minor compilation fix for gtk+ 2.x
 Fix bug in finding of "Next filter map" in multitrack.
 Fix showing of textbuffer parameters in effect windows (regression).
 Fix possible minor memory leak when applying inplace effects (regression).
-Code cleanup and optimisations.
+Improvements to edge detect filter.
+Major code cleanup and optimisations.
 Updated translation to Ukranian (thanks Yuri Churnoivan).
 
 

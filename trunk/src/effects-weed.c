@@ -2331,9 +2331,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (oclamping==-1||(channel_flags&WEED_CHANNEL_PALETTE_CAN_VARY)) {
       if (weed_plant_has_leaf(chantmpl,WEED_LEAF_YUV_CLAMPING)) {
-	oclamping=(weed_get_int_value(chantmpl,WEED_LEAF_YUV_CLAMPING,&error));
-      }
-      else oclamping=iclamping;
+        oclamping=(weed_get_int_value(chantmpl,WEED_LEAF_YUV_CLAMPING,&error));
+      } else oclamping=iclamping;
     }
 
     if (weed_plant_has_leaf(layer,WEED_LEAF_YUV_SAMPLING)) isampling=(weed_get_int_value(layer,WEED_LEAF_YUV_SAMPLING,&error));
@@ -7231,8 +7230,8 @@ void deinit_render_effects(void) {
     if (key_to_instance[i][0]!=NULL) {
       weed_deinit_effect(i);
       if (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&pchains[i]!=NULL) {
-	lives_free(pchains[i]);
-	pchains[i]=NULL;
+        lives_free(pchains[i]);
+        pchains[i]=NULL;
       }
     }
   }
@@ -10595,7 +10594,7 @@ boolean read_filter_defaults(int fd) {
 
     for (i=0; i<ntoread; i++) {
       if (lives_read_le_buffered(fd,&pnum,4,TRUE)<4) {
-	if (ptmpls!=NULL) lives_free(ptmpls);
+        if (ptmpls!=NULL) lives_free(ptmpls);
         break;
       }
 

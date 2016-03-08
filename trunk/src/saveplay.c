@@ -1310,7 +1310,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   } else if (!mainw->osc_auto&&sfile->orig_file_name) {
     char *warn=lives_strdup(
                  _("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n"
-		   "\nDo you still wish to continue ?"));
+                   "\nDo you still wish to continue ?"));
     if (!do_yesno_dialog_with_check(warn,WARN_MASK_SAVE_QUALITY)) {
       lives_free(warn);
       lives_free(full_file_name);
@@ -5249,7 +5249,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
   }
 
-  
+
   do {
     retval=0;
     rfile=fopen(recovery_file,"r");
@@ -5270,7 +5270,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   mainw->suppress_dprint=TRUE;
 
   while (1) {
-    
+
     threaded_dialog_spin(0.);
     is_scrap=FALSE;
     is_ascrap=FALSE;
@@ -5460,7 +5460,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         open_set_file(mainw->set_name,++clipnum);
         threaded_dialog_spin(0.);
 
-	lives_list_free_all(&mainw->cached_list);
+        lives_list_free_all(&mainw->cached_list);
 
         if (mainw->current_file<1) continue;
 

@@ -590,7 +590,7 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
 
   // can also be called from other places
 
-  
+
   if (!strcmp(prefidx,PREF_REC_EXT_AUDIO)) {
     boolean rec_ext_audio=newval;
     if (rec_ext_audio&&prefs->audio_src==AUDIO_SRC_INT) {

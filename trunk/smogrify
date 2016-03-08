@@ -999,9 +999,9 @@ if (defined($ARGV[0])) {
 
 
 
-	#TODO - mingw
+#TODO - mingw
         if ($command eq "get_recovery_file") {
-	    #find first non-in-use recovery file for given uid, gid and filepart
+#find first non-in-use recovery file for given uid, gid and filepart
             my $uid=$ARGV[1];
             my $gid=$ARGV[2];
             my $exename=$ARGV[3];
@@ -1009,18 +1009,18 @@ if (defined($ARGV[0])) {
             opendir DIR,"$tmpdir";
             my @files=readdir(DIR);
 
-	    # sort most recent first (in case of multiple files)
-	    @files = sort {(stat "$tmpdir/$b")[10] <=> (stat "$tmpdir/$a")[10]} (@files);
+# sort most recent first (in case of multiple files)
+            @files = sort {(stat "$tmpdir/$b")[10] <=> (stat "$tmpdir/$a")[10]}(@files);
 
-            foreach my $file (@files) {
+            foreach my $file(@files) {
                 if ($file=~/^$filepart\.$uid\.$gid\.(.*)/) {
                     if (-z $file) {
-			# clean up zero length files
+# clean up zero length files
                         unlink "$file";
                     } else {
-			# check to make sure pid is not a running LiVES
+# check to make sure pid is not a running LiVES
                         my $exe=smog_system_direct("/bin/readlink -n /proc/$1/exe");
-			#allowed to fail
+#allowed to fail
                         my $short_exe=&my_basename($exe);
 
                         unless($short_exe eq $exename) {
@@ -1037,9 +1037,9 @@ if (defined($ARGV[0])) {
             exit 0;
         }
 
-	#TODO - mingw
+#TODO - mingw
         if ($command eq "clean_recovery_files") {
-	    #remove non-in-use recovery/layout files for given uid, gid
+#remove non-in-use recovery/layout files for given uid, gid
             my $uid=$ARGV[1];
             my $gid=$ARGV[2];
             my $exename=$ARGV[3];
@@ -1050,7 +1050,7 @@ if (defined($ARGV[0])) {
             while (my $file=readdir(DIR)) {
                 if ($file=~/^recovery\.$uid\.$gid\.(.*)/ || $file=~/^layout\.$uid\.$gid\.(.*)/ || $file=~/^layout_numbering\.$uid\.$gid\.(.*)/) {
                     my $exe=smog_system_direct("/bin/readlink -n /proc/$1/exe");
-		    #allowed to fail
+#allowed to fail
                     my $short_exe=&my_basename($exe);
                     unless($short_exe eq $exename) {
                         unlink "$file";
@@ -1063,9 +1063,9 @@ if (defined($ARGV[0])) {
 
 
         if ($command eq "get_next_in_set") {
-	    # this is a special function for lives-exe. It will look for
-	    # clips on the disk that have the marker file "set.$name"
-	    # only used now for pre 0.9.6 versions
+# this is a special function for lives-exe. It will look for
+# clips on the disk that have the marker file "set.$name"
+# only used now for pre 0.9.6 versions
 
             $last=$ARGV[1];
             $setname=$ARGV[2];

@@ -4478,7 +4478,7 @@ LIVES_INLINE void lives_slist_free_all(LiVESSList **list) {
   lives_slist_free(*list);
   *list=NULL;
 }
-  
+
 
 LIVES_INLINE void lives_list_free_all(LiVESList **list) {
   if (*list==NULL) return;
@@ -4486,7 +4486,7 @@ LIVES_INLINE void lives_list_free_all(LiVESList **list) {
   lives_list_free(*list);
   *list=NULL;
 }
-  
+
 
 boolean cache_file_contents(const char *filename) {
   FILE *hfile;

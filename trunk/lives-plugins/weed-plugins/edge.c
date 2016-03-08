@@ -88,9 +88,9 @@ int edge_deinit(weed_plant_t *inst) {
 }
 
 
-static inline RGB32 copywalpha(RGB32 *dest, RGB32 *src, size_t ioffs, size_t ooffs, RGB32 val) {
+static inline RGB32 copywalpha(RGB32 *dest, size_t doffs, RGB32 *src, size_t offs, RGB32 val) {
   // copy alpha from src, and RGB from val; return val
-  dest[ooffs]=(src[ioffs]&0xff000000)|(val&0xffffff);
+  dest[doffs]=(src[offs]&0xff000000)|(val&0xffffff);
   return val;
 }
 
@@ -100,53 +100,47 @@ int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",
                            &error);
   RGB32 *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
-  RGB32 *dest=weed_get_voidptr_value(out_channel,"pixel_data",&error),*odest=dest;
+  RGB32 *dest=weed_get_voidptr_value(out_channel,"pixel_data",&error),*odest;
   int video_width=weed_get_int_value(in_channel,"width",&error);
   int video_height=weed_get_int_value(in_channel,"height",&error);
+  int irow=weed_get_int_value(in_channel,"rowstrides",&error)/4; // get val in pixels
+  int orow=weed_get_int_value(out_channel,"rowstrides",&error)/4;
   int r,g,b;
   static_data *sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   RGB32 *map=sdata->map;
-
-  int map_width=video_width/4;
+  int map_width=video_width/2;
   int map_height=video_height;
-
   register int x, y;
   RGB32 p, q;
   RGB32 v0, v1, v2, v3;
 
-  //int video_width_margin = video_width - video_width/4 * 4;
-  //int row=video_width*3+8+video_width_margin;
+  odest=dest;
 
-  int irow=weed_get_int_value(in_channel,"rowstrides",&error)/4;
-  int irowx = irow - video_width + 2;
-  int orow=weed_get_int_value(out_channel,"rowstrides",&error)/4;
-  int orowx = orow - video_width + 2;
+  src += irow;
+  dest += orow;
 
-  src += video_width+1;
-  dest += video_width+1;
-
-  for (y=1; y<map_height-1; y++) {
-    for (x=1; x<map_width-1; x++) {
+  for (y=1; y<map_height-4; y++) {
+    for (x=0; x<map_width; x++) {
       p = *src;
-      q = *(src - 4);
+      q = *(src + 1);
 
       /* difference between the current pixel and right neighbor. */
       r = ((int)(p & 0xff0000) - (int)(q & 0xff0000))>>16;
       g = ((int)(p & 0x00ff00) - (int)(q & 0x00ff00))>>8;
       b = ((int)(p & 0x0000ff) - (int)(q & 0x0000ff));
-      r *= r; /* Multiply itself and divide it with 16, instead of */
+      r *= r; /* Multiply itself and divide it by 16, instead of */
       g *= g; /* using abs(). */
       b *= b;
       r >>=5; /* To lack the lower bit for saturated addition,  */
-      g >>=5; /* devide the value with 32, instead of 16. It is */
-      b >>=4; /* same as `v2 &= 0xfefeff' */
+      g >>=5; /* divide the value by 32, instead of 16. It is */
+      b >>=4; /* the same as `v2 &= 0xfefeff' */
       if (r>127) r = 127;
       if (g>127) g = 127;
       if (b>255) b = 255;
       v2 = (r<<17)|(g<<9)|b;
 
       /* difference between the current pixel and upper neighbor. */
-      q = *(src - irow);
+      q = *(src - irow*2);
       r = ((int)(p & 0xff0000) - (int)(q & 0xff0000))>>16;
       g = ((int)(p & 0x00ff00) - (int)(q & 0x00ff00))>>8;
       b = ((int)(p & 0x0000ff) - (int)(q & 0x0000ff));
@@ -161,34 +155,37 @@ int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       if (b>255) b = 255;
       v3 = (r<<17)|(g<<9)|b;
 
-      map[y*map_width*2+x*2+1] = copywalpha(dest,src,2,2,copywalpha(dest,src,3,3,copywalpha(dest,src,irow+2,orow+2,
-                                            copywalpha(dest,src,irow+3,orow+3,
-                                                v3))));
-      map[y*map_width*2+x*2] = copywalpha(dest,src,irow*2,orow*2,copywalpha(dest,src,irow*2+1,orow*2+1,
-                                          copywalpha(dest,src,irow*3,orow*3,
-                                              copywalpha(dest,src,irow*3+1,orow*3+1,v2))));
+      map[y*video_width+x*2+2] =
+        v3;//copywalpha(dest,2,src,2,copywalpha(dest,3,src,3,copywalpha(dest,orow+2,src,irow+2,copywalpha(dest,orow+3,src,
+      //											      irow+3,
+      //														      v3))));
+      map[y*video_width*2+x*2] = v2;//copywalpha(dest,orow*2,src,irow*2,copywalpha(dest,orow*2+1,src,irow*2+1,copywalpha(dest,orow*3,src,irow*3,
+      //													  copywalpha(dest,orow*3+1,src,irow*3+1,v2))));
 
-      v0 = map[(y-1)*map_width*2+x*2];
-      v1 = map[y*map_width*2+(x-1)*2+1];
+      v0 = map[(y-1)*video_width*2+x*2];
+      v1 = map[y*video_width*2+x*2+2];
 
       g = (r=v0+v1) & 0x01010100;
-      copywalpha(dest,src,0,0,r | (g - (g>>8)));
+      copywalpha(dest,0,src,0,r | (g - (g>>8)));
       g = (r=v0+v3) & 0x01010100;
-      copywalpha(dest,src,1,1,r | (g - (g>>8)));
+      copywalpha(dest,0,src,1,r | (g - (g>>8)));
       g = (r=v2+v1) & 0x01010100;
-      copywalpha(dest,src,irow,orow,r | (g - (g>>8)));
+      copywalpha(dest,orow,src,irow,r | (g - (g>>8)));
       g = (r=v2+v3) & 0x01010100;
-      copywalpha(dest,src,irow+1,orow+1,r | (g - (g>>8)));
+      copywalpha(dest,orow+1,src,irow+1,r | (g - (g>>8)));
 
-      src += 4;
-      dest += 4;
+      src += 2; // jump 4 pixels
+      dest += 2; // jump 4 pixels
     }
-    src += irowx;
-    dest += orowx;
+
+    src += irow-map_width*2;
+    dest += orow-map_width*2;
   }
 
-  weed_memset(dest,0,orow*4-4);
-  weed_memset(odest,0,orow*4+4);
+  for (y=0; y<2; y++) {
+    for (x=0; x<video_width; x++) copywalpha(odest++,0,src,0,0);
+    odest += orow-video_width;
+  }
 
   return WEED_NO_ERROR;
 }

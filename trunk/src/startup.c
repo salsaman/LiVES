@@ -237,7 +237,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   } else {
     txt4=lives_strdup(
            _(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack,"
-	     "you can restart and try with another audio player instead.\n\n"));
+             "you can restart and try with another audio player instead.\n\n"));
   }
 #endif
 

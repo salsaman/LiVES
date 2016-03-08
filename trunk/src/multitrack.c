@@ -5120,7 +5120,7 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
         if (tmp!=NULL) lives_free(tmp);
         err=lives_strdup_printf(
               _("\nThis layout requires the set \"%s\"\nIn order to load it you must return to the Clip Editor, \n"
-		"close the current set,\nthen load in the new set from the File menu.\n"),
+                "close the current set,\nthen load in the new set from the File menu.\n"),
               set_needed);
         d_print(err);
         do_error_dialog_with_check_transient(err,TRUE,0,LIVES_WINDOW(mt->window));

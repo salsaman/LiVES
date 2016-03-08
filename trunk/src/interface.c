@@ -44,7 +44,7 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
   char *tmp,*tmp2;
   LiVESWidget *hbox=lives_hbox_new(FALSE, 0);
   LiVESWidget *checkbutton = lives_standard_check_button_new((tmp=lives_strdup(_("Apply _Deinterlace"))),TRUE,LIVES_BOX(hbox),
-							     (tmp2=lives_strdup( _("If this is set, frames will be deinterlaced as they are imported."))));
+                             (tmp2=lives_strdup(_("If this is set, frames will be deinterlaced as they are imported."))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -132,7 +132,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 
   lives_box_pack_start(for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
 
-  
+
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE) {
     add_deinterlace_checkbox(for_deint);
   }
@@ -141,7 +141,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
                        LIVES_GUI_CALLBACK(on_fs_preview_clicked),
                        LIVES_INT_TO_POINTER(preview_type));
 
-  
+
   if (LIVES_IS_FILE_CHOOSER(widget)) {
     lives_widget_set_sensitive(preview_button,FALSE);
 
@@ -1341,14 +1341,14 @@ _entryw *create_rename_dialog(int type) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*4);
 
     checkbutton = lives_standard_check_button_new(_("Save extended colors"),TRUE,LIVES_BOX(hbox),NULL);
-    
+
     lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-			       LIVES_GUI_CALLBACK(on_boolean_toggled),
-			       &mainw->fx1_bool);
+                               LIVES_GUI_CALLBACK(on_boolean_toggled),
+                               &mainw->fx1_bool);
   }
 
 
-  
+
 
   lives_entry_set_activates_default(LIVES_ENTRY(renamew->entry), TRUE);
   lives_entry_set_width_chars(LIVES_ENTRY(renamew->entry),RW_ENTRY_DISPWIDTH);

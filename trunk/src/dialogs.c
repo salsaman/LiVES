@@ -1171,8 +1171,8 @@ boolean process_one(boolean visible) {
       current_ticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
 #endif
       if (sc_ticks!=last_sc_ticks) {
-	last_sc_ticks=sc_ticks;
-	
+        last_sc_ticks=sc_ticks;
+
         // calculate ratio soundcard rate:sys clock rate
         sc_ratio=(double)sc_ticks/(double)current_ticks;
         if (sc_ratio==0.) sc_ratio=1.;
@@ -1323,7 +1323,8 @@ boolean process_one(boolean visible) {
 
     show_frame=FALSE;
 
-    cfile->frameno=calc_new_playback_position(mainw->current_file,mainw->startticks,&new_ticks);
+    if (cfile->pb_fps!=0.)
+      cfile->frameno=calc_new_playback_position(mainw->current_file,mainw->startticks,&new_ticks);
 
     if (new_ticks!=mainw->startticks) {
       if (display_ready) {
@@ -1371,7 +1372,7 @@ boolean process_one(boolean visible) {
 
         // load and display the new frame
         load_frame_image(cfile->frameno);
-        if (1||mainw->last_display_ticks==0) mainw->last_display_ticks=mainw->currticks;
+        if (mainw->last_display_ticks==0) mainw->last_display_ticks=mainw->currticks;
         else {
           if (mainw->vpp!=NULL&&mainw->ext_playback&&mainw->vpp->fixed_fpsd>0.)
             mainw->last_display_ticks+=U_SEC/mainw->vpp->fixed_fpsd;
@@ -1840,7 +1841,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
 
       if ((visible&&!mainw->internal_messaging)||!visible) lives_usleep(prefs->sleep_time);
-      
+
       sched_yield();
 
       // normal playback, wth realtime audio player

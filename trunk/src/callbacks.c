@@ -150,7 +150,7 @@ void lives_exit(int signum) {
     if (mainw->vpp!=NULL&&!mainw->only_close) {
       if (!mainw->leave_recovery) {
         if (mainw->write_vpp_file) {
-	  // save video playback plugin parameters
+          // save video playback plugin parameters
           char *vpp_file=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"vpp_defaults",NULL);
           save_vpp_defaults(mainw->vpp,vpp_file);
         }
@@ -200,9 +200,9 @@ void lives_exit(int signum) {
 
         cfile->event_list=cfile->event_list_back=NULL;
 
-	lives_list_free_all(&cfile->layout_map);
+        lives_list_free_all(&cfile->layout_map);
 
-	if (cfile->laudio_drawable!=NULL) {
+        if (cfile->laudio_drawable!=NULL) {
           lives_painter_surface_destroy(cfile->laudio_drawable);
         }
 
@@ -220,57 +220,57 @@ void lives_exit(int signum) {
           mainw->files[i]->ext_src=NULL;
           threaded_dialog_spin(0.);
         }
-	lives_freep((void **)&mainw->files[i]->frame_index);
+        lives_freep((void **)&mainw->files[i]->frame_index);
         cfile->layout_map=NULL;
 
       }
-    
-  
-    lives_chdir(cwd,FALSE);
-    lives_free(cwd);
 
-    for (i=0; i<=MAX_FILES; i++) {
-      if (mainw->files[i]!=NULL) {
-        if ((!mainw->leave_files&&!prefs->crash_recovery&&strlen(mainw->set_name)==0)||
-            (!mainw->only_close&&(i==0||(mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&
-                                         mainw->files[i]->clip_type!=CLIP_TYPE_FILE)))||
-            (i==mainw->scrap_file&&!mainw->leave_recovery)||
-            (i==mainw->ascrap_file&&!mainw->leave_recovery)||
-            (mainw->multitrack!=NULL&&i==mainw->multitrack->render_file)) {
-          // close all open clips, except for ones we want to retain
+
+      lives_chdir(cwd,FALSE);
+      lives_free(cwd);
+
+      for (i=0; i<=MAX_FILES; i++) {
+        if (mainw->files[i]!=NULL) {
+          if ((!mainw->leave_files&&!prefs->crash_recovery&&strlen(mainw->set_name)==0)||
+              (!mainw->only_close&&(i==0||(mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&
+                                           mainw->files[i]->clip_type!=CLIP_TYPE_FILE)))||
+              (i==mainw->scrap_file&&!mainw->leave_recovery)||
+              (i==mainw->ascrap_file&&!mainw->leave_recovery)||
+              (mainw->multitrack!=NULL&&i==mainw->multitrack->render_file)) {
+            // close all open clips, except for ones we want to retain
 
 #ifdef HAVE_YUV4MPEG
-          if (mainw->files[i]->clip_type==CLIP_TYPE_YUV4MPEG) {
-            lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
-            lives_free(mainw->files[i]->ext_src);
-          }
+            if (mainw->files[i]->clip_type==CLIP_TYPE_YUV4MPEG) {
+              lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
+              lives_free(mainw->files[i]->ext_src);
+            }
 #endif
 #ifdef HAVE_UNICAP
-          if (mainw->files[i]->clip_type==CLIP_TYPE_VIDEODEV) {
-            lives_vdev_free((lives_vdev_t *)mainw->files[i]->ext_src);
-            lives_free(mainw->files[i]->ext_src);
-          }
+            if (mainw->files[i]->clip_type==CLIP_TYPE_VIDEODEV) {
+              lives_vdev_free((lives_vdev_t *)mainw->files[i]->ext_src);
+              lives_free(mainw->files[i]->ext_src);
+            }
 #endif
-          threaded_dialog_spin(0.);
+            threaded_dialog_spin(0.);
 #ifdef IS_MINGW
-          // for other OS the backend does this
-          lives_kill_subprocesses(mainw->files[i]->handle,TRUE);
+            // for other OS the backend does this
+            lives_kill_subprocesses(mainw->files[i]->handle,TRUE);
 #endif
-          com=lives_strdup_printf("%s close \"%s\"",prefs->backend,mainw->files[i]->handle);
-          lives_system(com,FALSE);
-          lives_free(com);
-          threaded_dialog_spin(0.);
-        } else {
-          threaded_dialog_spin(0.);
-          // or just clean them up
-          com=lives_strdup_printf("%s clear_tmp_files \"%s\"",prefs->backend_sync,mainw->files[i]->handle);
-          lives_system(com,FALSE);
-          threaded_dialog_spin(0.);
-          lives_free(com);
-          if (mainw->files[i]->frame_index!=NULL) {
-            save_frame_index(i);
-          }
-          lives_freep((void **)&mainw->files[i]->op_dir);
+            com=lives_strdup_printf("%s close \"%s\"",prefs->backend,mainw->files[i]->handle);
+            lives_system(com,FALSE);
+            lives_free(com);
+            threaded_dialog_spin(0.);
+          } else {
+            threaded_dialog_spin(0.);
+            // or just clean them up
+            com=lives_strdup_printf("%s clear_tmp_files \"%s\"",prefs->backend_sync,mainw->files[i]->handle);
+            lives_system(com,FALSE);
+            threaded_dialog_spin(0.);
+            lives_free(com);
+            if (mainw->files[i]->frame_index!=NULL) {
+              save_frame_index(i);
+            }
+            lives_freep((void **)&mainw->files[i]->op_dir);
           }
         }
       }
@@ -998,7 +998,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_free(extra);
       if (!do_warning_dialog(warn)) {
         lives_free(warn);
-	lives_list_free_all(&mainw->xlays);
+        lives_list_free_all(&mainw->xlays);
 
         if (mainw->multitrack!=NULL) {
           mainw->current_file=mainw->multitrack->render_file;
@@ -1336,7 +1336,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *sepimg_ext,*frameimg_ext,*sepimg,*frameimg;
   char *dfile,*themefile;
   char *pstyle;
-  
+
   int response;
 
   do {
@@ -1386,11 +1386,11 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mkdir_with_parents(dfile,S_IRWXU);
 
   set_theme_pref(themefile,THEME_DETAIL_NAME,theme_name);
-  
+
   pstyle=lives_strdup_printf("%d",palette->style);
   set_theme_pref(themefile,THEME_DETAIL_STYLE,pstyle);
   lives_free(pstyle);
-  
+
   widget_color_to_lives_rgba(&lcol,&palette->normal_fore);
   set_theme_colour_pref(themefile,THEME_DETAIL_NORMAL_FORE,&lcol);
 
@@ -5133,8 +5133,8 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   mainw->add_clear_ds_adv=TRUE; ///< auto reset by do_warning_dialog()
   if (!do_warning_dialog(
         _("LiVES will attempt to recover some disk space.\n"
-	  "You should ONLY run this if you have no other copies of LiVES running on this machine.\n"
-	  "Click OK to proceed.\n"))) {
+          "You should ONLY run this if you have no other copies of LiVES running on this machine.\n"
+          "Click OK to proceed.\n"))) {
     mainw->next_ds_warn_level=ds_warn_level;
     return;
   }
@@ -5352,7 +5352,7 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
                    (tmp=lives_strdup((cfile->clip_type==CLIP_TYPE_YUV4MPEG||
                                       cfile->clip_type==CLIP_TYPE_VIDEODEV)?(_("buffered")):
                                      (cfile->img_type==IMG_TYPE_JPEG?LIVES_IMAGE_TYPE_JPEG:LIVES_IMAGE_TYPE_PNG))),
-		   cfile->bpp,LIVES_AUDIO_TYPE_PCM);
+                   cfile->bpp,LIVES_AUDIO_TYPE_PCM);
     lives_free(tmp);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_type),buff, -1);
     // fps
@@ -9163,7 +9163,9 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
     }
 
     if (ointernal_messaging) {
-      lives_sync(); lives_sync(); lives_sync();
+      lives_sync();
+      lives_sync();
+      lives_sync();
     }
     current_file=mainw->current_file;
     resize(1);

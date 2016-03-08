@@ -74,7 +74,7 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
 
   }
 
-  if (system(com)) {
+  if (lives_system(com,TRUE)) {
     tempdir_warning();
     lives_free(com);
     return LIVES_RESPONSE_INVALID;
@@ -185,7 +185,7 @@ void get_pref_default(const char *key, char *val, int maxlen) {
 
   memset(val,0,1);
 
-  if (system(com)) {
+  if (lives_system(com,TRUE)) {
     tempdir_warning();
     lives_free(com);
     return;
@@ -303,7 +303,7 @@ boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colR
 
 void delete_pref(const char *key) {
   char *com=lives_strdup_printf("%s delete_pref \"%s\"",prefs->backend_sync,key);
-  if (system(com)) {
+  if (lives_system(com,TRUE)) {
     tempdir_warning();
   }
   lives_free(com);
@@ -311,7 +311,7 @@ void delete_pref(const char *key) {
 
 void set_pref(const char *key, const char *value) {
   char *com=lives_strdup_printf("%s set_pref \"%s\" \"%s\"",prefs->backend_sync,key,value);
-  if (system(com)) {
+  if (lives_system(com,TRUE)) {
     tempdir_warning();
   }
   lives_free(com);
@@ -322,7 +322,7 @@ void set_pref_utf8(const char *key, const char *value) {
   // convert to locale encoding
   char *tmp=U82F(value);
   char *com=lives_strdup_printf("%s set_pref \"%s\" \"%s\"",prefs->backend_sync,key,tmp);
-  if (system(com)) {
+  if (lives_system(com,TRUE)) {
     tempdir_warning();
   }
   lives_free(com);
@@ -332,7 +332,7 @@ void set_pref_utf8(const char *key, const char *value) {
 
 void set_theme_pref(const char *themefile, const char *key, const char *value) {
   char *com=lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend_sync,themefile,key,value);
-  if (system(com)) {
+  if (lives_system(com,TRUE)) {
     tempdir_warning();
   }
   lives_free(com);
@@ -341,7 +341,7 @@ void set_theme_pref(const char *themefile, const char *key, const char *value) {
 
 void set_int_pref(const char *key, int value) {
   char *com=lives_strdup_printf("%s set_pref \"%s\" %d",prefs->backend_sync,key,value);
-  if (system(com)) {
+  if (lives_system(com,TRUE)) {
     tempdir_warning();
   }
   lives_free(com);
@@ -351,7 +351,7 @@ void set_int_pref(const char *key, int value) {
 void set_int64_pref(const char *key, int64_t value) {
   // not used
   char *com=lives_strdup_printf("%s set_pref \"%s\" %"PRId64,prefs->backend_sync,key,value);
-  if (system(com)) {
+  if (lives_system(com,TRUE)) {
     tempdir_warning();
   }
   lives_free(com);
@@ -360,7 +360,7 @@ void set_int64_pref(const char *key, int64_t value) {
 
 void set_double_pref(const char *key, double value) {
   char *com=lives_strdup_printf("%s set_pref \"%s\" %.3f",prefs->backend_sync,key,value);
-  if (system(com)) {
+  if (lives_system(com,TRUE)) {
     tempdir_warning();
   }
   lives_free(com);
@@ -375,7 +375,7 @@ void set_boolean_pref(const char *key, boolean value) {
   } else {
     com=lives_strdup_printf("%s set_pref \"%s\" false",prefs->backend_sync,key);
   }
-  if (system(com)) {
+  if (lives_system(com,TRUE)) {
     tempdir_warning();
   }
   lives_free(com);

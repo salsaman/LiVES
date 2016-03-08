@@ -731,22 +731,22 @@ boolean do_startup_tests(boolean tshoot) {
   if (success2) {
     if (capable->has_mplayer) {
 #ifndef IS_MINGW
-      res=system("LANG=en LANGUAGE=en mplayer -ao help | grep pcm >/dev/null 2>&1");
+      res=lives_system("LANG=en LANGUAGE=en mplayer -ao help | grep pcm >/dev/null 2>&1",TRUE);
 #else
-      res=system("mplayer -ao help | grep pcm >NUL 2>&1");
+      res=lives_system("mplayer -ao help | grep pcm >NUL 2>&1",TRUE);
 #endif
     } else if (capable->has_mplayer2) {
 #ifndef IS_MINGW
-      res=system("LANG=en LANGUAGE=en mplayer2 -ao help | grep pcm >/dev/null 2>&1");
+      res=lives_system("LANG=en LANGUAGE=en mplayer2 -ao help | grep pcm >/dev/null 2>&1",TRUE);
 #else
-      res=system("mplayer2 -ao help | grep pcm >NUL 2>&1");
+      res=lives_system("mplayer2 -ao help | grep pcm >NUL 2>&1",TRUE);
 #endif
     } else {
 #ifdef ALLOW_MPV
 #ifndef IS_MINGW
-      res=system("LANG=en LANGUAGE=en mpv --ao help | grep pcm >/dev/null 2>&1");
+      res=lives_system("LANG=en LANGUAGE=en mpv --ao help | grep pcm >/dev/null 2>&1",TRUE);
 #else
-      res=system("mpv --ao help | grep pcm >NUL 2>&1");
+      res=lives_system("mpv --ao help | grep pcm >NUL 2>&1",TRUE);
 #endif
 #endif
     }
@@ -849,22 +849,22 @@ boolean do_startup_tests(boolean tshoot) {
   if (success2) {
     if (capable->has_mplayer) {
 #ifndef IS_MINGW
-      res=system("LANG=en LANGUAGE=en mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
+      res=lives_system("LANG=en LANGUAGE=en mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1",TRUE);
 #else
-      res=system("mplayer -vo help | grep -i \"jpeg file\" >NUL 2>&1");
+      res=lives_system("mplayer -vo help | grep -i \"jpeg file\" >NUL 2>&1",TRUE);
 #endif
     } else if (capable->has_mplayer2) {
 #ifndef IS_MINGW
-      res=system("LANG=en LANGUAGE=en mplayer2 -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
+      res=lives_system("LANG=en LANGUAGE=en mplayer2 -vo help | grep -i \"jpeg file\" >/dev/null 2>&1",TRUE);
 #else
-      res=system("mplayer2 -vo help | grep -i \"jpeg file\" >NUL 2>&1");
+      res=lives_system("mplayer2 -vo help | grep -i \"jpeg file\" >NUL 2>&1",TRUE);
 #endif
     } else {
 #ifdef ALLOW_MPV
 #ifndef IS_MINGW
-      res=system("LANG=en LANGUAGE=en mpv --vo help | grep -i \"image\" >/dev/null 2>&1");
+      res=lives_system("LANG=en LANGUAGE=en mpv --vo help | grep -i \"image\" >/dev/null 2>&1",TRUE);
 #else
-      res=system("mpv --vo help | grep -i \"image\" >NUL 2>&1");
+      res=lives_system("mpv --vo help | grep -i \"image\" >NUL 2>&1",TRUE);
 #endif
 #endif
     }

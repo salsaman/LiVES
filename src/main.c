@@ -2349,7 +2349,7 @@ capability *get_capabilities(void) {
 
   lives_free(tmp);
 
-  err=system(string);
+  err=lives_system(string,TRUE);
 
   if (err==32512||err==32256) {
     return capable;

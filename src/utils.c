@@ -272,7 +272,7 @@ LIVES_INLINE void lives_sync(void) {
 #ifndef IS_MINGW
   sync();
 #else
-  system("sync.exe");
+  lives_system("sync.exe",TRUE);
   return;
 #endif
 }
@@ -358,11 +358,9 @@ lives_pgid_t lives_fork(const char *com) {
   pid_t ret;
 
   if (!(ret=fork())) {
-    int dummy;
     setsid(); // create new session id
     setpgid(capable->mainpid,0); // create new pgid
-    dummy=system(com);
-    dummy=dummy;
+    lives_system(com,TRUE);
     _exit(0);
   }
 

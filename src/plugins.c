@@ -68,7 +68,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
 
   mainw->error=FALSE;
 
-  if ((error=system(com))!=0&&error!=126*256&&error!=256) {
+  if ((error=lives_system(com,TRUE))!=0&&error!=126*256&&error!=256) {
     if (!list_plugins) {
       char *msg2;
       lives_free(com);
@@ -3682,7 +3682,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
     com=lives_strdup_printf("\"%s\" \"%s\" \"%s\" >%s",RFX_BUILDER,rfxfile,prefs->tmpdir,LIVES_DEVNULL);
 
-    res=system(com);
+    res=lives_system(com,TRUE);
     lives_free(com);
 
     lives_rm(rfxfile);

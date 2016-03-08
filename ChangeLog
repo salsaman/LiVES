@@ -9,6 +9,7 @@ Fix bug in finding of "Next filter map" in multitrack.
 Fix showing of textbuffer parameters in effect windows (regression).
 Fix possible minor memory leak when applying inplace effects (regression).
 Improvements to edge detect filter.
+Compatibility updates for ffmpeg 2.9+
 Major code cleanup and optimisations.
 Updated translation to Ukranian (thanks Yuri Churnoivan).
 

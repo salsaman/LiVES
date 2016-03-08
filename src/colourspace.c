@@ -80,8 +80,13 @@ struct _swscale_ctx {
   int iheight;
   int width;
   int height;
+#ifdef FF_API_PIX_FMT
   enum PixelFormat ipixfmt;
   enum PixelFormat opixfmt;
+#else
+  enum AVPixelFormat ipixfmt;
+  enum AVPixelFormat opixfmt;
+#endif
   int flags;
   struct SwsContext *ctx;
 };
@@ -10313,7 +10318,12 @@ void compact_rowstrides(weed_plant_t *layer) {
 
 static struct SwsContext *swscale_find_context(int iwidth, int iheight,
     int width, int height,
-    enum PixelFormat ipixfmt, enum PixelFormat opixfmt, int flags) {
+#ifdef FF_API_PIX_FMT
+    enum PixelFormat ipixfmt, enum PixelFormat opixfmt, int flags)
+#else
+    enum AVPixelFormat ipixfmt, enum AVPixelFormat opixfmt, int flags)
+#endif
+{
   register int i;
   struct _swscale_ctx tmpctx;
 
@@ -10351,7 +10361,12 @@ static struct SwsContext *swscale_find_context(int iwidth, int iheight,
 }
 
 
-static void swscale_add_context(int iwidth, int iheight, int width, int height, enum PixelFormat ipixfmt, enum PixelFormat opixfmt,
+static void swscale_add_context(int iwidth, int iheight, int width, int height,
+#ifdef FF_API_PIX_FMT
+                                enum PixelFormat ipixfmt, enum PixelFormat opixfmt,
+#else
+                                enum AVPixelFormat ipixfmt, enum AVPixelFormat opixfmt,
+#endif
                                 int flags, struct SwsContext *ctx) {
   // add at head of list
   register int i;
@@ -10496,7 +10511,11 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 
     boolean store_ctx=FALSE;
 
+#ifdef FF_API_PIX_FMT
     enum PixelFormat ipixfmt,opixfmt;
+#else
+    enum AVPixelFormat ipixfmt,opixfmt;
+#endif
 
     int flags;
 

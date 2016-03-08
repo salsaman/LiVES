@@ -1171,7 +1171,8 @@ boolean process_one(boolean visible) {
       current_ticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
 #endif
       if (sc_ticks!=last_sc_ticks) {
-
+	last_sc_ticks=sc_ticks;
+	
         // calculate ratio soundcard rate:sys clock rate
         sc_ratio=(double)sc_ticks/(double)current_ticks;
         if (sc_ratio==0.) sc_ratio=1.;
@@ -1838,6 +1839,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         reinit_audio_gen();
       }
 
+      if ((visible&&!mainw->internal_messaging)||!visible) lives_usleep(prefs->sleep_time);
+      
+      sched_yield();
+
       // normal playback, wth realtime audio player
       if (!visible&&(mainw->whentostop!=STOP_ON_AUD_END||is_realtime_aplayer(prefs->audio_player))) continue;
 
@@ -1847,9 +1852,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         pump_io_chan(mainw->iochan);
       }
 
-      sched_yield();
-
-      if (visible&&!mainw->internal_messaging) lives_usleep(prefs->sleep_time);
 
     }
 

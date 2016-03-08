@@ -841,10 +841,10 @@ static LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y,
 
 static LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, uyvy_macropixel *uyvy) {
   register short a;
-  if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) a=max_Y;
-  uyvy->y0=a<min_Y?min_Y:a;
-  if ((a=((Y_R[r1]+Y_G[g1]+Y_B[b1])>>FP_BITS))>max_Y) a=max_Y;
-  uyvy->y1=a<min_Y?min_Y:a;
+  if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) uyvy->y0=max_Y;
+  else uyvy->y0=a<min_Y?min_Y:a;
+  if ((a=((Y_R[r1]+Y_G[g1]+Y_B[b1])>>FP_BITS))>max_Y) uyvy->y1=max_Y;
+  else uyvy->y1=a<min_Y?min_Y:a;
 
   uyvy->u0=avg_chroma((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS,
                       (Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS);
@@ -856,10 +856,10 @@ static LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1
 
 static LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, yuyv_macropixel *yuyv) {
   register short a;
-  if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) a=max_Y;
-  yuyv->y0=a<min_Y?min_Y:a;
-  if ((a=((Y_R[r1]+Y_G[g1]+Y_B[b1])>>FP_BITS))>max_Y) a=max_Y;
-  yuyv->y1=a<min_Y?min_Y:a;
+  if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) yuyv->y0=max_Y;
+  else yuyv->y0=a<min_Y?min_Y:a;
+  if ((a=((Y_R[r1]+Y_G[g1]+Y_B[b1])>>FP_BITS))>max_Y) yuyv->y1=max_Y;
+  else yuyv->y1=a<min_Y?min_Y:a;
 
   yuyv->u0=avg_chroma((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS,
                       (Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS);
@@ -873,21 +873,21 @@ static LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1
 static LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                                   uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) {
   register int a;
-  if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) a=max_Y;
-  yuv->y0=a<min_Y?min_Y:a;
-  if ((a=((Y_R[r1]+Y_G[g1]+Y_B[b1])>>FP_BITS))>max_Y) a=max_Y;
-  yuv->y1=a<min_Y?min_Y:a;
-  if ((a=((Y_R[r2]+Y_G[g2]+Y_B[b2])>>FP_BITS))>max_Y) a=max_Y;
-  yuv->y2=a<min_Y?min_Y:a;
-  if ((a=((Y_R[r3]+Y_G[g3]+Y_B[b3])>>FP_BITS))>max_Y) a=max_Y;
-  yuv->y3=a<min_Y?min_Y:a;
+  if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) yuv->y0=max_Y;
+  else yuv->y0=a<min_Y?min_Y:a;
+  if ((a=((Y_R[r1]+Y_G[g1]+Y_B[b1])>>FP_BITS))>max_Y) yuv->y1=max_Y;
+  else yuv->y1=a<min_Y?min_Y:a;
+  if ((a=((Y_R[r2]+Y_G[g2]+Y_B[b2])>>FP_BITS))>max_Y) yuv->y2=max_Y;
+  else yuv->y2=a<min_Y?min_Y:a;
+  if ((a=((Y_R[r3]+Y_G[g3]+Y_B[b3])>>FP_BITS))>max_Y) yuv->y3=max_Y;
+  else yuv->y3=a<min_Y?min_Y:a;
 
   if ((a=((((Cr_R[r0]+Cr_G[g0]+Cr_B[b0])>>FP_BITS)+((Cr_R[r1]+Cr_G[g1]+Cr_B[b1])>>FP_BITS)+
-           ((Cr_R[r2]+Cr_G[g2]+Cr_B[b2])>>FP_BITS)+((Cr_R[r3]+Cr_G[g3]+Cr_B[b3])>>FP_BITS))>>2))>max_UV) a=max_UV;
-  yuv->v2=a<min_UV?min_UV:a;
+           ((Cr_R[r2]+Cr_G[g2]+Cr_B[b2])>>FP_BITS)+((Cr_R[r3]+Cr_G[g3]+Cr_B[b3])>>FP_BITS))>>2))>max_UV) yuv->v2=max_UV;
+  else yuv->v2=a<min_UV?min_UV:a;
   if ((a=((((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS)+((Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS)+
-           ((Cb_R[r2]+Cb_G[g2]+Cb_B[b2])>>FP_BITS)+((Cb_R[r3]+Cb_G[g3]+Cb_B[b3])>>FP_BITS))>>2))>max_UV) a=max_UV;
-  yuv->u2=a<min_UV?min_UV:a;
+           ((Cb_R[r2]+Cb_G[g2]+Cb_B[b2])>>FP_BITS)+((Cb_R[r3]+Cb_G[g3]+Cb_B[b3])>>FP_BITS))>>2))>max_UV) yuv->u2=max_UV;
+  else yuv->u2=a<min_UV?min_UV:a;
 }
 
 static LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {

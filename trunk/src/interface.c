@@ -77,7 +77,7 @@ static void pv_sel_changed(LiVESFileChooser *chooser, livespointer user_data) {
     lives_widget_set_sensitive(pbutton,FALSE);
   } else lives_widget_set_sensitive(pbutton,TRUE);
 
-  lives_list_free_all((LiVESList **)&slist);
+  lives_slist_free_all(&slist);
 
 }
 
@@ -132,6 +132,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 
   lives_box_pack_start(for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
 
+  
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE) {
     add_deinterlace_checkbox(for_deint);
   }
@@ -140,6 +141,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
                        LIVES_GUI_CALLBACK(on_fs_preview_clicked),
                        LIVES_INT_TO_POINTER(preview_type));
 
+  
   if (LIVES_IS_FILE_CHOOSER(widget)) {
     lives_widget_set_sensitive(preview_button,FALSE);
 
@@ -2360,7 +2362,6 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
     lives_window_set_resizable(LIVES_WINDOW(chooser),TRUE);
     lives_window_maximize(LIVES_WINDOW(chooser));
     lives_widget_queue_draw(chooser);
-    lives_widget_context_update();
   }
 
   lives_widget_show_all(chooser);

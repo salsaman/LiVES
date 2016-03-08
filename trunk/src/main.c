@@ -4566,14 +4566,13 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 #endif
 
 
-static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
-    const char *fname, int width,
-    int height,
-    const char *img_ext,
-    LiVESError **gerror) {
+static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer, const char *fname, int width,
+						    int height, const char *img_ext) {
 
 
   LiVESPixbuf *pixbuf=NULL;
+
+  LiVESError *gerror=NULL;
 
 #ifndef NO_PROG_LOAD
 #ifdef GUI_GTK
@@ -4595,11 +4594,11 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 #endif
 
 #ifdef GUI_GTK
-    pbload=gdk_pixbuf_loader_new_with_type("png",gerror);
+    pbload=gdk_pixbuf_loader_new_with_type("png",&gerror);
 #endif
   }
 #ifdef GUI_GTK
-  else if (!strcmp(img_ext,LIVES_FILE_EXT_JPG)) pbload=gdk_pixbuf_loader_new_with_type("jpeg",gerror);
+  else if (!strcmp(img_ext,LIVES_FILE_EXT_JPG)) pbload=gdk_pixbuf_loader_new_with_type("jpeg",&gerror);
   else pbload=gdk_pixbuf_loader_new();
 
   lives_signal_connect(LIVES_WIDGET_OBJECT(pbload), LIVES_WIDGET_SIZE_PREPARED_SIGNAL,
@@ -4610,7 +4609,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   while (1) {
     if (!(bsize=fread(buff,1,IMG_BUFF_SIZE,fp))) break;
     sched_yield();
-    if (!gdk_pixbuf_loader_write(pbload,buff,bsize,gerror)) {
+    if (!gdk_pixbuf_loader_write(pbload,buff,bsize,&gerror)) {
       fclose(fp);
       return FALSE;
     }
@@ -4622,7 +4621,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
   fclose(fp);
 
-  if (!gdk_pixbuf_loader_close(pbload,gerror)) return FALSE;
+  if (!gdk_pixbuf_loader_close(pbload,&gerror)) return FALSE;
 
   pixbuf=(LiVESPixbuf *)lives_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
   if (pbload!=NULL) lives_object_unref(pbload);
@@ -4645,8 +4644,8 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
 #endif
 
-  if (*gerror!=NULL) {
-    lives_error_free(*gerror);
+  if (gerror!=NULL) {
+    lives_error_free(gerror);
     pixbuf=NULL;
   }
 
@@ -4727,8 +4726,6 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
   // target_palette is also a hint
 
   // if we pull from a decoder plugin, then we may also deinterlace
-
-  LiVESError *gerror=NULL;
 
   weed_plant_t *vlayer;
   void **pixel_data;
@@ -4881,9 +4878,9 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         boolean ret;
         char *fname=make_image_file_name(sfile,frame,image_ext);
         if (height*width==0) {
-          ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext,&gerror);
+          ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext);
         } else {
-          ret=weed_layer_new_from_file_progressive(layer,fname,width,height,image_ext,&gerror);
+          ret=weed_layer_new_from_file_progressive(layer,fname,width,height,image_ext);
         }
         lives_free(fname);
 

@@ -311,27 +311,27 @@ static void init_RGB_to_YUV_tables(void) {
                       * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kb
     Y_Bc[i] = myround((KB_YCBCR * (double)i
                        // here we add the 16 which goes into all components
-		       * CLAMP_FACTOR_Y + YUV_CLAMP_MIN) * SCALE_FACTOR);
+                       * CLAMP_FACTOR_Y + YUV_CLAMP_MIN) * SCALE_FACTOR);
 
 
 
 
     fac = .5 / (1. - KB_YCBCR); // .564
 
-    
+
     Cb_Rc[i] = myround(-fac * KR_YCBCR * (double)i
-		       * CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
+                       * CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
     Cb_Gc[i] = myround(-fac * (1.-KB_YCBCR-KR_YCBCR)  * (double)i
-		       * CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
+                       * CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
     Cb_Bc[i] = myround((0.5 * (double)i
-			* CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
+                        * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
 
 
-    
+
     fac = .5 / (1. - KR_YCBCR); // .7133
-    
+
     Cr_Rc[i] = myround((0.5 * (double)i
-			* CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
+                        * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
     Cr_Gc[i] = myround(-fac * (1.-KB_YCBCR-KR_YCBCR) * (double)i
                        * CLAMP_FACTOR_UV * SCALE_FACTOR);
     Cr_Bc[i] = myround(-fac * KB_YCBCR * (double)i
@@ -344,36 +344,36 @@ static void init_RGB_to_YUV_tables(void) {
 
   for (i = 0; i < 256; i++) {
     Y_Ru[i] = myround(KR_YCBCR * (double)i
-		      * SCALE_FACTOR);   // Kr
+                      * SCALE_FACTOR);   // Kr
     Y_Gu[i] = myround((1.-KR_YCBCR-KB_YCBCR) * (double)i
-		      * SCALE_FACTOR);   // Kb
+                      * SCALE_FACTOR);   // Kb
     Y_Bu[i] = myround(KB_YCBCR * (double)i
-		      // here we add the 16 which goes into all components
-		      + YUV_CLAMP_MIN * SCALE_FACTOR);
+                      // here we add the 16 which goes into all components
+                      + YUV_CLAMP_MIN * SCALE_FACTOR);
 
 
 
-		       
+
     fac = .5 / (1. - KB_YCBCR); // .564
 
-    
+
     Cb_Ru[i] = myround(-fac * KR_YCBCR * (double)i
-		       * SCALE_FACTOR); // -.16736
+                       * SCALE_FACTOR); // -.16736
     Cb_Gu[i] = myround(-fac * (1.-KB_YCBCR-KR_YCBCR)  * (double)i
-		       * SCALE_FACTOR); // -.331264
+                       * SCALE_FACTOR); // -.331264
     Cb_Bu[i] = myround((0.5 * (double)i
-			+ UV_BIAS) * SCALE_FACTOR);
+                        + UV_BIAS) * SCALE_FACTOR);
 
 
-    
+
     fac = .5 / (1. - KR_YCBCR); // .7133
-    
+
     Cr_Ru[i] = myround((0.5 * (double)i
-			+ UV_BIAS) * SCALE_FACTOR);
+                        + UV_BIAS) * SCALE_FACTOR);
     Cr_Gu[i] = myround(-fac * (1.-KB_YCBCR-KR_YCBCR) * (double)i
-		       * SCALE_FACTOR);
+                       * SCALE_FACTOR);
     Cr_Bu[i] = myround(-fac * KB_YCBCR * (double)i
-		       * SCALE_FACTOR);
+                       * SCALE_FACTOR);
 
 
   }
@@ -392,12 +392,12 @@ static void init_RGB_to_YUV_tables(void) {
 
   for (i = 0; i < 256; i++) {
     HY_Rc[i] = myround(KR_BT701 * (double)i
-		       * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kr
+                       * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kr
     HY_Gc[i] = myround((1.-KR_BT701-KB_BT701) * (double)i
-		       * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kb
+                       * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kb
     HY_Bc[i] = myround((KB_BT701 * (double)i
-			// here we add the 16 which goes into all components
-			* CLAMP_FACTOR_Y + YUV_CLAMP_MIN) * SCALE_FACTOR);
+                        // here we add the 16 which goes into all components
+                        * CLAMP_FACTOR_Y + YUV_CLAMP_MIN) * SCALE_FACTOR);
 
 
 
@@ -405,24 +405,24 @@ static void init_RGB_to_YUV_tables(void) {
 
     fac = .5 / (1. - KB_BT701); // .5389
 
-    
+
     HCb_Rc[i] = myround(-fac * KR_BT701 * (double)i
-			* CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
+                        * CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
     HCb_Gc[i] = myround(-fac * (1.-KB_BT701-KR_BT701)  * (double)i
-			* CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
+                        * CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
     HCb_Bc[i] = myround((0.5 * (double)i
-			 * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
+                         * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
 
 
-    
+
     fac = .5 / (1. - KR_BT701); // .635
-    
+
     HCr_Rc[i] = myround((0.5 * (double)i
-			 * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
+                         * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
     HCr_Gc[i] = myround(-fac * (1.-KB_BT701-KR_BT701) * (double)i
-			* CLAMP_FACTOR_UV * SCALE_FACTOR);
+                        * CLAMP_FACTOR_UV * SCALE_FACTOR);
     HCr_Bc[i] = myround(-fac * KB_BT701 * (double)i
-			* CLAMP_FACTOR_UV * SCALE_FACTOR);
+                        * CLAMP_FACTOR_UV * SCALE_FACTOR);
 
 
   }
@@ -431,38 +431,38 @@ static void init_RGB_to_YUV_tables(void) {
 
   for (i = 0; i < 256; i++) {
     HY_Ru[i] = myround(KR_BT701 * (double)i
-		       * SCALE_FACTOR);   // Kr
+                       * SCALE_FACTOR);   // Kr
     HY_Gu[i] = myround((1.-KR_BT701-KB_BT701) * (double)i
-		       * SCALE_FACTOR);   // Kb
+                       * SCALE_FACTOR);   // Kb
     HY_Bu[i] = myround((KB_BT701 * (double)i
-                       // here we add the 16 which goes into all components
-			+ YUV_CLAMP_MIN) * SCALE_FACTOR);
+                        // here we add the 16 which goes into all components
+                        + YUV_CLAMP_MIN) * SCALE_FACTOR);
 
 
 
-		       
+
 
 
     fac = .5 / (1. - KB_BT701); // .5389
 
-    
+
     HCb_Ru[i] = myround(-fac * KR_BT701 * (double)i
-			* SCALE_FACTOR); // -.16736
+                        * SCALE_FACTOR); // -.16736
     HCb_Gu[i] = myround(-fac * (1.-KB_BT701-KR_BT701)  * (double)i
-			* SCALE_FACTOR); // -.331264
+                        * SCALE_FACTOR); // -.331264
     HCb_Bu[i] = myround((0.5 * (double)i
-			 + UV_BIAS) * SCALE_FACTOR);
+                         + UV_BIAS) * SCALE_FACTOR);
 
 
-    
+
     fac = .5 / (1. - KR_BT701); // .635
-    
+
     HCr_Ru[i] = myround((0.5 * (double)i
-			 + UV_BIAS) * SCALE_FACTOR);
+                         + UV_BIAS) * SCALE_FACTOR);
     HCr_Gu[i] = myround(-fac * (1.-KB_BT701-KR_BT701) * (double)i
-			* SCALE_FACTOR);
+                        * SCALE_FACTOR);
     HCr_Bu[i] = myround(-fac * KB_BT701 * (double)i
-			* SCALE_FACTOR);
+                        * SCALE_FACTOR);
 
 
   }
@@ -506,10 +506,12 @@ static void init_YUV_to_RGB_tables(void) {
   }
   /* clip Cb/Cr values above 240 */
   for (; i < 256; i++) {
-    R_Crc[i] = myround(2. * (1.-KR_YCBCR) * (((UV_CLAMP_MAX-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
+    R_Crc[i] = myround(2. * (1.-KR_YCBCR) * (((UV_CLAMP_MAX-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) *
+                       SCALE_FACTOR); // 2*(1-Kr)
     G_Crc[i] = myround(-.5 / (1. - KR_YCBCR) * (((UV_CLAMP_MAX-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) * SCALE_FACTOR);
     G_Cbc[i] = myround(-.5 / (1. - KB_YCBCR) * (((UV_CLAMP_MAX-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) * SCALE_FACTOR);
-    B_Cbc[i] = myround(2. * (1.-KB_YCBCR) * (((UV_CLAMP_MAX-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
+    B_Cbc[i] = myround(2. * (1.-KB_YCBCR) * (((UV_CLAMP_MAX-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) *
+                       SCALE_FACTOR); // 2*(1-Kb)
   }
 
 
@@ -550,10 +552,12 @@ static void init_YUV_to_RGB_tables(void) {
     HB_Cbc[i] = 0;
   }
   for (; i < UV_CLAMP_MAX; i++) {
-    HR_Crc[i] = myround(2. * (1.-KR_BT701) * ((((double)i-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
+    HR_Crc[i] = myround(2. * (1.-KR_BT701) * ((((double)i-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) *
+                        SCALE_FACTOR); // 2*(1-Kr)
     HG_Crc[i] = myround(-.5 / (1. - KR_BT701) * ((((double)i-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) * SCALE_FACTOR);
     HG_Cbc[i] = myround(-.5 / (1. - KB_BT701) * ((((double)i-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) * SCALE_FACTOR);
-    HB_Cbc[i] = myround(2. * (1.-KB_BT701) * ((((double)i-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
+    HB_Cbc[i] = myround(2. * (1.-KB_BT701) * ((((double)i-YUV_CLAMP_MIN)/(UV_CLAMP_MAX-YUV_CLAMP_MIN)*255.)-UV_BIAS) *
+                        SCALE_FACTOR); // 2*(1-Kb)
   }
   /* clip Cb/Cr values above 240 */
   for (; i < 256; i++) {
@@ -1286,7 +1290,7 @@ static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int 
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -1311,10 +1315,10 @@ static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int 
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
-  
+
   if (add_alpha) offs=4;
   orowstride-=offs*hsize;
   irowstride-=hsize*3;
@@ -1371,7 +1375,7 @@ static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, i
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -1396,7 +1400,7 @@ static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, i
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -1455,7 +1459,7 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -1480,7 +1484,7 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -1541,7 +1545,7 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -1566,7 +1570,7 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -1624,7 +1628,7 @@ static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -1648,7 +1652,7 @@ static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -1707,7 +1711,7 @@ static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, i
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -1731,7 +1735,7 @@ static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, i
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2038,7 +2042,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
           dheight=vsize-(dheight*i);
         }
 
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -2063,7 +2067,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
   }
 
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2146,7 +2150,7 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2206,7 +2210,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -2230,7 +2234,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2294,7 +2298,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -2318,7 +2322,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2381,7 +2385,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
           dheight=vsize-(dheight*i);
         }
 
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -2405,7 +2409,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
   }
 
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2461,7 +2465,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
           dheight=vsize-(dheight*i);
         }
 
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -2485,7 +2489,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
   }
 
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2541,7 +2545,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -2566,7 +2570,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2635,7 +2639,7 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -2660,7 +2664,7 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2721,7 +2725,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -2746,7 +2750,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2819,7 +2823,7 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -2844,7 +2848,7 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2906,7 +2910,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -2930,7 +2934,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -2995,7 +2999,7 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
         if (dheight*(i+1)>(vsize-4)) {
           dheight=vsize-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -3019,7 +3023,7 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -3408,7 +3412,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -3432,7 +3436,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -3491,7 +3495,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -3516,7 +3520,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
   }
 
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -3573,7 +3577,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -3596,7 +3600,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -3648,7 +3652,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
         ccparams[i].orowstrides[0]=orowstride;
@@ -3671,7 +3675,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -3730,7 +3734,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -3754,7 +3758,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -3807,7 +3811,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -3830,7 +3834,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -3983,7 +3987,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -4008,7 +4012,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -4078,7 +4082,7 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -4103,7 +4107,7 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
     return;
   }
 
-#if !USE_THREADS  
+#if !USE_THREADS
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 #endif
 
@@ -4171,7 +4175,7 @@ static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int heigh
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -5889,7 +5893,7 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -5967,7 +5971,7 @@ static void convert_swap4_frame(uint8_t *src, int width, int height, int irowstr
         ccparams[i].dest=dest+dheight*i*orowstride;
 
         if ((height-dheight*i)<dheight) dheight=height-(dheight*i);
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6045,7 +6049,7 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6124,7 +6128,7 @@ static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int i
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6201,7 +6205,7 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6279,7 +6283,7 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6361,7 +6365,7 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6438,7 +6442,7 @@ static void convert_swap3delpost_frame(uint8_t *src,int width,int height, int ir
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6513,7 +6517,7 @@ static void convert_delpost_frame(uint8_t *src,int width,int height, int irowstr
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6588,7 +6592,7 @@ static void convert_delpre_frame(uint8_t *src,int width,int height, int irowstri
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6664,7 +6668,7 @@ static void convert_swap3delpre_frame(uint8_t *src, int width, int height, int i
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6740,7 +6744,7 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -6839,7 +6843,7 @@ static void convert_swab_frame(uint8_t *src, int width, int height, uint8_t *des
         if (dheight*(i+1)>(height-4)) {
           dheight=height-(dheight*i);
         }
-        
+
 
         ccparams[i].vsize=dheight;
 
@@ -8280,7 +8284,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
   char *tmp2,*tmp3;
   g_print("converting palette %s(%s) to %s(%s)\n",weed_palette_get_name(inpl),
           (tmp2=lives_strdup(weed_yuv_clamping_get_name(iclamped))),
-	  weed_palette_get_name(outpl),
+          weed_palette_get_name(outpl),
           (tmp3=lives_strdup(weed_yuv_clamping_get_name(oclamping))));
   lives_free(tmp2);
   lives_free(tmp3);
@@ -10073,7 +10077,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   }
 
   // otherwise we need to steal or copy the pixel_data
-  
+
   palette=weed_get_int_value(layer,WEED_LEAF_CURRENT_PALETTE,&error);
   width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
   height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
@@ -10089,13 +10093,13 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
     case WEED_PALETTE_YUV888:
 #ifndef GUI_QT
       if (irowstride==get_rowstride_value(width*3)) {
-	// rowstrides are OK, we can just steal the pixel_data
+        // rowstrides are OK, we can just steal the pixel_data
         pixbuf=lives_pixbuf_cheat(FALSE, width, height, pixel_data);
-	weed_set_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,NULL);
+        weed_set_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,NULL);
         cheat=TRUE;
       } else
 #endif
-	// otherwise we need to copy the data
+        // otherwise we need to copy the data
         pixbuf=lives_pixbuf_new(FALSE, width, height);
       n_channels=3;
       break;
@@ -10111,13 +10115,13 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
     case WEED_PALETTE_YUVA8888:
 #ifndef GUI_QT
       if (irowstride==get_rowstride_value(width*4)) {
-	// rowstrides are OK, we can just steal the pixel_data
+        // rowstrides are OK, we can just steal the pixel_data
         pixbuf=lives_pixbuf_cheat(TRUE, width, height, pixel_data);
-	weed_set_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,NULL);
+        weed_set_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,NULL);
         cheat=TRUE;
       } else
 #endif
-	// otherwise we need to copy the data
+        // otherwise we need to copy the data
         pixbuf=lives_pixbuf_new(TRUE, width, height);
       n_channels=4;
       break;
@@ -10157,7 +10161,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
 
   }
 
-  
+
 #ifdef TEST_GAMMA
   register int j,k;
 
@@ -10485,7 +10489,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     struct SwsContext *swscale;
 
     weed_plant_t *old_layer;
-    
+
     void **in_pixel_data,**out_pixel_data;
 
     int *irowstrides,*orowstrides;
@@ -10531,7 +10535,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 
     out_pixel_data=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
     orowstrides=weed_get_int_array(layer,WEED_LEAF_ROWSTRIDES,&error);
-    
+
     width*=weed_palette_get_pixels_per_macropixel(opal_hint);
     iwidth*=weed_palette_get_pixels_per_macropixel(palette); // input width is in macropixels
 
@@ -10563,7 +10567,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 #endif
 
   switch (palette) {
-    // anything with 3 or 4 channels (alpha must be last)
+  // anything with 3 or 4 channels (alpha must be last)
 
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
@@ -10584,7 +10588,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       weed_set_int_value(layer,WEED_LEAF_HEIGHT,lives_pixbuf_get_height(new_pixbuf));
       weed_set_int_value(layer,WEED_LEAF_ROWSTRIDES,lives_pixbuf_get_rowstride(new_pixbuf));
     }
-    
+
     lives_object_unref(pixbuf);
 
     break;

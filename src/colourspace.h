@@ -29,7 +29,7 @@
 #define YUV_CLAMP_MIN 16.
 #define YUV_CLAMP_MINI 16
 
-#define Y_CLAMP_MAX 235. 
+#define Y_CLAMP_MAX 235.
 
 #define UV_CLAMP_MAX 240.
 #define UV_CLAMP_MAXI 240

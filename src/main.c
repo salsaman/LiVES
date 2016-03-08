@@ -1472,7 +1472,7 @@ static void lives_init(_ign_opts *ign_opts) {
         LiVESList *ofmt_all,*dummy_list;
 
         dummy_list=plugin_request("encoders",prefs->encoder.name,"init");
-	lives_list_free_all(&dummy_list);
+        lives_list_free_all(&dummy_list);
 
         if (!((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"get_capabilities"))==NULL)) {
           prefs->encoder.capabilities=atoi((char *)lives_list_nth_data(encoder_capabilities,0));
@@ -1949,7 +1949,7 @@ void set_palette_colours(boolean force_reload) {
 
   char *themedir,*themefile,*tmp;
   char *pstyle=NULL;
-  
+
   boolean is_OK=TRUE;
 
   lcol.alpha=65535;
@@ -2130,12 +2130,11 @@ void set_palette_colours(boolean force_reload) {
 
     if (!is_OK||get_pref_from_file(themefile,THEME_DETAIL_STYLE,pstyle,128)!=LIVES_RESPONSE_NONE) {
       is_OK=FALSE;
-    }
-    else {
+    } else {
       palette->style=atoi(pstyle);
     }
     lives_freep((void **)&pstyle);
-    
+
     if (!is_OK||!get_theme_colour_pref(themefile,THEME_DETAIL_STYLE,&lcol)) {
       is_OK=FALSE;
     } else palette->style=lcol.red;
@@ -4567,7 +4566,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
 
 static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer, const char *fname, int width,
-						    int height, const char *img_ext) {
+    int height, const char *img_ext) {
 
 
   LiVESPixbuf *pixbuf=NULL;
@@ -6671,7 +6670,7 @@ void load_frame_image(int frame) {
         if (cfile->event_list_back!=NULL) event_list_free(cfile->event_list_back);
         if (cfile->event_list!=NULL) event_list_free(cfile->event_list);
 
-	lives_list_free_all(&cfile->layout_map);
+        lives_list_free_all(&cfile->layout_map);
 
       }
 

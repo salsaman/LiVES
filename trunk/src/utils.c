@@ -3959,8 +3959,8 @@ int lives_cat(const char *from, const char *to, boolean append) {
   char *op;
   int retval;
 
-  if (append) op=">";
-  else op=">>";
+  if (append) op=">>";
+  else op=">";
 
   com=lives_strdup_printf("%s \"%s\" %s \"%s\" >\"%s\" 2>&1",capable->cat_cmd,from,op,to,prefs->cmd_log);
   retval=lives_system(com,FALSE);

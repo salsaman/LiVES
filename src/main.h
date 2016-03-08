@@ -1279,8 +1279,9 @@ void get_frames_sizes(int fileno, int frame_to_test);
 int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps);
 boolean int_array_contains_value(int *array, int num_elems, int value);
 boolean check_for_lock_file(const char *set_name, int type);
-void lives_list_free_strings(LiVESList *list);
-void lives_list_free_all(LiVESList **list);
+void lives_list_free_strings(LiVESList *);
+void lives_list_free_all(LiVESList **);
+void lives_slist_free_all(LiVESSList **);
 
 boolean create_event_space(int length_in_eventsb);
 void add_to_recent(const char *filename, double start, int frames, const char *file_open_params);

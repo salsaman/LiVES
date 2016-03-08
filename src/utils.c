@@ -4472,6 +4472,14 @@ LIVES_INLINE void lives_list_free_strings(LiVESList *list) {
 }
 
 
+LIVES_INLINE void lives_slist_free_all(LiVESSList **list) {
+  if (*list==NULL) return;
+  lives_list_free_strings((LiVESList *)*list);
+  lives_slist_free(*list);
+  *list=NULL;
+}
+  
+
 LIVES_INLINE void lives_list_free_all(LiVESList **list) {
   if (*list==NULL) return;
   lives_list_free_strings(*list);

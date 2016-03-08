@@ -483,11 +483,11 @@ boolean lives_osc_cb_playsel(void *context, int arglen, const void *vargs, OSCTi
 }
 
 boolean lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
+
   if (mainw->current_file<0||((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||mainw->playing_file==-1))
-    if (mainw->playing_file==-1) lives_osc_notify_failure();
-  dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
+    lives_osc_notify_failure();
+  dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
   return lives_osc_notify_success(NULL);
 
 }
@@ -496,12 +496,13 @@ boolean lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, 
 boolean lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file||mainw->playing_file==-1)
-    if (mainw->playing_file==-1) lives_osc_notify_failure();
 
-  if (mainw->current_file<0||(mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&
-                              mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE))
-    if (mainw->playing_file==-1) lives_osc_notify_failure();
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file||mainw->playing_file==-1)
+    lives_osc_notify_failure();
+
+  if (mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&
+      mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)
+    lives_osc_notify_failure();
 
   mainw->files[mainw->blend_file]->pb_fps=-mainw->files[mainw->blend_file]->pb_fps;
 
@@ -521,7 +522,7 @@ boolean lives_osc_cb_play_forward(void *context, int arglen, const void *vargs, 
     return lives_osc_notify_success(NULL);
   } else if (mainw->current_file>0) {
     if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0))
-      dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
+      dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
     if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
     return lives_osc_notify_success(NULL);
   }
@@ -543,7 +544,7 @@ boolean lives_osc_cb_play_backward(void *context, int arglen, const void *vargs,
     return lives_osc_notify_success(NULL);
   } else if (mainw->current_file>0) {
     if (cfile->pb_fps>0||(cfile->play_paused&&cfile->freeze_fps>0))
-      dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
+      dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
     if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
     return lives_osc_notify_success(NULL);
   }
@@ -609,7 +610,7 @@ boolean lives_osc_cb_play_reset(void *context, int arglen, const void *vargs, OS
 
   fps_reset_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
   if (cfile->pb_fps<0||(cfile->play_paused&&
-                        cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
+                        cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
   if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
 
   return lives_osc_notify_success(NULL);

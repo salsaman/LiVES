@@ -1699,7 +1699,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
         nframe+=last_frame; // normal
         if (nframe>last_frame) {
           nframe=last_frame-(nframe-last_frame);
-          if (mainw->playing_file==fileno) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(FALSE));
+          if (mainw->playing_file==fileno) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
           else sfile->pb_fps=-sfile->pb_fps;
         }
       }
@@ -1708,7 +1708,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
       nframe=ABS(nframe)+first_frame;
       if (mainw->ping_pong) {
         // bounce
-        if (mainw->playing_file==fileno) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(FALSE));
+        if (mainw->playing_file==fileno) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
         else sfile->pb_fps=-sfile->pb_fps;
       }
     }
@@ -1720,7 +1720,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
       if (mainw->ping_pong) {
         // bounce
         nframe=last_frame-(nframe-(first_frame-1));
-        if (mainw->playing_file==fileno) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(FALSE));
+        if (mainw->playing_file==fileno) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
         else sfile->pb_fps=-sfile->pb_fps;
       }
     } else if (mainw->playing_sel&&!mainw->ping_pong&&mainw->playing_file==fileno&&nframe<cframe&&mainw->loop_cont&&!mainw->loop) {
@@ -1734,7 +1734,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
       // scratch or transport backwards
       if (mainw->ping_pong) {
         nframe=first_frame;
-        if (mainw->playing_file==fileno) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(FALSE));
+        if (mainw->playing_file==fileno) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
         else sfile->pb_fps=-sfile->pb_fps;
 
       } else nframe=last_frame-nframe;

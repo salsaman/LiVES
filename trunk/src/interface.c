@@ -712,42 +712,55 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
-  if (textbuffer!=NULL) textwindow->textview = lives_text_view_new_with_buffer(textbuffer);
-  else textwindow->textview = lives_text_view_new();
-
   woat=widget_opts.apply_theme;
   widget_opts.apply_theme=FALSE;
-  scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->textview);
+  textwindow->textview=textwindow->table=NULL;
+
+  if (textbuffer!=NULL) textwindow->textview = lives_text_view_new_with_buffer(textbuffer);
+  else if (text!=NULL) textwindow->textview = lives_text_view_new();
+  if (textwindow->textview!=NULL) {
+    scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->textview);
+    if (palette->style&STYLE_1) {
+      lives_widget_set_base_color(textwindow->textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+      lives_widget_set_text_color(textwindow->textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    }
+
+    if (text!=NULL) {
+      lives_text_view_set_text(LIVES_TEXT_VIEW(textwindow->textview), text, -1);
+    }
+    lives_text_view_set_editable(LIVES_TEXT_VIEW(textwindow->textview), FALSE);
+    lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textwindow->textview), FALSE);
+  } else {
+    textwindow->table=lives_table_new(1, 1, FALSE);
+    scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->table);
+    if (palette->style&STYLE_1) {
+      lives_widget_set_bg_color(textwindow->table, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(textwindow->table, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    }
+
+  }
+
   widget_opts.apply_theme=woat;
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-  lives_text_view_set_editable(LIVES_TEXT_VIEW(textwindow->textview), FALSE);
-  lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textwindow->textview), FALSE);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_base_color(textwindow->textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-    lives_widget_set_text_color(textwindow->textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-  }
-
-  if (text!=NULL) {
-    lives_text_view_set_text(LIVES_TEXT_VIEW(textwindow->textview), text, -1);
-  }
-
-  if (text!=NULL||mainw->iochan!=NULL) {
+  if (text!=NULL||mainw->iochan!=NULL||textwindow->table!=NULL) {
     LiVESWidget *savebutton;
 
     okbutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
 
     savebutton = lives_button_new_from_stock(LIVES_STOCK_SAVE,_("_Save to file"));
 
-    lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), savebutton, LIVES_RESPONSE_YES);
-    lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), okbutton, LIVES_RESPONSE_OK);
+    if (textwindow->table==NULL) {
+      lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), savebutton, LIVES_RESPONSE_YES);
+      lives_signal_connect(LIVES_GUI_OBJECT(savebutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                           LIVES_GUI_CALLBACK(on_save_textview_clicked),
+                           textwindow->textview);
+    }
 
-    lives_signal_connect(LIVES_GUI_OBJECT(savebutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_save_textview_clicked),
-                         textwindow->textview);
+    lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), okbutton, LIVES_RESPONSE_OK);
 
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),
@@ -2285,7 +2298,7 @@ rundlg:
     char *tmp;
     filename=lives_filename_to_utf8((tmp=lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
     lives_free(tmp);
-  }
+  } else filename=NULL;
 
   if (filename!=NULL&&act==LIVES_FILE_CHOOSER_ACTION_SAVE) {
     if (!check_file(filename,TRUE)) {
@@ -2663,4 +2676,214 @@ LiVESTextView *create_output_textview(void) {
   lives_object_ref(textview);
   return LIVES_TEXT_VIEW(textview);
 }
+
+static int currow;
+
+static void pair_add(LiVESWidget *table, const char *key, const char *meaning) {
+  LiVESWidget *label;
+  LiVESWidget *align;
+
+  label=lives_standard_label_new(key);
+  align=lives_alignment_new(0.,0.,0.,0.);
+  lives_container_add(LIVES_CONTAINER(align), label);
+
+  if (meaning!=NULL) {
+    lives_table_attach(LIVES_TABLE(table), align, 0, 1, currow, currow+1,
+                       (LiVESAttachOptions)(0),
+                       (LiVESAttachOptions)(0), 0, 0);
+
+    label=lives_standard_label_new(meaning);
+    align=lives_alignment_new(0.,0.,0.,0.);
+    lives_container_add(LIVES_CONTAINER(align), label);
+
+    lives_table_attach(LIVES_TABLE(table), align, 1, 40, currow, currow+1,
+                       (LiVESAttachOptions)(LIVES_EXPAND),
+                       (LiVESAttachOptions)(0), 0, 0);
+  } else {
+    lives_table_attach(LIVES_TABLE(table), align, 0, 39, currow, currow+1,
+                       (LiVESAttachOptions)(LIVES_EXPAND),
+                       (LiVESAttachOptions)(0), 0, 0);
+  }
+
+  currow++;
+
+  lives_widget_show_all(table);
+
+}
+
+
+
+void do_keys_window(void) {
+  char *tmp=lives_strdup(_("Show Keys")),*tmp2;
+  text_window *textwindow=create_text_window(tmp,NULL,NULL);
+  lives_free(tmp);
+
+  lives_table_resize(LIVES_TABLE(textwindow->table),1,40);
+  currow=0;
+
+  pair_add(textwindow->table,_("You can use the following keys during playback to control LiVES:-\n\n"
+                               "Recordable keys (press 'r' before playback to make a recording)\n"
+                               "-----------------------\n"),NULL);
+
+
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-left"))),(tmp2=lives_strdup(_("skip back\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-right"))),(tmp2=lives_strdup(_("skip forwards\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-up"))),(tmp2=lives_strdup(_("faster/increase effect\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-down"))),(tmp2=lives_strdup(_("slower/decrease effect\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-enter"))),(tmp2=lives_strdup(_("reset frame rate\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-space"))),(tmp2=lives_strdup(_("reverse direction\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-alt-space"))),(tmp2=lives_strdup(_("reverse direction (background clip)\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-backspace"))),(tmp2=lives_strdup(_("freeze frame\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("n"))),(tmp2=lives_strdup(_("nervous\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-page-up"))),(tmp2=lives_strdup(_("previous clip\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-page-down"))),(tmp2=lives_strdup(_("next clip\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(("\n"))),NULL);
+  lives_free(tmp);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-1"))),(tmp2=lives_strdup(_("toggle real-time effect 1\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-2"))),(tmp2=lives_strdup(_("toggle real-time effect 2\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("...etc...\n"))),NULL);
+  lives_free(tmp);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-0"))),(tmp2=lives_strdup(_("real-time effects off\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(("\n"))),NULL);
+  lives_free(tmp);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("k"))),(tmp2=lives_strdup(_("grab keyboard for last activated effect\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("m"))),(tmp2=lives_strdup(_("switch effect mode (when effect has keyboard grab)\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("x"))),(tmp2=lives_strdup(_("swap background/foreground\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("f1"))),(tmp2=lives_strdup(_("store/switch to clip mnemonic 1\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("f2"))),(tmp2=lives_strdup(_("store/switch to clip mnemonic 2\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("...etc...\n"))),NULL);
+  lives_free(tmp);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("f12"))),(tmp2=lives_strdup(_("clear function keys\n"))));
+  lives_free(tmp);
+  pair_add(textwindow->table,(tmp=lives_strdup(("\n"))),NULL);
+  lives_free(tmp);
+  pair_add(textwindow->table,(tmp=lives_strdup(("\n"))),NULL);
+  lives_free(tmp);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("Other playback keys\n"))),NULL);
+  lives_free(tmp);
+  pair_add(textwindow->table,(tmp=lives_strdup("-----------------------------\n")),NULL);
+  lives_free(tmp);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("p"))),(tmp2=lives_strdup(_("play all\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("y"))),(tmp2=lives_strdup(_("play selection\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("q"))),(tmp2=lives_strdup(_("stop\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("f"))),(tmp2=lives_strdup(_("fullscreen\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("s"))),(tmp2=lives_strdup(_("separate window\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("d"))),(tmp2=lives_strdup(_("double size\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("g"))),(tmp2=lives_strdup(_("ping pong loops\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+
+}
+
+
+
+void do_mt_keys_window(void) {
+  char *tmp=lives_strdup(_("Multitrack Keys")),*tmp2;
+  text_window *textwindow=create_text_window(tmp,NULL,NULL);
+
+  lives_free(tmp);
+
+  lives_table_resize(LIVES_TABLE(textwindow->table),1,40);
+
+  currow=0;
+
+  pair_add(textwindow->table,_("You can use the following keys to control the multitrack window:-\n"
+                               "-----------------------\n"),NULL);
+
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-left-arrow"))),(tmp2=lives_strdup(_("move timeline cursor left 1 second\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-right-arrow"))),(tmp2=lives_strdup(_("move timeline cursor right 1 second\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("shift-left-arrow"))),(tmp2=lives_strdup(_("move timeline cursor left 1 frame\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("shift-right-arrow"))),(tmp2=lives_strdup(_("move timeline cursor right 1 frame\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-up-arrow"))),(tmp2=lives_strdup(_("move current track up\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-down-arrow"))),(tmp2=lives_strdup(_("move current track down\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-page-up"))),(tmp2=lives_strdup(_("select previous clip\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-page-down"))),(tmp2=lives_strdup(_("select next clip\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-space"))),(tmp2=lives_strdup(_("select/deselect current track\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-plus"))),(tmp2=lives_strdup(_("zoom in\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-minus"))),(tmp2=lives_strdup(_("zoom out\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("m"))),(tmp2=lives_strdup(_("make a mark on the timeline (during playback)\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("w"))),(tmp2=lives_strdup(_("rewind to play start.\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("\n"))),NULL);
+  lives_free(tmp);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("For other keys, see the menus.\n"))),NULL);
+  lives_free(tmp);
+
+}
+
 

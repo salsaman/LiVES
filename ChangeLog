@@ -10,6 +10,8 @@ Fix showing of textbuffer parameters in effect windows (regression).
 Fix possible minor memory leak when applying inplace effects (regression).
 Improvements to edge detect filter.
 Compatibility updates for ffmpeg 2.9+
+Add qtrle format and quality settings to ffmpeg_encoder.	
+Add new VJ keys: ctrl-alt-space (change direction of background clip), ctrl-alt-page-up/down (adjust speed of background clip)
 Major code cleanup and optimisations.
 Updated translation to Ukranian (thanks Yuri Churnoivan).
 

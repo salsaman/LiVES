@@ -989,8 +989,6 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
   blend_file->frameno=calc_new_playback_position(mainw->blend_file,blend_tc,(uint64_t *)&ntc);
 
-  g_print("bfno is %d\n",blend_file->frameno);
-
   blend_tc=ntc;
 
   mainw->blend_layer=weed_plant_new(WEED_PLANT_CHANNEL);

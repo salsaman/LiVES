@@ -71,7 +71,7 @@ void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_dat
 static void add_xlays_widget(LiVESBox *box) {
   // add widget to preview affected layouts
 
-  LiVESWidget *expander=lives_expander_new_with_mnemonic(_("Show affected _layouts"));
+  LiVESWidget *expander;
   LiVESWidget *textview=lives_text_view_new();
   LiVESWidget *label,*scrolledwindow;
   LiVESList *xlist=mainw->xlays;
@@ -81,6 +81,9 @@ static void add_xlays_widget(LiVESBox *box) {
 
   lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
 
+  lives_widget_set_size_request(scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
+  lives_widget_context_update();
+  
   expander=lives_standard_expander_new(_("Show affeced _layouts"),FALSE,LIVES_BOX(box),scrolledwindow);
 
   if (palette->style&STYLE_1) {

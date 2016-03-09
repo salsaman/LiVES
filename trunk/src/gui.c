@@ -2136,10 +2136,16 @@ void create_LiVES(void) {
                             lives_cclosure_new(LIVES_GUI_CALLBACK(nextclip_callback),NULL,NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),NULL,NULL));
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND),NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),NULL,NULL));
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND),NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK|LIVES_ALT_MASK, (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND),NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK|LIVES_ALT_MASK, (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND),NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Left, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(skip_back_callback),NULL,NULL));
@@ -2749,10 +2755,10 @@ void create_LiVES(void) {
                          NULL);
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_slower), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_slower_pressed),
-                         NULL);
+                         LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_faster), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_faster_pressed),
-                         NULL);
+                         LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_back), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_back_pressed),
                          NULL);

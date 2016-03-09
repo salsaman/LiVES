@@ -559,7 +559,7 @@ boolean lives_osc_cb_play_faster(void *context, int arglen, const void *vargs, O
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
-  on_faster_pressed(NULL,LIVES_INT_TO_POINTER(1));
+  on_faster_pressed(NULL,LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
   return lives_osc_notify_success(NULL);
 
 }
@@ -572,7 +572,7 @@ boolean lives_osc_cb_bgplay_faster(void *context, int arglen, const void *vargs,
 
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
-  on_faster_pressed(NULL,LIVES_INT_TO_POINTER(2));
+  on_faster_pressed(NULL,LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND));
   return lives_osc_notify_success(NULL);
 
 }

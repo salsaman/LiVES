@@ -4288,7 +4288,8 @@ void on_insfitaudio_toggled(LiVESToggleButton *togglebutton, livespointer user_d
 boolean dirchange_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer area_enum) {
   int area;
 
-  if (mainw->playing_file==-1) return TRUE;
+  if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return TRUE;
+  if (cfile->next_event!=NULL) return TRUE;
 
   area=LIVES_POINTER_TO_INT(area_enum);
 
@@ -9684,13 +9685,15 @@ void on_slower_pressed(LiVESButton *button, livespointer user_data) {
 
   lives_clip_t *sfile=cfile;
 
+  if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
+  if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
+  if (cfile->next_event!=NULL) return;
+
   if (user_data!=NULL) {
     type=LIVES_POINTER_TO_INT(user_data);
-    if (type==2) sfile=mainw->files[mainw->blend_file];
+    if (type==SCREEN_AREA_BACKGROUND) sfile=mainw->files[mainw->blend_file];
     change=0.1;
   }
-
-  if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
 
   if (mainw->rte_keys!=-1&&user_data==NULL) {
     mainw->blend_factor--;
@@ -9726,13 +9729,15 @@ void on_faster_pressed(LiVESButton *button, livespointer user_data) {
 
   lives_clip_t *sfile=cfile;
 
+  if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
+  if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
+  if (cfile->next_event!=NULL) return;
+
   if (user_data!=NULL) {
     type=LIVES_POINTER_TO_INT(user_data);
-    if (type==2) sfile=mainw->files[mainw->blend_file];
+    if (type==SCREEN_AREA_BACKGROUND) sfile=mainw->files[mainw->blend_file];
     change=0.1;
   }
-
-  if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
 
   if (mainw->rte_keys!=-1&&user_data==NULL) {
     mainw->blend_factor++;

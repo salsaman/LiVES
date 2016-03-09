@@ -4572,6 +4572,7 @@ void add_rfx_effects(void) {
         rfx->params=NULL;
         rfx->source=NULL;
         rfx->source_type=LIVES_RFX_SOURCE_RFX;
+	rfx->flags=0;
         rfx->extra=NULL;
         rfx->is_template=FALSE;
         if (!check_rfx_for_lives(rfx)) rfx_slot_count--;
@@ -4653,6 +4654,7 @@ void add_rfx_effects(void) {
     render_fx_get_params(rfx,rfx->name,rfx->status);
     threaded_dialog_spin(0.);
     rfx->source=NULL;
+    rfx->flags=0;
     rfx->extra=NULL;
     rfx->menuitem=NULL;
 

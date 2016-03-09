@@ -2896,7 +2896,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   rfx->source_type=LIVES_RFX_SOURCE_RFX;
   rfx->is_template=FALSE;
   rfx->extra=NULL;
-
+  rfx->flags=0;
+  
   while (sorted<=num) {
     for (i=start; i<=num; i++) {
       if (!used[i-1]) {
@@ -3533,6 +3534,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     rfx->source=(void *)inst;
     rfx->source_type=LIVES_RFX_SOURCE_WEED;
     rfx->extra=NULL;
+    rfx->flags=0;
     return rfx;
   }
 
@@ -3697,11 +3699,14 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       rfx->name=lives_strdup(rfx_scrapname);
       rfx->action_desc=NULL;
       rfx->extra=NULL;
+      rfx->flags=0;
       rfx->status=RFX_STATUS_SCRAP;
 
       rfx->num_in_channels=0;
       rfx->min_frames=-1;
 
+      rfx->flags=RFX_FLAGS_NO_SLIDERS;
+      
       // get the delimiter
       rfxfile=lives_strdup_printf("%ssmdef.%d",prefs->tmpdir,capable->mainpid);
       fnamex=lives_build_filename(prefs->tmpdir,rfx_scrapname,NULL);
@@ -3747,6 +3752,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
       // now we build our window and get param values
       if (vbox==NULL) {
+	
         on_fx_pre_activate(rfx,1,NULL);
 
         if (prefs->show_gui) {

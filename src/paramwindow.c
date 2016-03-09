@@ -1364,6 +1364,9 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   // so dont add sliders for such params
   if (param->reinit) add_scalers=FALSE;
 
+  // for plugins (encoders and video playback) sliders look silly
+  if (rfx->flags&RFX_FLAGS_NO_SLIDERS) add_scalers=FALSE;
+  
   if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
     hbox=LIVES_WIDGET(box);
   } else {

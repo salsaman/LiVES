@@ -3704,11 +3704,11 @@ LiVESList *get_script_section(const char *section, const char *file, boolean str
   char *line;
   char *whole=lives_strdup(""),*whole2;
 
+  char *outfile=lives_strdup_printf("%s"LIVES_DIR_SEP"rfxsec.%d",capable->system_tmpdir,capable->mainpid);
+
 #ifndef IS_MINGW
-  char *outfile=lives_strdup_printf("%s/rfxsec.%d",capable->system_tmpdir,capable->mainpid);
   char *com=lives_strdup_printf("\"%s\" -get \"%s\" \"%s\" > \"%s\"",RFX_BUILDER,section,file,outfile);
 #else
-  char *outfile=lives_strdup_printf("%s\\rfxsec.%d",capable->system_tmpdir,capable->mainpid);
   char *com=lives_strdup_printf("perl \"%s\\%s\" -get \"%s\" \"%s\" > \"%s\"",prefs->prefix_dir,RFX_BUILDER,
                                 section,file,outfile);
 #endif
@@ -4468,13 +4468,14 @@ void add_rfx_effects(void) {
   // use rfx[0] as "Apply realtime fx"
   rendered_fx[0].name=lives_strdup("realtime_fx");
   rendered_fx[0].menu_text=lives_strdup(_("_Apply Real Time Effects to Selection"));
-  rendered_fx[0].action_desc=lives_strdup("Applying Current Real Time Effects to");
+  rendered_fx[0].action_desc=lives_strdup(_("Applying Current Real Time Effects to"));
 
   rendered_fx[0].props=0;
   rendered_fx[0].num_params=0;
   rendered_fx[0].num_in_channels=1;
   rendered_fx[0].menuitem=NULL;
   rendered_fx[0].params=NULL;
+  rendered_fx[0].flags=0;
   rendered_fx[0].extra=NULL;
   rendered_fx[0].status=RFX_STATUS_WEED;
   rendered_fx[0].is_template=FALSE;

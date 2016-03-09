@@ -160,13 +160,13 @@ xprocess *create_processing(const char *text) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox2;
   LiVESWidget *vbox3;
-  LiVESWidget *details_arrow;
 
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
 
   xprocess *procw=(xprocess *)(lives_malloc(sizeof(xprocess)));
 
   char tmp_label[256];
+
 
   widget_opts.non_modal=TRUE;
   procw->processing = lives_standard_dialog_new(_("Processing..."),FALSE,-1,-1);
@@ -220,12 +220,11 @@ xprocess *create_processing(const char *text) {
     boolean woat=widget_opts.apply_theme;
     widget_opts.apply_theme=FALSE;
     procw->scrolledwindow = lives_standard_scrolled_window_new(ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, LIVES_WIDGET(mainw->optextview));
-    lives_widget_set_size_request(procw->scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-
     widget_opts.apply_theme=woat;
 
-    details_arrow=lives_standard_expander_new(_("Show Details"),FALSE,LIVES_BOX(vbox3),procw->scrolledwindow);
-    lives_widget_show_all(details_arrow);
+    lives_widget_set_size_request(procw->scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
+    lives_widget_context_update();
+    lives_standard_expander_new(_("Show Details"),FALSE,LIVES_BOX(vbox3),procw->scrolledwindow);
 
   }
 
@@ -554,8 +553,6 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
 
-  lives_widget_set_size_request(okbutton,DEF_BUTTON_WIDTH*4,-1);
-
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
                        filew);
@@ -568,6 +565,8 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
 
   lives_widget_show_all(filew->dialog);
+
+  lives_widget_set_size_request(okbutton,DEF_BUTTON_WIDTH*4,-1);
 
   return filew;
 }
@@ -1955,6 +1954,13 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(commentsw->comments_dialog));
 
+  if (filename!=NULL) {
+    label=lives_standard_label_new((extrabit=lives_strdup_printf(_("File Name: %s"),filename)));
+    lives_free(extrabit);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, widget_opts.packing_height);
+  }
+
+
   table = lives_table_new(4, 2, FALSE);
   lives_container_set_border_width(LIVES_CONTAINER(table), widget_opts.border_width);
 
@@ -1968,6 +1974,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
   lives_label_set_halignment(LIVES_LABEL(label), 0.5);
+
 
   label = lives_standard_label_new(_("Author/Artist : "));
 
@@ -2005,8 +2012,6 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
   if (filename!=NULL) {
     // options
     vbox = lives_vbox_new(FALSE, 0);
-
-    lives_standard_expander_new(_("_Options"),TRUE,LIVES_BOX(dialog_vbox),vbox);
 
     add_fill_to_box(LIVES_BOX(vbox));
 
@@ -2059,7 +2064,13 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
       }
       lives_entry_set_text(LIVES_ENTRY(commentsw->subt_entry),osubfname);
       mainw->subt_save_file=osubfname; // assign instead of free
+
     }
+
+    lives_widget_set_size_request(vbox, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
+    lives_widget_context_update();
+    lives_standard_expander_new(_("_Options"),TRUE,LIVES_BOX(dialog_vbox),vbox);
+  
   }
 
   lives_widget_show_all(commentsw->comments_dialog);

@@ -1774,6 +1774,7 @@ boolean apply_prefs(boolean skip_warn) {
 	mt_auto_backup(mainw->multitrack);
       }
       if (mt_autoback_time>0&&prefs->mt_auto_back<=0&&mainw->multitrack->idlefunc>0) {
+	prefs->mt_auto_back=mt_autoback_time;
 	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
     }

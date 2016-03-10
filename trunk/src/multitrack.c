@@ -26,6 +26,7 @@
 
 //#define DEBUG_TTABLE
 
+
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -2190,7 +2191,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
   }
 
   mt->timeline_table = lives_table_new(prefs->max_disp_vtracks, TIMELINE_TABLE_COLUMNS, TRUE);
-
+  
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(LIVES_WIDGET(mt->timeline_table), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
@@ -2223,9 +2224,9 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
       lives_container_add(LIVES_CONTAINER(ahbox), arrow);
 
-      lives_table_attach(LIVES_TABLE(mt->timeline_table), dummy, 0, 1, 0, 1, LIVES_FILL|LIVES_EXPAND, (LiVESAttachOptions)0, 0, 0);
-      lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 1, 6, 0, 1, LIVES_FILL|LIVES_EXPAND, (LiVESAttachOptions)0, 0, 0);
-      lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 6, 7, 0, 1, LIVES_FILL|LIVES_EXPAND, (LiVESAttachOptions)0, 0, 0);
+      lives_table_attach(LIVES_TABLE(mt->timeline_table), dummy, 0, 1, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+      lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 1, 6, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+      lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 6, 7, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"labelbox",labelbox);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"label",label);
@@ -2338,8 +2339,8 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
       lives_container_add(LIVES_CONTAINER(ahbox), arrow);
 
-      lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 0, 6, rows, rows+1, LIVES_FILL|LIVES_EXPAND, (LiVESAttachOptions)0, 0, 0);
-      lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL|LIVES_EXPAND, (LiVESAttachOptions)0, 0, 0);
+      lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 0, 6, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+      lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"labelbox",labelbox);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"label",label);
@@ -2415,9 +2416,10 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
           lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
           lives_container_add(LIVES_CONTAINER(ahbox), arrow);
 
-          lives_table_attach(LIVES_TABLE(mt->timeline_table), dummy, 0, 2, rows, rows+1, LIVES_FILL|LIVES_EXPAND, (LiVESAttachOptions)0, 0, 0);
-          lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 1, 6, rows, rows+1, LIVES_FILL|LIVES_EXPAND, (LiVESAttachOptions)0, 0, 0);
-          lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 5, 7, rows, rows+1, LIVES_FILL|LIVES_EXPAND, (LiVESAttachOptions)0, 0, 0);
+	  // for gtk+2.x have 0,2...5,7 ?
+          lives_table_attach(LIVES_TABLE(mt->timeline_table), dummy, 0, 1, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+          lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 1, 6, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+          lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox),"labelbox",labelbox);
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox),"label",label);

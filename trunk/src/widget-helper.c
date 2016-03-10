@@ -6948,7 +6948,7 @@ LIVES_INLINE boolean lives_table_attach(LiVESTable *table, LiVESWidget *child, u
 
 #if GTK_CHECK_VERSION(3,12,0)
   gtk_widget_set_margin_start(child,xpad);
-  gtk_widget_set_margin_end(child,xpad+50);
+  gtk_widget_set_margin_end(child,xpad);
 #else
   gtk_widget_set_margin_left(child,xpad);
   gtk_widget_set_margin_right(child,xpad);

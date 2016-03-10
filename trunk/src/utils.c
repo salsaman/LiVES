@@ -3845,19 +3845,25 @@ int lives_rmdir(const char *dir, boolean force) {
   // if force is FALSE, will not remove non-empty
   // may fail
   char *com;
-  char *frc;
+  char *cmd;
 
   int retval;
 
-  if (force) frc="f";
-  else frc="";
+  if (force) {
+    cmd=lives_strdup_printf("%s -rf",capable->rm_cmd);
+  }
+  else {
+    cmd=lives_strdup(capable->rmdir_cmd);
+  }
+  
 #ifndef IS_MINGW
-  com=lives_strdup_printf("%s -r%s \"%s/\" >\"%s\" 2>&1",capable->rm_cmd,frc,dir,prefs->cmd_log);
+  com=lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1",cmd,dir,prefs->cmd_log);
 #else
-  com=lives_strdup_printf("START /MIN /b %s -r%s \"%s/\" >\"%s\" 2>&1",capable->rm_cmd,frc,dir,prefs->cmd_log);
+  com=lives_strdup_printf("START /MIN /b %s \"%s/\" >\"%s\" 2>&1",cmd,dir,prefs->cmd_log);
 #endif
   retval=lives_system(com,TRUE);
   lives_free(com);
+  lives_free(cmd);
   return retval;
 }
 

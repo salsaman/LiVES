@@ -4829,7 +4829,6 @@ boolean reload_set(const char *set_name) {
   char *cwd;
 
   boolean added_recovery=FALSE;
-  boolean needs_update=FALSE;
   boolean keep_threaded_dialog=FALSE;
 
   int last_file=-1,new_file=-1;
@@ -5042,23 +5041,23 @@ boolean reload_set(const char *set_name) {
       // CLIP_TYPE_DISK
       if (!check_frame_count(mainw->current_file)) {
         get_frame_count(mainw->current_file);
-        needs_update=TRUE;
+        cfile->needs_update=TRUE;
       }
       if (cfile->frames>0&&(cfile->hsize*cfile->vsize==0)) {
         get_frames_sizes(mainw->current_file,1);
-        if (cfile->hsize*cfile->vsize>0) needs_update=TRUE;
+        if (cfile->hsize*cfile->vsize>0) cfile->needs_update=TRUE;
       }
     }
 
     last_file=new_file;
 
     // read the playback fps, play frame, and name
-    open_set_file(set_name,++clipnum);
+    open_set_file(set_name,++clipnum); // must do before calling save_clip_values()
     threaded_dialog_spin(0.);
 
-    if (needs_update) {
+    if (cfile->needs_update) {
       save_clip_values(mainw->current_file);
-      needs_update=FALSE;
+      cfile->needs_update=FALSE;
     }
 
     if (mainw->cached_list!=NULL) {

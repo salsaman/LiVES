@@ -8,8 +8,8 @@
 #define HAS_LIVES_RTE_WINDOW_H
 
 
-#define RTE_INFO_WIDTH ((int)(350.*widget_opts.scale))
-#define RTE_INFO_HEIGHT ((int)(200.*widget_opts.scale))
+#define RTE_INFO_WIDTH ((int)(550.*widget_opts.scale))
+#define RTE_INFO_HEIGHT ((int)(400.*widget_opts.scale))
 
 void rte_window_set_interactive(boolean interactive);
 

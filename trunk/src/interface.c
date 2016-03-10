@@ -734,8 +734,9 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
     textwindow->table=lives_table_new(1, 1, FALSE);
     scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->table);
     if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(textwindow->table, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-      lives_widget_set_fg_color(textwindow->table, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color(textwindow->table, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+      lives_widget_set_fg_color(textwindow->table, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     }
 
   }

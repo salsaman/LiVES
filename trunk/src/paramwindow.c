@@ -885,18 +885,27 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       if (!has_param) lives_widget_set_sensitive(okbutton,FALSE);
       cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
 
-      if (rfx->status!=RFX_STATUS_WEED&&no_process) {
-        lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH*4, -1);
-      }
       if (rfx->status==RFX_STATUS_WEED) {
         resetbutton = lives_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED,_("Reset"));
         lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), resetbutton, LIVES_RESPONSE_RESET);
         lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), okbutton, LIVES_RESPONSE_OK);
       }
+
       lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
+
+      if (rfx->status!=RFX_STATUS_WEED&&no_process) {
+	LiVESWidget *abox=lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[didx]));
+#if !GTK_CHECK_VERSION(3,0,0)
+	lives_button_box_set_layout(LIVES_BUTTON_BOX(abox),LIVES_BUTTONBOX_CENTER);
+#else
+	if (LIVES_IS_BOX(abox)) add_fill_to_box(LIVES_BOX(abox));
+#endif
+        lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH*4, -1);
+      }
+      
     }
 
     lives_widget_set_can_focus(cancelbutton,TRUE);

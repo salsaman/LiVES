@@ -4924,7 +4924,9 @@ static void make_fx_defs_menu(void) {
         string=lives_strdup_printf("%s (%s)",filter_name,filter_type);
 
         menuitem=lives_menu_item_new_with_label(string);
-        lives_widget_show(menuitem);
+	if (prefs->show_gui) {
+	  lives_widget_show(menuitem);
+	}
         lives_free(string);
         lives_free(filter_type);
 

@@ -1622,6 +1622,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *dialog;
 
   LiVESWidget *vbox;
+  LiVESWidget *abox;
   LiVESWidget *hbox;
   LiVESWidget *label;
   LiVESWidget *textview;
@@ -1751,6 +1752,13 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 
   ok_button = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), ok_button, LIVES_RESPONSE_OK);
+
+  abox=lives_dialog_get_action_area(LIVES_DIALOG(dialog));
+#if !GTK_CHECK_VERSION(3,0,0)
+  lives_button_box_set_layout(LIVES_BUTTON_BOX(abox),LIVES_BUTTONBOX_CENTER);
+#else
+  if (LIVES_IS_BOX(abox)) add_fill_to_box(LIVES_BOX(abox));
+#endif
 
   lives_widget_set_can_focus_and_default(ok_button);
   lives_widget_grab_default(ok_button);
@@ -2358,6 +2366,12 @@ LiVESWidget *create_rte_window(void) {
   lives_container_add(LIVES_CONTAINER(rte_window), top_vbox);
 
   hbuttonbox = lives_hbutton_box_new();
+  label=add_fill_to_box(LIVES_BOX(hbuttonbox));
+  
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  }
+  
   lives_box_pack_start(LIVES_BOX(top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height*2);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), clear_all_button);
@@ -2378,11 +2392,19 @@ LiVESWidget *create_rte_window(void) {
   lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default(ok_button);
 
+  label=add_fill_to_box(LIVES_BOX(hbuttonbox));
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  }
+  
+
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), clear_all_button, DEF_BUTTON_WIDTH);
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), save_keymap_button, DEF_BUTTON_WIDTH);
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), load_keymap_button, DEF_BUTTON_WIDTH);
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), ok_button, DEF_BUTTON_WIDTH);
 
+  
   rtew_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(rte_window), rtew_accel_group);
 

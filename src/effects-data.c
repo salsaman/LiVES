@@ -4759,7 +4759,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 
   conxw.disconbutton = lives_button_new_with_mnemonic(_("Disconnect All"));
   lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.disconbutton, LIVES_RESPONSE_NONE);
-  lives_container_set_border_width(LIVES_CONTAINER(conxw.disconbutton), widget_opts.border_width);
+  //lives_container_set_border_width(LIVES_CONTAINER(conxw.disconbutton), widget_opts.border_width); !! dont - causes other buttons to exp. vert in gtk2
   lives_widget_set_sensitive(conxw.disconbutton,FALSE);
 
   lives_signal_connect(LIVES_GUI_OBJECT(conxw.disconbutton), LIVES_WIDGET_CLICKED_SIGNAL,

@@ -546,8 +546,10 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
     rfxbuilder->onum_triggers=rfxbuilder->num_triggers;
   }
 
-  dialog = lives_standard_dialog_new(title,FALSE,RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4);
-  lives_widget_set_size_request(dialog,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
+  //dialog = lives_standard_dialog_new(title,FALSE,RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4);
+  dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
+  //lives_widget_set_size_request(dialog,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
+
   if (title!=NULL) lives_free(title);
 
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);

@@ -4744,10 +4744,11 @@ enum {
 };
 
 
+#if GTK_CHECK_VERSION(3,0,0)
 static void rowexpand(LiVESWidget *tv, LiVESTreeIter *iter, LiVESTreePath *path, livespointer ud) {
   lives_widget_queue_resize(tv);
 }
-
+#endif
 
 LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc) {
   // TODO - some event properties should be editable, e.g. parameter values
@@ -5032,8 +5033,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       tree = lives_tree_view_new_with_model(LIVES_TREE_MODEL(treestore));
 
       if (palette->style&STYLE_1) {
-        lives_widget_set_base_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-        lives_widget_set_text_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+        lives_widget_set_base_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+        lives_widget_set_text_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
       }
 
       renderer = lives_cell_renderer_text_new();
@@ -5063,11 +5064,16 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                          (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                          (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND), 0, 0);
 
+
+#if GTK_CHECK_VERSION(3,0,0)
       lives_signal_connect(LIVES_GUI_OBJECT(tree), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
                            LIVES_GUI_CALLBACK(rowexpand),
                            NULL);
 
+
+      
       lives_widget_set_size_request(tree,-1,TREE_ROW_HEIGHT);
+#endif
 
       currow++;
     }
@@ -5078,6 +5084,14 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   scrolledwindow = lives_standard_scrolled_window_new(winsize_h, winsize_v, table);
   widget_opts.apply_theme=woat;
 
+#if !GTK_CHECK_VERSION(3,0,0)
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(top_vbox, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    lives_widget_set_fg_color(top_vbox, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+  }
+#endif
+  
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
   hbuttonbox = lives_hbutton_box_new();

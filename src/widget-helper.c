@@ -2422,7 +2422,10 @@ LIVES_INLINE LiVESWidget *lives_vbutton_box_new(void) {
 
 LIVES_INLINE boolean lives_button_box_set_layout(LiVESButtonBox *bbox, LiVESButtonBoxStyle bstyle) {
 #ifdef GUI_GTK
-  gtk_button_box_set_layout(bbox,bstyle);
+#if GTK_CHECK_VERSION(3,0,0)
+  return FALSE;
+#endif
+    gtk_button_box_set_layout(bbox,bstyle);
   return TRUE;
 #ifdef GUI_QT
   if (bstyle == LIVES_BUTTONBOX_CENTER) {
@@ -8013,7 +8016,8 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   if (width!=0&&height!=0) {
 #if !GTK_CHECK_VERSION(3,0,0)
     if (width>-1||height>-1)
-      lives_widget_set_minimum_size(scrolledwindow, width, height);
+      lives_widget_set_size_request(scrolledwindow, width, height);
+      //lives_widget_set_minimum_size(scrolledwindow, width, height); // crash if we dont have toplevel win
 #else
     if (height!=-1) gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scrolledwindow),height);
     if (width!=-1) gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(scrolledwindow),width);

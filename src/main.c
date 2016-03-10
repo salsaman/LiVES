@@ -568,7 +568,10 @@ static boolean pre_init(void) {
 
   mainw->imsep=mainw->imframe=NULL;
 
-  set_palette_colours(FALSE);
+  if (!set_palette_colours(FALSE)) {
+    lives_snprintf(prefs->theme,64,"none");
+    set_palette_colours(FALSE);
+  }
 
   get_pref(PREF_CDPLAY_DEVICE,prefs->cdplay_device,256);
   prefs->warning_mask=(uint32_t)get_int_pref(PREF_LIVES_WARNING_MASK);
@@ -1942,13 +1945,13 @@ void do_start_messages(void) {
 
 
 
-void set_palette_colours(boolean force_reload) {
+boolean set_palette_colours(boolean force_reload) {
   // force_reload should only be set when the theme changes in prefs.
 
   lives_colRGBA64_t lcol;
 
   char *themedir,*themefile,*tmp;
-  char *pstyle=NULL;
+  char pstyle[8];
 
   boolean is_OK=TRUE;
 
@@ -2128,16 +2131,11 @@ void set_palette_colours(boolean force_reload) {
 
     // mandatory for themes
 
-    if (!is_OK||get_pref_from_file(themefile,THEME_DETAIL_STYLE,pstyle,128)!=LIVES_RESPONSE_NONE) {
+    if (!is_OK||get_pref_from_file(themefile,THEME_DETAIL_STYLE,pstyle,8)!=LIVES_RESPONSE_NONE) {
       is_OK=FALSE;
     } else {
       palette->style=atoi(pstyle);
     }
-    lives_freep((void **)&pstyle);
-
-    if (!is_OK||!get_theme_colour_pref(themefile,THEME_DETAIL_STYLE,&lcol)) {
-      is_OK=FALSE;
-    } else palette->style=lcol.red;
 
     if (!is_OK||!get_theme_colour_pref(themefile,THEME_DETAIL_NORMAL_FORE,&lcol)) {
       is_OK=FALSE;
@@ -2167,7 +2165,7 @@ void set_palette_colours(boolean force_reload) {
     if (!is_OK) {
       do_bad_theme_error(themefile);
       lives_free(themefile);
-      return;
+      return FALSE;
     }
 
 
@@ -2199,7 +2197,7 @@ void set_palette_colours(boolean force_reload) {
     set_palette_prefs();
 
   }
-
+  return TRUE;
 }
 
 
@@ -3044,7 +3042,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -4656,7 +4654,9 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer, const c
     weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGBA32);
   } else weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGB24);
 
-  if (!pixbuf_to_layer(layer,pixbuf)) lives_object_unref(pixbuf);
+  if (!pixbuf_to_layer(layer,pixbuf)) {
+    lives_object_unref(pixbuf);
+  }
 
   return TRUE;
 

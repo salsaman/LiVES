@@ -689,6 +689,8 @@ typedef struct {
   lives_painter_surface_t *raudio_drawable;
 
   int cb_src; ///< source clip for clipboard
+
+  boolean needs_update; ///< loaded values were incorrect, update header
 } lives_clip_t;
 
 

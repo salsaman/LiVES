@@ -3283,7 +3283,8 @@ void create_cfile(void) {
   cfile->no_proc_sys_errors=cfile->no_proc_read_errors=cfile->no_proc_write_errors=FALSE;
   cfile->keep_without_preview=FALSE;
   cfile->cb_src=-1;
-
+  cfile->needs_update=FALSE;
+  
   if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)) cfile->img_type=IMG_TYPE_JPEG;
   else cfile->img_type=IMG_TYPE_PNG;
 
@@ -4292,7 +4293,6 @@ boolean read_headers(const char *file_name) {
 
 void open_set_file(const char *set_name, int clipnum) {
   char name[256];
-  boolean needs_update=FALSE;
 
   if (mainw->current_file<1) return;
 
@@ -4314,17 +4314,17 @@ void open_set_file(const char *set_name, int clipnum) {
     retval=get_clip_value(mainw->current_file,CLIP_DETAILS_CLIPNAME,name,256);
     if (!retval) {
       lives_snprintf(name,256,_("Untitled%d"),mainw->untitled_number++);
-      needs_update=TRUE;
+      cfile->needs_update=TRUE;
     }
     retval=get_clip_value(mainw->current_file,CLIP_DETAILS_UNIQUE_ID,&cfile->unique_id,0);
     if (!retval) {
       cfile->unique_id=lives_random();
-      needs_update=TRUE;
+      cfile->needs_update=TRUE;
     }
     retval=get_clip_value(mainw->current_file,CLIP_DETAILS_INTERLACE,&cfile->interlace,0);
     if (!retval) {
       cfile->interlace=LIVES_INTERLACE_NONE;
-      needs_update=TRUE;
+      cfile->needs_update=TRUE;
     }
     if (cfile->interlace!=LIVES_INTERLACE_NONE) cfile->deinterlace=TRUE;
 
@@ -4350,7 +4350,7 @@ void open_set_file(const char *set_name, int clipnum) {
     } while (retval==LIVES_RESPONSE_RETRY);
 
     lives_free(setfile);
-    needs_update=TRUE;
+    cfile->needs_update=TRUE;
   }
 
   if (strlen(name)==0) {
@@ -4362,7 +4362,6 @@ void open_set_file(const char *set_name, int clipnum) {
     lives_snprintf(cfile->name,256,"%s",name);
   }
 
-  if (needs_update) save_clip_values(mainw->current_file);
 
 }
 
@@ -5224,7 +5223,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   boolean is_scrap;
   boolean is_ascrap;
   boolean did_set_check=FALSE;
-  boolean needs_update=FALSE;
   boolean is_ready;
 
   splash_end();
@@ -5446,11 +5444,11 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         // CLIP_TYPE_DISK
         if (is_scrap||!check_frame_count(mainw->current_file)) {
           get_frame_count(mainw->current_file);
-          needs_update=TRUE;
+          cfile->needs_update=TRUE;
         }
         if (!is_scrap&&cfile->frames>0&&(cfile->hsize*cfile->vsize==0)) {
           get_frames_sizes(mainw->current_file,1);
-          needs_update=TRUE;
+          cfile->needs_update=TRUE;
         }
         if (is_ascrap&&cfile->afilesize==0) reget_afilesize(mainw->current_file);
       }
@@ -5458,7 +5456,11 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (!is_scrap&&!is_ascrap) {
         // read the playback fps, play frame, and name
         threaded_dialog_spin(0.);
+
+	
         open_set_file(mainw->set_name,++clipnum);
+
+	
         threaded_dialog_spin(0.);
 
         lives_list_free_all(&mainw->cached_list);
@@ -5469,9 +5471,9 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         if (cfile->achans) cfile->aseek_pos=(int64_t)((double)(cfile->frameno-1.)/cfile->fps*cfile->arate*
                                               cfile->achans*(cfile->asampsize/8));
 
-        if (needs_update) {
+        if (cfile->needs_update) {
           save_clip_values(mainw->current_file);
-          needs_update=FALSE;
+          cfile->needs_update=FALSE;
         }
 
         // add to clip menu

@@ -5030,8 +5030,10 @@ void recover_layout_map(int numclips) {
           check_handle=lives_path_get_basename(mainw->files[i]->handle);
         }
 
-        if (!strcmp(check_handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
-          // check handle and unique id match
+        if ((!strcmp(check_handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id))||
+	    (prefs->mt_load_fuzzy&&(!strcmp(check_handle,lmap_entry->handle)||(mainw->files[i]->unique_id==lmap_entry->unique_id)))
+	    ){
+	  // check handle and unique id match
           // got a match, assign list to layout_map and delete this node
           lmap_entry_list=lmap_entry->list;
           while (lmap_entry_list!=NULL) {
@@ -5192,7 +5194,6 @@ boolean reload_clip(int fileno) {
     boolean bad_header=FALSE;
     boolean correct=check_clip_integrity(fileno,cdata); // get correct img_type, fps, etc.
     if (!correct||was_renamed) {
-      save_clip_values(fileno);
       if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
     } else {
       lives_decoder_t *dplug=(lives_decoder_t *)sfile->ext_src;

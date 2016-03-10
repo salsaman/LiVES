@@ -2741,10 +2741,8 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
     for (i=1; i<=MAX_FILES&&mainw->files[i]!=NULL; i++) {
       lmap=mainw->files[i]->layout_map;
       while (lmap!=NULL) {
-
         // lmap->data starts with layout name
         if (!strncmp((char *)lmap->data,lfile,strlen(lfile))) {
-
           threaded_dialog_spin(0.);
           array=lives_strsplit((char *)lmap->data,"|",-1);
           threaded_dialog_spin(0.);
@@ -21239,10 +21237,6 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
   if (!mainw->recoverable_layout) eload_name=lives_strdup(eload_file);
   else eload_name=lives_strdup(_("auto backup"));
 
-  g_print("opening %s\n",eload_file);
-  sleep(20.);
-
-  
   if ((fd=lives_open_buffered_rdonly(eload_file))<0) {
     msg=lives_strdup_printf(_("\nUnable to load layout file %s\n"),eload_name);
     do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(mt->window));

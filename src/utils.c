@@ -3842,7 +3842,7 @@ boolean check_file(const char *file_name, boolean check_existing) {
 
 
 int lives_rmdir(const char *dir, boolean force) {
-  // if force is FALSE, will not remove non-empty
+  // if force is TRUE, removes empty dirs, otherwise leaves them
   // may fail
   char *com;
   char *cmd;
@@ -3869,7 +3869,7 @@ int lives_rmdir(const char *dir, boolean force) {
 
 
 int lives_rmdir_with_parents(const char *dir) {
-  // may fail
+  // may fail, will not remove empty dirs
   char *com=lives_strdup_printf("%s -p \"%s\" >\"%s\" 2>&1",capable->rmdir_cmd,dir,prefs->cmd_log);
   int retval=lives_system(com,TRUE);
   lives_free(com);

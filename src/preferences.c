@@ -1767,6 +1767,16 @@ boolean apply_prefs(boolean skip_warn) {
   else if (mt_autoback_never) mt_autoback_time=-1;
 
   if (mt_autoback_time!=prefs->mt_auto_back) {
+    if (mainw->multitrack!=NULL) {
+      if (mt_autoback_time<=0&&prefs->mt_auto_back>0&&mainw->multitrack->idlefunc>0) {
+	lives_source_remove(mainw->multitrack->idlefunc);
+	mainw->multitrack->idlefunc=0;
+	mt_auto_backup(mainw->multitrack);
+      }
+      if (mt_autoback_time>0&&prefs->mt_auto_back<=0&&mainw->multitrack->idlefunc>0) {
+	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+      }
+    }
     prefs->mt_auto_back=mt_autoback_time;
     set_int_pref(PREF_MT_AUTO_BACK,mt_autoback_time);
   }

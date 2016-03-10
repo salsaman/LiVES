@@ -917,8 +917,12 @@ static void mt_load_recovery_layout(lives_mt *mt) {
     // keep the faulty layout for forensic purposes
     char *uldir=lives_build_filename(prefs->tmpdir,"unrecoverable_layouts",LIVES_DIR_SEP,NULL);
     lives_mkdir_with_parents(uldir,S_IRWXU);
-    lives_mv(eload_file,uldir);
-    lives_mv(aload_file,uldir);
+    if (lives_file_test(eload_file,LIVES_FILE_TEST_EXISTS)) {
+      lives_mv(eload_file,uldir);
+    }
+    if (lives_file_test(aload_file,LIVES_FILE_TEST_EXISTS)) {
+      lives_mv(aload_file,uldir);
+    }
     mt->fps=prefs->mt_def_fps;
     lives_free(uldir);
   }
@@ -21203,6 +21207,10 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
   if (!mainw->recoverable_layout) eload_name=lives_strdup(eload_file);
   else eload_name=lives_strdup(_("auto backup"));
 
+  g_print("opening %s\n",eload_file);
+  sleep(20.);
+
+  
   if ((fd=lives_open_buffered_rdonly(eload_file))<0) {
     msg=lives_strdup_printf(_("\nUnable to load layout file %s\n"),eload_name);
     do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(mt->window));

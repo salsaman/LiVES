@@ -5699,11 +5699,11 @@ boolean check_for_recovery_files(boolean auto_recover) {
   recovery_file=lives_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
   if (lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
     // move files temporarily to stop them being cleansed
-    char *xfile=lives_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
+    char *xfile=lives_strdup_printf("%s/keep_layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
     lives_mv(recovery_file,xfile);
     lives_free(xfile);
     recovery_numbering_file=lives_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
-    xfile=lives_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
+    xfile=lives_strdup_printf("%s/keep_layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
     lives_mv(recovery_numbering_file,xfile);
     lives_free(recovery_numbering_file);
     lives_free(xfile);
@@ -5722,11 +5722,11 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   if (mainw->recoverable_layout) {
     // move files back
-    char *xfile=lives_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
+    char *xfile=lives_strdup_printf("%s/keep_layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
     lives_mv(xfile,recovery_file);
     lives_free(xfile);
     recovery_numbering_file=lives_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
-    xfile=lives_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
+    xfile=lives_strdup_printf("%s/keep_layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
     lives_mv(xfile,recovery_numbering_file);
     lives_free(recovery_numbering_file);
     lives_free(xfile);

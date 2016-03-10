@@ -3640,7 +3640,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     char *rfx_scrapname=lives_strdup_printf("rfx.%d",capable->mainpid);
     char *rfxfile=lives_strdup_printf("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
     char *com;
-    char *fnamex;
+    char *fnamex=NULL;
     char *res_string=NULL;
     char buff[32];
 
@@ -3677,13 +3677,16 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     lives_free(com);
 
     // command failed
-    if (retval) return NULL;
-
+    if (retval) {
+      lives_rm(rfxfile);
+      lives_free(rfxfile);
+      return NULL;
+    }
+    
     // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
 
     // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
     com=lives_strdup_printf("\"%s\" \"%s\" \"%s\" >%s",RFX_BUILDER,rfxfile,prefs->tmpdir,LIVES_DEVNULL);
-
     res=lives_system(com,TRUE);
     lives_free(com);
 
@@ -3697,6 +3700,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
       // first create a lives_rfx_t from the scrap
       rfx->name=lives_strdup(rfx_scrapname);
+      rfx->menu_text=NULL;
       rfx->action_desc=NULL;
       rfx->extra=NULL;
       rfx->flags=0;
@@ -3711,13 +3715,18 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       rfxfile=lives_strdup_printf("%ssmdef.%d",prefs->tmpdir,capable->mainpid);
       fnamex=lives_build_filename(prefs->tmpdir,rfx_scrapname,NULL);
       com=lives_strdup_printf("\"%s\" get_define > \"%s\"",fnamex,rfxfile);
-      lives_free(fnamex);
       retval=lives_system(com,FALSE);
       lives_free(com);
 
       // command to get_define failed
-      if (retval) return NULL;
-
+      if (retval) {
+	lives_rm(rfxfile);
+	lives_free(rfxfile);
+	lives_rm(fnamex);
+	lives_free(fnamex);
+	return NULL;
+      }
+      
       do {
         retval=0;
         sfile=fopen(rfxfile,"r");
@@ -3737,7 +3746,11 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       lives_rm(rfxfile);
       lives_free(rfxfile);
 
-      if (retval==LIVES_RESPONSE_CANCEL) return NULL;
+      if (retval==LIVES_RESPONSE_CANCEL) {
+	lives_rm(fnamex);
+	lives_free(fnamex);
+	return NULL;
+      }
 
       lives_snprintf(rfx->delim,2,"%s",buff);
 
@@ -3752,7 +3765,6 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
       // now we build our window and get param values
       if (vbox==NULL) {
-	
         on_fx_pre_activate(rfx,1,NULL);
 
         if (prefs->show_gui) {
@@ -3768,10 +3780,6 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       } else {
         make_param_box(vbox,rfx);
       }
-
-      rfxfile=lives_build_filename(prefs->tmpdir,rfx_scrapname,NULL);
-      lives_rm(rfxfile);
-      lives_free(rfxfile);
 
       if (ret_rfx!=NULL) {
         *ret_rfx=rfx;
@@ -3790,6 +3798,11 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       }
     }
 
+    if (fnamex!=NULL) {
+      lives_rm(fnamex);
+      lives_free(fnamex);
+    }
+    
     lives_free(rfx_scrapname);
     return res_string;
   }

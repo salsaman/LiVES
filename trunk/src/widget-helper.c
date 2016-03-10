@@ -8709,12 +8709,14 @@ void lives_spin_button_configure(LiVESSpinButton *spinbutton,
 #include "ce_thumbs.h"
 
 boolean lives_widget_context_update(void) {
+  int autoback=-1;
   boolean mt_needs_idlefunc=FALSE;
 
   if (pthread_mutex_trylock(&mainw->gtk_mutex)) return FALSE;
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
-
+    autoback=prefs->mt_auto_back;
+    
 #ifdef GUI_GTK
     lives_source_remove(mainw->multitrack->idlefunc);
 #endif
@@ -8745,8 +8747,12 @@ boolean lives_widget_context_update(void) {
 #endif
   }
 
-  if (!mainw->is_exiting&&mt_needs_idlefunc) mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
-
+  if (!mainw->is_exiting&&mt_needs_idlefunc) {
+    prefs->mt_auto_back=-1; // prevent backup in case that change is "every" - otherwise we get in a loop calling here
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    prefs->mt_auto_back=autoback;
+  }
+  
   pthread_mutex_unlock(&mainw->gtk_mutex);
 
   return TRUE;

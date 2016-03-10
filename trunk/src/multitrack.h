@@ -551,7 +551,7 @@ struct _mt {
   boolean changed; ///< changed since last saved
   boolean auto_changed; ///< changed since last auto-saved
 
-  int64_t auto_back_time;
+  int64_t auto_back_time; ///< time when last backup was done (not to be confused with prefs->auto_back)
 
   // stuff to do with framedraw "special" widgets
   int inwidth;
@@ -961,6 +961,7 @@ uint32_t mt_idle_add(lives_mt *);
 void recover_layout(void);
 void recover_layout_cancelled(boolean is_startup);
 boolean write_backup_layout_numbering(lives_mt *);
+boolean mt_auto_backup(livespointer mt);
 
 
 // amixer funcs

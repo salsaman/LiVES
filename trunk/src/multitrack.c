@@ -815,7 +815,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
 
 
-static boolean mt_auto_backup(livespointer user_data) {
+boolean mt_auto_backup(livespointer user_data) {
 
 #ifndef USE_MONOTONIC_TIME
   struct timeval otv;
@@ -825,14 +825,16 @@ static boolean mt_auto_backup(livespointer user_data) {
 
   lives_mt *mt=(lives_mt *)user_data;
 
-  if (mt->idlefunc==0||!mt->auto_changed||mt->event_list==NULL||prefs->mt_auto_back<0) {
+  if (!mt->auto_changed||mt->event_list==NULL||prefs->mt_auto_back<0) {
     mt->idlefunc=0;
     return FALSE;
   }
 
-  lives_source_remove(mt->idlefunc);
-  mt->idlefunc=0;
-
+  if (mt->idlefunc!=0) {
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+  
 #ifdef USE_MONOTONIC_TIME
   stime=lives_get_monotonic_time()/1000000.;
 #else
@@ -857,15 +859,9 @@ static boolean mt_auto_backup(livespointer user_data) {
 uint32_t mt_idle_add(lives_mt *mt) {
   uint32_t retval;
 
-  if (prefs->mt_auto_back<0) return 0;
+  if (prefs->mt_auto_back<=0) return 0;
 
-  if (prefs->mt_auto_back>0&&mt->idlefunc>0) return mt->idlefunc;
-
-  if (prefs->mt_auto_back==0) {
-    mt->idlefunc=-1;
-    mt_auto_backup(mt);
-    return 0;
-  }
+  if (mt->idlefunc>0) return mt->idlefunc;
 
   set_signal_handlers((SignalHandlerPointer)defer_sigint);
 
@@ -946,6 +942,7 @@ void recover_layout(void) {
     mainw->multitrack->auto_reloading=FALSE;
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    if (prefs->mt_auto_back==0) mt_auto_backup(mainw->multitrack);
   }
   mainw->recoverable_layout=FALSE;
 
@@ -4956,7 +4953,7 @@ static void apply_avol_filter(lives_mt *mt) {
 
     boolean did_backup=mt->did_backup;
     boolean needs_idlefunc=FALSE;
-
+    
     int current_fx=mt->current_fx;
 
 
@@ -5001,6 +4998,7 @@ static void apply_avol_filter(lives_mt *mt) {
     }
 
     if (!did_backup&&needs_idlefunc) mt->idlefunc=mt_idle_add(mt);
+    if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
     return;
   }
@@ -9132,7 +9130,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   boolean transfer_focus=FALSE;
   boolean needs_idlefunc=FALSE;
-
+    
   register int i;
 
   mainw->cancelled=CANCEL_NONE;
@@ -11458,6 +11456,7 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
   if (block!=NULL) block->uid=uid;
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
   return block;
 }
@@ -14364,16 +14363,22 @@ mt_ign_ins_sel_toggled(LiVESMenuItem     *menuitem,
 
 static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, boolean only_first) {
   lives_mt *mt=(lives_mt *)user_data;
-  LiVESList *vsel=mt->selected_tracks;
-  track_rect *block=NULL;
-  int track;
-  LiVESWidget *eventbox;
-  weed_timecode_t tc,new_tc,tc_last,new_tc_last,tc_first,block_tc;
-  int filenum;
-  boolean did_backup=mt->did_backup;
-  LiVESList *track_sel;
-  boolean audio_done=FALSE;
+
   weed_timecode_t offset=0;
+  weed_timecode_t tc,new_tc,tc_last,new_tc_last,tc_first,block_tc;
+
+  LiVESList *vsel=mt->selected_tracks;
+  LiVESList *track_sel;
+
+  LiVESWidget *eventbox;
+
+  track_rect *block=NULL;
+
+  boolean did_backup=mt->did_backup;
+  boolean audio_done=FALSE;
+
+  int track;
+  int filenum;
 
   if (!did_backup&&mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
@@ -14517,6 +14522,7 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
   }
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
 }
 
@@ -14870,18 +14876,14 @@ static void insgap_inner(lives_mt *mt, int tnum, boolean is_sel, int passnm) {
 
 
 
-
-
-
-
-void on_insgap_sel_activate(LiVESMenuItem     *menuitem,
-                            livespointer         user_data) {
-
+void on_insgap_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_mt *mt=(lives_mt *)user_data;
   LiVESList *slist=mt->selected_tracks;
-  int track;
+  
   boolean did_backup=mt->did_backup;
+
+  int track;
 
   if (!did_backup&&mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
@@ -14906,15 +14908,18 @@ void on_insgap_sel_activate(LiVESMenuItem     *menuitem,
   d_print(_("Inserted gap in selected tracks from time %.4f to %.4f\n"),mt->region_start,mt->region_end);
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
 }
 
 
 
-void on_insgap_cur_activate(LiVESMenuItem     *menuitem,
-                            livespointer         user_data) {
+void on_insgap_cur_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  
   lives_mt *mt=(lives_mt *)user_data;
+
   boolean did_backup=mt->did_backup;
+
   char *tname;
 
   if (!did_backup&&mt->idlefunc>0) {
@@ -14938,6 +14943,7 @@ void on_insgap_cur_activate(LiVESMenuItem     *menuitem,
   lives_free(tname);
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
 }
 
@@ -14945,30 +14951,39 @@ void on_insgap_cur_activate(LiVESMenuItem     *menuitem,
 
 void multitrack_undo(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  size_t space_avail=(size_t)(prefs->mt_undo_buf*1024*1024)-mt->undo_buffer_used;
-  size_t space_needed;
-  mt_undo *last_undo=(mt_undo *)lives_list_nth_data(mt->undos,lives_list_length(mt->undos)-1-mt->undo_offset);
-  unsigned char *memblock,*mem_end;
-  mt_undo *new_redo=NULL;
-  int i;
-  int current_track;
-  int clip_sel;
-  int avol_fx;
-  int num_tracks;
-  boolean block_is_selected=FALSE;
-  boolean avoid_fx_list=FALSE;
-  char *utxt,*tmp;
-  char *txt;
 
-  double end_secs;
-  double ptr_time;
+  mt_undo *last_undo=(mt_undo *)lives_list_nth_data(mt->undos,lives_list_length(mt->undos)-1-mt->undo_offset);
+  mt_undo *new_redo=NULL;
 
   LiVESList *slist;
   LiVESList *label_list=NULL;
   LiVESList *vlist,*llist;
   LiVESList *seltracks=NULL;
   LiVESList *aparam_view_list;
+
   LiVESWidget *checkbutton,*eventbox,*label;
+
+  unsigned char *memblock,*mem_end;
+
+  size_t space_avail=(size_t)(prefs->mt_undo_buf*1024*1024)-mt->undo_buffer_used;
+  size_t space_needed;
+
+  double end_secs;
+  double ptr_time;
+
+  char *utxt,*tmp;
+  char *txt;
+  
+  boolean block_is_selected=FALSE;
+  boolean avoid_fx_list=FALSE;
+
+  int current_track;
+  int clip_sel;
+  int avol_fx;
+  int num_tracks;
+
+  register int i;
+
 
   if (mt->undo_mem==NULL) return;
 
@@ -15151,8 +15166,10 @@ void multitrack_undo(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
   mt->idlefunc=mt_idle_add(mt);
+  if (prefs->mt_auto_back==0) mt_auto_backup(mt);
 }
 
+ 
 
 void multitrack_redo(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
@@ -15174,6 +15191,7 @@ void multitrack_redo(LiVESMenuItem *menuitem, livespointer user_data) {
 
   double ptr_time;
   double end_secs;
+
 
   int current_track;
   int num_tracks;
@@ -15338,6 +15356,7 @@ void multitrack_redo(LiVESMenuItem *menuitem, livespointer user_data) {
   mt_sensitise(mt);
 
   mt->idlefunc=mt_idle_add(mt);
+  if (prefs->mt_auto_back==0) mt_auto_backup(mt);
 }
 
 
@@ -15512,6 +15531,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   } else polymorph(mt,POLY_FX_STACK);
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
 }
 
@@ -15682,6 +15702,7 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *tmp,*tmp1;
 
   boolean did_backup=mt->did_backup;
+
   int numtracks;
   int error;
 
@@ -15744,6 +15765,7 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mt->did_backup=did_backup;
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
 }
 
@@ -16336,9 +16358,13 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 void on_split_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // split current block at current time
   lives_mt *mt=(lives_mt *)user_data;
-  double timesecs=mt->ptr_time;
-  boolean did_backup=mt->did_backup;
+  
   weed_timecode_t tc;
+
+  double timesecs=mt->ptr_time;
+  
+  boolean did_backup=mt->did_backup;
+
 
   if (mt->putative_block==NULL) return;
 
@@ -16361,6 +16387,7 @@ void on_split_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mt->did_backup=did_backup;
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
 }
 
@@ -16398,6 +16425,7 @@ void on_split_curr_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mt->did_backup=did_backup;
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
 }
 
@@ -16432,6 +16460,7 @@ void on_split_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mt->did_backup=did_backup;
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
 }
 
@@ -16597,6 +16626,7 @@ static void on_delblock_activate(LiVESMenuItem *menuitem, livespointer user_data
   }
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
 }
 
@@ -17299,6 +17329,7 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
   mt_tl_move_relative(mt,0.);
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
   return TRUE;
 }
@@ -17455,6 +17486,7 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
   }
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (!did_backup&&prefs->mt_auto_back==0) mt_auto_backup(mt);
 
   return TRUE;
 }
@@ -19445,9 +19477,9 @@ boolean set_new_set_name(lives_mt *mt) {
 
   char *tmp;
 
-  boolean needs_idlefunc=FALSE;
   boolean response;
-
+  boolean needs_idlefunc=FALSE;
+    
   if (mt!=NULL&&mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
     mt->idlefunc=0;

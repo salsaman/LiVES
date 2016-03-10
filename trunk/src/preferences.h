@@ -227,7 +227,7 @@ typedef struct {
   boolean mt_pertrack_audio;
   int mt_backaudio;
 
-  int mt_auto_back;
+  int mt_auto_back; ///< time diff to backup (-1 == never, 0 == after every change, >0 == seconds)
 
   boolean ar_clipset;
   boolean ar_layout;

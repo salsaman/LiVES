@@ -1264,7 +1264,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->max_disp_vtracks=get_int_pref(PREF_MAX_DISP_VTRACKS);
 
-
+    prefs->mt_load_fuzzy=FALSE;
+    
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();

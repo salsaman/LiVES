@@ -218,10 +218,12 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
         sfile->vsize=cdata->height;
       }
     }
+    save_clip_value(fileno,CLIP_DETAILS_WIDTH,&sfile->hsize);
+    save_clip_value(fileno,CLIP_DETAILS_HEIGHT,&sfile->vsize);
     goto mismatch;
   }
 
-  if (sfile->fps!=cdata->fps) goto mismatch;
+  if (sfile->fps!=(double)cdata->fps) goto mismatch;
 
   if (sfile->img_type!=empirical_img_type) sfile->img_type=empirical_img_type;
 

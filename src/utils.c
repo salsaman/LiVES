@@ -3842,6 +3842,8 @@ boolean check_file(const char *file_name, boolean check_existing) {
 
 
 int lives_rmdir(const char *dir, boolean force) {
+  // if force is FALSE, will not remove non-empty
+  // may fail
   char *com;
   char *frc;
 
@@ -3861,6 +3863,7 @@ int lives_rmdir(const char *dir, boolean force) {
 
 
 int lives_rmdir_with_parents(const char *dir) {
+  // may fail
   char *com=lives_strdup_printf("%s -p \"%s\" >\"%s\" 2>&1",capable->rmdir_cmd,dir,prefs->cmd_log);
   int retval=lives_system(com,TRUE);
   lives_free(com);
@@ -3869,6 +3872,7 @@ int lives_rmdir_with_parents(const char *dir) {
 
 
 int lives_rm(const char *file) {
+  // may fail
   char *com;
   int retval;
 
@@ -3884,6 +3888,8 @@ int lives_rm(const char *file) {
 
 
 int lives_rmglob(const char *files) {
+  // delete files with name "files"*
+  // may fail
   char *com;
   int retval;
 #ifndef IS_MINGW
@@ -3898,6 +3904,7 @@ int lives_rmglob(const char *files) {
 
 
 int lives_cp(const char *from, const char *to) {
+  // may not fail
   char *com=lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1",capable->cp_cmd,from,to,prefs->cmd_log);
   int retval=lives_system(com,FALSE);
   lives_free(com);
@@ -3906,6 +3913,7 @@ int lives_cp(const char *from, const char *to) {
 
 
 int lives_cp_keep_perms(const char *from, const char *to) {
+  // may not fail
   char *com=lives_strdup_printf("%s -a \"%s\" \"%s/\" >\"%s\" 2>&1",capable->cp_cmd,from,to,prefs->cmd_log);
   int retval=lives_system(com,FALSE);
   lives_free(com);
@@ -3914,6 +3922,7 @@ int lives_cp_keep_perms(const char *from, const char *to) {
 
 
 int lives_mv(const char *from, const char *to) {
+  // may not fail
   char *com=lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1",capable->mv_cmd,from,to,prefs->cmd_log);
   int retval=lives_system(com,FALSE);
   lives_free(com);
@@ -3922,6 +3931,7 @@ int lives_mv(const char *from, const char *to) {
 
 
 int lives_touch(const char *tfile) {
+  // may not fail
   char *com=lives_strdup_printf("%s \"%s\" >\"%s\" 2>&1",capable->touch_cmd,tfile,prefs->cmd_log);
   int retval=lives_system(com,FALSE);
   lives_free(com);
@@ -3930,6 +3940,7 @@ int lives_touch(const char *tfile) {
 
 
 int lives_ln(const char *from, const char *to) {
+  // may not fail
   char *com;
   int retval;
 #ifndef IS_MINGW
@@ -3945,6 +3956,7 @@ int lives_ln(const char *from, const char *to) {
 
 
 int lives_chmod(const char *target, const char *mode) {
+  // may not fail
   char *com=lives_strdup_printf("%s %s \"%s\" >\"%s\" 2>&1",capable->chmod_cmd,mode,target,prefs->cmd_log);
   int retval=lives_system(com,FALSE);
   lives_free(com);
@@ -3953,6 +3965,7 @@ int lives_chmod(const char *target, const char *mode) {
 
 
 int lives_cat(const char *from, const char *to, boolean append) {
+  // may not fail
   char *com;
   char *op;
   int retval;
@@ -3968,6 +3981,7 @@ int lives_cat(const char *from, const char *to, boolean append) {
 
 
 int lives_echo(const char *text, const char *to, boolean append) {
+  // may not fail
   char *com;
   char *op;
   int retval;

@@ -53,6 +53,8 @@ void on_export_proj_activate(LiVESMenuItem *, livespointer);
 
 void on_export_theme_activate(LiVESMenuItem *, livespointer);
 
+void on_import_theme_activate(LiVESMenuItem *, livespointer);
+
 void on_quit_activate(LiVESMenuItem *, livespointer);
 
 void on_undo_activate(LiVESMenuItem *, livespointer);

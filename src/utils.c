@@ -2174,6 +2174,56 @@ boolean check_for_lock_file(const char *set_name, int type) {
 }
 
 
+boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, const char *nreject) {
+  char *xtype=lives_strdup(type),*msg;
+  const char *reject=" /\\*\"";
+
+  size_t slen=strlen(type_name);
+
+  register int i;
+
+  if (nreject!=NULL) reject=nreject;
+  
+  if (slen==0) {
+    msg=lives_strdup_printf(_("\n%s names may not be blank.\n"),xtype);
+    if (!mainw->osc_auto) do_blocking_error_dialog(msg);
+    lives_free(msg);
+    lives_free(xtype);
+    return FALSE;
+  }
+
+  if (slen>MAX_SET_NAME_LEN) {
+    msg=lives_strdup_printf(_("\n%s names may not be longer than %d characters.\n"),xtype,(int)maxlen);
+    if (!mainw->osc_auto) do_blocking_error_dialog(msg);
+    lives_free(msg);
+    lives_free(xtype);
+    return FALSE;
+  }
+
+  if (strcspn(type_name,reject)!=slen) {
+    msg=lives_strdup_printf(_("\n%s names may not contain spaces or the characters%s.\n"),xtype,reject);
+    if (!mainw->osc_auto) do_blocking_error_dialog(msg);
+    lives_free(msg);
+    lives_free(xtype);
+    return FALSE;
+  }
+
+  for (i=0; i<slen-1; i++) {
+    if (type_name[i]=='.'&&(i==0||type_name[i+1]=='.')) {
+      msg=lives_strdup_printf(_("\n%s names may not start with a '.' or contain '..'\n"),xtype);
+      if (!mainw->osc_auto) do_blocking_error_dialog(msg);
+      lives_free(msg);
+      lives_free(xtype);
+      return FALSE;
+    }
+  }
+
+  return TRUE;
+
+}
+
+
+
 boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
   // check (clip) set names for validity
   // - may not be of zero length
@@ -2191,37 +2241,9 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
   // iff allow_dupes is FALSE then we disallow the name of any existing set (has a subdirectory in the working directory)
 
   char *msg;
-  char *reject=" /\\*\"";
-  size_t slen=strlen(set_name);
 
-  register int i;
-
-  if (slen==0) {
-    if (!mainw->osc_auto) do_blocking_error_dialog(_("\nSet names may not be blank.\n"));
-    return FALSE;
-  }
-
-  if (slen>MAX_SET_NAME_LEN) {
-    if (!mainw->osc_auto) do_blocking_error_dialog(_("\nSet names may not be longer than ""MAX_SET_NAME_LEN"" characters.\n"));
-    return FALSE;
-  }
-
-  if (strcspn(set_name,reject)!=slen) {
-    msg=lives_strdup_printf(_("\nSet names may not contain spaces or the characters%s.\n"),reject);
-    if (!mainw->osc_auto) do_blocking_error_dialog(msg);
-    lives_free(msg);
-    return FALSE;
-  }
-
-  for (i=0; i<slen; i+=2) {
-    if (set_name[i]=='.'&&((i==0||set_name[i-1]=='.')||(i<slen-1&&set_name[i+1]=='.'))) {
-      msg=lives_strdup(_("\nSet names may not start with a '.' or contain '..'\n"));
-      if (!mainw->osc_auto) do_blocking_error_dialog(msg);
-      lives_free(msg);
-      return FALSE;
-    }
-  }
-
+  if (!do_std_checks(set_name,_("Set"),MAX_SET_NAME_LEN,NULL)) return FALSE;
+  
   // check if this is a set in use by another copy of LiVES
   if (!check_for_lock_file(set_name,1)) return FALSE;
 
@@ -3842,7 +3864,7 @@ boolean check_file(const char *file_name, boolean check_existing) {
 
 
 int lives_rmdir(const char *dir, boolean force) {
-  // if force is TRUE, removes empty dirs, otherwise leaves them
+  // if force is TRUE, removes non-empty dirs, otherwise leaves them
   // may fail
   char *com;
   char *cmd;

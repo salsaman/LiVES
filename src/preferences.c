@@ -1960,7 +1960,7 @@ static void on_forcesmon_toggled(LiVESToggleButton *tbutton, livespointer user_d
                              play_monitor!=0&&capable->nmonitors>0);
 }
 
-static void pmoni_gmoni_changed(LiVESWidget *sbut, livespointer advbutton) {
+static void pmoni_gmoni_changed(LiVESWidget *sbut, livespointer user_data) {
   int gui_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
   int play_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   lives_widget_set_sensitive(prefsw->ce_thumbs,play_monitor!=gui_monitor&&
@@ -2681,6 +2681,8 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->ce_thumbs), prefs->ce_thumb_mode);
 
+  pmoni_gmoni_changed(NULL,NULL);
+  
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_gui.png", NULL);
   pixbuf_gui = lives_pixbuf_new_from_file(icon, NULL);
   lives_free(icon);
@@ -4175,7 +4177,10 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_themes), hbox, TRUE, FALSE, widget_opts.packing_height);
 
   // scan for themes
-  themes = get_plugin_list(PLUGIN_THEMES, TRUE, NULL, NULL);
+  themes = get_plugin_list(PLUGIN_THEMES_CUSTOM, TRUE, NULL, NULL);
+  
+  themes = lives_list_concat(themes,get_plugin_list(PLUGIN_THEMES, TRUE, NULL, NULL));
+  
   themes = lives_list_prepend(themes, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
   prefsw->theme_combo = lives_standard_combo_new(_("New theme:           "),FALSE,themes,LIVES_BOX(hbox),NULL);
@@ -5019,6 +5024,8 @@ _prefsw *create_prefs_dialog(void) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_ce_maxspect), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->ce_thumbs), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_button_icons), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rb_startup_ce), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
@@ -5367,6 +5374,7 @@ void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   prefsw = create_prefs_dialog();
   lives_widget_show(prefsw->prefs_dialog);
+  lives_widget_queue_draw(prefsw->prefs_dialog);
 
 }
 
@@ -5390,6 +5398,61 @@ void on_prefs_close_clicked(LiVESButton *button, livespointer user_data) {
     on_quit_activate(NULL,NULL);
   }
 }
+
+
+
+void pref_change_images(void) {
+  if (prefs->show_gui) {
+    if (mainw->current_file==-1) {
+      load_start_image(0);
+      load_end_image(0);
+      if (mainw->preview_box!=NULL) load_preview_image(FALSE);
+    }
+    lives_widget_queue_draw(mainw->LiVES);
+    if (mainw->multitrack!=NULL) {
+      lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->multitrack->sep_image),mainw->imsep);
+      mt_show_current_frame(mainw->multitrack,FALSE);
+      lives_widget_queue_draw(mainw->multitrack->window);
+    }
+  }
+}
+
+
+void pref_change_xcolours(void) {
+  // minor colours changed
+  if (prefs->show_gui) {
+    if (mainw->multitrack!=NULL) {
+      resize_timeline(mainw->multitrack);
+      set_mt_colours(mainw->multitrack);
+    } else {
+      lives_widget_queue_draw(mainw->LiVES);
+    }
+  }
+}
+
+
+void pref_change_colours(void) {
+
+  if (mainw->preview_box!=NULL) {
+    set_preview_box_colours();
+  }
+
+  if (prefs->show_gui) {
+    set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars, \
+		&palette->info_base,&palette->info_text);
+    
+    if (mainw->multitrack!=NULL) {
+      set_mt_colours(mainw->multitrack);
+      scroll_tracks(mainw->multitrack,mainw->multitrack->top_track,FALSE);
+      track_select(mainw->multitrack);
+      mt_clip_select(mainw->multitrack,FALSE);
+    }
+  }
+
+}
+
+
+
 
 /*!
  *
@@ -5439,50 +5502,17 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   if (mainw->prefs_changed & PREFS_IMAGES_CHANGED) {
-    if (prefs->show_gui) {
-      if (mainw->current_file==-1) {
-        load_start_image(0);
-        load_end_image(0);
-        if (mainw->preview_box!=NULL) load_preview_image(FALSE);
-      }
-      lives_widget_queue_draw(mainw->LiVES);
-      if (mainw->multitrack!=NULL) {
-        lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->multitrack->sep_image),mainw->imsep);
-        mt_show_current_frame(mainw->multitrack,FALSE);
-        lives_widget_queue_draw(mainw->multitrack->window);
-      }
-    }
+    pref_change_images();
   }
 
   if (mainw->prefs_changed & PREFS_XCOLOURS_CHANGED) {
-    // minor colours changed
-    if (mainw->multitrack!=NULL) {
-      resize_timeline(mainw->multitrack);
-      set_mt_colours(mainw->multitrack);
-    } else {
-      lives_widget_queue_draw(mainw->LiVES);
-    }
+    pref_change_xcolours();
   }
 
   if (mainw->prefs_changed & PREFS_COLOURS_CHANGED) {
     // major coulours changed
     // force reshow of window
-    set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars, \
-                &palette->info_base,&palette->info_text);
-
-    if (mainw->preview_box!=NULL) {
-      set_preview_box_colours();
-    }
-
-    if (prefs->show_gui) {
-      if (mainw->multitrack!=NULL) {
-        set_mt_colours(mainw->multitrack);
-        scroll_tracks(mainw->multitrack,mainw->multitrack->top_track,FALSE);
-        track_select(mainw->multitrack);
-        mt_clip_select(mainw->multitrack,FALSE);
-      }
-    }
-
+    pref_change_colours();
     on_prefs_revert_clicked(button,NULL);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   } else lives_set_cursor_style(LIVES_CURSOR_NORMAL,prefsw->prefs_dialog);
@@ -5551,6 +5581,7 @@ void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
   on_preferences_activate(NULL, NULL);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+
 }
 
 

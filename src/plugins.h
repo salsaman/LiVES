@@ -27,6 +27,7 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 
 /// smogrify handles the directory differently for themes
 #define PLUGIN_THEMES "themes"
+#define PLUGIN_THEMES_CUSTOM "custom/themes"
 
 /// uses WEED_PLUGIN_PATH
 #define PLUGIN_EFFECTS_WEED "weed"

@@ -286,6 +286,7 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
   const char *ext=(filter_ext==NULL)?"":filter_ext;
 
   if (!strcmp(plugin_type,PLUGIN_THEMES)) {
+    // must not allow_nonex, otherwise we get splash image etc (just want dirs)
     com=lives_strdup_printf("%s list_plugins 0 1 \"%s%s\" \"\"",prefs->backend_sync,prefs->prefix_dir,THEME_DIR);
   } else if (!strcmp(plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS)||
              !strcmp(plugin_type,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS)||
@@ -294,8 +295,11 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
              !strcmp(plugin_type,PLUGIN_COMPOUND_EFFECTS_CUSTOM)
             ) {
     // look in home
-    com=lives_strdup_printf("%s list_plugins %d 0 \"%s/%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,capable->home_dir,
+    com=lives_strdup_printf("%s list_plugins %d 0 \"%s"LIVES_DIR_SEP"%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,capable->home_dir,
                             LIVES_CONFIG_DIR,plugin_type,ext);
+  } else if (!strcmp(plugin_type,PLUGIN_THEMES_CUSTOM)) {
+    com=lives_strdup_printf("%s list_plugins 0 1 \"%s"LIVES_DIR_SEP"%s%s\"",prefs->backend_sync,capable->home_dir,
+                            LIVES_CONFIG_DIR,PLUGIN_THEMES);
   } else if (!strcmp(plugin_type,PLUGIN_EFFECTS_WEED)) {
     com=lives_strdup_printf("%s list_plugins 1 1 \"%s\" \"%s\"",prefs->backend_sync,
                             (tmp=lives_filename_from_utf8((char *)plugdir,-1,NULL,NULL,NULL)),ext);

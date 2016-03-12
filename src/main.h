@@ -986,6 +986,8 @@ void do_pulse_lost_conn_error(void);
 void do_jack_lost_conn_error(void);
 void do_cd_error_dialog(void);
 void do_bad_theme_error(const char *themefile);
+void do_bad_theme_import_error(const char *theme_file);
+boolean do_theme_exists_warn(const char *themename);
 
 boolean process_one(boolean visible);
 void do_threaded_dialog(char *translated_text, boolean has_cancel);
@@ -1267,6 +1269,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
                        int clipno, int frameno, double atime, boolean affects_current);
 void clear_lmap_errors(void);
 boolean prompt_remove_layout_files(void);
+boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, const char *nreject);
 boolean is_legal_set_name(const char *set_name, boolean allow_dupes);
 char *repl_tmpdir(const char *entry, boolean fwd);
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);

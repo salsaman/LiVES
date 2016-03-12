@@ -3451,6 +3451,23 @@ void do_cd_error_dialog(void) {
 }
 
 
+void do_bad_theme_import_error(const char *theme_file) {
+  char *msg=lives_strdup_printf(_("\nLiVES was unable to import the theme file\n%s\n(Theme name not found).\n"),theme_file);
+  do_error_dialog(msg);
+  lives_free(msg);
+}
+
+
+boolean do_theme_exists_warn(const char *themename) {
+  boolean ret;
+  char *msg=lives_strdup_printf(_("\nA custom theme with the name\n%s\nalready exists. Would you like to overwrite it ?\n"),themename);
+  ret=do_yesno_dialog(msg);
+  lives_free(msg);
+  return ret;
+}
+
+
+
 boolean ask_permission_dialog(int what) {
   char *msg;
   boolean ret;

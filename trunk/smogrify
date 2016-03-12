@@ -406,7 +406,7 @@ if (defined($ARGV[0])) {
             &rc_set_if_not_set("audio_src",0);
 #internal
 
-            &rc_set_if_not_set("ce_thumb_mode","true");
+            &rc_set_if_not_set("ce_thumb_mode","false");
 
             &rc_set_if_not_set("show_button_icons","false");
 
@@ -780,14 +780,21 @@ if (defined($ARGV[0])) {
                 $ext=substr($ext,1,length($ext));
             }
 
+
+	    #print STDERR ("LOOKa in $plugindir");
+
             if (-d $plugindir) {
                 smog_chdir("$plugindir");
+
+		#print STDERR ("LOOK in $plugindir");
+		
                 opendir DIR,$plugindir;
                 my @files=readdir(DIR);
                 closedir DIR;
                 @files = sort (@files);
 
                 foreach my $plugname (@files) {
+		    #print STDERR("Check $plugname\n");
                     unless ($plugname =~ /^\./) {
                         if ((-f $plugname && (-x $plugname||$allow_nonex))||($allow_subdirs==1&& -d $plugname)) {
                             unless($allow_nonex) {
@@ -1211,14 +1218,84 @@ if (defined($ARGV[0])) {
 
 
         if ($command eq "create_package") {
-            my $com="tar czf \"$ARGV[1]\" -C \"$ARGV[2]\" .";
+	    # args are 1: pkg name, 2 dir to pack contents of
+	    
+	    if ($^O ne "MSWin32") {
 
-            my $smerr=smog_system($com);
-            if ($smerr) {
-                sig_system_error("$com",$smerr);
-                exit 1;
-            };
+		my $com="tar czf \"$ARGV[1]\" -C \"$ARGV[2]\" .";
 
+		my $smerr=smog_system($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    exit 1;
+		};
+
+	    }
+	    else {
+		chdir ("$tmpdir");
+		unlink "temp.pakage";
+		my $com="tar.exe -cf temp.pakage -C \"$ARGV[2]\"";
+		$smerr=smog_system ($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    unlink "$pidfile";
+		    exit 1;
+		}
+		my $com="gzip.exe -c temp.pakage > \"$ARGV[1]\" ";
+		$smerr=smog_system ($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    unlink "$pidfile";
+		    exit 1;
+		}
+		unlink "temp.pakage";
+	    }
+            exit 0;
+        }
+
+
+
+	if ($command eq "import_package") {
+	    ## args are 1: file to unpack, 2 dir to unpack in
+	    
+	    $com="/bin/mkdir -p \"$ARGV[2]\"";
+	    smog_system($com);
+	    chdir $ARGV[2];
+	    
+	    if ($^O ne "MSWin32") {
+		$com="tar xzf \"$ARGV[1]\" .";
+
+		my $smerr=smog_system($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    exit 1;
+		};
+	    }
+	    else {
+		unlink "temp.gz";
+		unlink "temp";
+		smog_copy("$ARGV[1]","temp.gz");
+		if ($panic) {
+		    unlink "$pidfile";
+		    exit 1;
+		}
+		$com="gzip.exe -d temp.gz";
+		$smerr=smog_system ($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    unlink "$pidfile";
+		    exit 1;
+		}
+		$com="tar.exe -xf temp";
+		$smerr=smog_system ($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    unlink "$pidfile";
+		    exit 1;
+		}
+		unlink "temp";
+	    }
+	    
             exit 0;
         }
 
@@ -2606,14 +2683,14 @@ if (defined($ARGV[0])) {
                 exit 1;
             }
             $com="gzip.exe -d temp.gz";
-            smog_system ($com);
+            $smerr=smog_system ($com);
             if ($smerr) {
                 sig_system_error("$com",$smerr);
                 unlink "$pidfile";
                 exit 1;
             }
             $com="tar.exe -xf temp";
-            smog_system ($com);
+            $smerr=smog_system ($com);
             if ($smerr) {
                 sig_system_error("$com",$smerr);
                 unlink "$pidfile";

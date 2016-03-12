@@ -668,6 +668,11 @@ void set_combo_box_active_string(LiVESCombo *, char *active_str);
 void prefsw_set_astream_settings(_vid_playback_plugin *);
 void prefsw_set_rec_after_settings(_vid_playback_plugin *);
 
+void pref_change_images(void);
+void pref_change_xcolours(void);
+void pref_change_colours(void);
+
+
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 

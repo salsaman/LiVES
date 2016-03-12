@@ -1454,7 +1454,7 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(advanced_menu));
 
-  mainw->import_theme = lives_menu_item_new_with_mnemonic(_("_Import Theme (."LIVES_FILE_EXT_TAR_GZ")..."));
+  mainw->import_theme = lives_menu_item_new_with_mnemonic(_("_Import Custom Theme (."LIVES_FILE_EXT_TAR_GZ")..."));
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->import_theme);
 
   mainw->export_theme = lives_menu_item_new_with_mnemonic(_("E_xport Theme (."LIVES_FILE_EXT_TAR_GZ")..."));
@@ -2373,9 +2373,9 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->export_theme), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_export_theme_activate),
                        NULL);
-  /*  lives_signal_connect(LIVES_GUI_OBJECT(mainw->import_theme), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->import_theme), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_import_theme_activate),
-                       NULL);*/
+                       NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->clear_ds), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_cleardisk_activate),
                        NULL);

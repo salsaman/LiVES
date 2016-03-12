@@ -2085,7 +2085,7 @@ boolean set_palette_colours(boolean force_reload) {
 
   if (force_reload) {
     // check if theme is custom:
-    themedir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,THEME_DIR,prefs->theme,NULL);
+    themedir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_THEMES,prefs->theme,NULL);
 
     if (!lives_file_test(themedir,LIVES_FILE_TEST_IS_DIR)) {
       lives_free(themedir);

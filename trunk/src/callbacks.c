@@ -1350,7 +1350,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_freep((void **)&renamew);
     lives_free(tmp);
     lives_widget_context_update();
-  } while (!is_legal_set_name(theme_name,TRUE));
+  } while (!do_std_checks(U82F(theme_name),_("Theme"),64,NULL));
 
   fname=lives_strdup_printf("%s.%s",theme_name,LIVES_FILE_EXT_TAR_GZ);
 
@@ -1370,11 +1370,11 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   frameimg_ext=get_extension(mainw->frameblank_path);
 
   dfile=lives_strdup_printf("%s"LIVES_DIR_SEP"theme%d"LIVES_DIR_SEP,prefs->tmpdir,capable->mainpid);
-  themefile=lives_strdup_printf("%s"LIVES_DIR_SEP"header.theme",dfile);
+  themefile=lives_build_filename(dfile,"header.theme",NULL);
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3,0,0)
   lives_free(themefile);
-  themefile=lives_strdup_printf("%s"LIVES_DIR_SEP"header.theme_gtk2",dfile);
+  themefile=lives_build_filename(dfile,"header.theme_gtk2",NULL);
 #endif
 #endif
   sepimg=lives_strdup_printf("%s"LIVES_DIR_SEP"main.%s",dfile,sepimg_ext);
@@ -1488,6 +1488,126 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 }
 
+
+
+void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  char *filt[]= {"*."LIVES_FILE_EXT_TAR_GZ,NULL};
+  char tname[128];
+
+  char *importcheckdir,*themeheader,*themedir;
+  char *com,*msg;
+  char *theme_file;
+  
+  theme_file=choose_file(NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
+  
+  if (theme_file==NULL) return;
+
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+
+  lives_widget_context_update();
+  
+  importcheckdir=lives_build_filename(prefs->tmpdir,"imports",NULL);
+  lives_rmdir(importcheckdir,TRUE);
+  
+  // unpackage file to get the theme name
+  mainw->com_failed=FALSE;
+  com=lives_strdup_printf("%s import_package \"%s\" \"%s\"",prefs->backend_sync,U82F(theme_file),importcheckdir);
+  lives_system(com,FALSE);
+  lives_free(com);
+
+  if (mainw->com_failed) {
+    lives_rmdir(importcheckdir,TRUE);
+    lives_free(importcheckdir);
+    lives_free(theme_file);
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+    return;
+  }
+
+  themeheader=lives_build_filename(prefs->tmpdir,"imports","header.theme",NULL);
+  
+  if (get_pref_from_file(themeheader,THEME_DETAIL_NAME,tname,128)!=LIVES_RESPONSE_NONE) {
+    // failed to get name
+    lives_rmdir(importcheckdir,TRUE);
+    lives_free(importcheckdir);
+    lives_free(themeheader);
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+    do_bad_theme_import_error(theme_file);
+    lives_free(theme_file);
+    return;
+  }
+
+  lives_rmdir(importcheckdir,TRUE);
+  lives_free(importcheckdir);
+  lives_free(themeheader);
+  
+  msg=lives_strdup_printf(_("Importing theme \"%s\" from %s..."),tname,theme_file);
+  d_print(msg);
+  lives_free(msg);
+  
+  if (!do_std_checks(U82F(tname),_("Theme"),64,NULL)) {
+    lives_free(theme_file);
+    d_print_failed();
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+    return;
+  }
+
+  // check for existing dupes
+  
+  themedir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_THEMES,tname,NULL);
+
+  if (lives_file_test(themedir,LIVES_FILE_TEST_IS_DIR)) {
+    if (!do_theme_exists_warn(tname)) {
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+      lives_free(themedir);
+      lives_free(theme_file);
+      d_print_failed();
+      return;
+    }
+    lives_rmdir(themedir,TRUE);
+  }
+
+  
+  // name was OK, unpack into custom dir
+  
+  mainw->com_failed=FALSE;
+  com=lives_strdup_printf("%s import_package \"%s\" \"%s\"",prefs->backend_sync,U82F(theme_file),themedir);
+  lives_system(com,FALSE);
+  lives_free(com);
+
+  lives_free(theme_file);
+
+  if (mainw->com_failed) {
+    lives_rmdir(themedir,TRUE);
+    lives_free(themedir);
+    d_print_failed();
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+    return;
+  }
+
+  lives_free(themedir);
+
+  lives_snprintf(prefs->theme,64,"%s",tname);
+
+  // try to set theme colours
+  if (!set_palette_colours(TRUE)) {
+    lives_snprintf(prefs->theme,64,"%s",future_prefs->theme);
+    d_print_failed();
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+    return;
+  }
+  
+  lives_snprintf(future_prefs->theme,64,"%s",prefs->theme);
+  set_pref(PREF_GUI_THEME,prefs->theme);
+
+  load_theme_images();
+  pref_change_images();
+  pref_change_colours();
+  pref_change_xcolours();
+  
+  d_print_done();
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+
+}
 
 
 void on_backup_activate(LiVESMenuItem *menuitem, livespointer user_data) {

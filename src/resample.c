@@ -31,6 +31,7 @@ static boolean reorder_leave_back=FALSE;
 /////////////////////////////////////////////////////
 
 LIVES_INLINE weed_timecode_t q_gint64(weed_timecode_t in, double fps) {
+  // quantise timecode to fps
   if (in>(weed_timecode_t)0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps+(long double).5)/
                                        (long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   if (in<(weed_timecode_t)0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps-(long double).5)/
@@ -45,6 +46,7 @@ LIVES_INLINE weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps) {
 }
 
 LIVES_INLINE weed_timecode_t q_dbl(double in, double fps) {
+  // quantise (double)in to fps 
   if (in>0.) return ((weed_timecode_t)((long double)in*(long double)fps+(long double).5)/(long double)fps)*
                       (weed_timecode_t)U_SECL; // quantise to frame timing
   if (in<0.) return ((weed_timecode_t)((long double)in*(long double)fps-(long double).5)/(long double)fps)*

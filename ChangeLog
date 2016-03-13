@@ -1,19 +1,24 @@
 Version 2.6.1
 -------------
 Fix flickering in multi threaded palette conversion.
+Improved YUV / RGB palette conversions.
 Play selections should function even after switching clips, restarting playback.
 Add encoded files to global "recently used files".
-Implement new theming engine, allow custom themes / colours in Preferences (in progress).
-Minor compilation fix for gtk+ 2.x
+Implement new theming engine, allow custom themes / colours in Preferences.
+Minor compilation fixes for gtk+ 2.x
 Fix bug in finding of "Next filter map" in multitrack.
+Fix bug with layout reloading after crash.
+Fix bugs in setting in/out points in multitrack.
 Fix showing of textbuffer parameters in effect windows (regression).
 Fix possible minor memory leak when applying inplace effects (regression).
 Improvements to edge detect filter.
 Compatibility updates for ffmpeg 2.9+
-Add qtrle format and quality settings to ffmpeg_encoder.	
+Add qtrle format and quality settings to ffmpeg_encoder.
 Add new VJ keys: ctrl-alt-space (change direction of background clip), ctrl-alt-page-up/down (adjust speed of background clip)
 Major code cleanup and optimisations.
 Updated translation to Ukranian (thanks Yuri Churnoivan).
+
+
 
 
 

@@ -2901,7 +2901,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   rfx->is_template=FALSE;
   rfx->extra=NULL;
   rfx->flags=0;
-  
+
   while (sorted<=num) {
     for (i=start; i<=num; i++) {
       if (!used[i-1]) {
@@ -3686,7 +3686,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       lives_free(rfxfile);
       return NULL;
     }
-    
+
     // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
 
     // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
@@ -3714,7 +3714,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       rfx->min_frames=-1;
 
       rfx->flags=RFX_FLAGS_NO_SLIDERS;
-      
+
       // get the delimiter
       rfxfile=lives_strdup_printf("%ssmdef.%d",prefs->tmpdir,capable->mainpid);
       fnamex=lives_build_filename(prefs->tmpdir,rfx_scrapname,NULL);
@@ -3724,13 +3724,13 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
       // command to get_define failed
       if (retval) {
-	lives_rm(rfxfile);
-	lives_free(rfxfile);
-	lives_rm(fnamex);
-	lives_free(fnamex);
-	return NULL;
+        lives_rm(rfxfile);
+        lives_free(rfxfile);
+        lives_rm(fnamex);
+        lives_free(fnamex);
+        return NULL;
       }
-      
+
       do {
         retval=0;
         sfile=fopen(rfxfile,"r");
@@ -3751,9 +3751,9 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       lives_free(rfxfile);
 
       if (retval==LIVES_RESPONSE_CANCEL) {
-	lives_rm(fnamex);
-	lives_free(fnamex);
-	return NULL;
+        lives_rm(fnamex);
+        lives_free(fnamex);
+        return NULL;
       }
 
       lives_snprintf(rfx->delim,2,"%s",buff);
@@ -3806,7 +3806,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       lives_rm(fnamex);
       lives_free(fnamex);
     }
-    
+
     lives_free(rfx_scrapname);
     return res_string;
   }

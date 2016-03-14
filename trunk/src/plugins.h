@@ -505,7 +505,7 @@ typedef struct {
   uint32_t flags; /// internal use
 #define RFX_FLAGS_NO_SLIDERS 0x0001
 
-  
+
   lives_param_t *params;
   lives_rfx_source_t source_type;
   void *source;  ///< points to the source (e.g. a weed_plant_t)

@@ -1497,18 +1497,18 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *importcheckdir,*themeheader,*themedir;
   char *com,*msg;
   char *theme_file;
-  
+
   theme_file=choose_file(NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
-  
+
   if (theme_file==NULL) return;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
   lives_widget_context_update();
-  
+
   importcheckdir=lives_build_filename(prefs->tmpdir,"imports",NULL);
   lives_rmdir(importcheckdir,TRUE);
-  
+
   // unpackage file to get the theme name
   mainw->com_failed=FALSE;
   com=lives_strdup_printf("%s import_package \"%s\" \"%s\"",prefs->backend_sync,U82F(theme_file),importcheckdir);
@@ -1524,7 +1524,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   themeheader=lives_build_filename(prefs->tmpdir,"imports","header.theme",NULL);
-  
+
   if (get_pref_from_file(themeheader,THEME_DETAIL_NAME,tname,128)!=LIVES_RESPONSE_NONE) {
     // failed to get name
     lives_rmdir(importcheckdir,TRUE);
@@ -1539,11 +1539,11 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_rmdir(importcheckdir,TRUE);
   lives_free(importcheckdir);
   lives_free(themeheader);
-  
+
   msg=lives_strdup_printf(_("Importing theme \"%s\" from %s..."),tname,theme_file);
   d_print(msg);
   lives_free(msg);
-  
+
   if (!do_std_checks(U82F(tname),_("Theme"),64,NULL)) {
     lives_free(theme_file);
     d_print_failed();
@@ -1552,7 +1552,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   // check for existing dupes
-  
+
   themedir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_THEMES,tname,NULL);
 
   if (lives_file_test(themedir,LIVES_FILE_TEST_IS_DIR)) {
@@ -1566,9 +1566,9 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_rmdir(themedir,TRUE);
   }
 
-  
+
   // name was OK, unpack into custom dir
-  
+
   mainw->com_failed=FALSE;
   com=lives_strdup_printf("%s import_package \"%s\" \"%s\"",prefs->backend_sync,U82F(theme_file),themedir);
   lives_system(com,FALSE);
@@ -1595,7 +1595,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     return;
   }
-  
+
   lives_snprintf(future_prefs->theme,64,"%s",prefs->theme);
   set_pref(PREF_GUI_THEME,prefs->theme);
 
@@ -1603,7 +1603,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   pref_change_images();
   pref_change_colours();
   pref_change_xcolours();
-  
+
   d_print_done();
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 

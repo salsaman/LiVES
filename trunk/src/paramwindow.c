@@ -897,15 +897,15 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
 
       if (rfx->status!=RFX_STATUS_WEED&&no_process) {
-	LiVESWidget *abox=lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[didx]));
+        LiVESWidget *abox=lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[didx]));
 #if !GTK_CHECK_VERSION(3,0,0)
-	lives_button_box_set_layout(LIVES_BUTTON_BOX(abox),LIVES_BUTTONBOX_CENTER);
+        lives_button_box_set_layout(LIVES_BUTTON_BOX(abox),LIVES_BUTTONBOX_CENTER);
 #else
-	if (LIVES_IS_BOX(abox)) add_fill_to_box(LIVES_BOX(abox));
+        if (LIVES_IS_BOX(abox)) add_fill_to_box(LIVES_BOX(abox));
 #endif
         lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH*4, -1);
       }
-      
+
     }
 
     lives_widget_set_can_focus(cancelbutton,TRUE);
@@ -1375,7 +1375,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
   // for plugins (encoders and video playback) sliders look silly
   if (rfx->flags&RFX_FLAGS_NO_SLIDERS) add_scalers=FALSE;
-  
+
   if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
     hbox=LIVES_WIDGET(box);
   } else {

@@ -364,7 +364,8 @@ boolean rte_key_is_enabled(int key);
 
 /////////////////////////////////////////////////////////////
 
-int rte_getmodespk(void);
+int rte_getmodespk(void) __attribute__((__pure__));
+
 LiVESList *weed_get_all_names(lives_fx_list_t list_type);
 int rte_get_numfilters(boolean inc_dupes);
 
@@ -384,11 +385,12 @@ boolean has_key_defaults(void);
 void rte_swap_fg_bg(void);
 
 
-int rte_bg_gen_key(void);
-int rte_fg_gen_key(void);
+int rte_bg_gen_key(void) GNU_PURE;
 
-int rte_bg_gen_mode(void);
-int rte_fg_gen_mode(void);
+int rte_fg_gen_key(void) GNU_PURE;
+
+int rte_bg_gen_mode(void) GNU_PURE;
+int rte_fg_gen_mode(void) GNU_PURE;
 
 
 

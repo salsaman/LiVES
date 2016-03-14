@@ -224,7 +224,7 @@ char *js_mangle(void) {
   }
 
   ret=lives_strdup_printf("%d %d %d",type,jse.number,jse.value);
-
+  
   return ret;
 
 }
@@ -633,10 +633,11 @@ static void cell1_edited_callback(LiVESCellRenderer *spinbutton, const char *pat
 }
 
 
+#if GTK_CHECK_VERSION(3,0,0)
 static void rowexpand(LiVESWidget *tv, LiVESTreeIter *iter, LiVESTreePath *path, livespointer ud) {
   lives_widget_queue_resize(tv);
 }
-
+#endif
 
 static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omclearn_w *omclw) {
   lives_omc_macro_t macro=omc_macros[mnode->macro];
@@ -731,13 +732,24 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
            NULL);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
 
+  /*
+  spinadj=(LiVESObject *)lives_adjustment_new(0., mini, maxi., 1., 10., 0);
 
+#ifdef GUI_GTK
+  g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
+               "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
+
+#endif
+  */
+  
   lives_widget_show(mnode->treev2);
 
+#if GTK_CHECK_VERSION(3,0,0)
   lives_signal_connect(LIVES_GUI_OBJECT(mnode->treev2), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
                        LIVES_GUI_CALLBACK(rowexpand),
                        NULL);
-
+#endif
+  
   lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev2, 3, 4, row, row+1,
                      (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
@@ -765,8 +777,10 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
 
   if (lps>mps) lps=mps;
 
-  for (i=mps; i>=0; i--) {
-    if (mnode->matchp[lps]) lps++; // variable is filtered for
+  if (lps>=0) {
+    for (i=mps; i>=0; i--) {
+      if (mnode->matchp[lps]) lps++; // variable is filtered for
+    }
   }
 
   for (i=mps; i>=0; i--) {
@@ -1191,13 +1205,15 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 #endif
 
   lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev1, 1, 2, omclw->tbl_currow, omclw->tbl_currow+1,
-                     (LiVESAttachOptions)(0),
+                     (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
+#if GTK_CHECK_VERSION(3,0,0)
   lives_signal_connect(LIVES_GUI_OBJECT(mnode->treev1), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
                        LIVES_GUI_CALLBACK(rowexpand),
                        NULL);
-
+#endif
+  
   combo=create_omc_macro_combo(mnode,omclw->tbl_currow,omclw);
 
   lives_widget_show(combo);

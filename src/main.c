@@ -3044,6 +3044,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
   g_log_set_always_fatal((GLogLevelFlags)0);
+  //gtk_window_set_interactive_debugging(TRUE);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);

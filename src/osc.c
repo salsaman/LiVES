@@ -854,12 +854,31 @@ boolean lives_osc_cb_fx_unmap(void *context, int arglen, const void *vargs, OSCT
 }
 
 
+static boolean osc_fx_on(int effect_key) {
+  int count;
+  int grab=mainw->last_grabbable_effect;
+
+  weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  
+  if (filter==NULL) return lives_osc_notify_failure();
+  count=enabled_in_channels(filter, FALSE);
+  if (mainw->playing_file==-1&&via_shortcut&&count!=0) return lives_osc_notify_failure(); // is no generator
+  
+  if (mainw->playing_file==-1&&count==0) {
+    mainw->error=FALSE;
+    lives_idle_add(osc_init_generator,LIVES_INT_TO_POINTER(effect_key));
+  } else {
+    rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
+    mainw->last_grabbable_effect=grab;
+  }
+  return lives_osc_notify_success(NULL);
+  
+}
+
 
 boolean lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // if via_shortcut and not playing, we ignore unless a generator starts (which starts playback)
-  int count;
   int effect_key;
-  int grab=mainw->last_grabbable_effect;
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments(arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
@@ -867,18 +886,7 @@ boolean lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSC
 
   if (!mainw->osc_block) {
     if (!(mainw->rte&(GU641<<(effect_key-1)))) {
-      weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
-      if (filter==NULL) return lives_osc_notify_failure();
-      count=enabled_in_channels(filter, FALSE);
-      if (mainw->playing_file==-1&&via_shortcut&&count!=0) return lives_osc_notify_failure(); // is no generator
-
-      if (mainw->playing_file==-1&&count==0) {
-        mainw->error=FALSE;
-        lives_idle_add(osc_init_generator,LIVES_INT_TO_POINTER(effect_key));
-      } else {
-        rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
-        mainw->last_grabbable_effect=grab;
-      }
+      return osc_fx_on(effect_key);
     }
   } else return lives_osc_notify_failure();
 
@@ -900,31 +908,19 @@ boolean lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OS
 
 
 boolean lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  // if not playing and via_shortcut, see if fx key points to generator
 
-  int count=0;
   int effect_key;
+
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments(arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
 
-  if (!(mainw->rte&(GU641<<(effect_key-1)))&&mainw->playing_file==-1) {
-    weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
-    if (filter==NULL) return lives_osc_notify_failure();
-    count=enabled_in_channels(filter, FALSE);
-    if (via_shortcut&&count!=0) return lives_osc_notify_failure(); // is no generator
+  if (!(mainw->rte&(GU641<<(effect_key-1)))) {
+    return osc_fx_on(effect_key);
   }
-  if (!mainw->osc_block) {
-    if (!(mainw->rte&(GU641<<(effect_key-1)))&&mainw->playing_file==-1&&count==0&&via_shortcut) {
-      // re - add the timer, as we hang here if a generator is started, and we want to receive messages still during playback
-      lives_timer_remove(mainw->kb_timer);
-      mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-    }
-    // TODO ***
-    //mainw->osc_auto=1; ///< request early notifiction of success
-    rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
-    mainw->kb_timer_end=TRUE;
-  }
+  
+  if (!mainw->osc_block) rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
+
   return lives_osc_notify_success(NULL);
 }
 

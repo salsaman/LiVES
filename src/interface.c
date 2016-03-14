@@ -2071,7 +2071,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
     lives_widget_set_size_request(vbox, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
     lives_widget_context_update();
     lives_standard_expander_new(_("_Options"),TRUE,LIVES_BOX(dialog_vbox),vbox);
-  
+
   }
 
   lives_widget_show_all(commentsw->comments_dialog);

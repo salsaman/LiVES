@@ -83,7 +83,7 @@ static void add_xlays_widget(LiVESBox *box) {
 
   lives_widget_set_size_request(scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
   lives_widget_context_update();
-  
+
   expander=lives_standard_expander_new(_("Show affeced _layouts"),FALSE,LIVES_BOX(box),scrolledwindow);
 
   if (palette->style&STYLE_1) {

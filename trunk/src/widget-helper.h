@@ -194,6 +194,8 @@ const char *lives_label_get_text(LiVESLabel *);
 boolean lives_label_set_text(LiVESLabel *, const char *text);
 boolean lives_label_set_text_with_mnemonic(LiVESLabel *, const char *text);
 
+boolean lives_label_set_xalign(LiVESLabel *, double align);
+
 boolean lives_label_set_markup(LiVESLabel *, const char *markup);
 boolean lives_label_set_markup_with_mnemonic(LiVESLabel *, const char *markup);
 

@@ -2224,8 +2224,8 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
       lives_container_add(LIVES_CONTAINER(ahbox), arrow);
 
-      lives_table_attach(LIVES_TABLE(mt->timeline_table), dummy, 0, 1, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
-      lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 1, 6, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+      lives_table_attach(LIVES_TABLE(mt->timeline_table), dummy, 0, 2, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+      lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 2, 6, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
       lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 6, 7, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"labelbox",labelbox);
@@ -2417,8 +2417,8 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
           lives_container_add(LIVES_CONTAINER(ahbox), arrow);
 
           // for gtk+2.x have 0,2...5,7 ?
-          lives_table_attach(LIVES_TABLE(mt->timeline_table), dummy, 0, 1, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
-          lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 1, 6, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+          lives_table_attach(LIVES_TABLE(mt->timeline_table), dummy, 0, 2, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+          lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 2, 6, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
           lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox),"labelbox",labelbox);
@@ -8334,6 +8334,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 0), mt->nb_label1);
 
+
   // poly box is first page in notebook
 
   // notebook goes in paned: so we have paned -> nb-> poly_box
@@ -8692,7 +8693,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        (livespointer)mt);
 
 
-
+  
 
   ///////////////////////////////////////////////
 
@@ -10105,6 +10106,9 @@ LiVESWidget *add_audio_track(lives_mt *mt, int track, boolean behind) {
     label=lives_label_new(tmp);
     lives_free(tmp);
   }
+
+  lives_label_set_halignment(LIVES_LABEL(label),0.);
+  
   widget_opts.justify=widget_opts.default_justify;
   lives_object_ref(label);
 
@@ -12818,7 +12822,10 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     lives_signal_handler_unblock(mt->spinbutton_out,mt->spin_out_func);
 
     if (mainw->playing_file>-1) mt_desensitise(mt);
-    else mt_sensitise(mt);
+    else {
+      mt_sensitise(mt);
+      lives_widget_grab_focus(mt->spinbutton_in);
+    }
 
     break;
   case (POLY_CLIPS) :

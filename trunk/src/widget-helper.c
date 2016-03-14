@@ -2684,18 +2684,18 @@ LIVES_INLINE LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expande
 
 
 
-LIVES_INLINE boolean lives_label_set_halignment(LiVESLabel *label, float yalign) {
+LIVES_INLINE boolean lives_label_set_halignment(LiVESLabel *label, float xalign) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,16,0)
-  gtk_label_set_yalign(label,yalign);
+  gtk_label_set_xalign(label,xalign);
 #else
-  gtk_misc_set_alignment(GTK_MISC(label),0.,yalign);
+  gtk_misc_set_alignment(GTK_MISC(label),0.,xalign);
 #endif
   return TRUE;
 #endif
 #ifdef GUI_QT
   QRect qr = (static_cast<QFrame *>(label))->contentsRect();
-  int pixels = (float)qr.width() * yalign;
+  int pixels = (float)qr.width() * xalign;
   label->setIndent(pixels);
 #endif
   return FALSE;

@@ -130,6 +130,7 @@ enum {
 enum {
   TITLE2_COLUMN,
   VALUE2_COLUMN,
+  ADJUSTMENT,
   NUM2_COLUMNS
 };
 

@@ -37,7 +37,7 @@ static void handle_omc_events(void) {
 #endif
 
   int i;
-
+  
 #ifdef OMC_JS_IMPL
   if (mainw->ext_cntl[EXT_CNTL_JS]) {
     char *string=js_mangle();
@@ -78,7 +78,7 @@ static void handle_omc_events(void) {
 
 
 boolean ext_triggers_poll(livespointer data) {
-
+  
   if (mainw->is_exiting) return FALSE;
 
   if (mainw->kb_timer_end) {

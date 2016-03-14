@@ -22429,6 +22429,8 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
 
   lives_button_box_set_layout(LIVES_BUTTON_BOX(hbuttonbox), LIVES_BUTTONBOX_SPREAD);
 
+  add_fill_to_box(LIVES_BOX(hbuttonbox));
+  
   reset_button = lives_button_new_with_mnemonic(_("_Reset values"));
   lives_container_add(LIVES_CONTAINER(hbuttonbox), reset_button);
   lives_widget_set_can_focus_and_default(reset_button);
@@ -22436,6 +22438,8 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
   close_button = lives_button_new_with_mnemonic(_("_Close mixer"));
   lives_container_add(LIVES_CONTAINER(hbuttonbox), close_button);
   lives_widget_set_can_focus_and_default(close_button);
+
+  add_fill_to_box(LIVES_BOX(hbuttonbox));
 
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), reset_button, DEF_BUTTON_WIDTH*4);
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), close_button, DEF_BUTTON_WIDTH*4);

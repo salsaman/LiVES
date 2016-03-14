@@ -289,8 +289,16 @@ typedef int lives_pgid_t;
 
 #ifdef __GNUC__
 #  define WARN_UNUSED  __attribute__((warn_unused_result))
+#  define GNU_PURE  __attribute__((pure))
+#  define GNU_CONST  __attribute__((const))
+#  define GNU_MALLOC  __attribute__((malloc))
+#  define GNU_ALIGN(x) __attribute__((alloc_align(x)))
 #else
 #  define WARN_UNUSED
+#  define GNU_PURE
+#  define GNU_CONST
+#  define GNU_MALLOC
+#  define GNU_ALIGN(x)
 #endif
 
 #ifdef PRODUCE_LOG
@@ -1194,9 +1202,10 @@ int lives_utf8_strcasecmp(const char *s1, const char *s2);
 
 char *filename_from_fd(char *val, int fd);
 
-float LEFloat_to_BEFloat(float f);
-uint64_t lives_10pow(int pow);
-int get_approx_ln(uint32_t val);
+float LEFloat_to_BEFloat(float f) GNU_CONST;
+uint64_t lives_10pow(int pow) GNU_CONST;
+double lives_fix(double val, int decimals) GNU_CONST;
+int get_approx_ln(uint32_t val) GNU_CONST;
 
 int64_t lives_get_current_ticks(void);
 boolean lives_alarm_get(int alarm_handle);
@@ -1337,10 +1346,10 @@ LiVESPixbuf *mt_framedraw(lives_mt *, LiVESPixbuf *);
 
 
 // effects-weed.c
-livespointer _lives_malloc(size_t size);
+livespointer _lives_malloc(size_t size) GNU_MALLOC;
 livespointer lives_memcpy(livespointer dest, livesconstpointer src, size_t n);
 livespointer lives_memset(livespointer s, int c, size_t n);
-void _lives_free(livespointer ptr); ///< calls mainw->free_fn
+void _lives_free(livespointer ptr);
 livespointer lives_calloc(size_t n_blocks, size_t n_block_bytes);
 livespointer _lives_realloc(livespointer ptr, size_t new_size);
 

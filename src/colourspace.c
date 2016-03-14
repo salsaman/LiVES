@@ -102,7 +102,7 @@ static pthread_t cthreads[MAX_FX_THREADS];
 
 static boolean unal_inited=FALSE;
 
-LIVES_INLINE __attribute__((__const__)) int get_rowstride_value(int rowstride) {
+LIVES_INLINE int get_rowstride_value(int rowstride) {
 #ifdef GUI_GTK
   // from gdk-pixbuf.c
   /* Always align rows to 32-bit boundaries */
@@ -113,7 +113,7 @@ LIVES_INLINE __attribute__((__const__)) int get_rowstride_value(int rowstride) {
 }
 
 
-LIVES_INLINE __attribute__((__const__)) int get_last_rowstride_value(int width, int nchans) {
+LIVES_INLINE int get_last_rowstride_value(int width, int nchans) {
 #ifdef GUI_GTK
   // from gdk pixbuf docs
   return width*(((nchans<<3)+7)>>3);
@@ -127,7 +127,7 @@ static void lives_free_buffer(uint8_t *pixels, livespointer data) {
   lives_free(pixels);
 }
 
-LIVES_INLINE __attribute__((__const__)) uint8_t CLAMP0255(int32_t a) {
+LIVES_INLINE uint8_t CLAMP0255(int32_t a) {
   return a>255?255:(a<0)?0:a;
 }
 

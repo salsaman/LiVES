@@ -81,7 +81,7 @@ livespointer lives_memcpy(livespointer dest, livesconstpointer src, size_t n) {
 #endif
 #endif
 
-__attribute__((__malloc__)) livespointer _lives_malloc(size_t size) {
+livespointer _lives_malloc(size_t size) {
 #ifdef __cplusplus
 #ifdef HAVE_OPENCV
   return fastMalloc(size);
@@ -1213,6 +1213,9 @@ static boolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array) {
   for (i=0; i<n1; i++) if (n1_array[i]!=n2_array[i]) return TRUE;
   return FALSE;
 }
+
+
+static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) GNU_ALIGN(2);
 
 
 static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
@@ -4924,9 +4927,9 @@ static void make_fx_defs_menu(void) {
         string=lives_strdup_printf("%s (%s)",filter_name,filter_type);
 
         menuitem=lives_menu_item_new_with_label(string);
-	if (prefs->show_gui) {
-	  lives_widget_show(menuitem);
-	}
+        if (prefs->show_gui) {
+          lives_widget_show(menuitem);
+        }
         lives_free(string);
         lives_free(filter_type);
 
@@ -8792,23 +8795,23 @@ char *rte_keymode_get_plugin_name(int key, int mode) {
 
 
 
-__attribute__((__pure__)) int rte_getmodespk(void) {
+int rte_getmodespk(void) {
   return prefs->max_modes_per_key;
 }
 
-__attribute__((__pure__)) int rte_bg_gen_key(void) {
+int rte_bg_gen_key(void) {
   return bg_generator_key;
 }
 
-__attribute__((__pure__)) int rte_fg_gen_key(void) {
+int rte_fg_gen_key(void) {
   return fg_generator_key;
 }
 
-__attribute__((__pure__)) int rte_bg_gen_mode(void) {
+int rte_bg_gen_mode(void) {
   return bg_generator_mode;
 }
 
-__attribute__((__pure__)) int rte_fg_gen_mode(void) {
+int rte_fg_gen_mode(void) {
   return fg_generator_mode;
 }
 

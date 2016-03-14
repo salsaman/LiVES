@@ -675,7 +675,7 @@ boolean filter_map_after_frame(weed_plant_t *fmap) {
 
 weed_plant_t *get_frame_event_at_or_before(weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut) {
   weed_plant_t *frame_event=get_frame_event_at(event_list,tc,shortcut,FALSE);
-  if (get_event_timecode(frame_event)>tc) {
+  while (frame_event!=NULL&&get_event_timecode(frame_event)>tc) {
     frame_event=get_prev_frame_event(frame_event);
   }
   return frame_event;
@@ -5071,7 +5071,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                            NULL);
 
 
-      
+
       lives_widget_set_size_request(tree,-1,TREE_ROW_HEIGHT);
 #endif
 
@@ -5091,7 +5091,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
     lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
   }
 #endif
-  
+
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
   hbuttonbox = lives_hbutton_box_new();

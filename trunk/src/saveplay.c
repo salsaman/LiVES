@@ -3284,7 +3284,7 @@ void create_cfile(void) {
   cfile->keep_without_preview=FALSE;
   cfile->cb_src=-1;
   cfile->needs_update=FALSE;
-  
+
   if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)) cfile->img_type=IMG_TYPE_JPEG;
   else cfile->img_type=IMG_TYPE_PNG;
 
@@ -5030,9 +5030,9 @@ void recover_layout_map(int numclips) {
         }
 
         if ((!strcmp(check_handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id))||
-	    (prefs->mt_load_fuzzy&&(!strcmp(check_handle,lmap_entry->handle)||(mainw->files[i]->unique_id==lmap_entry->unique_id)))
-	    ){
-	  // check handle and unique id match
+            (prefs->mt_load_fuzzy&&(!strcmp(check_handle,lmap_entry->handle)||(mainw->files[i]->unique_id==lmap_entry->unique_id)))
+           ) {
+          // check handle and unique id match
           // got a match, assign list to layout_map and delete this node
           lmap_entry_list=lmap_entry->list;
           while (lmap_entry_list!=NULL) {
@@ -5457,10 +5457,10 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         // read the playback fps, play frame, and name
         threaded_dialog_spin(0.);
 
-	
+
         open_set_file(mainw->set_name,++clipnum);
 
-	
+
         threaded_dialog_spin(0.);
 
         lives_list_free_all(&mainw->cached_list);
@@ -5701,7 +5701,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   // check for layout recovery file
   recovery_file=lives_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
   recovery_numbering_file=lives_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
-  
+
   if (lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
     // move files temporarily to stop them being cleansed
     char *xfile=lives_strdup_printf("%s/keep_layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
@@ -5715,7 +5715,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
     if (mainw->scrap_file!=-1) close_scrap_file();
     if (mainw->ascrap_file!=-1) close_ascrap_file();
   }
-  
+
   lives_free(recovery_file);
   lives_free(recovery_numbering_file);
 
@@ -5727,7 +5727,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   recovery_file=lives_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
   recovery_numbering_file=lives_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
-  
+
   if (mainw->recoverable_layout) {
     // move files back
     char *xfile=lives_strdup_printf("%s/keep_layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);

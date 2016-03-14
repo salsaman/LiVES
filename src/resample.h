@@ -48,7 +48,8 @@ weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps);
 weed_timecode_t q_dbl(double in, double fps);
 
 
-weed_plant_t *quantise_events(weed_plant_t *in_list, double new_fps, boolean allow_gap);  ///< quantise frame events for a single clip
+weed_plant_t *quantise_events(weed_plant_t *in_list, double new_fps,
+                              boolean allow_gap) WARN_UNUSED;  ///< quantise frame events for a single clip
 
 ///////////////////////////////////////////////////////
 int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps);

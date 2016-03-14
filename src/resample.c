@@ -46,7 +46,7 @@ LIVES_INLINE weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps) {
 }
 
 LIVES_INLINE weed_timecode_t q_dbl(double in, double fps) {
-  // quantise (double)in to fps 
+  // quantise (double)in to fps
   if (in>0.) return ((weed_timecode_t)((long double)in*(long double)fps+(long double).5)/(long double)fps)*
                       (weed_timecode_t)U_SECL; // quantise to frame timing
   if (in<0.) return ((weed_timecode_t)((long double)in*(long double)fps-(long double).5)/(long double)fps)*
@@ -453,8 +453,7 @@ boolean auto_resample_resize(int width,int height,double fps,int fps_num,int fps
 
 //////////////////////////////////////////////////////////////////
 
-WARN_UNUSED weed_plant_t *
-quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
+weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
   // new style event system, now we quantise from event_list_t *in_list to *out_list with period tl/U_SEC
 
   // the timecode of the midpoint of our last frame events will match as near as possible the old length

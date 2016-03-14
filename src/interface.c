@@ -984,13 +984,13 @@ LiVESWidget *create_opensel_dialog(void) {
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-  lives_label_set_halignment(LIVES_LABEL(label), 0.5);
+  lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
   label = lives_standard_label_new(_("Number of frames to open"));
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 1, 2,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-  lives_label_set_halignment(LIVES_LABEL(label), 0.5);
+  lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
   spinbutton = lives_standard_spin_button_new(NULL, FALSE, 0., 0., 1000000000., 1., 10., 2, NULL, NULL);
 
@@ -1974,7 +1974,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-  lives_label_set_halignment(LIVES_LABEL(label), 0.5);
+  lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
 
   label = lives_standard_label_new(_("Author/Artist : "));
@@ -1982,7 +1982,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 1, 2,
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-  lives_label_set_halignment(LIVES_LABEL(label), 0.5);
+  lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
   label = lives_standard_label_new(_("Comments : "));
 
@@ -1990,7 +1990,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  lives_label_set_halignment(LIVES_LABEL(label), 0.5);
+  lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
   commentsw->title_entry = lives_standard_entry_new(NULL,FALSE,cfile->title,STD_ENTRY_WIDTH,-1,NULL,NULL);
 

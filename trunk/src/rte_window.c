@@ -2367,11 +2367,11 @@ LiVESWidget *create_rte_window(void) {
 
   hbuttonbox = lives_hbutton_box_new();
   label=add_fill_to_box(LIVES_BOX(hbuttonbox));
-  
+
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
-  
+
   lives_box_pack_start(LIVES_BOX(top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height*2);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), clear_all_button);
@@ -2397,14 +2397,14 @@ LiVESWidget *create_rte_window(void) {
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
-  
+
 
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), clear_all_button, DEF_BUTTON_WIDTH);
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), save_keymap_button, DEF_BUTTON_WIDTH);
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), load_keymap_button, DEF_BUTTON_WIDTH);
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), ok_button, DEF_BUTTON_WIDTH);
 
-  
+
   rtew_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(rte_window), rtew_accel_group);
 

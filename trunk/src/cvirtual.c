@@ -235,7 +235,7 @@ mismatch:
   sfile->img_type=empirical_img_type;
 
   sfile->needs_update=TRUE;
-  
+
   return FALSE;
 }
 

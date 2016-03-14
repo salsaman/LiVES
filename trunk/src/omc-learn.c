@@ -224,7 +224,7 @@ char *js_mangle(void) {
   }
 
   ret=lives_strdup_printf("%d %d %d",type,jse.number,jse.value);
-  
+
   return ret;
 
 }
@@ -735,13 +735,13 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   /*
   spinadj=(LiVESObject *)lives_adjustment_new(0., mini, maxi., 1., 10., 0);
 
-#ifdef GUI_GTK
+  #ifdef GUI_GTK
   g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
                "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
 
-#endif
+  #endif
   */
-  
+
   lives_widget_show(mnode->treev2);
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -749,7 +749,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
                        LIVES_GUI_CALLBACK(rowexpand),
                        NULL);
 #endif
-  
+
   lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev2, 3, 4, row, row+1,
                      (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
@@ -1213,7 +1213,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
                        LIVES_GUI_CALLBACK(rowexpand),
                        NULL);
 #endif
-  
+
   combo=create_omc_macro_combo(mnode,omclw->tbl_currow,omclw);
 
   lives_widget_show(combo);

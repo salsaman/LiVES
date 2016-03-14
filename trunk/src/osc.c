@@ -859,11 +859,11 @@ static boolean osc_fx_on(int effect_key) {
   int grab=mainw->last_grabbable_effect;
 
   weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
-  
+
   if (filter==NULL) return lives_osc_notify_failure();
   count=enabled_in_channels(filter, FALSE);
   if (mainw->playing_file==-1&&via_shortcut&&count!=0) return lives_osc_notify_failure(); // is no generator
-  
+
   if (mainw->playing_file==-1&&count==0) {
     mainw->error=FALSE;
     lives_idle_add(osc_init_generator,LIVES_INT_TO_POINTER(effect_key));
@@ -872,7 +872,7 @@ static boolean osc_fx_on(int effect_key) {
     mainw->last_grabbable_effect=grab;
   }
   return lives_osc_notify_success(NULL);
-  
+
 }
 
 
@@ -918,7 +918,7 @@ boolean lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSC
   if (!(mainw->rte&(GU641<<(effect_key-1)))) {
     return osc_fx_on(effect_key);
   }
-  
+
   if (!mainw->osc_block) rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
 
   return lives_osc_notify_success(NULL);

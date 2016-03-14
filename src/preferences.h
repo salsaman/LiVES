@@ -367,7 +367,7 @@ typedef struct {
   int max_disp_vtracks;
 
   boolean mt_load_fuzzy;
-  
+
 } _prefs;
 
 enum {

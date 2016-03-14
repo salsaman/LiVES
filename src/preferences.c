@@ -1769,13 +1769,13 @@ boolean apply_prefs(boolean skip_warn) {
   if (mt_autoback_time!=prefs->mt_auto_back) {
     if (mainw->multitrack!=NULL) {
       if (mt_autoback_time<=0&&prefs->mt_auto_back>0&&mainw->multitrack->idlefunc>0) {
-	lives_source_remove(mainw->multitrack->idlefunc);
-	mainw->multitrack->idlefunc=0;
-	mt_auto_backup(mainw->multitrack);
+        lives_source_remove(mainw->multitrack->idlefunc);
+        mainw->multitrack->idlefunc=0;
+        mt_auto_backup(mainw->multitrack);
       }
       if (mt_autoback_time>0&&prefs->mt_auto_back<=0&&mainw->multitrack->idlefunc>0) {
-	prefs->mt_auto_back=mt_autoback_time;
-	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+        prefs->mt_auto_back=mt_autoback_time;
+        mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
     }
     prefs->mt_auto_back=mt_autoback_time;
@@ -2682,7 +2682,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->ce_thumbs), prefs->ce_thumb_mode);
 
   pmoni_gmoni_changed(NULL,NULL);
-  
+
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_gui.png", NULL);
   pixbuf_gui = lives_pixbuf_new_from_file(icon, NULL);
   lives_free(icon);
@@ -4178,9 +4178,9 @@ _prefsw *create_prefs_dialog(void) {
 
   // scan for themes
   themes = get_plugin_list(PLUGIN_THEMES_CUSTOM, TRUE, NULL, NULL);
-  
+
   themes = lives_list_concat(themes,get_plugin_list(PLUGIN_THEMES, TRUE, NULL, NULL));
-  
+
   themes = lives_list_prepend(themes, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
   prefsw->theme_combo = lives_standard_combo_new(_("New theme:           "),FALSE,themes,LIVES_BOX(hbox),NULL);
@@ -5439,8 +5439,8 @@ void pref_change_colours(void) {
 
   if (prefs->show_gui) {
     set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars, \
-		&palette->info_base,&palette->info_text);
-    
+                &palette->info_base,&palette->info_text);
+
     if (mainw->multitrack!=NULL) {
       set_mt_colours(mainw->multitrack);
       scroll_tracks(mainw->multitrack,mainw->multitrack->top_track,FALSE);

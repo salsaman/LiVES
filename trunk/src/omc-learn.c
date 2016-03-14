@@ -647,7 +647,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
   LiVESTreeIter iter1,iter2;
 
-  LiVESObject *spinadj;
+  LiVESAdjustment *adj;
 
   char *strval=NULL,*vname;
   char *oldval=NULL,*final=NULL;
@@ -656,7 +656,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   register int i;
 
 
-  mnode->gtkstore2 = lives_tree_store_new(NUM2_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
+  mnode->gtkstore2 = lives_tree_store_new(NUM2_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_OBJECT);
 
   if (macro.nparams==0) return;
 
@@ -676,14 +676,18 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
       final=NULL;
     }
 
+    adj=NULL;
+
     if ((mfrom=mnode->map[i])!=-1) strval=lives_strdup(_("variable"));
     else {
       switch (macro.ptypes[i]) {
       case OMC_PARAM_INT:
         strval=lives_strdup_printf("%d",mnode->fvali[i]);
+        adj=lives_adjustment_new(mnode->fvali[i],macro.mini[i],macro.maxi[i],1.,1.,0.);
         break;
       case OMC_PARAM_DOUBLE:
         strval=lives_strdup_printf("%.*f",OMC_FP_FIX,mnode->fvald[i]);
+        adj=lives_adjustment_new(mnode->fvald[i],macro.mind[i],macro.maxd[i],1.,1.,0.);
         break;
 
       }
@@ -691,7 +695,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
     vname=macro.pname[i];
 
-    lives_tree_store_set(mnode->gtkstore2, &iter2, TITLE2_COLUMN, vname, VALUE2_COLUMN, strval, -1);
+    lives_tree_store_set(mnode->gtkstore2, &iter2, TITLE2_COLUMN, vname, VALUE2_COLUMN, strval, ADJUSTMENT, adj, -1);
   }
 
   lives_free(strval);
@@ -713,34 +717,26 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
   renderer = lives_cell_renderer_spin_new();
 
-  spinadj=(LiVESObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
+  if (renderer!=NULL) {
 
 #ifdef GUI_GTK
-  g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-               "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
+    g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
+                 "editable", TRUE, "xalign", 1.0, NULL);
 
 #endif
 
-  lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell1_edited_callback), mnode);
+    lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell1_edited_callback), mnode);
 
 
+    //  renderer = lives_cell_renderer_text_new ();
+    column = lives_tree_view_column_new_with_attributes(_("value"),
+             renderer,
+             LIVES_TREE_VIEW_COLUMN_TEXT, VALUE2_COLUMN,
+             "adjustment", ADJUSTMENT,
+             NULL);
+    lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
 
-  //  renderer = lives_cell_renderer_text_new ();
-  column = lives_tree_view_column_new_with_attributes(_("value"),
-           renderer,
-           LIVES_TREE_VIEW_COLUMN_TEXT, VALUE2_COLUMN,
-           NULL);
-  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
-
-  /*
-  spinadj=(LiVESObject *)lives_adjustment_new(0., mini, maxi., 1., 10., 0);
-
-  #ifdef GUI_GTK
-  g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-               "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
-
-  #endif
-  */
+  }
 
   lives_widget_show(mnode->treev2);
 
@@ -1139,64 +1135,72 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
 
   renderer = lives_cell_renderer_spin_new();
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS1_COLUMN));
 
-  spinadj=(LiVESObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
+  if (renderer!=NULL) {
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS1_COLUMN));
+
+    spinadj=(LiVESObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
 
 #ifdef GUI_GTK
-  g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-               "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
+    g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
+                 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
 #endif
 
-  lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
+    lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
 
 
-  column = lives_tree_view_column_new_with_attributes(_("+ offset1"),
-           renderer,
-           LIVES_TREE_VIEW_COLUMN_TEXT, OFFS1_COLUMN,
-           NULL);
-  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
+    column = lives_tree_view_column_new_with_attributes(_("+ offset1"),
+             renderer,
+             LIVES_TREE_VIEW_COLUMN_TEXT, OFFS1_COLUMN,
+             NULL);
+    lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
+  }
 
   renderer = lives_cell_renderer_spin_new();
 
-  spinadj=(LiVESObject *)lives_adjustment_new(1., -100000., 100000., 1., 10., 0);
+  if (renderer!=NULL) {
+
+    spinadj=(LiVESObject *)lives_adjustment_new(1., -100000., 100000., 1., 10., 0);
 
 #ifdef GUI_GTK
-  g_object_set(renderer, "width-chars", 12, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-               "editable", TRUE, "xalign", 1.0, "adjustment", spinadj,
-               "digits", OMC_FP_FIX, NULL);
+    g_object_set(renderer, "width-chars", 12, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
+                 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj,
+                 "digits", OMC_FP_FIX, NULL);
 #endif
 
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(SCALE_COLUMN));
-  lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(SCALE_COLUMN));
+    lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
 
-  column = lives_tree_view_column_new_with_attributes(_("* scale"),
-           renderer,
-           LIVES_TREE_VIEW_COLUMN_TEXT, SCALE_COLUMN,
-           NULL);
-  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
+    column = lives_tree_view_column_new_with_attributes(_("* scale"),
+             renderer,
+             LIVES_TREE_VIEW_COLUMN_TEXT, SCALE_COLUMN,
+             NULL);
+    lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
+
+  }
 
   renderer = lives_cell_renderer_spin_new();
 
-
-  spinadj=(LiVESObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
+  if (renderer!=NULL) {
+    spinadj=(LiVESObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
 
 #ifdef GUI_GTK
-  g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-               "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
+    g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
+                 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
 #endif
 
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS2_COLUMN));
-  lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS2_COLUMN));
+    lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
 
-  column = lives_tree_view_column_new_with_attributes(_("+ offset2"),
-           renderer,
-           LIVES_TREE_VIEW_COLUMN_TEXT, OFFS2_COLUMN,
-           NULL);
-  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
+    column = lives_tree_view_column_new_with_attributes(_("+ offset2"),
+             renderer,
+             LIVES_TREE_VIEW_COLUMN_TEXT, OFFS2_COLUMN,
+             NULL);
+    lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
+  }
 
   lives_widget_show(mnode->treev1);
 

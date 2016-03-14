@@ -421,6 +421,7 @@ typedef GtkAboutDialog                    LiVESAboutDialog;
 
 
 // values here are long unsigned int
+#define LIVES_COL_TYPE_OBJECT G_TYPE_OBJECT
 #define LIVES_COL_TYPE_STRING G_TYPE_STRING
 #define LIVES_COL_TYPE_INT G_TYPE_INT
 #define LIVES_COL_TYPE_UINT G_TYPE_UINT

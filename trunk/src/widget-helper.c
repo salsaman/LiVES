@@ -4448,7 +4448,9 @@ LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_text_new(void) {
 LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_spin_new(void) {
   LiVESCellRenderer *renderer=NULL;
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,10,0)
   renderer=gtk_cell_renderer_spin_new();
+#endif
 #endif
 #ifdef GUI_QT
   renderer = new LiVESCellRenderer(LIVES_CELL_RENDERER_SPIN);

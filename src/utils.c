@@ -1276,6 +1276,14 @@ LIVES_INLINE uint64_t lives_10pow(int pow) {
   return res;
 }
 
+
+LIVES_INLINE double lives_fix(double val, int decimals) {
+  double factor=(double)lives_10pow(decimals);
+  return (double)((int)(val*factor+0.5))/factor;
+}
+
+
+
 LIVES_INLINE int get_approx_ln(uint32_t x) {
   x |= (x >> 1);
   x |= (x >> 2);
@@ -2183,7 +2191,7 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
   register int i;
 
   if (nreject!=NULL) reject=nreject;
-  
+
   if (slen==0) {
     msg=lives_strdup_printf(_("\n%s names may not be blank.\n"),xtype);
     if (!mainw->osc_auto) do_blocking_error_dialog(msg);
@@ -2243,7 +2251,7 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
   char *msg;
 
   if (!do_std_checks(set_name,_("Set"),MAX_SET_NAME_LEN,NULL)) return FALSE;
-  
+
   // check if this is a set in use by another copy of LiVES
   if (!check_for_lock_file(set_name,1)) return FALSE;
 
@@ -3873,11 +3881,10 @@ int lives_rmdir(const char *dir, boolean force) {
 
   if (force) {
     cmd=lives_strdup_printf("%s -rf",capable->rm_cmd);
-  }
-  else {
+  } else {
     cmd=lives_strdup(capable->rmdir_cmd);
   }
-  
+
 #ifndef IS_MINGW
   com=lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1",cmd,dir,prefs->cmd_log);
 #else

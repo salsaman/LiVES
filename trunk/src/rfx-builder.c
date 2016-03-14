@@ -4575,7 +4575,7 @@ void add_rfx_effects(void) {
         rfx->params=NULL;
         rfx->source=NULL;
         rfx->source_type=LIVES_RFX_SOURCE_RFX;
-	rfx->flags=0;
+        rfx->flags=0;
         rfx->extra=NULL;
         rfx->is_template=FALSE;
         if (!check_rfx_for_lives(rfx)) rfx_slot_count--;

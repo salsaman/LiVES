@@ -1265,7 +1265,8 @@ boolean idle_show_info(const char *text, boolean blocking, ulong id) {
 boolean idle_switch_clip(int type, int cnum, ulong id) {
   iipref *info;
 
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away||mainw->is_processing) return FALSE;
+  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))||
+      mainw->go_away||mainw->is_processing) return FALSE;
   if (mainw->multitrack!=NULL) return FALSE;
 
   info = (iipref *)lives_malloc(sizeof(iipref));
@@ -1280,7 +1281,7 @@ boolean idle_switch_clip(int type, int cnum, ulong id) {
 boolean idle_mt_set_track(int tnum, ulong id) {
   iipref *info;
 
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away||mainw->is_processing) return FALSE;
+  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing) return FALSE;
   if (mainw->multitrack==NULL) return FALSE;
 
   info = (iipref *)lives_malloc(sizeof(iipref));
@@ -1294,7 +1295,7 @@ boolean idle_mt_set_track(int tnum, ulong id) {
 boolean idle_set_track_label(int tnum, const char *label, ulong id) {
   lset *data;
 
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away||mainw->is_processing) return FALSE;
+  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing) return FALSE;
   if (mainw->multitrack==NULL) return FALSE;
 
   data = (lset *)lives_malloc(sizeof(lset));
@@ -1352,7 +1353,8 @@ boolean idle_set_current_audio_time(double time, ulong id) {
 
 
 boolean idle_unmap_effects(ulong id) {
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away||mainw->is_processing) return FALSE;
+  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))||
+      mainw->go_away||mainw->is_processing) return FALSE;
 
   lives_idle_add(call_unmap_effects,(livespointer)id);
 
@@ -1587,7 +1589,8 @@ boolean idle_set_insert_mode(int mode, ulong id) {
 boolean idle_map_fx(int key, int mode, int idx, ulong id) {
   fxmapdata *data;
 
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away||mainw->is_processing) return FALSE;
+  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))||
+      mainw->go_away||mainw->is_processing) return FALSE;
 
   data=(fxmapdata *)lives_malloc(sizeof(fxmapdata));
   data->key=key;
@@ -1603,7 +1606,8 @@ boolean idle_map_fx(int key, int mode, int idx, ulong id) {
 boolean idle_unmap_fx(int key, int mode, ulong id) {
   fxmapdata *data;
 
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away||mainw->is_processing) return FALSE;
+  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))||
+      mainw->go_away||mainw->is_processing) return FALSE;
 
   if (!rte_keymode_valid(key,mode,TRUE)) return FALSE;
 
@@ -1620,7 +1624,8 @@ boolean idle_unmap_fx(int key, int mode, ulong id) {
 boolean idle_fx_setmode(int key, int mode, ulong id) {
   fxmapdata *data;
 
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away||mainw->is_processing) return FALSE;
+  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))||
+      mainw->go_away||mainw->is_processing) return FALSE;
 
   data=(fxmapdata *)lives_malloc(sizeof(fxmapdata));
   data->key=key;
@@ -1636,7 +1641,8 @@ boolean idle_fx_setmode(int key, int mode, ulong id) {
 boolean idle_fx_enable(int key, boolean setting, ulong id) {
   fxmapdata *data;
 
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away||mainw->is_processing) return FALSE;
+  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))||
+      mainw->go_away||mainw->is_processing) return FALSE;
 
   data=(fxmapdata *)lives_malloc(sizeof(fxmapdata));
   data->key=key;
@@ -1652,7 +1658,8 @@ boolean idle_fx_enable(int key, boolean setting, ulong id) {
 boolean idle_set_pref_bool(const char *prefidx, boolean val, ulong id) {
   bpref *data;
 
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away) return FALSE;
+  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))||
+      mainw->go_away) return FALSE;
 
   data=(bpref *)lives_malloc(sizeof(bpref));
   data->id=id;
@@ -1666,7 +1673,8 @@ boolean idle_set_pref_bool(const char *prefidx, boolean val, ulong id) {
 boolean idle_set_pref_int(const char *prefidx, int val, ulong id) {
   iipref *data;
 
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away) return FALSE;
+  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))||
+      mainw->go_away) return FALSE;
 
   data=(iipref *)lives_malloc(sizeof(iipref));
   data->id=id;
@@ -1680,7 +1688,8 @@ boolean idle_set_pref_int(const char *prefidx, int val, ulong id) {
 boolean idle_set_pref_bitmapped(const char *prefidx, int bitfield, boolean val, ulong id) {
   bmpref *data;
 
-  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away) return FALSE;
+  if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))||
+      mainw->go_away) return FALSE;
 
   data=(bmpref *)lives_malloc(sizeof(bmpref));
   data->id=id;
@@ -1854,7 +1863,8 @@ boolean idle_render_layout(boolean with_aud, boolean normalise_aud, ulong id) {
 boolean idle_select_all(int cnum, ulong id) {
   iipref *data;
 
-  if (mainw==NULL||((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))&&mainw->multitrack==NULL)||mainw->go_away||
+  if (mainw==NULL||((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))&&
+		    mainw->multitrack==NULL)||mainw->go_away||
       mainw->is_processing) return FALSE;
 
   data=(iipref *)lives_malloc(sizeof(iipref));
@@ -1868,7 +1878,8 @@ boolean idle_select_all(int cnum, ulong id) {
 boolean idle_select_start(int cnum, int frame, ulong id) {
   iipref *data;
 
-  if (mainw==NULL||((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))&&mainw->multitrack==NULL)||mainw->go_away||
+  if (mainw==NULL||((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))&&
+		    mainw->multitrack==NULL)||mainw->go_away||
       mainw->is_processing) return FALSE;
 
   data=(iipref *)lives_malloc(sizeof(iipref));
@@ -1884,7 +1895,8 @@ boolean idle_select_start(int cnum, int frame, ulong id) {
 boolean idle_select_end(int cnum, int frame, ulong id) {
   iipref *data;
 
-  if (mainw==NULL||((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))&&mainw->multitrack==NULL)||mainw->go_away||
+  if (mainw==NULL||((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))&&
+		    mainw->multitrack==NULL)||mainw->go_away||
       mainw->is_processing) return FALSE;
 
   data=(iipref *)lives_malloc(sizeof(iipref));

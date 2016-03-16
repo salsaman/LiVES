@@ -3723,9 +3723,7 @@ apply_inst3:
             }
           }
 
-
           filter_error=weed_apply_instance(instance,NULL,layers,opwidth,opheight,tc);
-
           if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
           //#define DEBUG_RTE
 #ifdef DEBUG_RTE

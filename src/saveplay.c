@@ -1760,11 +1760,12 @@ void save_file(int clip, int start, int end, const char *filename) {
   lives_system(com,FALSE);
   lives_free(com);
 
+  mainw->error=FALSE;
+  
   if (mainw->com_failed||mainw->write_failed) {
     not_cancelled=FALSE;
     mainw->error=TRUE;
   }
-
 
   if (!mainw->error) {
     char *pluginstr;

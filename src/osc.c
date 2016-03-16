@@ -336,7 +336,7 @@ static char *lives_osc_format_result(weed_plant_t *plant, const char *key, int s
 
   g_print("lofr\n");
 
-  
+
   if (end==-1) end=weed_leaf_num_elements(plant,key);
 
   if (end<=st) return lives_strdup("");
@@ -3303,7 +3303,7 @@ grpinvalid:
     }
 
     g_print("Set %d %s\n",nargs,valuess[0]);
-    
+
 
     if (inst!=NULL) {
       filter_mutex_lock(key);
@@ -3833,7 +3833,7 @@ boolean lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *var
   default:
     return lives_osc_notify_failure();
   }
-  
+
   lives_status_send(retval);
   return TRUE;
 }

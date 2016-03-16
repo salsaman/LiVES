@@ -2534,7 +2534,7 @@ void redraw_pwindow(int key, int mode) {
       lives_container_set_focus_child(LIVES_CONTAINER(content_area),NULL);
       for (i=0; i<lives_list_length(child_list); i++) {
         LiVESWidget *widget=(LiVESWidget *)lives_list_nth_data(child_list,i);
-	if (lives_widget_is_ancestor(LIVES_WIDGET(button),widget)) continue;
+        if (lives_widget_is_ancestor(LIVES_WIDGET(button),widget)) continue;
         lives_widget_destroy(widget);
       }
       if (child_list!=NULL) lives_list_free(child_list);

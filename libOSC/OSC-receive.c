@@ -821,9 +821,9 @@ Boolean NetworkReceivePacket(OSCPacketBuffer packet) {
   if (n<=0) {
     return FALSE;
   }
-  
+
   packet->n = n;
-  
+
   return TRUE;
 }
 

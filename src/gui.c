@@ -2270,13 +2270,18 @@ void create_LiVES(void) {
   }
 
 
-
-
   lives_text_view_set_text(LIVES_TEXT_VIEW(mainw->textview1),
                            _("Starting...\n"), -1);
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->LiVES), LIVES_WIDGET_DELETE_EVENT,
                        LIVES_GUI_CALLBACK(on_LiVES_delete_event),
+                       NULL);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->LiVES), LIVES_WIDGET_KEY_PRESS_EVENT,
+                       LIVES_GUI_CALLBACK(key_press_or_release),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->LiVES), LIVES_WIDGET_KEY_RELEASE_EVENT,
+                       LIVES_GUI_CALLBACK(key_press_or_release),
                        NULL);
 
   mainw->config_func=lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
@@ -3774,6 +3779,13 @@ void make_play_window(void) {
                        LIVES_GUI_CALLBACK(on_stop_activate_by_del),
                        NULL);
 
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_KEY_PRESS_EVENT,
+                       LIVES_GUI_CALLBACK(key_press_or_release),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_KEY_RELEASE_EVENT,
+                       LIVES_GUI_CALLBACK(key_press_or_release),
+                       NULL);
+
 
 }
 
@@ -3980,6 +3992,7 @@ void resize_play_window(void) {
           }
         }
         if (mainw->ext_playback) {
+          lives_grab_remove(mainw->LiVES);
           mainw->ext_keyboard=FALSE;
 #ifdef RT_AUDIO
           stop_audio_stream();
@@ -4008,10 +4021,12 @@ void resize_play_window(void) {
           mainw->ext_playback=TRUE;
           // the play window is still visible (in case it was 'always on top')
           // start key polling from ext plugin
-          if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&pmonitor==0) {
+
+          if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&(pmonitor==0||capable->nmonitors==1)) {
+            lives_grab_add(mainw->LiVES);
             mainw->ext_keyboard=TRUE;
-            return;
           }
+
         }
       }
 

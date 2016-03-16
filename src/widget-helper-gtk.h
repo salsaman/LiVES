@@ -292,10 +292,15 @@ typedef GdkEventExpose                    LiVESXEventExpose;
 typedef GdkEventCrossing                  LiVESXEventCrossing;
 typedef GdkEventConfigure                 LiVESXEventConfigure;
 typedef GdkEventFocus                     LiVESXEventFocus;
+typedef GdkEventKey                       LiVESXEventKey;
 typedef GdkEvent                          LiVESXEventDelete;
 typedef GdkDisplay                        LiVESXDisplay;
 typedef GdkScreen                         LiVESXScreen;
 typedef GdkDevice                         LiVESXDevice;
+
+
+#define LIVES_KEY_RELEASE GDK_KEY_RELEASE
+#define LIVES_KEY_PRESS GDK_KEY_PRESS
 
 
 #define LIVES_SCROLL_UP   GDK_SCROLL_UP
@@ -347,6 +352,8 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_WIDGET_LEAVE_NOTIFY_EVENT "leave-notify-event"
 #define LIVES_WIDGET_FOCUS_OUT_EVENT "focus-out-event"
 #define LIVES_WIDGET_DELETE_EVENT "delete-event"
+#define LIVES_WIDGET_KEY_PRESS_EVENT "key-press-event"
+#define LIVES_WIDGET_KEY_RELEASE_EVENT "key-release-event"
 
 // signals
 #define LIVES_WIDGET_CLICKED_SIGNAL "clicked"

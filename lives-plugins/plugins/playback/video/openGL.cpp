@@ -744,6 +744,7 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
 
   swa.event_mask = StructureNotifyMask | ButtonPressMask | KeyPressMask | KeyReleaseMask;
 
+  
   if (window_id) {
     XVisualInfo *xvis;
     XVisualInfo xvtmpl;
@@ -912,6 +913,12 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
   else
     is_direct=FALSE;
 
+  /*
+  XMapWindow(dpy, xWin);
+  XSync(dpy, xWin);
+  XSetInputFocus(dpy, xWin, RevertToNone, CurrentTime);
+  XSelectInput(dpy, xWin, KeyPressMask | KeyReleaseMask);
+  */
   return TRUE;
 }
 
@@ -2227,34 +2234,4 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
 void module_unload(void) {
   if (zsubtitles!=NULL) weed_free(zsubtitles);
 }
-
-
-
-
-boolean send_keycodes (keyfunc host_key_fn) {
-  // poll for keyboard events, pass them back to the caller
-  // return FALSE on error
-  uint16_t mod_mask;
-  XEvent xEvent;
-  KeySym keySymbol;
-
-  if (host_key_fn==NULL || dpy == NULL) return FALSE;
-
-  if ((volatile Display *)dpy!=NULL) {
-    pthread_mutex_lock(&dpy_mutex);
-    if ((volatile Display *)dpy!=NULL) {
-      while (XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
-	int keysyms_per_keycode_return;
-	keySymbol = (KeySym)XGetKeyboardMapping(dpy,xEvent.xkey.keycode,0,&keysyms_per_keycode_return);
-	mod_mask=xEvent.xkey.state;
-	host_key_fn (xEvent.type == KeyPress, keySymbol, mod_mask);
-      }
-    }
-    pthread_mutex_unlock(&dpy_mutex);
-  }
-
-  return TRUE;
-
-}
-
 

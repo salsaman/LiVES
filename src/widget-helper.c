@@ -640,6 +640,23 @@ LIVES_INLINE boolean lives_signal_stop_emission_by_name(livespointer instance, c
 }
 
 
+LIVES_INLINE boolean lives_grab_add(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  gtk_grab_add(widget);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_grab_remove(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  gtk_grab_remove(widget);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 
 LIVES_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {

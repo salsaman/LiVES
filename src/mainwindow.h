@@ -41,10 +41,10 @@
 
 
 /// rate to change pb fps when faster/slower pressed (TODO: make pref)
-#define PB_CHANGE_RATE .005
+#define PB_CHANGE_RATE .0005
 
 /// forward/back scratch value (TODO: make pref)
-#define PB_SCRATCH_VALUE 0.01
+#define PB_SCRATCH_VALUE 0.001
 
 /////// GUI related constants /////////////////////////////////////////////////////////
 

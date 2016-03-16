@@ -97,6 +97,7 @@ void lives_exit(int signum) {
     }
 
     if (mainw->playing_file>-1) {
+      lives_grab_remove(mainw->LiVES);
       mainw->ext_keyboard=FALSE;
       if (mainw->ext_playback) {
         if (mainw->vpp->exit_screen!=NULL)(*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);

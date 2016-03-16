@@ -1324,6 +1324,8 @@ boolean process_one(boolean visible) {
     new_ticks=mainw->currticks+mainw->deltaticks;
     cfile->last_frameno=cfile->frameno;
 
+    handle_cached_keys();
+
     show_frame=FALSE;
 
     if (cfile->pb_fps!=0.)
@@ -1404,7 +1406,6 @@ boolean process_one(boolean visible) {
     // paused
     if (LIVES_UNLIKELY(cfile->play_paused)) {
       mainw->startticks=mainw->currticks+mainw->deltaticks;
-      if (mainw->ext_playback&&mainw->vpp->send_keycodes!=NULL)(*mainw->vpp->send_keycodes)(pl_key_function);
     }
   }
 

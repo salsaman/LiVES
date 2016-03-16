@@ -165,6 +165,8 @@ boolean lives_signal_handler_unblock(livespointer instance, unsigned long handle
 boolean lives_signal_handler_disconnect(livespointer instance, unsigned long handler_id);
 boolean lives_signal_stop_emission_by_name(livespointer instance, const char *detailed_signal);
 
+boolean lives_grab_add(LiVESWidget *widget);
+boolean lives_grab_remove(LiVESWidget *widget);
 
 boolean lives_widget_set_sensitive(LiVESWidget *, boolean state);
 boolean lives_widget_get_sensitive(LiVESWidget *);

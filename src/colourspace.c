@@ -127,9 +127,13 @@ static void lives_free_buffer(uint8_t *pixels, livespointer data) {
   lives_free(pixels);
 }
 
+
 LIVES_INLINE uint8_t CLAMP0255(int32_t a) {
-  return a>255?255:(a<0)?0:a;
+  return (unsigned char)
+         ((((-a) >> 31) & a)   // 0 if the number was negative
+          | (255 - a) >> 31); // -1 if the number was greater than 255
 }
+
 
 /* precomputed tables */
 
@@ -285,11 +289,36 @@ uint8_t gamma_lut[256];
 double current_gamma=-1.;
 
 /* Updates the gamma look-up-table. */
-static inline void update_gamma_lut(double gamma) {
+
+// adjust gamma just for display on monitors (I think)
+
+static inline void update_gamma_lut(float gamma) {
   register int i;
-  double inv_gamma = (1./gamma);
+  float inv_gamma = (1./gamma);
+
   gamma_lut[0] = 0;
-  for (i=1; i<256; ++i) gamma_lut[i] = CLAMP0255(myround(255.0 * pow((double)i / 255.0, inv_gamma)));
+
+  for (i=1; i<256; ++i) gamma_lut[i] = {
+    a=(float)i/255.;
+
+    // naive
+    x = powf(a, inv_gamma);
+
+    // rec 709 fwd gamma (linear to gamma)
+    x = (a<=0.018) ? 4.5*a : 1.099*powf(a,0.45)-0.099;
+
+    // rec 709 back gamma (gamma to linear)
+    x = (a<=0.0031308) ? 12.92*a : 1.055*powf(a,1.0/2.4)-0.055;
+
+    // sRGB fwd (linear to gamma)
+    x = (a<=0.0031308) ? 12.92*a : 1.055*powf(a,1.0/2.4)-0.055;
+
+    // sRGB back (gamma to linear)
+    x = (a<=0.04045) ? a/12.92 : powf((a+0.055)/1.055,2.4);
+
+    gamma_lut[i]=CLAMP0255(255.*x);
+
+  }
   current_gamma=gamma;
 }
 

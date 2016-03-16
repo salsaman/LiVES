@@ -866,7 +866,7 @@ static boolean osc_fx_on(int effect_key) {
 
   if (mainw->playing_file==-1&&count==0) {
     if (mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL)||mainw->is_processing||
-	mainw->multitrack!=NULL) return lives_osc_notify_failure();
+        mainw->multitrack!=NULL) return lives_osc_notify_failure();
     mainw->error=FALSE;
     lives_idle_add(osc_init_generator,LIVES_INT_TO_POINTER(effect_key));
   } else {
@@ -1023,13 +1023,13 @@ boolean lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs,
   lives_osc_parse_int_argument(vargs,&clip);
 
   if (clip<1||mainw->cliplist==NULL) return lives_osc_notify_failure();
-  
+
   if (mainw->scrap_file!=-1&&clip>=mainw->scrap_file) clip++;
 
   if (mainw->ascrap_file!=-1&&clip>=mainw->ascrap_file) clip++;
-  
+
   if (clip>lives_list_length(mainw->cliplist)) return lives_osc_notify_failure();
-  
+
   if (mainw->num_tr_applied<1) return lives_osc_notify_failure();
 
   i=LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->cliplist,clip-1));
@@ -1808,7 +1808,8 @@ boolean lives_osc_cb_getstatus(void *context, int arglen, const void *vargs, OSC
   if (mainw->go_away) lives_status_send(get_omc_const("LIVES_STATUS_NOTREADY"));
   if (mainw->playing_file > -1) lives_status_send(get_omc_const("LIVES_STATUS_PLAYING"));
   if (mainw->is_processing) lives_status_send(get_omc_const("LIVES_STATUS_PROCESSING"));
-  if ((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))) lives_status_send(get_omc_const("LIVES_STATUS_PREVIEW"));
+  if ((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||
+                        mainw->playing_file==-1)))) lives_status_send(get_omc_const("LIVES_STATUS_PREVIEW"));
   lives_status_send(get_omc_const("LIVES_STATUS_READY"));
   return TRUE;
 }

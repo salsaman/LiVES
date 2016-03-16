@@ -136,10 +136,6 @@ void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   if (usrgrp_to_livesgrp[0]!=NULL) lives_slist_free(usrgrp_to_livesgrp[0]);
   usrgrp_to_livesgrp[0]=NULL;
   if (fx_dialog[1]==NULL) special_cleanup();
-  if (mainw->invis!=NULL) {
-    lives_widget_destroy(mainw->invis);
-    mainw->invis=NULL;
-  }
 
   if (rfx!=NULL&&rfx->status==RFX_STATUS_SCRAP) return;
 
@@ -165,10 +161,7 @@ void on_paramwindow_cancel_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
 
   on_paramwindow_cancel_clicked(button,rfx);
   fx_dialog[1]=NULL;
-  if (mainw->invis!=NULL) {
-    lives_widget_destroy(mainw->invis);
-    mainw->invis=NULL;
-  }
+
 }
 
 void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
@@ -816,7 +809,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   if (pbox==NULL) {
     pbox = top_dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[didx]));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[didx]),"rfx",rfx);
-
     lives_widget_set_hexpand(pbox,TRUE);
     lives_widget_set_vexpand(pbox,TRUE);
   }
@@ -909,6 +901,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     }
 
     lives_widget_set_can_focus(cancelbutton,TRUE);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[didx]),"button",cancelbutton);
 
     if (lives_widget_get_parent(okbutton)!=NULL) {
       lives_widget_set_can_focus_and_default(okbutton);

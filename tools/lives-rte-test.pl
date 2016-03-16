@@ -36,6 +36,11 @@ if (defined($ARGV[2])) {
 $sendOMC="sendOSC -h $remote_host $remote_port";
 
 
+
+## note types are WEED types, not frei0r types
+## 1 == int, 2 == double/float 3 == string, 4 == bool, 5 == color
+
+
 ###################
 # ready our listener
 use IO::Socket;
@@ -121,7 +126,8 @@ for ($j=0;;$j++) {
 	    next unless ($retmsg=~ /^frei0rFrei0r/);
 	}
 	print "testing $retmsg\n";
-
+	$fxname = $retmsg;
+	
 	$totfx++;
 
 	# map to key 1 and enable it
@@ -138,7 +144,6 @@ for ($j=0;;$j++) {
 	
 	print("number of active in channels is $nchans\n");
 	
-
 	#test each parameter in turn - get value, set to min, max, default
 	`$sendOMC /effect_key/parameter/count,1`;
 	$nparms=&get_newmsg;
@@ -163,6 +168,7 @@ for ($j=0;;$j++) {
 
 	    `$sendOMC /effect_key/parameter/type/get,1,$i`;
 	    $ptype=&get_newmsg;
+	    
 	    if ($ptype==1) {
 		$ptype=1;
 		$ptname="int";
@@ -173,11 +179,11 @@ for ($j=0;;$j++) {
 	    }
 	    elsif ($ptype==3) {
 		$ptype=3;
-		$ptname="bool";
+		$ptname="string";
 	    }
 	    elsif ($ptype==4) {
 		$ptype=4;
-		$ptname="string";
+		$ptname="bool";
 	    }
 	    elsif ($ptype==5) {
 		$ptype=5;
@@ -190,11 +196,20 @@ for ($j=0;;$j++) {
 	    $pdef=&get_newmsg;
 	    
 	    print("default value is $pdef\n");
+
+
+	    if ($ptype == 4) {
+		if ($pdef != 1 && $pdef != 0) {
+		    print STDERR "ERROR: def should be 1 or 0 ($pdef) for $retmsg: $pname.\n"; 
+		}
+	    }
 	    
 
 	    # set to min, max, def; bool on/off; text "LiVES test"
 	    
 	    if ($ptype != 3 && $ptype != 4) {
+		## except string/bool
+		
 		`$sendOMC /effect_key/parameter/min/get,1,$i`;
 		$pmin=&get_newmsg;
 		
@@ -211,7 +226,7 @@ for ($j=0;;$j++) {
 		}
 
 		if ($pdef<$pmin || $pdef > $pmax) {
-		    print ("DEFAULT OUT OF RANGE ($pdef) $retmsg: $pname\n");
+		    print STDERR ("ERROR DEFAULT OUT OF RANGE ($pdef) $retmsg: $pname\n");
 		}
 		
 		
@@ -231,7 +246,7 @@ for ($j=0;;$j++) {
 	    print("nvalues is $pnvals\n");
 	    
 	    if ($pnvals!=1&&($ptype!=5&&$pnvals==3)&&$ptype!=4) {
-		print "WARNING: value of $value may be invalid.\n";
+		print STDERR "WARNING: value of $value may be invalid for $retmsg: $pname.\n";
 		next;
 		
 	    }
@@ -289,12 +304,12 @@ for ($j=0;;$j++) {
 	    
 	    
 	    # set to first value
-	    if ($ptype==3) {
+	    if ($ptype==4) {
 		#bool
 		$pmin=!$pdef;
 	    }
 	    
-	    if ($ptype==4) {
+	    if ($ptype==3) {
 		#string
 		$pmin="\"hello \\\"world\\\"!\"";
 		if ($pdef eq "") {
@@ -327,13 +342,27 @@ for ($j=0;;$j++) {
 	    
 	    
 	    # reset to def. value
-	    
+
+
 	    `$sendOMC /effect_key/parameter/value/set,1,$i,$pdef`;
 	    
 	    `$sendOMC /effect_key/parameter/value/get,1,$i`;
 	    $pval=&get_newmsg;
+
+
+	    if ($ptype==3 || $ptype==5) {
+		if ($pdef ne $pval) {
+		    print STDERR "ERROR: mismatch sent val $pdef, got val $pval for $retmsg: $pname\n";
+		}
+	    }
+	    else {
+		if ($pdef != $pval) {
+		    print STDERR "ERROR: mismatch sent val $pdef, got val $pval for $retmsg: $pname\n";
+		}
+	}
+
 	    
-	    print("reset to def value: $pval\n");
+	    print("reset to def value[$ptype]: $pval ($pdef)\n");
 	    
 	    
 	    # sleep 0.2 seconds
@@ -353,7 +382,7 @@ for ($j=0;;$j++) {
 
 `$sendOMC /video/stop`;
 
-print "/nAll tests complete, tested $totfx effects and $totparams parameters.\n\n";
+print "\n\nAll tests complete, tested $totfx effects and $totparams parameters.\n\n";
 
 exit 0;
 

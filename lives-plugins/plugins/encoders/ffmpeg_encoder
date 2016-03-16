@@ -89,6 +89,7 @@ if ($command eq "get_formats") {
    # means "can only encode at xx.yy frames per second", size=x X y, arate=audio rate 
     # - otherwise set it to 'none'
 
+    $has_mpeg4=(system("ffmpeg -encoders 2>/dev/null | grep \" mpeg4 \" >/dev/null")==0);
     $has_webm=(system("ffmpeg -encoders 2>/dev/null | grep vpx >/dev/null")==0);
     $has_qtrle=(system("ffmpeg -encoders 2>/dev/null | grep qtrle >/dev/null")==0);
     $has_wmv2=(system("ffmpeg -encoders 2>/dev/null | grep wmv2 >/dev/null")==0);
@@ -106,10 +107,14 @@ if ($command eq "get_formats") {
     $has_wmav2=(system("ffmpeg -encoders 2>/dev/null | grep wmav2 >/dev/null")==0);
 
 
-    $errwebm=$errx264=$errflv=$err3gp=$errwmv2=$errffv1=$errmjpeg=$errqtrle="";
+    $errwebm=$errx264=$errflv=$err3gp=$errwmv2=$errffv1=$errmjpeg=$errqtrle=$errmpeg4="";
 
     $erraac=$errvorbis=$erramraac=$errmp3aac=$errmp3mp2=$errwmav2="";
     
+    unless ($has_mpeg4) {
+	$errmpeg4=" (MISSING mpeg4 support) ";
+    }
+
     unless ($has_webm) {
 	$errwebm=" (MISSING libvxp support) ";
     }
@@ -178,7 +183,8 @@ if ($command eq "get_formats") {
     
     print "flv|flv$errflv$errmp3aac|33|arate=44100;22050;11025|flv|frame=|\n";
     print "flv-youtubex|flv (optimised for youtube)$errflv$errmp3aac|33|arate=44100;22050;11025,aspect=1.3333:1|flv|frame=|\n";
-    print "divx|divx (25 fps)$errflv$errmp3mp2|5|fps=25.00|avi|frame=|\n";
+
+    print "divx|divx/avi (25 fps)$errmpeg4$errmp3mp2|5|fps=25.00|avi|frame=|\n";
 
     print "wmv2|wmv2/wma2/asf (low quality)$errwmv2$errwmav2|256|arate=44100;22050;11025|wmv|frame=|\n";
     print "ffv1|ffv1 (lossless)$errffv1|2|none|avi|frame=|\n";
@@ -198,6 +204,7 @@ if ($command eq "get_rfx") {
     if ($otype eq "flv"||$otype eq "flv-youtube"||$otype eq "flv-youtubex"||$otype eq "divx") {
 	$aq=&rc_get("encoder_acodec");
 	if ($aq==0) {
+	    ## mp3 codec
 	    # mandatory section
 	    print "<define>\n";
 	    print "|1.7\n";
@@ -211,6 +218,10 @@ if ($command eq "get_rfx") {
 	    # optional section
 	    print "<params>\n";
 	    print "threads|Number of threads|num0|1|1|16|\n";
+	    if ($otype eq "divx") {
+		print "quality|Video Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|3|31|\n";
+		print "quality|Audio Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|4|31|\n";
+	    }
 	    print "mp3|Use _mp3 audio codec|bool|1|1\n";
 	    print "mp3lame|Use mp3_lame audio codec|bool|0|1\n";
 	    print "</params>\n";
@@ -233,6 +244,10 @@ if ($command eq "get_rfx") {
 	    # optional section
 	    print "<params>\n";
 	    print "threads|Number of threads|num0|1|1|16|\n";
+	    if ($otype eq "divx") {
+		print "quality|Video Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|3|31|\n";
+		print "quality|Audio Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|4|31|\n";
+	    }
 	    print "</params>\n";
 
 	    print "<param_window>\n";
@@ -254,8 +269,11 @@ if ($command eq "get_rfx") {
 	# optional section
 	print "<params>\n";
 	print "threads|Number of threads|num0|1|1|16|\n";
-	if ($otype=="x264" || $otype=="qtrle") {
+	if ($otype eq "x264" || $otype eq "qtrle") {
 	    print "quality|Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|1|31|\n";
+	}
+	if ($otype eq "x264") {
+	    print "yuv420|Force YUV420P format (unchecking this MAY result in higher quality, but may not play on all players)|bool|1|0\n";
 	}
 	print "</params>\n";
 
@@ -302,13 +320,22 @@ if ($command eq "encode") {
 
     $nthreads=$ARGV[13];
 
-    if ($otype=="x264" || $otype=="qtrle") {
+    if ($otype eq "x264" || $otype eq "qtrle" || $otype eq "divx") {
 	$quality=$ARGV[14];
+	if ($otype eq "divx") {
+	    $aquality=$ARGV[15];
+	    $usemp3=$ARGV[16];
+	    $usemp3lame=$ARGV[17];
+	}
+	elsif ($otype eq "x264") {
+	    $force420=$ARGV[15];
+	}
     }
     else {
 	$usemp3=$ARGV[14];
 	$usemp3lame=$ARGV[15];
     }
+
     
     $vid_length=($end-$start+1)/$fps;
 
@@ -327,6 +354,7 @@ if ($command eq "encode") {
 
     # default seems to be divx
     $vcodec="";
+    
     if ($otype eq "asf") {
 	$vcodec="-f asf";
     }
@@ -338,6 +366,9 @@ if ($command eq "encode") {
     }
     elsif ($otype eq "wmv2") {
 	$vcodec="-c:v wmv2";
+    }
+    elsif ($otype eq "divx") {
+	$vcodec="-c:v mpeg4 -vtag divx -q:v $quality";
     }
     elsif ($otype eq "ffv1") {
 	if ($img_ext eq ".png") {
@@ -366,6 +397,9 @@ if ($command eq "encode") {
     }
     elsif ($otype eq "x264") { 
 	$vcodec="-c:v libx264 -qscale $quality";
+	if ($force420) {
+	    $vcodec.=" -pix_fmt yuv420p";
+	}
     }
     elsif ($otype eq "qtrle") { 
 	$vcodec="-c:v qtrle -qscale $quality";
@@ -425,6 +459,9 @@ if ($command eq "encode") {
 	}
 	elsif ($otype eq "wmv2") {
 	    $audio_com.=" -acodec wmav2";
+	}
+	elsif ($otype eq "divx") {
+	    $audio_com.=" -q:a $aquality";
 	}
 
     }

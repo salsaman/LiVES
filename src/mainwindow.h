@@ -1021,7 +1021,6 @@ typedef struct {
   LiVESWidget *custom_utilities_submenu;
   LiVESWidget *custom_utilities_separator;
   LiVESWidget *rte_separator;
-  LiVESWidget *invis;
 
   int num_tracks;
   int *clip_index;

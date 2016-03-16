@@ -881,6 +881,14 @@ LIVES_INLINE boolean lives_widget_reparent(LiVESWidget *widget, LiVESWidget *new
 }
 
 
+LIVES_INLINE boolean lives_widget_is_ancestor(LiVESWidget *widget, LiVESWidget *ancestor) {
+#ifdef GUI_GTK
+  return gtk_widget_is_ancestor(widget,ancestor);
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *widget, boolean paintable) {
   return TRUE;
 #ifdef GUI_GTK

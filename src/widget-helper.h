@@ -182,6 +182,8 @@ boolean lives_widget_set_minimum_size(LiVESWidget *widget, int width, int height
 boolean lives_widget_set_maximum_size(LiVESWidget *widget, int width, int height);
 boolean lives_widget_reparent(LiVESWidget *, LiVESWidget *new_parent);
 
+boolean lives_widget_is_ancestor(LiVESWidget *widget, LiVESWidget *ancestor);
+
 boolean lives_widget_set_app_paintable(LiVESWidget *widget, boolean paintable);
 
 LiVESWidget *lives_event_box_new(void);

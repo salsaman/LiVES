@@ -124,6 +124,7 @@ static boolean lives_osc_check_arguments(int arglen, const void *vargs, const ch
 
 static void lives_osc_parse_string_argument(const void *vargs, char *dst) {
   const char *args = (char *)vargs;
+  g_print("STR is %s\n",(char *)args+osc_header_len+offset);
   lives_snprintf(dst, OSC_STRING_SIZE, "%s", args+osc_header_len+offset);
   offset+=pad4(strlen(dst));
 }
@@ -333,6 +334,9 @@ static char *lives_osc_format_result(weed_plant_t *plant, const char *key, int s
 
   char *retval=NULL,*tmp;
 
+  g_print("lofr\n");
+
+  
   if (end==-1) end=weed_leaf_num_elements(plant,key);
 
   if (end<=st) return lives_strdup("");
@@ -387,7 +391,10 @@ static char *lives_osc_format_result(weed_plant_t *plant, const char *key, int s
   case WEED_SEED_STRING: {
     char **vals=weed_get_string_array(plant,key,&error);
     char *tmp2;
+    g_print("LOFR string\n");
     for (i=st; i<end; i++) {
+      g_print("vals[%d] is %s\n",i,vals[i]);
+
       if (retval==NULL) tmp=lives_strdup_printf("\"%s\"",(tmp2=subst(vals[i],"\"","\\\"")));
       else {
         tmp=lives_strdup_printf("%s,\"%s\"",retval,(tmp2=subst(vals[i],"\"","\\\"")));
@@ -398,6 +405,7 @@ static char *lives_osc_format_result(weed_plant_t *plant, const char *key, int s
       lives_free(vals[i]);
     }
     lives_free(vals);
+    g_print("String is %s\n",retval);
     break;
   }
   }
@@ -3294,6 +3302,8 @@ grpinvalid:
       x++;
     }
 
+    g_print("Set %d %s\n",nargs,valuess[0]);
+    
 
     if (inst!=NULL) {
       filter_mutex_lock(key);
@@ -3823,7 +3833,7 @@ boolean lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *var
   default:
     return lives_osc_notify_failure();
   }
-
+  
   lives_status_send(retval);
   return TRUE;
 }

@@ -2784,6 +2784,9 @@ void do_keys_window(void) {
   pair_add(textwindow->table,(tmp=lives_strdup(_("ctrl-0"))),(tmp2=lives_strdup(_("real-time effects off\n"))));
   lives_free(tmp);
   lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("x"))),(tmp2=lives_strdup(_("swap background/foreground\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
   pair_add(textwindow->table,(tmp=lives_strdup(("\n"))),NULL);
   lives_free(tmp);
   pair_add(textwindow->table,(tmp=lives_strdup(_("k"))),(tmp2=lives_strdup(_("grab keyboard for last activated effect\n"))));
@@ -2792,7 +2795,10 @@ void do_keys_window(void) {
   pair_add(textwindow->table,(tmp=lives_strdup(_("m"))),(tmp2=lives_strdup(_("switch effect mode (when effect has keyboard grab)\n"))));
   lives_free(tmp);
   lives_free(tmp2);
-  pair_add(textwindow->table,(tmp=lives_strdup(_("x"))),(tmp2=lives_strdup(_("swap background/foreground\n"))));
+  pair_add(textwindow->table,(tmp=lives_strdup(_("t"))),(tmp2=lives_strdup(_("enter text parameter (when effect has keyboard grab)\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table,(tmp=lives_strdup(_("tab"))),(tmp2=lives_strdup(_("leave text parameter (when effect has keyboard grab)\n"))));
   lives_free(tmp);
   lives_free(tmp2);
   pair_add(textwindow->table,(tmp=lives_strdup(_("f1"))),(tmp2=lives_strdup(_("store/switch to clip mnemonic 1\n"))));

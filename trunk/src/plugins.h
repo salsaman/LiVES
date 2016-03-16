@@ -78,9 +78,6 @@ typedef struct {
   ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
   const weed_plant_t **(*get_play_params)(weed_bootstrap_f f);
 
-  // only for display plugins
-  boolean(*send_keycodes)(plugin_keyfunc);
-
   // optional for YUV palettes
   int *(*get_yuv_palette_sampling)(int palette);
   int *(*get_yuv_palette_clamping)(int palette);

@@ -1,6 +1,6 @@
 // keyboard.h
 // LiVES
-// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
 // see file ../COPYING for licensing details
 
 
@@ -22,15 +22,21 @@ uint16_t cached_mod;
 #define key_down2 116
 
 
+boolean key_press_or_release(LiVESWidget *, LiVESXEventKey *, livespointer); ///< wrapper for pl_key_function
+
 boolean ext_triggers_poll(livespointer); ///< poll for external playback start
 
 #if defined HAVE_X11 || defined IS_MINGW
-LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespointer data);
+LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespointer data); ///< unused ?
 #endif
 
-boolean plugin_poll_keyboard(void);
+void handle_cached_keys(void); ///< smooth the key repeat for scratching
 
-boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod);
+boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod); ///< all funky stuff with keys
+
+
+//////////////////////// callbacks ////////////////////////////////////////////
+
 
 boolean faster_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 

@@ -1,6 +1,6 @@
 // keyboard.c
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -89,9 +89,6 @@ boolean ext_triggers_poll(livespointer data) {
 #endif
   }
 
-
-  if (mainw->playing_file>-1) plugin_poll_keyboard(); ///< keyboard control during playback
-
   // check for external controller events
 #ifdef ENABLE_JACK
 #ifdef ENABLE_JACK_TRANSPORT
@@ -117,6 +114,12 @@ LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespoi
   // filter events at X11 level and act on key press/release
   uint32_t modifiers=0;
   uint32_t key;
+
+
+  return LIVES_FILTER_CONTINUE; // this is most likely handled in key_press_or_release() now
+
+
+
 
 #ifndef IS_MINGW
   // seems to broken in some cases - X does not send keypress/keyrelease events
@@ -191,32 +194,27 @@ bool nevfilter::nativeEventFilter(const QByteArray &eventType, livespointer mess
 
 #endif
 
-boolean plugin_poll_keyboard(void) {
+
+
+
+boolean key_press_or_release(LiVESWidget *widget, LiVESXEventKey *event, livespointer user_data) {
+  return pl_key_function(event->type==LIVES_KEY_PRESS,event->keyval,event->state);
+}
+
+
+
+void handle_cached_keys(void) {
+  // smooth out auto repeat for VJ scratch keys
+
   static int last_kb_time=0,current_kb_time;
-
-  // this is a function which should be called periodically during playback.
-  // If a video playback plugin has control of the keyboard
-  // (e.g fullscreen video playback plugins)
-  // it will be asked to send keycodes via pl_key_function
-
-  // as of LiVES 1.1.0, this is now called 10 times faster to provide lower latency for
-  // OSC and external controllers
-
-
-  if (mainw->ext_keyboard) {
-    //let plugin call pl_key_function itself, with any keycodes it has received
-    if (mainw->vpp->send_keycodes!=NULL)(*mainw->vpp->send_keycodes)(pl_key_function);
-  }
 
   current_kb_time=mainw->currticks*(1000/U_SEC_RATIO);
 
-  // we also auto-repeat our cached keys
   if (cached_key&&current_kb_time-last_kb_time>KEY_RPT_INTERVAL*10) {
     last_kb_time=current_kb_time;
     lives_accel_groups_activate(LIVES_WIDGET_OBJECT(mainw->LiVES),(uint32_t)cached_key, (LiVESXModifierType)cached_mod);
   }
 
-  return TRUE;
 }
 
 
@@ -227,9 +225,10 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
   // (via a polling mechanism)
 
   // mask for ctrl and alt
-  LiVESXModifierType state=(LiVESXModifierType)(keymod&(LIVES_CONTROL_MASK|LIVES_ALT_MASK));
+  //LiVESXModifierType state=(LiVESXModifierType)(keymod&(LIVES_CONTROL_MASK|LIVES_ALT_MASK));
 
-  // hmmm...only works with GTK+2.x
+  // down is a press, up is a release
+
 
   if (!down) {
     // up...
@@ -256,11 +255,10 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     } else {
       if (cached_key==unicode) cached_key=0;
     }
-    return FALSE;
   }
 
   // translate hardware code into gdk keyval, and call any accelerators
-  if (keymod&NEEDS_TRANSLATION) {
+  if (down&&(keymod&NEEDS_TRANSLATION)) {
     switch (unicode) {
     // some keys need translating when a modifier is held down
     case (65) :
@@ -371,51 +369,46 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     }
   }
 
-  if ((unicode==LIVES_KEY_Left||unicode==LIVES_KEY_Right||unicode==LIVES_KEY_Up||unicode==LIVES_KEY_Down)&&
+  if (down&&(unicode==LIVES_KEY_Left||unicode==LIVES_KEY_Right||unicode==LIVES_KEY_Up||unicode==LIVES_KEY_Down)&&
       (keymod&LIVES_CONTROL_MASK)) {
     cached_key=unicode;
     cached_mod=LIVES_CONTROL_MASK;
   }
+
 
   if (mainw->rte_textparm!=NULL&&(keymod==0||keymod==LIVES_SHIFT_MASK||keymod==LIVES_LOCK_MASK)) {
     if (unicode==LIVES_KEY_Return||unicode==13) unicode='\n'; // CR
     if (unicode==LIVES_KEY_BackSpace) unicode=8; // bs
     if (unicode==LIVES_KEY_Tab||unicode==9) mainw->rte_textparm=NULL;
     else if (unicode>0&&unicode<256) {
-      weed_plant_t *inst;
-      int param_number,copyto;
-      int error;
-      char *nval;
-      char *cval=weed_get_string_value(mainw->rte_textparm,WEED_LEAF_VALUE,&error);
-      if (unicode==8&&strlen(cval)>0) {
-        memset(cval+strlen(cval)-1,0,1); // delete 1 char
-        nval=lives_strdup(cval);
-      } else nval=lives_strdup_printf("%s%c",cval,(unsigned char)unicode); // append 1 char
-      lives_free(cval);
-      weed_set_string_value(mainw->rte_textparm,WEED_LEAF_VALUE,nval);
-      inst=weed_get_plantptr_value(mainw->rte_textparm,WEED_LEAF_HOST_INSTANCE,&error);
-      param_number=weed_get_int_value(mainw->rte_textparm,WEED_LEAF_HOST_IDX,&error);
-      copyto=set_copy_to(inst,param_number,TRUE);
-      if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-        // if we are recording, add this change to our event_list
-        rec_param_change(inst,param_number);
-        if (copyto!=-1) rec_param_change(inst,copyto);
+      if (down) {
+        weed_plant_t *inst;
+        int param_number,copyto;
+        int error;
+        char *nval;
+        char *cval=weed_get_string_value(mainw->rte_textparm,WEED_LEAF_VALUE,&error);
+        if (unicode==8&&strlen(cval)>0) {
+          memset(cval+strlen(cval)-1,0,1); // delete 1 char
+          nval=lives_strdup(cval);
+        } else nval=lives_strdup_printf("%s%c",cval,(unsigned char)unicode); // append 1 char
+        lives_free(cval);
+        weed_set_string_value(mainw->rte_textparm,WEED_LEAF_VALUE,nval);
+        inst=weed_get_plantptr_value(mainw->rte_textparm,WEED_LEAF_HOST_INSTANCE,&error);
+        param_number=weed_get_int_value(mainw->rte_textparm,WEED_LEAF_HOST_IDX,&error);
+        copyto=set_copy_to(inst,param_number,TRUE);
+        if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+          // if we are recording, add this change to our event_list
+          rec_param_change(inst,param_number);
+          if (copyto!=-1) rec_param_change(inst,copyto);
+        }
+        lives_free(nval);
       }
-      lives_free(nval);
       return TRUE;
     }
   }
 
-  if (mainw->ext_keyboard) {
-    if (cached_key) return FALSE;
-    if (mainw->multitrack==NULL) lives_accel_groups_activate(LIVES_WIDGET_OBJECT(mainw->LiVES),(uint32_t)unicode,state);
-    else lives_accel_groups_activate(LIVES_WIDGET_OBJECT(mainw->multitrack->window),(uint32_t)unicode,state);
-    if (!mainw->ext_keyboard) return TRUE; // if user switched out of ext_keyboard, do no further processing *
-  }
-
   return FALSE;
 
-  // * function was disabled so we must exit
 }
 
 

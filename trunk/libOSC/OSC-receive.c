@@ -815,7 +815,7 @@ Boolean NetworkReceivePacket(OSCPacketBuffer packet) {
   int n;
   NetworkReturnAddressPtr na = OSCPacketBufferGetClientAddr(packet);
 
-  n = recvfrom(na->sockfd, packet->buf, bufflen, 0,
+  n = recvfrom(na->sockfd, packet->buf, OSC_BUFFLEN, 0,
                (struct sockaddr *) &(na->cl_addr), &(na->clilen));
 
   if (n<=0) {

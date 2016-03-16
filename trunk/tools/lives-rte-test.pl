@@ -312,7 +312,7 @@ for ($j=0;;$j++) {
 	    if ($ptype==3) {
 		#string
 		$pmin="\"hello \\\"world\\\"!\"";
-		if ($pdef eq "") {
+		if ($pdef eq "\"\"") {
 		    $pdef="\" \"";
 		}
 	    }
@@ -362,7 +362,7 @@ for ($j=0;;$j++) {
 	}
 
 	    
-	    print("reset to def value[$ptype]: $pval ($pdef)\n");
+	    print("reset to def value: $pval\n");
 	    
 	    
 	    # sleep 0.2 seconds

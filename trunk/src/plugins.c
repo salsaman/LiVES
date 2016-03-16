@@ -660,6 +660,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
           if (!strcmp(cur_pal,weed_palette_get_name(pal_list[i]))) {
             vpp->palette=pal_list[i];
             if (mainw->ext_playback) {
+              lives_grab_remove(mainw->LiVES);
               mainw->ext_keyboard=FALSE;
               if (mainw->vpp->exit_screen!=NULL) {
                 (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
@@ -700,6 +701,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
               if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&prefs->play_monitor==0) {
                 lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window),TRUE);
                 mainw->ext_keyboard=TRUE;
+                lives_grab_add(mainw->LiVES);
               }
             } else {
               mainw->vpp->palette=pal_list[i];
@@ -1079,6 +1081,7 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
   if (vpp!=NULL) {
     if (vpp==mainw->vpp) {
       mainw->ext_keyboard=FALSE;
+      lives_grab_remove(mainw->LiVES);
       if (mainw->ext_playback) {
         if (mainw->vpp->exit_screen!=NULL)
           (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
@@ -1237,7 +1240,6 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   vpp->get_yuv_palette_clamping=(int *(*)(int))dlsym(handle,"get_yuv_palette_clamping");
   vpp->set_yuv_palette_clamping=(int (*)(int))dlsym(handle,"set_yuv_palette_clamping");
-  vpp->send_keycodes=(boolean(*)(plugin_keyfunc))dlsym(handle,"send_keycodes");
   vpp->get_audio_fmts=(int *(*)())dlsym(handle,"get_audio_fmts");
   vpp->init_screen=(boolean(*)(int, int, boolean, uint64_t, int, char **))dlsym(handle,"init_screen");
   vpp->exit_screen=(void (*)(uint16_t, uint16_t))dlsym(handle,"exit_screen");
@@ -1403,11 +1405,6 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     vpp->play_params[i]=NULL;
   }
 
-  if (vpp->send_keycodes==NULL&&vpp->capabilities&VPP_LOCAL_DISPLAY) {
-    d_print
-    (_("\nWarning ! Video playback plugin will not send key presses. Keyboard may be disabled during plugin use !\n"));
-  }
-
   cached_key=cached_mod=0;
 
   d_print(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,
@@ -1432,6 +1429,7 @@ void vid_playback_plugin_exit(void) {
   // external plugin
   if (mainw->ext_playback) {
     mainw->ext_keyboard=FALSE;
+    lives_grab_remove(mainw->LiVES);
     if (mainw->vpp->exit_screen!=NULL)(*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 #ifdef RT_AUDIO
     stop_audio_stream();

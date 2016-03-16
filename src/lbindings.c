@@ -1864,7 +1864,7 @@ boolean idle_select_all(int cnum, ulong id) {
   iipref *data;
 
   if (mainw==NULL||((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))&&
-		    mainw->multitrack==NULL)||mainw->go_away||
+                    mainw->multitrack==NULL)||mainw->go_away||
       mainw->is_processing) return FALSE;
 
   data=(iipref *)lives_malloc(sizeof(iipref));
@@ -1879,7 +1879,7 @@ boolean idle_select_start(int cnum, int frame, ulong id) {
   iipref *data;
 
   if (mainw==NULL||((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))&&
-		    mainw->multitrack==NULL)||mainw->go_away||
+                    mainw->multitrack==NULL)||mainw->go_away||
       mainw->is_processing) return FALSE;
 
   data=(iipref *)lives_malloc(sizeof(iipref));
@@ -1896,7 +1896,7 @@ boolean idle_select_end(int cnum, int frame, ulong id) {
   iipref *data;
 
   if (mainw==NULL||((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&(!mainw->record||mainw->playing_file==-1)))&&
-		    mainw->multitrack==NULL)||mainw->go_away||
+                    mainw->multitrack==NULL)||mainw->go_away||
       mainw->is_processing) return FALSE;
 
   data=(iipref *)lives_malloc(sizeof(iipref));

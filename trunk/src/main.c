@@ -934,7 +934,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->audio_event=NULL;
 
   mainw->did_rfx_preview=FALSE;
-  mainw->invis=NULL;
 
   prefsw=NULL;
   rdet=NULL;

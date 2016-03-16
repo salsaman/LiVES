@@ -2514,30 +2514,28 @@ void redraw_pwindow(int key, int mode) {
   LiVESList *child_list;
   lives_rfx_t *rfx;
 
-  LiVESWidget *content_area;
+  LiVESWidget *content_area,*button;
 
   int keyw=0,modew=0;
   int i;
 
   if (fx_dialog[1]!=NULL) {
     rfx=(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"rfx");
+    button=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"button");
     if (!rfx->is_template) {
       keyw=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"key"));
       modew=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"mode"));
     }
     if (rfx->is_template||(key==keyw&&mode==modew)) {
       // rip out the contents
-      if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
       content_area=lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]));
       child_list=lives_container_get_children(LIVES_CONTAINER(content_area));
       // remove focus from any widget we are ripping out
       lives_container_set_focus_child(LIVES_CONTAINER(content_area),NULL);
       for (i=0; i<lives_list_length(child_list); i++) {
         LiVESWidget *widget=(LiVESWidget *)lives_list_nth_data(child_list,i);
-        // we have to do this, because using lives_widget_destroy() here
-        // can causes a crash [bug in gtk+ ???]
-        // TODO - test: is this still the case ?
-        lives_widget_reparent(widget,mainw->invis);
+	if (lives_widget_is_ancestor(LIVES_WIDGET(button),widget)) continue;
+        lives_widget_destroy(widget);
       }
       if (child_list!=NULL) lives_list_free(child_list);
       on_paramwindow_cancel_clicked(NULL,NULL);
@@ -2774,17 +2772,14 @@ resetdefs1:
 
   // redraw the window
 
-  if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
   content_area=lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]));
   child_list=lives_container_get_children(LIVES_CONTAINER(content_area));
   // remove focus from any widget we are ripping out
   lives_container_set_focus_child(LIVES_CONTAINER(content_area),NULL);
   for (i=0; i<lives_list_length(child_list); i++) {
     LiVESWidget *widget=(LiVESWidget *)lives_list_nth_data(child_list,i);
-    // we have to do this, because using lives_widget_destroy() here
-    // can causes a crash [bug in gtk+ ???]
-    // TODO - test: is this still the case ?
-    lives_widget_reparent(widget,mainw->invis);
+    if (lives_widget_is_ancestor(LIVES_WIDGET(button),widget)) continue;
+    lives_widget_destroy(widget);
   }
 
   if (child_list!=NULL) lives_list_free(child_list);

@@ -215,6 +215,10 @@ Boolean NetworkStartUDPServer(OSCPacketBuffer packet, int port_id);
 
 Boolean NetworkPacketWaiting(OSCPacketBuffer packet);
 
+
+
+#define OSC_BUFFLEN 2048
+
 /**************************************************
    How to use this stuff
  **************************************************/

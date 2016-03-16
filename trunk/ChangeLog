@@ -11,6 +11,8 @@ Fix bug with layout reloading after crash.
 Fix bugs in setting in/out points in multitrack.
 Fix showing of textbuffer parameters in effect windows (regression).
 Fix possible minor memory leak when applying inplace effects (regression).
+Fix crash / bug in MIDI / joystick learner.
+Fix bug which prevented OSC clip changes during recording.
 Improvements to edge detect filter.
 Compatibility updates for ffmpeg 2.9+
 Add qtrle format and quality settings to ffmpeg_encoder.

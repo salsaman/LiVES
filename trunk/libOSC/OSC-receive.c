@@ -59,6 +59,8 @@ The OpenSound Control WWW page is
 #include <arpa/inet.h>
 #endif
 
+#include <fcntl.h>
+
 #include <libOSC/OSC-common.h>
 #include <libOSC/OSC-timetag.h>
 #include <libOSC/OSC-address-space.h>
@@ -74,8 +76,6 @@ The OpenSound Control WWW page is
 #ifdef IS_SOLARIS
 #include <sys/filio.h>
 #endif
-
-
 
 struct {
   OSCQueue TheQueue;		/* The Priority Queue */
@@ -226,7 +226,7 @@ static Boolean InitPackets(int receiveBufferSize, int clientAddrSize, int numRec
     allPackets[i].returnAddr = (*(globals.InitTimeMalloc))(clientAddrSize);
     if (allPackets[i].returnAddr == 0) return FALSE;
 
-    allPackets[i].buf = (*(globals.InitTimeMalloc))(receiveBufferSize);
+    allPackets[i].buf = (*(globals.InitTimeMalloc))(OSC_BUFFLEN);
     if (allPackets[i].buf == 0) return FALSE;
 
     allPackets[i].nextFree = &(allPackets[i+1]);
@@ -809,17 +809,21 @@ Boolean NetworkPacketWaiting(OSCPacketBuffer packet) {
   return TRUE;
 }
 
+
+
 Boolean NetworkReceivePacket(OSCPacketBuffer packet) {
   int n;
   NetworkReturnAddressPtr na = OSCPacketBufferGetClientAddr(packet);
 
-  n = recvfrom(na->sockfd, packet->buf, 100, 0,
+  n = recvfrom(na->sockfd, packet->buf, bufflen, 0,
                (struct sockaddr *) &(na->cl_addr), &(na->clilen));
+
   if (n<=0) {
     return FALSE;
   }
+  
   packet->n = n;
-
+  
   return TRUE;
 }
 

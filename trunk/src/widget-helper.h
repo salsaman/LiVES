@@ -597,6 +597,7 @@ boolean lives_grid_remove_row(LiVESGrid *, int posn);
 
 LiVESWidget *lives_frame_new(const char *label);
 boolean lives_frame_set_label(LiVESFrame *, const char *label);
+boolean lives_frame_set_label_align(LiVESFrame *, float xalign, float yalign);
 boolean lives_frame_set_label_widget(LiVESFrame *, LiVESWidget *);
 LiVESWidget *lives_frame_get_label_widget(LiVESFrame *);
 boolean lives_frame_set_shadow_type(LiVESFrame *, LiVESShadowType);
@@ -726,6 +727,8 @@ boolean lives_window_set_auto_startup_notification(boolean set);
 
 LiVESWidget *lives_standard_label_new(const char *text);
 LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget);
+
+LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invisible_outline);
 
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, LiVESBox *box, const char *tooltip);
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList *rbgroup,

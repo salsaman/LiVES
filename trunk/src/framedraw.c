@@ -165,12 +165,11 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   // after calling this function
 
   // an example of this is in 'trim frames'
+  LiVESAdjustment *spinbutton_adj;
 
   LiVESWidget *vseparator;
   LiVESWidget *vbox;
   LiVESWidget *hbox;
-  LiVESWidget *label;
-  LiVESAdjustment *spinbutton_adj;
   LiVESWidget *frame;
 
   lives_rfx_t *rfx;
@@ -199,22 +198,19 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   fbord_eventbox=lives_event_box_new();
   lives_container_set_border_width(LIVES_CONTAINER(fbord_eventbox),widget_opts.border_width);
 
-  frame = lives_frame_new(NULL);
+  frame = lives_standard_frame_new(_("Preview"),0.,TRUE);
 
-  lives_box_pack_start(LIVES_BOX(hbox), frame, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(fbord_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
+  lives_box_pack_start(LIVES_BOX(hbox), frame, TRUE, TRUE, 0);
 
   mainw->fd_frame=frame;
 
-  label = lives_standard_label_new(_("Preview"));
-  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_container_set_border_width(LIVES_CONTAINER(hbox),0);
+  lives_container_add(LIVES_CONTAINER(frame), hbox);
 
-  lives_frame_set_shadow_type(LIVES_FRAME(frame), LIVES_SHADOW_NONE);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
 
   mainw->framedraw=lives_event_box_new();
   lives_widget_set_size_request(mainw->framedraw, width, height);
@@ -225,7 +221,9 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 
   mainw->framedraw_frame=start;
 
-  lives_container_add(LIVES_CONTAINER(frame), fbord_eventbox);
+  lives_box_pack_start(LIVES_BOX(hbox), fbord_eventbox, FALSE, FALSE, 0);
+
+  //lives_container_add(LIVES_CONTAINER(frame), fbord_eventbox);
   lives_container_add(LIVES_CONTAINER(fbord_eventbox), mainw->framedraw);
 
   if (palette->style&STYLE_1) {
@@ -238,7 +236,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 
 
   hbox = lives_hbox_new(FALSE, 2);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   mainw->framedraw_spinbutton = lives_standard_spin_button_new(_("_Frame"),
                                 TRUE,start,start,end,1.,10.,0,LIVES_BOX(hbox),NULL);
@@ -679,6 +677,7 @@ void redraw_framedraw_image(void) {
 
   // layer to pixbuf
   pixbuf=layer_to_pixbuf(mainw->fd_layer);
+
 
   // get lives_painter for window
   cr = lives_painter_create_from_widget(mainw->framedraw);

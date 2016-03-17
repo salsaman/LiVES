@@ -5159,23 +5159,17 @@ void rdetw_spinf_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
 
 LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget **spheight, int defheight,
                                LiVESWidget **spfps, double deffps, boolean add_aspect) {
+
+
+  // add video options to multitrack enter, etc
   static lives_param_t aspect_width,aspect_height;
 
-  LiVESWidget *vbox,*hbox,*label;
+  LiVESWidget *vbox,*hbox;
 
-  LiVESWidget *frame = lives_frame_new(NULL);
-
-  lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
+  LiVESWidget *frame = lives_standard_frame_new(_("Video"),0.,FALSE);
 
   vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(frame), vbox);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-
-  label = lives_standard_label_new(_("Video"));
-  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
 
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width*5);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);

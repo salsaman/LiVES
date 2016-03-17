@@ -3006,7 +3006,7 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw->scrollw_right_playback = lives_standard_scrolled_window_new(0,0,prefsw->vbox_right_playback);
 
-  frame = lives_frame_new(NULL);
+  frame = lives_standard_frame_new(_("VIDEO"),0.,FALSE);
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_playback), frame, FALSE, FALSE, widget_opts.packing_height);
 
@@ -3107,19 +3107,17 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw_set_rec_after_settings(mainw->vpp);
 
-  label = lives_standard_label_new(_("VIDEO"));
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_fg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
-
 
   //-
 
-  frame = lives_frame_new(NULL);
+  frame = lives_standard_frame_new(_("AUDIO"),0.,FALSE);
+
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_playback), frame, TRUE, TRUE, 0);
 
   vbox = lives_vbox_new(FALSE, 0);
@@ -3258,11 +3256,6 @@ _prefsw *create_prefs_dialog(void) {
 
 
 
-  label = lives_standard_label_new(_("AUDIO"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
 
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_playback.png", NULL);
   pixbuf_playback = lives_pixbuf_new_from_file(icon, NULL);
@@ -4196,9 +4189,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_list_free_all(&themes);
 
   //
-  frame = lives_frame_new(NULL);
-  label = lives_standard_label_new(_("Main Theme Details"));
-  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
+  frame = lives_standard_frame_new(_("Main Theme Details"),0.,FALSE);
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_themes), frame, TRUE, TRUE, widget_opts.packing_height);
 
@@ -4395,10 +4386,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton),"filesel_type",LIVES_INT_TO_POINTER(LIVES_FILE_SELECTION_IMAGE_ONLY));
 
 
-
-  frame = lives_frame_new(NULL);
-  label = lives_standard_label_new(_("Extended Theme Details"));
-  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
+  frame = lives_standard_frame_new(_("Extended Theme Details"),0.,FALSE);
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_themes), frame, TRUE, TRUE, widget_opts.packing_height);
 

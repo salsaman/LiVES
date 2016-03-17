@@ -87,22 +87,15 @@ static void pv_sel_changed(LiVESFileChooser *chooser, livespointer user_data) {
 
 void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint, int preview_type) {
   LiVESWidget *preview_button=NULL;
-  LiVESWidget *fs_label;
-
 
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE||preview_type==LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
-    mainw->fs_playframe = lives_frame_new(NULL);
+    mainw->fs_playframe = lives_standard_frame_new(_("Preview"),0.5,FALSE);
     mainw->fs_playalign = lives_alignment_new(0.,0.,1.,1.);
     mainw->fs_playarea = lives_event_box_new();
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea),"pixbuf",NULL);
 
     lives_container_set_border_width(LIVES_CONTAINER(mainw->fs_playframe), widget_opts.border_width);
-
-    widget_opts.justify=LIVES_JUSTIFY_RIGHT;
-    fs_label = lives_standard_label_new(_("Preview"));
-    widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-    lives_frame_set_label_widget(LIVES_FRAME(mainw->fs_playframe), fs_label);
 
     lives_box_pack_start(for_preview, mainw->fs_playframe, FALSE, FALSE, 0);
 
@@ -367,13 +360,10 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(filew->dialog));
 
   if (cfile->frames>0||is_mt) {
-    vidframe = lives_frame_new(NULL);
-    lives_container_set_border_width(LIVES_CONTAINER(vidframe), widget_opts.border_width);
+
+    vidframe = lives_standard_frame_new(_("Video"),0.,FALSE);
 
     lives_box_pack_start(LIVES_BOX(dialog_vbox), vidframe, TRUE, TRUE, widget_opts.packing_height);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(vidframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    }
 
     table=lives_table_new(3,4,TRUE);
 
@@ -448,26 +438,18 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
                        (LiVESAttachOptions)(0), 0, 0);
 
 
-    label = lives_standard_label_new(_("Video"));
-    lives_frame_set_label_widget(LIVES_FRAME(vidframe), label);
   }
 
   if (audio_channels>0) {
-    laudframe = lives_frame_new(NULL);
-    lives_container_set_border_width(LIVES_CONTAINER(laudframe), widget_opts.border_width);
+    char *tmp;
+
+    if (audio_channels>1) tmp=lives_strdup(_("Left Audio"));
+    else tmp=lives_strdup(_("Audio"));
+
+    laudframe = lives_standard_frame_new(tmp,0.,FALSE);
+    lives_free(tmp);
 
     lives_box_pack_start(LIVES_BOX(dialog_vbox), laudframe, TRUE, TRUE, widget_opts.packing_height);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(laudframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    }
-
-    if (audio_channels>1) {
-      label = lives_standard_label_new(_("Left Audio"));
-    } else {
-      label = lives_standard_label_new(_("Audio"));
-    }
-
-    lives_frame_set_label_widget(LIVES_FRAME(laudframe), label);
 
     table=lives_table_new(1,4,TRUE);
 
@@ -501,16 +483,9 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
 
     if (audio_channels>1) {
-      raudframe = lives_frame_new(NULL);
-      lives_container_set_border_width(LIVES_CONTAINER(raudframe), widget_opts.border_width);
+      raudframe = lives_standard_frame_new(_("Right Audio"),0.,FALSE);
 
       lives_box_pack_start(LIVES_BOX(dialog_vbox), raudframe, TRUE, TRUE, widget_opts.packing_height);
-      if (palette->style&STYLE_1) {
-        lives_widget_set_bg_color(raudframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-      }
-
-      label = lives_standard_label_new(_("Right audio"));
-      lives_frame_set_label_widget(LIVES_FRAME(raudframe), label);
 
       table=lives_table_new(1,4,TRUE);
 

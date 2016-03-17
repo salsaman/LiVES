@@ -61,6 +61,13 @@
 /// char width of start / end spinbuttons
 #define SPBWIDTHCHARS 12
 
+
+/// char width of framecounter
+#define FCWIDTHCHARS 18
+
+/// char width of preview spinbutton
+#define PREVSBWIDTHCHARS 8
+
 #define MIN_SEPWIN_WIDTH 600
 #define MIN_SEPWIN_HEIGHT 36
 

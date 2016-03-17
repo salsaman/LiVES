@@ -1229,14 +1229,9 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
   } else vboxx=top_vbox;
 
   if (type==1) {
-    frame = lives_frame_new(NULL);
-    lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
+    frame = lives_standard_frame_new(_("Current"),0.,FALSE);
 
     lives_box_pack_start(LIVES_BOX(vboxx), frame, TRUE, TRUE, 0);
-
-    if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    }
 
     hbox2 = lives_hbox_new(FALSE, 0);
     lives_container_add(LIVES_CONTAINER(frame), hbox2);
@@ -1318,24 +1313,19 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_widget_set_sensitive(radiobutton_b1, FALSE);
     lives_widget_set_sensitive(radiobutton_l1, FALSE);
 
-    label = lives_standard_label_new(_("Current"));
-
-    lives_frame_set_label_widget(LIVES_FRAME(frame), label);
-
   }
 
   resaudw->aud_checkbutton = NULL;
 
   if (type<9||type==11) {
-    frame = lives_frame_new(NULL);
-    lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
+    if (type>=3&&type!=11) tmp=lives_strdup(_("Audio"));
+    else tmp=lives_strdup(_("New"));
+
+    frame = lives_standard_frame_new(tmp,0.,FALSE);
+    lives_free(tmp);
 
     if (type==4) lives_box_pack_start(LIVES_BOX(vboxx), frame, FALSE, FALSE, widget_opts.packing_height);
     else lives_box_pack_start(LIVES_BOX(vboxx), frame, TRUE, TRUE, 0);
-
-    if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    }
 
     vbox2 = lives_vbox_new(FALSE, 0);
     lives_container_add(LIVES_CONTAINER(frame), vbox2);
@@ -1488,23 +1478,12 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
                          LIVES_GUI_CALLBACK(on_resaudw_asamps_changed),
                          NULL);
 
-    if (type>=3&&type!=11) label_aud = lives_standard_label_new(_("Audio"));
-    else label_aud = lives_standard_label_new(_("New"));
-
-    if (type==3&&type!=11&&palette->style&STYLE_1) lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-    lives_frame_set_label_widget(LIVES_FRAME(frame), label_aud);
 
   }
 
   if (type>7&&type!=11) {
-    frame = lives_frame_new(NULL);
-    lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
+    frame = lives_standard_frame_new(_("Video"),0.,FALSE);
     lives_box_pack_start(LIVES_BOX(vboxx), frame, TRUE, TRUE, 0);
-
-    if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    }
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_container_add(LIVES_CONTAINER(frame), hbox);
@@ -1514,10 +1493,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     resaudw->fps_spinbutton = lives_standard_spin_button_new(_("_Frames Per Second "),TRUE,
                               prefs->default_fps,1.,FPS_MAX,1.,1.,3,LIVES_BOX(hbox),NULL);
 
-
-    label = lives_standard_label_new(_("Video"));
-
-    lives_frame_set_label_widget(LIVES_FRAME(frame), label);
   }
 
   if (type>4&&type!=11) {

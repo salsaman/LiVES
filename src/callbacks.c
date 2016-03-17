@@ -6941,6 +6941,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     unpaint_lines(mainw->multitrack);
     mainw->multitrack->redraw_block=TRUE; // stop pb cursor from updating
     mt_show_current_frame(mainw->multitrack, FALSE);
+    mainw->multitrack->redraw_block=FALSE;
   }
 
   fnamex=lives_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png",NULL);

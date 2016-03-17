@@ -834,6 +834,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       mainw->framedraw_frame=cfile->start;
       widget_add_framedraw(LIVES_VBOX(pbox),cfile->start,cfile->end,!(rfx->props&RFX_PROPS_MAY_RESIZE),
                            cfile->hsize,cfile->vsize);
+
     } else {
       if (!(rfx->props&RFX_PROPS_BATCHG)) {
         mainw->framedraw_frame=0;

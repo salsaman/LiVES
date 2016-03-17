@@ -972,7 +972,7 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
 
   char *widget_name,*wname;
   char *colref;
-  char *css_string;
+  char *css_string,*tmp;
   char *state_str;
 
   gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
@@ -1021,10 +1021,15 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
 
   css_string=g_strdup_printf(" %s {\n background-color: %s;\n }\n }\n",wname,colref);
 
+  if (GTK_IS_FRAME(widget)) {
+    tmp=lives_strdup_printf("%s %s label {\n background-color: %s;\n }\n }\n",css_string,wname,colref);
+    lives_free(css_string);
+    css_string=tmp;
+  }
+
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                   css_string,
                                   -1, NULL);
-
 
 
 
@@ -5764,6 +5769,11 @@ LIVES_INLINE LiVESWidget *lives_entry_new(void) {
 
 
 LIVES_INLINE boolean lives_entry_set_max_length(LiVESEntry *entry, int len) {
+#if GTK_CHECK_VERSION(3,12,0)
+  int chars=gtk_entry_get_width_chars(entry);
+  if (chars!=len)
+    gtk_entry_set_max_width_chars(entry,len);
+#endif
 #ifdef GUI_GTK
   gtk_entry_set_max_length(entry,len);
   return TRUE;
@@ -6728,6 +6738,15 @@ LIVES_INLINE boolean lives_frame_set_label(LiVESFrame *frame, const char *label)
 }
 
 
+LIVES_INLINE boolean lives_frame_set_label_align(LiVESFrame *frame, float xalign, float yalign) {
+#ifdef GUI_GTK
+  gtk_frame_set_label_align(frame,xalign,yalign);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 
 LIVES_INLINE boolean lives_frame_set_label_widget(LiVESFrame *frame, LiVESWidget *widget) {
 #ifdef GUI_GTK
@@ -7486,6 +7505,31 @@ LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidge
   return label;
 }
 
+
+
+LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invis) {
+  LiVESWidget *frame=lives_frame_new(NULL);
+  LiVESWidget *label=NULL;
+
+  lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
+
+  if (labeltext!=NULL) {
+    label=lives_standard_label_new(labeltext);
+    lives_frame_set_label_widget(LIVES_FRAME(frame),label);
+  }
+
+  widget_opts.last_label=label;
+
+  if (invis) lives_frame_set_shadow_type(LIVES_FRAME(frame), LIVES_SHADOW_NONE);
+
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(frame, LIVES_WIDGET_STATE_NORMAL);
+  }
+
+  if (xalign>=0.) lives_frame_set_label_align(LIVES_FRAME(frame),xalign,0.5);
+
+  return frame;
+}
 
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, LiVESBox *box,
     const char *tooltip) {

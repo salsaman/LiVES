@@ -8264,7 +8264,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->hbox, TRUE, TRUE, widget_opts.border_width);
 
   mt->play_blank = lives_image_new_from_pixbuf(mainw->imframe);
-  mt->preview_frame = lives_frame_new(_("Preview"));
+  mt->preview_frame = lives_standard_frame_new(_("Preview"),0.5,FALSE);
   lives_box_pack_start(LIVES_BOX(mt->hbox), mt->preview_frame, FALSE, FALSE, 0);
   mt->fd_frame=mt->preview_frame;
 
@@ -8701,7 +8701,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->poly_state=POLY_NONE;
   polymorph(mt,POLY_CLIPS);
 
-  mt->context_frame = lives_frame_new(_("Info"));
+  mt->context_frame = lives_standard_frame_new(_("Info"),0.5,FALSE);
 
   lives_paned_pack(2, LIVES_PANED(mt->hpaned), mt->context_frame, TRUE, TRUE);
 

@@ -397,7 +397,6 @@ void create_LiVES(void) {
   LiVESWidget *suggest_feature;
   LiVESWidget *help_translate;
   LiVESWidget *vbox4;
-  LiVESWidget *pf_label;
   LiVESWidget *label;
   LiVESWidget *hbox3;
   LiVESWidget *t_label;
@@ -1873,7 +1872,8 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
   lives_entry_set_editable(LIVES_ENTRY(mainw->framecounter), FALSE);
   lives_entry_set_has_frame(LIVES_ENTRY(mainw->framecounter), FALSE);
-  lives_entry_set_width_chars(LIVES_ENTRY(mainw->framecounter), 18);
+
+  lives_entry_set_width_chars(LIVES_ENTRY(mainw->framecounter), FCWIDTHCHARS);
 
   lives_widget_set_can_focus(mainw->framecounter, FALSE);
 
@@ -1883,24 +1883,17 @@ void create_LiVES(void) {
   hbox1 = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox4), hbox1, FALSE, FALSE, 0);
 
-  /*
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(hbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  */
   lives_widget_set_vexpand(hbox1,FALSE);
 
   mainw->eventbox3 = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(hbox1), mainw->eventbox3, TRUE, FALSE, 0);
 
-  mainw->frame1 = lives_frame_new(NULL);
-  lives_container_set_border_width(LIVES_CONTAINER(mainw->frame1), widget_opts.border_width);
+  mainw->frame1 = lives_standard_frame_new(_("First Frame"),0.1,TRUE);
+
   lives_container_add(LIVES_CONTAINER(mainw->eventbox3), mainw->frame1);
 
   lives_widget_set_vexpand(mainw->frame1,FALSE);
   lives_widget_set_hexpand(mainw->frame1,FALSE);
-
-  lives_frame_set_shadow_type(LIVES_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
 
   mainw->freventbox0=lives_event_box_new();
 
@@ -1915,22 +1908,10 @@ void create_LiVES(void) {
   lives_widget_set_vexpand(mainw->start_image,FALSE);
   lives_widget_set_hexpand(mainw->start_image,FALSE);
 
-  label = lives_standard_label_new(_("First Frame"));
-
-  lives_frame_set_label_widget(LIVES_FRAME(mainw->frame1), label);
-
-  mainw->playframe = lives_frame_new(NULL);
+  mainw->playframe = lives_standard_frame_new(_("Play"),0.5,TRUE);
 
   lives_box_pack_start(LIVES_BOX(hbox1), mainw->playframe, TRUE, FALSE, 0);
   lives_widget_set_size_request(mainw->playframe, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
-  lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
-
-
-  lives_frame_set_shadow_type(LIVES_FRAME(mainw->playframe), LIVES_SHADOW_NONE);
-
-  pf_label = lives_standard_label_new(_("Play"));
-
-  lives_frame_set_label_widget(LIVES_FRAME(mainw->playframe), pf_label);
 
   mainw->pl_eventbox = lives_event_box_new();
 
@@ -1948,14 +1929,12 @@ void create_LiVES(void) {
   lives_widget_set_vexpand(mainw->eventbox4,FALSE);
   lives_widget_set_hexpand(mainw->eventbox4,FALSE);
 
-  mainw->frame2 = lives_frame_new(NULL);
-  lives_container_set_border_width(LIVES_CONTAINER(mainw->frame2), widget_opts.border_width);
+  mainw->frame2 = lives_standard_frame_new(_("Last Frame"),0.9,TRUE);
+
   lives_container_add(LIVES_CONTAINER(mainw->eventbox4), mainw->frame2);
 
   lives_widget_set_vexpand(mainw->frame2,FALSE);
   lives_widget_set_hexpand(mainw->frame2,FALSE);
-
-  lives_frame_set_shadow_type(LIVES_FRAME(mainw->frame2), LIVES_SHADOW_NONE);
 
   mainw->freventbox1=lives_event_box_new();
 
@@ -1992,9 +1971,6 @@ void create_LiVES(void) {
   lives_widget_set_vexpand(mainw->play_image,TRUE);
 
   lives_object_ref_sink(mainw->play_image);
-
-  label = lives_standard_label_new(_("Last Frame"));
-  lives_frame_set_label_widget(LIVES_FRAME(mainw->frame2), label);
 
   hbox3 = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox4), hbox3, FALSE, TRUE, 0);
@@ -3011,7 +2987,6 @@ void fade_background(void) {
     if (mainw->sep_win) {
       lives_widget_hide(mainw->playframe);
     }
-    lives_frame_set_shadow_type(LIVES_FRAME(mainw->playframe), LIVES_SHADOW_NONE);
   }
 
   lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
@@ -3022,9 +2997,7 @@ void fade_background(void) {
   lives_widget_set_app_paintable(mainw->freventbox0,FALSE);
   lives_widget_set_app_paintable(mainw->freventbox1,FALSE);
 
-  lives_frame_set_shadow_type(LIVES_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
   lives_frame_set_label(LIVES_FRAME(mainw->frame1), "");
-  lives_frame_set_shadow_type(LIVES_FRAME(mainw->frame2), LIVES_SHADOW_NONE);
   lives_frame_set_label(LIVES_FRAME(mainw->frame2), "");
 
   if (mainw->toy_type!=LIVES_TOY_MAD_FRAMES||mainw->foreign) {
@@ -3440,7 +3413,7 @@ void make_preview_box(void) {
   lives_box_pack_start(LIVES_BOX(mainw->preview_controls), mainw->preview_scale,FALSE, FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->preview_controls), mainw->preview_hbox, FALSE, FALSE, 0);
 
-  lives_entry_set_width_chars(LIVES_ENTRY(mainw->preview_spinbutton),8);
+  lives_entry_set_width_chars(LIVES_ENTRY(mainw->preview_spinbutton),PREVSBWIDTHCHARS);
 
   radiobutton_free=lives_standard_radio_button_new((tmp=lives_strdup(_("_Free"))),TRUE,radiobutton_group,LIVES_BOX(mainw->preview_hbox),
                    (tmp2=lives_strdup(_("Free choice of frame number"))));

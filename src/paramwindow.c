@@ -191,6 +191,15 @@ void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   }
 
   if (button!=NULL) {
+    // prevent a gtk+ crash by removing the focus before detroying the dialog
+    LiVESWidget *toplevel=lives_widget_get_toplevel(LIVES_WIDGET(button));
+    if (LIVES_IS_DIALOG(toplevel)) {
+      LiVESWidget *content_area=lives_dialog_get_content_area(LIVES_DIALOG(toplevel));
+      lives_container_set_focus_child(LIVES_CONTAINER(content_area),NULL);
+    }
+  }
+  
+  if (button!=NULL) {
     lives_general_button_clicked(button,NULL);
   }
   if (rfx==NULL) {

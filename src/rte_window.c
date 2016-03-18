@@ -2531,7 +2531,6 @@ void redraw_pwindow(int key, int mode) {
       content_area=lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]));
       child_list=lives_container_get_children(LIVES_CONTAINER(content_area));
       // remove focus from any widget we are ripping out
-      lives_container_set_focus_child(LIVES_CONTAINER(content_area),NULL);
       for (i=0; i<lives_list_length(child_list); i++) {
         LiVESWidget *widget=(LiVESWidget *)lives_list_nth_data(child_list,i);
         if (lives_widget_is_ancestor(LIVES_WIDGET(button),widget)) continue;

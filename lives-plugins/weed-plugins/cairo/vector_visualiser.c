@@ -58,15 +58,16 @@ static list_ent xlist[MAX_ELEMS];
 static cairo_user_data_key_t crkey;
 
 
+union memtest {
+  int32_t num;
+  char chr[4];
+};
 
-static gboolean is_big_endian() {
-  int testint = 0x12345678;
-  char *pMem=&testint;
-
-  if (pMem[0] == 0x78) {
-    return FALSE;
-  }
-  return TRUE;
+static int is_big_endian() {
+  union memtest mm;
+  mm.num = 0x12345678;
+  if (mm.chr[0] == 0x78) return 0;
+  return 1;
 }
 
 

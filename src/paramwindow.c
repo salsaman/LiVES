@@ -198,7 +198,7 @@ void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
       lives_container_set_focus_child(LIVES_CONTAINER(content_area),NULL);
     }
   }
-  
+
   if (button!=NULL) {
     lives_general_button_clicked(button,NULL);
   }

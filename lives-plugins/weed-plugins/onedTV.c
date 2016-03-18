@@ -135,7 +135,7 @@ int oned_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
 
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
-  
+
   osrc=src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
   dest=weed_get_voidptr_value(out_channel,"pixel_data",&error);
 
@@ -148,17 +148,17 @@ int oned_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   palette = weed_get_int_value(in_channel,"current_palette",&error);
 
   if (palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_ARGB32) psize=4;
-  
+
   size=orow*height;
-  
+
   src += irow  * sdata->line;
 
   pwidth = width * psize;
 
   nlines=weed_get_int_value(in_params[0],"value",&error);
   weed_free(in_params);
-  
-  for (i=0;i<nlines;i++) {
+
+  for (i=0; i<nlines; i++) {
     // blit line(s) to linebuf
     weed_memcpy(sdata->linebuf+sdata->line*orow, src, pwidth);
     src += irow;
@@ -168,15 +168,15 @@ int oned_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       src=osrc;
     }
   }
-  
+
 
   // copy linebuff to dest
   weed_memcpy(dest,sdata->linebuf,size);
 
   // draw green line
   dest += orow * sdata->line;
-  
-  switch(palette) {
+
+  switch (palette) {
   case WEED_PALETTE_RGBA32:
     for (i=0; i<width; i++) {
       dest[0] = 0x00;
@@ -220,7 +220,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *in_params[]= {weed_integer_init("linerate","_Line rate",8,1,1024),NULL};
 
     weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE|WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE
-							      ,palette_list),NULL};
+                                   ,palette_list),NULL
+                                  };
     weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",0,palette_list),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("onedTV","effectTV",1,0,&oned_init,&oned_process,&oned_deinit,in_chantmpls,out_chantmpls,
                                in_params,NULL);

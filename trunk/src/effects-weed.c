@@ -1215,8 +1215,6 @@ static boolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array) {
 }
 
 
-static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) GNU_ALIGN(2);
-
 
 static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
 #ifndef HAVE_POSIX_MEMALIGN

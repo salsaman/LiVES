@@ -118,8 +118,8 @@ if ($command eq "encode") {
 	exit 1;
     }
 
-    if ($audiofile ne "" && &location("ffmpeg") eq "") {
-	print STDERR "You must install ffmpeg with libfaac support in order to encode with audio.\n";
+    if ($audiofile ne "" && &location("ffmpeg") eq "" && &location("avconv") eq "") {
+	print STDERR "You must install ffmpeg or avconv with libfaac support in order to encode with audio.\n";
 	&sig_complete;
 	exit 1;
     }
@@ -191,7 +191,13 @@ if ($command eq "encode") {
 
 
     if ($audiofile ne "") {
-	$syscom="nohup ffmpeg -i audiodump.wav -acodec aac -strict experimental -ab 192k -ar 44100 -threads $threads temp.aac";
+	$tool="ffmpeg";
+
+	if (&location("ffmpeg") eq "") {
+	    $tool="avconv";
+	}
+
+	$syscom="nohup $tool -i audiodump.wav -acodec aac -strict experimental -ab 192k -ar 44100 -threads $threads temp.aac";
 	
 	print STDERR "Encoding audio with:\n$syscom\n";
 

@@ -89,22 +89,29 @@ if ($command eq "get_formats") {
    # means "can only encode at xx.yy frames per second", size=x X y, arate=audio rate 
     # - otherwise set it to 'none'
 
-    $has_mpeg4=(system("ffmpeg -encoders 2>/dev/null | grep \" mpeg4 \" >/dev/null")==0);
-    $has_webm=(system("ffmpeg -encoders 2>/dev/null | grep vpx >/dev/null")==0);
-    $has_qtrle=(system("ffmpeg -encoders 2>/dev/null | grep qtrle >/dev/null")==0);
-    $has_wmv2=(system("ffmpeg -encoders 2>/dev/null | grep wmv2 >/dev/null")==0);
-    $has_ffv1=(system("ffmpeg -encoders 2>/dev/null | grep ffv1 >/dev/null")==0);
-    $has_mjpeg=(system("ffmpeg -encoders 2>/dev/null | grep mjpeg >/dev/null")==0);
-    $has_x264=(system("ffmpeg -encoders 2>/dev/null | grep x264 >/dev/null")==0);
-    $has_flv=(system("ffmpeg -encoders 2>/dev/null | grep flv >/dev/null")==0);
-    $has_3gp=(system("ffmpeg -encoders 2>/dev/null | grep h263 >/dev/null")==0);
+    $tool="ffmpeg";
 
-    $has_aac=(system("ffmpeg -encoders 2>/dev/null | grep aac >/dev/null")==0);
-    $has_vorbis=(system("ffmpeg -encoders 2>/dev/null | grep vorbis >/dev/null")==0);
-    $has_amr=(system("ffmpeg -encoders 2>/dev/null | grep amr >/dev/null")==0);
-    $has_mp3=(system("ffmpeg -encoders 2>/dev/null | grep mp3 >/dev/null")==0);
-    $has_mp2=(system("ffmpeg -encoders 2>/dev/null | grep mp2 >/dev/null")==0);
-    $has_wmav2=(system("ffmpeg -encoders 2>/dev/null | grep wmav2 >/dev/null")==0);
+    if (&location("ffmpeg") eq "") {
+	$tool="avconv";
+    }
+
+
+    $has_mpeg4=(system("$tool -encoders 2>/dev/null | grep \" mpeg4 \" >/dev/null")==0);
+    $has_webm=(system("$tool -encoders 2>/dev/null | grep vpx >/dev/null")==0);
+    $has_qtrle=(system("$tool -encoders 2>/dev/null | grep qtrle >/dev/null")==0);
+    $has_wmv2=(system("$tool -encoders 2>/dev/null | grep wmv2 >/dev/null")==0);
+    $has_ffv1=(system("$tool -encoders 2>/dev/null | grep ffv1 >/dev/null")==0);
+    $has_mjpeg=(system("$tool -encoders 2>/dev/null | grep mjpeg >/dev/null")==0);
+    $has_x264=(system("$tool -encoders 2>/dev/null | grep x264 >/dev/null")==0);
+    $has_flv=(system("$tool -encoders 2>/dev/null | grep flv >/dev/null")==0);
+    $has_3gp=(system("$tool -encoders 2>/dev/null | grep h263 >/dev/null")==0);
+
+    $has_aac=(system("$tool -encoders 2>/dev/null | grep aac >/dev/null")==0);
+    $has_vorbis=(system("$tool -encoders 2>/dev/null | grep vorbis >/dev/null")==0);
+    $has_amr=(system("$tool -encoders 2>/dev/null | grep amr >/dev/null")==0);
+    $has_mp3=(system("$tool -encoders 2>/dev/null | grep mp3 >/dev/null")==0);
+    $has_mp2=(system("$tool -encoders 2>/dev/null | grep mp2 >/dev/null")==0);
+    $has_wmav2=(system("$tool -encoders 2>/dev/null | grep wmav2 >/dev/null")==0);
 
 
     $errwebm=$errx264=$errflv=$err3gp=$errwmv2=$errffv1=$errmjpeg=$errqtrle=$errmpeg4="";

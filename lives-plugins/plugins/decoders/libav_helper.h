@@ -68,7 +68,16 @@
 #define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
 
 #else
-static void av_set_pts_info(AVStream *s, int pts_wrap_bits,
+
+#ifdef __GNUC__
+#  define UNUSED  __attribute__((unused))
+#else
+#  define UNUSED
+#endif
+
+
+
+static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits,
                             unsigned int pts_num, unsigned int pts_den) {
   AVRational new_tb;
   if (av_reduce(&new_tb.num, &new_tb.den, pts_num, pts_den, INT_MAX)) {

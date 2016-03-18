@@ -9817,7 +9817,7 @@ void on_slower_pressed(LiVESButton *button, livespointer user_data) {
   }
 
   if (mainw->rte_keys!=-1&&user_data==NULL) {
-    mainw->blend_factor--;
+    mainw->blend_factor-=BLEND_AMOUNT;
     weed_set_blend_factor(mainw->rte_keys);
     return;
   }
@@ -9861,7 +9861,7 @@ void on_faster_pressed(LiVESButton *button, livespointer user_data) {
   }
 
   if (mainw->rte_keys!=-1&&user_data==NULL) {
-    mainw->blend_factor++;
+    mainw->blend_factor+=BLEND_AMOUNT;
     weed_set_blend_factor(mainw->rte_keys);
     return;
   }

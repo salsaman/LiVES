@@ -42,12 +42,17 @@ static int package_version=2; // version of this package
 #include <pango/pangocairo.h>
 #include <gdk/gdk.h>
 
-static gboolean is_big_endian() {
-  int32_t testint = 0x12345678;
-  char *pMem;
-  pMem = (char *) &testint;
-  if (pMem[0] == 0x78) return FALSE;
-  return TRUE;
+union memtest {
+  int32_t num;
+  char chr[4];
+};
+
+
+static int is_big_endian() {
+  union memtest mm;
+  mm.num = 0x12345678;
+  if (mm.chr[0] == 0x78) return 0;
+  return 1;
 }
 
 // defines for configure dialog elements

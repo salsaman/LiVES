@@ -46,6 +46,9 @@
 /// forward/back scratch value (TODO: make pref)
 #define PB_SCRATCH_VALUE 0.001
 
+/// adjustment amount for effect parameter via keyboard (TODO: make pref)
+#define BLEND_AMOUNT 0.2
+
 /////// GUI related constants /////////////////////////////////////////////////////////
 
 // parameters for resizing the image frames, and for capture

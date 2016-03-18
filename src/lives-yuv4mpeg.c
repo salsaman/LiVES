@@ -15,10 +15,11 @@
 #endif
 
 #include "main.h"
-
 #include "support.h"
 #include "interface.h"
 #include "lives-yuv4mpeg.h"
+#include "effects-weed.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>

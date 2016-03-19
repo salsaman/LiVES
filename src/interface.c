@@ -146,8 +146,6 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 }
 
 
-
-
 xprocess *create_processing(const char *text) {
 
   LiVESWidget *dialog_vbox;
@@ -218,7 +216,6 @@ xprocess *create_processing(const char *text) {
     lives_widget_set_size_request(procw->scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
     lives_widget_context_update();
     lives_standard_expander_new(_("Show Details"),FALSE,LIVES_BOX(vbox3),procw->scrolledwindow);
-
   }
 
   procw->stop_button = lives_button_new_with_mnemonic(_("_Enough")); // used only for open location and for audio recording
@@ -2604,13 +2601,17 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
 #ifdef GTK_TEXT_VIEW_DRAW_BUG
 
+static ulong expt;
+
 static boolean exposetview(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   LiVESWidgetColor fgcol,bgcol;
   lives_colRGBA64_t fg,bg;
-  LingoLayout *layout;
+  LingoLayout *layout=NULL;
   lives_painter_surface_t *surface;
 
   char *text=lives_text_view_get_text(LIVES_TEXT_VIEW(widget));
+
+  lives_signal_handler_block(widget,expt);
 
   surface=lives_painter_get_target(cr);
   lives_painter_surface_flush(surface);
@@ -2621,21 +2622,22 @@ static boolean exposetview(LiVESWidget *widget, lives_painter_t *cr, livespointe
   widget_color_to_lives_rgba(&fg,&fgcol);
   widget_color_to_lives_rgba(&bg,&bgcol);
 
-  // TODO - can we clip cr to visible area ?
-
   layout=render_text_to_cr(widget,cr,text,"",0.0,
-                           LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&fg,&bg,FALSE,FALSE,0.,0.,
+                           LIVES_TEXT_MODE_FOREGROUND_ONLY,&fg,&bg,FALSE,FALSE,0.,0.,
                            lives_widget_get_allocation_width(widget),lives_widget_get_allocation_height(widget));
 
   lives_free(text);
 
-  lingo_painter_show_layout(cr, layout);
-
-  if (layout) lives_object_unref(layout);
+  if (layout!=NULL) {
+    lingo_painter_show_layout(cr, layout);
+    lives_object_unref(layout);
+  }
 
   lives_painter_fill(cr);
 
-  return TRUE;
+  lives_signal_handler_unblock(widget,expt);
+
+  return FALSE;
 }
 
 
@@ -2649,7 +2651,9 @@ LiVESTextView *create_output_textview(void) {
   LiVESWidget *textview=lives_text_view_new();
 
 #ifdef GTK_TEXT_VIEW_DRAW_BUG
-  g_signal_connect(textview,"draw",G_CALLBACK(exposetview),NULL);
+  expt=lives_signal_connect(LIVES_GUI_OBJECT(textview), LIVES_WIDGET_EXPOSE_EVENT,
+                            LIVES_GUI_CALLBACK(exposetview),
+                            NULL);
 #endif
 
   lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);

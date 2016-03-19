@@ -5769,11 +5769,7 @@ LIVES_INLINE LiVESWidget *lives_entry_new(void) {
 
 
 LIVES_INLINE boolean lives_entry_set_max_length(LiVESEntry *entry, int len) {
-#if GTK_CHECK_VERSION(3,12,0)
-  int chars=gtk_entry_get_width_chars(entry);
-  if (chars!=len)
-    gtk_entry_set_max_width_chars(entry,len);
-#endif
+  // entry length (not display length)
 #ifdef GUI_GTK
   gtk_entry_set_max_length(entry,len);
   return TRUE;
@@ -5859,6 +5855,7 @@ LIVES_INLINE boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
 
 
 LIVES_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entry, int nchars) {
+  // display length
 #ifdef GUI_GTK
   gtk_entry_set_width_chars(entry,nchars);
   return TRUE;

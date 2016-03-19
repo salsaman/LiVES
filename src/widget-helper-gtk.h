@@ -326,6 +326,11 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 
 #define LIVES_WIDGET_OBJECT(a) G_OBJECT(a)
 
+
+#define lives_object_freeze_notify(a) g_object_freeze_notify(a)
+#define lives_object_thaw_notify(a) g_object_thaw_notify(a)
+
+
 #if GTK_CHECK_VERSION(3,0,0)
 #define NO_MEM_OVERRIDE TRUE
 #else

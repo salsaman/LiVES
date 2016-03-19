@@ -155,9 +155,9 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 
   LingoLayout *layout;
 
-  double x_pos, y_pos;
+  double x_pos=0., y_pos=0.;
   double x_text, y_text;
-  double dwidth, dheight;
+  double dwidth=width, dheight=height;
 
   double b_alpha=1.;
   double f_alpha=1.;
@@ -188,7 +188,10 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   layout = new LingoLayout(text, fontname, size);
 #endif
 
-  getxypos(layout, &x_pos, &y_pos, width, height, center, &dwidth, &dheight);
+#ifndef GUI_QT
+  if (rising||center||mode==LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND)
+#endif
+    getxypos(layout, &x_pos, &y_pos, width, height, center, &dwidth, &dheight);
 
   if (!rising) y_pos = y_text = height*top;
 

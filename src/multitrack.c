@@ -2872,12 +2872,12 @@ static void set_time_scrollbar(lives_mt *mt) {
 
   if (mt->tl_max>mt->end_secs) mt->end_secs=mt->tl_max;
 
-  g_object_freeze_notify(LIVES_WIDGET_OBJECT(mt->hadjustment));
+  lives_object_freeze_notify(LIVES_WIDGET_OBJECT(mt->hadjustment));
   lives_range_set_range(LIVES_RANGE(mt->time_scrollbar),0.,mt->end_secs);
   lives_range_set_increments(LIVES_RANGE(mt->time_scrollbar),page/4.,page);
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->hadjustment),(double)page);
   lives_adjustment_set_value(LIVES_ADJUSTMENT(mt->hadjustment),(double)mt->tl_min);
-  g_object_thaw_notify(LIVES_WIDGET_OBJECT(mt->hadjustment));
+  lives_object_thaw_notify(LIVES_WIDGET_OBJECT(mt->hadjustment));
   lives_widget_queue_draw(mt->time_scrollbar);
 
 }
@@ -5633,9 +5633,9 @@ static boolean on_mt_delete_event(LiVESWidget *widget, LiVESXEventDelete *event,
 
 static void cmi_set_inactive(LiVESWidget *widget, livespointer data) {
   if (widget==data) return;
-  g_object_freeze_notify(LIVES_WIDGET_OBJECT(widget));
+  lives_object_freeze_notify(LIVES_WIDGET_OBJECT(widget));
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(widget),FALSE);
-  g_object_thaw_notify(LIVES_WIDGET_OBJECT(widget));
+  lives_object_thaw_notify(LIVES_WIDGET_OBJECT(widget));
 }
 
 

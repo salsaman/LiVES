@@ -616,13 +616,14 @@ boolean do_startup_tests(boolean tshoot) {
     else mainw->write_failed=FALSE;
 
     if (!mainw->write_failed) {
+      int bytes=44100*4;
       abuff=(uint8_t *)lives_calloc(44100,4);
       if (!abuff) {
-        tmp=lives_strdup(_("Unable to allocate 176400 bytes memory."));
+        tmp=lives_strdup_printf(_("Unable to allocate %d bytes memory."),bytes);
         fail_test(table,1,tmp);
         lives_free(tmp);
       } else {
-        lives_write(out_fd,abuff,176400,TRUE);
+        lives_write(out_fd,abuff,bytes,TRUE);
         close(out_fd);
         lives_free(abuff);
       }

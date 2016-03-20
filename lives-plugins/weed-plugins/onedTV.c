@@ -64,6 +64,7 @@ static int is_big_endian() {
 
 struct _sdata {
   int line;
+  int dir;
   unsigned char *linebuf;
 };
 
@@ -95,6 +96,7 @@ int oned_init(weed_plant_t *inst) {
   weed_memset(sdata->linebuf, 0, map_w*map_h);
 
   sdata->line = 0;
+  sdata->dir=1;
 
   weed_set_voidptr_value(inst,"plugin_internal",sdata);
 
@@ -124,7 +126,7 @@ int oned_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   size_t size;
 
-  int nlines;
+  int nlines,bounce;
   int width,height,irow,orow,psize=3,pwidth,palette;
   int error;
 
@@ -156,16 +158,31 @@ int oned_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   pwidth = width * psize;
 
   nlines=weed_get_int_value(in_params[0],"value",&error);
+  bounce=weed_get_boolean_value(in_params[1],"value",&error);
   weed_free(in_params);
 
   for (i=0; i<nlines; i++) {
     // blit line(s) to linebuf
     weed_memcpy(sdata->linebuf+sdata->line*orow, src, pwidth);
-    src += irow;
-    sdata->line++;
+    if (sdata->dir==-1) src-=irow;
+    else src += irow;
+    sdata->line+=sdata->dir;
     if (sdata->line >= height) {
-      sdata->line = 0;
-      src=osrc;
+      if (bounce==WEED_FALSE) {
+        sdata->line = 0;
+        src=osrc;
+      } else {
+        sdata->dir=-sdata->dir;
+        sdata->line+=sdata->dir;
+      }
+    } else if (sdata->line <= 0) {
+      if (bounce==WEED_FALSE) {
+        sdata->line = height-1;
+        src=osrc+(height-1)*irow;
+      } else {
+        sdata->dir=-sdata->dir;
+        sdata->line+=sdata->dir;
+      }
     }
   }
 
@@ -217,7 +234,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     int palette_list[]= {WEED_PALETTE_RGBA32,WEED_PALETTE_RGB24,WEED_PALETTE_BGR24,WEED_PALETTE_END};
-    weed_plant_t *in_params[]= {weed_integer_init("linerate","_Line rate",8,1,1024),NULL};
+    weed_plant_t *in_params[]= {weed_integer_init("linerate","_Line rate",8,1,1024),weed_switch_init("bounce","_Bounce",WEED_FALSE),NULL};
 
     weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE|WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE
                                    ,palette_list),NULL

@@ -1198,8 +1198,6 @@ void save_file(int clip, int start, int end, const char *filename) {
 
   struct stat filestat;
 
-  time_t file_mtime=0;
-
   uint64_t fsize;
 
   LiVESWidget *hbox;
@@ -1709,8 +1707,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   }
 
   if (lives_file_test((tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), LIVES_FILE_TEST_EXISTS)) {
-    stat(tmp,&filestat);
-    file_mtime=filestat.st_mtime;
+    lives_rm(tmp);
   }
   lives_free(tmp);
 
@@ -1873,7 +1870,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       stat((tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),&filestat);
       if (filestat.st_size>0) output_exists=TRUE;
     }
-    if (!output_exists||file_mtime==filestat.st_mtime) {
+    if (!output_exists) {
       lives_free(tmp);
 
       mainw->no_switch_dprint=TRUE;

@@ -13,7 +13,7 @@ Fix crash / bug in MIDI / joystick learner.
 Fix bug which prevented OSC clip changes during recording.
 Rewrite keyboard handler, fixing keyboard repeat for ctrl-arrow keys.
 Allow for slightly longer strings in LiVES libOSC.
-Improvements to edge detect filter.
+Improvements to edge detect and onedTV filters.
 Compatibility updates for ffmpeg 2.9+
 Add qtrle format and quality settings to ffmpeg_encoder.
 Add new VJ keys: ctrl-alt-space (change direction of background clip), ctrl-alt-page-up/down (adjust speed of background clip)

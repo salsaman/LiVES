@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2016-03-19 19:13-0300\n"
+"POT-Creation-Date: 2016-03-21 21:07-0300\n"
 "PO-Revision-Date: 2015-11-25 22:11+0000\n"
 "Last-Translator: Jean-Marc <Unknown>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -741,7 +741,7 @@ msgid "!rec %9d/%d"
 msgstr "!enr %9d/%d"
 
 #: src/main.c:5781 src/main.c:5782 src/gui.c:1911 src/gui.c:3114
-#: src/saveplay.c:2156
+#: src/saveplay.c:2153
 msgid "Play"
 msgstr "Lecture"
 
@@ -759,12 +759,12 @@ msgid "Closed file %s\n"
 msgstr "Fichier Fermé %s\n"
 
 #: src/main.c:6797 src/gui.c:751 src/utils.c:4432 src/utils.c:4462
-#: src/saveplay.c:3312 src/multitrack.c:4678 src/multitrack.c:6682
+#: src/saveplay.c:3309 src/multitrack.c:4678 src/multitrack.c:6682
 msgid "_Undo"
 msgstr "_Annuler"
 
 #: src/main.c:6798 src/gui.c:767 src/utils.c:4433 src/utils.c:4463
-#: src/saveplay.c:3313 src/multitrack.c:4698 src/multitrack.c:6705
+#: src/saveplay.c:3310 src/multitrack.c:4698 src/multitrack.c:6705
 msgid "_Redo"
 msgstr "_Rétablir"
 
@@ -1179,8 +1179,8 @@ msgstr ""
 "importation."
 
 #: src/interface.c:92 src/callbacks.c:9344 src/callbacks.c:9366
-#: src/callbacks.c:9367 src/gui.c:3116 src/gui.c:3721 src/saveplay.c:2158
-#: src/saveplay.c:2906 src/dialogs.c:1641 src/dialogs.c:1642
+#: src/callbacks.c:9367 src/gui.c:3116 src/gui.c:3721 src/saveplay.c:2155
+#: src/saveplay.c:2903 src/dialogs.c:1641 src/dialogs.c:1642
 #: src/dialogs.c:1914 src/dialogs.c:1915 src/framedraw.c:201
 #: src/multitrack.c:8267
 msgid "Preview"
@@ -1682,7 +1682,7 @@ msgstr "dernier"
 msgid "seconds."
 msgstr "secondes."
 
-#: src/interface.c:1874 src/saveplay.c:1420
+#: src/interface.c:1874 src/saveplay.c:1418
 msgid "selection"
 msgstr "sélection"
 
@@ -4124,7 +4124,7 @@ msgstr "Arréter l'enregistrement"
 msgid "_Record Performance"
 msgstr ""
 
-#: src/gui.c:3602 src/saveplay.c:2883 src/saveplay.c:2988 src/saveplay.c:3007
+#: src/gui.c:3602 src/saveplay.c:2880 src/saveplay.c:2985 src/saveplay.c:3004
 #: src/multitrack.c:9424 src/multitrack.c:11169
 #, c-format
 msgid " (%d %% scale)"
@@ -4503,7 +4503,7 @@ msgstr "Ouverture de %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Ouverture de %s début %.2f sec. %d images"
 
-#: src/saveplay.c:323 src/saveplay.c:3746
+#: src/saveplay.c:323 src/saveplay.c:3743
 msgid " without sound"
 msgstr " sans le son"
 
@@ -4601,12 +4601,12 @@ msgstr "Indiquer nom "
 msgid "Save Frame"
 msgstr "Dernière Image"
 
-#: src/saveplay.c:1252
+#: src/saveplay.c:1250
 #, fuzzy
 msgid "Save Clip"
 msgstr "Rotation"
 
-#: src/saveplay.c:1312
+#: src/saveplay.c:1310
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -4618,38 +4618,38 @@ msgstr ""
 "\n"
 "Voulez-vous vraiment continuer ?"
 
-#: src/saveplay.c:1429 src/saveplay.c:1551 src/saveplay.c:1627
-#: src/saveplay.c:3759
+#: src/saveplay.c:1427 src/saveplay.c:1549 src/saveplay.c:1625
+#: src/saveplay.c:3756
 msgid "Pulling frames from clip"
 msgstr ""
 
-#: src/saveplay.c:1485 src/saveplay.c:1593
+#: src/saveplay.c:1483 src/saveplay.c:1591
 msgid "Linking selection"
 msgstr "Lier la sélection"
 
-#: src/saveplay.c:1643
+#: src/saveplay.c:1641
 msgid " (with no sound)\n"
 msgstr " (sans le son)\n"
 
-#: src/saveplay.c:1649
+#: src/saveplay.c:1647
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 "Enregistrement des images %d à %d%s en tant que \"%s\" : encodeur = %s : "
 "format = %s..."
 
-#: src/saveplay.c:1653
+#: src/saveplay.c:1651
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 "Enregistrement des images 1 à %d%s en tant que \"%s\" : encodeur = %s : "
 "format = %s..."
 
-#: src/saveplay.c:1776
+#: src/saveplay.c:1773
 msgid "Saving [can take a long time]"
 msgstr "Épargne [peut prendre un certain temps]"
 
-#: src/saveplay.c:1897
+#: src/saveplay.c:1894
 msgid ""
 "\n"
 "\n"
@@ -4659,33 +4659,33 @@ msgstr ""
 "\n"
 "Erreur sur l'encodeur - fichier de sortie non créé !\n"
 
-#: src/saveplay.c:1933
+#: src/saveplay.c:1930
 msgid "Clearing letterbox"
 msgstr ""
 
-#: src/saveplay.c:2010
+#: src/saveplay.c:2007
 #, c-format
 msgid "File size was %s\n"
 msgstr ""
 
-#: src/saveplay.c:2106
+#: src/saveplay.c:2103
 msgid "recording aborted by preview.\n"
 msgstr "enregistrement annulé par la pré-visualisation.\n"
 
-#: src/saveplay.c:2109
+#: src/saveplay.c:2106
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:2111
+#: src/saveplay.c:2108
 msgid "Recording performance..."
 msgstr "Enregistrement de la représentation..."
 
-#: src/saveplay.c:3063
+#: src/saveplay.c:3060
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Moyenne d'IPS = %.4f\n"
 
-#: src/saveplay.c:3068
+#: src/saveplay.c:3065
 msgid ""
 "\n"
 "\n"
@@ -4699,21 +4699,21 @@ msgstr ""
 "Vous devez aller dans Outils--->Redimensionner toutes les images\n"
 "et redimensionner toutes les images aux dimensions actuelles.\n"
 
-#: src/saveplay.c:3240
+#: src/saveplay.c:3237
 msgid "Unknown"
 msgstr "Inconnu"
 
-#: src/saveplay.c:3346 src/saveplay.c:4317
+#: src/saveplay.c:3343 src/saveplay.c:4314
 #, c-format
 msgid "Untitled%d"
 msgstr "Sans Nom%d"
 
-#: src/saveplay.c:3386
+#: src/saveplay.c:3383
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d images sont en trop !\n"
 
-#: src/saveplay.c:3398
+#: src/saveplay.c:3395
 #, c-format
 msgid ""
 "\n"
@@ -4721,7 +4721,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3486
+#: src/saveplay.c:3483
 #, c-format
 msgid ""
 "\n"
@@ -4733,14 +4733,14 @@ msgstr ""
 "%.3f ips. \n"
 "La valeur par défaut peut être fixée dans Outils|Préférences|Divers.\n"
 
-#: src/saveplay.c:3496
+#: src/saveplay.c:3493
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "La vitesse de playback est ajustée à %.3f images par seconde pour "
 "correspondre au son.\n"
 
-#: src/saveplay.c:3513
+#: src/saveplay.c:3510
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4749,61 +4749,61 @@ msgstr ""
 "Cadres = %d genre = %s dimension = %d x %d *bpp = Greyscale* fps=%.3f\n"
 "Audio:"
 
-#: src/saveplay.c:3517 src/saveplay.c:4481
+#: src/saveplay.c:3514 src/saveplay.c:4478
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:3522 src/saveplay.c:4486
+#: src/saveplay.c:3519 src/saveplay.c:4483
 #, c-format
 msgid "%s none\n"
 msgstr "aucun %s\n"
 
-#: src/saveplay.c:3533
+#: src/saveplay.c:3530
 #, c-format
 msgid " - Author: %s\n"
 msgstr " - Auteur : %s\n"
 
-#: src/saveplay.c:3536
+#: src/saveplay.c:3533
 #, c-format
 msgid " - Title: %s\n"
 msgstr " - Titre : %s\n"
 
-#: src/saveplay.c:3539
+#: src/saveplay.c:3536
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Commentaires : %s\n"
 
-#: src/saveplay.c:3648
+#: src/saveplay.c:3645
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Enregistre Image %d comme %s..."
 
-#: src/saveplay.c:3743
+#: src/saveplay.c:3740
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Sauvegarde %s à %s"
 
-#: src/saveplay.c:3794
+#: src/saveplay.c:3791
 msgid "Backing up"
 msgstr "Sauvegarde"
 
-#: src/saveplay.c:3828
+#: src/saveplay.c:3825
 msgid "performance data was backed up..."
 msgstr "les données de la représentation sont sauvegardées..."
 
-#: src/saveplay.c:4388
+#: src/saveplay.c:4385
 #, c-format
 msgid "Restoring %s..."
 msgstr "Restauration de %s..."
 
-#: src/saveplay.c:4417
+#: src/saveplay.c:4414
 msgid "Restoring"
 msgstr "Restauration"
 
-#: src/saveplay.c:4435
+#: src/saveplay.c:4432
 #, c-format
 msgid ""
 "\n"
@@ -4817,22 +4817,22 @@ msgstr ""
 "LiVES est incapable de le restaurer.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4917
+#: src/saveplay.c:4914
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:4922
+#: src/saveplay.c:4919
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4925
+#: src/saveplay.c:4922
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:4950
+#: src/saveplay.c:4947
 #, c-format
 msgid ""
 "\n"
@@ -4840,7 +4840,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:5241
+#: src/saveplay.c:5238
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4850,11 +4850,11 @@ msgstr ""
 "Des fichiers d'une précédente exécution de LiVES ont été trouvés.\n"
 "Voulez-vous essayer de les récupérer ?\n"
 
-#: src/saveplay.c:5264
+#: src/saveplay.c:5261
 msgid "Recovering files"
 msgstr "Récupération des fichiers"
 
-#: src/saveplay.c:5267
+#: src/saveplay.c:5264
 msgid "Recovering files..."
 msgstr "Récupération des fichiers..."
 

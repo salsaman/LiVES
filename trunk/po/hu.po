@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2016-03-19 19:13-0300\n"
+"POT-Creation-Date: 2016-03-21 21:07-0300\n"
 "PO-Revision-Date: 2012-08-08 08:49+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -736,7 +736,7 @@ msgid "!rec %9d/%d"
 msgstr ""
 
 #: src/main.c:5781 src/main.c:5782 src/gui.c:1911 src/gui.c:3114
-#: src/saveplay.c:2156
+#: src/saveplay.c:2153
 msgid "Play"
 msgstr "Lejátszás"
 
@@ -754,12 +754,12 @@ msgid "Closed file %s\n"
 msgstr "%s fájl bezárva\n"
 
 #: src/main.c:6797 src/gui.c:751 src/utils.c:4432 src/utils.c:4462
-#: src/saveplay.c:3312 src/multitrack.c:4678 src/multitrack.c:6682
+#: src/saveplay.c:3309 src/multitrack.c:4678 src/multitrack.c:6682
 msgid "_Undo"
 msgstr "_Visszavonás"
 
 #: src/main.c:6798 src/gui.c:767 src/utils.c:4433 src/utils.c:4463
-#: src/saveplay.c:3313 src/multitrack.c:4698 src/multitrack.c:6705
+#: src/saveplay.c:3310 src/multitrack.c:4698 src/multitrack.c:6705
 msgid "_Redo"
 msgstr "Új_ra"
 
@@ -1155,8 +1155,8 @@ msgstr ""
 "őket."
 
 #: src/interface.c:92 src/callbacks.c:9344 src/callbacks.c:9366
-#: src/callbacks.c:9367 src/gui.c:3116 src/gui.c:3721 src/saveplay.c:2158
-#: src/saveplay.c:2906 src/dialogs.c:1641 src/dialogs.c:1642
+#: src/callbacks.c:9367 src/gui.c:3116 src/gui.c:3721 src/saveplay.c:2155
+#: src/saveplay.c:2903 src/dialogs.c:1641 src/dialogs.c:1642
 #: src/dialogs.c:1914 src/dialogs.c:1915 src/framedraw.c:201
 #: src/multitrack.c:8267
 msgid "Preview"
@@ -1653,7 +1653,7 @@ msgstr "utolsó"
 msgid "seconds."
 msgstr "másodperc"
 
-#: src/interface.c:1874 src/saveplay.c:1420
+#: src/interface.c:1874 src/saveplay.c:1418
 msgid "selection"
 msgstr "kiválasztás"
 
@@ -4169,7 +4169,7 @@ msgstr "_Felvétel leállítása"
 msgid "_Record Performance"
 msgstr "_Előadás felvétele"
 
-#: src/gui.c:3602 src/saveplay.c:2883 src/saveplay.c:2988 src/saveplay.c:3007
+#: src/gui.c:3602 src/saveplay.c:2880 src/saveplay.c:2985 src/saveplay.c:3004
 #: src/multitrack.c:9424 src/multitrack.c:11169
 #, c-format
 msgid " (%d %% scale)"
@@ -4576,7 +4576,7 @@ msgstr "%s megnyitása"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "%s megnyitása. Kezdés ideje %.2f mp. képkockák %d"
 
-#: src/saveplay.c:323 src/saveplay.c:3746
+#: src/saveplay.c:323 src/saveplay.c:3743
 msgid " without sound"
 msgstr " hang nélkül"
 
@@ -4674,12 +4674,12 @@ msgstr "Beállítás név "
 msgid "Save Frame"
 msgstr "Utolsó képkocka"
 
-#: src/saveplay.c:1252
+#: src/saveplay.c:1250
 #, fuzzy
 msgid "Save Clip"
 msgstr "Klip elforgatása"
 
-#: src/saveplay.c:1312
+#: src/saveplay.c:1310
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -4691,36 +4691,36 @@ msgstr ""
 "\n"
 "Még mindig akarod folytatni?"
 
-#: src/saveplay.c:1429 src/saveplay.c:1551 src/saveplay.c:1627
-#: src/saveplay.c:3759
+#: src/saveplay.c:1427 src/saveplay.c:1549 src/saveplay.c:1625
+#: src/saveplay.c:3756
 msgid "Pulling frames from clip"
 msgstr "Képkockák kiemelése a klipből"
 
-#: src/saveplay.c:1485 src/saveplay.c:1593
+#: src/saveplay.c:1483 src/saveplay.c:1591
 msgid "Linking selection"
 msgstr "Linkek létrehozása: kiválasztás"
 
-#: src/saveplay.c:1643
+#: src/saveplay.c:1641
 msgid " (with no sound)\n"
 msgstr " (hang nélkül)\n"
 
-#: src/saveplay.c:1649
+#: src/saveplay.c:1647
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 "%d képkockák mentése ide: %d%s, mint \"%s\" : kódoló = %s : formátum = %s..."
 
-#: src/saveplay.c:1653
+#: src/saveplay.c:1651
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 "Képkockák elmentése 1 től %d%s-ig mint \"%s\" : kódoló %s : formátum = %s..."
 
-#: src/saveplay.c:1776
+#: src/saveplay.c:1773
 msgid "Saving [can take a long time]"
 msgstr "Mentés [ sok időbe telhet]"
 
-#: src/saveplay.c:1897
+#: src/saveplay.c:1894
 msgid ""
 "\n"
 "\n"
@@ -4730,33 +4730,33 @@ msgstr ""
 "\n"
 "Kódolási hiba - a kimeneti fájl nem készült el!\n"
 
-#: src/saveplay.c:1933
+#: src/saveplay.c:1930
 msgid "Clearing letterbox"
 msgstr ""
 
-#: src/saveplay.c:2010
+#: src/saveplay.c:2007
 #, c-format
 msgid "File size was %s\n"
 msgstr ""
 
-#: src/saveplay.c:2106
+#: src/saveplay.c:2103
 msgid "recording aborted by preview.\n"
 msgstr "felvétel megszakítva az előnézet miatt.\n"
 
-#: src/saveplay.c:2109
+#: src/saveplay.c:2106
 msgid "recording aborted by clipboard playback.\n"
 msgstr "felvétel megszakítva a vágólap visszajátszása miatt.\n"
 
-#: src/saveplay.c:2111
+#: src/saveplay.c:2108
 msgid "Recording performance..."
 msgstr "Felvétel minősége..."
 
-#: src/saveplay.c:3063
+#: src/saveplay.c:3060
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Az átlagos FPS %.4f volt\n"
 
-#: src/saveplay.c:3068
+#: src/saveplay.c:3065
 msgid ""
 "\n"
 "\n"
@@ -4770,21 +4770,21 @@ msgstr ""
 "Kattints rá az Eszközök--->Mind átméretezése\n"
 "opcióra, majd minden képkockát méretezz át a megfelelő méretre.\n"
 
-#: src/saveplay.c:3240
+#: src/saveplay.c:3237
 msgid "Unknown"
 msgstr "Ismeretlen"
 
-#: src/saveplay.c:3346 src/saveplay.c:4317
+#: src/saveplay.c:3343 src/saveplay.c:4314
 #, c-format
 msgid "Untitled%d"
 msgstr "Névtelen%d"
 
-#: src/saveplay.c:3386
+#: src/saveplay.c:3383
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d képkoca elég!\n"
 
-#: src/saveplay.c:3398
+#: src/saveplay.c:3395
 #, c-format
 msgid ""
 "\n"
@@ -4792,7 +4792,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3486
+#: src/saveplay.c:3483
 #, c-format
 msgid ""
 "\n"
@@ -4805,14 +4805,14 @@ msgstr ""
 "Az alapértelmezett sebesség beállítható az Eszközök | Beállítások | Vegyes "
 "részben.\n"
 
-#: src/saveplay.c:3496
+#: src/saveplay.c:3493
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "A lejátszás sebessége %.3f fps-re lett beállítva, ezáltal a videó "
 "hozáilleszkedik a hanghoz.\n"
 
-#: src/saveplay.c:3513
+#: src/saveplay.c:3510
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4821,7 +4821,7 @@ msgstr ""
 "Képkockák=%d típus=%s méret=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Hang:"
 
-#: src/saveplay.c:3517 src/saveplay.c:4481
+#: src/saveplay.c:3514 src/saveplay.c:4478
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4830,54 +4830,54 @@ msgstr ""
 "Képkockák=%d típus=%s méret=%dx%d bpp=%d fps=%.3f\n"
 "Hang:"
 
-#: src/saveplay.c:3522 src/saveplay.c:4486
+#: src/saveplay.c:3519 src/saveplay.c:4483
 #, c-format
 msgid "%s none\n"
 msgstr "%s nincs\n"
 
-#: src/saveplay.c:3533
+#: src/saveplay.c:3530
 #, fuzzy, c-format
 msgid " - Author: %s\n"
 msgstr "Szerző: %s"
 
-#: src/saveplay.c:3536
+#: src/saveplay.c:3533
 #, fuzzy, c-format
 msgid " - Title: %s\n"
 msgstr " - Megjegyzés: %s\n"
 
-#: src/saveplay.c:3539
+#: src/saveplay.c:3536
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Megjegyzés: %s\n"
 
-#: src/saveplay.c:3648
+#: src/saveplay.c:3645
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "%d képkocka mentése mint %s..."
 
-#: src/saveplay.c:3743
+#: src/saveplay.c:3740
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "%s mentése eddig: %s"
 
-#: src/saveplay.c:3794
+#: src/saveplay.c:3791
 msgid "Backing up"
 msgstr "Mentés"
 
-#: src/saveplay.c:3828
+#: src/saveplay.c:3825
 msgid "performance data was backed up..."
 msgstr "minőségi adatok el lettek mentve..."
 
-#: src/saveplay.c:4388
+#: src/saveplay.c:4385
 #, c-format
 msgid "Restoring %s..."
 msgstr "%s helyreállítása..."
 
-#: src/saveplay.c:4417
+#: src/saveplay.c:4414
 msgid "Restoring"
 msgstr "Helyreállítás"
 
-#: src/saveplay.c:4435
+#: src/saveplay.c:4432
 #, c-format
 msgid ""
 "\n"
@@ -4891,22 +4891,22 @@ msgstr ""
 "A LiVES nem tudja helyreállítani.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4917
+#: src/saveplay.c:4914
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:4922
+#: src/saveplay.c:4919
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4925
+#: src/saveplay.c:4922
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:4950
+#: src/saveplay.c:4947
 #, c-format
 msgid ""
 "\n"
@@ -4914,7 +4914,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:5241
+#: src/saveplay.c:5238
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4924,11 +4924,11 @@ msgstr ""
 "A LiVES előző futtatásából előkerült néhány fájl.\n"
 "Szeretnéd helyreállítani őket?\n"
 
-#: src/saveplay.c:5264
+#: src/saveplay.c:5261
 msgid "Recovering files"
 msgstr "Fájlok visszaállítása"
 
-#: src/saveplay.c:5267
+#: src/saveplay.c:5264
 msgid "Recovering files..."
 msgstr "Visszaszerzés fájlokat..."
 

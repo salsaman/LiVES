@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2016-03-19 19:13-0300\n"
+"POT-Creation-Date: 2016-03-21 21:07-0300\n"
 "PO-Revision-Date: 2016-02-04 15:34+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -804,7 +804,7 @@ msgid "!rec %9d/%d"
 msgstr "!зап %9d/%d"
 
 #: src/main.c:5781 src/main.c:5782 src/gui.c:1911 src/gui.c:3114
-#: src/saveplay.c:2156
+#: src/saveplay.c:2153
 msgid "Play"
 msgstr "Пуск"
 
@@ -822,12 +822,12 @@ msgid "Closed file %s\n"
 msgstr "Закритий файл %s\n"
 
 #: src/main.c:6797 src/gui.c:751 src/utils.c:4432 src/utils.c:4462
-#: src/saveplay.c:3312 src/multitrack.c:4678 src/multitrack.c:6682
+#: src/saveplay.c:3309 src/multitrack.c:4678 src/multitrack.c:6682
 msgid "_Undo"
 msgstr "В_ернути"
 
 #: src/main.c:6798 src/gui.c:767 src/utils.c:4433 src/utils.c:4463
-#: src/saveplay.c:3313 src/multitrack.c:4698 src/multitrack.c:6705
+#: src/saveplay.c:3310 src/multitrack.c:4698 src/multitrack.c:6705
 msgid "_Redo"
 msgstr "Повт_орити"
 
@@ -1275,8 +1275,8 @@ msgstr ""
 "час імпортування."
 
 #: src/interface.c:92 src/callbacks.c:9344 src/callbacks.c:9366
-#: src/callbacks.c:9367 src/gui.c:3116 src/gui.c:3721 src/saveplay.c:2158
-#: src/saveplay.c:2906 src/dialogs.c:1641 src/dialogs.c:1642
+#: src/callbacks.c:9367 src/gui.c:3116 src/gui.c:3721 src/saveplay.c:2155
+#: src/saveplay.c:2903 src/dialogs.c:1641 src/dialogs.c:1642
 #: src/dialogs.c:1914 src/dialogs.c:1915 src/framedraw.c:201
 #: src/multitrack.c:8267
 msgid "Preview"
@@ -1795,7 +1795,7 @@ msgstr "останній"
 msgid "seconds."
 msgstr "секунд."
 
-#: src/interface.c:1874 src/saveplay.c:1420
+#: src/interface.c:1874 src/saveplay.c:1418
 msgid "selection"
 msgstr "позначене"
 
@@ -4375,7 +4375,7 @@ msgstr "Зупинити _запис"
 msgid "_Record Performance"
 msgstr "_Виконати запис"
 
-#: src/gui.c:3602 src/saveplay.c:2883 src/saveplay.c:2988 src/saveplay.c:3007
+#: src/gui.c:3602 src/saveplay.c:2880 src/saveplay.c:2985 src/saveplay.c:3004
 #: src/multitrack.c:9424 src/multitrack.c:11169
 #, c-format
 msgid " (%d %% scale)"
@@ -4790,7 +4790,7 @@ msgstr "Відкриття %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Відкриття %s час початку — %.2f с, %d кадрів"
 
-#: src/saveplay.c:323 src/saveplay.c:3746
+#: src/saveplay.c:323 src/saveplay.c:3743
 msgid " without sound"
 msgstr " без звуку"
 
@@ -4897,12 +4897,12 @@ msgstr "LiVES: Зберегти кадр %d як…"
 msgid "Save Frame"
 msgstr "Останній кадр"
 
-#: src/saveplay.c:1252
+#: src/saveplay.c:1250
 #, fuzzy
 msgid "Save Clip"
 msgstr "Обертати кліп"
 
-#: src/saveplay.c:1312
+#: src/saveplay.c:1310
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -4914,37 +4914,37 @@ msgstr ""
 "\n"
 "Бажаєте зберегти дані до поточного файла?"
 
-#: src/saveplay.c:1429 src/saveplay.c:1551 src/saveplay.c:1627
-#: src/saveplay.c:3759
+#: src/saveplay.c:1427 src/saveplay.c:1549 src/saveplay.c:1625
+#: src/saveplay.c:3756
 msgid "Pulling frames from clip"
 msgstr "Отримання кадрів з кліпу"
 
-#: src/saveplay.c:1485 src/saveplay.c:1593
+#: src/saveplay.c:1483 src/saveplay.c:1591
 msgid "Linking selection"
 msgstr "Пов’язування позначеного"
 
-#: src/saveplay.c:1643
+#: src/saveplay.c:1641
 msgid " (with no sound)\n"
 msgstr " (без звуку)\n"
 
-#: src/saveplay.c:1649
+#: src/saveplay.c:1647
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 "Збереження кадрів від %d до %d%s як «%s»: програма кодування = %s: формат = "
 "%s…"
 
-#: src/saveplay.c:1653
+#: src/saveplay.c:1651
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 "Збереження кадрів від 1 до %d%s як «%s»: програма кодування %s: формат = %s…"
 
-#: src/saveplay.c:1776
+#: src/saveplay.c:1773
 msgid "Saving [can take a long time]"
 msgstr "Збереження [може тривати досить довго]"
 
-#: src/saveplay.c:1897
+#: src/saveplay.c:1894
 msgid ""
 "\n"
 "\n"
@@ -4954,33 +4954,33 @@ msgstr ""
 "\n"
 "Помилка кодування. Файл даних не було створено!\n"
 
-#: src/saveplay.c:1933
+#: src/saveplay.c:1930
 msgid "Clearing letterbox"
 msgstr "Зняття додавання чорних смуг"
 
-#: src/saveplay.c:2010
+#: src/saveplay.c:2007
 #, c-format
 msgid "File size was %s\n"
 msgstr "Розмір файла: %s\n"
 
-#: src/saveplay.c:2106
+#: src/saveplay.c:2103
 msgid "recording aborted by preview.\n"
 msgstr "запис перервано переглядом.\n"
 
-#: src/saveplay.c:2109
+#: src/saveplay.c:2106
 msgid "recording aborted by clipboard playback.\n"
 msgstr "запис перервано відтворенням даних з буфера.\n"
 
-#: src/saveplay.c:2111
+#: src/saveplay.c:2108
 msgid "Recording performance..."
 msgstr "Виконання запису…"
 
-#: src/saveplay.c:3063
+#: src/saveplay.c:3060
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Середня частота кадрів — %.4f\n"
 
-#: src/saveplay.c:3068
+#: src/saveplay.c:3065
 msgid ""
 "\n"
 "\n"
@@ -4995,21 +4995,21 @@ msgstr ""
 "кадрів»\n"
 "і змінити розміри всіх кадрів до поточного значення.\n"
 
-#: src/saveplay.c:3240
+#: src/saveplay.c:3237
 msgid "Unknown"
 msgstr "Невідомо"
 
-#: src/saveplay.c:3346 src/saveplay.c:4317
+#: src/saveplay.c:3343 src/saveplay.c:4314
 #, c-format
 msgid "Untitled%d"
 msgstr "Без_назви%d"
 
-#: src/saveplay.c:3386
+#: src/saveplay.c:3383
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "Достатньо %d кадрів!\n"
 
-#: src/saveplay.c:3398
+#: src/saveplay.c:3395
 #, c-format
 msgid ""
 "\n"
@@ -5020,7 +5020,7 @@ msgstr ""
 "Помилка під час спроби отримання даних щодо кліпу %s.\n"
 "Можливо, дані цього кліпу пошкоджено.\n"
 
-#: src/saveplay.c:3486
+#: src/saveplay.c:3483
 #, c-format
 msgid ""
 "\n"
@@ -5033,14 +5033,14 @@ msgstr ""
 "Типову частоту кадрів можна встановити за допомогою пункту меню «Інструменти "
 "| Параметри | Інше».\n"
 
-#: src/saveplay.c:3496
+#: src/saveplay.c:3493
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Швидкість відтворення було скориговано до значення %.3f кадрів на секунду, "
 "щоб зберегти відповідність з звуковими даними.\n"
 
-#: src/saveplay.c:3513
+#: src/saveplay.c:3510
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -5050,7 +5050,7 @@ msgstr ""
 "%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:3517 src/saveplay.c:4481
+#: src/saveplay.c:3514 src/saveplay.c:4478
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -5059,54 +5059,54 @@ msgstr ""
 "Кадрів=%d тип=%s розмір=%dx%d глибина кольорів=%d частота кадрів=%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:3522 src/saveplay.c:4486
+#: src/saveplay.c:3519 src/saveplay.c:4483
 #, c-format
 msgid "%s none\n"
 msgstr "%s немає\n"
 
-#: src/saveplay.c:3533
+#: src/saveplay.c:3530
 #, c-format
 msgid " - Author: %s\n"
 msgstr " - Автор: %s\n"
 
-#: src/saveplay.c:3536
+#: src/saveplay.c:3533
 #, c-format
 msgid " - Title: %s\n"
 msgstr " - Назва: %s\n"
 
-#: src/saveplay.c:3539
+#: src/saveplay.c:3536
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Коментар: %s\n"
 
-#: src/saveplay.c:3648
+#: src/saveplay.c:3645
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Збереження кадру %d як %s..."
 
-#: src/saveplay.c:3743
+#: src/saveplay.c:3740
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Створення резервної копії %s на %s"
 
-#: src/saveplay.c:3794
+#: src/saveplay.c:3791
 msgid "Backing up"
 msgstr "Створення резервної копії"
 
-#: src/saveplay.c:3828
+#: src/saveplay.c:3825
 msgid "performance data was backed up..."
 msgstr "було створено резервну копію записаних даних…"
 
-#: src/saveplay.c:4388
+#: src/saveplay.c:4385
 #, c-format
 msgid "Restoring %s..."
 msgstr "Відновлення %s…"
 
-#: src/saveplay.c:4417
+#: src/saveplay.c:4414
 msgid "Restoring"
 msgstr "Відновлення"
 
-#: src/saveplay.c:4435
+#: src/saveplay.c:4432
 #, c-format
 msgid ""
 "\n"
@@ -5120,22 +5120,22 @@ msgstr ""
 "LiVES не вдалося відновити їх.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4917
+#: src/saveplay.c:4914
 #, c-format
 msgid "rec %.2f MB"
 msgstr "зап %.2f МБ"
 
-#: src/saveplay.c:4922
+#: src/saveplay.c:4919
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!зап %.2f МБ"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4925
+#: src/saveplay.c:4922
 msgid "rec ?? MB"
 msgstr "зап. ?? МБ"
 
-#: src/saveplay.c:4950
+#: src/saveplay.c:4947
 #, c-format
 msgid ""
 "\n"
@@ -5148,7 +5148,7 @@ msgstr ""
 "Визначити обмеження щодо призупинення запису можна за допомогою вікна "
 "параметрів програми.\n"
 
-#: src/saveplay.c:5241
+#: src/saveplay.c:5238
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -5158,11 +5158,11 @@ msgstr ""
 "Було знайдено файли від попереднього запуску LiVES.\n"
 "Бажаєте, щоб програма спробувала їх відновити?\n"
 
-#: src/saveplay.c:5264
+#: src/saveplay.c:5261
 msgid "Recovering files"
 msgstr "Відновлення файлів"
 
-#: src/saveplay.c:5267
+#: src/saveplay.c:5264
 msgid "Recovering files..."
 msgstr "Відновлення файлів…"
 

@@ -229,6 +229,7 @@ boolean has_audio_filters(lives_af_t af_type);
 #endif
 
 char *weed_seed_type_to_text(int seed_type);
+char *weed_error_to_text(int error);
 
 boolean has_usable_palette(weed_plant_t *chantmpl);
 int check_weed_palette_list(int *palette_list, int num_palettes, int palette);

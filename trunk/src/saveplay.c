@@ -3030,6 +3030,11 @@ void play_file(void) {
       weed_layer_free(mainw->frame_layer);
       mainw->frame_layer=NULL;
     }
+  } else {
+    if (mainw->multitrack==NULL) {
+      lives_widget_queue_draw(mainw->LiVES);
+      lives_widget_context_update();
+    }
   }
 
   if (!mainw->foreign) {

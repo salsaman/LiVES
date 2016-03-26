@@ -96,14 +96,14 @@ boolean save_clip_values(int which) {
         if (mainw->com_failed||mainw->write_failed) break;
         save_clip_value(which,CLIP_DETAILS_ACHANS,&mainw->files[which]->achans);
         if (mainw->com_failed||mainw->write_failed) break;
-	if (mainw->files[which]->achans>0) {
-	  save_clip_value(which,CLIP_DETAILS_ASIGNED,&asigned);
-	  if (mainw->com_failed||mainw->write_failed) break;
-	}
-	if (mainw->files[which]->achans>0) {
-	  save_clip_value(which,CLIP_DETAILS_AENDIAN,&endian);
-	  if (mainw->com_failed||mainw->write_failed) break;
-	}
+        if (mainw->files[which]->achans>0) {
+          save_clip_value(which,CLIP_DETAILS_ASIGNED,&asigned);
+          if (mainw->com_failed||mainw->write_failed) break;
+        }
+        if (mainw->files[which]->achans>0) {
+          save_clip_value(which,CLIP_DETAILS_AENDIAN,&endian);
+          if (mainw->com_failed||mainw->write_failed) break;
+        }
         save_clip_value(which,CLIP_DETAILS_ASAMPS,&mainw->files[which]->asampsize);
         if (mainw->com_failed||mainw->write_failed) break;
         save_clip_value(which,CLIP_DETAILS_FRAMES,&mainw->files[which]->frames);

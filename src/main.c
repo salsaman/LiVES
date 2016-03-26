@@ -4577,14 +4577,20 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer, const c
 #endif
   uint8_t buff[IMG_BUFF_SIZE];
   size_t bsize;
-  FILE *fp=fopen(fname,"rb");
-  if (!fp) return FALSE;
+
+  int fd=lives_open2(fname,O_RDONLY);
+  if (fd<0) return FALSE;
+
+#ifdef HAVE_POSIX_FADVISE
+  posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+#endif
 
   xxwidth=width;
   xxheight=height;
 
   if (!strcmp(img_ext,LIVES_FILE_EXT_PNG)) {
 #ifdef USE_LIBPNG
+    FILE *fp=fdopen(fd,"rb");
     boolean ret=layer_from_png(fp,layer,TRUE);
     fclose(fp);
     return ret;
@@ -4604,10 +4610,10 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer, const c
 
 
   while (1) {
-    if (!(bsize=fread(buff,1,IMG_BUFF_SIZE,fp))) break;
+    if (!(bsize=read(fd,buff,IMG_BUFF_SIZE))) break;
     sched_yield();
     if (!gdk_pixbuf_loader_write(pbload,buff,bsize,&gerror)) {
-      fclose(fp);
+      close(fd);
       return FALSE;
     }
     sched_yield();
@@ -4616,7 +4622,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer, const c
 
   sched_yield();
 
-  fclose(fp);
+  close(fd);
 
   if (!gdk_pixbuf_loader_close(pbload,&gerror)) return FALSE;
 
@@ -4628,9 +4634,14 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer, const c
 
 #ifdef USE_LIBPNG
   {
+    FILE *fp;
     boolean ret;
-    FILE *fp=fopen(fname,"rb");
-    if (!fp) return FALSE;
+    int fd=lives_open2(fname,O_RDONLY);
+    if (fd<0) return FALSE;
+#ifdef HAVE_POSIX_FADVISE
+    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+#endif
+    fp=fdopen(fd,"rb");
     ret=layer_from_png(fp,layer,FALSE);
     fclose(fp);
     return ret;

@@ -1754,6 +1754,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   mainw->write_failed=FALSE;
   save_file_comments(current_file);
 
+  mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   lives_free(com);
 

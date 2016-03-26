@@ -39,6 +39,7 @@ static int package_version=1; // version of this package
 
 #define USE_DBLBUF 1
 
+
 #include <libprojectM/projectM.hpp>
 
 #include <GL/gl.h>
@@ -50,12 +51,19 @@ static int package_version=1; // version of this package
 
 #include <limits.h>
 
+#include <sys/time.h>
+
+#include <errno.h>
+
 #include "projectM-ConfigFile.h"
 #include "projectM-getConfigFilename.h"
 
 #define TARGET_FPS 30.
 
 static int copies=0;
+
+static pthread_cond_t cond;
+static pthread_mutex_t cond_mutex;
 
 typedef struct {
   projectM *globalPM;
@@ -239,7 +247,15 @@ static int render_frame(_sdata *sdata) {
 }
 
 
+static void do_exit(void) {
+  std::cout << "ProjectM EXITING" << std::endl;
 
+  pthread_mutex_lock(&cond_mutex);
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&cond_mutex);
+
+  pthread_exit(NULL);
+}
 
 
 static void *worker(void *data) {
@@ -256,11 +272,14 @@ static void *worker(void *data) {
   register int i=0;
 
   if (init_display(sd)) {
-    sd->worker_ready=true;
+    //sd->worker_ready=true;
     sd->failed=true;
     goto fail;
   }
 
+  atexit(do_exit);
+  
+  // can fail here
   sd->globalPM = new projectM(config_filename);
 
   settings = sd->globalPM->settings();
@@ -277,7 +296,11 @@ static void *worker(void *data) {
     sd->prnames[i]=const_cast<volatile char *>((sd->globalPM->getPresetName(i-1)).c_str());
   };
 
-
+  // tell main thread we are ready
+  pthread_mutex_lock(&cond_mutex);
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&cond_mutex);
+  
   sd->worker_ready=true;
 
   while (!sd->die) {
@@ -319,24 +342,53 @@ static void *worker(void *data) {
 
   if (sd->globalPM!=NULL) delete(sd->globalPM);
 
+  
  fail:
 
   SDL_Quit();
+
+  // tell main thread we are ready
+  pthread_mutex_lock(&cond_mutex);
+  pthread_cond_signal(&cond);
+  pthread_mutex_lock(&cond_mutex);
 
   return NULL;
 
 }
 
 
+static int projectM_deinit (weed_plant_t *inst) {
+    int error;
+  _sdata *sd=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
+
+
+  copies--;
+
+  if (sd!=NULL) {
+    sd->rendering=false;
+    pthread_mutex_destroy(&sd->mutex);
+    pthread_mutex_destroy(&sd->pcm_mutex);
+    pthread_mutex_destroy(&cond_mutex);
+    pthread_cond_destroy(&cond);
+    }
+
+  return WEED_NO_ERROR;
+}
+
+
 
 static int projectM_init (weed_plant_t *inst) {
+
   weed_plant_t *iparam;
 
   if (copies==1) return WEED_ERROR_TOO_MANY_INSTANCES;
   copies++;
 
   if (!inited) {
-    int error;
+    int error,rc;
+    struct timeval tv;
+    struct timespec ts;
+
     weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
     weed_plant_t *iparam=weed_get_plantptr_value(inst,"in_parameters",&error);
     weed_plant_t *itmpl=weed_get_plantptr_value(iparam,"template",&error);
@@ -357,6 +409,8 @@ static int projectM_init (weed_plant_t *inst) {
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
 
+    weed_set_voidptr_value(inst,"plugin_internal",sd);
+
     sd->pidx=sd->opidx=-1;
 
     sd->fps=TARGET_FPS;
@@ -375,16 +429,31 @@ static int projectM_init (weed_plant_t *inst) {
     pthread_mutex_init(&sd->mutex,NULL);
     pthread_mutex_init(&sd->pcm_mutex,NULL);
 
-    inited=1;
 
     sd->nprs=0;
     sd->prnames=NULL;
     sd->worker_ready=false;
 
+    pthread_mutex_init(&cond_mutex,NULL);
+    pthread_cond_init(&cond,NULL);
+    
     // kick off a thread to init screean and render
     pthread_create(&sd->thread,NULL,worker,sd);
 
-    while (!sd->worker_ready) usleep(10000);
+    gettimeofday(&tv,NULL);
+    ts.tv_sec = tv.tv_sec+30;
+    
+    pthread_mutex_lock(&cond_mutex);
+    rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
+    pthread_mutex_unlock(&cond_mutex);
+
+    if (rc==ETIMEDOUT||!sd->worker_ready) {
+      // if we timedout then die
+      projectM_deinit(inst);
+      return WEED_ERROR_INIT_ERROR;
+    }
+
+    inited=1;
 
     weed_set_string_array(iparamgui,"choices",sd->nprs,(char **)sd->prnames);
   }
@@ -393,25 +462,10 @@ static int projectM_init (weed_plant_t *inst) {
 
   sd->rendering=true;
 
-  weed_set_voidptr_value(inst,"plugin_internal",sd);
-
   return WEED_NO_ERROR;
 
 
 }
-
-
-static int projectM_deinit (weed_plant_t *inst) {
-    int error;
-  _sdata *sd=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
-
-  sd->rendering=false;
-
-  copies--;
-
-  return WEED_NO_ERROR;
-}
-
 
 
 
@@ -438,7 +492,7 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   register int j;
 
-  if (sd->failed) return WEED_ERROR_PLUGIN_INVALID;
+  if (sd==NULL||sd->failed) return WEED_ERROR_PLUGIN_INVALID;
 
   if (sd->width!=width||sd->height!=height) {
     sd->width=width;

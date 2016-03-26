@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2016-03-21 21:07-0300\n"
+"POT-Creation-Date: 2016-03-25 22:36-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -724,7 +724,7 @@ msgid "!rec %9d/%d"
 msgstr ""
 
 #: src/main.c:5781 src/main.c:5782 src/gui.c:1911 src/gui.c:3114
-#: src/saveplay.c:2153
+#: src/saveplay.c:2154
 msgid "Play"
 msgstr "Toista"
 
@@ -742,12 +742,12 @@ msgid "Closed file %s\n"
 msgstr "Tiedosto %s suljettiin\n"
 
 #: src/main.c:6797 src/gui.c:751 src/utils.c:4432 src/utils.c:4462
-#: src/saveplay.c:3309 src/multitrack.c:4678 src/multitrack.c:6682
+#: src/saveplay.c:3310 src/multitrack.c:4678 src/multitrack.c:6682
 msgid "_Undo"
 msgstr "Kum_oa"
 
 #: src/main.c:6798 src/gui.c:767 src/utils.c:4433 src/utils.c:4463
-#: src/saveplay.c:3310 src/multitrack.c:4698 src/multitrack.c:6705
+#: src/saveplay.c:3311 src/multitrack.c:4698 src/multitrack.c:6705
 msgid "_Redo"
 msgstr "_Tee uudestaan"
 
@@ -1142,8 +1142,8 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
 #: src/interface.c:92 src/callbacks.c:9344 src/callbacks.c:9366
-#: src/callbacks.c:9367 src/gui.c:3116 src/gui.c:3721 src/saveplay.c:2155
-#: src/saveplay.c:2903 src/dialogs.c:1641 src/dialogs.c:1642
+#: src/callbacks.c:9367 src/gui.c:3116 src/gui.c:3721 src/saveplay.c:2156
+#: src/saveplay.c:2904 src/dialogs.c:1641 src/dialogs.c:1642
 #: src/dialogs.c:1914 src/dialogs.c:1915 src/framedraw.c:201
 #: src/multitrack.c:8267
 msgid "Preview"
@@ -4031,7 +4031,7 @@ msgstr "Pysäytä _nauhoitus"
 msgid "_Record Performance"
 msgstr ""
 
-#: src/gui.c:3602 src/saveplay.c:2880 src/saveplay.c:2985 src/saveplay.c:3004
+#: src/gui.c:3602 src/saveplay.c:2881 src/saveplay.c:2986 src/saveplay.c:3005
 #: src/multitrack.c:9424 src/multitrack.c:11169
 #, c-format
 msgid " (%d %% scale)"
@@ -4426,7 +4426,7 @@ msgstr "Avataan %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:323 src/saveplay.c:3743
+#: src/saveplay.c:323 src/saveplay.c:3744
 msgid " without sound"
 msgstr ""
 
@@ -4535,7 +4535,7 @@ msgstr ""
 "Haluatko tästä huolimatta jatkaa?"
 
 #: src/saveplay.c:1427 src/saveplay.c:1549 src/saveplay.c:1625
-#: src/saveplay.c:3756
+#: src/saveplay.c:3757
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -4557,11 +4557,11 @@ msgstr ""
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1773
+#: src/saveplay.c:1774
 msgid "Saving [can take a long time]"
 msgstr "Tallennetaan [saattaa kestää kauan]"
 
-#: src/saveplay.c:1894
+#: src/saveplay.c:1895
 msgid ""
 "\n"
 "\n"
@@ -4571,33 +4571,33 @@ msgstr ""
 "\n"
 "Pakkausvirhe - tiedostoa ei luotu!\n"
 
-#: src/saveplay.c:1930
+#: src/saveplay.c:1931
 msgid "Clearing letterbox"
 msgstr ""
 
-#: src/saveplay.c:2007
+#: src/saveplay.c:2008
 #, c-format
 msgid "File size was %s\n"
 msgstr ""
 
-#: src/saveplay.c:2103
+#: src/saveplay.c:2104
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:2106
+#: src/saveplay.c:2107
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:2108
+#: src/saveplay.c:2109
 msgid "Recording performance..."
 msgstr ""
 
-#: src/saveplay.c:3060
+#: src/saveplay.c:3061
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:3065
+#: src/saveplay.c:3066
 msgid ""
 "\n"
 "\n"
@@ -4606,21 +4606,21 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:3237
+#: src/saveplay.c:3238
 msgid "Unknown"
 msgstr "Tuntematon"
 
-#: src/saveplay.c:3343 src/saveplay.c:4314
+#: src/saveplay.c:3344 src/saveplay.c:4315
 #, c-format
 msgid "Untitled%d"
 msgstr "Nimetön%d"
 
-#: src/saveplay.c:3383
+#: src/saveplay.c:3384
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr ""
 
-#: src/saveplay.c:3395
+#: src/saveplay.c:3396
 #, c-format
 msgid ""
 "\n"
@@ -4628,7 +4628,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3483
+#: src/saveplay.c:3484
 #, c-format
 msgid ""
 "\n"
@@ -4640,12 +4640,12 @@ msgstr ""
 "fps. \n"
 "Oletusarvon voi asettaa kohdasta Työkalut | Asetukset | Sekalaiset.\n"
 
-#: src/saveplay.c:3493
+#: src/saveplay.c:3494
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:3510
+#: src/saveplay.c:3511
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4654,7 +4654,7 @@ msgstr ""
 "Kuvia=%d tyyppi=%s koko=%dx%d *bpp=Harmaasävy* fps=%.3f\n"
 "Ääni:"
 
-#: src/saveplay.c:3514 src/saveplay.c:4478
+#: src/saveplay.c:3515 src/saveplay.c:4479
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4663,54 +4663,54 @@ msgstr ""
 "Kuvia=%d tyyppi=%s koko=%dx%d bpp=%d fps=%.3f\n"
 "Ääni:"
 
-#: src/saveplay.c:3519 src/saveplay.c:4483
+#: src/saveplay.c:3520 src/saveplay.c:4484
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:3530
+#: src/saveplay.c:3531
 #, fuzzy, c-format
 msgid " - Author: %s\n"
 msgstr "Tekijä: %s"
 
-#: src/saveplay.c:3533
+#: src/saveplay.c:3534
 #, fuzzy, c-format
 msgid " - Title: %s\n"
 msgstr " - Kommentti: %s\n"
 
-#: src/saveplay.c:3536
+#: src/saveplay.c:3537
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Kommentti: %s\n"
 
-#: src/saveplay.c:3645
+#: src/saveplay.c:3646
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Tallennetaan kuva %d nimellä %s..."
 
-#: src/saveplay.c:3740
+#: src/saveplay.c:3741
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Varmuuskopioidaan %s tiedostoon %s"
 
-#: src/saveplay.c:3791
+#: src/saveplay.c:3792
 msgid "Backing up"
 msgstr "Varmuuskopioidaan"
 
-#: src/saveplay.c:3825
+#: src/saveplay.c:3826
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:4385
+#: src/saveplay.c:4386
 #, c-format
 msgid "Restoring %s..."
 msgstr "Palautetaan %s..."
 
-#: src/saveplay.c:4414
+#: src/saveplay.c:4415
 msgid "Restoring"
 msgstr "Palautetaan"
 
-#: src/saveplay.c:4432
+#: src/saveplay.c:4433
 #, c-format
 msgid ""
 "\n"
@@ -4724,22 +4724,22 @@ msgstr ""
 "LiVES ei pystynyt palauttamaan sitä.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4914
+#: src/saveplay.c:4915
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:4919
+#: src/saveplay.c:4920
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4922
+#: src/saveplay.c:4923
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:4947
+#: src/saveplay.c:4948
 #, c-format
 msgid ""
 "\n"
@@ -4747,7 +4747,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:5238
+#: src/saveplay.c:5239
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4757,11 +4757,11 @@ msgstr ""
 "Edellisen LiVES-istunnon jäljiltä löytyi tiedostoja.\n"
 "Haluatko yrittää niiden palautusta?\n"
 
-#: src/saveplay.c:5261
+#: src/saveplay.c:5262
 msgid "Recovering files"
 msgstr "Palautetaan tiedostoja"
 
-#: src/saveplay.c:5264
+#: src/saveplay.c:5265
 msgid "Recovering files..."
 msgstr "Palautetaan tiedostoja..."
 

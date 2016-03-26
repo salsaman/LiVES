@@ -88,11 +88,12 @@ typedef struct {
   volatile bool rendering;
 } _sdata;
 
+
+static _sdata *statsd;
+
 static int maxwidth,maxheight;
 
 static int inited=0;
-
-static _sdata *sd=NULL;
 
 static void winhide() {
   SDL_SysWMinfo info;
@@ -184,8 +185,6 @@ static int init_display(_sdata *sd) {
 
   return 0;
 }
-
-
 
 
 
@@ -366,11 +365,7 @@ static int projectM_deinit (weed_plant_t *inst) {
 
   if (sd!=NULL) {
     sd->rendering=false;
-    pthread_mutex_destroy(&sd->mutex);
-    pthread_mutex_destroy(&sd->pcm_mutex);
-    pthread_mutex_destroy(&cond_mutex);
-    pthread_cond_destroy(&cond);
-    }
+  }
 
   return WEED_NO_ERROR;
 }
@@ -378,14 +373,17 @@ static int projectM_deinit (weed_plant_t *inst) {
 
 
 static int projectM_init (weed_plant_t *inst) {
+  _sdata *sd;
 
   weed_plant_t *iparam;
 
+  int error;
+  
   if (copies==1) return WEED_ERROR_TOO_MANY_INSTANCES;
   copies++;
 
   if (!inited) {
-    int error,rc;
+    int rc;
     struct timeval tv;
     struct timespec ts;
 
@@ -429,7 +427,6 @@ static int projectM_init (weed_plant_t *inst) {
     pthread_mutex_init(&sd->mutex,NULL);
     pthread_mutex_init(&sd->pcm_mutex,NULL);
 
-
     sd->nprs=0;
     sd->prnames=NULL;
     sd->worker_ready=false;
@@ -457,10 +454,15 @@ static int projectM_init (weed_plant_t *inst) {
 
     weed_set_string_array(iparamgui,"choices",sd->nprs,(char **)sd->prnames);
   }
-
+  else sd=statsd;
+  
   sd->nprs--;
 
   sd->rendering=true;
+
+  statsd = sd;
+  
+  weed_set_voidptr_value(inst,"plugin_internal",sd);
 
   return WEED_NO_ERROR;
 
@@ -615,6 +617,9 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 
   }
+
+  statsd=NULL;
+  
   return plugin_info;
 }
 
@@ -622,12 +627,17 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 
 void weed_desetup(void) {
-  if (inited) {
-    sd->die=true;
-    pthread_join(sd->thread,NULL);
-    if (sd->fbuffer!=NULL) weed_free(sd->fbuffer);
-    if (sd->audio!=NULL) weed_free(sd->audio);
-    if (sd->prnames!=NULL) weed_free(sd->prnames);
-    weed_free(sd);
+  if (inited&&statsd!=NULL) {
+    statsd->die=true;
+    pthread_join(statsd->thread,NULL);
+    if (statsd->fbuffer!=NULL) weed_free(statsd->fbuffer);
+    if (statsd->audio!=NULL) weed_free(statsd->audio);
+    if (statsd->prnames!=NULL) weed_free(statsd->prnames);
+    pthread_mutex_destroy(&statsd->mutex);
+    pthread_mutex_destroy(&statsd->pcm_mutex);
+    pthread_mutex_destroy(&cond_mutex);
+    pthread_cond_destroy(&cond);
+    weed_free(statsd);
+    statsd=NULL;
   }
 }

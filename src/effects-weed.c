@@ -333,6 +333,40 @@ weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_
 }
 
 
+
+char *weed_error_to_text(int error) {
+  // value should be freed after use
+
+  switch (error) {
+  case (WEED_ERROR_MEMORY_ALLOCATION):
+    return lives_strdup(_("Memory allocation error"));
+  case (WEED_ERROR_LEAF_READONLY):
+    return lives_strdup(_("Read only property"));
+  case (WEED_ERROR_NOSUCH_ELEMENT):
+    return lives_strdup(_("Invalid element"));
+  case (WEED_ERROR_NOSUCH_LEAF):
+    return lives_strdup(_("Invalid property"));
+  case (WEED_ERROR_WRONG_SEED_TYPE):
+    return lives_strdup(_("Incorrect property type"));
+  case (WEED_ERROR_TOO_MANY_INSTANCES):
+    return lives_strdup(_("Too many instances"));
+  case (WEED_ERROR_HARDWARE):
+    return lives_strdup(_("Fatal plugin error"));
+  case (WEED_ERROR_INIT_ERROR):
+    return lives_strdup(_("Initialization error"));
+  case (WEED_ERROR_PLUGIN_INVALID):
+    return lives_strdup(_("Invalid plugin"));
+  default:
+    break;
+  }
+
+  return lives_strdup(_("No error"));
+
+}
+
+
+
+
 lives_fx_cat_t weed_filter_categorise(weed_plant_t *pl, int in_channels, int out_channels) {
   weed_plant_t *filt=pl;
   int filter_flags,error;
@@ -6091,7 +6125,7 @@ void weed_generator_end(weed_plant_t *inst) {
 
   if (inst==NULL) {
     LIVES_WARN("inst was NULL !");
-    return;
+    //return;
   }
 
   if (mainw->blend_file!=-1&&mainw->blend_file!=current_file&&mainw->files[mainw->blend_file]!=NULL&&
@@ -6122,7 +6156,7 @@ void weed_generator_end(weed_plant_t *inst) {
     }
   }
 
-  if (get_audio_channel_in(inst,0)!=NULL) {
+  if (inst!=NULL&&get_audio_channel_in(inst,0)!=NULL) {
     mainw->afbuffer_clients--;
     if (mainw->afbuffer_clients==0) {
       pthread_mutex_lock(&mainw->abuf_frame_mutex);
@@ -6155,7 +6189,7 @@ void weed_generator_end(weed_plant_t *inst) {
     if (mainw->blend_file==mainw->current_file) mainw->blend_file=-1;
   }
 
-  wge_inner(inst,TRUE);
+  if (inst!=NULL) wge_inner(inst,TRUE);
 
   // if the param window is already open, show any reinits now
   if (fx_dialog[1]!=NULL) {
@@ -6794,7 +6828,7 @@ start1:
     if (weed_plant_has_leaf(filter,WEED_LEAF_INIT_FUNC)) {
       weed_init_f *init_func_ptr_ptr;
       weed_init_f init_func;
-      char *cwd=cd_to_plugin_dir(filter);
+      char *cwd=cd_to_plugin_dir(filter),*tmp;
       weed_leaf_get(filter,WEED_LEAF_INIT_FUNC,0,(void *)&init_func_ptr_ptr);
       init_func=init_func_ptr_ptr[0];
       set_param_gui_readwrite(inst);
@@ -6804,7 +6838,8 @@ start1:
         filter=weed_filters[idx];
         filter_name=weed_get_string_value(filter,WEED_LEAF_NAME,&weed_error);
         set_param_gui_readonly(inst);
-        d_print(_("Failed to start instance %s, error code %d\n"),filter_name,error);
+        d_print(_("Failed to start instance %s, (%s)\n"),filter_name,(tmp=lives_strdup(weed_error_to_text(error))));
+        lives_free(tmp);
         lives_free(filter_name);
         filter_mutex_lock(hotkey);
         key_to_instance[hotkey][key_modes[hotkey]]=NULL;
@@ -7686,9 +7721,11 @@ geninit1:
           inst=key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]];
           key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]]=NULL;
           if (inst!=NULL) {
+            char *tmp;
             filter=weed_instance_get_filter(inst,TRUE);
             filter_name=weed_get_string_value(filter,WEED_LEAF_NAME,&weed_error);
-            d_print(_("Failed to start generator %s\n"),filter_name);
+            d_print(_("Failed to start generator %s (%s)\n"),filter_name,(tmp=lives_strdup(weed_error_to_text(error))));
+            lives_free(tmp);
             lives_free(filter_name);
 
 deinit4:
@@ -7786,9 +7823,11 @@ genstart2:
 
       if (error!=WEED_NO_ERROR) {
         if (inst!=NULL) {
+          char *tmp;
           filter=weed_instance_get_filter(inst,TRUE);
           filter_name=weed_get_string_value(filter,WEED_LEAF_NAME,&weed_error);
-          d_print(_("Failed to start generator %s, error %d\n"),filter_name,error);
+          d_print(_("Failed to start generator %s, (%s)\n"),filter_name,(tmp=lives_strdup(weed_error_to_text(error))));
+          lives_free(tmp);
           lives_free(filter_name);
 
 deinit5:

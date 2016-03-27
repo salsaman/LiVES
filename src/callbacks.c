@@ -4111,7 +4111,8 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!mainw->record) {
 
     // TODO - change message depending on rec_opts
-    d_print(_("Ready to record. Use 'control' and cursor keys during playback to record your performance.\n(To cancel, press 'r' or click on Play|Record Performance again before you play.)\n"));
+    d_print(_("Ready to record. Use 'control' and cursor keys during playback to record your performance.\n"
+              "(To cancel, press 'r' or click on Play|Record Performance again before you play.)\n"));
     mainw->record=TRUE;
     toggle_record();
     get_play_times();
@@ -5679,7 +5680,7 @@ void on_about_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *translator_credits = lives_strdup(_("translator_credits"));
 
 #if GTK_CHECK_VERSION(3,0,0)
-  char *authors[2]= {"salsaman@gmail.com",NULL};
+  char *authors[2]= {LIVES_AUTHOR_EMAIL,NULL};
 #else
   gtk_about_dialog_set_url_hook(activate_url, NULL, NULL);
   gtk_about_dialog_set_email_hook(activate_url, NULL, NULL);
@@ -5690,8 +5691,8 @@ void on_about_activate(LiVESMenuItem *menuitem, livespointer user_data) {
                         "name", "LiVES",
                         "version", LiVES_VERSION,
                         "comments",comments,
-                        "copyright", "(C) 2002-2016 salsaman <salsaman@gmail.com> and others",
-                        "website", "http://lives.sourceforge.net",
+                        "copyright", "(C) "LIVES_COPYRIGHT_YEARS" salsaman <"LIVES_AUTHOR_EMAIL"> and others",
+                        "website", LIVES_WEBSITE,
                         "license", license,
                         "title", title,
                         "translator_credits", translator_credits,
@@ -5711,8 +5712,14 @@ void on_about_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   char *mesg;
   mesg=lives_strdup_printf(
-         _("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),
-         LiVES_VERSION,"2002-2016");
+         _("LiVES Version %s\n"
+           "(c) G. Finch (salsaman) %s\n\n"
+           "Released under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\n"
+           "LiVES is distributed WITHOUT WARRANTY\n\n"
+           "Contact the author at:\n%s\n"
+           "Homepage: %s"),
+         LiVES_VERSION,LIVES_COPYRIGHT_YEARS,LIVES_AUTHOR_EMAIL,LIVES_WEBSITE
+       );
   do_error_dialog(mesg);
   lives_free(mesg);
 
@@ -5727,7 +5734,7 @@ void show_manual_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void email_author_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  activate_url_inner(LIVES_AUTHOR_EMAIL);
+  activate_url_inner("mailto:"LIVES_AUTHOR_EMAIL);
 }
 
 

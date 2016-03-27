@@ -5430,7 +5430,9 @@ lives_cancel_t check_for_bad_ffmpeg(void) {
 
   if (!maybeok) {
     do_error_dialog(
-      _("Your version of mplayer/ffmpeg may be broken !\nSee http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\nYou can work around this temporarily by switching to jpeg output in Preferences/Decoding.\n\nTry running Help/Troubleshoot for more information."));
+      _("Your version of mplayer/ffmpeg may be broken !\nSee http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\n"
+        "You can work around this temporarily by switching to jpeg output in Preferences/Decoding.\n\n"
+        "Try running Help/Troubleshoot for more information."));
     return CANCEL_ERROR;
   }
   return CANCEL_NONE;

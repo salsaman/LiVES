@@ -173,7 +173,8 @@ s_cam *camready(void) {
 
   if (0&&cam->device == -1) {
     do_error_dialog(
-      _("\nLiVES could not find any firewire camera.\nPlease make sure your camera is switched on,\nand check that you have read/write permissions for the camera device\n(generally /dev/raw1394*).\n"));
+      _("\nLiVES could not find any firewire camera.\nPlease make sure your camera is switched on,\n"
+        "and check that you have read/write permissions for the camera device\n(generally /dev/raw1394*).\n"));
     raw1394_destroy_handle(cam->handle);
     return NULL;
   }

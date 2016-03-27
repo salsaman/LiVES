@@ -494,7 +494,8 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
 
         if (strcmp(buf,version)) {
           msg=lives_strdup_printf(
-                _("\nThe %s video playback plugin has been updated.\nPlease check your settings in\n Tools|Preferences|Playback|Playback Plugins Advanced\n\n"),
+                _("\nThe %s video playback plugin has been updated.\nPlease check your settings in\n"
+                  "Tools|Preferences|Playback|Playback Plugins Advanced\n\n"),
                 mainw->vpp->name);
           do_error_dialog(msg);
           lives_free(msg);
@@ -1555,7 +1556,8 @@ void do_plugin_encoder_error(const char *plugin_name) {
 
   if (plugin_name==NULL) {
     msg=lives_strdup_printf(
-          _("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),
+          _("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n"
+            "%s%s%s\nor change the value of <lib_dir> in %s\n"),
           prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
     lives_free(tmp);
     if (rdet!=NULL) do_error_dialog_with_check_transient(msg,FALSE,0,LIVES_WINDOW(rdet->dialog));
@@ -1565,7 +1567,9 @@ void do_plugin_encoder_error(const char *plugin_name) {
   }
 
   msg=lives_strdup_printf(
-        _("LiVES did not receive a response from the encoder plugin called '%s'.\nPlease make sure you have that plugin installed correctly in\n%s%s%s\nor switch to another plugin using Tools|Preferences|Encoding\n"),
+        _("LiVES did not receive a response from the encoder plugin called '%s'.\n"
+          "Please make sure you have that plugin installed correctly in\n%s%s%s\n"
+          "or switch to another plugin using Tools|Preferences|Encoding\n"),
         plugin_name,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS);
   do_blocking_error_dialog(msg);
   lives_free(msg);

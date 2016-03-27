@@ -127,7 +127,9 @@ LiVESTargetEntry target_table[]  = {
 void tr_msg(void) {
   // TRANSLATORS: do not translate this message
   char *msg=
-    (_("Attention Translators !\nThis message is intended for you, so please do not translate it.\n\nAll translators should read the LiVES translation notes at\nhttp://lives.sourceforge.net/TRANS-README.txt"));
+    (_("Attention Translators !\nThis message is intended for you, so please do not translate it.\n\n"
+       "All translators should read the LiVES translation notes at\n"
+       "http://lives-video.com/TRANS-README.txt"));
 }
 #endif
 
@@ -1736,7 +1738,9 @@ static void lives_init(_ign_opts *ign_opts) {
               char *tmp;
 
               char *msg=lives_strdup_printf(
-                          _("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\nAlternatively, try to start lives with either \"lives -jackopts 16\", or "),
+                          _("\n\nManual start of jackd required. Please make sure jackd is running, \n"
+                            "or else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\n"
+                            "Alternatively, try to start lives with either \"lives -jackopts 16\", or "),
                           (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
               lives_printerr("%s%s\n\n",msg,otherbit);
               lives_free(msg);
@@ -2536,8 +2540,9 @@ capability *get_capabilities(void) {
 
 void print_notice() {
   lives_printerr("\nLiVES %s\n",LiVES_VERSION);
-  lives_printerr("Copyright 2002-2016 Gabriel Finch (salsaman@gmail.com) and others.\n");
-  lives_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\nunder certain conditions;"
+  lives_printerr("Copyright "LIVES_COPYRIGHT_YEARS" Gabriel Finch ("LIVES_AUTHOR_EMAIL") and others.\n");
+  lives_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\n"
+                 "under certain conditions;"
                  "see the file COPYING for details.\n\n");
 }
 
@@ -6895,7 +6900,8 @@ void load_frame_image(int frame) {
     if (cfile!=NULL&&old_file*new_file>0&&cfile->opening) {
       if (prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
         do_error_dialog(
-          _("\n\nLiVES cannot switch clips whilst opening if the audio player is set to mplayer or mplayer2.\nPlease adjust the playback options in Preferences and try again.\n"));
+          _("\n\nLiVES cannot switch clips whilst opening if the audio player is set to mplayer or mplayer2.\n"
+            "Please adjust the playback options in Preferences and try again.\n"));
         return;
       }
     }

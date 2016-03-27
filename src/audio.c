@@ -974,7 +974,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   boolean is_silent[nfiles];
   int first_nonsilent=-1;
 
-  int64_t tsamples=((tc_end-tc_start)/U_SEC*out_arate+.5);
+  int64_t tsamples=((double)(tc_end-tc_start)/U_SEC*out_arate+.5);
 
   int64_t blocksize,zsamples,xsamples;
 
@@ -1165,10 +1165,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   xsamples=zsamples+(tsamples-(max_segments*zsamples)); // e.g 10 + 30 - 3 * 10 == 10
 
-  holding_buff=(short *)lives_malloc(xsamples*sizeof(short)*out_achans);
+  holding_buff=(short *)lives_malloc(xsamples*sizeof(short)*out_achans+128);
 
   for (i=0; i<out_achans*nfiles; i++) {
-    float_buffer[i]=(float *)lives_malloc(xsamples*sizeof(float));
+    float_buffer[i]=(float *)lives_malloc(xsamples*sizeof(float)+128);
   }
 
   finish_buff=lives_malloc(tsamples*out_achans*out_asamps);

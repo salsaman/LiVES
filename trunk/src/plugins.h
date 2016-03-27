@@ -143,7 +143,7 @@ void do_plugin_encoder_error(const char *plugin_name_or_null);
 LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext);
 
 typedef struct {
-  char name[51];
+  char name[64];
   uint32_t audio_codec;
   // match with bitmaps in the encoder plugins
   // and also anames array in plugins.c (see below)
@@ -173,7 +173,7 @@ typedef struct {
 #define ENCODER_NON_NATIVE 1<<3
 
   // current output format
-  char of_name[51];
+  char of_name[64];
   char of_desc[128];
   int of_allowed_acodecs;
   char of_restrict[1024];

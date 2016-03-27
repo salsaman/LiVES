@@ -1315,7 +1315,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   // encoder
   if (strcmp(prefs->encoder.name,future_prefs->encoder.name)) {
-    lives_snprintf(prefs->encoder.name,51,"%s",future_prefs->encoder.name);
+    lives_snprintf(prefs->encoder.name,64,"%s",future_prefs->encoder.name);
     set_pref(PREF_ENCODER,prefs->encoder.name);
     lives_snprintf(prefs->encoder.of_restrict,1024,"%s",future_prefs->encoder.of_restrict);
     prefs->encoder.of_allowed_acodecs=future_prefs->encoder.of_allowed_acodecs;
@@ -1323,7 +1323,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   // output format
   if (strcmp(prefs->encoder.of_name,future_prefs->encoder.of_name)) {
-    lives_snprintf(prefs->encoder.of_name,51,"%s",future_prefs->encoder.of_name);
+    lives_snprintf(prefs->encoder.of_name,64,"%s",future_prefs->encoder.of_name);
     lives_snprintf(prefs->encoder.of_restrict,1024,"%s",future_prefs->encoder.of_restrict);
     lives_snprintf(prefs->encoder.of_desc,128,"%s",future_prefs->encoder.of_desc);
     prefs->encoder.of_allowed_acodecs=future_prefs->encoder.of_allowed_acodecs;

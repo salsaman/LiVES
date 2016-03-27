@@ -6627,6 +6627,7 @@ void load_frame_image(int frame) {
     if (mainw->current_file>-1) {
       register int i;
       if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&mainw->current_file!=mainw->scrap_file&&
+          mainw->current_file!=mainw->ascrap_file&&
           (mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)) {
         d_print(_("Closed file %s\n"),cfile->file_name);
 

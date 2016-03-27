@@ -1,5 +1,5 @@
-Version 2.6.1
--------------
+Version 2.6.1 (27 March 2016)
+-----------------------------
 Fix flickering in multi threaded palette conversion.
 Improved YUV / RGB palette conversions.
 Play selections should function even after switching clips, restarting playback.

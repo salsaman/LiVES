@@ -3,7 +3,7 @@ Welcome to LiVES, the open source video editor for Linux.
 
 FAQ
 ---
- Does LiVES require a working copy of mplayer ?
+ Does LiVES require a working copy of mplayer (or mplayer2) ?
 It is no longer a requirement to run LiVES, but without it you will not be able to open SOME movie clips* or see previews in the file open dialog.
 
 * in current versions of LiVES almost all clips can be opened instantly via plugins, howver mplayer is used as a fallback in cases 

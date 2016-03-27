@@ -918,12 +918,13 @@ boolean apply_prefs(boolean skip_warn) {
         !lives_widget_color_equal(&colb,&palette->normal_back)||
         !lives_widget_color_equal(&colf2,&palette->menu_and_bars_fore)||
         !lives_widget_color_equal(&colb2,&palette->menu_and_bars)||
-        !lives_widget_color_equal(&coli,&palette->info_text)||
-        !lives_widget_color_equal(&colb,&palette->info_base)||
-        (pstyle2!=(palette->style&STYLE_2))||
-        (pstyle3!=(palette->style&STYLE_3))||
-        (pstyle4!=(palette->style&STYLE_4))
+        !lives_widget_color_equal(&colt,&palette->info_text)||
+        !lives_widget_color_equal(&coli,&palette->info_base)||
+        ((pstyle2*STYLE_2)!=(palette->style&STYLE_2))||
+        ((pstyle3*STYLE_3)!=(palette->style&STYLE_3))||
+        ((pstyle4*STYLE_4)!=(palette->style&STYLE_4))
        ) {
+
       lives_widget_color_copy(&palette->normal_fore,&colf);
       lives_widget_color_copy(&palette->normal_back,&colb);
       lives_widget_color_copy(&palette->menu_and_bars_fore,&colf2);
@@ -3016,11 +3017,11 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw->pbq_list=NULL;
   // TRANSLATORS: video quality, max len 50
-  prefsw->pbq_list=lives_list_append(prefsw->pbq_list,lives_strdup((_("Low - can improve performance on slower machines"))));
+  prefsw->pbq_list=lives_list_append(prefsw->pbq_list,lives_strdup(_("Low - can improve performance on slower machines")));
   // TRANSLATORS: video quality, max len 50
-  prefsw->pbq_list=lives_list_append(prefsw->pbq_list,lives_strdup((_("Normal - recommended for most users"))));
+  prefsw->pbq_list=lives_list_append(prefsw->pbq_list,lives_strdup(_("Normal - recommended for most users")));
   // TRANSLATORS: video quality, max len 50
-  prefsw->pbq_list=lives_list_append(prefsw->pbq_list,lives_strdup((_("High - can improve quality on very fast machines"))));
+  prefsw->pbq_list=lives_list_append(prefsw->pbq_list,lives_strdup(_("High - can improve quality on very fast machines")));
 
   widget_opts.expand=LIVES_EXPAND_EXTRA;
   prefsw->pbq_combo = lives_standard_combo_new((tmp=lives_strdup(_("Preview _quality"))),TRUE,prefsw->pbq_list,LIVES_BOX(vbox),
@@ -5450,13 +5451,13 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,prefsw->prefs_dialog);
 
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), FALSE);
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), FALSE);
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
+
   // Apply preferences
   needs_restart = apply_prefs(FALSE);
 
-  // do this now in case anything was changed or reverted
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), FALSE);
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), FALSE);
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), TRUE);
 
   if (!mainw->prefs_need_restart) {
     mainw->prefs_need_restart = needs_restart;
@@ -5505,6 +5506,7 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   } else lives_set_cursor_style(LIVES_CURSOR_NORMAL,prefsw->prefs_dialog);
 
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), TRUE);
 
   mainw->prefs_changed = 0;
 
@@ -5562,11 +5564,11 @@ void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_list_free_all(&future_prefs->disabled_decoders);
 
-  lives_general_button_clicked(button, prefsw);
-
-  prefsw = NULL;
+  lives_freep((void **)&prefsw);
 
   on_preferences_activate(NULL, NULL);
+
+  lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 

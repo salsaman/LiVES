@@ -54,7 +54,7 @@
 #include "startup.h"
 #include "cvirtual.h"
 #include "ce_thumbs.h"
-
+#include "rfx-builder.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -1639,7 +1639,7 @@ static void lives_init(_ign_opts *ign_opts) {
       lives_snprintf(prefs->ladspa_path,PATH_MAX,"%s",ladspa_path);
       if (needs_free) lives_free(ladspa_path);
 
-      splash_msg(_("Loading realtime effect plugins..."),.6);
+      splash_msg(_("Loading realtime effect plugins..."),SPLASH_LEVEL_LOAD_RTE);
       weed_load_all();
 
       // replace any multi choice effects with their delegates
@@ -1705,10 +1705,10 @@ static void lives_init(_ign_opts *ign_opts) {
         if (prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER||prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT||prefs->jack_opts&JACK_OPTS_START_ASERVER||
             prefs->jack_opts&JACK_OPTS_START_TSERVER) {
           // start jack transport polling
-          if (prefs->jack_opts&JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."),.8);
+          if (prefs->jack_opts&JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."),SPLASH_LEVEL_LOAD_APLAYER);
           else {
-            if (prefs->jack_opts&JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."),.8);
-            else splash_msg(_("Connecting to jack transport server..."),.8);
+            if (prefs->jack_opts&JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."),SPLASH_LEVEL_LOAD_APLAYER);
+            else splash_msg(_("Connecting to jack transport server..."),SPLASH_LEVEL_LOAD_APLAYER);
           }
           if (!lives_jack_init()) {
             if ((prefs->jack_opts&JACK_OPTS_START_ASERVER)||(prefs->jack_opts&JACK_OPTS_START_TSERVER)) do_jack_noopen_warn();
@@ -1775,7 +1775,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
 #ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_player==AUD_PLAYER_PULSE) {
-        splash_msg(_("Starting pulse audio server..."),.8);
+        splash_msg(_("Starting pulse audio server..."),SPLASH_LEVEL_LOAD_APLAYER);
 
         if (!lives_pulse_init(prefs->startup_phase)) {
           if (prefs->startup_phase==4) {
@@ -2620,7 +2620,7 @@ static boolean lives_startup(livespointer data) {
     print_notice();
   }
 
-  splash_msg(_("Starting GUI..."),0.);
+  splash_msg(_("Starting GUI..."),SPLASH_LEVEL_BEGIN);
 
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   create_LiVES();
@@ -2878,21 +2878,22 @@ static boolean lives_startup(livespointer data) {
     got_files=TRUE;
   } else {
     set_main_title(NULL,0);
-    splash_end();
   }
+
+  splash_end();
 
   if (prefs->crash_recovery&&!no_recover) got_files=check_for_recovery_files(auto_recover);
 
   if (!mainw->foreign&&!got_files&&prefs->ar_clipset) {
     char *msg=lives_strdup_printf(_("Autoloading set %s..."),prefs->ar_clipset_name);
     d_print(msg);
-    splash_msg(msg,1.);
     lives_free(msg);
     if (!reload_set(prefs->ar_clipset_name) || mainw->current_file==-1) {
       set_pref(PREF_AR_CLIPSET,"");
       prefs->ar_clipset=FALSE;
     }
   }
+
 
 #ifdef ENABLE_OSC
   if (prefs->osc_start) prefs->osc_udp_started=lives_osc_init(prefs->osc_udp_port);
@@ -3046,7 +3047,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #endif
 

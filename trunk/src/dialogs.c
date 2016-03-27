@@ -2878,13 +2878,10 @@ void threaded_dialog_spin(double fraction) {
   int progress;
 
   if (mainw->splash_window!=NULL) {
-    do_splash_progress();
     return;
   }
 
-  if (procw==NULL||!procw->is_ready) return;
-
-
+  if (procw==NULL||!procw->is_ready||!mainw->is_ready) return;
 
   if (fraction>0.) {
     gettimeofday(&tv, NULL);
@@ -2912,12 +2909,6 @@ void threaded_dialog_spin(double fraction) {
 
 }
 
-
-
-void *splash_prog(void) {
-  lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->splash_progress));
-  return NULL;
-}
 
 
 
@@ -2955,15 +2946,12 @@ void end_threaded_dialog(void) {
   if (procw!=NULL) {
     if (procw->processing!=NULL) lives_widget_destroy(procw->processing);
   }
-  if (mainw->splash_window==NULL) {
-    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-    if (mainw->multitrack==NULL) {
-      if (mainw->is_ready) lives_widget_queue_draw(mainw->LiVES);
-    } else lives_widget_queue_draw(mainw->multitrack->window);
-  } else {
-    lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window);
-    mainw->splash_window=NULL; // need to do this before calling lives_widget_context_update()
-  }
+
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+  if (mainw->multitrack==NULL) {
+    if (mainw->is_ready) lives_widget_queue_draw(mainw->LiVES);
+  } else lives_widget_queue_draw(mainw->multitrack->window);
+
   if (procw!=NULL) {
     lives_free(procw);
     procw=NULL;
@@ -2975,14 +2963,6 @@ void end_threaded_dialog(void) {
     lives_widget_context_update();
 }
 
-
-
-
-void do_splash_progress(void) {
-  mainw->threaded_dialog=TRUE;
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,mainw->splash_window);
-  splash_prog();
-}
 
 
 void response_ok(LiVESButton *button, livespointer user_data) {

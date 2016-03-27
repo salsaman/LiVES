@@ -4291,7 +4291,7 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
   }
   lives_list_free_all(&dummy_list);
 
-  lives_snprintf(future_prefs->encoder.name,51,"%s",new_encoder_name);
+  lives_snprintf(future_prefs->encoder.name,64,"%s",new_encoder_name);
   lives_free(new_encoder_name);
 
   if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,future_prefs->encoder.name,"get_capabilities"))==NULL) {
@@ -4315,7 +4315,7 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
     }
 
     plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "init");
-    lives_snprintf(future_prefs->encoder.name,51,"%s",prefs->encoder.name);
+    lives_snprintf(future_prefs->encoder.name,64,"%s",prefs->encoder.name);
     return;
   }
   prefs->encoder.capabilities = atoi((char *)lives_list_nth_data(encoder_capabilities,0));
@@ -4358,7 +4358,7 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
       lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), array[1]);
 
       if (prefsw==NULL&&strcmp(prefs->encoder.name,future_prefs->encoder.name)) {
-        lives_snprintf(prefs->encoder.name,51,"%s",future_prefs->encoder.name);
+        lives_snprintf(prefs->encoder.name,64,"%s",future_prefs->encoder.name);
         set_pref(PREF_ENCODER,prefs->encoder.name);
         lives_snprintf(prefs->encoder.of_restrict,1024,"%s",future_prefs->encoder.of_restrict);
         prefs->encoder.of_allowed_acodecs=future_prefs->encoder.of_allowed_acodecs;
@@ -10360,7 +10360,7 @@ void on_encoder_ofmt_changed(LiVESCombo *combo, livespointer user_data) {
             lives_combo_set_active_index(LIVES_COMBO(rdet->ofmt_combo), counter);
             lives_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
           }
-          lives_snprintf(future_prefs->encoder.of_name,51,"%s",array[0]);
+          lives_snprintf(future_prefs->encoder.of_name,64,"%s",array[0]);
           lives_snprintf(future_prefs->encoder.of_desc,128,"%s",array[1]);
 
           future_prefs->encoder.of_allowed_acodecs=atoi(array[2]);
@@ -10378,7 +10378,7 @@ void on_encoder_ofmt_changed(LiVESCombo *combo, livespointer user_data) {
     if (rdet!=NULL&&prefsw==NULL) {
       if (strcmp(prefs->encoder.of_name,future_prefs->encoder.of_name)) {
         rdet->enc_changed=TRUE;
-        lives_snprintf(prefs->encoder.of_name,51,"%s",future_prefs->encoder.of_name);
+        lives_snprintf(prefs->encoder.of_name,64,"%s",future_prefs->encoder.of_name);
         lives_snprintf(prefs->encoder.of_desc,128,"%s",future_prefs->encoder.of_desc);
         lives_snprintf(prefs->encoder.of_restrict,1024,"%s",future_prefs->encoder.of_restrict);
         prefs->encoder.of_allowed_acodecs=future_prefs->encoder.of_allowed_acodecs;

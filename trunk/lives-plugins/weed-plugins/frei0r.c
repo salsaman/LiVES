@@ -277,8 +277,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     int pnum,wnum,num_weed_params;
     char **rfx_strings=NULL;
 
-    char *blacklist[2]={"Timeout indicator",NULL};
-    
+    char *blacklist[2]= {"Timeout indicator",NULL};
+
     weed_plant_t **out_chantmpls,**in_chantmpls=NULL;
     weed_plant_t **in_params=NULL,*gui,*pgui;
 
@@ -324,16 +324,16 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     double vald;
     char *valch;
-    
+
     f0r_param_color_t valcol;
     f0r_param_position_t valpos;
-    
+
     int is_unstable;
 
     int blacklisted;
-    
+
     register int i;
-    
+
 #ifdef CAN_GET_DEF
     f0r_instance_t f0r_inst;
     f0r_get_param_value_f f0r_get_param_value=NULL;
@@ -511,16 +511,16 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           (*f0r_init)();
           (*f0r_get_plugin_info)(&f0rinfo);
 
-	  blacklisted=0;
-	  
-	  for (i=0;blacklist[i]!=NULL;i++) {
-	    if (!strcmp(f0rinfo.name,blacklist[i])) {
-	      fprintf(stderr,"Warning, frei0r plugin skipping blacklisted plugin %s\n",f0rinfo.name);
-	      blacklisted=1;
-	      break;
-	    }
-	  }
-	  
+          blacklisted=0;
+
+          for (i=0; blacklist[i]!=NULL; i++) {
+            if (!strcmp(f0rinfo.name,blacklist[i])) {
+              fprintf(stderr,"Warning, frei0r plugin skipping blacklisted plugin %s\n",f0rinfo.name);
+              blacklisted=1;
+              break;
+            }
+          }
+
           if (blacklisted||f0rinfo.frei0r_version!=FREI0R_MAJOR_VERSION) {
             (*f0r_deinit)();
             dlclose(handle);

@@ -5553,11 +5553,7 @@ void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
   memset(future_prefs->vpp_name, 0, 64);
 
   lives_list_free_all(&prefs->acodec_list);
-
-  if (prefsw->pbq_list != NULL) {
-    lives_list_free(prefsw->pbq_list);
-  }
-  prefsw->pbq_list = NULL;
+  lives_list_free_all(&prefsw->pbq_list);
 
   lives_free(prefsw->audp_name);
   lives_free(prefsw->orig_audp_name);

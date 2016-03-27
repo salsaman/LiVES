@@ -4397,9 +4397,11 @@ void add_rfx_effects(void) {
       if (mainw->run_test_rfx_menu!=NULL) lives_widget_destroy(mainw->run_test_rfx_menu);
     }
 
-    lives_widget_queue_draw(mainw->effects_menu);
-    lives_widget_context_update();
-    threaded_dialog_spin(0.);
+    if (mainw->is_ready) {
+      lives_widget_queue_draw(mainw->effects_menu);
+      lives_widget_context_update();
+      threaded_dialog_spin(0.);
+    }
 
     if (mainw->rendered_fx!=NULL) rfx_free_all();
   }
@@ -4524,7 +4526,7 @@ void add_rfx_effects(void) {
       plugin_name=lives_strdup((char *)lives_list_nth_data(rfx_list,plugin_idx-offset));
 
       if (mainw->splash_window!=NULL) {
-        splash_msg((tmp=lives_strdup_printf(_("Loading rendered effect %s..."),plugin_name)),.2);
+        splash_msg((tmp=lives_strdup_printf(_("Loading rendered effect %s..."),plugin_name)),SPLASH_LEVEL_LOAD_RFX);
         lives_free(tmp);
       }
 

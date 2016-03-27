@@ -1179,6 +1179,14 @@ typedef struct {
   LiVESWidget *splash_label;
   LiVESWidget *splash_progress;
 
+#define SPLASH_LEVEL_BEGIN .0
+#define SPLASH_LEVEL_START_GUI .2
+#define SPLASH_LEVEL_LOAD_RTE .4
+#define SPLASH_LEVEL_LOAD_APLAYER .6
+#define SPLASH_LEVEL_LOAD_RFX .8
+#define SPLASH_LEVEL_COMPLETE 1.
+
+
   boolean recoverable_layout;
 
   boolean soft_debug; ///< for testing

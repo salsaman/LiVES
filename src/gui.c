@@ -1149,9 +1149,7 @@ void create_LiVES(void) {
   mainw->custom_tools_menu=NULL;
 
   if (!mainw->foreign&&capable->smog_version_correct) {
-    splash_msg(_("Loading rendered effect plugins..."),.2);
-    add_rfx_effects();
-    splash_msg(_("Starting GUI..."),.4);
+    splash_msg(_("Starting GUI..."),SPLASH_LEVEL_START_GUI);
   }
 
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->utilities_submenu);
@@ -2797,14 +2795,20 @@ void create_LiVES(void) {
 
   lives_widget_set_can_focus(mainw->LiVES, TRUE);
   lives_widget_grab_focus(mainw->textview1);
-
 }
 
 
 void show_lives(void) {
   char buff[PATH_MAX];
 
-  lives_widget_show_all(mainw->LiVES); // this calls the config_event()
+  lives_widget_show_all(mainw->vbox1);
+
+  if (!mainw->foreign&&capable->smog_version_correct) {
+    splash_msg(_("Loading rendered effect plugins..."),SPLASH_LEVEL_LOAD_RFX);
+    add_rfx_effects();
+  }
+
+  lives_widget_show(mainw->LiVES); // this calls the config_event()
 
   if (palette->style&STYLE_1) {
     lives_widget_hide(mainw->vidbar);
@@ -4348,13 +4352,13 @@ void splash_end(void) {
   if (mainw->foreign) return;
 
   if (mainw->splash_window!=NULL) {
-    LiVESWidget *splash_window=mainw->splash_window; // end_threaded_dialog() will set mainw->splash_window to NULL
-
-    end_threaded_dialog();
-
-    lives_widget_destroy(splash_window);
-
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window);
+    lives_widget_destroy(mainw->splash_window);
   }
+
+  mainw->threaded_dialog=FALSE;
+  mainw->splash_window=NULL;
+  lives_widget_context_update();
 
   if (prefs->startup_interface==STARTUP_MT&&prefs->startup_phase==0&&mainw->multitrack==NULL)
     on_multitrack_activate(NULL,NULL);

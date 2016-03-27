@@ -1034,7 +1034,7 @@ boolean apply_prefs(boolean skip_warn) {
   else if (!strncmp(audp,AUDIO_PLAYER_MPLAYER2,8)) lives_snprintf(audio_player,256,AUDIO_PLAYER_MPLAYER2);
   else if (!strncmp(audp,AUDIO_PLAYER_JACK,4)) lives_snprintf(audio_player,256,AUDIO_PLAYER_JACK);
   else if (!strncmp(audp,AUDIO_PLAYER_SOX,3)) lives_snprintf(audio_player,256,AUDIO_PLAYER_SOX);
-  else if (!strncmp(audp,"pulse audio",11)) lives_snprintf(audio_player,256,AUDIO_PLAYER_PULSE);
+  else if (!strncmp(audp,AUDIO_PLAYER_PULSE_AUDIO,11)) lives_snprintf(audio_player,256,AUDIO_PLAYER_PULSE);
 
   lives_free(audp);
 
@@ -1166,7 +1166,9 @@ boolean apply_prefs(boolean skip_warn) {
         lives_widget_context_update(); // update prefs window before showing confirmation box
 
         msg=lives_strdup(
-              _("You have chosen to change the temporary directory.\nPlease make sure you have no other copies of LiVES open.\n\nIf you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\nAlternatively, press Cancel to restore the temporary directory to its original setting."));
+              _("You have chosen to change the temporary directory.\nPlease make sure you have no other copies of LiVES open.\n\n"
+                "If you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\n"
+                "Alternatively, press Cancel to restore the temporary directory to its original setting."));
         if (do_warning_dialog(msg)) {
           mainw->prefs_changed=PREFS_TEMPDIR_CHANGED;
           needs_restart=TRUE;
@@ -1546,8 +1548,10 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (prefs->audio_player==AUD_PLAYER_JACK&&!capable->has_jackd) {
     do_error_dialog_with_check_transient
-    (_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"),
+    ((tmp=lives_strdup_printf(_("\nUnable to switch audio players to jack\n"
+                                "jackd must be installed first.\nSee %s\n"),JACK_URL)),
      TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):LIVES_WINDOW(mainw->LiVES));
+    lives_free(tmp);
   } else {
     if (prefs->audio_player==AUD_PLAYER_JACK&&strcmp(audio_player,AUDIO_PLAYER_JACK)) {
       do_error_dialog_with_check_transient
@@ -1578,8 +1582,10 @@ boolean apply_prefs(boolean skip_warn) {
     else if (!(strcmp(audio_player,AUDIO_PLAYER_PULSE))&&prefs->audio_player!=AUD_PLAYER_PULSE) {
       if (!capable->has_pulse_audio) {
         do_error_dialog_with_check_transient
-        (_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"),
+        ((tmp=lives_strdup_printf(_("\nUnable to switch audio players to pulse audio\n"
+                                    "pulseaudio must be installed first.\nSee %s\n"),PULSE_AUDIO_URL)),
          TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):LIVES_WINDOW(mainw->LiVES));
+        lives_free(tmp);
       } else {
         if (!switch_aud_to_pulse()) {
           // revert text
@@ -2184,7 +2190,6 @@ static void pref_init_list(LiVESWidget *list) {
 
   lives_tree_view_set_model(LIVES_TREE_VIEW(list), LIVES_TREE_MODEL(store));
 
-  //lives_object_unref(store);
 }
 
 /*
@@ -3125,12 +3130,13 @@ _prefsw *create_prefs_dialog(void) {
   lives_container_add(LIVES_CONTAINER(frame), vbox);
 
 #ifdef HAVE_PULSE_AUDIO
-  audp = lives_list_append(audp, lives_strdup_printf("pulse audio (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
+  audp = lives_list_append(audp, lives_strdup_printf("%s (%s)",AUDIO_PLAYER_PULSE_AUDIO,
+                           mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
   has_ap_rec=TRUE;
 #endif
 
 #ifdef ENABLE_JACK
-  if (!has_ap_rec) audp = lives_list_append(audp, lives_strdup_printf("jack (%s)",
+  if (!has_ap_rec) audp = lives_list_append(audp, lives_strdup_printf("%s (%s)",AUDIO_PLAYER_JACK,
                             mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
   else audp = lives_list_append(audp, lives_strdup_printf(AUDIO_PLAYER_JACK));
   has_ap_rec=TRUE;
@@ -3138,7 +3144,8 @@ _prefsw *create_prefs_dialog(void) {
 
   if (capable->has_sox_play) {
     if (has_ap_rec) audp = lives_list_append(audp, lives_strdup(AUDIO_PLAYER_SOX));
-    else audp = lives_list_append(audp, lives_strdup_printf("sox (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
+    else audp = lives_list_append(audp, lives_strdup_printf("%s (%s)",AUDIO_PLAYER_SOX,
+                                    mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
   }
 
   if (capable->has_mplayer) {
@@ -3162,7 +3169,7 @@ _prefsw *create_prefs_dialog(void) {
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
-    prefsw->audp_name=lives_strdup_printf("pulse audio (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
+    prefsw->audp_name=lives_strdup_printf("%s (%s)",AUDIO_PLAYER_PULSE_AUDIO,mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
   }
   has_ap_rec=TRUE;
 #endif
@@ -3170,14 +3177,15 @@ _prefsw *create_prefs_dialog(void) {
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK) {
     if (!has_ap_rec)
-      prefsw->audp_name=lives_strdup_printf("jack (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
+      prefsw->audp_name=lives_strdup_printf("%s (%s)",AUDIO_PLAYER_JACK,mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
     else prefsw->audp_name=lives_strdup_printf(AUDIO_PLAYER_JACK);
   }
   has_ap_rec=TRUE;
 #endif
 
   if (prefs->audio_player==AUD_PLAYER_SOX) {
-    if (!has_ap_rec) prefsw->audp_name=lives_strdup_printf("sox (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
+    if (!has_ap_rec) prefsw->audp_name=lives_strdup_printf("%s (%s)",AUDIO_PLAYER_SOX,
+                                         mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
     else prefsw->audp_name=lives_strdup_printf(AUDIO_PLAYER_SOX);
   }
 

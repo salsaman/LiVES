@@ -647,7 +647,8 @@ char *ds_critical_msg(const char *dir, uint64_t dsval) {
   char *dscr=lives_format_storage_space_string(prefs->ds_crit_level); ///< crit level
   char *dscu=lives_format_storage_space_string(dsval); ///< current level
   msg=lives_strdup_printf(
-        _("FREE SPACE IN THE PARTITION CONTAINING\n%s\nHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\nCURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences.)"),
+        _("FREE SPACE IN THE PARTITION CONTAINING\n%s\nHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\n"
+          "CURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences.)"),
         (tmp=lives_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscr,dscu);
   msgx=insert_newlines(msg,MAX_MSG_WIDTH_CHARS);
   lives_free(msg);
@@ -666,7 +667,8 @@ char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t n
   char *dscu=lives_format_storage_space_string(dsval); ///< current level
   char *dscn=lives_format_storage_space_string(nwarn); ///< next warn level
   msg=lives_strdup_printf(
-        _("Free space in the partition containing\n%s\nhas fallen below the warning level of %s\nCurrent free space is %s\n\n(Next warning will be shown at %s. Disk warning levels can be configured in Preferences.)"),
+        _("Free space in the partition containing\n%s\nhas fallen below the warning level of %s\nCurrent free space is %s\n\n"
+          "(Next warning will be shown at %s. Disk warning levels can be configured in Preferences.)"),
         (tmp=lives_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscw,dscu,dscn);
   msgx=insert_newlines(msg,MAX_MSG_WIDTH_CHARS);
   lives_free(msg);
@@ -2435,7 +2437,9 @@ boolean do_clipboard_fps_warning(void) {
     return TRUE;
   }
   return do_warning_dialog_with_check(
-           _("The playback speed (fps), or the audio rate\n of the clipboard does not match\nthe playback speed or audio rate of the clip you are inserting into.\n\nThe insertion will be adjusted to fit into the clip.\n\nPlease press Cancel to abort the insert, or OK to continue."),
+           _("The playback speed (fps), or the audio rate\n of the clipboard does not match\n"
+             "the playback speed or audio rate of the clip you are inserting into.\n\n"
+             "The insertion will be adjusted to fit into the clip.\n\nPlease press Cancel to abort the insert, or OK to continue."),
            WARN_MASK_FPS);
 }
 
@@ -2446,7 +2450,8 @@ boolean do_yuv4m_open_warning(void) {
     return TRUE;
   }
   msg=lives_strdup_printf(
-        _("When opening a yuvmpeg stream, you should first create a fifo file in:\n\n%sstream.yuv\n\n and then write yuv4mpeg frames to it.\nLiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, otherwise, click Cancel."),
+        _("When opening a yuvmpeg stream, you should first create a fifo file in:\n\n%sstream.yuv\n\n and then write yuv4mpeg frames to it.\n"
+          "LiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, otherwise, click Cancel."),
         prefs->tmpdir);
   resp=do_warning_dialog_with_check(msg,WARN_MASK_OPEN_YUV4M);
   lives_free(msg);
@@ -2588,7 +2593,8 @@ boolean do_layout_alter_audio_warning(void) {
 
 boolean do_original_lost_warning(const char *fname) {
   char *msg=lives_strdup_printf(
-              _("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, click 'OK' to browse to the new location.\nOtherwise click Cancel to skip loading this file.\n"),
+              _("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, click 'OK' to browse to the new location.\n"
+                "Otherwise click Cancel to skip loading this file.\n"),
               fname);
   boolean retcode=do_warning_dialog(msg);
   lives_free(msg);
@@ -2605,12 +2611,14 @@ void do_no_decoder_error(const char *fname) {
 
 static void do_extra_jack_warning(void) {
   do_blocking_error_dialog(
-    _("\nDear user, the jack developers decided to remove the -Z option from jackd.\nPlease check your ~/.jackdrc file and remove this option if present.\nAlternately, select a different audio player in Preferences.\n"));
+    _("\nDear user, the jack developers decided to remove the -Z option from jackd.\n"
+      "Please check your ~/.jackdrc file and remove this option if present.\nAlternately, select a different audio player in Preferences.\n"));
 }
 
 void do_jack_noopen_warn(void) {
   do_blocking_error_dialog(
-    _("\nUnable to start up jack. Please ensure that alsa is set up correctly on your machine\nand also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"));
+    _("\nUnable to start up jack. Please ensure that alsa is set up correctly on your machine\n"
+      "and also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"));
   if (prefs->startup_phase!=2) do_extra_jack_warning();
 }
 
@@ -2638,7 +2646,8 @@ void do_jack_noopen_warn2(void) {
 
 void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
   char *msg=lives_strdup_printf(
-              _("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\nIt is recommended to increase it to at least %d MB"),
+              _("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\n"
+                "It is recommended to increase it to at least %d MB"),
               memreq_mb);
   do_error_dialog_with_check_transient(msg,TRUE,WARN_MASK_MT_BACKUP_SPACE,LIVES_WINDOW(mt->window));
   lives_free(msg);
@@ -2654,7 +2663,8 @@ boolean do_set_rename_old_layouts_warning(const char *new_set) {
 
 void do_mt_undo_mem_error(void) {
   do_error_dialog(
-    _("\nLiVES was unable to reserve enough memory for multitrack undo.\nEither close some other applications, or reduce the undo memory\nusing Preferences/Multitrack/Undo Memory\n"));
+    _("\nLiVES was unable to reserve enough memory for multitrack undo.\nEither close some other applications, or reduce the undo memory\n"
+      "using Preferences/Multitrack/Undo Memory\n"));
 }
 
 void do_mt_undo_buf_error(void) {
@@ -2695,7 +2705,8 @@ void do_mt_no_jack_error(int warn_mask) {
 
 boolean do_mt_rect_prompt(void) {
   return do_yesno_dialog(
-           _("Errors were detected in the layout (which may be due to transferring from another system, or from an older version of LiVES).\nShould I try to repair the disk copy of the layout ?\n"));
+           _("Errors were detected in the layout (which may be due to transferring from another system, or from an older version of LiVES).\n"
+             "Should I try to repair the disk copy of the layout ?\n"));
 }
 
 void do_bad_layout_error(void) {
@@ -2737,7 +2748,8 @@ void do_dvgrab_error(void) {
 
 void do_nojack_rec_error(void) {
   do_error_dialog(
-    _("\n\nAudio recording can only be done using either\nthe \"jack\" or the \"pulse audio\" audio player.\nYou may need to select one of these in Tools/Preferences/Playback.\n"));
+    _("\n\nAudio recording can only be done using either\nthe \"jack\" or the \"pulse audio\" audio player.\n"
+      "You may need to select one of these in Tools/Preferences/Playback.\n"));
 }
 
 void do_vpp_palette_error(void) {
@@ -2771,7 +2783,8 @@ static void on_dth_cancel_clicked(LiVESButton *button, livespointer user_data) {
 
 void do_rmem_max_error(int size) {
   char *msg=lives_strdup_printf((
-                                  _("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\necho %d > /proc/sys/net/core/rmem_max\n")),
+                                  _("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\n"
+                                    "echo %d > /proc/sys/net/core/rmem_max\n")),
                                 size);
   do_error_dialog(msg);
   lives_free(msg);
@@ -3478,7 +3491,8 @@ boolean ask_permission_dialog(int what) {
   switch (what) {
   case LIVES_PERM_OSC_PORTS:
     msg=lives_strdup_printf(
-          _("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\nDo you wish to allow this (for this session only) ?\n"),
+          _("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\n"
+            "Do you wish to allow this (for this session only) ?\n"),
           prefs->osc_udp_port);
     ret=do_yesno_dialog(msg);
     lives_free(msg);

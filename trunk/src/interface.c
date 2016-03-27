@@ -1053,10 +1053,12 @@ _entryw *create_location_dialog(int type) {
 
   if (type==1) {
     label = lives_standard_label_new(
-              _("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer.\nAlso make sure you have set your bandwidth in Preferences|Streaming\n\n"));
+              _("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer.\n"
+                "Also make sure you have set your bandwidth in Preferences|Streaming\n\n"));
   } else {
     label = lives_standard_label_new(
-              _("\n\nTo open a clip from Youtube, LiVES will first download it with youtube-dl.\nPlease make sure you have the latest version of that tool installed.\n\n"));
+              _("\n\nTo open a clip from Youtube, LiVES will first download it with youtube-dl.\n"
+                "Please make sure you have the latest version of that tool installed.\n\n"));
 
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
 
@@ -1223,7 +1225,8 @@ _entryw *create_rename_dialog(int type) {
 
   if (type==4) {
     label = lives_standard_label_new
-            (_("You need to enter a name for the current clip set.\nThis will allow you reload the layout with the same clips later.\nPlease enter the set name you wish to use.\nLiVES will remind you to save the clip set later when you try to exit.\n"));
+            (_("You need to enter a name for the current clip set.\nThis will allow you reload the layout with the same clips later.\n"
+               "Please enter the set name you wish to use.\nLiVES will remind you to save the clip set later when you try to exit.\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
   }
 

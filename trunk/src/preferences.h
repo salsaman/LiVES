@@ -1,6 +1,6 @@
 // preferences.h
 // LiVES (lives-exe)
-// (c) G. Finch (salsaman@gmail.com) 2004 - 2013
+// (c) G. Finch (salsaman@gmail.com) 2004 - 2016
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -16,6 +16,9 @@
 #define PREFS_COLOURS_CHANGED (1<<3)
 #define PREFS_XCOLOURS_CHANGED (1<<4)
 #define PREFS_IMAGES_CHANGED (1<<5)
+
+#define PULSE_AUDIO_URL "http://www.pulseaudio.org"
+#define JACK_URL "http://jackaudio.org"
 
 typedef struct {
   char bgcolour[256];
@@ -41,6 +44,7 @@ typedef struct {
 #define AUDIO_PLAYER_SOX "sox"
 #define AUDIO_PLAYER_JACK "jack"
 #define AUDIO_PLAYER_PULSE "pulse"
+#define AUDIO_PLAYER_PULSE_AUDIO "pulse audio" // display version
 
 #define AUDIO_PLAYER_MPLAYER "mplayer"
 #define AUDIO_PLAYER_MPLAYER2 "mplayer2"

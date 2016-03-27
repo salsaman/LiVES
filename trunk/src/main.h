@@ -174,6 +174,9 @@ typedef int lives_pgid_t;
 #endif
 
 
+#define LIVES_WEBSITE "http://lives-video.com"
+#define AUTHOR_EMAIL "salsaman@gmail.com"
+
 
 #ifndef IS_MINGW
 #define LIVES_DIR_SEP "/"
@@ -225,10 +228,11 @@ typedef int lives_pgid_t;
 
 #define LIVES_DEVICE_DIR "/dev/"
 
+#define LIVES_COPYRIGHT_YEARS "2002 - 2016"
 
-#define LIVES_MANUAL_URL "http://lives.sourceforge.net/manual/"
+#define LIVES_MANUAL_URL "http://lives-video.com/manual/"
 #define LIVES_MANUAL_FILENAME "LiVES_manual.html"
-#define LIVES_AUTHOR_EMAIL "mailto:salsaman@gmail.com"
+#define LIVES_AUTHOR_EMAIL "salsaman+lives@gmail.com"
 #define LIVES_DONATE_URL "https://sourceforge.net/p/lives/donate/"
 #define LIVES_BUG_URL "https://sourceforge.net/p/lives/bugs/"
 #define LIVES_FEATURE_URL "https://sourceforge.net/p/lives/feature-requests/"

@@ -3450,7 +3450,8 @@ static void notebook_error(LiVESNotebook *nb, uint32_t tab, lives_mt_nb_error_t 
     break;
   case NB_ERROR_NOTRANS:
     mt->nb_label=lives_standard_label_new(
-                   _("You must select two video tracks\nand a time region\nto apply transitions.\n\nAlternately, you can enable Autotransitions from the Effects menu\nbefore inserting clips into the timeline."));
+                   _("You must select two video tracks\nand a time region\nto apply transitions.\n\n"
+                     "Alternately, you can enable Autotransitions from the Effects menu\nbefore inserting clips into the timeline."));
     break;
   case NB_ERROR_NOCOMP:
     mt->nb_label=lives_standard_label_new(_("\n\nYou must select at least one video track\nand a time region\nto apply compositors.\n"));

@@ -1,6 +1,6 @@
 // cvirtual.c
 // LiVES
-// (c) G. Finch 2008 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2008 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 

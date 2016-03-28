@@ -88,6 +88,8 @@ void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamp
   // append 16 bit audio to the audio frame buffer
   size_t nsampsize;
 
+  if (abuf==NULL) return;
+  
   if (!prefs->push_audio_to_gens) return;
 
   if (abuf->buffer16==NULL) free_audio_frame_buffer(abuf);

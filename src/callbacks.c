@@ -2731,7 +2731,8 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   cfile->progress_end=cfile->end=cfile->frames;
   cfile->changed=TRUE;
   cfile->is_loaded=TRUE;
-
+  cfile->img_type=clipboard->img_type;
+  
   mainw->fx1_val=1;
   mainw->fx1_bool=FALSE;
 

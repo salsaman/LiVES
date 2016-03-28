@@ -390,7 +390,7 @@ static boolean pre_init(void) {
   sizdbl=sizeof(double);
   sizshrt=sizeof(short);
 
-  mainw=(mainwindow *)(calloc(1,sizeof(mainwindow)));
+  mainw=(mainwindow *)(calloc(1,sizeof(mainwindow))); // must not use lives_malloc() yet !
   mainw->is_ready=mainw->fatal=FALSE;
 
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
@@ -1418,9 +1418,9 @@ static void lives_init(_ign_opts *ign_opts) {
         LiVESList *ofmt_all=NULL;
         char **array;
         if (capable->python_version>=3000000)
-          lives_snprintf(prefs->encoder.name,64,"%s","multi_encoder3");
+          lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder3");
         else
-          lives_snprintf(prefs->encoder.name,64,"%s","multi_encoder");
+          lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
 
         // need to change the output format
 
@@ -1433,18 +1433,18 @@ static void lives_init(_ign_opts *ign_opts) {
               array=lives_strsplit((char *)lives_list_nth_data(ofmt_all,i),"|",-1);
 
               if (!strcmp(array[0],"hi-theora")) {
-                lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
+                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
                 lives_strfreev(array);
                 break;
               }
               if (!strcmp(array[0],"hi-mpeg")) {
-                lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
+                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
               } else if (!strcmp(array[0],"hi_h-mkv")&&strcmp(prefs->encoder.of_name,"hi-mpeg")) {
-                lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
+                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
               } else if (!strcmp(array[0],"hi_h-avi")&&strcmp(prefs->encoder.of_name,"hi-mpeg")&&strcmp(prefs->encoder.of_name,"hi_h-mkv")) {
-                lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
+                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
               } else if (!strlen(prefs->encoder.of_name)) {
-                lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
+                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
               }
 
               lives_strfreev(array);
@@ -1458,15 +1458,15 @@ static void lives_init(_ign_opts *ign_opts) {
       }
 
       if (!strlen(prefs->encoder.of_name)) {
-        get_pref(PREF_ENCODER,prefs->encoder.name,64);
-        get_pref(PREF_OUTPUT_TYPE,prefs->encoder.of_name,64);
+        get_pref(PREF_ENCODER,prefs->encoder.name,51);
+        get_pref(PREF_OUTPUT_TYPE,prefs->encoder.of_name,51);
       }
 
       future_prefs->encoder.audio_codec=prefs->encoder.audio_codec=get_int_pref(PREF_ENCODER_ACODEC);
       prefs->encoder.capabilities=0;
       prefs->encoder.of_allowed_acodecs=AUDIO_CODEC_UNKNOWN;
 
-      lives_snprintf(future_prefs->encoder.name,64,"%s",prefs->encoder.name);
+      lives_snprintf(future_prefs->encoder.name,52,"%s",prefs->encoder.name);
 
       memset(future_prefs->encoder.of_restrict,0,1);
       memset(prefs->encoder.of_restrict,0,1);

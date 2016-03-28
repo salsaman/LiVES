@@ -563,7 +563,7 @@ typedef struct {
   char info_file[PATH_MAX];
   char name[256];  ///< the display name
   char save_file_name[PATH_MAX];
-  char type[64];
+  char type[40];
   int start;
   int end;
   int insert_start;

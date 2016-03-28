@@ -4845,13 +4845,17 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
     osetn=lives_build_filename(prefs->tmpdir,old_set,"layouts",NULL);
-    nsetn=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
 
-    // move any layouts from old set to new (including layout.map)
-    lives_cp_keep_perms(osetn,nsetn);
+    if (lives_file_test(osetn,LIVES_FILE_TEST_IS_DIR)) {
+      nsetn=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
 
+      // move any layouts from old set to new (including layout.map)
+      lives_cp_keep_perms(osetn,nsetn);
+
+      lives_free(nsetn);
+    }
+    
     lives_free(osetn);
-    lives_free(nsetn);
 
     osetn=lives_build_filename(prefs->tmpdir,old_set,NULL);
     lives_rmdir(osetn,FALSE);

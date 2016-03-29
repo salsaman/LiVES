@@ -897,6 +897,7 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
   lives_free(fname);
   lives_free(url);
 
+  mainw->img_concat_clip=-1;
   mainw->no_switch_dprint=FALSE;
   open_file(dfile);
   lives_free(dfile);
@@ -2732,7 +2733,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   cfile->changed=TRUE;
   cfile->is_loaded=TRUE;
   cfile->img_type=clipboard->img_type;
-  
+
   mainw->fx1_val=1;
   mainw->fx1_bool=FALSE;
 
@@ -4854,7 +4855,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
       lives_free(nsetn);
     }
-    
+
     lives_free(osetn);
 
     osetn=lives_build_filename(prefs->tmpdir,old_set,NULL);
@@ -6233,6 +6234,7 @@ void on_ok_file_open_clicked(LiVESFileChooser *chooser, LiVESSList *fnames) {
   }
 
   ofnames=fnames;
+  mainw->img_concat_clip=-1;
 
   while (fnames!=NULL&&mainw->cancelled==CANCEL_NONE) {
     lives_snprintf(file_name,PATH_MAX,"%s",(char *)fnames->data);
@@ -11145,6 +11147,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   cfile->is_loaded=TRUE;
+  cfile->img_type=IMG_TYPE_BEST; // override the pref
 
   cfile->arps=cfile->arate=(int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
   cfile->achans=(int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));

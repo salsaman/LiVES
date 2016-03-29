@@ -5180,7 +5180,7 @@ sub get_file_info {
     }
 
 
-    if ((split(" ",$mplay_command))[0]=="mpv") {
+    if ((split(" ",$mplay_command))[0] eq "mpv") {
         $is_mpv=1;
     }
 
@@ -5257,7 +5257,7 @@ sub get_file_info {
                     $id_vid_form=(split("  ",(split("\n",$id_vid_form))[0]))[1];
                     chomp($id_vid_form);
                 }
-
+		
             }
             else {
                 $id_vid_form=smog_system_direct("grep -i 'selected video' \"$file_ident\" 2>$nulfile");
@@ -5447,12 +5447,21 @@ sub get_file_info {
 
     }
 
+    $fwtype=(split(" ",$type))[0];
+    
+    if (($hsize*$vsize==0||$count eq "")
+	## test for various image types...
+	||(($type eq "ffpng" || $fwtype eq "PNG")
+	   && $count eq "0")
+	||(($type eq "ffmjpeg" || $fwtype eq "MJPEG")
+           && $count eq "1")
 
-    if (($hsize*$vsize==0||$count eq "")&&!$is_audio) {
-# test even if mplayer thinks it is audio (at least some png files are misread)
+	&&!$is_audio) {
+	$origcount=$count;
+
         $name=&mkname(1);
         unless (-f "$curtmpdir/$name") {
-# see if it is image(s)
+	    # see if it is image(s)
             &open_images(1);
             if ($hsize==-1) {
                 $hsize=$vsize=0;
@@ -5461,6 +5470,8 @@ sub get_file_info {
             while ($file2=readdir(DIR)) {
                 if ($file2 =~ /$img_ext$/) {
                     $count++;
+		    $count-=$origcount;
+		    $origcount=0;
                     $imresact="none";
                     if ($only_first) {
                         unlink glob "$curtmpdir/*$img_ext";

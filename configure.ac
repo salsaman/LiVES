@@ -572,6 +572,10 @@ AC_SUBST(LIBFREENECT_LIBS)
 AM_CONDITIONAL(HAVE_LIBFREENECT,$HAVE_LIBFREENECT)
 
 
+AC_ARG_ENABLE( turbo, [  --enable-turbo     Most optimised compile.] , turbo=true, turbo=false)
+AM_CONDITIONAL(TURBO,$TURBO)
+
+
 dnl check for openGL
 HAVE_OPENGL=false
 AC_ARG_ENABLE( opengl, [  --disable-opengl     Disable openGL support.] , disable_opengl=yes)

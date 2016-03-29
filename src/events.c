@@ -4344,6 +4344,9 @@ boolean render_to_clip(boolean new_clip) {
       int old_file=current_file;
       cfile->start=1;
       cfile->end=cfile->frames;
+
+      cfile->img_type=IMG_TYPE_BEST; // override the pref
+
       set_undoable(NULL,FALSE);
       add_to_clipmenu();
       current_file=mainw->current_file;

@@ -1,3 +1,20 @@
+Version 2.6.3
+-------------
+Fix bug which caused error moving set with no layouts (regression).
+Optimise recording of generated frames.
+Fixes for recording audio from external pulse audio.
+
+
+
+
+
+Version 2.6.2 (28 March 2016)
+-----------------------------
+Fix bug which causes crash on new installs.
+
+
+
+
 Version 2.6.1 (27 March 2016)
 -----------------------------
 Fix flickering in multi threaded palette conversion.

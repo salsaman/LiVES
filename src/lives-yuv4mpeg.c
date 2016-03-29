@@ -366,6 +366,8 @@ static boolean open_yuv4m_inner(const char *filename, const char *fname, int new
   cfile->hsize=DEF_GEN_WIDTH;
   cfile->vsize=DEF_GEN_HEIGHT;
 
+  cfile->img_type=IMG_TYPE_BEST; // override the pref
+
   cfile->is_loaded=TRUE;
 
   add_to_clipmenu();

@@ -11030,6 +11030,8 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     return FALSE; // show dialog again
   }
 
+  cfile->img_type=IMG_TYPE_BEST; // override the pref
+
   cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
   cfile->changed=TRUE;
   cfile->is_loaded=TRUE;
@@ -16144,6 +16146,8 @@ boolean on_render_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     cfile->hsize=mainw->files[orig_file]->hsize;
     cfile->vsize=mainw->files[orig_file]->vsize;
+
+    cfile->img_type=mainw->files[orig_file]->img_type;
 
     cfile->pb_fps=cfile->fps=mainw->files[orig_file]->fps;
     cfile->ratio_fps=mainw->files[orig_file]->ratio_fps;

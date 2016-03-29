@@ -160,4 +160,6 @@ DISTCLEANFILES = intltool-extract intltool-merge intltool-update po/POTFILES_PLU
 
 ACLOCAL_AMFLAGS = -I m4
 
-
+if TURBO
+CFLAGS += -Ofast
+endif

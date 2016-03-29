@@ -36,6 +36,14 @@ static boolean seek_err;
 
 ///////////////////////////////////////////////////////////////////
 
+void pa_mloop_lock(void) {
+  pa_threaded_mainloop_lock(pa_mloop);
+}
+
+void pa_mloop_unlock(void) {
+  pa_threaded_mainloop_unlock(pa_mloop);
+}
+
 
 static void pulse_server_cb(pa_context *c,const pa_server_info *info, void *userdata) {
   if (info==NULL) {
@@ -806,7 +814,16 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
     size_t target=frames_out*(ofile->asampsize/8)*ofile->achans,bytes;
     // use write not lives_write - because of potential threading issues
     bytes=write(mainw->aud_rec_fd,holding_buff,target);
-    if (bytes<target) mainw->bad_aud_file=filename_from_fd(NULL,mainw->aud_rec_fd);
+    if (bytes>0) {
+      mainw->aud_data_written+=bytes;
+      if (mainw->ascrap_file!=-1&&mainw->files[mainw->ascrap_file]!=NULL&&mainw->aud_rec_fd==mainw->files[mainw->ascrap_file]->cb_src)
+        add_to_ascrap_mb(bytes);
+      if (mainw->aud_data_written>AUD_WRITTEN_CHECK) {
+        mainw->aud_data_written=0;
+        check_for_disk_space();
+      }
+      if (bytes<target) mainw->bad_aud_file=filename_from_fd(NULL,mainw->aud_rec_fd);
+    }
   }
 
   lives_free(holding_buff);
@@ -840,7 +857,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
   if (pulsed->playing_file==-1) {
     out_scale=1.0; // just listening, no recording
   } else {
-    out_scale=(float)pulsed->in_arate/(float)afile->arate; // recording to ascrap_file
+    out_scale=(float)afile->arate/(float)pulsed->in_arate; // recording to ascrap_file
     prb+=rbytes;
   }
 

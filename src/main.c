@@ -390,7 +390,7 @@ static boolean pre_init(void) {
   sizdbl=sizeof(double);
   sizshrt=sizeof(short);
 
-  mainw=(mainwindow *)(calloc(1,sizeof(mainwindow))); // must not use lives_malloc() yet !
+  mainw=(mainwindow *)(calloc(1,sizeof(mainwindow)));
   mainw->is_ready=mainw->fatal=FALSE;
 
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
@@ -1140,6 +1140,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   memset(mainw->recent_file,0,1);
 
+  mainw->aud_data_written=0;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -1418,9 +1419,9 @@ static void lives_init(_ign_opts *ign_opts) {
         LiVESList *ofmt_all=NULL;
         char **array;
         if (capable->python_version>=3000000)
-          lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder3");
+          lives_snprintf(prefs->encoder.name,64,"%s","multi_encoder3");
         else
-          lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
+          lives_snprintf(prefs->encoder.name,64,"%s","multi_encoder");
 
         // need to change the output format
 
@@ -1433,18 +1434,18 @@ static void lives_init(_ign_opts *ign_opts) {
               array=lives_strsplit((char *)lives_list_nth_data(ofmt_all,i),"|",-1);
 
               if (!strcmp(array[0],"hi-theora")) {
-                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+                lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
                 lives_strfreev(array);
                 break;
               }
               if (!strcmp(array[0],"hi-mpeg")) {
-                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+                lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
               } else if (!strcmp(array[0],"hi_h-mkv")&&strcmp(prefs->encoder.of_name,"hi-mpeg")) {
-                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+                lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
               } else if (!strcmp(array[0],"hi_h-avi")&&strcmp(prefs->encoder.of_name,"hi-mpeg")&&strcmp(prefs->encoder.of_name,"hi_h-mkv")) {
-                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+                lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
               } else if (!strlen(prefs->encoder.of_name)) {
-                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+                lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
               }
 
               lives_strfreev(array);
@@ -1458,15 +1459,15 @@ static void lives_init(_ign_opts *ign_opts) {
       }
 
       if (!strlen(prefs->encoder.of_name)) {
-        get_pref(PREF_ENCODER,prefs->encoder.name,51);
-        get_pref(PREF_OUTPUT_TYPE,prefs->encoder.of_name,51);
+        get_pref(PREF_ENCODER,prefs->encoder.name,64);
+        get_pref(PREF_OUTPUT_TYPE,prefs->encoder.of_name,64);
       }
 
       future_prefs->encoder.audio_codec=prefs->encoder.audio_codec=get_int_pref(PREF_ENCODER_ACODEC);
       prefs->encoder.capabilities=0;
       prefs->encoder.of_allowed_acodecs=AUDIO_CODEC_UNKNOWN;
 
-      lives_snprintf(future_prefs->encoder.name,52,"%s",prefs->encoder.name);
+      lives_snprintf(future_prefs->encoder.name,64,"%s",prefs->encoder.name);
 
       memset(future_prefs->encoder.of_restrict,0,1);
       memset(prefs->encoder.of_restrict,0,1);
@@ -4418,12 +4419,6 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   png_structp png_ptr;
   png_infop info_ptr;
 
-  int width, height;
-  int color_type, bit_depth;
-  int rowstrides[1];
-
-  int i;
-
   unsigned char buff[8];
 
   unsigned char *mem,*ptr;
@@ -4434,6 +4429,12 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
   float screen_gamma=SCREEN_GAMMA;
   double file_gamma;
+
+  int width, height;
+  int color_type, bit_depth;
+  int rowstrides[1];
+
+  register int i;
 
   if (!is_png) return FALSE;
 
@@ -4515,7 +4516,6 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   height = png_get_image_height(png_ptr, info_ptr);
   *rowstrides = png_get_rowbytes(png_ptr, info_ptr);
 
-
   weed_set_int_value(layer,WEED_LEAF_WIDTH,width);
   weed_set_int_value(layer,WEED_LEAF_HEIGHT,height);
   weed_set_int_value(layer,WEED_LEAF_ROWSTRIDES,*rowstrides);
@@ -4562,6 +4562,111 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
     weed_set_int_value(layer,WEED_LEAF_FLAGS,flags);
   }
 
+  return TRUE;
+}
+
+
+
+
+boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp) {
+  // comp is 0 (none) - 9 (full)
+  png_structp png_ptr;
+  png_infop info_ptr;
+
+  unsigned char *ptr;
+
+  float screen_gamma=SCREEN_GAMMA;
+
+  int width, height, palette, flags, error;
+  int rowstride;
+
+  register int i;
+
+  png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,(png_voidp)NULL, NULL, NULL);
+
+  if (!png_ptr) return FALSE;
+
+  info_ptr = png_create_info_struct(png_ptr);
+
+  if (!info_ptr) {
+    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+    return FALSE;
+  }
+
+
+  if (setjmp(png_jmpbuf(png_ptr))) {
+    // libpng will longjump to here on error
+    if (info_ptr != NULL) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+    return FALSE;
+  }
+
+  png_init_io(png_ptr, fp);
+
+  width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
+  height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
+  rowstride=weed_get_int_value(layer,WEED_LEAF_ROWSTRIDES,&error);
+  palette=weed_get_int_value(layer,WEED_LEAF_CURRENT_PALETTE,&error);
+
+
+  // unpremult the alpha
+  if (weed_plant_has_leaf(layer,WEED_LEAF_FLAGS))
+    flags=weed_get_int_value(layer,WEED_LEAF_FLAGS,&error);
+
+  if (flags&WEED_CHANNEL_ALPHA_PREMULT) {
+    alpha_unpremult(layer,TRUE);
+  }
+
+  switch (palette) {
+  case WEED_PALETTE_RGB24:
+  case WEED_PALETTE_BGR24:
+    png_set_IHDR(png_ptr, info_ptr, width, height,
+                 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+    break;
+  case WEED_PALETTE_RGBA32:
+  case WEED_PALETTE_BGRA32:
+    png_set_IHDR(png_ptr, info_ptr, width, height,
+                 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+    break;
+  default:
+    LIVES_ERROR("Bad png palette !\n");
+    break;
+  }
+
+  png_set_compression_level(png_ptr, comp);
+
+  png_set_write_status_fn(png_ptr, png_row_callback);
+
+#if PNG_LIBPNG_VER >= 10504
+  png_set_alpha_mode(png_ptr, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
+#endif
+
+  png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
+
+  png_write_info(png_ptr, info_ptr);
+
+  ptr=weed_get_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,&error);
+
+  // Write image data
+  for (i=0 ; i<height ; i++) {
+    png_write_row(png_ptr,ptr);
+    ptr+=rowstride;
+  }
+
+  // end write
+  png_write_end(png_ptr, (png_infop)NULL);
+
+  if (info_ptr != NULL) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+  png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+
+  if (!prefs->alpha_post) {
+    // premultiply the alpha
+    alpha_unpremult(layer,FALSE);
+  }
+
+  fflush(fp);
 
   return TRUE;
 }

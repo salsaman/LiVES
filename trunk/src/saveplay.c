@@ -357,6 +357,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         lives_decoder_t *dplug=(lives_decoder_t *)cfile->ext_src;
         cfile->opening=TRUE;
         cfile->clip_type=CLIP_TYPE_FILE;
+        cfile->img_type=IMG_TYPE_BEST; // override the pref
 
         if (cdata->frame_width>0) {
           cfile->hsize=cdata->frame_width;
@@ -920,11 +921,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   }
   lives_freep((void **)&mainw->file_open_params);
 
-  if (!strcmp(cfile->type,"Frames")||!strcmp(cfile->type,"jpeg")||!strcmp(cfile->type,"png")||!strcmp(cfile->type,"Audio")) {
+  if (!strcmp(cfile->type,"Frames")||!strcmp(cfile->type,LIVES_IMAGE_TYPE_JPEG)||!strcmp(cfile->type,LIVES_IMAGE_TYPE_PNG)||!strcmp(cfile->type,"Audio")) {
     cfile->is_untitled=TRUE;
   }
-
-  if (cfile->frames==1&&(!strcmp(cfile->type,"jpeg")||!strcmp(cfile->type,"png"))) {
+  
+  if (cfile->frames==1&&(!strcmp(cfile->type,LIVES_IMAGE_TYPE_JPEG)||!strcmp(cfile->type,LIVES_IMAGE_TYPE_PNG))) {
     if (mainw->img_concat_clip==-1) mainw->img_concat_clip=mainw->current_file;
     else if (prefs->concat_images) {
       // insert this image into our image clip, close this file
@@ -2851,6 +2852,11 @@ void play_file(void) {
     lives_free(stfile);
   }
 
+  if (mainw->scrap_file!=-1&&mainw->files[mainw->scrap_file]!=NULL&&mainw->files[mainw->scrap_file]->cb_src>=0) {
+    close(mainw->files[mainw->scrap_file]->cb_src);
+    mainw->files[mainw->scrap_file]->cb_src=-1;
+  }
+
   if (mainw->foreign) {
     // recording from external window capture
 
@@ -4027,7 +4033,7 @@ boolean read_headers(const char *file_name) {
           cfile->f_size=strtol(array[1],NULL,10);
           cfile->afilesize=strtol(array[2],NULL,10);
           if (cfile->clip_type==CLIP_TYPE_DISK) {
-            if (!strcmp(array[3],"jpg")) cfile->img_type=IMG_TYPE_JPEG;
+            if (!strcmp(array[3],LIVES_FILE_EXT_JPG)) cfile->img_type=IMG_TYPE_JPEG;
             else cfile->img_type=IMG_TYPE_PNG;
           }
           lives_strfreev(array);
@@ -4277,7 +4283,7 @@ boolean read_headers(const char *file_name) {
   cfile->afilesize=strtol(array[2],NULL,10);
 
   if (cfile->clip_type==CLIP_TYPE_DISK) {
-    if (!strcmp(array[3],"jpg")) cfile->img_type=IMG_TYPE_JPEG;
+    if (!strcmp(array[3],LIVES_FILE_EXT_JPG)) cfile->img_type=IMG_TYPE_JPEG;
     else cfile->img_type=IMG_TYPE_PNG;
   }
 
@@ -4617,6 +4623,11 @@ static double scrap_mb;  // MB written to frame file
 static double ascrap_mb;  // MB written to audio file
 static uint64_t free_mb; // MB free to write
 
+void add_to_ascrap_mb(uint64_t bytes) {
+  ascrap_mb+=bytes/1000000.;
+}
+
+
 boolean open_scrap_file(void) {
   // create a scrap file for recording generated video frames
   int current_file=mainw->current_file;
@@ -4712,26 +4723,63 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   // return FALSE if the frame does not exist/we are unable to read it
 
-
-  int width,height,palette,nplanes;
-  int clamping,subspace,sampling;
-  int *rowstrides;
-
-  int i,fd;
-
-  char *oname=make_image_file_name(mainw->files[mainw->scrap_file],frame,LIVES_FILE_EXT_SCRAP);
+  char *oname;
 
   ssize_t bytes;
   ssize_t tsize;
 
   void **pdata;
 
-  fd=lives_open2(oname,O_RDONLY);
+  int *rowstrides;
 
-  if (fd==-1) return FALSE;
+  int width,height,palette,nplanes;
+  int clamping,subspace,sampling;
+
+  int fd;
+
+#ifdef USE_LIBPNG
+  FILE *fp;
+  off_t end;
+#endif
+
+  register int i;
+
+
+  if (mainw->files[mainw->scrap_file]->cb_src<0) {
+    oname=make_image_file_name(mainw->files[mainw->scrap_file],1,LIVES_FILE_EXT_SCRAP);
+    fd=lives_open2(oname,O_RDONLY);
+    lives_free(oname);
+    if (fd<0) return FALSE;
+    mainw->files[mainw->scrap_file]->cb_src=fd;
+  } else fd=mainw->files[mainw->scrap_file]->cb_src;
 
   bytes=lives_read_le(fd,&palette,4,TRUE);
-  if (bytes<sizint) return FALSE;
+  if (bytes<4) {
+    // old style file per frame
+    close(mainw->files[mainw->scrap_file]->cb_src);
+    mainw->files[mainw->scrap_file]->cb_src=-1;
+
+    oname=make_image_file_name(mainw->files[mainw->scrap_file],frame,LIVES_FILE_EXT_SCRAP);
+    fd=lives_open2(oname,O_RDONLY);
+    lives_free(oname);
+    if (fd<0) return FALSE;
+    mainw->files[mainw->scrap_file]->cb_src=fd;
+    bytes=lives_read_le(fd,&palette,4,TRUE);
+    if (bytes<sizint) {
+      return FALSE;
+    }
+  }
+
+#ifdef USE_LIBPNG
+  else if (palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24||palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_BGRA32) {
+    fp=fdopen(fd,"rb");
+    layer_from_png(fp,layer,TRUE);
+    end=ftell(fp);
+    lseek(fd,end,SEEK_SET);
+    return TRUE;
+  }
+#endif
+
 
   weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,palette);
 
@@ -4759,12 +4807,10 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   weed_set_int_value(layer,WEED_LEAF_WIDTH,width);
 
-
   bytes=lives_read_le(fd,&height,4,TRUE);
   if (bytes<4) return FALSE;
 
   weed_set_int_value(layer,WEED_LEAF_HEIGHT,height);
-
 
   nplanes=weed_palette_get_numplanes(palette);
 
@@ -4805,11 +4851,37 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
   lives_free(pdata);
 
 
-  close(fd);
-
   return TRUE;
 }
 
+
+boolean check_for_disk_space(void) {
+  boolean wrtable=TRUE;
+  // check if we have enough free space left on the volume (return FALSE if not)
+  if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
+    // check free space again
+
+    char *dir=lives_build_filename(prefs->tmpdir,NULL);
+
+    free_mb=(double)get_fs_free(dir)/1000000.;
+    if (free_mb==0) wrtable=is_writeable_dir(dir);
+    else wrtable=TRUE;
+
+    if (wrtable) {
+      if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
+        if (mainw->record&&!mainw->record_paused) {
+          d_print(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),
+                  dir,prefs->rec_stop_gb);
+          on_record_perf_activate(NULL,NULL);
+        }
+        lives_free(dir);
+        return FALSE;
+      }
+      lives_free(dir);
+    }
+  }
+  return TRUE;
+}
 
 
 int save_to_scrap_file(weed_plant_t *layer) {
@@ -4824,92 +4896,126 @@ int save_to_scrap_file(weed_plant_t *layer) {
 
   // we also check if there is enough free space left; if not, recording is paused
 
+  // NOW, for RGB / BGR / RGBA / BGRA we write the palette followed by a png file. In this way we can reduce the io at cost of some CPU..
 
-  int fd;
-  int flags=O_WRONLY|O_CREAT|O_TRUNC;
+  // NOW, we also use a single file and just append to it.
 
-  int width,height,palette,nplanes,error;
-  int *rowstrides;
-
-  int clamping,subspace,sampling;
-
-  int i;
-
-  boolean wrtable=TRUE;
 
   void **pdata;
 
-  char *oname=make_image_file_name(mainw->files[mainw->scrap_file],mainw->files[mainw->scrap_file]->frames+1,LIVES_FILE_EXT_SCRAP);
-
   char *framecount;
 
-  struct stat filestat;
+  int *rowstrides;
 
-#ifdef O_NOATIME
-  flags|=O_NOATIME;
+  size_t pdata_size;
+
+#ifdef USE_LIBPNG
+  FILE *fp;
+  off_t end;
 #endif
 
-  fd=lives_open3(oname,flags,S_IRUSR|S_IWUSR);
+  boolean wrtable=TRUE;
+  boolean done=FALSE;
 
-  if (fd==-1) {
+  int flags=O_WRONLY|O_CREAT|O_TRUNC;
+  int width,height,palette,nplanes,error;
+  int clamping,subspace,sampling;
+  int fd;
+
+  register int i;
+
+  if (mainw->files[mainw->scrap_file]->cb_src<0) {
+    char *drnm;
+    char *oname=make_image_file_name(mainw->files[mainw->scrap_file],1,LIVES_FILE_EXT_SCRAP);
+
+#ifdef O_NOATIME
+    flags|=O_NOATIME;
+#endif
+
+    drnm=lives_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
+    lives_mkdir_with_parents(drnm,S_IRWXU);
+
+    fd=lives_open3(oname,flags,S_IRUSR|S_IWUSR);
+
     lives_free(oname);
-    return mainw->files[mainw->scrap_file]->frames;
-  }
+
+    if (fd<0) return mainw->files[mainw->scrap_file]->frames;
+    mainw->files[mainw->scrap_file]->cb_src=fd;
+
+  } else fd=mainw->files[mainw->scrap_file]->cb_src;
+
+  palette=weed_get_int_value(layer,WEED_LEAF_CURRENT_PALETTE,&error);
 
   mainw->write_failed=FALSE;
 
   // write current_palette, rowstrides and height
-  palette=weed_get_int_value(layer,WEED_LEAF_CURRENT_PALETTE,&error);
   lives_write_le(fd,&palette,4,TRUE);
 
   if (mainw->write_failed) {
-    lives_free(oname);
     return mainw->files[mainw->scrap_file]->frames;
   }
 
-  if (weed_palette_is_yuv_palette(palette)) {
-    if (weed_plant_has_leaf(layer,WEED_LEAF_YUV_CLAMPING)) {
-      clamping=weed_get_int_value(layer,WEED_LEAF_YUV_CLAMPING,&error);
-    } else clamping=WEED_YUV_CLAMPING_CLAMPED;
-    lives_write_le(fd,&clamping,4,TRUE);
+#ifdef USE_LIBPNG
+  if (palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24||palette==WEED_PALETTE_BGRA32||palette==WEED_PALETTE_RGBA32) {
+    fp=fdopen(fd,"ab");
+    pdata_size=-ftell(fp);
+    save_to_png(fp,layer,4);
+    end=ftell(fp);
+    lseek(fd,end,SEEK_SET);
+    pdata_size+=end;
+    done=TRUE;
+  }
+#endif
 
-    if (weed_plant_has_leaf(layer,WEED_LEAF_YUV_SUBSPACE)) {
-      subspace=weed_get_int_value(layer,WEED_LEAF_YUV_SUBSPACE,&error);
-    } else subspace=WEED_YUV_SUBSPACE_YUV;
-    lives_write_le(fd,&subspace,4,TRUE);
+  if (!done) {
+    if (weed_palette_is_yuv_palette(palette)) {
+      if (weed_plant_has_leaf(layer,WEED_LEAF_YUV_CLAMPING)) {
+        clamping=weed_get_int_value(layer,WEED_LEAF_YUV_CLAMPING,&error);
+      } else clamping=WEED_YUV_CLAMPING_CLAMPED;
+      lives_write_le(fd,&clamping,4,TRUE);
 
-    if (weed_plant_has_leaf(layer,WEED_LEAF_YUV_SAMPLING)) {
-      sampling=weed_get_int_value(layer,WEED_LEAF_YUV_SAMPLING,&error);
-    } else sampling=WEED_YUV_SAMPLING_DEFAULT;
-    lives_write_le(fd,&sampling,4,TRUE);
+      if (weed_plant_has_leaf(layer,WEED_LEAF_YUV_SUBSPACE)) {
+        subspace=weed_get_int_value(layer,WEED_LEAF_YUV_SUBSPACE,&error);
+      } else subspace=WEED_YUV_SUBSPACE_YUV;
+      lives_write_le(fd,&subspace,4,TRUE);
+
+      if (weed_plant_has_leaf(layer,WEED_LEAF_YUV_SAMPLING)) {
+        sampling=weed_get_int_value(layer,WEED_LEAF_YUV_SAMPLING,&error);
+      } else sampling=WEED_YUV_SAMPLING_DEFAULT;
+      lives_write_le(fd,&sampling,4,TRUE);
+    }
+
+    width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
+    lives_write_le(fd,&width,4,TRUE);
+
+    height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
+    lives_write_le(fd,&height,4,TRUE);
+
+    nplanes=weed_palette_get_numplanes(palette);
+
+    rowstrides=weed_get_int_array(layer,WEED_LEAF_ROWSTRIDES,&error);
+
+    for (i=0; i<nplanes; i++) {
+      lives_write_le(fd,&rowstrides[i],4,TRUE);
+    }
+
+
+    // now write pixel_data planes
+
+    pdata=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
+    pdata_size=0;
+
+    for (i=0; i<nplanes; i++) {
+      pdata_size+=rowstrides[i]*height*weed_palette_get_plane_ratio_vertical(palette,i);
+      lives_write(fd,pdata[i],pdata_size,TRUE);
+    }
+
+    lives_free(rowstrides);
+    lives_free(pdata);
   }
 
-  width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
-  lives_write_le(fd,&width,4,TRUE);
+  scrap_mb+=(double)(pdata_size)/1000000.;
 
-  height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
-  lives_write_le(fd,&height,4,TRUE);
-
-  nplanes=weed_palette_get_numplanes(palette);
-
-  rowstrides=weed_get_int_array(layer,WEED_LEAF_ROWSTRIDES,&error);
-
-  for (i=0; i<nplanes; i++) {
-    lives_write_le(fd,&rowstrides[i],4,TRUE);
-  }
-
-
-  // now write pixel_data planes
-
-  pdata=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
-
-  for (i=0; i<nplanes; i++) {
-    lives_write(fd,pdata[i],rowstrides[i]*height*weed_palette_get_plane_ratio_vertical(palette,i),TRUE);
-  }
-
-  fstat(fd,&filestat);
-
-  scrap_mb+=(double)(filestat.st_size)/1000000.;
 
   // check free space every 1000 frames or every 10 MB of audio (TODO ****)
   if (mainw->files[mainw->scrap_file]->frames%1000==0) {
@@ -4937,32 +5043,9 @@ int save_to_scrap_file(weed_plant_t *layer) {
   }
 
   lives_fsync(fd); // try to sync file access, to make saving smoother
-  close(fd);
 
-  lives_free(rowstrides);
-  lives_free(pdata);
+  check_for_disk_space();
 
-  lives_free(oname);
-
-  // check if we have enough free space left on the volume
-  if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
-    // check free space again
-    char *dir=lives_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
-    free_mb=(double)get_fs_free(dir)/1000000.;
-    if (free_mb==0) wrtable=is_writeable_dir(dir);
-    else wrtable=TRUE;
-
-    if (wrtable) {
-      if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
-        if (mainw->record&&!mainw->record_paused) {
-          d_print(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),
-                  dir,prefs->rec_stop_gb);
-          on_record_perf_activate(NULL,NULL);
-        }
-      }
-      lives_free(dir);
-    }
-  }
   return ++mainw->files[mainw->scrap_file]->frames;
 
 }
@@ -4975,6 +5058,9 @@ void close_scrap_file(void) {
   if (mainw->scrap_file==-1) return;
 
   mainw->current_file=mainw->scrap_file;
+
+  if (cfile->cb_src>=0) close(cfile->cb_src);
+
   close_current_file(current_file);
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
@@ -5195,7 +5281,7 @@ boolean reload_clip(int fileno) {
 
   sfile->clip_type=CLIP_TYPE_FILE;
   get_mime_type(sfile->type,40,cdata);
-  if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG)) sfile->img_type=IMG_TYPE_PNG; // read_headers() will have set this to "jpeg" (default)
+  sfile->img_type=IMG_TYPE_BEST; // read_headers() will have set this to "jpeg" (default)
   // we will set correct value in check_clip_integrity() if there are any real images
 
   if (sfile->ext_src!=NULL) {

@@ -137,6 +137,9 @@ int64_t lives_pulse_get_time(pulse_driver_t *, boolean absolute); ///< get time 
 
 double lives_pulse_get_pos(pulse_driver_t *);
 
+void pa_mloop_lock(void);
+void pa_mloop_unlock(void);
+
 
 //////////////////////
 

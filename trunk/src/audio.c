@@ -89,7 +89,7 @@ void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamp
   size_t nsampsize;
 
   if (abuf==NULL) return;
-  
+
   if (!prefs->push_audio_to_gens) return;
 
   if (abuf->buffer16==NULL) free_audio_frame_buffer(abuf);
@@ -1423,6 +1423,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
       }
     } while (retval==LIVES_RESPONSE_RETRY);
     lives_free(outfilename);
+    if (fileno==mainw->ascrap_file) mainw->files[mainw->ascrap_file]->cb_src=mainw->aud_rec_fd;
   }
 
   if (rec_type==RECA_GENERATED) {
@@ -1537,6 +1538,7 @@ void jack_rec_audio_end(boolean close_device, boolean close_fd) {
 
 
 #ifdef HAVE_PULSE_AUDIO
+
 void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   lives_clip_t *outfile;
@@ -1572,6 +1574,20 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
       }
     } while (retval==LIVES_RESPONSE_RETRY);
     lives_free(outfilename);
+    if (fileno==mainw->ascrap_file) {
+      mainw->files[mainw->ascrap_file]->cb_src=mainw->aud_rec_fd;
+      if (mainw->pulsed_read!=NULL) {
+	// flush all data from buffer; this seems like the only way
+	void *data;
+	size_t rbytes;
+	pa_mloop_lock();
+	do {
+	  pa_stream_peek(mainw->pulsed_read->pstream,(const void **)&data,&rbytes);
+	  if (rbytes>0) pa_stream_drop(mainw->pulsed_read->pstream);
+	} while (rbytes>0);
+	pa_mloop_unlock();
+      }
+    }
   }
 
   if (rec_type==RECA_GENERATED) {

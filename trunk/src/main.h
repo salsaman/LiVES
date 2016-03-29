@@ -495,6 +495,8 @@ typedef enum {
   IMG_TYPE_PNG
 } lives_image_type_t;
 
+#define IMG_TYPE_BEST IMG_TYPE_PNG
+
 
 #define AFORM_SIGNED 0
 #define AFORM_LITTLE_ENDIAN 0
@@ -563,7 +565,7 @@ typedef struct {
   char info_file[PATH_MAX];
   char name[256];  ///< the display name
   char save_file_name[PATH_MAX];
-  char type[40];
+  char type[64];
   int start;
   int end;
   int insert_start;
@@ -1066,6 +1068,9 @@ int save_to_scrap_file(weed_plant_t *layer);
 boolean load_from_scrap_file(weed_plant_t *layer, int frame);
 void close_ascrap_file(void);
 void close_scrap_file(void);
+void add_to_ascrap_mb(uint64_t bytes);
+
+boolean check_for_disk_space(void);
 
 
 // main.c
@@ -1100,6 +1105,10 @@ LiVESError *lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type
 void init_track_decoders(void);
 void free_track_decoders(void);
 
+#ifdef USE_LIBPNG
+boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog);
+boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp);
+#endif
 
 void load_frame_image(int frame);
 void sensitize(void);

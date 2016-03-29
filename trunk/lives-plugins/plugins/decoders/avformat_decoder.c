@@ -270,6 +270,11 @@ skip_probe:
     return FALSE;
   }
 
+  if (priv->ic->pb==NULL) {
+    fprintf(stderr, "avformat stream not video\n");
+    return FALSE;
+  }
+  
   if (!priv->ic->pb->seekable) {
     fprintf(stderr, "avformat stream non-seekable\n");
     return FALSE;

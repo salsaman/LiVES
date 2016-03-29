@@ -2901,29 +2901,12 @@ _prefsw *create_prefs_dialog(void) {
                              LIVES_BOX(hbox),NULL);
 
 
-  if (prefs->ocp==-1) prefs->ocp=get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
-
   // ---
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
-  prefsw->spinbutton_ocp = lives_standard_spin_button_new(_("Open/render compression"), FALSE, prefs->ocp, 0., 100., 1., 5., 0,
-                           LIVES_BOX(hbox),NULL);
-
-  label = lives_standard_label_new(_(" %     ( lower = slower, larger files; for jpeg, higher quality )"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
-
-  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
-
-
-
-  // ---
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
-  // ---
-
-  label = lives_standard_label_new(_("Default image format"));
+  label = lives_standard_label_new(_("Fallback image format"));
 
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   // ---
@@ -2939,6 +2922,28 @@ _prefsw *create_prefs_dialog(void) {
   // ---
   label = lives_standard_label_new(_("(Check Help/Troubleshoot to see which image formats are supported)"));
   lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
+
+
+
+
+  
+
+  if (prefs->ocp==-1) prefs->ocp=get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
+  
+  // ---
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+  // ---
+
+  prefsw->spinbutton_ocp = lives_standard_spin_button_new(_("Open/render compression"), FALSE, prefs->ocp, 0., 100., 1., 5., 0,
+                           LIVES_BOX(hbox),NULL);
+
+  label = lives_standard_label_new(_(" %     ( lower = slower, larger files; for jpeg, higher quality )"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
+
+  // ---
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
+  // ---
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
@@ -3416,6 +3421,15 @@ _prefsw *create_prefs_dialog(void) {
   lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_encoding), widget_opts.border_width);
 
   prefsw->scrollw_right_encoding = lives_standard_scrolled_window_new(0,0,prefsw->vbox_right_encoding);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_encoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  label = lives_standard_label_new(_("You can also change these values when encoding a clip"));
+
+  lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
+  // ---
+  add_fill_to_box(LIVES_BOX(hbox));
 
   if (capable->has_encoder_plugins) {
     // scan for encoder plugins
@@ -4788,6 +4802,9 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->checkbutton_omc_js = lives_standard_check_button_new(_("_Joystick events"),TRUE,LIVES_BOX(hbox),NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_omc_js), prefs->omc_dev_opts&OMC_DEV_JS);
+
+  label = lives_standard_label_new(_("Leave blank to use defaults"));
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);

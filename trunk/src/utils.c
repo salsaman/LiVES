@@ -1861,6 +1861,7 @@ void init_clipboard(void) {
     do_progress_dialog(TRUE,FALSE,_("Clearing the clipboard"));
   }
 
+  clipboard->img_type=IMG_TYPE_BEST; // override the pref
   clipboard->cb_src=current_file;
   mainw->current_file=current_file;
 }
@@ -3585,6 +3586,8 @@ boolean prepare_to_play_foreign(void) {
   cfile->hsize=mainw->pwidth;
   cfile->vsize=mainw->pheight;
 
+  cfile->img_type=IMG_TYPE_BEST; // override the pref
+  
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
 

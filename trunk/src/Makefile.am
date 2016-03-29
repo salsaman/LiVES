@@ -227,6 +227,7 @@ AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CF
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
 
+
 if HAVE_AVFORMAT
 if HAVE_AVCODEC
 if HAVE_AVUTIL

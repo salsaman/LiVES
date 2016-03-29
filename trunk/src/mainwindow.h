@@ -1311,6 +1311,8 @@ typedef struct {
   char frameblank_path[PATH_MAX];
   char sepimg_path[PATH_MAX];
 
+  uint64_t aud_data_written;
+
   ////////////////////
 
 } mainwindow;

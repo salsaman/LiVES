@@ -45,6 +45,7 @@
 /// buffer size for realtime audio
 #define XSAMPLES 128000
 
+#define AUD_WRITTEN_CHECK 100000000 ///< after recording this many bytes we check disk space
 
 /////////////////////////////////////
 /// asynch msging

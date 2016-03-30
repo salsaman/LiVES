@@ -530,7 +530,7 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
     char xbuf[count];
     ssize_t retval=lives_read(fd,buf,count,allow_less);
     if (retval<count) return retval;
-    reverse_bytes(buf,(const char *)xbuf,count);
+    reverse_bytes((char *)buf,(const char *)xbuf,count);
     return retval;
   } else {
     return lives_read(fd,buf,count,allow_less);
@@ -735,7 +735,7 @@ ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_le
     char xbuf[count];
     ssize_t retval=lives_read_buffered(fd,buf,count,allow_less);
     if (retval<count) return retval;
-    reverse_bytes(buf,(const char *)xbuf,count);
+    reverse_bytes((char *)buf,(const char *)xbuf,count);
     return retval;
   } else {
     return lives_read_buffered(fd,buf,count,allow_less);
@@ -796,10 +796,10 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
 ssize_t lives_write_le_buffered(int fd, const void *buf, size_t count, boolean allow_fail) {
   if (capable->byte_order==LIVES_BIG_ENDIAN&&(prefs->bigendbug!=1)) {
     char xbuf[count];
-    reverse_bytes(xbuf,(const char *)buf,count);
+    reverse_bytes((char *)xbuf,(const char *)buf,count);
     return lives_write_buffered(fd,xbuf,count,allow_fail);
   } else {
-    return lives_write_buffered(fd,buf,count,allow_fail);
+    return lives_write_buffered(fd,(char *)buf,count,allow_fail);
   }
 
 }

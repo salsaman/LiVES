@@ -7534,7 +7534,7 @@ void on_rev_clipboard_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 
 void on_load_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *subfile;
-  char **const filt=LIVES_SUBS_FILTER;
+  char *filt[]=LIVES_SUBS_FILTER;
   char filename[512];
   char *subfname,*isubfname;
   lives_subtitle_type_t subtype=SUBTITLE_TYPE_NONE;
@@ -7683,7 +7683,7 @@ void on_erase_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_load_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESWidget *chooser;
 
-  char **filt=LIVES_AUDIO_LOAD_FILTER;
+  char *filt[]=LIVES_AUDIO_LOAD_FILTER;
 
   int resp;
 
@@ -7794,7 +7794,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
   a_type=get_extension(file_name);
 
   if (strlen(a_type)) {
-    char **filt=LIVES_AUDIO_LOAD_FILTER;
+    char *filt[]=LIVES_AUDIO_LOAD_FILTER;
     for (i=0; filt[i]!=NULL; i++) {
       if (!lives_ascii_strcasecmp(a_type,filt[i]+2)) gotit=TRUE; // skip past "*." in filt
     }
@@ -10490,7 +10490,7 @@ void on_export_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESWidget *chooser;
 
-  char **const filt=LIVES_AUDIO_LOAD_FILTER;
+  char *filt[]=LIVES_AUDIO_LOAD_FILTER;
 
   char *com,*tmp,*tmp2;
   char *a_type;
@@ -10544,7 +10544,7 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   a_type=get_extension(file_name);
 
   if (strlen(a_type)) {
-    char **filt=LIVES_AUDIO_LOAD_FILTER;
+    char *filt[]=LIVES_AUDIO_LOAD_FILTER;
     for (i=0; filt[i]!=NULL; i++) {
       if (!lives_ascii_strcasecmp(a_type,filt[i]+2)) gotit=TRUE; // skip past "*." in filt
     }

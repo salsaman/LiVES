@@ -352,8 +352,8 @@ enum {
 
 // filters
 
-#define LIVES_SUBS_FILTER  ((char*[]){"*.srt","*.sub",NULL})
-#define LIVES_AUDIO_LOAD_FILTER  ((char*[]){"*.it","*.mp3","*.wav","*.ogg","*.mod","*.xm","*.wma","*.flac",NULL})
+#define LIVES_SUBS_FILTER  {"*.srt","*.sub",NULL}
+#define LIVES_AUDIO_LOAD_FILTER  {"*.it","*.mp3","*.wav","*.ogg","*.mod","*.xm","*.wma","*.flac",NULL}
 
 
 typedef struct {

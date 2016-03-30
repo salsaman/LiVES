@@ -10123,7 +10123,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
   irowstride=weed_get_int_value(layer,WEED_LEAF_ROWSTRIDES,&error);
 
-  pixel_data=weed_get_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,&error);
+  pixel_data=(uint8_t *)weed_get_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,&error);
 
   do {
     done=TRUE;

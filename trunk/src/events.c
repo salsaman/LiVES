@@ -587,7 +587,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     new_init_event=find_init_event_by_id(init_event,event);
     error=weed_set_voidptr_value(event,WEED_LEAF_INIT_EVENT,new_init_event);
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    weed_leaf_delete(new_init_event,WEED_LEAF_EVENT_ID);
+    weed_leaf_delete((weed_plant_t *)new_init_event,WEED_LEAF_EVENT_ID);
     error=weed_set_voidptr_value((weed_plant_t *)new_init_event,WEED_LEAF_EVENT_ID,
                                  (void *)new_init_event);  // useful later for event_list_rectify
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;

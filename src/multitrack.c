@@ -3998,7 +3998,7 @@ void mt_spin_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_
 
   if ((((mt->region_start!=mt->region_end&&!has_region)||(mt->region_start==mt->region_end&&has_region)))&&
       mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
-    int statep=get_poly_state_from_page(mt);
+    lives_mt_poly_state_t statep=get_poly_state_from_page(mt);
     if (mt->selected_tracks!=NULL) {
       lives_widget_set_sensitive(mt->split_sel,TRUE);
       if (mt->region_start!=mt->region_end) {
@@ -4054,7 +4054,7 @@ void mt_spin_end_value_changed(LiVESSpinButton *spinbutton, livespointer user_da
 
   if ((((mt->region_start!=mt->region_end&&!has_region)||(mt->region_start==mt->region_end&&has_region)))&&
       mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
-    int statep=get_poly_state_from_page(mt);
+    lives_mt_poly_state_t statep=get_poly_state_from_page(mt);
     if (mt->selected_tracks!=NULL) {
       lives_widget_set_sensitive(mt->split_sel,TRUE);
       if (mt->region_start!=mt->region_end) {
@@ -16718,7 +16718,7 @@ void on_seltrack_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   boolean mi_state;
 
-  int statep;
+  lives_mt_poly_state_t statep;
 
   if (mt->current_track==-1) return;
 
@@ -18401,7 +18401,7 @@ boolean on_timeline_release(LiVESWidget *eventbox, LiVESXEventButton *event, liv
 
   double pos=mt->region_end;
 
-  int statep;
+  lives_mt_poly_state_t statep;
 
   if (!mainw->interactive) return FALSE;
 

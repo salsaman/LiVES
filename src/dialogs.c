@@ -2547,15 +2547,17 @@ void do_audio_import_error(void) {
   char *msg=lives_strdup(_("Sorry, unknown audio type.\n\n (Filenames must end in"));
   char *tmp;
 
+  char *filt[]=LIVES_AUDIO_LOAD_FILTER;
+
   register int i=0;
 
-  while (LIVES_AUDIO_LOAD_FILTER[i]!=NULL) {
-    if (LIVES_AUDIO_LOAD_FILTER[i+1]==NULL) {
-      tmp=lives_strdup_printf("%s or .%s)",msg,LIVES_AUDIO_LOAD_FILTER[i]+2);
+  while (filt[i]!=NULL) {
+    if (filt[i+1]==NULL) {
+      tmp=lives_strdup_printf("%s or .%s)",msg,filt[i]+2);
     } else if (i==0) {
-      tmp=lives_strdup_printf("%s .%s)",msg,LIVES_AUDIO_LOAD_FILTER[i]+2);
+      tmp=lives_strdup_printf("%s .%s)",msg,filt[i]+2);
     } else {
-      tmp=lives_strdup_printf("%s, .%s)",msg,LIVES_AUDIO_LOAD_FILTER[i]+2);
+      tmp=lives_strdup_printf("%s, .%s)",msg,filt[i]+2);
     }
     lives_free(msg);
     msg=tmp;
@@ -3331,15 +3333,18 @@ boolean do_existing_subs_warning(void) {
 void do_invalid_subs_error(void) {
   char *msg=lives_strdup(_("\nLiVES currently only supports subtitles of type"));
   char *tmp;
+
+  char *filt[]=LIVES_SUBS_FILTER;
+
   register int i=0;
 
-  while (LIVES_SUBS_FILTER[i]!=NULL) {
-    if (LIVES_SUBS_FILTER[i+1]==NULL) {
-      tmp=lives_strdup_printf("%s or .%s\n",msg,LIVES_SUBS_FILTER[i]+2);
+  while (filt[i]!=NULL) {
+    if (filt[i+1]==NULL) {
+      tmp=lives_strdup_printf("%s or .%s\n",msg,filt[i]+2);
     } else if (i>0) {
-      tmp=lives_strdup_printf("%s, .%s)",msg,LIVES_SUBS_FILTER[i]+2);
+      tmp=lives_strdup_printf("%s, .%s)",msg,filt[i]+2);
     } else {
-      tmp=lives_strdup_printf("%s .%s)",msg,LIVES_SUBS_FILTER[i]+2);
+      tmp=lives_strdup_printf("%s .%s)",msg,filt[i]+2);
     }
     lives_free(msg);
     msg=tmp;

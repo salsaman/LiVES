@@ -949,7 +949,7 @@ LIVES_INLINE boolean lives_dialog_response(LiVESDialog *dialog, int response) {
 
 #if GTK_CHECK_VERSION(3,16,0)
 static char *make_random_string() {
-  char *str=malloc(32);
+  char *str=(char *)malloc(32);
   register int i;
 
   str[0]=str[1]=str[2]='X';

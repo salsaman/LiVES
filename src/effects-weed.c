@@ -10199,7 +10199,7 @@ static void weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, bo
       lives_write_le_buffered(fd,&vlen,4,TRUE);
       if (st!=WEED_SEED_STRING) {
         lives_write_le_buffered(fd,valuer,(size_t)vlen,TRUE);
-      } else lives_write_buffered(fd,valuer,(size_t)vlen,TRUE);
+      } else lives_write_buffered(fd,(const char *)valuer,(size_t)vlen,TRUE);
     } else {
       lives_memcpy(*mem,&vlen,4);
       *mem+=4;

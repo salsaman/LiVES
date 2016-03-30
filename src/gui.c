@@ -2121,10 +2121,12 @@ void create_LiVES(void) {
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND),NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK|LIVES_ALT_MASK, (LiVESAccelFlags)0,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down, (LiVESXModifierType)(LIVES_CONTROL_MASK|LIVES_ALT_MASK),
+                            (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND),NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK|LIVES_ALT_MASK, (LiVESAccelFlags)0,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up, (LiVESXModifierType)(LIVES_CONTROL_MASK|LIVES_ALT_MASK),
+                            (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND),NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Left, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
@@ -2136,7 +2138,8 @@ void create_LiVES(void) {
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback),LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND),NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space, LIVES_CONTROL_MASK|LIVES_ALT_MASK, (LiVESAccelFlags)0,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space, (LiVESXModifierType)(LIVES_CONTROL_MASK|LIVES_ALT_MASK),
+                            (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback),LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND),NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Return, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,

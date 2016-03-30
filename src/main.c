@@ -4649,7 +4649,7 @@ boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp) {
 
   png_write_info(png_ptr, info_ptr);
 
-  ptr=weed_get_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,&error);
+  ptr=(unsigned char *)weed_get_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,&error);
 
   // Write image data
   for (i=0 ; i<height ; i++) {

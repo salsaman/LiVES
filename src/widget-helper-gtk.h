@@ -177,17 +177,17 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define LIVES_GUI_CALLBACK(f) ((LiVESGuiCallback) (f))
 
-#define lives_printerr(args...) g_printerr(args)
-#define lives_strdup_printf(args...) g_strdup_printf(args)
-#define lives_strdup_vprintf(args...) g_strdup_vprintf(args)
-#define lives_strndup_printf(args...) g_strndup_printf(args)
+#define lives_printerr(...) g_printerr(__VA_ARGS__)
+#define lives_strdup_printf(...) g_strdup_printf(__VA_ARGS__)
+#define lives_strdup_vprintf(...) g_strdup_vprintf(__VA_ARGS__)
+#define lives_strndup_printf(...) g_strndup_printf(__VA_ARGS__)
 #define lives_strndup(a,b) g_strndup(a,b)
-#define lives_snprintf(a,b,args...) g_snprintf(a,b,args)
+#define lives_snprintf(a,b,...) g_snprintf(a,b,__VA_ARGS__)
 #define lives_strsplit(a,b,c) g_strsplit(a,b,c)
 #define lives_strfreev(a) g_strfreev(a)
 #define lives_ascii_strcasecmp(a,b) g_ascii_strcasecmp(a,b)
 #define lives_ascii_strncasecmp(a,b,c) g_ascii_strncasecmp(a,b,c)
-#define lives_strconcat(a,args...) g_strconcat(a,args)
+#define lives_strconcat(a,...) g_strconcat(a,__VA_ARGS__)
 #define lives_strstrip(a) g_strstrip(a)
 #define lives_strrstr(a,b) g_strrstr(a,b)
 #define lives_strstr_len(a,b,c) g_strstr_len(a,b,c)
@@ -224,7 +224,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_slist_nth_data(list,i) g_slist_nth_data(list,i)
 #define lives_slist_append(list,data) g_slist_append(list,data)
 
-#define lives_build_filename(args...) g_build_filename(args)
+#define lives_build_filename(...) g_build_filename(__VA_ARGS__)
 #define lives_filename_to_utf8(a,b,c,d,e) g_filename_to_utf8(a,b,c,d,e)
 #define lives_filename_from_utf8(a,b,c,d,e) g_filename_from_utf8(a,b,c,d,e)
 

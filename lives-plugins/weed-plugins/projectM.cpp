@@ -242,7 +242,7 @@ static int render_frame(_sdata *sdata) {
   glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);
   pthread_mutex_unlock(&sdata->mutex);
 #endif
-
+  return 0;
 }
 
 
@@ -375,8 +375,6 @@ static int projectM_deinit (weed_plant_t *inst) {
 static int projectM_init (weed_plant_t *inst) {
   _sdata *sd;
 
-  weed_plant_t *iparam;
-
   int error;
   
   if (copies==1) return WEED_ERROR_TOO_MANY_INSTANCES;
@@ -395,7 +393,7 @@ static int projectM_init (weed_plant_t *inst) {
     int width=weed_get_int_value(out_channel,"width",&error);
     int height=weed_get_int_value(out_channel,"height",&error);
 
-    int palette=weed_get_int_value(out_channel,"current_palette",&error);
+    //int palette=weed_get_int_value(out_channel,"current_palette",&error);
 
     sd=(_sdata *)weed_malloc(sizeof(_sdata));
     if (sd==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
@@ -486,7 +484,7 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int width=weed_get_int_value(out_channel,"width",&error);
   int height=weed_get_int_value(out_channel,"height",&error);
 
-  int palette=weed_get_int_value(out_channel,"current_palette",&error);
+  //int palette=weed_get_int_value(out_channel,"current_palette",&error);
 
   int rowstride=weed_get_int_value(out_channel,"rowstrides",&error);
 

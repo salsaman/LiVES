@@ -198,15 +198,14 @@ void catch_sigint(int signum) {
       if (signum==LIVES_SIGABRT||signum==LIVES_SIGSEGV) {
         signal(LIVES_SIGSEGV, SIG_DFL);
         signal(LIVES_SIGABRT, SIG_DFL);
-        lives_printerr("%s",
-                       _("\nUnfortunately LiVES crashed.\nPlease report this bug at http://sourceforge.net/tracker/?group_id=64341&atid=507139\n"
-                         "Thanks. Recovery should be possible if you restart LiVES.\n"));
-        lives_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, and the LiVES version ("
-                              LiVES_VERSION ")\n"));
+        lives_printerr(_("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
+                         "Thanks. Recovery should be possible if you restart LiVES.\n"),LIVES_BUG_URL);
+        lives_printerr(_("\n\nWhen reporting crashes, please include details of your operating system, "
+                         "distribution, and the LiVES version (%s)\n"),LiVES_VERSION);
 
         if (capable->has_gdb) {
           if (mainw->debug) lives_printerr("%s",_("and any information shown below:\n\n"));
-          else lives_printerr("%s","Please try running LiVES with the -debug option to collect more information.\n\n");
+          else lives_printerr("%s",_("Please try running LiVES with the -debug option to collect more information.\n\n"));
         } else {
           lives_printerr("%s",_("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
         }
@@ -1900,24 +1899,27 @@ void do_start_messages(void) {
   d_print(mainw->msg);
 
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
   lives_snprintf(mainw->msg,512,_("GTK+ "
-#if GTK_CHECK_VERSION(3,0,0)
                                   "version %d.%d.%d ("
-#endif
                                   "compiled with %d.%d.%d"
-#if GTK_CHECK_VERSION(3,0,0)
-                                  ")"
-#endif
-                                 ),
-#if GTK_CHECK_VERSION(3,0,0)
+                                  ")"),
                  gtk_get_major_version(),
                  gtk_get_minor_version(),
                  gtk_get_micro_version(),
-#endif
                  GTK_MAJOR_VERSION,
                  GTK_MINOR_VERSION,
                  GTK_MICRO_VERSION
                 );
+#else
+  lives_snprintf(mainw->msg,512,_("GTK+ "
+                                  "compiled with %d.%d.%d"
+                                  ")"),
+                 GTK_MAJOR_VERSION,
+                 GTK_MINOR_VERSION,
+                 GTK_MICRO_VERSION
+                );
+#endif
   d_print(mainw->msg);
 #endif
 

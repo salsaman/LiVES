@@ -922,7 +922,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
         target_size=((lstream->hsize*lstream->vsize*5)>>2)-framedataread;
         if (target_size>=lstream->dsize) {
           lives_stream_in_chunks(lstream,lstream->dsize,
-                                 (uint8_t *)(pixel_data[1]+framedataread-lstream->hsize*lstream->vsize),0);
+                                 ((uint8_t *)pixel_data[1]+framedataread-lstream->hsize*lstream->vsize),0);
           if (mainw->cancelled) {
             lives_free(pixel_data);
             return;
@@ -967,7 +967,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
         target_size=((lstream->hsize*lstream->vsize*3)>>1)-framedataread;
         if (target_size>=lstream->dsize) target_size=lstream->dsize;
         lives_stream_in_chunks(lstream,target_size,
-                               (uint8_t *)(pixel_data[2]+framedataread-((lstream->hsize*lstream->vsize*5)>>2)),0);
+                               ((uint8_t *)pixel_data[2]+framedataread-((lstream->hsize*lstream->vsize*5)>>2)),0);
         if (mainw->cancelled) {
           lives_free(pixel_data);
           return;

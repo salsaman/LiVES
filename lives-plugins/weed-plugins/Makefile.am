@@ -63,8 +63,8 @@ weed_CFLAGS += -DHAVE_SYSTEM_WEED_COMPAT
 endif
 
 
-AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math
-AM_CPPFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math
+AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall
+AM_CPPFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall
 
 if HAVE_LIBVISUAL
 libvis_libs = libvis.la

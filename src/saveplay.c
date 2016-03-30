@@ -921,10 +921,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   }
   lives_freep((void **)&mainw->file_open_params);
 
-  if (!strcmp(cfile->type,"Frames")||!strcmp(cfile->type,LIVES_IMAGE_TYPE_JPEG)||!strcmp(cfile->type,LIVES_IMAGE_TYPE_PNG)||!strcmp(cfile->type,"Audio")) {
+  if (!strcmp(cfile->type,"Frames")||!strcmp(cfile->type,LIVES_IMAGE_TYPE_JPEG)||!strcmp(cfile->type,LIVES_IMAGE_TYPE_PNG)||
+      !strcmp(cfile->type,"Audio")) {
     cfile->is_untitled=TRUE;
   }
-  
+
   if (cfile->frames==1&&(!strcmp(cfile->type,LIVES_IMAGE_TYPE_JPEG)||!strcmp(cfile->type,LIVES_IMAGE_TYPE_PNG))) {
     if (mainw->img_concat_clip==-1) mainw->img_concat_clip=mainw->current_file;
     else if (prefs->concat_images) {

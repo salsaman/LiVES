@@ -2594,7 +2594,7 @@ LIVES_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_type, LiVESShadow
   LiVESWidget *arrow=NULL;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,12,0)
-  const char *format = "<b>\%s</b>";
+  const char *format = "<b>%s</b>";
   char *markup;
   char *str;
 

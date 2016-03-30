@@ -643,7 +643,7 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
         lives_write_le_buffered(fd,&vald,8,TRUE);
         hdlsize=strlen(mainw->files[i]->handle);
         lives_write_le_buffered(fd,&hdlsize,4,TRUE);
-        lives_write_buffered(fd,&mainw->files[i]->handle,hdlsize,TRUE);
+        lives_write_buffered(fd,(const char *)&mainw->files[i]->handle,hdlsize,TRUE);
       } else {
         vali=mainw->files[i]->stored_layout_idx;
         if (vali!=-1) {
@@ -652,7 +652,7 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
           lives_write_le_buffered(fd,&vald,8,TRUE);
           hdlsize=strlen(mainw->files[i]->handle);
           lives_write_le_buffered(fd,&hdlsize,4,TRUE);
-          lives_write_buffered(fd,&mainw->files[i]->handle,hdlsize,TRUE);
+          lives_write_buffered(fd,(const char *)&mainw->files[i]->handle,hdlsize,TRUE);
         }
       }
       clist=clist->next;
@@ -20514,7 +20514,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
                               int ntracks=weed_leaf_num_elements(event,WEED_LEAF_IN_TRACKS);
                               int *trax=weed_get_int_array(event,WEED_LEAF_IN_TRACKS,&error);
                               for (i=0; i<ntracks; i++) {
-                                if (trax>=0&&!has_video_chans_in(filter,FALSE)) {
+                                if (trax[i]>=0&&!has_video_chans_in(filter,FALSE)) {
                                   // TODO ** inform user
                                   if (mt!=NULL&&!mt->opts.pertrack_audio) {
                                     lives_widget_set_sensitive(mt->fx_region_2a,TRUE);
@@ -20535,7 +20535,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
                               ntracks=weed_leaf_num_elements(event,WEED_LEAF_OUT_TRACKS);
                               trax=weed_get_int_array(event,WEED_LEAF_OUT_TRACKS,&error);
                               for (i=0; i<ntracks; i++) {
-                                if (trax>=0&&!has_video_chans_out(filter,FALSE)) {
+                                if (trax[i]>=0&&!has_video_chans_out(filter,FALSE)) {
                                   // TODO ** inform user
                                   if (mt!=NULL&&!mt->opts.pertrack_audio) {
                                     lives_widget_set_sensitive(mt->fx_region_2a,TRUE);

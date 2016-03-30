@@ -3420,6 +3420,7 @@ static void convert_argb_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize,
   }
 }
 
+
 static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int height, int orowstride,
                                       uint8_t *dest, boolean add_alpha, boolean clamped, int thread_id) {
   register int i,j;
@@ -3743,10 +3744,10 @@ void *convert_yuyv_to_rgb_frame_thread(void *data) {
 
 static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int height, int orowstride,
                                       uint8_t *dest, boolean add_alpha, boolean clamped, int thread_id) {
-  register int x;
-  int size=width*height,psize=6;
+
+  register int i,j;
+  int psize=6;
   int a=3,b=4,c=5;
-  register int i;
 
   if (LIVES_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
 
@@ -3798,17 +3799,22 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
 
   if (add_alpha) {
     psize=8;
-    a=5;
-    b=6;
-    c=7;
+    a=4;
+    b=5;
+    c=6;
   }
 
-  for (x=0; x<size; x++) {
-    yuyv2rgb(src,&dest[2],&dest[1],&dest[0],&dest[c],&dest[b],&dest[a]);
-    if (add_alpha) dest[3]=dest[7]=255;
-    dest+=psize;
-    src++;
+  orowstride-=width*psize;
+  for (i=0; i<height; i++) {
+    for (j=0; j<width; j++) {
+      yuyv2rgb(src,&dest[2],&dest[1],&dest[0],&dest[c],&dest[b],&dest[a]);
+      if (add_alpha) dest[3]=dest[7]=255;
+      dest+=psize;
+      src++;
+    }
+    dest+=orowstride;
   }
+
 }
 
 

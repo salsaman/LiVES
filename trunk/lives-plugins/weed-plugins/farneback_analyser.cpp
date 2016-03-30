@@ -110,7 +110,8 @@ static void unclamp_frame(uint8_t *data, int width, int row, int height) {
 
   for (i=0;i<height;i++) {
     for (j=0;j<width;j++) {
-      *data++=UNCLAMP_Y[*data];
+      *data=UNCLAMP_Y[*data];
+      data++;
     }
     data+=row;
   }
@@ -138,7 +139,6 @@ static uint8_t *copy_frame(const uint8_t *csrc, int width, int row, int height) 
 
 
 int farneback_init (weed_plant_t *inst) {
-  int error;
   _sdata *sdata;
 
   sdata=(_sdata *)weed_malloc(sizeof(_sdata));
@@ -188,11 +188,7 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
   int orow1=weed_get_int_value(out_channels[0],"rowstrides",&error);
   int orow2=weed_get_int_value(out_channels[1],"rowstrides",&error);
   
-  int clamped=0;
-
   register int i,j;
-
-  uint8_t *grey;
 
   Mat *cvgrey;
   Mat cvprevgrey, cvflow, srcMat, mixMat, ucMat;

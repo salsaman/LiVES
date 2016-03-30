@@ -1539,7 +1539,11 @@ if (defined($ARGV[0])) {
             $withsound=$ARGV[3];
 
             if (defined($ARGV[4])) {
-                $img_ext=".".$ARGV[4];
+                $img_ext=".".(split(":",$ARGV[4]))[0];
+                $ximg_ext=".".(split(":",$ARGV[4]))[1];
+                if ($ximg_ext eq "") {
+                    $ximg_ext=$img_ext;
+                }
             }
 
             if (defined($ARGV[5]) && $ARGV[5] > 0) {
@@ -5257,7 +5261,7 @@ sub get_file_info {
                     $id_vid_form=(split("  ",(split("\n",$id_vid_form))[0]))[1];
                     chomp($id_vid_form);
                 }
-		
+
             }
             else {
                 $id_vid_form=smog_system_direct("grep -i 'selected video' \"$file_ident\" 2>$nulfile");
@@ -5448,20 +5452,20 @@ sub get_file_info {
     }
 
     $fwtype=(split(" ",$type))[0];
-    
-    if (($hsize*$vsize==0||$count eq "")
-	## test for various image types...
-	||(($type eq "ffpng" || $fwtype eq "PNG")
-	   && $count eq "0")
-	||(($type eq "ffmjpeg" || $fwtype eq "MJPEG")
-           && $count eq "1")
 
-	&&!$is_audio) {
-	$origcount=$count;
+    if (($hsize*$vsize==0||$count eq "")
+## test for various image types...
+    ||(($type eq "ffpng" || $fwtype eq "PNG")
+    && $count eq "0")
+    ||(($type eq "ffmjpeg" || $fwtype eq "MJPEG")
+    && $count eq "1")
+
+    &&!$is_audio) {
+        $origcount=$count;
 
         $name=&mkname(1);
         unless (-f "$curtmpdir/$name") {
-	    # see if it is image(s)
+# see if it is image(s)
             &open_images(1);
             if ($hsize==-1) {
                 $hsize=$vsize=0;
@@ -5470,8 +5474,8 @@ sub get_file_info {
             while ($file2=readdir(DIR)) {
                 if ($file2 =~ /$img_ext$/) {
                     $count++;
-		    $count-=$origcount;
-		    $origcount=0;
+                    $count-=$origcount;
+                    $origcount=0;
                     $imresact="none";
                     if ($only_first) {
                         unlink glob "$curtmpdir/*$img_ext";
@@ -6445,6 +6449,11 @@ return 0;
 }
 
 smog_system_sync();
+
+if (!defined($ximg_ext)) {
+    $ximg_ext=$img_ext;
+}
+
 
 if ($antialias eq "false") {
 $com="$smog_convert_command +antialias \"$file\" -scale $hsize"."x"."$vsize\\! $img_prefix\"$curtmpdir/$name$img_ext\" > $nulfile 2>&1";

@@ -174,9 +174,6 @@ typedef int lives_pgid_t;
 #endif
 
 
-#define LIVES_WEBSITE "http://lives-video.com"
-#define AUTHOR_EMAIL "salsaman@gmail.com"
-
 
 #ifndef IS_MINGW
 #define LIVES_DIR_SEP "/"
@@ -230,11 +227,12 @@ typedef int lives_pgid_t;
 
 #define LIVES_COPYRIGHT_YEARS "2002 - 2016"
 
-#define LIVES_MANUAL_URL "http://lives-video.com/manual/"
+#define LIVES_WEBSITE PACKAGE_URL
+#define LIVES_MANUAL_URL LIVES_WEBSITE "/manual/"
 #define LIVES_MANUAL_FILENAME "LiVES_manual.html"
 #define LIVES_AUTHOR_EMAIL "salsaman+lives@gmail.com"
 #define LIVES_DONATE_URL "https://sourceforge.net/p/lives/donate/"
-#define LIVES_BUG_URL "https://sourceforge.net/p/lives/bugs/"
+#define LIVES_BUG_URL PACKAGE_BUGREPORT
 #define LIVES_FEATURE_URL "https://sourceforge.net/p/lives/feature-requests/"
 #define LIVES_TRANSLATE_URL "https://translations.launchpad.net/lives/trunk"
 
@@ -1170,7 +1168,7 @@ int lives_close_buffered(int fd);
 void lives_close_all_file_buffers(void);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 ssize_t lives_write(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
-ssize_t lives_write_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
+ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
 ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less);

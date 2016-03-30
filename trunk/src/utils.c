@@ -83,7 +83,7 @@ char *filename_from_fd(char *val, int fd) {
 
 
 
-static LIVES_INLINE void reverse_bytes(uint8_t *out, const uint8_t *in, size_t count) {
+static LIVES_INLINE void reverse_bytes(char *out, const char *in, size_t count) {
   register int i;
   for (i=0; i<count; i++) {
     out[i]=in[count-i-1];
@@ -420,8 +420,8 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
 
 ssize_t lives_write_le(int fd, const void *buf, size_t count, boolean allow_fail) {
   if (capable->byte_order==LIVES_BIG_ENDIAN&&(prefs->bigendbug!=1)) {
-    uint8_t xbuf[count];
-    reverse_bytes(xbuf,(const uint8_t *)buf,count);
+    char xbuf[count];
+    reverse_bytes(xbuf,(const char *)buf,count);
     return lives_write(fd,xbuf,count,allow_fail);
   } else {
     return lives_write(fd,buf,count,allow_fail);
@@ -527,10 +527,10 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
 
 ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
   if (capable->byte_order==LIVES_BIG_ENDIAN&&!prefs->bigendbug) {
-    uint8_t xbuf[count];
+    char xbuf[count];
     ssize_t retval=lives_read(fd,buf,count,allow_less);
     if (retval<count) return retval;
-    reverse_bytes((uint8_t *)buf,(const uint8_t *)xbuf,count);
+    reverse_bytes(buf,(const char *)xbuf,count);
     return retval;
   } else {
     return lives_read(fd,buf,count,allow_less);
@@ -732,10 +732,10 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
 ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less) {
   if (capable->byte_order==LIVES_BIG_ENDIAN&&!prefs->bigendbug) {
-    uint8_t xbuf[count];
+    char xbuf[count];
     ssize_t retval=lives_read_buffered(fd,buf,count,allow_less);
     if (retval<count) return retval;
-    reverse_bytes((uint8_t *)buf,(const uint8_t *)xbuf,count);
+    reverse_bytes(buf,(const char *)xbuf,count);
     return retval;
   } else {
     return lives_read_buffered(fd,buf,count,allow_less);
@@ -743,7 +743,8 @@ ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_le
 }
 
 
-ssize_t lives_write_buffered(int fd, const void *buf, size_t count, boolean allow_fail) {
+ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail) {
+
   lives_file_buffer_t *fbuff;
   ssize_t retval=0,res;
   size_t space_left;
@@ -794,8 +795,8 @@ ssize_t lives_write_buffered(int fd, const void *buf, size_t count, boolean allo
 
 ssize_t lives_write_le_buffered(int fd, const void *buf, size_t count, boolean allow_fail) {
   if (capable->byte_order==LIVES_BIG_ENDIAN&&(prefs->bigendbug!=1)) {
-    uint8_t xbuf[count];
-    reverse_bytes(xbuf,(const uint8_t *)buf,count);
+    char xbuf[count];
+    reverse_bytes(xbuf,(const char *)buf,count);
     return lives_write_buffered(fd,xbuf,count,allow_fail);
   } else {
     return lives_write_buffered(fd,buf,count,allow_fail);
@@ -1245,7 +1246,7 @@ LIVES_INLINE int lives_kill(lives_pid_t pid, int sig) {
   GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid->dwProcessId);
 #endif
   return 0;
-};
+}
 
 
 LIVES_INLINE int lives_killpg(lives_pgid_t pgrp, int sig) {
@@ -1257,7 +1258,7 @@ LIVES_INLINE int lives_killpg(lives_pgid_t pgrp, int sig) {
   GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pgrp->dwProcessId);
 #endif
   return 0;
-};
+}
 
 
 LIVES_INLINE int myround(double n) {
@@ -3587,7 +3588,7 @@ boolean prepare_to_play_foreign(void) {
   cfile->vsize=mainw->pheight;
 
   cfile->img_type=IMG_TYPE_BEST; // override the pref
-  
+
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
 

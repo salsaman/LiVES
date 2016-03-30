@@ -1,10 +1,12 @@
 Version 2.6.3
 -------------
-Fix bug which caused error moving set with no layouts (regression).
+Fix bug which caused error moving sets with no layouts (regression).
 Optimise recording of generated frames.
 Fixes for recording audio from external pulse audio.
+Fix incorrect recognition of single jpeg/png as video (regression).
+Use png rather than jpeg internally whenever possible.
 
-
+	
 
 
 

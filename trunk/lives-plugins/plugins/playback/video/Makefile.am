@@ -12,8 +12,6 @@ shared_ldflags =  -shared -fPIC -DPIC -module -avoid-version --tag=disable-stati
 shared_cflags =  -fPIC -DPIC
 endif
 
-
-
 if IS_IRIX
 shared_cflags +=-DIS_IRIX=1
 endif

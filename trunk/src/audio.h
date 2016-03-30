@@ -107,7 +107,10 @@ typedef struct {
 
   // in or out buffers
   uint8_t **buffer8; ///< sample data in 8 bit format (or NULL)
-  short   **buffer16; ///< sample data in 16 bit format (or NULL)
+  union {
+    short   **buffer16; ///< sample data in 16 bit format (or NULL)
+    uint8_t **buffer16_8; ///< sample data in 8 bit format (or NULL)
+  };
   int32_t **buffer24; ///< sample data in 24 bit format (or NULL)
   int32_t **buffer32; ///< sample data in 32 bit format (or NULL)
   float   **bufferf; ///< sample data in float format (or NULL)

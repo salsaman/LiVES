@@ -2926,10 +2926,10 @@ _prefsw *create_prefs_dialog(void) {
 
 
 
-  
+
 
   if (prefs->ocp==-1) prefs->ocp=get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
-  
+
   // ---
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);

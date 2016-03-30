@@ -1129,10 +1129,12 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
           if (prefs->audio_player==AUD_PLAYER_JACK) {
             obuf->bufferf[i][j]=0.;
           } else {
-            if (!out_unsigned) obuf->buffer16[0][j*out_achans+i]=0;
+            if (!out_unsigned) obuf->buffer16[0][j*out_achans+i]=0x00;
             else {
-              if (out_bendian) obuf->buffer16[0][j*out_achans+i]=0x8000;
-              else obuf->buffer16[0][j*out_achans+i]=0x80;
+              if (out_bendian) {
+                memset(&obuf->buffer16_8[0][(j*out_achans+i)*2],0x80,1);
+                memset(&obuf->buffer16_8[0][(j*out_achans+i)*2+1],0x00,1);
+              } else obuf->buffer16[0][j*out_achans+i]=0x0080;
             }
           }
         }
@@ -1577,15 +1579,15 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     if (fileno==mainw->ascrap_file) {
       mainw->files[mainw->ascrap_file]->cb_src=mainw->aud_rec_fd;
       if (mainw->pulsed_read!=NULL) {
-	// flush all data from buffer; this seems like the only way
-	void *data;
-	size_t rbytes;
-	pa_mloop_lock();
-	do {
-	  pa_stream_peek(mainw->pulsed_read->pstream,(const void **)&data,&rbytes);
-	  if (rbytes>0) pa_stream_drop(mainw->pulsed_read->pstream);
-	} while (rbytes>0);
-	pa_mloop_unlock();
+        // flush all data from buffer; this seems like the only way
+        void *data;
+        size_t rbytes;
+        pa_mloop_lock();
+        do {
+          pa_stream_peek(mainw->pulsed_read->pstream,(const void **)&data,&rbytes);
+          if (rbytes>0) pa_stream_drop(mainw->pulsed_read->pstream);
+        } while (rbytes>0);
+        pa_mloop_unlock();
       }
     }
   }
@@ -2910,7 +2912,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
   // NB: if player is jack, we will have non-interleaved float
   // if player is pulse, we will have interleaved S16
-  void *dst,*src;
+  float *dst,*src;
 
   weed_plant_t *ctmpl;
 
@@ -3001,10 +3003,10 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   scale=(float)trate/(float)abuf->arate;
 
   // malloc audio_data
-  dst=lives_malloc(alen*tchans*sizeof(float));
+  dst=(float *)lives_malloc(alen*tchans*sizeof(float));
 
   // set channel values
-  weed_set_voidptr_value(achan,WEED_LEAF_AUDIO_DATA,dst);
+  weed_set_voidptr_value(achan,WEED_LEAF_AUDIO_DATA,(void *)dst);
   weed_set_boolean_value(achan,WEED_LEAF_AUDIO_INTERLEAF,tinter);
   weed_set_int_value(achan,WEED_LEAF_AUDIO_DATA_LENGTH,alen);
   weed_set_int_value(achan,WEED_LEAF_AUDIO_CHANNELS,tchans);
@@ -3018,12 +3020,12 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
         lives_memcpy(dst,src,alen*sizeof(float));
       } else {
         // needs resample
-        sample_move_float_float((float *)dst,(float *)src,alen,scale,1);
+        sample_move_float_float(dst,src,alen,scale,1);
       }
-      dst+=alen*sizeof(float);
+      dst+=alen;
     } else {
-      sample_move_float_float((float *)dst,(float *)src,alen,scale,tchans);
-      dst+=sizeof(float);
+      sample_move_float_float(dst,src,alen,scale,tchans);
+      dst++;
     }
   }
   return TRUE;

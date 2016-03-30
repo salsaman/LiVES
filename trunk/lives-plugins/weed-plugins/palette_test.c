@@ -46,9 +46,11 @@ int ptest_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int width=weed_get_int_value(in_channel,"width",&error);
   int height=weed_get_int_value(in_channel,"height",&error);
 
-  if (src[0]!=dst[0]) weed_memcpy(dst[0],src[0],width*height);
+  if (src[0]!=dst[0]) weed_memcpy(dst[0],src[0],width*height*4);
+  /*
   if (src[1]!=dst[1]) weed_memcpy(dst[1],src[1],width*height);
   if (src[2]!=dst[2]) weed_memcpy(dst[2],src[2],width*height);
+  */
 
   weed_free(src);
   weed_free(dst);
@@ -62,7 +64,7 @@ int ptest_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions),*gui;
   if (plugin_info!=NULL) {
-    int palette_list[]= {WEED_PALETTE_YUV444P,WEED_PALETTE_END};
+    int palette_list[]= {WEED_PALETTE_YUYV,WEED_PALETTE_END};
 
     weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};

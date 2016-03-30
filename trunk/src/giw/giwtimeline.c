@@ -122,7 +122,7 @@ static PangoLayout *giw_timeline_get_layout(GtkWidget      *widget,
 
 //G_DEFINE_TYPE (GiwTimeline, giw_timeline, GTK_TYPE_WIDGET)
 
-G_DEFINE_TYPE(GiwTimeline, giw_timeline, GTK_TYPE_SCALE);
+G_DEFINE_TYPE(GiwTimeline, giw_timeline, GTK_TYPE_SCALE)
 
 #define parent_class giw_timeline_parent_class
 

@@ -5694,7 +5694,7 @@ void on_about_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   gtk_show_about_dialog(LIVES_WINDOW(mainw->LiVES),
                         "logo", NULL,
-                        "name", "LiVES",
+                        "name", PACKAGE_NAME,
                         "version", LiVES_VERSION,
                         "comments",comments,
                         "copyright", "(C) "LIVES_COPYRIGHT_YEARS" salsaman <"LIVES_AUTHOR_EMAIL"> and others",
@@ -6523,7 +6523,7 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
       // see if there was a message from backend
 
       if (mainw->cancel_type!=CANCEL_SOFT) {
-        if ((infofile=fopen(cfile->info_file,"r"))>0) {
+        if ((infofile=fopen(cfile->info_file,"r"))!=NULL) {
           mainw->read_failed=FALSE;
           lives_fgets(mainw->msg,512,infofile);
           fclose(infofile);

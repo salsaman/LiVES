@@ -205,11 +205,12 @@ static int get_texture_type(int tnum) {
   return textures[tnum].type;
 }
 
-
+/*
 static int get_texture_typesize(int tnum) {
   tnum=get_real_tnum(tnum,TRUE);
   return textures[tnum].type;
 }
+*/
 
 ///////////////////////////////////////////////
 
@@ -602,13 +603,13 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, in
 
 
 
-
+/*
 static void render_to_gpumem(int tnum, uint8_t *texturebuf) {
   render_to_gpumem_inner(get_real_tnum(tnum,TRUE),get_texture_width(tnum),get_texture_height(tnum),
 			 get_texture_type(tnum),get_size_for_type(get_texture_type(tnum)),texturebuf);
 }
 
-
+*/
 
 
 boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
@@ -953,7 +954,7 @@ static void set_priorities(void) {
 
 }
 
-
+/*
 static void resize_buffer(uint8_t *out, int owidth, int oheight, uint8_t *in, int iwidth, int iheight, int type) {
   int xi,xj;
   int typesize=get_size_for_type(type);
@@ -979,7 +980,7 @@ static void resize_buffer(uint8_t *out, int owidth, int oheight, uint8_t *in, in
     
   }
 }
-
+*/
 
 
 static boolean Upload(int width, int height) {
@@ -1962,7 +1963,6 @@ static boolean Upload(int width, int height) {
  
       for (int i=0; i<NOF_PARTS2; i++) {
 
-	int pos;
 	if ((parts[i].start_time==NOT_CREATED) || (ticks>=parts[i].end_time)) {
 	  parts[i].start_time=ticks;
 	  parts[i].x=(rand() % 2000)/1000.0-1.0;

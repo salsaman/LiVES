@@ -132,12 +132,14 @@ Clarified description of "group" leaf for WEED_HINT_SWITCH parameter templates.
 12/10/2013 salsaman
 Add "hidden" option to filter_class gui.
 
-
 30/09/2014 salsaman
 Add missing type documentation for "fps".
 
+04/03/2016 salsaman
+Add "copyright" leaf to plugin info.
 
-(C) Gabriel "Salsaman" Finch 2005 - 2014
+
+(C) Gabriel "Salsaman" Finch 2005 - 2016
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
 Tori, and Oyvind "Pippin" Kolas.
@@ -614,6 +616,7 @@ the plugin after weed_setup(), and should not be altered by the host.
  * "extra_authors": WEED_SEED_STRING : list of extra authors which can be altered without changing the plugin "version"
  * "description"  : WEED_SEED_STRING : filter description
  * "url"          : WEED_SEED_STRING : filter URL
+ * "copyright"    : WEED_SEED_STRING : copyright details for filter
  * "license"      : WEED_SEED_STRING : license of filter
  * "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of
                                        the target fps rate(s) for the
@@ -951,8 +954,8 @@ may have any number of elements.
  * "max" : WEED_SEED_INT : maximal value of the parameter, MANDATORY for in parameters (optional for out parameters)
  * "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value" should wrap when going below min or above max, OPTIONAL
  * "transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this
- parameter is a transition, (i.e. at min the effect is fully "off", at
- max it is fully "on") OPTIONAL. For in paramters only.
+ parameter is a transition, (i.e. at min the effect is fully "off", showing only the first in_channel as output, at
+ max it is fully "on", showing only the second in_channel as output) OPTIONAL. For in parameters only.
 
  * WEED_HINT_FLOAT
 "value" and "default" are constrained by min and max: min <= value <= max
@@ -962,11 +965,10 @@ WEED_SEED_DOUBLE. "default" may have any number of elements.
 Additional leaves that hint causes:
  * "min" : WEED_SEED_DOUBLE : minimal value of the parameter, MANDATORY for in parameters (optional for out parameters)
  * "max" : WEED_SEED_DOUBLE : maximal value of the parameter, MANDATORY for in parameters (optional for out parameters)
- * "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value"
- should be wrapped when going below min or above max, OPTIONAL
+ * "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value" should be wrapped when going below min or above max, OPTIONAL
  * "transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this
- parameter is a transition, (i.e. at min the effect is fully "off", at
- max it is fully "on") OPTIONAL. For in parameters only.
+ parameter is a transition, (i.e. at min the effect is fully "off", showing only the first in_channel as output, at
+ max it is fully "on", showing only the second in_channel as output) OPTIONAL. For in parameters only.
 
 
  * WEED_HINT_TEXT

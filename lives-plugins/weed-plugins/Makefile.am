@@ -14,7 +14,7 @@ shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
 
 shared_cflags = -fno-common
 else
-shared_ldflags = -shared -fPIC -DPIC -module -no-undefined -avoid-version --tag=disable-static
+shared_ldflags = -shared -fPIC -DPIC -module -no-undefined --no-allow-shlib-undefined -avoid-version --tag=disable-static
 
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
@@ -22,7 +22,7 @@ endif
 
 if IS_MINGW
 shared_cflags += -DIS_MINGW=1
-shared_ldflags += -no-undefined -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libSDL.dll.a -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libSDLmain.a \
+shared_ldflags += -no-undefined --no-allow-shlib-undefined -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libSDL.dll.a -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libSDLmain.a \
 	-mwindows -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libmingw32.a
 SDL_libs = SDL.la
 CFLAGS_SDL = @SDL_CFLAGS@
@@ -89,8 +89,13 @@ farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_cor
 farneback_analyser_la_CPPFLAGS = $(AM_CPPFLAGS)
 farneback_analyser_la_SOURCES = farneback_analyser.cpp
 
+toonz_libs = toonz.la
+toonz_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_core -lopencv_imgproc
+toonz_la_CPPFLAGS = $(AM_CPPFLAGS) -std=c++11
+toonz_la_SOURCES = toonz.cpp
+
 opencvlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
-opencvlib_LTLIBRARIES = $(farneback_analyser_libs)
+opencvlib_LTLIBRARIES = $(farneback_analyser_libs) $(toonz_libs)
 endif
 
 

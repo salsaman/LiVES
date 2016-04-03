@@ -20,7 +20,7 @@ Alexandre Pereira Bueno - alpebu@yahoo.com.br
 James Scott Jr <skoona@users.sourceforge.net>
 */
 
-// additional code G. Finch (salsaman@gmail.com) 2010 - 2014
+// additional code G. Finch (salsaman@gmail.com) 2010 - 2016
 
 
 #include <math.h>
@@ -108,7 +108,6 @@ void knob_calculate_legends_sizes(GiwKnob *knob);
 // A function that calculates width and height of the title's the layout
 void knob_calculate_title_sizes(GiwKnob *knob);
 
-
 #if GTK_CHECK_VERSION(3,0,0)
 G_DEFINE_TYPE(GiwKnob, giw_knob, GTK_TYPE_WIDGET)
 #define parent_class giw_knob_parent_class
@@ -193,7 +192,8 @@ giw_knob_init(GiwKnob *knob) {
   knob->minor_ticks_size=3;
   knob->legends_digits=3;
   knob->title=NULL;
-
+  knob->wrap=FALSE;
+  
 #if GTK_CHECK_VERSION(2,18,0)
   gtk_widget_set_has_window(GTK_WIDGET(knob),TRUE);
 #endif
@@ -921,6 +921,23 @@ giw_knob_get_adjustment(GiwKnob *knob) {
   return (knob->adjustment);
 }
 
+
+ void
+   giw_knob_set_wrap(GiwKnob *knob,
+		     gboolean wrap) {
+  g_return_if_fail(knob != NULL);
+  g_return_if_fail(GIW_IS_KNOB(knob));
+
+  knob->wrap=wrap;
+
+  knob_build_legends(knob);
+  knob_calculate_sizes(knob);
+  knob_set_angle(knob, knob_calculate_angle_with_value(knob, gtk_adjustment_get_value(knob->adjustment)));
+  gtk_widget_queue_draw(GTK_WIDGET(knob));
+ }
+
+  
+
 void
 giw_knob_set_legends_digits(GiwKnob *knob,
                             guint digits_number) {
@@ -1054,14 +1071,16 @@ knob_update_false_mouse(GiwKnob *knob, gint x, gint y) {
   while (knob->false_angle<0)
     knob->false_angle+=(2.0*M_PI);
 
-  // Taking out of the "forbideen" region
-  if ((knob->false_angle <= (3.0*M_PI/2.0)) &&
-      (knob->false_angle > (5.0*M_PI/4.0)))
-    knob->false_angle=5.0*M_PI/4.0;
-  if ((knob->false_angle < (7.0*M_PI/4.0)) &&
-      (knob->false_angle >= (3.0*M_PI/2.0)))
-    knob->false_angle=7.0*M_PI/4.0;
-
+  if (!knob->wrap) {
+    // Taking out of the "forbidden" region
+    if ((knob->false_angle <= (3.0*M_PI/2.0)) &&
+	(knob->false_angle > (5.0*M_PI/4.0)))
+      knob->false_angle=5.0*M_PI/4.0;
+    if ((knob->false_angle < (7.0*M_PI/4.0)) &&
+	(knob->false_angle >= (3.0*M_PI/2.0)))
+      knob->false_angle=7.0*M_PI/4.0;
+  }
+  
   gtk_widget_queue_draw(GTK_WIDGET(knob));
 }
 
@@ -1085,10 +1104,16 @@ knob_calculate_sizes(GiwKnob *knob) {
     knob->x=lives_widget_get_allocation_width(widget)/2-knob->size/2;
   }
 
-  // The distance between the radius and the widget limits is the bigger dimension of the legends plus the major_ticks_size, so it's the half of size, less the bigger dimension of the legends less the major_ticks size (wich depends of the radius), them, with some algebra, it results in this equation:
+  // The distance between the radius and the widget limits is the bigger dimension of the legends plus the major_ticks_size,
+  // so it's the half of size, less the bigger dimension of the legends less the major_ticks size (wich depends of the radius), 
+  // then, with some algebra, it results in this equation:
   knob->radius=8*((knob->size/2)-sqrt(knob->legend_width*knob->legend_width+knob->legend_height*knob->legend_height))/9;
 
-  knob->d_major_ticks=(3.0*M_PI/2.0)/(knob->major_ticks-1);
+  if (!knob->wrap) 
+    knob->d_major_ticks=(3.0*M_PI/2.0)/(knob->major_ticks-1);
+  else
+    knob->d_major_ticks=(2.0*M_PI)/(knob->major_ticks-1);
+    
   knob->d_minor_ticks=knob->d_major_ticks/(knob->minor_ticks+1);
 
   knob->major_ticks_size=knob->radius/8.0;
@@ -1109,18 +1134,27 @@ knob_calculate_value_with_angle(GiwKnob *knob, gdouble angle) {
   while (angle<0)
     angle=angle+(2.0*M_PI);
 
-  // Taking out of the "forbideen" region
-  if ((angle <= (3.0*M_PI/2.0)) && (angle  > (5.0*M_PI/4.0))) angle=5.0*M_PI/4.0;
-  if ((angle  < (7.0*M_PI/4.0)) && (angle >= (3.0*M_PI/2.0))) angle=7.0*M_PI/4.0;
+  if (!knob->wrap) {
+    // Taking out of the "forbidden" region
+    if ((angle <= (3.0*M_PI/2.0)) && (angle  > (5.0*M_PI/4.0))) angle=5.0*M_PI/4.0;
+    if ((angle  < (7.0*M_PI/4.0)) && (angle >= (3.0*M_PI/2.0))) angle=7.0*M_PI/4.0;
 
-  // Calculating the distance (in radians) between the pointer and the lower angle
-  if (angle<=(5.0*M_PI/4.0)) d_angle=(5.0*M_PI/4.0)-angle;
-  if (angle>=(7.0*M_PI/4.0)) d_angle=(13.0*M_PI/4.0)-angle;
+    // Calculating the distance (in radians) between the pointer and the lower angle
+    if (angle<=(5.0*M_PI/4.0)) d_angle=(5.0*M_PI/4.0)-angle;
+    if (angle>=(7.0*M_PI/4.0)) d_angle=(13.0*M_PI/4.0)-angle;
+    
+    return (lives_adjustment_get_lower(knob->adjustment)+
+	    fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment))*d_angle/(3.0*M_PI/2.0));
+  }
 
+  if (angle<3*M_PI/2.) d_angle=(3.*M_PI/2.) - angle;
+  else d_angle = 7./2.*M_PI - angle;
   return (lives_adjustment_get_lower(knob->adjustment)+
-          fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment))*d_angle/(3.0*M_PI/2.0));
+	    fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment))*d_angle/(2.0*M_PI));
 }
 
+
+  
 gdouble
 knob_calculate_angle_with_value(GiwKnob *knob, gdouble value) {
   gdouble angle;
@@ -1129,14 +1163,24 @@ knob_calculate_angle_with_value(GiwKnob *knob, gdouble value) {
   g_return_val_if_fail(GIW_IS_KNOB(knob), 0.0);
   g_return_val_if_fail(knob->adjustment!=NULL, 0.0);
 
-  angle=(value-lives_adjustment_get_lower(knob->adjustment))*
-        (3.0*M_PI/2.0)/fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment));
+  if (!knob->wrap) {
+    angle=(value-lives_adjustment_get_lower(knob->adjustment))*
+      (3.0*M_PI/2.0)/fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment));
 
-  // Now, the angle is relative to the 3 o'clock position, and need to be changed in order to be ralative to the initial angle ((5.0*M_PI/4.0)
-  angle=(5.0*M_PI/4.0)-angle;
+    // Now, the angle is relative to the 3 o'clock position, and need to be changed in order to be relative to the initial angle ((5.0*M_PI/4.0)
+    angle=(5.0*M_PI/4.0)-angle;
+  }
+  else {
+    angle=(value-lives_adjustment_get_lower(knob->adjustment))*
+      (2.0*M_PI)/fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment));
 
+    // Now, the angle is relative to the 3 o'clock position, and need to be changed in order to be relative to the initial angle (3*M_PI/2)
+    angle=3.*M_PI/2.-angle;
+  }
+  
   return (angle);
 }
+
 
 void
 knob_set_angle(GiwKnob *knob,
@@ -1153,10 +1197,11 @@ knob_set_angle(GiwKnob *knob,
     angle=angle+(2.0*M_PI);
 
   if (knob->angle != angle) {
-    // Taking out of the "forbideen" region
-    if ((angle <= (3.0*M_PI/2.0)) && (angle > (5.0*M_PI/4.0))) angle=5.0*M_PI/4.0;
-    if ((angle  < (7.0*M_PI/4.0)) && (angle >= (3.0*M_PI/2.0))) angle=7.0*M_PI/4.0;
-
+    if (!knob->wrap) {
+      // Taking out of the "forbidden" region
+      if ((angle <= (3.0*M_PI/2.0)) && (angle > (5.0*M_PI/4.0))) angle=5.0*M_PI/4.0;
+      if ((angle  < (7.0*M_PI/4.0)) && (angle >= (3.0*M_PI/2.0))) angle=7.0*M_PI/4.0;
+    }
     knob->angle=angle;
   }
 }

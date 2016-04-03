@@ -1631,6 +1631,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 
   char *filter_name;
   char *filter_author;
+  char *filter_copyright;
   char *filter_extra_authors=NULL;
   char *filter_description;
   char *url;
@@ -1642,6 +1643,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   boolean has_desc=FALSE;
   boolean has_url=FALSE;
   boolean has_license=FALSE;
+  boolean has_copyright=FALSE;
 
   int filter_version;
   int weed_error;
@@ -1664,6 +1666,10 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   filter_author=weed_get_string_value(filter,WEED_LEAF_AUTHOR,&weed_error);
   if (weed_plant_has_leaf(filter,WEED_LEAF_EXTRA_AUTHORS)) filter_extra_authors=weed_get_string_value(filter,WEED_LEAF_EXTRA_AUTHORS,
         &weed_error);
+  if (weed_plant_has_leaf(filter,WEED_LEAF_COPYRIGHT)) {
+    filter_copyright=weed_get_string_value(filter,WEED_LEAF_COPYRIGHT,&weed_error);
+    has_copyright=TRUE;
+  }
   if (weed_plant_has_leaf(filter,WEED_LEAF_DESCRIPTION)) {
     filter_description=weed_get_string_value(filter,WEED_LEAF_DESCRIPTION,&weed_error);
     has_desc=TRUE;
@@ -1750,6 +1756,13 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   }
 
 
+  if (has_copyright) {
+    label = lives_standard_label_new((tmp=lives_strdup_printf(_("Copyright: %s"),filter_copyright)));
+    lives_free(tmp);
+    lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
+  }
+
+
   ok_button = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), ok_button, LIVES_RESPONSE_OK);
 
@@ -1775,6 +1788,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   if (has_desc) lives_free(filter_description);
   if (has_url) lives_free(url);
   if (has_license) lives_free(license);
+  if (has_copyright) lives_free(filter_copyright);
   lives_free(plugin_name);
   lives_free(type);
 

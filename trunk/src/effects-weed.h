@@ -63,6 +63,7 @@ typedef enum {
 #define WEED_LEAF_URL "url"
 #define WEED_LEAF_ICON "icon"
 #define WEED_LEAF_LICENSE "license"
+#define WEED_LEAF_COPYRIGHT "copyright"
 #define WEED_LEAF_VERSION "version"
 
 // instance

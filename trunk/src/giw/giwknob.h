@@ -93,6 +93,9 @@ struct _GiwKnob {
   // Distance between the center and the center of each legend layout
   guint legend_radius;
 
+  // whether we wrap min / max
+  gboolean wrap;
+  
   // The layouts of the legends
   PangoLayout **legends;
 
@@ -126,6 +129,8 @@ void           giw_knob_set_legends_digits(GiwKnob *knob, guint digits_number);
 void           giw_knob_set_ticks_number(GiwKnob *knob, guint major, guint minor);
 void           giw_knob_set_mouse_policy(GiwKnob *knob, GiwKnobMousePolicy policy);
 void           giw_knob_set_title(GiwKnob *knob, gchar *str);
+void           giw_knob_set_wrap(GiwKnob *knob, gboolean wrap);
+
 
 
 G_END_DECLS

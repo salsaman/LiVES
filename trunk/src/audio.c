@@ -1678,14 +1678,10 @@ void pulse_rec_audio_end(boolean close_device, boolean close_fd) {
   // stop recording
 
   if (mainw->pulsed_read!=NULL) {
-    pa_threaded_mainloop_lock(mainw->pulsed_read->mloop);
-
     if (mainw->pulsed_read->playing_file>-1)
       pulse_flush_read_data(mainw->pulsed_read,mainw->pulsed_read->playing_file,0,mainw->pulsed_read->reverse_endian,NULL);
 
     if (close_device) pulse_close_client(mainw->pulsed_read);
-
-    pa_threaded_mainloop_unlock(mainw->pulsed_read->mloop);
 
     if (close_device) mainw->pulsed_read=NULL;
     else {

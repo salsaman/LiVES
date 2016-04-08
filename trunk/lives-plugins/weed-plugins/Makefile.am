@@ -144,6 +144,7 @@ endif
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	alpha_means.la \
+	alpha_visualizer.la \
 	alien_overlay.la \
 	audio_transition.la \
 	audio_volume.la \

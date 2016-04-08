@@ -319,6 +319,7 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   // copy cvflow to float outputs
 
+  // TODO: construct cvflow from dest
   width=cvflow.size().width;
   height=cvflow.size().height;
 

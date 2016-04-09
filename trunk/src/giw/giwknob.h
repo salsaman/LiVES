@@ -95,7 +95,7 @@ struct _GiwKnob {
 
   // whether we wrap min / max
   gboolean wrap;
-  
+
   // The layouts of the legends
   PangoLayout **legends;
 

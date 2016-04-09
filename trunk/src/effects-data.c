@@ -2008,7 +2008,7 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
   g_print("spd is %p %d %d %d %d %d %d %d %d\n",spdata,ipal,opal,iwidth,owidth,iheight,oheight,irow,orow);
   if (spdata) g_print("spd2 is %p %d\n",spdata,spdata[0]);
-  
+
   if (ipal==opal&&iwidth==owidth&&iheight==oheight&&irow==orow) {
     /// everything matches - we can just do a steal
     weed_set_voidptr_value(dchan,WEED_LEAF_PIXEL_DATA,spdata);
@@ -2045,7 +2045,7 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
     if (spdata) g_print("spd3 is %p %d\n",spdata,spdata[0]);
     return FALSE;
   }
-  
+
   create_empty_pixel_data(dchan,FALSE,TRUE);
   dpdata=(uint8_t *)weed_get_voidptr_value(dchan,WEED_LEAF_PIXEL_DATA,&error);
 

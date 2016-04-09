@@ -264,6 +264,8 @@ skip_probe:
   priv->last_frame=-1;
   priv->black_fill=FALSE;
 
+  priv->needs_packet=TRUE;
+  
   /* Open it */
   if (avformat_open_input(&priv->ic, cdata->URI, priv->fmt, NULL)) {
     fprintf(stderr, "avformat_open_input failed\n");
@@ -645,6 +647,9 @@ static void detach_stream(lives_clip_data_t *cdata) {
 
   priv->ctx=NULL;
 
+  if (!priv->needs_packet) 
+    av_packet_unref(&priv->packet);
+
   if (priv->pFrame!=NULL) {
     av_frame_unref(&priv->pFrame);
     priv->pFrame=NULL;
@@ -951,13 +956,16 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   boolean hit_target=FALSE;
 
   int gotFrame;
-  int p,i;
+  
   int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
   int btop=cdata->offs_y,bbot=xheight-1-btop;
   int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
   int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
+  int ret;
 
   int jump_frames;
+
+  register int p,i;
 
   if (tframe<0||tframe>=cdata->nframes||cdata->fps==0.) return FALSE;
 
@@ -1038,6 +1046,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       avcodec_flush_buffers(cc);
       priv->black_fill=FALSE;
       MyPts=-1;
+      priv->needs_packet=TRUE;
     } else {
       MyPts=(priv->last_frame+1.)/cdata->fps*(double)AV_TIME_BASE;
     }
@@ -1045,24 +1054,27 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     //
 
     while (1) {
-      do {
-        int ret;
+      if (priv->needs_packet) {
+	do {
 
-        ret=av_read_frame(priv->ic, &priv->packet);
+	  ret=av_read_frame(priv->ic, &priv->packet);
 
 #ifdef DEBUG
-        fprintf(stderr,"ret was %d for tframe %ld\n",ret,tframe);
+	  fprintf(stderr,"ret was %d for tframe %ld\n",ret,tframe);
 #endif
-        if (ret<0) {
-          av_packet_unref(&priv->packet);
-          priv->last_frame=tframe;
-          if (pixel_data==NULL) return FALSE;
-          priv->black_fill=TRUE;
-          goto framedone;
-        }
+	  if (ret<0) {
+	    av_packet_unref(&priv->packet);
+	    priv->needs_packet=TRUE;
+	    priv->last_frame=tframe;
+	    if (pixel_data==NULL) return FALSE;
+	    priv->black_fill=TRUE;
+	    goto framedone;
+	  }
 
-      } while (priv->packet.stream_index!=priv->vstream);
-
+	} while (priv->packet.stream_index!=priv->vstream);
+	
+      }
+      
       if (MyPts==-1) {
         MyPts = priv->packet.pts;
         MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q)-priv->ic->start_time;
@@ -1075,19 +1087,26 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       // decode any frames from this packet
       if (priv->pFrame==NULL) priv->pFrame=av_frame_alloc();
 
-
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-      avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
+      ret=avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
+      if (ret<0) return FALSE;
+      ret = FFMIN(ret, priv->packet.size);
+      priv->packet.data+=ret;
+      priv->packet.size-=ret;
 #else
-      avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
+      ret=avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
+      priv->pakcet.size=0;
 #endif
 
 #ifdef DEBUG
       fprintf(stderr,"pt 1 %ld %d %ld\n",tframe,gotFrame,MyPts);
 #endif
 
-      av_packet_unref(&priv->packet);
-
+      if (priv->packet.size==0) {
+	av_packet_unref(&priv->packet);
+	priv->needs_packet=TRUE;
+      }
+	
       if (MyPts >= target_pts - 100) hit_target=TRUE;
 
       if (hit_target&&gotFrame) break;

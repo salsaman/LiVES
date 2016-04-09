@@ -7408,7 +7408,7 @@ weed_plant_t *weed_layer_new_from_generator(weed_plant_t *inst, weed_timecode_t 
   int palette;
   int filter_flags=0;
   int key=-1;
-  int num_alpha=0;
+  int num_in_alpha=0;
   int width,height;
 
   register int i;
@@ -7422,6 +7422,7 @@ weed_plant_t *weed_layer_new_from_generator(weed_plant_t *inst, weed_timecode_t 
 
   if ((num_channels=weed_leaf_num_elements(inst,WEED_LEAF_OUT_CHANNELS))==0) return NULL;
   out_channels=weed_get_plantptr_array(inst,WEED_LEAF_OUT_CHANNELS,&error);
+
   if ((channel=get_enabled_channel(inst,0,FALSE))==NULL) {
     lives_free(out_channels);
     return NULL;
@@ -7441,12 +7442,21 @@ weed_plant_t *weed_layer_new_from_generator(weed_plant_t *inst, weed_timecode_t 
   }
 
 
-  if (weed_plant_has_leaf(inst,WEED_LEAF_IN_CHANNELS))
-    num_alpha=weed_leaf_num_elements(inst,WEED_LEAF_IN_CHANNELS);
+  if (weed_plant_has_leaf(inst,WEED_LEAF_IN_CHANNELS)) {
+    int num_inc=weed_leaf_num_elements(inst,WEED_LEAF_IN_CHANNELS);
+    weed_plant_t **in_channels=weed_get_plantptr_array(inst,WEED_LEAF_IN_CHANNELS,&error);
+    for (i=0; i<num_inc; i++) {
+      if (weed_palette_is_alpha_palette(weed_get_int_value(in_channels[i],WEED_LEAF_CURRENT_PALETTE,&error))&&
+	  !(weed_plant_has_leaf(in_channels[i],WEED_LEAF_DISABLED) &&
+	    weed_get_boolean_value(in_channels[i],WEED_LEAF_DISABLED,&error)==WEED_TRUE))
+	num_in_alpha++;
+    }
+    weed_free(in_channels);
+  }
 
-  if (num_alpha>0) {
+  if (num_in_alpha>0) {
     // if we have mandatory alpha ins, make sure they are filled
-    retval=check_cconx(inst,num_alpha,&needs_reinit);
+    retval=check_cconx(inst,num_in_alpha,&needs_reinit);
 
     if (retval!=FILTER_NO_ERROR) {
       lives_free(out_channels);
@@ -7465,7 +7475,6 @@ weed_plant_t *weed_layer_new_from_generator(weed_plant_t *inst, weed_timecode_t 
 
     width=weed_get_int_value(channel,WEED_LEAF_WIDTH,&error);
     height=weed_get_int_value(channel,WEED_LEAF_HEIGHT,&error);
-
     
     for (i=0;(channel=get_enabled_channel(inst,i,FALSE))!=NULL;i++) {
       if (width!=weed_get_int_value(channel,WEED_LEAF_WIDTH,&error)||height!=weed_get_int_value(channel,WEED_LEAF_HEIGHT,&error)) {

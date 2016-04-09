@@ -18,7 +18,7 @@ typedef struct  {
   boolean inited;
   boolean longer_seek;
   boolean needs_packet;
-  
+
   int astream;
   int vstream;
 

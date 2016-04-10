@@ -606,7 +606,7 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   fifofile=lives_strdup_printf("%s/tvpic_%d.y4m",prefs->tmpdir,capable->mainpid);
-  
+
   mainw->open_deint=FALSE;
 
   card_dialog=create_cdtrack_dialog(4,NULL);

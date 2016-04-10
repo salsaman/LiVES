@@ -1245,6 +1245,9 @@ char *get_val_from_cached_list(const char *key, size_t maxlen);
 void get_location(const char *exe, char *val, int maxlen);
 
 char *make_image_file_name(lives_clip_t *clip, int frame, const char *img_ext);
+const char *lives_image_type_to_ext(lives_image_type_t imtype);
+lives_image_type_t lives_image_ext_to_type(const char *img_ext);
+lives_image_type_t lives_image_type_to_image_type(const char *lives_img_type);
 
 void set_menu_text(LiVESWidget *menu, const char *text, boolean use_mnemonic);
 void get_menu_text(LiVESWidget *menu, char *text);

@@ -613,8 +613,8 @@ void create_LiVES(void) {
 #ifdef HAVE_UNICAP
   lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
-		       LIVES_GUI_CALLBACK(on_open_vdev_activate),
-		       NULL);
+                       LIVES_GUI_CALLBACK(on_open_vdev_activate),
+                       NULL);
 #endif
 
 
@@ -624,15 +624,15 @@ void create_LiVES(void) {
       lives_container_add(LIVES_CONTAINER(submenu), mainw->firewire);
 
       lives_signal_connect(LIVES_GUI_OBJECT(mainw->firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,
-			   LIVES_GUI_CALLBACK(on_live_fw_activate),
-			   NULL);
+                           LIVES_GUI_CALLBACK(on_live_fw_activate),
+                           NULL);
     }
 
     lives_container_add(LIVES_CONTAINER(submenu), mainw->tvdev);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->tvdev), LIVES_WIDGET_ACTIVATE_SIGNAL,
-			 LIVES_GUI_CALLBACK(on_live_tvcard_activate),
-			 NULL);
+                         LIVES_GUI_CALLBACK(on_live_tvcard_activate),
+                         NULL);
   }
 
 

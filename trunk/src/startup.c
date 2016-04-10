@@ -525,14 +525,14 @@ boolean do_startup_tests(boolean tshoot) {
   LiVESAccelGroup *accel_group;
 
   char mppath[PATH_MAX];
-  
+
   char *com,*rname,*afile,*tmp;
   char *image_ext=lives_strdup(prefs->image_ext);
   char *title,*msg;
 
   const char *mp_cmd;
   const char *lookfor;
-  
+
   uint8_t *abuff;
 
   size_t fsize;
@@ -715,7 +715,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   // check for mplayer presence
   success2=TRUE;
-  
+
 #ifdef ALLOW_MPV
   add_test(table,2,_("Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"),TRUE);
 
@@ -733,7 +733,7 @@ boolean do_startup_tests(boolean tshoot) {
   if (!capable->has_mplayer&&!capable->has_mplayer2) {
     success2=fail_test(table,2,_("You should install mplayer or mplayer2 to be able to use all the decoding features in LiVES"));
   }
-  
+
 #endif
   if (!success2) {
     if (!success) {
@@ -770,7 +770,7 @@ boolean do_startup_tests(boolean tshoot) {
   msg=lives_strdup_printf(_("Checking if %s can convert audio"),mp_cmd);
   add_test(table,3,msg,success2);
   lives_free(msg);
-  
+
   res=1;
 
   if (success2) {
@@ -779,21 +779,21 @@ boolean do_startup_tests(boolean tshoot) {
     res=lives_system(com,TRUE);
     lives_free(com);
 #else
-    com=lives_strdup_printf("%s -ao help | grep pcm >NUL 2>&1",prefs->video_open_command); 
+    com=lives_strdup_printf("%s -ao help | grep pcm >NUL 2>&1",prefs->video_open_command);
     res=lives_system(com,TRUE);
     lives_free(com);
 #endif
-    }
+  }
 
   if (res==0) {
-      pass_test(table,3);
-    } else {
+    pass_test(table,3);
+  } else {
 #ifdef ALLOW_MPV
-      fail_test(table,3,_("You should install mplayer,mplayer2 or mpv with pcm/wav support"));
+    fail_test(table,3,_("You should install mplayer,mplayer2 or mpv with pcm/wav support"));
 #else
-      fail_test(table,3,_("You should install mplayer or mplayer2 with pcm/wav support"));
+    fail_test(table,3,_("You should install mplayer or mplayer2 with pcm/wav support"));
 #endif
-    }
+  }
 
 
   // check if mplayer can decode to png/alpha
@@ -811,7 +811,7 @@ boolean do_startup_tests(boolean tshoot) {
   msg=lives_strdup_printf(_("Checking if %s can decode to png/alpha"),mp_cmd);
   add_test(table,4,msg,success2&&success4);
   lives_free(msg);
-  
+
   success3=FALSE;
 
   // try to open resource vidtest.avi
@@ -853,9 +853,9 @@ boolean do_startup_tests(boolean tshoot) {
       get_frame_count(mainw->current_file);
 
       if (cfile->frames==0) {
-      msg=lives_strdup_printf(_("You may wish to upgrade %s to a newer version"),mp_cmd);
-      fail_test(table,4,msg);
-      lives_free(msg);
+        msg=lives_strdup_printf(_("You may wish to upgrade %s to a newer version"),mp_cmd);
+        fail_test(table,4,msg);
+        lives_free(msg);
       }
 
       else {
@@ -884,38 +884,37 @@ boolean do_startup_tests(boolean tshoot) {
   msg=lives_strdup_printf(_("Checking if %s can decode to jpeg"),mp_cmd);
   add_test(table,5,msg,success2);
   lives_free(msg);
-  
+
   res=1;
 
   if (!strcmp(mp_cmd,"mpv")) lookfor="image";
   else lookfor="jpeg file";
-  
+
   if (success2) {
 #ifndef IS_MINGW
     com=lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | grep -i \"%s\" >/dev/null 2>&1",prefs->video_open_command,lookfor);
-      res=lives_system(com,TRUE);
-      lives_free(com);
+    res=lives_system(com,TRUE);
+    lives_free(com);
 #else
-      com=lives_strdup_printf("%s -vo help | grep -i \"%s\" >NUL 2>&1",prefs->video_open_command,lookfor); 
-      res=lives_system(com,TRUE);
-      lives_free(com);
+    com=lives_strdup_printf("%s -vo help | grep -i \"%s\" >NUL 2>&1",prefs->video_open_command,lookfor);
+    res=lives_system(com,TRUE);
+    lives_free(com);
 #endif
-    }
+  }
 
-    if (res==0) {
-      pass_test(table,5);
-      if (!success3) {
-        if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG)) imgext_switched=TRUE;
-        set_pref(PREF_DEFAULT_IMAGE_FORMAT,LIVES_IMAGE_TYPE_JPEG);
-        lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_JPG);
-      }
-    } else {
-      if (!success3) {
+  if (res==0) {
+    pass_test(table,5);
+    if (!success3) {
+      if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG)) imgext_switched=TRUE;
+      set_pref(PREF_DEFAULT_IMAGE_FORMAT,LIVES_IMAGE_TYPE_JPEG);
+      lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_JPG);
+    }
+  } else {
+    if (!success3) {
       msg=lives_strdup_printf(_("You should install %s with either png/alpha or jpeg support"),mp_cmd);
       fail_test(table,5,msg);
       lives_free(msg);
-    }
-      else {
+    } else {
       msg=lives_strdup_printf(_("You may wish to add jpeg output support to %s"),mp_cmd);
       fail_test(table,5,msg);
       lives_free(msg);
@@ -928,7 +927,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   // check for convert
 
-    add_test(table,8,_("Checking for \"convert\" presence"),TRUE);
+  add_test(table,8,_("Checking for \"convert\" presence"),TRUE);
 
 
   if (!capable->has_convert) {
@@ -945,8 +944,8 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (!capable->has_mplayer&&!capable->has_mplayer2&&capable->has_mpv) {
     label=lives_standard_label_new(
-    _("\n\nLiVES has experimental support for 'mpv' but it is advisable to install\n"
-      "'mplayer' or 'mplayer2' in order to use all the features of LiVES"));
+            _("\n\nLiVES has experimental support for 'mpv' but it is advisable to install\n"
+              "'mplayer' or 'mplayer2' in order to use all the features of LiVES"));
     lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
   }
 

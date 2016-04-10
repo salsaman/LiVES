@@ -2275,6 +2275,31 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
 
 
 
+LIVES_INLINE const char *lives_image_type_to_ext(lives_image_type_t imtype) {
+  switch (imtype) {
+  case IMG_TYPE_JPEG:
+    return LIVES_FILE_EXT_JPG;
+  case IMG_TYPE_PNG:
+    return LIVES_FILE_EXT_PNG;
+  default:
+    return "";
+  }
+}
+
+
+LIVES_INLINE lives_image_type_t lives_image_ext_to_type(const char *img_ext) {
+  if (!strcmp(img_ext,LIVES_FILE_EXT_PNG)) return IMG_TYPE_PNG;
+  if (!strcmp(img_ext,LIVES_FILE_EXT_JPG)) return IMG_TYPE_JPEG;
+  return IMG_TYPE_UNKNOWN;
+}
+
+LIVES_INLINE lives_image_type_t lives_image_type_to_image_type(const char *lives_img_type) {
+  if (!strcmp(lives_img_type,LIVES_IMAGE_TYPE_PNG)) return IMG_TYPE_PNG;
+  if (!strcmp(lives_img_type,LIVES_IMAGE_TYPE_JPEG)) return IMG_TYPE_JPEG;
+  return IMG_TYPE_UNKNOWN;
+}
+
+
 LIVES_INLINE char *make_image_file_name(lives_clip_t *sfile, int frame, const char *img_ext) {
   return lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,img_ext);
 }

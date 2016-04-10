@@ -620,7 +620,7 @@ void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     do_need_mplayer_dialog();
     return;
   }
-  
+
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       lives_source_remove(mainw->multitrack->idlefunc);
@@ -5987,9 +5987,9 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
     if (!capable->has_mplayer&&!(capable->has_mplayer2
 #ifdef ALLOW_MPV
-				 ||capable->has_mpv
+                                 ||capable->has_mpv
 #endif
-				 )) {
+                                )) {
       char *msg;
       if (capable->has_identify) {
         msg=lives_strdup(_("\n\nYou need to install mplayer or mplayer2 to be able to preview this file.\n"));
@@ -7836,7 +7836,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
 #ifdef ALLOW_MPV
       ||capable->has_mpv
 #endif
-      ) {
+     ) {
     if (read_file_details(file_name,TRUE)) {
       array=lives_strsplit(mainw->msg,"|",15);
       cfile->arate=atoi(array[9]);

@@ -339,7 +339,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       mainw->multitrack->has_audio_file=TRUE;
     }
 
-    if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG)) cfile->img_type=IMG_TYPE_PNG;
+    cfile->img_type=lives_image_ext_to_type(prefs->image_ext);
 
     if (prefs->instant_open) {
       // cd to clip directory - so decoder plugins can write temp files
@@ -455,9 +455,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             if (cfile->achans>0) {
               // plugin returned no audio, try with mplayer
               if (mainw->file_open_params==NULL) mainw->file_open_params=lives_strdup("");
-              com=lives_strdup_printf("%s open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
+              com=lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d \"%s\"",prefs->backend,cfile->handle,
                                       (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),-1,
-                                      prefs->image_ext,start,frames,mainw->file_open_params);
+                                      prefs->image_ext,lives_image_type_to_ext(IMG_TYPE_BEST),start,frames,mainw->file_open_params);
 
               lives_free(tmp);
 
@@ -719,9 +719,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       lives_free(mainw->file_open_params);
       mainw->file_open_params=tmp;
 
-      com=lives_strdup_printf("%s open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
+      com=lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d \"%s\"",prefs->backend,cfile->handle,
                               (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),withsound,
-                              prefs->image_ext,start,frames,mainw->file_open_params);
+                              prefs->image_ext,lives_image_type_to_ext(IMG_TYPE_BEST),start,frames,mainw->file_open_params);
       lives_rm(cfile->info_file);
       lives_system(com,FALSE);
       lives_free(com);
@@ -927,8 +927,10 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   }
 
   if (cfile->frames==1&&(!strcmp(cfile->type,LIVES_IMAGE_TYPE_JPEG)||!strcmp(cfile->type,LIVES_IMAGE_TYPE_PNG))) {
-    if (mainw->img_concat_clip==-1) mainw->img_concat_clip=mainw->current_file;
-    else if (prefs->concat_images) {
+    if (mainw->img_concat_clip==-1) {
+      cfile->img_type=lives_image_type_to_image_type(cfile->type);
+      mainw->img_concat_clip=mainw->current_file;
+    } else if (prefs->concat_images) {
       // insert this image into our image clip, close this file
 
       com=lives_strdup_printf("%s insert \"%s\" \"%s\" %d 1 1 \"%s\" 0 %d %d %d",prefs->backend,
@@ -3407,17 +3409,16 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       array=lives_strsplit(mainw->msg,"|",-1);
 
       if (!strcmp(array[0],"error")) {
-	if (npieces>=3) {
-	  mesg=lives_strdup_printf(_("\nAn error occurred doing\n%s\n"),array[2]);
-	  LIVES_ERROR(array[2]);
-	}
-	else mesg=lives_strdup(_("\nAn error occurred opening the file\n"));
+        if (npieces>=3) {
+          mesg=lives_strdup_printf(_("\nAn error occurred doing\n%s\n"),array[2]);
+          LIVES_ERROR(array[2]);
+        } else mesg=lives_strdup(_("\nAn error occurred opening the file\n"));
         do_error_dialog(mesg);
         lives_free(mesg);
         lives_strfreev(array);
         return FALSE;
       }
-      
+
       // sanity check handle against status file
       // (this should never happen...)
 

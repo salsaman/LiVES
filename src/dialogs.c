@@ -2203,12 +2203,13 @@ void tempdir_warning(void) {
 
 void do_no_mplayer_sox_error(void) {
   do_blocking_error_dialog(_("\nLiVES currently requires either 'mplayer', 'mplayer2', or 'sox' to function. "
-			     "Please install one or other of these, and try again.\n"));
+                             "Please install one or other of these, and try again.\n"));
 }
 
 
 void do_need_mplayer_dialog(void) {
-  do_error_dialog(_("\nThis function requires either mplayer or mplayer2 to operate.\nYou may wish to install one or other of these and try again.\n"));
+  do_error_dialog(
+    _("\nThis function requires either mplayer or mplayer2 to operate.\nYou may wish to install one or other of these and try again.\n"));
 }
 
 

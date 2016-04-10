@@ -4738,7 +4738,8 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE,0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->jack_aserver_entry = lives_standard_entry_new(_("Jack _audio server config file"),TRUE,prefs->jack_aserver,-1,PATH_MAX,LIVES_BOX(hbox),
+  prefsw->jack_aserver_entry = lives_standard_entry_new(_("Jack _audio server config file"),TRUE,prefs->jack_aserver,-1,PATH_MAX,
+                               LIVES_BOX(hbox),
                                NULL);
 
   lives_widget_set_sensitive(prefsw->jack_aserver_entry,FALSE);

@@ -312,6 +312,11 @@ void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int type=LIVES_POINTER_TO_INT(user_data); // type 0==dv, type 1==hdv
   s_cam *cam;
 
+  if (!capable->has_mplayer&&!capable->has_mplayer2) {
+    do_need_mplayer_dialog();
+    return;
+  }
+
   if (type==CAM_FORMAT_DV&&!capable->has_dvgrab) {
     do_dvgrab_error();
     return;

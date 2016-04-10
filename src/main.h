@@ -327,6 +327,7 @@ typedef struct {
 
 typedef  void *(*fn_ptr)(void *ptr);
 
+#define ALLOW_MPV
 
 /// this struct is used only when physically resampling frames on the disk
 /// we create an array of these and write them to the disk
@@ -941,6 +942,7 @@ void do_messages_window(void);
 void do_firstever_dialog(void);
 void do_upgrade_error_dialog(void);
 void do_no_mplayer_sox_error(void);
+void do_need_mplayer_dialog(void);
 void do_aud_during_play_error(void);
 void do_rendered_fx_dialog(void);
 void do_layout_scrap_file_error(void);

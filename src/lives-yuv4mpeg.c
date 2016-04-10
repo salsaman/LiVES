@@ -589,7 +589,7 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int response;
 
   char *com,*tmp;
-  char *fifofile=lives_strdup_printf("%s/tvpic_%d.y4m",prefs->tmpdir,capable->mainpid);
+  char *fifofile;
 
   char *chanstr;
   char *devstr;
@@ -600,12 +600,18 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_tvcardw_t *tvcardw;
 
+  if (!capable->has_mplayer&&!capable->has_mplayer2) {
+    do_need_mplayer_dialog();
+    return;
+  }
+
+  fifofile=lives_strdup_printf("%s/tvpic_%d.y4m",prefs->tmpdir,capable->mainpid);
+  
   mainw->open_deint=FALSE;
 
   card_dialog=create_cdtrack_dialog(4,NULL);
 
   tvcardw=(lives_tvcardw_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(card_dialog),"tvcard_data");
-
 
   response=lives_dialog_run(LIVES_DIALOG(card_dialog));
   if (response==LIVES_RESPONSE_CANCEL) {

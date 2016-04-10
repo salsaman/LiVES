@@ -1053,7 +1053,7 @@ _entryw *create_location_dialog(int type) {
 
   if (type==1) {
     label = lives_standard_label_new(
-              _("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer.\n"
+              _("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer (or mpv).\n"
                 "Also make sure you have set your bandwidth in Preferences|Streaming\n\n"));
   } else {
     label = lives_standard_label_new(

@@ -616,6 +616,11 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESWidget *vcdtrack_dialog;
 
+  if (!capable->has_mplayer&&!capable->has_mplayer2) {
+    do_need_mplayer_dialog();
+    return;
+  }
+  
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       lives_source_remove(mainw->multitrack->idlefunc);
@@ -635,6 +640,13 @@ void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_open_loc_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+
+  if (!capable->has_mplayer&&!capable->has_mplayer2) {
+    // TODO: check with mpv, libavformat
+    do_need_mplayer_dialog();
+    return;
+  }
+
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       lives_source_remove(mainw->multitrack->idlefunc);
@@ -5973,7 +5985,11 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
   if (!(height*width)&&preview_type!=LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
     // media preview
 
-    if (!capable->has_mplayer&&!(capable->has_mplayer2||capable->has_mpv)) {
+    if (!capable->has_mplayer&&!(capable->has_mplayer2
+#ifdef ALLOW_MPV
+				 ||capable->has_mpv
+#endif
+				 )) {
       char *msg;
       if (capable->has_identify) {
         msg=lives_strdup(_("\n\nYou need to install mplayer or mplayer2 to be able to preview this file.\n"));
@@ -7816,7 +7832,11 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
 
   if (!lives_ascii_strncasecmp(a_type,LIVES_FILE_EXT_WAV,3)) israw=0;
 
-  if (capable->has_mplayer||capable->has_mplayer2||capable->has_mpv) {
+  if (capable->has_mplayer||capable->has_mplayer2
+#ifdef ALLOW_MPV
+      ||capable->has_mpv
+#endif
+      ) {
     if (read_file_details(file_name,TRUE)) {
       array=lives_strsplit(mainw->msg,"|",15);
       cfile->arate=atoi(array[9]);

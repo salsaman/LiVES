@@ -6442,71 +6442,67 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_open_sel_activate),
                        NULL);
 
-  // TODO: mpv
-
   // TODO, show these options but show error if no mplayer / mplayer2
 
-  if (capable->has_mplayer||capable->has_mplayer2) {
 
 #ifdef HAVE_WEBM
-    mt->open_loc_menu = lives_menu_item_new_with_mnemonic(_("Open _Location/Stream..."));
-    lives_container_add(LIVES_CONTAINER(menuitem_menu2), mt->open_loc_menu);
+  mt->open_loc_menu = lives_menu_item_new_with_mnemonic(_("Open _Location/Stream..."));
+  lives_container_add(LIVES_CONTAINER(menuitem_menu2), mt->open_loc_menu);
+    
+  open_loc_submenu=lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->open_loc_menu), open_loc_submenu);
 
-    open_loc_submenu=lives_menu_new();
-    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->open_loc_menu), open_loc_submenu);
+  menuitem = lives_menu_item_new_with_mnemonic(_("Open _Youtube Clip..."));
+  lives_container_add(LIVES_CONTAINER(open_loc_submenu), menuitem);
 
-    menuitem = lives_menu_item_new_with_mnemonic(_("Open _Youtube Clip..."));
-    lives_container_add(LIVES_CONTAINER(open_loc_submenu), menuitem);
+  lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+		       LIVES_GUI_CALLBACK(on_open_utube_activate),
+		       NULL);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_open_utube_activate),
-                         NULL);
-
-    menuitem = lives_menu_item_new_with_mnemonic(_("Open _Location/Stream..."));
-    lives_container_add(LIVES_CONTAINER(open_loc_submenu), menuitem);
+  menuitem = lives_menu_item_new_with_mnemonic(_("Open _Location/Stream..."));
+  lives_container_add(LIVES_CONTAINER(open_loc_submenu), menuitem);
 
 #else
 
-    menuitem = lives_menu_item_new_with_mnemonic(_("Open _Location/Stream..."));
-    lives_container_add(LIVES_CONTAINER(menuitem_menu2), menuitem);
+  menuitem = lives_menu_item_new_with_mnemonic(_("Open _Location/Stream..."));
+  lives_container_add(LIVES_CONTAINER(menuitem_menu2), menuitem);
 
 #endif
 
-    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_open_loc_activate),
-                         NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+		       LIVES_GUI_CALLBACK(on_open_loc_activate),
+		       NULL);
 
 
 
 #ifdef ENABLE_DVD_GRAB
-    mt->vcd_dvd_menu = lives_menu_item_new_with_mnemonic(_("Import Selection from _dvd/vcd..."));
-    lives_container_add(LIVES_CONTAINER(menuitem_menu2), mt->vcd_dvd_menu);
-    vcd_dvd_submenu=lives_menu_new();
-    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->vcd_dvd_menu), vcd_dvd_submenu);
+  mt->vcd_dvd_menu = lives_menu_item_new_with_mnemonic(_("Import Selection from _dvd/vcd..."));
+  lives_container_add(LIVES_CONTAINER(menuitem_menu2), mt->vcd_dvd_menu);
+  vcd_dvd_submenu=lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->vcd_dvd_menu), vcd_dvd_submenu);
 
-    menuitem = lives_menu_item_new_with_mnemonic(_("Import Selection from _dvd"));
-    lives_container_add(LIVES_CONTAINER(vcd_dvd_submenu), menuitem);
+  menuitem = lives_menu_item_new_with_mnemonic(_("Import Selection from _dvd"));
+  lives_container_add(LIVES_CONTAINER(vcd_dvd_submenu), menuitem);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_open_vcd_activate),
-                         LIVES_INT_TO_POINTER(1));
+  lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+		       LIVES_GUI_CALLBACK(on_open_vcd_activate),
+		       LIVES_INT_TO_POINTER(1));
 
 
 # endif
 
-    menuitem = lives_menu_item_new_with_mnemonic(_("Import Selection from _vcd"));
+  menuitem = lives_menu_item_new_with_mnemonic(_("Import Selection from _vcd"));
 
 #ifdef ENABLE_DVD_GRAB
-    lives_container_add(LIVES_CONTAINER(vcd_dvd_submenu), menuitem);
+  lives_container_add(LIVES_CONTAINER(vcd_dvd_submenu), menuitem);
 #else
-    lives_container_add(LIVES_CONTAINER(menuitem_menu2), menuitem);
+  lives_container_add(LIVES_CONTAINER(menuitem_menu2), menuitem);
 #endif
 
-    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_open_vcd_activate),
-                         LIVES_INT_TO_POINTER(2));
+  lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+		       LIVES_GUI_CALLBACK(on_open_vcd_activate),
+		       LIVES_INT_TO_POINTER(2));
 
-  }
 
 
 #ifdef HAVE_LDVGRAB

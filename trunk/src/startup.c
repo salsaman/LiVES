@@ -524,10 +524,15 @@ boolean do_startup_tests(boolean tshoot) {
 
   LiVESAccelGroup *accel_group;
 
+  char mppath[PATH_MAX];
+  
   char *com,*rname,*afile,*tmp;
   char *image_ext=lives_strdup(prefs->image_ext);
-  char *title;
+  char *title,*msg;
 
+  const char *mp_cmd;
+  const char *lookfor;
+  
   uint8_t *abuff;
 
   size_t fsize;
@@ -709,15 +714,28 @@ boolean do_startup_tests(boolean tshoot) {
 
 
   // check for mplayer presence
+  success2=TRUE;
+  
+#ifdef ALLOW_MPV
+  add_test(table,2,_("Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"),TRUE);
 
-  // TODO: mpv
+  if (!capable->has_mplayer&&!capable->has_mplayer2&&!capable->has_mpv) {
+    success2=fail_test(table,2,_("You should install mplayer, mplayer2 or mpv to be able to use all the decoding features in LiVES"));
+  }
 
-  add_test(table,2,_("Checking for \"mplayer\" presence"),TRUE);
+  if (!success&&!capable->has_mplayer2&&!capable->has_mplayer) {
+    success2=FALSE;
+  }
 
+#else
+  add_test(table,2,_("Checking for \"mplayer\" or \"mplayer2\" presence"),TRUE);
 
   if (!capable->has_mplayer&&!capable->has_mplayer2) {
     success2=fail_test(table,2,_("You should install mplayer or mplayer2 to be able to use all the decoding features in LiVES"));
-
+  }
+  
+#endif
+  if (!success2) {
     if (!success) {
       lives_widget_destroy(dialog);
       lives_widget_context_update();
@@ -741,39 +759,41 @@ boolean do_startup_tests(boolean tshoot) {
 
   // check if mplayer can decode audio
 
-  add_test(table,3,_("Checking if mplayer can convert audio"),success2);
+  if (capable->has_mplayer) mp_cmd="mplayer";
+  else if (capable->has_mplayer2) mp_cmd="mplayer2";
+  else mp_cmd="mpv";
 
+  get_location(mp_cmd,mppath,PATH_MAX);
+  lives_snprintf(prefs->video_open_command,PATH_MAX+2,"\"%s\"",mppath);
+  set_pref(PREF_VIDEO_OPEN_COMMAND,prefs->video_open_command);
+
+  msg=lives_strdup_printf(_("Checking if %s can convert audio"),mp_cmd);
+  add_test(table,3,msg,success2);
+  lives_free(msg);
+  
   res=1;
 
   if (success2) {
-    if (capable->has_mplayer) {
 #ifndef IS_MINGW
-      res=lives_system("LANG=en LANGUAGE=en mplayer -ao help | grep pcm >/dev/null 2>&1",TRUE);
+    com=lives_strdup_printf("LANG=en LANGUAGE=en %s -ao help | grep pcm >/dev/null 2>&1",prefs->video_open_command);
+    res=lives_system(com,TRUE);
+    lives_free(com);
 #else
-      res=lives_system("mplayer -ao help | grep pcm >NUL 2>&1",TRUE);
-#endif
-    } else if (capable->has_mplayer2) {
-#ifndef IS_MINGW
-      res=lives_system("LANG=en LANGUAGE=en mplayer2 -ao help | grep pcm >/dev/null 2>&1",TRUE);
-#else
-      res=lives_system("mplayer2 -ao help | grep pcm >NUL 2>&1",TRUE);
-#endif
-    } else {
-#ifdef ALLOW_MPV
-#ifndef IS_MINGW
-      res=lives_system("LANG=en LANGUAGE=en mpv --ao help | grep pcm >/dev/null 2>&1",TRUE);
-#else
-      res=lives_system("mpv --ao help | grep pcm >NUL 2>&1",TRUE);
-#endif
+    com=lives_strdup_printf("%s -ao help | grep pcm >NUL 2>&1",prefs->video_open_command); 
+    res=lives_system(com,TRUE);
+    lives_free(com);
 #endif
     }
 
-    if (res==0) {
+  if (res==0) {
       pass_test(table,3);
     } else {
+#ifdef ALLOW_MPV
+      fail_test(table,3,_("You should install mplayer,mplayer2 or mpv with pcm/wav support"));
+#else
       fail_test(table,3,_("You should install mplayer or mplayer2 with pcm/wav support"));
+#endif
     }
-  }
 
 
   // check if mplayer can decode to png/alpha
@@ -788,10 +808,10 @@ boolean do_startup_tests(boolean tshoot) {
 
   lives_free(rname);
 
-  // TODO: mpv
-
-  add_test(table,4,_("Checking if mplayer can decode to png/alpha"),success2&&success4);
-
+  msg=lives_strdup_printf(_("Checking if %s can decode to png/alpha"),mp_cmd);
+  add_test(table,4,msg,success2&&success4);
+  lives_free(msg);
+  
   success3=FALSE;
 
   // try to open resource vidtest.avi
@@ -804,7 +824,7 @@ boolean do_startup_tests(boolean tshoot) {
 
     rname=get_resource("vidtest.avi");
 
-    com=lives_strdup_printf("%s open_test \"%s\" \"%s\" 0 png",prefs->backend_sync,cfile->handle,
+    com=lives_strdup_printf("%s open_test \"%s\" %s \"%s\" 0 png",prefs->backend_sync,cfile->handle,prefs->video_open_command,
                             (tmp=lives_filename_from_utf8(rname,-1,NULL,NULL,NULL)));
     lives_free(tmp);
     lives_free(rname);
@@ -833,7 +853,9 @@ boolean do_startup_tests(boolean tshoot) {
       get_frame_count(mainw->current_file);
 
       if (cfile->frames==0) {
-        fail_test(table,4,_("You may wish to upgrade mplayer to a newer version"));
+      msg=lives_strdup_printf(_("You may wish to upgrade %s to a newer version"),mp_cmd);
+      fail_test(table,4,msg);
+      lives_free(msg);
       }
 
       else {
@@ -859,30 +881,24 @@ boolean do_startup_tests(boolean tshoot) {
 
   // check if mplayer can decode to jpeg
 
-  add_test(table,5,_("Checking if mplayer can decode to jpeg"),success2);
-
+  msg=lives_strdup_printf(_("Checking if %s can decode to jpeg"),mp_cmd);
+  add_test(table,5,msg,success2);
+  lives_free(msg);
+  
   res=1;
 
+  if (!strcmp(mp_cmd,"mpv")) lookfor="image";
+  else lookfor="jpeg file";
+  
   if (success2) {
-    if (capable->has_mplayer) {
 #ifndef IS_MINGW
-      res=lives_system("LANG=en LANGUAGE=en mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1",TRUE);
+    com=lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | grep -i \"%s\" >/dev/null 2>&1",prefs->video_open_command,lookfor);
+      res=lives_system(com,TRUE);
+      lives_free(com);
 #else
-      res=lives_system("mplayer -vo help | grep -i \"jpeg file\" >NUL 2>&1",TRUE);
-#endif
-    } else if (capable->has_mplayer2) {
-#ifndef IS_MINGW
-      res=lives_system("LANG=en LANGUAGE=en mplayer2 -vo help | grep -i \"jpeg file\" >/dev/null 2>&1",TRUE);
-#else
-      res=lives_system("mplayer2 -vo help | grep -i \"jpeg file\" >NUL 2>&1",TRUE);
-#endif
-    } else {
-#ifdef ALLOW_MPV
-#ifndef IS_MINGW
-      res=lives_system("LANG=en LANGUAGE=en mpv --vo help | grep -i \"image\" >/dev/null 2>&1",TRUE);
-#else
-      res=lives_system("mpv --vo help | grep -i \"image\" >NUL 2>&1",TRUE);
-#endif
+      com=lives_strdup_printf("%s -vo help | grep -i \"%s\" >NUL 2>&1",prefs->video_open_command,lookfor); 
+      res=lives_system(com,TRUE);
+      lives_free(com);
 #endif
     }
 
@@ -894,17 +910,25 @@ boolean do_startup_tests(boolean tshoot) {
         lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_JPG);
       }
     } else {
-      if (!success3) fail_test(table,5,_("You should install mplayer with either png/alpha or jpeg support"));
-      else fail_test(table,5,_("You may wish to add jpeg output support to mplayer"));
+      if (!success3) {
+      msg=lives_strdup_printf(_("You should install %s with either png/alpha or jpeg support"),mp_cmd);
+      fail_test(table,5,msg);
+      lives_free(msg);
+    }
+      else {
+      msg=lives_strdup_printf(_("You may wish to add jpeg output support to %s"),mp_cmd);
+      fail_test(table,5,msg);
+      lives_free(msg);
     }
   }
+
 
   // TODO - check each enabled decoder plugin in turn
 
 
   // check for convert
 
-  add_test(table,8,_("Checking for \"convert\" presence"),TRUE);
+    add_test(table,8,_("Checking for \"convert\" presence"),TRUE);
 
 
   if (!capable->has_convert) {
@@ -918,6 +942,14 @@ boolean do_startup_tests(boolean tshoot) {
   mainw->current_file=current_file;
 
   lives_widget_set_sensitive(okbutton,TRUE);
+
+  if (!capable->has_mplayer&&!capable->has_mplayer2&&capable->has_mpv) {
+    label=lives_standard_label_new(
+    _("\n\nLiVES has experimental support for 'mpv' but it is advisable to install\n"
+      "'mplayer' or 'mplayer2' in order to use all the features of LiVES"));
+    lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
+  }
+
   if (tshoot) {
     lives_widget_hide(cancelbutton);
     if (imgext_switched) {

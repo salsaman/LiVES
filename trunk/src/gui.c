@@ -572,11 +572,9 @@ void create_LiVES(void) {
 
   // TODO: show these options, but give errors for no mplayer / mplayer2
   // TODO - mpv
-  if (capable->has_mplayer||capable->has_mplayer2) {
 #ifdef ENABLE_DVD_GRAB
-    lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_vcd_menu);
+  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_vcd_menu);
 #endif
-  }
 
   mainw->open_vcd_submenu=lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->open_vcd_menu), mainw->open_vcd_submenu);
@@ -609,41 +607,35 @@ void create_LiVES(void) {
 #if defined(HAVE_UNICAP) || defined(HAVE_YUV4MPEG)
   lives_container_add(LIVES_CONTAINER(menuitem_menu), menuitem);
 
-#ifndef HAVE_UNICAP
-  if (capable->has_mplayer||capable->has_mplayer2) {
-#endif
-
-    submenu=lives_menu_new();
-    lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
+  submenu=lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
 
 #ifdef HAVE_UNICAP
-    lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_open_vdev_activate),
-                         NULL);
+  lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
+		       LIVES_GUI_CALLBACK(on_open_vdev_activate),
+		       NULL);
 #endif
 
 
 #ifdef HAVE_YUV4MPEG
-    if (capable->has_dvgrab) {
-      if (capable->has_mplayer||capable->has_mplayer2) {
-        lives_container_add(LIVES_CONTAINER(submenu), mainw->firewire);
+  if (capable->has_dvgrab) {
+    if (capable->has_mplayer||capable->has_mplayer2) {
+      lives_container_add(LIVES_CONTAINER(submenu), mainw->firewire);
 
-        lives_signal_connect(LIVES_GUI_OBJECT(mainw->firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_live_fw_activate),
-                             NULL);
-      }
-
-      lives_container_add(LIVES_CONTAINER(submenu), mainw->tvdev);
-
-      lives_signal_connect(LIVES_GUI_OBJECT(mainw->tvdev), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                           LIVES_GUI_CALLBACK(on_live_tvcard_activate),
-                           NULL);
+      lives_signal_connect(LIVES_GUI_OBJECT(mainw->firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,
+			   LIVES_GUI_CALLBACK(on_live_fw_activate),
+			   NULL);
     }
 
-#ifndef HAVE_UNICAP
-  } // if (capable->has_mplayer)
-#endif
+    lives_container_add(LIVES_CONTAINER(submenu), mainw->tvdev);
+
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->tvdev), LIVES_WIDGET_ACTIVATE_SIGNAL,
+			 LIVES_GUI_CALLBACK(on_live_tvcard_activate),
+			 NULL);
+  }
+
+
 
 #endif
 #endif // defined HAVE_UNICAP || defined HAVE_YUV4MPEG

@@ -122,9 +122,9 @@ typedef struct {
 
 #define WARN_MASK_LAYOUT_WIPE (1<<26)
   char cmd_log[PATH_MAX];
-  char effect_command[256];
-  char video_open_command[256];
-  char audio_play_command[256];
+  char effect_command[PATH_MAX*2];
+  char video_open_command[PATH_MAX*2];
+  char audio_play_command[PATH_MAX*2];
   char cdplay_device[PATH_MAX];  ///< locale encoding
   double default_fps;
   int bar_height;
@@ -192,8 +192,8 @@ typedef struct {
 #define JACK_OPTS_TIMEBASE_MASTER (1<<7)   ///< timebase master (not implemented yet)
 #define JACK_OPTS_NO_READ_AUTOCON (1<<8)   ///< do not auto connect read clients when playing ext audio
 
-  char jack_tserver[256];
-  char jack_aserver[256];
+  char jack_tserver[PATH_MAX];
+  char jack_aserver[PATH_MAX];
 
   char *fxdefsfile;
   char *fxsizesfile;

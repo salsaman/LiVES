@@ -1351,7 +1351,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   // video open command
   if (strcmp(prefs->video_open_command,video_open_command)) {
-    lives_snprintf(prefs->video_open_command,256,"%s",video_open_command);
+    lives_snprintf(prefs->video_open_command,PATH_MAX*2,"%s",video_open_command);
     set_pref(PREF_VIDEO_OPEN_COMMAND,prefs->video_open_command);
   }
 
@@ -1360,13 +1360,13 @@ boolean apply_prefs(boolean skip_warn) {
 
   // audio play command
   if (strcmp(prefs->audio_play_command,audio_play_command)) {
-    lives_snprintf(prefs->audio_play_command,256,"%s",audio_play_command);
+    lives_snprintf(prefs->audio_play_command,PATH_MAX*2,"%s",audio_play_command);
     set_pref(PREF_AUDIO_PLAY_COMMAND,prefs->audio_play_command);
   }
 
   // cd play device
   if (strcmp(prefs->cdplay_device,cdplay_device)) {
-    lives_snprintf(prefs->cdplay_device,256,"%s",cdplay_device);
+    lives_snprintf(prefs->cdplay_device,PATH_MAX,"%s",cdplay_device);
     set_pref(PREF_CDPLAY_DEVICE,prefs->cdplay_device);
   }
 
@@ -1614,7 +1614,7 @@ boolean apply_prefs(boolean skip_warn) {
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
   if (strcmp(omc_js_fname,prefs->omc_js_fname)) {
-    lives_snprintf(prefs->omc_js_fname,256,"%s",omc_js_fname);
+    lives_snprintf(prefs->omc_js_fname,PATH_MAX,"%s",omc_js_fname);
     set_pref_utf8(PREF_OMC_JS_FNAME,omc_js_fname);
   }
   if (omc_js_enable!=((prefs->omc_dev_opts&OMC_DEV_JS)/OMC_DEV_JS)) {
@@ -1632,7 +1632,7 @@ boolean apply_prefs(boolean skip_warn) {
 
 #ifdef OMC_MIDI_IMPL
   if (strcmp(omc_midi_fname,prefs->omc_midi_fname)) {
-    lives_snprintf(prefs->omc_midi_fname,256,"%s",omc_midi_fname);
+    lives_snprintf(prefs->omc_midi_fname,PATH_MAX,"%s",omc_midi_fname);
     set_pref_utf8(PREF_OMC_MIDI_FNAME,omc_midi_fname);
   }
 
@@ -2897,7 +2897,7 @@ _prefsw *create_prefs_dialog(void) {
 
   // ---
   prefsw->video_open_entry = lives_standard_entry_new(_("Video open command (fallback)"),FALSE,
-                             prefs->video_open_command,-1,255,
+                             prefs->video_open_command,-1,PATH_MAX*2,
                              LIVES_BOX(hbox),NULL);
 
 
@@ -3209,7 +3209,7 @@ _prefsw *create_prefs_dialog(void) {
     prefsw->audp_name=lives_strdup(_(AUDIO_PLAYER_MPLAYER2));
   }
   // ---
-  prefsw->audio_command_entry = lives_standard_entry_new(_("Audio play _command"),TRUE,"",-1,255,LIVES_BOX(vbox),NULL);
+  prefsw->audio_command_entry = lives_standard_entry_new(_("Audio play _command"),TRUE,"",-1,PATH_MAX*2,LIVES_BOX(vbox),NULL);
 
 
   // get from prefs
@@ -4645,7 +4645,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE,0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->jack_tserver_entry = lives_standard_entry_new(_("Jack _transport config file"),TRUE,prefs->jack_tserver,-1,255,LIVES_BOX(hbox),
+  prefsw->jack_tserver_entry = lives_standard_entry_new(_("Jack _transport config file"),TRUE,prefs->jack_tserver,-1,PATH_MAX,LIVES_BOX(hbox),
                                NULL);
 
   lives_widget_set_sensitive(prefsw->jack_tserver_entry,FALSE); // unused for now
@@ -4738,7 +4738,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE,0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->jack_aserver_entry = lives_standard_entry_new(_("Jack _audio server config file"),TRUE,prefs->jack_aserver,-1,255,LIVES_BOX(hbox),
+  prefsw->jack_aserver_entry = lives_standard_entry_new(_("Jack _audio server config file"),TRUE,prefs->jack_aserver,-1,PATH_MAX,LIVES_BOX(hbox),
                                NULL);
 
   lives_widget_set_sensitive(prefsw->jack_aserver_entry,FALSE);

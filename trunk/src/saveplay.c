@@ -878,18 +878,18 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                      ("\n\nLiVES was unable to extract either video or audio.\nPlease check the terminal window for more details.\n"));
 
       if (!capable->has_mplayer&&!capable->has_mplayer2&&!capable->has_mpv) {
-        lives_strappend(msg,256,_("\n\nYou may need to install mplayer to open this file.\n"));
+        lives_strappend(msg,256,_("\n\nYou may need to install mplayer, mplayer2 or mpv to open this file.\n"));
       } else {
         if (capable->has_mplayer) {
-          get_location(AUDIO_PLAYER_MPLAYER,loc,256);
+          get_location(AUDIO_PLAYER_MPLAYER,loc,PATH_MAX);
         } else if (capable->has_mplayer2) {
-          get_location(AUDIO_PLAYER_MPLAYER2,loc,256);
+          get_location(AUDIO_PLAYER_MPLAYER2,loc,PATH_MAX);
         } else if (capable->has_mpv) {
-          get_location("mpv",loc,256);
+          get_location("mpv",loc,PATH_MAX);
         }
 
-        if (strcmp(prefs->video_open_command,loc)) {
-          lives_strappend(msg,256,_("\n\nPlease check the setting of Video open command in\nTools|Preferences|Decoding\n"));
+        if (strcmp(prefs->video_open_command,loc)&&strncmp(prefs->video_open_command+1,loc,strlen(loc))) {
+          lives_strappend(msg,256,_("\n\nPlease check the setting of Video Open Command in\nTools|Preferences|Decoding\n"));
         }
       }
       do_error_dialog(msg);
@@ -3401,10 +3401,23 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     d_print(_("%d frames are enough !\n"),cfile->frames);
   } else {
     if (check_handle!=NULL) {
-      if (mainw->msg==NULL||get_token_count(mainw->msg,'|')==1) return FALSE;
+      int npieces=get_token_count(mainw->msg,'|');
+      if (mainw->msg==NULL||npieces<2) return FALSE;
 
       array=lives_strsplit(mainw->msg,"|",-1);
 
+      if (!strcmp(array[0],"error")) {
+	if (npieces>=3) {
+	  mesg=lives_strdup_printf(_("\nAn error occurred doing\n%s\n"),array[2]);
+	  LIVES_ERROR(array[2]);
+	}
+	else mesg=lives_strdup(_("\nAn error occurred opening the file\n"));
+        do_error_dialog(mesg);
+        lives_free(mesg);
+        lives_strfreev(array);
+        return FALSE;
+      }
+      
       // sanity check handle against status file
       // (this should never happen...)
 
@@ -3598,10 +3611,7 @@ boolean save_file_comments(int fileno) {
 
 
 
-
-
-void
-wait_for_stop(const char *stop_command) {
+void wait_for_stop(const char *stop_command) {
   FILE *infofile;
 
   // only used for audio player mplayer or audio player sox

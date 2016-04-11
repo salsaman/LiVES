@@ -6174,7 +6174,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       lives_widget_context_update();
       lives_usleep(prefs->sleep_time);
     }
-    
+
     if (ifile!=NULL) {
       fclose(ifile);
     }

@@ -505,7 +505,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                 lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
                 return 0;
               }
-	      
+
               if (mainw->error==0) add_file_info(cfile->handle,TRUE);
               mainw->error=0;
               lives_free(msgstr);
@@ -869,8 +869,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
   if (cfile->ext_src==NULL) {
     add_file_info(cfile->handle,FALSE);
-  }
-  else {
+  } else {
     add_file_info(NULL,FALSE);
     cfile->f_size=sget_file_size((char *)file_name);
   }
@@ -922,7 +921,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     else d_print("\n");
     cfile->changed=FALSE;
   }
-  
+
   current_file=mainw->current_file;
 
   if (isubfname!=NULL) {

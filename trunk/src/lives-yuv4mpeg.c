@@ -609,7 +609,7 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mainw->open_deint=FALSE;
 
-  card_dialog=create_cdtrack_dialog(4,NULL);
+  card_dialog=create_cdtrack_dialog(LIVES_DEVICE_TV_CARD,NULL);
 
   tvcardw=(lives_tvcardw_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(card_dialog),"tvcard_data");
 
@@ -746,7 +746,7 @@ void on_live_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mainw->open_deint=FALSE;
 
-  card_dialog=create_cdtrack_dialog(5,NULL);
+  card_dialog=create_cdtrack_dialog(LIVES_DEVICE_FW_CARD,NULL);
   response=lives_dialog_run(LIVES_DIALOG(card_dialog));
   if (response==LIVES_RESPONSE_CANCEL) {
     lives_widget_destroy(card_dialog);

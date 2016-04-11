@@ -2213,6 +2213,12 @@ void do_need_mplayer_dialog(void) {
 }
 
 
+void do_need_mplayer_mpv_dialog(void) {
+  do_error_dialog(
+    _("\nThis function requires either mplayer, mplayer2 or mpv to operate.\nYou may wish to install one or other of these and try again.\n"));
+}
+
+
 
 void do_audio_warning(void) {
 #ifdef ALLOW_MPV

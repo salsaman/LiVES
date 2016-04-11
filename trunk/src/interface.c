@@ -158,10 +158,13 @@ xprocess *create_processing(const char *text) {
 
   char tmp_label[256];
 
+  boolean no_gui=widget_opts.no_gui;
 
+  widget_opts.no_gui=TRUE; // work around bugs in gtk+
   widget_opts.non_modal=TRUE;
   procw->processing = lives_standard_dialog_new(_("Processing..."),FALSE,-1,-1);
   widget_opts.non_modal=FALSE;
+  widget_opts.no_gui=no_gui;
 
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), accel_group);
 
@@ -1493,20 +1496,19 @@ LiVESWidget *create_combo_dialog(int type, livespointer user_data) {
 
 
 LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
-  // general purpose dialog with label and up to 2 spinbuttons
+  // general purpose device dialog with label and up to 2 spinbuttons
 
   // type 0 = cd track
   // type 1 = dvd title/chapter/aid
   // type 2 = vcd title -- do we need chapter as well ?
-  // type 3 = number of tracks in mt
 
+  // type 3 = number of tracks in mt
 
   // type 4 = TV card (device and channel)
   // type 5 = fw card
 
-  // TODO - add pref for dvd/vcd device
+    // TODO - for CD make this nicer - get track names
 
-  // TODO - for CD make this nicer - get track names
   lives_tvcardw_t *tvcardw=NULL;
 
   LiVESWidget *cd_dialog;
@@ -1524,13 +1526,13 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
   int ph_mult=4;
 
-  if (type==0) {
+  if (type==LIVES_DEVICE_CD) {
     title=lives_strdup(_("Load CD Track"));
-  } else if (type==1) {
+  } else if (type==LIVES_DEVICE_DVD) {
     title=lives_strdup(_("Select DVD Title/Chapter"));
-  } else if (type==2) {
+  } else if (type==LIVES_DEVICE_VCD) {
     title=lives_strdup(_("Select VCD Title"));
-  } else if (type==3) {
+  } else if (type==LIVES_DEVICE_INTERNAL) {
     title=lives_strdup(_("Change Maximum Visible Tracks"));
   } else {
     title=lives_strdup(_("Device details"));
@@ -1540,7 +1542,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   lives_free(title);
 
   if (prefs->show_gui) {
-    if (type==0||type==1||type==2||type==4||type==5) {
+    if (type!=LIVES_DEVICE_INTERNAL) {
       lives_window_set_transient_for(LIVES_WINDOW(cd_dialog),LIVES_WINDOW(mainw->LiVES));
     } else {
       lives_window_set_transient_for(LIVES_WINDOW(cd_dialog),LIVES_WINDOW(mainw->multitrack->window));
@@ -1550,31 +1552,31 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cd_dialog));
 
 
-  if (type==1||type==4) ph_mult=2;
+  if (type==LIVES_DEVICE_DVD||type==LIVES_DEVICE_TV_CARD) ph_mult=2;
 
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width*5);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*ph_mult);
 
-  if (type==0) {
+  if (type==LIVES_DEVICE_CD) {
     label_text=lives_strdup_printf(_("Track to load (from %s)"),prefs->cdplay_device);
-  } else if (type==1) {
+  } else if (type==LIVES_DEVICE_DVD) {
     label_text=lives_strdup(_("DVD Title"));
-  } else if (type==2) {
+  } else if (type==LIVES_DEVICE_VCD) {
     label_text=lives_strdup(_("VCD Title"));
-  } else if (type==3) {
+  } else if (type==LIVES_DEVICE_INTERNAL) {
     label_text=lives_strdup(_("Maximum number of tracks to display"));
-  } else if (type==4) {
+  } else if (type==LIVES_DEVICE_TV_CARD) {
     label_text=lives_strdup(_("Device:        /dev/video"));
-  } else if (type==5) {
+  } else if (type==LIVES_DEVICE_FW_CARD) {
     label_text=lives_strdup(_("Device:        fw:"));
   }
 
 
-  if (type==0||type==1||type==2) {
+  if (type==LIVES_DEVICE_CD||type==LIVES_DEVICE_DVD||type==LIVES_DEVICE_VCD) {
     spinbutton = lives_standard_spin_button_new(label_text,FALSE, mainw->fx1_val,
                  1., 256., 1., 10., 0,
                  LIVES_BOX(hbox),NULL);
-  } else if (type==3) {
+  } else if (type==LIVES_DEVICE_INTERNAL) {
     spinbutton = lives_standard_spin_button_new(label_text,FALSE, mainw->fx1_val,
                  5., 15., 1., 1.,0,
                  LIVES_BOX(hbox),NULL);
@@ -1593,12 +1595,12 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  if (type==1||type==4) {
+  if (type==LIVES_DEVICE_DVD||type==LIVES_DEVICE_TV_CARD) {
 
     hbox = lives_hbox_new(FALSE, widget_opts.packing_width*5);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*ph_mult);
 
-    if (type==1) {
+    if (type==LIVES_DEVICE_DVD) {
       spinbutton = lives_standard_spin_button_new(_("Chapter  "), FALSE, mainw->fx2_val,
                    1., 1024., 1., 10., 0,
                    LIVES_BOX(hbox),NULL);
@@ -1614,12 +1616,12 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
                                LIVES_INT_TO_POINTER(2));
 
 
-    if (type==1) {
+    if (type==LIVES_DEVICE_DVD) {
       hbox = lives_hbox_new(FALSE, widget_opts.packing_width*5);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*ph_mult);
 
       spinbutton = lives_standard_spin_button_new(_("Audio ID  "), FALSE, mainw->fx3_val,
-                   128., 159., 1., 1., 0,
+                   DVD_AUDIO_CHAN_MIN, DVD_AUDIO_CHAN_MAX, 1., 1., 0,
                    LIVES_BOX(hbox),NULL);
 
       lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -1629,13 +1631,13 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     }
   }
 
-  if (type==4||type==5) {
+  if (type==LIVES_DEVICE_TV_CARD||type==LIVES_DEVICE_FW_CARD) {
     hbox=add_deinterlace_checkbox(LIVES_BOX(dialog_vbox));
     add_fill_to_box(LIVES_BOX(hbox));
   }
 
 
-  if (type==4) {
+  if (type==LIVES_DEVICE_TV_CARD) {
     LiVESList *dlist=NULL;
     LiVESList *olist=NULL;
 
@@ -1763,21 +1765,21 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  if (type!=4&&type!=5) {
+  if (type!=LIVES_DEVICE_TV_CARD&&type!=LIVES_DEVICE_FW_CARD) {
     lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),
                          NULL);
   }
 
-  if (type==0) {
+  if (type==LIVES_DEVICE_CD) {
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_load_cdtrack_ok_clicked),
                          NULL);
-  } else if (type==1||type==2)  {
+  } else if (type==LIVES_DEVICE_DVD||type==LIVES_DEVICE_VCD)  {
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_load_vcd_ok_clicked),
                          LIVES_INT_TO_POINTER(type));
-  } else if (type==3)  {
+  } else if (type==LIVES_DEVICE_INTERNAL)  {
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(mt_change_disp_tracks_ok),
                          user_data);
@@ -1787,7 +1789,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
   lives_widget_show_all(cd_dialog);
 
-  if (type==4) lives_widget_hide(tvcardw->adv_vbox);
+  if (type==LIVES_DEVICE_TV_CARD) lives_widget_hide(tvcardw->adv_vbox);
 
   return cd_dialog;
 }

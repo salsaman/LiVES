@@ -2282,10 +2282,10 @@ void create_LiVES(void) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_dvd), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_vcd_activate),
-                       LIVES_INT_TO_POINTER(1));
+                       LIVES_INT_TO_POINTER(LIVES_DEVICE_DVD));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_vcd), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_vcd_activate),
-                       LIVES_INT_TO_POINTER(2));
+                       LIVES_INT_TO_POINTER(LIVES_DEVICE_VCD));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_loc), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_loc_activate),
                        NULL);

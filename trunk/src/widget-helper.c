@@ -7922,6 +7922,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
 
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height) {
+  // in case of problems, try setting widget_opts.no_gui=TRUE
+
   LiVESWidget *dialog=NULL;
 
   dialog = lives_dialog_new();

@@ -220,6 +220,21 @@ typedef enum {
   LIVES_STORAGE_STATUS_OFFLINE
 } lives_storage_status_t;
 
+
+#define DVD_AUDIO_CHAN_MIN 128
+#define DVD_AUDIO_CHAN_DEFAULT 128
+#define DVD_AUDIO_CHAN_MAX 159
+      
+enum {
+  LIVES_DEVICE_CD=0,
+  LIVES_DEVICE_DVD, // 1
+  LIVES_DEVICE_VCD, // 2
+  LIVES_DEVICE_INTERNAL, // 2
+  LIVES_DEVICE_TV_CARD, // 4
+  LIVES_DEVICE_FW_CARD, // 5
+};
+
+
 #define THEME_DETAIL_NAME "theme_name"
 #define THEME_DETAIL_STYLE "theme_style"
 #define THEME_DETAIL_SEPWIN_IMAGE "sepwin_image"

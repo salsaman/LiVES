@@ -1551,13 +1551,16 @@ if (defined($ARGV[0])) {
 
             smog_chdir("$curtmpdir");
 
-            if (! -f "$file" && ! -d "$file") {
-                &sig_error("$file","could not be found","$GUI_NAME was unable to open it.","Please check the file name and try again.");
-            }
+
+	    unless ($file =~ /^http/) {
+		if (! -f "$file" && ! -d "$file") {
+		    &sig_error("$file","could not be found","$GUI_NAME was unable to open it.","Please check the file name and try again.");
+		}
+	    }
 
 
             &get_file_info;
-## here we set $mplay_command, $is_mpv
+	    ## here we set $mplay_command, $is_mpv
 
 
             if ($panic) {
@@ -5304,10 +5307,10 @@ sub get_mpv_info {
     }
 
     if (defined($is_remote)&&($is_remote>0)) {
-        $com=$mplay_command.' --term-playing-msg="'.$propstr.'" --vo=null --ao=null --frames=1 --quiet --cache=32 --no-config -- "'
+        $com=$mplay_command.' --term-playing-msg="'.$propstr.'" --vo=null --ao=null --frames=1 --quiet --cache=32 --no-config "'
         .$file.'">'.$file_ident.' 2>'.$nulfile;
     } else {
-        $com=$mplay_command.' --term-playing-msg="'.$propstr.'" --vo=null --ao=null --frames=1 --quiet --no-cache --no-config -- "'
+        $com=$mplay_command.' --term-playing-msg="'.$propstr.'" --vo=null --ao=null --frames=1 --quiet --no-cache --no-config "'
         .$file.'">'.$file_ident.' 2>'.$nulfile;
     }
 
@@ -5366,7 +5369,7 @@ sub get_mpv_info {
     if (! -f $file_ident) {
         return;
     };
-    print "is $curtmpdir/$file_ident\n";
+
     $fps=smog_system_direct("grep XDATA:fps \"$file_ident\" 2>$nulfile");
     $fps=(split("=",(split("\n",$fps))[0]))[1];
     chomp($fps);
@@ -5412,7 +5415,7 @@ sub get_mplayer_info {
 # $comment, $title, $author
 
     if (defined($is_remote)&&($is_remote>0)) {
-# remote files might be streams, so we need to cache a bit before we can identify them
+	# remote files might be streams, so we need to cache a bit before we can identify them
         $com="$mplay_command -identify -vo null -ao null -frames 0 -cache 32 \"$file\" > $file_ident 2>$nulfile <$nulfile";
 
     } else {

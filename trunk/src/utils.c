@@ -1426,17 +1426,6 @@ LIVES_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, const char *a
 }
 
 
-LIVES_INLINE const char *get_image_ext_for_type(lives_image_type_t imgtype) {
-  switch (imgtype) {
-  case IMG_TYPE_JPEG:
-    return LIVES_FILE_EXT_JPG; // "jpg"
-  case IMG_TYPE_PNG:
-    return LIVES_FILE_EXT_PNG; // "png"
-  default:
-    return "";
-  }
-}
-
 
 /* convert to/from a big endian 32 bit float for internal use */
 LIVES_INLINE float LEFloat_to_BEFloat(float f) {
@@ -2274,18 +2263,16 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
 }
 
 
-
-LIVES_INLINE const char *lives_image_type_to_ext(lives_image_type_t imtype) {
-  switch (imtype) {
+LIVES_INLINE const char *get_image_ext_for_type(lives_image_type_t imgtype) {
+  switch (imgtype) {
   case IMG_TYPE_JPEG:
-    return LIVES_FILE_EXT_JPG;
+    return LIVES_FILE_EXT_JPG; // "jpg"
   case IMG_TYPE_PNG:
-    return LIVES_FILE_EXT_PNG;
+    return LIVES_FILE_EXT_PNG; // "png"
   default:
     return "";
   }
 }
-
 
 LIVES_INLINE lives_image_type_t lives_image_ext_to_type(const char *img_ext) {
   if (!strcmp(img_ext,LIVES_FILE_EXT_PNG)) return IMG_TYPE_PNG;

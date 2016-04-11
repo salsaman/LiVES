@@ -744,7 +744,6 @@ typedef struct {
   /// system tempdir (e.g /tmp for linux, C:\TEMP for win32)
   char system_tmpdir[PATH_MAX];  ///< kept in locale encoding
 
-#ifndef IS_MINGW
   char touch_cmd[PATH_MAX];
   char rm_cmd[PATH_MAX];
   char mv_cmd[PATH_MAX];
@@ -753,8 +752,8 @@ typedef struct {
   char chmod_cmd[PATH_MAX];
   char cat_cmd[PATH_MAX];
   char echo_cmd[PATH_MAX];
+  char eject_cmd[PATH_MAX];
   char rmdir_cmd[PATH_MAX];
-#endif
 
   char *rcfile;
 
@@ -943,6 +942,7 @@ void do_firstever_dialog(void);
 void do_upgrade_error_dialog(void);
 void do_no_mplayer_sox_error(void);
 void do_need_mplayer_dialog(void);
+void do_need_mplayer_mpv_dialog(void);
 void do_aud_during_play_error(void);
 void do_rendered_fx_dialog(void);
 void do_layout_scrap_file_error(void);
@@ -1245,7 +1245,7 @@ char *get_val_from_cached_list(const char *key, size_t maxlen);
 void get_location(const char *exe, char *val, int maxlen);
 
 char *make_image_file_name(lives_clip_t *clip, int frame, const char *img_ext);
-const char *lives_image_type_to_ext(lives_image_type_t imtype);
+const char *get_image_ext_for_type(lives_image_type_t imgtype);
 lives_image_type_t lives_image_ext_to_type(const char *img_ext);
 lives_image_type_t lives_image_type_to_image_type(const char *lives_img_type);
 
@@ -1345,8 +1345,6 @@ char *insert_newlines(const char *text, int maxwidth);
 
 int hextodec(char *string);
 int get_hex_digit(const char *c);
-
-const char *get_image_ext_for_type(lives_image_type_t imgtype);
 
 uint32_t fastrand(void);
 void fastsrand(uint32_t seed);

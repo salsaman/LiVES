@@ -4,6 +4,7 @@ Fix bug which caused error moving sets with no layouts (regression).
 Optimise recording of generated frames.
 Fixes for recording audio from external pulse audio.
 Fix incorrect recognition of single jpeg/png as video (regression).
+Fix "Open Location" (regression).
 Use png rather than jpeg internally whenever possible (in progress).
 Experimental support for mpv instead of mplayer.
 

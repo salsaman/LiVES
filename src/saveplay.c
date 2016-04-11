@@ -505,6 +505,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                 lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
                 return 0;
               }
+	      
               if (mainw->error==0) add_file_info(cfile->handle,TRUE);
               mainw->error=0;
               lives_free(msgstr);
@@ -539,9 +540,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                     cfile->changed=FALSE;
                   }
                   if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_END) {
-                    cfile->undo1_dbl=cfile->laudio_time;
-                    cfile->undo2_dbl=cfile->total_time-cfile->video_time;
-                    d_print(_("Auto trimming %.2f seconds of audio at end..."),cfile->undo2_dbl);
+                    cfile->undo1_dbl=cfile->video_time;
+                    cfile->undo2_dbl=cfile->total_time;
+                    d_print(_("Auto trimming %.2f seconds of audio at end..."),cfile->undo2_dbl-cfile->undo1_dbl);
                     if (on_del_audio_activate(NULL,NULL)) d_print_done();
                     else d_print("\n");
                     cfile->changed=FALSE;
@@ -865,7 +866,10 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   // now file should be loaded...get full details
   cfile->is_loaded=TRUE;
 
-  if (cfile->ext_src==NULL) add_file_info(cfile->handle,FALSE);
+
+  if (cfile->ext_src==NULL) {
+    add_file_info(cfile->handle,FALSE);
+  }
   else {
     add_file_info(NULL,FALSE);
     cfile->f_size=sget_file_size((char *)file_name);
@@ -907,6 +911,18 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     cfile->frames=0;
   }
 
+  reget_afilesize(mainw->current_file);
+  get_total_time(cfile);
+
+  if (cfile->ext_src==NULL&&start!=0.&&cfile->total_time>cfile->video_time) {
+    cfile->undo1_dbl=cfile->video_time;
+    cfile->undo2_dbl=cfile->total_time;
+    d_print(_("Auto trimming %.2f seconds of audio at end..."),cfile->undo2_dbl-cfile->undo1_dbl);
+    if (on_del_audio_activate(NULL,NULL)) d_print_done();
+    else d_print("\n");
+    cfile->changed=FALSE;
+  }
+  
   current_file=mainw->current_file;
 
   if (isubfname!=NULL) {

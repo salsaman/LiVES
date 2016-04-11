@@ -935,7 +935,7 @@ LiVESWidget *create_opensel_dialog(void) {
   widget_opts.no_gui=TRUE; // work around bugs in gtk+
   opensel_dialog = lives_standard_dialog_new(_("Open Selection"),FALSE,-1,-1);
   widget_opts.no_gui=no_gui;
-
+  
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(opensel_dialog),LIVES_WINDOW(mainw->LiVES));
     else lives_window_set_transient_for(LIVES_WINDOW(opensel_dialog),LIVES_WINDOW(mainw->multitrack->window));

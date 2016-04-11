@@ -168,17 +168,17 @@ if (defined($ARGV[0])) {
                     exit 1;
                 }
 
-		# make sure pidfile has same group and owner, otherwise exit
+# make sure pidfile has same group and owner, otherwise exit
                 @stat=stat($pidfile);
                 if (!($uid==$stat[4]&&$gid==$stat[5])) {
                     die "Smogrify: Unable to stop process $target_pid.\n";
                 }
                 elsif($command eq "stopsubsub"||$command eq "stop_audio") {
-		    # kill all subprocesses of target_pid, and target_pid
+# kill all subprocesses of target_pid, and target_pid
                     &kill_child_pids($target_pid,$sig);
                 }
                 elsif($command eq "stopsubsubs") {
-		    # kill all subprocesses of target_pid, but not target_pid
+# kill all subprocesses of target_pid, but not target_pid
                     smog_system("pgrep -P $target_pid > \"$tmpdir/.pids.$target_pid\" 2>/dev/null");
                     if (-s "$tmpdir/.pids.$target_pid"&&defined(open IN,"$tmpdir/.pids.$target_pid")) {
                         while (<IN>) {
@@ -1556,35 +1556,35 @@ if (defined($ARGV[0])) {
             }
 
 
-	    &get_file_info; ## here we set $mplay_command, $is_mpv
+            &get_file_info;
+## here we set $mplay_command, $is_mpv
 
-	    
-	    if ($panic) {
-		unlink "$pidfile";
-		exit 1;
-	    }
+
+            if ($panic) {
+                unlink "$pidfile";
+                exit 1;
+            }
 
 
             if (defined($ARGV[5]) && $ARGV[5] > 0) {
-		if (!$is_mpv) {
-		    $ss=" -ss $ARGV[5] ";
-		} else {
-		    $ss=" -start=$ARGV[5] ";
-		}
-	    }
+                if (!$is_mpv) {
+                    $ss=" -ss $ARGV[5] ";
+                } else {
+                    $ss=" -start=$ARGV[5] ";
+                }
+            }
             $frames="";
-	    if (defined($ARGV[6]) && $ARGV[6] > 0) {
-		$nframes=$ARGV[6]++;
-		# cf below, we remove 1st frame
-		if (!$is_mpv) {
-		    $frames=" -frames $ARGV[6] ";
-		}
-		else {
-		    $frames=" -frames=$ARGV[6] ";
-		}
-	    }
-		
-	    $extra_params=$ARGV[7];
+            if (defined($ARGV[6]) && $ARGV[6] > 0) {
+                $nframes=$ARGV[6]++;
+# cf below, we remove 1st frame
+                if (!$is_mpv) {
+                    $frames=" -frames $ARGV[6] ";
+                } else {
+                    $frames=" -frames=$ARGV[6] ";
+                }
+            }
+
+            $extra_params=$ARGV[7];
             $band="";
             if ($is_mpv||$extra_params eq "nobandwidth") {
                 $extra_params="";
@@ -1605,12 +1605,12 @@ if (defined($ARGV[0])) {
 
 
 
-	    # let get_file_info set this
-	    #$mplay_command=&rc_get("video_open_command");
+# let get_file_info set this
+#$mplay_command=&rc_get("video_open_command");
 
-	    # process video
+# process video
 
-	    # 3 other files we will use
+# 3 other files we will use
             $curtmpfile="tempresult";
             $audio_out="audio";
             $audio_in="audiodump.pcm";
@@ -1625,15 +1625,15 @@ if (defined($ARGV[0])) {
 
             if ($file=~/:\/\//) {
                       $is_remote=2;
-		      #$wavhead=""; # need wav header, as user will probably finish by
-		      # quitting, thus we won't send full info
+#$wavhead=""; # need wav header, as user will probably finish by
+# quitting, thus we won't send full info
         }
 
 
 
-        my $wavhead=":nowaveheader";
+    my $wavhead=":nowaveheader";
 
-        if ($is_mpv) {
+    if ($is_mpv) {
             $wavhead=":waveheader=no";
         }
 
@@ -3223,7 +3223,7 @@ if (defined($ARGV[0])) {
         } else {
             $com="\"$mplayer_command\" -quiet -wid $win -vo direct3d -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile";
         }
-	smog_system($com);
+        smog_system($com);
         &sig_complete;
         exit 0;
     }
@@ -4736,7 +4736,7 @@ sub smog_system {
     my $smcomret;
 
     $smcomret=system($smcommand);
-    
+
     if ($smcomret && $DEBUG_SMOGRIFY) {
         print STDERR "smogrify debug: $smcommand\n";
         print STDERR "smogrify debug - command failed: result was $smcomret\n";
@@ -5262,44 +5262,44 @@ sub get_mpv_info {
 
     my @allprops=split("\n",
     "filename
-path
-stream-start
-stream-end
-stream-length
+    path
+    stream-start
+    stream-end
+    stream-length
 
-demuxer
+    demuxer
 
-length
-chapters
-editions
-titles
+    length
+    chapters
+    editions
+    titles
 
-audio
-audio-bitrate
-audio-codec
-audio-format
-audio-channels
-audio-samplerate
+    audio
+    audio-bitrate
+    audio-codec
+    audio-format
+    audio-channels
+    audio-samplerate
 
-video
-angle
-video-bitrate
-video-codec
-video-format
-video-aspect
-fps
-width
-height
-dwidth
-dheight
+    video
+    angle
+    video-bitrate
+    video-codec
+    video-format
+    video-aspect
+    fps
+    width
+    height
+    dwidth
+    dheight
 
-sub");
+    sub");
 
 
     my $propstr="";
 
     foreach my $line(@allprops) {
-	$line =~ s/^\s+//;
+        $line =~ s/^\s+//;
         $propstr.="XDATA:$line=\\\${=$line}\n";
     }
 
@@ -5704,11 +5704,11 @@ sub get_file_info {
 
         if ($mpc1 =~ /mpv$/ || $mpc1 =~ /mpv\"$/) {
         $is_mpv=1;
-	}
     }
-    else {
-	# sets $is_mpv
-	$mp_command="\"".&get_mplayer_location."\"";
+    }
+        else {
+# sets $is_mpv
+        $mp_command="\"".&get_mplayer_location."\"";
     }
 
 if ($mp_command eq "") {

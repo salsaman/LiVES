@@ -3581,13 +3581,16 @@ lives_render_error_t render_events(boolean reset) {
 
 
           if (layer!=NULL) {
+#ifndef ALLOW_PNG24
             layer_palette=weed_layer_get_palette(layer);
             if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32)
               layer_palette=WEED_PALETTE_RGB24;
 
             else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32)
               layer_palette=WEED_PALETTE_RGBA32;
-
+#else
+	    layer_palette=WEED_PALETTE_RGB24;
+#endif	    
             resize_layer(layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST,layer_palette,0);
             convert_layer_palette(layer,layer_palette,0);
             pixbuf=layer_to_pixbuf(layer);

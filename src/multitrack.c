@@ -21923,7 +21923,7 @@ void mt_change_max_disp_tracks(LiVESMenuItem *menuitem, livespointer user_data) 
   lives_mt *mt=(lives_mt *)user_data;
 
   mainw->fx1_val=prefs->max_disp_vtracks;
-  dialog=create_cdtrack_dialog(3,mt);
+  dialog=create_cdtrack_dialog(LIVES_DEVICE_INTERNAL,mt);
   lives_widget_show(dialog);
 
 }

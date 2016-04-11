@@ -613,10 +613,13 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer device_type) {
   LiVESWidget *vcdtrack_dialog;
 
-  if (!capable->has_mplayer&&!capable->has_mplayer2) {
+  int type=LIVES_POINTER_TO_INT(device_type);
+  
+  if (type==LIVES_DEVICE_VCD&&!capable->has_mplayer&&!capable->has_mplayer2) {
+    // needs testing, mpv MAY work with VCD
     do_need_mplayer_dialog();
     return;
   }
@@ -633,20 +636,29 @@ void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mainw->fx1_val=1;
   mainw->fx2_val=1;
-  mainw->fx3_val=128;
-  vcdtrack_dialog = create_cdtrack_dialog(LIVES_POINTER_TO_INT(user_data),NULL);
+  mainw->fx3_val=DVD_AUDIO_CHAN_DEFAULT;
+  
+  vcdtrack_dialog = create_cdtrack_dialog(type,NULL);
   lives_widget_show_all(vcdtrack_dialog);
 }
 
 
 void on_open_loc_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
+  // need non-instant opening (for now)
+  
+#ifndef ALLOW_MPV
   if (!capable->has_mplayer&&!capable->has_mplayer2) {
-    // TODO: check with mpv, libavformat
     do_need_mplayer_dialog();
     return;
   }
-
+#else
+  if (!capable->has_mplayer&&!capable->has_mplayer2&&!capable->has_mpv) {
+    do_need_mplayer_mpv_dialog();
+    return;
+  }
+#endif
+  
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       lives_source_remove(mainw->multitrack->idlefunc);
@@ -8075,9 +8087,9 @@ void on_load_cdtrack_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  cdtrack_dialog = create_cdtrack_dialog(0,NULL);
-  lives_widget_show_all(cdtrack_dialog);
   mainw->fx1_val=1;
+  cdtrack_dialog = create_cdtrack_dialog(LIVES_DEVICE_CD,NULL);
+  lives_widget_show_all(cdtrack_dialog);
 
 }
 
@@ -8092,10 +8104,12 @@ void on_eject_cd_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  com=lives_strdup_printf("eject \"%s\"",prefs->cdplay_device);
+  if (strlen(capable->eject_cmd)) {
+    com=lives_strdup_printf("%s \"%s\"",capable->eject_cmd,prefs->cdplay_device);
 
-  lives_system(com,TRUE);
-  lives_free(com);
+    lives_system(com,TRUE);
+    lives_free(com);
+  }
 }
 
 
@@ -8372,9 +8386,10 @@ void on_load_cdtrack_ok_clicked(LiVESButton *button, livespointer user_data) {
 
 }
 
-void on_load_vcd_ok_clicked(LiVESButton *button, livespointer         user_data) {
+
+void on_load_vcd_ok_clicked(LiVESButton *button, livespointer user_data) {
   lives_general_button_clicked(button,NULL);
-  if (LIVES_POINTER_TO_INT(user_data)==1) {
+  if (LIVES_POINTER_TO_INT(user_data)==LIVES_DEVICE_DVD) {
     lives_snprintf(file_name,PATH_MAX,"dvd://%d",(int)mainw->fx1_val);
     lives_freep((void **)&mainw->file_open_params);
     mainw->file_open_params=lives_strdup_printf("-chapter %d -aid %d",(int)mainw->fx2_val,(int)mainw->fx3_val);

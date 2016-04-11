@@ -341,7 +341,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
     cfile->img_type=lives_image_ext_to_type(prefs->image_ext);
 
-    if (prefs->instant_open) {
+    if (prefs->instant_open&&!mainw->opening_loc) {
       // cd to clip directory - so decoder plugins can write temp files
       char *ppath=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
       char *cwd=lives_get_current_dir();
@@ -457,7 +457,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               if (mainw->file_open_params==NULL) mainw->file_open_params=lives_strdup("");
               com=lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d \"%s\"",prefs->backend,cfile->handle,
                                       (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),-1,
-                                      prefs->image_ext,lives_image_type_to_ext(IMG_TYPE_BEST),start,frames,mainw->file_open_params);
+                                      prefs->image_ext,get_image_ext_for_type(IMG_TYPE_BEST),start,frames,mainw->file_open_params);
 
               lives_free(tmp);
 
@@ -722,7 +722,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
       com=lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d \"%s\"",prefs->backend,cfile->handle,
                               (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),withsound,
-                              prefs->image_ext,lives_image_type_to_ext(IMG_TYPE_BEST),start,frames,mainw->file_open_params);
+                              prefs->image_ext,get_image_ext_for_type(IMG_TYPE_BEST),start,frames,mainw->file_open_params);
       lives_rm(cfile->info_file);
       lives_system(com,FALSE);
       lives_free(com);

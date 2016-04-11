@@ -2272,6 +2272,7 @@ capability *get_capabilities(void) {
   get_location("chmod", capable->chmod_cmd, PATH_MAX);
   get_location("cat", capable->cat_cmd, PATH_MAX);
   get_location("echo", capable->echo_cmd, PATH_MAX);
+  get_location("eject", capable->eject_cmd, PATH_MAX);
 #else
   lives_snprintf(capable->rm_cmd,PATH_MAX,"rm.exe");
   lives_snprintf(capable->rmdir_cmd,PATH_MAX,"rmdir.exe");
@@ -2282,6 +2283,7 @@ capability *get_capabilities(void) {
   lives_snprintf(capable->chmod_cmd,PATH_MAX,"chmod.exe");
   lives_snprintf(capable->cat_cmd,PATH_MAX,"cat.exe");
   lives_snprintf(capable->echo_cmd,PATH_MAX,"echo.exe");
+  lives_snprintf(capable->eject_cmd,PATH_MAX,"eject.exe"); // does it exist ?
 #endif
 
   // required
@@ -4495,7 +4497,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   // read header info
   png_read_info(png_ptr, info_ptr);
 
-  // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32
+  // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32 (or RGB24)
   color_type = png_get_color_type(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
@@ -4521,15 +4523,19 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 #endif
   }
 
+#ifndef ALLOW_PNG24
   if (color_type != PNG_COLOR_TYPE_RGB_ALPHA &&
       color_type !=PNG_COLOR_TYPE_GRAY_ALPHA)
     png_set_add_alpha(png_ptr, 255, PNG_FILLER_AFTER);
-
+#endif
+  
   png_set_interlace_handling(png_ptr);
 
 
   // read updated info with the new palette
   png_read_update_info(png_ptr, info_ptr);
+
+  color_type = png_get_color_type(png_ptr, info_ptr);
 
   width = png_get_image_width(png_ptr, info_ptr);
   height = png_get_image_height(png_ptr, info_ptr);
@@ -4538,9 +4544,14 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   weed_set_int_value(layer,WEED_LEAF_WIDTH,width);
   weed_set_int_value(layer,WEED_LEAF_HEIGHT,height);
   weed_set_int_value(layer,WEED_LEAF_ROWSTRIDES,*rowstrides);
-  weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGBA32);
 
 
+  if (color_type==PNG_COLOR_TYPE_RGB_ALPHA)
+    weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGBA32);
+  else
+    weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGB24);
+
+  
   // here we allocate ourselves, instead of calling create_empty_pixel data - in case rowbytes is different
 
   // some things, like swscale, expect all frames to be a multiple of 32 bytes
@@ -4569,16 +4580,18 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
                           (png_infopp)NULL);
 
 
-  if (prefs->alpha_post) {
-    // un-premultiply the alpha
-    alpha_unpremult(layer,TRUE);
-  } else {
-    int flags=0,error;
-    if (weed_plant_has_leaf(layer,WEED_LEAF_FLAGS))
-      flags=weed_get_int_value(layer,WEED_LEAF_FLAGS,&error);
+  if (color_type==PNG_COLOR_TYPE_RGB_ALPHA) {
+    if (prefs->alpha_post) {
+      // un-premultiply the alpha
+      alpha_unpremult(layer,TRUE);
+    } else {
+      int flags=0,error;
+      if (weed_plant_has_leaf(layer,WEED_LEAF_FLAGS))
+	flags=weed_get_int_value(layer,WEED_LEAF_FLAGS,&error);
 
-    flags|=WEED_CHANNEL_ALPHA_PREMULT;
-    weed_set_int_value(layer,WEED_LEAF_FLAGS,flags);
+      flags|=WEED_CHANNEL_ALPHA_PREMULT;
+      weed_set_int_value(layer,WEED_LEAF_FLAGS,flags);
+    }
   }
 
   return TRUE;
@@ -5199,7 +5212,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
 
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc,
                                        int width, int height, LiVESInterpType interp) {
-  // return a correctly sized (Gdk)Pixbuf (RGB24 for jpeg, RGBA32 for png) for the given clip and frame
+  // return a correctly sized (Gdk)Pixbuf (RGB24 for jpeg, RGB24 / RGBA32 for png) for the given clip and frame
   // tc is used instead of WEED_LEAF_FRAME for some sources (e.g. generator plugins)
   // image_ext is used if the source is an image file (eg. "jpg" or "png")
   // pixbuf will be sized to width x height pixels using interp
@@ -5211,11 +5224,15 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
   weed_set_int_value(layer,WEED_LEAF_CLIP,clip);
   weed_set_int_value(layer,WEED_LEAF_FRAME,frame);
 
+#ifndef ALLOW_PNG24
   if (!strcmp(image_ext,LIVES_FILE_EXT_PNG)) palette=WEED_PALETTE_RGBA32;
   else palette=WEED_PALETTE_RGB24;
-
+#else
+  palette=WEED_PALETTE_END;
+#endif
+  
   if (pull_frame_at_size(layer,image_ext,tc,width,height,palette)) {
-    convert_layer_palette(layer,palette,0);
+    if (palette!=WEED_PALETTE_END) convert_layer_palette(layer,palette,0);
     pixbuf=layer_to_pixbuf(layer);
   }
   weed_plant_free(layer);

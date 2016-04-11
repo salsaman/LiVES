@@ -6158,6 +6158,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     mainw->com_failed=FALSE;
 
     mainw->in_fs_preview=TRUE;
+    lives_rm(info_file);
     lives_system(com,FALSE);
     lives_free(com);
 
@@ -6173,7 +6174,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       lives_widget_context_update();
       lives_usleep(prefs->sleep_time);
     }
-
+    
     if (ifile!=NULL) {
       fclose(ifile);
     }
@@ -6349,8 +6350,9 @@ void on_opensel_range_ok_clicked(LiVESButton *button, livespointer user_data) {
 
 void open_sel_range_activate(void) {
   // open selection range dialog
-
-  LiVESWidget *opensel_dialog = create_opensel_dialog();
+  LiVESWidget *opensel_dialog;
+  mainw->fc_buttonresponse=LIVES_RESPONSE_NONE; // reset button state
+  opensel_dialog = create_opensel_dialog();
   lives_widget_show_all(opensel_dialog);
   mainw->fx1_val=0.;
   mainw->fx2_val=1000;

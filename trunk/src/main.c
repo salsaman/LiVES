@@ -1145,6 +1145,9 @@ static void lives_init(_ign_opts *ign_opts) {
   memset(mainw->recent_file,0,1);
 
   mainw->aud_data_written=0;
+
+  mainw->rendered_fx=NULL;
+  
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 

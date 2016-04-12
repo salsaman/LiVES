@@ -224,7 +224,7 @@ typedef enum {
 #define DVD_AUDIO_CHAN_MIN 128
 #define DVD_AUDIO_CHAN_DEFAULT 128
 #define DVD_AUDIO_CHAN_MAX 159
-      
+
 enum {
   LIVES_DEVICE_CD=0,
   LIVES_DEVICE_DVD, // 1

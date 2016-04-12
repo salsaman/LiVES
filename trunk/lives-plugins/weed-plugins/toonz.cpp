@@ -683,8 +683,6 @@ int paraffin_kernel(Mat& in, Mat& retimg, int palette, weed_plant_t **in_params)
 
 // add incident light on linear color space
 
-  printf("psize is %d\n",psize);
-  
   for (int y = 0; y < size.height; y++) {
     cv::Vec3f const* s = shadow.ptr<cv::Vec3f>(y);
     VecT* d = retimg.ptr<VecT>(y);

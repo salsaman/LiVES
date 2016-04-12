@@ -328,6 +328,7 @@ typedef struct {
 typedef  void *(*fn_ptr)(void *ptr);
 
 #define ALLOW_MPV
+#define ALLOW_PNG24
 
 /// this struct is used only when physically resampling frames on the disk
 /// we create an array of these and write them to the disk

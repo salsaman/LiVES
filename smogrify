@@ -1579,7 +1579,7 @@ if (defined($ARGV[0])) {
             $frames="";
             if (defined($ARGV[6]) && $ARGV[6] > 0) {
                 $nframes=$ARGV[6]++;
-# cf below, we remove 1st frame
+		# cf below, we remove 1st frame
                 if (!$is_mpv) {
                     $frames=" -frames $ARGV[6] ";
                 } else {
@@ -1634,10 +1634,10 @@ if (defined($ARGV[0])) {
 
 
 
-    my $wavhead=":nowaveheader";
+    my $wavhead="nowaveheader";
 
     if ($is_mpv) {
-            $wavhead=":waveheader=no";
+            $wavhead="no-waveheader";
         }
 
         $aformnew="";
@@ -1656,7 +1656,7 @@ if (defined($ARGV[0])) {
             $aformnew="-audio-format=s16";
         }
 
-#TODO - mingw
+	    #TODO - mingw
         $threads=smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
         $threads=int($threads);
         if ($threads==0) {
@@ -1686,7 +1686,7 @@ if (defined($ARGV[0])) {
                     $img_fmt="-vo image:format=jpg:jpeg-quality=$quality";
                 }
                 else {
-                    $img_fmt="-vo image:format=png:png-compression=$compression:alpha";
+                    $img_fmt="-vo image:format=png:png-compression=$compression";
                 }
             }
             else {
@@ -1694,7 +1694,7 @@ if (defined($ARGV[0])) {
                     $img_fmt="-vo jpeg:quality=$quality";
                 }
                 else {
-                    $img_fmt="-vo png:z=$compression:alpha";
+                    $img_fmt="-vo png:z=$compression";
                 }
             }
 
@@ -1710,27 +1710,22 @@ if (defined($ARGV[0])) {
                 $osd="-osd-level=0";
                 $threadopts="-vd-lavc-threads=$threads";
                 $noframedrop="-framedrop=no";
-                $vcnull="";
-                $audcom="-ao=pcm:file=audiodump.pcm:$wavhead";
+                $vcnull="--no-video";
+                $audcom="-ao=pcm:$wavhead";
             }
 
             if ($withsound eq "0") {
-#video only
-                $syscom="$mplay_command -quiet $band $osd $img_fmt $threadopts -fps 100000 $ss $frames $noframedrop -ao null \"$file\" $extra_params <$nulfile";
+		#video only
+                $syscom="$mplay_command -quiet $band $osd $img_fmt $threadopts -fps 1000000. $ss $frames $noframedrop -ao null \"$file\" $extra_params <$nulfile";
             }
             elsif ($withsound eq "1") {
-#video and audio
-                $syscom=$mplay_command . " -quiet $band -osdlevel 0 $img_fmt $ss $threadopts $noframedrop $frames $audcom $channs $aformnew -mc 0"
+		#video and audio
+                $syscom=$mplay_command . " -quiet $band $osd -fps 1000000. $img_fmt $ss $threadopts $noframedrop $frames $audcom $channs $aformnew -mc 0"
                         . "  \"$file\" $extra_params <$nulfile";
             }
             else {
-#audio only 
-                if ($ss eq "" && $frames eq "") {
-                    $syscom=$mplay_command . " -quiet $band -vo null $vcnull $audcom $aformnew $channs -mc 0 \"$file\" $extra_params <$nulfile";
-                }
-                else {
-                    $syscom=$mplay_command . " -quiet $band -vo null $ss $frames $audcom $aformnew $channs -mc 0 \"$file\" $extra_params <$nulfile";
-                }
+		#audio only 
+		$syscom=$mplay_command . " -quiet $band -vo null $vcnull $ss $frames $audcom $aformnew $channs \"$file\" $extra_params <$nulfile";
             }
             if (1||defined($DEBUG_OPEN)) {
                 print STDERR "open command for $handle is: $syscom\n";
@@ -1929,7 +1924,7 @@ if (defined($ARGV[0])) {
         $curtmpdir="$tmpdir/$handle";
 
 
-#attempt to get file details
+	#attempt to get file details
         $file=$ARGV[2];
         $only_first=1;
 
@@ -1948,7 +1943,7 @@ if (defined($ARGV[0])) {
         }
 
         if ($asamps==32) {
-# cant handle this yet, so we will resample on open
+	    # cant handle this yet, so we will resample on open
             $asamps=16;
         }
 

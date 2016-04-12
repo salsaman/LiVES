@@ -1761,7 +1761,6 @@ static lives_filter_error_t check_cconx(weed_plant_t *inst, int nchans, boolean 
         else weed_set_boolean_value(in_channels[i],WEED_LEAF_HOST_TEMP_DISABLED,WEED_FALSE); // WEED_LEAF_DISABLED will do instead
       else {
         weed_free(in_channels);
-        g_print("FEMC\n");
         return FILTER_ERROR_MISSING_CHANNEL;
       }
     }

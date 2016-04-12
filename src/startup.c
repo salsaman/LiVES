@@ -796,7 +796,7 @@ boolean do_startup_tests(boolean tshoot) {
   }
 
 
-  // check if mplayer can decode to png/alpha
+  // check if mplayer can decode to png/(alpha)
 
   rname=get_resource("");
 
@@ -808,7 +808,11 @@ boolean do_startup_tests(boolean tshoot) {
 
   lives_free(rname);
 
+#ifdef ALLOW_PNG24
+  msg=lives_strdup_printf(_("Checking if %s can decode to png"),mp_cmd);
+#else
   msg=lives_strdup_printf(_("Checking if %s can decode to png/alpha"),mp_cmd);
+#endif
   add_test(table,4,msg,success2&&success4);
   lives_free(msg);
 
@@ -911,7 +915,11 @@ boolean do_startup_tests(boolean tshoot) {
     }
   } else {
     if (!success3) {
+#ifdef ALLOW_PNG24
+      msg=lives_strdup_printf(_("You should install %s with either png or jpeg support"),mp_cmd);
+#else
       msg=lives_strdup_printf(_("You should install %s with either png/alpha or jpeg support"),mp_cmd);
+#endif
       fail_test(table,5,msg);
       lives_free(msg);
     } else {

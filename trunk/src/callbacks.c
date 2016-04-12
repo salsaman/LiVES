@@ -617,7 +617,7 @@ void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer device_type) {
   LiVESWidget *vcdtrack_dialog;
 
   int type=LIVES_POINTER_TO_INT(device_type);
-  
+
   if (type==LIVES_DEVICE_VCD&&!capable->has_mplayer&&!capable->has_mplayer2) {
     // needs testing, mpv MAY work with VCD
     do_need_mplayer_dialog();
@@ -637,7 +637,7 @@ void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer device_type) {
   mainw->fx1_val=1;
   mainw->fx2_val=1;
   mainw->fx3_val=DVD_AUDIO_CHAN_DEFAULT;
-  
+
   vcdtrack_dialog = create_cdtrack_dialog(type,NULL);
   lives_widget_show_all(vcdtrack_dialog);
 }
@@ -646,7 +646,7 @@ void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer device_type) {
 void on_open_loc_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // need non-instant opening (for now)
-  
+
 #ifndef ALLOW_MPV
   if (!capable->has_mplayer&&!capable->has_mplayer2) {
     do_need_mplayer_dialog();
@@ -658,7 +658,7 @@ void on_open_loc_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 #endif
-  
+
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       lives_source_remove(mainw->multitrack->idlefunc);

@@ -1507,7 +1507,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   // type 4 = TV card (device and channel)
   // type 5 = fw card
 
-    // TODO - for CD make this nicer - get track names
+  // TODO - for CD make this nicer - get track names
 
   lives_tvcardw_t *tvcardw=NULL;
 

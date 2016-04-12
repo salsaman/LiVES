@@ -3069,7 +3069,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #endif
 
@@ -4528,7 +4528,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
       color_type !=PNG_COLOR_TYPE_GRAY_ALPHA)
     png_set_add_alpha(png_ptr, 255, PNG_FILLER_AFTER);
 #endif
-  
+
   png_set_interlace_handling(png_ptr);
 
 
@@ -4551,7 +4551,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   else
     weed_set_int_value(layer,WEED_LEAF_CURRENT_PALETTE,WEED_PALETTE_RGB24);
 
-  
+
   // here we allocate ourselves, instead of calling create_empty_pixel data - in case rowbytes is different
 
   // some things, like swscale, expect all frames to be a multiple of 32 bytes
@@ -4587,7 +4587,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
     } else {
       int flags=0,error;
       if (weed_plant_has_leaf(layer,WEED_LEAF_FLAGS))
-	flags=weed_get_int_value(layer,WEED_LEAF_FLAGS,&error);
+        flags=weed_get_int_value(layer,WEED_LEAF_FLAGS,&error);
 
       flags|=WEED_CHANNEL_ALPHA_PREMULT;
       weed_set_int_value(layer,WEED_LEAF_FLAGS,flags);
@@ -5230,7 +5230,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
 #else
   palette=WEED_PALETTE_END;
 #endif
-  
+
   if (pull_frame_at_size(layer,image_ext,tc,width,height,palette)) {
     if (palette!=WEED_PALETTE_END) convert_layer_palette(layer,palette,0);
     pixbuf=layer_to_pixbuf(layer);

@@ -1552,15 +1552,15 @@ if (defined($ARGV[0])) {
             smog_chdir("$curtmpdir");
 
 
-	    unless ($file =~ /^http/) {
-		if (! -f "$file" && ! -d "$file") {
-		    &sig_error("$file","could not be found","$GUI_NAME was unable to open it.","Please check the file name and try again.");
-		}
-	    }
+            unless($file =~ /^http/) {
+                if (! -f "$file" && ! -d "$file") {
+                    &sig_error("$file","could not be found","$GUI_NAME was unable to open it.","Please check the file name and try again.");
+                }
+            }
 
 
             &get_file_info;
-	    ## here we set $mplay_command, $is_mpv
+## here we set $mplay_command, $is_mpv
 
 
             if ($panic) {
@@ -1579,7 +1579,7 @@ if (defined($ARGV[0])) {
             $frames="";
             if (defined($ARGV[6]) && $ARGV[6] > 0) {
                 $nframes=$ARGV[6]++;
-		# cf below, we remove 1st frame
+# cf below, we remove 1st frame
                 if (!$is_mpv) {
                     $frames=" -frames $ARGV[6] ";
                 } else {
@@ -1656,7 +1656,7 @@ if (defined($ARGV[0])) {
             $aformnew="-audio-format=s16";
         }
 
-	    #TODO - mingw
+#TODO - mingw
         $threads=smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
         $threads=int($threads);
         if ($threads==0) {
@@ -1715,17 +1715,17 @@ if (defined($ARGV[0])) {
             }
 
             if ($withsound eq "0") {
-		#video only
+#video only
                 $syscom="$mplay_command -quiet $band $osd $img_fmt $threadopts -fps 1000000. $ss $frames $noframedrop -ao null \"$file\" $extra_params <$nulfile";
             }
             elsif ($withsound eq "1") {
-		#video and audio
+#video and audio
                 $syscom=$mplay_command . " -quiet $band $osd -fps 1000000. $img_fmt $ss $threadopts $noframedrop $frames $audcom $channs $aformnew -mc 0"
                         . "  \"$file\" $extra_params <$nulfile";
             }
             else {
-		#audio only 
-		$syscom=$mplay_command . " -quiet $band -vo null $vcnull $ss $frames $audcom $aformnew $channs \"$file\" $extra_params <$nulfile";
+#audio only 
+                $syscom=$mplay_command . " -quiet $band -vo null $vcnull $ss $frames $audcom $aformnew $channs \"$file\" $extra_params <$nulfile";
             }
             if (1||defined($DEBUG_OPEN)) {
                 print STDERR "open command for $handle is: $syscom\n";
@@ -1924,7 +1924,7 @@ if (defined($ARGV[0])) {
         $curtmpdir="$tmpdir/$handle";
 
 
-	#attempt to get file details
+#attempt to get file details
         $file=$ARGV[2];
         $only_first=1;
 
@@ -1943,7 +1943,7 @@ if (defined($ARGV[0])) {
         }
 
         if ($asamps==32) {
-	    # cant handle this yet, so we will resample on open
+# cant handle this yet, so we will resample on open
             $asamps=16;
         }
 
@@ -5410,7 +5410,7 @@ sub get_mplayer_info {
 # $comment, $title, $author
 
     if (defined($is_remote)&&($is_remote>0)) {
-	# remote files might be streams, so we need to cache a bit before we can identify them
+# remote files might be streams, so we need to cache a bit before we can identify them
         $com="$mplay_command -identify -vo null -ao null -frames 0 -cache 32 \"$file\" > $file_ident 2>$nulfile <$nulfile";
 
     } else {

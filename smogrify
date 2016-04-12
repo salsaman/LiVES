@@ -1727,7 +1727,7 @@ if (defined($ARGV[0])) {
 #audio only 
                 $syscom=$mplay_command . " -quiet $band -vo null $vcnull $ss $frames $audcom $aformnew $channs \"$file\" $extra_params <$nulfile";
             }
-            if (1||defined($DEBUG_OPEN)) {
+            if (defined($DEBUG_OPEN)) {
                 print STDERR "open command for $handle is: $syscom\n";
             }
 
@@ -1763,7 +1763,7 @@ if (defined($ARGV[0])) {
             if (!$is_mpv) {
                 $xbpp=int($info[3]);
 
-                $xfps=float((split / /,$info[4])[0]);
+                $xfps=(split / /,$info[4])[0];
 
                 $xarate=int($info2[1]);
                 $xachans=int($info2[3]);
@@ -8030,7 +8030,7 @@ sub get_convert_version_hash {
 # eg. 1.4.6 becomes 10004006
 
     my $real_convert_command=(split(" ",$smog_convert_command))[0];
-    my $convert_version=smog_system_direct("$real_convert_command | grep -i version");
+    my $convert_version=smog_system_direct("$real_convert_command 2>$nulfile | grep -i version");
     $convert_version=(split(" ",$convert_version))[2];
     return &version_hash($convert_version);
 }

@@ -52,7 +52,7 @@ bin_PROGRAMS = lives-exe
 
 if HAVE_MJPEGTOOLS
 yuv4mpeg_SOURCES=lives-yuv4mpeg.c lives-yuv4mpeg.h
-yuv4mpeg_CFLAGS = -DHAVE_MJPEGTOOLS=1
+yuv4mpeg_CFLAGS = -DHAVE_YUV4MPEG=1
 endif
 
 if HAVE_UNICAP

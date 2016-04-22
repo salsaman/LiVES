@@ -360,7 +360,7 @@ typedef struct {
 	  val += (hi<<10) + 0x10000;		\
     }						\
   }						\
- 
+
 
 #define PUT_UTF8(val, tmp, PUT_BYTE)			\
   {							\

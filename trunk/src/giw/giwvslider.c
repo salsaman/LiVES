@@ -300,7 +300,7 @@ giw_vslider_realize(GtkWidget *widget) {
   stylecon=gtk_style_context_new();
   gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
   gtk_style_context_set_state(stylecon,GTK_STATE_FLAG_ACTIVE);
-  gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
+  //gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
 #else
   widget->style = gtk_style_attach(widget->style, lives_widget_get_xwindow(widget));
   gtk_style_set_background(widget->style, lives_widget_get_xwindow(widget), GTK_STATE_ACTIVE);
@@ -765,7 +765,9 @@ giw_vslider_set_value(GiwVSlider *vslider,
   if (gtk_adjustment_get_value(vslider->adjustment)!=value) {
     gtk_adjustment_set_value(vslider->adjustment,value);
 
+#if !GTK_CHECK_VERSION(3,18,0)
     gtk_adjustment_value_changed(vslider->adjustment);
+#endif
   }
 }
 
@@ -815,9 +817,10 @@ giw_vslider_set_adjustment(GiwVSlider *vslider,
                                      (GCallback) giw_vslider_adjustment_value_changed,
                                      (gpointer) vslider);
 
+#if !GTK_CHECK_VERSION(3,18,0)
   gtk_adjustment_value_changed(vslider->adjustment);
-
   gtk_adjustment_changed(vslider->adjustment);
+#endif
 }
 
 void

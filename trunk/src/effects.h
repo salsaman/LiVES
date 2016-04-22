@@ -78,6 +78,7 @@ boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data
 boolean rte_on_off_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);  ///< for accel groups
 boolean rte_on_off_callback_hook(LiVESToggleButton *, livespointer user_data);  ///< for widgets
 
+
 boolean rtemode_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);  ///< for accel groups
 boolean rtemode_callback_hook(LiVESToggleButton *, livespointer user_data);  ///< for widgets
 

@@ -251,7 +251,7 @@ giw_led_realize(GtkWidget *widget) {
   }
   gtk_style_context_add_class(stylecon,"giwled");
   gtk_style_context_set_state(stylecon,GTK_STATE_FLAG_ACTIVE);
-  gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(widget));
+  //gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(widget));
 #else
   widget->style = gtk_style_attach(widget->style, lives_widget_get_xwindow(widget));
   gtk_style_set_background(widget->style, lives_widget_get_xwindow(widget), GTK_STATE_ACTIVE);

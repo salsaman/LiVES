@@ -1005,9 +1005,6 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 // keypresses
 
 
-
-
-
 boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // this is the callback which happens when a rte is keyed
   int key=LIVES_POINTER_TO_INT(user_data);
@@ -1109,6 +1106,10 @@ boolean rte_on_off_callback_hook(LiVESToggleButton *button, livespointer user_da
 
 boolean grabkeys_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // assign the keys to the last key-grabbable effect
+  int fx=LIVES_POINTER_TO_INT(user_data);
+  if (fx!=-1) {
+    mainw->last_grabbable_effect=fx;
+  }
   mainw->rte_keys=mainw->last_grabbable_effect;
   mainw->osc_block=TRUE;
   if (rte_window!=NULL) {
@@ -1131,7 +1132,6 @@ boolean textparm_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
 
 boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data) {
   if (!lives_toggle_button_get_active(button)) return TRUE;
-  mainw->last_grabbable_effect=LIVES_POINTER_TO_INT(user_data);
   grabkeys_callback(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }

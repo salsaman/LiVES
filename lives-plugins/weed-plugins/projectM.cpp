@@ -1,6 +1,6 @@
 // projectM.c
 // weed plugin
-// (c) G. Finch (salsaman) 2014
+// (c) G. Finch (salsaman) 2014 - 2016
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -64,6 +64,7 @@ static int copies=0;
 
 static pthread_cond_t cond;
 static pthread_mutex_t cond_mutex;
+static struct timespec ts;
 
 typedef struct {
   projectM *globalPM;
@@ -383,7 +384,6 @@ static int projectM_init (weed_plant_t *inst) {
   if (!inited) {
     int rc;
     struct timeval tv;
-    struct timespec ts;
 
     weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
     weed_plant_t *iparam=weed_get_plantptr_value(inst,"in_parameters",&error);

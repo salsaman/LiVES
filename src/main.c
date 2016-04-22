@@ -1336,6 +1336,8 @@ static void lives_init(_ign_opts *ign_opts) {
         get_pref(PREF_AUDIO_PLAY_COMMAND,prefs->audio_play_command,PATH_MAX*2);
       }
 
+      memset(mppath,0,1);
+      
       if (!strlen(prefs->video_open_command)&&capable->has_mplayer) {
         get_location("mplayer",mppath,PATH_MAX);
       }
@@ -1348,9 +1350,11 @@ static void lives_init(_ign_opts *ign_opts) {
         get_location("mpv",mppath,PATH_MAX);
       }
 
-      lives_snprintf(prefs->video_open_command,PATH_MAX+2,"\"%s\"",mppath);
-      set_pref(PREF_VIDEO_OPEN_COMMAND,prefs->video_open_command);
-
+      if (strlen(mppath)) {
+	lives_snprintf(prefs->video_open_command,PATH_MAX+2,"\"%s\"",mppath);
+	set_pref(PREF_VIDEO_OPEN_COMMAND,prefs->video_open_command);
+      }
+      
       prefs->warn_file_size=get_int_pref(PREF_WARN_FILE_SIZE);
       if (prefs->warn_file_size==0) {
         prefs->warn_file_size=WARN_FILE_SIZE;
@@ -3072,7 +3076,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #endif
 

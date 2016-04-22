@@ -244,6 +244,9 @@ const char *module_check_init(void) {
   glClearColor( 0.0, 0.0, 0.0, 0.0 );
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  texID=(GLuint *)malloc(nbuf * sizeof(GLuint));
+  glGenTextures(nbuf, texID);
+
   mypalette=WEED_PALETTE_END;
 
   zsubtitles=NULL;
@@ -646,10 +649,6 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 	  if (argc>4) {
 	    fsover=atoi(argv[4]);
 	  }}}}}
-
-  texID=(GLuint *)malloc(nbuf * sizeof(GLuint));
-
-  glGenTextures(nbuf, texID);
 
   textures=(_texture *)malloc(nbuf*sizeof(_texture));
 
@@ -2207,11 +2206,7 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
 
   if (use_pbo) glDeleteBuffers(1, &video_pbo);
 
-  if (ntextures>0) glDeleteTextures(ntextures,texID);
-
   free(textures);
-
-  free(texID);
 
   if (!is_ext) {
     XUnmapWindow (dpy, xWin);
@@ -2232,6 +2227,8 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
 
 
 void module_unload(void) {
+  if (ntextures>0) glDeleteTextures(ntextures,texID);
+  free(texID);
   if (zsubtitles!=NULL) weed_free(zsubtitles);
 }
 

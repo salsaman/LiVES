@@ -66,6 +66,7 @@ static pthread_cond_t cond;
 static pthread_mutex_t cond_mutex;
 static struct timespec ts;
 
+
 typedef struct {
   projectM *globalPM;
   GLubyte *fbuffer;
@@ -248,13 +249,13 @@ static int render_frame(_sdata *sdata) {
 
 
 static void do_exit(void) {
-  std::cout << "ProjectM EXITING" << std::endl;
+  //pthread_mutex_lock(&cond_mutex);
+  //pthread_cond_signal(&cond);
+  //pthread_mutex_unlock(&cond_mutex);
 
-  pthread_mutex_lock(&cond_mutex);
-  pthread_cond_signal(&cond);
-  pthread_mutex_unlock(&cond_mutex);
-
-  pthread_exit(NULL);
+  if (inited&&statsd!=NULL) {
+    statsd->die=true;
+  }
 }
 
 
@@ -274,8 +275,15 @@ static void *worker(void *data) {
   if (init_display(sd)) {
     //sd->worker_ready=true;
     sd->failed=true;
+
+    // tell main thread we are ready
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_signal(&cond);
+    pthread_mutex_lock(&cond_mutex);
+  
     goto fail;
   }
+
 
   atexit(do_exit);
   
@@ -347,18 +355,13 @@ static void *worker(void *data) {
 
   SDL_Quit();
 
-  // tell main thread we are ready
-  pthread_mutex_lock(&cond_mutex);
-  pthread_cond_signal(&cond);
-  pthread_mutex_lock(&cond_mutex);
-
   return NULL;
 
 }
 
 
 static int projectM_deinit (weed_plant_t *inst) {
-    int error;
+  int error;
   _sdata *sd=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
 
@@ -441,7 +444,7 @@ static int projectM_init (weed_plant_t *inst) {
     pthread_mutex_lock(&cond_mutex);
     rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
     pthread_mutex_unlock(&cond_mutex);
-
+    
     if (rc==ETIMEDOUT||!sd->worker_ready) {
       // if we timedout then die
       projectM_deinit(inst);
@@ -625,6 +628,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 
 void weed_desetup(void) {
+  std::cout << "ProjectM EXITING3" << std::endl;
   if (inited&&statsd!=NULL) {
     statsd->die=true;
     pthread_join(statsd->thread,NULL);
@@ -638,4 +642,5 @@ void weed_desetup(void) {
     weed_free(statsd);
     statsd=NULL;
   }
+  std::cout << "ProjectM EXITING4" << std::endl;
 }

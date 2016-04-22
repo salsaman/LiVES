@@ -377,7 +377,7 @@ static boolean all_outs_alpha(weed_plant_t *filt,boolean ign_opt) {
         if (ign_opt&&weed_plant_has_leaf(ctmpls[i],WEED_LEAF_OPTIONAL)&&
             weed_get_boolean_value(ctmpls[i],WEED_LEAF_OPTIONAL,&error)==WEED_TRUE) continue; ///< ignore optional channels
         if (has_non_alpha_palette(ctmpls[i])) {
-	  lives_free(ctmpls);
+          lives_free(ctmpls);
           return FALSE;
         }
       }
@@ -404,14 +404,14 @@ static boolean all_ins_alpha(weed_plant_t *filt,boolean ign_opt) {
             weed_get_boolean_value(ctmpls[i],WEED_LEAF_OPTIONAL,&error)==WEED_TRUE) continue; ///< ignore optional channels
         has_mandatory_in=TRUE;
         if (has_non_alpha_palette(ctmpls[i])) {
-	  lives_free(ctmpls);
+          lives_free(ctmpls);
           return FALSE;
         }
       }
       if (!has_mandatory_in) {
         for (i=0; i<nins; i++) {
           if (has_non_alpha_palette(ctmpls[i])) {
-	    lives_free(ctmpls);
+            lives_free(ctmpls);
             return FALSE;
           }
         }

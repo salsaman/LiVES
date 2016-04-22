@@ -5160,7 +5160,7 @@ sub trim_center {
         $resize_prefix=&get_img_prefix($resize_ext);
     }
 
-    unless($hsize>=$width&&$vsize>=$height) {
+    unless($hsize>=$width &&$vsize>=$height) {
 #composite over a large enough frame
         $size=$hsize;
         if ($vsize>$size) {
@@ -6686,7 +6686,7 @@ my($i)=shift;
             }
         }
 
-        foreach(@files) {
+        foreach (@files) {
             $file="$dir/$_";
             unless($_ =~ /^\./||(! -f $file)||(-z $file)) {
                 $nframes=&open_single_image($i);

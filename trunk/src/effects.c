@@ -987,7 +987,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
   blend_file->last_frameno=blend_file->frameno;
 
-  if (!cfile->play_paused) 
+  if (!cfile->play_paused)
     blend_file->frameno=calc_new_playback_position(mainw->blend_file,blend_tc,(uint64_t *)&ntc);
 
   blend_tc=ntc;

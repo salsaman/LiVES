@@ -2979,7 +2979,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
   void rfx_free(lives_rfx_t *rfx) {
     if (rfx==NULL) return;
-    
+
     if (mainw->vrfx_update==rfx) mainw->vrfx_update=NULL;
 
     lives_freep((void **)&rfx->name);

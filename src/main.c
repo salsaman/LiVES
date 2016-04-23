@@ -699,12 +699,11 @@ static boolean pre_init(void) {
 
 
 static void replace_with_delegates(void) {
-  int resize_fx;
   weed_plant_t *filter;
-  lives_rfx_t *rfx;
-  char mtext[256];
-  int i;
 
+  lives_rfx_t *rfx;
+
+  int resize_fx;
   int deint_idx;
 
   if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate!=-1) {
@@ -721,25 +720,17 @@ static void replace_with_delegates(void) {
     rfx->action_desc=lives_strdup(_("Resizing"));
 
     rfx->min_frames=1;
-
+    
     lives_free(rfx->menu_text);
 
     if (mainw->resize_menuitem==NULL) {
-      rfx->menu_text=lives_strdup(_("_Resize All Frames"));
+      rfx->menu_text=lives_strdup(_("_Resize All Frames..."));
       mainw->resize_menuitem = lives_menu_item_new_with_mnemonic(rfx->menu_text);
       lives_widget_show(mainw->resize_menuitem);
       lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->tools_menu), mainw->resize_menuitem, RFX_TOOL_MENU_POSN);
     } else {
-      get_menu_text(mainw->resize_menuitem,mtext);
-
-      // remove trailing dots
-      for (i=strlen(mtext)-1; i>0&&!strncmp(&mtext[i],".",1); i--) memset(&mtext[i],0,1);
-
-      rfx->menu_text=lives_strdup(mtext);
-
       // disconnect old menu entry
       lives_signal_handler_disconnect(mainw->resize_menuitem,mainw->fx_candidates[FX_CANDIDATE_RESIZER].func);
-
     }
     // connect new menu entry
     mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect(LIVES_GUI_OBJECT(mainw->resize_menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -748,6 +739,8 @@ static void replace_with_delegates(void) {
     mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx=rfx;
   }
 
+  lives_widget_set_sensitive(mainw->resize_menuitem, mainw->current_file>0&&cfile->frames>0);
+  
   deint_idx=weed_get_idx_for_hashname("deinterlacedeinterlace",FALSE);
   if (deint_idx>-1) {
     mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list=lives_list_append(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
@@ -1928,7 +1921,7 @@ void do_start_messages(void) {
                 );
 #else
   lives_snprintf(mainw->msg,512,_("GTK+ "
-                                  "compiled with %d.%d.%d"
+                                  "(compiled with %d.%d.%d"
                                   ")"),
                  GTK_MAJOR_VERSION,
                  GTK_MINOR_VERSION,
@@ -3574,6 +3567,10 @@ void sensitize(void) {
 
   lives_widget_set_sensitive(mainw->custom_effects_submenu,TRUE);
 
+  if (mainw->resize_menuitem!=NULL) {
+    lives_widget_set_sensitive(mainw->resize_menuitem, mainw->current_file>0&&cfile->frames>0);
+  }
+  
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
   lives_widget_set_sensitive(mainw->export_submenu, mainw->current_file>0&&(cfile->achans>0));
   lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
@@ -3718,6 +3715,10 @@ void desensitize(void) {
       if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].menuitem!=NULL&&
           mainw->rendered_fx[i].min_frames>=0)
         lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem,FALSE);
+  }
+
+  if (mainw->resize_menuitem!=NULL) {
+    lives_widget_set_sensitive(mainw->resize_menuitem,FALSE);
   }
 
   lives_widget_set_sensitive(mainw->run_test_rfx_submenu,FALSE);

@@ -130,14 +130,15 @@ void add_message_scroller(LiVESWidget *conter) {
 
   mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),LIVES_POLICY_AUTOMATIC,LIVES_POLICY_ALWAYS);
-  lives_widget_show(mainw->scrolledwindow);
   lives_widget_set_vexpand(mainw->scrolledwindow,TRUE);
 
   lives_container_add(LIVES_CONTAINER(conter), mainw->scrolledwindow);
 
   mainw->textview1 = lives_text_view_new();
-  lives_widget_show(mainw->textview1);
   lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
+
+  if (mainw->is_ready) 
+    lives_widget_show_all(mainw->scrolledwindow);
 
   tbuff=lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
   if (tbuff!=NULL && all_text!=NULL) {

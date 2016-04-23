@@ -7518,7 +7518,7 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
   widget_opts.last_label=label;
 
   if (invis) lives_frame_set_shadow_type(LIVES_FRAME(frame), LIVES_SHADOW_NONE);
-
+  
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(frame, LIVES_WIDGET_STATE_NORMAL);
   }
@@ -7527,6 +7527,8 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
 
   return frame;
 }
+
+
 
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, LiVESBox *box,
     const char *tooltip) {
@@ -9010,17 +9012,13 @@ void unhide_cursor(LiVESXWindow *window) {
 
 void funkify_dialog(LiVESWidget *dialog) {
   if (prefs->funky_widgets) {
-    LiVESWidget *frame=lives_frame_new(NULL);
+    LiVESWidget *frame=lives_standard_frame_new(NULL,0.,FALSE);
     LiVESWidget *box=lives_vbox_new(FALSE,0);
     LiVESWidget *content=lives_dialog_get_content_area(LIVES_DIALOG(dialog));
     LiVESWidget *label=lives_label_new("");
 
     lives_container_set_border_width(LIVES_CONTAINER(dialog),0);
-
-    if (widget_opts.apply_theme) {
-      lives_widget_set_fg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-      lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    }
+    lives_container_set_border_width(LIVES_CONTAINER(frame),0);
 
     lives_object_ref(content);
     lives_widget_unparent(content);

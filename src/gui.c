@@ -137,7 +137,7 @@ void add_message_scroller(LiVESWidget *conter) {
   mainw->textview1 = lives_text_view_new();
   lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
 
-  if (mainw->is_ready) 
+  if (mainw->is_ready)
     lives_widget_show_all(mainw->scrolledwindow);
 
   tbuff=lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));

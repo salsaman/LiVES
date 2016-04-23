@@ -4779,7 +4779,7 @@ void add_rfx_effects(void) {
   if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate==-1) {
     mainw->resize_menuitem=NULL;
   }
-  
+
   if (rfx_slot_count) {
     for (rfx=&mainw->rendered_fx[(plugin_idx=1)]; plugin_idx<=rfx_slot_count; rfx=&mainw->rendered_fx[++plugin_idx]) {
       threaded_dialog_spin(0.);
@@ -4789,13 +4789,12 @@ void add_rfx_effects(void) {
       if ((rfx->props&RFX_PROPS_MAY_RESIZE&&rfx->num_in_channels==1)||rfx->min_frames<0) {
         // add resizing effects to tools menu
 
-	if (!strcmp(rfx->name,"resize")) {
-	  if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate==-1) {
-	    mainw->resize_menuitem=menuitem;
-	  }
-	  else continue;
-	}
-	
+        if (!strcmp(rfx->name,"resize")) {
+          if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate==-1) {
+            mainw->resize_menuitem=menuitem;
+          } else continue;
+        }
+
         lives_snprintf(txt,61,"_%s",_(rfx->menu_text));
         if (rfx->num_params) lives_strappend(txt,64,"...");
         menuitem = lives_menu_item_new_with_mnemonic(txt);

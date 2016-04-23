@@ -720,7 +720,7 @@ static void replace_with_delegates(void) {
     rfx->action_desc=lives_strdup(_("Resizing"));
 
     rfx->min_frames=1;
-    
+
     lives_free(rfx->menu_text);
 
     if (mainw->resize_menuitem==NULL) {
@@ -740,7 +740,7 @@ static void replace_with_delegates(void) {
   }
 
   lives_widget_set_sensitive(mainw->resize_menuitem, mainw->current_file>0&&cfile->frames>0);
-  
+
   deint_idx=weed_get_idx_for_hashname("deinterlacedeinterlace",FALSE);
   if (deint_idx>-1) {
     mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list=lives_list_append(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
@@ -3570,7 +3570,7 @@ void sensitize(void) {
   if (mainw->resize_menuitem!=NULL) {
     lives_widget_set_sensitive(mainw->resize_menuitem, mainw->current_file>0&&cfile->frames>0);
   }
-  
+
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
   lives_widget_set_sensitive(mainw->export_submenu, mainw->current_file>0&&(cfile->achans>0));
   lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);

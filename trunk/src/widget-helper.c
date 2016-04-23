@@ -7518,7 +7518,7 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
   widget_opts.last_label=label;
 
   if (invis) lives_frame_set_shadow_type(LIVES_FRAME(frame), LIVES_SHADOW_NONE);
-  
+
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(frame, LIVES_WIDGET_STATE_NORMAL);
   }

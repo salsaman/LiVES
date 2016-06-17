@@ -62,8 +62,8 @@
 
 
 #if !HAVE_AV_SET_PTS_INFO
-#if HAVE_AVFORMAT_INTERNAL_H
 
+#if HAVE_AVFORMAT_INTERNAL_H && HAVE_AVPRIV_SET_PTS_INFO
 #include <avformat/internal.h>
 #define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
 
@@ -77,7 +77,7 @@
 
 
 
-static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits,
+static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits, 
                                    unsigned int pts_num, unsigned int pts_den) {
   AVRational new_tb;
   if (av_reduce(&new_tb.num, &new_tb.den, pts_num, pts_den, INT_MAX)) {

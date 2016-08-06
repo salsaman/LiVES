@@ -1,11 +1,13 @@
 Version 2.6.4
 -------------
 Fix bug with yuv420p -> rgb palette conversions (regression).
-Better centering of dialogs in some window managers.	
+Better centering of dialogs in some window managers.
+Fix error with setting / resetting midi raw in Preferences.
+Fix crash when opening clips with older versions of libav.
 Minor compilation fixes.
 Updated translations to French and Ukranian.
 
-	
+
 
 
 

@@ -266,9 +266,9 @@ typedef struct {
   int midi_check_rate;
   int midi_rpt;
 
-#define OMC_DEV_MIDI 1<<0
-#define OMC_DEV_JS 1<<1
-#define OMC_DEV_FORCE_RAW_MIDI 1<<2
+#define OMC_DEV_MIDI (1<<0)
+#define OMC_DEV_JS (1<<1)
+#define OMC_DEV_FORCE_RAW_MIDI (1<<2)
   uint32_t omc_dev_opts;
 
   char omc_js_fname[PATH_MAX];  ///< utf8

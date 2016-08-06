@@ -1666,10 +1666,10 @@ boolean apply_prefs(boolean skip_warn) {
 
     if (!use_alsa_midi) {
       prefs->omc_dev_opts|=OMC_DEV_FORCE_RAW_MIDI;
-      prefs->use_alsa_midi=TRUE;
+      prefs->use_alsa_midi=FALSE;
     } else {
       prefs->omc_dev_opts^=OMC_DEV_FORCE_RAW_MIDI;
-      prefs->use_alsa_midi=FALSE;
+      prefs->use_alsa_midi=TRUE;
     }
     set_omc_dev_opts=TRUE;
   }

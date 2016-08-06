@@ -10118,14 +10118,14 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
 
   // otherwise we need to steal or copy the pixel_data
 
-  palette=weed_get_int_value(layer,WEED_LEAF_CURRENT_PALETTE,&error);
-  width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
-  height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
-  irowstride=weed_get_int_value(layer,WEED_LEAF_ROWSTRIDES,&error);
-
-  pixel_data=(uint8_t *)weed_get_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,&error);
-
   do {
+
+    palette=weed_get_int_value(layer,WEED_LEAF_CURRENT_PALETTE,&error);
+    width=weed_get_int_value(layer,WEED_LEAF_WIDTH,&error);
+    height=weed_get_int_value(layer,WEED_LEAF_HEIGHT,&error);
+    irowstride=weed_get_int_value(layer,WEED_LEAF_ROWSTRIDES,&error);
+
+    pixel_data=(uint8_t *)weed_get_voidptr_value(layer,WEED_LEAF_PIXEL_DATA,&error);
     done=TRUE;
     switch (palette) {
     case WEED_PALETTE_RGB24:

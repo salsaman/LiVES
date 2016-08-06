@@ -1,5 +1,16 @@
-Version 2.6.3
+Version 2.6.4
 -------------
+Fix bug with yuv420p -> rgb palette conversions (regression).
+Better centering of dialogs in some window managers.	
+Minor compilation fixes.
+Updated translations to French and Ukranian.
+
+	
+
+
+
+Version 2.6.3 (8 May 2016)
+--------------------------
 Fix bug which caused error moving sets with no layouts (regression).
 Optimise recording of generated frames.
 Fixes for recording audio from external pulse audio.

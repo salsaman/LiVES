@@ -4617,7 +4617,7 @@ boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp) {
 
   float screen_gamma=SCREEN_GAMMA;
 
-  int width, height, palette, flags, error;
+  int width, height, palette, flags=0, error;
   int rowstride;
 
   register int i;

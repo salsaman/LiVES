@@ -1,6 +1,6 @@
 // stream.h
 // LiVES
-// (c) G. Finch 2008 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2008 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -36,7 +36,7 @@ typedef struct {
 #define LIVES_STREAM_TYPE_VIDEO 1
 
 // video stream flags
-#define LIVES_VSTREAM_FLAGS_IS_CONTINUATION 1<<0
+#define LIVES_VSTREAM_FLAGS_IS_CONTINUATION (1<<0)
 
 // video compression types
 #define LIVES_VSTREAM_COMPRESSION_NONE 0

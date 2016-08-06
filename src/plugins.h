@@ -95,9 +95,9 @@ typedef struct {
 
   uint64_t capabilities;
 
-#define VPP_CAN_RESIZE    1<<0
-#define VPP_CAN_RETURN    1<<1
-#define VPP_LOCAL_DISPLAY 1<<2
+#define VPP_CAN_RESIZE    (1<<0)
+#define VPP_CAN_RETURN    (1<<1)
+#define VPP_LOCAL_DISPLAY (1<<2)
 
   int fwidth,fheight;
 
@@ -167,10 +167,10 @@ typedef struct {
   uint32_t capabilities;
 
 
-#define HAS_RFX 1<<0
+#define HAS_RFX (1<<0)
 
-#define CAN_ENCODE_PNG 1<<2
-#define ENCODER_NON_NATIVE 1<<3
+#define CAN_ENCODE_PNG (1<<2)
+#define ENCODER_NON_NATIVE (1<<3)
 
   // current output format
   char of_name[64];

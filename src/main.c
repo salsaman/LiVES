@@ -391,7 +391,8 @@ static boolean pre_init(void) {
 
   mainw=(mainwindow *)(calloc(1,sizeof(mainwindow)));
   mainw->is_ready=mainw->fatal=FALSE;
-
+  mainw->mgeom=NULL;
+  
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
   mainw->string_constants[LIVES_STRING_CONSTANT_ANY]=lives_strdup(_("Any"));
   // TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")

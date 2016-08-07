@@ -1095,7 +1095,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       priv->packet.size-=ret;
 #else
       ret=avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
-      priv->pakcet.size=0;
+      priv->packet.size=0;
 #endif
 
 #ifdef DEBUG
@@ -1103,7 +1103,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #endif
 
       if (priv->packet.size==0) {
+#if HAVE_AVPACKET_UNREF
         av_packet_unref(&priv->packet);
+#endif
         priv->needs_packet=TRUE;
       }
 

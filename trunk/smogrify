@@ -23,7 +23,7 @@ $GUI_NAME="LiVES";
 # Do not change these except for testing !
 
 $background=1;
-$version="2.6.4-svn";
+$version="2.6.3-svn";
 #$dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -5864,13 +5864,15 @@ sub convert_audio_to_raw {
     else {
         $mp_com=&get_mplayer_location;
 
-        if ($is_mpv) {
+
+        $format=&get_mplayer_format;
+
+        if ($is_mpv && $format eq "") {
             sig_system_error("mpv cannot fully resample");
             $panic=1;
             return;
         }
 
-        $format=&get_mplayer_format;
         $smcom="$mp_com -quiet \"$audio_in\" -ao pcm:nowaveheader:file=\"$audio_out\" $format >$nulfile 2>&1";
     }
 
@@ -5897,10 +5899,10 @@ sub convert_audio_to_wav {
 
     smog_chdir("$curtmpdir");
     if (&location("sox") eq "") {
-        $format=&get_mplayer_format;
         $mp_com=&get_mplayer_location;
+        $format=&get_mplayer_format;
 
-        if ($is_mpv) {
+        if ($is_mpv and $format eq "") {
             sig_system_error("mpv cannot fully resample");
             $panic=1;
             return;
@@ -7115,9 +7117,16 @@ sub othera_open {
     $aendian=&get_endian;
     $asigned=1;
 
-## TODO - mpv
+    $mplayer_command=&get_mplayer_location;
     $format=&get_mplayer_format;
-    $com=&rc_get("video_open_command") . " -quiet \"$file\" -ao pcm:waveheader:file=\"$audio_in\" $format >$nulfile 2>&1 <$nulfile";
+
+    if ($is_mpv && $format eq "") {
+	sig_system_error("mpv cannot fully resample");
+	$panic=1;
+	return;
+    }
+
+    $com="\"$mplayer_command\" -quiet \"$file\" -ao pcm:waveheader:file=\"$audio_in\" $format >$nulfile 2>&1 <$nulfile";
 
     $smerr=smog_system($com);
 
@@ -7231,6 +7240,22 @@ sub get_mplayer_format {
         $nendian=$aendian;
     }
 
+
+    if ($is_mpv) {
+	if ($nsamps==8) {
+	    if ($nsigned==0) {
+		return "--af=lavrresample,format=u8";
+	    }
+	}
+	if ($nsamps==16) {
+	    if ($nsigned==1) {
+		return "--af=lavrresample,format=s16";
+	    }
+	}
+	return "";
+    }
+
+    
     if ($nasamps==8) {
         if ($nsigned==0) {
             return "-format u8";

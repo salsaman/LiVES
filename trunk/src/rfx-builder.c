@@ -4397,7 +4397,7 @@ void add_rfx_effects(void) {
       if (mainw->run_test_rfx_menu!=NULL) lives_widget_destroy(mainw->run_test_rfx_menu);
     }
 
-    if (mainw->is_ready) {
+    if (mainw->is_ready&&prefs->show_gui) {
       lives_widget_queue_draw(mainw->effects_menu);
       lives_widget_context_update();
       threaded_dialog_spin(0.);
@@ -4682,7 +4682,7 @@ void add_rfx_effects(void) {
       lives_snprintf(txt,61,"_%s",_(rfx->menu_text));
       if (rfx->num_params) lives_strappend(txt,64,"...");
       menuitem = lives_image_menu_item_new_with_mnemonic(txt);
-      lives_widget_show(menuitem);
+      if (prefs->show_gui) lives_widget_show(menuitem);
 
       switch (rfx->status) {
       case RFX_STATUS_BUILTIN:
@@ -4709,7 +4709,7 @@ void add_rfx_effects(void) {
       }
       lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(menuitem), rfx_image);
 
-      lives_widget_show(rfx_image);
+      if (prefs->show_gui) lives_widget_show(rfx_image);
 #endif
 
       if (rfx->params==NULL) {
@@ -4729,14 +4729,16 @@ void add_rfx_effects(void) {
   threaded_dialog_spin(0.);
 
   // custom effects
-  if (rc_child>0) {
-    lives_widget_show(mainw->custom_effects_separator);
-    lives_widget_show(mainw->custom_effects_menu);
-    lives_widget_show(mainw->custom_effects_submenu);
-  } else {
-    lives_widget_hide(mainw->custom_effects_separator);
-    lives_widget_hide(mainw->custom_effects_menu);
-    lives_widget_hide(mainw->custom_effects_submenu);
+  if (prefs->show_gui) {
+    if (rc_child>0) {
+      lives_widget_show(mainw->custom_effects_separator);
+      lives_widget_show(mainw->custom_effects_menu);
+      lives_widget_show(mainw->custom_effects_submenu);
+    } else {
+      lives_widget_hide(mainw->custom_effects_separator);
+      lives_widget_hide(mainw->custom_effects_menu);
+      lives_widget_hide(mainw->custom_effects_submenu);
+    }
   }
 
   mainw->utilities_menu=lives_menu_new();
@@ -4783,7 +4785,7 @@ void add_rfx_effects(void) {
   if (rfx_slot_count) {
     for (rfx=&mainw->rendered_fx[(plugin_idx=1)]; plugin_idx<=rfx_slot_count; rfx=&mainw->rendered_fx[++plugin_idx]) {
       threaded_dialog_spin(0.);
-      if (mainw->splash_window==NULL) {
+      if (mainw->splash_window==NULL&&prefs->show_gui) {
         lives_widget_context_update();
       }
       if ((rfx->props&RFX_PROPS_MAY_RESIZE&&rfx->num_in_channels==1)||rfx->min_frames<0) {
@@ -4798,7 +4800,7 @@ void add_rfx_effects(void) {
         lives_snprintf(txt,61,"_%s",_(rfx->menu_text));
         if (rfx->num_params) lives_strappend(txt,64,"...");
         menuitem = lives_menu_item_new_with_mnemonic(txt);
-        lives_widget_show(menuitem);
+        if (prefs->show_gui) lives_widget_show(menuitem);
 
         switch (rfx->status) {
         case RFX_STATUS_BUILTIN:
@@ -4806,7 +4808,7 @@ void add_rfx_effects(void) {
             lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->tools_menu), menuitem,tool_posn++);
           } else {
             lives_container_add(LIVES_CONTAINER(mainw->utilities_menu), menuitem);
-            lives_widget_show(mainw->utilities_menu);
+            if (prefs->show_gui) lives_widget_show(mainw->utilities_menu);
           }
           break;
         case RFX_STATUS_CUSTOM:
@@ -4851,12 +4853,12 @@ void add_rfx_effects(void) {
         lives_snprintf(txt,61,"_%s",_(rfx->menu_text));
         if (rfx->num_params) lives_strappend(txt,64,"...");
         menuitem = lives_menu_item_new_with_mnemonic(txt);
-        lives_widget_show(menuitem);
+        if (prefs->show_gui) lives_widget_show(menuitem);
 
         switch (rfx->status) {
         case RFX_STATUS_BUILTIN:
           lives_container_add(LIVES_CONTAINER(mainw->gens_menu), menuitem);
-          lives_widget_show(mainw->gens_menu);
+          if (prefs->show_gui) lives_widget_show(mainw->gens_menu);
           break;
         case RFX_STATUS_CUSTOM:
           lives_container_add(LIVES_CONTAINER(mainw->custom_gens_menu), menuitem);
@@ -4883,36 +4885,38 @@ void add_rfx_effects(void) {
   }
 
 
-  threaded_dialog_spin(0.);
+  if (prefs->show_gui) {
+    threaded_dialog_spin(0.);
 
-  if (mainw->has_custom_tools||mainw->has_custom_utilities) {
-    lives_widget_show(mainw->custom_tools_separator);
-    lives_widget_show(mainw->custom_tools_menu);
-    lives_widget_show(mainw->custom_tools_submenu);
-  } else {
-    lives_widget_hide(mainw->custom_tools_separator);
-    lives_widget_hide(mainw->custom_tools_menu);
-    lives_widget_hide(mainw->custom_tools_submenu);
-  }
-  if (mainw->has_custom_utilities) {
-    if (mainw->has_custom_tools) {
-      lives_widget_show(mainw->custom_utilities_separator);
+    if (mainw->has_custom_tools||mainw->has_custom_utilities) {
+      lives_widget_show(mainw->custom_tools_separator);
+      lives_widget_show(mainw->custom_tools_menu);
+      lives_widget_show(mainw->custom_tools_submenu);
+    } else {
+      lives_widget_hide(mainw->custom_tools_separator);
+      lives_widget_hide(mainw->custom_tools_menu);
+      lives_widget_hide(mainw->custom_tools_submenu);
+    }
+    if (mainw->has_custom_utilities) {
+      if (mainw->has_custom_tools) {
+	lives_widget_show(mainw->custom_utilities_separator);
+      } else {
+	lives_widget_hide(mainw->custom_utilities_separator);
+      }
+      lives_widget_show(mainw->custom_utilities_menu);
+      lives_widget_show(mainw->custom_utilities_submenu);
     } else {
       lives_widget_hide(mainw->custom_utilities_separator);
+      lives_widget_hide(mainw->custom_utilities_menu);
+      lives_widget_hide(mainw->custom_utilities_submenu);
     }
-    lives_widget_show(mainw->custom_utilities_menu);
-    lives_widget_show(mainw->custom_utilities_submenu);
-  } else {
-    lives_widget_hide(mainw->custom_utilities_separator);
-    lives_widget_hide(mainw->custom_utilities_menu);
-    lives_widget_hide(mainw->custom_utilities_submenu);
-  }
-  if (mainw->has_custom_gens) {
-    lives_widget_show(mainw->custom_gens_menu);
-    lives_widget_show(mainw->custom_gens_submenu);
-  } else {
-    lives_widget_hide(mainw->custom_gens_menu);
-    lives_widget_hide(mainw->custom_gens_submenu);
+    if (mainw->has_custom_gens) {
+      lives_widget_show(mainw->custom_gens_menu);
+      lives_widget_show(mainw->custom_gens_submenu);
+    } else {
+      lives_widget_hide(mainw->custom_gens_menu);
+      lives_widget_hide(mainw->custom_gens_submenu);
+    }
   }
 
   if (mainw->is_ready) {

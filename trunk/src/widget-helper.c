@@ -8804,7 +8804,7 @@ boolean lives_widget_context_update(void) {
   }
 
   if (!mainw->is_exiting) {
-    if (rte_window!=NULL) ret_set_key_check_state();
+    if (rte_window!=NULL) rtew_set_key_check_state();
     if (mainw->ce_thumbs) {
       ce_thumbs_set_key_check_state();
       ce_thumbs_apply_liberation();

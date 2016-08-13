@@ -103,7 +103,7 @@ void rte_window_set_interactive(boolean interactive) {
 }
 
 
-void ret_set_key_check_state(void) {
+void rtew_set_key_check_state(void) {
   // set (delayed) keycheck state
   register int i;
   for (i=0; i<prefs->rte_keys_virtual; i++) {
@@ -164,8 +164,7 @@ boolean on_clear_all_clicked(LiVESButton *button, livespointer user_data) {
     for (j=modes-1; j>=0; j--) {
       weed_delete_effectkey(i+1,j);
       if (rte_window!=NULL) {
-        lives_entry_set_text(LIVES_ENTRY(combo_entries[i*modes+j]),"");
-        type_label_set_text(i,j);
+        rtew_combo_set_text(i,j,"");
       }
     }
     if (mainw->ce_thumbs) ce_thumbs_reset_combo(i);
@@ -1544,7 +1543,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       int idx=(key-1)*modes+mode;
       int fx_idx=rte_keymode_get_filter_idx(key,mode);
 
-      lives_entry_set_text(LIVES_ENTRY(combo_entries[idx]),(tmp=rte_keymode_get_filter_name(key,mode)));
+      rtew_combo_set_text(key,mode,(tmp=rte_keymode_get_filter_name(key,mode)));
       lives_free(tmp);
 
       if (fx_idx!=-1) {
@@ -1833,8 +1832,7 @@ void on_clear_clicked(LiVESButton *button, livespointer user_data) {
     if (rte_window!=NULL) {
       int fx_idx=rte_keymode_get_filter_idx(key,mode);
       idx=key*modes+i;
-      lives_entry_set_text(LIVES_ENTRY(combo_entries[idx]),lives_entry_get_text(LIVES_ENTRY(combo_entries[idx+1])));
-      type_label_set_text(key,i);
+      rtew_combo_set_text(key,i,lives_entry_get_text(LIVES_ENTRY(combo_entries[idx+1])));
 
       if (fx_idx!=-1) {
         char *hashname=(char *)lives_list_nth_data(hash_list,fx_idx);
@@ -1848,7 +1846,7 @@ void on_clear_clicked(LiVESButton *button, livespointer user_data) {
   idx++;
 
   if (rte_window!=NULL) {
-    lives_entry_set_text(LIVES_ENTRY(combo_entries[idx]),"");
+    rtew_combo_set_text(key,i,"");
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",empty_string);
 
     // set parameters button sensitive/insensitive
@@ -1981,6 +1979,13 @@ enum {
 };
 
 
+void rtew_combo_set_text(int key, int mode, const char *txt) {
+  // key is zero based
+  int key_mode=key*rte_getmodespk()+mode;
+  lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]),txt);
+  type_label_set_text(key,mode);
+}
+
 
 void fx_changed(LiVESCombo *combo, livespointer user_data) {
   LiVESTreeIter iter1;
@@ -2040,7 +2045,7 @@ void fx_changed(LiVESCombo *combo, livespointer user_data) {
   model=lives_combo_get_model(combo);
 
   lives_tree_model_get(model,&iter1,NAME_COLUMN,&txt,-1);
-  lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]),txt);
+  rtew_combo_set_text(key,mode,txt);
   lives_free(txt);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo),"hashname",hashname1);

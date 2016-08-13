@@ -9243,6 +9243,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   add_message_scroller(mainw->message_box);
 
   if (prefs->show_gui) {
+    show_lives();
     if (lives_window_has_toplevel_focus(LIVES_WINDOW(mt->window))) transfer_focus=TRUE;
     lives_widget_show(mainw->LiVES);
     mainw->is_ready=mainw_was_ready;

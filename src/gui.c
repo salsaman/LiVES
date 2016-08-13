@@ -2817,11 +2817,6 @@ void show_lives(void) {
 
   lives_widget_show_all(mainw->vbox1);
 
-  if (!mainw->foreign&&capable->smog_version_correct) {
-    splash_msg(_("Loading rendered effect plugins..."),SPLASH_LEVEL_LOAD_RFX);
-    add_rfx_effects();
-  }
-
   lives_widget_show(mainw->LiVES); // this calls the config_event()
 
   if (palette->style&STYLE_1) {
@@ -4183,17 +4178,15 @@ char *get_menu_name(lives_clip_t *sfile) {
 
 void add_to_clipmenu(void) {
   // TODO - indicate "opening"
-  char *tmp;
+  char *tmp,*fname;
 
 #ifndef GTK_RADIO_MENU_BUG
   cfile->menuentry = lives_radio_menu_item_new_with_label(mainw->clips_group, tmp=get_menu_name(cfile));
   mainw->clips_group=lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));
 #else
-  cfile->menuentry = lives_check_menu_item_new_with_label(tmp=get_menu_name(cfile));
+  cfile->menuentry = lives_check_menu_item_new_with_label(fname=get_menu_name(cfile));
   lives_check_menu_item_set_draw_as_radio(LIVES_CHECK_MENU_ITEM(cfile->menuentry),TRUE);
 #endif
-
-  lives_free(tmp);
 
   lives_widget_show(cfile->menuentry);
   lives_container_add(LIVES_CONTAINER(mainw->clipsmenu), cfile->menuentry);
@@ -4209,6 +4202,14 @@ void add_to_clipmenu(void) {
   pthread_mutex_unlock(&mainw->clip_list_mutex);
   cfile->old_frames=cfile->frames;
   cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
+
+#define TEST_NOTIFY
+#ifdef TEST_NOTIFY
+  tmp=lives_strdup_printf("notify-send 'LiVES opened the file' '%s'",fname);
+  lives_system(tmp,TRUE);
+  lives_free(tmp);
+#endif
+  lives_free(fname);
 }
 
 

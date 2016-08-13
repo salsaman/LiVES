@@ -2812,6 +2812,11 @@ static boolean lives_startup(livespointer data) {
                     }
                   }
 
+		    if (!mainw->foreign&&capable->smog_version_correct) {
+		      splash_msg(_("Loading rendered effect plugins..."),SPLASH_LEVEL_LOAD_RFX);
+		      add_rfx_effects();
+		    }
+
                   if (prefs->startup_interface!=STARTUP_MT) {
                     if (prefs->show_gui) {
                       // mainw->ready gets set here
@@ -5007,7 +5012,6 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         }
 
         create_empty_pixel_data(layer,FALSE,TRUE);
-
 
         pixel_data=weed_get_voidptr_array(layer,WEED_LEAF_PIXEL_DATA,&error);
         rowstrides=weed_get_int_array(layer,WEED_LEAF_ROWSTRIDES,&error);

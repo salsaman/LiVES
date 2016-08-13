@@ -469,6 +469,7 @@ typedef struct {
   LiVESWidget *reffects;
   LiVESWidget *raudio;
   LiVESWidget *rextaudio;
+  LiVESWidget *rintaudio;
   LiVESWidget *rdesk_audio;
   LiVESWidget *encoder_combo;
   LiVESWidget *checkbutton_antialias;
@@ -601,6 +602,8 @@ typedef struct {
   LiVESWidget *frameblank_entry;
   LiVESWidget *sepimg_entry;
   LiVESTreeSelection *selection;
+  
+  boolean ignore_apply; ///< dont light the apply button when thing changes (for external calls), normally FALSE
   boolean needs_restart;
 } _prefsw;
 

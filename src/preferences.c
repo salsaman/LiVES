@@ -590,6 +590,8 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
 
   // can also be called from other places
 
+  if (prefsw!=NULL) 
+    prefsw->ignore_apply=TRUE;
 
   if (!strcmp(prefidx,PREF_REC_EXT_AUDIO)) {
     boolean rec_ext_audio=newval;
@@ -597,23 +599,21 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
       prefs->audio_src=AUDIO_SRC_EXT;
       set_int_pref(PREF_AUDIO_SRC,AUDIO_SRC_EXT);
 
-      if (mainw->playing_file==-1) {
-        if (prefs->audio_player==AUD_PLAYER_JACK) {
+      if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-          if (prefs->perm_audio_reader) {
-            // create reader connection now, if permanent
-            jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
-          }
+	if (prefs->perm_audio_reader) {
+	  // create reader connection now, if permanent
+	  jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+	}
 #endif
-        }
-        if (prefs->audio_player==AUD_PLAYER_PULSE) {
+      }
+      if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-          if (prefs->perm_audio_reader) {
-            // create reader connection now, if permanent
-            pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
-          }
+	if (prefs->perm_audio_reader) {
+	  // create reader connection now, if permanent
+	  pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+	}
 #endif
-        }
       }
 
     } else if (!rec_ext_audio&&prefs->audio_src==AUDIO_SRC_EXT) {
@@ -631,9 +631,12 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
       }
 
     }
-    if (prefsw!=NULL)
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio),prefs->audio_src==AUDIO_SRC_EXT);
-
+    if (prefsw!=NULL) {
+      if (prefs->audio_src==AUDIO_SRC_EXT)
+	lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio),TRUE);
+      else 
+	lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rintaudio),TRUE);
+    }
   }
   if (!strcmp(prefidx,PREF_SEPWIN_STICKY)) {
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sticky),newval);
@@ -645,16 +648,37 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
   }
 
 
+  if (prefsw!=NULL) { 
+    lives_widget_context_update();
+    prefsw->ignore_apply=FALSE;
+  }
 }
 
 
 void pref_factory_int(const char *prefidx, int newval) {
   // TODO
+  if (prefsw!=NULL) 
+    prefsw->ignore_apply=TRUE;
+
+
+
+  // ...
+
+  
+  if (prefsw!=NULL) { 
+    lives_widget_context_update();
+    prefsw->ignore_apply=FALSE;
+  }
+
 }
 
 
 
 void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval) {
+
+  if (prefsw!=NULL) 
+    prefsw->ignore_apply=TRUE;
+
   if (!strcmp(prefidx,PREF_MT_EXIT_RENDER)) {
     if (newval&&!(prefs->audio_opts&bitfield)) prefs->audio_opts&=bitfield;
     else if (!newval&&(prefs->audio_opts&bitfield)) prefs->audio_opts^=bitfield;
@@ -666,6 +690,10 @@ void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval) {
     }
   }
 
+  if (prefsw!=NULL) {
+    lives_widget_context_update();
+    prefsw->ignore_apply=FALSE;
+  }
 }
 
 
@@ -901,6 +929,10 @@ boolean apply_prefs(boolean skip_warn) {
 
   char *cdplay_device=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
+
+  // TODO: move all into pref_factory_* functions
+
+  
   if (prefsw->theme_style2!=NULL)
     pstyle2=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2));
   else
@@ -2309,14 +2341,15 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer dummy) {
       }
     }
   }
-  lives_widget_queue_draw(prefsw->prefs_dialog);
 
+  lives_widget_queue_draw(prefsw->prefs_dialog);
 }
 
 /*
  * Function makes apply button sensitive
  */
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data) {
+  if (prefsw->ignore_apply) return;
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
@@ -2382,7 +2415,6 @@ _prefsw *create_prefs_dialog(void) {
   LiVESWidget *mt_enter_defs;
 
   LiVESWidget *advbutton;
-  LiVESWidget *rbutton;
 
   LiVESWidget *sp_red,*sp_green,*sp_blue;
 
@@ -2450,6 +2482,8 @@ _prefsw *create_prefs_dialog(void) {
     if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),LIVES_WINDOW(mainw->LiVES));
     else lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),LIVES_WINDOW(mainw->multitrack->window));
   }
+
+  prefsw->ignore_apply=FALSE;
 
   // Get dialog's vbox and show it
   dialog_vbox_main = lives_dialog_get_content_area(LIVES_DIALOG(prefsw->prefs_dialog));
@@ -3244,9 +3278,9 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
 
-  rbutton=lives_standard_radio_button_new(_("_Internal"),TRUE,asrc_group,LIVES_BOX(hbox),NULL);
+  prefsw->rintaudio=lives_standard_radio_button_new(_("_Internal"),TRUE,asrc_group,LIVES_BOX(hbox),NULL);
 
-  asrc_group=lives_radio_button_get_group(LIVES_RADIO_BUTTON(rbutton));
+  asrc_group=lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->rintaudio));
   add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->rextaudio = lives_standard_radio_button_new(_("_External (requires jack or pulse audio player)"),

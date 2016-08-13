@@ -9164,6 +9164,15 @@ int weed_add_effectkey_by_idx(int key, int idx) {
            !all_outs_alpha(weed_filters[idx],TRUE)&&has_video_chans_out(weed_filters[idx],TRUE)) ||
           (enabled_in_channels(weed_filters[idx],FALSE)>0&&has_gen)) return -2;
       key_to_fx[key][i]=idx;
+      if (rte_window!=NULL) {
+	// if rte window is visible add to combo box
+	char *tmp;
+	rtew_combo_set_text(key,i,(tmp=rte_keymode_get_filter_name(key+1,i)));
+	lives_free(tmp);
+
+	// set in ce_thumb combos
+	if (mainw->ce_thumbs) ce_thumbs_reset_combo(key);
+      }
       return i;
     }
   }
@@ -10130,16 +10139,33 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
 
 
 int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
+  char *chashname, *chashname2;
+
   register int i;
-  char *chashname;
 
   for (i=0; i<num_weed_filters; i++) {
     chashname=make_weed_hashname(i,fullname,FALSE);
+
+    //g_print("cf .%s .%s.\n",hashname,chashname);
+
     if (!lives_utf8_strcasecmp(hashname,chashname)) {
       lives_free(chashname);
       return i;
     }
+
+    //try again with spaces converted to "_"
+    chashname2=subst(chashname," ","_");
+    if (strcmp(chashname2,chashname)) {
+      if (!lives_utf8_strcasecmp(hashname,chashname2)) {
+	lives_free(chashname2);
+	lives_free(chashname);
+	return i;
+      }
+    }
+
+    lives_free(chashname2);
     lives_free(chashname);
+
     if (fullname) {
       chashname=make_weed_hashname(i,fullname,TRUE);
       if (!lives_utf8_strcasecmp(hashname,chashname)) {

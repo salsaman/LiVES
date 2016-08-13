@@ -1,6 +1,6 @@
 // liblives.hpp
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman@gmail.com> 2015
+// (c) G. Finch <salsaman@gmail.com> 2015 - 2016
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -24,7 +24,7 @@
 /**
    Version number micro
 */
-#define LIVES_VERSION_MICRO 4
+#define LIVES_VERSION_MICRO 5
 
 /**
    Macro to check if livesApp version is >= major.minor.micro
@@ -148,7 +148,7 @@ typedef enum {
    Audio sources
 */
 typedef enum {
-  LIVES_AUDIO_SOURCE_UNKNOWN, ///< Unknown / invalid
+  LIVES_AUDIO_SOURCE_UNKNOWN=-1, ///< Unknown / invalid
   LIVES_AUDIO_SOURCE_INTERNAL, ///< Audio source is internal to LiVES
   LIVES_AUDIO_SOURCE_EXTERNAL ///< Audio source is external to LiVES
 } lives_audio_source_t;
@@ -158,7 +158,7 @@ typedef enum {
    Audio players
 */
 typedef enum {
-  LIVES_AUDIO_PLAYER_UNKNOWN, ///< Unknown / invalid
+  LIVES_AUDIO_PLAYER_UNKNOWN=-1, ///< Unknown / invalid
   LIVES_AUDIO_PLAYER_PULSE, ///< Audio playback is through PulseAudio
   LIVES_AUDIO_PLAYER_JACK, ///< Audio playback is thorugh Jack
   LIVES_AUDIO_PLAYER_SOX, ///< Audio playback is through Sox

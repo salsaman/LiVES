@@ -349,6 +349,8 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   filew->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
   lives_free(title);
 
+  lives_signal_handlers_disconnect_by_func(filew->dialog,return_true,NULL);
+
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(filew->dialog), accel_group);
 
@@ -542,6 +544,8 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   lives_widget_show_all(filew->dialog);
 
   lives_widget_set_size_request(okbutton,DEF_BUTTON_WIDTH*4,-1);
+
+  lives_widget_context_update();
 
   return filew;
 }
@@ -771,6 +775,7 @@ _insertw *create_insert_dialog(void) {
   _insertw *insertw=(_insertw *)(lives_malloc(sizeof(_insertw)));
 
   insertw->insert_dialog = lives_standard_dialog_new(_("Insert"),FALSE,-1,-1);
+  lives_signal_handlers_disconnect_by_func(insertw->insert_dialog,return_true,NULL);
 
   lives_window_add_accel_group(LIVES_WINDOW(insertw->insert_dialog), accel_group);
 
@@ -1040,6 +1045,7 @@ _entryw *create_location_dialog(int type) {
     title=lives_strdup(_("Open Youtube Clip"));
 
   locw->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
+  lives_signal_handlers_disconnect_by_func(locw->dialog,return_true,NULL);
 
   lives_free(title);
 
@@ -1213,6 +1219,7 @@ _entryw *create_rename_dialog(int type) {
   }
 
   renamew->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
+  lives_signal_handlers_disconnect_by_func(renamew->dialog,return_true,NULL);
 
   lives_window_add_accel_group(LIVES_WINDOW(renamew->dialog), accel_group);
 
@@ -1540,6 +1547,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
   cd_dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
   lives_free(title);
+  lives_signal_handlers_disconnect_by_func(cd_dialog,return_true,NULL);
 
   if (prefs->show_gui) {
     if (type!=LIVES_DEVICE_INTERNAL) {
@@ -1830,6 +1838,7 @@ aud_dialog_t *create_audfade_dialog(int type) {
   }
 
   audd->dialog = lives_standard_dialog_new(title,TRUE,-1,-1);
+  lives_signal_handlers_disconnect_by_func(audd->dialog,return_true,NULL);
   lives_free(title);
 
   if (prefs->show_gui) {
@@ -1925,6 +1934,8 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
   commentsw->comments_dialog = lives_standard_dialog_new(title,TRUE,-1,-1);
   lives_free(title);
   lives_free(extrabit);
+  lives_signal_handlers_disconnect_by_func(commentsw->comments_dialog,return_true,NULL);
+
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(commentsw->comments_dialog),LIVES_WINDOW(mainw->LiVES));

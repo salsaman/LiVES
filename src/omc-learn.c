@@ -1346,6 +1346,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   winsize_v=scr_height-SCR_HEIGHT_SAFETY;
 
   omclw->dialog = lives_standard_dialog_new(_("OMC Learner"),FALSE,winsize_h,winsize_v);
+  lives_signal_handlers_disconnect_by_func(omclw->dialog,return_true,NULL);
 
   omclw->top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(omclw->dialog));
 

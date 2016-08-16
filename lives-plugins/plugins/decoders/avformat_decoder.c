@@ -1,5 +1,5 @@
 /// LiVES - avformat plugin
-// (c) G. Finch 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2010 - 2016 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 //
@@ -220,7 +220,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   pd.buf=calloc(128,32);
 
-  if ((pd.buf_size=stream_peek(priv->fd,pd.buf,2261))<2261) {
+  pd.mime_type="";
+  
+  if ((pd.buf_size=stream_peek(priv->fd,pd.buf,AVPROBE_PADDING_SIZE))<AVPROBE_PADDING_SIZE) {
     fprintf(stderr, "couldn't peek stream %d\n",pd.buf_size);
     return FALSE;
   }
@@ -1053,7 +1055,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
     //
 
-    while (1) {
+    do {
       if (priv->needs_packet) {
         do {
 

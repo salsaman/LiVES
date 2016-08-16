@@ -1212,6 +1212,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     }
 
     resaudw->dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
+    lives_signal_handlers_disconnect_by_func(resaudw->dialog,return_true,NULL);
     lives_free(title);
 
     accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
@@ -1639,6 +1640,7 @@ void create_new_pb_speed(short type) {
   }
 
   new_pb_speed = lives_standard_dialog_new(title,FALSE,-1,-1);
+  lives_signal_handlers_disconnect_by_func(new_pb_speed,return_true,NULL);
   lives_free(title);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());

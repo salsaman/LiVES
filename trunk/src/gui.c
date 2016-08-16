@@ -4203,12 +4203,14 @@ void add_to_clipmenu(void) {
   cfile->old_frames=cfile->frames;
   cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
 
-#define TEST_NOTIFY
 #ifdef TEST_NOTIFY
-  tmp=lives_strdup_printf("notify-send 'LiVES opened the file' '%s'",fname);
+  char *detail=lives_strdup_printf(_("'LiVES opened the file' '%s'"),fname);
+  tmp=lives_strdup_printf("notify-send %s",detail);
   lives_system(tmp,TRUE);
   lives_free(tmp);
+  lives_free(detail);
 #endif
+
   lives_free(fname);
 }
 
@@ -4219,6 +4221,16 @@ void remove_from_clipmenu(void) {
 #ifndef GTK_RADIO_MENU_BUG
   LiVESList *list;
   int fileno;
+#endif
+
+#ifdef TEST_NOTIFY
+  char *fname=get_menu_name(cfile);
+  char *detail=lives_strdup_printf(_("'LiVES closed the file' '%s'"),fname);
+  char *tmp=lives_strdup_printf("notify-send %s",detail);
+  lives_system(tmp,TRUE);
+  lives_free(tmp);
+  lives_free(fname);
+  lives_free(detail);
 #endif
 
   lives_container_remove(LIVES_CONTAINER(mainw->clipsmenu), cfile->menuentry);

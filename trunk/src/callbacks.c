@@ -44,13 +44,34 @@
 
 static char file_name[PATH_MAX];
 
-void lives_notify(int msgnumber,const char *msgstring) {
+void lives_notify(int msgnumber, const char *msgstring) {
 #ifdef IS_LIBLIVES
   binding_cb(msgnumber, msgstring, mainw->id);
 #endif
 #ifdef ENABLE_OSC
   lives_osc_notify(msgnumber,msgstring);
 #endif
+
+
+#ifdef TEST_NOTIFY
+  if (msgnumber==LIVES_OSC_NOTIFY_CLIPSET_OPENED) {
+    char *details=lives_strdup_printf(_("'LiVES opened the clip set' '%s'"), msgstring);
+    char *tmp=lives_strdup_printf("notify-send %s",details);
+    lives_system(tmp,TRUE);
+    lives_free(tmp);
+    lives_free(details);
+  }
+
+  if (msgnumber==LIVES_OSC_NOTIFY_CLIPSET_SAVED) {
+    char *details=lives_strdup_printf(_("'LiVES saved the clip set' '%s'"), msgstring);
+    char *tmp=lives_strdup_printf("notify-send %s",details);
+    lives_system(tmp,TRUE);
+    lives_free(tmp);
+    lives_free(details);
+  }
+#endif
+
+
 }
 
 

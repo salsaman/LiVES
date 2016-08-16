@@ -1,5 +1,14 @@
-Version 2.6.5
+Version 2.6.6
 -------------
+Remove debugging and test code.
+Allow closure of dialog boxes clicking on 'X'.
+
+
+
+
+
+Version 2.6.5 (14 Aug 2016)
+---------------------------
 Fix bug with multitrack startup not showing clip editor on switch (regression).
 Fix crash when statring in headless (nogui) mode (regression).
 Remove some debugging output from 2.6.4

@@ -549,6 +549,7 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
   //dialog = lives_standard_dialog_new(title,FALSE,RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4);
   dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
   //lives_widget_set_size_request(dialog,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
+  lives_signal_handlers_disconnect_by_func(dialog,return_true,NULL);
 
   if (title!=NULL) lives_free(title);
 

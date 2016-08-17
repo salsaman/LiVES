@@ -1,5 +1,5 @@
-Version 2.6.6
--------------
+Version 2.6.6 (16 Aug 2016)
+---------------------------
 Remove debugging and test code.
 Allow closure of dialog boxes clicking on 'X'.
 

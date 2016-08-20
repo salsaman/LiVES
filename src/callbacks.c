@@ -5084,6 +5084,7 @@ boolean reload_set(const char *set_name) {
             mt_sensitise(mainw->multitrack);
             mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
           }
+	  lives_chdir(cwd,FALSE);
           lives_free(cwd);
           return FALSE;
         }
@@ -5149,6 +5150,7 @@ boolean reload_set(const char *set_name) {
       }
 
       if (!keep_threaded_dialog) end_threaded_dialog();
+      lives_chdir(cwd,FALSE);
       lives_free(cwd);
       return TRUE;
     }
@@ -5188,6 +5190,7 @@ boolean reload_set(const char *set_name) {
         }
 
         recover_layout_map(MAX_FILES);
+	lives_chdir(cwd,FALSE);
         lives_free(cwd);
         return FALSE;
       }

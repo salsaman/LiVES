@@ -1,3 +1,13 @@
+Version 2.6.7 (18 Aug 2016)
+---------------------------
+Fix breakage in single image loader (regression).
+Alter icon location to comply with LSB.
+Fix for older libav.
+
+
+
+
+
 Version 2.6.6 (16 Aug 2016)
 ---------------------------
 Remove debugging and test code.

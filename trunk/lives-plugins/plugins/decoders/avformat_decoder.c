@@ -187,7 +187,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get a handle
   lives_av_priv_t *priv=cdata->priv;
-  AVProbeData   pd;
+  AVProbeData pd={0};
   AVInputFormat *fmt;
 
   AVCodec *vdecoder;
@@ -219,8 +219,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   pd.filename=cdata->URI;
 
   pd.buf=calloc(128,32);
-
-  pd.mime_type="";
   
   if ((pd.buf_size=stream_peek(priv->fd,pd.buf,AVPROBE_PADDING_SIZE))<AVPROBE_PADDING_SIZE) {
     fprintf(stderr, "couldn't peek stream %d\n",pd.buf_size);
@@ -588,7 +586,7 @@ skip_init:
   }
 
   if (priv->vstream==-1) {
-    fprintf(stderr,"avcodec_decoder: no video stream found");
+    fprintf(stderr,"avcodec_decoder: no video stream found\n");
     return FALSE;
   }
 

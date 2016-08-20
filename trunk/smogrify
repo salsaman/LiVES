@@ -23,7 +23,7 @@ $GUI_NAME="LiVES";
 # Do not change these except for testing !
 
 $background=1;
-$version="2.6.6";
+$version="2.6.7";
 #$dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -1562,7 +1562,6 @@ if (defined($ARGV[0])) {
             &get_file_info;
 ## here we set $mplay_command, $is_mpv
 
-
             if ($panic) {
                 unlink "$pidfile";
                 exit 1;
@@ -1576,14 +1575,14 @@ if (defined($ARGV[0])) {
                     $ss=" -start=$ARGV[5] ";
                 }
             }
-            $frames="";
+	    $stframes="";
             if (defined($ARGV[6]) && $ARGV[6] > 0) {
                 $nframes=$ARGV[6]++;
 # cf below, we remove 1st frame
                 if (!$is_mpv) {
-                    $frames=" -frames $ARGV[6] ";
+                    $stframes=" -frames $ARGV[6] ";
                 } else {
-                    $frames=" -frames=$ARGV[6] ";
+                    $stframes=" -frames=$ARGV[6] ";
                 }
             }
 
@@ -1624,14 +1623,11 @@ if (defined($ARGV[0])) {
                 $quality=int(100-$compression);
             }
 
-            $xframes=$frames;
-
             if ($file=~/:\/\//) {
                       $is_remote=2;
 #$wavhead=""; # need wav header, as user will probably finish by
 # quitting, thus we won't send full info
         }
-
 
 
     my $wavhead="nowaveheader";
@@ -1668,7 +1664,6 @@ if (defined($ARGV[0])) {
             $img_ext=$ximg_ext;
         }
         else {
-            $frames=$xframes;
 
             if ($achans eq "" || $achans eq "0") {
                 $channs="";
@@ -1716,16 +1711,16 @@ if (defined($ARGV[0])) {
 
             if ($withsound eq "0") {
 #video only
-                $syscom="$mplay_command -quiet $band $osd $img_fmt $threadopts -fps 1000000. $ss $frames $noframedrop -ao null \"$file\" $extra_params <$nulfile";
+                $syscom="$mplay_command -quiet $band $osd $img_fmt $threadopts -fps 1000000. $ss $stframes $noframedrop -ao null \"$file\" $extra_params <$nulfile";
             }
             elsif ($withsound eq "1") {
 #video and audio
-                $syscom=$mplay_command . " -quiet $band $osd -fps 1000000. $img_fmt $ss $threadopts $noframedrop $frames $audcom $channs $aformnew -mc 0"
+                $syscom=$mplay_command . " -quiet $band $osd -fps 1000000. $img_fmt $ss $threadopts $noframedrop $stframes $audcom $channs $aformnew -mc 0"
                         . "  \"$file\" $extra_params <$nulfile";
             }
             else {
 #audio only 
-                $syscom=$mplay_command . " -quiet $band -vo null $vcnull $ss $frames $audcom $aformnew $channs \"$file\" $extra_params <$nulfile";
+                $syscom=$mplay_command . " -quiet $band -vo null $vcnull $ss $stframes $audcom $aformnew $channs \"$file\" $extra_params <$nulfile";
             }
             if (defined($DEBUG_OPEN)) {
                 print STDERR "open command for $handle is: $syscom\n";
@@ -5842,7 +5837,6 @@ if ($mp_command eq "") {
     if ($type=~ m/^\[/) {
     $type=substr($type,1,-1);
     }
-
 }
 
 

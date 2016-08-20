@@ -194,7 +194,7 @@ typedef int lives_pgid_t;
 #define PLUGIN_COMPOUND_DIR "/share/lives/plugins/"
 #define PLUGIN_EXEC_DIR "/lives/plugins/"
 #define ICON_DIR "/share/lives/icons/"
-#define DESKTOP_ICON_DIR "/share/app-install/icons/"
+#define DESKTOP_ICON_DIR "/share/icons/hicolor/48x48/apps"
 #define DATA_DIR "/share/lives/"
 #define LIVES_CONFIG_DIR ".lives-dir/"
 #define LIVES_TMP_NAME "livestmp"

@@ -6048,15 +6048,11 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new(void) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_menu_item_new();
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
 #ifdef GUI_QT
   menuitem = new LiVESMenuItem(mainw->LiVES);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
   return menuitem;
 }
@@ -6067,15 +6063,11 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_menu_item_new_with_mnemonic(label);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
 #ifdef GUI_QT
   menuitem = new LiVESMenuItem(qmake_mnemonic(QString::fromUtf8(label)),mainw->LiVES);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
   return menuitem;
 }
@@ -6086,15 +6078,11 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_menu_item_new_with_label(label);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
 #ifdef GUI_QT
   menuitem = new LiVESMenuItem(QString::fromUtf8(label),mainw->LiVES);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
   return menuitem;
 }
@@ -6108,15 +6096,11 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label
 #else
   menuitem=gtk_image_menu_item_new_with_label(label);
 #endif
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
 #ifdef GUI_QT
   menuitem = new LiVESMenuItem(QString::fromUtf8(label),mainw->LiVES);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
   return menuitem;
 }
@@ -6130,15 +6114,11 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *la
 #else
   menuitem=gtk_image_menu_item_new_with_mnemonic(label);
 #endif
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
 #ifdef GUI_QT
   menuitem = new LiVESMenuItem(qmake_mnemonic(QString::fromUtf8(label)),mainw->LiVES);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
   return menuitem;
 }
@@ -6148,9 +6128,7 @@ LIVES_INLINE LiVESWidget *lives_radio_menu_item_new_with_label(LiVESSList *group
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_radio_menu_item_new_with_label(group,label);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
 #ifdef GUI_QT
   QActionGroup *qag;
@@ -6165,9 +6143,7 @@ LIVES_INLINE LiVESWidget *lives_radio_menu_item_new_with_label(LiVESSList *group
 
   xmenuitem->set_group(group);
   qag->addAction(static_cast<QAction *>(xmenuitem));
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
   menuitem = static_cast<LiVESWidget *>(xmenuitem);
 #endif
   return menuitem;
@@ -6191,15 +6167,11 @@ LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_label(const char *label
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_check_menu_item_new_with_label(label);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
 #ifdef GUI_QT
   menuitem = new LiVESCheckMenuItem(QString::fromUtf8(label),mainw->LiVES);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
   return menuitem;
 }
@@ -6210,15 +6182,11 @@ LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *la
 #ifdef GUI_GTK
   // TODO - deprecated
   menuitem=gtk_check_menu_item_new_with_mnemonic(label);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
 #ifdef GUI_QT
   menuitem = new LiVESCheckMenuItem(qmake_mnemonic(QString::fromUtf8(label)),mainw->LiVES);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
   return menuitem;
 }
@@ -6251,9 +6219,7 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock
 #else
   menuitem=gtk_image_menu_item_new_from_stock(stock_id,accel_group);
 #endif
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
 #ifdef GUI_QT
   char *xstock_id=lives_strdup(stock_id); // need to back this up as we will use translation functions
@@ -6271,9 +6237,7 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock
 
   menuitem = static_cast<LiVESWidget *>(xmenuitem);
 
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
+  lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
 #endif
   return menuitem;
 }
@@ -7479,9 +7443,7 @@ LiVESWidget *lives_standard_label_new(const char *text) {
 
   label=lives_label_new(text);
 
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
-  }
+  lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
 
   return label;
 }
@@ -7493,9 +7455,7 @@ LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidge
   label=lives_label_new("");
   lives_label_set_text_with_mnemonic(LIVES_LABEL(label),text);
 
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
-  }
+  lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
 
   if (mnemonic_widget!=NULL) lives_label_set_mnemonic_widget(LIVES_LABEL(label),mnemonic_widget);
 
@@ -7519,9 +7479,7 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
 
   if (invis) lives_frame_set_shadow_type(LIVES_FRAME(frame), LIVES_SHADOW_NONE);
 
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme(frame, LIVES_WIDGET_STATE_NORMAL);
-  }
+  lives_widget_apply_theme(frame, LIVES_WIDGET_STATE_NORMAL);
 
   if (xalign>=0.) lives_frame_set_label_align(LIVES_FRAME(frame),xalign,0.5);
 
@@ -7561,9 +7519,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 
     widget_opts.last_label=label;
 
-    if (widget_opts.apply_theme) {
-      lives_widget_apply_theme(eventbox,LIVES_WIDGET_STATE_NORMAL);
-    }
+    lives_widget_apply_theme(eventbox,LIVES_WIDGET_STATE_NORMAL);
   }
 
   if (box!=NULL) {
@@ -7635,9 +7591,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
                          LIVES_GUI_CALLBACK(label_act_toggle),
                          radiobutton);
 
-    if (widget_opts.apply_theme) {
-      lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
-    }
+    lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
   }
 
 
@@ -7729,9 +7683,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,spinbutton);
     lives_container_add(LIVES_CONTAINER(eventbox),label);
 
-    if (widget_opts.apply_theme) {
-      lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
-    }
+    lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
   }
 
   if (box!=NULL) {
@@ -7804,9 +7756,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, boolean use_mnemoni
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,combo);
     lives_container_add(LIVES_CONTAINER(eventbox),label);
 
-    if (widget_opts.apply_theme) {
-      lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
-    }
+    lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
   }
 
   if (box!=NULL) {
@@ -7943,13 +7893,12 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   lives_widget_set_hexpand(dialog,TRUE);
   lives_widget_set_vexpand(dialog,TRUE);
 
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
 
 #if !GTK_CHECK_VERSION(3,0,0)
-    lives_dialog_set_has_separator(LIVES_DIALOG(dialog),FALSE);
+  lives_dialog_set_has_separator(LIVES_DIALOG(dialog),FALSE);
 #endif
-  }
+
 
   if (widget_opts.apply_theme) {
     funkify_dialog(dialog);
@@ -8070,9 +8019,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
     lives_widget_set_minimum_size(scrolledwindow, width, height);
 #endif
 
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme(swchild, LIVES_WIDGET_STATE_NORMAL);
-  }
+  lives_widget_apply_theme(swchild, LIVES_WIDGET_STATE_NORMAL);
 
   if (widget_opts.expand!=LIVES_EXPAND_NONE) {
     lives_widget_set_hexpand(swchild,TRUE);
@@ -8105,20 +8052,18 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic, LiVESBox *parent, LiVESWidget *child) {
   LiVESWidget *expander=NULL;
 
-
 #ifdef GUI_GTK
+  LiVESWidget *label;
   if (use_mnemonic)
     expander=lives_expander_new_with_mnemonic(ltext);
   else
     expander=lives_expander_new(ltext);
 
-  if (widget_opts.apply_theme) {
-    LiVESWidget *label=lives_expander_get_label_widget(LIVES_EXPANDER(expander));
-    lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
-    lives_widget_apply_theme(label, LIVES_WIDGET_STATE_PRELIGHT);
-    lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_PRELIGHT);
-    lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_NORMAL);
-  }
+  label=lives_expander_get_label_widget(LIVES_EXPANDER(expander));
+  lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(label, LIVES_WIDGET_STATE_PRELIGHT);
+  lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_PRELIGHT);
+  lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_NORMAL);
 
 #ifdef GUI_GTK
   lives_container_forall(LIVES_CONTAINER(expander),set_child_colour_internal,LIVES_INT_TO_POINTER(TRUE));
@@ -8133,6 +8078,36 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
 
   return expander;
 }
+
+
+
+LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbuff) {
+  LiVESWidget *textview;
+
+  if (tbuff==NULL)
+    textview=lives_text_view_new();
+  else
+    textview=lives_text_view_new_with_buffer(tbuff);
+
+  
+  lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
+  lives_text_view_set_wrap_mode(LIVES_TEXT_VIEW(textview), LIVES_WRAP_WORD);
+  lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textview), FALSE);
+
+  if (text!=NULL) {
+    lives_text_view_set_text(LIVES_TEXT_VIEW(textview),text,-1);
+    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(textview));
+  }
+
+  lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
+
+  lives_text_view_set_justification(LIVES_TEXT_VIEW(textview), widget_opts.justify);
+    
+  return textview;
+
+}
+
+
 
 
 
@@ -8531,6 +8506,7 @@ LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 
 
 void lives_widget_apply_theme(LiVESWidget *widget, LiVESWidgetState state) {
+  if (!widget_opts.apply_theme) return;
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(widget, state, &palette->normal_fore);
     lives_widget_set_bg_color(widget, state, &palette->normal_back);
@@ -8539,6 +8515,7 @@ void lives_widget_apply_theme(LiVESWidget *widget, LiVESWidgetState state) {
 
 
 void lives_widget_apply_theme2(LiVESWidget *widget, LiVESWidgetState state, boolean set_fg) {
+  if (!widget_opts.apply_theme) return;
   if (palette->style&STYLE_1) {
     if (set_fg)
       lives_widget_set_fg_color(widget, state, &palette->menu_and_bars_fore);
@@ -8546,6 +8523,14 @@ void lives_widget_apply_theme2(LiVESWidget *widget, LiVESWidgetState state, bool
   }
 }
 
+
+void lives_widget_apply_theme3(LiVESWidget *widget, LiVESWidgetState state) {
+  if (!widget_opts.apply_theme) return;
+  if (palette->style&STYLE_1) {
+    lives_widget_set_text_color(widget, state, &palette->info_text);
+    lives_widget_set_base_color(widget, state, &palette->info_base);
+  }
+}
 
 
 boolean lives_entry_set_completion_from_list(LiVESEntry *entry, LiVESList *xlist) {
@@ -9098,9 +9083,7 @@ LiVESWidget *add_hsep_to_box(LiVESBox *box) {
   lives_box_pack_start(box, hseparator, FALSE, FALSE, widget_opts.packing_width>>1);
   if (!widget_opts.no_gui)
     lives_widget_show(hseparator);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_NORMAL);
-  }
+  lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_NORMAL);
   return hseparator;
 }
 
@@ -9110,9 +9093,7 @@ LiVESWidget *add_vsep_to_box(LiVESBox *box) {
   lives_box_pack_start(box, vseparator, FALSE, FALSE, widget_opts.packing_height>>1);
   if (!widget_opts.no_gui)
     lives_widget_show(vseparator);
-  if (widget_opts.apply_theme) {
-    lives_widget_apply_theme(vseparator, LIVES_WIDGET_STATE_NORMAL);
-  }
+  lives_widget_apply_theme(vseparator, LIVES_WIDGET_STATE_NORMAL);
   return vseparator;
 }
 

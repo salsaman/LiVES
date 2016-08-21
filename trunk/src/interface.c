@@ -293,34 +293,21 @@ xprocess *create_processing(const char *text) {
 
 
 static LiVESWidget *vid_text_view_new(void) {
-  LiVESWidget *textview=lives_text_view_new();
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-    lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
-  }
-
+  LiVESWidget *textview;
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
+  textview=lives_standard_text_view_new(NULL,NULL);
+  widget_opts.justify=widget_opts.default_justify;
   lives_widget_set_size_request(textview, TB_WIDTH, TB_HEIGHT_VID);
-  lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
-  lives_text_view_set_justification(LIVES_TEXT_VIEW(textview), LIVES_JUSTIFY_CENTER);
-  lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textview), FALSE);
-
   return textview;
 }
 
+
 static LiVESWidget *aud_text_view_new(void) {
-  LiVESWidget *textview=lives_text_view_new();
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-    lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
-  }
-
+  LiVESWidget *textview;
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
+  textview=lives_standard_text_view_new(NULL,NULL);
+  widget_opts.justify=widget_opts.default_justify;
   lives_widget_set_size_request(textview, TB_WIDTH, TB_HEIGHT_AUD);
-  lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
-  lives_text_view_set_justification(LIVES_TEXT_VIEW(textview), LIVES_JUSTIFY_CENTER);
-  lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textview), FALSE);
-
   return textview;
 }
 
@@ -690,25 +677,19 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
-  woat=widget_opts.apply_theme;
-  widget_opts.apply_theme=FALSE;
   textwindow->textview=textwindow->table=NULL;
 
-  if (textbuffer!=NULL) textwindow->textview = lives_text_view_new_with_buffer(textbuffer);
-  else if (text!=NULL) textwindow->textview = lives_text_view_new();
+  if (textbuffer!=NULL||text!=NULL) textwindow->textview = lives_standard_text_view_new(text,textbuffer);
+  
+  woat=widget_opts.apply_theme;
+  widget_opts.apply_theme=FALSE;
+
   if (textwindow->textview!=NULL) {
     scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->textview);
     if (palette->style&STYLE_1) {
-      lives_widget_set_base_color(textwindow->textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-      lives_widget_set_text_color(textwindow->textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
       lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     }
-
-    if (text!=NULL) {
-      lives_text_view_set_text(LIVES_TEXT_VIEW(textwindow->textview), text, -1);
-    }
-    lives_text_view_set_editable(LIVES_TEXT_VIEW(textwindow->textview), FALSE);
-    lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textwindow->textview), FALSE);
+    
   } else {
     textwindow->table=lives_table_new(1, 1, FALSE);
     scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->table);
@@ -2664,7 +2645,7 @@ static boolean exposetview(LiVESWidget *widget, lives_painter_t *cr, livespointe
 
 
 LiVESTextView *create_output_textview(void) {
-  LiVESWidget *textview=lives_text_view_new();
+  LiVESWidget *textview=lives_standard_text_view_new(NULL,NULL);
 
 #ifdef GTK_TEXT_VIEW_DRAW_BUG
   expt=lives_signal_connect(LIVES_GUI_OBJECT(textview), LIVES_WIDGET_EXPOSE_EVENT,
@@ -2672,14 +2653,6 @@ LiVESTextView *create_output_textview(void) {
                             NULL);
 #endif
 
-  lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-    lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
-  }
-
-  //lives_object_ref_sink(textview);
   lives_object_ref(textview);
   return LIVES_TEXT_VIEW(textview);
 }

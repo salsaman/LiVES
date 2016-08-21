@@ -1733,19 +1733,15 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
     label = lives_standard_label_new(_("Description: "));
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_height);
 
-    textview = lives_text_view_new();
+    textview = lives_standard_text_view_new(filter_description,NULL);
 
     if (palette->style&STYLE_1) {
       lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
       lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
 
-    lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
-    lives_text_view_set_wrap_mode(LIVES_TEXT_VIEW(textview), LIVES_WRAP_WORD);
-    lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textview), FALSE);
-
-    lives_text_view_set_text(LIVES_TEXT_VIEW(textview), filter_description,-1);
     lives_box_pack_start(LIVES_BOX(hbox), textview, TRUE, TRUE, widget_opts.packing_height);
+
   }
 
   if (has_license) {

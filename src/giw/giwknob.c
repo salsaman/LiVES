@@ -326,7 +326,9 @@ giw_knob_realize(GtkWidget *widget) {
   stylecon=gtk_style_context_new();
   gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
   gtk_style_context_set_state(stylecon,GTK_STATE_FLAG_ACTIVE);
-  gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+    gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
+  G_GNUC_END_IGNORE_DEPRECATIONS
 #else
   widget->style = gtk_style_attach(widget->style, lives_widget_get_xwindow(widget));
   gtk_style_set_background(widget->style, lives_widget_get_xwindow(widget), GTK_STATE_ACTIVE);
@@ -876,7 +878,9 @@ giw_knob_set_value(GiwKnob *knob,
   if (value!=gtk_adjustment_get_value(knob->adjustment)) {
     knob_set_value(knob, value);
     g_return_if_fail(knob->adjustment != NULL);
+#if !GTK_CHECK_VERSION(3,18,0)
     gtk_adjustment_value_changed(knob->adjustment);
+#endif
   }
 }
 
@@ -908,9 +912,10 @@ giw_knob_set_adjustment(GiwKnob *knob,
                                   (GCallback) giw_knob_adjustment_value_changed,
                                   (gpointer) knob);
 
+#if !GTK_CHECK_VERSION(3,18,0)
   gtk_adjustment_value_changed(knob->adjustment);
-
   gtk_adjustment_changed(knob->adjustment);
+#endif
 }
 
 GtkAdjustment *
@@ -1050,7 +1055,9 @@ knob_update_mouse(GiwKnob *knob, gint x, gint y) {
   if (knob->angle != atan2(yc-y, x-xc)) {
     knob_set_value(knob, knob_calculate_value_with_angle(knob, atan2(yc-y, x-xc)));
     g_return_if_fail(knob->adjustment != NULL);
+#if !GTK_CHECK_VERSION(3,18,0)
     gtk_adjustment_value_changed(knob->adjustment);
+#endif
   }
 }
 

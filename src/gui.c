@@ -134,28 +134,16 @@ void add_message_scroller(LiVESWidget *conter) {
 
   lives_container_add(LIVES_CONTAINER(conter), mainw->scrolledwindow);
 
-  mainw->textview1 = lives_text_view_new();
+  mainw->textview1 = lives_standard_text_view_new(all_text,NULL);
   lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
 
   if (mainw->is_ready)
     lives_widget_show_all(mainw->scrolledwindow);
 
-  tbuff=lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
-  if (tbuff!=NULL && all_text!=NULL) {
-    lives_text_buffer_set_text(tbuff,all_text,-1);
-    lives_free(all_text);
-    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
-  }
+  if (all_text!=NULL) lives_free(all_text);
 
   lives_widget_set_size_request(mainw->textview1, -1, MSG_AREA_HEIGHT);
-  lives_text_view_set_editable(LIVES_TEXT_VIEW(mainw->textview1), FALSE);
-  lives_text_view_set_wrap_mode(LIVES_TEXT_VIEW(mainw->textview1), LIVES_WRAP_WORD);
-  lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(mainw->textview1), FALSE);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_base_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-    lives_widget_set_text_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
-  }
+    
 }
 
 

@@ -758,6 +758,8 @@ LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir)
 LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boolean use_mnemonic, boolean use_alpha, lives_colRGBA64_t *rgba,
     LiVESWidget **sb_red, LiVESWidget **sb_green, LiVESWidget **sb_blue, LiVESWidget **sb_alpha);
 
+LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbuff);
+
 
 LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x, int y);
 
@@ -765,6 +767,7 @@ LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x
 
 void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state); // normal theme colours
 void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state, boolean set_fg); // menu and bars colours
+void lives_widget_apply_theme3(LiVESWidget *, LiVESWidgetState state); // info base/text
 
 boolean global_recent_manager_add(const char *file_name);
 

@@ -116,7 +116,6 @@ void load_theme_images(void) {
 
 
 void add_message_scroller(LiVESWidget *conter) {
-  LiVESTextBuffer *tbuff=NULL;
   char *all_text=NULL;
 
   if (mainw->textview1!=NULL) {
@@ -4166,8 +4165,13 @@ char *get_menu_name(lives_clip_t *sfile) {
 
 void add_to_clipmenu(void) {
   // TODO - indicate "opening"
-  char *tmp,*fname;
+  char *fname;
 
+#ifdef TEST_NOTIFY
+  char *tmp,*detail;
+#endif
+
+  
 #ifndef GTK_RADIO_MENU_BUG
   cfile->menuentry = lives_radio_menu_item_new_with_label(mainw->clips_group, tmp=get_menu_name(cfile));
   mainw->clips_group=lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));
@@ -4192,7 +4196,7 @@ void add_to_clipmenu(void) {
   cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
 
 #ifdef TEST_NOTIFY
-  char *detail=lives_strdup_printf(_("'LiVES opened the file' '%s'"),fname);
+  detail=lives_strdup_printf(_("'LiVES opened the file' '%s'"),fname);
   tmp=lives_strdup_printf("notify-send %s",detail);
   lives_system(tmp,TRUE);
   lives_free(tmp);

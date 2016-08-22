@@ -113,6 +113,12 @@ static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits,
 #endif
 
 
+#if !HAVE_AV_GET_BITS_PER_SAMPLE
+#define av_get_bits_per_sample(a) (av_get_bytes_per_sample(a) * 8)
+#endif
+
+
+
 #endif // HAVE_LIBAV_LIBS
 
 #endif // HAVE_LIBAV_HELPER_H

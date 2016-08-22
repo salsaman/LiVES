@@ -1423,9 +1423,9 @@ static void lives_init(_ign_opts *ign_opts) {
         LiVESList *ofmt_all=NULL;
         char **array;
         if (capable->python_version>=3000000)
-          lives_snprintf(prefs->encoder.name,64,"%s","multi_encoder3");
+          lives_snprintf(prefs->encoder.name,64,"%s",MULTI_ENCODER3_NAME);
         else
-          lives_snprintf(prefs->encoder.name,64,"%s","multi_encoder");
+          lives_snprintf(prefs->encoder.name,64,"%s",MULTI_ENCODER_NAME);
 
         // need to change the output format
 
@@ -1437,16 +1437,16 @@ static void lives_init(_ign_opts *ign_opts) {
             if (get_token_count((char *)lives_list_nth_data(ofmt_all,i),'|')>2) {
               array=lives_strsplit((char *)lives_list_nth_data(ofmt_all,i),"|",-1);
 
-              if (!strcmp(array[0],"hi-theora")) {
+              if (!strcmp(array[0],HI_THEORA_FORMAT)) {
                 lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
                 lives_strfreev(array);
                 break;
               }
-              if (!strcmp(array[0],"hi-mpeg")) {
+              if (!strcmp(array[0],HI_MPEG_FORMAT)) {
                 lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
-              } else if (!strcmp(array[0],"hi_h-mkv")&&strcmp(prefs->encoder.of_name,"hi-mpeg")) {
+              } else if (!strcmp(array[0],HI_H_MKV_FORMAT)&&strcmp(prefs->encoder.of_name,HI_MPEG_FORMAT)) {
                 lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
-              } else if (!strcmp(array[0],"hi_h-avi")&&strcmp(prefs->encoder.of_name,"hi-mpeg")&&strcmp(prefs->encoder.of_name,"hi_h-mkv")) {
+              } else if (!strcmp(array[0],HI_H_AVI_FORMAT)&&strcmp(prefs->encoder.of_name,HI_MPEG_FORMAT)&&strcmp(prefs->encoder.of_name,HI_H_MKV_FORMAT)) {
                 lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
               } else if (!strlen(prefs->encoder.of_name)) {
                 lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
@@ -1846,38 +1846,37 @@ static void lives_init(_ign_opts *ign_opts) {
 }
 
 
+static void show_detected_or_not(boolean cap, const char *pname) {
+  char *msg;
+  if (cap) msg=lives_strdup_printf(_("%s...detected... "),pname);
+  else msg=lives_strdup_printf(_("%s...NOT DETECTED... "),pname);
+  d_print(msg);
+  lives_free(msg);
+}
 
+
+ 
 void do_start_messages(void) {
   char *endian;
 
   d_print("\n");
-  d_print(_("Checking optional dependencies:"));
-  if (capable->has_mplayer) d_print(_("mplayer...detected..."));
-  else d_print(_("mplayer...NOT DETECTED..."));
-  if (capable->has_mplayer2) d_print(_("mplayer2...detected..."));
-  else d_print(_("mplayer2...NOT DETECTED..."));
+  d_print(_("Checking optional dependencies: "));
+
+
+  show_detected_or_not(capable->has_mplayer,"mplayer");
+  show_detected_or_not(capable->has_mplayer2,"mplayer2");
 #ifdef ALLOW_MPV
-  if (capable->has_mpv) d_print(_("mpv...detected..."));
-  else d_print(_("mpv...NOT DETECTED..."));
+  show_detected_or_not(capable->has_mpv,"mpv");
 #endif
-  if (capable->has_convert) d_print(_("convert...detected..."));
-  else d_print(_("convert...NOT DETECTED..."));
-  if (capable->has_composite) d_print(_("composite...detected..."));
-  else d_print(_("composite...NOT DETECTED..."));
-  if (capable->has_sox_sox) d_print(_("sox...detected\n"));
-  else d_print(_("sox...NOT DETECTED\n"));
-  if (capable->has_cdda2wav) d_print(_("cdda2wav/icedax...detected..."));
-  else d_print(_("cdda2wav/icedax...NOT DETECTED..."));
-  if (capable->has_jackd) d_print(_("jackd...detected..."));
-  else d_print(_("jackd...NOT DETECTED..."));
-  if (capable->has_pulse_audio) d_print(_("pulse audio...detected..."));
-  else d_print(_("pulse audio...NOT DETECTED..."));
-  if (capable->has_python) d_print(_("python...detected..."));
-  else d_print(_("python...NOT DETECTED..."));
-  if (capable->has_dvgrab) d_print(_("dvgrab...detected..."));
-  else d_print(_("dvgrab...NOT DETECTED..."));
-  if (capable->has_xwininfo) d_print(_("xwininfo...detected..."));
-  else d_print(_("xwininfo...NOT DETECTED..."));
+  show_detected_or_not(capable->has_convert,"convert");
+  show_detected_or_not(capable->has_composite,"composite");
+  show_detected_or_not(capable->has_sox_sox,"sox");
+  show_detected_or_not(capable->has_cdda2wav,"cdda2wav/icedax");
+  show_detected_or_not(capable->has_jackd,"jackd");
+  show_detected_or_not(capable->has_pulse_audio,"pulse audio");
+  show_detected_or_not(capable->has_python,"python");
+  show_detected_or_not(capable->has_dvgrab,"dvgrab");
+  show_detected_or_not(capable->has_xwininfo,"xwininfo");
 
 #ifdef GDK_WINDOWING_X11
   prefs->wm=lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));

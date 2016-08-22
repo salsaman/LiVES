@@ -138,6 +138,15 @@ const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx);
 
 // encoder plugins
 
+#define MULTI_ENCODER_NAME "multi_encoder"
+#define MULTI_ENCODER3_NAME "multi_encoder3"
+
+#define HI_THEORA_FORMAT "hi-theora"
+#define HI_MPEG_FORMAT "hi-mpg"
+#define HI_H_MKV_FORMAT "hi_h-mkv"
+#define HI_H_AVI_FORMAT "hi_h-avi"
+
+
 void do_plugin_encoder_error(const char *plugin_name_or_null);
 
 LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext);

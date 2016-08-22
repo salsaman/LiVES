@@ -81,7 +81,7 @@ static int stream_peek(int fd, unsigned char *str, size_t len) {
 
 
 void get_samps_and_signed(enum AVSampleFormat sfmt, int *asamps, boolean *asigned) {
-  *asamps=av_get_bytes_per_sample(sfmt)*8;
+  *asamps=av_get_bits_per_sample(sfmt);
 
   switch (sfmt) {
   case AV_SAMPLE_FMT_U8:
@@ -325,8 +325,25 @@ skip_probe:
 
 skip_init:
     s = priv->ic->streams[i];
-    cc = s->codec;
 
+
+#ifdef API_3_1
+    cc = avcodec_alloc_context3(NULL);
+    if (!cc) {
+      fprintf(stderr,"avcodec_decoder: out of memory\n");
+      return FALSE;
+    }
+ 
+    ret = avcodec_parameters_to_context(cc, s->codecpar);
+    if (ret < 0) {
+      fprintf(stderr,"avcodec_decoder: avparms to context failed\n");
+      return FALSE;
+    }
+
+#else
+ cc = s->codec;
+#endif
+    
     // vlc_fourcc_t fcc;
     //const char *psz_type = "unknown";
 
@@ -640,8 +657,10 @@ static void detach_stream(lives_clip_data_t *cdata) {
   close(priv->fd);
 
   // will close and free the context
-  if (priv->ic !=NULL) av_close_input_file(priv->ic);
-
+  if (priv->ic !=NULL) {
+    avformat_close_input(&priv->ic);
+  }
+  
   if (cdata->palettes!=NULL) free(cdata->palettes);
   cdata->palettes=NULL;
 
@@ -945,7 +964,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   double time;
 
   AVStream *s = priv->ic->streams[priv->vstream];
-  AVCodecContext *cc = s->codec;
+  AVCodecContext *cc;
 
   int64_t target_pts, MyPts, seek_target=10000000000;
   int64_t timex;
@@ -969,6 +988,26 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (tframe<0||tframe>=cdata->nframes||cdata->fps==0.) return FALSE;
 
+
+
+#ifdef API_3_1
+  cc = avcodec_alloc_context3(NULL);
+  if (!cc) {
+    fprintf(stderr,"avcodec_decoder: out of memory\n");
+    return FALSE;
+  }
+ 
+  ret = avcodec_parameters_to_context(cc, s->codecpar);
+  if (ret < 0) {
+    fprintf(stderr,"avcodec_decoder: avparms to context failed\n");
+    return FALSE;
+  }
+
+#else
+  cc = s->codec;
+#endif
+
+  
   //cc->get_buffer = our_get_buffer;
   //cc->release_buffer = our_release_buffer;
 
@@ -1063,7 +1102,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
           fprintf(stderr,"ret was %d for tframe %ld\n",ret,tframe);
 #endif
           if (ret<0) {
-            av_packet_unref(&priv->packet);
             priv->needs_packet=TRUE;
             priv->last_frame=tframe;
             if (pixel_data==NULL) return FALSE;
@@ -1103,9 +1141,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #endif
 
       if (priv->packet.size==0) {
-#if HAVE_AVPACKET_UNREF
-        av_packet_unref(&priv->packet);
-#endif
         priv->needs_packet=TRUE;
       }
 

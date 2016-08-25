@@ -86,13 +86,21 @@ boolean save_frame_index(int fileno) {
 
 
 // load frame_index from disk
-boolean load_frame_index(int fileno) {
-  int fd,i;
-  int retval;
-  char *fname;
+// returns -1 (error)
+// or maxframe pointed to in clip
+
+int load_frame_index(int fileno) {
   lives_clip_t *sfile=mainw->files[fileno];
 
-  if (sfile==NULL||sfile->frame_index!=NULL) return FALSE;
+  char *fname;
+
+  int fd;
+  int retval;
+  int maxframe=0;
+  
+  register int i;
+
+  if (sfile==NULL||sfile->frame_index!=NULL) return -1;
 
   lives_freep((void **)&sfile->frame_index);
 
@@ -100,7 +108,7 @@ boolean load_frame_index(int fileno) {
 
   if (!lives_file_test(fname,LIVES_FILE_TEST_EXISTS)) {
     lives_free(fname);
-    return FALSE;
+    return 0;
   }
 
 
@@ -113,7 +121,7 @@ boolean load_frame_index(int fileno) {
       retval=do_read_failed_error_s_with_retry(fname,lives_strerror(errno),NULL);
       if (retval==LIVES_RESPONSE_CANCEL) {
         lives_free(fname);
-        return FALSE;
+        return -1;
       }
     } else {
 
@@ -123,6 +131,7 @@ boolean load_frame_index(int fileno) {
       for (i=0; i<sfile->frames; i++) {
         lives_read_le_buffered(fd,&sfile->frame_index[i],4,FALSE);
         if (mainw->read_failed) break;
+	if (sfile->frame_index[i]>maxframe) maxframe=sfile->frame_index[i];
       }
 
       lives_close_buffered(fd);
@@ -137,7 +146,7 @@ boolean load_frame_index(int fileno) {
 
   lives_free(fname);
 
-  return TRUE;
+  return maxframe;
 }
 
 

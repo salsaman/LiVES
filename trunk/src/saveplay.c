@@ -3177,7 +3177,7 @@ void play_file(void) {
 
   mainw->record_paused=mainw->record_starting=FALSE;
 
-  if (!mainw->preview&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
+  if (!mainw->preview&&mainw->current_file>=1&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
     mainw->osc_block=TRUE;
     weed_generator_end((weed_plant_t *)cfile->ext_src);
     mainw->osc_block=FALSE;

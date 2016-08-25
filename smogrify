@@ -5549,7 +5549,10 @@ sub get_mplayer_info {
             };
             $fps=smog_system_direct("grep ID_VIDEO_FPS \"$file_ident\" 2>$nulfile");
             $fps=(split("=",(split("\n",$fps))[0]))[1];
-            chomp($fps);
+            $fps=trim($fps);
+	    if ($fps eq "nan" or $fps eq "-nan") {
+		$fps=0.;
+	    }
 
             if (! -f $file_ident) {
                 return;
@@ -5659,6 +5662,14 @@ sub get_mplayer_info {
     }
 }
 
+
+sub trim {
+    ## trim whitespace from beginning and end
+    my $str=shift;
+    $str =~ s/^\s+//;
+    $str =~ s/\s+$//;
+    $str;
+}
 
 sub get_file_info {
 ## we will set the following if possible:

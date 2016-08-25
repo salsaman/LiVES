@@ -5433,7 +5433,7 @@ lives_cancel_t check_for_bad_ffmpeg(void) {
   fcount=cfile->frames;
 
   for (i=1; i<=fcount; i++) {
-    fname_next=make_image_file_name(cfile,i,prefs->image_ext);
+    fname_next=make_image_file_name(cfile,i,get_image_ext_for_type(cfile->img_type));
     if (sget_file_size(fname_next)>0) {
       lives_free(fname_next);
       maybeok=TRUE;

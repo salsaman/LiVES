@@ -1027,7 +1027,7 @@ void do_text_window(const char *title, const char *text);
 boolean read_file_details(const char *file_name, boolean only_check_for_audio);
 boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
-boolean reload_clip(int fileno);
+boolean reload_clip(int fileno,int maxframe);
 void reget_afilesize(int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
 ulong open_file(const char *filename);

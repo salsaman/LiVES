@@ -5200,14 +5200,15 @@ void recover_layout_map(int numclips) {
 
 
 
-boolean reload_clip(int fileno) {
+boolean reload_clip(int fileno, int maxframe) {
+  // reload clip -- for CLIP_TYPE_FILE
   // cd to clip directory - so decoder plugins can write temp files
 
   lives_clip_t *sfile=mainw->files[fileno];
 
-  char *ppath=lives_build_filename(prefs->tmpdir,sfile->handle,NULL);
-
   const lives_clip_data_t *cdata=NULL;
+
+  char *ppath=lives_build_filename(prefs->tmpdir,sfile->handle,NULL);
 
   lives_clip_data_t *fake_cdata=(lives_clip_data_t *)lives_calloc(sizeof(lives_clip_data_t),1);
 
@@ -5221,7 +5222,7 @@ boolean reload_clip(int fileno) {
 
     fake_cdata->URI=lives_strdup(sfile->file_name);
     fake_cdata->fps=sfile->fps;
-    fake_cdata->nframes=sfile->frames;
+    fake_cdata->nframes=maxframe;
 
     if ((cdata=get_decoder_cdata(fileno,prefs->disabled_decoders,fake_cdata->fps!=0.?fake_cdata:NULL))==NULL) {
       if (mainw->error) {
@@ -5340,6 +5341,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   int retval;
   int new_file,clipnum=0;
+  int maxframe;
 
   boolean last_was_normal_file=FALSE;
   boolean is_scrap;
@@ -5559,9 +5561,9 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       if (mainw->current_file<1) continue;
 
-      if (load_frame_index(mainw->current_file)) {
+      if ((maxframe=load_frame_index(mainw->current_file))) {
         // CLIP_TYPE_FILE
-        if (!reload_clip(mainw->current_file)) continue;
+        if (!reload_clip(mainw->current_file,maxframe)) continue;
       } else {
         // CLIP_TYPE_DISK
         if (is_scrap||!check_frame_count(mainw->current_file)) {

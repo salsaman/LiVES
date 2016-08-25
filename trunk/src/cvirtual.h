@@ -1,6 +1,6 @@
 // cvirtual.h
 // LiVES
-// (c) G. Finch 2008 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2008 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -13,7 +13,7 @@
 
 void create_frame_index(int fileno, boolean init, int start_offset, int nframes);
 boolean save_frame_index(int fileno);
-boolean load_frame_index(int fileno) WARN_UNUSED;
+int load_frame_index(int fileno) WARN_UNUSED;
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata);
 
 boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_progress, LiVESPixbuf **pbr) WARN_UNUSED;

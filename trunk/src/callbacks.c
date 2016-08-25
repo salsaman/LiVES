@@ -5014,6 +5014,7 @@ boolean reload_set(const char *set_name) {
   int last_file=-1,new_file=-1;
   int current_file=mainw->current_file;
   int clipnum=0;
+  int maxframe;
 
   memset(mainw->set_name,0,1);
 
@@ -5217,9 +5218,9 @@ boolean reload_set(const char *set_name) {
     // if the clip has a frame_index file, then it is CLIP_TYPE_FILE
     // and we must load the frame_index and locate a suitable decoder plugin
 
-    if (load_frame_index(mainw->current_file)) {
+    if ((maxframe=load_frame_index(mainw->current_file))) {
       // CLIP_TYPE_FILE
-      if (!reload_clip(mainw->current_file)) continue;
+      if (!reload_clip(mainw->current_file,maxframe)) continue;
     } else {
       // CLIP_TYPE_DISK
       if (!check_frame_count(mainw->current_file)) {

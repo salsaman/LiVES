@@ -3498,7 +3498,7 @@ lives_render_error_t render_events(boolean reset) {
             layer=weed_plant_new(WEED_PLANT_CHANNEL);
             weed_set_int_value(layer,WEED_LEAF_CLIP,mainw->clip_index[scrap_track]);
             weed_set_int_value(layer,WEED_LEAF_FRAME,mainw->frame_index[scrap_track]);
-            if (!pull_frame(layer,prefs->image_ext,tc)) {
+            if (!pull_frame(layer,get_image_ext_for_type(cfile->img_type),tc)) {
               weed_plant_free(layer);
               layer=NULL;
             }
@@ -4326,6 +4326,10 @@ boolean render_to_clip(boolean new_clip) {
   cfile->changed=TRUE;
   mainw->effects_paused=FALSE;
 
+  if (new_clip) {
+    cfile->img_type=IMG_TYPE_BEST; // override the pref
+  }
+
   prefs->render_audio=rendaud;
 
   init_track_decoders();
@@ -4347,8 +4351,6 @@ boolean render_to_clip(boolean new_clip) {
       int old_file=current_file;
       cfile->start=1;
       cfile->end=cfile->frames;
-
-      cfile->img_type=IMG_TYPE_BEST; // override the pref
 
       set_undoable(NULL,FALSE);
       add_to_clipmenu();

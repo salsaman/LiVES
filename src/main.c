@@ -4462,6 +4462,8 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   boolean is_png = !png_sig_cmp(buff, 0, bsize);
 
   float screen_gamma=SCREEN_GAMMA;
+  float pref_gamma = 2.4; // TODO ***: make adjustable
+
   double file_gamma;
 
   int width, height;
@@ -4498,14 +4500,14 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
   // progressive read calls png_row_callback on each row
   if (prog) png_set_read_status_fn(png_ptr, png_row_callback);
-
+  
 #if PNG_LIBPNG_VER >= 10504
   png_set_alpha_mode(png_ptr, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
 #endif
   if (png_get_gAMA(png_ptr, info_ptr, &file_gamma))
     png_set_gamma(png_ptr, screen_gamma, file_gamma);
-  else
-    png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
+  else 
+    png_set_gamma(png_ptr, pref_gamma, 1./screen_gamma);
 
   // read header info
   png_read_info(png_ptr, info_ptr);
@@ -4925,6 +4927,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
     clip_type=sfile->clip_type;
   }
 
+
   switch (clip_type) {
   case CLIP_TYPE_DISK:
   case CLIP_TYPE_FILE:
@@ -5042,6 +5045,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         // pull frame from decoded images
         boolean ret;
         char *fname=make_image_file_name(sfile,frame,image_ext);
+	g_print("HERE %d %d %s %s\n",width,height,fname,image_ext);
         if (height*width==0) {
           ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext);
         } else {
@@ -5705,7 +5709,7 @@ void load_frame_image(int frame) {
       // play preview
       if (cfile->opening||(cfile->next_event!=NULL&&cfile->proc_ptr==NULL)) {
 
-        fname_next=make_image_file_name(cfile,frame+1,prefs->image_ext);
+        fname_next=make_image_file_name(cfile,frame+1,get_image_ext_for_type(cfile->img_type));
 
         if (!mainw->fs&&prefs->show_framecount&&!mainw->is_rendering) {
           lives_freep((void **)&framecount);
@@ -5732,7 +5736,7 @@ void load_frame_image(int frame) {
         }
       } else {
         if (mainw->is_rendering||mainw->is_generating) {
-          fname_next=make_image_file_name(cfile,frame+1,prefs->image_ext);
+          fname_next=make_image_file_name(cfile,frame+1,get_image_ext_for_type(cfile->img_type));
         } else {
           if (!mainw->keep_pre) {
             img_ext=LIVES_FILE_EXT_MGK;
@@ -6629,17 +6633,14 @@ void load_frame_image(int frame) {
       QPixmap qp = qscreen->grabWindow(mainw->foreign_id, 0, 0, xwidth, xheight);
       if (0) { // TODO
 #endif
-        tmp=make_image_file_name(cfile,frame,prefs->image_ext);
+        tmp=make_image_file_name(cfile,frame,get_image_ext_for_type(cfile->img_type));
         lives_snprintf(fname,PATH_MAX,"%s",tmp);
         lives_free(tmp);
 
         do {
           if (gerror!=NULL) lives_error_free(gerror);
-          if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)) lives_pixbuf_save(pixbuf, fname, IMG_TYPE_JPEG, 100, FALSE, &gerror);
-          else if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG))
-            lives_pixbuf_save(pixbuf, fname, IMG_TYPE_PNG, 100, FALSE, &gerror);
+          lives_pixbuf_save(pixbuf, fname, cfile->img_type, 100, FALSE, &gerror);
         } while (gerror!=NULL);
-
 
         lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0);
         lives_painter_paint(cr);

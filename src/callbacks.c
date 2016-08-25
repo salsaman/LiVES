@@ -10336,7 +10336,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // start another copy of LiVES and wait for it to return values
   com=lives_strdup_printf("%s -capture %d %u %d %d %s %d %d %.4f %d %d %d %d \"%s\"",capable->myname_full,capable->mainpid,
-                          (unsigned int)mainw->foreign_id,mainw->foreign_width,mainw->foreign_height,prefs->image_ext,
+                          (unsigned int)mainw->foreign_id,mainw->foreign_width,mainw->foreign_height,get_image_ext_for_type(IMG_TYPE_BEST),
                           mainw->foreign_bpp,mainw->rec_vid_frames,mainw->rec_fps,mainw->rec_arate,
                           mainw->rec_asamps,mainw->rec_achans,mainw->rec_signed_endian,mainw->foreign_visual);
 

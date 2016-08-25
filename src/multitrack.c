@@ -3047,7 +3047,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(mainw->frame_layer,WEED_LEAF_CLIP,mainw->current_file);
     weed_set_int_value(mainw->frame_layer,WEED_LEAF_FRAME,actual_frame);
-    pull_frame(mainw->frame_layer,prefs->image_ext,curr_tc);
+    pull_frame(mainw->frame_layer,get_image_ext_for_type(cfile->img_type),curr_tc);
   } else {
     mainw->is_rendering=TRUE;
 

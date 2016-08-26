@@ -403,6 +403,11 @@ skip_init:
       cdata->palettes[0]=avi_pix_fmt_to_weed_palette(cc->pix_fmt,&cdata->YUV_clamping);
       cdata->palettes[1]=WEED_PALETTE_END;
 
+      if (cdata->palettes[0]==WEED_PALETTE_END) {
+	fprintf(stderr,"avcodec_decoder: no usable palette found (%d)\n",cc->pix_fmt);
+	return FALSE;
+      }
+
       sprintf(cdata->video_name,"%s",cc->codec_name);
 
       cdata->par=cc->sample_aspect_ratio.num/cc->sample_aspect_ratio.den;
@@ -654,7 +659,7 @@ skip_init:
 static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_av_priv_t *priv=cdata->priv;
-  close(priv->fd);
+  if (priv->fd>-1) close(priv->fd);
 
   // will close and free the context
   if (priv->ic !=NULL) {
@@ -848,6 +853,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     }
     cdata->URI=strdup(URI);
     if (!attach_stream(cdata,FALSE)) {
+      detach_stream(cdata);
       free(cdata->URI);
       cdata->URI=NULL;
       clip_data_free(cdata);
@@ -877,6 +883,8 @@ rescan:
   }
 
   if (real_frames<=0) {
+    fprintf(stderr,
+            "avformat_decoder: ERROR - could not find the last frame\navformat_decoder: I will pass on this file as it may be broken.\n");
     detach_stream(cdata);
     free(cdata->URI);
     cdata->URI=NULL;
@@ -1055,6 +1063,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   if (priv->pFrame==NULL||tframe!=priv->last_frame) {
     // same frame -> we reuse priv-pFrame;
 
+    //#define DEBUG
 #ifdef DEBUG
     fprintf(stderr,"pt a1 %d %ld\n",priv->last_frame,tframe);
 #endif
@@ -1082,6 +1091,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       seek_target=av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
       av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
+#ifdef DEBUG
+    fprintf(stderr,"pt a2 %d %ld\n",priv->last_frame,seek_target);
+#endif
       avcodec_flush_buffers(cc);
       priv->black_fill=FALSE;
       MyPts=-1;

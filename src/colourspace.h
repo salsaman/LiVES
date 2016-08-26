@@ -4,6 +4,7 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+
 // headers for palette conversions
 
 #ifndef HAS_LIVES_COLOURSPACE_H
@@ -12,7 +13,7 @@
 #define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_pixel_data_contiguous"
 #define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
 
-#define SCREEN_GAMMA 1.0
+#define SCREEN_GAMMA 2.2
 
 
 

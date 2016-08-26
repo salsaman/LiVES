@@ -4462,7 +4462,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   boolean is_png = !png_sig_cmp(buff, 0, bsize);
 
   float screen_gamma=SCREEN_GAMMA;
-  float pref_gamma = 2.4; // TODO ***: make adjustable
+  float pref_gamma = 2.2; // TODO ***: make adjustable
 
   double file_gamma;
 
@@ -5045,7 +5045,6 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         // pull frame from decoded images
         boolean ret;
         char *fname=make_image_file_name(sfile,frame,image_ext);
-	g_print("HERE %d %d %s %s\n",width,height,fname,image_ext);
         if (height*width==0) {
           ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext);
         } else {

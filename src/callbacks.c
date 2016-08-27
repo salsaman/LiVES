@@ -1017,6 +1017,19 @@ void on_save_selection_activate(LiVESMenuItem *menuitem, livespointer user_data)
 }
 
 
+static void check_remove_layout_files(void) {
+  if (prompt_remove_layout_files()) {
+    // delete layout directory
+    char *msg,*laydir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
+    lives_rmdir(laydir,TRUE);
+    lives_free(laydir);
+    msg=lives_strdup_printf(_("Layouts were removed for set %s.\n"),mainw->set_name);
+    d_print(msg);
+    lives_free(msg);
+  }
+}
+
+
 void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *warn,*extra;
   char title[256];
@@ -1112,11 +1125,8 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     char *ofile;
     char *sdir;
     char *cdir;
-    char *laydir;
 
     boolean has_layout_map=FALSE;
-    int i;
-
 
     // TODO - combine this with lives_exit and make into a function
 
@@ -1126,21 +1136,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
     if (has_layout_map) {
-      if (prompt_remove_layout_files()) {
-        // delete layout files
-        for (i=1; i<MAX_FILES; i++) {
-          if (!(mainw->files[i]==NULL)) {
-            if (mainw->was_set&&mainw->files[i]->layout_map!=NULL) {
-              remove_layout_files(mainw->files[i]->layout_map);
-            }
-          }
-        }
-
-        // delete layout directory
-        laydir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
-        lives_rmdir(laydir,FALSE);
-        lives_free(laydir);
-      }
+      check_remove_layout_files();
       recover_layout_cancelled(FALSE);
     }
 
@@ -1750,12 +1746,10 @@ void mt_memory_free(void) {
 
 
 void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char *esave_dir,*msg,*tmp;
+  char *msg,*tmp;
 
   boolean has_layout_map=FALSE;
   boolean had_clips=FALSE,legal_set_name;
-
-  register int i;
 
   if (user_data!=NULL&&LIVES_POINTER_TO_INT(user_data)==1) mainw->only_close=TRUE;
   else mainw->only_close=FALSE;
@@ -1870,20 +1864,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
     if (has_layout_map) {
-      if (prompt_remove_layout_files()) {
-        // delete layout files
-        for (i=1; i<MAX_FILES; i++) {
-          if (!(mainw->files[i]==NULL)) {
-            if (mainw->was_set&&mainw->files[i]->layout_map!=NULL) {
-              remove_layout_files(mainw->files[i]->layout_map);
-            }
-          }
-        }
-        // delete layout directory
-        esave_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
-        lives_rmdir(esave_dir,FALSE);
-        lives_free(esave_dir);
-      }
+      check_remove_layout_files();
     }
   }
 

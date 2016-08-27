@@ -4462,7 +4462,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   boolean is_png = !png_sig_cmp(buff, 0, bsize);
 
   float screen_gamma=SCREEN_GAMMA;
-  float pref_gamma = 2.2; // TODO ***: make adjustable
+  float pref_gamma = SCREEN_GAMMA*1.0; // a larger value is brighter
 
   double file_gamma;
 

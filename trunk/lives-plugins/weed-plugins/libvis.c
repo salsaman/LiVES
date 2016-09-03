@@ -288,6 +288,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     char *vdir;
 
+    if (lpp==NULL) return NULL;
+    
     // set hints for host
     weed_set_int_value(in_chantmpls[0],"audio_channels",2);
     weed_set_int_value(in_chantmpls[0],"audio_rate",44100);
@@ -308,7 +310,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     }
 
     vdir = strtok(lpp, ":");
-
+    
     // add lpp paths
     while (vdir!=NULL) {
       if (!strlen(vdir)) continue;

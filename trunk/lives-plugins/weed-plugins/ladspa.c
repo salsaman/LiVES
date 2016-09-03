@@ -574,6 +574,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     register int i,j;
 
+    if (lpp==NULL) return NULL;
+    
     //#define DEBUG
 #ifndef DEBUG
     new_stdout=dup(1);

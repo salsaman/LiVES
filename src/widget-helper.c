@@ -8581,10 +8581,10 @@ void lives_window_center(LiVESWindow *window) {
 
     lives_window_set_screen(LIVES_WINDOW(window),mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].screen);
 
-    xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].width-
-					       lives_widget_get_allocation_width(LIVES_WIDGET(window)))/2;
-    ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].height-
-					       lives_widget_get_allocation_height(LIVES_WIDGET(window)))/2;
+    xcen=mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].width-
+								       lives_widget_get_allocation_width(LIVES_WIDGET(window)))/2;
+    ycen=mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].height-
+								       lives_widget_get_allocation_height(LIVES_WIDGET(window)))/2;
     lives_window_move(LIVES_WINDOW(window),xcen,ycen);
   }
 }

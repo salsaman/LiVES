@@ -78,7 +78,7 @@ typedef void (*f0r_get_param_value_f)(f0r_instance_t *instance, f0r_param_t *par
 #endif
 
 
-static int getenv_piece(char *target, size_t tlen, char *envvar, int num) {
+static void getenv_piece(char *target, size_t tlen, char *envvar, int num) {
   // get num piece from envvar path and set in target
   char *str1;
   memset(target,0,1);
@@ -96,8 +96,6 @@ static int getenv_piece(char *target, size_t tlen, char *envvar, int num) {
   }
 
   if (str1!=NULL) snprintf(target,tlen,"%s",str1);
-  else return 0;
-  return 1;
 
 }
 
@@ -340,7 +338,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 #endif
 
     char *fpp=getenv("FREI0R_PATH");
-
+#define DEBUG
 #ifndef DEBUG
     int new_stdout=dup(1);
     int new_stderr=dup(2);
@@ -348,6 +346,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     close(1);
     close(2);
 #endif
+
     if (fpp!=NULL) {
       vdirval=10;
     } else {
@@ -367,7 +366,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
         if (curvdir!=NULL) closedir(curvdir);
         curvdir=opendir(vdir2);
         if (curvdir==NULL) vdirval=4;
-        else vdirval=3;
+        else {
+	  vdirval=3;
+	}
       }
 
       if (vdirval==4) {
@@ -380,8 +381,12 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
         vdirval=5;
       }
 
+
       if (vdirval>9) {
-        if (!getenv_piece(vdir1,PATH_MAX,fpp,vdirval-10)) {
+	char *fpp_copy=strdup(fpp);
+        getenv_piece(vdir1,PATH_MAX,fpp_copy,vdirval-10);
+	free(fpp_copy);
+	if (vdir1==NULL) {
           vdirval=6;
           break;
         }
@@ -401,38 +406,40 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       weed_memset(vendor_name,0,1);
 
       do {
+	snprintf(dir1,PATH_MAX,"%s/%s",vdir1,vendor_name);
 
-        snprintf(dir1,PATH_MAX,"%s/%s",vdir1,vendor_name);
-
-        if (vdirval<10) {
-          snprintf(dir2,PATH_MAX,"%s/%s",vdir2,vendor_name);
-          snprintf(dir3,PATH_MAX,"%s/%s",vdir3,vendor_name);
-        }
+	if (vdirval<10) {
+	  snprintf(dir2,PATH_MAX,"%s/%s",vdir2,vendor_name);
+	  snprintf(dir3,PATH_MAX,"%s/%s",vdir3,vendor_name);
+	}
 
         vdirent=readdir(curvdir);
 
-        if (vdirent==NULL) {
-          closedir(curvdir);
-          curvdir=NULL;
-          vdirval++;
-          break;
-        }
-
-        if (!strncmp(vdirent->d_name,"..",strlen(vdirent->d_name))) continue;
-
-        snprintf(vendor_name,PATH_MAX,"%s",vdirent->d_name);
+        if (vdirent!=NULL) {
+	  if (!strncmp(vdirent->d_name,"..",strlen(vdirent->d_name))) continue;
+	  snprintf(vendor_name,PATH_MAX,"%s",vdirent->d_name);
+	}
 
         if (vdirval==1) {
           curdir=opendir(dir3);
-          if (curdir==NULL) continue;
+          if (curdir==NULL) {
+	    if (vdirent==NULL) break;
+	    continue;
+	  }
         } else if (vdirval==3) {
           if (curdir!=NULL) closedir(curdir);
           curdir=opendir(dir2);
-          if (curdir==NULL) continue;
+          if (curdir==NULL) {
+	    if (vdirent==NULL) break;
+	    continue;
+	  }
         } else if (vdirval==5||vdirval>9) {
           if (curdir!=NULL) closedir(curdir);
           curdir=opendir(dir1);
-          if (curdir==NULL) continue;
+          if (curdir==NULL) {
+	    if (vdirent==NULL) break;
+	    continue;
+	  }
         }
 
         finished=0;
@@ -897,10 +904,12 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
         }
         // end vendor dir
       } while (vdirent!=NULL);
+      if (curvdir!=NULL) closedir(curvdir);
+      curvdir=NULL;
+      vdirval++;
       if (curdir!=NULL) closedir(curdir);
     }
     // end frei0r dirs
-    if (curvdir!=NULL) closedir(curvdir);
 
 #ifndef DEBUG
     dup2(new_stdout,1);

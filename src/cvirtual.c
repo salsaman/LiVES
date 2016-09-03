@@ -146,7 +146,7 @@ boolean save_frame_index(int fileno) {
 
    lives_free(fname);
 
-   return maxframe;
+   return ++maxframe;
 }
 
 

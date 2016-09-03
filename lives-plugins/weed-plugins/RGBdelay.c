@@ -318,7 +318,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       for (j=0; j<3; j++) {
         if (j==2) snprintf(label,256,"        Frame -%-2d       ",(i-1)/4);
         else weed_memset(label,0,1);
-        in_params[i+j]=weed_switch_init("",label,i<4?WEED_TRUE:WEED_FALSE);
+        in_params[i+j]=weed_switch_init("",label,(i+j==1||i+j==18||i+j==35)?WEED_TRUE:WEED_FALSE);
       }
       in_params[i+j]=weed_float_init("","",1.,0.,1.);
 

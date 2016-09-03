@@ -1,3 +1,16 @@
+Version 2.6.8 (27 Aug 2016)
+---------------------------
+Fix bug which could result in blank frames / hang after deleting frames.
+Fix some internal issues with image types.
+Fix a crash after recording a generator and cancelling.
+Correctly remove layouts directory if the clips in a set are deleted.
+Print info text if libav decoder cannot find a usable pixel format.
+
+
+
+
+
+
 Version 2.6.7 (18 Aug 2016)
 ---------------------------
 Fix breakage in single image loader (regression).

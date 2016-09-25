@@ -154,9 +154,6 @@ top:
     if (lives_mkdir_with_parents(dirname,S_IRWXU)==-1) goto top;
   }
 
-#ifndef IS_MINGW
-  lives_chmod(dirname,"777");
-#endif
 
   lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",dirname);
   lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);

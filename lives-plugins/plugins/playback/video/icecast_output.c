@@ -125,13 +125,11 @@ static uint8_t **make_blankframe(size_t size, boolean clear) {
 
 
 const char *module_check_init(void) {
-  int rfd;
-  char buf[16384];
-  int dummyvar;
-
-  ssize_t ret;
+  FILE *fp;
+  char buffer[PATH_MAX];
+  const char *dummy;
+  
   // check all binaries are present
-
 
   render_fn=&render_frame_unknown;
   ov_vsize=ov_hsize=0;
@@ -142,16 +140,14 @@ const char *module_check_init(void) {
   yuv4mpeg->fd=-1;
 
   // get tempdir
-  dummyvar=system("smogrify get_tempdir oggstream");
-  rfd=open("/tmp/.smogrify.oggstream",O_RDONLY);
-  ret=read(rfd,(void *)buf,16383);
-  memset(buf+ret,0,1);
-
-  tmpdir=strdup(buf);
+  fp=popen("smogrify get_tempdir","r");
+  dummy=fgets(buffer,PATH_MAX,fp);
+  pclose(fp);
+  tmpdir=strdup(buffer);
 
   blankframe=NULL;
 
-  dummyvar=dummyvar; // keep compiler happy
+  dummy=dummy; // keep compiler happy
 
   return NULL;
 }

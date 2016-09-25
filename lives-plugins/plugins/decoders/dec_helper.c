@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 double get_fps(const char *uri) {
+#ifndef IS_MINGW
   // use mplayer to get fps if we can...it seems to have some magical way
   FILE *fp;
   int rc;
@@ -43,5 +44,8 @@ found_player:
   }
   pclose(fp);
 exit:
+#else
+  double ret=0.;
+#endif
   return ret;
 }

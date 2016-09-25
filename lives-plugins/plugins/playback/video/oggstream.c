@@ -27,11 +27,13 @@ boolean render_frame_unknown(int hsize, int vsize, void **pixel_data);
 
 static int ov_vsize,ov_hsize;
 
-static char *tmpdir;
+static char *workdir;
 
-static char xfile[4096];
+static char xfile[PATH_MAX];
 
 static int aforms[2];
+
+const char rfx[32768];
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -67,7 +69,7 @@ yuv4m_t *yuv4mpeg_alloc(void) {
 
 
 static void make_path(const char *fname, int pid, const char *ext) {
-  snprintf(xfile,4096,"%s/%s-%d.%s",tmpdir,fname,pid,ext);
+  snprintf(xfile,PATH_MAX,"%s/%s-%d.%s",workdir,fname,pid,ext);
 }
 
 static uint8_t **blankframe;
@@ -124,13 +126,9 @@ static uint8_t **make_blankframe(size_t size, boolean clear) {
 
 
 const char *module_check_init(void) {
-  int rfd;
-  char buf[16384];
-  int dummyvar;
-
-  ssize_t ret;
-  // check all binaries are present
-
+  FILE *fp;
+  char buffer[PATH_MAX];
+  const char *dummy;
 
   render_fn=&render_frame_unknown;
   ov_vsize=ov_hsize=0;
@@ -141,16 +139,14 @@ const char *module_check_init(void) {
   yuv4mpeg->fd=-1;
 
   // get tempdir
-  dummyvar=system("smogrify get_tempdir oggstream");
-  rfd=open("/tmp/.smogrify.oggstream",O_RDONLY);
-  ret=read(rfd,(void *)buf,16383);
-  memset(buf+ret,0,1);
-
-  tmpdir=strdup(buf);
+  fp=popen("smogrify get_tempdir","r");
+  dummy=fgets(buffer,PATH_MAX,fp);
+  pclose(fp);
+  workdir=strdup(buffer);
 
   blankframe=NULL;
 
-  dummyvar=dummyvar; // keep compiler happy
+  dummy=dummy; // keep compiler happy
 
   return NULL;
 }
@@ -186,7 +182,10 @@ const int *get_audio_fmts() {
 
 
 const char *get_init_rfx(void) {
-  return \
+  char homedir[PATH_MAX];
+
+  snprintf(homedir,PATH_MAX,"%s",getenv("HOME"));
+  snprintf((char *)rfx,32768,"%s%s%s",
          "<define>\\n\
 |1.7\\n\
 </define>\\n\
@@ -194,14 +193,16 @@ const char *get_init_rfx(void) {
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-output|Output _file|string|/tmp/output.ogv|1024|\\n\
+output|Output _file|string|",homedir,"/output.ogv|1024|\\n	\
 syncd|A/V Sync _delay (seconds)|num2|0.|0.|20.|\\n\
 </params> \\n\
 <param_window> \\n\
 </param_window> \\n\
 <onchange> \\n\
 </onchange> \\n\
-";
+");
+
+  return rfx;
 }
 
 const int *get_yuv_palette_clamping(int palette) {
@@ -270,7 +271,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr,"oggstream plugin error: No palette was set !\n");
     return FALSE;
   }
-
+  
   if (argc>0) {
     outfile=argv[0];
   } else {
@@ -305,7 +306,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   mkfifo(xfile,S_IRUSR|S_IWUSR); // corrected ogg stream (saved or muxed)
 
   snprintf(cmd,8192,"ffmpeg2theora --noaudio --nosync -e 10000 -f yuv4m -F %d:%d -o %s/video-%d.ogv %s/stream-%d.fifo&",(int)yuv4mpeg->fps.n,
-           (int)yuv4mpeg->fps.d,tmpdir,mypid,tmpdir,mypid);
+           (int)yuv4mpeg->fps.d,workdir,mypid,workdir,mypid);
   dummyvar=system(cmd);
   //printf("cmd is %s\n",cmd);
   make_path("livesaudio",mypid,"stream");
@@ -317,17 +318,19 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   } else audio=0;
 
   if (audio) {
-    snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &",tmpdir,mypid,tmpdir,mypid);
+    snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &",workdir,mypid,workdir,mypid);
     dummyvar=system(cmd);
-    snprintf(cmd,8192,"oggJoin \"%s\" %s/video2-%d.ogv %s/livesaudio-%d.stream &",outfile,tmpdir,mypid,tmpdir,mypid);
+    snprintf(cmd,8192,"oggJoin \"%s\" %s/video2-%d.ogv %s/livesaudio-%d.stream &",outfile,workdir,mypid,workdir,mypid);
     dummyvar=system(cmd);
   } else {
-    snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv \"%s\" &",tmpdir,mypid,outfile);
+    snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv \"%s\" &",workdir,mypid,outfile);
     dummyvar=system(cmd);
   }
 
   // open first fifo for writing
 
+  // TODO !!!
+  
   make_path("stream",mypid,"fifo");
   yuv4mpeg->fd=open(xfile,O_WRONLY|O_SYNC|O_CREAT,S_IWUSR|S_IRUSR);
 

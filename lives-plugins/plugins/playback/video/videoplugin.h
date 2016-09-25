@@ -59,6 +59,14 @@ typedef int boolean;
 #define ABS(a) (a>0?a:-a)
 #endif
 
+#ifndef PATH_MAX
+#ifdef MAX_PATH
+#define PATH_MAX MAX_PATH
+#else
+#define PATH_MAX 4096
+#endif
+#endif
+
 // Warning - CPU_BITS macro evaluates only at runtime (uses sizeof)
 #define CPU_BITS ((sizeof(void *))<<3)
 

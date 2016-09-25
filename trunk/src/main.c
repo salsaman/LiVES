@@ -502,7 +502,7 @@ static boolean pre_init(void) {
   capable->rcfile=lives_strdup_printf("%s/LiVES.ini",capable->home_dir);
 #endif
 
-  if (!capable->smog_version_correct||!capable->can_write_to_tempdir) {
+  if (!capable->smog_version_correct||!capable->can_write_to_workdir) {
     lives_snprintf(prefs->theme,64,"none");
     return FALSE;
   }
@@ -1150,7 +1150,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->pause_effect_during_preview=FALSE;
 
-  if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
+  if (capable->smog_version_correct&&capable->can_write_to_workdir) {
 
     int pb_quality=get_int_pref(PREF_PB_QUALITY);
 
@@ -2288,7 +2288,7 @@ capability *get_capabilities(void) {
 
   // required
   capable->can_write_to_home=FALSE;
-  capable->can_write_to_tempdir=FALSE;
+  capable->can_write_to_workdir=FALSE;
   capable->can_write_to_config=FALSE;
   capable->can_read_from_config=FALSE;
 
@@ -2388,7 +2388,7 @@ capability *get_capabilities(void) {
 
 
   if (err!=1280) {
-    capable->can_write_to_tempdir=TRUE;
+    capable->can_write_to_workdir=TRUE;
   }
 
   if (!(bootfile=fopen(safer_bfile,"r"))) {
@@ -2443,7 +2443,7 @@ capability *get_capabilities(void) {
   }
   lives_strfreev(array);
 
-  if (!capable->can_write_to_tempdir) return capable;
+  if (!capable->can_write_to_workdir) return capable;
 
   get_location(AUDIO_PLAYER_MPLAYER,string,256);
   if (strlen(string)) capable->has_mplayer=TRUE;
@@ -2706,7 +2706,7 @@ static boolean lives_startup(livespointer data) {
             startup_message_fatal(err);
             lives_free(err);
           } else {
-            if (!capable->can_write_to_tempdir) {
+            if (!capable->can_write_to_workdir) {
               char *extrabit;
               char *err;
               if (!mainw->has_session_tmpdir) {
@@ -2716,7 +2716,7 @@ static boolean lives_startup(livespointer data) {
               } else
                 extrabit=lives_strdup("");
 
-              err=lives_strdup_printf(_("\nLiVES was unable to use the temporary directory\n%s\n\n%s"),
+              err=lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
                                       prefs->tmpdir,extrabit);
               lives_free(extrabit);
               startup_message_fatal(err);
@@ -3193,7 +3193,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
               LIVES_ERROR("Could not create directory");
               LIVES_ERROR(prefs->tmpdir);
             }
-            capable->can_write_to_tempdir=FALSE;
+            capable->can_write_to_workdir=FALSE;
           } else {
             LIVES_INFO("Created directory");
             LIVES_INFO(prefs->tmpdir);

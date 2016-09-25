@@ -716,7 +716,7 @@ typedef struct {
   boolean can_read_from_config;
   boolean can_write_to_config;
   boolean can_write_to_home;
-  boolean can_write_to_tempdir;
+  boolean can_write_to_workdir;
 
   // the following may need checking before use
   boolean has_dvgrab;

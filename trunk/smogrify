@@ -66,7 +66,7 @@ use File::Path qw(make_path);
     $lives_home_dir="$home/.lives-dir";
 
 # default temporary directory (can be overridden from the GUI)
-    $default_tmpdir="$home/livestmp/";
+    $default_tmpdir="$home";
     $nulfile="/dev/null";
 
     $encoder="mencoder_encoder";
@@ -98,7 +98,7 @@ if (defined($ARGV[0])) {
 
             if (! -d $tmpdir) {
                 unless($command eq "report" || $command eq "set_pref") {
-                    &mktmpdir;
+                    #&mktmpdir;
                 }
 
             }
@@ -422,10 +422,14 @@ if (defined($ARGV[0])) {
 
             &rc_set_if_not_set("max_disp_vtracks",5);
 
+
+	    ######
             $tmpdir=&rc_get("tempdir");
             &write_bootstrap_file;
-            &mktmpdir;
+            #&mktmpdir;
+	    ####
 
+	    
             $convert_old_version=&rc_get("convert_version");
             unless($convert_old_version eq $convert_version) {
                 &rc_set("convert_version",$convert_version);
@@ -439,9 +443,9 @@ if (defined($ARGV[0])) {
             }
 
 #make sure we can write to tempir
-            open OUT,"> $tmpdir/testfile" or exit 5;
-            close OUT;
-            unlink "$tmpdir/testfile";
+            #open OUT,"> $tmpdir/testfile" or exit 5;
+            #close OUT;
+            #unlink "$tmpdir/testfile";
 
             exit 0;
         }

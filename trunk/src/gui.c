@@ -636,21 +636,21 @@ void create_LiVES(void) {
   memset(buff,0,1);
 
   // since we are still initialising, we need to check if we can read prefs
-  if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
+  if (capable->smog_version_correct&&capable->can_write_to_workdir) {
     get_pref_utf8(PREF_RECENT1,buff,32768);
   }
   mainw->recent1 = lives_menu_item_new_with_label(buff);
-  if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
+  if (capable->smog_version_correct&&capable->can_write_to_workdir) {
     get_pref_utf8(PREF_RECENT2,buff,32768);
   }
   mainw->recent2 = lives_menu_item_new_with_label(buff);
 
-  if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
+  if (capable->smog_version_correct&&capable->can_write_to_workdir) {
     get_pref_utf8(PREF_RECENT3,buff,32768);
   }
   mainw->recent3 = lives_menu_item_new_with_label(buff);
 
-  if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
+  if (capable->smog_version_correct&&capable->can_write_to_workdir) {
     get_pref_utf8(PREF_RECENT4,buff,32768);
   }
   mainw->recent4 = lives_menu_item_new_with_label(buff);

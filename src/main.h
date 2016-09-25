@@ -715,7 +715,7 @@ typedef struct {
   boolean smog_version_correct;
   boolean can_read_from_config;
   boolean can_write_to_config;
-  boolean can_write_to_tmp;
+  boolean can_write_to_home;
   boolean can_write_to_tempdir;
 
   // the following may need checking before use
@@ -743,7 +743,7 @@ typedef struct {
   char home_dir[PATH_MAX];
 
   /// system tempdir (e.g /tmp for linux, C:\TEMP for win32)
-  char system_tmpdir[PATH_MAX];  ///< kept in locale encoding
+  //char system_tmpdir[PATH_MAX];  ///< kept in locale encoding
 
   char touch_cmd[PATH_MAX];
   char rm_cmd[PATH_MAX];

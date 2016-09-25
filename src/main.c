@@ -2337,12 +2337,12 @@ capability *get_capabilities(void) {
   capable->has_gconftool_2=FALSE;
   capable->has_xdg_screensaver=FALSE;
 
-  safer_bfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_BFILE_NAME".%d.%d",capable->system_tmpdir,lives_getuid(),lives_getgid());
+  safer_bfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_BFILE_NAME".%d.%d",capable->home_dir,lives_getuid(),lives_getgid());
   lives_rm(safer_bfile);
 
   // check that we can write to /tmp
   if (!check_file(safer_bfile,FALSE)) return capable;
-  capable->can_write_to_tmp=TRUE;
+  capable->can_write_to_home=TRUE;
 
 #ifndef IS_MINGW
   lives_snprintf(prefs->backend_sync,PATH_MAX,"%s","smogrify");
@@ -2680,7 +2680,7 @@ static boolean lives_startup(livespointer data) {
     if (!capable->can_write_to_tmp) {
       startup_message_fatal((tmp=lives_strdup_printf(
                                    _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to %s and try again.\n"),
-                                   capable->system_tmpdir)));
+                                   capable->home_dir)));
       lives_free(tmp);
     } else {
       if (!capable->has_smogrify) {

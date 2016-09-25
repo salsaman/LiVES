@@ -1123,14 +1123,14 @@ if (defined($ARGV[0])) {
                 unlink glob "* .* *.*";
 		# will not remove directories
             } else {
-                $new_temp=$ARGV[1];
-                unless($new_temp eq "") {
-		    # here is where we create a new temp directory
-                    unless(-d $new_temp||(mkdir $new_temp)) {
-                        print "Smogrify: Unable to create new directory $new_temp!\n";
+                $new_work=$ARGV[1];
+                unless($new_work eq "") {
+		    # here is where we create a new work directory
+                    unless(-d $new_work||(mkdir $new_work)) {
+                        print "Smogrify: Unable to create new directory $new_work!\n";
                         exit 1;
                     }
-                    print "Smogrify: moving sets from $workdir to $new_temp\n";
+                    print "Smogrify: moving sets from $workdir to $new_work\n";
                 }
                 else {
                     print "Smogrify: Leaving sets intact.\n";
@@ -8071,10 +8071,10 @@ sub weed {
 # remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
                 if (&is_non_empty_dir("$workdir/$file/clips") || (&is_non_empty_dir("$workdir/$file/layouts") && !($opts & 0x04))) {
 # new style sets, check clips and optionally layouts
-                    unless (!defined($new_temp)||$new_temp eq "") {
+                    unless (!defined($new_work)||$new_work eq "") {
 # we are to move this set
-                        if (-d "$new_temp/$file") {
-                            smog_rename( "$new_temp/$file","$new_temp/$file.bak");
+                        if (-d "$new_work/$file") {
+                            smog_rename( "$new_work/$file","$new_work/$file.bak");
                         }
                         unless ($opts & 0x02) {
                             unless (-f "$workdir/$file/noprune") {
@@ -8083,7 +8083,7 @@ sub weed {
                                 smog_chdir("$workdir");
                             }
                         }
-                        smog_rename( "$workdir/$file","$new_temp/$file");
+                        smog_rename( "$workdir/$file","$new_work/$file");
                     }
                 }
                 else {
@@ -8113,14 +8113,14 @@ sub weed {
                                 smog_chdir("$workdir");
                             }
                         }
-                        unless (!defined($new_temp)||$new_temp eq "") {
-# tempdir was changed, so we move all sets (subdirs) from old tempdir to new 
+                        unless (!defined($new_work)||$new_work eq "") {
+# workdir was changed, so we move all sets (subdirs) from old workdir to new 
 # [TODO - check for set name collision !]
                             if (-d "$workdir/$file") {
-                                if (-d "$new_temp/$file") {
-                                    smog_rename( "$new_temp/$file","$new_temp/$file.bak");
+                                if (-d "$new_work/$file") {
+                                    smog_rename( "$new_work/$file","$new_work/$file.bak");
                                 }
-                                smog_rename( "$workdir/$file","$new_temp/$file");
+                                smog_rename( "$workdir/$file","$new_work/$file");
                             }
                         }
                     }
@@ -8132,9 +8132,9 @@ sub weed {
             }
             else {
 # move crash recovery files
-                unless (!defined($new_temp)||$new_temp eq "") {
+                unless (!defined($new_work)||$new_work eq "") {
                     if ($file =~ /^recovery/ || $file =~ /^layout/) {
-                        smog_rename( "$workdir/$file","$new_temp/$file");
+                        smog_rename( "$workdir/$file","$new_work/$file");
                     }
                 }
             }
@@ -8147,7 +8147,7 @@ sub weed {
 # clean up a few extra remnants
         smog_chdir("$workdir");
         unlink glob ".* rfx.* smogplugin.*";
-        unless (!defined($new_temp)||$new_temp eq "") {
+        unless (!defined($new_work)||$new_work eq "") {
             unlink glob "firew.* encoder_log_* stream.*";
         }
     }

@@ -2287,7 +2287,7 @@ capability *get_capabilities(void) {
 #endif
 
   // required
-  capable->can_write_to_tmp=FALSE;
+  capable->can_write_to_home=FALSE;
   capable->can_write_to_tempdir=FALSE;
   capable->can_write_to_config=FALSE;
   capable->can_read_from_config=FALSE;
@@ -2300,7 +2300,6 @@ capability *get_capabilities(void) {
 
   lives_snprintf(capable->home_dir,PATH_MAX,"%s\\Application Data\\LiVES",g_get_home_dir());
 #endif
-  lives_snprintf(capable->system_tmpdir,PATH_MAX,"%s",g_get_tmp_dir());
 #endif
 
 #ifdef GUI_QT
@@ -2677,7 +2676,7 @@ static boolean lives_startup(livespointer data) {
 
   if (!mainw->foreign) {
     // fatal errors
-    if (!capable->can_write_to_tmp) {
+    if (!capable->can_write_to_home) {
       startup_message_fatal((tmp=lives_strdup_printf(
                                    _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to %s and try again.\n"),
                                    capable->home_dir)));

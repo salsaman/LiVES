@@ -3707,7 +3707,7 @@ LiVESList *get_script_section(const char *section, const char *file, boolean str
   char *line;
   char *whole=lives_strdup(""),*whole2;
 
-  char *outfile=lives_strdup_printf("%s"LIVES_DIR_SEP"rfxsec.%d",capable->system_tmpdir,capable->mainpid);
+  char *outfile=lives_strdup_printf("%s"LIVES_DIR_SEP"rfxsec.%d",prefs->tmpdir,capable->mainpid);
 
 #ifndef IS_MINGW
   char *com=lives_strdup_printf("\"%s\" -get \"%s\" \"%s\" > \"%s\"",RFX_BUILDER,section,file,outfile);

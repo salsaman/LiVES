@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# smogrify - Copyright G. Finch (salsaman@gmail.com) 2003 - 2016
+# smogrify - Copyright G. Finch (salsaman+lives@gmail.com) 2003 - 2016
 # Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
 
 
@@ -52,7 +52,7 @@ use File::Path qw(make_path);
 
 
 # default temporary directory (can be overridden from the GUI)
-    $default_tmpdir="$home\\livescache\\";
+    $default_workdir="$home\\livescache\\";
     $is_mingw=1;
     $nulfile="NUL";
 
@@ -66,7 +66,7 @@ use File::Path qw(make_path);
     $lives_home_dir="$home/.lives-dir";
 
 # default temporary directory (can be overridden from the GUI)
-    $default_tmpdir="$home";
+    $default_workdir="$home";
     $nulfile="/dev/null";
 
     $encoder="ffmpeg_encoder";
@@ -87,12 +87,12 @@ if (defined($ARGV[0])) {
     unless($command eq "version") {
         my $rcfile="$home/$rc_filename";
         if (-f $rcfile) {
-            $tmpdir=&rc_get("session_tempdir");
+            $workdir=&rc_get("session_tempdir");
 
-            if ($tmpdir eq ""||$command eq "report") {
-                $tmpdir=&rc_get("tempdir");
+            if ($workdir eq ""||$command eq "report") {
+                $workdir=&rc_get("tempdir");
                 $priority=1;
-                &rc_set("session_tempdir","$tmpdir");
+                &rc_set("session_tempdir","$workdir");
                 $priority=0;
             }
 
@@ -112,13 +112,13 @@ if (defined($ARGV[0])) {
 ## blocking calls
         if ($command eq "get_pid_for_handle") {
             $handle=$ARGV[1];
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
             $target_pid=" ";
 
             if ($^O eq "MSWin32") {
-                $pidfile="$curtmpdir/pid";
+                $pidfile="$curworkdir/pid";
             } else {
-                $pidfile="$curtmpdir/.pid";
+                $pidfile="$curworkdir/.pid";
             }
 
             if (defined(open IN,"< $pidfile")) {
@@ -137,19 +137,19 @@ if (defined($ARGV[0])) {
 
         if ($command eq "stopsubsub"||$command eq "stopsubsubs"||$command eq "stop_audio") {
             $handle=$ARGV[1];
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
             my $sig="KILL";
             if ($command eq "stop_audio") {
-                $pidfile="$curtmpdir/.pidpb";
+                $pidfile="$curworkdir/.pidpb";
             } else {
-                $pidfile="$curtmpdir/.pid";
+                $pidfile="$curworkdir/.pid";
                 if (defined($ARGV[2])) {
                     $sig=$ARGV[2];
                 }
             }
-            $statusfile="$curtmpdir/.status";
+            $statusfile="$curworkdir/.status";
 
-            unless(-d "$curtmpdir") {
+            unless(-d "$curworkdir") {
                 exit 2;
             }
 
@@ -172,8 +172,8 @@ if (defined($ARGV[0])) {
                 }
                 elsif($command eq "stopsubsubs") {
 # kill all subprocesses of target_pid, but not target_pid
-                    smog_system("pgrep -P $target_pid > \"$tmpdir/.pids.$target_pid\" 2>/dev/null");
-                    if (-s "$tmpdir/.pids.$target_pid"&&defined(open IN,"$tmpdir/.pids.$target_pid")) {
+                    smog_system("pgrep -P $target_pid > \"$workdir/.pids.$target_pid\" 2>/dev/null");
+                    if (-s "$workdir/.pids.$target_pid"&&defined(open IN,"$workdir/.pids.$target_pid")) {
                         while (<IN>) {
                             $pid=$_;
                             chomp($pid);
@@ -181,7 +181,7 @@ if (defined($ARGV[0])) {
                         }
                         close IN;
                     }
-                    unlink "$tmpdir/.pids.$target_pid";
+                    unlink "$workdir/.pids.$target_pid";
                 }
 
 
@@ -214,19 +214,19 @@ if (defined($ARGV[0])) {
 # write mini-info file
 
             if ($^O eq "MSWin32") {
-                $infofile="$tmpdir/info.$key";
+                $infofile="$workdir/info.$key";
             }
             else {
-                $infofile="$tmpdir/.info.$key";
+                $infofile="$workdir/.info.$key";
             }
             do {
                 $handle=int(rand 1000000000)+65536;
-                $curtmpdir="$tmpdir/$handle";
-            } while (-d $curtmpdir);
+                $curworkdir="$workdir/$handle";
+            } while (-d $curworkdir);
 
             umask 0;
-            unless (mkdir $curtmpdir) {
-                sig_system_error("Creating directory \"$curtmpdir\"",0);
+            unless (mkdir $curworkdir) {
+                sig_system_error("Creating directory \"$curworkdir\"",0);
                 exit 1;
             }
             umask $umask;
@@ -254,10 +254,10 @@ if (defined($ARGV[0])) {
                 } else {
                     open OUT,"> C:\\smogrify.$id" or exit 1;
                 }
-                print OUT "$tmpdir";
+                print OUT "$workdir";
                 close OUT;
             } else {
-                print $tmpdir
+                print $workdir
             };
             exit 0;
         }
@@ -265,7 +265,7 @@ if (defined($ARGV[0])) {
 	
         if ($command eq "get_workdir") {
 	    # safer version - writes to stdout
-	    print $tmpdir;
+	    print $workdir;
             exit 0;
         }
 
@@ -313,7 +313,7 @@ if (defined($ARGV[0])) {
                 $audio_play_command=&rc_get_default("mplayer_audio_command");
             }
 
-# get $tmpdir from .rc file, if no .rc file, create it
+# get $workdir from .rc file, if no .rc file, create it
             if (! -s "$home/$rc_filename") {
 # set comment at start of file
                 &rc_set("","");
@@ -330,7 +330,7 @@ if (defined($ARGV[0])) {
             $default_keymap="default.keymap";
 
             &rc_set_if_not_set("version","$version");
-            &rc_set_if_not_set("tempdir","$default_tmpdir");
+            &rc_set_if_not_set("tempdir","$default_workdir");
 
             if (defined($dyneversion)) {
                 &rc_set_if_not_set("lib_dir","/opt/$dyneversion/lib/");
@@ -416,7 +416,7 @@ if (defined($ARGV[0])) {
             &rc_set_if_not_set("max_disp_vtracks",5);
 
 
-            $tmpdir=&rc_get("tempdir");
+            $workdir=&rc_get("tempdir");
             &write_bootstrap_file;
 	    
             $convert_old_version=&rc_get("convert_version");
@@ -427,14 +427,14 @@ if (defined($ARGV[0])) {
 
             unless($gui_bootstrap_file eq "") {
                 open OUT,"> $gui_bootstrap_file" or exit 4;
-                print OUT "$version|$tmpdir|$startup_phase|$msg|$msg2";
+                print OUT "$version|$workdir|$startup_phase|$msg|$msg2";
                 close OUT;
             }
 
 #make sure we can write to tempir
-            #open OUT,"> $tmpdir/testfile" or exit 5;
+            #open OUT,"> $workdir/testfile" or exit 5;
             #close OUT;
-            #unlink "$tmpdir/testfile";
+            #unlink "$workdir/testfile";
 
             exit 0;
         }
@@ -493,9 +493,9 @@ if (defined($ARGV[0])) {
                 exit 0;
             }
             if ($^O eq "MSWin32") {
-                open OUT,"> $tmpdir/smogval.$first.$second" or exit 1;
+                open OUT,"> $workdir/smogval.$first.$second" or exit 1;
             } else {
-                open OUT,"> $tmpdir/.smogval.$first.$second" or exit 1;
+                open OUT,"> $workdir/.smogval.$first.$second" or exit 1;
             }
             print OUT $value;
             close OUT;
@@ -521,9 +521,9 @@ if (defined($ARGV[0])) {
             }
 
             if ($^O eq "MSWin32") {
-                open OUT,"> $tmpdir/smogval.$first.$second" or exit 1;
+                open OUT,"> $workdir/smogval.$first.$second" or exit 1;
             } else {
-                open OUT,"> $tmpdir/.smogval.$first.$second" or exit 1;
+                open OUT,"> $workdir/.smogval.$first.$second" or exit 1;
             }
             print OUT $value;
             close OUT;
@@ -551,9 +551,9 @@ if (defined($ARGV[0])) {
             $value=&location($exe);
 
             if ($^O eq "MSWin32") {
-                open OUT,"> $tmpdir/smogval.$first.$second" or exit 1;
+                open OUT,"> $workdir/smogval.$first.$second" or exit 1;
             } else {
-                open OUT,"> $tmpdir/.smogval.$first.$second" or exit 1;
+                open OUT,"> $workdir/.smogval.$first.$second" or exit 1;
             }
 
             print OUT $value;
@@ -564,29 +564,29 @@ if (defined($ARGV[0])) {
 
         if ($command eq "pause") {
             if ($^O eq "MSWin32") {
-                $smres=smog_system("touch.exe \"$tmpdir\\$ARGV[1]\\pause\"");
+                $smres=smog_system("touch.exe \"$workdir\\$ARGV[1]\\pause\"");
                 if ($smres) {
-                    sig_write_error("$tmpdir\\$ARGV[1]\\pause");
+                    sig_write_error("$workdir\\$ARGV[1]\\pause");
                     exit 1;
                 }
             } else {
-                $smres=smog_system("touch \"$tmpdir/$ARGV[1]/pause\"");
+                $smres=smog_system("touch \"$workdir/$ARGV[1]/pause\"");
                 if ($smres) {
-                    sig_write_error("$tmpdir/$ARGV[1]/pause");
+                    sig_write_error("$workdir/$ARGV[1]/pause");
                     exit 1;
                 }
             }
             if ($^O eq "MSWin32") {
-#smog_system("chmod.exe 600 \"$tmpdir\\$ARGV[1]\\pause\"");
+#smog_system("chmod.exe 600 \"$workdir\\$ARGV[1]\\pause\"");
             } else {
-                smog_system("/bin/chmod 600 \"$tmpdir/$ARGV[1]/pause\"");
+                smog_system("/bin/chmod 600 \"$workdir/$ARGV[1]/pause\"");
             }
             exit 0;
         }
 
 
         if ($command eq "resume") {
-            unlink "$tmpdir/$ARGV[1]/pause";
+            unlink "$workdir/$ARGV[1]/pause";
             exit 0;
         }
 
@@ -594,7 +594,7 @@ if (defined($ARGV[0])) {
         if ($command eq "clear_tmp_files") {
             $handle=$ARGV[1];
 #clear old backups (e.g. when saving a set)
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
             &clean_old;
             &sig_complete;
             exit 0;
@@ -603,8 +603,8 @@ if (defined($ARGV[0])) {
         if ($command eq "clear_pre_files") {
             $handle=$ARGV[1];
 #clear old backups (e.g. when saving a set)
-            $curtmpdir="$tmpdir/$handle";
-            smog_chdir("$curtmpdir");
+            $curworkdir="$workdir/$handle";
+            smog_chdir("$curworkdir");
             unlink glob "*.pre";
             &sig_complete;
             exit 0;
@@ -613,11 +613,11 @@ if (defined($ARGV[0])) {
 
         if ($command eq "undo_audio") {
             $handle=$ARGV[1];
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
             if ($^O eq "MSWin32") {
-                $statusfile="$curtmpdir/status";
+                $statusfile="$curworkdir/status";
             } else {
-                $statusfile="$curtmpdir/.status";
+                $statusfile="$curworkdir/.status";
             }
 
             &undo_audio;
@@ -628,13 +628,13 @@ if (defined($ARGV[0])) {
 
         if ($command eq "backup_audio") {
             $handle=$ARGV[1];
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
             if ($^O eq "MSWin32") {
-                $statusfile="$curtmpdir/status";
+                $statusfile="$curworkdir/status";
             } else {
-                $statusfile="$curtmpdir/.status";
+                $statusfile="$curworkdir/.status";
             }
-            smog_chdir("$curtmpdir");
+            smog_chdir("$curworkdir");
             &backup_audio;
             if ($panic) {
                 exit 1;
@@ -649,7 +649,7 @@ if (defined($ARGV[0])) {
             my $vsize=-1;
 
             $handle=$ARGV[1];
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
             $frame=$ARGV[2];
             $name=&mkname($frame);
             $nfile=$ARGV[3];
@@ -661,9 +661,9 @@ if (defined($ARGV[0])) {
             }
 
             if ($^O eq "MSWin32") {
-                $statusfile="$curtmpdir/status";
+                $statusfile="$curworkdir/status";
             } else {
-                $statusfile="$curtmpdir/.status";
+                $statusfile="$curworkdir/.status";
             }
 
 # check the file is writable
@@ -671,18 +671,18 @@ if (defined($ARGV[0])) {
                 &sig_error("Unable to open output file !","$GUI_NAME could not write to $nfile.");
             }
 
-            $img_ext=&get_img_ext($curtmpdir,$frame);
+            $img_ext=&get_img_ext($curworkdir,$frame);
             $img_prefix=&get_img_prefix($img_ext);
 
             umask 0111;
 
             if ($hsize==-1||$vsize==-1) {
-                $com="$smog_convert_command $img_prefix\"$curtmpdir/$name$img_ext\" \"$nfile\" >$nulfile 2>&1";
+                $com="$smog_convert_command $img_prefix\"$curworkdir/$name$img_ext\" \"$nfile\" >$nulfile 2>&1";
             } else {
                 if ($antialias eq "false") {
-                    $com="$smog_convert_command +antialias $img_prefix\"$curtmpdir/$name$img_ext\" -scale $hsize"."x"."$vsize\\! \"$nfile\" > $nulfile 2>&1";
+                    $com="$smog_convert_command +antialias $img_prefix\"$curworkdir/$name$img_ext\" -scale $hsize"."x"."$vsize\\! \"$nfile\" > $nulfile 2>&1";
                 } else {
-                    $com="$smog_convert_command -antialias $img_prefix\"$curtmpdir/$name$img_ext\" -resize $hsize"."x"."$vsize\\! \"$nfile\" > $nulfile 2>&1";
+                    $com="$smog_convert_command -antialias $img_prefix\"$curworkdir/$name$img_ext\" -resize $hsize"."x"."$vsize\\! \"$nfile\" > $nulfile 2>&1";
                 }
             }
 
@@ -701,15 +701,15 @@ if (defined($ARGV[0])) {
             $nfile=$ARGV[2];
             $leave_headers=$ARGV[3];
 
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
 
             if ($^O eq "MSWin32") {
-                $statusfile="$curtmpdir/status";
+                $statusfile="$curworkdir/status";
             } else {
-                $statusfile="$curtmpdir/.status";
+                $statusfile="$curworkdir/.status";
             }
 
-            smog_chdir("$curtmpdir");
+            smog_chdir("$curworkdir");
             $fsize= -s "$nfile";
             $afsize = -s "audio";
             unlink glob "*.tar";
@@ -739,7 +739,7 @@ if (defined($ARGV[0])) {
                 if (! -f "header2") {
                     unless ($nfile eq "") {
                         unlink glob "event.*";
-                        $img_ext=&get_img_ext($curtmpdir);
+                        $img_ext=&get_img_ext($curworkdir);
                         $img_prefix=&get_img_prefix($img_ext);
                         $frames=&count_frames;
                     }
@@ -848,12 +848,12 @@ if (defined($ARGV[0])) {
 
         if ($command eq "make_thumb") {
             $handle=$ARGV[1];
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
             if ($^O eq "MSWin32") {
-                $statusfile="$curtmpdir/status";
+                $statusfile="$curworkdir/status";
             }
             else {
-                $statusfile="$curtmpdir/.status";
+                $statusfile="$curworkdir/.status";
             }
             $dwidth=$ARGV[2];
             $dheight=$ARGV[3];
@@ -861,8 +861,8 @@ if (defined($ARGV[0])) {
             $img_prefix=&get_img_prefix($img_ext);
             $file=$ARGV[5];
 
-            if (! -d "$curtmpdir") {
-                mkdir ("$curtmpdir",0700);
+            if (! -d "$curworkdir") {
+                mkdir ("$curworkdir",0700);
             }
 
             $antialias=&rc_get("antialias");
@@ -877,15 +877,15 @@ if (defined($ARGV[0])) {
                 exit 0;
             }
 
-            smog_chdir("$curtmpdir");
+            smog_chdir("$curworkdir");
 
             $name=&mkname(1);
 
             if ($antialias eq "false") {
-                smog_system("$smog_convert_command +antialias \"$file\" -scale $hsize"."x"."$vsize\\! $img_prefix\"$curtmpdir/$name$img_ext\" > $nulfile 2>&1");
+                smog_system("$smog_convert_command +antialias \"$file\" -scale $hsize"."x"."$vsize\\! $img_prefix\"$curworkdir/$name$img_ext\" > $nulfile 2>&1");
             }
             else {
-                smog_system("$smog_convert_command -antialias \"$file\" -resize $hsize"."x"."$vsize\\! $img_prefix\"$curtmpdir/$name$img_ext\" > $nulfile 2>&1");
+                smog_system("$smog_convert_command -antialias \"$file\" -resize $hsize"."x"."$vsize\\! $img_prefix\"$curworkdir/$name$img_ext\" > $nulfile 2>&1");
             }
             &sig_complete($hsize,$vsize);
             exit 0;
@@ -904,14 +904,14 @@ if (defined($ARGV[0])) {
 # non-perl plugins have to implement this command themselves
 #
             $handle=$ARGV[1];
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
             if ($^O eq "MSWin32") {
-                $statusfile="$curtmpdir/status";
+                $statusfile="$curworkdir/status";
             }
             else {
-                $statusfile="$curtmpdir/.status";
+                $statusfile="$curworkdir/.status";
             }
-            smog_chdir("$curtmpdir");
+            smog_chdir("$curworkdir");
             $start=$ARGV[2];
             $end=$ARGV[3];
             $plugdir=$ARGV[4];
@@ -925,7 +925,7 @@ if (defined($ARGV[0])) {
             }
 
             if ($type eq "encoders" || $type eq "effects/rendered/") {
-                $img_ext=&get_img_ext($curtmpdir,$start);
+                $img_ext=&get_img_ext($curworkdir,$start);
                 $img_prefix=&get_img_prefix($img_ext);
                 if ($type eq "encoders") {
                     if (-f "audio.origbak") {
@@ -945,7 +945,7 @@ if (defined($ARGV[0])) {
             }
 
 #need this again - something resets us
-            smog_chdir("$curtmpdir");
+            smog_chdir("$curworkdir");
 
             if ($^O eq "MSWin32") {
 # filter by file ext
@@ -981,7 +981,7 @@ if (defined($ARGV[0])) {
             my $exename=$ARGV[2];
             my $pid=$ARGV[3];
 
-            opendir DIR,"$tmpdir/$setname";
+            opendir DIR,"$workdir/$setname";
 
             while (my $file=readdir(DIR)) {
                 if ($file=~/^lock\.(.*)/) {
@@ -997,7 +997,7 @@ if (defined($ARGV[0])) {
                             print $proc."\n";
                             exit 0;
                         }
-                        unlink "$tmpdir/$setname/$file";
+                        unlink "$workdir/$setname/$file";
                     }
                 }
             }
@@ -1015,11 +1015,11 @@ if (defined($ARGV[0])) {
             my $gid=$ARGV[2];
             my $exename=$ARGV[3];
             my $filepart=$ARGV[4];
-            opendir DIR,"$tmpdir";
+            opendir DIR,"$workdir";
             my @files=readdir(DIR);
 
 # sort most recent first (in case of multiple files)
-            @files = sort {(stat "$tmpdir/$b")[10] <=> (stat "$tmpdir/$a")[10]}(@files);
+            @files = sort {(stat "$workdir/$b")[10] <=> (stat "$workdir/$a")[10]}(@files);
 
             foreach my $file(@files) {
                 if ($file=~/^$filepart\.$uid\.$gid\.(.*)/) {
@@ -1052,9 +1052,9 @@ if (defined($ARGV[0])) {
             my $uid=$ARGV[1];
             my $gid=$ARGV[2];
             my $exename=$ARGV[3];
-            opendir DIR,"$tmpdir";
+            opendir DIR,"$workdir";
 
-            smog_chdir("$tmpdir");
+            smog_chdir("$workdir");
 
             while (my $file=readdir(DIR)) {
                 if ($file=~/^recovery\.$uid\.$gid\.(.*)/ || $file=~/^layout\.$uid\.$gid\.(.*)/ || $file=~/^layout_numbering\.$uid\.$gid\.(.*)/) {
@@ -1080,12 +1080,12 @@ if (defined($ARGV[0])) {
             $setname=$ARGV[2];
             $pid=$ARGV[3];
 
-            opendir DIR,"$tmpdir";
+            opendir DIR,"$workdir";
             @allfiles=readdir(DIR);
             closedir DIR;
 
             foreach my $subdir(@allfiles) {
-                if (-f "$tmpdir/$subdir/set.$setname") {
+                if (-f "$workdir/$subdir/set.$setname") {
                     if ($last eq "none") {
                         $found=$subdir;
                         last;
@@ -1101,13 +1101,13 @@ if (defined($ARGV[0])) {
             }
 
             if ($^O eq "MSWin32") {
-                $infofile="$tmpdir/info.$pid";
+                $infofile="$workdir/info.$pid";
             } else {
-                $infofile="$tmpdir/.info.$pid";
+                $infofile="$workdir/.info.$pid";
             }
             smog_system_sync();
 
-            if (-d $tmpdir) {
+            if (-d $workdir) {
                 open OUT,"> $infofile";
                 print OUT $found;
                 close OUT;
@@ -1117,7 +1117,7 @@ if (defined($ARGV[0])) {
 
 
         if ($command eq "cleanup"||$command eq "weed") {
-            smog_chdir("$tmpdir");
+            smog_chdir("$workdir");
             print "Cleaning up temporary space for $GUI_NAME.\n";
             if ($command eq "cleanup") {
                 unlink glob "* .* *.*";
@@ -1130,7 +1130,7 @@ if (defined($ARGV[0])) {
                         print "Smogrify: Unable to create new directory $new_temp!\n";
                         exit 1;
                     }
-                    print "Smogrify: moving sets from $tmpdir to $new_temp\n";
+                    print "Smogrify: moving sets from $workdir to $new_temp\n";
                 }
                 else {
                     print "Smogrify: Leaving sets intact.\n";
@@ -1156,7 +1156,7 @@ if (defined($ARGV[0])) {
             shift;
             shift;
 
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
 
             $ARGV[0]="onchange_init";
             require("$plugin_name");
@@ -1187,13 +1187,13 @@ if (defined($ARGV[0])) {
 
         if ($command eq "mv_pre") {
             $handle=$ARGV[1];
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
             if ($^O eq "MSWin32") {
-                $statusfile="$curtmpdir/status";
+                $statusfile="$curworkdir/status";
             } else {
-                $statusfile="$curtmpdir/.status";
+                $statusfile="$curworkdir/.status";
             }
-            unlink "$curtmpdir/pause";
+            unlink "$curworkdir/pause";
             $start=$ARGV[2];
             $end=$ARGV[3];
             $img_ext=".".$ARGV[4];
@@ -1229,7 +1229,7 @@ if (defined($ARGV[0])) {
                 };
 
             } else {
-                chdir("$tmpdir");
+                chdir("$workdir");
                 unlink "temp.pakage";
                 my $com="tar.exe -cf temp.pakage -C \"$ARGV[2]\"";
                 $smerr=smog_system($com);
@@ -1315,25 +1315,25 @@ if (defined($ARGV[0])) {
 
         $handle=$ARGV[1];
 
-        $curtmpdir="$tmpdir/$handle";
+        $curworkdir="$workdir/$handle";
 
         if ($^O eq "MSWin32") {
-            $statusfile=$curtmpdir."/status";
+            $statusfile=$curworkdir."/status";
         } else {
-            $statusfile=$curtmpdir."/.status";
+            $statusfile=$curworkdir."/.status";
         }
 
         if ($command eq "play"||$command eq "play_opening_preview") {
             if ($^O eq "MSWin32") {
-                $pidfile=$curtmpdir."/pidpb";
+                $pidfile=$curworkdir."/pidpb";
             } else {
-                $pidfile=$curtmpdir."/.pidpb";
+                $pidfile=$curworkdir."/.pidpb";
             }
         } else {
             if ($^O eq "MSWin32") {
-                $pidfile=$curtmpdir."/pid";
+                $pidfile=$curworkdir."/pid";
             } else {
-                $pidfile=$curtmpdir."/.pid";
+                $pidfile=$curworkdir."/.pid";
             }
         }
 
@@ -1403,10 +1403,10 @@ if (defined($ARGV[0])) {
 
             if (defined($opening_preview)) {
                 $aformat=".raw";
-                $audiofile="$curtmpdir/audiodump.pcm";
+                $audiofile="$curworkdir/audiodump.pcm";
             } else {
                 $aformat=".raw";
-                $audiofile="$curtmpdir/audio";
+                $audiofile="$curworkdir/audio";
             }
 
 
@@ -1498,7 +1498,7 @@ if (defined($ARGV[0])) {
             $showed_err=0;
 
             do {
-                if (! -d "$curtmpdir" || -f "$curtmpdir/.stoploop" || -f "$curtmpdir/stoploop" || ! -f $audiofile) {
+                if (! -d "$curworkdir" || -f "$curworkdir/.stoploop" || -f "$curworkdir/stoploop" || ! -f $audiofile) {
                     $loop=0;
                 } else {
                     $syscom3=$syscom2.">$nulfile 2>&1";
@@ -1515,8 +1515,8 @@ if (defined($ARGV[0])) {
             } while ($loop);
             &sig_complete_audio;
 
-            unlink "$curtmpdir/.stoploop";
-            unlink "$curtmpdir/stoploop";
+            unlink "$curworkdir/.stoploop";
+            unlink "$curworkdir/stoploop";
 
             exit 0;
         }
@@ -1532,7 +1532,7 @@ if (defined($ARGV[0])) {
 
         if ($command eq "open") {
 
-            unlink "$curtmpdir/pause";
+            unlink "$curworkdir/pause";
 
             $file=$ARGV[2];
             $ss="";
@@ -1547,7 +1547,7 @@ if (defined($ARGV[0])) {
                 }
             }
 
-            smog_chdir("$curtmpdir");
+            smog_chdir("$curworkdir");
 
 
             unless($file =~ /^http/) {
@@ -1781,8 +1781,8 @@ if (defined($ARGV[0])) {
                 $achans=$xachans;
             }
 
-            if (! -d $curtmpdir) {
-#curtmpdir can be removed by cancel
+            if (! -d $curworkdir) {
+#curworkdir can be removed by cancel
                 exit 1;
             }
 
@@ -1845,8 +1845,8 @@ if (defined($ARGV[0])) {
 # just in case...
                 $type="Audio";
             }
-            if (! -d $curtmpdir) {
-#curtmpdir can be removed by cancel
+            if (! -d $curworkdir) {
+#curworkdir can be removed by cancel
                 exit 1;
             }
 
@@ -1908,7 +1908,7 @@ if (defined($ARGV[0])) {
 	#    }
 
         $af_size= -s $audio_out;
-        if (-d $curtmpdir) {
+        if (-d $curworkdir) {
             &sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
         }
         exit 0;
@@ -1919,7 +1919,7 @@ if (defined($ARGV[0])) {
     if ($command eq "get_details") {
 
         $handle=$ARGV[1];
-        $curtmpdir="$tmpdir/$handle";
+        $curworkdir="$workdir/$handle";
 
 
 #attempt to get file details
@@ -1945,7 +1945,7 @@ if (defined($ARGV[0])) {
             $asamps=16;
         }
 
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
 
         &sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
 
@@ -2032,10 +2032,10 @@ if (defined($ARGV[0])) {
                 smog_system("smogrify stopsubsub \"$handle\"");
             }
         }
-        if (chdir("$curtmpdir")) {
+        if (chdir("$curworkdir")) {
             unlink glob "* .* *.*";
-            smog_chdir("$tmpdir");
-            rmdir $curtmpdir;
+            smog_chdir("$workdir");
+            rmdir $curworkdir;
         }
         exit 0;
     }
@@ -2043,11 +2043,11 @@ if (defined($ARGV[0])) {
 
     if ($command eq "ext_save") {
         shift(@ARGV);
-        $curtmpdir="$tmpdir/$handle";
+        $curworkdir="$workdir/$handle";
         $execname=$ARGV[1];
         shift(@ARGV);
 
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
 
         $com="\"$execname\" encode @ARGV";
         $smerr=smog_system($com);
@@ -2073,20 +2073,20 @@ if (defined($ARGV[0])) {
             shift(@ARGV);
             $handle=$ARGV[1];
 
-            $curtmpdir="$tmpdir/$handle";
+            $curworkdir="$workdir/$handle";
             if ($^O eq "MSWin32") {
-                $statusfile="$curtmpdir/status";
-                $pidfile=$curtmpdir."/pid";
+                $statusfile="$curworkdir/status";
+                $pidfile=$curworkdir."/pid";
             }
             else {
-                $statusfile="$curtmpdir/.status";
-                $pidfile=$curtmpdir."/.pid";
+                $statusfile="$curworkdir/.status";
+                $pidfile=$curworkdir."/.pid";
             }
 
         }
 
-        unlink "$curtmpdir/pause";
-        smog_chdir("$curtmpdir");
+        unlink "$curworkdir/pause";
+        smog_chdir("$curworkdir");
 
         $plugin=$ARGV[2];
 
@@ -2101,7 +2101,7 @@ if (defined($ARGV[0])) {
         $start=$ARGV[5];
         $is_linked=0;
 
-        $linksdir="$curtmpdir/lives-symlinks/";
+        $linksdir="$curworkdir/lives-symlinks/";
 
         if ($start==-1) {
 # special value which tells us we are dealing with symlinks
@@ -2159,7 +2159,7 @@ if (defined($ARGV[0])) {
             $aud_end=($end*1.)/($fps*1.);
         }
 
-        $img_ext=&get_img_ext($curtmpdir,$start);
+        $img_ext=&get_img_ext($curworkdir,$start);
 
 # get image size ($hsize x $vsize)
         $imresact="none";
@@ -2187,9 +2187,9 @@ if (defined($ARGV[0])) {
             $areq=&get_form_request($plugin);
 
 #prepare audio stream if requested
-            if (-f "$curtmpdir/audio" && $arate>0) {
+            if (-f "$curworkdir/audio" && $arate>0) {
 
-                $origaudio=$audiofile=$audio_in="$curtmpdir/audio";
+                $origaudio=$audiofile=$audio_in="$curworkdir/audio";
                 if ($areq&1||$aud_start!=0.) {
 
 # encode sound up to the next nearest second
@@ -2221,13 +2221,13 @@ if (defined($ARGV[0])) {
                         else {
                             smog_rename( "$origaudio","$origaudio.origbak");
                         }
-                        smog_rename( "$curtmpdir/$audiofile","$origaudio");
+                        smog_rename( "$curworkdir/$audiofile","$origaudio");
                         $audio_file=$audio_in=$origaudio;
                     }
                 }
                 if ($areq&2) {
 # convert raw audio to wav
-                    $audio_out=$curtmpdir . "/audiodump.wav";
+                    $audio_out=$curworkdir . "/audiodump.wav";
                     &convert_audio_to_wav;
                     if ($panic) {
                         unlink "$pidfile";
@@ -2259,7 +2259,7 @@ if (defined($ARGV[0])) {
                     };
 
                     if ($^O ne "MSWin32") {
-                        $fstype=&get_fs_type($curtmpdir);
+                        $fstype=&get_fs_type($curworkdir);
                     }
 
 # need to make hard links, as some encoders complain about symbolic links
@@ -2268,28 +2268,28 @@ if (defined($ARGV[0])) {
                     for ($i=1;$i<=($end-$start+1);$i++) {
                         $name=&mkname($i);
                         $from=&mkname($i+$start-1);
-                        if (-f "$curtmpdir$from$img_ext") {
+                        if (-f "$curworkdir$from$img_ext") {
                             if ($^O eq "MSWin32") {
-                                $smerr=smog_system ("cp.exe \"$curtmpdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
+                                $smerr=smog_system ("cp.exe \"$curworkdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
                                 if ($smerr) {
-                                    sig_system_error("Copying \"$curtmpdir/$from$img_ext\" to \"$linksdir$name$img_ext\"",$smerr);
+                                    sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir$name$img_ext\"",$smerr);
                                     unlink "$pidfile";
                                     exit 1;
                                 }
                             }
                             else {
                                 if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
-                                    $smerr=smog_system ("/bin/cp -f \"$curtmpdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
+                                    $smerr=smog_system ("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
                                     if ($smerr) {
-                                        sig_system_error("Copying \"$curtmpdir/$from$img_ext\" from \"$linksdir$name$img_ext\"",$smerr);
+                                        sig_system_error("Copying \"$curworkdir/$from$img_ext\" from \"$linksdir$name$img_ext\"",$smerr);
                                         unlink "$pidfile";
                                         exit 1;
                                     }
                                 }
                                 else {
-                                    $smerr=smog_system ("/bin/ln \"$curtmpdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
+                                    $smerr=smog_system ("/bin/ln \"$curworkdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
                                     if ($smerr) {
-                                        sig_system_error("Symlinking \"$curtmpdir/$from$img_ext\" from \"$linksdir$name$img_ext\"",$smerr);
+                                        sig_system_error("Symlinking \"$curworkdir/$from$img_ext\" from \"$linksdir$name$img_ext\"",$smerr);
                                         unlink "$pidfile";
                                         exit 1;
                                     }
@@ -2301,26 +2301,26 @@ if (defined($ARGV[0])) {
                         my $xaudiofile=(split(/\//,$audiofile))[-1];
                         if (! -f "$linksdir$xaudiofile") {
                         if ($^O eq "MSWin32") {
-                                $smerr=smog_system ("cp.exe \"$curtmpdir/$audiofile\" \"$linksdir$xaudiofile\"");
+                                $smerr=smog_system ("cp.exe \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
                                 if ($smerr) {
-                                    sig_system_error("Copying \"$curtmpdir/$audiofile\" to \"$linksdir$xaudiofile\"",$smerr);
+                                    sig_system_error("Copying \"$curworkdir/$audiofile\" to \"$linksdir$xaudiofile\"",$smerr);
                                     unlink "$pidfile";
                                     exit 1;
                                 }
                             }
                             else {
                                 if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
-                                    $smerr=smog_system("/bin/cp -f \"$curtmpdir/$audiofile\" \"$linksdir$xaudiofile\"");
+                                    $smerr=smog_system("/bin/cp -f \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
                                     if ($smerr) {
-                                        sig_system_error("Copying \"$curtmpdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
+                                        sig_system_error("Copying \"$curworkdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
                                         unlink "$pidfile";
                                         exit 1;
                                     }
                                 }
                                 else {
-                                    $smerr=smog_system("/bin/ln \"$curtmpdir/$audiofile\" \"$linksdir$xaudiofile\"");
+                                    $smerr=smog_system("/bin/ln \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
                                     if ($smerr) {
-                                        sig_system_error("Symlinking \"$curtmpdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
+                                        sig_system_error("Symlinking \"$curworkdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
                                         unlink "$pidfile";
                                         exit 1;
                                     }
@@ -2409,8 +2409,8 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "link_frames") {
-        unlink "$curtmpdir/pause";
-        smog_chdir("$curtmpdir");
+        unlink "$curworkdir/pause";
+        smog_chdir("$curworkdir");
 
         $start=$ARGV[2];
         $end=$ARGV[3];
@@ -2430,7 +2430,7 @@ if (defined($ARGV[0])) {
         my $audiofile="audio";
 
         if ($from_handle eq "") {
-            $linksdir="$curtmpdir/lives-symlinks/";
+            $linksdir="$curworkdir/lives-symlinks/";
 
             if (-d $linksdir) {
                 if ($^O eq "MSWin32") {
@@ -2457,9 +2457,9 @@ if (defined($ARGV[0])) {
 
         }
         else {
-            $linksdir=$curtmpdir;
+            $linksdir=$curworkdir;
             $handle=$from_handle;
-            $curtmpdir="$tmpdir/$handle/";
+            $curworkdir="$workdir/$handle/";
         }
 
 
@@ -2469,7 +2469,7 @@ if (defined($ARGV[0])) {
 
         unless ($aend==0.) {
 
-            my $ocurtmpdir=$curtmpdir;
+            my $ocurworkdir=$curworkdir;
             my $ofrom_handle=$from_handle;
             my $ostart=$start;
             my $oend=$end;
@@ -2478,7 +2478,7 @@ if (defined($ARGV[0])) {
             $end=$aend;
             $where=0.;
             $from_handle=$handle;
-            $curtmpdir=$linksdir;
+            $curworkdir=$linksdir;
 
             &insert_audio($asamps,$achans,$asigned,$aendian,0);
             if ($panic) {
@@ -2486,44 +2486,44 @@ if (defined($ARGV[0])) {
                 exit 1;
             }
 
-            $curtmpdir=$ocurtmpdir;
+            $curworkdir=$ocurworkdir;
             $from_handle=$ofrom_handle;
             $start=$ostart;
             $end=$oend;
 
         }
 
-        $img_ext=&get_img_ext($curtmpdir,$start);
+        $img_ext=&get_img_ext($curworkdir,$start);
 
         if ($^O ne "MSWin32") {
-            $fstype=&get_fs_type($curtmpdir);
+            $fstype=&get_fs_type($curworkdir);
         }
 
         for ($i=1;$i<=($end-$start+1);$i++) {
             $name=&mkname($i);
             $from=&mkname($i+$start-1);
-            if (-f "$curtmpdir/$from$img_ext") {
+            if (-f "$curworkdir/$from$img_ext") {
                 if ($^O eq "MSWin32") {
-                    $smerr=smog_system ("cp.exe \"$curtmpdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+                    $smerr=smog_system ("cp.exe \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
                     if ($smerr) {
-                        sig_system_error("Copying \"$curtmpdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
+                        sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
                         unlink "$pidfile";
                         exit 1;
                     }
                 }
                 else {
                     if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
-                        $smerr=smog_system ("/bin/cp -f \"$curtmpdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+                        $smerr=smog_system ("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
                         if ($smerr) {
-                            sig_system_error("Copying \"$curtmpdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
+                            sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
                             unlink "$pidfile";
                             exit 1;
                         }
                     }
                     else {
-                        $smerr=smog_system ("/bin/ln \"$curtmpdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+                        $smerr=smog_system ("/bin/ln \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
                         if ($smerr) {
-                            sig_system_error("Linking \"$curtmpdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
+                            sig_system_error("Linking \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
                             unlink "$pidfile";
                             exit 1;
                         }
@@ -2535,7 +2535,7 @@ if (defined($ARGV[0])) {
         }
 
         unless ($from_handle eq "") {
-            $curtmpdir=$linksdir;
+            $curworkdir=$linksdir;
         }
 
         &sig_complete;
@@ -2544,8 +2544,8 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "resize_all") {
-        unlink "$curtmpdir/pause";
-        smog_chdir("$curtmpdir");
+        unlink "$curworkdir/pause";
+        smog_chdir("$curworkdir");
         $end=$ARGV[2];
 
         my $iwidth=$ARGV[3];
@@ -2601,9 +2601,9 @@ if (defined($ARGV[0])) {
                     unlink $blankname;
                 }
                 if ($DEBUG_SMOGRIFY) {
-                    print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name$img_ext\",\"$curtmpdir/$name.bak\"\n";
+                    print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name$img_ext\",\"$curworkdir/$name.bak\"\n";
                 }
-                sig_system_error("Renaming \"$curtmpdir/$name$img_ext\" to \"$curtmpdir/$name.bak\"");
+                sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to \"$curworkdir/$name.bak\"");
 
                 unlink "$pidfile";
                 exit 1;
@@ -2671,8 +2671,8 @@ if (defined($ARGV[0])) {
 
         $nfile=$ARGV[5];
 
-        unlink "$curtmpdir/pause";
-        smog_chdir("$curtmpdir");
+        unlink "$curworkdir/pause";
+        smog_chdir("$curworkdir");
 
 # check the file is writable
         unless (&is_writeable($nfile)) {
@@ -2745,7 +2745,7 @@ if (defined($ARGV[0])) {
     if ($command eq "restore") {
         $nfile=$ARGV[2];
 
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
 
         if ($^O ne "MSWin32") {
             $com="tar -zxf \"$nfile\" 2>$nulfile";
@@ -2758,7 +2758,7 @@ if (defined($ARGV[0])) {
             }
         }
         else {
-            smog_copy("$nfile","$curtmpdir\\temp.gz");
+            smog_copy("$nfile","$curworkdir\\temp.gz");
             if ($panic) {
                 unlink "$pidfile";
                 exit 1;
@@ -2784,7 +2784,7 @@ if (defined($ARGV[0])) {
             &sig_error("This does not appear to be a valid backup file","$GUI_NAME was unable to open it.");
         }
 
-        opendir DIR,$curtmpdir;
+        opendir DIR,$curworkdir;
         while ($file=readdir(DIR)) {
             if ($file =~ /.tar$/) {
                 smog_system("tar -xf $file 2>$nulfile");
@@ -2800,7 +2800,7 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "reorder") {
-        unlink "$curtmpdir/pause";
+        unlink "$curworkdir/pause";
 
         $img_ext=".".$ARGV[2];
         $img_prefix=&get_img_prefix($img_ext);
@@ -2841,9 +2841,9 @@ if (defined($ARGV[0])) {
         }
 
         $newframe=-1;
-        $event_file="$curtmpdir/event.frames";
+        $event_file="$curworkdir/event.frames";
         $resize_ext=".tmp";
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
 
         unless ($leave_bak==1) {
             &clean_old;
@@ -2878,7 +2878,7 @@ if (defined($ARGV[0])) {
                 $newframe=&getint($val);
                 if ($newframe>0) {
                     $from=&mkname($newframe);
-                    if (-f "$curtmpdir/$from$img_ext") {
+                    if (-f "$curworkdir/$from$img_ext") {
                         $to=&mkname($count);
 
                         if ($newwidth > 0 && $newheight > 0) {
@@ -2892,20 +2892,20 @@ if (defined($ARGV[0])) {
                                 exit 1;
                             }
 
-                            $smerr=rename "$curtmpdir/$from$resize_ext","$curtmpdir/$to.mgk";
+                            $smerr=rename "$curworkdir/$from$resize_ext","$curworkdir/$to.mgk";
                             if (!$smerr) {
                                 if ($letterbox) {
                                     try_to_recover($start,$i);
                                     unlink $blankname;
                                 }
-                                sig_system_error("Renaming \"$curtmpdir/$from$resize_ext\" to \"$curtmpdir/$to.mgk\"",$!);
+                                sig_system_error("Renaming \"$curworkdir/$from$resize_ext\" to \"$curworkdir/$to.mgk\"",$!);
                                 unlink "$pidfile";
                                 exit 1;
                             }
                         }
                         else {
                             unless (($from eq $to) || $letterbox) {
-                                smog_copy("$curtmpdir/$from$img_ext", "$curtmpdir/$to.mgk");
+                                smog_copy("$curworkdir/$from$img_ext", "$curworkdir/$to.mgk");
                                 if ($panic) {
                                     unlink "$pidfile";
                                     exit 1;
@@ -2918,13 +2918,13 @@ if (defined($ARGV[0])) {
                             if ($leave_bak) {
 #letterboxing was done with resize
                                 unless ($from eq $to) {
-                                    smog_copy("$curtmpdir/$from$img_ext", "$curtmpdir/$to$img_ext.2");
+                                    smog_copy("$curworkdir/$from$img_ext", "$curworkdir/$to$img_ext.2");
                                     if ($panic) {
                                         try_to_recover($start,$i);
                                         unlink "$pidfile";
                                         exit 1;
                                     }
-                                    smog_copy("$curtmpdir/$from.mgk", "$curtmpdir/$to.mgk.2");
+                                    smog_copy("$curworkdir/$from.mgk", "$curworkdir/$to.mgk.2");
                                     if ($panic) {
                                         try_to_recover($start,$i);
                                         unlink "$pidfile";
@@ -2933,7 +2933,7 @@ if (defined($ARGV[0])) {
                                 }
                             }
                             else {
-                                smog_copy("$curtmpdir/$to$img_ext", "$curtmpdir/$to.bak");
+                                smog_copy("$curworkdir/$to$img_ext", "$curworkdir/$to.bak");
                                 if ($panic) {
                                     try_to_recover($start,$i-1);
                                     unlink "$pidfile";
@@ -3000,28 +3000,28 @@ if (defined($ARGV[0])) {
             }
             for ($i=$start; $i<=$end; $i++) {
                 $name=&mkname($i);
-                if (-f "$curtmpdir/$name.mgk.2") {
-                    if (-f "$curtmpdir/$name$img_ext.2") {
-                        unlink "$curtmpdir/$name$img_ext";
-                        $smerr=rename "$curtmpdir/$name$img_ext.2","$curtmpdir/$name$img_ext";
+                if (-f "$curworkdir/$name.mgk.2") {
+                    if (-f "$curworkdir/$name$img_ext.2") {
+                        unlink "$curworkdir/$name$img_ext";
+                        $smerr=rename "$curworkdir/$name$img_ext.2","$curworkdir/$name$img_ext";
                         if (!$smerr) {
                             if ($letterbox) {
                                 try_to_recover($start,$end);
                             }
-                            sig_system_error("Renaming \"$curtmpdir/$name$img_ext.2\" to \"$curtmpdir/$name$img_ext\"",$!);
+                            sig_system_error("Renaming \"$curworkdir/$name$img_ext.2\" to \"$curworkdir/$name$img_ext\"",$!);
                             unlink "$pidfile";
                             exit 1;
                         }
 
                     }
-                    unlink "$curtmpdir/$name.mgk";
-                    $smerr=rename "$curtmpdir/$name.mgk.2","$curtmpdir/$name.mgk";
+                    unlink "$curworkdir/$name.mgk";
+                    $smerr=rename "$curworkdir/$name.mgk.2","$curworkdir/$name.mgk";
 
                     if (!$smerr) {
                         if ($letterbox) {
                             try_to_recover($start,$end);
                         }
-                        sig_system_error("Renaming \"$curtmpdir/$name.mgk.2\" to \"$curtmpdir/$name.mgk\"",$!);
+                        sig_system_error("Renaming \"$curworkdir/$name.mgk.2\" to \"$curworkdir/$name.mgk\"",$!);
                         unlink "$pidfile";
                         exit 1;
                     }
@@ -3033,9 +3033,9 @@ if (defined($ARGV[0])) {
 # remove excess frames
             for ($i=$end+1; $i<=$old_end; $i++) {
                 $name=&mkname($i);
-                if (-f "$curtmpdir/$name$img_ext") {
-                    unlink "$curtmpdir/$name.bak";
-                    smog_rename("$curtmpdir/$name$img_ext","$curtmpdir/$name.bak");
+                if (-f "$curworkdir/$name$img_ext") {
+                    unlink "$curworkdir/$name.bak";
+                    smog_rename("$curworkdir/$name$img_ext","$curworkdir/$name.bak");
                 }
             }
             &sig_progress($i);
@@ -3058,7 +3058,7 @@ if (defined($ARGV[0])) {
             $leave_bak=0;
         }
 
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
 
         $oend=$end;
 
@@ -3074,9 +3074,9 @@ if (defined($ARGV[0])) {
             for ($i=$frames+1; $i<=$oend; $i++) {
                 $name=&mkname($i);
                 if (!$leave_bak) {
-                    unlink "$curtmpdir/$name$img_ext";
+                    unlink "$curworkdir/$name$img_ext";
                 } else {
-                    smog_rename("$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk");
+                    smog_rename("$curworkdir/$name$img_ext","$curworkdir/$name.mgk");
                 }
             }
         } else {
@@ -3084,11 +3084,11 @@ if (defined($ARGV[0])) {
             for ($i=$end+1; $i<=$frames; $i++) {
                 $name=&mkname($i);
                 if (!$leave_bak) {
-                    if (-f  "$curtmpdir/$name.bak") {
-                        smog_rename("$curtmpdir/$name.bak","$curtmpdir/$name$img_ext");
+                    if (-f  "$curworkdir/$name.bak") {
+                        smog_rename("$curworkdir/$name.bak","$curworkdir/$name$img_ext");
                     }
                 } else {
-                    smog_rename("$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk");
+                    smog_rename("$curworkdir/$name$img_ext","$curworkdir/$name.mgk");
                 }
             }
         }
@@ -3104,7 +3104,7 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "cut") {
-        unlink "$curtmpdir/pause";
+        unlink "$curworkdir/pause";
         &clean_old;
 
         $start=$ARGV[2];
@@ -3136,11 +3136,11 @@ if (defined($ARGV[0])) {
 
     if ($command eq "delete_all") {
         $frames=$ARGV[2];
-        if (! -d $curtmpdir) {
+        if (! -d $curworkdir) {
             &sig_complete;
             exit 1;
         }
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
         unlink glob "* *.* .*";
         if ($GUI_NAME eq "LiVES") {
 # LiVES needs this to stop the progress dialog from flickering
@@ -3153,7 +3153,7 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "reverse") {
-        unlink "$curtmpdir/pause";
+        unlink "$curworkdir/pause";
         $start=$ARGV[2];
         $end=$ARGV[3];
         $img_ext=".".$ARGV[4];
@@ -3164,7 +3164,7 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "undo") {
-        unlink "$curtmpdir/pause";
+        unlink "$curworkdir/pause";
 
         $start=$ARGV[2];
         $end=$ARGV[3];
@@ -3177,7 +3177,7 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "redo") {
-        unlink "$curtmpdir/pause";
+        unlink "$curworkdir/pause";
 
         $start=$ARGV[2];
         $end=$ARGV[3];
@@ -3214,7 +3214,7 @@ if (defined($ARGV[0])) {
     }
 
     if ($command eq "mv_mgk") {
-        unlink "$curtmpdir/pause";
+        unlink "$curworkdir/pause";
         $start=$ARGV[2];
         $end=$ARGV[3];
         $img_ext=".".$ARGV[4];
@@ -3271,11 +3271,11 @@ if (defined($ARGV[0])) {
                 exit 1;
             }
         } else {
-            $audio_in="$curtmpdir/audio";
+            $audio_in="$curworkdir/audio";
         }
 
 # convert raw audio to wav
-        $audio_out=$curtmpdir . "/audiodump.wav";
+        $audio_out=$curworkdir . "/audiodump.wav";
 
         &convert_audio_to_wav;
         if ($panic) {
@@ -3329,7 +3329,7 @@ if (defined($ARGV[0])) {
         $file=$ARGV[8];
         $audio_in="audiodump.wav";
 
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
 
         $audiofile="audio";
 
@@ -3402,20 +3402,20 @@ if (defined($ARGV[0])) {
 
 # cat audio audio.new -> audiodump
         if ($^O eq "MSWin32") {
-            $smerr=smog_system("cat.exe \"$curtmpdir/audio\" \"$audio_out\" > \"$curtmpdir/audiodump\"");
+            $smerr=smog_system("cat.exe \"$curworkdir/audio\" \"$audio_out\" > \"$curworkdir/audiodump\"");
         } else {
-            $smerr=smog_system("/bin/cat \"$curtmpdir/audio\" \"$audio_out\" > \"$curtmpdir/audiodump\"");
+            $smerr=smog_system("/bin/cat \"$curworkdir/audio\" \"$audio_out\" > \"$curworkdir/audiodump\"");
         }
 
         if ($smerr) {
-            sig_system_error("Creating \"$curtmpdir\audiodump\"",$smerr);
+            sig_system_error("Creating \"$curworkdir\audiodump\"",$smerr);
             unlink "$pidfile";
             exit 1;
         }
 
         unlink "$audio_out";
 #audio.new
-        $fsize=-s "$curtmpdir/audiodump";
+        $fsize=-s "$curworkdir/audiodump";
         &sig_complete($fsize);
         exit 0;
     }
@@ -3432,7 +3432,7 @@ if (defined($ARGV[0])) {
         $asigned=$ARGV[7];
         $aendian=$ARGV[8];
 
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
 
         unless(&rc_get("conserve_space") eq "true") {
             &backup_audio;
@@ -3522,12 +3522,12 @@ if (defined($ARGV[0])) {
         $nsamps=$ARGV[9];
         $nsigned=$ARGV[10];
         $nendian=$ARGV[11];
-        $audio_in="$curtmpdir/audio.bak";
-        $audio_out="$curtmpdir/audio";
+        $audio_in="$curworkdir/audio.bak";
+        $audio_out="$curworkdir/audio";
 
         if (defined($ARGV[12])) {
             $stretch=$ARGV[12];
-            $audio_in="$curtmpdir/audio.orig";
+            $audio_in="$curworkdir/audio.orig";
         }
 
         unlink "$audio_in";
@@ -3553,10 +3553,10 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "get_window_id") {
-        smog_system("xwininfo > \"$curtmpdir/tmpinfo\"");
+        smog_system("xwininfo > \"$curworkdir/tmpinfo\"");
 
-        smog_system("grep \"Window id:\" \"$curtmpdir/tmpinfo\" > \"$curtmpdir/tmpinfo2\"");
-        if (defined(open IN,"< $curtmpdir/tmpinfo2")) {
+        smog_system("grep \"Window id:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
+        if (defined(open IN,"< $curworkdir/tmpinfo2")) {
             read IN,$win_id,128;
             close IN;
         }
@@ -3564,8 +3564,8 @@ if (defined($ARGV[0])) {
         $win_id=hex($wid[3]);
         chomp($win_id);
 
-        smog_system("grep \"Width:\" \"$curtmpdir/tmpinfo\" > \"$curtmpdir/tmpinfo2\"");
-        if (defined(open IN,"< $curtmpdir/tmpinfo2")) {
+        smog_system("grep \"Width:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
+        if (defined(open IN,"< $curworkdir/tmpinfo2")) {
             read IN,$width,128;
             close IN;
         }
@@ -3573,8 +3573,8 @@ if (defined($ARGV[0])) {
         $width=$widths[1];
         chomp($width);
 
-        smog_system("grep \"Height:\" \"$curtmpdir/tmpinfo\" > \"$curtmpdir/tmpinfo2\"");
-        if (defined(open IN,"< $curtmpdir/tmpinfo2")) {
+        smog_system("grep \"Height:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
+        if (defined(open IN,"< $curworkdir/tmpinfo2")) {
             read IN,$height,128;
             close IN;
         }
@@ -3582,8 +3582,8 @@ if (defined($ARGV[0])) {
         $height=$heights[1];
         chomp($height);
 
-        smog_system("grep \"Depth:\" \"$curtmpdir/tmpinfo\" > \"$curtmpdir/tmpinfo2\"");
-        if (defined(open IN,"< $curtmpdir/tmpinfo2")) {
+        smog_system("grep \"Depth:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
+        if (defined(open IN,"< $curworkdir/tmpinfo2")) {
             read IN,$bpp,128;
             close IN;
         }
@@ -3592,8 +3592,8 @@ if (defined($ARGV[0])) {
         chomp($bpp);
 
 
-        smog_system("grep \"Visual:\" \"$curtmpdir/tmpinfo\" > \"$curtmpdir/tmpinfo2\"");
-        if (defined(open IN,"< $curtmpdir/tmpinfo2")) {
+        smog_system("grep \"Visual:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
+        if (defined(open IN,"< $curworkdir/tmpinfo2")) {
             read IN,$visual,128;
             close IN;
         }
@@ -3601,8 +3601,8 @@ if (defined($ARGV[0])) {
         $visual=$visuals[1];
         chomp($visual);
 
-        unlink "$curtmpdir/tmpinfo";
-        unlink "$curtmpdir/tmpinfo2";
+        unlink "$curworkdir/tmpinfo";
+        unlink "$curworkdir/tmpinfo2";
 
         &sig_complete($win_id,$width,$height,$bpp,$visual);
         exit 0;
@@ -3611,7 +3611,7 @@ if (defined($ARGV[0])) {
 
     if ($command eq "fill_and_redo_frames") {
 # remove any gaps in the play images
-        unlink "$curtmpdir/pause";
+        unlink "$curworkdir/pause";
         $end=$ARGV[2];
         $width=$ARGV[3];
         $height=$ARGV[4];
@@ -3638,7 +3638,7 @@ if (defined($ARGV[0])) {
 
         if ($has_audio) {
             $aud_end=($end/$fps)*$achans*$arate*($asamps/8);
-            $audio_in="$curtmpdir/audio";
+            $audio_in="$curworkdir/audio";
             $audsize=-s $audio_in;
             if ($audsize > $aud_end) {
                 $audio_out=&clip_audio(0.,$end/$fps);
@@ -3650,7 +3650,7 @@ if (defined($ARGV[0])) {
                 smog_rename("$audio_out","$audio_in");
             }
             elsif($audsize<$aud_end) {
-                $audio_out="$curtmpdir/audio.bak";
+                $audio_out="$curworkdir/audio.bak";
                 smog_rename("$audio_in","$audio_out");
                 &append_silence(0,$aud_end-$audsize,$asamps,$achans,$asigned,$aendian,$audio_in);
                 if ($panic) {
@@ -3679,7 +3679,7 @@ if (defined($ARGV[0])) {
             $allow_nonex=$ARGV[2];
         }
 
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
         $audio_out="audio";
         $audio_bak="audio.bak";
 
@@ -3764,7 +3764,7 @@ if (defined($ARGV[0])) {
 # remove the audio file in audiodump/audiodump.wav
 # plus any audio.new files (e.g. from append audio)
 
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
         unlink glob "audiodump* audio.new";
 
         &sig_complete;
@@ -3829,7 +3829,7 @@ if (defined($ARGV[0])) {
 
         $track=$ARGV[2];
 
-        $audiofile=$curtmpdir."/audiodump.wav";
+        $audiofile=$curworkdir."/audiodump.wav";
         if (-f $audiofile) {
             unlink "$audiofile";
         }
@@ -3861,7 +3861,7 @@ if (defined($ARGV[0])) {
 
         $file=$ARGV[2];
 
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
 
         $audio_in="audiodump.wav";
 
@@ -3897,7 +3897,7 @@ if (defined($ARGV[0])) {
 
 # with -ve end means "allow missing frames" (used for copying to clipboard)
 
-        unlink "$curtmpdir/pause";
+        unlink "$curworkdir/pause";
         $img_ext=".".$ARGV[2];
         $img_prefix=&get_img_prefix($img_ext);
         $where=$ARGV[3];
@@ -3914,7 +3914,7 @@ if (defined($ARGV[0])) {
 
         $new_frames=$num_frames;
 
-        smog_chdir("$curtmpdir");
+        smog_chdir("$curworkdir");
 
         $allow_missing=0;
         if ($end<0) {
@@ -3944,7 +3944,7 @@ if (defined($ARGV[0])) {
         if ($with_audio<2) {
             if (!$undo_cut) {
                 if (!$allow_missing) {
-                    $img_ext2=&get_img_ext("$tmpdir/$from_handle",$start);
+                    $img_ext2=&get_img_ext("$workdir/$from_handle",$start);
                     $img_prefix2=&get_img_prefix($img_ext2);
                 } else {
                     $img_ext2=$img_ext;
@@ -3989,7 +3989,7 @@ if (defined($ARGV[0])) {
                     }
                     smog_system_sync();
                 } else {
-                    $end=-s "$curtmpdir/audio.bak";
+                    $end=-s "$curworkdir/audio.bak";
                     $end/=$arate*$achans*$asamps/8;
                     $start=0.;
                     if ($with_audio<2) {
@@ -4047,8 +4047,8 @@ if (defined($ARGV[0])) {
 
     if (substr($command,0,9) eq "fxrender_") {
 
-        smog_chdir("$curtmpdir");
-        unlink "$curtmpdir/pause";
+        smog_chdir("$curworkdir");
+        unlink "$curworkdir/pause";
         $command=substr($command,9);
         $status=$ARGV[2];
         $start=$ARGV[3];
@@ -4139,7 +4139,7 @@ if (defined($ARGV[0])) {
         if ($fx_caps&0x8000) {
 # is autogenerated
 # we are so nice :-), we set:
-# $handle,$curtmpdir,$img_ext,$start,$end,$width,$height
+# $handle,$curworkdir,$img_ext,$start,$end,$width,$height
 # and for transitions $where, $chandle
 # remove fxrender $handle $status start end width height (start2 clipboard)
             shift;
@@ -4198,7 +4198,7 @@ if (defined($ARGV[0])) {
             shift;
             shift;
 #remove "fxrender_.." and $handle $status
-            my($res_file)="$curtmpdir/.rfx_result";
+            my($res_file)="$curworkdir/.rfx_result";
 
             my $err;
 
@@ -4213,9 +4213,9 @@ if (defined($ARGV[0])) {
                     } else {
                         $cmd="perl";
                     }
-                    $err=smog_system("$cmd \"$plugin_name\" process \"$curtmpdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
+                    $err=smog_system("$cmd \"$plugin_name\" process \"$curworkdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
                 } else {
-                    $err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
+                    $err=smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
                 }
             }
             elsif($num_in_channels==1) {
@@ -4227,9 +4227,9 @@ if (defined($ARGV[0])) {
                     } else {
                         $cmd="perl";
                     }
-                    $err=smog_system("$cmd \"$plugin_name\" process \"$curtmpdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
+                    $err=smog_system("$cmd \"$plugin_name\" process \"$curworkdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
                 } else {
-                    $err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
+                    $err=smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
                 }
             }
             else {
@@ -4241,9 +4241,9 @@ if (defined($ARGV[0])) {
                     } else {
                         $cmd="perl";
                     }
-                    $err=smog_system("$cmd \"$plugin_name\" process \"$curtmpdir\" $out_ext @ARGV > \"$res_file\"");
+                    $err=smog_system("$cmd \"$plugin_name\" process \"$curworkdir\" $out_ext @ARGV > \"$res_file\"");
                 } else {
-                    $err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $out_ext @ARGV > \"$res_file\"");
+                    $err=smog_system("\"$plugin_name\" process \"$curworkdir\" $out_ext @ARGV > \"$res_file\"");
                 }
             }
             if (!$err) {
@@ -4279,7 +4279,7 @@ if (defined($ARGV[0])) {
 
     if ($command eq "import_project") {
         $proj_file=$ARGV[2];
-        smog_chdir("$tmpdir");
+        smog_chdir("$workdir");
         umask 0;
         $com="tar --no-same-owner -xzf \"$proj_file\"";
         $smerr=smog_system($com);
@@ -4295,7 +4295,7 @@ if (defined($ARGV[0])) {
     if ($command eq "export_project") {
         my $set=$ARGV[2];
         my $proj_file=$ARGV[3];
-        smog_chdir("$tmpdir");
+        smog_chdir("$workdir");
         $com="tar --exclude=*.bak --exclude=.pid* --exclude .status* --exclude=lock.* --exclude=*.mgk --exclude=*.tmp --exclude=audioclip* -czf \"$proj_file\" $set";
         $smerr=smog_system($com);
         if ($smerr) {
@@ -4349,17 +4349,17 @@ sub mkname {
 }
 
 sub check_for_pause {
-    if (-f "$curtmpdir/pause") {
+    if (-f "$curworkdir/pause") {
         smog_system_sync();
     }
-    while (-f "$curtmpdir/pause") {
+    while (-f "$curworkdir/pause") {
         sleep 1;
     }
 }
 
 
 sub check_for_stop {
-    if (defined(open IN,"< $curtmpdir/.status.fileop")) {
+    if (defined(open IN,"< $curworkdir/.status.fileop")) {
         close IN;
         return 1;
     }
@@ -4371,7 +4371,7 @@ sub check_for_stop {
 sub kill_child_pids {
     my($target_pid,$sig)=@_;
     my $pid;
-    smog_system("pgrep -P $target_pid > \"$tmpdir/.pids.$target_pid\" 2>/dev/null");
+    smog_system("pgrep -P $target_pid > \"$workdir/.pids.$target_pid\" 2>/dev/null");
 
     if ($sig eq "KILL") {
         smog_system("kill -$sig $target_pid >/dev/null 2>&1");
@@ -4380,7 +4380,7 @@ sub kill_child_pids {
 # must not ! >/dev/null 2>&1");
     }
 
-    if (-s "$tmpdir/.pids.$target_pid"&&defined(open IN,"$tmpdir/.pids.$target_pid")) {
+    if (-s "$workdir/.pids.$target_pid"&&defined(open IN,"$workdir/.pids.$target_pid")) {
         while (<IN>) {
             $pid=$_;
             chomp($pid);
@@ -4389,7 +4389,7 @@ sub kill_child_pids {
         close IN;
     }
 
-    unlink "$tmpdir/.pids.$target_pid";
+    unlink "$workdir/.pids.$target_pid";
 }
 
 sub is_writeable {
@@ -4470,14 +4470,14 @@ sub try_to_recover {
 
     my($smstart,$smend)=@_;
     if ($DEBUG_SMOGRIFY) {
-        print STDERR "Beginning clip recovery process for $curtmpdir\n";
+        print STDERR "Beginning clip recovery process for $curworkdir\n";
     }
     for ($i=$smstart; $i<=$smend; $i++) {
         $name &mkname($i);
         smog_rename("$name.bak","$name$img_ext");
     }
     if ($DEBUG_SMOGRIFY) {
-        print STDERR "Clip recovery process succeeded for $curtmpdir\n";
+        print STDERR "Clip recovery process succeeded for $curworkdir\n";
     }
 }
 
@@ -4502,31 +4502,31 @@ sub mv_mgk {
 
     for ($i=$start;$i<=$end;$i++) {
         $name=&mkname($i);
-        if (-f "$curtmpdir/$name.mgk") {
-            if (-f "$curtmpdir/$name$img_ext") {
-                if ($leave_bak==1&&-f "$curtmpdir/$name.bak") {
-                    unlink "$curtmpdir/$name$img_ext";
+        if (-f "$curworkdir/$name.mgk") {
+            if (-f "$curworkdir/$name$img_ext") {
+                if ($leave_bak==1&&-f "$curworkdir/$name.bak") {
+                    unlink "$curworkdir/$name$img_ext";
                 }
                 else {
-                    $smres=rename "$curtmpdir/$name$img_ext","$curtmpdir/$name.bak";
+                    $smres=rename "$curworkdir/$name$img_ext","$curworkdir/$name.bak";
                     if (!$smres) {
                         try_to_recover($start,$i-1);
                         if ($DEBUG_SMOGRIFY) {
-                            print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name$img_ext\",\"$curtmpdir/$name.bak\"\n";
+                            print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name$img_ext\",\"$curworkdir/$name.bak\"\n";
                         }
-                        sig_system_error("Renaming \"$curtmpdir/$name$img_ext\" to \"$curtmpdir/$name.bak\"");
+                        sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to \"$curworkdir/$name.bak\"");
                         unlink $pidfile;
                         exit 1;
                     }
                 }
             }
-            $smerr=rename( "$curtmpdir/$name.mgk","$curtmpdir/$name$img_ext");
+            $smerr=rename( "$curworkdir/$name.mgk","$curworkdir/$name$img_ext");
             if (!$smerr) {
                 try_to_recover($start,$i);
                 if ($DEBUG_SMOGRIFY) {
-                    print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name.mgk\",\"$curtmpdir/$name$img_ext\"\n";
+                    print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name.mgk\",\"$curworkdir/$name$img_ext\"\n";
                 }
-                sig_system_error("Renaming \"$curtmpdir/$name.mgk\" to \"$curtmpdir/$name$img_ext\"");
+                sig_system_error("Renaming \"$curworkdir/$name.mgk\" to \"$curworkdir/$name$img_ext\"");
                 unlink $pidfile;
                 exit 1;
             }
@@ -4551,32 +4551,32 @@ sub mv_pre {
         unlink "$pidfile";
     }
 
-    smog_chdir("$curtmpdir");
+    smog_chdir("$curworkdir");
     unlink glob "*.mgk";
 
     for ($i=$start; $i<=$end; $i++) {
         $name=&mkname($i);
-        if (-f "$curtmpdir/$name.pre") {
-            if (-f "$curtmpdir/$name$img_ext") {
-                unlink "$curtmpdir/$name.bak";
-                $smerr=rename("$curtmpdir/$name$img_ext","$curtmpdir/$name.bak");
+        if (-f "$curworkdir/$name.pre") {
+            if (-f "$curworkdir/$name$img_ext") {
+                unlink "$curworkdir/$name.bak";
+                $smerr=rename("$curworkdir/$name$img_ext","$curworkdir/$name.bak");
                 if (!$smerr) {
                     try_to_recover($start,$i-1);
                     if ($DEBUG_SMOGRIFY) {
-                        print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name$img_ext\",\"$curtmpdir/$name.bak\"\n";
+                        print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name$img_ext\",\"$curworkdir/$name.bak\"\n";
                     }
-                    sig_system_error("Renaming \"$curtmpdir/$name$img_ext\" to \"$curtmpdir/$name.bak\"");
+                    sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to \"$curworkdir/$name.bak\"");
                     unlink "$pidfile";
                     exit 1;
                 }
             }
-            $smerr=rename "$curtmpdir/$name.pre","$curtmpdir/$name$img_ext";
+            $smerr=rename "$curworkdir/$name.pre","$curworkdir/$name$img_ext";
             if (!$smerr) {
                 try_to_recover($start,$i);
                 if ($DEBUG_SMOGRIFY) {
-                    print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name.pre\",\"$curtmpdir/$name$img_ext\"\n";
+                    print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name.pre\",\"$curworkdir/$name$img_ext\"\n";
                 }
-                sig_system_error("Renaming \"$curtmpdir/$name.pre\" to \"$curtmpdir/$name$img_ext\"");
+                sig_system_error("Renaming \"$curworkdir/$name.pre\" to \"$curworkdir/$name$img_ext\"");
                 unlink "$pidfile";
                 exit 1;
             }
@@ -4597,12 +4597,12 @@ sub undo {
     my($i,$name);
     for ($i=$start; $i<=$end; $i++) {
         $name=&mkname($i);
-        if (-f "$curtmpdir/$name.bak") {
-            if ($param==0 && -f "$curtmpdir/$name$img_ext") {
+        if (-f "$curworkdir/$name.bak") {
+            if ($param==0 && -f "$curworkdir/$name$img_ext") {
 # file may not exist if we are undoing resample for example
-                smog_rename("$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk");
+                smog_rename("$curworkdir/$name$img_ext","$curworkdir/$name.mgk");
             }
-            smog_rename("$curtmpdir/$name.bak","$curtmpdir/$name$img_ext");
+            smog_rename("$curworkdir/$name.bak","$curworkdir/$name$img_ext");
         }
         &sig_progress($i);
     }
@@ -4610,20 +4610,20 @@ sub undo {
 
 
 sub undo_audio {
-    if (-f "$curtmpdir/audio.orig") {
-        unlink "$curtmpdir/audio";
-        smog_rename("$curtmpdir/audio.orig","$curtmpdir/audio");
-        unlink "$curtmpdir/audio.bak";
+    if (-f "$curworkdir/audio.orig") {
+        unlink "$curworkdir/audio";
+        smog_rename("$curworkdir/audio.orig","$curworkdir/audio");
+        unlink "$curworkdir/audio.bak";
     } else {
-        unlink "$curtmpdir/audio.new";
-        if (-f "$curtmpdir/audio") {
-            smog_rename("$curtmpdir/audio","$curtmpdir/audio.new");
+        unlink "$curworkdir/audio.new";
+        if (-f "$curworkdir/audio") {
+            smog_rename("$curworkdir/audio","$curworkdir/audio.new");
         }
-        if (-f "$curtmpdir/audio.bak") {
-            smog_rename("$curtmpdir/audio.bak","$curtmpdir/audio");
+        if (-f "$curworkdir/audio.bak") {
+            smog_rename("$curworkdir/audio.bak","$curworkdir/audio");
         }
-        if (-f "$curtmpdir/audio.new") {
-            smog_rename("$curtmpdir/audio.new","$curtmpdir/audio.bak");
+        if (-f "$curworkdir/audio.new") {
+            smog_rename("$curworkdir/audio.new","$curworkdir/audio.bak");
         }
     }
 }
@@ -4631,14 +4631,14 @@ sub undo_audio {
 
 sub backup_audio {
     &clean_old;
-    smog_copy("$curtmpdir/audio", "$curtmpdir/audio.bak");
+    smog_copy("$curworkdir/audio", "$curworkdir/audio.bak");
 # may set $panic
 }
 
 sub cut {
     my($start,$end)=@_;
     my($i,$name);
-    smog_chdir("$curtmpdir");
+    smog_chdir("$curworkdir");
     $frames_cut=$end-$start+1;
 
     for ($i=$start; $i<=$end; $i++) {
@@ -4652,8 +4652,8 @@ sub cut {
     for ($i=$end+1; $i<=$frames; $i++) {
         $from=&mkname($i);
         $to=&mkname($i-$frames_cut);
-        if (-f "$curtmpdir/$from$img_ext") {
-            smog_rename("$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
+        if (-f "$curworkdir/$from$img_ext") {
+            smog_rename("$curworkdir/$from$img_ext","$curworkdir/$to$img_ext");
         }
         &sig_progress($i);
     }
@@ -4666,23 +4666,23 @@ sub reverse {
     for ($i=$start; $i<int(($start+$end)/2+.5); $i++) {
         $from=&mkname($i);
         $to=&mkname($end-$i+1);
-        $hasfrom=-f "$curtmpdir/$from$img_ext";
-        $hasto=-f "$curtmpdir/$to$img_ext";
+        $hasfrom=-f "$curworkdir/$from$img_ext";
+        $hasto=-f "$curworkdir/$to$img_ext";
         if ($hasfrom) {
             if ($hasto) {
-                smog_rename("$curtmpdir/$from$img_ext","$curtmpdir/$from.revtemp");
-                smog_rename("$curtmpdir/$to$img_ext","$curtmpdir/$from$img_ext");
+                smog_rename("$curworkdir/$from$img_ext","$curworkdir/$from.revtemp");
+                smog_rename("$curworkdir/$to$img_ext","$curworkdir/$from$img_ext");
             }
             &sig_progress($start+($i-$start)*2);
             if ($hasto) {
-                smog_rename("$curtmpdir/$from.revtemp","$curtmpdir/$to$img_ext");
+                smog_rename("$curworkdir/$from.revtemp","$curworkdir/$to$img_ext");
             } else {
-                smog_rename("$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
+                smog_rename("$curworkdir/$from$img_ext","$curworkdir/$to$img_ext");
             }
         } else {
             &sig_progress($start+($i-$start)*2);
             if ($hasto) {
-                smog_rename("$curtmpdir/$to$img_ext","$curtmpdir/$from$img_ext");
+                smog_rename("$curworkdir/$to$img_ext","$curworkdir/$from$img_ext");
             }
         }
         &sig_progress($start+($i-$start)*2+1);
@@ -4698,9 +4698,9 @@ sub undo_insert {
 # move any shifted frames back
         $name=&mkname($i);
         $to=&mkname($i-$frames_inserted);
-        if (-f "$curtmpdir/$name$img_ext") {
-            unlink "$curtmpdir/$to$img_ext";
-            smog_rename("$curtmpdir/$name$img_ext","$curtmpdir/$to$img_ext");
+        if (-f "$curworkdir/$name$img_ext") {
+            unlink "$curworkdir/$to$img_ext";
+            smog_rename("$curworkdir/$name$img_ext","$curworkdir/$to$img_ext");
         }
     }
 }
@@ -4837,20 +4837,20 @@ sub insert {
         $img_prefix=&get_img_prefix($img_ext);
     }
 
-    $fromdir="$tmpdir/$from_handle";
+    $fromdir="$workdir/$from_handle";
     $frames_to_move=($nend-$nstart+1) *$times;
 
 # make space for new frames
     for ($i=$num_frames; $i>$nwhere; $i--) {
         $from=&mkname($i);
         $to=&mkname($i+$frames_to_move);
-        if ($i<=($new_frames-$frames_to_move)&&!$undo_cut&&-f "$curtmpdir/$from$img_ext") {
+        if ($i<=($new_frames-$frames_to_move)&&!$undo_cut&&-f "$curworkdir/$from$img_ext") {
 # this frame will get overwritten, so back it up
-            smog_copy("$curtmpdir/$from$img_ext", "$curtmpdir/$from.bak");
+            smog_copy("$curworkdir/$from$img_ext", "$curworkdir/$from.bak");
             return if $panic;
     }
-    if (-f "$curtmpdir/$from$img_ext") {
-            smog_rename("$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
+    if (-f "$curworkdir/$from$img_ext") {
+            smog_rename("$curworkdir/$from$img_ext","$curworkdir/$to$img_ext");
         }
         &sig_progress($new_frames-$i);
     }
@@ -4871,7 +4871,7 @@ sub insert {
 
             if ($undo_cut==1) {
                 if (-f "$fromdir/$from.bak") {
-                    smog_rename("$fromdir/$from.bak","$curtmpdir/$to$img_ext");
+                    smog_rename("$fromdir/$from.bak","$curworkdir/$to$img_ext");
                     return if $panic;
             }
         } else {
@@ -4901,12 +4901,12 @@ sub insert {
                 }
 
                 if ($quick_copy==1) {
-                    smog_copy("$fromdir/$from$img_ext2","$curtmpdir/$to$img_ext");
+                    smog_copy("$fromdir/$from$img_ext2","$curworkdir/$to$img_ext");
                     return if $panic;
             } else {
                 if ($antialias eq "false") {
                         $com="$smog_convert_command +antialias -size $width"."x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width"
-                             ."x$height\\! $img_prefix\"$curtmpdir/$to$img_ext\" >$nulfile 2>&1";
+                             ."x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
                         $smerr=smog_system($com);
                         if ($smerr) {
                             sig_system_error("$com",$smerr);
@@ -4915,7 +4915,7 @@ sub insert {
                         }
                     } else {
                         $com="$smog_convert_command -antialias -size $width"."x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width"
-                             ."x$height\\! $img_prefix\"$curtmpdir/$to$img_ext\" >$nulfile 2>&1";
+                             ."x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
                         $smerr=smog_system($com);
                         if ($smerr) {
                             sig_system_error("$com",$smerr);
@@ -4936,7 +4936,7 @@ sub insert {
         if ($times_inserted==2) {
             $nend=$nwhere;
             $nstart=$nwhere-$inserted+1;
-            $fromdir=$curtmpdir;
+            $fromdir=$curworkdir;
         }
         $nwhere+=$inserted;
 
@@ -5730,7 +5730,7 @@ if ($mp_command eq "") {
         $type="Audio";
     }
 
-    smog_chdir("$curtmpdir");
+    smog_chdir("$curworkdir");
 
 # if mplayer supports the -identify command, use that
 # the format changed for 1.0pre1 so now we use -vo null -ao null -frames 0
@@ -5770,13 +5770,13 @@ if ($mp_command eq "") {
 
         $name=&mkname(1);
 
-        unless (-f "$curtmpdir/$name") {
+        unless (-f "$curworkdir/$name") {
 # see if it is image(s)
             &open_images(1);
             if ($hsize==-1) {
                 $hsize=$vsize=0;
             }
-            opendir DIR,$curtmpdir;
+            opendir DIR,$curworkdir;
             while ($file2=readdir(DIR)) {
                 if ($file2 =~ /$ximg_ext$/) {
                     $count++;
@@ -5784,7 +5784,7 @@ if ($mp_command eq "") {
                     $origcount=0;
                     $imresact="none";
                     if ($only_first) {
-                        unlink glob "$curtmpdir/*$ximg_ext";
+                        unlink glob "$curworkdir/*$ximg_ext";
                         last;
                     }
                     else {
@@ -5895,7 +5895,7 @@ sub convert_audio_to_wav {
     my $smcom;
 
 
-    smog_chdir("$curtmpdir");
+    smog_chdir("$curworkdir");
     if (&location("sox") eq "") {
         $mp_com=&get_mplayer_location;
         $format=&get_mplayer_format;
@@ -6017,7 +6017,7 @@ sub convert_audio_to_wav {
         }
 
         $smcom="sox $nodither -t .raw -r $arate $asigned -$sasamps -c $achans \"$audio_in\" -t .wav -r $nrate -c $nchans $nsigned -$nnasamps "
-        . "\"$curtmpdir/audiodump.wav\" >$nulfile 2>&1";
+        . "\"$curworkdir/audiodump.wav\" >$nulfile 2>&1";
 
     }
 
@@ -6043,8 +6043,8 @@ sub clip_audio {
         return;
     }
 
-    $audio_in=$curtmpdir."/audio";
-    $audio_out=$curtmpdir."/audioclip";
+    $audio_in=$curworkdir."/audio";
+    $audio_out=$curworkdir."/audioclip";
 
     unlink "$audio_out";
     if ($^O eq "MSWin32") {
@@ -6269,16 +6269,16 @@ sub get_ext {
 
     my ($audio_from)=$audio_from;
 
-    my ($audio_to)="$curtmpdir/audio";
+    my ($audio_to)="$curworkdir/audio";
     if (defined($from_handle)) {
     if ($undo_cut) {
-    $audio_from="$tmpdir/$from_handle/audio.bak";
+    $audio_from="$workdir/$from_handle/audio.bak";
 }
     else {
-    $audio_from="$tmpdir/$from_handle/audio";
+    $audio_from="$workdir/$from_handle/audio";
 }
 }
-    my ($audio_temp)="$curtmpdir/audio.temp";
+    my ($audio_temp)="$curworkdir/audio.temp";
 
     unlink "$audio_temp";
     if ($^O eq "MSWin32") {
@@ -6427,7 +6427,7 @@ $size=&align(-s $audio_temp);
 }
 else {
 # copy from audio.bak to output
-    my ($audio_bak)="$curtmpdir/audio.bak";
+    my ($audio_bak)="$curworkdir/audio.bak";
     $size=-s $audio_bak;
     $size=&align($size-$owpos);
     if ($size>0) {
@@ -6457,9 +6457,9 @@ sub cut_audio {
         return;
     }
 
-    my ($audio_in)="$curtmpdir/audio";
-    my ($audio_temp)="$curtmpdir/audio.temp";
-    my ($audio_bak)="$curtmpdir/audio.bak";
+    my ($audio_in)="$curworkdir/audio";
+    my ($audio_temp)="$curworkdir/audio.temp";
+    my ($audio_bak)="$curworkdir/audio.bak";
 
     unlink "$audio_temp";
     unlink "$audio_bak";
@@ -6565,7 +6565,7 @@ sub append_silence {
 #pad from end - $offset of $audio_file to byte $end-1 with zeros
     my($offset,$end,$asamps,$achans,$asigned,$aendian,$audio_file)=@_;
     if ($audio_file eq "") {
-        $audio_file="$curtmpdir/audio";
+        $audio_file="$curworkdir/audio";
     }
 
     unless(-f $audio_file) {
@@ -6691,7 +6691,7 @@ my($i)=shift;
             unless($_ =~ /^\./||(! -f $file)||(-z $file)) {
                 $nframes=&open_single_image($i);
                 return if $panic;
-            if (-s "$curtmpdir/$name$img_ext") {
+            if (-s "$curworkdir/$name$img_ext") {
                     if ($only_first) {
                         $i++;
                         last;
@@ -6699,15 +6699,15 @@ my($i)=shift;
                         $i+=$nframes;
                     }
                 } else {
-                    unlink "$curtmpdir/$name$img_ext";
+                    unlink "$curworkdir/$name$img_ext";
                 }
             }
         }
     } else {
         &open_single_image($i);
         return if $panic;
-    unless(-s "$curtmpdir/$name$img_ext") {
-            unlink "$curtmpdir/$name$img_ext";
+    unless(-s "$curworkdir/$name$img_ext") {
+            unlink "$curworkdir/$name$img_ext";
         }
     }
     return $i-$orig;
@@ -6785,9 +6785,9 @@ elsif(!defined($ximg_prefix)) {
 }
 
 if ($antialias eq "false") {
-$com="$smog_convert_command +antialias \"$file\" -scale $hsize"."x"."$vsize\\! $ximg_prefix\"$curtmpdir/$name$ximg_ext\" > $nulfile 2>&1";
+$com="$smog_convert_command +antialias \"$file\" -scale $hsize"."x"."$vsize\\! $ximg_prefix\"$curworkdir/$name$ximg_ext\" > $nulfile 2>&1";
 } else {
-$com="$smog_convert_command \"$file\" -resize $hsize"."x"."$vsize\\! $ximg_prefix\"$curtmpdir/$name$ximg_ext\" >$nulfile 2>&1";
+$com="$smog_convert_command \"$file\" -resize $hsize"."x"."$vsize\\! $ximg_prefix\"$curworkdir/$name$ximg_ext\" >$nulfile 2>&1";
 }
 
 
@@ -6803,9 +6803,9 @@ sig_system_error("$com",$smerr);
 #convert gives multiple frames for e.g. animated gif
 $found=1;
 for ($j=0; $found==1; $j++) {
-if (-f "$curtmpdir/$name-$j$ximg_ext") {
+if (-f "$curworkdir/$name-$j$ximg_ext") {
         $newname=&mkname($i+$j);
-        smog_rename("$curtmpdir/$name-$j$ximg_ext","$curtmpdir/$newname$ximg_ext");
+        smog_rename("$curworkdir/$name-$j$ximg_ext","$curworkdir/$newname$ximg_ext");
         $nframes++;
 
     } else {
@@ -6814,7 +6814,7 @@ if (-f "$curtmpdir/$name-$j$ximg_ext") {
 }
 
 if ($hsize*$vsize==0) {
-&get_image_size("$curtmpdir/$name$ximg_ext");
+&get_image_size("$curworkdir/$name$ximg_ext");
 }
 
 if ($hsize*$vsize>0&&$nframes==0) {
@@ -6906,7 +6906,7 @@ sub fill_and_redo_frames {
 
     my $next=0;
 
-    smog_chdir("$curtmpdir");
+    smog_chdir("$curworkdir");
 
 
     for ($i=1; $i<=$end; $i++) {
@@ -6924,7 +6924,7 @@ sub fill_and_redo_frames {
         }
 
         unless($fromname eq $name) {
-            smog_copy("$curtmpdir/$fromname$img_ext","$curtmpdir/$name$img_ext");
+            smog_copy("$curworkdir/$fromname$img_ext","$curworkdir/$name$img_ext");
             return if $panic;
     }
     &sig_progress($i);
@@ -7069,7 +7069,7 @@ if ($arate==0&&$achans==0&&$asamps==0) {
 
 
 sub wav_open {
-    $curtmpfile=$curtmpdir . "/.temp";
+    $curtmpfile=$curworkdir . "/.temp";
 
     if (-f $audio_in) {
         unlink "$audio_in";
@@ -7277,8 +7277,8 @@ sub get_mplayer_format {
 
 sub clean_old {
 # clear away any old backup files, etc.
-    return if (! -d "$tmpdir/$handle");
-    smog_chdir("$tmpdir/$handle");
+    return if (! -d "$workdir/$handle");
+    smog_chdir("$workdir/$handle");
     unlink glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
     smog_system_sync();
 }
@@ -7287,7 +7287,7 @@ sub clean_old {
 
 sub sig_complete {
 
-    return if (! -d "$curtmpdir");
+    return if (! -d "$curworkdir");
     my($status)="completed";
     foreach (@_) {
         $status.="|".$_;
@@ -7295,7 +7295,7 @@ sub sig_complete {
 
     smog_system_sync();
 
-    if (-d $curtmpdir) {
+    if (-d $curworkdir) {
         open OUT,">","$statusfile";
         print OUT "$status";
         close OUT;
@@ -7305,7 +7305,7 @@ sub sig_complete {
 
 
 sub sig_killed {
-    return if (! -d "$curtmpdir");
+    return if (! -d "$curworkdir");
     return if (-f "$statusfile");
     my($status)="killed";
 
@@ -7318,7 +7318,7 @@ sub sig_killed {
 
 
 sub sig_complete_audio {
-    return if (! -d "$curtmpdir");
+    return if (! -d "$curworkdir");
     my($status)="audio_ended|";
     foreach (@_) {
         $status.="|".$_;
@@ -7341,7 +7341,7 @@ sub sig_error {
 
 # write to backend -> frontend $statusfile
 
-    return if (! -d $curtmpdir);
+    return if (! -d $curworkdir);
 
     my($status)="error";
     my ($count)=0;
@@ -7371,7 +7371,7 @@ sub sig_write_error {
 
 # in params: 1 - filename, 2 - optional additional info (1 line)
 
-    return 1 if (! -d $curtmpdir);
+    return 1 if (! -d $curworkdir);
 
     my ($smfile,$smaddinfo)=@_;
     my ($smstatus)="error|write|$smfile";
@@ -7394,7 +7394,7 @@ sub sig_read_error {
 
 # in params: 1 - filename, 2 - optional additional info (1 line)
 
-    return 1 if (! -d $curtmpdir);
+    return 1 if (! -d $curworkdir);
     my ($smfile,$smaddinfo)=@_;
     my ($smstatus)="error|read|$smfile";
 
@@ -7422,7 +7422,7 @@ sub sig_system_error {
 # in params: 1 - command which failed or description of command, 2 - error value returned, 
 # 3 - optional additional info (1 line)
 
-    return 1 if (! -d $curtmpdir);
+    return 1 if (! -d $curworkdir);
 
     my ($smcom,$smerrno,$smaddinfo)=@_;
     my ($smstatus)="error|system|$smcom|$smerrno";
@@ -7766,18 +7766,18 @@ sub count_frames {
 my $count=0,$gap=1;
 if (!defined $handle) {
         $handle=$ARGV[1];
-        $curtmpdir="$tmpdir/$handle";
+        $curworkdir="$workdir/$handle";
     }
 
     $name=&mkname(1);
 
-    unless (-f "$curtmpdir/$name$img_ext") {
+    unless (-f "$curworkdir/$name$img_ext") {
         return 0;
     }
 
     while (1) {
         $name=&mkname($count+$gap);
-        if (-f "$curtmpdir/$name$img_ext") {
+        if (-f "$curworkdir/$name$img_ext") {
             $count+=$gap;
             $gap*=2;
         }
@@ -7802,7 +7802,7 @@ sub my_basename {
 
 
 sub write_bootstrap_file {
-#write our bootstrap file and make our tmpdir
+#write our bootstrap file and make our workdir
     unlink "$gui_bootstrap_file";
     unless (defined(open OUT,"> $gui_bootstrap_file")) {
         exit 4;
@@ -8057,19 +8057,19 @@ sub weed {
 #
 
     my $file;
-    smog_chdir("$tmpdir");
+    smog_chdir("$workdir");
 
 # get starting disk space
     my $start_total=(split / /, (smog_system_direct("du -sb 2>$nulfile")))[0];
 
     use File::Find;
-    opendir DIR,$tmpdir;
+    opendir DIR,$workdir;
     while ($file=readdir(DIR)) {
         unless ($file =~ /^\./) {
 
-            if (-d "$tmpdir/$file") {
+            if (-d "$workdir/$file") {
 # remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
-                if (&is_non_empty_dir("$tmpdir/$file/clips") || (&is_non_empty_dir("$tmpdir/$file/layouts") && !($opts & 0x04))) {
+                if (&is_non_empty_dir("$workdir/$file/clips") || (&is_non_empty_dir("$workdir/$file/layouts") && !($opts & 0x04))) {
 # new style sets, check clips and optionally layouts
                     unless (!defined($new_temp)||$new_temp eq "") {
 # we are to move this set
@@ -8077,13 +8077,13 @@ sub weed {
                             smog_rename( "$new_temp/$file","$new_temp/$file.bak");
                         }
                         unless ($opts & 0x02) {
-                            unless (-f "$tmpdir/$file/noprune") {
-                                smog_chdir("$tmpdir/$file");
+                            unless (-f "$workdir/$file/noprune") {
+                                smog_chdir("$workdir/$file");
                                 &prune;
-                                smog_chdir("$tmpdir");
+                                smog_chdir("$workdir");
                             }
                         }
-                        smog_rename( "$tmpdir/$file","$new_temp/$file");
+                        smog_rename( "$workdir/$file","$new_temp/$file");
                     }
                 }
                 else {
@@ -8091,50 +8091,50 @@ sub weed {
 
 # dir is of no interest
                     $in_set=0;
-                    find (\&fndset,"$tmpdir/$file/");
+                    find (\&fndset,"$workdir/$file/");
                     if (!$in_set && !($opts & 0x01)) {
                         if ($^O eq "MSWin32") {
-                            if (chdir("$tmpdir/$file")) {
+                            if (chdir("$workdir/$file")) {
                                 unlink glob "* *.* .*";
-                                smog_chdir("$tmpdir");
-                                rmdir "$tmpdir/$file";
+                                smog_chdir("$workdir");
+                                rmdir "$workdir/$file";
                             }
 
                         }
                         else {
-                            smog_system("/bin/rm -rf \"$tmpdir/$file\"");
+                            smog_system("/bin/rm -rf \"$workdir/$file\"");
                         }
                     }
                     else {
                         unless ($opts & 0x02) {
-                            unless (-f "$tmpdir/$file/noprune") {
-                                smog_chdir("$tmpdir/$file");
+                            unless (-f "$workdir/$file/noprune") {
+                                smog_chdir("$workdir/$file");
                                 &prune;
-                                smog_chdir("$tmpdir");
+                                smog_chdir("$workdir");
                             }
                         }
                         unless (!defined($new_temp)||$new_temp eq "") {
 # tempdir was changed, so we move all sets (subdirs) from old tempdir to new 
 # [TODO - check for set name collision !]
-                            if (-d "$tmpdir/$file") {
+                            if (-d "$workdir/$file") {
                                 if (-d "$new_temp/$file") {
                                     smog_rename( "$new_temp/$file","$new_temp/$file.bak");
                                 }
-                                smog_rename( "$tmpdir/$file","$new_temp/$file");
+                                smog_rename( "$workdir/$file","$new_temp/$file");
                             }
                         }
                     }
                 }
                 unless ($opts & 0x08) {
-                    unlink "$tmpdir/$file/set.";
-                    unlink "$tmpdir/$file/noprune";
+                    unlink "$workdir/$file/set.";
+                    unlink "$workdir/$file/noprune";
                 }
             }
             else {
 # move crash recovery files
                 unless (!defined($new_temp)||$new_temp eq "") {
                     if ($file =~ /^recovery/ || $file =~ /^layout/) {
-                        smog_rename( "$tmpdir/$file","$new_temp/$file");
+                        smog_rename( "$workdir/$file","$new_temp/$file");
                     }
                 }
             }
@@ -8145,11 +8145,8 @@ sub weed {
 
     unless ($opts & 0x10) {
 # clean up a few extra remnants
-        smog_chdir("$tmpdir");
+        smog_chdir("$workdir");
         unlink glob ".* rfx.* smogplugin.*";
-        if ($^O ne "MSWin32") {
-            unlink glob "/tmp/lives-symlinks";
-        }
         unless (!defined($new_temp)||$new_temp eq "") {
             unlink glob "firew.* encoder_log_* stream.*";
         }
@@ -8193,7 +8190,7 @@ sub get_sox_version {
 
 
 sub prune {
-# clean up old backup images etc in $tmpdir/$file
+# clean up old backup images etc in $workdir/$file
 # part of the diskspace recovery process
 
     $old_handle=$handle;
@@ -8209,15 +8206,15 @@ sub clear_symlinks {
 # clear symlinks directory - called after encoding a selection (part of a clip which gets symlinked)
 
 # this is for "safe" symlinks
-# we say that symlinks may be created only within /tmp/lives-symlinks on whatever system
+# we say that symlinks may be created only within <workdir>/handle/lives-symlinks on whatever system
 
 # this allows e.g dynebolic to use non-Linux disk as working directory
 
 
-    my $curtmpdir="$tmpdir/$handle";
-    my $linksdir="$curtmpdir/lives-symlinks/";
+    my $curworkdir="$workdir/$handle";
+    my $linksdir="$curworkdir/lives-symlinks/";
 
-    smog_chdir($curtmpdir);
+    smog_chdir($curworkdir);
 
     if (-d $linksdir) {
 # remove directory + contents

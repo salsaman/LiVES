@@ -759,8 +759,8 @@ boolean do_startup_tests(boolean tshoot) {
 
   // check if mplayer can decode audio
 
-  if (capable->has_mplayer) mp_cmd="mplayer";
-  else if (capable->has_mplayer2) mp_cmd="mplayer2";
+  if (capable->has_mplayer) mp_cmd=AUDIO_PLAYER_MPLAYER;
+  else if (capable->has_mplayer2) mp_cmd=AUDIO_PLAYER_MPLAYER2;
   else mp_cmd="mpv";
 
   get_location(mp_cmd,mppath,PATH_MAX);

@@ -53,7 +53,7 @@ boolean save_frame_index(int fileno) {
 
   if (sfile==NULL||sfile->frame_index==NULL) return FALSE;
 
-  fname=lives_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
+  fname=lives_build_filename(prefs->workdir,sfile->handle,"file_index",NULL);
 
   do {
     retval=0;
@@ -104,7 +104,7 @@ boolean save_frame_index(int fileno) {
 
    lives_freep((void **)&sfile->frame_index);
 
-   fname=lives_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
+   fname=lives_build_filename(prefs->workdir,sfile->handle,"file_index",NULL);
 
    if (!lives_file_test(fname,LIVES_FILE_TEST_EXISTS)) {
      lives_free(fname);
@@ -170,7 +170,7 @@ void del_frame_index(lives_clip_t *sfile) {
   }
 
   if (sfile!=clipboard) {
-    idxfile=lives_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
+    idxfile=lives_build_filename(prefs->workdir,sfile->handle,"file_index",NULL);
     lives_rm(idxfile);
     lives_free(idxfile);
   }

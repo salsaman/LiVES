@@ -74,7 +74,7 @@ void close_file(int current_file, boolean tshoot) {
 
 
 
-boolean do_tempdir_query(void) {
+boolean do_workdir_query(void) {
   uint64_t freesp;
 
   int response;
@@ -155,13 +155,13 @@ top:
   }
 
 
-  lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",dirname);
-  lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
+  lives_snprintf(prefs->workdir,PATH_MAX,"%s",dirname);
+  lives_snprintf(future_prefs->workdir,PATH_MAX,"%s",prefs->workdir);
 
-  set_pref(PREF_WORKING_DIR,prefs->tmpdir);
-  set_pref(PREF_SESSION_TEMPDIR,prefs->tmpdir);
+  set_pref(PREF_WORKING_DIR,prefs->workdir);
+  set_pref(PREF_SESSION_WORKDIR,prefs->workdir);
 
-  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d",prefs->tmpdir,capable->mainpid);
+  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d",prefs->workdir,capable->mainpid);
 
   lives_free(dirname);
   return TRUE;
@@ -627,7 +627,7 @@ boolean do_startup_tests(boolean tshoot) {
     lives_rm(cfile->info_file);
 
     // write 1 second of silence
-    afile=lives_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL);
+    afile=lives_build_filename(prefs->workdir,cfile->handle,"audio",NULL);
     out_fd=lives_open3(afile,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
 
     if (out_fd<0) mainw->write_failed=TRUE;
@@ -656,7 +656,7 @@ boolean do_startup_tests(boolean tshoot) {
     lives_free(afile);
 
     if (!mainw->write_failed) {
-      afile=lives_build_filename(prefs->tmpdir,cfile->handle,"testout.wav",NULL);
+      afile=lives_build_filename(prefs->workdir,cfile->handle,"testout.wav",NULL);
 
       mainw->com_failed=FALSE;
       com=lives_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",prefs->backend_sync,cfile->handle,afile);

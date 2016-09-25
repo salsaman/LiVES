@@ -1851,7 +1851,7 @@ void jack_aud_pb_ready(int fileno) {
     if (sfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&
         (sfile->laudio_time>0.||sfile->opening||
          (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&
-          lives_file_test((tmpfilename=lives_build_filename(prefs->tmpdir,sfile->handle,"audio",NULL)),
+          lives_file_test((tmpfilename=lives_build_filename(prefs->workdir,sfile->handle,"audio",NULL)),
                           LIVES_FILE_TEST_EXISTS)))) {
       boolean timeout;
       int alarm_handle;

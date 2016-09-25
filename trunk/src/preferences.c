@@ -75,12 +75,12 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
   }
 
   if (lives_system(com,TRUE)) {
-    tempdir_warning();
+    workdir_warning();
     lives_free(com);
     return LIVES_RESPONSE_INVALID;
   }
 
-  vfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGVAL_FILE_NAME".%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
+  vfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGVAL_FILE_NAME".%d.%d",prefs->workdir,lives_getuid(),capable->mainpid);
 
   do {
     retval=LIVES_RESPONSE_NONE;
@@ -186,12 +186,12 @@ void get_pref_default(const char *key, char *val, int maxlen) {
   memset(val,0,1);
 
   if (lives_system(com,TRUE)) {
-    tempdir_warning();
+    workdir_warning();
     lives_free(com);
     return;
   }
 
-  vfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGVAL_FILE_NAME".%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
+  vfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGVAL_FILE_NAME".%d.%d",prefs->workdir,lives_getuid(),capable->mainpid);
 
 
   do {
@@ -304,7 +304,7 @@ boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colR
 void delete_pref(const char *key) {
   char *com=lives_strdup_printf("%s delete_pref \"%s\"",prefs->backend_sync,key);
   if (lives_system(com,TRUE)) {
-    tempdir_warning();
+    workdir_warning();
   }
   lives_free(com);
 }
@@ -312,7 +312,7 @@ void delete_pref(const char *key) {
 void set_pref(const char *key, const char *value) {
   char *com=lives_strdup_printf("%s set_pref \"%s\" \"%s\"",prefs->backend_sync,key,value);
   if (lives_system(com,TRUE)) {
-    tempdir_warning();
+    workdir_warning();
   }
   lives_free(com);
 }
@@ -323,7 +323,7 @@ void set_pref_utf8(const char *key, const char *value) {
   char *tmp=U82F(value);
   char *com=lives_strdup_printf("%s set_pref \"%s\" \"%s\"",prefs->backend_sync,key,tmp);
   if (lives_system(com,TRUE)) {
-    tempdir_warning();
+    workdir_warning();
   }
   lives_free(com);
   lives_free(tmp);
@@ -333,7 +333,7 @@ void set_pref_utf8(const char *key, const char *value) {
 void set_theme_pref(const char *themefile, const char *key, const char *value) {
   char *com=lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend_sync,themefile,key,value);
   if (lives_system(com,TRUE)) {
-    tempdir_warning();
+    workdir_warning();
   }
   lives_free(com);
 }
@@ -342,7 +342,7 @@ void set_theme_pref(const char *themefile, const char *key, const char *value) {
 void set_int_pref(const char *key, int value) {
   char *com=lives_strdup_printf("%s set_pref \"%s\" %d",prefs->backend_sync,key,value);
   if (lives_system(com,TRUE)) {
-    tempdir_warning();
+    workdir_warning();
   }
   lives_free(com);
 }
@@ -352,7 +352,7 @@ void set_int64_pref(const char *key, int64_t value) {
   // not used
   char *com=lives_strdup_printf("%s set_pref \"%s\" %"PRId64,prefs->backend_sync,key,value);
   if (lives_system(com,TRUE)) {
-    tempdir_warning();
+    workdir_warning();
   }
   lives_free(com);
 }
@@ -361,7 +361,7 @@ void set_int64_pref(const char *key, int64_t value) {
 void set_double_pref(const char *key, double value) {
   char *com=lives_strdup_printf("%s set_pref \"%s\" %.3f",prefs->backend_sync,key,value);
   if (lives_system(com,TRUE)) {
-    tempdir_warning();
+    workdir_warning();
   }
   lives_free(com);
 }
@@ -376,7 +376,7 @@ void set_boolean_pref(const char *key, boolean value) {
     com=lives_strdup_printf("%s set_pref \"%s\" false",prefs->backend_sync,key);
   }
   if (lives_system(com,TRUE)) {
-    tempdir_warning();
+    workdir_warning();
   }
   lives_free(com);
 }
@@ -550,10 +550,10 @@ void set_vpp(boolean set_in_prefs) {
 
 
 
-static void set_temp_label_text(LiVESLabel *label) {
+static void set_workdir_label_text(LiVESLabel *label) {
   char *free_ds;
   char *tmpx1,*tmpx2;
-  char *dir=future_prefs->tmpdir;
+  char *dir=future_prefs->workdir;
   char *markup;
 
   // use lives_strdup* since the translation string is auto-freed()
@@ -567,7 +567,7 @@ static void set_temp_label_text(LiVESLabel *label) {
   }
 
   tmpx1=lives_strdup(
-          _("The temp directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n"));
+          _("The work directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n"));
 
 #ifdef GUI_GTK
   markup = g_markup_printf_escaped("<span background=\"white\" foreground=\"red\"><b>%s</b></span>%s",tmpx1,tmpx2);
@@ -714,7 +714,7 @@ boolean apply_prefs(boolean skip_warn) {
   const char *sepimg_path=lives_entry_get_text(LIVES_ENTRY(prefsw->sepimg_entry));
   const char *frameblank_path=lives_entry_get_text(LIVES_ENTRY(prefsw->frameblank_entry));
 
-  char tmpdir[PATH_MAX];
+  char workdir[PATH_MAX];
   char *theme = lives_combo_get_active_text(LIVES_COMBO(prefsw->theme_combo));
   char *audp = lives_combo_get_active_text(LIVES_COMBO(prefsw->audp_combo));
   char *audio_codec=NULL;
@@ -1057,7 +1057,7 @@ boolean apply_prefs(boolean skip_warn) {
     else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
   } else future_prefs->encoder.audio_codec=0;
 
-  lives_snprintf(tmpdir,PATH_MAX,"%s",(tmp=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->tmpdir_entry)),
+  lives_snprintf(workdir,PATH_MAX,"%s",(tmp=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->workdir_entry)),
                                        -1,NULL,NULL,NULL)));
   lives_free(tmp);
 
@@ -1163,28 +1163,28 @@ boolean apply_prefs(boolean skip_warn) {
     mainw->prefs_changed|=PREFS_IMAGES_CHANGED;
   }
 
-  ensure_isdir(tmpdir);
-  ensure_isdir(prefs->tmpdir);
-  ensure_isdir(future_prefs->tmpdir);
+  ensure_isdir(workdir);
+  ensure_isdir(prefs->workdir);
+  ensure_isdir(future_prefs->workdir);
 
-  if (strcmp(prefs->tmpdir,tmpdir)||strcmp(future_prefs->tmpdir,tmpdir)) {
-    if (lives_file_test(tmpdir, LIVES_FILE_TEST_EXISTS)&&(strlen(tmpdir)<10||
-        strncmp(tmpdir+strlen(tmpdir)-10,"/"LIVES_TMP_NAME"/",10)))
-      lives_strappend(tmpdir,PATH_MAX,LIVES_TMP_NAME"/");
+  if (strcmp(prefs->workdir,workdir)||strcmp(future_prefs->workdir,workdir)) {
+    if (lives_file_test(workdir, LIVES_FILE_TEST_EXISTS)&&(strlen(workdir)<10||
+        strncmp(workdir+strlen(workdir)-10,"/"LIVES_TMP_NAME"/",10)))
+      lives_strappend(workdir,PATH_MAX,LIVES_TMP_NAME"/");
 
-    if (strcmp(prefs->tmpdir,tmpdir)||strcmp(future_prefs->tmpdir,tmpdir)) {
+    if (strcmp(prefs->workdir,workdir)||strcmp(future_prefs->workdir,workdir)) {
       char *msg;
 
-      if (!check_dir_access(tmpdir)) {
-        tmp=lives_filename_to_utf8(tmpdir,-1,NULL,NULL,NULL);
+      if (!check_dir_access(workdir)) {
+        tmp=lives_filename_to_utf8(workdir,-1,NULL,NULL,NULL);
 #ifndef IS_MINGW
         msg=lives_strdup_printf(
-              _("Unable to create or write to the new temporary directory.\nYou may need to create it as the root user first, e.g:\n\nsudo mkdir -p %s; "
-                "sudo chmod 777 %s\n\nThe directory will not be changed now.\n"),
+              _("Unable to create or write to the new working directory.\nYou may need to create it as the root user first, e.g:\n\nsudo mkdir -p %s; "
+                "\n\nThe directory will not be changed now.\n"),
               tmp,tmp);
 #else
         msg=lives_strdup_printf(
-              _("Unable to create or write to the new temporary directory.\n%s\nPlease try another directory or contact your system administrator."
+              _("Unable to create or write to the new working directory.\n%s\nPlease try another directory or contact your system administrator."
                 "\n\nThe directory will not be changed now.\n"),
               tmp);
 #endif
@@ -1192,21 +1192,21 @@ boolean apply_prefs(boolean skip_warn) {
         lives_free(tmp);
         do_blocking_error_dialog(msg);
       } else {
-        lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",tmpdir);
-        set_temp_label_text(LIVES_LABEL(prefsw->temp_label));
-        lives_widget_queue_draw(prefsw->temp_label);
+        lives_snprintf(future_prefs->workdir,PATH_MAX,"%s",workdir);
+        set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label));
+        lives_widget_queue_draw(prefsw->workdir_label);
         lives_widget_context_update(); // update prefs window before showing confirmation box
 
         msg=lives_strdup(
-              _("You have chosen to change the temporary directory.\nPlease make sure you have no other copies of LiVES open.\n\n"
+              _("You have chosen to change the working directory.\nPlease make sure you have no other copies of LiVES open.\n\n"
                 "If you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\n"
-                "Alternatively, press Cancel to restore the temporary directory to its original setting."));
+                "Alternatively, press Cancel to restore the working directory to its original setting."));
         if (do_warning_dialog(msg)) {
-          mainw->prefs_changed=PREFS_TEMPDIR_CHANGED;
+          mainw->prefs_changed=PREFS_WORKDIR_CHANGED;
           needs_restart=TRUE;
         } else {
-          lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
-          lives_entry_set_text(LIVES_ENTRY(prefsw->tmpdir_entry), prefs->tmpdir);
+          lives_snprintf(future_prefs->workdir,PATH_MAX,"%s",prefs->workdir);
+          lives_entry_set_text(LIVES_ENTRY(prefsw->workdir_entry), prefs->workdir);
         }
       }
       lives_free(msg);
@@ -1856,8 +1856,8 @@ void save_future_prefs(void) {
     set_pref(PREF_RECENT4,"");
   }
 
-  if (strncmp(future_prefs->tmpdir,"NULL",4)) {
-    set_pref(PREF_WORKING_DIR,future_prefs->tmpdir);
+  if (strncmp(future_prefs->workdir,"NULL",4)) {
+    set_pref(PREF_WORKING_DIR,future_prefs->workdir);
   }
   if (prefs->show_tool!=future_prefs->show_tool) {
     set_boolean_pref(PREF_SHOW_TOOLBAR,future_prefs->show_tool);
@@ -3654,7 +3654,7 @@ _prefsw *create_prefs_dialog(void) {
                      (LiVESAttachOptions)(0), 0, 0);
   lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
-  label = lives_standard_label_new(_("      Temp directory (do not remove) "));
+  label = lives_standard_label_new(_("   Working directory (do not remove) "));
   lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), label, 0, 1, 3, 4,
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
@@ -3671,19 +3671,19 @@ _prefsw *create_prefs_dialog(void) {
 
 
 
-  // tempdir warning label
+  // workdir warning label
 
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new("");
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  set_temp_label_text(LIVES_LABEL(label));
+  set_workdir_label_text(LIVES_LABEL(label));
   lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), label, 0, 3, 0, 2,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
   lives_label_set_halignment(LIVES_LABEL(label), 0.65);
 
-  prefsw->temp_label=label;
+  prefsw->workdir_label=label;
 
 
   // get from prefs
@@ -3723,17 +3723,17 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->proj_dir_entry),FALSE);
 
-  prefsw->tmpdir_entry = lives_standard_entry_new(NULL,FALSE,(tmp=lives_filename_to_utf8(future_prefs->tmpdir,-1,NULL,NULL,NULL)),-1,PATH_MAX,
+  prefsw->workdir_entry = lives_standard_entry_new(NULL,FALSE,(tmp=lives_filename_to_utf8(future_prefs->workdir,-1,NULL,NULL,NULL)),-1,PATH_MAX,
                          NULL,(tmp2=lives_strdup(_("LiVES working directory."))));
 
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), prefsw->tmpdir_entry, 1, 2, 3, 4,
+  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), prefsw->workdir_entry, 1, 2, 3, 4,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
 
   lives_free(tmp);
   lives_free(tmp2);
 
-  lives_entry_set_editable(LIVES_ENTRY(prefsw->tmpdir_entry),FALSE);
+  lives_entry_set_editable(LIVES_ENTRY(prefsw->workdir_entry),FALSE);
 
   dirbutton = lives_standard_file_button_new(TRUE,NULL);
 
@@ -3786,7 +3786,7 @@ _prefsw *create_prefs_dialog(void) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_complex_clicked),prefsw->tmpdir_entry);
+  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_complex_clicked),prefsw->workdir_entry);
 
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_directory.png", NULL);
   pixbuf_directories = lives_pixbuf_new_from_file(icon, NULL);
@@ -5215,7 +5215,7 @@ _prefsw *create_prefs_dialog(void) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->proj_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->tmpdir_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->workdir_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_fps), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);

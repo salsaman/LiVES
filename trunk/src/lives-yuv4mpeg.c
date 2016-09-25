@@ -404,7 +404,7 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->current_file=new_file;
 
   if (!strlen(prefs->yuvin))
-    filename=lives_build_filename(prefs->tmpdir,"stream.yuv",NULL);
+    filename=lives_build_filename(prefs->workdir,"stream.yuv",NULL);
   else
     filename=lives_strdup(prefs->yuvin);
 
@@ -451,14 +451,14 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     // and we dont really care if it doesnt work
 
     // but what it means is, if we have an audio file or stream at
-    // "prefs->tmpdir/audiodump.pcm" we will try to play it
+    // "prefs->workdir/audiodump.pcm" we will try to play it
 
 
 
-    // real is tmpdir/audiodump.pcm
-    audio_real=lives_build_filename(prefs->tmpdir,"audiodump.pcm",NULL);
-    // fake is tmpdir/handle/audiodump.pcm
-    audio_fake=lives_build_filename(prefs->tmpdir,cfile->handle,"audiodump.pcm",NULL);
+    // real is workdir/audiodump.pcm
+    audio_real=lives_build_filename(prefs->workdir,"audiodump.pcm",NULL);
+    // fake is workdir/handle/audiodump.pcm
+    audio_fake=lives_build_filename(prefs->workdir,cfile->handle,"audiodump.pcm",NULL);
 
     // fake file will go away when we close the current clip
     lives_ln(audio_real,audio_fake);
@@ -499,7 +499,7 @@ boolean lives_yuv_stream_start_write(lives_yuv4m_t *yuv4mpeg, const char *filena
   }
   mainw->fixed_fpsd=fps;
 
-  if (filename==NULL) filename=lives_strdup_printf("%s/streamout.yuv",prefs->tmpdir);
+  if (filename==NULL) filename=lives_strdup_printf("%s/streamout.yuv",prefs->workdir);
 
   // TODO - do_threaded_dialog
   if ((yuvout=creat(filename,O_CREAT))<0) {
@@ -605,7 +605,7 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  fifofile=lives_strdup_printf("%s/tvpic_%d.y4m",prefs->tmpdir,capable->mainpid);
+  fifofile=lives_strdup_printf("%s/tvpic_%d.y4m",prefs->workdir,capable->mainpid);
 
   mainw->open_deint=FALSE;
 
@@ -739,7 +739,7 @@ void on_live_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   int response;
 
-  char *fifofile=lives_strdup_printf("%s/firew_%d.y4m",prefs->tmpdir,capable->mainpid);
+  char *fifofile=lives_strdup_printf("%s/firew_%d.y4m",prefs->workdir,capable->mainpid);
   char *fname;
 
   LiVESWidget *card_dialog;

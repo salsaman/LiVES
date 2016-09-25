@@ -190,7 +190,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       pdefault=lives_strdup_printf("%s %d %d %d %d %d %s %s %d \"%s/%s\"",cfile->handle,rfx->status,
                                    cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,
                                    get_image_ext_for_type(cfile->img_type),get_image_ext_for_type(clipboard->img_type),
-                                   clipboard->start,prefs->tmpdir,clipboard->handle);
+                                   clipboard->start,prefs->workdir,clipboard->handle);
     } else {
       pdefault=lives_strdup_printf("%s %d %d %d %d %d %s",cfile->handle,rfx->status,cfile->progress_start,
                                    cfile->progress_end,cfile->hsize,cfile->vsize,get_image_ext_for_type(cfile->img_type));
@@ -471,7 +471,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (rfx->num_in_channels==0) {
     if (rfx->props&RFX_PROPS_BATCHG) {
       // batch mode generators need some extra processing
-      char *imgdir=lives_strdup_printf("%s%s",prefs->tmpdir,cfile->handle);
+      char *imgdir=lives_strdup_printf("%s%s",prefs->workdir,cfile->handle);
       int img_file=mainw->current_file;
 
       mainw->suppress_dprint=TRUE;

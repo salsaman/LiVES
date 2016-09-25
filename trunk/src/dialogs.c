@@ -840,7 +840,7 @@ void pump_io_chan(LiVESIOChannel *iochan) {
 
 
 boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
-  // check storage space in prefs->tmpdir, and if sfile!=NULL, in sfile->op_dir
+  // check storage space in prefs->workdir, and if sfile!=NULL, in sfile->op_dir
   uint64_t dsval;
 
   int retval;
@@ -852,7 +852,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
   char *pausstr=lives_strdup(_("Processing has been paused."));
 
   do {
-    ds=get_storage_status(prefs->tmpdir,mainw->next_ds_warn_level,&dsval);
+    ds=get_storage_status(prefs->workdir,mainw->next_ds_warn_level,&dsval);
     if (ds==LIVES_STORAGE_STATUS_WARNING) {
       uint64_t curr_ds_warn=mainw->next_ds_warn_level;
       mainw->next_ds_warn_level>>=1;
@@ -864,7 +864,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
         did_pause=TRUE;
       }
 
-      tmp=ds_warning_msg(prefs->tmpdir,dsval,curr_ds_warn,mainw->next_ds_warn_level);
+      tmp=ds_warning_msg(prefs->workdir,dsval,curr_ds_warn,mainw->next_ds_warn_level);
       if (!did_pause)
         msg=lives_strdup_printf("\n%s\n",tmp);
       else
@@ -888,7 +888,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
         on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button),NULL);
         did_pause=TRUE;
       }
-      tmp=ds_critical_msg(prefs->tmpdir,dsval);
+      tmp=ds_critical_msg(prefs->workdir,dsval);
       if (!did_pause)
         msg=lives_strdup_printf("\n%s\n",tmp);
       else
@@ -2188,11 +2188,11 @@ void too_many_files(void) {
   lives_free(warn);
 }
 
-void tempdir_warning(void) {
+void workdir_warning(void) {
   char *tmp,*com=lives_strdup_printf(
-                   _("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\n"
+                   _("LiVES was unable to write to its working directory.\n\nThe current working directory is:\n\n%s\n\n"
                      "Please make sure you can write to this directory."),
-                   (tmp=lives_filename_to_utf8(prefs->tmpdir,-1,NULL,NULL,NULL)));
+                   (tmp=lives_filename_to_utf8(prefs->workdir,-1,NULL,NULL,NULL)));
   lives_free(tmp);
   if (mainw!=NULL&&mainw->is_ready) {
     do_error_dialog(com);
@@ -2469,7 +2469,7 @@ boolean do_yuv4m_open_warning(void) {
   msg=lives_strdup_printf(
         _("When opening a yuvmpeg stream, you should first create a fifo file in:\n\n%sstream.yuv\n\n and then write yuv4mpeg frames to it.\n"
           "LiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, otherwise, click Cancel."),
-        prefs->tmpdir);
+        prefs->workdir);
   resp=do_warning_dialog_with_check(msg,WARN_MASK_OPEN_YUV4M);
   lives_free(msg);
   return resp;
@@ -3019,7 +3019,7 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
 
   uint64_t dsval1,dsval2;
 
-  lives_storage_status_t ds1=get_storage_status(prefs->tmpdir,prefs->ds_crit_level,&dsval1),ds2;
+  lives_storage_status_t ds1=get_storage_status(prefs->workdir,prefs->ds_crit_level,&dsval1),ds2;
 
   if (mainw->current_file>-1&&cfile!=NULL&&cfile->op_dir!=NULL) {
     ds2=get_storage_status(cfile->op_dir,prefs->ds_crit_level,&dsval2);
@@ -3033,7 +3033,7 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
 
   if (ds1==LIVES_STORAGE_STATUS_CRITICAL) {
     lives_free(dsmsg1);
-    tmp=ds_critical_msg(prefs->tmpdir,dsval1);
+    tmp=ds_critical_msg(prefs->workdir,dsval1);
     dsmsg1=lives_strdup_printf("%s\n",tmp);
     lives_free(tmp);
   }
@@ -3218,7 +3218,7 @@ int do_header_read_error_with_retry(int clip) {
   char *hname;
   if (mainw->files[clip]==NULL) return 0;
 
-  hname=lives_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
+  hname=lives_build_filename(prefs->workdir,mainw->files[clip]->handle,"header.lives",NULL);
 
   ret=do_read_failed_error_s_with_retry(hname,NULL,NULL);
 
@@ -3236,7 +3236,7 @@ boolean do_header_write_error(int clip) {
 
   if (mainw->files[clip]==NULL) return TRUE;
 
-  hname=lives_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
+  hname=lives_build_filename(prefs->workdir,mainw->files[clip]->handle,"header.lives",NULL);
   retval=do_write_failed_error_s_with_retry(hname,NULL,NULL);
   if (retval==LIVES_RESPONSE_RETRY && save_clip_values(clip)) retval=0; // on retry try to save all values
   lives_free(hname);
@@ -3251,7 +3251,7 @@ int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
   char *hname,*key,*msg;
   if (mainw->files[clip]==NULL) return 0;
 
-  hname=lives_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
+  hname=lives_build_filename(prefs->workdir,mainw->files[clip]->handle,"header.lives",NULL);
 
   key=clip_detail_to_string(detail,NULL);
 
@@ -3387,7 +3387,7 @@ boolean do_sub_type_warning(const char *ext, const char *type_ext) {
   return ret;
 }
 
-boolean do_move_tmpdir_dialog(void) {
+boolean do_move_workdir_dialog(void) {
   return do_yesno_dialog(_("\nDo you wish to move the current clip sets to the new directory ?\n(If unsure, click Yes)\n"));
 }
 

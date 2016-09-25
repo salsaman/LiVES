@@ -742,9 +742,6 @@ typedef struct {
   /// home directory - default location for config file - locale encoding
   char home_dir[PATH_MAX];
 
-  /// system tempdir (e.g /tmp for linux, C:\TEMP for win32)
-  //char system_tmpdir[PATH_MAX];  ///< kept in locale encoding
-
   char touch_cmd[PATH_MAX];
   char rm_cmd[PATH_MAX];
   char mv_cmd[PATH_MAX];
@@ -923,7 +920,7 @@ boolean do_abort_check(void);
 void add_warn_check(LiVESBox *box, int warn_mask_number);
 void do_memory_error_dialog(void);
 void too_many_files(void);
-void tempdir_warning(void);
+void workdir_warning(void);
 void do_audio_import_error(void);
 void do_mt_backup_space_error(lives_mt *, int memreq_mb);
 
@@ -989,7 +986,7 @@ boolean do_existing_subs_warning(void);
 void do_invalid_subs_error(void);
 boolean do_erase_subs_warning(void);
 boolean do_sub_type_warning(const char *ext, const char *type_ext);
-boolean do_move_tmpdir_dialog(void);
+boolean do_move_workdir_dialog(void);
 void do_set_locked_warning(const char *setname);
 void do_no_in_vdevs_error(void);
 void do_locked_in_vdevs_error(void);
@@ -1298,7 +1295,7 @@ void clear_lmap_errors(void);
 boolean prompt_remove_layout_files(void);
 boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, const char *nreject);
 boolean is_legal_set_name(const char *set_name, boolean allow_dupes);
-char *repl_tmpdir(const char *entry, boolean fwd);
+char *repl_workdir(const char *entry, boolean fwd);
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
 void save_clip_value(int which, lives_clip_details_t, void *val);

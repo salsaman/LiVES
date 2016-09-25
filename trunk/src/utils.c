@@ -2126,7 +2126,7 @@ boolean check_for_lock_file(const char *set_name, int type) {
   char *msg=NULL;
   ssize_t bytes;
 
-  char *info_file=lives_strdup_printf("%s/.locks.%d",prefs->tmpdir,capable->mainpid);
+  char *info_file=lives_strdup_printf("%s/.locks.%d",prefs->workdir,capable->mainpid);
   char *com=lives_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d >\"%s\"",prefs->backend_sync,set_name,capable->myname,
                                 capable->mainpid,info_file);
 
@@ -2248,7 +2248,7 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
 
   if (!allow_dupes) {
     // check for duplicate set names
-    char *set_dir=lives_build_filename(prefs->tmpdir,set_name,NULL);
+    char *set_dir=lives_build_filename(prefs->workdir,set_name,NULL);
     if (lives_file_test(set_dir,LIVES_FILE_TEST_IS_DIR)) {
       lives_free(set_dir);
       msg=lives_strdup_printf(_("\nThe set %s already exists.\nPlease choose another set name.\n"),set_name);
@@ -2288,7 +2288,7 @@ LIVES_INLINE lives_image_type_t lives_image_type_to_image_type(const char *lives
 
 
 LIVES_INLINE char *make_image_file_name(lives_clip_t *sfile, int frame, const char *img_ext) {
-  return lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,img_ext);
+  return lives_strdup_printf("%s/%s/%08d.%s",prefs->workdir,sfile->handle,frame,img_ext);
 }
 
 
@@ -2347,7 +2347,7 @@ void get_frame_count(int idx) {
   int info_fd;
   int retval;
   ssize_t bytes;
-  char *info_file=lives_strdup_printf("%s/.check.%d",prefs->tmpdir,capable->mainpid);
+  char *info_file=lives_strdup_printf("%s/.check.%d",prefs->workdir,capable->mainpid);
   char *com=lives_strdup_printf("%s count_frames \"%s\" \"%s\" > \"%s\"",prefs->backend_sync,mainw->files[idx]->handle,
                                 get_image_ext_for_type(mainw->files[idx]->img_type),info_file);
 
@@ -2553,26 +2553,26 @@ uint64_t make_version_hash(const char *ver) {
 
 
 
-char *repl_tmpdir(const char *entry, boolean fwd) {
-  // replace prefs->tmpdir with string tmpdir or vice-versa. This allows us to relocate tmpdir if necessary.
+char *repl_workdir(const char *entry, boolean fwd) {
+  // replace prefs->workdir with string workdir or vice-versa. This allows us to relocate workdir if necessary.
   // used for layout.map file
   // return value should be freed
 
-  // fwd TRUE replaces "/tmp/foo" with "tmpdir"
-  // fwd FALSE replaces "tmpdir" with "/tmp/foo"
+  // fwd TRUE replaces "/tmp/foo" with "workdir"
+  // fwd FALSE replaces "workdir" with "/tmp/foo"
 
 
   char *string=lives_strdup(entry);
 
   if (fwd) {
-    if (!strncmp(entry,prefs->tmpdir,strlen(prefs->tmpdir))) {
+    if (!strncmp(entry,prefs->workdir,strlen(prefs->workdir))) {
       lives_free(string);
-      string=lives_strdup_printf("tmpdir%s",entry+strlen(prefs->tmpdir));
+      string=lives_strdup_printf("workdir%s",entry+strlen(prefs->workdir));
     }
   } else {
-    if (!strncmp(entry,"tmpdir",6)) {
+    if (!strncmp(entry,"workdir",6)) {
       lives_free(string);
-      string=lives_build_filename(prefs->tmpdir,entry+6,NULL);
+      string=lives_build_filename(prefs->workdir,entry+6,NULL);
     }
   }
   return string;
@@ -2623,7 +2623,7 @@ void remove_layout_files(LiVESList *map) {
         }
 
         array=lives_strsplit((char *)map->data,"|",-1);
-        fname=repl_tmpdir(array[0],FALSE);
+        fname=repl_workdir(array[0],FALSE);
         lives_strfreev(array);
       }
 
@@ -2636,13 +2636,13 @@ void remove_layout_files(LiVESList *map) {
         // if no more layouts in parent dir, we can delete dir
 
         // ensure that parent dir is below our own working dir
-        if (!strncmp(fname,prefs->tmpdir,strlen(prefs->tmpdir))) {
-          // is in tmpdir, safe to remove parents
+        if (!strncmp(fname,prefs->workdir,strlen(prefs->workdir))) {
+          // is in workdir, safe to remove parents
 
-          char *protect_file=lives_build_filename(prefs->tmpdir,"noremove",NULL);
+          char *protect_file=lives_build_filename(prefs->workdir,"noremove",NULL);
 
           mainw->com_failed=FALSE;
-          // touch a file in tpmdir, so we cannot remove tmpdir itself
+          // touch a file in tpmdir, so we cannot remove workdir itself
           lives_touch(protect_file);
 
           if (!mainw->com_failed) {
@@ -3681,7 +3681,7 @@ boolean prepare_to_play_foreign(void) {
 boolean after_foreign_play(void) {
   // read details from capture file
   int capture_fd;
-  char *capfile=lives_strdup_printf("%s/.capture.%d",prefs->tmpdir,capable->mainpid);
+  char *capfile=lives_strdup_printf("%s/.capture.%d",prefs->workdir,capable->mainpid);
   char capbuf[256];
   ssize_t length;
   int new_file=-1;
@@ -3727,7 +3727,7 @@ boolean after_foreign_play(void) {
 
           // TODO - dirsep
 
-          lives_snprintf(file_name,PATH_MAX,"%s/%s/",prefs->tmpdir,cfile->handle);
+          lives_snprintf(file_name,PATH_MAX,"%s/%s/",prefs->workdir,cfile->handle);
 
           com=lives_strdup_printf("%s fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
                                   prefs->backend,
@@ -4236,8 +4236,8 @@ void reget_afilesize(int fileno) {
 
   if (mainw->multitrack!=NULL) return; // otherwise achans gets set to 0...
 
-  if (!sfile->opening) afile=lives_build_filename(prefs->tmpdir,sfile->handle,"audio",NULL);
-  else afile=lives_build_filename(prefs->tmpdir,sfile->handle,"audiodump.pcm",NULL);
+  if (!sfile->opening) afile=lives_build_filename(prefs->workdir,sfile->handle,"audio",NULL);
+  else afile=lives_build_filename(prefs->workdir,sfile->handle,"audiodump.pcm",NULL);
   if ((sfile->afilesize=sget_file_size(afile))==0l) {
     if (!sfile->opening&&fileno!=mainw->ascrap_file&&fileno!=mainw->scrap_file) {
       if (sfile->arate!=0||sfile->achans!=0||sfile->asampsize!=0||sfile->arps!=0) {
@@ -4418,7 +4418,7 @@ int verhash(char *version) {
 #ifdef PRODUCE_LOG
 // disabled by default
 void lives_log(const char *what) {
-  char *lives_log_file=lives_build_filename(prefs->tmpdir,LIVES_LOG_FILE,NULL);
+  char *lives_log_file=lives_build_filename(prefs->workdir,LIVES_LOG_FILE,NULL);
   if (mainw->log_fd<0) mainw->log_fd=open(lives_log_file,O_WRONLY|O_CREAT,DEF_FILE_PERMS);
   if (mainw->log_fd!=-1) {
     char *msg=lives_strdup("%s|%d|",what,mainw->current_file);
@@ -4711,8 +4711,8 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
 
   if (mainw->cached_list==NULL) {
 
-    lives_header=lives_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
-    old_header=lives_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header",NULL);
+    lives_header=lives_build_filename(prefs->workdir,mainw->files[which]->handle,"header.lives",NULL);
+    old_header=lives_build_filename(prefs->workdir,mainw->files[which]->handle,"header",NULL);
 
     // TODO - remove this some time before 2038
     if (!stat(old_header,&mystat)) old_time=mystat.st_mtime;
@@ -4828,7 +4828,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   if (which==0||which==mainw->scrap_file) return;
 
-  lives_header=lives_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
+  lives_header=lives_build_filename(prefs->workdir,mainw->files[which]->handle,"header.lives",NULL);
   key=clip_detail_to_string(what,NULL);
 
   if (key==NULL) {

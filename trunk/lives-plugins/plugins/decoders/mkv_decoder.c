@@ -2069,37 +2069,8 @@ skip_probe:
   }
 
   if (cdata->fps==0.||cdata->fps==1000.) {
-    // use mplayer to get fps if we can...it seems to have some magical way
-    char cmd[1024];
-    char tmpfname[32];
-    int res;
-
-    sprintf(tmpfname,"mkvdec=XXXXXX");
-#ifndef IS_MINGW
-    snprintf(cmd,1024,"LANGUAGE=en LANG=en mplayer \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
-#else
-    snprintf(cmd,1024,"mplayer.exe \"%s\" -identify -frames 0 2>NUL | grep.exe ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
-#endif
-    res=system(cmd);
-
-    if (!res) {
-      char buffer[1024];
-      ssize_t bytes;
-      int ofd=open(tmpfname,O_RDONLY);
-      if (ofd>-1) {
-
-#ifdef IS_MINGW
-        setmode(ofd,O_BINARY);
-#endif
-        bytes=read(ofd,buffer,1024);
-        memset(buffer+bytes,0,1);
-        if (!(strncmp(buffer,"ID_VIDEO_FPS=",13))) {
-          cdata->fps=strtod(buffer+13,NULL);
-        }
-        close(ofd);
-      }
-    }
-    unlink(tmpfname);
+    double res = get_fps(cdata->URI);
+    if (res >= 0.) cdata->fps = res;
   }
 
   if (cdata->fps==0.||cdata->fps==1000.) {

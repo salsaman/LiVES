@@ -3290,8 +3290,8 @@ skip_det:
 #ifndef IS_MINGW
 
   if (cdata->fps==0.||cdata->fps==1000.) {
-    int res = get_fps(cdata->URI);
-    if (res >= 0) cdata->fps = res;
+    double res = get_fps(cdata->URI);
+    if (res >= 0.) cdata->fps = res;
   }
 
 #endif

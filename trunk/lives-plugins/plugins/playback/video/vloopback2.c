@@ -133,12 +133,12 @@ static char **get_vloopback2_devices(void) {
 const char *module_check_init(void) {
   char **vdevs = get_vloopback2_devices();
 
-  char buf[16384];
+  FILE *fp;
+  char buffer[PATH_MAX];
+  const char *dummy;
+  
 
-  int i=0;
-  int dummyvar,rfd;
-
-  size_t ret;
+  register int i=0;
 
   if (vdevs[0]==NULL) {
     free(vdevs);
@@ -149,16 +149,12 @@ const char *module_check_init(void) {
   free(vdevs);
 
   // get tempdir
-  dummyvar=system("smogrify get_tempdir oggstream");
-  rfd=open("/tmp/.smogrify.oggstream",O_RDONLY);
-  ret=read(rfd,(void *)buf,16383);
-  memset(buf+ret,0,1);
-
-  tmpdir=strdup(buf);
-
-  dummyvar=dummyvar; // keep compiler happy
-
-
+  fp=popen("smogrify get_tempdir","r");
+  dummy=fgets(buffer,PATH_MAX,fp);
+  pclose(fp);
+  tmpdir=strdup(buffer);
+  dummy=dummy;
+  
   return NULL;
 }
 
@@ -189,8 +185,11 @@ const char rfx[32768];
 const char *get_init_rfx(void) {
   char **vdevs = get_vloopback2_devices();
   char devstr[30000];
+  char homedir[PATH_MAX];
+  
   size_t slen=0;
-  int i=0;
+  
+  register int i=0;
 
   if (vdevs[0]==NULL) {
     free(vdevs);
@@ -206,7 +205,9 @@ const char *get_init_rfx(void) {
   }
   free(vdevs);
 
-  snprintf((char *)rfx,32768,"%s%s%s",
+  snprintf(homedir,PATH_MAX,"%s",getenv("HOME"));
+  
+  snprintf((char *)rfx,32768,"%s%s%s%s%s",
            "<define>\\n\
 |1.7\\n\
 </define>\\n\
@@ -217,7 +218,7 @@ const char *get_init_rfx(void) {
 vdevname|Video _device|string_list|0|",
            devstr,
            "\\n\
-afname|Send _audio to|string|/tmp/audio.wav|1024|\\n\
+afname|Send _audio to|string|",homedir,"/audio.wav|1024|\\n\
 </params> \\n\
 <param_window> \\n\
 </param_window> \\n\

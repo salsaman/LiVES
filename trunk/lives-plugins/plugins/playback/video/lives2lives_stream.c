@@ -49,9 +49,6 @@ static lives_stream_t *lstream;
 #include <string.h>
 #include <errno.h>
 
-#define UNIXDG_PATH "/tmp/lives2lives"
-#define UNIXDG_TMP "/tmp/lives2lives.XXXXXX"
-
 typedef struct {
   struct sockaddr_in serv_addr;
   int sockfd;

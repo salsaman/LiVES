@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2016-09-25 10:22-0300\n"
+"POT-Creation-Date: 2016-09-25 15:03-0300\n"
 "PO-Revision-Date: 2015-04-05 16:35+0000\n"
 "Last-Translator: Timothy Gu <timothy_gu@hotmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -514,14 +514,14 @@ msgid ""
 msgstr ""
 
 #: src/main.c:2719
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "\n"
-"LiVES was unable to use the temporary directory\n"
+"LiVES was unable to use the working directory\n"
 "%s\n"
 "\n"
 "%s"
-msgstr ""
+msgstr "LiVES 无法捕获此窗口。对不起。\n"
 
 #: src/main.c:2727
 msgid ""
@@ -770,7 +770,7 @@ msgstr ""
 msgid "Directory name is too long !"
 msgstr "目录名太长!"
 
-#: src/startup.c:229
+#: src/startup.c:226
 msgid ""
 "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
 "\n"
@@ -778,7 +778,7 @@ msgstr ""
 "LIVES 无法启动您选定的音频播放器!\n"
 "\n"
 
-#: src/startup.c:235
+#: src/startup.c:232
 msgid ""
 "Before starting LiVES, you need to choose an audio player.\n"
 "\n"
@@ -788,7 +788,7 @@ msgstr ""
 "\n"
 "推荐大多数用户使用 PULSEAUDIO"
 
-#: src/startup.c:238
+#: src/startup.c:235
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
@@ -796,7 +796,7 @@ msgstr ""
 "，但是本版本 LIVES 编译时未加入对 pulse 音频的支持\n"
 "\n"
 
-#: src/startup.c:242
+#: src/startup.c:239
 msgid ""
 ", but you do not have pulse audio installed on your system.\n"
 " You are advised to install pulse audio first before running LiVES.\n"
@@ -806,11 +806,11 @@ msgstr ""
 " 建议您在运行 LIVES 前安装 pulse 音频。\n"
 "\n"
 
-#: src/startup.c:246
+#: src/startup.c:243
 msgid "JACK audio is recommended for pro users"
 msgstr "推荐专业用户使用 JACK 音频系统"
 
-#: src/startup.c:249
+#: src/startup.c:246
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
@@ -818,7 +818,7 @@ msgstr ""
 "，但是本版本 LIVES 编译时未加入对 jack 音频的支持。\n"
 "\n"
 
-#: src/startup.c:252
+#: src/startup.c:249
 msgid ""
 ", but you do not have jackd installed. You may wish to install jackd first "
 "before running LiVES.\n"
@@ -828,7 +828,7 @@ msgstr ""
 "频。\n"
 "\n"
 
-#: src/startup.c:255
+#: src/startup.c:252
 #, fuzzy
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
@@ -840,11 +840,11 @@ msgstr ""
 "如果 LIVES 不能与 jack 一同启动，您可以重启并选择其它的音频播放器。\n"
 "\n"
 
-#: src/startup.c:260
+#: src/startup.c:257
 msgid "SOX may be used if neither of the preceding players work, "
 msgstr "如果前述播放器均不能工作，可以尝试 SOX， "
 
-#: src/startup.c:263
+#: src/startup.c:260
 msgid ""
 "but some audio features will be disabled.\n"
 "\n"
@@ -852,7 +852,7 @@ msgstr ""
 "但一些音频功能将被禁用。\n"
 "\n"
 
-#: src/startup.c:265
+#: src/startup.c:262
 msgid ""
 "but you do not have sox installed.\n"
 "You are advised to install it before running LiVES.\n"
@@ -862,7 +862,7 @@ msgstr ""
 "建议您在运行 LIVES 前安装 SOX。\n"
 "\n"
 
-#: src/startup.c:269
+#: src/startup.c:266
 #, fuzzy
 msgid ""
 "The MPLAYER/MPLAYER2 audio player is only recommended for testing purposes.\n"
@@ -871,177 +871,177 @@ msgstr ""
 "MPlayer 的音频播放器只推荐用于测试目的。\n"
 "\n"
 
-#: src/startup.c:285
+#: src/startup.c:282
 #, fuzzy
 msgid "Choose an audio player"
 msgstr "LIVES： -选择一款音频播放器"
 
-#: src/startup.c:302
+#: src/startup.c:299
 msgid "Use _pulse audio player"
 msgstr "音频播放器使用_pulse"
 
-#: src/startup.c:324
+#: src/startup.c:321
 msgid "Use _jack audio player"
 msgstr "音频播放器使用_jack"
 
-#: src/startup.c:344
+#: src/startup.c:341
 msgid "Use _sox audio player"
 msgstr "音频播放器使用_sox"
 
-#: src/startup.c:365
+#: src/startup.c:362
 msgid "Use _mplayer audio player"
 msgstr "音频播放器使用_mplayer"
 
-#: src/startup.c:385
+#: src/startup.c:382
 #, fuzzy
 msgid "Use _mplayer2 audio player"
 msgstr "音频播放器使用_mplayer"
 
-#: src/startup.c:408 src/startup.c:586 src/interface.c:1346
+#: src/startup.c:405 src/startup.c:583 src/interface.c:1346
 msgid "_Next"
 msgstr "下一步(_N)"
 
-#: src/startup.c:448
+#: src/startup.c:445
 msgid "Skipped"
 msgstr "已跳过"
 
-#: src/startup.c:463
+#: src/startup.c:460
 msgid "Passed"
 msgstr "已通过"
 
-#: src/startup.c:496
+#: src/startup.c:493
 msgid "Failed"
 msgstr "已失败"
 
-#: src/startup.c:560
+#: src/startup.c:557
 #, fuzzy
 msgid "Testing Configuration"
 msgstr "LIVES： - 测试配置"
 
-#: src/startup.c:562
+#: src/startup.c:559
 #, fuzzy
 msgid "Troubleshoot"
 msgstr "故障诊断(_T)"
 
-#: src/startup.c:575
+#: src/startup.c:572
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr "LIVES 现在将进行一些基本的配置测试\n"
 
-#: src/startup.c:608
+#: src/startup.c:605
 msgid "Checking for \"sox\" presence"
 msgstr "检查\"sox\"的存在"
 
-#: src/startup.c:612
+#: src/startup.c:609
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr "要使用 LIVES 的所有音频功能您应该安装 sox"
 
-#: src/startup.c:619
+#: src/startup.c:616
 msgid "Checking if sox can convert audio"
 msgstr "检查 sox 是否可以转换音频"
 
-#: src/startup.c:643
+#: src/startup.c:640
 #, c-format
 msgid "Unable to allocate %d bytes memory."
 msgstr ""
 
-#: src/startup.c:654
+#: src/startup.c:651
 #, c-format
 msgid "Unable to write to: %s"
 msgstr ""
 
-#: src/startup.c:668 src/startup.c:839
+#: src/startup.c:665 src/startup.c:836
 #, c-format
 msgid "Command failed: %s"
 msgstr ""
 
-#: src/startup.c:690
+#: src/startup.c:687
 msgid "You should install sox_fmt_all or similar"
 msgstr "您应该安装 sox_fmt_all 或类似软件包"
 
-#: src/startup.c:720
+#: src/startup.c:717
 #, fuzzy
 msgid "Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"
 msgstr "检查\"mplayer\"是否存在"
 
-#: src/startup.c:723
+#: src/startup.c:720
 #, fuzzy
 msgid ""
 "You should install mplayer, mplayer2 or mpv to be able to use all the "
 "decoding features in LiVES"
 msgstr "要使用 LIVES 全部的解码功能，需要安装 mplayer"
 
-#: src/startup.c:731
+#: src/startup.c:728
 #, fuzzy
 msgid "Checking for \"mplayer\" or \"mplayer2\" presence"
 msgstr "检查\"mplayer\"是否存在"
 
-#: src/startup.c:734
+#: src/startup.c:731
 #, fuzzy
 msgid ""
 "You should install mplayer or mplayer2 to be able to use all the decoding "
 "features in LiVES"
 msgstr "要使用 LIVES 全部的解码功能，需要安装 mplayer"
 
-#: src/startup.c:770
+#: src/startup.c:767
 #, fuzzy, c-format
 msgid "Checking if %s can convert audio"
 msgstr "检查 sox 是否可以转换音频"
 
-#: src/startup.c:792
+#: src/startup.c:789
 #, fuzzy
 msgid "You should install mplayer,mplayer2 or mpv with pcm/wav support"
 msgstr "您应该安装带 pcm/wav 支持的 mplayer"
 
-#: src/startup.c:794
+#: src/startup.c:791
 #, fuzzy
 msgid "You should install mplayer or mplayer2 with pcm/wav support"
 msgstr "您应该安装带 pcm/wav 支持的 mplayer"
 
-#: src/startup.c:812
+#: src/startup.c:809
 #, fuzzy, c-format
 msgid "Checking if %s can decode to png"
 msgstr "检查 mplayer 是否可以解码为 jpeg"
 
-#: src/startup.c:814
+#: src/startup.c:811
 #, fuzzy, c-format
 msgid "Checking if %s can decode to png/alpha"
 msgstr "检查 mplayer 是否可以解码为 png/alpha"
 
-#: src/startup.c:860
+#: src/startup.c:857
 #, fuzzy, c-format
 msgid "You may wish to upgrade %s to a newer version"
 msgstr "您可能要升级到 mplayer 的新版本"
 
-#: src/startup.c:888
+#: src/startup.c:885
 #, fuzzy, c-format
 msgid "Checking if %s can decode to jpeg"
 msgstr "检查 mplayer 是否可以解码为 jpeg"
 
-#: src/startup.c:919
+#: src/startup.c:916
 #, fuzzy, c-format
 msgid "You should install %s with either png or jpeg support"
 msgstr "您应该安装带 png/alpha 或 jpeg 支持的 mplayer"
 
-#: src/startup.c:921
+#: src/startup.c:918
 #, fuzzy, c-format
 msgid "You should install %s with either png/alpha or jpeg support"
 msgstr "您应该安装带 png/alpha 或 jpeg 支持的 mplayer"
 
-#: src/startup.c:926
+#: src/startup.c:923
 #, fuzzy, c-format
 msgid "You may wish to add jpeg output support to %s"
 msgstr "您可能需要向 mplayer 添加 jpeg 输出支持"
 
-#: src/startup.c:938
+#: src/startup.c:935
 msgid "Checking for \"convert\" presence"
 msgstr "检查\"convert\"是否存在"
 
-#: src/startup.c:942
+#: src/startup.c:939
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr "安装 imageMagic 以使用所有的渲染效果"
 
-#: src/startup.c:955
+#: src/startup.c:952
 msgid ""
 "\n"
 "\n"
@@ -1049,7 +1049,7 @@ msgid ""
 "'mplayer' or 'mplayer2' in order to use all the features of LiVES"
 msgstr ""
 
-#: src/startup.c:964
+#: src/startup.c:961
 msgid ""
 "\n"
 "\n"
@@ -1057,7 +1057,7 @@ msgid ""
 "Preferences/Decoding.    \n"
 msgstr ""
 
-#: src/startup.c:969
+#: src/startup.c:966
 msgid ""
 "\n"
 "\n"
@@ -1068,7 +1068,7 @@ msgstr ""
 "\n"
 "    点击\"取消\"退出然后安装缺失的任何组件或者\"下一步\"继续    \n"
 
-#: src/startup.c:1003
+#: src/startup.c:1000
 msgid ""
 "\n"
 "\n"
@@ -1078,7 +1078,7 @@ msgstr ""
 "\n"
 "最后您可以为 LIVES 选择一个默认的启动界面。\n"
 
-#: src/startup.c:1004
+#: src/startup.c:1001
 msgid ""
 "\n"
 "\n"
@@ -1088,7 +1088,7 @@ msgstr ""
 "\n"
 "LIVES有两个主要的用户界面，您可以选择任意一个作为启动界面\n"
 
-#: src/startup.c:1005
+#: src/startup.c:1002
 msgid ""
 "\n"
 "\n"
@@ -1098,29 +1098,29 @@ msgstr ""
 "\n"
 "默认的画面以后在首选项中可以随时修改。\n"
 
-#: src/startup.c:1015
+#: src/startup.c:1012
 #, fuzzy
 msgid "Choose the Startup Interface"
 msgstr "LIVES： - 选择启动界面"
 
-#: src/startup.c:1026
+#: src/startup.c:1023
 msgid "Start in _Clip Edit mode"
 msgstr "以剪辑编辑模式启动(_C)"
 
-#: src/startup.c:1029
+#: src/startup.c:1026
 msgid "This is the best choice for simple editing tasks and for VJs\n"
 msgstr ""
 
-#: src/startup.c:1035
+#: src/startup.c:1032
 msgid "Start in _Multitrack mode"
 msgstr "多轨道模式启动(_M)"
 
-#: src/startup.c:1037
+#: src/startup.c:1034
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr "这更适合包含多剪辑片段的复杂编辑任务。\n"
 
-#: src/startup.c:1045
+#: src/startup.c:1042
 msgid "_Finish"
 msgstr "完成(_F)"
 
@@ -4961,9 +4961,9 @@ msgstr ""
 #: src/dialogs.c:2193
 #, c-format
 msgid ""
-"LiVES was unable to write to its temporary directory.\n"
+"LiVES was unable to write to its working directory.\n"
 "\n"
-"The current temporary directory is:\n"
+"The current working directory is:\n"
 "\n"
 "%s\n"
 "\n"
@@ -7406,7 +7406,7 @@ msgstr ""
 
 #: src/preferences.c:570
 msgid ""
-"The temp directory is LiVES working directory where opened clips and sets "
+"The work directory is LiVES working directory where opened clips and sets "
 "are stored.\n"
 "It should be in a partition with plenty of free disk space.\n"
 msgstr ""
@@ -7414,10 +7414,10 @@ msgstr ""
 #: src/preferences.c:1182
 #, c-format
 msgid ""
-"Unable to create or write to the new temporary directory.\n"
+"Unable to create or write to the new working directory.\n"
 "You may need to create it as the root user first, e.g:\n"
 "\n"
-"sudo mkdir -p %s; sudo chmod 777 %s\n"
+"sudo mkdir -p %s; \n"
 "\n"
 "The directory will not be changed now.\n"
 msgstr ""
@@ -7425,7 +7425,7 @@ msgstr ""
 #: src/preferences.c:1187
 #, c-format
 msgid ""
-"Unable to create or write to the new temporary directory.\n"
+"Unable to create or write to the new working directory.\n"
 "%s\n"
 "Please try another directory or contact your system administrator.\n"
 "\n"
@@ -7434,14 +7434,14 @@ msgstr ""
 
 #: src/preferences.c:1201
 msgid ""
-"You have chosen to change the temporary directory.\n"
+"You have chosen to change the working directory.\n"
 "Please make sure you have no other copies of LiVES open.\n"
 "\n"
 "If you do have other copies of LiVES open, please close them now, *before* "
 "pressing OK.\n"
 "\n"
-"Alternatively, press Cancel to restore the temporary directory to its "
-"original setting."
+"Alternatively, press Cancel to restore the working directory to its original "
+"setting."
 msgstr ""
 
 #: src/preferences.c:1583
@@ -7893,7 +7893,7 @@ msgid "      Backup/Restore directory (default) "
 msgstr ""
 
 #: src/preferences.c:3657
-msgid "      Temp directory (do not remove) "
+msgid "   Working directory (do not remove) "
 msgstr ""
 
 #: src/preferences.c:3670

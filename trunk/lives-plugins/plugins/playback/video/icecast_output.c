@@ -27,9 +27,9 @@ boolean render_frame_unknown(int hsize, int vsize, void **pixel_data);
 
 static int ov_vsize,ov_hsize;
 
-static char *tmpdir;
+static char *workdir;
 
-static char xfile[4096];
+static char xfile[PATH_MAX];
 
 static int aforms[2];
 
@@ -67,7 +67,7 @@ yuv4m_t *yuv4mpeg_alloc(void) {
 
 
 static void make_path(const char *fname, int pid, const char *ext) {
-  snprintf(xfile,4096,"%s/%s-%d.%s",tmpdir,fname,pid,ext);
+  snprintf(xfile,PATH_MAX,"%s/%s-%d.%s",workdir,fname,pid,ext);
 }
 
 static uint8_t **blankframe;
@@ -143,7 +143,7 @@ const char *module_check_init(void) {
   fp=popen("smogrify get_workdir","r");
   dummy=fgets(buffer,PATH_MAX,fp);
   pclose(fp);
-  tmpdir=strdup(buffer);
+  workdir=strdup(buffer);
 
   blankframe=NULL;
 
@@ -258,7 +258,7 @@ static int audio;
 
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   int dummyvar;
-  char cmd[8192];
+  char cmd[PATH_MAX*2];
   const char *ics=NULL,*icpw=NULL,*icmp=NULL;
   int afd;
   int icp=8000;
@@ -308,7 +308,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   make_path("video3",mypid,"ogv");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // feed to oggfwd
 
-  snprintf(cmd,8192,"ffmpeg2theora -f yuv4m -o %s/video-%d.ogv %s/stream-%d.fifo 2>/dev/null&",tmpdir,mypid,tmpdir,mypid);
+  snprintf(cmd,PATH_MAX*2,"ffmpeg2theora -f yuv4m -o %s/video-%d.ogv %s/stream-%d.fifo 2>/dev/null&",workdir,mypid,workdir,mypid);
   dummyvar=system(cmd);
 
   make_path("livesaudio",mypid,"stream");
@@ -320,16 +320,16 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   } else audio=0;
 
   if (audio) {
-    snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &",tmpdir,mypid,tmpdir,mypid);
+    snprintf(cmd,PATH_MAX*2,"oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &",workdir,mypid,workdir,mypid);
     dummyvar=system(cmd);
-    snprintf(cmd,8192,"oggJoin %s/video3-%d.ogv %s/video2-%d.ogv %s/livesaudio-%d.stream &",tmpdir,mypid,tmpdir,mypid,tmpdir,mypid);
+    snprintf(cmd,PATH_MAX*2,"oggJoin %s/video3-%d.ogv %s/video2-%d.ogv %s/livesaudio-%d.stream &",workdir,mypid,workdir,mypid,workdir,mypid);
     dummyvar=system(cmd);
   } else {
-    snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv %s/video3-%d.ogv &",tmpdir,mypid,tmpdir,mypid);
+    snprintf(cmd,PATH_MAX*2,"oggTranscode %s/video-%d.ogv %s/video3-%d.ogv &",workdir,mypid,workdir,mypid);
     dummyvar=system(cmd);
   }
 
-  snprintf(cmd,8192,"oggfwd -d \"LiVES stream\" \"%s\" %d \"%s\" \"%s\" < %s/video3-%d.ogv &",ics,icp,icpw,icmp,tmpdir,mypid);
+  snprintf(cmd,PATH_MAX*2,"oggfwd -d \"LiVES stream\" \"%s\" %d \"%s\" \"%s\" < %s/video3-%d.ogv &",ics,icp,icpw,icmp,workdir,mypid);
   dummyvar=system(cmd);
 
   // open first fifo for writing

@@ -12,7 +12,7 @@
 // for mainw->prefs_changed
 #define PREFS_THEME_CHANGED (1<<0)
 #define PREFS_JACK_CHANGED (1<<1)
-#define PREFS_TEMPDIR_CHANGED (1<<2)
+#define PREFS_WORKDIR_CHANGED (1<<2)
 #define PREFS_COLOURS_CHANGED (1<<3)
 #define PREFS_XCOLOURS_CHANGED (1<<4)
 #define PREFS_IMAGES_CHANGED (1<<5)
@@ -58,7 +58,7 @@ typedef struct {
 #define Q_FILL 1
 #define Q_SMOOTH 1
 
-  char tmpdir[PATH_MAX];  ///< kept in locale encoding
+  char workdir[PATH_MAX];  ///< kept in locale encoding
 
   // utf8 encoding
   char def_vid_load_dir[PATH_MAX];
@@ -171,7 +171,7 @@ typedef struct {
   boolean omc_noisy; ///< send success/fail
   boolean omc_events; ///< send other events
 
-  short startup_phase; ///< -1 = fresh install, 1 = tmpdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
+  short startup_phase; ///< -1 = fresh install, 1 = workdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
   char *wm; ///<window manager name
   int ocp; ///< open_compression_percent : get/set in prefs
 
@@ -457,7 +457,7 @@ typedef struct {
   LiVESWidget *audio_dir_entry;
   LiVESWidget *image_dir_entry;
   LiVESWidget *proj_dir_entry;
-  LiVESWidget *tmpdir_entry;
+  LiVESWidget *workdir_entry;
   LiVESWidget *cdplay_entry;
   LiVESWidget *spinbutton_def_fps;
   LiVESWidget *pbq_combo;
@@ -591,7 +591,7 @@ typedef struct {
   LiVESWidget *jack_int_label;
   LiVESWidget *checkbutton_ce_maxspect;
   LiVESWidget *checkbutton_button_icons;
-  LiVESWidget *temp_label;
+  LiVESWidget *workdir_label;
   LiVESWidget *checkbutton_stream_audio;
   LiVESWidget *checkbutton_rec_after_pb;
   LiVESWidget *wpp_entry;
@@ -617,7 +617,7 @@ typedef struct {
 } _ign_opts;
 
 typedef struct {
-  char tmpdir[PATH_MAX];
+  char workdir[PATH_MAX];
   char theme[64];
   char vpp_name[64]; ///< new video playback plugin
   int vpp_fixed_fps_numer;
@@ -700,7 +700,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_PREFIX_DIR "prefix_dir" // readonly
 #define PREF_LIB_DIR "lib_dir" // readonly
 
-#define PREF_SESSION_TEMPDIR "session_tempdir"
+#define PREF_SESSION_WORKDIR "session_tempdir"
 
 #define PREF_AUDIO_PLAYER "audio_player"
 #define PREF_AUDIO_PLAY_COMMAND "audio_play_command"

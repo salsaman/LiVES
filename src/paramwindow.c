@@ -3069,7 +3069,7 @@ LiVESList *do_onchange(LiVESObject *object, lives_rfx_t *rfx) {
       plugdir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST,NULL);
       break;
     default:
-      plugdir=lives_strdup_printf("%s",prefs->tmpdir);
+      plugdir=lives_strdup_printf("%s",prefs->workdir);
     }
 
     if (mainw->current_file>0) {

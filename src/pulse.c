@@ -228,9 +228,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     case ASERVER_CMD_FILE_OPEN:
       new_file=atoi((char *)msg->data);
       if (pulsed->playing_file!=new_file) {
-        if (pulsed->is_opening) filename=lives_build_filename(prefs->tmpdir,mainw->files[new_file]->handle,
+        if (pulsed->is_opening) filename=lives_build_filename(prefs->workdir,mainw->files[new_file]->handle,
                                            "audiodump.pcm",NULL);
-        else filename=lives_build_filename(prefs->tmpdir,mainw->files[new_file]->handle,"audio",NULL);
+        else filename=lives_build_filename(prefs->workdir,mainw->files[new_file]->handle,"audio",NULL);
         pulsed->fd=lives_open2(filename,O_RDONLY);
         if (pulsed->fd==-1) {
           // dont show gui errors - we are running in realtime thread
@@ -1386,7 +1386,7 @@ void pulse_aud_pb_ready(int fileno) {
     if (sfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&
         (sfile->laudio_time>0.||sfile->opening||
          (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&
-          lives_file_test((tmpfilename=lives_build_filename(prefs->tmpdir,sfile->handle,"audio",NULL)),
+          lives_file_test((tmpfilename=lives_build_filename(prefs->workdir,sfile->handle,"audio",NULL)),
                           LIVES_FILE_TEST_EXISTS)))) {
 
       boolean timeout;

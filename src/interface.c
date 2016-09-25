@@ -1161,7 +1161,7 @@ _entryw *create_rename_dialog(int type) {
   // type 4 = save clip set from mt
   // type 5 = save clip set for project export
 
-  // type 6 = initial tempdir
+  // type 6 = initial workdir
 
   // type 7 = rename track in mt
 
@@ -1267,7 +1267,7 @@ _entryw *create_rename_dialog(int type) {
 
     set_combo=lives_combo_new();
 
-    renamew->setlist=get_set_list(prefs->tmpdir,TRUE);
+    renamew->setlist=get_set_list(prefs->workdir,TRUE);
 
     lives_combo_populate(LIVES_COMBO(set_combo),renamew->setlist);
 
@@ -1291,12 +1291,12 @@ _entryw *create_rename_dialog(int type) {
       lives_free(tmp);
     }
     if (type==6) {
-      char *tmpdir;
-      if (prefs->startup_phase==-1) tmpdir=lives_build_filename(capable->home_dir,LIVES_TMP_NAME,NULL);
-      else tmpdir=lives_strdup(prefs->tmpdir);
-      lives_entry_set_text(LIVES_ENTRY(renamew->entry),(tmp=F2U8(tmpdir)));
+      char *workdir;
+      if (prefs->startup_phase==-1) workdir=lives_build_filename(capable->home_dir,LIVES_TMP_NAME,NULL);
+      else workdir=lives_strdup(prefs->workdir);
+      lives_entry_set_text(LIVES_ENTRY(renamew->entry),(tmp=F2U8(workdir)));
       lives_free(tmp);
-      lives_free(tmpdir);
+      lives_free(workdir);
     }
     lives_box_pack_start(LIVES_BOX(hbox), renamew->entry, TRUE, TRUE, 0);
   }

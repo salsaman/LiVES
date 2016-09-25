@@ -60,7 +60,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
 
   threaded_dialog_spin(0.);
 
-  outfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGPLUGIN_FILE_NAME".%d",prefs->tmpdir,capable->mainpid);
+  outfile=lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGPLUGIN_FILE_NAME".%d",prefs->workdir,capable->mainpid);
 
   lives_rm(outfile);
 
@@ -215,8 +215,8 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
     if (!strcmp(plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM)||!strcmp(plugin_type,PLUGIN_RENDERED_EFFECTS_TEST)) {
       comfile=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,plugin_type,plugin_name,NULL);
     } else if (!strcmp(plugin_type,PLUGIN_RFX_SCRAP)) {
-      // scraps are in the tmpdir
-      comfile=lives_build_filename(prefs->tmpdir,plugin_name,NULL);
+      // scraps are in the workdir
+      comfile=lives_build_filename(prefs->workdir,plugin_name,NULL);
     } else {
       comfile=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,plugin_type,plugin_name,NULL);
     }
@@ -3646,7 +3646,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
     char *string;
     char *rfx_scrapname=lives_strdup_printf("rfx.%d",capable->mainpid);
-    char *rfxfile=lives_strdup_printf("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
+    char *rfxfile=lives_strdup_printf("%s/.%s.script",prefs->workdir,rfx_scrapname);
     char *com;
     char *fnamex=NULL;
     char *res_string=NULL;
@@ -3694,7 +3694,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
 
     // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
-    com=lives_strdup_printf("\"%s\" \"%s\" \"%s\" >%s",RFX_BUILDER,rfxfile,prefs->tmpdir,LIVES_DEVNULL);
+    com=lives_strdup_printf("\"%s\" \"%s\" \"%s\" >%s",RFX_BUILDER,rfxfile,prefs->workdir,LIVES_DEVNULL);
     res=lives_system(com,TRUE);
     lives_free(com);
 
@@ -3720,8 +3720,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       rfx->flags=RFX_FLAGS_NO_SLIDERS;
 
       // get the delimiter
-      rfxfile=lives_strdup_printf("%ssmdef.%d",prefs->tmpdir,capable->mainpid);
-      fnamex=lives_build_filename(prefs->tmpdir,rfx_scrapname,NULL);
+      rfxfile=lives_strdup_printf("%ssmdef.%d",prefs->workdir,capable->mainpid);
+      fnamex=lives_build_filename(prefs->workdir,rfx_scrapname,NULL);
       com=lives_strdup_printf("\"%s\" get_define > \"%s\"",fnamex,rfxfile);
       retval=lives_system(com,FALSE);
       lives_free(com);

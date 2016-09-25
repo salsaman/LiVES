@@ -1258,7 +1258,7 @@ typedef struct {
   boolean add_clear_ds_adv;
   boolean tried_ds_recover;
 
-  boolean has_session_tmpdir;
+  boolean has_session_workdir;
   boolean startup_error;
 
   boolean kb_timer_end;

@@ -947,7 +947,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->affected_layouts_map=mainw->current_layouts_map=NULL;
 
-  mainw->recovery_file=lives_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),capable->mainpid);
+  mainw->recovery_file=lives_strdup_printf("%s/recovery.%d.%d.%d",prefs->workdir,lives_getuid(),lives_getgid(),capable->mainpid);
   mainw->leave_recovery=TRUE;
 
   mainw->pchains=NULL;
@@ -1667,8 +1667,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
       if ((prefs->startup_phase==1||prefs->startup_phase==-1)) {
         splash_end();
-        // get initial tempdir
-        if (!do_tempdir_query()) {
+        // get initial workdir
+        if (!do_workdir_query()) {
           lives_exit(0);
         }
         prefs->startup_phase=2;
@@ -1939,7 +1939,7 @@ void do_start_messages(void) {
   lives_snprintf(mainw->msg,512,"\n");
   d_print(mainw->msg);
 
-  lives_snprintf(mainw->msg,512,_("Temp directory is %s\n"),prefs->tmpdir);
+  lives_snprintf(mainw->msg,512,_("Temp directory is %s\n"),prefs->workdir);
   d_print(mainw->msg);
 
 #ifndef RT_AUDIO
@@ -2307,7 +2307,7 @@ capability *get_capabilities(void) {
   lives_snprintf(capable->home_dir,PATH_MAX,"%s",qsl.at(0).toLocal8Bit().constData());
 
   qsl = QStandardPaths::standardLocations(QStandardPaths::TempLocation);
-  lives_snprintf(capable->system_tmpdir,PATH_MAX,"%s",qsl.at(0).toLocal8Bit().constData());
+  lives_snprintf(capable->system_workdir,PATH_MAX,"%s",qsl.at(0).toLocal8Bit().constData());
 #endif
 
   memset(capable->startup_msg,0,1);
@@ -2405,7 +2405,7 @@ capability *get_capabilities(void) {
 
   if (mainw->read_failed) return capable;
 
-  // get backend version, tempdir, and any startup message
+  // get backend version, workdir, and any startup message
   numtok=get_token_count(buffer,'|');
   array=lives_strsplit(buffer,"|",numtok);
 
@@ -2418,8 +2418,8 @@ capability *get_capabilities(void) {
 
   capable->smog_version_correct=TRUE;
 
-  lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",array[1]);
-  lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
+  lives_snprintf(prefs->workdir,PATH_MAX,"%s",array[1]);
+  lives_snprintf(future_prefs->workdir,PATH_MAX,"%s",prefs->workdir);
 
   prefs->startup_phase=atoi(array[2]);
 
@@ -2709,7 +2709,7 @@ static boolean lives_startup(livespointer data) {
             if (!capable->can_write_to_workdir) {
               char *extrabit;
               char *err;
-              if (!mainw->has_session_tmpdir) {
+              if (!mainw->has_session_workdir) {
                 extrabit=lives_strdup_printf(_("Please check the <tempdir> setting in \n%s\nand try again.\n"),
                                              (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
                 lives_free(tmp);
@@ -2717,7 +2717,7 @@ static boolean lives_startup(livespointer data) {
                 extrabit=lives_strdup("");
 
               err=lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
-                                      prefs->tmpdir,extrabit);
+                                      prefs->workdir,extrabit);
               lives_free(extrabit);
               startup_message_fatal(err);
               lives_free(err);
@@ -2787,21 +2787,21 @@ static boolean lives_startup(livespointer data) {
 
                     if (mainw->next_ds_warn_level>0) {
                       uint64_t dsval;
-                      lives_storage_status_t ds=get_storage_status(prefs->tmpdir,mainw->next_ds_warn_level,&dsval);
+                      lives_storage_status_t ds=get_storage_status(prefs->workdir,mainw->next_ds_warn_level,&dsval);
                       if (ds==LIVES_STORAGE_STATUS_WARNING) {
                         char *err;
                         uint64_t curr_ds_warn=mainw->next_ds_warn_level;
                         mainw->next_ds_warn_level>>=1;
                         if (mainw->next_ds_warn_level>(dsval>>1)) mainw->next_ds_warn_level=dsval>>1;
                         if (mainw->next_ds_warn_level<prefs->ds_crit_level) mainw->next_ds_warn_level=prefs->ds_crit_level;
-                        tmp=ds_warning_msg(prefs->tmpdir,dsval,curr_ds_warn,mainw->next_ds_warn_level);
+                        tmp=ds_warning_msg(prefs->workdir,dsval,curr_ds_warn,mainw->next_ds_warn_level);
                         err=lives_strdup_printf("\n%s\n",tmp);
                         lives_free(tmp);
                         startup_message_nonfatal(err);
                         lives_free(err);
                       } else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
                         char *err;
-                        tmp=ds_critical_msg(prefs->tmpdir,dsval);
+                        tmp=ds_critical_msg(prefs->workdir,dsval);
                         err=lives_strdup_printf("\n%s\n",tmp);
                         lives_free(tmp);
                         startup_message_fatal(err);
@@ -3085,12 +3085,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // mainw->foreign is set if we are grabbing an external window
   mainw->foreign=FALSE;
   memset(start_file,0,1);
-  mainw->has_session_tmpdir=FALSE;
+  mainw->has_session_workdir=FALSE;
 
   mainw->libthread=gtk_thread;
   mainw->id=id;
 
-  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d",prefs->tmpdir,capable->mainpid);
+  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d",prefs->workdir,capable->mainpid);
 
   // what's my name ?
   capable->myname_full=lives_find_program_in_path(argv[0]);
@@ -3181,22 +3181,22 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           continue;
         }
         if (!strcmp(charopt,"tmpdir")) {
-          mainw->has_session_tmpdir=TRUE;
-          // override tempdir setting
-          lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",optarg);
-          lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
-          set_pref(PREF_SESSION_TEMPDIR,prefs->tmpdir);
+          mainw->has_session_workdir=TRUE;
+          // override tempdir (workdir) setting
+          lives_snprintf(prefs->workdir,PATH_MAX,"%s",optarg);
+          lives_snprintf(future_prefs->workdir,PATH_MAX,"%s",prefs->workdir);
+          set_pref(PREF_SESSION_WORKDIR,prefs->workdir);
 
-          if (lives_mkdir_with_parents(prefs->tmpdir,S_IRWXU)==-1) {
-            if (!check_dir_access(prefs->tmpdir)) {
+          if (lives_mkdir_with_parents(prefs->workdir,S_IRWXU)==-1) {
+            if (!check_dir_access(prefs->workdir)) {
               // abort if we cannot create the new subdir
               LIVES_ERROR("Could not create directory");
-              LIVES_ERROR(prefs->tmpdir);
+              LIVES_ERROR(prefs->workdir);
             }
             capable->can_write_to_workdir=FALSE;
           } else {
             LIVES_INFO("Created directory");
-            LIVES_INFO(prefs->tmpdir);
+            LIVES_INFO(prefs->workdir);
           }
           mainw->com_failed=FALSE;
           continue;
@@ -5694,7 +5694,7 @@ void load_frame_image(int frame) {
     }
 
     if (was_preview) {
-      info_file=lives_build_filename(prefs->tmpdir,cfile->handle,LIVES_STATUS_FILE_NAME,NULL);
+      info_file=lives_build_filename(prefs->workdir,cfile->handle,LIVES_STATUS_FILE_NAME,NULL);
       // preview
       if (prefs->safer_preview&&cfile->proc_ptr!=NULL&&cfile->proc_ptr->frames_done>0&&
           frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start)) {
@@ -6811,7 +6811,7 @@ void load_frame_image(int frame) {
 
       if ((cfile->clip_type==CLIP_TYPE_FILE||cfile->clip_type==CLIP_TYPE_DISK)&&cfile->ext_src!=NULL) {
         char *cwd=lives_get_current_dir();
-        char *ppath=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
+        char *ppath=lives_build_filename(prefs->workdir,cfile->handle,NULL);
         lives_chdir(ppath,FALSE);
         lives_free(ppath);
         close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
@@ -7503,7 +7503,7 @@ void load_frame_image(int frame) {
     // reset old info file
     if (cfile!=NULL) {
       char *tmp;
-      tmp=lives_build_filename(prefs->tmpdir,cfile->handle,LIVES_STATUS_FILE_NAME,NULL);
+      tmp=lives_build_filename(prefs->workdir,cfile->handle,LIVES_STATUS_FILE_NAME,NULL);
       lives_snprintf(cfile->info_file,PATH_MAX,"%s",tmp);
       lives_free(tmp);
     }

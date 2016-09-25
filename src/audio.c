@@ -1000,7 +1000,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (to_file>-1) {
     // prepare outfile stuff
-    outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+    outfilename=lives_build_filename(prefs->workdir,outfile->handle,"audio",NULL);
 #ifdef DEBUG_ARENDER
     g_print("writing to %s\n",outfilename);
 #endif
@@ -1078,7 +1078,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       zavel=avels[track]*(double)in_arate[track]/(double)out_arate*in_asamps[track]*in_achans[track]/sizeof(float);
       if (ABS(zavel)>zavel_max) zavel_max=ABS(zavel);
 
-      infilename=lives_build_filename(prefs->tmpdir,infile->handle,"audio",NULL);
+      infilename=lives_build_filename(prefs->workdir,infile->handle,"audio",NULL);
 
 
       // try to speed up access by keeping some files open
@@ -1372,12 +1372,12 @@ LIVES_INLINE void aud_fade(int fileno, double startt, double endt, double startv
   render_audio_segment(1,&fileno,fileno,&vel,&startt,startt*U_SECL,endt*U_SECL,&vol,startv,endv,NULL);
 
   if (mainw->write_failed) {
-    char *outfilename=lives_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
+    char *outfilename=lives_build_filename(prefs->workdir,mainw->files[fileno]->handle,"audio",NULL);
     do_write_failed_error_s(outfilename,NULL);
   }
 
   if (mainw->read_failed) {
-    char *infilename=lives_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
+    char *infilename=lives_build_filename(prefs->workdir,mainw->files[fileno]->handle,"audio",NULL);
     do_read_failed_error_s(infilename,NULL);
   }
 
@@ -1412,7 +1412,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   outfile=mainw->files[fileno];
 
   if (mainw->aud_rec_fd==-1) {
-    char *outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+    char *outfilename=lives_build_filename(prefs->workdir,outfile->handle,"audio",NULL);
     do {
       retval=0;
       mainw->aud_rec_fd=lives_open3(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
@@ -1563,7 +1563,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   outfile=mainw->files[fileno];
 
   if (mainw->aud_rec_fd==-1) {
-    char *outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+    char *outfilename=lives_build_filename(prefs->workdir,outfile->handle,"audio",NULL);
     do {
       retval=0;
       mainw->aud_rec_fd=lives_open3(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
@@ -2402,8 +2402,8 @@ static void *cache_my_audio(void *arg) {
       if (cbuffer->_fd!=-1) close(cbuffer->_fd);
 
       if (afile->opening)
-        filename=lives_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,mainw->files[cbuffer->fileno]->handle);
-      else filename=lives_strdup_printf("%s/%s/audio",prefs->tmpdir,mainw->files[cbuffer->fileno]->handle);
+        filename=lives_strdup_printf("%s/%s/audiodump.pcm",prefs->workdir,mainw->files[cbuffer->fileno]->handle);
+      else filename=lives_strdup_printf("%s/%s/audio",prefs->workdir,mainw->files[cbuffer->fileno]->handle);
 
       cbuffer->_fd=lives_open2(filename,O_RDONLY);
       if (cbuffer->_fd==-1) {
@@ -2723,7 +2723,7 @@ boolean apply_rte_audio_init(void) {
   }
 
   audio_pos=(double)((cfile->start-1)*cfile->arate*cfile->achans*cfile->asampsize/8)/cfile->fps;
-  audio_file=lives_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL);
+  audio_file=lives_build_filename(prefs->workdir,cfile->handle,"audio",NULL);
 
   audio_fd=lives_open3(audio_file,O_RDWR|O_CREAT,DEF_FILE_PERMS);
 
@@ -3052,11 +3052,11 @@ boolean start_audio_stream(void) {
 
   boolean timeout=FALSE;
 
-  astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
+  astream_name=lives_build_filename(prefs->workdir,astname,NULL);
 
   mkfifo(astream_name,S_IRUSR|S_IWUSR);
 
-  astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
+  astream_name_out=lives_build_filename(prefs->workdir,astname_out,NULL);
 
   lives_free(astname);
   lives_free(astname_out);
@@ -3121,8 +3121,8 @@ void stop_audio_stream(void) {
     char *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
     char *astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
 
-    char *astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
-    char *astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
+    char *astream_name=lives_build_filename(prefs->workdir,astname,NULL);
+    char *astream_name_out=lives_build_filename(prefs->workdir,astname_out,NULL);
 
     char *com;
 
@@ -3161,9 +3161,9 @@ void stop_audio_stream(void) {
 void clear_audio_stream(void) {
   // remove raw and cooked streams
   char *astname=lives_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
-  char *astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
+  char *astream_name=lives_build_filename(prefs->workdir,astname,NULL);
   char *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
-  char *astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
+  char *astream_name_out=lives_build_filename(prefs->workdir,astname_out,NULL);
   lives_rm(astream_name);
   lives_rm(astream_name_out);
   lives_free(astname);

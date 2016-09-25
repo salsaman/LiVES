@@ -128,7 +128,7 @@ void lives_exit(int signum) {
 
       // tell non-realtime audio players (sox or mplayer) to stop
       if (!is_realtime_aplayer(prefs->audio_player)&&mainw->aud_file_to_kill>-1&&mainw->files[mainw->aud_file_to_kill]!=NULL) {
-        char *lsname=lives_build_filename(prefs->tmpdir,mainw->files[mainw->aud_file_to_kill]->handle,NULL);
+        char *lsname=lives_build_filename(prefs->workdir,mainw->files[mainw->aud_file_to_kill]->handle,NULL);
         lives_touch(lsname);
         lives_free(lsname);
         com=lives_strdup_printf("%s stop_audio \"%s\"",prefs->backend,mainw->files[mainw->aud_file_to_kill]->handle);
@@ -188,11 +188,11 @@ void lives_exit(int signum) {
       threaded_dialog_spin(0.);
     }
 
-    if (strcmp(future_prefs->tmpdir,prefs->tmpdir)) {
-      // if we changed the tempdir, remove everything but sets from the old dir
+    if (strcmp(future_prefs->workdir,prefs->workdir)) {
+      // if we changed the workdir, remove everything but sets from the old dir
       // create the new directory, and then move any sets over
       end_threaded_dialog();
-      if (do_move_tmpdir_dialog()) {
+      if (do_move_workdir_dialog()) {
         do_do_not_close_d();
         lives_widget_context_update();
 
@@ -200,12 +200,12 @@ void lives_exit(int signum) {
 
 
         // use backend to move the sets
-        com=lives_strdup_printf("%s weed \"%s\" &",prefs->backend_sync,future_prefs->tmpdir);
+        com=lives_strdup_printf("%s weed \"%s\" &",prefs->backend_sync,future_prefs->workdir);
         lives_system(com,FALSE);
         lives_free(com);
       }
-      lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",future_prefs->tmpdir);
-    } else if (!mainw->only_close) lives_snprintf(future_prefs->tmpdir,256,"NULL");
+      lives_snprintf(prefs->workdir,PATH_MAX,"%s",future_prefs->workdir);
+    } else if (!mainw->only_close) lives_snprintf(future_prefs->workdir,256,"NULL");
 
     if (mainw->leave_files&&!mainw->fatal) {
       d_print(_("Saving as set %s..."),mainw->set_name);
@@ -234,7 +234,7 @@ void lives_exit(int signum) {
 
         if ((mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK)&&mainw->files[i]->ext_src!=NULL) {
           // must do this before we move it
-          char *ppath=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
+          char *ppath=lives_build_filename(prefs->workdir,cfile->handle,NULL);
           lives_chdir(ppath,FALSE);
           lives_free(ppath);
           threaded_dialog_spin(0.);
@@ -299,23 +299,23 @@ void lives_exit(int signum) {
     }
 
     if (!mainw->leave_files&&strlen(mainw->set_name)&&!mainw->leave_recovery) {
-      char *set_layout_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
+      char *set_layout_dir=lives_build_filename(prefs->workdir,mainw->set_name,"layouts",NULL);
       if (!lives_file_test(set_layout_dir,LIVES_FILE_TEST_IS_DIR)) {
-        char *sdname=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
+        char *sdname=lives_build_filename(prefs->workdir,mainw->set_name,NULL);
 
         // note, FORCE is FALSE
         lives_rmdir(sdname,FALSE);
         lives_free(sdname);
         threaded_dialog_spin(0.);
       } else {
-        char *dname=lives_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
+        char *dname=lives_build_filename(prefs->workdir,mainw->set_name,"clips",NULL);
 
         // note, FORCE is FALSE
         lives_rmdir(dname,FALSE);
         lives_free(dname);
         threaded_dialog_spin(0.);
 
-        dname=lives_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
+        dname=lives_build_filename(prefs->workdir,mainw->set_name,"order",NULL);
         lives_rm(dname);
         lives_free(dname);
         threaded_dialog_spin(0.);
@@ -324,7 +324,7 @@ void lives_exit(int signum) {
     }
 
     if (strlen(mainw->set_name)) {
-      char *set_lock_file=lives_strdup_printf("%s/%s/lock.%d",prefs->tmpdir,mainw->set_name,capable->mainpid);
+      char *set_lock_file=lives_strdup_printf("%s/%s/lock.%d",prefs->workdir,mainw->set_name,capable->mainpid);
       lives_rm(set_lock_file);
       lives_free(set_lock_file);
       threaded_dialog_spin(0.);
@@ -1020,7 +1020,7 @@ void on_save_selection_activate(LiVESMenuItem *menuitem, livespointer user_data)
 static void check_remove_layout_files(void) {
   if (prompt_remove_layout_files()) {
     // delete layout directory
-    char *msg,*laydir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
+    char *msg,*laydir=lives_build_filename(prefs->workdir,mainw->set_name,"layouts",NULL);
     lives_rmdir(laydir,TRUE);
     lives_free(laydir);
     msg=lives_strdup_printf(_("Layouts were removed for set %s.\n"),mainw->set_name);
@@ -1140,7 +1140,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       recover_layout_cancelled(FALSE);
     }
 
-    cdir=lives_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
+    cdir=lives_build_filename(prefs->workdir,mainw->set_name,"clips",NULL);
 
     do {
       // keep trying until backend has deleted the clip
@@ -1156,12 +1156,12 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     lives_free(cdir);
 
-    lfiles=lives_build_filename(prefs->tmpdir,mainw->set_name,"lock",NULL);
+    lfiles=lives_build_filename(prefs->workdir,mainw->set_name,"lock",NULL);
 
     lives_rmglob(lfiles);
     lives_free(lfiles);
 
-    ofile=lives_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
+    ofile=lives_build_filename(prefs->workdir,mainw->set_name,"order",NULL);
     lives_rm(ofile);
     lives_free(ofile);
 
@@ -1169,7 +1169,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_sync();
 
 
-    sdir=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
+    sdir=lives_build_filename(prefs->workdir,mainw->set_name,NULL);
     lives_rmdir(sdir,FALSE);
     lives_free(sdir);
 
@@ -1202,7 +1202,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *msg;
 
   if (proj_file==NULL) return;
-  info_file=lives_strdup_printf("%s/.impname.%d",prefs->tmpdir,capable->mainpid);
+  info_file=lives_strdup_printf("%s/.impname.%d",prefs->workdir,capable->mainpid);
   lives_rm(info_file);
   mainw->com_failed=FALSE;
   com=lives_strdup_printf("%s get_proj_set \"%s\">\"%s\"",prefs->backend_sync,proj_file,info_file);
@@ -1235,7 +1235,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!is_legal_set_name(mainw->msg,TRUE)) return;
 
   new_set=lives_strdup(mainw->msg);
-  set_dir=lives_build_filename(prefs->tmpdir,new_set,NULL);
+  set_dir=lives_build_filename(prefs->workdir,new_set,NULL);
 
   if (lives_file_test(set_dir,LIVES_FILE_TEST_IS_DIR)) {
     msg=lives_strdup_printf(
@@ -1419,7 +1419,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   sepimg_ext=get_extension(mainw->sepimg_path);
   frameimg_ext=get_extension(mainw->frameblank_path);
 
-  dfile=lives_strdup_printf("%s"LIVES_DIR_SEP"theme%d"LIVES_DIR_SEP,prefs->tmpdir,capable->mainpid);
+  dfile=lives_strdup_printf("%s"LIVES_DIR_SEP"theme%d"LIVES_DIR_SEP,prefs->workdir,capable->mainpid);
   themefile=lives_build_filename(dfile,"header.theme",NULL);
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -1556,7 +1556,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_widget_context_update();
 
-  importcheckdir=lives_build_filename(prefs->tmpdir,"imports",NULL);
+  importcheckdir=lives_build_filename(prefs->workdir,"imports",NULL);
   lives_rmdir(importcheckdir,TRUE);
 
   // unpackage file to get the theme name
@@ -1573,7 +1573,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  themeheader=lives_build_filename(prefs->tmpdir,"imports","header.theme",NULL);
+  themeheader=lives_build_filename(prefs->workdir,"imports","header.theme",NULL);
 
   if (get_pref_from_file(themeheader,THEME_DETAIL_NAME,tname,128)!=LIVES_RESPONSE_NONE) {
     // failed to get name
@@ -2075,7 +2075,7 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     do_progress_dialog(TRUE,FALSE,_("Undoing"));
 
     if (cfile->undo_action!=UNDO_ATOMIC_RESAMPLE_RESIZE) {
-      audfile=lives_strdup_printf("%s/%s/audio.%s",prefs->tmpdir,cfile->handle,LIVES_FILE_EXT_BAK);
+      audfile=lives_strdup_printf("%s/%s/audio.%s",prefs->workdir,cfile->handle,LIVES_FILE_EXT_BAK);
       if (lives_file_test(audfile, LIVES_FILE_TEST_EXISTS)) {
         // restore overwritten audio
         com=lives_strdup_printf("%s undo_audio \"%s\"",prefs->backend_sync,cfile->handle);
@@ -4669,7 +4669,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     // and possibly merge with another set
 
-    new_clips_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
+    new_clips_dir=lives_build_filename(prefs->workdir,mainw->set_name,"clips",NULL);
     // check if target clips dir exists, ask if user wants to append files
     if (lives_file_test(new_clips_dir,LIVES_FILE_TEST_IS_DIR)) {
       lives_free(new_clips_dir);
@@ -4683,13 +4683,13 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       is_append=TRUE;
     } else {
       lives_free(new_clips_dir);
-      layout_map_file=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
+      layout_map_file=lives_build_filename(prefs->workdir,mainw->set_name,"layouts","layout.map",NULL);
       // if target has layouts dir but no clips, it means we have old layouts !
       if (lives_file_test(layout_map_file,LIVES_FILE_TEST_EXISTS)) {
         if (do_set_rename_old_layouts_warning(mainw->set_name)) {
           // user answered "yes" - delete
           // clear _old_layout maps
-          char *dfile=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
+          char *dfile=lives_build_filename(prefs->workdir,mainw->set_name,"layouts",NULL);
           lives_rm(dfile);
           lives_free(dfile);
         }
@@ -4706,13 +4706,13 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mainw->com_failed=FALSE;
 
-  current_clips_dir=lives_build_filename(prefs->tmpdir,old_set,"clips/",NULL);
+  current_clips_dir=lives_build_filename(prefs->workdir,old_set,"clips/",NULL);
   if (strlen(old_set)&&strcmp(mainw->set_name,old_set)&&lives_file_test(current_clips_dir,LIVES_FILE_TEST_IS_DIR)) {
     // set name was changed for an existing set
 
     if (!is_append) {
       // create new dir, in case it doesn't already exist
-      dfile=lives_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
+      dfile=lives_build_filename(prefs->workdir,mainw->set_name,"clips",NULL);
       if (lives_mkdir_with_parents(dfile,S_IRWXU)==-1) {
         if (!check_dir_access(dfile)) {
           // abort if we cannot create the new subdir
@@ -4730,7 +4730,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   } else {
     // saving as same name (or as new set)
 
-    dfile=lives_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
+    dfile=lives_build_filename(prefs->workdir,mainw->set_name,"clips",NULL);
     if (lives_mkdir_with_parents(dfile,S_IRWXU)==-1) {
       if (!check_dir_access(dfile)) {
         // abort if we cannot create the new subdir
@@ -4747,7 +4747,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
   lives_free(current_clips_dir);
 
-  ordfile=lives_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
+  ordfile=lives_build_filename(prefs->workdir,mainw->set_name,"order",NULL);
 
   cwd=lives_get_current_dir();
 
@@ -4788,7 +4788,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             lives_snprintf(new_handle,256,"%s/clips/%s",mainw->set_name,mainw->files[i]->handle);
           }
           if (strcmp(new_handle,mainw->files[i]->handle)) {
-            new_dir=lives_build_filename(prefs->tmpdir,new_handle,NULL);
+            new_dir=lives_build_filename(prefs->workdir,new_handle,NULL);
             if (lives_file_test(new_dir,LIVES_FILE_TEST_IS_DIR)) {
               // get a new unique handle
               get_temp_handle(i,FALSE);
@@ -4799,8 +4799,8 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             // move the files
             mainw->com_failed=FALSE;
 
-            oldval=lives_strdup_printf("%s"LIVES_DIR_SEP"%s",prefs->tmpdir,mainw->files[i]->handle);
-            newval=lives_strdup_printf("%s"LIVES_DIR_SEP"%s",prefs->tmpdir,new_handle);
+            oldval=lives_strdup_printf("%s"LIVES_DIR_SEP"%s",prefs->workdir,mainw->files[i]->handle);
+            newval=lives_strdup_printf("%s"LIVES_DIR_SEP"%s",prefs->workdir,new_handle);
 
             lives_mv(oldval,newval);
             lives_free(oldval);
@@ -4815,7 +4815,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             got_new_handle=TRUE;
 
             lives_snprintf(mainw->files[i]->handle,256,"%s",new_handle);
-            dfile=lives_build_filename(prefs->tmpdir,mainw->files[i]->handle,LIVES_STATUS_FILE_NAME,NULL);
+            dfile=lives_build_filename(prefs->workdir,mainw->files[i]->handle,LIVES_STATUS_FILE_NAME,NULL);
             lives_snprintf(mainw->files[i]->info_file,PATH_MAX,"%s",dfile);
             lives_free(dfile);
           }
@@ -4851,7 +4851,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (got_new_handle&&!strlen(old_set)) migrate_layouts(NULL,mainw->set_name);
 
   if (strlen(old_set)&&strcmp(old_set,mainw->set_name)) {
-    layout_map_dir=lives_build_filename(prefs->tmpdir,old_set,"layouts",LIVES_DIR_SEP,NULL);
+    layout_map_dir=lives_build_filename(prefs->workdir,old_set,"layouts",LIVES_DIR_SEP,NULL);
     layout_map_file=lives_build_filename(layout_map_dir,"layout.map",NULL);
     // update details for layouts - needs_set, current_layout_map and affected_layout_map
     if (lives_file_test(layout_map_file,LIVES_FILE_TEST_EXISTS)) {
@@ -4866,8 +4866,8 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free(layout_map_dir);
 
     if (is_append) {
-      osetn=lives_build_filename(prefs->tmpdir,old_set,"layouts","layout.map",NULL);
-      nsetn=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
+      osetn=lives_build_filename(prefs->workdir,old_set,"layouts","layout.map",NULL);
+      nsetn=lives_build_filename(prefs->workdir,mainw->set_name,"layouts","layout.map",NULL);
 
       //append current layout.map to target one
       lives_cat(osetn,nsetn,TRUE);
@@ -4878,10 +4878,10 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_free(nsetn);
     }
 
-    osetn=lives_build_filename(prefs->tmpdir,old_set,"layouts",NULL);
+    osetn=lives_build_filename(prefs->workdir,old_set,"layouts",NULL);
 
     if (lives_file_test(osetn,LIVES_FILE_TEST_IS_DIR)) {
-      nsetn=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
+      nsetn=lives_build_filename(prefs->workdir,mainw->set_name,NULL);
 
       // move any layouts from old set to new (including layout.map)
       lives_cp_keep_perms(osetn,nsetn);
@@ -4891,7 +4891,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     lives_free(osetn);
 
-    osetn=lives_build_filename(prefs->tmpdir,old_set,NULL);
+    osetn=lives_build_filename(prefs->workdir,old_set,NULL);
     lives_rmdir(osetn,FALSE);
     lives_free(osetn);
   }
@@ -4899,7 +4899,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (!mainw->was_set&&!strcmp(old_set,mainw->set_name)) {
     // set name was set by export or save layout, now we need to update our layout map
-    layout_map_dir=lives_build_filename(prefs->tmpdir,old_set,"layouts",LIVES_DIR_SEP,NULL);
+    layout_map_dir=lives_build_filename(prefs->workdir,old_set,"layouts",LIVES_DIR_SEP,NULL);
     layout_map_file=lives_build_filename(layout_map_dir,"layout.map",NULL);
     if (lives_file_test(layout_map_file,LIVES_FILE_TEST_EXISTS)) save_layout_map(NULL,NULL,NULL,layout_map_dir);
     mainw->was_set=TRUE;
@@ -5023,7 +5023,7 @@ boolean reload_set(const char *set_name) {
     lives_free(tmp);
   }
 
-  ordfile=lives_build_filename(prefs->tmpdir,set_name,"order",NULL);
+  ordfile=lives_build_filename(prefs->workdir,set_name,"order",NULL);
   orderfile=fopen(ordfile,"r"); // no we can't assert this, because older sets did not have this file
   lives_free(ordfile);
 
@@ -5149,7 +5149,7 @@ boolean reload_set(const char *set_name) {
     if (orderfile!=NULL) {
       // newer style (0.9.6+)
       char *tfile;
-      char *clipdir=lives_build_filename(prefs->tmpdir,mainw->msg,NULL);
+      char *clipdir=lives_build_filename(prefs->workdir,mainw->msg,NULL);
       if (!lives_file_test(clipdir,LIVES_FILE_TEST_IS_DIR)) {
         lives_free(clipdir);
         continue;
@@ -5183,7 +5183,7 @@ boolean reload_set(const char *set_name) {
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
       // lock the set
-      tfile=lives_strdup_printf("%s"LIVES_DIR_SEP"%s"LIVES_DIR_SEP"lock.%d",prefs->tmpdir,set_name,capable->mainpid);
+      tfile=lives_strdup_printf("%s"LIVES_DIR_SEP"%s"LIVES_DIR_SEP"lock.%d",prefs->workdir,set_name,capable->mainpid);
       lives_touch(tfile);
       lives_free(tfile);
     }
@@ -5230,12 +5230,12 @@ boolean reload_set(const char *set_name) {
     }
 
     if (prefs->autoload_subs) {
-      subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SRT,NULL);
+      subfname=lives_build_filename(prefs->workdir,cfile->handle,"subs.",LIVES_FILE_EXT_SRT,NULL);
       if (lives_file_test(subfname,LIVES_FILE_TEST_EXISTS)) {
         subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);
       } else {
         lives_free(subfname);
-        subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SUB,NULL);
+        subfname=lives_build_filename(prefs->workdir,cfile->handle,"subs.",LIVES_FILE_EXT_SUB,NULL);
         if (lives_file_test(subfname,LIVES_FILE_TEST_EXISTS)) {
           subtitles_init(cfile,subfname,SUBTITLE_TYPE_SUB);
         }
@@ -5341,7 +5341,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
 
     if ((i==mainw->current_file)||(mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||
                                    mainw->files[i]->clip_type==CLIP_TYPE_FILE))) {
-      markerfile=lives_build_filename(prefs->tmpdir,mainw->files[i]->handle,"set.",NULL);
+      markerfile=lives_build_filename(prefs->workdir,mainw->files[i]->handle,"set.",NULL);
 
       do {
         retval=0;
@@ -5354,7 +5354,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
       close(marker_fd);
       lives_free(markerfile);
       if (mainw->files[i]->undo_action!=UNDO_NONE) {
-        markerfile=lives_build_filename(prefs->tmpdir,mainw->files[i]->handle,"noprune",NULL);
+        markerfile=lives_build_filename(prefs->workdir,mainw->files[i]->handle,"noprune",NULL);
         do {
           retval=0;
           marker_fd=creat(markerfile,S_IRUSR|S_IWUSR);
@@ -5370,7 +5370,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
 
 
   // get space before
-  fspace=get_fs_free(prefs->tmpdir);
+  fspace=get_fs_free(prefs->workdir);
 
   // call "smogrify bg_weed" to do the actual cleanup
   // its parameters are the handle of a temp file, and opts mask
@@ -5407,11 +5407,11 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   // remove the protective markers
   for (i=0; i<MAX_FILES; i++) {
     if (mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
-      markerfile=lives_build_filename(prefs->tmpdir,mainw->files[i]->handle,"set.",NULL);
+      markerfile=lives_build_filename(prefs->workdir,mainw->files[i]->handle,"set.",NULL);
       lives_rm(markerfile);
       lives_free(markerfile);
       if (mainw->files[i]->undo_action!=UNDO_NONE) {
-        markerfile=lives_build_filename(prefs->tmpdir,mainw->files[i]->handle,"noprune",NULL);
+        markerfile=lives_build_filename(prefs->workdir,mainw->files[i]->handle,"noprune",NULL);
         lives_rm(markerfile);
         lives_free(markerfile);
       }
@@ -5429,7 +5429,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
 
   if (bytes==0) {
     // get after
-    bytes=get_fs_free(prefs->tmpdir)-fspace;
+    bytes=get_fs_free(prefs->workdir)-fspace;
   }
 
   if (bytes<0) bytes=0;
@@ -5917,7 +5917,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
   }
 
-  info_file=lives_strdup_printf("%s/thm%d/%s",prefs->tmpdir,capable->mainpid,LIVES_STATUS_FILE_NAME);
+  info_file=lives_strdup_printf("%s/thm%d/%s",prefs->workdir,capable->mainpid,LIVES_STATUS_FILE_NAME);
   lives_rm(info_file);
 
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
@@ -5979,7 +5979,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     if (height*width) {
       // draw image
       LiVESError *error=NULL;
-      char *thumb=lives_strdup_printf("%s/thm%d/%08d.%s",prefs->tmpdir,pid,1,prefs->image_ext);
+      char *thumb=lives_strdup_printf("%s/thm%d/%08d.%s",prefs->workdir,pid,1,prefs->image_ext);
       LiVESPixbuf *pixbuf=lives_pixbuf_new_from_file((tmp=lives_filename_from_utf8(thumb,-1,NULL,NULL,NULL)),&error);
       lives_free(thumb);
       lives_free(tmp);
@@ -6001,7 +6001,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     }
     lives_free(info_file);
 
-    thm_dir=lives_strdup_printf("%s/thm%d",prefs->tmpdir,capable->mainpid);
+    thm_dir=lives_strdup_printf("%s/thm%d",prefs->workdir,capable->mainpid);
     lives_rmdir(thm_dir,TRUE);
     lives_free(thm_dir);
   }
@@ -6026,7 +6026,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       return;
     }
 
-    dfile=lives_strdup_printf("%s"LIVES_DIR_SEP"fsp%d"LIVES_DIR_SEP,prefs->tmpdir,capable->mainpid);
+    dfile=lives_strdup_printf("%s"LIVES_DIR_SEP"fsp%d"LIVES_DIR_SEP,prefs->workdir,capable->mainpid);
     lives_mkdir_with_parents(dfile,S_IRWXU);
 
     info_file=lives_strdup_printf("%s%s",dfile,LIVES_STATUS_FILE_NAME);
@@ -7606,7 +7606,7 @@ void on_load_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lfile_name=lives_filename_from_utf8(isubfname,-1,NULL,NULL,NULL);
 
   if (lives_file_test(lfile_name,LIVES_FILE_TEST_EXISTS)) {
-    subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SRT,NULL);
+    subfname=lives_build_filename(prefs->workdir,cfile->handle,"subs.",LIVES_FILE_EXT_SRT,NULL);
     subtype=SUBTITLE_TYPE_SRT;
   } else {
     lives_free(isubfname);
@@ -7615,7 +7615,7 @@ void on_load_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lfile_name=lives_filename_from_utf8(isubfname,-1,NULL,NULL,NULL);
 
     if (lives_file_test(isubfname,LIVES_FILE_TEST_EXISTS)) {
-      subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SUB,NULL);
+      subfname=lives_build_filename(prefs->workdir,cfile->handle,"subs.",LIVES_FILE_EXT_SUB,NULL);
       subtype=SUBTITLE_TYPE_SUB;
     } else {
       lives_free(isubfname);
@@ -7695,11 +7695,11 @@ void on_erase_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   switch (cfile->subt->type) {
   case SUBTITLE_TYPE_SRT:
-    sfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SRT,NULL);
+    sfname=lives_build_filename(prefs->workdir,cfile->handle,"subs.",LIVES_FILE_EXT_SRT,NULL);
     break;
 
   case SUBTITLE_TYPE_SUB:
-    sfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SUB,NULL);
+    sfname=lives_build_filename(prefs->workdir,cfile->handle,"subs.",LIVES_FILE_EXT_SUB,NULL);
     break;
 
   default:
@@ -10353,7 +10353,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_capture2_activate(void) {
   // this is in the second copy of lives, we are now going to grab frames from the X window
   char *capfilename=lives_strdup_printf(".capture.%d",mainw->foreign_key);
-  char *capfile=lives_build_filename(prefs->tmpdir,capfilename,NULL);
+  char *capfile=lives_build_filename(prefs->workdir,capfilename,NULL);
 
   char buf[32];
 
@@ -11375,7 +11375,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
     if (mainw->write_failed) {
       // on failure
       int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
-      char *outfilename=lives_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
+      char *outfilename=lives_build_filename(prefs->workdir,mainw->files[outfile]->handle,"audio",NULL);
       do_write_failed_error_s(outfilename,NULL);
 
       if (!prefs->conserve_space&&type==1) {

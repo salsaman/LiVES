@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2016-09-25 10:22-0300\n"
+"POT-Creation-Date: 2016-09-25 15:03-0300\n"
 "PO-Revision-Date: 2015-04-06 05:53+0000\n"
 "Last-Translator: ☠Jay ZDLin☠ <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -556,10 +556,10 @@ msgstr ""
 "и повторите снова.\n"
 
 #: src/main.c:2719
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "\n"
-"LiVES was unable to use the temporary directory\n"
+"LiVES was unable to use the working directory\n"
 "%s\n"
 "\n"
 "%s"
@@ -850,7 +850,7 @@ msgstr ""
 msgid "Directory name is too long !"
 msgstr "Имя директории слишком длинное !"
 
-#: src/startup.c:229
+#: src/startup.c:226
 msgid ""
 "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
 "\n"
@@ -858,7 +858,7 @@ msgstr ""
 "LiVES не удалось запустить выбранный вами аудиоплеер!\n"
 "\n"
 
-#: src/startup.c:235
+#: src/startup.c:232
 msgid ""
 "Before starting LiVES, you need to choose an audio player.\n"
 "\n"
@@ -868,7 +868,7 @@ msgstr ""
 "\n"
 "PULSE AUDIO рекомендуется большинству пользователей"
 
-#: src/startup.c:238
+#: src/startup.c:235
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
@@ -876,7 +876,7 @@ msgstr ""
 ", но данная версия LiVES была скомпонована без поддержки pulse audio.\n"
 "\n"
 
-#: src/startup.c:242
+#: src/startup.c:239
 msgid ""
 ", but you do not have pulse audio installed on your system.\n"
 " You are advised to install pulse audio first before running LiVES.\n"
@@ -886,11 +886,11 @@ msgstr ""
 " Перед тем, как начать пользоваться LiVES, следует установить pulse audio.\n"
 "\n"
 
-#: src/startup.c:246
+#: src/startup.c:243
 msgid "JACK audio is recommended for pro users"
 msgstr "JACK audio рекомендуется продвинутым пользователям"
 
-#: src/startup.c:249
+#: src/startup.c:246
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
@@ -898,7 +898,7 @@ msgstr ""
 ", но данная версия LiVES была скомпонована без поддержки jack audio.\n"
 "\n"
 
-#: src/startup.c:252
+#: src/startup.c:249
 msgid ""
 ", but you do not have jackd installed. You may wish to install jackd first "
 "before running LiVES.\n"
@@ -908,7 +908,7 @@ msgstr ""
 "LiVES, следует установить jackd.\n"
 "\n"
 
-#: src/startup.c:255
+#: src/startup.c:252
 #, fuzzy
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
@@ -922,12 +922,12 @@ msgstr ""
 "другим аудиоплеером.\n"
 "\n"
 
-#: src/startup.c:260
+#: src/startup.c:257
 msgid "SOX may be used if neither of the preceding players work, "
 msgstr ""
 "SOX обычно используется, если ни один из вышеуказанных плееров не работает, "
 
-#: src/startup.c:263
+#: src/startup.c:260
 msgid ""
 "but some audio features will be disabled.\n"
 "\n"
@@ -935,7 +935,7 @@ msgstr ""
 "но некоторые аудиофункции не будут работать.\n"
 "\n"
 
-#: src/startup.c:265
+#: src/startup.c:262
 msgid ""
 "but you do not have sox installed.\n"
 "You are advised to install it before running LiVES.\n"
@@ -945,7 +945,7 @@ msgstr ""
 "Вам следует установить его, прежде чем запустить LiVES.\n"
 "\n"
 
-#: src/startup.c:269
+#: src/startup.c:266
 #, fuzzy
 msgid ""
 "The MPLAYER/MPLAYER2 audio player is only recommended for testing purposes.\n"
@@ -954,101 +954,101 @@ msgstr ""
 "Плеер MPLAYER рекомендуется использовать исключительно для тестирования.\n"
 "\n"
 
-#: src/startup.c:285
+#: src/startup.c:282
 #, fuzzy
 msgid "Choose an audio player"
 msgstr "LiVES: - Выберите аудиоплеер"
 
-#: src/startup.c:302
+#: src/startup.c:299
 msgid "Use _pulse audio player"
 msgstr "Использовать аудиоплеер _pulse"
 
-#: src/startup.c:324
+#: src/startup.c:321
 msgid "Use _jack audio player"
 msgstr "Использовать аудиоплеер _jack"
 
-#: src/startup.c:344
+#: src/startup.c:341
 msgid "Use _sox audio player"
 msgstr "Использовать аудиоплеер _sox"
 
-#: src/startup.c:365
+#: src/startup.c:362
 msgid "Use _mplayer audio player"
 msgstr "Использовать аудиоплеер _mplayer"
 
-#: src/startup.c:385
+#: src/startup.c:382
 #, fuzzy
 msgid "Use _mplayer2 audio player"
 msgstr "Использовать аудиоплеер _mplayer"
 
-#: src/startup.c:408 src/startup.c:586 src/interface.c:1346
+#: src/startup.c:405 src/startup.c:583 src/interface.c:1346
 msgid "_Next"
 msgstr "_Далее"
 
-#: src/startup.c:448
+#: src/startup.c:445
 msgid "Skipped"
 msgstr "Пропущено"
 
-#: src/startup.c:463
+#: src/startup.c:460
 msgid "Passed"
 msgstr "Пройдено"
 
-#: src/startup.c:496
+#: src/startup.c:493
 msgid "Failed"
 msgstr "Ошибка"
 
-#: src/startup.c:560
+#: src/startup.c:557
 #, fuzzy
 msgid "Testing Configuration"
 msgstr "LiVES: - Тестирование настроек"
 
-#: src/startup.c:562
+#: src/startup.c:559
 #, fuzzy
 msgid "Troubleshoot"
 msgstr "Устранение _неполадок"
 
-#: src/startup.c:575
+#: src/startup.c:572
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr "LiVES теперь выполнят некоторые тесты базовой конфигурации\n"
 
-#: src/startup.c:608
+#: src/startup.c:605
 msgid "Checking for \"sox\" presence"
 msgstr "Проверка представлений \"sox\""
 
-#: src/startup.c:612
+#: src/startup.c:609
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr ""
 "Вы должны установить sox для использования всех звуковых эффектов в LiVES"
 
-#: src/startup.c:619
+#: src/startup.c:616
 msgid "Checking if sox can convert audio"
 msgstr "Проверка возможностей sox для конвертации звука"
 
-#: src/startup.c:643
+#: src/startup.c:640
 #, fuzzy, c-format
 msgid "Unable to allocate %d bytes memory."
 msgstr "Невозможно выделить 176400 байт памяти."
 
-#: src/startup.c:654
+#: src/startup.c:651
 #, c-format
 msgid "Unable to write to: %s"
 msgstr "Невозможно ваыполнить запись: %s"
 
-#: src/startup.c:668 src/startup.c:839
+#: src/startup.c:665 src/startup.c:836
 #, c-format
 msgid "Command failed: %s"
 msgstr "Ошибка выполнения команды: %s"
 
-#: src/startup.c:690
+#: src/startup.c:687
 msgid "You should install sox_fmt_all or similar"
 msgstr "Вы должны установить sox_fmt_all или аналогичное"
 
-#: src/startup.c:720
+#: src/startup.c:717
 #, fuzzy
 msgid "Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"
 msgstr "Проверка представлений для \"mplayer\""
 
-#: src/startup.c:723
+#: src/startup.c:720
 #, fuzzy
 msgid ""
 "You should install mplayer, mplayer2 or mpv to be able to use all the "
@@ -1057,12 +1057,12 @@ msgstr ""
 "Вы должны установить mplayer для возможности использовать все видеоэффекты в "
 "LiVES"
 
-#: src/startup.c:731
+#: src/startup.c:728
 #, fuzzy
 msgid "Checking for \"mplayer\" or \"mplayer2\" presence"
 msgstr "Проверка представлений для \"mplayer\""
 
-#: src/startup.c:734
+#: src/startup.c:731
 #, fuzzy
 msgid ""
 "You should install mplayer or mplayer2 to be able to use all the decoding "
@@ -1071,65 +1071,65 @@ msgstr ""
 "Вы должны установить mplayer для возможности использовать все видеоэффекты в "
 "LiVES"
 
-#: src/startup.c:770
+#: src/startup.c:767
 #, fuzzy, c-format
 msgid "Checking if %s can convert audio"
 msgstr "Проверка возможностей sox для конвертации звука"
 
-#: src/startup.c:792
+#: src/startup.c:789
 #, fuzzy
 msgid "You should install mplayer,mplayer2 or mpv with pcm/wav support"
 msgstr "Вы должны утановить mplayer с поддержкой pcm/wav"
 
-#: src/startup.c:794
+#: src/startup.c:791
 #, fuzzy
 msgid "You should install mplayer or mplayer2 with pcm/wav support"
 msgstr "Вы должны утановить mplayer с поддержкой pcm/wav"
 
-#: src/startup.c:812
+#: src/startup.c:809
 #, fuzzy, c-format
 msgid "Checking if %s can decode to png"
 msgstr "Проверка возможностей mplayer декодирования в jpeg"
 
-#: src/startup.c:814
+#: src/startup.c:811
 #, fuzzy, c-format
 msgid "Checking if %s can decode to png/alpha"
 msgstr "Проверка возможностей mplayer декодирования в png/alpha"
 
-#: src/startup.c:860
+#: src/startup.c:857
 #, fuzzy, c-format
 msgid "You may wish to upgrade %s to a newer version"
 msgstr "Вы можете обновить mplayer на новую версию"
 
-#: src/startup.c:888
+#: src/startup.c:885
 #, fuzzy, c-format
 msgid "Checking if %s can decode to jpeg"
 msgstr "Проверка возможностей mplayer декодирования в jpeg"
 
-#: src/startup.c:919
+#: src/startup.c:916
 #, fuzzy, c-format
 msgid "You should install %s with either png or jpeg support"
 msgstr "Вы должны установить mplayer с поддержкой png/alpha или jpeg"
 
-#: src/startup.c:921
+#: src/startup.c:918
 #, fuzzy, c-format
 msgid "You should install %s with either png/alpha or jpeg support"
 msgstr "Вы должны установить mplayer с поддержкой png/alpha или jpeg"
 
-#: src/startup.c:926
+#: src/startup.c:923
 #, fuzzy, c-format
 msgid "You may wish to add jpeg output support to %s"
 msgstr "Вы можете добавить поддержку вывода jpeg в mplayer"
 
-#: src/startup.c:938
+#: src/startup.c:935
 msgid "Checking for \"convert\" presence"
 msgstr "Проверка для представлений \"convert\""
 
-#: src/startup.c:942
+#: src/startup.c:939
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr "Установите imageMagick для возможности использовать все рендер-эффекты"
 
-#: src/startup.c:955
+#: src/startup.c:952
 msgid ""
 "\n"
 "\n"
@@ -1137,7 +1137,7 @@ msgid ""
 "'mplayer' or 'mplayer2' in order to use all the features of LiVES"
 msgstr ""
 
-#: src/startup.c:964
+#: src/startup.c:961
 msgid ""
 "\n"
 "\n"
@@ -1149,7 +1149,7 @@ msgstr ""
 "    Тип преобразования изображения был изменён на jpeg. Вы можете внести "
 "изменение в Параметры/Декодирование.    \n"
 
-#: src/startup.c:969
+#: src/startup.c:966
 msgid ""
 "\n"
 "\n"
@@ -1161,7 +1161,7 @@ msgstr ""
 "    Нажмиет Отмена для выхода и устанвоки всех недостающих компонентов, или "
 "Далее чтобы продолжить    \n"
 
-#: src/startup.c:1003
+#: src/startup.c:1000
 msgid ""
 "\n"
 "\n"
@@ -1171,7 +1171,7 @@ msgstr ""
 "\n"
 "Завершение, вы можете выбрать стартовый стандартный интерфейс для LiVES.\n"
 
-#: src/startup.c:1004
+#: src/startup.c:1001
 msgid ""
 "\n"
 "\n"
@@ -1182,7 +1182,7 @@ msgstr ""
 "LiVES имеет два основных интерфейса и вы можете выбрать любой из них для "
 "запуска.\n"
 
-#: src/startup.c:1005
+#: src/startup.c:1002
 msgid ""
 "\n"
 "\n"
@@ -1192,32 +1192,32 @@ msgstr ""
 "\n"
 "Умолчания можно изменить позднее в меню Предпочтения.\n"
 
-#: src/startup.c:1015
+#: src/startup.c:1012
 #, fuzzy
 msgid "Choose the Startup Interface"
 msgstr "LiVES: - Выберите начальный интерфейс"
 
-#: src/startup.c:1026
+#: src/startup.c:1023
 msgid "Start in _Clip Edit mode"
 msgstr "Запустить в режиме фрагментного редактирования"
 
-#: src/startup.c:1029
+#: src/startup.c:1026
 msgid "This is the best choice for simple editing tasks and for VJs\n"
 msgstr ""
 "Наилучший вариант для задач простого редактирования, а также для VJ`ев\n"
 
-#: src/startup.c:1035
+#: src/startup.c:1032
 msgid "Start in _Multitrack mode"
 msgstr "Запустить в режиме с _несколькими дорожками"
 
-#: src/startup.c:1037
+#: src/startup.c:1034
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr ""
 "Наилучший вариант для редактирования сложных задач с несколькими "
 "фрагментами.\n"
 
-#: src/startup.c:1045
+#: src/startup.c:1042
 msgid "_Finish"
 msgstr "_Завершить"
 
@@ -5154,11 +5154,11 @@ msgstr ""
 "Пожалуйста, закройте файл и затем попробуйте снова."
 
 #: src/dialogs.c:2193
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"LiVES was unable to write to its temporary directory.\n"
+"LiVES was unable to write to its working directory.\n"
 "\n"
-"The current temporary directory is:\n"
+"The current working directory is:\n"
 "\n"
 "%s\n"
 "\n"
@@ -7741,7 +7741,7 @@ msgstr ""
 
 #: src/preferences.c:570
 msgid ""
-"The temp directory is LiVES working directory where opened clips and sets "
+"The work directory is LiVES working directory where opened clips and sets "
 "are stored.\n"
 "It should be in a partition with plenty of free disk space.\n"
 msgstr ""
@@ -7749,10 +7749,10 @@ msgstr ""
 #: src/preferences.c:1182
 #, c-format
 msgid ""
-"Unable to create or write to the new temporary directory.\n"
+"Unable to create or write to the new working directory.\n"
 "You may need to create it as the root user first, e.g:\n"
 "\n"
-"sudo mkdir -p %s; sudo chmod 777 %s\n"
+"sudo mkdir -p %s; \n"
 "\n"
 "The directory will not be changed now.\n"
 msgstr ""
@@ -7760,7 +7760,7 @@ msgstr ""
 #: src/preferences.c:1187
 #, c-format
 msgid ""
-"Unable to create or write to the new temporary directory.\n"
+"Unable to create or write to the new working directory.\n"
 "%s\n"
 "Please try another directory or contact your system administrator.\n"
 "\n"
@@ -7769,14 +7769,14 @@ msgstr ""
 
 #: src/preferences.c:1201
 msgid ""
-"You have chosen to change the temporary directory.\n"
+"You have chosen to change the working directory.\n"
 "Please make sure you have no other copies of LiVES open.\n"
 "\n"
 "If you do have other copies of LiVES open, please close them now, *before* "
 "pressing OK.\n"
 "\n"
-"Alternatively, press Cancel to restore the temporary directory to its "
-"original setting."
+"Alternatively, press Cancel to restore the working directory to its original "
+"setting."
 msgstr ""
 
 #: src/preferences.c:1583
@@ -8228,7 +8228,7 @@ msgid "      Backup/Restore directory (default) "
 msgstr ""
 
 #: src/preferences.c:3657
-msgid "      Temp directory (do not remove) "
+msgid "   Working directory (do not remove) "
 msgstr ""
 
 #: src/preferences.c:3670

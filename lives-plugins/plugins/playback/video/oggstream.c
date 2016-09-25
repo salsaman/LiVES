@@ -259,7 +259,7 @@ static int audio;
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   int dummyvar;
   const char *outfile;
-  char cmd[8192];
+  char cmd[PATH_MAX*2];
   int afd;
   int i;
 
@@ -305,7 +305,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   make_path("video2",mypid,"ogv");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // corrected ogg stream (saved or muxed)
 
-  snprintf(cmd,8192,"ffmpeg2theora --noaudio --nosync -e 10000 -f yuv4m -F %d:%d -o %s/video-%d.ogv %s/stream-%d.fifo&",(int)yuv4mpeg->fps.n,
+  snprintf(cmd,PATH_MAX*2,"ffmpeg2theora --noaudio --nosync -e 10000 -f yuv4m -F %d:%d -o %s/video-%d.ogv %s/stream-%d.fifo&",(int)yuv4mpeg->fps.n,
            (int)yuv4mpeg->fps.d,workdir,mypid,workdir,mypid);
   dummyvar=system(cmd);
   //printf("cmd is %s\n",cmd);
@@ -318,12 +318,12 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   } else audio=0;
 
   if (audio) {
-    snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &",workdir,mypid,workdir,mypid);
+    snprintf(cmd,PATH_MAX*2,"oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &",workdir,mypid,workdir,mypid);
     dummyvar=system(cmd);
-    snprintf(cmd,8192,"oggJoin \"%s\" %s/video2-%d.ogv %s/livesaudio-%d.stream &",outfile,workdir,mypid,workdir,mypid);
+    snprintf(cmd,PATH_MAX*2,"oggJoin \"%s\" %s/video2-%d.ogv %s/livesaudio-%d.stream &",outfile,workdir,mypid,workdir,mypid);
     dummyvar=system(cmd);
   } else {
-    snprintf(cmd,8192,"oggTranscode %s/video-%d.ogv \"%s\" &",workdir,mypid,outfile);
+    snprintf(cmd,PATH_MAX*2,"oggTranscode %s/video-%d.ogv \"%s\" &",workdir,mypid,outfile);
     dummyvar=system(cmd);
   }
 

@@ -34,9 +34,9 @@ static int vdevfd;
 
 static char *vdevname;
 
-static char *tmpdir;
+static char *workdir;
 
-static char xfile[4096];
+static char xfile[PATH_MAX];
 
 static int aforms[2];
 
@@ -152,7 +152,7 @@ const char *module_check_init(void) {
   fp=popen("smogrify get_workdir","r");
   dummy=fgets(buffer,PATH_MAX,fp);
   pclose(fp);
-  tmpdir=strdup(buffer);
+  workdir=strdup(buffer);
   dummy=dummy;
   
   return NULL;
@@ -185,7 +185,6 @@ const char rfx[32768];
 const char *get_init_rfx(void) {
   char **vdevs = get_vloopback2_devices();
   char devstr[30000];
-  char homedir[PATH_MAX];
   
   size_t slen=0;
   
@@ -205,8 +204,6 @@ const char *get_init_rfx(void) {
   }
   free(vdevs);
 
-  snprintf(homedir,PATH_MAX,"%s",getenv("HOME"));
-  
   snprintf((char *)rfx,32768,"%s%s%s%s%s",
            "<define>\\n\
 |1.7\\n\
@@ -218,7 +215,7 @@ const char *get_init_rfx(void) {
 vdevname|Video _device|string_list|0|",
            devstr,
            "\\n\
-afname|Send _audio to|string|",homedir,"/audio.wav|1024|\\n\
+afname|Send _audio to|string|",workdir,"/audio.wav|1024|\\n\
 </params> \\n\
 <param_window> \\n\
 </param_window> \\n\
@@ -275,7 +272,7 @@ boolean set_yuv_palette_clamping(int clamping_type) {
 }
 
 static void make_path(const char *fname, int pid, const char *ext) {
-  snprintf(xfile,4096,"%s/%s-%d.%s",tmpdir,fname,pid,ext);
+  snprintf(xfile,PATH_MAX,"%s/%s-%d.%s",workdir,fname,pid,ext);
 }
 
 
@@ -289,7 +286,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   int dummyvar;
 
-  char cmd[8192];
+  char cmd[PATH_MAX*2];
 
   char *audfile=NULL;
 
@@ -375,7 +372,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     }
 
     if (audio) {
-      snprintf(cmd,8192,"/bin/cat %s > \"%s\" &",xfile,audfile);
+      snprintf(cmd,PATH_MAX*2,"/bin/cat %s > \"%s\" &",xfile,audfile);
       dummyvar=system(cmd);
     }
     dummyvar=dummyvar; // keep compiler happy

@@ -249,8 +249,10 @@ if (defined($ARGV[0])) {
         }
 
 
+
         if ($command eq "get_tempdir") {
-# TODO - take dirname as second param
+	    ## deprecated - DO NOT USE, use get_workdir instead
+	    # TODO - take dirname as second param
             if (defined($ARGV[1])) {
                 $id=$ARGV[1];
 
@@ -267,6 +269,14 @@ if (defined($ARGV[0])) {
             exit 0;
         }
 
+	
+        if ($command eq "get_workdir") {
+	    # safer version - writes to stdout
+	    print $tmpdir;
+            exit 0;
+        }
+
+	
         if ($command eq "get_version_hash") {
             $com=$ARGV[1];
             $sep=$ARGV[2];
@@ -935,7 +945,6 @@ if (defined($ARGV[0])) {
                     }
                     if ($areq&4) {
                         if ($^O ne "MSWin32") {
-# TODO **** !!!!!
                             &clear_symlinks;
                         }
                     }
@@ -1118,10 +1127,6 @@ if (defined($ARGV[0])) {
             smog_chdir("$tmpdir");
             print "Cleaning up temporary space for $GUI_NAME.\n";
             if ($command eq "cleanup") {
-                if ($^O ne "MSWin32") {
-                    unlink "/tmp/.smogval*";
-# TODO *** !!!!!!!!!!
-                }
                 unlink glob "* .* *.*";
 # will not remove directories
             } else {
@@ -1904,6 +1909,11 @@ if (defined($ARGV[0])) {
             }
         }
 
+	    ## this is not accurate
+	    #if ($fps==0.&&$length!=0) {
+	#	$fps=$count/$length;
+	#    }
+
         $af_size= -s $audio_out;
         if (-d $curtmpdir) {
             &sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
@@ -2098,8 +2108,7 @@ if (defined($ARGV[0])) {
         $start=$ARGV[5];
         $is_linked=0;
 
-#create symlinks in /tmp (for dynebolic)
-        $linksdir="/tmp/lives-symlinks/$handle/";
+        $linksdir="$curtmpdir/lives-symlinks/";
 
         if ($start==-1) {
 # special value which tells us we are dealing with symlinks
@@ -2248,16 +2257,13 @@ if (defined($ARGV[0])) {
                         smog_system("/bin/rm -rf \"$linksdir\"");
                     }
 
-                    $com="/bin/mkdir -p \"$linksdir\"";
+                    $com="/bin/mkdir -p -m 700 \"$linksdir\"";
                     $smerr=smog_system($com);
                     if ($smerr) {
                         sig_system_error("Creating directory \"$linksdir\"",$smerr);
                         unlink "$pidfile";
                         exit 1;
                     };
-
-
-                    smog_system ("/bin/chmod -R 777 \"$linksdir\"");
 
                     if ($^O ne "MSWin32") {
                         $fstype=&get_fs_type($curtmpdir);
@@ -2431,8 +2437,7 @@ if (defined($ARGV[0])) {
         my $audiofile="audio";
 
         if ($from_handle eq "") {
-#create symlinks in /tmp for dynebolic
-            $linksdir="/tmp/lives-symlinks/$handle/";
+            $linksdir="$curtmpdir/lives-symlinks/";
 
             if (-d $linksdir) {
                 if ($^O eq "MSWin32") {
@@ -2445,10 +2450,10 @@ if (defined($ARGV[0])) {
             }
 
             if ($^O eq "MSWin32") {
-                $com="mkdir.exe -p \"$linksdir\"";
+                $com="mkdir.exe -p -m 700 \"$linksdir\"";
             }
             else {
-                $com="/bin/mkdir /p \"$linksdir\"";
+                $com="/bin/mkdir /p /m 700 \"$linksdir\"";
             }
             $smerr=smog_system($com);
             if ($smerr) {
@@ -2457,12 +2462,6 @@ if (defined($ARGV[0])) {
                 exit 1;
             }
 
-            if ($^O eq "MSWin32") {
-                smog_system ("chmod.exe -R 777 \"$linksdir\"");
-            }
-            else {
-                smog_system ("/bin/chmod -R 777 \"$linksdir\"");
-            }
         }
         else {
             $linksdir=$curtmpdir;
@@ -5692,6 +5691,7 @@ sub get_file_info {
     $arate=$asamps=$achans=0;
     $frames=0;
     $asamps=0;
+    $length=0;
 
     $endian="";
 
@@ -8172,7 +8172,7 @@ sub weed {
         smog_chdir("$tmpdir");
         unlink glob ".* rfx.* smogplugin.*";
         if ($^O ne "MSWin32") {
-            unlink glob "/tmp/.smogval* /tmp/lives-symlinks";
+            unlink glob "/tmp/lives-symlinks";
         }
         unless (!defined($new_temp)||$new_temp eq "") {
             unlink glob "firew.* encoder_log_* stream.*";
@@ -8238,9 +8238,10 @@ sub clear_symlinks {
 # this allows e.g dynebolic to use non-Linux disk as working directory
 
 
-    my $linksdir="lives-symlinks/$handle/";
+    my $curtmpdir="$tmpdir/$handle";
+    my $linksdir="$curtmpdir/lives-symlinks/";
 
-    smog_chdir("/tmp");
+    smog_chdir($curtmpdir);
 
     if (-d $linksdir) {
 # remove directory + contents

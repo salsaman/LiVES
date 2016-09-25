@@ -139,7 +139,7 @@ const char *module_check_init(void) {
   yuv4mpeg->fd=-1;
 
   // get tempdir
-  fp=popen("smogrify get_tempdir","r");
+  fp=popen("smogrify get_workdir","r");
   dummy=fgets(buffer,PATH_MAX,fp);
   pclose(fp);
   workdir=strdup(buffer);

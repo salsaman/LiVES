@@ -4,7 +4,7 @@ LiVES is a Video Editing System
 -     -    -     -       -
 
 
-Original author: salsaman (salsaman@gmail.com) and others (see file AUTHORS)
+Original author: salsaman (salsaman+lives@gmail.com) and others (see file AUTHORS)
 
 
 Released under the GNU PUBLIC LICENSE, version 3 or later.
@@ -23,7 +23,7 @@ Linux 2.x or BSD or openMosix or IRIX or OSX/Darwin (other UNIX untested)
 mplayer 0.90rc1+ compiled with jpeg support
 ImageMagick 5
 perl 5+
-gtk+ 2.12+
+gtk+ 2.12+ or gtk+ 3.x
 libjpeg62
 gdk-pixbuf-loaders
 
@@ -31,8 +31,7 @@ sox (highly recommended)
 libmjpeg-tools (recommended)
 
 *Highly* Recommended runtime dependencies include:
-theora-bin, mkvtoolnix, vorbis-tools, mencoder,
-libmatroska, ogmtools, dvgrab, x264, ffmpeg,
+theora-bin, mkvtoolnix, vorbis-tools, libmatroska, ogmtools, dvgrab, x264, ffmpeg,
 libdv2-apps/libdv-bin, cdda2wav, lame, python, youtube-dl
 
 Optional -  libvisual-actors, frei0r-plugins
@@ -137,10 +136,11 @@ The default location for everything is inside /usr; so executables go in /usr/bi
 
 
 
-However, if you do relocate, and this is not a fresh install, you will need to edit your .lives file in your home directory and adjust <prefix_dir> and <lib_dir> so that they point to the correct locations for scripts and plugins.
+However, if you do relocate, and this is not a fresh install, you will need to edit your .lives file in your home directory and adjust <prefix_dir> and <lib_dir>
+so that they point to the correct locations for scripts and plugins.
 
 NOTE: if the library directory is anything except /usr/lib, you should adjust the libraries in libweed pkg-config files:
-libweed/*.pk
+libweed/*.pc
 
 
 
@@ -166,13 +166,10 @@ in ~/.lives
 In case of any problems, check your ~/.lives file and make sure everything is 
 pointing to the right locations.
 
-You can also try deteleting your ~/.lives file. LiVES will recreate this with default settings 
-on the next start up.
+You can also try deleting your ~/.lives file. LiVES will then run through the install process the next time it is started.
 
 
-Make sure there is plenty of space available in the temporary directory
-(default is /tmp/livestmp).
-It is advisable to change the temp directory from Tools | Preferences | Directories
+Make sure there is plenty of space available in the working directory. The directory may be changed through Preferences / Directories.
 
 
 Run through Help -> Troubleshoot in the app and see if anything is missing.

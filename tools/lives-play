@@ -1,21 +1,20 @@
 #!/usr/bin/perl
 
 
-my $home=$ENV{"HOME"};
-
-my $streamin;
-
 if (!defined($ARGV[0])) {
    exit 1;
 }
 
 my $vidfile=shift;
 
+my $streamin;
+
 if (defined($ARGV[0])) {
-   $streamin=shift;
+    $streamin=shift;
 }	
 else {
-     $streamin="$home/lives-stream.yuv";
+    my $workdir=`smogrify get_workdir`;
+    $streamin="$workdir/stream.yuv";
 }
 
 

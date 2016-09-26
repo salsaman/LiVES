@@ -2140,7 +2140,7 @@ static void stream_audio_toggled(LiVESToggleButton *togglebutton, livespointer u
       char buf[1024];
       char *com;
 
-      char *astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
+      char *astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,AUDIO_STREAMER_NAME,NULL);
 
       com=lives_strdup_printf("\"%s\" check %d",astreamer,tmpvpp->audio_codec);
       lives_free(astreamer);

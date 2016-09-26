@@ -1467,7 +1467,7 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
     fmts=(*vpp->get_audio_fmts)(); // const, so do not free()
 
     // make audiostream plugin name
-    astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
+    astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,AUDIO_STREAMER_NAME,NULL);
 
     // create sfmts array and nfmts
 

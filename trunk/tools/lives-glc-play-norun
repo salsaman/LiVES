@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 
-my $home=$ENV{"HOME"};
 
 my $streamout;
 my $streamin;
@@ -11,11 +10,13 @@ if (!defined($ARGV[0])) {
 
 my $com=$ARGV[0];
 
+my $workdir=`smogrify get_workdir`;
+
 if (defined($ARGV[1])) {
    $streamout=$ARGV[1];
 }	
 else {
-     $streamout="/tmp/glcfifo";
+     $streamout="$workdir/glcfifo";
 }
 
 
@@ -23,7 +24,7 @@ if (defined($ARGV[2])) {
    $streamin=$ARGV[2];
 }	
 else {
-     $streamin="$home/livestmp/stream.yuv";
+     $streamin="$workdir/stream.yuv";
 }
 
 
@@ -34,7 +35,7 @@ system "mkfifo \"$streamout\"";
 
 system "glc-capture --disable-audio -b back -i -f 25 -s -z none -g -o \"$streamout\" \"$com\" &";
 
-system "glc-play -f 25 -t /tmp/glcfifo -y 1 -o \"$streamin\"";
+system "glc-play -f 25 -t \"$streamout\" -y 1 -o \"$streamin\"";
 
 unlink "$streamin";
 unlink "$streamout";

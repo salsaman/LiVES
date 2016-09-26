@@ -25,6 +25,8 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 #define PLUGIN_VID_PLAYBACK "playback/video"
 #define PLUGIN_AUDIO_STREAM "playback/audiostream"
 
+#define AUDIO_STREAMER_NAME "audiostreamer.pl"
+
 /// smogrify handles the directory differently for themes
 #define PLUGIN_THEMES "themes"
 #define PLUGIN_THEMES_CUSTOM "custom/themes"

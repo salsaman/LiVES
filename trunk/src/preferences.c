@@ -1168,9 +1168,10 @@ boolean apply_prefs(boolean skip_warn) {
   ensure_isdir(future_prefs->workdir);
 
   if (strcmp(prefs->workdir,workdir)||strcmp(future_prefs->workdir,workdir)) {
-    if (lives_file_test(workdir, LIVES_FILE_TEST_EXISTS)&&(strlen(workdir)<10||
-        strncmp(workdir+strlen(workdir)-10,"/"LIVES_TMP_NAME"/",10)))
-      lives_strappend(workdir,PATH_MAX,LIVES_TMP_NAME"/");
+    size_t chklen=strlen(LIVES_WORK_NAME)+strlen(LIVES_DIR_SEP)*2;
+    if (lives_file_test(workdir, LIVES_FILE_TEST_EXISTS)&&(strlen(workdir)<chklen||
+							   strncmp(workdir+strlen(workdir)-chklen,LIVES_DIR_SEP LIVES_WORK_NAME LIVES_DIR_SEP,chklen)))
+      lives_strappend(workdir,PATH_MAX,LIVES_WORK_NAME LIVES_DIR_SEP);
 
     if (strcmp(prefs->workdir,workdir)||strcmp(future_prefs->workdir,workdir)) {
       char *msg;

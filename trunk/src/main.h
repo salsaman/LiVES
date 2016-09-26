@@ -197,7 +197,7 @@ typedef int lives_pgid_t;
 #define DESKTOP_ICON_DIR "/share/icons/hicolor/48x48/apps"
 #define DATA_DIR "/share/lives/"
 #define LIVES_CONFIG_DIR ".lives-dir/"
-#define LIVES_TMP_NAME "livestmp"
+#define LIVES_WORK_NAME "livesprojects"
 
 #else // IS_MINGW
 #define LIVES_DIR_SEP "\\"
@@ -220,7 +220,7 @@ typedef int lives_pgid_t;
 #define ICON_DIR "\\Icons/"
 #define DATA_DIR "\\Data/"
 #define LIVES_CONFIG_DIR "\\Config/"
-#define LIVES_TMP_NAME "livescache"
+#define LIVES_WORK_NAME "livesprojects"
 #endif
 
 #define LIVES_DEVICE_DIR "/dev/"

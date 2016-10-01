@@ -110,9 +110,10 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 #include "support.h"
 
+#if GTK_CHECK_VERSION(4,10,0)
 #define USE_MONOTONIC_TIME
 #define lives_get_monotonic_time() g_get_monotonic_time()
-
+#endif
 
 //#if GTK_CHECK_VERSION(3,8,0)
 //#define USE_GDK_FRAME_CLOCK

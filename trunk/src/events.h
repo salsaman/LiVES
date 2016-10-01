@@ -73,6 +73,8 @@
 
 
 
+#define LIVES_TRACK_ANY -1000000
+
 weed_plant_t *append_frame_event(weed_plant_t *event_list, weed_timecode_t tc, int numframes,
                                  int *clips, int *frames) WARN_UNUSED;
 weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t tc,

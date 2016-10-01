@@ -12900,7 +12900,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     frame_event=get_frame_event_at(mt->event_list,tc,shortcut,TRUE);
 
     if (frame_event!=NULL)
-      filter_map=mt->fm_edit_event=get_filter_map_before(frame_event,-1000000,NULL);
+      filter_map=mt->fm_edit_event=get_filter_map_before(frame_event,LIVES_TRACK_ANY,NULL);
 
     mt->fx_list_box=lives_vbox_new(FALSE,0);
     mt->fx_list_scroll = lives_scrolled_window_new(NULL, NULL);
@@ -18615,7 +18615,7 @@ weed_plant_t *get_next_fm(lives_mt *mt, int current_track, weed_plant_t *event) 
 
   if ((event2=get_filter_map_after(event,current_track))==NULL) return event;
 
-  event3=get_filter_map_before(event,-1000000,NULL);
+  event3=get_filter_map_before(event,LIVES_TRACK_ANY,NULL);
 
   if (event3==NULL) return NULL;
 
@@ -19986,18 +19986,18 @@ void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_
 
 
 boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack) {
-  // return TRUE if the maps match exactly; if ctrack is !=-1000000,
+  // return TRUE if the maps match exactly; if ctrack is !=LIVES_TRACK_ANY,
   // then we only compare filter maps where ctrack is an in_track or out_track
   int i1,i2,error,num_events1,num_events2;
   void **inits1,**inits2;
 
   if (!weed_plant_has_leaf(fm1,WEED_LEAF_INIT_EVENTS)&&!weed_plant_has_leaf(fm2,WEED_LEAF_INIT_EVENTS)) return TRUE;
-  if (ctrack==-1000000&&((!weed_plant_has_leaf(fm1,WEED_LEAF_INIT_EVENTS)&&
+  if (ctrack==LIVES_TRACK_ANY&&((!weed_plant_has_leaf(fm1,WEED_LEAF_INIT_EVENTS)&&
                           weed_get_voidptr_value(fm2,WEED_LEAF_INIT_EVENTS,&error)!=NULL)||
                          (!weed_plant_has_leaf(fm2,WEED_LEAF_INIT_EVENTS)&&
                           weed_get_voidptr_value(fm1,WEED_LEAF_INIT_EVENTS,&error)!=NULL))) return FALSE;
 
-  if (ctrack==-1000000&&(weed_plant_has_leaf(fm1,WEED_LEAF_INIT_EVENTS))&&weed_plant_has_leaf(fm2,WEED_LEAF_INIT_EVENTS)&&
+  if (ctrack==LIVES_TRACK_ANY&&(weed_plant_has_leaf(fm1,WEED_LEAF_INIT_EVENTS))&&weed_plant_has_leaf(fm2,WEED_LEAF_INIT_EVENTS)&&
       ((weed_get_voidptr_value(fm1,WEED_LEAF_INIT_EVENTS,&error)==NULL&&
         weed_get_voidptr_value(fm2,WEED_LEAF_INIT_EVENTS,&error)!=NULL)||
        (weed_get_voidptr_value(fm1,WEED_LEAF_INIT_EVENTS,&error)!=NULL&&
@@ -20006,7 +20006,7 @@ boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack) {
 
   num_events1=weed_leaf_num_elements(fm1,WEED_LEAF_INIT_EVENTS);
   num_events2=weed_leaf_num_elements(fm2,WEED_LEAF_INIT_EVENTS);
-  if (ctrack==-1000000&&num_events1!=num_events2) return FALSE;
+  if (ctrack==LIVES_TRACK_ANY&&num_events1!=num_events2) return FALSE;
 
   inits1=weed_get_voidptr_array(fm1,WEED_LEAF_INIT_EVENTS,&error);
   inits2=weed_get_voidptr_array(fm2,WEED_LEAF_INIT_EVENTS,&error);
@@ -20034,7 +20034,7 @@ boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack) {
     }
 
 
-    if (ctrack!=-1000000) {
+    if (ctrack!=LIVES_TRACK_ANY) {
 
       if (inits1[i1]!=NULL) {
 
@@ -20050,7 +20050,7 @@ boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack) {
     }
 
     if (i2<num_events2) {
-      if (ctrack!=-1000000) {
+      if (ctrack!=LIVES_TRACK_ANY) {
         if (inits2[i2]==NULL||!init_event_is_relevant((weed_plant_t *)inits2[i2],ctrack)) {
           i2++;
           i1--;
@@ -20068,7 +20068,7 @@ boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack) {
   }
 
   if (i2<num_events2) {
-    if (ctrack==-1000000) {
+    if (ctrack==LIVES_TRACK_ANY) {
       lives_free(inits1);
       return FALSE;
     }
@@ -20726,7 +20726,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
         weed_set_voidptr_value(event,WEED_LEAF_INIT_EVENTS,NULL);
       }
       if (last_filter_map!=NULL) {
-        if (compare_filter_maps(last_filter_map,event,-1000000)) {
+        if (compare_filter_maps(last_filter_map,event,LIVES_TRACK_ANY)) {
           // filter map is identical to prior one, we can remove this one
           delete_event(event_list,event);
           was_deleted=TRUE;

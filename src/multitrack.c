@@ -19993,9 +19993,9 @@ boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack) {
 
   if (!weed_plant_has_leaf(fm1,WEED_LEAF_INIT_EVENTS)&&!weed_plant_has_leaf(fm2,WEED_LEAF_INIT_EVENTS)) return TRUE;
   if (ctrack==LIVES_TRACK_ANY&&((!weed_plant_has_leaf(fm1,WEED_LEAF_INIT_EVENTS)&&
-                          weed_get_voidptr_value(fm2,WEED_LEAF_INIT_EVENTS,&error)!=NULL)||
-                         (!weed_plant_has_leaf(fm2,WEED_LEAF_INIT_EVENTS)&&
-                          weed_get_voidptr_value(fm1,WEED_LEAF_INIT_EVENTS,&error)!=NULL))) return FALSE;
+                                 weed_get_voidptr_value(fm2,WEED_LEAF_INIT_EVENTS,&error)!=NULL)||
+                                (!weed_plant_has_leaf(fm2,WEED_LEAF_INIT_EVENTS)&&
+                                 weed_get_voidptr_value(fm1,WEED_LEAF_INIT_EVENTS,&error)!=NULL))) return FALSE;
 
   if (ctrack==LIVES_TRACK_ANY&&(weed_plant_has_leaf(fm1,WEED_LEAF_INIT_EVENTS))&&weed_plant_has_leaf(fm2,WEED_LEAF_INIT_EVENTS)&&
       ((weed_get_voidptr_value(fm1,WEED_LEAF_INIT_EVENTS,&error)==NULL&&

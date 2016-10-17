@@ -394,7 +394,7 @@ static boolean pre_init(void) {
   mainw=(mainwindow *)(calloc(1,sizeof(mainwindow)));
   mainw->is_ready=mainw->fatal=FALSE;
   mainw->mgeom=NULL;
-  
+
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
   mainw->string_constants[LIVES_STRING_CONSTANT_ANY]=lives_strdup(_("Any"));
   // TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
@@ -1449,7 +1449,8 @@ static void lives_init(_ign_opts *ign_opts) {
                 lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
               } else if (!strcmp(array[0],HI_H_MKV_FORMAT)&&strcmp(prefs->encoder.of_name,HI_MPEG_FORMAT)) {
                 lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
-              } else if (!strcmp(array[0],HI_H_AVI_FORMAT)&&strcmp(prefs->encoder.of_name,HI_MPEG_FORMAT)&&strcmp(prefs->encoder.of_name,HI_H_MKV_FORMAT)) {
+              } else if (!strcmp(array[0],HI_H_AVI_FORMAT)&&strcmp(prefs->encoder.of_name,HI_MPEG_FORMAT)&&
+                         strcmp(prefs->encoder.of_name,HI_H_MKV_FORMAT)) {
                 lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
               } else if (!strlen(prefs->encoder.of_name)) {
                 lives_snprintf(prefs->encoder.of_name,64,"%s",array[0]);
@@ -1858,7 +1859,7 @@ static void show_detected_or_not(boolean cap, const char *pname) {
 }
 
 
- 
+
 void do_start_messages(void) {
   char *endian;
 
@@ -2757,7 +2758,7 @@ static boolean lives_startup(livespointer data) {
 #endif
                 else {
                   if (strlen(capable->startup_msg)) {
-		    if (startup_msgtype==2) startup_message_choice(capable->startup_msg,startup_msgtype);
+                    if (startup_msgtype==2) startup_message_choice(capable->startup_msg,startup_msgtype);
                     else if (info_only) startup_message_info(capable->startup_msg);
                     else startup_message_nonfatal(capable->startup_msg);
                   } else {
@@ -2828,10 +2829,10 @@ static boolean lives_startup(livespointer data) {
                     }
                   }
 
-		    if (!mainw->foreign&&capable->smog_version_correct) {
-		      splash_msg(_("Loading rendered effect plugins..."),SPLASH_LEVEL_LOAD_RFX);
-		      add_rfx_effects();
-		    }
+                  if (!mainw->foreign&&capable->smog_version_correct) {
+                    splash_msg(_("Loading rendered effect plugins..."),SPLASH_LEVEL_LOAD_RFX);
+                    add_rfx_effects();
+                  }
 
                   if (prefs->startup_interface!=STARTUP_MT) {
                     if (prefs->show_gui) {
@@ -3453,7 +3454,8 @@ boolean startup_message_nonfatal(const char *msg) {
   return TRUE;
 }
 
- boolean startup_message_choice(const char *msg, int msg_type) {
+
+boolean startup_message_choice(const char *msg, int msg_type) {
   boolean res;
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   res=do_yesno_dialog(msg);
@@ -4531,13 +4533,13 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
   // progressive read calls png_row_callback on each row
   if (prog) png_set_read_status_fn(png_ptr, png_row_callback);
-  
+
 #if PNG_LIBPNG_VER >= 10504
   png_set_alpha_mode(png_ptr, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
 #endif
   if (png_get_gAMA(png_ptr, info_ptr, &file_gamma))
     png_set_gamma(png_ptr, screen_gamma, file_gamma);
-  else 
+  else
     png_set_gamma(png_ptr, pref_gamma, 1./screen_gamma);
 
   // read header info
@@ -6700,7 +6702,7 @@ void load_frame_image(int frame) {
 
     // do_chmod is ignored now
 
-    
+
     if (imgtype==IMG_TYPE_JPEG) {
       char *qstr=lives_strdup_printf("%d",quality);
 #ifdef GUI_GTK

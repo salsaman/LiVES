@@ -128,7 +128,7 @@ const char *module_check_init(void) {
   FILE *fp;
   char buffer[PATH_MAX];
   const char *dummy;
-  
+
   // check all binaries are present
 
   render_fn=&render_frame_unknown;

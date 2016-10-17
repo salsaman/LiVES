@@ -77,7 +77,7 @@
 
 
 
-static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits, 
+static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits,
                                    unsigned int pts_num, unsigned int pts_den) {
   AVRational new_tb;
   if (av_reduce(&new_tb.num, &new_tb.den, pts_num, pts_den, INT_MAX)) {

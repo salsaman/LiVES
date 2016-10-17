@@ -327,7 +327,7 @@ giw_knob_realize(GtkWidget *widget) {
   gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
   gtk_style_context_set_state(stylecon,GTK_STATE_FLAG_ACTIVE);
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-    gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
+  gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
   G_GNUC_END_IGNORE_DEPRECATIONS
 #else
   widget->style = gtk_style_attach(widget->style, lives_widget_get_xwindow(widget));

@@ -680,7 +680,7 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   textwindow->textview=textwindow->table=NULL;
 
   if (textbuffer!=NULL||text!=NULL) textwindow->textview = lives_standard_text_view_new(text,textbuffer);
-  
+
   woat=widget_opts.apply_theme;
   widget_opts.apply_theme=FALSE;
 
@@ -689,7 +689,7 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     }
-    
+
   } else {
     textwindow->table=lives_table_new(1, 1, FALSE);
     scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->table);

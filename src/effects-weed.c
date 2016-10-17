@@ -9165,13 +9165,13 @@ int weed_add_effectkey_by_idx(int key, int idx) {
           (enabled_in_channels(weed_filters[idx],FALSE)>0&&has_gen)) return -2;
       key_to_fx[key][i]=idx;
       if (rte_window!=NULL) {
-	// if rte window is visible add to combo box
-	char *tmp;
-	rtew_combo_set_text(key,i,(tmp=rte_keymode_get_filter_name(key+1,i)));
-	lives_free(tmp);
+        // if rte window is visible add to combo box
+        char *tmp;
+        rtew_combo_set_text(key,i,(tmp=rte_keymode_get_filter_name(key+1,i)));
+        lives_free(tmp);
 
-	// set in ce_thumb combos
-	if (mainw->ce_thumbs) ce_thumbs_reset_combo(key);
+        // set in ce_thumb combos
+        if (mainw->ce_thumbs) ce_thumbs_reset_combo(key);
       }
       return i;
     }
@@ -10157,9 +10157,9 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
     chashname2=subst(chashname," ","_");
     if (strcmp(chashname2,chashname)) {
       if (!lives_utf8_strcasecmp(hashname,chashname2)) {
-	lives_free(chashname2);
-	lives_free(chashname);
-	return i;
+        lives_free(chashname2);
+        lives_free(chashname);
+        return i;
       }
     }
 

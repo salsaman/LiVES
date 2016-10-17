@@ -602,7 +602,7 @@ typedef struct {
   LiVESWidget *frameblank_entry;
   LiVESWidget *sepimg_entry;
   LiVESTreeSelection *selection;
-  
+
   boolean ignore_apply; ///< dont light the apply button when thing changes (for external calls), normally FALSE
   boolean needs_restart;
 } _prefsw;

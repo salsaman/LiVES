@@ -3073,7 +3073,7 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   char *sutf=lives_filename_to_utf8(s,-1,NULL,NULL,NULL);
 
   boolean exists;
-  
+
   uint64_t dsval;
 
   lives_storage_status_t ds;
@@ -3146,7 +3146,7 @@ int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, L
   char dirname[PATH_MAX];
 
   boolean exists;
-  
+
   uint64_t dsval;
 
   lives_storage_status_t ds;
@@ -3442,11 +3442,11 @@ char *get_upd_msg(int type) {
   char *msg;
   if (type==2) {
     msg=lives_strdup_printf(
-			    _("Some security issues have been fixed in this version of LiVES.\nIn order to complete the fixes I can update the permissions on your\n%s\ndirectory. Would you like me to do this (recommended) ?"),prefs->workdir); 
-  }
-  else {
+          _("Some security issues have been fixed in this version of LiVES.\nIn order to complete the fixes I can update the permissions on your\n%s\ndirectory. Would you like me to do this (recommended) ?"),
+          prefs->workdir);
+  } else {
     msg=lives_strdup_printf(
-			    _("\nWelcome to LiVES version %s\n\nAfter upgrading, you are *strongly* advised to run:\n\nFile -> Clean up Diskspace\n"),LiVES_VERSION);
+          _("\nWelcome to LiVES version %s\n\nAfter upgrading, you are *strongly* advised to run:\n\nFile -> Clean up Diskspace\n"),LiVES_VERSION);
   }
   return msg;
 }

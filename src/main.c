@@ -3460,7 +3460,9 @@ boolean startup_message_nonfatal(const char *msg) {
   widget_opts.apply_theme=FALSE;
   if (res&&msg_type==2) {
     // do chmod
-    lives_chmod(prefs->workdir,"-R a-w");
+    char *mode=lives_strdup_printf("-R %o",capable->umask);
+    lives_chmod(prefs->workdir,mode);
+    lives_free(mode);
   }
   return TRUE;
 }

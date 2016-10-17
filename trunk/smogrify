@@ -862,7 +862,7 @@ if (defined($ARGV[0])) {
             $file=$ARGV[5];
 
             if (! -d "$curworkdir") {
-                mkdir ("$curworkdir",0700);
+                mkdir ("$curworkdir");
             }
 
             $antialias=&rc_get("antialias");
@@ -2250,7 +2250,7 @@ if (defined($ARGV[0])) {
                         smog_system("/bin/rm -rf \"$linksdir\"");
                     }
 
-                    $com="/bin/mkdir -p -m 700 \"$linksdir\"";
+                    $com="/bin/mkdir -p \"$linksdir\"";
                     $smerr=smog_system($com);
                     if ($smerr) {
                         sig_system_error("Creating directory \"$linksdir\"",$smerr);
@@ -2443,10 +2443,10 @@ if (defined($ARGV[0])) {
             }
 
             if ($^O eq "MSWin32") {
-                $com="mkdir.exe -p -m 700 \"$linksdir\"";
+                $com="mkdir.exe -p \"$linksdir\"";
             }
             else {
-                $com="/bin/mkdir /p /m 700 \"$linksdir\"";
+                $com="/bin/mkdir /p \"$linksdir\"";
             }
             $smerr=smog_system($com);
             if ($smerr) {

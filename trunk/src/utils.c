@@ -4123,7 +4123,7 @@ boolean check_dir_access(const char *dir) {
   // see also is_writeable_dir() which uses statvfs
 
   // WARNING: may leave some parents around
-  
+
   boolean exists=lives_file_test(dir, LIVES_FILE_TEST_EXISTS);
   boolean is_OK=FALSE;
 

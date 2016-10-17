@@ -142,7 +142,7 @@ void add_message_scroller(LiVESWidget *conter) {
   if (all_text!=NULL) lives_free(all_text);
 
   lives_widget_set_size_request(mainw->textview1, -1, MSG_AREA_HEIGHT);
-    
+
 }
 
 
@@ -4171,7 +4171,7 @@ void add_to_clipmenu(void) {
   char *tmp,*detail;
 #endif
 
-  
+
 #ifndef GTK_RADIO_MENU_BUG
   cfile->menuentry = lives_radio_menu_item_new_with_label(mainw->clips_group, tmp=get_menu_name(cfile));
   mainw->clips_group=lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));

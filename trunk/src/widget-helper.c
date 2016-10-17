@@ -8089,7 +8089,7 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbu
   else
     textview=lives_text_view_new_with_buffer(tbuff);
 
-  
+
   lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
   lives_text_view_set_wrap_mode(LIVES_TEXT_VIEW(textview), LIVES_WRAP_WORD);
   lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textview), FALSE);
@@ -8102,7 +8102,7 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbu
   lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
 
   lives_text_view_set_justification(LIVES_TEXT_VIEW(textview), widget_opts.justify);
-    
+
   return textview;
 
 }
@@ -8573,7 +8573,7 @@ boolean lives_entry_set_completion_from_list(LiVESEntry *entry, LiVESList *xlist
 void lives_window_center(LiVESWindow *window) {
   if (prefs->show_gui) {
     int xcen,ycen;
-    
+
     if (mainw->mgeom==NULL) {
       lives_window_set_position(LIVES_WINDOW(window),LIVES_WIN_POS_CENTER_ALWAYS);
       return;
@@ -8582,9 +8582,9 @@ void lives_window_center(LiVESWindow *window) {
     lives_window_set_screen(LIVES_WINDOW(window),mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].screen);
 
     xcen=mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].width-
-								       lives_widget_get_allocation_width(LIVES_WIDGET(window)))/2;
+         lives_widget_get_allocation_width(LIVES_WIDGET(window)))/2;
     ycen=mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor<=0?0:prefs->gui_monitor-1].height-
-								       lives_widget_get_allocation_height(LIVES_WIDGET(window)))/2;
+         lives_widget_get_allocation_height(LIVES_WIDGET(window)))/2;
     lives_window_move(LIVES_WINDOW(window),xcen,ycen);
   }
 }

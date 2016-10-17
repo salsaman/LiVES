@@ -590,7 +590,7 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
 
   // can also be called from other places
 
-  if (prefsw!=NULL) 
+  if (prefsw!=NULL)
     prefsw->ignore_apply=TRUE;
 
   if (!strcmp(prefidx,PREF_REC_EXT_AUDIO)) {
@@ -601,18 +601,18 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
 
       if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-	if (prefs->perm_audio_reader) {
-	  // create reader connection now, if permanent
-	  jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
-	}
+        if (prefs->perm_audio_reader) {
+          // create reader connection now, if permanent
+          jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+        }
 #endif
       }
       if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-	if (prefs->perm_audio_reader) {
-	  // create reader connection now, if permanent
-	  pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
-	}
+        if (prefs->perm_audio_reader) {
+          // create reader connection now, if permanent
+          pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+        }
 #endif
       }
 
@@ -633,9 +633,9 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
     }
     if (prefsw!=NULL) {
       if (prefs->audio_src==AUDIO_SRC_EXT)
-	lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio),TRUE);
-      else 
-	lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rintaudio),TRUE);
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio),TRUE);
+      else
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rintaudio),TRUE);
     }
   }
   if (!strcmp(prefidx,PREF_SEPWIN_STICKY)) {
@@ -648,7 +648,7 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
   }
 
 
-  if (prefsw!=NULL) { 
+  if (prefsw!=NULL) {
     lives_widget_context_update();
     prefsw->ignore_apply=FALSE;
   }
@@ -657,15 +657,15 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
 
 void pref_factory_int(const char *prefidx, int newval) {
   // TODO
-  if (prefsw!=NULL) 
+  if (prefsw!=NULL)
     prefsw->ignore_apply=TRUE;
 
 
 
   // ...
 
-  
-  if (prefsw!=NULL) { 
+
+  if (prefsw!=NULL) {
     lives_widget_context_update();
     prefsw->ignore_apply=FALSE;
   }
@@ -676,7 +676,7 @@ void pref_factory_int(const char *prefidx, int newval) {
 
 void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval) {
 
-  if (prefsw!=NULL) 
+  if (prefsw!=NULL)
     prefsw->ignore_apply=TRUE;
 
   if (!strcmp(prefidx,PREF_MT_EXIT_RENDER)) {
@@ -932,7 +932,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   // TODO: move all into pref_factory_* functions
 
-  
+
   if (prefsw->theme_style2!=NULL)
     pstyle2=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2));
   else
@@ -1058,7 +1058,7 @@ boolean apply_prefs(boolean skip_warn) {
   } else future_prefs->encoder.audio_codec=0;
 
   lives_snprintf(workdir,PATH_MAX,"%s",(tmp=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->workdir_entry)),
-                                       -1,NULL,NULL,NULL)));
+                                        -1,NULL,NULL,NULL)));
   lives_free(tmp);
 
   if (audp==NULL) memset(audio_player,0,1);
@@ -1170,7 +1170,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(prefs->workdir,workdir)||strcmp(future_prefs->workdir,workdir)) {
     size_t chklen=strlen(LIVES_WORK_NAME)+strlen(LIVES_DIR_SEP)*2;
     if (lives_file_test(workdir, LIVES_FILE_TEST_EXISTS)&&(strlen(workdir)<chklen||
-							   strncmp(workdir+strlen(workdir)-chklen,LIVES_DIR_SEP LIVES_WORK_NAME LIVES_DIR_SEP,chklen)))
+        strncmp(workdir+strlen(workdir)-chklen,LIVES_DIR_SEP LIVES_WORK_NAME LIVES_DIR_SEP,chklen)))
       lives_strappend(workdir,PATH_MAX,LIVES_WORK_NAME LIVES_DIR_SEP);
 
     if (strcmp(prefs->workdir,workdir)||strcmp(future_prefs->workdir,workdir)) {
@@ -3724,8 +3724,9 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->proj_dir_entry),FALSE);
 
-  prefsw->workdir_entry = lives_standard_entry_new(NULL,FALSE,(tmp=lives_filename_to_utf8(future_prefs->workdir,-1,NULL,NULL,NULL)),-1,PATH_MAX,
-                         NULL,(tmp2=lives_strdup(_("LiVES working directory."))));
+  prefsw->workdir_entry = lives_standard_entry_new(NULL,FALSE,(tmp=lives_filename_to_utf8(future_prefs->workdir,-1,NULL,NULL,NULL)),-1,
+                          PATH_MAX,
+                          NULL,(tmp2=lives_strdup(_("LiVES working directory."))));
 
   lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), prefsw->workdir_entry, 1, 2, 3, 4,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),

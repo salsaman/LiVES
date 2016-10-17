@@ -315,9 +315,9 @@ static const char *get_omc_const(const char *cname) {
     return get_value_of((const int)LIVES_OSC_NOTIFY_MODE_CHANGED);
 
   // audio sources
-  if (!strcmp(cname,"LIVES_AUDIO_SOURCE_INTERNAL")) 
+  if (!strcmp(cname,"LIVES_AUDIO_SOURCE_INTERNAL"))
     return get_value_of((const int)AUDIO_SRC_INT);
-  if (!strcmp(cname,"LIVES_AUDIO_SOURCE_EXTERNAL")) 
+  if (!strcmp(cname,"LIVES_AUDIO_SOURCE_EXTERNAL"))
     return get_value_of((const int)AUDIO_SRC_EXT);
 
 
@@ -2037,7 +2037,7 @@ boolean lives_osc_cb_bgget_fps_ratio(void *context, int arglen, const void *varg
   else if ((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL&&!mainw->record))||
            mainw->playing_file<1) lives_status_send((tmp=lives_strdup_printf("%.4f",1.)));
   else lives_status_send((tmp=lives_strdup_printf("%.4f",mainw->files[mainw->blend_file]->pb_fps/
-						  mainw->files[mainw->blend_file]->fps)));
+                                mainw->files[mainw->blend_file]->fps)));
   lives_free(tmp);
   return TRUE;
 }

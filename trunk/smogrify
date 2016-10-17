@@ -96,7 +96,7 @@ if (defined($ARGV[0])) {
                 $priority=0;
             }
 
-	}
+        }
     }
 
     if (!caller||$command eq "save"||$command eq "plugin_clear") {
@@ -244,8 +244,8 @@ if (defined($ARGV[0])) {
 
 
         if ($command eq "get_tempdir") {
-	    ## deprecated - DO NOT USE, use get_workdir instead
-	    # TODO - take dirname as second param
+## deprecated - DO NOT USE, use get_workdir instead
+# TODO - take dirname as second param
             if (defined($ARGV[1])) {
                 $id=$ARGV[1];
 
@@ -262,14 +262,14 @@ if (defined($ARGV[0])) {
             exit 0;
         }
 
-	
+
         if ($command eq "get_workdir") {
-	    # safer version - writes to stdout
-	    print $workdir;
+# safer version - writes to stdout
+            print $workdir;
             exit 0;
         }
 
-	
+
         if ($command eq "get_version_hash") {
             $com=$ARGV[1];
             $sep=$ARGV[2];
@@ -418,7 +418,7 @@ if (defined($ARGV[0])) {
 
             $workdir=&rc_get("tempdir");
             &write_bootstrap_file;
-	    
+
             $convert_old_version=&rc_get("convert_version");
             unless($convert_old_version eq $convert_version) {
                 &rc_set("convert_version",$convert_version);
@@ -432,9 +432,9 @@ if (defined($ARGV[0])) {
             }
 
 #make sure we can write to tempir
-            #open OUT,"> $workdir/testfile" or exit 5;
-            #close OUT;
-            #unlink "$workdir/testfile";
+#open OUT,"> $workdir/testfile" or exit 5;
+#close OUT;
+#unlink "$workdir/testfile";
 
             exit 0;
         }
@@ -1121,11 +1121,11 @@ if (defined($ARGV[0])) {
             print "Cleaning up temporary space for $GUI_NAME.\n";
             if ($command eq "cleanup") {
                 unlink glob "* .* *.*";
-		# will not remove directories
+# will not remove directories
             } else {
                 $new_work=$ARGV[1];
                 unless($new_work eq "") {
-		    # here is where we create a new work directory
+# here is where we create a new work directory
                     unless(-d $new_work||(mkdir $new_work)) {
                         print "Smogrify: Unable to create new directory $new_work!\n";
                         exit 1;
@@ -1573,7 +1573,7 @@ if (defined($ARGV[0])) {
                     $ss=" -start=$ARGV[5] ";
                 }
             }
-	    $stframes="";
+            $stframes="";
             if (defined($ARGV[6]) && $ARGV[6] > 0) {
                 $nframes=$ARGV[6]++;
 # cf below, we remove 1st frame
@@ -1902,10 +1902,10 @@ if (defined($ARGV[0])) {
             }
         }
 
-	    ## this is not accurate
-	    #if ($fps==0.&&$length!=0) {
-	#	$fps=$count/$length;
-	#    }
+## this is not accurate
+#if ($fps==0.&&$length!=0) {
+#	$fps=$count/$length;
+#    }
 
         $af_size= -s $audio_out;
         if (-d $curworkdir) {
@@ -5542,9 +5542,9 @@ sub get_mplayer_info {
             $fps=smog_system_direct("grep ID_VIDEO_FPS \"$file_ident\" 2>$nulfile");
             $fps=(split("=",(split("\n",$fps))[0]))[1];
             $fps=trim($fps);
-	    if ($fps eq "nan" or $fps eq "-nan") {
-		$fps=0.;
-	    }
+            if ($fps eq "nan" or $fps eq "-nan") {
+                $fps=0.;
+            }
 
             if (! -f $file_ident) {
                 return;
@@ -5656,9 +5656,9 @@ sub get_mplayer_info {
 
 
 sub trim {
-    ## trim whitespace from beginning and end
+## trim whitespace from beginning and end
     my $str=shift;
-    $str =~ s/^\s+//;
+    $str =~ s/ ^\s+ //;
     $str =~ s/\s+$//;
     $str;
 }
@@ -7119,9 +7119,9 @@ sub othera_open {
     $format=&get_mplayer_format;
 
     if ($is_mpv && $format eq "") {
-	sig_system_error("mpv cannot fully resample");
-	$panic=1;
-	return;
+        sig_system_error("mpv cannot fully resample");
+        $panic=1;
+        return;
     }
 
     $com="\"$mplayer_command\" -quiet \"$file\" -ao pcm:waveheader:file=\"$audio_in\" $format >$nulfile 2>&1 <$nulfile";
@@ -7240,20 +7240,20 @@ sub get_mplayer_format {
 
 
     if ($is_mpv) {
-	if ($nsamps==8) {
-	    if ($nsigned==0) {
-		return "--af=lavrresample,format=u8";
-	    }
-	}
-	if ($nsamps==16) {
-	    if ($nsigned==1) {
-		return "--af=lavrresample,format=s16";
-	    }
-	}
-	return "";
+        if ($nsamps==8) {
+            if ($nsigned==0) {
+                return "--af=lavrresample,format=u8";
+            }
+        }
+        if ($nsamps==16) {
+            if ($nsigned==1) {
+                return "--af=lavrresample,format=s16";
+            }
+        }
+        return "";
     }
 
-    
+
     if ($nasamps==8) {
         if ($nsigned==0) {
             return "-format u8";
@@ -7905,11 +7905,11 @@ sub version_check_and_upgrade {
             $msg="!updmsg";
         }
 
-	if ($^O ne "MSWin32") {
-	    if ($new_version_hash>2008000&&$version_hash<=2008000) {
-		$msg="!updmsg2";
-	    }
-	}
+        if ($^O ne "MSWin32") {
+            if ($new_version_hash>2008000&&$version_hash<=2008000) {
+                $msg="!updmsg2";
+            }
+        }
 
         if ($version_hash<8005) {
 # not used now

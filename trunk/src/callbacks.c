@@ -5066,7 +5066,7 @@ boolean reload_set(const char *set_name) {
             mt_sensitise(mainw->multitrack);
             mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
           }
-	  lives_chdir(cwd,FALSE);
+          lives_chdir(cwd,FALSE);
           lives_free(cwd);
           return FALSE;
         }
@@ -5172,7 +5172,7 @@ boolean reload_set(const char *set_name) {
         }
 
         recover_layout_map(MAX_FILES);
-	lives_chdir(cwd,FALSE);
+        lives_chdir(cwd,FALSE);
         lives_free(cwd);
         return FALSE;
       }
@@ -7872,21 +7872,21 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
       d_print_failed();
       mainw->noswitch=FALSE;
       if (mainw->multitrack!=NULL) {
-	mt_sensitise(mainw->multitrack);
-	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+        mt_sensitise(mainw->multitrack);
+        mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
       return;
     }
 
     if (read_file_details(file_name,TRUE)) {
       if (get_token_count(mainw->msg,'|')>=14) {
-	array=lives_strsplit(mainw->msg,"|",-1);
-	cfile->arate=atoi(array[9]);
-	cfile->achans=atoi(array[10]);
-	cfile->asampsize=atoi(array[11]);
-	cfile->signed_endian=get_signed_endian(atoi(array[12]), atoi(array[13]));
-	lives_strfreev(array);
-	preparse=TRUE;
+        array=lives_strsplit(mainw->msg,"|",-1);
+        cfile->arate=atoi(array[9]);
+        cfile->achans=atoi(array[10]);
+        cfile->asampsize=atoi(array[11]);
+        cfile->signed_endian=get_signed_endian(atoi(array[12]), atoi(array[13]));
+        lives_strfreev(array);
+        preparse=TRUE;
       }
     }
 
@@ -7895,7 +7895,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
     lives_free(com2);
     lives_freep((void **)&cfile);
     mainw->current_file=current_file;
-    
+
   }
 
   if (!preparse) {

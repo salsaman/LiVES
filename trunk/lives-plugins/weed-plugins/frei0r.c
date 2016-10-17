@@ -368,8 +368,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
         curvdir=opendir(vdir2);
         if (curvdir==NULL) vdirval=4;
         else {
-	  vdirval=3;
-	}
+          vdirval=3;
+        }
       }
 
       if (vdirval==4) {
@@ -384,13 +384,13 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
 
       if (vdirval>9) {
-	char *fpp_copy=strdup(fpp);
+        char *fpp_copy=strdup(fpp);
         if (!getenv_piece(vdir1,PATH_MAX,fpp_copy,vdirval-10)) {
-	  free(fpp_copy);
+          free(fpp_copy);
           vdirval=6;
           break;
         }
-	free(fpp_copy);
+        free(fpp_copy);
 
         if (!strlen(vdir1)) {
           vdirval++;
@@ -407,40 +407,40 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       weed_memset(vendor_name,0,1);
 
       do {
-	snprintf(dir1,PATH_MAX,"%s/%s",vdir1,vendor_name);
+        snprintf(dir1,PATH_MAX,"%s/%s",vdir1,vendor_name);
 
-	if (vdirval<10) {
-	  snprintf(dir2,PATH_MAX,"%s/%s",vdir2,vendor_name);
-	  snprintf(dir3,PATH_MAX,"%s/%s",vdir3,vendor_name);
-	}
+        if (vdirval<10) {
+          snprintf(dir2,PATH_MAX,"%s/%s",vdir2,vendor_name);
+          snprintf(dir3,PATH_MAX,"%s/%s",vdir3,vendor_name);
+        }
 
         vdirent=readdir(curvdir);
 
         if (vdirent!=NULL) {
-	  if (!strncmp(vdirent->d_name,"..",strlen(vdirent->d_name))) continue;
-	  snprintf(vendor_name,PATH_MAX,"%s",vdirent->d_name);
-	}
+          if (!strncmp(vdirent->d_name,"..",strlen(vdirent->d_name))) continue;
+          snprintf(vendor_name,PATH_MAX,"%s",vdirent->d_name);
+        }
 
         if (vdirval==1) {
           curdir=opendir(dir3);
           if (curdir==NULL) {
-	    if (vdirent==NULL) break;
-	    continue;
-	  }
+            if (vdirent==NULL) break;
+            continue;
+          }
         } else if (vdirval==3) {
           if (curdir!=NULL) closedir(curdir);
           curdir=opendir(dir2);
           if (curdir==NULL) {
-	    if (vdirent==NULL) break;
-	    continue;
-	  }
+            if (vdirent==NULL) break;
+            continue;
+          }
         } else if (vdirval==5||vdirval>9) {
           if (curdir!=NULL) closedir(curdir);
           curdir=opendir(dir1);
           if (curdir==NULL) {
-	    if (vdirent==NULL) break;
-	    continue;
-	  }
+            if (vdirent==NULL) break;
+            continue;
+          }
         }
 
         finished=0;

@@ -136,7 +136,7 @@ const char *module_check_init(void) {
   FILE *fp;
   char buffer[PATH_MAX];
   const char *dummy;
-  
+
 
   register int i=0;
 
@@ -154,7 +154,7 @@ const char *module_check_init(void) {
   pclose(fp);
   workdir=strdup(buffer);
   dummy=dummy;
-  
+
   return NULL;
 }
 
@@ -185,9 +185,9 @@ const char rfx[32768];
 const char *get_init_rfx(void) {
   char **vdevs = get_vloopback2_devices();
   char devstr[30000];
-  
+
   size_t slen=0;
-  
+
   register int i=0;
 
   if (vdevs[0]==NULL) {

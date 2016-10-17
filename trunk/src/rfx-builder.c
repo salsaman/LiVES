@@ -4900,9 +4900,9 @@ void add_rfx_effects(void) {
     }
     if (mainw->has_custom_utilities) {
       if (mainw->has_custom_tools) {
-	lives_widget_show(mainw->custom_utilities_separator);
+        lives_widget_show(mainw->custom_utilities_separator);
       } else {
-	lives_widget_hide(mainw->custom_utilities_separator);
+        lives_widget_hide(mainw->custom_utilities_separator);
       }
       lives_widget_show(mainw->custom_utilities_menu);
       lives_widget_show(mainw->custom_utilities_submenu);

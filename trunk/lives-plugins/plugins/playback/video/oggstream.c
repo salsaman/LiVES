@@ -186,7 +186,7 @@ const char *get_init_rfx(void) {
 
   snprintf(homedir,PATH_MAX,"%s",getenv("HOME"));
   snprintf((char *)rfx,32768,"%s%s%s",
-         "<define>\\n\
+           "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
@@ -271,7 +271,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr,"oggstream plugin error: No palette was set !\n");
     return FALSE;
   }
-  
+
   if (argc>0) {
     outfile=argv[0];
   } else {
@@ -305,7 +305,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   make_path("video2",mypid,"ogv");
   mkfifo(xfile,S_IRUSR|S_IWUSR); // corrected ogg stream (saved or muxed)
 
-  snprintf(cmd,PATH_MAX*2,"ffmpeg2theora --noaudio --nosync -e 10000 -f yuv4m -F %d:%d -o %s/video-%d.ogv %s/stream-%d.fifo&",(int)yuv4mpeg->fps.n,
+  snprintf(cmd,PATH_MAX*2,"ffmpeg2theora --noaudio --nosync -e 10000 -f yuv4m -F %d:%d -o %s/video-%d.ogv %s/stream-%d.fifo&",
+           (int)yuv4mpeg->fps.n,
            (int)yuv4mpeg->fps.d,workdir,mypid,workdir,mypid);
   dummyvar=system(cmd);
   //printf("cmd is %s\n",cmd);
@@ -330,7 +331,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   // open first fifo for writing
 
   // TODO !!!
-  
+
   make_path("stream",mypid,"fifo");
   yuv4mpeg->fd=open(xfile,O_WRONLY|O_SYNC|O_CREAT,S_IWUSR|S_IRUSR);
 

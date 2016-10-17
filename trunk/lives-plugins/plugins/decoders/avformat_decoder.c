@@ -187,7 +187,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get a handle
   lives_av_priv_t *priv=cdata->priv;
-  AVProbeData pd={0};
+  AVProbeData pd= {0};
   AVInputFormat *fmt;
 
   AVCodec *vdecoder;
@@ -219,7 +219,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   pd.filename=cdata->URI;
 
   pd.buf=calloc(128,32);
-  
+
   if ((pd.buf_size=stream_peek(priv->fd,pd.buf,AVPROBE_PADDING_SIZE))<AVPROBE_PADDING_SIZE) {
     fprintf(stderr, "couldn't peek stream %d\n",pd.buf_size);
     return FALSE;
@@ -333,7 +333,7 @@ skip_init:
       fprintf(stderr,"avcodec_decoder: out of memory\n");
       return FALSE;
     }
- 
+
     ret = avcodec_parameters_to_context(cc, s->codecpar);
     if (ret < 0) {
       fprintf(stderr,"avcodec_decoder: avparms to context failed\n");
@@ -341,9 +341,9 @@ skip_init:
     }
 
 #else
- cc = s->codec;
+    cc = s->codec;
 #endif
-    
+
     // vlc_fourcc_t fcc;
     //const char *psz_type = "unknown";
 
@@ -404,8 +404,8 @@ skip_init:
       cdata->palettes[1]=WEED_PALETTE_END;
 
       if (cdata->palettes[0]==WEED_PALETTE_END) {
-	fprintf(stderr,"avcodec_decoder: no usable palette found (%d)\n",cc->pix_fmt);
-	return FALSE;
+        fprintf(stderr,"avcodec_decoder: no usable palette found (%d)\n",cc->pix_fmt);
+        return FALSE;
       }
 
       sprintf(cdata->video_name,"%s",cc->codec_name);
@@ -665,7 +665,7 @@ static void detach_stream(lives_clip_data_t *cdata) {
   if (priv->ic !=NULL) {
     avformat_close_input(&priv->ic);
   }
-  
+
   if (cdata->palettes!=NULL) free(cdata->palettes);
   cdata->palettes=NULL;
 
@@ -1004,7 +1004,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     fprintf(stderr,"avcodec_decoder: out of memory\n");
     return FALSE;
   }
- 
+
   ret = avcodec_parameters_to_context(cc, s->codecpar);
   if (ret < 0) {
     fprintf(stderr,"avcodec_decoder: avparms to context failed\n");
@@ -1015,7 +1015,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   cc = s->codec;
 #endif
 
-  
+
   //cc->get_buffer = our_get_buffer;
   //cc->release_buffer = our_release_buffer;
 
@@ -1092,7 +1092,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       seek_target=av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
       av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
 #ifdef DEBUG
-    fprintf(stderr,"pt a2 %d %ld\n",priv->last_frame,seek_target);
+      fprintf(stderr,"pt a2 %d %ld\n",priv->last_frame,seek_target);
 #endif
       avcodec_flush_buffers(cc);
       priv->black_fill=FALSE;
@@ -1168,8 +1168,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       }
 
 
-    }
-    while (!(hit_target&&gotFrame));
+    } while (!(hit_target&&gotFrame));
   }
 
 framedone:

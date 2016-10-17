@@ -7905,6 +7905,12 @@ sub version_check_and_upgrade {
             $msg="!updmsg";
         }
 
+	if ($^O ne "MSWin32") {
+	    if ($new_version_hash>2008000&&$version_hash<=2008000) {
+		$msg="!updmsg2";
+	    }
+	}
+
         if ($version_hash<8005) {
 # not used now
             &rc_delete("frontend");

@@ -1433,7 +1433,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(sepimg_ext);
   lives_free(frameimg_ext);
 
-  lives_mkdir_with_parents(dfile,S_IRWXU);
+  lives_mkdir_with_parents(dfile,capable->umask);
 
   set_theme_pref(themefile,THEME_DETAIL_NAME,theme_name);
 
@@ -4713,7 +4713,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (!is_append) {
       // create new dir, in case it doesn't already exist
       dfile=lives_build_filename(prefs->workdir,mainw->set_name,"clips",NULL);
-      if (lives_mkdir_with_parents(dfile,S_IRWXU)==-1) {
+      if (lives_mkdir_with_parents(dfile,capable->umask)==-1) {
         if (!check_dir_access(dfile)) {
           // abort if we cannot create the new subdir
           LIVES_ERROR("Could not create directory");
@@ -4731,7 +4731,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     // saving as same name (or as new set)
 
     dfile=lives_build_filename(prefs->workdir,mainw->set_name,"clips",NULL);
-    if (lives_mkdir_with_parents(dfile,S_IRWXU)==-1) {
+    if (lives_mkdir_with_parents(dfile,capable->umask)==-1) {
       if (!check_dir_access(dfile)) {
         // abort if we cannot create the new subdir
         LIVES_ERROR("Could not create directory");
@@ -6027,7 +6027,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     }
 
     dfile=lives_strdup_printf("%s"LIVES_DIR_SEP"fsp%d"LIVES_DIR_SEP,prefs->workdir,capable->mainpid);
-    lives_mkdir_with_parents(dfile,S_IRWXU);
+    lives_mkdir_with_parents(dfile,capable->umask);
 
     info_file=lives_strdup_printf("%s%s",dfile,LIVES_STATUS_FILE_NAME);
 

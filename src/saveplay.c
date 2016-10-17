@@ -40,15 +40,9 @@ boolean save_clip_values(int which) {
   int asigned;
   int endian;
   int retval;
-#ifndef IS_MINGW
-  mode_t xumask;
-#endif
 
   if (which==0||which==mainw->scrap_file||which==mainw->ascrap_file) return TRUE;
 
-#ifndef IS_MINGW
-  xumask=umask(DEF_FILE_UMASK);
-#endif
 
   asigned=!(mainw->files[which]->signed_endian&AFORM_UNSIGNED);
   endian=mainw->files[which]->signed_endian&AFORM_BIG_ENDIAN;
@@ -61,9 +55,6 @@ boolean save_clip_values(int which) {
       retval=do_write_failed_error_s_with_retry(lives_header,lives_strerror(errno),NULL);
       if (retval==LIVES_RESPONSE_CANCEL) {
         lives_free(lives_header);
-#ifndef IS_MINGW
-        umask(xumask);
-#endif
         return FALSE;
       }
     }
@@ -142,9 +133,6 @@ boolean save_clip_values(int which) {
   } while (retval==LIVES_RESPONSE_RETRY);
 
   lives_free(lives_header);
-#ifndef IS_MINGW
-  umask(xumask);
-#endif
 
   fclose(mainw->clip_header);
   mainw->clip_header=NULL;
@@ -4888,23 +4876,19 @@ boolean check_for_disk_space(void) {
   if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
     // check free space again
 
-    char *dir=lives_build_filename(prefs->workdir,NULL);
-
-    free_mb=(double)get_fs_free(dir)/1000000.;
-    if (free_mb==0) wrtable=is_writeable_dir(dir);
+    free_mb=(double)get_fs_free(prefs->workdir)/1000000.;
+    if (free_mb==0) wrtable=is_writeable_dir(prefs->workdir);
     else wrtable=TRUE;
 
     if (wrtable) {
       if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
         if (mainw->record&&!mainw->record_paused) {
           d_print(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),
-                  dir,prefs->rec_stop_gb);
+                  prefs->workdir,prefs->rec_stop_gb);
           on_record_perf_activate(NULL,NULL);
         }
-        lives_free(dir);
         return FALSE;
       }
-      lives_free(dir);
     }
   }
   return TRUE;
@@ -4960,7 +4944,7 @@ int save_to_scrap_file(weed_plant_t *layer) {
 #endif
 
     drnm=lives_build_filename(prefs->workdir,mainw->files[mainw->scrap_file]->handle,NULL);
-    lives_mkdir_with_parents(drnm,S_IRWXU);
+    lives_mkdir_with_parents(drnm,capable->umask);
 
     fd=lives_open3(oname,flags,S_IRUSR|S_IWUSR);
 

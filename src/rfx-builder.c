@@ -3094,7 +3094,7 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
   script_file_dir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,NULL);
 
   if (!lives_file_test(script_file_dir,LIVES_FILE_TEST_IS_DIR)) {
-    if (lives_mkdir_with_parents(script_file_dir,S_IRWXU)==-1) {
+    if (lives_mkdir_with_parents(script_file_dir,capable->umask)==-1) {
       lives_free(script_name);
       return FALSE;
     }
@@ -3922,7 +3922,7 @@ void on_promote_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     d_print(_("Promoting rfx test plugin %s to custom..."),script_name);
     lives_free(script_name);
 
-    lives_mkdir_with_parents(rfx_dir_to,S_IRWXU);
+    lives_mkdir_with_parents(rfx_dir_to,capable->umask);
 
     if (!(ret=rename(rfx_script_from,rfx_script_to))) {
       d_print_done();
@@ -4002,7 +4002,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   case RFX_STATUS_TEST :
     rfx_dir_to=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,NULL);
 
-    lives_mkdir_with_parents((tmp=lives_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)),S_IRWXU);
+    lives_mkdir_with_parents((tmp=lives_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)),capable->umask);
 
     lives_free(tmp);
     rfx_script_to=lives_build_filename(rfx_dir_to,basename,NULL);
@@ -4011,7 +4011,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   case RFX_STATUS_CUSTOM :
     rfx_dir_to=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,NULL);
 
-    lives_mkdir_with_parents((tmp=lives_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)),S_IRWXU);
+    lives_mkdir_with_parents((tmp=lives_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)),capable->umask);
 
     lives_free(tmp);
     rfx_script_to=lives_build_filename(rfx_dir_to,basename,NULL);

@@ -245,8 +245,7 @@ typedef int lives_pgid_t;
 #endif
 #endif
 
-#define DEF_FILE_PERMS (S_IRUSR|S_IWUSR) // must be at least S_IRUSR|S_IWUSR
-#define DEF_FILE_UMASK (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)^( DEF_FILE_PERMS )
+#define DEF_FILE_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) ///< non-executable, is modified by the umask
 
 /// LiVES will show a warning if this (MBytes) is exceeded on load
 /// (can be overridden in prefs)
@@ -780,6 +779,8 @@ typedef struct {
 
   pid_t mainpid;
 
+  mode_t umask;
+
 } capability;
 
 
@@ -912,7 +913,7 @@ char *ds_critical_msg(const char *dir, uint64_t dsval);
 char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn);
 boolean check_storage_space(lives_clip_t *sfile, boolean is_processing);
 
-char *get_upd_msg(void);
+char *get_upd_msg(int type);
 char *get_new_install_msg(void);
 
 boolean ask_permission_dialog(int what);
@@ -1078,6 +1079,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc);
 void catch_sigint(int signum);
 void defer_sigint(int signum);
 boolean startup_message_fatal(const char *msg);
+boolean startup_message_choice(const char *msg, int msgtype);
 boolean startup_message_nonfatal(const char *msg);
 boolean startup_message_info(const char *msg);
 boolean startup_message_nonfatal_dismissable(const char *msg, int warning_mask);

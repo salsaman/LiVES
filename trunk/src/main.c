@@ -108,6 +108,8 @@ static _ign_opts ign_opts;
 static int zargc;
 static char **zargv;
 
+static int startup_msgtype=0;
+
 #ifndef NO_PROG_LOAD
 static int xxwidth=0,xxheight=0;
 #endif
@@ -506,6 +508,7 @@ static boolean pre_init(void) {
     lives_snprintf(prefs->theme,64,"none");
     return FALSE;
   }
+
 
 #if GTK_CHECK_VERSION(3,0,0)
   prefs->funky_widgets=TRUE;
@@ -2262,6 +2265,16 @@ capability *get_capabilities(void) {
 
   capable->mainpid=lives_getpid();
 
+  // this is the version we should pass into mkdir
+#ifndef IS_MINGW
+  capable->umask=umask(0);
+  umask(capable->umask);
+  capable->umask=(0777&~capable->umask);
+#else
+  capable->umask=0775;
+#endif
+
+
 #ifndef IS_MINGW
   get_location("rm", capable->rm_cmd, PATH_MAX);
   get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
@@ -2424,8 +2437,12 @@ capability *get_capabilities(void) {
   prefs->startup_phase=atoi(array[2]);
 
   if (numtok>3&&strlen(array[3])) {
-    if (!strcmp(array[3],"!updmsg")) {
-      char *text=get_upd_msg();
+    startup_msgtype=1;
+    if (!strcmp(array[3],"!updmsg2")) {
+      startup_msgtype=2;
+    }
+    if (!strncmp(array[3],"!updmsg",7)) {
+      char *text=get_upd_msg(startup_msgtype);
       lives_snprintf(capable->startup_msg,256,"%s\n\n",text);
       info_only=TRUE;
       lives_free(text);
@@ -2740,7 +2757,8 @@ static boolean lives_startup(livespointer data) {
 #endif
                 else {
                   if (strlen(capable->startup_msg)) {
-                    if (info_only) startup_message_info(capable->startup_msg);
+		    if (startup_msgtype==2) startup_message_choice(capable->startup_msg,startup_msgtype);
+                    else if (info_only) startup_message_info(capable->startup_msg);
                     else startup_message_nonfatal(capable->startup_msg);
                   } else {
                     // non-fatal errors
@@ -3187,7 +3205,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           lives_snprintf(future_prefs->workdir,PATH_MAX,"%s",prefs->workdir);
           set_pref(PREF_SESSION_WORKDIR,prefs->workdir);
 
-          if (lives_mkdir_with_parents(prefs->workdir,S_IRWXU)==-1) {
+          if (lives_mkdir_with_parents(prefs->workdir,capable->umask)==-1) {
             if (!check_dir_access(prefs->workdir)) {
               // abort if we cannot create the new subdir
               LIVES_ERROR("Could not create directory");
@@ -3432,6 +3450,18 @@ boolean startup_message_nonfatal(const char *msg) {
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   do_error_dialog(msg);
   widget_opts.apply_theme=FALSE;
+  return TRUE;
+}
+
+ boolean startup_message_choice(const char *msg, int msg_type) {
+  boolean res;
+  if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
+  res=do_yesno_dialog(msg);
+  widget_opts.apply_theme=FALSE;
+  if (res&&msg_type==2) {
+    // do chmod
+    lives_chmod(prefs->workdir,"-R a-w");
+  }
   return TRUE;
 }
 
@@ -6666,16 +6696,9 @@ void load_frame_image(int frame) {
 
     // fname should be in local charset
 
-    // if do_chmod, we try to set permissions to default
+    // do_chmod is ignored now
 
-#ifndef IS_MINGW
-    mode_t xumask=0;
-
-    if (do_chmod) {
-      xumask=umask(DEF_FILE_UMASK);
-    }
-#endif
-
+    
     if (imgtype==IMG_TYPE_JPEG) {
       char *qstr=lives_strdup_printf("%d",quality);
 #ifdef GUI_GTK
@@ -6697,12 +6720,6 @@ void load_frame_image(int frame) {
     } else {
       //gdk_pixbuf_save_to_callback(...);
     }
-
-#ifndef IS_MINGW
-    if (do_chmod) {
-      umask(xumask);
-    }
-#endif
 
     return *gerrorptr;
   }

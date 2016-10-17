@@ -838,6 +838,7 @@ char *lives_format_storage_space_string(uint64_t space) {
 
 
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval) {
+  // WARNING: this will actually create the directory (since we dont know if its parents are needed)
   uint64_t ds;
   if (!is_writeable_dir(dir)) return LIVES_STORAGE_STATUS_UNKNOWN;
   ds=get_fs_free(dir);
@@ -4121,13 +4122,15 @@ boolean check_dir_access(const char *dir) {
 
   // see also is_writeable_dir() which uses statvfs
 
+  // WARNING: may leave some parents around
+  
   boolean exists=lives_file_test(dir, LIVES_FILE_TEST_EXISTS);
   boolean is_OK=FALSE;
 
   char *testfile;
 
   if (!exists) {
-    lives_mkdir_with_parents(dir,S_IRWXU);
+    lives_mkdir_with_parents(dir,capable->umask);
   }
 
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
@@ -5261,18 +5264,20 @@ void fastsrand(uint32_t seed) {
 
 
 boolean is_writeable_dir(const char *dir) {
-  // return 0 if we cannot create/write to dir
+  // return FALSE if we cannot create/write to dir
 
   // dir should be in locale encoding
+
+  // WARNING: this will actually create the directory (since we dont know if its parents are needed)
+
 #ifndef IS_MINGW
   struct statvfs sbuf;
 #else
-  char *com;
   char *tfile;
 #endif
 
   if (!lives_file_test(dir,LIVES_FILE_TEST_IS_DIR)) {
-    lives_mkdir_with_parents(dir,S_IRWXU);
+    lives_mkdir_with_parents(dir,capable->umask);
     if (!lives_file_test(dir,LIVES_FILE_TEST_IS_DIR)) {
       return FALSE;
     }
@@ -5286,7 +5291,7 @@ boolean is_writeable_dir(const char *dir) {
   mainw->com_failed=FALSE;
   tfile=lives_strdup_printf("%s\\xxxxfile.txt",dir);
   lives_touch(tfile);
-  lives_rm(com);
+  lives_rm(tfile);
   if (mainw->com_failed) return FALSE;
 #endif
   return TRUE;
@@ -5303,6 +5308,8 @@ uint64_t get_fs_free(const char *dir) {
   // since 0 is a valid return value
 
   // dir should be in locale encoding
+
+  // WARNING: this will actually create the directory (since we dont know if its parents are needed)
 
 #ifndef IS_MINGW
   struct statvfs sbuf;

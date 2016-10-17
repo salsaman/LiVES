@@ -151,7 +151,7 @@ top:
   mainw->com_failed=FALSE;
 
   if (!lives_file_test(dirname,LIVES_FILE_TEST_IS_DIR)) {
-    if (lives_mkdir_with_parents(dirname,S_IRWXU)==-1) goto top;
+    if (lives_mkdir_with_parents(dirname,capable->umask)==-1) goto top;
   }
 
 

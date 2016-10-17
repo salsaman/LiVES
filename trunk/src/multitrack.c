@@ -913,7 +913,7 @@ static void mt_load_recovery_layout(lives_mt *mt) {
     // failed to load
     // keep the faulty layout for forensic purposes
     char *uldir=lives_build_filename(prefs->workdir,"unrecoverable_layouts",LIVES_DIR_SEP,NULL);
-    lives_mkdir_with_parents(uldir,S_IRWXU);
+    lives_mkdir_with_parents(uldir,capable->umask);
     if (lives_file_test(eload_file,LIVES_FILE_TEST_EXISTS)) {
       lives_mv(eload_file,uldir);
     }
@@ -19375,7 +19375,7 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
 
     map_name=lives_build_filename(ldir,"layout.map",NULL);
 
-    lives_mkdir_with_parents(ldir,S_IRWXU);
+    lives_mkdir_with_parents(ldir,capable->umask);
   }
 
   do {
@@ -19692,7 +19692,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
   }
 
   esave_dir=lives_build_filename(prefs->workdir,mainw->set_name,"layouts",LIVES_DIR_SEP,NULL);
-  lives_mkdir_with_parents(esave_dir,S_IRWXU);
+  lives_mkdir_with_parents(esave_dir,capable->umask);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -21237,7 +21237,7 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
   eload_dir=lives_build_filename(prefs->workdir,mainw->set_name,"layouts",LIVES_DIR_SEP,NULL);
 
   mainw->com_failed=FALSE;
-  lives_mkdir_with_parents(eload_dir,S_IRWXU);
+  lives_mkdir_with_parents(eload_dir,capable->umask);
 
   if (!mainw->recoverable_layout&&!lives_file_test(eload_dir,LIVES_FILE_TEST_IS_DIR)) {
     lives_free(eload_dir);

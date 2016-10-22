@@ -89,10 +89,14 @@ farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_cor
 farneback_analyser_la_CPPFLAGS = $(AM_CPPFLAGS)
 farneback_analyser_la_SOURCES = farneback_analyser.cpp
 
+if ENABLE_TOONZ
 toonz_libs = toonz.la
 toonz_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_core -lopencv_imgproc
 toonz_la_CPPFLAGS = $(AM_CPPFLAGS) -std=c++11
 toonz_la_SOURCES = toonz.cpp
+else
+toonz_libs =
+endif
 
 opencvlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 opencvlib_LTLIBRARIES = $(farneback_analyser_libs) $(toonz_libs)

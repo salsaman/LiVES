@@ -5,7 +5,7 @@ ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES,2.8.0,https://sourceforge.net/p/lives/bugs/,,http://lives-video.com)
+AC_INIT(LiVES,2.8.1,https://sourceforge.net/p/lives/bugs/,,http://lives-video.com)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -579,6 +579,10 @@ AM_CONDITIONAL(HAVE_LIBFREENECT,$HAVE_LIBFREENECT)
 
 AC_ARG_ENABLE( turbo, [  --enable-turbo     Most optimised compile.] , turbo=true, turbo=false)
 AM_CONDITIONAL(TURBO,$TURBO)
+
+
+AC_ARG_ENABLE( toonz, [  --enable-toonz     Enable plugins ported from toonz. Requires c++11 compiler support and opencv.] , enable_toonz=true, enable_toonz=false)
+AM_CONDITIONAL(ENABLE_TOONZ,$ENABLE_TOONZ)
 
 
 dnl check for openGL

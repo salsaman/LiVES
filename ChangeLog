@@ -1,3 +1,18 @@
+Vesion 2.8.1
+------------
+Fix various security issues on multi-user systems - see:
+https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=756565
+https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=798043
+
+Fix audio length encoding bug:
+https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=810146
+
+Fix some compilation issues.
+
+
+
+
+
 Version 2.8.0 (3 Sep 2016)
 --------------------------
 Correct blank frame fix from 2.6.8 (add one to last frame).

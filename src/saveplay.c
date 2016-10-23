@@ -1346,8 +1346,8 @@ void save_file(int clip, int start, int end, const char *filename) {
 
 
   if (sfile->arate*sfile->achans) {
-    aud_start=calc_time_from_frame(clip,start*sfile->arps/sfile->arate);
-    aud_end=calc_time_from_frame(clip,(end+1)*sfile->arps/sfile->arate);
+    aud_start=calc_time_from_frame(clip,start)*sfile->arps/sfile->arate;
+    aud_end=calc_time_from_frame(clip,end+1)*sfile->arps/sfile->arate;
   }
 
 
@@ -1737,6 +1737,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   // if startframe is -ve, we will use the links created for safe_symlinks - in /tmp
   // for non-safe symlinks, cfile will be our new links file
   // for save_all, cfile will be sfile
+
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
     com=lives_strdup_printf("%s save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",prefs->backend,
@@ -2144,8 +2145,8 @@ void play_file(void) {
   }
 
   if (mainw->audio_end==0) {
-    mainw->audio_start=(calc_time_from_frame(mainw->current_file,mainw->play_start)*cfile->fps+1.)*cfile->arate/cfile->arps;
-    mainw->audio_end=(calc_time_from_frame(mainw->current_file,mainw->play_end)*cfile->fps+1.)*cfile->arate/cfile->arps;
+    mainw->audio_start=calc_time_from_frame(mainw->current_file,mainw->play_start)*cfile->fps+1.*cfile->arate/cfile->arps;
+    mainw->audio_end=calc_time_from_frame(mainw->current_file,mainw->play_end)*cfile->fps+1.*cfile->arate/cfile->arps;
     if (!mainw->playing_sel) {
       mainw->audio_end=0;
     }

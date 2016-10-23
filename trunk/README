@@ -139,8 +139,11 @@ The default location for everything is inside /usr; so executables go in /usr/bi
 However, if you do relocate, and this is not a fresh install, you will need to edit your .lives file in your home directory and adjust <prefix_dir> and <lib_dir>
 so that they point to the correct locations for scripts and plugins.
 
-NOTE: if the library directory is anything except /usr/lib, you should adjust the libraries in libweed pkg-config files:
-libweed/*.pc
+IMPORTANT: if the library directory is anything except /usr/lib, you should adjust the libraries in libweed pkg-config files:
+libweed/*.pc. If you use a library path other $PREFIX/lib for the plugins you also need to do:
+
+./configure --libdir=<path_to_lib>
+e.g. ./configure --libdir=/usr/lib/libx86_64-linux-gnu/
 
 
 

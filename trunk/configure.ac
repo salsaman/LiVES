@@ -576,12 +576,12 @@ AC_SUBST(LIBFREENECT_LIBS)
 
 AM_CONDITIONAL(HAVE_LIBFREENECT,$HAVE_LIBFREENECT)
 
-
-AC_ARG_ENABLE( turbo, [  --enable-turbo     Most optimised compile.] , turbo=true, turbo=false)
+TURBO=false
+AC_ARG_ENABLE( turbo, [  --enable-turbo     Most optimised compile.] , TURBO=true, TURBO=false)
 AM_CONDITIONAL(TURBO,$TURBO)
 
-
-AC_ARG_ENABLE( toonz, [  --enable-toonz     Enable plugins ported from toonz. Requires c++11 compiler support and opencv.] , enable_toonz=true, enable_toonz=false)
+ENABLE_TOONZ=false
+AC_ARG_ENABLE( toonz, [  --enable-toonz     Enable plugins ported from toonz. Requires c++11 compiler support and opencv.] , ENABLE_TOONZ=true, ENABLE_TOONZ=false)
 AM_CONDITIONAL(ENABLE_TOONZ,$ENABLE_TOONZ)
 
 

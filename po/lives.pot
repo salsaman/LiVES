@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives 2.8.1\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2016-10-22 19:52-0300\n"
+"POT-Creation-Date: 2016-10-23 10:06-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -598,7 +598,7 @@ msgid "!rec %9d/%d"
 msgstr ""
 
 #: src/main.c:5986 src/main.c:5987 src/gui.c:1895 src/gui.c:3120
-#: src/saveplay.c:2166
+#: src/saveplay.c:2167
 msgid "Play"
 msgstr ""
 
@@ -614,12 +614,12 @@ msgid "Closed file %s\n"
 msgstr ""
 
 #: src/main.c:6987 src/gui.c:733 src/utils.c:4451 src/utils.c:4481
-#: src/saveplay.c:3332 src/multitrack.c:4679 src/multitrack.c:6679
+#: src/saveplay.c:3333 src/multitrack.c:4679 src/multitrack.c:6679
 msgid "_Undo"
 msgstr ""
 
 #: src/main.c:6988 src/gui.c:749 src/utils.c:4452 src/utils.c:4482
-#: src/saveplay.c:3333 src/multitrack.c:4699 src/multitrack.c:6702
+#: src/saveplay.c:3334 src/multitrack.c:4699 src/multitrack.c:6702
 msgid "_Redo"
 msgstr ""
 
@@ -1010,8 +1010,8 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
 #: src/interface.c:92 src/callbacks.c:9431 src/callbacks.c:9453
-#: src/callbacks.c:9454 src/gui.c:3122 src/gui.c:3727 src/saveplay.c:2168
-#: src/saveplay.c:2921 src/dialogs.c:1643 src/dialogs.c:1644 src/dialogs.c:1916
+#: src/callbacks.c:9454 src/gui.c:3122 src/gui.c:3727 src/saveplay.c:2169
+#: src/saveplay.c:2922 src/dialogs.c:1643 src/dialogs.c:1644 src/dialogs.c:1916
 #: src/dialogs.c:1917 src/framedraw.c:201 src/multitrack.c:8264
 msgid "Preview"
 msgstr ""
@@ -3761,7 +3761,7 @@ msgstr ""
 msgid "_Record Performance"
 msgstr ""
 
-#: src/gui.c:3608 src/saveplay.c:2898 src/saveplay.c:3003 src/saveplay.c:3022
+#: src/gui.c:3608 src/saveplay.c:2899 src/saveplay.c:3004 src/saveplay.c:3023
 #: src/multitrack.c:9422 src/multitrack.c:11169
 #, c-format
 msgid " (%d %% scale)"
@@ -4130,7 +4130,7 @@ msgstr ""
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:315 src/saveplay.c:3775
+#: src/saveplay.c:315 src/saveplay.c:3776
 msgid " without sound"
 msgstr ""
 
@@ -4229,7 +4229,7 @@ msgid ""
 msgstr ""
 
 #: src/saveplay.c:1439 src/saveplay.c:1561 src/saveplay.c:1637
-#: src/saveplay.c:3788
+#: src/saveplay.c:3789
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -4251,44 +4251,44 @@ msgstr ""
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1786
+#: src/saveplay.c:1787
 msgid "Saving [can take a long time]"
 msgstr ""
 
-#: src/saveplay.c:1907
+#: src/saveplay.c:1908
 msgid ""
 "\n"
 "\n"
 "Encoder error - output file was not created !\n"
 msgstr ""
 
-#: src/saveplay.c:1943
+#: src/saveplay.c:1944
 msgid "Clearing letterbox"
 msgstr ""
 
-#: src/saveplay.c:2020
+#: src/saveplay.c:2021
 #, c-format
 msgid "File size was %s\n"
 msgstr ""
 
-#: src/saveplay.c:2116
+#: src/saveplay.c:2117
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:2119
+#: src/saveplay.c:2120
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:2121
+#: src/saveplay.c:2122
 msgid "Recording performance..."
 msgstr ""
 
-#: src/saveplay.c:3083
+#: src/saveplay.c:3084
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:3088
+#: src/saveplay.c:3089
 msgid ""
 "\n"
 "\n"
@@ -4297,21 +4297,21 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:3260
+#: src/saveplay.c:3261
 msgid "Unknown"
 msgstr ""
 
-#: src/saveplay.c:3366 src/saveplay.c:4346
+#: src/saveplay.c:3367 src/saveplay.c:4347
 #, c-format
 msgid "Untitled%d"
 msgstr ""
 
-#: src/saveplay.c:3406
+#: src/saveplay.c:3407
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr ""
 
-#: src/saveplay.c:3416
+#: src/saveplay.c:3417
 #, c-format
 msgid ""
 "\n"
@@ -4319,13 +4319,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/saveplay.c:3418
+#: src/saveplay.c:3419
 msgid ""
 "\n"
 "An error occurred opening the file\n"
 msgstr ""
 
-#: src/saveplay.c:3430
+#: src/saveplay.c:3431
 #, c-format
 msgid ""
 "\n"
@@ -4333,7 +4333,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3518
+#: src/saveplay.c:3519
 #, c-format
 msgid ""
 "\n"
@@ -4341,73 +4341,73 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:3528
+#: src/saveplay.c:3529
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:3545
+#: src/saveplay.c:3546
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:3549 src/saveplay.c:4510
+#: src/saveplay.c:3550 src/saveplay.c:4511
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:3554 src/saveplay.c:4515
+#: src/saveplay.c:3555 src/saveplay.c:4516
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:3565
+#: src/saveplay.c:3566
 #, c-format
 msgid " - Author: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3568
+#: src/saveplay.c:3569
 #, c-format
 msgid " - Title: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3571
+#: src/saveplay.c:3572
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3677
+#: src/saveplay.c:3678
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:3772
+#: src/saveplay.c:3773
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:3823
+#: src/saveplay.c:3824
 msgid "Backing up"
 msgstr ""
 
-#: src/saveplay.c:3857
+#: src/saveplay.c:3858
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:4417
+#: src/saveplay.c:4418
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:4446
+#: src/saveplay.c:4447
 msgid "Restoring"
 msgstr ""
 
-#: src/saveplay.c:4464
+#: src/saveplay.c:4465
 #, c-format
 msgid ""
 "\n"
@@ -4416,7 +4416,7 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:4886
+#: src/saveplay.c:4887
 #, c-format
 msgid ""
 "\n"
@@ -4425,33 +4425,33 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:5042
+#: src/saveplay.c:5043
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:5047
+#: src/saveplay.c:5048
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:5050
+#: src/saveplay.c:5051
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:5348
+#: src/saveplay.c:5349
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:5371
+#: src/saveplay.c:5372
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:5374
+#: src/saveplay.c:5375
 msgid "Recovering files..."
 msgstr ""
 

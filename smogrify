@@ -23,7 +23,7 @@ $GUI_NAME="LiVES";
 # Do not change these except for testing !
 
 $background=1;
-$version="2.8.1";
+$version="2.8.2-svn";
 #$dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -1918,10 +1918,6 @@ if (defined($ARGV[0])) {
 
     if ($command eq "get_details") {
 
-        $handle=$ARGV[1];
-        $curworkdir="$workdir/$handle";
-
-
 #attempt to get file details
         $file=$ARGV[2];
         $only_first=1;
@@ -3048,6 +3044,7 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "deorder") {
+        $curworkdir="$workdir/$handle";
         $start=$ARGV[2];
         $end=$ARGV[3];
         $frames=$ARGV[4];
@@ -3890,12 +3887,12 @@ if (defined($ARGV[0])) {
     }
 
     if ($command eq "insert") {
-# with_audio: 0, no audio, 1 video and audio, 2 ONLY audio
-# for 0 and 1, start, end, where are in frames; for 2, start,end,where are in seconds
-# with -ve arate means insert silence [with_audio should be 1 or 2]
-# with -ve times means undo cut/delete [source is same clip dir]
+	# with_audio: 0, no audio, 1 video and audio, 2 ONLY audio
+	# for 0 and 1, start, end, where are in frames; for 2, start,end,where are in seconds
+	# with -ve arate means insert silence [with_audio should be 1 or 2]
+	# with -ve times means undo cut/delete [source is same clip dir]
 
-# with -ve end means "allow missing frames" (used for copying to clipboard)
+	# with -ve end means "allow missing frames" (used for copying to clipboard)
 
         unlink "$curworkdir/pause";
         $img_ext=".".$ARGV[2];
@@ -3916,9 +3913,10 @@ if (defined($ARGV[0])) {
 
         smog_chdir("$curworkdir");
 
+	
         $allow_missing=0;
         if ($end<0) {
-# insert (copy) from (virtual) clip into clipboard
+	    # insert (copy) from (virtual) clip into clipboard
             $allow_missing=1;
             $end=-$end;
         }
@@ -3926,21 +3924,27 @@ if (defined($ARGV[0])) {
         if (defined($ARGV[17])) {
             $times=$ARGV[17];
             if ($times<0) {
-# this indicates undoing a previous cut
+		# this indicates undoing a previous cut
                 $times=-$times;
                 $undo_cut=1;
                 $new_frames=$num_frames+$end-$start+1;
             } else {
                 if ($start>=0) {
                     &clean_old;
+		    if (-f "audio") {
+			## back this up here for undo
+			smog_rename("audio","audio.bak");
+		    }
                 } else {
-# $start < 0 tells us to leave backups alone
+		    # $start < 0 tells us to leave backups alone
                     $start=-$start;
                 }
                 $antialias=&rc_get("antialias");
             }
         }
+	
 
+	
         if ($with_audio<2) {
             if (!$undo_cut) {
                 if (!$allow_missing) {
@@ -3953,6 +3957,7 @@ if (defined($ARGV[0])) {
             }
 
             &insert;
+
             if ($panic) {
                 unlink "$pidfile";
                 exit 1;
@@ -3971,6 +3976,7 @@ if (defined($ARGV[0])) {
             $asigned=$ARGV[15];
             $aendian=$ARGV[16];
 
+
             if ($arate*$achans*$asamps!=0) {
                 if (!$undo_cut) {
                     if ($with_audio<2) {
@@ -3978,10 +3984,8 @@ if (defined($ARGV[0])) {
                         $start=($start-1.)/$fps;
                         $where/=$fps;
                     }
-                    if (! -f "audio") {
-                        unlink "audio.bak";
-                    } else {
-                        smog_copy("audio","audio.bak");
+                    if (-f "audio.bak") {
+                        smog_copy("audio.bak","audio");
                     }
                     if ($panic) {
                         unlink "$pidfile";
@@ -4016,21 +4020,22 @@ if (defined($ARGV[0])) {
     }
 
     if ($command eq "undo_insert") {
-#clean up after an interrupted insert
+	
+	#clean up after an interrupted insert
         $start=$ARGV[2];
         $end=$ARGV[3];
         $frames=$ARGV[4];
         $img_ext=".".$ARGV[5];
 
-# move extra frames back to end
+	# move extra frames back to end
         smog_system_sync();
         &undo_insert;
 
         $end=$frames;
         &undo(1);
-# will abort on failure
+	# will abort on failure
         &undo_audio;
-# will abort on failure
+	# will abort on failure
         &sig_complete;
         exit 0;
     }
@@ -4695,7 +4700,8 @@ sub undo_insert {
     $frames_inserted=$end-$start+1;
 
     for ($i=$frames+$frames_inserted; $i>$frames; $i--) {
-# move any shifted frames back
+	# move any shifted frames back
+	last if ($i<=$frames_inserted);
         $name=&mkname($i);
         $to=&mkname($i-$frames_inserted);
         if (-f "$curworkdir/$name$img_ext") {
@@ -6423,7 +6429,6 @@ $size=&align(-s $audio_temp);
         return if ($panic);
     }
 
-    unlink "$audio_temp";
 }
 else {
 # copy from audio.bak to output
@@ -6439,6 +6444,7 @@ else {
     }
 }
 
+unlink "$audio_temp";
 smog_system_sync();
 
 }

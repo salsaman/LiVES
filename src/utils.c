@@ -4221,6 +4221,7 @@ uint64_t sget_file_size(const char *name) {
   int fd;
 
   if ((fd=open(name,O_RDONLY))==-1) {
+    //g_print("could not open %s %s\n",name,lives_strerror(errno));
     return (uint32_t)0;
   }
 
@@ -4258,6 +4259,8 @@ void reget_afilesize(int fileno) {
     }
   }
 
+  //g_print("pvalss %s %ld\n",afile,sfile->afilesize);
+  
   //g_print("sfa = %d\n",sfile->achans);
 
   lives_free(afile);

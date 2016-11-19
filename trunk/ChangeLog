@@ -1,5 +1,5 @@
-Vesion 2.8.1
-------------
+Vesion 2.8.1 (23 October 2016)
+------------------------------
 Fix various security issues on multi-user systems - see:
 https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=756565
 https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=798043

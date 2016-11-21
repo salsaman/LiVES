@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2016-10-23 10:06-0300\n"
+"POT-Creation-Date: 2016-11-19 17:39-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -696,12 +696,12 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "הקובץ %s נסגר\n"
 
-#: src/main.c:6987 src/gui.c:733 src/utils.c:4451 src/utils.c:4481
+#: src/main.c:6987 src/gui.c:733 src/utils.c:4454 src/utils.c:4484
 #: src/saveplay.c:3333 src/multitrack.c:4679 src/multitrack.c:6679
 msgid "_Undo"
 msgstr "_ביטול"
 
-#: src/main.c:6988 src/gui.c:749 src/utils.c:4452 src/utils.c:4482
+#: src/main.c:6988 src/gui.c:749 src/utils.c:4455 src/utils.c:4485
 #: src/saveplay.c:3334 src/multitrack.c:4699 src/multitrack.c:6702
 msgid "_Redo"
 msgstr "ב_צע שוב"
@@ -1148,8 +1148,8 @@ msgstr ""
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr "באם מוגדר, תבוצע פעולת deinterlace על השקופיות בעת הייבוא."
 
-#: src/interface.c:92 src/callbacks.c:9431 src/callbacks.c:9453
-#: src/callbacks.c:9454 src/gui.c:3122 src/gui.c:3727 src/saveplay.c:2169
+#: src/interface.c:92 src/callbacks.c:9444 src/callbacks.c:9466
+#: src/callbacks.c:9467 src/gui.c:3122 src/gui.c:3727 src/saveplay.c:2169
 #: src/saveplay.c:2922 src/dialogs.c:1643 src/dialogs.c:1644 src/dialogs.c:1916
 #: src/dialogs.c:1917 src/framedraw.c:201 src/multitrack.c:8264
 msgid "Preview"
@@ -1191,7 +1191,7 @@ msgstr ""
 "\n"
 "נא לזכור לכבות את האפקטים (Ctrl-0) לאחר מכן !"
 
-#: src/interface.c:202 src/callbacks.c:9163 src/callbacks.c:9215
+#: src/interface.c:202 src/callbacks.c:9176 src/callbacks.c:9228
 #: src/dialogs.c:2848
 msgid ""
 "\n"
@@ -1212,11 +1212,11 @@ msgstr "_מספיק"
 msgid "_Preview"
 msgstr "_תצוגה מקדימה"
 
-#: src/interface.c:227 src/callbacks.c:9162 src/callbacks.c:9213
+#: src/interface.c:227 src/callbacks.c:9175 src/callbacks.c:9226
 msgid "Paus_e"
 msgstr "הש_הייה"
 
-#: src/interface.c:228 src/callbacks.c:9212
+#: src/interface.c:228 src/callbacks.c:9225
 msgid "Pause/_Enough"
 msgstr "השהייה/_מספיק"
 
@@ -1300,7 +1300,7 @@ msgstr "ש_מירת ההגדרות האישיות"
 msgid "Use _recommended settings"
 msgstr "שימוש בהגדרות מ_ומלצות"
 
-#: src/interface.c:712 src/callbacks.c:8459 src/paramwindow.c:888
+#: src/interface.c:712 src/callbacks.c:8472 src/paramwindow.c:888
 #: src/omc-learn.c:1386
 msgid "_Close Window"
 msgstr "_סגירת החלון"
@@ -1309,7 +1309,7 @@ msgstr "_סגירת החלון"
 msgid "_Save to file"
 msgstr "_שמירה לקובץ"
 
-#: src/interface.c:758 src/callbacks.c:3529
+#: src/interface.c:758 src/callbacks.c:3542
 msgid "Insert"
 msgstr "הכנסה"
 
@@ -2373,7 +2373,7 @@ msgstr "מחיקת אוסף"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "האוסף %s נמחק לצמיתות מהכונן הקשיח.\n"
 
-#: src/callbacks.c:1940 src/callbacks.c:11544 src/resample.c:1207
+#: src/callbacks.c:1940 src/callbacks.c:11557 src/resample.c:1207
 msgid "Insert Silence"
 msgstr "הוספת שקט"
 
@@ -2425,7 +2425,7 @@ msgstr "מעתיק ללוח הגזירים"
 msgid "Cut"
 msgstr "גזירה"
 
-#: src/callbacks.c:2780 src/callbacks.c:3188 src/callbacks.c:7534
+#: src/callbacks.c:2780 src/callbacks.c:3188 src/callbacks.c:7547
 #, fuzzy
 msgid "Pulling frames from clipboard"
 msgstr "מושך שקופיות מהקטע"
@@ -2485,7 +2485,7 @@ msgstr ""
 "הוספת הקובץ המבוקש תזיז את השקופיות בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:3014 src/callbacks.c:11477
+#: src/callbacks.c:3014 src/callbacks.c:11490
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2525,12 +2525,12 @@ msgstr ""
 "האם ברצונך להמשיך עם ההוספה  \n"
 "באמצעות שמע שלא שונה ?\n"
 
-#: src/callbacks.c:3257 src/callbacks.c:3424
+#: src/callbacks.c:3257 src/callbacks.c:3437
 #, c-format
 msgid "Inserting %d%s frames from the clipboard..."
 msgstr "מכניס %d%s שקופיות מלוח הגזירים..."
 
-#: src/callbacks.c:3280 src/callbacks.c:3349 src/callbacks.c:3450
+#: src/callbacks.c:3280 src/callbacks.c:3349 src/callbacks.c:3463
 msgid "Inserting"
 msgstr "מוסיף"
 
@@ -2544,7 +2544,7 @@ msgstr "מכניס %d פעמים מלוח הגזירים %s..."
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "מכניס %d שקופיות  מלוח הגזירים %s..."
 
-#: src/callbacks.c:3596
+#: src/callbacks.c:3609
 msgid ""
 "\n"
 "Deleting all frames will close this file.\n"
@@ -2554,7 +2554,7 @@ msgstr ""
 "מחיקת כל השקופיות תסגור את קובץ זה.\n"
 "האם ברצונך להמשיך ?"
 
-#: src/callbacks.c:3605
+#: src/callbacks.c:3618
 msgid ""
 "\n"
 "Deletion will cause missing frames in some multitrack layouts.\n"
@@ -2564,8 +2564,8 @@ msgstr ""
 "עקב המחיקה תיתכנו שקופיות חסרות בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:3621 src/callbacks.c:10753 src/callbacks.c:10977
-#: src/callbacks.c:11030
+#: src/callbacks.c:3634 src/callbacks.c:10766 src/callbacks.c:10990
+#: src/callbacks.c:11043
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2575,7 +2575,7 @@ msgstr ""
 "עקב המחיקה ייתכן שקטעי קול מסויימים יוחסרו בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:3636
+#: src/callbacks.c:3649
 msgid ""
 "\n"
 "Deletion will cause frames to shift in some multitrack layouts.\n"
@@ -2585,7 +2585,7 @@ msgstr ""
 "המחיקה תזיז את השקופיות בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:3651 src/callbacks.c:11016
+#: src/callbacks.c:3664 src/callbacks.c:11029
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2595,20 +2595,20 @@ msgstr ""
 "המחיקה תזיז את השמע בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:3699
+#: src/callbacks.c:3712
 #, c-format
 msgid "Deleting frames %d to %d%s..."
 msgstr "מוחק את השקופיות %d ל־%d%s..."
 
-#: src/callbacks.c:3721
+#: src/callbacks.c:3734
 msgid "Deleting"
 msgstr "מוחק"
 
-#: src/callbacks.c:3801
+#: src/callbacks.c:3814
 msgid "Delete"
 msgstr "מחיקה"
 
-#: src/callbacks.c:3819
+#: src/callbacks.c:3832
 msgid ""
 "\n"
 "\n"
@@ -2618,7 +2618,7 @@ msgstr ""
 "\n"
 "הבחירה נעולה.\n"
 
-#: src/callbacks.c:4149
+#: src/callbacks.c:4162
 msgid ""
 "Ready to record. Use 'control' and cursor keys during playback to record "
 "your performance.\n"
@@ -2628,11 +2628,11 @@ msgstr ""
 "מוכן להקלטה. השתמש ב־'control' ובכפתורי העכבר בעת הנגינה להקלטת ביצועיך.\n"
 "(לביטול, הקש על 'r' או לחץ על נגן|הקלט ביצועים שוב לפני נגינה.)\n"
 
-#: src/callbacks.c:4155
+#: src/callbacks.c:4168
 msgid "Record cancelled.\n"
 msgstr "ההקלטה בוטלה.\n"
 
-#: src/callbacks.c:4289
+#: src/callbacks.c:4302
 #, c-format
 msgid ""
 "\n"
@@ -2645,7 +2645,7 @@ msgstr ""
 "התוסף '%s' מדווח:\n"
 "%s\n"
 
-#: src/callbacks.c:4292
+#: src/callbacks.c:4305
 #, c-format
 msgid ""
 "\n"
@@ -2658,7 +2658,7 @@ msgstr ""
 "לא ניתן למצוא את שיטת 'init' בתוסף %s.\n"
 "ייתן שהתוסף לא תקין או לא מותקן כראוי."
 
-#: src/callbacks.c:4626
+#: src/callbacks.c:4639
 #, c-format
 msgid ""
 "Saving the set will cause copies of all loaded clips to remain on the disk"
@@ -2670,22 +2670,22 @@ msgstr ""
 "\n"
 "יש ללחוץ על 'ביטול' אם אין ברצונך לבצע את פעולה זו.\n"
 
-#: src/callbacks.c:4701
+#: src/callbacks.c:4714
 #, c-format
 msgid "Saving set %s"
 msgstr "שומר אוסף %s"
 
-#: src/callbacks.c:5020
+#: src/callbacks.c:5033
 #, c-format
 msgid "Loading clips from set %s"
 msgstr "טוען קטע מהאוסף %s"
 
-#: src/callbacks.c:5109
+#: src/callbacks.c:5122
 #, c-format
 msgid "%d clips and %d layouts were recovered from set (%s).\n"
 msgstr ""
 
-#: src/callbacks.c:5311
+#: src/callbacks.c:5324
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -2696,24 +2696,24 @@ msgstr ""
 "עליך להריץ זאת רק אם אין לך עותקים של LiVES הרצים על מכונה זו.\n"
 "לחץ על אישור בכדי להמשיך.\n"
 
-#: src/callbacks.c:5318
+#: src/callbacks.c:5331
 msgid "Cleaning up disk space..."
 msgstr "מנקה שטח כונן..."
 
-#: src/callbacks.c:5388
+#: src/callbacks.c:5401
 msgid "Recovering disk space"
 msgstr ""
 
-#: src/callbacks.c:5439
+#: src/callbacks.c:5452
 #, c-format
 msgid "%s of disk space was recovered.\n"
 msgstr ""
 
-#: src/callbacks.c:5483
+#: src/callbacks.c:5496
 msgid "Resetting frame rates and frame values..."
 msgstr "מאפס את קצבי וערכי השקופיות..."
 
-#: src/callbacks.c:5527
+#: src/callbacks.c:5540
 #, c-format
 msgid ""
 "\n"
@@ -2721,12 +2721,12 @@ msgid ""
 "Internal: %s (%d bpp) / %s\n"
 msgstr ""
 
-#: src/callbacks.c:5529
+#: src/callbacks.c:5542
 msgid "buffered"
 msgstr "נאגר"
 
-#: src/callbacks.c:5543 src/callbacks.c:5561 src/callbacks.c:5577
-#: src/callbacks.c:5610
+#: src/callbacks.c:5556 src/callbacks.c:5574 src/callbacks.c:5590
+#: src/callbacks.c:5623
 msgid ""
 "\n"
 "  Opening..."
@@ -2734,7 +2734,7 @@ msgstr ""
 "\n"
 "  פותח..."
 
-#: src/callbacks.c:5549
+#: src/callbacks.c:5562
 #, c-format
 msgid ""
 "\n"
@@ -2743,7 +2743,7 @@ msgstr ""
 "\n"
 "(%d מדומה)"
 
-#: src/callbacks.c:5552
+#: src/callbacks.c:5565
 #, c-format
 msgid ""
 "\n"
@@ -2752,7 +2752,7 @@ msgstr ""
 "\n"
 "(%d פוענח)"
 
-#: src/callbacks.c:5563 src/callbacks.c:5579 src/callbacks.c:5612
+#: src/callbacks.c:5576 src/callbacks.c:5592 src/callbacks.c:5625
 #, c-format
 msgid ""
 "\n"
@@ -2761,7 +2761,7 @@ msgstr ""
 "\n"
 "  %.2f שניות."
 
-#: src/callbacks.c:5571
+#: src/callbacks.c:5584
 msgid ""
 "\n"
 "  Unknown"
@@ -2769,23 +2769,23 @@ msgstr ""
 "\n"
 "  לא ידוע"
 
-#: src/callbacks.c:5583 src/callbacks.c:5597
+#: src/callbacks.c:5596 src/callbacks.c:5610
 msgid "unsigned"
 msgstr "לא מסומן"
 
-#: src/callbacks.c:5584 src/callbacks.c:5598
+#: src/callbacks.c:5597 src/callbacks.c:5611
 msgid "signed"
 msgstr "מסומן"
 
-#: src/callbacks.c:5586 src/callbacks.c:5600
+#: src/callbacks.c:5599 src/callbacks.c:5613
 msgid "big-endian"
 msgstr "סידור בתים עולה"
 
-#: src/callbacks.c:5587 src/callbacks.c:5601
+#: src/callbacks.c:5600 src/callbacks.c:5614
 msgid "little-endian"
 msgstr "סידור בתים יורד"
 
-#: src/callbacks.c:5589 src/callbacks.c:5603
+#: src/callbacks.c:5602 src/callbacks.c:5616
 #, c-format
 msgid ""
 "  %d Hz %d bit\n"
@@ -2794,7 +2794,7 @@ msgstr ""
 "  %d הרץ, %d סיביות\n"
 "%s %s"
 
-#: src/callbacks.c:5706
+#: src/callbacks.c:5719
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -2811,15 +2811,15 @@ msgid ""
 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"
 msgstr ""
 
-#: src/callbacks.c:5720
+#: src/callbacks.c:5733
 msgid "A video editor and VJ program."
 msgstr "עורך וידאו ותוכנת VJ."
 
-#: src/callbacks.c:5721
+#: src/callbacks.c:5734
 msgid "About LiVES"
 msgstr ""
 
-#: src/callbacks.c:5723
+#: src/callbacks.c:5736
 msgid "translator_credits"
 msgstr ""
 "Launchpad Contributions:\n"
@@ -2828,7 +2828,7 @@ msgstr ""
 "  Yaron https://launchpad.net/~sh-yaron\n"
 "  salsaman https://launchpad.net/~salsaman"
 
-#: src/callbacks.c:5758
+#: src/callbacks.c:5771
 #, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -2842,7 +2842,7 @@ msgid ""
 "Homepage: %s"
 msgstr ""
 
-#: src/callbacks.c:6020
+#: src/callbacks.c:6033
 #, fuzzy
 msgid ""
 "\n"
@@ -2853,7 +2853,7 @@ msgstr ""
 "\n"
 "יש להתקין את mplayer בכדי להציג את קובץ זה.\n"
 
-#: src/callbacks.c:6022
+#: src/callbacks.c:6035
 #, fuzzy
 msgid ""
 "\n"
@@ -2865,94 +2865,94 @@ msgstr ""
 "\n"
 "יש להתקין את mplayer בכדי להציג את קובץ זה.\n"
 
-#: src/callbacks.c:6461
+#: src/callbacks.c:6474
 #, c-format
 msgid ""
 "Text was saved as\n"
 "%s\n"
 msgstr ""
 
-#: src/callbacks.c:6649
+#: src/callbacks.c:6662
 #, fuzzy
 msgid "Encoder Debug Output"
 msgstr "LiVES: - פלט ניפוי שגיאות של המקודד"
 
-#: src/callbacks.c:6684 src/gui.c:1762
+#: src/callbacks.c:6697 src/gui.c:1762
 msgid "Fullscreen playback (f)"
 msgstr "נגינה במסך מלא (f)"
 
-#: src/callbacks.c:6685
+#: src/callbacks.c:6698
 msgid "Fullscreen playback off (f)"
 msgstr "כיבוי נגינה במסך מלא (f)"
 
-#: src/callbacks.c:6882 src/gui.c:1747
+#: src/callbacks.c:6895 src/gui.c:1747
 msgid "Double size (d)"
 msgstr "גודל כפול (d)"
 
-#: src/callbacks.c:6888
+#: src/callbacks.c:6901
 msgid "Single size (d)"
 msgstr "גודל יחיד (d)"
 
-#: src/callbacks.c:7012 src/callbacks.c:7013
+#: src/callbacks.c:7025 src/callbacks.c:7026
 msgid "Hide the play window (s)"
 msgstr "הסתרת חלון הנגינה (s)"
 
-#: src/callbacks.c:7021 src/gui.c:1584
+#: src/callbacks.c:7034 src/gui.c:1584
 msgid "Show the play window (s)"
 msgstr "הצגת חלון הנגינה (s)"
 
-#: src/callbacks.c:7022 src/gui.c:1736
+#: src/callbacks.c:7035 src/gui.c:1736
 msgid "Play in separate window (s)"
 msgstr "נגינה בחלון נפרד (s)"
 
-#: src/callbacks.c:7296
+#: src/callbacks.c:7309
 msgid "Switch continuous looping off (o)"
 msgstr "כיבוי הלולאה המתמשכת (o)"
 
-#: src/callbacks.c:7302 src/gui.c:1633
+#: src/callbacks.c:7315 src/gui.c:1633
 msgid "Switch continuous looping on (o)"
 msgstr "הפעלת את הלולאה המתמשכת (o)"
 
-#: src/callbacks.c:7352
+#: src/callbacks.c:7365
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "עוצמת הקול (%.2f)"
 
-#: src/callbacks.c:7391 src/callbacks.c:7392 src/gui.c:3530
+#: src/callbacks.c:7404 src/callbacks.c:7405 src/gui.c:3530
 msgid "Unmute the audio (z)"
 msgstr "הפעלת השמע שנית (z)"
 
-#: src/callbacks.c:7402 src/callbacks.c:7403 src/gui.c:1646 src/gui.c:3529
+#: src/callbacks.c:7415 src/callbacks.c:7416 src/gui.c:1646 src/gui.c:3529
 msgid "Mute the audio (z)"
 msgstr "השתקת השמע (z)"
 
-#: src/callbacks.c:7546
+#: src/callbacks.c:7559
 msgid "Reversing clipboard..."
 msgstr "הופך את לוח הגזירים..."
 
-#: src/callbacks.c:7560
+#: src/callbacks.c:7573
 msgid "Reversing clipboard"
 msgstr "הופך את לוח הגזירים"
 
-#: src/callbacks.c:7592
+#: src/callbacks.c:7605
 msgid "Load Subtitles"
 msgstr ""
 
-#: src/callbacks.c:7650 src/saveplay.c:916
+#: src/callbacks.c:7663 src/saveplay.c:916
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr ""
 
-#: src/callbacks.c:7718
+#: src/callbacks.c:7731
 msgid "Subtitles were erased.\n"
 msgstr ""
 
-#: src/callbacks.c:7743
+#: src/callbacks.c:7756
 #, fuzzy
 msgid "Select Audio File"
 msgstr "מחק שמע"
 
-#: src/callbacks.c:7781 src/callbacks.c:8170
+#: src/callbacks.c:7794 src/callbacks.c:8183
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -2963,65 +2963,65 @@ msgstr ""
 "טעינת שמע חדש תגרום לאיבוד שמע בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?"
 
-#: src/callbacks.c:7913
+#: src/callbacks.c:7926
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "פותח שמע %s, סוג %s..."
 
-#: src/callbacks.c:7947 src/saveplay.c:466
+#: src/callbacks.c:7960 src/saveplay.c:466
 msgid "Opening audio"
 msgstr "פותח שמע"
 
-#: src/callbacks.c:7956 src/callbacks.c:8011 src/callbacks.c:8257
-#: src/callbacks.c:8299 src/callbacks.c:8342 src/callbacks.c:10668
+#: src/callbacks.c:7969 src/callbacks.c:8024 src/callbacks.c:8270
+#: src/callbacks.c:8312 src/callbacks.c:8355 src/callbacks.c:10681
 msgid "Cancelling"
 msgstr "מבטל"
 
-#: src/callbacks.c:8065 src/callbacks.c:8384 src/callbacks.c:10705
-#: src/callbacks.c:11343
+#: src/callbacks.c:8078 src/callbacks.c:8397 src/callbacks.c:10718
+#: src/callbacks.c:11356
 msgid "Committing audio"
 msgstr "מפקיד שמע"
 
-#: src/callbacks.c:8081 src/callbacks.c:8414
+#: src/callbacks.c:8094 src/callbacks.c:8427
 msgid "New Audio"
 msgstr "שמע חדש"
 
-#: src/callbacks.c:8194
+#: src/callbacks.c:8207
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "פותח רצועה %d מתקליטור %s..."
 
-#: src/callbacks.c:8197
+#: src/callbacks.c:8210
 #, c-format
 msgid "CD track %d"
 msgstr "רצועת תקליטור %d"
 
-#: src/callbacks.c:8243
+#: src/callbacks.c:8256
 msgid "Opening CD track..."
 msgstr "פותח רצועת תקליטור..."
 
-#: src/callbacks.c:8285 src/callbacks.c:8331
+#: src/callbacks.c:8298 src/callbacks.c:8344
 msgid "Error loading CD track\n"
 msgstr "שגיאה בטעינת רצועת תקליטור\n"
 
-#: src/callbacks.c:8449
+#: src/callbacks.c:8462
 #, fuzzy
 msgid "Layout Errors"
 msgstr "שגיאות פריסה"
 
-#: src/callbacks.c:8470
+#: src/callbacks.c:8483
 msgid "Clear _Errors"
 msgstr "ניקוי _שגיאות"
 
-#: src/callbacks.c:8481
+#: src/callbacks.c:8494
 msgid "_Delete affected layouts"
 msgstr "_מחיקת פריסות ששונו"
 
-#: src/callbacks.c:9152 src/callbacks.c:9181
+#: src/callbacks.c:9165 src/callbacks.c:9194
 msgid "Resume"
 msgstr "המשך"
 
-#: src/callbacks.c:9153
+#: src/callbacks.c:9166
 msgid ""
 "\n"
 "Paused\n"
@@ -3031,23 +3031,23 @@ msgstr ""
 "מושהה\n"
 "(יש ללחוץ על כפתור ההמשך כדי להמשיך בתהליך)"
 
-#: src/callbacks.c:9154 src/callbacks.c:9198
+#: src/callbacks.c:9167 src/callbacks.c:9211
 msgid "paused..."
 msgstr "מושהה..."
 
-#: src/callbacks.c:9164 src/callbacks.c:9216
+#: src/callbacks.c:9177 src/callbacks.c:9229
 msgid "resumed..."
 msgstr "ממשיך..."
 
-#: src/callbacks.c:9186
+#: src/callbacks.c:9199
 msgid "Keep"
 msgstr "שמירה"
 
-#: src/callbacks.c:9188
+#: src/callbacks.c:9201
 msgid "Enough"
 msgstr "מספיק"
 
-#: src/callbacks.c:9193
+#: src/callbacks.c:9206
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -3060,30 +3060,30 @@ msgstr ""
 "(לחץ על כפתור השמירה כדי לשמור את העבודה ולהפסיק)\n"
 "(בנוסף, ישנה אפשרות ללחוץ על המשך כדי להמשיך בעיבוד)"
 
-#: src/callbacks.c:9214
+#: src/callbacks.c:9227
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/callbacks.c:9365
+#: src/callbacks.c:9378
 msgid "Stop"
 msgstr ""
 
-#: src/callbacks.c:9862 src/multitrack.c:13419
+#: src/callbacks.c:9875 src/multitrack.c:13419
 #, fuzzy
 msgid "Selected Frame"
 msgstr "בחירת _כל השקופיות"
 
-#: src/callbacks.c:9870
+#: src/callbacks.c:9883
 #, fuzzy
 msgid "_Save Frame as..."
 msgstr "_שמירת פריסה כ..."
 
-#: src/callbacks.c:10100
+#: src/callbacks.c:10113
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:10153
+#: src/callbacks.c:10166
 msgid ""
 "\n"
 "\n"
@@ -3092,7 +3092,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10159
+#: src/callbacks.c:10172
 msgid ""
 "\n"
 "\n"
@@ -3104,7 +3104,7 @@ msgstr ""
 "עליך להתקין את \"xwininfo\" כדי להשתמש בתכונה זו\n"
 "\n"
 
-#: src/callbacks.c:10231 src/callbacks.c:11261
+#: src/callbacks.c:10244 src/callbacks.c:11274
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -3112,7 +3112,7 @@ msgstr ""
 "\n"
 "זמן ההקלטה חייב להיות גדול מ־0.\n"
 
-#: src/callbacks.c:10243
+#: src/callbacks.c:10256
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -3126,11 +3126,11 @@ msgstr ""
 "לאחר מכן ללחוץ על 'ביטול' לביטול\n"
 "\n"
 
-#: src/callbacks.c:10248
+#: src/callbacks.c:10261
 msgid "External window was released.\n"
 msgstr "החלון הנוסף שוחרר.\n"
 
-#: src/callbacks.c:10282
+#: src/callbacks.c:10295
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -3138,7 +3138,7 @@ msgstr ""
 "יש ללחוץ על חלון כדי ללכוד אותו\n"
 "יש ללחוץ על 'q' כדי להפסיק את ההקלטה"
 
-#: src/callbacks.c:10315
+#: src/callbacks.c:10328
 #, c-format
 msgid ""
 "\n"
@@ -3154,19 +3154,19 @@ msgstr ""
 "\n"
 "(LiVES ישתמש בברירת המחדל: %.3f שקופיות לשנייה.)\n"
 
-#: src/callbacks.c:10339
+#: src/callbacks.c:10352
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES כשל בלכידת חלון זה. עמכם הסליחה.\n"
 
-#: src/callbacks.c:10495
+#: src/callbacks.c:10508
 msgid "Export Selected Audio as..."
 msgstr "מייצא את השמע הנבחר כ..."
 
-#: src/callbacks.c:10498
+#: src/callbacks.c:10511
 msgid "Export Audio as..."
 msgstr "מייצא שמע כ..."
 
-#: src/callbacks.c:10513
+#: src/callbacks.c:10526
 msgid ""
 "\n"
 "\n"
@@ -3180,87 +3180,87 @@ msgstr ""
 "יש ללחוץ על 'אישור' כדי לייצא במהירות החדשה,או על 'ביטול' לייצוא בקצב "
 "המקורי.\n"
 
-#: src/callbacks.c:10519
+#: src/callbacks.c:10532
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "מייצא שקופיות שמע %d ל־%d כ־%s"
 
-#: src/callbacks.c:10523
+#: src/callbacks.c:10536
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "מייצא שמע כ־%s..."
 
-#: src/callbacks.c:10549
+#: src/callbacks.c:10562
 msgid "Exporting audio"
 msgstr "ייצוא שמע"
 
-#: src/callbacks.c:10591
+#: src/callbacks.c:10604
 #, fuzzy
 msgid "Append Audio File"
 msgstr "צירוף שמע"
 
-#: src/callbacks.c:10641
+#: src/callbacks.c:10654
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "מצרף את קובץ השמע %s..."
 
-#: src/callbacks.c:10658
+#: src/callbacks.c:10671
 msgid "Appending audio"
 msgstr "מצרף שמע"
 
-#: src/callbacks.c:10720
+#: src/callbacks.c:10733
 msgid "Append Audio"
 msgstr "צירוף שמע"
 
-#: src/callbacks.c:10777
+#: src/callbacks.c:10790
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10779
+#: src/callbacks.c:10792
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "מתקן שמע מ־%.2f ל־%.2f שניות..."
 
-#: src/callbacks.c:10798
+#: src/callbacks.c:10811
 msgid "Trimming/Padding audio"
 msgstr "מתקן\\מרפד שמע"
 
-#: src/callbacks.c:10806
+#: src/callbacks.c:10819
 msgid "Trim/Pad Audio"
 msgstr "תיקון\\ריפוד שמע"
 
-#: src/callbacks.c:10876
+#: src/callbacks.c:10889
 msgid "Fading audio in"
 msgstr "מחיל אפקט Fade In על השמע"
 
-#: src/callbacks.c:10877
+#: src/callbacks.c:10890
 msgid "Fade audio in"
 msgstr "החלת אפקט Fade In על השמע"
 
-#: src/callbacks.c:10881
+#: src/callbacks.c:10894
 msgid "Fading audio out"
 msgstr "מחיל אפקט Fade Out על השמע"
 
-#: src/callbacks.c:10882
+#: src/callbacks.c:10895
 msgid "Fade audio out"
 msgstr "החלת אפקט Fade Out על השמע"
 
-#: src/callbacks.c:10901
+#: src/callbacks.c:10914
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s מעל %.1f שניות..."
 
-#: src/callbacks.c:10903
+#: src/callbacks.c:10916
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s מזמן %.2f שניות ל־%.2f שניות..."
 
-#: src/callbacks.c:10910
+#: src/callbacks.c:10923
 msgid "Fading audio..."
 msgstr "מפעיל אפקט Fade על השמע"
 
-#: src/callbacks.c:11001
+#: src/callbacks.c:11014
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -3270,33 +3270,33 @@ msgstr ""
 "מחיקת כל השמע תסגור את קובץ זה.\n"
 "האם ברצונך להמשיך ?"
 
-#: src/callbacks.c:11004
+#: src/callbacks.c:11017
 msgid "Deleting all audio..."
 msgstr "מוחק את כל השמע"
 
-#: src/callbacks.c:11009
+#: src/callbacks.c:11022
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "מוחק שמע מ־%.2f ל־%.2f שניות..."
 
-#: src/callbacks.c:11084
+#: src/callbacks.c:11097
 msgid "Deleting Audio"
 msgstr "מוחק שמע"
 
-#: src/callbacks.c:11091
+#: src/callbacks.c:11104
 msgid "Delete Audio"
 msgstr "מחק שמע"
 
-#: src/callbacks.c:11413
+#: src/callbacks.c:11426
 msgid "Record new audio"
 msgstr "הקלט שמע חדש"
 
-#: src/callbacks.c:11503
+#: src/callbacks.c:11516
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "מכניס שקט מ־%.2f ל־%.2f שניות..."
 
-#: src/callbacks.c:11529
+#: src/callbacks.c:11542
 msgid "Inserting Silence"
 msgstr "מכניס שקט"
 
@@ -4534,29 +4534,29 @@ msgstr ""
 "\n"
 "לשכתבו ?\n"
 
-#: src/utils.c:4445 src/utils.c:4475 src/multitrack.c:4673
+#: src/utils.c:4448 src/utils.c:4478 src/multitrack.c:4673
 #, c-format
 msgid "_Undo %s"
 msgstr "_ביטול %s"
 
-#: src/utils.c:4446 src/utils.c:4476 src/multitrack.c:4694
+#: src/utils.c:4449 src/utils.c:4479 src/multitrack.c:4694
 #, c-format
 msgid "_Redo %s"
 msgstr "_ביצוע מחדש %s"
 
-#: src/utils.c:4499
+#: src/utils.c:4502
 msgid "-------------Selection------------"
 msgstr "------------בחירה----------"
 
-#: src/utils.c:4507
+#: src/utils.c:4510
 msgid " sec ] ----------Selection---------- [ "
 msgstr " שניות [ --------בחירה--------] "
 
-#: src/utils.c:4508
+#: src/utils.c:4511
 msgid " frames ] ----------"
 msgstr " שקופיות ] --------"
 
-#: src/utils.c:5456
+#: src/utils.c:5459
 msgid ""
 "Your version of mplayer/ffmpeg may be broken !\n"
 "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n"

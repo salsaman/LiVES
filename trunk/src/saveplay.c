@@ -500,6 +500,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
               cfile->opening=FALSE;
 
+	      wait_for_bg_audio_sync(cfile);
+	      
               reget_afilesize(mainw->current_file);
               get_total_time(cfile);
 
@@ -3402,6 +3404,8 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     com=lives_strdup_printf("%s commit_audio \"%s\" 1",prefs->backend,cfile->handle);
     lives_system(com, TRUE);
     lives_free(com);
+
+    wait_for_bg_audio_sync(cfile);
 
     reget_afilesize(mainw->current_file);
     d_print(_("%d frames are enough !\n"),cfile->frames);

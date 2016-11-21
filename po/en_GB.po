@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2016-10-23 10:06-0300\n"
+"POT-Creation-Date: 2016-11-19 17:39-0300\n"
 "PO-Revision-Date: 2015-04-16 10:52+0000\n"
 "Last-Translator: Andi Chandler <Unknown>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -744,12 +744,12 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "Closed file %s\n"
 
-#: src/main.c:6987 src/gui.c:733 src/utils.c:4451 src/utils.c:4481
+#: src/main.c:6987 src/gui.c:733 src/utils.c:4454 src/utils.c:4484
 #: src/saveplay.c:3333 src/multitrack.c:4679 src/multitrack.c:6679
 msgid "_Undo"
 msgstr "_Undo"
 
-#: src/main.c:6988 src/gui.c:749 src/utils.c:4452 src/utils.c:4482
+#: src/main.c:6988 src/gui.c:749 src/utils.c:4455 src/utils.c:4485
 #: src/saveplay.c:3334 src/multitrack.c:4699 src/multitrack.c:6702
 msgid "_Redo"
 msgstr "_Redo"
@@ -1228,8 +1228,8 @@ msgstr "Apply _Deinterlace"
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr "If this is set, frames will be deinterlaced as they are imported."
 
-#: src/interface.c:92 src/callbacks.c:9431 src/callbacks.c:9453
-#: src/callbacks.c:9454 src/gui.c:3122 src/gui.c:3727 src/saveplay.c:2169
+#: src/interface.c:92 src/callbacks.c:9444 src/callbacks.c:9466
+#: src/callbacks.c:9467 src/gui.c:3122 src/gui.c:3727 src/saveplay.c:2169
 #: src/saveplay.c:2922 src/dialogs.c:1643 src/dialogs.c:1644 src/dialogs.c:1916
 #: src/dialogs.c:1917 src/framedraw.c:201 src/multitrack.c:8264
 msgid "Preview"
@@ -1271,7 +1271,7 @@ msgstr ""
 "\n"
 "Remember to switch off effects (ctrl-0) afterwards !"
 
-#: src/interface.c:202 src/callbacks.c:9163 src/callbacks.c:9215
+#: src/interface.c:202 src/callbacks.c:9176 src/callbacks.c:9228
 #: src/dialogs.c:2848
 msgid ""
 "\n"
@@ -1292,11 +1292,11 @@ msgstr "_Enough"
 msgid "_Preview"
 msgstr "_Preview"
 
-#: src/interface.c:227 src/callbacks.c:9162 src/callbacks.c:9213
+#: src/interface.c:227 src/callbacks.c:9175 src/callbacks.c:9226
 msgid "Paus_e"
 msgstr "Paus_e"
 
-#: src/interface.c:228 src/callbacks.c:9212
+#: src/interface.c:228 src/callbacks.c:9225
 msgid "Pause/_Enough"
 msgstr "Pause/_Enough"
 
@@ -1382,7 +1382,7 @@ msgstr "Keep _my settings"
 msgid "Use _recommended settings"
 msgstr "Use _recommended settings"
 
-#: src/interface.c:712 src/callbacks.c:8459 src/paramwindow.c:888
+#: src/interface.c:712 src/callbacks.c:8472 src/paramwindow.c:888
 #: src/omc-learn.c:1386
 msgid "_Close Window"
 msgstr "_Close Window"
@@ -1391,7 +1391,7 @@ msgstr "_Close Window"
 msgid "_Save to file"
 msgstr "_Save to file"
 
-#: src/interface.c:758 src/callbacks.c:3529
+#: src/interface.c:758 src/callbacks.c:3542
 msgid "Insert"
 msgstr "Insert"
 
@@ -2476,7 +2476,7 @@ msgstr "Deleting set"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "Set %s was permanently deleted from the disk.\n"
 
-#: src/callbacks.c:1940 src/callbacks.c:11544 src/resample.c:1207
+#: src/callbacks.c:1940 src/callbacks.c:11557 src/resample.c:1207
 msgid "Insert Silence"
 msgstr "Insert Silence"
 
@@ -2528,7 +2528,7 @@ msgstr "Copying to the clipboard"
 msgid "Cut"
 msgstr "Cut"
 
-#: src/callbacks.c:2780 src/callbacks.c:3188 src/callbacks.c:7534
+#: src/callbacks.c:2780 src/callbacks.c:3188 src/callbacks.c:7547
 msgid "Pulling frames from clipboard"
 msgstr "Pulling frames from clipboard"
 
@@ -2587,7 +2587,7 @@ msgstr ""
 "Insertion will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 
-#: src/callbacks.c:3014 src/callbacks.c:11477
+#: src/callbacks.c:3014 src/callbacks.c:11490
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2627,12 +2627,12 @@ msgstr ""
 "Do you wish to continue with the insert \n"
 "using unchanged audio ?\n"
 
-#: src/callbacks.c:3257 src/callbacks.c:3424
+#: src/callbacks.c:3257 src/callbacks.c:3437
 #, c-format
 msgid "Inserting %d%s frames from the clipboard..."
 msgstr "Inserting %d%s frames from the clipboard..."
 
-#: src/callbacks.c:3280 src/callbacks.c:3349 src/callbacks.c:3450
+#: src/callbacks.c:3280 src/callbacks.c:3349 src/callbacks.c:3463
 msgid "Inserting"
 msgstr "Inserting"
 
@@ -2646,7 +2646,7 @@ msgstr "Inserting %d times from the clipboard%s..."
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "Inserting %d frames from the clipboard%s..."
 
-#: src/callbacks.c:3596
+#: src/callbacks.c:3609
 msgid ""
 "\n"
 "Deleting all frames will close this file.\n"
@@ -2656,7 +2656,7 @@ msgstr ""
 "Deleting all frames will close this file.\n"
 "Are you sure ?"
 
-#: src/callbacks.c:3605
+#: src/callbacks.c:3618
 msgid ""
 "\n"
 "Deletion will cause missing frames in some multitrack layouts.\n"
@@ -2666,8 +2666,8 @@ msgstr ""
 "Deletion will cause missing frames in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 
-#: src/callbacks.c:3621 src/callbacks.c:10753 src/callbacks.c:10977
-#: src/callbacks.c:11030
+#: src/callbacks.c:3634 src/callbacks.c:10766 src/callbacks.c:10990
+#: src/callbacks.c:11043
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2677,7 +2677,7 @@ msgstr ""
 "Deletion will cause missing audio in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 
-#: src/callbacks.c:3636
+#: src/callbacks.c:3649
 msgid ""
 "\n"
 "Deletion will cause frames to shift in some multitrack layouts.\n"
@@ -2687,7 +2687,7 @@ msgstr ""
 "Deletion will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 
-#: src/callbacks.c:3651 src/callbacks.c:11016
+#: src/callbacks.c:3664 src/callbacks.c:11029
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2697,20 +2697,20 @@ msgstr ""
 "Deletion will cause audio to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 
-#: src/callbacks.c:3699
+#: src/callbacks.c:3712
 #, c-format
 msgid "Deleting frames %d to %d%s..."
 msgstr "Deleting frames %d to %d%s..."
 
-#: src/callbacks.c:3721
+#: src/callbacks.c:3734
 msgid "Deleting"
 msgstr "Deleting"
 
-#: src/callbacks.c:3801
+#: src/callbacks.c:3814
 msgid "Delete"
 msgstr "Delete"
 
-#: src/callbacks.c:3819
+#: src/callbacks.c:3832
 msgid ""
 "\n"
 "\n"
@@ -2720,7 +2720,7 @@ msgstr ""
 "\n"
 "Selection is locked.\n"
 
-#: src/callbacks.c:4149
+#: src/callbacks.c:4162
 msgid ""
 "Ready to record. Use 'control' and cursor keys during playback to record "
 "your performance.\n"
@@ -2732,11 +2732,11 @@ msgstr ""
 "(To cancel, press 'r' or click on Play|Record Performance again before you "
 "play.)\n"
 
-#: src/callbacks.c:4155
+#: src/callbacks.c:4168
 msgid "Record cancelled.\n"
 msgstr "Record cancelled.\n"
 
-#: src/callbacks.c:4289
+#: src/callbacks.c:4302
 #, c-format
 msgid ""
 "\n"
@@ -2749,7 +2749,7 @@ msgstr ""
 "The '%s' plugin reports:\n"
 "%s\n"
 
-#: src/callbacks.c:4292
+#: src/callbacks.c:4305
 #, c-format
 msgid ""
 "\n"
@@ -2762,7 +2762,7 @@ msgstr ""
 "Unable to find the 'init' method in the %s plugin.\n"
 "The plugin may be broken or not installed correctly."
 
-#: src/callbacks.c:4626
+#: src/callbacks.c:4639
 #, c-format
 msgid ""
 "Saving the set will cause copies of all loaded clips to remain on the disk"
@@ -2775,22 +2775,22 @@ msgstr ""
 "\n"
 "Please press 'Cancel' if that is not what you want.\n"
 
-#: src/callbacks.c:4701
+#: src/callbacks.c:4714
 #, c-format
 msgid "Saving set %s"
 msgstr "Saving set %s"
 
-#: src/callbacks.c:5020
+#: src/callbacks.c:5033
 #, c-format
 msgid "Loading clips from set %s"
 msgstr "Loading clips from set %s"
 
-#: src/callbacks.c:5109
+#: src/callbacks.c:5122
 #, c-format
 msgid "%d clips and %d layouts were recovered from set (%s).\n"
 msgstr "%d clips and %d layouts were recovered from set (%s).\n"
 
-#: src/callbacks.c:5311
+#: src/callbacks.c:5324
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -2802,24 +2802,24 @@ msgstr ""
 "this machine.\n"
 "Click OK to proceed.\n"
 
-#: src/callbacks.c:5318
+#: src/callbacks.c:5331
 msgid "Cleaning up disk space..."
 msgstr "Cleaning up disk space..."
 
-#: src/callbacks.c:5388
+#: src/callbacks.c:5401
 msgid "Recovering disk space"
 msgstr "Recovering disk space..."
 
-#: src/callbacks.c:5439
+#: src/callbacks.c:5452
 #, c-format
 msgid "%s of disk space was recovered.\n"
 msgstr "%s of disk space was recovered.\n"
 
-#: src/callbacks.c:5483
+#: src/callbacks.c:5496
 msgid "Resetting frame rates and frame values..."
 msgstr "Resetting frame rates and frame values..."
 
-#: src/callbacks.c:5527
+#: src/callbacks.c:5540
 #, c-format
 msgid ""
 "\n"
@@ -2830,12 +2830,12 @@ msgstr ""
 "External: %s\n"
 "Internal: %s (%d bpp) / %s\n"
 
-#: src/callbacks.c:5529
+#: src/callbacks.c:5542
 msgid "buffered"
 msgstr "buffered"
 
-#: src/callbacks.c:5543 src/callbacks.c:5561 src/callbacks.c:5577
-#: src/callbacks.c:5610
+#: src/callbacks.c:5556 src/callbacks.c:5574 src/callbacks.c:5590
+#: src/callbacks.c:5623
 msgid ""
 "\n"
 "  Opening..."
@@ -2843,7 +2843,7 @@ msgstr ""
 "\n"
 "  Opening..."
 
-#: src/callbacks.c:5549
+#: src/callbacks.c:5562
 #, c-format
 msgid ""
 "\n"
@@ -2852,7 +2852,7 @@ msgstr ""
 "\n"
 "(%d virtual)"
 
-#: src/callbacks.c:5552
+#: src/callbacks.c:5565
 #, c-format
 msgid ""
 "\n"
@@ -2861,7 +2861,7 @@ msgstr ""
 "\n"
 "(%d decoded)"
 
-#: src/callbacks.c:5563 src/callbacks.c:5579 src/callbacks.c:5612
+#: src/callbacks.c:5576 src/callbacks.c:5592 src/callbacks.c:5625
 #, c-format
 msgid ""
 "\n"
@@ -2870,7 +2870,7 @@ msgstr ""
 "\n"
 "  %.2f sec."
 
-#: src/callbacks.c:5571
+#: src/callbacks.c:5584
 msgid ""
 "\n"
 "  Unknown"
@@ -2878,23 +2878,23 @@ msgstr ""
 "\n"
 "  Unknown"
 
-#: src/callbacks.c:5583 src/callbacks.c:5597
+#: src/callbacks.c:5596 src/callbacks.c:5610
 msgid "unsigned"
 msgstr "unsigned"
 
-#: src/callbacks.c:5584 src/callbacks.c:5598
+#: src/callbacks.c:5597 src/callbacks.c:5611
 msgid "signed"
 msgstr "signed"
 
-#: src/callbacks.c:5586 src/callbacks.c:5600
+#: src/callbacks.c:5599 src/callbacks.c:5613
 msgid "big-endian"
 msgstr "big-endian"
 
-#: src/callbacks.c:5587 src/callbacks.c:5601
+#: src/callbacks.c:5600 src/callbacks.c:5614
 msgid "little-endian"
 msgstr "little-endian"
 
-#: src/callbacks.c:5589 src/callbacks.c:5603
+#: src/callbacks.c:5602 src/callbacks.c:5616
 #, c-format
 msgid ""
 "  %d Hz %d bit\n"
@@ -2903,7 +2903,7 @@ msgstr ""
 "  %d Hz %d bit\n"
 "%s %s"
 
-#: src/callbacks.c:5706
+#: src/callbacks.c:5719
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -2933,15 +2933,15 @@ msgstr ""
 "along with this program; if not, write to the Free Software\n"
 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"
 
-#: src/callbacks.c:5720
+#: src/callbacks.c:5733
 msgid "A video editor and VJ program."
 msgstr "A video editor and VJ program."
 
-#: src/callbacks.c:5721
+#: src/callbacks.c:5734
 msgid "About LiVES"
 msgstr "About LiVES"
 
-#: src/callbacks.c:5723
+#: src/callbacks.c:5736
 msgid "translator_credits"
 msgstr ""
 "Launchpad Contributions:\n"
@@ -2951,7 +2951,7 @@ msgstr ""
 "  Robert Readman https://launchpad.net/~robert-readman\n"
 "  salsaman https://launchpad.net/~salsaman"
 
-#: src/callbacks.c:5758
+#: src/callbacks.c:5771
 #, fuzzy, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -2974,7 +2974,7 @@ msgstr ""
 "salsaman@gmail.com\n"
 "Homepage: http://lives.sourceforge.net"
 
-#: src/callbacks.c:6020
+#: src/callbacks.c:6033
 #, fuzzy
 msgid ""
 "\n"
@@ -2985,7 +2985,7 @@ msgstr ""
 "\n"
 "You need to install mplayer or imageMagick to be able to preview this file.\n"
 
-#: src/callbacks.c:6022
+#: src/callbacks.c:6035
 #, fuzzy
 msgid ""
 "\n"
@@ -2997,7 +2997,7 @@ msgstr ""
 "\n"
 "You need to install mplayer or imageMagick to be able to preview this file.\n"
 
-#: src/callbacks.c:6461
+#: src/callbacks.c:6474
 #, c-format
 msgid ""
 "Text was saved as\n"
@@ -3006,88 +3006,88 @@ msgstr ""
 "Text was saved as\n"
 "%s\n"
 
-#: src/callbacks.c:6649
+#: src/callbacks.c:6662
 #, fuzzy
 msgid "Encoder Debug Output"
 msgstr "LiVES: - Encoder debug output"
 
-#: src/callbacks.c:6684 src/gui.c:1762
+#: src/callbacks.c:6697 src/gui.c:1762
 msgid "Fullscreen playback (f)"
 msgstr "Fullscreen playback (f)"
 
-#: src/callbacks.c:6685
+#: src/callbacks.c:6698
 msgid "Fullscreen playback off (f)"
 msgstr "Fullscreen playback off (f)"
 
-#: src/callbacks.c:6882 src/gui.c:1747
+#: src/callbacks.c:6895 src/gui.c:1747
 msgid "Double size (d)"
 msgstr "Double size (d)"
 
-#: src/callbacks.c:6888
+#: src/callbacks.c:6901
 msgid "Single size (d)"
 msgstr "Single size (d)"
 
-#: src/callbacks.c:7012 src/callbacks.c:7013
+#: src/callbacks.c:7025 src/callbacks.c:7026
 msgid "Hide the play window (s)"
 msgstr "Hide the play window (s)"
 
-#: src/callbacks.c:7021 src/gui.c:1584
+#: src/callbacks.c:7034 src/gui.c:1584
 msgid "Show the play window (s)"
 msgstr "Show the play window (s)"
 
-#: src/callbacks.c:7022 src/gui.c:1736
+#: src/callbacks.c:7035 src/gui.c:1736
 msgid "Play in separate window (s)"
 msgstr "Play in separate window (s)"
 
-#: src/callbacks.c:7296
+#: src/callbacks.c:7309
 msgid "Switch continuous looping off (o)"
 msgstr "Switch continuous looping off (o)"
 
-#: src/callbacks.c:7302 src/gui.c:1633
+#: src/callbacks.c:7315 src/gui.c:1633
 msgid "Switch continuous looping on (o)"
 msgstr "Switch continuous looping on (o)"
 
-#: src/callbacks.c:7352
+#: src/callbacks.c:7365
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "Audio volume (%.2f)"
 
-#: src/callbacks.c:7391 src/callbacks.c:7392 src/gui.c:3530
+#: src/callbacks.c:7404 src/callbacks.c:7405 src/gui.c:3530
 msgid "Unmute the audio (z)"
 msgstr "Unmute the audio (z)"
 
-#: src/callbacks.c:7402 src/callbacks.c:7403 src/gui.c:1646 src/gui.c:3529
+#: src/callbacks.c:7415 src/callbacks.c:7416 src/gui.c:1646 src/gui.c:3529
 msgid "Mute the audio (z)"
 msgstr "Mute the audio (z)"
 
-#: src/callbacks.c:7546
+#: src/callbacks.c:7559
 msgid "Reversing clipboard..."
 msgstr "Reversing clipboard..."
 
-#: src/callbacks.c:7560
+#: src/callbacks.c:7573
 msgid "Reversing clipboard"
 msgstr "Reversing clipboard"
 
-#: src/callbacks.c:7592
+#: src/callbacks.c:7605
 #, fuzzy
 msgid "Load Subtitles"
 msgstr "Show Subtitles"
 
-#: src/callbacks.c:7650 src/saveplay.c:916
+#: src/callbacks.c:7663 src/saveplay.c:916
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr "Loaded subtitle file: %s\n"
 
-#: src/callbacks.c:7718
+#: src/callbacks.c:7731
 msgid "Subtitles were erased.\n"
 msgstr "Subtitles were erased.\n"
 
-#: src/callbacks.c:7743
+#: src/callbacks.c:7756
 #, fuzzy
 msgid "Select Audio File"
 msgstr "LiVES: - Select Audio File"
 
-#: src/callbacks.c:7781 src/callbacks.c:8170
+#: src/callbacks.c:7794 src/callbacks.c:8183
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -3099,65 +3099,65 @@ msgstr ""
 "Are you sure you wish to continue ?\n"
 "."
 
-#: src/callbacks.c:7913
+#: src/callbacks.c:7926
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "Opening audio %s, type %s..."
 
-#: src/callbacks.c:7947 src/saveplay.c:466
+#: src/callbacks.c:7960 src/saveplay.c:466
 msgid "Opening audio"
 msgstr "Opening audio"
 
-#: src/callbacks.c:7956 src/callbacks.c:8011 src/callbacks.c:8257
-#: src/callbacks.c:8299 src/callbacks.c:8342 src/callbacks.c:10668
+#: src/callbacks.c:7969 src/callbacks.c:8024 src/callbacks.c:8270
+#: src/callbacks.c:8312 src/callbacks.c:8355 src/callbacks.c:10681
 msgid "Cancelling"
 msgstr "Cancelling"
 
-#: src/callbacks.c:8065 src/callbacks.c:8384 src/callbacks.c:10705
-#: src/callbacks.c:11343
+#: src/callbacks.c:8078 src/callbacks.c:8397 src/callbacks.c:10718
+#: src/callbacks.c:11356
 msgid "Committing audio"
 msgstr "Committing audio"
 
-#: src/callbacks.c:8081 src/callbacks.c:8414
+#: src/callbacks.c:8094 src/callbacks.c:8427
 msgid "New Audio"
 msgstr "New Audio"
 
-#: src/callbacks.c:8194
+#: src/callbacks.c:8207
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "Opening CD track %d from %s..."
 
-#: src/callbacks.c:8197
+#: src/callbacks.c:8210
 #, c-format
 msgid "CD track %d"
 msgstr "CD track %d"
 
-#: src/callbacks.c:8243
+#: src/callbacks.c:8256
 msgid "Opening CD track..."
 msgstr "Opening CD track..."
 
-#: src/callbacks.c:8285 src/callbacks.c:8331
+#: src/callbacks.c:8298 src/callbacks.c:8344
 msgid "Error loading CD track\n"
 msgstr "Error loading CD track\n"
 
-#: src/callbacks.c:8449
+#: src/callbacks.c:8462
 #, fuzzy
 msgid "Layout Errors"
 msgstr "layout errors"
 
-#: src/callbacks.c:8470
+#: src/callbacks.c:8483
 msgid "Clear _Errors"
 msgstr "Clear _Errors"
 
-#: src/callbacks.c:8481
+#: src/callbacks.c:8494
 msgid "_Delete affected layouts"
 msgstr "_Delete affected layouts"
 
-#: src/callbacks.c:9152 src/callbacks.c:9181
+#: src/callbacks.c:9165 src/callbacks.c:9194
 msgid "Resume"
 msgstr "Resume"
 
-#: src/callbacks.c:9153
+#: src/callbacks.c:9166
 msgid ""
 "\n"
 "Paused\n"
@@ -3167,23 +3167,23 @@ msgstr ""
 "Paused\n"
 "(click Resume to continue processing)"
 
-#: src/callbacks.c:9154 src/callbacks.c:9198
+#: src/callbacks.c:9167 src/callbacks.c:9211
 msgid "paused..."
 msgstr "paused..."
 
-#: src/callbacks.c:9164 src/callbacks.c:9216
+#: src/callbacks.c:9177 src/callbacks.c:9229
 msgid "resumed..."
 msgstr "resumed..."
 
-#: src/callbacks.c:9186
+#: src/callbacks.c:9199
 msgid "Keep"
 msgstr "Keep"
 
-#: src/callbacks.c:9188
+#: src/callbacks.c:9201
 msgid "Enough"
 msgstr "Enough"
 
-#: src/callbacks.c:9193
+#: src/callbacks.c:9206
 #, c-format
 msgid ""
 "\n"
@@ -3196,30 +3196,30 @@ msgstr ""
 "(click %s to keep what you have and stop)\n"
 "(click Resume to continue processing)"
 
-#: src/callbacks.c:9214
+#: src/callbacks.c:9227
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/callbacks.c:9365
+#: src/callbacks.c:9378
 msgid "Stop"
 msgstr "Stop"
 
-#: src/callbacks.c:9862 src/multitrack.c:13419
+#: src/callbacks.c:9875 src/multitrack.c:13419
 #, fuzzy
 msgid "Selected Frame"
 msgstr "Select _All Frames"
 
-#: src/callbacks.c:9870
+#: src/callbacks.c:9883
 #, fuzzy
 msgid "_Save Frame as..."
 msgstr "_Save frame as..."
 
-#: src/callbacks.c:10100
+#: src/callbacks.c:10113
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr "Audio is ahead of video by %.4f secs at frame %d, with fps %.4f\n"
 
-#: src/callbacks.c:10153
+#: src/callbacks.c:10166
 msgid ""
 "\n"
 "\n"
@@ -3233,7 +3233,7 @@ msgstr ""
 "Please send a patch to get it working on other platforms.\n"
 "\n"
 
-#: src/callbacks.c:10159
+#: src/callbacks.c:10172
 msgid ""
 "\n"
 "\n"
@@ -3245,7 +3245,7 @@ msgstr ""
 "You must install \"xwininfo\" before you can use this feature\n"
 "\n"
 
-#: src/callbacks.c:10231 src/callbacks.c:11261
+#: src/callbacks.c:10244 src/callbacks.c:11274
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -3253,7 +3253,7 @@ msgstr ""
 "\n"
 "Record time must be greater than 0.\n"
 
-#: src/callbacks.c:10243
+#: src/callbacks.c:10256
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -3267,11 +3267,11 @@ msgstr ""
 "Click 'Cancel' to cancel\n"
 "\n"
 
-#: src/callbacks.c:10248
+#: src/callbacks.c:10261
 msgid "External window was released.\n"
 msgstr "External window was released.\n"
 
-#: src/callbacks.c:10282
+#: src/callbacks.c:10295
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -3279,7 +3279,7 @@ msgstr ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 
-#: src/callbacks.c:10315
+#: src/callbacks.c:10328
 #, c-format
 msgid ""
 "\n"
@@ -3294,19 +3294,19 @@ msgstr ""
 "Stop or 'q' to finish.\n"
 "(Default of %.3f frames per second will be used.)\n"
 
-#: src/callbacks.c:10339
+#: src/callbacks.c:10352
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES was unable to capture this window. Sorry.\n"
 
-#: src/callbacks.c:10495
+#: src/callbacks.c:10508
 msgid "Export Selected Audio as..."
 msgstr "Export Selected Audio as..."
 
-#: src/callbacks.c:10498
+#: src/callbacks.c:10511
 msgid "Export Audio as..."
 msgstr "Export Audio as..."
 
-#: src/callbacks.c:10513
+#: src/callbacks.c:10526
 msgid ""
 "\n"
 "\n"
@@ -3320,87 +3320,87 @@ msgstr ""
 "Click 'OK' to export at the new speed, or 'Cancel' to export at the original "
 "rate.\n"
 
-#: src/callbacks.c:10519
+#: src/callbacks.c:10532
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Exporting audio frames %d to %d as %s..."
 
-#: src/callbacks.c:10523
+#: src/callbacks.c:10536
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Exporting audio as %s..."
 
-#: src/callbacks.c:10549
+#: src/callbacks.c:10562
 msgid "Exporting audio"
 msgstr "Exporting audio"
 
-#: src/callbacks.c:10591
+#: src/callbacks.c:10604
 #, fuzzy
 msgid "Append Audio File"
 msgstr "Append Audio"
 
-#: src/callbacks.c:10641
+#: src/callbacks.c:10654
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "Appending audio file %s..."
 
-#: src/callbacks.c:10658
+#: src/callbacks.c:10671
 msgid "Appending audio"
 msgstr "Appending audio"
 
-#: src/callbacks.c:10720
+#: src/callbacks.c:10733
 msgid "Append Audio"
 msgstr "Append Audio"
 
-#: src/callbacks.c:10777
+#: src/callbacks.c:10790
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr "Padding audio to %.2f seconds..."
 
-#: src/callbacks.c:10779
+#: src/callbacks.c:10792
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "Trimming audio from %.2f to %.2f seconds..."
 
-#: src/callbacks.c:10798
+#: src/callbacks.c:10811
 msgid "Trimming/Padding audio"
 msgstr "Trimming/Padding audio"
 
-#: src/callbacks.c:10806
+#: src/callbacks.c:10819
 msgid "Trim/Pad Audio"
 msgstr "Trim/Pad Audio"
 
-#: src/callbacks.c:10876
+#: src/callbacks.c:10889
 msgid "Fading audio in"
 msgstr "Fading audio in"
 
-#: src/callbacks.c:10877
+#: src/callbacks.c:10890
 msgid "Fade audio in"
 msgstr "Fade audio in"
 
-#: src/callbacks.c:10881
+#: src/callbacks.c:10894
 msgid "Fading audio out"
 msgstr "Fading audio out"
 
-#: src/callbacks.c:10882
+#: src/callbacks.c:10895
 msgid "Fade audio out"
 msgstr "Fade audio out"
 
-#: src/callbacks.c:10901
+#: src/callbacks.c:10914
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s over %.1f seconds..."
 
-#: src/callbacks.c:10903
+#: src/callbacks.c:10916
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s from time %.2f seconds to %.2f seconds..."
 
-#: src/callbacks.c:10910
+#: src/callbacks.c:10923
 msgid "Fading audio..."
 msgstr "Fading audio..."
 
-#: src/callbacks.c:11001
+#: src/callbacks.c:11014
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -3410,33 +3410,33 @@ msgstr ""
 "Deleting all audio will close this file.\n"
 "Are you sure ?"
 
-#: src/callbacks.c:11004
+#: src/callbacks.c:11017
 msgid "Deleting all audio..."
 msgstr "Deleting all audio..."
 
-#: src/callbacks.c:11009
+#: src/callbacks.c:11022
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Deleting audio from %.2f to %.2f seconds..."
 
-#: src/callbacks.c:11084
+#: src/callbacks.c:11097
 msgid "Deleting Audio"
 msgstr "Deleting Audio"
 
-#: src/callbacks.c:11091
+#: src/callbacks.c:11104
 msgid "Delete Audio"
 msgstr "Delete Audio"
 
-#: src/callbacks.c:11413
+#: src/callbacks.c:11426
 msgid "Record new audio"
 msgstr "Record new audio"
 
-#: src/callbacks.c:11503
+#: src/callbacks.c:11516
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Inserting silence from %.2f to %.2f seconds..."
 
-#: src/callbacks.c:11529
+#: src/callbacks.c:11542
 msgid "Inserting Silence"
 msgstr "Inserting Silence"
 
@@ -4682,29 +4682,29 @@ msgstr ""
 "\n"
 "Overwrite ?\n"
 
-#: src/utils.c:4445 src/utils.c:4475 src/multitrack.c:4673
+#: src/utils.c:4448 src/utils.c:4478 src/multitrack.c:4673
 #, c-format
 msgid "_Undo %s"
 msgstr "_Undo %s"
 
-#: src/utils.c:4446 src/utils.c:4476 src/multitrack.c:4694
+#: src/utils.c:4449 src/utils.c:4479 src/multitrack.c:4694
 #, c-format
 msgid "_Redo %s"
 msgstr "_Redo %s"
 
-#: src/utils.c:4499
+#: src/utils.c:4502
 msgid "-------------Selection------------"
 msgstr "-------------Selection------------"
 
-#: src/utils.c:4507
+#: src/utils.c:4510
 msgid " sec ] ----------Selection---------- [ "
 msgstr " sec ] ----------Selection---------- [ "
 
-#: src/utils.c:4508
+#: src/utils.c:4511
 msgid " frames ] ----------"
 msgstr " frames ] ----------"
 
-#: src/utils.c:5456
+#: src/utils.c:5459
 msgid ""
 "Your version of mplayer/ffmpeg may be broken !\n"
 "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n"

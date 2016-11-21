@@ -4698,17 +4698,38 @@ sub reverse {
 
 sub undo_insert {
     $frames_inserted=$end-$start+1;
+    
+    if ($start<=$frames) {
+	## insert was BEFORE
 
-    for ($i=$frames+$frames_inserted; $i>$frames; $i--) {
-	# move any shifted frames back
-	last if ($i<=$frames_inserted);
-        $name=&mkname($i);
-        $to=&mkname($i-$frames_inserted);
-        if (-f "$curworkdir/$name$img_ext") {
-            unlink "$curworkdir/$to$img_ext";
-            smog_rename("$curworkdir/$name$img_ext","$curworkdir/$to$img_ext");
-        }
+	## $frames is orig frames
+	## we inserted $frames_inserted from start to end
+	
+	for ($i=$frames+$frames_inserted; $i>$end; $i--) {
+	    # move any shifted frames back
+	    $name=&mkname($i);
+	    $to=&mkname($i-$frames_inserted);
+	    if (-f "$curworkdir/$name$img_ext") {
+		unlink "$curworkdir/$to$img_ext";
+		smog_rename("$curworkdir/$name$img_ext","$curworkdir/$to$img_ext");
+	    }
+	}
+
+	for ($i=$frames+1;$i<=$end;$i++) {
+	    $name=&mkname($i);
+	    unlink "$curworkdir/$name$img_ext";
+	}
+
+	
     }
+    else {
+	## insert was AFTER, remove excess frames
+	for ($i=$frames+1;$i<=$frames+$frames_inserted;$i++) {
+	    $name=&mkname($i);
+	    unlink "$curworkdir/$name$img_ext";
+	}
+    }
+
 }
 
 

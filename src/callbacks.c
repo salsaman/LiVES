@@ -3368,11 +3368,6 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     cfile->end=end;
 
     if (with_sound) {
-      char *afile=lives_build_filename(prefs->workdir,cfile->handle,"audio",NULL);
-      boolean timeout;
-      int alarm_handle=lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-      int fd;
-      
       // desample clipboard audio
       if (cb_audio_change&&!prefs->conserve_space) {
         lives_rm(clipboard->info_file);
@@ -3386,12 +3381,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
       }
 
       // seems like we need to wait for the audio.bak to be renamed (!)
-      while ((fd=open(afile,O_RDONLY))==-1 || (timeout=lives_alarm_get(alarm_handle))) {
-	lives_usleep(prefs->sleep_time);
-      }
-      if (fd!=-1) close(fd);
-      lives_free(afile);
-      lives_alarm_clear(alarm_handle);
+      wait_for_bg_audio_sync(cfile);
     }
 
     if (cb_video_change) {

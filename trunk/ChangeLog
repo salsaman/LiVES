@@ -1,4 +1,15 @@
-Vesion 2.8.1 (23 October 2016)
+Version 2.8.2 (27 November 2016)
+--------------------------------
+Fix loss of audio when cancelling Insert operation in Clip Editor.
+Minor compilation fix for Toonz plugins.
+Updated translation to Ukranian (Yuri Chornoivan).
+
+
+
+
+
+
+Version 2.8.1 (23 October 2016)
 ------------------------------
 Fix various security issues on multi-user systems - see:
 https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=756565

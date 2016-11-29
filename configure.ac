@@ -5,7 +5,7 @@ ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES,2.8.2-svn,https://sourceforge.net/p/lives/bugs/,,http://lives-video.com)
+AC_INIT(LiVES,2.8.2,https://sourceforge.net/p/lives/bugs/,,http://lives-video.com)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET

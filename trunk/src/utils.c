@@ -4231,13 +4231,13 @@ uint64_t sget_file_size(const char *name) {
   return (uint64_t)(filestat.st_size);
 }
 
- 
+
 void wait_for_bg_audio_sync(lives_clip_t *sfile) {
   char *afile=lives_build_filename(prefs->workdir,sfile->handle,"audio",NULL);
   boolean timeout;
   int alarm_handle=lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
   int fd;
-      
+
   while ((fd=open(afile,O_RDONLY))==-1 && !(timeout=lives_alarm_get(alarm_handle))) {
     lives_usleep(prefs->sleep_time);
   }
@@ -4275,7 +4275,7 @@ void reget_afilesize(int fileno) {
   }
 
   //g_print("pvalss %s %ld\n",afile,sfile->afilesize);
-  
+
   //g_print("sfa = %d\n",sfile->achans);
 
   lives_free(afile);

@@ -3365,7 +3365,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     lives_free(com);
 
     do_progress_dialog(TRUE,FALSE,_("Cancelling"));
-    
+
     cfile->start=start;
     cfile->end=end;
 
@@ -3379,7 +3379,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
         lives_free(com);
         mainw->current_file=current_file;
         clipboard->arps=ocarps;
-	reget_afilesize(0);
+        reget_afilesize(0);
       }
 
     }
@@ -3392,7 +3392,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
       mainw->no_switch_dprint=FALSE;
       mainw->current_file=current_file;
     }
-    
+
     switch_to_file(0,current_file);
     set_undoable(NULL,FALSE);
     mainw->cancelled=CANCEL_USER;

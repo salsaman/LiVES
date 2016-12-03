@@ -88,31 +88,26 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
     timeout=FALSE;
     mainw->read_failed=FALSE;
 
-    do {
-
-      if (!((valfile=fopen(vfile,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-        if (!timeout) {
-          if (!(mainw==NULL)) {
-            weed_plant_t *frame_layer=mainw->frame_layer;
-            mainw->frame_layer=NULL;
-            lives_widget_context_update();
-            mainw->frame_layer=frame_layer;
-          }
-          lives_usleep(prefs->sleep_time);
-        } else break;
-      } else break;
-    } while (!valfile);
+    while (!((valfile=fopen(vfile,"r"))&&!(timeout=lives_alarm_get(alarm_handle)))) {
+      if (mainw!=NULL) {
+	weed_plant_t *frame_layer=mainw->frame_layer;
+	mainw->frame_layer=NULL;
+	lives_widget_context_update();
+	mainw->frame_layer=frame_layer;
+	lives_usleep(prefs->sleep_time);
+      }
+    }
 
     lives_alarm_clear(alarm_handle);
 
     if (timeout) {
-      retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
+      if (mainw!=NULL) retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
     } else {
-      mainw->read_failed=FALSE;
+      if (mainw!=NULL) mainw->read_failed=FALSE;
       lives_fgets(val,maxlen,valfile);
       fclose(valfile);
       lives_rm(vfile);
-      if (mainw->read_failed) {
+      if (mainw!=NULL&&mainw->read_failed) {
         retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
       }
     }
@@ -201,30 +196,26 @@ void get_pref_default(const char *key, char *val, int maxlen) {
 
     alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
-    do {
-      if (!((valfile=fopen(vfile,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-        if (!timeout) {
-          if (!(mainw==NULL)) {
-            weed_plant_t *frame_layer=mainw->frame_layer;
-            mainw->frame_layer=NULL;
-            lives_widget_context_update();
-            mainw->frame_layer=frame_layer;
-          }
-          lives_usleep(prefs->sleep_time);
-        } else break;
-      } else break;
-    } while (!valfile);
+    while (!((valfile=fopen(vfile,"r"))&&!(timeout=lives_alarm_get(alarm_handle)))) {
+      if (mainw!=NULL) {
+	weed_plant_t *frame_layer=mainw->frame_layer;
+	mainw->frame_layer=NULL;
+	lives_widget_context_update();
+	mainw->frame_layer=frame_layer;
+	lives_usleep(prefs->sleep_time);
+      }
+    }
 
     lives_alarm_clear(alarm_handle);
 
     if (timeout) {
-      retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
+      if (mainw!=NULL) retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
     } else {
-      mainw->read_failed=FALSE;
+      if (mainw!=NULL) mainw->read_failed=FALSE;
       lives_fgets(val,maxlen,valfile);
       fclose(valfile);
       lives_rm(vfile);
-      if (mainw->read_failed) {
+      if (mainw!=NULL&&mainw->read_failed) {
         retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
       }
     }

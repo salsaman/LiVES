@@ -3364,6 +3364,8 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     lives_system(com,FALSE);
     lives_free(com);
 
+    do_progress_dialog(TRUE,FALSE,_("Cancelling"));
+    
     cfile->start=start;
     cfile->end=end;
 
@@ -3380,8 +3382,6 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
 	reget_afilesize(0);
       }
 
-      // seems like we need to wait for the audio.bak to be renamed (!)
-      wait_for_bg_audio_sync(cfile);
     }
 
     if (cb_video_change) {
@@ -5944,7 +5944,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
         timeout=FALSE;
         alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
-        while (!((ifile=fopen(info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+        while (!((ifile=fopen(info_file,"r")) && !(timeout=lives_alarm_get(alarm_handle)))) {
           lives_widget_context_update();
           lives_usleep(prefs->sleep_time);
         }
@@ -6068,7 +6068,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
       alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
-      while (!((ifile=fopen(info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))
+      while (!((ifile=fopen(info_file,"r")) && !(timeout=lives_alarm_get(alarm_handle)))
              &&mainw->in_fs_preview) {
         lives_widget_context_update();
         threaded_dialog_spin(0.);
@@ -10911,7 +10911,7 @@ void on_fade_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   desensitize();
   do_threaded_dialog(_("Fading audio..."),FALSE);
-  alarm_handle=lives_alarm_set(1);
+  alarm_handle=lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
   threaded_dialog_spin(0.);
   lives_widget_context_update();

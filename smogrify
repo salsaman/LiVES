@@ -3887,12 +3887,12 @@ if (defined($ARGV[0])) {
     }
 
     if ($command eq "insert") {
-	# with_audio: 0, no audio, 1 video and audio, 2 ONLY audio
-	# for 0 and 1, start, end, where are in frames; for 2, start,end,where are in seconds
-	# with -ve arate means insert silence [with_audio should be 1 or 2]
-	# with -ve times means undo cut/delete [source is same clip dir]
+# with_audio: 0, no audio, 1 video and audio, 2 ONLY audio
+# for 0 and 1, start, end, where are in frames; for 2, start,end,where are in seconds
+# with -ve arate means insert silence [with_audio should be 1 or 2]
+# with -ve times means undo cut/delete [source is same clip dir]
 
-	# with -ve end means "allow missing frames" (used for copying to clipboard)
+# with -ve end means "allow missing frames" (used for copying to clipboard)
 
         unlink "$curworkdir/pause";
         $img_ext=".".$ARGV[2];
@@ -3913,10 +3913,10 @@ if (defined($ARGV[0])) {
 
         smog_chdir("$curworkdir");
 
-	
+
         $allow_missing=0;
         if ($end<0) {
-	    # insert (copy) from (virtual) clip into clipboard
+# insert (copy) from (virtual) clip into clipboard
             $allow_missing=1;
             $end=-$end;
         }
@@ -3924,27 +3924,27 @@ if (defined($ARGV[0])) {
         if (defined($ARGV[17])) {
             $times=$ARGV[17];
             if ($times<0) {
-		# this indicates undoing a previous cut
+# this indicates undoing a previous cut
                 $times=-$times;
                 $undo_cut=1;
                 $new_frames=$num_frames+$end-$start+1;
             } else {
                 if ($start>=0) {
                     &clean_old;
-		    if (-f "audio") {
-			## back this up here for undo
-			smog_rename("audio","audio.bak");
-		    }
+                    if (-f "audio") {
+## back this up here for undo
+                        smog_rename("audio","audio.bak");
+                    }
                 } else {
-		    # $start < 0 tells us to leave backups alone
+# $start < 0 tells us to leave backups alone
                     $start=-$start;
                 }
                 $antialias=&rc_get("antialias");
             }
         }
-	
 
-	
+
+
         if ($with_audio<2) {
             if (!$undo_cut) {
                 if (!$allow_missing) {
@@ -4020,21 +4020,21 @@ if (defined($ARGV[0])) {
     }
 
     if ($command eq "undo_insert") {
-	
-	#clean up after an interrupted insert
+
+#clean up after an interrupted insert
         $start=$ARGV[2];
         $end=$ARGV[3];
         $frames=$ARGV[4];
         $img_ext=".".$ARGV[5];
 
-	# move extra frames back to end
+# move extra frames back to end
         smog_system_sync();
         &undo_insert;
 
         &undo_audio;
-	# will abort on failure
+# will abort on failure
 
-	&clean_old;
+        &clean_old;
 
         &sig_complete;
         exit 0;
@@ -4625,11 +4625,11 @@ sub undo_audio {
             smog_rename("$curworkdir/audio","$curworkdir/audio.new");
         }
         if (-f "$curworkdir/audio.bak") {
-	    unlink "$curworkdir/audio";
+            unlink "$curworkdir/audio";
             smog_rename("$curworkdir/audio.bak","$curworkdir/audio");
         }
         if (-f "$curworkdir/audio.new") {
-	    unlink "$curworkdir/audio.bak";
+            unlink "$curworkdir/audio.bak";
             smog_rename("$curworkdir/audio.new","$curworkdir/audio.bak");
         }
     }
@@ -4700,36 +4700,35 @@ sub reverse {
 
 sub undo_insert {
     $frames_inserted=$end-$start+1;
-    
+
     if ($start<=$frames) {
-	## insert was BEFORE
+## insert was BEFORE
 
-	## $frames is orig frames
-	## we inserted $frames_inserted from start to end
-	
-	for ($i=$end+1+$frames_inserted; $i<=$frames+$frames_inserted; $i++) {
-	    # move any shifted frames back
-	    $name=&mkname($i);
-	    $to=&mkname($i-$frames_inserted);
-	    if (-f "$curworkdir/$name$img_ext") {
-		unlink "$curworkdir/$to$img_ext";
-		smog_rename("$curworkdir/$name$img_ext","$curworkdir/$to$img_ext");
-	    }
-	}
+## $frames is orig frames
+## we inserted $frames_inserted from start to end
 
-	for ($i=$frames+1;$i<=$end;$i++) {
-	    $name=&mkname($i);
-	    unlink "$curworkdir/$name$img_ext";
-	}
+        for ($i=$end+1+$frames_inserted; $i<=$frames+$frames_inserted; $i++) {
+# move any shifted frames back
+            $name=&mkname($i);
+            $to=&mkname($i-$frames_inserted);
+            if (-f "$curworkdir/$name$img_ext") {
+                unlink "$curworkdir/$to$img_ext";
+                smog_rename("$curworkdir/$name$img_ext","$curworkdir/$to$img_ext");
+            }
+        }
 
-	
-    }
-    else {
-	## insert was AFTER, remove excess frames
-	for ($i=$frames+1;$i<=$frames+$frames_inserted;$i++) {
-	    $name=&mkname($i);
-	    unlink "$curworkdir/$name$img_ext";
-	}
+        for ($i=$frames+1; $i<=$end; $i++) {
+            $name=&mkname($i);
+            unlink "$curworkdir/$name$img_ext";
+        }
+
+
+    } else {
+## insert was AFTER, remove excess frames
+        for ($i=$frames+1; $i<=$frames+$frames_inserted; $i++) {
+            $name=&mkname($i);
+            unlink "$curworkdir/$name$img_ext";
+        }
     }
 
 }
@@ -4873,7 +4872,7 @@ sub insert {
     for ($i=$num_frames; $i>$nwhere; $i--) {
         $from=&mkname($i);
         $to=&mkname($i+$frames_to_move);
-	if (-f "$curworkdir/$from$img_ext") {
+        if (-f "$curworkdir/$from$img_ext") {
             smog_rename("$curworkdir/$from$img_ext","$curworkdir/$to$img_ext");
         }
         &sig_progress($new_frames-$i);

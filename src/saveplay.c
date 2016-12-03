@@ -500,8 +500,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
               cfile->opening=FALSE;
 
-	      wait_for_bg_audio_sync(cfile);
-	      
+              wait_for_bg_audio_sync(cfile);
+
               reget_afilesize(mainw->current_file);
               get_total_time(cfile);
 

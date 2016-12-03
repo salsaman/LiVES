@@ -90,11 +90,11 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
 
     while (!((valfile=fopen(vfile,"r"))&&!(timeout=lives_alarm_get(alarm_handle)))) {
       if (mainw!=NULL) {
-	weed_plant_t *frame_layer=mainw->frame_layer;
-	mainw->frame_layer=NULL;
-	lives_widget_context_update();
-	mainw->frame_layer=frame_layer;
-	lives_usleep(prefs->sleep_time);
+        weed_plant_t *frame_layer=mainw->frame_layer;
+        mainw->frame_layer=NULL;
+        lives_widget_context_update();
+        mainw->frame_layer=frame_layer;
+        lives_usleep(prefs->sleep_time);
       }
     }
 
@@ -198,11 +198,11 @@ void get_pref_default(const char *key, char *val, int maxlen) {
 
     while (!((valfile=fopen(vfile,"r"))&&!(timeout=lives_alarm_get(alarm_handle)))) {
       if (mainw!=NULL) {
-	weed_plant_t *frame_layer=mainw->frame_layer;
-	mainw->frame_layer=NULL;
-	lives_widget_context_update();
-	mainw->frame_layer=frame_layer;
-	lives_usleep(prefs->sleep_time);
+        weed_plant_t *frame_layer=mainw->frame_layer;
+        mainw->frame_layer=NULL;
+        lives_widget_context_update();
+        mainw->frame_layer=frame_layer;
+        lives_usleep(prefs->sleep_time);
       }
     }
 

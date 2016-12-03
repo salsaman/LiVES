@@ -4031,11 +4031,11 @@ if (defined($ARGV[0])) {
         smog_system_sync();
         &undo_insert;
 
-        $end=$frames;
-        &undo(1);
-	# will abort on failure
         &undo_audio;
 	# will abort on failure
+
+	&clean_old;
+
         &sig_complete;
         exit 0;
     }
@@ -4625,9 +4625,11 @@ sub undo_audio {
             smog_rename("$curworkdir/audio","$curworkdir/audio.new");
         }
         if (-f "$curworkdir/audio.bak") {
+	    unlink "$curworkdir/audio";
             smog_rename("$curworkdir/audio.bak","$curworkdir/audio");
         }
         if (-f "$curworkdir/audio.new") {
+	    unlink "$curworkdir/audio.bak";
             smog_rename("$curworkdir/audio.new","$curworkdir/audio.bak");
         }
     }
@@ -4705,7 +4707,7 @@ sub undo_insert {
 	## $frames is orig frames
 	## we inserted $frames_inserted from start to end
 	
-	for ($i=$frames+$frames_inserted; $i>$end; $i--) {
+	for ($i=$end+1+$frames_inserted; $i<=$frames+$frames_inserted; $i++) {
 	    # move any shifted frames back
 	    $name=&mkname($i);
 	    $to=&mkname($i-$frames_inserted);
@@ -4871,12 +4873,7 @@ sub insert {
     for ($i=$num_frames; $i>$nwhere; $i--) {
         $from=&mkname($i);
         $to=&mkname($i+$frames_to_move);
-        if ($i<=($new_frames-$frames_to_move)&&!$undo_cut&&-f "$curworkdir/$from$img_ext") {
-# this frame will get overwritten, so back it up
-            smog_copy("$curworkdir/$from$img_ext", "$curworkdir/$from.bak");
-            return if $panic;
-    }
-    if (-f "$curworkdir/$from$img_ext") {
+	if (-f "$curworkdir/$from$img_ext") {
             smog_rename("$curworkdir/$from$img_ext","$curworkdir/$to$img_ext");
         }
         &sig_progress($new_frames-$i);
@@ -4887,7 +4884,6 @@ sub insert {
     if (!defined($antialias)) {
         $antialias="false";
     }
-
 
 #move from $from_handle
     $j=$start;

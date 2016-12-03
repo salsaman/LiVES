@@ -180,7 +180,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
 
     alarm_handle=lives_alarm_set(LIVES_LONGEST_TIMEOUT);
 
-    while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+    while (!((infofile=fopen(cfile->info_file,"r"))&&!(timeout=lives_alarm_get(alarm_handle)))) {
       lives_widget_context_update();
       threaded_dialog_spin(0.);
       lives_usleep(prefs->sleep_time);
@@ -1076,7 +1076,7 @@ boolean get_handle_from_info_file(int index) {
 
     alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
-    while (!((infofile=fopen(mainw->first_info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+    while (!((infofile=fopen(mainw->first_info_file,"r"))&&!(timeout=lives_alarm_get(alarm_handle)))) {
       lives_usleep(prefs->sleep_time);
     }
 
@@ -4024,7 +4024,7 @@ boolean read_headers(const char *file_name) {
 
           alarm_handle=lives_alarm_set(LIVES_LONGEST_TIMEOUT);
 
-          while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+          while (!((infofile=fopen(cfile->info_file,"r"))&&!(timeout=lives_alarm_get(alarm_handle)))) {
             lives_usleep(prefs->sleep_time);
           }
 
@@ -4274,7 +4274,7 @@ boolean read_headers(const char *file_name) {
 
     alarm_handle=lives_alarm_set(LIVES_LONGEST_TIMEOUT);
 
-    while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+    while (!((infofile=fopen(cfile->info_file,"r"))&&!(timeout=lives_alarm_get(alarm_handle)))) {
       lives_usleep(prefs->sleep_time);
     }
 

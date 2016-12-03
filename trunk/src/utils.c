@@ -4238,7 +4238,7 @@ void wait_for_bg_audio_sync(lives_clip_t *sfile) {
   int alarm_handle=lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
   int fd;
       
-  while ((fd=open(afile,O_RDONLY))==-1 || (timeout=lives_alarm_get(alarm_handle))) {
+  while ((fd=open(afile,O_RDONLY))==-1 && !(timeout=lives_alarm_get(alarm_handle))) {
     lives_usleep(prefs->sleep_time);
   }
   if (fd!=-1) close(fd);

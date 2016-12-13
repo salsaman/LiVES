@@ -1,3 +1,12 @@
+Version 2.8.3
+-------------
+Correct errors in cance Insert fix from 2.8.2
+Fix some minor issues with alarm timers.
+Fix trivial focus issue with Insert dialog in Clip Editor.
+
+
+
+
 Version 2.8.2 (27 November 2016)
 --------------------------------
 Fix loss of audio when cancelling Insert operation in Clip Editor.

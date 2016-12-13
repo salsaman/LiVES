@@ -23,7 +23,7 @@ $GUI_NAME="LiVES";
 # Do not change these except for testing !
 
 $background=1;
-$version="2.8.2";
+$version="2.8.3-svn";
 #$dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -4707,7 +4707,7 @@ sub undo_insert {
 ## $frames is orig frames
 ## we inserted $frames_inserted from start to end
 
-        for ($i=$end+1+$frames_inserted; $i<=$frames+$frames_inserted; $i++) {
+        for ($i=$end+1; $i<=$frames+$frames_inserted; $i++) {
 # move any shifted frames back
             $name=&mkname($i);
             $to=&mkname($i-$frames_inserted);

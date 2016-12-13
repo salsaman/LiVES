@@ -7644,7 +7644,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
     const char *tooltip) {
   LiVESWidget *spinbutton=NULL;
 
-  // pack a themed check button into box
+  // pack a themed spin button into box
 
 
   LiVESWidget *eventbox=NULL;

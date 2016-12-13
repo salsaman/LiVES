@@ -776,6 +776,8 @@ _insertw *create_insert_dialog(void) {
   insertw->spinbutton_times = lives_standard_spin_button_new(_("_Number of times to insert"),
                               TRUE,1.,1.,10000.,1.,10.,0.,LIVES_BOX(hbox),NULL);
 
+  lives_widget_grab_focus(insertw->spinbutton_times);
+
   add_fill_to_box(LIVES_BOX(hbox1));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -873,7 +875,6 @@ _insertw *create_insert_dialog(void) {
   lives_dialog_add_action_widget(LIVES_DIALOG(insertw->insert_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
-  lives_widget_grab_focus(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(insertw->with_sound), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_insertwsound_toggled),
@@ -890,15 +891,13 @@ _insertw *create_insert_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(insertw->fit_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_insfitaudio_toggled),
                        NULL);
+
   lives_signal_connect_after(LIVES_GUI_OBJECT(insertw->spinbutton_times), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_spin_value_changed),
                              LIVES_INT_TO_POINTER(1));
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
-  lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                               LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(insertw->insert_dialog);
 

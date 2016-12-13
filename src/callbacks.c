@@ -2863,7 +2863,7 @@ void on_insert_pre_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_insert_activate(LiVESButton *button, livespointer user_data) {
-  double times_to_insert=mainw->fx1_val;
+  double times_to_insert;
   double audio_stretch;
 
   char *com;
@@ -2881,8 +2881,8 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
   boolean all_virtual=FALSE;
 
   int where=cfile->start-1;
-  int start=cfile->start;
-  int end=cfile->end;
+  int start=cfile->start,ostart=start;
+  int end=cfile->end,oend=end;
 
   int hsize=cfile->hsize;
   int vsize=cfile->vsize;
@@ -2921,6 +2921,14 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     }
   }
 
+  if (button!=NULL) {
+    lives_widget_destroy(insertw->insert_dialog);
+    lives_widget_context_update(); // call to update fx1_val, in case activates_default was called from spin entry
+    lives_free(insertw);
+  }
+
+  times_to_insert=mainw->fx1_val;
+
   // fit video to audio if requested
   if (mainw->fx1_bool&&(cfile->asampsize*cfile->arate*cfile->achans)) {
     // "insert to fit audio" : number of inserts is (audio_time - video_time) / clipboard_time
@@ -2931,10 +2939,6 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     do_error_dialog(
       _("\n\nVideo is longer than audio.\nTry selecting all frames, and then using \nthe 'Trim Audio' function from the Audio menu."));
     mainw->error=TRUE;
-    if (button!=NULL) {
-      lives_widget_destroy(insertw->insert_dialog);
-      lives_free(insertw);
-    }
     return;
   }
 
@@ -2972,10 +2976,6 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     if ((mainw->xlays=layout_frame_is_affected(mainw->current_file,insert_start))!=NULL) {
       if (!do_warning_dialog
           (_("\nInsertion will cause frames to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-        if (button!=NULL) {
-          lives_widget_destroy(insertw->insert_dialog);
-          lives_free(insertw);
-        }
         mainw->error=TRUE;
         lives_list_free_all(&mainw->xlays);
         return;
@@ -3012,10 +3012,6 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,(insert_start-1.)/cfile->fps))!=NULL) {
       if (!do_warning_dialog
           (_("\nInsertion will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-        if (button!=NULL) {
-          lives_widget_destroy(insertw->insert_dialog);
-          lives_free(insertw);
-        }
         mainw->error=TRUE;
         lives_list_free_all(&mainw->xlays);
         return;
@@ -3039,9 +3035,6 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
   }
 
   if (button!=NULL) {
-    lives_widget_destroy(insertw->insert_dialog);
-    lives_widget_context_update();
-    lives_free(insertw);
     if ((cfile->fps!=clipboard->fps&&orig_frames>0)||(cfile->arps!=clipboard->arps&&clipboard->achans>0&&with_sound)) {
       if (!do_clipboard_fps_warning()) {
         mainw->error=TRUE;
@@ -3366,8 +3359,8 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
 
     do_progress_dialog(TRUE,FALSE,_("Cancelling"));
 
-    cfile->start=start;
-    cfile->end=end;
+    cfile->start=ostart;
+    cfile->end=oend;
 
     if (with_sound) {
       // desample clipboard audio

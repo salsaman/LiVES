@@ -1,6 +1,6 @@
 // main.h
 // LiVES
-// (c) G. Finch (salsaman@gmail.com) 2003 - 2016
+// (c) G. Finch (salsaman@gmail.com) 2003 - 2017
 // see file ../COPYING for full licensing details
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -225,7 +225,7 @@ typedef int lives_pgid_t;
 
 #define LIVES_DEVICE_DIR "/dev/"
 
-#define LIVES_COPYRIGHT_YEARS "2002 - 2016"
+#define LIVES_COPYRIGHT_YEARS "2002 - 2017"
 
 #define LIVES_WEBSITE PACKAGE_URL
 #define LIVES_MANUAL_URL LIVES_WEBSITE "/manual/"
@@ -601,6 +601,10 @@ typedef struct {
   double laudio_time;
   double raudio_time;
   double pointer_time;
+
+  // used only for insert_silence, holds pre-padding length for undo
+  double old_laudio_time;
+  double old_raudio_time;
 
   // current and last played index frames for internal player
   int frameno;

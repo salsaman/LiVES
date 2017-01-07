@@ -1125,7 +1125,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
   LiVESWidget *vboxx;
   LiVESWidget *vbox2;
   LiVESWidget *frame;
-  LiVESWidget *label_aud=NULL;
   LiVESWidget *combo_entry2;
   LiVESWidget *combo_entry3;
   LiVESWidget *combo_entry1;
@@ -1320,6 +1319,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
   if (type<9||type==11) {
     if (type>=3&&type!=11) tmp=lives_strdup(_("Audio"));
+    else if (type==2) tmp=lives_strdup(_("New Audio Details"));
     else tmp=lives_strdup(_("New"));
 
     frame = lives_standard_frame_new(tmp,0.,FALSE);
@@ -1594,8 +1594,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
   }
 
   lives_widget_show_all(vboxx);
-
-  if (type==2) lives_widget_hide(label_aud);
 
   lives_list_free(channels);
   lives_list_free(sampsize);

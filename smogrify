@@ -23,7 +23,7 @@ $GUI_NAME="LiVES";
 # Do not change these except for testing !
 
 $background=1;
-$version="2.8.3";
+$version="2.8.4-svn";
 #$dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -4000,6 +4000,7 @@ if (defined($ARGV[0])) {
                         $where/=$fps;
                     }
                 }
+
                 &insert_audio($asamps,$achans,$asigned,$aendian,$undo_cut);
                 if (&rc_get("conserve_space") eq "true") {
                     unlink "audio.bak";
@@ -6354,7 +6355,6 @@ $audio_file=$audio_to;
 # step 2 - pad with silence to insertion point (if necessary)
 &append_silence(0,$wpos,$xxsamps,$xxchans,$xxsigned,$xxendian);
 return if $panic;
-
 
 ####################################################
 # step 3 - insert new section (possibly multiple times)

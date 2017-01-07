@@ -1,6 +1,15 @@
-Version 2.8.3
+Version 2.8.4
 -------------
-Correct errors in cance Insert fix from 2.8.2
+Fix error in Insert Silence (regression).
+Fix minor issue with Undo Insert Silence.
+Minor GUI updates for Insert Silence dialog.
+
+
+
+
+Version 2.8.3 (28 December 2016)
+--------------------------------
+Correct errors in Cancel Insert fix from 2.8.2
 Fix some minor issues with alarm timers.
 Fix trivial focus issue with Insert dialog in Clip Editor.
 

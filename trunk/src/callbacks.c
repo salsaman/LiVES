@@ -1,6 +1,6 @@
 // callbacks.c
 // LiVES
-// (c) G. Finch 2003 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2017 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1935,9 +1935,13 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
   if (cfile->undo_action==UNDO_INSERT_SILENCE) {
+    double start=cfile->undo1_dbl;
+    // if old audio end < start then we want to delete from oae to end
+    if (cfile->old_laudio_time<start) cfile->undo1_dbl=cfile->old_laudio_time;
     on_del_audio_activate(NULL,NULL);
     cfile->undo_action=UNDO_INSERT_SILENCE;
     set_redoable(_("Insert Silence"),TRUE);
+    cfile->undo1_dbl=start;
   }
 
   if (cfile->undo_action==UNDO_CUT||cfile->undo_action==UNDO_DELETE||cfile->undo_action==UNDO_DELETE_AUDIO) {
@@ -11504,8 +11508,12 @@ boolean on_ins_silence_activate(LiVESMenuItem *menuitem, livespointer user_data)
   cfile->undo2_dbl=end;
   end*=(double)cfile->arate/(double)cfile->arps;
 
+  // store values for undo
+  cfile->old_laudio_time=cfile->laudio_time;
+  cfile->old_raudio_time=cfile->raudio_time;
+
   // with_sound is 2 (audio only), therfore start, end, where, are in seconds. rate is -ve to indicate silence
-  com=lives_strdup_printf("%s insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d",
+  com=lives_strdup_printf("%s insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d 1",
                           prefs->backend, cfile->handle,
                           get_image_ext_for_type(cfile->img_type), start, end-start, cfile->handle, -cfile->arps,
                           cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),

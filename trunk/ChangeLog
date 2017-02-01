@@ -1,5 +1,12 @@
-Version 2.8.4
+Version 2.8.5
 -------------
+Fix compiler error and warnings for gcc 7 (https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=853520)
+
+
+
+
+Version 2.8.4 (14 Jan 2017)
+---------------------------
 Fix error in Insert Silence (regression).
 Fix minor issue with Undo Insert Silence.
 Minor GUI updates for Insert Silence dialog.

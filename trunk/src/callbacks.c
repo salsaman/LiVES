@@ -5976,7 +5976,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       height=width=0;
     }
 
-    if (height*width) {
+    if (height>0&&width>0) {
       // draw image
       LiVESError *error=NULL;
       char *thumb=lives_strdup_printf("%s/thm%d/%08d.%s",prefs->workdir,pid,1,prefs->image_ext);
@@ -6007,7 +6007,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
   }
 
 
-  if (!(height*width)&&preview_type!=LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
+  if ((height==0||width==0)&&preview_type!=LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
     // media preview
 
     if (!capable->has_mplayer&&!(capable->has_mplayer2
@@ -6123,6 +6123,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
         width=owidth;
         height=oheight;
       }
+
 
       lives_alignment_set(LIVES_ALIGNMENT(mainw->fs_playalign),0.5,
                           0.5,0.,
@@ -6717,7 +6718,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
       if (mainw->ext_playback&&mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {
         // fixed o/p size for stream
-        if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
+        if (mainw->vpp->fwidth==0||mainw->vpp->fheight==0) {
           mainw->vpp->fwidth=cfile->hsize;
           mainw->vpp->fheight=cfile->vsize;
         }
@@ -6904,7 +6905,7 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_widget_context_update();
       mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
       mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
-    } while (!(mainw->pwidth*mainw->pheight));
+    } while (mainw->pwidth==0||mainw->pheight==0);
     unblock_expose();
 
     if (mainw->sep_win) {
@@ -7089,7 +7090,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
         if (mainw->ext_playback&&mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {
           // fixed o/p size for stream
-          if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
+          if (mainw->vpp->fwidth==0||mainw->vpp->fheight==0) {
             mainw->vpp->fwidth=cfile->hsize;
             mainw->vpp->fheight=cfile->vsize;
           }

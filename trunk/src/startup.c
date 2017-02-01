@@ -504,7 +504,7 @@ static boolean fail_test(LiVESWidget *table, int row, char *ftext) {
 }
 
 
-LIVES_INLINE char *get_resource(char *fname) {
+static LIVES_INLINE char *get_resource(char *fname) {
   return lives_strdup_printf("%s%sresources/%s",prefs->prefix_dir,DATA_DIR,fname);
 }
 

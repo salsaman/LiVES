@@ -959,7 +959,7 @@ void **mt_get_pchain(void) {
 }
 
 
-LIVES_INLINE char *get_track_name(lives_mt *mt, int track_num, boolean is_audio) {
+static LIVES_INLINE char *get_track_name(lives_mt *mt, int track_num, boolean is_audio) {
   LiVESWidget *xeventbox;
   if (track_num<0) return lives_strdup(_("Backing audio"));
   if (!is_audio) xeventbox=(LiVESWidget *)lives_list_nth_data(mt->video_draws,track_num);
@@ -968,7 +968,7 @@ LIVES_INLINE char *get_track_name(lives_mt *mt, int track_num, boolean is_audio)
 }
 
 
-LIVES_INLINE double get_time_from_x(lives_mt *mt, int x) {
+static LIVES_INLINE double get_time_from_x(lives_mt *mt, int x) {
   double time=(double)x/(double)lives_widget_get_allocation_width(mt->timeline)*(mt->tl_max-mt->tl_min)+mt->tl_min;
   if (time<0.) time=0.;
   else if (time>mt->end_secs+1./mt->fps) time=mt->end_secs+1./mt->fps;
@@ -976,7 +976,7 @@ LIVES_INLINE double get_time_from_x(lives_mt *mt, int x) {
 }
 
 
-LIVES_INLINE void set_params_unchanged(lives_rfx_t *rfx) {
+static LIVES_INLINE void set_params_unchanged(lives_rfx_t *rfx) {
   int i;
   for (i=0; i<rfx->num_params; i++) rfx->params[i].changed=FALSE;
 }
@@ -3245,7 +3245,7 @@ void mt_tl_move(lives_mt *mt, double pos) {
 }
 
 
-LIVES_INLINE void mt_tl_move_relative(lives_mt *mt, double pos_rel) {
+static LIVES_INLINE void mt_tl_move_relative(lives_mt *mt, double pos_rel) {
   mt_tl_move(mt,mt->ptr_time+pos_rel);
 }
 
@@ -3416,16 +3416,17 @@ boolean mt_trup(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVES
 
 
 
-LIVES_INLINE int poly_page_to_tab(uint32_t page) {
+static LIVES_INLINE int poly_page_to_tab(uint32_t page) {
   return ++page;
 }
 
-LIVES_INLINE int poly_tab_to_page(uint32_t tab) {
+
+static LIVES_INLINE int poly_tab_to_page(uint32_t tab) {
   return --tab;
 }
 
 
-LIVES_INLINE lives_mt_poly_state_t get_poly_state_from_page(lives_mt *mt) {
+static LIVES_INLINE lives_mt_poly_state_t get_poly_state_from_page(lives_mt *mt) {
   return (lives_mt_poly_state_t)poly_page_to_tab(lives_notebook_get_current_page(LIVES_NOTEBOOK(mt->nb)));
 }
 

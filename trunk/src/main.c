@@ -7072,7 +7072,7 @@ void load_frame_image(int frame) {
 
     if (mainw->files[new_file]==NULL) return;
 
-    if (cfile!=NULL&&old_file*new_file>0&&cfile->opening) {
+    if (cfile!=NULL&&old_file>0&&new_file>0&&cfile->opening) {
       if (prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
         do_error_dialog(
           _("\n\nLiVES cannot switch clips whilst opening if the audio player is set to mplayer or mplayer2.\n"
@@ -7102,7 +7102,7 @@ void load_frame_image(int frame) {
     }
 
     if (old_file!=new_file) {
-      if (old_file*new_file) mainw->preview_frame=0;
+      if (old_file!=0&&new_file!=0) mainw->preview_frame=0;
       if (old_file!=-1) {
         // TODO - indicate "opening" in clipmenu
 

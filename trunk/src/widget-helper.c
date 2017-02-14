@@ -999,13 +999,21 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
       state_str=":active";
       break;
     case GTK_STATE_FLAG_PRELIGHT:
+#if GTK_CHECK_VERSION(3,18,0)
+      state_str=":hover";
+#else
       state_str=":prelight";
+#endif
       break;
     case GTK_STATE_FLAG_SELECTED:
       state_str=":selected";
       break;
     case GTK_STATE_FLAG_INSENSITIVE:
+#if GTK_CHECK_VERSION(3,18,0)
+      state_str=":disabled";
+#else
       state_str=":insensitive";
+#endif
       break;
     default:
       state_str="";

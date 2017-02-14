@@ -137,7 +137,7 @@ mkv_libs = mkv_decoder.la
 MKVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@ @LIBZ_LIBS@ @LIBBZ_LIBS@
 MKVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ @LIBZ_CFLAGS@ @LIBBZ_CFLAGS@ \
 	-Wno-deprecated-declarations
-mkv_decoder_la_SOURCES = mkv_decoder.c mkv_decoder.h
+mkv_decoder_la_SOURCES = mkv_decoder.c mkv_decoder.h dec_helper.c
 mkv_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(MKVDEC_CFLAGS)
 mkv_decoder_la_LDFLAGS = $(shared_ldflags) $(MKVDEC_LIBS)
 

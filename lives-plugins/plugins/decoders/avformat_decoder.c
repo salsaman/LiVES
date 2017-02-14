@@ -50,7 +50,7 @@ const char *plugin_version="LiVES avformat decoder version 1.0";
 static pthread_mutex_t avcodec_mutex=PTHREAD_MUTEX_INITIALIZER;
 
 #define FAST_SEEK_LIMIT 50000 // microseconds (default 0.1 sec)
-#define NO_SEEK_LIMIT 1000000 // microseconds
+#define NO_SEEK_LIMIT 2000000 // microseconds
 #define LNO_SEEK_LIMIT 10000000 // microseconds
 
 #define SEEK_SUCCESS_MIN_RATIO 0.5 // how many frames we can seek to vs. suggested duration

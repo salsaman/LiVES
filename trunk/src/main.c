@@ -1882,15 +1882,22 @@ void do_start_messages(void) {
   show_detected_or_not(capable->has_dvgrab,"dvgrab");
   show_detected_or_not(capable->has_xwininfo,"xwininfo");
 
+  prefs->wm=NULL;
+  
+#ifdef GDK_WINDOWING_WAYLAND
+if (GDK_IS_WAYLAND_DISPLAY (mainw->mgeom[0].disp))
+  prefs->wm=lives_strdup("Wayland");
+#endif
 #ifdef GDK_WINDOWING_X11
+ if (GDK_IS_X11_DISPLAY (mainw->mgeom[0].disp))
   prefs->wm=lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
-#else
+#endif
 #ifdef IS_MINGW
   prefs->wm=lives_strdup_printf(_("Windows version %04X"),WINVER);
-#else
-  prefs->wm=lives_strdup((_("UNKNOWN - please patch me !")));
 #endif
-#endif
+  if (prefs->wm==NULL) 
+    prefs->wm=lives_strdup((_("UNKNOWN - please patch me !")));
+
 
   lives_snprintf(mainw->msg,512,_("\n\nWindow manager reports as \"%s\"; "),prefs->wm);
   d_print(mainw->msg);

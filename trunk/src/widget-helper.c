@@ -7220,6 +7220,9 @@ LIVES_INLINE lives_display_t lives_widget_get_display_type(LiVESWidget *widget) 
   LiVESXDisplay *display=gtk_widget_get_display(widget);
   display=display; // stop compiler complaining
   if (GDK_IS_X11_DISPLAY(display)) dtype=LIVES_DISPLAY_TYPE_X11;
+#ifdef GDK_WINDOWING_WAYLAND
+  else if (GDK_IS_WAYLAND_DISPLAY(display)) dtype=LIVES_DISPLAY_TYPE_WAYLAND;
+#endif
   else if (GDK_IS_WIN32_DISPLAY(display)) dtype=LIVES_DISPLAY_TYPE_WIN32;
 #endif
 #ifdef GUI_QT

@@ -1,7 +1,10 @@
 Version 2.8.5
 -------------
 Fix compiler error and warnings for gcc 7 (https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=853520)
-
+Fix regression in mkv_decoder.
+Change max seek allowed from 1 second to 2 seconds in avformat decoder.
+Update css state selectors for gtk 3.18+
+Experimental support for Wayland.
 
 
 

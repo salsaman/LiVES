@@ -82,6 +82,10 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #endif
 
+#ifdef HAVE_WAYLAND
+#include <gdk/gdkwayland.h>
+#endif
+
 #ifdef IS_MINGW
 
 #ifndef WINVER

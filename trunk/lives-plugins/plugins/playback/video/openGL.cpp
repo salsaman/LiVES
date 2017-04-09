@@ -858,8 +858,9 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
 
   error = glGetError();
   if( error != GL_NO_ERROR ) {
-    char *msg = "";
-      
+    char const *msg;
+
+    
     if( error == GL_INVALID_ENUM )	msg = "GL_INVALID_ENUM";
     else if( error == GL_INVALID_VALUE ) msg = "GL_INVALID_VALUE";
     else if( error ==    GL_INVALID_OPERATION) msg = "GL_INVALID_OPERATION";

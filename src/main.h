@@ -86,6 +86,12 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <gdk/gdkwayland.h>
 #endif
 
+#ifdef GDK_WINDOWING_WAYLAND
+#ifndef GDK_IS_WAYLAND_DISPLAY
+#define GDK_IS_WAYLAND_DISPLAY(a) FALSE
+#endif
+#endif
+
 #ifdef IS_MINGW
 
 #ifndef WINVER
@@ -118,6 +124,7 @@ typedef PROCESS_INFORMATION *lives_pgid_t;
 #else
 #include <sys/types.h>
 #include <unistd.h>
+
 #endif // GUI_GTK
 
 typedef pid_t lives_pid_t;

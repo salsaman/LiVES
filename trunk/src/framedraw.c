@@ -289,7 +289,7 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
 
   if (fd_width>width) fd_width=width;
   if (fd_height>height) fd_height=height;
-
+  
   calc_maxspect(fd_width,fd_height,&width,&height);
 
   // copy from orig, resize
@@ -303,7 +303,7 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
 
   mainw->fd_layer=weed_layer_copy(NULL,mainw->fd_layer_orig);
   // resize to correct size
-
+  
   resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST, WEED_PALETTE_END, 0);
 
   cr=layer_to_lives_painter(mainw->fd_layer);

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2017-01-31 22:09-0300\n"
+"POT-Creation-Date: 2017-04-09 15:09-0300\n"
 "PO-Revision-Date: 2015-11-25 22:11+0000\n"
 "Last-Translator: Jean-Marc <Unknown>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -215,16 +215,16 @@ msgstr "mplayer... NON DÉTECTÉ..."
 msgid "Checking optional dependencies: "
 msgstr "Vérification des dépendances optionnelles :"
 
-#: src/main.c:1889
+#: src/main.c:1896
 #, c-format
 msgid "Windows version %04X"
 msgstr "Windows version %04X"
 
-#: src/main.c:1891
+#: src/main.c:1899
 msgid "UNKNOWN - please patch me !"
 msgstr "INCONNU - veuillez me corriger !"
 
-#: src/main.c:1895
+#: src/main.c:1902
 #, c-format
 msgid ""
 "\n"
@@ -235,53 +235,53 @@ msgstr ""
 "\n"
 "Le gestionnaire de fenêtres apparaît comme étant  \"%s\"; "
 
-#: src/main.c:1898
+#: src/main.c:1905
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "nombre d'écrans détectés : %d\n"
 
-#: src/main.c:1901
+#: src/main.c:1908
 #, c-format
 msgid "Number of CPUs detected: %d "
 msgstr "nombre de CPU détectés : %d "
 
-#: src/main.c:1904 src/multitrack.c:5071
+#: src/main.c:1911 src/multitrack.c:5071
 msgid "little endian"
 msgstr "petit boutien"
 
-#: src/main.c:1905 src/multitrack.c:5070
+#: src/main.c:1912 src/multitrack.c:5070
 msgid "big endian"
 msgstr "grand boutien"
 
-#: src/main.c:1906
+#: src/main.c:1913
 #, c-format
 msgid "(%d bits, %s)\n"
 msgstr "(%d bits, %s)\n"
 
-#: src/main.c:1910
+#: src/main.c:1917
 msgid "GUI type is: "
 msgstr ""
 
-#: src/main.c:1915
+#: src/main.c:1922
 #, c-format
 msgid "GTK+ version %d.%d.%d (compiled with %d.%d.%d)"
 msgstr "GTK+ version %d.%d.%d (compilé avec %d.%d.%d)"
 
-#: src/main.c:1927
+#: src/main.c:1934
 #, fuzzy, c-format
 msgid "GTK+ (compiled with %d.%d.%d)"
 msgstr "GTK+ version %d.%d.%d (compilé avec %d.%d.%d)"
 
-#: src/main.c:1939
+#: src/main.c:1946
 msgid ", with cairo support"
 msgstr ", avec prise en charge cairo"
 
-#: src/main.c:1946
+#: src/main.c:1953
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Le dossier temporaire est %s\n"
 
-#: src/main.c:1950
+#: src/main.c:1957
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -291,15 +291,15 @@ msgstr ""
 "prise en charge de jack ou de pulse audio.\n"
 "De nombreuses fonctions ne seront pas disponibles.\n"
 
-#: src/main.c:1953
+#: src/main.c:1960
 msgid "Compiled with jack support, good !\n"
 msgstr "Compilé avec prise en charge de jack, bien !\n"
 
-#: src/main.c:1956
+#: src/main.c:1963
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Compilé avec prise en charge de Pulse Audio, génial !\n"
 
-#: src/main.c:1960
+#: src/main.c:1967
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -308,7 +308,7 @@ msgstr ""
 "Bienvenue sur LiVES version %s.\n"
 "\n"
 
-#: src/main.c:2581
+#: src/main.c:2588
 #, c-format
 msgid ""
 "\n"
@@ -318,82 +318,82 @@ msgstr ""
 "La syntaxe de lancement est : %s [options] [nomfichier [start_time] "
 "[frames]]\n"
 
-#: src/main.c:2582
+#: src/main.c:2589
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr ""
 "Où : nomfichier est le nom d'un fichier média ou d'un fichier de "
 "sauvegarde.\n"
 
-#: src/main.c:2583
+#: src/main.c:2590
 msgid "start_time : filename start time in seconds\n"
 msgstr "start_time : temps de début de filename en secondes.\n"
 
-#: src/main.c:2584
+#: src/main.c:2591
 msgid "frames : maximum number of frames to open\n"
 msgstr "frames : nombre maximal d'images à ouvrir\n"
 
-#: src/main.c:2586
+#: src/main.c:2593
 msgid "opts can be:\n"
 msgstr "opts peut être :\n"
 
-#: src/main.c:2587
+#: src/main.c:2594
 msgid "-help            : show this help text and exit\n"
 msgstr "-help : affiche l'aide et quitte.\n"
 
-#: src/main.c:2588
+#: src/main.c:2595
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 "-tmpdir <repertoiretemporaire> : utiliser un autre répertoire de travail "
 "(ex : /var/ramdisk)\n"
 
-#: src/main.c:2589
+#: src/main.c:2596
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr ""
 "-set <nom_du_set> : charger automatiquement l'ensemble de clips nom_du_set\n"
 
-#: src/main.c:2590
+#: src/main.c:2597
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset : ne charger aucun profil au démarrage\n"
 
-#: src/main.c:2591
+#: src/main.c:2598
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-norecover : désactiver la récupération automatique en cas de crash\n"
 
-#: src/main.c:2592
+#: src/main.c:2599
 msgid "-recover         : force loading of crash recovery\n"
 msgstr ""
 "-recover         : force le chargement du recouvrement après un crash\n"
 
-#: src/main.c:2593
+#: src/main.c:2600
 msgid ""
 "-nothreaddialog  : does nothing - retained for backwards compatibility\n"
 msgstr ""
 
-#: src/main.c:2594
+#: src/main.c:2601
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui : lance le programme sans l'interface graphique.\n"
 
-#: src/main.c:2595
+#: src/main.c:2602
 msgid "-nosplash        : do not show the splash window\n"
 msgstr "-nosplash : ne pas montrer la fenêtre de démarrage\n"
 
-#: src/main.c:2596
+#: src/main.c:2603
 msgid "-noplaywin       : do not show the play window\n"
 msgstr "-noplaywin : ne pas montrer la fenêtre de lecture\n"
 
-#: src/main.c:2597
+#: src/main.c:2604
 msgid "-noninteractive  : disable menu interactivity\n"
 msgstr ""
 
-#: src/main.c:2598
+#: src/main.c:2605
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-startup-ce : démarrer en mode éditeur de clip\n"
 
-#: src/main.c:2599
+#: src/main.c:2606
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-startup-mt : démarrer en mode multipiste\n"
 
-#: src/main.c:2600
+#: src/main.c:2607
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
@@ -401,30 +401,30 @@ msgstr ""
 "-fxmodesmax <n> : permet <n> modes par clé d'effet (minimum : 1, valeur par "
 "défaut : 8)\n"
 
-#: src/main.c:2602
+#: src/main.c:2609
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr "-oscstart <port> : démarrer l'écoute de OSC sur le port UDP <port>\n"
 
-#: src/main.c:2603
+#: src/main.c:2610
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart  : ne pas démarrer l'écouteur OSC\n"
 
-#: src/main.c:2605
+#: src/main.c:2612
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer, "
 "mplayer2"
 msgstr ""
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2608
+#: src/main.c:2615
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:2611
+#: src/main.c:2618
 msgid ", sox or jack\n"
 msgstr ", sox ou jack\n"
 
-#: src/main.c:2613
+#: src/main.c:2620
 #, fuzzy
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
@@ -436,17 +436,17 @@ msgstr ""
 "serveur de transport jack, 8 = mettre l'audio en pause quand la vidéo est "
 "mise en pause, 16 = démarrer le serveur audio jack] \n"
 
-#: src/main.c:2617
+#: src/main.c:2624
 msgid " or sox\n"
 msgstr " ou sox\n"
 
-#: src/main.c:2619
+#: src/main.c:2626
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr ""
 "-devicemap <mapname> : lancer automatiquement la cartographie des "
 "périphériques\n"
 
-#: src/main.c:2621
+#: src/main.c:2628
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
@@ -455,15 +455,15 @@ msgstr ""
 "lecture vidéo depuis <fichier> (Remarque : définit seulement la "
 "configuration, pas le type du plugin)\n"
 
-#: src/main.c:2622
+#: src/main.c:2629
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr "-debug : essayer de debugger les crashs (nécessite 'gdb' installé)\n"
 
-#: src/main.c:2652 src/gui.c:1132
+#: src/main.c:2659 src/gui.c:1132
 msgid "Starting GUI..."
 msgstr "Démarrage de l'interface graphique..."
 
-#: src/main.c:2681
+#: src/main.c:2688
 #, c-format
 msgid ""
 "\n"
@@ -474,7 +474,7 @@ msgid ""
 "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"
 msgstr ""
 
-#: src/main.c:2699
+#: src/main.c:2706
 #, c-format
 msgid ""
 "\n"
@@ -482,7 +482,7 @@ msgid ""
 "Please make sure you have write access to %s and try again.\n"
 msgstr ""
 
-#: src/main.c:2705
+#: src/main.c:2712
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -496,7 +496,7 @@ msgstr ""
 "Relisez SVP le fichier README livré avec ce programme\n"
 "avant de lancer LiVES.\n"
 
-#: src/main.c:2712
+#: src/main.c:2719
 #, c-format
 msgid ""
 "\n"
@@ -506,7 +506,7 @@ msgid ""
 "Please check the file permissions for this file and try again.\n"
 msgstr ""
 
-#: src/main.c:2720
+#: src/main.c:2727
 #, c-format
 msgid ""
 "\n"
@@ -517,7 +517,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:2731
+#: src/main.c:2738
 #, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -525,7 +525,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:2737
+#: src/main.c:2744
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -540,7 +540,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: src/main.c:2745
+#: src/main.c:2752
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -558,21 +558,21 @@ msgstr ""
 "\n"
 "Merci.\n"
 
-#: src/main.c:2751
+#: src/main.c:2758
 msgid ""
 "\n"
 "LiVES currently requires 'mplayer', 'mplayer2' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2756
+#: src/main.c:2763
 msgid ""
 "\n"
 "LiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to function. "
 "Please install these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2769
+#: src/main.c:2776
 #, fuzzy
 msgid ""
 "\n"
@@ -584,7 +584,7 @@ msgstr ""
 "est contenu dans ImageMagick si vous voulez utiliser les fonctions de "
 "fusion.\n"
 
-#: src/main.c:2775
+#: src/main.c:2782
 #, fuzzy
 msgid ""
 "\n"
@@ -596,7 +596,7 @@ msgstr ""
 "est contenu dans ImageMagick si vous voulez utiliser les fonctions de "
 "fusion.\n"
 
-#: src/main.c:2783
+#: src/main.c:2790
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -606,7 +606,7 @@ msgstr ""
 "LiVES n'arrive pas à trouver 'convert'. Vous devez installer convert qui est "
 "contenu dans ImageMagick si vous voulez utiliser les effets de rendu.\n"
 
-#: src/main.c:2788
+#: src/main.c:2795
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -617,7 +617,7 @@ msgstr ""
 "est contenu dans ImageMagick si vous voulez utiliser les fonctions de "
 "fusion.\n"
 
-#: src/main.c:2792
+#: src/main.c:2799
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -627,7 +627,7 @@ msgstr ""
 "Lives n'a pas pu trouver 'sox'. Certaines fonctions audios risquent de pas "
 "fonctionner. Vous devriez installer 'sox'.\n"
 
-#: src/main.c:2797
+#: src/main.c:2804
 #, c-format
 msgid ""
 "\n"
@@ -638,63 +638,63 @@ msgid ""
 "You may need to change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/main.c:2833
+#: src/main.c:2840
 msgid "Loading rendered effect plugins..."
 msgstr ""
 
-#: src/main.c:2933
+#: src/main.c:2940
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "En chargeant automatiquement le set %s..."
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:3131
+#: src/main.c:3138
 msgid "LiVES"
 msgstr "LiVES"
 
-#: src/main.c:3319
+#: src/main.c:3326
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Lecteur audio invalide %s\n"
 
-#: src/main.c:3492
+#: src/main.c:3499
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Sans titre%d> %dx%d : %d cadres %d bpp %.3f fps"
 
-#: src/main.c:3497
+#: src/main.c:3504
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? cadres ??? bpp %.3f fps"
 
-#: src/main.c:3500
+#: src/main.c:3507
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d cadres %d bpp %.3f fps"
 
-#: src/main.c:3507
+#: src/main.c:3514
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Pas de Fichier>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:5689
+#: src/main.c:5696
 #, c-format
 msgid "rec %9d/%d"
 msgstr "enr %9d/%d"
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:5694
+#: src/main.c:5701
 #, c-format
 msgid "!rec %9d/%d"
 msgstr "!enr %9d/%d"
 
-#: src/main.c:5986 src/main.c:5987 src/gui.c:1895 src/gui.c:3120
+#: src/main.c:5993 src/main.c:5994 src/gui.c:1895 src/gui.c:3120
 #: src/saveplay.c:2169
 msgid "Play"
 msgstr "Lecture"
 
-#: src/main.c:6684
+#: src/main.c:6691
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -702,34 +702,34 @@ msgstr ""
 "LiVES ne peut capturer cette image\n"
 "\n"
 
-#: src/main.c:6805
+#: src/main.c:6812
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Fichier Fermé %s\n"
 
-#: src/main.c:6987 src/gui.c:733 src/utils.c:4469 src/utils.c:4499
+#: src/main.c:6994 src/gui.c:733 src/utils.c:4469 src/utils.c:4499
 #: src/saveplay.c:3335 src/multitrack.c:4680 src/multitrack.c:6680
 msgid "_Undo"
 msgstr "_Annuler"
 
-#: src/main.c:6988 src/gui.c:749 src/utils.c:4470 src/utils.c:4500
+#: src/main.c:6995 src/gui.c:749 src/utils.c:4470 src/utils.c:4500
 #: src/saveplay.c:3336 src/multitrack.c:4700 src/multitrack.c:6703
 msgid "_Redo"
 msgstr "_Rétablir"
 
-#: src/main.c:7028 src/interface.c:353 src/gui.c:2038 src/resample.c:1486
+#: src/main.c:7035 src/interface.c:353 src/gui.c:2038 src/resample.c:1486
 msgid "Video"
 msgstr "Vidéo"
 
-#: src/main.c:7029 src/interface.c:435 src/gui.c:2051
+#: src/main.c:7036 src/interface.c:435 src/gui.c:2051
 msgid "Left Audio"
 msgstr "Audio Gauche"
 
-#: src/main.c:7030 src/interface.c:475 src/gui.c:2065
+#: src/main.c:7037 src/interface.c:475 src/gui.c:2065
 msgid "Right Audio"
 msgstr "Audio Droite"
 
-#: src/main.c:7078
+#: src/main.c:7085
 msgid ""
 "\n"
 "\n"

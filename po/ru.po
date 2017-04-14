@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2017-01-31 22:09-0300\n"
+"POT-Creation-Date: 2017-04-09 15:09-0300\n"
 "PO-Revision-Date: 2015-04-06 05:53+0000\n"
 "Last-Translator: ☠Jay ZDLin☠ <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -226,16 +226,16 @@ msgstr "mplayer...НЕ ОБНАРУЖЕН..."
 msgid "Checking optional dependencies: "
 msgstr "Проверка опциональных зависимостей:"
 
-#: src/main.c:1889
+#: src/main.c:1896
 #, c-format
 msgid "Windows version %04X"
 msgstr "Версия Windows %04X"
 
-#: src/main.c:1891
+#: src/main.c:1899
 msgid "UNKNOWN - please patch me !"
 msgstr ""
 
-#: src/main.c:1895
+#: src/main.c:1902
 #, c-format
 msgid ""
 "\n"
@@ -246,53 +246,53 @@ msgstr ""
 "\n"
 "Менеджер интерфейса определен как \"%s\"; "
 
-#: src/main.c:1898
+#: src/main.c:1905
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "обнаружено мониторов: %d\n"
 
-#: src/main.c:1901
+#: src/main.c:1908
 #, c-format
 msgid "Number of CPUs detected: %d "
 msgstr "Количество обнаруженных ЦПУ: %d "
 
-#: src/main.c:1904 src/multitrack.c:5071
+#: src/main.c:1911 src/multitrack.c:5071
 msgid "little endian"
 msgstr ""
 
-#: src/main.c:1905 src/multitrack.c:5070
+#: src/main.c:1912 src/multitrack.c:5070
 msgid "big endian"
 msgstr ""
 
-#: src/main.c:1906
+#: src/main.c:1913
 #, c-format
 msgid "(%d bits, %s)\n"
 msgstr "(%d бит, %s)\n"
 
-#: src/main.c:1910
+#: src/main.c:1917
 msgid "GUI type is: "
 msgstr "Тип графической оболочки: "
 
-#: src/main.c:1915
+#: src/main.c:1922
 #, c-format
 msgid "GTK+ version %d.%d.%d (compiled with %d.%d.%d)"
 msgstr "GTK+ версии %d.%d.%d (сборка %d.%d.%d)"
 
-#: src/main.c:1927
+#: src/main.c:1934
 #, fuzzy, c-format
 msgid "GTK+ (compiled with %d.%d.%d)"
 msgstr "GTK+ версии %d.%d.%d (сборка %d.%d.%d)"
 
-#: src/main.c:1939
+#: src/main.c:1946
 msgid ", with cairo support"
 msgstr ", с поддержкой cairo"
 
-#: src/main.c:1946
+#: src/main.c:1953
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Временный каталог: %s\n"
 
-#: src/main.c:1950
+#: src/main.c:1957
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -302,15 +302,15 @@ msgstr ""
 "без поддержки jack или pulse audio.\n"
 "Многие аудиофункции будут недоступны.\n"
 
-#: src/main.c:1953
+#: src/main.c:1960
 msgid "Compiled with jack support, good !\n"
 msgstr "Скомпилировано с поддержкой jack, отлично!\n"
 
-#: src/main.c:1956
+#: src/main.c:1963
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Скомпоновано с поддержкой pulse audio, замечательно !\n"
 
-#: src/main.c:1960
+#: src/main.c:1967
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -319,7 +319,7 @@ msgstr ""
 "Добро пожаловать в LiVES версии %s.\n"
 "\n"
 
-#: src/main.c:2581
+#: src/main.c:2588
 #, c-format
 msgid ""
 "\n"
@@ -328,94 +328,94 @@ msgstr ""
 "\n"
 "Синтаксис запуска: %s [opts] [filename [start_time] [frames]]\n"
 
-#: src/main.c:2582
+#: src/main.c:2589
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr "Где: filename - это имя медиафайла или резервной копии файла.\n"
 
-#: src/main.c:2583
+#: src/main.c:2590
 msgid "start_time : filename start time in seconds\n"
 msgstr "start_time - время начала filename (в сек.)\n"
 
-#: src/main.c:2584
+#: src/main.c:2591
 msgid "frames : maximum number of frames to open\n"
 msgstr "frames : максимальное количество кадров, которые будут открыты\n"
 
-#: src/main.c:2586
+#: src/main.c:2593
 msgid "opts can be:\n"
 msgstr "opts могут быть следующие:\n"
 
-#: src/main.c:2587
+#: src/main.c:2594
 msgid "-help            : show this help text and exit\n"
 msgstr "-help : показать этот текст помощи и выйти\n"
 
-#: src/main.c:2588
+#: src/main.c:2595
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 "-tmpdir <tempdir>: использовать другой рабочий каталог (например /var/"
 "ramdisk)\n"
 
-#: src/main.c:2589
+#: src/main.c:2596
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr "-set <setname>   : автоматическая загрузка сборки <setname>\n"
 
-#: src/main.c:2590
+#: src/main.c:2597
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset           : не загружать какую-либо сборку при запуске\n"
 
-#: src/main.c:2591
+#: src/main.c:2598
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-norecover       : загрузка без режима восстановления после сбоя\n"
 
-#: src/main.c:2592
+#: src/main.c:2599
 msgid "-recover         : force loading of crash recovery\n"
 msgstr "-recover         : загрузка в режиме восстановления после сбоя\n"
 
-#: src/main.c:2593
+#: src/main.c:2600
 #, fuzzy
 msgid ""
 "-nothreaddialog  : does nothing - retained for backwards compatibility\n"
 msgstr ""
 "-nothreaddialog  : ничего не делать, сохранено для обратной совместимости\n"
 
-#: src/main.c:2594
+#: src/main.c:2601
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui: не показывать графический интерфейс\n"
 
-#: src/main.c:2595
+#: src/main.c:2602
 msgid "-nosplash        : do not show the splash window\n"
 msgstr "-nosplash        : не показывать заставку программы\n"
 
-#: src/main.c:2596
+#: src/main.c:2603
 msgid "-noplaywin       : do not show the play window\n"
 msgstr "-noplaywin       : не показывать окно воспроизведения\n"
 
-#: src/main.c:2597
+#: src/main.c:2604
 msgid "-noninteractive  : disable menu interactivity\n"
 msgstr ""
 
-#: src/main.c:2598
+#: src/main.c:2605
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-startup-ce : запуск в режиме редактора\n"
 
-#: src/main.c:2599
+#: src/main.c:2606
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-startup-mt      : запуск в режиме multitrack\n"
 
-#: src/main.c:2600
+#: src/main.c:2607
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
 msgstr ""
 
-#: src/main.c:2602
+#: src/main.c:2609
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr "-oscstart <port> : запуск демона OSC на UDP порту <port>\n"
 
-#: src/main.c:2603
+#: src/main.c:2610
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart      : не запускать OSC демон\n"
 
-#: src/main.c:2605
+#: src/main.c:2612
 #, fuzzy
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer, "
@@ -425,15 +425,15 @@ msgstr ""
 "указать mplayer"
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2608
+#: src/main.c:2615
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:2611
+#: src/main.c:2618
 msgid ", sox or jack\n"
 msgstr ", sox или jack\n"
 
-#: src/main.c:2613
+#: src/main.c:2620
 #, fuzzy
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
@@ -445,31 +445,31 @@ msgstr ""
 "транспорт сервер, 8 = остановить звук когда остановлено видео, 16 = "
 "запустить звуковой jack сервер] \n"
 
-#: src/main.c:2617
+#: src/main.c:2624
 msgid " or sox\n"
 msgstr " или sox\n"
 
-#: src/main.c:2619
+#: src/main.c:2626
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr ""
 "-devicemap <mapname>          : автоматическая загрузка карты устройств\n"
 
-#: src/main.c:2621
+#: src/main.c:2628
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
 msgstr ""
 
-#: src/main.c:2622
+#: src/main.c:2629
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr ""
 "-debug : использовать для отладки ошибок (требуется установленный 'gdb')\n"
 
-#: src/main.c:2652 src/gui.c:1132
+#: src/main.c:2659 src/gui.c:1132
 msgid "Starting GUI..."
 msgstr "Запуск графической оболочки..."
 
-#: src/main.c:2681
+#: src/main.c:2688
 #, c-format
 msgid ""
 "\n"
@@ -486,7 +486,7 @@ msgstr ""
 "%s/%s.\n"
 "(Возможно вам необходимо изменить значение <prefix_dir> в файле %s)\n"
 
-#: src/main.c:2699
+#: src/main.c:2706
 #, c-format
 msgid ""
 "\n"
@@ -498,7 +498,7 @@ msgstr ""
 "Пожалуйста, убедитесь, что у вас есть разрешение на запись в %s и повторите "
 "снова.\n"
 
-#: src/main.c:2705
+#: src/main.c:2712
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -512,7 +512,7 @@ msgstr ""
 "Пожалуйста, изучите файл README, входящий в этот пакет\n"
 "перед запуском LiVES.\n"
 
-#: src/main.c:2712
+#: src/main.c:2719
 #, c-format
 msgid ""
 "\n"
@@ -527,7 +527,7 @@ msgstr ""
 "\n"
 "Пожалуйста, проверьте разрешения файла и повторите снова.\n"
 
-#: src/main.c:2720
+#: src/main.c:2727
 #, c-format
 msgid ""
 "\n"
@@ -544,7 +544,7 @@ msgstr ""
 "Пожалуйста, проверьте разрешения файла и каталога,\n"
 "затем повторите снова.\n"
 
-#: src/main.c:2731
+#: src/main.c:2738
 #, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -555,7 +555,7 @@ msgstr ""
 "%s\n"
 "и повторите снова.\n"
 
-#: src/main.c:2737
+#: src/main.c:2744
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -570,7 +570,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: src/main.c:2745
+#: src/main.c:2752
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -588,7 +588,7 @@ msgstr ""
 "\n"
 "Спасибо.\n"
 
-#: src/main.c:2751
+#: src/main.c:2758
 #, fuzzy
 msgid ""
 "\n"
@@ -599,7 +599,7 @@ msgstr ""
 "Для работы LiVES требуется 'mplayer' или 'sox'. Установите любой из этих "
 "пакетов и повторите ещё раз.\n"
 
-#: src/main.c:2756
+#: src/main.c:2763
 #, fuzzy
 msgid ""
 "\n"
@@ -610,7 +610,7 @@ msgstr ""
 "Для обеспечение работоспособности, LiVES необходимы 'mplayer' и 'sox'. "
 "Пожалуйста, установите их и повторите снова.\n"
 
-#: src/main.c:2769
+#: src/main.c:2776
 #, fuzzy
 msgid ""
 "\n"
@@ -621,7 +621,7 @@ msgstr ""
 "LiVES не обнаружила 'mplayer'. Для полноценного использования LiVES "
 "желательно установить mplayer.\n"
 
-#: src/main.c:2775
+#: src/main.c:2782
 #, fuzzy
 msgid ""
 "\n"
@@ -632,7 +632,7 @@ msgstr ""
 "LiVES не обнаружила 'mplayer'. Для полноценного использования LiVES "
 "желательно установить mplayer.\n"
 
-#: src/main.c:2783
+#: src/main.c:2790
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -642,7 +642,7 @@ msgstr ""
 "LiVES не обнаружила 'convert'. Для наложения эффектов необходимо установить "
 "convert и image-magick.\n"
 
-#: src/main.c:2788
+#: src/main.c:2795
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -652,7 +652,7 @@ msgstr ""
 "LiVES не обнаружила 'composite'. Если вы планируете использовать "
 "композиционные функции, необходимо установить composite и image-magick.\n"
 
-#: src/main.c:2792
+#: src/main.c:2799
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -662,7 +662,7 @@ msgstr ""
 "LiVES не обнаружила 'sox'. Некоторые звуковые функции не будут доступны. "
 "Необходимо установить 'sox'.\n"
 
-#: src/main.c:2797
+#: src/main.c:2804
 #, c-format
 msgid ""
 "\n"
@@ -679,63 +679,63 @@ msgstr ""
 "При их отсутствии, вы не сможете выполнять 'Сохранение'.\n"
 "Возможно вам понадобится изменить значение <lib_dir> в %s\n"
 
-#: src/main.c:2833
+#: src/main.c:2840
 msgid "Loading rendered effect plugins..."
 msgstr "Загрузка надстроек готовых эффектов"
 
-#: src/main.c:2933
+#: src/main.c:2940
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Загрузка сборки %s..."
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:3131
+#: src/main.c:3138
 msgid "LiVES"
 msgstr "LiVES"
 
-#: src/main.c:3319
+#: src/main.c:3326
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Непригодный аудиоплеер %s\n"
 
-#: src/main.c:3492
+#: src/main.c:3499
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Неизвестный%d> %dx%d : %d кадров %d bpp %.3f fps"
 
-#: src/main.c:3497
+#: src/main.c:3504
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? кадров ??? bpp %.3f fps"
 
-#: src/main.c:3500
+#: src/main.c:3507
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d кадров %d bpp %.3f fps"
 
-#: src/main.c:3507
+#: src/main.c:3514
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Нет файла>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:5689
+#: src/main.c:5696
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:5694
+#: src/main.c:5701
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:5986 src/main.c:5987 src/gui.c:1895 src/gui.c:3120
+#: src/main.c:5993 src/main.c:5994 src/gui.c:1895 src/gui.c:3120
 #: src/saveplay.c:2169
 msgid "Play"
 msgstr "Воспроизвести"
 
-#: src/main.c:6684
+#: src/main.c:6691
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -743,34 +743,34 @@ msgstr ""
 "LiVES не может загрузить это изображение\n"
 "\n"
 
-#: src/main.c:6805
+#: src/main.c:6812
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Закрыть файл %s\n"
 
-#: src/main.c:6987 src/gui.c:733 src/utils.c:4469 src/utils.c:4499
+#: src/main.c:6994 src/gui.c:733 src/utils.c:4469 src/utils.c:4499
 #: src/saveplay.c:3335 src/multitrack.c:4680 src/multitrack.c:6680
 msgid "_Undo"
 msgstr "_Отменить"
 
-#: src/main.c:6988 src/gui.c:749 src/utils.c:4470 src/utils.c:4500
+#: src/main.c:6995 src/gui.c:749 src/utils.c:4470 src/utils.c:4500
 #: src/saveplay.c:3336 src/multitrack.c:4700 src/multitrack.c:6703
 msgid "_Redo"
 msgstr "_Вернуть"
 
-#: src/main.c:7028 src/interface.c:353 src/gui.c:2038 src/resample.c:1486
+#: src/main.c:7035 src/interface.c:353 src/gui.c:2038 src/resample.c:1486
 msgid "Video"
 msgstr "Видео"
 
-#: src/main.c:7029 src/interface.c:435 src/gui.c:2051
+#: src/main.c:7036 src/interface.c:435 src/gui.c:2051
 msgid "Left Audio"
 msgstr "Левый звуковой канал"
 
-#: src/main.c:7030 src/interface.c:475 src/gui.c:2065
+#: src/main.c:7037 src/interface.c:475 src/gui.c:2065
 msgid "Right Audio"
 msgstr "Правый звуковой канал"
 
-#: src/main.c:7078
+#: src/main.c:7085
 #, fuzzy
 msgid ""
 "\n"

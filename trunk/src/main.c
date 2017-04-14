@@ -1883,19 +1883,19 @@ void do_start_messages(void) {
   show_detected_or_not(capable->has_xwininfo,"xwininfo");
 
   prefs->wm=NULL;
-  
+
 #ifdef GDK_WINDOWING_WAYLAND
-if (GDK_IS_WAYLAND_DISPLAY (mainw->mgeom[0].disp))
-  prefs->wm=lives_strdup("Wayland");
+  if (GDK_IS_WAYLAND_DISPLAY(mainw->mgeom[0].disp))
+    prefs->wm=lives_strdup("Wayland");
 #endif
 #ifdef GDK_WINDOWING_X11
- if (GDK_IS_X11_DISPLAY (mainw->mgeom[0].disp))
-  prefs->wm=lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
+  if (GDK_IS_X11_DISPLAY(mainw->mgeom[0].disp))
+    prefs->wm=lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
 #endif
 #ifdef IS_MINGW
   prefs->wm=lives_strdup_printf(_("Windows version %04X"),WINVER);
 #endif
-  if (prefs->wm==NULL) 
+  if (prefs->wm==NULL)
     prefs->wm=lives_strdup((_("UNKNOWN - please patch me !")));
 
 

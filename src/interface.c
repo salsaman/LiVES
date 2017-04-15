@@ -830,10 +830,14 @@ _insertw *create_insert_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
 
-  insertw->with_sound=lives_standard_radio_button_new(_("Insert _with sound"),
-                      TRUE,radiobutton2_group,LIVES_BOX(hbox),NULL);
-  radiobutton2_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(insertw->with_sound));
+  if (clipboard->achans==0)
+    insertw->with_sound=lives_standard_radio_button_new(_("Insert _with silence"),
+                        TRUE,radiobutton2_group,LIVES_BOX(hbox),NULL);
+  else
+    insertw->with_sound=lives_standard_radio_button_new(_("Insert _with sound"),
+                        TRUE,radiobutton2_group,LIVES_BOX(hbox),NULL);
 
+  radiobutton2_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(insertw->with_sound));
 
   lives_table_attach(LIVES_TABLE(table), hbox, 2, 3, 0, 1,
                      (LiVESAttachOptions)(LIVES_FILL),

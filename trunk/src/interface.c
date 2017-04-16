@@ -2052,7 +2052,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 }
 
 
-char last_good_folder[PATH_MAX];
+static char last_good_folder[PATH_MAX];
 
 static void chooser_check_dir(LiVESFileChooser *chooser, livespointer user_data) {
   char *cwd=lives_get_current_dir();

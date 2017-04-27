@@ -8,16 +8,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2017-04-16 13:07-0300\n"
-"PO-Revision-Date: 2016-10-29 06:52+0000\n"
+"POT-Creation-Date: 2017-04-26 20:58-0300\n"
+"PO-Revision-Date: 2017-01-16 07:04+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2016-11-27 15:08+0000\n"
-"X-Generator: Launchpad (build 18282)\n"
+"X-Launchpad-Export-Date: 2017-04-26 23:56+0000\n"
+"X-Generator: Launchpad (build 18364)\n"
 
 #: src/main.c:132
 msgid ""
@@ -1442,9 +1442,8 @@ msgid "Insert clipboard after selected frames"
 msgstr "Вставити вміст буфера обміну даними після позначених кадрів"
 
 #: src/interface.c:834
-#, fuzzy
 msgid "Insert _with silence"
-msgstr "Вставити _зі звуком"
+msgstr ""
 
 #: src/interface.c:837
 msgid "Insert _with sound"
@@ -9495,9 +9494,8 @@ msgid "Big Endian"
 msgstr "Big Endian"
 
 #: src/resample.c:1322
-#, fuzzy
 msgid "New Audio Details"
-msgstr "Новий звук"
+msgstr "Параметри нових звукових даних"
 
 #: src/resample.c:1323
 msgid "New"

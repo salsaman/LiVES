@@ -1,10 +1,13 @@
-Version 2.8.5
--------------
+Version 2.8.5 (27 April 2017)
+-----------------------------
+Fix audio loss when inserting without audio in clip editor (regression).
 Fix compiler error and warnings for gcc 7 (https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=853520)
 Fix regression in mkv_decoder.
+Fix compiler warnings for openGL plugin.
 Change max seek allowed from 1 second to 2 seconds in avformat decoder.
 Update css state selectors for gtk 3.18+
 Experimental support for Wayland.
+Updated translation to Ukranian (thaks Yuri).
 
 
 

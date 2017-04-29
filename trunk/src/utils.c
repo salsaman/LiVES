@@ -2885,10 +2885,10 @@ void get_play_times(void) {
         lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_unsel);
 
 #ifdef TEST_AUDLEVELS
-        lives_painter_rectangle(cr,0,prefs->bar_height*2,
+        lives_painter_rectangle(cr,0,prefs->bar_height*1.5,
                                 offset_left,
                                 prefs->bar_height);
-        lives_painter_rectangle(cr,offset_right,prefs->bar_height*2,
+        lives_painter_rectangle(cr,offset_right,prefs->bar_height*1.5,
                                 cfile->raudio_time/cfile->total_time*allocwidth-offset_right,
                                 prefs->bar_height);
 #else

@@ -21,10 +21,10 @@ int main(int argc, char *argv[]) {
   mt.setCurrentTrack(0);
 
   mt.setCurrentTime(0);
-  
+
   block b = mt.insertBlock(c);
 
-  cout << "Inserted a block from clip " << c.name() << " in track " << mt.trackLabel( mt.currentTrack() ) 
+  cout << "Inserted a block from clip " << c.name() << " in track " << mt.trackLabel(mt.currentTrack())
        << " at time " << b.startTime() << " duration " << b.length() << endl;
 
   lives.getPlayer().play();

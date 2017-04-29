@@ -68,7 +68,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={131}; // array of weed api versions supported in plugin, in order (most preferred first)
+static int api_versions[]= {131}; // array of weed api versions supported in plugin, in order (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -88,9 +88,9 @@ static int package_version=1; // version of this package
 
 
 /* C Includes */
-#include <math.h> 
-#include <stdio.h> 
-#include <stdlib.h> 
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <gdk/gdk.h>
@@ -119,38 +119,38 @@ static void init_luma_arrays(void) {
 
   for (i = 0; i < 256; i++) {
     Y_Ru[i] = myround(0.299 * (gdouble)i
-		      * (1<<FP_BITS));
-    Y_Gu[i] = myround(0.587 * (gdouble)i 
-		      * (1<<FP_BITS));
-    Y_Bu[i] = myround(0.114 * (gdouble)i 
+                      * (1<<FP_BITS));
+    Y_Gu[i] = myround(0.587 * (gdouble)i
+                      * (1<<FP_BITS));
+    Y_Bu[i] = myround(0.114 * (gdouble)i
                       * (1<<FP_BITS));
 
-    
-    Cb_Bu[i] = myround(-0.168736 * (gdouble)i 
-		       * (1<<FP_BITS));
-    Cb_Gu[i] = myround(-0.331264 * (gdouble)i 
-		       * (1<<FP_BITS));
+
+    Cb_Bu[i] = myround(-0.168736 * (gdouble)i
+                       * (1<<FP_BITS));
+    Cb_Gu[i] = myround(-0.331264 * (gdouble)i
+                       * (1<<FP_BITS));
     Cb_Ru[i] = myround((0.500 * (gdouble)i
-			+ 128.) * (1<<FP_BITS));
+                        + 128.) * (1<<FP_BITS));
 
     Cr_Bu[i] = myround(0.500 * (gdouble)i
-		       * (1<<FP_BITS));
-    Cr_Gu[i] = myround(-0.418688 * (gdouble)i 
-		       * (1<<FP_BITS));
-    Cr_Ru[i] = myround((-0.081312 * (gdouble)i 
-			+ 128.) * (1<<FP_BITS));
+                       * (1<<FP_BITS));
+    Cr_Gu[i] = myround(-0.418688 * (gdouble)i
+                       * (1<<FP_BITS));
+    Cr_Ru[i] = myround((-0.081312 * (gdouble)i
+                        + 128.) * (1<<FP_BITS));
   }
 
-  for (i=0;i<17;i++) {
+  for (i=0; i<17; i++) {
     UNCLAMP_Y[i]=UNCLAMP_UV[i]=0;
   }
 
-  for (i=17;i<235;i++) {
+  for (i=17; i<235; i++) {
     UNCLAMP_Y[i]=(int)((float)(i-16.)/219.*255.+.5);
     UNCLAMP_UV[i]=(int)((float)(i-16.)/224.*255.+.5);
   }
 
-  for (i=235;i<256;i++) {
+  for (i=235; i<256; i++) {
     UNCLAMP_Y[i]=UNCLAMP_UV[i]=255;
     if (i<241) UNCLAMP_UV[i]=(int)((float)(i-16.)/224.*255.+.5);
   }
@@ -181,8 +181,7 @@ static void init_luma_arrays(void) {
 // Here input is RGB data [0..255] in Unit arrays
 // Computation is (almost) in-situ.
 static void
-haar2D(Unit a[])
-{
+haar2D(Unit a[]) {
   int i;
   Unit t[NUM_PIXELS >> 1];
 
@@ -232,7 +231,7 @@ haar2D(Unit a[])
       h1 = h >> 1;
       C *= 0.7071;		// 1/sqrt(2) = 0.7071
       for (k = 0, j1 = j2 = i; k < h1;
-	   k++, j1 += NUM_PIXELS, j2 += 2*NUM_PIXELS) {
+           k++, j1 += NUM_PIXELS, j2 += 2*NUM_PIXELS) {
         int j21 = j2+NUM_PIXELS;
 
         t[k]  = (a[j2] - a[j21]) * C;
@@ -254,12 +253,10 @@ haar2D(Unit a[])
    but we don't care about that.
 */
 void
-transform(Unit* a, Unit* b, Unit* c, int pal)
-{
+transform(Unit *a, Unit *b, Unit *c, int pal) {
   if (pal==WEED_PALETTE_RGB24) {
     RGB_2_Y(a, b, c);
-  }
-  else if (pal==WEED_PALETTE_BGR24) {
+  } else if (pal==WEED_PALETTE_BGR24) {
     RGB_2_Y(c, b, a);
   }
 
@@ -277,8 +274,7 @@ transform(Unit* a, Unit* b, Unit* c, int pal)
 // Find the NUM_COEFS largest numbers in cdata[] (in magnitude that is)
 // and store their indices in sig[].
 inline static void
-get_m_largests(Unit *cdata, Idx *sig, int num_coefs)
-{
+get_m_largests(Unit *cdata, Idx *sig, int num_coefs) {
   int cnt, i;
   valStruct val;
   valqueue vq;			// dynamic priority queue of valStruct's
@@ -316,7 +312,7 @@ get_m_largests(Unit *cdata, Idx *sig, int num_coefs)
     /* i - 0 ^ 0 = i; i - 1 ^ 0b111..1111 = 2-compl(i) = -i */
     sig[cnt++] = (val.i - t) ^ -t; // never 0
     vq.pop();
-  } while(!vq.empty());
+  } while (!vq.empty());
   // Must have cnt==NUM_COEFS here.
 }
 
@@ -327,8 +323,7 @@ get_m_largests(Unit *cdata, Idx *sig, int num_coefs)
 // Complexity is 3 x NUM_PIXELS^2 x 2log(NUM_COEFS).
 int
 calcHaar(Unit *cdata1, Unit *cdata2, Unit *cdata3,
-	 Idx *sig1, Idx *sig2, Idx *sig3, double *avgl, int num_coefs)
-{
+         Idx *sig1, Idx *sig2, Idx *sig3, double *avgl, int num_coefs) {
   avgl[0]=cdata1[0];
   avgl[1]=cdata2[0];
   avgl[2]=cdata3[0];
@@ -350,28 +345,29 @@ calcHaar(Unit *cdata1, Unit *cdata2, Unit *cdata3,
 ///////////////////////////////////////
 
 
-inline G_GNUC_CONST int pl_gdk_rowstride_value (int rowstride) {
+inline G_GNUC_CONST int pl_gdk_rowstride_value(int rowstride) {
   return (rowstride + 3) & ~3;
 }
 
-inline int G_GNUC_CONST pl_gdk_last_rowstride_value (int width, int nchans) {
+inline int G_GNUC_CONST pl_gdk_last_rowstride_value(int width, int nchans) {
   return width*(((nchans<<3)+7)>>3);
 }
 
-static void plugin_free_buffer (guchar *pixels, gpointer data) {
+static void plugin_free_buffer(guchar *pixels, gpointer data) {
   return;
 }
 
 
-static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, int width, int height, guchar *buf) {
+static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, int width, int height,
+                                      guchar *buf) {
   int channels=has_alpha?4:3;
   int rowstride=pl_gdk_rowstride_value(width*channels);
-  return gdk_pixbuf_new_from_data (buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer, NULL);
+  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer, NULL);
 }
 
 
 
-static GdkPixbuf *pl_channel_to_pixbuf (weed_plant_t *channel) {
+static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
   int error;
   GdkPixbuf *pixbuf;
   int palette=weed_get_int_value(channel,"current_palette",&error);
@@ -390,8 +386,7 @@ static GdkPixbuf *pl_channel_to_pixbuf (weed_plant_t *channel) {
     if (irowstride==pl_gdk_rowstride_value(width*3)) {
       pixbuf=pl_gdk_pixbuf_cheat(GDK_COLORSPACE_RGB, FALSE, 8, width, height, pixel_data);
       cheat=TRUE;
-    }
-    else pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, width, height);
+    } else pixbuf=gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, width, height);
     n_channels=3;
     break;
   case WEED_PALETTE_RGBA32:
@@ -400,29 +395,28 @@ static GdkPixbuf *pl_channel_to_pixbuf (weed_plant_t *channel) {
     if (irowstride==pl_gdk_rowstride_value(width*4)) {
       pixbuf=pl_gdk_pixbuf_cheat(GDK_COLORSPACE_RGB, TRUE, 8, width, height, pixel_data);
       cheat=TRUE;
-    }
-    else pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
+    } else pixbuf=gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, width, height);
     n_channels=4;
     break;
   default:
     return NULL;
   }
-  pixels=gdk_pixbuf_get_pixels (pixbuf);
+  pixels=gdk_pixbuf_get_pixels(pixbuf);
   orowstride=gdk_pixbuf_get_rowstride(pixbuf);
-  
+
   if (irowstride>orowstride) rowstride=orowstride;
   else rowstride=irowstride;
   end=pixels+orowstride*height;
 
   if (!cheat) {
     gboolean done=FALSE;
-    for (;pixels<end&&!done;pixels+=orowstride) {
+    for (; pixels<end&&!done; pixels+=orowstride) {
       if (pixels+orowstride>=end) {
-	orowstride=rowstride=pl_gdk_last_rowstride_value(width,n_channels);
-	done=TRUE;
+        orowstride=rowstride=pl_gdk_last_rowstride_value(width,n_channels);
+        done=TRUE;
       }
       weed_memcpy(pixels,pixel_data,rowstride);
-      if (rowstride<orowstride) weed_memset (pixels+rowstride,0,orowstride-rowstride);
+      if (rowstride<orowstride) weed_memset(pixels+rowstride,0,orowstride-rowstride);
       pixel_data+=irowstride;
     }
   }
@@ -432,7 +426,7 @@ static GdkPixbuf *pl_channel_to_pixbuf (weed_plant_t *channel) {
 
 
 static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
-  
+
   int error;
   int rowstride=gdk_pixbuf_get_rowstride(pixbuf);
   int width=gdk_pixbuf_get_width(pixbuf);
@@ -449,7 +443,7 @@ static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
     return FALSE;
   }
 
-  for (i=0;i<height;i++) {
+  for (i=0; i<height; i++) {
     if (i==height-1) rowstride=pl_gdk_last_rowstride_value(width,n_channels);
     weed_memcpy(dst,in_pixel_data,rowstride);
     in_pixel_data+=rowstride;
@@ -502,7 +496,7 @@ static int make_sigs(_sdata *sdata, int num_coefs) {
 ////////////////////////////////////////////////////////////
 
 
-int haar_init (weed_plant_t *inst) {
+int haar_init(weed_plant_t *inst) {
   int error,retval;
   _sdata *sdata;
   weed_plant_t **in_params=(weed_plant_t **)weed_get_plantptr_array(inst,"in_parameters",&error);
@@ -514,7 +508,7 @@ int haar_init (weed_plant_t *inst) {
 
   if (sdata==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  if ((retval=make_sigs(sdata,num_coefs))!=WEED_NO_ERROR) return retval; 
+  if ((retval=make_sigs(sdata,num_coefs))!=WEED_NO_ERROR) return retval;
 
   weed_set_voidptr_value(inst,"plugin_internal",sdata);
 
@@ -523,7 +517,7 @@ int haar_init (weed_plant_t *inst) {
 
 
 
-int haar_deinit (weed_plant_t *inst) {
+int haar_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
@@ -539,7 +533,7 @@ int haar_deinit (weed_plant_t *inst) {
 
 
 
-int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *channel=weed_get_plantptr_value(inst,"in_channels",&error);
   unsigned char **orig_src,*src;
@@ -581,7 +575,7 @@ int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     clamped=1;
 
   if (pal==WEED_PALETTE_YUV888) psize=3;
-  
+
 
   // resize to NUM_PIXELS x NUM_PIXELS
 
@@ -594,18 +588,16 @@ int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
     if (width>NUM_PIXELS||height>NUM_PIXELS) {
       out_pixbuf=gdk_pixbuf_scale_simple(in_pixbuf,NUM_PIXELS,NUM_PIXELS,up_interp);
-    }
-    else {
+    } else {
       out_pixbuf=gdk_pixbuf_scale_simple(in_pixbuf,NUM_PIXELS,NUM_PIXELS,down_interp);
     }
-    
+
     g_object_unref(in_pixbuf);
-    
+
     irowstride=gdk_pixbuf_get_rowstride(out_pixbuf);
 
     src=gdk_pixbuf_get_pixels(out_pixbuf);
-  }
-  else src=orig_src[0];
+  } else src=orig_src[0];
 
   hmax=NUM_PIXELS*psize;
 
@@ -613,16 +605,15 @@ int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     k=i*irowstride;
     for (j = 0; j < hmax; j+=psize) {
       if (clamped) {
-	// convert to unclamped
-	cdata1[cn] = UNCLAMP_Y[src[k+j]];
-	cdata2[cn] = UNCLAMP_UV[src[k+j+1]];
-	cdata3[cn] = UNCLAMP_UV[src[k+j]];
-      }
-      else {
-	// unclamped YUV - pass through
-	cdata1[cn] = src[k+j];
-	cdata2[cn] = src[k+j+1];
-	cdata3[cn] = src[k+j];
+        // convert to unclamped
+        cdata1[cn] = UNCLAMP_Y[src[k+j]];
+        cdata2[cn] = UNCLAMP_UV[src[k+j+1]];
+        cdata3[cn] = UNCLAMP_UV[src[k+j]];
+      } else {
+        // unclamped YUV - pass through
+        cdata1[cn] = src[k+j];
+        cdata2[cn] = src[k+j+1];
+        cdata3[cn] = src[k+j];
       }
       cn++;
     }
@@ -630,8 +621,7 @@ int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (out_pixbuf!=NULL) {
     g_object_unref(out_pixbuf);
-  }
-  else {
+  } else {
     if (src!=orig_src[0]) {
       weed_set_voidptr_array(channel,"pixel_data",nplanes,(void **)orig_src);
       weed_set_int_array(channel,"rowstrides",nplanes,orig_rows);
@@ -654,7 +644,7 @@ int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_set_int_array(out_params[0],"value",num_coefs,sdata->sig1);
   weed_set_int_array(out_params[1],"value",num_coefs,sdata->sig2);
   weed_set_int_array(out_params[2],"value",num_coefs,sdata->sig3);
-  
+
   weed_set_double_value(out_params[3],"value",avgl[0]);
   weed_set_double_value(out_params[4],"value",avgl[1]);
   weed_set_double_value(out_params[5],"value",avgl[2]);
@@ -662,7 +652,7 @@ int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 #ifdef DEBUG
   printf("vals %f %f %f\n",avgl[0],avgl[1],avgl[2]);
 
-  for (i=0;i<num_coefs;i++) {
+  for (i=0; i<num_coefs; i++) {
     printf("vals %d: %d %d %d\n",i,sdata->sig1[i],sdata->sig2[i],sdata->sig3[i]);
   }
 #endif
@@ -674,28 +664,29 @@ int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-// 
+//
 #define VLIMIT 4096
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_YUVA8888,WEED_PALETTE_YUV888,
-			WEED_PALETTE_END};
-    weed_plant_t *out_params[]={weed_out_param_integer_init("Y maxima",0,-VLIMIT,VLIMIT),weed_out_param_integer_init("U maxima",0,-VLIMIT,VLIMIT),weed_out_param_integer_init("V maxima",0,-VLIMIT,VLIMIT),weed_out_param_float_init("Y average",0.,0.,1.),weed_out_param_float_init("U average",0.,0.,1.),weed_out_param_float_init("V average",0.,0.,1.),NULL};
-    weed_plant_t *in_params[]={weed_integer_init("nco","Number of _Coefficients",40,1,NUM_PIXELS),NULL};
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
+    int palette_list[]= {WEED_PALETTE_YUVA8888,WEED_PALETTE_YUV888,
+                         WEED_PALETTE_END
+                        };
+    weed_plant_t *out_params[]= {weed_out_param_integer_init("Y maxima",0,-VLIMIT,VLIMIT),weed_out_param_integer_init("U maxima",0,-VLIMIT,VLIMIT),weed_out_param_integer_init("V maxima",0,-VLIMIT,VLIMIT),weed_out_param_float_init("Y average",0.,0.,1.),weed_out_param_float_init("U average",0.,0.,1.),weed_out_param_float_init("V average",0.,0.,1.),NULL};
+    weed_plant_t *in_params[]= {weed_integer_init("nco","Number of _Coefficients",40,1,NUM_PIXELS),NULL};
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("haar_analyser","salsaman and others",1,0,&haar_init,
-						      &haar_process,&haar_deinit,in_chantmpls,NULL,in_params,out_params);
+                               &haar_process,&haar_deinit,in_chantmpls,NULL,in_params,out_params);
 
 
     weed_set_int_value(out_params[0],"flags",WEED_PARAMETER_VARIABLE_ELEMENTS);
     weed_set_int_value(out_params[1],"flags",WEED_PARAMETER_VARIABLE_ELEMENTS);
     weed_set_int_value(out_params[2],"flags",WEED_PARAMETER_VARIABLE_ELEMENTS);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
 

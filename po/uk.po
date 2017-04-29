@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2017-04-26 20:58-0300\n"
+"POT-Creation-Date: 2017-04-29 18:37-0300\n"
 "PO-Revision-Date: 2017-01-16 07:04+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -758,12 +758,12 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "Закритий файл %s\n"
 
-#: src/main.c:6994 src/gui.c:733 src/utils.c:4469 src/utils.c:4499
+#: src/main.c:6994 src/gui.c:733 src/utils.c:4477 src/utils.c:4507
 #: src/saveplay.c:3335 src/multitrack.c:4680 src/multitrack.c:6680
 msgid "_Undo"
 msgstr "В_ернути"
 
-#: src/main.c:6995 src/gui.c:749 src/utils.c:4470 src/utils.c:4500
+#: src/main.c:6995 src/gui.c:749 src/utils.c:4478 src/utils.c:4508
 #: src/saveplay.c:3336 src/multitrack.c:4700 src/multitrack.c:6703
 msgid "_Redo"
 msgstr "Повт_орити"
@@ -4589,68 +4589,68 @@ msgstr ""
 msgid "Removing layout %s\n"
 msgstr "Вилучення компонування %s\n"
 
-#: src/utils.c:2942
+#: src/utils.c:2950
 msgid "Video [opening...]"
 msgstr "Відео [відкриття…]"
 
-#: src/utils.c:2945
+#: src/utils.c:2953
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "Відео [%.2f с]"
 
-#: src/utils.c:2948
+#: src/utils.c:2956
 msgid "(Undefined)"
 msgstr "(Не визначено)"
 
-#: src/utils.c:2950
+#: src/utils.c:2958
 msgid "(No video)"
 msgstr "(Немає відео)"
 
-#: src/utils.c:2957
+#: src/utils.c:2965
 msgid "(No audio)"
 msgstr "(Немає звуку)"
 
-#: src/utils.c:2961
+#: src/utils.c:2969
 msgid "Mono  [opening...]"
 msgstr "Моно [відкриття…]"
 
-#: src/utils.c:2963
+#: src/utils.c:2971
 msgid "Left Audio [opening...]"
 msgstr "Лівий канал звуку [відкриття…]"
 
-#: src/utils.c:2967
+#: src/utils.c:2975
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "Моно [%.2f с]"
 
-#: src/utils.c:2969
+#: src/utils.c:2977
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "Лівий канал звуку [%.2f с]"
 
-#: src/utils.c:2977
+#: src/utils.c:2985
 msgid "Right Audio [opening...]"
 msgstr "Правий канал звуку [відкриття…]"
 
-#: src/utils.c:2979
+#: src/utils.c:2987
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "Правий канал звуку [%.2f с]"
 
-#: src/utils.c:3439
+#: src/utils.c:3447
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVES не може перемикатися на mplayer під час завантаження кліпів."
 
-#: src/utils.c:3492
+#: src/utils.c:3500
 msgid "LiVES cannot switch to mplayer2 whilst clips are loading."
 msgstr ""
 "LiVES не може перемкнутися на mplayer2, доки триває завантаження кліпів."
 
-#: src/utils.c:3745
+#: src/utils.c:3753
 msgid "Cleaning up clip"
 msgstr "Спорожнення кліпу"
 
-#: src/utils.c:3854
+#: src/utils.c:3862
 #, c-format
 msgid ""
 "\n"
@@ -4665,29 +4665,29 @@ msgstr ""
 "\n"
 "Перезаписати?\n"
 
-#: src/utils.c:4463 src/utils.c:4493 src/multitrack.c:4674
+#: src/utils.c:4471 src/utils.c:4501 src/multitrack.c:4674
 #, c-format
 msgid "_Undo %s"
 msgstr "В_ернути %s"
 
-#: src/utils.c:4464 src/utils.c:4494 src/multitrack.c:4695
+#: src/utils.c:4472 src/utils.c:4502 src/multitrack.c:4695
 #, c-format
 msgid "_Redo %s"
 msgstr "П_овторити %s"
 
-#: src/utils.c:4517
+#: src/utils.c:4525
 msgid "-------------Selection------------"
 msgstr "-------------Позначене------------"
 
-#: src/utils.c:4525
+#: src/utils.c:4533
 msgid " sec ] ----------Selection---------- [ "
 msgstr " с ] ----------Позначене---------- [ "
 
-#: src/utils.c:4526
+#: src/utils.c:4534
 msgid " frames ] ----------"
 msgstr " кадрів ] ----------"
 
-#: src/utils.c:5474
+#: src/utils.c:5482
 msgid ""
 "Your version of mplayer/ffmpeg may be broken !\n"
 "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n"

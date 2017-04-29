@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2017-04-26 20:58-0300\n"
+"POT-Creation-Date: 2017-04-29 18:37-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -702,12 +702,12 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "ファイル %s を閉じました\n"
 
-#: src/main.c:6994 src/gui.c:733 src/utils.c:4469 src/utils.c:4499
+#: src/main.c:6994 src/gui.c:733 src/utils.c:4477 src/utils.c:4507
 #: src/saveplay.c:3335 src/multitrack.c:4680 src/multitrack.c:6680
 msgid "_Undo"
 msgstr "元に戻す(_U)"
 
-#: src/main.c:6995 src/gui.c:749 src/utils.c:4470 src/utils.c:4500
+#: src/main.c:6995 src/gui.c:749 src/utils.c:4478 src/utils.c:4508
 #: src/saveplay.c:3336 src/multitrack.c:4700 src/multitrack.c:6703
 msgid "_Redo"
 msgstr "やり直す(_R)"
@@ -4570,68 +4570,68 @@ msgstr ""
 msgid "Removing layout %s\n"
 msgstr "レイアウト %s を削除\n"
 
-#: src/utils.c:2942
+#: src/utils.c:2950
 msgid "Video [opening...]"
 msgstr "映像ファイル [開く...]"
 
-#: src/utils.c:2945
+#: src/utils.c:2953
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "映像 [%.2f 秒]"
 
-#: src/utils.c:2948
+#: src/utils.c:2956
 msgid "(Undefined)"
 msgstr "(未定義)"
 
-#: src/utils.c:2950
+#: src/utils.c:2958
 msgid "(No video)"
 msgstr "(映像なし)"
 
-#: src/utils.c:2957
+#: src/utils.c:2965
 msgid "(No audio)"
 msgstr "(音声なし)"
 
-#: src/utils.c:2961
+#: src/utils.c:2969
 msgid "Mono  [opening...]"
 msgstr "モノラル [開く...]"
 
-#: src/utils.c:2963
+#: src/utils.c:2971
 msgid "Left Audio [opening...]"
 msgstr "左音声 [開く...]"
 
-#: src/utils.c:2967
+#: src/utils.c:2975
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "モノラル [%.2f 秒]"
 
-#: src/utils.c:2969
+#: src/utils.c:2977
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "左音声 [%.2f 秒]"
 
-#: src/utils.c:2977
+#: src/utils.c:2985
 msgid "Right Audio [opening...]"
 msgstr "右音声 [開く...]"
 
-#: src/utils.c:2979
+#: src/utils.c:2987
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "右音声 [%.2f 秒]"
 
-#: src/utils.c:3439
+#: src/utils.c:3447
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVESはクリップが読み込み時にmplayerを起動できませんでした。"
 
-#: src/utils.c:3492
+#: src/utils.c:3500
 #, fuzzy
 msgid "LiVES cannot switch to mplayer2 whilst clips are loading."
 msgstr "LiVESはクリップが読み込み時にmplayerを起動できませんでした。"
 
-#: src/utils.c:3745
+#: src/utils.c:3753
 msgid "Cleaning up clip"
 msgstr "クリップを消去します"
 
-#: src/utils.c:3854
+#: src/utils.c:3862
 #, c-format
 msgid ""
 "\n"
@@ -4646,29 +4646,29 @@ msgstr ""
 "\n"
 "上書きしますか ?\n"
 
-#: src/utils.c:4463 src/utils.c:4493 src/multitrack.c:4674
+#: src/utils.c:4471 src/utils.c:4501 src/multitrack.c:4674
 #, c-format
 msgid "_Undo %s"
 msgstr "%sを元に戻す(_U)"
 
-#: src/utils.c:4464 src/utils.c:4494 src/multitrack.c:4695
+#: src/utils.c:4472 src/utils.c:4502 src/multitrack.c:4695
 #, c-format
 msgid "_Redo %s"
 msgstr "%sをやり直す(_R)"
 
-#: src/utils.c:4517
+#: src/utils.c:4525
 msgid "-------------Selection------------"
 msgstr "------------- 選択範囲 ------------"
 
-#: src/utils.c:4525
+#: src/utils.c:4533
 msgid " sec ] ----------Selection---------- [ "
 msgstr " 秒 ] ---------- 選択範囲 ---------- [ "
 
-#: src/utils.c:4526
+#: src/utils.c:4534
 msgid " frames ] ----------"
 msgstr " フレーム ] ----------"
 
-#: src/utils.c:5474
+#: src/utils.c:5482
 msgid ""
 "Your version of mplayer/ffmpeg may be broken !\n"
 "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n"

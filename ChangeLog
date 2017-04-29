@@ -1,3 +1,10 @@
+Version 2.8.6
+-------------
+Remove dependency on (deprecated) GLee.
+
+
+
+
 Version 2.8.5 (27 April 2017)
 -----------------------------
 Fix audio loss when inserting without audio in clip editor (regression).

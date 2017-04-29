@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -106,10 +106,10 @@ static void winhide() {
     Window win=info.info.x11.wmwindow;
     Display *dpy=info.info.x11.display;
     info.info.x11.lock_func();
-  
-    atoms[0] = XInternAtom (dpy, "_NET_WM_STATE_BELOW", False);
-    atoms[1] = XInternAtom (dpy, "_NET_WM_STATE_DESKTOP", False);
-    XChangeProperty (dpy, win, XInternAtom (dpy,"_NET_WM_STATE",False),XA_ATOM,32,PropModeReplace, (const unsigned char *) &atoms, 2);
+
+    atoms[0] = XInternAtom(dpy, "_NET_WM_STATE_BELOW", False);
+    atoms[1] = XInternAtom(dpy, "_NET_WM_STATE_DESKTOP", False);
+    XChangeProperty(dpy, win, XInternAtom(dpy,"_NET_WM_STATE",False),XA_ATOM,32,PropModeReplace, (const unsigned char *) &atoms, 2);
 
     XIconifyWindow(dpy,win,0);
 
@@ -126,9 +126,9 @@ static int resize_display(int width, int height) {
   int flags = SDL_OPENGL|SDL_HWSURFACE|SDL_RESIZABLE;
 
   // 0 : use current bits per pixel
-  if(!SDL_SetVideoMode(width, height, 0, flags)) {
-      fprintf(stderr, "Video mode set failed: %s\n", SDL_GetError());
-      return 1;
+  if (!SDL_SetVideoMode(width, height, 0, flags)) {
+    fprintf(stderr, "Video mode set failed: %s\n", SDL_GetError());
+    return 1;
   }
 
   winhide();
@@ -142,13 +142,13 @@ static int change_size(_sdata *sdata) {
   sdata->globalPM->projectM_resetGL(sdata->width,sdata->height);
   if (sdata->fbuffer!=NULL) weed_free(sdata->fbuffer);
   ret=resize_display(sdata->width,sdata->height);
-  sdata->fbuffer = (GLubyte *)weed_malloc( sizeof( GLubyte ) * sdata->width * sdata->height * 3 );
+  sdata->fbuffer = (GLubyte *)weed_malloc(sizeof(GLubyte) * sdata->width * sdata->height * 3);
   return ret;
 }
 
 
 static int init_display(_sdata *sd) {
-  const SDL_VideoInfo* info;
+  const SDL_VideoInfo *info;
 
   int defwidth=sd->width;
   int defheight=sd->height;
@@ -156,7 +156,7 @@ static int init_display(_sdata *sd) {
   /* First, initialize SDL's video subsystem. */
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) {
     fprintf(stderr, "Video initialization failed: %s\n",
-	    SDL_GetError());
+            SDL_GetError());
     return 1;
   }
 
@@ -165,8 +165,8 @@ static int init_display(_sdata *sd) {
   if (!info) {
     /* This should probably never happen. */
     fprintf(stderr, "Video query failed: %s\n",
-	    SDL_GetError());
-    
+            SDL_GetError());
+
     return 2;
   }
 
@@ -180,7 +180,7 @@ static int init_display(_sdata *sd) {
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, USE_DBLBUF);
-	
+
   if (resize_display(defwidth,defheight)) return 3;
 
   //if (change_size(sd)) return 4;
@@ -280,13 +280,13 @@ static void *worker(void *data) {
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
     pthread_mutex_lock(&cond_mutex);
-  
+
     goto fail;
   }
 
 
   atexit(do_exit);
-  
+
   // can fail here
   sd->globalPM = new projectM(config_filename);
 
@@ -300,7 +300,7 @@ static void *worker(void *data) {
 
   sd->prnames[0]=(volatile char *)"- Random -";
 
-  for (i=1;i<sd->nprs;i++) {
+  for (i=1; i<sd->nprs; i++) {
     sd->prnames[i]=const_cast<volatile char *>((sd->globalPM->getPresetName(i-1)).c_str());
   };
 
@@ -308,7 +308,7 @@ static void *worker(void *data) {
   pthread_mutex_lock(&cond_mutex);
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);
-  
+
   sd->worker_ready=true;
 
   while (!sd->die) {
@@ -321,8 +321,7 @@ static void *worker(void *data) {
     if (sd->pidx==-1) {
       if (rerand) sd->globalPM->selectRandom(true);
       rerand=false;
-    }
-    else if (sd->pidx!=sd->opidx) {
+    } else if (sd->pidx!=sd->opidx) {
       sd->globalPM->setPresetLock(true);
       sd->globalPM->selectPreset(sd->pidx);
     }
@@ -350,8 +349,8 @@ static void *worker(void *data) {
 
   if (sd->globalPM!=NULL) delete(sd->globalPM);
 
-  
- fail:
+
+fail:
 
   SDL_Quit();
 
@@ -360,7 +359,7 @@ static void *worker(void *data) {
 }
 
 
-static int projectM_deinit (weed_plant_t *inst) {
+static int projectM_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sd=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
@@ -376,11 +375,11 @@ static int projectM_deinit (weed_plant_t *inst) {
 
 
 
-static int projectM_init (weed_plant_t *inst) {
+static int projectM_init(weed_plant_t *inst) {
   _sdata *sd;
 
   int error;
-  
+
   if (copies==1) return WEED_ERROR_TOO_MANY_INSTANCES;
   copies++;
 
@@ -401,7 +400,7 @@ static int projectM_init (weed_plant_t *inst) {
     sd=(_sdata *)weed_malloc(sizeof(_sdata));
     if (sd==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-    sd->fbuffer = (GLubyte *)weed_malloc( sizeof( GLubyte ) * width * height * 3 );
+    sd->fbuffer = (GLubyte *)weed_malloc(sizeof(GLubyte) * width * height * 3);
 
     if (sd->fbuffer==NULL) {
       weed_free(sd);
@@ -417,7 +416,7 @@ static int projectM_init (weed_plant_t *inst) {
 
     sd->width=width;
     sd->height=height;
-    
+
     sd->die=false;
     sd->failed=false;
     sd->update_size=false;
@@ -434,17 +433,17 @@ static int projectM_init (weed_plant_t *inst) {
 
     pthread_mutex_init(&cond_mutex,NULL);
     pthread_cond_init(&cond,NULL);
-    
+
     // kick off a thread to init screean and render
     pthread_create(&sd->thread,NULL,worker,sd);
 
     gettimeofday(&tv,NULL);
     ts.tv_sec = tv.tv_sec+30;
-    
+
     pthread_mutex_lock(&cond_mutex);
     rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
     pthread_mutex_unlock(&cond_mutex);
-    
+
     if (rc==ETIMEDOUT||!sd->worker_ready) {
       // if we timedout then die
       projectM_deinit(inst);
@@ -454,15 +453,14 @@ static int projectM_init (weed_plant_t *inst) {
     inited=1;
 
     weed_set_string_array(iparamgui,"choices",sd->nprs,(char **)sd->prnames);
-  }
-  else sd=statsd;
-  
+  } else sd=statsd;
+
   sd->nprs--;
 
   sd->rendering=true;
 
   statsd = sd;
-  
+
   weed_set_voidptr_value(inst,"plugin_internal",sd);
 
   return WEED_NO_ERROR;
@@ -472,7 +470,7 @@ static int projectM_init (weed_plant_t *inst) {
 
 
 
-static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
 
   _sdata *sd=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
@@ -540,18 +538,17 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       pthread_mutex_lock(&sd->pcm_mutex);
       aud_data=(float *)weed_malloc((adlen+sd->audio_frames)*sizeof(float));
       if (sd->audio!=NULL) {
-	weed_memcpy(aud_data,sd->audio,sd->audio_frames*sizeof(float));
-	weed_free(sd->audio);
+        weed_memcpy(aud_data,sd->audio,sd->audio_frames*sizeof(float));
+        weed_free(sd->audio);
       }
       if (ainter==WEED_FALSE) {
-	weed_memcpy(aud_data+sd->audio_frames,adata,adlen*sizeof(float));
-      }
-      else {
-	int achans=weed_get_int_value(in_channel,"audio_channels",&error);
-	for (j=0;j<adlen;j++) {
-	  weed_memcpy(aud_data+sd->audio_frames+j,adata,sizeof(float));
-	  adata+=achans;
-	}
+        weed_memcpy(aud_data+sd->audio_frames,adata,adlen*sizeof(float));
+      } else {
+        int achans=weed_get_int_value(in_channel,"audio_channels",&error);
+        for (j=0; j<adlen; j++) {
+          weed_memcpy(aud_data+sd->audio_frames+j,adata,sizeof(float));
+          adata+=achans;
+        }
       }
       sd->audio_frames+=adlen;
       sd->audio=aud_data;
@@ -569,12 +566,11 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   // copy sd->fbuffer -> dst
   if (rowstride==widthx&&width==sd->width&&height==sd->height) {
     weed_memcpy(ptrd,ptrs,widthx*height);
-  }
-  else {
-    for (j=0;j<sd->height;j++) {
-    weed_memcpy(ptrd,ptrs,widthx);
-    ptrd+=rowstride;
-    ptrs+=sd->width*3;
+  } else {
+    for (j=0; j<sd->height; j++) {
+      weed_memcpy(ptrd,ptrs,widthx);
+      ptrd+=rowstride;
+      ptrs+=sd->width*3;
     }
   }
 
@@ -585,22 +581,23 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
 
-    int palette_list[]={WEED_PALETTE_RGB24,WEED_PALETTE_END};
+    int palette_list[]= {WEED_PALETTE_RGB24,WEED_PALETTE_END};
 
-    const char *xlist[3]={"- Random -","Choose...",NULL};
+    const char *xlist[3]= {"- Random -","Choose...",NULL};
 
-    weed_plant_t *in_params[]={weed_string_list_init("preset","_Preset",0,xlist),NULL};
+    weed_plant_t *in_params[]= {weed_string_list_init("preset","_Preset",0,xlist),NULL};
 
-    weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("In audio",0),NULL};
+    weed_plant_t *in_chantmpls[]= {weed_audio_channel_template_init("In audio",0),NULL};
 
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE|
-							      WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE|
+                                    WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE,palette_list),NULL
+                                   };
     weed_plant_t *filter_class=weed_filter_class_init("projectM","salsaman/projectM authors",1,0,&projectM_init,
-						      &projectM_process,&projectM_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
+                               &projectM_process,&projectM_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
 
     //weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
@@ -612,7 +609,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_set_double_value(filter_class,"target_fps",TARGET_FPS); // set reasonable default fps
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
 
@@ -620,7 +617,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   }
 
   statsd=NULL;
-  
+
   return plugin_info;
 }
 

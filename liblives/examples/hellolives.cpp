@@ -4,18 +4,18 @@
 #include <iostream> // for cout
 
 int main() {
-           using namespace lives;
-           using namespace std;
+  using namespace lives;
+  using namespace std;
 
-	livesApp *lives = new livesApp;
+  livesApp *lives = new livesApp;
 
-	sleep(40);
+  sleep(40);
 
-	set cset = lives->getSet();
+  set cset = lives->getSet();
 
-	cout << "Set name is " << cset.name() << endl;
+  cout << "Set name is " << cset.name() << endl;
 
-	sleep(20);
+  sleep(20);
 
-	delete lives;
+  delete lives;
 }

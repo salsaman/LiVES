@@ -70,13 +70,11 @@ endif
 if HAVE_X11
 if HAVE_XRENDER
 if HAVE_OPENGL
-if HAVE_GLEE
 if HAVE_GLU
 openGL_libs = openGL.la
-openGL_la_SOURCES = openGL.cpp
-openGL_la_CPPFLAGS = $(shared_cflags) $(weed_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ @GLEE_CFLAGS@ \
-	@GLU_CFLAGS@
-openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ @GLEE_LIBS@ @GLU_LIBS@
+openGL_la_SOURCES = openGL.cpp glad.cpp glad_glx.cpp
+openGL_la_CPPFLAGS = $(shared_cflags) $(weed_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ @GLU_CFLAGS@
+openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ @GLU_LIBS@
 
 
 
@@ -93,7 +91,6 @@ endif
 
 
 
-endif
 endif
 endif
 endif

@@ -606,38 +606,6 @@ AM_CONDITIONAL(HAVE_OPENGL,$HAVE_OPENGL)
 
 
 
-dnl check for GLee
-
-HAVE_GLEE=false
-AC_MSG_CHECKING(for GLee)
-AC_CHECK_HEADERS(GLee.h GL/GLee.h,HAVE_GLEE=true)
-
-if test "x$ac_cv_header_GL_GLee_h" != "xno"; then
-GLEE_CFLAGS="-I $includedir/GL -I/usr/include/GL"
-fi 
-
-if test "$HAVE_GLEE" = "true" ; then
-
-AC_CHECK_LIB(glee,GLeeEnabled,glee_lower_case=true,glee_lower_case=false)
-if test "$glee_lower_case" = "true"; then
-echo "GLee lib is -lglee"
-GLEE_LIBS="-lglee"
-else
-AC_CHECK_LIB(GLee,GLeeEnabled,glee_mixed_case=true,glee_mixed_case=false)
-if test "$glee_mixed_case" = "true"; then
-echo "GLee lib is -lGLee"
-GLEE_LIBS="-lGLee"
-fi
-fi
-fi
-
-AC_SUBST(GLEE_CFLAGS)
-AC_SUBST(GLEE_LIBS)
-
-AM_CONDITIONAL(HAVE_GLEE,$HAVE_GLEE)
-
-
-
 dnl check for GLU
 PKG_CHECK_MODULES(GLU,glu,HAVE_GLU=true,HAVE_GLU=false)
 AC_SUBST(GLU_CFLAGS)

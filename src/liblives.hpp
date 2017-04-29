@@ -24,7 +24,7 @@
 /**
    Version number micro
 */
-#define LIVES_VERSION_MICRO 5
+#define LIVES_VERSION_MICRO 6
 
 /**
    Macro to check if livesApp version is >= major.minor.micro

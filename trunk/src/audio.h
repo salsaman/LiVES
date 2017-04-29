@@ -151,6 +151,7 @@ typedef enum lives_audio_loop {
 } lives_audio_loop_t;
 
 
+float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans);
 
 void sample_silence_dS(float *dst, uint64_t nsamples);
 

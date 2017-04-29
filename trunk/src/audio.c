@@ -189,6 +189,57 @@ void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
 }
 
 
+float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans) {
+  // return audio level between -1.0 and +1.0
+
+  lives_clip_t *afile=mainw->files[fnum];
+  int64_t bytes;
+  off_t apos;
+
+  uint8_t val8;
+  uint8_t val8b;
+
+  uint16_t val16;
+
+  float val;
+
+  bytes=secs*afile->arate*afile->achans*afile->asampsize/8;
+  if (bytes==0) return 0.;
+
+  apos=((int64_t)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8); // quantise
+
+  if (afd==-1) {
+    // deal with read errors after drawing a whole block
+    mainw->read_failed=TRUE;
+    return 0.;
+  }
+
+  apos+=afile->asampsize/8*chnum;
+
+  lseek(afd,apos,SEEK_SET);
+
+  if (afile->asampsize==8) {
+    // 8 bit sample size
+    lives_read(afd,&val8,1,FALSE);
+    if (!(afile->signed_endian&AFORM_UNSIGNED)) val=val8>=128?val8-256:val8;
+    else val=val8-127;
+    val/=127.;
+  } else {
+    // 16 bit sample size
+    lives_read(afd,&val8,1,TRUE);
+    lives_read(afd,&val8b,1,TRUE);
+    if (afile->signed_endian&AFORM_BIG_ENDIAN) val16=(uint16_t)(val8<<8)+val8b;
+    else val16=(uint16_t)(val8b<<8)+val8;
+    if (!(afile->signed_endian&AFORM_UNSIGNED)) val=val16>=32768?val16-65536:val16;
+    else val=val16-32767;
+    val/=32767.;
+  }
+
+  //printf("val is %f\n",val);
+  return val;
+}
+
+
 
 LIVES_INLINE void sample_silence_dS(float *dst, uint64_t nsamples) {
   // send silence to the jack player

@@ -17986,63 +17986,6 @@ static boolean expose_timeline_reg_event(LiVESWidget *timeline, LiVESXEventExpos
 }
 
 
-static float get_float_audio_val_at_time(int fnum, double secs, int chnum, int chans) {
-  lives_clip_t *afile=mainw->files[fnum];
-  int64_t bytes;
-  off_t apos;
-
-  uint8_t val8;
-  uint8_t val8b;
-
-  uint16_t val16;
-
-  float val;
-
-  char *filename;
-
-  bytes=secs*afile->arate*afile->achans*afile->asampsize/8;
-  if (bytes==0) return 0.;
-
-  apos=((int64_t)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8); // quantise
-
-  if (fnum!=aofile) {
-    // does not make sense to use buffer reads, as we may read very sparsely from the file
-    if (afd!=-1) close(afd);
-    filename=lives_build_filename(prefs->workdir,afile->handle,"audio",NULL);
-    afd=lives_open2(filename,O_RDONLY);
-    aofile=fnum;
-  }
-
-  if (afd==-1) {
-    // deal with read errors after drawing a whole block
-    mainw->read_failed=TRUE;
-    return 0.;
-  }
-
-  apos+=afile->asampsize/8*chnum;
-
-  lseek(afd,apos,SEEK_SET);
-
-  if (afile->asampsize==8) {
-    // 8 bit sample size
-    lives_read(afd,&val8,1,FALSE);
-    if (!(afile->signed_endian&AFORM_UNSIGNED)) val=val8>=128?val8-256:val8;
-    else val=val8-127;
-    val/=127.;
-  } else {
-    // 16 bit sample size
-    lives_read(afd,&val8,1,TRUE);
-    lives_read(afd,&val8b,1,TRUE);
-    if (afile->signed_endian&AFORM_BIG_ENDIAN) val16=(uint16_t)(val8<<8)+val8b;
-    else val16=(uint16_t)(val8b<<8)+val8;
-    if (!(afile->signed_endian&AFORM_UNSIGNED)) val=val16>=32768?val16-65536:val16;
-    else val=val16-32767;
-    val/=32767.;
-  }
-  return val;
-}
-
-
 
 static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int chnum, lives_mt *mt) {
   weed_plant_t *event;
@@ -18054,11 +17997,14 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
 
   track_rect *block=(track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "blocks");
 
+  char *filename;
+
   double offset_startd,offset_endd; // time values
   double tl_span=mt->tl_max-mt->tl_min;
   double secs;
   double ypos;
   double seek,vel;
+  double awid;
 
   int offset_start,offset_end;  // pixel values
   int fnum;
@@ -18113,13 +18059,24 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
 
     // open audio file here
 
+    awid=lives_widget_get_allocation_width(ebox)*tl_span+mt->tl_min-offset_startd/vel;
+
+    if (fnum!=aofile) {
+      // does not make sense to use buffer reads, as we may read very sparsely from the file
+      if (afd!=-1) close(afd);
+      filename=lives_build_filename(prefs->workdir,mainw->files[fnum]->handle,"audio",NULL);
+      afd=lives_open2(filename,O_RDONLY);
+      lives_free(filename);
+      aofile=fnum;
+    }
+
     for (i=offset_start; i<=offset_end; i++) {
-      secs=((double)i/lives_widget_get_allocation_width(ebox)*tl_span+mt->tl_min-offset_startd)*vel;
+      secs=(double)i/awid;
       secs+=seek;
       if (secs>mainw->files[fnum]->laudio_time) break;
 
       // seek and read
-      ypos=get_float_audio_val_at_time(fnum,secs,chnum,cfile->achans)*.5;
+      ypos=get_float_audio_val_at_time(fnum,afd,secs,chnum,cfile->achans)*.5;
 
       lives_painter_move_to(cr,i,(float)lives_widget_get_allocation_height(ebox)/2.);
       lives_painter_line_to(cr,i,(.5-ypos)*(float)lives_widget_get_allocation_height(ebox));
@@ -18128,7 +18085,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
     block=block->next;
 
     if (mainw->read_failed) {
-      char *filename=lives_build_filename(prefs->workdir,mainw->files[fnum]->handle,"audio",NULL);
+      filename=lives_build_filename(prefs->workdir,mainw->files[fnum]->handle,"audio",NULL);
       do_read_failed_error_s(filename,NULL);
       lives_free(filename);
     }

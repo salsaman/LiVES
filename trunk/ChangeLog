@@ -1,6 +1,9 @@
 Version 2.8.6
 -------------
 Remove dependency on (deprecated) GLee.
+Show audio as volume levels in Clip Editor.
+Ensure that timeline track backgrounds are properly painted in multitrack (regression).
+
 
 
 

@@ -3192,7 +3192,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         mainw->pchains=NULL;
       }
     }
-    if (mainw->playing_file>-1) lives_widget_context_update();
+    if (mainw->playing_file>-1&&mainw->multitrack==NULL) lives_widget_context_update();
     cfile->next_event=get_next_event(next_event);
     break;
   case WEED_EVENT_HINT_FILTER_INIT:

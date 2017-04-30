@@ -817,7 +817,6 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
 
 boolean mt_auto_backup(livespointer user_data) {
-
 #ifndef USE_MONOTONIC_TIME
   struct timeval otv;
 #endif
@@ -831,11 +830,6 @@ boolean mt_auto_backup(livespointer user_data) {
     return FALSE;
   }
 
-  if (mt->idlefunc!=0) {
-    lives_source_remove(mt->idlefunc);
-    mt->idlefunc=0;
-  }
-
 #ifdef USE_MONOTONIC_TIME
   stime=lives_get_monotonic_time()/1000000.;
 #else
@@ -847,11 +841,15 @@ boolean mt_auto_backup(livespointer user_data) {
 
   diff=stime-mt->auto_back_time;
   if (diff>=prefs->mt_auto_back) {
+    if (mt->idlefunc!=0) {
+      lives_source_remove(mt->idlefunc);
+      mt->idlefunc=0;
+    }
     save_mt_autoback(mt,stime);
     mt->auto_changed=FALSE;
+    mt->idlefunc=mt_idle_add(mt);
   }
 
-  mt->idlefunc=mt_idle_add(mt);
 
   return TRUE;
 }
@@ -1438,8 +1436,8 @@ static boolean expose_track_event(LiVESWidget *eventbox, LiVESXEventExpose *even
 
   idlefunc=mt->idlefunc;
   if (mt->idlefunc>0) {
-    lives_source_remove(mt->idlefunc);
     mt->idlefunc=0;
+    lives_source_remove(idlefunc);
   }
 
   if (width>lives_widget_get_allocation_width(eventbox)-startx) width=lives_widget_get_allocation_width(eventbox)-startx;
@@ -1485,6 +1483,21 @@ draw1:
 
   if (bgimage!=NULL&&lives_painter_image_surface_get_width(bgimage)>0) {
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+
+    if (palette->style&STYLE_1) {
+      lives_painter_t *crx=lives_painter_create(bgimage);
+      lives_colRGBA64_t lcol;
+      if (palette->style&STYLE_3) {
+        widget_color_to_lives_rgba(&lcol,&palette->menu_and_bars);
+      } else {
+        widget_color_to_lives_rgba(&lcol,&palette->normal_fore);
+      }
+      lives_painter_set_source_rgb_from_lives_rgba(crx,&lcol);
+      lives_painter_rectangle(crx,0.,0.,width,height);
+      lives_painter_fill(crx);
+      lives_painter_paint(crx);
+      lives_painter_destroy(crx);
+    }
 
     if (mt->block_selected!=NULL) {
       sblock=mt->block_selected;
@@ -4759,7 +4772,7 @@ void mt_backup(lives_mt *mt, int undo_type, weed_timecode_t tc) {
   unsigned char *memblock;
 
 
-  mt->did_backup=TRUE;
+  mt->did_backup=FALSE;
 
   mt->changed=mt->auto_changed=TRUE;
 
@@ -6025,11 +6038,12 @@ void set_mt_colours(lives_mt *mt) {
 
     lives_widget_set_bg_color(LIVES_WIDGET(mt->timeline_table_header), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
+    if (mt->timeline!=NULL) {
+      lives_widget_set_fg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    }
+
     if (palette->style&STYLE_3) {
-      if (mt->timeline!=NULL) {
-        lives_widget_set_fg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-        lives_widget_set_bg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-      }
       if (mt->timeline_eb!=NULL) {
         lives_widget_set_bg_color(mt->timeline_eb, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
         lives_widget_set_fg_color(mt->timeline_eb, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -6107,6 +6121,8 @@ void set_mt_colours(lives_mt *mt) {
     lives_widget_set_fg_color(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_bg_color(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
+
+  redraw_all_event_boxes(mt);
 
 }
 
@@ -8591,7 +8607,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   hbox=lives_hbox_new(FALSE,0);
@@ -8650,7 +8665,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   hbox=lives_hbox_new(FALSE,0);
@@ -13838,6 +13852,7 @@ void unpaint_line(lives_mt *mt, LiVESWidget *eventbox) {
 
   ebwidth=lives_widget_get_allocation_width(eventbox);
 
+
   bth=((uint64_t)((uint32_t)(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h")))))<<32;
   btl=(uint64_t)((uint32_t)(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l"))));
   ocurrtime=(bth+btl)/U_SEC;
@@ -13847,6 +13862,7 @@ void unpaint_line(lives_mt *mt, LiVESWidget *eventbox) {
     lives_widget_queue_draw_area(eventbox,xoffset-4,0,9,lives_widget_get_allocation_height(eventbox));
     lives_widget_process_updates(eventbox,TRUE);
   }
+
 }
 
 
@@ -13913,6 +13929,7 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
     if (lives_widget_is_visible(eventbox)) {
       if (unpaint) unpaint_line(mt,eventbox);
 
+
       if (offset>0&&offset<ebwidth) {
 
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h",
@@ -13922,7 +13939,6 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
 
         cr = lives_painter_create_from_widget(eventbox);
 
-
         if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE))
           lives_painter_set_source_rgb(cr,1.,1.,1.);
         else
@@ -13930,12 +13946,12 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
 
         lives_painter_set_line_width(cr,1.);
 
-        lives_painter_move_to(cr,offset,0.);
-        lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(eventbox));
+        lives_painter_rectangle(cr,offset,0.,1.,lives_widget_get_allocation_height(eventbox));
 
-        lives_painter_stroke(cr);
+        lives_painter_fill(cr);
         lives_painter_destroy(cr);
       }
+
     }
     if (expanded) {
       if (is_video) {
@@ -13952,15 +13968,14 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
 
             cr = lives_painter_create_from_widget(aeventbox);
 
-            if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE))
+            if (lives_painter_set_operator(cr, CAIRO_OPERATOR_XOR))
               lives_painter_set_source_rgb(cr,1.,1.,1.);
             else
               lives_painter_set_source_rgb(cr,0.,0.,0.);
 
-            lives_painter_move_to(cr,offset,0.);
-            lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(aeventbox));
+            lives_painter_rectangle(cr,offset,0.,1.,lives_widget_get_allocation_height(aeventbox));
 
-            lives_painter_stroke(cr);
+            lives_painter_fill(cr);
             lives_painter_destroy(cr);
           }
         }
@@ -13983,10 +13998,9 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
           else
             lives_painter_set_source_rgb(cr,0.,0.,0.);
 
-          lives_painter_move_to(cr,offset,0.);
-          lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(eventbox));
+          lives_painter_rectangle(cr,offset,0.,1.,lives_widget_get_allocation_height(eventbox));
 
-          lives_painter_stroke(cr);
+          lives_painter_fill(cr);
           lives_painter_destroy(cr);
 
         }
@@ -14010,10 +14024,9 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
           else
             lives_painter_set_source_rgb(cr,0.,0.,0.);
 
-          lives_painter_move_to(cr,offset,0.);
-          lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(eventbox));
+          lives_painter_rectangle(cr,offset,0.,1.,lives_widget_get_allocation_height(eventbox));
 
-          lives_painter_stroke(cr);
+          lives_painter_fill(cr);
           lives_painter_destroy(cr);
         }
       }
@@ -14056,6 +14069,7 @@ void animate_multitrack(lives_mt *mt) {
 
   lives_widget_queue_draw(mt->timeline);
   if (mt->redraw_block) return; // don't update during expose event, otherwise we might leave lines
+
   paint_lines(mt,currtime,TRUE);
 }
 
@@ -18167,6 +18181,21 @@ static boolean mt_expose_audtrack_event(LiVESWidget *ebox, LiVESXEventExpose *ev
   bgimage=lives_painter_image_surface_create(LIVES_PAINTER_FORMAT_ARGB32,
           width,
           height);
+
+  if (palette->style&STYLE_1) {
+    lives_painter_t *crx=lives_painter_create(bgimage);
+    lives_colRGBA64_t lcol;
+    if (palette->style&STYLE_3) {
+      widget_color_to_lives_rgba(&lcol,&palette->menu_and_bars);
+    } else {
+      widget_color_to_lives_rgba(&lcol,&palette->normal_fore);
+    }
+    lives_painter_set_source_rgb_from_lives_rgba(crx,&lcol);
+    lives_painter_rectangle(crx,0.,0.,width,height);
+    lives_painter_fill(crx);
+    lives_painter_paint(crx);
+    lives_painter_destroy(crx);
+  }
 
   channum=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox),"channel"));
 

@@ -18073,7 +18073,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
 
     // open audio file here
 
-    awid=lives_widget_get_allocation_width(ebox)*tl_span+mt->tl_min-offset_startd/vel;
+    awid=lives_widget_get_allocation_width(ebox)/(tl_span+mt->tl_min-offset_startd*vel);
 
     if (fnum!=aofile) {
       // does not make sense to use buffer reads, as we may read very sparsely from the file

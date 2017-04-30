@@ -2528,13 +2528,10 @@ boolean do_comments_dialog(int fileno, char *filename) {
 
 void do_messages_window(void) {
   char *text=lives_text_view_get_text(LIVES_TEXT_VIEW(mainw->textview1));
-  do_text_window(_("Message History"),text);
+  widget_opts.expand=LIVES_EXPAND_EXTRA;
+  create_text_window(_("Message History"),text,NULL);
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
   lives_free(text);
-}
-
-
-void do_text_window(const char *title, const char *text) {
-  create_text_window(title,text,NULL);
 }
 
 

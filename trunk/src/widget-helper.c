@@ -8008,7 +8008,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
     {
       lives_scrolled_window_add_with_viewport(LIVES_SCROLLED_WINDOW(scrolledwindow), child);
     } else {
-      if (widget_opts.expand!=LIVES_EXPAND_NONE) {
+      if (widget_opts.expand!=LIVES_EXPAND_EXTRA) {
         LiVESWidget *align;
         align=lives_alignment_new(.5,0.,0.,0.);
         lives_container_add(LIVES_CONTAINER(align), child);

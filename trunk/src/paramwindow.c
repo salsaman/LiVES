@@ -1635,7 +1635,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
       woat=widget_opts.apply_theme;
       widget_opts.apply_theme=FALSE;
-      widget_opts.expand=LIVES_EXPAND_NONE;
+      widget_opts.expand=LIVES_EXPAND_EXTRA;
       scrolledwindow = lives_standard_scrolled_window_new(-1, RFX_TEXT_SCROLL_HEIGHT, textview);
       widget_opts.expand=LIVES_EXPAND_DEFAULT;
       widget_opts.apply_theme=woat;

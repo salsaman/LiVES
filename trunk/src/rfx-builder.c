@@ -2761,7 +2761,7 @@ LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder) {
 
   woat=widget_opts.apply_theme;
   widget_opts.apply_theme=FALSE;
-  widget_opts.expand=LIVES_EXPAND_NONE; // prevent centering
+  widget_opts.expand=LIVES_EXPAND_EXTRA; // prevent centering
   scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H*2./3.,RFX_WINSIZE_V/4.,rfxbuilder->code_textview);
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
   widget_opts.apply_theme=woat;
@@ -2814,7 +2814,7 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
 
   woat=widget_opts.apply_theme;
   widget_opts.apply_theme=FALSE;
-  widget_opts.expand=LIVES_EXPAND_NONE; // prevent centering
+  widget_opts.expand=LIVES_EXPAND_EXTRA; // prevent centering
   scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V,rfxbuilder->code_textview);
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
   widget_opts.apply_theme=woat;

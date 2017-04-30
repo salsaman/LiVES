@@ -702,7 +702,7 @@ boolean lives_xwindow_set_cursor(LiVESXWindow *, LiVESXCursor *);
 uint32_t lives_timer_add(uint32_t interval, LiVESWidgetSourceFunc function, livespointer data);
 boolean lives_timer_remove(uint32_t timer);
 
-boolean lives_source_remove(ulong handle);
+boolean lives_source_remove(uint32_t handle);
 
 uint32_t lives_accelerator_get_default_mod_mask();
 

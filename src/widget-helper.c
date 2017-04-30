@@ -7293,13 +7293,13 @@ LIVES_INLINE boolean lives_timer_remove(uint32_t timer) {
 
 
 
-boolean lives_source_remove(ulong handle) {
+boolean lives_source_remove(uint32_t handle) {
 #ifdef GUI_GTK
   g_source_remove(handle);
   return TRUE;
 #endif
 #ifdef GUI_QT
-  lives_timer_remove((uint32_t)handle);
+  lives_timer_remove(handle);
   return TRUE;
 #endif
   return FALSE;

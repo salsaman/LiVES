@@ -8446,7 +8446,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (prefs->warning_mask&WARN_MASK_LAYOUT_POPUP) return;
 
-  widget_opts.expand=LIVES_EXPAND_NONE;
+  widget_opts.expand=LIVES_EXPAND_EXTRA;
   textwindow=create_text_window(_("Layout Errors"),NULL,mainw->layout_textbuffer);
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
 

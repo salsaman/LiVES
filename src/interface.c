@@ -668,7 +668,7 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   textwindow=(text_window *)lives_malloc(sizeof(text_window));
 
-  textwindow->dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
+  textwindow->dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(textwindow->dialog),mainw->multitrack==NULL?

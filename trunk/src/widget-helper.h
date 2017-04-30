@@ -337,6 +337,7 @@ LiVESWidget *lives_expander_new_with_mnemonic(const char *label);
 LiVESWidget *lives_expander_new(const char *label);
 LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expander);
 
+boolean lives_label_set_width_chars(LiVESLabel *label, int nchars);
 boolean lives_label_set_halignment(LiVESLabel *, float yalign);
 
 LiVESWidget *lives_combo_new(void);
@@ -727,6 +728,8 @@ boolean lives_window_set_auto_startup_notification(boolean set);
 
 // compound functions (composed of basic functions)
 
+void lives_label_set_hpadding(LiVESLabel *label, int pad);
+
 LiVESWidget *lives_standard_label_new(const char *text);
 LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget);
 
@@ -869,7 +872,7 @@ typedef struct {
   boolean pack_end;
   boolean line_wrap; // line wrapping for labels
   boolean non_modal; // non-modal for dialogs
-  boolean expand; // whether spin,check,radio buttons should expand
+  lives_expand_t expand; // whether spin,check,radio buttons should expand
   boolean apply_theme; // whether to apply theming to widget
   double scale; // scale factor for all sizes
   int packing_width; // default should be W_PACKING_WIDTH

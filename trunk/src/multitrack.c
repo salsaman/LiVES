@@ -841,6 +841,7 @@ boolean mt_auto_backup(livespointer user_data) {
 
   diff=stime-mt->auto_back_time;
   if (diff>=prefs->mt_auto_back) {
+    // time to back up the event_list
     if (mt->idlefunc!=0) {
       lives_source_remove(mt->idlefunc);
       mt->idlefunc=0;
@@ -849,7 +850,6 @@ boolean mt_auto_backup(livespointer user_data) {
     mt->auto_changed=FALSE;
     mt->idlefunc=mt_idle_add(mt);
   }
-
 
   return TRUE;
 }
@@ -13823,6 +13823,7 @@ boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *event, livespoi
   return TRUE;
 }
 
+
 boolean on_track_move(LiVESWidget *widget, LiVESXEventMotion *event, livespointer user_data) {
   // used for mouse mode SELECT
   lives_mt *mt=(lives_mt *)user_data;
@@ -13830,6 +13831,7 @@ boolean on_track_move(LiVESWidget *widget, LiVESXEventMotion *event, livespointe
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) mouse_select_move(widget,event,mt);
   return TRUE;
 }
+
 
 boolean on_track_header_move(LiVESWidget *widget, LiVESXEventMotion *event, livespointer user_data) {
   // used for mouse mode SELECT
@@ -13839,6 +13841,7 @@ boolean on_track_header_move(LiVESWidget *widget, LiVESXEventMotion *event, live
   return TRUE;
 }
 
+
 void unpaint_line(lives_mt *mt, LiVESWidget *eventbox) {
   uint64_t bth,btl;
 
@@ -13846,19 +13849,22 @@ void unpaint_line(lives_mt *mt, LiVESWidget *eventbox) {
 
   int xoffset;
   int ebwidth;
+  int off_x;
 
   if (mt->redraw_block) return; // don't update during expose event, otherwise we might leave lines
   if (!lives_widget_is_visible(eventbox)) return;
 
-  ebwidth=lives_widget_get_allocation_width(eventbox);
-
+  ebwidth=lives_widget_get_allocation_width(mt->timeline);
 
   bth=((uint64_t)((uint32_t)(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h")))))<<32;
   btl=(uint64_t)((uint32_t)(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l"))));
   ocurrtime=(bth+btl)/U_SEC;
   xoffset=(ocurrtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth+.5;
 
-  if (xoffset>=0&&xoffset<ebwidth) {
+  lives_widget_get_position(mt->timeline, &off_x, NULL);
+  xoffset+=off_x;
+
+  if (xoffset>off_x&&xoffset<ebwidth) {
     lives_widget_queue_draw_area(eventbox,xoffset-4,0,9,lives_widget_get_allocation_height(eventbox));
     lives_widget_process_updates(eventbox,TRUE);
   }
@@ -13867,174 +13873,54 @@ void unpaint_line(lives_mt *mt, LiVESWidget *eventbox) {
 
 
 void unpaint_lines(lives_mt *mt) {
-  int len=lives_list_length(mt->video_draws);
-  int i;
-  LiVESWidget *eventbox,*xeventbox;
-  boolean is_video=FALSE;
-
-  for (i=-1; i<len; i++) {
-    if (i==-1) {
-      if (mt->audio_draws==NULL||(eventbox=(LiVESWidget *)mt->audio_draws->data)==NULL) continue;
-    } else {
-      eventbox=(LiVESWidget *)lives_list_nth_data(mt->video_draws,i);
-      is_video=TRUE;
-    }
-    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))==0) {
-      unpaint_line(mt,eventbox);
-    }
-    if (is_video) {
-      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"))) {
-        eventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"));
-        unpaint_line(mt,eventbox);
-      } else continue;
-    }
-    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"))) {
-      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan0");
-      unpaint_line(mt,xeventbox);
-      if (cfile->achans>1) {
-        xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan1");
-        unpaint_line(mt,xeventbox);
-      }
-    }
-  }
+  unpaint_line(mt,mt->timeline_table);
+  return;
 }
 
 
-static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
+
+static void paint_line(lives_mt *mt, LiVESWidget *eventbox, int offset, double currtime) {
   lives_painter_t *cr;
 
-  LiVESWidget *eventbox=NULL,*aeventbox=NULL;
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h",
+			       LIVES_INT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l",
+			       LIVES_INT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
-  boolean expanded=FALSE;
-  boolean is_video=FALSE;
+  cr = lives_painter_create_from_widget(eventbox);
 
-  int len=lives_list_length(mt->video_draws);
+  if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE))
+    lives_painter_set_source_rgb(cr,1.,1.,1.);
+  else
+    lives_painter_set_source_rgb(cr,0.,0.,0.);
+    
+  lives_painter_set_line_width(cr,1.);
+
+  lives_painter_rectangle(cr,offset,0.,1.,lives_widget_get_allocation_height(eventbox));
+
+  lives_painter_fill(cr);
+  lives_painter_destroy(cr);
+}
+
+
+
+ 
+static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
   int ebwidth=lives_widget_get_allocation_width(mt->timeline);
-  int offset;
-
-  register int i;
+  int offset,off_x;
 
   if (currtime<mt->tl_min||currtime>mt->tl_max) return;
 
   offset=(currtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth;
 
-  for (i=-mt->opts.back_audio_tracks; i<len; i++) {
-    if (i==-1) {
-      if (mt->audio_draws==NULL||((aeventbox=eventbox=(LiVESWidget *)mt->audio_draws->data)==NULL)) continue;
-    } else {
-      eventbox=(LiVESWidget *)lives_list_nth_data(mt->video_draws,i);
-      is_video=TRUE;
-    }
-    expanded=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
-    if (lives_widget_is_visible(eventbox)) {
-      if (unpaint) unpaint_line(mt,eventbox);
-
-
-      if (offset>0&&offset<ebwidth) {
-
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h",
-                                     LIVES_INT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l",
-                                     LIVES_INT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-
-        cr = lives_painter_create_from_widget(eventbox);
-
-        if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE))
-          lives_painter_set_source_rgb(cr,1.,1.,1.);
-        else
-          lives_painter_set_source_rgb(cr,0.,0.,0.);
-
-        lives_painter_set_line_width(cr,1.);
-
-        lives_painter_rectangle(cr,offset,0.,1.,lives_widget_get_allocation_height(eventbox));
-
-        lives_painter_fill(cr);
-        lives_painter_destroy(cr);
-      }
-
-    }
-    if (expanded) {
-      if (is_video) {
-        aeventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"));
-        expanded=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"expanded"));
-        if (lives_widget_is_visible(aeventbox)) {
-          if (unpaint) unpaint_line(mt,aeventbox);
-
-          if (offset>0&&offset<ebwidth) {
-            lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox),"backup_timepos_h",
-                                         LIVES_INT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
-            lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox),"backup_timepos_l",
-                                         LIVES_INT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-
-            cr = lives_painter_create_from_widget(aeventbox);
-
-            if (lives_painter_set_operator(cr, CAIRO_OPERATOR_XOR))
-              lives_painter_set_source_rgb(cr,1.,1.,1.);
-            else
-              lives_painter_set_source_rgb(cr,0.,0.,0.);
-
-            lives_painter_rectangle(cr,offset,0.,1.,lives_widget_get_allocation_height(aeventbox));
-
-            lives_painter_fill(cr);
-            lives_painter_destroy(cr);
-          }
-        }
-      }
-      if (expanded) eventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"achan0");
-      else continue;
-      if (lives_widget_is_visible(eventbox)) {
-        if (unpaint) unpaint_line(mt,eventbox);
-
-        if (offset>0&&offset<ebwidth) {
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h",
-                                       LIVES_INT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l",
-                                       LIVES_INT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-
-          cr = lives_painter_create_from_widget(eventbox);
-
-          if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE))
-            lives_painter_set_source_rgb(cr,1.,1.,1.);
-          else
-            lives_painter_set_source_rgb(cr,0.,0.,0.);
-
-          lives_painter_rectangle(cr,offset,0.,1.,lives_widget_get_allocation_height(eventbox));
-
-          lives_painter_fill(cr);
-          lives_painter_destroy(cr);
-
-        }
-      }
-      // expanded right audio
-      if (cfile->achans>1) eventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"achan1");
-      else continue;
-      if (lives_widget_is_visible(eventbox)) {
-        if (unpaint) unpaint_line(mt,eventbox);
-
-        if (offset>0&&offset<ebwidth) {
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h",
-                                       LIVES_INT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l",
-                                       LIVES_INT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-
-          cr = lives_painter_create_from_widget(eventbox);
-
-          if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE))
-            lives_painter_set_source_rgb(cr,1.,1.,1.);
-          else
-            lives_painter_set_source_rgb(cr,0.,0.,0.);
-
-          lives_painter_rectangle(cr,offset,0.,1.,lives_widget_get_allocation_height(eventbox));
-
-          lives_painter_fill(cr);
-          lives_painter_destroy(cr);
-        }
-      }
-    }
+  if (unpaint) unpaint_line(mt,mt->timeline_table);
+  lives_widget_get_position(mt->timeline_eb, &off_x, NULL);
+  offset+=off_x;
+  
+  if (offset>off_x&&offset<ebwidth) {
+    paint_line(mt,mt->timeline_table,offset,currtime);
   }
 }
-
-
 
 
 

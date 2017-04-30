@@ -2721,6 +2721,14 @@ LIVES_INLINE LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expande
 
 
 
+LIVES_INLINE boolean lives_label_set_width_chars(LiVESLabel *label, int nchars) {
+#ifdef GUI_GTK
+  gtk_label_set_width_chars(label,nchars);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 LIVES_INLINE boolean lives_label_set_halignment(LiVESLabel *label, float xalign) {
 #ifdef GUI_GTK
@@ -7381,6 +7389,12 @@ static void set_label_state(LiVESWidget *widget, LiVESWidgetState state, livespo
   if (!lives_widget_get_sensitive(widget)&&lives_widget_get_sensitive(label)) {
     lives_widget_set_sensitive(label,FALSE);
   }
+}
+
+
+LIVES_INLINE void lives_label_set_hpadding(LiVESLabel *label, int pad) {
+  const char *text=lives_label_get_text(label);
+  lives_label_set_width_chars(label,strlen(text)+pad);
 }
 
 

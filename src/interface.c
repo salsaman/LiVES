@@ -298,6 +298,9 @@ static LiVESWidget *vid_text_view_new(void) {
   textview=lives_standard_text_view_new(NULL,NULL);
   widget_opts.justify=widget_opts.default_justify;
   lives_widget_set_size_request(textview, TB_WIDTH, TB_HEIGHT_VID);
+  if (palette->style&STYLE_3) {
+    lives_widget_set_bg_color(textview,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+  }
   return textview;
 }
 
@@ -308,6 +311,9 @@ static LiVESWidget *aud_text_view_new(void) {
   textview=lives_standard_text_view_new(NULL,NULL);
   widget_opts.justify=widget_opts.default_justify;
   lives_widget_set_size_request(textview, TB_WIDTH, TB_HEIGHT_AUD);
+  if (palette->style&STYLE_3) {
+    lives_widget_set_bg_color(textview,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+  }
   return textview;
 }
 
@@ -365,33 +371,57 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     lives_container_add(LIVES_CONTAINER(vidframe), table);
 
     label = lives_standard_label_new(_("Format"));
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+    }
+    lives_label_set_hpadding(LIVES_LABEL(label),4);
     lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
     label = lives_standard_label_new(_("Frame size"));
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+    }
+    lives_label_set_hpadding(LIVES_LABEL(label),4);
     lives_table_attach(LIVES_TABLE(table), label, 0, 1, 1, 2,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
     if (!is_mt) label = lives_standard_label_new(_("File size"));
     else label = lives_standard_label_new(_("Byte size"));
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+    }
+    lives_label_set_hpadding(LIVES_LABEL(label),4);
     lives_table_attach(LIVES_TABLE(table), label, 0, 1, 2, 3,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
     label = lives_standard_label_new(_("FPS"));
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+    }
+    lives_label_set_hpadding(LIVES_LABEL(label),4);
     lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
     if (!is_mt) label = lives_standard_label_new(_("Frames"));
     else label = lives_standard_label_new(_("Events"));
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+    }
+    lives_label_set_hpadding(LIVES_LABEL(label),4);
     lives_table_attach(LIVES_TABLE(table), label, 2, 3, 1, 2,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
     label = lives_standard_label_new(_("Total time"));
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+    }
+    lives_label_set_hpadding(LIVES_LABEL(label),4);
     lives_table_attach(LIVES_TABLE(table), label, 2, 3, 2, 3,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
@@ -450,6 +480,9 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
     if (!is_mt) {
       label = lives_standard_label_new(_("Total time"));
+      if (palette->style&STYLE_3) {
+	lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+      }
       lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
                          (LiVESAttachOptions)(0),
                          (LiVESAttachOptions)(0), 0, 0);
@@ -461,6 +494,10 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     }
 
     label = lives_standard_label_new(_("Rate/size"));
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+    }
+    lives_label_set_hpadding(LIVES_LABEL(label),4);
     lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
                        (LiVESAttachOptions)(0),
                        (LiVESAttachOptions)(0), 0, 0);
@@ -486,6 +523,10 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
       if (!is_mt) {
         label = lives_standard_label_new(_("Total time"));
+	if (palette->style&STYLE_3) {
+	  lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+	}
+	lives_label_set_hpadding(LIVES_LABEL(label),4);
         lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
                            (LiVESAttachOptions)(0),
                            (LiVESAttachOptions)(0), 0, 0);
@@ -497,6 +538,10 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
       }
 
       label = lives_standard_label_new(_("Rate/size"));
+      if (palette->style&STYLE_3) {
+	lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+      }
+      lives_label_set_hpadding(LIVES_LABEL(label),4);
       lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
                          (LiVESAttachOptions)(0),
                          (LiVESAttachOptions)(0), 0, 0);

@@ -2206,6 +2206,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
   }
 
   mt->timeline_table = lives_table_new(prefs->max_disp_vtracks, TIMELINE_TABLE_COLUMNS, TRUE);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->timeline_table),"has_line",LIVES_INT_TO_POINTER(-1));
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(LIVES_WIDGET(mt->timeline_table), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -13845,31 +13846,22 @@ boolean on_track_header_move(LiVESWidget *widget, LiVESXEventMotion *event, live
 
 
 void unpaint_line(lives_mt *mt, LiVESWidget *eventbox) {
-  uint64_t bth,btl;
-
-  double ocurrtime;
-
   int xoffset;
   int ebwidth;
-  int off_x;
 
   if (mt->redraw_block) return; // don't update during expose event, otherwise we might leave lines
   if (!lives_widget_is_visible(eventbox)) return;
+  if (!LIVES_IS_WINDOW(mt->window)||!mt->is_ready) return;
+  if ((xoffset=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"has_line")))<0) return;
 
   ebwidth=lives_widget_get_allocation_width(mt->timeline);
 
-  bth=((uint64_t)((uint32_t)(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h")))))<<32;
-  btl=(uint64_t)((uint32_t)(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l"))));
-  ocurrtime=(bth+btl)/U_SEC;
-  xoffset=(ocurrtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth+.5;
-
-  lives_widget_get_position(mt->timeline, &off_x, NULL);
-  xoffset+=off_x;
-
-  if (xoffset>off_x&&xoffset<ebwidth) {
+  if (xoffset<ebwidth) {
     lives_widget_queue_draw_area(eventbox,xoffset-4,0,9,lives_widget_get_allocation_height(eventbox));
     lives_widget_process_updates(eventbox,TRUE);
   }
+
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"has_line",LIVES_INT_TO_POINTER(-1));
 
 }
 
@@ -13884,10 +13876,7 @@ void unpaint_lines(lives_mt *mt) {
 static void paint_line(lives_mt *mt, LiVESWidget *eventbox, int offset, double currtime) {
   lives_painter_t *cr;
 
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h",
-			       LIVES_INT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l",
-			       LIVES_INT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"has_line",LIVES_INT_TO_POINTER(offset));
 
   cr = lives_painter_create_from_widget(eventbox);
 

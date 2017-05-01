@@ -1243,7 +1243,7 @@ int lives_alarm_set(int64_t ticks);
 void lives_alarm_clear(int alarm_handle);
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval);
 char *lives_format_storage_space_string(uint64_t space);
-
+char *lives_datetime(struct timeval *tv);
 
 int myround(double n);
 void get_dirname(char *filename);

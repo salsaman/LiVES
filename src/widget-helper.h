@@ -727,6 +727,7 @@ boolean lives_window_set_auto_startup_notification(boolean set);
 
 
 // compound functions (composed of basic functions)
+boolean lives_has_toplevel_focus();
 
 void lives_label_set_hpadding(LiVESLabel *label, int pad);
 

@@ -7375,6 +7375,11 @@ LIVES_INLINE LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *disp, LiV
 // compound functions
 
 
+LIVES_INLINE boolean lives_has_toplevel_focus() {
+  return TRUE;
+  return lives_window_has_toplevel_focus(LIVES_WINDOW(mainw->LiVES))||
+    (mainw->multitrack!=NULL&&lives_window_has_toplevel_focus(LIVES_WINDOW(mainw->multitrack->window)));
+}
 
 LIVES_INLINE boolean lives_entry_set_editable(LiVESEntry *entry, boolean editable) {
   return lives_editable_set_editable(LIVES_EDITABLE(entry),editable);

@@ -481,7 +481,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     if (!is_mt) {
       label = lives_standard_label_new(_("Total time"));
       if (palette->style&STYLE_3) {
-	lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+        lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
       }
       lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
                          (LiVESAttachOptions)(0),
@@ -523,10 +523,10 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
       if (!is_mt) {
         label = lives_standard_label_new(_("Total time"));
-	if (palette->style&STYLE_3) {
-	  lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
-	}
-	lives_label_set_hpadding(LIVES_LABEL(label),4);
+        if (palette->style&STYLE_3) {
+          lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+        }
+        lives_label_set_hpadding(LIVES_LABEL(label),4);
         lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
                            (LiVESAttachOptions)(0),
                            (LiVESAttachOptions)(0), 0, 0);
@@ -539,7 +539,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
       label = lives_standard_label_new(_("Rate/size"));
       if (palette->style&STYLE_3) {
-	lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+        lives_widget_set_bg_color(label,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
       }
       lives_label_set_hpadding(LIVES_LABEL(label),4);
       lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,

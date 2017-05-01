@@ -976,11 +976,42 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   // return (audio) frames rendered
 
+  weed_plant_t *shortcut=NULL;
   lives_clip_t *outfile=to_file>-1?mainw->files[to_file]:NULL;
-
-
-  size_t tbytes;
   uint8_t *in_buff;
+  void *finish_buff;
+  double *vis=NULL;
+  short *holding_buff;
+
+  char *infilename,*outfilename;
+
+  off64_t seekstart[nfiles];
+
+  int in_fd[nfiles];
+  int in_asamps[nfiles];
+  int in_achans[nfiles];
+  int in_arate[nfiles];
+  int in_unsigned[nfiles];
+
+  boolean in_reverse_endian[nfiles];
+  boolean is_silent[nfiles];
+
+  size_t max_aud_mem,bytes_to_read,aud_buffer;
+  size_t tbytes;
+
+  ssize_t bytes_read;
+
+  uint64_t nframes;
+
+  weed_timecode_t tc=tc_start;
+
+  double ins_pt=tc/U_SEC;
+  double time=0.;
+  double opvol=opvol_start;
+  double zavel,zavel_max=0.;
+
+  boolean out_reverse_endian=FALSE;
+  boolean is_fade=FALSE;
 
   int out_asamps=to_file>-1?outfile->asampsize/8:0;
   int out_achans=to_file>-1?outfile->achans:obuf->out_achans;
@@ -988,62 +1019,28 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   int out_unsigned=to_file>-1?outfile->signed_endian&AFORM_UNSIGNED:0;
   int out_bendian=to_file>-1?outfile->signed_endian&AFORM_BIG_ENDIAN:0;
 
-  short *holding_buff;
-  float *float_buffer[out_achans*nfiles];
-
-  float *chunk_float_buffer[out_achans*nfiles];
-
+  int track;
+  int in_bendian;
+  int first_nonsilent=-1;
+  int max_segments;
+  int render_block_size=RENDER_BLOCK_SIZE;
   int c,x;
+  int out_fd=-1;
+
   register int i,j;
-  ssize_t bytes_read;
-
-  int in_fd[nfiles],out_fd=-1;
-
-  uint64_t nframes;
-
-  boolean in_reverse_endian[nfiles],out_reverse_endian=FALSE;
-
-  off64_t seekstart[nfiles];
-  char *infilename,*outfilename;
-
-  weed_timecode_t tc=tc_start;
-
-  double ins_pt=tc/U_SEC;
-  double time=0.;
-  double opvol=opvol_start;
-  double *vis=NULL;
 
   int64_t frames_out=0;
   int64_t ins_size=0l,cur_size;
-
-  int track;
-
-  int in_asamps[nfiles];
-  int in_achans[nfiles];
-  int in_arate[nfiles];
-  int in_unsigned[nfiles];
-  int in_bendian;
-
-  boolean is_silent[nfiles];
-  int first_nonsilent=-1;
-
   int64_t tsamples=((double)(tc_end-tc_start)/U_SEC*out_arate+.5);
-
   int64_t blocksize,zsamples,xsamples;
-
-  void *finish_buff;
-
-  weed_plant_t *shortcut=NULL;
-
-  size_t max_aud_mem,bytes_to_read,aud_buffer;
-  int max_segments;
-  double zavel,zavel_max=0.;
-
   int64_t tot_frames=0l;
 
-  int render_block_size=RENDER_BLOCK_SIZE;
+  float *float_buffer[out_achans*nfiles];
+  float *chunk_float_buffer[out_achans*nfiles];
 
   if (out_achans*nfiles*tsamples==0) return 0l;
+
+  if (to_file>-1&&mainw->multitrack==NULL&&opvol_start!=opvol_end) is_fade=TRUE;
 
   if (!storedfdsset) audio_reset_stored_fnames();
 
@@ -1259,6 +1256,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       bytes_read=0;
       mainw->read_failed=FALSE;
+
       if (in_fd[track]>-1) bytes_read=lives_read(in_fd[track],in_buff,tbytes,TRUE);
 
       if (bytes_read<0) bytes_read=0;
@@ -1349,14 +1347,14 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         opvol=opvol_start+(opvol_end-opvol_start)*(time/(double)((tc_end-tc_start)/U_SEC));
       }
 
-      if (to_file>-1&&mainw->multitrack==NULL&&opvol_start!=opvol_end) {
+      if (is_fade) {
         // output to file
         // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
         frames_out=sample_move_float_int((void *)finish_buff,chunk_float_buffer,blocksize,1.,out_achans,
                                          out_asamps*8,out_unsigned,out_reverse_endian,FALSE,opvol);
         lives_write(out_fd,finish_buff,frames_out*out_asamps*out_achans,TRUE);
+        threaded_dialog_spin(0.);
         tot_frames+=frames_out;
-
 #ifdef DEBUG_ARENDER
         g_print(".");
 #endif
@@ -1364,25 +1362,27 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       tc+=(double)blocksize/(double)out_arate*U_SEC;
     }
 
-    if (to_file>-1) {
-      // output to file
-      // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
-      frames_out=sample_move_float_int((void *)finish_buff,float_buffer,xsamples,1.,out_achans,
-                                       out_asamps*8,out_unsigned,out_reverse_endian,FALSE,opvol);
-      lives_write(out_fd,finish_buff,frames_out*out_asamps*out_achans,TRUE);
+    if (!is_fade) {
+      if (to_file>-1) {
+        // output to file
+        // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
+        frames_out=sample_move_float_int((void *)finish_buff,float_buffer,xsamples,1.,out_achans,
+                                         out_asamps*8,out_unsigned,out_reverse_endian,FALSE,opvol);
+        lives_write(out_fd,finish_buff,frames_out*out_asamps*out_achans,TRUE);
 #ifdef DEBUG_ARENDER
-      g_print(".");
+        g_print(".");
 #endif
-      tot_frames+=frames_out;
-    } else {
-      // output to memory buffer
-      if (prefs->audio_player==AUD_PLAYER_JACK) {
-        frames_out=chunk_to_float_abuf(obuf,float_buffer,xsamples);
+        tot_frames+=frames_out;
       } else {
-        frames_out=chunk_to_int16_abuf(obuf,float_buffer,xsamples);
+        // output to memory buffer
+        if (prefs->audio_player==AUD_PLAYER_JACK) {
+          frames_out=chunk_to_float_abuf(obuf,float_buffer,xsamples);
+        } else {
+          frames_out=chunk_to_int16_abuf(obuf,float_buffer,xsamples);
+        }
+        obuf->samples_filled+=frames_out;
+        tot_frames+=frames_out;
       }
-      obuf->samples_filled+=frames_out;
-      tot_frames+=frames_out;
     }
 
     xsamples=zsamples;

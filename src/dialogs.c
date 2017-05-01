@@ -2815,7 +2815,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
   LiVESWidget *vbox;
   char tmp_label[256];
   boolean nogui=widget_opts.no_gui;
-  
+
   procw=(xprocess *)(lives_calloc(1,sizeof(xprocess)));
 
   if (!(lives_has_toplevel_focus())) widget_opts.no_gui=TRUE;
@@ -2881,7 +2881,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
     mainw->cancel_type=CANCEL_SOFT;
   }
 
-  if (lives_has_toplevel_focus()) 
+  if (lives_has_toplevel_focus())
     lives_widget_show_all(procw->processing);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing);
@@ -2914,7 +2914,7 @@ void threaded_dialog_spin(double fraction) {
       //#define GDB
 #ifndef GDB
       if (lives_has_toplevel_focus()) {
-	if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
+        if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
       }
 #endif
     } else {

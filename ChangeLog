@@ -2,9 +2,12 @@ Version 2.8.6
 -------------
 Remove dependency on (deprecated) GLee.
 Show audio as volume levels in Clip Editor.
-Ensure that timeline track backgrounds are properly painted in multitrack (regression).
-
-
+Performance improvements for multitrack playback.
+Ensure that timeline track backgrounds are painted in multitrack (regression).
+Properly expand text width in the message info window.
+Improve zoom in multitrack (zooms around cursor rather than screen center).
+Prevent annyoing focus stealing when mt is backed up in the background.
+Fix broken audio fade in/out (regression).
 
 
 

@@ -747,7 +747,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
   char *asave_file=lives_strdup_printf("%s/layout.%d.%d.%d",prefs->workdir,lives_getuid(),lives_getgid(),capable->mainpid);
   char *tmp;
-  
+
   boolean retval=TRUE;
   int retval2;
   int fd;
@@ -3201,7 +3201,7 @@ void mt_tl_move(lives_mt *mt, double pos) {
   if (mainw->playing_file>-1) return;
 
   if (mt->is_ready) unpaint_lines(mt);
-  
+
   pos=q_dbl(pos,mt->fps)/U_SEC;
   if (pos<0.) pos=0.;
 
@@ -3324,11 +3324,10 @@ static void mt_zoom(lives_mt *mt, double scale) {
   double tl_cur;
 
 
-  
+
   if (scale>0.) {
     tl_cur=mt->ptr_time;
-  }
-  else {
+  } else {
     tl_cur=mt->tl_min+tl_span; // center on middle of screen
     scale=-scale;
   }
@@ -13883,7 +13882,7 @@ static void paint_line(lives_mt *mt, LiVESWidget *eventbox, int offset, double c
     lives_painter_set_source_rgb(cr,1.,1.,1.);
   else
     lives_painter_set_source_rgb(cr,0.,0.,0.);
-    
+
   lives_painter_set_line_width(cr,1.);
 
   lives_painter_rectangle(cr,offset,0.,1.,lives_widget_get_allocation_height(eventbox));
@@ -13894,15 +13893,15 @@ static void paint_line(lives_mt *mt, LiVESWidget *eventbox, int offset, double c
 
 
 
- 
+
 static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
   int ebwidth;
   int offset,off_x;
 
   if (!mt->is_ready) return;
-  
+
   ebwidth=lives_widget_get_allocation_width(mt->timeline);
-  
+
   if (currtime<mt->tl_min||currtime>mt->tl_max) return;
 
   offset=(currtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth;
@@ -13910,7 +13909,7 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
   if (unpaint) unpaint_line(mt,mt->timeline_table);
   lives_widget_get_position(mt->timeline_eb, &off_x, NULL);
   offset+=off_x;
-  
+
   if (offset>off_x&&offset<ebwidth) {
     paint_line(mt,mt->timeline_table,offset,currtime);
   }
@@ -14721,7 +14720,7 @@ static void insgap_inner(lives_mt *mt, int tnum, boolean is_sel, int passnm) {
               }
               mt_fixup_events(mt,event,new_event);
               redraw_eventbox(mt,eventbox);
-	      paint_lines(mt,mt->ptr_time,TRUE);
+              paint_lines(mt,mt->ptr_time,TRUE);
               return;
             }
             block=block->prev;

@@ -1418,8 +1418,8 @@ char *lives_datetime(struct timeval *tv) {
   char *datetime=NULL;
   struct tm *gm = gmtime(&tv->tv_sec);
   ssize_t written;
-  
-  
+
+
   if (gm) {
     written = (ssize_t)strftime(buf, 128, "%Y-%m-%d    %H:%M:%S", gm);
     if ((written > 0) && ((size_t)written < 128)) {

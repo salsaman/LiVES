@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2017-04-29 18:37-0300\n"
+"POT-Creation-Date: 2017-05-01 16:41-0300\n"
 "PO-Revision-Date: 2015-04-05 16:35+0000\n"
 "Last-Translator: Timothy Gu <timothy_gu@hotmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -245,11 +245,11 @@ msgstr "检测到的显视器数量：%d\n"
 msgid "Number of CPUs detected: %d "
 msgstr "检测到CPU个数：%d "
 
-#: src/main.c:1911 src/multitrack.c:5071
+#: src/main.c:1911 src/multitrack.c:5083
 msgid "little endian"
 msgstr "小端"
 
-#: src/main.c:1912 src/multitrack.c:5070
+#: src/main.c:1912 src/multitrack.c:5082
 msgid "big endian"
 msgstr "大端"
 
@@ -690,25 +690,25 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "已关闭文件 %s\n"
 
-#: src/main.c:6994 src/gui.c:733 src/utils.c:4477 src/utils.c:4507
-#: src/saveplay.c:3335 src/multitrack.c:4680 src/multitrack.c:6680
+#: src/main.c:6994 src/gui.c:733 src/utils.c:4527 src/utils.c:4557
+#: src/saveplay.c:3335 src/multitrack.c:4692 src/multitrack.c:6695
 msgid "_Undo"
 msgstr "撤消(_U)"
 
-#: src/main.c:6995 src/gui.c:749 src/utils.c:4478 src/utils.c:4508
-#: src/saveplay.c:3336 src/multitrack.c:4700 src/multitrack.c:6703
+#: src/main.c:6995 src/gui.c:749 src/utils.c:4528 src/utils.c:4558
+#: src/saveplay.c:3336 src/multitrack.c:4712 src/multitrack.c:6718
 msgid "_Redo"
 msgstr "重做(_R)"
 
-#: src/main.c:7035 src/interface.c:353 src/gui.c:2038 src/resample.c:1486
+#: src/main.c:7035 src/interface.c:359 src/gui.c:2038 src/resample.c:1486
 msgid "Video"
 msgstr "视频"
 
-#: src/main.c:7036 src/interface.c:435 src/gui.c:2051
+#: src/main.c:7036 src/interface.c:465 src/gui.c:2051
 msgid "Left Audio"
 msgstr "左声道"
 
-#: src/main.c:7037 src/interface.c:475 src/gui.c:2065
+#: src/main.c:7037 src/interface.c:512 src/gui.c:2065
 msgid "Right Audio"
 msgstr "右声道"
 
@@ -897,7 +897,7 @@ msgstr "音频播放器使用_mplayer"
 msgid "Use _mplayer2 audio player"
 msgstr "音频播放器使用_mplayer"
 
-#: src/startup.c:405 src/startup.c:583 src/interface.c:1349
+#: src/startup.c:405 src/startup.c:583 src/interface.c:1394
 msgid "_Next"
 msgstr "下一步(_N)"
 
@@ -1144,7 +1144,7 @@ msgstr "如果设置此项，视频在导入时将被反交错化。"
 #: src/interface.c:92 src/callbacks.c:9432 src/callbacks.c:9454
 #: src/callbacks.c:9455 src/gui.c:3122 src/gui.c:3727 src/saveplay.c:2171
 #: src/saveplay.c:2924 src/dialogs.c:1643 src/dialogs.c:1644 src/dialogs.c:1916
-#: src/dialogs.c:1917 src/framedraw.c:201 src/multitrack.c:8265
+#: src/dialogs.c:1917 src/framedraw.c:201 src/multitrack.c:8280
 msgid "Preview"
 msgstr "预览"
 
@@ -1165,7 +1165,7 @@ msgstr "点击此处预览（_P）视频"
 msgid "Click here to _Preview the file"
 msgstr "点击此处预览（_P）视频"
 
-#: src/interface.c:165 src/dialogs.c:2823
+#: src/interface.c:165 src/dialogs.c:2822
 #, fuzzy
 msgid "Processing..."
 msgstr "LiVES: - 正在处理..."
@@ -1217,155 +1217,155 @@ msgstr ""
 msgid "_Cancel"
 msgstr "取消(_C)"
 
-#: src/interface.c:334
+#: src/interface.c:340
 #, fuzzy
 msgid "Multitrack Details"
 msgstr "多轨道细节(_D)"
 
-#: src/interface.c:367
+#: src/interface.c:373
 msgid "Format"
 msgstr "格式"
 
-#: src/interface.c:372
+#: src/interface.c:382
 msgid "Frame size"
 msgstr "帧尺寸"
 
-#: src/interface.c:377
+#: src/interface.c:391
 msgid "File size"
 msgstr "文件大小"
 
-#: src/interface.c:378
+#: src/interface.c:392
 msgid "Byte size"
 msgstr "字节大小"
 
-#: src/interface.c:383 src/interface.c:1715
+#: src/interface.c:401 src/interface.c:1760
 msgid "FPS"
 msgstr "帧每秒"
 
-#: src/interface.c:388
+#: src/interface.c:410
 msgid "Frames"
 msgstr "帧"
 
-#: src/interface.c:389
+#: src/interface.c:411
 msgid "Events"
 msgstr "事件"
 
-#: src/interface.c:394 src/interface.c:452 src/interface.c:488
+#: src/interface.c:420 src/interface.c:482 src/interface.c:525
 msgid "Total time"
 msgstr "总时间"
 
-#: src/interface.c:436 src/resample.c:1321
+#: src/interface.c:466 src/resample.c:1321
 msgid "Audio"
 msgstr "音频"
 
-#: src/interface.c:463 src/interface.c:499
+#: src/interface.c:496 src/interface.c:540
 msgid "Rate/size"
 msgstr "速率/尺寸"
 
-#: src/interface.c:568
+#: src/interface.c:613
 #, fuzzy
 msgid "Encoding Options"
 msgstr "LiVES: - 编码选项"
 
-#: src/interface.c:572
+#: src/interface.c:617
 msgid "<------------- (Check the box to re_size as suggested)"
 msgstr ""
 
-#: src/interface.c:573
+#: src/interface.c:618
 msgid "<------------- (Check the box to use the _size recommendation)"
 msgstr ""
 
-#: src/interface.c:594
+#: src/interface.c:639
 msgid "Use _letterboxing to maintain aspect ratio (optional)"
 msgstr ""
 
-#: src/interface.c:595
+#: src/interface.c:640
 msgid ""
 "Draw black rectangles either above or to the sides of the image, to prevent "
 "it from stretching."
 msgstr ""
 
-#: src/interface.c:623
+#: src/interface.c:668
 msgid "Keep _my settings"
 msgstr "记住我的设置(_M)"
 
-#: src/interface.c:624
+#: src/interface.c:669
 msgid "Use _recommended settings"
 msgstr "使用推荐设置(_R)"
 
-#: src/interface.c:712 src/callbacks.c:8460 src/paramwindow.c:888
+#: src/interface.c:757 src/callbacks.c:8460 src/paramwindow.c:888
 #: src/omc-learn.c:1386
 msgid "_Close Window"
 msgstr "关闭窗口(_C)"
 
-#: src/interface.c:714
+#: src/interface.c:759
 msgid "_Save to file"
 msgstr "保存到文件（_S）"
 
-#: src/interface.c:758 src/callbacks.c:3529
+#: src/interface.c:803 src/callbacks.c:3529
 msgid "Insert"
 msgstr "插入"
 
-#: src/interface.c:776
+#: src/interface.c:821
 msgid "_Number of times to insert"
 msgstr "插入次数（_N）"
 
-#: src/interface.c:787
+#: src/interface.c:832
 msgid "_Insert to fit audio"
 msgstr "插入以适应音频（_I）"
 
-#: src/interface.c:801
+#: src/interface.c:846
 msgid "Insert _before selection"
 msgstr "插入到选区前（_B）"
 
-#: src/interface.c:803
+#: src/interface.c:848
 msgid "Insert clipboard before selected frames"
 msgstr "插入剪切板内容到选定帧之前"
 
-#: src/interface.c:820
+#: src/interface.c:865
 msgid "Insert _after selection"
 msgstr "插入到选区后（_A）"
 
-#: src/interface.c:822
+#: src/interface.c:867
 msgid "Insert clipboard after selected frames"
 msgstr "插入剪切板内容到选定帧之后"
 
-#: src/interface.c:834
+#: src/interface.c:879
 #, fuzzy
 msgid "Insert _with silence"
 msgstr "带声音插入（_W）"
 
-#: src/interface.c:837
+#: src/interface.c:882
 msgid "Insert _with sound"
 msgstr "带声音插入（_W）"
 
-#: src/interface.c:850
+#: src/interface.c:895
 msgid "Insert with_out sound"
 msgstr "不带声音插入（_O）"
 
-#: src/interface.c:928
+#: src/interface.c:973
 #, fuzzy
 msgid "Open Selection"
 msgstr "_复制选择"
 
-#: src/interface.c:947
+#: src/interface.c:992
 msgid "Selection start time (sec)"
 msgstr ""
 
-#: src/interface.c:953
+#: src/interface.c:998
 msgid "Number of frames to open"
 msgstr ""
 
-#: src/interface.c:1027
+#: src/interface.c:1072
 #, fuzzy
 msgid "Open Location"
 msgstr "LiVES: - 打开位置"
 
-#: src/interface.c:1029
+#: src/interface.c:1074
 msgid "Open Youtube Clip"
 msgstr ""
 
-#: src/interface.c:1049
+#: src/interface.c:1094
 #, fuzzy
 msgid ""
 "\n"
@@ -1381,7 +1381,7 @@ msgstr ""
 "并保证在 首选向|流媒体 中设置了带宽\n"
 "\n"
 
-#: src/interface.c:1053
+#: src/interface.c:1098
 msgid ""
 "\n"
 "\n"
@@ -1390,72 +1390,72 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/interface.c:1058
+#: src/interface.c:1103
 msgid ""
 "Enter the URL of the clip below.\n"
 "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:1069
+#: src/interface.c:1114
 msgid "URL : "
 msgstr "URL : "
 
-#: src/interface.c:1069
+#: src/interface.c:1114
 msgid "Youtube URL : "
 msgstr ""
 
-#: src/interface.c:1073
+#: src/interface.c:1118
 msgid "Do not send bandwidth information"
 msgstr "不发送带宽信息"
 
-#: src/interface.c:1075
+#: src/interface.c:1120
 msgid "Try this setting if you are having problems getting a stream"
 msgstr "如果获取流媒体有问题是请尝试此选项"
 
-#: src/interface.c:1097
+#: src/interface.c:1142
 msgid "Download to _Directory : "
 msgstr ""
 
-#: src/interface.c:1115
+#: src/interface.c:1160
 msgid "Download _File Name : "
 msgstr ""
 
-#: src/interface.c:1120
+#: src/interface.c:1165
 msgid ".webm"
 msgstr ""
 
-#: src/interface.c:1192
+#: src/interface.c:1237
 #, fuzzy
 msgid "Rename Clip"
 msgstr "粘贴"
 
-#: src/interface.c:1194
+#: src/interface.c:1239
 #, fuzzy
 msgid "Enter Set Name to Save as"
 msgstr "LiVES: - 输入场景名"
 
-#: src/interface.c:1196
+#: src/interface.c:1241
 #, fuzzy
 msgid "Enter a Set Name to Reload"
 msgstr "LiVES: - 输入场景名"
 
-#: src/interface.c:1198
+#: src/interface.c:1243
 #, fuzzy
 msgid "Choose a Working Directory"
 msgstr "LiVES: - 选择工作目录"
 
-#: src/interface.c:1200 src/multitrack.c:7212
+#: src/interface.c:1245 src/multitrack.c:7227
 #, fuzzy
 msgid "Rename Current Track"
 msgstr "选择当前轨道(_S)"
 
-#: src/interface.c:1202
+#: src/interface.c:1247
 #, fuzzy
 msgid "Enter a Name for Your Theme"
 msgstr "LiVES: - 输入场景名"
 
-#: src/interface.c:1222
+#: src/interface.c:1267
 msgid ""
 "You need to enter a name for the current clip set.\n"
 "This will allow you reload the layout with the same clips later.\n"
@@ -1467,7 +1467,7 @@ msgstr ""
 "请输入您希望使用的场景名字。\n"
 "LiVES 将会在稍后退出时提示您保存剪辑场景。\n"
 
-#: src/interface.c:1229
+#: src/interface.c:1274
 msgid ""
 "In order to export this project, you must enter a name for this clip set.\n"
 "This will also be used for the project name.\n"
@@ -1475,7 +1475,7 @@ msgstr ""
 "为了导出此项目，您必须为剪辑场景起个名字。\n"
 "这个名字同时也是项目名字。\n"
 
-#: src/interface.c:1236
+#: src/interface.c:1281
 msgid ""
 "Welcome to LiVES !\n"
 "This startup wizard will guide you through the\n"
@@ -1485,227 +1485,227 @@ msgstr ""
 "启动向导将指引您进行初始安装，\n"
 "以尽可能开启本程序功能。\n"
 
-#: src/interface.c:1240
+#: src/interface.c:1285
 msgid ""
 "\n"
 "First of all you need to choose a working directory for LiVES.\n"
 "This should be a directory with plenty of disk space available.\n"
 msgstr ""
 
-#: src/interface.c:1257
+#: src/interface.c:1302
 msgid "New name "
 msgstr "新名称 "
 
-#: src/interface.c:1259
+#: src/interface.c:1304
 msgid "Set name "
 msgstr "场景名 "
 
-#: src/interface.c:1261
+#: src/interface.c:1306
 #, fuzzy
 msgid "Theme name "
 msgstr "新名称 "
 
-#: src/interface.c:1325
+#: src/interface.c:1370
 msgid "Save extended colors"
 msgstr ""
 
-#: src/interface.c:1386
+#: src/interface.c:1431
 msgid "Use def_aults"
 msgstr "用默认值(_A)"
 
-#: src/interface.c:1388 src/interface.c:1664 src/preferences.c:2908
+#: src/interface.c:1433 src/interface.c:1709 src/preferences.c:2908
 #: src/preferences.c:3098
 msgid "_Advanced"
 msgstr "高级(_A)"
 
-#: src/interface.c:1441
+#: src/interface.c:1486
 #, fuzzy
 msgid "Select input device"
 msgstr "选择输入设备:"
 
-#: src/interface.c:1458
+#: src/interface.c:1503
 msgid "Select input device:"
 msgstr "选择输入设备:"
 
-#: src/interface.c:1521
+#: src/interface.c:1566
 #, fuzzy
 msgid "Load CD Track"
 msgstr "LiVES:- 载入 CD 音轨"
 
-#: src/interface.c:1523
+#: src/interface.c:1568
 #, fuzzy
 msgid "Select DVD Title/Chapter"
 msgstr "LiVES:- 选择 DVD 标题/章节"
 
-#: src/interface.c:1525
+#: src/interface.c:1570
 #, fuzzy
 msgid "Select VCD Title"
 msgstr "LiVES:- 选择 VCD 标题"
 
-#: src/interface.c:1527
+#: src/interface.c:1572
 #, fuzzy
 msgid "Change Maximum Visible Tracks"
 msgstr "LiVES:- 更改最大可见Change Maximum Visible Tracks"
 
-#: src/interface.c:1529
+#: src/interface.c:1574
 #, fuzzy
 msgid "Device details"
 msgstr "LiVES:-设备明细"
 
-#: src/interface.c:1553
+#: src/interface.c:1598
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "载入音轨 (从 %s)"
 
-#: src/interface.c:1555
+#: src/interface.c:1600
 msgid "DVD Title"
 msgstr "DVD 标题"
 
-#: src/interface.c:1557
+#: src/interface.c:1602
 msgid "VCD Title"
 msgstr "VCD 标题"
 
-#: src/interface.c:1559
+#: src/interface.c:1604
 msgid "Maximum number of tracks to display"
 msgstr "显示的最大音轨数"
 
-#: src/interface.c:1561
+#: src/interface.c:1606
 msgid "Device:        /dev/video"
 msgstr "设备：/dev/video"
 
-#: src/interface.c:1563
+#: src/interface.c:1608
 msgid "Device:        fw:"
 msgstr "设备： fw:"
 
-#: src/interface.c:1596
+#: src/interface.c:1641
 msgid "Chapter  "
 msgstr "章  "
 
-#: src/interface.c:1600
+#: src/interface.c:1645
 msgid "Channel  "
 msgstr "通道  "
 
-#: src/interface.c:1615
+#: src/interface.c:1660
 msgid "Audio ID  "
 msgstr "音频 ID  "
 
-#: src/interface.c:1681
+#: src/interface.c:1726
 msgid "Input number"
 msgstr "输入数字"
 
-#: src/interface.c:1689
+#: src/interface.c:1734
 msgid "Use default width, height and FPS"
 msgstr "使用默认的宽度、高度和帧率"
 
-#: src/interface.c:1703
+#: src/interface.c:1748
 msgid "Width"
 msgstr "宽度"
 
-#: src/interface.c:1709
+#: src/interface.c:1754
 msgid "Height"
 msgstr "高度"
 
-#: src/interface.c:1723
+#: src/interface.c:1768
 msgid "_Driver"
 msgstr ""
 
-#: src/interface.c:1726
+#: src/interface.c:1771
 msgid "_Output format"
 msgstr ""
 
-#: src/interface.c:1819
+#: src/interface.c:1864
 #, fuzzy
 msgid "Fade Audio In"
 msgstr "淡入音频"
 
-#: src/interface.c:1821
+#: src/interface.c:1866
 #, fuzzy
 msgid "Fade Audio Out"
 msgstr "淡出音频"
 
-#: src/interface.c:1838
+#: src/interface.c:1883
 msgid "Fade in over  "
 msgstr "结束时淡出  "
 
-#: src/interface.c:1839
+#: src/interface.c:1884
 msgid "first"
 msgstr "第一个"
 
-#: src/interface.c:1841
+#: src/interface.c:1886
 msgid "Fade out over  "
 msgstr "渐弱结束  "
 
-#: src/interface.c:1842
+#: src/interface.c:1887
 msgid "last"
 msgstr "最后一个"
 
-#: src/interface.c:1864
+#: src/interface.c:1909
 msgid "seconds."
 msgstr "秒。"
 
-#: src/interface.c:1872 src/saveplay.c:1432
+#: src/interface.c:1917 src/saveplay.c:1432
 msgid "selection"
 msgstr "选区"
 
-#: src/interface.c:1913
+#: src/interface.c:1958
 #, fuzzy
 msgid " (Optional)"
 msgstr "选项(_O)"
 
-#: src/interface.c:1916
+#: src/interface.c:1961
 #, fuzzy, c-format
 msgid "File Comments%s"
 msgstr "LiVES: - 文件注释（可选）"
 
-#: src/interface.c:1931
+#: src/interface.c:1976
 #, fuzzy, c-format
 msgid "File Name: %s"
 msgstr "标题/名称： "
 
-#: src/interface.c:1944
+#: src/interface.c:1989
 msgid "Title/Name : "
 msgstr "标题/名称： "
 
-#: src/interface.c:1952
+#: src/interface.c:1997
 msgid "Author/Artist : "
 msgstr "作者/艺术家： "
 
-#: src/interface.c:1959
+#: src/interface.c:2004
 msgid "Comments : "
 msgstr "评论： "
 
-#: src/interface.c:1994
+#: src/interface.c:2039
 msgid "Save _subtitles to file"
 msgstr "将字幕保存到文件(_S)"
 
-#: src/interface.c:2005
+#: src/interface.c:2050
 msgid "Subtitle file"
 msgstr "字幕文件"
 
-#: src/interface.c:2007
+#: src/interface.c:2052
 msgid "Browse..."
 msgstr "浏览…"
 
-#: src/interface.c:2045
+#: src/interface.c:2090
 msgid "_Options"
 msgstr "选项(_O)"
 
-#: src/interface.c:2113
+#: src/interface.c:2158
 #, c-format
 msgid "%sChoose a Device"
 msgstr ""
 
-#: src/interface.c:2116
+#: src/interface.c:2161
 #, fuzzy, c-format
 msgid "%sChoose a Directory"
 msgstr "LiVES: - 选择工作目录"
 
-#: src/interface.c:2118
+#: src/interface.c:2163
 #, c-format
 msgid "%sChoose a File"
 msgstr ""
 
-#: src/interface.c:2401
+#: src/interface.c:2446
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1715,7 +1715,7 @@ msgstr ""
 "当前布局（layout）还没有保存。\n"
 "你打算保存吗？\n"
 
-#: src/interface.c:2404
+#: src/interface.c:2449
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -1725,7 +1725,7 @@ msgstr ""
 "当前布局（layout）至上一次保存已经有改动。\n"
 "你打算保存吗？\n"
 
-#: src/interface.c:2408
+#: src/interface.c:2453
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -1735,7 +1735,7 @@ msgstr ""
 "当前剪辑设置可以保存。\n"
 "您打算保存吗？\n"
 
-#: src/interface.c:2409
+#: src/interface.c:2454
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1743,7 +1743,7 @@ msgstr ""
 "目前的剪辑尚未保存。\n"
 "你打算保存吗？\n"
 
-#: src/interface.c:2412
+#: src/interface.c:2457
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1751,7 +1751,7 @@ msgstr ""
 "当前的布局尚未保存。\n"
 "你打算保存吗？\n"
 
-#: src/interface.c:2414
+#: src/interface.c:2459
 #, fuzzy
 msgid ""
 "The current layout has *NOT BEEN CHANGED* since it was last saved.\n"
@@ -1760,7 +1760,7 @@ msgstr ""
 "当前的布局尚未保存。\n"
 "你打算保存吗？\n"
 
-#: src/interface.c:2418
+#: src/interface.c:2463
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout contains generated frames and cannot be retained.\n"
@@ -1770,44 +1770,44 @@ msgstr ""
 "当前的布局包含生成的帧，并且不能保留。\n"
 "你打算做什么？"
 
-#: src/interface.c:2421
+#: src/interface.c:2466
 #, fuzzy
 msgid "Cancel/Discard/Save"
 msgstr "LiVES: - 取消/放弃/保存"
 
-#: src/interface.c:2434
+#: src/interface.c:2479
 msgid "Clip set _name"
 msgstr ""
 
-#: src/interface.c:2440
+#: src/interface.c:2485
 msgid "_Auto reload next time"
 msgstr "_下一次自动加载"
 
-#: src/interface.c:2476 src/interface.c:2485
+#: src/interface.c:2521 src/interface.c:2530
 msgid "_Wipe layout"
 msgstr "_擦除布局"
 
-#: src/interface.c:2477
+#: src/interface.c:2522
 msgid "_Ignore changes"
 msgstr "_忽略的变化"
 
-#: src/interface.c:2478
+#: src/interface.c:2523
 msgid "_Delete clip set"
 msgstr "_夹上删除"
 
-#: src/interface.c:2479
+#: src/interface.c:2524
 msgid "_Delete layout"
 msgstr "_删除布局"
 
-#: src/interface.c:2483
+#: src/interface.c:2528
 msgid "_Save layout"
 msgstr "_保存布局"
 
-#: src/interface.c:2484
+#: src/interface.c:2529
 msgid "_Save clip set"
 msgstr "_夹上保存"
 
-#: src/interface.c:2505
+#: src/interface.c:2550
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
@@ -1817,35 +1817,35 @@ msgstr ""
 "LiVES检测到先前的多轨布局\n"
 "你要恢复到这个布局吗？\n"
 
-#: src/interface.c:2531
+#: src/interface.c:2576
 msgid "Disk Recovery Options"
 msgstr ""
 
-#: src/interface.c:2552
+#: src/interface.c:2597
 msgid "Delete _Orphaned Clips"
 msgstr ""
 
-#: src/interface.c:2553
+#: src/interface.c:2598
 msgid "Delete any clips which are not currently loaded or part of a set"
 msgstr ""
 
-#: src/interface.c:2567
+#: src/interface.c:2612
 msgid "Clear _Backup Files from Closed Clips"
 msgstr ""
 
-#: src/interface.c:2578
+#: src/interface.c:2623
 msgid "Remove Sets which have _Layouts but no Clips"
 msgstr ""
 
-#: src/interface.c:2587
+#: src/interface.c:2632
 msgid "_Reset to Defaults"
 msgstr ""
 
-#: src/interface.c:2700
+#: src/interface.c:2745
 msgid "Show Keys"
 msgstr "显示键"
 
-#: src/interface.c:2707
+#: src/interface.c:2752
 msgid ""
 "You can use the following keys during playback to control LiVES:-\n"
 "\n"
@@ -1853,312 +1853,312 @@ msgid ""
 "-----------------------\n"
 msgstr ""
 
-#: src/interface.c:2712
+#: src/interface.c:2757
 msgid "ctrl-left"
 msgstr ""
 
-#: src/interface.c:2712
+#: src/interface.c:2757
 msgid "skip back\n"
 msgstr ""
 
-#: src/interface.c:2715
+#: src/interface.c:2760
 msgid "ctrl-right"
 msgstr ""
 
-#: src/interface.c:2715
+#: src/interface.c:2760
 #, fuzzy
 msgid "skip forwards\n"
 msgstr "已跳过"
 
-#: src/interface.c:2718
+#: src/interface.c:2763
 msgid "ctrl-up"
 msgstr ""
 
-#: src/interface.c:2718
+#: src/interface.c:2763
 msgid "faster/increase effect\n"
 msgstr ""
 
-#: src/interface.c:2721
+#: src/interface.c:2766
 msgid "ctrl-down"
 msgstr ""
 
-#: src/interface.c:2721
+#: src/interface.c:2766
 msgid "slower/decrease effect\n"
 msgstr ""
 
-#: src/interface.c:2724
+#: src/interface.c:2769
 msgid "ctrl-enter"
 msgstr ""
 
-#: src/interface.c:2724
+#: src/interface.c:2769
 #, fuzzy
 msgid "reset frame rate\n"
 msgstr "首帧"
 
-#: src/interface.c:2727 src/interface.c:2856
+#: src/interface.c:2772 src/interface.c:2901
 msgid "ctrl-space"
 msgstr ""
 
-#: src/interface.c:2727
+#: src/interface.c:2772
 msgid "reverse direction\n"
 msgstr ""
 
-#: src/interface.c:2730
+#: src/interface.c:2775
 msgid "ctrl-alt-space"
 msgstr ""
 
-#: src/interface.c:2730
+#: src/interface.c:2775
 msgid "reverse direction (background clip)\n"
 msgstr ""
 
-#: src/interface.c:2733
+#: src/interface.c:2778
 msgid "ctrl-backspace"
 msgstr ""
 
-#: src/interface.c:2733
+#: src/interface.c:2778
 msgid "freeze frame\n"
 msgstr ""
 
-#: src/interface.c:2736
+#: src/interface.c:2781
 msgid "nervous\n"
 msgstr ""
 
-#: src/interface.c:2739 src/interface.c:2850
+#: src/interface.c:2784 src/interface.c:2895
 msgid "ctrl-page-up"
 msgstr ""
 
-#: src/interface.c:2739
+#: src/interface.c:2784
 msgid "previous clip\n"
 msgstr ""
 
-#: src/interface.c:2742 src/interface.c:2853
+#: src/interface.c:2787 src/interface.c:2898
 msgid "ctrl-page-down"
 msgstr ""
 
-#: src/interface.c:2742
+#: src/interface.c:2787
 msgid "next clip\n"
 msgstr ""
 
-#: src/interface.c:2747
+#: src/interface.c:2792
 msgid "ctrl-1"
 msgstr ""
 
-#: src/interface.c:2747
+#: src/interface.c:2792
 #, fuzzy
 msgid "toggle real-time effect 1\n"
 msgstr "正在加载实时效果插件..."
 
-#: src/interface.c:2750
+#: src/interface.c:2795
 msgid "ctrl-2"
 msgstr ""
 
-#: src/interface.c:2750
+#: src/interface.c:2795
 #, fuzzy
 msgid "toggle real-time effect 2\n"
 msgstr "正在加载实时效果插件..."
 
-#: src/interface.c:2753 src/interface.c:2781
+#: src/interface.c:2798 src/interface.c:2826
 msgid "...etc...\n"
 msgstr ""
 
-#: src/interface.c:2755
+#: src/interface.c:2800
 msgid "ctrl-0"
 msgstr ""
 
-#: src/interface.c:2755
+#: src/interface.c:2800
 #, fuzzy
 msgid "real-time effects off\n"
 msgstr "关闭所有效果。"
 
-#: src/interface.c:2758
+#: src/interface.c:2803
 msgid "swap background/foreground\n"
 msgstr ""
 
-#: src/interface.c:2763
+#: src/interface.c:2808
 msgid "grab keyboard for last activated effect\n"
 msgstr ""
 
-#: src/interface.c:2766
+#: src/interface.c:2811
 msgid "switch effect mode (when effect has keyboard grab)\n"
 msgstr ""
 
-#: src/interface.c:2769
+#: src/interface.c:2814
 msgid "enter text parameter (when effect has keyboard grab)\n"
 msgstr ""
 
-#: src/interface.c:2772
+#: src/interface.c:2817
 msgid "tab"
 msgstr ""
 
-#: src/interface.c:2772
+#: src/interface.c:2817
 msgid "leave text parameter (when effect has keyboard grab)\n"
 msgstr ""
 
-#: src/interface.c:2775
+#: src/interface.c:2820
 msgid "f1"
 msgstr ""
 
-#: src/interface.c:2775
+#: src/interface.c:2820
 msgid "store/switch to clip mnemonic 1\n"
 msgstr ""
 
-#: src/interface.c:2778
+#: src/interface.c:2823
 msgid "f2"
 msgstr ""
 
-#: src/interface.c:2778
+#: src/interface.c:2823
 msgid "store/switch to clip mnemonic 2\n"
 msgstr ""
 
-#: src/interface.c:2783
+#: src/interface.c:2828
 msgid "f12"
 msgstr ""
 
-#: src/interface.c:2783
+#: src/interface.c:2828
 msgid "clear function keys\n"
 msgstr ""
 
-#: src/interface.c:2789
+#: src/interface.c:2834
 msgid "Other playback keys\n"
 msgstr ""
 
-#: src/interface.c:2793
+#: src/interface.c:2838
 #, fuzzy
 msgid "play all\n"
 msgstr "播放所有"
 
-#: src/interface.c:2796
+#: src/interface.c:2841
 #, fuzzy
 msgid "play selection\n"
 msgstr "播放选择"
 
-#: src/interface.c:2799
+#: src/interface.c:2844
 msgid "stop\n"
 msgstr ""
 
-#: src/interface.c:2802
+#: src/interface.c:2847
 #, fuzzy
 msgid "fullscreen\n"
 msgstr "全屏(_F)"
 
-#: src/interface.c:2805
+#: src/interface.c:2850
 #, fuzzy
 msgid "separate window\n"
 msgstr "在单独的窗口中播放 (s)"
 
-#: src/interface.c:2808
+#: src/interface.c:2853
 #, fuzzy
 msgid "double size\n"
 msgstr "_双倍大小"
 
-#: src/interface.c:2811
+#: src/interface.c:2856
 #, fuzzy
 msgid "ping pong loops\n"
 msgstr "乒乓循环(_G)"
 
-#: src/interface.c:2820
+#: src/interface.c:2865
 msgid "Multitrack Keys"
 msgstr "多轨钥匙"
 
-#: src/interface.c:2829
+#: src/interface.c:2874
 msgid ""
 "You can use the following keys to control the multitrack window:-\n"
 "-----------------------\n"
 msgstr ""
 
-#: src/interface.c:2832
+#: src/interface.c:2877
 msgid "ctrl-left-arrow"
 msgstr ""
 
-#: src/interface.c:2832
+#: src/interface.c:2877
 msgid "move timeline cursor left 1 second\n"
 msgstr ""
 
-#: src/interface.c:2835
+#: src/interface.c:2880
 msgid "ctrl-right-arrow"
 msgstr ""
 
-#: src/interface.c:2835
+#: src/interface.c:2880
 msgid "move timeline cursor right 1 second\n"
 msgstr ""
 
-#: src/interface.c:2838
+#: src/interface.c:2883
 msgid "shift-left-arrow"
 msgstr ""
 
-#: src/interface.c:2838
+#: src/interface.c:2883
 msgid "move timeline cursor left 1 frame\n"
 msgstr ""
 
-#: src/interface.c:2841
+#: src/interface.c:2886
 msgid "shift-right-arrow"
 msgstr ""
 
-#: src/interface.c:2841
+#: src/interface.c:2886
 msgid "move timeline cursor right 1 frame\n"
 msgstr ""
 
-#: src/interface.c:2844
+#: src/interface.c:2889
 msgid "ctrl-up-arrow"
 msgstr ""
 
-#: src/interface.c:2844
+#: src/interface.c:2889
 #, fuzzy
 msgid "move current track up\n"
 msgstr "选择当前轨道(_S)"
 
-#: src/interface.c:2847
+#: src/interface.c:2892
 msgid "ctrl-down-arrow"
 msgstr ""
 
-#: src/interface.c:2847
+#: src/interface.c:2892
 #, fuzzy
 msgid "move current track down\n"
 msgstr "选择当前轨道(_S)"
 
-#: src/interface.c:2850
+#: src/interface.c:2895
 msgid "select previous clip\n"
 msgstr ""
 
-#: src/interface.c:2853
+#: src/interface.c:2898
 #, fuzzy
 msgid "select next clip\n"
 msgstr "LiVES：已选剪辑"
 
-#: src/interface.c:2856
+#: src/interface.c:2901
 #, fuzzy
 msgid "select/deselect current track\n"
 msgstr "选择当前轨道(_S)"
 
-#: src/interface.c:2859
+#: src/interface.c:2904
 msgid "ctrl-plus"
 msgstr ""
 
-#: src/interface.c:2859
+#: src/interface.c:2904
 #, fuzzy
 msgid "zoom in\n"
 msgstr "拉近(_Z)"
 
-#: src/interface.c:2862
+#: src/interface.c:2907
 msgid "ctrl-minus"
 msgstr ""
 
-#: src/interface.c:2862
+#: src/interface.c:2907
 #, fuzzy
 msgid "zoom out\n"
 msgstr "推远(_Z)"
 
-#: src/interface.c:2865
+#: src/interface.c:2910
 #, fuzzy
 msgid "make a mark on the timeline (during playback)\n"
 msgstr "要在时间线上做标记"
 
-#: src/interface.c:2868
+#: src/interface.c:2913
 #, fuzzy
 msgid "rewind to play start.\n"
 msgstr "倒带启动 (w)"
 
-#: src/interface.c:2873
+#: src/interface.c:2918
 msgid "For other keys, see the menus.\n"
 msgstr ""
 
@@ -3038,7 +3038,7 @@ msgstr "取消"
 msgid "Stop"
 msgstr ""
 
-#: src/callbacks.c:9863 src/multitrack.c:13420
+#: src/callbacks.c:9863 src/multitrack.c:13434
 #, fuzzy
 msgid "Selected Frame"
 msgstr "选择_所有帧"
@@ -3323,11 +3323,11 @@ msgstr "自定义效果(_C)"
 msgid "Custom _Utilities"
 msgstr "自定义工具(_U)"
 
-#: src/gui.c:518 src/multitrack.c:6420
+#: src/gui.c:518 src/multitrack.c:6435
 msgid "_File"
 msgstr "文件(_F)"
 
-#: src/gui.c:526 src/multitrack.c:6432
+#: src/gui.c:526 src/multitrack.c:6447
 msgid "_Open File/Directory"
 msgstr ""
 
@@ -3335,12 +3335,12 @@ msgstr ""
 msgid "O_pen Part of File..."
 msgstr ""
 
-#: src/gui.c:538 src/gui.c:542 src/multitrack.c:6450 src/multitrack.c:6463
-#: src/multitrack.c:6468
+#: src/gui.c:538 src/gui.c:542 src/multitrack.c:6465 src/multitrack.c:6478
+#: src/multitrack.c:6483
 msgid "Open _Location/Stream..."
 msgstr "打开_位置/流..."
 
-#: src/gui.c:548 src/multitrack.c:6456
+#: src/gui.c:548 src/multitrack.c:6471
 msgid "Open _Youtube Clip..."
 msgstr ""
 
@@ -3360,11 +3360,11 @@ msgstr ""
 msgid "_Import from Firewire"
 msgstr ""
 
-#: src/gui.c:582 src/multitrack.c:6518
+#: src/gui.c:582 src/multitrack.c:6533
 msgid "Import from _Firewire Device (dv)"
 msgstr ""
 
-#: src/gui.c:583 src/multitrack.c:6526
+#: src/gui.c:583 src/multitrack.c:6541
 msgid "Import from _Firewire Device (hdv)"
 msgstr ""
 
@@ -3384,15 +3384,15 @@ msgstr ""
 msgid "Add _TV Device"
 msgstr ""
 
-#: src/gui.c:631 src/multitrack.c:6551
+#: src/gui.c:631 src/multitrack.c:6566
 msgid "_Recent Files..."
 msgstr "_最近的文件..."
 
-#: src/gui.c:665 src/multitrack.c:6597
+#: src/gui.c:665 src/multitrack.c:6612
 msgid "_Reload Clip Set..."
 msgstr ""
 
-#: src/gui.c:668 src/multitrack.c:6604
+#: src/gui.c:668 src/multitrack.c:6619
 msgid "Close/Sa_ve All Clips"
 msgstr ""
 
@@ -3426,11 +3426,11 @@ msgstr ""
 msgid "Auto load subtitles"
 msgstr ""
 
-#: src/gui.c:721 src/multitrack.c:6642
+#: src/gui.c:721 src/multitrack.c:6657
 msgid "Clean _up Diskspace"
 msgstr ""
 
-#: src/gui.c:727 src/multitrack.c:6674
+#: src/gui.c:727 src/multitrack.c:6689
 msgid "_Edit"
 msgstr "编辑(_E)"
 
@@ -3506,7 +3506,7 @@ msgstr "反转选择(_I)"
 msgid "_Lock Selection Width"
 msgstr "锁定选区宽度(_L)"
 
-#: src/gui.c:893 src/multitrack.c:6821
+#: src/gui.c:893 src/multitrack.c:6836
 msgid "_Play"
 msgstr "播放(_P)"
 
@@ -3522,15 +3522,15 @@ msgstr "播放选择(_Y)"
 msgid "Play _Clipboard"
 msgstr ""
 
-#: src/gui.c:939 src/multitrack.c:6848
+#: src/gui.c:939 src/multitrack.c:6863
 msgid "_Stop"
 msgstr "停止(_S)"
 
-#: src/gui.c:952 src/multitrack.c:6860
+#: src/gui.c:952 src/multitrack.c:6875
 msgid "Re_wind"
 msgstr ""
 
-#: src/gui.c:979 src/multitrack.c:6878
+#: src/gui.c:979 src/multitrack.c:6893
 msgid "_Full Screen"
 msgstr "全屏(_F)"
 
@@ -3538,7 +3538,7 @@ msgstr "全屏(_F)"
 msgid "_Double Size"
 msgstr "_双倍大小"
 
-#: src/gui.c:994 src/multitrack.c:6886
+#: src/gui.c:994 src/multitrack.c:6901
 msgid "Play in _Separate Window"
 msgstr ""
 
@@ -3550,7 +3550,7 @@ msgstr "空白背景(_B)"
 msgid "(Auto)_loop Video (to fit audio track)"
 msgstr "(自动)循环视频(以适应音轨)(_L)"
 
-#: src/gui.c:1019 src/multitrack.c:6894
+#: src/gui.c:1019 src/multitrack.c:6909
 msgid "L_oop Continuously"
 msgstr "持续循环(_O)"
 
@@ -3558,7 +3558,7 @@ msgstr "持续循环(_O)"
 msgid "Pin_g Pong Loops"
 msgstr "乒乓循环(_G)"
 
-#: src/gui.c:1034 src/multitrack.c:6902
+#: src/gui.c:1034 src/multitrack.c:6917
 msgid "_Mute"
 msgstr "静音(_M)"
 
@@ -3578,7 +3578,7 @@ msgstr "显示字幕"
 msgid "Letterbox Mode"
 msgstr ""
 
-#: src/gui.c:1074 src/multitrack.c:6914
+#: src/gui.c:1074 src/multitrack.c:6929
 msgid "Effect_s"
 msgstr "效果(_S)"
 
@@ -3590,7 +3590,7 @@ msgstr "效果应用到当前的选区。"
 msgid "_Run Test Rendered Effect/Tool/Generator..."
 msgstr ""
 
-#: src/gui.c:1089 src/multitrack.c:7429
+#: src/gui.c:1089 src/multitrack.c:7444
 msgid "_Tools"
 msgstr "工具(_T)"
 
@@ -3618,7 +3618,7 @@ msgstr "工具(_U)"
 msgid "Custom _Tools"
 msgstr "自定义工具(_T)"
 
-#: src/gui.c:1123 src/multitrack.c:7448
+#: src/gui.c:1123 src/multitrack.c:7463
 msgid "_Generate"
 msgstr "生成(_G)"
 
@@ -3630,11 +3630,11 @@ msgstr ""
 msgid "Erase subtitles"
 msgstr ""
 
-#: src/gui.c:1152 src/multitrack.c:7457
+#: src/gui.c:1152 src/multitrack.c:7472
 msgid "Capture _External Window... "
 msgstr ""
 
-#: src/gui.c:1157 src/multitrack.c:7471
+#: src/gui.c:1157 src/multitrack.c:7486
 msgid "_Preferences..."
 msgstr "偏好设置(_P)..."
 
@@ -3738,15 +3738,15 @@ msgstr ""
 msgid "Show _Clipboard Info"
 msgstr ""
 
-#: src/gui.c:1301 src/multitrack.c:7574
+#: src/gui.c:1301 src/multitrack.c:7589
 msgid "Show _Messages"
 msgstr "显示消息(_M)"
 
-#: src/gui.c:1304 src/multitrack.c:7648
+#: src/gui.c:1304 src/multitrack.c:7663
 msgid "Show _Layout Errors"
 msgstr "显示布局错误(_L)"
 
-#: src/gui.c:1308 src/multitrack.c:7551
+#: src/gui.c:1308 src/multitrack.c:7566
 msgid "_Clips"
 msgstr "剪辑(_C)"
 
@@ -3918,20 +3918,20 @@ msgstr "_疯狂框架"
 msgid "_LiVES TV (broadband)"
 msgstr "_LiVES 电视(宽带)"
 
-#: src/gui.c:1530 src/multitrack.c:7669
+#: src/gui.c:1530 src/multitrack.c:7684
 msgid "_Help"
 msgstr "帮助(_H)"
 
-#: src/gui.c:1536 src/multitrack.c:7682
+#: src/gui.c:1536 src/multitrack.c:7697
 msgid "_Manual (opens in browser)"
 msgstr "手动(打开浏览器)(_M)"
 
-#: src/gui.c:1541 src/multitrack.c:7689
+#: src/gui.c:1541 src/multitrack.c:7704
 #, fuzzy
 msgid "_Donate to the Project !"
 msgstr "向项目捐款(_D)！"
 
-#: src/gui.c:1544 src/multitrack.c:7692
+#: src/gui.c:1544 src/multitrack.c:7707
 #, fuzzy
 msgid "_Email the Author"
 msgstr "给作者发邮件(_E)"
@@ -3941,21 +3941,21 @@ msgstr "给作者发邮件(_E)"
 msgid "Report a _Bug"
 msgstr "报告错误(_B)"
 
-#: src/gui.c:1550 src/multitrack.c:7698
+#: src/gui.c:1550 src/multitrack.c:7713
 #, fuzzy
 msgid "Suggest a _Feature"
 msgstr "功能建议(_F)"
 
-#: src/gui.c:1553 src/multitrack.c:7701
+#: src/gui.c:1553 src/multitrack.c:7716
 #, fuzzy
 msgid "Assist with _Translating"
 msgstr "帮助翻译(_T)"
 
-#: src/gui.c:1558 src/multitrack.c:7706
+#: src/gui.c:1558 src/multitrack.c:7721
 msgid "_Troubleshoot"
 msgstr "故障诊断(_T)"
 
-#: src/gui.c:1561 src/multitrack.c:7709
+#: src/gui.c:1561 src/multitrack.c:7724
 msgid "_About"
 msgstr "关于(_A)"
 
@@ -3963,7 +3963,7 @@ msgstr "关于(_A)"
 msgid "Rewind to start (w)"
 msgstr "倒带启动 (w)"
 
-#: src/gui.c:1598 src/multitrack.c:17037
+#: src/gui.c:1598 src/multitrack.c:16932
 msgid "Play all (p)"
 msgstr "播放所有 (p)"
 
@@ -4116,7 +4116,7 @@ msgid "_Record Performance"
 msgstr "记录性能(_R)"
 
 #: src/gui.c:3608 src/saveplay.c:2901 src/saveplay.c:3006 src/saveplay.c:3025
-#: src/multitrack.c:9423 src/multitrack.c:11170
+#: src/multitrack.c:9436 src/multitrack.c:11183
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
@@ -4160,7 +4160,7 @@ msgstr ""
 msgid "Effects"
 msgstr "特效"
 
-#: src/ce_thumbs.c:299 src/multitrack.c:5811
+#: src/ce_thumbs.c:299 src/multitrack.c:5823
 msgid "Clips"
 msgstr "剪辑"
 
@@ -4223,11 +4223,11 @@ msgstr ""
 msgid "%d bytes"
 msgstr ""
 
-#: src/utils.c:1852
+#: src/utils.c:1870
 msgid "Clearing the clipboard"
 msgstr ""
 
-#: src/utils.c:1892
+#: src/utils.c:1910
 #, c-format
 msgid ""
 "\n"
@@ -4235,7 +4235,7 @@ msgid ""
 "Switched to clip %s\n"
 msgstr ""
 
-#: src/utils.c:1895
+#: src/utils.c:1913
 msgid ""
 "\n"
 "==============================\n"
@@ -4245,74 +4245,74 @@ msgstr ""
 "==============================\n"
 "切换到空剪辑\n"
 
-#: src/utils.c:1934
+#: src/utils.c:1952
 msgid "(blank)"
 msgstr ""
 
-#: src/utils.c:1937
+#: src/utils.c:1955
 #, c-format
 msgid ""
 "The set name has been changed from %s to %s. Affected layouts have been "
 "updated accordingly\n"
 msgstr ""
 
-#: src/utils.c:1945
+#: src/utils.c:1963
 #, c-format
 msgid ""
 "The clip %s is missing from this set.\n"
 "It is required by the following layouts:\n"
 msgstr ""
 
-#: src/utils.c:1949
+#: src/utils.c:1967
 #, c-format
 msgid ""
 "The clip %s has been closed.\n"
 "It is required by the following layouts:\n"
 msgstr ""
 
-#: src/utils.c:1954
+#: src/utils.c:1972
 #, c-format
 msgid ""
 "Frames have been shifted in the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1959
+#: src/utils.c:1977
 #, c-format
 msgid ""
 "Frames have been deleted from the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1964
+#: src/utils.c:1982
 #, c-format
 msgid ""
 "Audio has been deleted from the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1969
+#: src/utils.c:1987
 #, c-format
 msgid ""
 "Audio has been shifted in clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1974
+#: src/utils.c:1992
 #, c-format
 msgid ""
 "Audio has been altered in the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1979
+#: src/utils.c:1997
 #, c-format
 msgid ""
 "Frames have been altered in the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:2152
+#: src/utils.c:2170
 #, c-format
 msgid ""
 "Set %s\n"
@@ -4320,7 +4320,7 @@ msgid ""
 "by another copy of LiVES.\n"
 msgstr ""
 
-#: src/utils.c:2158
+#: src/utils.c:2176
 #, c-format
 msgid ""
 "\n"
@@ -4328,7 +4328,7 @@ msgid ""
 "Please choose another set name.\n"
 msgstr ""
 
-#: src/utils.c:2188
+#: src/utils.c:2206
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -4337,7 +4337,7 @@ msgstr ""
 "\n"
 "设置名称可能不能为空。\n"
 
-#: src/utils.c:2196
+#: src/utils.c:2214
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -4346,25 +4346,25 @@ msgstr ""
 "\n"
 "设置名称可能不能为空。\n"
 
-#: src/utils.c:2204
+#: src/utils.c:2222
 #, c-format
 msgid ""
 "\n"
 "%s names may not contain spaces or the characters%s.\n"
 msgstr ""
 
-#: src/utils.c:2213
+#: src/utils.c:2231
 #, c-format
 msgid ""
 "\n"
 "%s names may not start with a '.' or contain '..'\n"
 msgstr ""
 
-#: src/utils.c:2245
+#: src/utils.c:2263
 msgid "Set"
 msgstr ""
 
-#: src/utils.c:2255
+#: src/utils.c:2273
 #, c-format
 msgid ""
 "\n"
@@ -4372,72 +4372,72 @@ msgid ""
 "Please choose another set name.\n"
 msgstr ""
 
-#: src/utils.c:2632
+#: src/utils.c:2650
 #, c-format
 msgid "Removing layout %s\n"
 msgstr ""
 
-#: src/utils.c:2950
+#: src/utils.c:3007
 msgid "Video [opening...]"
 msgstr ""
 
-#: src/utils.c:2953
+#: src/utils.c:3010
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr ""
 
-#: src/utils.c:2956
+#: src/utils.c:3013
 msgid "(Undefined)"
 msgstr ""
 
-#: src/utils.c:2958
+#: src/utils.c:3015
 msgid "(No video)"
 msgstr "（无视频）"
 
-#: src/utils.c:2965
+#: src/utils.c:3022
 msgid "(No audio)"
 msgstr "（无音频）"
 
-#: src/utils.c:2969
+#: src/utils.c:3026
 msgid "Mono  [opening...]"
 msgstr ""
 
-#: src/utils.c:2971
+#: src/utils.c:3028
 msgid "Left Audio [opening...]"
 msgstr ""
 
-#: src/utils.c:2975
+#: src/utils.c:3032
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr ""
 
-#: src/utils.c:2977
+#: src/utils.c:3034
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr ""
 
-#: src/utils.c:2985
+#: src/utils.c:3042
 msgid "Right Audio [opening...]"
 msgstr ""
 
-#: src/utils.c:2987
+#: src/utils.c:3044
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr ""
 
-#: src/utils.c:3447
+#: src/utils.c:3497
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr ""
 
-#: src/utils.c:3500
+#: src/utils.c:3550
 msgid "LiVES cannot switch to mplayer2 whilst clips are loading."
 msgstr ""
 
-#: src/utils.c:3753
+#: src/utils.c:3803
 msgid "Cleaning up clip"
 msgstr "清理剪辑"
 
-#: src/utils.c:3862
+#: src/utils.c:3912
 #, c-format
 msgid ""
 "\n"
@@ -4447,29 +4447,29 @@ msgid ""
 "Overwrite ?\n"
 msgstr ""
 
-#: src/utils.c:4471 src/utils.c:4501 src/multitrack.c:4674
+#: src/utils.c:4521 src/utils.c:4551 src/multitrack.c:4686
 #, c-format
 msgid "_Undo %s"
 msgstr "撤消 %s(_U)"
 
-#: src/utils.c:4472 src/utils.c:4502 src/multitrack.c:4695
+#: src/utils.c:4522 src/utils.c:4552 src/multitrack.c:4707
 #, c-format
 msgid "_Redo %s"
 msgstr "重做 %s(_R)"
 
-#: src/utils.c:4525
+#: src/utils.c:4575
 msgid "-------------Selection------------"
 msgstr "-------------选择------------"
 
-#: src/utils.c:4533
+#: src/utils.c:4583
 msgid " sec ] ----------Selection---------- [ "
 msgstr ""
 
-#: src/utils.c:4534
+#: src/utils.c:4584
 msgid " frames ] ----------"
 msgstr " 帧 ] ----------"
 
-#: src/utils.c:5482
+#: src/utils.c:5532
 msgid ""
 "Your version of mplayer/ffmpeg may be broken !\n"
 "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n"
@@ -5183,18 +5183,18 @@ msgid ""
 "click Cancel."
 msgstr ""
 
-#: src/dialogs.c:2531
+#: src/dialogs.c:2532
 msgid "Message History"
 msgstr "消息历史"
 
-#: src/dialogs.c:2544
+#: src/dialogs.c:2541
 #, c-format
 msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
 "in your %s file"
 msgstr ""
 
-#: src/dialogs.c:2555
+#: src/dialogs.c:2552
 #, c-format
 msgid ""
 "\n"
@@ -5205,25 +5205,25 @@ msgid ""
 "or change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/dialogs.c:2564
+#: src/dialogs.c:2561
 msgid ""
 "Sorry, unknown audio type.\n"
 "\n"
 " (Filenames must end in"
 msgstr ""
 
-#: src/dialogs.c:2586
+#: src/dialogs.c:2583
 msgid "failed (unknown type)\n"
 msgstr ""
 
-#: src/dialogs.c:2592
+#: src/dialogs.c:2589
 msgid ""
 "\n"
 "Do you wish to remove the layout files associated with this set ?\n"
 "(They will not be usable without the set).\n"
 msgstr ""
 
-#: src/dialogs.c:2598
+#: src/dialogs.c:2595
 #, c-format
 msgid ""
 "\n"
@@ -5232,7 +5232,7 @@ msgid ""
 "Click Cancel to pick a new name.\n"
 msgstr ""
 
-#: src/dialogs.c:2606
+#: src/dialogs.c:2603
 msgid ""
 "\n"
 "Frames from this clip are used in some multitrack layouts.\n"
@@ -5240,7 +5240,7 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:2610
+#: src/dialogs.c:2607
 msgid ""
 "\n"
 "Audio from this clip is used in some multitrack layouts.\n"
@@ -5248,7 +5248,7 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:2615
+#: src/dialogs.c:2612
 #, c-format
 msgid ""
 "\n"
@@ -5259,7 +5259,7 @@ msgid ""
 "Otherwise click Cancel to skip loading this file.\n"
 msgstr ""
 
-#: src/dialogs.c:2624
+#: src/dialogs.c:2621
 #, c-format
 msgid ""
 "\n"
@@ -5269,7 +5269,7 @@ msgid ""
 "The clip could not be loaded.\n"
 msgstr ""
 
-#: src/dialogs.c:2633
+#: src/dialogs.c:2630
 msgid ""
 "\n"
 "Dear user, the jack developers decided to remove the -Z option from jackd.\n"
@@ -5277,7 +5277,7 @@ msgid ""
 "Alternately, select a different audio player in Preferences.\n"
 msgstr ""
 
-#: src/dialogs.c:2639
+#: src/dialogs.c:2636
 msgid ""
 "\n"
 "Unable to start up jack. Please ensure that alsa is set up correctly on your "
@@ -5286,13 +5286,13 @@ msgid ""
 "Automatic jack startup will be disabled now.\n"
 msgstr ""
 
-#: src/dialogs.c:2646
+#: src/dialogs.c:2643
 msgid ""
 "\n"
 "Unable to connect to jack server. Please start jack before starting LiVES\n"
 msgstr ""
 
-#: src/dialogs.c:2655
+#: src/dialogs.c:2652
 #, c-format
 msgid ""
 "\n"
@@ -5303,13 +5303,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/dialogs.c:2662
+#: src/dialogs.c:2659
 msgid ""
 "\n"
 "Alternately, you can restart LiVES and select another audio player.\n"
 msgstr ""
 
-#: src/dialogs.c:2668
+#: src/dialogs.c:2665
 #, c-format
 msgid ""
 "\n"
@@ -5319,7 +5319,7 @@ msgid ""
 "It is recommended to increase it to at least %d MB"
 msgstr ""
 
-#: src/dialogs.c:2677
+#: src/dialogs.c:2674
 #, c-format
 msgid ""
 "\n"
@@ -5328,7 +5328,7 @@ msgid ""
 "Do you wish to delete them ?\n"
 msgstr ""
 
-#: src/dialogs.c:2685
+#: src/dialogs.c:2682
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for multitrack undo.\n"
@@ -5336,7 +5336,7 @@ msgid ""
 "using Preferences/Multitrack/Undo Memory\n"
 msgstr ""
 
-#: src/dialogs.c:2690
+#: src/dialogs.c:2687
 msgid ""
 "\n"
 "Out of memory for undo.\n"
@@ -5344,56 +5344,56 @@ msgid ""
 "using Preferences/Multitrack/Undo Memory\n"
 msgstr ""
 
-#: src/dialogs.c:2694
+#: src/dialogs.c:2691
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
 msgstr ""
 
-#: src/dialogs.c:2696
+#: src/dialogs.c:2693
 msgid "or enter a smaller value.\n"
 msgstr ""
 
-#: src/dialogs.c:2698
+#: src/dialogs.c:2695
 msgid "Try again from the clip editor, try closing some other applications\n"
 msgstr ""
 
-#: src/dialogs.c:2699
+#: src/dialogs.c:2696
 msgid "Try closing some other applications\n"
 msgstr ""
 
-#: src/dialogs.c:2711
+#: src/dialogs.c:2708
 msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
 msgstr ""
 
-#: src/dialogs.c:2716
+#: src/dialogs.c:2713
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 msgstr ""
 
-#: src/dialogs.c:2721
+#: src/dialogs.c:2718
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulse audio\" audio player.\n"
 "You can set this in Tools|Preferences|Playback."
 msgstr ""
 
-#: src/dialogs.c:2727
+#: src/dialogs.c:2724
 msgid ""
 "Errors were detected in the layout (which may be due to transferring from "
 "another system, or from an older version of LiVES).\n"
 "Should I try to repair the disk copy of the layout ?\n"
 msgstr ""
 
-#: src/dialogs.c:2732
+#: src/dialogs.c:2729
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
 msgstr ""
 
-#: src/dialogs.c:2738
+#: src/dialogs.c:2735
 #, fuzzy
 msgid ""
 "LiVES currently requires composite from ImageMagick to do letterboxing.\n"
@@ -5402,7 +5402,7 @@ msgstr ""
 "\n"
 "LiVES 目前需要 'mplayer' 或 'sox' 以正常工作。请至少安装其中之一并重试。\n"
 
-#: src/dialogs.c:2744
+#: src/dialogs.c:2741
 #, fuzzy
 msgid ""
 "LiVES currently requires convert from ImageMagick to do letterboxing.\n"
@@ -5411,7 +5411,7 @@ msgstr ""
 "\n"
 "LiVES 目前需要 'mplayer' 或 'sox' 以正常工作。请至少安装其中之一并重试。\n"
 
-#: src/dialogs.c:2750
+#: src/dialogs.c:2747
 #, fuzzy
 msgid ""
 "LiVES currently requires convert from ImageMagick resize frames.\n"
@@ -5420,14 +5420,14 @@ msgstr ""
 "\n"
 "LiVES 目前需要 'mplayer' 或 'sox' 以正常工作。请至少安装其中之一并重试。\n"
 
-#: src/dialogs.c:2755
+#: src/dialogs.c:2752
 msgid ""
 "\n"
 "\n"
 "Audio rate must be greater than 0.\n"
 msgstr ""
 
-#: src/dialogs.c:2759
+#: src/dialogs.c:2756
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -5435,14 +5435,14 @@ msgid ""
 "Are you sure you wish to view it ?\n"
 msgstr ""
 
-#: src/dialogs.c:2764
+#: src/dialogs.c:2761
 msgid ""
 "\n"
 "\n"
 "You must install 'dvgrab' to use this function.\n"
 msgstr ""
 
-#: src/dialogs.c:2770
+#: src/dialogs.c:2767
 msgid ""
 "\n"
 "\n"
@@ -5451,25 +5451,25 @@ msgid ""
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
 
-#: src/dialogs.c:2775
+#: src/dialogs.c:2772
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr ""
 
-#: src/dialogs.c:2780
+#: src/dialogs.c:2777
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr ""
 
-#: src/dialogs.c:2785
+#: src/dialogs.c:2782
 msgid "Unable to set framerate of video plugin\n"
 msgstr ""
 
-#: src/dialogs.c:2791
+#: src/dialogs.c:2788
 msgid ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 msgstr ""
 
-#: src/dialogs.c:2805
+#: src/dialogs.c:2802
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -5478,33 +5478,33 @@ msgid ""
 "echo %d > /proc/sys/net/core/rmem_max\n"
 msgstr ""
 
-#: src/dialogs.c:2993
+#: src/dialogs.c:3001
 msgid "cancelled.\n"
 msgstr ""
 
-#: src/dialogs.c:2998
+#: src/dialogs.c:3006
 msgid "failed.\n"
 msgstr "失败。\n"
 
-#: src/dialogs.c:3003
+#: src/dialogs.c:3011
 msgid "done.\n"
 msgstr "完成。\n"
 
-#: src/dialogs.c:3007
+#: src/dialogs.c:3015
 msgid "error in file. Failed.\n"
 msgstr ""
 
-#: src/dialogs.c:3041 src/dialogs.c:3094 src/dialogs.c:3118
+#: src/dialogs.c:3049 src/dialogs.c:3102 src/dialogs.c:3126
 #, c-format
 msgid "Additional info: %s\n"
 msgstr ""
 
-#: src/dialogs.c:3044
+#: src/dialogs.c:3052
 #, c-format
 msgid "The error value was %d%s\n"
 msgstr ""
 
-#: src/dialogs.c:3047
+#: src/dialogs.c:3055
 #, c-format
 msgid ""
 "\n"
@@ -5514,7 +5514,7 @@ msgid ""
 "%s%s%s"
 msgstr ""
 
-#: src/dialogs.c:3097
+#: src/dialogs.c:3105
 #, c-format
 msgid ""
 "\n"
@@ -5524,7 +5524,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3121
+#: src/dialogs.c:3129
 #, c-format
 msgid ""
 "\n"
@@ -5534,7 +5534,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3169
+#: src/dialogs.c:3177
 #, c-format
 msgid ""
 "\n"
@@ -5543,7 +5543,7 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 
-#: src/dialogs.c:3172
+#: src/dialogs.c:3180
 #, c-format
 msgid ""
 "\n"
@@ -5553,7 +5553,7 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: src/dialogs.c:3203
+#: src/dialogs.c:3211
 #, c-format
 msgid ""
 "\n"
@@ -5562,7 +5562,7 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 
-#: src/dialogs.c:3206
+#: src/dialogs.c:3214
 #, c-format
 msgid ""
 "\n"
@@ -5572,12 +5572,12 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: src/dialogs.c:3274
+#: src/dialogs.c:3282
 #, c-format
 msgid "Value for \"%s\" could not be read."
 msgstr ""
 
-#: src/dialogs.c:3292
+#: src/dialogs.c:3300
 #, c-format
 msgid ""
 "\n"
@@ -5586,7 +5586,7 @@ msgid ""
 "Please check your system for errors.\n"
 msgstr ""
 
-#: src/dialogs.c:3301
+#: src/dialogs.c:3309
 #, c-format
 msgid ""
 "\n"
@@ -5595,7 +5595,7 @@ msgid ""
 "Please check the file permissions and try again."
 msgstr ""
 
-#: src/dialogs.c:3310
+#: src/dialogs.c:3318
 #, c-format
 msgid ""
 "\n"
@@ -5604,7 +5604,7 @@ msgid ""
 "Please check the directory permissions and try again."
 msgstr ""
 
-#: src/dialogs.c:3317
+#: src/dialogs.c:3325
 #, c-format
 msgid ""
 "\n"
@@ -5612,14 +5612,14 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/dialogs.c:3324
+#: src/dialogs.c:3332
 msgid ""
 "\n"
 "Abort and exit immediately from LiVES\n"
 "Are you sure ?\n"
 msgstr ""
 
-#: src/dialogs.c:3330
+#: src/dialogs.c:3338
 #, c-format
 msgid ""
 "\n"
@@ -5627,13 +5627,13 @@ msgid ""
 "Please select another encoder from the list.\n"
 msgstr ""
 
-#: src/dialogs.c:3340
+#: src/dialogs.c:3348
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 msgstr ""
 
-#: src/dialogs.c:3346
+#: src/dialogs.c:3354
 #, c-format
 msgid ""
 "\n"
@@ -5643,27 +5643,27 @@ msgid ""
 "- Check if the device actually exists.\n"
 msgstr ""
 
-#: src/dialogs.c:3355
+#: src/dialogs.c:3363
 msgid ""
 "\n"
 "This file already has subtitles loaded.\n"
 "Do you wish to overwrite the existing subtitles ?\n"
 msgstr ""
 
-#: src/dialogs.c:3359
+#: src/dialogs.c:3367
 msgid ""
 "\n"
 "LiVES currently only supports subtitles of type"
 msgstr ""
 
-#: src/dialogs.c:3384
+#: src/dialogs.c:3392
 msgid ""
 "\n"
 "Erase all subtitles from this clip.\n"
 "Are you sure ?\n"
 msgstr ""
 
-#: src/dialogs.c:3391
+#: src/dialogs.c:3399
 #, c-format
 msgid ""
 "\n"
@@ -5672,14 +5672,14 @@ msgid ""
 "or OK to continue and save as type \"%s\"\n"
 msgstr ""
 
-#: src/dialogs.c:3399
+#: src/dialogs.c:3407
 msgid ""
 "\n"
 "Do you wish to move the current clip sets to the new directory ?\n"
 "(If unsure, click Yes)\n"
 msgstr ""
 
-#: src/dialogs.c:3404
+#: src/dialogs.c:3412
 #, c-format
 msgid ""
 "\n"
@@ -5690,19 +5690,19 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:3411
+#: src/dialogs.c:3419
 msgid ""
 "\n"
 "No video input devices could be found.\n"
 msgstr ""
 
-#: src/dialogs.c:3415
+#: src/dialogs.c:3423
 msgid ""
 "\n"
 "All video input devices are already in use.\n"
 msgstr ""
 
-#: src/dialogs.c:3419
+#: src/dialogs.c:3427
 msgid ""
 "\n"
 "\n"
@@ -5710,7 +5710,7 @@ msgid ""
 "DO NOT SHUT DOWN OR CLOSE LIVES !\n"
 msgstr ""
 
-#: src/dialogs.c:3425
+#: src/dialogs.c:3433
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5721,14 +5721,14 @@ msgstr ""
 "有些 %s 在布局 %s 中找不到\n"
 "因此不能正确加载。\n"
 
-#: src/dialogs.c:3432
+#: src/dialogs.c:3440
 #, c-format
 msgid ""
 "No clips were recovered for set (%s).\n"
 "Please check the spelling of the set name and try again.\n"
 msgstr ""
 
-#: src/dialogs.c:3445
+#: src/dialogs.c:3453
 #, c-format
 msgid ""
 "Some security issues have been fixed in this version of LiVES.\n"
@@ -5737,7 +5737,7 @@ msgid ""
 "directory. Would you like me to do this (recommended) ?"
 msgstr ""
 
-#: src/dialogs.c:3449
+#: src/dialogs.c:3457
 #, c-format
 msgid ""
 "\n"
@@ -5749,7 +5749,7 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:3458
+#: src/dialogs.c:3466
 #, c-format
 msgid ""
 "\n"
@@ -5758,38 +5758,38 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:3464
+#: src/dialogs.c:3472
 msgid ""
 "\n"
 "You must have autolives.pl installed and in your path to use this toy.\n"
 "Consult your package distributor.\n"
 msgstr ""
 
-#: src/dialogs.c:3468
+#: src/dialogs.c:3476
 msgid ""
 "\n"
 "You must have a minimum of one clip loaded to use this toy.\n"
 msgstr ""
 
-#: src/dialogs.c:3472
+#: src/dialogs.c:3480
 msgid ""
 "\n"
 "LiVES lost its connection to jack and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
 
-#: src/dialogs.c:3476
+#: src/dialogs.c:3484
 msgid ""
 "\n"
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
 
-#: src/dialogs.c:3481
+#: src/dialogs.c:3489
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr "请在 工具 | 首选项 | 杂项 中设置您的光盘播放设备\n"
 
-#: src/dialogs.c:3486
+#: src/dialogs.c:3494
 #, c-format
 msgid ""
 "\n"
@@ -5798,7 +5798,7 @@ msgid ""
 "(Theme name not found).\n"
 msgstr ""
 
-#: src/dialogs.c:3494
+#: src/dialogs.c:3502
 #, c-format
 msgid ""
 "\n"
@@ -5807,7 +5807,7 @@ msgid ""
 "already exists. Would you like to overwrite it ?\n"
 msgstr ""
 
-#: src/dialogs.c:3511
+#: src/dialogs.c:3519
 #, c-format
 msgid ""
 "\n"
@@ -5948,7 +5948,7 @@ msgstr ""
 msgid "Video only Transitions"
 msgstr ""
 
-#: src/effects.c:117 src/multitrack.c:10847
+#: src/effects.c:117 src/multitrack.c:10860
 msgid "audio only"
 msgstr ""
 
@@ -5956,7 +5956,7 @@ msgstr ""
 msgid "Audio only Transitions"
 msgstr ""
 
-#: src/effects.c:120 src/effects.c:123 src/multitrack.c:19146
+#: src/effects.c:120 src/effects.c:123 src/multitrack.c:19014
 msgid "audio"
 msgstr "音频"
 
@@ -8947,7 +8947,7 @@ msgstr "清除所有特效(_C)"
 msgid "Mode active"
 msgstr ""
 
-#: src/rte_window.c:2312 src/multitrack.c:8702
+#: src/rte_window.c:2312 src/multitrack.c:8715
 msgid "Info"
 msgstr "信息"
 
@@ -9071,7 +9071,7 @@ msgstr "火线卡 %d"
 msgid "Opened firewire card %d"
 msgstr "已打开火线卡 %d"
 
-#: src/multitrack.c:770
+#: src/multitrack.c:768
 msgid "Auto backup"
 msgstr "自动备份"
 
@@ -9079,46 +9079,46 @@ msgstr "自动备份"
 msgid "Backing audio"
 msgstr ""
 
-#: src/multitrack.c:1542
+#: src/multitrack.c:1557
 #, c-format
 msgid "%s : parameters for %s"
 msgstr ""
 
-#: src/multitrack.c:1961 src/multitrack.c:3635
+#: src/multitrack.c:1976 src/multitrack.c:3646
 #, c-format
 msgid "Current track: %s (layer %d)\n"
 msgstr "当前轨道：%s(第 %d 层)\n"
 
-#: src/multitrack.c:1965 src/multitrack.c:3637
+#: src/multitrack.c:1980 src/multitrack.c:3648
 msgid "Current track: Backing audio\n"
 msgstr ""
 
-#: src/multitrack.c:1966
+#: src/multitrack.c:1981
 #, c-format
 msgid "Current track: Layer %d audio\n"
 msgstr "当前轨道：第 %d 层音频\n"
 
-#: src/multitrack.c:1969
+#: src/multitrack.c:1984
 #, c-format
 msgid "%.2f sec.\n"
 msgstr "%.2f 秒\n"
 
-#: src/multitrack.c:1974 src/multitrack.c:3643
+#: src/multitrack.c:1989 src/multitrack.c:3654
 #, c-format
 msgid "Source: %s"
 msgstr "源：%s"
 
-#: src/multitrack.c:1977 src/multitrack.c:3645
+#: src/multitrack.c:1992 src/multitrack.c:3656
 msgid "Right click for context menu.\n"
 msgstr "右击打开环境菜单。\n"
 
-#: src/multitrack.c:1979
+#: src/multitrack.c:1994
 msgid ""
 "Double click on a block\n"
 "to select it."
 msgstr ""
 
-#: src/multitrack.c:3444
+#: src/multitrack.c:3455
 msgid ""
 "\n"
 "\n"
@@ -9127,7 +9127,7 @@ msgid ""
 "right or double clicking on it.\n"
 msgstr ""
 
-#: src/multitrack.c:3447
+#: src/multitrack.c:3458
 msgid ""
 "\n"
 "\n"
@@ -9135,7 +9135,7 @@ msgid ""
 "Select an effect in FX stack first to view its parameters.\n"
 msgstr ""
 
-#: src/multitrack.c:3450
+#: src/multitrack.c:3461
 msgid ""
 "\n"
 "\n"
@@ -9145,7 +9145,7 @@ msgstr ""
 "\n"
 "未载入剪辑。\n"
 
-#: src/multitrack.c:3454
+#: src/multitrack.c:3465
 msgid ""
 "You must select two video tracks\n"
 "and a time region\n"
@@ -9155,7 +9155,7 @@ msgid ""
 "before inserting clips into the timeline."
 msgstr ""
 
-#: src/multitrack.c:3458
+#: src/multitrack.c:3469
 msgid ""
 "\n"
 "\n"
@@ -9164,12 +9164,12 @@ msgid ""
 "to apply compositors.\n"
 msgstr ""
 
-#: src/multitrack.c:3640
+#: src/multitrack.c:3651
 #, c-format
 msgid "%.2f sec. to %.2f sec.\n"
 msgstr "%.2f 秒到 %.2f 秒\n"
 
-#: src/multitrack.c:3646
+#: src/multitrack.c:3657
 msgid ""
 "Single click on timeline\n"
 "to select a frame.\n"
@@ -9177,12 +9177,12 @@ msgstr ""
 "单击时间线\n"
 "来选择某一帧。\n"
 
-#: src/multitrack.c:3868 src/multitrack.c:7105
+#: src/multitrack.c:3880 src/multitrack.c:7120
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
 
-#: src/multitrack.c:3979
+#: src/multitrack.c:3991
 msgid ""
 "You can click and drag\n"
 "below the timeline"
@@ -9190,170 +9190,170 @@ msgstr ""
 "您可以点击拖动\n"
 "时间线下方"
 
-#: src/multitrack.c:3980
+#: src/multitrack.c:3992
 msgid "to select a time region.\n"
 msgstr "以选择一个时间区段。\n"
 
-#: src/multitrack.c:4153
+#: src/multitrack.c:4165
 #, fuzzy
 msgid "Selected Clip"
 msgstr "LiVES：已选剪辑"
 
-#: src/multitrack.c:4156
+#: src/multitrack.c:4168
 #, fuzzy
 msgid "_Adjust Start and End Points"
 msgstr "调整起点和终点(_A)"
 
-#: src/multitrack.c:4165
+#: src/multitrack.c:4177
 #, fuzzy
 msgid "_Edit/Encode in Clip Editor"
 msgstr "在剪辑编辑器中进行编辑/编码(_E)"
 
-#: src/multitrack.c:4172
+#: src/multitrack.c:4184
 #, fuzzy
 msgid "_Show Clip Information"
 msgstr "显示剪辑信息(_S)"
 
-#: src/multitrack.c:4179
+#: src/multitrack.c:4191
 #, fuzzy
 msgid "_Close this Clip"
 msgstr "_关闭此影片"
 
-#: src/multitrack.c:4405
+#: src/multitrack.c:4417
 #, fuzzy
 msgid "Audio Mixer (ctrl-m)"
 msgstr "混音器(ctrl-m)"
 
-#: src/multitrack.c:4472
+#: src/multitrack.c:4484
 msgid "Single click on timeline"
 msgstr "点击时间线"
 
-#: src/multitrack.c:4473
+#: src/multitrack.c:4485
 msgid "to select a frame."
 msgstr "来选择一帧。"
 
-#: src/multitrack.c:4474
+#: src/multitrack.c:4486
 msgid "Double click or right click on timeline"
 msgstr ""
 
-#: src/multitrack.c:4475
+#: src/multitrack.c:4487
 msgid "to select a block."
 msgstr "来选择块。"
 
-#: src/multitrack.c:4476
+#: src/multitrack.c:4488
 msgid "Clips can be dragged"
 msgstr "剪辑可以被拖放"
 
-#: src/multitrack.c:4477
+#: src/multitrack.c:4489
 msgid "onto the timeline."
 msgstr "到时间线上。"
 
-#: src/multitrack.c:4479
+#: src/multitrack.c:4491
 msgid "Mouse mode is: Move"
 msgstr "鼠标模式为：移动"
 
-#: src/multitrack.c:4480
+#: src/multitrack.c:4492
 msgid "clips can be moved around."
 msgstr "剪辑可以四处移动。"
 
-#: src/multitrack.c:4484
+#: src/multitrack.c:4496
 msgid "Mouse mode is: Select."
 msgstr "鼠标模式为：选择。"
 
-#: src/multitrack.c:4485
+#: src/multitrack.c:4497
 msgid "Drag with mouse on timeline"
 msgstr "用鼠标拖动时间线"
 
-#: src/multitrack.c:4486
+#: src/multitrack.c:4498
 msgid "to select tracks and time."
 msgstr "来选择轨道和时间。"
 
-#: src/multitrack.c:4570
+#: src/multitrack.c:4582
 msgid "Close _last gap(s) in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4572
+#: src/multitrack.c:4584
 msgid "Close _first gap(s) in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4629
+#: src/multitrack.c:4641
 msgid "Close gaps"
 msgstr "关闭缺口"
 
-#: src/multitrack.c:4631
+#: src/multitrack.c:4643
 msgid "Move block"
 msgstr ""
 
-#: src/multitrack.c:4633
+#: src/multitrack.c:4645
 msgid "Move audio block"
 msgstr ""
 
-#: src/multitrack.c:4635
+#: src/multitrack.c:4647
 msgid "Delete block"
 msgstr "删除区块"
 
-#: src/multitrack.c:4637
+#: src/multitrack.c:4649
 msgid "Delete audio block"
 msgstr ""
 
-#: src/multitrack.c:4639
+#: src/multitrack.c:4651
 msgid "Split tracks"
 msgstr ""
 
-#: src/multitrack.c:4641
+#: src/multitrack.c:4653
 msgid "Split block"
 msgstr ""
 
-#: src/multitrack.c:4644
+#: src/multitrack.c:4656
 #, c-format
 msgid "Apply %s"
 msgstr "应用 %s"
 
-#: src/multitrack.c:4649
+#: src/multitrack.c:4661
 #, c-format
 msgid "Delete %s"
 msgstr "删除 %s"
 
-#: src/multitrack.c:4653
+#: src/multitrack.c:4665
 msgid "Insert block"
 msgstr ""
 
-#: src/multitrack.c:4655
+#: src/multitrack.c:4667
 msgid "Insert gap"
 msgstr ""
 
-#: src/multitrack.c:4657
+#: src/multitrack.c:4669
 msgid "Insert audio block"
 msgstr ""
 
-#: src/multitrack.c:4659
+#: src/multitrack.c:4671
 msgid "Effect order change"
 msgstr "更改特效顺序"
 
-#: src/multitrack.c:5067
+#: src/multitrack.c:5079
 msgid "unsigned "
 msgstr "无符号 "
 
-#: src/multitrack.c:5068
+#: src/multitrack.c:5080
 msgid "signed "
 msgstr "有符号 "
 
-#: src/multitrack.c:5074
+#: src/multitrack.c:5086
 #, c-format
 msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
 "audio rate %d, audio sample size %d, %s.\n"
 msgstr ""
 
-#: src/multitrack.c:5107
+#: src/multitrack.c:5119
 msgid "invalid event list. Failed.\n"
 msgstr "无效的事件列表。失败。\n"
 
-#: src/multitrack.c:5113
+#: src/multitrack.c:5125
 msgid "event list has invalid fps. Failed.\n"
 msgstr "事件列表中有无效的帧率。失败。\n"
 
-#: src/multitrack.c:5126
+#: src/multitrack.c:5138
 #, c-format
 msgid ""
 "\n"
@@ -9363,7 +9363,7 @@ msgid ""
 "then load in the new set from the File menu.\n"
 msgstr ""
 
-#: src/multitrack.c:5169
+#: src/multitrack.c:5181
 #, c-format
 msgid ""
 "\n"
@@ -9374,477 +9374,477 @@ msgstr ""
 "此布局中的声道数 (%d) 对 LiVES 无效。\n"
 "无法加载。\n"
 
-#: src/multitrack.c:5469
+#: src/multitrack.c:5481
 msgid "Layout was wiped.\n"
 msgstr "布局已擦除。\n"
 
-#: src/multitrack.c:5564
+#: src/multitrack.c:5576
 #, c-format
 msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr ""
 
-#: src/multitrack.c:5813
+#: src/multitrack.c:5825
 msgid "In/out"
 msgstr "输入/输出"
 
-#: src/multitrack.c:5815
+#: src/multitrack.c:5827
 msgid "FX stack"
 msgstr ""
 
-#: src/multitrack.c:5823 src/omc-learn.c:664
+#: src/multitrack.c:5835 src/omc-learn.c:664
 msgid "Params."
 msgstr "参数"
 
-#: src/multitrack.c:6426
+#: src/multitrack.c:6441
 msgid "_Open..."
 msgstr "打开(_O)..."
 
-#: src/multitrack.c:6439
+#: src/multitrack.c:6454
 msgid "O_pen File Selection..."
 msgstr "_打开文件选择..."
 
-#: src/multitrack.c:6480
+#: src/multitrack.c:6495
 msgid "Import Selection from _dvd/vcd..."
 msgstr ""
 
-#: src/multitrack.c:6485
+#: src/multitrack.c:6500
 msgid "Import Selection from _dvd"
 msgstr ""
 
-#: src/multitrack.c:6495
+#: src/multitrack.c:6510
 msgid "Import Selection from _vcd"
 msgstr ""
 
-#: src/multitrack.c:6510
+#: src/multitrack.c:6525
 msgid "_Import from Device"
 msgstr "_从设备进口"
 
-#: src/multitrack.c:6537
+#: src/multitrack.c:6552
 #, fuzzy
 msgid "_Close the Selected Clip"
 msgstr "关闭选择的剪辑(_C)"
 
-#: src/multitrack.c:6616
+#: src/multitrack.c:6631
 #, fuzzy
 msgid "_Save Layout as..."
 msgstr "布局保存为(_S)..."
 
-#: src/multitrack.c:6624
+#: src/multitrack.c:6639
 #, fuzzy
 msgid "_Load Layout..."
 msgstr "加载布局(_L)..."
 
-#: src/multitrack.c:6628
+#: src/multitrack.c:6643
 #, fuzzy
 msgid "_Wipe/Delete Layout..."
 msgstr "擦除/删除布局(_W)..."
 
-#: src/multitrack.c:6653
+#: src/multitrack.c:6668
 #, fuzzy
 msgid "_Ignore Width, Height and Audio Values from Loaded Layouts"
 msgstr "忽略已加载布局中的宽度、高度和音频值(_I)"
 
-#: src/multitrack.c:6657
+#: src/multitrack.c:6672
 #, fuzzy
 msgid "Auto Load _Subtitles with Clips"
 msgstr "显示字幕"
 
-#: src/multitrack.c:6731
+#: src/multitrack.c:6746
 msgid "_CLIP EDITOR"
 msgstr "剪辑编辑器(_C)"
 
-#: src/multitrack.c:6743
+#: src/multitrack.c:6758
 #, fuzzy
 msgid "_Adjust Selected Clip Start/End Points"
 msgstr "调整所选剪辑的始点/终点(_A)"
 
-#: src/multitrack.c:6752
+#: src/multitrack.c:6767
 msgid "_Insert selected clip"
 msgstr "插入选择的剪辑(_I)"
 
-#: src/multitrack.c:6764
+#: src/multitrack.c:6779
 #, fuzzy
 msgid "_Insert Selected Clip Audio"
 msgstr "插入选择的剪辑音频(_I)"
 
-#: src/multitrack.c:6773
+#: src/multitrack.c:6788
 #, fuzzy
 msgid "_Delete Selected Block"
 msgstr "删除选中区域(_D)"
 
-#: src/multitrack.c:6785
+#: src/multitrack.c:6800
 msgid "_Jump to Previous Block Boundary"
 msgstr ""
 
-#: src/multitrack.c:6794
+#: src/multitrack.c:6809
 msgid "_Jump to Next Block Boundary"
 msgstr ""
 
-#: src/multitrack.c:6807
+#: src/multitrack.c:6822
 #, fuzzy
 msgid "Clear _Marks from Timeline"
 msgstr "清除时间线上的标记(_M)"
 
-#: src/multitrack.c:6815
+#: src/multitrack.c:6830
 #, fuzzy
 msgid "Ignore Selection Limits when Inserting"
 msgstr "在插入时忽略选区限制"
 
-#: src/multitrack.c:6827 src/multitrack.c:17036
+#: src/multitrack.c:6842 src/multitrack.c:16931
 msgid "_Play from Timeline Position"
 msgstr "从时间线位置开始播放(_P)"
 
-#: src/multitrack.c:6841
+#: src/multitrack.c:6856
 #, fuzzy
 msgid "Pla_y Selected Time Only"
 msgstr "只播放选择的时间段(_Y)"
 
-#: src/multitrack.c:6920
+#: src/multitrack.c:6935
 msgid "_Move Effects with Blocks"
 msgstr ""
 
-#: src/multitrack.c:6933
+#: src/multitrack.c:6948
 #, fuzzy
 msgid "Select _Autotransition Effect..."
 msgstr "选择自动过渡特效(_A)..."
 
-#: src/multitrack.c:6939
+#: src/multitrack.c:6954
 msgid "Crossfade Audio with Autotransition"
 msgstr ""
 
-#: src/multitrack.c:6947
+#: src/multitrack.c:6962
 #, fuzzy
 msgid "View/_Edit Selected Effect"
 msgstr "查看/编辑选择的特效(_E)"
 
-#: src/multitrack.c:6951
+#: src/multitrack.c:6966
 #, fuzzy
 msgid "_Delete Selected Effect"
 msgstr "删除选择的效果(_D)"
 
-#: src/multitrack.c:6959
+#: src/multitrack.c:6974
 msgid "Apply Effect to _Block..."
 msgstr ""
 
-#: src/multitrack.c:6996
+#: src/multitrack.c:7011
 msgid "Apply Effect to _Region..."
 msgstr ""
 
-#: src/multitrack.c:7206
+#: src/multitrack.c:7221
 msgid "_Tracks"
 msgstr "轨道(_T)"
 
-#: src/multitrack.c:7220
+#: src/multitrack.c:7235
 #, fuzzy
 msgid "Make _Backing Audio Current Track"
 msgstr "选择当前轨道(_S)"
 
-#: src/multitrack.c:7231
+#: src/multitrack.c:7246
 msgid "Add Video Track at _Rear"
 msgstr ""
 
-#: src/multitrack.c:7239
+#: src/multitrack.c:7254
 msgid "Add Video Track at _Front"
 msgstr ""
 
-#: src/multitrack.c:7252
+#: src/multitrack.c:7267
 #, fuzzy
 msgid "_Split Current Track at Cursor"
 msgstr "从光标处分割当前轨道(_S)"
 
-#: src/multitrack.c:7264
+#: src/multitrack.c:7279
 #, fuzzy
 msgid "_Split Selected Video Tracks"
 msgstr "分割所选的视频轨道(_S)"
 
-#: src/multitrack.c:7277
+#: src/multitrack.c:7292
 #, fuzzy
 msgid "Insert Gap in Selected Tracks/Time"
 msgstr "插入选择的剪辑(_I)"
 
-#: src/multitrack.c:7285
+#: src/multitrack.c:7300
 msgid "Insert Gap in Current Track/Selected Time"
 msgstr ""
 
-#: src/multitrack.c:7297
+#: src/multitrack.c:7312
 msgid "Close All _Gaps in Selected Tracks/Time"
 msgstr ""
 
-#: src/multitrack.c:7323
+#: src/multitrack.c:7338
 msgid "Se_lection"
 msgstr "选区(_L)"
 
-#: src/multitrack.c:7329
+#: src/multitrack.c:7344
 msgid "_Select Current Track"
 msgstr "选择当前轨道(_S)"
 
-#: src/multitrack.c:7336
+#: src/multitrack.c:7351
 #, fuzzy
 msgid "Select _All Video Tracks"
 msgstr "选择所有视频轨道(_A)"
 
-#: src/multitrack.c:7343
+#: src/multitrack.c:7358
 #, fuzzy
 msgid "Select _No Video Tracks"
 msgstr "取消选择所有视频轨道(_N)"
 
-#: src/multitrack.c:7350
+#: src/multitrack.c:7365
 #, fuzzy
 msgid "Select All _Time"
 msgstr "选择所有时间(_T)"
 
-#: src/multitrack.c:7361
+#: src/multitrack.c:7376
 #, fuzzy
 msgid "Select from _Zero Time"
 msgstr "从时间开头开始选择(_Z)"
 
-#: src/multitrack.c:7368
+#: src/multitrack.c:7383
 #, fuzzy
 msgid "Select to _End Time"
 msgstr "选择到时间末尾(_E)"
 
-#: src/multitrack.c:7375
+#: src/multitrack.c:7390
 msgid "_Copy..."
 msgstr "复制(_C)..."
 
-#: src/multitrack.c:7381
+#: src/multitrack.c:7396
 msgid "_Timecode to Region Start"
 msgstr ""
 
-#: src/multitrack.c:7388
+#: src/multitrack.c:7403
 msgid "_Timecode to Region End"
 msgstr ""
 
-#: src/multitrack.c:7395
+#: src/multitrack.c:7410
 msgid "_Region Start to Timecode"
 msgstr ""
 
-#: src/multitrack.c:7402
+#: src/multitrack.c:7417
 msgid "_Region End to Timecode"
 msgstr ""
 
-#: src/multitrack.c:7416
+#: src/multitrack.c:7431
 #, fuzzy
 msgid "Select/Deselect Block at Current Track/Time"
 msgstr "选择当前轨道(_S)"
 
-#: src/multitrack.c:7435
+#: src/multitrack.c:7450
 #, fuzzy
 msgid "_Change Width, Height and Audio Values..."
 msgstr "更改宽度、高度和音频值(_C)..."
 
-#: src/multitrack.c:7490
+#: src/multitrack.c:7505
 msgid "_Render"
 msgstr "渲染(_R)"
 
-#: src/multitrack.c:7496
+#: src/multitrack.c:7511
 #, fuzzy
 msgid "_Render All to New Clip"
 msgstr "渲染所有到新剪辑(_R)"
 
-#: src/multitrack.c:7511
+#: src/multitrack.c:7526
 #, fuzzy
 msgid "Render _Video"
 msgstr "渲染视频(_V)"
 
-#: src/multitrack.c:7518
+#: src/multitrack.c:7533
 #, fuzzy
 msgid "Render _Audio"
 msgstr "渲染音频(_A)"
 
-#: src/multitrack.c:7528
+#: src/multitrack.c:7543
 #, fuzzy
 msgid "_Normalise Rendered Audio"
 msgstr "预渲染音频(_P)"
 
-#: src/multitrack.c:7536
+#: src/multitrack.c:7551
 #, fuzzy
 msgid "_Pre-render Audio"
 msgstr "预渲染音频(_P)"
 
-#: src/multitrack.c:7545
+#: src/multitrack.c:7560
 msgid "_View"
 msgstr "视图(_V)"
 
-#: src/multitrack.c:7558
+#: src/multitrack.c:7573
 msgid "Block _In/Out Points"
 msgstr ""
 
-#: src/multitrack.c:7567
+#: src/multitrack.c:7582
 #, fuzzy
 msgid "_Effects at Current"
 msgstr "当前特效(_E)"
 
-#: src/multitrack.c:7585
+#: src/multitrack.c:7600
 #, fuzzy
 msgid "Audio Parameters"
 msgstr "音频参数"
 
-#: src/multitrack.c:7591
+#: src/multitrack.c:7606
 msgid "Show Backing _Audio Track"
 msgstr ""
 
-#: src/multitrack.c:7595
+#: src/multitrack.c:7610
 #, fuzzy
 msgid "Compact View"
 msgstr "紧凑视图"
 
-#: src/multitrack.c:7603
+#: src/multitrack.c:7618
 #, fuzzy
 msgid "Maximum Tracks to Display..."
 msgstr "显示的最大轨道数目..."
 
-#: src/multitrack.c:7610
+#: src/multitrack.c:7625
 msgid "Scroll to Follow Playback"
 msgstr ""
 
-#: src/multitrack.c:7614
+#: src/multitrack.c:7629
 #, fuzzy
 msgid "_Center on Cursor"
 msgstr "沿光标居中(_C)"
 
-#: src/multitrack.c:7621
+#: src/multitrack.c:7636
 #, fuzzy
 msgid "_Zoom In"
 msgstr "拉近(_Z)"
 
-#: src/multitrack.c:7632
+#: src/multitrack.c:7647
 #, fuzzy
 msgid "_Zoom Out"
 msgstr "推远(_Z)"
 
-#: src/multitrack.c:7644
+#: src/multitrack.c:7659
 #, fuzzy
 msgid "Multitrack _Details"
 msgstr "多轨道细节(_D)"
 
-#: src/multitrack.c:7656
+#: src/multitrack.c:7671
 msgid "_Event Window"
 msgstr "事件窗口(_E)"
 
-#: src/multitrack.c:7660
+#: src/multitrack.c:7675
 msgid "_Event Window (selected time only)"
 msgstr "事件窗口(只针对选择的时间)(_E)"
 
-#: src/multitrack.c:7664
+#: src/multitrack.c:7679
 #, fuzzy
 msgid "_Show FRAME Events"
 msgstr "显示帧事件(_S)"
 
-#: src/multitrack.c:7675
+#: src/multitrack.c:7690
 #, fuzzy
 msgid "_Show Multitrack Keys"
 msgstr "显示多轨道键(_S)"
 
-#: src/multitrack.c:7695
+#: src/multitrack.c:7710
 msgid "Report a _bug"
 msgstr "报告错误(_B)"
 
-#: src/multitrack.c:7926
+#: src/multitrack.c:7941
 #, fuzzy
 msgid "Insert With _Audio"
 msgstr "和音频一同插入(_A)"
 
-#: src/multitrack.c:7927
+#: src/multitrack.c:7942
 msgid ""
 "Select whether video clips are inserted and moved with their audio or not"
 msgstr "选择是否将视频剪辑和所带的音频一起插入或移动"
 
-#: src/multitrack.c:8005
+#: src/multitrack.c:8020
 #, fuzzy
 msgid "Select _Overlap"
 msgstr "选择重叠(_O)"
 
-#: src/multitrack.c:8006
+#: src/multitrack.c:8021
 msgid ""
 "Select whether timeline selection snaps to overlap between selected tracks "
 "or not"
 msgstr "选择时间线选区是否捕获到所选轨道的重叠处"
 
-#: src/multitrack.c:8061 src/multitrack.c:14354
+#: src/multitrack.c:8076 src/multitrack.c:14247
 msgid "Expanded View (d)"
 msgstr "扩展视图(d)"
 
-#: src/multitrack.c:8064 src/multitrack.c:14360
+#: src/multitrack.c:8079 src/multitrack.c:14253
 msgid "Compact View (d)"
 msgstr "紧凑视图(d)"
 
-#: src/multitrack.c:8088
+#: src/multitrack.c:8103
 msgid "Gravity: _Normal"
 msgstr "重力：正常(_N)"
 
-#: src/multitrack.c:8109
+#: src/multitrack.c:8124
 msgid "Gravity: _Left"
 msgstr "重力：左(_L)"
 
-#: src/multitrack.c:8120
+#: src/multitrack.c:8135
 msgid "Gravity: _Right"
 msgstr "重力：右(_R)"
 
-#: src/multitrack.c:8145
+#: src/multitrack.c:8160
 #, fuzzy
 msgid "Mouse Mode: _Move"
 msgstr "鼠标模式：移动(_M)"
 
-#: src/multitrack.c:8172
+#: src/multitrack.c:8187
 #, fuzzy
 msgid "Mouse Mode: _Select"
 msgstr "鼠标模式：(_S)"
 
-#: src/multitrack.c:8195
+#: src/multitrack.c:8210
 #, fuzzy
 msgid "Insert Mode: _Normal"
 msgstr "插入模式：正常(_N)"
 
-#: src/multitrack.c:8460
+#: src/multitrack.c:8475
 msgid "_Apply"
 msgstr "应用(_A)"
 
-#: src/multitrack.c:8481
+#: src/multitrack.c:8496
 msgid "Time"
 msgstr "时间"
 
-#: src/multitrack.c:8492
+#: src/multitrack.c:8507
 msgid "_Del. node"
 msgstr ""
 
-#: src/multitrack.c:8500
+#: src/multitrack.c:8515
 msgid "_Next node"
 msgstr ""
 
-#: src/multitrack.c:8508
+#: src/multitrack.c:8523
 msgid "_Prev node"
 msgstr ""
 
-#: src/multitrack.c:8534
+#: src/multitrack.c:8549
 msgid "_Reverse playback  "
 msgstr ""
 
-#: src/multitrack.c:8551
+#: src/multitrack.c:8566
 msgid "_Velocity  "
 msgstr "速率(_V)  "
 
-#: src/multitrack.c:8611
+#: src/multitrack.c:8625
 msgid "Anchor _start"
 msgstr ""
 
-#: src/multitrack.c:8612
+#: src/multitrack.c:8626
 msgid "Anchor the start point to the timeline"
 msgstr ""
 
-#: src/multitrack.c:8670
+#: src/multitrack.c:8683
 msgid "Anchor _end"
 msgstr ""
 
-#: src/multitrack.c:8671
+#: src/multitrack.c:8684
 msgid "Anchor the end point to the timeline"
 msgstr ""
 
-#: src/multitrack.c:8814
+#: src/multitrack.c:8827
 msgid "Scroll"
 msgstr "滚动"
 
-#: src/multitrack.c:9399
+#: src/multitrack.c:9412
 msgid ""
 "\n"
 "==============================\n"
@@ -9854,95 +9854,95 @@ msgstr ""
 "==============================\n"
 "已切换到剪辑编辑方式\n"
 
-#: src/multitrack.c:9607
+#: src/multitrack.c:9620
 msgid "Timeline (seconds)"
 msgstr "时间线(秒)"
 
-#: src/multitrack.c:10102
+#: src/multitrack.c:10115
 msgid " Backing audio"
 msgstr ""
 
-#: src/multitrack.c:10104
+#: src/multitrack.c:10117
 #, c-format
 msgid " Layer %d audio"
 msgstr " 层 %d 音频"
 
-#: src/multitrack.c:10115
+#: src/multitrack.c:10128
 msgid "Show/hide audio details"
 msgstr "显示/隐藏音频细节"
 
-#: src/multitrack.c:10124 src/multitrack.c:10349
+#: src/multitrack.c:10137 src/multitrack.c:10362
 #, c-format
 msgid "Layer %d audio"
 msgstr "层 %d 的音频"
 
-#: src/multitrack.c:10250 src/multitrack.c:10378
+#: src/multitrack.c:10263 src/multitrack.c:10391
 #, c-format
 msgid "%s (layer %d)"
 msgstr "%s (层 %d)"
 
-#: src/multitrack.c:10300
+#: src/multitrack.c:10313
 msgid "Select track"
 msgstr "选择轨道"
 
-#: src/multitrack.c:10304
+#: src/multitrack.c:10317
 msgid "Show/hide audio"
 msgstr "显示/隐藏音频"
 
-#: src/multitrack.c:10310
+#: src/multitrack.c:10323
 #, c-format
 msgid "Video %d"
 msgstr "视频 %d"
 
-#: src/multitrack.c:10350
+#: src/multitrack.c:10363
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:10464
+#: src/multitrack.c:10477
 #, fuzzy
 msgid "Selected Effect"
 msgstr "选择最后的_影响"
 
-#: src/multitrack.c:10471
+#: src/multitrack.c:10484
 #, fuzzy
 msgid "_View/Edit this Effect"
 msgstr "查看/编辑此特效(_V)"
 
-#: src/multitrack.c:10473
+#: src/multitrack.c:10486
 #, fuzzy
 msgid "_View this Effect"
 msgstr "查看此特效(_V)"
 
-#: src/multitrack.c:10481
+#: src/multitrack.c:10494
 #, fuzzy
 msgid "_Delete this Effect"
 msgstr "删除此特效(_D)"
 
-#: src/multitrack.c:10539
+#: src/multitrack.c:10552
 msgid "Cannot insert after this effect"
 msgstr "无法在此特效后插入"
 
-#: src/multitrack.c:10569
+#: src/multitrack.c:10582
 msgid "This effect cannot be moved"
 msgstr "此特效无法移除"
 
-#: src/multitrack.c:10623
+#: src/multitrack.c:10636
 #, c-format
 msgid "  %d to %d selected  "
 msgstr "  已选择 %d 到 %d  "
 
-#: src/multitrack.c:10626 src/multitrack.c:10851
+#: src/multitrack.c:10639 src/multitrack.c:10864
 #, c-format
 msgid "%.2f sec."
 msgstr "%.2f 秒"
 
-#: src/multitrack.c:10831
+#: src/multitrack.c:10844
 #, c-format
 msgid "%d frames"
 msgstr "%d 帧"
 
-#: src/multitrack.c:11181
+#: src/multitrack.c:11192
 msgid ""
 "\n"
 "==============================\n"
@@ -9952,70 +9952,70 @@ msgstr ""
 "==============================\n"
 "已切换到多轨道模式\n"
 
-#: src/multitrack.c:12873
+#: src/multitrack.c:12887
 msgid "Drag the time slider to where you"
 msgstr "将时间滑块拖到您"
 
-#: src/multitrack.c:12874
+#: src/multitrack.c:12888
 msgid "want to set effect parameters"
 msgstr "想要设置特效参数的地方"
 
-#: src/multitrack.c:12875
+#: src/multitrack.c:12889
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr "设置参数，然后点击“应用”\n"
 
-#: src/multitrack.c:12876
+#: src/multitrack.c:12890
 msgid ""
 "NODES are points where parameters\n"
 "have been set.\n"
 "Nodes can be deleted."
 msgstr ""
 
-#: src/multitrack.c:12878
+#: src/multitrack.c:12892
 msgid "Effect has no parameters.\n"
 msgstr "特效没有参数。\n"
 
-#: src/multitrack.c:12971
+#: src/multitrack.c:12985
 #, c-format
 msgid "%s output"
 msgstr "%s 输出"
 
-#: src/multitrack.c:12976 src/multitrack.c:12984
+#: src/multitrack.c:12990 src/multitrack.c:12998
 #, c-format
 msgid "layer %d"
 msgstr "层 %d"
 
-#: src/multitrack.c:12977 src/multitrack.c:12985
+#: src/multitrack.c:12991 src/multitrack.c:12999
 msgid "audio track"
 msgstr "音轨"
 
-#: src/multitrack.c:12978
+#: src/multitrack.c:12992
 #, c-format
 msgid "%s to %s"
 msgstr "%s 到 %s"
 
-#: src/multitrack.c:12986
+#: src/multitrack.c:13000
 #, c-format
 msgid "%s from %s"
 msgstr ""
 
-#: src/multitrack.c:13031
+#: src/multitrack.c:13045
 msgid "_Prev filter map"
 msgstr ""
 
-#: src/multitrack.c:13042
+#: src/multitrack.c:13056
 msgid "Insert _before"
 msgstr "插入前面(_B)"
 
-#: src/multitrack.c:13052
+#: src/multitrack.c:13066
 msgid "Insert _after"
 msgstr "插入后面(_A)"
 
-#: src/multitrack.c:13066
+#: src/multitrack.c:13080
 msgid "_Next filter map"
 msgstr ""
 
-#: src/multitrack.c:13080
+#: src/multitrack.c:13094
 msgid ""
 "\n"
 "\n"
@@ -10027,32 +10027,32 @@ msgstr ""
 "当前轨道、当前时刻\n"
 "无特效。\n"
 
-#: src/multitrack.c:13098
+#: src/multitrack.c:13112
 msgid ""
 "Drag a compositor anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:13105
+#: src/multitrack.c:13119
 msgid ""
 "Drag a transition anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:13113
+#: src/multitrack.c:13127
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
 msgstr ""
 
-#: src/multitrack.c:13337
+#: src/multitrack.c:13351
 #, fuzzy
 msgid "Selected Block/Frame"
 msgstr "选择_所有帧"
 
-#: src/multitrack.c:13339
+#: src/multitrack.c:13353
 #, fuzzy
 msgid "_Select this Block"
 msgstr ""
@@ -10060,140 +10060,140 @@ msgstr ""
 "\n"
 "选择被锁定。\n"
 
-#: src/multitrack.c:13349
+#: src/multitrack.c:13363
 msgid "_Split Block Here"
 msgstr ""
 
-#: src/multitrack.c:13357
+#: src/multitrack.c:13371
 #, fuzzy
 msgid "List _Effects Here"
 msgstr "在此列出效果(_E)"
 
-#: src/multitrack.c:13366 src/multitrack.c:13444
+#: src/multitrack.c:13380 src/multitrack.c:13458
 #, c-format
 msgid "_Adjust %s"
 msgstr "调整 %s(_A)"
 
-#: src/multitrack.c:13381
+#: src/multitrack.c:13395
 #, fuzzy
 msgid "_Delete this Block"
 msgstr "删除此特效(_D)"
 
-#: src/multitrack.c:13426
+#: src/multitrack.c:13440
 #, fuzzy
 msgid "_Insert Here"
 msgstr "在此插入(_I)"
 
-#: src/multitrack.c:13431
+#: src/multitrack.c:13445
 #, fuzzy
 msgid "_Insert Audio Here"
 msgstr "在此插入音频(_I)"
 
-#: src/multitrack.c:14954
+#: src/multitrack.c:14849
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:14988
+#: src/multitrack.c:14883
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15194
+#: src/multitrack.c:15089
 #, c-format
 msgid "Undid %s\n"
 msgstr ""
 
-#: src/multitrack.c:15400
+#: src/multitrack.c:15295
 #, c-format
 msgid "Redid %s\n"
 msgstr ""
 
-#: src/multitrack.c:15433
+#: src/multitrack.c:15328
 msgid ""
 "\n"
 " (variable)"
 msgstr ""
 
-#: src/multitrack.c:15670 src/multitrack.c:15784 src/multitrack.c:19126
-#: src/multitrack.c:19138
+#: src/multitrack.c:15565 src/multitrack.c:15679 src/multitrack.c:18994
+#: src/multitrack.c:19006
 #, c-format
 msgid "track %s"
 msgstr "轨道 %s"
 
-#: src/multitrack.c:15675 src/multitrack.c:15789 src/multitrack.c:19131
+#: src/multitrack.c:15570 src/multitrack.c:15684 src/multitrack.c:18999
 #, c-format
 msgid "tracks %s and %s"
 msgstr "轨道 %s 和 %s"
 
-#: src/multitrack.c:15681 src/multitrack.c:15795 src/multitrack.c:19140
+#: src/multitrack.c:15576 src/multitrack.c:15690 src/multitrack.c:19008
 msgid "selected tracks"
 msgstr "已选择的轨道"
 
-#: src/multitrack.c:15686
+#: src/multitrack.c:15581
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15720
+#: src/multitrack.c:15615
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15806
+#: src/multitrack.c:15701
 #, c-format
 msgid "Deleted %s %s from %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:16105
+#: src/multitrack.c:16000
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr ""
 
-#: src/multitrack.c:16194
+#: src/multitrack.c:16089
 msgid "Cleaning up..."
 msgstr "正在清理..."
 
-#: src/multitrack.c:16625
+#: src/multitrack.c:16520
 #, c-format
 msgid "Deleted frames from time %.4f to %.4f on track %s\n"
 msgstr ""
 
-#: src/multitrack.c:16628
+#: src/multitrack.c:16523
 #, c-format
 msgid "Deleted audio from time %.4f to %.4f on track %s\n"
 msgstr ""
 
-#: src/multitrack.c:17030
+#: src/multitrack.c:16925
 msgid "_Pause"
 msgstr "暂停(_P)"
 
-#: src/multitrack.c:17031
+#: src/multitrack.c:16926
 msgid "Pause (p)"
 msgstr "暂停(p)"
 
-#: src/multitrack.c:17179
+#: src/multitrack.c:17075
 msgid "Press 'm' during playback"
 msgstr "在播放过程中按“m”键"
 
-#: src/multitrack.c:17180
+#: src/multitrack.c:17076
 msgid "to make a mark on the timeline"
 msgstr "要在时间线上做标记"
 
-#: src/multitrack.c:17527
+#: src/multitrack.c:17423
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:17789
+#: src/multitrack.c:17685
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:18365
+#: src/multitrack.c:18233
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
@@ -10202,7 +10202,7 @@ msgstr ""
 "时间区段 %.3f 到 %.3f\n"
 "已选择。\n"
 
-#: src/multitrack.c:18369
+#: src/multitrack.c:18237
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -10210,12 +10210,12 @@ msgstr ""
 "选择一条或多条轨道\n"
 "来创建一个区段。\n"
 
-#: src/multitrack.c:18370
+#: src/multitrack.c:18238
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "已选择了 %d 条视频轨道。\n"
 
-#: src/multitrack.c:18372
+#: src/multitrack.c:18240
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
@@ -10223,7 +10223,7 @@ msgstr ""
 "双击时间线来\n"
 "取消时间区段选择。"
 
-#: src/multitrack.c:18379
+#: src/multitrack.c:18247
 msgid ""
 "Single click on an effect\n"
 "to select it."
@@ -10231,7 +10231,7 @@ msgstr ""
 "单击某个效果来\n"
 "选中它。"
 
-#: src/multitrack.c:18380
+#: src/multitrack.c:18248
 msgid ""
 "Double click on an effect\n"
 "to edit it."
@@ -10239,7 +10239,7 @@ msgstr ""
 "双击某个效果\n"
 "进行编辑。"
 
-#: src/multitrack.c:18381
+#: src/multitrack.c:18249
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
@@ -10247,13 +10247,13 @@ msgstr ""
 "右击某个效果来\n"
 "打开环境菜单。\n"
 
-#: src/multitrack.c:18383
+#: src/multitrack.c:18251
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
 msgstr ""
 
-#: src/multitrack.c:18390
+#: src/multitrack.c:18258
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
@@ -10261,15 +10261,15 @@ msgstr ""
 "您可以选择一个特效，\n"
 "然后使用 插入前面"
 
-#: src/multitrack.c:18391
+#: src/multitrack.c:18259
 msgid "or INSERT AFTER buttons to move it."
 msgstr "或 插入后面 按钮来移动它。"
 
-#: src/multitrack.c:18688 src/multitrack.c:18701
+#: src/multitrack.c:18556 src/multitrack.c:18569
 msgid "Click on another effect,"
 msgstr "点击另一个效果，"
 
-#: src/multitrack.c:18689 src/multitrack.c:18702
+#: src/multitrack.c:18557 src/multitrack.c:18570
 msgid ""
 "and the selected one\n"
 "will be inserted"
@@ -10277,50 +10277,50 @@ msgstr ""
 "和所选的这个\n"
 "将被插入"
 
-#: src/multitrack.c:18690
+#: src/multitrack.c:18558
 msgid "after it.\n"
 msgstr "在它之后。\n"
 
-#: src/multitrack.c:18703
+#: src/multitrack.c:18571
 msgid "before it.\n"
 msgstr "在它之前。\n"
 
-#: src/multitrack.c:18938
+#: src/multitrack.c:18806
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr "已移除效果 %s 的参数值，于时间 %.4f\n"
 
-#: src/multitrack.c:19149
+#: src/multitrack.c:19017
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:19700 src/multitrack.c:21253
+#: src/multitrack.c:19568 src/multitrack.c:21121
 msgid "_Autoreload each time"
 msgstr "每次都自动重载(_A)"
 
-#: src/multitrack.c:19756
+#: src/multitrack.c:19624
 msgid "Saving layout"
 msgstr ""
 
-#: src/multitrack.c:19778
+#: src/multitrack.c:19646
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr "将布局保存到 %s\n"
 
-#: src/multitrack.c:21184
+#: src/multitrack.c:21052
 msgid "clips and frames"
 msgstr "剪辑和帧"
 
-#: src/multitrack.c:21187
+#: src/multitrack.c:21055
 msgid "clips"
 msgstr "剪辑"
 
-#: src/multitrack.c:21189
+#: src/multitrack.c:21057
 msgid "frames"
 msgstr "画面"
 
-#: src/multitrack.c:21199
+#: src/multitrack.c:21067
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -10328,7 +10328,7 @@ msgstr ""
 "\n"
 "自动重载布局。\n"
 
-#: src/multitrack.c:21202
+#: src/multitrack.c:21070
 #, c-format
 msgid ""
 "%s\n"
@@ -10339,11 +10339,11 @@ msgstr ""
 "有些 %s 在布局 %s 中找不到\n"
 "因此不能正确加载。\n"
 
-#: src/multitrack.c:21330
+#: src/multitrack.c:21198
 msgid "auto backup"
 msgstr "自动备份"
 
-#: src/multitrack.c:21333
+#: src/multitrack.c:21201
 #, c-format
 msgid ""
 "\n"
@@ -10352,64 +10352,64 @@ msgstr ""
 "\n"
 "无法加载布局文件 %s\n"
 
-#: src/multitrack.c:21350
+#: src/multitrack.c:21218
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "正在从 %s 加载布局..."
 
-#: src/multitrack.c:21380
+#: src/multitrack.c:21248
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "收到 %d 个事件...处理中..."
 
-#: src/multitrack.c:21391
+#: src/multitrack.c:21259
 msgid "Checking and rebuilding event list"
 msgstr "正在检测和重新构建事件列表"
 
-#: src/multitrack.c:21416
+#: src/multitrack.c:21284
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "检测到 %d 项错误。\n"
 
-#: src/multitrack.c:21461
+#: src/multitrack.c:21329
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:21615
+#: src/multitrack.c:21483
 msgid ""
 "The current layout has changes which have not been saved.\n"
 "Are you sure you wish to wipe it ?\n"
 msgstr ""
 
-#: src/multitrack.c:22406
+#: src/multitrack.c:22274
 #, fuzzy
 msgid "Multitrack Audio Mixer"
 msgstr "LiVES：多轨音频混音器"
 
-#: src/multitrack.c:22437
+#: src/multitrack.c:22305
 msgid "_Reset values"
 msgstr "重设值(_R)"
 
-#: src/multitrack.c:22441
+#: src/multitrack.c:22309
 msgid "_Close mixer"
 msgstr "关闭混音器(_C)"
 
-#: src/multitrack.c:22491
+#: src/multitrack.c:22359
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr ""
 
-#: src/multitrack.c:22493
+#: src/multitrack.c:22361
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:22535
+#: src/multitrack.c:22403
 msgid "_Gang layer audio"
 msgstr ""
 
-#: src/multitrack.c:22537
+#: src/multitrack.c:22405
 msgid "Adjust all layer audio values to the same value"
 msgstr "将所有层的音频值调整为相同值"
 

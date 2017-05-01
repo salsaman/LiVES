@@ -1413,6 +1413,24 @@ void lives_alarm_clear(int alarm_handle) {
 
 
 
+char *lives_datetime(struct timeval *tv) {
+  char buf[128];
+  char *datetime=NULL;
+  struct tm *gm = gmtime(&tv->tv_sec);
+  ssize_t written;
+  
+  
+  if (gm) {
+    written = (ssize_t)strftime(buf, 128, "%Y-%m-%d    %H:%M:%S", gm);
+    if ((written > 0) && ((size_t)written < 128)) {
+      datetime=lives_strdup(buf);
+    }
+  }
+  return datetime;
+}
+
+
+
 LIVES_INLINE char *lives_strappend(char *string, int len, const char *xnew) {
   char *tmp=lives_strconcat(string,xnew,NULL);
   lives_snprintf(string,len,"%s",tmp);
@@ -3090,10 +3108,7 @@ void draw_little_bars(double ptrtime) {
         lives_painter_line_to(cr, offset, allocheight);
       }
       lives_painter_stroke(cr);
-
       lives_painter_destroy(cr);
-
-
     }
   }
 
@@ -3175,9 +3190,7 @@ void draw_little_bars(double ptrtime) {
           lives_painter_line_to(cr, offset, allocheight);
         }
         lives_painter_stroke(cr);
-
         lives_painter_destroy(cr);
-
       }
     }
   }

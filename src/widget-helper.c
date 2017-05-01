@@ -7376,7 +7376,6 @@ LIVES_INLINE LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *disp, LiV
 
 
 LIVES_INLINE boolean lives_has_toplevel_focus() {
-  return TRUE;
   return lives_window_has_toplevel_focus(LIVES_WINDOW(mainw->LiVES))||
     (mainw->multitrack!=NULL&&lives_window_has_toplevel_focus(LIVES_WINDOW(mainw->multitrack->window)));
 }

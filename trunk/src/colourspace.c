@@ -1342,7 +1342,7 @@ static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int 
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -1427,7 +1427,7 @@ static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, i
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -1511,7 +1511,7 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -1597,7 +1597,7 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -1679,7 +1679,7 @@ static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -1762,7 +1762,7 @@ static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, i
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2093,7 +2093,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2177,7 +2177,7 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2261,7 +2261,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2349,7 +2349,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2435,7 +2435,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2515,7 +2515,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2597,7 +2597,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2691,7 +2691,7 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2777,7 +2777,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2875,7 +2875,7 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -2961,7 +2961,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -3050,7 +3050,7 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -3464,7 +3464,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -3547,7 +3547,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -3628,7 +3628,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -3703,7 +3703,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -3786,7 +3786,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -3867,7 +3867,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -4045,7 +4045,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -4140,7 +4140,7 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -4232,7 +4232,7 @@ static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int heigh
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -5949,7 +5949,7 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6027,7 +6027,7 @@ static void convert_swap4_frame(uint8_t *src, int width, int height, int irowstr
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6105,7 +6105,7 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6184,7 +6184,7 @@ static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int i
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6261,7 +6261,7 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6339,7 +6339,7 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6421,7 +6421,7 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6498,7 +6498,7 @@ static void convert_swap3delpost_frame(uint8_t *src,int width,int height, int ir
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6573,7 +6573,7 @@ static void convert_delpost_frame(uint8_t *src,int width,int height, int irowstr
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6648,7 +6648,7 @@ static void convert_delpre_frame(uint8_t *src,int width,int height, int irowstri
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6724,7 +6724,7 @@ static void convert_swap3delpre_frame(uint8_t *src, int width, int height, int i
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6803,7 +6803,7 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);
@@ -6897,7 +6897,7 @@ static void convert_swab_frame(uint8_t *src, int width, int height, uint8_t *des
       }
     }
 
-    for (i=0; i<nthreads; i++) {
+    for (i=1; i<nthreads; i++) {
       pthread_join(cthreads[i],NULL);
     }
     lives_free(ccparams);

@@ -1869,6 +1869,14 @@ LIVES_INLINE boolean lives_window_unmaximize(LiVESWindow *window) {
 }
 
 
+LIVES_INLINE LiVESWidget *lives_window_get_focus(LiVESWindow *window) {
+#ifdef GUI_GTK
+  return gtk_window_get_focus(window);
+#endif
+  return NULL;
+}
+
+
 LIVES_INLINE LiVESAccelGroup *lives_accel_group_new(void) {
   LiVESAccelGroup *group=NULL;
 #ifdef GUI_GTK
@@ -1936,6 +1944,14 @@ LIVES_INLINE boolean lives_window_add_accel_group(LiVESWindow *window, LiVESAcce
 #ifdef GUI_QT
   window->add_accel_group(group);
   return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_widget_has_focus(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  return gtk_widget_has_focus(widget);
 #endif
   return FALSE;
 }
@@ -7375,10 +7391,13 @@ LIVES_INLINE LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *disp, LiV
 // compound functions
 
 
-LIVES_INLINE boolean lives_has_toplevel_focus() {
+boolean lives_has_toplevel_focus() {
+  LiVESWidget *widget;
   lives_widget_context_update();
-  return ((mainw->multitrack==NULL&&gtk_widget_has_focus(gtk_window_get_focus(LIVES_WINDOW(mainw->LiVES))))||
-          (mainw->multitrack!=NULL&&gtk_widget_has_focus(gtk_window_get_focus(LIVES_WINDOW(mainw->multitrack->window)))));
+  if (mainw->multitrack==NULL) widget=lives_window_get_focus(LIVES_WINDOW(mainw->LiVES));
+  else widget=(lives_window_get_focus(LIVES_WINDOW(mainw->multitrack->window)));
+  if (!LIVES_IS_WIDGET(widget)) return FALSE;
+  return lives_widget_has_focus(widget);
 }
 
 LIVES_INLINE boolean lives_entry_set_editable(LiVESEntry *entry, boolean editable) {

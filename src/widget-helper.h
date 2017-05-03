@@ -156,7 +156,7 @@ boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *
 #define lives_signal_handlers_block_by_func(instance, func, data) g_signal_handlers_block_by_func(instance, func, data)
 #define lives_signal_handlers_unblock_by_func(instance, func, data) g_signal_handlers_unblock_by_func(instance, func, data)
 #else
-ulong lives_signal_connect(LiVESWidget *widget, const char *signal_name, ulong funcptr, livespointer data);
+ulong lives_signal_connect(LiVESWidget *, const char *signal_name, ulong funcptr, livespointer data);
 boolean lives_signal_handlers_block_by_func(livespointer instance, livespointer func, livespointer data);
 boolean lives_signal_handlers_unblock_by_func(livespointer instance, livespointer func, livespointer data);
 #endif
@@ -167,8 +167,8 @@ boolean lives_signal_handler_unblock(livespointer instance, unsigned long handle
 boolean lives_signal_handler_disconnect(livespointer instance, unsigned long handler_id);
 boolean lives_signal_stop_emission_by_name(livespointer instance, const char *detailed_signal);
 
-boolean lives_grab_add(LiVESWidget *widget);
-boolean lives_grab_remove(LiVESWidget *widget);
+boolean lives_grab_add(LiVESWidget *);
+boolean lives_grab_remove(LiVESWidget *);
 
 boolean lives_widget_set_sensitive(LiVESWidget *, boolean state);
 boolean lives_widget_get_sensitive(LiVESWidget *);
@@ -182,16 +182,18 @@ boolean lives_widget_queue_draw(LiVESWidget *);
 boolean lives_widget_queue_draw_area(LiVESWidget *, int x, int y, int width, int height);
 boolean lives_widget_queue_resize(LiVESWidget *);
 boolean lives_widget_set_size_request(LiVESWidget *, int width, int height);
-boolean lives_widget_set_minimum_size(LiVESWidget *widget, int width, int height);
-boolean lives_widget_set_maximum_size(LiVESWidget *widget, int width, int height);
+boolean lives_widget_set_minimum_size(LiVESWidget *, int width, int height);
+boolean lives_widget_set_maximum_size(LiVESWidget *, int width, int height);
 boolean lives_widget_reparent(LiVESWidget *, LiVESWidget *new_parent);
 
-boolean lives_widget_is_ancestor(LiVESWidget *widget, LiVESWidget *ancestor);
+boolean lives_widget_is_ancestor(LiVESWidget *, LiVESWidget *ancestor);
 
-boolean lives_widget_set_app_paintable(LiVESWidget *widget, boolean paintable);
+boolean lives_widget_set_app_paintable(LiVESWidget *, boolean paintable);
 
+boolean lives_widget_has_focus(LiVESWidget *);
+  
 LiVESWidget *lives_event_box_new(void);
-boolean lives_event_box_set_above_child(LiVESEventBox *ebox, boolean set);
+boolean lives_event_box_set_above_child(LiVESEventBox *, boolean set);
 
 LiVESWidget *lives_label_new(const char *text);
 LiVESWidget *lives_label_new_with_mnemonic(const char *text);
@@ -277,6 +279,8 @@ boolean lives_window_set_screen(LiVESWindow *, LiVESXScreen *);
 
 boolean lives_widget_get_position(LiVESWidget *, int *x, int *y);
 
+LiVESWidget *lives_window_get_focus(LiVESWindow *);
+  
 boolean lives_window_move(LiVESWindow *, int x, int y);
 boolean lives_window_get_position(LiVESWindow *, int *x, int *y);
 boolean lives_window_set_position(LiVESWindow *, LiVESWindowPosition pos);

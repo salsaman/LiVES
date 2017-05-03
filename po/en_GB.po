@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2017-05-01 16:41-0300\n"
+"POT-Creation-Date: 2017-05-03 20:41-0300\n"
 "PO-Revision-Date: 2015-04-16 10:52+0000\n"
 "Last-Translator: Andi Chandler <Unknown>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -744,12 +744,12 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "Closed file %s\n"
 
-#: src/main.c:6994 src/gui.c:733 src/utils.c:4527 src/utils.c:4557
+#: src/main.c:6994 src/gui.c:733 src/utils.c:4524 src/utils.c:4554
 #: src/saveplay.c:3335 src/multitrack.c:4692 src/multitrack.c:6695
 msgid "_Undo"
 msgstr "_Undo"
 
-#: src/main.c:6995 src/gui.c:749 src/utils.c:4528 src/utils.c:4558
+#: src/main.c:6995 src/gui.c:749 src/utils.c:4525 src/utils.c:4555
 #: src/saveplay.c:3336 src/multitrack.c:4712 src/multitrack.c:6718
 msgid "_Redo"
 msgstr "_Redo"
@@ -4612,68 +4612,68 @@ msgstr ""
 msgid "Removing layout %s\n"
 msgstr "Removing layout %s\n"
 
-#: src/utils.c:3007
+#: src/utils.c:3004
 msgid "Video [opening...]"
 msgstr "Video [opening...]"
 
-#: src/utils.c:3010
+#: src/utils.c:3007
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "Video [%.2f sec]"
 
-#: src/utils.c:3013
+#: src/utils.c:3010
 msgid "(Undefined)"
 msgstr "(Undefined)"
 
-#: src/utils.c:3015
+#: src/utils.c:3012
 msgid "(No video)"
 msgstr "(No video)"
 
-#: src/utils.c:3022
+#: src/utils.c:3019
 msgid "(No audio)"
 msgstr "(No audio)"
 
-#: src/utils.c:3026
+#: src/utils.c:3023
 msgid "Mono  [opening...]"
 msgstr "Mono  [opening...]"
 
-#: src/utils.c:3028
+#: src/utils.c:3025
 msgid "Left Audio [opening...]"
 msgstr "Left Audio [opening...]"
 
-#: src/utils.c:3032
+#: src/utils.c:3029
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "Mono [%.2f sec]"
 
-#: src/utils.c:3034
+#: src/utils.c:3031
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "Left Audio [%.2f sec]"
 
-#: src/utils.c:3042
+#: src/utils.c:3039
 msgid "Right Audio [opening...]"
 msgstr "Right Audio [opening...]"
 
-#: src/utils.c:3044
+#: src/utils.c:3041
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "Right Audio [%.2f sec]"
 
-#: src/utils.c:3497
+#: src/utils.c:3494
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVES cannot switch to mplayer whilst clips are loading."
 
-#: src/utils.c:3550
+#: src/utils.c:3547
 #, fuzzy
 msgid "LiVES cannot switch to mplayer2 whilst clips are loading."
 msgstr "LiVES cannot switch to mplayer whilst clips are loading."
 
-#: src/utils.c:3803
+#: src/utils.c:3800
 msgid "Cleaning up clip"
 msgstr "Cleaning up clip"
 
-#: src/utils.c:3912
+#: src/utils.c:3909
 #, c-format
 msgid ""
 "\n"
@@ -4688,29 +4688,29 @@ msgstr ""
 "\n"
 "Overwrite ?\n"
 
-#: src/utils.c:4521 src/utils.c:4551 src/multitrack.c:4686
+#: src/utils.c:4518 src/utils.c:4548 src/multitrack.c:4686
 #, c-format
 msgid "_Undo %s"
 msgstr "_Undo %s"
 
-#: src/utils.c:4522 src/utils.c:4552 src/multitrack.c:4707
+#: src/utils.c:4519 src/utils.c:4549 src/multitrack.c:4707
 #, c-format
 msgid "_Redo %s"
 msgstr "_Redo %s"
 
-#: src/utils.c:4575
+#: src/utils.c:4572
 msgid "-------------Selection------------"
 msgstr "-------------Selection------------"
 
-#: src/utils.c:4583
+#: src/utils.c:4580
 msgid " sec ] ----------Selection---------- [ "
 msgstr " sec ] ----------Selection---------- [ "
 
-#: src/utils.c:4584
+#: src/utils.c:4581
 msgid " frames ] ----------"
 msgstr " frames ] ----------"
 
-#: src/utils.c:5532
+#: src/utils.c:5529
 msgid ""
 "Your version of mplayer/ffmpeg may be broken !\n"
 "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n"

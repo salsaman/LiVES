@@ -2719,7 +2719,7 @@ void remove_layout_files(LiVESList *map) {
 
 }
 
-
+#define TEST_AUDLEVELS
 
 void get_play_times(void) {
   // update the on-screen timer bars,
@@ -2735,8 +2735,15 @@ void get_play_times(void) {
   double allocheight;
 
   int current_file=mainw->current_file;
+  int afd=-1;
 
   register int i;
+
+#ifdef TEST_AUDLEVELS
+  char *filename;
+  double atime;
+  float vol;
+#endif
 
   if (current_file>-1&&cfile!=NULL&&cfile->cb_src!=-1) mainw->current_file=cfile->cb_src;
 
@@ -2843,7 +2850,6 @@ void get_play_times(void) {
     if (offset_right>cfile->laudio_time/cfile->total_time*allocwidth)
       offset_right=cfile->laudio_time/cfile->total_time*allocwidth;
 
-#define TEST_AUDLEVELS
     if (mainw->laudio_drawable!=NULL) {
       lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
 
@@ -2869,12 +2875,10 @@ void get_play_times(void) {
         lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_sel);
 
 #ifdef TEST_AUDLEVELS
-
-        char *filename=lives_build_filename(prefs->workdir,cfile->handle,"audio",NULL);
-        int afd=lives_open2(filename,O_RDONLY);
-        double atime;
-        float vol;
-
+        filename=lives_build_filename(prefs->workdir,cfile->handle,"audio",NULL);
+        afd=lives_open2(filename,O_RDONLY);
+	lives_free(filename);
+	
         for (i=offset_left; i<offset_right; i++) {
           atime=i/allocwidth*cfile->total_time;
           lives_painter_move_to(cr, i, prefs->bar_height*2);
@@ -2882,7 +2886,6 @@ void get_play_times(void) {
           lives_painter_line_to(cr,i,(double)prefs->bar_height*(2.-vol));
         }
         lives_painter_stroke(cr);
-        if (afd!=-1) close(afd);
 #else
         lives_painter_rectangle(cr,offset_left, 0,
                                 offset_right-offset_left,
@@ -2922,11 +2925,6 @@ void get_play_times(void) {
           lives_painter_set_source_rgb_from_lives_rgba(cr,&palette->ce_sel);
 
 #ifdef TEST_AUDLEVELS
-          char *filename=lives_build_filename(prefs->workdir,cfile->handle,"audio",NULL);
-          int afd=lives_open2(filename,O_RDONLY);
-          double atime;
-          float vol;
-
           for (i=offset_left; i<offset_right; i++) {
             atime=i/allocwidth*cfile->total_time;
             lives_painter_move_to(cr, i, prefs->bar_height*2);
@@ -2934,7 +2932,6 @@ void get_play_times(void) {
             lives_painter_line_to(cr,i,(double)prefs->bar_height*(2.-vol));
           }
           lives_painter_stroke(cr);
-          if (afd!=-1) close(afd);
 #else
           lives_painter_rectangle(cr,offset_left, 0,
                                   offset_right-offset_left,
@@ -2944,12 +2941,12 @@ void get_play_times(void) {
 #endif
 
         }
-
         lives_painter_destroy(cr);
-
       }
     }
   }
+
+  if (afd!=-1) close(afd);
 
   // playback cursors
   if (mainw->playing_file>-1) {

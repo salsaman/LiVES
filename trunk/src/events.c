@@ -3270,6 +3270,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           if (weed_plant_has_leaf(bitmpl[i],WEED_LEAF_HOST_REPEATS))
             weed_set_int_value(citmpl[i],WEED_LEAF_HOST_REPEATS,weed_get_int_value(bitmpl[i],WEED_LEAF_HOST_REPEATS,&error));
           else weed_leaf_delete(citmpl[i],WEED_LEAF_HOST_REPEATS);
+	  weed_plant_free(bitmpl[i]);
         }
         lives_free(bitmpl);
         lives_free(citmpl);
@@ -3284,6 +3285,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           if (weed_plant_has_leaf(botmpl[i],WEED_LEAF_HOST_REPEATS))
             weed_set_int_value(cotmpl[i],WEED_LEAF_HOST_REPEATS,weed_get_int_value(botmpl[i],WEED_LEAF_HOST_REPEATS,&error));
           else weed_leaf_delete(cotmpl[i],WEED_LEAF_HOST_REPEATS);
+	  weed_plant_free(botmpl[i]);
         }
         lives_free(botmpl);
         lives_free(cotmpl);

@@ -271,7 +271,7 @@ xprocess *create_processing(const char *text) {
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering) {
     lives_signal_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(multitrack_preview_clicked),
-                         maienw->multitrack);
+                         mainw->multitrack);
   } else {
     lives_signal_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_preview_clicked),
@@ -354,7 +354,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(filew->dialog));
 
-  if (cfile->frames>0||is_mt)dx {
+  if (cfile->frames>0||is_mt) {
 
     vidframe = lives_standard_frame_new(_("Video"),0.,FALSE);
 
@@ -1663,7 +1663,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
       lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                  LIVES_GUI_CALLBACK(on_spin_value_changed),
-                                 bLIVES_INT_TO_POINTER(3));
+                                 LIVES_INT_TO_POINTER(3));
 
     }
   }
@@ -1677,12 +1677,14 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   if (type==LIVES_DEVICE_TV_CARD) {
     LiVESList *dlist=NULL;
     LiVESList *olist=NULL;
+    char const *str;
     char *tvcardtypes[] = LIVES_TV_CARD_TYPES;
+    register int i;
     
     tvcardw=(lives_tvcardw_t *)lives_malloc(sizeof(lives_tvcardw_t));
     tvcardw->use_advanced=FALSE;
 
-    for (i=0;(str=tvcardtypes[i]!=NULL;i++) {
+    for (i=0;(str=tvcardtypes[i])!=NULL;i++) {
 	dlist=lives_list_append(dlist,(livespointer)tvcardtypes[i]);
       }
 
@@ -2173,9 +2175,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   }
 
-
   gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser),TRUE);
-
 
   if (dir!=NULL) {
     gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser),dir);

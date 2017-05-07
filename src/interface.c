@@ -1,6 +1,6 @@
 // interface.c
 // LiVES
-// (c) G. Finch 2003 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2017 <salsaman@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -271,7 +271,7 @@ xprocess *create_processing(const char *text) {
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering) {
     lives_signal_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(multitrack_preview_clicked),
-                         mainw->multitrack);
+                         maienw->multitrack);
   } else {
     lives_signal_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_preview_clicked),
@@ -354,7 +354,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(filew->dialog));
 
-  if (cfile->frames>0||is_mt) {
+  if (cfile->frames>0||is_mt)dx {
 
     vidframe = lives_standard_frame_new(_("Video"),0.,FALSE);
 
@@ -1663,7 +1663,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
       lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                  LIVES_GUI_CALLBACK(on_spin_value_changed),
-                                 LIVES_INT_TO_POINTER(3));
+                                 bLIVES_INT_TO_POINTER(3));
 
     }
   }
@@ -1677,26 +1677,14 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   if (type==LIVES_DEVICE_TV_CARD) {
     LiVESList *dlist=NULL;
     LiVESList *olist=NULL;
-
+    char *tvcardtypes[] = LIVES_TV_CARD_TYPES;
+    
     tvcardw=(lives_tvcardw_t *)lives_malloc(sizeof(lives_tvcardw_t));
     tvcardw->use_advanced=FALSE;
 
-    dlist=lives_list_append(dlist,(livespointer)"autodetect");
-    dlist=lives_list_append(dlist,(livespointer)"v4l2");
-    dlist=lives_list_append(dlist,(livespointer)"v4l");
-    dlist=lives_list_append(dlist,(livespointer)"bsdbt848");
-    dlist=lives_list_append(dlist,(livespointer)"dummy");
-
-    olist=lives_list_append(olist,(livespointer)"autodetect");
-    olist=lives_list_append(olist,(livespointer)"yv12");
-    olist=lives_list_append(olist,(livespointer)"rgb32");
-    olist=lives_list_append(olist,(livespointer)"rgb24");
-    olist=lives_list_append(olist,(livespointer)"rgb16");
-    olist=lives_list_append(olist,(livespointer)"rgb15");
-    olist=lives_list_append(olist,(livespointer)"uyvy");
-    olist=lives_list_append(olist,(livespointer)"yuy2");
-    olist=lives_list_append(olist,(livespointer)"i420");
-
+    for (i=0;(str=tvcardtypes[i]!=NULL;i++) {
+	dlist=lives_list_append(dlist,(livespointer)tvcardtypes[i]);
+      }
 
     lives_box_set_spacing(LIVES_BOX(dialog_vbox),widget_opts.packing_height*2);
 

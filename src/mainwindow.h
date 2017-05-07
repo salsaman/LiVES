@@ -369,6 +369,7 @@ enum {
 
 #define LIVES_SUBS_FILTER  {"*.srt","*.sub",NULL}
 #define LIVES_AUDIO_LOAD_FILTER  {"*.it","*.mp3","*.wav","*.ogg","*.mod","*.xm","*.wma","*.flac",NULL}
+#define LIVES_TV_CARD_TYPES  {"v4l2","v4l","bsdbt848","dummy","*autodetect","yv12","*","rgb32","rgb24","rgb16","rgb15", "uyvy", "yuy2", "i2420",NULL}
 
 
 typedef struct {

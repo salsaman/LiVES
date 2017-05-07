@@ -66,12 +66,9 @@ typedef struct {
 static list<livesAppCtx> appMgr;
 
 static livesApp *find_instance_for_id(ulong id) {
-  list<livesAppCtx>::iterator it = appMgr.begin();
-  while (it != appMgr.end()) {
-    if ((*it).id == id) {
-      return (*it).app;
-    }
-    ++it;
+  list<livesAppCtx>::iterator it;
+  for(it = appMgr.begin();it != appMgr.end(); it++) {
+    if ((*it).id == id) return (*it).app;
   }
   return NULL;
 }
@@ -370,7 +367,7 @@ livesString livesApp::chooseSet() {
 livesStringList livesApp::availableSets() {
   livesStringList list;
   if (!isValid() || status() == LIVES_STATUS_NOTREADY) return list;
-  LiVESList *setlist=get_set_list(::prefs->tmpdir, true), *slist=setlist;
+  LiVESList *setlist=get_set_list(::prefs->workdir, true), *slist=setlist;
   while (slist != NULL) {
     list.push_back(livesString((const char *)slist->data, LIVES_CHAR_ENCODING_UTF8));
     lives_free(slist->data);
@@ -457,7 +454,6 @@ lives_interface_mode_t livesApp::setMode(lives_interface_mode_t newmode) {
   while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
   pthread_mutex_unlock(&cond_mutex);
   if (isValid()) {
-    bool ret = (bool)atoi(private_response);
     lives_free(private_response);
   }
   return mode();
@@ -1004,7 +1000,7 @@ bool set::isValid() const {
 
 livesString set::name() const {
   if (!isValid()) return livesString();
-  return livesString(get_set_name(), LIVES_CHAR_ENCODING_UTF8);
+  return livesString(mainw->set_name, LIVES_CHAR_ENCODING_UTF8);
 }
 
 
@@ -1062,9 +1058,10 @@ clip set::nthClip(unsigned int n) const {
 int set::indexOf(clip c) const {
   if (!isValid()) return -1;
   if (!c.isValid()) return -1;
+  if (m_clips.empty()) return -1;
   (const_cast<set *>(this))->update_clip_list();
   int i;
-  for (i = 0; i < m_clips.size(); i++) {
+  for (i = 0; i < (int)m_clips.size(); i++) {
     if (m_clips[i] == c.m_uid) return i;
   }
   return -1;
@@ -1508,7 +1505,6 @@ int effectKey::setCurrentMode(int new_mode) {
   while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
   pthread_mutex_unlock(&cond_mutex);
   if (isValid()) {
-    bool ret = (bool)atoi(private_response);
     lives_free(private_response);
   }
   return currentMode();
@@ -1532,7 +1528,6 @@ bool effectKey::setEnabled(bool setting) {
   while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
   pthread_mutex_unlock(&cond_mutex);
   if (isValid()) {
-    bool ret = (bool)atoi(private_response);
     lives_free(private_response);
 
     // TODO: if it was a generator, wait for playing or error
@@ -1883,7 +1878,7 @@ livesStringList multitrack::availableLayouts() const {
   if (!isValid()) return list;
   LiVESList *layoutlist=mainw->current_layouts_map;
   while (layoutlist != NULL) {
-    char *data=repl_tmpdir((const char *)layoutlist->data, FALSE);
+    char *data=repl_workdir((const char *)layoutlist->data, FALSE);
     list.push_back(livesString(data, LIVES_CHAR_ENCODING_FILESYSTEM).toEncoding(LIVES_CHAR_ENCODING_UTF8));
     lives_free(data);
     layoutlist = layoutlist->next;
@@ -2231,7 +2226,7 @@ livesString currentAudioDir(const livesApp &lives) {
 
 livesString tmpDir(const livesApp &lives) {
   if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return livesString();
-  return livesString(::prefs->tmpdir, LIVES_CHAR_ENCODING_FILESYSTEM);
+  return livesString(::prefs->workdir, LIVES_CHAR_ENCODING_FILESYSTEM);
 }
 
 lives_audio_source_t audioSource(const livesApp &lives) {
@@ -2252,6 +2247,7 @@ lives_audio_player_t audioPlayer(const livesApp &lives) {
   if (::prefs->audio_player == AUD_PLAYER_PULSE) return LIVES_AUDIO_PLAYER_PULSE;
   if (::prefs->audio_player == AUD_PLAYER_MPLAYER) return LIVES_AUDIO_PLAYER_MPLAYER;
   if (::prefs->audio_player == AUD_PLAYER_MPLAYER2) return LIVES_AUDIO_PLAYER_MPLAYER2;
+  return LIVES_AUDIO_PLAYER_UNKNOWN;
 }
 
 int audioPlayerRate(const livesApp &lives) {
@@ -2266,7 +2262,7 @@ int audioPlayerRate(const livesApp &lives) {
 }
 
 bool isRealtimeAudioPlayer(lives_audio_player_t player_type) {
-  int ptype;
+  int ptype = AUD_PLAYER_NONE;
   if (player_type == LIVES_AUDIO_PLAYER_SOX) ptype = AUD_PLAYER_SOX;
   else if (player_type == LIVES_AUDIO_PLAYER_JACK) ptype = AUD_PLAYER_JACK;
   else if (player_type == LIVES_AUDIO_PLAYER_PULSE) ptype = AUD_PLAYER_PULSE;
@@ -2389,6 +2385,7 @@ void binding_cb(lives_callback_t cb_type, const char *msgstring, ulong id) {
       }
       break;
       default:
+	++it;
         continue;
       }
       if (!ret) {

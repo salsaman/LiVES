@@ -959,7 +959,8 @@ void **mt_get_pchain(void) {
 }
 
 
-static LIVES_INLINE char *get_track_name(lives_mt *mt, int track_num, boolean is_audio) {
+char *get_track_name(lives_mt *mt, int track_num, boolean is_audio) {
+  // not const return because of translation issues
   LiVESWidget *xeventbox;
   if (track_num<0) return lives_strdup(_("Backing audio"));
   if (!is_audio) xeventbox=(LiVESWidget *)lives_list_nth_data(mt->video_draws,track_num);

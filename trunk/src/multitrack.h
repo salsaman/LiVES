@@ -775,6 +775,7 @@ void mt_set_autotrans(int idx);
 weed_plant_t *add_blank_frames_up_to(weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);
 
 // track functions
+char *get_track_name(lives_mt *, int track_num, boolean is_audio);
 void on_cback_audio_activate(LiVESMenuItem *, livespointer mt);
 LiVESWidget *add_audio_track(lives_mt *, int trackno, boolean behind);
 int add_video_track_behind(LiVESMenuItem *, livespointer mt);

@@ -307,15 +307,14 @@ typedef list<livesString> livesStringList;
 */
 class livesString : public std::string {
 public:
-  livesString(const string &str="", lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(str) {}
-  livesString(const string &str, size_t pos, size_t len = npos, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e),
-    std::string(str, pos, len) {}
-  livesString(const char *s, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s) {}
-  livesString(const char *s, size_t n, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s, n) {}
-  livesString(size_t n, char c, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(n, c) {}
+  livesString(const string &str="", lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(str), m_encoding(e) {}
+  livesString(const string &str, size_t pos, size_t len = npos, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(str, pos, len), m_encoding(e) {}
+  livesString(const char *s, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(s), m_encoding(e) {}
+  livesString(const char *s, size_t n, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(s, n), m_encoding(e) {}
+  livesString(size_t n, char c, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(n, c), m_encoding(e) {}
   template <class InputIterator>
   livesString(InputIterator first, InputIterator last,
-              lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(first, last) {}
+              lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(first, last), m_encoding(e) {}
 
   /**
      Change the character encoding of the string.
@@ -1451,6 +1450,10 @@ public:
   */
   effect at(int mode);
 
+
+  
+
+  
   /**
      @return true if the two effectKeys have the same livesApp and key value and belong to the same livesApp
   */

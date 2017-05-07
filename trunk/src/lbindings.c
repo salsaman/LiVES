@@ -126,6 +126,7 @@ typedef struct {
   // i, i
   // int pref
   ulong id;
+  char *prefidx;
   int integ;
   int val;
 } iipref;
@@ -677,10 +678,10 @@ static boolean call_insert_vtrack(livespointer data) {
   ibpref *ibdata=(ibpref *)data;
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing&&mainw->playing_file==-1&&mainw->multitrack!=NULL) {
     int tnum;
-    if (!bdata->val) tnum=add_video_track_behind(NULL, mainw->multitrack);
+    if (!ibdata->val) tnum=add_video_track_behind(NULL, mainw->multitrack);
     else tnum=add_video_track_front(NULL, mainw->multitrack);
-    ext_caller_return_int(bdata->id,tnum);
-  } else ext_caller_return_int(bdata->id,-1);
+    ext_caller_return_int(ibdata->id,tnum);
+  } else ext_caller_return_int(ibdata->id,-1);
   lives_free(data);
   return FALSE;
 }
@@ -726,7 +727,7 @@ static boolean call_set_if_mode(livespointer data) {
 static boolean call_switch_clip(livespointer data) {
   iipref *idata=(iipref *)data;
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
-    switch_clip(idata->int,idata->val,FALSE);
+    switch_clip(idata->integ,idata->val,FALSE);
     ext_caller_return_int(idata->id,TRUE);
   } else ext_caller_return_int(idata->id,FALSE);
   lives_free(data);
@@ -987,7 +988,7 @@ static boolean call_set_current_frame(livespointer data) {
 
   *vargs = lives_strdup(",i");
   arglen = padup(vargs, arglen);
-  arglen = add_int_arg(vargs, arglen, bdata->bool);
+  arglen = add_int_arg(vargs, arglen, bdata->val);
 
   if (!bdata->val)
     ret=lives_osc_cb_clip_goto(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
@@ -1930,7 +1931,7 @@ boolean idle_set_current_frame(int frame, boolean bg, ulong id) {
   if (mainw==NULL||mainw->playing_file == -1) return FALSE;
   if (mainw->multitrack != NULL) return FALSE;
 
-  data=(bpref *)lives_malloc(sizeof(bpref));
+  data=(ibpref *)lives_malloc(sizeof(ibpref));
   data->integ=frame;
   data->val=bg;
   lives_idle_add(call_set_current_frame,(livespointer)data);

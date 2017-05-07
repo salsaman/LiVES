@@ -34,6 +34,7 @@ typedef struct {
   _encoder encoder; ///< from main.h
 
   short audio_player;
+#define AUD_PLAYER_NONE 0
 #define AUD_PLAYER_SOX 1
 #define AUD_PLAYER_MPLAYER 2
 #define AUD_PLAYER_JACK 3

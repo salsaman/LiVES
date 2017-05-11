@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef IS_MINGW
   // Initialize Winsock
-  iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+  iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
   if (iResult != 0) {
     printf("WSAStartup failed: %d\n", iResult);
     exit(1);
@@ -190,7 +190,7 @@ void CommandLineMode(int argc, char *argv[], void *htmsocket) {
   char *messageName;
   char *token;
   typedArg args[MAX_ARGS];
-  int i,j, numArgs;
+  int i, j, numArgs;
   OSCbuf buf[1];
 
   OSC_initBuffer(buf, SC_BUFFER_SIZE, bufferForOSCbuf);
@@ -258,7 +258,7 @@ void InteractiveMode(void *htmsocket) {
     }
 
     if (mesg[0] == '[') {
-      OSCTimeTag tt = ParseTimeTag(mesg+1);
+      OSCTimeTag tt = ParseTimeTag(mesg + 1);
       if (OSC_openBundle(buf, tt)) {
         complain("Problem opening bundle: %s\n", OSC_errorMessage);
         OSC_resetBuffer(buf);
@@ -325,7 +325,7 @@ OSCTimeTag ParseTimeTag(char *s) {
     }
   }
 
-  if (isdigit(*p) || (*p >= 'a' && *p <='f') || (*p >= 'A' && *p <='F')) {
+  if (isdigit(*p) || (*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')) {
     /* They specified the 8-byte tag in hex */
     OSCTimeTag tt;
     if (sscanf(p, "%"PRIu64, (uint64_t *)&tt) != 1) {
@@ -504,7 +504,7 @@ int WriteMessage(OSCbuf *buf, char *messageName, int numArgs, typedArg *args) {
     }
   } else {
     /* First figure out the type tags */
-    char typeTags[MAX_ARGS+2];
+    char typeTags[MAX_ARGS + 2];
     int i;
 
     typeTags[0] = ',';
@@ -512,15 +512,15 @@ int WriteMessage(OSCbuf *buf, char *messageName, int numArgs, typedArg *args) {
     for (i = 0; i < numArgs; ++i) {
       switch (args[i].type) {
       case INTx:
-        typeTags[i+1] = 'i';
+        typeTags[i + 1] = 'i';
         break;
 
       case FLOATx:
-        typeTags[i+1] = 'f';
+        typeTags[i + 1] = 'f';
         break;
 
       case STRINGx:
-        typeTags[i+1] = 's';
+        typeTags[i + 1] = 's';
         break;
 
       default:
@@ -528,7 +528,7 @@ int WriteMessage(OSCbuf *buf, char *messageName, int numArgs, typedArg *args) {
         exit(5);
       }
     }
-    typeTags[i+1] = '\0';
+    typeTags[i + 1] = '\0';
 
     returnVal = OSC_writeAddressAndTypes(buf, messageName, typeTags);
     if (returnVal) {

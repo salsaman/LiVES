@@ -11,7 +11,7 @@
 #define LIVES_PANGOTEXT_H
 
 typedef enum {
-  SUBTITLE_TYPE_NONE=0,
+  SUBTITLE_TYPE_NONE = 0,
   SUBTITLE_TYPE_SRT,
   SUBTITLE_TYPE_SUB
 } lives_subtitle_type_t;

@@ -45,9 +45,9 @@
 
 #include "avformat_decoder.h"
 
-const char *plugin_version="LiVES avformat decoder version 1.0";
+const char *plugin_version = "LiVES avformat decoder version 1.0";
 
-static pthread_mutex_t avcodec_mutex=PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t avcodec_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define FAST_SEEK_LIMIT 50000 // microseconds (default 0.1 sec)
 #define NO_SEEK_LIMIT 2000000 // microseconds
@@ -67,11 +67,11 @@ static void lives_avcodec_unlock(void) {
 
 
 static int stream_peek(int fd, unsigned char *str, size_t len) {
-  off_t cpos=lseek(fd,0,SEEK_CUR); // get current posn
-  int rv= pread(fd,str,len,cpos); // read len bytes without changing cpos
+  off_t cpos = lseek(fd, 0, SEEK_CUR); // get current posn
+  int rv = pread(fd, str, len, cpos); // read len bytes without changing cpos
 
-  if (rv==-1) {
-    fprintf(stderr,"err is %d\n",errno);
+  if (rv == -1) {
+    fprintf(stderr, "err is %d\n", errno);
   }
   return rv;
 }
@@ -81,104 +81,104 @@ static int stream_peek(int fd, unsigned char *str, size_t len) {
 
 
 void get_samps_and_signed(enum AVSampleFormat sfmt, int *asamps, boolean *asigned) {
-  *asamps=av_get_bits_per_sample(sfmt);
+  *asamps = av_get_bits_per_sample(sfmt);
 
   switch (sfmt) {
   case AV_SAMPLE_FMT_U8:
-    *asigned=FALSE;
+    *asigned = FALSE;
     break;
   default:
-    *asigned=TRUE;
+    *asigned = TRUE;
   }
 }
 
 static int64_t get_current_ticks(void) {
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  return tv.tv_sec*1000000+tv.tv_usec;
+  return tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
 
 static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longer_seek) {
-  int64_t diff=0;
-  int64_t olframe=(cdata->nframes==0?0:cdata->nframes-1),lframe=olframe;
-  int64_t timex,tottime=0;
+  int64_t diff = 0;
+  int64_t olframe = (cdata->nframes == 0 ? 0 : cdata->nframes - 1), lframe = olframe;
+  int64_t timex, tottime = 0;
 
-  int nseeks=0;
+  int nseeks = 0;
 
-  long no_seek_limit=NO_SEEK_LIMIT;
+  long no_seek_limit = NO_SEEK_LIMIT;
 
-  if (allow_longer_seek) no_seek_limit=LNO_SEEK_LIMIT;
+  if (allow_longer_seek) no_seek_limit = LNO_SEEK_LIMIT;
 
-  cdata->seek_flag=LIVES_SEEK_FAST;
+  cdata->seek_flag = LIVES_SEEK_FAST;
 
   while (1) {
     nseeks++;
     //    #define DEBUG_RLF
 #ifdef DEBUG_RLF
-    fprintf(stderr,"will check frame %ld of %ld...",lframe+1,cdata->nframes);
+    fprintf(stderr, "will check frame %ld of %ld...", lframe + 1, cdata->nframes);
 #endif
 
-    timex=get_current_ticks();
-    if (!get_frame(cdata,lframe,NULL,0,NULL)) {
-      timex=get_current_ticks()-timex;
+    timex = get_current_ticks();
+    if (!get_frame(cdata, lframe, NULL, 0, NULL)) {
+      timex = get_current_ticks() - timex;
 
-      if (timex>no_seek_limit) {
+      if (timex > no_seek_limit) {
         //#ifdef DEBUG_RLF
-        fprintf(stderr,"avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n",timex,NO_SEEK_LIMIT);
+        fprintf(stderr, "avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n", timex, NO_SEEK_LIMIT);
         //#endif
         return -1;
       }
 
 #ifdef DEBUG_RLF
-      fprintf(stderr,"no (%ld)\n",timex);
+      fprintf(stderr, "no (%ld)\n", timex);
 #endif
-      if (diff==1) {
-        tottime/=nseeks;
+      if (diff == 1) {
+        tottime /= nseeks;
 #ifdef DEBUG_RLF
-        fprintf(stderr,"av positive seek was %ld\n",tottime);
+        fprintf(stderr, "av positive seek was %ld\n", tottime);
 #endif
-        return lframe-1;
+        return lframe - 1;
       }
-      if (diff<0) diff*=2;
-      else if (diff==0) diff=-1;
-      else diff/=2;
-      lframe=olframe+diff;
-      if (lframe<0) {
-        diff=olframe;
-        lframe=0;
-        if (diff==0) diff=1;
+      if (diff < 0) diff *= 2;
+      else if (diff == 0) diff = -1;
+      else diff /= 2;
+      lframe = olframe + diff;
+      if (lframe < 0) {
+        diff = olframe;
+        lframe = 0;
+        if (diff == 0) diff = 1;
       }
     } else {
-      timex=get_current_ticks()-timex;
+      timex = get_current_ticks() - timex;
 
-      if (timex>NO_SEEK_LIMIT) {
+      if (timex > NO_SEEK_LIMIT) {
         //#ifdef DEBUG_RLF
-        fprintf(stderr,"avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n",timex,NO_SEEK_LIMIT);
+        fprintf(stderr, "avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n", timex, NO_SEEK_LIMIT);
         //#endif
         return -1;
       }
 
-      if (timex>FAST_SEEK_LIMIT)
-        cdata->seek_flag=LIVES_SEEK_NEEDS_CALCULATION;
+      if (timex > FAST_SEEK_LIMIT)
+        cdata->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
 
-      tottime+=timex;
+      tottime += timex;
 #ifdef DEBUG_RLF
-      fprintf(stderr,"yes ! (%ld)\n",timex);
+      fprintf(stderr, "yes ! (%ld)\n", timex);
 #endif
-      if (diff<2&&diff>-4) {
-        tottime/=nseeks;
+      if (diff < 2 && diff > -4) {
+        tottime /= nseeks;
 #ifdef DEBUG_RLF
-        fprintf(stderr,"av seek was %ld\n",tottime);
+        fprintf(stderr, "av seek was %ld\n", tottime);
 #endif
-        if (tottime>FAST_SEEK_LIMIT)
-          cdata->seek_flag|=LIVES_SEEK_NEEDS_CALCULATION;
+        if (tottime > FAST_SEEK_LIMIT)
+          cdata->seek_flag |= LIVES_SEEK_NEEDS_CALCULATION;
         return lframe;
       }
-      diff/=2;
-      if (diff<0) diff=-diff/2;
-      olframe=lframe;
-      lframe+=diff;
+      diff /= 2;
+      if (diff < 0) diff = -diff / 2;
+      olframe = lframe;
+      lframe += diff;
     }
   }
 }
@@ -186,8 +186,8 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 
 static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get a handle
-  lives_av_priv_t *priv=cdata->priv;
-  AVProbeData pd= {0};
+  lives_av_priv_t *priv = cdata->priv;
+  AVProbeData pd = {0};
   AVInputFormat *fmt;
 
   AVCodec *vdecoder;
@@ -195,33 +195,33 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   AVStream *s;
   AVCodecContext *cc;
 
-  int64_t i_start_time=0;
+  int64_t i_start_time = 0;
 
-  boolean is_partial_clone=FALSE;
+  boolean is_partial_clone = FALSE;
 
   register int i;
 
 
-  if (isclone&&!priv->inited) {
-    isclone=FALSE;
-    if (cdata->fps>0.&&cdata->nframes>0)
-      is_partial_clone=TRUE;
-    else priv->longer_seek=TRUE;
+  if (isclone && !priv->inited) {
+    isclone = FALSE;
+    if (cdata->fps > 0. && cdata->nframes > 0)
+      is_partial_clone = TRUE;
+    else priv->longer_seek = TRUE;
   }
 
-  if ((priv->fd=open(cdata->URI,O_RDONLY))==-1) {
-    fprintf(stderr, "avformat_decoder: unable to open %s\n",cdata->URI);
+  if ((priv->fd = open(cdata->URI, O_RDONLY)) == -1) {
+    fprintf(stderr, "avformat_decoder: unable to open %s\n", cdata->URI);
     return FALSE;
   }
 
   if (isclone) goto skip_probe;
 
-  pd.filename=cdata->URI;
+  pd.filename = cdata->URI;
 
-  pd.buf=calloc(128,32);
+  pd.buf = calloc(128, 32);
 
-  if ((pd.buf_size=stream_peek(priv->fd,pd.buf,AVPROBE_PADDING_SIZE))<AVPROBE_PADDING_SIZE) {
-    fprintf(stderr, "couldn't peek stream %d\n",pd.buf_size);
+  if ((pd.buf_size = stream_peek(priv->fd, pd.buf, AVPROBE_PADDING_SIZE)) < AVPROBE_PADDING_SIZE) {
+    fprintf(stderr, "couldn't peek stream %d\n", pd.buf_size);
     return FALSE;
   }
 
@@ -252,19 +252,19 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   fprintf(stderr, "avformat detected format: %s\n", fmt->name);
 
-  priv->fmt=fmt;
-  priv->inited=TRUE;
+  priv->fmt = fmt;
+  priv->inited = TRUE;
 
 skip_probe:
 
-  priv->ic=NULL;
+  priv->ic = NULL;
 
-  priv->found_pts=-1;
+  priv->found_pts = -1;
 
-  priv->last_frame=-1;
-  priv->black_fill=FALSE;
+  priv->last_frame = -1;
+  priv->black_fill = FALSE;
 
-  priv->needs_packet=TRUE;
+  priv->needs_packet = TRUE;
 
   /* Open it */
   if (avformat_open_input(&priv->ic, cdata->URI, priv->fmt, NULL)) {
@@ -272,7 +272,7 @@ skip_probe:
     return FALSE;
   }
 
-  if (priv->ic->pb==NULL) {
+  if (priv->ic->pb == NULL) {
     fprintf(stderr, "avformat stream not video\n");
     return FALSE;
   }
@@ -289,37 +289,37 @@ skip_probe:
   lives_avcodec_unlock();
 
   if (isclone) {
-    i=priv->vstream;
+    i = priv->vstream;
     goto skip_init;
   }
 
 
   // fill cdata
 
-  cdata->nclips=1;
+  cdata->nclips = 1;
 
-  cdata->interlace=LIVES_INTERLACE_NONE;  // TODO - this is set per frame
+  cdata->interlace = LIVES_INTERLACE_NONE; // TODO - this is set per frame
 
-  cdata->par=1.;
-  cdata->offs_x=0;
-  cdata->offs_y=0;
-  cdata->frame_width=cdata->width=0;
-  cdata->frame_height=cdata->height=0;
+  cdata->par = 1.;
+  cdata->offs_x = 0;
+  cdata->offs_y = 0;
+  cdata->frame_width = cdata->width = 0;
+  cdata->frame_height = cdata->height = 0;
 
   if (!is_partial_clone) {
-    cdata->nframes=0;
-    cdata->fps=0.;
+    cdata->nframes = 0;
+    cdata->fps = 0.;
   }
 
-  sprintf(cdata->container_name,"%s",priv->ic->iformat->name);
+  sprintf(cdata->container_name, "%s", priv->ic->iformat->name);
 
-  memset(cdata->video_name,0,1);
-  memset(cdata->audio_name,0,1);
+  memset(cdata->video_name, 0, 1);
+  memset(cdata->audio_name, 0, 1);
 
-  cdata->achans=cdata->asamps=cdata->arate=0;
+  cdata->achans = cdata->asamps = cdata->arate = 0;
 
-  cdata->asigned=FALSE;
-  cdata->ainterleaf=TRUE;
+  cdata->asigned = FALSE;
+  cdata->ainterleaf = TRUE;
 
   for (i = 0; i < priv->ic->nb_streams; i++) {
 
@@ -330,13 +330,13 @@ skip_init:
 #ifdef API_3_1
     cc = avcodec_alloc_context3(NULL);
     if (!cc) {
-      fprintf(stderr,"avcodec_decoder: out of memory\n");
+      fprintf(stderr, "avcodec_decoder: out of memory\n");
       return FALSE;
     }
 
     ret = avcodec_parameters_to_context(cc, s->codecpar);
     if (ret < 0) {
-      fprintf(stderr,"avcodec_decoder: avparms to context failed\n");
+      fprintf(stderr, "avcodec_decoder: avparms to context failed\n");
       return FALSE;
     }
 
@@ -352,7 +352,7 @@ skip_init:
 
     switch (cc->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
-      if (priv->astream!=-1) {
+      if (priv->astream != -1) {
         fprintf(stderr, "Warning - got multiple audio streams\n");
         break;
       }
@@ -366,28 +366,28 @@ skip_init:
       cdata->asamps = cc->bits_per_coded_sample;
 #endif
 
-      get_samps_and_signed(cc->sample_fmt,&cdata->asamps,&cdata->asigned);
+      get_samps_and_signed(cc->sample_fmt, &cdata->asamps, &cdata->asigned);
 
-      sprintf(cdata->audio_name,"%s",cc->codec_name);
+      sprintf(cdata->audio_name, "%s", cc->codec_name);
 
-      priv->astream=i;
+      priv->astream = i;
       break;
 
 
     case AVMEDIA_TYPE_VIDEO:
 
-      if (!isclone && priv->vstream!=-1) {
+      if (!isclone && priv->vstream != -1) {
         fprintf(stderr, "Warning - got multiple video streams\n");
         break;
       }
 
-      vdecoder=avcodec_find_decoder(cc->codec_id);
+      vdecoder = avcodec_find_decoder(cc->codec_id);
       avcodec_open2(cc, vdecoder, NULL);
 
       if (isclone) return TRUE;
 
-      cdata->frame_width=cdata->width = cc->width;
-      cdata->frame_height=cdata->height = cc->height;
+      cdata->frame_width = cdata->width = cc->width;
+      cdata->frame_height = cdata->height = cc->height;
 
 
       /*if( cc->palctrl )
@@ -397,55 +397,55 @@ skip_init:
       }*/
 
 
-      cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
-      cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
+      cdata->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
+      cdata->YUV_sampling = WEED_YUV_SAMPLING_DEFAULT;
 
-      cdata->palettes[0]=avi_pix_fmt_to_weed_palette(cc->pix_fmt,&cdata->YUV_clamping);
-      cdata->palettes[1]=WEED_PALETTE_END;
+      cdata->palettes[0] = avi_pix_fmt_to_weed_palette(cc->pix_fmt, &cdata->YUV_clamping);
+      cdata->palettes[1] = WEED_PALETTE_END;
 
-      if (cdata->palettes[0]==WEED_PALETTE_END) {
-        fprintf(stderr,"avcodec_decoder: no usable palette found (%d)\n",cc->pix_fmt);
+      if (cdata->palettes[0] == WEED_PALETTE_END) {
+        fprintf(stderr, "avcodec_decoder: no usable palette found (%d)\n", cc->pix_fmt);
         return FALSE;
       }
 
-      sprintf(cdata->video_name,"%s",cc->codec_name);
+      sprintf(cdata->video_name, "%s", cc->codec_name);
 
-      cdata->par=cc->sample_aspect_ratio.num/cc->sample_aspect_ratio.den;
-      if (cdata->par==0) cdata->par=1;
+      cdata->par = cc->sample_aspect_ratio.num / cc->sample_aspect_ratio.den;
+      if (cdata->par == 0) cdata->par = 1;
 
-      priv->fps_avg=FALSE;
+      priv->fps_avg = FALSE;
 
-      if (cdata->fps==0.) {
-        cdata->fps=s->time_base.den/s->time_base.num;
-        if (cdata->fps>=1000.||cdata->fps==0.) {
-          cdata->fps=(float)s->avg_frame_rate.num/(float)s->avg_frame_rate.den;
-          priv->fps_avg=TRUE;
+      if (cdata->fps == 0.) {
+        cdata->fps = s->time_base.den / s->time_base.num;
+        if (cdata->fps >= 1000. || cdata->fps == 0.) {
+          cdata->fps = (float)s->avg_frame_rate.num / (float)s->avg_frame_rate.den;
+          priv->fps_avg = TRUE;
           if (isnan(cdata->fps)) {
-            cdata->fps=s->time_base.den/s->time_base.num;
-            priv->fps_avg=FALSE;
+            cdata->fps = s->time_base.den / s->time_base.num;
+            priv->fps_avg = FALSE;
           }
         }
       }
 
-      priv->ctx=cc;
+      priv->ctx = cc;
 
-      if (priv->ctx->ticks_per_frame==2) {
+      if (priv->ctx->ticks_per_frame == 2) {
         // needs checking
-        cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
+        cdata->interlace = LIVES_INTERLACE_BOTTOM_FIRST;
       }
 
 #ifdef DEBUG
-      fprintf(stderr,"fps is %.4f %d %d %d %d %d\n",cdata->fps,s->time_base.den,s->time_base.num,cc->time_base.den,cc->time_base.num,
+      fprintf(stderr, "fps is %.4f %d %d %d %d %d\n", cdata->fps, s->time_base.den, s->time_base.num, cc->time_base.den, cc->time_base.num,
               priv->ctx->ticks_per_frame);
 #endif
 
-      if (cdata->nframes==0) {
-        if (priv->ic->duration!=(int64_t)AV_NOPTS_VALUE)
-          cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
-        if ((cdata->nframes==0||cdata->fps==1000.)&&s->nb_frames>1) cdata->nframes=s->nb_frames;
+      if (cdata->nframes == 0) {
+        if (priv->ic->duration != (int64_t)AV_NOPTS_VALUE)
+          cdata->nframes = ((double)priv->ic->duration / (double)AV_TIME_BASE * cdata->fps -  .5);
+        if ((cdata->nframes == 0 || cdata->fps == 1000.) && s->nb_frames > 1) cdata->nframes = s->nb_frames;
       }
 
-      priv->vstream=i;
+      priv->vstream = i;
 
       break;
 
@@ -607,8 +607,8 @@ skip_init:
     }
   }
 
-  if (priv->vstream==-1) {
-    fprintf(stderr,"avcodec_decoder: no video stream found\n");
+  if (priv->vstream == -1) {
+    fprintf(stderr, "avcodec_decoder: no video stream found\n");
     return FALSE;
   }
 
@@ -658,31 +658,31 @@ skip_init:
 
 static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
-  lives_av_priv_t *priv=cdata->priv;
-  if (priv->fd>-1) close(priv->fd);
+  lives_av_priv_t *priv = cdata->priv;
+  if (priv->fd > -1) close(priv->fd);
 
   // will close and free the context
-  if (priv->ic !=NULL) {
+  if (priv->ic != NULL) {
     avformat_close_input(&priv->ic);
   }
 
-  if (cdata->palettes!=NULL) free(cdata->palettes);
-  cdata->palettes=NULL;
+  if (cdata->palettes != NULL) free(cdata->palettes);
+  cdata->palettes = NULL;
 
-  priv->ctx=NULL;
+  priv->ctx = NULL;
 
   if (!priv->needs_packet)
     av_packet_unref(&priv->packet);
 
-  if (priv->pFrame!=NULL) {
+  if (priv->pFrame != NULL) {
     av_frame_unref(&priv->pFrame);
-    priv->pFrame=NULL;
+    priv->pFrame = NULL;
   }
 
-  priv->ic=NULL;
+  priv->ic = NULL;
 
-  priv->astream=-1;
-  priv->vstream=-1;
+  priv->astream = -1;
+  priv->vstream = -1;
 
 }
 
@@ -708,38 +708,38 @@ const char *version(void) {
 
 static lives_clip_data_t *init_cdata(void) {
   lives_av_priv_t *priv;
-  lives_clip_data_t *cdata=(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
+  lives_clip_data_t *cdata = (lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
 
-  cdata->palettes=malloc(2*sizeof(int));
+  cdata->palettes = malloc(2 * sizeof(int));
 
-  cdata->palettes[1]=WEED_PALETTE_END;
+  cdata->palettes[1] = WEED_PALETTE_END;
 
-  cdata->URI=NULL;
+  cdata->URI = NULL;
 
-  cdata->priv=priv=malloc(sizeof(lives_av_priv_t));
+  cdata->priv = priv = malloc(sizeof(lives_av_priv_t));
 
-  priv->fd=-1;
+  priv->fd = -1;
 
-  priv->ic=NULL;
+  priv->ic = NULL;
 
-  priv->astream=-1;
-  priv->vstream=-1;
+  priv->astream = -1;
+  priv->vstream = -1;
 
-  priv->inited=FALSE;
-  priv->longer_seek=FALSE;
+  priv->inited = FALSE;
+  priv->longer_seek = FALSE;
 
-  cdata->seek_flag=0;
+  cdata->seek_flag = 0;
 
-  priv->ctx=NULL;
-  priv->pFrame=NULL;
+  priv->ctx = NULL;
+  priv->pFrame = NULL;
 
-  cdata->sync_hint=SYNC_HINT_AUDIO_PAD_START;
+  cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START;
 
-  cdata->video_start_time=0.;
+  cdata->video_start_time = 0.;
 
-  memset(cdata->author,0,1);
-  memset(cdata->title,0,1);
-  memset(cdata->comment,0,1);
+  memset(cdata->author, 0, 1);
+  memset(cdata->title, 0, 1);
+  memset(cdata->comment, 0, 1);
 
   return cdata;
 }
@@ -747,70 +747,70 @@ static lives_clip_data_t *init_cdata(void) {
 
 
 static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
-  lives_clip_data_t *clone=init_cdata();
-  lives_av_priv_t *dpriv,*spriv;
+  lives_clip_data_t *clone = init_cdata();
+  lives_av_priv_t *dpriv, *spriv;
 
   // copy from cdata to clone, with a new context for clone
-  clone->URI=strdup(cdata->URI);
-  clone->nclips=cdata->nclips;
-  snprintf(clone->container_name,512,"%s",cdata->container_name);
-  clone->current_clip=cdata->current_clip;
-  clone->width=cdata->width;
-  clone->height=cdata->height;
-  clone->nframes=cdata->nframes;
-  clone->interlace=cdata->interlace;
-  clone->offs_x=cdata->offs_x;
-  clone->offs_y=cdata->offs_y;
-  clone->frame_width=cdata->frame_width;
-  clone->frame_height=cdata->frame_height;
-  clone->par=cdata->par;
-  clone->fps=cdata->fps;
-  if (cdata->palettes!=NULL) clone->palettes[0]=cdata->palettes[0];
-  clone->current_palette=cdata->current_palette;
-  clone->YUV_sampling=cdata->YUV_sampling;
-  clone->YUV_clamping=cdata->YUV_clamping;
-  snprintf(clone->video_name,512,"%s",cdata->video_name);
-  clone->arate=cdata->arate;
-  clone->achans=cdata->achans;
-  clone->asamps=cdata->asamps;
-  clone->asigned=cdata->asigned;
-  clone->ainterleaf=cdata->ainterleaf;
-  snprintf(clone->audio_name,512,"%s",cdata->audio_name);
-  clone->seek_flag=cdata->seek_flag;
-  clone->sync_hint=cdata->sync_hint;
+  clone->URI = strdup(cdata->URI);
+  clone->nclips = cdata->nclips;
+  snprintf(clone->container_name, 512, "%s", cdata->container_name);
+  clone->current_clip = cdata->current_clip;
+  clone->width = cdata->width;
+  clone->height = cdata->height;
+  clone->nframes = cdata->nframes;
+  clone->interlace = cdata->interlace;
+  clone->offs_x = cdata->offs_x;
+  clone->offs_y = cdata->offs_y;
+  clone->frame_width = cdata->frame_width;
+  clone->frame_height = cdata->frame_height;
+  clone->par = cdata->par;
+  clone->fps = cdata->fps;
+  if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
+  clone->current_palette = cdata->current_palette;
+  clone->YUV_sampling = cdata->YUV_sampling;
+  clone->YUV_clamping = cdata->YUV_clamping;
+  snprintf(clone->video_name, 512, "%s", cdata->video_name);
+  clone->arate = cdata->arate;
+  clone->achans = cdata->achans;
+  clone->asamps = cdata->asamps;
+  clone->asigned = cdata->asigned;
+  clone->ainterleaf = cdata->ainterleaf;
+  snprintf(clone->audio_name, 512, "%s", cdata->audio_name);
+  clone->seek_flag = cdata->seek_flag;
+  clone->sync_hint = cdata->sync_hint;
 
-  snprintf(clone->author,256,"%s",cdata->author);
-  snprintf(clone->title,256,"%s",cdata->title);
-  snprintf(clone->comment,256,"%s",cdata->comment);
+  snprintf(clone->author, 256, "%s", cdata->author);
+  snprintf(clone->title, 256, "%s", cdata->title);
+  snprintf(clone->comment, 256, "%s", cdata->comment);
 
   // create "priv" elements
-  dpriv=clone->priv;
-  spriv=cdata->priv;
+  dpriv = clone->priv;
+  spriv = cdata->priv;
 
-  if (spriv!=NULL) {
-    dpriv->vstream=spriv->vstream;
-    dpriv->astream=spriv->astream;
+  if (spriv != NULL) {
+    dpriv->vstream = spriv->vstream;
+    dpriv->astream = spriv->astream;
 
-    dpriv->fps_avg=spriv->fps_avg;
+    dpriv->fps_avg = spriv->fps_avg;
 
-    dpriv->fmt=spriv->fmt;
-    dpriv->inited=TRUE;
+    dpriv->fmt = spriv->fmt;
+    dpriv->inited = TRUE;
   }
 
-  if (!attach_stream(clone,TRUE)) {
+  if (!attach_stream(clone, TRUE)) {
     free(clone->URI);
-    clone->URI=NULL;
+    clone->URI = NULL;
     clip_data_free(clone);
     return NULL;
   }
 
-  if (spriv==NULL) {
-    clone->current_palette=clone->palettes[0];
-    clone->current_clip=0;
-    dpriv->last_frame=1000000000;
+  if (spriv == NULL) {
+    clone->current_palette = clone->palettes[0];
+    clone->current_clip = 0;
+    dpriv->last_frame = 1000000000;
   }
 
-  dpriv->pFrame=NULL;
+  dpriv->pFrame = NULL;
 
   return clone;
 }
@@ -827,81 +827,81 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   lives_av_priv_t *priv;
 
-  if (URI==NULL&&cdata!=NULL) {
+  if (URI == NULL && cdata != NULL) {
     // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
-    cdata=avf_clone(cdata);
-    priv=cdata->priv;
+    cdata = avf_clone(cdata);
+    priv = cdata->priv;
     if (priv->longer_seek) goto rescan;
     return cdata;
   }
 
-  if (cdata!=NULL&&cdata->current_clip>0) {
+  if (cdata != NULL && cdata->current_clip > 0) {
     // currently we only support one clip per container
 
     clip_data_free(cdata);
     return NULL;
   }
 
-  if (cdata==NULL) {
-    cdata=init_cdata();
+  if (cdata == NULL) {
+    cdata = init_cdata();
   }
 
-  if (cdata->URI==NULL||strcmp(URI,cdata->URI)) {
-    if (cdata->URI!=NULL) {
+  if (cdata->URI == NULL || strcmp(URI, cdata->URI)) {
+    if (cdata->URI != NULL) {
       detach_stream(cdata);
       free(cdata->URI);
     }
-    cdata->URI=strdup(URI);
-    if (!attach_stream(cdata,FALSE)) {
+    cdata->URI = strdup(URI);
+    if (!attach_stream(cdata, FALSE)) {
       detach_stream(cdata);
       free(cdata->URI);
-      cdata->URI=NULL;
+      cdata->URI = NULL;
       clip_data_free(cdata);
       return NULL;
     }
-    cdata->current_palette=cdata->palettes[0];
-    cdata->current_clip=0;
-    priv=cdata->priv;
-    priv->last_frame=1000000000;
-    priv->pFrame=NULL;
+    cdata->current_palette = cdata->palettes[0];
+    cdata->current_clip = 0;
+    priv = cdata->priv;
+    priv->last_frame = 1000000000;
+    priv->pFrame = NULL;
   }
 
 rescan:
-  priv=cdata->priv;
+  priv = cdata->priv;
 
-  real_frames=get_real_last_frame(cdata,priv->longer_seek)+1;
+  real_frames = get_real_last_frame(cdata, priv->longer_seek) + 1;
 
-  if (cdata->nframes>100&&real_frames<cdata->nframes*SEEK_SUCCESS_MIN_RATIO) {
+  if (cdata->nframes > 100 && real_frames < cdata->nframes * SEEK_SUCCESS_MIN_RATIO) {
     fprintf(stderr,
             "avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",
-            real_frames,cdata->nframes);
+            real_frames, cdata->nframes);
     detach_stream(cdata);
     free(cdata->URI);
-    cdata->URI=NULL;
+    cdata->URI = NULL;
     clip_data_free(cdata);
     return NULL;
   }
 
-  if (real_frames<=0) {
+  if (real_frames <= 0) {
     fprintf(stderr,
             "avformat_decoder: ERROR - could not find the last frame\navformat_decoder: I will pass on this file as it may be broken.\n");
     detach_stream(cdata);
     free(cdata->URI);
-    cdata->URI=NULL;
+    cdata->URI = NULL;
     clip_data_free(cdata);
     return NULL;
   }
 
-  priv=cdata->priv;
+  priv = cdata->priv;
 
-  if (priv->fps_avg&&cdata->nframes>1) {
+  if (priv->fps_avg && cdata->nframes > 1) {
     //cdata->fps=cdata->fps*(cdata->nframes-1.)/(float)real_frames;
   }
 
-  cdata->nframes=real_frames;
+  cdata->nframes = real_frames;
 
-  if (priv->pFrame!=NULL) av_frame_unref(&priv->pFrame);
-  priv->pFrame=NULL;
+  if (priv->pFrame != NULL) av_frame_unref(&priv->pFrame);
+  priv->pFrame = NULL;
 
   return cdata;
 }
@@ -909,52 +909,52 @@ rescan:
 
 
 static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
-  unsigned char *dst=idst;
+  unsigned char *dst = idst;
   register int i;
 
-  for (i=0; i<npixels; i++) {
+  for (i = 0; i < npixels; i++) {
     switch (pal) {
     case WEED_PALETTE_RGBA32:
     case WEED_PALETTE_BGRA32:
-      dst[0]=dst[1]=dst[2]=0;
-      dst[3]=255;
-      dst+=4;
+      dst[0] = dst[1] = dst[2] = 0;
+      dst[3] = 255;
+      dst += 4;
       break;
     case WEED_PALETTE_ARGB32:
-      dst[1]=dst[2]=dst[3]=0;
-      dst[0]=255;
-      dst+=4;
+      dst[1] = dst[2] = dst[3] = 0;
+      dst[0] = 255;
+      dst += 4;
       break;
     case WEED_PALETTE_UYVY8888:
-      dst[1]=dst[3]=y_black;
-      dst[0]=dst[2]=128;
-      dst+=4;
+      dst[1] = dst[3] = y_black;
+      dst[0] = dst[2] = 128;
+      dst += 4;
       break;
     case WEED_PALETTE_YUYV8888:
-      dst[0]=dst[2]=y_black;
-      dst[1]=dst[3]=128;
-      dst+=4;
+      dst[0] = dst[2] = y_black;
+      dst[1] = dst[3] = 128;
+      dst += 4;
       break;
     case WEED_PALETTE_YUV888:
-      dst[0]=y_black;
-      dst[1]=dst[2]=128;
-      dst+=3;
+      dst[0] = y_black;
+      dst[1] = dst[2] = 128;
+      dst += 3;
       break;
     case WEED_PALETTE_YUVA8888:
-      dst[0]=y_black;
-      dst[1]=dst[2]=128;
-      dst[3]=255;
-      dst+=4;
+      dst[0] = y_black;
+      dst[1] = dst[2] = 128;
+      dst[3] = 255;
+      dst += 4;
       break;
     case WEED_PALETTE_YUV411:
-      dst[0]=dst[3]=128;
-      dst[1]=dst[2]=dst[4]=dst[5]=y_black;
-      dst+=6;
+      dst[0] = dst[3] = 128;
+      dst[1] = dst[2] = dst[4] = dst[5] = y_black;
+      dst += 6;
     default:
       break;
     }
   }
-  return idst-dst;
+  return idst - dst;
 }
 
 
@@ -968,46 +968,46 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   // tframe starts at 0
 
-  lives_av_priv_t *priv=cdata->priv;
+  lives_av_priv_t *priv = cdata->priv;
   double time;
 
   AVStream *s = priv->ic->streams[priv->vstream];
   AVCodecContext *cc;
 
-  int64_t target_pts, MyPts, seek_target=10000000000;
+  int64_t target_pts, MyPts, seek_target = 10000000000;
   int64_t timex;
 
   unsigned char *dst, *src;
-  unsigned char black[4]= {0,0,0,255};
+  unsigned char black[4] = {0, 0, 0, 255};
 
-  boolean hit_target=FALSE;
+  boolean hit_target = FALSE;
 
   int gotFrame;
 
-  int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
-  int btop=cdata->offs_y,bbot=xheight-1-btop;
-  int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
-  int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
+  int xheight = cdata->frame_height, pal = cdata->current_palette, nplanes = 1, dstwidth = cdata->width, psize = 1;
+  int btop = cdata->offs_y, bbot = xheight - 1 - btop;
+  int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
+  int y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
   int ret;
 
   int jump_frames;
 
-  register int p,i;
+  register int p, i;
 
-  if (tframe<0||tframe>=cdata->nframes||cdata->fps==0.) return FALSE;
+  if (tframe < 0 || tframe >= cdata->nframes || cdata->fps == 0.) return FALSE;
 
 
 
 #ifdef API_3_1
   cc = avcodec_alloc_context3(NULL);
   if (!cc) {
-    fprintf(stderr,"avcodec_decoder: out of memory\n");
+    fprintf(stderr, "avcodec_decoder: out of memory\n");
     return FALSE;
   }
 
   ret = avcodec_parameters_to_context(cc, s->codecpar);
   if (ret < 0) {
-    fprintf(stderr,"avcodec_decoder: avparms to context failed\n");
+    fprintf(stderr, "avcodec_decoder: avparms to context failed\n");
     return FALSE;
   }
 
@@ -1019,87 +1019,87 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   //cc->get_buffer = our_get_buffer;
   //cc->release_buffer = our_release_buffer;
 
-  timex=get_current_ticks();
+  timex = get_current_ticks();
 
-  if (pixel_data!=NULL) {
+  if (pixel_data != NULL) {
 
     // calc frame width and height, including any border
 
-    if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
-      nplanes=3;
-      black[0]=y_black;
-      black[1]=black[2]=128;
-    } else if (pal==WEED_PALETTE_YUVA4444P) {
-      nplanes=4;
-      black[0]=y_black;
-      black[1]=black[2]=128;
-      black[3]=255;
+    if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) {
+      nplanes = 3;
+      black[0] = y_black;
+      black[1] = black[2] = 128;
+    } else if (pal == WEED_PALETTE_YUVA4444P) {
+      nplanes = 4;
+      black[0] = y_black;
+      black[1] = black[2] = 128;
+      black[3] = 255;
     }
 
-    if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+    if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) psize = 3;
 
-    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||
-        pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+    if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 || pal == WEED_PALETTE_UYVY8888 ||
+        pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888) psize = 4;
 
-    if (pal==WEED_PALETTE_YUV411) psize=6;
+    if (pal == WEED_PALETTE_YUV411) psize = 6;
 
-    if (pal==WEED_PALETTE_A1) dstwidth>>=3;
+    if (pal == WEED_PALETTE_A1) dstwidth >>= 3;
 
-    dstwidth*=psize;
+    dstwidth *= psize;
 
     if (cdata->frame_height > cdata->height && height == cdata->height) {
       // host ignores vertical border
-      btop=0;
-      xheight=cdata->height;
-      bbot=xheight-1;
+      btop = 0;
+      xheight = cdata->height;
+      bbot = xheight - 1;
     }
 
-    if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
+    if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width * psize) {
       // host ignores horizontal border
-      bleft=bright=0;
+      bleft = bright = 0;
     }
   }
 
-  if (priv->pFrame==NULL||tframe!=priv->last_frame) {
+  if (priv->pFrame == NULL || tframe != priv->last_frame) {
     // same frame -> we reuse priv-pFrame;
 
     //#define DEBUG
 #ifdef DEBUG
-    fprintf(stderr,"pt a1 %d %ld\n",priv->last_frame,tframe);
+    fprintf(stderr, "pt a1 %d %ld\n", priv->last_frame, tframe);
 #endif
 
-    if (priv->pFrame!=NULL) av_frame_unref(&priv->pFrame);
-    priv->pFrame=NULL;
+    if (priv->pFrame != NULL) av_frame_unref(&priv->pFrame);
+    priv->pFrame = NULL;
 
-    time=(double)tframe/cdata->fps;
+    time = (double)tframe / cdata->fps;
 
     target_pts = time * (double)AV_TIME_BASE;
 
-    if (cdata->seek_flag&LIVES_SEEK_FAST) jump_frames=JUMP_FRAMES_FAST;
-    else jump_frames=JUMP_FRAMES_SLOW;
+    if (cdata->seek_flag & LIVES_SEEK_FAST) jump_frames = JUMP_FRAMES_FAST;
+    else jump_frames = JUMP_FRAMES_SLOW;
 
-    if (tframe < priv->last_frame || tframe-priv->last_frame > jump_frames) {
+    if (tframe < priv->last_frame || tframe - priv->last_frame > jump_frames) {
       int64_t xtarget_pts;
       // seek to new frame
 
       // try to seek straight to keyframe
-      if (!(cdata->seek_flag&LIVES_SEEK_FAST)&&tframe<priv->last_frame&&priv->found_pts!=-1&&target_pts>priv->found_pts)
-        xtarget_pts=priv->found_pts;
-      else xtarget_pts=target_pts;
+      if (!(cdata->seek_flag & LIVES_SEEK_FAST) && tframe < priv->last_frame && priv->found_pts != -1 && target_pts > priv->found_pts)
+        xtarget_pts = priv->found_pts;
+      else xtarget_pts = target_pts;
 
-      xtarget_pts+=priv->ic->start_time;
+      xtarget_pts += priv->ic->start_time;
 
-      seek_target=av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
+      seek_target = av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
       av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
 #ifdef DEBUG
-      fprintf(stderr,"pt a2 %d %ld\n",priv->last_frame,seek_target);
+      fprintf(stderr, "pt a2 %d %ld\n", priv->last_frame, seek_target);
 #endif
       avcodec_flush_buffers(cc);
-      priv->black_fill=FALSE;
-      MyPts=-1;
-      priv->needs_packet=TRUE;
+      priv->black_fill = FALSE;
+      MyPts = -1;
+      priv->needs_packet = TRUE;
     } else {
-      MyPts=(priv->last_frame+1.)/cdata->fps*(double)AV_TIME_BASE;
+      MyPts = (priv->last_frame + 1.) / cdata->fps * (double)AV_TIME_BASE;
     }
 
     //
@@ -1108,126 +1108,126 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if (priv->needs_packet) {
         do {
 
-          ret=av_read_frame(priv->ic, &priv->packet);
+          ret = av_read_frame(priv->ic, &priv->packet);
 
 #ifdef DEBUG
-          fprintf(stderr,"ret was %d for tframe %ld\n",ret,tframe);
+          fprintf(stderr, "ret was %d for tframe %ld\n", ret, tframe);
 #endif
-          if (ret<0) {
-            priv->needs_packet=TRUE;
-            priv->last_frame=tframe;
-            if (pixel_data==NULL) return FALSE;
-            priv->black_fill=TRUE;
+          if (ret < 0) {
+            priv->needs_packet = TRUE;
+            priv->last_frame = tframe;
+            if (pixel_data == NULL) return FALSE;
+            priv->black_fill = TRUE;
             goto framedone;
           }
 
-        } while (priv->packet.stream_index!=priv->vstream);
+        } while (priv->packet.stream_index != priv->vstream);
 
       }
 
-      if (MyPts==-1) {
+      if (MyPts == -1) {
         MyPts = priv->packet.pts;
-        MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q)-priv->ic->start_time;
-        priv->found_pts=MyPts; // PTS of end of frame, set so start_time is zero
+        MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q) - priv->ic->start_time;
+        priv->found_pts = MyPts; // PTS of end of frame, set so start_time is zero
       }
 
 #ifdef DEBUG
-      fprintf(stderr,"pt b1 %ld %ld %ld\n",MyPts,target_pts,seek_target);
+      fprintf(stderr, "pt b1 %ld %ld %ld\n", MyPts, target_pts, seek_target);
 #endif
       // decode any frames from this packet
-      if (priv->pFrame==NULL) priv->pFrame=av_frame_alloc();
+      if (priv->pFrame == NULL) priv->pFrame = av_frame_alloc();
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-      ret=avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
-      if (ret<0) return FALSE;
+      ret = avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
+      if (ret < 0) return FALSE;
       ret = FFMIN(ret, priv->packet.size);
-      priv->packet.data+=ret;
-      priv->packet.size-=ret;
+      priv->packet.data += ret;
+      priv->packet.size -= ret;
 #else
-      ret=avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
-      priv->packet.size=0;
+      ret = avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
+      priv->packet.size = 0;
 #endif
 
 #ifdef DEBUG
-      fprintf(stderr,"pt 1 %ld %d %ld\n",tframe,gotFrame,MyPts);
+      fprintf(stderr, "pt 1 %ld %d %ld\n", tframe, gotFrame, MyPts);
 #endif
 
-      if (priv->packet.size==0) {
-        priv->needs_packet=TRUE;
+      if (priv->packet.size == 0) {
+        priv->needs_packet = TRUE;
       }
 
-      if (MyPts >= target_pts - 100) hit_target=TRUE;
+      if (MyPts >= target_pts - 100) hit_target = TRUE;
 
-      if (hit_target&&gotFrame) break;
+      if (hit_target && gotFrame) break;
 
       // otherwise discard this frame
       if (gotFrame) {
-        MyPts+=(double)AV_TIME_BASE/cdata->fps;
+        MyPts += (double)AV_TIME_BASE / cdata->fps;
         av_frame_unref(&priv->pFrame);
-        priv->pFrame=NULL;
+        priv->pFrame = NULL;
       }
 
 
-    } while (!(hit_target&&gotFrame));
+    } while (!(hit_target && gotFrame));
   }
 
 framedone:
-  timex=get_current_ticks()-timex;
-  if (timex>FAST_SEEK_LIMIT)((lives_clip_data_t *)cdata)->seek_flag=LIVES_SEEK_NEEDS_CALCULATION;
+  timex = get_current_ticks() - timex;
+  if (timex > FAST_SEEK_LIMIT)((lives_clip_data_t *)cdata)->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
 
-  priv->last_frame=tframe;
+  priv->last_frame = tframe;
 
-  if (priv->pFrame==NULL||pixel_data==NULL) return TRUE;
+  if (priv->pFrame == NULL || pixel_data == NULL) return TRUE;
 
   //height=cdata->height;
 
-  if (priv->black_fill) btop=cdata->frame_height;
+  if (priv->black_fill) btop = cdata->frame_height;
 
-  for (p=0; p<nplanes; p++) {
-    dst=pixel_data[p];
-    src=priv->pFrame->data[p];
+  for (p = 0; p < nplanes; p++) {
+    dst = pixel_data[p];
+    src = priv->pFrame->data[p];
 
-    for (i=0; i<xheight; i++) {
-      if (i<btop||i>bbot) {
+    for (i = 0; i < xheight; i++) {
+      if (i < btop || i > bbot) {
         // top or bottom border, copy black row
-        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-          memset(dst,black[p],dstwidth+(bleft+bright)*psize);
-          dst+=dstwidth+(bleft+bright)*psize;
-        } else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+          memset(dst, black[p], dstwidth + (bleft + bright)*psize);
+          dst += dstwidth + (bleft + bright) * psize;
+        } else dst += write_black_pixel(dst, pal, dstwidth / psize + bleft + bright, y_black);
         continue;
       }
 
-      if (bleft>0) {
-        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-          memset(dst,black[p],bleft*psize);
-          dst+=bleft*psize;
-        } else dst+=write_black_pixel(dst,pal,bleft,y_black);
+      if (bleft > 0) {
+        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+          memset(dst, black[p], bleft * psize);
+          dst += bleft * psize;
+        } else dst += write_black_pixel(dst, pal, bleft, y_black);
       }
 
-      memcpy(dst,src,dstwidth);
-      dst+=dstwidth;
+      memcpy(dst, src, dstwidth);
+      dst += dstwidth;
 
-      if (bright>0) {
-        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-          memset(dst,black[p],bright*psize);
-          dst+=bright*psize;
-        } else dst+=write_black_pixel(dst,pal,bright,y_black);
+      if (bright > 0) {
+        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+          memset(dst, black[p], bright * psize);
+          dst += bright * psize;
+        } else dst += write_black_pixel(dst, pal, bright, y_black);
       }
 
-      src+=priv->pFrame->linesize[p];
+      src += priv->pFrame->linesize[p];
     }
-    if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
-      dstwidth>>=1;
-      bleft>>=1;
-      bright>>=1;
+    if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P)) {
+      dstwidth >>= 1;
+      bleft >>= 1;
+      bright >>= 1;
     }
-    if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
-      xheight>>=1;
-      btop>>=1;
-      bbot>>=1;
+    if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P)) {
+      xheight >>= 1;
+      btop >>= 1;
+      bbot >>= 1;
     }
   }
 
@@ -1241,10 +1241,10 @@ framedone:
 
 void clip_data_free(lives_clip_data_t *cdata) {
 
-  if (cdata->palettes!=NULL) free(cdata->palettes);
-  cdata->palettes=NULL;
+  if (cdata->palettes != NULL) free(cdata->palettes);
+  cdata->palettes = NULL;
 
-  if (cdata->URI!=NULL) {
+  if (cdata->URI != NULL) {
     detach_stream(cdata);
     free(cdata->URI);
   }

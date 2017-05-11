@@ -44,7 +44,7 @@ char *OSCDataAfterAlignedString(const char *string, const char *boundary, char *
 
   int i;
 
-  if ((boundary - string) %4 != 0) {
+  if ((boundary - string) % 4 != 0) {
     fatal_error("DataAfterAlignedString: bad boundary\n");
   }
 
@@ -69,7 +69,7 @@ char *OSCDataAfterAlignedString(const char *string, const char *boundary, char *
     }
   }
 
-  return (char *)(string+i);
+  return (char *)(string + i);
 }
 
 int OSCPaddedStrlen(const char *s) {

@@ -229,9 +229,9 @@ static Boolean InitPackets(int receiveBufferSize, int clientAddrSize, int numRec
     allPackets[i].buf = (*(globals.InitTimeMalloc))(OSC_BUFFLEN);
     if (allPackets[i].buf == 0) return FALSE;
 
-    allPackets[i].nextFree = &(allPackets[i+1]);
+    allPackets[i].nextFree = &(allPackets[i + 1]);
   }
-  allPackets[numReceiveBuffers-1].nextFree = ((struct OSCPacketBuffer_struct *) 0);
+  allPackets[numReceiveBuffers - 1].nextFree = ((struct OSCPacketBuffer_struct *) 0);
   freePackets = allPackets;
 
   return TRUE;
@@ -330,9 +330,9 @@ static Boolean InitQueuedData(int numQueuedObjects) {
   if (allQD == 0) return FALSE;
 
   for (i = 0; i < numQueuedObjects; ++i) {
-    allQD[i].nextFree = &(allQD[i+1]);
+    allQD[i].nextFree = &(allQD[i + 1]);
   }
-  allQD[numQueuedObjects-1].nextFree = 0;
+  allQD[numQueuedObjects - 1].nextFree = 0;
   freeQDList = &(allQD[0]);
 
   return TRUE;
@@ -458,7 +458,7 @@ Boolean OSCInvokeMessagesThatAreReady(OSCTimeTag now) {
         printf("...bundle is empty.\n");
       } else {
         printf("...bundle len %d, first count %d, first msg %s\n",
-               x->data.bundle.length, *((int *) x->data.bundle.bytes), x->data.bundle.bytes+4);
+               x->data.bundle.length, *((int *) x->data.bundle.bytes), x->data.bundle.bytes + 4);
       }
     }
     PrintPacket(x->myPacket);
@@ -567,7 +567,7 @@ static void InsertBundleOrMessage(char *buf, int n, OSCPacketBuffer packet, OSCT
        way to get a bus error when buf happens not to be 8-byte aligned:
        qd->timetag = *((OSCTimeTag *)(buf+8));
     */
-    memcpy(&(qd->timetag), buf+8, sizeof(OSCTimeTag));
+    memcpy(&(qd->timetag), buf + 8, sizeof(OSCTimeTag));
 
     if (OSCTT_Compare(qd->timetag, enclosingTimeTag) < 0) {
       OSCProblem("Time tag of sub-bundle is before time tag of enclosing bundle.");
@@ -612,13 +612,13 @@ static void ParseBundle(queuedData *qd) {
     }
     if ((size + i + 4) > qd->data.bundle.length) {
       OSCProblem("Bad size count %d in bundle (only %d bytes left in entire bundle).",
-                 size, qd->data.bundle.length-i-4);
+                 size, qd->data.bundle.length - i - 4);
       DropBundle(qd->data.bundle.bytes, qd->data.bundle.length, qd->myPacket);
       goto bag;
     }
 
     /* Recursively handle element of bundle */
-    InsertBundleOrMessage(qd->data.bundle.bytes+i+4, size, qd->myPacket, qd->timetag);
+    InsertBundleOrMessage(qd->data.bundle.bytes + i + 4, size, qd->myPacket, qd->timetag);
     i += 4 + size;
   }
 
@@ -658,7 +658,7 @@ static Boolean ParseMessage(queuedData *qd) {
   }
 
   args = OSCDataAfterAlignedString(qd->data.message.messageName,
-                                   qd->data.message.messageName+qd->data.message.length,
+                                   qd->data.message.messageName + qd->data.message.length,
                                    &DAAS_errormsg);
 
   if (args == 0) {
@@ -773,7 +773,7 @@ Boolean OSCScheduleInternalMessages(OSCTimeTag when, int numMessages,
   }
 
 #ifdef PARANOID
-  if (bufPtr != p->buf+bufSizeNeeded) {
+  if (bufPtr != p->buf + bufSizeNeeded) {
     fatal_error("OSCScheduleInternalMessages: internal error");
   }
 #endif
@@ -800,12 +800,12 @@ Boolean NetworkPacketWaiting(OSCPacketBuffer packet) {
   NetworkReturnAddressPtr na = OSCPacketBufferGetClientAddr(packet);
 #ifndef IS_MINGW
   int n;
-  if (ioctl(na->sockfd, FIONREAD, &n, 0)==-1) return FALSE;
+  if (ioctl(na->sockfd, FIONREAD, &n, 0) == -1) return FALSE;
 #else
   long unsigned int n;
-  if (ioctlsocket(na->sockfd, FIONREAD, &n)==-1) return FALSE;
+  if (ioctlsocket(na->sockfd, FIONREAD, &n) == -1) return FALSE;
 #endif
-  if (n==0) return FALSE;
+  if (n == 0) return FALSE;
   return TRUE;
 }
 
@@ -816,9 +816,9 @@ Boolean NetworkReceivePacket(OSCPacketBuffer packet) {
   NetworkReturnAddressPtr na = OSCPacketBufferGetClientAddr(packet);
 
   n = recvfrom(na->sockfd, packet->buf, OSC_BUFFLEN, 0,
-               (struct sockaddr *) &(na->cl_addr), &(na->clilen));
+               (struct sockaddr *) & (na->cl_addr), &(na->clilen));
 
-  if (n<=0) {
+  if (n <= 0) {
     return FALSE;
   }
 

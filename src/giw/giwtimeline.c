@@ -402,8 +402,8 @@ giw_timeline_get_position(GiwTimeline *timeline) {
   GtkRange *range;
   g_return_val_if_fail(GIW_IS_TIMELINE(timeline), 0.0);
 
-  widget=GTK_WIDGET(timeline);
-  range=GTK_RANGE(widget);
+  widget = GTK_WIDGET(timeline);
+  range = GTK_RANGE(widget);
 
   //return GIW_TIMELINE_GET_PRIVATE (timeline)->position;
 
@@ -482,16 +482,16 @@ giw_timeline_get_range(GiwTimeline *timeline,
 
   priv = GIW_TIMELINE_GET_PRIVATE(timeline);
 
-  widget=GTK_WIDGET(timeline);
-  range=GTK_RANGE(widget);
+  widget = GTK_WIDGET(timeline);
+  range = GTK_RANGE(widget);
 
-  adj=gtk_range_get_adjustment(range);
+  adj = gtk_range_get_adjustment(range);
   if (lower)
-    *lower=gtk_adjustment_get_lower(adj);
+    *lower = gtk_adjustment_get_lower(adj);
   if (upper)
-    *upper=gtk_adjustment_get_upper(adj);
+    *upper = gtk_adjustment_get_upper(adj);
   if (max_size)
-    *max_size=priv->max_size;
+    *max_size = priv->max_size;
 
 }
 
@@ -694,9 +694,9 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
   gdouble           increment;     /* Number of pixels per unit */
   gint              scale;         /* Number of units per major unit */
 
-  gint scaleh,scalem,scales;
+  gint scaleh, scalem, scales;
 
-  gint curi,curh,curm,curs;
+  gint curi, curh, curm, curs;
   gdouble           start, end, cur;
   gchar             unit_str[32];
   gint              digit_height;
@@ -772,19 +772,19 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
    */
   scale = ceil(max_size);
 
-  if (priv->unit==GIW_TIME_UNIT_SECONDS) {
+  if (priv->unit == GIW_TIME_UNIT_SECONDS) {
     g_snprintf(unit_str, sizeof(unit_str), "%d", scale);
   } else {
-    scaleh=(int)((double)scale/3600.);
-    scalem=(int)((double)(scale-scaleh*3600)/60.);
-    scales=scale-scaleh*3600-scalem*60;
+    scaleh = (int)((double)scale / 3600.);
+    scalem = (int)((double)(scale - scaleh * 3600) / 60.);
+    scales = scale - scaleh * 3600 - scalem * 60;
 
-    if (scale<0) {
-      scalem=-scalem;
-      scales=-scales;
+    if (scale < 0) {
+      scalem = -scalem;
+      scales = -scales;
     }
 
-    g_snprintf(unit_str, sizeof(unit_str), "%02d:%02d:%02d", scaleh,scalem,scales);
+    g_snprintf(unit_str, sizeof(unit_str), "%02d:%02d:%02d", scaleh, scalem, scales);
   }
 
 
@@ -852,20 +852,20 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
 
       /* draw label */
       if (i == 0) {
-        curi=(int)cur;
-        if (priv->unit==GIW_TIME_UNIT_SECONDS) {
+        curi = (int)cur;
+        if (priv->unit == GIW_TIME_UNIT_SECONDS) {
           g_snprintf(unit_str, sizeof(unit_str), "%d", curi);
         } else {
-          curh=(int)(cur/3600.);
-          curm=(int)((double)(curi-curh*3600)/60.);
-          curs=curi-curh*3600-curm*60;
+          curh = (int)(cur / 3600.);
+          curm = (int)((double)(curi - curh * 3600) / 60.);
+          curs = curi - curh * 3600 - curm * 60;
 
-          if (curi<0) {
-            curm=-curm;
-            curs=-curs;
+          if (curi < 0) {
+            curm = -curm;
+            curs = -curs;
           }
 
-          g_snprintf(unit_str, sizeof(unit_str), "%02d:%02d:%02d", curh,curm,curs);
+          g_snprintf(unit_str, sizeof(unit_str), "%02d:%02d:%02d", curh, curm, curs);
         }
 
         if (priv->orientation == GTK_ORIENTATION_HORIZONTAL) {

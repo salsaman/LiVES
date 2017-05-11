@@ -89,7 +89,7 @@ weed_plant_t *append_marker_event(weed_plant_t *event_list, weed_timecode_t tc, 
 /** will either insert or replace */
 weed_plant_t *insert_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, int numframes,
                                     int *clips, int *frames, weed_plant_t **shortcut) WARN_UNUSED;
-void insert_audio_event_at(weed_plant_t *event_list,weed_plant_t *event, int track, int clipnum,
+void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, int track, int clipnum,
                            double time, double vel);
 void remove_audio_for_track(weed_plant_t *event, int track);
 weed_plant_t *insert_blank_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc,
@@ -269,16 +269,16 @@ void unlink_event(weed_plant_t *event_list, weed_plant_t *event);
 void delete_event(weed_plant_t *event_list, weed_plant_t *event);
 
 // event replacement
-void replace_event(weed_plant_t *event_list, weed_plant_t *at_event,weed_plant_t *event);
+void replace_event(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
 
 // event insertion
-boolean insert_event_before(weed_plant_t *at_event,weed_plant_t *event);
-boolean insert_event_after(weed_plant_t *at_event,weed_plant_t *event);
+boolean insert_event_before(weed_plant_t *at_event, weed_plant_t *event);
+boolean insert_event_after(weed_plant_t *at_event, weed_plant_t *event);
 
 // param changes
 void ** *get_event_pchains(void);
-weed_timecode_t get_next_paramchange(void **pchange_next,weed_timecode_t end_tc);
-weed_timecode_t get_prev_paramchange(void **pchange_next,weed_timecode_t start_tc);
+weed_timecode_t get_next_paramchange(void **pchange_next, weed_timecode_t end_tc);
+weed_timecode_t get_prev_paramchange(void **pchange_next, weed_timecode_t start_tc);
 boolean is_init_pchange(weed_plant_t *init_event, weed_plant_t *pchange_event);
 void free_pchains(int key);
 

@@ -17,7 +17,7 @@
 #define LIVES_HAS_DEVICE_MANAGER 0
 
 typedef enum {
-  LIVES_DISPLAY_TYPE_UNKNOWN=0,
+  LIVES_DISPLAY_TYPE_UNKNOWN = 0,
   LIVES_DISPLAY_TYPE_X11,
   LIVES_DISPLAY_TYPE_WIN32,
   LIVES_DISPLAY_TYPE_WAYLAND
@@ -191,7 +191,7 @@ boolean lives_widget_is_ancestor(LiVESWidget *, LiVESWidget *ancestor);
 boolean lives_widget_set_app_paintable(LiVESWidget *, boolean paintable);
 
 boolean lives_widget_has_focus(LiVESWidget *);
-  
+
 LiVESWidget *lives_event_box_new(void);
 boolean lives_event_box_set_above_child(LiVESEventBox *, boolean set);
 
@@ -280,7 +280,7 @@ boolean lives_window_set_screen(LiVESWindow *, LiVESXScreen *);
 boolean lives_widget_get_position(LiVESWidget *, int *x, int *y);
 
 LiVESWidget *lives_window_get_focus(LiVESWindow *);
-  
+
 boolean lives_window_move(LiVESWindow *, int x, int y);
 boolean lives_window_get_position(LiVESWindow *, int *x, int *y);
 boolean lives_window_set_position(LiVESWindow *, LiVESWindowPosition pos);
@@ -846,7 +846,7 @@ LiVESWidget *add_fill_to_box(LiVESBox *);
 
 
 typedef enum {
-  LIVES_CURSOR_NORMAL=0,  ///< must be zero
+  LIVES_CURSOR_NORMAL = 0, ///< must be zero
   LIVES_CURSOR_BUSY,
   LIVES_CURSOR_CENTER_PTR,
   LIVES_CURSOR_HAND2,

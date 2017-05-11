@@ -66,7 +66,7 @@ typedef struct _aserver_message_t {
 
 
 typedef enum {
-  LIVES_NOP_OPERATION=0,
+  LIVES_NOP_OPERATION = 0,
   LIVES_READ_OPERATION,
   LIVES_WRITE_OPERATION,
   LIVES_CONVERT_OPERATION

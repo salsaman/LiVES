@@ -57,10 +57,10 @@ protected:
   string myDelimiter;  // separator between key and value
   string myComment;    // separator between value and comments
   string mySentry;     // optional string to signal end of file
-  std::map<string,string> myContents;  // extracted keys and values
+  std::map<string, string> myContents; // extracted keys and values
 
-  typedef std::map<string,string>::iterator mapi;
-  typedef std::map<string,string>::const_iterator mapci;
+  typedef std::map<string, string>::iterator mapi;
+  typedef std::map<string, string>::const_iterator mapci;
 
   // Methods
 public:
@@ -172,9 +172,9 @@ inline bool ConfigFile::string_as_T<bool>(const string &s) {
   string sup = s;
   for (string::iterator p = sup.begin(); p != sup.end(); ++p)
     *p = toupper(*p);  // make string all caps
-  if (sup==string("FALSE") || sup==string("F") ||
-      sup==string("NO") || sup==string("N") ||
-      sup==string("0") || sup==string("NONE"))
+  if (sup == string("FALSE") || sup == string("F") ||
+      sup == string("NO") || sup == string("N") ||
+      sup == string("0") || sup == string("NONE"))
     b = false;
   return b;
 }

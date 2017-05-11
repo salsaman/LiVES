@@ -43,7 +43,7 @@ int raw_iso_handler(raw1394handle_t handle, int channel, size_t length, quadlet_
    simple and quit */
 int reset_handler(raw1394handle_t handle, unsigned int generation) {
   raw1394_update_generation(handle, generation);
-  on_camquit_clicked(NULL,dvgrabw->cam);
+  on_camquit_clicked(NULL, dvgrabw->cam);
   return 0;
 }
 
@@ -109,15 +109,15 @@ s_cam *camready(void) {
 
   struct raw1394_portinfo pinf[16];
 
-  s_cam *cam=(s_cam *)lives_malloc(sizeof(s_cam));
+  s_cam *cam = (s_cam *)lives_malloc(sizeof(s_cam));
 
   char *msg;
 
   int n_ports;
 
-  register int i,j;
+  register int i, j;
 
-  cam->device=-1;
+  cam->device = -1;
 
 #ifdef RAW1394_V_0_8
   cam->handle = raw1394_get_handle();
@@ -136,7 +136,7 @@ s_cam *camready(void) {
   }
 
   if ((n_ports = raw1394_get_port_info(cam->handle, pinf, 16)) < 0) {
-    msg=lives_strdup_printf(_("raw1394 - failed to get port info: %s.\n"), lives_strerror(errno));
+    msg = lives_strdup_printf(_("raw1394 - failed to get port info: %s.\n"), lives_strerror(errno));
     d_print(msg);
     lives_free(msg);
     raw1394_destroy_handle(cam->handle);
@@ -148,16 +148,16 @@ s_cam *camready(void) {
   for (j = 0; j < n_ports && cam->device == -1; j++) {
 
     if (raw1394_set_port(cam->handle, j) < 0) {
-      msg=lives_strdup_printf(_("\nraw1394 - couldn't set port %d !\n"),j);
+      msg = lives_strdup_printf(_("\nraw1394 - couldn't set port %d !\n"), j);
       d_print(msg);
       lives_free(msg);
       continue;
     }
 
-    for (i=0; i < raw1394_get_nodecount(cam->handle); ++i) {
+    for (i = 0; i < raw1394_get_nodecount(cam->handle); ++i) {
 
       if (rom1394_get_directory(cam->handle, i, &rom_dir) < 0) {
-        msg=lives_strdup_printf(_("error reading config rom directory for node %d\n"), i);
+        msg = lives_strdup_printf(_("error reading config rom directory for node %d\n"), i);
         d_print(msg);
         lives_free(msg);
         continue;
@@ -171,7 +171,7 @@ s_cam *camready(void) {
     }
   }
 
-  if (0&&cam->device == -1) {
+  if (0 && cam->device == -1) {
     do_error_dialog(
       _("\nLiVES could not find any firewire camera.\nPlease make sure your camera is switched on,\n"
         "and check that you have read/write permissions for the camera device\n(generally /dev/raw1394*).\n"));
@@ -194,7 +194,7 @@ void camplay(s_cam *cam) {
 }
 
 void camstop(s_cam *cam) {
-  g_alldone=1;
+  g_alldone = 1;
   avc1394_vcr_stop(cam->handle, cam->device);
 }
 
@@ -220,35 +220,35 @@ void cameject(s_cam *cam) {
 
 
 char *find_free_camfile(int format) {
-  char *filename=lives_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
-  char *fname,*tmp=NULL,*tmp2,*tmp3;
+  char *filename = lives_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
+  char *fname, *tmp = NULL, *tmp2, *tmp3;
 
   register int i;
 
-  if (format==CAM_FORMAT_HDV) {
-    for (i=1; i<10000; i++) {
-      fname=lives_strdup_printf("%s%04d.mpg",filename,i);
-      if (!lives_file_test((tmp=lives_build_filename((tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-                                (tmp3=lives_filename_from_utf8(fname,-1,NULL,NULL,NULL)),NULL)),
+  if (format == CAM_FORMAT_HDV) {
+    for (i = 1; i < 10000; i++) {
+      fname = lives_strdup_printf("%s%04d.mpg", filename, i);
+      if (!lives_file_test((tmp = lives_build_filename((tmp2 = lives_filename_from_utf8(dvgrabw->dirname, -1, NULL, NULL, NULL)),
+                                  (tmp3 = lives_filename_from_utf8(fname, -1, NULL, NULL, NULL)), NULL)),
                            LIVES_FILE_TEST_EXISTS)) break;
       lives_free(tmp);
       lives_free(tmp2);
       lives_free(tmp3);
-      tmp=NULL;
+      tmp = NULL;
     }
   } else {
-    for (i=1; i<1000; i++) {
-      fname=lives_strdup_printf("%s%03d.dv",filename,i);
-      if (!lives_file_test((tmp=lives_build_filename((tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-                                (tmp3=lives_filename_from_utf8(fname,-1,NULL,NULL,NULL)),NULL)),
+    for (i = 1; i < 1000; i++) {
+      fname = lives_strdup_printf("%s%03d.dv", filename, i);
+      if (!lives_file_test((tmp = lives_build_filename((tmp2 = lives_filename_from_utf8(dvgrabw->dirname, -1, NULL, NULL, NULL)),
+                                  (tmp3 = lives_filename_from_utf8(fname, -1, NULL, NULL, NULL)), NULL)),
                            LIVES_FILE_TEST_EXISTS)) break;
       lives_free(tmp);
       lives_free(tmp2);
       lives_free(tmp3);
-      tmp=NULL;
+      tmp = NULL;
     }
   }
-  if (tmp!=NULL) lives_free(tmp);
+  if (tmp != NULL) lives_free(tmp);
   lives_free(filename);
 
   return fname;
@@ -258,26 +258,26 @@ char *find_free_camfile(int format) {
 boolean rec(s_cam *cam) {
   // returns filename of file being written
 
-  char *tmp2,*tmp3,*com;
+  char *tmp2, *tmp3, *com;
   char *splits;
 
-  if (cam->pgid!=0) return FALSE;
+  if (cam->pgid != 0) return FALSE;
 
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(dvgrabw->split))) splits=lives_strdup("-autosplit ");
-  else splits=lives_strdup("");
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(dvgrabw->split))) splits = lives_strdup("-autosplit ");
+  else splits = lives_strdup("");
 
-  if (cam->format==CAM_FORMAT_DV) {
+  if (cam->format == CAM_FORMAT_DV) {
     // dv format
 #ifndef IS_MINGW
-    com=lives_strdup_printf("dvgrab -format raw %s\"%s/%s\" >/dev/null 2>&1 &",splits,
-                            (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-                            (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+    com = lives_strdup_printf("dvgrab -format raw %s\"%s/%s\" >/dev/null 2>&1 &", splits,
+                              (tmp2 = lives_filename_from_utf8(dvgrabw->dirname, -1, NULL, NULL, NULL)),
+                              (tmp3 = lives_filename_from_utf8(dvgrabw->filename, -1, NULL, NULL, NULL)));
 #else
-    com=lives_strdup_printf("dvgrab.exe -format raw %s\"%s\\%s\" >NUL 2>&1 &",splits,
-                            (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-                            (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+    com = lives_strdup_printf("dvgrab.exe -format raw %s\"%s\\%s\" >NUL 2>&1 &", splits,
+                              (tmp2 = lives_filename_from_utf8(dvgrabw->dirname, -1, NULL, NULL, NULL)),
+                              (tmp3 = lives_filename_from_utf8(dvgrabw->filename, -1, NULL, NULL, NULL)));
 #endif
-    cam->pgid=lives_fork(com);
+    cam->pgid = lives_fork(com);
     lives_free(com);
     lives_free(tmp2);
     lives_free(tmp3);
@@ -287,16 +287,16 @@ boolean rec(s_cam *cam) {
 
   // hdv format
 #ifndef IS_MINGW
-  com=lives_strdup_printf("dvgrab -format mpeg2 %s\"%s/%s\" >/dev/null 2>&1 &",splits,
-                          (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-                          (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+  com = lives_strdup_printf("dvgrab -format mpeg2 %s\"%s/%s\" >/dev/null 2>&1 &", splits,
+                            (tmp2 = lives_filename_from_utf8(dvgrabw->dirname, -1, NULL, NULL, NULL)),
+                            (tmp3 = lives_filename_from_utf8(dvgrabw->filename, -1, NULL, NULL, NULL)));
 #else
-  com=lives_strdup_printf("dvgrab.exe -format mpeg2 %s\"%s\\%s\" >NUL 2>&1 &",splits,
-                          (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-                          (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+  com = lives_strdup_printf("dvgrab.exe -format mpeg2 %s\"%s\\%s\" >NUL 2>&1 &", splits,
+                            (tmp2 = lives_filename_from_utf8(dvgrabw->dirname, -1, NULL, NULL, NULL)),
+                            (tmp3 = lives_filename_from_utf8(dvgrabw->filename, -1, NULL, NULL, NULL)));
 #endif
 
-  cam->pgid=lives_fork(com);
+  cam->pgid = lives_fork(com);
 
   lives_free(com);
   lives_free(tmp2);
@@ -309,43 +309,43 @@ boolean rec(s_cam *cam) {
 
 
 void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  int type=LIVES_POINTER_TO_INT(user_data); // type 0==dv, type 1==hdv
+  int type = LIVES_POINTER_TO_INT(user_data); // type 0==dv, type 1==hdv
   s_cam *cam;
 
-  if (!capable->has_mplayer&&!capable->has_mplayer2) {
+  if (!capable->has_mplayer && !capable->has_mplayer2) {
     do_need_mplayer_dialog();
     return;
   }
 
-  if (type==CAM_FORMAT_DV&&!capable->has_dvgrab) {
+  if (type == CAM_FORMAT_DV && !capable->has_dvgrab) {
     do_dvgrab_error();
     return;
   }
 
-  cam=camready();
-  if (cam==NULL) return;
+  cam = camready();
+  if (cam == NULL) return;
 
   /*  if (type==CAM_FORMAT_HDV) {
     cam->rec_handle=open_raw1394();
     if (cam->rec_handle==NULL) return;
   }
   else*/
-  cam->rec_handle=NULL;
+  cam->rec_handle = NULL;
 
-  if (mainw->multitrack!=NULL) {
-    if (mainw->multitrack->idlefunc>0) {
+  if (mainw->multitrack != NULL) {
+    if (mainw->multitrack->idlefunc > 0) {
       lives_source_remove(mainw->multitrack->idlefunc);
-      mainw->multitrack->idlefunc=0;
+      mainw->multitrack->idlefunc = 0;
     }
     mt_desensitise(mainw->multitrack);
   }
 
-  dvgrabw = create_camwindow(cam,type);
+  dvgrabw = create_camwindow(cam, type);
   lives_widget_show_all(dvgrabw->dialog);
-  dvgrabw->cursor=NULL;
-  cam->format=type;
-  cam->grabbed_clips=FALSE;
-  cam->pgid=0;
-  dvgrabw->cam=cam;
+  dvgrabw->cursor = NULL;
+  cam->format = type;
+  cam->grabbed_clips = FALSE;
+  cam->pgid = 0;
+  dvgrabw->cam = cam;
 }
 

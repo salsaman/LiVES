@@ -34,7 +34,7 @@
 #include <endian.h>
 #endif
 
-const char *plugin_version="LiVES mpegts decoder version 1.3";
+const char *plugin_version = "LiVES mpegts decoder version 1.3";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -95,7 +95,7 @@ static inline unsigned int get_bits(GetBitContext *s, int n) {
 static inline unsigned int get_bits1(GetBitContext *s) {
 #ifdef ALT_BITSTREAM_READER
   unsigned int index = s->index;
-  uint8_t result = s->buffer[index>>3];
+  uint8_t result = s->buffer[index >> 3];
 #ifdef ALT_BITSTREAM_READER_LE
   result >>= index & 7;
   result &= 1;
@@ -134,7 +134,7 @@ static inline void skip_bits(GetBitContext *s, int n) {
  */
 static inline void init_get_bits(GetBitContext *s,
                                  const uint8_t *buffer, int bit_size) {
-  int buffer_size = (bit_size+7)>>3;
+  int buffer_size = (bit_size + 7) >> 3;
   if (buffer_size < 0 || bit_size < 0) {
     buffer_size = bit_size = 0;
     buffer = NULL;
@@ -147,7 +147,7 @@ static inline void init_get_bits(GetBitContext *s,
   s->index        = 0;
 #elif defined A32_BITSTREAM_READER
   s->buffer_ptr   = (uint32_t *)((intptr_t)buffer & ~3);
-  s->bit_count    = 32 +     8*((intptr_t)buffer &  3);
+  s->bit_count    = 32 +     8 * ((intptr_t)buffer &  3);
   skip_bits_long(s, 0);
 #endif
 }
@@ -155,12 +155,12 @@ static inline void init_get_bits(GetBitContext *s,
 
 
 static void index_free(index_entry *idx) {
-  index_entry *cidx=idx,*next;
+  index_entry *cidx = idx, *next;
 
-  while (cidx!=NULL) {
-    next=cidx->next;
+  while (cidx != NULL) {
+    next = cidx->next;
     free(cidx);
-    cidx=next;
+    cidx = next;
   }
 }
 
@@ -173,10 +173,10 @@ static void index_free(index_entry *idx) {
 
 
 static index_entry *index_walk(index_entry *idx, uint32_t pts) {
-  index_entry *xidx=idx;
-  while (xidx!=NULL) {
-    if (xidx->next==NULL || (pts>=xidx->dts && pts<xidx->next->dts)) return xidx;
-    xidx=xidx->next;
+  index_entry *xidx = idx;
+  while (xidx != NULL) {
+    if (xidx->next == NULL || (pts >= xidx->dts && pts < xidx->next->dts)) return xidx;
+    xidx = xidx->next;
   }
   /// oops. something went wrong
   return NULL;
@@ -184,42 +184,42 @@ static index_entry *index_walk(index_entry *idx, uint32_t pts) {
 
 
 index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int64_t pts) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  index_entry *nidx=priv->idxc->idxht;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  index_entry *nidx = priv->idxc->idxht;
   index_entry *nentry;
 
-  nentry=malloc(sizeof(index_entry));
+  nentry = malloc(sizeof(index_entry));
 
-  nentry->dts=pts;
-  nentry->offs=offset;
-  nentry->next=NULL;
+  nentry->dts = pts;
+  nentry->offs = offset;
+  nentry->next = NULL;
 
-  if (nidx==NULL) {
+  if (nidx == NULL) {
     // first entry in list
-    priv->idxc->idxhh=priv->idxc->idxht=nentry;
+    priv->idxc->idxhh = priv->idxc->idxht = nentry;
     return nentry;
   }
 
   if (nidx->dts < pts) {
     // last entry in list
-    nidx->next=nentry;
-    priv->idxc->idxht=nentry;
+    nidx->next = nentry;
+    priv->idxc->idxht = nentry;
     return nentry;
   }
 
-  if (priv->idxc->idxhh->dts>pts) {
+  if (priv->idxc->idxhh->dts > pts) {
     // before head
-    nentry->next=priv->idxc->idxhh;
-    priv->idxc->idxhh=nentry;
+    nentry->next = priv->idxc->idxhh;
+    priv->idxc->idxhh = nentry;
     return nentry;
   }
 
-  nidx=index_walk(priv->idxc->idxhh,pts);
+  nidx = index_walk(priv->idxc->idxhh, pts);
 
   // after nidx in list
 
-  nentry->next=nidx->next;
-  nidx->next=nentry;
+  nentry->next = nidx->next;
+  nidx->next = nentry;
 
   return nentry;
 }
@@ -227,8 +227,8 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int6
 
 
 static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  return index_walk(priv->idxc->idxhh,pts);
+  lives_mpegts_priv_t *priv = cdata->priv;
+  return index_walk(priv->idxc->idxhh, pts);
 }
 
 
@@ -236,9 +236,9 @@ static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts)
 
 
 static boolean check_for_eof(lives_clip_data_t *cdata) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  if (priv->input_position>priv->filesize) {
-    priv->got_eof=TRUE;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  if (priv->input_position > priv->filesize) {
+    priv->got_eof = TRUE;
     return TRUE;
   }
   return FALSE;
@@ -275,8 +275,8 @@ typedef struct MpegTSSectionFilter {
   int section_index;
   int section_h_size;
   uint8_t *section_buf;
-  unsigned int check_crc:1;
-  unsigned int end_of_section_reached:1;
+  unsigned int check_crc: 1;
+  unsigned int end_of_section_reached: 1;
   SectionCallback *section_cb;
   void *opaque;
 } MpegTSSectionFilter;
@@ -386,15 +386,15 @@ typedef struct PESContext {
 
 static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
   int i;
-  for (i=0; tags[i].id != CODEC_ID_NONE; i++) {
+  for (i = 0; tags[i].id != CODEC_ID_NONE; i++) {
     if (tag == tags[i].tag)
       return tags[i].id;
   }
-  for (i=0; tags[i].id != CODEC_ID_NONE; i++) {
-    if (toupper((tag >> 0)&0xFF) == toupper((tags[i].tag >> 0)&0xFF)
-        && toupper((tag >> 8)&0xFF) == toupper((tags[i].tag >> 8)&0xFF)
-        && toupper((tag >>16)&0xFF) == toupper((tags[i].tag >>16)&0xFF)
-        && toupper((tag >>24)&0xFF) == toupper((tags[i].tag >>24)&0xFF))
+  for (i = 0; tags[i].id != CODEC_ID_NONE; i++) {
+    if (toupper((tag >> 0) & 0xFF) == toupper((tags[i].tag >> 0) & 0xFF)
+        && toupper((tag >> 8) & 0xFF) == toupper((tags[i].tag >> 8) & 0xFF)
+        && toupper((tag >> 16) & 0xFF) == toupper((tags[i].tag >> 16) & 0xFF)
+        && toupper((tag >> 24) & 0xFF) == toupper((tags[i].tag >> 24) & 0xFF))
       return tags[i].id;
   }
   return CODEC_ID_NONE;
@@ -404,18 +404,18 @@ static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
 static boolean lives_seek(lives_clip_data_t *cdata, int fd, off_t pos) {
   // seek
 
-  lives_mpegts_priv_t *priv=cdata->priv;
-  if (fd==priv->fd) {
+  lives_mpegts_priv_t *priv = cdata->priv;
+  if (fd == priv->fd) {
     priv->input_position = pos;
     check_for_eof(cdata);
-    if (lseek(priv->fd, priv->input_position, SEEK_SET)==-1) {
+    if (lseek(priv->fd, priv->input_position, SEEK_SET) == -1) {
       return FALSE;
     }
   } else {
     struct stat sb;
-    fstat(fd,&sb);
-    if (pos>sb.st_size) priv->got_eof=TRUE;
-    if (lseek(fd, pos, SEEK_SET)==-1) return FALSE;
+    fstat(fd, &sb);
+    if (pos > sb.st_size) priv->got_eof = TRUE;
+    if (lseek(fd, pos, SEEK_SET) == -1) return FALSE;
   }
   return TRUE;
 }
@@ -424,16 +424,16 @@ static boolean lives_seek(lives_clip_data_t *cdata, int fd, off_t pos) {
 static boolean lives_skip(lives_clip_data_t *cdata, int fd, off_t offs) {
   // skip
 
-  lives_mpegts_priv_t *priv=cdata->priv;
-  if (fd==priv->fd) {
+  lives_mpegts_priv_t *priv = cdata->priv;
+  if (fd == priv->fd) {
     priv->input_position += offs;
     check_for_eof(cdata);
-    if (lseek(priv->fd, priv->input_position, SEEK_SET)==-1) {
+    if (lseek(priv->fd, priv->input_position, SEEK_SET) == -1) {
       return FALSE;
     }
   } else {
-    off_t pos=lseek(fd,0,SEEK_CUR)+offs;
-    return lives_seek(cdata,fd,pos);
+    off_t pos = lseek(fd, 0, SEEK_CUR) + offs;
+    return lives_seek(cdata, fd, pos);
   }
   return TRUE;
 }
@@ -443,9 +443,9 @@ static boolean lives_skip(lives_clip_data_t *cdata, int fd, off_t offs) {
 ssize_t lives_read(lives_clip_data_t *cdata, int fd, void *data, size_t len) {
   // read fd
 
-  lives_mpegts_priv_t *priv=cdata->priv;
-  ssize_t bytes=read(fd,data,len);
-  if (bytes>=0 && fd==priv->fd) priv->input_position+=len;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  ssize_t bytes = read(fd, data, len);
+  if (bytes >= 0 && fd == priv->fd) priv->input_position += len;
   check_for_eof(cdata);
   return bytes;
 }
@@ -458,42 +458,42 @@ static inline uint16_t lives_r8(const uint8_t *x) {
 
 static uint8_t lives_rf8(lives_clip_data_t *cdata, int fd) {
   uint8_t buf;
-  lives_read(cdata,fd,&buf,1);
+  lives_read(cdata, fd, &buf, 1);
   return buf;
 }
 
 
 
 static inline uint16_t lives_rb16(const uint8_t *x) {
-  return (x[0]<<8) + x[1];
+  return (x[0] << 8) + x[1];
 }
 
 static uint16_t lives_rbf16(lives_clip_data_t *cdata, int fd) {
   uint8_t buf[2];
-  lives_read(cdata,fd,&buf,2);
+  lives_read(cdata, fd, &buf, 2);
   return lives_rb16(buf);
 }
 
 
 static inline uint16_t lives_rb24(const uint8_t *x) {
-  return (((x[0]<<8) + x[1])<<8) + x[2];
+  return (((x[0] << 8) + x[1]) << 8) + x[2];
 }
 
 
 static inline uint16_t lives_rb32(const uint8_t *x) {
-  return (((((x[0]<<8) + x[1])<<8) + x[2])<<8) + x[3];
+  return (((((x[0] << 8) + x[1]) << 8) + x[2]) << 8) + x[3];
 }
 
 
 static uint16_t lives_rbf32(lives_clip_data_t *cdata, int fd) {
   uint8_t buf[4];
-  lives_read(cdata,fd,&buf,4);
+  lives_read(cdata, fd, &buf, 4);
   return lives_rb32(buf);
 }
 
 
 static inline uint16_t lives_rl32(const char *x) {
-  return (((((x[3]<<8) + x[2])<<8) + x[1])<<8) + x[0];
+  return (((((x[3] << 8) + x[2]) << 8) + x[1]) << 8) + x[0];
 }
 
 
@@ -504,8 +504,8 @@ static inline uint16_t lives_rl32(const char *x) {
  */
 static inline int64_t ff_parse_pes_pts(const uint8_t *buf) {
   return (int64_t)(*buf & 0x0e) << 29 |
-         (lives_rb16(buf+1) >> 1) << 15 |
-         lives_rb16(buf+3) >> 1;
+         (lives_rb16(buf + 1) >> 1) << 15 |
+         lives_rb16(buf + 3) >> 1;
 }
 
 
@@ -520,39 +520,39 @@ int ff_find_stream_index(AVFormatContext *s, int id) {
 
 
 void ff_mp4_parse_es_descr(lives_clip_data_t *cdata, int fd, int *es_id) {
-  lives_mpegts_priv_t *priv=cdata->priv;
+  lives_mpegts_priv_t *priv = cdata->priv;
   int flags;
 
-  if (es_id) *es_id = lives_rbf16(cdata,fd);
-  else                lives_rbf16(cdata,fd);
-  flags = lives_rf8(cdata,fd);
+  if (es_id) *es_id = lives_rbf16(cdata, fd);
+  else                lives_rbf16(cdata, fd);
+  flags = lives_rf8(cdata, fd);
   if (flags & 0x80) //streamDependenceFlag
-    lives_rbf16(cdata,fd);
+    lives_rbf16(cdata, fd);
   if (flags & 0x40) { //URL_Flag
-    int len = lives_rf8(cdata,fd);
+    int len = lives_rf8(cdata, fd);
     lives_skip(cdata, fd, len);
   }
   if (flags & 0x20) //OCRstreamFlag
-    lives_rbf16(cdata,priv->fd);
+    lives_rbf16(cdata, priv->fd);
 }
 
 
 static void clear_program(MpegTSContext *ts, unsigned int programid) {
   int i;
 
-  for (i=0; i<ts->nb_prg; i++)
+  for (i = 0; i < ts->nb_prg; i++)
     if (ts->prg[i].id == programid)
       ts->prg[i].nb_pids = 0;
 }
 
 static void clear_programs(MpegTSContext *ts) {
   av_freep(&ts->prg);
-  ts->nb_prg=0;
+  ts->nb_prg = 0;
 }
 
 static void add_pat_entry(MpegTSContext *ts, unsigned int programid) {
   struct Program *p;
-  void *tmp = av_realloc(ts->prg, (ts->nb_prg+1)*sizeof(struct Program));
+  void *tmp = av_realloc(ts->prg, (ts->nb_prg + 1) * sizeof(struct Program));
   if (!tmp)
     return;
   ts->prg = tmp;
@@ -565,7 +565,7 @@ static void add_pat_entry(MpegTSContext *ts, unsigned int programid) {
 static void add_pid_to_pmt(MpegTSContext *ts, unsigned int programid, unsigned int pid) {
   int i;
   struct Program *p = NULL;
-  for (i=0; i<ts->nb_prg; i++) {
+  for (i = 0; i < ts->nb_prg; i++) {
     if (ts->prg[i].id == programid) {
       p = &ts->prg[i];
       break;
@@ -583,7 +583,7 @@ static void add_pid_to_pmt(MpegTSContext *ts, unsigned int programid, unsigned i
 
 static void set_pcr_pid(AVFormatContext *s, unsigned int programid, unsigned int pid) {
   int i;
-  for (i=0; i<s->nb_programs; i++) {
+  for (i = 0; i < s->nb_programs; i++) {
     if (s->programs[i]->id == programid) {
       //s->programs[i]->pcr_pid = pid;
       break;
@@ -603,13 +603,13 @@ static int discard_pid(MpegTSContext *ts, unsigned int pid) {
   int i, j, k;
   int used = 0, discarded = 0;
   struct Program *p;
-  for (i=0; i<ts->nb_prg; i++) {
+  for (i = 0; i < ts->nb_prg; i++) {
     p = &ts->prg[i];
-    for (j=0; j<p->nb_pids; j++) {
+    for (j = 0; j < p->nb_pids; j++) {
       if (p->pids[j] != pid)
         continue;
       //is program with id p->id set to be discarded?
-      for (k=0; k<ts->stream->nb_programs; k++) {
+      for (k = 0; k < ts->stream->nb_programs; k++) {
         if (ts->stream->programs[k]->id == p->id) {
           if (ts->stream->programs[k]->discard == AVDISCARD_ALL)
             discarded++;
@@ -744,22 +744,22 @@ static void mpegts_close_filter(MpegTSContext *ts, MpegTSFilter *filter) {
 static int analyze(const uint8_t *buf, int size, int packet_size, int *index) {
   int stat[TS_MAX_PACKET_SIZE];
   int i;
-  int x=0;
-  int best_score=0;
+  int x = 0;
+  int best_score = 0;
 
-  memset(stat, 0, packet_size*sizeof(int));
+  memset(stat, 0, packet_size * sizeof(int));
 
-  for (x=i=0; i<size-3; i++) {
-    if (buf[i] == 0x47 && !(buf[i+1] & 0x80) && buf[i+3] != 0x47) {
+  for (x = i = 0; i < size - 3; i++) {
+    if (buf[i] == 0x47 && !(buf[i + 1] & 0x80) && buf[i + 3] != 0x47) {
       stat[x]++;
       if (stat[x] > best_score) {
-        best_score= stat[x];
-        if (index) *index= x;
+        best_score = stat[x];
+        if (index) *index = x;
       }
     }
 
     x++;
-    if (x == packet_size) x= 0;
+    if (x == packet_size) x = 0;
   }
 
   return best_score;
@@ -774,7 +774,7 @@ static int get_packet_size(const uint8_t *buf, int size) {
 
   score    = analyze(buf, size, TS_PACKET_SIZE, NULL);
   dvhs_score    = analyze(buf, size, TS_DVHS_PACKET_SIZE, NULL);
-  fec_score= analyze(buf, size, TS_FEC_PACKET_SIZE, NULL);
+  fec_score = analyze(buf, size, TS_FEC_PACKET_SIZE, NULL);
   //    av_log(NULL, AV_LOG_DEBUG, "score: %d, dvhs_score: %d, fec_score: %d \n", score, dvhs_score, fec_score);
 
   if (score > fec_score && score > dvhs_score) return TS_PACKET_SIZE;
@@ -910,13 +910,13 @@ static const StreamType MISC_types[] = {
 };
 
 static const StreamType REGD_types[] = {
-  { MKTAG('d','r','a','c'), AVMEDIA_TYPE_VIDEO, CODEC_ID_DIRAC },
-  { MKTAG('A','C','-','3'), AVMEDIA_TYPE_AUDIO,   CODEC_ID_AC3 },
-  { MKTAG('B','S','S','D'), AVMEDIA_TYPE_AUDIO, CODEC_ID_S302M },
-  { MKTAG('D','T','S','1'), AVMEDIA_TYPE_AUDIO,   CODEC_ID_DTS },
-  { MKTAG('D','T','S','2'), AVMEDIA_TYPE_AUDIO,   CODEC_ID_DTS },
-  { MKTAG('D','T','S','3'), AVMEDIA_TYPE_AUDIO,   CODEC_ID_DTS },
-  { MKTAG('V','C','-','1'), AVMEDIA_TYPE_VIDEO,   CODEC_ID_VC1 },
+  { MKTAG('d', 'r', 'a', 'c'), AVMEDIA_TYPE_VIDEO, CODEC_ID_DIRAC },
+  { MKTAG('A', 'C', '-', '3'), AVMEDIA_TYPE_AUDIO,   CODEC_ID_AC3 },
+  { MKTAG('B', 'S', 'S', 'D'), AVMEDIA_TYPE_AUDIO, CODEC_ID_S302M },
+  { MKTAG('D', 'T', 'S', '1'), AVMEDIA_TYPE_AUDIO,   CODEC_ID_DTS },
+  { MKTAG('D', 'T', 'S', '2'), AVMEDIA_TYPE_AUDIO,   CODEC_ID_DTS },
+  { MKTAG('D', 'T', 'S', '3'), AVMEDIA_TYPE_AUDIO,   CODEC_ID_DTS },
+  { MKTAG('V', 'C', '-', '1'), AVMEDIA_TYPE_VIDEO,   CODEC_ID_VC1 },
   { 0 },
 };
 
@@ -943,8 +943,8 @@ static void mpegts_find_stream_type(AVStream *st,
 
 static int mpegts_set_stream_info(lives_clip_data_t *cdata, AVStream *st, PESContext *pes,
                                   uint32_t stream_type, uint32_t prog_reg_desc) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  int old_codec_type= st->codec->codec_type;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  int old_codec_type = st->codec->codec_type;
   int old_codec_id  = st->codec->codec_id;
   av_set_pts_info(st, 33, 1, 90000);
   st->priv_data = pes;
@@ -960,22 +960,22 @@ static int mpegts_set_stream_info(lives_clip_data_t *cdata, AVStream *st, PESCon
 
   st->codec->codec_tag = pes->stream_type;
 
-  if (st->codec->codec_tag==STREAM_TYPE_VIDEO_MPEG1||
-      st->codec->codec_tag==STREAM_TYPE_VIDEO_MPEG2||
-      st->codec->codec_tag==STREAM_TYPE_VIDEO_MPEG4||
-      st->codec->codec_tag==STREAM_TYPE_VIDEO_H264||
-      st->codec->codec_tag==STREAM_TYPE_VIDEO_VC1||
-      st->codec->codec_tag==STREAM_TYPE_VIDEO_DIRAC) {
+  if (st->codec->codec_tag == STREAM_TYPE_VIDEO_MPEG1 ||
+      st->codec->codec_tag == STREAM_TYPE_VIDEO_MPEG2 ||
+      st->codec->codec_tag == STREAM_TYPE_VIDEO_MPEG4 ||
+      st->codec->codec_tag == STREAM_TYPE_VIDEO_H264 ||
+      st->codec->codec_tag == STREAM_TYPE_VIDEO_VC1 ||
+      st->codec->codec_tag == STREAM_TYPE_VIDEO_DIRAC) {
     //    fprintf(stderr,"got our vidst %d %p\n",st->codec->codec_tag,st);
-    priv->vidst=st;
+    priv->vidst = st;
   }
 
-  if (st->codec->codec_tag==STREAM_TYPE_AUDIO_MPEG1) sprintf(cdata->audio_name,"%s","mpeg1");
-  else if (st->codec->codec_tag==STREAM_TYPE_AUDIO_MPEG2) sprintf(cdata->audio_name,"%s","mpeg2");
-  else if (st->codec->codec_tag==STREAM_TYPE_AUDIO_AAC) sprintf(cdata->audio_name,"%s","aac");
-  else if (st->codec->codec_tag==STREAM_TYPE_AUDIO_AAC_LATM) sprintf(cdata->audio_name,"%s","aac_latm");
-  else if (st->codec->codec_tag==STREAM_TYPE_AUDIO_AC3) sprintf(cdata->audio_name,"%s","ac3");
-  else if (st->codec->codec_tag==STREAM_TYPE_AUDIO_DTS) sprintf(cdata->audio_name,"%s","dts");
+  if (st->codec->codec_tag == STREAM_TYPE_AUDIO_MPEG1) sprintf(cdata->audio_name, "%s", "mpeg1");
+  else if (st->codec->codec_tag == STREAM_TYPE_AUDIO_MPEG2) sprintf(cdata->audio_name, "%s", "mpeg2");
+  else if (st->codec->codec_tag == STREAM_TYPE_AUDIO_AAC) sprintf(cdata->audio_name, "%s", "aac");
+  else if (st->codec->codec_tag == STREAM_TYPE_AUDIO_AAC_LATM) sprintf(cdata->audio_name, "%s", "aac_latm");
+  else if (st->codec->codec_tag == STREAM_TYPE_AUDIO_AC3) sprintf(cdata->audio_name, "%s", "ac3");
+  else if (st->codec->codec_tag == STREAM_TYPE_AUDIO_DTS) sprintf(cdata->audio_name, "%s", "dts");
 
   mpegts_find_stream_type(st, pes->stream_type, ISO_types);
 
@@ -1014,7 +1014,7 @@ static int mpegts_set_stream_info(lives_clip_data_t *cdata, AVStream *st, PESCon
     mpegts_find_stream_type(st, pes->stream_type, MISC_types);
   if (st->codec->codec_id == CODEC_ID_NONE) {
     st->codec->codec_id  = old_codec_id;
-    st->codec->codec_type= old_codec_type;
+    st->codec->codec_type = old_codec_type;
   }
 
   return 0;
@@ -1035,7 +1035,7 @@ static void new_pes_packet(PESContext *pes, AVPacket *pkt) {
     fprintf(stderr, "mpegts_decoder: PES packet size mismatch\n");
     //pes->flags |= AV_PKT_FLAG_CORRUPT;
   }
-  memset(pkt->data+pkt->size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+  memset(pkt->data + pkt->size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
 
   // Separate out the AC3 substream from an HDMV combined TrueHD/AC3 PID
   if (pes->sub_st && pes->stream_type == 0x83 && pes->extended_stream_id == 0x76)
@@ -1074,7 +1074,7 @@ static int read_sl_header(PESContext *pes, SLConfigDescr *sl, const uint8_t *buf
   int padding_flag = 0, padding_bits = 0, inst_bitrate_flag = 0;
   int dts_flag = -1, cts_flag = -1;
   int64_t dts = AV_NOPTS_VALUE, cts = AV_NOPTS_VALUE;
-  init_get_bits(&gb, buf, buf_size*8);
+  init_get_bits(&gb, buf, buf_size * 8);
 
   if (sl->use_au_start)
     au_start_flag = get_bits1(&gb);
@@ -1192,7 +1192,7 @@ static int mpegts_push_data(lives_clip_data_t *cdata, MpegTSFilter *filter,
             pes->total_size = MAX_PES_PAYLOAD;
 
           /* allocate pes buffer */
-          pes->buffer = av_malloc(pes->total_size+FF_INPUT_BUFFER_PADDING_SIZE);
+          pes->buffer = av_malloc(pes->total_size + FF_INPUT_BUFFER_PADDING_SIZE);
           if (!pes->buffer)
             return AVERROR(ENOMEM);
 
@@ -1286,10 +1286,10 @@ skip:
       break;
     case MPEGTS_PAYLOAD:
       if (buf_size > 0 && pes->buffer) {
-        if (pes->data_index > 0 && pes->data_index+buf_size > pes->total_size) {
+        if (pes->data_index > 0 && pes->data_index + buf_size > pes->total_size) {
           new_pes_packet(pes, ts->pkt);
           pes->total_size = MAX_PES_PAYLOAD;
-          pes->buffer = av_malloc(pes->total_size+FF_INPUT_BUFFER_PADDING_SIZE);
+          pes->buffer = av_malloc(pes->total_size + FF_INPUT_BUFFER_PADDING_SIZE);
           if (!pes->buffer)
             return AVERROR(ENOMEM);
           ts->stop_parse = 1;
@@ -1298,7 +1298,7 @@ skip:
           // not sure if this is legal in ts but see issue #2392
           buf_size = pes->total_size;
         }
-        memcpy(pes->buffer+pes->data_index, p, buf_size);
+        memcpy(pes->buffer + pes->data_index, p, buf_size);
         pes->data_index += buf_size;
       }
       buf_size = 0;
@@ -1361,10 +1361,10 @@ static int init_MP4DescrParseContext(lives_clip_data_t *cdata,
                                      MP4DescrParseContext *d, AVFormatContext *s, const uint8_t *buf,
                                      unsigned size, Mp4Descr *descr, int max_descr_count) {
   //    int ret;
-  if (size > (1<<30))
+  if (size > (1 << 30))
     return -2;
 
-  if ((d->fd=open(cdata->URI,O_RDONLY))==-1) {
+  if ((d->fd = open(cdata->URI, O_RDONLY)) == -1) {
     return d->fd;
   }
   d->s = s;
@@ -1408,7 +1408,7 @@ int ff_mp4_read_descr_lenf(lives_clip_data_t *cdata, int fd) {
   int len = 0;
   int count = 4;
   while (count--) {
-    int c = lives_rf8(cdata,fd);
+    int c = lives_rf8(cdata, fd);
     len = (len << 7) | (c & 0x7f);
     if (!(c & 0x80))
       break;
@@ -1419,8 +1419,8 @@ int ff_mp4_read_descr_lenf(lives_clip_data_t *cdata, int fd) {
 
 int ff_mp4_read_descrf(lives_clip_data_t *cdata, AVFormatContext *fc, int fd, int *tag) {
   int len;
-  *tag = lives_rf8(cdata,fd);
-  len = ff_mp4_read_descr_lenf(cdata,fd);
+  *tag = lives_rf8(cdata, fd);
+  len = ff_mp4_read_descr_lenf(cdata, fd);
   //av_dlog(fc, "MPEG4 description: tag=0x%02x len=%d\n", *tag, len);
   return len;
 }
@@ -1438,20 +1438,20 @@ int ff_mp4_read_dec_config_descr(lives_clip_data_t *cdata, AVFormatContext *fc, 
   lives_r8(p); /* stream type */
   p++;
   lives_rb24(p); /* buffer size db */
-  p+=3;
+  p += 3;
   lives_rb32(p); /* max bitrate */
-  p+=4;
+  p += 4;
   lives_rb32(p); /* avg bitrate */
-  p+=4;
+  p += 4;
 
-  st->codec->codec_id= ff_codec_get_id(ff_mp4_obj_type, object_type_id);
+  st->codec->codec_id = ff_codec_get_id(ff_mp4_obj_type, object_type_id);
   //fprintf(stderr, "esds object type id 0x%02x\n", object_type_id);
 
   len = ff_mp4_read_descr(cdata, fc, p, &tag);
 
   if (tag == MP4DecSpecificDescrTag) {
     //av_dlog(fc, "Specific MPEG4 header len=%d\n", len);
-    if (!len || (uint64_t)len > (1<<30))
+    if (!len || (uint64_t)len > (1 << 30))
       return -1;
     av_free(st->codec->extradata);
     st->codec->extradata = av_mallocz(len + FF_INPUT_BUFFER_PADDING_SIZE);
@@ -1468,7 +1468,7 @@ int ff_mp4_read_dec_config_descr(lives_clip_data_t *cdata, AVFormatContext *fc, 
 
 
 static void update_offsets(int fd, int64_t *off, int *len) {
-  int64_t new_off = lseek(fd,0,SEEK_CUR);
+  int64_t new_off = lseek(fd, 0, SEEK_CUR);
   (*len) -= new_off - *off;
   *off = new_off;
 }
@@ -1486,12 +1486,12 @@ static int parse_mp4_descr_arr(lives_clip_data_t *cdata, MP4DescrParseContext *d
 }
 
 static int parse_MP4IODescrTag(lives_clip_data_t *cdata, MP4DescrParseContext *d, int64_t off, int len) {
-  lives_rbf16(cdata,d->fd); // ID
-  lives_rf8(cdata,d->fd);
-  lives_rf8(cdata,d->fd);
-  lives_rf8(cdata,d->fd);
-  lives_rf8(cdata,d->fd);
-  lives_rf8(cdata,d->fd);
+  lives_rbf16(cdata, d->fd); // ID
+  lives_rf8(cdata, d->fd);
+  lives_rf8(cdata, d->fd);
+  lives_rf8(cdata, d->fd);
+  lives_rf8(cdata, d->fd);
+  lives_rf8(cdata, d->fd);
   update_offsets(d->fd, &off, &len);
   return parse_mp4_descr_arr(cdata, d, off, len);
 }
@@ -1501,7 +1501,7 @@ static int parse_MP4ODescrTag(lives_clip_data_t *cdata, MP4DescrParseContext *d,
   int id_flags;
   if (len < 2)
     return 0;
-  id_flags = lives_rbf16(cdata,d->fd);
+  id_flags = lives_rbf16(cdata, d->fd);
   if (!(id_flags & 0x0020)) { //URL_Flag
     update_offsets(d->fd, &off, &len);
     return parse_mp4_descr_arr(cdata, d, off, len); //ES_Descriptor[]
@@ -1547,23 +1547,23 @@ static int parse_MP4SLDescrTag(lives_clip_data_t *cdata, MP4DescrParseContext *d
   if (!descr)
     return -1;
 
-  predefined = lives_rf8(cdata,d->fd);
+  predefined = lives_rf8(cdata, d->fd);
   if (!predefined) {
     int lengths;
-    int flags = lives_rf8(cdata,d->fd);
+    int flags = lives_rf8(cdata, d->fd);
     descr->sl.use_au_start       = !!(flags & 0x80);
     descr->sl.use_au_end         = !!(flags & 0x40);
     descr->sl.use_rand_acc_pt    = !!(flags & 0x20);
     descr->sl.use_padding        = !!(flags & 0x08);
     descr->sl.use_timestamps     = !!(flags & 0x04);
     descr->sl.use_idle           = !!(flags & 0x02);
-    descr->sl.timestamp_res      = lives_rbf32(cdata,d->fd);
-    lives_rbf32(cdata,d->fd);
-    descr->sl.timestamp_len      = lives_rf8(cdata,d->fd);
-    descr->sl.ocr_len            = lives_rf8(cdata,d->fd);
-    descr->sl.au_len             = lives_rf8(cdata,d->fd);
-    descr->sl.inst_bitrate_len   = lives_rf8(cdata,d->fd);
-    lengths                      = lives_rbf16(cdata,d->fd);
+    descr->sl.timestamp_res      = lives_rbf32(cdata, d->fd);
+    lives_rbf32(cdata, d->fd);
+    descr->sl.timestamp_len      = lives_rf8(cdata, d->fd);
+    descr->sl.ocr_len            = lives_rf8(cdata, d->fd);
+    descr->sl.au_len             = lives_rf8(cdata, d->fd);
+    descr->sl.inst_bitrate_len   = lives_rf8(cdata, d->fd);
+    lengths                      = lives_rbf16(cdata, d->fd);
     descr->sl.degr_prior_len     = lengths >> 12;
     descr->sl.au_seq_num_len     = (lengths >> 7) & 0x1f;
     descr->sl.packet_seq_num_len = (lengths >> 2) & 0x1f;
@@ -1632,7 +1632,7 @@ static int mp4_read_iods(lives_clip_data_t *cdata, AVFormatContext *s, const uin
   if (init_MP4DescrParseContext(cdata, &d, s, buf, size, descr, max_descr_count) < 0)
     return -1;
 
-  parse_mp4_descr(cdata, &d, lseek(d.fd,0,SEEK_CUR), size, MP4IODescrTag);
+  parse_mp4_descr(cdata, &d, lseek(d.fd, 0, SEEK_CUR), size, MP4IODescrTag);
 
   *descr_count = d.descr_count;
 
@@ -1647,7 +1647,7 @@ static int mp4_read_od(lives_clip_data_t *cdata, AVFormatContext *s, const uint8
   if (init_MP4DescrParseContext(cdata, &d, s, buf, size, descr, max_descr_count) < 0)
     return -1;
 
-  parse_mp4_descr_arr(cdata, &d, lseek(d.fd,0,SEEK_CUR), size);
+  parse_mp4_descr_arr(cdata, &d, lseek(d.fd, 0, SEEK_CUR), size);
 
   *descr_count = d.descr_count;
 
@@ -1771,7 +1771,7 @@ int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVS
       if (st->codec->codec_id == CODEC_ID_AAC &&
           st->codec->extradata_size > 0) {
         st->need_parsing = 0;
-        st->codec->codec_type= AVMEDIA_TYPE_AUDIO;
+        st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
       }
     }
     break;
@@ -1836,7 +1836,7 @@ int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVS
     break;
   case 0x05: /* registration descriptor */
     st->codec->codec_tag = lives_rl32((const char *)*pp);
-    *pp+=4;
+    *pp += 4;
     //av_dlog(fc, "reg_desc=%.4s\n", (char*)&st->codec->codec_tag);
     if (st->codec->codec_id == CODEC_ID_NONE &&
         stream_type == STREAM_TYPE_PRIVATE_DATA)
@@ -1855,7 +1855,7 @@ int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVS
 
 void ff_program_add_stream_index(AVFormatContext *ac, int progid, unsigned int idx) {
   int i, j;
-  AVProgram *program=NULL;
+  AVProgram *program = NULL;
   void *tmp;
 
   if (idx >= ac->nb_streams) {
@@ -1863,15 +1863,15 @@ void ff_program_add_stream_index(AVFormatContext *ac, int progid, unsigned int i
     return;
   }
 
-  for (i=0; i<ac->nb_programs; i++) {
+  for (i = 0; i < ac->nb_programs; i++) {
     if (ac->programs[i]->id != progid)
       continue;
     program = ac->programs[i];
-    for (j=0; j<program->nb_stream_indexes; j++)
+    for (j = 0; j < program->nb_stream_indexes; j++)
       if (program->stream_index[j] == idx)
         return;
 
-    tmp = av_realloc(program->stream_index, sizeof(unsigned int)*(program->nb_stream_indexes+1));
+    tmp = av_realloc(program->stream_index, sizeof(unsigned int) * (program->nb_stream_indexes + 1));
     if (!tmp)
       return;
     program->stream_index = tmp;
@@ -1949,7 +1949,7 @@ static void pmt_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
                     &mp4_descr_count, MAX_MP4_DESCR_COUNT);
     } else if (tag == 0x05 && len >= 4) { // registration descriptor
       prog_reg_desc = lives_rl32((const char *)p);
-      p+=4;
+      p += 4;
       len -= 4;
     }
     p += len;
@@ -2162,8 +2162,8 @@ static void sdt_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
 
 /* handle one TS packet */
 static int handle_packet(lives_clip_data_t *cdata, const uint8_t *packet) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  AVFormatContext *s=priv->s;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  AVFormatContext *s = priv->s;
   MpegTSContext *ts = s->priv_data;
 
   MpegTSFilter *tss;
@@ -2192,9 +2192,9 @@ static int handle_packet(lives_clip_data_t *cdata, const uint8_t *packet) {
   }
 
   pes = tss->u.pes_filter.opaque;
-  if (pes!=NULL) {
+  if (pes != NULL) {
     st = pes->st;
-    if (priv->vidst!=NULL&&st!=priv->vidst) return 0;
+    if (priv->vidst != NULL && st != priv->vidst) return 0;
   }
 
   afc = (packet[3] >> 4) & 3;
@@ -2232,14 +2232,14 @@ static int handle_packet(lives_clip_data_t *cdata, const uint8_t *packet) {
   // skip stream packet
   p = packet + 4;
   if (has_adaptation) {
-    uint8_t xflags,spc;
-    if ((xflags=p[1])&4) {
+    uint8_t xflags, spc;
+    if ((xflags = p[1]) & 4) {
       // get splice distance
-      size_t sploffs=1; // skip pcr
-      if (xflags & 8) sploffs+=48; // skip opcr
+      size_t sploffs = 1; // skip pcr
+      if (xflags & 8) sploffs += 48; // skip opcr
 
-      spc=p[sploffs];
-      if (spc==0) {
+      spc = p[sploffs];
+      if (spc == 0) {
         //fprintf (stderr,"XXX:  Keyframe ?");
       }
 
@@ -2253,7 +2253,7 @@ static int handle_packet(lives_clip_data_t *cdata, const uint8_t *packet) {
     return 0;
 
   pos = priv->input_position;
-  ts->pos47= pos % ts->raw_packet_size;
+  ts->pos47 = pos % ts->raw_packet_size;
 
 
   if (tss->type == MPEGTS_SECTION) {
@@ -2297,12 +2297,12 @@ static int handle_packet(lives_clip_data_t *cdata, const uint8_t *packet) {
 /* XXX: try to find a better synchro over several packets (use
    get_packet_size() ?) */
 static int mpegts_resync(lives_clip_data_t *cdata) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  int pb=priv->fd;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  int pb = priv->fd;
   int c, i;
 
   for (i = 0; i < MAX_RESYNC_SIZE; i++) {
-    c = lives_rf8(cdata,pb);
+    c = lives_rf8(cdata, pb);
     if (check_for_eof(cdata))
       return -1;
     if (c == 0x47) {
@@ -2319,7 +2319,7 @@ static int mpegts_resync(lives_clip_data_t *cdata) {
 
 /* return -1 if error or EOF. Return 0 if OK. */
 static int read_packet(lives_clip_data_t *cdata, uint8_t *buf, int raw_packet_size) {
-  lives_mpegts_priv_t *priv=cdata->priv;
+  lives_mpegts_priv_t *priv = cdata->priv;
   int pb = priv->fd;
 
   int skip, len;
@@ -2327,15 +2327,15 @@ static int read_packet(lives_clip_data_t *cdata, uint8_t *buf, int raw_packet_si
   for (;;) {
     len = read(pb, buf, TS_PACKET_SIZE);
     if (len != TS_PACKET_SIZE) {
-      priv->input_position+=len;
+      priv->input_position += len;
       return len < 0 ? len : -1;
     }
-    priv->input_position+=len;
+    priv->input_position += len;
 
     /* check packet sync byte */
     if (buf[0] != 0x47) {
       /* find a new packet start */
-      priv->input_position-=TS_PACKET_SIZE;
+      priv->input_position -= TS_PACKET_SIZE;
       lseek(pb, priv->input_position, SEEK_SET);
       if (mpegts_resync(cdata) < 0)
         return -1;
@@ -2344,7 +2344,7 @@ static int read_packet(lives_clip_data_t *cdata, uint8_t *buf, int raw_packet_si
     } else {
       skip = raw_packet_size - TS_PACKET_SIZE;
       if (skip > 0) {
-        lives_seek(cdata, pb, priv->input_position+skip);
+        lives_seek(cdata, pb, priv->input_position + skip);
       }
       break;
     }
@@ -2356,8 +2356,8 @@ static int read_packet(lives_clip_data_t *cdata, uint8_t *buf, int raw_packet_si
 
 
 static int handle_packets(lives_clip_data_t *cdata, int nb_packets) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  AVFormatContext *s=priv->s;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  AVFormatContext *s = priv->s;
   MpegTSContext *ts = s->priv_data;
 
   uint8_t packet[TS_PACKET_SIZE];
@@ -2414,16 +2414,16 @@ static int handle_packets(lives_clip_data_t *cdata, int nb_packets) {
 
 static boolean lives_mpegts_probe(const lives_clip_data_t *cdata, unsigned char *p) {
 
-  const int size= MPEGTS_PROBE_SIZE;
+  const int size = MPEGTS_PROBE_SIZE;
   int score, fec_score, dvhs_score;
-  int check_count= size / TS_FEC_PACKET_SIZE;
+  int check_count = size / TS_FEC_PACKET_SIZE;
 #define CHECK_COUNT 10
 
   if (check_count < CHECK_COUNT) return FALSE;
 
-  score      = analyze(p, TS_PACKET_SIZE     *check_count, TS_PACKET_SIZE     , NULL)*CHECK_COUNT/check_count;
-  dvhs_score = analyze(p, TS_DVHS_PACKET_SIZE*check_count, TS_DVHS_PACKET_SIZE, NULL)*CHECK_COUNT/check_count;
-  fec_score  = analyze(p, TS_FEC_PACKET_SIZE *check_count, TS_FEC_PACKET_SIZE , NULL)*CHECK_COUNT/check_count;
+  score      = analyze(p, TS_PACKET_SIZE     * check_count, TS_PACKET_SIZE     , NULL) * CHECK_COUNT / check_count;
+  dvhs_score = analyze(p, TS_DVHS_PACKET_SIZE * check_count, TS_DVHS_PACKET_SIZE, NULL) * CHECK_COUNT / check_count;
+  fec_score  = analyze(p, TS_FEC_PACKET_SIZE * check_count, TS_FEC_PACKET_SIZE , NULL) * CHECK_COUNT / check_count;
 
   if (score > fec_score && score > dvhs_score && score > 6) return TRUE;
   else if (dvhs_score > score && dvhs_score > fec_score && dvhs_score > 6) return TRUE;
@@ -2461,11 +2461,11 @@ static int parse_pcr(int64_t *ppcr_high, int *ppcr_low, const uint8_t *packet) {
 
 
 static int lives_mpegts_read_header(lives_clip_data_t *cdata) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  AVFormatContext *s=priv->s;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  AVFormatContext *s = priv->s;
   MpegTSContext *ts = s->priv_data;
   int pb = priv->fd;
-  uint8_t buf[8*1024];
+  uint8_t buf[8 * 1024];
   int len;
   int64_t pos;
 
@@ -2474,11 +2474,11 @@ static int lives_mpegts_read_header(lives_clip_data_t *cdata) {
   len = read(pb, buf, sizeof(buf));
 
   if (len != sizeof(buf)) {
-    if (len>0) priv->input_position+=len;
+    if (len > 0) priv->input_position += len;
     goto fail;
   }
 
-  priv->input_position+=len;
+  priv->input_position += len;
 
   ts->raw_packet_size = get_packet_size(buf, sizeof(buf));
   if (ts->raw_packet_size <= 0) {
@@ -2527,8 +2527,8 @@ static int lives_mpegts_read_header(lives_clip_data_t *cdata) {
     st->codec->codec_type = AVMEDIA_TYPE_DATA;
     st->codec->codec_id = CODEC_ID_MPEG2TS;
 
-    if (priv->vidst==NULL) {
-      priv->vidst=st;
+    if (priv->vidst == NULL) {
+      priv->vidst = st;
       //fprintf(stderr,"mpegts_decoder: got video stream\n");
     }
 
@@ -2573,8 +2573,8 @@ fail:
 
 
 static boolean mpegts_read_packet(lives_clip_data_t *cdata, AVPacket *pkt) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  AVFormatContext *s=priv->s;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  AVFormatContext *s = priv->s;
   MpegTSContext *ts = s->priv_data;
   int ret, i;
 
@@ -2601,15 +2601,15 @@ static boolean mpegts_read_packet(lives_clip_data_t *cdata, AVPacket *pkt) {
 
 
 static int mpegts_read_close(lives_clip_data_t *cdata) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  AVFormatContext *s=priv->s;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  AVFormatContext *s = priv->s;
 
   MpegTSContext *ts = s->priv_data;
   int i;
 
   clear_programs(ts);
 
-  for (i=0; i<NB_PID_MAX; i++)
+  for (i = 0; i < NB_PID_MAX; i++)
     if (ts->pids[i]) mpegts_close_filter(ts, ts->pids[i]);
 
   return 0;
@@ -2624,12 +2624,12 @@ static int mpegts_read_close(lives_clip_data_t *cdata) {
 
 static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts) {
   // use ADJUSTED dts (subtract priv->start_dts from it)
-  return (int64_t)((double)dts/90000.*cdata->fps+.5);
+  return (int64_t)((double)dts / 90000.*cdata->fps + .5);
 }
 
 static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
   // returns UNADJUSTED dts : add priv->start_dts to it
-  return (int64_t)((double)frame*90000./cdata->fps+.5);
+  return (int64_t)((double)frame * 90000. / cdata->fps + .5);
 }
 
 
@@ -2642,9 +2642,9 @@ static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
 const char *module_check_init(void) {
   avcodec_register_all();
   av_log_set_level(0);
-  indices=NULL;
-  nidxc=0;
-  pthread_mutex_init(&indices_mutex,NULL);
+  indices = NULL;
+  nidxc = 0;
+  pthread_mutex_init(&indices_mutex, NULL);
   return NULL;
 }
 
@@ -2657,37 +2657,37 @@ const char *version(void) {
 
 static lives_clip_data_t *init_cdata(void) {
   lives_mpegts_priv_t *priv;
-  lives_clip_data_t *cdata=(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
+  lives_clip_data_t *cdata = (lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
 
-  cdata->URI=NULL;
+  cdata->URI = NULL;
 
-  cdata->priv=priv=malloc(sizeof(lives_mpegts_priv_t));
+  cdata->priv = priv = malloc(sizeof(lives_mpegts_priv_t));
 
-  cdata->seek_flag=0;
+  cdata->seek_flag = 0;
 
-  priv->ctx=NULL;
-  priv->codec=NULL;
-  priv->picture=NULL;
-  priv->inited=FALSE;
+  priv->ctx = NULL;
+  priv->codec = NULL;
+  priv->picture = NULL;
+  priv->inited = FALSE;
 
-  priv->expect_eof=FALSE;
+  priv->expect_eof = FALSE;
 
-  cdata->palettes=(int *)malloc(2*sizeof(int));
-  cdata->palettes[1]=WEED_PALETTE_END;
+  cdata->palettes = (int *)malloc(2 * sizeof(int));
+  cdata->palettes[1] = WEED_PALETTE_END;
 
-  cdata->interlace=LIVES_INTERLACE_NONE;
+  cdata->interlace = LIVES_INTERLACE_NONE;
 
-  cdata->nframes=0;
+  cdata->nframes = 0;
 
-  cdata->sync_hint=0;
+  cdata->sync_hint = 0;
 
-  cdata->fps=0.;
+  cdata->fps = 0.;
 
-  cdata->video_start_time=0.;
+  cdata->video_start_time = 0.;
 
-  memset(cdata->author,0,1);
-  memset(cdata->title,0,1);
-  memset(cdata->comment,0,1);
+  memset(cdata->author, 0, 1);
+  memset(cdata->title, 0, 1);
+  memset(cdata->comment, 0, 1);
 
   return cdata;
 }
@@ -2695,27 +2695,27 @@ static lives_clip_data_t *init_cdata(void) {
 static index_entry *mpegts_read_seek(const lives_clip_data_t *cdata, uint32_t timestamp) {
   // use unadj timestamp
 
-  lives_mpegts_priv_t *priv=cdata->priv;
+  lives_mpegts_priv_t *priv = cdata->priv;
 
   index_entry *idx;
 
   if (!priv->idxc->idxhh) return NULL;
 
   pthread_mutex_lock(&priv->idxc->mutex);
-  timestamp = FFMIN(timestamp, frame_to_dts(cdata,cdata->nframes));
+  timestamp = FFMIN(timestamp, frame_to_dts(cdata, cdata->nframes));
   timestamp = FFMAX(timestamp, priv->idxc->idxhh->dts);
 
-  idx=get_idx_for_pts(cdata,timestamp);
+  idx = get_idx_for_pts(cdata, timestamp);
 
-  priv->input_position=idx->offs;
+  priv->input_position = idx->offs;
   pthread_mutex_unlock(&priv->idxc->mutex);
 
-  lseek(priv->fd,priv->input_position,SEEK_SET);
+  lseek(priv->fd, priv->input_position, SEEK_SET);
 
-  if (priv->avpkt.data!=NULL) {
+  if (priv->avpkt.data != NULL) {
     free(priv->avpkt.data);
-    priv->avpkt.data=NULL;
-    priv->avpkt.size=0;
+    priv->avpkt.data = NULL;
+    priv->avpkt.size = 0;
   }
 
   avcodec_flush_buffers(priv->ctx);
@@ -2731,13 +2731,13 @@ static index_container_t *idxc_for(lives_clip_data_t *cdata) {
 
   pthread_mutex_lock(&indices_mutex);
 
-  for (i=0; i<nidxc; i++) {
-    if (indices[i]->clients[0]->current_clip==cdata->current_clip&&
-        !strcmp(indices[i]->clients[0]->URI,cdata->URI)) {
-      idxc=indices[i];
+  for (i = 0; i < nidxc; i++) {
+    if (indices[i]->clients[0]->current_clip == cdata->current_clip &&
+        !strcmp(indices[i]->clients[0]->URI, cdata->URI)) {
+      idxc = indices[i];
       // append cdata to clients
-      idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,(idxc->nclients+1)*sizeof(lives_clip_data_t *));
-      idxc->clients[idxc->nclients]=cdata;
+      idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, (idxc->nclients + 1) * sizeof(lives_clip_data_t *));
+      idxc->clients[idxc->nclients] = cdata;
       idxc->nclients++;
       //
       pthread_mutex_unlock(&indices_mutex);
@@ -2745,20 +2745,20 @@ static index_container_t *idxc_for(lives_clip_data_t *cdata) {
     }
   }
 
-  indices=(index_container_t **)realloc(indices,(nidxc+1)*sizeof(index_container_t *));
+  indices = (index_container_t **)realloc(indices, (nidxc + 1) * sizeof(index_container_t *));
 
   // match not found, create a new index container
-  idxc=(index_container_t *)malloc(sizeof(index_container_t));
+  idxc = (index_container_t *)malloc(sizeof(index_container_t));
 
-  idxc->idxhh=NULL;
-  idxc->idxht=NULL;
+  idxc->idxhh = NULL;
+  idxc->idxht = NULL;
 
-  idxc->nclients=1;
-  idxc->clients=(lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
-  idxc->clients[0]=cdata;
-  pthread_mutex_init(&idxc->mutex,NULL);
+  idxc->nclients = 1;
+  idxc->clients = (lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
+  idxc->clients[0] = cdata;
+  pthread_mutex_init(&idxc->mutex, NULL);
 
-  indices[nidxc]=idxc;
+  indices[nidxc] = idxc;
   pthread_mutex_unlock(&indices_mutex);
 
   nidxc++;
@@ -2768,44 +2768,44 @@ static index_container_t *idxc_for(lives_clip_data_t *cdata) {
 
 
 static void idxc_release(lives_clip_data_t *cdata) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  index_container_t *idxc=priv->idxc;
-  register int i,j;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  index_container_t *idxc = priv->idxc;
+  register int i, j;
 
-  if (idxc==NULL) return;
+  if (idxc == NULL) return;
 
   pthread_mutex_lock(&indices_mutex);
 
-  if (idxc->nclients==1) {
+  if (idxc->nclients == 1) {
     mpegts_save_index(idxc->clients[0]);
 
     // remove this index
     index_free(idxc->idxhh);
     free(idxc->clients);
-    for (i=0; i<nidxc; i++) {
-      if (indices[i]==idxc) {
+    for (i = 0; i < nidxc; i++) {
+      if (indices[i] == idxc) {
         nidxc--;
-        for (j=i; j<nidxc; j++) {
-          indices[j]=indices[j+1];
+        for (j = i; j < nidxc; j++) {
+          indices[j] = indices[j + 1];
         }
         free(idxc);
-        if (nidxc==0) {
+        if (nidxc == 0) {
           free(indices);
-          indices=NULL;
-        } else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
+          indices = NULL;
+        } else indices = (index_container_t **)realloc(indices, nidxc * sizeof(index_container_t *));
         break;
       }
     }
   } else {
     // reduce client count by 1
-    for (i=0; i<idxc->nclients; i++) {
-      if (idxc->clients[i]==cdata) {
+    for (i = 0; i < idxc->nclients; i++) {
+      if (idxc->clients[i] == cdata) {
         // remove this entry
         idxc->nclients--;
-        for (j=i; j<idxc->nclients; j++) {
-          idxc->clients[j]=idxc->clients[j+1];
+        for (j = i; j < idxc->nclients; j++) {
+          idxc->clients[j] = idxc->clients[j + 1];
         }
-        idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,idxc->nclients*sizeof(lives_clip_data_t *));
+        idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, idxc->nclients * sizeof(lives_clip_data_t *));
         break;
       }
     }
@@ -2819,46 +2819,46 @@ static void idxc_release(lives_clip_data_t *cdata) {
 static void idxc_release_all(void) {
   register int i;
 
-  for (i=0; i<nidxc; i++) {
+  for (i = 0; i < nidxc; i++) {
     index_free(indices[i]->idxhh);
     free(indices[i]->clients);
     free(indices[i]);
   }
-  nidxc=0;
+  nidxc = 0;
 }
 
 
 
 static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
-  lives_mpegts_priv_t *priv=cdata->priv;
+  lives_mpegts_priv_t *priv = cdata->priv;
 
-  cdata->seek_flag=0;
+  cdata->seek_flag = 0;
 
   if (priv->s) mpegts_read_close(cdata);
 
-  if (priv->ctx!=NULL) {
+  if (priv->ctx != NULL) {
     avcodec_close(priv->ctx);
     av_free(priv->ctx);
   }
 
-  if (priv->s!=NULL) {
+  if (priv->s != NULL) {
     av_free(priv->s);
   }
 
-  if (priv->picture!=NULL) av_frame_unref(&priv->picture);
+  if (priv->picture != NULL) av_frame_unref(&priv->picture);
 
-  priv->ctx=NULL;
-  priv->codec=NULL;
-  priv->picture=NULL;
+  priv->ctx = NULL;
+  priv->codec = NULL;
+  priv->picture = NULL;
 
-  if (cdata->palettes!=NULL) free(cdata->palettes);
-  cdata->palettes=NULL;
+  if (cdata->palettes != NULL) free(cdata->palettes);
+  cdata->palettes = NULL;
 
-  if (priv->avpkt.data!=NULL) {
+  if (priv->avpkt.data != NULL) {
     free(priv->avpkt.data);
-    priv->avpkt.data=NULL;
-    priv->avpkt.size=0;
+    priv->avpkt.data = NULL;
+    priv->avpkt.size = 0;
   }
 
   close(priv->fd);
@@ -2867,59 +2867,59 @@ static void detach_stream(lives_clip_data_t *cdata) {
 static int64_t mpegts_load_index(lives_clip_data_t *cdata);
 
 int64_t get_last_video_dts(lives_clip_data_t *cdata) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  boolean got_picture=FALSE;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  boolean got_picture = FALSE;
   int len;
-  int64_t dts,last_dts=-1;
-  int64_t idxpos,idxpos_data=0;
+  int64_t dts, last_dts = -1;
+  int64_t idxpos, idxpos_data = 0;
 
   // see if we have a file from previous open
   pthread_mutex_lock(&priv->idxc->mutex);
-  if ((dts=mpegts_load_index(cdata))>0) {
+  if ((dts = mpegts_load_index(cdata)) > 0) {
     pthread_mutex_unlock(&priv->idxc->mutex);
-    return dts+priv->start_dts;
+    return dts + priv->start_dts;
   }
   pthread_mutex_unlock(&priv->idxc->mutex);
 
-  priv->input_position=priv->data_start;
-  lseek(priv->fd,priv->input_position,SEEK_SET);
+  priv->input_position = priv->data_start;
+  lseek(priv->fd, priv->input_position, SEEK_SET);
   avcodec_flush_buffers(priv->ctx);
-  mpegts_read_packet(cdata,&priv->avpkt);
-  priv->got_eof=FALSE;
+  mpegts_read_packet(cdata, &priv->avpkt);
+  priv->got_eof = FALSE;
 
-  idxpos=priv->input_position;
+  idxpos = priv->input_position;
 
   // get each packet and decode just the first frame
 
   while (1) {
-    got_picture=FALSE;
+    got_picture = FALSE;
 
     while (!got_picture) {
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-      len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+      len = avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
 #else
-      len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+      len = avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
 
       if (got_picture) {
-        idxpos_data=idxpos;
-        dts=priv->avpkt.dts-priv->start_dts;
+        idxpos_data = idxpos;
+        dts = priv->avpkt.dts - priv->start_dts;
         pthread_mutex_lock(&priv->idxc->mutex);
-        lives_add_idx(cdata,idxpos,dts);
+        lives_add_idx(cdata, idxpos, dts);
         pthread_mutex_unlock(&priv->idxc->mutex);
         avcodec_flush_buffers(priv->ctx);
-        idxpos=priv->input_position;
+        idxpos = priv->input_position;
       }
 
-      if (len<0||len==priv->avpkt.size||got_picture) {
-        if (priv->avpkt.data!=NULL) {
+      if (len < 0 || len == priv->avpkt.size || got_picture) {
+        if (priv->avpkt.data != NULL) {
           free(priv->avpkt.data);
-          priv->avpkt.data=NULL;
-          priv->avpkt.size=0;
+          priv->avpkt.data = NULL;
+          priv->avpkt.size = 0;
         }
-        if (priv->input_position==priv->filesize) goto vts_next;
-        mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+        if (priv->input_position == priv->filesize) goto vts_next;
+        mpegts_read_packet((lives_clip_data_t *)cdata, &priv->avpkt);
         if (priv->got_eof) goto vts_next;
       }
 
@@ -2930,30 +2930,30 @@ vts_next:
 
   // rewind back to last pos, and decode up to end now
 
-  priv->input_position=idxpos_data;
-  lseek(priv->fd,priv->input_position,SEEK_SET);
-  priv->got_eof=FALSE;
+  priv->input_position = idxpos_data;
+  lseek(priv->fd, priv->input_position, SEEK_SET);
+  priv->got_eof = FALSE;
   avcodec_flush_buffers(priv->ctx);
-  mpegts_read_packet(cdata,&priv->avpkt);
+  mpegts_read_packet(cdata, &priv->avpkt);
 
   while (1) {
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+    len = avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
 #else
-    len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+    len = avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
 
-    if (got_picture) last_dts=priv->avpkt.dts;
+    if (got_picture) last_dts = priv->avpkt.dts;
 
-    if (len==priv->avpkt.size) {
-      if (priv->avpkt.data!=NULL) {
+    if (len == priv->avpkt.size) {
+      if (priv->avpkt.data != NULL) {
         free(priv->avpkt.data);
-        priv->avpkt.data=NULL;
-        priv->avpkt.size=0;
+        priv->avpkt.data = NULL;
+        priv->avpkt.size = 0;
       }
-      if (priv->input_position==priv->filesize) goto vts_done;
-      mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+      if (priv->input_position == priv->filesize) goto vts_done;
+      mpegts_read_packet((lives_clip_data_t *)cdata, &priv->avpkt);
       if (priv->got_eof) goto vts_done;
     }
 
@@ -2961,7 +2961,7 @@ vts_next:
 
 vts_done:
 
-  priv->got_eof=FALSE;
+  priv->got_eof = FALSE;
   return last_dts;
 
 }
@@ -2970,96 +2970,96 @@ vts_done:
 
 static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get a handle
-  lives_mpegts_priv_t *priv=cdata->priv;
+  lives_mpegts_priv_t *priv = cdata->priv;
   unsigned char header[MPEGTS_PROBE_SIZE];
-  int64_t ldts,dts,pts;
+  int64_t ldts, dts, pts;
   double fps;
 
   int len;
 
 
-  AVCodec *codec=NULL;
+  AVCodec *codec = NULL;
   AVCodecContext *ctx;
 
-  boolean got_picture=FALSE;
-  boolean is_partial_clone=FALSE;
+  boolean got_picture = FALSE;
+  boolean is_partial_clone = FALSE;
 
   struct stat sb;
 
   //#define DEBUG
 #ifdef DEBUG
-  fprintf(stderr,"\n");
+  fprintf(stderr, "\n");
 #endif
 
-  if (isclone&&!priv->inited) {
-    isclone=FALSE;
-    if (cdata->fps>0.&&cdata->nframes>0)
-      is_partial_clone=TRUE;
+  if (isclone && !priv->inited) {
+    isclone = FALSE;
+    if (cdata->fps > 0. && cdata->nframes > 0)
+      is_partial_clone = TRUE;
   }
 
-  priv->has_audio=priv->has_video=FALSE;
-  priv->vidst=NULL;
-  priv->vididx=-1;
+  priv->has_audio = priv->has_video = FALSE;
+  priv->vidst = NULL;
+  priv->vididx = -1;
 
-  priv->got_eof=FALSE;
+  priv->got_eof = FALSE;
 
-  if ((priv->fd=open(cdata->URI,O_RDONLY))==-1) {
-    fprintf(stderr, "mpegts_decoder: unable to open %s\n",cdata->URI);
+  if ((priv->fd = open(cdata->URI, O_RDONLY)) == -1) {
+    fprintf(stderr, "mpegts_decoder: unable to open %s\n", cdata->URI);
     return FALSE;
   }
 
 #ifdef IS_MINGW
-  setmode(priv->fd,O_BINARY);
+  setmode(priv->fd, O_BINARY);
 #endif
 
   if (isclone) goto seek_skip;
 
-  fstat(priv->fd,&sb);
-  priv->filesize=sb.st_size;
+  fstat(priv->fd, &sb);
+  priv->filesize = sb.st_size;
 
   if (read(priv->fd, header, MPEGTS_PROBE_SIZE) < MPEGTS_PROBE_SIZE) {
     // for example, might be a directory
 #ifdef DEBUG
-    fprintf(stderr, "mpegts_decoder: unable to read header for %s\n",cdata->URI);
+    fprintf(stderr, "mpegts_decoder: unable to read header for %s\n", cdata->URI);
 #endif
     close(priv->fd);
     return FALSE;
   }
 
-  priv->input_position+=MPEGTS_PROBE_SIZE;
+  priv->input_position += MPEGTS_PROBE_SIZE;
 
   if (!lives_mpegts_probe(cdata, header)) {
 #ifdef DEBUG
-    fprintf(stderr, "mpegts_decoder: unable to parse header for %s\n",cdata->URI);
+    fprintf(stderr, "mpegts_decoder: unable to parse header for %s\n", cdata->URI);
 #endif
     close(priv->fd);
     return FALSE;
   }
 
-  priv->input_position=0;
-  lseek(priv->fd,priv->input_position,SEEK_SET);
+  priv->input_position = 0;
+  lseek(priv->fd, priv->input_position, SEEK_SET);
 
-  if (!is_partial_clone) cdata->fps=0.;
-  cdata->width=cdata->frame_width=cdata->height=cdata->frame_height=0;
-  cdata->offs_x=cdata->offs_y=0;
+  if (!is_partial_clone) cdata->fps = 0.;
+  cdata->width = cdata->frame_width = cdata->height = cdata->frame_height = 0;
+  cdata->offs_x = cdata->offs_y = 0;
 
-  cdata->arate=0;
-  cdata->achans=0;
-  cdata->asamps=16;
+  cdata->arate = 0;
+  cdata->achans = 0;
+  cdata->asamps = 16;
 
-  cdata->sync_hint=SYNC_HINT_AUDIO_TRIM_START;
+  cdata->sync_hint = SYNC_HINT_AUDIO_TRIM_START;
 
-  sprintf(cdata->audio_name,"%s","");
+  sprintf(cdata->audio_name, "%s", "");
 
 
 seek_skip:
-  priv->idxc=idxc_for(cdata);
-  priv->inited=TRUE;
+  priv->idxc = idxc_for(cdata);
+  priv->inited = TRUE;
 
   priv->s = avformat_alloc_context();
 
-  priv->ts=malloc(sizeof(MpegTSContext));
-  memset(priv->ts,0,sizeof(MpegTSContext));
+  priv->ts = malloc(sizeof(MpegTSContext));
+  memset(priv->ts, 0, sizeof(MpegTSContext));
 
   priv->ts->raw_packet_size = TS_PACKET_SIZE;
   //ts->stream = s;
@@ -3067,57 +3067,57 @@ seek_skip:
   priv->s->priv_data = priv->ts;
 
   av_init_packet(&priv->avpkt);
-  priv->avpkt.data=NULL;
-  priv->ctx=NULL;
+  priv->avpkt.data = NULL;
+  priv->ctx = NULL;
 
   if (lives_mpegts_read_header(cdata)) {
     close(priv->fd);
     return FALSE;
   }
 
-  if (priv->vidst==NULL) {
+  if (priv->vidst == NULL) {
     fprintf(stderr, "mpegts_decoder: Got no video stream !\n");
     detach_stream(cdata);
     return FALSE;
   }
 
-  priv->data_start=priv->input_position;
+  priv->data_start = priv->input_position;
 
   if (isclone) goto skip_det;
 
-  cdata->seek_flag=LIVES_SEEK_FAST|LIVES_SEEK_NEEDS_CALCULATION;
+  cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_NEEDS_CALCULATION;
 
-  cdata->offs_x=0;
-  cdata->offs_y=0;
+  cdata->offs_x = 0;
+  cdata->offs_y = 0;
 
   switch (priv->vidst->codec->codec_id) {
   case CODEC_ID_DIRAC:
-    sprintf(cdata->video_name,"%s","dirac");
+    sprintf(cdata->video_name, "%s", "dirac");
     break;
   case CODEC_ID_H264:
-    sprintf(cdata->video_name,"%s","h264");
+    sprintf(cdata->video_name, "%s", "h264");
     break;
   case CODEC_ID_MPEG1VIDEO:
-    sprintf(cdata->video_name,"%s","mpeg1");
+    sprintf(cdata->video_name, "%s", "mpeg1");
     break;
   case CODEC_ID_MPEG2VIDEO:
-    sprintf(cdata->video_name,"%s","mpeg2");
+    sprintf(cdata->video_name, "%s", "mpeg2");
     break;
   case CODEC_ID_MPEG4:
-    sprintf(cdata->video_name,"%s","mpeg2");
+    sprintf(cdata->video_name, "%s", "mpeg2");
     break;
   case CODEC_ID_VC1:
-    sprintf(cdata->video_name,"%s","vc1");
+    sprintf(cdata->video_name, "%s", "vc1");
     break;
   default:
-    sprintf(cdata->video_name,"%s","unknown");
+    sprintf(cdata->video_name, "%s", "unknown");
     break;
   }
 
   //#define DEBUG
 #ifdef DEBUG
-  fprintf(stderr,"video type is %f %s %d x %d (%d x %d +%d +%d)\n",duration,cdata->video_name,
-          cdata->width,cdata->height,cdata->frame_width,cdata->frame_height,cdata->offs_x,cdata->offs_y);
+  fprintf(stderr, "video type is %f %s %d x %d (%d x %d +%d +%d)\n", duration, cdata->video_name,
+          cdata->width, cdata->height, cdata->frame_width, cdata->frame_height, cdata->offs_x, cdata->offs_y);
 #endif
 
 skip_det:
@@ -3125,8 +3125,8 @@ skip_det:
   codec = avcodec_find_decoder(priv->vidst->codec->codec_id);
 
   if (!codec) {
-    if (strlen(cdata->video_name)>0)
-      fprintf(stderr, "mpegts_decoder: Could not find avcodec codec for video type %s\n",cdata->video_name);
+    if (strlen(cdata->video_name) > 0)
+      fprintf(stderr, "mpegts_decoder: Could not find avcodec codec for video type %s\n", cdata->video_name);
     detach_stream(cdata);
     return FALSE;
   }
@@ -3139,181 +3139,181 @@ skip_det:
     return FALSE;
   }
 
-  priv->codec=codec;
+  priv->codec = codec;
 
-  if (codec->capabilities&CODEC_CAP_TRUNCATED)
-    ctx->flags|= CODEC_FLAG_TRUNCATED;
+  if (codec->capabilities & CODEC_CAP_TRUNCATED)
+    ctx->flags |= CODEC_FLAG_TRUNCATED;
 
   // re-scan with avcodec; priv->data_start holds video data start position
 
   av_init_packet(&priv->avpkt);
-  if (priv->avpkt.data!=NULL) free(priv->avpkt.data);
-  priv->avpkt.data=NULL;
+  if (priv->avpkt.data != NULL) free(priv->avpkt.data);
+  priv->avpkt.data = NULL;
 
-  priv->input_position=priv->data_start;
-  lseek(priv->fd,priv->input_position,SEEK_SET);
+  priv->input_position = priv->data_start;
+  lseek(priv->fd, priv->input_position, SEEK_SET);
   avcodec_flush_buffers(priv->ctx);
 
   priv->picture = av_frame_alloc();
 
-  mpegts_read_packet(cdata,&priv->avpkt);
+  mpegts_read_packet(cdata, &priv->avpkt);
 
-  while (!got_picture&&!priv->got_eof) {
+  while (!got_picture && !priv->got_eof) {
 
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    len=avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt);
+    len = avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt);
 #else
-    len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+    len = avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
 
-    if (len<0||len==priv->avpkt.size) {
-      if (priv->avpkt.data!=NULL) {
+    if (len < 0 || len == priv->avpkt.size) {
+      if (priv->avpkt.data != NULL) {
         free(priv->avpkt.data);
-        priv->avpkt.data=NULL;
-        priv->avpkt.size=0;
+        priv->avpkt.data = NULL;
+        priv->avpkt.size = 0;
       }
-      mpegts_read_packet(cdata,&priv->avpkt);
+      mpegts_read_packet(cdata, &priv->avpkt);
     }
 
 
   }
 
-  priv->last_frame=-1;
+  priv->last_frame = -1;
 
   if (isclone) {
-    if (priv->picture!=NULL) av_frame_unref(&priv->picture);
-    priv->picture=NULL;
+    if (priv->picture != NULL) av_frame_unref(&priv->picture);
+    priv->picture = NULL;
     return TRUE;
   }
 
 
   if (!got_picture) {
-    fprintf(stderr,"mpegts_decoder: could not get picture.\n PLEASE SEND A PATCH FOR %s FORMAT.\n",cdata->video_name);
+    fprintf(stderr, "mpegts_decoder: could not get picture.\n PLEASE SEND A PATCH FOR %s FORMAT.\n", cdata->video_name);
     detach_stream(cdata);
     return FALSE;
   }
 
-  pts=priv->avpkt.pts;
-  dts=priv->avpkt.dts;
+  pts = priv->avpkt.pts;
+  dts = priv->avpkt.dts;
 
-  priv->start_dts=dts;
+  priv->start_dts = dts;
 
 
   //fprintf(stderr,"got dts %ld pts %ld\n",dts,pts);
 
-  got_picture=0;
+  got_picture = 0;
 
-  while (!got_picture&&!priv->got_eof) {
+  while (!got_picture && !priv->got_eof) {
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    len=avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt);
+    len = avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt);
 #else
-    len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+    len = avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
 
-    if (len==priv->avpkt.size) {
-      if (priv->avpkt.data!=NULL) {
+    if (len == priv->avpkt.size) {
+      if (priv->avpkt.data != NULL) {
         free(priv->avpkt.data);
-        priv->avpkt.data=NULL;
-        priv->avpkt.size=0;
+        priv->avpkt.data = NULL;
+        priv->avpkt.size = 0;
       }
-      mpegts_read_packet(cdata,&priv->avpkt);
+      mpegts_read_packet(cdata, &priv->avpkt);
     }
 
   }
 
   if (got_picture) {
-    pts=priv->avpkt.pts-pts;
-    dts=priv->avpkt.dts-dts;
+    pts = priv->avpkt.pts - pts;
+    dts = priv->avpkt.dts - dts;
     //fprintf(stderr,"got second picture %ld %ld\n",pts,dts);
-  } else pts=dts=0;
+  } else pts = dts = 0;
 
-  if (priv->avpkt.data!=NULL) {
+  if (priv->avpkt.data != NULL) {
     free(priv->avpkt.data);
-    priv->avpkt.data=NULL;
-    priv->avpkt.size=0;
+    priv->avpkt.data = NULL;
+    priv->avpkt.size = 0;
   }
 
 
-  cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
-  if (ctx->color_range==AVCOL_RANGE_MPEG) cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
+  cdata->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+  if (ctx->color_range == AVCOL_RANGE_MPEG) cdata->YUV_clamping = WEED_YUV_CLAMPING_CLAMPED;
 
-  cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
-  if (ctx->chroma_sample_location!=AVCHROMA_LOC_LEFT) cdata->YUV_sampling=WEED_YUV_SAMPLING_MPEG;
+  cdata->YUV_sampling = WEED_YUV_SAMPLING_DEFAULT;
+  if (ctx->chroma_sample_location != AVCHROMA_LOC_LEFT) cdata->YUV_sampling = WEED_YUV_SAMPLING_MPEG;
 
-  cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
-  if (ctx->colorspace==AVCOL_SPC_BT709) cdata->YUV_subspace=WEED_YUV_SUBSPACE_BT709;
+  cdata->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
+  if (ctx->colorspace == AVCOL_SPC_BT709) cdata->YUV_subspace = WEED_YUV_SUBSPACE_BT709;
 
 
-  cdata->palettes[0]=avi_pix_fmt_to_weed_palette(ctx->pix_fmt,
-                     &cdata->YUV_clamping);
+  cdata->palettes[0] = avi_pix_fmt_to_weed_palette(ctx->pix_fmt,
+                       &cdata->YUV_clamping);
 
-  if (cdata->palettes[0]==WEED_PALETTE_END) {
-    fprintf(stderr, "mpegts_decoder: Could not find a usable palette for (%d) %s\n",ctx->pix_fmt,cdata->URI);
+  if (cdata->palettes[0] == WEED_PALETTE_END) {
+    fprintf(stderr, "mpegts_decoder: Could not find a usable palette for (%d) %s\n", ctx->pix_fmt, cdata->URI);
     detach_stream(cdata);
     return FALSE;
   }
 
-  cdata->current_palette=cdata->palettes[0];
+  cdata->current_palette = cdata->palettes[0];
 
   // re-get fps, width, height, nframes - actually avcodec is pretty useless at getting this
   // so we fall back on the values we obtained ourselves
 
-  if (cdata->width==0) cdata->width=ctx->width-cdata->offs_x*2;
-  if (cdata->height==0) cdata->height=ctx->height-cdata->offs_y*2;
+  if (cdata->width == 0) cdata->width = ctx->width - cdata->offs_x * 2;
+  if (cdata->height == 0) cdata->height = ctx->height - cdata->offs_y * 2;
 
-  if (cdata->width*cdata->height==0) {
-    fprintf(stderr, "mpegts_decoder: invalid width and height (%d X %d)\n",cdata->width,cdata->height);
+  if (cdata->width * cdata->height == 0) {
+    fprintf(stderr, "mpegts_decoder: invalid width and height (%d X %d)\n", cdata->width, cdata->height);
     detach_stream(cdata);
     return FALSE;
   }
   //#define DEBUG
 #ifdef DEBUG
-  fprintf(stderr,"using palette %d, size %d x %d\n",
-          cdata->current_palette,cdata->width,cdata->height);
+  fprintf(stderr, "using palette %d, size %d x %d\n",
+          cdata->current_palette, cdata->width, cdata->height);
 #endif
 
-  cdata->par=(double)ctx->sample_aspect_ratio.num/(double)ctx->sample_aspect_ratio.den;
-  if (cdata->par==0.) cdata->par=1.;
+  cdata->par = (double)ctx->sample_aspect_ratio.num / (double)ctx->sample_aspect_ratio.den;
+  if (cdata->par == 0.) cdata->par = 1.;
 
-  if (cdata->fps==0.&&ctx->time_base.den>0&&ctx->time_base.num>0) {
-    fps=(double)ctx->time_base.den/(double)ctx->time_base.num;
-    if (fps!=1000.) cdata->fps=fps;
+  if (cdata->fps == 0. && ctx->time_base.den > 0 && ctx->time_base.num > 0) {
+    fps = (double)ctx->time_base.den / (double)ctx->time_base.num;
+    if (fps != 1000.) cdata->fps = fps;
   }
 
-  if (cdata->fps==0.) {
-    if (pts!=0) cdata->fps=180000./(double)pts;
-    else if (dts!=0) cdata->fps=180000./(double)dts;
+  if (cdata->fps == 0.) {
+    if (pts != 0) cdata->fps = 180000. / (double)pts;
+    else if (dts != 0) cdata->fps = 180000. / (double)dts;
   }
 
 #ifndef IS_MINGW
 
-  if (cdata->fps==0.||cdata->fps==1000.) {
+  if (cdata->fps == 0. || cdata->fps == 1000.) {
     double res = get_fps(cdata->URI);
     if (res >= 0.) cdata->fps = res;
   }
 
 #endif
 
-  if (cdata->fps==0.||cdata->fps==1000.) {
+  if (cdata->fps == 0. || cdata->fps == 1000.) {
     // if mplayer fails, count the frames between index entries
     //dts=calc_dts_delta(cdata);
     //if (dts!=0) cdata->fps=1000./(double)dts;
   }
 
-  if (cdata->fps==0.||cdata->fps==1000.) {
+  if (cdata->fps == 0. || cdata->fps == 1000.) {
     fprintf(stderr, "mpegts_decoder: invalid framerate %.4f (%d / %d)\n",
-            cdata->fps,ctx->time_base.den,ctx->time_base.num);
+            cdata->fps, ctx->time_base.den, ctx->time_base.num);
     detach_stream(cdata);
     return FALSE;
   }
 
 
-  if (ctx->ticks_per_frame==2) {
+  if (ctx->ticks_per_frame == 2) {
     // TODO - needs checking
-    cdata->fps/=2.;
-    cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
+    cdata->fps /= 2.;
+    cdata->interlace = LIVES_INTERLACE_BOTTOM_FIRST;
   }
 
   if (is_partial_clone) {
@@ -3324,139 +3324,139 @@ skip_det:
     return TRUE;
   }
 
-  ldts=get_last_video_dts(cdata);
+  ldts = get_last_video_dts(cdata);
 
-  if (ldts==-1) {
+  if (ldts == -1) {
     fprintf(stderr, "mpegts_decoder: could not read last dts\n");
     detach_stream(cdata);
     return FALSE;
   }
 
-  ldts-=priv->start_dts;
+  ldts -= priv->start_dts;
 
-  cdata->nframes=dts_to_frame(cdata,ldts)+2;
+  cdata->nframes = dts_to_frame(cdata, ldts) + 2;
 
   //fprintf(stderr,"check for %ld frames\n",cdata->nframes);
 
   // double check, sometimes we can be out by one or two frames
   while (1) {
-    priv->expect_eof=TRUE;
-    priv->got_eof=FALSE;
-    if (get_frame(cdata,cdata->nframes-1,NULL,0,NULL)) {
+    priv->expect_eof = TRUE;
+    priv->got_eof = FALSE;
+    if (get_frame(cdata, cdata->nframes - 1, NULL, 0, NULL)) {
       if (!priv->got_eof) break;
     }
     cdata->nframes--;
   }
-  priv->expect_eof=FALSE;
+  priv->expect_eof = FALSE;
 
 
 #ifdef DEBUG
-  fprintf(stderr,"fps is %.4f %ld %ld %ld\n",cdata->fps,cdata->nframes,ldts,priv->start_dts);
+  fprintf(stderr, "fps is %.4f %ld %ld %ld\n", cdata->fps, cdata->nframes, ldts, priv->start_dts);
 #endif
 
-  if (priv->picture!=NULL) av_frame_unref(&priv->picture);
-  priv->picture=NULL;
+  if (priv->picture != NULL) av_frame_unref(&priv->picture);
+  priv->picture = NULL;
 
   return TRUE;
 }
 
 
 static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
-  lives_clip_data_t *clone=init_cdata();
-  lives_mpegts_priv_t *dpriv,*spriv;
+  lives_clip_data_t *clone = init_cdata();
+  lives_mpegts_priv_t *dpriv, *spriv;
 
   // copy from cdata to clone, with a new context for clone
-  clone->URI=strdup(cdata->URI);
+  clone->URI = strdup(cdata->URI);
 
   // create "priv" elements
-  dpriv=clone->priv;
-  spriv=cdata->priv;
+  dpriv = clone->priv;
+  spriv = cdata->priv;
 
-  if (spriv!=NULL) dpriv->filesize=spriv->filesize;
+  if (spriv != NULL) dpriv->filesize = spriv->filesize;
 
-  clone->current_clip=cdata->current_clip;
-  clone->width=cdata->width;
-  clone->height=cdata->height;
-  clone->nframes=cdata->nframes;
-  clone->interlace=cdata->interlace;
-  clone->offs_x=cdata->offs_x;
-  clone->offs_y=cdata->offs_y;
-  clone->frame_width=cdata->frame_width;
-  clone->frame_height=cdata->frame_height;
-  clone->par=cdata->par;
-  clone->fps=cdata->fps;
-  if (cdata->palettes!=NULL) clone->palettes[0]=cdata->palettes[0];
-  clone->current_palette=cdata->current_palette;
-  clone->YUV_sampling=cdata->YUV_sampling;
-  clone->YUV_clamping=cdata->YUV_clamping;
+  clone->current_clip = cdata->current_clip;
+  clone->width = cdata->width;
+  clone->height = cdata->height;
+  clone->nframes = cdata->nframes;
+  clone->interlace = cdata->interlace;
+  clone->offs_x = cdata->offs_x;
+  clone->offs_y = cdata->offs_y;
+  clone->frame_width = cdata->frame_width;
+  clone->frame_height = cdata->frame_height;
+  clone->par = cdata->par;
+  clone->fps = cdata->fps;
+  if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
+  clone->current_palette = cdata->current_palette;
+  clone->YUV_sampling = cdata->YUV_sampling;
+  clone->YUV_clamping = cdata->YUV_clamping;
 
-  snprintf(clone->author,256,"%s",cdata->author);
-  snprintf(clone->title,256,"%s",cdata->title);
-  snprintf(clone->comment,256,"%s",cdata->comment);
+  snprintf(clone->author, 256, "%s", cdata->author);
+  snprintf(clone->title, 256, "%s", cdata->title);
+  snprintf(clone->comment, 256, "%s", cdata->comment);
 
-  if (spriv!=NULL) dpriv->inited=TRUE;
+  if (spriv != NULL) dpriv->inited = TRUE;
 
-  if (!attach_stream(clone,TRUE)) {
+  if (!attach_stream(clone, TRUE)) {
     free(clone->URI);
-    clone->URI=NULL;
+    clone->URI = NULL;
     clip_data_free(clone);
     return NULL;
   }
 
-  if (spriv!=NULL) {
-    clone->nclips=cdata->nclips;
-    snprintf(clone->container_name,512,"%s",cdata->container_name);
-    snprintf(clone->video_name,512,"%s",cdata->video_name);
-    clone->arate=cdata->arate;
-    clone->achans=cdata->achans;
-    clone->asamps=cdata->asamps;
-    clone->asigned=cdata->asigned;
-    clone->ainterleaf=cdata->ainterleaf;
-    snprintf(clone->audio_name,512,"%s",cdata->audio_name);
-    clone->seek_flag=cdata->seek_flag;
-    clone->sync_hint=cdata->sync_hint;
+  if (spriv != NULL) {
+    clone->nclips = cdata->nclips;
+    snprintf(clone->container_name, 512, "%s", cdata->container_name);
+    snprintf(clone->video_name, 512, "%s", cdata->video_name);
+    clone->arate = cdata->arate;
+    clone->achans = cdata->achans;
+    clone->asamps = cdata->asamps;
+    clone->asigned = cdata->asigned;
+    clone->ainterleaf = cdata->ainterleaf;
+    snprintf(clone->audio_name, 512, "%s", cdata->audio_name);
+    clone->seek_flag = cdata->seek_flag;
+    clone->sync_hint = cdata->sync_hint;
 
-    dpriv->data_start=spriv->data_start;
-    dpriv->start_dts=spriv->start_dts;
+    dpriv->data_start = spriv->data_start;
+    dpriv->start_dts = spriv->start_dts;
   }
 
   else {
-    clone->nclips=1;
+    clone->nclips = 1;
 
     ///////////////////////////////////////////////////////////
 
-    sprintf(clone->container_name,"%s","mpegts");
+    sprintf(clone->container_name, "%s", "mpegts");
 
     // clone->height was set when we attached the stream
 
-    if (clone->frame_width==0||clone->frame_width<clone->width) clone->frame_width=clone->width;
+    if (clone->frame_width == 0 || clone->frame_width < clone->width) clone->frame_width = clone->width;
     else {
-      clone->offs_x=(clone->frame_width-clone->width)/2;
+      clone->offs_x = (clone->frame_width - clone->width) / 2;
     }
 
-    if (clone->frame_height==0||clone->frame_height<clone->height) clone->frame_height=clone->height;
+    if (clone->frame_height == 0 || clone->frame_height < clone->height) clone->frame_height = clone->height;
     else {
-      clone->offs_y=(clone->frame_height-clone->height)/2;
+      clone->offs_y = (clone->frame_height - clone->height) / 2;
     }
 
-    clone->frame_width=clone->width+clone->offs_x*2;
-    clone->frame_height=clone->height+clone->offs_y*2;
+    clone->frame_width = clone->width + clone->offs_x * 2;
+    clone->frame_height = clone->height + clone->offs_y * 2;
 
-    if (dpriv->ctx->width==clone->frame_width) clone->offs_x=0;
-    if (dpriv->ctx->height==clone->frame_height) clone->offs_y=0;
+    if (dpriv->ctx->width == clone->frame_width) clone->offs_x = 0;
+    if (dpriv->ctx->height == clone->frame_height) clone->offs_y = 0;
 
     ////////////////////////////////////////////////////////////////////
 
-    clone->asigned=TRUE;
-    clone->ainterleaf=TRUE;
+    clone->asigned = TRUE;
+    clone->ainterleaf = TRUE;
   }
 
-  dpriv->last_frame=-1;
-  dpriv->expect_eof=FALSE;
-  dpriv->got_eof=FALSE;
+  dpriv->last_frame = -1;
+  dpriv->expect_eof = FALSE;
+  dpriv->got_eof = FALSE;
 
-  if (dpriv->picture!=NULL) av_frame_unref(&dpriv->picture);
-  dpriv->picture=NULL;
+  if (dpriv->picture != NULL) av_frame_unref(&dpriv->picture);
+  dpriv->picture = NULL;
 
   return clone;
 }
@@ -3478,119 +3478,119 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   lives_mpegts_priv_t *priv;
 
-  if (URI==NULL&&cdata!=NULL) {
+  if (URI == NULL && cdata != NULL) {
     // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     return mpegts_clone(cdata);
   }
 
-  if (cdata!=NULL&&cdata->current_clip>0) {
+  if (cdata != NULL && cdata->current_clip > 0) {
     // currently we only support one clip per container
 
     //clip_data_free(cdata);
     return NULL;
   }
 
-  if (cdata==NULL) {
-    cdata=init_cdata();
+  if (cdata == NULL) {
+    cdata = init_cdata();
   }
 
-  if (cdata->URI==NULL||strcmp(URI,cdata->URI)) {
-    if (cdata->URI!=NULL) {
+  if (cdata->URI == NULL || strcmp(URI, cdata->URI)) {
+    if (cdata->URI != NULL) {
       detach_stream(cdata);
       free(cdata->URI);
     }
-    cdata->URI=strdup(URI);
-    if (!attach_stream(cdata,FALSE)) {
+    cdata->URI = strdup(URI);
+    if (!attach_stream(cdata, FALSE)) {
       free(cdata->URI);
-      cdata->URI=NULL;
+      cdata->URI = NULL;
       //clip_data_free(cdata);
       return NULL;
     }
-    cdata->current_palette=cdata->palettes[0];
-    cdata->current_clip=0;
+    cdata->current_palette = cdata->palettes[0];
+    cdata->current_clip = 0;
   }
 
-  cdata->nclips=1;
+  cdata->nclips = 1;
 
   ///////////////////////////////////////////////////////////
 
-  sprintf(cdata->container_name,"%s","mpegts");
+  sprintf(cdata->container_name, "%s", "mpegts");
 
   // cdata->height was set when we attached the stream
 
-  if (cdata->frame_width==0||cdata->frame_width<cdata->width) cdata->frame_width=cdata->width;
+  if (cdata->frame_width == 0 || cdata->frame_width < cdata->width) cdata->frame_width = cdata->width;
   else {
-    cdata->offs_x=(cdata->frame_width-cdata->width)/2;
+    cdata->offs_x = (cdata->frame_width - cdata->width) / 2;
   }
 
-  if (cdata->frame_height==0||cdata->frame_height<cdata->height) cdata->frame_height=cdata->height;
+  if (cdata->frame_height == 0 || cdata->frame_height < cdata->height) cdata->frame_height = cdata->height;
   else {
-    cdata->offs_y=(cdata->frame_height-cdata->height)/2;
+    cdata->offs_y = (cdata->frame_height - cdata->height) / 2;
   }
 
-  cdata->frame_width=cdata->width+cdata->offs_x*2;
-  cdata->frame_height=cdata->height+cdata->offs_y*2;
+  cdata->frame_width = cdata->width + cdata->offs_x * 2;
+  cdata->frame_height = cdata->height + cdata->offs_y * 2;
 
-  priv=cdata->priv;
+  priv = cdata->priv;
 
-  if (priv->ctx->width==cdata->frame_width) cdata->offs_x=0;
-  if (priv->ctx->height==cdata->frame_height) cdata->offs_y=0;
+  if (priv->ctx->width == cdata->frame_width) cdata->offs_x = 0;
+  if (priv->ctx->height == cdata->frame_height) cdata->offs_y = 0;
 
   ////////////////////////////////////////////////////////////////////
 
-  cdata->asigned=TRUE;
-  cdata->ainterleaf=TRUE;
+  cdata->asigned = TRUE;
+  cdata->ainterleaf = TRUE;
 
   return cdata;
 }
 
 static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
-  unsigned char *dst=idst;
+  unsigned char *dst = idst;
   register int i;
 
-  for (i=0; i<npixels; i++) {
+  for (i = 0; i < npixels; i++) {
     switch (pal) {
     case WEED_PALETTE_RGBA32:
     case WEED_PALETTE_BGRA32:
-      dst[0]=dst[1]=dst[2]=0;
-      dst[3]=255;
-      dst+=4;
+      dst[0] = dst[1] = dst[2] = 0;
+      dst[3] = 255;
+      dst += 4;
       break;
     case WEED_PALETTE_ARGB32:
-      dst[1]=dst[2]=dst[3]=0;
-      dst[0]=255;
-      dst+=4;
+      dst[1] = dst[2] = dst[3] = 0;
+      dst[0] = 255;
+      dst += 4;
       break;
     case WEED_PALETTE_UYVY8888:
-      dst[1]=dst[3]=y_black;
-      dst[0]=dst[2]=128;
-      dst+=4;
+      dst[1] = dst[3] = y_black;
+      dst[0] = dst[2] = 128;
+      dst += 4;
       break;
     case WEED_PALETTE_YUYV8888:
-      dst[0]=dst[2]=y_black;
-      dst[1]=dst[3]=128;
-      dst+=4;
+      dst[0] = dst[2] = y_black;
+      dst[1] = dst[3] = 128;
+      dst += 4;
       break;
     case WEED_PALETTE_YUV888:
-      dst[0]=y_black;
-      dst[1]=dst[2]=128;
-      dst+=3;
+      dst[0] = y_black;
+      dst[1] = dst[2] = 128;
+      dst += 3;
       break;
     case WEED_PALETTE_YUVA8888:
-      dst[0]=y_black;
-      dst[1]=dst[2]=128;
-      dst[3]=255;
-      dst+=4;
+      dst[0] = y_black;
+      dst[1] = dst[2] = 128;
+      dst[3] = 255;
+      dst += 4;
       break;
     case WEED_PALETTE_YUV411:
-      dst[0]=dst[3]=128;
-      dst[1]=dst[2]=dst[4]=dst[5]=y_black;
-      dst+=6;
+      dst[0] = dst[3] = 128;
+      dst[1] = dst[2] = dst[4] = dst[5] = y_black;
+      dst += 6;
     default:
       break;
     }
   }
-  return idst-dst;
+  return idst - dst;
 }
 
 
@@ -3599,181 +3599,181 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
   int len;
-  int64_t target_pts=frame_to_dts(cdata,tframe);
-  int64_t nextframe=0;
-  lives_mpegts_priv_t *priv=cdata->priv;
+  int64_t target_pts = frame_to_dts(cdata, tframe);
+  int64_t nextframe = 0;
+  lives_mpegts_priv_t *priv = cdata->priv;
 
-  int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
-  int btop=cdata->offs_y,bbot=xheight-1-btop;
-  int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
-  int rescan_limit=16;  // pick some arbitrary value
-  int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
+  int xheight = cdata->frame_height, pal = cdata->current_palette, nplanes = 1, dstwidth = cdata->width, psize = 1;
+  int btop = cdata->offs_y, bbot = xheight - 1 - btop;
+  int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
+  int rescan_limit = 16; // pick some arbitrary value
+  int y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
 
-  boolean got_picture=FALSE;
-  unsigned char *dst,*src;//,flags;
-  unsigned char black[4]= {0,0,0,255};
+  boolean got_picture = FALSE;
+  unsigned char *dst, *src; //,flags;
+  unsigned char black[4] = {0, 0, 0, 255};
 
   index_entry *idx;
-  register int i,p;
+  register int i, p;
 
 
   //#define DEBUG_KFRAMES
 #ifdef DEBUG_KFRAMES
-  fprintf(stderr,"vals %ld %ld\n",tframe,priv->last_frame);
+  fprintf(stderr, "vals %ld %ld\n", tframe, priv->last_frame);
 #endif
 
-  priv->got_eof=FALSE;
+  priv->got_eof = FALSE;
 
   // calc frame width and height, including any border
 
-  if (pixel_data!=NULL) {
-    if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
-      nplanes=3;
-      black[0]=y_black;
-      black[1]=black[2]=128;
-    } else if (pal==WEED_PALETTE_YUVA4444P) {
-      nplanes=4;
-      black[0]=y_black;
-      black[1]=black[2]=128;
-      black[3]=255;
+  if (pixel_data != NULL) {
+    if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) {
+      nplanes = 3;
+      black[0] = y_black;
+      black[1] = black[2] = 128;
+    } else if (pal == WEED_PALETTE_YUVA4444P) {
+      nplanes = 4;
+      black[0] = y_black;
+      black[1] = black[2] = 128;
+      black[3] = 255;
     }
 
-    if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+    if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) psize = 3;
 
-    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||
-        pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||
-        pal==WEED_PALETTE_YUVA8888) psize=4;
+    if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 ||
+        pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV888 ||
+        pal == WEED_PALETTE_YUVA8888) psize = 4;
 
-    if (pal==WEED_PALETTE_YUV411) psize=6;
+    if (pal == WEED_PALETTE_YUV411) psize = 6;
 
-    if (pal==WEED_PALETTE_A1) dstwidth>>=3;
+    if (pal == WEED_PALETTE_A1) dstwidth >>= 3;
 
-    dstwidth*=psize;
+    dstwidth *= psize;
 
     if (cdata->frame_height > cdata->height && height == cdata->height) {
       // host ignores vertical border
-      btop=0;
-      xheight=cdata->height;
-      bbot=xheight-1;
+      btop = 0;
+      xheight = cdata->height;
+      bbot = xheight - 1;
     }
 
-    if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
+    if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width * psize) {
       // host ignores horizontal border
-      bleft=bright=0;
+      bleft = bright = 0;
     }
   }
   ////////////////////////////////////////////////////////////////////
 
-  if (tframe!=priv->last_frame) {
+  if (tframe != priv->last_frame) {
 
-    if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
-      idx=mpegts_read_seek(cdata,target_pts);
+    if (priv->last_frame == -1 || (tframe < priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
+      idx = mpegts_read_seek(cdata, target_pts);
 
-      nextframe=dts_to_frame(cdata,idx->dts);
+      nextframe = dts_to_frame(cdata, idx->dts);
 
-      if (priv->input_position==priv->filesize) return FALSE;
-      mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+      if (priv->input_position == priv->filesize) return FALSE;
+      mpegts_read_packet((lives_clip_data_t *)cdata, &priv->avpkt);
       if (priv->got_eof) return FALSE;
 
       //#define DEBUG_KFRAMES
 #ifdef DEBUG_KFRAMES
-      if (idx!=NULL) printf("got kframe %ld for frame %ld\n",nextframe,tframe);
+      if (idx != NULL) printf("got kframe %ld for frame %ld\n", nextframe, tframe);
 #endif
     } else {
-      nextframe=priv->last_frame+1;
+      nextframe = priv->last_frame + 1;
     }
 
     //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
-    priv->last_frame=tframe;
-    if (priv->picture==NULL) priv->picture = av_frame_alloc();
+    priv->last_frame = tframe;
+    if (priv->picture == NULL) priv->picture = av_frame_alloc();
 
     // do this until we reach target frame //////////////
 
     do {
 
-      got_picture=FALSE;
+      got_picture = FALSE;
 
       while (!got_picture) {
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-        len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+        len = avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
 #else
-        len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+        len = avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
 
-        if (len==priv->avpkt.size) {
-          if (priv->avpkt.data!=NULL) {
+        if (len == priv->avpkt.size) {
+          if (priv->avpkt.data != NULL) {
             free(priv->avpkt.data);
-            priv->avpkt.data=NULL;
-            priv->avpkt.size=0;
+            priv->avpkt.data = NULL;
+            priv->avpkt.size = 0;
           }
 
-          if (priv->input_position==priv->filesize) return FALSE;
-          mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+          if (priv->input_position == priv->filesize) return FALSE;
+          mpegts_read_packet((lives_clip_data_t *)cdata, &priv->avpkt);
           if (priv->got_eof) return FALSE;
 
         }
       }
 
       nextframe++;
-      if (nextframe>cdata->nframes) return FALSE;
-    } while (nextframe<=tframe);
+      if (nextframe > cdata->nframes) return FALSE;
+    } while (nextframe <= tframe);
 
     /////////////////////////////////////////////////////
 
   }
 
-  if (pixel_data==NULL||priv->picture==NULL) return TRUE;
+  if (pixel_data == NULL || priv->picture == NULL) return TRUE;
 
-  for (p=0; p<nplanes; p++) {
-    dst=pixel_data[p];
-    src=priv->picture->data[p];
+  for (p = 0; p < nplanes; p++) {
+    dst = pixel_data[p];
+    src = priv->picture->data[p];
 
-    for (i=0; i<xheight; i++) {
-      if (i<btop||i>bbot) {
+    for (i = 0; i < xheight; i++) {
+      if (i < btop || i > bbot) {
         // top or bottom border, copy black row
-        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P
-            ||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24
-            ||pal==WEED_PALETTE_BGR24) {
-          memset(dst,black[p],dstwidth+(bleft+bright)*psize);
-          dst+=dstwidth+(bleft+bright)*psize;
-        } else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P
+            || pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24
+            || pal == WEED_PALETTE_BGR24) {
+          memset(dst, black[p], dstwidth + (bleft + bright)*psize);
+          dst += dstwidth + (bleft + bright) * psize;
+        } else dst += write_black_pixel(dst, pal, dstwidth / psize + bleft + bright, y_black);
         continue;
       }
 
-      if (bleft>0) {
-        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||
-            pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24
-            ||pal==WEED_PALETTE_BGR24) {
-          memset(dst,black[p],bleft*psize);
-          dst+=bleft*psize;
-        } else dst+=write_black_pixel(dst,pal,bleft,y_black);
+      if (bleft > 0) {
+        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P ||
+            pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24
+            || pal == WEED_PALETTE_BGR24) {
+          memset(dst, black[p], bleft * psize);
+          dst += bleft * psize;
+        } else dst += write_black_pixel(dst, pal, bleft, y_black);
       }
 
-      memcpy(dst,src,dstwidth);
-      dst+=dstwidth;
+      memcpy(dst, src, dstwidth);
+      dst += dstwidth;
 
-      if (bright>0) {
-        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P
-            ||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||
-            pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-          memset(dst,black[p],bright*psize);
-          dst+=bright*psize;
-        } else dst+=write_black_pixel(dst,pal,bright,y_black);
+      if (bright > 0) {
+        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P
+            || pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P ||
+            pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+          memset(dst, black[p], bright * psize);
+          dst += bright * psize;
+        } else dst += write_black_pixel(dst, pal, bright, y_black);
       }
 
-      src+=priv->picture->linesize[p];
+      src += priv->picture->linesize[p];
     }
-    if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
-      dstwidth>>=1;
-      bleft>>=1;
-      bright>>=1;
+    if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P)) {
+      dstwidth >>= 1;
+      bleft >>= 1;
+      bright >>= 1;
     }
-    if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
-      xheight>>=1;
-      btop>>=1;
-      bbot>>=1;
+    if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P)) {
+      xheight >>= 1;
+      btop >>= 1;
+      bbot >>= 1;
     }
   }
 
@@ -3786,8 +3786,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 static void reverse_bytes(uint8_t *out, const uint8_t *in, size_t count) {
   register int i;
-  for (i=0; i<count; i++) {
-    out[i]=in[count-i-1];
+  for (i = 0; i < count; i++) {
+    out[i] = in[count - i - 1];
   }
 }
 
@@ -3799,13 +3799,13 @@ static ssize_t lives_write_le(int fd, const void *buf, size_t count) {
 #if !defined (IS_MINGW) && !defined (IS_SOLARIS) && !defined (__FreeBSD__)
 # if __BYTE_ORDER == __BIG_ENDIAN
   uint8_t xbuf[count];
-  reverse_bytes(xbuf,(const uint8_t *)buf,count);
-  return write(fd,xbuf,count);
+  reverse_bytes(xbuf, (const uint8_t *)buf, count);
+  return write(fd, xbuf, count);
 # else
-  return write(fd,buf,count);
+  return write(fd, buf, count);
 # endif
 #else
-  return write(fd,buf,count);
+  return write(fd, buf, count);
 #endif
 
 }
@@ -3815,15 +3815,15 @@ ssize_t lives_read_le(int fd, void *buf, size_t count) {
 #if !defined (IS_MINGW) && !defined (IS_SOLARIS) && !defined (__FreeBSD__)
 # if __BYTE_ORDER == __BIG_ENDIAN
   uint8_t xbuf[count];
-  ssize_t retval=read(fd,buf,count);
-  if (retval<count) return retval;
-  reverse_bytes((uint8_t *)buf,(const uint8_t *)xbuf,count);
+  ssize_t retval = read(fd, buf, count);
+  if (retval < count) return retval;
+  reverse_bytes((uint8_t *)buf, (const uint8_t *)xbuf, count);
   return retval;
 #else
-  return read(fd,buf,count);
+  return read(fd, buf, count);
 #endif
 #else
-  return read(fd,buf,count);
+  return read(fd, buf, count);
 #endif
 }
 
@@ -3833,31 +3833,31 @@ ssize_t lives_read_le(int fd, void *buf, size_t count) {
 
 static void mpegts_save_index(lives_clip_data_t *cdata) {
 
-  lives_mpegts_priv_t *priv=cdata->priv;
-  index_entry *idx=priv->idxc->idxhh;
+  lives_mpegts_priv_t *priv = cdata->priv;
+  index_entry *idx = priv->idxc->idxhh;
 
   int fd;
 
 
-  int64_t max_dts=frame_to_dts(cdata,cdata->nframes);
+  int64_t max_dts = frame_to_dts(cdata, cdata->nframes);
 
-  const char ver[4]="V1.0";
+  const char ver[4] = "V1.0";
 
-  if (idx==NULL) return;
+  if (idx == NULL) return;
 
-  if ((fd=open("sync_index",O_CREAT|O_TRUNC|O_WRONLY,S_IRUSR|S_IWUSR))==-1) return;
+  if ((fd = open("sync_index", O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR)) == -1) return;
 
-  if (write(fd,ver,4)<4) goto donewr;
+  if (write(fd, ver, 4) < 4) goto donewr;
 
-  if (lives_write_le(fd,&max_dts,8)<8) goto failwr;
+  if (lives_write_le(fd, &max_dts, 8) < 8) goto failwr;
 
 
   // dump index to file in le format
 
-  while (idx!=NULL) {
-    if (lives_write_le(fd,&idx->dts,8)<8) goto failwr;
-    if (lives_write_le(fd,&idx->offs,8)<8) goto failwr;
-    idx=idx->next;
+  while (idx != NULL) {
+    if (lives_write_le(fd, &idx->dts, 8) < 8) goto failwr;
+    if (lives_write_le(fd, &idx->offs, 8) < 8) goto failwr;
+    idx = idx->next;
   }
 
 donewr:
@@ -3878,44 +3878,44 @@ static int64_t mpegts_load_index(lives_clip_data_t *cdata) {
   // returns max_dts
   char hdr[4];
 
-  lives_mpegts_priv_t *priv=cdata->priv;
+  lives_mpegts_priv_t *priv = cdata->priv;
 
-  int64_t dts,last_dts=0,max_dts=0;
-  uint64_t offs,last_offs=0;
+  int64_t dts, last_dts = 0, max_dts = 0;
+  uint64_t offs, last_offs = 0;
 
   int fd;
-  int count=0;
+  int count = 0;
 
   ssize_t bytes;
 
-  if ((fd=open("sync_index",O_RDONLY))<0) return 0;
+  if ((fd = open("sync_index", O_RDONLY)) < 0) return 0;
 
-  if (read(fd,hdr,4)<4) goto donerd;
+  if (read(fd, hdr, 4) < 4) goto donerd;
 
-  if (strncmp(hdr,"V1.0",4)) goto donerd;
+  if (strncmp(hdr, "V1.0", 4)) goto donerd;
 
-  bytes=lives_read_le(fd,&max_dts,8);
-  if (bytes<8) goto failrd;
+  bytes = lives_read_le(fd, &max_dts, 8);
+  if (bytes < 8) goto failrd;
 
-  if (max_dts<last_dts) goto failrd;
+  if (max_dts < last_dts) goto failrd;
 
   while (1) {
-    bytes=lives_read_le(fd,&dts,8);
-    if (bytes<8) break;
+    bytes = lives_read_le(fd, &dts, 8);
+    if (bytes < 8) break;
 
-    if (dts<last_dts) goto failrd;
-    if (dts>max_dts) goto failrd;
+    if (dts < last_dts) goto failrd;
+    if (dts > max_dts) goto failrd;
 
-    bytes=lives_read_le(fd,&offs,8);
-    if (bytes<8) break;
+    bytes = lives_read_le(fd, &offs, 8);
+    if (bytes < 8) break;
 
-    if (offs<last_offs) goto failrd;
-    if (offs>=priv->filesize) goto failrd;
+    if (offs < last_offs) goto failrd;
+    if (offs >= priv->filesize) goto failrd;
 
-    lives_add_idx(cdata,offs,dts);
+    lives_add_idx(cdata, offs, dts);
 
-    last_dts=dts;
-    last_offs=offs;
+    last_dts = dts;
+    last_offs = offs;
 
     count++;
   }
@@ -3925,7 +3925,7 @@ donerd:
   return max_dts;
 
 failrd:
-  if (priv->idxc->idxhh!=NULL) idxc_release(cdata);
+  if (priv->idxc->idxhh != NULL) idxc_release(cdata);
 
   close(fd);
   return 0;
@@ -3934,15 +3934,15 @@ failrd:
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
-  lives_mpegts_priv_t *priv=cdata->priv;
+  lives_mpegts_priv_t *priv = cdata->priv;
 
-  if (cdata->palettes!=NULL) free(cdata->palettes);
-  cdata->palettes=NULL;
+  if (cdata->palettes != NULL) free(cdata->palettes);
+  cdata->palettes = NULL;
 
-  if (priv->idxc!=NULL) idxc_release(cdata);
-  priv->idxc=NULL;
+  if (priv->idxc != NULL) idxc_release(cdata);
+  priv->idxc = NULL;
 
-  if (cdata->URI!=NULL) {
+  if (cdata->URI != NULL) {
     detach_stream(cdata);
     free(cdata->URI);
   }

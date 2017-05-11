@@ -67,9 +67,9 @@ Adrian Freed
 #define _S_IREAD 256
 #define _S_IWRITE 128
 int mkstemp(char *tmpl) {
-  int ret=-1;
+  int ret = -1;
   mktemp(tmpl);
-  ret=open(tmpl,O_RDWR|O_BINARY|O_CREAT|O_EXCL|_O_SHORT_LIVED, _S_IREAD|_S_IWRITE);
+  ret = open(tmpl, O_RDWR | O_BINARY | O_CREAT | O_EXCL | _O_SHORT_LIVED, _S_IREAD | _S_IWRITE);
   return ret;
 }
 
@@ -102,7 +102,7 @@ typedef struct {
   struct sockaddr_un userv_addr; /* UNIX socket */
 #endif
   int sockfd;		/* socket file descriptor */
-  int index, len,uservlen;
+  int index, len, uservlen;
   void *addr;
   int id;
 } desc;
@@ -123,7 +123,7 @@ void *OpenHTMSocket(char *host, int portnumber) {
   if (!o)
     return 0;
 #ifdef IS_MINGW
-  if (!host) host="localhost";
+  if (!host) host = "localhost";
 #else
   if (!host) {
     int clilen;
@@ -136,7 +136,7 @@ void *OpenHTMSocket(char *host, int portnumber) {
     memset((char *) &o->userv_addr, 0, sizeof(o->userv_addr));
     o->userv_addr.sun_family = AF_UNIX;
     strcpy(o->userv_addr.sun_path, UNIXDG_PATH);
-    sprintf(o->userv_addr.sun_path+strlen(o->userv_addr.sun_path), "%d", portnumber);
+    sprintf(o->userv_addr.sun_path + strlen(o->userv_addr.sun_path), "%d", portnumber);
     o->uservlen = sizeof(o->userv_addr.sun_family) + strlen(o->userv_addr.sun_path);
     o->addr = &(o->userv_addr);
     /*
@@ -156,8 +156,8 @@ void *OpenHTMSocket(char *host, int portnumber) {
       ucl_addr.sun_family = AF_UNIX;
       strcpy(ucl_addr.sun_path, UNIXDG_TMP);
 
-      dummy=mkstemp(ucl_addr.sun_path);
-      dummy=dummy;
+      dummy = mkstemp(ucl_addr.sun_path);
+      dummy = dummy;
       clilen = sizeof(ucl_addr.sun_family) + strlen(ucl_addr.sun_path);
 
       if (bind(sockfd, (struct sockaddr *) &ucl_addr, clilen) < 0) {
@@ -223,7 +223,7 @@ void *OpenHTMSocket(char *host, int portnumber) {
 #ifndef IS_MINGW
 }
 #endif
-if (sockfd<0) {
+if (sockfd < 0) {
   free(o);
   o = 0;
 } else
@@ -236,9 +236,9 @@ return NULL;
 
 #include <errno.h>
 
-static  bool sendudp(const struct sockaddr *sp, int sockfd,int length, int count, void  *b) {
+static  bool sendudp(const struct sockaddr *sp, int sockfd, int length, int count, void  *b) {
   int rcount;
-  if ((rcount=sendto(sockfd, b, count, 0, sp, length)) != count) {
+  if ((rcount = sendto(sockfd, b, count, 0, sp, length)) != count) {
     /*	printf("sockfd %d count %d rcount %dlength %d errno %d\n", sockfd,count,rcount,length,
     			errno); */
     return FALSE;

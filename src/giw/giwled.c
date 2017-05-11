@@ -152,21 +152,21 @@ giw_led_init(GiwLed *led) {
   g_return_if_fail(led != NULL);
   g_return_if_fail(GIW_IS_LED(led));
 
-  led->on=0; //Default position: off
-  led->enable_mouse=FALSE;
+  led->on = 0; //Default position: off
+  led->enable_mouse = FALSE;
 
   // Default on color, full green
-  led->color_on.green=65535;
-  led->color_on.red=0;
-  led->color_on.blue=0;
+  led->color_on.green = 65535;
+  led->color_on.red = 0;
+  led->color_on.blue = 0;
 
   // Default off color, white
-  led->color_off.green=65535;
-  led->color_off.red=65535;
-  led->color_off.blue=65535;
+  led->color_off.green = 65535;
+  led->color_off.red = 65535;
+  led->color_off.blue = 65535;
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_has_window(GTK_WIDGET(led),TRUE);
+  gtk_widget_set_has_window(GTK_WIDGET(led), TRUE);
 #endif
 }
 
@@ -213,7 +213,7 @@ giw_led_realize(GtkWidget *widget) {
   g_return_if_fail(GIW_IS_LED(widget));
 
 #if GTK_CHECK_VERSION(2,20,0)
-  gtk_widget_set_realized(widget,TRUE);
+  gtk_widget_set_realized(widget, TRUE);
 #else
   GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
 #endif
@@ -238,19 +238,19 @@ giw_led_realize(GtkWidget *widget) {
 #endif
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_window(widget,gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
+  gtk_widget_set_window(widget, gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
 #else
   widget->window = gdk_window_new(widget->parent->window, &attributes, attributes_mask);
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
-  stylecon=gtk_widget_get_style_context(widget);
+  stylecon = gtk_widget_get_style_context(widget);
   if (!stylecon) {
-    stylecon=gtk_style_context_new();
-    gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
+    stylecon = gtk_style_context_new();
+    gtk_style_context_set_path(stylecon, gtk_widget_get_path(widget));
   }
-  gtk_style_context_add_class(stylecon,"giwled");
-  gtk_style_context_set_state(stylecon,GTK_STATE_FLAG_ACTIVE);
+  gtk_style_context_add_class(stylecon, "giwled");
+  gtk_style_context_set_state(stylecon, GTK_STATE_FLAG_ACTIVE);
   //gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(widget));
 #else
   widget->style = gtk_style_attach(widget->style, lives_widget_get_xwindow(widget));
@@ -312,7 +312,7 @@ giw_led_size_allocate(GtkWidget     *widget,
   g_return_if_fail(allocation != NULL);
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_allocation(widget,allocation);
+  gtk_widget_set_allocation(widget, allocation);
 #else
   widget->allocation = *allocation;
 #endif
@@ -328,15 +328,15 @@ giw_led_size_allocate(GtkWidget     *widget,
 
   // The size of the led will be the lower dimension of the widget
   if (lives_widget_get_allocation_width(widget) > lives_widget_get_allocation_height(widget)) {
-    led->size=lives_widget_get_allocation_height(widget);
-    led->radius=led->size-4;
-    led->x=(lives_widget_get_allocation_width(widget)/2)-(led->size/2);
-    led->y=0;
+    led->size = lives_widget_get_allocation_height(widget);
+    led->radius = led->size - 4;
+    led->x = (lives_widget_get_allocation_width(widget) / 2) - (led->size / 2);
+    led->y = 0;
   } else {
-    led->size=lives_widget_get_allocation_width(widget);
-    led->radius=led->size-4;
-    led->x=0;
-    led->y=(lives_widget_get_allocation_height(widget)/2)-(led->size/2);
+    led->size = lives_widget_get_allocation_width(widget);
+    led->radius = led->size - 4;
+    led->x = 0;
+    led->y = (lives_widget_get_allocation_height(widget) / 2) - (led->size / 2);
   }
 }
 
@@ -364,16 +364,16 @@ giw_led_expose(GtkWidget      *widget,
   g_return_val_if_fail(widget != NULL, FALSE);
   g_return_val_if_fail(GIW_IS_LED(widget), FALSE);
 
-  led=GIW_LED(widget);
+  led = GIW_LED(widget);
 
-  rect.x=0;
-  rect.y=0;
-  rect.width=lives_widget_get_allocation_width(widget);
-  rect.height=lives_widget_get_allocation_height(widget);
+  rect.x = 0;
+  rect.y = 0;
+  rect.width = lives_widget_get_allocation_width(widget);
+  rect.height = lives_widget_get_allocation_height(widget);
 
   // Drawing background
 #if GTK_CHECK_VERSION(3,0,0)
-  cairo_set_line_width(cairo,1.);
+  cairo_set_line_width(cairo, 1.);
 
   gtk_render_background(gtk_widget_get_style_context(widget),
                         cairo,
@@ -393,27 +393,27 @@ giw_led_expose(GtkWidget      *widget,
                          );
 
   cairo_arc(cairo,
-            rect.width/2+2,
-            rect.height/2+2,
-            led->radius/2,
+            rect.width / 2 + 2,
+            rect.height / 2 + 2,
+            led->radius / 2,
             0.,
             2.*M_PI);
 
   if (led->on) cairo_set_source_rgb(cairo, 0., 0., 0.);
 
   cairo_arc(cairo,
-            rect.width/2+1,
-            rect.height/2+1,
-            led->radius/2+1,
-            -45./M_PI,
-            57.5/M_PI);
+            rect.width / 2 + 1,
+            rect.height / 2 + 1,
+            led->radius / 2 + 1,
+            -45. / M_PI,
+            57.5 / M_PI);
 
   cairo_arc(cairo,
-            rect.width/2,
-            rect.height/2,
-            led->radius/2+1.5,
-            -32/M_PI,
-            37.5/M_PI);
+            rect.width / 2,
+            rect.height / 2,
+            led->radius / 2 + 1.5,
+            -32 / M_PI,
+            37.5 / M_PI);
 
   if (led->on)
     cairo_set_source_rgba(cairo,
@@ -432,9 +432,9 @@ giw_led_expose(GtkWidget      *widget,
 
 
   cairo_arc(cairo,
-            rect.width/2+2,
-            rect.height/2+2,
-            (led->size-4)/2,
+            rect.width / 2 + 2,
+            rect.height / 2 + 2,
+            (led->size - 4) / 2,
             0,
             2.*M_PI);
 
@@ -443,7 +443,7 @@ giw_led_expose(GtkWidget      *widget,
 #else
   gtk_paint_flat_box(widget->style,
                      widget->window,
-                     (GtkStateType)(widget->parent==NULL?GTK_STATE_NORMAL:widget->parent->state),
+                     (GtkStateType)(widget->parent == NULL ? GTK_STATE_NORMAL : widget->parent->state),
                      GTK_SHADOW_NONE,
                      &rect,
                      widget,
@@ -453,7 +453,7 @@ giw_led_expose(GtkWidget      *widget,
                      -1,
                      -1);
 
-  gc=gdk_gc_new(widget->window); // Allocating memory
+  gc = gdk_gc_new(widget->window); // Allocating memory
   gdk_gc_copy(gc, widget->style->fg_gc[widget->state]);
 
   if (led->on)
@@ -464,44 +464,44 @@ giw_led_expose(GtkWidget      *widget,
 
   // The border
   gdk_draw_arc(widget->window,
-               led->on?widget->style->white_gc:gc,
+               led->on ? widget->style->white_gc : gc,
                FALSE,
-               led->x+2,
-               led->y+2,
+               led->x + 2,
+               led->y + 2,
                led->radius,
                led->radius,
                0,
-               64*360);
+               64 * 360);
 
   gdk_draw_arc(widget->window,
                widget->style->black_gc,
                FALSE,
-               led->x+1,
-               led->y+1,
-               led->radius+2,
-               led->radius+2,
-               -64*90,
-               64*115);
+               led->x + 1,
+               led->y + 1,
+               led->radius + 2,
+               led->radius + 2,
+               -64 * 90,
+               64 * 115);
 
   gdk_draw_arc(widget->window,
                widget->style->black_gc,
                FALSE,
-               led->x+1,
-               led->y+1,
-               led->radius+3,
-               led->radius+3,
-               -64*60,
-               64*75);
+               led->x + 1,
+               led->y + 1,
+               led->radius + 3,
+               led->radius + 3,
+               -64 * 60,
+               64 * 75);
 
   gdk_draw_arc(widget->window,
                gc,
                TRUE,
-               led->x+2,
-               led->y+2,
-               led->size-4,
-               led->size-4,
+               led->x + 2,
+               led->y + 2,
+               led->size - 4,
+               led->size - 4,
                0,
-               64*360);
+               64 * 360);
 
   g_object_unref(gc);
 #endif
@@ -516,7 +516,7 @@ giw_led_style_updated(GtkWidget *widget) {
 }
 
 static void
-giw_led_state_flags_changed(GtkWidget *widget,GtkStateFlags previous_state) {
+giw_led_state_flags_changed(GtkWidget *widget, GtkStateFlags previous_state) {
   gtk_widget_queue_draw(widget);
 }
 #endif
@@ -533,18 +533,18 @@ giw_led_button_press(GtkWidget      *widget,
 
   led = GIW_LED(widget);
 
-  if (led->enable_mouse==0) return (FALSE);
+  if (led->enable_mouse == 0) return (FALSE);
 
-  dx = event->x - lives_widget_get_allocation_width(widget)/2;
-  dy = lives_widget_get_allocation_height(widget)/2 - event->y;
+  dx = event->x - lives_widget_get_allocation_width(widget) / 2;
+  dy = lives_widget_get_allocation_height(widget) / 2 - event->y;
 
-  d=sqrt(dx*dx+dy*dy); // Distance between the pointer and the center
+  d = sqrt(dx * dx + dy * dy); // Distance between the pointer and the center
 
-  if (d <= (led->size/2)) { // If it's inside the led
-    if (led->on==FALSE)
-      led->on=TRUE;
+  if (d <= (led->size / 2)) { // If it's inside the led
+    if (led->on == FALSE)
+      led->on = TRUE;
     else
-      led->on=FALSE;
+      led->on = FALSE;
 
     g_signal_emit(G_OBJECT(led), giw_led_signals[MODE_CHANGED_SIGNAL], 0);
   }
@@ -564,8 +564,8 @@ giw_led_set_mode(GiwLed *led,
   g_return_if_fail(led != NULL);
   g_return_if_fail(GIW_IS_LED(led));
 
-  if (led->on!=mode) {
-    led->on=mode;
+  if (led->on != mode) {
+    led->on = mode;
     g_signal_emit(G_OBJECT(led), giw_led_signals[MODE_CHANGED_SIGNAL], 0);
 
     gtk_widget_queue_draw(GTK_WIDGET(led));
@@ -588,8 +588,8 @@ giw_led_set_rgba(GiwLed *led,
   g_return_if_fail(led != NULL);
   g_return_if_fail(GIW_IS_LED(led));
 
-  led->color_on=on_color;
-  led->color_off=off_color;
+  led->color_on = on_color;
+  led->color_off = off_color;
 
   gtk_widget_queue_draw(GTK_WIDGET(led));
 }
@@ -602,17 +602,17 @@ giw_led_set_colors(GiwLed *led,
   g_return_if_fail(GIW_IS_LED(led));
 
 #if GTK_CHECK_VERSION(3,0,0)
-  led->color_on.red=(gdouble)on_color.red/65535.;
-  led->color_on.green=(gdouble)on_color.green/65535.;
-  led->color_on.blue=(gdouble)on_color.blue/65535.;
-  led->color_on.alpha=1.;
-  led->color_off.red=(gdouble)off_color.red/65535.;
-  led->color_off.green=(gdouble)off_color.green/65535.;
-  led->color_off.blue=(gdouble)off_color.blue/65535.;
-  led->color_off.alpha=1.;
+  led->color_on.red = (gdouble)on_color.red / 65535.;
+  led->color_on.green = (gdouble)on_color.green / 65535.;
+  led->color_on.blue = (gdouble)on_color.blue / 65535.;
+  led->color_on.alpha = 1.;
+  led->color_off.red = (gdouble)off_color.red / 65535.;
+  led->color_off.green = (gdouble)off_color.green / 65535.;
+  led->color_off.blue = (gdouble)off_color.blue / 65535.;
+  led->color_off.alpha = 1.;
 #else
-  led->color_on=on_color;
-  led->color_off=off_color;
+  led->color_on = on_color;
+  led->color_off = off_color;
 #endif
   gtk_widget_queue_draw(GTK_WIDGET(led));
 }
@@ -623,7 +623,7 @@ giw_led_enable_mouse(GiwLed *led,
   g_return_if_fail(led != NULL);
   g_return_if_fail(GIW_IS_LED(led));
 
-  led->enable_mouse=option;
+  led->enable_mouse = option;
 }
 
 /******************

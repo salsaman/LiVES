@@ -10,7 +10,7 @@
 
 /// filter apply errors
 typedef enum {
-  FILTER_NO_ERROR=0,
+  FILTER_NO_ERROR = 0,
   FILTER_ERROR_MISSING_LAYER,
   FILTER_ERROR_BLANK_FRAME,
   FILTER_ERROR_MISSING_FRAME,
@@ -33,7 +33,7 @@ typedef enum {
   FILTER_ERROR_DONT_THREAD,
 
   /// values >= 512 are info
-  FILTER_INFO_REINITED=512
+  FILTER_INFO_REINITED = 512
 } lives_filter_error_t;
 
 

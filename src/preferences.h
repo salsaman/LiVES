@@ -123,9 +123,9 @@ typedef struct {
 
 #define WARN_MASK_LAYOUT_WIPE (1<<26)
   char cmd_log[PATH_MAX];
-  char effect_command[PATH_MAX*2];
-  char video_open_command[PATH_MAX*2];
-  char audio_play_command[PATH_MAX*2];
+  char effect_command[PATH_MAX * 2];
+  char video_open_command[PATH_MAX * 2];
+  char audio_play_command[PATH_MAX * 2];
   char cdplay_device[PATH_MAX];  ///< locale encoding
   double default_fps;
   int bar_height;

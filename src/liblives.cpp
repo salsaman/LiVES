@@ -67,7 +67,7 @@ static list<livesAppCtx> appMgr;
 
 static livesApp *find_instance_for_id(ulong id) {
   list<livesAppCtx>::iterator it;
-  for(it = appMgr.begin();it != appMgr.end(); it++) {
+  for (it = appMgr.begin(); it != appMgr.end(); it++) {
     if ((*it).id == id) return (*it).app;
   }
   return NULL;
@@ -134,14 +134,14 @@ livesString livesString::toEncoding(lives_char_encoding_t enc) {
 void livesApp::init(int argc, char *oargv[]) {
   char **argv;
   char progname[] = "lives-exe";
-  if (argc < 0) argc=0;
+  if (argc < 0) argc = 0;
   argc++;
 
-  argv=(char **)malloc(argc * sizeof(char *));
-  argv[0]=strdup(progname);
+  argv = (char **)malloc(argc * sizeof(char *));
+  argv[0] = strdup(progname);
 
-  for (int i=1; i < argc; i++) {
-    argv[i]=strdup(oargv[i-1]);
+  for (int i = 1; i < argc; i++) {
+    argv[i] = strdup(oargv[i - 1]);
   }
 
   ulong id = lives_random();
@@ -173,12 +173,12 @@ void livesApp::init(int argc, char *oargv[]) {
 
 livesApp::livesApp() : m_id(0l) {
   if (appMgr.empty())
-    init(0,NULL);
+    init(0, NULL);
 }
 
 livesApp::livesApp(int argc, char *argv[]) : m_id(0l) {
   if (appMgr.empty())
-    init(argc,argv);
+    init(argc, argv);
 }
 
 
@@ -283,7 +283,7 @@ bool livesApp::removeCallback(ulong id) const {
 
 
 lives_dialog_response_t livesApp::showInfo(livesString text, bool blocking) {
-  lives_dialog_response_t ret=LIVES_DIALOG_RESPONSE_INVALID;
+  lives_dialog_response_t ret = LIVES_DIALOG_RESPONSE_INVALID;
   if (!isValid() || status() == LIVES_STATUS_NOTREADY) return ret;
   // if blocking wait for response
   if (blocking) {
@@ -291,7 +291,7 @@ lives_dialog_response_t livesApp::showInfo(livesString text, bool blocking) {
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     pthread_mutex_lock(&cond_mutex);
-    if (!idle_show_info(text.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(),blocking, msg_id)) {
+    if (!idle_show_info(text.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), blocking, msg_id)) {
       pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
@@ -305,7 +305,7 @@ lives_dialog_response_t livesApp::showInfo(livesString text, bool blocking) {
     }
     return ret;
   }
-  if (idle_show_info(text.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(),blocking,0))
+  if (idle_show_info(text.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), blocking, 0))
     return LIVES_DIALOG_RESPONSE_NONE;
   return ret;
 }
@@ -367,7 +367,7 @@ livesString livesApp::chooseSet() {
 livesStringList livesApp::availableSets() {
   livesStringList list;
   if (!isValid() || status() == LIVES_STATUS_NOTREADY) return list;
-  LiVESList *setlist=get_set_list(::prefs->workdir, true), *slist=setlist;
+  LiVESList *setlist = get_set_list(::prefs->workdir, true), *slist = setlist;
   while (slist != NULL) {
     list.push_back(livesString((const char *)slist->data, LIVES_CHAR_ENCODING_UTF8));
     lives_free(slist->data);
@@ -464,7 +464,7 @@ lives_status_t livesApp::status() const {
   if (!isValid()) return LIVES_STATUS_INVALID;
   if (mainw->go_away) return LIVES_STATUS_NOTREADY;
   if (mainw->is_processing) return LIVES_STATUS_PROCESSING;
-  if ((mainw->preview || mainw->event_list != NULL) && mainw->multitrack==NULL) return LIVES_STATUS_PREVIEW;
+  if ((mainw->preview || mainw->event_list != NULL) && mainw->multitrack == NULL) return LIVES_STATUS_PREVIEW;
   if (mainw->playing_file > -1 || mainw->preview) return LIVES_STATUS_PLAYING;
   return LIVES_STATUS_READY;
 }
@@ -760,7 +760,7 @@ double player::videoPlaybackTime(bool background) const {
   if (!m_lives->m_multitrack->isActive()) {
     if (mainw->current_file == -1) return 0.;
     if (mainw->playing_file > -1) {
-      if (!background) return (cfile->frameno - 1.)/cfile->fps;
+      if (!background) return (cfile->frameno - 1.) / cfile->fps;
       else if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] != NULL) {
         return mainw->files[mainw->blend_file]->frameno;
       } else return 0.;
@@ -778,7 +778,7 @@ double player::audioPlaybackTime() const {
 
   if (!m_lives->m_multitrack->isActive()) {
     if (mainw->current_file == -1) return 0.;
-    if (mainw->playing_file > -1) return (mainw->aframeno - 1.)/cfile->fps;
+    if (mainw->playing_file > -1) return (mainw->aframeno - 1.) / cfile->fps;
     else return cfile->pointer_time;
   } else {
     return lives_ruler_get_value(LIVES_RULER(mainw->multitrack->timeline));
@@ -792,7 +792,7 @@ double player::setAudioPlaybackTime(double time) const {
   if (!is_realtime_aplayer(::prefs->audio_player)) return 0.;
   if (mainw->record && ::prefs->audio_src == AUDIO_SRC_EXT) return 0.;
   if (mainw->multitrack != NULL) return 0.;
-  if (time<0. || time > cfile->laudio_time) return 0.;
+  if (time < 0. || time > cfile->laudio_time) return 0.;
 
   spinning = true;
   msg_id = lives_random();
@@ -861,7 +861,7 @@ int player::setVideoPlaybackFrame(int frame, bool bg) const {
 
 double player::elapsedTime() const {
   if (!isPlaying()) return 0.;
-  return mainw->currticks/U_SEC;
+  return mainw->currticks / U_SEC;
 }
 
 
@@ -1012,7 +1012,7 @@ bool set::setName(livesString name) const {
   if (!name.empty()) {
     const char *new_set_name = name.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str();
     if (is_legal_set_name(new_set_name, TRUE)) {
-      lives_snprintf(mainw->set_name,128,"%s",new_set_name);
+      lives_snprintf(mainw->set_name, 128, "%s", new_set_name);
       return true;
     }
     return false;
@@ -1080,7 +1080,7 @@ bool set::save(livesString name, bool force_append) const {
   bool ret = false;
 
   pthread_mutex_lock(&cond_mutex);
-  if (!idle_save_set(cname,force_append, msg_id)) {
+  if (!idle_save_set(cname, force_append, msg_id)) {
     pthread_mutex_unlock(&cond_mutex);
     spinning = false;
     m_lives->removeCallback(cbid);
@@ -1110,7 +1110,7 @@ void set::update_clip_list() {
   if (isValid()) {
     ulong *ids = get_unique_ids();
 
-    for (int i=0; ids[i] != 0l; i++) {
+    for (int i = 0; ids[i] != 0l; i++) {
       m_clips.push_back(ids[i]);
     }
     lives_free(ids);
@@ -1353,7 +1353,7 @@ bool clip::switchTo() {
 
   int cnum = cnum_for_uid(m_uid);
   pthread_mutex_lock(&cond_mutex);
-  if (!idle_switch_clip(1,cnum, msg_id)) {
+  if (!idle_switch_clip(1, cnum, msg_id)) {
     pthread_mutex_unlock(&cond_mutex);
     spinning = false;
     m_lives->removeCallback(cbid);
@@ -1379,7 +1379,7 @@ bool clip::setIsBackground() {
 
   int cnum = cnum_for_uid(m_uid);
   pthread_mutex_lock(&cond_mutex);
-  if (!idle_switch_clip(2,cnum, msg_id)) {
+  if (!idle_switch_clip(2, cnum, msg_id)) {
     pthread_mutex_unlock(&cond_mutex);
     spinning = false;
     m_lives->removeCallback(cbid);
@@ -1676,14 +1676,14 @@ void block::invalidate() {
 double block::startTime() {
   track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
   if (tr == NULL) return -1.;
-  return (double)get_event_timecode(tr->start_event)/U_SEC;
+  return (double)get_event_timecode(tr->start_event) / U_SEC;
 }
 
 double block::length() {
   track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
   if (tr == NULL) return -1.;
-  return (double)get_event_timecode(tr->end_event)/U_SEC + 1./mainw->multitrack->fps -
-         (double)get_event_timecode(tr->start_event)/U_SEC;
+  return (double)get_event_timecode(tr->end_event) / U_SEC + 1. / mainw->multitrack->fps -
+         (double)get_event_timecode(tr->start_event) / U_SEC;
 }
 
 clip block::clipSource() {
@@ -1721,7 +1721,7 @@ bool block::remove() {
   while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
   pthread_mutex_unlock(&cond_mutex);
   if (isValid()) {
-    bool ret=(bool)atoi(private_response);
+    bool ret = (bool)atoi(private_response);
     lives_free(private_response);
     if (ret) invalidate();
     return ret;
@@ -1750,7 +1750,7 @@ bool block::moveTo(int track, double time) {
   while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
   pthread_mutex_unlock(&cond_mutex);
   if (isValid()) {
-    bool ret=(bool)atoi(private_response);
+    bool ret = (bool)atoi(private_response);
     lives_free(private_response);
     if (ret) invalidate();
     return ret;
@@ -1876,9 +1876,9 @@ livesString multitrack::chooseLayout() const {
 livesStringList multitrack::availableLayouts() const {
   livesStringList list;
   if (!isValid()) return list;
-  LiVESList *layoutlist=mainw->current_layouts_map;
+  LiVESList *layoutlist = mainw->current_layouts_map;
   while (layoutlist != NULL) {
-    char *data=repl_workdir((const char *)layoutlist->data, FALSE);
+    char *data = repl_workdir((const char *)layoutlist->data, FALSE);
     list.push_back(livesString(data, LIVES_CHAR_ENCODING_FILESYSTEM).toEncoding(LIVES_CHAR_ENCODING_UTF8));
     lives_free(data);
     layoutlist = layoutlist->next;
@@ -1986,7 +1986,7 @@ clip multitrack::render(bool with_audio, bool normalise_audio) const {
   while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
   pthread_mutex_unlock(&cond_mutex);
   if (isValid()) {
-    ulong uid = strtoul(private_response,NULL,10);
+    ulong uid = strtoul(private_response, NULL, 10);
     c = clip(uid, m_lives);
     lives_free(private_response);
   }
@@ -2046,7 +2046,7 @@ bool multitrack::setCurrentTrack(int track) const {
     while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
     pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
-      bool ret=(bool)(atoi(private_response));
+      bool ret = (bool)(atoi(private_response));
       lives_free(private_response);
       return ret;
     }
@@ -2092,7 +2092,7 @@ bool multitrack::setTrackLabel(int track, livesString label) const {
     while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
     pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
-      bool ret=(bool)(atoi(private_response));
+      bool ret = (bool)(atoi(private_response));
       lives_free(private_response);
       return ret;
     }
@@ -2237,7 +2237,7 @@ lives_audio_source_t audioSource(const livesApp &lives) {
 
 bool setAudioSource(const livesApp &lives, lives_audio_source_t asrc) {
   if (!lives.isReady()) return false;
-  return lives.setPref(PREF_REC_EXT_AUDIO, (bool)(asrc==LIVES_AUDIO_SOURCE_EXTERNAL));
+  return lives.setPref(PREF_REC_EXT_AUDIO, (bool)(asrc == LIVES_AUDIO_SOURCE_EXTERNAL));
 }
 
 lives_audio_player_t audioPlayer(const livesApp &lives) {
@@ -2303,7 +2303,7 @@ bool setAudioFollowsFPSChanges(const livesApp &lives, bool setting) {
 
 bool sepWinSticky(const livesApp &lives) {
   if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
-  return ::prefs->sepwin_type==SEPWIN_TYPE_STICKY;
+  return ::prefs->sepwin_type == SEPWIN_TYPE_STICKY;
 }
 
 bool setSepWinSticky(const livesApp &lives, bool setting) {
@@ -2378,14 +2378,14 @@ void binding_cb(lives_callback_t cb_type, const char *msgstring, ulong id) {
         // private event type
         lives::_privateInfo info;
         char *endptr;
-        info.id = strtoul(msgstring,&endptr,10);
-        info.response = endptr+1;
+        info.id = strtoul(msgstring, &endptr, 10);
+        info.response = endptr + 1;
         lives::private_callback_f fn = (lives::private_callback_f)((*it)->func);
         ret = (fn)(&info, (*it)->data);
       }
       break;
       default:
-	++it;
+        ++it;
         continue;
       }
       if (!ret) {

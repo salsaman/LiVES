@@ -35,7 +35,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-static char plugin_version[64]="LiVES openGL playback engine version 1.1";
+static char plugin_version[64] = "LiVES openGL playback engine version 1.1";
 static char error[256];
 
 static boolean(*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
@@ -108,11 +108,11 @@ static int m_HeightFS;
 static int window_width;
 static int window_height;
 
-static int mode=0;
-static int dblbuf=1;
-static int nbuf=32;
-static boolean fsover=FALSE;
-static boolean use_pbo=FALSE;
+static int mode = 0;
+static int dblbuf = 1;
+static int nbuf = 32;
+static boolean fsover = FALSE;
+static boolean use_pbo = FALSE;
 
 static float rquad;
 
@@ -129,12 +129,12 @@ static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
 
-static GLenum m_TexTarget=GL_TEXTURE_2D;
+static GLenum m_TexTarget = GL_TEXTURE_2D;
 
 static float tfps;
 
-static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]= {131}; // array of weed api versions supported in plugin
+static int num_versions = 2; // number of different weed api versions supported
+static int api_versions[] = {131}; // array of weed api versions supported in plugin
 static weed_plant_t *plugin_info;
 
 static weed_plant_t *params[7];
@@ -174,33 +174,33 @@ static int typesize;
 //////////////////////////////////////////////
 
 static int get_real_tnum(int tnum, bool do_assert) {
-  tnum=ctexture-1-tnum;
-  if (tnum<0) tnum+=nbuf;
-  assert(tnum>=0);
-  if (do_assert) assert(tnum<ntextures);
+  tnum = ctexture - 1 - tnum;
+  if (tnum < 0) tnum += nbuf;
+  assert(tnum >= 0);
+  if (do_assert) assert(tnum < ntextures);
   return tnum;
 }
 
 static int get_texture_width(int tnum) {
-  tnum=get_real_tnum(tnum,TRUE);
+  tnum = get_real_tnum(tnum, TRUE);
   return textures[tnum].width;
 }
 
 
 static int get_texture_height(int tnum) {
-  tnum=get_real_tnum(tnum,TRUE);
+  tnum = get_real_tnum(tnum, TRUE);
   return textures[tnum].height;
 }
 
 
 static int get_texture_texID(int tnum) {
-  tnum=get_real_tnum(tnum,FALSE);
+  tnum = get_real_tnum(tnum, FALSE);
   return texID[tnum];
 }
 
 
 static int get_texture_type(int tnum) {
-  tnum=get_real_tnum(tnum,TRUE);
+  tnum = get_real_tnum(tnum, TRUE);
   return textures[tnum].type;
 }
 
@@ -215,27 +215,27 @@ static int get_texture_typesize(int tnum) {
 
 const char *module_check_init(void) {
   if (!GL_ARB_texture_non_power_of_two) {
-    snprintf(error,256,"\n\nGL_ARB_texture_non_power_of_two unavailable.\nCannot use plugin.\n");
+    snprintf(error, 256, "\n\nGL_ARB_texture_non_power_of_two unavailable.\nCannot use plugin.\n");
     return error;
   }
 
   XInitThreads();
 
-  pbo_available=FALSE;
+  pbo_available = FALSE;
 
   if (GL_ARB_pixel_buffer_object) {
-    pbo_available=TRUE;
+    pbo_available = TRUE;
     //use_pbo=TRUE;
   }
 
-  render_fn=&render_frame_unknown;
+  render_fn = &render_frame_unknown;
 
   inited = false;
 
-  mypalette=WEED_PALETTE_END;
+  mypalette = WEED_PALETTE_END;
 
-  zsubtitles=NULL;
-  plugin_info=NULL;
+  zsubtitles = NULL;
+  plugin_info = NULL;
 
   return NULL;
 }
@@ -251,7 +251,7 @@ const char *get_description(void) {
 }
 
 uint64_t get_capabilities(int palette) {
-  return VPP_CAN_RESIZE|VPP_CAN_RETURN|VPP_LOCAL_DISPLAY;
+  return VPP_CAN_RESIZE | VPP_CAN_RETURN | VPP_LOCAL_DISPLAY;
 }
 
 const char *get_init_rfx(void) {
@@ -278,35 +278,35 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 
 
 const void **get_play_params(func_ptr weed_bootd) {
-  weed_bootstrap_f weed_boot=(weed_bootstrap_f)weed_bootd;
+  weed_bootstrap_f weed_boot = (weed_bootstrap_f)weed_bootd;
 
   //weed_plant_t *gui;
 
   //int api,error;
 
-  if (plugin_info==NULL) {
-    plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
+  if (plugin_info == NULL) {
+    plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
 
     // play params
-    params[0]=weed_integer_init("mode", "Playback _mode", -1, -1, 10);
-    weed_set_int_value(weed_parameter_template_get_gui(params[0]),"hidden",WEED_TRUE);
+    params[0] = weed_integer_init("mode", "Playback _mode", -1, -1, 10);
+    weed_set_int_value(weed_parameter_template_get_gui(params[0]), "hidden", WEED_TRUE);
 
-    params[1]=weed_float_init("fft0", "fft value 0", -1., 0., 1.);
-    weed_set_int_value(weed_parameter_template_get_gui(params[1]),"hidden",WEED_TRUE);
+    params[1] = weed_float_init("fft0", "fft value 0", -1., 0., 1.);
+    weed_set_int_value(weed_parameter_template_get_gui(params[1]), "hidden", WEED_TRUE);
 
-    params[2]=weed_float_init("fft1", "fft value 1", -1., 0., 1.);
-    weed_set_int_value(weed_parameter_template_get_gui(params[2]),"hidden",WEED_TRUE);
+    params[2] = weed_float_init("fft1", "fft value 1", -1., 0., 1.);
+    weed_set_int_value(weed_parameter_template_get_gui(params[2]), "hidden", WEED_TRUE);
 
-    params[3]=weed_float_init("fft2", "fft value 2", -1., 0., 1.);
-    weed_set_int_value(weed_parameter_template_get_gui(params[3]),"hidden",WEED_TRUE);
+    params[3] = weed_float_init("fft2", "fft value 2", -1., 0., 1.);
+    weed_set_int_value(weed_parameter_template_get_gui(params[3]), "hidden", WEED_TRUE);
 
-    params[4]=weed_float_init("fft3", "fft value 3", -1., 0., 1.);
-    weed_set_int_value(weed_parameter_template_get_gui(params[4]),"hidden",WEED_TRUE);
+    params[4] = weed_float_init("fft3", "fft value 3", -1., 0., 1.);
+    weed_set_int_value(weed_parameter_template_get_gui(params[4]), "hidden", WEED_TRUE);
 
-    params[5]=weed_text_init("subtitles", "_Subtitles", "");
-    weed_set_int_value(weed_parameter_template_get_gui(params[5]),"hidden",WEED_TRUE);
+    params[5] = weed_text_init("subtitles", "_Subtitles", "");
+    weed_set_int_value(weed_parameter_template_get_gui(params[5]), "hidden", WEED_TRUE);
 
-    params[6]=NULL;
+    params[6] = NULL;
   }
 
   return (const void **)params;
@@ -315,18 +315,18 @@ const void **get_play_params(func_ptr weed_bootd) {
 
 const int *get_palette_list(void) {
   // return palettes in order of preference, ending with WEED_PALETTE_END
-  palette_list[0]=WEED_PALETTE_RGB24;
-  palette_list[1]=WEED_PALETTE_RGBA32;
-  palette_list[2]=WEED_PALETTE_END;
+  palette_list[0] = WEED_PALETTE_RGB24;
+  palette_list[1] = WEED_PALETTE_RGBA32;
+  palette_list[2] = WEED_PALETTE_END;
   return palette_list;
 }
 
 
 boolean set_palette(int palette) {
-  if (palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_RGB24||
-      palette==WEED_PALETTE_BGR24||palette==WEED_PALETTE_BGRA32) {
-    render_fn=&render_frame_rgba;
-    mypalette=palette;
+  if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_RGB24 ||
+      palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32) {
+    render_fn = &render_frame_rgba;
+    mypalette = palette;
     return TRUE;
   }
   // invalid palette
@@ -344,7 +344,7 @@ static void setWindowDecorations(void) {
   MotifWmHints newHints;
 
   Atom WM_HINTS;
-  boolean set=FALSE;
+  boolean set = FALSE;
 
   WM_HINTS = XInternAtom(dpy, "_MOTIF_WM_HINTS", True);
   if (WM_HINTS != None) {
@@ -426,15 +426,15 @@ static void setFullScreen(void) {
   XA_NET_WM_STATE = XInternAtom(dpy, "_NET_WM_STATE", False);
   XA_NET_WM_STATE_ADD = XInternAtom(dpy, "_NET_WM_STATE_ADD", False);
 
-  XA_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(dpy, "_NET_WM_STATE_MAXIMIZED_VERT",False);
-  XA_NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(dpy,"_NET_WM_STATE_MAXIMIZED_HORZ",False);
-  XA_NET_WM_STATE_FULLSCREEN = XInternAtom(dpy,"_NET_WM_STATE_FULLSCREEN",False);
+  XA_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(dpy, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+  XA_NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(dpy, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+  XA_NET_WM_STATE_FULLSCREEN = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False);
 
 
   if (isWindowMapped()) {
     XEvent e;
 
-    memset(&e,0,sizeof(e));
+    memset(&e, 0, sizeof(e));
     e.xany.type = ClientMessage;
     e.xclient.message_type = XA_NET_WM_STATE;
     e.xclient.format = 32;
@@ -489,7 +489,7 @@ static int get_size_for_type(int type) {
 
 
 static volatile uint8_t *buffer_free(volatile uint8_t *retbuf) {
-  if (retbuf==NULL) return NULL;
+  if (retbuf == NULL) return NULL;
   free((void *)retbuf);
   return NULL;
 }
@@ -503,20 +503,20 @@ static uint8_t *render_to_mainmem(int type) {
 
   XGetWindowAttributes(dpy, xWin, &attr);
 
-  window_width=attr.width;
-  window_height=attr.height;
+  window_width = attr.width;
+  window_height = attr.height;
 
   glFlush();
 
   glPushAttrib(GL_PIXEL_MODE_BIT);
   glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
 
-  glReadBuffer(swapFlag?GL_BACK:GL_FRONT);
+  glReadBuffer(swapFlag ? GL_BACK : GL_FRONT);
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   if (!use_pbo) {
-    xretbuf=(uint8_t *)malloc(window_width*window_height*get_size_for_type(type));
+    xretbuf = (uint8_t *)malloc(window_width * window_height * get_size_for_type(type));
     if (!xretbuf) {
       glPopClientAttrib();
       glPopAttrib();
@@ -532,8 +532,8 @@ static uint8_t *render_to_mainmem(int type) {
 
 
 static void render_to_gpumem_inner(int tnum, int width, int height, int type, int typesize, volatile uint8_t *texturebuf) {
-  int mipMapLevel=0;
-  int texID=get_texture_texID(tnum);
+  int mipMapLevel = 0;
+  int texID = get_texture_texID(tnum);
 
   glEnable(m_TexTarget);
 
@@ -545,13 +545,13 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, in
 
   glDisable(m_TexTarget);
 
-  tnum=get_real_tnum(tnum,FALSE);
+  tnum = get_real_tnum(tnum, FALSE);
 
-  textures[tnum].width=width;
-  textures[tnum].height=height;
+  textures[tnum].width = width;
+  textures[tnum].height = height;
 
-  textures[tnum].type=type;
-  textures[tnum].typesize=typesize;
+  textures[tnum].type = type;
+  textures[tnum].typesize = typesize;
 
 }
 
@@ -571,62 +571,62 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   register int i;
 
-  if (mypalette==WEED_PALETTE_END) {
-    fprintf(stderr,"openGL plugin error: No palette was set !\n");
+  if (mypalette == WEED_PALETTE_END) {
+    fprintf(stderr, "openGL plugin error: No palette was set !\n");
     return FALSE;
   }
 
-  xparms.width=width;
-  xparms.height=height;
-  xparms.fullscreen=fullscreen;
-  xparms.window_id=window_id;
-  xparms.argc=argc;
-  xparms.argv=argv;
+  xparms.width = width;
+  xparms.height = height;
+  xparms.fullscreen = fullscreen;
+  xparms.window_id = window_id;
+  xparms.argc = argc;
+  xparms.argv = argv;
 
-  mode=0;
-  tfps=50.;
-  nbuf=32;
-  dblbuf=1;
-  fsover=FALSE;
+  mode = 0;
+  tfps = 50.;
+  nbuf = 32;
+  dblbuf = 1;
+  fsover = FALSE;
 
-  if (argc>0) {
-    mode=atoi(argv[0]);
-    if (argc>1) {
-      tfps=atof(argv[1]);
-      if (argc>2) {
-        nbuf=atoi(argv[2]);
-        if (argc>3) {
-          dblbuf=atoi(argv[3]);
-          if (argc>4) {
-            fsover=atoi(argv[4]);
+  if (argc > 0) {
+    mode = atoi(argv[0]);
+    if (argc > 1) {
+      tfps = atof(argv[1]);
+      if (argc > 2) {
+        nbuf = atoi(argv[2]);
+        if (argc > 3) {
+          dblbuf = atoi(argv[3]);
+          if (argc > 4) {
+            fsover = atoi(argv[4]);
           }
         }
       }
     }
   }
 
-  textures=(_texture *)malloc(nbuf*sizeof(_texture));
+  textures = (_texture *)malloc(nbuf * sizeof(_texture));
 
-  for (i=0; i<nbuf; i++) {
-    textures[i].width=textures[i].height=0;
+  for (i = 0; i < nbuf; i++) {
+    textures[i].width = textures[i].height = 0;
   }
 
-  ntextures=ctexture=0;
+  ntextures = ctexture = 0;
 
-  playing=TRUE;
+  playing = TRUE;
 
-  rthread_ready=FALSE;
-  has_texture=FALSE;
-  has_new_texture=FALSE;
-  texturebuf=NULL;
+  rthread_ready = FALSE;
+  has_texture = FALSE;
+  has_new_texture = FALSE;
+  texturebuf = NULL;
 
-  pthread_create(&rthread,NULL,render_thread_func,&xparms);
+  pthread_create(&rthread, NULL, render_thread_func, &xparms);
 
   // wait for render thread to start up
   while (!rthread_ready) usleep(1000);
 
   if (!playing) {
-    fprintf(stderr,"openGL plugin error: Failed to start render thread\n");
+    fprintf(stderr, "openGL plugin error: Failed to start render thread\n");
     return FALSE;
   }
 
@@ -647,7 +647,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   Cursor invisibleCursor;
   Pixmap bitmapNoData;
   XColor black;
-  static char noData[] = { 0,0,0,0,0,0,0,0 };
+  static char noData[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
   int singleBufferAttributess[] = {
     GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
@@ -671,13 +671,13 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   };
 
   XVisualInfo          *vInfo;
-  GLXFBConfig          *fbConfigs=NULL;
+  GLXFBConfig          *fbConfigs = NULL;
   XEvent                event;
   XSetWindowAttributes  swa;
   int                   swaMask;
   int                   numReturned;
 
-  if (fsover) fullscreen=FALSE;
+  if (fsover) fullscreen = FALSE;
 
   /* Open a connection to the X server */
   dpy = XOpenDisplay(NULL);
@@ -699,7 +699,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
 
   swa.event_mask = StructureNotifyMask | ButtonPressMask | KeyPressMask | KeyReleaseMask;
 
-  if (!inited) gladLoadGLX(dpy,DefaultScreen(dpy));
+  if (!inited) gladLoadGLX(dpy, DefaultScreen(dpy));
 
   if (window_id) {
     XVisualInfo *xvis;
@@ -710,27 +710,27 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     XGetWindowAttributes(dpy, xWin, &attr);
     glxWin = xWin;
 
-    xvtmpl.visual=attr.visual;
-    xvtmpl.visualid=XVisualIDFromVisual(attr.visual);
+    xvtmpl.visual = attr.visual;
+    xvtmpl.visualid = XVisualIDFromVisual(attr.visual);
 
-    xvis=XGetVisualInfo(dpy,VisualIDMask,&xvtmpl,&numReturned);
+    xvis = XGetVisualInfo(dpy, VisualIDMask, &xvtmpl, &numReturned);
 
-    if (numReturned==0) {
-      fprintf(stderr,"openGL plugin error: No xvis could be set !\n");
+    if (numReturned == 0) {
+      fprintf(stderr, "openGL plugin error: No xvis could be set !\n");
       return FALSE;
     }
 
     context = glXCreateContext(dpy, &xvis[0], 0, GL_TRUE);
 
-    width=window_width=attr.width;
-    height=window_height=attr.height;
+    width = window_width = attr.width;
+    height = window_height = attr.height;
 
     glXGetConfig(dpy, xvis, GLX_DOUBLEBUFFER, &swapFlag);
     XFree(xvis);
-    is_ext=TRUE;
+    is_ext = TRUE;
   } else {
-    width=window_width=fullscreen?m_WidthFS:width;
-    height=window_height=fullscreen?m_HeightFS:height;
+    width = window_width = fullscreen ? m_WidthFS : width;
+    height = window_height = fullscreen ? m_HeightFS : height;
 
     if (dblbuf) {
       /* Request a suitable framebuffer configuration - try for a double
@@ -746,7 +746,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     }
 
     if (!fbConfigs) {
-      fprintf(stderr,"openGL plugin error: No config could be set !\n");
+      fprintf(stderr, "openGL plugin error: No config could be set !\n");
       return FALSE;
     }
 
@@ -755,7 +755,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     vInfo = glXGetVisualFromFBConfig(dpy, fbConfigs[0]);
 
     if (!vInfo) {
-      fprintf(stderr,"openGL plugin error: No vInfo could be got !\n");
+      fprintf(stderr, "openGL plugin error: No vInfo could be got !\n");
       return FALSE;
     }
 
@@ -763,7 +763,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
                                    vInfo->visual, AllocNone);
 
     if (!swa.colormap) {
-      fprintf(stderr,"openGL plugin error: No colormap could be set !\n");
+      fprintf(stderr, "openGL plugin error: No colormap could be set !\n");
       XFree(vInfo);
       return FALSE;
     }
@@ -773,11 +773,11 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     swa.border_pixel = 0;
 
     xWin = XCreateWindow(dpy, RootWindow(dpy, vInfo->screen), 0, 0,
-                         width,height,
+                         width, height,
                          0, vInfo->depth, InputOutput, vInfo->visual,
                          swaMask, &swa);
 
-    XFreeColormap(dpy,swa.colormap);
+    XFreeColormap(dpy, swa.colormap);
 
     if (fullscreen) setFullScreen();
 
@@ -804,7 +804,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     XDefineCursor(dpy, xWin, invisibleCursor);
     XFreeCursor(dpy, invisibleCursor);
 
-    is_ext=FALSE;
+    is_ext = FALSE;
   }
 
   glXMakeCurrent(dpy, glxWin, context);
@@ -841,7 +841,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    texID=(GLuint *)malloc(nbuf * sizeof(GLuint));
+    texID = (GLuint *)malloc(nbuf * sizeof(GLuint));
     glGenTextures(nbuf, texID);
   }
 
@@ -854,19 +854,19 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   glFlush();
   if (swapFlag) glXSwapBuffers(dpy, glxWin);
 
-  type=GL_RGBA;
-  if (mypalette==WEED_PALETTE_RGB24) type=GL_RGB;
-  else if (mypalette==WEED_PALETTE_BGR24) type=GL_BGR;
-  else if (mypalette==WEED_PALETTE_BGRA32) type=GL_BGRA;
+  type = GL_RGBA;
+  if (mypalette == WEED_PALETTE_RGB24) type = GL_RGB;
+  else if (mypalette == WEED_PALETTE_BGR24) type = GL_BGR;
+  else if (mypalette == WEED_PALETTE_BGRA32) type = GL_BGRA;
 
-  typesize=get_size_for_type(type);
+  typesize = get_size_for_type(type);
 
-  rquad=0.;
+  rquad = 0.;
 
   if (glXIsDirect(dpy, context))
-    is_direct=TRUE;
+    is_direct = TRUE;
   else
-    is_direct=FALSE;
+    is_direct = FALSE;
 
   /*
   XMapWindow(dpy, xWin);
@@ -883,26 +883,26 @@ static void set_priorities(void) {
   // prioritise textures so the most recent ones have highest priority
   // GL should swap oldest out memory and swap newst in memory
 
-  float pri=1.;
-  GLclampf *prios=(GLclampf *)malloc(nbuf * sizeof(GLclampf));
-  int idx=ctexture;
+  float pri = 1.;
+  GLclampf *prios = (GLclampf *)malloc(nbuf * sizeof(GLclampf));
+  int idx = ctexture;
 
   register int i;
 
-  for (i=0; i<nbuf; i++) {
-    prios[i]=0.;
+  for (i = 0; i < nbuf; i++) {
+    prios[i] = 0.;
   }
 
-  for (i=0; i<nbuf; i++) {
-    prios[idx]=pri;
+  for (i = 0; i < nbuf; i++) {
+    prios[idx] = pri;
     idx--;
-    if (idx<0) idx+=nbuf;
-    if (idx>ntextures) break;
-    pri-=1./(float)nbuf;
-    if (pri<0.) pri=0.;
+    if (idx < 0) idx += nbuf;
+    if (idx > ntextures) break;
+    pri -= 1. / (float)nbuf;
+    if (pri < 0.) pri = 0.;
   }
 
-  glPrioritizeTextures(nbuf,texID,prios);
+  glPrioritizeTextures(nbuf, texID, prios);
 
   free(prios);
 
@@ -940,23 +940,23 @@ static void resize_buffer(uint8_t *out, int owidth, int oheight, uint8_t *in, in
 static boolean Upload(int width, int height) {
   XWindowAttributes attr;
 
-  int imgWidth=width;
-  int imgHeight=height;
+  int imgWidth = width;
+  int imgHeight = height;
 
   int texID;
 
-  texID=get_texture_texID(0);
+  texID = get_texture_texID(0);
 
-  if (zmode!=-1) mode=zmode;
+  if (zmode != -1) mode = zmode;
 
   if (has_new_texture) {
     ctexture++;
-    if (ctexture==nbuf) ctexture=0;
-    if (ntextures<nbuf) ntextures++;
+    if (ctexture == nbuf) ctexture = 0;
+    if (ntextures < nbuf) ntextures++;
 
-    has_new_texture=FALSE;
+    has_new_texture = FALSE;
 
-    render_to_gpumem_inner(0,width,height,type,typesize,texturebuf);
+    render_to_gpumem_inner(0, width, height, type, typesize, texturebuf);
 
     set_priorities();
 
@@ -964,11 +964,11 @@ static boolean Upload(int width, int height) {
 
   pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
 
-  if (!return_ready&&retbuf!=NULL) {
-    retbuf=buffer_free(retbuf);
+  if (!return_ready && retbuf != NULL) {
+    retbuf = buffer_free(retbuf);
   }
 
-  texID=get_texture_texID(0);
+  texID = get_texture_texID(0);
 
 
   ////////////////////////////////////////////////////////////
@@ -976,8 +976,8 @@ static boolean Upload(int width, int height) {
 
   XGetWindowAttributes(dpy, xWin, &attr);
 
-  window_width=attr.width;
-  window_height=attr.height;
+  window_width = attr.width;
+  window_height = attr.height;
 
   switch (mode) {
   case 0: {
@@ -1077,13 +1077,13 @@ static boolean Upload(int width, int height) {
     glVertex3f(0.0f, 1.0f, 0.0f);               // Top
 
     glTexCoord2f(0.0, 1.0);
-    glVertex3f(-1.0f,-1.0f, 0.0f);              // Bottom Left
+    glVertex3f(-1.0f, -1.0f, 0.0f);             // Bottom Left
 
     glTexCoord2f(1.0, 1.0);
-    glVertex3f(1.0f,-1.0f, 0.0f);               // Bottom Right
+    glVertex3f(1.0f, -1.0f, 0.0f);              // Bottom Right
     glEnd();
 
-    glTranslatef(-1.5f,0.0f,-6.0f);
+    glTranslatef(-1.5f, 0.0f, -6.0f);
     glEnd();
 
     glDisable(m_TexTarget);
@@ -1104,14 +1104,14 @@ static boolean Upload(int width, int height) {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0,0.0,-1.);
+    glTranslatef(0.0, 0.0, -1.);
 
     // rotations
     glMatrixMode(GL_PROJECTION);                // Select The Projection Matrix
     glLoadIdentity();
-    gluPerspective(45.0f,(GLfloat)window_width/(GLfloat)window_height,0.1f,100.0f);
+    gluPerspective(45.0f, (GLfloat)window_width / (GLfloat)window_height, 0.1f, 100.0f);
 
-    glRotatef(rquad,0.0f,0.0f,1.0f);            // Rotate The Quad On The Z axis
+    glRotatef(rquad, 0.0f, 0.0f, 1.0f);         // Rotate The Quad On The Z axis
 
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -1127,7 +1127,7 @@ static boolean Upload(int width, int height) {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    rquad-=0.5f;                       // Decrease The Rotation Variable For The Quad
+    rquad -= 0.5f;                     // Decrease The Rotation Variable For The Quad
 
     glBegin(GL_QUADS);
 
@@ -1156,14 +1156,14 @@ static boolean Upload(int width, int height) {
     struct timespec now;
     int ticks;
 
-    float vx=-1.0,vy=1.0;
-    float tx=0.0,ty;
+    float vx = -1.0, vy = 1.0;
+    float tx = 0.0, ty;
 
     float vz;
 
-    clock_gettime(CLOCK_MONOTONIC,&now);
-    ticks=now.tv_sec*1000+now.tv_nsec/1000000;
-    ty=sin(ticks*0.001)*0.2;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+    ty = sin(ticks * 0.001) * 0.2;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1171,11 +1171,11 @@ static boolean Upload(int width, int height) {
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth/(float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0,0.0,-1.1);
+    glTranslatef(0.0, 0.0, -1.1);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -1213,49 +1213,49 @@ static boolean Upload(int width, int height) {
 #define A2 0.04		// amplitude
 
 
-    for (int j=0; j<WY; j++) {
-      vx=-1.0;
-      tx=0.0;
-      for (int i=0; i<WX; i++) {
-        float col=1.0-sin(i*0.05+j*0.06)*1.0;
+    for (int j = 0; j < WY; j++) {
+      vx = -1.0;
+      tx = 0.0;
+      for (int i = 0; i < WX; i++) {
+        float col = 1.0 - sin(i * 0.05 + j * 0.06) * 1.0;
 
         glBegin(GL_QUADS);
 
-        glColor3f(col,col,col);
+        glColor3f(col, col, col);
 
-        vz=sin(ticks*TSPD1+i*XSPD1+j*YSPD1)*A1+cos(ticks*TSPD2+i*XSPD2+j*YSPD2)*A2;
-        glTexCoord2f(tx,ty);
-        glVertex3f(vx,vy, vz);
+        vz = sin(ticks * TSPD1 + i * XSPD1 + j * YSPD1) * A1 + cos(ticks * TSPD2 + i * XSPD2 + j * YSPD2) * A2;
+        glTexCoord2f(tx, ty);
+        glVertex3f(vx, vy, vz);
 
-        vz=sin(ticks*TSPD1+(i+1)*XSPD1+j*YSPD1)*A1+cos(ticks*TSPD2+(i+1)*XSPD2+j*YSPD2)*A2;
-        col=1.0-sin((i+1)*0.05+j*0.06)*1.0;
-        glColor3f(col,col,col);
+        vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + j * YSPD1) * A1 + cos(ticks * TSPD2 + (i + 1) * XSPD2 + j * YSPD2) * A2;
+        col = 1.0 - sin((i + 1) * 0.05 + j * 0.06) * 1.0;
+        glColor3f(col, col, col);
 
-        glTexCoord2f(tx+TX_PLUS, ty);
-        glVertex3f(vx+VX_PLUS, vy, vz);
+        glTexCoord2f(tx + TX_PLUS, ty);
+        glVertex3f(vx + VX_PLUS, vy, vz);
 
-        vz=sin(ticks*TSPD1+(i+1)*XSPD1+(j+1)*YSPD1)*A1+cos(ticks*TSPD2+(i+1)*XSPD2+(j+1)*YSPD2)*A2;
-        col=1.0-sin((i+1)*0.05+(j+1)*0.06)*1.0;
-        glColor3f(col,col,col);
+        vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + (j + 1) * YSPD1) * A1 + cos(ticks * TSPD2 + (i + 1) * XSPD2 + (j + 1) * YSPD2) * A2;
+        col = 1.0 - sin((i + 1) * 0.05 + (j + 1) * 0.06) * 1.0;
+        glColor3f(col, col, col);
 
-        glTexCoord2f(tx+TX_PLUS, ty+TY_PLUS);
-        glVertex3f(vx+VX_PLUS, vy-VY_PLUS, vz);
+        glTexCoord2f(tx + TX_PLUS, ty + TY_PLUS);
+        glVertex3f(vx + VX_PLUS, vy - VY_PLUS, vz);
 
-        vz=sin(ticks*TSPD1+i*XSPD1+(j+1)*YSPD1)*A1+cos(ticks*TSPD2+i*XSPD2+(j+1)*YSPD2)*A2;
-        col=1.0-sin(i*0.05+(j+1)*0.06)*1.0;
-        glColor3f(col,col,col);
+        vz = sin(ticks * TSPD1 + i * XSPD1 + (j + 1) * YSPD1) * A1 + cos(ticks * TSPD2 + i * XSPD2 + (j + 1) * YSPD2) * A2;
+        col = 1.0 - sin(i * 0.05 + (j + 1) * 0.06) * 1.0;
+        glColor3f(col, col, col);
 
-        glTexCoord2f(tx, ty+TY_PLUS);
-        glVertex3f(vx, vy-VY_PLUS, vz);
+        glTexCoord2f(tx, ty + TY_PLUS);
+        glVertex3f(vx, vy - VY_PLUS, vz);
 
         glEnd();
 
-        vx+=VX_PLUS;
-        tx+=TX_PLUS;
+        vx += VX_PLUS;
+        tx += TX_PLUS;
 
       }
-      vy-=VY_PLUS;
-      ty+=TY_PLUS;
+      vy -= VY_PLUS;
+      ty += TY_PLUS;
 
     }
     glDisable(m_TexTarget);
@@ -1267,26 +1267,26 @@ static boolean Upload(int width, int height) {
 
     // time sync
     struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC,&now);
-    int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    int ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth/(float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0,0.0,-1.1);
+    glTranslatef(0.0, 0.0, -1.1);
 
     // tilt the texture to look like a landscape
-    glRotatef(-60,1,0,0);
+    glRotatef(-60, 1, 0, 0);
     // add a little bit of rotating movement
-    glRotatef(sin(ticks*0.001)*15,0,1,1);
+    glRotatef(sin(ticks * 0.001) * 15, 0, 1, 1);
 
-    glScalef(1.3,1.0,1.0); // make the landscape wide!
+    glScalef(1.3, 1.0, 1.0); // make the landscape wide!
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -1324,53 +1324,53 @@ static boolean Upload(int width, int height) {
 #define A22 0.05         // amplitude
 
 
-    float vx=-1.0,vy=1.0;
-    float tx=0.0,ty=-(ticks % 4000)*0.00025;
+    float vx = -1.0, vy = 1.0;
+    float tx = 0.0, ty = -(ticks % 4000) * 0.00025;
     float vz;
 
-    for (int j=0; j<WY; j++) {
-      vx=-1.0;
-      tx=0.0;
-      for (int i=0; i<WX; i++) {
-        float col=1.0-sin(i*0.05+j*0.06)*1.0;
+    for (int j = 0; j < WY; j++) {
+      vx = -1.0;
+      tx = 0.0;
+      for (int i = 0; i < WX; i++) {
+        float col = 1.0 - sin(i * 0.05 + j * 0.06) * 1.0;
 
         glBegin(GL_QUADS);
 
-        glColor3f(col,col,col);
+        glColor3f(col, col, col);
 
-        vz=sin(ticks*TSPD1+i*XSPD1+j*YSPD1)*A12+cos(ticks*TSPD2+i*XSPD2+j*YSPD2)*A22;
-        glTexCoord2f(tx,ty);
-        glVertex3f(vx,vy, vz);
+        vz = sin(ticks * TSPD1 + i * XSPD1 + j * YSPD1) * A12 + cos(ticks * TSPD2 + i * XSPD2 + j * YSPD2) * A22;
+        glTexCoord2f(tx, ty);
+        glVertex3f(vx, vy, vz);
 
-        vz=sin(ticks*TSPD1+(i+1)*XSPD1+j*YSPD1)*A12+cos(ticks*TSPD2+(i+1)*XSPD2+j*YSPD2)*A22;
-        col=1.0-sin((i+1)*0.05+j*0.06)*1.0;
-        glColor3f(col,col,col);
+        vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + j * YSPD1) * A12 + cos(ticks * TSPD2 + (i + 1) * XSPD2 + j * YSPD2) * A22;
+        col = 1.0 - sin((i + 1) * 0.05 + j * 0.06) * 1.0;
+        glColor3f(col, col, col);
 
-        glTexCoord2f(tx+TX_PLUS, ty);
-        glVertex3f(vx+VX_PLUS, vy, vz);
+        glTexCoord2f(tx + TX_PLUS, ty);
+        glVertex3f(vx + VX_PLUS, vy, vz);
 
-        vz=sin(ticks*TSPD1+(i+1)*XSPD1+(j+1)*YSPD1)*A12+cos(ticks*TSPD2+(i+1)*XSPD2+(j+1)*YSPD2)*A22;
-        col=1.0-sin((i+1)*0.05+(j+1)*0.06)*1.0;
-        glColor3f(col,col,col);
+        vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + (j + 1) * YSPD1) * A12 + cos(ticks * TSPD2 + (i + 1) * XSPD2 + (j + 1) * YSPD2) * A22;
+        col = 1.0 - sin((i + 1) * 0.05 + (j + 1) * 0.06) * 1.0;
+        glColor3f(col, col, col);
 
-        glTexCoord2f(tx+TX_PLUS, ty+TY_PLUS);
-        glVertex3f(vx+VX_PLUS, vy-VY_PLUS, vz);
+        glTexCoord2f(tx + TX_PLUS, ty + TY_PLUS);
+        glVertex3f(vx + VX_PLUS, vy - VY_PLUS, vz);
 
-        vz=sin(ticks*TSPD1+i*XSPD1+(j+1)*YSPD1)*A12+cos(ticks*TSPD2+i*XSPD2+(j+1)*YSPD2)*A22;
-        col=1.0-sin(i*0.05+(j+1)*0.06)*1.0;
-        glColor3f(col,col,col);
+        vz = sin(ticks * TSPD1 + i * XSPD1 + (j + 1) * YSPD1) * A12 + cos(ticks * TSPD2 + i * XSPD2 + (j + 1) * YSPD2) * A22;
+        col = 1.0 - sin(i * 0.05 + (j + 1) * 0.06) * 1.0;
+        glColor3f(col, col, col);
 
-        glTexCoord2f(tx, ty+TY_PLUS);
-        glVertex3f(vx, vy-VY_PLUS, vz);
+        glTexCoord2f(tx, ty + TY_PLUS);
+        glVertex3f(vx, vy - VY_PLUS, vz);
 
         glEnd();
 
-        vx+=VX_PLUS;
-        tx+=TX_PLUS;
+        vx += VX_PLUS;
+        tx += TX_PLUS;
 
       }
-      vy-=VY_PLUS;
-      ty+=TY_PLUS;
+      vy -= VY_PLUS;
+      ty += TY_PLUS;
 
     }
     glDisable(m_TexTarget);
@@ -1385,24 +1385,24 @@ static boolean Upload(int width, int height) {
     struct timespec now;
     int ticks;
 
-    clock_gettime(CLOCK_MONOTONIC,&now);
-    ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth/(float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0,0.0,-1.0);
+    glTranslatef(0.0, 0.0, -1.0);
 
     // turn the cube
-    glRotatef(ticks*0.07,0,1,0);
-    glRotatef(ticks*0.08,0,0,1);
-    glRotatef(ticks*0.035,1,0,0);
+    glRotatef(ticks * 0.07, 0, 1, 0);
+    glRotatef(ticks * 0.08, 0, 0, 1);
+    glRotatef(ticks * 0.035, 1, 0, 0);
 
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -1419,7 +1419,7 @@ static boolean Upload(int width, int height) {
     glEnable(GL_DEPTH_TEST);
 
     // draw the cube with the texture
-    for (int i=0; i<6; i++) {
+    for (int i = 0; i < 6; i++) {
       glBegin(GL_QUADS);
 
       glTexCoord2f(0.0, 0.0);
@@ -1435,9 +1435,9 @@ static boolean Upload(int width, int height) {
       glVertex3f(-1.0, -1.0, 1.0);
 
       glEnd();
-      if (i<3) glRotatef(90,0,1,0);
-      else if (i==3) glRotatef(90,1,0,0);
-      else if (i==4) glRotatef(180,1,0,0);
+      if (i < 3) glRotatef(90, 0, 1, 0);
+      else if (i == 3) glRotatef(90, 1, 0, 0);
+      else if (i == 4) glRotatef(180, 1, 0, 0);
     }
 
     glDisable(m_TexTarget);
@@ -1452,15 +1452,15 @@ static boolean Upload(int width, int height) {
     struct timespec now;
     int ticks;
 
-    clock_gettime(CLOCK_MONOTONIC,&now);
-    ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth/(float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1480,20 +1480,20 @@ static boolean Upload(int width, int height) {
     glEnable(GL_DEPTH_TEST);
 
     // inner + outer cube
-    for (int k=0; k<2; k++) {
+    for (int k = 0; k < 2; k++) {
 
       glPushMatrix();
-      glTranslatef(0.0,0.0,-1.0);
+      glTranslatef(0.0, 0.0, -1.0);
 
       // turn the cube
-      glRotatef(ticks*0.036,0,1,0);
-      glRotatef(ticks*0.07,0,0,1);
-      glRotatef(ticks*0.08,1,0,0);
+      glRotatef(ticks * 0.036, 0, 1, 0);
+      glRotatef(ticks * 0.07, 0, 0, 1);
+      glRotatef(ticks * 0.08, 1, 0, 0);
 
-      glScalef(1.0-k*0.75,1.0-k*0.75,1.0-k*0.75);
+      glScalef(1.0 - k * 0.75, 1.0 - k * 0.75, 1.0 - k * 0.75);
 
       // draw the cube with the texture
-      for (int i=0; i<6; i++) {
+      for (int i = 0; i < 6; i++) {
         glBegin(GL_QUADS);
 
         glTexCoord2f(0.0, 0.0);
@@ -1509,9 +1509,9 @@ static boolean Upload(int width, int height) {
         glVertex3f(-1.0, -1.0, 1.0);
 
         glEnd();
-        if (i<3) glRotatef(90,0,1,0);
-        else if (i==3) glRotatef(90,1,0,0);
-        else if (i==4) glRotatef(180,1,0,0);
+        if (i < 3) glRotatef(90, 0, 1, 0);
+        else if (i == 3) glRotatef(90, 1, 0, 0);
+        else if (i == 4) glRotatef(180, 1, 0, 0);
       }
 
       glPopMatrix();
@@ -1527,22 +1527,22 @@ static boolean Upload(int width, int height) {
     // time sync
     struct timespec now;
     int ticks;
-    clock_gettime(CLOCK_MONOTONIC,&now);
-    ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth/(float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0,0.0,-2.3);
+    glTranslatef(0.0, 0.0, -2.3);
 
     // turn the cube
-    glRotatef(cos((ticks % 5000)*M_PI/5000.0)*45+45,0,1,0);
+    glRotatef(cos((ticks % 5000)*M_PI / 5000.0) * 45 + 45, 0, 1, 0);
 
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -1559,7 +1559,7 @@ static boolean Upload(int width, int height) {
     glEnable(GL_DEPTH_TEST);
 
     // draw the cube with the texture
-    for (int i=0; i<6; i++) {
+    for (int i = 0; i < 6; i++) {
       glBegin(GL_QUADS);
 
       glTexCoord2f(0.0, 0.0);
@@ -1575,9 +1575,9 @@ static boolean Upload(int width, int height) {
       glVertex3f(-1.0, -1.0, 1.0);
 
       glEnd();
-      if (i<3) glRotatef(90,0,1,0);
-      else if (i==3) glRotatef(90,1,0,0);
-      else if (i==4) glRotatef(180,1,0,0);
+      if (i < 3) glRotatef(90, 0, 1, 0);
+      else if (i == 3) glRotatef(90, 1, 0, 0);
+      else if (i == 4) glRotatef(180, 1, 0, 0);
     }
 
     glDisable(m_TexTarget);
@@ -1591,26 +1591,26 @@ static boolean Upload(int width, int height) {
     // sync to the clock
     struct timespec now;
     int ticks;
-    float tx=0.0,ty;
+    float tx = 0.0, ty;
 
-    clock_gettime(CLOCK_MONOTONIC,&now);
-    ticks=now.tv_sec*1000+now.tv_nsec/1000000;
-    ty=(ticks % 2000)*0.0005;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+    ty = (ticks % 2000) * 0.0005;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth/(float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0,0.0,-1.0);
+    glTranslatef(0.0, 0.0, -1.0);
 
-    glRotatef(5,0,1,0);
-    glRotatef(ticks*0.05,0,0,1);
-    glRotatef(7,1,0,0);
+    glRotatef(5, 0, 1, 0);
+    glRotatef(ticks * 0.05, 0, 0, 1);
+    glRotatef(7, 1, 0, 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -1640,45 +1640,45 @@ static boolean Upload(int width, int height) {
 
 
 
-    for (int j=0; j<TD; j++) {
-      tx=0.0;
-      for (int i=0; i<TR; i++) {
-        float vx=cos(i*2*M_PI/TR)*SR;
-        float vy=sin(i*2*M_PI/TR)*SR;
-        float vz=-j*SD;
+    for (int j = 0; j < TD; j++) {
+      tx = 0.0;
+      for (int i = 0; i < TR; i++) {
+        float vx = cos(i * 2 * M_PI / TR) * SR;
+        float vy = sin(i * 2 * M_PI / TR) * SR;
+        float vz = -j * SD;
 
-        float col=2.0-2.0*(float)j/TD;
+        float col = 2.0 - 2.0 * (float)j / TD;
 
-        glColor3f(col,col*0.92,col*0.93);
+        glColor3f(col, col * 0.92, col * 0.93);
         glBegin(GL_QUADS);
 
-        glTexCoord2f(tx,ty);
-        glVertex3f(vx,vy,vz);
-
-        vx=cos((i+1)*2*M_PI/TR)*SR;
-        vy=sin((i+1)*2*M_PI/TR)*SR;
-        vz=-j*SD;
-        glTexCoord2f(tx+TX_PLUS2, ty);
+        glTexCoord2f(tx, ty);
         glVertex3f(vx, vy, vz);
 
-        vx=cos((i+1)*2*M_PI/TR)*SR;
-        vy=sin((i+1)*2*M_PI/TR)*SR;
-        vz=-(j+1)*SD;
-        glTexCoord2f(tx+TX_PLUS2, ty+TY_PLUS2);
+        vx = cos((i + 1) * 2 * M_PI / TR) * SR;
+        vy = sin((i + 1) * 2 * M_PI / TR) * SR;
+        vz = -j * SD;
+        glTexCoord2f(tx + TX_PLUS2, ty);
         glVertex3f(vx, vy, vz);
 
-        vx=cos(i*2*M_PI/TR)*SR;
-        vy=sin(i*2*M_PI/TR)*SR;
-        vz=-(j+1)*SD;
-        glTexCoord2f(tx, ty+TY_PLUS2);
+        vx = cos((i + 1) * 2 * M_PI / TR) * SR;
+        vy = sin((i + 1) * 2 * M_PI / TR) * SR;
+        vz = -(j + 1) * SD;
+        glTexCoord2f(tx + TX_PLUS2, ty + TY_PLUS2);
+        glVertex3f(vx, vy, vz);
+
+        vx = cos(i * 2 * M_PI / TR) * SR;
+        vy = sin(i * 2 * M_PI / TR) * SR;
+        vz = -(j + 1) * SD;
+        glTexCoord2f(tx, ty + TY_PLUS2);
         glVertex3f(vx, vy, vz);
 
         glEnd();
 
-        tx+=TX_PLUS2;
+        tx += TX_PLUS2;
 
       }
-      ty+=TY_PLUS2;
+      ty += TY_PLUS2;
 
     }
     glDisable(m_TexTarget);
@@ -1688,10 +1688,10 @@ static boolean Upload(int width, int height) {
     // particles:
 
     typedef struct {
-      float x,y,z; 	// position coordinate
-      float sx,sy;	// size of the particle square
-      float vx,vy,vz; // speed
-      float tx1,ty1,tx2,ty2; // texture position (color)
+      float x, y, z; 	// position coordinate
+      float sx, sy;	// size of the particle square
+      float vx, vy, vz; // speed
+      float tx1, ty1, tx2, ty2; // texture position (color)
       int start_time; // when was created (tick)
       int end_time; 	// when will disappear (tick)
     } PARTICLE;
@@ -1702,38 +1702,38 @@ static boolean Upload(int width, int height) {
 
     static PARTICLE parts[NOF_PARTS]; // particle array
 
-    static int parts_init=FALSE; // have been inited?
+    static int parts_init = FALSE; // have been inited?
 
     if (!parts_init) {
-      for (int i=0; i<NOF_PARTS; i++) parts[i].start_time=NOT_CREATED;
-      parts_init=TRUE;
+      for (int i = 0; i < NOF_PARTS; i++) parts[i].start_time = NOT_CREATED;
+      parts_init = TRUE;
     }
     // time sync
     struct timespec now;
     int ticks;
 
-    clock_gettime(CLOCK_MONOTONIC,&now);
-    ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth/(float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0,0.0,-2.3);
+    glTranslatef(0.0, 0.0, -2.3);
 
     // turn the place
-    float rotx=sin(ticks*M_PI/5000.0)*5-15;
-    float roty=sin(ticks*M_PI/5000.0)*5+45;
-    float rotz=sin(ticks*M_PI/5000.0)*5;
+    float rotx = sin(ticks * M_PI / 5000.0) * 5 - 15;
+    float roty = sin(ticks * M_PI / 5000.0) * 5 + 45;
+    float rotz = sin(ticks * M_PI / 5000.0) * 5;
 
-    glRotatef(rotx,1,0,0);
-    glRotatef(roty,0,1,0);
-    glRotatef(rotz,0,0,1);
+    glRotatef(rotx, 1, 0, 0);
+    glRotatef(roty, 0, 1, 0);
+    glRotatef(rotz, 0, 0, 1);
 
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -1752,7 +1752,7 @@ static boolean Upload(int width, int height) {
     // draw the emitter with the texture
 
     glBegin(GL_QUADS);
-    glColor3f(1,1,1);
+    glColor3f(1, 1, 1);
     glTexCoord2f(0.0, 0.0);
     glVertex3f(-1.0, 1.0, 0.0);
 
@@ -1769,46 +1769,46 @@ static boolean Upload(int width, int height) {
 
     // draw the particles
 
-    for (int i=0; i<NOF_PARTS; i++) {
+    for (int i = 0; i < NOF_PARTS; i++) {
 
       //int pos;
-      if ((parts[i].start_time==NOT_CREATED) || (ticks>=parts[i].end_time)) {
-        parts[i].start_time=ticks;
-        parts[i].x=(rand() % 2000)/1000.0-1.0;
-        parts[i].y=(rand() % 2000)/1000.0-1.0;
-        parts[i].z=0.0;
-        parts[i].vx=0.001*((rand() % 2000)/1000.0-1.0);
-        parts[i].vy=0.0;
-        parts[i].vz=0.01;
-        parts[i].end_time=4000+parts[i].start_time+rand() % 500;
+      if ((parts[i].start_time == NOT_CREATED) || (ticks >= parts[i].end_time)) {
+        parts[i].start_time = ticks;
+        parts[i].x = (rand() % 2000) / 1000.0 - 1.0;
+        parts[i].y = (rand() % 2000) / 1000.0 - 1.0;
+        parts[i].z = 0.0;
+        parts[i].vx = 0.001 * ((rand() % 2000) / 1000.0 - 1.0);
+        parts[i].vy = 0.0;
+        parts[i].vz = 0.01;
+        parts[i].end_time = 4000 + parts[i].start_time + rand() % 500;
 
-        parts[i].sx=PIXEL_SIZE*2.0/imgWidth;
-        parts[i].sy=PIXEL_SIZE*2.0/imgHeight;
+        parts[i].sx = PIXEL_SIZE * 2.0 / imgWidth;
+        parts[i].sy = PIXEL_SIZE * 2.0 / imgHeight;
 
-        parts[i].tx1=((parts[i].x+1.0)/2.0);
-        parts[i].ty1=(1.0-(parts[i].y+1.0)/2.0);
-        parts[i].tx2=parts[i].tx1+parts[i].sx/2.0;
-        parts[i].ty2=parts[i].ty1+parts[i].sy/2.0;
+        parts[i].tx1 = ((parts[i].x + 1.0) / 2.0);
+        parts[i].ty1 = (1.0 - (parts[i].y + 1.0) / 2.0);
+        parts[i].tx2 = parts[i].tx1 + parts[i].sx / 2.0;
+        parts[i].ty2 = parts[i].ty1 + parts[i].sy / 2.0;
       }
       glBegin(GL_QUADS);
 
       glTexCoord2f(parts[i].tx1, parts[i].ty1);
-      glVertex3f(parts[i].x,parts[i].y,parts[i].z);
+      glVertex3f(parts[i].x, parts[i].y, parts[i].z);
 
       glTexCoord2f(parts[i].tx2, parts[i].ty1);
-      glVertex3f(parts[i].x+parts[i].sx,parts[i].y,parts[i].z);
+      glVertex3f(parts[i].x + parts[i].sx, parts[i].y, parts[i].z);
 
       glTexCoord2f(parts[i].tx2, parts[i].ty2);
-      glVertex3f(parts[i].x+parts[i].sx,parts[i].y-parts[i].sy,parts[i].z);
+      glVertex3f(parts[i].x + parts[i].sx, parts[i].y - parts[i].sy, parts[i].z);
 
       glTexCoord2f(parts[i].tx1, parts[i].ty2);
-      glVertex3f(parts[i].x,parts[i].y-parts[i].sy,parts[i].z);
+      glVertex3f(parts[i].x, parts[i].y - parts[i].sy, parts[i].z);
       glEnd();
 
-      parts[i].x+=parts[i].vx;
-      parts[i].y+=parts[i].vy;
-      parts[i].z+=parts[i].vz;
-      parts[i].vy-=0.0001; // adds a small gravity
+      parts[i].x += parts[i].vx;
+      parts[i].y += parts[i].vy;
+      parts[i].z += parts[i].vz;
+      parts[i].vy -= 0.0001; // adds a small gravity
 
 
     }
@@ -1822,10 +1822,10 @@ static boolean Upload(int width, int height) {
     // dissolve:
 
     typedef struct {
-      float x,y,z; 	// position coordinate
-      float sx,sy;	// size of the particle square
-      float vx,vy,vz; // speed
-      float tx1,ty1,tx2,ty2; // texture position (color)
+      float x, y, z; 	// position coordinate
+      float sx, sy;	// size of the particle square
+      float vx, vy, vz; // speed
+      float tx1, ty1, tx2, ty2; // texture position (color)
       int start_time; // when was created (tick)
       int end_time; 	// when will disappear (tick)
     } PARTICLE;
@@ -1836,38 +1836,38 @@ static boolean Upload(int width, int height) {
 
     static PARTICLE parts[NOF_PARTS2]; // particle array
 
-    static int parts_init=FALSE; // have been inited?
+    static int parts_init = FALSE; // have been inited?
 
     if (!parts_init) {
-      for (int i=0; i<NOF_PARTS2; i++) parts[i].start_time=NOT_CREATED;
-      parts_init=TRUE;
+      for (int i = 0; i < NOF_PARTS2; i++) parts[i].start_time = NOT_CREATED;
+      parts_init = TRUE;
     }
     // time sync
     struct timespec now;
-    float rotx,roty,rotz;
+    float rotx, roty, rotz;
     int ticks;
-    clock_gettime(CLOCK_MONOTONIC,&now);
-    ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth/(float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0,0.0,-2.3);
+    glTranslatef(0.0, 0.0, -2.3);
 
     // turn the place
-    rotx=sin(ticks*M_PI/5000.0)*5+15;
-    roty=sin(ticks*M_PI/5000.0)*15+15;
-    rotz=sin(ticks*M_PI/5000.0)*5;
+    rotx = sin(ticks * M_PI / 5000.0) * 5 + 15;
+    roty = sin(ticks * M_PI / 5000.0) * 15 + 15;
+    rotz = sin(ticks * M_PI / 5000.0) * 5;
 
-    glRotatef(rotx,1,0,0);
-    glRotatef(roty,0,1,0);
-    glRotatef(rotz,0,0,1);
+    glRotatef(rotx, 1, 0, 0);
+    glRotatef(roty, 0, 1, 0);
+    glRotatef(rotz, 0, 0, 1);
 
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -1906,46 +1906,46 @@ static boolean Upload(int width, int height) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA);
 
-    for (int i=0; i<NOF_PARTS2; i++) {
+    for (int i = 0; i < NOF_PARTS2; i++) {
 
-      if ((parts[i].start_time==NOT_CREATED) || (ticks>=parts[i].end_time)) {
-        parts[i].start_time=ticks;
-        parts[i].x=(rand() % 2000)/1000.0-1.0;
-        parts[i].y=(rand() % 2000)/1000.0-1.0;
-        parts[i].z=0.0;
-        parts[i].vx=0.001*((rand() % 2000)/1000.0-1.0);
-        parts[i].vy=0.001*((rand() % 2000)/1000.0-1.0);
-        parts[i].vz=0.01;
-        parts[i].end_time=parts[i].start_time+500+rand() % 500;
+      if ((parts[i].start_time == NOT_CREATED) || (ticks >= parts[i].end_time)) {
+        parts[i].start_time = ticks;
+        parts[i].x = (rand() % 2000) / 1000.0 - 1.0;
+        parts[i].y = (rand() % 2000) / 1000.0 - 1.0;
+        parts[i].z = 0.0;
+        parts[i].vx = 0.001 * ((rand() % 2000) / 1000.0 - 1.0);
+        parts[i].vy = 0.001 * ((rand() % 2000) / 1000.0 - 1.0);
+        parts[i].vz = 0.01;
+        parts[i].end_time = parts[i].start_time + 500 + rand() % 500;
 
-        parts[i].sx=PIXEL_SIZE2*2.0/imgWidth;
-        parts[i].sy=PIXEL_SIZE2*2.0/imgHeight;
+        parts[i].sx = PIXEL_SIZE2 * 2.0 / imgWidth;
+        parts[i].sy = PIXEL_SIZE2 * 2.0 / imgHeight;
 
-        parts[i].tx1=((parts[i].x+1.0)/2.0);
-        parts[i].ty1=(1.0-(parts[i].y+1.0)/2.0);
-        parts[i].tx2=parts[i].tx1+parts[i].sx/2.0;
-        parts[i].ty2=parts[i].ty1+parts[i].sy/2.0;
+        parts[i].tx1 = ((parts[i].x + 1.0) / 2.0);
+        parts[i].ty1 = (1.0 - (parts[i].y + 1.0) / 2.0);
+        parts[i].tx2 = parts[i].tx1 + parts[i].sx / 2.0;
+        parts[i].ty2 = parts[i].ty1 + parts[i].sy / 2.0;
       }
-      glColor4f(1.0,1.0,1.0,0.5+(float)(parts[i].end_time-ticks)/(parts[i].end_time-parts[i].start_time));
+      glColor4f(1.0, 1.0, 1.0, 0.5 + (float)(parts[i].end_time - ticks) / (parts[i].end_time - parts[i].start_time));
       glBegin(GL_QUADS);
 
       glTexCoord2f(parts[i].tx1, parts[i].ty1);
-      glVertex3f(parts[i].x,parts[i].y,parts[i].z);
+      glVertex3f(parts[i].x, parts[i].y, parts[i].z);
 
       glTexCoord2f(parts[i].tx2, parts[i].ty1);
-      glVertex3f(parts[i].x+parts[i].sx,parts[i].y,parts[i].z);
+      glVertex3f(parts[i].x + parts[i].sx, parts[i].y, parts[i].z);
 
       glTexCoord2f(parts[i].tx2, parts[i].ty2);
-      glVertex3f(parts[i].x+parts[i].sx,parts[i].y-parts[i].sy,parts[i].z);
+      glVertex3f(parts[i].x + parts[i].sx, parts[i].y - parts[i].sy, parts[i].z);
 
       glTexCoord2f(parts[i].tx1, parts[i].ty2);
-      glVertex3f(parts[i].x,parts[i].y-parts[i].sy,parts[i].z);
+      glVertex3f(parts[i].x, parts[i].y - parts[i].sy, parts[i].z);
       glEnd();
 
-      parts[i].x+=parts[i].vx;
-      parts[i].y+=parts[i].vy;
-      parts[i].z+=parts[i].vz;
-      parts[i].vy+=0.0004; // adds a small pull up
+      parts[i].x += parts[i].vx;
+      parts[i].y += parts[i].vy;
+      parts[i].z += parts[i].vz;
+      parts[i].vy += 0.0004; // adds a small pull up
 
 
     }
@@ -1958,15 +1958,15 @@ static boolean Upload(int width, int height) {
 
   }
 
-  if (retdata!=NULL) {
+  if (retdata != NULL) {
     // copy buffer to retbuf
 
-    if (retbuf!=NULL) {
+    if (retbuf != NULL) {
       buffer_free(retbuf);
     }
 
-    retbuf=render_to_mainmem(type);
-    return_ready=TRUE;
+    retbuf = render_to_mainmem(type);
+    return_ready = TRUE;
   }
 
   if (swapFlag) glXSwapBuffers(dpy, glxWin);
@@ -1976,27 +1976,27 @@ static boolean Upload(int width, int height) {
 
 
 static void *render_thread_func(void *data) {
-  _xparms *xparms=(_xparms *)data;
+  _xparms *xparms = (_xparms *)data;
 
-  retbuf=NULL;
+  retbuf = NULL;
 
   init_screen_inner(xparms->width, xparms->height, xparms->fullscreen, xparms->window_id, xparms->argc, xparms->argv);
 
-  rthread_ready=TRUE;
+  rthread_ready = TRUE;
 
   while (playing) {
-    usleep(1000000./tfps);
+    usleep(1000000. / tfps);
     pthread_mutex_lock(&rthread_mutex);
-    if (has_texture&&playing) {
-      Upload(imgWidth,imgHeight);
+    if (has_texture && playing) {
+      Upload(imgWidth, imgHeight);
     } else pthread_mutex_unlock(&rthread_mutex);
   }
 
-  if (retbuf!=NULL) {
+  if (retbuf != NULL) {
     buffer_free(retbuf);
   }
 
-  retbuf=NULL;
+  retbuf = NULL;
 
   return NULL;
 }
@@ -2008,59 +2008,59 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
 
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
-  has_texture=TRUE;
-  has_new_texture=TRUE;
+  has_texture = TRUE;
+  has_new_texture = TRUE;
 
 
-  if (return_data!=NULL) {
-    size_t twidth=window_width*typesize;
-    uint8_t *dst,*src;
+  if (return_data != NULL) {
+    size_t twidth = window_width * typesize;
+    uint8_t *dst, *src;
     register int i;
 
-    if (texturebuf!=NULL) {
+    if (texturebuf != NULL) {
       free((void *)texturebuf);
     }
 
-    texturebuf=(uint8_t *)pixel_data[0]; // no memcpy needed, as we will not free pixel_data until render_thread has used it
-    return_ready=FALSE;
-    retdata=(uint8_t *)return_data[0]; // host created space for return data
+    texturebuf = (uint8_t *)pixel_data[0]; // no memcpy needed, as we will not free pixel_data until render_thread has used it
+    return_ready = FALSE;
+    retdata = (uint8_t *)return_data[0]; // host created space for return data
 
-    imgWidth=hsize;
-    imgHeight=vsize;
+    imgWidth = hsize;
+    imgHeight = vsize;
 
     pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
 
     while (!return_ready) usleep(1000); // wait for return data
     pthread_mutex_lock(&rthread_mutex); // lock render thread while we grab data
 
-    dst=(uint8_t *)retdata;
-    retdata=NULL;
+    dst = (uint8_t *)retdata;
+    retdata = NULL;
 
-    texturebuf=NULL;
+    texturebuf = NULL;
 
-    src=(uint8_t *)retbuf+(window_height-1)*twidth;
+    src = (uint8_t *)retbuf + (window_height - 1) * twidth;
 
     // texture is upside-down compared to image
-    for (i=0; i<window_height; i++) {
-      memcpy(dst,src,twidth);
-      dst+=twidth;
-      src-=twidth;
+    for (i = 0; i < window_height; i++) {
+      memcpy(dst, src, twidth);
+      dst += twidth;
+      src -= twidth;
     }
 
   } else {
-    if (hsize!=imgWidth || vsize!=imgHeight || texturebuf==NULL) {
-      if (texturebuf!=NULL) {
+    if (hsize != imgWidth || vsize != imgHeight || texturebuf == NULL) {
+      if (texturebuf != NULL) {
         free((void *)texturebuf);
       }
-      texturebuf=(uint8_t *)malloc(hsize*vsize*typesize);
+      texturebuf = (uint8_t *)malloc(hsize * vsize * typesize);
     }
 
-    memcpy((void *)texturebuf,pixel_data[0],hsize*vsize*typesize);
+    memcpy((void *)texturebuf, pixel_data[0], hsize * vsize * typesize);
 
-    imgWidth=hsize;
-    imgHeight=vsize;
+    imgWidth = hsize;
+    imgHeight = vsize;
 
-    retdata=NULL;
+    retdata = NULL;
   }
 
   pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
@@ -2073,7 +2073,7 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
 
 
 boolean render_frame_unknown(int hsize, int vsize, void **pixel_data, void **return_data) {
-  fprintf(stderr,"openGL plugin error: No palette was set !\n");
+  fprintf(stderr, "openGL plugin error: No palette was set !\n");
   return FALSE;
 }
 
@@ -2083,31 +2083,31 @@ boolean render_frame_unknown(int hsize, int vsize, void **pixel_data, void **ret
 void decode_pparams(weed_plant_t **pparams) {
   weed_plant_t *ptmpl;
   char *pname;
-  int error,type;
+  int error, type;
 
-  register int i=0;
+  register int i = 0;
 
-  zmode=0;
-  zfft0=0.;
-  if (zsubtitles!=NULL) weed_free(zsubtitles);
-  zsubtitles=NULL;
+  zmode = 0;
+  zfft0 = 0.;
+  if (zsubtitles != NULL) weed_free(zsubtitles);
+  zsubtitles = NULL;
 
-  if (pparams==NULL) return;
-  while (pparams[i]!=NULL) {
+  if (pparams == NULL) return;
+  while (pparams[i] != NULL) {
 
-    type=weed_get_int_value(pparams[i],"type",&error);
+    type = weed_get_int_value(pparams[i], "type", &error);
 
 
-    if (type==WEED_PLANT_PARAMETER) {
-      ptmpl=weed_get_plantptr_value(pparams[i],"template",&error);
-      pname=weed_get_string_value(ptmpl,"name",&error);
+    if (type == WEED_PLANT_PARAMETER) {
+      ptmpl = weed_get_plantptr_value(pparams[i], "template", &error);
+      pname = weed_get_string_value(ptmpl, "name", &error);
 
-      if (!strcmp(pname,"mode")) {
-        zmode=weed_get_int_value(pparams[i],"value",&error);
-      } else if (!strcmp(pname,"fft0")) {
-        zfft0=(float)weed_get_double_value(pparams[i],"value",&error);
-      } else if (!strcmp(pname,"subtitles")) {
-        zsubtitles=weed_get_string_value(pparams[i],"value",&error);
+      if (!strcmp(pname, "mode")) {
+        zmode = weed_get_int_value(pparams[i], "value", &error);
+      } else if (!strcmp(pname, "fft0")) {
+        zfft0 = (float)weed_get_double_value(pparams[i], "value", &error);
+      } else if (!strcmp(pname, "subtitles")) {
+        zsubtitles = weed_get_string_value(pparams[i], "value", &error);
       }
 
       weed_free(pname);
@@ -2126,22 +2126,22 @@ void decode_pparams(weed_plant_t **pparams) {
 
 boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data, void **pp) {
   // call the function which was set in set_palette
-  weed_plant_t **pparams=(weed_plant_t **)pp;
+  weed_plant_t **pparams = (weed_plant_t **)pp;
 
-  if (pparams!=NULL) {
+  if (pparams != NULL) {
     decode_pparams(pparams);
   }
 
-  return render_fn(hsize,vsize,pixel_data,return_data);
+  return render_fn(hsize, vsize, pixel_data, return_data);
 }
 
 
 void exit_screen(int16_t mouse_x, int16_t mouse_y) {
-  playing=FALSE;
+  playing = FALSE;
 
-  pthread_join(rthread,NULL);
+  pthread_join(rthread, NULL);
 
-  if (texturebuf!=NULL) {
+  if (texturebuf != NULL) {
     free((void *)texturebuf);
   }
 
@@ -2158,7 +2158,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   glXMakeContextCurrent(dpy, 0, 0, 0);
   glXDestroyContext(dpy, context);
   XCloseDisplay(dpy);
-  dpy=NULL;
+  dpy = NULL;
   pthread_mutex_unlock(&dpy_mutex);
 
 }
@@ -2166,8 +2166,8 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
 
 void module_unload(void) {
-  if (ntextures>0) glDeleteTextures(ntextures,texID);
+  if (ntextures > 0) glDeleteTextures(ntextures, texID);
   free(texID);
-  if (zsubtitles!=NULL) weed_free(zsubtitles);
+  if (zsubtitles != NULL) weed_free(zsubtitles);
 }
 

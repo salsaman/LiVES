@@ -158,7 +158,7 @@ static int get_exts(void) {
     num_exts_i = 0;
     glGetIntegerv(GL_NUM_EXTENSIONS, &num_exts_i);
     if (num_exts_i > 0) {
-      exts_i = (const char **)realloc((void *)exts_i, (size_t)num_exts_i * (sizeof *exts_i));
+      exts_i = (const char **)realloc((void *)exts_i, (size_t)num_exts_i * (sizeof * exts_i));
     }
 
     if (exts_i == NULL) {

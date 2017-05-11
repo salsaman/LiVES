@@ -9,7 +9,7 @@
 
 /////////////////////////////////////////////////////////////////
 
-static char plugin_version[64]="LiVES videojack output client 1.1";
+static char plugin_version[64] = "LiVES videojack output client 1.1";
 static char fps_list[256];
 static int palette_list[2];
 static int mypalette;
@@ -29,7 +29,7 @@ int server_process(jack_nframes_t nframes, void *arg) {
   // jack calls this
   uint8_t *in;
 
-  if (rb==NULL) return 0;
+  if (rb == NULL) return 0;
 
   in = jack_port_get_buffer(output_port, nframes);
   while (jack_ringbuffer_read_space(rb) >= frame_size) {
@@ -40,16 +40,16 @@ int server_process(jack_nframes_t nframes, void *arg) {
 
 //////////////////////////////////////////////
 const char *get_fps_list(int palette) {
-  double fps=(double)jack_get_sample_rate(client);
-  snprintf(fps_list,256,"%.8f",fps);
+  double fps = (double)jack_get_sample_rate(client);
+  snprintf(fps_list, 256, "%.8f", fps);
   return fps_list;
 }
 
 const char *module_check_init(void) {
-  const char *client_name="LiVES";
+  const char *client_name = "LiVES";
   jack_options_t options = JackNullOption;
   jack_status_t status;
-  const char *server_name=NULL; // set to "video0" if running with audio on "default"
+  const char *server_name = NULL; // set to "video0" if running with audio on "default"
 
   // connect to vjack
   client = jack_client_open(client_name, options, &status, server_name);
@@ -69,7 +69,7 @@ const char *module_check_init(void) {
     fprintf(stderr, "unique name `%s' assigned\n", client_name);
   }
 
-  fprintf(stderr,"engine sample rate: %" PRIu32 "\n",
+  fprintf(stderr, "engine sample rate: %" PRIu32 "\n",
           jack_get_sample_rate(client));
 
   output_port = jack_port_register(client,
@@ -78,7 +78,7 @@ const char *module_check_init(void) {
                                    JackPortIsOutput,
                                    0);
 
-  if (output_port==NULL) {
+  if (output_port == NULL) {
     fprintf(stderr, "vjack_output: no more JACK ports available\n");
     return "no jack ports available";
   }
@@ -110,14 +110,14 @@ uint64_t get_capabilities(int palette) {
 }
 
 int *get_palette_list(void) {
-  palette_list[0]=WEED_PALETTE_RGBA32;
-  palette_list[1]=WEED_PALETTE_END;
+  palette_list[0] = WEED_PALETTE_RGBA32;
+  palette_list[1] = WEED_PALETTE_END;
   return palette_list;
 }
 
 boolean set_palette(int palette) {
-  if (palette==WEED_PALETTE_RGBA32) {
-    mypalette=palette;
+  if (palette == WEED_PALETTE_RGBA32) {
+    mypalette = palette;
     return TRUE;
   }
   // invalid palette
@@ -125,8 +125,8 @@ boolean set_palette(int palette) {
 }
 
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
-  jack_video_set_width_and_height(client,output_port,width,height);
-  frame_size=width*height*4;
+  jack_video_set_width_and_height(client, output_port, width, height);
+  frame_size = width * height * 4;
   rb = jack_ringbuffer_create(16 * frame_size);
   return TRUE;
 }
@@ -139,8 +139,8 @@ boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void *
 }
 
 void exit_screen(int16_t mouse_x, int16_t mouse_y) {
-  if (rb!=NULL) jack_ringbuffer_free(rb);
-  rb=NULL;
+  if (rb != NULL) jack_ringbuffer_free(rb);
+  rb = NULL;
 }
 
 void module_unload(void) {

@@ -8,7 +8,7 @@ using namespace lives;
 
 
 int main(int argc, char *argv[]) {
-  livesApp lives(argc-1, &argv[1]);
+  livesApp lives(argc - 1, &argv[1]);
 
   while (lives.status() != LIVES_STATUS_READY) sleep(1);
 

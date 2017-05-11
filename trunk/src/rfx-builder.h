@@ -93,7 +93,7 @@ typedef enum {
 
 
 typedef enum {
-  RFX_BUILDER_MODE_NEW=0,
+  RFX_BUILDER_MODE_NEW = 0,
   RFX_BUILDER_MODE_EDIT,
   RFX_BUILDER_MODE_COPY
 } lives_rfx_builder_mode_t;

@@ -31,19 +31,19 @@ std::string getConfigFilename() {
   strcpy(projectM_config, PROJECTM_PREFIX);
   strcpy(projectM_config + strlen(PROJECTM_PREFIX), CONFIG_FILE);
   projectM_config[strlen(PROJECTM_PREFIX) + strlen(CONFIG_FILE)] = '\0';
-  fprintf(stderr,"dir:%s \n", projectM_config);
+  fprintf(stderr, "dir:%s \n", projectM_config);
   home = getenv("HOME");
   strcpy(projectM_home, home);
   strcpy(projectM_home + strlen(home), "/.projectM/config.inp");
   projectM_home[strlen(home) + strlen("/.projectM/config.inp")] = '\0';
 
   if ((in = fopen(projectM_home, "r"))) {
-    fprintf(stderr,"reading ~/.projectM/config.inp \n");
+    fprintf(stderr, "reading ~/.projectM/config.inp \n");
     fclose(in);
     return std::string(projectM_home);
   }
 
-  fprintf(stderr,"trying to create ~/.projectM/config.inp \n");
+  fprintf(stderr, "trying to create ~/.projectM/config.inp \n");
 
   projectM_home[strlen(home) + strlen("/.projectM")] = '\0';
   mkdir(projectM_home, 0755);
@@ -53,7 +53,7 @@ std::string getConfigFilename() {
 
   if ((out = fopen(projectM_home, "w"))) {
     if ((in = fopen(projectM_config, "r"))) {
-      while (fgets(num, 80, in)!=NULL) {
+      while (fgets(num, 80, in) != NULL) {
         fputs(num, out);
       }
       fclose(in);
@@ -61,26 +61,26 @@ std::string getConfigFilename() {
 
 
       if ((in = fopen(projectM_home, "r"))) {
-        fprintf(stderr,"created ~/.projectM/config.inp successfully\n");
+        fprintf(stderr, "created ~/.projectM/config.inp successfully\n");
         fclose(in);
         return std::string(projectM_home);
       }
 
-      fprintf(stderr,"This shouldn't happen, using implementation defaults\n");
+      fprintf(stderr, "This shouldn't happen, using implementation defaults\n");
       abort();
     }
-    fprintf(stderr,"Cannot find projectM default config, using implementation defaults\n");
+    fprintf(stderr, "Cannot find projectM default config, using implementation defaults\n");
     abort();
   }
 
-  fprintf(stderr,"Cannot create ~/.projectM/config.inp, using default config file\n");
+  fprintf(stderr, "Cannot create ~/.projectM/config.inp, using default config file\n");
   if ((in = fopen(projectM_config, "r"))) {
-    fprintf(stderr,"Successfully opened default config file\n");
+    fprintf(stderr, "Successfully opened default config file\n");
     fclose(in);
     return std::string(projectM_config);
   }
 
-  fprintf(stderr,"Using implementation defaults, your system is really messed up, I'm suprised we even got this far\n");
+  fprintf(stderr, "Using implementation defaults, your system is really messed up, I'm suprised we even got this far\n");
   return NULL;
 }
 

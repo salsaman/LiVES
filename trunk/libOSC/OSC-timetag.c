@@ -62,7 +62,7 @@ OSCTimeTag OSCTT_PlusSeconds(OSCTimeTag original, float secondsOffset) {
 int OSCTT_Compare(OSCTimeTag left, OSCTimeTag right) {
 #if 0
   printf("***** OSCTT_Compare(%llx, %llx): %d\n", left, right,
-         (left<right) ? -1 : ((left == right) ? 0 : 1));
+         (left < right) ? -1 : ((left == right) ? 0 : 1));
 #endif
   if (left < right) {
     return -1;

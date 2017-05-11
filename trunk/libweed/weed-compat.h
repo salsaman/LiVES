@@ -73,10 +73,10 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
 
   // data from http://www.fourcc.org
 
-  if (clamping!=NULL) *clamping=WEED_YUV_CLAMPING_CLAMPED;
-  if (interlaced!=NULL) *interlaced=0;
-  if (sspace!=NULL) *sspace=WEED_YUV_SUBSPACE_YCBCR;
-  if (sampling!=NULL) *sampling=WEED_YUV_SAMPLING_DEFAULT;
+  if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_CLAMPED;
+  if (interlaced != NULL) *interlaced = 0;
+  if (sspace != NULL) *sspace = WEED_YUV_SUBSPACE_YCBCR;
+  if (sampling != NULL) *sampling = WEED_YUV_SAMPLING_DEFAULT;
 
   switch (fourcc) {
 
@@ -85,8 +85,8 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
   case 0x32524742: // BGR3
   case 0x33524742: // BGR3 - tested and OK
   case 0x34524742: // BGR4
-    if (bpp==24) return WEED_PALETTE_BGR24;
-    if (bpp==32) return WEED_PALETTE_BGRA32;
+    if (bpp == 24) return WEED_PALETTE_BGR24;
+    if (bpp == 32) return WEED_PALETTE_BGRA32;
     break;
 
   case 0x00000000: // BI_RGB - RGB or BGR ???
@@ -95,18 +95,18 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
   case 0x32424752: // RGB2
   case 0x33424752: // RGB3
   case 0x34424752: // RGB4
-    if (bpp==24) return WEED_PALETTE_RGB24;
-    if (bpp==32) return WEED_PALETTE_RGBA32;
+    if (bpp == 24) return WEED_PALETTE_RGB24;
+    if (bpp == 32) return WEED_PALETTE_RGBA32;
     break;
   case 0x41424752: // RGBA
-    if (bpp==32) return WEED_PALETTE_RGBA32;
+    if (bpp == 32) return WEED_PALETTE_RGBA32;
     break;
 
 
   // YUV packed formats
 
   case 0x56595549: // IUYV
-    if (interlaced!=NULL) *interlaced=1;
+    if (interlaced != NULL) *interlaced = 1;
     return WEED_PALETTE_UYVY;
   case 0x31555949: // IYU1
   case 0x31313459: // Y411
@@ -114,7 +114,7 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
   case 0x32555949: // IYU2
     return WEED_PALETTE_YUV888;
   case 0x43594448: // HDYC
-    if (sspace!=NULL) *sspace=WEED_YUV_SUBSPACE_BT709;
+    if (sspace != NULL) *sspace = WEED_YUV_SUBSPACE_BT709;
     return WEED_PALETTE_UYVY;
   case 0x564E5955: // UYNV
   case 0x59565955: // UYVY
@@ -127,7 +127,7 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
   case 0x31313259: // Y211 - ???
     return WEED_PALETTE_YUYV;
   case 0x59455247: // grey
-    if (clamping!=NULL) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
   case 0x30303859: // Y800
   case 0x20203859: // Y8
     return WEED_PALETTE_A8;
@@ -151,13 +151,13 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
     return WEED_PALETTE_YUV420P;
 
   case 0x3032344a: // J420
-    if (clamping!=NULL) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV420P;
   case 0x3232344a: // J422
-    if (clamping!=NULL) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV422P;
   case 0x3434344a: // J444
-    if (clamping!=NULL) *clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV444P;
 
 
@@ -629,13 +629,13 @@ int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
   case PIX_FMT_MONOBLACK:
     return WEED_PALETTE_A1;
   case PIX_FMT_YUVJ422P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV422P;
   case PIX_FMT_YUVJ444P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV444P;
   case PIX_FMT_YUVJ420P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV420P;
 
   default:
@@ -657,15 +657,15 @@ enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
     case WEED_PALETTE_ARGB32:
       return PIX_FMT_ARGB;
     case WEED_PALETTE_YUV444P:
-      if (clamped && *clamped==WEED_YUV_CLAMPING_UNCLAMPED)
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
         return PIX_FMT_YUVJ444P;
       return PIX_FMT_YUV444P;
     case WEED_PALETTE_YUV422P:
-      if (clamped && *clamped==WEED_YUV_CLAMPING_UNCLAMPED)
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
         return PIX_FMT_YUVJ422P;
       return PIX_FMT_YUV422P;
     case WEED_PALETTE_YUV420P:
-      if (clamped && *clamped==WEED_YUV_CLAMPING_UNCLAMPED)
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
         return PIX_FMT_YUVJ420P;
       return PIX_FMT_YUV420P;
     case WEED_PALETTE_YUYV:
@@ -719,13 +719,13 @@ int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
   case AV_PIX_FMT_MONOBLACK:
     return WEED_PALETTE_A1;
   case AV_PIX_FMT_YUVJ422P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV422P;
   case AV_PIX_FMT_YUVJ444P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV444P;
   case AV_PIX_FMT_YUVJ420P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV420P;
 
   default:
@@ -747,15 +747,15 @@ enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
     case WEED_PALETTE_ARGB32:
       return AV_PIX_FMT_ARGB;
     case WEED_PALETTE_YUV444P:
-      if (clamped && *clamped==WEED_YUV_CLAMPING_UNCLAMPED)
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
         return AV_PIX_FMT_YUVJ444P;
       return AV_PIX_FMT_YUV444P;
     case WEED_PALETTE_YUV422P:
-      if (clamped && *clamped==WEED_YUV_CLAMPING_UNCLAMPED)
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
         return AV_PIX_FMT_YUVJ422P;
       return AV_PIX_FMT_YUV422P;
     case WEED_PALETTE_YUV420P:
-      if (clamped && *clamped==WEED_YUV_CLAMPING_UNCLAMPED)
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
         return AV_PIX_FMT_YUVJ420P;
       return AV_PIX_FMT_YUV420P;
     case WEED_PALETTE_YUYV:

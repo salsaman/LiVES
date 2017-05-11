@@ -290,7 +290,7 @@ int OSC_writeAddress(OSCbuf *buf, char *name) {
     buf->state = ONE_MSG_ARGS;
   } else {
     /* GET_ARGS or NEED_COUNT */
-    CheckOverflow(buf, 4+paddedLength);
+    CheckOverflow(buf, 4 + paddedLength);
     if (buf->state == GET_ARGS) {
       /* Close the old message */
       PatchMessageSize(buf);
@@ -415,7 +415,7 @@ int OSC_writeStringArg(OSCbuf *buf, char *arg) {
        (with a double comma) so it won't look like a type
        tag string. */
 
-    CheckOverflow(buf, len+4); /* Too conservative */
+    CheckOverflow(buf, len + 4); /* Too conservative */
     buf->bufptr +=
       OSC_padStringWithAnExtraStupidComma(buf->bufptr, arg);
 
@@ -458,10 +458,10 @@ static int OSC_padStringWithAnExtraStupidComma(char *dest, char *str) {
 
   dest[0] = ',';
   for (i = 0; str[i] != '\0'; i++) {
-    dest[i+1] = str[i];
+    dest[i + 1] = str[i];
   }
 
-  return OSC_WritePadding(dest, i+1);
+  return OSC_WritePadding(dest, i + 1);
 }
 
 static int OSC_WritePadding(char *dest, int i) {

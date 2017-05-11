@@ -57,10 +57,10 @@ Boolean InitCallbackListNodes(int numNodes, void *(*InitTimeMalloc)(int numBytes
 
   /* Initialize list of freeNodes */
   freeNodes = &(allNodes[0]);
-  for (i = 0; i < numNodes-1; ++i) {
-    allNodes[i].next = &(allNodes[i+1]);
+  for (i = 0; i < numNodes - 1; ++i) {
+    allNodes[i].next = &(allNodes[i + 1]);
   }
-  allNodes[numNodes-1].next = 0;
+  allNodes[numNodes - 1].next = 0;
   return TRUE;
 }
 

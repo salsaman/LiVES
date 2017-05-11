@@ -101,7 +101,7 @@ typedef struct {
 #define VPP_CAN_RETURN    (1<<1)
 #define VPP_LOCAL_DISPLAY (1<<2)
 
-  int fwidth,fheight;
+  int fwidth, fheight;
 
   int palette;
   int YUV_sampling;
@@ -369,7 +369,7 @@ lives_decoder_t *clone_decoder(int fileno);
 
 typedef enum {
 
-  LIVES_PARAM_UNKNOWN=0,
+  LIVES_PARAM_UNKNOWN = 0,
   LIVES_PARAM_NUM,
   LIVES_PARAM_BOOL,
   LIVES_PARAM_COLRGB24,
@@ -377,19 +377,19 @@ typedef enum {
   LIVES_PARAM_STRING_LIST,
   LIVES_PARAM_COLRGBA32,
 
-  LIVES_PARAM_UNDISPLAYABLE=65536
+  LIVES_PARAM_UNDISPLAYABLE = 65536
 
 } lives_param_type_t;
 
 
 typedef enum {
-  LIVES_RFX_SOURCE_RFX=0,
+  LIVES_RFX_SOURCE_RFX = 0,
   LIVES_RFX_SOURCE_WEED
 } lives_rfx_source_t;
 
 
 typedef enum {
-  LIVES_PARAM_SPECIAL_TYPE_NONE=0, // normal parameter type
+  LIVES_PARAM_SPECIAL_TYPE_NONE = 0, // normal parameter type
 
   // framedraw types
   LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK,  ///< type may be used in framedraw
@@ -473,16 +473,16 @@ typedef struct {
 
 
 typedef enum {
-  RFX_STATUS_BUILTIN=0, ///< factory presets
-  RFX_STATUS_CUSTOM=1, ///< custom effects in the custom menu
-  RFX_STATUS_TEST=2, ///< test effects in the advanced menu
-  RFX_STATUS_ANY=3, ///< indicates free choice of statuses
-  RFX_STATUS_WEED=4, ///< indicates an internal RFX, created from a weed instance
-  RFX_STATUS_SCRAP=5, ///< used for parsing RFX scraps from external apps
+  RFX_STATUS_BUILTIN = 0, ///< factory presets
+  RFX_STATUS_CUSTOM = 1, ///< custom effects in the custom menu
+  RFX_STATUS_TEST = 2, ///< test effects in the advanced menu
+  RFX_STATUS_ANY = 3, ///< indicates free choice of statuses
+  RFX_STATUS_WEED = 4, ///< indicates an internal RFX, created from a weed instance
+  RFX_STATUS_SCRAP = 5, ///< used for parsing RFX scraps from external apps
 
   // these are only used when prompting for a name
-  RFX_STATUS_COPY=128, ///< indicates a copy operation to test
-  RFX_STATUS_RENAME=129 ///< indicates a copy operation to test
+  RFX_STATUS_COPY = 128, ///< indicates a copy operation to test
+  RFX_STATUS_RENAME = 129 ///< indicates a copy operation to test
 } lives_rfx_status_t;
 
 

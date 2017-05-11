@@ -89,19 +89,19 @@ static void *(*RealTimeMemoryAllocator)(int numBytes);
 static void MakeFreeContainersList(int n) {
   int i;
 
-  for (i = 0; i+1 < n; ++i) {
-    freeContainers[i].next = &(freeContainers[i+1]);
+  for (i = 0; i + 1 < n; ++i) {
+    freeContainers[i].next = &(freeContainers[i + 1]);
   }
-  freeContainers[n-1].next = 0;
+  freeContainers[n - 1].next = 0;
 }
 
 static void MakeFreeMethodsList(int n) {
   int i;
 
-  for (i = 0; i+1 < n; ++i) {
-    freeMethods[i].next = &(freeMethods[i+1]);
+  for (i = 0; i + 1 < n; ++i) {
+    freeMethods[i].next = &(freeMethods[i + 1]);
   }
-  freeMethods[n-1].next = 0;
+  freeMethods[n - 1].next = 0;
 }
 
 OSCcontainer OSCInitAddressSpace(struct OSCAddressSpaceMemoryTuner *t) {
@@ -234,8 +234,8 @@ void RemoveSubContainer(OSCcontainer parent, OSCcontainer child) {
   numRemoved = 0;
   for (i = 0; i < parent->numChildren; ++i) {
     if (parent->children[i] != child) {
-      parent->children[i-numRemoved] = parent->children[i];
-      parent->childrenNames[i-numRemoved] = parent->childrenNames[i];
+      parent->children[i - numRemoved] = parent->children[i];
+      parent->childrenNames[i - numRemoved] = parent->childrenNames[i];
     } else {
       ++numRemoved;
     }
@@ -264,9 +264,9 @@ Boolean OSCRemoveContainerAlias(OSCcontainer container, Name otherName) {
                     otherName);
       }
       found = TRUE;
-      for (j = i+1; j < parent->numChildren; ++j) {
-        parent->children[j-1] = parent->children[j];
-        parent->childrenNames[j-1] = parent->childrenNames[j];
+      for (j = i + 1; j < parent->numChildren; ++j) {
+        parent->children[j - 1] = parent->children[j];
+        parent->childrenNames[j - 1] = parent->childrenNames[j];
         --(parent->numChildren);
       }
     }
@@ -343,8 +343,8 @@ static int gasHelp(char *target, int maxLength, OSCcontainer c) {
     return length;
   }
 
-  strcpy(target+sublength, myName);
-  target[length-1] = '/';
+  strcpy(target + sublength, myName);
+  target[length - 1] = '/';
   target[length] = '\0';
 
   return length;
@@ -356,7 +356,7 @@ Boolean OSCGetAddressString(char *target, int maxLength, OSCcontainer c) {
 
   if (maxLength <= 1) return FALSE;
 
-  lenNeeded = gasHelp(target, maxLength-1, c) + 1; /* -1, +1 are for null char. */
+  lenNeeded = gasHelp(target, maxLength - 1, c) + 1; /* -1, +1 are for null char. */
   if (lenNeeded > maxLength) {
     OSCProblem("Address string too long (room for %d chars; need %d)",
                maxLength, lenNeeded);
@@ -441,7 +441,7 @@ static int ContainerAliases(OSCcontainer c, char *target) {
   }
   if (n == 0) fatal_error("ContainerAliases: internal inconsistency");
 
-  return n-1;
+  return n - 1;
 }
 
 #define BIG_ADDRESS 50
@@ -520,7 +520,7 @@ callbackList OSCDispatchMessage(char *pattern) {
     return 0;
   }
 
-  result = DispatchSubMessage(pattern+1, OSCTopLevelContainer);
+  result = DispatchSubMessage(pattern + 1, OSCTopLevelContainer);
 
   return result.begin;
 }
@@ -547,7 +547,7 @@ static callbackListEnds DispatchSubMessage(char *pattern, OSCcontainer c) {
         if (node == 0) {
           /* Excuse the hairyness of the code to generate the error message. */
           if (OSCGetAddressString(offendingAddr,
-                                  LONG_ADDR_LEN-strlen(c->methodNames[i]),
+                                  LONG_ADDR_LEN - strlen(c->methodNames[i]),
                                   c)) {
             strcat(offendingAddr, c->methodNames[i]);
           } else {

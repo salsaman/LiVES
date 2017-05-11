@@ -53,10 +53,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]= {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int num_versions = 1; // number of different weed api versions supported
+static int api_versions[] = {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
-static int package_version=1; // version of this package
+static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
@@ -324,9 +324,9 @@ int phatch_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   int const type = retimg.type();
   Size const size = retimg.size();
 
-  float const angle = weed_get_int_value(in_params[PARAMa_ANGLE],"value",&error);
-  float const length = weed_get_double_value(in_params[PARAMa_LENGTH],"value",&error)*size.height;
-  float const attenuation = weed_get_double_value(in_params[PARAMa_ATTENUATION],"value",&error);
+  float const angle = weed_get_int_value(in_params[PARAMa_ANGLE], "value", &error);
+  float const length = weed_get_double_value(in_params[PARAMa_LENGTH], "value", &error) * size.height;
+  float const attenuation = weed_get_double_value(in_params[PARAMa_ATTENUATION], "value", &error);
 
   // snp noise based on grayscale
   Mat noise(size, CV_MAKETYPE(CV_MAT_DEPTH(type), 1));
@@ -437,27 +437,27 @@ int lglare_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   using value_type = typename VecT::value_type;
 
   int error;
-  int psize=4;
+  int psize = 4;
 
   Size const size = retimg.size();
 
   // init parameters
-  float const gamma = weed_get_double_value(in_params[PARAMb_GAMMA],"value",&error);
-  float const exposure = weed_get_double_value(in_params[PARAMb_EXPOSURE],"value",&error);
-  float const gain = weed_get_double_value(in_params[PARAMb_GAIN],"value",&error);
+  float const gamma = weed_get_double_value(in_params[PARAMb_GAMMA], "value", &error);
+  float const exposure = weed_get_double_value(in_params[PARAMb_EXPOSURE], "value", &error);
+  float const gain = weed_get_double_value(in_params[PARAMb_GAIN], "value", &error);
 
-  float const radius = weed_get_double_value(in_params[PARAMb_RADIUS],"value",&error)*size.height;
-  float const attenuation = weed_get_double_value(in_params[PARAMb_ATTENUATION],"value",&error);
+  float const radius = weed_get_double_value(in_params[PARAMb_RADIUS], "value", &error) * size.height;
+  float const attenuation = weed_get_double_value(in_params[PARAMb_ATTENUATION], "value", &error);
 
-  int const number = weed_get_int_value(in_params[PARAMb_NUMBER],"value",&error);
-  int const angle = weed_get_int_value(in_params[PARAMb_ANGLE],"value",&error);
+  int const number = weed_get_int_value(in_params[PARAMb_NUMBER], "value", &error);
+  int const angle = weed_get_int_value(in_params[PARAMb_ANGLE], "value", &error);
 
   Mat src(size, CV_32FC3);
 
-  if (palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24) psize=3;
+  if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) psize = 3;
 
   Size const local_size = in.size();
-  Mat local(src, Rect(0,0,local_size.width,local_size.height)); // not sure that this is right...
+  Mat local(src, Rect(0, 0, local_size.width, local_size.height)); // not sure that this is right...
 
   {
     tnzu::linear_color_space_converter<sizeof(value_type) * 8> converter(exposure, gamma);
@@ -507,7 +507,7 @@ int lglare_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
     cv::Vec3f const *s = src.ptr<cv::Vec3f>(y);
     VecT *d = retimg.ptr<VecT>(y);
     for (int x = 0; x < size.width; ++x) {
-      if (psize==4) {
+      if (psize == 4) {
         Vec4f const sbgra(
           tnzu::to_nonlinear_color_space(s[x][0], exposure, gamma),
           tnzu::to_nonlinear_color_space(s[x][1], exposure, gamma),
@@ -539,21 +539,21 @@ int lbloom_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   using value_type = typename VecT::value_type;
 
   int error;
-  int psize=4;
+  int psize = 4;
 
   Size const size = retimg.size();
 
   // init parameters
-  float const gamma = weed_get_double_value(in_params[PARAMd_GAMMA],"value",&error);
-  float const exposure = weed_get_double_value(in_params[PARAMd_EXPOSURE],"value",&error);
-  float const gain = weed_get_double_value(in_params[PARAMd_GAIN],"value",&error);
+  float const gamma = weed_get_double_value(in_params[PARAMd_GAMMA], "value", &error);
+  float const exposure = weed_get_double_value(in_params[PARAMd_EXPOSURE], "value", &error);
+  float const gain = weed_get_double_value(in_params[PARAMd_GAIN], "value", &error);
 
-  int const radius = weed_get_int_value(in_params[PARAMd_RADIUS],"value",&error);
-  int const level = weed_get_int_value(in_params[PARAMd_LEVEL],"value",&error);
+  int const radius = weed_get_int_value(in_params[PARAMd_RADIUS], "value", &error);
+  int const level = weed_get_int_value(in_params[PARAMd_LEVEL], "value", &error);
 
   Mat src(size, CV_32FC3);
 
-  if (palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24) psize=3;
+  if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) psize = 3;
 
 
   // transform color space
@@ -562,7 +562,7 @@ int lbloom_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
       exposure, gamma);
 
     Size const local_size = in.size();
-    Mat local(src, Rect(0,0,local_size.width,local_size.height)); // not sure that this is right...
+    Mat local(src, Rect(0, 0, local_size.width, local_size.height)); // not sure that this is right...
     //cv::Size const local_size = args.size(PORT_INPUT);
     //cv::Mat local(src, args.rect(PORT_INPUT));
 
@@ -587,7 +587,7 @@ int lbloom_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
     cv::Vec3f const *s = src.ptr<cv::Vec3f>(y);
     VecT *d = retimg.ptr<VecT>(y);
     for (int x = 0; x < size.width; ++x) {
-      if (psize==4) {
+      if (psize == 4) {
         Vec4f const sbgra(
           tnzu::to_nonlinear_color_space(s[x][0] * scale, exposure, gamma),
           tnzu::to_nonlinear_color_space(s[x][1] * scale, exposure, gamma),
@@ -620,7 +620,7 @@ int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params)
   using value_type = typename VecT::value_type;
 
   int error;
-  int psize=4;
+  int psize = 4;
 
   Size const size = retimg.size();
 
@@ -628,21 +628,21 @@ int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params)
   // Params
   //
   // geometry
-  float const d = weed_get_double_value(in_params[PARAMe_DISTANCE],"value",&error)*size.height;
-  float const a = (float)(weed_get_int_value(in_params[PARAMe_THETA],"value",&error))/360.*TWO_PI;
+  float const d = weed_get_double_value(in_params[PARAMe_DISTANCE], "value", &error) * size.height;
+  float const a = (float)(weed_get_int_value(in_params[PARAMe_THETA], "value", &error)) / 360.*TWO_PI;
 
-  int const s = (int)(weed_get_double_value(in_params[PARAMe_RADIUS],"value",&error) * size.height * 0.5) * 2 + 1;
+  int const s = (int)(weed_get_double_value(in_params[PARAMe_RADIUS], "value", &error) * size.height * 0.5) * 2 + 1;
 
-  double *cvals=weed_get_double_array(in_params[PARAMe_COLOR],"value",&error);
+  double *cvals = weed_get_double_array(in_params[PARAMe_COLOR], "value", &error);
 
-  float r,g=cvals[1],b;
+  float r, g = cvals[1], b;
 
-  if (palette==WEED_PALETTE_BGR24||palette==WEED_PALETTE_BGRA32) {
-    r=cvals[2];
-    b=cvals[0];
+  if (palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32) {
+    r = cvals[2];
+    b = cvals[0];
   } else {
-    r=cvals[0];
-    b=cvals[2];
+    r = cvals[0];
+    b = cvals[2];
   }
 
 
@@ -687,7 +687,7 @@ int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params)
     cv::Vec3f const *s = shadow.ptr<cv::Vec3f>(y);
     VecT *d = retimg.ptr<VecT>(y);
     for (int x = 0; x < size.width; x++) {
-      if (psize==4) {
+      if (psize == 4) {
         cv::Vec4f const sbgra(tnzu::to_nonlinear_color_space(
                                 converter[d[x][0]] * s[x][0], 1.0f, 2.2f),
                               tnzu::to_nonlinear_color_space(
@@ -723,40 +723,40 @@ static int common_process(weed_plant_t *inst, weed_timecode_t tc, int filter_typ
 
   Mat srcMat, mixMat, destMat;
 
-  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
-  weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
 
-  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
 
-  uint8_t *src=(uint8_t *)weed_get_voidptr_value(in_channel,"pixel_data",&error);
-  uint8_t *dst=(uint8_t *)weed_get_voidptr_value(out_channel,"pixel_data",&error);
+  uint8_t *src = (uint8_t *)weed_get_voidptr_value(in_channel, "pixel_data", &error);
+  uint8_t *dst = (uint8_t *)weed_get_voidptr_value(out_channel, "pixel_data", &error);
 
-  int width=weed_get_int_value(in_channel,"width",&error);
-  int height=weed_get_int_value(in_channel,"height",&error);
-  int palette=weed_get_int_value(in_channel,"current_palette",&error);
+  int width = weed_get_int_value(in_channel, "width", &error);
+  int height = weed_get_int_value(in_channel, "height", &error);
+  int palette = weed_get_int_value(in_channel, "current_palette", &error);
 
-  int irow=weed_get_int_value(in_channel,"rowstrides",&error);
-  int orow=weed_get_int_value(out_channel,"rowstrides",&error);
+  int irow = weed_get_int_value(in_channel, "rowstrides", &error);
+  int orow = weed_get_int_value(out_channel, "rowstrides", &error);
 
-  int psize=4;
+  int psize = 4;
 
   switch (palette) {
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
-    srcMat=mixMat=Mat(height,width,CV_8UC3,src,irow);
-    destMat=Mat(height,width,CV_8UC3,dst,orow);
-    psize=3;
+    srcMat = mixMat = Mat(height, width, CV_8UC3, src, irow);
+    destMat = Mat(height, width, CV_8UC3, dst, orow);
+    psize = 3;
     break;
   case WEED_PALETTE_BGRA32:
   case WEED_PALETTE_RGBA32:
-    srcMat=mixMat=Mat(height,width,CV_8UC4,src,irow);
-    destMat=Mat(height,width,CV_8UC4,dst,orow);
+    srcMat = mixMat = Mat(height, width, CV_8UC4, src, irow);
+    destMat = Mat(height, width, CV_8UC4, dst, orow);
     break;
   case WEED_PALETTE_ARGB32: {
-    int from_to[]= {0,3,1,0,2,1,3,2}; // convert src argb to rgba
-    srcMat=Mat(height,width,CV_8UC4,src,irow);
-    mixChannels(&srcMat,1,&mixMat,1,from_to,4);
-    destMat=Mat(height,width,CV_8UC4,dst,orow);
+    int from_to[] = {0, 3, 1, 0, 2, 1, 3, 2}; // convert src argb to rgba
+    srcMat = Mat(height, width, CV_8UC4, src, irow);
+    mixChannels(&srcMat, 1, &mixMat, 1, from_to, 4);
+    destMat = Mat(height, width, CV_8UC4, dst, orow);
   }
   break;
   default:
@@ -765,29 +765,29 @@ static int common_process(weed_plant_t *inst, weed_timecode_t tc, int filter_typ
 
   switch (filter_type) {
   case FILTER_LIGHT_BLOOM:
-    if (psize==4)
-      lbloom_kernel<Vec4b>(mixMat,destMat,palette,in_params);
+    if (psize == 4)
+      lbloom_kernel<Vec4b>(mixMat, destMat, palette, in_params);
     else
-      lbloom_kernel<Vec3b>(mixMat,destMat,palette,in_params);
+      lbloom_kernel<Vec3b>(mixMat, destMat, palette, in_params);
     break;
   case FILTER_LIGHT_GLARE:
-    if (psize==4)
-      lglare_kernel<Vec4b>(mixMat,destMat,palette,in_params);
+    if (psize == 4)
+      lglare_kernel<Vec4b>(mixMat, destMat, palette, in_params);
     else
-      lglare_kernel<Vec3b>(mixMat,destMat,palette,in_params);
+      lglare_kernel<Vec3b>(mixMat, destMat, palette, in_params);
     break;
   case FILTER_PHATCH:
-    if (psize==4)
-      phatch_kernel<Vec4b>(mixMat,destMat,palette,in_params);
+    if (psize == 4)
+      phatch_kernel<Vec4b>(mixMat, destMat, palette, in_params);
     else
-      phatch_kernel<Vec3b>(mixMat,destMat,palette,in_params);
+      phatch_kernel<Vec3b>(mixMat, destMat, palette, in_params);
     break;
   case FILTER_PARAFFIN:
     srcMat.copyTo(destMat);
-    if (psize==4)
-      paraffin_kernel<Vec4b>(mixMat,destMat,palette,in_params);
+    if (psize == 4)
+      paraffin_kernel<Vec4b>(mixMat, destMat, palette, in_params);
     else
-      paraffin_kernel<Vec3b>(mixMat,destMat,palette,in_params);
+      paraffin_kernel<Vec3b>(mixMat, destMat, palette, in_params);
     break;
   default:
     break;
@@ -806,19 +806,19 @@ static int common_process(weed_plant_t *inst, weed_timecode_t tc, int filter_typ
 
 
 int lbloom_process(weed_plant_t *inst, weed_timecode_t tc) {
-  return common_process(inst,tc,FILTER_LIGHT_BLOOM);
+  return common_process(inst, tc, FILTER_LIGHT_BLOOM);
 }
 
 int lglare_process(weed_plant_t *inst, weed_timecode_t tc) {
-  return common_process(inst,tc,FILTER_LIGHT_GLARE);
+  return common_process(inst, tc, FILTER_LIGHT_GLARE);
 }
 
 int phatch_process(weed_plant_t *inst, weed_timecode_t tc) {
-  return common_process(inst,tc,FILTER_PHATCH);
+  return common_process(inst, tc, FILTER_PHATCH);
 }
 
 int paraffin_process(weed_plant_t *inst, weed_timecode_t tc) {
-  return common_process(inst,tc,FILTER_PARAFFIN);
+  return common_process(inst, tc, FILTER_PARAFFIN);
 }
 
 
@@ -835,25 +835,25 @@ int cnoise_compute(Mat &retimg, weed_plant_t **in_params, double sec) {
     // Params
     //
 
-    int const time = weed_get_int_value(in_params[PARAMc_TIME],"value",&error);
-    int const time_limit = weed_get_int_value(in_params[PARAMc_TIME_LIMIT],"value",&error) - 1;
-    float const alpha = weed_get_double_value(in_params[PARAMc_ALPHA],"value",&error);
-    float const gain = weed_get_double_value(in_params[PARAMc_GAIN],"value",&error);
-    float const bias = weed_get_double_value(in_params[PARAMc_BIAS],"value",&error);
+    int const time = weed_get_int_value(in_params[PARAMc_TIME], "value", &error);
+    int const time_limit = weed_get_int_value(in_params[PARAMc_TIME_LIMIT], "value", &error) - 1;
+    float const alpha = weed_get_double_value(in_params[PARAMc_ALPHA], "value", &error);
+    float const gain = weed_get_double_value(in_params[PARAMc_GAIN], "value", &error);
+    float const bias = weed_get_double_value(in_params[PARAMc_BIAS], "value", &error);
 
     std::array<float, 5> const amp = {
-      (float)weed_get_double_value(in_params[PARAMc_AMP0],"value",&error),
-      (float)weed_get_double_value(in_params[PARAMc_AMP1],"value",&error),
-      (float)weed_get_double_value(in_params[PARAMc_AMP2],"value",&error),
-      (float)weed_get_double_value(in_params[PARAMc_AMP3],"value",&error),
-      (float)weed_get_double_value(in_params[PARAMc_AMP4],"value",&error)
+      (float)weed_get_double_value(in_params[PARAMc_AMP0], "value", &error),
+      (float)weed_get_double_value(in_params[PARAMc_AMP1], "value", &error),
+      (float)weed_get_double_value(in_params[PARAMc_AMP2], "value", &error),
+      (float)weed_get_double_value(in_params[PARAMc_AMP3], "value", &error),
+      (float)weed_get_double_value(in_params[PARAMc_AMP4], "value", &error)
     };
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     cv::theRNG().state = seed;
 
     int ntimes =
-      (time ? time - 1 : std::max(1, (int)(sec/25.))) % (time_limit * 2);
+      (time ? time - 1 : std::max(1, (int)(sec / 25.))) % (time_limit * 2);
     if (ntimes >= time_limit) {
       ntimes = time_limit * 2 - ntimes;
     }
@@ -894,20 +894,20 @@ int cnoise_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   Mat destMat;
 
-  weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
 
-  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
 
-  float *dst=(float *)weed_get_voidptr_value(out_channel,"pixel_data",&error);
+  float *dst = (float *)weed_get_voidptr_value(out_channel, "pixel_data", &error);
 
-  int width=weed_get_int_value(out_channel,"width",&error);
-  int height=weed_get_int_value(out_channel,"height",&error);
+  int width = weed_get_int_value(out_channel, "width", &error);
+  int height = weed_get_int_value(out_channel, "height", &error);
 
-  int orow=weed_get_int_value(out_channel,"rowstrides",&error);
+  int orow = weed_get_int_value(out_channel, "rowstrides", &error);
 
-  destMat=Mat(height,width,CV_32FC1,dst,orow);
+  destMat = Mat(height, width, CV_32FC1, dst, orow);
 
-  cnoise_compute(destMat, in_params, (double)tc/100000000.);
+  cnoise_compute(destMat, in_params, (double)tc / 100000000.);
 
   weed_free(in_params);
 
@@ -923,144 +923,144 @@ int cnoise_process(weed_plant_t *inst, weed_timecode_t tc) {
 
 
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
-  if (plugin_info!=NULL) {
+  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+  if (plugin_info != NULL) {
 
-    int palette_list[]= {WEED_PALETTE_RGB24,WEED_PALETTE_BGR24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_END};
+    int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
 
-    int opalette_list[]= {WEED_PALETTE_AFLOAT,WEED_PALETTE_END};
+    int opalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel",0,palette_list),NULL};
+    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel", 0, palette_list), NULL};
+    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel", 0, palette_list), NULL};
 
-    weed_plant_t *out_chantmplsx[]= {weed_channel_template_init("out channel",0,opalette_list),NULL};
+    weed_plant_t *out_chantmplsx[] = {weed_channel_template_init("out channel", 0, opalette_list), NULL};
 
-    weed_plant_t *in_paramsa[]= {weed_integer_init("angle","_Angle",0,0,360),weed_float_init("length","_Length",0.01,0.,1.),
-                                 weed_float_init("attenuation","A_ttenuation",0.9,0.,1.),NULL
-                                };
+    weed_plant_t *in_paramsa[] = {weed_integer_init("angle", "_Angle", 0, 0, 360), weed_float_init("length", "_Length", 0.01, 0., 1.),
+                                  weed_float_init("attenuation", "A_ttenuation", 0.9, 0., 1.), NULL
+                                 };
 
-    weed_plant_t *in_paramsb[]= {weed_float_init("gamma","_Gamma",2.2,0.1,5.0),weed_float_init("exposure","_Exposure",1.0,0.125,8.),
-                                 weed_float_init("gain","Ga_in",1.,0.1,10.0),weed_float_init("radius","_Radius",.1,0.01,1.),
-                                 weed_float_init("attenuation","A_ttenuation",.9,0.001,.999),weed_integer_init("number","_Number",6,2,10),
-                                 weed_integer_init("angle","_Angle",15,0,180),NULL
-                                };
+    weed_plant_t *in_paramsb[] = {weed_float_init("gamma", "_Gamma", 2.2, 0.1, 5.0), weed_float_init("exposure", "_Exposure", 1.0, 0.125, 8.),
+                                  weed_float_init("gain", "Ga_in", 1., 0.1, 10.0), weed_float_init("radius", "_Radius", .1, 0.01, 1.),
+                                  weed_float_init("attenuation", "A_ttenuation", .9, 0.001, .999), weed_integer_init("number", "_Number", 6, 2, 10),
+                                  weed_integer_init("angle", "_Angle", 15, 0, 180), NULL
+                                 };
 
-    weed_plant_t *in_paramsc[]= {weed_integer_init("time","_Time",0,0,1500),weed_integer_init("time_limit","Time _Limit",8,2,250),
-                                 weed_float_init("alpha","_Alpha",.8,0.,1.),weed_float_init("gain","_Gain",1.,0.,1.),
-                                 weed_float_init("bias","_Bias",.5,0.,1.),
-                                 weed_float_init("amp0","Amp _0",1.,0.,1.),
-                                 weed_float_init("amp1","Amp _1",.8,0.,1.),
-                                 weed_float_init("amp2","Amp _2",.6,0.,1.),
-                                 weed_float_init("amp3","Amp _3",.4,0.,1.),
-                                 weed_float_init("amp4","Amp _4",.2,0.,1.),
-                                 NULL
-                                };
+    weed_plant_t *in_paramsc[] = {weed_integer_init("time", "_Time", 0, 0, 1500), weed_integer_init("time_limit", "Time _Limit", 8, 2, 250),
+                                  weed_float_init("alpha", "_Alpha", .8, 0., 1.), weed_float_init("gain", "_Gain", 1., 0., 1.),
+                                  weed_float_init("bias", "_Bias", .5, 0., 1.),
+                                  weed_float_init("amp0", "Amp _0", 1., 0., 1.),
+                                  weed_float_init("amp1", "Amp _1", .8, 0., 1.),
+                                  weed_float_init("amp2", "Amp _2", .6, 0., 1.),
+                                  weed_float_init("amp3", "Amp _3", .4, 0., 1.),
+                                  weed_float_init("amp4", "Amp _4", .2, 0., 1.),
+                                  NULL
+                                 };
 
-    weed_plant_t *in_paramsd[]= {weed_float_init("gamma","_Gamma",2.2,0.1,5.0),weed_float_init("exposure","_Exposure",1.0,0.125,8.),
-                                 weed_float_init("gain","Ga_in",1.,0.1,10.0),weed_integer_init("radius","_Radius",6,1,32),
-                                 weed_integer_init("level","_Level",4,0,10),NULL
-                                };
+    weed_plant_t *in_paramsd[] = {weed_float_init("gamma", "_Gamma", 2.2, 0.1, 5.0), weed_float_init("exposure", "_Exposure", 1.0, 0.125, 8.),
+                                  weed_float_init("gain", "Ga_in", 1., 0.1, 10.0), weed_integer_init("radius", "_Radius", 6, 1, 32),
+                                  weed_integer_init("level", "_Level", 4, 0, 10), NULL
+                                 };
 
-    weed_plant_t *in_paramse[]= {weed_float_init("distance","_Distance",-1.,-1.5,1.5),
-                                 weed_integer_init("theta","_Theta",40,-180,180),
-                                 weed_float_init("radius","_Radius",.1,0.,1.),
-                                 weed_colRGBd_init("color","_Color",0.,0.,0.),
-                                 NULL
-                                };
+    weed_plant_t *in_paramse[] = {weed_float_init("distance", "_Distance", -1., -1.5, 1.5),
+                                  weed_integer_init("theta", "_Theta", 40, -180, 180),
+                                  weed_float_init("radius", "_Radius", .1, 0., 1.),
+                                  weed_colRGBd_init("color", "_Color", 0., 0., 0.),
+                                  NULL
+                                 };
 
     weed_plant_t *filter_class;
 
 
     // pencil hatching
 
-    filter_class=weed_filter_class_init("Toonz: Pencil Hatching","DWANGO co.",1,0,NULL,
-                                        &phatch_process,NULL,
-                                        in_chantmpls,out_chantmpls,in_paramsa,NULL);
+    filter_class = weed_filter_class_init("Toonz: Pencil Hatching", "DWANGO co.", 1, 0, NULL,
+                                          &phatch_process, NULL,
+                                          in_chantmpls, out_chantmpls, in_paramsa, NULL);
 
-    weed_set_boolean_value(in_paramsa[PARAMa_ANGLE],"wrap",WEED_TRUE);
+    weed_set_boolean_value(in_paramsa[PARAMa_ANGLE], "wrap", WEED_TRUE);
 
-    weed_set_string_value(filter_class,"extra_authors","salsaman");
-    weed_set_string_value(filter_class,"url","http://dwango.co.jp");
-    weed_set_string_value(filter_class,"copyright","DWANGO 2016, salsaman 2016");
-    weed_set_string_value(filter_class,"license","BSD 3-clause");
+    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
+    weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
+    weed_set_string_value(filter_class, "license", "BSD 3-clause");
 
-    weed_plugin_info_add_filter_class(plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
 
     // light glare
 
 
-    filter_class=weed_filter_class_init("Toonz: Light Glare","DWANGO co.",1,0,NULL,
-                                        &lglare_process,NULL,
-                                        in_chantmpls,out_chantmpls,in_paramsb,NULL);
+    filter_class = weed_filter_class_init("Toonz: Light Glare", "DWANGO co.", 1, 0, NULL,
+                                          &lglare_process, NULL,
+                                          in_chantmpls, out_chantmpls, in_paramsb, NULL);
 
 
 
 
 
-    weed_set_string_value(filter_class,"extra_authors","salsaman");
-    weed_set_string_value(filter_class,"url","http://dwango.co.jp");
-    weed_set_string_value(filter_class,"copyright","DWANGO 2016, salsaman 2016");
-    weed_set_string_value(filter_class,"license","BSD 3-clause");
+    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
+    weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
+    weed_set_string_value(filter_class, "license", "BSD 3-clause");
 
-    weed_plugin_info_add_filter_class(plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
 
 
 
     // coherent noise
 
-    filter_class=weed_filter_class_init("Toonz: Coherent Noise","DWANGO co.",1,0,NULL,
-                                        &cnoise_process,NULL,
-                                        NULL,out_chantmplsx,in_paramsc,NULL);
+    filter_class = weed_filter_class_init("Toonz: Coherent Noise", "DWANGO co.", 1, 0, NULL,
+                                          &cnoise_process, NULL,
+                                          NULL, out_chantmplsx, in_paramsc, NULL);
 
 
 
-    weed_set_string_value(filter_class,"extra_authors","salsaman");
-    weed_set_string_value(filter_class,"url","http://dwango.co.jp");
-    weed_set_string_value(filter_class,"copyright","DWANGO 2016, salsaman 2016");
-    weed_set_string_value(filter_class,"license","BSD 3-clause");
+    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
+    weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
+    weed_set_string_value(filter_class, "license", "BSD 3-clause");
 
-    weed_plugin_info_add_filter_class(plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
 
     // light bloom
 
 
-    filter_class=weed_filter_class_init("Toonz: Light Bloom","DWANGO co.",1,0,NULL,
-                                        &lbloom_process,NULL,
-                                        in_chantmpls,out_chantmpls,in_paramsd,NULL);
+    filter_class = weed_filter_class_init("Toonz: Light Bloom", "DWANGO co.", 1, 0, NULL,
+                                          &lbloom_process, NULL,
+                                          in_chantmpls, out_chantmpls, in_paramsd, NULL);
 
 
 
-    weed_set_string_value(filter_class,"extra_authors","salsaman");
-    weed_set_string_value(filter_class,"url","http://dwango.co.jp");
-    weed_set_string_value(filter_class,"copyright","DWANGO 2016, salsaman 2016");
-    weed_set_string_value(filter_class,"license","BSD 3-clause");
+    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
+    weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
+    weed_set_string_value(filter_class, "license", "BSD 3-clause");
 
-    weed_plugin_info_add_filter_class(plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
 
     // paraffin
 
 
-    filter_class=weed_filter_class_init("Toonz: Paraffin","DWANGO co.",1,0,NULL,
-                                        &paraffin_process,NULL,
-                                        in_chantmpls,out_chantmpls,in_paramse,NULL);
+    filter_class = weed_filter_class_init("Toonz: Paraffin", "DWANGO co.", 1, 0, NULL,
+                                          &paraffin_process, NULL,
+                                          in_chantmpls, out_chantmpls, in_paramse, NULL);
 
 
-    weed_set_string_value(filter_class,"extra_authors","salsaman");
-    weed_set_string_value(filter_class,"url","http://dwango.co.jp");
-    weed_set_string_value(filter_class,"copyright","DWANGO 2016, salsaman 2016");
-    weed_set_string_value(filter_class,"license","BSD 3-clause");
+    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
+    weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
+    weed_set_string_value(filter_class, "license", "BSD 3-clause");
 
-    weed_plugin_info_add_filter_class(plugin_info,filter_class);
-
-
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
 
 
-    weed_set_int_value(plugin_info,"version",package_version);
+
+
+    weed_set_int_value(plugin_info, "version", package_version);
 
   }
   return plugin_info;

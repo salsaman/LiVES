@@ -185,7 +185,7 @@ static inline int bs_pos(const bs_t *s) {
 }
 
 static inline int bs_eof(const bs_t *s) {
-  return (s->p >= s->p_end ? 1: 0);
+  return (s->p >= s->p_end ? 1 : 0);
 }
 
 static inline uint32_t bs_read(bs_t *s, int i_count) {
@@ -198,7 +198,7 @@ static inline uint32_t bs_read(bs_t *s, int i_count) {
     0x1ffff,   0x3ffff,   0x7ffff,   0xfffff,
     0x1fffff,  0x3fffff,  0x7fffff,  0xffffff,
     0x1ffffff, 0x3ffffff, 0x7ffffff, 0xfffffff,
-    0x1fffffff,0x3fffffff,0x7fffffff,0xffffffff
+    0x1fffffff, 0x3fffffff, 0x7fffffff, 0xffffffff
   };
   int      i_shr;
   uint32_t i_result = 0;
@@ -219,7 +219,7 @@ static inline uint32_t bs_read(bs_t *s, int i_count) {
       return (i_result);
     } else {
       /* less in the buffer than requested */
-      i_result |= (*s->p&i_mask[s->i_left]) << -i_shr;
+      i_result |= (*s->p & i_mask[s->i_left]) << -i_shr;
       i_count  -= s->i_left;
       s->p++;
       s->i_left = 8;
@@ -234,7 +234,7 @@ static inline uint32_t bs_read1(bs_t *s) {
     unsigned int i_result;
 
     s->i_left--;
-    i_result = (*s->p >> s->i_left)&0x01;
+    i_result = (*s->p >> s->i_left) & 0x01;
     if (s->i_left == 0) {
       s->p++;
       s->i_left = 8;
@@ -269,7 +269,7 @@ static inline void bs_write(bs_t *s, int i_count, uint32_t i_bits) {
 
     i_count--;
 
-    if ((i_bits >> i_count)&0x01) {
+    if ((i_bits >> i_count) & 0x01) {
       *s->p |= 1 << (s->i_left - 1);
     } else {
       *s->p &= ~(1 << (s->i_left - 1));

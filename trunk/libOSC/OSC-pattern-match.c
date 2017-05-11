@@ -51,7 +51,7 @@ Boolean PatternMatch(const char   *pattern, const char *test) {
 
   if (test[0] == 0) {
     if (pattern[0] == '*')
-      return PatternMatch(pattern+1,test);
+      return PatternMatch(pattern + 1, test);
     else
       return FALSE;
   }
@@ -62,30 +62,30 @@ Boolean PatternMatch(const char   *pattern, const char *test) {
   case '?'    :
     return PatternMatch(pattern + 1, test + 1);
   case '*'    :
-    if (PatternMatch(pattern+1, test)) {
+    if (PatternMatch(pattern + 1, test)) {
       return TRUE;
     } else {
-      return PatternMatch(pattern, test+1);
+      return PatternMatch(pattern, test + 1);
     }
   case ']'    :
   case '}'    :
-    OSCWarning("Spurious %c in pattern \".../%s/...\"",pattern[0], theWholePattern);
+    OSCWarning("Spurious %c in pattern \".../%s/...\"", pattern[0], theWholePattern);
     return FALSE;
   case '['    :
-    return MatchBrackets(pattern,test);
+    return MatchBrackets(pattern, test);
   case '{'    :
-    return MatchList(pattern,test);
+    return MatchList(pattern, test);
   case '\\'   :
     if (pattern[1] == 0) {
       return test[0] == 0;
     } else if (pattern[1] == test[0]) {
-      return PatternMatch(pattern+2,test+1);
+      return PatternMatch(pattern + 2, test + 1);
     } else {
       return FALSE;
     }
   default     :
     if (pattern[0] == test[0]) {
-      return PatternMatch(pattern+1,test+1);
+      return PatternMatch(pattern + 1, test + 1);
     } else {
       return FALSE;
     }
@@ -143,7 +143,7 @@ advance:
     p++;
   }
 
-  return PatternMatch(p+1,test+1);
+  return PatternMatch(p + 1, test + 1);
 }
 
 static Boolean MatchList(const char *pattern, const char *test) {

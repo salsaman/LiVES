@@ -163,7 +163,7 @@ int cjClassCreate(cjClass_t *pClass) {
       pMethod->method = (*env)->GetMethodID(env, pClass->clazz,
                                             pMethod->methodName, pMethod->methodSig);
 
-      printf("got method %s\n",pMethod->methodName);
+      printf("got method %s\n", pMethod->methodName);
 
       isException = checkException(jvm);
       if (isException || pMethod->method == NULL) {

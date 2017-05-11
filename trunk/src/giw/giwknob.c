@@ -184,18 +184,18 @@ giw_knob_init(GiwKnob *knob) {
   g_return_if_fail(knob != NULL);
   g_return_if_fail(GIW_IS_KNOB(knob));
 
-  knob->button=0;
-  knob->mouse_policy=GIW_KNOB_MOUSE_AUTOMATICALLY;
-  knob->major_ticks=9;
-  knob->minor_ticks=3;
-  knob->major_ticks_size=5;
-  knob->minor_ticks_size=3;
-  knob->legends_digits=3;
-  knob->title=NULL;
-  knob->wrap=FALSE;
+  knob->button = 0;
+  knob->mouse_policy = GIW_KNOB_MOUSE_AUTOMATICALLY;
+  knob->major_ticks = 9;
+  knob->minor_ticks = 3;
+  knob->major_ticks_size = 5;
+  knob->minor_ticks_size = 3;
+  knob->legends_digits = 3;
+  knob->title = NULL;
+  knob->wrap = FALSE;
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_has_window(GTK_WIDGET(knob),TRUE);
+  gtk_widget_set_has_window(GTK_WIDGET(knob), TRUE);
 #endif
 
 }
@@ -253,14 +253,14 @@ static void giw_knob_destroy(GtkObject *object) {
 
   if (knob->adjustment)
     g_object_unref(G_OBJECT(knob->adjustment));
-  knob->adjustment=NULL;
+  knob->adjustment = NULL;
 
   if (knob->legends) {
-    for (loop=0; loop<knob->major_ticks; loop++) {
+    for (loop = 0; loop < knob->major_ticks; loop++) {
       g_object_unref(G_OBJECT(knob->legends[loop]));
     }
     g_free(knob->legends);
-    knob->legends=NULL;
+    knob->legends = NULL;
   }
   if (knob->title_str)
     g_free(knob->title_str);
@@ -289,7 +289,7 @@ giw_knob_realize(GtkWidget *widget) {
   g_return_if_fail(GIW_IS_KNOB(widget));
 
 #if GTK_CHECK_VERSION(2,20,0)
-  gtk_widget_set_realized(widget,TRUE);
+  gtk_widget_set_realized(widget, TRUE);
 #else
   GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
 #endif
@@ -317,17 +317,17 @@ giw_knob_realize(GtkWidget *widget) {
 #endif
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_window(widget,gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
+  gtk_widget_set_window(widget, gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
 #else
   widget->window = gdk_window_new(widget->parent->window, &attributes, attributes_mask);
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
-  stylecon=gtk_style_context_new();
-  gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
-  gtk_style_context_set_state(stylecon,GTK_STATE_FLAG_ACTIVE);
+  stylecon = gtk_style_context_new();
+  gtk_style_context_set_path(stylecon, gtk_widget_get_path(widget));
+  gtk_style_context_set_state(stylecon, GTK_STATE_FLAG_ACTIVE);
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
+  gtk_style_context_set_background(stylecon, lives_widget_get_xwindow(lives_widget_get_parent(widget)));
   G_GNUC_END_IGNORE_DEPRECATIONS
 #else
   widget->style = gtk_style_attach(widget->style, lives_widget_get_xwindow(widget));
@@ -360,7 +360,7 @@ giw_knob_get_preferred_width(GtkWidget *widget,
 
   giw_knob_size_request(widget, &requisition);
 
-  *minimal_width = *natural_width = requisition.width/4.;
+  *minimal_width = *natural_width = requisition.width / 4.;
 }
 
 static void
@@ -371,7 +371,7 @@ giw_knob_get_preferred_height(GtkWidget *widget,
 
   giw_knob_size_request(widget, &requisition);
 
-  *minimal_height = *natural_height = requisition.height/4.;
+  *minimal_height = *natural_height = requisition.height / 4.;
 }
 
 #endif
@@ -386,7 +386,7 @@ giw_knob_size_allocate(GtkWidget     *widget,
   g_return_if_fail(allocation != NULL);
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_allocation(widget,allocation);
+  gtk_widget_set_allocation(widget, allocation);
 #else
   widget->allocation = *allocation;
 #endif
@@ -413,11 +413,11 @@ giw_knob_expose(GtkWidget      *widget,
                 GdkEventExpose *event) {
 #endif
   GiwKnob *knob;
-  gdouble s,c;
+  gdouble s, c;
   gint xc, yc;
   gdouble loop1;
   guint dx1, dy1, dx2, dy2;
-  gint counter=0;
+  gint counter = 0;
   GdkRectangle rect;
 
   g_return_val_if_fail(widget != NULL, FALSE);
@@ -428,16 +428,16 @@ giw_knob_expose(GtkWidget      *widget,
     return FALSE;
 #endif
 
-  knob=GIW_KNOB(widget);
+  knob = GIW_KNOB(widget);
 
-  rect.x=0;
-  rect.y=0;
-  rect.width=lives_widget_get_allocation_width(widget);
-  rect.height=lives_widget_get_allocation_height(widget);
+  rect.x = 0;
+  rect.y = 0;
+  rect.width = lives_widget_get_allocation_width(widget);
+  rect.height = lives_widget_get_allocation_height(widget);
 
   // The center
-  xc = lives_widget_get_allocation_width(widget)/2;
-  yc = lives_widget_get_allocation_height(widget)/2;
+  xc = lives_widget_get_allocation_width(widget) / 2;
+  yc = lives_widget_get_allocation_height(widget) / 2;
 
   s = sin(knob->angle);
   c = cos(knob->angle);
@@ -454,8 +454,8 @@ giw_knob_expose(GtkWidget      *widget,
   cairo_set_source_rgb(cairo, 0., 0., 0.);
 
   cairo_arc(cairo,
-            knob->x+((knob->size/2)),
-            knob->y+((knob->size/2)),
+            knob->x + ((knob->size / 2)),
+            knob->y + ((knob->size / 2)),
             knob->radius,
             0,
             2.*M_PI);
@@ -480,95 +480,95 @@ giw_knob_expose(GtkWidget      *widget,
   cairo_set_source_rgb(cairo, 1., 1., 1.);
 
   cairo_move_to(cairo,
-                xc+c*((float)knob->radius*0.6),
-                yc-s*((float)knob->radius*0.6));
+                xc + c * ((float)knob->radius * 0.6),
+                yc - s * ((float)knob->radius * 0.6));
 
   cairo_line_to(cairo,
-                xc+c*knob->radius,
-                yc-s*knob->radius);
+                xc + c * knob->radius,
+                yc - s * knob->radius);
 
   cairo_stroke(cairo);
 
   cairo_arc(cairo,
-            xc+c*((float)knob->radius*0.8),
-            yc-s*((float)knob->radius*0.8),
-            knob->radius/2*0.1,
+            xc + c * ((float)knob->radius * 0.8),
+            yc - s * ((float)knob->radius * 0.8),
+            knob->radius / 2 * 0.1,
             0,
             2.*M_PI);
 
   cairo_fill(cairo);
 
-  if ((knob->mouse_policy==GIW_KNOB_MOUSE_DELAYED) & (knob->button!=0)) {
+  if ((knob->mouse_policy == GIW_KNOB_MOUSE_DELAYED) & (knob->button != 0)) {
     s = sin(knob->false_angle);
     c = cos(knob->false_angle);
 
     //lives_widget_get_fg_state_color (widget, GTK_STATE_FLAG_PRELIGHT, &color);
 
     cairo_move_to(cairo,
-                  xc+c*((float)knob->radius*0.8),
-                  yc-s*((float)knob->radius*0.8));
+                  xc + c * ((float)knob->radius * 0.8),
+                  yc - s * ((float)knob->radius * 0.8));
     cairo_line_to(cairo,
-                  xc+c*knob->radius,
-                  yc-s*knob->radius);
+                  xc + c * knob->radius,
+                  yc - s * knob->radius);
 
 
   }
 
   // Now, draw the ticks
   // The major ticks (and legends)
-  if (knob->major_ticks!=0)
-    for (loop1=(3.0*M_PI/2.0); loop1>=-0.0001; loop1-=knob->d_major_ticks) { // -0.0001 (and not 0) to avoid rounding errors
-      s=sin(loop1-M_PI/4.0);
-      c=cos(loop1-M_PI/4.0);
-      dx1=c*knob->radius;
-      dy1=s*knob->radius;
-      dx2=c*(knob->radius+knob->major_ticks_size);
-      dy2=s*(knob->radius+knob->major_ticks_size);
+  if (knob->major_ticks != 0)
+    for (loop1 = (3.0 * M_PI / 2.0); loop1 >= -0.0001; loop1 -= knob->d_major_ticks) { // -0.0001 (and not 0) to avoid rounding errors
+      s = sin(loop1 - M_PI / 4.0);
+      c = cos(loop1 - M_PI / 4.0);
+      dx1 = c * knob->radius;
+      dy1 = s * knob->radius;
+      dx2 = c * (knob->radius + knob->major_ticks_size);
+      dy2 = s * (knob->radius + knob->major_ticks_size);
       cairo_move_to(cairo,
-                    xc+dx1,
-                    yc-dy1);
+                    xc + dx1,
+                    yc - dy1);
 
       cairo_line_to(cairo,
-                    xc+dx2,
-                    yc-dy2);
+                    xc + dx2,
+                    yc - dy2);
 
       cairo_stroke(cairo);
 
       // Drawing the legends
-      if (knob->legends_digits!=0)
+      if (knob->legends_digits != 0)
         gtk_render_layout(gtk_widget_get_style_context(widget),
                           cairo,
-                          xc+(c*knob->legend_radius)-(knob->legend_width/2),
-                          yc-(s*knob->legend_radius)-(knob->legend_height/2),
+                          xc + (c * knob->legend_radius) - (knob->legend_width / 2),
+                          yc - (s * knob->legend_radius) - (knob->legend_height / 2),
                           knob->legends[counter]);
       counter++;
     }
 
 
   // The minor ticks
-  if (knob->minor_ticks!=0)
-    for (loop1=(3.0*M_PI/2.0); loop1>=0.0; loop1-=knob->d_minor_ticks) {
-      s=sin(loop1-M_PI/4.0);
-      c=cos(loop1-M_PI/4.0);
-      dx1=c*knob->radius;
-      dy1=s*knob->radius;
-      dx2=c*(knob->radius+knob->minor_ticks_size);
-      dy2=s*(knob->radius+knob->minor_ticks_size);
+  if (knob->minor_ticks != 0)
+    for (loop1 = (3.0 * M_PI / 2.0); loop1 >= 0.0; loop1 -= knob->d_minor_ticks) {
+      s = sin(loop1 - M_PI / 4.0);
+      c = cos(loop1 - M_PI / 4.0);
+      dx1 = c * knob->radius;
+      dy1 = s * knob->radius;
+      dx2 = c * (knob->radius + knob->minor_ticks_size);
+      dy2 = s * (knob->radius + knob->minor_ticks_size);
       cairo_move_to(cairo,
-                    xc+dx1,
-                    yc-dy1);
+                    xc + dx1,
+                    yc - dy1);
       cairo_line_to(cairo,
-                    xc+dx2,
-                    yc-dy2);
+                    xc + dx2,
+                    yc - dy2);
       cairo_stroke(cairo);
     }
 
   // Draw the title
-  if (knob->title_str!=NULL) // font_str==NULL means no title
+  if (knob->title_str != NULL) // font_str==NULL means no title
     gtk_render_layout(gtk_widget_get_style_context(widget),
                       cairo,
-                      xc-knob->title_width/2,
-                      knob->size-knob->title_height-5, // 5 pixels to separate from the borders
+                      xc - knob->title_width / 2,
+                      knob->size - knob->title_height - 5, // 5 pixels to separate from the borders
                       knob->title);
 
 #else
@@ -589,72 +589,72 @@ giw_knob_expose(GtkWidget      *widget,
   gdk_draw_arc(widget->window,
                widget->style->black_gc,
                TRUE,
-               knob->x+((knob->size/2)-knob->radius),
-               knob->y+((knob->size/2)-knob->radius),
-               knob->radius*2,
-               knob->radius*2,
+               knob->x + ((knob->size / 2) - knob->radius),
+               knob->y + ((knob->size / 2) - knob->radius),
+               knob->radius * 2,
+               knob->radius * 2,
                0,
-               360*64);
+               360 * 64);
 
 
 
   gdk_draw_line(widget->window,
                 widget->style->white_gc,
-                xc+c*((float)knob->radius*0.6),
-                yc-s*((float)knob->radius*0.6),
-                xc+c*knob->radius,
-                yc-s*knob->radius);
+                xc + c * ((float)knob->radius * 0.6),
+                yc - s * ((float)knob->radius * 0.6),
+                xc + c * knob->radius,
+                yc - s * knob->radius);
   gdk_draw_arc(widget->window,
                widget->style->white_gc,
                TRUE,
-               xc+c*((float)knob->radius*0.8)-knob->radius*0.1,
-               yc-s*((float)knob->radius*0.8)-knob->radius*0.1,
-               knob->radius*0.2,
-               knob->radius*0.2,
+               xc + c * ((float)knob->radius * 0.8) - knob->radius * 0.1,
+               yc - s * ((float)knob->radius * 0.8) - knob->radius * 0.1,
+               knob->radius * 0.2,
+               knob->radius * 0.2,
                0,
-               360*64);
+               360 * 64);
 
   // Draw the false-pointer if the delayed policy of mouse is set and a button is pressed
-  if ((knob->mouse_policy==GIW_KNOB_MOUSE_DELAYED) & (knob->button!=0)) {
+  if ((knob->mouse_policy == GIW_KNOB_MOUSE_DELAYED) & (knob->button != 0)) {
     s = sin(knob->false_angle);
     c = cos(knob->false_angle);
 
     gdk_draw_line(widget->window,
                   widget->style->fg_gc[widget->state],
-                  xc+c*((float)knob->radius*0.8),
-                  yc-s*((float)knob->radius*0.8),
-                  xc+c*knob->radius,
-                  yc-s*knob->radius);
+                  xc + c * ((float)knob->radius * 0.8),
+                  yc - s * ((float)knob->radius * 0.8),
+                  xc + c * knob->radius,
+                  yc - s * knob->radius);
 
     gdk_draw_arc(widget->window,
                  widget->style->black_gc,
                  FALSE,
-                 xc+c*((float)knob->radius*0.8)-knob->radius*0.1,
-                 yc-s*((float)knob->radius*0.8)-knob->radius*0.1,
-                 knob->radius*0.2,
-                 knob->radius*0.2,
+                 xc + c * ((float)knob->radius * 0.8) - knob->radius * 0.1,
+                 yc - s * ((float)knob->radius * 0.8) - knob->radius * 0.1,
+                 knob->radius * 0.2,
+                 knob->radius * 0.2,
                  0,
-                 360*64);
+                 360 * 64);
   }
 
   // Now, draw the ticks
   // The major ticks (and legends)
-  if (knob->major_ticks!=0)
-    for (loop1=(3.0*M_PI/2.0); loop1>=-0.0001; loop1-=knob->d_major_ticks) { // -0.0001 (and not 0) to avoid rounding errors
-      s=sin(loop1-M_PI/4.0);
-      c=cos(loop1-M_PI/4.0);
-      dx1=c*knob->radius;
-      dy1=s*knob->radius;
-      dx2=c*(knob->radius+knob->major_ticks_size);
-      dy2=s*(knob->radius+knob->major_ticks_size);
+  if (knob->major_ticks != 0)
+    for (loop1 = (3.0 * M_PI / 2.0); loop1 >= -0.0001; loop1 -= knob->d_major_ticks) { // -0.0001 (and not 0) to avoid rounding errors
+      s = sin(loop1 - M_PI / 4.0);
+      c = cos(loop1 - M_PI / 4.0);
+      dx1 = c * knob->radius;
+      dy1 = s * knob->radius;
+      dx2 = c * (knob->radius + knob->major_ticks_size);
+      dy2 = s * (knob->radius + knob->major_ticks_size);
       gdk_draw_line(widget->window,
                     widget->style->fg_gc[widget->state],
-                    xc+dx1,
-                    yc-dy1,
-                    xc+dx2,
-                    yc-dy2);
+                    xc + dx1,
+                    yc - dy1,
+                    xc + dx2,
+                    yc - dy2);
       // Drawing the legends
-      if (knob->legends_digits!=0)
+      if (knob->legends_digits != 0)
         gtk_paint_layout(widget->style,
                          widget->window,
                          GTK_STATE_NORMAL,
@@ -662,30 +662,30 @@ giw_knob_expose(GtkWidget      *widget,
                          &rect,
                          widget,
                          NULL,
-                         xc+(c*knob->legend_radius)-(knob->legend_width/2),
-                         yc-(s*knob->legend_radius)-(knob->legend_height/2),
+                         xc + (c * knob->legend_radius) - (knob->legend_width / 2),
+                         yc - (s * knob->legend_radius) - (knob->legend_height / 2),
                          knob->legends[counter]);
       counter++;
     }
   // The minor ticks
-  if (knob->minor_ticks!=0)
-    for (loop1=(3.0*M_PI/2.0); loop1>=0.0; loop1-=knob->d_minor_ticks) {
-      s=sin(loop1-M_PI/4.0);
-      c=cos(loop1-M_PI/4.0);
-      dx1=c*knob->radius;
-      dy1=s*knob->radius;
-      dx2=c*(knob->radius+knob->minor_ticks_size);
-      dy2=s*(knob->radius+knob->minor_ticks_size);
+  if (knob->minor_ticks != 0)
+    for (loop1 = (3.0 * M_PI / 2.0); loop1 >= 0.0; loop1 -= knob->d_minor_ticks) {
+      s = sin(loop1 - M_PI / 4.0);
+      c = cos(loop1 - M_PI / 4.0);
+      dx1 = c * knob->radius;
+      dy1 = s * knob->radius;
+      dx2 = c * (knob->radius + knob->minor_ticks_size);
+      dy2 = s * (knob->radius + knob->minor_ticks_size);
       gdk_draw_line(widget->window,
                     widget->style->fg_gc[widget->state],
-                    xc+dx1,
-                    yc-dy1,
-                    xc+dx2,
-                    yc-dy2);
+                    xc + dx1,
+                    yc - dy1,
+                    xc + dx2,
+                    yc - dy2);
     }
 
   // Draw the title
-  if (knob->title_str!=NULL) // font_str==NULL means no title
+  if (knob->title_str != NULL) // font_str==NULL means no title
     gtk_paint_layout(widget->style,
                      widget->window,
                      GTK_STATE_NORMAL,
@@ -693,8 +693,8 @@ giw_knob_expose(GtkWidget      *widget,
                      &rect,
                      widget,
                      NULL,
-                     xc-knob->title_width/2,
-                     knob->size-knob->title_height-5, // 5 pixels to separate from the borders
+                     xc - knob->title_width / 2,
+                     knob->size - knob->title_height - 5, // 5 pixels to separate from the borders
                      knob->title);
 
 #endif
@@ -715,19 +715,19 @@ giw_knob_button_press(GtkWidget      *widget,
 
   knob = GIW_KNOB(widget);
 
-  if (knob->mouse_policy==GIW_KNOB_MOUSE_DISABLED) return TRUE;
+  if (knob->mouse_policy == GIW_KNOB_MOUSE_DISABLED) return TRUE;
   if (knob->button) return TRUE; // Some button is already pressed
 
   /* To verify if the pointer is in the knob, the distance between the pointer and the center
   of the circle is calculated, if it's less the the radius of the circle , it's in!!*/
 
-  xc = lives_widget_get_allocation_width(widget)/2;
-  yc = lives_widget_get_allocation_height(widget)/2;
+  xc = lives_widget_get_allocation_width(widget) / 2;
+  yc = lives_widget_get_allocation_height(widget) / 2;
 
   dx = abs((int)event->x - xc);
   dy = abs((int)event->y - yc);
 
-  if (!knob->button & (dx<knob->radius) & (dy<knob->radius))
+  if (!knob->button & (dx < knob->radius) & (dy < knob->radius))
     knob->button = event->button;
 
   return FALSE;
@@ -745,9 +745,9 @@ giw_knob_button_release(GtkWidget      *widget,
 
   knob = GIW_KNOB(widget);
 
-  g_return_val_if_fail(knob->adjustment != NULL,TRUE);
+  g_return_val_if_fail(knob->adjustment != NULL, TRUE);
 
-  if (knob->mouse_policy==GIW_KNOB_MOUSE_DISABLED) return TRUE;
+  if (knob->mouse_policy == GIW_KNOB_MOUSE_DISABLED) return TRUE;
 
   // If the policy is delayed, now that the button was released (if it is), it's time to update the value
   if ((knob->mouse_policy == GIW_KNOB_MOUSE_DELAYED) &&
@@ -755,7 +755,7 @@ giw_knob_button_release(GtkWidget      *widget,
     x = event->x;
     y = event->y;
 
-    knob_update_mouse(knob, x,y);
+    knob_update_mouse(knob, x, y);
   }
 
 
@@ -771,16 +771,16 @@ giw_knob_motion_notify(GtkWidget      *widget,
   GiwKnob *knob;
   gint x, y;
 
-  g_return_val_if_fail(widget != NULL,TRUE);
-  g_return_val_if_fail(GTK_IS_WIDGET(widget),TRUE);
-  g_return_val_if_fail(GIW_IS_KNOB(widget),TRUE);
-  g_return_val_if_fail(event != NULL,TRUE);
+  g_return_val_if_fail(widget != NULL, TRUE);
+  g_return_val_if_fail(GTK_IS_WIDGET(widget), TRUE);
+  g_return_val_if_fail(GIW_IS_KNOB(widget), TRUE);
+  g_return_val_if_fail(event != NULL, TRUE);
 
   knob = GIW_KNOB(widget);
 
-  g_return_val_if_fail(knob->adjustment != NULL,TRUE);
+  g_return_val_if_fail(knob->adjustment != NULL, TRUE);
 
-  if (knob->mouse_policy==GIW_KNOB_MOUSE_DISABLED) return TRUE;
+  if (knob->mouse_policy == GIW_KNOB_MOUSE_DISABLED) return TRUE;
 
   // If the some button is pressed and the policy is set to update the value AUTOMATICALLY, update the knob's value
   if ((knob->button != 0) && (knob->mouse_policy == GIW_KNOB_MOUSE_AUTOMATICALLY)) {
@@ -801,7 +801,7 @@ giw_knob_motion_notify(GtkWidget      *widget,
   }
 
   // If the some button is pressed and the policy is set to update the value delayed, update the knob's false pointer's angle
-  if ((knob->button != 0) && (knob->mouse_policy==GIW_KNOB_MOUSE_DELAYED)) {
+  if ((knob->button != 0) && (knob->mouse_policy == GIW_KNOB_MOUSE_DELAYED)) {
     x = event->x;
     y = event->y;
 
@@ -875,7 +875,7 @@ giw_knob_set_value(GiwKnob *knob,
   g_return_if_fail(GIW_IS_KNOB(knob));
 
 
-  if (value!=gtk_adjustment_get_value(knob->adjustment)) {
+  if (value != gtk_adjustment_get_value(knob->adjustment)) {
     knob_set_value(knob, value);
     g_return_if_fail(knob->adjustment != NULL);
 #if !GTK_CHECK_VERSION(3,18,0)
@@ -894,8 +894,8 @@ giw_knob_set_adjustment(GiwKnob *knob,
   // Freeing the last one
   if (knob->adjustment) {
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_handler_disconnect((gpointer)(knob->adjustment),knob->chsig);
-    g_signal_handler_disconnect((gpointer)(knob->adjustment),knob->vchsig);
+    g_signal_handler_disconnect((gpointer)(knob->adjustment), knob->chsig);
+    g_signal_handler_disconnect((gpointer)(knob->adjustment), knob->vchsig);
 #else
     gtk_signal_disconnect_by_data(LIVES_GUI_OBJECT(knob->adjustment), (gpointer) knob);
 #endif
@@ -933,7 +933,7 @@ giw_knob_set_wrap(GiwKnob *knob,
   g_return_if_fail(knob != NULL);
   g_return_if_fail(GIW_IS_KNOB(knob));
 
-  knob->wrap=wrap;
+  knob->wrap = wrap;
 
   knob_build_legends(knob);
   knob_calculate_sizes(knob);
@@ -952,7 +952,7 @@ giw_knob_set_legends_digits(GiwKnob *knob,
   if (digits_number != knob->legends_digits) {
     knob_free_legends(knob);
 
-    knob->legends_digits=digits_number;
+    knob->legends_digits = digits_number;
 
     knob_build_legends(knob);
     knob_calculate_sizes(knob);
@@ -969,12 +969,12 @@ giw_knob_set_ticks_number(GiwKnob *knob,
   if ((major != knob->major_ticks) || (minor != knob->minor_ticks)) {
     knob_free_legends(knob);
 
-    knob->major_ticks=major;
+    knob->major_ticks = major;
 
-    if (knob->major_ticks==0)
-      knob->minor_ticks=0;          // It's impossible to have minor ticks without major ticks
+    if (knob->major_ticks == 0)
+      knob->minor_ticks = 0;        // It's impossible to have minor ticks without major ticks
     else
-      knob->minor_ticks=minor;
+      knob->minor_ticks = minor;
 
     knob_build_legends(knob);
     knob_calculate_sizes(knob);
@@ -988,8 +988,8 @@ giw_knob_set_mouse_policy(GiwKnob *knob,
   g_return_if_fail(knob != NULL);
   g_return_if_fail(GIW_IS_KNOB(knob));
 
-  if (knob->button==0) // The policy can only be change when there is no button pressed
-    knob->mouse_policy=policy;
+  if (knob->button == 0) // The policy can only be change when there is no button pressed
+    knob->mouse_policy = policy;
 }
 
 static void
@@ -1028,7 +1028,7 @@ giw_knob_set_title(GiwKnob *knob, gchar *str) {
   g_return_if_fail(knob != NULL);
   g_return_if_fail(GIW_IS_KNOB(knob));
 
-  knob->title_str=g_strdup(str); // Duplicate the string, after this, str can be freed
+  knob->title_str = g_strdup(str); // Duplicate the string, after this, str can be freed
 
   knob_build_title(knob);
   knob_calculate_sizes(knob);
@@ -1048,12 +1048,12 @@ knob_update_mouse(GiwKnob *knob, gint x, gint y) {
 
   gtk_widget_queue_draw(GTK_WIDGET(knob));
 
-  xc = lives_widget_get_allocation_width(LIVES_WIDGET(knob))/2;
-  yc = lives_widget_get_allocation_height(LIVES_WIDGET(knob))/2;
+  xc = lives_widget_get_allocation_width(LIVES_WIDGET(knob)) / 2;
+  yc = lives_widget_get_allocation_height(LIVES_WIDGET(knob)) / 2;
 
   // Calculating the new angle
-  if (knob->angle != atan2(yc-y, x-xc)) {
-    knob_set_value(knob, knob_calculate_value_with_angle(knob, atan2(yc-y, x-xc)));
+  if (knob->angle != atan2(yc - y, x - xc)) {
+    knob_set_value(knob, knob_calculate_value_with_angle(knob, atan2(yc - y, x - xc)));
     g_return_if_fail(knob->adjustment != NULL);
 #if !GTK_CHECK_VERSION(3,18,0)
     gtk_adjustment_value_changed(knob->adjustment);
@@ -1068,24 +1068,24 @@ knob_update_false_mouse(GiwKnob *knob, gint x, gint y) {
   g_return_if_fail(knob != NULL);
   g_return_if_fail(GIW_IS_KNOB(knob));
 
-  xc = lives_widget_get_allocation_width(LIVES_WIDGET(knob))/2;
-  yc = lives_widget_get_allocation_height(LIVES_WIDGET(knob))/2;
+  xc = lives_widget_get_allocation_width(LIVES_WIDGET(knob)) / 2;
+  yc = lives_widget_get_allocation_height(LIVES_WIDGET(knob)) / 2;
 
   // Calculating the new angle
-  knob->false_angle = atan2(yc-y, x-xc);
+  knob->false_angle = atan2(yc - y, x - xc);
 
   // Putting the angle between 0 and 2PI, because the atan2 returns the angle between PI and -PI
-  while (knob->false_angle<0)
-    knob->false_angle+=(2.0*M_PI);
+  while (knob->false_angle < 0)
+    knob->false_angle += (2.0 * M_PI);
 
   if (!knob->wrap) {
     // Taking out of the "forbidden" region
-    if ((knob->false_angle <= (3.0*M_PI/2.0)) &&
-        (knob->false_angle > (5.0*M_PI/4.0)))
-      knob->false_angle=5.0*M_PI/4.0;
-    if ((knob->false_angle < (7.0*M_PI/4.0)) &&
-        (knob->false_angle >= (3.0*M_PI/2.0)))
-      knob->false_angle=7.0*M_PI/4.0;
+    if ((knob->false_angle <= (3.0 * M_PI / 2.0)) &&
+        (knob->false_angle > (5.0 * M_PI / 4.0)))
+      knob->false_angle = 5.0 * M_PI / 4.0;
+    if ((knob->false_angle < (7.0 * M_PI / 4.0)) &&
+        (knob->false_angle >= (3.0 * M_PI / 2.0)))
+      knob->false_angle = 7.0 * M_PI / 4.0;
   }
 
   gtk_widget_queue_draw(GTK_WIDGET(knob));
@@ -1098,36 +1098,36 @@ knob_calculate_sizes(GiwKnob *knob) {
   g_return_if_fail(knob != NULL);
   g_return_if_fail(GIW_IS_KNOB(knob));
 
-  widget=GTK_WIDGET(knob);
+  widget = GTK_WIDGET(knob);
 
   // Getting the radius and size
   if (lives_widget_get_allocation_width(widget) < lives_widget_get_allocation_height(widget)) {
-    knob->size=lives_widget_get_allocation_width(widget);
-    knob->x=0;
-    knob->y=lives_widget_get_allocation_height(widget)/2-knob->size/2;
+    knob->size = lives_widget_get_allocation_width(widget);
+    knob->x = 0;
+    knob->y = lives_widget_get_allocation_height(widget) / 2 - knob->size / 2;
   } else {
-    knob->size=lives_widget_get_allocation_height(widget);
-    knob->y=0;
-    knob->x=lives_widget_get_allocation_width(widget)/2-knob->size/2;
+    knob->size = lives_widget_get_allocation_height(widget);
+    knob->y = 0;
+    knob->x = lives_widget_get_allocation_width(widget) / 2 - knob->size / 2;
   }
 
   // The distance between the radius and the widget limits is the bigger dimension of the legends plus the major_ticks_size,
   // so it's the half of size, less the bigger dimension of the legends less the major_ticks size (wich depends of the radius),
   // then, with some algebra, it results in this equation:
-  knob->radius=8*((knob->size/2)-sqrt(knob->legend_width*knob->legend_width+knob->legend_height*knob->legend_height))/9;
+  knob->radius = 8 * ((knob->size / 2) - sqrt(knob->legend_width * knob->legend_width + knob->legend_height * knob->legend_height)) / 9;
 
   if (!knob->wrap)
-    knob->d_major_ticks=(3.0*M_PI/2.0)/(knob->major_ticks-1);
+    knob->d_major_ticks = (3.0 * M_PI / 2.0) / (knob->major_ticks - 1);
   else
-    knob->d_major_ticks=(2.0*M_PI)/(knob->major_ticks-1);
+    knob->d_major_ticks = (2.0 * M_PI) / (knob->major_ticks - 1);
 
-  knob->d_minor_ticks=knob->d_major_ticks/(knob->minor_ticks+1);
+  knob->d_minor_ticks = knob->d_major_ticks / (knob->minor_ticks + 1);
 
-  knob->major_ticks_size=knob->radius/8.0;
-  knob->minor_ticks_size=knob->radius/16.0;
+  knob->major_ticks_size = knob->radius / 8.0;
+  knob->minor_ticks_size = knob->radius / 16.0;
 
   // The legend will in the middle of the inside (plus the major_ticks_size) and outside circle
-  knob->legend_radius=((knob->radius+knob->major_ticks_size+(knob->size/2))/2);
+  knob->legend_radius = ((knob->radius + knob->major_ticks_size + (knob->size / 2)) / 2);
 }
 
 gdouble
@@ -1138,26 +1138,26 @@ knob_calculate_value_with_angle(GiwKnob *knob, gdouble angle) {
   g_return_val_if_fail(GIW_IS_KNOB(knob), 0.0);
 
   // Putting the angle between 0 and 2PI, because the atan2 returns the angle between PI and -PI
-  while (angle<0)
-    angle=angle+(2.0*M_PI);
+  while (angle < 0)
+    angle = angle + (2.0 * M_PI);
 
   if (!knob->wrap) {
     // Taking out of the "forbidden" region
-    if ((angle <= (3.0*M_PI/2.0)) && (angle  > (5.0*M_PI/4.0))) angle=5.0*M_PI/4.0;
-    if ((angle  < (7.0*M_PI/4.0)) && (angle >= (3.0*M_PI/2.0))) angle=7.0*M_PI/4.0;
+    if ((angle <= (3.0 * M_PI / 2.0)) && (angle  > (5.0 * M_PI / 4.0))) angle = 5.0 * M_PI / 4.0;
+    if ((angle  < (7.0 * M_PI / 4.0)) && (angle >= (3.0 * M_PI / 2.0))) angle = 7.0 * M_PI / 4.0;
 
     // Calculating the distance (in radians) between the pointer and the lower angle
-    if (angle<=(5.0*M_PI/4.0)) d_angle=(5.0*M_PI/4.0)-angle;
-    if (angle>=(7.0*M_PI/4.0)) d_angle=(13.0*M_PI/4.0)-angle;
+    if (angle <= (5.0 * M_PI / 4.0)) d_angle = (5.0 * M_PI / 4.0) - angle;
+    if (angle >= (7.0 * M_PI / 4.0)) d_angle = (13.0 * M_PI / 4.0) - angle;
 
-    return (lives_adjustment_get_lower(knob->adjustment)+
-            fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment))*d_angle/(3.0*M_PI/2.0));
+    return (lives_adjustment_get_lower(knob->adjustment) +
+            fabs(lives_adjustment_get_upper(knob->adjustment) - lives_adjustment_get_lower(knob->adjustment)) * d_angle / (3.0 * M_PI / 2.0));
   }
 
-  if (angle<3*M_PI/2.) d_angle=(3.*M_PI/2.) - angle;
-  else d_angle = 7./2.*M_PI - angle;
-  return (lives_adjustment_get_lower(knob->adjustment)+
-          fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment))*d_angle/(2.0*M_PI));
+  if (angle < 3 * M_PI / 2.) d_angle = (3.*M_PI / 2.) - angle;
+  else d_angle = 7. / 2.*M_PI - angle;
+  return (lives_adjustment_get_lower(knob->adjustment) +
+          fabs(lives_adjustment_get_upper(knob->adjustment) - lives_adjustment_get_lower(knob->adjustment)) * d_angle / (2.0 * M_PI));
 }
 
 
@@ -1168,20 +1168,20 @@ knob_calculate_angle_with_value(GiwKnob *knob, gdouble value) {
 
   g_return_val_if_fail(knob != NULL, 0.0);
   g_return_val_if_fail(GIW_IS_KNOB(knob), 0.0);
-  g_return_val_if_fail(knob->adjustment!=NULL, 0.0);
+  g_return_val_if_fail(knob->adjustment != NULL, 0.0);
 
   if (!knob->wrap) {
-    angle=(value-lives_adjustment_get_lower(knob->adjustment))*
-          (3.0*M_PI/2.0)/fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment));
+    angle = (value - lives_adjustment_get_lower(knob->adjustment)) *
+            (3.0 * M_PI / 2.0) / fabs(lives_adjustment_get_upper(knob->adjustment) - lives_adjustment_get_lower(knob->adjustment));
 
     // Now, the angle is relative to the 3 o'clock position, and need to be changed in order to be relative to the initial angle ((5.0*M_PI/4.0)
-    angle=(5.0*M_PI/4.0)-angle;
+    angle = (5.0 * M_PI / 4.0) - angle;
   } else {
-    angle=(value-lives_adjustment_get_lower(knob->adjustment))*
-          (2.0*M_PI)/fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment));
+    angle = (value - lives_adjustment_get_lower(knob->adjustment)) *
+            (2.0 * M_PI) / fabs(lives_adjustment_get_upper(knob->adjustment) - lives_adjustment_get_lower(knob->adjustment));
 
     // Now, the angle is relative to the 3 o'clock position, and need to be changed in order to be relative to the initial angle (3*M_PI/2)
-    angle=3.*M_PI/2.-angle;
+    angle = 3.*M_PI / 2. - angle;
   }
 
   return (angle);
@@ -1196,19 +1196,19 @@ knob_set_angle(GiwKnob *knob,
   g_return_if_fail(GIW_IS_KNOB(knob));
 
   // Putting the angle between 0 and 2PI(360�)
-  while (angle > 2.0*M_PI)
-    angle=angle-(2.0*M_PI);
+  while (angle > 2.0 * M_PI)
+    angle = angle - (2.0 * M_PI);
 
-  while (angle<0)
-    angle=angle+(2.0*M_PI);
+  while (angle < 0)
+    angle = angle + (2.0 * M_PI);
 
   if (knob->angle != angle) {
     if (!knob->wrap) {
       // Taking out of the "forbidden" region
-      if ((angle <= (3.0*M_PI/2.0)) && (angle > (5.0*M_PI/4.0))) angle=5.0*M_PI/4.0;
-      if ((angle  < (7.0*M_PI/4.0)) && (angle >= (3.0*M_PI/2.0))) angle=7.0*M_PI/4.0;
+      if ((angle <= (3.0 * M_PI / 2.0)) && (angle > (5.0 * M_PI / 4.0))) angle = 5.0 * M_PI / 4.0;
+      if ((angle  < (7.0 * M_PI / 4.0)) && (angle >= (3.0 * M_PI / 2.0))) angle = 7.0 * M_PI / 4.0;
     }
-    knob->angle=angle;
+    knob->angle = angle;
   }
 }
 
@@ -1219,7 +1219,7 @@ knob_set_value(GiwKnob *knob,
   g_return_if_fail(GIW_IS_KNOB(knob));
   g_return_if_fail(knob->adjustment != NULL);
 
-  gtk_adjustment_set_value(knob->adjustment,value);
+  gtk_adjustment_set_value(knob->adjustment, value);
 }
 
 void
@@ -1230,30 +1230,30 @@ knob_build_legends(GiwKnob *knob) {
 
   g_return_if_fail(knob != NULL);
 
-  widget=GTK_WIDGET(knob);
+  widget = GTK_WIDGET(knob);
 
-  if (knob->major_ticks==0)  // Preventing from bugs
+  if (knob->major_ticks == 0) // Preventing from bugs
     return;
 
   // Creating the legend's layouts
-  if (knob->legends_digits!=0) {
-    knob->legends=g_new(PangoLayout *, knob->major_ticks);
-    str=g_new(gchar, knob->legends_digits+1); // +1 for the '/0'
-    for (loop=0; loop<knob->major_ticks; loop++) {
-      snprintf(str,knob->legends_digits+1,"%f",
-               lives_adjustment_get_lower(knob->adjustment)+
-               loop*(lives_adjustment_get_upper(knob->adjustment)-
-                     lives_adjustment_get_lower(knob->adjustment))/
-               (knob->major_ticks-1)); // Creating the legends string
-      knob->legends[loop]=gtk_widget_create_pango_layout(widget, str);
+  if (knob->legends_digits != 0) {
+    knob->legends = g_new(PangoLayout *, knob->major_ticks);
+    str = g_new(gchar, knob->legends_digits + 1); // +1 for the '/0'
+    for (loop = 0; loop < knob->major_ticks; loop++) {
+      snprintf(str, knob->legends_digits + 1, "%f",
+               lives_adjustment_get_lower(knob->adjustment) +
+               loop * (lives_adjustment_get_upper(knob->adjustment) -
+                       lives_adjustment_get_lower(knob->adjustment)) /
+               (knob->major_ticks - 1)); // Creating the legends string
+      knob->legends[loop] = gtk_widget_create_pango_layout(widget, str);
     }
     g_free(str);
 
     // Getting the size of the legends
     knob_calculate_legends_sizes(knob);
   } else { // If there are no legends (0 digits), the size is the major ticks size (5)
-    knob->legend_width=0;
-    knob->legend_height=0;
+    knob->legend_width = 0;
+    knob->legend_height = 0;
   }
 }
 
@@ -1263,12 +1263,12 @@ knob_free_legends(GiwKnob *knob) {
 
   g_return_if_fail(knob != NULL);
 
-  if (knob->legends!=NULL) {
-    for (loop=0; loop<knob->major_ticks; loop++)
-      if (knob->legends[loop]!=NULL)
+  if (knob->legends != NULL) {
+    for (loop = 0; loop < knob->major_ticks; loop++)
+      if (knob->legends[loop] != NULL)
         g_object_unref(G_OBJECT(knob->legends[loop]));
     g_free(knob->legends);
-    knob->legends=NULL;
+    knob->legends = NULL;
   }
 }
 
@@ -1278,15 +1278,15 @@ knob_build_title(GiwKnob *knob) {
 
   g_return_if_fail(knob != NULL);
 
-  widget=GTK_WIDGET(knob);
+  widget = GTK_WIDGET(knob);
 
-  if (knob->title_str==NULL) // Return if there is no title (the layout will be keeped, but not drawed)
+  if (knob->title_str == NULL) // Return if there is no title (the layout will be keeped, but not drawed)
     return;
 
   if (knob->title)
     pango_layout_set_text(knob->title, knob->title_str, strlen(knob->title_str));
   else // If the title hasn't been created yet..
-    knob->title=gtk_widget_create_pango_layout(widget, knob->title_str);
+    knob->title = gtk_widget_create_pango_layout(widget, knob->title_str);
 
   // Calculating new size
   knob_calculate_title_sizes(knob);
@@ -1302,31 +1302,31 @@ knob_calculate_legends_sizes(GiwKnob *knob) {
 
   g_return_if_fail(knob != NULL);
 
-  widget=GTK_WIDGET(knob);
+  widget = GTK_WIDGET(knob);
 
-  if (knob->legends!=NULL) {
+  if (knob->legends != NULL) {
 
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,8,0)
-    fontdesc=pango_font_description_new();
+    fontdesc = pango_font_description_new();
     gtk_style_context_get(gtk_widget_get_style_context(widget),
                           gtk_widget_get_state_flags(widget),
                           GTK_STYLE_PROPERTY_FONT,
                           &fontdesc,
                           NULL
                          );
-    pango_layout_set_font_description(knob->legends[0],fontdesc);
+    pango_layout_set_font_description(knob->legends[0], fontdesc);
     pango_font_description_free(fontdesc);
 #else
     pango_layout_set_font_description(knob->legends[0],
-                                      gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state_flags(widget)));
+                                      gtk_style_context_get_font(gtk_widget_get_style_context(widget), gtk_widget_get_state_flags(widget)));
 #endif
 #else
     pango_layout_set_font_description(knob->legends[0], widget->style->font_desc);
 #endif
     pango_layout_get_size(knob->legends[0], &(knob->legend_width), &(knob->legend_height));
-    knob->legend_width/=PANGO_SCALE;
-    knob->legend_height/=PANGO_SCALE;
+    knob->legend_width /= PANGO_SCALE;
+    knob->legend_height /= PANGO_SCALE;
   }
 }
 
@@ -1342,29 +1342,29 @@ knob_calculate_title_sizes(GiwKnob *knob) {
 
   if (knob->title == NULL) return;
 
-  widget=GTK_WIDGET(knob);
+  widget = GTK_WIDGET(knob);
 
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,8,0)
-  fontdesc=pango_font_description_new();
+  fontdesc = pango_font_description_new();
   gtk_style_context_get(gtk_widget_get_style_context(widget),
                         gtk_widget_get_state_flags(widget),
                         GTK_STYLE_PROPERTY_FONT,
                         &fontdesc,
                         NULL
                        );
-  pango_layout_set_font_description(knob->legends[0],fontdesc);
+  pango_layout_set_font_description(knob->legends[0], fontdesc);
   pango_font_description_free(fontdesc);
 #else
   pango_layout_set_font_description(knob->legends[0],
-                                    gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state_flags(widget)));
+                                    gtk_style_context_get_font(gtk_widget_get_style_context(widget), gtk_widget_get_state_flags(widget)));
 #endif
 #else
   pango_layout_set_font_description(knob->legends[0], widget->style->font_desc);
 #endif
   pango_layout_get_size(knob->title, &(knob->title_width), &(knob->title_height));
-  knob->title_width/=PANGO_SCALE;
-  knob->title_height/=PANGO_SCALE;
+  knob->title_width /= PANGO_SCALE;
+  knob->title_height /= PANGO_SCALE;
 
   knob_calculate_sizes(knob);
 }

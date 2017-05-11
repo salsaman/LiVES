@@ -42,16 +42,16 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
   struct sockaddr_in cl_addr;
   desc *o;
   struct hostent *hostsEntry;
-  uint64_t address=0;
+  uint64_t address = 0;
 
   o = (desc *)malloc(sizeof(desc));
-  if (o==NULL) return NULL;
+  if (o == NULL) return NULL;
 
   o->len = sizeof(cl_addr);
   memset((char *)&o->serv_addr, 0, sizeof(o->serv_addr));
   o->serv_addr.sin_family = AF_INET;
 
-  if (strcmp(host,"INADDR_ANY")) {
+  if (strcmp(host, "INADDR_ANY")) {
     hostsEntry = gethostbyname(host);
 
     if (hostsEntry == NULL) {
@@ -67,13 +67,13 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
     o->serv_addr.sin_port = htons(portnumber);
   } else {
     // open receiver socket
-    if (!strcmp(host,"INADDR_ANY")) o->serv_addr.sin_addr.s_addr = INADDR_ANY;
+    if (!strcmp(host, "INADDR_ANY")) o->serv_addr.sin_addr.s_addr = INADDR_ANY;
     else o->serv_addr.sin_addr.s_addr = address;
     o->serv_addr.sin_port = htons(0);
   }
 
 #ifdef __cplusplus
-  o->addr = (sockaddr *)&(o->serv_addr);
+  o->addr = (sockaddr *) & (o->serv_addr);
 #else
   o->addr = &(o->serv_addr);
 #endif
@@ -97,16 +97,16 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
     }
   } else lives_printerr("unable to make socket\n");
 
-  if (sockfd<0) {
+  if (sockfd < 0) {
     lives_free(o);
     o = NULL;
   } else {
-    int mxsize=1024*1024;
+    int mxsize = 1024 * 1024;
     o->sockfd = sockfd;
     if (!sender) setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void *) &mxsize, sizeof(mxsize));
   }
 
-  if (o!=NULL&&strcmp(host,"INADDR_ANY")) {
+  if (o != NULL && strcmp(host, "INADDR_ANY")) {
     connect(sockfd, o->addr, sizeof(cl_addr));
   }
 
@@ -114,37 +114,37 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
 }
 
 static ssize_t getudp(struct sockaddr *sp, int sockfd, int length, size_t count, void  *b, int bfsize) {
-  int flags=0;
+  int flags = 0;
   ssize_t res;
   unsigned long len;
 
-  if (bfsize>0) {
+  if (bfsize > 0) {
     int xbfsize;
-    socklen_t slt=sizeof(xbfsize);
+    socklen_t slt = sizeof(xbfsize);
     setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void *) &bfsize, sizeof(bfsize));
     getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void *) &xbfsize, &slt);
-    if (xbfsize<bfsize) return -2;
+    if (xbfsize < bfsize) return -2;
   }
 
 #ifdef IS_MINGW
-  ioctlsocket(sockfd,FIONREAD,&len);
+  ioctlsocket(sockfd, FIONREAD, &len);
 #else
-  ioctl(sockfd,FIONREAD,&len);
+  ioctl(sockfd, FIONREAD, &len);
 #endif
 
-  if (len==0) return -1;
+  if (len == 0) return -1;
 
   do {
-    res=recvfrom(sockfd, b, count, flags, sp, (socklen_t *)&length);
+    res = recvfrom(sockfd, b, count, flags, sp, (socklen_t *)&length);
     //g_print("res is %d\n",res);
-  } while (res==-1);
+  } while (res == -1);
 
   return res;
 }
 
 static boolean sendudp(const struct sockaddr *sp, int sockfd, int length, size_t count, void  *b) {
   size_t rcount;
-  if ((rcount=sendto(sockfd, b, count, 0, sp, length)) != count) {
+  if ((rcount = sendto(sockfd, b, count, 0, sp, length)) != count) {
     //printf("sockfd %d count %d rcount %dlength %d errno %d\n", sockfd,count,rcount,length,errno);
     return FALSE;
   }

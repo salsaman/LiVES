@@ -163,21 +163,21 @@ giw_vslider_class_init(GiwVSliderClass *xclass) {
 static void
 giw_vslider_init(GiwVSlider *vslider) {
   //Defaults
-  vslider->legend_digits=3;
-  vslider->major_ticks=3;
-  vslider->minor_ticks=1;
+  vslider->legend_digits = 3;
+  vslider->major_ticks = 3;
+  vslider->minor_ticks = 1;
 
   // Default mouse policy : automatically
-  vslider->mouse_policy=GIW_VSLIDER_MOUSE_AUTOMATICALLY;
+  vslider->mouse_policy = GIW_VSLIDER_MOUSE_AUTOMATICALLY;
 
-  vslider->button=FALSE;
+  vslider->button = FALSE;
 
   // Conditions for a unpressed button
-  vslider->button_state=GTK_STATE_NORMAL;
-  vslider->button_shadow=GTK_SHADOW_OUT;
+  vslider->button_state = GTK_STATE_NORMAL;
+  vslider->button_shadow = GTK_SHADOW_OUT;
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_has_window(GTK_WIDGET(vslider),TRUE);
+  gtk_widget_set_has_window(GTK_WIDGET(vslider), TRUE);
 #endif
 
 }
@@ -232,13 +232,13 @@ static void giw_vslider_destroy(GtkObject *object) {
   // Freeing all
   if (vslider->adjustment)
     g_object_unref(G_OBJECT(vslider->adjustment));
-  vslider->adjustment=NULL;
+  vslider->adjustment = NULL;
   if (vslider->legends) {
-    for (loop=0; loop<vslider->major_ticks; loop++) {
-      if (vslider->legends[loop]!=NULL) g_object_unref(G_OBJECT(vslider->legends[loop]));
+    for (loop = 0; loop < vslider->major_ticks; loop++) {
+      if (vslider->legends[loop] != NULL) g_object_unref(G_OBJECT(vslider->legends[loop]));
     }
     g_free(vslider->legends);
-    vslider->legends=NULL;
+    vslider->legends = NULL;
   }
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -263,7 +263,7 @@ giw_vslider_realize(GtkWidget *widget) {
   g_return_if_fail(GIW_IS_VSLIDER(widget));
 
 #if GTK_CHECK_VERSION(2,20,0)
-  gtk_widget_set_realized(widget,TRUE);
+  gtk_widget_set_realized(widget, TRUE);
 #else
   GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
 #endif
@@ -291,15 +291,15 @@ giw_vslider_realize(GtkWidget *widget) {
 #endif
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_window(widget,gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
+  gtk_widget_set_window(widget, gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
 #else
   widget->window = gdk_window_new(widget->parent->window, &attributes, attributes_mask);
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
-  stylecon=gtk_style_context_new();
-  gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
-  gtk_style_context_set_state(stylecon,GTK_STATE_FLAG_ACTIVE);
+  stylecon = gtk_style_context_new();
+  gtk_style_context_set_path(stylecon, gtk_widget_get_path(widget));
+  gtk_style_context_set_state(stylecon, GTK_STATE_FLAG_ACTIVE);
   //gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
 #else
   widget->style = gtk_style_attach(widget->style, lives_widget_get_xwindow(widget));
@@ -359,7 +359,7 @@ giw_vslider_size_allocate(GtkWidget     *widget,
   g_return_if_fail(allocation != NULL);
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_allocation(widget,allocation);
+  gtk_widget_set_allocation(widget, allocation);
 #else
   widget->allocation = *allocation;
 #endif
@@ -403,10 +403,10 @@ giw_vslider_expose(GtkWidget      *widget,
 
   vslider = GIW_VSLIDER(widget);
 
-  rect.x=0;
-  rect.y=0;
-  rect.width=lives_widget_get_allocation_width(widget);
-  rect.height=lives_widget_get_allocation_height(widget);
+  rect.x = 0;
+  rect.y = 0;
+  rect.width = lives_widget_get_allocation_width(widget);
+  rect.height = lives_widget_get_allocation_height(widget);
 
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -417,16 +417,16 @@ giw_vslider_expose(GtkWidget      *widget,
                         rect.width,
                         rect.height);
 
-  cairo_set_line_width(cairo,1.);
+  cairo_set_line_width(cairo, 1.);
 
   // Drawing all the ticks and legends
-  for (loop=0; loop<vslider->major_ticks; loop++) {
+  for (loop = 0; loop < vslider->major_ticks; loop++) {
     // Legends
-    if (vslider->legend_digits!=0)
+    if (vslider->legend_digits != 0)
       gtk_render_layout(gtk_widget_get_style_context(widget),
                         cairo,
                         0,
-                        vslider->y+(gint)(vslider->major_dy*(gdouble)loop)-(vslider->legend_height/2),
+                        vslider->y + (gint)(vslider->major_dy * (gdouble)loop) - (vslider->legend_height / 2),
                         vslider->legends[loop]);
 
     gtk_style_context_get_color(gtk_widget_get_style_context(widget), gtk_widget_get_state_flags(widget), &color);
@@ -434,35 +434,35 @@ giw_vslider_expose(GtkWidget      *widget,
 
     // Major ticks
     cairo_move_to(cairo,
-                  vslider->legend_width-5,
-                  vslider->y+(gint)(vslider->major_dy*(gdouble)loop));
+                  vslider->legend_width - 5,
+                  vslider->y + (gint)(vslider->major_dy * (gdouble)loop));
 
 
     cairo_line_to(cairo,
                   vslider->legend_width,
-                  vslider->y+(gint)(vslider->major_dy*(gdouble)loop));
+                  vslider->y + (gint)(vslider->major_dy * (gdouble)loop));
 
     cairo_stroke(cairo);
 
     // Minor ticks
-    for (loop2=1; loop2<vslider->minor_ticks+1; loop2++)
-      if (loop!=vslider->major_ticks-1) { // If it's not the last one
+    for (loop2 = 1; loop2 < vslider->minor_ticks + 1; loop2++)
+      if (loop != vslider->major_ticks - 1) { // If it's not the last one
         cairo_move_to(cairo,
-                      vslider->legend_width-3,
-                      vslider->y+(gint)(vslider->major_dy*(gdouble)loop)+vslider->minor_dy*(gdouble)loop2);
+                      vslider->legend_width - 3,
+                      vslider->y + (gint)(vslider->major_dy * (gdouble)loop) + vslider->minor_dy * (gdouble)loop2);
 
         cairo_line_to(cairo,
                       vslider->legend_width,
-                      vslider->y+(gint)(vslider->major_dy*(gdouble)loop)+vslider->minor_dy*(gdouble)loop2);
+                      vslider->y + (gint)(vslider->major_dy * (gdouble)loop) + vslider->minor_dy * (gdouble)loop2);
 
         cairo_stroke(cairo);
       }
   }
 
   //Drawing the back hole
-  cairo_set_source_rgba(cairo, 0.,0.,0.,1.);
+  cairo_set_source_rgba(cairo, 0., 0., 0., 1.);
   cairo_rectangle(cairo,
-                  vslider->x+vslider->width/2-2,
+                  vslider->x + vslider->width / 2 - 2,
                   vslider->y,
                   4,
                   vslider->height);
@@ -473,7 +473,7 @@ giw_vslider_expose(GtkWidget      *widget,
   cairo_set_source_rgba(cairo, color.red, color.green, color.blue, color.alpha);
 
   cairo_rectangle(cairo,
-                  vslider->x+vslider->width/2-2,
+                  vslider->x + vslider->width / 2 - 2,
                   vslider->y,
                   4,
                   vslider->height);
@@ -493,7 +493,7 @@ giw_vslider_expose(GtkWidget      *widget,
 
 
   // The phanton button
-  if ((vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED) && (vslider->button !=0))
+  if ((vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED) && (vslider->button != 0))
     gtk_render_slider(gtk_widget_get_style_context(widget),
                       cairo,
                       vslider->pbutton_x,
@@ -519,9 +519,9 @@ giw_vslider_expose(GtkWidget      *widget,
                      -1);
 
   // Drawing all the ticks and legends
-  for (loop=0; loop<vslider->major_ticks; loop++) {
+  for (loop = 0; loop < vslider->major_ticks; loop++) {
     // Legends
-    if (vslider->legend_digits!=0)
+    if (vslider->legend_digits != 0)
       gtk_paint_layout(widget->style,
                        widget->window,
                        GTK_STATE_NORMAL,
@@ -530,31 +530,31 @@ giw_vslider_expose(GtkWidget      *widget,
                        widget,
                        NULL,
                        0,
-                       vslider->y+(gint)(vslider->major_dy*(gdouble)loop)-(vslider->legend_height/2),
+                       vslider->y + (gint)(vslider->major_dy * (gdouble)loop) - (vslider->legend_height / 2),
                        vslider->legends[loop]);
     // Major ticks
     gdk_draw_line(widget->window,
                   widget->style->fg_gc[widget->state],
-                  vslider->legend_width-5,
-                  vslider->y+(gint)(vslider->major_dy*(gdouble)loop),
+                  vslider->legend_width - 5,
+                  vslider->y + (gint)(vslider->major_dy * (gdouble)loop),
                   vslider->legend_width,
-                  vslider->y+(gint)(vslider->major_dy*(gdouble)loop));
+                  vslider->y + (gint)(vslider->major_dy * (gdouble)loop));
     // Minor ticks
-    for (loop2=1; loop2<vslider->minor_ticks+1; loop2++)
-      if (loop!=vslider->major_ticks-1) // If it's not the last one
+    for (loop2 = 1; loop2 < vslider->minor_ticks + 1; loop2++)
+      if (loop != vslider->major_ticks - 1) // If it's not the last one
         gdk_draw_line(widget->window,
                       widget->style->fg_gc[widget->state],
-                      vslider->legend_width-3,
-                      vslider->y+(gint)(vslider->major_dy*(gdouble)loop)+vslider->minor_dy*(gdouble)loop2,
+                      vslider->legend_width - 3,
+                      vslider->y + (gint)(vslider->major_dy * (gdouble)loop) + vslider->minor_dy * (gdouble)loop2,
                       vslider->legend_width,
-                      vslider->y+(gint)(vslider->major_dy*(gdouble)loop)+vslider->minor_dy*(gdouble)loop2);
+                      vslider->y + (gint)(vslider->major_dy * (gdouble)loop) + vslider->minor_dy * (gdouble)loop2);
   }
 
   //Drawing the back hole
   gdk_draw_rectangle(widget->window,
                      widget->style->black_gc,
                      TRUE,
-                     vslider->x+vslider->width/2-2,
+                     vslider->x + vslider->width / 2 - 2,
                      vslider->y,
                      4,
                      vslider->height);
@@ -562,7 +562,7 @@ giw_vslider_expose(GtkWidget      *widget,
   gdk_draw_rectangle(widget->window,
                      widget->style->fg_gc[widget->state],
                      FALSE,
-                     vslider->x+vslider->width/2-2,
+                     vslider->x + vslider->width / 2 - 2,
                      vslider->y,
                      4,
                      vslider->height);
@@ -590,7 +590,7 @@ giw_vslider_expose(GtkWidget      *widget,
                      vslider->button_h);
 
   // The phanton button
-  if ((vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED) && (vslider->button !=0))
+  if ((vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED) && (vslider->button != 0))
     gtk_paint_slider(widget->style,
                      widget->window,
                      GTK_STATE_ACTIVE,
@@ -618,17 +618,17 @@ giw_vslider_button_press(GtkWidget        *widget,
   g_return_val_if_fail(GIW_IS_VSLIDER(widget), FALSE);
   g_return_val_if_fail(event != NULL, FALSE);
 
-  vslider=GIW_VSLIDER(widget);
+  vslider = GIW_VSLIDER(widget);
 
-  if (vslider->mouse_policy==GIW_VSLIDER_MOUSE_DISABLED) return (FALSE);
+  if (vslider->mouse_policy == GIW_VSLIDER_MOUSE_DISABLED) return (FALSE);
 
   // Checking if the pointer is inside the button
-  if (event->x > vslider->button_x && event->x < vslider->button_x+ vslider->button_w && event->y >
-      vslider->button_y && event->y < vslider->button_y+vslider->button_h) {
-    if (vslider->button==0) {
-      vslider->button=event->button;
-      vslider->button_state=GTK_STATE_ACTIVE;
-      vslider->button_shadow=GTK_SHADOW_IN;
+  if (event->x > vslider->button_x && event->x < vslider->button_x + vslider->button_w && event->y >
+      vslider->button_y && event->y < vslider->button_y + vslider->button_h) {
+    if (vslider->button == 0) {
+      vslider->button = event->button;
+      vslider->button_state = GTK_STATE_ACTIVE;
+      vslider->button_shadow = GTK_SHADOW_IN;
     }
   }
 
@@ -646,9 +646,9 @@ giw_vslider_button_release(GtkWidget        *widget,
   g_return_val_if_fail(GIW_IS_VSLIDER(widget), FALSE);
   g_return_val_if_fail(event != NULL, FALSE);
 
-  vslider=GIW_VSLIDER(widget);
+  vslider = GIW_VSLIDER(widget);
 
-  if (vslider->mouse_policy==GIW_VSLIDER_MOUSE_DISABLED) return (FALSE);
+  if (vslider->mouse_policy == GIW_VSLIDER_MOUSE_DISABLED) return (FALSE);
 
   // Get the position inside the vslider
   //x=event->x-vslider->x;
@@ -656,19 +656,19 @@ giw_vslider_button_release(GtkWidget        *widget,
 
   if (vslider->button == event->button) {
     // If the mouse policy is to update delayed, it's time to update the value (the button was released)
-    if (vslider->mouse_policy==GIW_VSLIDER_MOUSE_DELAYED)
+    if (vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED)
       giw_vslider_set_value(vslider, vslider->phanton_value);
 
-    vslider->button=FALSE;
+    vslider->button = FALSE;
 
     // If the mouse stills inside the button, state is prelight, else state is normal
-    if (event->x > vslider->button_x && event->x < vslider->button_x+ vslider->button_w && event->y >
-        vslider->button_y && event->y < vslider->button_y+vslider->button_h)
-      vslider->button_state=GTK_STATE_PRELIGHT;
+    if (event->x > vslider->button_x && event->x < vslider->button_x + vslider->button_w && event->y >
+        vslider->button_y && event->y < vslider->button_y + vslider->button_h)
+      vslider->button_state = GTK_STATE_PRELIGHT;
     else
-      vslider->button_state=GTK_STATE_NORMAL;
+      vslider->button_state = GTK_STATE_NORMAL;
 
-    vslider->button_shadow=GTK_SHADOW_OUT;  // Return to normal shadow
+    vslider->button_shadow = GTK_SHADOW_OUT; // Return to normal shadow
   }
 
   gtk_widget_queue_draw(GTK_WIDGET(vslider));
@@ -687,18 +687,18 @@ giw_vslider_motion_notify(GtkWidget        *widget,
   g_return_val_if_fail(GIW_IS_VSLIDER(widget), FALSE);
   g_return_val_if_fail(event != NULL, FALSE);
 
-  vslider=GIW_VSLIDER(widget);
+  vslider = GIW_VSLIDER(widget);
 
-  if (vslider->mouse_policy==GIW_VSLIDER_MOUSE_DISABLED) return (FALSE);
+  if (vslider->mouse_policy == GIW_VSLIDER_MOUSE_DISABLED) return (FALSE);
 
   // Get the position inside the vslider
   //x=event->x-vslider->x;
-  y=event->y-vslider->y;
+  y = event->y - vslider->y;
 
   // If the mouse policy is to update automatically, change the value now if it's valid
-  if (vslider->button!=0 && vslider->mouse_policy==GIW_VSLIDER_MOUSE_AUTOMATICALLY) {
-    new_value=lives_adjustment_get_lower(vslider->adjustment)+((gdouble)(vslider->height-y))/
-              ((gdouble)vslider->height)*(lives_adjustment_get_upper(vslider->adjustment)-lives_adjustment_get_lower(vslider->adjustment));
+  if (vslider->button != 0 && vslider->mouse_policy == GIW_VSLIDER_MOUSE_AUTOMATICALLY) {
+    new_value = lives_adjustment_get_lower(vslider->adjustment) + ((gdouble)(vslider->height - y)) /
+                ((gdouble)vslider->height) * (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment));
 
     // If it's a valid value, update it!
     if ((new_value <= lives_adjustment_get_upper(vslider->adjustment)) &&
@@ -707,26 +707,26 @@ giw_vslider_motion_notify(GtkWidget        *widget,
   }
 
   // If the mouse policy is to update delayed, calculate the false value
-  if (vslider->button!=0 && vslider->mouse_policy==GIW_VSLIDER_MOUSE_DELAYED) {
-    new_value=lives_adjustment_get_lower(vslider->adjustment)+((gdouble)(vslider->height-y))/
-              ((gdouble)vslider->height)*(lives_adjustment_get_upper(vslider->adjustment)-lives_adjustment_get_lower(vslider->adjustment));
+  if (vslider->button != 0 && vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED) {
+    new_value = lives_adjustment_get_lower(vslider->adjustment) + ((gdouble)(vslider->height - y)) /
+                ((gdouble)vslider->height) * (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment));
 
     // If it's a valid value, update the false value
     if ((new_value <= lives_adjustment_get_upper(vslider->adjustment)) &&
         (new_value >= lives_adjustment_get_lower(vslider->adjustment))) {
-      vslider->phanton_value=new_value;
+      vslider->phanton_value = new_value;
       vslider_calculate_phanton_button(vslider);
       gtk_widget_queue_draw(GTK_WIDGET(vslider));
     }
   }
 
   // If the button is not pressed and the pointer is inside the button, set prelight, if the pointer is out  of the button, set normal
-  if (vslider->button==0) {
-    if (event->x > vslider->button_x && event->x < vslider->button_x+ vslider->button_w && event->y >
-        vslider->button_y && event->y < vslider->button_y+vslider->button_h)
-      vslider->button_state=GTK_STATE_PRELIGHT;
+  if (vslider->button == 0) {
+    if (event->x > vslider->button_x && event->x < vslider->button_x + vslider->button_w && event->y >
+        vslider->button_y && event->y < vslider->button_y + vslider->button_h)
+      vslider->button_state = GTK_STATE_PRELIGHT;
     else
-      vslider->button_state=GTK_STATE_NORMAL;
+      vslider->button_state = GTK_STATE_NORMAL;
   }
 
   gtk_widget_queue_draw(GTK_WIDGET(vslider));
@@ -762,8 +762,8 @@ giw_vslider_set_value(GiwVSlider *vslider,
   g_return_if_fail(vslider != NULL);
   g_return_if_fail(GIW_IS_VSLIDER(vslider));
 
-  if (gtk_adjustment_get_value(vslider->adjustment)!=value) {
-    gtk_adjustment_set_value(vslider->adjustment,value);
+  if (gtk_adjustment_get_value(vslider->adjustment) != value) {
+    gtk_adjustment_set_value(vslider->adjustment, value);
 
 #if !GTK_CHECK_VERSION(3,18,0)
     gtk_adjustment_value_changed(vslider->adjustment);
@@ -798,13 +798,13 @@ giw_vslider_set_adjustment(GiwVSlider *vslider,
   // Freeing the last one
   if (vslider->adjustment) {
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_handler_disconnect((gpointer)(vslider->adjustment),vslider->chsig);
-    g_signal_handler_disconnect((gpointer)(vslider->adjustment),vslider->vchsig);
+    g_signal_handler_disconnect((gpointer)(vslider->adjustment), vslider->chsig);
+    g_signal_handler_disconnect((gpointer)(vslider->adjustment), vslider->vchsig);
 #else
     gtk_signal_disconnect_by_data(LIVES_GUI_OBJECT(vslider->adjustment), (gpointer) vslider);
 #endif
     g_object_unref(G_OBJECT(vslider->adjustment));
-    vslider->adjustment=NULL;
+    vslider->adjustment = NULL;
   }
 
   vslider->adjustment = adjustment;
@@ -829,10 +829,10 @@ giw_vslider_set_legends_digits(GiwVSlider *vslider,
   g_return_if_fail(vslider != NULL);
   g_return_if_fail(GIW_IS_VSLIDER(vslider));
 
-  if (vslider->legend_digits!=digits) {
+  if (vslider->legend_digits != digits) {
     vslider_free_legends(vslider);
 
-    vslider->legend_digits=digits;
+    vslider->legend_digits = digits;
     vslider_build_legends(vslider);
     vslider_calculate_sizes(vslider);
 
@@ -846,7 +846,7 @@ giw_vslider_set_mouse_policy(GiwVSlider *vslider,
   g_return_if_fail(vslider != NULL);
   g_return_if_fail(GIW_IS_VSLIDER(vslider));
 
-  vslider->mouse_policy=policy;
+  vslider->mouse_policy = policy;
 }
 
 void
@@ -855,11 +855,11 @@ giw_vslider_set_major_ticks_number(GiwVSlider *vslider,
   g_return_if_fail(vslider != NULL);
   g_return_if_fail(GIW_IS_VSLIDER(vslider));
 
-  if (number!=vslider->major_ticks) {
+  if (number != vslider->major_ticks) {
     // Freeing the old legends, because they will be changed
     vslider_free_legends(vslider);
 
-    vslider->major_ticks=number;
+    vslider->major_ticks = number;
 
     // Now, there are diferent legends, so, we have to create them
     vslider_build_legends(vslider);
@@ -875,7 +875,7 @@ giw_vslider_set_minor_ticks_number(GiwVSlider *vslider,
   g_return_if_fail(vslider != NULL);
   g_return_if_fail(GIW_IS_VSLIDER(vslider));
 
-  vslider->minor_ticks=number;
+  vslider->minor_ticks = number;
 
   vslider_calculate_sizes(vslider);
   gtk_widget_queue_draw(GTK_WIDGET(vslider));
@@ -922,25 +922,25 @@ vslider_calculate_sizes(GiwVSlider *vslider) {
 
   g_return_if_fail(vslider != NULL);
 
-  widget=GTK_WIDGET(vslider);
+  widget = GTK_WIDGET(vslider);
 
   // Calculating the sizes and distances...
-  vslider->width=lives_widget_get_allocation_width(widget)-vslider->legend_width;
-  vslider->height=lives_widget_get_allocation_height(widget)-vslider->legend_height;
-  vslider->x=vslider->legend_width;
-  vslider->y=vslider->legend_height/2;
+  vslider->width = lives_widget_get_allocation_width(widget) - vslider->legend_width;
+  vslider->height = lives_widget_get_allocation_height(widget) - vslider->legend_height;
+  vslider->x = vslider->legend_width;
+  vslider->y = vslider->legend_height / 2;
 
   // If the legends are too small, or inexistant, it has to be some space left fot the button (when it's on he edge)
-  if (vslider->y < vslider->button_h/2) {
-    vslider->height = lives_widget_get_allocation_height(widget)-vslider->button_h;
-    vslider->y = vslider->button_h/2;
+  if (vslider->y < vslider->button_h / 2) {
+    vslider->height = lives_widget_get_allocation_height(widget) - vslider->button_h;
+    vslider->y = vslider->button_h / 2;
   }
 
   /* The height of the vslider is the widget's height less a half of legend height (beacause a half of the legends are drawn outside the vslider's area .
      If there are no legends the temometer width is the widget's width, is there are legends, the width of the vslider is the space left by the legends.*/
 
-  vslider->major_dy=(gdouble)vslider->height/(gdouble)(vslider->major_ticks-1);
-  vslider->minor_dy=vslider->major_dy/(vslider->minor_ticks+1);
+  vslider->major_dy = (gdouble)vslider->height / (gdouble)(vslider->major_ticks - 1);
+  vslider->minor_dy = vslider->major_dy / (vslider->minor_ticks + 1);
 
   vslider_calculate_button(vslider);
   vslider_calculate_phanton_button(vslider);
@@ -951,12 +951,12 @@ vslider_calculate_button(GiwVSlider *vslider) {
   g_return_if_fail(vslider != NULL);
 
   // Getting button's positon and dimensions
-  vslider->button_x=vslider->x+5;
-  vslider->button_y=vslider->y+vslider->height-vslider->height*
-                    ((gtk_adjustment_get_value(vslider->adjustment)-lives_adjustment_get_lower(vslider->adjustment))/
-                     (lives_adjustment_get_upper(vslider->adjustment)-lives_adjustment_get_lower(vslider->adjustment)))-5;
-  vslider->button_w=vslider->width-10;
-  vslider->button_h=10;
+  vslider->button_x = vslider->x + 5;
+  vslider->button_y = vslider->y + vslider->height - vslider->height *
+                      ((gtk_adjustment_get_value(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment)) /
+                       (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment))) - 5;
+  vslider->button_w = vslider->width - 10;
+  vslider->button_h = 10;
 }
 
 void
@@ -964,12 +964,12 @@ vslider_calculate_phanton_button(GiwVSlider *vslider) {
   g_return_if_fail(vslider != NULL);
 
   // Getting phanton button's positon and dimensions
-  vslider->pbutton_x=vslider->x+5;
-  vslider->pbutton_y=vslider->y+vslider->height-vslider->height*
-                     ((vslider->phanton_value-lives_adjustment_get_lower(vslider->adjustment))/
-                      (lives_adjustment_get_upper(vslider->adjustment)-lives_adjustment_get_lower(vslider->adjustment)))-5;
-  vslider->pbutton_w=vslider->width-10;
-  vslider->pbutton_h=10;
+  vslider->pbutton_x = vslider->x + 5;
+  vslider->pbutton_y = vslider->y + vslider->height - vslider->height *
+                       ((vslider->phanton_value - lives_adjustment_get_lower(vslider->adjustment)) /
+                        (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment))) - 5;
+  vslider->pbutton_w = vslider->width - 10;
+  vslider->pbutton_h = 10;
 }
 
 void
@@ -984,32 +984,32 @@ vslider_build_legends(GiwVSlider *vslider) {
 
   g_return_if_fail(vslider != NULL);
 
-  widget=GTK_WIDGET(vslider);
+  widget = GTK_WIDGET(vslider);
 
-  if (vslider->major_ticks==0)  // Preventing from bugs
+  if (vslider->major_ticks == 0) // Preventing from bugs
     return;
 
   // Creating the legend's layouts
-  if (vslider->legend_digits!=0) {
-    vslider->legends=g_new(PangoLayout *, vslider->major_ticks);
-    str=g_new(gchar, vslider->legend_digits+1); // +1 for the '/0'
-    for (loop=0; loop<vslider->major_ticks; loop++) {
-      snprintf(str,vslider->legend_digits+1,"%f",lives_adjustment_get_lower(vslider->adjustment)+
-               (vslider->major_ticks-1-loop)*
-               (lives_adjustment_get_upper(vslider->adjustment)-lives_adjustment_get_lower(vslider->adjustment))/
-               (vslider->major_ticks-1)); // Creating the legends string
-      vslider->legends[loop]=gtk_widget_create_pango_layout(widget, str);
+  if (vslider->legend_digits != 0) {
+    vslider->legends = g_new(PangoLayout *, vslider->major_ticks);
+    str = g_new(gchar, vslider->legend_digits + 1); // +1 for the '/0'
+    for (loop = 0; loop < vslider->major_ticks; loop++) {
+      snprintf(str, vslider->legend_digits + 1, "%f", lives_adjustment_get_lower(vslider->adjustment) +
+               (vslider->major_ticks - 1 - loop) *
+               (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment)) /
+               (vslider->major_ticks - 1)); // Creating the legends string
+      vslider->legends[loop] = gtk_widget_create_pango_layout(widget, str);
 
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,8,0)
-      fontdesc=pango_font_description_new();
+      fontdesc = pango_font_description_new();
       gtk_style_context_get(gtk_widget_get_style_context(widget),
                             gtk_widget_get_state_flags(widget),
                             GTK_STYLE_PROPERTY_FONT,
                             &fontdesc,
                             NULL
                            );
-      pango_layout_set_font_description(vslider->legends[loop],fontdesc);
+      pango_layout_set_font_description(vslider->legends[loop], fontdesc);
       pango_font_description_free(fontdesc);
 #else
       pango_layout_set_font_description(vslider->legends[loop],
@@ -1025,8 +1025,8 @@ vslider_build_legends(GiwVSlider *vslider) {
     // Calculating sizes
     vslider_calculate_legends_sizes(vslider);
   } else { // If there are no legends (0 digits), the size is the major ticks size (5)
-    vslider->legend_width=5;
-    vslider->legend_height=0;
+    vslider->legend_width = 5;
+    vslider->legend_height = 0;
   }
 }
 
@@ -1036,14 +1036,14 @@ vslider_free_legends(GiwVSlider *vslider) {
 
   g_return_if_fail(vslider != NULL);
 
-  if (vslider->legends!=NULL) {
-    for (loop=0; loop<vslider->major_ticks; loop++) {
-      if (vslider->legends[loop]!=NULL) {
+  if (vslider->legends != NULL) {
+    for (loop = 0; loop < vslider->major_ticks; loop++) {
+      if (vslider->legends[loop] != NULL) {
         g_object_unref(G_OBJECT(vslider->legends[loop]));
       }
     }
     g_free(vslider->legends);
-    vslider->legends=NULL;
+    vslider->legends = NULL;
   }
 }
 
@@ -1057,19 +1057,19 @@ vslider_calculate_legends_sizes(GiwVSlider *vslider) {
 
   g_return_if_fail(vslider != NULL);
 
-  widget=GTK_WIDGET(vslider);
+  widget = GTK_WIDGET(vslider);
 
-  if (vslider->legends!=NULL) {
+  if (vslider->legends != NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,8,0)
-    fontdesc=pango_font_description_new();
+    fontdesc = pango_font_description_new();
     gtk_style_context_get(gtk_widget_get_style_context(widget),
                           gtk_widget_get_state_flags(widget),
                           GTK_STYLE_PROPERTY_FONT,
                           &fontdesc,
                           NULL
                          );
-    pango_layout_set_font_description(vslider->legends[0],fontdesc);
+    pango_layout_set_font_description(vslider->legends[0], fontdesc);
     pango_font_description_free(fontdesc);
 #else
     pango_layout_set_font_description(vslider->legends[0],
@@ -1080,9 +1080,9 @@ vslider_calculate_legends_sizes(GiwVSlider *vslider) {
     pango_layout_set_font_description(vslider->legends[0], widget->style->font_desc);
 #endif
     pango_layout_get_size(vslider->legends[0], &(vslider->legend_width), &(vslider->legend_height));
-    vslider->legend_width/=PANGO_SCALE;
-    vslider->legend_height/=PANGO_SCALE;
-    vslider->legend_width+=5;  // Five pixels for the ticks
+    vslider->legend_width /= PANGO_SCALE;
+    vslider->legend_height /= PANGO_SCALE;
+    vslider->legend_width += 5; // Five pixels for the ticks
 
 
     vslider_calculate_sizes(vslider);

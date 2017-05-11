@@ -83,24 +83,24 @@ typedef enum {
 typedef enum {
   // undo actions
   /// no event_list
-  MT_UNDO_NONE=0,
-  MT_UNDO_INSERT_BLOCK=1,
-  MT_UNDO_INSERT_AUDIO_BLOCK=2,
+  MT_UNDO_NONE = 0,
+  MT_UNDO_INSERT_BLOCK = 1,
+  MT_UNDO_INSERT_AUDIO_BLOCK = 2,
 
   // minimal event_list
-  MT_UNDO_APPLY_FILTER=512,
-  MT_UNDO_DELETE_FILTER=513,
-  MT_UNDO_SPLIT=514,
-  MT_UNDO_SPLIT_MULTI=515,
-  MT_UNDO_FILTER_MAP_CHANGE=516,
+  MT_UNDO_APPLY_FILTER = 512,
+  MT_UNDO_DELETE_FILTER = 513,
+  MT_UNDO_SPLIT = 514,
+  MT_UNDO_SPLIT_MULTI = 515,
+  MT_UNDO_FILTER_MAP_CHANGE = 516,
 
   // full backups of event_list
-  MT_UNDO_DELETE_BLOCK=1024,
-  MT_UNDO_MOVE_BLOCK=1025,
-  MT_UNDO_REMOVE_GAPS=1026,
-  MT_UNDO_DELETE_AUDIO_BLOCK=1027,
-  MT_UNDO_MOVE_AUDIO_BLOCK=1028,
-  MT_UNDO_INSERT_GAP=1029
+  MT_UNDO_DELETE_BLOCK = 1024,
+  MT_UNDO_MOVE_BLOCK = 1025,
+  MT_UNDO_REMOVE_GAPS = 1026,
+  MT_UNDO_DELETE_AUDIO_BLOCK = 1027,
+  MT_UNDO_MOVE_AUDIO_BLOCK = 1028,
+  MT_UNDO_INSERT_GAP = 1029
 } lives_mt_undo_t;
 
 
@@ -116,7 +116,7 @@ typedef enum {
 
 
 typedef enum {
-  POLY_NONE=0,
+  POLY_NONE = 0,
   POLY_CLIPS,
   POLY_IN_OUT,
   POLY_FX_STACK,
@@ -135,14 +135,14 @@ typedef enum {
 
 
 typedef enum {
-  MT_LAST_FX_NONE=0,
+  MT_LAST_FX_NONE = 0,
   MT_LAST_FX_BLOCK,
   MT_LAST_FX_REGION
 } lives_mt_last_fx_type_t;
 
 
 typedef enum {
-  FX_ORD_NONE=0,
+  FX_ORD_NONE = 0,
   FX_ORD_BEFORE,
   FX_ORD_AFTER
 } lives_mt_fx_order_t;
@@ -150,7 +150,7 @@ typedef enum {
 
 typedef enum {
   // block state
-  BLOCK_UNSELECTED=0,
+  BLOCK_UNSELECTED = 0,
   BLOCK_SELECTED
 } lives_mt_block_state_t;
 
@@ -986,19 +986,19 @@ boolean mt_nextclip(LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXMod
 
 typedef enum {
   /* default to warn about */
-  LMAP_ERROR_MISSING_CLIP=1,
-  LMAP_ERROR_CLOSE_FILE=2,
-  LMAP_ERROR_DELETE_FRAMES=3,
-  LMAP_ERROR_DELETE_AUDIO=4,
+  LMAP_ERROR_MISSING_CLIP = 1,
+  LMAP_ERROR_CLOSE_FILE = 2,
+  LMAP_ERROR_DELETE_FRAMES = 3,
+  LMAP_ERROR_DELETE_AUDIO = 4,
 
   /*non-default*/
-  LMAP_ERROR_SHIFT_FRAMES=65,
-  LMAP_ERROR_ALTER_FRAMES=66,
-  LMAP_ERROR_SHIFT_AUDIO=67,
-  LMAP_ERROR_ALTER_AUDIO=68,
+  LMAP_ERROR_SHIFT_FRAMES = 65,
+  LMAP_ERROR_ALTER_FRAMES = 66,
+  LMAP_ERROR_SHIFT_AUDIO = 67,
+  LMAP_ERROR_ALTER_AUDIO = 68,
 
   /* info */
-  LMAP_INFO_SETNAME_CHANGED=1024
+  LMAP_INFO_SETNAME_CHANGED = 1024
 } lives_lmap_error_t;
 
 

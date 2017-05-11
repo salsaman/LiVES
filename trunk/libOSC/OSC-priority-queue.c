@@ -120,7 +120,7 @@ static void RemoveElement(int goner, OSCQueue q) {
   --(q->n);
 
   for (i = goner; i < q->n; ++i) {
-    q->list[i] = q->list[i+1];
+    q->list[i] = q->list[i + 1];
   }
 }
 
@@ -165,7 +165,7 @@ void OSCQueuePrint(OSCQueue q) {
   printf("OSC Priority queue at %p has %d elements:\n", q, q->n);
 
   for (i = 0; i < q->n; ++i) {
-    printf("   list[%2d] is %p, timetag = %"PRIu64"\n", i, q->list[i], *(uint64_t *)&(q->list[i]->timetag));
+    printf("   list[%2d] is %p, timetag = %"PRIu64"\n", i, q->list[i], *(uint64_t *) & (q->list[i]->timetag));
   }
   printf("\n\n");
 }
@@ -189,7 +189,7 @@ void OSCQueueRemoveCurrentScanItem(OSCQueue q) {
      the one most recently returned by OSCQueueScanNext(),
      is q->scanIndex-1. */
 
-  RemoveElement(q->scanIndex-1, q);
+  RemoveElement(q->scanIndex - 1, q);
   --(q->scanIndex);
 }
 

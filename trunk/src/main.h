@@ -392,7 +392,7 @@ typedef struct {
 #endif
 
 typedef enum {
-  UNDO_NONE=0,
+  UNDO_NONE = 0,
   UNDO_EFFECT,
   UNDO_RESIZABLE,
   UNDO_MERGE,
@@ -425,7 +425,7 @@ typedef enum {
 
 /// which stream end should cause playback to finish ?
 typedef enum {
-  NEVER_STOP=0,
+  NEVER_STOP = 0,
   STOP_ON_VID_END,
   STOP_ON_AUD_END
 } lives_whentostop_t;
@@ -434,7 +434,7 @@ typedef enum {
 /// cancel reason
 typedef enum {
   /// no cancel
-  CANCEL_NONE=FALSE,
+  CANCEL_NONE = FALSE,
 
   /// user pressed stop
   CANCEL_USER,
@@ -476,13 +476,13 @@ typedef enum {
   CANCEL_USER_PAUSED,
 
   /// special cancel for TV toy
-  CANCEL_KEEP_LOOPING=CANCEL_NONE+100
+  CANCEL_KEEP_LOOPING = CANCEL_NONE + 100
 
 } lives_cancel_t;
 
 
 typedef enum {
-  CANCEL_KILL=0,  ///< normal - kill background processes working on current clip
+  CANCEL_KILL = 0, ///< normal - kill background processes working on current clip
   CANCEL_SOFT     ///< just cancel in GUI (for keep, etc)
 } lives_cancel_type_t;
 
@@ -500,7 +500,7 @@ typedef enum {
 
 
 typedef enum {
-  IMG_TYPE_UNKNOWN=0,
+  IMG_TYPE_UNKNOWN = 0,
   IMG_TYPE_JPEG,
   IMG_TYPE_PNG
 } lives_image_type_t;
@@ -517,9 +517,9 @@ typedef enum {
 
 
 typedef enum {
-  LIVES_INTERLACE_NONE=0,
-  LIVES_INTERLACE_BOTTOM_FIRST=1,
-  LIVES_INTERLACE_TOP_FIRST=2
+  LIVES_INTERLACE_NONE = 0,
+  LIVES_INTERLACE_BOTTOM_FIRST = 1,
+  LIVES_INTERLACE_TOP_FIRST = 2
 } lives_interlace_t;
 
 
@@ -1040,7 +1040,7 @@ void do_text_window(const char *title, const char *text);
 boolean read_file_details(const char *file_name, boolean only_check_for_audio);
 boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
-boolean reload_clip(int fileno,int maxframe);
+boolean reload_clip(int fileno, int maxframe);
 void wait_for_bg_audio_sync(lives_clip_t *sfile);
 void reget_afilesize(int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
@@ -1344,7 +1344,7 @@ LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add);
 void find_when_to_stop(void);
 int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc);
 void calc_aframeno(int fileno);
-void minimise_aspect_delta(double allowed_aspect,int hblock,int vblock,int hsize,int vsize,int *width,int *height);
+void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height);
 LiVESInterpType get_interp_value(short quality);
 
 LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSED;

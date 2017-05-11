@@ -160,15 +160,15 @@
 
 /// external control types
 typedef enum {
-  EXT_CNTL_NONE=-1, ///< not used
-  EXT_CNTL_JS=0,
-  EXT_CNTL_MIDI=1
+  EXT_CNTL_NONE = -1, ///< not used
+  EXT_CNTL_JS = 0,
+  EXT_CNTL_MIDI = 1
 } lives_ext_cntl_t;
 
 
 /// timebase sources
 typedef enum {
-  LIVES_TIME_SOURCE_NONE=0,
+  LIVES_TIME_SOURCE_NONE = 0,
   LIVES_TIME_SOURCE_SYSTEM,
   LIVES_TIME_SOURCE_SOUNDCARD,
   LIVES_TIME_SOURCE_EXTERNAL
@@ -177,7 +177,7 @@ typedef enum {
 
 
 typedef enum {
-  LIVES_TOY_NONE=0,
+  LIVES_TOY_NONE = 0,
   LIVES_TOY_MAD_FRAMES,
   LIVES_TOY_TV,
   LIVES_TOY_AUTOLIVES
@@ -197,7 +197,7 @@ typedef enum {
 
 /// various return conditions from rendering (multitrack or after recording)
 typedef enum {
-  LIVES_RENDER_ERROR_NONE=0,
+  LIVES_RENDER_ERROR_NONE = 0,
   LIVES_RENDER_READY,
   LIVES_RENDER_PROCESSING,
   LIVES_RENDER_EFFECTS_PAUSED,
@@ -213,7 +213,7 @@ typedef enum {
 
 /// disk/storage status values
 typedef enum {
-  LIVES_STORAGE_STATUS_UNKNOWN=0,
+  LIVES_STORAGE_STATUS_UNKNOWN = 0,
   LIVES_STORAGE_STATUS_NORMAL,
   LIVES_STORAGE_STATUS_WARNING,
   LIVES_STORAGE_STATUS_CRITICAL,
@@ -226,7 +226,7 @@ typedef enum {
 #define DVD_AUDIO_CHAN_MAX 159
 
 enum {
-  LIVES_DEVICE_CD=0,
+  LIVES_DEVICE_CD = 0,
   LIVES_DEVICE_DVD, // 1
   LIVES_DEVICE_VCD, // 2
   LIVES_DEVICE_INTERNAL, // 2
@@ -326,7 +326,7 @@ typedef struct {
 
 /// constant strings
 enum {
-  LIVES_STRING_CONSTANT_ANY=0,
+  LIVES_STRING_CONSTANT_ANY = 0,
   LIVES_STRING_CONSTANT_NONE,
   LIVES_STRING_CONSTANT_RECOMMENDED,
   LIVES_STRING_CONSTANT_DISABLED,
@@ -397,7 +397,7 @@ typedef struct {
   // files
   int current_file;
   int first_free_file;
-  lives_clip_t *files[MAX_FILES+1]; ///< +1 for the clipboard
+  lives_clip_t *files[MAX_FILES + 1]; ///< +1 for the clipboard
   char vid_load_dir[PATH_MAX];
   char vid_save_dir[PATH_MAX];
   char vid_dl_dir[PATH_MAX];
@@ -731,7 +731,7 @@ typedef struct {
   boolean hrule_blocked;
 
   /// stored clips
-  int clipstore[FN_KEYS-1];
+  int clipstore[FN_KEYS - 1];
 
   /// key function for autorepeat ctrl-arrows
   uint32_t ksnoop;

@@ -4,12 +4,12 @@
     - Marq
 */
 
-enum {  Nc1=0,NC1,Nd1,ND1, Ne1,Nf1,NF1,Ng1, NG1,Na1,NA1,Nb1,
-        Nc2,  NC2,Nd2,ND2, Ne2,Nf2,NF2,Ng2, NG2,Na2,NA2,Nb2,
-        Nc3,  NC3,Nd3,ND3, Ne3,Nf3,NF3,Ng3, NG3,Na3,NA3,Nb3,
-        Nc4,  NC4,Nd4,ND4, Ne4,Nf4,NF4,Ng4, NG4,Na4,NA4,Nb4,
-        Nc5,  NC5,Nd5,ND5, Ne5,Nf5,NF5,Ng5, NG5,Na5,NA5,Nb5,
-        Nc6,  NC6,Nd6,ND6, Ne6,Nf6,NF6,Ng6, NG6,Na6,NA6,Nb6,
+enum {  Nc1 = 0, NC1, Nd1, ND1, Ne1, Nf1, NF1, Ng1, NG1, Na1, NA1, Nb1,
+        Nc2,  NC2, Nd2, ND2, Ne2, Nf2, NF2, Ng2, NG2, Na2, NA2, Nb2,
+        Nc3,  NC3, Nd3, ND3, Ne3, Nf3, NF3, Ng3, NG3, Na3, NA3, Nb3,
+        Nc4,  NC4, Nd4, ND4, Ne4, Nf4, NF4, Ng4, NG4, Na4, NA4, Nb4,
+        Nc5,  NC5, Nd5, ND5, Ne5, Nf5, NF5, Ng5, NG5, Na5, NA5, Nb5,
+        Nc6,  NC6, Nd6, ND6, Ne6, Nf6, NF6, Ng6, NG6, Na6, NA6, Nb6,
         NECHON, NECHOFF, NSTOP, NVOL, NSLIDE, NEMPTY /* Special "notes" */
      };
 
@@ -51,17 +51,17 @@ enum {  Nc1=0,NC1,Nd1,ND1, Ne1,Nf1,NF1,Ng1, NG1,Na1,NA1,Nb1,
 typedef struct {
   float   *aalto[WAVES];
 
-  int  *instr[INSTR],*echo[INSTR],vol[INSTR],pola[INSTR],
-       prev[INSTR],pan[INSTR],off[INSTR],plus[INSTR],slide[INSTR];
+  int  *instr[INSTR], *echo[INSTR], vol[INSTR], pola[INSTR],
+       prev[INSTR], pan[INSTR], off[INSTR], plus[INSTR], slide[INSTR];
 
   // an addition for Syna Live -Antti
   int	live_row[INSTR];
   int	new_live_row[INSTR];
 
-  int  global,slen,update,new_update,trak[INSTR][PTLEN],ptn[MAXR][PTLEN],
-       ti[INSTR],pi[INSTR],len[INSTR],ekolen;
+  int  global, slen, update, new_update, trak[INSTR][PTLEN], ptn[MAXR][PTLEN],
+       ti[INSTR], pi[INSTR], len[INSTR], ekolen;
 
-  char *module,eko[INSTR];
+  char *module, eko[INSTR];
 
   int song_bpm;
 
@@ -73,24 +73,24 @@ typedef struct {
 } _sdata;
 
 
-static char *notes[]= {
-  "c1","C1","d1","D1", "e1","f1","F1","g1", "G1","a1","A1","b1",
-  "c2","C2","d2","D2", "e2","f2","F2","g2", "G2","a2","A2","b2",
-  "c3","C3","d3","D3", "e3","f3","F3","g3", "G3","a3","A3","b3",
-  "c4","C4","d4","D4", "e4","f4","F4","g4", "G4","a4","A4","b4",
-  "c5","C5","d5","D5", "e5","f5","F5","g5", "G5","a5","A5","b5",
-  "c6","C6","d6","D6", "e6","f6","F6","g6", "G6","a6","A6","b6",
-  "echo1","echo0","stop","vol","sld","0"
+static char *notes[] = {
+  "c1", "C1", "d1", "D1", "e1", "f1", "F1", "g1", "G1", "a1", "A1", "b1",
+  "c2", "C2", "d2", "D2", "e2", "f2", "F2", "g2", "G2", "a2", "A2", "b2",
+  "c3", "C3", "d3", "D3", "e3", "f3", "F3", "g3", "G3", "a3", "A3", "b3",
+  "c4", "C4", "d4", "D4", "e4", "f4", "F4", "g4", "G4", "a4", "A4", "b4",
+  "c5", "C5", "d5", "D5", "e5", "f5", "F5", "g5", "G5", "a5", "A5", "b5",
+  "c6", "C6", "d6", "D6", "e6", "f6", "F6", "g6", "G6", "a6", "A6", "b6",
+  "echo1", "echo0", "stop", "vol", "sld", "0"
 };
 
-static int notei[]= {
-  0,0,0,0, 0,0,0,0, 0,0,0,0,
-  0,0,0,0, 0,0,0,0, 0,0,0,0,
-  0,0,0,0, 0,0,0,0, 0,0,0,0,
-  0,0,0,0, 0,0,0,0, 0,0,0,0,
-  0,0,0,0, 0,0,0,0, 0,0,0,0,
-  1047,1109,1175,1245, 1319,1397,1480,1568, 1661,1760,1864,1976,
-  ECHON,ECHOFF,STOP,VOL,SLIDE,0
+static int notei[] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  1047, 1109, 1175, 1245, 1319, 1397, 1480, 1568, 1661, 1760, 1864, 1976,
+  ECHON, ECHOFF, STOP, VOL, SLIDE, 0
 };
 
 

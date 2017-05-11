@@ -48,7 +48,7 @@ typedef enum {
    LiVES operation mode
 */
 typedef enum {
-  LIVES_INTERFACE_MODE_INVALID=-1, ///< livesApp instance is invalid
+  LIVES_INTERFACE_MODE_INVALID = -1, ///< livesApp instance is invalid
   LIVES_INTERFACE_MODE_CLIPEDIT, ///< clip editor mode
   LIVES_INTERFACE_MODE_MULTITRACK ///< multitrack mode
 } lives_interface_mode_t;
@@ -58,7 +58,7 @@ typedef enum {
    LiVES operational status
 */
 typedef enum {
-  LIVES_STATUS_INVALID=-1, ///< livesApp instance is invalid
+  LIVES_STATUS_INVALID = -1, ///< livesApp instance is invalid
   LIVES_STATUS_NOTREADY, ///< application is starting up; not ready
   LIVES_STATUS_READY, ///< application is ready for commands
   LIVES_STATUS_PLAYING, ///< application is playing, only player commands will be responded to
@@ -130,8 +130,8 @@ typedef enum {
 */
 typedef enum {
   // positive values for custom responses
-  LIVES_DIALOG_RESPONSE_INVALID=-1, ///< INVALID response
-  LIVES_DIALOG_RESPONSE_NONE=0, ///< Response not obtained
+  LIVES_DIALOG_RESPONSE_INVALID = -1, ///< INVALID response
+  LIVES_DIALOG_RESPONSE_NONE = 0, ///< Response not obtained
   LIVES_DIALOG_RESPONSE_OK, ///< OK button clicked
   LIVES_DIALOG_RESPONSE_RETRY, ///< Retry button clicked
   LIVES_DIALOG_RESPONSE_ABORT, ///< Abort button clicked
@@ -148,7 +148,7 @@ typedef enum {
    Audio sources
 */
 typedef enum {
-  LIVES_AUDIO_SOURCE_UNKNOWN=-1, ///< Unknown / invalid
+  LIVES_AUDIO_SOURCE_UNKNOWN = -1, ///< Unknown / invalid
   LIVES_AUDIO_SOURCE_INTERNAL, ///< Audio source is internal to LiVES
   LIVES_AUDIO_SOURCE_EXTERNAL ///< Audio source is external to LiVES
 } lives_audio_source_t;
@@ -158,7 +158,7 @@ typedef enum {
    Audio players
 */
 typedef enum {
-  LIVES_AUDIO_PLAYER_UNKNOWN=-1, ///< Unknown / invalid
+  LIVES_AUDIO_PLAYER_UNKNOWN = -1, ///< Unknown / invalid
   LIVES_AUDIO_PLAYER_PULSE, ///< Audio playback is through PulseAudio
   LIVES_AUDIO_PLAYER_JACK, ///< Audio playback is thorugh Jack
   LIVES_AUDIO_PLAYER_SOX, ///< Audio playback is through Sox
@@ -192,9 +192,9 @@ typedef enum {
    Player looping modes (bitmap)
 */
 typedef enum {
-  LIVES_LOOP_MODE_NONE=0, ///< no looping
-  LIVES_LOOP_MODE_CONTINUOUS=1, ///< both video and audio loop continuously
-  LIVES_LOOP_MODE_FIT_AUDIO=2 ///< video keeps looping until audio playback finishes
+  LIVES_LOOP_MODE_NONE = 0, ///< no looping
+  LIVES_LOOP_MODE_CONTINUOUS = 1, ///< both video and audio loop continuously
+  LIVES_LOOP_MODE_FIT_AUDIO = 2 ///< video keeps looping until audio playback finishes
 } lives_loop_mode_t;
 
 
@@ -307,14 +307,15 @@ typedef list<livesString> livesStringList;
 */
 class livesString : public std::string {
 public:
-  livesString(const string &str="", lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(str), m_encoding(e) {}
-  livesString(const string &str, size_t pos, size_t len = npos, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(str, pos, len), m_encoding(e) {}
-  livesString(const char *s, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(s), m_encoding(e) {}
-  livesString(const char *s, size_t n, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(s, n), m_encoding(e) {}
-  livesString(size_t n, char c, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(n, c), m_encoding(e) {}
+  livesString(const string &str = "", lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(str), m_encoding(e) {}
+  livesString(const string &str, size_t pos, size_t len = npos, lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(str, pos,
+        len), m_encoding(e) {}
+  livesString(const char *s, lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(s), m_encoding(e) {}
+  livesString(const char *s, size_t n, lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(s, n), m_encoding(e) {}
+  livesString(size_t n, char c, lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(n, c), m_encoding(e) {}
   template <class InputIterator>
   livesString(InputIterator first, InputIterator last,
-              lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : std::string(first, last), m_encoding(e) {}
+              lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(first, last), m_encoding(e) {}
 
   /**
      Change the character encoding of the string.
@@ -525,7 +526,7 @@ public:
      @param blocking if true then function will block until the user presses "OK"
      @return if blocking, returns the response code from the dialog.
   */
-  lives_dialog_response_t showInfo(livesString text, bool blocking=true);
+  lives_dialog_response_t showInfo(livesString text, bool blocking = true);
 
   /**
       Allow the user choose a file via a fileselector.
@@ -540,7 +541,7 @@ public:
       @return the name of the file selected.
       @see openFile().
    */
-  livesString chooseFileWithPreview(livesString dirname, lives_filechooser_t chooser_type, livesString title=livesString(""));
+  livesString chooseFileWithPreview(livesString dirname, lives_filechooser_t chooser_type, livesString title = livesString(""));
 
   /**
      Open a file and return a clip for it.
@@ -556,7 +557,7 @@ public:
      @see chooseFileWithPreview().
      @see deinterlaceOption().
    */
-  clip openFile(livesString fname, bool with_audio=true, double stime=0., int frames=0, bool deinterlace=false);
+  clip openFile(livesString fname, bool with_audio = true, double stime = 0., int frames = 0, bool deinterlace = false);
 
   /**
      Returns a list of available sets. The list returned depends on the setting of prefs::tmpDir().
@@ -896,7 +897,7 @@ public:
   }
 
 protected:
-  clip(ulong uid, livesApp *lives=NULL);
+  clip(ulong uid, livesApp *lives = NULL);
   ulong m_uid;
 
 private:
@@ -948,7 +949,7 @@ public:
      @return true if the name was set.
      @see name().
   */
-  bool setName(livesString name=livesString()) const;
+  bool setName(livesString name = livesString()) const;
 
   /**
      Save the set, and close all open clips and layouts.
@@ -961,7 +962,7 @@ public:
      @param force_append set to true to force appending to another existing set.
      @return true if the set was saved.
   */
-  bool save(livesString name, bool force_append=false) const;
+  bool save(livesString name, bool force_append = false) const;
 
   /**
      Save the set, and close all open clips and layouts.
@@ -1011,7 +1012,7 @@ public:
 
 
 protected:
-  set(livesApp *lives=NULL);
+  set(livesApp *lives = NULL);
 
 private:
   livesApp *m_lives;
@@ -1176,7 +1177,7 @@ public:
      @see videoPlaybackTime()
      @see setPlaybackTime()
   */
-  int setVideoPlaybackFrame(int frame, bool background=false) const;
+  int setVideoPlaybackFrame(int frame, bool background = false) const;
 
   /**
      Return the current clip playback time. If livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT, then this returns
@@ -1193,7 +1194,7 @@ public:
      @see elapsedTime().
      @see multitrack::currentTime().
   */
-  double videoPlaybackTime(bool background=false) const;
+  double videoPlaybackTime(bool background = false) const;
 
   /**
      Set the audio playback time. Only works if livesApp::status() is LIVES_STATUS_PLAYING and livesApp::mode() is
@@ -1325,7 +1326,7 @@ public:
 
 
 protected:
-  player(livesApp *lives=NULL);
+  player(livesApp *lives = NULL);
 
 private:
   livesApp *m_lives;
@@ -1451,9 +1452,9 @@ public:
   effect at(int mode);
 
 
-  
 
-  
+
+
   /**
      @return true if the two effectKeys have the same livesApp and key value and belong to the same livesApp
   */
@@ -1564,7 +1565,7 @@ public:
      If false then the hashname and the target must be equivalent strings.
      @return an effect.
   */
-  effect(const livesApp &lives, livesString hashname, bool match_full=false);
+  effect(const livesApp &lives, livesString hashname, bool match_full = false);
 
   /**
      Create a new effect from a template. In case of multiple matches, only the first match is returned.
@@ -1581,7 +1582,7 @@ public:
      @param version the number of a version to match, or 0 to match any version.
      @return an effect.
   */
-  effect(const livesApp &lives, livesString package, livesString fxname, livesString author=livesString(), int version=0);
+  effect(const livesApp &lives, livesString package, livesString fxname, livesString author = livesString(), int version = 0);
 
   /**
      Returns whether the effect is valid or not.
@@ -1698,7 +1699,7 @@ protected:
   /**
      Protected initialiser
   */
-  block(multitrack *m=NULL, ulong uid=0l);
+  block(multitrack *m = NULL, ulong uid = 0l);
 
 
 private:
@@ -1793,7 +1794,7 @@ public:
      @return true if it was possible to change the label.
      @see trackLabel().
   */
-  bool setTrackLabel(int track, livesString label=livesString()) const;
+  bool setTrackLabel(int track, livesString label = livesString()) const;
 
   /**
      Returns the value of the multitrack gravity. This value, together with the insertMode() defines what happens when a block is inserted,
@@ -1886,7 +1887,7 @@ public:
      @see setGravity().
      @see block::remove().
   */
-  block insertBlock(clip c, bool ignore_selection_limits=false, bool without_audio=false) const;
+  block insertBlock(clip c, bool ignore_selection_limits = false, bool without_audio = false) const;
 
   /**
      Wipe the current layout, leaving a blank layout.
@@ -1897,7 +1898,7 @@ public:
      @param force set to true to force the layout to be wiped.
      @return the name which the layout was saved to, or empty livesString if it was not saved.
   */
-  livesString wipeLayout(bool force=false) const;
+  livesString wipeLayout(bool force = false) const;
 
   /**
      Allow the user to graphically choose a layout to load for the set.
@@ -1973,7 +1974,7 @@ public:
      @param normalise_audio if true then the audio volume is normalized (backing audio gets half volume, video tracks get half volume)
      @return clip a new clip which contains the rendered video, or an invalid clip in case of failure.
   */
-  clip render(bool render_audio=true, bool normalise_audio=true) const;
+  clip render(bool render_audio = true, bool normalise_audio = true) const;
 
   /**
      Returns the current autotransition effect for multitrack mode.
@@ -2015,7 +2016,7 @@ public:
 
 
 protected:
-  multitrack(livesApp *lives=NULL);
+  multitrack(livesApp *lives = NULL);
 
   /**
      The linked LiVES application

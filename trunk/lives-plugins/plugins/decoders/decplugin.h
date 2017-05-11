@@ -39,9 +39,9 @@ typedef int boolean;
 #define FALSE 0
 
 typedef enum {
-  LIVES_INTERLACE_NONE=0,
-  LIVES_INTERLACE_BOTTOM_FIRST=1,
-  LIVES_INTERLACE_TOP_FIRST=2
+  LIVES_INTERLACE_NONE = 0,
+  LIVES_INTERLACE_BOTTOM_FIRST = 1,
+  LIVES_INTERLACE_TOP_FIRST = 2
 } lives_interlace_t;
 
 /// good
@@ -170,7 +170,7 @@ void module_unload(void);
 double get_fps(const char *uri);
 
 enum LiVESMediaType {
-  LIVES_MEDIA_TYPE_UNKNOWN=0,
+  LIVES_MEDIA_TYPE_UNKNOWN = 0,
   LIVES_MEDIA_TYPE_VIDEO,
   LIVES_MEDIA_TYPE_AUDIO,
   LIVES_MEDIA_TYPE_DATA

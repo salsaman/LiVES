@@ -50,7 +50,6 @@ struct _GiwTimeline {
 
 struct _GiwTimelineClass {
   GtkScaleClass  parent_class;
-
 };
 
 

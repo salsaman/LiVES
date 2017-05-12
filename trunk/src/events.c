@@ -4800,7 +4800,7 @@ enum {
 };
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static void rowexpand(LiVESWidget *tv, LiVESTreeIter *iter, LiVESTreePath *path, livespointer ud) {
   lives_widget_queue_resize(tv);
 }
@@ -5121,7 +5121,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                          (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND), 0, 0);
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
       lives_signal_connect(LIVES_GUI_OBJECT(tree), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
                            LIVES_GUI_CALLBACK(rowexpand),
                            NULL);
@@ -5140,7 +5140,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   scrolledwindow = lives_standard_scrolled_window_new(winsize_h, winsize_v, table);
   widget_opts.apply_theme = woat;
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   if (palette->style & STYLE_1) {
     lives_widget_set_bg_color(top_vbox, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     lives_widget_set_fg_color(top_vbox, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);

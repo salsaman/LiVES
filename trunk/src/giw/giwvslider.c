@@ -42,7 +42,7 @@ static void giw_vslider_init(GiwVSlider         *vslider);
 static void giw_vslider_realize(GtkWidget        *widget);
 static void giw_vslider_size_request(GtkWidget      *widget,
                                      GtkRequisition *requisition);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static void giw_vslider_get_preferred_width(GtkWidget *widget,
     gint      *minimal_width,
     gint      *natural_width);
@@ -93,7 +93,7 @@ void vslider_free_legends(GiwVSlider *vslider);
 void vslider_calculate_legends_sizes(GiwVSlider *vslider);
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 G_DEFINE_TYPE(GiwVSlider, giw_vslider, GTK_TYPE_WIDGET)
 #define parent_class giw_vslider_parent_class
 #else
@@ -126,7 +126,7 @@ giw_vslider_get_type() {
 
 static void
 giw_vslider_class_init(GiwVSliderClass *xclass) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   GObjectClass *object_class = G_OBJECT_CLASS(xclass);
 #else
   GtkObjectClass *object_class = (GtkObjectClass *) xclass;
@@ -135,7 +135,7 @@ giw_vslider_class_init(GiwVSliderClass *xclass) {
 
   widget_class = (GtkWidgetClass *) xclass;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   object_class->dispose = giw_vslider_dispose;
 #else
   parent_class = (GtkWidgetClass *)gtk_type_class(gtk_widget_get_type());
@@ -144,7 +144,7 @@ giw_vslider_class_init(GiwVSliderClass *xclass) {
 
 
   widget_class->realize = giw_vslider_realize;
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   widget_class->get_preferred_width = giw_vslider_get_preferred_width;
   widget_class->get_preferred_height = giw_vslider_get_preferred_height;
   widget_class->draw = giw_vslider_draw;
@@ -188,7 +188,7 @@ giw_vslider_new(GtkAdjustment *adjustment) {
 
   g_return_val_if_fail(adjustment != NULL, NULL);
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   vslider = (GiwVSlider *)g_object_new(GIW_TYPE_VSLIDER, NULL);
 #else
   vslider = (GiwVSlider *)gtk_type_new(giw_vslider_get_type());
@@ -205,7 +205,7 @@ giw_vslider_new_with_adjustment(gdouble value,
                                 gdouble upper) {
   GiwVSlider *vslider;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   vslider = (GiwVSlider *)g_object_new(GIW_TYPE_VSLIDER, NULL);
 #else
   vslider = (GiwVSlider *)gtk_type_new(giw_vslider_get_type());
@@ -216,7 +216,7 @@ giw_vslider_new_with_adjustment(gdouble value,
   return GTK_WIDGET(vslider);
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static void giw_vslider_dispose(GObject *object) {
 #else
 static void giw_vslider_destroy(GtkObject *object) {
@@ -241,7 +241,7 @@ static void giw_vslider_destroy(GtkObject *object) {
     vslider->legends = NULL;
   }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   G_OBJECT_CLASS(giw_vslider_parent_class)->dispose(object);
 #else
   if (LIVES_GUI_OBJECT_CLASS(parent_class)->destroy)
@@ -255,7 +255,7 @@ giw_vslider_realize(GtkWidget *widget) {
   GdkWindowAttr attributes;
   gint attributes_mask;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   GtkStyleContext *stylecon;
 #endif
 
@@ -284,7 +284,7 @@ giw_vslider_realize(GtkWidget *widget) {
 
   attributes_mask = GDK_WA_X | GDK_WA_Y;
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   attributes_mask |= GDK_WA_COLORMAP | GDK_WA_VISUAL;
   attributes.visual = gtk_widget_get_visual(widget);
   attributes.colormap = gtk_widget_get_colormap(widget);
@@ -296,7 +296,7 @@ giw_vslider_realize(GtkWidget *widget) {
   widget->window = gdk_window_new(widget->parent->window, &attributes, attributes_mask);
 #endif
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   stylecon = gtk_style_context_new();
   gtk_style_context_set_path(stylecon, gtk_widget_get_path(widget));
   gtk_style_context_set_state(stylecon, GTK_STATE_FLAG_ACTIVE);
@@ -322,7 +322,7 @@ giw_vslider_size_request(GtkWidget      *widget,
   requisition->height = VSLIDER_DEFAULT_HEIGHT;
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 
 static void
 giw_vslider_get_preferred_width(GtkWidget *widget,
@@ -377,7 +377,7 @@ giw_vslider_size_allocate(GtkWidget     *widget,
   vslider_calculate_sizes(vslider);
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static gboolean giw_vslider_draw(GtkWidget *widget, cairo_t *cairo) {
   GdkRGBA color;
 #else
@@ -390,7 +390,7 @@ giw_vslider_expose(GtkWidget      *widget,
   gint loop, loop2;
   GdkRectangle rect;
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
 
   g_return_val_if_fail(event != NULL, FALSE);
 
@@ -409,7 +409,7 @@ giw_vslider_expose(GtkWidget      *widget,
   rect.height = lives_widget_get_allocation_height(widget);
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_render_background(gtk_widget_get_style_context(widget),
                         cairo,
                         0,
@@ -748,7 +748,7 @@ giw_vslider_style_set(GtkWidget *widget,
   vslider_calculate_legends_sizes(vslider);
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static void
 giw_vslider_style_updated(GtkWidget *widget) {
 
@@ -797,7 +797,7 @@ giw_vslider_set_adjustment(GiwVSlider *vslider,
 
   // Freeing the last one
   if (vslider->adjustment) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     g_signal_handler_disconnect((gpointer)(vslider->adjustment), vslider->chsig);
     g_signal_handler_disconnect((gpointer)(vslider->adjustment), vslider->vchsig);
 #else
@@ -1000,7 +1000,7 @@ vslider_build_legends(GiwVSlider *vslider) {
                (vslider->major_ticks - 1)); // Creating the legends string
       vslider->legends[loop] = gtk_widget_create_pango_layout(widget, str);
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(3,8,0)
       fontdesc = pango_font_description_new();
       gtk_style_context_get(gtk_widget_get_style_context(widget),
@@ -1060,7 +1060,7 @@ vslider_calculate_legends_sizes(GiwVSlider *vslider) {
   widget = GTK_WIDGET(vslider);
 
   if (vslider->legends != NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(3,8,0)
     fontdesc = pango_font_description_new();
     gtk_style_context_get(gtk_widget_get_style_context(widget),

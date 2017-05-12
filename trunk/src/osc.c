@@ -2869,7 +2869,8 @@ boolean lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OS
   int fps;
   float fpsf;
   double fpsd;
-
+  char *msg;
+  
   if (mainw->fixed_fpsd > 0.) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments(arglen, vargs, "f", FALSE)) {
     if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
@@ -2883,14 +2884,14 @@ boolean lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OS
   if (fpsd > 0. && fpsd <= FPS_MAX) {
     mainw->fixed_fpsd = fpsd;
     d_print(_("Syncing to external framerate of %.8f frames per second.\n"), fpsd);
-  } else if (fpsd == 0.) mainw->fixed_fpsd = -1.; ///< 0. to release
-  else lives_osc_notify_failure();
-  {
-    char *msg = lives_strdup_printf("%.3f", fpsd);
-    lives_osc_notify_success(msg);
-    lives_free(msg);
-    return TRUE;
+  } else {
+    if (fpsd == 0.) mainw->fixed_fpsd = -1.; ///< 0. to release
+    else lives_osc_notify_failure();
   }
+  msg = lives_strdup_printf("%.3f", fpsd);
+  lives_osc_notify_success(msg);
+  lives_free(msg);
+  return TRUE;
 }
 
 
@@ -7192,14 +7193,14 @@ static struct {
 int lives_osc_build_cont(lives_osc *o) {
   /* Create containers /video , /clip, /chain and /tag */
   register int i;
-  for (i = 0; osc_cont[i].name != NULL ; i ++) {
+  for (i = 0; osc_cont[i].name != NULL ; i++) {
     if (osc_cont[i].it == 0) {
       o->cqinfo.comment = osc_cont[i].comment;
 
       // add a container to a leaf
-      if ((o->leaves[ osc_cont[i].leave ] =
+      if ((o->leaves[osc_cont[i].leave] =
              OSCNewContainer(osc_cont[i].name,
-                             (osc_cont[i].att == -1 ? o->container : o->leaves[ osc_cont[i].att ]),
+                             (osc_cont[i].att == -1 ? o->container : o->leaves[osc_cont[i].att]),
                              &(o->cqinfo))) == 0) {
         if (osc_cont[i].att == - 1) {
           lives_printerr("Cannot create container %d (%s) \n",
@@ -7218,14 +7219,14 @@ int lives_osc_build_cont(lives_osc *o) {
       int base = osc_cont[i].leave;
       register int j;
 
-      for (j = 0; j < n ; j ++) {
+      for (j = 0; j < n ; j++) {
         sprintf(name, "N%d", j);
         sprintf(comment, "<%d>", j);
         lives_printerr("Try cont.%d  '%s', %d %d\n", j, name,
                        base + j, base);
         o->cqinfo.comment = comment;
-        if ((o->leaves[ base + j ] = OSCNewContainer(name,
-                                     o->leaves[ osc_cont[i].att ],
+        if ((o->leaves[base + j] = OSCNewContainer(name,
+                                     o->leaves[osc_cont[i].att],
                                      &(o->cqinfo))) == 0) {
           lives_printerr("Cannot auto numerate container %s \n",
                          osc_cont[i].name);
@@ -7242,13 +7243,13 @@ int lives_osc_build_cont(lives_osc *o) {
 int lives_osc_attach_methods(lives_osc *o) {
   int i;
 
-  for (i = 0; osc_methods[i].name != NULL ; i ++) {
+  for (i = 0; osc_methods[i].name != NULL ; i++) {
     o->ris.description = osc_methods[i].descr;
     OSCNewMethod(osc_methods[i].name,
-                 o->leaves[ osc_methods[i].leave ],
+                 o->leaves[osc_methods[i].leave],
                  osc_methods[i].cb ,
                  NULL, // this is the context which is reurned but it seems to be unused
-                 & (o->ris));
+                 &(o->ris));
 
 
   }

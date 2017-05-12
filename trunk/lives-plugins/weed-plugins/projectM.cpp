@@ -116,8 +116,6 @@ static void winhide() {
     XFlush(dpy);
     info.info.x11.unlock_func();
   }
-
-
 }
 
 
@@ -355,14 +353,12 @@ fail:
   SDL_Quit();
 
   return NULL;
-
 }
 
 
 static int projectM_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sd = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
-
 
   copies--;
 
@@ -464,8 +460,6 @@ static int projectM_init(weed_plant_t *inst) {
   weed_set_voidptr_value(inst, "plugin_internal", sd);
 
   return WEED_NO_ERROR;
-
-
 }
 
 
@@ -584,7 +578,6 @@ static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
-
     int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_END};
 
     const char *xlist[3] = {"- Random -", "Choose...", NULL};
@@ -612,8 +605,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
     weed_set_int_value(plugin_info, "version", package_version);
-
-
   }
 
   statsd = NULL;

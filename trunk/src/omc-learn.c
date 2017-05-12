@@ -633,7 +633,7 @@ static void cell1_edited_callback(LiVESCellRenderer *spinbutton, const char *pat
 }
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static void rowexpand(LiVESWidget *tv, LiVESTreeIter *iter, LiVESTreePath *path, livespointer ud) {
   lives_widget_queue_resize(tv);
 }
@@ -740,7 +740,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
   lives_widget_show(mnode->treev2);
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_connect(LIVES_GUI_OBJECT(mnode->treev2), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
                        LIVES_GUI_CALLBACK(rowexpand),
                        NULL);
@@ -1083,7 +1083,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
   if (labelt != NULL) lives_free(labelt);
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   if (palette->style & STYLE_1) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->black);
   }
@@ -1212,7 +1212,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_connect(LIVES_GUI_OBJECT(mnode->treev1), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
                        LIVES_GUI_CALLBACK(rowexpand),
                        NULL);

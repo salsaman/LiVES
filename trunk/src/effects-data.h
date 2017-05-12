@@ -44,7 +44,6 @@ struct _lives_pconnect_t {
   boolean *autoscale;
 
   lives_pconnect_t *next;
-
 };
 
 
@@ -100,7 +99,6 @@ struct _lives_cconnect_t {
   int *icnum;
 
   lives_cconnect_t *next;
-
 };
 
 
@@ -177,7 +175,6 @@ typedef struct {
   ulong *dpc_func;
   ulong *dpp_func;
   ulong *acheck_func;
-
 } lives_conx_w;
 
 

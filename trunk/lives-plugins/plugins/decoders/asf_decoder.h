@@ -195,7 +195,6 @@ typedef struct {
 
   int      palette_changed;
   uint32_t palette[256];
-
 } ASFStream;
 
 
@@ -344,7 +343,7 @@ typedef struct {
       val = GET_16BIT - 0xDC00;			\
       if (val > 0x3FFU || hi > 0x3FFU)		\
 	ERROR					\
-	  val += (hi<<10) + 0x10000;		\
+	  val += (hi << 10) + 0x10000;		\
     }						\
   }						\
 
@@ -373,11 +372,11 @@ typedef struct {
 #define DO_2BITS(bits, var, defval)					\
   switch (bits & 3)							\
     {									\
-      int dummy=0;							\
-    case 3: dummy=read(priv->fd,buffer,4); var = get_le32int(buffer); priv->input_position+=4; rsize+=4; break; \
-    case 2: dummy=read (priv->fd,buffer,2); var = get_le16int(buffer); priv->input_position+=2; rsize+=2; break; \
-    case 1: dummy=read (priv->fd,buffer,1); var = *buffer; priv->input_position++; rsize++; break; \
-    default: var = defval; dummy=dummy; break;				\
+      int dummy = 0;							\
+    case 3: dummy = read(priv->fd, buffer, 4); var = get_le32int(buffer); priv->input_position += 4; rsize += 4; break; \
+    case 2: dummy = read(priv->fd, buffer, 2); var = get_le16int(buffer); priv->input_position += 2; rsize += 2; break; \
+    case 1: dummy = read(priv->fd, buffer, 1); var = *buffer; priv->input_position++; rsize++; break; \
+    default: var = defval; dummy = dummy; break;				\
     }
 
 

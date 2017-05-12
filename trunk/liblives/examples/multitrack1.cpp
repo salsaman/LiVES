@@ -38,5 +38,4 @@ int main(int argc, char *argv[]) {
   while (lives.isValid()) sleep(1);
 
   return 0;
-
 }

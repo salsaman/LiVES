@@ -19,7 +19,7 @@
 
 // rgb / yuv conversion factors ////////////
 #define FP_BITS 16 /// max fp bits
-#define SCALE_FACTOR (1<<FP_BITS)
+#define SCALE_FACTOR (1 << FP_BITS)
 
 #define KR_YCBCR 0.299
 #define KB_YCBCR 0.114

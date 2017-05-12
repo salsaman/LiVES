@@ -56,7 +56,7 @@ typedef int boolean;
 #define FALSE 0
 
 #ifndef ABS
-#define ABS(a) (a>0?a:-a)
+#define ABS(a) (a > 0 ? a : -a)
 #endif
 
 #ifndef PATH_MAX
@@ -68,7 +68,7 @@ typedef int boolean;
 #endif
 
 // Warning - CPU_BITS macro evaluates only at runtime (uses sizeof)
-#define CPU_BITS ((sizeof(void *))<<3)
+#define CPU_BITS ((sizeof(void *)) << 3)
 
 // all playback modules need to implement these functions, unless they are marked (optional)
 

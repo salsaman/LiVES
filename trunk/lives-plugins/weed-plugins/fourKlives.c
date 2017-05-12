@@ -381,24 +381,24 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
         if (li != END) {
           if ((note = sdata->ptn[sdata->trak[i][li]][sdata->pi[i]])) {
             switch (note) {
-            case STOP  :
+            case STOP:
               sdata->off[i] = -1;
               break;
-            case ECHON :
+            case ECHON:
               sdata->eko[i] = 1;
               break;
             case ECHOFF:
               sdata->eko[i] = 0;
               break;
-            case VOL   :
+            case VOL:
               sdata->pi[i]++;
               sdata->vol[i] = sdata->ptn[sdata->trak[i][li]][sdata->pi[i]] * 255 / 100;
               break;
-            case SLIDE :
+            case SLIDE:
               sdata->pi[i]++;
               sdata->slide[i] = sdata->ptn[sdata->trak[i][li]][sdata->pi[i]] * 164 / 1000;
               break;
-            default    :
+            default:
               sdata->plus[i] = note << 13;
               //plus[i]/=BFREQ;
               sdata->off[i] = 0;

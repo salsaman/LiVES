@@ -21,7 +21,6 @@ int main() {
       livesString fname = lives.chooseFileWithPreview(prefs::currentVideoLoadDir(lives), LIVES_FILE_CHOOSER_VIDEO_AUDIO);
       lives.openFile(fname);
     }
-
   }
 
   // now we have 2 or more clips open
@@ -54,5 +53,4 @@ int main() {
   while (lives.isValid()) sleep(1);
 
   return 0;
-
 }

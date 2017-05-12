@@ -161,7 +161,7 @@ LIVES_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
 LIVES_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_painter_t *cr, double x, double y, double width,
     double height) {
 #ifdef PAINTER_CAIRO
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
   gtk_render_background(ctx, cr, x, y, width, height);
 #else
@@ -392,7 +392,7 @@ LIVES_INLINE lives_painter_surface_t *lives_painter_surface_create_from_widget(L
 #ifdef PAINTER_CAIRO
   LiVESXWindow *window = lives_widget_get_xwindow(widget);
   if (window != NULL) {
-#if G_ENCODE_VERSION(GDK_MAJOR_VERSION,GDK_MINOR_VERSION) >= G_ENCODE_VERSION(2,22)
+#if G_ENCODE_VERSION(GDK_MAJOR_VERSION, GDK_MINOR_VERSION) >= G_ENCODE_VERSION(2, 22)
     surf = gdk_window_create_similar_surface(window, content, width, height);
 #else
     surf = cairo_image_surface_create(LIVES_PAINTER_FORMAT_ARGB32, width, height);
@@ -537,7 +537,7 @@ LIVES_INLINE boolean lives_object_unref(livespointer object) {
 
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 LIVES_INLINE livespointer lives_object_ref_sink(livespointer object) {
   g_object_ref_sink(object);
   return object;
@@ -772,7 +772,7 @@ LIVES_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget) {
 
 LIVES_INLINE boolean lives_widget_queue_draw_area(LiVESWidget *widget, int x, int y, int width, int height) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_widget_queue_draw_area(widget, x, y, width, height);
 #else
   gtk_widget_queue_draw(widget);
@@ -876,7 +876,7 @@ LIVES_INLINE boolean lives_xwindow_process_all_updates() {
 
 LIVES_INLINE boolean lives_widget_reparent(LiVESWidget *widget, LiVESWidget *new_parent) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,14,0)
+#if GTK_CHECK_VERSION(3, 14, 0)
   g_object_ref(widget);
   gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(widget)), widget);
   gtk_container_add(GTK_CONTAINER(new_parent), widget);
@@ -947,7 +947,7 @@ LIVES_INLINE boolean lives_dialog_response(LiVESDialog *dialog, int response) {
 }
 
 
-#if GTK_CHECK_VERSION(3,16,0)
+#if GTK_CHECK_VERSION(3, 16, 0)
 static char *make_random_string() {
   char *str = (char *)malloc(32);
   register int i;
@@ -964,8 +964,8 @@ static char *make_random_string() {
 
 LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-#if GTK_CHECK_VERSION(3,16,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(3, 16, 0)
 
   GtkCssProvider *provider = gtk_css_provider_new();
   GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
@@ -999,7 +999,7 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
       state_str = ":active";
       break;
     case GTK_STATE_FLAG_PRELIGHT:
-#if GTK_CHECK_VERSION(3,18,0)
+#if GTK_CHECK_VERSION(3, 18, 0)
       state_str = ":hover";
 #else
       state_str = ":prelight";
@@ -1009,7 +1009,7 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
       state_str = ":selected";
       break;
     case GTK_STATE_FLAG_INSENSITIVE:
-#if GTK_CHECK_VERSION(3,18,0)
+#if GTK_CHECK_VERSION(3, 18, 0)
       state_str = ":disabled";
 #else
       state_str = ":insensitive";
@@ -1066,8 +1066,8 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
 
 LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-#if GTK_CHECK_VERSION(3,16,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(3, 16, 0)
 
   GtkCssProvider *provider = gtk_css_provider_new();
   GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
@@ -1131,7 +1131,7 @@ LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetS
 
 LIVES_INLINE boolean lives_widget_set_text_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_set_fg_color(widget, state, color);
 #else
   gtk_widget_modify_text(widget, state, color);
@@ -1148,7 +1148,7 @@ LIVES_INLINE boolean lives_widget_set_text_color(LiVESWidget *widget, LiVESWidge
 
 LIVES_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_set_bg_color(widget, state, color);
 #else
   gtk_widget_modify_base(widget, state, color);
@@ -1166,7 +1166,7 @@ LIVES_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidge
 
 LIVES_INLINE boolean lives_widget_get_fg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_style_context_get_color(gtk_widget_get_style_context(widget), LIVES_WIDGET_STATE_NORMAL, color);
 #else
   lives_widget_color_copy(color, &gtk_widget_get_style(widget)->fg[LIVES_WIDGET_STATE_NORMAL]);
@@ -1183,7 +1183,7 @@ LIVES_INLINE boolean lives_widget_get_fg_state_color(LiVESWidget *widget, LiVESW
 
 LIVES_INLINE boolean lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   gtk_style_context_get_background_color(gtk_widget_get_style_context(widget), LIVES_WIDGET_STATE_NORMAL, color);
   G_GNUC_END_IGNORE_DEPRECATIONS
@@ -1220,13 +1220,13 @@ LIVES_INLINE LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1, con
     c1->red = c2->red;
     c1->green = c2->green;
     c1->blue = c2->blue;
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     c1->alpha = c2->alpha;
 #else
     c1->pixel = c2->pixel;
 #endif
   } else {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     c0 = gdk_rgba_copy(c2);
 #else
     c0 = gdk_color_copy(c2);
@@ -1292,13 +1292,13 @@ LIVES_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, LiVES
   LiVESWidget *image = NULL;
 #ifdef GUI_GTK
   if (lives_has_icon(stock_id, size)) {
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3, 10, 0)
     image = gtk_image_new_from_icon_name(stock_id, size);
 #else
     image = gtk_image_new_from_stock(stock_id, size);
 #endif
   } else {
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3, 10, 0)
     image = gtk_image_new_from_icon_name(LIVES_STOCK_MISSING_IMAGE, size);
     if (image == NULL) image = gtk_image_new_from_icon_name(LIVES_STOCK_CLOSE, size);
 #else
@@ -1392,7 +1392,7 @@ LIVES_INLINE LiVESPixbuf *lives_image_get_pixbuf(LiVESImage *image) {
 LIVES_INLINE boolean lives_color_parse(const char *spec, LiVESWidgetColor *color) {
   boolean retval = FALSE;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   retval = gdk_rgba_parse(color, spec);
 #else
   retval = gdk_color_parse(spec, color);
@@ -1416,7 +1416,7 @@ LIVES_INLINE boolean lives_color_parse(const char *spec, LiVESWidgetColor *color
 LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
 
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   return gtk_dialog_get_content_area(LIVES_DIALOG(dialog));
 #else
   return LIVES_DIALOG(dialog)->vbox;
@@ -1432,7 +1432,7 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 
 LIVES_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
 #ifdef G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 #endif
@@ -1764,7 +1764,7 @@ LIVES_INLINE boolean lives_window_set_position(LiVESWindow *window, LiVESWindowP
 
 LIVES_INLINE boolean lives_window_set_hide_titlebar_when_maximized(LiVESWindow *window, boolean setting) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,4,0)
+#if GTK_CHECK_VERSION(3, 4, 0)
   gtk_window_set_hide_titlebar_when_maximized(window, setting);
 #endif
   return TRUE;
@@ -2247,7 +2247,7 @@ LIVES_INLINE LiVESAdjustment *lives_adjustment_new(double value, double lower, d
     double step_increment, double page_increment, double page_size) {
   LiVESAdjustment *adj = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   adj = gtk_adjustment_new(value, lower, upper, step_increment, page_increment, page_size);
 #else
   adj = GTK_ADJUSTMENT(gtk_adjustment_new(value, lower, upper, step_increment, page_increment, page_size));
@@ -2315,7 +2315,7 @@ LIVES_INLINE boolean lives_box_set_spacing(LiVESBox *box, int spacing) {
 LIVES_INLINE LiVESWidget *lives_hbox_new(boolean homogeneous, int spacing) {
   LiVESWidget *hbox = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   hbox = gtk_box_new(LIVES_ORIENTATION_HORIZONTAL, spacing);
   lives_box_set_homogeneous(LIVES_BOX(hbox), homogeneous);
 #else
@@ -2334,7 +2334,7 @@ LIVES_INLINE LiVESWidget *lives_hbox_new(boolean homogeneous, int spacing) {
 LIVES_INLINE LiVESWidget *lives_vbox_new(boolean homogeneous, int spacing) {
   LiVESWidget *vbox = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   vbox = gtk_box_new(LIVES_ORIENTATION_VERTICAL, spacing);
   lives_box_set_homogeneous(LIVES_BOX(vbox), homogeneous);
 #else
@@ -2412,7 +2412,7 @@ LIVES_INLINE boolean lives_box_pack_end(LiVESBox *box, LiVESWidget *child, boole
 LIVES_INLINE LiVESWidget *lives_hseparator_new(void) {
   LiVESWidget *hsep = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   hsep = gtk_separator_new(LIVES_ORIENTATION_HORIZONTAL);
 #else
   hsep = gtk_hseparator_new();
@@ -2428,7 +2428,7 @@ LIVES_INLINE LiVESWidget *lives_hseparator_new(void) {
 LIVES_INLINE LiVESWidget *lives_vseparator_new(void) {
   LiVESWidget *vsep = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   vsep = gtk_separator_new(LIVES_ORIENTATION_VERTICAL);
 #else
   vsep = gtk_vseparator_new();
@@ -2444,7 +2444,7 @@ LIVES_INLINE LiVESWidget *lives_vseparator_new(void) {
 LIVES_INLINE LiVESWidget *lives_hbutton_box_new(void) {
   LiVESWidget *bbox = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   bbox = gtk_button_box_new(LIVES_ORIENTATION_HORIZONTAL);
 #else
   bbox = gtk_hbutton_box_new();
@@ -2460,7 +2460,7 @@ LIVES_INLINE LiVESWidget *lives_hbutton_box_new(void) {
 LIVES_INLINE LiVESWidget *lives_vbutton_box_new(void) {
   LiVESWidget *bbox = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   bbox = gtk_button_box_new(LIVES_ORIENTATION_VERTICAL);
 #else
   bbox = gtk_vbutton_box_new();
@@ -2476,7 +2476,7 @@ LIVES_INLINE LiVESWidget *lives_vbutton_box_new(void) {
 
 LIVES_INLINE boolean lives_button_box_set_layout(LiVESButtonBox *bbox, LiVESButtonBoxStyle bstyle) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   return FALSE;
 #endif
   gtk_button_box_set_layout(bbox, bstyle);
@@ -2498,7 +2498,7 @@ LIVES_INLINE boolean lives_button_box_set_layout(LiVESButtonBox *bbox, LiVESButt
 LIVES_INLINE LiVESWidget *lives_hscale_new(LiVESAdjustment *adj) {
   LiVESWidget *hscale = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   hscale = gtk_scale_new(LIVES_ORIENTATION_HORIZONTAL, adj);
 #else
   hscale = gtk_hscale_new(adj);
@@ -2514,7 +2514,7 @@ LIVES_INLINE LiVESWidget *lives_hscale_new(LiVESAdjustment *adj) {
 LIVES_INLINE LiVESWidget *lives_vscale_new(LiVESAdjustment *adj) {
   LiVESWidget *vscale = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   vscale = gtk_scale_new(LIVES_ORIENTATION_VERTICAL, adj);
 #else
   vscale = gtk_vscale_new(adj);
@@ -2530,7 +2530,7 @@ LIVES_INLINE LiVESWidget *lives_vscale_new(LiVESAdjustment *adj) {
 LIVES_INLINE LiVESWidget *lives_hpaned_new(void) {
   LiVESWidget *hpaned = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   hpaned = gtk_paned_new(LIVES_ORIENTATION_HORIZONTAL);
 #else
   hpaned = gtk_hpaned_new();
@@ -2548,7 +2548,7 @@ LIVES_INLINE LiVESWidget *lives_hpaned_new(void) {
 LIVES_INLINE LiVESWidget *lives_vpaned_new(void) {
   LiVESWidget *vpaned = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   vpaned = gtk_paned_new(LIVES_ORIENTATION_VERTICAL);
 #else
   vpaned = gtk_vpaned_new();
@@ -2566,7 +2566,7 @@ LIVES_INLINE LiVESWidget *lives_vpaned_new(void) {
 LIVES_INLINE LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *adj) {
   LiVESWidget *hscrollbar = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   hscrollbar = gtk_scrollbar_new(LIVES_ORIENTATION_HORIZONTAL, adj);
 #else
   hscrollbar = gtk_hscrollbar_new(adj);
@@ -2582,7 +2582,7 @@ LIVES_INLINE LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *adj) {
 LIVES_INLINE LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *adj) {
   LiVESWidget *vscrollbar = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   vscrollbar = gtk_scrollbar_new(LIVES_ORIENTATION_VERTICAL, adj);
 #else
   vscrollbar = gtk_vscrollbar_new(adj);
@@ -2617,7 +2617,7 @@ LIVES_INLINE LiVESWidget *lives_label_new(const char *text) {
 LIVES_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_type, LiVESShadowType shadow_type) {
   LiVESWidget *arrow = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,12,0)
+#if GTK_CHECK_VERSION(3, 12, 0)
   const char *format = "<b>%s</b>";
   char *markup;
   char *str;
@@ -2659,7 +2659,7 @@ LIVES_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_type, LiVESShadow
 LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale) {
   LiVESWidget *alignment = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   alignment = gtk_frame_new(NULL);
   gtk_frame_set_shadow_type(LIVES_FRAME(alignment), GTK_SHADOW_NONE);
   if (xalign == 0.5) gtk_widget_set_halign(alignment, GTK_ALIGN_CENTER);
@@ -2681,7 +2681,7 @@ LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float 
 
 LIVES_INLINE boolean lives_alignment_set(LiVESAlignment *alignment, float xalign, float yalign, float xscale, float yscale) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   if (xalign == 0.5) gtk_widget_set_halign((GtkWidget *)alignment, GTK_ALIGN_CENTER);
   if (xalign == 0. && xscale == 1.) gtk_widget_set_halign((GtkWidget *)alignment, GTK_ALIGN_FILL);
   if (xalign == 0. && xscale == 0.) gtk_widget_set_halign((GtkWidget *)alignment, GTK_ALIGN_START);
@@ -2705,7 +2705,7 @@ LIVES_INLINE LiVESWidget *lives_expander_new_with_mnemonic(const char *label) {
   LiVESWidget *expander = NULL;
 #ifdef GUI_GTK
   expander = gtk_expander_new_with_mnemonic(label);
-#if GTK_CHECK_VERSION(3,2,0)
+#if GTK_CHECK_VERSION(3, 2, 0)
   gtk_expander_set_resize_toplevel(GTK_EXPANDER(expander), TRUE);
 #endif
 #endif
@@ -2718,7 +2718,7 @@ LIVES_INLINE LiVESWidget *lives_expander_new(const char *label) {
   LiVESWidget *expander = NULL;
 #ifdef GUI_GTK
   expander = gtk_expander_new(label);
-#if GTK_CHECK_VERSION(3,2,0)
+#if GTK_CHECK_VERSION(3, 2, 0)
   gtk_expander_set_resize_toplevel(GTK_EXPANDER(expander), TRUE);
 #endif
 #endif
@@ -2748,7 +2748,7 @@ LIVES_INLINE boolean lives_label_set_width_chars(LiVESLabel *label, int nchars) 
 
 LIVES_INLINE boolean lives_label_set_halignment(LiVESLabel *label, float xalign) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,16,0)
+#if GTK_CHECK_VERSION(3, 16, 0)
   gtk_label_set_xalign(label, xalign);
 #else
   gtk_misc_set_alignment(GTK_MISC(label), 0., xalign);
@@ -2767,7 +2767,7 @@ LIVES_INLINE boolean lives_label_set_halignment(LiVESLabel *label, float xalign)
 LIVES_INLINE LiVESWidget *lives_combo_new(void) {
   LiVESWidget *combo = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,24,0)
+#if GTK_CHECK_VERSION(2, 24, 0)
   combo = gtk_combo_box_text_new_with_entry();
 #else
   combo = gtk_combo_box_entry_new_text();
@@ -2783,7 +2783,7 @@ LIVES_INLINE LiVESWidget *lives_combo_new(void) {
 LIVES_INLINE LiVESWidget *lives_combo_new_with_model(LiVESTreeModel *model) {
   LiVESWidget *combo = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,24,0)
+#if GTK_CHECK_VERSION(2, 24, 0)
   combo = gtk_combo_box_new_with_model_and_entry(model);
 #else
   combo = gtk_combo_box_entry_new();
@@ -2823,7 +2823,7 @@ LIVES_INLINE LiVESTreeModel *lives_combo_get_model(LiVESCombo *combo) {
 
 LIVES_INLINE boolean lives_combo_append_text(LiVESCombo *combo, const char *text) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,24,0)
+#if GTK_CHECK_VERSION(2, 24, 0)
   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), text);
 #else
   gtk_combo_box_append_text(GTK_COMBO_BOX(combo), text);
@@ -2842,7 +2842,7 @@ LIVES_INLINE boolean lives_combo_append_text(LiVESCombo *combo, const char *text
 
 static boolean lives_combo_remove_all_text(LiVESCombo *combo) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(combo));
 #else
   register int count = lives_tree_model_iter_n_children(lives_combo_get_model(combo), NULL);
@@ -2862,7 +2862,7 @@ static boolean lives_combo_remove_all_text(LiVESCombo *combo) {
 
 LIVES_INLINE boolean lives_combo_set_entry_text_column(LiVESCombo *combo, int column) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,24,0)
+#if GTK_CHECK_VERSION(2, 24, 0)
   gtk_combo_box_set_entry_text_column(GTK_COMBO_BOX(combo), column);
 #else
   gtk_combo_box_entry_set_text_column(GTK_COMBO_BOX_ENTRY(combo), column);
@@ -2880,7 +2880,7 @@ LIVES_INLINE boolean lives_combo_set_entry_text_column(LiVESCombo *combo, int co
 LIVES_INLINE char *lives_combo_get_active_text(LiVESCombo *combo) {
   // return value should be freed
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,24,0)
+#if GTK_CHECK_VERSION(2, 24, 0)
   return gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
 #else
   return gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
@@ -3303,7 +3303,7 @@ LIVES_INLINE LiVESWidget *lives_button_new_with_label(const char *label) {
 LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label) {
   LiVESWidget *button = NULL;
 
-#if GTK_CHECK_VERSION(3,10,0) || defined GUI_QT
+#if GTK_CHECK_VERSION(3, 10, 0) || defined GUI_QT
   if (!strcmp(stock_id, LIVES_STOCK_LABEL_CANCEL)) stock_id = LIVES_STOCK_CANCEL;
   if (!strcmp(stock_id, LIVES_STOCK_LABEL_OK)) stock_id = LIVES_STOCK_OK;
   // gtk 3.10 + -> we need to set the text ourselves
@@ -3382,7 +3382,7 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id, cons
 #endif
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,6,0)
+#if GTK_CHECK_VERSION(3, 6, 0)
     gtk_button_set_always_show_image(GTK_BUTTON(button), prefs->show_button_images);
 #endif
     if (label != NULL)
@@ -3646,7 +3646,7 @@ LIVES_INLINE LiVESWidget *lives_check_button_new_with_label(const char *label) {
 
 LIVES_INLINE boolean lives_widget_set_tooltip_text(LiVESWidget *widget, const char *tip_text) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,12,0)
+#if GTK_CHECK_VERSION(2, 12, 0)
   gtk_widget_set_tooltip_text(widget, tip_text);
 #else
   GtkTooltips *tips;
@@ -3735,7 +3735,7 @@ LIVES_INLINE LiVESWidget *lives_widget_get_toplevel(LiVESWidget *widget) {
 
 LIVES_INLINE LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,12,0)
+#if GTK_CHECK_VERSION(2, 12, 0)
   return gtk_widget_get_window(widget);
 #else
   return GDK_WINDOW(widget->window);
@@ -3776,7 +3776,7 @@ LIVES_INLINE boolean lives_xwindow_set_keep_above(LiVESXWindow *xwin, boolean se
 
 LIVES_INLINE boolean lives_widget_set_can_focus(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,18,0)
+#if GTK_CHECK_VERSION(2, 18, 0)
   gtk_widget_set_can_focus(widget, state);
 #else
   if (state)
@@ -3798,7 +3798,7 @@ LIVES_INLINE boolean lives_widget_set_can_focus(LiVESWidget *widget, boolean sta
 
 LIVES_INLINE boolean lives_widget_set_can_default(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,18,0)
+#if GTK_CHECK_VERSION(2, 18, 0)
   gtk_widget_set_can_default(widget, state);
 #else
   if (state)
@@ -3861,7 +3861,7 @@ LIVES_INLINE boolean lives_widget_remove_accelerator(LiVESWidget *widget, LiVESA
 
 boolean lives_widget_get_preferred_size(LiVESWidget *widget, LiVESRequisition *min_size, LiVESRequisition *nat_size) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_widget_get_preferred_size(widget, min_size, nat_size);
   return TRUE;
 #endif
@@ -3877,7 +3877,7 @@ boolean lives_widget_get_preferred_size(LiVESWidget *widget, LiVESRequisition *m
 
 LIVES_INLINE boolean lives_widget_is_sensitive(LiVESWidget *widget) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,18,0)
+#if GTK_CHECK_VERSION(2, 18, 0)
   return gtk_widget_is_sensitive(widget);
 #else
   return GTK_WIDGET_IS_SENSITIVE(widget);
@@ -3892,7 +3892,7 @@ LIVES_INLINE boolean lives_widget_is_sensitive(LiVESWidget *widget) {
 
 LIVES_INLINE boolean lives_widget_is_visible(LiVESWidget *widget) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,18,0)
+#if GTK_CHECK_VERSION(2, 18, 0)
   return gtk_widget_get_visible(widget);
 #else
   return GTK_WIDGET_VISIBLE(widget);
@@ -3908,7 +3908,7 @@ LIVES_INLINE boolean lives_widget_is_visible(LiVESWidget *widget) {
 LIVES_INLINE boolean lives_widget_is_realized(LiVESWidget *widget) {
   // used for giw widgets
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,18,0)
+#if GTK_CHECK_VERSION(2, 18, 0)
   return gtk_widget_get_realized(widget);
 #else
   return GTK_WIDGET_REALIZED(widget);
@@ -4404,7 +4404,7 @@ LIVES_INLINE boolean lives_tool_button_set_use_underline(LiVESToolButton *button
 
 LIVES_INLINE void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_range_set_range(GTK_RANGE(ruler), lower, upper);
   gtk_range_set_value(GTK_RANGE(ruler), position);
 #else
@@ -4437,7 +4437,7 @@ LIVES_INLINE LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDia
 
 LIVES_INLINE double lives_ruler_get_value(LiVESRuler *ruler) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   return gtk_range_get_value(GTK_RANGE(ruler));
 #else
   return ruler->position;
@@ -4452,7 +4452,7 @@ LIVES_INLINE double lives_ruler_get_value(LiVESRuler *ruler) {
 
 LIVES_INLINE double lives_ruler_set_value(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_range_set_value(GTK_RANGE(ruler), value);
 #else
   ruler->position = value;
@@ -4467,7 +4467,7 @@ LIVES_INLINE double lives_ruler_set_value(LiVESRuler *ruler, double value) {
 
 LIVES_INLINE double lives_ruler_set_upper(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_adjustment_set_upper(gtk_range_get_adjustment(GTK_RANGE(ruler)), value);
 #else
   ruler->upper = value;
@@ -4482,7 +4482,7 @@ LIVES_INLINE double lives_ruler_set_upper(LiVESRuler *ruler, double value) {
 
 LIVES_INLINE double lives_ruler_set_lower(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_adjustment_set_lower(gtk_range_get_adjustment(GTK_RANGE(ruler)), value);
 #else
   ruler->lower = value;
@@ -4510,7 +4510,7 @@ LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_text_new(void) {
 LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_spin_new(void) {
   LiVESCellRenderer *renderer = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,10,0)
+#if GTK_CHECK_VERSION(2, 10, 0)
   renderer = gtk_cell_renderer_spin_new();
 #endif
 #endif
@@ -4636,7 +4636,7 @@ LIVES_INLINE boolean lives_toolbar_set_style(LiVESToolbar *toolbar, LiVESToolbar
 LIVES_INLINE int lives_widget_get_allocation_x(LiVESWidget *widget) {
   int x = 0;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,18,0)
+#if GTK_CHECK_VERSION(2, 18, 0)
   GtkAllocation alloc;
   gtk_widget_get_allocation(widget, &alloc);
   x = alloc.x;
@@ -4656,7 +4656,7 @@ LIVES_INLINE int lives_widget_get_allocation_x(LiVESWidget *widget) {
 LIVES_INLINE int lives_widget_get_allocation_y(LiVESWidget *widget) {
   int y = 0;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,18,0)
+#if GTK_CHECK_VERSION(2, 18, 0)
   GtkAllocation alloc;
   gtk_widget_get_allocation(widget, &alloc);
   y = alloc.y;
@@ -4676,7 +4676,7 @@ LIVES_INLINE int lives_widget_get_allocation_y(LiVESWidget *widget) {
 LIVES_INLINE int lives_widget_get_allocation_width(LiVESWidget *widget) {
   int width = 0;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,18,0)
+#if GTK_CHECK_VERSION(2, 18, 0)
   GtkAllocation alloc;
   gtk_widget_get_allocation(widget, &alloc);
   width = alloc.width;
@@ -4694,7 +4694,7 @@ LIVES_INLINE int lives_widget_get_allocation_width(LiVESWidget *widget) {
 LIVES_INLINE int lives_widget_get_allocation_height(LiVESWidget *widget) {
   int height = 0;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,18,0)
+#if GTK_CHECK_VERSION(2, 18, 0)
   GtkAllocation alloc;
   gtk_widget_get_allocation(widget, &alloc);
   height = alloc.height;
@@ -4711,7 +4711,7 @@ LIVES_INLINE int lives_widget_get_allocation_height(LiVESWidget *widget) {
 
 LIVES_INLINE boolean lives_widget_set_state(LiVESWidget *widget, LiVESWidgetState state) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_widget_set_state_flags(widget, state, TRUE);
 #else
   gtk_widget_set_state(widget, state);
@@ -4728,10 +4728,10 @@ LIVES_INLINE boolean lives_widget_set_state(LiVESWidget *widget, LiVESWidgetStat
 
 LIVES_INLINE LiVESWidgetState lives_widget_get_state(LiVESWidget *widget) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   return gtk_widget_get_state_flags(widget);
 #else
-#if GTK_CHECK_VERSION(2,18,0)
+#if GTK_CHECK_VERSION(2, 18, 0)
   return gtk_widget_get_state(widget);
 #else
   return GTK_WIDGET_STATE(widget);
@@ -4770,7 +4770,7 @@ LIVES_INLINE LiVESWidget *lives_bin_get_child(LiVESBin *bin) {
 LIVES_INLINE double lives_adjustment_get_upper(LiVESAdjustment *adj) {
   double upper = 0.;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   upper = gtk_adjustment_get_upper(adj);
 #else
   upper = adj->upper;
@@ -4786,7 +4786,7 @@ LIVES_INLINE double lives_adjustment_get_upper(LiVESAdjustment *adj) {
 LIVES_INLINE double lives_adjustment_get_lower(LiVESAdjustment *adj) {
   double lower = 0.;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   lower = gtk_adjustment_get_lower(adj);
 #else
   lower = adj->lower;
@@ -4802,7 +4802,7 @@ LIVES_INLINE double lives_adjustment_get_lower(LiVESAdjustment *adj) {
 LIVES_INLINE double lives_adjustment_get_page_size(LiVESAdjustment *adj) {
   double page_size = 0.;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   page_size = gtk_adjustment_get_page_size(adj);
 #else
   page_size = adj->page_size;
@@ -4829,7 +4829,7 @@ LIVES_INLINE double lives_adjustment_get_value(LiVESAdjustment *adj) {
 
 LIVES_INLINE boolean lives_adjustment_set_upper(LiVESAdjustment *adj, double upper) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   gtk_adjustment_set_upper(adj, upper);
 #else
   adj->upper = upper;
@@ -4846,7 +4846,7 @@ LIVES_INLINE boolean lives_adjustment_set_upper(LiVESAdjustment *adj, double upp
 
 LIVES_INLINE boolean lives_adjustment_set_lower(LiVESAdjustment *adj, double lower) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   gtk_adjustment_set_lower(adj, lower);
 #else
   adj->lower = lower;
@@ -4863,7 +4863,7 @@ LIVES_INLINE boolean lives_adjustment_set_lower(LiVESAdjustment *adj, double low
 
 LIVES_INLINE boolean lives_adjustment_set_page_size(LiVESAdjustment *adj, double page_size) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   gtk_adjustment_set_page_size(adj, page_size);
 #else
   adj->page_size = page_size;
@@ -5407,7 +5407,7 @@ LIVES_INLINE boolean lives_tree_view_set_headers_visible(LiVESTreeView *tview, b
 LIVES_INLINE LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *tview) {
   LiVESAdjustment *adj = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   adj = gtk_scrollable_get_hadjustment(GTK_SCROLLABLE(tview));
 #else
   adj = gtk_tree_view_get_hadjustment(tview);
@@ -5957,7 +5957,7 @@ LIVES_INLINE boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *scrol
 
 LIVES_INLINE boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *scrolledwindow, LiVESWidget *child) {
 #ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,8,0)
+#if !GTK_CHECK_VERSION(3, 8, 0)
   gtk_scrolled_window_add_with_viewport(scrolledwindow, child);
 #else
   lives_container_add(LIVES_CONTAINER(scrolledwindow), child);
@@ -6007,7 +6007,7 @@ LIVES_INLINE boolean lives_dialog_set_has_separator(LiVESDialog *dialog, boolean
   // return TRUE if implemented
 
 #ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   gtk_dialog_set_has_separator(dialog, has);
   return TRUE;
 #endif
@@ -6023,7 +6023,7 @@ LIVES_INLINE boolean lives_dialog_set_has_separator(LiVESDialog *dialog, boolean
 LIVES_INLINE boolean lives_widget_set_hexpand(LiVESWidget *widget, boolean state) {
   // return TRUE if implemented
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_widget_set_hexpand(widget, state);
   return TRUE;
 #endif
@@ -6039,7 +6039,7 @@ LIVES_INLINE boolean lives_widget_set_hexpand(LiVESWidget *widget, boolean state
 LIVES_INLINE boolean lives_widget_set_vexpand(LiVESWidget *widget, boolean state) {
   // return TRUE if implemented
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_widget_set_vexpand(widget, state);
   return TRUE;
 #endif
@@ -6123,7 +6123,7 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new_with_label(const char *label) {
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3, 10, 0)
   menuitem = gtk_menu_item_new_with_label(label);
 #else
   menuitem = gtk_image_menu_item_new_with_label(label);
@@ -6141,7 +6141,7 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *label) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3, 10, 0)
   menuitem = gtk_menu_item_new_with_mnemonic(label);
 #else
   menuitem = gtk_image_menu_item_new_with_mnemonic(label);
@@ -6236,7 +6236,7 @@ LIVES_INLINE boolean lives_check_menu_item_set_draw_as_radio(LiVESCheckMenuItem 
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3, 10, 0)
   char *xstock_id = lives_strdup(stock_id); // need to back this up as we will use translation functions
   menuitem = gtk_menu_item_new_with_mnemonic(xstock_id);
 
@@ -6362,7 +6362,7 @@ LIVES_INLINE boolean lives_check_menu_item_get_active(LiVESCheckMenuItem *item) 
 }
 
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if !GTK_CHECK_VERSION(3, 10, 0)
 
 LIVES_INLINE boolean lives_image_menu_item_set_image(LiVESImageMenuItem *item, LiVESWidget *image) {
 #ifdef GUI_GTK
@@ -6386,7 +6386,7 @@ LIVES_INLINE boolean lives_image_menu_item_set_image(LiVESImageMenuItem *item, L
 
 LIVES_INLINE boolean lives_menu_set_title(LiVESMenu *menu, const char *title) {
 #ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,10,0)
+#if !GTK_CHECK_VERSION(3, 10, 0)
   char *ntitle = lives_strdup_printf("%s%s", widget_opts.title_prefix, title);
   gtk_menu_set_title(menu, ntitle);
   lives_free(ntitle);
@@ -6499,8 +6499,8 @@ LIVES_INLINE boolean lives_menu_shell_prepend(LiVESMenuShell *menushell, LiVESWi
 LIVES_INLINE boolean lives_image_menu_item_set_always_show_image(LiVESImageMenuItem *item, boolean show) {
   // return TRUE if implemented
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,16,0)
-#if !GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(2, 16, 0)
+#if !GTK_CHECK_VERSION(3, 10, 0)
   gtk_image_menu_item_set_always_show_image(item, show);
 #endif
   return TRUE;
@@ -6558,11 +6558,11 @@ LIVES_INLINE boolean lives_scale_set_digits(LiVESScale *scale, int digits) {
 LIVES_INLINE boolean lives_scale_button_set_orientation(LiVESScaleButton *scale, LiVESOrientation orientation) {
   // return TRUE if implemented
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_orientable_set_orientation(GTK_ORIENTABLE(scale), orientation);
   return TRUE;
 #else
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   gtk_scale_button_set_orientation(scale, orientation);
   return TRUE;
 #endif
@@ -6579,7 +6579,7 @@ LIVES_INLINE boolean lives_scale_button_set_orientation(LiVESScaleButton *scale,
 LIVES_INLINE double lives_scale_button_get_value(LiVESScaleButton *scale) {
   double value = 0.;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   value = gtk_scale_button_get_value(scale);
 #else
   value = gtk_adjustment_get_value(gtk_range_get_adjustment(scale));
@@ -6593,7 +6593,7 @@ LIVES_INLINE double lives_scale_button_get_value(LiVESScaleButton *scale) {
 
 LIVES_INLINE boolean lives_scale_button_set_value(LiVESScaleButton *scale, double value) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   gtk_scale_button_set_value(scale, value);
 #else
   gtk_adjustment_set_value(gtk_range_get_adjustment(scale), value);
@@ -6671,7 +6671,7 @@ LIVES_INLINE boolean lives_grid_set_column_spacing(LiVESGrid *grid, uint32_t spa
 
 LIVES_INLINE boolean lives_grid_remove_row(LiVESGrid *grid, int posn) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3, 10, 0)
   gtk_grid_remove_row(grid, posn);
   return TRUE;
 #endif
@@ -6683,7 +6683,7 @@ LIVES_INLINE boolean lives_grid_remove_row(LiVESGrid *grid, int posn) {
 
 LIVES_INLINE boolean lives_grid_insert_row(LiVESGrid *grid, int posn) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3, 10, 0)
   gtk_grid_insert_row(grid, posn);
   return TRUE;
 #endif
@@ -6985,7 +6985,7 @@ LIVES_INLINE boolean lives_table_attach(LiVESTable *table, LiVESWidget *child, u
   else
     lives_widget_set_vexpand(child, FALSE);
 
-#if GTK_CHECK_VERSION(3,12,0)
+#if GTK_CHECK_VERSION(3, 12, 0)
   gtk_widget_set_margin_start(child, xpad);
   gtk_widget_set_margin_end(child, xpad);
 #else
@@ -7033,7 +7033,7 @@ LIVES_INLINE boolean lives_table_attach(LiVESTable *table, LiVESWidget *child, u
 LIVES_INLINE LiVESWidget *lives_color_button_new_with_color(const LiVESWidgetColor *color) {
   LiVESWidget *cbutton = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   cbutton = gtk_color_button_new_with_rgba(color);
 #else
   cbutton = gtk_color_button_new_with_color(color);
@@ -7048,10 +7048,10 @@ LIVES_INLINE LiVESWidget *lives_color_button_new_with_color(const LiVESWidgetCol
 
 LIVES_INLINE boolean lives_color_button_get_color(LiVESColorButton *button, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,4,0)
+#if GTK_CHECK_VERSION(3, 4, 0)
   gtk_color_chooser_get_rgba((GtkColorChooser *)button, color);
 #else
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_color_button_get_rgba((GtkColorChooser *)button, color);
 #else
   gtk_color_button_get_color(button, color);
@@ -7068,10 +7068,10 @@ LIVES_INLINE boolean lives_color_button_get_color(LiVESColorButton *button, LiVE
 
 LIVES_INLINE boolean lives_color_button_set_color(LiVESColorButton *button, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,4,0)
+#if GTK_CHECK_VERSION(3, 4, 0)
   gtk_color_chooser_set_rgba((GtkColorChooser *)button, color);
 #else
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_color_button_set_rgba((GtkColorChooser *)button, color);
 #else
   gtk_color_button_set_color(button, color);
@@ -7108,10 +7108,10 @@ LIVES_INLINE boolean lives_color_button_set_title(LiVESColorButton *button, cons
 
 LIVES_INLINE boolean lives_color_button_set_use_alpha(LiVESColorButton *button, boolean use_alpha) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,4,0)
+#if GTK_CHECK_VERSION(3, 4, 0)
   gtk_color_chooser_set_use_alpha((GtkColorChooser *)button, use_alpha);
 #else
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_color_button_set_use_alpha((GtkColorChooser *)button, use_alpha);
 #else
   gtk_color_button_set_use_alpha(button, use_alpha);
@@ -7133,7 +7133,7 @@ LIVES_INLINE boolean lives_color_button_set_use_alpha(LiVESColorButton *button, 
 
 LIVES_INLINE boolean lives_widget_get_pointer(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   // try: gdk_event_get_device (event)
   LiVESXWindow *xwin;
   if (widget == NULL) xwin = gdk_get_default_root_window();
@@ -7178,7 +7178,7 @@ LIVES_INLINE LiVESXWindow *lives_display_get_window_at_pointer
 (LiVESXDevice *device, LiVESXDisplay *display, int *win_x, int *win_y) {
   LiVESXWindow *xwindow = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   if (device == NULL) return NULL;
   xwindow = gdk_device_get_window_at_position(device, win_x, win_y);
 #else
@@ -7198,7 +7198,7 @@ LIVES_INLINE LiVESXWindow *lives_display_get_window_at_pointer
 LIVES_INLINE boolean lives_display_get_pointer
 (LiVESXDevice *device, LiVESXDisplay *display, LiVESXScreen **screen, int *x, int *y, LiVESXModifierType *mask) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   if (device == NULL) return TRUE;
   gdk_device_get_position(device, screen, x, y);
 #else
@@ -7220,11 +7220,11 @@ LIVES_INLINE boolean lives_display_get_pointer
 LIVES_INLINE boolean lives_display_warp_pointer
 (LiVESXDevice *device, LiVESXDisplay *display, LiVESXScreen *screen, int x, int y) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   if (device == NULL) return TRUE;
   gdk_device_warp(device, screen, x, y);
 #else
-#if GLIB_CHECK_VERSION(2,8,0)
+#if GLIB_CHECK_VERSION(2, 8, 0)
   gdk_display_warp_pointer(display, screen, x, y);
 #endif
 #endif
@@ -7288,7 +7288,7 @@ LIVES_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget, const char *m
 LIVES_INLINE uint32_t lives_timer_add(uint32_t interval, LiVESWidgetSourceFunc function, livespointer data) {
   uint32_t timer = 0;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   timer = g_timeout_add(interval, function, data);
 #else
   timer = gtk_timeout_add(interval, function, data);
@@ -7304,7 +7304,7 @@ LIVES_INLINE uint32_t lives_timer_add(uint32_t interval, LiVESWidgetSourceFunc f
 
 LIVES_INLINE boolean lives_timer_remove(uint32_t timer) {
 #ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   gtk_timeout_remove(timer);
   return TRUE;
 #endif
@@ -7425,7 +7425,7 @@ LIVES_INLINE void lives_label_set_hpadding(LiVESLabel *label, int pad) {
 
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,12,0)
+#if GTK_CHECK_VERSION(2, 12, 0)
   char *text = gtk_widget_get_tooltip_text(source);
   lives_widget_set_tooltip_text(dest, text);
   lives_free(text);
@@ -7464,7 +7464,7 @@ boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *adj, double volume) {
   LiVESWidget *volume_scale = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   volume_scale = gtk_volume_button_new();
   gtk_scale_button_set_value(GTK_SCALE_BUTTON(volume_scale), volume);
   lives_scale_button_set_orientation(LIVES_SCALE_BUTTON(volume_scale), orientation);
@@ -7944,7 +7944,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
 #endif
 
@@ -8003,10 +8003,10 @@ LiVESWidget *lives_standard_hruler_new(void) {
   LiVESWidget *hruler = NULL;
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   hruler = gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, NULL);
   gtk_scale_set_draw_value(GTK_SCALE(hruler), FALSE);
-#if GTK_CHECK_VERSION(3,4,0)
+#if GTK_CHECK_VERSION(3, 4, 0)
   gtk_scale_set_has_origin(GTK_SCALE(hruler), FALSE);
 #endif
   gtk_scale_set_digits(GTK_SCALE(hruler), 8);
@@ -8038,7 +8038,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   if (child != NULL) {
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     if (!LIVES_IS_SCROLLABLE(child))
 #else
     if (!LIVES_IS_TEXT_VIEW(child))
@@ -8082,7 +8082,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
     gtk_viewport_set_shadow_type(GTK_VIEWPORT(swchild), LIVES_SHADOW_IN);
 
   if (width != 0 && height != 0) {
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
     if (width > -1 || height > -1)
       lives_widget_set_size_request(scrolledwindow, width, height);
     //lives_widget_set_minimum_size(scrolledwindow, width, height); // crash if we dont have toplevel win
@@ -8447,7 +8447,7 @@ boolean widget_helper_init(void) {
   register int i;
 #endif
 
-#if GTK_CHECK_VERSION(3,10,0) || defined GUI_QT
+#if GTK_CHECK_VERSION(3, 10, 0) || defined GUI_QT
   lives_snprintf(LIVES_STOCK_LABEL_CANCEL, 32, "%s", (_("_Cancel")));
   lives_snprintf(LIVES_STOCK_LABEL_OK, 32, "%s", (_("_OK")));
   lives_snprintf(LIVES_STOCK_LABEL_YES, 32, "%s", (_("_Yes")));
@@ -8510,7 +8510,7 @@ boolean widget_helper_init(void) {
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
   boolean has_icon = FALSE;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   GtkIconInfo *iset = gtk_icon_theme_lookup_icon(gtk_icon_theme_get_default(), stock_id, size, GTK_ICON_LOOKUP_USE_BUILTIN);
 #else
   GtkIconSet *iset = gtk_icon_factory_lookup_default(stock_id);
@@ -8542,7 +8542,7 @@ LIVES_INLINE void lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *
 
 LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   g_object_unref(LIVES_GUI_OBJECT(cursor));
 #else
   gdk_cursor_unref(cursor);
@@ -8792,7 +8792,7 @@ void lives_spin_button_configure(LiVESSpinButton *spinbutton,
   LiVESAdjustment *adj = lives_spin_button_get_adjustment(spinbutton);
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   gtk_adjustment_configure(adj, value, lower, upper, step_increment, page_increment, 0.);
 #else
   g_object_freeze_notify(LIVES_WIDGET_OBJECT(adj));
@@ -8881,7 +8881,7 @@ LiVESWidget *lives_menu_add_separator(LiVESMenu *menu) {
 
 LIVES_INLINE int lives_display_get_n_screens(LiVESXDisplay *disp) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3, 10, 0)
   return 1;
 #else
   return gdk_display_get_n_screens(disp);
@@ -8944,7 +8944,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
     if (mainw->multitrack != NULL) mainw->multitrack->cursor_style = cstyle;
     else mainw->cursor_style = cstyle;
   }
-#if GTK_CHECK_VERSION(2,22,0)
+#if GTK_CHECK_VERSION(2, 22, 0)
   cursor = gdk_window_get_cursor(window);
   if (cursor != NULL && gdk_cursor_get_cursor_type(cursor) == ctype) return;
   cursor = NULL;
@@ -9008,9 +9008,9 @@ void hide_cursor(LiVESXWindow *window) {
   //make the cursor invisible in playback windows
 #ifdef GUI_GTK
 
-#if GTK_CHECK_VERSION(2,16,0)
+#if GTK_CHECK_VERSION(2, 16, 0)
   if (GDK_IS_WINDOW(window)) {
-#if GTK_CHECK_VERSION(3,16,0)
+#if GTK_CHECK_VERSION(3, 16, 0)
     GdkCursor *cursor = gdk_cursor_new_for_display(gdk_window_get_display(window), GDK_BLANK_CURSOR);
 #else
     GdkCursor *cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
@@ -9189,7 +9189,7 @@ LiVESWidget *add_fill_to_box(LiVESBox *box) {
 LIVES_INLINE boolean lives_button_box_set_button_width(LiVESButtonBox *bbox, LiVESWidget *button, int min_width) {
   lives_button_box_set_layout(bbox, LIVES_BUTTONBOX_SPREAD);
 #ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   gtk_button_box_set_child_size(bbox, min_width / 4, -1);
   return TRUE;
 #endif

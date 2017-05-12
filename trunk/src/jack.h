@@ -112,7 +112,6 @@ typedef struct {
   volatile int read_abuf;
 
   volatile int astream_fd;
-
 } jack_driver_t;
 
 

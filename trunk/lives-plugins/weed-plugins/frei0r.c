@@ -62,7 +62,7 @@ typedef void (*f0r_update2_f)(f0r_instance_t instance, double time, const uint32
                               const uint32_t *inframe3, uint32_t *outframe);
 typedef void (*f0r_set_param_value_f)(f0r_instance_t *instance, f0r_param_t *param, int param_index);
 
-#if FREI0R_MAJOR_VERSION >1 || FREI0R_MINOR_VERSION > 1
+#if FREI0R_MAJOR_VERSION > 1 || FREI0R_MINOR_VERSION > 1
 #define CAN_GET_DEF
 typedef void (*f0r_get_param_value_f)(f0r_instance_t *instance, f0r_param_t *param, int param_index);
 #endif

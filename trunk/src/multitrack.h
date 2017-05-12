@@ -650,7 +650,6 @@ struct _mt {
 
   char *force_load_name; ///< pointer to a string which contains a filename to be force loaded when load_event_list_activate() is called.
   ///< Normally NULL except when called from language bindings.
-
 };  // lives_mt
 
 
@@ -700,7 +699,6 @@ struct _track_rect {
 
   LiVESWidget
   *eventbox; ///< pointer to eventbox widget which contains this block; we can use its "layer_number" to get the track/layer number
-
 };
 
 

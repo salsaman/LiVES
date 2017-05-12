@@ -144,7 +144,7 @@ enum {
 
 using namespace cv;
 
-#define DEBUG_PRINT(a) fprintf(stderr,"%s\n",a)
+#define DEBUG_PRINT(a) fprintf(stderr, "%s\n", a)
 
 
 
@@ -208,7 +208,6 @@ cv::Mat make_snp_noise(cv::Size const size, float const low, float const high) {
 template <typename VecT, std::size_t Sz>
 cv::Mat make_perlin_noise(cv::Size const size,
                           std::array<float, Sz> const &amp) {
-
   cv::Mat retval = cv::Mat::zeros(size, tnzu::opencv_type_traits<VecT>::value);
 
   for (std::size_t i = 0; i < Sz; ++i) {
@@ -318,7 +317,6 @@ private:
 
 template <typename VecT>
 int phatch_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
-
   int error;
 
   int const type = retimg.type();
@@ -331,7 +329,6 @@ int phatch_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   // snp noise based on grayscale
   Mat noise(size, CV_MAKETYPE(CV_MAT_DEPTH(type), 1));
   {
-
     // grascaling
     Mat grayscale;
     switch (palette) {
@@ -606,10 +603,8 @@ int lbloom_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
           d[x][c] = tnzu::normalize_cast<uchar>(sbgr[c]);
         }
       }
-
     }
   }
-
   return 0;
 }
 
@@ -793,17 +788,13 @@ static int common_process(weed_plant_t *inst, weed_timecode_t tc, int filter_typ
     break;
   }
 
-
   weed_free(in_params);
 
   return WEED_NO_ERROR;
-
 }
 
 
 //////////////////////////////////////////
-
-
 
 int lbloom_process(weed_plant_t *inst, weed_timecode_t tc) {
   return common_process(inst, tc, FILTER_LIGHT_BLOOM);
@@ -828,12 +819,7 @@ int paraffin_process(weed_plant_t *inst, weed_timecode_t tc) {
 int cnoise_compute(Mat &retimg, weed_plant_t **in_params, double sec) {
   int error;
   try {
-
     cv::Size const size = retimg.size();
-
-    //
-    // Params
-    //
 
     int const time = weed_get_int_value(in_params[PARAMc_TIME], "value", &error);
     int const time_limit = weed_get_int_value(in_params[PARAMc_TIME_LIMIT], "value", &error) - 1;
@@ -858,7 +844,6 @@ int cnoise_compute(Mat &retimg, weed_plant_t **in_params, double sec) {
       ntimes = time_limit * 2 - ntimes;
     }
     ++ntimes;
-
 
     // generate time-Coherent perlin noise
     cv::Mat field = tnzu::make_perlin_noise<float>(size, amp);
@@ -912,20 +897,13 @@ int cnoise_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_free(in_params);
 
   return WEED_NO_ERROR;
-
 }
 
-
-
-
 ///////////////////////////////
-
-
 
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
-
     int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
 
     int opalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
@@ -970,9 +948,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_plant_t *filter_class;
 
-
     // pencil hatching
-
     filter_class = weed_filter_class_init("Toonz: Pencil Hatching", "DWANGO co.", 1, 0, NULL,
                                           &phatch_process, NULL,
                                           in_chantmpls, out_chantmpls, in_paramsa, NULL);
@@ -988,15 +964,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
 
     // light glare
-
-
     filter_class = weed_filter_class_init("Toonz: Light Glare", "DWANGO co.", 1, 0, NULL,
                                           &lglare_process, NULL,
                                           in_chantmpls, out_chantmpls, in_paramsb, NULL);
-
-
-
-
 
     weed_set_string_value(filter_class, "extra_authors", "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
@@ -1006,15 +976,10 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
 
-
-
     // coherent noise
-
     filter_class = weed_filter_class_init("Toonz: Coherent Noise", "DWANGO co.", 1, 0, NULL,
                                           &cnoise_process, NULL,
                                           NULL, out_chantmplsx, in_paramsc, NULL);
-
-
 
     weed_set_string_value(filter_class, "extra_authors", "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
@@ -1026,12 +991,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     // light bloom
 
-
     filter_class = weed_filter_class_init("Toonz: Light Bloom", "DWANGO co.", 1, 0, NULL,
                                           &lbloom_process, NULL,
                                           in_chantmpls, out_chantmpls, in_paramsd, NULL);
-
-
 
     weed_set_string_value(filter_class, "extra_authors", "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
@@ -1043,11 +1005,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     // paraffin
 
-
     filter_class = weed_filter_class_init("Toonz: Paraffin", "DWANGO co.", 1, 0, NULL,
                                           &paraffin_process, NULL,
                                           in_chantmpls, out_chantmpls, in_paramse, NULL);
-
 
     weed_set_string_value(filter_class, "extra_authors", "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
@@ -1056,12 +1016,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-
-
-
-
     weed_set_int_value(plugin_info, "version", package_version);
-
   }
   return plugin_info;
 }

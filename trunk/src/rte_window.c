@@ -1762,7 +1762,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), ok_button, LIVES_RESPONSE_OK);
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);
 #else
   if (LIVES_IS_BOX(abox)) add_fill_to_box(LIVES_BOX(abox));

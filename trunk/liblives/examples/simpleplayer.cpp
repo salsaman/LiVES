@@ -18,8 +18,6 @@ bool modeChangedCb(livesApp *lives, modeChangedInfo *info, void *data) {
 
 
 int main() {
-
-
   livesApp *lives = new livesApp;
 
   set cset = lives->getSet();
@@ -45,5 +43,4 @@ int main() {
   sleep(10);
 
   delete lives;
-
 }

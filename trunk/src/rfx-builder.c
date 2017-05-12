@@ -4005,7 +4005,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->com_failed = FALSE;
 
   switch (status) {
-  case RFX_STATUS_TEST :
+  case RFX_STATUS_TEST:
     rfx_dir_to = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
 
     lives_mkdir_with_parents((tmp = lives_filename_from_utf8(rfx_dir_to, -1, NULL, NULL, NULL)), capable->umask);
@@ -4014,7 +4014,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     rfx_script_to = lives_build_filename(rfx_dir_to, basename, NULL);
     lives_free(rfx_dir_to);
     break;
-  case RFX_STATUS_CUSTOM :
+  case RFX_STATUS_CUSTOM:
     rfx_dir_to = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, NULL);
 
     lives_mkdir_with_parents((tmp = lives_filename_from_utf8(rfx_dir_to, -1, NULL, NULL, NULL)), capable->umask);
@@ -4023,7 +4023,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     rfx_script_to = lives_build_filename(rfx_dir_to, basename, NULL);
     lives_free(rfx_dir_to);
     break;
-  default :
+  default:
     rfx_script_to = lives_build_filename(prefs->prefix_dir, PLUGIN_SCRIPTS_DIR,
                                          PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS, basename, NULL);
     break;
@@ -4324,14 +4324,14 @@ LiVESList *get_script_list(short status) {
   LiVESList *script_list = NULL;
 
   switch (status) {
-  case RFX_STATUS_TEST :
+  case RFX_STATUS_TEST:
     script_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, TRUE, NULL, "script");
     break;
-  case RFX_STATUS_CUSTOM :
+  case RFX_STATUS_CUSTOM:
     script_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, TRUE, NULL, "script");
     break;
-  case RFX_STATUS_BUILTIN :
-  case RFX_STATUS_COPY :
+  case RFX_STATUS_BUILTIN:
+  case RFX_STATUS_COPY:
     script_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS, TRUE, NULL, "script");
     break;
   }

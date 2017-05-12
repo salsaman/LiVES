@@ -20,7 +20,7 @@
 
 #include <gtk/gtk.h>
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 
 #ifndef ROUND
 #define ROUND(a) ((int)(a<0.?a-.5:a+.5))
@@ -1053,4 +1053,4 @@ giw_timeline_get_layout(GtkWidget   *widget,
 
 
 
-#endif // #if GTK_CHECK_VERSION(3,0,0)
+#endif // #if GTK_CHECK_VERSION(3, 0, 0)

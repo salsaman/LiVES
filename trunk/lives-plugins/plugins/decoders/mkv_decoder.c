@@ -1569,7 +1569,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       av_reduce(&st->sample_aspect_ratio.num,
                 &st->sample_aspect_ratio.den,
                 st->codec->height * track->video.display_width,
-                st->codec-> width * track->video.display_height,
+                st->codec->width * track->video.display_height,
                 255);
       if (st->codec->codec_id != CODEC_ID_H264)
         st->need_parsing = AVSTREAM_PARSE_HEADERS;

@@ -48,7 +48,7 @@ typedef struct _GiwVSlider        GiwVSlider;
 typedef struct _GiwVSliderClass   GiwVSliderClass;
 
 struct _GiwVSlider {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   GtkWidget parent_instance;
 #endif
   GtkWidget widget;

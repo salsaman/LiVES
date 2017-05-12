@@ -372,7 +372,6 @@ typedef struct {
   int max_disp_vtracks;
 
   boolean mt_load_fuzzy;
-
 } _prefs;
 
 enum {
@@ -643,7 +642,6 @@ typedef struct {
 
   LiVESList *disabled_decoders;
   LiVESList *disabled_decoders_new;
-
 } _future_prefs;
 
 _prefs *prefs;

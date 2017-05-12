@@ -3600,7 +3600,7 @@ boolean prepare_to_play_foreign(void) {
 
 
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
 #ifdef GDK_WINDOWING_X11
   GdkVisual *vissi = NULL;
   register int i;
@@ -3659,7 +3659,7 @@ boolean prepare_to_play_foreign(void) {
   cfile->img_type = IMG_TYPE_BEST; // override the pref
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 
 #ifdef GDK_WINDOWING_X11
   mainw->foreign_window = gdk_x11_window_foreign_new_for_display
@@ -3677,14 +3677,14 @@ boolean prepare_to_play_foreign(void) {
 
   if (mainw->foreign_window != NULL) gdk_window_set_keep_above(mainw->foreign_window, TRUE);
 
-#else // 3,0,0
+#else // 3, 0, 0
   mainw->foreign_window = gdk_window_foreign_new(mainw->foreign_id);
 #endif
 #endif // GUI_GTK
 
 #ifdef GUI_GTK
 #ifdef GDK_WINDOWING_X11
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
 
   if (mainw->foreign_visual != NULL) {
     for (i = 0; i < capable->nmonitors; i++) {
@@ -4231,7 +4231,7 @@ boolean check_dev_busy(char *devstr) {
 
 
 void activate_url_inner(const char *link) {
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   LiVESError *err = NULL;
   gtk_show_uri(NULL, link, GDK_CURRENT_TIME, &err);
 #else

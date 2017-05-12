@@ -360,11 +360,11 @@ start_sync:
         AVIStream *ast1 = st1->priv_data;
         //workaround for broken small-file-bug402.avi
         if (d[2] == 'w' && d[3] == 'b'
-            && n == 0
-            && st ->codec->codec_type == AVMEDIA_TYPE_VIDEO
-            && st1->codec->codec_type == AVMEDIA_TYPE_AUDIO
-            && ast->prefix == 'd' * 256 + 'c'
-            && (d[2] * 256 + d[3] == ast1->prefix || !ast1->prefix_count)
+	    && n == 0
+	    && st->codec->codec_type == AVMEDIA_TYPE_VIDEO
+	    && st1->codec->codec_type == AVMEDIA_TYPE_AUDIO
+	    && ast->prefix == 'd' * 256 + 'c'
+	    && (d[2] * 256 + d[3] == ast1->prefix || !ast1->prefix_count)
            ) {
           n = 1;
           st = st1;

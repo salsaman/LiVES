@@ -137,7 +137,7 @@ livespointer lives_memset(livespointer s, int c, size_t n) {
 
 #ifdef GUI_GTK
 livespointer lives_calloc(size_t nmemb, size_t size) {
-#if GTK_CHECK_VERSION(2,24,0)
+#if GTK_CHECK_VERSION(2, 24, 0)
   return lives_try_malloc0_n(nmemb, size);
 #endif
   return calloc(nmemb, size);

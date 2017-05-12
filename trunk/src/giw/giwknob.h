@@ -47,7 +47,7 @@ typedef struct _GiwKnob        GiwKnob;
 typedef struct _GiwKnobClass   GiwKnobClass;
 
 struct _GiwKnob {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   GtkWidget parent_instance;
 #endif
 
@@ -110,7 +110,6 @@ struct _GiwKnob {
 
   gulong chsig;
   gulong vchsig;
-
 };
 
 struct _GiwKnobClass {

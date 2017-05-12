@@ -65,7 +65,7 @@
 
 #if HAVE_AVFORMAT_INTERNAL_H && HAVE_AVPRIV_SET_PTS_INFO
 #include <avformat/internal.h>
-#define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
+#define av_set_pts_info(a, b, c, d) avpriv_set_pts_info(a, b, c, d)
 
 #else
 
@@ -101,7 +101,7 @@ static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits,
 #endif
 
 
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55,28,1)
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55, 28, 1)
 #define av_frame_alloc()  avcodec_alloc_frame()
 #if !HAVE_AVFRAME_UNREF
 #define av_frame_unref(a)  avcodec_free_frame(a)

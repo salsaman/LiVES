@@ -137,8 +137,8 @@ static void doWarp(int xw, int yw, int cw, RGB32 *src, RGB32 *dst, int width, in
     for (x = 0; x < width; x++) {
       i = *distptr;
       distptr++;
-      dx = sdata->ctable [i + 1] + x;
-      dy = sdata->ctable [i] + y;
+      dx = sdata->ctable[i + 1] + x;
+      dy = sdata->ctable[i] + y;
 
 
       if (dx < 0) dx = 0;

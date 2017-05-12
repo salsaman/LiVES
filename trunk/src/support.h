@@ -12,7 +12,7 @@
 #include <gtk/gtk.h>
 #define lives_strdup(a) g_strdup(a)
 #define lives_free(a) g_free(a)
-#define lives_locale_to_utf8(a,b,c,d,e) g_locale_to_utf8(a,b,c,d,e)
+#define lives_locale_to_utf8(a, b, c, d, e) g_locale_to_utf8(a, b, c, d, e)
 #endif
 
 /*
@@ -27,22 +27,22 @@ char *translate_with_plural(const char *String, const char *StringPlural, unsign
 #  include <libintl.h>
 #  undef _
 #  define _(String) (translate(String))
-#  define P_(String,StringPlural,n) (translate_with_plural(String,StringPlural,n))
+#  define P_(String, StringPlural, n) (translate_with_plural(String, StringPlural, n))
 #  ifdef gettext_noop
-#    define N_(String) gettext_noop (String)
+#    define N_(String) gettext_noop(String)
 #  else
 #    define N_(String) (String)
 #  endif
 #else
 #  define textdomain(String) (String)
 #  define gettext(String) (String)
-#  define dgettext(Domain,Message) (Message)
-#  define dngettext(Domain,Message,MsgPlur,n) (Message)
-#  define dcgettext(Domain,Message,Type) (Message)
-#  define bindtextdomain(Domain,Directory) (Domain)
+#  define dgettext(Domain, Message) (Message)
+#  define dngettext(Domain, Message, MsgPlur, n) (Message)
+#  define dcgettext(Domain, Message, Type) (Message)
+#  define bindtextdomain(Domain, Directory) (Domain)
 #  define _(String) (String)
 #  define N_(String) (String)
-#  define P_(String,StringPlural,n) (String)
+#  define P_(String, StringPlural, n) (String)
 #endif
 
 #endif

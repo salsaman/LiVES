@@ -1422,7 +1422,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   dfile = lives_strdup_printf("%s"LIVES_DIR_SEP"theme%d"LIVES_DIR_SEP, prefs->workdir, capable->mainpid);
   themefile = lives_build_filename(dfile, "header.theme", NULL);
 #ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   lives_free(themefile);
   themefile = lives_build_filename(dfile, "header.theme_gtk2", NULL);
 #endif
@@ -5704,7 +5704,7 @@ void switch_clip_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_about_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
   char *license = lives_strdup(_(
                                  "This program is free software; you can redistribute it and/or modify\n"
                                  "it under the terms of the GNU General Public License as published by\n"
@@ -5725,7 +5725,7 @@ void on_about_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   char *translator_credits = lives_strdup(_("translator_credits"));
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   char *authors[2] = {LIVES_AUTHOR_EMAIL, NULL};
 #else
   gtk_about_dialog_set_url_hook(activate_url, NULL, NULL);
@@ -5742,7 +5742,7 @@ void on_about_activate(LiVESMenuItem *menuitem, livespointer user_data) {
                         "license", license,
                         "title", title,
                         "translator_credits", translator_credits,
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
                         "authors", authors,
                         "license-type", GTK_LICENSE_GPL_3_0,
 #endif
@@ -5809,7 +5809,7 @@ void donate_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_fsplayarea_event(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   //LiVESXEventExpose *event=NULL;
 #else
@@ -5989,7 +5989,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
       if (error == NULL) {
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), "pixbuf", pixbuf);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
         expose_fsplayarea_event(mainw->fs_playarea, NULL, NULL);
 #else
         expose_fsplayarea_event(mainw->fs_playarea, NULL);
@@ -6312,7 +6312,7 @@ void on_ok_file_open_clicked(LiVESFileChooser *chooser, LiVESSList *fnames) {
 void drag_from_outside(LiVESWidget *widget, GdkDragContext *dcon, int x, int y,
                        GtkSelectionData *data, uint32_t info, uint32_t time, livespointer user_data) {
   GSList *fnames = NULL;
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   char *filelist = (char *)gtk_selection_data_get_data(data);
 #else
   char *filelist = (char *)data->data;
@@ -7446,16 +7446,16 @@ void on_mute_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_spin_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
-  case 1 :
+  case 1:
     mainw->fx1_val = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 2 :
+  case 2:
     mainw->fx2_val = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 3 :
+  case 3:
     mainw->fx3_val = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 4 :
+  case 4:
     mainw->fx4_val = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
     break;
   }
@@ -7466,16 +7466,16 @@ void on_spin_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_
   // generic
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
-  case 1 :
+  case 1:
     mainw->fx1_start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 2 :
+  case 2:
     mainw->fx2_start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 3 :
+  case 3:
     mainw->fx3_start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 4 :
+  case 4:
     mainw->fx4_start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   }
@@ -7486,16 +7486,16 @@ void on_spin_step_value_changed(LiVESSpinButton *spinbutton, livespointer user_d
   // generic
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
-  case 1 :
+  case 1:
     mainw->fx1_step = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 2 :
+  case 2:
     mainw->fx2_step = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 3 :
+  case 3:
     mainw->fx3_step = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 4 :
+  case 4:
     mainw->fx4_step = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   }
@@ -7506,16 +7506,16 @@ void on_spin_end_value_changed(LiVESSpinButton *spinbutton, livespointer user_da
   // generic
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
-  case 1 :
+  case 1:
     mainw->fx1_end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 2 :
+  case 2:
     mainw->fx2_end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 3 :
+  case 3:
     mainw->fx3_end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
-  case 4 :
+  case 4:
     mainw->fx4_end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   }
@@ -8817,7 +8817,7 @@ void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer u
 
 // for the timer bars
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_vid_event(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   LiVESXEventExpose *event = NULL;
   boolean dest_cr = FALSE;
@@ -9000,7 +9000,7 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_laud_event(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   LiVESXEventExpose *event = NULL;
   boolean need_cr = TRUE;
@@ -9048,7 +9048,7 @@ boolean expose_laud_event(LiVESWidget *widget, LiVESXEventExpose *event) {
 
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_raud_event(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   LiVESXEventExpose *event = NULL;
   boolean need_cr = FALSE;
@@ -10153,7 +10153,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int response;
   double rec_end_time = -1.;
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
 #ifndef GDK_WINDOWING_X11
   do_blocking_error_dialog(_("\n\nThis function will only work with X11.\nPlease send a patch to get it working on other platforms.\n\n"));
   return;
@@ -10297,7 +10297,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   array = lives_strsplit(mainw->msg, "|", -1);
-#if GTK_CHECK_VERSION(3,0,0) || defined GUI_QT
+#if GTK_CHECK_VERSION(3, 0, 0) || defined GUI_QT
   mainw->foreign_id = (Window)atoi(array[1]);
 #else
   mainw->foreign_id = (GdkNativeWindow)atoi(array[1]);

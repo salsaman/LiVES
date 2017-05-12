@@ -138,7 +138,6 @@ typedef struct {
   int _casamps; ///< current out_asamps
 
   volatile boolean die;  ///< set to TRUE to shut down thread
-
 } lives_audio_buf_t;
 
 

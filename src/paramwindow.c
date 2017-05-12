@@ -901,7 +901,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
       if (rfx->status != RFX_STATUS_WEED && no_process) {
         LiVESWidget *abox = lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[didx]));
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
         lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);
 #else
         if (LIVES_IS_BOX(abox)) add_fill_to_box(LIVES_BOX(abox));
@@ -1388,7 +1388,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   }
 
   switch (param->type) {
-  case LIVES_PARAM_BOOL :
+  case LIVES_PARAM_BOOL:
     if (!param->group) {
 
       if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) {
@@ -1459,7 +1459,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       if (param->hidden) lives_widget_set_sensitive(radiobutton, FALSE);
     }
     break;
-  case LIVES_PARAM_NUM :
+  case LIVES_PARAM_NUM:
     was_num = TRUE;
 
     if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) {
@@ -1539,7 +1539,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     }
     break;
 
-  case LIVES_PARAM_COLRGB24 :
+  case LIVES_PARAM_COLRGB24:
     get_colRGB24_param(param->value, &rgb);
 
     rgba.red = rgb.red << 8;
@@ -1590,7 +1590,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     break;
 
   case LIVES_PARAM_STRING:
-
     if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) {
       if (param->max == 0.) txt = lives_strdup(disp_string);
       else txt = lives_strndup(disp_string, (int)param->max);
@@ -1599,8 +1598,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       if (param->max == 0.) txt = lives_strdup((char *)param->value);
       else txt = lives_strndup((char *)param->value, (int)param->max);
     }
-
-
 
     if (((int)param->max > RFX_TEXT_MAGIC || param->max == 0.) &&
         param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
@@ -1684,7 +1681,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     break;
 
   case LIVES_PARAM_STRING_LIST:
-
     widget_opts.expand = LIVES_EXPAND_EXTRA;
     combo = lives_standard_combo_new(name, use_mnemonic, param->list, (LiVESBox *)hbox, param->desc);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;

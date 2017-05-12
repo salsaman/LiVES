@@ -70,7 +70,7 @@
 #include <stdlib.h> // for free
 
 
-#if GLIB_CHECK_VERSION(2,14,0) == FALSE
+#if !GLIB_CHECK_VERSION(2, 14, 0)
 static inline gpointer g_slice_copy(gsize bsize, gconstpointer block) {
   gpointer ret = g_slice_alloc(bsize);
   memcpy(ret, block, bsize);

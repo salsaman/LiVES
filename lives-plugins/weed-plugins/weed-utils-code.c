@@ -103,7 +103,7 @@ static int weed_set_voidptr_value(weed_plant_t *plant, const char *key, void *va
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // general leaf getter
 
-inline static int weed_get_value(weed_plant_t *plant, const char *key, void *value) {
+static inline int weed_get_value(weed_plant_t *plant, const char *key, void *value) {
   // returns a WEED_ERROR
   return weed_leaf_get(plant, key, 0, value);
 }

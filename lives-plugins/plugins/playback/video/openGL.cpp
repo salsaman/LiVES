@@ -348,7 +348,6 @@ static void setWindowDecorations(void) {
 
   WM_HINTS = XInternAtom(dpy, "_MOTIF_WM_HINTS", True);
   if (WM_HINTS != None) {
-
     XGetWindowProperty(dpy, xWin, WM_HINTS, 0,
                        sizeof(MotifWmHints) / sizeof(long),
                        False, AnyPropertyType, &typeAtom,
@@ -390,7 +389,6 @@ static void setWindowDecorations(void) {
   if (!set) {
     XSetTransientForHint(dpy, xWin, RootWindow(dpy, DefaultScreen(dpy)));
   }
-
 }
 
 
@@ -552,7 +550,6 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, in
 
   textures[tnum].type = type;
   textures[tnum].typesize = typesize;
-
 }
 
 
@@ -637,7 +634,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
 
 static boolean init_screen_inner(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
-
   // screen size is in RGB pixels
 
   int renderEventBase;
@@ -905,7 +901,6 @@ static void set_priorities(void) {
   glPrioritizeTextures(nbuf, texID, prios);
 
   free(prios);
-
 }
 
 /*
@@ -959,7 +954,6 @@ static boolean Upload(int width, int height) {
     render_to_gpumem_inner(0, width, height, type, typesize, texturebuf);
 
     set_priorities();
-
   }
 
   pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
@@ -1030,8 +1024,6 @@ static boolean Upload(int width, int height) {
 
     glMatrixMode(GL_MODELVIEW);
     glDisable(GL_DEPTH_TEST);
-
-
   }
   break;
 
@@ -1090,8 +1082,6 @@ static boolean Upload(int width, int height) {
 
     glMatrixMode(GL_MODELVIEW);
     glDisable(GL_DEPTH_TEST);
-
-
   }
   break;
 
@@ -1212,7 +1202,6 @@ static boolean Upload(int width, int height) {
 #define YSPD2 0.03	// speed (along grid Y)
 #define A2 0.04		// amplitude
 
-
     for (int j = 0; j < WY; j++) {
       vx = -1.0;
       tx = 0.0;
@@ -1252,11 +1241,9 @@ static boolean Upload(int width, int height) {
 
         vx += VX_PLUS;
         tx += TX_PLUS;
-
       }
       vy -= VY_PLUS;
       ty += TY_PLUS;
-
     }
     glDisable(m_TexTarget);
   }
@@ -1367,11 +1354,9 @@ static boolean Upload(int width, int height) {
 
         vx += VX_PLUS;
         tx += TX_PLUS;
-
       }
       vy -= VY_PLUS;
       ty += TY_PLUS;
-
     }
     glDisable(m_TexTarget);
   }
@@ -1481,7 +1466,6 @@ static boolean Upload(int width, int height) {
 
     // inner + outer cube
     for (int k = 0; k < 2; k++) {
-
       glPushMatrix();
       glTranslatef(0.0, 0.0, -1.0);
 
@@ -1676,10 +1660,8 @@ static boolean Upload(int width, int height) {
         glEnd();
 
         tx += TX_PLUS2;
-
       }
       ty += TY_PLUS2;
-
     }
     glDisable(m_TexTarget);
   }
@@ -1697,11 +1679,10 @@ static boolean Upload(int width, int height) {
     } PARTICLE;
 
 #define NOT_CREATED -1 	// a flag for a particle that was not created
-#define NOF_PARTS 10000  // the number of particles	
+#define NOF_PARTS 10000  // the number of particles
 #define PIXEL_SIZE 1.0	// size of the particle pixels (1.0 = a pixel)
 
     static PARTICLE parts[NOF_PARTS]; // particle array
-
     static int parts_init = FALSE; // have been inited?
 
     if (!parts_init) {
@@ -1770,7 +1751,6 @@ static boolean Upload(int width, int height) {
     // draw the particles
 
     for (int i = 0; i < NOF_PARTS; i++) {
-
       //int pos;
       if ((parts[i].start_time == NOT_CREATED) || (ticks >= parts[i].end_time)) {
         parts[i].start_time = ticks;
@@ -1809,11 +1789,8 @@ static boolean Upload(int width, int height) {
       parts[i].y += parts[i].vy;
       parts[i].z += parts[i].vz;
       parts[i].vy -= 0.0001; // adds a small gravity
-
-
     }
     glDisable(m_TexTarget);
-
   }
 
   break;
@@ -1831,7 +1808,7 @@ static boolean Upload(int width, int height) {
     } PARTICLE;
 
 #define NOT_CREATED -1 	// a flag for a particle that was not created
-#define NOF_PARTS2 20000  // the number of particles	
+#define NOF_PARTS2 20000  // the number of particles
 #define PIXEL_SIZE2 4.0	// size of the particle pixels (1.0 = a pixel)
 
     static PARTICLE parts[NOF_PARTS2]; // particle array
@@ -1907,7 +1884,6 @@ static boolean Upload(int width, int height) {
     glBlendFunc(GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA);
 
     for (int i = 0; i < NOF_PARTS2; i++) {
-
       if ((parts[i].start_time == NOT_CREATED) || (ticks >= parts[i].end_time)) {
         parts[i].start_time = ticks;
         parts[i].x = (rand() % 2000) / 1000.0 - 1.0;
@@ -1946,16 +1922,11 @@ static boolean Upload(int width, int height) {
       parts[i].y += parts[i].vy;
       parts[i].z += parts[i].vz;
       parts[i].vy += 0.0004; // adds a small pull up
-
-
     }
     glDisable(m_TexTarget);
     glDisable(GL_BLEND);
-
   }
-
   break;
-
   }
 
   if (retdata != NULL) {
@@ -2005,7 +1976,6 @@ static void *render_thread_func(void *data) {
 
 
 boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return_data) {
-
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
   has_texture = TRUE;
@@ -2094,9 +2064,7 @@ void decode_pparams(weed_plant_t **pparams) {
 
   if (pparams == NULL) return;
   while (pparams[i] != NULL) {
-
     type = weed_get_int_value(pparams[i], "type", &error);
-
 
     if (type == WEED_PLANT_PARAMETER) {
       ptmpl = weed_get_plantptr_value(pparams[i], "template", &error);
@@ -2115,12 +2083,9 @@ void decode_pparams(weed_plant_t **pparams) {
       // must be an alpha channel
 
 
-
     }
     i++;
   }
-
-
 }
 
 
@@ -2160,7 +2125,6 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   XCloseDisplay(dpy);
   dpy = NULL;
   pthread_mutex_unlock(&dpy_mutex);
-
 }
 
 

@@ -1,6 +1,6 @@
 // liblives.cpp
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman@gmail.com> 2015
+// (c) G. Finch <salsaman@gmail.com> 2015 - 2017
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -166,8 +166,6 @@ void livesApp::init(int argc, char *oargv[]) {
 
   real_main(argc, argv, m_thread, m_id);
   free(argv);
-
-
 }
 
 
@@ -1532,7 +1530,6 @@ bool effectKey::setEnabled(bool setting) {
 
     // TODO: if it was a generator, wait for playing or error
 
-
   }
   return enabled();
 }
@@ -2111,7 +2108,6 @@ lives_gravity_t multitrack::gravity() const {
   default:
     return LIVES_GRAVITY_NORMAL;
   }
-
 }
 
 
@@ -2144,7 +2140,6 @@ lives_insert_mode_t multitrack::insertMode() const {
   default:
     return LIVES_INSERT_MODE_NORMAL;
   }
-
 }
 
 
@@ -2349,7 +2344,6 @@ void binding_cb(lives_callback_t cb_type, const char *msgstring, ulong id) {
 
   lives::closureListIterator it = cl.begin();
   while (it != cl.end()) {
-
     if ((*it)->cb_type == cb_type) {
       switch (cb_type) {
       case LIVES_CALLBACK_MODE_CHANGED: {
@@ -2399,7 +2393,6 @@ void binding_cb(lives_callback_t cb_type, const char *msgstring, ulong id) {
   }
 
   pthread_mutex_unlock(&spin_mutex);
-
 }
 
 #endif // doxygen_skip

@@ -459,7 +459,7 @@ static boolean pass_test(LiVESWidget *table, int row) {
   // TRANSLATORS - as in "passed test"
   LiVESWidget *label = lives_standard_label_new(_("Passed"));
 
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3, 10, 0)
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_ADD, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #else
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_APPLY, LIVES_ICON_SIZE_LARGE_TOOLBAR);
@@ -478,7 +478,7 @@ static boolean pass_test(LiVESWidget *table, int row) {
 
 static boolean fail_test(LiVESWidget *table, int row, char *ftext) {
   LiVESWidget *label;
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3, 10, 0)
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_REMOVE, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #else
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_CANCEL, LIVES_ICON_SIZE_LARGE_TOOLBAR);

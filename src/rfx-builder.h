@@ -23,7 +23,7 @@
 #define MAXFLOATLEN 11
 
 /// length in chars of G_MAXINT (for display only)
-#define MAXINTLEN strlen(lives_strdup_printf("%d",LIVES_MAXINT))
+#define MAXINTLEN strlen(lives_strdup_printf("%d", LIVES_MAXINT))
 
 // advanced menu entries
 void on_new_rfx_activate(LiVESMenuItem *, livespointer status);
@@ -222,7 +222,6 @@ typedef struct {
 
   char *rfx_version;
   int plugin_version;
-
 } rfx_build_window_t;
 
 // builder window widgets/callbacks

@@ -424,15 +424,15 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot)
 
 // some general utilities
 
-#define WEED_PLANT_IS_PLUGIN_INFO(plant) (weed_get_plant_type(plant)==WEED_PLANT_PLUGIN_INFO?1:0)
-#define WEED_PLANT_IS_HOST_INFO(plant) (weed_get_plant_type(plant)==WEED_PLANT_HOST_INFO?1:0)
-#define WEED_PLANT_IS_FILTER_CLASS(plant) (weed_get_plant_type(plant)==WEED_PLANT_FILTER_CLASS?1:0)
-#define WEED_PLANT_IS_FILTER_INSTANCE(plant) (weed_get_plant_type(plant)==WEED_PLANT_FILTER_INSTANCE?1:0)
-#define WEED_PLANT_IS_CHANNEL(plant) (weed_get_plant_type(plant)==WEED_PLANT_CHANNEL?1:0)
-#define WEED_PLANT_IS_CHANNEL_TEMPLATE(plant) (weed_get_plant_type(plant)==WEED_PLANT_CHANNEL_TEMPLATE?1:0)
-#define WEED_PLANT_IS_PARAMETER(plant) (weed_get_plant_type(plant)==WEED_PLANT_PARAMETER?1:0)
-#define WEED_PLANT_IS_PARAMETER_TEMPLATE(plant) (weed_get_plant_type(plant)==WEED_PLANT_PARAMETER_TEMPLATE?1:0)
-#define WEED_PLANT_IS_GUI(plant) (weed_get_plant_type(plant)==WEED_PLANT_GUI?1:0)
+#define WEED_PLANT_IS_PLUGIN_INFO(plant) (weed_get_plant_type(plant) == WEED_PLANT_PLUGIN_INFO ? 1 : 0)
+#define WEED_PLANT_IS_HOST_INFO(plant) (weed_get_plant_type(plant) == WEED_PLANT_HOST_INFO ? 1 : 0)
+#define WEED_PLANT_IS_FILTER_CLASS(plant) (weed_get_plant_type(plant) == WEED_PLANT_FILTER_CLASS ? 1 : 0)
+#define WEED_PLANT_IS_FILTER_INSTANCE(plant) (weed_get_plant_type(plant) == WEED_PLANT_FILTER_INSTANCE ? 1 : 0)
+#define WEED_PLANT_IS_CHANNEL(plant) (weed_get_plant_type(plant) == WEED_PLANT_CHANNEL ? 1 : 0)
+#define WEED_PLANT_IS_CHANNEL_TEMPLATE(plant) (weed_get_plant_type(plant) == WEED_PLANT_CHANNEL_TEMPLATE ? 1 : 0)
+#define WEED_PLANT_IS_PARAMETER(plant) (weed_get_plant_type(plant) == WEED_PLANT_PARAMETER ? 1 : 0)
+#define WEED_PLANT_IS_PARAMETER_TEMPLATE(plant) (weed_get_plant_type(plant) == WEED_PLANT_PARAMETER_TEMPLATE ? 1 : 0)
+#define WEED_PLANT_IS_GUI(plant) (weed_get_plant_type(plant) == WEED_PLANT_GUI ? 1 : 0)
 
 
 #endif

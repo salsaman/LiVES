@@ -26,7 +26,6 @@ typedef struct {
   int y_width;
   int y_height;
   int uv_width;
-
 } ogg_t;
 
 
@@ -41,14 +40,13 @@ typedef struct {
   int64_t last_granulepos;
 
   int keyframe_granule_shift;
-
 } stream_priv_t;
 
 
 
 
 // theora
-#define FOURCC_THEORA    MK_FOURCC('T','H','R','A')
+#define FOURCC_THEORA    MK_FOURCC('T', 'H', 'R', 'A')
 
 #ifdef HAVE_THEORA
 typedef struct {
@@ -70,12 +68,12 @@ typedef struct {
 
 
 // vorbis
-#define FOURCC_VORBIS    MK_FOURCC('V','B','I','S')
+#define FOURCC_VORBIS    MK_FOURCC('V', 'B', 'I', 'S')
 
 
 
 // dirac
-#define FOURCC_DIRAC    MK_FOURCC('D','R','A','C')
+#define FOURCC_DIRAC    MK_FOURCC('D', 'R', 'A', 'C')
 
 
 typedef struct lives_stream_s {
@@ -94,7 +92,6 @@ typedef struct lives_stream_s {
 
   void *ext_data;
   size_t ext_size;
-
 } lives_in_stream;
 
 

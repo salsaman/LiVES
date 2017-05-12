@@ -154,7 +154,6 @@ static void init_luma_arrays(void) {
     UNCLAMP_Y[i] = UNCLAMP_UV[i] = 255;
     if (i < 241) UNCLAMP_UV[i] = (int)((float)(i - 16.) / 224.*255. + .5);
   }
-
 }
 
 #define RGB_2_Y(a, b, c)			\
@@ -426,7 +425,6 @@ static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
 
 
 static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
-
   int error;
   int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
   int width = gdk_pixbuf_get_width(pixbuf);
@@ -470,8 +468,6 @@ typedef struct {
 
 
 static int make_sigs(_sdata *sdata, int num_coefs) {
-
-
   sdata->sig1 = (Idx *)weed_malloc(num_coefs * sizeof(Idx));
   if (sdata->sig1 == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
@@ -576,13 +572,10 @@ int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (pal == WEED_PALETTE_YUV888) psize = 3;
 
-
   // resize to NUM_PIXELS x NUM_PIXELS
 
   if (width != NUM_PIXELS || height != NUM_PIXELS) {
-
     GdkPixbuf *in_pixbuf = pl_channel_to_pixbuf(channel);
-
     GdkInterpType up_interp = GDK_INTERP_HYPER;
     GdkInterpType down_interp = GDK_INTERP_BILINEAR;
 
@@ -666,8 +659,6 @@ int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
 //
 #define VLIMIT 4096
-
-
 
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);

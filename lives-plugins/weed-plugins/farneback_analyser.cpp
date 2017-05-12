@@ -100,7 +100,6 @@ static void init_luma_arrays(void) {
   for (i = 235; i < 256; i++) {
     UNCLAMP_Y[i] = 255;
   }
-
 }
 
 static void unclamp_frame(uint8_t *data, int width, int row, int height) {

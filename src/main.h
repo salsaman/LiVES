@@ -74,7 +74,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 #ifdef ENABLE_GIW
 #define ENABLE_GIW_3
 #endif
@@ -477,7 +477,6 @@ typedef enum {
 
   /// special cancel for TV toy
   CANCEL_KEEP_LOOPING = CANCEL_NONE + 100
-
 } lives_cancel_t;
 
 
@@ -795,7 +794,6 @@ typedef struct {
   pid_t mainpid;
 
   mode_t umask;
-
 } capability;
 
 
@@ -1164,7 +1162,7 @@ void splash_end(void);
 void splash_msg(const char *msg, double pct);
 void add_message_scroller(LiVESWidget *conter);
 void resize_widgets_for_monitor(boolean get_play_times);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 void calibrate_sepwin_size(void);
 boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data);
 boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data);
@@ -1405,7 +1403,7 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 
 
 // round (double) a up to next (integer) multiple of (double) b
-#define CEIL(a,b) ((int)(((double)a+(double)b-.000000001)/((double)b))*b)
+#define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
 
 #ifdef NEED_ENDIAN_TEST
 #undef NEED_ENDIAN_TEST

@@ -83,8 +83,8 @@ boolean ext_triggers_poll(livespointer data) {
 
   if (mainw->kb_timer_end) {
     mainw->kb_timer_end = FALSE;
-#if GTK_CHECK_VERSION(3,0,0)
-    // below 3,0,0 the timer is removed by a function
+#if GTK_CHECK_VERSION(3, 0, 0)
+    // below 3, 0, 0 the timer is removed by a function
     return FALSE;
 #endif
   }

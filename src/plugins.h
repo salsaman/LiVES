@@ -120,7 +120,6 @@ typedef struct {
   weed_plant_t **alpha_chans;
   int num_play_params;
   int num_alpha_chans;
-
 } _vid_playback_plugin;
 
 
@@ -276,7 +275,6 @@ typedef struct {
 
 
   void *priv; ///< private data for demuxer/decoder - host should not touch this
-
 } lives_clip_data_t;
 
 
@@ -313,7 +311,6 @@ typedef struct {
                        unsigned char **abuff);
   void (*rip_audio_cleanup)(const lives_clip_data_t *cdata);
   void (*module_unload)(void);
-
 } lives_decoder_sys_t;
 
 
@@ -368,7 +365,6 @@ lives_decoder_t *clone_decoder(int fileno);
 
 
 typedef enum {
-
   LIVES_PARAM_UNKNOWN = 0,
   LIVES_PARAM_NUM,
   LIVES_PARAM_BOOL,
@@ -378,7 +374,6 @@ typedef enum {
   LIVES_PARAM_COLRGBA32,
 
   LIVES_PARAM_UNDISPLAYABLE = 65536
-
 } lives_param_type_t;
 
 
@@ -404,7 +399,6 @@ typedef enum {
   // misc types
   LIVES_PARAM_SPECIAL_TYPE_MERGEALIGN,
   LIVES_PARAM_SPECIAL_TYPE_ASPECT_RATIO
-
 } lives_param_special_t;
 
 
@@ -468,7 +462,6 @@ typedef struct {
   // this may change
   lives_param_special_t special_type; // the visual modification type (see paramspecial.h)
   int special_type_index; // index within special_type (e.g for DEMASK, 0==left, 1==top, 2==width, 3==height)
-
 } lives_param_t;
 
 
@@ -520,7 +513,6 @@ typedef struct {
   void *extra;  ///< for future use
   char delim[2];
   boolean is_template;
-
 } lives_rfx_t;
 
 

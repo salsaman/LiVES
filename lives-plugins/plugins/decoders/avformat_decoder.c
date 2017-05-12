@@ -238,7 +238,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
   /* Don't trigger false alarms on bin files */
-  if (! strcmp(fmt->name, "psxstr")) {
+  if (!strcmp(fmt->name, "psxstr")) {
     int i_len;
     i_len = strlen(cdata->URI);
     if (i_len < 4) return FALSE;

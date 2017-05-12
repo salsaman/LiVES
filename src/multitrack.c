@@ -1,6 +1,6 @@
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2017 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -73,7 +73,7 @@
 #endif
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static boolean expose_timeline_reg_event(LiVESWidget *, lives_painter_t *cr, livespointer mt);
 static boolean mt_expose_audtrack_event(LiVESWidget *ebox, lives_painter_t *, livespointer mt);
 #else
@@ -1390,7 +1390,7 @@ static void redraw_eventbox(lives_mt *mt, LiVESWidget *eventbox) {
 }
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static boolean expose_track_event(LiVESWidget *eventbox, lives_painter_t *cairo, livespointer user_data) {
 #else
 static boolean expose_track_event(LiVESWidget *eventbox, LiVESXEventExpose *event, livespointer user_data) {
@@ -1413,7 +1413,7 @@ static boolean expose_track_event(LiVESWidget *eventbox, LiVESXEventExpose *even
 
   if (mt->no_expose) return TRUE;
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   if (event != NULL && event->count > 0) {
     return TRUE;
   }
@@ -1473,7 +1473,7 @@ draw1:
   }
 
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   width = lives_widget_get_allocation_width(eventbox);
   height = lives_widget_get_allocation_height(eventbox);
 #endif
@@ -2338,7 +2338,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
 
 #ifdef ENABLE_GIW
       if (prefs->lamp_buttons) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
         giw_led_set_rgba(GIW_LED(checkbutton), palette->light_green, palette->dark_red);
 #else
         giw_led_set_colors(GIW_LED(checkbutton), palette->light_green, palette->dark_red);
@@ -3032,7 +3032,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
   if (mainw->playing_file > -1) {
     if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
       if (mt->frame_pixbuf == NULL || mt->frame_pixbuf != mainw->imframe) {
         if (mt->frame_pixbuf != NULL) lives_object_unref(mt->frame_pixbuf);
         // set frame_pixbuf, this gets painted in in expose_event
@@ -3042,7 +3042,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), mainw->imframe, NULL);
 #endif
     } else {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
       if (mt->frame_pixbuf != mainw->imframe) {
         if (mt->frame_pixbuf != NULL) lives_object_unref(mt->frame_pixbuf);
         mt->frame_pixbuf = NULL;
@@ -3127,7 +3127,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
   if (return_layer) return;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   if (mt->frame_pixbuf != NULL && mt->frame_pixbuf != mainw->imframe) {
     lives_object_unref(mt->frame_pixbuf);
     mt->frame_pixbuf = NULL;
@@ -3166,7 +3166,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
     if (mt->framedraw != NULL) pixbuf = mt_framedraw(mt, pixbuf);
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     // set frame_pixbuf, this gets painted in in expose_event
     mt->frame_pixbuf = pixbuf;
 #else
@@ -3176,7 +3176,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
   } else {
     // no frame - show blank
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     // set frame_pixbuf, this gets painted in in expose_event
     mt->frame_pixbuf = mainw->imframe;
 #else
@@ -5691,7 +5691,7 @@ static void after_timecode_changed(LiVESWidget *entry, LiVESXEventFocus *dir, li
 
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static boolean expose_pb(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   if (mainw->playing_file > -1) return TRUE;
@@ -5944,7 +5944,7 @@ void set_mt_colours(lives_mt *mt) {
     lives_widget_set_fg_color(mt->tlx_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_bg_color(mt->tlx_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     // m & b for gtk 3.x
     lives_widget_set_fg_color(mt->time_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
     lives_widget_set_bg_color(mt->time_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -6074,7 +6074,7 @@ void set_mt_colours(lives_mt *mt) {
     lives_widget_set_fg_color(mt->btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
     if (palette->style & STYLE_2) {
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
       lives_widget_set_base_color(mt->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
       lives_widget_set_base_color(mt->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
       lives_widget_set_base_color(mt->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -8010,7 +8010,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_bg_color(mt->insa_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(mt->insa_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_connect(LIVES_GUI_OBJECT(mt->insa_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                          LIVES_GUI_CALLBACK(draw_cool_toggle),
                          NULL);
@@ -8039,7 +8039,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   if (prefs->lamp_buttons) {
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton), FALSE);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_connect(LIVES_GUI_OBJECT(mt->snapo_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                          LIVES_GUI_CALLBACK(draw_cool_toggle),
                          NULL);
@@ -8295,7 +8295,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(mt->play_box, FALSE);
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_connect(LIVES_GUI_OBJECT(mt->play_box), LIVES_WIDGET_EXPOSE_EVENT,
                        LIVES_GUI_CALLBACK(expose_pb),
                        (livespointer)mt);
@@ -16933,7 +16933,7 @@ void mt_swap_play_pause(lives_mt *mt, boolean put_pause) {
   LiVESWidget *tmp_img = NULL;
 
   if (put_pause) {
-#if GTK_CHECK_VERSION(2,6,0)
+#if GTK_CHECK_VERSION(2, 6, 0)
     tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PAUSE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 #endif
     set_menu_text(mt->playall, _("_Pause"), TRUE);
@@ -17852,7 +17852,7 @@ void draw_region(lives_mt *mt) {
 }
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static boolean expose_timeline_reg_event(LiVESWidget *timeline, lives_painter_t *cairo, livespointer user_data) {
   LiVESXEventExpose *event = NULL;
 #else
@@ -18010,7 +18010,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
 
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static boolean mt_expose_audtrack_event(LiVESWidget *ebox, lives_painter_t *cairo, livespointer user_data) {
 #else
 static boolean mt_expose_audtrack_event(LiVESWidget *ebox, LiVESXEventExpose *event, livespointer user_data) {
@@ -18029,7 +18029,7 @@ static boolean mt_expose_audtrack_event(LiVESWidget *ebox, LiVESXEventExpose *ev
 
   if (mt->no_expose) return TRUE;
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   startx = event->area.x;
   starty = event->area.y;
   width = event->area.width;
@@ -18067,7 +18067,7 @@ static boolean mt_expose_audtrack_event(LiVESWidget *ebox, LiVESXEventExpose *ev
     }
   }
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   width = lives_widget_get_allocation_width(ebox);
   height = lives_widget_get_allocation_height(ebox);
 #endif
@@ -22355,7 +22355,7 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
   if (prefs->lamp_buttons) {
     amixer->inv_checkbutton = lives_check_button_new_with_label(" ");
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(amixer->inv_checkbutton), FALSE);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_connect(LIVES_GUI_OBJECT(amixer->inv_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                          LIVES_GUI_CALLBACK(draw_cool_toggle),
                          NULL);
@@ -22406,7 +22406,7 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
   if (prefs->lamp_buttons) {
     amixer->gang_checkbutton = lives_check_button_new_with_label(" ");
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton), FALSE);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_connect(LIVES_GUI_OBJECT(amixer->gang_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                          LIVES_GUI_CALLBACK(draw_cool_toggle),
                          NULL);

@@ -510,7 +510,7 @@ static boolean pre_init(void) {
   }
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   prefs->funky_widgets = TRUE;
 #else
   prefs->funky_widgets = FALSE;
@@ -1516,7 +1516,7 @@ static void lives_init(_ign_opts *ign_opts) {
       get_pref_utf8(PREF_VID_LOAD_DIR, prefs->def_vid_load_dir, PATH_MAX);
       if (!strlen(prefs->def_vid_load_dir)) {
 #ifdef USE_GLIB
-#if GLIB_CHECK_VERSION(2,14,0)
+#if GLIB_CHECK_VERSION(2, 14, 0)
         lives_snprintf(prefs->def_vid_load_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
 #else
         lives_snprintf(prefs->def_vid_load_dir, PATH_MAX, "%s", capable->home_dir);
@@ -1530,7 +1530,7 @@ static void lives_init(_ign_opts *ign_opts) {
       get_pref_utf8(PREF_VID_SAVE_DIR, prefs->def_vid_save_dir, PATH_MAX);
       if (!strlen(prefs->def_vid_save_dir)) {
 #ifdef USE_GLIB
-#if GLIB_CHECK_VERSION(2,14,0)
+#if GLIB_CHECK_VERSION(2, 14, 0)
         lives_snprintf(prefs->def_vid_save_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
 #else
         lives_snprintf(prefs->def_vid_save_dir, PATH_MAX, "%s", capable->home_dir);
@@ -1546,7 +1546,7 @@ static void lives_init(_ign_opts *ign_opts) {
       get_pref_utf8(PREF_AUDIO_DIR, prefs->def_audio_dir, PATH_MAX);
       if (!strlen(prefs->def_audio_dir)) {
 #ifdef USE_GLIB
-#if GLIB_CHECK_VERSION(2,14,0)
+#if GLIB_CHECK_VERSION(2, 14, 0)
         lives_snprintf(prefs->def_audio_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_MUSIC));
 #else
         lives_snprintf(prefs->def_audio_dir, PATH_MAX, "%s", capable->home_dir);
@@ -1560,7 +1560,7 @@ static void lives_init(_ign_opts *ign_opts) {
       get_pref_utf8(PREF_IMAGE_DIR, prefs->def_image_dir, PATH_MAX);
       if (!strlen(prefs->def_image_dir)) {
 #ifdef USE_GLIB
-#if GLIB_CHECK_VERSION(2,14,0)
+#if GLIB_CHECK_VERSION(2, 14, 0)
         lives_snprintf(prefs->def_image_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_PICTURES));
 #else
         lives_snprintf(prefs->def_image_dir, PATH_MAX, "%s", capable->home_dir);
@@ -1922,7 +1922,7 @@ void do_start_messages(void) {
   d_print(mainw->msg);
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_snprintf(mainw->msg, 512, _("GTK+ "
                                     "version %d.%d.%d ("
                                     "compiled with %d.%d.%d"
@@ -2136,7 +2136,7 @@ boolean set_palette_colours(boolean force_reload) {
     // load from file
     themefile = lives_build_filename(themedir, "header.theme", NULL);
 #ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
     lives_free(themefile);
     themefile = lives_build_filename(themedir, "header.theme_gtk2", NULL);
 #endif
@@ -2146,7 +2146,7 @@ boolean set_palette_colours(boolean force_reload) {
       lives_free(themefile);
       themefile = lives_build_filename(themedir, "header.theme_gtk2", NULL);
 #ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
       lives_free(themefile);
       themefile = lives_build_filename(themedir, "header.theme", NULL);
 #endif
@@ -2865,7 +2865,7 @@ static boolean lives_startup(livespointer data) {
     // capture mode
     mainw->foreign_key = atoi(zargv[2]);
 
-#if GTK_CHECK_VERSION(3,0,0) || defined GUI_QT
+#if GTK_CHECK_VERSION(3, 0, 0) || defined GUI_QT
     mainw->foreign_id = (Window)atoi(zargv[3]);
 #else
     mainw->foreign_id = (GdkNativeWindow)atoi(zargv[3]);
@@ -2980,7 +2980,7 @@ static boolean lives_startup(livespointer data) {
 #endif
 #endif
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   if (!mainw->foreign && prefs->show_gui) {
     calibrate_sepwin_size();
   }
@@ -3907,7 +3907,7 @@ void procw_desensitize(void) {
 
 
 void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_painter_t *cairo) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 
   int rwidth = lives_widget_get_allocation_width(LIVES_WIDGET(image));
   int rheight = lives_widget_get_allocation_height(LIVES_WIDGET(image));
@@ -3968,7 +3968,7 @@ void load_start_image(int frame) {
 
   if (mainw->multitrack != NULL) return;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
 #endif
 
@@ -3982,7 +3982,7 @@ void load_start_image(int frame) {
     }
 
     set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image), mainw->camframe, NULL);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -3998,7 +3998,7 @@ void load_start_image(int frame) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image), NULL, NULL);
     }
     threaded_dialog_spin(0.);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -4041,7 +4041,7 @@ void load_start_image(int frame) {
       }
     }
     threaded_dialog_spin(0.);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -4059,7 +4059,7 @@ void load_start_image(int frame) {
     // TODO *** - if width*height==0, show broken frame image
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
     rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 #else
@@ -4103,7 +4103,7 @@ void load_start_image(int frame) {
 
     start_pixbuf = NULL;
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_queue_resize(mainw->start_image);
 
     lives_widget_context_update();
@@ -4115,13 +4115,12 @@ void load_start_image(int frame) {
   } while (rwidth != lives_widget_get_allocation_width(mainw->start_image) ||
            rheight != lives_widget_get_allocation_height(mainw->start_image));
 #else
-  }
-  while (FALSE);
+  } while (FALSE);
 #endif
   threaded_dialog_spin(0.);
   mainw->noswitch = noswitch;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -4142,7 +4141,7 @@ void load_end_image(int frame) {
 
   if (mainw->multitrack != NULL) return;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
 #endif
 
@@ -4156,7 +4155,7 @@ void load_end_image(int frame) {
     }
 
     set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image), mainw->camframe, NULL);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
     lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -4172,7 +4171,7 @@ void load_end_image(int frame) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image), NULL, NULL);
     }
     threaded_dialog_spin(0.);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
     lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -4217,7 +4216,7 @@ void load_end_image(int frame) {
       }
     }
     threaded_dialog_spin(0.);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
     lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -4231,7 +4230,7 @@ void load_end_image(int frame) {
     width = cfile->hsize;
     height = cfile->vsize;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
     rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 #else
@@ -4275,7 +4274,7 @@ void load_end_image(int frame) {
 
     end_pixbuf = NULL;
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_queue_resize(mainw->end_image);
 
     lives_widget_context_update();
@@ -4286,14 +4285,13 @@ void load_end_image(int frame) {
     }
   } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) || rheight != lives_widget_get_allocation_height(mainw->end_image));
 #else
-  }
-  while (FALSE);
+  } while (FALSE);
 #endif
 
   threaded_dialog_spin(0.);
   mainw->noswitch = noswitch;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
   lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -4319,7 +4317,7 @@ void load_preview_image(boolean update_always) {
 
   if (mainw->playing_file > -1) return;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->preview_image, (livespointer)expose_pim, NULL);
 #endif
 
@@ -4340,7 +4338,7 @@ void load_preview_image(boolean update_always) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->preview_spinbutton), 1);
     lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
     lives_widget_set_size_request(mainw->preview_image, mainw->pwidth, mainw->pheight);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->preview_image, (livespointer)expose_pim, NULL);
     lives_signal_stop_emission_by_name(mainw->preview_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -4359,7 +4357,7 @@ void load_preview_image(boolean update_always) {
       lives_widget_set_size_request(mainw->preview_image, lives_pixbuf_get_width(mainw->imframe), lives_pixbuf_get_height(mainw->imframe));
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->preview_image), mainw->imframe, NULL);
     } else set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->preview_image), NULL, NULL);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->preview_image, (livespointer)expose_pim, NULL);
     lives_signal_stop_emission_by_name(mainw->preview_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -4468,7 +4466,7 @@ void load_preview_image(boolean update_always) {
     }
   }
   if (pixbuf != NULL) lives_object_unref(pixbuf);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_unblock_by_func(mainw->preview_image, (livespointer)expose_pim, NULL);
   lives_signal_stop_emission_by_name(mainw->preview_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
@@ -5424,7 +5422,7 @@ static void get_max_opsize(int *opwidth, int *opheight) {
         if (cfile->vsize > *opheight) *opheight = cfile->vsize;
       } else {
         if (!mainw->sep_win) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
           int rwidth = mainw->ce_frame_width;
           int rheight = mainw->ce_frame_height;
           *opwidth = cfile->hsize;
@@ -6326,7 +6324,7 @@ void load_frame_image(int frame) {
       }
 
       if (mainw->multitrack == NULL && mainw->play_window == NULL && prefs->ce_maxspect) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
         int rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
         int rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 
@@ -6660,7 +6658,7 @@ void load_frame_image(int frame) {
     }
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
     xwidth = gdk_window_get_width(mainw->foreign_window);
     xheight = gdk_window_get_height(mainw->foreign_window);
     if ((pixbuf = gdk_pixbuf_get_from_window(mainw->foreign_window,

@@ -47,7 +47,7 @@ static gint giw_led_button_press(GtkWidget        *widget,
                                  GdkEventButton   *event);
 static void giw_led_size_request(GtkWidget      *widget,
                                  GtkRequisition *requisition);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static void giw_led_dispose(GObject        *object);
 static void giw_led_get_preferred_width(GtkWidget *widget,
                                         gint      *minimal_width,
@@ -70,7 +70,7 @@ static void giw_led_destroy(GtkObject        *object);
 static guint giw_led_signals[LAST_SIGNAL] = { 0 };
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 G_DEFINE_TYPE(GiwLed, giw_led, GTK_TYPE_WIDGET)
 #define parent_class giw_led_parent_class
 #else
@@ -107,7 +107,7 @@ GType giw_led_get_type() {
 
 static void
 giw_led_class_init(GiwLedClass *xclass) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   GObjectClass *object_class = G_OBJECT_CLASS(xclass);
 #else
   GtkObjectClass *object_class = (GtkObjectClass *) xclass;
@@ -116,7 +116,7 @@ giw_led_class_init(GiwLedClass *xclass) {
 
   widget_class = (GtkWidgetClass *) xclass;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   object_class->dispose = giw_led_dispose;
 #else
   parent_class = (GtkWidgetClass *)gtk_type_class(gtk_widget_get_type());
@@ -124,7 +124,7 @@ giw_led_class_init(GiwLedClass *xclass) {
 #endif
 
   widget_class->realize = giw_led_realize;
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   widget_class->get_preferred_width = giw_led_get_preferred_width;
   widget_class->get_preferred_height = giw_led_get_preferred_height;
   widget_class->draw = giw_led_draw;
@@ -174,7 +174,7 @@ GtkWidget *
 giw_led_new(void) {
   GiwLed *led;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   led = (GiwLed *)g_object_new(GIW_TYPE_LED, NULL);
 #else
   led = (GiwLed *)gtk_type_new(giw_led_get_type());
@@ -183,7 +183,7 @@ giw_led_new(void) {
   return GTK_WIDGET(led);
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static void giw_led_dispose(GObject *object) {
 #else
 static void giw_led_destroy(GtkObject *object) {
@@ -191,7 +191,7 @@ static void giw_led_destroy(GtkObject *object) {
   g_return_if_fail(object != NULL);
   g_return_if_fail(GIW_IS_LED(object));
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   G_OBJECT_CLASS(giw_led_parent_class)->dispose(object);
 #else
   if (LIVES_GUI_OBJECT_CLASS(parent_class)->destroy)
@@ -205,7 +205,7 @@ giw_led_realize(GtkWidget *widget) {
   GdkWindowAttr attributes;
   gint attributes_mask;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   GtkStyleContext *stylecon;
 #endif
 
@@ -231,7 +231,7 @@ giw_led_realize(GtkWidget *widget) {
 
   attributes_mask = GDK_WA_X | GDK_WA_Y;
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   attributes.visual = gtk_widget_get_visual(widget);
   attributes_mask |= GDK_WA_COLORMAP | GDK_WA_VISUAL;
   attributes.colormap = gtk_widget_get_colormap(widget);
@@ -243,7 +243,7 @@ giw_led_realize(GtkWidget *widget) {
   widget->window = gdk_window_new(widget->parent->window, &attributes, attributes_mask);
 #endif
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   stylecon = gtk_widget_get_style_context(widget);
   if (!stylecon) {
     stylecon = gtk_style_context_new();
@@ -275,7 +275,7 @@ giw_led_size_request(GtkWidget      *widget,
   requisition->height = LED_DEFAULT_SIZE;
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 
 static void
 giw_led_get_preferred_width(GtkWidget *widget,
@@ -340,7 +340,7 @@ giw_led_size_allocate(GtkWidget     *widget,
   }
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static gboolean giw_led_draw(GtkWidget *widget, cairo_t *cairo) {
 
 #else
@@ -352,7 +352,7 @@ giw_led_expose(GtkWidget      *widget,
   GiwLed *led;
   GdkRectangle rect;
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   GdkGC *gc; // To put the on and off colors
 
   g_return_val_if_fail(event != NULL, FALSE);
@@ -372,7 +372,7 @@ giw_led_expose(GtkWidget      *widget,
   rect.height = lives_widget_get_allocation_height(widget);
 
   // Drawing background
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   cairo_set_line_width(cairo, 1.);
 
   gtk_render_background(gtk_widget_get_style_context(widget),
@@ -509,7 +509,7 @@ giw_led_expose(GtkWidget      *widget,
   return FALSE;
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 static void
 giw_led_style_updated(GtkWidget *widget) {
   GTK_WIDGET_CLASS(giw_led_parent_class)->style_updated(widget);
@@ -580,7 +580,7 @@ giw_led_get_mode(GiwLed *led) {
   return (led->on);
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 void
 giw_led_set_rgba(GiwLed *led,
                  GdkRGBA on_color,
@@ -601,7 +601,7 @@ giw_led_set_colors(GiwLed *led,
   g_return_if_fail(led != NULL);
   g_return_if_fail(GIW_IS_LED(led));
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   led->color_on.red = (gdouble)on_color.red / 65535.;
   led->color_on.green = (gdouble)on_color.green / 65535.;
   led->color_on.blue = (gdouble)on_color.blue / 65535.;

@@ -215,7 +215,7 @@ static inline void skip_bits_long(GetBitContext *s, int n) {
     } while (0)
 
 #   define UPDATE_CACHE(name, gb) do {                                  \
-        if(name##_bit_count > 0){                                       \
+        if (name##_bit_count > 0){                                       \
             const uint32_t next = av_be2ne32(*name##_buffer_ptr);       \
             name##_cache0 |= NEG_USR32(next, name##_bit_count);         \
             name##_cache1 |= next << name##_bit_count;                  \
@@ -233,7 +233,7 @@ static inline void skip_bits_long(GetBitContext *s, int n) {
 #else
 #   define SKIP_CACHE(name, gb, num) do {               \
         name##_cache0 <<= (num);                        \
-        name##_cache0 |= NEG_USR32(name##_cache1,num);  \
+        name##_cache0 |= NEG_USR32(name##_cache1, num);  \
         name##_cache1 <<= (num);                        \
     } while (0)
 #endif
@@ -262,11 +262,11 @@ static inline void skip_bits_long(GetBitContext *s, int n) {
 
 
 #ifndef NEG_SSR32
-#   define NEG_SSR32(a,s) ((( int32_t)(a))>>(32-(s)))
+#   define NEG_SSR32(a, s) ((( int32_t)(a)) >> (32 - (s)))
 #endif
 
 #ifndef NEG_USR32
-#   define NEG_USR32(a,s) (((uint32_t)(a))>>(32-(s)))
+#   define NEG_USR32(a, s) (((uint32_t)(a)) >> (32 - (s)))
 #endif
 
 

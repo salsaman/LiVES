@@ -55,7 +55,7 @@
 #define V_RESIZE_ADJUST ((W_PACKING_WIDTH+2)*3)
 #define H_RESIZE_ADJUST ((W_PACKING_HEIGHT+2)*2)
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 #define CE_FRAME_HSPACE ((int)(320.*widget_opts.scale))
 #else
 #define CE_FRAME_HSPACE ((int)(420.*widget_opts.scale))
@@ -124,7 +124,7 @@
 #define MAX_MSG_WIDTH_CHARS ((int)(100.*widget_opts.scale)) ///< max width of text on warning/error labels
 
 /// size of the fx dialog windows scrollwindow
-#define RFX_WINSIZE_H ((int)(mainw->scr_width>=1024?(820.*widget_opts.scale):640))
+#define RFX_WINSIZE_H ((int)(mainw->scr_width >= 1024 ? (820.*widget_opts.scale) : 640))
 #define RFX_WINSIZE_V ((int)(480.*widget_opts.scale))
 
 #define DEF_BUTTON_WIDTH ((int)(80.*widget_opts.scale))
@@ -309,8 +309,6 @@ typedef struct {
 
   lives_colRGBA64_t ce_sel;
   lives_colRGBA64_t ce_unsel;
-
-
 } _palette;
 
 /// screen details
@@ -367,9 +365,9 @@ enum {
 
 // filters
 
-#define LIVES_SUBS_FILTER  {"*.srt","*.sub",NULL}
-#define LIVES_AUDIO_LOAD_FILTER  {"*.it","*.mp3","*.wav","*.ogg","*.mod","*.xm","*.wma","*.flac",NULL}
-#define LIVES_TV_CARD_TYPES  {"v4l2","v4l","bsdbt848","dummy","*autodetect","yv12","*","rgb32","rgb24","rgb16","rgb15", "uyvy", "yuy2", "i2420",NULL}
+#define LIVES_SUBS_FILTER  {"*.srt", "*.sub", NULL}
+#define LIVES_AUDIO_LOAD_FILTER  {"*.it", "*.mp3", "*.wav", "*.ogg", "*.mod", "*.xm", "*.wma", "*.flac", NULL}
+#define LIVES_TV_CARD_TYPES  {"v4l2", "v4l", "bsdbt848", "dummy", "*autodetect", "yv12", "*", "rgb32", "rgb24", "rgb16", "rgb15", "uyvy", "yuy2", "i2420", NULL}
 
 
 typedef struct {
@@ -499,7 +497,7 @@ typedef struct {
 
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   Window foreign_id;
 #else
   GdkNativeWindow foreign_id;
@@ -1328,9 +1326,7 @@ typedef struct {
   char sepimg_path[PATH_MAX];
 
   uint64_t aud_data_written;
-
   ////////////////////
-
 } mainwindow;
 
 extern _palette *palette;
@@ -1350,7 +1346,6 @@ typedef struct {
 
   int *list_to_rfx_index;
   LiVESList *trans_list;
-
 } _merge_opts;
 
 extern _merge_opts *merge_opts;

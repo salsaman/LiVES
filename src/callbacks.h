@@ -194,19 +194,19 @@ void on_spin_step_value_changed(LiVESSpinButton *, livespointer);
 void on_spin_end_value_changed(LiVESSpinButton *, livespointer);
 
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_vid_event(LiVESWidget *, lives_painter_t *cr, livespointer);
 #else
 boolean expose_vid_event(LiVESWidget *, LiVESXEventExpose *event);
 #endif
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_laud_event(LiVESWidget *, lives_painter_t *cr, livespointer);
 #else
 boolean expose_laud_event(LiVESWidget *, LiVESXEventExpose *event);
 #endif
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_raud_event(LiVESWidget *, lives_painter_t *cr, livespointer);
 #else
 boolean expose_raud_event(LiVESWidget *, LiVESXEventExpose *event);
@@ -298,7 +298,7 @@ void on_recaudsel_activate(LiVESMenuItem *, livespointer);
 
 void on_recaudclip_ok_clicked(LiVESButton *, livespointer);
 
-#if GTK_CHECK_VERSION(2,14,0)
+#if GTK_CHECK_VERSION(2, 14, 0)
 void on_volume_slider_value_changed(LiVESScaleButton *, livespointer);
 #else
 void on_volume_slider_value_changed(LiVESRange *, livespointer);

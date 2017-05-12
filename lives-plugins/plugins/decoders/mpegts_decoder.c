@@ -1660,7 +1660,7 @@ static void m4sl_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_
   MpegTSContext *ts = filter->u.section_filter.opaque;
   SectionHeader h;
   const uint8_t *p, *p_end;
-  Mp4Descr mp4_descr[MAX_MP4_DESCR_COUNT] = {{ 0 }};
+  Mp4Descr mp4_descr[MAX_MP4_DESCR_COUNT] = {{0} };
   int mp4_descr_count = 0;
   int i, pid;
   AVFormatContext *s = ts->stream;
@@ -1900,7 +1900,7 @@ static void pmt_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
   int desc_list_len;
   uint32_t prog_reg_desc = 0; /* registration descriptor */
 
-  Mp4Descr mp4_descr[MAX_MP4_DESCR_COUNT] = {{ 0 }};
+  Mp4Descr mp4_descr[MAX_MP4_DESCR_COUNT] = {{0} };
   int mp4_descr_count = 0;
   int i;
 

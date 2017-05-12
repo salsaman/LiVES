@@ -233,7 +233,7 @@ static void makePalette(int pal) {
   for (i = 0; i < COLORS / 2; i++) {
     if (pal == WEED_PALETTE_RGBA32) {
       palettes[COLORS * 2         + i + COLORS / 2] = 255 | (i * DELTA) << 16 | (i * DELTA) << 8;
-      palettes[ i + COLORS / 2] = (255 << 16) | (i * DELTA) << 8 | i * DELTA;
+      palettes[i + COLORS / 2] = (255 << 16) | (i * DELTA) << 8 | i * DELTA;
     } else {
       palettes[i + COLORS / 2] = 255 | (i * DELTA) << 16 | (i * DELTA) << 8;
       palettes[COLORS * 2 + i + COLORS / 2] = (255 << 16) | (i * DELTA) << 8 | i * DELTA;

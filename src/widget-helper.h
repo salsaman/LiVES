@@ -110,7 +110,7 @@ boolean lives_object_unref(livespointer); ///< decrease refcount by one: if refc
 
 // remove any "floating" reference and add a new ref
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 livespointer lives_object_ref_sink(livespointer);
 #else
 void lives_object_ref_sink(livespointer);
@@ -644,7 +644,7 @@ LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
 boolean lives_menu_tool_button_set_menu(LiVESMenuToolButton *, LiVESWidget *menu);
 
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if !GTK_CHECK_VERSION(3, 10, 0)
 
 boolean lives_image_menu_item_set_image(LiVESImageMenuItem *, LiVESWidget *image);
 

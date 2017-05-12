@@ -153,7 +153,7 @@ void make_custom_submenus(void) {
 
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
@@ -192,7 +192,7 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
                  LiVESWidgetColor *colb2, LiVESWidgetColor *coli, LiVESWidgetColor *colt) {
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   if (!mainw->foreign) {
     gtk_widget_ensure_style(mainw->LiVES);
     lives_widget_hide(mainw->spinbutton_start);
@@ -324,7 +324,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
   if (palette->style & STYLE_2) {
     // background colour seems to be broken in gtk+3 !!!
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, colb);
     lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, colb);
     lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -390,7 +390,7 @@ void create_LiVES(void) {
   LiVESWidget *t_label;
   LiVESWidget *eventbox;
 
-#if defined (HAVE_YUV4MPEG) || defined (HAVE_UNICAP)
+#if defined HAVE_YUV4MPEG || defined HAVE_UNICAP
   LiVESWidget *submenu;
 #endif
 
@@ -452,7 +452,7 @@ void create_LiVES(void) {
   } else {
 #ifdef GUI_GTK
     LiVESWidgetColor normal;
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
     if (!mainw->foreign) {
       gtk_widget_ensure_style(mainw->LiVES);
     }
@@ -467,7 +467,7 @@ void create_LiVES(void) {
 
   }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->start_image), LIVES_WIDGET_EXPOSE_EVENT,
                        LIVES_GUI_CALLBACK(expose_sim),
                        NULL);
@@ -3306,7 +3306,7 @@ void block_expose(void) {
   // symptoms - strace shows the app looping on poll() and it is otherwise
   // unresponsive
   mainw->draw_blocked = TRUE;
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handler_block(mainw->video_draw, mainw->config_func);
   lives_signal_handler_block(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_block(mainw->laudio_draw, mainw->laudbar_func);
@@ -3317,7 +3317,7 @@ void block_expose(void) {
 void unblock_expose(void) {
   // unblock expose/config events
   mainw->draw_blocked = FALSE;
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handler_unblock(mainw->video_draw, mainw->config_func);
   lives_signal_handler_unblock(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_unblock(mainw->laudio_draw, mainw->laudbar_func);
@@ -3366,7 +3366,7 @@ void make_preview_box(void) {
                        LIVES_GUI_CALLBACK(on_mouse_scroll),
                        NULL);
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_EXPOSE_EVENT,
                        LIVES_GUI_CALLBACK(expose_pim),
                        NULL);
@@ -3574,7 +3574,7 @@ void make_preview_box(void) {
 
 }
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 
 void calibrate_sepwin_size(void) {
   // get size of preview box in sepwin
@@ -3934,13 +3934,13 @@ void resize_play_window(void) {
           // get mouse position to warp it back after playback ends
           // in future we will handle multiple displays, so we will get the mouse device for the first screen of that display
           LiVESXDevice *device = mainw->mgeom[0].mouse_device;
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
           if (device != NULL) {
 #endif
             LiVESXScreen *screen;
             LiVESXDisplay *display = mainw->mgeom[0].disp;
             lives_display_get_pointer(device, display, &screen, &mainw->ptr_x, &mainw->ptr_y, NULL);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3, 0, 0)
           }
 #endif
         }

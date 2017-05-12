@@ -60,8 +60,6 @@ typedef struct {
   double *mind;
   double *maxd;
   double *vald;
-
-
 } lives_omc_macro_t;
 
 
@@ -97,7 +95,6 @@ typedef struct {
   LiVESTreeStore *gtkstore2;
 
   int *tmpvals;
-
 } lives_omc_match_node_t;
 
 

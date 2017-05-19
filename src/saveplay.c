@@ -2418,7 +2418,7 @@ void play_file(void) {
 
   // show the framebar
   if (mainw->multitrack == NULL && (prefs->show_framecount &&
-                                    (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && mainw->sep_win != 0) ||
+                                    (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1 && mainw->sep_win) ||
                                      (mainw->vpp != NULL && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
                                     ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
     lives_widget_show(mainw->framebar);

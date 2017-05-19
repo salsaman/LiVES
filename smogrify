@@ -205,14 +205,14 @@ if (defined($ARGV[0])) {
 	    # write mini-info file
 
             if ($^O eq "MSWin32") {
-                $infofile="$workdir / info.$key";
+                $infofile="$workdir/info.$key";
             }
             else {
-                $infofile="$workdir / .info.$key";
+                $infofile="$workdir/.info.$key";
             }
             do {
                 $handle=int(rand 1000000000)+65536;
-                $curworkdir="$workdir / $handle";
+                $curworkdir="$workdir/$handle";
             } while (-d $curworkdir);
 
             umask 0;
@@ -264,7 +264,7 @@ if (defined($ARGV[0])) {
             $res = smog_system_direct("$com");
             chomp($res);
 
-            $ver = (split( / $sep /, $res))[$piece];
+            $ver = (split( /$sep/, $res))[$piece];
 
             print &version_hash($ver);
             exit 0;
@@ -977,7 +977,7 @@ if (defined($ARGV[0])) {
             @files = sort {(stat "$workdir/$b")[10] <=> (stat "$workdir/$a")[10]}(@files);
 
             foreach my $file(@files) {
-                if ($file =~ / ^$filepart\.$uid\.$gid\.(.*) /) {
+                if ($file =~ /^$filepart\.$uid\.$gid\.(.*)/) {
                     if (-z $file) {
 			# clean up zero length files
                         unlink "$file";
@@ -988,7 +988,7 @@ if (defined($ARGV[0])) {
                         my $short_exe = &my_basename($exe);
 
                         unless($short_exe eq $exename) {
-                            $output = (split / \. /, $file)[-1];
+                            $output = (split /\./, $file)[-1];
                             print $output;
                             closedir DIR;
                             exit 0;
@@ -3431,7 +3431,7 @@ if (defined($ARGV[0])) {
 		read IN, $width, 128;
 		close IN;
 	    }
-	    @widths = split( / Width: /, $width);
+	    @widths = split( /Width: /, $width);
 	    $width = $widths[1];
 	    chomp($width);
 
@@ -3440,7 +3440,7 @@ if (defined($ARGV[0])) {
 		read IN, $height, 128;
 		close IN;
 	    }
-	    @heights = split( / Height: /, $height);
+	    @heights = split( /Height: /, $height);
 	    $height = $heights[1];
 	    chomp($height);
 
@@ -3449,7 +3449,7 @@ if (defined($ARGV[0])) {
 		read IN, $bpp, 128;
 		close IN;
 	    }
-	    @bpps = split( / Depth: /, $bpp);
+	    @bpps = split( /Depth: /, $bpp);
 	    $bpp = $bpps[1];
 	    chomp($bpp);
 
@@ -3458,7 +3458,7 @@ if (defined($ARGV[0])) {
 		read IN, $visual, 128;
 		close IN;
 	    }
-	    @visuals = split( / Visual: /, $visual);
+	    @visuals = split( /Visual: /, $visual);
 	    $visual = $visuals[1];
 	    chomp($visual);
 
@@ -3634,7 +3634,7 @@ if (defined($ARGV[0])) {
 	    my $url = $ARGV[2];
 	    my $dfile = $ARGV[3];
 
-	    if ($url =~~ /youtube/ || $url =~ /youtu\.be /) {
+	    if ($url =~~ /youtube/ || $url =~ /youtu\.be/) {
 		# youtube-dl
 
 		if (-f $dfile) {
@@ -3957,7 +3957,7 @@ if (defined($ARGV[0])) {
 		unlink $pidfile;
 		exit 1;
 	    }
-	    $num_in_channels = (split( / \ | /, $fx_desc))[3];
+	    $num_in_channels = (split( /\|/, $fx_desc))[3];
 
 	    if ($num_in_channels == 0) {
 		# generators get the out_extension
@@ -4231,7 +4231,7 @@ sub kill_child_pids {
 	# must not ! >/dev/null 2>&1");
     }
 
-    if (-s "$workdir / .pids.$target_pid"&&defined(open IN,"$workdir / .pids.$target_pid")) {
+    if (-s "$workdir/.pids.$target_pid"&&defined(open IN,"$workdir/.pids.$target_pid")) {
         while (<IN>) {
             $pid=$_;
             chomp($pid);
@@ -4240,7 +4240,7 @@ sub kill_child_pids {
         close IN;
     }
 
-    unlink "$workdir / .pids.$target_pid";
+    unlink "$workdir/.pids.$target_pid";
 }
 
 
@@ -5117,7 +5117,7 @@ sub get_mpv_info {
     my $propstr = "";
 
     foreach my $line(@allprops) {
-        $line =~ s / ^\s + //;
+        $line =~ s/^\s+//;
         $propstr.= "XDATA:$line=\\\${=$line}\n";
     }
 
@@ -5488,8 +5488,8 @@ sub get_mplayer_info {
 sub trim {
     ## trim whitespace from beginning and end
     my $str = shift;
-    $str =~ s / ^\s + //;
-    $str =~ s / \s + $ //;
+    $str =~ s/^\s+//;
+    $str =~ s/\s+$//;
     $str;
 }
 
@@ -6496,7 +6496,7 @@ sub open_images {
 
         foreach (@files) {
             $file = "$dir/$_";
-            unless($_ =~ / ^\. / || (! -f $file) || (-z $file)) {
+            unless($_ =~ /^\./ || (! -f $file) || (-z $file)) {
                 $nframes = &open_single_image($i);
                 return if $panic;
 		if (-s "$curworkdir/$name$img_ext") {
@@ -6661,15 +6661,15 @@ sub get_image_size {
         }
 
         my($file2) = $file;
-        $space_count = ($file2 =~ tr / //);
+        $space_count = ($file2 =~ tr/ //);
         for ($i = 0; $i < $space_count; $i++) {
 	    shift(@info);
         }
         $bppstr = $info[4];
-	@bpp = split / - /, $bppstr;
+	@bpp = split /-/, $bppstr;
 	$bpp = $bpp[0];
-	@sizestr = split / \ + /, $info[2];
-	@size = split / x /, $sizestr[0];
+	@sizestr = split /\+/, $info[2];
+	@size = split /x/, $sizestr[0];
 
 	$hsize = $size[0];
 	$vsize = $size[1];

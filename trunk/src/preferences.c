@@ -1,6 +1,6 @@
 // preferences.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2016
+// (c) G. Finch 2004 - 2017
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 

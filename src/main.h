@@ -114,7 +114,6 @@ typedef PROCESS_INFORMATION *lives_pgid_t;
 #endif
 #endif
 
-
 #else // IS_MINGW
 
 #ifdef GUI_GTK
@@ -130,12 +129,7 @@ typedef PROCESS_INFORMATION *lives_pgid_t;
 typedef pid_t lives_pid_t;
 typedef int lives_pgid_t;
 
-
 #endif // IS_MINGW
-
-
-
-
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -156,14 +150,11 @@ typedef int lives_pgid_t;
 #include <stdint.h>
 #include <stdarg.h>
 
-
 #ifndef ulong
 #define ulong unsigned long
 #endif
 
-
 #define QUOTEME(x) #x
-
 
 /// max files is actually 1 more than this, since file 0 is the clipboard
 #define MAX_FILES 65535
@@ -183,8 +174,6 @@ typedef int lives_pgid_t;
 #ifndef PREFIX
 #define PREFIX PREFIX_DEFAULT
 #endif
-
-
 
 #ifndef IS_MINGW
 #define LIVES_DIR_SEP "/"
@@ -332,7 +321,6 @@ typedef struct {
   uint16_t alpha;
 } lives_colRGBA64_t;
 
-
 #include "widget-helper.h"
 
 typedef  void *(*fn_ptr)(void *ptr);
@@ -363,15 +351,11 @@ typedef struct {
   boolean is_ready;
 } xprocess;
 
-
-
-
 typedef struct {
   int afile;
   double seek;
   double vel;
 } lives_audio_track_state_t;
-
 
 #if HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -422,14 +406,12 @@ typedef enum {
   UNDO_INSERT_WITH_AUDIO
 } lives_undo_t;
 
-
 /// which stream end should cause playback to finish ?
 typedef enum {
   NEVER_STOP = 0,
   STOP_ON_VID_END,
   STOP_ON_AUD_END
 } lives_whentostop_t;
-
 
 /// cancel reason
 typedef enum {
@@ -479,14 +461,10 @@ typedef enum {
   CANCEL_KEEP_LOOPING = CANCEL_NONE + 100
 } lives_cancel_t;
 
-
 typedef enum {
   CANCEL_KILL = 0, ///< normal - kill background processes working on current clip
   CANCEL_SOFT     ///< just cancel in GUI (for keep, etc)
 } lives_cancel_type_t;
-
-
-
 
 typedef enum {
   CLIP_TYPE_DISK, ///< imported video, broken into frames
@@ -497,7 +475,6 @@ typedef enum {
   CLIP_TYPE_VIDEODEV  ///< frames from video device
 } lives_clip_type_t;
 
-
 typedef enum {
   IMG_TYPE_UNKNOWN = 0,
   IMG_TYPE_JPEG,
@@ -506,7 +483,6 @@ typedef enum {
 
 #define IMG_TYPE_BEST IMG_TYPE_PNG
 
-
 #define AFORM_SIGNED 0
 #define AFORM_LITTLE_ENDIAN 0
 
@@ -514,13 +490,11 @@ typedef enum {
 #define AFORM_BIG_ENDIAN (1<<1)
 #define AFORM_UNKNOWN 65536
 
-
 typedef enum {
   LIVES_INTERLACE_NONE = 0,
   LIVES_INTERLACE_BOTTOM_FIRST = 1,
   LIVES_INTERLACE_TOP_FIRST = 2
 } lives_interlace_t;
-
 
 #include "pangotext.h"
 
@@ -620,11 +594,8 @@ typedef struct {
   int frameno;
   int last_frameno;
 
-
-
   /////////////////////////////////////////////////////////////
   // see resample.c for new events system
-
 
   // events
   event *events[1];  ///<for block resampler
@@ -690,7 +661,6 @@ typedef struct {
 
   char mime_type[256];
 
-
   boolean deinterlace; ///< auto deinterlace
 
   lives_image_type_t img_type;
@@ -719,8 +689,6 @@ typedef struct {
 
   boolean needs_update; ///< loaded values were incorrect, update header
 } lives_clip_t;
-
-
 
 typedef struct {
   // the following can be assumed TRUE, they are checked on startup
@@ -779,7 +747,6 @@ typedef struct {
 
   short cpu_bits;
 
-
   char *myname_full;
   char *myname;
 
@@ -795,7 +762,6 @@ typedef struct {
 
   mode_t umask;
 } capability;
-
 
 /// some shared structures
 extern capability *capable;
@@ -832,7 +798,6 @@ extern capability *capable;
 # define PRIu64		__PRI64_PREFIX "u"
 #endif // ifndef PRI64d
 
-
 // common defs for mainwindow (retain this order)
 #include "plugins.h"
 #include "colourspace.h"
@@ -844,16 +809,12 @@ extern capability *capable;
 
 extern mainwindow *mainw;
 
-
 // internal player clock
 #include <sys/time.h>
 struct timeval tv;
 
-
 /// type sizes
 extern ssize_t sizint, sizdbl, sizshrt;
-
-
 
 typedef enum {
   CLIP_DETAILS_BPP,
@@ -881,9 +842,7 @@ typedef enum {
   CLIP_DETAILS_DECODER_NAME
 } lives_clip_details_t;
 
-
 // some useful functions
-
 
 // dialogs.c
 boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text);
@@ -1024,7 +983,6 @@ void pump_io_chan(LiVESIOChannel *iochan);
 
 void do_splash_progress(void);
 
-
 // d_print shortcuts
 void d_print_cancelled(void);
 void d_print_failed(void);
@@ -1073,7 +1031,6 @@ boolean read_headers(const char *file_name);
 // saveplay.c sets
 void open_set_file(const char *set_name, int clipnum);
 
-
 // saveplay.c scrap file
 boolean open_scrap_file(void);
 boolean open_ascrap_file(void);
@@ -1084,7 +1041,6 @@ void close_scrap_file(void);
 void add_to_ascrap_mb(uint64_t bytes);
 
 boolean check_for_disk_space(void);
-
 
 // main.c
 typedef void (*SignalHandlerPointer)(int);
@@ -1169,10 +1125,6 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data);
 #endif
 
-
-
-
-
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);
 lives_pid_t lives_fork(const char *com);
@@ -1224,7 +1176,6 @@ int lives_chmod(const char *target, const char *mode);
 int lives_cat(const char *from, const char *to, boolean append);
 int lives_echo(const char *text, const char *to, boolean append);
 int lives_ln(const char *from, const char *to);
-
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2);
 
@@ -1369,10 +1320,8 @@ lives_cancel_t check_for_bad_ffmpeg(void);
 
 //callbacks.c
 
-
 // paramspecial.c
 LiVESPixbuf *mt_framedraw(lives_mt *, LiVESPixbuf *);
-
 
 // effects-weed.c
 livespointer _lives_malloc(size_t size) GNU_MALLOC;
@@ -1381,7 +1330,6 @@ livespointer lives_memset(livespointer s, int c, size_t n);
 void _lives_free(livespointer ptr);
 livespointer lives_calloc(size_t n_blocks, size_t n_block_bytes);
 livespointer _lives_realloc(livespointer ptr, size_t new_size);
-
 
 // pangotext.c
 boolean subtitles_init(lives_clip_t *sfile, char *fname, lives_subtitle_type_t);
@@ -1401,7 +1349,6 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 
-
 // round (double) a up to next (integer) multiple of (double) b
 #define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
 
@@ -1410,7 +1357,6 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 static int32_t testint = 0x12345678;
 #define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)
 #endif
-
 
 char *dummychar;
 
@@ -1456,7 +1402,6 @@ void break_me(void);
 #define LIVES_FATAL(x)      dummychar = x
 #endif // LIVES_NO_FATAL
 #endif // LIVES_FATAL
-
 
 #endif // #ifndef HAS_LIVES_MAIN_H
 

@@ -193,24 +193,11 @@ void on_spin_step_value_changed(LiVESSpinButton *, livespointer);
 
 void on_spin_end_value_changed(LiVESSpinButton *, livespointer);
 
+EXPOSE_FN_PROTOTYPE(expose_vid_event)
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-boolean expose_vid_event(LiVESWidget *, lives_painter_t *cr, livespointer);
-#else
-boolean expose_vid_event(LiVESWidget *, LiVESXEventExpose *event);
-#endif
+EXPOSE_FN_PROTOTYPE(expose_laud_event)
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-boolean expose_laud_event(LiVESWidget *, lives_painter_t *cr, livespointer);
-#else
-boolean expose_laud_event(LiVESWidget *, LiVESXEventExpose *event);
-#endif
-
-#if GTK_CHECK_VERSION(3, 0, 0)
-boolean expose_raud_event(LiVESWidget *, lives_painter_t *cr, livespointer);
-#else
-boolean expose_raud_event(LiVESWidget *, LiVESXEventExpose *event);
-#endif
+EXPOSE_FN_PROTOTYPE(expose_raud_event)
 
 void on_preview_clicked(LiVESButton *, livespointer);
 

@@ -19,7 +19,6 @@
 #include "startup.h"
 #include "ce_thumbs.h"
 
-
 #ifdef ENABLE_GIW_3
 #include "giw/giwtimeline.h"
 #endif
@@ -54,7 +53,6 @@ static LiVESWidgetClosure *rec_closure;
 static LiVESWidgetClosure *mute_audio_closure;
 static LiVESWidgetClosure *ping_pong_closure;
 
-
 void load_theme_images(void) {
   // load the theme images
   // TODO - set palette in here ?
@@ -74,7 +72,6 @@ void load_theme_images(void) {
     palette->style = STYLE_PLAIN;
     lives_snprintf(prefs->theme, 64, "%%ERROR%%");
     lives_error_free(error);
-
   } else {
     if (pixbuf != NULL) {
       //resize
@@ -110,7 +107,6 @@ void load_theme_images(void) {
         lives_object_unref(pixbuf);
       }
     }
-
   }
 }
 
@@ -142,7 +138,6 @@ void add_message_scroller(LiVESWidget *conter) {
   if (all_text != NULL) lives_free(all_text);
 
   lives_widget_set_size_request(mainw->textview1, -1, MSG_AREA_HEIGHT);
-
 }
 
 
@@ -150,8 +145,8 @@ void make_custom_submenus(void) {
   mainw->custom_gens_submenu = lives_menu_item_new_with_mnemonic(_("_Custom Generators"));
   mainw->custom_effects_submenu = lives_menu_item_new_with_mnemonic(_("_Custom Effects"));
   mainw->custom_utilities_submenu = lives_menu_item_new_with_mnemonic(_("Custom _Utilities"));
-
 }
+
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
@@ -164,6 +159,7 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   return TRUE;
 }
 
+
 boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
@@ -173,6 +169,7 @@ boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   mainw->current_file = current_file;
   return TRUE;
 }
+
 
 boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
@@ -184,9 +181,6 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   return TRUE;
 }
 #endif
-
-
-
 
 
 void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
@@ -340,11 +334,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
   lives_widget_set_bg_color(mainw->tb_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color(mainw->toolbar, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-
 }
-
-
-
 
 
 void create_LiVES(void) {
@@ -401,7 +391,6 @@ void create_LiVES(void) {
   LiVESWidget *assign_rte_keys;
 
   LiVESWidget *tmp_toolbar_icon;
-
 
   LiVESAdjustment *adj;
 
@@ -464,7 +453,6 @@ void create_LiVES(void) {
 
     lives_widget_get_fg_color(mainw->LiVES, &normal);
     lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_fore), &normal);
-
   }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -533,8 +521,6 @@ void create_LiVES(void) {
 
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_sel);
 
-
-
   mainw->open_loc = lives_menu_item_new_with_mnemonic(_("Open _Location/Stream..."));
 
 #ifdef HAVE_WEBM
@@ -573,7 +559,6 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->open_vcd_submenu), mainw->open_dvd);
   lives_container_add(LIVES_CONTAINER(mainw->open_vcd_submenu), mainw->open_vcd);
 
-
   mainw->open_device_menu = lives_menu_item_new_with_mnemonic(_("_Import from Firewire"));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_device_menu);
   mainw->open_device_submenu = lives_menu_new();
@@ -605,7 +590,6 @@ void create_LiVES(void) {
                        NULL);
 #endif
 
-
 #ifdef HAVE_YUV4MPEG
   if (capable->has_dvgrab) {
     if (capable->has_mplayer || capable->has_mplayer2) {
@@ -622,8 +606,6 @@ void create_LiVES(void) {
                          LIVES_GUI_CALLBACK(on_live_tvcard_activate),
                          NULL);
   }
-
-
 
 #endif
 #endif // defined HAVE_UNICAP || defined HAVE_YUV4MPEG
@@ -735,7 +717,6 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->undo);
   lives_widget_set_sensitive(mainw->undo, FALSE);
 
-
   lives_widget_add_accelerator(mainw->undo, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_u, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
@@ -838,7 +819,6 @@ void create_LiVES(void) {
   mainw->select_submenu = lives_menu_item_new_with_mnemonic(_("_Select..."));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->select_submenu);
 
-
   select_submenu_menu = lives_menu_new();
 
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->select_submenu), select_submenu_menu);
@@ -863,7 +843,6 @@ void create_LiVES(void) {
   lives_widget_add_accelerator(mainw->select_end_only, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_End, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
-
 
   lives_menu_add_separator(LIVES_MENU(select_submenu_menu));
 
@@ -943,7 +922,6 @@ void create_LiVES(void) {
                                LIVES_KEY_q, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
-
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_STOP, LIVES_ICON_SIZE_MENU);
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->stop), image);
@@ -979,7 +957,6 @@ void create_LiVES(void) {
   mainw->full_screen = lives_check_menu_item_new_with_mnemonic(_("_Full Screen"));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->full_screen);
 
-
   lives_widget_add_accelerator(mainw->full_screen, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_f, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
@@ -997,7 +974,6 @@ void create_LiVES(void) {
   lives_widget_add_accelerator(mainw->sepwin, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_s, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
-
 
   mainw->fade = lives_check_menu_item_new_with_mnemonic(_("_Blank Background"));
   if (palette->style != STYLE_PLAIN) {
@@ -1188,7 +1164,6 @@ void create_LiVES(void) {
     }
   }
 
-
   mainw->recaudio_submenu = lives_menu_item_new_with_mnemonic(_("Record E_xternal Audio..."));
   if ((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE && capable->has_pulse_audio))
     lives_container_add(LIVES_CONTAINER(audio_menu), mainw->recaudio_submenu);
@@ -1371,7 +1346,6 @@ void create_LiVES(void) {
   rebuild_rfx = lives_menu_item_new_with_mnemonic(_("Re_build all RFX plugins"));
   lives_container_add(LIVES_CONTAINER(rfx_menu), rebuild_rfx);
 
-
   if (mainw->num_rendered_effects_custom > 0) {
     lives_widget_set_sensitive(mainw->delete_custom_rfx, TRUE);
     lives_widget_set_sensitive(mainw->export_custom_rfx, TRUE);
@@ -1420,7 +1394,6 @@ void create_LiVES(void) {
 #endif
   }
 
-
   lives_menu_add_separator(LIVES_MENU(advanced_menu));
 
   mainw->import_proj = lives_menu_item_new_with_mnemonic((tmp = lives_strdup_printf(_("_Import Project (.%s)..."), LIVES_FILE_EXT_PROJECT)));
@@ -1430,7 +1403,6 @@ void create_LiVES(void) {
   mainw->export_proj = lives_menu_item_new_with_mnemonic((tmp = lives_strdup_printf(_("E_xport Project (.%s)..."), LIVES_FILE_EXT_PROJECT)));
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->export_proj);
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
-
 
   lives_menu_add_separator(LIVES_MENU(advanced_menu));
 
@@ -1470,7 +1442,6 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(vj_menu), mainw->save_rte_defs);
   lives_widget_set_tooltip_text(mainw->save_rte_defs,
                                 (_("Save real time effect defaults so they will be restored each time you use LiVES.")));
-
 
   lives_menu_add_separator(LIVES_MENU(vj_menu));
 
@@ -1599,7 +1570,6 @@ void create_LiVES(void) {
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all (p)"));
     lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
 
-
     tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_STOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
     mainw->m_stopbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
@@ -1618,7 +1588,6 @@ void create_LiVES(void) {
     lives_widget_set_tooltip_text(mainw->m_playselbutton, _("Play selection (y)"));
 
     lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
-
 
     fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "loop.png", NULL);
     lives_snprintf(buff, PATH_MAX, "%s", fnamex);
@@ -1645,7 +1614,6 @@ void create_LiVES(void) {
     mainw->m_mutebutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_mutebutton), -1);
     lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Mute the audio (z)"));
-
   } else {
     mainw->m_sepwinbutton = lives_menu_item_new();
     mainw->m_rewindbutton = lives_menu_item_new();
@@ -1764,7 +1732,6 @@ void create_LiVES(void) {
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_REMOVE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
 
-
   mainw->t_slower = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_slower), 5);
   lives_widget_set_tooltip_text(mainw->t_slower, _("Play slower (ctrl-down)"));
@@ -1774,7 +1741,6 @@ void create_LiVES(void) {
   mainw->t_faster = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_faster), 6);
   lives_widget_set_tooltip_text(mainw->t_faster, _("Play faster (ctrl-up)"));
-
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_GO_BACK, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
 
@@ -1807,7 +1773,6 @@ void create_LiVES(void) {
   }
 
   lives_box_pack_start(LIVES_BOX(mainw->tb_hbox), t_label, FALSE, FALSE, 0);
-
 
   vbox4 = lives_vbox_new(FALSE, 0);
 
@@ -2002,9 +1967,7 @@ void create_LiVES(void) {
 
   if (palette->style & STYLE_1) {
     lives_box_pack_start(LIVES_BOX(vbox4), mainw->sep_image, FALSE, TRUE, widget_opts.packing_height * 2);
-  }
-
-  else {
+  } else {
     lives_box_pack_start(LIVES_BOX(vbox4), mainw->hseparator, TRUE, TRUE, 0);
   }
 
@@ -2250,7 +2213,6 @@ void create_LiVES(void) {
       }
     }
   }
-
 
   lives_text_view_set_text(LIVES_TEXT_VIEW(mainw->textview1),
                            _("Starting...\n"), -1);
@@ -2900,7 +2862,6 @@ void set_interactive(boolean interactive) {
       lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
     }
-
   } else {
     if (lives_widget_get_parent(mainw->menubar) == NULL) {
       lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
@@ -2924,7 +2885,6 @@ void set_interactive(boolean interactive) {
         lives_widget_hide(mainw->custom_gens_menu);
         lives_widget_hide(mainw->custom_gens_submenu);
       }
-
 
       lives_widget_hide(mainw->multitrack->aparam_separator); // no longer used
 
@@ -2970,19 +2930,14 @@ void set_interactive(boolean interactive) {
       lives_widget_set_sensitive(cfile->proc_ptr->pause_button, TRUE);
       lives_widget_set_sensitive(cfile->proc_ptr->preview_button, TRUE);
     }
-
   }
 
   if (mainw->ce_thumbs) ce_thumbs_set_interactive(interactive);
   if (rte_window != NULL) rte_window_set_interactive(interactive);
-
 }
 
 
-
-
 void fade_background(void) {
-
   if (palette->style == STYLE_PLAIN) {
     lives_label_set_text(LIVES_LABEL(mainw->banner), "            = <  L i V E S > =              ");
   }
@@ -3101,10 +3056,6 @@ void fade_background(void) {
 }
 
 
-
-
-
-
 void unfade_background(void) {
   if (prefs->open_maximised && prefs->show_gui) {
     lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
@@ -3219,7 +3170,6 @@ void unfade_background(void) {
                                    LIVES_ACCEL_VISIBLE);
     }
     stop_closure = NULL;
-
   }
   if (mainw->double_size) {
     resize(2);
@@ -3237,12 +3187,10 @@ void unfade_background(void) {
 }
 
 
-
 void fullscreen_internal(void) {
   // resize for full screen, internal player, no separate window
 
   int bx, by;
-
   int w, h, scr_width, scr_height;
 
   if (prefs->gui_monitor == 0) {
@@ -3254,7 +3202,6 @@ void fullscreen_internal(void) {
   }
 
   if (mainw->multitrack == NULL) {
-
     lives_widget_hide(mainw->frame1);
     lives_widget_hide(mainw->frame2);
 
@@ -3268,7 +3215,6 @@ void fullscreen_internal(void) {
     lives_widget_hide(mainw->t_double);
 
     lives_widget_hide(mainw->menu_hbox);
-
 
     if (mainw->playing_file == -1) {
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL);
@@ -3290,13 +3236,10 @@ void fullscreen_internal(void) {
     if (h > scr_height) h = scr_height;
 
     lives_widget_set_size_request(mainw->LiVES, w, h);
-
   } else {
     make_play_window();
   }
-
 }
-
 
 
 void block_expose(void) {
@@ -3313,6 +3256,7 @@ void block_expose(void) {
   lives_signal_handler_block(mainw->raudio_draw, mainw->raudbar_func);
 #endif
 }
+
 
 void unblock_expose(void) {
   // unblock expose/config events
@@ -3334,7 +3278,6 @@ void set_preview_box_colours(void) {
   lives_widget_set_fg_color(mainw->preview_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   set_child_colour(mainw->preview_box, TRUE);
 }
-
 
 
 void make_preview_box(void) {
@@ -3378,7 +3321,6 @@ void make_preview_box(void) {
                        LIVES_GUI_CALLBACK(frame_context),
                        LIVES_INT_TO_POINTER(3));
 
-
   mainw->preview_image = lives_image_new_from_pixbuf(NULL);
   lives_widget_show(mainw->preview_image);
   lives_container_add(LIVES_CONTAINER(eventbox), mainw->preview_image);
@@ -3416,7 +3358,6 @@ void make_preview_box(void) {
   mainw->preview_scale = lives_hscale_new(lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->preview_spinbutton)));
   lives_scale_set_draw_value(LIVES_SCALE(mainw->preview_scale), FALSE);
 
-
   lives_box_pack_start(LIVES_BOX(mainw->preview_controls), mainw->preview_scale, FALSE, FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->preview_controls), mainw->preview_hbox, FALSE, FALSE, 0);
 
@@ -3438,7 +3379,6 @@ void make_preview_box(void) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_start), mainw->prv_link == PRV_START);
 
-
   radiobutton_end = lives_standard_radio_button_new((tmp = lives_strdup(_("_End"))), TRUE, radiobutton_group, LIVES_BOX(mainw->preview_hbox),
                     (tmp2 = lives_strdup(_("Frame number is linked to end frame"))));
   lives_free(tmp);
@@ -3447,16 +3387,13 @@ void make_preview_box(void) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_end), mainw->prv_link == PRV_END);
 
-
   radiobutton_ptr = lives_standard_radio_button_new((tmp = lives_strdup(_("_Pointer"))), TRUE, radiobutton_group,
                     LIVES_BOX(mainw->preview_hbox),
                     (tmp2 = lives_strdup(_("Frame number is linked to playback pointer"))));
   lives_free(tmp);
   lives_free(tmp2);
 
-
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_end), mainw->prv_link == PRV_PTR);
-
 
   add_hsep_to_box(LIVES_BOX(mainw->preview_controls));
 
@@ -3571,7 +3508,6 @@ void make_preview_box(void) {
   }
 
   lives_widget_show_all(mainw->preview_box);
-
 }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -3592,6 +3528,7 @@ void enable_record(void) {
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
 }
 
+
 void toggle_record(void) {
   set_menu_text(mainw->record_perf, _("Stop _recording"), TRUE);
 }
@@ -3600,7 +3537,6 @@ void toggle_record(void) {
 void disable_record(void) {
   set_menu_text(mainw->record_perf, _("_Record Performance"), TRUE);
 }
-
 
 
 void play_window_set_title(void) {
@@ -3632,7 +3568,6 @@ void play_window_set_title(void) {
 
   if (title != NULL) lives_free(title);
   lives_free(xtrabit);
-
 }
 
 
@@ -3655,7 +3590,6 @@ void resize_widgets_for_monitor(boolean get_play_times) {
       lives_window_center(LIVES_WINDOW(mainw->multitrack->window));
     }
 
-
     if ((prefs->gui_monitor != 0 || capable->nmonitors <= 1) && prefs->open_maximised) {
       lives_window_maximize(LIVES_WINDOW(mainw->multitrack->window));
     }
@@ -3670,8 +3604,6 @@ void resize_widgets_for_monitor(boolean get_play_times) {
       get_play_times();
     }
     }*/
-
-
 }
 
 
@@ -3716,7 +3648,6 @@ void make_play_window(void) {
 
   //if (mainw->playing_file==-1&&mainw->current_file>0&&cfile->frames>0&&mainw->multitrack==NULL) {
   if (mainw->multitrack == NULL && mainw->playing_file == -1) {
-
     if (mainw->preview_box == NULL) {
       // create the preview box that shows frames
       make_preview_box();
@@ -3761,17 +3692,13 @@ void make_play_window(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_DELETE_EVENT,
                        LIVES_GUI_CALLBACK(on_stop_activate_by_del),
                        NULL);
-
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_KEY_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(key_press_or_release),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_KEY_RELEASE_EVENT,
                        LIVES_GUI_CALLBACK(key_press_or_release),
                        NULL);
-
-
 }
-
 
 
 void resize_play_window(void) {
@@ -4109,12 +4036,12 @@ point1:
   lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
   lives_widget_set_size_request(mainw->play_window, nwidth, nheight);
 
-  if (width != -1 && (width != nwidth || height != nheight) && mainw->preview_spinbutton != NULL)
+  if (width != -1 && (width != nwidth || height != nheight) && mainw->preview_spinbutton != NULL) {
     if (mainw->playing_file == -1) {
       load_preview_image(FALSE);
     }
+  }
 }
-
 
 
 void kill_play_window(void) {
@@ -4134,7 +4061,6 @@ void kill_play_window(void) {
   }
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show Play Window"));
 }
-
 
 
 void add_to_playframe(void) {
@@ -4177,7 +4103,6 @@ void add_to_clipmenu(void) {
   char *tmp, *detail;
 #endif
 
-
 #ifndef GTK_RADIO_MENU_BUG
   cfile->menuentry = lives_radio_menu_item_new_with_label(mainw->clips_group, tmp = get_menu_name(cfile));
   mainw->clips_group = lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));
@@ -4213,8 +4138,6 @@ void add_to_clipmenu(void) {
 }
 
 
-
-
 void remove_from_clipmenu(void) {
 #ifndef GTK_RADIO_MENU_BUG
   LiVESList *list;
@@ -4242,7 +4165,6 @@ void remove_from_clipmenu(void) {
     if (prefs->crash_recovery) rewrite_recovery_file();
   }
 
-
 #ifndef GTK_RADIO_MENU_BUG
   list = mainw->cliplist;
   mainw->clips_group = NULL;
@@ -4255,18 +4177,11 @@ void remove_from_clipmenu(void) {
     }
   }
 #endif
-
 }
-
-
-
-
 
 //////////////////////////////////////////////////////////////////////
 
 // splash screen
-
-
 
 void splash_init(void) {
   LiVESWidget *vbox, *hbox;
@@ -4297,7 +4212,6 @@ void splash_init(void) {
       lives_widget_set_bg_color(mainw->splash_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
 
-
     vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
     lives_container_add(LIVES_CONTAINER(mainw->splash_window), vbox);
 
@@ -4309,7 +4223,6 @@ void splash_init(void) {
     lives_box_pack_start(LIVES_BOX(vbox), splash_img, TRUE, TRUE, 0);
 
     if (splash_pix != NULL) lives_object_unref(splash_pix);
-
 
     mainw->splash_label = lives_standard_label_new("");
 
@@ -4331,7 +4244,6 @@ void splash_init(void) {
 
     lives_widget_show_all(mainw->splash_window);
 
-
     if (prefs->gui_monitor > 0) {
       lives_window_set_screen(LIVES_WINDOW(mainw->splash_window), mainw->mgeom[prefs->gui_monitor - 1].screen);
     }
@@ -4348,14 +4260,10 @@ void splash_init(void) {
   }
 
   lives_window_set_auto_startup_notification(TRUE);
-
 }
 
 
-
-
 void splash_msg(const char *msg, double pct) {
-
   if (mainw->foreign || mainw->splash_window == NULL) return;
 
   lives_label_set_text(LIVES_LABEL(mainw->splash_label), msg);
@@ -4365,15 +4273,10 @@ void splash_msg(const char *msg, double pct) {
   lives_widget_queue_draw(mainw->splash_window);
 
   lives_widget_context_update();
-
 }
 
 
-
-
-
 void splash_end(void) {
-
   if (mainw->foreign) return;
 
   if (mainw->splash_window != NULL) {
@@ -4387,5 +4290,4 @@ void splash_end(void) {
 
   if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && mainw->multitrack == NULL)
     on_multitrack_activate(NULL, NULL);
-
 }

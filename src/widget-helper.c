@@ -1,9 +1,8 @@
 // widget-helper.c
 // LiVES
-// (c) G. Finch 2012 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2017 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
-
 
 #include "main.h"
 
@@ -16,7 +15,6 @@
 // static defns
 static void set_child_colour_internal(LiVESWidget *widget, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *widget, livespointer set_allx);
-
 
 
 // basic functions
@@ -33,7 +31,6 @@ LIVES_INLINE lives_painter_t *lives_painter_create(lives_painter_surface_t *targ
   cr = new lives_painter_t(target);
 #endif
   return cr;
-
 }
 
 LIVES_INLINE lives_painter_t *lives_painter_create_from_widget(LiVESWidget *widget) {
@@ -67,7 +64,6 @@ LIVES_INLINE boolean lives_painter_set_source_pixbuf(lives_painter_t *cr, const 
   return TRUE;
 #endif
   return FALSE;
-
 }
 
 
@@ -82,8 +78,6 @@ LIVES_INLINE boolean lives_painter_set_source_surface(lives_painter_t *cr, lives
   return TRUE;
 #endif
   return FALSE;
-
-
 }
 
 LIVES_INLINE boolean lives_painter_paint(lives_painter_t *cr) {
@@ -152,8 +146,6 @@ LIVES_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
 #endif
   return FALSE;
 }
-
-
 
 
 
@@ -227,7 +219,6 @@ LIVES_INLINE boolean lives_painter_translate(lives_painter_t *cr, double x, doub
   return TRUE;
 #endif
   return FALSE;
-
 }
 
 
@@ -372,7 +363,6 @@ LIVES_INLINE boolean lives_painter_surface_flush(lives_painter_surface_t *surf) 
 }
 
 
-
 LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t format,
     int width, int height, int stride) {
   lives_painter_surface_t *surf = NULL;
@@ -420,11 +410,9 @@ LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_p
 }
 
 
-
 ////////////////////////// painter info funcs
 
 lives_painter_surface_t *lives_painter_get_target(lives_painter_t *cr) {
-
   lives_painter_surface_t *surf = NULL;
 #ifdef PAINTER_CAIRO
   surf = cairo_get_target(cr);
@@ -433,7 +421,6 @@ lives_painter_surface_t *lives_painter_get_target(lives_painter_t *cr) {
   surf = cr->target;
 #endif
   return surf;
-
 }
 
 
@@ -511,7 +498,6 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 ////////////////////////////////////////////////////////
 
-
 LIVES_INLINE livespointer lives_object_ref(livespointer object) {
 #ifdef GUI_GTK
   g_object_ref(object);
@@ -558,7 +544,6 @@ LIVES_INLINE livespointer lives_object_ref_sink(livespointer object) {
   return object;
 }
 #endif
-
 
 
 LIVES_INLINE boolean lives_signal_handler_block(livespointer instance, unsigned long handler_id) {
@@ -611,7 +596,6 @@ LIVES_INLINE boolean lives_signal_handlers_unblock_by_func(livespointer instance
 #endif
 
 
-
 LIVES_INLINE boolean lives_signal_handler_disconnect(livespointer instance, unsigned long handler_id) {
 #ifdef GUI_GTK
   g_signal_handler_disconnect(instance, handler_id);
@@ -656,7 +640,6 @@ LIVES_INLINE boolean lives_grab_remove(LiVESWidget *widget) {
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {
@@ -799,7 +782,6 @@ LIVES_INLINE boolean lives_widget_queue_resize(LiVESWidget *widget) {
 }
 
 
-
 LIVES_INLINE boolean lives_widget_set_size_request(LiVESWidget *widget, int width, int height) {
 #ifdef GUI_GTK
   gtk_widget_set_size_request(widget, width, height);
@@ -813,7 +795,6 @@ LIVES_INLINE boolean lives_widget_set_size_request(LiVESWidget *widget, int widt
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_widget_set_minimum_size(LiVESWidget *widget, int width, int height) {
@@ -842,7 +823,6 @@ LIVES_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *widget, int widt
 #endif
   return FALSE;
 }
-
 
 
 
@@ -918,7 +898,6 @@ LIVES_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *widget, boolean
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
@@ -1026,7 +1005,6 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
   }
 #endif
 
-
   css_string = g_strdup_printf(" %s {\n background-color: %s;\n }\n }\n", wname, colref);
 
   if (GTK_IS_FRAME(widget)) {
@@ -1038,7 +1016,6 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                   css_string,
                                   -1, NULL);
-
 
 
   g_free(colref);
@@ -1095,7 +1072,6 @@ LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetS
 #endif
     if (GTK_IS_NOTEBOOK(widget)) wname = g_strdup_printf("#%s tab", widget_name);
     wname = g_strdup_printf("#%s", widget_name);
-
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   }
@@ -1161,7 +1137,6 @@ LIVES_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidge
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_widget_get_fg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
@@ -1274,7 +1249,6 @@ LIVES_INLINE boolean lives_event_box_set_above_child(LiVESEventBox *ebox, boolea
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_image_new(void) {
   LiVESWidget *image = NULL;
 #ifdef GUI_GTK
@@ -1285,7 +1259,6 @@ LIVES_INLINE LiVESWidget *lives_image_new(void) {
 #endif
   return image;
 }
-
 
 
 LIVES_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, LiVESIconSize size) {
@@ -1362,7 +1335,6 @@ LIVES_INLINE LiVESWidget *lives_image_new_from_pixbuf(LiVESPixbuf *pixbuf) {
 }
 
 
-
 LIVES_INLINE boolean lives_image_set_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf) {
 #ifdef GUI_GTK
   gtk_image_set_from_pixbuf(image, pixbuf);
@@ -1388,7 +1360,6 @@ LIVES_INLINE LiVESPixbuf *lives_image_get_pixbuf(LiVESImage *image) {
 }
 
 
-
 LIVES_INLINE boolean lives_color_parse(const char *spec, LiVESWidgetColor *color) {
   boolean retval = FALSE;
 #ifdef GUI_GTK
@@ -1412,7 +1383,6 @@ LIVES_INLINE boolean lives_color_parse(const char *spec, LiVESWidgetColor *color
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
 
@@ -1427,7 +1397,6 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 #endif
   return NULL;
 }
-
 
 
 LIVES_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog) {
@@ -1451,7 +1420,6 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog) {
 }
 
 
-
 LIVES_INLINE boolean lives_dialog_add_action_widget(LiVESDialog *dialog, LiVESWidget *widget, int response) {
 #ifdef GUI_GTK
   gtk_dialog_add_action_widget(dialog, widget, response);
@@ -1463,7 +1431,6 @@ LIVES_INLINE boolean lives_dialog_add_action_widget(LiVESDialog *dialog, LiVESWi
   qbb->addButton(dynamic_cast<QPushButton *>(widget), static_cast<QDialogButtonBox::ButtonRole>(response));
 #endif
   return FALSE;
-
 }
 
 
@@ -1651,7 +1618,6 @@ LIVES_INLINE boolean lives_window_set_auto_startup_notification(boolean set) {
 }
 
 
-
 LIVES_INLINE boolean lives_window_set_screen(LiVESWindow *window, LiVESXScreen *screen) {
 #ifdef GUI_GTK
   gtk_window_set_screen(window, screen);
@@ -1728,7 +1694,6 @@ LIVES_INLINE boolean lives_widget_get_position(LiVESWidget *widget, int *x, int 
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_window_get_position(LiVESWindow *window, int *x, int *y) {
@@ -1889,10 +1854,8 @@ LIVES_INLINE LiVESAccelGroup *lives_accel_group_new(void) {
 }
 
 
-
 LIVES_INLINE boolean lives_accel_group_connect(LiVESAccelGroup *group, uint32_t key, LiVESXModifierType mod,
     LiVESAccelFlags flags, LiVESWidgetClosure *closure) {
-
 #ifdef GUI_GTK
   gtk_accel_group_connect(group, key, mod, flags, closure);
   return TRUE;
@@ -1904,9 +1867,7 @@ LIVES_INLINE boolean lives_accel_group_connect(LiVESAccelGroup *group, uint32_t 
 }
 
 
-
 LIVES_INLINE boolean lives_accel_group_disconnect(LiVESAccelGroup *group, LiVESWidgetClosure *closure) {
-
 #ifdef GUI_GTK
   gtk_accel_group_disconnect(group, closure);
   return TRUE;
@@ -1917,7 +1878,6 @@ LIVES_INLINE boolean lives_accel_group_disconnect(LiVESAccelGroup *group, LiVESW
 #endif
   return FALSE;
 }
-
 
 
 
@@ -1933,7 +1893,6 @@ LIVES_INLINE boolean lives_widget_add_accelerator(LiVESWidget *widget, const cha
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_window_add_accel_group(LiVESWindow *window, LiVESAccelGroup *group) {
@@ -1997,7 +1956,6 @@ LIVES_INLINE boolean lives_accel_groups_activate(LiVESObject *object, uint32_t k
 
 
 
-
 LIVES_INLINE boolean lives_window_has_toplevel_focus(LiVESWindow *window) {
 #ifdef GUI_GTK
   return gtk_window_has_toplevel_focus(window);
@@ -2012,9 +1970,7 @@ LIVES_INLINE boolean lives_window_has_toplevel_focus(LiVESWindow *window) {
 }
 
 
-
 LIVES_INLINE LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height) {
-
 #ifdef GUI_GTK
   // alpha fmt is RGBA post mult
   return gdk_pixbuf_new(GDK_COLORSPACE_RGB, has_alpha, 8, width, height);
@@ -2034,17 +1990,14 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int hei
 }
 
 
-
 LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_data(const unsigned char *buf, boolean has_alpha, int width, int height,
     int rowstride, LiVESPixbufDestroyNotify lives_free_buffer_fn,
     livespointer destroy_fn_data) {
-
 #ifdef GUI_GTK
   return gdk_pixbuf_new_from_data((const guchar *)buf, GDK_COLORSPACE_RGB, has_alpha, 8, width, height, rowstride,
                                   lives_free_buffer_fn,
                                   destroy_fn_data);
 #endif
-
 
 #ifdef GUI_QT
   // alpha fmt is ARGB32 premult
@@ -2056,9 +2009,7 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_data(const unsigned char *buf, b
   }
   return new LiVESPixbuf((uchar *)buf, width, height, rowstride, fmt, imclean, (void *)buf);
 #endif
-
 }
-
 
 
 LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, LiVESError **error) {
@@ -2082,11 +2033,9 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, LiVES
 
 
 
-
 LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width, int height,
     boolean preserve_aspect_ratio,
     LiVESError **error) {
-
 #ifdef GUI_GTK
   return gdk_pixbuf_new_from_file_at_scale(filename, width, height, preserve_aspect_ratio, error);
 #endif
@@ -2124,7 +2073,6 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filena
 
   return NULL;
 }
-
 
 
 LIVES_INLINE int lives_pixbuf_get_rowstride(const LiVESPixbuf *pixbuf) {
@@ -2171,7 +2119,6 @@ LIVES_INLINE int lives_pixbuf_get_n_channels(const LiVESPixbuf *pixbuf) {
 }
 
 
-
 LIVES_INLINE unsigned char *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf) {
 #ifdef GUI_GTK
   return gdk_pixbuf_get_pixels(pixbuf);
@@ -2184,7 +2131,6 @@ LIVES_INLINE unsigned char *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf) {
 
 
 LIVES_INLINE const unsigned char *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *pixbuf) {
-
 #ifdef GUI_GTK
   return (const guchar *)gdk_pixbuf_get_pixels(pixbuf);
 #endif
@@ -2193,7 +2139,6 @@ LIVES_INLINE const unsigned char *lives_pixbuf_get_pixels_readonly(const LiVESPi
   return (const uchar *)(dynamic_cast<const QImage *>(pixbuf))->bits();
 #endif
 }
-
 
 
 LIVES_INLINE boolean lives_pixbuf_get_has_alpha(const LiVESPixbuf *pixbuf) {
@@ -2209,11 +2154,9 @@ LIVES_INLINE boolean lives_pixbuf_get_has_alpha(const LiVESPixbuf *pixbuf) {
 
 LIVES_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, int dest_height,
     LiVESInterpType interp_type) {
-
 #ifdef GUI_GTK
   return gdk_pixbuf_scale_simple(src, dest_width, dest_height, interp_type);
 #endif
-
 
 #ifdef GUI_QT
   QImage image = (dynamic_cast<const QImage *>(src))->scaled(dest_width, dest_height, Qt::IgnoreAspectRatio, interp_type);
@@ -2225,11 +2168,9 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int 
   return new LiVESPixbuf(&image);
 
 #endif
-
 }
 
 LIVES_INLINE boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixilate) {
-
 #ifdef GUI_GTK
   gdk_pixbuf_saturate_and_pixelate(src, dest, saturation, pixilate);
   return TRUE;
@@ -2239,7 +2180,6 @@ LIVES_INLINE boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, 
 #endif
   return FALSE;
 }
-
 
 
 
@@ -2350,7 +2290,6 @@ LIVES_INLINE LiVESWidget *lives_vbox_new(boolean homogeneous, int spacing) {
 }
 
 
-
 LIVES_INLINE boolean lives_box_pack_start(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding) {
 #ifdef GUI_GTK
   gtk_box_pack_start(box, child, expand, fill, padding);
@@ -2384,7 +2323,6 @@ LIVES_INLINE boolean lives_box_pack_start(LiVESBox *box, LiVESWidget *child, boo
 }
 
 
-
 LIVES_INLINE boolean lives_box_pack_end(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding) {
 #ifdef GUI_GTK
   gtk_box_pack_end(box, child, expand, fill, padding);
@@ -2405,7 +2343,6 @@ LIVES_INLINE boolean lives_box_pack_end(LiVESBox *box, LiVESWidget *child, boole
 #endif
   return FALSE;
 }
-
 
 
 
@@ -2473,7 +2410,6 @@ LIVES_INLINE LiVESWidget *lives_vbutton_box_new(void) {
 }
 
 
-
 LIVES_INLINE boolean lives_button_box_set_layout(LiVESButtonBox *bbox, LiVESButtonBoxStyle bstyle) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -2491,7 +2427,6 @@ LIVES_INLINE boolean lives_button_box_set_layout(LiVESButtonBox *bbox, LiVESButt
 #endif
   return FALSE;
 }
-
 
 
 
@@ -2713,7 +2648,6 @@ LIVES_INLINE LiVESWidget *lives_expander_new_with_mnemonic(const char *label) {
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_expander_new(const char *label) {
   LiVESWidget *expander = NULL;
 #ifdef GUI_GTK
@@ -2726,7 +2660,6 @@ LIVES_INLINE LiVESWidget *lives_expander_new(const char *label) {
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expander) {
   LiVESWidget *widget = NULL;
 #ifdef GUI_GTK
@@ -2734,7 +2667,6 @@ LIVES_INLINE LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expande
 #endif
   return widget;
 }
-
 
 
 LIVES_INLINE boolean lives_label_set_width_chars(LiVESLabel *label, int nchars) {
@@ -2797,7 +2729,6 @@ LIVES_INLINE LiVESWidget *lives_combo_new_with_model(LiVESTreeModel *model) {
   if (model->get_qtree_widget() != NULL) qcombo->setView(model->get_qtree_widget());
 #endif
   return combo;
-
 }
 
 
@@ -2820,7 +2751,6 @@ LIVES_INLINE LiVESTreeModel *lives_combo_get_model(LiVESCombo *combo) {
 }
 
 
-
 LIVES_INLINE boolean lives_combo_append_text(LiVESCombo *combo, const char *text) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 24, 0)
@@ -2839,7 +2769,6 @@ LIVES_INLINE boolean lives_combo_append_text(LiVESCombo *combo, const char *text
 }
 
 
-
 static boolean lives_combo_remove_all_text(LiVESCombo *combo) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -2856,7 +2785,6 @@ static boolean lives_combo_remove_all_text(LiVESCombo *combo) {
 #endif
   return FALSE;
 }
-
 
 
 
@@ -2920,7 +2848,6 @@ LIVES_INLINE boolean lives_combo_set_active_iter(LiVESCombo *combo, LiVESTreeIte
   return TRUE;
 #endif
   return FALSE;
-
 }
 
 
@@ -2954,7 +2881,6 @@ LIVES_INLINE int lives_combo_get_active(LiVESCombo *combo) {
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_text_view_new(void) {
   LiVESWidget *tview = NULL;
 #ifdef GUI_GTK
@@ -2965,7 +2891,6 @@ LIVES_INLINE LiVESWidget *lives_text_view_new(void) {
 #endif
   return tview;
 }
-
 
 
 LIVES_INLINE LiVESWidget *lives_text_view_new_with_buffer(LiVESTextBuffer *tbuff) {
@@ -3005,7 +2930,6 @@ LIVES_INLINE boolean lives_text_view_set_editable(LiVESTextView *tview, boolean 
 }
 
 
-
 LIVES_INLINE boolean lives_text_view_set_accepts_tab(LiVESTextView *tview, boolean setting) {
 #ifdef GUI_GTK
   gtk_text_view_set_accepts_tab(tview, setting);
@@ -3033,7 +2957,6 @@ LIVES_INLINE boolean lives_text_view_set_cursor_visible(LiVESTextView *tview, bo
 }
 
 
-
 LIVES_INLINE boolean lives_text_view_set_wrap_mode(LiVESTextView *tview, LiVESWrapMode wrapmode) {
 #ifdef GUI_GTK
   gtk_text_view_set_wrap_mode(tview, wrapmode);
@@ -3046,7 +2969,6 @@ LIVES_INLINE boolean lives_text_view_set_wrap_mode(LiVESTextView *tview, LiVESWr
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_text_view_set_justification(LiVESTextView *tview, LiVESJustification justify) {
@@ -3076,7 +2998,6 @@ LIVES_INLINE boolean lives_text_view_scroll_mark_onscreen(LiVESTextView *tview, 
 }
 
 
-
 LIVES_INLINE LiVESTextBuffer *lives_text_buffer_new(void) {
   LiVESTextBuffer *tbuff = NULL;
 #ifdef GUI_GTK
@@ -3087,7 +3008,6 @@ LIVES_INLINE LiVESTextBuffer *lives_text_buffer_new(void) {
 #endif
   return tbuff;
 }
-
 
 
 LIVES_INLINE boolean lives_text_buffer_insert(LiVESTextBuffer *tbuff, LiVESTextIter *iter, const char *text, int len) {
@@ -3117,7 +3037,6 @@ LIVES_INLINE boolean lives_text_buffer_insert_at_cursor(LiVESTextBuffer *tbuff, 
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_text_buffer_set_text(LiVESTextBuffer *tbuff, const char *text, int len) {
@@ -3173,7 +3092,6 @@ LIVES_INLINE boolean lives_text_buffer_get_end_iter(LiVESTextBuffer *tbuff, LiVE
 }
 
 
-
 LIVES_INLINE boolean lives_text_buffer_place_cursor(LiVESTextBuffer *tbuff, LiVESTextIter *iter) {
 #ifdef GUI_GTK
   gtk_text_buffer_place_cursor(tbuff, iter);
@@ -3185,7 +3103,6 @@ LIVES_INLINE boolean lives_text_buffer_place_cursor(LiVESTextBuffer *tbuff, LiVE
 #endif
   return FALSE;
 }
-
 
 
 
@@ -3202,7 +3119,6 @@ LIVES_INLINE LiVESTextMark *lives_text_buffer_create_mark(LiVESTextBuffer *tbuff
 }
 
 
-
 LIVES_INLINE boolean lives_text_buffer_delete_mark(LiVESTextBuffer *tbuff, LiVESTextMark *mark) {
 #ifdef GUI_GTK
   gtk_text_buffer_delete_mark(tbuff, mark);
@@ -3214,7 +3130,6 @@ LIVES_INLINE boolean lives_text_buffer_delete_mark(LiVESTextBuffer *tbuff, LiVES
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_text_buffer_delete(LiVESTextBuffer *tbuff, LiVESTextIter *start, LiVESTextIter *end) {
@@ -3231,7 +3146,6 @@ LIVES_INLINE boolean lives_text_buffer_delete(LiVESTextBuffer *tbuff, LiVESTextI
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_text_buffer_get_iter_at_mark(LiVESTextBuffer *tbuff, LiVESTextIter *iter, LiVESTextMark *mark) {
@@ -3389,7 +3303,6 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id, cons
       gtk_button_set_label(GTK_BUTTON(button), label);
 #endif
 
-
     return button;
   }
 
@@ -3414,7 +3327,6 @@ LIVES_INLINE boolean lives_button_set_label(LiVESButton *button, const char *lab
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_button_set_use_underline(LiVESButton *button, boolean use) {
@@ -3467,7 +3379,6 @@ LIVES_INLINE boolean lives_button_set_image(LiVESButton *button, LiVESWidget *im
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_button_set_focus_on_click(LiVESButton *button, boolean focus) {
@@ -3524,7 +3435,6 @@ LIVES_INLINE boolean lives_paned_pack(int where, LiVESPaned *paned, LiVESWidget 
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_drawing_area_new(void) {
   LiVESWidget *darea = NULL;
 #ifdef GUI_GTK
@@ -3535,7 +3445,6 @@ LIVES_INLINE LiVESWidget *lives_drawing_area_new(void) {
 #endif
   return darea;
 }
-
 
 
 LIVES_INLINE int lives_event_get_time(LiVESXEvent *event) {
@@ -3586,7 +3495,6 @@ LIVES_INLINE boolean lives_toggle_button_set_mode(LiVESToggleButton *button, boo
 #endif
   return FALSE;
 }
-
 
 
 
@@ -3704,7 +3612,6 @@ LIVES_INLINE LiVESSList *lives_radio_button_get_group(LiVESRadioButton *rbutton)
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_widget_get_parent(LiVESWidget *widget) {
 #ifdef GUI_GTK
   return gtk_widget_get_parent(widget);
@@ -3714,7 +3621,6 @@ LIVES_INLINE LiVESWidget *lives_widget_get_parent(LiVESWidget *widget) {
 #endif
   return NULL;
 }
-
 
 
 LIVES_INLINE LiVESWidget *lives_widget_get_toplevel(LiVESWidget *widget) {
@@ -3771,7 +3677,6 @@ LIVES_INLINE boolean lives_xwindow_set_keep_above(LiVESXWindow *xwin, boolean se
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_widget_set_can_focus(LiVESWidget *widget, boolean state) {
@@ -3918,7 +3823,6 @@ LIVES_INLINE boolean lives_widget_is_realized(LiVESWidget *widget) {
 }
 
 
-
 LIVES_INLINE boolean lives_container_add(LiVESContainer *container, LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_container_add(container, widget);
@@ -3995,7 +3899,6 @@ LIVES_INLINE boolean lives_container_add(LiVESContainer *container, LiVESWidget 
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_container_remove(LiVESContainer *container, LiVESWidget *widget) {
@@ -4084,7 +3987,6 @@ LIVES_INLINE boolean lives_container_set_border_width(LiVESContainer *container,
 }
 
 
-
 LIVES_INLINE boolean lives_container_foreach(LiVESContainer *cont, LiVESWidgetCallback callback, livespointer cb_data) {
   // excludes internal children
 #ifdef GUI_GTK
@@ -4136,7 +4038,6 @@ LIVES_INLINE LiVESList *lives_container_get_children(LiVESContainer *cont) {
 #endif
   return children;
 }
-
 
 
 LIVES_INLINE boolean lives_container_set_focus_child(LiVESContainer *cont, LiVESWidget *child) {
@@ -4202,7 +4103,6 @@ LIVES_INLINE boolean lives_progress_bar_set_pulse_step(LiVESProgressBar *pbar, d
 }
 
 
-
 LIVES_INLINE boolean lives_progress_bar_pulse(LiVESProgressBar *pbar) {
 #ifdef GUI_GTK
   gtk_progress_bar_pulse(pbar);
@@ -4216,7 +4116,6 @@ LIVES_INLINE boolean lives_progress_bar_pulse(LiVESProgressBar *pbar) {
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE LiVESWidget *lives_spin_button_new(LiVESAdjustment *adj, double climb_rate, uint32_t digits) {
@@ -4338,7 +4237,6 @@ LIVES_INLINE boolean lives_spin_button_update(LiVESSpinButton *button) {
 }
 
 
-
 LIVES_INLINE LiVESToolItem *lives_tool_button_new(LiVESWidget *icon_widget, const char *label) {
   LiVESToolItem *button = NULL;
 #ifdef GUI_GTK
@@ -4387,7 +4285,6 @@ LIVES_INLINE boolean lives_tool_button_set_label_widget(LiVESToolButton *button,
 }
 
 
-
 LIVES_INLINE boolean lives_tool_button_set_use_underline(LiVESToolButton *button, boolean use_underline) {
 #ifdef GUI_GTK
   gtk_tool_button_set_use_underline(button, use_underline);
@@ -4399,7 +4296,6 @@ LIVES_INLINE boolean lives_tool_button_set_use_underline(LiVESToolButton *button
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size) {
@@ -4533,7 +4429,6 @@ LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_toggle_new(void) {
 }
 
 
-
 LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_pixbuf_new(void) {
   LiVESCellRenderer *renderer = NULL;
 #ifdef GUI_GTK
@@ -4547,7 +4442,6 @@ LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_pixbuf_new(void) {
 
 
 
-
 LIVES_INLINE LiVESWidget *lives_toolbar_new(void) {
   LiVESWidget *toolbar = NULL;
 #ifdef GUI_GTK
@@ -4558,7 +4452,6 @@ LIVES_INLINE LiVESWidget *lives_toolbar_new(void) {
 #endif
   return toolbar;
 }
-
 
 
 LIVES_INLINE boolean lives_toolbar_insert(LiVESToolbar *toolbar, LiVESToolItem *item, int pos) {
@@ -4603,7 +4496,6 @@ LIVES_INLINE LiVESIconSize lives_toolbar_get_icon_size(LiVESToolbar *toolbar) {
 }
 
 
-
 LIVES_INLINE boolean lives_toolbar_set_icon_size(LiVESToolbar *toolbar, LiVESIconSize icon_size) {
 #ifdef GUI_GTK
   gtk_toolbar_set_icon_size(toolbar, icon_size);
@@ -4628,8 +4520,6 @@ LIVES_INLINE boolean lives_toolbar_set_style(LiVESToolbar *toolbar, LiVESToolbar
 #endif
   return FALSE;
 }
-
-
 
 
 
@@ -4744,10 +4634,7 @@ LIVES_INLINE LiVESWidgetState lives_widget_get_state(LiVESWidget *widget) {
 #else
   return (LiVESWidgetState)0;
 #endif
-
-
 }
-
 
 
 LIVES_INLINE LiVESWidget *lives_bin_get_child(LiVESBin *bin) {
@@ -4764,7 +4651,6 @@ LIVES_INLINE LiVESWidget *lives_bin_get_child(LiVESBin *bin) {
 #endif
   return child;
 }
-
 
 
 LIVES_INLINE double lives_adjustment_get_upper(LiVESAdjustment *adj) {
@@ -4905,7 +4791,6 @@ LIVES_INLINE boolean lives_adjustment_clamp_page(LiVESAdjustment *adj, double lo
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE LiVESAdjustment *lives_range_get_adjustment(LiVESRange *range) {
@@ -5177,7 +5062,6 @@ LIVES_INLINE LiVESTreePath *lives_tree_path_new_from_string(const char *path) {
 }
 
 
-
 LIVES_INLINE int lives_tree_path_get_depth(LiVESTreePath *tpath) {
   int depth = -1;
 #ifdef GUI_GTK
@@ -5190,7 +5074,6 @@ LIVES_INLINE int lives_tree_path_get_depth(LiVESTreePath *tpath) {
 }
 
 
-
 LIVES_INLINE int *lives_tree_path_get_indices(LiVESTreePath *tpath) {
   int *indices = NULL;
 #ifdef GUI_GTK
@@ -5201,7 +5084,6 @@ LIVES_INLINE int *lives_tree_path_get_indices(LiVESTreePath *tpath) {
 #endif
   return indices;
 }
-
 
 
 LIVES_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...) {
@@ -5237,7 +5119,6 @@ LIVES_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...) {
 }
 
 
-
 LIVES_INLINE boolean lives_tree_store_append(LiVESTreeStore *tstore, LiVESTreeIter *titer, LiVESTreeIter *parent) {
 #ifdef GUI_GTK
   gtk_tree_store_append(tstore, titer, parent);
@@ -5246,7 +5127,6 @@ LIVES_INLINE boolean lives_tree_store_append(LiVESTreeStore *tstore, LiVESTreeIt
 #ifdef GUI_QT
   QVariant qv = (static_cast<QAbstractItemModel *>(tstore))->property("LiVESObject");
   if (qv.isValid()) {
-
     LiVESTreeModel *ltm = static_cast<LiVESTreeModel *>(qv.value<LiVESObject *>());
     QTreeWidget *qtw = ltm->get_qtree_widget();
 
@@ -5263,7 +5143,6 @@ LIVES_INLINE boolean lives_tree_store_append(LiVESTreeStore *tstore, LiVESTreeIt
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_tree_store_set(LiVESTreeStore *tstore, LiVESTreeIter *titer, ...) {
@@ -5304,7 +5183,6 @@ LIVES_INLINE boolean lives_tree_store_set(LiVESTreeStore *tstore, LiVESTreeIter 
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_tree_view_new_with_model(LiVESTreeModel *tmod) {
   LiVESWidget *tview = NULL;
 #ifdef GUI_GTK
@@ -5319,7 +5197,6 @@ LIVES_INLINE LiVESWidget *lives_tree_view_new_with_model(LiVESTreeModel *tmod) {
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_tree_view_new(void) {
   LiVESWidget *tview = NULL;
 #ifdef GUI_GTK
@@ -5330,8 +5207,6 @@ LIVES_INLINE LiVESWidget *lives_tree_view_new(void) {
 #endif
   return tview;
 }
-
-
 
 
 
@@ -5348,7 +5223,6 @@ LIVES_INLINE boolean lives_tree_view_set_model(LiVESTreeView *tview, LiVESTreeMo
 }
 
 
-
 LIVES_INLINE LiVESTreeModel *lives_tree_view_get_model(LiVESTreeView *tview) {
   LiVESTreeModel *tmod = NULL;
 #ifdef GUI_GTK
@@ -5361,7 +5235,6 @@ LIVES_INLINE LiVESTreeModel *lives_tree_view_get_model(LiVESTreeView *tview) {
 }
 
 
-
 LIVES_INLINE LiVESTreeSelection *lives_tree_view_get_selection(LiVESTreeView *tview) {
   LiVESTreeSelection *tsel = NULL;
 #ifdef GUI_GTK
@@ -5372,7 +5245,6 @@ LIVES_INLINE LiVESTreeSelection *lives_tree_view_get_selection(LiVESTreeView *tv
 #endif
   return tsel;
 }
-
 
 
 LIVES_INLINE int lives_tree_view_append_column(LiVESTreeView *tview, LiVESTreeViewColumn *tvcol) {
@@ -5388,7 +5260,6 @@ LIVES_INLINE int lives_tree_view_append_column(LiVESTreeView *tview, LiVESTreeVi
 }
 
 
-
 LIVES_INLINE boolean lives_tree_view_set_headers_visible(LiVESTreeView *tview, boolean vis) {
 #ifdef GUI_GTK
   gtk_tree_view_set_headers_visible(tview, vis);
@@ -5400,7 +5271,6 @@ LIVES_INLINE boolean lives_tree_view_set_headers_visible(LiVESTreeView *tview, b
 #endif
   return FALSE;
 }
-
 
 
 
@@ -5418,7 +5288,6 @@ LIVES_INLINE LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *tvi
 #endif
   return adj;
 }
-
 
 
 
@@ -5460,7 +5329,6 @@ LIVES_INLINE LiVESTreeViewColumn *lives_tree_view_column_new_with_attributes(con
 
 
 
-
 LIVES_INLINE boolean lives_tree_view_column_set_sizing(LiVESTreeViewColumn *tvcol, LiVESTreeViewColumnSizing type) {
 #ifdef GUI_GTK
   gtk_tree_view_column_set_sizing(tvcol, type);
@@ -5474,7 +5342,6 @@ LIVES_INLINE boolean lives_tree_view_column_set_sizing(LiVESTreeViewColumn *tvco
 }
 
 
-
 LIVES_INLINE boolean lives_tree_view_column_set_fixed_width(LiVESTreeViewColumn *tvcol, int fwidth) {
 #ifdef GUI_GTK
   gtk_tree_view_column_set_fixed_width(tvcol, fwidth);
@@ -5486,7 +5353,6 @@ LIVES_INLINE boolean lives_tree_view_column_set_fixed_width(LiVESTreeViewColumn 
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_tree_selection_get_selected(LiVESTreeSelection *tsel, LiVESTreeModel **tmod, LiVESTreeIter *titer) {
@@ -5506,7 +5372,6 @@ LIVES_INLINE boolean lives_tree_selection_get_selected(LiVESTreeSelection *tsel,
 }
 
 
-
 LIVES_INLINE boolean lives_tree_selection_set_mode(LiVESTreeSelection *tsel, LiVESSelectionMode tselmod) {
 #ifdef GUI_GTK
   gtk_tree_selection_set_mode(tsel, tselmod);
@@ -5518,7 +5383,6 @@ LIVES_INLINE boolean lives_tree_selection_set_mode(LiVESTreeSelection *tsel, LiV
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_tree_selection_select_iter(LiVESTreeSelection *tsel, LiVESTreeIter *titer) {
@@ -5565,7 +5429,6 @@ LIVES_INLINE LiVESListStore *lives_list_store_new(int ncols, ...) {
   va_end(argList);
   return lstore;
 }
-
 
 
 LIVES_INLINE boolean lives_list_store_set(LiVESListStore *lstore, LiVESTreeIter *titer, ...) {
@@ -5619,7 +5482,6 @@ LIVES_INLINE boolean lives_list_store_insert(LiVESListStore *lstore, LiVESTreeIt
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE const char *lives_label_get_text(LiVESLabel *label) {
@@ -5707,7 +5569,6 @@ LIVES_INLINE boolean lives_label_set_mnemonic_widget(LiVESLabel *label, LiVESWid
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_label_get_mnemonic_widget(LiVESLabel *label) {
   LiVESWidget *widget = NULL;
 #ifdef GUI_GTK
@@ -5718,7 +5579,6 @@ LIVES_INLINE LiVESWidget *lives_label_get_mnemonic_widget(LiVESLabel *label) {
 #endif
   return widget;
 }
-
 
 
 LIVES_INLINE boolean lives_label_set_selectable(LiVESLabel *label, boolean setting) {
@@ -5741,7 +5601,6 @@ LIVES_INLINE boolean lives_label_set_selectable(LiVESLabel *label, boolean setti
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_editable_set_editable(LiVESEditable *editable, boolean is_editable) {
@@ -5785,7 +5644,6 @@ LIVES_INLINE boolean lives_editable_select_region(LiVESEditable *editable, int s
 }
 
 
-
 LIVES_INLINE LiVESWidget *lives_entry_new(void) {
   LiVESWidget *entry = NULL;
 #ifdef GUI_GTK
@@ -5796,7 +5654,6 @@ LIVES_INLINE LiVESWidget *lives_entry_new(void) {
 #endif
   return entry;
 }
-
 
 
 
@@ -5814,7 +5671,6 @@ LIVES_INLINE boolean lives_entry_set_max_length(LiVESEntry *entry, int len) {
 }
 
 
-
 LIVES_INLINE boolean lives_entry_set_activates_default(LiVESEntry *entry, boolean act) {
 #ifdef GUI_GTK
   gtk_entry_set_activates_default(entry, act);
@@ -5826,7 +5682,6 @@ LIVES_INLINE boolean lives_entry_set_activates_default(LiVESEntry *entry, boolea
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_entry_set_visibility(LiVESEntry *entry, boolean vis) {
@@ -5846,7 +5701,6 @@ LIVES_INLINE boolean lives_entry_set_visibility(LiVESEntry *entry, boolean vis) 
 }
 
 
-
 LIVES_INLINE boolean lives_entry_set_has_frame(LiVESEntry *entry, boolean has) {
 #ifdef GUI_GTK
   gtk_entry_set_has_frame(entry, has);
@@ -5858,7 +5712,6 @@ LIVES_INLINE boolean lives_entry_set_has_frame(LiVESEntry *entry, boolean has) {
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE const char *lives_entry_get_text(LiVESEntry *entry) {
@@ -5885,7 +5738,6 @@ LIVES_INLINE boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
 }
 
 
-
 LIVES_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entry, int nchars) {
   // display length
 #ifdef GUI_GTK
@@ -5900,7 +5752,6 @@ LIVES_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entry, int nchars) 
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE LiVESWidget *lives_scrolled_window_new(LiVESAdjustment *hadj, LiVESAdjustment *vadj) {
@@ -5954,7 +5805,6 @@ LIVES_INLINE boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *scrol
 }
 
 
-
 LIVES_INLINE boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *scrolledwindow, LiVESWidget *child) {
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3, 8, 0)
@@ -5971,7 +5821,6 @@ LIVES_INLINE boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_xwindow_raise(LiVESXWindow *xwin) {
@@ -6017,7 +5866,6 @@ LIVES_INLINE boolean lives_dialog_set_has_separator(LiVESDialog *dialog, boolean
 #endif
   return FALSE;
 }
-
 
 
 LIVES_INLINE boolean lives_widget_set_hexpand(LiVESWidget *widget, boolean state) {
@@ -6972,7 +6820,6 @@ LIVES_INLINE boolean lives_table_resize(LiVESTable *table, uint32_t rows, uint32
 LIVES_INLINE boolean lives_table_attach(LiVESTable *table, LiVESWidget *child, uint32_t left, uint32_t right,
                                         uint32_t top, uint32_t bottom, LiVESAttachOptions xoptions, LiVESAttachOptions yoptions,
                                         uint32_t xpad, uint32_t ypad) {
-
 #ifdef GUI_GTK
 #if LIVES_TABLE_IS_GRID  // required for grid remove row
   gtk_grid_attach(table, child, left, top, right - left, bottom - top);
@@ -7191,7 +7038,6 @@ LIVES_INLINE LiVESXWindow *lives_display_get_window_at_pointer
   xwindow = widget->windowHandle();
 #endif
   return xwindow;
-
 }
 
 
@@ -7213,7 +7059,6 @@ LIVES_INLINE boolean lives_display_get_pointer
   return TRUE;
 #endif
   return FALSE;
-
 }
 
 
@@ -7859,7 +7704,6 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, boolean use_mnemoni
 
 LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, const char *txt, int dispwidth, int maxchars,
                                       LiVESBox *box, const char *tooltip) {
-
   LiVESWidget *entry = NULL;
   LiVESWidget *label = NULL;
   LiVESWidget *hbox = NULL;
@@ -7994,7 +7838,6 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
   return dialog;
-
 }
 
 
@@ -8036,7 +7879,6 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   lives_container_set_border_width(LIVES_CONTAINER(scrolledwindow), widget_opts.border_width);
 
   if (child != NULL) {
-
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
     if (!LIVES_IS_SCROLLABLE(child))
@@ -8153,7 +7995,6 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbu
   lives_text_view_set_justification(LIVES_TEXT_VIEW(textview), widget_opts.justify);
 
   return textview;
-
 }
 
 
@@ -8330,7 +8171,6 @@ static void after_param_alpha_changedx(LiVESSpinButton *spinbutton, livespointer
 
 LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boolean use_mnemonic, boolean use_alpha, lives_colRGBA64_t *rgba,
     LiVESWidget **sb_red, LiVESWidget **sb_green, LiVESWidget **sb_blue, LiVESWidget **sb_alpha) {
-
   LiVESWidgetColor colr;
   LiVESWidget *cbutton, *labelcname;
   LiVESWidget *spinbutton_red, *spinbutton_green, *spinbutton_blue, *spinbutton_alpha = NULL;
@@ -8692,7 +8532,6 @@ LIVES_INLINE void set_child_colour(LiVESWidget *widget, boolean set_all) {
   // if set_all is FALSE, we only set labels (and ignore labels in buttons)
 
   set_child_colour_internal(widget, LIVES_INT_TO_POINTER(set_all));
-
 }
 
 
@@ -8720,7 +8559,6 @@ LIVES_INLINE void set_child_alt_colour(LiVESWidget *widget, boolean set_all) {
   // if set_all is FALSE, we only set labels (and ignore labels in buttons)
 
   set_child_alt_colour_internal(widget, LIVES_INT_TO_POINTER(set_all));
-
 }
 
 
@@ -8826,7 +8664,6 @@ boolean lives_widget_context_update(void) {
   if (pthread_mutex_trylock(&mainw->gtk_mutex)) return FALSE;
 
   if (mainw->multitrack != NULL && mainw->multitrack->idlefunc > 0) {
-
 #ifdef GUI_GTK
     lives_source_remove(mainw->multitrack->idlefunc);
 #endif
@@ -8864,7 +8701,6 @@ boolean lives_widget_context_update(void) {
   pthread_mutex_unlock(&mainw->gtk_mutex);
 
   return TRUE;
-
 }
 
 
@@ -8997,8 +8833,6 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
     return;
   }
 #endif
-
-
 }
 
 
@@ -9076,7 +8910,6 @@ void funkify_dialog(LiVESWidget *dialog) {
   } else {
     lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
   }
-
 }
 
 

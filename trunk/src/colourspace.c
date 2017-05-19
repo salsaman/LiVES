@@ -1,6 +1,6 @@
 // colourspace.c
 // LiVES
-// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2017 <salsaman@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -97,7 +97,6 @@ static struct _swscale_ctx swscale_ctx[N_SWS_CTX];
 
 #define USE_THREADS 1
 
-
 static pthread_t cthreads[MAX_FX_THREADS];
 
 static boolean unal_inited = FALSE;
@@ -134,7 +133,6 @@ LIVES_INLINE uint8_t CLAMP0255(int32_t a) {
           | (255 - a) >> 31); // -1 if the number was greater than 255
 }
 
-
 /* precomputed tables */
 
 // generic
@@ -148,7 +146,6 @@ static int *Cr_R;
 static int *Cr_G;
 static int *Cr_B;
 
-
 // clamped Y'CbCr
 static int Y_Rc[256];
 static int Y_Gc[256];
@@ -159,7 +156,6 @@ static int Cb_Bc[256];
 static int Cr_Rc[256];
 static int Cr_Gc[256];
 static int Cr_Bc[256];
-
 
 // unclamped Y'CbCr
 static int Y_Ru[256];
@@ -183,7 +179,6 @@ static int HCr_Rc[256];
 static int HCr_Gc[256];
 static int HCr_Bc[256];
 
-
 // unclamped BT.701
 static int HY_Ru[256];
 static int HY_Gu[256];
@@ -197,16 +192,12 @@ static int HCr_Bu[256];
 
 static boolean conv_RY_inited = FALSE;
 
-
-
-
 // generic
 static int *RGB_Y;
 static int *R_Cr;
 static int *G_Cb;
 static int *G_Cr;
 static int *B_Cb;
-
 
 // clamped Y'CbCr
 static int RGB_Yc[256];
@@ -238,9 +229,7 @@ static int HB_Cbu[256];
 
 static boolean conv_YR_inited = FALSE;
 
-
 static short min_Y, max_Y, min_UV, max_UV;
-
 
 // averaging
 static uint8_t *cavg;
@@ -248,7 +237,6 @@ static uint8_t cavgc[256][256];
 static uint8_t cavgu[256][256];
 static uint8_t cavgrgb[256][256];
 static boolean avg_inited = FALSE;
-
 
 // pre-post multiply alpha
 
@@ -258,8 +246,6 @@ static int unalcy[256][256];
 static int alcy[256][256];
 static int unalcuv[256][256];
 static int alcuv[256][256];
-
-
 
 // clamping and subspace converters
 
@@ -272,13 +258,11 @@ static uint8_t *V_to_V;
 static uint8_t Yclamped_to_Yunclamped[256];
 static uint8_t UVclamped_to_UVunclamped[256];
 
-
 // same subspace, unclamped to clamped
 static uint8_t Yunclamped_to_Yclamped[256];
 static uint8_t UVunclamped_to_UVclamped[256];
 
 static boolean conv_YY_inited = FALSE;
-
 
 // gamma correction
 
@@ -347,11 +331,7 @@ static void init_RGB_to_YUV_tables(void) {
                        // here we add the 16 which goes into all components
                        * CLAMP_FACTOR_Y + YUV_CLAMP_MIN) * SCALE_FACTOR);
 
-
-
-
     fac = .5 / (1. - KB_YCBCR); // .564
-
 
     Cb_Rc[i] = myround(-fac * KR_YCBCR * (double)i
                        * CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
@@ -359,8 +339,6 @@ static void init_RGB_to_YUV_tables(void) {
                        * CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
     Cb_Bc[i] = myround((0.5 * (double)i
                         * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
-
-
 
     fac = .5 / (1. - KR_YCBCR); // .7133
 
@@ -370,11 +348,7 @@ static void init_RGB_to_YUV_tables(void) {
                        * CLAMP_FACTOR_UV * SCALE_FACTOR);
     Cr_Bc[i] = myround(-fac * KB_YCBCR * (double)i
                        * CLAMP_FACTOR_UV * SCALE_FACTOR);
-
-
   }
-
-
 
   for (i = 0; i < 256; i++) {
     Y_Ru[i] = myround(KR_YCBCR * (double)i
@@ -385,11 +359,7 @@ static void init_RGB_to_YUV_tables(void) {
                       // here we add the 16 which goes into all components
                       + YUV_CLAMP_MIN * SCALE_FACTOR);
 
-
-
-
     fac = .5 / (1. - KB_YCBCR); // .564
-
 
     Cb_Ru[i] = myround(-fac * KR_YCBCR * (double)i
                        * SCALE_FACTOR); // -.16736
@@ -397,8 +367,6 @@ static void init_RGB_to_YUV_tables(void) {
                        * SCALE_FACTOR); // -.331264
     Cb_Bu[i] = myround((0.5 * (double)i
                         + UV_BIAS) * SCALE_FACTOR);
-
-
 
     fac = .5 / (1. - KR_YCBCR); // .7133
 
@@ -408,21 +376,14 @@ static void init_RGB_to_YUV_tables(void) {
                        * SCALE_FACTOR);
     Cr_Bu[i] = myround(-fac * KB_YCBCR * (double)i
                        * SCALE_FACTOR);
-
-
   }
-
 
   // Different values are used for hdtv, I call this subspace YUV_SUBSPACE_BT709
 
   // Kr = 0.2126
   // Kb = 0.0722
 
-
-
-
   // converting from one subspace to another is not recommended.
-
 
   for (i = 0; i < 256; i++) {
     HY_Rc[i] = myround(KR_BT701 * (double)i
@@ -433,12 +394,7 @@ static void init_RGB_to_YUV_tables(void) {
                         // here we add the 16 which goes into all components
                         * CLAMP_FACTOR_Y + YUV_CLAMP_MIN) * SCALE_FACTOR);
 
-
-
-
-
     fac = .5 / (1. - KB_BT701); // .5389
-
 
     HCb_Rc[i] = myround(-fac * KR_BT701 * (double)i
                         * CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
@@ -446,8 +402,6 @@ static void init_RGB_to_YUV_tables(void) {
                         * CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
     HCb_Bc[i] = myround((0.5 * (double)i
                          * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
-
-
 
     fac = .5 / (1. - KR_BT701); // .635
 
@@ -458,10 +412,7 @@ static void init_RGB_to_YUV_tables(void) {
     HCr_Bc[i] = myround(-fac * KB_BT701 * (double)i
                         * CLAMP_FACTOR_UV * SCALE_FACTOR);
 
-
   }
-
-
 
   for (i = 0; i < 256; i++) {
     HY_Ru[i] = myround(KR_BT701 * (double)i
@@ -472,13 +423,7 @@ static void init_RGB_to_YUV_tables(void) {
                         // here we add the 16 which goes into all components
                         + YUV_CLAMP_MIN) * SCALE_FACTOR);
 
-
-
-
-
-
     fac = .5 / (1. - KB_BT701); // .5389
-
 
     HCb_Ru[i] = myround(-fac * KR_BT701 * (double)i
                         * SCALE_FACTOR); // -.16736
@@ -486,8 +431,6 @@ static void init_RGB_to_YUV_tables(void) {
                         * SCALE_FACTOR); // -.331264
     HCb_Bu[i] = myround((0.5 * (double)i
                          + UV_BIAS) * SCALE_FACTOR);
-
-
 
     fac = .5 / (1. - KR_BT701); // .635
 
@@ -497,15 +440,10 @@ static void init_RGB_to_YUV_tables(void) {
                         * SCALE_FACTOR);
     HCr_Bu[i] = myround(-fac * KB_BT701 * (double)i
                         * SCALE_FACTOR);
-
-
   }
-
 
   conv_RY_inited = TRUE;
 }
-
-
 
 
 static void init_YUV_to_RGB_tables(void) {
@@ -554,7 +492,6 @@ static void init_YUV_to_RGB_tables(void) {
                        SCALE_FACTOR); // 2*(1-Kb)
   }
 
-
   // unclamped Y'CbCr
   for (i = 0; i <= 255; i++) {
     RGB_Yu[i] = i * SCALE_FACTOR;
@@ -567,10 +504,7 @@ static void init_YUV_to_RGB_tables(void) {
     B_Cbu[i] = myround(2. * (1. - KB_YCBCR) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
   }
 
-
-
   // These values are for what I call YUV_SUBSPACE_BT709
-
 
   /* clip Y values under 16 */
   for (i = 0; i < YUV_CLAMP_MIN; i++) {
@@ -609,7 +543,6 @@ static void init_YUV_to_RGB_tables(void) {
     HB_Cbc[i] = myround(2. * (1. - KB_BT701) * (255. - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
   }
 
-
   // unclamped Y'CbCr
   for (i = 0; i <= 255; i++) {
     HRGB_Yu[i] = i * SCALE_FACTOR;
@@ -621,9 +554,7 @@ static void init_YUV_to_RGB_tables(void) {
     HG_Cbc[i] = myround(-.5 / (1. - KB_BT701) * ((double)i - UV_BIAS) * SCALE_FACTOR);
     HB_Cbc[i] = myround(2. * (1. - KB_BT701) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
   }
-
 }
-
 
 
 static void init_YUV_to_YUV_tables(void) {
@@ -649,7 +580,6 @@ static void init_YUV_to_YUV_tables(void) {
   for (; i < 256; i++) {
     UVclamped_to_UVunclamped[i] = 255;
   }
-
 
   for (i = 0; i < 256; i++) {
     Yunclamped_to_Yclamped[i] = myround((i / 255.) * (Y_CLAMP_MAX - YUV_CLAMP_MIN) + YUV_CLAMP_MIN);
@@ -678,7 +608,6 @@ static void init_average(void) {
 }
 
 
-
 static void init_unal(void) {
   // premult to postmult and vice-versa
 
@@ -699,10 +628,6 @@ static void init_unal(void) {
   }
   unal_inited = TRUE;
 }
-
-
-
-
 
 
 static void set_conversion_arrays(int clamping, int subspace) {
@@ -864,10 +789,9 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
   }
 }
 
-
-
 //////////////////////////
 // pixel conversions
+
 
 static LIVES_INLINE uint8_t avg_chroma(size_t x, size_t y) {
   // cavg == cavgc for clamped, cavgu for unclamped
@@ -885,6 +809,7 @@ static LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y,
   *v = a < min_UV ? min_UV : a;
 }
 
+
 static LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, uyvy_macropixel *uyvy) {
   register short a;
   if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) uyvy->y0 = max_Y;
@@ -897,8 +822,8 @@ static LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1
 
   uyvy->v0 = avg_chroma((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS,
                         (Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS);
-
 }
+
 
 static LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, yuyv_macropixel *yuyv) {
   register short a;
@@ -912,9 +837,8 @@ static LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1
 
   yuyv->v0 = avg_chroma((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS,
                         (Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS);
-
-
 }
+
 
 static LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                                   uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) {
@@ -936,11 +860,13 @@ static LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1
   else yuv->u2 = a < min_UV ? min_UV : a;
 }
 
+
 static LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
   *r = CLAMP0255((RGB_Y[y] + R_Cr[v]) >> FP_BITS);
   *g = CLAMP0255((RGB_Y[y] + G_Cb[u] + G_Cr[v]) >> FP_BITS);
   *b = CLAMP0255((RGB_Y[y] + B_Cb[u]) >> FP_BITS);
 }
+
 
 static LIVES_INLINE void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g0, uint8_t *b0,
                                   uint8_t *r1, uint8_t *g1, uint8_t *b1) {
@@ -968,6 +894,7 @@ static LIVES_INLINE void yuva8888_2_rgba(uint8_t *yuva, uint8_t *rgba, boolean d
   if (!del_alpha) rgba[3] = yuva[3];
 }
 
+
 static LIVES_INLINE void yuv888_2_bgr(uint8_t *yuv, uint8_t *bgr, boolean add_alpha) {
   yuv2rgb(yuv[0], yuv[1], yuv[2], &(bgr[2]), &(bgr[1]), &(bgr[0]));
   if (add_alpha) bgr[3] = 255;
@@ -978,6 +905,7 @@ static LIVES_INLINE void yuva8888_2_bgra(uint8_t *yuva, uint8_t *bgra, boolean d
   yuv2rgb(yuva[0], yuva[1], yuva[2], &(bgra[2]), &(bgra[1]), &(bgra[0]));
   if (!del_alpha) bgra[3] = yuva[3];
 }
+
 
 static LIVES_INLINE void yuv888_2_argb(uint8_t *yuv, uint8_t *argb) {
   argb[0] = 255;
@@ -990,12 +918,14 @@ static LIVES_INLINE void yuva8888_2_argb(uint8_t *yuva, uint8_t *argb) {
   yuv2rgb(yuva[0], yuva[1], yuva[2], &(argb[1]), &(argb[2]), &(argb[3]));
 }
 
+
 static LIVES_INLINE void uyvy_2_yuv422(uyvy_macropixel *uyvy, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) {
   *u0 = uyvy->u0;
   *y0 = uyvy->y0;
   *v0 = uyvy->v0;
   *y1 = uyvy->y1;
 }
+
 
 static LIVES_INLINE void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) {
   *y0 = yuyv->y0;
@@ -1004,8 +934,6 @@ static LIVES_INLINE void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8
   *v0 = yuyv->v0;
 }
 
-
-
 /////////////////////////////////////////////////
 //utilities
 
@@ -1013,13 +941,16 @@ LIVES_INLINE boolean weed_palette_is_alpha_palette(int pal) {
   return (pal >= 1024 && pal < 2048) ? TRUE : FALSE;
 }
 
+
 LIVES_INLINE boolean weed_palette_is_rgb_palette(int pal) {
   return (pal < 512) ? TRUE : FALSE;
 }
 
+
 LIVES_INLINE boolean weed_palette_is_yuv_palette(int pal) {
   return (pal >= 512 && pal < 1024) ? TRUE : FALSE;
 }
+
 
 LIVES_INLINE int weed_palette_get_numplanes(int pal) {
   if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 ||
@@ -1031,10 +962,12 @@ LIVES_INLINE int weed_palette_get_numplanes(int pal) {
   return 0; // unknown palette
 }
 
+
 LIVES_INLINE boolean weed_palette_is_valid_palette(int pal) {
   if (weed_palette_get_numplanes(pal) == 0) return FALSE;
   return TRUE;
 }
+
 
 LIVES_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
   if (pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P ||
@@ -1058,15 +991,18 @@ LIVES_INLINE int weed_palette_get_pixels_per_macropixel(int pal) {
   return 1;
 }
 
+
 LIVES_INLINE boolean weed_palette_is_float_palette(int pal) {
   return (pal == WEED_PALETTE_RGBAFLOAT || pal == WEED_PALETTE_AFLOAT || pal == WEED_PALETTE_RGBFLOAT) ? TRUE : FALSE;
 }
+
 
 LIVES_INLINE boolean weed_palette_has_alpha_channel(int pal) {
   return (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 ||
           pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_RGBAFLOAT ||
           weed_palette_is_alpha_palette(pal)) ? TRUE : FALSE;
 }
+
 
 LIVES_INLINE double weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
   // return ratio of plane[n] width/plane[0] width;
@@ -1081,6 +1017,7 @@ LIVES_INLINE double weed_palette_get_plane_ratio_horizontal(int pal, int plane) 
   return 0.0;
 }
 
+
 LIVES_INLINE double weed_palette_get_plane_ratio_vertical(int pal, int plane) {
   // return ratio of plane[n] height/plane[n] height
   if (plane == 0) return 1.0;
@@ -1093,6 +1030,7 @@ LIVES_INLINE double weed_palette_get_plane_ratio_vertical(int pal, int plane) {
   }
   return 0.0;
 }
+
 
 boolean weed_palette_is_lower_quality(int p1, int p2) {
   // return TRUE if p1 is lower quality than p2
@@ -1217,8 +1155,6 @@ char *weed_palette_get_name_full(int pal, int clamped, int subspace) {
 }
 
 
-
-
 /////////////////////////////////////////////////////////
 // just as an example: 1.0 == RGB(A), 0.5 == compressed to 50%, etc
 
@@ -1242,7 +1178,6 @@ double weed_palette_get_compression_ratio(int pal) {
 
 
 //////////////////////////////////////////////////////////////
-
 
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf) {
   int width = lives_pixbuf_get_width(pixbuf);
@@ -1301,7 +1236,6 @@ void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, i
 }
 
 
-
 ///////////////////////////////////////////////////////////
 // frame conversions
 
@@ -1324,7 +1258,6 @@ static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int 
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -1386,9 +1319,6 @@ void *convert_yuv888_to_rgb_frame_thread(void *data) {
 }
 
 
-
-
-
 static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, int irowstride,
     int orowstride, uint8_t *dest, boolean del_alpha, boolean clamped,
     int thread_id) {
@@ -1409,7 +1339,6 @@ static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, i
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -1471,9 +1400,6 @@ void *convert_yuva8888_to_rgba_frame_thread(void *data) {
 }
 
 
-
-
-
 static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int irowstride,
                                         int orowstride, uint8_t *dest, boolean add_alpha, boolean clamped,
                                         int thread_id) {
@@ -1493,7 +1419,6 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -1501,7 +1426,6 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -1543,9 +1467,7 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
     dest += orowstride;
     src += irowstride;
   }
-
 }
-
 
 
 void *convert_yuv888_to_bgr_frame_thread(void *data) {
@@ -1555,8 +1477,6 @@ void *convert_yuv888_to_bgr_frame_thread(void *data) {
                               ccparams->in_clamped, ccparams->thread_id);
   return NULL;
 }
-
-
 
 
 static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, int irowstride,
@@ -1579,7 +1499,6 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -1587,7 +1506,6 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -1632,7 +1550,6 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
 }
 
 
-
 void *convert_yuva8888_to_bgra_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_yuva8888_to_bgra_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
@@ -1640,7 +1557,6 @@ void *convert_yuva8888_to_bgra_frame_thread(void *data) {
                                  ccparams->in_clamped, ccparams->thread_id);
   return NULL;
 }
-
 
 
 static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int irowstride,
@@ -1662,7 +1578,6 @@ static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -1670,7 +1585,6 @@ static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -1722,9 +1636,6 @@ void *convert_yuv888_to_argb_frame_thread(void *data) {
 }
 
 
-
-
-
 static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, int irowstride,
     int orowstride, uint8_t *dest, boolean clamped,
     int thread_id) {
@@ -1745,7 +1656,6 @@ static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, i
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -1753,7 +1663,6 @@ static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, i
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -1803,7 +1712,6 @@ void *convert_yuva8888_to_argb_frame_thread(void *data) {
                                  ccparams->in_clamped, ccparams->thread_id);
   return NULL;
 }
-
 
 
 static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, int orowstride,
@@ -1884,7 +1792,6 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, i
     chroma = !chroma;
     dest += orowstride;
   }
-
 }
 
 
@@ -2075,7 +1982,6 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = u + dheight * i * (hsize >> 1);
@@ -2083,7 +1989,6 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
 
         ccparams[i].vsize = dheight;
@@ -2107,7 +2012,6 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
     lives_free(ccparams);
     return;
   }
-
 
 #if !USE_THREADS
   set_conversion_arrays(clamped ? WEED_YUV_CLAMPING_CLAMPED : WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);
@@ -2161,7 +2065,6 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = u + dheight * i * (hsize >> 1);
@@ -2244,7 +2147,6 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = u + dheight * i * (hsize >> 1);
@@ -2252,7 +2154,6 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -2307,9 +2208,6 @@ void *convert_bgr_to_uyvy_frame_thread(void *data) {
 }
 
 
-
-
-
 static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
                                       yuyv_macropixel *u, boolean has_alpha, boolean clamped, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
@@ -2332,7 +2230,6 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = u + dheight * i * (hsize >> 1);
@@ -2340,7 +2237,6 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -2395,8 +2291,6 @@ void *convert_bgr_to_yuyv_frame_thread(void *data) {
 }
 
 
-
-
 static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
                                        uyvy_macropixel *u, boolean clamped, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
@@ -2418,7 +2312,6 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = u + dheight * i * (hsize >> 1);
@@ -2426,7 +2319,6 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
 
         ccparams[i].vsize = dheight;
@@ -2449,7 +2341,6 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
     lives_free(ccparams);
     return;
   }
-
 
 #if !USE_THREADS
   set_conversion_arrays(clamped ? WEED_YUV_CLAMPING_CLAMPED : WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);
@@ -2475,8 +2366,6 @@ void *convert_argb_to_uyvy_frame_thread(void *data) {
 }
 
 
-
-
 static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
                                        yuyv_macropixel *u, boolean clamped, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
@@ -2498,7 +2387,6 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = u + dheight * i * (hsize >> 1);
@@ -2506,7 +2394,6 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
 
         ccparams[i].vsize = dheight;
@@ -2529,7 +2416,6 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
     lives_free(ccparams);
     return;
   }
-
 
 #if !USE_THREADS
   set_conversion_arrays(clamped ? WEED_YUV_CLAMPING_CLAMPED : WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);
@@ -2555,9 +2441,6 @@ void *convert_argb_to_yuyv_frame_thread(void *data) {
 }
 
 
-
-
-
 static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
                                      uint8_t *u, boolean in_has_alpha, boolean out_has_alpha,
                                      boolean clamped, int thread_id) {
@@ -2579,7 +2462,6 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = u + dheight * i * hsize * opsize;
@@ -2587,7 +2469,6 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -2633,6 +2514,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
   }
 }
 
+
 void *convert_rgb_to_yuv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_rgb_to_yuv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
@@ -2669,7 +2551,6 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
 
@@ -2681,7 +2562,6 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -2737,7 +2617,6 @@ void *convert_rgb_to_yuvp_frame_thread(void *data) {
 }
 
 
-
 static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
                                      uint8_t *u, boolean in_has_alpha, boolean out_has_alpha,
                                      boolean clamped, int thread_id) {
@@ -2759,7 +2638,6 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
         ccparams[i].dest = u + dheight * i * hsize * opsize;
@@ -2767,7 +2645,6 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -2813,6 +2690,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
   }
 }
 
+
 void *convert_bgr_to_yuv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_bgr_to_yuv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
@@ -2821,11 +2699,9 @@ void *convert_bgr_to_yuv_frame_thread(void *data) {
 }
 
 
-
 static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
                                       uint8_t **yuvp, boolean in_has_alpha, boolean out_has_alpha, boolean clamped,
                                       int thread_id) {
-
   // TESTED !
 
   int ipsize = 3;
@@ -2853,7 +2729,6 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
 
@@ -2865,7 +2740,6 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -2921,8 +2795,6 @@ void *convert_bgr_to_yuvp_frame_thread(void *data) {
 }
 
 
-
-
 static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
                                       uint8_t *u, boolean out_has_alpha,
                                       boolean clamped, int thread_id) {
@@ -2943,7 +2815,6 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
 
@@ -2952,7 +2823,6 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -2994,6 +2864,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
   }
 }
 
+
 void *convert_argb_to_yuv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_argb_to_yuv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
@@ -3029,7 +2900,6 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
     dheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((rgbdata + dheight * i * rowstride) < end) {
-
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
 
@@ -3041,7 +2911,6 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -3091,10 +2960,6 @@ void *convert_argb_to_yuvp_frame_thread(void *data) {
                              ccparams->thread_id);
   return NULL;
 }
-
-
-
-
 
 
 static void convert_rgb_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
@@ -3162,7 +3027,6 @@ static void convert_rgb_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, 
 }
 
 
-
 static void convert_argb_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
     uint8_t **dest, boolean is_422, int samtype, boolean clamped) {
   // for odd sized widths, cut the rightmost pixel
@@ -3225,7 +3089,6 @@ static void convert_argb_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize,
     rgbdata += rowstride;
   }
 }
-
 
 
 static void convert_bgr_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
@@ -3451,7 +3314,6 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-
         ccparams[i].src = src + dheight * i * width;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -3459,7 +3321,6 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -3534,7 +3395,6 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-
         ccparams[i].src = src + dheight * i * width;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -3542,7 +3402,6 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -3565,7 +3424,6 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
     lives_free(ccparams);
     return;
   }
-
 
 #if !USE_THREADS
   set_conversion_arrays(clamped ? WEED_YUV_CLAMPING_CLAMPED : WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);
@@ -3616,7 +3474,6 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-
         ccparams[i].src = src + dheight * i * width;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -3624,7 +3481,6 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -3650,7 +3506,6 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
 #if !USE_THREADS
   set_conversion_arrays(clamped ? WEED_YUV_CLAMPING_CLAMPED : WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);
 #endif
-
 
   orowstride -= width * psize;
   for (i = 0; i < height; i++) {
@@ -3691,7 +3546,6 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-
         ccparams[i].src = src + dheight * i * width;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -3699,7 +3553,6 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
         ccparams[i].orowstrides[0] = orowstride;
@@ -3756,7 +3609,6 @@ void *convert_yuyv_to_rgb_frame_thread(void *data) {
 
 static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int height, int orowstride,
                                       uint8_t *dest, boolean add_alpha, boolean clamped, int thread_id) {
-
   register int i, j;
   int psize = 6;
   int a = 3, b = 4, c = 5;
@@ -3773,7 +3625,6 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-
         ccparams[i].src = src + dheight * i * width;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -3781,7 +3632,6 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -3826,7 +3676,6 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
     }
     dest += orowstride;
   }
-
 }
 
 
@@ -3855,7 +3704,6 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-
         ccparams[i].src = src + dheight * i * width;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -3863,7 +3711,6 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -3889,7 +3736,6 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
 #if !USE_THREADS
   set_conversion_arrays(clamped ? WEED_YUV_CLAMPING_CLAMPED : WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);
 #endif
-
 
   orowstride -= width * psize;
   for (i = 0; i < height; i++) {
@@ -4026,7 +3872,6 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((y + dheight * i * width) < end) {
-
         ccparams[i].hsize = width;
 
         ccparams[i].srcp[0] = y + dheight * i * width;
@@ -4039,7 +3884,6 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -4086,6 +3930,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
   }
 }
 
+
 void *convert_yuv_planar_to_rgb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_yuv_planar_to_rgb_frame((uint8_t **)ccparams->srcp, ccparams->hsize, ccparams->vsize, ccparams->orowstrides[0],
@@ -4121,7 +3966,6 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((y + dheight * i * width) < end) {
-
         ccparams[i].hsize = width;
 
         ccparams[i].srcp[0] = y + dheight * i * width;
@@ -4134,7 +3978,6 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -4189,7 +4032,6 @@ void *convert_yuv_planar_to_bgr_frame_thread(void *data) {
 }
 
 
-
 static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int height, int orowstride, uint8_t *dest,
     boolean in_alpha, boolean clamped, int thread_id) {
   uint8_t *y = src[0];
@@ -4214,7 +4056,6 @@ static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int heigh
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((y + dheight * i * width) < end) {
-
         ccparams[i].hsize = width;
 
         ccparams[i].srcp[0] = y + dheight * i * width;
@@ -4227,7 +4068,6 @@ static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int heigh
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -4272,8 +4112,6 @@ void *convert_yuv_planar_to_argb_frame_thread(void *data) {
                                    (uint8_t *)ccparams->dest, ccparams->in_alpha, ccparams->in_clamped, ccparams->thread_id);
   return NULL;
 }
-
-
 
 
 static void convert_yuv_planar_to_uyvy_frame(uint8_t **src, int width, int height, uyvy_macropixel *uyvy, boolean clamped) {
@@ -4365,7 +4203,6 @@ static void convert_yuvap_to_yuvp_frame(uint8_t **src, int width, int height, ui
   if (yd != ys) lives_memcpy(yd, ys, size);
   if (ud != us) lives_memcpy(ud, us, size);
   if (vd != vs) lives_memcpy(vd, vs, size);
-
 }
 
 
@@ -4400,7 +4237,6 @@ static void convert_yuvp_to_yuv420_frame(uint8_t **src, int width, int height, u
 
   for (i = 0; i < height; i++) {
     for (j = 0; j < hwidth; j++) {
-
       if (!chroma) {
         // pass 1, copy row
         // average two dest pixels
@@ -4705,6 +4541,7 @@ static void convert_yuyv_to_yuv411_frame(yuyv_macropixel *yuyv, int width, int h
   }
 }
 
+
 static void convert_yuv888_to_yuv420_frame(uint8_t *yuv8, int width, int height, int irowstride,
     uint8_t **yuv4, boolean src_alpha, boolean clamped) {
   // subsample vertically and horizontally
@@ -4782,6 +4619,7 @@ static void convert_uyvy_to_yuv422_frame(uyvy_macropixel *uyvy, int width, int h
   }
 }
 
+
 static void convert_yuyv_to_yuv422_frame(yuyv_macropixel *yuyv, int width, int height, uint8_t **yuv) {
   int size = width * height; // y is twice this, u and v are equal
 
@@ -4802,7 +4640,6 @@ static void convert_yuyv_to_yuv422_frame(yuyv_macropixel *yuyv, int width, int h
 
 static void convert_yuv888_to_yuv422_frame(uint8_t *yuv8, int width, int height, int irowstride,
     uint8_t **yuv4, boolean has_alpha, boolean clamped) {
-
   // 888(8) packed to 422p
 
   // TODO - handle different sampling types
@@ -4846,7 +4683,6 @@ static void convert_yuv888_to_yuv422_frame(uint8_t *yuv8, int width, int height,
       yuv8 += irowstride;
     }
   }
-
 }
 
 
@@ -4889,8 +4725,6 @@ static void convert_yuv888_to_uyvy_frame(uint8_t *yuv, int width, int height, in
       yuv += irowstride;
     }
   }
-
-
 }
 
 
@@ -4934,6 +4768,7 @@ static void convert_yuv888_to_yuyv_frame(uint8_t *yuv, int width, int height, in
     }
   }
 }
+
 
 static void convert_yuv888_to_yuv411_frame(uint8_t *yuv8, int width, int height, int irowstride,
     yuv411_macropixel *yuv411, boolean has_alpha) {
@@ -5382,7 +5217,6 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
 
       if (add_alpha) dest[3] = 255;
       dest += psize;
-
     }
     // write last 2 pixels
 
@@ -5400,7 +5234,6 @@ static void convert_yuv411_to_yuv888_frame(yuv411_macropixel *yuv411, int width,
     dest += psize;
     yuv411 += width;
   }
-
 }
 
 
@@ -5490,7 +5323,6 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
       *(d_u++) = u;
       *(d_v++) = v;
       if (add_alpha) *(d_a++) = 255;
-
     }
     // write last 2 pixels
     *(d_y++) = yuv411[j - 1].y2;
@@ -5505,7 +5337,6 @@ static void convert_yuv411_to_yuvp_frame(yuv411_macropixel *yuv411, int width, i
 
     yuv411 += width;
   }
-
 }
 
 
@@ -5576,7 +5407,6 @@ static void convert_yuv411_to_uyvy_frame(yuv411_macropixel *yuv411, int width, i
 
     yuv411 += width;
   }
-
 }
 
 
@@ -5647,7 +5477,6 @@ static void convert_yuv411_to_yuyv_frame(yuv411_macropixel *yuv411, int width, i
 
     yuv411 += width;
   }
-
 }
 
 
@@ -5705,7 +5534,6 @@ static void convert_yuv411_to_yuv422_frame(yuv411_macropixel *yuv411, int width,
 
     yuv411 += width;
   }
-
 }
 
 
@@ -5815,7 +5643,6 @@ static void convert_yuv411_to_yuv420_frame(yuv411_macropixel *yuv411, int width,
     chroma = !chroma;
     yuv411 += width;
   }
-
 }
 
 
@@ -5869,10 +5696,8 @@ static void convert_yuv420_to_yuv411_frame(uint8_t **src, int hsize, int vsize, 
 }
 
 
-
 static void convert_splitplanes_frame(uint8_t *src, int width, int height, int irowstride,
                                       uint8_t **dest, boolean src_alpha, boolean dest_alpha) {
-
   // convert 888(8) packed to 444(4)P planar
   size_t size = width * height;
   int ipsize = 3;
@@ -5888,7 +5713,6 @@ static void convert_splitplanes_frame(uint8_t *src, int width, int height, int i
 
   if (src_alpha) ipsize = 4;
   if (irowstride == ipsize * width) {
-
     for (end = src + size * ipsize; src < end;) {
       *(y++) = *(src++);
       *(u++) = *(src++);
@@ -5915,9 +5739,7 @@ static void convert_splitplanes_frame(uint8_t *src, int width, int height, int i
       src += irowstride;
     }
   }
-
 }
-
 
 
 /////////////////////////////////////////////////////////////////
@@ -5937,7 +5759,6 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -5945,7 +5766,6 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6002,7 +5822,6 @@ void *convert_swap3_frame_thread(void *data) {
 }
 
 
-
 static void convert_swap4_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
                                 uint8_t *dest, int thread_id) {
   // swap 4 byte palette
@@ -6017,13 +5836,11 @@ static void convert_swap4_frame(uint8_t *src, int width, int height, int irowstr
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
 
         if ((height - dheight * i) < dheight) dheight = height - (dheight * i);
-
 
         ccparams[i].vsize = dheight;
 
@@ -6045,7 +5862,6 @@ static void convert_swap4_frame(uint8_t *src, int width, int height, int irowstr
     lives_free(ccparams);
     return;
   }
-
 
   if ((irowstride == width * 4) && (orowstride == irowstride)) {
     // quick version
@@ -6093,7 +5909,6 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -6101,7 +5916,6 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6148,14 +5962,12 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
 }
 
 
-
 void *convert_swap3addpost_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swap3addpost_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
                              ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
   return NULL;
 }
-
 
 
 static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
@@ -6172,7 +5984,6 @@ static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int i
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -6180,7 +5991,6 @@ static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int i
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6249,7 +6059,6 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -6257,7 +6066,6 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6279,7 +6087,6 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
     lives_free(ccparams);
     return;
   }
-
 
   if ((irowstride == width * 4) && (orowstride == irowstride)) {
     // quick version
@@ -6327,7 +6134,6 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -6335,7 +6141,6 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6386,7 +6191,6 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
 }
 
 
-
 void *convert_addpost_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_addpost_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
@@ -6409,7 +6213,6 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -6417,7 +6220,6 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6439,7 +6241,6 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
     lives_free(ccparams);
     return;
   }
-
 
   if ((irowstride == width * 3) && (orowstride == width * 4)) {
     // quick version
@@ -6472,6 +6273,7 @@ void *convert_addpre_frame_thread(void *data) {
   return NULL;
 }
 
+
 static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
                                        uint8_t *dest, int thread_id) {
   // swap 3 bytes, delete post alpha
@@ -6486,7 +6288,6 @@ static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int 
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -6494,7 +6295,6 @@ static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int 
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6561,7 +6361,6 @@ static void convert_delpost_frame(uint8_t *src, int width, int height, int irows
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -6569,7 +6368,6 @@ static void convert_delpost_frame(uint8_t *src, int width, int height, int irows
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6591,7 +6389,6 @@ static void convert_delpost_frame(uint8_t *src, int width, int height, int irows
     lives_free(ccparams);
     return;
   }
-
 
   if ((irowstride == width * 4) && (orowstride == width * 3)) {
     // quick version
@@ -6621,7 +6418,6 @@ void *convert_delpost_frame_thread(void *data) {
 }
 
 
-
 static void convert_delpre_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
                                  uint8_t *dest, int thread_id) {
   // delete pre alpha
@@ -6636,7 +6432,6 @@ static void convert_delpre_frame(uint8_t *src, int width, int height, int irowst
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -6644,7 +6439,6 @@ static void convert_delpre_frame(uint8_t *src, int width, int height, int irowst
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6689,7 +6483,6 @@ static void convert_delpre_frame(uint8_t *src, int width, int height, int irowst
 }
 
 
-
 void *convert_delpre_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_delpre_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
@@ -6712,7 +6505,6 @@ static void convert_swap3delpre_frame(uint8_t *src, int width, int height, int i
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -6720,7 +6512,6 @@ static void convert_swap3delpre_frame(uint8_t *src, int width, int height, int i
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6773,7 +6564,6 @@ void *convert_swap3delpre_frame_thread(void *data) {
 }
 
 
-
 static void convert_swapprepost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
                                       uint8_t *dest, boolean alpha_first, int thread_id) {
   // swap first and last bytes in a 4 byte palette
@@ -6788,7 +6578,6 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * irowstride) < end) {
-
         ccparams[i].src = src + dheight * i * irowstride;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
@@ -6796,7 +6585,6 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6871,6 +6659,7 @@ void *convert_swapprepost_frame_thread(void *data) {
   return NULL;
 }
 
+
 //////////////////////////
 // genric YUV
 
@@ -6887,7 +6676,6 @@ static void convert_swab_frame(uint8_t *src, int width, int height, uint8_t *des
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * width4) < end) {
-
         ccparams[i].src = src + dheight * i * width4;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * width4;
@@ -6895,7 +6683,6 @@ static void convert_swab_frame(uint8_t *src, int width, int height, uint8_t *des
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -6915,7 +6702,6 @@ static void convert_swab_frame(uint8_t *src, int width, int height, uint8_t *des
     lives_free(ccparams);
     return;
   }
-
 
   for (; src < end; src += width4) {
     for (i = 0; i < width4; i += 4) {
@@ -6949,7 +6735,6 @@ static void convert_halve_chroma(uint8_t **src, int width, int height, uint8_t *
 
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
-
       if (!chroma) {
         // pass 1, copy row
         lives_memcpy(d_u, s_u, width);
@@ -6988,7 +6773,6 @@ static void convert_double_chroma(uint8_t **src, int width, int height, uint8_t 
 
   for (i = 0; i < height2; i++) {
     for (j = 0; j < width; j++) {
-
       lives_memcpy(d_u, s_u, width);
       lives_memcpy(d_v, s_v, width);
 
@@ -7072,7 +6856,6 @@ static void convert_quad_chroma(uint8_t **src, int width, int height, uint8_t **
   }
 
   if (add_alpha) memset(dest + ((width * height) << 3), 255, ((width * height) << 3));
-
 }
 
 
@@ -7149,6 +6932,7 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, uin
   }
 }
 
+
 static void convert_double_chroma_packed(uint8_t **src, int width, int height, uint8_t *dest, boolean add_alpha,
     boolean clamped) {
   // width and height here are width and height of dest chroma planes, in bytes
@@ -7200,7 +6984,6 @@ static void convert_double_chroma_packed(uint8_t **src, int width, int height, u
 }
 
 
-
 static void switch_yuv_sampling(weed_plant_t *layer) {
   int error;
   int sampling = weed_get_int_value(layer, WEED_LEAF_YUV_SAMPLING, &error);
@@ -7247,7 +7030,6 @@ static void switch_yuv_sampling(weed_plant_t *layer) {
   }
   lives_free(pixel_data);
 }
-
 
 
 static void switch_yuv_clamping_and_subspace(weed_plant_t *layer, int oclamping, int osubspace) {
@@ -7412,13 +7194,10 @@ static void switch_yuv_clamping_and_subspace(weed_plant_t *layer, int oclamping,
   }
   weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, oclamping);
   lives_free(pixel_data);
-
 }
 
 
-
 ////////////////////////////////////////////////////////////////////////////////////////
-
 
 void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean may_contig) {
   // width, height are src size in (macro) pixels
@@ -7669,7 +7448,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
     framesize = CEIL(width * height, 32);
 
-
     if (!may_contig) {
       weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
       if (!black_fill) {
@@ -7714,10 +7492,8 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         }
         memset(pd_array[2], 128, width * height / 4);
       }
-
     } else {
       weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
-
       if (!black_fill) {
         memblock = (uint8_t *)lives_calloc(((framesize * 3) >> 3) + 8, 4);
         if (memblock == NULL) return;
@@ -7733,7 +7509,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         memset(pd_array[1], 128, width * height / 2);
         pd_array[2] = (uint8_t *)(memblock + ((framesize * 5) >> 2));
       }
-
     }
 
     weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)pd_array);
@@ -7796,11 +7571,8 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         }
         memset(pd_array[2], 128, width * height / 2);
       }
-
-
     } else {
       weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
-
       if (!black_fill) {
         memblock = (uint8_t *)lives_calloc((framesize >> 1) + 8, 4);
         if (memblock == NULL) return;
@@ -7816,12 +7588,10 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         memset(pd_array[0], y_black, width * height);
         memset(pd_array[1], 128, width * height);
       }
-
     }
     weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)pd_array);
     lives_free(pd_array);
     break;
-
 
   case WEED_PALETTE_YUV444P:
     rowstrides = (int *)lives_malloc(sizint * 3);
@@ -7876,8 +7646,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         }
         memset(pd_array[2], 128, width * height);
       }
-
-
     } else {
       weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
       if (!black_fill) {
@@ -7886,7 +7654,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         pd_array[0] = memblock;
         pd_array[1] = memblock + framesize;
         pd_array[2] = memblock + framesize * 2;
-
       } else {
         memblock = (uint8_t *)lives_try_malloc(framesize * 3 + 64);
         if (memblock == NULL) return;
@@ -7900,7 +7667,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)pd_array);
     lives_free(pd_array);
     break;
-
 
   case WEED_PALETTE_YUVA4444P:
     rowstrides = (int *)lives_malloc(sizint * 4);
@@ -7972,8 +7738,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         }
         memset(pd_array[3], 255, width * height);
       }
-
-
     } else {
       weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
 
@@ -8002,7 +7766,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 4, (void **)pd_array);
     lives_free(pd_array);
     break;
-
 
   case WEED_PALETTE_YUV411:
     weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
@@ -8107,9 +7870,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     lives_printerr("Warning: asked to create empty pixel_data for palette %d !\n", palette);
   }
 }
-
-
-
 
 
 void alpha_unpremult(weed_plant_t *layer, boolean un) {
@@ -8281,9 +8041,6 @@ void alpha_unpremult(weed_plant_t *layer, boolean un) {
 }
 
 
-
-
-
 boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype, boolean oclamping, int osubspace) {
   // here we will not handle RGB float palettes (wait for libabl for that...)
   // but we will convert to/from the 5 other RGB palettes and 10 YUV palettes
@@ -8297,7 +8054,6 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
   //        currently chroma is assumed centred between luma
   // osamtype, subspace and clamping currently only work for default values
 
-
   //       TODO: allow plugin candidates/delegates
 
   // - original palette WEED_LEAF_PIXEL_DATA is free()d
@@ -8306,10 +8062,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
 
   // layer must not be NULL
 
-
   // rowstrides value MUST be checked for input palettes RGB24, BGR24 and YUV888
-
-
 
   uint8_t *gusrc = NULL, **gusrc_array = NULL, *gudest, **gudest_array, *tmp;
   int width, height, orowstride, irowstride;
@@ -8365,7 +8118,6 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
 #endif
     }
   }
-
 
   if (inpl == outpl) {
 #ifdef DEBUG_PCONV
@@ -9747,7 +9499,6 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
         }
       }
       lives_free(gusrc_array);
-
     }
     break;
   case WEED_PALETTE_YUV422P:
@@ -10086,7 +9837,6 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
 }
 
 
-
 static LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int height, uint8_t *buf) {
   // we can cheat if our buffer is correctly sized
   LiVESPixbuf *pixbuf;
@@ -10131,7 +9881,6 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   // otherwise we need to steal or copy the pixel_data
 
   do {
-
     palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
     width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
     height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
@@ -10210,9 +9959,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
     }
 
     weed_layer_pixel_data_free(layer);
-
   }
-
 
 #ifdef TEST_GAMMA
   register int j, k;
@@ -10282,7 +10029,6 @@ void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf) {
     pdata += row;
   }
 }
-
 
 
 void compact_rowstrides(weed_plant_t *layer) {
@@ -10483,7 +10229,6 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   int iheight = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
   int iclamped = WEED_YUV_CLAMPING_UNCLAMPED;
 
-
   if (iwidth == width && iheight == height) return TRUE; // no resize needed
 
   if (width <= 0 || height <= 0) {
@@ -10532,7 +10277,6 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   }
 #endif
 
-
   // if we cannot scale YUV888 (unclamped) or YUVA8888 (unclamped) directly, pretend they are RGB24 and RGBA32
   if (palette == WEED_PALETTE_YUV888 && iclamped == WEED_YUV_CLAMPING_UNCLAMPED
       && !weed_palette_is_resizable(palette, iclamped, TRUE)) opal_hint = palette = WEED_PALETTE_RGB24;
@@ -10544,7 +10288,6 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     opal_hint = palette;
     oclamp_hint = iclamped;
   }
-
 
 #ifdef USE_SWSCALE
   if (iwidth > 1 && iheight > 1 && weed_palette_is_resizable(palette, iclamped, TRUE) &&
@@ -10965,7 +10708,6 @@ void letterbox_layer(weed_plant_t *layer, int width, int height, int nwidth, int
   lives_free(new_pixel_data);
   lives_free(irowstrides);
   lives_free(rowstrides);
-
 }
 
 
@@ -10982,7 +10724,6 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
   // return TRUE if we can use the original pixbuf pixels; in this case the pixbuf pixels should only be freed via lives_layer_pixel_data_free()
   // see code example.
 
-
   /* code example:
 
   if (pixbuf!=NULL) {
@@ -10994,9 +10735,7 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 
   weed_layer_pixel_data_free(layer);
 
-
   */
-
 
   int rowstride;
   int width;
@@ -11072,16 +10811,10 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 }
 
 
-
-
-
-
-
 //////////////////////////////////////
 // TODO - move into layers.c
 
 #ifdef GUI_GTK
-
 
 LIVES_INLINE int get_weed_palette_for_lives_painter(void) {
   // TODO - should move to weed-compat.h
@@ -11106,7 +10839,6 @@ lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
   lives_painter_surface_t *surf;
   lives_painter_t *cairo;
   lives_painter_format_t cform;
-
 
   width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
 
@@ -11174,7 +10906,6 @@ lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
 
   return cairo;
 }
-
 
 
 boolean lives_painter_to_layer(lives_painter_t *cr, weed_plant_t *layer) {
@@ -11279,7 +11010,6 @@ weed_plant_t *weed_layer_copy(weed_plant_t *dlayer, weed_plant_t *slayer) {
 
   weed_plant_t *layer;
 
-
   void **pd_array, **pixel_data;
   uint8_t *npixel_data;
 
@@ -11293,7 +11023,6 @@ weed_plant_t *weed_layer_copy(weed_plant_t *dlayer, weed_plant_t *slayer) {
   boolean deep = FALSE, contig;
 
   register int i;
-
 
   if (dlayer == NULL) {
     layer = weed_plant_new(WEED_PLANT_CHANNEL);
@@ -11361,7 +11090,6 @@ weed_plant_t *weed_layer_copy(weed_plant_t *dlayer, weed_plant_t *slayer) {
 }
 
 
-
 void weed_layer_pixel_data_free(weed_plant_t *layer) {
   // free pixel_data from layer
   // we do not free if WEED_LEAF_HOST_ORIG_PDATA is set (data is an alpha in which "belongs" to another out param)
@@ -11372,7 +11100,6 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
   // sets WEED_LEAF_PIXEL_DATA to NULL for the layer
 
   // this should almost ALWAYS be used to free WEED_LEAF_PIXEL_DATA
-
 
   void **pixel_data;
 
@@ -11393,7 +11120,6 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
     if (pd_elements > 0) {
       pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
       if (pixel_data != NULL) {
-
         if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS)) {
           if (weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE)
             pd_elements = 1;
@@ -11431,7 +11157,6 @@ int weed_layer_get_palette(weed_plant_t *layer) {
   if (error == WEED_NO_ERROR) return pal;
   return WEED_PALETTE_END;
 }
-
 
 
 void insert_blank_frames(int sfileno, int nframes, int after) {
@@ -11476,7 +11201,6 @@ void insert_blank_frames(int sfileno, int nframes, int after) {
       break;
     }
   }
-
 
   insert_images_in_virtual(sfileno, after, nframes, NULL, 0);
 

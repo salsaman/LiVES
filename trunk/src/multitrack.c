@@ -1411,7 +1411,7 @@ static EXPOSE_FN_DECL(expose_track_event, eventbox) {
 
   if (cairo == NULL) cr = lives_painter_create_from_widget(eventbox);
   else cr = cairo;
-  
+
   bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg");
 
 draw1:
@@ -1506,7 +1506,8 @@ draw1:
   }
 
   return TRUE;
-}}
+}
+}
 
 
 static char *mt_params_label(lives_mt *mt) {
@@ -1524,7 +1525,7 @@ static char *mt_params_label(lives_mt *mt) {
   return ltext;
 }
 
- 
+
 LIVES_INLINE double mt_get_effect_time(lives_mt *mt) {
   return q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * U_SEC, mt->fps) / U_SEC;
 }
@@ -2562,7 +2563,7 @@ void multitrack_view_in_out(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 }
 
- 
+
 static void time_to_string(lives_mt *mt, double secs, int length) {
   int hours, mins, rest;
   char *string;
@@ -2671,7 +2672,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
   int rnc;
   register int i;
 
-   // ensure file layouts are updated
+  // ensure file layouts are updated
   upd_layout_maps(event_list);
 
   renumbered_clips[0] = 0;
@@ -2798,7 +2799,7 @@ boolean mt_prevclip(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, L
   return TRUE;
 }
 
- 
+
 boolean mt_nextclip(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   if (!mainw->interactive) return TRUE;
@@ -17453,7 +17454,8 @@ static EXPOSE_FN_DECL(expose_timeline_reg_event, timeline) {
   if (event != NULL) lives_painter_destroy(cairo);
 
   return TRUE;
-}}
+}
+}
 
 
 static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int chnum, lives_mt *mt) {
@@ -17654,7 +17656,8 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox) {
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ebox), "bgimg", bgimage);
 
   return TRUE;
-}}
+}
+}
 
 
 ////////////////////////////////////////////////////
@@ -21995,7 +21998,7 @@ track_rect *find_block_by_uid(lives_mt *mt, ulong uid) {
 
   return NULL;
 }
- 
+
 
 boolean mt_track_is_video(lives_mt *mt, int ntrack) {
   if (ntrack >= 0 && mt->video_draws != NULL && ntrack < lives_list_length(mt->video_draws)) return TRUE;

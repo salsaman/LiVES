@@ -291,7 +291,7 @@ void lives_exit(int signum) {
         }
       }
     }
-    
+
     if (!mainw->leave_files && strlen(mainw->set_name) && !mainw->leave_recovery) {
       char *set_layout_dir = lives_build_filename(prefs->workdir, mainw->set_name, "layouts", NULL);
       if (!lives_file_test(set_layout_dir, LIVES_FILE_TEST_IS_DIR)) {
@@ -3780,7 +3780,7 @@ void on_select_start_only_activate(LiVESMenuItem *menuitem, livespointer user_da
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start);
 }
 
- 
+
 void on_select_end_only_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->current_file == -1) return;
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end);
@@ -4151,7 +4151,7 @@ boolean on_stop_activate_by_del(LiVESWidget *widget, LiVESXEventDelete *event, l
   return TRUE;
 }
 
- 
+
 void on_pause_clicked(void) {
   mainw->jack_can_stop = FALSE;
   mainw->cancelled = CANCEL_USER_PAUSED;
@@ -5711,7 +5711,7 @@ EXPOSE_FN_DECL(expose_fsplayarea_event, widget) {
   LiVESPixbuf *pixbuf = (LiVESPixbuf *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "pixbuf");
 
   lives_painter_t *cr;
-  
+
   int fwidth, fheight, owidth, oheight, width, height;
   int offs_x, offs_y;
 
@@ -5750,7 +5750,8 @@ EXPOSE_FN_DECL(expose_fsplayarea_event, widget) {
   if (cr != cairo) lives_painter_destroy(cr);
 
   return TRUE;
-}}
+}
+}
 
 
 void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
@@ -8688,9 +8689,10 @@ EXPOSE_FN_DECL(expose_vid_event, widget) {
   if (event != NULL) {
     lives_painter_destroy(cairo);
   }
-  
+
   return TRUE;
-}}
+}
+}
 
 
 static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
@@ -8812,7 +8814,8 @@ EXPOSE_FN_DECL(expose_laud_event, widget) {
   if (event != NULL) lives_painter_destroy(cairo);
 
   return TRUE;
-}}
+}
+}
 
 
 EXPOSE_FN_DECL(expose_raud_event, widget) {
@@ -8848,7 +8851,8 @@ EXPOSE_FN_DECL(expose_raud_event, widget) {
   if (event != NULL) lives_painter_destroy(cairo);
 
   return TRUE;
-}}
+}
+}
 
 
 boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data) {

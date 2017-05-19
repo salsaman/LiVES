@@ -644,43 +644,43 @@ int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
 enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {
   case WEED_PALETTE_RGB24:
-    return PIX_FMT_RGB24;
-  case WEED_PALETTE_BGR24:
-    return PIX_FMT_BGR24;
-  case WEED_PALETTE_RGBA32:
-    return PIX_FMT_RGBA;
-  case WEED_PALETTE_BGRA32:
-    return PIX_FMT_BGRA;
-  case WEED_PALETTE_ARGB32:
-    return PIX_FMT_ARGB;
-  case WEED_PALETTE_YUV444P:
-    if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
-      return PIX_FMT_YUVJ444P;
-    return PIX_FMT_YUV444P;
-  case WEED_PALETTE_YUV422P:
-    if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
-      return PIX_FMT_YUVJ422P;
-    return PIX_FMT_YUV422P;
-  case WEED_PALETTE_YUV420P:
-    if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
-      return PIX_FMT_YUVJ420P;
-    return PIX_FMT_YUV420P;
-  case WEED_PALETTE_YUYV:
-    return PIX_FMT_YUYV422;
-  case WEED_PALETTE_UYVY:
-    return PIX_FMT_UYVY422;
-  case WEED_PALETTE_YUV411:
-    return PIX_FMT_UYYVYY411;
+        return PIX_FMT_RGB24;
+    case WEED_PALETTE_BGR24:
+      return PIX_FMT_BGR24;
+    case WEED_PALETTE_RGBA32:
+      return PIX_FMT_RGBA;
+    case WEED_PALETTE_BGRA32:
+      return PIX_FMT_BGRA;
+    case WEED_PALETTE_ARGB32:
+      return PIX_FMT_ARGB;
+    case WEED_PALETTE_YUV444P:
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
+        return PIX_FMT_YUVJ444P;
+      return PIX_FMT_YUV444P;
+    case WEED_PALETTE_YUV422P:
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
+        return PIX_FMT_YUVJ422P;
+      return PIX_FMT_YUV422P;
+    case WEED_PALETTE_YUV420P:
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
+        return PIX_FMT_YUVJ420P;
+      return PIX_FMT_YUV420P;
+    case WEED_PALETTE_YUYV:
+      return PIX_FMT_YUYV422;
+    case WEED_PALETTE_UYVY:
+      return PIX_FMT_UYVY422;
+    case WEED_PALETTE_YUV411:
+      return PIX_FMT_UYYVYY411;
 
-  case WEED_PALETTE_A8:
-    return PIX_FMT_GRAY8;
-  case WEED_PALETTE_A1:
-    return PIX_FMT_MONOBLACK;
+    case WEED_PALETTE_A8:
+      return PIX_FMT_GRAY8;
+    case WEED_PALETTE_A1:
+      return PIX_FMT_MONOBLACK;
 
-  default:
-    return PIX_FMT_NONE;
+    default:
+      return PIX_FMT_NONE;
+    }
   }
-}
 
 #else
 
@@ -733,43 +733,43 @@ int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
 enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {
   case WEED_PALETTE_RGB24:
-    return AV_PIX_FMT_RGB24;
-  case WEED_PALETTE_BGR24:
-    return AV_PIX_FMT_BGR24;
-  case WEED_PALETTE_RGBA32:
-    return AV_PIX_FMT_RGBA;
-  case WEED_PALETTE_BGRA32:
-    return AV_PIX_FMT_BGRA;
-  case WEED_PALETTE_ARGB32:
-    return AV_PIX_FMT_ARGB;
-  case WEED_PALETTE_YUV444P:
-    if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
-      return AV_PIX_FMT_YUVJ444P;
-    return AV_PIX_FMT_YUV444P;
-  case WEED_PALETTE_YUV422P:
-    if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
-      return AV_PIX_FMT_YUVJ422P;
-    return AV_PIX_FMT_YUV422P;
-  case WEED_PALETTE_YUV420P:
-    if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
-      return AV_PIX_FMT_YUVJ420P;
-    return AV_PIX_FMT_YUV420P;
-  case WEED_PALETTE_YUYV:
-    return AV_PIX_FMT_YUYV422;
-  case WEED_PALETTE_UYVY:
-    return AV_PIX_FMT_UYVY422;
-  case WEED_PALETTE_YUV411:
-    return AV_PIX_FMT_UYYVYY411;
+        return AV_PIX_FMT_RGB24;
+    case WEED_PALETTE_BGR24:
+      return AV_PIX_FMT_BGR24;
+    case WEED_PALETTE_RGBA32:
+      return AV_PIX_FMT_RGBA;
+    case WEED_PALETTE_BGRA32:
+      return AV_PIX_FMT_BGRA;
+    case WEED_PALETTE_ARGB32:
+      return AV_PIX_FMT_ARGB;
+    case WEED_PALETTE_YUV444P:
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
+        return AV_PIX_FMT_YUVJ444P;
+      return AV_PIX_FMT_YUV444P;
+    case WEED_PALETTE_YUV422P:
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
+        return AV_PIX_FMT_YUVJ422P;
+      return AV_PIX_FMT_YUV422P;
+    case WEED_PALETTE_YUV420P:
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
+        return AV_PIX_FMT_YUVJ420P;
+      return AV_PIX_FMT_YUV420P;
+    case WEED_PALETTE_YUYV:
+      return AV_PIX_FMT_YUYV422;
+    case WEED_PALETTE_UYVY:
+      return AV_PIX_FMT_UYVY422;
+    case WEED_PALETTE_YUV411:
+      return AV_PIX_FMT_UYYVYY411;
 
-  case WEED_PALETTE_A8:
-    return AV_PIX_FMT_GRAY8;
-  case WEED_PALETTE_A1:
-    return AV_PIX_FMT_MONOBLACK;
+    case WEED_PALETTE_A8:
+      return AV_PIX_FMT_GRAY8;
+    case WEED_PALETTE_A1:
+      return AV_PIX_FMT_MONOBLACK;
 
-  default:
-    return AV_PIX_FMT_NONE;
+    default:
+      return AV_PIX_FMT_NONE;
+    }
   }
-}
 
 #endif
 

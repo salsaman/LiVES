@@ -2870,7 +2870,7 @@ boolean lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OS
   float fpsf;
   double fpsd;
   char *msg;
-  
+
   if (mainw->fixed_fpsd > 0.) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments(arglen, vargs, "f", FALSE)) {
     if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
@@ -7226,8 +7226,8 @@ int lives_osc_build_cont(lives_osc *o) {
                        base + j, base);
         o->cqinfo.comment = comment;
         if ((o->leaves[base + j] = OSCNewContainer(name,
-                                     o->leaves[osc_cont[i].att],
-                                     &(o->cqinfo))) == 0) {
+                                   o->leaves[osc_cont[i].att],
+                                   &(o->cqinfo))) == 0) {
           lives_printerr("Cannot auto numerate container %s \n",
                          osc_cont[i].name);
           return 0;
@@ -7249,7 +7249,7 @@ int lives_osc_attach_methods(lives_osc *o) {
                  o->leaves[osc_methods[i].leave],
                  osc_methods[i].cb ,
                  NULL, // this is the context which is reurned but it seems to be unused
-                 &(o->ris));
+                 & (o->ris));
 
 
   }

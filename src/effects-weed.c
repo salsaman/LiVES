@@ -6626,7 +6626,7 @@ boolean weed_init_effect(int hotkey) {
 
   if (all_ins_alpha(filter, TRUE)) inc_count = 0;
 
-                                                                                                                // check first if it is an audio generator
+  // check first if it is an audio generator
 
   if ((inc_count == 0 || (has_audio_chans_in(filter, FALSE) &&
                           !has_video_chans_in(filter, TRUE))) &&

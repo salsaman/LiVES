@@ -9978,7 +9978,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->multitrack == NULL) lives_widget_hide(mainw->LiVES);
   else lives_widget_hide(mainw->multitrack->window);
   lives_widget_context_update();
-  
+
   if (!(do_warning_dialog(
           _("Capture an External Window:\n\nClick on 'OK', then click on any window to capture it\nClick 'Cancel' to cancel\n\n")))) {
     if (prefs->show_gui) {

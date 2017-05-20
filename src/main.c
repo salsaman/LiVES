@@ -3714,7 +3714,7 @@ void desensitize(void) {
     lives_widget_set_sensitive(mainw->custom_tools_submenu, FALSE);
   }
 
-  if (!mainw->foreign) 
+  if (!mainw->foreign)
     lives_widget_set_sensitive(mainw->custom_effects_submenu, FALSE);
 
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);
@@ -5224,23 +5224,23 @@ static void get_max_opsize(int *opwidth, int *opheight) {
     // playback plugin
     if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
       if (mainw->vpp->capabilities & VPP_CAN_RESIZE) {
-	// plugin can resize. Set whichever is smaller of screen size, clip size.
-          if (prefs->play_monitor == 0) {
-            *opwidth = mainw->scr_width;
-            *opheight = mainw->scr_height;
-            if (capable->nmonitors > 1) {
-              // spread over all monitors
-              *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
-              *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
-            }
-          } else {
-            *opwidth = mainw->mgeom[prefs->play_monitor - 1].width;
-            *opheight = mainw->mgeom[prefs->play_monitor - 1].height;
+        // plugin can resize. Set whichever is smaller of screen size, clip size.
+        if (prefs->play_monitor == 0) {
+          *opwidth = mainw->scr_width;
+          *opheight = mainw->scr_height;
+          if (capable->nmonitors > 1) {
+            // spread over all monitors
+            *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
+            *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
           }
+        } else {
+          *opwidth = mainw->mgeom[prefs->play_monitor - 1].width;
+          *opheight = mainw->mgeom[prefs->play_monitor - 1].height;
+        }
 
-	  // use smaller of clip size, screen size
-	  if (cfile->hsize < *opwidth) *opwidth = cfile->hsize;
-	  if (cfile->vsize < *opheight) *opheight = cfile->vsize;
+        // use smaller of clip size, screen size
+        if (cfile->hsize < *opwidth) *opwidth = cfile->hsize;
+        if (cfile->vsize < *opheight) *opheight = cfile->vsize;
 
       } else {
         // ext plugin can't resize, use its fixed size
@@ -5252,14 +5252,13 @@ static void get_max_opsize(int *opwidth, int *opheight) {
       if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
         *opwidth = mainw->vpp->fwidth;
         *opheight = mainw->vpp->fheight;
-      }
-      else {
+      } else {
         *opwidth = cfile->hsize;
         *opheight = cfile->vsize;
       }
     }
   }
-  
+
   if (mainw->multitrack != NULL) {
     // multitrack mode
     if (mainw->multitrack->is_rendering) {
@@ -5269,13 +5268,13 @@ static void get_max_opsize(int *opwidth, int *opheight) {
     } else if (!mainw->ext_playback) {
       // not rendering or using playback plugin
       if (!mainw->fs || mainw->play_window == NULL) {
-	// not full screen, or inset
-	*opwidth = mainw->files[mainw->multitrack->render_file]->hsize;
-	*opheight = mainw->files[mainw->multitrack->render_file]->vsize;
-	calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height, opwidth, opheight);
+        // not full screen, or inset
+        *opwidth = mainw->files[mainw->multitrack->render_file]->hsize;
+        *opheight = mainw->files[mainw->multitrack->render_file]->vsize;
+        calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height, opwidth, opheight);
       } else {
-	// fullscreen, sepwin
-	// use screen size. We dealt with pb plugins above
+        // fullscreen, sepwin
+        // use screen size. We dealt with pb plugins above
         if (prefs->play_monitor == 0) {
           *opwidth = mainw->scr_width;
           *opheight = mainw->scr_height;
@@ -5304,34 +5303,34 @@ static void get_max_opsize(int *opwidth, int *opheight) {
           }
         } while (*opwidth **opheight == 0);
       } else {
-	// sep win full screen
-	if (!mainw->ext_playback) {
-	  if (prefs->play_monitor == 0) {
-	    if (capable->nmonitors == 1) {
-	      *opwidth = mainw->scr_width;
-	      *opheight = mainw->scr_height;
-	    } else {
-	      // spread over all monitors
-	      *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
-	      *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
-	    }
-	  } else {
-	    if (mainw->play_window != NULL) pmonitor = prefs->play_monitor;
-	    else pmonitor = prefs->gui_monitor;
-	    *opwidth = mainw->mgeom[pmonitor - 1].width;
-	    *opheight = mainw->mgeom[pmonitor - 1].height;
-	  }
-	}
+        // sep win full screen
+        if (!mainw->ext_playback) {
+          if (prefs->play_monitor == 0) {
+            if (capable->nmonitors == 1) {
+              *opwidth = mainw->scr_width;
+              *opheight = mainw->scr_height;
+            } else {
+              // spread over all monitors
+              *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
+              *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
+            }
+          } else {
+            if (mainw->play_window != NULL) pmonitor = prefs->play_monitor;
+            else pmonitor = prefs->gui_monitor;
+            *opwidth = mainw->mgeom[pmonitor - 1].width;
+            *opheight = mainw->mgeom[pmonitor - 1].height;
+          }
+        }
       }
     } else {
       if (mainw->is_rendering) {
         if (cfile->hsize > *opwidth) *opwidth = cfile->hsize;
         if (cfile->vsize > *opheight) *opheight = cfile->vsize;
       } else {
-	// not full screen
-	
+        // not full screen
+
         if (!mainw->sep_win) {
-	  // in GUI
+          // in GUI
 #if GTK_CHECK_VERSION(3, 0, 0)
           int rwidth = mainw->ce_frame_width;
           int rheight = mainw->ce_frame_height;
@@ -5348,7 +5347,7 @@ static void get_max_opsize(int *opwidth, int *opheight) {
           } while (*opwidth **opheight == 0);
 #endif
         } else {
-	  // in sep. window
+          // in sep. window
           if (mainw->pwidth < *opwidth || mainw->pheight < *opheight || *opwidth == 0 || *opheight == 0) {
             *opwidth = mainw->pwidth;
             *opheight = mainw->pheight;
@@ -5389,7 +5388,7 @@ static void load_frame_cleanup(boolean noswitch) {
   mainw->frame_layer = NULL;
   mainw->noswitch = noswitch;
 
-  if (!mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors >1)) &&
+  if (!mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1)) &&
       mainw->current_file != mainw->scrap_file) get_play_times();
   if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
 
@@ -6506,7 +6505,8 @@ void load_frame_image(int frame) {
 
     if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
 
-    else if (!mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors >1) || 
+    else if (!mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 &&
+                               capable->nmonitors > 1) ||
                                (mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
              mainw->current_file != mainw->scrap_file)
       get_play_times();
@@ -6529,7 +6529,7 @@ void load_frame_image(int frame) {
     int xwidth, xheight;
     LiVESError *gerror = NULL;
     lives_painter_t *cr = lives_painter_create_from_widget(mainw->playarea);
-    
+
     if (cr == NULL) return;
 
     if (mainw->rec_vid_frames == -1) {
@@ -7574,7 +7574,7 @@ void load_frame_image(int frame) {
     //if (!mainw->is_ready) return;
 
     lives_widget_set_size_request(mainw->playframe, (int)hsize * scale + H_RESIZE_ADJUST, (int)vsize * scale + V_RESIZE_ADJUST);
-    
+
     if (oscale == 2.) {
       if (hsize * 4 < scr_width - 70) {
         scale = 1.;

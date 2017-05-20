@@ -2180,7 +2180,7 @@ void play_file(void) {
       lives_widget_show_all(mainw->vbox1);
       lives_widget_context_update();
     }
-    
+
     // blank the background if asked to
     if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui) || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
         mainw->foreign)) {

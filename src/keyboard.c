@@ -1,6 +1,6 @@
 // keyboard.c
 // LiVES
-// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2017 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -20,7 +20,6 @@
 #endif
 
 #define NEEDS_TRANSLATION 1<<15
-
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -72,7 +71,6 @@ static void handle_omc_events(void) {
   }
 #endif // OMC_MIDI_IMPL
 }
-
 
 #endif
 
@@ -195,12 +193,9 @@ bool nevfilter::nativeEventFilter(const QByteArray &eventType, livespointer mess
 #endif
 
 
-
-
 boolean key_press_or_release(LiVESWidget *widget, LiVESXEventKey *event, livespointer user_data) {
   return pl_key_function(event->type == LIVES_KEY_PRESS, event->keyval, event->state);
 }
-
 
 
 void handle_cached_keys(void) {
@@ -214,9 +209,7 @@ void handle_cached_keys(void) {
     last_kb_time = current_kb_time;
     lives_accel_groups_activate(LIVES_WIDGET_OBJECT(mainw->LiVES), (uint32_t)cached_key, (LiVESXModifierType)cached_mod);
   }
-
 }
-
 
 
 boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
@@ -228,7 +221,6 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
   //LiVESXModifierType state=(LiVESXModifierType)(keymod&(LIVES_CONTROL_MASK|LIVES_ALT_MASK));
 
   // down is a press, up is a release
-
 
   if (!down) {
     // up...
@@ -365,7 +357,6 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     case (key_down2):
       unicode = LIVES_KEY_Down;
       break;
-
     }
   }
 
@@ -374,7 +365,6 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     cached_key = unicode;
     cached_mod = LIVES_CONTROL_MASK;
   }
-
 
   if (mainw->rte_textparm != NULL && (keymod == 0 || keymod == LIVES_SHIFT_MASK || keymod == LIVES_LOCK_MASK)) {
     if (unicode == LIVES_KEY_Return || unicode == 13) unicode = '\n'; // CR
@@ -408,12 +398,10 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
   }
 
   return FALSE;
-
 }
 
 
 // key callback functions - ones which have keys and need wrappers
-
 
 boolean slower_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_slower_pressed(NULL, user_data);

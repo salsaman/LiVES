@@ -216,7 +216,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   case LIVES_DIALOG_WARN_WITH_CANCEL:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_WARNING, LIVES_BUTTONS_NONE, NULL);
-
+    
     if (mainw->add_clear_ds_button) {
       mainw->add_clear_ds_button = FALSE;
       add_clear_ds_button(LIVES_DIALOG(dialog));
@@ -260,7 +260,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   }
 
   lives_window_set_default_size(LIVES_WINDOW(dialog), MIN_MSGBOX_WIDTH, -1);
-
 
   if (widget_opts.apply_theme && (palette->style & STYLE_1)) {
     lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
@@ -357,6 +356,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_xwindow_raise(lives_widget_get_xwindow(dialog));
   }
 
+  if (transient == NULL) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
+
   return dialog;
 }
 
@@ -411,7 +412,7 @@ boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_n
   mytext = lives_strdup(text); // must copy this because of translation issues
 
   do {
-    warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext, transient, warn_mask_number, TRUE);
+    warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext, lives_widget_is_visible(LIVES_WIDGET(transient)) ? transient : NULL, warn_mask_number, TRUE);
     response = lives_dialog_run(LIVES_DIALOG(warning));
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);

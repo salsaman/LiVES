@@ -2843,6 +2843,8 @@ static boolean lives_startup(livespointer data) {
     }
 #endif
     lives_widget_show(mainw->LiVES);
+    lives_widget_context_update();
+    mainw->go_away = FALSE;
     on_capture2_activate();  // exits
   }
 
@@ -3712,7 +3714,8 @@ void desensitize(void) {
     lives_widget_set_sensitive(mainw->custom_tools_submenu, FALSE);
   }
 
-  lives_widget_set_sensitive(mainw->custom_effects_submenu, FALSE);
+  if (!mainw->foreign) 
+    lives_widget_set_sensitive(mainw->custom_effects_submenu, FALSE);
 
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);
   lives_widget_set_sensitive(mainw->recaudio_submenu, FALSE);
@@ -6526,6 +6529,8 @@ void load_frame_image(int frame) {
     int xwidth, xheight;
     LiVESError *gerror = NULL;
     lives_painter_t *cr = lives_painter_create_from_widget(mainw->playarea);
+    
+    if (cr == NULL) return;
 
     if (mainw->rec_vid_frames == -1) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d", frame)));
@@ -7569,7 +7574,7 @@ void load_frame_image(int frame) {
     //if (!mainw->is_ready) return;
 
     lives_widget_set_size_request(mainw->playframe, (int)hsize * scale + H_RESIZE_ADJUST, (int)vsize * scale + V_RESIZE_ADJUST);
-
+    
     if (oscale == 2.) {
       if (hsize * 4 < scr_width - 70) {
         scale = 1.;

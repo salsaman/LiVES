@@ -2176,6 +2176,11 @@ void play_file(void) {
                                 LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     }
 
+    if (mainw->foreign) {
+      lives_widget_show_all(mainw->vbox1);
+      lives_widget_context_update();
+    }
+    
     // blank the background if asked to
     if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui) || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
         mainw->foreign)) {
@@ -2184,7 +2189,7 @@ void play_file(void) {
 
     if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY))) && (cfile->frames > 0 || mainw->foreign)) {
       // show the frame in the main window
-      lives_widget_show(mainw->playframe);
+      lives_widget_show_all(mainw->playframe);
       lives_widget_context_update();
     }
   }

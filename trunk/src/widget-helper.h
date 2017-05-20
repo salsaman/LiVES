@@ -271,6 +271,7 @@ boolean lives_window_set_modal(LiVESWindow *, boolean modal);
 boolean lives_window_set_deletable(LiVESWindow *, boolean deletable);
 boolean lives_window_set_resizable(LiVESWindow *, boolean resizable);
 boolean lives_window_set_keep_below(LiVESWindow *, boolean keep_below);
+boolean lives_window_set_keep_above(LiVESWindow *, boolean keep_below);
 boolean lives_window_set_decorated(LiVESWindow *, boolean decorated);
 
 boolean lives_window_set_default_size(LiVESWindow *, int width, int height);

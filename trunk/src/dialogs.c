@@ -216,7 +216,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   case LIVES_DIALOG_WARN_WITH_CANCEL:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_WARNING, LIVES_BUTTONS_NONE, NULL);
-    
+
     if (mainw->add_clear_ds_button) {
       mainw->add_clear_ds_button = FALSE;
       add_clear_ds_button(LIVES_DIALOG(dialog));
@@ -412,7 +412,8 @@ boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_n
   mytext = lives_strdup(text); // must copy this because of translation issues
 
   do {
-    warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext, lives_widget_is_visible(LIVES_WIDGET(transient)) ? transient : NULL, warn_mask_number, TRUE);
+    warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext, lives_widget_is_visible(LIVES_WIDGET(transient)) ? transient : NULL,
+                                    warn_mask_number, TRUE);
     response = lives_dialog_run(LIVES_DIALOG(warning));
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);

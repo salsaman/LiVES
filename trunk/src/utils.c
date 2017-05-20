@@ -3640,7 +3640,7 @@ boolean prepare_to_play_foreign(void) {
 
   cfile->hsize = mainw->foreign_width / 2 + 1;
   cfile->vsize = mainw->foreign_height / 2 + 3;
-  
+
   cfile->fps = cfile->pb_fps = mainw->rec_fps;
 
   resize(-2);

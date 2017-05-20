@@ -414,6 +414,7 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
 
 // key callback functions - ones which have keys and need wrappers
 
+
 boolean slower_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_slower_pressed(NULL, user_data);
   return TRUE;

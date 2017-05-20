@@ -3640,7 +3640,7 @@ boolean prepare_to_play_foreign(void) {
 
   cfile->hsize = mainw->foreign_width / 2 + 1;
   cfile->vsize = mainw->foreign_height / 2 + 3;
-
+  
   cfile->fps = cfile->pb_fps = mainw->rec_fps;
 
   resize(-2);
@@ -3675,7 +3675,7 @@ boolean prepare_to_play_foreign(void) {
 
 #endif // GDK_WINDOWING
 
-  if (mainw->foreign_window != NULL) gdk_window_set_keep_above(mainw->foreign_window, TRUE);
+  if (mainw->foreign_window != NULL) lives_xwindow_set_keep_above(mainw->foreign_window, TRUE);
 
 #else // 3, 0, 0
   mainw->foreign_window = gdk_window_foreign_new(mainw->foreign_id);

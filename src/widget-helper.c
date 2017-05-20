@@ -1581,6 +1581,15 @@ LIVES_INLINE boolean lives_window_set_keep_below(LiVESWindow *window, boolean se
 }
 
 
+LIVES_INLINE boolean lives_window_set_keep_above(LiVESWindow *window, boolean set) {
+#ifdef GUI_GTK
+  gtk_window_set_keep_above(window, set);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE boolean lives_window_set_decorated(LiVESWindow *window, boolean set) {
 #ifdef GUI_GTK
   gtk_window_set_decorated(window, set);

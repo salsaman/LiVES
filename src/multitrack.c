@@ -16579,7 +16579,6 @@ void mt_prepare_for_playback(lives_mt *mt) {
   lives_widget_set_sensitive(mt->stop, TRUE);
   lives_widget_set_sensitive(mt->rewind, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
-
   //if (!mt->is_paused&&!mt->playing_sel) mt->ptr_time=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
   mainw->must_resize = TRUE;

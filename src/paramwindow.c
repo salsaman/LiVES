@@ -1,6 +1,6 @@
 // paramwindow.c
 // LiVES
-// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2017 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -811,8 +811,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   if (didx == 0) {
     // activated from the menu for a rendered effect
     if (prefs->show_gui) {
-      if (mainw->multitrack == NULL) lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]), LIVES_WINDOW(mainw->LiVES));
-      else lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]), LIVES_WINDOW(mainw->multitrack->window));
+      lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     }
   }
 
@@ -2387,7 +2386,6 @@ boolean after_param_text_focus_changed(LiVESWidget *hbox, LiVESWidget *child, li
       lives_window_remove_accel_group(LIVES_WINDOW(mainw->multitrack->window), mainw->multitrack->accel_group);
     else
       lives_window_add_accel_group(LIVES_WINDOW(mainw->multitrack->window), mainw->multitrack->accel_group);
-
   }
 
   if (mainw->textwidget_focus != NULL) {

@@ -865,9 +865,8 @@ int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, 
 int do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWindow *transient);
 LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESWindow *transient,
                                    int warn_mask_number, boolean is_blocking);
-
 LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *parent);
-
+LiVESWindow *get_transient_full();
 void do_system_failed_error(const char *com, int retval, const char *addinfo);
 int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;
 void do_write_failed_error_s(const char *filename, const char *addinfo);

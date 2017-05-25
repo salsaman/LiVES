@@ -1,6 +1,6 @@
 // ldvinterface.c
 // LiVES
-// (c) G. Finch 2006-2016 <salsaman@gmail.com>
+// (c) G. Finch 2006-2017 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -28,8 +28,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   dvgrabw->playing = FALSE;
 
   if (prefs->show_gui) {
-    if (mainw->multitrack == NULL) lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog), LIVES_WINDOW(mainw->LiVES));
-    else lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog), LIVES_WINDOW(mainw->multitrack->window));
+    lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
   vbox = lives_dialog_get_content_area(LIVES_DIALOG(dvgrabw->dialog));

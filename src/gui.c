@@ -3557,9 +3557,7 @@ void play_window_set_title(void) {
     }
   } else {
     char *otit = widget_opts.title_prefix;
-    title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW
-                                ((mainw->multitrack == NULL ? mainw->LiVES :
-                                  mainw->multitrack->window))),
+    title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW((LIVES_MAIN_WINDOW_WIDGET))),
                                 xtrabit);
     widget_opts.title_prefix = "";
     lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
@@ -3902,7 +3900,7 @@ void resize_play_window(void) {
           }
         }
         if (mainw->ext_playback) {
-          lives_grab_remove(mainw->LiVES);
+          lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
           mainw->ext_keyboard = FALSE;
 #ifdef RT_AUDIO
           stop_audio_stream();
@@ -3933,10 +3931,9 @@ void resize_play_window(void) {
           // start key polling from ext plugin
 
           if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && (pmonitor == 0 || capable->nmonitors == 1)) {
-            lives_grab_add(mainw->LiVES);
+            lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);
             mainw->ext_keyboard = TRUE;
           }
-
         }
       }
 

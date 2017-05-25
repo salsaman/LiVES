@@ -11,7 +11,7 @@
         GL_ARB_texture_non_power_of_two
     Loader: True
     Local files: False
-    Omit khrplatform: False
+    Omit khrplatform: True
 
     Commandline:
         --profile="compatibility" --api="gl=3.3" --generator="c" --spec="gl" --extensions="GL_ARB_pixel_buffer_object,GL_ARB_texture_non_power_of_two"
@@ -86,7 +86,6 @@ GLAPI int gladLoadGL(void);
 GLAPI int gladLoadGLLoader(GLADloadproc);
 
 #include <stddef.h>
-#include <KHR/khrplatform.h>
 #ifndef GLEXT_64_TYPES_DEFINED
 /* This code block is duplicated in glxext.h, so must be protected */
 #define GLEXT_64_TYPES_DEFINED

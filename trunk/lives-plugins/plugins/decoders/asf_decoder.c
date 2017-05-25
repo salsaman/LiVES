@@ -1,4 +1,3 @@
-
 // LiVES - asf decoder plugin
 // (c) G. Finch 2011 - 2014 <salsaman@gmail.com>
 

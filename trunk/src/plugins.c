@@ -694,15 +694,13 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
               }
 
 #endif
-
-
               if (vpp->init_screen != NULL) {
                 (*vpp->init_screen)(mainw->pwidth, mainw->pheight, TRUE, xwinid, vpp->extra_argc, vpp->extra_argv);
               }
               if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && prefs->play_monitor == 0) {
                 lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), TRUE);
                 mainw->ext_keyboard = TRUE;
-                lives_grab_add(mainw->LiVES);
+                lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);
               }
             } else {
               mainw->vpp->palette = pal_list[i];
@@ -898,11 +896,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   lives_window_add_accel_group(LIVES_WINDOW(vppa->dialog), accel_group);
 
   if (prefs->show_gui) {
-    if (prefsw != NULL) lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog), LIVES_WINDOW(prefsw->prefs_dialog));
-    else {
-      if (mainw->multitrack == NULL) lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog), LIVES_WINDOW(mainw->LiVES));
-      else lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog), LIVES_WINDOW(mainw->multitrack->window));
-    }
+    lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog), get_transient_full());
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(vppa->dialog));
@@ -2556,11 +2550,7 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
   dialog = lives_standard_dialog_new(_("Decoder Plugins"), FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
 
   if (prefs->show_gui) {
-    if (prefsw != NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(prefsw->prefs_dialog));
-    else {
-      if (mainw->multitrack == NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(mainw->LiVES));
-      else lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(mainw->multitrack->window));
-    }
+    lives_window_set_transient_for(LIVES_WINDOW(dialog), get_transient_full());
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
@@ -3777,8 +3767,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         on_fx_pre_activate(rfx, 1, NULL);
 
         if (prefs->show_gui) {
-          if (mainw->multitrack == NULL) lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]), LIVES_WINDOW(mainw->LiVES));
-          else lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]), LIVES_WINDOW(mainw->multitrack->window));
+          lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
         }
         lives_window_set_modal(LIVES_WINDOW(fx_dialog[1]), TRUE);
 

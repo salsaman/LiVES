@@ -921,7 +921,5 @@ const widget_opts_t def_widget_opts = {
 
 extern const widget_opts_t def_widget_opts;
 
-//#endif
-
 #endif
 

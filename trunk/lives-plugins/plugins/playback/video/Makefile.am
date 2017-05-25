@@ -132,4 +132,4 @@ videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(i
 	$(vjack_output_libs) $(lives2lives_stream_libs) $(vloopback_libs) $(vloopback2_libs) \
 	$(openGL_libs)
 
-EXTRA_DIST = videoplugin.h
+EXTRA_DIST = videoplugin.h glad.h glad_glx.h

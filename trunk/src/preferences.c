@@ -2421,8 +2421,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_window_set_default_size(LIVES_WINDOW(prefsw->prefs_dialog), PREFWIN_WIDTH, PREFWIN_HEIGHT);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack == NULL) lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog), LIVES_WINDOW(mainw->LiVES));
-    else lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog), LIVES_WINDOW(mainw->multitrack->window));
+    lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
   prefsw->ignore_apply = FALSE;

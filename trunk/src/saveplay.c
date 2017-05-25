@@ -2371,11 +2371,7 @@ void play_file(void) {
     if (!prefs->show_gui && prefs->show_playwin && mainw->play_window != NULL) {
       awinid = lives_widget_get_xwinid(mainw->play_window, NULL);
     } else if (prefs->show_gui) {
-      if (mainw->multitrack != NULL) {
-        awinid = lives_widget_get_xwinid(mainw->multitrack->window, NULL);
-      } else if (mainw->LiVES != NULL) {
-        awinid = lives_widget_get_xwinid(mainw->LiVES, NULL);
-      }
+      awinid = lives_widget_get_xwinid(LIVES_MAIN_WINDOW_WIDGET, NULL);
     }
 
     com2 = lives_strdup("xset s off 2>/dev/null; xset -dpms 2>/dev/null ;");
@@ -2907,8 +2903,7 @@ void play_file(void) {
       if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
       else xtrabit = lives_strdup("");
       title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW
-                                  ((mainw->multitrack == NULL ? mainw->LiVES :
-                                    mainw->multitrack->window))), xtrabit);
+                                  (LIVES_MAIN_WINDOW_WIDGET)), xtrabit);
       if (mainw->play_window != NULL)
         lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
       lives_free(title);
@@ -3012,8 +3007,7 @@ void play_file(void) {
           if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
           else xtrabit = lives_strdup("");
           title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW
-                                      ((mainw->multitrack == NULL ? mainw->LiVES :
-                                        mainw->multitrack->window))), xtrabit);
+                                      (LIVES_MAIN_WINDOW_WIDGET)), xtrabit);
           lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
           lives_free(title);
           lives_free(xtrabit);
@@ -3031,8 +3025,7 @@ void play_file(void) {
             if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
             else xtrabit = lives_strdup("");
             title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW
-                                        ((mainw->multitrack == NULL ? mainw->LiVES :
-                                          mainw->multitrack->window))), xtrabit);
+                                        (LIVES_MAIN_WINDOW_WIDGET)), xtrabit);
             lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
             lives_free(title);
             lives_free(xtrabit);

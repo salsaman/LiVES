@@ -1,7 +1,5 @@
-BUG - keys in mt fs
-
-	Version 2.8.6
--------------
+Version 2.8.6 (24 May 2017)
+---------------------------
 Remove dependency on (deprecated) GLee.
 Show audio as volume levels in Clip Editor.
 Performance improvements for multitrack playback.
@@ -13,6 +11,7 @@ Fix broken audio fade in/out (regression).
 Fix external window capture (regression).
 Fix crash in palette conversions.
 Fix compilation issues with liblives scripting engine.
+Fix for keys being in multitrack fullscreen preview.
 Code reformatting and tidying (W.I.P)
 
 

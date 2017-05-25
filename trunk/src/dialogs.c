@@ -1,6 +1,6 @@
 // dialogs.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2016
+// (c) G. Finch 2003 - 2017
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -22,7 +22,6 @@
 
 extern void reset_frame_and_clip_index(void);
 
-
 // processing
 static uint64_t event_start;
 static double audio_start;
@@ -38,7 +37,6 @@ static boolean shown_paused_frames;
 static boolean force_show;
 
 static double est_time;
-
 
 // how often to we count frames when opening
 #define OPEN_CHECK_TICKS (U_SECL/10l)
@@ -63,9 +61,7 @@ void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_dat
       lives_widget_set_sensitive(tbutton, TRUE);
     }
   }
-
 }
-
 
 
 static void add_xlays_widget(LiVESBox *box) {
@@ -106,10 +102,7 @@ static void add_xlays_widget(LiVESBox *box) {
     lives_text_buffer_insert_at_cursor(textbuffer, "\n", strlen("\n"));
     xlist = xlist->next;
   }
-
 }
-
-
 
 
 
@@ -136,7 +129,6 @@ static void add_clear_ds_button(LiVESDialog *dialog) {
                        (livespointer)button);
 
   lives_dialog_add_action_widget(dialog, button, LIVES_RESPONSE_RETRY);
-
 }
 
 
@@ -151,10 +143,7 @@ static void add_clear_ds_adv(LiVESBox *box) {
   lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_cleardisk_advanced_clicked),
                        NULL);
-
 }
-
-
 
 
 
@@ -162,7 +151,6 @@ static void add_clear_ds_adv(LiVESBox *box) {
 
 // the type of message box here is with 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/CANCEL/RETRY)
 // if a single OK button is needed, use create_info_error_dialog() in inteface.c instead
-
 
 
 LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESWindow *transient,
@@ -212,7 +200,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),
                          NULL);
     break;
-
 
   case LIVES_DIALOG_WARN_WITH_CANCEL:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_WARNING, LIVES_BUTTONS_NONE, NULL);
@@ -378,10 +365,7 @@ boolean do_warning_dialog_with_check(const char *text, int warn_mask_number) {
   if (!prefs->show_gui) {
     return do_warning_dialog_with_check_transient(text, warn_mask_number, NULL);
   } else {
-    if (mainw->multitrack == NULL) {
-      return do_warning_dialog_with_check_transient(text, warn_mask_number, LIVES_WINDOW(mainw->LiVES));
-    }
-    return do_warning_dialog_with_check_transient(text, warn_mask_number, LIVES_WINDOW(mainw->multitrack->window));
+    return do_warning_dialog_with_check_transient(text, warn_mask_number, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 }
 
@@ -390,13 +374,9 @@ boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number) {
   if (!prefs->show_gui) {
     return do_yesno_dialog_with_check_transient(text, warn_mask_number, NULL);
   } else {
-    if (mainw->multitrack == NULL) {
-      return do_yesno_dialog_with_check_transient(text, warn_mask_number, LIVES_WINDOW(mainw->LiVES));
-    }
-    return do_yesno_dialog_with_check_transient(text, warn_mask_number, LIVES_WINDOW(mainw->multitrack->window));
+    return do_yesno_dialog_with_check_transient(text, warn_mask_number, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 }
-
 
 
 boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient) {
@@ -425,7 +405,6 @@ boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_n
 }
 
 
-
 boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient) {
   // show YES/NO, returns TRUE for YES
   LiVESWidget *warning;
@@ -451,16 +430,24 @@ boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_num
 }
 
 
+LiVESWindow *get_transient_full() {
+  LiVESWindow *transient = NULL;
+  if (prefs->show_gui) {
+    if (prefsw != NULL && prefsw->prefs_dialog != NULL) transient = LIVES_WINDOW(prefsw->prefs_dialog);
+    else {
+      if (mainw->multitrack == NULL && mainw->is_ready) transient = LIVES_WINDOW(mainw->LiVES);
+      else if (mainw->multitrack != NULL && mainw->multitrack->is_ready) transient = LIVES_WINDOW(mainw->multitrack->window);
+    }
+  }
+  return transient;
+}
+
+
 boolean do_yesno_dialog(const char *text) {
   // show Yes/No, returns TRUE if Yes
   LiVESWidget *warning;
+  LiVESWindow *transient = get_transient_full();
   int response;
-  LiVESWindow *transient = NULL;
-
-  if (prefs->show_gui) {
-    if (mainw->multitrack == NULL && mainw->is_ready) transient = LIVES_WINDOW(mainw->LiVES);
-    else if (mainw->multitrack != NULL && mainw->multitrack->is_ready) transient = LIVES_WINDOW(mainw->multitrack->window);
-  }
 
   warning = create_message_dialog(LIVES_DIALOG_YESNO, text, transient, 0, TRUE);
 
@@ -472,23 +459,15 @@ boolean do_yesno_dialog(const char *text) {
 }
 
 
-
 // returns LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY
 int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
   int response;
   char *mytext;
   LiVESWidget *warning;
 
-  if (!prefs->show_gui) {
-    transient = NULL;
-  } else {
-    if (transient == NULL) {
-      if (mainw->multitrack == NULL && mainw->is_ready) transient = LIVES_WINDOW(mainw->LiVES);
-      else if (mainw->multitrack != NULL && mainw->multitrack->is_ready) transient = LIVES_WINDOW(mainw->multitrack->window);
-    }
-  }
-
   mytext = lives_strdup(text); // translation issues
+
+  if (transient == NULL) transient = get_transient_full();
 
   do {
     warning = create_message_dialog(LIVES_DIALOG_ABORT_CANCEL_RETRY, mytext, transient, 0, TRUE);
@@ -517,86 +496,40 @@ int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
 }
 
 
-
-
-
 int do_error_dialog(const char *text) {
-  int ret;
-
   // show error box
-  if (!prefs->show_gui) {
-    ret = do_error_dialog_with_check_transient(text, FALSE, 0, NULL);
-  } else {
-    if (prefsw != NULL && prefsw->prefs_dialog != NULL) ret = do_error_dialog_with_check_transient(text, FALSE, 0,
-          LIVES_WINDOW(prefsw->prefs_dialog));
-    else {
-      if (mainw->multitrack == NULL) ret = do_error_dialog_with_check_transient(text, FALSE, 0, LIVES_WINDOW(mainw->LiVES));
-      else ret = do_error_dialog_with_check_transient(text, FALSE, 0, LIVES_WINDOW(mainw->multitrack->window));
-    }
-  }
-  return ret;
+  LiVESWindow *transient = get_transient_full();
+  return do_error_dialog_with_check_transient(text, FALSE, 0, transient);
 }
 
 
 int do_info_dialog(const char *text) {
   // show info box
-  int ret;
-
-  if (!prefs->show_gui) {
-    ret = do_info_dialog_with_transient(text, FALSE, NULL);
-  } else {
-    if (prefsw != NULL && prefsw->prefs_dialog != NULL) ret = do_info_dialog_with_transient(text, FALSE,
-          LIVES_WINDOW(prefsw->prefs_dialog));
-    else {
-      if (mainw->multitrack == NULL) ret = do_info_dialog_with_transient(text, FALSE, LIVES_WINDOW(mainw->LiVES));
-      else ret = do_info_dialog_with_transient(text, FALSE, LIVES_WINDOW(mainw->multitrack->window));
-    }
-  }
-  return ret;
+  LiVESWindow *transient = get_transient_full();
+  return do_info_dialog_with_transient(text, FALSE, transient);
 }
 
 
 int do_error_dialog_with_check(const char *text, int warn_mask_number) {
   // show warning box
-  int ret;
-
-  if (!prefs->show_gui) {
-    ret = do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, NULL);
-  } else {
-    if (mainw->multitrack == NULL) ret = do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, LIVES_WINDOW(mainw->LiVES));
-    else ret = do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, LIVES_WINDOW(mainw->multitrack->window));
-  }
-  return ret;
+  LiVESWindow *transient = get_transient_full();
+  return do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, transient);
 }
+
 
 
 int do_blocking_error_dialog(const char *text) {
   // show error box - blocks until OK is pressed
-  int ret;
-
-  if (!prefs->show_gui) {
-    ret = do_error_dialog_with_check_transient(text, TRUE, 0, NULL);
-  } else {
-    if (mainw->multitrack == NULL) ret = do_error_dialog_with_check_transient(text, TRUE, 0, LIVES_WINDOW(mainw->LiVES));
-    else ret = do_error_dialog_with_check_transient(text, TRUE, 0, LIVES_WINDOW(mainw->multitrack->window));
-  }
-  return ret;
+  LiVESWindow *transient = get_transient_full();
+  return do_error_dialog_with_check_transient(text, TRUE, 0, transient);
 }
 
 
 int do_blocking_info_dialog(const char *text) {
   // show info box - blocks until OK is pressed
-  int ret;
-
-  if (!prefs->show_gui) {
-    ret = do_info_dialog_with_transient(text, TRUE, NULL);
-  } else {
-    if (mainw->multitrack == NULL) ret = do_info_dialog_with_transient(text, TRUE, LIVES_WINDOW(mainw->LiVES));
-    else ret = do_info_dialog_with_transient(text, TRUE, LIVES_WINDOW(mainw->multitrack->window));
-  }
-  return ret;
+  LiVESWindow *transient = get_transient_full();
+  return do_info_dialog_with_transient(text, TRUE, transient);
 }
-
 
 
 int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, int warn_mask_number, LiVESWindow *transient) {
@@ -621,7 +554,6 @@ int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, 
 }
 
 
-
 int do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWindow *transient) {
   // info box
 
@@ -642,7 +574,6 @@ int do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWi
 }
 
 
-
 char *ds_critical_msg(const char *dir, uint64_t dsval) {
   char *msg;
   char *msgx;
@@ -660,7 +591,6 @@ char *ds_critical_msg(const char *dir, uint64_t dsval) {
   lives_free(dscu);
   return msgx;
 }
-
 
 char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn) {
   char *msg;
@@ -691,7 +621,6 @@ void do_memory_error_dialog(void) {
   do_error_dialog(
     _("\n\nLiVES was unable to perform this operation due to unsufficient memory.\nPlease try closing some other applications first.\n"));
 }
-
 
 
 void handle_backend_errors(void) {
@@ -733,7 +662,6 @@ void handle_backend_errors(void) {
     mainw->cancelled = CANCEL_ERROR;
   }
 
-
   else if (numtok > 3 && !strcmp(array[1], "system")) {
     // got (sub) system error from backend
     if (numtok > 4 && strlen(array[4])) addinfo = array[4];
@@ -754,9 +682,7 @@ void handle_backend_errors(void) {
   lives_strfreev(array);
 
   mainw->error = TRUE;
-
 }
-
 
 
 boolean check_backend_return(lives_clip_t *sfile) {
@@ -838,7 +764,6 @@ void pump_io_chan(LiVESIOChannel *iochan) {
   }
 
   lives_freep((void **)&str_return);
-
 }
 
 
@@ -911,7 +836,6 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
     }
   } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
 
-
   if (sfile != NULL && sfile->op_dir != NULL) {
     do {
       ds = get_storage_status(sfile->op_dir, sfile->op_ds_warn_level, &dsval);
@@ -983,7 +907,6 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 
 
 
-
 static void cancel_process(boolean visible) {
   if (prefs->show_player_stats && !visible && mainw->fps_measure > 0.) {
     // statistics
@@ -1023,7 +946,6 @@ static void cancel_process(boolean visible) {
 
 
 
-
 static void disp_fraction(double fraction_done, double timesofar, xprocess *proc) {
   // display fraction done and estimated time remaining
   char *prog_label;
@@ -1044,9 +966,7 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess *proc
   lives_free(prog_label);
 
   disp_fraction_done = fraction_done;
-
 }
-
 
 
 static int progress_count;
@@ -1059,7 +979,6 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
   if (progress_count++ >= PROG_LOOP_VAL) {
     if (frames_done <= sfile->progress_end && sfile->progress_end > 0 && !mainw->effects_paused &&
         frames_done > 0) {
-
 #ifdef USE_MONOTONIC_TIME
       mainw->currticks = (lives_get_monotonic_time() - mainw->origusecs) * U_SEC_RATIO;
 #else
@@ -1078,8 +997,6 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
     }
   }
 }
-
-
 
 
 
@@ -1119,7 +1036,6 @@ boolean process_one(boolean visible) {
     //   so, between updates we interpolate with the system clock and then adjust when we get a new value
     //   from the card
 
-
     time_source = LIVES_TIME_SOURCE_NONE;
 
 #ifdef ENABLE_JACK_TRANSPORT
@@ -1131,10 +1047,8 @@ boolean process_one(boolean visible) {
     }
 #endif
 
-
     if (!mainw->ext_playback || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
       // get time from soundcard
-
 
 #ifdef ENABLE_JACK
       if (!prefs->force_system_clock &&
@@ -1256,7 +1170,6 @@ boolean process_one(boolean visible) {
       }
 #endif
 
-
 #ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
@@ -1285,7 +1198,6 @@ boolean process_one(boolean visible) {
 
     if (LIVES_UNLIKELY(cfile->proc_ptr == NULL && cfile->next_event != NULL)) {
       // playing an event_list
-
 
       if (mainw->scratch != SCRATCH_NONE && mainw->multitrack != NULL) {
 #ifdef ENABLE_JACK_TRANSPORT
@@ -1349,7 +1261,6 @@ boolean process_one(boolean visible) {
 
     // play next frame
     if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
-
       // calculate the audio 'frame' for non-realtime audio players
       // for realtime players, we did this in calc_new_playback_position()
       if (!is_realtime_aplayer(prefs->audio_player)) {
@@ -1359,7 +1270,6 @@ boolean process_one(boolean visible) {
           mainw->firstticks = mainw->startticks - mainw->deltaticks;
         }
       }
-
 
       if ((mainw->fixed_fpsd <= 0. && show_frame && (mainw->vpp == NULL ||
            mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) ||
@@ -1394,7 +1304,6 @@ boolean process_one(boolean visible) {
         force_show = FALSE;
       }
 
-
 #ifdef ENABLE_JACK
       // request for another audio buffer - used only during mt render preview
       if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
@@ -1416,7 +1325,6 @@ boolean process_one(boolean visible) {
   }
 
   if (visible) {
-
     // fixes a problem with opening preview with bg generator
     if (cfile->proc_ptr == NULL) {
       if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_NO_PROPOGATE;
@@ -1488,7 +1396,6 @@ boolean process_one(boolean visible) {
   }
 
   if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
-
     if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1] != NULL) {
       // the audio thread wants to update the parameter window
       mainw->vrfx_update = NULL;
@@ -1527,7 +1434,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   // visible is set for processing (progress dialog is visible)
   // or unset for video playback (progress dialog is not shown)
-
 
   FILE *infofile = NULL;
   char *mytext = NULL;
@@ -1641,7 +1547,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
     }
 
-
     if (cfile->opening && (capable->has_sox_play || (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) ||
                            (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL)) && mainw->playing_file == -1) {
       if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
@@ -1655,7 +1560,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   }
 
   if (cfile->next_event != NULL) event_start = get_event_timecode(cfile->next_event);
-
 
   // mainw->origsecs, mainw->origusecs is our base for quantising
   // (and is constant for each playback session)
@@ -1683,7 +1587,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   mainw->origsecs = tv.tv_sec;
   mainw->origusecs = tv.tv_usec;
 #endif
-
 
   if (!visible) {
     // video playback
@@ -1714,7 +1617,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     mainw->deltaticks = 0;
   }
 
-
   if (mainw->multitrack != NULL && !mainw->multitrack->is_rendering) {
     // playback start from middle of multitrack
     // calculate when we "would have started" at time 0
@@ -1732,18 +1634,15 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
   }
 
-
   // set initial audio seek position for current file
   if (cfile->achans) cfile->aseek_pos = (int64_t)((double)(mainw->play_start - 1.) /
                                           cfile->fps * cfile->arate * cfile->achans * (cfile->asampsize / 8));
-
 
   // MUST do re-seek after setting origsecs in order to set our clock properly
   // re-seek to new playback start
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd != NULL && mainw->jackd->playing_file > -1) {
-
     if (!jack_audio_seek_frame(mainw->jackd, mainw->play_start)) {
       if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->play_start);
     }
@@ -1800,7 +1699,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   if (mainw->iochan != NULL) lives_widget_show(cfile->proc_ptr->pause_button);
 
-
   // tell jack transport we are ready to play
   mainw->video_seek_ready = TRUE;
 
@@ -1813,10 +1711,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (prefs->show_gui) {
     using_gdk_frame_clock = TRUE;
     display_ready = FALSE;
-    if (mainw->multitrack == NULL)
-      gclock = gtk_widget_get_frame_clock(mainw->LiVES);
-    else
-      gclock = gtk_widget_get_frame_clock(mainw->multitrack->window);
+    gclock = gtk_widget_get_frame_clock(LIVES_MAIN_WINDOW_WIDGET);
     gdk_frame_clock_begin_updating(gclock);
     lives_signal_connect(LIVES_GUI_OBJECT(gclock), "update",
                          LIVES_GUI_CALLBACK(clock_upd),
@@ -1830,8 +1725,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     while (!mainw->internal_messaging && (((!visible && (mainw->whentostop != STOP_ON_AUD_END ||
                                             is_realtime_aplayer(prefs->audio_player)))) ||
                                           !lives_file_test(cfile->info_file, LIVES_FILE_TEST_EXISTS))) {
-
-
       // just pulse the progress bar, or play video
       // returns FALSE if playback ended
       if (!process_one(visible)) {
@@ -1862,7 +1755,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // this is for encoder output
         pump_io_chan(mainw->iochan);
       }
-
 
     }
 
@@ -2110,7 +2002,6 @@ boolean do_auto_dialog(const char *text, int type) {
     clear_mainw_msg();
     alarm_handle = lives_alarm_set(MIN_FLASH_TIME); // don't want to flash too fast...
   } else if (type == 1) {
-
     // show buttons
     lives_widget_show(proc_ptr->stop_button);
     lives_widget_show(proc_ptr->cancel_button);
@@ -2148,7 +2039,6 @@ boolean do_auto_dialog(const char *text, int type) {
     }
   }
 
-
   if (type == 0 || type == 2) {
     mainw->read_failed = FALSE;
     lives_fgets(mainw->msg, 512, infofile);
@@ -2182,7 +2072,6 @@ boolean do_auto_dialog(const char *text, int type) {
   }
   return TRUE;
 }
-
 
 
 
@@ -2223,7 +2112,6 @@ void do_need_mplayer_mpv_dialog(void) {
 }
 
 
-
 void do_audio_warning(void) {
 #ifdef ALLOW_MPV
   do_error_dialog(_("Audio was not loaded; please install mplayer or mplayer2 if you expected audio for this clip.\n"));
@@ -2252,7 +2140,6 @@ void do_layout_scrap_file_error(void) {
 void do_layout_ascrap_file_error(void) {
   do_blocking_error_dialog(_("This layout includes generated or recorded audio.\nIt cannot be saved, you must render it to a clip first.\n"));
 }
-
 
 
 
@@ -2349,7 +2236,6 @@ boolean rdet_suggest_values(int width, int height, double fps, int fps_num, int 
 }
 
 
-
 boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_num, int fps_denom, int arate, int asigned,
                                    boolean swap_endian, boolean anr, boolean save_all) {
   LiVESWidget *prep_dialog;
@@ -2380,7 +2266,6 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
     cvsize = cfile->vsize;
     cfps = cfile->fps;
   }
-
 
   if (swap_endian || asigned != 0 || (arate > 0 && arate != carate) || (fps > 0. && fps != cfps) ||
       (fps_denom > 0 && (fps_num * 1.) / (fps_denom * 1.) != cfps) || (!anr &&
@@ -2480,7 +2365,6 @@ boolean do_yuv4m_open_warning(void) {
 }
 
 
-
 boolean do_comments_dialog(int fileno, char *filename) {
   lives_clip_t *sfile = mainw->files[fileno];
 
@@ -2529,7 +2413,6 @@ boolean do_comments_dialog(int fileno, char *filename) {
 }
 
 
-
 void do_messages_window(void) {
   char *text = lives_text_view_get_text(LIVES_TEXT_VIEW(mainw->textview1));
   widget_opts.expand = LIVES_EXPAND_EXTRA;
@@ -2537,7 +2420,6 @@ void do_messages_window(void) {
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_free(text);
 }
-
 
 
 void do_upgrade_error_dialog(void) {
@@ -2603,13 +2485,16 @@ boolean do_set_duplicate_warning(const char *new_set) {
   return retcode;
 }
 
+
 boolean do_layout_alter_frames_warning(void) {
   return do_warning_dialog(_("\nFrames from this clip are used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
 }
 
+
 boolean do_layout_alter_audio_warning(void) {
   return do_warning_dialog(_("\nAudio from this clip is used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
 }
+
 
 boolean do_original_lost_warning(const char *fname) {
   char *msg = lives_strdup_printf(
@@ -2620,6 +2505,7 @@ boolean do_original_lost_warning(const char *fname) {
   lives_free(msg);
   return retcode;
 }
+
 
 void do_no_decoder_error(const char *fname) {
   char *msg = lives_strdup_printf(_("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"),
@@ -2810,11 +2696,10 @@ void do_rmem_max_error(int size) {
   lives_free(msg);
 }
 
+
 static xprocess *procw = NULL;
 
-
 static void create_threaded_dialog(char *text, boolean has_cancel) {
-
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
   char tmp_label[256];
@@ -2828,8 +2713,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), mainw->accel_group);
 
-  if (mainw->multitrack == NULL) lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(mainw->LiVES));
-  else lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(mainw->multitrack->window));
+  lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
 
@@ -2896,7 +2780,6 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
 static double sttime;
 
-
 void threaded_dialog_spin(double fraction) {
   double timesofar;
   int progress;
@@ -2931,14 +2814,13 @@ void threaded_dialog_spin(double fraction) {
   }
 
   if (lives_has_toplevel_focus()) {
-    lives_widget_show_all(procw->processing);
-    if (LIVES_IS_WIDGET(procw->processing)) lives_widget_queue_draw(procw->processing);
+    if (LIVES_IS_WIDGET(procw->processing)) {
+      lives_widget_show_all(procw->processing);
+      lives_widget_queue_draw(procw->processing);
+    }
     lives_widget_context_update();
   }
-
 }
-
-
 
 
 void do_threaded_dialog(char *trans_text, boolean has_cancel) {
@@ -2970,30 +2852,21 @@ void do_threaded_dialog(char *trans_text, boolean has_cancel) {
 }
 
 
-
 void end_threaded_dialog(void) {
   if (procw != NULL) {
     if (procw->processing != NULL) lives_widget_destroy(procw->processing);
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-  if (mainw->multitrack == NULL) {
-    if (mainw->is_ready) lives_widget_queue_draw(mainw->LiVES);
-  } else lives_widget_queue_draw(mainw->multitrack->window);
 
-  if (procw != NULL) {
-    lives_free(procw);
-    procw = NULL;
-  }
-  mainw->cancel_type = CANCEL_KILL;
-  mainw->threaded_dialog = FALSE;
+  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
   if (mainw->is_ready)
     if (lives_has_toplevel_focus()) {
       lives_widget_context_update();
     }
+  procw = NULL;
 }
-
 
 
 void response_ok(LiVESButton *button, livespointer user_data) {
@@ -3144,7 +3017,6 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
 }
 
 
-
 int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) {
   // err can be errno from open/fopen etc.
 
@@ -3196,7 +3068,6 @@ int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, L
   mainw->write_failed = FALSE; // reset this
 
   return ret;
-
 }
 
 
@@ -3229,7 +3100,6 @@ int do_read_failed_error_s_with_retry(const char *fname, const char *errtext, Li
   mainw->read_failed = FALSE; // reset this
 
   return ret;
-
 }
 
 
@@ -3247,7 +3117,6 @@ int do_header_read_error_with_retry(int clip) {
 }
 
 
-
 boolean do_header_write_error(int clip) {
   // returns TRUE if we manage to clear the error
 
@@ -3263,7 +3132,6 @@ boolean do_header_write_error(int clip) {
 
   return (!retval);
 }
-
 
 
 int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
@@ -3293,7 +3161,6 @@ int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
 }
 
 
-
 void do_chdir_failed_error(const char *dir) {
   char *msg;
   char *dutf;
@@ -3306,7 +3173,6 @@ void do_chdir_failed_error(const char *dir) {
   lives_free(msg);
   lives_free(dutf);
 }
-
 
 
 void do_file_perm_error(const char *file_name) {
@@ -3335,7 +3201,6 @@ void do_dir_perm_access_error(const char *dir_name) {
 boolean do_abort_check(void) {
   return do_yesno_dialog(_("\nAbort and exit immediately from LiVES\nAre you sure ?\n"));
 }
-
 
 
 void do_encoder_img_ftm_error(render_details *rdet) {
@@ -3392,6 +3257,7 @@ void do_invalid_subs_error(void) {
   lives_free(msg);
 }
 
+
 boolean do_erase_subs_warning(void) {
   return do_yesno_dialog(_("\nErase all subtitles from this clip.\nAre you sure ?\n"));
 }
@@ -3407,9 +3273,11 @@ boolean do_sub_type_warning(const char *ext, const char *type_ext) {
   return ret;
 }
 
+
 boolean do_move_workdir_dialog(void) {
   return do_yesno_dialog(_("\nDo you wish to move the current clip sets to the new directory ?\n(If unsure, click Yes)\n"));
 }
+
 
 void do_set_locked_warning(const char *setname) {
   char *msg = lives_strdup_printf(
@@ -3419,19 +3287,23 @@ void do_set_locked_warning(const char *setname) {
   lives_free(msg);
 }
 
+
 void do_no_in_vdevs_error(void) {
   do_error_dialog(_("\nNo video input devices could be found.\n"));
 }
 
+
 void do_locked_in_vdevs_error(void) {
   do_error_dialog(_("\nAll video input devices are already in use.\n"));
 }
+
 
 void do_do_not_close_d(void) {
   char *msg = lives_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
   create_info_error_dialog(LIVES_DIALOG_WARN, msg, NULL, 0, FALSE);
   lives_free(msg);
 }
+
 
 void do_bad_theme_error(const char *themefile) {
   char *msg = lives_strdup_printf(_("\nThe theme file %s has missing elements.\nThe theme could not be loaded correctly.\n"), themefile);
@@ -3476,13 +3348,16 @@ void do_no_autolives_error(void) {
   do_error_dialog(_("\nYou must have autolives.pl installed and in your path to use this toy.\nConsult your package distributor.\n"));
 }
 
+
 void do_autolives_needs_clips_error(void) {
   do_error_dialog(_("\nYou must have a minimum of one clip loaded to use this toy.\n"));
 }
 
+
 void do_jack_lost_conn_error(void) {
   do_error_dialog(_("\nLiVES lost its connection to jack and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
 }
+
 
 void do_pulse_lost_conn_error(void) {
   do_error_dialog(_("\nLiVES lost its connection to pulseaudio and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
@@ -3508,7 +3383,6 @@ boolean do_theme_exists_warn(const char *themename) {
   lives_free(msg);
   return ret;
 }
-
 
 
 boolean ask_permission_dialog(int what) {

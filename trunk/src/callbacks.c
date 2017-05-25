@@ -609,8 +609,7 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_snprintf(mainw->vid_load_dir, PATH_MAX, "%s", file_name);
   get_dirname(mainw->vid_load_dir);
 
-  if (mainw->multitrack == NULL) lives_widget_queue_draw(mainw->LiVES);
-  else lives_widget_queue_draw(mainw->multitrack->window);
+  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   lives_widget_context_update();
 
   if (prefs->save_directories) {
@@ -4223,10 +4222,7 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
     lives_free(new_encoder_name);
 
     if (mainw->is_ready) {
-      LiVESWindow *twindow = LIVES_WINDOW(mainw->LiVES);
-      if (prefsw != NULL) twindow = LIVES_WINDOW(prefsw->prefs_dialog);
-      else if (mainw->multitrack != NULL) twindow = LIVES_WINDOW(mainw->multitrack->window);
-      if (!prefs->show_gui) twindow = (LiVESWindow *)NULL;
+      LiVESWindow *twindow = get_transient_full();
       do_error_dialog_with_check_transient(msg, TRUE, 0, twindow);
     }
 
@@ -6136,8 +6132,7 @@ void on_ok_file_open_clicked(LiVESFileChooser *chooser, LiVESSList *fnames) {
     lives_snprintf(mainw->vid_load_dir, PATH_MAX, "%s", (char *)fnames->data);
     get_dirname(mainw->vid_load_dir);
 
-    if (mainw->multitrack == NULL) lives_widget_queue_draw(mainw->LiVES);
-    else lives_widget_queue_draw(mainw->multitrack->window);
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
 
     if (prefs->save_directories) {
@@ -9975,15 +9970,13 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  if (mainw->multitrack == NULL) lives_widget_hide(mainw->LiVES);
-  else lives_widget_hide(mainw->multitrack->window);
+  lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
   lives_widget_context_update();
 
   if (!(do_warning_dialog(
           _("Capture an External Window:\n\nClick on 'OK', then click on any window to capture it\nClick 'Cancel' to cancel\n\n")))) {
     if (prefs->show_gui) {
-      if (mainw->multitrack == NULL) lives_widget_show(mainw->LiVES);
-      else lives_widget_show(mainw->multitrack->window);
+      lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
     }
     d_print(_("External window was released.\n"));
     if (mainw->multitrack != NULL) {
@@ -10067,8 +10060,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_system(com, FALSE);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack == NULL) lives_widget_show(mainw->LiVES);
-    else lives_widget_show(mainw->multitrack->window);
+    lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
   }
 
   mainw->noswitch = TRUE;

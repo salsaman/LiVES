@@ -132,6 +132,7 @@
 #define DEF_DIALOG_WIDTH RFX_WINSIZE_H
 #define DEF_DIALOG_HEIGHT RFX_WINSIZE_V
 
+#define LIVES_MAIN_WINDOW_WIDGET (mainw->multitrack == NULL ? mainw->LiVES : mainw->multitrack->window)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 

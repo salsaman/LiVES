@@ -7488,7 +7488,7 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
     filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
     lives_snprintf(cfile->type, 40, "generator:%s", filter_name);
     lives_snprintf(cfile->file_name, PATH_MAX, "generator: %s", filter_name);
-    lives_snprintf(cfile->name, 256, "generator: %s", filter_name);
+    lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "generator: %s", filter_name);
     lives_free(filter_name);
     cfile->achans = 0;
     cfile->asampsize = 0;

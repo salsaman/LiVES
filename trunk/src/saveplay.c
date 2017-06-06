@@ -3345,6 +3345,12 @@ void create_cfile(void) {
   // remember to set cfile->is_loaded=TRUE !!!!!!!!!!
 }
 
+ 
+LIVES_INLINE char *get_untitled_name(int number) {
+  // utility function to get clip name
+  return lives_strdup_printf(_("Untitled%d"), number);
+}
+
 
 boolean get_new_handle(int index, const char *name) {
   // here is where we first initialize for the clipboard
@@ -3365,17 +3371,16 @@ boolean get_new_handle(int index, const char *name) {
 
   if (name == NULL || !strlen(name)) {
     cfile->is_untitled = TRUE;
-    xname = lives_strdup_printf(_("Untitled%d"), mainw->untitled_number++);
+    xname = get_untitled_name(mainw->untitled_number++);
   } else xname = lives_strdup(name);
 
   lives_snprintf(cfile->file_name, PATH_MAX, "%s", xname);
-  lives_snprintf(cfile->name, 256, "%s", xname);
+  lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "%s", xname);
   mainw->current_file = current_file;
 
   lives_free(xname);
   return TRUE;
 }
-
 
 
 boolean add_file_info(const char *check_handle, boolean aud_only) {
@@ -3867,7 +3872,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
   lives_snprintf(sfile->file_name, PATH_MAX, "%s", full_file_name);
   if (!sfile->was_renamed) {
-    lives_snprintf(sfile->name, 256, "%s", full_file_name);
+    lives_snprintf(sfile->name, CLIP_NAME_MAXLEN, "%s", full_file_name);
     set_main_title(cfile->name, 0);
     set_menu_text(sfile->menuentry, full_file_name, FALSE);
   }
@@ -4106,7 +4111,7 @@ boolean read_headers(const char *file_name) {
         }
         if (retval) {
           detail = CLIP_DETAILS_CLIPNAME;
-          get_clip_value(mainw->current_file, detail, cfile->name, 256);
+          get_clip_value(mainw->current_file, detail, cfile->name, CLIP_NAME_MAXLEN);
         }
         if (retval) {
           detail = CLIP_DETAILS_FILENAME;
@@ -4326,11 +4331,11 @@ boolean read_headers(const char *file_name) {
 
 
 void open_set_file(const char *set_name, int clipnum) {
-  char name[256];
-
+  char name[CLIP_NAME_MAXLEN];
+  
   if (mainw->current_file < 1) return;
 
-  memset(name, 0, 256);
+  memset(name, 0, CLIP_NAME_MAXLEN);
 
   if (mainw->cached_list != NULL) {
     boolean retval;
@@ -4345,9 +4350,11 @@ void open_set_file(const char *set_name, int clipnum) {
       cfile->frameno = 1;
     }
 
-    retval = get_clip_value(mainw->current_file, CLIP_DETAILS_CLIPNAME, name, 256);
+    retval = get_clip_value(mainw->current_file, CLIP_DETAILS_CLIPNAME, name, CLIP_NAME_MAXLEN);
     if (!retval) {
-      lives_snprintf(name, 256, _("Untitled%d"), mainw->untitled_number++);
+      char *tmp;
+      lives_snprintf(name, CLIP_NAME_MAXLEN, "%s", (tmp = get_untitled_name(mainw->untitled_number++)));
+      lives_free(tmp);
       cfile->needs_update = TRUE;
     }
     retval = get_clip_value(mainw->current_file, CLIP_DETAILS_UNIQUE_ID, &cfile->unique_id, 0);
@@ -4377,7 +4384,7 @@ void open_set_file(const char *set_name, int clipnum) {
         if ((nlen = lives_read_le(set_fd, &pb_fps, 4, TRUE)) > 0) {
           cfile->pb_fps = pb_fps / 1000.;
           lives_read_le(set_fd, &cfile->frameno, 4, TRUE);
-          lives_read(set_fd, name, 256, TRUE);
+          lives_read(set_fd, name, CLIP_NAME_MAXLEN, TRUE);
         }
         close(set_fd);
       } else retval = do_read_failed_error_s_with_retry(setfile, lives_strerror(errno), NULL);
@@ -4388,12 +4395,12 @@ void open_set_file(const char *set_name, int clipnum) {
   }
 
   if (strlen(name) == 0) {
-    lives_snprintf(name, 256, "set_clip %.3d", clipnum);
+    lives_snprintf(name, CLIP_NAME_MAXLEN, "set_clip %.3d", clipnum);
   }
   if (strlen(mainw->set_name) && strcmp(name + strlen(name) - 1, ")")) {
-    lives_snprintf(cfile->name, 256, "%s (%s)", name, set_name);
+    lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "%s (%s)", name, set_name);
   } else {
-    lives_snprintf(cfile->name, 256, "%s", name);
+    lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "%s", name);
   }
 
 

@@ -31,14 +31,11 @@
 #include "ce_thumbs.h"
 #include "callbacks.h"
 
-
 //////////// Effects ////////////////
-
 
 #ifdef HAVE_YUV4MPEG
 #include "lives-yuv4mpeg.h"
 #endif
-
 
 #include "rte_window.h"
 
@@ -54,10 +51,8 @@ static boolean apply_audio_fx;
 
 
 char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
-
   // return value should be free'd after use
   switch (cat) {
-
   // main categories
   case LIVES_FX_CAT_VIDEO_GENERATOR:
     if (!plural) return (lives_strdup(_("generator")));
@@ -105,7 +100,6 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
     if (!plural) return (lives_strdup(_("analyser")));
     else return (lives_strdup(_("Analysers")));
 
-
   // subcategories
   case LIVES_FX_CAT_AV_TRANSITION:
     if (!plural) return (lives_strdup(_("audio/video")));
@@ -135,16 +129,13 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
     if (!plural) return (lives_strdup(_("audio analyser")));
     else return (lives_strdup(_("Audio Analysers")));
 
-
   default:
     return (lives_strdup(_("unknown")));
   }
 }
 
 
-
 // Rendered effects
-
 
 boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   // returns FALSE if the user cancelled
@@ -314,7 +305,6 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     }
   }
 
-
   if (!do_progress_dialog(TRUE, TRUE, effectstring) || mainw->error) {
     mainw->last_dprint_file = ldfile;
     mainw->show_procd = TRUE;
@@ -482,7 +472,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       if (new_file != img_file) {
         mainw->current_file = img_file;
 
-        lives_snprintf(mainw->files[new_file]->name, 256, "%s", cfile->name);
+        lives_snprintf(mainw->files[new_file]->name, CLIP_NAME_MAXLEN, "%s", cfile->name);
         lives_snprintf(mainw->files[new_file]->file_name, PATH_MAX, "%s", cfile->file_name);
         set_menu_text(mainw->files[new_file]->menuentry, cfile->name, FALSE);
 
@@ -583,11 +573,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 }
 
 
-
 // realtime fx
-
-
-
 
 lives_render_error_t realfx_progress(boolean reset) {
   static lives_render_error_t write_error;
@@ -609,7 +595,6 @@ lives_render_error_t realfx_progress(boolean reset) {
   int weed_error;
   int layer_palette;
   int retval;
-
 
   // this is called periodically from do_processing_dialog for internal effects
 
@@ -690,7 +675,6 @@ lives_render_error_t realfx_progress(boolean reset) {
         }
       } while (retval == LIVES_RESPONSE_RETRY);
 
-
       lives_object_unref(pixbuf);
 
       if (cfile->clip_type == CLIP_TYPE_FILE) {
@@ -734,8 +718,6 @@ lives_render_error_t realfx_progress(boolean reset) {
   if (write_error) return write_error;
   return LIVES_RENDER_PROCESSING;
 }
-
-
 
 
 boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
@@ -808,10 +790,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 
   resize_instance = NULL;
   return retval;
-
 }
-
-
 
 
 void on_realfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
@@ -837,7 +816,6 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       has_lmap_error = TRUE;
     }
 
-
     if (!(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_AUDIO) &&
         (mainw->xlays = layout_audio_is_affected(mainw->current_file, 0.)) != NULL) {
       if (!do_layout_alter_audio_warning()) {
@@ -854,12 +832,7 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!on_realfx_activate_inner(type, (lives_rfx_t *)user_data)) return;
 
   if (has_lmap_error) popup_lmap_errors(NULL, NULL);
-
-
 }
-
-
-
 
 
 weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_timecode_t tc) {
@@ -912,9 +885,6 @@ weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_
 }
 
 
-
-
-
 void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
   weed_plant_t **layers;
 
@@ -964,13 +934,6 @@ deint1:
 
 
 
-
-
-
-
-
-
-
 weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   lives_clip_t *blend_file;
   static weed_timecode_t blend_tc = 0;
@@ -1001,10 +964,8 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   return mainw->blend_layer;
 }
 
-
 ////////////////////////////////////////////////////////////////////
 // keypresses
-
 
 boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // this is the callback which happens when a rte is keyed
@@ -1028,7 +989,6 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
     // switch up/down keys to default (fps change)
     weed_deinit_all(FALSE);
   } else {
-
     // the idea here is this gets set if a generator starts play, because in weed_init_effect() we will run playback
     // and then we come out of there and do not wish to set the key on
     mainw->gen_started_play = FALSE;
@@ -1046,7 +1006,6 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
         mainw->osc_block = FALSE;
         return TRUE;
       }
-
 
       if (!mainw->gen_started_play) {
         if (!(mainw->rte & new_rte)) mainw->rte |= new_rte;
@@ -1082,7 +1041,6 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
   if (mainw->playing_file == -1 && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
       (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
       mainw->agen_key != 0)) {
-
     lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
   } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
 
@@ -1096,7 +1054,6 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
 
   return TRUE;
 }
-
 
 
 boolean rte_on_off_callback_hook(LiVESToggleButton *button, livespointer user_data) {
@@ -1122,13 +1079,11 @@ boolean grabkeys_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
 }
 
 
-
 boolean textparm_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm = get_textparm();
   return TRUE;
 }
-
 
 
 boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data) {
@@ -1183,12 +1138,4 @@ boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
   // **TODO - for weed, invert all transition parameters for any active effects
 }
 
-
-
-
-
-
 //////////////////////////////////////////////////////////////
-
-
-

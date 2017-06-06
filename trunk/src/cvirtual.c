@@ -4,9 +4,7 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-
 // functions for handling "virtual" clips (CLIP_TYPE_FILE)
-
 
 #include "main.h"
 
@@ -61,7 +59,6 @@ boolean save_frame_index(int fileno) {
     if (fd < 0) {
       retval = do_write_failed_error_s_with_retry(fname, lives_strerror(errno), NULL);
     } else {
-
       mainw->write_failed = FALSE;
       for (i = 0; i < sfile->frames; i++) {
         lives_write_le_buffered(fd, &sfile->frame_index[i], 4, TRUE);
@@ -82,7 +79,6 @@ boolean save_frame_index(int fileno) {
 
   return TRUE;
 }
-
 
 
 // load frame_index from disk
@@ -111,7 +107,6 @@ int load_frame_index(int fileno) {
     return 0;
   }
 
-
   do {
     retval = 0;
 
@@ -124,7 +119,6 @@ int load_frame_index(int fileno) {
         return -1;
       }
     } else {
-
       create_frame_index(fileno, FALSE, 0, sfile->frames);
 
       mainw->read_failed = FALSE;
@@ -179,8 +173,6 @@ void del_frame_index(lives_clip_t *sfile) {
 }
 
 
-
-
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
   lives_clip_t *sfile = mainw->files[fileno];
 
@@ -195,9 +187,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
   // check that cached values match with sfile (on disk) values
   // TODO: also check sfile->frame_index to make sure all frames are present
 
-
   // return FALSE if we find any omissions/inconsistencies
-
 
   // check the image type
   for (i = 0; i < sfile->frames; i++) {
@@ -249,8 +239,6 @@ mismatch:
 }
 
 
-
-
 boolean check_if_non_virtual(int fileno, int start, int end) {
   // check if there are no virtual frames from start to end inclusive in clip fileno
 
@@ -267,7 +255,6 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
   }
 
   if (start > 1 || end < sfile->frames) return TRUE;
-
 
   // no virtual frames in entire clip - change to CLIP_TYPE_DISK
 
@@ -286,7 +273,6 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
 
   return TRUE;
 }
-
 
 
 boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_progress, LiVESPixbuf **pbr) {
@@ -349,7 +335,6 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
       if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
 
-
       // another thread may have called check_if_non_virtual - TODO : use a mutex
       if (sfile->frame_index == NULL) break;
       sfile->frame_index[i - 1] = -1;
@@ -375,8 +360,6 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
   return TRUE;
 }
-
-
 
 
 void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_index, int start) {
@@ -417,8 +400,6 @@ void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_ind
   save_frame_index(sfileno);
   sfile->frames -= frames;
 }
-
-
 
 
 void delete_frames_from_virtual(int sfileno, int start, int end) {
@@ -472,7 +453,6 @@ void reverse_frame_index(int sfileno) {
 }
 
 
-
 void restore_frame_index_back(int sfileno) {
   // undo an operation
   // this is the virtual (book-keeping) part
@@ -498,8 +478,6 @@ void restore_frame_index_back(int sfileno) {
 }
 
 
-
-
 void clean_images_from_virtual(lives_clip_t *sfile, int oldframes) {
   // remove images on disk where the frame_index points to a frame in
   // the original clip
@@ -509,7 +487,6 @@ void clean_images_from_virtual(lives_clip_t *sfile, int oldframes) {
 
   // in future, a smarter function could trace the images back to their
   // original source frames, and just rename them
-
 
   // should be threadsafe
 

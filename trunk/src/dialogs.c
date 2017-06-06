@@ -106,7 +106,6 @@ static void add_xlays_widget(LiVESBox *box) {
 
 
 
-
 void add_warn_check(LiVESBox *box, int warn_mask_number) {
   LiVESWidget *checkbutton;
 
@@ -144,7 +143,6 @@ static void add_clear_ds_adv(LiVESBox *box) {
                        LIVES_GUI_CALLBACK(on_cleardisk_advanced_clicked),
                        NULL);
 }
-
 
 
 //Warning or yes/no dialog
@@ -515,7 +513,6 @@ int do_error_dialog_with_check(const char *text, int warn_mask_number) {
   LiVESWindow *transient = get_transient_full();
   return do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, transient);
 }
-
 
 
 int do_blocking_error_dialog(const char *text) {
@@ -906,7 +903,6 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 }
 
 
-
 static void cancel_process(boolean visible) {
   if (prefs->show_player_stats && !visible && mainw->fps_measure > 0.) {
     // statistics
@@ -943,7 +939,6 @@ static void cancel_process(boolean visible) {
     lives_rm(cfile->info_file);
   }
 }
-
 
 
 static void disp_fraction(double fraction_done, double timesofar, xprocess *proc) {
@@ -997,7 +992,6 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
     }
   }
 }
-
 
 
 boolean process_one(boolean visible) {
@@ -2074,7 +2068,6 @@ boolean do_auto_dialog(const char *text, int type) {
 }
 
 
-
 void too_many_files(void) {
   char *warn = lives_strdup_printf(_("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."), MAX_FILES);
   do_error_dialog(warn);
@@ -2140,7 +2133,6 @@ void do_layout_scrap_file_error(void) {
 void do_layout_ascrap_file_error(void) {
   do_blocking_error_dialog(_("This layout includes generated or recorded audio.\nIt cannot be saved, you must render it to a clip first.\n"));
 }
-
 
 
 boolean rdet_suggest_values(int width, int height, double fps, int fps_num, int fps_denom, int arate, int asigned,
@@ -2680,7 +2672,6 @@ void do_after_crash_warning(void) {
 }
 
 
-
 static void on_dth_cancel_clicked(LiVESButton *button, livespointer user_data) {
   if (LIVES_POINTER_TO_INT(user_data) == 1) mainw->cancelled = CANCEL_KEEP;
   else mainw->cancelled = CANCEL_USER;
@@ -3071,7 +3062,6 @@ int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, L
 }
 
 
-
 int do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) {
   // err can be errno from open/fopen etc.
 
@@ -3406,5 +3396,4 @@ boolean ask_permission_dialog(int what) {
 
   return FALSE;
 }
-
 

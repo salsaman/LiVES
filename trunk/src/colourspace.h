@@ -4,7 +4,6 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-
 // headers for palette conversions
 
 #ifndef HAS_LIVES_COLOURSPACE_H
@@ -14,8 +13,6 @@
 #define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
 
 #define SCREEN_GAMMA 2.2
-
-
 
 // rgb / yuv conversion factors ////////////
 #define FP_BITS 16 /// max fp bits
@@ -42,8 +39,6 @@
 
 /////////////////////////////////////////////
 
-
-
 typedef struct {
   uint8_t u0;
   uint8_t y0;
@@ -58,7 +53,6 @@ typedef struct {
   uint8_t v0;
 } yuyv_macropixel;
 
-
 typedef struct {
   uint8_t u2;
   uint8_t y0;
@@ -67,9 +61,6 @@ typedef struct {
   uint8_t y2;
   uint8_t y3;
 } yuv411_macropixel;
-
-
-
 
 typedef struct {
   void *src;
@@ -92,7 +83,6 @@ typedef struct {
   int thread_id;
 } lives_cc_params;
 
-
 // internal thread fns
 void *convert_rgb_to_uyvy_frame_thread(void *cc_params);
 void *convert_bgr_to_uyvy_frame_thread(void *cc_params);
@@ -101,7 +91,6 @@ void *convert_bgr_to_yuyv_frame_thread(void *cc_params);
 void *convert_argb_to_uyvy_frame_thread(void *cc_params);
 void *convert_argb_to_yuyv_frame_thread(void *cc_params);
 
-
 void *convert_rgb_to_yuv_frame_thread(void *cc_params);
 void *convert_bgr_to_yuv_frame_thread(void *cc_params);
 void *convert_argb_to_yuv_frame_thread(void *cc_params);
@@ -109,14 +98,12 @@ void *convert_rgb_to_yuvp_frame_thread(void *cc_params);
 void *convert_bgr_to_yuvp_frame_thread(void *cc_params);
 void *convert_argb_to_yuvp_frame_thread(void *cc_params);
 
-
 void *convert_uyvy_to_rgb_frame_thread(void *cc_params);
 void *convert_uyvy_to_bgr_frame_thread(void *cc_params);
 void *convert_uyvy_to_argb_frame_thread(void *cc_params);
 void *convert_yuyv_to_rgb_frame_thread(void *cc_params);
 void *convert_yuyv_to_bgr_frame_thread(void *cc_params);
 void *convert_yuyv_to_argb_frame_thread(void *cc_params);
-
 
 void *convert_yuv_planar_to_rgb_frame_thread(void *cc_params);
 void *convert_yuv_planar_to_bgr_frame_thread(void *cc_params);
@@ -128,7 +115,6 @@ void *convert_yuv888_to_argb_frame_thread(void *cc_params);
 void *convert_yuva8888_to_rgba_frame_thread(void *cc_params);
 void *convert_yuva8888_to_bgra_frame_thread(void *cc_params);
 void *convert_yuva8888_to_argb_frame_thread(void *cc_params);
-
 
 void *convert_swap3_frame_thread(void *cc_params);
 void *convert_swap4_frame_thread(void *cc_params);
@@ -144,8 +130,6 @@ void *convert_swap3postalpha_frame_thread(void *cc_params);
 void *convert_swapprepost_frame_thread(void *cc_params);
 
 void *convert_swab_frame_thread(void *cc_params);
-
-
 
 ///////////////////////////////////////
 // these functions should be used in future
@@ -173,7 +157,6 @@ boolean lives_painter_to_layer(lives_painter_t *cairo, weed_plant_t *layer);
 
 void alpha_unpremult(weed_plant_t *layer, boolean un);
 
-
 // palette information functions
 boolean weed_palette_is_valid_palette(int pal);
 boolean weed_palette_is_alpha_palette(int pal);
@@ -195,7 +178,6 @@ int get_weed_palette_for_lives_painter(void);
 #define BLACK_THRESH 20 ///< if R,G and B values are all <= this, we consider it a "black" pixel
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf);
 
-
 void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf);
 
 const char *weed_palette_get_name(int pal);
@@ -203,10 +185,8 @@ const char *weed_yuv_clamping_get_name(int clamping);
 const char *weed_yuv_subspace_get_name(int subspace);
 char *weed_palette_get_name_full(int pal, int clamped, int subspace);
 
-
 #ifdef USE_SWSCALE
 void sws_free_context(void);
 #endif
-
 
 #endif

@@ -503,6 +503,8 @@ typedef enum {
 #define WEED_LEAF_HOST_DECODER "host_decoder" // pointer to decoder for a layer
 #define WEED_LEAF_HOST_PTHREAD "host_pthread" // thread for a layer
 
+#define CLIP_NAME_MAXLEN 256
+
 /// corresponds to one clip in the GUI
 typedef struct {
   // basic info (saved during backup)
@@ -546,7 +548,7 @@ typedef struct {
   int old_frames; ///< for deordering, etc.
   char file_name[PATH_MAX]; ///< input file
   char info_file[PATH_MAX];
-  char name[256];  ///< the display name
+  char name[CLIP_NAME_MAXLEN];  ///< the display name
   char save_file_name[PATH_MAX];
   char type[64];
   int start;
@@ -1002,6 +1004,7 @@ ulong deduce_file(const char *filename, double start_time, int end);
 ulong open_file(const char *filename);
 ulong open_file_sel(const char *file_name, double start_time, int frames);
 void open_fw_device(void);
+char *get_untitled_name(int number);
 boolean get_new_handle(int index, const char *name);
 boolean get_temp_handle(int index, boolean create);
 boolean get_handle_from_info_file(int index);

@@ -3765,7 +3765,7 @@ boolean after_foreign_play(void) {
           lives_strfreev(array);
           create_cfile();
           lives_snprintf(cfile->file_name, 256, "Capture %d", mainw->cap_number);
-          lives_snprintf(cfile->name, 256, "Capture %d", mainw->cap_number++);
+          lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "Capture %d", mainw->cap_number++);
           lives_snprintf(cfile->type, 40, "Frames");
 
           cfile->progress_start = cfile->start = 1;

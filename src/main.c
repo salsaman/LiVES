@@ -3437,8 +3437,11 @@ void set_main_title(const char *file, int untitled) {
   char short_file[256];
 
   if (file != NULL) {
-    if (untitled) title = lives_strdup_printf(_("LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"), LiVES_VERSION, untitled,
-                            cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
+    if (untitled) {
+      title = lives_strdup_printf(_("LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"), LiVES_VERSION, (tmp = get_untitled_name(untitled)),
+				  cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
+      lives_free(tmp);
+    }
     else {
       lives_snprintf(short_file, 256, "%s", file);
       if (cfile->restoring || (cfile->opening && cfile->frames == 123456789)) {

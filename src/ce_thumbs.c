@@ -12,7 +12,6 @@
 
 // TODO - user defined screen mapping areas
 
-
 #include "main.h"
 #include "effects-weed.h"
 #include "effects.h"
@@ -60,7 +59,6 @@ void ce_thumbs_set_interactive(boolean interactive) {
       }
     }
   }
-
 }
 
 #if LIVES_HAS_GRID_WIDGET
@@ -228,7 +226,6 @@ void start_ce_thumb_mode(void) {
   }
 
   for (i = 0; i < rte_keys_virtual; i++) {
-
     pscrolls[i] = NULL;
 
     fxlist = NULL;
@@ -250,7 +247,6 @@ void start_ce_thumb_mode(void) {
 
     ch_fns[i] = lives_signal_connect_after(LIVES_GUI_OBJECT(key_checks[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
                                            LIVES_GUI_CALLBACK(rte_on_off_callback_hook), LIVES_INT_TO_POINTER(i + 1));
-
 
     fxcombos[i] = lives_standard_combo_new(NULL, FALSE, fxlist, LIVES_BOX(hbox), NULL);
 
@@ -288,7 +284,6 @@ void start_ce_thumb_mode(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_widget_set_hexpand(hbox, FALSE);
 
-
   lives_box_pack_start(LIVES_BOX(vbox3), hbox, FALSE, TRUE, 0);
   arrow = lives_arrow_new(LIVES_ARROW_LEFT, LIVES_SHADOW_NONE);
   lives_box_pack_start(LIVES_BOX(hbox), arrow, FALSE, TRUE, 0);
@@ -302,9 +297,6 @@ void start_ce_thumb_mode(void) {
   arrow = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_NONE);
   lives_box_pack_start(LIVES_BOX(hbox), arrow, FALSE, TRUE, 0);
 
-
-
-
   // screen areas
   vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
   tscroll = lives_standard_scrolled_window_new(width, height, vbox);
@@ -312,7 +304,6 @@ void start_ce_thumb_mode(void) {
   lives_box_pack_start(LIVES_BOX(vbox3), tscroll, FALSE, TRUE, 0);
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(tscroll), LIVES_POLICY_NEVER, LIVES_POLICY_AUTOMATIC);
   lives_widget_set_hexpand(tscroll, FALSE);
-
 
   for (i = 0; i < n_screen_areas; i++) {
     hbox = lives_hbox_new(FALSE, 0);
@@ -365,7 +356,6 @@ void start_ce_thumb_mode(void) {
   lives_widget_show_all(top_hbox);
 
   lives_widget_context_update(); // need size of cscroll to fit thumbs
-
 
   cpw = (lives_widget_get_allocation_width(tscroll) - widget_opts.border_width * 2) / (width * 1.5) - 2;
 
@@ -470,8 +460,6 @@ void end_ce_thumb_mode(void) {
 }
 
 
-
-
 void ce_thumbs_add_param_box(int key, boolean remove) {
   // when an effect with params is applied, show the parms in a box
   weed_plant_t *inst, *ninst;
@@ -506,14 +494,12 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   } while (weed_plant_has_leaf(ninst, WEED_LEAF_HOST_NEXT_INSTANCE) &&
            (ninst = weed_get_plantptr_value(ninst, WEED_LEAF_HOST_NEXT_INSTANCE, &error)) != NULL);
 
-
   // here we just check if we have any params to display
   if (!make_param_box(NULL, rfx)) {
     rfx_free(rfx);
     lives_free(rfx);
     return;
   }
-
 
   vbox = lives_vbox_new(FALSE, 0);
 
@@ -542,7 +528,6 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(pin_check), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(pin_toggled), LIVES_INT_TO_POINTER(key));
-
 
   on_fx_pre_activate(rfx, 1, vbox);
 
@@ -580,7 +565,6 @@ static void ce_thumbs_remove_param_boxes(boolean remove_pinned) {
     }
   }
 }
-
 
 
 void ce_thumbs_register_rfx_change(int key, int mode) {
@@ -667,7 +651,6 @@ void ce_thumbs_reset_combo(int key) {
     lives_widget_set_sensitive(key_checks[key], FALSE);
     lives_combo_set_active_string(LIVES_COMBO(fxcombos[key]), "");
   }
-
 }
 
 
@@ -731,7 +714,6 @@ void ce_thumbs_highlight_current_clip(void) {
     }
     lives_widget_set_state(clip_boxes[i], LIVES_WIDGET_STATE_NORMAL);
   }
-
 }
 
 

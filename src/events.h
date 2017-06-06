@@ -4,7 +4,6 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-
 // functions/structs for event_lists and events
 
 #ifndef HAS_LIVES_EVENTS_H
@@ -19,7 +18,6 @@
 #define WEED_LEAF_AUDIO_VOLUME_VALUES "audio_volume_values"
 #define WEED_LEAF_TRACK_LABEL_TRACKS "track_label_tracks"
 #define WEED_LEAF_TRACK_LABEL_VALUES "track_label_values"
-
 
 // frame event
 #define WEED_LEAF_FRAMES "frames"
@@ -38,14 +36,11 @@
 // deinit
 #define WEED_LEAF_INIT_EVENT "init_event"
 
-
 // filter map
 #define WEED_LEAF_INIT_EVENTS "init_events"
 
 // param change
 #define WEED_LEAF_INDEX "index"
-
-
 
 // internal
 // event_list
@@ -70,8 +65,6 @@
 #define WEED_LEAF_PTRSIZE "ptrsize"
 
 #define WEED_LEAF_HOST_AUDIO_TRANSITION "host_audio_transition"
-
-
 
 #define LIVES_TRACK_ANY -1000000
 
@@ -139,15 +132,11 @@ weed_plant_t *get_audio_block_start(weed_plant_t *event_list, int track, weed_ti
 boolean filter_map_after_frame(weed_plant_t *fmap);
 boolean init_event_is_relevant(weed_plant_t *init_event, int ctrack);
 
-
 // definitions in events.c
 weed_plant_t *get_first_event(weed_plant_t *event_list);
 weed_plant_t *get_last_event(weed_plant_t *event_list);
 weed_plant_t *get_prev_event(weed_plant_t *event);
 weed_plant_t *get_next_event(weed_plant_t *event);
-
-
-
 
 //////////////////////////////////////////////////////////
 #if HAVE_SYSTEM_WEED
@@ -178,6 +167,7 @@ typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *okbutton;
   LiVESWidget *usecur_button;
+  LiVESWidget *clipname_entry;
   LiVESWidget *encoder_combo;
   LiVESWidget *ofmt_combo;
   LiVESWidget *acodec_combo;
@@ -203,12 +193,10 @@ typedef struct {
   int aendian;
 } render_details;
 
-
 render_details *rdet;
 
 ////////////////////////////////////////////////////////
 //// UI stuff ///////
-
 
 LiVESWidget *events_rec_dialog(boolean allow_mt);
 int get_render_choice(void);
@@ -229,13 +217,11 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
 
 LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertrack);
 
-
 ////////////////////////////////////////////////////////////////
 /// rendering
 
 boolean render_to_clip(boolean new_clip);  ///< render to clip
 boolean start_render_effect_events(weed_plant_t *event_list);  ///< render to clip
-
 
 // effect insertion/updating
 void insert_filter_init_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
@@ -291,14 +277,12 @@ double get_audio_frame_vel(weed_plant_t *event, int track);
 /// returns velocity for track (track==-1 is backing audio)
 double get_audio_frame_seek(weed_plant_t *event, int track);
 
-
 // playback
 
 void backup_host_tags(weed_plant_t *event_list, weed_timecode_t curr_tc);
 void restore_host_tags(weed_plant_t *event_list, weed_timecode_t curr_tc);
 
 boolean has_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t **shortcut);
-
 
 #define EVENT_MARKER_BLOCK_START 1
 #define EVENT_MARKER_BLOCK_UNORDERED 512

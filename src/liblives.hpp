@@ -1,6 +1,6 @@
 // liblives.hpp
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman@gmail.com> 2015 - 2016
+// (c) G. Finch <salsaman@gmail.com> 2015 - 2017
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -24,7 +24,7 @@
 /**
    Version number micro
 */
-#define LIVES_VERSION_MICRO 6
+#define LIVES_VERSION_MICRO 7
 
 /**
    Macro to check if livesApp version is >= major.minor.micro

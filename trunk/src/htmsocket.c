@@ -4,7 +4,6 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -113,6 +112,7 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
   return o;
 }
 
+
 static ssize_t getudp(struct sockaddr *sp, int sockfd, int length, size_t count, void  *b, int bfsize) {
   int flags = 0;
   ssize_t res;
@@ -142,6 +142,7 @@ static ssize_t getudp(struct sockaddr *sp, int sockfd, int length, size_t count,
   return res;
 }
 
+
 static boolean sendudp(const struct sockaddr *sp, int sockfd, int length, size_t count, void  *b) {
   size_t rcount;
   if ((rcount = sendto(sockfd, b, count, 0, sp, length)) != count) {
@@ -150,6 +151,7 @@ static boolean sendudp(const struct sockaddr *sp, int sockfd, int length, size_t
   }
   return TRUE;
 }
+
 
 boolean lives_stream_out(void *htmsendhandle, size_t length, void *buffer) {
   desc *o = (desc *)(htmsendhandle);
@@ -165,8 +167,10 @@ ssize_t lives_stream_in(void *htmrecvhandle, size_t length, void *buffer, int bf
 #endif
 }
 
+
 void CloseHTMSocket(void *htmsendhandle) {
   desc *o = (desc *)htmsendhandle;
   close(o->sockfd);
   lives_free(o);
 }
+

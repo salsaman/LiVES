@@ -138,8 +138,6 @@ void create_merge_dialog(void) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(align_end_button), !mainw->last_transition_align_start);
 
-
-
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height * 2);
 
@@ -161,7 +159,6 @@ void create_merge_dialog(void) {
     merge_opts->spinbutton_loops = lives_standard_spin_button_new
                                    (_("Number of Times to Loop Clipboard"), FALSE, 1., 1.,
                                     (int)((cfile->end - cfile->start + 1) / cb_frames), 1., 10., 0, LIVES_BOX(hbox), NULL);
-
 
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops), mainw->last_transition_loops);
     lives_widget_set_sensitive(merge_opts->spinbutton_loops, !mainw->last_transition_loop_to_fit);
@@ -191,7 +188,6 @@ void create_merge_dialog(void) {
 
   add_hsep_to_box(LIVES_BOX(vbox));
 
-
   // now the dynamic part...
   merge_opts->param_vbox = lives_vbox_new(FALSE, 0);
   lives_container_set_border_width(LIVES_CONTAINER(merge_opts->param_vbox), widget_opts.border_width >> 1);
@@ -214,7 +210,6 @@ void create_merge_dialog(void) {
 
   // done !
 
-
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(merge_opts->merge_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus(cancelbutton, TRUE);
@@ -228,10 +223,8 @@ void create_merge_dialog(void) {
                        LIVES_GUI_CALLBACK(on_merge_cancel_clicked),
                        rfx);
 
-
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_merge_ok_clicked),
@@ -239,16 +232,15 @@ void create_merge_dialog(void) {
 
   lives_signal_connect(LIVES_GUI_OBJECT(transition_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_trans_method_changed), NULL);
 
-
   lives_signal_connect(LIVES_GUI_OBJECT(align_start_button), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_align_start_end_toggled),
                        rfx);
-
 
   if (prefs->show_gui) {
     lives_widget_show_all(merge_opts->merge_dialog);
   }
 }
+
 
 static void bang(LiVESWidget *widget, livespointer null) {
   lives_widget_destroy(widget);
@@ -297,8 +289,6 @@ void on_trans_method_changed(LiVESCombo *combo, livespointer user_data) {
 }
 
 
-
-
 void on_merge_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   create_merge_dialog();
 
@@ -308,7 +298,6 @@ void on_merge_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   on_align_start_end_toggled(NULL, NULL);
 }
-
 
 
 void on_merge_cancel_clicked(LiVESButton *button, livespointer user_data) {
@@ -325,9 +314,6 @@ void on_merge_cancel_clicked(LiVESButton *button, livespointer user_data) {
   lives_free(merge_opts->list_to_rfx_index);
   lives_free(merge_opts);
 }
-
-
-
 
 
 void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
@@ -439,7 +425,6 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
   // cb > sel         1       end-start+1                              excess_frames          cb_frames
   // l2f              1       end-start+1                              1          end-start+1
 
-
   // number of frames to merge, must be <= selection length
   if (!mainw->last_transition_loop_to_fit) {
     cb_end = (clipboard->frames - excess_frames) * times_to_loop;
@@ -447,7 +432,6 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
     //loop_to_fit_audio
     cb_end = cfile->end - cfile->start + 1;
   }
-
 
   // here we use undo_start and undo_end to mark the merged section,
   // insert_start and insert_end to mark the inserted section (if any)

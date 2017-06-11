@@ -4,7 +4,6 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-
 #include <gdk/gdkkeysyms.h>
 
 #include "main.h"
@@ -76,7 +75,6 @@ static void handle_omc_events(void) {
 
 
 boolean ext_triggers_poll(livespointer data) {
-
   if (mainw->is_exiting) return FALSE;
 
   if (mainw->kb_timer_end) {
@@ -113,10 +111,7 @@ LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespoi
   uint32_t modifiers = 0;
   uint32_t key;
 
-
   return LIVES_FILTER_CONTINUE; // this is most likely handled in key_press_or_release() now
-
-
 
 
 #ifndef IS_MINGW
@@ -492,9 +487,4 @@ boolean rec_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, 
                                    !lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf)));
   return TRUE;
 }
-
-
-
-
-
 

@@ -9,8 +9,6 @@
 #include "ldvcallbacks.h"
 #include "ldvinterface.h"
 
-
-
 void on_camgrab_clicked(LiVESButton *button, livespointer user_data) {
   s_cam *cam = (s_cam *)user_data;
 
@@ -112,6 +110,5 @@ void on_camquit_clicked(LiVESButton *button, livespointer user_data) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
-
 }
 

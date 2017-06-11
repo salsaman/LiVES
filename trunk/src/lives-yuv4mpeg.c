@@ -32,12 +32,9 @@ typedef struct y4data {
 
   int fd;
   int i;
-
 } y4data;
 
-
 static int yuvout, hsize_out, vsize_out;
-
 
 // lists of cards in use
 static LiVESList *fw_cards = NULL;
@@ -83,7 +80,6 @@ static void fill_read(int fd, char *buf, size_t count) {
     if (got < 0) return;
     bytes += got;
   } while (bytes < count);
-
 }
 
 
@@ -123,7 +119,6 @@ static void *y4frame_thread(void *arg) {
 }
 
 
-
 static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
   double ofps = sfile->fps;
 
@@ -141,7 +136,6 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
   y4data thread_data;
 
   register int i;
-
 
   if (filename == NULL) return FALSE;
 
@@ -254,9 +248,7 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
 }
 
 
-
 void lives_yuv_stream_stop_read(lives_yuv4m_t *yuv4mpeg) {
-
   y4m_fini_stream_info(&(yuv4mpeg->streaminfo));
   y4m_fini_frame_info(&(yuv4mpeg->frameinfo));
   yuv4mpeg->sar = y4m_sar_UNKNOWN;
@@ -272,10 +264,7 @@ void lives_yuv_stream_stop_read(lives_yuv4m_t *yuv4mpeg) {
 
   if (yuv4mpeg->type == YUV4_TYPE_FW) fw_cards = lives_list_remove(fw_cards, LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
   if (yuv4mpeg->type == YUV4_TYPE_TV) mainw->videodevs = lives_list_remove(mainw->videodevs, LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
-
-
 }
-
 
 
 void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
@@ -336,8 +325,6 @@ void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
 }
 
 
-
-
 static boolean open_yuv4m_inner(const char *filename, const char *fname, int new_file, int type, int cardno) {
   // create a virtual clip
   int old_file = mainw->current_file;
@@ -376,9 +363,6 @@ static boolean open_yuv4m_inner(const char *filename, const char *fname, int new
 
   return TRUE;
 }
-
-
-
 
 
 void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
@@ -445,15 +429,12 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // if not playing, start playing
   if (mainw->playing_file == -1) {
-
     // temp kludge, symlink audiodump.pcm to wav file, then pretend we are playing
     // an opening preview . Doesn't work with fifo.
     // and we dont really care if it doesnt work
 
     // but what it means is, if we have an audio file or stream at
     // "prefs->workdir/audiodump.pcm" we will try to play it
-
-
 
     // real is workdir/audiodump.pcm
     audio_real = lives_build_filename(prefs->workdir, "audiodump.pcm", NULL);
@@ -482,13 +463,11 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // close this temporary clip
   close_current_file(old_file);
-
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // write functions - not used currently
-
 
 boolean lives_yuv_stream_start_write(lives_yuv4m_t *yuv4mpeg, const char *filename, int hsize, int vsize, double fps) {
   int i;
@@ -549,8 +528,6 @@ void lives_yuv_stream_stop_write(lives_yuv4m_t *yuv4mpeg) {
 }
 
 
-
-
 //////////////////////////////////////////////////////////////
 
 // add live input peripherals
@@ -559,7 +536,6 @@ void lives_yuv_stream_stop_write(lives_yuv4m_t *yuv4mpeg) {
 
 // advantages would be: - no longer necessary to have mjpegtools
 // - multiple copies of LiVES could share the same input at (almost) zero cost
-
 
 
 // for each of thes functions:
@@ -576,9 +552,6 @@ void lives_yuv_stream_stop_write(lives_yuv4m_t *yuv4mpeg) {
 
 // note: we add the clip to the menu and to mainw->cliplist
 // beware when handling mainw->cliplist
-
-
-
 
 
 void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
@@ -689,7 +662,6 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
                               devstr, fifofile, input, width, height, fps, driver, outfmt);
     lives_free(driver);
     lives_free(outfmt);
-
   }
   lives_widget_destroy(card_dialog);
   lives_free(tvcardw);
@@ -724,13 +696,10 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(chanstr);
   lives_free(devstr);
   lives_free(fifofile);
-
 }
 
 
-
 void on_live_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-
   char *com, *tmp;
   int cardno;
   int cache = 1024;
@@ -805,5 +774,4 @@ void on_live_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(tmp);
   lives_free(fname);
   lives_free(fifofile);
-
 }

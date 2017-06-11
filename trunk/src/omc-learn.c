@@ -4,7 +4,6 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-
 #ifdef ENABLE_OSC
 
 #ifdef HAVE_SYSTEM_WEED
@@ -44,7 +43,6 @@
 // TODO !! - greedy matching should done - i.e. if an input sequence matches more than one macro, each of those macros will be triggered
 // for now, only first match is acted on
 
-
 // some events are filtered out, for example MIDI_NOTE_OFF, joystick button release; this needs to be done automatically
 
 // TODO: we need end up with a table (struct *) like:
@@ -58,7 +56,6 @@
 
 // where min/max are not known we will need to calibrate
 
-
 static OSCbuf obuf;
 static char byarr[OSC_BUF_SIZE];
 static lives_omc_macro_t omc_macros[N_OMC_MACROS];
@@ -69,7 +66,6 @@ static boolean omc_macros_inited = FALSE;
 
 
 static void omc_match_node_free(lives_omc_match_node_t *mnode) {
-
   if (mnode->nvars > 0) {
     lives_free(mnode->offs0);
     lives_free(mnode->scale);
@@ -87,9 +83,7 @@ static void omc_match_node_free(lives_omc_match_node_t *mnode) {
   lives_free(mnode->srch);
 
   lives_free(mnode);
-
 }
-
 
 
 static void remove_all_nodes(boolean every, omclearn_w *omclw) {
@@ -112,7 +106,6 @@ static void remove_all_nodes(boolean every, omclearn_w *omclw) {
 
   lives_widget_set_sensitive(omclw->clear_button, FALSE);
   if (slist == NULL) lives_widget_set_sensitive(omclw->del_all_button, FALSE);
-
 }
 
 
@@ -137,13 +130,9 @@ static LIVES_INLINE int midi_index(const char *string) {
   return res;
 }
 
-
 #ifdef OMC_JS_IMPL
 
-
-
 static int js_fd;
-
 
 
 #ifndef IS_MINGW
@@ -173,7 +162,6 @@ const char *get_js_filename(void) {
 
 
 boolean js_open(void) {
-
   if (!(prefs->omc_dev_opts & OMC_DEV_JS)) return TRUE;
 
   if (prefs->omc_js_fname != NULL) {
@@ -192,7 +180,6 @@ boolean js_open(void) {
 
   return TRUE;
 }
-
 
 
 void js_close(void) {
@@ -226,7 +213,6 @@ char *js_mangle(void) {
   ret = lives_strdup_printf("%d %d %d", type, jse.number, jse.value);
 
   return ret;
-
 }
 
 
@@ -235,16 +221,13 @@ static LIVES_INLINE int js_msg_type(const char *string) {
 }
 
 
-
 #endif  // OMC_JS
-
 
 #ifdef OMC_MIDI_IMPL
 
 static int midi_fd;
 
 #ifndef IS_MINGW
-
 
 const char *get_midi_filename(void) {
   char *midi_fname;
@@ -270,12 +253,10 @@ const char *get_midi_filename(void) {
 
 
 boolean midi_open(void) {
-
   if (!(prefs->omc_dev_opts & OMC_DEV_MIDI)) return TRUE;
 
 #ifdef ALSA_MIDI
   if (prefs->use_alsa_midi) {
-
     d_print(_("Creating ALSA seq port..."));
 
     // ORL Ouverture d'un port ALSA
@@ -288,14 +269,12 @@ boolean midi_open(void) {
     if ((mainw->alsa_midi_port = snd_seq_create_simple_port(mainw->seq_handle, "LiVES",
                                  SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
                                  SND_SEQ_PORT_TYPE_APPLICATION | SND_SEQ_PORT_TYPE_PORT | SND_SEQ_PORT_TYPE_SOFTWARE)) < 0) {
-
       d_print_failed();
       return FALSE;
     }
 
     d_print_done();
   } else {
-
 #endif
 
 #ifndef IS_MINGW
@@ -323,10 +302,8 @@ boolean midi_open(void) {
 }
 
 
-
 void midi_close(void) {
   if (mainw->ext_cntl[EXT_CNTL_MIDI]) {
-
 #ifdef ALSA_MIDI
     if (mainw->seq_handle != NULL) {
       // close
@@ -334,7 +311,6 @@ void midi_close(void) {
       snd_seq_close(mainw->seq_handle);
       mainw->seq_handle = NULL;
     } else {
-
 #endif
 
       close(midi_fd);
@@ -346,7 +322,6 @@ void midi_close(void) {
     mainw->ext_cntl[EXT_CNTL_MIDI] = FALSE;
   }
 }
-
 
 
 static int get_midi_len(int msgtype) {
@@ -372,7 +347,6 @@ static int midi_msg_type(const char *string) {
   if ((type & 0XF0) == 0xC0) return OMC_MIDI_PGM_CHANGE;
   if ((type & 0XF0) == 0xE0) return OMC_MIDI_PITCH_BEND;
 
-
   // other types are currently ignored
   // 0XA0 is aftertouch, has key and value
 
@@ -385,7 +359,6 @@ static int midi_msg_type(const char *string) {
 
   return 0;
 }
-
 
 
 char *midi_mangle(void) {
@@ -406,7 +379,6 @@ char *midi_mangle(void) {
   boolean hasmore = FALSE;
 
   if (mainw->seq_handle != NULL) {
-
     if (snd_seq_event_input_pending(mainw->seq_handle, 0) == 0) {
       // returns number of poll descriptors
       npfd = snd_seq_poll_descriptors_count(mainw->seq_handle, POLLIN);
@@ -420,9 +392,7 @@ char *midi_mangle(void) {
     } else hasmore = TRUE; // events remaining from the last call to this function
 
     if (hasmore || poll(pfd, npfd, 0) > 0) {
-
       do {
-
         if (snd_seq_event_input(mainw->seq_handle, &ev) < 0) {
           break; // an error occured reading from the port
         }
@@ -456,20 +426,14 @@ char *midi_mangle(void) {
           string = lives_strdup_printf("%d %d %d", typeNumber + ev->data.note.channel, ev->data.note.channel, ev->data.control.value);
 
           break;
-
         }
         snd_seq_free_event(ev);
-
       } while (snd_seq_event_input_pending(mainw->seq_handle, 0) > 0 && string == NULL);
-
     }
 
     if (pfd != NULL) lives_free(pfd);
-
   } else {
-
 #endif
-
     if (midi_fd == -1) return NULL;
 
     while (tot < target) {
@@ -494,7 +458,6 @@ char *midi_mangle(void) {
       memcpy(midbuf + tot, xbuf, bytes);
 
       tot += bytes;
-
     }
 
     if (mtype == 0) return NULL;
@@ -505,7 +468,6 @@ char *midi_mangle(void) {
     else if (target == 3) string = lives_strdup_printf("%u %u %u %u", midbuf[0], idx, midbuf[1], midbuf[2]);
     else string = lives_strdup_printf("%u %u %u %u %u", midbuf[0], idx, midbuf[1], midbuf[2], midbuf[3]);
 
-
 #ifdef ALSA_MIDI
   }
 #endif
@@ -515,9 +477,7 @@ char *midi_mangle(void) {
   return string;
 }
 
-
 #endif //OMC_MIDI_IMPL
-
 
 
 static LIVES_INLINE char *cut_string_elems(const char *string, int nelems) {
@@ -541,11 +501,6 @@ static LIVES_INLINE char *cut_string_elems(const char *string, int nelems) {
 }
 
 
-
-
-
-
-
 static char *omc_learn_get_pname(int type, int idx) {
   switch (type) {
   case OMC_MIDI_CONTROLLER:
@@ -564,7 +519,6 @@ static char *omc_learn_get_pname(int type, int idx) {
 }
 
 
-
 static int omc_learn_get_pvalue(int type, int idx, const char *string) {
   char **array = lives_strsplit(string, " ", -1);
   int res;
@@ -581,7 +535,6 @@ static int omc_learn_get_pvalue(int type, int idx, const char *string) {
   lives_strfreev(array);
   return res;
 }
-
 
 
 static void cell1_edited_callback(LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text, livespointer user_data) {
@@ -629,7 +582,6 @@ static void cell1_edited_callback(LiVESCellRenderer *spinbutton, const char *pat
   }
 
   lives_tree_store_set(mnode->gtkstore2, &iter, VALUE2_COLUMN, new_text, -1);
-
 }
 
 
@@ -638,6 +590,7 @@ static void rowexpand(LiVESWidget *tv, LiVESTreeIter *iter, LiVESTreePath *path,
   lives_widget_queue_resize(tv);
 }
 #endif
+
 
 static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omclearn_w *omclw) {
   lives_omc_macro_t macro = omc_macros[mnode->macro];
@@ -654,7 +607,6 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
   int mfrom;
   register int i;
-
 
   mnode->gtkstore2 = lives_tree_store_new(NUM2_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_OBJECT);
 
@@ -689,7 +641,6 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
         strval = lives_strdup_printf("%.*f", OMC_FP_FIX, mnode->fvald[i]);
         adj = lives_adjustment_new(mnode->fvald[i], macro.mind[i], macro.maxd[i], 1., 1., 0.);
         break;
-
       }
     }
 
@@ -718,7 +669,6 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   renderer = lives_cell_renderer_spin_new();
 
   if (renderer != NULL) {
-
 #ifdef GUI_GTK
     g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
                  "editable", TRUE, "xalign", 1.0, NULL);
@@ -727,7 +677,6 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
     lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell1_edited_callback), mnode);
 
-
     //  renderer = lives_cell_renderer_text_new ();
     column = lives_tree_view_column_new_with_attributes(_("value"),
              renderer,
@@ -735,7 +684,6 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
              "adjustment", ADJUSTMENT,
              NULL);
     lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
-
   }
 
   lives_widget_show(mnode->treev2);
@@ -749,12 +697,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev2, 3, 4, row, row + 1,
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
-
-
-
 }
-
-
 
 
 static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
@@ -792,15 +735,7 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
     }
     lps--;
   }
-
 }
-
-
-
-
-
-
-
 
 
 static void on_omc_combo_entry_changed(LiVESCombo *combo, livespointer ptr) {
@@ -845,10 +780,7 @@ static void on_omc_combo_entry_changed(LiVESCombo *combo, livespointer ptr) {
   mnode->macro = i;
   omc_learn_link_params(mnode);
   omc_macro_row_add_params(mnode, row, omclw);
-
 }
-
-
 
 
 static void cell_toggled_callback(LiVESCellRenderer *toggle, const char *path_string, livespointer user_data) {
@@ -889,9 +821,7 @@ static void cell_toggled_callback(LiVESCellRenderer *toggle, const char *path_st
   lives_tree_store_set(mnode->gtkstore, &iter, FILTER_COLUMN, mnode->matchp[row], -1);
 
   omc_learn_link_params(mnode);
-
 }
-
 
 
 static void cell_edited_callback(LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text, livespointer user_data) {
@@ -938,14 +868,7 @@ static void cell_edited_callback(LiVESCellRenderer *spinbutton, const char *path
   }
 
   lives_tree_store_set(mnode->gtkstore, &iter, col, new_text, -1);
-
 }
-
-
-
-
-
-
 
 
 static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int row, omclearn_w *omclw) {
@@ -959,7 +882,6 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
     if (omc_macros[i].msg == NULL) break;
 
     lives_combo_append_text(LIVES_COMBO(combo), omc_macros[i].macro_text);
-
   }
 
   if (mnode->macro != -1) {
@@ -973,7 +895,6 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
 
   return combo;
 }
-
 
 
 static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mnode, const char *string, omclearn_w *omclw) {
@@ -1116,7 +1037,6 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
            NULL);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
-
   renderer = lives_cell_renderer_toggle_new();
   column = lives_tree_view_column_new_with_attributes(_("x"),
            renderer,
@@ -1133,7 +1053,6 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
            NULL);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
-
   renderer = lives_cell_renderer_spin_new();
 
   if (renderer != NULL) {
@@ -1148,8 +1067,6 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
     lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
-
-
     column = lives_tree_view_column_new_with_attributes(_("+ offset1"),
              renderer,
              LIVES_TREE_VIEW_COLUMN_TEXT, OFFS1_COLUMN,
@@ -1160,7 +1077,6 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   renderer = lives_cell_renderer_spin_new();
 
   if (renderer != NULL) {
-
     spinadj = (LiVESObject *)lives_adjustment_new(1., -100000., 100000., 1., 10., 0);
 
 #ifdef GUI_GTK
@@ -1172,13 +1088,11 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(SCALE_COLUMN));
     lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
-
     column = lives_tree_view_column_new_with_attributes(_("* scale"),
              renderer,
              LIVES_TREE_VIEW_COLUMN_TEXT, SCALE_COLUMN,
              NULL);
     lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
-
   }
 
   renderer = lives_cell_renderer_spin_new();
@@ -1193,7 +1107,6 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS2_COLUMN));
     lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
-
 
     column = lives_tree_view_column_new_with_attributes(_("+ offset2"),
              renderer,
@@ -1226,14 +1139,9 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
                      (LiVESAttachOptions) 0,
                      (LiVESAttachOptions)(0), 0, 0);
 
-
   if (mnode->macro == -1) lives_widget_set_sensitive(omclw->clear_button, TRUE);
   lives_widget_set_sensitive(omclw->del_all_button, TRUE);
-
 }
-
-
-
 
 
 static void killit(LiVESWidget *widget, livespointer user_data) {
@@ -1288,7 +1196,6 @@ static void show_existing(omclearn_w *omclw) {
 }
 
 
-
 static void clear_unmatched(LiVESButton *button, livespointer user_data) {
   omclearn_w *omclw = (omclearn_w *)user_data;
 
@@ -1301,7 +1208,6 @@ static void clear_unmatched(LiVESButton *button, livespointer user_data) {
   remove_all_nodes(FALSE, omclw);
 
   show_existing(omclw);
-
 }
 
 
@@ -1315,15 +1221,12 @@ static void del_all(LiVESButton *button, livespointer user_data) {
   lives_container_foreach(LIVES_CONTAINER(omclw->table), killit, NULL);
 
   remove_all_nodes(TRUE, omclw);
-
 }
-
 
 
 static void close_learner_dialog(LiVESButton *button, livespointer user_data) {
   mainw->cancelled = CANCEL_USER;
 }
-
 
 
 static omclearn_w *create_omclearn_dialog(void) {
@@ -1382,7 +1285,6 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_widget_set_sensitive(omclw->del_all_button, FALSE);
 
-
   ok_button = lives_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
   lives_widget_set_size_request(ok_button, DEF_BUTTON_WIDTH * 4, -1);
   lives_container_set_border_width(LIVES_CONTAINER(ok_button), widget_opts.border_width);
@@ -1417,9 +1319,6 @@ static omclearn_w *create_omclearn_dialog(void) {
 }
 
 
-
-
-
 static void init_omc_macros(void) {
   int i;
 
@@ -1436,7 +1335,6 @@ static void init_omc_macros(void) {
 
   omc_macros[1].msg = lives_strdup("/video/stop");
   omc_macros[1].macro_text = lives_strdup(_("Stop video playback"));
-
 
   omc_macros[2].msg = lives_strdup("/clip/foreground/select");
   omc_macros[2].macro_text = lives_strdup(_("Clip select <clipnum>"));
@@ -1533,7 +1431,6 @@ static void init_omc_macros(void) {
   omc_macros[25].info_text = lives_strdup(_("Set <value> of pth parameter for the playback plugin."));
   omc_macros[25].nparams = 2;
 
-
   for (i = 0; i < N_OMC_MACROS; i++) {
     if (omc_macros[i].msg != NULL) {
       if (omc_macros[i].nparams > 0) {
@@ -1551,14 +1448,12 @@ static void init_omc_macros(void) {
     }
   }
 
-
   // clip select
   omc_macros[2].ptypes[0] = OMC_PARAM_INT;
   omc_macros[2].mini[0] = omc_macros[2].vali[0] = 1;
   omc_macros[2].maxi[0] = 100000;
   // TRANSLATORS: short form of "clip number"
   omc_macros[2].pname[0] = lives_strdup(_("clipnum"));
-
 
   // set fps (will be handled to avoid 0.)
   omc_macros[9].ptypes[0] = OMC_PARAM_DOUBLE;
@@ -1622,7 +1517,6 @@ static void init_omc_macros(void) {
   // TRANSLATORS: short form of "frames per second"
   omc_macros[21].pname[0] = lives_strdup(_("fps_ratio"));
 
-
   // clip retrigger
   omc_macros[22].ptypes[0] = OMC_PARAM_INT;
   omc_macros[22].mini[0] = omc_macros[22].vali[0] = 1;
@@ -1646,7 +1540,6 @@ static void init_omc_macros(void) {
   // TRANSLATORS: as in keyboard key
   omc_macros[24].pname[0] = lives_strdup(_("key"));
 
-
   // param
   omc_macros[25].ptypes[0] = OMC_PARAM_INT;
   omc_macros[25].mini[0] = 0;
@@ -1662,7 +1555,6 @@ static void init_omc_macros(void) {
   omc_macros[25].maxd[1] = 0.;
   omc_macros[25].vald[1] = 0.;
   omc_macros[25].pname[1] = lives_strdup(_("value"));
-
 }
 
 
@@ -1695,7 +1587,6 @@ static int get_nfixed(int type, const char *string) {
 }
 
 
-
 static boolean match_filtered_params(lives_omc_match_node_t *mnode, const char *sig, int nfixed) {
   int i;
   char **array = lives_strsplit(sig, " ", -1);
@@ -1713,8 +1604,6 @@ static boolean match_filtered_params(lives_omc_match_node_t *mnode, const char *
   lives_strfreev(array);
   return TRUE;
 }
-
-
 
 
 static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *sig) {
@@ -1770,10 +1659,8 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *si
   do_blocking_error_dialog(msg);
   if (msg!=NULL) lives_free(msg);
 
-
   return NULL;
   }*/
-
 
 
 static LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char *string2) {
@@ -1793,9 +1680,7 @@ static LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char
   }
 
   return match + 1;
-
 }
-
 
 
 static LIVES_INLINE int get_nth_elem(const char *string, int idx) {
@@ -1804,9 +1689,6 @@ static LIVES_INLINE int get_nth_elem(const char *string, int idx) {
   lives_strfreev(array);
   return retval;
 }
-
-
-
 
 
 static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index, const char *string, int nfixed) {
@@ -1858,8 +1740,6 @@ static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index,
 }
 
 
-
-
 static int *omclearn_get_values(const char *string, int nfixed) {
   register int i, j;
   size_t slen, tslen;
@@ -1899,10 +1779,7 @@ static int *omclearn_get_values(const char *string, int nfixed) {
 }
 
 
-
-
 void omclearn_match_control(lives_omc_match_node_t *mnode, int str_type, int index, const char *string, int nfixed, omclearn_w *omclw) {
-
   if (nfixed == -1) {
     // already there : allow user to update
     return;
@@ -1916,12 +1793,7 @@ void omclearn_match_control(lives_omc_match_node_t *mnode, int str_type, int ind
   // add combo box on right
 
   omc_learner_add_row(str_type, index, mnode, string, omclw);
-
-
 }
-
-
-
 
 
 lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omclearn_w *omclw) {
@@ -1939,11 +1811,9 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
 
   // if not we allow the user to match it to any macro that has n or less parameters, where n is the number of variables in string
 
-
   lives_omc_match_node_t *mnode;
 
   int nfixed = get_nfixed(str_type, string);
-
 
   switch (str_type) {
   case OMC_MIDI_CONTROLLER:
@@ -2046,7 +1916,6 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
 }
 
 
-
 // here we process a string which is formed of (supertype) (type) [(idx)] [(values)]
 // eg "val_for_js js_button idx_1  1"  => "2 3 1
 
@@ -2098,7 +1967,6 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
 
       // basically only messages which will trigger start of playback
 
-
       // further checks are performed when enabling/toggling an effect to see whether it is a generator
 
       if (oscbuf != NULL) {
@@ -2116,9 +1984,6 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
   }
   return ret;
 }
-
-
-
 
 
 void on_midi_learn_activate(LiVESMenuItem *menuitem, livespointer user_data) {
@@ -2187,11 +2052,7 @@ void on_midi_learn_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->cancelled = CANCEL_NONE;
 
   lives_free(omclw);
-
 }
-
-
-
 
 
 static void write_fx_tag(const char *string, int nfixed, lives_omc_match_node_t *mnode, lives_omc_macro_t *omacro, char *typetags) {
@@ -2260,14 +2121,6 @@ static void write_fx_tag(const char *string, int nfixed, lives_omc_match_node_t 
 }
 
 
-
-
-
-
-
-
-
-
 OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
   int macro, nfixed;
   lives_omc_match_node_t *mnode;
@@ -2311,9 +2164,7 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
 
   OSC_writeAddressAndTypes(&obuf, omacro.msg, typetags);
 
-
   if (omacro.nparams > 0) {
-
     vals = omclearn_get_values(string, nfixed);
 
     for (i = 0; i < omacro.nparams; i++) {
@@ -2321,7 +2172,6 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
       j = mnode->map[i];
 
       if (j > -1) {
-
         if (macro == 25 && i == 1 && mainw->vpp != NULL && mainw->vpp->play_params != NULL && oval0 < mainw->vpp->num_play_params) {
           // auto scale for playback plugin params
 
@@ -2421,15 +2271,10 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
 }
 
 
-
-
-
-
 /////////////////////////////////////
 
 /** Save midi mapping to an external file
  */
-
 
 void on_midi_save_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESSList *slist = omc_node_list;
@@ -2518,7 +2363,6 @@ void on_midi_save_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (retval != LIVES_RESPONSE_CANCEL) d_print_done();
 
   lives_free(save_file);
-
 }
 
 
@@ -2539,14 +2383,13 @@ static void do_midi_load_error(const char *fname) {
   d_print_failed();
 }
 
+
 static void do_midi_version_error(const char *fname) {
   char *msg = lives_strdup_printf(_("\n\nInvalid version in file\n%s\n"), fname);
   do_blocking_error_dialog(msg);
   lives_free(msg);
   d_print_failed();
 }
-
-
 
 
 void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
@@ -2622,7 +2465,6 @@ void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   for (i = 0; i < nnodes; i++) {
-
     bytes = lives_read_le(fd, &srchlen, 4, TRUE);
     if (bytes < 4) {
       do_midi_load_error(load_file);
@@ -2716,7 +2558,6 @@ void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         close(fd);
         return;
       }
-
       bytes = lives_read_le(fd, &mnode->min[j], 4, TRUE);
       if (bytes < 4) {
         do_midi_load_error(load_file);
@@ -2731,7 +2572,6 @@ void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         close(fd);
         return;
       }
-
       bytes = lives_read_le(fd, &mnode->matchp[j], 4, TRUE);
       if (bytes < 4) {
         do_midi_load_error(load_file);
@@ -2783,7 +2623,6 @@ void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   close(fd);
   d_print_done();
 
-
 #ifdef OMC_MIDI_IMPL
   if (!mainw->ext_cntl[EXT_CNTL_MIDI]) midi_open();
 #endif
@@ -2791,8 +2630,6 @@ void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 #ifdef OMC_JS_IMPL
   if (!mainw->ext_cntl[EXT_CNTL_JS]) js_open();
 #endif
-
 }
-
 
 #endif

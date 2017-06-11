@@ -10,6 +10,7 @@
 #include "ldvinterface.h"
 #include "callbacks.h"
 
+
 struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   LiVESWidget *hbuttonbox1;
   LiVESWidget *hbuttonbox2;
@@ -43,14 +44,11 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   lives_box_pack_start(LIVES_BOX(hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
 
-
   dvgrabw->dirname = lives_filename_to_utf8(lives_get_current_dir(), -1, NULL, NULL, NULL);
   dvgrabw->dirent = lives_standard_entry_new(NULL, FALSE, dvgrabw->dirname, -1, PATH_MAX,
                     LIVES_BOX(hbox), NULL);
 
-
   lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)dvgrabw->dirent);
-
 
   //////////////////
 
@@ -71,7 +69,6 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   dvgrabw->split = lives_standard_check_button_new(_("_Split into scenes"), TRUE, LIVES_BOX(hbox), NULL);
-
 
   // TODO - widget_opts.editable
   dvgrabw->status_entry = lives_entry_new();
@@ -116,7 +113,6 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
             _("\nUse this tool to control your camera and grab clips.\nAfter grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
   lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height * 4);
 
-
   hbuttonbox2 = lives_hbutton_box_new();
   lives_box_pack_start(LIVES_BOX(vbox), hbuttonbox2, FALSE, FALSE, widget_opts.packing_height);
 
@@ -124,7 +120,6 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox2), dvgrabw->quit);
   lives_widget_set_can_focus_and_default(dvgrabw->quit);
-
 
   //////////////////////////////////////////////////////////////////////////////////////////
 

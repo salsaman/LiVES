@@ -1,6 +1,6 @@
 // lbindings.c
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman@gmail.com> 2015
+// (c) G. Finch <salsaman+lives@gmail.com> 2015 - 2017
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -15,20 +15,16 @@
 
 #include "liblives.hpp"
 
-
 typedef boolean Boolean;
 
 #include <libOSC/libosc.h>
 #include <libOSC/OSC-client.h>
-
-
 
 typedef struct {
   // c
   ulong id;
   char *msg;
 } msginfo;
-
 
 typedef struct {
   // i, c
@@ -37,14 +33,12 @@ typedef struct {
   char *string;
 } lset;
 
-
 typedef struct {
   // i,v
   ulong id;
   int arglen;
   const void *vargs;
 } oscdata;
-
 
 typedef struct {
   // c, d, i
@@ -54,7 +48,6 @@ typedef struct {
   int frames;
 } opfidata;
 
-
 typedef struct {
   // c, c, i
   ulong id;
@@ -63,18 +56,15 @@ typedef struct {
   int preview_type;
 } fprev;
 
-
 typedef struct {
   // b
   ulong id;
   boolean setting;
 } sintdata;
 
-
 typedef struct {
   ulong id;
 } udata;
-
 
 typedef struct {
   // i, i, i
@@ -84,7 +74,6 @@ typedef struct {
   int idx;
 } fxmapdata;
 
-
 typedef struct {
   // c, b
   // boolean pref
@@ -93,7 +82,6 @@ typedef struct {
   boolean val;
 } bpref;
 
-
 typedef struct {
   // i, b
   // boolean pref
@@ -101,7 +89,6 @@ typedef struct {
   int integ;
   boolean val;
 } ibpref;
-
 
 typedef struct {
   // c, i, b
@@ -112,7 +99,6 @@ typedef struct {
   boolean val;
 } bmpref;
 
-
 typedef struct {
   // c, i
   // int pref
@@ -120,7 +106,6 @@ typedef struct {
   char *prefidx;
   int val;
 } ipref;
-
 
 typedef struct {
   // i, i
@@ -131,7 +116,6 @@ typedef struct {
   int val;
 } iipref;
 
-
 typedef struct {
   // i, b, b
   ulong id;
@@ -140,14 +124,12 @@ typedef struct {
   boolean with_audio;
 } iblock;
 
-
 typedef struct {
   ulong id;
   track_rect *block;
   int track;
   double time;
 } mblockdata;
-
 
 
 /////////////////////////////////////////
@@ -160,11 +142,7 @@ boolean lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSC
 boolean lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
 
 
-
 /// osc utils
-
-
-
 
 int padup(char **str, int arglen) {
   int newlen = pad4(arglen);
@@ -206,7 +184,6 @@ static int add_string_arg(char **str, int arglen, const char *val) {
 
 
 /////////// value return functions ///////////////////////
-
 
 static void ext_caller_return_int(ulong caller_id, int ret) {
   // this is for the C++ binding
@@ -304,10 +281,12 @@ enum {
   const_domain_insert_mode
 };
 
+
 inline int trans_rev(int consta, int a, int b) {
   if (consta == a) return b;
   else return consta;
 }
+
 
 int trans_constant(int consta, int domain) {
   int nconsta;
@@ -359,7 +338,6 @@ int trans_constant(int consta, int domain) {
     if (consta == LIVES_GRAVITY_RIGHT) return GRAV_MODE_RIGHT;
   }
 
-
   if (domain == const_domain_insert_mode) {
     if (consta == LIVES_INSERT_MODE_NORMAL) return INSERT_MODE_NORMAL;
   }
@@ -394,7 +372,6 @@ boolean get_rte_key_is_enabled(int key) {
 
 //// interface callers
 
-
 static boolean call_osc_show_info(livespointer text) {
   // function that is picked up on idle
   if (mainw != NULL && !mainw->go_away && !mainw->is_processing) {
@@ -403,7 +380,6 @@ static boolean call_osc_show_info(livespointer text) {
   lives_free(text);
   return FALSE;
 }
-
 
 
 static boolean call_osc_show_blocking_info(livespointer data) {
@@ -561,7 +537,6 @@ static boolean call_set_sepwin(livespointer data) {
 }
 
 
-
 static boolean call_set_fullscreen(livespointer data) {
   sintdata *sint = (sintdata *)data;
   if (mainw != NULL && !mainw->go_away) {
@@ -623,7 +598,6 @@ static boolean call_set_pref_int(livespointer data) {
   lives_free(data);
   return FALSE;
 }
-
 
 
 static boolean call_set_pref_bitmapped(livespointer data) {
@@ -864,8 +838,6 @@ static boolean call_wipe_layout(livespointer data) {
 }
 
 
-
-
 static boolean call_choose_layout(livespointer data) {
   iblock *fxdata = (iblock *)data;
   char *lname = lives_strdup("");
@@ -879,8 +851,6 @@ static boolean call_choose_layout(livespointer data) {
   lives_free(data);
   return FALSE;
 }
-
-
 
 
 static boolean call_render_layout(livespointer data) {
@@ -910,7 +880,6 @@ static boolean call_render_layout(livespointer data) {
 
 
 
-
 static boolean call_reload_layout(livespointer data) {
   msginfo *mdata = (msginfo *)data;
   boolean resp = FALSE;
@@ -931,7 +900,6 @@ static boolean call_reload_layout(livespointer data) {
   lives_free(mdata);
   return resp;
 }
-
 
 
 static boolean call_save_layout(livespointer data) {
@@ -1028,7 +996,6 @@ static boolean call_select_all(livespointer data) {
 }
 
 
-
 static boolean call_select_start(livespointer data) {
   iipref *idata = (iipref *)data;
 
@@ -1081,7 +1048,6 @@ static boolean call_select_end(livespointer data) {
 }
 
 
-
 static boolean call_insert_block(livespointer data) {
   iblock *idata = (iblock *)data;
   boolean ins_audio;
@@ -1113,7 +1079,6 @@ static boolean call_insert_block(livespointer data) {
 
 
 
-
 static boolean call_remove_block(livespointer data) {
   mblockdata *rdata = (mblockdata *)data;
 
@@ -1127,7 +1092,6 @@ static boolean call_remove_block(livespointer data) {
   lives_free(data);
   return FALSE;
 }
-
 
 
 static boolean call_move_block(livespointer data) {
@@ -1148,7 +1112,6 @@ static boolean call_move_block(livespointer data) {
   lives_free(data);
   return FALSE;
 }
-
 
 
 static boolean call_fx_enable(livespointer data) {
@@ -1215,7 +1178,6 @@ static boolean call_set_loop_mode(livespointer data) {
 }
 
 
-
 static boolean call_resync_fps(livespointer data) {
   iipref *idata = (iipref *)data;
   if (mainw != NULL && mainw->playing_file > -1) {
@@ -1225,7 +1187,6 @@ static boolean call_resync_fps(livespointer data) {
   lives_free(data);
   return FALSE;
 }
-
 
 
 static boolean call_cancel_proc(livespointer data) {
@@ -1242,12 +1203,9 @@ static boolean call_cancel_proc(livespointer data) {
 }
 
 
-
-
 //////////////////////////////////////////////////////////////////
 
 /// idlefunc hooks
-
 
 boolean idle_show_info(const char *text, boolean blocking, ulong id) {
   if (mainw == NULL || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL)) || mainw->go_away ||
@@ -1325,7 +1283,6 @@ boolean idle_insert_vtrack(boolean in_front, ulong id) {
 }
 
 
-
 boolean idle_set_current_time(double time, ulong id) {
   opfidata *info;
 
@@ -1375,7 +1332,6 @@ boolean idle_stop_playback(ulong id) {
 
   return TRUE;
 }
-
 
 
 boolean idle_quit(pthread_t *gtk_thread) {
@@ -1453,7 +1409,6 @@ boolean idle_choose_set(ulong id) {
 }
 
 
-
 boolean idle_set_set_name(ulong id) {
   if (mainw == NULL || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL)) || mainw->go_away ||
       mainw->is_processing ||
@@ -1501,7 +1456,6 @@ boolean idle_reload_set(const char *setname, ulong id) {
   lives_idle_add(call_reload_set, (livespointer)data);
   return TRUE;
 }
-
 
 
 boolean idle_set_interactive(boolean setting, ulong id) {
@@ -1556,7 +1510,6 @@ boolean idle_set_fullscreen_sepwin(boolean setting, ulong id) {
 }
 
 
-
 boolean idle_set_ping_pong(boolean setting, ulong id) {
   sintdata *data;
 
@@ -1568,7 +1521,6 @@ boolean idle_set_ping_pong(boolean setting, ulong id) {
   lives_idle_add(call_set_ping_pong, (livespointer)data);
   return TRUE;
 }
-
 
 
 boolean idle_set_gravity(int grav, ulong id) {
@@ -1597,7 +1549,6 @@ boolean idle_set_insert_mode(int mode, ulong id) {
 }
 
 
-
 boolean idle_map_fx(int key, int mode, int idx, ulong id) {
   fxmapdata *data;
 
@@ -1613,7 +1564,6 @@ boolean idle_map_fx(int key, int mode, int idx, ulong id) {
   lives_idle_add(call_map_effect, (livespointer)data);
   return TRUE;
 }
-
 
 
 boolean idle_unmap_fx(int key, int mode, ulong id) {
@@ -1634,7 +1584,6 @@ boolean idle_unmap_fx(int key, int mode, ulong id) {
 }
 
 
-
 boolean idle_fx_setmode(int key, int mode, ulong id) {
   fxmapdata *data;
 
@@ -1652,7 +1601,6 @@ boolean idle_fx_setmode(int key, int mode, ulong id) {
 }
 
 
-
 boolean idle_fx_enable(int key, boolean setting, ulong id) {
   fxmapdata *data;
 
@@ -1668,7 +1616,6 @@ boolean idle_fx_enable(int key, boolean setting, ulong id) {
   lives_idle_add(call_fx_enable, (livespointer)data);
   return TRUE;
 }
-
 
 
 boolean idle_set_pref_bool(const char *prefidx, boolean val, ulong id) {
@@ -1720,7 +1667,6 @@ boolean idle_set_pref_bitmapped(const char *prefidx, int bitfield, boolean val, 
 }
 
 
-
 boolean idle_set_if_mode(lives_interface_mode_t mode, ulong id) {
   iipref *data;
 
@@ -1734,7 +1680,6 @@ boolean idle_set_if_mode(lives_interface_mode_t mode, ulong id) {
   lives_idle_add(call_set_if_mode, (livespointer)data);
   return TRUE;
 }
-
 
 
 boolean idle_insert_block(int clipno, boolean ign_sel, boolean with_audio, ulong id) {
@@ -1817,7 +1762,6 @@ boolean idle_wipe_layout(boolean force, ulong id) {
 }
 
 
-
 boolean idle_choose_layout(ulong id) {
   iblock *data;
 
@@ -1831,7 +1775,6 @@ boolean idle_choose_layout(ulong id) {
   lives_idle_add(call_choose_layout, (livespointer)data);
   return TRUE;
 }
-
 
 
 boolean idle_reload_layout(const char *lname, ulong id) {
@@ -1848,8 +1791,6 @@ boolean idle_reload_layout(const char *lname, ulong id) {
   lives_idle_add(call_reload_layout, (livespointer)data);
   return TRUE;
 }
-
-
 
 
 boolean idle_save_layout(const char *lname, ulong id) {
@@ -1869,7 +1810,6 @@ boolean idle_save_layout(const char *lname, ulong id) {
 }
 
 
-
 boolean idle_render_layout(boolean with_aud, boolean normalise_aud, ulong id) {
   iblock *data;
 
@@ -1885,7 +1825,6 @@ boolean idle_render_layout(boolean with_aud, boolean normalise_aud, ulong id) {
   lives_idle_add(call_render_layout, (livespointer)data);
   return TRUE;
 }
-
 
 
 boolean idle_select_all(int cnum, ulong id) {
@@ -1921,7 +1860,6 @@ boolean idle_select_start(int cnum, int frame, ulong id) {
 }
 
 
-
 boolean idle_select_end(int cnum, int frame, ulong id) {
   iipref *data;
 
@@ -1937,7 +1875,6 @@ boolean idle_select_end(int cnum, int frame, ulong id) {
   lives_idle_add(call_select_end, (livespointer)data);
   return TRUE;
 }
-
 
 
 boolean idle_set_current_fps(double fps, ulong id) {
@@ -1969,7 +1906,6 @@ boolean idle_set_current_frame(int frame, boolean bg, ulong id) {
 }
 
 
-
 boolean idle_set_loop_mode(int mode, ulong id) {
   iipref *data;
 
@@ -1981,7 +1917,6 @@ boolean idle_set_loop_mode(int mode, ulong id) {
   lives_idle_add(call_set_loop_mode, (livespointer)data);
   return TRUE;
 }
-
 
 
 boolean idle_resync_fps(ulong id) {
@@ -1996,7 +1931,6 @@ boolean idle_resync_fps(ulong id) {
 }
 
 
-
 boolean idle_cancel_proc(ulong id) {
   iipref *data;
 
@@ -2008,3 +1942,4 @@ boolean idle_cancel_proc(ulong id) {
   lives_idle_add(call_cancel_proc, (livespointer)data);
   return TRUE;
 }
+

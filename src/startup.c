@@ -4,14 +4,10 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-
 // functions for first time startup
 
 #include "main.h"
 #include "interface.h"
-
-
-
 
 
 static boolean prompt_existing_dir(char *dirname, uint64_t freespace, boolean wrtable) {
@@ -33,9 +29,6 @@ static boolean prompt_existing_dir(char *dirname, uint64_t freespace, boolean wr
   lives_free(msg);
   return res;
 }
-
-
-
 
 
 static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable) {
@@ -71,7 +64,6 @@ void close_file(int current_file, boolean tshoot) {
     lives_free(com);
   }
 }
-
 
 
 boolean do_workdir_query(void) {
@@ -110,7 +102,6 @@ top:
       lives_free(dirname);
       continue;
     }
-
 
     if (lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) {
       if (is_writeable_dir(dirname)) {
@@ -154,7 +145,6 @@ top:
     if (lives_mkdir_with_parents(dirname, capable->umask) == -1) goto top;
   }
 
-
   lives_snprintf(prefs->workdir, PATH_MAX, "%s", dirname);
   lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
 
@@ -166,9 +156,6 @@ top:
   lives_free(dirname);
   return TRUE;
 }
-
-
-
 
 
 static void on_init_aplayer_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
@@ -195,10 +182,7 @@ static void on_init_aplayer_toggled(LiVESToggleButton *tbutton, livespointer use
     set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER2);
     break;
   }
-
 }
-
-
 
 
 boolean do_audio_choice_dialog(short startup_phase) {
@@ -290,8 +274,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
   lives_free(msg);
 
-
-
 #ifdef HAVE_PULSE_AUDIO
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -310,9 +292,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
                        LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
                        LIVES_INT_TO_POINTER(AUD_PLAYER_PULSE));
 
-
 #endif
-
 
 #ifdef ENABLE_JACK
   hbox = lives_hbox_new(FALSE, 0);
@@ -330,7 +310,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton1), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
                        LIVES_INT_TO_POINTER(AUD_PLAYER_JACK));
-
 
 #endif
 
@@ -351,8 +330,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
                          LIVES_INT_TO_POINTER(AUD_PLAYER_SOX));
-
-
   }
 
   if (capable->has_mplayer) {
@@ -371,8 +348,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton3), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
                          LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER));
-
-
   }
 
   if (capable->has_mplayer2) {
@@ -391,8 +366,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton4), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
                          LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER2));
-
-
   }
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
@@ -408,7 +381,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
-
 
   if (prefs->audio_player == -1) {
     do_no_mplayer_sox_error();
@@ -509,7 +481,6 @@ static LIVES_INLINE char *get_resource(char *fname) {
 }
 
 
-
 boolean do_startup_tests(boolean tshoot) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
@@ -559,7 +530,6 @@ boolean do_startup_tests(boolean tshoot) {
     title = lives_strdup(_("Troubleshoot"));
   }
 
-
   dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
@@ -588,9 +558,7 @@ boolean do_startup_tests(boolean tshoot) {
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
 
-
   lives_widget_set_sensitive(okbutton, FALSE);
-
 
   table = lives_table_new(10, 4, FALSE);
   lives_container_add(LIVES_CONTAINER(dialog_vbox), table);
@@ -599,11 +567,9 @@ boolean do_startup_tests(boolean tshoot) {
 
   lives_widget_context_update();
 
-
   // check for sox presence
 
   add_test(table, 0, _("Checking for \"sox\" presence"), TRUE);
-
 
   if (!capable->has_sox_sox) {
     success = fail_test(table, 0, _("You should install sox to be able to use all the audio features in LiVES"));
@@ -621,7 +587,6 @@ boolean do_startup_tests(boolean tshoot) {
   get_temp_handle(mainw->first_free_file, TRUE);
 
   if (success) {
-
     info_fd = -1;
 
     lives_rm(cfile->info_file);
@@ -686,9 +651,7 @@ boolean do_startup_tests(boolean tshoot) {
         if (fsize == 0) {
           fail_test(table, 1, _("You should install sox_fmt_all or similar"));
         }
-
         else pass_test(table, 1);
-
       }
     }
   }
@@ -708,7 +671,6 @@ boolean do_startup_tests(boolean tshoot) {
 
     return FALSE;
   }
-
 
   // check for mplayer presence
   success2 = TRUE;
@@ -751,7 +713,6 @@ boolean do_startup_tests(boolean tshoot) {
     success2 = pass_test(table, 2);
   }
 
-
   // if present
 
   // check if mplayer can decode audio
@@ -792,7 +753,6 @@ boolean do_startup_tests(boolean tshoot) {
 #endif
   }
 
-
   // check if mplayer can decode to png/(alpha)
 
   rname = get_resource("");
@@ -801,7 +761,6 @@ boolean do_startup_tests(boolean tshoot) {
     /// oops, no resources dir
     success4 = FALSE;
   } else success4 = TRUE;
-
 
   lives_free(rname);
 
@@ -818,7 +777,6 @@ boolean do_startup_tests(boolean tshoot) {
   // try to open resource vidtest.avi
 
   if (success2 && success4) {
-
     info_fd = -1;
 
     lives_rm(cfile->info_file);
@@ -845,7 +803,6 @@ boolean do_startup_tests(boolean tshoot) {
     }
 
     if (info_fd != -1) {
-
       close(info_fd);
 
       lives_sync();
@@ -926,21 +883,17 @@ boolean do_startup_tests(boolean tshoot) {
     }
   }
 
-
   // TODO - check each enabled decoder plugin in turn
-
 
   // check for convert
 
   add_test(table, 8, _("Checking for \"convert\" presence"), TRUE);
-
 
   if (!capable->has_convert) {
     success = fail_test(table, 8, _("Install imageMagick to be able to use all of the rendered effects"));
   } else {
     success = pass_test(table, 8);
   }
-
 
   close_file(current_file, tshoot);
   mainw->current_file = current_file;
@@ -982,14 +935,8 @@ boolean do_startup_tests(boolean tshoot) {
 }
 
 
-
-
-
-
 void do_startup_interface_query(void) {
-
   // prompt for startup ce or startup mt
-
 
   LiVESWidget *dialog, *dialog_vbox, *radiobutton0, *radiobutton1, *label;
   LiVESWidget *okbutton;
@@ -1001,9 +948,7 @@ void do_startup_interface_query(void) {
   txt2 = lives_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
   txt3 = lives_strdup(_("\n\nThe default can always be changed later from Preferences.\n"));
 
-
   msg = lives_strdup_printf("%s%s%s", txt1, txt2, txt3);
-
 
   lives_free(txt1);
   lives_free(txt2);
@@ -1016,7 +961,6 @@ void do_startup_interface_query(void) {
   label = lives_standard_label_new(msg);
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
   lives_free(msg);
-
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -1046,11 +990,9 @@ void do_startup_interface_query(void) {
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
 
-
   lives_widget_show_all(dialog);
 
   lives_dialog_run(LIVES_DIALOG(dialog));
-
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton1)))
     future_prefs->startup_interface = prefs->startup_interface = STARTUP_MT;
@@ -1060,9 +1002,7 @@ void do_startup_interface_query(void) {
   lives_widget_destroy(dialog);
 
   lives_widget_context_update();
-
 }
-
 
 
 void on_troubleshoot_activate(LiVESMenuItem *menuitem, livespointer user_data) {

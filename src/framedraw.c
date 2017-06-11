@@ -1,6 +1,6 @@
 // framedraw.c
 // LiVES
-// (c) G. Finch (salsaman@gmail.com) 2002 - 2013
+// (c) G. Finch (salsaman+lives@gmail.com) 2002 - 2017
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 // functions for the 'framedraw' widget - lets users draw on frames :-)
@@ -42,8 +42,8 @@ static double calc_fd_scale(int width, int height) {
   if (width > MAX_PRE_X) scale = (double)width / (double)MAX_PRE_X;
   if (height > MAX_PRE_Y && (height / MAX_PRE_Y > scale)) scale = (double)height / (double)MAX_PRE_Y;
   return scale;
-
 }
+
 
 static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
   int i;
@@ -89,22 +89,16 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
 }
 
 
-
-
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *framedraw, lives_rfx_t *rfx) {
   framedraw->rfx = rfx;
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(after_framedraw_frame_spinbutton_changed),
                              framedraw);
-
 }
 
 
-
 void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int height, lives_rfx_t *rfx) {
-
-
   // add mouse fn's so we can draw on frames
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
                        LIVES_GUI_CALLBACK(on_framedraw_mouse_update),
@@ -159,6 +153,7 @@ static boolean expose_fd_event(LiVESWidget *widget, LiVESXEventExpose ev) {
   redraw_framedraw_image();
   return TRUE;
 }
+
 
 void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_preview_button, int width, int height) {
   // adds the frame draw widget to box
@@ -235,7 +230,6 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_EXPOSE_EVENT,
                              LIVES_GUI_CALLBACK(expose_fd_event), NULL);
 
-
   hbox = lives_hbox_new(FALSE, 2);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
@@ -260,9 +254,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   if (!add_preview_button) {
     lives_widget_hide(mainw->framedraw_preview);
   }
-
 }
-
 
 
 void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload, LiVESPixbuf *pixbuf) {
@@ -308,7 +300,6 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
   resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST, WEED_PALETTE_END, 0);
 
   cr = layer_to_lives_painter(mainw->fd_layer);
-
 
   // draw on the lives_painter
 
@@ -442,7 +433,6 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
   default:
 
     break;
-
   }
 
   lives_painter_to_layer(cr, mainw->fd_layer);
@@ -451,7 +441,6 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
 
   redraw_framedraw_image();
 }
-
 
 
 void load_rfx_preview(lives_rfx_t *rfx) {
@@ -478,7 +467,6 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   clear_mainw_msg();
   mainw->write_failed = FALSE;
-
 
   if (cfile->clip_type == CLIP_TYPE_FILE && vend <= cfile->end) {
     // pull some frames for 10 seconds
@@ -539,7 +527,6 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   fclose(infofile);
 
-
   if (strncmp(mainw->msg, "completed", 9)) {
     if (rfx->num_in_channels > 0) {
       max_frame = atoi(mainw->msg);
@@ -589,13 +576,11 @@ void load_rfx_preview(lives_rfx_t *rfx) {
                                      tc, (double)cfile->hsize,
                                      (double)cfile->vsize, LIVES_INTERP_BEST);
 
-
   load_framedraw_image(pixbuf);
   redraw_framedraw_image();
 
   mainw->current_file = current_file;
 }
-
 
 
 void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton, lives_special_framedraw_rect_t *framedraw) {
@@ -608,8 +593,6 @@ void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton, lives
     load_rfx_preview(framedraw->rfx);
   } else framedraw_redraw(framedraw, TRUE, NULL);
 }
-
-
 
 
 void load_framedraw_image(LiVESPixbuf *pixbuf) {
@@ -645,11 +628,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
 
   if (mainw->fd_layer != NULL) weed_layer_free(mainw->fd_layer);
   mainw->fd_layer = NULL;
-
 }
-
-
-
 
 
 void redraw_framedraw_image(void) {
@@ -660,7 +639,6 @@ void redraw_framedraw_image(void) {
   int fd_height = lives_widget_get_allocation_height(mainw->framedraw);
 
   int width, height;
-
 
   if (mainw->fd_layer_orig == NULL) return;
 
@@ -683,7 +661,6 @@ void redraw_framedraw_image(void) {
   // layer to pixbuf
   pixbuf = layer_to_pixbuf(mainw->fd_layer);
 
-
   // get lives_painter for window
   cr = lives_painter_create_from_widget(mainw->framedraw);
 
@@ -698,14 +675,12 @@ void redraw_framedraw_image(void) {
     // convert pixbuf back to layer (layer_to_pixbuf destroys it)
     if (!pixbuf_to_layer(mainw->fd_layer, pixbuf)) lives_object_unref(pixbuf);
   }
-
 }
 
 
 // change cursor maybe when we enter or leave the framedraw window
 
 boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
-
   if (framedraw == NULL && mainw->multitrack != NULL) {
     framedraw = mainw->multitrack->framedraw;
     if (framedraw == NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL)
@@ -790,7 +765,6 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
     }
   }
 
-
   fd_width = lives_widget_get_allocation_width(widget);
   fd_height = lives_widget_get_allocation_height(widget);
 
@@ -848,12 +822,10 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (int)(ystart * (double)cfile->vsize + .5));
     }
 
-
     break;
   default:
     break;
   }
-
 
   if (mainw->framedraw_reset != NULL) {
     lives_widget_set_sensitive(mainw->framedraw_reset, TRUE);
@@ -868,6 +840,7 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
 
   return FALSE;
 }
+
 
 boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event, lives_special_framedraw_rect_t *framedraw) {
   // pointer moved in the framedraw widget
@@ -886,7 +859,6 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
                            widget, &xcurrenti, &ycurrenti);
 
-
   width = cfile->hsize;
   height = cfile->vsize;
 
@@ -902,7 +874,6 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
   ycurrent /= (double)height;
 
   noupdate = TRUE;
-
 
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT: {
@@ -976,7 +947,6 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
       }
     }
 
-
     break;
 
   default:
@@ -1038,7 +1008,6 @@ void after_framedraw_widget_changed(LiVESWidget *widget, lives_special_framedraw
 }
 
 
-
 void on_framedraw_reset_clicked(LiVESButton *button, lives_special_framedraw_rect_t *framedraw) {
   // reset to defaults
 
@@ -1081,5 +1050,4 @@ void on_framedraw_reset_clicked(LiVESButton *button, lives_special_framedraw_rec
   noupdate = FALSE;
 
   framedraw_redraw(framedraw, FALSE, NULL);
-
 }

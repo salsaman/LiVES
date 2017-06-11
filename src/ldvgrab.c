@@ -23,7 +23,6 @@ int g_rx_length; /* the size of a received packet */
 int g_alldone = 0; /* flag to indicate when to quit */
 int g_rx_channel = RX_CHANNEL;
 
-
 //////////////////////////////////////////////////////////////////////////
 
 #include "main.h"
@@ -104,6 +103,7 @@ void camdest(s_cam *cam) {
   lives_free(cam);
 }
 
+
 s_cam *camready(void) {
   rom1394_directory rom_dir;
 
@@ -144,9 +144,7 @@ s_cam *camready(void) {
   }
 
 
-
   for (j = 0; j < n_ports && cam->device == -1; j++) {
-
     if (raw1394_set_port(cam->handle, j) < 0) {
       msg = lives_strdup_printf(_("\nraw1394 - couldn't set port %d !\n"), j);
       d_print(msg);
@@ -155,7 +153,6 @@ s_cam *camready(void) {
     }
 
     for (i = 0; i < raw1394_get_nodecount(cam->handle); ++i) {
-
       if (rom1394_get_directory(cam->handle, i, &rom_dir) < 0) {
         msg = lives_strdup_printf(_("error reading config rom directory for node %d\n"), i);
         d_print(msg);
@@ -183,41 +180,40 @@ s_cam *camready(void) {
 }
 
 
-
-
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 void camplay(s_cam *cam) {
   avc1394_vcr_play(cam->handle, cam->device);
 }
 
+
 void camstop(s_cam *cam) {
   g_alldone = 1;
   avc1394_vcr_stop(cam->handle, cam->device);
 }
 
+
 void camrew(s_cam *cam) {
   avc1394_vcr_rewind(cam->handle, cam->device);
 }
+
 
 void camff(s_cam *cam) {
   avc1394_vcr_forward(cam->handle, cam->device);
 }
 
+
 void campause(s_cam *cam) {
   avc1394_vcr_pause(cam->handle, cam->device);
 }
+
 
 void cameject(s_cam *cam) {
   avc1394_vcr_eject(cam->handle, cam->device);
 }
 
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 char *find_free_camfile(int format) {
   char *filename = lives_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
@@ -305,7 +301,6 @@ boolean rec(s_cam *cam) {
 
   return TRUE;
 }
-
 
 
 void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {

@@ -4203,6 +4203,11 @@ boolean render_to_clip(boolean new_clip) {
         return FALSE;
       }
     }
+    else {
+      // prompt for clip name
+
+
+    }
 
     if (mainw->current_file > -1 && cfile != NULL && cfile->clip_type == CLIP_TYPE_GENERATOR) {
       weed_generator_end((weed_plant_t *)cfile->ext_src);
@@ -4225,7 +4230,7 @@ boolean render_to_clip(boolean new_clip) {
     }
 
     lives_freep((void **)&clipname);
-    
+
     if (prefs->render_prompt) {
       cfile->hsize = rdet->width;
       cfile->vsize = rdet->height;

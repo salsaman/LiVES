@@ -129,12 +129,11 @@ void create_merge_dialog(void) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  align_start_button = lives_standard_radio_button_new(_("Align _Starts"), TRUE, radiobutton_align_group, LIVES_BOX(hbox), NULL);
-  radiobutton_align_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(align_start_button));
+  align_start_button = lives_standard_radio_button_new(_("Align _Starts"), TRUE, &radiobutton_align_group, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  align_end_button = lives_standard_radio_button_new(_("Align _Ends"), TRUE, radiobutton_align_group, LIVES_BOX(hbox), NULL);
+  align_end_button = lives_standard_radio_button_new(_("Align _Ends"), TRUE, &radiobutton_align_group, LIVES_BOX(hbox), NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(align_end_button), !mainw->last_transition_align_start);
 
@@ -146,13 +145,12 @@ void create_merge_dialog(void) {
     label = lives_standard_label_new(_("What to do with extra clipboard frames -"));
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
-    merge_opts->ins_frame_button = lives_standard_radio_button_new(_("_Insert Frames"), TRUE, radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
-    radiobutton_insdrop_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(merge_opts->ins_frame_button));
+    merge_opts->ins_frame_button = lives_standard_radio_button_new(_("_Insert Frames"), TRUE, &radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
 
     merge_opts->ins_frame_function = lives_signal_connect(LIVES_GUI_OBJECT(merge_opts->ins_frame_button),
                                      LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_ins_frames_toggled), NULL);
 
-    merge_opts->drop_frame_button = lives_standard_radio_button_new(_("_Drop Frames"), TRUE, radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
+    merge_opts->drop_frame_button = lives_standard_radio_button_new(_("_Drop Frames"), TRUE, &radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(merge_opts->drop_frame_button), !mainw->last_transition_ins_frames);
   } else if ((cfile->end - cfile->start + 1) > cb_frames) {

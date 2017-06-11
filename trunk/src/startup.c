@@ -132,7 +132,6 @@ top:
         }
       }
     }
-
     ok = TRUE;
   }
 
@@ -278,8 +277,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  radiobutton0 = lives_standard_radio_button_new(_("Use _pulse audio player"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton0));
+  radiobutton0 = lives_standard_radio_button_new(_("Use _pulse audio player"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_PULSE;
 
@@ -298,8 +296,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  radiobutton1 = lives_standard_radio_button_new(_("Use _jack audio player"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton1));
+  radiobutton1 = lives_standard_radio_button_new(_("Use _jack audio player"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   if (prefs->audio_player == AUD_PLAYER_JACK || !capable->has_pulse_audio || prefs->audio_player == -1) {
     prefs->audio_player = AUD_PLAYER_JACK;
@@ -317,8 +314,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton2 = lives_standard_radio_button_new(_("Use _sox audio player"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
-    radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton2));
+    radiobutton2 = lives_standard_radio_button_new(_("Use _sox audio player"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_SOX;
 
@@ -336,7 +332,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton3 = lives_standard_radio_button_new(_("Use _mplayer audio player"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
+    radiobutton3 = lives_standard_radio_button_new(_("Use _mplayer audio player"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_MPLAYER;
 
@@ -354,7 +350,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton4 = lives_standard_radio_button_new(_("Use _mplayer2 audio player"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
+    radiobutton4 = lives_standard_radio_button_new(_("Use _mplayer2 audio player"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_MPLAYER2;
 
@@ -938,7 +934,7 @@ boolean do_startup_tests(boolean tshoot) {
 void do_startup_interface_query(void) {
   // prompt for startup ce or startup mt
 
-  LiVESWidget *dialog, *dialog_vbox, *radiobutton0, *radiobutton1, *label;
+  LiVESWidget *dialog, *dialog_vbox, *radiobutton, *label;
   LiVESWidget *okbutton;
   LiVESWidget *hbox;
   LiVESSList *radiobutton_group = NULL;
@@ -964,8 +960,7 @@ void do_startup_interface_query(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  radiobutton0 = lives_standard_radio_button_new(_("Start in _Clip Edit mode"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton0));
+  lives_standard_radio_button_new(_("Start in _Clip Edit mode"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   label = lives_standard_label_new(_("This is the best choice for simple editing tasks and for VJs\n"));
 
@@ -973,14 +968,14 @@ void do_startup_interface_query(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  radiobutton1 = lives_standard_radio_button_new(_("Start in _Multitrack mode"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton = lives_standard_radio_button_new(_("Start in _Multitrack mode"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   label = lives_standard_label_new(_("This is a better choice for complex editing tasks involving multiple clips.\n"));
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   if (prefs->startup_interface == STARTUP_MT) {
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1), TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
   }
 
   okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD, _("_Finish"));
@@ -994,7 +989,7 @@ void do_startup_interface_query(void) {
 
   lives_dialog_run(LIVES_DIALOG(dialog));
 
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton1)))
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton)))
     future_prefs->startup_interface = prefs->startup_interface = STARTUP_MT;
 
   set_int_pref(PREF_STARTUP_INTERFACE, prefs->startup_interface);

@@ -2544,10 +2544,9 @@ _prefsw *create_prefs_dialog(void) {
   label = lives_standard_label_new(_("Startup mode:"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, TRUE, 0);
 
-  prefsw->rb_startup_ce = lives_standard_radio_button_new(_("_Clip editor"), TRUE, st_interface_group, LIVES_BOX(hbox), NULL);
-  st_interface_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->rb_startup_ce));
+  prefsw->rb_startup_ce = lives_standard_radio_button_new(_("_Clip editor"), TRUE, &st_interface_group, LIVES_BOX(hbox), NULL);
 
-  prefsw->rb_startup_mt = lives_standard_radio_button_new(_("_Multitrack mode"), TRUE, st_interface_group, LIVES_BOX(hbox), NULL);
+  prefsw->rb_startup_mt = lives_standard_radio_button_new(_("_Multitrack mode"), TRUE, &st_interface_group, LIVES_BOX(hbox), NULL);
 
   if (future_prefs->startup_interface == STARTUP_MT) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rb_startup_mt), TRUE);
@@ -2655,11 +2654,10 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->mt_enter_prompt = lives_standard_radio_button_new(_("_Prompt me for width, height, fps and audio settings"), TRUE,
-                            mt_enter_prompt, LIVES_BOX(hbox), NULL);
-  mt_enter_prompt = lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->mt_enter_prompt));
+                            &mt_enter_prompt, LIVES_BOX(hbox), NULL);
 
   mt_enter_defs = lives_standard_radio_button_new(_("_Always use the following values:"), TRUE,
-                  mt_enter_prompt, LIVES_BOX(hbox), NULL);
+                  &mt_enter_prompt, LIVES_BOX(hbox), NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt_enter_defs), !prefs->mt_enter_prompt);
 
@@ -2717,8 +2715,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, TRUE, 0);
 
   hbox = lives_hbox_new(FALSE, 0);
-  prefsw->mt_autoback_every = lives_standard_radio_button_new(_("_Every"), TRUE, autoback_group, LIVES_BOX(hbox), NULL);
-  autoback_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->mt_autoback_every));
+  prefsw->mt_autoback_every = lives_standard_radio_button_new(_("_Every"), TRUE, &autoback_group, LIVES_BOX(hbox), NULL);
   lives_box_pack_start(LIVES_BOX(hbox2), hbox, TRUE, TRUE, 0);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -2730,13 +2727,11 @@ _prefsw *create_prefs_dialog(void) {
   add_fill_to_box(LIVES_BOX(hbox2));
 
   hbox = lives_hbox_new(FALSE, 0);
-  prefsw->mt_autoback_always = lives_standard_radio_button_new(_("After every _change"), TRUE, autoback_group, LIVES_BOX(hbox), NULL);
-  autoback_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->mt_autoback_always));
+  prefsw->mt_autoback_always = lives_standard_radio_button_new(_("After every _change"), TRUE, &autoback_group, LIVES_BOX(hbox), NULL);
   lives_box_pack_start(LIVES_BOX(hbox2), hbox, TRUE, TRUE, 0);
 
   hbox = lives_hbox_new(FALSE, 0);
-  prefsw->mt_autoback_never = lives_standard_radio_button_new(_("_Never"), TRUE, autoback_group, LIVES_BOX(hbox), NULL);
-  autoback_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->mt_autoback_never));
+  prefsw->mt_autoback_never = lives_standard_radio_button_new(_("_Never"), TRUE, &autoback_group, LIVES_BOX(hbox), NULL);
   lives_box_pack_start(LIVES_BOX(hbox2), hbox, TRUE, TRUE, 0);
 
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_every), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_mtbackevery_toggled),
@@ -2812,10 +2807,9 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
-  prefsw->jpeg = lives_standard_radio_button_new(_("_jpeg"), TRUE, jpeg_png, LIVES_BOX(hbox), NULL);
-  jpeg_png = lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->jpeg));
+  prefsw->jpeg = lives_standard_radio_button_new(_("_jpeg"), TRUE, &jpeg_png, LIVES_BOX(hbox), NULL);
 
-  png = lives_standard_radio_button_new(_("_png"), TRUE, jpeg_png, LIVES_BOX(hbox), NULL);
+  png = lives_standard_radio_button_new(_("_png"), TRUE, &jpeg_png, LIVES_BOX(hbox), NULL);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(png), !strcmp(prefs->image_ext, LIVES_FILE_EXT_PNG));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -3111,13 +3105,12 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
 
-  prefsw->rintaudio = lives_standard_radio_button_new(_("_Internal"), TRUE, asrc_group, LIVES_BOX(hbox), NULL);
+  prefsw->rintaudio = lives_standard_radio_button_new(_("_Internal"), TRUE, &asrc_group, LIVES_BOX(hbox), NULL);
 
-  asrc_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->rintaudio));
   add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->rextaudio = lives_standard_radio_button_new(_("_External (requires jack or pulse audio player)"),
-                      TRUE, asrc_group, LIVES_BOX(hbox), NULL);
+                      TRUE, &asrc_group, LIVES_BOX(hbox), NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefs->audio_src == AUDIO_SRC_EXT);
   add_fill_to_box(LIVES_BOX(hbox));
@@ -3901,10 +3894,9 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width * 2);
 
-  prefsw->ins_speed = lives_standard_radio_button_new(_("_Speed Up/Slow Down Insertion"), TRUE, rb_group2, LIVES_BOX(hbox), NULL);
-  rb_group2 = lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->ins_speed));
+  prefsw->ins_speed = lives_standard_radio_button_new(_("_Speed Up/Slow Down Insertion"), TRUE, &rb_group2, LIVES_BOX(hbox), NULL);
 
-  ins_resample = lives_standard_radio_button_new(_("_Resample Insertion"), TRUE, rb_group2, LIVES_BOX(hbox), NULL);
+  ins_resample = lives_standard_radio_button_new(_("_Resample Insertion"), TRUE, &rb_group2, LIVES_BOX(hbox), NULL);
 
   prefsw->cdda_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), prefsw->cdda_hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -4568,16 +4560,14 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->midi_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), prefsw->midi_hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->alsa_midi = lives_standard_radio_button_new((tmp = lives_strdup(_("Use _ALSA MIDI (recommended)"))), TRUE, alsa_midi_group,
+  prefsw->alsa_midi = lives_standard_radio_button_new((tmp = lives_strdup(_("Use _ALSA MIDI (recommended)"))), TRUE, &alsa_midi_group,
                       LIVES_BOX(prefsw->midi_hbox),
                       (tmp2 = lives_strdup(_("Create an ALSA MIDI port which other MIDI devices can be connected to"))));
 
   lives_free(tmp);
   lives_free(tmp2);
 
-  alsa_midi_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->alsa_midi));
-
-  raw_midi_button = lives_standard_radio_button_new((tmp = lives_strdup(_("Use _raw MIDI"))), TRUE, alsa_midi_group,
+  raw_midi_button = lives_standard_radio_button_new((tmp = lives_strdup(_("Use _raw MIDI"))), TRUE, &alsa_midi_group,
                     LIVES_BOX(prefsw->midi_hbox),
                     (tmp2 = lives_strdup(_("Read directly from the MIDI device"))));
 

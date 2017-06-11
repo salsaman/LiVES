@@ -1122,9 +1122,8 @@ lives_pandh_w *create_pandh_dialog(int type) {
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   pandhw->rb_anyhost = lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams from _any host")))
-                       , TRUE, radiobutton_group, LIVES_BOX(hbox),
+                       , TRUE, &radiobutton_group, LIVES_BOX(hbox),
                        (tmp2 = lives_strdup(_("Accept incoming LiVES streams from any connected host."))));
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(pandhw->rb_anyhost));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -1138,7 +1137,7 @@ lives_pandh_w *create_pandh_dialog(int type) {
 
 
   lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams only from the _specified host:")))
-                                  , TRUE, radiobutton_group, LIVES_BOX(hbox),
+                                  , TRUE, &radiobutton_group, LIVES_BOX(hbox),
                                   (tmp2 = lives_strdup(_("Accept LiVES streams from the specified host only."))));
 
   lives_free(tmp);

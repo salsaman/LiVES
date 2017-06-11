@@ -812,13 +812,11 @@ _insertw *create_insert_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
 
   radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Insert _before selection"))),
-                TRUE, radiobutton1_group, LIVES_BOX(hbox),
+                TRUE, &radiobutton1_group, LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Insert clipboard before selected frames"))));
 
   lives_free(tmp);
   lives_free(tmp2);
-
-  radiobutton1_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
 
   lives_table_attach(LIVES_TABLE(table), hbox, 0, 1, 0, 1,
                      (LiVESAttachOptions)(LIVES_FILL),
@@ -831,7 +829,7 @@ _insertw *create_insert_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
 
   radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Insert _after selection"))),
-                TRUE, radiobutton1_group, LIVES_BOX(hbox),
+                TRUE, &radiobutton1_group, LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Insert clipboard after selected frames"))));
 
   lives_table_attach(LIVES_TABLE(table), hbox, 0, 1, 1, 2,
@@ -844,12 +842,10 @@ _insertw *create_insert_dialog(void) {
 
   if (clipboard->achans == 0)
     insertw->with_sound = lives_standard_radio_button_new(_("Insert _with silence"),
-                          TRUE, radiobutton2_group, LIVES_BOX(hbox), NULL);
+                          TRUE, &radiobutton2_group, LIVES_BOX(hbox), NULL);
   else
     insertw->with_sound = lives_standard_radio_button_new(_("Insert _with sound"),
-                          TRUE, radiobutton2_group, LIVES_BOX(hbox), NULL);
-
-  radiobutton2_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(insertw->with_sound));
+                          TRUE, &radiobutton2_group, LIVES_BOX(hbox), NULL);
 
   lives_table_attach(LIVES_TABLE(table), hbox, 2, 3, 0, 1,
                      (LiVESAttachOptions)(LIVES_FILL),
@@ -860,7 +856,7 @@ _insertw *create_insert_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
 
   insertw->without_sound = lives_standard_radio_button_new(_("Insert with_out sound"),
-                           TRUE, radiobutton2_group, LIVES_BOX(hbox), NULL);
+                           TRUE, &radiobutton2_group, LIVES_BOX(hbox), NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(insertw->without_sound),
                                  !((cfile->achans > 0 || clipboard->achans > 0) && mainw->ccpd_with_sound));
@@ -1651,8 +1647,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
     tvcardw->radiobuttond = lives_standard_radio_button_new(_("Use default width, height and FPS"), FALSE,
-                            radiobutton_group, LIVES_BOX(hbox), NULL);
-    radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(tvcardw->radiobuttond));
+                            &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(tvcardw->radiobuttond), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(rb_tvcarddef_toggled),
@@ -1662,7 +1657,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
     lives_standard_radio_button_new(NULL, FALSE,
-                                    radiobutton_group, LIVES_BOX(hbox), NULL);
+                                    &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     tvcardw->spinbuttonw = lives_standard_spin_button_new(_("Width"), FALSE,
                            640., 4., 4096., 2., 2., 0,
@@ -1762,7 +1757,6 @@ aud_dialog_t *create_audfade_dialog(int type) {
 
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
-  LiVESWidget *rb_time;
   LiVESWidget *rb_sel;
   LiVESWidget *label;
 
@@ -1809,10 +1803,9 @@ aud_dialog_t *create_audfade_dialog(int type) {
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width * 5);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  rb_time = lives_standard_radio_button_new(label_text2, FALSE, radiobutton_group,
-            LIVES_BOX(hbox), NULL);
+  lives_standard_radio_button_new(label_text2, FALSE, &radiobutton_group,
+				  LIVES_BOX(hbox), NULL);
 
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(rb_time));
   if (label_text2 != NULL) lives_free(label_text2);
 
   max = cfile->laudio_time;
@@ -1826,7 +1819,7 @@ aud_dialog_t *create_audfade_dialog(int type) {
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width * 5);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  rb_sel = lives_standard_radio_button_new(_("selection"), FALSE, radiobutton_group, LIVES_BOX(hbox), NULL);
+  rb_sel = lives_standard_radio_button_new(_("selection"), FALSE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   audd->is_sel = FALSE;
 

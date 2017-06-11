@@ -2273,11 +2273,10 @@ LiVESWidget *create_rte_window(void) {
     hbox2 = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
-    key_grabs[i] = lives_standard_radio_button_new((tmp = lives_strdup(_("Key grab"))), FALSE, grab_group, LIVES_BOX(hbox2),
+    key_grabs[i] = lives_standard_radio_button_new((tmp = lives_strdup(_("Key grab"))), FALSE, &grab_group, LIVES_BOX(hbox2),
                    (tmp2 = lives_strdup(_("Grab keyboard for this effect key"))));
     lives_free(tmp);
     lives_free(tmp2);
-    grab_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(key_grabs[i]));
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_grabs[i]), mainw->rte_keys == i);
 
     gr_fns[i] = lives_signal_connect_after(LIVES_GUI_OBJECT(key_grabs[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -2299,8 +2298,7 @@ LiVESWidget *create_rte_window(void) {
       hbox2 = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
-      mode_radios[idx] = lives_standard_radio_button_new(_("Mode active"), FALSE, mode_group, LIVES_BOX(hbox2), NULL);
-      mode_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(mode_radios[idx]));
+      mode_radios[idx] = lives_standard_radio_button_new(_("Mode active"), FALSE, &mode_group, LIVES_BOX(hbox2), NULL);
 
       if (rte_key_getmode(i + 1) == j) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[idx]), TRUE);
 

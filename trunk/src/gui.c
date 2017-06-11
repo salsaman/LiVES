@@ -3363,31 +3363,28 @@ void make_preview_box(void) {
 
   lives_entry_set_width_chars(LIVES_ENTRY(mainw->preview_spinbutton), PREVSBWIDTHCHARS);
 
-  radiobutton_free = lives_standard_radio_button_new((tmp = lives_strdup(_("_Free"))), TRUE, radiobutton_group,
+  radiobutton_free = lives_standard_radio_button_new((tmp = lives_strdup(_("_Free"))), TRUE, &radiobutton_group,
                      LIVES_BOX(mainw->preview_hbox),
                      (tmp2 = lives_strdup(_("Free choice of frame number"))));
   lives_free(tmp);
   lives_free(tmp2);
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton_free));
 
-  radiobutton_start = lives_standard_radio_button_new((tmp = lives_strdup(_("_Start"))), TRUE, radiobutton_group,
+  radiobutton_start = lives_standard_radio_button_new((tmp = lives_strdup(_("_Start"))), TRUE, &radiobutton_group,
                       LIVES_BOX(mainw->preview_hbox),
                       (tmp2 = lives_strdup(_("Frame number is linked to start frame"))));
   lives_free(tmp);
   lives_free(tmp2);
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton_start));
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_start), mainw->prv_link == PRV_START);
 
-  radiobutton_end = lives_standard_radio_button_new((tmp = lives_strdup(_("_End"))), TRUE, radiobutton_group, LIVES_BOX(mainw->preview_hbox),
+  radiobutton_end = lives_standard_radio_button_new((tmp = lives_strdup(_("_End"))), TRUE, &radiobutton_group, LIVES_BOX(mainw->preview_hbox),
                     (tmp2 = lives_strdup(_("Frame number is linked to end frame"))));
   lives_free(tmp);
   lives_free(tmp2);
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton_end));
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_end), mainw->prv_link == PRV_END);
 
-  radiobutton_ptr = lives_standard_radio_button_new((tmp = lives_strdup(_("_Pointer"))), TRUE, radiobutton_group,
+  radiobutton_ptr = lives_standard_radio_button_new((tmp = lives_strdup(_("_Pointer"))), TRUE, &radiobutton_group,
                     LIVES_BOX(mainw->preview_hbox),
                     (tmp2 = lives_strdup(_("Frame number is linked to playback pointer"))));
   lives_free(tmp);

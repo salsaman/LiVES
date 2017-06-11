@@ -742,7 +742,7 @@ LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidge
 LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invisible_outline);
 
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, LiVESBox *box, const char *tooltip);
-LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList *rbgroup,
+LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList **rbgroup,
     LiVESBox *, const char *tooltip);
 LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_mnemonic, double val, double min,
     double max, double step, double page, int dp, LiVESBox *,

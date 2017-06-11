@@ -403,12 +403,10 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
 
   radiobutton_in = lives_standard_radio_button_new((tmp = lives_strdup(_("Transition _In"))), TRUE,
-                   radiobutton_group, LIVES_BOX(hbox),
+                   &radiobutton_group, LIVES_BOX(hbox),
                    (tmp2 = lives_strdup(_("Click to set the transition parameter to show only the front frame"))));
   lives_free(tmp);
   lives_free(tmp2);
-
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton_in));
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(radiobutton_in), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(transition_in_pressed),
@@ -448,7 +446,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
 
   widget_opts.pack_end = TRUE;
   radiobutton_out = lives_standard_radio_button_new((tmp = lives_strdup(_("Transition _Out"))), TRUE,
-                    radiobutton_group, LIVES_BOX(hbox),
+                    &radiobutton_group, LIVES_BOX(hbox),
                     (tmp2 = lives_strdup(_("Click to set the transition parameter to show only the rear frame"))));
 
   lives_free(tmp);
@@ -643,17 +641,16 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Generate to _Clipboard"))),
-                TRUE, radiobutton_group, LIVES_BOX(hbox),
+                TRUE, &radiobutton_group, LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Generate frames to the clipboard"))));
 
   lives_free(tmp);
   lives_free(tmp2);
 
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
 
   widget_opts.pack_end = TRUE;
   radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Generate to _New Clip"))),
-                TRUE, radiobutton_group, LIVES_BOX(hbox),
+                TRUE, &radiobutton_group, LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Generate frames to a new clip"))));
   widget_opts.pack_end = FALSE;
 
@@ -1423,16 +1420,16 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       if (group != NULL) rbgroup = group->rbgroup;
       else rbgroup = NULL;
 
-      radiobutton = lives_standard_radio_button_new(name, use_mnemonic, rbgroup, LIVES_BOX(hbox), param->desc);
+      radiobutton = lives_standard_radio_button_new(name, use_mnemonic, &rbgroup, LIVES_BOX(hbox), param->desc);
 
       if (group == NULL) {
         if (rfx->status == RFX_STATUS_WEED) {
           usrgrp_to_livesgrp[1] = add_usrgrp_to_livesgrp(usrgrp_to_livesgrp[1],
-                                  lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton)),
+                                  rbgroup,
                                   param->group);
         } else {
           usrgrp_to_livesgrp[0] = add_usrgrp_to_livesgrp(usrgrp_to_livesgrp[0],
-                                  lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton)),
+                                  rbgroup,
                                   param->group);
         }
       }
@@ -1440,7 +1437,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       group = get_group(rfx, param);
 
       if (group != NULL) {
-        group->rbgroup = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
+        group->rbgroup = rbgroup;
         if (get_bool_param(param->value)) {
           group->active_param = pnum + 1;
         }

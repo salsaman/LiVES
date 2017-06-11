@@ -646,8 +646,7 @@ boolean do_startup_tests(boolean tshoot) {
 
         if (fsize == 0) {
           fail_test(table, 1, _("You should install sox_fmt_all or similar"));
-        }
-        else pass_test(table, 1);
+        } else pass_test(table, 1);
       }
     }
   }

@@ -4147,7 +4147,7 @@ boolean render_to_clip(boolean new_clip) {
   // this function is called to actually start rendering mainw->event_list to a new/current clip
   char *com;
   char *clipname = NULL;
-  
+
   boolean retval = TRUE;
   boolean rendaud = TRUE;
   boolean response;
@@ -4187,18 +4187,17 @@ boolean render_to_clip(boolean new_clip) {
       } else xse |= AFORM_LITTLE_ENDIAN;
 
       clipname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(rdet->clipname_entry)));
-      
+
       lives_widget_destroy(rdet->dialog);
 
       if (response == LIVES_RESPONSE_CANCEL) {
         lives_free(rdet->encoder_name);
-	lives_free(clipname);
+        lives_free(clipname);
         lives_freep((void **)&rdet);
         lives_freep((void **)&resaudw);
         return FALSE;
       }
-    }
-    else {
+    } else {
       // prompt for clip name
 
 
@@ -5333,9 +5332,10 @@ render_details *create_render_details(int type) {
 
   if (type == 2) {
     // add clip name entry
-    rdet->clipname_entry = lives_standard_entry_new((tmp = lives_strdup(_("New clip name"))), FALSE, (tmp2 = get_untitled_name(mainw->untitled_number)),
-						      STD_ENTRY_WIDTH, 256, LIVES_BOX(top_vbox),
-						    (tmp3 = lives_strdup(_("The name to give the clip in the Clips menu"))));
+    rdet->clipname_entry = lives_standard_entry_new((tmp = lives_strdup(_("New clip name"))), FALSE,
+                           (tmp2 = get_untitled_name(mainw->untitled_number)),
+                           STD_ENTRY_WIDTH, 256, LIVES_BOX(top_vbox),
+                           (tmp3 = lives_strdup(_("The name to give the clip in the Clips menu"))));
     lives_free(tmp);
     lives_free(tmp2);
     lives_free(tmp3);

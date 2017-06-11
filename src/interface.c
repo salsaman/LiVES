@@ -1804,7 +1804,7 @@ aud_dialog_t *create_audfade_dialog(int type) {
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   lives_standard_radio_button_new(label_text2, FALSE, &radiobutton_group,
-				  LIVES_BOX(hbox), NULL);
+                                  LIVES_BOX(hbox), NULL);
 
   if (label_text2 != NULL) lives_free(label_text2);
 

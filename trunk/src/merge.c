@@ -145,7 +145,8 @@ void create_merge_dialog(void) {
     label = lives_standard_label_new(_("What to do with extra clipboard frames -"));
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
-    merge_opts->ins_frame_button = lives_standard_radio_button_new(_("_Insert Frames"), TRUE, &radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
+    merge_opts->ins_frame_button = lives_standard_radio_button_new(_("_Insert Frames"), TRUE, &radiobutton_insdrop_group, LIVES_BOX(hbox),
+                                   NULL);
 
     merge_opts->ins_frame_function = lives_signal_connect(LIVES_GUI_OBJECT(merge_opts->ins_frame_button),
                                      LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_ins_frames_toggled), NULL);

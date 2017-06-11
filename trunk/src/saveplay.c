@@ -3345,7 +3345,7 @@ void create_cfile(void) {
   // remember to set cfile->is_loaded=TRUE !!!!!!!!!!
 }
 
- 
+
 LIVES_INLINE char *get_untitled_name(int number) {
   // utility function to get clip name
   return lives_strdup_printf(_("Untitled%d"), number);
@@ -4332,7 +4332,7 @@ boolean read_headers(const char *file_name) {
 
 void open_set_file(const char *set_name, int clipnum) {
   char name[CLIP_NAME_MAXLEN];
-  
+
   if (mainw->current_file < 1) return;
 
   memset(name, 0, CLIP_NAME_MAXLEN);

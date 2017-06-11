@@ -7411,7 +7411,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
   radiobutton = lives_radio_button_new(*rbgroup);
   *rbgroup = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
-  
+
   if (tooltip != NULL) lives_widget_set_tooltip_text(radiobutton, tooltip);
 
   widget_opts.last_label = NULL;

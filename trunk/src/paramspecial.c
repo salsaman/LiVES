@@ -7,7 +7,6 @@
 // dynamic window generation from parameter arrays :-)
 // special widgets
 
-
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -47,9 +46,6 @@ void init_special(void) {
 }
 
 
-
-
-
 void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   char **array = lives_strsplit(sp_string, "|", -1);
   int num_widgets = get_token_count(sp_string, '|') - 2;
@@ -58,7 +54,6 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   register int i;
 
   // TODO - assert only one of each of these
-
 
   if (!strcmp(array[0], "aspect")) {
     aspect.width_param = &rfx->params[atoi(array[1])];
@@ -182,7 +177,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
   LiVESWidget *buttond;
   LiVESList *slist;
 
-
   char *tmp, *tmp2;
 
   // check if this parameter is part of a special window
@@ -222,7 +216,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
                                  LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
     }
 
-
     if (framedraw.stdwidgets > 0 && !framedraw.added) {
       if (framedraw.xstart_param != NULL && framedraw.xstart_param->widgets[0] != NULL &&
           framedraw.ystart_param != NULL && framedraw.ystart_param->widgets[0] != NULL) {
@@ -253,7 +246,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
 
       box = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), box, FALSE, FALSE, widget_opts.packing_height * 2);
-
 
       add_fill_to_box(LIVES_BOX(box));
 
@@ -310,7 +302,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
     slist = slist->next;
   }
 
-
   // password fields
 
   slist = passwd_widgets;
@@ -341,15 +332,12 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
                                  LIVES_GUI_CALLBACK(passwd_toggle_vis),
                                  (livespointer)param->widgets[0]);
 
-
-
       lives_entry_set_visibility(LIVES_ENTRY(param->widgets[0]), FALSE);
 
     }
     slist = slist->next;
   }
 }
-
 
 
 void after_aspect_width_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
@@ -417,7 +405,6 @@ void special_cleanup(void) {
 
   mainw->framedraw = mainw->framedraw_reset = NULL;
   mainw->framedraw_spinbutton = NULL;
-
 
   if (mainw->fd_layer != NULL) weed_layer_free(mainw->fd_layer);
   mainw->fd_layer = NULL;
@@ -530,5 +517,4 @@ boolean is_perchannel_multi(lives_rfx_t *rfx, int i) {
   if (rfx->params[i].multi == PVAL_MULTI_PER_CHANNEL) return TRUE;
   return FALSE;
 }
-
 

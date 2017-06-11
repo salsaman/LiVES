@@ -6,8 +6,6 @@
 
 // dynamic window generation from parameter arrays :-)
 
-
-
 // NOTE: this is now the "house style" for all LiVES widgets, there should be a consistent look across all
 // windows.
 
@@ -42,11 +40,10 @@
 extern boolean do_effect(lives_rfx_t *, boolean is_preview);  //effects.c in LiVES
 extern void on_realfx_activate(LiVESMenuItem *, livespointer rfx);  // effects.c in LiVES
 
-
 static void after_param_text_buffer_changed(LiVESTextBuffer *textbuffer, lives_rfx_t *rfx);
 
-
 LiVESWidget *fx_dialog[2];
+
 
 // TODO -
 // use list of these in case we have multiple windows open
@@ -151,9 +148,7 @@ void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
-
 }
-
 
 
 void on_paramwindow_cancel_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
@@ -161,8 +156,8 @@ void on_paramwindow_cancel_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
 
   on_paramwindow_cancel_clicked(button, rfx);
   fx_dialog[1] = NULL;
-
 }
+
 
 void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   mainw->block_param_updates = TRUE;
@@ -221,15 +216,13 @@ void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
-
 }
+
 
 /**
    get a (radiobutton) list from an index
 */
 static lives_widget_group_t *get_group(lives_rfx_t *rfx, lives_param_t *param) {
-
-
   if (rfx->status == RFX_STATUS_WEED) {
     return livesgrp_from_usrgrp(usrgrp_to_livesgrp[1], param->group);
   } else {
@@ -263,7 +256,6 @@ void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
     do_effect(rfx, FALSE);
   }
   if (has_lmap_error) popup_lmap_errors(NULL, NULL);
-
 }
 
 
@@ -308,7 +300,6 @@ static void gen_fps_changed(LiVESSpinButton *spin, livespointer user_data) {
   double val = lives_spin_button_get_value(spin);
   weed_set_double_value(filter, WEED_LEAF_HOST_FPS, val);
 }
-
 
 
 static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
@@ -360,7 +351,6 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
     set_int_param(rfx->params[trans].value, old_val);
     after_param_value_changed(LIVES_SPIN_BUTTON(rfx->params[trans].widgets[0]), rfx);
   }
-
 }
 
 
@@ -368,9 +358,11 @@ static void transition_in_pressed(LiVESToggleButton *tbut, livespointer rfx) {
   trans_in_out_pressed((lives_rfx_t *)rfx, TRUE);
 }
 
+
 static void transition_out_pressed(LiVESToggleButton *tbut, livespointer rfx) {
   trans_in_out_pressed((lives_rfx_t *)rfx, FALSE);
 }
+
 
 static void after_transaudio_toggled(LiVESToggleButton *togglebutton, livespointer rfx) {
   weed_plant_t *init_event = mainw->multitrack->init_event;
@@ -378,14 +370,12 @@ static void after_transaudio_toggled(LiVESToggleButton *togglebutton, livespoint
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(togglebutton)))
     weed_set_boolean_value(init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, WEED_TRUE);
   else weed_set_boolean_value(init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, WEED_FALSE);
-
 }
+
 
 static void gen_cb_toggled(LiVESToggleButton *tbut, livespointer rfx) {
   mainw->gen_to_clipboard = !mainw->gen_to_clipboard;
 }
-
-
 
 
 void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_check) {
@@ -411,8 +401,6 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   lives_signal_connect_after(LIVES_GUI_OBJECT(radiobutton_in), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(transition_in_pressed),
                              (livespointer)rfx);
-
-
 
   if (add_audio_check) {
     int error;
@@ -464,12 +452,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
 
   hseparator = lives_hseparator_new();
   lives_box_pack_start(vbox, hseparator, FALSE, FALSE, 0);
-
 }
-
-
-
-
 
 
 static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, lives_rfx_t *rfx) {
@@ -500,16 +483,13 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
 
   register int i;
 
-
   if (!has_param) {
     lives_widget_set_size_request(LIVES_WIDGET(vbox), RFX_WINSIZE_H, RFX_WINSIZE_V);
   }
 
   // add fps
 
-
   if (add_fps) {
-
     if (has_param)
       add_hsep_to_box(vbox);
 
@@ -564,7 +544,6 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
-
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_HOST_WIDTH)) def_width = weed_get_int_value(tmpl, WEED_LEAF_HOST_WIDTH, &error);
     if (def_width == 0) def_width = DEF_GEN_WIDTH;
     max_width = INT_MAX;
@@ -591,7 +570,6 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     height_step = 1;
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_VSTEP)) height_step = weed_get_int_value(tmpl, WEED_LEAF_VSTEP, &error);
 
-
     spinbuttonh = lives_standard_spin_button_new(_("_Height"), TRUE, def_height, 4., max_height, height_step == 1 ? 4 : height_step,
                   height_step == 1 ? 16 : height_step * 4, 0,
                   LIVES_BOX(hbox), NULL);
@@ -603,7 +581,6 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     gen_height_changed(LIVES_SPIN_BUTTON(spinbuttonh), tmpl);
 
   }
-
 
   if (!chk_params) {
     if (!rfx->is_template) {
@@ -621,10 +598,7 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
   }
 
   return added;
-
 }
-
-
 
 
 static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
@@ -647,7 +621,6 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
   lives_free(tmp);
   lives_free(tmp2);
 
-
   widget_opts.pack_end = TRUE;
   radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Generate to _New Clip"))),
                 TRUE, &radiobutton_group, LIVES_BOX(hbox),
@@ -665,10 +638,7 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
   lives_signal_connect_after(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(gen_cb_toggled),
                              (livespointer)rfx);
-
 }
-
-
 
 
 void on_render_fx_pre_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
@@ -740,7 +710,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
     // create a new file to generate frames into
     if (!get_new_handle((new_file = mainw->first_free_file), NULL)) {
-
       if (mainw->multitrack != NULL) {
         mt_sensitise(mainw->multitrack);
         mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
@@ -782,9 +751,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     }
   }
 
-
   if (pbox == NULL) {
-
     if (prefs->gui_monitor != 0) {
       scrw = mainw->mgeom[prefs->gui_monitor - 1].width;
       scrh = mainw->mgeom[prefs->gui_monitor - 1].height;
@@ -818,7 +785,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     lives_widget_set_hexpand(pbox, TRUE);
     lives_widget_set_vexpand(pbox, TRUE);
   }
-
 
   if (rfx->status != RFX_STATUS_WEED && !no_process) {
     // rendered fx preview
@@ -859,14 +825,12 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   // update widgets from onchange_init here
 
   if (top_dialog_vbox != NULL) {
-
     cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
 
     fxw_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     lives_window_add_accel_group(LIVES_WINDOW(fx_dialog[didx]), fxw_accel_group);
 
     if (!no_process || is_defaults || rfx->status == RFX_STATUS_SCRAP) {
-
       lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -893,7 +857,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
 
       if (rfx->status != RFX_STATUS_WEED && no_process) {
         LiVESWidget *abox = lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[didx]));
@@ -965,7 +928,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
         lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]), LIVES_WIDGET_DELETE_EVENT,
                              LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked),
                              (livespointer)rfx);
-
       } else {
         lives_signal_connect_after(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                    LIVES_GUI_CALLBACK(rte_set_defs_ok),
@@ -995,8 +957,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     param_demarshall(rfx, retvals, TRUE, TRUE);
     lives_list_free_all(&retvals);
   }
-
-
 }
 
 
@@ -1032,8 +992,6 @@ static int num_in_params_for_nth_instance(weed_plant_t *inst, int idx) {
   while (--idx > 0) inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
   return weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
 }
-
-
 
 
 boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
@@ -1265,8 +1223,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     }
   }
 
-
-
   if (mainw->multitrack == NULL && rfx->status == RFX_STATUS_WEED && rfx->is_template) {
     weed_plant_t *filter = weed_instance_get_filter((weed_plant_t *)rfx->source, TRUE);
     if (enabled_in_channels(filter, FALSE) == 0 && enabled_out_channels(filter, FALSE) > 0 && has_video_chans_out(filter, TRUE)) {
@@ -1278,7 +1234,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       chk_params = TRUE;
     }
   }
-
 
   if (!chk_params) {
     if (!has_param) {
@@ -1298,7 +1253,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       scrolledwindow = lives_standard_scrolled_window_new(-1, -1, top_hbox);
 
     lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, 0);
-
   }
 
   if (needs_sizes) {
@@ -1311,8 +1265,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   return has_param;
 }
-
-
 
 
 boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_slider) {
@@ -1386,7 +1338,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   switch (param->type) {
   case LIVES_PARAM_BOOL:
     if (!param->group) {
-
       if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) {
         dlabel = lives_standard_label_new((tmp = lives_strdup_printf("(%s)", _(disp_string))));
         lives_free(tmp);
@@ -1394,7 +1345,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         lives_box_pack_start(LIVES_BOX(hbox), dlabel, FALSE, FALSE, widget_opts.packing_width);
         param->widgets[1] = dlabel;
       }
-
 
       checkbutton = lives_standard_check_button_new(name, use_mnemonic, (LiVESBox *)hbox, param->desc);
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), get_bool_param(param->value));
@@ -1476,7 +1426,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
                    (LiVESBox *)hbox, param->desc);
     }
 
-
     lives_spin_button_set_wrap(LIVES_SPIN_BUTTON(spinbutton), param->wrap);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -1488,7 +1437,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     param->widgets[0] = spinbutton;
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), "rfx", rfx);
     if (param->hidden) lives_widget_set_sensitive(spinbutton, FALSE);
-
 
     if (add_scalers) {
       spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
@@ -1581,7 +1529,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       //lives_widget_set_sensitive(spinbutton_alpha,FALSE);
       lives_widget_set_sensitive(cbutton, FALSE);
     }
-
 
     break;
 
@@ -1700,9 +1647,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
   default:
     break;
-
   }
-
 
   // see if there were any 'special' hints
   check_for_special(rfx, param, LIVES_BOX(lives_widget_get_parent(LIVES_WIDGET(box))));
@@ -1748,8 +1693,6 @@ LiVESSList *add_usrgrp_to_livesgrp(LiVESSList *u2l, LiVESSList *rbgroup, int usr
 }
 
 
-
-
 lives_widget_group_t *livesgrp_from_usrgrp(LiVESSList *u2l, int usrgrp) {
   int i;
   lives_widget_group_t *group;
@@ -1760,11 +1703,6 @@ lives_widget_group_t *livesgrp_from_usrgrp(LiVESSList *u2l, int usrgrp) {
   }
   return NULL;
 }
-
-
-
-
-
 
 
 
@@ -1835,10 +1773,7 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
         weed_reinit_effect(inst, FALSE);
         was_reinited = TRUE;
       }
-
     }
-
-
   }
   if (get_bool_param(param->value) != old_bool && param->onchange) {
     param->change_blocked = TRUE;
@@ -1853,7 +1788,6 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
   }
   param->changed = TRUE;
 }
-
 
 
 void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
@@ -2107,7 +2041,6 @@ void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int 
     }
     break;
   }
-
 }
 
 
@@ -2137,7 +2070,6 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     copyto = set_copy_to((weed_plant_t *)rfx->source, param_number, FALSE);
     if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
   }
-
 
   set_colRGB24_param(param->value, new_red, old_value.green, old_value.blue);
 
@@ -2193,7 +2125,6 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   boolean was_reinited = FALSE;
 
   lives_param_t *param = &rfx->params[param_number];
-
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
@@ -2354,7 +2285,6 @@ void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
   }
 
-
   if (new_alpha != old_value.alpha && param->onchange) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
@@ -2412,7 +2342,6 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
 
   int copyto = -1;
   int param_number;
-
 
   if (rfx == NULL || rfx->params == NULL || textwidget == NULL) return;
 
@@ -2485,7 +2414,6 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
         weed_reinit_effect(inst, FALSE);
         was_reinited = TRUE;
       }
-
     }
   }
 
@@ -2502,8 +2430,8 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
     activate_mt_preview(mainw->multitrack);
   }
   param->changed = TRUE;
-
 }
+
 
 static void after_param_text_buffer_changed(LiVESTextBuffer *textbuffer, lives_rfx_t *rfx) {
   LiVESWidget *textview = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(textbuffer), "textview");
@@ -2584,7 +2512,6 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
         weed_reinit_effect(inst, FALSE);
         was_reinited = TRUE;
       }
-
     }
   }
 
@@ -2601,7 +2528,6 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
   }
   param->changed = TRUE;
 }
-
 
 
 char **param_marshall_to_argv(lives_rfx_t *rfx) {
@@ -2651,11 +2577,6 @@ char **param_marshall_to_argv(lives_rfx_t *rfx) {
 }
 
 
-
-
-
-
-
 char *param_marshall(lives_rfx_t *rfx, boolean with_min_max) {
   // this function will marshall all parameters into a space separated string
   // in case of string parameters, these will be surrounded by " and all
@@ -2670,7 +2591,6 @@ char *param_marshall(lives_rfx_t *rfx, boolean with_min_max) {
   char *tmp, *mysubst, *mysubst2;
 
   register int i;
-
 
   for (i = 0; i < rfx->num_params; i++) {
     switch (rfx->params[i].type) {
@@ -2822,7 +2742,6 @@ char *reconstruct_string(LiVESList *plist, int start, int *offs) {
   // remove trailing space
   memset(ret + strlen(ret) - 1, 0, 1);
   return ret;
-
 }
 
 
@@ -2842,7 +2761,6 @@ void param_demarshall(lives_rfx_t *rfx, LiVESList *plist, boolean with_min_max, 
     pnum = set_param_from_list(plist, param, pnum, with_min_max, upd);
   }
 }
-
 
 
 LiVESList *argv_to_marshalled_list(lives_rfx_t *rfx, int argc, char **argv) {
@@ -2866,9 +2784,6 @@ LiVESList *argv_to_marshalled_list(lives_rfx_t *rfx, int argc, char **argv) {
   }
   return plist;
 }
-
-
-
 
 
 int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolean with_min_max, boolean upd) {
@@ -3104,9 +3019,7 @@ LiVESList *do_onchange(LiVESObject *object, lives_rfx_t *rfx) {
   lives_free(com);
 
   return retvals;
-
 }
-
 
 
 void on_pwcolsel(LiVESButton *button, lives_rfx_t *rfx) {
@@ -3130,8 +3043,6 @@ void on_pwcolsel(LiVESButton *button, lives_rfx_t *rfx) {
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[2]), (double)b);
   lives_color_button_set_color(LIVES_COLOR_BUTTON(param->widgets[4]), &selected);
 }
-
-
 
 
 void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {

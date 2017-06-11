@@ -166,25 +166,21 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, FALSE, widget_opts.packing_width);
 
   string = lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT, FALSE);
-  rfxbuilder->type_effect1_radiobutton = lives_standard_radio_button_new(string, FALSE, radiobutton_type_group, LIVES_BOX(hbox), NULL);
-  radiobutton_type_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(rfxbuilder->type_effect1_radiobutton));
+  rfxbuilder->type_effect1_radiobutton = lives_standard_radio_button_new(string, FALSE, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
   lives_free(string);
 
   string = lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION, FALSE);
-  rfxbuilder->type_effect2_radiobutton = lives_standard_radio_button_new(string, FALSE, radiobutton_type_group, LIVES_BOX(hbox), NULL);
-  radiobutton_type_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(rfxbuilder->type_effect2_radiobutton));
+  rfxbuilder->type_effect2_radiobutton = lives_standard_radio_button_new(string, FALSE, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
   lives_free(string);
 
   string = lives_fx_cat_to_text(LIVES_FX_CAT_VIDEO_GENERATOR, FALSE);
-  rfxbuilder->type_effect0_radiobutton = lives_standard_radio_button_new(string, FALSE, radiobutton_type_group, LIVES_BOX(hbox), NULL);
-  radiobutton_type_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(rfxbuilder->type_effect0_radiobutton));
+  rfxbuilder->type_effect0_radiobutton = lives_standard_radio_button_new(string, FALSE, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
   lives_free(string);
 
-  rfxbuilder->type_tool_radiobutton = lives_standard_radio_button_new(_("tool"), FALSE, radiobutton_type_group, LIVES_BOX(hbox), NULL);
-  radiobutton_type_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(rfxbuilder->type_tool_radiobutton));
+  rfxbuilder->type_tool_radiobutton = lives_standard_radio_button_new(_("tool"), FALSE, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
   lives_widget_show(label);
 
-  rfxbuilder->type_utility_radiobutton = lives_standard_radio_button_new(_("utility"), FALSE, radiobutton_type_group, LIVES_BOX(hbox), NULL);
+  rfxbuilder->type_utility_radiobutton = lives_standard_radio_button_new(_("utility"), FALSE, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
 
 
   // name

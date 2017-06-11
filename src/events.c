@@ -2121,8 +2121,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  radiobutton = lives_standard_radio_button_new(_("_Preview events"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
+  radiobutton = lives_standard_radio_button_new(_("_Preview events"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
 
@@ -2134,8 +2133,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-    radiobutton = lives_standard_radio_button_new(_("Render events to _same clip"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
-    radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
+    radiobutton = lives_standard_radio_button_new(_("Render events to _same clip"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(set_render_choice),
@@ -2145,8 +2143,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  radiobutton = lives_standard_radio_button_new(_("Render events to _new clip"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
+  radiobutton = lives_standard_radio_button_new(_("Render events to _new clip"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(set_render_choice),
@@ -2155,9 +2152,8 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  radiobutton = lives_standard_radio_button_new(_("View/edit events in _multitrack window (test)"), TRUE, radiobutton_group, LIVES_BOX(hbox),
+  radiobutton = lives_standard_radio_button_new(_("View/edit events in _multitrack window (test)"), TRUE, &radiobutton_group, LIVES_BOX(hbox),
                 NULL);
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(set_render_choice),
@@ -2168,8 +2164,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  radiobutton = lives_standard_radio_button_new(_("View/edit events in _event window"), TRUE, radiobutton_group, LIVES_BOX(hbox), NULL);
-  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
+  radiobutton = lives_standard_radio_button_new(_("View/edit events in _event window"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(set_render_choice),

@@ -61,6 +61,7 @@ void ce_thumbs_set_interactive(boolean interactive) {
   }
 }
 
+
 #if LIVES_HAS_GRID_WIDGET
 static boolean switch_clip_cb(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
   int i = LIVES_POINTER_TO_INT(user_data);
@@ -69,6 +70,7 @@ static boolean switch_clip_cb(LiVESWidget *eventbox, LiVESXEventButton *event, l
   switch_clip(0, i, FALSE);
   return FALSE;
 }
+
 
 static void ce_thumbs_fx_changed(LiVESCombo *combo, livespointer user_data) {
   // callback after user switches fx via combo
@@ -310,10 +312,9 @@ void start_ce_thumb_mode(void) {
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     // radiobuttons for fx
-    rb_fx_areas[i] = lives_standard_radio_button_new("", FALSE, rb_fx_areas_group, LIVES_BOX(hbox),
-                     (tmp = lives_strdup_printf(_("Show / apply effects to %s\n"),
-                            mainw->screen_areas[i].name)));
-    rb_fx_areas_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(rb_fx_areas[i]));
+    rb_fx_areas[i] = lives_standard_radio_button_new("", FALSE, &rb_fx_areas_group, LIVES_BOX(hbox),
+						     (tmp = lives_strdup_printf(_("Show / apply effects to %s\n"),
+										mainw->screen_areas[i].name)));
     lives_free(tmp);
 
     if (i != SCREEN_AREA_FOREGROUND) lives_widget_set_sensitive(rb_fx_areas[i], FALSE);
@@ -322,10 +323,10 @@ void start_ce_thumb_mode(void) {
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, TRUE, 0);
 
     // radiobuttons for fx
-    rb_clip_areas[i] = lives_standard_radio_button_new("", FALSE, rb_clip_areas_group, LIVES_BOX(hbox),
-                       (tmp = lives_strdup_printf(_("Select clip for %s\n"),
-                              mainw->screen_areas[i].name)));
-    rb_clip_areas_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(rb_clip_areas[i]));
+    rb_clip_areas[i] = lives_standard_radio_button_new("", FALSE,
+						       &rb_clip_areas_group, LIVES_BOX(hbox),
+						       (tmp = lives_strdup_printf(_("Select clip for %s\n"),
+										  mainw->screen_areas[i].name)));
     lives_free(tmp);
 
     rb_clip_fns[i] = lives_signal_connect(LIVES_GUI_OBJECT(rb_clip_areas[i]), LIVES_WIDGET_TOGGLED_SIGNAL,

@@ -1269,13 +1269,12 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton_s1 = lives_standard_radio_button_new(_("Signed"), FALSE, s1_group, LIVES_BOX(hbox), NULL);
-    s1_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton_s1));
+    radiobutton_s1 = lives_standard_radio_button_new(_("Signed"), FALSE, &s1_group, LIVES_BOX(hbox), NULL);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton_u1 = lives_standard_radio_button_new(_("Unsigned"), FALSE, s1_group, LIVES_BOX(hbox), NULL);
+    radiobutton_u1 = lives_standard_radio_button_new(_("Unsigned"), FALSE, &s1_group, LIVES_BOX(hbox), NULL);
 
     aendian = mainw->fx4_val;
 
@@ -1297,13 +1296,12 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton_l1 = lives_standard_radio_button_new(_("Little Endian"), FALSE, e1_group, LIVES_BOX(hbox), NULL);
-    e1_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton_l1));
+    radiobutton_l1 = lives_standard_radio_button_new(_("Little Endian"), FALSE, &e1_group, LIVES_BOX(hbox), NULL);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton_b1 = lives_standard_radio_button_new(_("Big Endian"), FALSE, e1_group, LIVES_BOX(hbox), NULL);
+    radiobutton_b1 = lives_standard_radio_button_new(_("Big Endian"), FALSE, &e1_group, LIVES_BOX(hbox), NULL);
 
     if (aendian & AFORM_BIG_ENDIAN) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_b1), TRUE);
@@ -1419,8 +1417,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_signed = lives_standard_radio_button_new(_("Signed"), FALSE, s2_group, LIVES_BOX(hbox), NULL);
-    s2_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(resaudw->rb_signed));
+    resaudw->rb_signed = lives_standard_radio_button_new(_("Signed"), FALSE, &s2_group, LIVES_BOX(hbox), NULL);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed), TRUE);
     if (type == 7 || is_8bit) lives_widget_set_sensitive(resaudw->rb_signed, FALSE);
@@ -1429,7 +1426,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_unsigned = lives_standard_radio_button_new(_("Unsigned"), FALSE, s2_group, LIVES_BOX(hbox), NULL);
+    resaudw->rb_unsigned = lives_standard_radio_button_new(_("Unsigned"), FALSE, &s2_group, LIVES_BOX(hbox), NULL);
 
     if (type == 7 || !is_8bit) lives_widget_set_sensitive(resaudw->rb_unsigned, FALSE);
 
@@ -1453,15 +1450,14 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_littleend = lives_standard_radio_button_new(_("Little Endian"), FALSE, e2_group, LIVES_BOX(hbox), NULL);
-    e2_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(resaudw->rb_littleend));
+    resaudw->rb_littleend = lives_standard_radio_button_new(_("Little Endian"), FALSE, &e2_group, LIVES_BOX(hbox), NULL);
 
     if (type == 7) lives_widget_set_sensitive(resaudw->rb_littleend, FALSE);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_bigend = lives_standard_radio_button_new(_("Big Endian"), FALSE, e2_group, LIVES_BOX(hbox), NULL);
+    resaudw->rb_bigend = lives_standard_radio_button_new(_("Big Endian"), FALSE, &e2_group, LIVES_BOX(hbox), NULL);
 
     if (type == 7) lives_widget_set_sensitive(resaudw->rb_bigend, FALSE);
 
@@ -1505,8 +1501,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
     if (type != 6 && type != 7) {
 
-      radiobutton = lives_standard_radio_button_new(_("Record for maximum:  "), FALSE, rbgroup, LIVES_BOX(hbox), NULL);
-      rbgroup = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
+      radiobutton = lives_standard_radio_button_new(_("Record for maximum:  "), FALSE, &rbgroup, LIVES_BOX(hbox), NULL);
 
       resaudw->hour_spinbutton = lives_standard_spin_button_new(_(" hours  "), FALSE, hours,
                                  0., hours > 23 ? hours : 23, 1., 1., 0, LIVES_BOX(hbox), NULL);
@@ -1519,8 +1514,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-      resaudw->unlim_radiobutton = lives_standard_radio_button_new(_("Unlimited"), FALSE, rbgroup, LIVES_BOX(hbox), NULL);
-      rbgroup = lives_radio_button_get_group(LIVES_RADIO_BUTTON(resaudw->unlim_radiobutton));
+      resaudw->unlim_radiobutton = lives_standard_radio_button_new(_("Unlimited"), FALSE, &rbgroup, LIVES_BOX(hbox), NULL);
 
       lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                            LIVES_GUI_CALLBACK(on_rb_audrec_time_toggled),
@@ -1676,9 +1670,7 @@ void create_new_pb_speed(short type) {
     spinbutton_pb_speed = lives_standard_spin_button_new(NULL, FALSE, cfile->fps, 1., FPS_MAX, .01, .1, 3, LIVES_BOX(hbox), NULL);
     add_fill_to_box(LIVES_BOX(hbox));
   } else {
-    radiobutton1 = lives_standard_radio_button_new(NULL, FALSE, rbgroup, LIVES_BOX(hbox), NULL);
-    rbgroup = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton1));
-
+    radiobutton1 = lives_standard_radio_button_new(NULL, FALSE, &rbgroup, LIVES_BOX(hbox), NULL);
 
     spinbutton_pb_speed = lives_standard_spin_button_new(NULL, FALSE, cfile->fps, 1., FPS_MAX, .01, .1, 3, LIVES_BOX(hbox), NULL);
 
@@ -1688,15 +1680,13 @@ void create_new_pb_speed(short type) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton2 = lives_standard_radio_button_new(NULL, FALSE, rbgroup, LIVES_BOX(hbox), NULL);
-
+    radiobutton2 = lives_standard_radio_button_new(NULL, FALSE, &rbgroup, LIVES_BOX(hbox), NULL);
 
     spinbutton_pb_time = lives_standard_spin_button_new(NULL, FALSE,
                          (double)((int)(cfile->frames / cfile->fps * 100.)) / 100.,
                          1. / FPS_MAX, cfile->frames, 1., 10., 2, LIVES_BOX(hbox), NULL);
 
     lives_label_set_mnemonic_widget(LIVES_LABEL(label2), spinbutton_pb_time);
-
   }
 
   lives_label_set_mnemonic_widget(LIVES_LABEL(label), spinbutton_pb_speed);

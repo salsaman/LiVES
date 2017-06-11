@@ -30,7 +30,6 @@
 static int font_cmp(const void *p1, const void *p2);
 #endif
 
-
 //
 // code things from scribbler.c
 //
@@ -63,7 +62,6 @@ static void getxypos(LingoLayout *layout, double *px, double *py, int width, int
 
   if (px) *px = d;
 
-
   // ypos (adjusted so text goes to bottom)
 
   d = ((double)h_) / LINGO_SCALE;
@@ -71,6 +69,7 @@ static void getxypos(LingoLayout *layout, double *px, double *py, int width, int
 
   if (py) *py = d;
 }
+
 
 static void fill_bckg(lives_painter_t *cr, double x, double y, double dx, double dy) {
   lives_painter_new_path(cr);
@@ -120,7 +119,6 @@ char **get_font_list(void) {
 }
 
 
-
 #ifdef GUI_GTK
 static int font_cmp(const void *p1, const void *p2) {
   const char *s1 = (const char *)(*(char **)p1);
@@ -135,11 +133,9 @@ static int font_cmp(const void *p1, const void *p2) {
 #endif
 
 
-
 LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const char *text, const char *fontname,
                                double size, lives_text_mode_t mode, lives_colRGBA64_t *fg, lives_colRGBA64_t *bg,
                                boolean center, boolean rising, double top, int offs_x, int width, int height) {
-
   // fontname may be eg. "Sans"
 
   // ypos:
@@ -236,9 +232,6 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 }
 
 
-
-
-
 weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
                                    double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col, lives_colRGBA64_t *bg_col,
                                    boolean center, boolean rising, double top) {
@@ -280,9 +273,6 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
   lives_painter_destroy(cr);
   return layer;
 }
-
-
-
 
 
 static const char *cr_str = "\x0D";
@@ -404,7 +394,6 @@ static char *sub_read_text(FILE *pf, lives_subtitle_t *title) {
 }
 
 
-
 static void sub_get_last_time(lives_subtitles_t *subt) {
   lives_subtitle_t *xsubt;
   if (subt == NULL) return;
@@ -417,6 +406,7 @@ static void sub_get_last_time(lives_subtitles_t *subt) {
     xsubt = (lives_subtitle_t *)xsubt->next;
   }
 }
+
 
 // read .srt files
 boolean get_srt_text(lives_clip_t *sfile, double xtime) {
@@ -445,7 +435,6 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
     sfile->subt->current = NULL;
     return TRUE;
   }
-
 
   if (curr && (curr->start_time <= xtime))
     index_ptr = index_prev = index = curr;
@@ -561,7 +550,6 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 }
 
 
-
 // read .sub files
 boolean get_sub_text(lives_clip_t *sfile, double xtime) {
   lives_subtitle_t *index = NULL;
@@ -590,7 +578,6 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
     sfile->subt->current = NULL;
     return TRUE;
   }
-
 
   if (curr && (curr->start_time <= xtime))
     index_ptr = index_prev = index = curr;
@@ -706,7 +693,6 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
   return TRUE;
 }
 
-///
 
 void subtitles_free(lives_clip_t *sfile) {
   if (sfile == NULL) return;
@@ -726,7 +712,6 @@ void subtitles_free(lives_clip_t *sfile) {
 
   lives_freep((void **)&sfile->subt->text);
   lives_freep((void **)&sfile->subt);
-
 }
 
 
@@ -759,6 +744,7 @@ boolean subtitles_init(lives_clip_t *sfile, char *fname, lives_subtitle_type_t s
   return TRUE;
 }
 
+
 static void parse_double_time(double tim, int *ph, int *pmin, int *psec, int *pmsec, int fix) {
   int ntim = (int)tim;
   int h, m, s, ms;
@@ -777,6 +763,7 @@ static void parse_double_time(double tim, int *ph, int *pmin, int *psec, int *pm
   if (pmsec)
     *pmsec = ms;
 }
+
 
 boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename) {
   lives_subtitles_t *subt = NULL;
@@ -844,6 +831,7 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   return TRUE;
 }
 
+
 boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename) {
   lives_subtitles_t *subt = NULL;
   int64_t savepos = 0;
@@ -877,7 +865,6 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   fprintf(pf, "[COMMENT] %s\n", sfile->comment);
   fprintf(pf, "[END INFORMATION]\n");
   fprintf(pf, "[SUBTITLE]\n");
-
 
   while (ptr) {
     char *text = NULL;
@@ -925,6 +912,5 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
     fseek(subt->tfile, savepos, SEEK_SET);
 
   return TRUE;
-
 }
 

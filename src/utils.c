@@ -358,9 +358,11 @@ lives_pgid_t lives_fork(const char *com) {
   pid_t ret;
 
   if (!(ret = fork())) {
+    int dummy;
     setsid(); // create new session id
     setpgid(capable->mainpid, 0); // create new pgid
-    lives_system(com, TRUE);
+    dummy = system(com);
+    dummy = dummy;
     _exit(0);
   }
 

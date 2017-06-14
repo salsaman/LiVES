@@ -3036,6 +3036,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 #endif
 
+#ifdef GDK_WINDOWING_X11
+  XInitThreads();
+#endif
+  
 #ifdef GUI_GTK
   gtk_init(&argc, &argv);
 #endif

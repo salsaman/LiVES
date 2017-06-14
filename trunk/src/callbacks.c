@@ -8459,16 +8459,14 @@ void on_toy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
 #ifndef IS_MINGW
-    com = lives_strdup_printf("autolives.pl localhost %d %d >/dev/null 2>&1", prefs->osc_udp_port, prefs->osc_udp_port - 1);
+    com = lives_strdup_printf("autolives.pl localhost %d %d", prefs->osc_udp_port, prefs->osc_udp_port - 1);
 #else
     com = lives_strdup_printf("START /MIN /B perl \"%s\\bin\\autolives.pl\" localhost %d %d >NUL 2>&1",
                               prefs->prefix_dir, prefs->osc_udp_port, prefs->osc_udp_port - 1);
 #endif
-
     mainw->toy_alives_pgid = lives_fork(com);
 
     lives_free(com);
-
     break;
 #endif
   case LIVES_TOY_MAD_FRAMES:

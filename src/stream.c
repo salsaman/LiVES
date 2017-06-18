@@ -53,7 +53,6 @@ void *streambuf(void *arg) {
 
   uint8_t tmpbuf[STREAM_BUF_SIZE];
 
-
   lstream->bufoffs = 0;
 
   while (buffering) {
@@ -79,7 +78,6 @@ void *streambuf(void *arg) {
   pthread_exit(NULL);
   return NULL;
 }
-
 
 
 static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf) {
@@ -425,7 +423,6 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
 }
 
 
-
 void lives2lives_read_stream(const char *host, int port) {
   lives_vstream_t *lstream = (lives_vstream_t *)lives_malloc(sizeof(lives_vstream_t));
 
@@ -678,7 +675,6 @@ void lives2lives_read_stream(const char *host, int port) {
 }
 
 
-
 void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstream_t *lstream) {
   static int64_t last_delta_ticks = 0;
   int64_t currticks;
@@ -795,7 +791,6 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 
     width = mainw->files[clip]->hsize;
     height = mainw->files[clip]->vsize;
-
 
     if (lstream->hsize != width || lstream->vsize != height) {
       // frame size changed...
@@ -988,9 +983,6 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 }
 
 
-
-
-
 //////////////////////////////
 
 // gui bits
@@ -1031,9 +1023,6 @@ void on_send_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
 }
 
 
-
-
-
 void on_open_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_pandh_w *pandh = create_pandh_dialog(0);
 
@@ -1064,9 +1053,6 @@ void on_open_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
 }
 
 
-
-
-
 static void pandhw_anyhost_toggled(LiVESToggleButton *tbut, livespointer user_data) {
   lives_pandh_w *pandhw = (lives_pandh_w *)user_data;
 
@@ -1082,7 +1068,6 @@ static void pandhw_anyhost_toggled(LiVESToggleButton *tbut, livespointer user_da
     lives_widget_set_sensitive(pandhw->entry4, TRUE);
   }
 }
-
 
 
 lives_pandh_w *create_pandh_dialog(int type) {
@@ -1135,7 +1120,6 @@ lives_pandh_w *create_pandh_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-
   lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams only from the _specified host:")))
                                   , TRUE, &radiobutton_group, LIVES_BOX(hbox),
                                   (tmp2 = lives_strdup(_("Accept LiVES streams from the specified host only."))));
@@ -1144,7 +1128,6 @@ lives_pandh_w *create_pandh_dialog(int type) {
   lives_free(tmp2);
 
   ////////////////////////////////////
-
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);

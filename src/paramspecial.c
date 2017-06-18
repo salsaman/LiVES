@@ -497,7 +497,6 @@ LiVESPixbuf *mt_framedraw(lives_mt *mt, LiVESPixbuf *pixbuf) {
 
     default:
       break;
-
     }
 
     framedraw_redraw(&framedraw, TRUE, pixbuf);

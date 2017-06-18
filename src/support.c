@@ -21,7 +21,6 @@
 #endif
 #endif
 
-
 #ifdef ENABLE_NLS
 LIVES_INLINE char *translate(const char *String) {
   if (trString != NULL) lives_free(trString); // be very careful, as trString is free()d automatically here
@@ -30,13 +29,13 @@ LIVES_INLINE char *translate(const char *String) {
   return trString;
 }
 
+
 LIVES_INLINE char *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n) {
   if (trString != NULL) lives_free(trString); // be very careful, as trString is free()d automatically here
   if (strlen(String)) trString = lives_locale_to_utf8(dngettext(PACKAGE, String, StringPlural, n), -1, NULL, NULL, NULL);
   else trString = lives_strdup(String);
   return trString;
 }
-
 
 #endif
 

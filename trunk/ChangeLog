@@ -1,8 +1,10 @@
 Version 2.8.7
 -------------
 Remove glad.h dependence on khr.
-Prompt for clip name when rendering to new clip. (WIP).
-
+Prompt for clip name when rendering to new clip.
+Fix autolives toy.
+Increase default frame size to 1024x768 for new installs.
+	
 
 
 

@@ -234,7 +234,7 @@ if ($command eq "get_rfx") {
 	    print "</params>\n";
 
 	    print "<param_window>\n";
-	    print "layout|\$p0|\n";
+	    print "layout|p0|\n";
 	    print "</param_window>\n";
 	}
 	else {
@@ -258,7 +258,7 @@ if ($command eq "get_rfx") {
 	    print "</params>\n";
 
 	    print "<param_window>\n";
-	    print "layout|\$p0|\n";
+	    print "layout|p0|\n";
 	    print "</param_window>\n";
 	}
     }
@@ -275,26 +275,28 @@ if ($command eq "get_rfx") {
 	
 	# optional section
 	print "<params>\n";
+	
 	print "threads|Number of threads|num0|1|1|16|\n";
+
 	if ($otype eq "x264" || $otype eq "qtrle") {
 	    print "quality|Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|1|31|\n";
 	}
 	if ($otype eq "x264") {
+	    print "opwidth|Width|num0|$hsize|4|65536|\n";
+	    print "opheight|Height|num0|$vsize|4|65536|\n";
 	    print "yuv420|Force YUV420P format (unchecking this MAY result in higher quality, but may not play on all players)|bool|1|0\n";
 	}
 	print "</params>\n";
 
 	print "<param_window>\n";
-	print "layout|\$p0|\n";
+	print "layout|p0|\n";
+	if ($otype eq "x264") {
+	    print "layout|\"Override output frame size\"|p2|p3|\n";
+	    print "special|aspect|2|3|\n";
+	}
 	print "</param_window>\n";
-	
     }
 }
-
-
-
-
-
 
 
 if ($command eq "encode") {
@@ -325,8 +327,10 @@ if ($command eq "encode") {
 
     unlink "testfile";
 
-    $nthreads=$ARGV[13];
+    $nthreads=$ARGV[14];
 
+    $fwidth = $fheight = 0;
+    
     if ($otype eq "x264" || $otype eq "qtrle" || $otype eq "divx") {
 	$quality=$ARGV[14];
 	if ($otype eq "divx") {
@@ -335,14 +339,15 @@ if ($command eq "encode") {
 	    $usemp3lame=$ARGV[17];
 	}
 	elsif ($otype eq "x264") {
-	    $force420=$ARGV[15];
+	    $fwidth=$ARGV[15];
+	    $fheight=$ARGV[16];
+	    $force420=$ARGV[17];
 	}
     }
     else {
 	$usemp3=$ARGV[14];
 	$usemp3lame=$ARGV[15];
     }
-
     
     $vid_length=($end-$start+1)/$fps;
 
@@ -403,7 +408,7 @@ if ($command eq "encode") {
 	$vcodec="-f webm -c:v libvpx -g 60 -qscale 31";
     }
     elsif ($otype eq "x264") { 
-	$vcodec="-c:v libx264 -qscale $quality";
+	$vcodec="-c:v libx264 -qscale $quality -s $fwidth"."X$fheight";
 	if ($force420) {
 	    $vcodec.=" -pix_fmt yuv420p";
 	}
@@ -527,7 +532,6 @@ if ($command eq "encode") {
 	}
 
     }
-
 
     &sig_complete;
     exit 0;

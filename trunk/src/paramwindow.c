@@ -1161,7 +1161,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
         param = &rfx->params[pnum];
         if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, param);
         if ((param->hidden && param->hidden != HIDDEN_NEEDS_REINIT) ||
-            param->type == LIVES_PARAM_UNDISPLAYABLE) continue;
+            param->type == LIVES_PARAM_UNDISPLAYABLE || param->type == LIVES_PARAM_UNKNOWN) continue;
         // parameter, eg. p1
         if (!has_box) {
           hbox = lives_hbox_new(FALSE, 0);
@@ -1214,7 +1214,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     rfx->params[i].changed = FALSE;
     if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, &rfx->params[i]);
     if ((rfx->params[i].hidden && rfx->params[i].hidden != HIDDEN_NEEDS_REINIT) ||
-        rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE) continue;
+        rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
     if (!used[i]) {
       if (!chk_params) {
         add_param_to_box(LIVES_BOX(param_vbox), rfx, i, TRUE);

@@ -4,9 +4,7 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-
 // functions for reordering, resampling video and audio
-
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -113,9 +111,7 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
     if ((width != cfile->hsize || height != cfile->vsize) && width * height > 0) {
       // CHANGING SIZE..
 
-
       // TODO: check if we have convert / composite installed
-
 
       if (fps > cfile->fps) {
         boolean rs_builtin;
@@ -124,7 +120,6 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
         // we will have more frames...
         // ...do resize first
         if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate == -1 || prefs->enc_letterbox) {
-
           if (prefs->enc_letterbox && LETTERBOX_NEEDS_COMPOSITE && !capable->has_composite) {
             do_lb_composite_error();
             on_undo_activate(NULL, NULL);
@@ -313,7 +308,6 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
     lives_rfx_t *resize_rfx;
     // NO FPS CHANGE
     if ((width != cfile->hsize || height != cfile->vsize) && width * height > 0) {
-
       // no fps change - just a normal resize
       cfile->undo_start = 1;
       cfile->undo_end = cfile->frames;
@@ -513,7 +507,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   // length of old clip is assumed as last timecode + (last timecode - previous timecode)
   // we fill out frames until the new slot>=old length
 
-
   while ((out_tc + tl) <= tc_end) {
     // walk list of in events
 
@@ -636,7 +629,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   if (get_first_frame_event(out_list) == NULL) {
     // make sure we have at least one frame
     if ((event = get_last_frame_event(in_list)) != NULL) {
-
       if (out_clips != NULL) lives_free(out_clips);
       if (out_frames != NULL) lives_free(out_frames);
 
@@ -664,7 +656,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
 
 //////////////////////////////////////////////////////////////////
-
 
 static void on_reorder_activate(int rwidth, int rheight) {
   char *msg;
@@ -728,11 +719,7 @@ static void on_reorder_activate(int rwidth, int rheight) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
-
-
 }
-
-
 
 
 void on_resample_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
@@ -744,7 +731,6 @@ void on_resample_audio_activate(LiVESMenuItem *menuitem, livespointer user_data)
   resaudw = create_resaudw(1, NULL, NULL);
   lives_widget_show(resaudw->dialog);
 }
-
 
 
 void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
@@ -892,10 +878,7 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
-
 }
-
-
 
 
 static void on_resaudw_achans_changed(LiVESWidget *widg, livespointer user_data) {
@@ -946,8 +929,6 @@ static void on_resaudw_achans_changed(LiVESWidget *widg, livespointer user_data)
 }
 
 
-
-
 void on_resaudw_asamps_changed(LiVESWidget *irrelevant, livespointer rubbish) {
   if (atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps))) == 8) {
     lives_widget_set_sensitive(resaudw->rb_bigend, FALSE);
@@ -967,13 +948,11 @@ void on_resaudw_asamps_changed(LiVESWidget *irrelevant, livespointer rubbish) {
 }
 
 
-
 void on_resample_video_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // change speed from the menu
   create_new_pb_speed(2);
   mainw->fx1_val = cfile->fps;
 }
-
 
 
 void on_resample_vid_ok(LiVESButton *button, LiVESEntry *entry) {
@@ -1100,14 +1079,10 @@ void on_resample_vid_ok(LiVESButton *button, LiVESEntry *entry) {
   if (bad_header) do_header_write_error(mainw->current_file);
 
   switch_to_file(mainw->current_file, mainw->current_file);
-
 }
 
 
-
 ///////// GUI stuff /////////////////////////////////////////////////////
-
-
 
 _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox) {
   // type 1 == resample
@@ -1368,7 +1343,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     combo5 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Channels")) : (_("Channels"))), type >= 3 && type != 11,
                                       channels, LIVES_BOX(hbox), NULL);
 
-
     if (type == 7) lives_widget_set_sensitive(combo5, FALSE);
 
     resaudw->entry_achans = lives_combo_get_entry(LIVES_COMBO(combo5));
@@ -1385,7 +1359,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       lives_widget_set_sensitive(resaudw->entry_achans, FALSE);
       lives_widget_set_sensitive(combo5, FALSE);
     }
-
 
     combo6 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Sample Size")) : (_("Sample Size"))), type >= 3 && type != 11,
                                       sampsize, LIVES_BOX(hbox), NULL);
@@ -1421,7 +1394,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed), TRUE);
     if (type == 7 || is_8bit) lives_widget_set_sensitive(resaudw->rb_signed, FALSE);
-
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -1475,8 +1447,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_signal_connect(LIVES_GUI_OBJECT(resaudw->entry_asamps), LIVES_WIDGET_CHANGED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_resaudw_asamps_changed),
                          NULL);
-
-
   }
 
   if (type > 7 && type != 11) {
@@ -1487,10 +1457,8 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_container_add(LIVES_CONTAINER(frame), hbox);
     lives_container_set_border_width(LIVES_CONTAINER(hbox), widget_opts.border_width);
 
-
     resaudw->fps_spinbutton = lives_standard_spin_button_new(_("_Frames Per Second "), TRUE,
                               prefs->default_fps, 1., FPS_MAX, 1., 1., 3, LIVES_BOX(hbox), NULL);
-
   }
 
   if (type > 4 && type != 11) {
@@ -1500,7 +1468,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
     if (type != 6 && type != 7) {
-
       radiobutton = lives_standard_radio_button_new(_("Record for maximum:  "), FALSE, &rbgroup, LIVES_BOX(hbox), NULL);
 
       resaudw->hour_spinbutton = lives_standard_spin_button_new(_(" hours  "), FALSE, hours,
@@ -1509,7 +1476,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       resaudw->minute_spinbutton = lives_standard_spin_button_new(_(" minutes  "), FALSE, mins, 0., 59., 1., 1., 0, LIVES_BOX(hbox), NULL);
 
       resaudw->second_spinbutton = lives_standard_spin_button_new(_(" seconds  "), FALSE, secs, 0., 59., 1., 1., 0, LIVES_BOX(hbox), NULL);
-
 
       hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
@@ -1534,9 +1500,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     }
   }
 
-
   if (type < 3 || type > 4) {
-
     cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
 
     lives_dialog_add_action_widget(LIVES_DIALOG(resaudw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -1544,7 +1508,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
     if (accel_group != NULL) lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
           LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
 
     okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
 
@@ -1596,7 +1559,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
   return resaudw;
 }
-
 
 
 void create_new_pb_speed(short type) {
@@ -1691,13 +1653,11 @@ void create_new_pb_speed(short type) {
 
   lives_label_set_mnemonic_widget(LIVES_LABEL(label), spinbutton_pb_speed);
 
-
   ca_hbox = lives_hbox_new(FALSE, 0);
   change_audio_speed = lives_standard_check_button_new
                        (_("Change the _audio speed as well"), TRUE, LIVES_BOX(ca_hbox), NULL);
 
   lives_box_pack_start(LIVES_BOX(vbox), ca_hbox, TRUE, TRUE, widget_opts.packing_height);
-
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(new_pb_speed), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -1711,7 +1671,6 @@ void create_new_pb_speed(short type) {
   lives_widget_set_can_focus_and_default(change_pb_ok);
   lives_widget_grab_default(change_pb_ok);
   lives_widget_grab_focus(spinbutton_pb_speed);
-
 
   reorder_leave_back = FALSE;
 
@@ -1754,9 +1713,7 @@ void create_new_pb_speed(short type) {
   if (type != 1 || cfile->achans == 0) {
     lives_widget_hide(ca_hbox);
   }
-
 }
-
 
 
 void on_change_speed_activate(LiVESMenuItem *menuitem, livespointer user_data) {
@@ -1765,7 +1722,6 @@ void on_change_speed_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->fx1_bool = mainw->fx2_bool = FALSE;
   mainw->fx1_val = cfile->fps;
 }
-
 
 
 void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
@@ -1907,12 +1863,7 @@ void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
-
 }
-
-
-
-
 
 
 int reorder_frames(int rwidth, int rheight) {
@@ -2018,7 +1969,6 @@ int reorder_frames(int rwidth, int rheight) {
 }
 
 
-
 int deorder_frames(int old_frames, boolean leave_bak) {
   char *com;
   weed_timecode_t time_start;
@@ -2048,7 +1998,6 @@ int deorder_frames(int old_frames, boolean leave_bak) {
 
   do_progress_dialog(TRUE, FALSE, _("Deordering frames"));
   lives_free(com);
-
 
   // check for EOF
 

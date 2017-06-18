@@ -4,7 +4,6 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +27,6 @@
 
 static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
-
 typedef struct {
   int fd;
   ssize_t bytes;
@@ -45,7 +43,6 @@ char *filename_from_fd(char *val, int fd) {
   // return filename from an open fd, freeing val first
 
   // in case of error we return val
-
 
   // call like: foo=filename_from_fd(foo,fd);
 
@@ -82,14 +79,12 @@ char *filename_from_fd(char *val, int fd) {
 }
 
 
-
 static LIVES_INLINE void reverse_bytes(char *out, const char *in, size_t count) {
   register int i;
   for (i = 0; i < count; i++) {
     out[i] = in[count - i - 1];
   }
 }
-
 
 
 // system calls
@@ -110,7 +105,6 @@ LIVES_INLINE uint64_t lives_random(void) {
   return random();
 #endif
 }
-
 
 
 LIVES_INLINE pid_t lives_getpid(void) {
@@ -152,6 +146,7 @@ LIVES_INLINE int lives_open3(const char *pathname, int flags, mode_t mode) {
   return fd;
 }
 
+
 LIVES_INLINE int lives_open2(const char *pathname, int flags) {
   int fd = open(pathname, flags);
 #ifdef IS_MINGW
@@ -172,7 +167,6 @@ LIVES_INLINE int lives_getuid(void) {
   PTOKEN_GROUPS ptg = NULL;
   PSID psid = NULL;
 
-
   DAmask = TOKEN_READ;
 
   if (!OpenProcessToken(GetCurrentProcess(), DAmask, &Thandle)) {
@@ -191,7 +185,6 @@ LIVES_INLINE int lives_getuid(void) {
 
   if (ptg == NULL)
     goto Cleanup;
-
 
   // Loop through the groups to find the logon SID.
 
@@ -242,7 +235,6 @@ LIVES_INLINE int lives_getgid(void) {
 #endif
   return 0; // stop gcc complaining
 }
-
 
 
 LIVES_INLINE ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz) {
@@ -300,7 +292,6 @@ LIVES_INLINE boolean lives_setenv(const char *name, const char *value) {
 }
 
 
-
 int lives_system(const char *com, boolean allow_error) {
   int retval;
   boolean cnorm = FALSE;
@@ -345,7 +336,6 @@ int lives_system(const char *com, boolean allow_error) {
 }
 
 
-
 lives_pgid_t lives_fork(const char *com) {
   // returns a number which is the pgid to use for lives_killpg
 
@@ -375,9 +365,6 @@ lives_pgid_t lives_fork(const char *com) {
   return pi;
 #endif
 }
-
-
-
 
 
 ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
@@ -418,8 +405,6 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
 }
 
 
-
-
 ssize_t lives_write_le(int fd, const void *buf, size_t count, boolean allow_fail) {
   if (capable->byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
     char xbuf[count];
@@ -428,9 +413,7 @@ ssize_t lives_write_le(int fd, const void *buf, size_t count, boolean allow_fail
   } else {
     return lives_write(fd, buf, count, allow_fail);
   }
-
 }
-
 
 
 int lives_fputs(const char *s, FILE *stream) {
@@ -472,6 +455,7 @@ static lives_file_buffer_t *find_in_file_buffers(int fd) {
   return NULL;
 }
 
+
 void lives_close_all_file_buffers(void) {
   lives_file_buffer_t *fbuff;
 
@@ -479,7 +463,6 @@ void lives_close_all_file_buffers(void) {
     fbuff = (lives_file_buffer_t *)mainw->file_buffers->data;
     lives_close_buffered(fbuff->fd);
   }
-
 }
 
 
@@ -494,8 +477,6 @@ static void do_file_read_error(int fd, ssize_t errval, size_t count) {
   else
     msg = lives_strdup_printf("Read failed with error %"PRId64" in: %s", (int64_t)errval,
                               mainw->read_failed_file);
-
-
 
   LIVES_ERROR(msg);
   lives_free(msg);
@@ -526,7 +507,6 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
 }
 
 
-
 ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
   if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
     char xbuf[count];
@@ -537,16 +517,12 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
   } else {
     return lives_read(fd, buf, count, allow_less);
   }
-
 }
-
-
 
 
 //// buffered io ////
 
 #define BUFFER_FILL_BYTES 65536
-
 
 static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   ssize_t res = 0;
@@ -629,14 +605,12 @@ int lives_close_buffered(int fd) {
 }
 
 
-
 static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
   ssize_t res;
 
   if (fbuff->buffer == NULL) fbuff->buffer = (uint8_t *)lives_malloc(BUFFER_FILL_BYTES);
 
   res = lives_read(fbuff->fd, fbuff->buffer, BUFFER_FILL_BYTES, TRUE);
-
 
   if (res < 0) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed
@@ -678,7 +652,6 @@ off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
 
   return lseek(fd, offset, SEEK_CUR);
 }
-
 
 
 ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less) {
@@ -746,7 +719,6 @@ ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_le
 
 
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail) {
-
   lives_file_buffer_t *fbuff;
   ssize_t retval = 0, res;
   size_t space_left;
@@ -803,8 +775,8 @@ ssize_t lives_write_le_buffered(int fd, const void *buf, size_t count, boolean a
   } else {
     return lives_write_buffered(fd, (char *)buf, count, allow_fail);
   }
-
 }
+
 
 /////////////////////////////////////////////
 
@@ -837,8 +809,6 @@ char *lives_format_storage_space_string(uint64_t space) {
 }
 
 
-
-
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval) {
   // WARNING: this will actually create the directory (since we dont know if its parents are needed)
   uint64_t ds;
@@ -849,8 +819,6 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
   if (ds < warn_level) return LIVES_STORAGE_STATUS_WARNING;
   return LIVES_STORAGE_STATUS_NORMAL;
 }
-
-
 
 
 int lives_chdir(const char *path, boolean allow_fail) {
@@ -871,7 +839,6 @@ int lives_chdir(const char *path, boolean allow_fail) {
 }
 
 
-
 LIVES_INLINE boolean lives_freep(void **ptr) {
   // free a pointer and nullify it, only if it is non-null to start with
   // pass the address of the pointer in
@@ -884,15 +851,11 @@ LIVES_INLINE boolean lives_freep(void **ptr) {
 }
 
 
-
 #ifdef IS_MINGW
-
-
 
 // should compile but it doesnt: http://msdn.microsoft.com/en-us/library/windows/desktop/ms683194%28v=vs.85%29.aspx
 /*
 typedef BOOL (WINAPI *LPFN_GLPI)(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION, PDWORD);
-
 
 // Helper function to count set bits in the processor mask.
 DWORD CountSetBits(ULONG_PTR bitMask) {
@@ -908,7 +871,6 @@ DWORD CountSetBits(ULONG_PTR bitMask) {
 
   return bitSetCount;
 }
-
 
 int lives_win32_get_num_logical_cpus(void) {
   LPFN_GLPI glpi;
@@ -1026,12 +988,6 @@ int lives_win32_get_num_logical_cpus(void) {
 */
 
 
-
-
-
-
-
-
 static boolean lives_win32_suspend_resume_threads(DWORD pid, boolean suspend) {
   HANDLE hThreadSnap;
   HANDLE hThread;
@@ -1076,7 +1032,6 @@ static boolean lives_win32_suspend_resume_threads(DWORD pid, boolean suspend) {
   CloseHandle(hThreadSnap);
 
   return TRUE;
-
 }
 
 
@@ -1139,7 +1094,6 @@ boolean lives_win32_suspend_resume_process(DWORD pid, boolean suspend) {
 }
 
 
-
 boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent) {
   HANDLE hProcessSnap;
   HANDLE hProcess;
@@ -1191,7 +1145,6 @@ boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent) {
   CloseHandle(hProcessSnap);
 
   if (kill_parent) {
-
     hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hProcessSnap == INVALID_HANDLE_VALUE) {
       LIVES_ERROR("CreateToolhelp32Snapshot (of processes)");
@@ -1235,7 +1188,6 @@ boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent) {
 #endif
 
 
-
 LIVES_INLINE int lives_kill(lives_pid_t pid, int sig) {
 #ifndef IS_MINGW
   if (pid == 0) {
@@ -1268,6 +1220,7 @@ LIVES_INLINE int myround(double n) {
   return (n >= 0.) ? (int)(n + 0.5) : (int)(n - 0.5);
 }
 
+
 LIVES_INLINE void clear_mainw_msg(void) {
   memset(mainw->msg, 0, 512);
 }
@@ -1285,7 +1238,6 @@ LIVES_INLINE double lives_fix(double val, int decimals) {
   double factor = (double)lives_10pow(decimals);
   return (double)((int)(val * factor + 0.5)) / factor;
 }
-
 
 
 LIVES_INLINE int get_approx_ln(uint32_t x) {
@@ -1310,9 +1262,6 @@ LIVES_INLINE int64_t lives_get_current_ticks(void) {
   return U_SECL * tv.tv_sec + tv.tv_usec * U_SEC_RATIO;
 #endif
 }
-
-
-
 
 
 /** set alarm for now + delta ticks (10 nanosec)
@@ -1391,13 +1340,11 @@ boolean lives_alarm_get(int alarm_handle) {
       LIVES_DEBUG("Alarm reached");
       return TRUE;
     }
-
   }
 
   // alarm time not reached yet
   return FALSE;
 }
-
 
 
 void lives_alarm_clear(int alarm_handle) {
@@ -1414,13 +1361,11 @@ void lives_alarm_clear(int alarm_handle) {
 }
 
 
-
 char *lives_datetime(struct timeval *tv) {
   char buf[128];
   char *datetime = NULL;
   struct tm *gm = gmtime(&tv->tv_sec);
   ssize_t written;
-
 
   if (gm) {
     written = (ssize_t)strftime(buf, 128, "%Y-%m-%d    %H:%M:%S", gm);
@@ -1430,7 +1375,6 @@ char *lives_datetime(struct timeval *tv) {
   }
   return datetime;
 }
-
 
 
 LIVES_INLINE char *lives_strappend(char *string, int len, const char *xnew) {
@@ -1445,7 +1389,6 @@ LIVES_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, const char *a
   if (lives_list_find_custom(xlist, add, (LiVESCompareFunc)strcmp) == NULL) return lives_list_append(xlist, lives_strdup(add));
   return xlist;
 }
-
 
 
 /* convert to/from a big endian 32 bit float for internal use */
@@ -1469,6 +1412,7 @@ LIVES_INLINE double calc_time_from_frame(int clip, int frame) {
   return (frame - 1.) / mainw->files[clip]->fps;
 }
 
+
 LIVES_INLINE int calc_frame_from_time(int filenum, double time) {
   // return the nearest frame (rounded) for a given time, max is cfile->frames
   int frame = 0;
@@ -1476,6 +1420,7 @@ LIVES_INLINE int calc_frame_from_time(int filenum, double time) {
   frame = (int)(time * mainw->files[filenum]->fps + 1.49999);
   return (frame < mainw->files[filenum]->frames) ? frame : mainw->files[filenum]->frames;
 }
+
 
 LIVES_INLINE int calc_frame_from_time2(int filenum, double time) {
   // return the nearest frame (rounded) for a given time
@@ -1486,6 +1431,7 @@ LIVES_INLINE int calc_frame_from_time2(int filenum, double time) {
   return (frame < mainw->files[filenum]->frames + 1) ? frame : mainw->files[filenum]->frames + 1;
 }
 
+
 LIVES_INLINE int calc_frame_from_time3(int filenum, double time) {
   // return the nearest frame (floor) for a given time
   // allow max (frames+1)
@@ -1494,7 +1440,6 @@ LIVES_INLINE int calc_frame_from_time3(int filenum, double time) {
   frame = (int)(time * mainw->files[filenum]->fps + 1.);
   return (frame < mainw->files[filenum]->frames + 1) ? frame : mainw->files[filenum]->frames + 1;
 }
-
 
 
 LIVES_INLINE boolean is_realtime_aplayer(int ptype) {
@@ -1567,7 +1512,6 @@ void calc_aframeno(int fileno) {
 
 
 
-
 int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
   // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes
@@ -1580,7 +1524,6 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
 
   // ntc is adjusted backwards to timecode of the new frame
 
-
   // the basic operation is quite simple, given the time difference between the last frame and
   // now, we calculate the new frame from the current fps and then ensure it is in the range
   // first_frame -> last_frame
@@ -1591,10 +1534,8 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
 
   // caller should check return value of ntc, and if it differs from otc, show the frame
 
-
   // note we also calculate the audio "frame" and position for realtime audio players
   // this is done so we can check here if audio limits stopped playback
-
 
   int64_t dtc = *ntc - otc;
   lives_clip_t *sfile = mainw->files[fileno];
@@ -1648,9 +1589,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
     first_frame = 1;
   }
 
-
   if (mainw->playing_file == fileno) {
-
     if (mainw->noframedrop) {
       // if noframedrop is set, we may not skip any frames
       // - the usual situation is that we are allowed to skip frames
@@ -1665,7 +1604,6 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
         return 0;
       }
     }
-
 
     // check if audio stopped playback
 #ifdef RT_AUDIO
@@ -1787,9 +1725,6 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
 }
 
 
-
-
-
 void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate maxspect (maximum size which maintains aspect ratio)
   // of cwidth, cheight - given restrictions rwidth * rheight
@@ -1827,10 +1762,7 @@ void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
 }
 
 
-
-
 /////////////////////////////////////////////////////////////////////////////
-
 
 void init_clipboard(void) {
   int current_file = mainw->current_file;
@@ -1879,7 +1811,6 @@ void init_clipboard(void) {
 }
 
 
-
 void d_print(const char *fmt, ...) {
   // print out output in the main message area (and info log)
 
@@ -1925,7 +1856,6 @@ void d_print(const char *fmt, ...) {
 
   lives_free(text);
 }
-
 
 
 boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno,
@@ -2132,7 +2062,6 @@ void clear_lmap_errors(void) {
   if (mainw->affected_layout_marks != NULL) {
     remove_current_from_affected_layouts(mainw->multitrack);
   }
-
 }
 
 
@@ -2240,9 +2169,7 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
   }
 
   return TRUE;
-
 }
-
 
 
 boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
@@ -2296,11 +2223,13 @@ LIVES_INLINE const char *get_image_ext_for_type(lives_image_type_t imgtype) {
   }
 }
 
+
 LIVES_INLINE lives_image_type_t lives_image_ext_to_type(const char *img_ext) {
   if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) return IMG_TYPE_PNG;
   if (!strcmp(img_ext, LIVES_FILE_EXT_JPG)) return IMG_TYPE_JPEG;
   return IMG_TYPE_UNKNOWN;
 }
+
 
 LIVES_INLINE lives_image_type_t lives_image_type_to_image_type(const char *lives_img_type) {
   if (!strcmp(lives_img_type, LIVES_IMAGE_TYPE_PNG)) return IMG_TYPE_PNG;
@@ -2354,7 +2283,6 @@ void count_opening_frames(void) {
   mainw->opening_frames = cfile->frames;
   cfile->frames = cframes;
 }
-
 
 
 void get_frame_count(int idx) {
@@ -2414,9 +2342,7 @@ void get_frames_sizes(int fileno, int frame) {
     sfile->vsize = lives_pixbuf_get_height(pixbuf);
     lives_object_unref(pixbuf);
   }
-
 }
-
 
 
 void get_next_free_file(void) {
@@ -2443,7 +2369,6 @@ void get_dirname(char *filename) {
   }
 
   lives_free(tmp);
-
 }
 
 
@@ -2475,7 +2400,7 @@ void get_filename(char *filename, boolean strip_dir) {
   lives_strfreev(array);
 }
 
-
+ 
 char *get_extension(const char *filename) {
   // return file extension without the "."
   char *tmp = lives_path_get_basename(filename);
@@ -2542,6 +2467,7 @@ uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   return strtol(val, NULL, 10);
 }
 
+
 #define VER_MAJOR_MULT 1000000
 #define VER_MINOR_MULT 1000
 #define VER_MICRO_MULT 1
@@ -2573,8 +2499,6 @@ uint64_t make_version_hash(const char *ver) {
   return hash;
 }
 
-
-
 char *repl_workdir(const char *entry, boolean fwd) {
   // replace prefs->workdir with string workdir or vice-versa. This allows us to relocate workdir if necessary.
   // used for layout.map file
@@ -2582,7 +2506,6 @@ char *repl_workdir(const char *entry, boolean fwd) {
 
   // fwd TRUE replaces "/tmp/foo" with "workdir"
   // fwd FALSE replaces "workdir" with "/tmp/foo"
-
 
   char *string = lives_strdup(entry);
 
@@ -2599,7 +2522,6 @@ char *repl_workdir(const char *entry, boolean fwd) {
   }
   return string;
 }
-
 
 void remove_layout_files(LiVESList *map) {
   // removes a LiVESList of layouts from the set layout map
@@ -2680,7 +2602,6 @@ void remove_layout_files(LiVESList *map) {
           lives_free(protect_file);
         }
 
-
         // remove from mainw->files[]->layout_map
         for (i = 1; i <= MAX_FILES; i++) {
           if (mainw->files[i] != NULL) {
@@ -2719,7 +2640,6 @@ void remove_layout_files(LiVESList *map) {
 
   // save updated layout.map
   save_layout_map(NULL, NULL, NULL, NULL);
-
 }
 
 #define TEST_AUDLEVELS
@@ -2740,12 +2660,11 @@ void get_play_times(void) {
   int current_file = mainw->current_file;
   int afd = -1;
 
-  register int i;
-
 #ifdef TEST_AUDLEVELS
   char *filename;
   double atime;
   float vol;
+  register int i;
 #endif
 
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
@@ -2772,7 +2691,6 @@ void get_play_times(void) {
   // draw timer bars
   allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
   allocheight = lives_widget_get_allocation_height(mainw->video_draw);
-
 
   if (mainw->laudio_drawable != NULL) {
     lives_painter_t *cr = lives_painter_create(mainw->laudio_drawable);
@@ -2811,7 +2729,6 @@ void get_play_times(void) {
     offset_left = (cfile->start - 1) / cfile->fps / cfile->total_time * allocwidth;
     offset_right = (cfile->end) / cfile->fps / cfile->total_time * allocwidth;
 
-
     if (mainw->video_drawable != NULL) {
       lives_painter_t *cr = lives_painter_create(mainw->video_drawable);
 
@@ -2823,7 +2740,6 @@ void get_play_times(void) {
                               prefs->bar_height);
 
       lives_painter_fill(cr);
-
 
       // selected
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
@@ -2874,7 +2790,6 @@ void get_play_times(void) {
       lives_painter_fill(cr);
 
       if (offset_left < cfile->laudio_time / cfile->total_time * allocwidth) {
-
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
 
 #ifdef TEST_AUDLEVELS
@@ -2884,6 +2799,7 @@ void get_play_times(void) {
 
         for (i = offset_left; i < offset_right; i++) {
           atime = i / allocwidth * cfile->total_time;
+	  
           lives_painter_move_to(cr, i, prefs->bar_height * 2);
           vol = get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
           lives_painter_line_to(cr, i, (double)prefs->bar_height * (2. - vol));
@@ -2924,7 +2840,6 @@ void get_play_times(void) {
         lives_painter_fill(cr);
 
         if (offset_left < cfile->laudio_time / cfile->total_time * allocwidth) {
-
           lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
 
 #ifdef TEST_AUDLEVELS
@@ -3064,9 +2979,7 @@ void get_play_times(void) {
   lives_widget_queue_draw(mainw->hruler);
 
   mainw->current_file = current_file;
-
 }
-
 
 void draw_little_bars(double ptrtime) {
   //draw the vertical player bars
@@ -3198,8 +3111,6 @@ void draw_little_bars(double ptrtime) {
 }
 
 
-
-
 void get_total_time(lives_clip_t *file) {
   // get times (video, left and right audio)
 
@@ -3231,8 +3142,6 @@ void get_total_time(lives_clip_t *file) {
   }
 }
 
-
-
 void find_when_to_stop(void) {
   // work out when to stop playing
   //
@@ -3255,9 +3164,7 @@ void find_when_to_stop(void) {
   else mainw->whentostop = STOP_ON_VID_END; // tada...
 }
 
-
 #define ASPECT_ALLOWANCE 0.005
-
 
 void minimise_aspect_delta(double aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height) {
   // we will use trigonometry to calculate the smallest difference between a given
@@ -3284,7 +3191,6 @@ void minimise_aspect_delta(double aspect, int hblock, int vblock, int hsize, int
     real_width = (int)(calc_width / hblock + i) * hblock;
     real_height = (int)(real_width / aspect / vblock + .5) * vblock;
     delta = (hsize - real_width) * (hsize - real_width) + (vsize - real_height) * (vsize - real_height);
-
 
     if (real_width % hblock != 0 || real_height % vblock != 0 || ABS((double)real_width / (double)real_height - aspect) > ASPECT_ALLOWANCE) {
       // encoders can be fussy, so we need to fit both aspect ratio and blocksize
@@ -3316,6 +3222,7 @@ void minimise_aspect_delta(double aspect, int hblock, int vblock, int hsize, int
   }
 }
 
+
 void zero_spinbuttons(void) {
   lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 0., 0.);
@@ -3326,8 +3233,6 @@ void zero_spinbuttons(void) {
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 0.);
   lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
 }
-
-
 
 
 boolean switch_aud_to_jack(void) {
@@ -3381,13 +3286,10 @@ boolean switch_aud_to_jack(void) {
     jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
   }
 
-
   return TRUE;
 #endif
   return FALSE;
 }
-
-
 
 boolean switch_aud_to_pulse(void) {
 #ifdef HAVE_PULSE_AUDIO
@@ -3433,7 +3335,6 @@ boolean switch_aud_to_pulse(void) {
       jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
     }
 
-
 #endif
 
     return retval;
@@ -3442,8 +3343,6 @@ boolean switch_aud_to_pulse(void) {
 #endif
   return FALSE;
 }
-
-
 
 void switch_aud_to_sox(boolean set_in_prefs) {
   prefs->audio_player = AUD_PLAYER_SOX;
@@ -3484,10 +3383,7 @@ void switch_aud_to_sox(boolean set_in_prefs) {
     pulse_shutdown();
   }
 #endif
-
 }
-
-
 
 void switch_aud_to_mplayer(boolean set_in_prefs) {
   int i;
@@ -3538,9 +3434,7 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
     pulse_shutdown();
   }
 #endif
-
 }
-
 
 void switch_aud_to_mplayer2(boolean set_in_prefs) {
   int i;
@@ -3591,16 +3485,12 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
     pulse_shutdown();
   }
 #endif
-
 }
-
 
 boolean prepare_to_play_foreign(void) {
   // here we are going to 'play' a captured external window
 
 #ifdef GUI_GTK
-
-
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
 #ifdef GDK_WINDOWING_X11
@@ -3736,7 +3626,6 @@ boolean prepare_to_play_foreign(void) {
   return TRUE;
 }
 
-
 boolean after_foreign_play(void) {
   // read details from capture file
   int capture_fd;
@@ -3798,7 +3687,6 @@ boolean after_foreign_play(void) {
           mainw->com_failed = FALSE;
           lives_system(com, FALSE);
 
-
           cfile->nopreview = TRUE;
           if (!mainw->com_failed && do_progress_dialog(TRUE, TRUE, _("Cleaning up clip"))) {
             get_next_free_file();
@@ -3841,7 +3729,6 @@ boolean after_foreign_play(void) {
   return TRUE;
 }
 
-
 void set_menu_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic) {
   LiVESWidget *label;
   if (LIVES_IS_MENU_ITEM(menuitem)) {
@@ -3854,7 +3741,6 @@ void set_menu_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic
   }
 }
 
-
 void get_menu_text(LiVESWidget *menuitem, char *text) {
   LiVESWidget *label = lives_bin_get_child(LIVES_BIN(menuitem));
   lives_snprintf(text, 255, "%s", lives_label_get_text(LIVES_LABEL(label)));
@@ -3865,7 +3751,6 @@ void get_menu_text_long(LiVESWidget *menuitem, char *text) {
   lives_snprintf(text, 32768, "%s", lives_label_get_text(LIVES_LABEL(label)));
 }
 
-
 LIVES_INLINE boolean int_array_contains_value(int *array, int num_elems, int value) {
   int i;
   for (i = 0; i < num_elems; i++) {
@@ -3873,7 +3758,6 @@ LIVES_INLINE boolean int_array_contains_value(int *array, int num_elems, int val
   }
   return FALSE;
 }
-
 
 void reset_clipmenu(void) {
   // sometimes the clip menu gets messed up, e.g. after reloading a set.
@@ -3896,8 +3780,6 @@ void reset_clipmenu(void) {
     lives_signal_handler_unblock(cfile->menuentry, cfile->menuentry_func);
   }
 }
-
-
 
 boolean check_file(const char *file_name, boolean check_existing) {
   int check;
@@ -3944,8 +3826,6 @@ boolean check_file(const char *file_name, boolean check_existing) {
   return TRUE;
 }
 
-
-
 int lives_rmdir(const char *dir, boolean force) {
   // if force is TRUE, removes non-empty dirs, otherwise leaves them
   // may fail
@@ -3971,7 +3851,6 @@ int lives_rmdir(const char *dir, boolean force) {
   return retval;
 }
 
-
 int lives_rmdir_with_parents(const char *dir) {
   // may fail, will not remove empty dirs
   char *com = lives_strdup_printf("%s -p \"%s\" >\"%s\" 2>&1", capable->rmdir_cmd, dir, prefs->cmd_log);
@@ -3979,7 +3858,6 @@ int lives_rmdir_with_parents(const char *dir) {
   lives_free(com);
   return retval;
 }
-
 
 int lives_rm(const char *file) {
   // may fail
@@ -3996,7 +3874,6 @@ int lives_rm(const char *file) {
   return retval;
 }
 
-
 int lives_rmglob(const char *files) {
   // delete files with name "files"*
   // may fail
@@ -4012,7 +3889,6 @@ int lives_rmglob(const char *files) {
   return retval;
 }
 
-
 int lives_cp(const char *from, const char *to) {
   // may not fail
   char *com = lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
@@ -4020,7 +3896,6 @@ int lives_cp(const char *from, const char *to) {
   lives_free(com);
   return retval;
 }
-
 
 int lives_cp_keep_perms(const char *from, const char *to) {
   // may not fail
@@ -4030,7 +3905,6 @@ int lives_cp_keep_perms(const char *from, const char *to) {
   return retval;
 }
 
-
 int lives_mv(const char *from, const char *to) {
   // may not fail
   char *com = lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1", capable->mv_cmd, from, to, prefs->cmd_log);
@@ -4039,7 +3913,6 @@ int lives_mv(const char *from, const char *to) {
   return retval;
 }
 
-
 int lives_touch(const char *tfile) {
   // may not fail
   char *com = lives_strdup_printf("%s \"%s\" >\"%s\" 2>&1", capable->touch_cmd, tfile, prefs->cmd_log);
@@ -4047,7 +3920,6 @@ int lives_touch(const char *tfile) {
   lives_free(com);
   return retval;
 }
-
 
 int lives_ln(const char *from, const char *to) {
   // may not fail
@@ -4073,7 +3945,7 @@ int lives_chmod(const char *target, const char *mode) {
   return retval;
 }
 
-
+  
 int lives_cat(const char *from, const char *to, boolean append) {
   // may not fail
   char *com;
@@ -4089,7 +3961,7 @@ int lives_cat(const char *from, const char *to, boolean append) {
   return retval;
 }
 
-
+  
 int lives_echo(const char *text, const char *to, boolean append) {
   // may not fail
   char *com;
@@ -4105,8 +3977,7 @@ int lives_echo(const char *text, const char *to, boolean append) {
   return retval;
 }
 
-
-
+  
 void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
   char *com;
 #ifndef IS_MINGW
@@ -4134,9 +4005,6 @@ void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
 
   lives_free(com);
 }
-
-
-
 
 void lives_suspend_resume_process(const char *dirname, boolean suspend) {
   char *com;
@@ -4169,10 +4037,7 @@ void lives_suspend_resume_process(const char *dirname, boolean suspend) {
 }
 
 
-
-
-
-boolean check_dir_access(const char *dir) {
+gboolean check_dir_access(const char *dir) {
   // if a directory exists, make sure it is readable and writable
   // otherwise create it and then check
 
@@ -4205,7 +4070,6 @@ boolean check_dir_access(const char *dir) {
   return is_OK;
 }
 
-
 boolean check_dev_busy(char *devstr) {
 #ifndef IS_MINGW
   int ret;
@@ -4230,8 +4094,6 @@ boolean check_dev_busy(char *devstr) {
   return FALSE;
 }
 
-
-
 void activate_url_inner(const char *link) {
 #if GTK_CHECK_VERSION(2, 14, 0)
   LiVESError *err = NULL;
@@ -4244,11 +4106,9 @@ void activate_url_inner(const char *link) {
 #endif
 }
 
-
 void activate_url(LiVESAboutDialog *about, const char *link, livespointer data) {
   activate_url_inner(link);
 }
-
 
 void show_manual_section(const char *lang, const char *section) {
   char *tmp = NULL, *tmp2 = NULL;
@@ -4261,9 +4121,7 @@ void show_manual_section(const char *lang, const char *section) {
 
   if (tmp != NULL) lives_free(tmp);
   if (tmp2 != NULL) lives_free(tmp2);
-
 }
-
 
 uint64_t get_file_size(int fd) {
   // get the size of file fd
@@ -4271,7 +4129,6 @@ uint64_t get_file_size(int fd) {
   fstat(fd, &filestat);
   return (uint64_t)(filestat.st_size);
 }
-
 
 uint64_t sget_file_size(const char *name) {
   // get the size of file fd
@@ -4289,7 +4146,6 @@ uint64_t sget_file_size(const char *name) {
   return (uint64_t)(filestat.st_size);
 }
 
-
 void wait_for_bg_audio_sync(lives_clip_t *sfile) {
   char *afile = lives_build_filename(prefs->workdir, sfile->handle, "audio", NULL);
   boolean timeout;
@@ -4303,7 +4159,6 @@ void wait_for_bg_audio_sync(lives_clip_t *sfile) {
   lives_free(afile);
   lives_alarm_clear(alarm_handle);
 }
-
 
 void reget_afilesize(int fileno) {
   // re-get the audio file size
@@ -4339,8 +4194,6 @@ void reget_afilesize(int fileno) {
   lives_free(afile);
 }
 
-
-
 boolean create_event_space(int length) {
   // try to create desired events
   // if we run out of memory, all events requested are freed, and we return FALSE
@@ -4359,8 +4212,6 @@ boolean create_event_space(int length) {
   return TRUE;
 }
 
-
-
 int lives_list_strcmp_index(LiVESList *list, livesconstpointer data) {
   // find data in list, using strcmp
 
@@ -4375,8 +4226,6 @@ int lives_list_strcmp_index(LiVESList *list, livesconstpointer data) {
   }
   return -1;
 }
-
-
 
 void add_to_recent(const char *filename, double start, int frames, const char *extra_params) {
   char buff[PATH_MAX];
@@ -4467,8 +4316,6 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
 }
 
 
-
-
 int verhash(char *version) {
   char *s;
   int major = 0;
@@ -4492,8 +4339,6 @@ int verhash(char *version) {
   return major * 1000000 + minor * 1000 + micro;
 }
 
-
-
 #ifdef PRODUCE_LOG
 // disabled by default
 void lives_log(const char *what) {
@@ -4507,8 +4352,6 @@ void lives_log(const char *what) {
   lives_free(lives_log_file);
 }
 #endif
-
-
 
 
 // TODO - move into undo.c
@@ -4538,8 +4381,6 @@ void set_undoable(const char *what, boolean sensitive) {
 #ifdef PRODUCE_LOG
   lives_log(what);
 #endif
-
-
 }
 
 void set_redoable(const char *what, boolean sensitive) {
@@ -4566,7 +4407,6 @@ void set_redoable(const char *what, boolean sensitive) {
   lives_widget_set_sensitive(mainw->redo, sensitive);
 }
 
-
 void set_sel_label(LiVESWidget *sel_label) {
   char *tstr, *frstr, *tmp;
   char *sy, *sz;
@@ -4591,8 +4431,6 @@ void set_sel_label(LiVESWidget *sel_label) {
   }
   lives_widget_queue_draw(sel_label);
 }
-
-
 
 
 LIVES_INLINE void lives_list_free_strings(LiVESList *list) {
@@ -4676,8 +4514,6 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
 
   return lives_strdup(buff);
 }
-
-
 
 
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
@@ -4774,8 +4610,6 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
   return key;
 }
 
-
-
 boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
   time_t old_time = 0, new_time = 0;
   struct stat mystat;
@@ -4789,7 +4623,6 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   int retval2 = LIVES_RESPONSE_NONE;
 
   if (mainw->cached_list == NULL) {
-
     lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, "header.lives", NULL);
     old_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, "header", NULL);
 
@@ -4892,8 +4725,6 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   lives_free(val);
   return TRUE;
 }
-
-
 
 void save_clip_value(int which, lives_clip_details_t what, void *val) {
   char *lives_header;
@@ -5024,8 +4855,6 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
   return;
 }
 
-
-
 LiVESList *get_set_list(const char *dir, boolean utf8) {
   // get list of sets in top level dir
   // values will be in filename encoding
@@ -5043,7 +4872,6 @@ LiVESList *get_set_list(const char *dir, boolean utf8) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_context_update();
-
 
   while (1) {
     tdirent = readdir(tldir);
@@ -5083,10 +4911,7 @@ LiVESList *get_set_list(const char *dir, boolean utf8) {
     lives_free(subdirname);
     closedir(subdir);
   }
-
 }
-
-
 
 
 boolean check_for_ratio_fps(double fps) {
@@ -5123,7 +4948,6 @@ double get_ratio_fps(const char *string) {
 }
 
 
-
 char *remove_trailing_zeroes(double val) {
   int i;
   double xval = val;
@@ -5139,7 +4963,6 @@ char *remove_trailing_zeroes(double val) {
 
 uint32_t get_signed_endian(boolean is_signed, boolean little_endian) {
   // asigned TRUE == signed, FALSE == unsigned
-
 
   if (is_signed) {
     if (little_endian) {
@@ -5160,8 +4983,6 @@ uint32_t get_signed_endian(boolean is_signed, boolean little_endian) {
 }
 
 
-
-
 int get_token_count(const char *string, int delim) {
   int pieces = 1;
   if (string == NULL) return 0;
@@ -5173,7 +4994,6 @@ int get_token_count(const char *string, int delim) {
   }
   return pieces;
 }
-
 
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2) {
@@ -5204,6 +5024,7 @@ char *subst(const char *string, const char *from, const char *to) {
   return ret;
 }
 
+
 char *insert_newlines(const char *text, int maxwidth) {
   // crude formating of strings, ensure a newline after every run of maxwidth chars
   // does not take into account for example utf8 multi byte chars
@@ -5232,7 +5053,6 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   xtoffs = mbtowc(NULL, NULL, 0); // reset read state
 
-
   //pass 1, get the required size
   for (i = 0; i < tlen; i += xtoffs) {
     xtoffs = mbtowc(&utfsym, &text[i], 4); // get next utf8 wchar
@@ -5257,7 +5077,6 @@ char *insert_newlines(const char *text, int maxwidth) {
     req_size += xtoffs;
   }
 
-
   xtoffs = mbtowc(NULL, NULL, 0); // reset read state
 
   retstr = (char *)lives_malloc(req_size);
@@ -5268,7 +5087,6 @@ char *insert_newlines(const char *text, int maxwidth) {
   //pass 2, copy and insert newlines
 
   for (i = 0; i < tlen; i += xtoffs) {
-
     xtoffs = mbtowc(&utfsym, &text[i], 4); // get next utf8 wchar
     if (!strncmp(text + i, "\n", nlen)) runlen = 0; // is a newline (in any encoding)
     else {
@@ -5297,7 +5115,6 @@ char *insert_newlines(const char *text, int maxwidth) {
 }
 
 
-
 int hextodec(char *string) {
   int i;
   int tot = 0;
@@ -5313,6 +5130,7 @@ int hextodec(char *string) {
   return tot;
 }
 
+
 int get_hex_digit(const char *c) {
   if (!strcmp(c, "a") || !strcmp(c, "A")) return 10;
   if (!strcmp(c, "b") || !strcmp(c, "B")) return 11;
@@ -5324,7 +5142,6 @@ int get_hex_digit(const char *c) {
 }
 
 
-
 static uint32_t fastrand_val;
 
 LIVES_INLINE uint32_t fastrand(void) {
@@ -5333,6 +5150,7 @@ LIVES_INLINE uint32_t fastrand(void) {
 
   return (fastrand_val = rand_a * fastrand_val + rand_c);
 }
+
 
 void fastsrand(uint32_t seed) {
   fastrand_val = seed;
@@ -5349,7 +5167,7 @@ boolean is_writeable_dir(const char *dir) {
 #ifndef IS_MINGW
   struct statvfs sbuf;
 #else
-  char *tfile;
+  char *tfile;s
 #endif
 
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
@@ -5372,8 +5190,6 @@ boolean is_writeable_dir(const char *dir) {
 #endif
   return TRUE;
 }
-
-
 
 
 uint64_t get_fs_free(const char *dir) {
@@ -5417,14 +5233,11 @@ getfserr:
 }
 
 
-
-
 LIVES_INLINE LiVESInterpType get_interp_value(short quality) {
   if (quality == PB_QUALITY_HIGH) return LIVES_INTERP_BEST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
   return LIVES_INTERP_FAST;
 }
-
 
 
 LIVES_INLINE LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) {
@@ -5464,13 +5277,10 @@ LiVESList *lives_list_copy_strings(LiVESList *list) {
 }
 
 
-
-
 boolean string_lists_differ(LiVESList *alist, LiVESList *blist) {
   // compare 2 lists of strings and see if they are different (ignoring ordering)
   // for long lists this would be quicker if we sorted the lists first; however this function
   // is designed to deal with short lists only
-
 
   LiVESList *plist;
 
@@ -5499,7 +5309,6 @@ boolean string_lists_differ(LiVESList *alist, LiVESList *blist) {
 }
 
 
-
 lives_cancel_t check_for_bad_ffmpeg(void) {
   int i;
 
@@ -5524,7 +5333,7 @@ lives_cancel_t check_for_bad_ffmpeg(void) {
     }
     lives_free(fname_next);
   }
-
+  
   cfile->frames = ofcount;
 
   if (!maybeok) {

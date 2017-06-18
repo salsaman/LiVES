@@ -971,7 +971,7 @@ static int progress_count;
 static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
   double timesofar, fraction_done;
 
-  if (progress_count++ >= PROG_LOOP_VAL) {
+  if (progress_count++ >= mainw->is_rendering ? PROG_LOOP_VAL / 4 : PROG_LOOP_VAL) {
     if (frames_done <= sfile->progress_end && sfile->progress_end > 0 && !mainw->effects_paused &&
         frames_done > 0) {
 #ifdef USE_MONOTONIC_TIME

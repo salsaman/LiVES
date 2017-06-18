@@ -1824,10 +1824,14 @@ void do_start_messages(void) {
   d_print(_("Checking optional dependencies: "));
 
   show_detected_or_not(capable->has_mplayer, "mplayer");
-  show_detected_or_not(capable->has_mplayer2, "mplayer2");
+  if (!capable->has_mplayer) {
+    show_detected_or_not(capable->has_mplayer2, "mplayer2");
 #ifdef ALLOW_MPV
-  show_detected_or_not(capable->has_mpv, "mpv");
+    if (!capable->has_mplayer2) {
+      show_detected_or_not(capable->has_mpv, "mpv");
+    }
 #endif
+  }
   show_detected_or_not(capable->has_convert, "convert");
   show_detected_or_not(capable->has_composite, "composite");
   show_detected_or_not(capable->has_sox_sox, "sox");

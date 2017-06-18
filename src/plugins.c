@@ -2727,12 +2727,16 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
     cparam->source_type = LIVES_RFX_SOURCE_RFX;
     cparam->special_type = LIVES_PARAM_SPECIAL_TYPE_NONE;
     cparam->special_type_index = 0;
+    cparam->def = NULL;
+    cparam->value = NULL;
 
 #ifdef DEBUG_RENDER_FX_P
     lives_printerr("Got parameter %s\n", cparam->name);
 #endif
     cparam->dp = 0;
     cparam->list = NULL;
+
+    cparam->type = LIVES_PARAM_UNKNOWN;
 
     if (!strncmp(param_array[2], "num", 3)) {
       cparam->dp = atoi(param_array[2] + 3);
@@ -2955,7 +2959,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   void rfx_params_free(lives_rfx_t *rfx) {
     register int i;
     for (i = 0; i < rfx->num_params; i++) {
-      if (rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE) continue;
+      if (rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
       lives_free(rfx->params[i].name);
       lives_freep((void **)&rfx->params[i].def);
       lives_freep((void **)&rfx->params[i].value);
@@ -2964,7 +2968,6 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       lives_list_free_all(&rfx->params[i].list);
     }
   }
-
 
 
   void rfx_free(lives_rfx_t *rfx) {
@@ -3014,6 +3017,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     dest->source = src->source;
     dest->reinit = src->reinit;
     dest->source_type = src->source_type;
+    dest->value = dest->def = NULL;
     dest->list = NULL;
 
     switch (dest->type) {
@@ -3198,7 +3202,9 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       rpar[i].source_type = LIVES_RFX_SOURCE_WEED;
       rpar[i].special_type = LIVES_PARAM_SPECIAL_TYPE_NONE;
       rpar[i].special_type_index = 0;
-
+      rpar[i].value = NULL;
+      rpar[i].def = NULL;
+      
       if (flags & WEED_PARAMETER_VARIABLE_ELEMENTS && !(flags & WEED_PARAMETER_ELEMENT_PER_CHANNEL)) {
         rpar[i].hidden |= HIDDEN_MULTI;
         rpar[i].multi = PVAL_MULTI_ANY;

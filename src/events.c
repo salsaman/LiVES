@@ -4145,7 +4145,7 @@ boolean has_audio_frame(weed_plant_t *event_list) {
 
 boolean render_to_clip(boolean new_clip) {
   // this function is called to actually start rendering mainw->event_list to a new/current clip
-  char *com;
+  char *com, *tmp;
   char *clipname = NULL;
 
   boolean retval = TRUE;
@@ -4187,6 +4187,9 @@ boolean render_to_clip(boolean new_clip) {
       } else xse |= AFORM_LITTLE_ENDIAN;
 
       clipname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(rdet->clipname_entry)));
+      tmp = get_untitled_name(mainw->untitled_number);
+      if (!strcmp(clipname, tmp)) mainw->untitled_number++;
+      lives_free(tmp);
 
       lives_widget_destroy(rdet->dialog);
 

@@ -2804,7 +2804,7 @@ void threaded_dialog_spin(double fraction) {
     }
   }
 
-  if (lives_has_toplevel_focus()) {
+  if (1||lives_has_toplevel_focus()) {
     if (LIVES_IS_WIDGET(procw->processing)) {
       lives_widget_show_all(procw->processing);
       lives_widget_queue_draw(procw->processing);
@@ -2857,6 +2857,7 @@ void end_threaded_dialog(void) {
       lives_widget_context_update();
     }
   procw = NULL;
+  mainw->threaded_dialog = FALSE;
 }
 
 

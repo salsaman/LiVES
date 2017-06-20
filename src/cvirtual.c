@@ -301,13 +301,13 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
   for (i = sframe; i <= eframe; i++) {
     if (i > sfile->frames) break;
 
+    if (update_progress) {
+      threaded_dialog_spin(0.);
+      lives_widget_context_update();
+    }
+
     if (sfile->frame_index[i - 1] >= 0) {
       oname = NULL;
-
-      if (update_progress) {
-        threaded_dialog_spin(0.);
-        lives_widget_context_update();
-      }
 
       if (pbr != NULL && pixbuf != NULL) lives_object_unref(pixbuf);
 

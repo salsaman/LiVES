@@ -4201,7 +4201,7 @@ boolean render_to_clip(boolean new_clip) {
         return FALSE;
       }
     } else {
-      // prompt for clip name
+      // TODO: prompt just for clip name
 
 
     }

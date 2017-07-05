@@ -1162,7 +1162,7 @@ _entryw *create_rename_dialog(int type) {
   // type 7 = rename track in mt
 
   // type 8 = export theme
-
+  
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
@@ -1272,7 +1272,6 @@ _entryw *create_rename_dialog(int type) {
     lives_box_pack_start(LIVES_BOX(hbox), set_combo, TRUE, TRUE, 0);
 
     lives_entry_set_completion_from_list(LIVES_ENTRY(renamew->entry), renamew->setlist);
-
   } else {
     char *tmp;
     renamew->entry = lives_entry_new();
@@ -1301,7 +1300,6 @@ _entryw *create_rename_dialog(int type) {
 
     lives_box_pack_start(LIVES_BOX(hbox), dirbutton1, FALSE, TRUE, widget_opts.packing_width);
     lives_signal_connect(dirbutton1, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_complex_clicked), renamew->entry);
-
   }
 
   if (type == 8) {

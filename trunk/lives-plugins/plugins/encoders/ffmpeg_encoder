@@ -5,7 +5,6 @@
 # released under the GNU GPL 3 or later
 # see file COPYING or www.gnu.org for details
 
-
 #######################################################################
 # LiVES ffmpeg plugin v2.10
 # v 2.1 - add experimental 3gp support
@@ -48,7 +47,6 @@ if ($command eq "version") {
 
 
 if ($command eq "init") {
-
     # perform any initialisation needed
     # On error, print error message and exit 1
     # otherwise exit 0
@@ -64,7 +62,6 @@ if ($command eq "init") {
 }
     
     
-
 
 if ($command eq "get_capabilities") {
     # return capabilities - this is a bitmap field
@@ -95,7 +92,6 @@ if ($command eq "get_formats") {
 	$tool="avconv";
     }
 
-
     $has_mpeg4=(system("$tool -encoders 2>/dev/null | grep \" mpeg4 \" >/dev/null")==0);
     $has_webm=(system("$tool -encoders 2>/dev/null | grep vpx >/dev/null")==0);
     $has_qtrle=(system("$tool -encoders 2>/dev/null | grep qtrle >/dev/null")==0);
@@ -112,7 +108,6 @@ if ($command eq "get_formats") {
     $has_mp3=(system("$tool -encoders 2>/dev/null | grep mp3 >/dev/null")==0);
     $has_mp2=(system("$tool -encoders 2>/dev/null | grep mp2 >/dev/null")==0);
     $has_wmav2=(system("$tool -encoders 2>/dev/null | grep wmav2 >/dev/null")==0);
-
 
     $errwebm=$errx264=$errflv=$err3gp=$errwmv2=$errffv1=$errmjpeg=$errqtrle=$errmpeg4="";
 
@@ -153,7 +148,6 @@ if ($command eq "get_formats") {
     unless ($has_3gp) {
 	$err3gp=" (MISSING h263 support) ";
     }
-
 
     unless ($has_aac) {
 	$erraac=" (MISSING aac support) ";
@@ -201,8 +195,6 @@ if ($command eq "get_formats") {
     print "3gp_mp4|3gp (mp4)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|frame=|\n";
     exit 0;
 }
-
-
 
 
 if ($command eq "get_rfx") {
@@ -362,7 +354,6 @@ if ($command eq "encode") {
     }
 
     $ncpus=&get_num_procs;
-
 
     # default seems to be divx
     $vcodec="";
@@ -538,7 +529,6 @@ if ($command eq "encode") {
 }
 
 
-
 if ($command eq "clear") {
     # this is called after "encode"
     # note that encoding could have been stopped at any time
@@ -551,7 +541,6 @@ if ($command eq "clear") {
 }
 
 
-
 if ($command eq "finalise") {
     # do any finalising code
     
@@ -561,7 +550,6 @@ if ($command eq "finalise") {
 }
 
 exit 0;
-
 
 
 ###### subroutines #######

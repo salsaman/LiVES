@@ -1,10 +1,12 @@
-Version 2.8.7
--------------
+Version 2.8.7 (29 June 2017)
+----------------------------
 Remove glad.h dependence on khr.
 Prompt for clip name when rendering to new clip.
 Fix autolives toy.
 Increase default frame size to 1024x768 for new installs.
-	
+Allow override of frame size when encoding to ffmpeg / h264 format.
+Fix breakage in the threaded progress window.
+Updated Ukrainian translation (Yuri).
 
 
 

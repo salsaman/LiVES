@@ -1401,6 +1401,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->import_proj);
 
   mainw->export_proj = lives_menu_item_new_with_mnemonic((tmp = lives_strdup_printf(_("E_xport Project (.%s)..."), LIVES_FILE_EXT_PROJECT)));
+  lives_free(tmp);
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->export_proj);
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
 
@@ -3932,6 +3933,9 @@ void resize_play_window(void) {
             mainw->ext_keyboard = TRUE;
           }
         }
+	else if (mainw->vpp->init_screen != NULL) {
+	  LIVES_ERROR("Failed to start playback plugin");
+	}
       }
 
 #define TEST_CE_THUMBS 0

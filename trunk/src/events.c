@@ -4482,7 +4482,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       new_clip = TRUE;
       break;
     case RENDER_CHOICE_SAME_CLIP:
-      mainw->play_start = oplay_start; ///< same clip frames start where recording started
+      cfile->undo_start = mainw->play_start = oplay_start; ///< same clip frames start where recording started
       if (!render_to_clip(FALSE)) render_choice = RENDER_CHOICE_PREVIEW;
       else {
         close_scrap_file();

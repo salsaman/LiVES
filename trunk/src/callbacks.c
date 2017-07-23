@@ -2057,7 +2057,7 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       cfile->frame_index = cfile->frame_index_back;
       if (cfile->undo_action == UNDO_RENDER) {
         do_threaded_dialog(_("Clearing frame images"), FALSE);
-        clean_images_from_virtual(cfile, cfile->undo_end);
+        clean_images_from_virtual(cfile, cfile->undo_start, cfile->undo_end);
         save_frame_index(mainw->current_file);
         cfile->frame_index_back = NULL;
         end_threaded_dialog();

@@ -8237,6 +8237,7 @@ boolean widget_helper_init(void) {
     for (i = 0; ext[i] != NULL; i++) {
       xlist = lives_list_append_unique(xlist, ext[i]);
     }
+    lives_strfreev(ext);
     slist = slist->next;
   }
   g_slist_free(flist);

@@ -128,8 +128,70 @@ vloopback2_la_CFLAGS = $(shared_cflags) $(weed_cflags)
 vloopback2_la_LDFLAGS = $(shared_ldflags)
 endif
 
+if HAVE_AVFORMAT
+if HAVE_AVCODEC
+if HAVE_AVUTIL
+
+libav_cflags = -DHAVE_LIBAV_LIBS=1
+
+if HAVE_AVCODEC_OPEN2
+libav_cflags += -DHAVE_AVCODEC_OPEN2=1
+endif
+
+if HAVE_AVCODEC_ALLOC_CONTEXT3
+libav_cflags += -DHAVE_AVCODEC_ALLOC_CONTEXT3=1
+endif
+
+if HAVE_AV_CODEC_SET_PKT_TIMEBASE
+libav_cflags += -DHAVE_AV_CODEC_SET_PKT_TIMEBASE=1
+endif
+
+if HAVE_AVFORMAT_NEW_STREAM
+libav_cflags += -DHAVE_AVFORMAT_NEW_STREAM=1
+endif
+
+if HAVE_AVPACKET_UNREF
+libav_cflags += -DHAVE_AVPACKET_UNREF=1
+endif
+
+if HAVE_AVFRAME_UNREF
+libav_cflags += -DHAVE_AVFRAME_UNREF=1
+endif
+
+if HAVE_AVFORMAT_FIND_STREAM_INFO
+libav_cflags += -DHAVE_AVFORMAT_FIND_STREAM_INFO=1
+endif
+
+if HAVE_AVFORMAT_CLOSE_INPUT
+libav_cflags += -DHAVE_AVFORMAT_CLOSE_INPUT=1
+endif
+
+if HAVE_AVFORMAT_INTERNAL_H
+libav_cflags += -DHAVE_AVFORMAT_INTERNAL_H=1
+endif
+
+if HAVE_AV_SET_PTS_INFO
+libav_cflags += -DHAVE_AV_SET_PTS_INFO=1
+endif
+
+if HAVE_AVPRIV_SET_PTS_INFO
+libav_cflags += -DHAVE_AVPRIV_SET_PTS_INFO=1
+endif
+
+libav_stream_libs = libav_stream.la
+AVSTREAM_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@
+AVSTREAM_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ -Wno-deprecated-declarations
+
+libav_stream_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(AVSTREAM_CFLAGS)
+libav_stream_la_LDFLAGS = $(shared_ldflags) $(AVSTREAM_LIBS) $(libav_ldflags)
+
+endif
+endif
+endif
+
+
 videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) \
 	$(vjack_output_libs) $(lives2lives_stream_libs) $(vloopback_libs) $(vloopback2_libs) \
-	$(openGL_libs)
+	$(openGL_libs) $(libav_stream_libs)
 
 EXTRA_DIST = videoplugin.h glad.h glad_glx.h

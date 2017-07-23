@@ -1,6 +1,6 @@
 // cvirtual.h
 // LiVES
-// (c) G. Finch 2008 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2008 - 2017 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -21,7 +21,11 @@ void delete_frames_from_virtual(int sfileno, int start, int end);
 void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_index, int start);
 void del_frame_index(lives_clip_t *sfile);
 void reverse_frame_index(int sfileno);
-void clean_images_from_virtual(lives_clip_t *sfile, int oldframes);
+
+/*
+ * @brief remove rendered (real) frames from region oldsframe -> oldframes, when they are virtual in current frame_index
+ */
+void clean_images_from_virtual(lives_clip_t *sfile, int oldsframe, int oldframes);
 int *frame_index_copy(int *findex, int nframes, int offset);
 boolean check_if_non_virtual(int fileno, int start, int end);
 

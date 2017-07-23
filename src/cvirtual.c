@@ -478,29 +478,30 @@ void restore_frame_index_back(int sfileno) {
 }
 
 
-void clean_images_from_virtual(lives_clip_t *sfile, int oldframes) {
+void clean_images_from_virtual(lives_clip_t *sfile, int oldsframe, int oldframes) {
   // remove images on disk where the frame_index points to a frame in
   // the original clip
 
   // only needed if frames were reordered when rendered and the process is
   // then undone
 
-  // in future, a smarter function could trace the images back to their
-  // original source frames, and just rename them
+  // oldsframe is > 1 if we rendered to a selection
+  
+  // should be threadsafe, provided the frame_index does not change
 
-  // should be threadsafe
-
+  // the only purpose of this is to reclaim disk space
+  
   register int i;
   char *iname = NULL;
 
   if (sfile == NULL || sfile->frame_index == NULL) return;
 
-  for (i = 0; i < oldframes; i++) {
+  for (i = oldsframe; i <= oldframes; i++) {
     threaded_dialog_spin(0.);
     lives_widget_context_update();
     threaded_dialog_spin(0.);
 
-    if ((i < sfile->frames && sfile->frame_index[i] != -1) || i >= sfile->frames) {
+    if ((i <= sfile->frames && sfile->frame_index[i - 1] != -1) || i > sfile->frames) {
       iname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
       lives_rm(iname);
     }

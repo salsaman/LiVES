@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2017-06-28 23:44-0300\n"
+"POT-Creation-Date: 2017-07-23 12:52-0300\n"
 "PO-Revision-Date: 2016-03-22 00:48+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -713,7 +713,7 @@ msgstr "grv %9d/%d"
 msgid "!rec %9d/%d"
 msgstr "!grv %9d/%d"
 
-#: src/main.c:5910 src/main.c:5911 src/gui.c:1861 src/gui.c:3072
+#: src/main.c:5910 src/main.c:5911 src/gui.c:1862 src/gui.c:3073
 #: src/saveplay.c:2169
 msgid "Play"
 msgstr "Tocar"
@@ -741,15 +741,15 @@ msgstr "Desfazer [_U]"
 msgid "_Redo"
 msgstr "_Refazer"
 
-#: src/main.c:6935 src/interface.c:341 src/gui.c:2002 src/resample.c:1453
+#: src/main.c:6935 src/interface.c:341 src/gui.c:2003 src/resample.c:1453
 msgid "Video"
 msgstr "Vídeo"
 
-#: src/main.c:6936 src/interface.c:446 src/gui.c:2015
+#: src/main.c:6936 src/interface.c:446 src/gui.c:2016
 msgid "Left Audio"
 msgstr "Áudio Esquerdo"
 
-#: src/main.c:6937 src/interface.c:492 src/gui.c:2029
+#: src/main.c:6937 src/interface.c:492 src/gui.c:2030
 msgid "Right Audio"
 msgstr "Áudio Direito"
 
@@ -1212,7 +1212,7 @@ msgstr ""
 "importados."
 
 #: src/interface.c:85 src/callbacks.c:9183 src/callbacks.c:9205
-#: src/callbacks.c:9206 src/gui.c:3074 src/gui.c:3657 src/saveplay.c:2171
+#: src/callbacks.c:9206 src/gui.c:3075 src/gui.c:3658 src/saveplay.c:2171
 #: src/saveplay.c:2925 src/dialogs.c:1546 src/dialogs.c:1547 src/dialogs.c:1806
 #: src/dialogs.c:1807 src/framedraw.c:197 src/multitrack.c:8065
 msgid "Preview"
@@ -2896,7 +2896,7 @@ msgstr ""
 msgid "Encoder Debug Output"
 msgstr ""
 
-#: src/callbacks.c:6533 src/gui.c:1731
+#: src/callbacks.c:6533 src/gui.c:1732
 msgid "Fullscreen playback (f)"
 msgstr "Tela Cheia (f)"
 
@@ -2904,7 +2904,7 @@ msgstr "Tela Cheia (f)"
 msgid "Fullscreen playback off (f)"
 msgstr "Desativar tela Cheia (f)"
 
-#: src/callbacks.c:6730 src/gui.c:1716
+#: src/callbacks.c:6730 src/gui.c:1717
 msgid "Double size (d)"
 msgstr "Tamanho dobrado(d)"
 
@@ -2916,11 +2916,11 @@ msgstr "Tamanho normal (d)"
 msgid "Hide the play window (s)"
 msgstr "Esconder janela do tocador (s)"
 
-#: src/callbacks.c:6867 src/gui.c:1556
+#: src/callbacks.c:6867 src/gui.c:1557
 msgid "Show the play window (s)"
 msgstr "Mostrar janela do tocador (s)"
 
-#: src/callbacks.c:6868 src/gui.c:1705
+#: src/callbacks.c:6868 src/gui.c:1706
 msgid "Play in separate window (s)"
 msgstr "Tocar em janela separada (s)"
 
@@ -2928,7 +2928,7 @@ msgstr "Tocar em janela separada (s)"
 msgid "Switch continuous looping off (o)"
 msgstr "Desligar loop contínuo (o)"
 
-#: src/callbacks.c:7140 src/gui.c:1603
+#: src/callbacks.c:7140 src/gui.c:1604
 msgid "Switch continuous looping on (o)"
 msgstr "Ligar loop contínuo (o)"
 
@@ -2937,11 +2937,11 @@ msgstr "Ligar loop contínuo (o)"
 msgid "Audio volume (%.2f)"
 msgstr "Volume do áudio (%.2f)"
 
-#: src/callbacks.c:7227 src/callbacks.c:7228 src/gui.c:3468
+#: src/callbacks.c:7227 src/callbacks.c:7228 src/gui.c:3469
 msgid "Unmute the audio (z)"
 msgstr "Ligar o áudio (z)"
 
-#: src/callbacks.c:7238 src/callbacks.c:7239 src/gui.c:1616 src/gui.c:3467
+#: src/callbacks.c:7238 src/callbacks.c:7239 src/gui.c:1617 src/gui.c:3468
 msgid "Mute the audio (z)"
 msgstr "Desligar o áudio (z)"
 
@@ -3876,41 +3876,41 @@ msgstr "Exportando projeto %s..."
 msgid "E_xport Project (.%s)..."
 msgstr "Exportando projeto %s..."
 
-#: src/gui.c:1409
+#: src/gui.c:1410
 #, fuzzy, c-format
 msgid "_Import Custom Theme (.%s)..."
 msgstr "_Importar Script RFX Customizado"
 
-#: src/gui.c:1414
+#: src/gui.c:1415
 #, fuzzy, c-format
 msgid "E_xport Theme (.%s)..."
 msgstr "Exportando projeto %s..."
 
-#: src/gui.c:1421
+#: src/gui.c:1422
 msgid "_VJ"
 msgstr "_VJ"
 
-#: src/gui.c:1427
+#: src/gui.c:1428
 msgid "Real Time _Effect Mapping"
 msgstr "Mapeamento de _Efeitos de Tempo-Real"
 
-#: src/gui.c:1432
+#: src/gui.c:1433
 msgid "Bind real time effects to ctrl-number keys."
 msgstr "Vincular efeitos em tempo real para ctrl mais teclas de número."
 
-#: src/gui.c:1434
+#: src/gui.c:1435
 msgid "Set Real Time Effect _Defaults"
 msgstr "_Definir Padrão de Efeitos em Tempo Real"
 
-#: src/gui.c:1436
+#: src/gui.c:1437
 msgid "Set default parameter values for real time effects."
 msgstr "Definir padrão de valores de parâmetros para efeitos em tempo real."
 
-#: src/gui.c:1441
+#: src/gui.c:1442
 msgid "Save Real Time Effect _Defaults"
 msgstr "Salvar Padrão _de Efeitos em Tempo Real"
 
-#: src/gui.c:1444
+#: src/gui.c:1445
 msgid ""
 "Save real time effect defaults so they will be restored each time you use "
 "LiVES."
@@ -3918,273 +3918,273 @@ msgstr ""
 "Salvar padrão de efeitos de tempo real de modo que seja restaurado toda vez "
 "que o LiVES abrir."
 
-#: src/gui.c:1448
+#: src/gui.c:1449
 msgid "_Reset All Playback Speeds and Positions"
 msgstr ""
 
-#: src/gui.c:1450
+#: src/gui.c:1451
 msgid ""
 "Reset all playback positions to frame 1, and reset all playback frame rates."
 msgstr ""
 "Reiniciar todas posições de reprodução para o frame 1 e todas as framerates."
 
-#: src/gui.c:1452
+#: src/gui.c:1453
 msgid "_MIDI/Joystick Interface"
 msgstr ""
 
-#: src/gui.c:1461
+#: src/gui.c:1462
 msgid "_MIDI/Joystick Learner..."
 msgstr ""
 
-#: src/gui.c:1465
+#: src/gui.c:1466
 msgid "_Save Device Mapping..."
 msgstr ""
 
-#: src/gui.c:1469
+#: src/gui.c:1470
 msgid "_Load Device Mapping..."
 msgstr ""
 
-#: src/gui.c:1475
+#: src/gui.c:1476
 msgid "Show VJ _Keys"
 msgstr "Mostrar Teclas de VJ [_K]"
 
-#: src/gui.c:1478
+#: src/gui.c:1479
 msgid "To_ys"
 msgstr "_Brinquedos"
 
-#: src/gui.c:1484
+#: src/gui.c:1485
 msgid "_None"
 msgstr "_Nenhum"
 
-#: src/gui.c:1490
+#: src/gui.c:1491
 msgid "_Autolives"
 msgstr ""
 
-#: src/gui.c:1494
+#: src/gui.c:1495
 msgid "_Mad Frames"
 msgstr "Fra_mes doidos"
 
-#: src/gui.c:1498
+#: src/gui.c:1499
 msgid "_LiVES TV (broadband)"
 msgstr "TV _LiVES (banda larga)"
 
-#: src/gui.c:1502 src/multitrack.c:7490
+#: src/gui.c:1503 src/multitrack.c:7490
 msgid "_Help"
 msgstr "A_juda"
 
-#: src/gui.c:1508 src/multitrack.c:7503
+#: src/gui.c:1509 src/multitrack.c:7503
 msgid "_Manual (opens in browser)"
 msgstr "_Manual (abre no browser)"
 
-#: src/gui.c:1513 src/multitrack.c:7510
+#: src/gui.c:1514 src/multitrack.c:7510
 msgid "_Donate to the Project !"
 msgstr ""
 
-#: src/gui.c:1516 src/multitrack.c:7513
+#: src/gui.c:1517 src/multitrack.c:7513
 msgid "_Email the Author"
 msgstr ""
 
-#: src/gui.c:1519
+#: src/gui.c:1520
 msgid "Report a _Bug"
 msgstr ""
 
-#: src/gui.c:1522 src/multitrack.c:7519
+#: src/gui.c:1523 src/multitrack.c:7519
 msgid "Suggest a _Feature"
 msgstr ""
 
-#: src/gui.c:1525 src/multitrack.c:7522
+#: src/gui.c:1526 src/multitrack.c:7522
 msgid "Assist with _Translating"
 msgstr ""
 
-#: src/gui.c:1530 src/multitrack.c:7527
+#: src/gui.c:1531 src/multitrack.c:7527
 msgid "_Troubleshoot"
 msgstr "Resolução de Problemas"
 
-#: src/gui.c:1533 src/multitrack.c:7530
+#: src/gui.c:1534 src/multitrack.c:7530
 msgid "_About"
 msgstr "Sobre [_A]"
 
-#: src/gui.c:1562
+#: src/gui.c:1563
 msgid "Rewind to start (w)"
 msgstr "Rebobinar para iniciar (w)"
 
-#: src/gui.c:1570 src/multitrack.c:16542
+#: src/gui.c:1571 src/multitrack.c:16542
 msgid "Play all (p)"
 msgstr "Tocar tudo (p)"
 
-#: src/gui.c:1577 src/gui.c:1686
+#: src/gui.c:1578 src/gui.c:1687
 msgid "Stop playback (q)"
 msgstr "Parar execução (q)"
 
-#: src/gui.c:1588
+#: src/gui.c:1589
 msgid "Play selection (y)"
 msgstr "Tocar seleção (y)"
 
-#: src/gui.c:1636
+#: src/gui.c:1637
 msgid "Volume"
 msgstr "Volume"
 
-#: src/gui.c:1664
+#: src/gui.c:1665
 msgid "Audio volume (1.00)"
 msgstr "Volume do áudio (1.00)"
 
-#: src/gui.c:1692
+#: src/gui.c:1693
 msgid "Unblank background (b)"
 msgstr "Remover fundo branco (b)"
 
-#: src/gui.c:1737
+#: src/gui.c:1738
 msgid "Play slower (ctrl-down)"
 msgstr "Tocar mais devagar (ctrl-down)"
 
-#: src/gui.c:1743
+#: src/gui.c:1744
 msgid "Play faster (ctrl-up)"
 msgstr "Tocar mais rápido (ctrl-up)"
 
-#: src/gui.c:1749
+#: src/gui.c:1750
 msgid "Skip back (ctrl-left)"
 msgstr "Voltar (ctrl-left)"
 
-#: src/gui.c:1755
+#: src/gui.c:1756
 msgid "Skip forward (ctrl-right)"
 msgstr "Avançar (ctrl-right)"
 
-#: src/gui.c:1761
+#: src/gui.c:1762
 msgid "Show clip info (i)"
 msgstr "Mostrar informação de clipe (i)"
 
-#: src/gui.c:1767
+#: src/gui.c:1768
 msgid "Hide this toolbar"
 msgstr "Esconder esta barra de ferramentas"
 
-#: src/gui.c:1769
+#: src/gui.c:1770
 msgid ""
 "Press \"s\" to toggle separate play window for improved performance, \"q\" "
 "to stop."
 msgstr ""
 
 #. TRANSLATORS: please keep the translated string the same length
-#: src/gui.c:1800
+#: src/gui.c:1801
 msgid "     Video playback speed (frames per second)        "
 msgstr "     Velocidade de execução do vídeo (frames por segundo)        "
 
-#: src/gui.c:1809
+#: src/gui.c:1810
 msgid "Vary the video speed"
 msgstr "Variar a velocidade do vídeo"
 
-#: src/gui.c:1841 src/gui.c:3070
+#: src/gui.c:1842 src/gui.c:3071
 msgid "First Frame"
 msgstr "Primeiro Frame"
 
-#: src/gui.c:1882 src/gui.c:3077
+#: src/gui.c:1883 src/gui.c:3078
 msgid "Last Frame"
 msgstr "Último Frame"
 
-#: src/gui.c:1934
+#: src/gui.c:1935
 msgid "The first selected frame in this clip"
 msgstr "O primeiro frame selecionado nesse clipe"
 
-#: src/gui.c:1956
+#: src/gui.c:1957
 msgid "The last selected frame in this clip"
 msgstr "O último frame selecionado nesse clipe"
 
-#: src/gui.c:2218
+#: src/gui.c:2219
 msgid "Starting...\n"
 msgstr "Iniciando...\n"
 
-#: src/gui.c:2945
+#: src/gui.c:2946
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr ""
 "    Aperte 'Q' para parar a gravação. NÃO CUBRA A JANELA DO TOCADOR!   "
 
-#: src/gui.c:3356
+#: src/gui.c:3357
 msgid "Frame number to preview"
 msgstr "Número do frame a visualizar"
 
-#: src/gui.c:3366
+#: src/gui.c:3367
 msgid "_Free"
 msgstr "Livre [_f]"
 
-#: src/gui.c:3368
+#: src/gui.c:3369
 msgid "Free choice of frame number"
 msgstr "Escolha livre do número do frame"
 
-#: src/gui.c:3372
+#: src/gui.c:3373
 msgid "_Start"
 msgstr "Início [_s]"
 
-#: src/gui.c:3374
+#: src/gui.c:3375
 msgid "Frame number is linked to start frame"
 msgstr "O número do frame está ligado ao quadro inicial"
 
-#: src/gui.c:3380
+#: src/gui.c:3381
 msgid "_End"
 msgstr "Fim [_e]"
 
-#: src/gui.c:3381
+#: src/gui.c:3382
 msgid "Frame number is linked to end frame"
 msgstr "O número do frame está ligado ao quadro final"
 
-#: src/gui.c:3387
+#: src/gui.c:3388
 msgid "_Pointer"
 msgstr "_Ponteiro"
 
-#: src/gui.c:3389
+#: src/gui.c:3390
 msgid "Frame number is linked to playback pointer"
 msgstr "O número do frame está ligado ao ponteiro de execução"
 
-#: src/gui.c:3409
+#: src/gui.c:3410
 msgid "Rewind"
 msgstr "Voltar"
 
-#: src/gui.c:3420 src/dialogs.c:918 src/dialogs.c:920 src/dialogs.c:1888
+#: src/gui.c:3421 src/dialogs.c:918 src/dialogs.c:920 src/dialogs.c:1888
 #: src/dialogs.c:1890
 msgid "Play all"
 msgstr "Tocar Tudo"
 
-#: src/gui.c:3433
+#: src/gui.c:3434
 msgid "Play Selection"
 msgstr "Tocar Seleção"
 
-#: src/gui.c:3447
+#: src/gui.c:3448
 msgid "Loop On/Off"
 msgstr "Loop On/Off"
 
-#: src/gui.c:3524
+#: src/gui.c:3525
 msgid "Start _recording"
 msgstr "Iniciar g_ravação"
 
-#: src/gui.c:3530
+#: src/gui.c:3531
 msgid "Stop _recording"
 msgstr "Parar de grava_r"
 
-#: src/gui.c:3535
+#: src/gui.c:3536
 msgid "_Record Performance"
 msgstr "G_ravar Performance"
 
-#: src/gui.c:3545 src/saveplay.c:2903 src/saveplay.c:3007 src/saveplay.c:3025
+#: src/gui.c:3546 src/saveplay.c:2903 src/saveplay.c:3007 src/saveplay.c:3025
 #: src/multitrack.c:9172 src/multitrack.c:10890
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/gui.c:3550
+#: src/gui.c:3551
 msgid "Streaming"
 msgstr ""
 
-#: src/gui.c:3552
+#: src/gui.c:3553
 #, c-format
 msgid "Play Window%s"
 msgstr ""
 
-#: src/gui.c:3685
+#: src/gui.c:3686
 msgid "Hide Play Window"
 msgstr "Esconder Janela do Tocador"
 
-#: src/gui.c:4056
+#: src/gui.c:4060
 msgid "Show Play Window"
 msgstr "Mostrar Janela do Tocador"
 
-#: src/gui.c:4124
+#: src/gui.c:4128
 #, fuzzy, c-format
 msgid "'LiVES opened the file' '%s'"
 msgstr ""
@@ -4192,7 +4192,7 @@ msgstr ""
 "\n"
 "LiVES foi incapaz de reordenar os frames."
 
-#: src/gui.c:4143
+#: src/gui.c:4147
 #, fuzzy, c-format
 msgid "'LiVES closed the file' '%s'"
 msgstr "Deixar LiVES definir a extensão do _file"
@@ -6220,7 +6220,7 @@ msgstr ""
 msgid "Audio Analysers"
 msgstr ""
 
-#: src/effects.c:133 src/plugins.c:2465 src/plugins.c:2479
+#: src/effects.c:133 src/plugins.c:2417 src/plugins.c:2431
 msgid "unknown"
 msgstr "desconhecido"
 
@@ -6684,11 +6684,11 @@ msgstr "%s : tamanho"
 msgid "New size (pixels)"
 msgstr "Novo tamanho (pixels)"
 
-#: src/paramwindow.c:555 src/plugins.c:960
+#: src/paramwindow.c:555 src/plugins.c:947
 msgid "_Width"
 msgstr "Largura [_W]"
 
-#: src/paramwindow.c:573 src/plugins.c:966
+#: src/paramwindow.c:573 src/plugins.c:953
 msgid "_Height"
 msgstr "Altura [_H]"
 
@@ -6735,7 +6735,7 @@ msgstr "Sem parâmetros"
 msgid "Invalid parameter"
 msgstr "Parametro inválido"
 
-#: src/plugins.c:83
+#: src/plugins.c:80
 #, c-format
 msgid ""
 "\n"
@@ -6744,12 +6744,12 @@ msgstr ""
 "\n"
 "Erro de plugin: %s falhou com o código %d"
 
-#: src/plugins.c:85
+#: src/plugins.c:82
 #, c-format
 msgid " : message was %s\n"
 msgstr " : mensagem era %s\n"
 
-#: src/plugins.c:374
+#: src/plugins.c:371
 #, c-format
 msgid ""
 "\n"
@@ -6764,17 +6764,17 @@ msgstr ""
 "%s\n"
 "Código de erro %d\n"
 
-#: src/plugins.c:380
+#: src/plugins.c:377
 #, c-format
 msgid "Updating video playback plugin defaults in %s\n"
 msgstr "Atualizando padrões de plugins de execução de vídeo em %s\n"
 
-#: src/plugins.c:439
+#: src/plugins.c:436
 #, c-format
 msgid "Loading video playback plugin defaults from %s..."
 msgstr "Carregando padrões de plugin de execução de vídeo de %s..."
 
-#: src/plugins.c:497
+#: src/plugins.c:493
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6789,32 +6789,32 @@ msgstr ""
 " Ferramentas|Preferências|Execução|Plugins de Execução Avançados\n"
 "\n"
 
-#: src/plugins.c:829
+#: src/plugins.c:822
 #, c-format
 msgid "Saving playback plugin defaults to %s..."
 msgstr ""
 
-#: src/plugins.c:928
+#: src/plugins.c:917
 msgid "_FPS"
 msgstr "_FPS"
 
-#: src/plugins.c:929
+#: src/plugins.c:918
 msgid "Fixed framerate for plugin.\n"
 msgstr "Framerate fixa para plugin.\n"
 
-#: src/plugins.c:995
+#: src/plugins.c:981
 msgid "_Colourspace"
 msgstr ""
 
-#: src/plugins.c:996
+#: src/plugins.c:982
 msgid "Colourspace input to the plugin.\n"
 msgstr "Entrada de colorspace para o plugin.\n"
 
-#: src/plugins.c:1045
+#: src/plugins.c:1029
 msgid "Save settings to an alternate file.\n"
 msgstr ""
 
-#: src/plugins.c:1160
+#: src/plugins.c:1141
 #, c-format
 msgid ""
 "\n"
@@ -6827,7 +6827,7 @@ msgstr ""
 "Falhou em abrir o plugin de execução %s\n"
 "Erro: %s\n"
 
-#: src/plugins.c:1206
+#: src/plugins.c:1185
 #, c-format
 msgid ""
 "\n"
@@ -6842,7 +6842,7 @@ msgstr ""
 "está sem uma função essencial.\n"
 "Impossível usá-lo.\n"
 
-#: src/plugins.c:1219
+#: src/plugins.c:1198
 #, c-format
 msgid ""
 "Video playback plugin failed to initialise.\n"
@@ -6851,7 +6851,7 @@ msgstr ""
 "O plugin de execução de vídeo falhou ao iniciar.\n"
 "O error: %s\n"
 
-#: src/plugins.c:1405
+#: src/plugins.c:1383
 #, c-format
 msgid ""
 "*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). "
@@ -6860,17 +6860,17 @@ msgstr ""
 "*** Usando o plugin %s pra execução em tela cheia, com a palheta tipo %d "
 "(%s). ***\n"
 
-#: src/plugins.c:1511
+#: src/plugins.c:1489
 #, c-format
 msgid "Audio stream unable to use preferred format '%s'\n"
 msgstr ""
 
-#: src/plugins.c:1517
+#: src/plugins.c:1495
 #, c-format
 msgid "Using format '%s' instead.\n"
 msgstr ""
 
-#: src/plugins.c:1553
+#: src/plugins.c:1529
 #, c-format
 msgid ""
 "LiVES was unable to find its encoder plugins. Please make sure you have the "
@@ -6879,7 +6879,7 @@ msgid ""
 "or change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/plugins.c:1564
+#: src/plugins.c:1540
 #, c-format
 msgid ""
 "LiVES did not receive a response from the encoder plugin called '%s'.\n"
@@ -6892,7 +6892,7 @@ msgstr ""
 "%s%s%s\n"
 "ou troque de plugin em 'Ferramentas | Preferências | Codificação'\n"
 
-#: src/plugins.c:2148
+#: src/plugins.c:2112
 #, c-format
 msgid ""
 "\n"
@@ -6900,12 +6900,12 @@ msgid ""
 "No decoders found in %s !\n"
 msgstr ""
 
-#: src/plugins.c:2333
+#: src/plugins.c:2292
 #, c-format
 msgid " using %s"
 msgstr ""
 
-#: src/plugins.c:2409
+#: src/plugins.c:2363
 #, c-format
 msgid ""
 "\n"
@@ -6918,7 +6918,7 @@ msgstr ""
 "Falhou em abrir o plugin de decodificação %s\n"
 "Erro: %s\n"
 
-#: src/plugins.c:2430
+#: src/plugins.c:2384
 #, c-format
 msgid ""
 "\n"
@@ -6933,24 +6933,24 @@ msgstr ""
 "está sem uma função essencial.\n"
 "Impossível usá-lo.\n"
 
-#: src/plugins.c:2470
+#: src/plugins.c:2422
 msgid "/unknown"
 msgstr "/desconhecido"
 
-#: src/plugins.c:2550
+#: src/plugins.c:2501
 msgid "Decoder Plugins"
 msgstr ""
 
-#: src/plugins.c:2564
+#: src/plugins.c:2515
 msgid "Enabled Video Decoders (uncheck to disable)"
 msgstr ""
 
-#: src/plugins.c:2620
+#: src/plugins.c:2569
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Falhou em carregar %s, as transições podem não redimensionar.\n"
 
-#: src/plugins.c:3763
+#: src/plugins.c:3702
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s configurações avançadas"

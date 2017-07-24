@@ -1,7 +1,8 @@
 Version 2.8.8
 -------------
 Fix "undo render to same clip" after rendering to selection.
-
+Add new libav_stream playback plugin (WIP).
+Set openGL playback plugin (if present) as the default for new installs.
 
 
 

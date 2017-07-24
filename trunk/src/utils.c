@@ -1820,7 +1820,7 @@ void d_print(const char *fmt, ...) {
   // mainw->no_switch_dprint :: TRUE - disable printing of switch message when maine->current_file changes
 
   // mainw->last_dprint_file :: clip number of last mainw->current_file;
-  LiVESTextBuffer *tbuf = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
+  LiVESTextBuffer *tbuf;
 
   va_list xargs;
 
@@ -1835,6 +1835,15 @@ void d_print(const char *fmt, ...) {
   text = lives_strdup_vprintf(fmt, xargs);
 
   va_end(xargs);
+
+  if (!mainw->is_ready && !(mainw->multitrack != NULL && mainw->multitrack->is_ready)) {
+    char *tmp = lives_strdup_printf("%s%s", mainw->dp_cache, text);
+    lives_free(mainw->dp_cache);
+    mainw->dp_cache = tmp;
+    return;
+  }
+
+  tbuf  = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
 
   if (LIVES_IS_TEXT_VIEW(mainw->textview1)) {
     lives_text_buffer_insert_at_end(tbuf, text);

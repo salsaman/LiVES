@@ -945,13 +945,13 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     add_fill_to_box(LIVES_BOX(hbox));
 
     vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"), TRUE,
-                        tmpvpp->fwidth > 0 ? tmpvpp->fwidth : DEF_VPP_HSIZE,
+                        tmpvpp->fwidth > 0 ? tmpvpp->fwidth : MAX_VPP_HSIZE,
                         4., MAX_FRAME_WIDTH, 4., 4., 0, LIVES_BOX(hbox), NULL);
 
     add_fill_to_box(LIVES_BOX(hbox));
 
     vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"), TRUE,
-                        tmpvpp->fheight > 0 ? tmpvpp->fheight : DEF_VPP_VSIZE,
+                        tmpvpp->fheight > 0 ? tmpvpp->fheight : MAX_VPP_VSIZE,
                         4., MAX_FRAME_HEIGHT, 4., 4., 0, LIVES_BOX(hbox), NULL);
 
     add_fill_to_box(LIVES_BOX(hbox));
@@ -1139,9 +1139,12 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   if (handle == NULL) {
     char *msg = lives_strdup_printf(_("\n\nFailed to open playback plugin %s\nError was %s\n"), plugname, dlerror());
-    if (prefsw != NULL) do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
-          LIVES_WINDOW(mainw->LiVES));
-    else do_error_dialog(msg);
+    if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
+      if (prefsw != NULL) do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
+							       LIVES_WINDOW(mainw->LiVES));
+      else do_error_dialog(msg);
+    }
+    LIVES_ERROR(msg);
     lives_free(msg);
     lives_free(plugname);
     return NULL;
@@ -1195,9 +1198,14 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   }
 
   if ((pl_error = (*vpp->module_check_init)()) != NULL) {
-    msg = lives_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"), pl_error);
-    do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
+      msg = lives_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"), pl_error);
+    if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
+      do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
                                          LIVES_WINDOW(mainw->LiVES));
+    }
+    else {
+      LIVES_ERROR(msg);
+    }
     lives_free(msg);
     dlclose(handle);
     lives_free(vpp);
@@ -1426,6 +1434,8 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
 
   // i.e. cross-check video list with astreamer list
 
+  // only for plugins which want to stream audiom but dont provide a render_audio_frame()
+  
   int *fmts, *sfmts;
   int ret = AUDIO_CODEC_NONE;
   int i, j = 0, nfmts;

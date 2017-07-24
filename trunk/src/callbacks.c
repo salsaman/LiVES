@@ -8882,6 +8882,13 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
 #endif
     }
     mainw->is_ready = TRUE;
+    if (mainw->dp_cache != NULL) {
+      mainw->no_switch_dprint = TRUE;
+      d_print(mainw->dp_cache);
+      mainw->no_switch_dprint = FALSE;
+      lives_free(mainw->dp_cache);
+      mainw->dp_cache = NULL;
+    }
     if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
     if (!mainw->foreign) resize(1);
   }

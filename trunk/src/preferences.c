@@ -1909,6 +1909,7 @@ void after_vpp_changed(LiVESWidget *vpp_combo, livespointer advbutton) {
     // will call set_astream_settings
     if ((tmpvpp = open_vid_playback_plugin(newvpp, FALSE)) == NULL) {
       lives_free(newvpp);
+      lives_combo_set_active_string(LIVES_COMBO(vpp_combo), mainw->vpp->name);
       return;
     }
     close_vid_playback_plugin(tmpvpp);

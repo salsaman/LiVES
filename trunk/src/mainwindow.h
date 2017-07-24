@@ -49,6 +49,7 @@
 /// adjustment amount for effect parameter via keyboard (TODO: make pref)
 #define BLEND_AMOUNT 0.2
 
+
 /////// GUI related constants /////////////////////////////////////////////////////////
 
 // parameters for resizing the image frames, and for capture
@@ -1327,6 +1328,8 @@ typedef struct {
   char sepimg_path[PATH_MAX];
 
   uint64_t aud_data_written;
+
+  char *dp_cache;
   ////////////////////
 } mainwindow;
 

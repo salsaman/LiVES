@@ -381,6 +381,8 @@ static boolean pre_init(void) {
   mainw->is_ready = mainw->fatal = FALSE;
   mainw->mgeom = NULL;
 
+  mainw->dp_cache = lives_strdup("");
+
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
   mainw->string_constants[LIVES_STRING_CONSTANT_ANY] = lives_strdup(_("Any"));
   // TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
@@ -670,6 +672,24 @@ static boolean pre_init(void) {
 
   for (i = 0; i < LIVES_MAX_ALARMS; i++) {
     mainw->alarms[i] = LIVES_NO_ALARM_TICKS;
+  }
+
+  weed_memory_init();
+
+  mainw->vpp = NULL;
+  memset(future_prefs->vpp_name, 0, 64);
+  future_prefs->vpp_argv = NULL;
+
+  get_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
+  if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
+    mainw->vpp = open_vid_playback_plugin(buff, TRUE);
+  }
+  else if (prefs->startup_phase == 1 || prefs->startup_phase == -1) {
+    mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, FALSE);
+    if (mainw->vpp != NULL) {
+      lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
+      set_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
+    }
   }
 
   needs_update = needs_update; // stop compiler warnings
@@ -1117,6 +1137,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->rendered_fx = NULL;
 
+  
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -1131,7 +1152,6 @@ static void lives_init(_ign_opts *ign_opts) {
     if (pb_quality == PB_QUALITY_LOW) prefs->pb_quality = PB_QUALITY_LOW;
     else if (pb_quality == PB_QUALITY_HIGH) prefs->pb_quality = PB_QUALITY_HIGH;
 
-    mainw->vpp = NULL;
     mainw->ext_playback = mainw->ext_keyboard = FALSE;
 
     get_pref(PREF_DEFAULT_IMAGE_FORMAT, buff, 256);
@@ -1149,8 +1169,6 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->stop_screensaver = get_boolean_pref(PREF_STOP_SCREENSAVER);
     prefs->open_maximised = get_boolean_pref(PREF_OPEN_MAXIMISED);
     future_prefs->show_tool = prefs->show_tool = get_boolean_pref(PREF_SHOW_TOOLBAR);
-    memset(future_prefs->vpp_name, 0, 64);
-    future_prefs->vpp_argv = NULL;
 
     if (prefs->gui_monitor != 0) {
       int xcen = mainw->mgeom[prefs->gui_monitor - 1].x + (mainw->mgeom[prefs->gui_monitor - 1].width -
@@ -1243,8 +1261,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
     //////////////////////////////////////////////////////////////////
 
-    weed_memory_init();
-
     if (!mainw->foreign) {
       randres = -1;
 
@@ -1289,11 +1305,6 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->mouse_scroll_clips = get_boolean_pref(PREF_MOUSE_SCROLL_CLIPS);
 
       prefs->mt_auto_back = get_int_pref(PREF_MT_AUTO_BACK);
-
-      get_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
-      if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
-        mainw->vpp = open_vid_playback_plugin(buff, TRUE);
-      }
 
       get_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command, PATH_MAX * 2);
 
@@ -1809,11 +1820,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
 
 static void show_detected_or_not(boolean cap, const char *pname) {
-  char *msg;
-  if (cap) msg = lives_strdup_printf(_("%s...detected... "), pname);
-  else msg = lives_strdup_printf(_("%s...NOT DETECTED... "), pname);
-  d_print(msg);
-  lives_free(msg);
+  if (cap) d_print(_("%s...detected... "), pname);
+  else d_print(_("%s...NOT DETECTED... "), pname);
 }
 
 
@@ -2903,7 +2911,9 @@ static boolean lives_startup(livespointer data) {
 
   if (mainw->recoverable_layout) do_layout_recover_dialog();
 
-  if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) mainw->is_ready = TRUE;
+  if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
+    mainw->is_ready = TRUE;
+  }
 
   mainw->kb_timer_end = FALSE;
   mainw->kb_timer = lives_timer_add(KEY_RPT_INTERVAL, &ext_triggers_poll, NULL);

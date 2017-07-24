@@ -156,12 +156,14 @@ boolean set_yuv_palette_clamping(int clamping_type);
 /// host sets the palette subspace (optional)
 boolean set_yuv_palette_subspace(int subspace_type);
 
-// optional - supported audio streams :: defined in lives/src/plugins.h
+// optional - supported audio streams :: defined in lives/src/plugins.h (deprecated)
 const int *get_audio_fmts(void);
 
-// ...may be expanded in the future to specify rates, #channels, sample size
-// signed/endian [get_raw_audio_fmts ?]
+// newer style
+boolean init_audio(int sample_rate, int nchans, int argc, char **argv);
 
+// only float handled for now
+boolean render_audio_frame_float(float **audio, int nsamps);
 
 #ifdef __cplusplus
 }

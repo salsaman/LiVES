@@ -1,6 +1,6 @@
 // plugins.h
 // LiVES
-// (c) G. Finch 2003-2016 <salsaman@gmail.com>
+// (c) G. Finch 2003-2017 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -88,12 +88,16 @@ typedef struct {
   int (*set_yuv_palette_clamping)(int palette);
   int (*set_yuv_palette_subspace)(int palette);
 
-  // audio streaming
+  // audio streaming (deprecated, use init_audio(), render_audio_frame())
   int *(*get_audio_fmts)(void);
 
-  uint32_t audio_codec;
+  uint32_t audio_codec; //(deprecated, use init_audio(), render_audio_frame())
   // must match with the "acodec" LiVESList in interface.c
-  // and bitmaps in the encder plugins, with this one addition:
+  // and bitmaps in the encder plugins
+
+  // optional audio packeting
+  boolean (*init_audio)(int in_sample_rate, int in_nchans);
+  boolean (*render_audio_frame_float)(float **audio, int nsamps);
 
   uint64_t capabilities;
 
@@ -123,8 +127,10 @@ typedef struct {
 } _vid_playback_plugin;
 
 
-#define DEF_VPP_HSIZE 320.
-#define DEF_VPP_VSIZE 240.
+#define DEFAULT_VPP "openGLa"
+
+#define MAX_VPP_HSIZE 1280.
+#define MAX_VPP_VSIZE 720.
 
 _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use);
 void vid_playback_plugin_exit(void);

@@ -45,11 +45,12 @@ static int ovsize, ohsize;
 static int in_nchans, out_nchans;
 static int in_sample_rate, out_sample_rate;
 static int in_nb_samples, out_nb_samples;
+static int maxabitrate, maxvbitrate;
 
 static float **spill_buffers;
 static int spb_len;
 
-//static int aforms[2];
+static double target_fps;
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -60,7 +61,7 @@ static AVStream *vStream, *aStream;
 #define URI "udp://127.0.0.1:5678"
 //#define URI "file2.flv"
 
-#define STREAM_FRAME_RATE 25 /* 25 images/s */
+#define STREAM_FRAME_RATE 15 /* 25 images/s */
 #define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
 #define SCALE_FLAGS SWS_BICUBIC
 
@@ -110,7 +111,11 @@ const char *module_check_init(void) {
   
   av_register_all();
   avformat_network_init();
-  
+
+  target_fps = STREAM_FRAME_RATE;
+
+  in_sample_rate = 0;
+
   return NULL;
 }
 
@@ -136,16 +141,10 @@ uint64_t get_capabilities(int palette) {
   return 0;
 }
 
+
 /*
-  const int *get_audio_fmts() {
-  // this is not yet documented in the manual, but is an optional function to get a list of audio formats. 
-  aforms[0] = 3; // vorbis - see src/plugins.h
-  aforms[1] = -1; // end
-
-  return aforms;
-  }
+  parameter template, these are returned as argc, argv in init_screen() and init_audio() 
 */
-
 const char *get_init_rfx(void) {
   return \
     "<define>\\n\
@@ -155,19 +154,36 @@ const char *get_init_rfx(void) {
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-syncd|A/V Sync _delay (seconds)|num2|4.|0.|20.|\\n\
-address|Icecast server _address|string|127.0.0.1|16|\\n\
-port|Icecast server _port|num0|8000|1024|65535|\\n\
-passwd|Icecast server pass_word|string|hackme|32|\\n\
-mountpt|Icecast _mount point|string|/stream.ogg|80|\\n\
+ip1|_Address to stream to|string|127|3| \\n\
+ip2||string|0|3| \\n\
+ip3||string|0|3| \\n\
+ip4||string|1|3| \\n\
+port|_port|num0|8000|1024|65535|\\n\
+cform|_Container format|string_list|0|flv|mkv||\\n\
+\
+vform|_Video format|string_list|0|h264||\\n\
+mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
+\
+achans|Audio _layout|string_list|1|mono|stereo||\\n\
+arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
+aform|_Audio format|string_list|0|mp3||\\n\
+mbitv|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 </params> \\n\
 <param_window> \\n\
-special|password|3|\\n\
+layout|\\\"Enter an IP address and port to stream to LiVES output to.\\\"| \\n\
+layout|\\\"You can play the stream on the remote / local machine with e.g:\\\"| \\n\
+layout|\\\"mplayer udp://127.0.0.1:8000\\\"| \\n\
+layout|\\\"You are advised to start with a small frame size and low framerate,\\\"| \\n\
+layout|\\\"and increase this if your network bandwidth allows it.\\\"| \\n\
+layout|p0|\\\".\\\"|p1|\\\".\\\"|p2|\\\".\\\"|p3|fill|fill|fill|fill| \\n\
+layout|p4|fill\\n\
+layout|p5|p6|\\n\
 </param_window> \\n\
 <onchange> \\n\
 </onchange> \\n\
 ";
 }
+
 
 
 const int *get_yuv_palette_clamping(int palette) {
@@ -197,6 +213,7 @@ boolean set_palette(int palette) {
 
 
 boolean set_fps(double in_fps) {
+  target_fps = in_fps;
   return TRUE;
 }
 
@@ -246,89 +263,27 @@ static AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
 }
 
 
-static void open_audio(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, AVDictionary *opt_arg) {
+static boolean open_audio() {
   AVCodecContext *c;
-  int ret;
+  AVCodec *codec;
   AVDictionary *opt = NULL;
- 
-  c = ost->enc;
- 
-  /* open it */
-  //av_dict_copy(&opt, opt_arg, 0);
+  int ret;
+  int i;
   
-  ret = avcodec_open2(c, codec, &opt);
-  av_dict_free(&opt);
-  if (ret < 0) {
-    fprintf(stderr, "Could not open audio codec: %s\n", av_err2str(ret));
-    return;
-  }
- 
-  if (c->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) {
-    fprintf(stderr, "varaudio, nice\n");
-    out_nb_samples = 0;
-  }
-  else {
-    out_nb_samples = c->frame_size;
-    fprintf(stderr, "nb samples is %d\n", out_nb_samples);
-  }
-
-  /* copy the stream parameters to the muxer */
-  /*     ret = avcodec_parameters_from_context(ost->st->codecpar, c);
-	 if (ret < 0) {
-         fprintf(stderr, "Could not copy the stream parameters\n");
-         exit(1);
-	 }*/
- 
-}
-
-
-static void add_stream(OutputStream *ost, AVFormatContext *oc,
-                       AVCodec **codec,
-                       enum AVCodecID codec_id) {
-  AVCodecContext *c;
-
-  *codec = avcodec_find_encoder(codec_id);
-  if (!(*codec)) {
-    fprintf(stderr, "Could not find encoder for '%s'\n",
-	    avcodec_get_name(codec_id));
-    return;
-  }
-
-  c = avcodec_alloc_context3(*codec);
-  if (!c) {
-    fprintf(stderr, "Could not allocate video codec context\n");
-    return;
-  }
-
-  ost->st = avformat_new_stream(oc, *codec); // stream(s) created from format_ctx and codec
-  if (!ost->st) {
-    fprintf(stderr, "Could not allocate stream\n");
-    return;
-  }
-
-  ost->st->codec = ost->enc = c;
-  ost->st->id = oc->nb_streams-1;
-
-  /* Some formats want stream headers to be separate. */
-  if (!STREAM_ENCODE && oc->oformat->flags & AVFMT_GLOBALHEADER)
-    c->flags |= CODEC_FLAG_GLOBAL_HEADER;
-  
-}
-
-
-boolean init_audio(int _in_sample_rate, int _in_nchans, int _out_sample_rate, int _out_nchans) {
-  // must be called after init_screen(), before next render_audio_frame()
-
-  AVCodecContext *c;
-  AVCodec *codec = osta.codec;
-  int i, ret;
-
-  in_sample_rate = _in_sample_rate;
-  in_nchans = _in_nchans;
-  out_sample_rate = _out_sample_rate;
-  out_nchans = _out_nchans;
-  
+  codec = osta.codec;
   c = osta.enc;
+
+  c->sample_fmt  = AV_SAMPLE_FMT_FLTP;
+  if (codec->sample_fmts) {
+    c->sample_fmt = codec->supported_samplerates[0];
+    for (i = 0; codec->sample_fmts[i]; i++) {
+      if (codec->sample_fmts[i] == AV_SAMPLE_FMT_FLTP) {
+	c->sample_fmt = AV_SAMPLE_FMT_FLTP;
+	break;
+      }
+    }
+  }
+
   c->sample_rate = out_sample_rate;
   if (codec->supported_samplerates) {
     c->sample_rate = codec->supported_samplerates[0];
@@ -340,27 +295,6 @@ boolean init_audio(int _in_sample_rate, int _in_nchans, int _out_sample_rate, in
     }
   }
 
-  /* create resampler context */
-  osta.swr_ctx = swr_alloc();
-  if (!osta.swr_ctx) {
-    fprintf(stderr, "Could not allocate resampler context\n");
-    return FALSE;
-  }
-
-  in_nb_samples = out_nb_samples;
-  
-  if (out_nb_samples != 0) {
-    /* compute src number of samples */
-    in_nb_samples = av_rescale_rnd(swr_get_delay(osta.swr_ctx, c->sample_rate) + out_nb_samples,
-				    in_sample_rate, c->sample_rate, AV_ROUND_DOWN);
-
-    /* confirm destination number of samples */
-    int dst_nb_samples = av_rescale_rnd(in_nb_samples,
-				    c->sample_rate, in_sample_rate, AV_ROUND_UP);
-
-    av_assert0(dst_nb_samples == out_nb_samples);
-  }
-  
   c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
   c->channel_layout = (out_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
   if (codec->channel_layouts) {
@@ -374,14 +308,41 @@ boolean init_audio(int _in_sample_rate, int _in_nchans, int _out_sample_rate, in
   }
   c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
 
-  c->bit_rate    = 320000;
+  c->bit_rate    = maxabitrate;
 
-  osta.st->time_base = (AVRational){ 1, c->sample_rate };
+  if (c->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) {
+    fprintf(stderr, "varaudio, nice\n");
+    out_nb_samples = 0;
+  }
+  else {
+    out_nb_samples = c->frame_size;
+    fprintf(stderr, "nb samples is %d\n", out_nb_samples);
+  }
 
+  in_nb_samples = out_nb_samples;
+  if (out_nb_samples != 0) {
+    /* compute src number of samples */
+    in_nb_samples = av_rescale_rnd(swr_get_delay(osta.swr_ctx, c->sample_rate) + out_nb_samples,
+				    in_sample_rate, c->sample_rate, AV_ROUND_DOWN);
+
+    /* confirm destination number of samples */
+    int dst_nb_samples = av_rescale_rnd(in_nb_samples,
+				    c->sample_rate, in_sample_rate, AV_ROUND_UP);
+
+    av_assert0(dst_nb_samples == out_nb_samples);
+  }
+  
   if (out_nb_samples > 0) 
     osta.frame = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, out_nb_samples);
   else
     osta.frame = NULL;
+  
+  /* create resampler context */
+  osta.swr_ctx = swr_alloc();
+  if (!osta.swr_ctx) {
+    fprintf(stderr, "Could not allocate resampler context\n");
+    return FALSE;
+  }
   
   /* set options */
   av_opt_set_int       (osta.swr_ctx, "in_channel_count",   in_nchans,       0);
@@ -389,7 +350,7 @@ boolean init_audio(int _in_sample_rate, int _in_nchans, int _out_sample_rate, in
   av_opt_set_sample_fmt(osta.swr_ctx, "in_sample_fmt",      AV_SAMPLE_FMT_FLTP,0);
   av_opt_set_int       (osta.swr_ctx, "out_channel_count",  c->channels,       0);
   av_opt_set_int       (osta.swr_ctx, "out_sample_rate",    c->sample_rate,    0);
-  av_opt_set_sample_fmt(osta.swr_ctx, "out_sample_fmt",     AV_SAMPLE_FMT_S16, 0);
+  av_opt_set_sample_fmt(osta.swr_ctx, "out_sample_fmt",     c->sample_fmt, 0);
  
   /* initialize the resampling context */
   if ((ret = swr_init(osta.swr_ctx)) < 0) {
@@ -407,21 +368,85 @@ boolean init_audio(int _in_sample_rate, int _in_nchans, int _out_sample_rate, in
 
   osta.samples_count = 0;
   
+  osta.st->time_base = (AVRational){ 1, c->sample_rate };
+
+  /* open the codec */
+  ret = avcodec_open2(c, codec, &opt);
+  if (ret < 0) {
+    fprintf(stderr, "Could not open audio codec: %s\n", av_err2str(ret));
+    return FALSE;
+  }
+  
+  /* copy the stream parameters to the muxer */
+  /*     ret = avcodec_parameters_from_context(ost->st->codecpar, c);
+	 if (ret < 0) {
+         fprintf(stderr, "Could not copy the stream parameters\n");
+         exit(1);
+	 }*/
+
   return TRUE;
 }
 
 
+static boolean add_stream(OutputStream *ost, AVFormatContext *oc,
+			  AVCodec **codec,
+			  enum AVCodecID codec_id) {
+  AVCodecContext *c;
+
+  *codec = avcodec_find_encoder(codec_id);
+  if (!(*codec)) {
+    fprintf(stderr, "Could not find encoder for '%s'\n",
+	    avcodec_get_name(codec_id));
+    return FALSE;
+  }
+
+  c = avcodec_alloc_context3(*codec);
+  if (!c) {
+    fprintf(stderr, "Could not allocate video / audio codec context\n");
+    return FALSE;
+  }
+
+  ost->st = avformat_new_stream(oc, *codec); // stream(s) created from format_ctx and codec
+  if (!ost->st) {
+    fprintf(stderr, "Could not allocate stream\n");
+    return FALSE;
+  }
+
+  ost->st->codec = ost->enc = c;
+  ost->st->id = oc->nb_streams-1;
+
+  /* Some formats want stream headers to be separate. */
+  if (!STREAM_ENCODE && oc->oformat->flags & AVFMT_GLOBALHEADER)
+    c->flags |= CODEC_FLAG_GLOBAL_HEADER;
+
+  return TRUE;
+}
+
+
+boolean init_audio(int sample_rate, int nchans, int argc, char **argv) {
+  // must be called before init_screen()
+  // gets the same argc, argv as init_screen() [created from get_init_rfx() template]
+  in_sample_rate = sample_rate;
+  in_nchans = nchans;
+  return TRUE;
+}
+
+
+
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
-  int vcodec_id = AV_CODEC_ID_H264;
-  int acodec_id = AV_CODEC_ID_MP3;
   AVOutputFormat *opfmt;
   AVCodec *codec, *acodec;
 
+  const char *fmtstring;
+  
   //AVDictionary *opts = NULL;
-
+  char uri[128];
+  
+  int vcodec_id;
+  int acodec_id;
   int ret;
 
-  fprintf(stderr,"init_screen\n");
+  //fprintf(stderr,"init_screen\n");
   
   ostv.frame = osta.frame = NULL;
   vStream = aStream = NULL;
@@ -433,12 +458,42 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr, "libav stream plugin error: No palette was set !\n");
     return FALSE;
   }
-    
+
+  snprintf(uri, 128, "%s", "udp://127.0.0.1:8000");
+  fmtstring = "flv";
+  vcodec_id = AV_CODEC_ID_H264;
+  maxvbitrate = 3000000;
+
+  if (argc > 0) {
+    snprintf(uri, 128, "udp://%s.%s.%s.%s:%s", argv[0], argv[1], argv[2], argv[3], argv[4]);
+
+    switch(atoi(argv[5])) {
+    case 0:
+      fmtstring = "flv";
+      break;
+    case 1:
+      fmtstring = "mkv";
+      break;
+    default:
+      return FALSE;
+    }
+
+    switch(atoi(argv[6])) {
+    case 0:
+      vcodec_id = AV_CODEC_ID_H264;
+      break;
+    default:
+      return FALSE;
+    }
+
+    maxvbitrate = atoi(argv[7]);
+  }
+  
   fmtctx = avformat_alloc_context();
 
   // open flv
   opfmt = av_guess_format("flv", NULL, NULL);
-  avformat_alloc_output_context2(&fmtctx, opfmt, "flv", URI);
+  avformat_alloc_output_context2(&fmtctx, opfmt, fmtstring, URI);
   
   if (!fmtctx) {
     printf("Could not deduce output format from file extension: using flv.\n");
@@ -446,7 +501,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   }
   if (!fmtctx) return FALSE;
 
-  fprintf(stderr,"init_screen2 %p\n", fmtctx);
+  //fprintf(stderr,"init_screen2 %p\n", fmtctx);
 
   // add the video stream
   add_stream(&ostv, fmtctx, &codec, vcodec_id);
@@ -456,14 +511,14 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   ostv.enc = encctx = vStream->codec;
 
   // override defaults
-  vStream->time_base = (AVRational){1, STREAM_FRAME_RATE};  // 25.0 fps
+  vStream->time_base = (AVRational){1, target_fps};
   vStream->codec->time_base = vStream->time_base;
   
   vStream->codec->width = width;
   vStream->codec->height = height;
   vStream->codec->pix_fmt = PIX_FMT_YUV420P;
   
-  vStream->codec->bit_rate = 7280000 ; // allow user to set
+  vStream->codec->bit_rate = maxvbitrate;
 
   av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
   vStream->codec->gop_size = 10;
@@ -486,15 +541,39 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   }
 
   // audio
-  //#define ADD_AUDIO
-#ifdef ADD_AUDIO
+  
   // add the audio stream
-  add_stream(&osta, fmtctx, &acodec, acodec_id);
-  osta.codec = acodec;
-  aStream = osta.st;
-  osta.enc = aencctx = aStream->codec;
-  open_audio(fmtctx, acodec, &osta, NULL); 
-#endif
+  acodec_id = AV_CODEC_ID_MP3;
+  if (argc > 0) {
+    switch(atoi(argv[10])) {
+    case 0:
+      acodec_id = AV_CODEC_ID_MP3;
+      break;
+    default:
+      return FALSE;
+    }
+  }
+
+  if (in_sample_rate > 0) {
+    add_stream(&osta, fmtctx, &acodec, acodec_id);
+    osta.codec = acodec;
+    aStream = osta.st;
+    osta.enc = aencctx = aStream->codec;
+
+    out_nchans = 2;
+    out_sample_rate = 44100;
+    maxabitrate = 320000;
+  
+    if (argc > 0) {
+      out_nchans = atoi(argv[8]);
+      out_sample_rate = atoi(argv[9]);
+      maxabitrate = atoi(argv[11]);
+    }
+  
+    open_audio(); 
+  }
+  
+  // container
   
   /* open output file */
   if (!(fmtctx->oformat->flags & AVFMT_NOFILE)) {
@@ -506,7 +585,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
       return FALSE;
     }
 
-    /* write header */
+
     ret = avformat_write_header(fmtctx, NULL);
     if (ret < 0) {
       fprintf(stderr, "Error occurred when writing header: %s\n",
@@ -515,6 +594,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     }
   }
 
+  
   /* create (container) libav video frame */
   ostv.frame = alloc_picture(PIX_FMT_YUV420P, FRAME_WIDTH, FRAME_HEIGHT);
   if (ostv.frame == NULL) {
@@ -618,7 +698,7 @@ static AVFrame *get_video_frame(const uint8_t * const *pixel_data, int hsize, in
 }
 
 
-boolean render_audio_frame(float **audio, int nsamps)  {
+boolean render_audio_frame_float(float **audio, int nsamps)  {
   AVCodecContext *c;
   AVPacket pkt = { 0 }; // data and size must be 0;
   
@@ -833,6 +913,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   }
   free(spill_buffers);
 
+  in_sample_rate = 0;
 }
 
 

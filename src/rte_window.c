@@ -1508,7 +1508,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     } else d_print_done();
   } else {
     if (kfd != -1) lives_close_buffered(kfd);
-    d_print_done();
+    if (mainw->is_ready) d_print_done();
   }
 
   if (update == 0) {

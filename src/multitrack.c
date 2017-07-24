@@ -8663,6 +8663,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt_sensitise(mt);
   mt->is_ready = TRUE;
+  if (mainw->dp_cache != NULL) {
+    mainw->no_switch_dprint = TRUE;
+    d_print(mainw->dp_cache);
+    mainw->no_switch_dprint = FALSE;
+    lives_free(mainw->dp_cache);
+    mainw->dp_cache = NULL;
+  }
 
   lives_widget_grab_focus(mainw->textview1);
 

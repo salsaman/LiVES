@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2017-06-28 23:44-0300\n"
+"POT-Creation-Date: 2017-07-23 12:52-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -671,7 +671,7 @@ msgstr "rec %9d/%d"
 msgid "!rec %9d/%d"
 msgstr "!rec %9d/%d"
 
-#: src/main.c:5910 src/main.c:5911 src/gui.c:1861 src/gui.c:3072
+#: src/main.c:5910 src/main.c:5911 src/gui.c:1862 src/gui.c:3073
 #: src/saveplay.c:2169
 msgid "Play"
 msgstr "Prehrať"
@@ -699,15 +699,15 @@ msgstr "_Späť"
 msgid "_Redo"
 msgstr "_Znova"
 
-#: src/main.c:6935 src/interface.c:341 src/gui.c:2002 src/resample.c:1453
+#: src/main.c:6935 src/interface.c:341 src/gui.c:2003 src/resample.c:1453
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:6936 src/interface.c:446 src/gui.c:2015
+#: src/main.c:6936 src/interface.c:446 src/gui.c:2016
 msgid "Left Audio"
 msgstr "Ľavý audio kanál"
 
-#: src/main.c:6937 src/interface.c:492 src/gui.c:2029
+#: src/main.c:6937 src/interface.c:492 src/gui.c:2030
 msgid "Right Audio"
 msgstr "Pravý audio kanál"
 
@@ -1154,7 +1154,7 @@ msgstr ""
 "importované."
 
 #: src/interface.c:85 src/callbacks.c:9183 src/callbacks.c:9205
-#: src/callbacks.c:9206 src/gui.c:3074 src/gui.c:3657 src/saveplay.c:2171
+#: src/callbacks.c:9206 src/gui.c:3075 src/gui.c:3658 src/saveplay.c:2171
 #: src/saveplay.c:2925 src/dialogs.c:1546 src/dialogs.c:1547 src/dialogs.c:1806
 #: src/dialogs.c:1807 src/framedraw.c:197 src/multitrack.c:8065
 msgid "Preview"
@@ -2898,7 +2898,7 @@ msgstr ""
 msgid "Encoder Debug Output"
 msgstr "LiVES: - Kódovač výstupu ladenia"
 
-#: src/callbacks.c:6533 src/gui.c:1731
+#: src/callbacks.c:6533 src/gui.c:1732
 msgid "Fullscreen playback (f)"
 msgstr "Prehranie na celej obrazovke (f)"
 
@@ -2906,7 +2906,7 @@ msgstr "Prehranie na celej obrazovke (f)"
 msgid "Fullscreen playback off (f)"
 msgstr "Prehranie na celej obrazovke vypnuté (f)"
 
-#: src/callbacks.c:6730 src/gui.c:1716
+#: src/callbacks.c:6730 src/gui.c:1717
 msgid "Double size (d)"
 msgstr "Dvojitá veľkosť (d)"
 
@@ -2918,11 +2918,11 @@ msgstr "Vlastná veľkosť (d)"
 msgid "Hide the play window (s)"
 msgstr "Skryť okno s prehrávaním (s)"
 
-#: src/callbacks.c:6867 src/gui.c:1556
+#: src/callbacks.c:6867 src/gui.c:1557
 msgid "Show the play window (s)"
 msgstr "Zobraziť okno s prehrávaním (s)"
 
-#: src/callbacks.c:6868 src/gui.c:1705
+#: src/callbacks.c:6868 src/gui.c:1706
 msgid "Play in separate window (s)"
 msgstr "Prehrať v oddelenom okne (s)"
 
@@ -2930,7 +2930,7 @@ msgstr "Prehrať v oddelenom okne (s)"
 msgid "Switch continuous looping off (o)"
 msgstr "Vypnúť nekonečnú sľučku (o)"
 
-#: src/callbacks.c:7140 src/gui.c:1603
+#: src/callbacks.c:7140 src/gui.c:1604
 msgid "Switch continuous looping on (o)"
 msgstr "Zapnúť nekonečnú sľučku (o)"
 
@@ -2939,11 +2939,11 @@ msgstr "Zapnúť nekonečnú sľučku (o)"
 msgid "Audio volume (%.2f)"
 msgstr "Hlasitosť zvuku (%.2f)"
 
-#: src/callbacks.c:7227 src/callbacks.c:7228 src/gui.c:3468
+#: src/callbacks.c:7227 src/callbacks.c:7228 src/gui.c:3469
 msgid "Unmute the audio (z)"
 msgstr "Zapnúť zvuk (z)"
 
-#: src/callbacks.c:7238 src/callbacks.c:7239 src/gui.c:1616 src/gui.c:3467
+#: src/callbacks.c:7238 src/callbacks.c:7239 src/gui.c:1617 src/gui.c:3468
 msgid "Mute the audio (z)"
 msgstr "Vypnúť zvuk (z)"
 
@@ -3883,41 +3883,41 @@ msgstr "_Importovať projekt (.lv2)..."
 msgid "E_xport Project (.%s)..."
 msgstr "E_xportovať projekt (.lv2)..."
 
-#: src/gui.c:1409
+#: src/gui.c:1410
 #, fuzzy, c-format
 msgid "_Import Custom Theme (.%s)..."
 msgstr "_Importovať projekt (.lv2)..."
 
-#: src/gui.c:1414
+#: src/gui.c:1415
 #, fuzzy, c-format
 msgid "E_xport Theme (.%s)..."
 msgstr "E_xportovať projekt (.lv2)..."
 
-#: src/gui.c:1421
+#: src/gui.c:1422
 msgid "_VJ"
 msgstr "_VJ"
 
-#: src/gui.c:1427
+#: src/gui.c:1428
 msgid "Real Time _Effect Mapping"
 msgstr "Mapovanie real time _efektu"
 
-#: src/gui.c:1432
+#: src/gui.c:1433
 msgid "Bind real time effects to ctrl-number keys."
 msgstr "Priradiť real time efekty k ctrl-numerickým klávesam."
 
-#: src/gui.c:1434
+#: src/gui.c:1435
 msgid "Set Real Time Effect _Defaults"
 msgstr "Nastaviť _predvolený real time efekt"
 
-#: src/gui.c:1436
+#: src/gui.c:1437
 msgid "Set default parameter values for real time effects."
 msgstr "Nastaviť _predvolenú hodnotu pre real time efekty."
 
-#: src/gui.c:1441
+#: src/gui.c:1442
 msgid "Save Real Time Effect _Defaults"
 msgstr "Uložiť _predvolený real time efekt"
 
-#: src/gui.c:1444
+#: src/gui.c:1445
 msgid ""
 "Save real time effect defaults so they will be restored each time you use "
 "LiVES."
@@ -3925,156 +3925,156 @@ msgstr ""
 "Uložiť predvolené hodnoty real time efektov, budú použité pri každom "
 "spustení LiVES."
 
-#: src/gui.c:1448
+#: src/gui.c:1449
 #, fuzzy
 msgid "_Reset All Playback Speeds and Positions"
 msgstr "_Resetovať všetky rýchlosti prehrávania a pozícií"
 
-#: src/gui.c:1450
+#: src/gui.c:1451
 msgid ""
 "Reset all playback positions to frame 1, and reset all playback frame rates."
 msgstr ""
 "Resetovanie všetkých prehraných pozícií na snímok 1 a resetovanie všetkých "
 "prehraných snímkov."
 
-#: src/gui.c:1452
+#: src/gui.c:1453
 #, fuzzy
 msgid "_MIDI/Joystick Interface"
 msgstr "Rozhranie _MIDI/Joystick"
 
-#: src/gui.c:1461
+#: src/gui.c:1462
 #, fuzzy
 msgid "_MIDI/Joystick Learner..."
 msgstr "Rozhranie _MIDI/Joystick"
 
-#: src/gui.c:1465
+#: src/gui.c:1466
 #, fuzzy
 msgid "_Save Device Mapping..."
 msgstr "_Uložiť mapu zariadenia..."
 
-#: src/gui.c:1469
+#: src/gui.c:1470
 #, fuzzy
 msgid "_Load Device Mapping..."
 msgstr "_Načítať mapu zariadenia..."
 
-#: src/gui.c:1475
+#: src/gui.c:1476
 msgid "Show VJ _Keys"
 msgstr "Zobraziť VJ _\tKlávesy"
 
-#: src/gui.c:1478
+#: src/gui.c:1479
 msgid "To_ys"
 msgstr "_Hračky"
 
-#: src/gui.c:1484
+#: src/gui.c:1485
 msgid "_None"
 msgstr "Žia_dny"
 
-#: src/gui.c:1490
+#: src/gui.c:1491
 msgid "_Autolives"
 msgstr ""
 
-#: src/gui.c:1494
+#: src/gui.c:1495
 msgid "_Mad Frames"
 msgstr "_Bláznivé snḿky"
 
-#: src/gui.c:1498
+#: src/gui.c:1499
 msgid "_LiVES TV (broadband)"
 msgstr "_LiVES TV (širokopásmová)"
 
-#: src/gui.c:1502 src/multitrack.c:7490
+#: src/gui.c:1503 src/multitrack.c:7490
 msgid "_Help"
 msgstr "_Pomocník"
 
-#: src/gui.c:1508 src/multitrack.c:7503
+#: src/gui.c:1509 src/multitrack.c:7503
 msgid "_Manual (opens in browser)"
 msgstr "_Manuál (otvoriť v prehliadači)"
 
-#: src/gui.c:1513 src/multitrack.c:7510
+#: src/gui.c:1514 src/multitrack.c:7510
 #, fuzzy
 msgid "_Donate to the Project !"
 msgstr "_Prispieť na projekt !"
 
-#: src/gui.c:1516 src/multitrack.c:7513
+#: src/gui.c:1517 src/multitrack.c:7513
 #, fuzzy
 msgid "_Email the Author"
 msgstr "_Mailová adresa autora"
 
-#: src/gui.c:1519
+#: src/gui.c:1520
 #, fuzzy
 msgid "Report a _Bug"
 msgstr "Nahlásiť _chybu"
 
-#: src/gui.c:1522 src/multitrack.c:7519
+#: src/gui.c:1523 src/multitrack.c:7519
 #, fuzzy
 msgid "Suggest a _Feature"
 msgstr "Navrhnite _funkciu"
 
-#: src/gui.c:1525 src/multitrack.c:7522
+#: src/gui.c:1526 src/multitrack.c:7522
 #, fuzzy
 msgid "Assist with _Translating"
 msgstr "Pomôcť s _prekladom"
 
-#: src/gui.c:1530 src/multitrack.c:7527
+#: src/gui.c:1531 src/multitrack.c:7527
 msgid "_Troubleshoot"
 msgstr "Riešenie _problémov"
 
-#: src/gui.c:1533 src/multitrack.c:7530
+#: src/gui.c:1534 src/multitrack.c:7530
 msgid "_About"
 msgstr "_O programe"
 
-#: src/gui.c:1562
+#: src/gui.c:1563
 msgid "Rewind to start (w)"
 msgstr "Previnúť na štart (w)"
 
-#: src/gui.c:1570 src/multitrack.c:16542
+#: src/gui.c:1571 src/multitrack.c:16542
 msgid "Play all (p)"
 msgstr "Prehrať všetko (p)"
 
-#: src/gui.c:1577 src/gui.c:1686
+#: src/gui.c:1578 src/gui.c:1687
 msgid "Stop playback (q)"
 msgstr "Zastaviť prehrávanie (q)"
 
-#: src/gui.c:1588
+#: src/gui.c:1589
 msgid "Play selection (y)"
 msgstr "Prehrať vybrané (y)"
 
-#: src/gui.c:1636
+#: src/gui.c:1637
 msgid "Volume"
 msgstr "Hlasitosť"
 
-#: src/gui.c:1664
+#: src/gui.c:1665
 msgid "Audio volume (1.00)"
 msgstr "Hlasitosť zvuku (1.00)"
 
-#: src/gui.c:1692
+#: src/gui.c:1693
 msgid "Unblank background (b)"
 msgstr "Vyplnené pozadie (b)"
 
-#: src/gui.c:1737
+#: src/gui.c:1738
 msgid "Play slower (ctrl-down)"
 msgstr "Prehrať pomalšie (ctrl-down)"
 
-#: src/gui.c:1743
+#: src/gui.c:1744
 msgid "Play faster (ctrl-up)"
 msgstr "Prehrať rýchlejšie (ctrl-hore)"
 
-#: src/gui.c:1749
+#: src/gui.c:1750
 msgid "Skip back (ctrl-left)"
 msgstr "Preskočiť späť (ctrl-vľavo)"
 
-#: src/gui.c:1755
+#: src/gui.c:1756
 msgid "Skip forward (ctrl-right)"
 msgstr "Preskočiť vpred (ctrl-vpravo)"
 
-#: src/gui.c:1761
+#: src/gui.c:1762
 msgid "Show clip info (i)"
 msgstr "Zobraziť info o klipe (i)"
 
-#: src/gui.c:1767
+#: src/gui.c:1768
 msgid "Hide this toolbar"
 msgstr "Skryť túto lištu s nástrojmi"
 
-#: src/gui.c:1769
+#: src/gui.c:1770
 msgid ""
 "Press \"s\" to toggle separate play window for improved performance, \"q\" "
 "to stop."
@@ -4083,133 +4083,133 @@ msgstr ""
 "zastavte s \"q\"."
 
 #. TRANSLATORS: please keep the translated string the same length
-#: src/gui.c:1800
+#: src/gui.c:1801
 msgid "     Video playback speed (frames per second)        "
 msgstr "     Rýchlosť prehrávania videa (snímky za sekundu)        "
 
-#: src/gui.c:1809
+#: src/gui.c:1810
 msgid "Vary the video speed"
 msgstr "Odlíšiť rýchlosť videa"
 
-#: src/gui.c:1841 src/gui.c:3070
+#: src/gui.c:1842 src/gui.c:3071
 msgid "First Frame"
 msgstr "Prvý snímok"
 
-#: src/gui.c:1882 src/gui.c:3077
+#: src/gui.c:1883 src/gui.c:3078
 msgid "Last Frame"
 msgstr "Posledný snímok"
 
-#: src/gui.c:1934
+#: src/gui.c:1935
 msgid "The first selected frame in this clip"
 msgstr "Prvý vybraný snímok v tomto klipe"
 
-#: src/gui.c:1956
+#: src/gui.c:1957
 msgid "The last selected frame in this clip"
 msgstr "Posledný vybraný snímok v tomto klipe"
 
-#: src/gui.c:2218
+#: src/gui.c:2219
 msgid "Starting...\n"
 msgstr "Začínam...\n"
 
-#: src/gui.c:2945
+#: src/gui.c:2946
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr "    Stlač 'q' k zastaveniu nahrávania. NEPREKRÝVAJTE HRACIE OKNO !   "
 
-#: src/gui.c:3356
+#: src/gui.c:3357
 msgid "Frame number to preview"
 msgstr "Čísla snímkov k náhľadu"
 
-#: src/gui.c:3366
+#: src/gui.c:3367
 msgid "_Free"
 msgstr "_Voľná"
 
-#: src/gui.c:3368
+#: src/gui.c:3369
 msgid "Free choice of frame number"
 msgstr "Voľný výber čísla snímku"
 
-#: src/gui.c:3372
+#: src/gui.c:3373
 msgid "_Start"
 msgstr "_Štart"
 
-#: src/gui.c:3374
+#: src/gui.c:3375
 msgid "Frame number is linked to start frame"
 msgstr "Číslo snímku ukazuje na prvý snímok"
 
-#: src/gui.c:3380
+#: src/gui.c:3381
 msgid "_End"
 msgstr "_Koniec"
 
-#: src/gui.c:3381
+#: src/gui.c:3382
 msgid "Frame number is linked to end frame"
 msgstr "Číslo snímku ukazuje na posledný snímok"
 
-#: src/gui.c:3387
+#: src/gui.c:3388
 msgid "_Pointer"
 msgstr "_Kurzor"
 
-#: src/gui.c:3389
+#: src/gui.c:3390
 msgid "Frame number is linked to playback pointer"
 msgstr "Číslo snímku ukazuje na ukazovateľ prehrávania"
 
-#: src/gui.c:3409
+#: src/gui.c:3410
 msgid "Rewind"
 msgstr "Previnúť"
 
-#: src/gui.c:3420 src/dialogs.c:918 src/dialogs.c:920 src/dialogs.c:1888
+#: src/gui.c:3421 src/dialogs.c:918 src/dialogs.c:920 src/dialogs.c:1888
 #: src/dialogs.c:1890
 msgid "Play all"
 msgstr "Prehrať všetko"
 
-#: src/gui.c:3433
+#: src/gui.c:3434
 msgid "Play Selection"
 msgstr "Prehrať vybrané"
 
-#: src/gui.c:3447
+#: src/gui.c:3448
 msgid "Loop On/Off"
 msgstr "Slučka Zap/Vyp"
 
-#: src/gui.c:3524
+#: src/gui.c:3525
 msgid "Start _recording"
 msgstr "Spustiť _nahrávanie"
 
-#: src/gui.c:3530
+#: src/gui.c:3531
 msgid "Stop _recording"
 msgstr "Zastaviť _nahrávanie"
 
-#: src/gui.c:3535
+#: src/gui.c:3536
 msgid "_Record Performance"
 msgstr ""
 
-#: src/gui.c:3545 src/saveplay.c:2903 src/saveplay.c:3007 src/saveplay.c:3025
+#: src/gui.c:3546 src/saveplay.c:2903 src/saveplay.c:3007 src/saveplay.c:3025
 #: src/multitrack.c:9172 src/multitrack.c:10890
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/gui.c:3550
+#: src/gui.c:3551
 #, fuzzy
 msgid "Streaming"
 msgstr "Zasnenie"
 
-#: src/gui.c:3552
+#: src/gui.c:3553
 #, fuzzy, c-format
 msgid "Play Window%s"
 msgstr "Skryť okno s prehrávaním"
 
-#: src/gui.c:3685
+#: src/gui.c:3686
 msgid "Hide Play Window"
 msgstr "Skryť okno s prehrávaním"
 
-#: src/gui.c:4056
+#: src/gui.c:4060
 msgid "Show Play Window"
 msgstr "Zobraziť okno s prehrávaním"
 
-#: src/gui.c:4124
+#: src/gui.c:4128
 #, fuzzy, c-format
 msgid "'LiVES opened the file' '%s'"
 msgstr "LiVES nebol schopný otvoriť súbor"
 
-#: src/gui.c:4143
+#: src/gui.c:4147
 #, fuzzy, c-format
 msgid "'LiVES closed the file' '%s'"
 msgstr "Nechať LiVES nastaviť _príponu súboru"
@@ -6281,7 +6281,7 @@ msgstr ""
 msgid "Audio Analysers"
 msgstr ""
 
-#: src/effects.c:133 src/plugins.c:2465 src/plugins.c:2479
+#: src/effects.c:133 src/plugins.c:2417 src/plugins.c:2431
 msgid "unknown"
 msgstr "neznáme"
 
@@ -6747,11 +6747,11 @@ msgstr "%s : veľkosť"
 msgid "New size (pixels)"
 msgstr "Nová veľkosť (pixely)"
 
-#: src/paramwindow.c:555 src/plugins.c:960
+#: src/paramwindow.c:555 src/plugins.c:947
 msgid "_Width"
 msgstr "_Šírka"
 
-#: src/paramwindow.c:573 src/plugins.c:966
+#: src/paramwindow.c:573 src/plugins.c:953
 msgid "_Height"
 msgstr "_Výška"
 
@@ -6798,7 +6798,7 @@ msgstr "Žiadne parametre"
 msgid "Invalid parameter"
 msgstr "Neplatný parameter"
 
-#: src/plugins.c:83
+#: src/plugins.c:80
 #, c-format
 msgid ""
 "\n"
@@ -6807,12 +6807,12 @@ msgstr ""
 "\n"
 "Chyba rozšírenia: %s chyba s kódom %d"
 
-#: src/plugins.c:85
+#: src/plugins.c:82
 #, c-format
 msgid " : message was %s\n"
 msgstr " : správa %s\n"
 
-#: src/plugins.c:374
+#: src/plugins.c:371
 #, c-format
 msgid ""
 "\n"
@@ -6827,17 +6827,17 @@ msgstr ""
 "%s\n"
 "Kód chyby %d\n"
 
-#: src/plugins.c:380
+#: src/plugins.c:377
 #, c-format
 msgid "Updating video playback plugin defaults in %s\n"
 msgstr "Aktualizácia prehrania rozšírenia videa predvolene v %s\n"
 
-#: src/plugins.c:439
+#: src/plugins.c:436
 #, c-format
 msgid "Loading video playback plugin defaults from %s..."
 msgstr "Načítavam video rozšírenie predvolene z %s..."
 
-#: src/plugins.c:497
+#: src/plugins.c:493
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6852,32 +6852,32 @@ msgstr ""
 " Nástroje|Preferences|Prehrávanie|Pokročilé rozšírenie prehrávania\n"
 "\n"
 
-#: src/plugins.c:829
+#: src/plugins.c:822
 #, c-format
 msgid "Saving playback plugin defaults to %s..."
 msgstr ""
 
-#: src/plugins.c:928
+#: src/plugins.c:917
 msgid "_FPS"
 msgstr "_FPS"
 
-#: src/plugins.c:929
+#: src/plugins.c:918
 msgid "Fixed framerate for plugin.\n"
 msgstr "Fixný počet snímkov pre rozšírenie.\n"
 
-#: src/plugins.c:995
+#: src/plugins.c:981
 msgid "_Colourspace"
 msgstr "_Farebný priestor"
 
-#: src/plugins.c:996
+#: src/plugins.c:982
 msgid "Colourspace input to the plugin.\n"
 msgstr ""
 
-#: src/plugins.c:1045
+#: src/plugins.c:1029
 msgid "Save settings to an alternate file.\n"
 msgstr ""
 
-#: src/plugins.c:1160
+#: src/plugins.c:1141
 #, c-format
 msgid ""
 "\n"
@@ -6890,7 +6890,7 @@ msgstr ""
 "Zlyhalo otvorenie rozšírenia prehrávanie %s\n"
 "Chyba bola: %s\n"
 
-#: src/plugins.c:1206
+#: src/plugins.c:1185
 #, c-format
 msgid ""
 "\n"
@@ -6905,7 +6905,7 @@ msgstr ""
 "chýbajú povinné funkcie.\n"
 "Nedá sa použiť.\n"
 
-#: src/plugins.c:1219
+#: src/plugins.c:1198
 #, c-format
 msgid ""
 "Video playback plugin failed to initialise.\n"
@@ -6914,7 +6914,7 @@ msgstr ""
 "Nepodarilo sa inicializovať rozšírenie videa.\n"
 "Chyba bola: %s\n"
 
-#: src/plugins.c:1405
+#: src/plugins.c:1383
 #, c-format
 msgid ""
 "*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). "
@@ -6923,17 +6923,17 @@ msgstr ""
 "*** Použitím %s rozšírenia pre fs prehrávanie, súhlasíte s použitím palety "
 "typu %d ( %s ).***\n"
 
-#: src/plugins.c:1511
+#: src/plugins.c:1489
 #, c-format
 msgid "Audio stream unable to use preferred format '%s'\n"
 msgstr ""
 
-#: src/plugins.c:1517
+#: src/plugins.c:1495
 #, c-format
 msgid "Using format '%s' instead.\n"
 msgstr ""
 
-#: src/plugins.c:1553
+#: src/plugins.c:1529
 #, c-format
 msgid ""
 "LiVES was unable to find its encoder plugins. Please make sure you have the "
@@ -6942,7 +6942,7 @@ msgid ""
 "or change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/plugins.c:1564
+#: src/plugins.c:1540
 #, c-format
 msgid ""
 "LiVES did not receive a response from the encoder plugin called '%s'.\n"
@@ -6951,7 +6951,7 @@ msgid ""
 "or switch to another plugin using Tools|Preferences|Encoding\n"
 msgstr ""
 
-#: src/plugins.c:2148
+#: src/plugins.c:2112
 #, c-format
 msgid ""
 "\n"
@@ -6959,12 +6959,12 @@ msgid ""
 "No decoders found in %s !\n"
 msgstr ""
 
-#: src/plugins.c:2333
+#: src/plugins.c:2292
 #, fuzzy, c-format
 msgid " using %s"
 msgstr "Otváram %s"
 
-#: src/plugins.c:2409
+#: src/plugins.c:2363
 #, c-format
 msgid ""
 "\n"
@@ -6977,7 +6977,7 @@ msgstr ""
 "Nepodarilo sa otvoriť rozšírenie dekodéra  %s\n"
 "Chyba bola %s\n"
 
-#: src/plugins.c:2430
+#: src/plugins.c:2384
 #, c-format
 msgid ""
 "\n"
@@ -6992,25 +6992,25 @@ msgstr ""
 "chýbajú povinné funkcie.\n"
 "Nedá sa použiť.\n"
 
-#: src/plugins.c:2470
+#: src/plugins.c:2422
 msgid "/unknown"
 msgstr "/neznámy"
 
-#: src/plugins.c:2550
+#: src/plugins.c:2501
 #, fuzzy
 msgid "Decoder Plugins"
 msgstr "Dekódovanie"
 
-#: src/plugins.c:2564
+#: src/plugins.c:2515
 msgid "Enabled Video Decoders (uncheck to disable)"
 msgstr ""
 
-#: src/plugins.c:2620
+#: src/plugins.c:2569
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Zlyhalo spustenie %s, nie je možné zmenit veľkosť prechodu.\n"
 
-#: src/plugins.c:3763
+#: src/plugins.c:3702
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s pokročilé nastavenia"

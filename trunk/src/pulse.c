@@ -159,7 +159,14 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
     if (nbytes < xbytes) xbytes = nbytes;
     buff = (uint8_t *)lives_try_malloc0(xbytes);
     if (!buff) return;
-    if (pdriver->astream_fd != -1) audio_stream(buff, xbytes, pdriver->astream_fd);
+    if (pdriver->astream_fd != -1) audio_stream(buff, xbytes, pdriver->astream_fd); // old streaming API
+
+    // new streaming API
+    if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+      int nframes = nbytes / pdriver->out_achans / (pdriver->out_asamps >> 3);
+      sample_silence_stream(pdriver->out_achans, nframes);
+    }
+    
     if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
       pthread_mutex_lock(&mainw->abuf_frame_mutex);
       append_to_audio_buffer16(mainw->audio_frame_buffer, buff, xbytes / 2, 0);
@@ -510,7 +517,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             }
           }
 
-          if (has_audio_filters(AF_TYPE_ANY) && (pulsed->playing_file != mainw->ascrap_file)) {
+          if ((has_audio_filters(AF_TYPE_ANY) || mainw->ext_audio) && (pulsed->playing_file != mainw->ascrap_file)) {
             boolean memok = TRUE;
             float **fltbuf = (float **)lives_malloc(pulsed->out_achans * sizeof(float *));
             register int i;
@@ -534,8 +541,15 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               int64_t tc = pulsed->audio_ticks + (int64_t)(pulsed->frames_written / (double)pulsed->out_arate * U_SEC);
               // apply any audio effects with in_channels
 
-              weed_apply_audio_effects_rt(fltbuf, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
+              if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
 
+	      // new streaming API
+	      pthread_mutex_lock(&mainw->vpp_stream_mutex);
+	      if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+		(*mainw->vpp->render_audio_frame_float)(fltbuf, numFramesToWrite);
+	      }
+	      pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+	      
               // convert float audio back to s16
               sample_move_float_int(pulsed->sound_buffer, fltbuf, numFramesToWrite, 1.0, pulsed->out_achans, 16, 0,
                                     (capable->byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
@@ -585,7 +599,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             pulsed->sound_buffer = (uint8_t *)pulsed->aPlayPtr->data;
             buf = (void *)pulsed->sound_buffer;
 
-            if (has_audio_filters(AF_TYPE_ANY)) {
+            if (has_audio_filters(AF_TYPE_ANY) || mainw->ext_audio) {
               register int i;
 
               memok = TRUE;
@@ -610,7 +624,14 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 int64_t tc = pulsed->audio_ticks + (int64_t)(pulsed->frames_written / (double)pulsed->out_arate * U_SEC);
                 // apply any audio effects with in_channels
 
-                weed_apply_audio_effects_rt(fp, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
+                if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fp, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
+
+		// new streaming API
+		pthread_mutex_lock(&mainw->vpp_stream_mutex);
+		if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+		  (*mainw->vpp->render_audio_frame_float)(fp, numFramesToWrite);
+		}
+		pthread_mutex_unlock(&mainw->vpp_stream_mutex);
 
                 // convert float audio to s16
                 sample_move_float_int(buf, fp, numFramesToWrite, 1.0, pulsed->out_achans, 16, FALSE,
@@ -867,7 +888,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example, or push it to a video generator
 
-    if (has_audio_filters(AF_TYPE_A)) {
+    if (has_audio_filters(AF_TYPE_A) || mainw->ext_audio) {
       // convert to float, apply any analysers
       boolean memok = TRUE;
       float **fltbuf = (float **)lives_malloc(pulsed->in_achans * sizeof(float *));
@@ -901,7 +922,14 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
         int64_t tc = pulsed->audio_ticks + (int64_t)(pulsed->frames_written / (double)pulsed->in_arate * U_SEC);
         // apply any audio effects with in channels but no out channels
 
-        weed_apply_audio_effects_rt(fltbuf, pulsed->in_achans, xnframes, pulsed->in_arate, tc, TRUE);
+        if (has_audio_filters(AF_TYPE_A)) weed_apply_audio_effects_rt(fltbuf, pulsed->in_achans, xnframes, pulsed->in_arate, tc, TRUE);
+
+	// new streaming API
+	pthread_mutex_lock(&mainw->vpp_stream_mutex);
+	if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+	  (*mainw->vpp->render_audio_frame_float)(fltbuf, xnframes);
+	}
+	pthread_mutex_unlock(&mainw->vpp_stream_mutex);
 
         for (i = 0; i < pulsed->in_achans; i++) {
           lives_free(fltbuf[i]);

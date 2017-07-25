@@ -365,6 +365,9 @@ static int audio_process(nframes_t nframes, void *arg) {
             append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
           }
         }
+	if (!jackd->is_silent && mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+	  sample_silence_stream(jackd->num_output_channels, nframes);
+	}
         if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
           mainw->audio_frame_buffer->samples_filled += nframes;
           pthread_mutex_unlock(&mainw->abuf_frame_mutex);
@@ -416,6 +419,9 @@ static int audio_process(nframes_t nframes, void *arg) {
             append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
           }
         }
+	if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+	  sample_silence_stream(jackd->num_output_channels, nframes);
+	}
         if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
           mainw->audio_frame_buffer->samples_filled += nframes;
           pthread_mutex_unlock(&mainw->abuf_frame_mutex);
@@ -511,6 +517,9 @@ static int audio_process(nframes_t nframes, void *arg) {
                 append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
               }
             }
+	    if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+	      sample_silence_stream(jackd->num_output_channels, nframes);
+	    }
             if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
               mainw->audio_frame_buffer->samples_filled += nframes;
               pthread_mutex_unlock(&mainw->abuf_frame_mutex);
@@ -577,6 +586,9 @@ static int audio_process(nframes_t nframes, void *arg) {
               append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
             }
           }
+	  if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+	    sample_silence_stream(jackd->num_output_channels, nframes);
+	  }
           if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
             mainw->audio_frame_buffer->samples_filled += nframes;
             pthread_mutex_unlock(&mainw->abuf_frame_mutex);
@@ -651,9 +663,12 @@ static int audio_process(nframes_t nframes, void *arg) {
                   for (i = 0; i < jackd->num_output_channels; i++) {
                     sample_silence_dS(out_buffer[i], numFramesToWrite);
                     if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
-                      append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
+                      append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], numFramesToWrite, i);
                     }
                   }
+		  if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+		    sample_silence_stream(jackd->num_output_channels, numFramesToWrite);
+		  }
                   if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
                     mainw->audio_frame_buffer->samples_filled += numFramesToWrite;
                     pthread_mutex_unlock(&mainw->abuf_frame_mutex);
@@ -782,6 +797,9 @@ static int audio_process(nframes_t nframes, void *arg) {
                 append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
               }
             }
+	    if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+	      sample_silence_stream(jackd->num_output_channels, numFramesToWrite);
+	    }
             if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
               mainw->audio_frame_buffer->samples_filled += numFramesToWrite;
               pthread_mutex_unlock(&mainw->abuf_frame_mutex);
@@ -818,6 +836,9 @@ static int audio_process(nframes_t nframes, void *arg) {
                       append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
                     }
                   }
+		  if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+		    sample_silence_stream(jackd->num_output_channels, numFramesToWrite);
+		  }
                   if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
                     mainw->audio_frame_buffer->samples_filled += numFramesToWrite;
                     pthread_mutex_unlock(&mainw->abuf_frame_mutex);
@@ -862,6 +883,9 @@ static int audio_process(nframes_t nframes, void *arg) {
                 append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
               }
             }
+	    if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+	      sample_silence_stream(jackd->num_output_channels, numFramesToWrite);
+	    }
             if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
               mainw->audio_frame_buffer->samples_filled += numFramesToWrite;
               pthread_mutex_unlock(&mainw->abuf_frame_mutex);
@@ -885,6 +909,9 @@ static int audio_process(nframes_t nframes, void *arg) {
             append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
           }
         }
+	if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+	  sample_silence_stream(jackd->num_output_channels, numFramesToWrite);
+	}
         if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
           mainw->audio_frame_buffer->samples_filled += numFramesToWrite;
           pthread_mutex_unlock(&mainw->abuf_frame_mutex);
@@ -921,9 +948,12 @@ static int audio_process(nframes_t nframes, void *arg) {
         for (i = 0; i < jackd->num_output_channels; i++) {
           sample_silence_dS(out_buffer[i] + (nframes - jackFramesAvailable), jackFramesAvailable);
           if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
-            append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
+            append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], jackFramesAvailable, i);
           }
         }
+	if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+	  sample_silence_stream(jackd->num_output_channels, jackFramesAvailable);
+	}
         if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
           mainw->audio_frame_buffer->samples_filled += jackFramesAvailable;
           pthread_mutex_unlock(&mainw->abuf_frame_mutex);
@@ -952,6 +982,9 @@ static int audio_process(nframes_t nframes, void *arg) {
       if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
         append_to_audio_bufferf(mainw->audio_frame_buffer, out_buffer[i], nframes, i);
       }
+    }
+    if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+      sample_silence_stream(jackd->num_output_channels, nframes);
     }
     if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
       mainw->audio_frame_buffer->samples_filled += nframes;

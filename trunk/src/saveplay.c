@@ -2139,30 +2139,28 @@ void play_file(void) {
 
   mainw->audio_start = mainw->audio_end = 0;
 
-  if (mainw->event_list != NULL) {
-    // play performance data
-    if (event_list_get_end_secs(mainw->event_list) > cfile->frames / cfile->fps && !mainw->playing_sel) {
-      mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.) * cfile->arate / cfile->arps;
+  if (cfile->achans > 0) {
+    if (mainw->event_list != NULL) {
+      // play performance data
+      if (event_list_get_end_secs(mainw->event_list) > cfile->frames / cfile->fps && !mainw->playing_sel) {
+	mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.) * cfile->arate / cfile->arps;
+      }
+    }
+
+    if (mainw->audio_end == 0) {
+      mainw->audio_start = calc_time_from_frame(mainw->current_file, mainw->play_start) * cfile->fps + 1. * cfile->arate / cfile->arps;
+      mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1. * cfile->arate / cfile->arps;
+      if (!mainw->playing_sel) {
+	mainw->audio_end = 0;
+      }
     }
   }
-
-  if (mainw->audio_end == 0) {
-    mainw->audio_start = calc_time_from_frame(mainw->current_file, mainw->play_start) * cfile->fps + 1.*cfile->arate / cfile->arps;
-    mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.*cfile->arate / cfile->arps;
-    if (!mainw->playing_sel) {
-      mainw->audio_end = 0;
-    }
-  }
-
 
   if (!cfile->opening_audio && !mainw->loop) {
     // if we are opening audio or looping we just play to the end of audio,
     // otherwise...
     audio_end = mainw->audio_end;
   }
-
-
-
 
   if (mainw->multitrack == NULL) {
     if (!mainw->preview) {
@@ -2351,12 +2349,16 @@ void play_file(void) {
     if (mainw->vpp != NULL && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
       // fixed o/p size for stream
       if (!(mainw->vpp->fwidth * mainw->vpp->fheight)) {
-	mainw->vpp->fwidth = cfile->hsize;
+	/*	mainw->vpp->fwidth = cfile->hsize;
         mainw->vpp->fheight = cfile->vsize;
-        calc_maxspect(MAX_VPP_HSIZE, MAX_VPP_VSIZE, &mainw->vpp->fwidth, &mainw->vpp->fheight);
+        calc_maxspect(MAX_VPP_HSIZE, MAX_VPP_VSIZE, &mainw->vpp->fwidth, &mainw->vpp->fheight);*/
+	mainw->vpp->fwidth = MAX_VPP_HSIZE;
+	mainw->vpp->fheight = MAX_VPP_VSIZE;
       }
-      mainw->pwidth = mainw->vpp->fwidth;
-      mainw->pheight = mainw->vpp->fheight;
+      if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
+	mainw->pwidth = mainw->vpp->fwidth;
+	mainw->pheight = mainw->vpp->fheight;
+      }
     }
 
     if (mainw->fs && !mainw->sep_win && cfile->frames > 0) {

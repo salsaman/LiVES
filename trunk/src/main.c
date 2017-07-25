@@ -424,6 +424,8 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->clip_list_mutex, NULL);
 
+  pthread_mutex_init(&mainw->vpp_stream_mutex, NULL);
+
   for (i = 0; i < FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->data_mutex[i], &mattr); // because audio filters can enable/disable video filters and vice-versa
   }
@@ -1137,7 +1139,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->rendered_fx = NULL;
 
-  
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -1152,7 +1153,7 @@ static void lives_init(_ign_opts *ign_opts) {
     if (pb_quality == PB_QUALITY_LOW) prefs->pb_quality = PB_QUALITY_LOW;
     else if (pb_quality == PB_QUALITY_HIGH) prefs->pb_quality = PB_QUALITY_HIGH;
 
-    mainw->ext_playback = mainw->ext_keyboard = FALSE;
+    mainw->ext_playback = mainw->ext_keyboard = mainw->ext_audio = FALSE;
 
     get_pref(PREF_DEFAULT_IMAGE_FORMAT, buff, 256);
     if (!strcmp(buff, LIVES_IMAGE_TYPE_JPEG)) lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_JPG);

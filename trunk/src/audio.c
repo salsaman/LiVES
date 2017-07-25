@@ -242,6 +242,29 @@ LIVES_INLINE void sample_silence_dS(float *dst, uint64_t nsamples) {
 }
 
 
+void sample_silence_stream(int nchans, int nframes) {
+  float **fbuff = malloc(nchans * sizeof(float *));
+  boolean memok = TRUE;
+  int i;
+
+  for (i = 0; i < nchans; i++) {
+    fbuff[i] = (float *)lives_try_malloc0(nframes * sizeof(float));
+    if (!fbuff[i]) memok = FALSE;
+  }
+  if (memok) {
+    pthread_mutex_lock(&mainw->vpp_stream_mutex);
+    if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+      (*mainw->vpp->render_audio_frame_float)(fbuff, nframes);
+    }
+    pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+  }
+  for (i = 0; i < nchans; i++) {
+    lives_freep((void **)&fbuff[i]);
+  }
+  free(fbuff);
+}
+
+
 void sample_move_d8_d16(short *dst, uint8_t *src,
                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   // convert 8 bit audio to 16 bit audio

@@ -96,7 +96,7 @@ typedef struct {
   // and bitmaps in the encder plugins
 
   // optional audio packeting
-  boolean (*init_audio)(int in_sample_rate, int in_nchans);
+  boolean (*init_audio)(int in_sample_rate, int in_nchans, int argc, char **argv);
   boolean (*render_audio_frame_float)(float **audio, int nsamps);
 
   uint64_t capabilities;
@@ -129,8 +129,8 @@ typedef struct {
 
 #define DEFAULT_VPP "openGLa"
 
-#define MAX_VPP_HSIZE 1280.
-#define MAX_VPP_VSIZE 720.
+#define MAX_VPP_HSIZE 1024.
+#define MAX_VPP_VSIZE 576.
 
 _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use);
 void vid_playback_plugin_exit(void);

@@ -2120,7 +2120,7 @@ static void stream_audio_toggled(LiVESToggleButton *togglebutton, livespointer u
 
 void prefsw_set_astream_settings(_vid_playback_plugin *vpp) {
 
-  if (vpp != NULL && vpp->audio_codec != AUDIO_CODEC_NONE) {
+  if (vpp != NULL && (vpp->audio_codec != AUDIO_CODEC_NONE || vpp->init_audio != NULL)) {
     lives_widget_set_sensitive(prefsw->checkbutton_stream_audio, TRUE);
     //lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
   } else {

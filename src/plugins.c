@@ -584,12 +584,16 @@ void on_vppa_cancel_clicked(LiVESButton *button, livespointer user_data) {
 
 void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
   _vppaw *vppw = (_vppaw *)user_data;
+  uint64_t xwinid = 0;
+  
   const char *fixed_fps = NULL;
-  char *cur_pal = NULL;
   const char *tmp;
+
+  char *cur_pal = NULL;
+
   int *pal_list, i = 0;
 
-  uint64_t xwinid = 0;
+  boolean ext_audio = FALSE;
 
   _vid_playback_plugin *vpp = vppw->plugin;
 
@@ -657,6 +661,9 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
             if (mainw->ext_playback) {
               lives_grab_remove(mainw->LiVES);
               mainw->ext_keyboard = FALSE;
+	      pthread_mutex_lock(&mainw->vpp_stream_mutex);
+	      mainw->ext_audio = FALSE;
+	      pthread_mutex_unlock(&mainw->vpp_stream_mutex);
               if (mainw->vpp->exit_screen != NULL) {
                 (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
               }
@@ -687,9 +694,27 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
               }
 
 #endif
+	      if (vpp->init_audio != NULL && prefs->stream_audio_out) {
+#ifdef HAVE_PULSE_AUDIO
+		if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+		  if ((*vpp->init_audio)(mainw->pulsed->out_arate, mainw->pulsed->out_achans, vpp->extra_argc, vpp->extra_argv)) 
+		    mainw->ext_audio = TRUE;
+		}
+#endif
+#ifdef ENABLE_JACK
+		if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+		  if ((*vpp->init_audio)(mainw->jackd->sample_out_rate, mainw->jackd->num_output_channels, vpp->extra_argc, vpp->extra_argv)) 
+		    ext_audio = TRUE;
+		}
+#endif
+	      }
+
               if (vpp->init_screen != NULL) {
-                (*vpp->init_screen)(mainw->pwidth, mainw->pheight, TRUE, xwinid, vpp->extra_argc, vpp->extra_argv);
+                (*vpp->init_screen)(mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
+				    mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
+				    TRUE, xwinid, vpp->extra_argc, vpp->extra_argv);
               }
+	      mainw->ext_audio = ext_audio; // cannot set this until after init_screen()
               if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && prefs->play_monitor == 0) {
                 lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), TRUE);
                 mainw->ext_keyboard = TRUE;
@@ -1060,6 +1085,9 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
       mainw->ext_keyboard = FALSE;
       lives_grab_remove(mainw->LiVES);
       if (mainw->ext_playback) {
+	  pthread_mutex_lock(&mainw->vpp_stream_mutex);
+	  mainw->ext_audio = FALSE;
+	  pthread_mutex_unlock(&mainw->vpp_stream_mutex);
         if (mainw->vpp->exit_screen != NULL)
           (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
 #ifdef RT_AUDIO
@@ -1224,6 +1252,8 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   vpp->set_yuv_palette_clamping = (int (*)(int))dlsym(handle, "set_yuv_palette_clamping");
   vpp->get_audio_fmts = (int *(*)())dlsym(handle, "get_audio_fmts");
   vpp->init_screen = (boolean(*)(int, int, boolean, uint64_t, int, char **))dlsym(handle, "init_screen");
+  vpp->init_audio = (boolean(*)(int, int, int, char **))dlsym(handle, "init_audio");
+  vpp->render_audio_frame_float = (boolean(*)(float **, int))dlsym(handle, "render_audio_frame_float");
   vpp->exit_screen = (void (*)(uint16_t, uint16_t))dlsym(handle, "exit_screen");
   vpp->module_unload = (void (*)())dlsym(handle, "module_unload");
 
@@ -1248,7 +1278,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   vpp->audio_codec = AUDIO_CODEC_NONE;
   vpp->capabilities = (*vpp->get_capabilities)(vpp->palette);
 
-  if (vpp->capabilities & VPP_CAN_RESIZE) {
+  if (vpp->capabilities & VPP_CAN_RESIZE && vpp->capabilities & VPP_LOCAL_DISPLAY) {
     vpp->fwidth = vpp->fheight = -1;
   } else {
     vpp->fwidth = vpp->fheight = 0;
@@ -1259,6 +1289,9 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   } else if (!in_use && mainw->vpp != NULL && !(strcmp(name, mainw->vpp->name))) {
     vpp->fwidth = mainw->vpp->fwidth;
     vpp->fheight = mainw->vpp->fheight;
+  }
+  if (vpp->fwidth == -1 && !(vpp->capabilities & VPP_CAN_RESIZE && vpp->capabilities & VPP_LOCAL_DISPLAY)) {
+    vpp->fwidth = vpp->fheight = 0;
   }
 
   vpp->fixed_fpsd = -1.;
@@ -1411,6 +1444,9 @@ void vid_playback_plugin_exit(void) {
   if (mainw->ext_playback) {
     mainw->ext_keyboard = FALSE;
     lives_grab_remove(mainw->LiVES);
+    pthread_mutex_lock(&mainw->vpp_stream_mutex);
+    mainw->ext_audio = FALSE;
+    pthread_mutex_unlock(&mainw->vpp_stream_mutex);
     if (mainw->vpp->exit_screen != NULL)(*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
 #ifdef RT_AUDIO
     stop_audio_stream();

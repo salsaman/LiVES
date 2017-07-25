@@ -3702,7 +3702,8 @@ void resize_play_window(void) {
 
   boolean fullscreen = TRUE;
   boolean size_ok;
-
+  boolean ext_audio = FALSE;
+  
   int width = -1, height = -1, nwidth, nheight = 0;
 
   uint64_t xwinid = 0;
@@ -3870,23 +3871,23 @@ void resize_play_window(void) {
         if (mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
           // fixed o/p size for stream
           if (!(mainw->vpp->fwidth * mainw->vpp->fheight)) {
-            if (mainw->current_file > -1) {
-              mainw->vpp->fwidth = cfile->hsize;
-              mainw->vpp->fheight = cfile->vsize;
-            } else mainw->vpp->fwidth = mainw->vpp->fheight = -1;
+	    mainw->vpp->fwidth = MAX_VPP_HSIZE;
+	    mainw->vpp->fheight = MAX_VPP_VSIZE;
           }
-          mainw->pwidth = mainw->vpp->fwidth;
-          mainw->pheight = mainw->vpp->fheight;
-          fixed_size = TRUE;
+	  if (!mainw->vpp->capabilities & VPP_CAN_RESIZE) {
+	    mainw->pwidth = mainw->vpp->fwidth;
+	    mainw->pheight = mainw->vpp->fheight;
+	    fixed_size = TRUE;
+	    
+	    // * leave this alone !
+	    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
 
-          // * leave this alone !
-          lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+	    play_window_set_title();
 
-          play_window_set_title();
-
-          lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
-          lives_widget_queue_resize(mainw->play_window);
-        }
+	    lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
+	    lives_widget_queue_resize(mainw->play_window);
+	  }
+	}
 
         if (pmonitor != 0) {
           fullscreen = FALSE;
@@ -3903,6 +3904,10 @@ void resize_play_window(void) {
 #ifdef RT_AUDIO
           stop_audio_stream();
 #endif
+	  pthread_mutex_lock(&mainw->vpp_stream_mutex);
+	  mainw->ext_audio = FALSE;
+	  pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+
           if (mainw->vpp->exit_screen != NULL) {
             (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
           }
@@ -3921,12 +3926,30 @@ void resize_play_window(void) {
         if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && pmonitor == 0)
           lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), TRUE);
 
+	if (mainw->vpp->init_audio != NULL && prefs->stream_audio_out) {
+#ifdef HAVE_PULSE_AUDIO
+          if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+	    if ((*mainw->vpp->init_audio)(mainw->pulsed->out_arate, mainw->pulsed->out_achans, mainw->vpp->extra_argc, mainw->vpp->extra_argv)) 
+	      ext_audio = TRUE;
+	  }
+#endif
+#ifdef ENABLE_JACK
+          if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+	    if (*(mainw->vpp->init_audio)(mainw->jackd->sample_out_rate, mainw->jackd->num_output_channels, mainw->vpp->extra_argc, mainw->vpp->extra_argv)) 
+	      ext_audio = TRUE;
+	  }
+#endif
+	}
+	
         if ((mainw->vpp->init_screen == NULL) || ((*mainw->vpp->init_screen)
-            (mainw->pwidth, mainw->pheight * (fixed_size ? 1 : prefs->virt_height),
+						  (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
+						   mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight * (fixed_size ? 1 : prefs->virt_height),
              fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
           mainw->ext_playback = TRUE;
           // the play window is still visible (in case it was 'always on top')
           // start key polling from ext plugin
+
+	  mainw->ext_audio = ext_audio; // cannot set this until after init_screen()
 
           if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && (pmonitor == 0 || capable->nmonitors == 1)) {
             lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);

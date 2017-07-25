@@ -6,12 +6,7 @@
 #include "videoplugin.h"
 
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <pthread.h>
 
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
@@ -52,23 +47,23 @@ static int spb_len;
 
 static double target_fps;
 
+static pthread_mutex_t write_mutex;
+
 /////////////////////////////////////////////////////////////////////////
 
 static AVFormatContext *fmtctx;
 static AVCodecContext *encctx, *aencctx;
 static AVStream *vStream, *aStream;
 
-#define URI "udp://127.0.0.1:5678"
+//#define URI "udp://127.0.0.1:5678"
 //#define URI "file2.flv"
 
-#define STREAM_FRAME_RATE 15 /* 25 images/s */
+#define STREAM_FRAME_RATE 10. /* 10 images/s */
 #define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
 #define SCALE_FLAGS SWS_BICUBIC
 
-#define FRAME_WIDTH 1280
-#define FRAME_HEIGHT 720
-
 #define STREAM_ENCODE TRUE 
+//#define STREAM_ENCODE FALSE
 
 // a wrapper around a single output AVStream
 typedef struct OutputStream {
@@ -116,6 +111,8 @@ const char *module_check_init(void) {
 
   in_sample_rate = 0;
 
+  pthread_mutex_init(&write_mutex, NULL);
+
   return NULL;
 }
 
@@ -138,7 +135,7 @@ const int *get_palette_list(void) {
 
 
 uint64_t get_capabilities(int palette) {
-  return 0;
+  return 0;//VPP_CAN_RESIZE;
 }
 
 
@@ -311,7 +308,7 @@ static boolean open_audio() {
   c->bit_rate    = maxabitrate;
 
   if (c->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) {
-    fprintf(stderr, "varaudio, nice\n");
+    fprintf(stderr, "varaudio\n");
     out_nb_samples = 0;
   }
   else {
@@ -358,6 +355,8 @@ static boolean open_audio() {
     return FALSE;
   }
 
+  spill_buffers = NULL;
+  
   if (in_nb_samples != 0) {
     spill_buffers = (float **) malloc(in_nchans * sizeof(float *));
     for (i = 0; i < in_nchans; i++) {
@@ -384,6 +383,7 @@ static boolean open_audio() {
          exit(1);
 	 }*/
 
+  fprintf(stderr, "Opened audio stream\n");
   return TRUE;
 }
 
@@ -446,7 +446,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   int acodec_id;
   int ret;
 
-  //fprintf(stderr,"init_screen\n");
+  fprintf(stderr,"init_screen %d x %d\n", width, height);
   
   ostv.frame = osta.frame = NULL;
   vStream = aStream = NULL;
@@ -460,6 +460,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   }
 
   snprintf(uri, 128, "%s", "udp://127.0.0.1:8000");
+  //snprintf(uri, 128, "%s", "filevid.flv");
   fmtstring = "flv";
   vcodec_id = AV_CODEC_ID_H264;
   maxvbitrate = 3000000;
@@ -493,11 +494,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   // open flv
   opfmt = av_guess_format("flv", NULL, NULL);
-  avformat_alloc_output_context2(&fmtctx, opfmt, fmtstring, URI);
+  avformat_alloc_output_context2(&fmtctx, opfmt, fmtstring, uri);
   
   if (!fmtctx) {
     printf("Could not deduce output format from file extension: using flv.\n");
-    avformat_alloc_output_context2(&fmtctx, NULL, "flv", URI);
+    avformat_alloc_output_context2(&fmtctx, NULL, "flv", uri);
   }
   if (!fmtctx) return FALSE;
 
@@ -569,7 +570,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
       out_sample_rate = atoi(argv[9]);
       maxabitrate = atoi(argv[11]);
     }
-  
+    fprintf(stderr,"added audio stream\n");
     open_audio(); 
   }
   
@@ -578,9 +579,9 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   /* open output file */
   if (!(fmtctx->oformat->flags & AVFMT_NOFILE)) {
     fprintf(stderr, "opening file");
-    ret = avio_open(&fmtctx->pb, URI, AVIO_FLAG_WRITE);
+    ret = avio_open(&fmtctx->pb, uri, AVIO_FLAG_WRITE);
     if (ret < 0) {
-      fprintf(stderr, "Could not open '%s': %s\n", URI,
+      fprintf(stderr, "Could not open '%s': %s\n", uri,
 	      av_err2str(ret));
       return FALSE;
     }
@@ -596,13 +597,13 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   
   /* create (container) libav video frame */
-  ostv.frame = alloc_picture(PIX_FMT_YUV420P, FRAME_WIDTH, FRAME_HEIGHT);
+  ostv.frame = alloc_picture(PIX_FMT_YUV420P, width, height);
   if (ostv.frame == NULL) {
     fprintf(stderr, "Could not allocate video frame\n");
     return FALSE;
   }
 
-  av_dump_format(fmtctx, 0, URI , 1);
+  av_dump_format(fmtctx, 0, uri , 1);
   
   ostv.next_pts = osta.next_pts = 0;
   return TRUE;
@@ -625,13 +626,17 @@ static void log_packet(const AVPacket *pkt) {
 }
 
 
-static int write_video_frame(const AVRational *time_base, AVPacket *pkt) {
+static int write_frame(const AVRational *time_base, AVStream *stream, AVPacket *pkt) {
+  int ret;
   /* rescale output packet timestamp values from codec to stream timebase */
-  av_packet_rescale_ts(pkt, *time_base, vStream->time_base);
-  pkt->stream_index = vStream->index;
+  av_packet_rescale_ts(pkt, *time_base, stream->time_base);
+  pkt->stream_index = stream->index;
   /* Write the compressed frame to the media file. */
   //log_packet(pkt);
-  return av_interleaved_write_frame(fmtctx, pkt);
+  pthread_mutex_lock(&write_mutex);
+  ret = av_interleaved_write_frame(fmtctx, pkt);
+  pthread_mutex_unlock(&write_mutex);
+  return ret;
 }
 
 
@@ -683,11 +688,10 @@ static AVFrame *get_video_frame(const uint8_t * const *pixel_data, int hsize, in
       ovsize = vsize;
       istrides[0] = hsize;
       istrides[1] = istrides[2] = hsize >> 1;
-  
-      sws_scale(ostv.sws_ctx,
-		(const uint8_t * const *)pixel_data, istrides,
-		0, vsize, ostv.frame->data, ostv.frame->linesize);
     }
+    sws_scale(ostv.sws_ctx,
+	      (const uint8_t * const *)pixel_data, istrides,
+	      0, vsize, ostv.frame->data, ostv.frame->linesize);
   }
   else {
     copy_yuv_image(ostv.frame, hsize, vsize, pixel_data);
@@ -770,16 +774,16 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
       fprintf(stderr, "Error encoding audio frame: %s\n", av_err2str(ret));
       return FALSE;
     }
-    /*
+
     if (got_packet) {
-      ret = write_audio_frame(oc, &c->time_base, ost->st, &pkt);
+      ret = write_frame(&c->time_base, aStream, &pkt);
       if (ret < 0) {
 	fprintf(stderr, "Error while writing audio frame: %s\n",
 		av_err2str(ret));
-	exit(1);
+	return FALSE;
       }
     }
-    */
+
     for (i= 0; i < in_nchans; i++) {
       abuff[i] += in_nb_samples - spb_len;
     }
@@ -817,7 +821,7 @@ boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data) {
       return FALSE;
     }
     if (got_packet) {
-      ret = write_video_frame(&c->time_base, &pkt);
+      ret = write_frame(&c->time_base, vStream, &pkt);
     } else {
       ret = 0;
     }
@@ -849,20 +853,20 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   int i;
 
   if (!STREAM_ENCODE && !(fmtctx->oformat->flags & AVFMT_NOFILE)) {
+    // flush final few frames
     c = ostv.enc;
 
     do {
       av_init_packet(&pkt);
 
-      /* encode the image */
-      ret = avcodec_encode_video2(c, &pkt, ostv.frame, &got_packet);
+      ret = avcodec_encode_video2(c, &pkt, NULL, &got_packet);
 
       if (ret < 0) {
 	fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(ret));
 	break;
       }
       if (got_packet) {
-	ret = write_video_frame(&c->time_base, &pkt);
+	ret = write_frame(&c->time_base, vStream, &pkt);
       } else {
 	ret = 0;
       }
@@ -908,11 +912,13 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   ostv.sws_ctx = NULL;
   osta.swr_ctx = NULL;
 
-  for (i = 0; i < in_nchans; i++) {
-    free(spill_buffers[i]);
+  if (spill_buffers != NULL) {
+    for (i = 0; i < in_nchans; i++) {
+      free(spill_buffers[i]);
+    }
+    free(spill_buffers);
   }
-  free(spill_buffers);
-
+  
   in_sample_rate = 0;
 }
 

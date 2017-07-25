@@ -433,6 +433,7 @@ typedef struct {
   int audio_end;
 
   boolean ext_playback; ///< using external video playback plugin
+  volatile boolean ext_audio; ///< using external video playback plugin to stream audio
   volatile boolean ext_keyboard; ///< keyboard codes must be polled from video playback plugin
 
   int ptr_x;
@@ -1113,6 +1114,7 @@ typedef struct {
   pthread_mutex_t fxd_active_mutex; ///< prevent simultaneous writing to active_dummy by audio and video threads
   pthread_mutex_t event_list_mutex; /// prevent simultaneous writing to event_list by audio and video threads
   pthread_mutex_t clip_list_mutex; /// prevent adding/removing to cliplist while another thread could be reading it
+  pthread_mutex_t vpp_stream_mutex; /// prevent from writing audio when stream is closing
 
   volatile lives_rfx_t *vrfx_update;
 

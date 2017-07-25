@@ -154,6 +154,8 @@ float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int
 
 void sample_silence_dS(float *dst, uint64_t nsamples);
 
+void sample_silence_stream(int nchans, int nframes);
+
 void sample_move_d8_d16(short *dst, uint8_t *src,
                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
 

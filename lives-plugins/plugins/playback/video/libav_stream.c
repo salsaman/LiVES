@@ -153,14 +153,12 @@ ip2||string|0|3| \\n\
 ip3||string|0|3| \\n\
 ip4||string|1|3| \\n\
 port|_port|num0|8000|1024|65535|\\n\
-cform|_Container format|string_list|0|flv|mkv||\\n\
+form|_Format|string_list|0|flv/h264/mp3|ogg/theora/vorbis||\\n\
 \
-vform|_Video format|string_list|0|h264|theora||\\n\
 mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
 \
 achans|Audio _layout|string_list|1|mono|stereo||\\n\
 arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
-aform|_Audio format|string_list|0|mp3|vorbis||\\n\
 mbitv|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 </params> \\n\
 <param_window> \\n\
@@ -170,8 +168,6 @@ layout|\\\"mplayer udp://127.0.0.1:8000\\\"| \\n\
 layout|\\\"You are advised to start with a small frame size and low framerate,\\\"| \\n\
 layout|\\\"and increase this if your network bandwidth allows it.\\\"| \\n\
 layout|p0|\\\".\\\"|p1|\\\".\\\"|p2|\\\".\\\"|p3|fill|fill|fill|fill| \\n\
-layout|p4|fill\\n\
-layout|p5|p6|\\n\
 </param_window> \\n\
 <onchange> \\n\
 </onchange> \\n\
@@ -278,12 +274,12 @@ static boolean open_audio() {
     }
   }
 
-  c->sample_rate = in_sample_rate;
+  c->sample_rate = out_sample_rate;
   if (codec->supported_samplerates) {
     c->sample_rate = codec->supported_samplerates[0];
     for (i = 0; codec->supported_samplerates[i]; i++) {
-      if (codec->supported_samplerates[i] == in_sample_rate) {
-	c->sample_rate = in_sample_rate;
+      if (codec->supported_samplerates[i] == out_sample_rate) {
+	c->sample_rate = out_sample_rate;
 	break;
       }
     }
@@ -291,12 +287,12 @@ static boolean open_audio() {
   out_sample_rate = c->sample_rate;
   
   c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
-  c->channel_layout = (in_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
+  c->channel_layout = (out_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
   if (codec->channel_layouts) {
     c->channel_layout = codec->channel_layouts[0];
     for (i = 0; codec->channel_layouts[i]; i++) {
-      if (codec->channel_layouts[i] == (in_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO)) {
-	c->channel_layout = (in_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
+      if (codec->channel_layouts[i] == (out_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO)) {
+	c->channel_layout = (out_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
 	break;
       }
     }
@@ -305,33 +301,20 @@ static boolean open_audio() {
 
   c->bit_rate    = maxabitrate;
 
+  ret = avcodec_open2(c, codec, &opt);
+  if (ret < 0) {
+    fprintf(stderr, "Could not open audio codec: %s\n", av_err2str(ret));
+    return FALSE;
+  }
+
   if (c->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) {
     fprintf(stderr, "varaudio\n");
-    out_nb_samples = 0;
   }
   else {
     out_nb_samples = c->frame_size;
     fprintf(stderr, "nb samples is %d\n", out_nb_samples);
   }
 
-  in_nb_samples = out_nb_samples;
-  if (out_nb_samples != 0) {
-    /* compute src number of samples */
-    in_nb_samples = av_rescale_rnd(swr_get_delay(osta.swr_ctx, c->sample_rate) + out_nb_samples,
-				    in_sample_rate, c->sample_rate, AV_ROUND_DOWN);
-
-    /* confirm destination number of samples */
-    int dst_nb_samples = av_rescale_rnd(in_nb_samples,
-				    c->sample_rate, in_sample_rate, AV_ROUND_UP);
-
-    av_assert0(dst_nb_samples == out_nb_samples);
-  }
-  
-  if (out_nb_samples > 0) 
-    osta.frame = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, out_nb_samples);
-  else
-    osta.frame = NULL;
-  
   /* create resampler context */
   osta.swr_ctx = swr_alloc();
   if (!osta.swr_ctx) {
@@ -354,6 +337,24 @@ static boolean open_audio() {
     return FALSE;
   }
 
+  in_nb_samples = out_nb_samples;
+  if (out_nb_samples != 0) {
+    /* compute src number of samples */
+    in_nb_samples = av_rescale_rnd(swr_get_delay(osta.swr_ctx, c->sample_rate) + out_nb_samples,
+				    in_sample_rate, c->sample_rate, AV_ROUND_DOWN);
+
+    /* confirm destination number of samples */
+    int dst_nb_samples = av_rescale_rnd(in_nb_samples,
+				    c->sample_rate, in_sample_rate, AV_ROUND_UP);
+
+    av_assert0(dst_nb_samples == out_nb_samples);
+  }
+  
+  if (out_nb_samples > 0) 
+    osta.frame = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, out_nb_samples);
+  else
+    osta.frame = NULL;
+
   spill_buffers = NULL;
   
   if (in_nb_samples != 0) {
@@ -368,13 +369,6 @@ static boolean open_audio() {
   
   osta.st->time_base = (AVRational){ 1, c->sample_rate };
 
-  /* open the codec */
-  ret = avcodec_open2(c, codec, &opt);
-  if (ret < 0) {
-    fprintf(stderr, "Could not open audio codec: %s\n", av_err2str(ret));
-    return FALSE;
-  }
-  
   /* copy the stream parameters to the muxer */
   /*     ret = avcodec_parameters_from_context(ost->st->codecpar, c);
 	 if (ret < 0) {
@@ -433,7 +427,6 @@ boolean init_audio(int sample_rate, int nchans, int argc, char **argv) {
 
 
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
-  AVOutputFormat *opfmt;
   AVCodec *codec, *acodec;
 
   const char *fmtstring;
@@ -458,54 +451,54 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
+  //snprintf(uri, 128, "%s", "udp://127.0.0.1:8000");
+
   // just for testing
+  //snprintf(uri, 128, "%s", "filevid.ogv");
+  //fmtstring = "ogg";
+  //vcodec_id = AV_CODEC_ID_THEORA;
+
   snprintf(uri, 128, "%s", "filevid.flv");
   fmtstring = "flv";
-
   vcodec_id = AV_CODEC_ID_H264;
+
+  acodec_id = AV_CODEC_ID_MP3;
   maxvbitrate = 3000000;
 
   if (argc > 0) {
+    // argc is 0 for testing
+    
     snprintf(uri, 128, "udp://%s.%s.%s.%s:%s", argv[0], argv[1], argv[2], argv[3], argv[4]);
 
     switch(atoi(argv[5])) {
     case 0:
       fmtstring = "flv";
-      break;
-    case 1:
-      fmtstring = "mkv";
-      break;
-    default:
-      return FALSE;
-    }
-
-    switch(atoi(argv[6])) {
-    case 0:
       vcodec_id = AV_CODEC_ID_H264;
+      acodec_id = AV_CODEC_ID_MP3;
       break;
     case 1:
+      fmtstring = "ogg";
       vcodec_id = AV_CODEC_ID_THEORA;
+      acodec_id = AV_CODEC_ID_VORBIS;
       break;
     default:
       return FALSE;
     }
 
-    maxvbitrate = atoi(argv[7]);
+    maxvbitrate = atoi(argv[6]);
   }
   
-  fmtctx = avformat_alloc_context();
-
-  // open flv
-  //opfmt = av_guess_format(fmtstring, NULL, NULL);
-  avformat_alloc_output_context2(&fmtctx, NULL, fmtstring, uri);
+  ret = avformat_alloc_output_context2(&fmtctx, NULL, fmtstring, uri);
+  if (ret < 0) {
+    fprintf(stderr, "Could not open fmt '%s': %s\n", fmtstring,
+	    av_err2str(ret));
+  }
   
   if (!fmtctx) {
     printf("Could not deduce output format from file extension %s: using flv.\n", fmtstring);
     avformat_alloc_output_context2(&fmtctx, NULL, "flv", uri);
   }
   if (!fmtctx) return FALSE;
-
-  //fprintf(stderr,"init_screen2 %p\n", fmtctx);
 
   // add the video stream
   add_stream(&ostv, fmtctx, &codec, vcodec_id);
@@ -523,8 +516,9 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   vStream->codec->pix_fmt = PIX_FMT_YUV420P;
   
   vStream->codec->bit_rate = maxvbitrate;
+  if (vcodec_id == AV_CODEC_ID_H264)
+    av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
 
-  av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
   vStream->codec->gop_size = 10;
 
   if (vcodec_id == AV_CODEC_ID_MPEG2VIDEO) {
@@ -546,21 +540,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   // audio
   
-  // add the audio stream
-  acodec_id = AV_CODEC_ID_MP3;
-  if (argc > 0) {
-    switch(atoi(argv[10])) {
-    case 0:
-      acodec_id = AV_CODEC_ID_MP3;
-      break;
-    case 1:
-      acodec_id = AV_CODEC_ID_VORBIS;
-      break;
-    default:
-      return FALSE;
-    }
-  }
-
   if (in_sample_rate > 0) {
     add_stream(&osta, fmtctx, &acodec, acodec_id);
     osta.codec = acodec;
@@ -572,9 +551,9 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     maxabitrate = 320000;
   
     if (argc > 0) {
-      out_nchans = atoi(argv[8]);
-      out_sample_rate = atoi(argv[9]);
-      maxabitrate = atoi(argv[11]);
+      out_nchans = atoi(argv[7]) + 1;
+      out_sample_rate = atoi(argv[8]);
+      maxabitrate = atoi(argv[9]);
     }
     fprintf(stderr,"added audio stream\n");
     open_audio(); 
@@ -584,7 +563,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   
   /* open output file */
   if (!(fmtctx->oformat->flags & AVFMT_NOFILE)) {
-    fprintf(stderr, "opening file");
+    fprintf(stderr, "opening file\n");
     ret = avio_open(&fmtctx->pb, uri, AVIO_FLAG_WRITE);
     if (ret < 0) {
       fprintf(stderr, "Could not open '%s': %s\n", uri,
@@ -739,17 +718,16 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
       if (nsamps + spb_len < in_nb_samples) {
 	// have l.t. one full buffer to send, store this for next time
 	for (i= 0; i < in_nchans; i++) {
-	  memcpy(&spill_buffers[i + spb_len], &abuff[i], nsamps * sizeof(float));
+	  memcpy(&(spill_buffers[i][spb_len]), abuff[i], nsamps * sizeof(float));
 	}
 	spb_len += nsamps;
-	break;
+	return TRUE;
       }
     
       if (spb_len > 0) {
 	// have data in buffers from last call. fill these up and clear them first 
 	for (i= 0; i < in_nchans; i++) {
-	  memcpy(&spill_buffers[i + spb_len], &abuff[i], (in_nb_samples - spb_len) * sizeof(float));
-	  abuff[i] += in_nb_samples - spb_len;
+	  memcpy(&(spill_buffers[i][spb_len]), abuff[i], (in_nb_samples - spb_len) * sizeof(float));
 	}
       }
       nb_samples = out_nb_samples;
@@ -776,7 +754,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
     
     ret = avcodec_encode_audio2(c, &pkt, osta.frame, &got_packet);
     if (ret < 0) {
-      fprintf(stderr, "Error encoding audio frame: %s\n", av_err2str(ret));
+      fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps, nb_samples, c->sample_rate, c->sample_fmt, c->channel_layout);
       return FALSE;
     }
 

@@ -55,15 +55,12 @@ static AVFormatContext *fmtctx;
 static AVCodecContext *encctx, *aencctx;
 static AVStream *vStream, *aStream;
 
-//#define URI "udp://127.0.0.1:5678"
-//#define URI "file2.flv"
-
 #define STREAM_FRAME_RATE 10. /* 10 images/s */
 #define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
 #define SCALE_FLAGS SWS_BICUBIC
 
-#define STREAM_ENCODE TRUE 
-//#define STREAM_ENCODE FALSE
+//#define STREAM_ENCODE TRUE 
+#define STREAM_ENCODE FALSE
 
 // a wrapper around a single output AVStream
 typedef struct OutputStream {
@@ -158,12 +155,12 @@ ip4||string|1|3| \\n\
 port|_port|num0|8000|1024|65535|\\n\
 cform|_Container format|string_list|0|flv|mkv||\\n\
 \
-vform|_Video format|string_list|0|h264||\\n\
+vform|_Video format|string_list|0|h264|theora||\\n\
 mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
 \
 achans|Audio _layout|string_list|1|mono|stereo||\\n\
 arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
-aform|_Audio format|string_list|0|mp3||\\n\
+aform|_Audio format|string_list|0|mp3|vorbis||\\n\
 mbitv|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 </params> \\n\
 <param_window> \\n\
@@ -272,7 +269,7 @@ static boolean open_audio() {
 
   c->sample_fmt  = AV_SAMPLE_FMT_FLTP;
   if (codec->sample_fmts) {
-    c->sample_fmt = codec->supported_samplerates[0];
+    c->sample_fmt = codec->sample_fmts[0];
     for (i = 0; codec->sample_fmts[i]; i++) {
       if (codec->sample_fmts[i] == AV_SAMPLE_FMT_FLTP) {
 	c->sample_fmt = AV_SAMPLE_FMT_FLTP;
@@ -281,29 +278,30 @@ static boolean open_audio() {
     }
   }
 
-  c->sample_rate = out_sample_rate;
+  c->sample_rate = in_sample_rate;
   if (codec->supported_samplerates) {
     c->sample_rate = codec->supported_samplerates[0];
     for (i = 0; codec->supported_samplerates[i]; i++) {
-      if (codec->supported_samplerates[i] == out_sample_rate) {
-	c->sample_rate = out_sample_rate;
+      if (codec->supported_samplerates[i] == in_sample_rate) {
+	c->sample_rate = in_sample_rate;
 	break;
       }
     }
   }
-
+  out_sample_rate = c->sample_rate;
+  
   c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
-  c->channel_layout = (out_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
+  c->channel_layout = (in_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
   if (codec->channel_layouts) {
     c->channel_layout = codec->channel_layouts[0];
     for (i = 0; codec->channel_layouts[i]; i++) {
-      if (codec->channel_layouts[i] == (out_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO)) {
-	c->channel_layout = (out_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
+      if (codec->channel_layouts[i] == (in_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO)) {
+	c->channel_layout = (in_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
 	break;
       }
     }
   }
-  c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
+  c->channels        = out_nchans = av_get_channel_layout_nb_channels(c->channel_layout);
 
   c->bit_rate    = maxabitrate;
 
@@ -352,6 +350,7 @@ static boolean open_audio() {
   /* initialize the resampling context */
   if ((ret = swr_init(osta.swr_ctx)) < 0) {
     fprintf(stderr, "Failed to initialize the resampling context\n");
+    fprintf(stderr, "%d %d - %d %d %d\n", in_nchans, in_sample_rate, c->channels, c->sample_rate, c->sample_fmt);
     return FALSE;
   }
 
@@ -459,9 +458,10 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
-  snprintf(uri, 128, "%s", "udp://127.0.0.1:8000");
-  //snprintf(uri, 128, "%s", "filevid.flv");
+  // just for testing
+  snprintf(uri, 128, "%s", "filevid.flv");
   fmtstring = "flv";
+
   vcodec_id = AV_CODEC_ID_H264;
   maxvbitrate = 3000000;
 
@@ -483,6 +483,9 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     case 0:
       vcodec_id = AV_CODEC_ID_H264;
       break;
+    case 1:
+      vcodec_id = AV_CODEC_ID_THEORA;
+      break;
     default:
       return FALSE;
     }
@@ -493,11 +496,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   fmtctx = avformat_alloc_context();
 
   // open flv
-  opfmt = av_guess_format("flv", NULL, NULL);
-  avformat_alloc_output_context2(&fmtctx, opfmt, fmtstring, uri);
+  //opfmt = av_guess_format(fmtstring, NULL, NULL);
+  avformat_alloc_output_context2(&fmtctx, NULL, fmtstring, uri);
   
   if (!fmtctx) {
-    printf("Could not deduce output format from file extension: using flv.\n");
+    printf("Could not deduce output format from file extension %s: using flv.\n", fmtstring);
     avformat_alloc_output_context2(&fmtctx, NULL, "flv", uri);
   }
   if (!fmtctx) return FALSE;
@@ -550,6 +553,9 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     case 0:
       acodec_id = AV_CODEC_ID_MP3;
       break;
+    case 1:
+      acodec_id = AV_CODEC_ID_VORBIS;
+      break;
     default:
       return FALSE;
     }
@@ -591,7 +597,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     if (ret < 0) {
       fprintf(stderr, "Error occurred when writing header: %s\n",
 	      av_err2str(ret));
-      return FALSE;
     }
   }
 

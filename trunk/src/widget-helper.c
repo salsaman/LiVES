@@ -7708,6 +7708,10 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   lives_widget_set_minimum_size(dialog, width, height);
 
+  if (prefs->gui_monitor != 0) {
+    lives_window_set_screen(LIVES_WINDOW(dialog), mainw->mgeom[prefs->gui_monitor - 1].screen);
+  }
+
   if (title != NULL)
     lives_window_set_title(LIVES_WINDOW(dialog), title);
 

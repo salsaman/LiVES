@@ -165,7 +165,7 @@ LiVESList *get_list_pref(const char *key) {
 void get_pref_default(const char *key, char *val, int maxlen) {
   FILE *valfile;
   char *vfile;
-  char *com = lives_strdup_printf("%s get_pref_default \"%s\"", prefs->backend_sync, key);
+  char *com = lives_strdup_printf("%s get_pref_default \"%s\" %d %d", prefs->backend_sync, key. lives_getuid(), capable->mainpid);
 
   int retval;
   int alarm_handle;

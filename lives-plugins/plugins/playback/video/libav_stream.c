@@ -377,6 +377,7 @@ static boolean open_audio() {
 	 }*/
 
   fprintf(stderr, "Opened audio stream\n");
+  fprintf(stderr, "%d %d - %d %d %d\n", in_nchans, in_sample_rate, c->channels, c->sample_rate, c->sample_fmt);
   return TRUE;
 }
 
@@ -438,7 +439,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   int acodec_id;
   int ret;
 
-  fprintf(stderr,"init_screen %d x %d\n", width, height);
+  fprintf(stderr,"init_screen %d x %d %d\n", width, height, argc);
   
   ostv.frame = osta.frame = NULL;
   vStream = aStream = NULL;
@@ -458,7 +459,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   //fmtstring = "ogg";
   //vcodec_id = AV_CODEC_ID_THEORA;
 
-  snprintf(uri, 128, "%s", "filevid.flv");
+  snprintf(uri, 128, "%s", "filevid.mkv");
   fmtstring = "flv";
   vcodec_id = AV_CODEC_ID_H264;
 
@@ -468,7 +469,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   if (argc > 0) {
     // argc is 0 for testing
     
-    snprintf(uri, 128, "udp://%s.%s.%s.%s:%s", argv[0], argv[1], argv[2], argv[3], argv[4]);
+    //snprintf(uri, 128, "udp://%s.%s.%s.%s:%s", argv[0], argv[1], argv[2], argv[3], argv[4]);
 
     switch(atoi(argv[5])) {
     case 0:
@@ -552,7 +553,12 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   
     if (argc > 0) {
       out_nchans = atoi(argv[7]) + 1;
-      out_sample_rate = atoi(argv[8]);
+      switch(atoi(argv[8])) {
+	case 0: out_sample_rate = 22050; break; 
+	case 1: out_sample_rate = 44100; break; 
+	case 2: out_sample_rate = 48000; break; 
+	default: break;
+	}
       maxabitrate = atoi(argv[9]);
     }
     fprintf(stderr,"added audio stream\n");

@@ -678,22 +678,6 @@ static boolean pre_init(void) {
 
   weed_memory_init();
 
-  mainw->vpp = NULL;
-  memset(future_prefs->vpp_name, 0, 64);
-  future_prefs->vpp_argv = NULL;
-
-  get_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
-  if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
-    mainw->vpp = open_vid_playback_plugin(buff, TRUE);
-  }
-  else if (prefs->startup_phase == 1 || prefs->startup_phase == -1) {
-    mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, FALSE);
-    if (mainw->vpp != NULL) {
-      lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
-      set_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
-    }
-  }
-
   needs_update = needs_update; // stop compiler warnings
 
   if (!lives_ascii_strcasecmp(prefs->theme, "none")) return FALSE;
@@ -1048,9 +1032,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->videodevs = NULL;
 
   mainw->camframe = NULL;
-
-  if (!ign_opts->ign_vppdefs)
-    lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s/%svpp_defaults", capable->home_dir, LIVES_CONFIG_DIR);
 
   mainw->has_custom_tools = FALSE;
   mainw->has_custom_gens = FALSE;
@@ -2999,7 +2980,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
   ssize_t mynsize;
   char fbuff[PATH_MAX];
-
+  char buff[256];
   char *tmp;
 
 #ifdef GUI_QT
@@ -3068,7 +3049,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   g_log_set_default_handler(lives_log_handler, NULL);
 #endif
-
+  
   theme_expected = pre_init();
 
   // mainw->foreign is set if we are grabbing an external window
@@ -3250,7 +3231,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           continue;
         }
         if (!strcmp(charopt, "aplayer")) {
-          char buff[256];
           boolean apl_valid = FALSE;
 
           lives_snprintf(buff, 256, "%s", optarg);
@@ -3385,6 +3365,26 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     }
   }
 
+  // need to do this here, before startup but afer setting ign_opts
+  mainw->vpp = NULL;
+  memset(future_prefs->vpp_name, 0, 64);
+  future_prefs->vpp_argv = NULL;
+
+  if (!ign_opts.ign_vppdefs)
+    lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s/%svpp_defaults", capable->home_dir, LIVES_CONFIG_DIR);
+
+  get_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
+  if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
+    mainw->vpp = open_vid_playback_plugin(buff, TRUE);
+  }
+  else if (prefs->startup_phase == 1 || prefs->startup_phase == -1) {
+    mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, FALSE);
+    if (mainw->vpp != NULL) {
+      lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
+      set_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
+    }
+  }
+  
   lives_idle_add(lives_startup, NULL);
 
 #ifdef GUI_GTK

@@ -769,7 +769,6 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
 
   lives_clip_t *ofile;
 
-  return 0;
   if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
     if (prb == 0 || mainw->rec_samples == 0) return 0;
     if (prb <= PULSE_READ_BYTES * 2 && rbytes > 0) {
@@ -856,12 +855,14 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
   void *data;
   size_t rbytes = nbytes;
 
-  if (!pulsed->in_use) return;
-
-  if (mainw->playing_file < 0 && prefs->audio_src == AUDIO_SRC_EXT) return;
-
-  if (mainw->effects_paused) return; // pause during record ???
-
+  if (!pulsed->in_use || (mainw->playing_file < 0 && prefs->audio_src == AUDIO_SRC_EXT) || mainw->effects_paused) {
+    if (pulsed->playing_file == -1) {
+      pa_operation *paop = pa_stream_flush(pulsed->pstream, NULL, NULL); // if not recording, flush the rest of audio (to reduce latency)
+      pa_operation_unref(paop);
+    }
+    return;
+  }
+  
   pa_stream_peek(pulsed->pstream, (const void **)&data, &rbytes);
 
   if (data == NULL) return;
@@ -906,8 +907,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
           }
           break;
         }
-
-        sample_move_d16_float(fltbuf[i], (short *)data + i, xnframes, pulsed->in_achans, FALSE, FALSE, 1.0);
+        sample_move_d16_float(fltbuf[i], ((short *)(data)) + i, xnframes, pulsed->in_achans, FALSE, FALSE, 1.0);
 
         if (mainw->audio_frame_buffer != NULL && prefs->audio_src == AUDIO_SRC_EXT) {
           // if we have audio triggered gens., push audio to it

@@ -511,7 +511,6 @@ AC_CHECK_LIB(avcodec,avcodec_open2,HAVE_AVCODEC_OPEN2=true,HAVE_AVCODEC_OPEN2=fa
 AC_CHECK_LIB(avcodec,avcodec_alloc_context3,HAVE_AVCODEC_ALLOC_CONTEXT3=true,HAVE_AVCODEC_ALLOC_COBTEXT3=false)
 AC_CHECK_LIB(avcodec,av_codec_set_pkt_timebase,HAVE_AV_CODEC_SET_PKT_TIMEBASE=true,HAVE_AV_CODEC_SET_PKT_TIMEBASE=false)
 AC_CHECK_LIB(avcodec,av_packet_unref,HAVE_AVPACKET_UNREF=true,HAVE_AVPACKET_UNREF=false)
-AC_CHECK_LIB(avcodec,av_frame_unref,HAVE_AVFRAME_UNREF=true,HAVE_AVFRAME_UNREF=false)
 AC_CHECK_LIB(avcodec,av_get_bits_per_sample,HAVE_AV_SET_BITS_PER_SAMPLE=true,HAVE_AV_SET_BITS_PER_SAMPLE=false)
 fi
 
@@ -531,6 +530,10 @@ fi
 
 fi
 
+fi
+
+if test "$HAVE_AVUTIL" = "true" ; then
+AC_CHECK_LIB(avutil,av_frame_unref,HAVE_AVFRAME_UNREF=true,HAVE_AVFRAME_UNREF=false)
 fi
 
 AM_CONDITIONAL(HAVE_AVCODEC_OPEN2,$HAVE_AVCODEC_OPEN2)

@@ -460,7 +460,7 @@ void sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t s
   uint8_t srcx[2];
   short srcxs;
   short *srcp;
-
+  
   if (vol == 0.) vol = 0.0000001f;
   svolp = SAMPLE_MAX_16BIT_P / vol;
   svoln = SAMPLE_MAX_16BIT_N / vol;
@@ -484,6 +484,7 @@ void sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t s
 #else
       if ((val = (float)((float)(*srcp) / (*srcp > 0 ? svolp : svoln))) > 1.0f) val = 1.0f;
       else if (val < -1.0f) val = -1.0f;
+      //g_print("vals %d and %f\n", (short)(*srcp), val);
 #endif
     } else {
 #ifdef ENABLE_OIL
@@ -520,6 +521,15 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
                               int usigned, boolean little_endian, boolean interleaved, float vol) {
   // convert float samples back to int
   // interleaved is for the float buffer; output int is always interleaved
+
+  // scale is out_sample_rate / in_sample_rate (so 2.0 would play twice as fast, etc.)
+
+  // nsamps is number of samples, asamps is sample bit size (8 or 16) 
+  
+  // output is in holding_buff which can be cast to uint8_t * or uint16_t *
+
+  // returns number of frames out
+
   int64_t frames_out = 0l;
   register int i;
   register int offs = 0, coffs = 0;

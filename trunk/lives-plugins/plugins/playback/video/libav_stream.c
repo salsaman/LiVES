@@ -784,7 +784,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
     spb_len = 0;
 
     if (out_nb_samples == 0) {
-      if (osta.frame != NULL) av_frame_unref(&osta.frame);
+      if (osta.frame != NULL) av_frame_unref(osta.frame);
       osta.frame = NULL;
       in_nb_samples = 0;
     }

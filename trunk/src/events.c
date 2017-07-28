@@ -5068,15 +5068,11 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (prefs->gui_monitor != 0) {
-    int xcen = mainw->mgeom[prefs->gui_monitor - 1].x +
-               (mainw->mgeom[prefs->gui_monitor - 1].width - lives_widget_get_allocation_width(event_dialog)) / 2;
-    int ycen = mainw->mgeom[prefs->gui_monitor - 1].y +
-               (mainw->mgeom[prefs->gui_monitor - 1].height - lives_widget_get_allocation_height(event_dialog)) / 2;
-    lives_window_set_screen(LIVES_WINDOW(event_dialog), mainw->mgeom[prefs->gui_monitor - 1].screen);
-    lives_window_move(LIVES_WINDOW(event_dialog), xcen, ycen);
+    lives_window_center(LIVES_WINDOW(event_dialog));
   }
 
   if (prefs->open_maximised) {
+    lives_window_unmaximize(LIVES_WINDOW(event_dialog));
     lives_window_maximize(LIVES_WINDOW(event_dialog));
   }
 

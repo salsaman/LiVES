@@ -9162,6 +9162,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   if (prefs->show_gui && prefs->open_maximised) {
     int wx, wy;
+    lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
     lives_window_get_position(LIVES_WINDOW(mainw->LiVES), &wx, &wy);
     if (prefs->gui_monitor == 0 && (wx > 0 || wy > 0)) lives_window_move(LIVES_WINDOW(mainw->LiVES), 0, 0);
     lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
@@ -10909,15 +10910,11 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   if (prefs->gui_monitor != 0) {
-    int xcen = mainw->mgeom[prefs->gui_monitor - 1].x + (mainw->mgeom[prefs->gui_monitor - 1].width -
-               lives_widget_get_allocation_width(multi->window)) / 2;
-    int ycen = mainw->mgeom[prefs->gui_monitor - 1].y + (mainw->mgeom[prefs->gui_monitor - 1].height -
-               lives_widget_get_allocation_height(multi->window)) / 2;
-    lives_window_set_screen(LIVES_WINDOW(multi->window), mainw->mgeom[prefs->gui_monitor - 1].screen);
-    lives_window_move(LIVES_WINDOW(multi->window), xcen, ycen);
+    lives_window_center(LIVES_WINDOW(multi->window));
   }
 
   if ((prefs->gui_monitor != 0 || capable->nmonitors <= 1) && prefs->open_maximised) {
+    lives_window_unmaximize(LIVES_WINDOW(multi->window));
     lives_window_maximize(LIVES_WINDOW(multi->window));
   }
 
@@ -12846,6 +12843,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
   lives_widget_queue_draw(mt->poly_box);
 
   if (prefs->open_maximised) {
+    lives_window_unmaximize(LIVES_WINDOW(mt->window));
     lives_window_maximize(LIVES_WINDOW(mt->window));
   }
 }
@@ -13955,6 +13953,7 @@ void mt_view_ctx_toggled(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (prefs->open_maximised) {
+    lives_window_unmaximize(LIVES_WINDOW(mt->window));
     lives_window_maximize(LIVES_WINDOW(mt->window));
     lives_widget_queue_resize(mt->window);
   }
@@ -21763,15 +21762,11 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
   scrolledwindow = lives_standard_scrolled_window_new(winsize_h, winsize_v, amixer->main_hbox);
 
   if (prefs->gui_monitor != 0) {
-    int xcen = mainw->mgeom[prefs->gui_monitor - 1].x + (mainw->mgeom[prefs->gui_monitor - 1].width -
-               lives_widget_get_allocation_width(amixerw)) / 2;
-    int ycen = mainw->mgeom[prefs->gui_monitor - 1].y + (mainw->mgeom[prefs->gui_monitor - 1].height -
-               lives_widget_get_allocation_height(amixerw)) / 2;
-    lives_window_set_screen(LIVES_WINDOW(amixerw), mainw->mgeom[prefs->gui_monitor - 1].screen);
-    lives_window_move(LIVES_WINDOW(amixerw), xcen, ycen);
+    lives_window_center(LIVES_WINDOW(amixerw));
   }
 
   if (prefs->open_maximised) {
+    lives_window_unmaximize(LIVES_WINDOW(amixerw));
     lives_window_maximize(LIVES_WINDOW(amixerw));
   } else lives_window_set_default_size(LIVES_WINDOW(amixerw), winsize_h, winsize_v);
 

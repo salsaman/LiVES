@@ -356,8 +356,11 @@ void get_monitors(void) {
     if (prefs->play_monitor > capable->nmonitors) prefs->play_monitor = capable->nmonitors;
   }
 
-  mainw->scr_width = mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].width;
-  mainw->scr_height = mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].height;
+  widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0;
+  widget_opts.screen = mainw->mgeom[widget_opts.monitor].screen;
+  
+  mainw->scr_width = mainw->mgeom[widget_opts.monitor].width;
+  mainw->scr_height = mainw->mgeom[widget_opts.monitor].height;
 }
 
 
@@ -1153,15 +1156,11 @@ static void lives_init(_ign_opts *ign_opts) {
     future_prefs->show_tool = prefs->show_tool = get_boolean_pref(PREF_SHOW_TOOLBAR);
 
     if (prefs->gui_monitor != 0) {
-      int xcen = mainw->mgeom[prefs->gui_monitor - 1].x + (mainw->mgeom[prefs->gui_monitor - 1].width -
-                 lives_widget_get_allocation_width(mainw->LiVES)) / 2;
-      int ycen = mainw->mgeom[prefs->gui_monitor - 1].y + (mainw->mgeom[prefs->gui_monitor - 1].height -
-                 lives_widget_get_allocation_height(mainw->LiVES)) / 2;
-      lives_window_set_screen(LIVES_WINDOW(mainw->LiVES), mainw->mgeom[prefs->gui_monitor - 1].screen);
-      lives_window_move(LIVES_WINDOW(mainw->LiVES), xcen, ycen);
+      lives_window_center(LIVES_WINDOW(mainw->LiVES));
     }
 
     if (prefs->open_maximised && prefs->show_gui) {
+      lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
       lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
     }
 
@@ -1231,7 +1230,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->ce_thumb_mode = FALSE;
 #endif
 
-    prefs->show_button_images = get_boolean_pref(PREF_SHOW_BUTTON_ICONS);
+    widget_opts.show_button_images = get_boolean_pref(PREF_SHOW_BUTTON_ICONS);
 
     prefs->push_audio_to_gens = TRUE;
 
@@ -7656,7 +7655,6 @@ void load_frame_image(int frame) {
     if (prefs->open_maximised || w > scr_width - bx || h > scr_height - by) {
       lives_window_resize(LIVES_WINDOW(mainw->LiVES), scr_width - bx, scr_height - by);
       lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
-      lives_widget_queue_resize(mainw->LiVES);
     }
 
     if (!mainw->foreign && mainw->playing_file == -1 && mainw->current_file > 0 && cfile != NULL && (!cfile->opening ||

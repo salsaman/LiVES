@@ -890,6 +890,9 @@ typedef struct {
   LiVESJustification default_justify;
   char **image_filter; /// NULL or NULL terminated list of image extensions which can be loaded
   char *title_prefix; // Text which is prepended to window titles, etc.
+  int monitor;
+  LiVESXScreen *screen;
+  boolean show_button_images;
 } widget_opts_t;
 
 
@@ -914,7 +917,10 @@ const widget_opts_t def_widget_opts = {
   LIVES_JUSTIFY_LEFT, // justify
   LIVES_JUSTIFY_LEFT, // default justify
   NULL, // image_filter
-  "" // title_prefix
+  "", // title_prefix
+  0, // monitor
+  NULL, // screen
+  FALSE // show button images
 };
 
 #else

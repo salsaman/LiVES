@@ -1,6 +1,6 @@
 // omc-learn.c
 // LiVES (lives-exe)
-// (c) G. Finch 2008 - 2016
+// (c) G. Finch 2008 - 2017
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1300,15 +1300,11 @@ static omclearn_w *create_omclearn_dialog(void) {
                        NULL);
 
   if (prefs->gui_monitor != 0) {
-    int xcen = mainw->mgeom[prefs->gui_monitor - 1].x + (mainw->mgeom[prefs->gui_monitor - 1].width
-               - lives_widget_get_allocation_width(omclw->dialog)) / 2;
-    int ycen = mainw->mgeom[prefs->gui_monitor - 1].y + (mainw->mgeom[prefs->gui_monitor - 1].height
-               - lives_widget_get_allocation_height(omclw->dialog)) / 2;
-    lives_window_set_screen(LIVES_WINDOW(omclw->dialog), mainw->mgeom[prefs->gui_monitor - 1].screen);
-    lives_window_move(LIVES_WINDOW(omclw->dialog), xcen, ycen);
+    lives_window_center(LIVES_WINDOW(omclw->dialog));
   }
 
   if (prefs->open_maximised) {
+    lives_window_unmaximize(LIVES_WINDOW(omclw->dialog));
     lives_window_maximize(LIVES_WINDOW(omclw->dialog));
   }
 

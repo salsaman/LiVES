@@ -607,7 +607,7 @@ static void detach_stream(lives_clip_data_t *cdata) {
   if (priv->idxc != NULL) idxc_release(cdata);
   priv->idxc = NULL;
 
-  if (priv->picture != NULL) av_frame_unref(&priv->picture);
+  if (priv->picture != NULL) av_frame_unref(priv->picture);
 
   priv->ctx = NULL;
   priv->codec = NULL;
@@ -1455,7 +1455,7 @@ static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
 
   }
 
-  if (dpriv->picture != NULL) av_frame_unref(&dpriv->picture);
+  if (dpriv->picture != NULL) av_frame_unref(dpriv->picture);
   dpriv->picture = NULL;
 
   dpriv->last_frame = -1;
@@ -1537,7 +1537,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->asigned = TRUE;
   cdata->ainterleaf = TRUE;
 
-  if (priv->picture != NULL) av_frame_unref(&priv->picture);
+  if (priv->picture != NULL) av_frame_unref(priv->picture);
   priv->picture = NULL;
 
   if (cdata->width != cdata->frame_width || cdata->height != cdata->frame_height)

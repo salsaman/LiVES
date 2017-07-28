@@ -104,11 +104,11 @@ static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits,
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55, 28, 1)
 #define av_frame_alloc()  avcodec_alloc_frame()
 #if !HAVE_AVFRAME_UNREF
-#define av_frame_unref(a)  avcodec_free_frame(a)
+#define av_frame_unref(a)  avcodec_free_frame(&a)
 #endif
 #else
 #if !HAVE_AVFRAME_UNREF
-#define av_frame_unref(a) av_frame_free(a)
+#define av_frame_unref(a) av_frame_free(&a)
 #endif
 #endif
 

@@ -2354,12 +2354,7 @@ rte_window_ready:
   lives_widget_hide(dummy_radio);
 
   if (prefs->gui_monitor != 0) {
-    int xcen = mainw->mgeom[prefs->gui_monitor - 1].x + (mainw->mgeom[prefs->gui_monitor - 1].width -
-               lives_widget_get_allocation_width(rte_window)) / 2;
-    int ycen = mainw->mgeom[prefs->gui_monitor - 1].y + (mainw->mgeom[prefs->gui_monitor - 1].height -
-               lives_widget_get_allocation_height(rte_window)) / 2;
-    lives_window_set_screen(LIVES_WINDOW(rte_window), mainw->mgeom[prefs->gui_monitor - 1].screen);
-    lives_window_move(LIVES_WINDOW(rte_window), xcen, ycen);
+    lives_window_center(LIVES_WINDOW(rte_window));
   }
 
   if (prefs->open_maximised) {

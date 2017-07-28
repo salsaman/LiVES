@@ -1085,8 +1085,8 @@ boolean apply_prefs(boolean skip_warn) {
     set_boolean_pref(PREF_MOUSE_SCROLL_CLIPS, mouse_scroll);
   }
 
-  if (show_button_icons != (prefs->show_button_images)) {
-    prefs->show_button_images = show_button_icons;
+  if (show_button_icons != (widget_opts.show_button_images)) {
+    widget_opts.show_button_images = show_button_icons;
     set_boolean_pref(PREF_SHOW_BUTTON_ICONS, show_button_icons);
   }
 
@@ -1229,7 +1229,8 @@ boolean apply_prefs(boolean skip_warn) {
       set_pref(PREF_MONITORS, str);
       prefs->gui_monitor = gui_monitor;
       prefs->play_monitor = play_monitor;
-
+      widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0;
+      widget_opts.screen = mainw->mgeom[widget_opts.monitor].screen;
       resize_widgets_for_monitor(TRUE);
     }
   }
@@ -2537,7 +2538,7 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw->checkbutton_button_icons =
     lives_standard_check_button_new(_("Show icons in buttons"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_button_icons), prefs->show_button_images);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_button_icons), widget_opts.show_button_images);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);

@@ -1629,18 +1629,18 @@ LIVES_INLINE boolean lives_window_set_auto_startup_notification(boolean set) {
 
 
 LIVES_INLINE boolean lives_window_set_screen(LiVESWindow *window, LiVESXScreen *screen) {
+  if (LIVES_IS_WINDOW(window)) {
 #ifdef GUI_GTK
-  gtk_window_set_screen(window, screen);
-  return TRUE;
+    gtk_window_set_screen(window, screen);
+    return TRUE;
 #endif
 #ifdef GUI_QT
-  if (LIVES_IS_WINDOW(window)) {
     window->winId();
     QWindow *qwindow = window->windowHandle();
     qwindow->setScreen(screen);
-  }
-  return TRUE;
+    return TRUE;
 #endif
+  }
   return FALSE;
 }
 
@@ -3271,7 +3271,7 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id, cons
   }
 
 #ifdef GUI_GTK
-  if (prefs->show_button_images
+  if (widget_opts.show_button_images
       || !strcmp(stock_id, LIVES_STOCK_ADD)
       || !strcmp(stock_id, LIVES_STOCK_REMOVE)
      ) {
@@ -3300,7 +3300,7 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id, cons
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 6, 0)
-    gtk_button_set_always_show_image(GTK_BUTTON(button), prefs->show_button_images);
+    gtk_button_set_always_show_image(GTK_BUTTON(button), widget_opts.show_button_images);
 #endif
     if (label != NULL)
       gtk_button_set_label(GTK_BUTTON(button), label);
@@ -4329,6 +4329,8 @@ LIVES_INLINE LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDia
   xmdial->setIcon(type);
   mdial = static_cast<LiVESWidget *>(xmdial);
 #endif
+  if (mdial != NULL && widget_opts.screen != NULL) lives_window_set_screen(parent, widget_opts.screen);
+
   return mdial;
 }
 
@@ -7708,9 +7710,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   lives_widget_set_minimum_size(dialog, width, height);
 
-  if (prefs->gui_monitor != 0) {
-    lives_window_set_screen(LIVES_WINDOW(dialog), mainw->mgeom[prefs->gui_monitor - 1].screen);
-  }
+  if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(dialog), widget_opts.screen);
 
   if (title != NULL)
     lives_window_set_title(LIVES_WINDOW(dialog), title);
@@ -8374,7 +8374,7 @@ boolean lives_entry_set_completion_from_list(LiVESEntry *entry, LiVESList *xlist
 
 
 void lives_window_center(LiVESWindow *window) {
-  if (prefs->show_gui) {
+  if (!widget_opts.no_gui) {
     int xcen, ycen;
 
     if (mainw->mgeom == NULL) {
@@ -8382,13 +8382,11 @@ void lives_window_center(LiVESWindow *window) {
       return;
     }
 
-    lives_window_set_screen(LIVES_WINDOW(window), mainw->mgeom[prefs->gui_monitor <= 0 ? 0 : prefs->gui_monitor - 1].screen);
+    if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(window), widget_opts.screen);
 
-    xcen = mainw->mgeom[prefs->gui_monitor <= 0 ? 0 : prefs->gui_monitor - 1].x + (mainw->mgeom[prefs->gui_monitor <= 0 ? 0 : prefs->gui_monitor
-           - 1].width -
+    xcen = mainw->mgeom[widget_opts.monitor].x + (mainw->mgeom[widget_opts.monitor].width -
            lives_widget_get_allocation_width(LIVES_WIDGET(window))) / 2;
-    ycen = mainw->mgeom[prefs->gui_monitor <= 0 ? 0 : prefs->gui_monitor - 1].y + (mainw->mgeom[prefs->gui_monitor <= 0 ? 0 : prefs->gui_monitor
-           - 1].height -
+    ycen = mainw->mgeom[widget_opts.monitor].y + (mainw->mgeom[widget_opts.monitor].height -
            lives_widget_get_allocation_height(LIVES_WIDGET(window))) / 2;
     lives_window_move(LIVES_WINDOW(window), xcen, ycen);
   }
@@ -8691,7 +8689,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
   if (cursor != NULL && gdk_cursor_get_cursor_type(cursor) == ctype) return;
   cursor = NULL;
 #endif
-  disp = mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].disp;
+  disp = mainw->mgeom[widget_opts.monitor].disp;
   if (cstyle != LIVES_CURSOR_NORMAL) {
     cursor = gdk_cursor_new_for_display(disp, ctype);
     gdk_window_set_cursor(window, cursor);

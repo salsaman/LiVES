@@ -480,7 +480,6 @@ void create_LiVES(void) {
 
   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES), FALSE);
 
-
 #ifdef GUI_GTK
   // TODO - can we use just DEFAULT_DROP ?
   gtk_drag_dest_set(mainw->LiVES, GTK_DEST_DEFAULT_ALL, mainw->target_table, 2,
@@ -3059,6 +3058,7 @@ void fade_background(void) {
 
 void unfade_background(void) {
   if (prefs->open_maximised && prefs->show_gui) {
+    lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
     lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
   }
 
@@ -3570,8 +3570,8 @@ void play_window_set_title(void) {
 void resize_widgets_for_monitor(boolean get_play_times) {
   // resize widgets if we are aware that monitor resolution has changed
 
-  mainw->scr_width = mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].width;
-  mainw->scr_height = mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].height;
+  mainw->scr_width = mainw->mgeom[widget_opts.monitor].width;
+  mainw->scr_height = mainw->mgeom[widget_opts.monitor].height;
 
   if (mainw->multitrack == NULL) {
     if (prefs->gui_monitor != 0) {
@@ -3579,6 +3579,7 @@ void resize_widgets_for_monitor(boolean get_play_times) {
 
     }
     if (prefs->open_maximised && prefs->show_gui) {
+      lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
       lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
     }
   } else {
@@ -3587,6 +3588,7 @@ void resize_widgets_for_monitor(boolean get_play_times) {
     }
 
     if ((prefs->gui_monitor != 0 || capable->nmonitors <= 1) && prefs->open_maximised) {
+      lives_window_unmaximize(LIVES_WINDOW(mainw->multitrack->window));
       lives_window_maximize(LIVES_WINDOW(mainw->multitrack->window));
     }
   }
@@ -3698,7 +3700,7 @@ void make_play_window(void) {
 
 
 void resize_play_window(void) {
-  int opwx, opwy, pmonitor = prefs->play_monitor, gmonitor = prefs->gui_monitor;
+  int opwx, opwy, pmonitor = prefs->play_monitor, gmonitor = widget_opts.monitor;
 
   boolean fullscreen = TRUE;
   boolean size_ok;
@@ -4035,10 +4037,10 @@ point1:
       if (gmonitor == 0) lives_window_move(LIVES_WINDOW(mainw->play_window), (mainw->scr_width - mainw->pwidth) / 2,
                                              (mainw->scr_height - mainw->pheight - mainw->sepwin_minheight * 2) / 2);
       else {
-        int xcen = mainw->mgeom[gmonitor - 1].x + (mainw->mgeom[gmonitor - 1].width - mainw->pwidth) / 2;
-        lives_window_set_screen(LIVES_WINDOW(mainw->play_window), mainw->mgeom[gmonitor - 1].screen);
+        int xcen = mainw->mgeom[gmonitor].x + (mainw->mgeom[gmonitor].width - mainw->pwidth) / 2;
+        if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(mainw->play_window), widget_opts.screen);
         lives_window_move(LIVES_WINDOW(mainw->play_window), xcen,
-                          (mainw->mgeom[gmonitor - 1].height - mainw->pheight - mainw->sepwin_minheight * 2) / 2);
+                          (mainw->mgeom[gmonitor].height - mainw->pheight - mainw->sepwin_minheight * 2) / 2);
       }
     }
     mainw->opwx = mainw->opwy = -1;
@@ -4215,7 +4217,7 @@ void splash_init(void) {
   lives_window_set_auto_startup_notification(FALSE);
 
   mainw->splash_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
-
+  
   widget_opts.default_justify = LIVES_JUSTIFY_LEFT;
 
 #ifdef GUI_GTK
@@ -4265,9 +4267,7 @@ void splash_init(void) {
 
     lives_widget_show_all(mainw->splash_window);
 
-    if (prefs->gui_monitor > 0) {
-      lives_window_set_screen(LIVES_WINDOW(mainw->splash_window), mainw->mgeom[prefs->gui_monitor - 1].screen);
-    }
+    if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(mainw->splash_window), widget_opts.screen);
 
     lives_window_center(LIVES_WINDOW(mainw->splash_window));
 

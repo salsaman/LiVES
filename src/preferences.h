@@ -292,8 +292,6 @@ typedef struct {
 
   boolean ce_maxspect;
 
-  boolean show_button_icons;
-
   boolean lamp_buttons;
 
   boolean autoload_subs;

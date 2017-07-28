@@ -675,7 +675,7 @@ static void detach_stream(lives_clip_data_t *cdata) {
     av_packet_unref(&priv->packet);
 
   if (priv->pFrame != NULL) {
-    av_frame_unref(&priv->pFrame);
+    av_frame_unref(priv->pFrame);
     priv->pFrame = NULL;
   }
 
@@ -900,7 +900,7 @@ rescan:
 
   cdata->nframes = real_frames;
 
-  if (priv->pFrame != NULL) av_frame_unref(&priv->pFrame);
+  if (priv->pFrame != NULL) av_frame_unref(priv->pFrame);
   priv->pFrame = NULL;
 
   return cdata;
@@ -1068,7 +1068,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     fprintf(stderr, "pt a1 %d %ld\n", priv->last_frame, tframe);
 #endif
 
-    if (priv->pFrame != NULL) av_frame_unref(&priv->pFrame);
+    if (priv->pFrame != NULL) av_frame_unref(priv->pFrame);
     priv->pFrame = NULL;
 
     time = (double)tframe / cdata->fps;
@@ -1163,7 +1163,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       // otherwise discard this frame
       if (gotFrame) {
         MyPts += (double)AV_TIME_BASE / cdata->fps;
-        av_frame_unref(&priv->pFrame);
+        av_frame_unref(priv->pFrame);
         priv->pFrame = NULL;
       }
 

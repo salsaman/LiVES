@@ -746,15 +746,19 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
       osta.frame = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, nb_samples);
     }
       
-    /* convert to destination format */
-    ret = swr_convert(osta.swr_ctx,
+    /*    ret = swr_convert(osta.swr_ctx,
 		      osta.frame->data, nb_samples,
 		      spb_len == 0 ? (const uint8_t **)abuff : (const uint8_t **)spill_buffers, in_nb_samples);
     if (ret < 0) {
       fprintf(stderr, "Error while converting audio\n");
       return FALSE;
-    }
+      }*/
+
+
+    memcpy(osta.frame->data, abuff[0], in_nb_samples * sizeof(float));
+    memcpy(osta.frame->data + in_nb_samples * sizeof(float), abuff[1], in_nb_samples * sizeof(float));
     
+
     osta.frame->pts = av_rescale_q(osta.samples_count, (AVRational){1, c->sample_rate}, c->time_base);
     osta.samples_count += nb_samples;
     
@@ -892,8 +896,8 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     fmtctx = NULL;
   }
 
-  if (ostv.frame != NULL) av_frame_unref(&ostv.frame);
-  if (osta.frame != NULL) av_frame_unref(&osta.frame);
+  if (ostv.frame != NULL) av_frame_unref(ostv.frame);
+  if (osta.frame != NULL) av_frame_unref(osta.frame);
 
   if (ostv.sws_ctx != NULL) sws_freeContext(ostv.sws_ctx);
   if (osta.swr_ctx != NULL) swr_free(&(osta.swr_ctx));

@@ -2846,7 +2846,7 @@ static void detach_stream(lives_clip_data_t *cdata) {
     av_free(priv->s);
   }
 
-  if (priv->picture != NULL) av_frame_unref(&priv->picture);
+  if (priv->picture != NULL) av_frame_unref(priv->picture);
 
   priv->ctx = NULL;
   priv->codec = NULL;
@@ -3182,7 +3182,7 @@ skip_det:
   priv->last_frame = -1;
 
   if (isclone) {
-    if (priv->picture != NULL) av_frame_unref(&priv->picture);
+    if (priv->picture != NULL) av_frame_unref(priv->picture);
     priv->picture = NULL;
     return TRUE;
   }
@@ -3354,7 +3354,7 @@ skip_det:
   fprintf(stderr, "fps is %.4f %ld %ld %ld\n", cdata->fps, cdata->nframes, ldts, priv->start_dts);
 #endif
 
-  if (priv->picture != NULL) av_frame_unref(&priv->picture);
+  if (priv->picture != NULL) av_frame_unref(priv->picture);
   priv->picture = NULL;
 
   return TRUE;
@@ -3455,7 +3455,7 @@ static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
   dpriv->expect_eof = FALSE;
   dpriv->got_eof = FALSE;
 
-  if (dpriv->picture != NULL) av_frame_unref(&dpriv->picture);
+  if (dpriv->picture != NULL) av_frame_unref(dpriv->picture);
   dpriv->picture = NULL;
 
   return clone;

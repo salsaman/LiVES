@@ -127,7 +127,7 @@ typedef struct {
 } _vid_playback_plugin;
 
 
-#define DEFAULT_VPP "openGLa"
+#define DEFAULT_VPP "openGL"
 
 #define MAX_VPP_HSIZE 1024.
 #define MAX_VPP_VSIZE 576.

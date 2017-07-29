@@ -3380,7 +3380,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
     mainw->vpp = open_vid_playback_plugin(buff, TRUE);
   } else if (prefs->startup_phase == 1 || prefs->startup_phase == -1) {
-    mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, FALSE);
+    mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
     if (mainw->vpp != NULL) {
       lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
       set_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
@@ -5405,7 +5405,11 @@ void free_track_decoders(void) {
 
 
 static void load_frame_cleanup(boolean noswitch) {
+  // here is where we free the mainw->frame_layer (the output video "frame" we just worked with)
+
   char *tmp;
+
+  check_layer_ready(mainw->frame_layer);
 
   if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
   mainw->frame_layer = NULL;
@@ -5745,7 +5749,8 @@ void load_frame_image(int frame) {
 
     do {
       if (mainw->frame_layer != NULL) {
-        check_layer_ready(mainw->frame_layer);
+	// free the old mainw->frame_layer
+        check_layer_ready(mainw->frame_layer); // ensure all threads are complete
         weed_layer_free(mainw->frame_layer);
         mainw->frame_layer = NULL;
       }
@@ -5853,6 +5858,7 @@ void load_frame_image(int frame) {
           if (mainw->preview && mainw->frame_layer == NULL && (mainw->event_list == NULL || cfile->opening)) {
             if (!pull_frame_at_size(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks,
                                     cfile->hsize, cfile->vsize, WEED_PALETTE_END)) {
+
               if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
               mainw->frame_layer = NULL;
 
@@ -5864,7 +5870,7 @@ void load_frame_image(int frame) {
               }
             }
           } else {
-            pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
+	    pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
           }
         }
         if ((cfile->next_event == NULL && mainw->is_rendering && !mainw->switch_during_pb &&
@@ -5887,6 +5893,7 @@ void load_frame_image(int frame) {
         img_ext = NULL;
 
         if (mainw->internal_messaging) {
+	  // here we are rendering to an effect or timeline, need to keep mainw->frame_layer and return
           mainw->noswitch = noswitch;
           lives_freep((void **)&framecount);
           check_layer_ready(mainw->frame_layer);
@@ -5933,14 +5940,17 @@ void load_frame_image(int frame) {
           if ((!cfile->opening && frame >= (cfile->proc_ptr->frames_done - cfile->progress_start + cfile->start)) ||
               (cfile->opening && (mainw->toy_type == LIVES_TOY_TV || !mainw->preview || mainw->effects_paused))) {
             if (mainw->toy_type == LIVES_TOY_TV) {
-              // force a loop (set mainw->cancelled to 100 to play selection again)
+              // force a loop (set mainw->cancelled to CANCEL_KEEP_LOOPING to play selection again)
               mainw->cancelled = CANCEL_KEEP_LOOPING;
             } else mainw->cancelled = CANCEL_NO_MORE_PREVIEW;
             lives_free(info_file);
             lives_free(fname_next);
             check_layer_ready(mainw->frame_layer);
+
+	    // end of playback, so this is no longer needed
             if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
             mainw->frame_layer = NULL;
+
             mainw->noswitch = noswitch;
             lives_freep((void **)&framecount);
             return;
@@ -5949,13 +5959,13 @@ void load_frame_image(int frame) {
       }
     } while (mainw->frame_layer == NULL && mainw->cancelled == CANCEL_NONE && cfile->clip_type == CLIP_TYPE_DISK);
 
-    // from this point onwards we don't need to keep mainw->frame_layer around when we return
-
     if (LIVES_UNLIKELY((mainw->frame_layer == NULL) || mainw->cancelled > 0)) {
+      // NULL frame or user cancelled
       check_layer_ready(mainw->frame_layer);
 
       if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
       mainw->frame_layer = NULL;
+
       mainw->noswitch = noswitch;
       lives_freep((void **)&framecount);
       return;
@@ -6410,6 +6420,7 @@ void load_frame_image(int frame) {
       }
 
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
+	// frame display was handled by a playback plugin, skip the rest
         load_frame_cleanup(noswitch);
         lives_freep((void **)&framecount);
         return;
@@ -6421,9 +6432,10 @@ void load_frame_image(int frame) {
     // local display - either we are playing with no playback plugin, or else the playback plugin has no
     // local display of its own
 
-    check_layer_ready(mainw->frame_layer);
+    check_layer_ready(mainw->frame_layer); // wait for all threads to complete
 
     if ((mainw->sep_win && !prefs->show_playwin) || (!mainw->sep_win && !prefs->show_gui)) {
+      // no display to output, skip the rest
       load_frame_cleanup(noswitch);
       lives_freep((void **)&framecount);
       return;

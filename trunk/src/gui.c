@@ -1,6 +1,6 @@
 // gui.c
 // LiVES
-// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2017 <salsaman+lives@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1775,12 +1775,6 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(mainw->tb_hbox), t_label, FALSE, FALSE, 0);
 
   vbox4 = lives_vbox_new(FALSE, 0);
-
-  /*
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(vbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  */
 
   mainw->eventbox = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(mainw->vbox1), mainw->eventbox, TRUE, TRUE, 0);

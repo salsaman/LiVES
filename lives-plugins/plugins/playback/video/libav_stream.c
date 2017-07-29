@@ -3,8 +3,6 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#include "videoplugin.h"
-
 #include <stdio.h>
 #include <pthread.h>
 
@@ -21,13 +19,28 @@
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 
+#include "videoplugin.h"
+
+#define HAVE_AVUTIL
+#define HAVE_AVCODEC
+
+#ifdef HAVE_SYSTEM_WEED
+#include <weed/weed-compat.h>
+#else
+#include "../../../../libweed/weed-compat.h"
+#endif
+
 #include "../../decoders/libav_helper.h"
+
+static int intent;
 
 static int mypalette = WEED_PALETTE_END;
 static int palette_list[2];
 
+static int avpalette;
+
 static int clampings[3];
-static int myclamp;
+static int myclamp = WEED_YUV_CLAMPING_CLAMPED;
 
 static char plugin_version[64] = "LiVES libav stream engine version 1.0";
 
@@ -55,12 +68,10 @@ static AVFormatContext *fmtctx;
 static AVCodecContext *encctx, *aencctx;
 static AVStream *vStream, *aStream;
 
-#define STREAM_FRAME_RATE 10. /* 10 images/s */
-#define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
+#define DEFAULT_FRAME_RATE 10. /* 10 images/s */
 #define SCALE_FLAGS SWS_BICUBIC
 
-//#define STREAM_ENCODE TRUE 
-#define STREAM_ENCODE FALSE
+boolean stream_encode;
 
 // a wrapper around a single output AVStream
 typedef struct OutputStream {
@@ -88,7 +99,7 @@ static OutputStream osta; // audio
 #define STR(tok) STR_EXPAND(tok)
 
 const char *get_fps_list(int palette) {
-  return STR(STREAM_FRAME_RATE);
+  return STR(DEFAULT_FRAME_RATE);
 }
 
 
@@ -104,9 +115,11 @@ const char *module_check_init(void) {
   av_register_all();
   avformat_network_init();
 
-  target_fps = STREAM_FRAME_RATE;
+  target_fps = DEFAULT_FRAME_RATE;
 
   in_sample_rate = 0;
+
+  intent = 0;
 
   pthread_mutex_init(&write_mutex, NULL);
 
@@ -140,26 +153,33 @@ uint64_t get_capabilities(int palette) {
   parameter template, these are returned as argc, argv in init_screen() and init_audio() 
 */
 const char *get_init_rfx(void) {
-  return \
-    "<define>\\n\
+  // intention allows switching between different tailored interfaces
+  int intention = 0;
+  intent = intention;
+
+  switch (intent) {
+  case 0: // LiVES VPP (streaming output)
+    return					\
+      "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-ip1|_Address to stream to|string|127|3| \\n\
-ip2||string|0|3| \\n\
-ip3||string|0|3| \\n\
-ip4||string|1|3| \\n\
-port|_port|num0|8000|1024|65535|\\n\
 form|_Format|string_list|0|flv/h264/mp3|ogg/theora/vorbis||\\n\
 \
 mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
 \
 achans|Audio _layout|string_list|1|mono|stereo||\\n\
 arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
-mbitv|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
+mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
+\
+ip1|_Address to stream to|string|127|3| \\n\
+ip2||string|0|3| \\n\
+ip3||string|0|3| \\n\
+ip4||string|1|3| \\n\
+port|_port|num0|8000|1024|65535|\\n\
 </params> \\n\
 <param_window> \\n\
 layout|\\\"Enter an IP address and port to stream to LiVES output to.\\\"| \\n\
@@ -167,13 +187,49 @@ layout|\\\"You can play the stream on the remote / local machine with e.g:\\\"| 
 layout|\\\"mplayer udp://127.0.0.1:8000\\\"| \\n\
 layout|\\\"You are advised to start with a small frame size and low framerate,\\\"| \\n\
 layout|\\\"and increase this if your network bandwidth allows it.\\\"| \\n\
-layout|p0|\\\".\\\"|p1|\\\".\\\"|p2|\\\".\\\"|p3|fill|fill|fill|fill| \\n\
+layout|p0|| \\n\
+layout|p1|| \\n\
+layout|p2|| \\n\
+layout|p3|| \\n\
+layout|p4|| \\n\
+layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill| \\n\
 </param_window> \\n\
 <onchange> \\n\
 </onchange> \\n\
 ";
-}
 
+  case 1: // LiVES transcoding (test)
+    return					\
+      "<define>\\n\
+|1.7\\n\
+</define>\\n\
+<language_code>\\n\
+0xF0\\n\
+</language_code>\\n\
+<params> \\n\
+form|_Format|string_list|0|flv/h264/mp3|ogg/theora/vorbis||\\n\
+\
+mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
+\
+achans|Audio _layout|string_list|1|mono|stereo||\\n\
+arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
+mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
+\
+fname|_Output file|string|| \\n\
+ip2||string|0|3| \\n\
+ip3||string|0|3| \\n\
+ip4||string|1|3| \\n\
+port|_port|num0|8000|1024|65535|\\n\
+</params> \\n\
+<param_window> \\n\
+</param_window> \\n\
+<onchange> \\n\
+</onchange> \\n\
+";
+  default:
+    return "";
+  }
+}
 
 
 const int *get_yuv_palette_clamping(int palette) {
@@ -187,6 +243,7 @@ const int *get_yuv_palette_clamping(int palette) {
 
 boolean set_yuv_palette_clamping(int clamping_type) {
   myclamp = clamping_type;
+  avpalette = weed_palette_to_avi_pix_fmt(mypalette, &myclamp);
   return TRUE;
 }
 
@@ -195,6 +252,7 @@ boolean set_palette(int palette) {
   if (palette == WEED_PALETTE_YUV420P) {
     mypalette = palette;
     render_fn = &render_frame_yuv420;
+    avpalette = weed_palette_to_avi_pix_fmt(palette, &myclamp);
     return TRUE;
   }
   // invalid palette
@@ -410,7 +468,7 @@ static boolean add_stream(OutputStream *ost, AVFormatContext *oc,
   ost->st->id = oc->nb_streams-1;
 
   /* Some formats want stream headers to be separate. */
-  if (!STREAM_ENCODE && oc->oformat->flags & AVFMT_GLOBALHEADER)
+  if (!stream_encode && oc->oformat->flags & AVFMT_GLOBALHEADER)
     c->flags |= CODEC_FLAG_GLOBAL_HEADER;
 
   return TRUE;
@@ -426,14 +484,13 @@ boolean init_audio(int sample_rate, int nchans, int argc, char **argv) {
 }
 
 
-
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   AVCodec *codec, *acodec;
 
   const char *fmtstring;
   
   //AVDictionary *opts = NULL;
-  char uri[128];
+  char uri[PATH_MAX];
   
   int vcodec_id;
   int acodec_id;
@@ -452,14 +509,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
-  //snprintf(uri, 128, "%s", "udp://127.0.0.1:8000");
+  snprintf(uri, PATH_MAX, "%s", "filevid.flv");
 
-  // just for testing
-  //snprintf(uri, 128, "%s", "filevid.ogv");
-  //fmtstring = "ogg";
-  //vcodec_id = AV_CODEC_ID_THEORA;
-
-  snprintf(uri, 128, "%s", "filevid.mkv");
   fmtstring = "flv";
   vcodec_id = AV_CODEC_ID_H264;
 
@@ -467,11 +518,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   maxvbitrate = 3000000;
 
   if (argc > 0) {
-    // argc is 0 for testing
-    
-    //snprintf(uri, 128, "udp://%s.%s.%s.%s:%s", argv[0], argv[1], argv[2], argv[3], argv[4]);
-
-    switch(atoi(argv[5])) {
+    switch(atoi(argv[0])) {
     case 0:
       fmtstring = "flv";
       vcodec_id = AV_CODEC_ID_H264;
@@ -486,7 +533,21 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
       return FALSE;
     }
 
-    maxvbitrate = atoi(argv[6]);
+    maxvbitrate = atoi(argv[1]);
+
+    switch (intent) {
+    case 0:
+      stream_encode = TRUE;
+      snprintf(uri, PATH_MAX, "udp://%s.%s.%s.%s:%s", argv[5], argv[6], argv[7], argv[8], argv[9]);
+      break;
+    case 1:
+      stream_encode = FALSE;
+      snprintf(uri, PATH_MAX, "%s", argv[5]);
+      break;
+    default:
+      break;
+    }
+
   }
   
   ret = avformat_alloc_output_context2(&fmtctx, NULL, fmtstring, uri);
@@ -514,7 +575,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   
   vStream->codec->width = width;
   vStream->codec->height = height;
-  vStream->codec->pix_fmt = PIX_FMT_YUV420P;
+  vStream->codec->pix_fmt = avpalette;
   
   vStream->codec->bit_rate = maxvbitrate;
   if (vcodec_id == AV_CODEC_ID_H264)
@@ -552,14 +613,14 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     maxabitrate = 320000;
   
     if (argc > 0) {
-      out_nchans = atoi(argv[7]) + 1;
-      switch(atoi(argv[8])) {
+      out_nchans = atoi(argv[2]) + 1;
+      switch(atoi(argv[3])) {
 	case 0: out_sample_rate = 22050; break; 
 	case 1: out_sample_rate = 44100; break; 
 	case 2: out_sample_rate = 48000; break; 
 	default: break;
 	}
-      maxabitrate = atoi(argv[9]);
+      maxabitrate = atoi(argv[4]);
     }
     fprintf(stderr,"added audio stream\n");
     open_audio(); 
@@ -587,7 +648,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   
   /* create (container) libav video frame */
-  ostv.frame = alloc_picture(PIX_FMT_YUV420P, width, height);
+  ostv.frame = alloc_picture(avpalette, width, height);
   if (ostv.frame == NULL) {
     fprintf(stderr, "Could not allocate video frame\n");
     return FALSE;
@@ -665,9 +726,9 @@ static AVFrame *get_video_frame(const uint8_t * const *pixel_data, int hsize, in
   if (hsize != c->width || vsize != c->height) {
     if (ostv.sws_ctx == NULL) {
       ostv.sws_ctx = sws_getContext(hsize, vsize,
-				    AV_PIX_FMT_YUV420P,
+				    avpalette,
 				    c->width, c->height,
-				    AV_PIX_FMT_YUV420P,
+				    avpalette,
 				    SCALE_FLAGS, NULL, NULL, NULL);
       if (ostv.sws_ctx == NULL) {
 	fprintf(stderr,
@@ -693,7 +754,7 @@ static AVFrame *get_video_frame(const uint8_t * const *pixel_data, int hsize, in
 
 
 boolean render_audio_frame_float(float **audio, int nsamps)  {
-  AVCodecContext *c;
+  AVCodecContext *c = osta.enc;
   AVPacket pkt = { 0 }; // data and size must be 0;
   
   float *abuff[in_nchans];
@@ -704,21 +765,11 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
   int i;
 
   av_init_packet(&pkt);
-  c = osta.enc;
 
   for (i= 0; i < in_nchans; i++) {
     abuff[i] = audio[i];
   }
 
-  if (osta.frame != NULL) {
-    /* when we pass a frame to the encoder, it may keep a reference to it
-     * internally;
-     * make sure we do not overwrite it here
-     */
-    ret = av_frame_make_writable(osta.frame);
-    if (ret < 0) return FALSE;
-  }
- 
   while (nsamps > 0) {
     if (out_nb_samples != 0) {
       if (nsamps + spb_len < in_nb_samples) {
@@ -733,7 +784,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
       if (spb_len > 0) {
 	// have data in buffers from last call. fill these up and clear them first 
 	for (i= 0; i < in_nchans; i++) {
-	  memcpy(&(spill_buffers[i][spb_len]), abuff[i], (in_nb_samples - spb_len) * sizeof(float));
+	  memcpy(&(spill_buffers[i][spb_len]), audio[i], (in_nb_samples - spb_len) * sizeof(float));
 	}
       }
       nb_samples = out_nb_samples;
@@ -746,18 +797,16 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
       osta.frame = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, nb_samples);
     }
       
-    /*    ret = swr_convert(osta.swr_ctx,
+    ret = av_frame_make_writable(osta.frame);
+    if (ret < 0) return FALSE;
+
+    ret = swr_convert(osta.swr_ctx,
 		      osta.frame->data, nb_samples,
 		      spb_len == 0 ? (const uint8_t **)abuff : (const uint8_t **)spill_buffers, in_nb_samples);
     if (ret < 0) {
       fprintf(stderr, "Error while converting audio\n");
       return FALSE;
-      }*/
-
-
-    memcpy(osta.frame->data, abuff[0], in_nb_samples * sizeof(float));
-    memcpy(osta.frame->data + in_nb_samples * sizeof(float), abuff[1], in_nb_samples * sizeof(float));
-    
+    }
 
     osta.frame->pts = av_rescale_q(osta.samples_count, (AVRational){1, c->sample_rate}, c->time_base);
     osta.samples_count += nb_samples;
@@ -780,6 +829,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
     for (i= 0; i < in_nchans; i++) {
       abuff[i] += in_nb_samples - spb_len;
     }
+
     nsamps -= in_nb_samples - spb_len;
     spb_len = 0;
 
@@ -845,7 +895,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
   int i;
 
-  if (!STREAM_ENCODE && !(fmtctx->oformat->flags & AVFMT_NOFILE)) {
+  if (!stream_encode && !(fmtctx->oformat->flags & AVFMT_NOFILE)) {
     // flush final few frames
     c = ostv.enc;
 

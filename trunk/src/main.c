@@ -1243,6 +1243,8 @@ static void lives_init(_ign_opts *ign_opts) {
     //////////////////////////////////////////////////////////////////
 
     if (!mainw->foreign) {
+      // set random seeds
+      
       randres = -1;
 
       // try to get randomness from /dev/urandom
@@ -1275,6 +1277,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
       fastsrand(rseed);
 
+      // set various prefs
+      
       prefs->midi_check_rate = get_int_pref(PREF_MIDI_CHECK_RATE);
       if (prefs->midi_check_rate == 0) prefs->midi_check_rate = DEF_MIDI_CHECK_RATE;
 
@@ -1618,10 +1622,10 @@ static void lives_init(_ign_opts *ign_opts) {
       threaded_dialog_spin(0.);
 
       prefs->audio_opts = get_int_pref(PREF_AUDIO_OPTS);
+
 #ifdef ENABLE_JACK
       lives_snprintf(prefs->jack_aserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
       lives_snprintf(prefs->jack_tserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
-
 #endif
 
       get_pref(PREF_CURRENT_AUTOTRANS, buff, 256);
@@ -5878,13 +5882,7 @@ void load_frame_image(int frame) {
             check_layer_ready(mainw->frame_layer);
             return;
           }
-#ifdef USE_MONOTONIC_TIME
-          mainw->currticks = (lives_get_monotonic_time() - mainw->origusecs) * U_SEC_RATIO;
-#else
-          gettimeofday(&tv, NULL);
-          mainw->currticks = U_SECL * (tv.tv_sec - mainw->origsecs) + tv.tv_usec * U_SEC_RATIO - mainw->origusecs * U_SEC_RATIO;
-#endif
-          mainw->startticks = mainw->currticks + mainw->deltaticks;
+          mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
         }
 
         img_ext = NULL;

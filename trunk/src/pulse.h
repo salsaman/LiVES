@@ -87,9 +87,7 @@ typedef struct {
   lives_whentostop_t *whentostop; ///< pointer to mainw->whentostop
   volatile lives_cancel_t *cancelled; ///< pointer to mainw->cancelled
 
-  /* variables used for trying to restart the connection to pulse */
   boolean pulsed_died;
-  struct timeval last_reconnect_attempt;
 
   boolean is_output; ///< is output FROM host to jack
 

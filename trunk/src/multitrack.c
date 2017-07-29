@@ -782,16 +782,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
   lives_free(asave_file);
 
-  gettimeofday(&otv, NULL);
-
-  if (stime == 0) {
-#ifdef USE_MONOTONIC_TIME
-    stime = lives_get_monotonic_time() / 1000000.;
-#else
-    stime = otv.tv_sec;
-#endif
-  }
-
+  stime = lives_get_current_ticks(0, 0);
   mt->auto_back_time = stime;
 
   tmp = lives_datetime(&otv);
@@ -814,17 +805,11 @@ boolean mt_auto_backup(livespointer user_data) {
     return FALSE;
   }
 
-#ifdef USE_MONOTONIC_TIME
-  stime = lives_get_monotonic_time() / 1000000.;
-#else
-  gettimeofday(&otv, NULL);
-  stime = otv.tv_sec;
-#endif
-
+  stime = lives_get_current_ticks(0, 0);
   if (mt->auto_back_time == 0) mt->auto_back_time = stime;
 
   diff = stime - mt->auto_back_time;
-  if (diff >= prefs->mt_auto_back) {
+  if (diff >= prefs->mt_auto_back * U_SECL) {
     // time to back up the event_list
     if (mt->idlefunc != 0) {
       lives_source_remove(mt->idlefunc);

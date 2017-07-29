@@ -27,11 +27,10 @@
 
 /// fraction of a second quantisation for event timing; must match U_SECL, and must be a multiple of 10>=1000000
 ///
-/// >10**8 is not recommended, since we sometimes store seconds in a double
-#define U_SEC 100000000.
-#define U_SECL (int64_t)100000000
-#define U_SEC_RATIO (U_SECL/1000000) ///< how many U_SECs (ticks) in a microsecond [default 100]
-
+/// > 10**8 is not recommended, since we sometimes store seconds in a double
+#define U_SEC ((double)100000000.)   ///< actually microseconds / 100.
+#define U_SECL (int64_t)100000000 ///< ticks per second
+#define U_SEC_RATIO (U_SECL/1000000l) ///< how many U_SECs (ticks) in a microsecond [default 100]
 
 #define LIVES_SHORTEST_TIMEOUT  (2. * U_SEC) // 2 sec timeout
 #define LIVES_SHORT_TIMEOUT  (5. * U_SEC) // 5 sec timeout

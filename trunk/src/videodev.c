@@ -1,5 +1,5 @@
 // LiVES - videodev input
-// (c) G. Finch 2010 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2017 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -45,14 +45,8 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
   unicap_status_t status;
   int ncount;
 
-  timer = timeout * 1000000.;
-
-#ifdef USE_MONOTONIC_TIME
-  stime = lives_get_monotonic_time() * U_SEC_RATIO;
-#else
-  gettimeofday(&otv, NULL);
-  stime = otv.tv_sec * 1000000 + otv.tv_usec;
-#endif
+  timer = timeout * U_SECL;
+  stime = lives_get_current_ticks(0, 0);
 
   while (1) {
     status = unicap_poll_buffer(ldev->handle, &ncount);
@@ -66,12 +60,7 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
       return TRUE;
     }
 
-#ifdef USE_MONOTONIC_TIME
-    dtime = lives_get_monotonic_time() * U_SEC_RATIO;
-#else
-    gettimeofday(&otv, NULL);
-    dtime = otv.tv_sec * 1000000 + otv.tv_usec;
-#endif
+    dtime = lives_get_current_ticks(0, 0);
     if (dtime - stime > timer) return FALSE;
 
     lives_usleep(prefs->sleep_time);
@@ -82,39 +71,22 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
 }
 
 
-
 static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
   // wait for SYSTEM type buffer
-#ifndef USE_MONOTONIC_TIME
-  struct timeval otv;
-#endif
   int64_t stime, dtime, timer;
 
-  timer = timeout * 1000000.;
+  timer = timeout * U_SECL;
+  stime = lives_get_current_ticks(0, 0);
 
-#ifdef USE_MONOTONIC_TIME
-  stime = lives_get_monotonic_time() * U_SEC_RATIO;
-#else
-  gettimeofday(&otv, NULL);
-  stime = otv.tv_sec * 1000000 + otv.tv_usec;
-#endif
   while (ldev->buffer_ready == 0) {
-#ifdef USE_MONOTONIC_TIME
-    dtime = lives_get_monotonic_time() * U_SEC_RATIO;
-#else
-    gettimeofday(&otv, NULL);
-    dtime = otv.tv_sec * 1000000 + otv.tv_usec;
-#endif
+    dtime = lives_get_current_ticks(0, 0);
     if (dtime - stime > timer) return FALSE;
-
     lives_usleep(prefs->sleep_time);
     lives_widget_context_update();
   }
 
   return TRUE;
 }
-
-
 
 
 static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,

@@ -633,7 +633,7 @@ lives_render_error_t realfx_progress(boolean reset) {
     weed_set_int_value(layer, WEED_LEAF_CLIP, mainw->current_file);
     weed_set_int_value(layer, WEED_LEAF_FRAME, i);
 
-    frameticks = (i - cfile->start + 1.) / cfile->fps * U_SECL;
+    frameticks = (i - cfile->start + 1.) / cfile->fps * TICKS_PER_SECOND;
 
     if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename

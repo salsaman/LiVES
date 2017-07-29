@@ -39,7 +39,7 @@ static boolean force_show;
 static double est_time;
 
 // how often to we count frames when opening
-#define OPEN_CHECK_TICKS (U_SECL/10l)
+#define OPEN_CHECK_TICKS (TICKS_PER_SECOND/10l)
 
 static volatile boolean dlg_thread_ready = FALSE;
 
@@ -909,7 +909,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 static void cancel_process(boolean visible) {
   if (prefs->show_player_stats && !visible && mainw->fps_measure > 0.) {
     // statistics
-    mainw->fps_measure /= (lives_get_current_ticks(mainw->origsecs, mainw->origusecs) / U_SEC);
+    mainw->fps_measure /= (lives_get_current_ticks(mainw->origsecs, mainw->origusecs) / TICKS_PER_SECOND_DBL);
   }
   if (visible) {
     if (mainw->preview_box != NULL && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
@@ -972,7 +972,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
     if (frames_done <= sfile->progress_end && sfile->progress_end > 0 && !mainw->effects_paused &&
         frames_done > 0) {
       mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
-      timesofar = (mainw->currticks - mainw->timeout_ticks) / U_SEC;
+      timesofar = (mainw->currticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
 
       fraction_done = (double)(frames_done - sfile->progress_start) / (double)(sfile->progress_end - sfile->progress_start + 1.);
 
@@ -1028,7 +1028,7 @@ boolean process_one(boolean visible) {
     if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) &&
         (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) && !(mainw->record && !(prefs->rec_opts & REC_FRAMES))) {
       // calculate the time from jack transport
-      mainw->currticks = jack_transport_get_time() * U_SEC;
+      mainw->currticks = jack_transport_get_time() * TICKS_PER_SECOND_DBL;
       time_source = LIVES_TIME_SOURCE_EXTERNAL;
     }
 #endif
@@ -1126,7 +1126,7 @@ boolean process_one(boolean visible) {
 #ifdef ENABLE_JACK
       if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL &&
           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
-          (mainw->currticks - mainw->offsetticks) > U_SECL * 10 && (audio_ticks = lives_jack_get_time(mainw->jackd, TRUE)) >
+          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && (audio_ticks = lives_jack_get_time(mainw->jackd, TRUE)) >
           mainw->offsetticks) {
         if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2.) {
           // if audio_stretch is > 1. it means that audio is playing too fast
@@ -1150,7 +1150,7 @@ boolean process_one(boolean visible) {
 #ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
-          (mainw->currticks - mainw->offsetticks) > U_SECL * 10 && (audio_ticks = lives_pulse_get_time(mainw->pulsed, TRUE)) >
+          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && (audio_ticks = lives_pulse_get_time(mainw->pulsed, TRUE)) >
           mainw->offsetticks) {
         // fps is synched to external source, so we adjust the audio rate to fit
         if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2.) {
@@ -1179,13 +1179,13 @@ boolean process_one(boolean visible) {
       if (mainw->scratch != SCRATCH_NONE && mainw->multitrack != NULL) {
 #ifdef ENABLE_JACK_TRANSPORT
         // handle transport jump
-        weed_timecode_t transtc = q_gint64(jack_transport_get_time() * U_SEC, cfile->fps);
+        weed_timecode_t transtc = q_gint64(jack_transport_get_time() * TICKS_PER_SECOND_DBL, cfile->fps);
         mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
         if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
 #endif
       } else if (mainw->currticks >= event_start) {
         // see if we are playing a selection and reached the end
-        if (mainw->multitrack != NULL && mainw->multitrack->playing_sel && get_event_timecode(cfile->next_event) / U_SEC >=
+        if (mainw->multitrack != NULL && mainw->multitrack->playing_sel && get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
             mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
         else {
           cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
@@ -1241,7 +1241,7 @@ boolean process_one(boolean visible) {
       // calculate the audio 'frame' for non-realtime audio players
       // for realtime players, we did this in calc_new_playback_position()
       if (!is_realtime_aplayer(prefs->audio_player)) {
-        mainw->aframeno = (int64_t)(mainw->currticks - mainw->firstticks) * cfile->fps / U_SEC + audio_start;
+        mainw->aframeno = (int64_t)(mainw->currticks - mainw->firstticks) * cfile->fps / TICKS_PER_SECOND_DBL + audio_start;
         if (LIVES_UNLIKELY(mainw->loop_cont && (mainw->aframeno > (mainw->audio_end ? mainw->audio_end :
                                                 cfile->laudio_time * cfile->fps)))) {
           mainw->firstticks = mainw->startticks - mainw->deltaticks;
@@ -1250,9 +1250,9 @@ boolean process_one(boolean visible) {
 
       if ((mainw->fixed_fpsd <= 0. && show_frame && (mainw->vpp == NULL ||
            mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) ||
-          (mainw->fixed_fpsd > 0. && (mainw->currticks - mainw->last_display_ticks) / U_SEC >= 1. / mainw->fixed_fpsd) ||
+          (mainw->fixed_fpsd > 0. && (mainw->currticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
           (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
-           (mainw->currticks - mainw->last_display_ticks) / U_SEC >= 1. / mainw->vpp->fixed_fpsd) || force_show) {
+           (mainw->currticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd) || force_show) {
         // time to show a new frame
 
 #ifdef ENABLE_JACK
@@ -1273,9 +1273,9 @@ boolean process_one(boolean visible) {
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = mainw->currticks;
         else {
           if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
-            mainw->last_display_ticks += U_SEC / mainw->vpp->fixed_fpsd;
+            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
           else if (mainw->fixed_fpsd > 0.)
-            mainw->last_display_ticks += U_SEC / mainw->fixed_fpsd;
+            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
           else mainw->last_display_ticks = mainw->currticks;
         }
         force_show = FALSE;
@@ -1327,7 +1327,7 @@ boolean process_one(boolean visible) {
               fraction_done = (double)(mainw->opening_frames - 1) / (double)cfile->frames;
               if (fraction_done > 1.) fraction_done = 1.;
               if (!mainw->effects_paused) {
-                timesofar = (mainw->currticks - mainw->timeout_ticks) / U_SEC;
+                timesofar = (mainw->currticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
                 est_time = timesofar / fraction_done - timesofar;
               }
               lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar), fraction_done);
@@ -1568,7 +1568,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         !(mainw->record && !(prefs->rec_opts & REC_FRAMES) && cfile->next_event == NULL)) {
       // calculate the start position from jack transport
 
-      uint64_t ntc = jack_transport_get_time() * U_SEC;
+      uint64_t ntc = jack_transport_get_time() * TICKS_PER_SECOND_DBL;
       boolean noframedrop = mainw->noframedrop;
       mainw->noframedrop = FALSE;
       cfile->last_frameno = 1;
@@ -1595,14 +1595,14 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     // WARNING: origticks could be negative
 #ifdef USE_MONOTONIC_TIME
-    int64_t origticks = mainw->origusecs * U_SEC_RATIO -
+    int64_t origticks = mainw->origusecs * USEC_TO_TICKS -
                         (mainw->offsetticks = get_event_timecode(mainw->multitrack->pb_start_event));
-    mainw->origusecs = ((int64_t)(origticks / U_SEC_RATIO));
+    mainw->origusecs = ((int64_t)(origticks / USEC_TO_TICKS));
 #else
-    int64_t origticks = mainw->origsecs * U_SEC + mainw->origusecs * U_SEC_RATIO -
+    int64_t origticks = mainw->origsecs * TICKS_PER_SECOND_DBL + mainw->origusecs * USEC_TO_TICKS -
                         (mainw->offsetticks = get_event_timecode(mainw->multitrack->pb_start_event));
-    mainw->origsecs = origticks / U_SEC;
-    mainw->origusecs = ((int64_t)(origticks / U_SEC_RATIO) - mainw->origsecs * 1000000.);
+    mainw->origsecs = origticks / TICKS_PER_SECOND_DBL;
+    mainw->origusecs = ((int64_t)(origticks / USEC_TO_TICKS) - mainw->origsecs * 1000000.);
 #endif
   }
 
@@ -1891,7 +1891,7 @@ finish:
   } else {
     if (prefs->show_player_stats) {
       if (mainw->fps_measure > 0.) {
-        mainw->fps_measure /= (lives_get_current_ticks(mainw->origsecs, mainw->origusecs) / U_SEC);
+        mainw->fps_measure /= (lives_get_current_ticks(mainw->origsecs, mainw->origusecs) / TICKS_PER_SECOND_DBL);
       }
     }
     mainw->is_processing = TRUE;
@@ -1986,7 +1986,7 @@ boolean do_auto_dialog(const char *text, int type) {
       // subtract start time
       time -= stime;
 
-      time_rem = (int)(mainw->rec_end_time - (double)time / U_SEC + .5);
+      time_rem = (int)(mainw->rec_end_time - (double)time / TICKS_PER_SECOND_DBL + .5);
       if (time_rem >= 0 && time_rem < last_time_rem) {
         label_text = lives_strdup_printf(_("\nTime remaining: %d sec"), time_rem);
         lives_label_set_text(LIVES_LABEL(proc_ptr->label2), label_text);
@@ -2743,7 +2743,7 @@ void threaded_dialog_spin(double fraction) {
   if (procw == NULL || !procw->is_ready || !mainw->is_ready) return;
 
   if (fraction > 0.) {
-    timesofar = (double)(lives_get_current_ticks(0, 0) - sttime) / U_SEC;
+    timesofar = (double)(lives_get_current_ticks(0, 0) - sttime) / TICKS_PER_SECOND_DBL;
     disp_fraction(fraction, timesofar, procw);
   } else {
     if (mainw->current_file < 0 || cfile == NULL || cfile->progress_start == 0 || cfile->progress_end == 0 ||
@@ -2758,7 +2758,7 @@ void threaded_dialog_spin(double fraction) {
     } else {
       // show fraction
       double fraction_done = (double)(progress - cfile->progress_start) / (double)(cfile->progress_end - cfile->progress_start + 1.);
-      timesofar = (double)(lives_get_current_ticks(0, 0) - sttime) / U_SEC;
+      timesofar = (double)(lives_get_current_ticks(0, 0) - sttime) / TICKS_PER_SECOND_DBL;
       disp_fraction(fraction_done, timesofar, procw);
     }
   }

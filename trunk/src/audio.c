@@ -1002,7 +1002,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   weed_timecode_t tc = tc_start;
 
-  double ins_pt = tc / U_SEC;
+  double ins_pt = tc / TICKS_PER_SECOND_DBL;
   double time = 0.;
   double opvol = opvol_start;
   double zavel, zavel_max = 0.;
@@ -1028,7 +1028,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   int64_t frames_out = 0;
   int64_t ins_size = 0l, cur_size;
-  int64_t tsamples = ((double)(tc_end - tc_start) / U_SEC * out_arate + .5);
+  int64_t tsamples = ((double)(tc_end - tc_start) / TICKS_PER_SECOND_DBL * out_arate + .5);
   int64_t blocksize, zsamples, xsamples;
   int64_t tot_frames = 0l;
 
@@ -1161,7 +1161,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     // output silence
     if (to_file > -1) {
       int64_t oins_size = ins_size;
-      ins_pt = tc_end / U_SEC;
+      ins_pt = tc_end / TICKS_PER_SECOND_DBL;
       ins_pt *= out_achans * out_arate * out_asamps;
       ins_size = ((int64_t)(ins_pt / out_achans / out_asamps) + .5) * out_achans * out_asamps;
       pad_with_silence(out_fd, oins_size, ins_size, out_asamps, out_unsigned, out_bendian);
@@ -1339,7 +1339,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       if (mainw->multitrack == NULL && opvol_end != opvol_start) {
         time += (double)frames_out / (double)out_arate;
-        opvol = opvol_start + (opvol_end - opvol_start) * (time / (double)((tc_end - tc_start) / U_SEC));
+        opvol = opvol_start + (opvol_end - opvol_start) * (time / (double)((tc_end - tc_start) / TICKS_PER_SECOND_DBL));
       }
 
       if (is_fade) {
@@ -1354,7 +1354,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         g_print(".");
 #endif
       }
-      tc += (double)blocksize / (double)out_arate * U_SEC;
+      tc += (double)blocksize / (double)out_arate * TICKS_PER_SECOND_DBL;
     }
 
     if (!is_fade) {
@@ -1414,7 +1414,7 @@ LIVES_INLINE void aud_fade(int fileno, double startt, double endt, double startv
   double vel = 1., vol = 1.;
 
   mainw->read_failed = mainw->write_failed = FALSE;
-  render_audio_segment(1, &fileno, fileno, &vel, &startt, startt * U_SECL, endt * U_SECL, &vol, startv, endv, NULL);
+  render_audio_segment(1, &fileno, fileno, &vel, &startt, startt * TICKS_PER_SECOND, endt * TICKS_PER_SECOND, &vol, startv, endv, NULL);
 
   if (mainw->write_failed) {
     char *outfilename = lives_build_filename(prefs->workdir, mainw->files[fileno]->handle, "audio", NULL);
@@ -1845,7 +1845,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
 
         for (i = 0; i < nfiles; i++) {
           // increase seek values up to current frame
-          audstate[i].seek += audstate[i].vel * (get_event_timecode(event) - last_tc) / U_SEC;
+          audstate[i].seek += audstate[i].vel * (get_event_timecode(event) - last_tc) / TICKS_PER_SECOND_DBL;
         }
 
         for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
@@ -1875,7 +1875,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
 
     for (i = 0; i < nfiles; i++) {
       // increase seek values
-      audstate[i].seek += audstate[i].vel * (fill_tc - last_tc) / U_SEC;
+      audstate[i].seek += audstate[i].vel * (fill_tc - last_tc) / TICKS_PER_SECOND_DBL;
     }
 
   }
@@ -1976,7 +1976,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     }
   } else chvols[0] = 1.;
 
-  fill_tc = last_tc + (double)(abuf->samp_space) / (double)abuf->arate * U_SEC;
+  fill_tc = last_tc + (double)(abuf->samp_space) / (double)abuf->arate * TICKS_PER_SECOND_DBL;
 
   // continue until either we have a full buffer, or we reach next audio frame
   while (event != NULL && get_event_timecode(event) <= fill_tc) {
@@ -1986,7 +1986,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       weed_timecode_t tc = get_event_timecode(event);
       if (tc >= fill_tc) break;
 
-      tc += (U_SEC / cfile->fps * !is_blank_frame(event, FALSE));
+      tc += (TICKS_PER_SECOND_DBL / cfile->fps * !is_blank_frame(event, FALSE));
 
       mainw->read_failed = FALSE;
       lives_freep((void **)&mainw->read_failed_file);
@@ -1999,7 +1999,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
       for (i = 0; i < nfiles; i++) {
         // increase seek values
-        aseeks[i] += avels[i] * (tc - last_tc) / U_SEC;
+        aseeks[i] += avels[i] * (tc - last_tc) / TICKS_PER_SECOND_DBL;
       }
 
       last_tc = tc;
@@ -2032,7 +2032,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
     for (i = 0; i < nfiles; i++) {
       // increase seek values
-      aseeks[i] += avels[i] * (fill_tc - last_tc) / U_SEC;
+      aseeks[i] += avels[i] * (fill_tc - last_tc) / TICKS_PER_SECOND_DBL;
     }
   }
 
@@ -2568,7 +2568,7 @@ boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps)
   weed_process_f process_func;
 
   if (mainw->agen_needs_reinit) return FALSE; // wait for other thread to reinit us
-  tc = (double)mainw->agen_samps_count / (double)arate * U_SEC; // we take our timing from the number of samples read
+  tc = (double)mainw->agen_samps_count / (double)arate * TICKS_PER_SECOND_DBL; // we take our timing from the number of samples read
 
 getaud1:
 
@@ -2824,7 +2824,7 @@ boolean apply_rte_audio(int nframes) {
 
   // apply any audio effects
 
-  aud_tc += (double)onframes / (double)cfile->arate * U_SEC;
+  aud_tc += (double)onframes / (double)cfile->arate * TICKS_PER_SECOND_DBL;
   // apply any audio effects with in_channels
 
   weed_apply_audio_effects_rt(fltbuf, cfile->achans, onframes, cfile->arate, aud_tc, FALSE);

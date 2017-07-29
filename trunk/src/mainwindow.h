@@ -25,18 +25,18 @@
 
 // hardware related prefs
 
-/// fraction of a second quantisation for event timing; must match U_SECL, and must be a multiple of 10>=1000000
+/// fraction of a second quantisation for event timing
 ///
 /// > 10**8 is not recommended, since we sometimes store seconds in a double
-#define U_SEC ((double)100000000.)   ///< actually microseconds / 100.
-#define U_SECL (int64_t)100000000 ///< ticks per second
-#define U_SEC_RATIO (U_SECL/1000000l) ///< how many U_SECs (ticks) in a microsecond [default 100]
+#define TICKS_PER_SECOND_DBL ((double)100000000.)   ///< actually microseconds / 100.
+#define TICKS_PER_SECOND (int64_t)100000000 ///< ticks per second
+#define USEC_TO_TICKS (TICKS_PER_SECOND/1000000l) ///< how many TICKS in a microsecond [default 100]
 
-#define LIVES_SHORTEST_TIMEOUT  (2. * U_SEC) // 2 sec timeout
-#define LIVES_SHORT_TIMEOUT  (5. * U_SEC) // 5 sec timeout
-#define LIVES_DEFAULT_TIMEOUT  (10. * U_SEC) // 10 sec timeout
-#define LIVES_LONGER_TIMEOUT  (20. * U_SEC) // 20 sec timeout
-#define LIVES_LONGEST_TIMEOUT  (30. * U_SEC) // 30 sec timeout
+#define LIVES_SHORTEST_TIMEOUT  (2. * TICKS_PER_SECOND_DBL) // 2 sec timeout
+#define LIVES_SHORT_TIMEOUT  (5. * TICKS_PER_SECOND_DBL) // 5 sec timeout
+#define LIVES_DEFAULT_TIMEOUT  (10. * TICKS_PER_SECOND_DBL) // 10 sec timeout
+#define LIVES_LONGER_TIMEOUT  (20. * TICKS_PER_SECOND_DBL) // 20 sec timeout
+#define LIVES_LONGEST_TIMEOUT  (30. * TICKS_PER_SECOND_DBL) // 30 sec timeout
 
 
 /// rate to change pb fps when faster/slower pressed (TODO: make pref)
@@ -607,7 +607,7 @@ typedef struct {
   /// and the audio 'frame' for when we are looping
   double aframeno;
 
-  // ticks are measured in 1/U_SEC of a second (by defalt a tick is 10 nano seconds)
+  // ticks are measured in 1/TICKS_PER_SECOND_DBL of a second (by defalt a tick is 10 nano seconds)
 
   // for the internal player
   double period; ///< == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)

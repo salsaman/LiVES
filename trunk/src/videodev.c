@@ -45,7 +45,7 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
   unicap_status_t status;
   int ncount;
 
-  timer = timeout * U_SECL;
+  timer = timeout * TICKS_PER_SECOND;
   stime = lives_get_current_ticks(0, 0);
 
   while (1) {
@@ -75,7 +75,7 @@ static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
   // wait for SYSTEM type buffer
   int64_t stime, dtime, timer;
 
-  timer = timeout * U_SECL;
+  timer = timeout * TICKS_PER_SECOND;
   stime = lives_get_current_ticks(0, 0);
 
   while (ldev->buffer_ready == 0) {

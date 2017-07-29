@@ -2213,7 +2213,7 @@ boolean lives_osc_cb_mtctimeset(void *context, int arglen, const void *vargs, OS
 
   if (time < 0.) return lives_osc_notify_failure();
 
-  time = q_dbl(time, mainw->multitrack->fps) / U_SEC;
+  time = q_dbl(time, mainw->multitrack->fps) / TICKS_PER_SECOND_DBL;
   mt_tl_move(mainw->multitrack, time);
 
   msg = lives_strdup_printf("%.8f", lives_ruler_get_value(LIVES_RULER(mainw->multitrack->timeline)));
@@ -2330,7 +2330,7 @@ boolean lives_osc_cb_get_playtime(void *context, int arglen, const void *vargs, 
   if (mainw->current_file < 1 || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL && !mainw->record)) ||
       mainw->playing_file < 1) return lives_osc_notify_failure();
 
-  lives_status_send((tmp = lives_strdup_printf("%.8f", (double)mainw->currticks / U_SEC)));
+  lives_status_send((tmp = lives_strdup_printf("%.8f", (double)mainw->currticks / TICKS_PER_SECOND_DBL)));
   lives_free(tmp);
   return TRUE;
 }

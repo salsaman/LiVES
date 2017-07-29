@@ -460,7 +460,7 @@ void sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t s
   uint8_t srcx[2];
   short srcxs;
   short *srcp;
-  
+
   if (vol == 0.) vol = 0.0000001f;
   svolp = SAMPLE_MAX_16BIT_P / vol;
   svoln = SAMPLE_MAX_16BIT_N / vol;
@@ -473,8 +473,8 @@ void sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t s
 
   while (nsamples--) {
     if (rev_endian) {
-      memcpy(&srcx, src + 1, 2);
-      srcxs = (srcx[0] << 8) + srcx[1];
+      memcpy(&srcx, src, 2);
+      srcxs = ((srcx[1] & 0xFF)  << 8) + (srcx[0] & 0xFF);
       srcp = &srcxs;
     } else srcp = src;
 
@@ -484,7 +484,6 @@ void sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t s
 #else
       if ((val = (float)((float)(*srcp) / (*srcp > 0 ? svolp : svoln))) > 1.0f) val = 1.0f;
       else if (val < -1.0f) val = -1.0f;
-      //g_print("vals %d and %f\n", (short)(*srcp), val);
 #endif
     } else {
 #ifdef ENABLE_OIL

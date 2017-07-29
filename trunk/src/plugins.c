@@ -659,11 +659,11 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
           if (!strcmp(cur_pal, weed_palette_get_name(pal_list[i]))) {
             vpp->palette = pal_list[i];
             if (mainw->ext_playback) {
-              lives_grab_remove(mainw->LiVES);
-              mainw->ext_keyboard = FALSE;
 	      pthread_mutex_lock(&mainw->vpp_stream_mutex);
 	      mainw->ext_audio = FALSE;
 	      pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+              lives_grab_remove(mainw->LiVES);
+              mainw->ext_keyboard = FALSE;
               if (mainw->vpp->exit_screen != NULL) {
                 (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
               }
@@ -1442,11 +1442,11 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 void vid_playback_plugin_exit(void) {
   // external plugin
   if (mainw->ext_playback) {
-    mainw->ext_keyboard = FALSE;
-    lives_grab_remove(mainw->LiVES);
     pthread_mutex_lock(&mainw->vpp_stream_mutex);
     mainw->ext_audio = FALSE;
     pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+    mainw->ext_keyboard = FALSE;
+    lives_grab_remove(mainw->LiVES);
     if (mainw->vpp->exit_screen != NULL)(*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
 #ifdef RT_AUDIO
     stop_audio_stream();

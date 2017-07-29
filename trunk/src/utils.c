@@ -1256,10 +1256,10 @@ LIVES_INLINE int get_approx_ln(uint32_t x) {
 
 LIVES_INLINE int64_t lives_get_current_ticks(int64_t origsecs, int64_t origusecs) {
 #ifdef USE_MONOTONIC_TIME
-    return (lives_get_monotonic_time() - origusecs) * USEC_TO_TICKS;
+  return (lives_get_monotonic_time() - origusecs) * USEC_TO_TICKS;
 #else
-    gettimeofday(&tv, NULL);
-    return = TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
+  gettimeofday(&tv, NULL);
+  return = TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
 #endif
 }
 
@@ -2409,7 +2409,7 @@ void get_filename(char *filename, boolean strip_dir) {
   lives_strfreev(array);
 }
 
- 
+
 char *get_extension(const char *filename) {
   // return file extension without the "."
   char *tmp = lives_path_get_basename(filename);
@@ -2808,7 +2808,7 @@ void get_play_times(void) {
 
         for (i = offset_left; i < offset_right; i++) {
           atime = i / allocwidth * cfile->total_time;
-	  
+
           lives_painter_move_to(cr, i, prefs->bar_height * 2);
           vol = get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
           lives_painter_line_to(cr, i, (double)prefs->bar_height * (2. - vol));
@@ -3954,7 +3954,7 @@ int lives_chmod(const char *target, const char *mode) {
   return retval;
 }
 
-  
+
 int lives_cat(const char *from, const char *to, boolean append) {
   // may not fail
   char *com;
@@ -3970,7 +3970,7 @@ int lives_cat(const char *from, const char *to, boolean append) {
   return retval;
 }
 
-  
+
 int lives_echo(const char *text, const char *to, boolean append) {
   // may not fail
   char *com;
@@ -3986,7 +3986,7 @@ int lives_echo(const char *text, const char *to, boolean append) {
   return retval;
 }
 
-  
+
 void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
   char *com;
 #ifndef IS_MINGW
@@ -5176,7 +5176,8 @@ boolean is_writeable_dir(const char *dir) {
 #ifndef IS_MINGW
   struct statvfs sbuf;
 #else
-  char *tfile;s
+  char *tfile;
+  s
 #endif
 
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
@@ -5342,7 +5343,7 @@ lives_cancel_t check_for_bad_ffmpeg(void) {
     }
     lives_free(fname_next);
   }
-  
+
   cfile->frames = ofcount;
 
   if (!maybeok) {

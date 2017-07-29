@@ -1316,7 +1316,7 @@ boolean process_one(boolean visible) {
       if (cfile->opening && cfile->clip_type == CLIP_TYPE_DISK && !cfile->opening_only_audio &&
           (cfile->hsize > 0 || cfile->vsize > 0 || cfile->frames > 0) && (!mainw->effects_paused || !shown_paused_frames)) {
         uint32_t apxl;
-	mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+        mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
         if ((mainw->currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
             ((apxl = get_approx_ln((uint32_t)mainw->opening_frames)) < 200 ? apxl : 200) ||
             (mainw->effects_paused && !shown_paused_frames)) {
@@ -2763,7 +2763,7 @@ void threaded_dialog_spin(double fraction) {
     }
   }
 
-  if (1||lives_has_toplevel_focus()) {
+  if (1 || lives_has_toplevel_focus()) {
     if (LIVES_IS_WIDGET(procw->processing)) {
       lives_widget_show_all(procw->processing);
       lives_widget_queue_draw(procw->processing);
@@ -2809,13 +2809,13 @@ void end_threaded_dialog(void) {
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
-  if (procw!=NULL) {
+  if (procw != NULL) {
     lives_free(procw);
-    procw=NULL;
+    procw = NULL;
   }
 
-  mainw->cancel_type=CANCEL_KILL;
-  mainw->threaded_dialog=FALSE;
+  mainw->cancel_type = CANCEL_KILL;
+  mainw->threaded_dialog = FALSE;
 
   if (mainw->is_ready)
     if (lives_has_toplevel_focus()) {

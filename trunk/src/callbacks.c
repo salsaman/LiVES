@@ -118,9 +118,9 @@ void lives_exit(int signum) {
       lives_grab_remove(mainw->LiVES);
       mainw->ext_keyboard = FALSE;
       if (mainw->ext_playback) {
-	pthread_mutex_lock(&mainw->vpp_stream_mutex);
-	mainw->ext_audio = FALSE;
-	pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+        pthread_mutex_lock(&mainw->vpp_stream_mutex);
+        mainw->ext_audio = FALSE;
+        pthread_mutex_unlock(&mainw->vpp_stream_mutex);
         if (mainw->vpp->exit_screen != NULL)(*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
         stop_audio_stream();
         mainw->stream_ticks = -1;

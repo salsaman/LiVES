@@ -9625,8 +9625,10 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
 
           valis[k] = last_valueir + (next_valuesi[k] - last_valueir) / (tc_diff / TICKS_PER_SECOND_DBL) *
                      ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / TICKS_PER_SECOND_DBL) + .5;
-          valis[k + 1] = last_valueig + (next_valuesi[k + 1] - last_valueig) / (tc_diff / TICKS_PER_SECOND_DBL) * (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
-          valis[k + 2] = last_valueib + (next_valuesi[k + 2] - last_valueib) / (tc_diff / TICKS_PER_SECOND_DBL) * (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+          valis[k + 1] = last_valueig + (next_valuesi[k + 1] - last_valueig) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                         (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+          valis[k + 2] = last_valueib + (next_valuesi[k + 2] - last_valueib) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                         (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
 
           lives_free(last_valuesi);
           lives_free(next_valuesi);
@@ -9671,8 +9673,10 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
           }
           valds[k] = last_valuedr + (next_valuesd[k] - last_valuedr) / (tc_diff / TICKS_PER_SECOND_DBL) *
                      ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / TICKS_PER_SECOND_DBL);
-          valds[k + 1] = last_valuedg + (next_valuesd[k + 1] - last_valuedg) / (tc_diff / TICKS_PER_SECOND_DBL) * (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
-          valds[k + 2] = last_valuedb + (next_valuesd[k + 2] - last_valuedb) / (tc_diff / TICKS_PER_SECOND_DBL) * (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+          valds[k + 1] = last_valuedg + (next_valuesd[k + 1] - last_valuedg) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                         (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+          valds[k + 2] = last_valuedb + (next_valuesd[k + 2] - last_valuedb) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                         (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
 
           lives_free(last_valuesd);
           lives_free(next_valuesd);

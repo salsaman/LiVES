@@ -96,8 +96,8 @@ typedef struct {
   // and bitmaps in the encder plugins
 
   // optional audio packeting
-  boolean (*init_audio)(int in_sample_rate, int in_nchans, int argc, char **argv);
-  boolean (*render_audio_frame_float)(float **audio, int nsamps);
+  boolean(*init_audio)(int in_sample_rate, int in_nchans, int argc, char **argv);
+  boolean(*render_audio_frame_float)(float **audio, int nsamps);
 
   uint64_t capabilities;
 

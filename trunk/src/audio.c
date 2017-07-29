@@ -523,8 +523,8 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
 
   // scale is out_sample_rate / in_sample_rate (so 2.0 would play twice as fast, etc.)
 
-  // nsamps is number of samples, asamps is sample bit size (8 or 16) 
-  
+  // nsamps is number of samples, asamps is sample bit size (8 or 16)
+
   // output is in holding_buff which can be cast to uint8_t * or uint16_t *
 
   // returns number of frames out

@@ -3,7 +3,6 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
 #include "main.h"
 
 #ifdef HAVE_UNICAP
@@ -31,9 +30,6 @@
 #endif
 
 #include <unicap/unicap.h>
-
-////////////////////////////////////////////////////
-
 
 
 static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
@@ -106,8 +102,6 @@ static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
   }
 
 }
-
-
 
 
 boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, double timeoutsecs) {
@@ -317,9 +311,6 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 }
 
 
-
-
-
 /// get devnumber from user and open it to a new clip
 
 static boolean open_vdev_inner(unicap_device_t *device) {
@@ -379,7 +370,6 @@ static boolean open_vdev_inner(unicap_device_t *device) {
     return FALSE;
   }
 
-
   if (format->buffer_size != format->size.width * format->size.height * weed_palette_get_bits_per_macropixel(ldev->current_palette) /
       weed_palette_get_pixels_per_macropixel(ldev->current_palette) / 8) {
     int wwidth = format->size.width, awidth;
@@ -438,7 +428,6 @@ void lives_vdev_free(lives_vdev_t *ldev) {
   if (ldev->buffer1.data != NULL) lives_free(ldev->buffer1.data);
   if (ldev->buffer2.data != NULL) lives_free(ldev->buffer2.data);
 }
-
 
 
 boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
@@ -514,7 +503,6 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
   }
 
-
   for (i = dev_count - 1; i >= 0; i--) {
     if (!unicap_is_stream_locked(&devices[i])) {
       if (mainw->fx1_val == 0) {
@@ -562,8 +550,6 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   return TRUE;
 }
-
-
 
 #endif
 

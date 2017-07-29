@@ -163,11 +163,11 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
 
     // new streaming API
     if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL && pdriver->playing_file != -1
-	&& pdriver->playing_file != mainw->ascrap_file) {
+        && pdriver->playing_file != mainw->ascrap_file) {
       int nframes = nbytes / pdriver->out_achans / (pdriver->out_asamps >> 3);
       sample_silence_stream(pdriver->out_achans, nframes);
     }
-    
+
     if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
       pthread_mutex_lock(&mainw->abuf_frame_mutex);
       append_to_audio_buffer16(mainw->audio_frame_buffer, buff, xbytes / 2, 0);
@@ -544,12 +544,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
               if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
 
-	      // new streaming API
-	      pthread_mutex_lock(&mainw->vpp_stream_mutex);
-	      if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
-		(*mainw->vpp->render_audio_frame_float)(fltbuf, numFramesToWrite);
-	      }
-	      pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+              // new streaming API
+              pthread_mutex_lock(&mainw->vpp_stream_mutex);
+              if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+                (*mainw->vpp->render_audio_frame_float)(fltbuf, numFramesToWrite);
+              }
+              pthread_mutex_unlock(&mainw->vpp_stream_mutex);
 
               // convert float audio back to s16
               sample_move_float_int(pulsed->sound_buffer, fltbuf, numFramesToWrite, 1.0, pulsed->out_achans, 16, 0,
@@ -627,12 +627,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
                 if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fp, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
 
-		// new streaming API
-		pthread_mutex_lock(&mainw->vpp_stream_mutex);
-		if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
-		  (*mainw->vpp->render_audio_frame_float)(fp, numFramesToWrite);
-		}
-		pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+                // new streaming API
+                pthread_mutex_lock(&mainw->vpp_stream_mutex);
+                if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+                  (*mainw->vpp->render_audio_frame_float)(fp, numFramesToWrite);
+                }
+                pthread_mutex_unlock(&mainw->vpp_stream_mutex);
 
                 // convert float audio to s16
                 sample_move_float_int(buf, fp, numFramesToWrite, 1.0, pulsed->out_achans, 16, FALSE,
@@ -863,7 +863,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     }
     return;
   }
-  
+
   pa_stream_peek(pulsed->pstream, (const void **)&data, &rbytes);
 
   if (data == NULL) return;
@@ -890,7 +890,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example, or push it to a video generator
     // or stream it to the video playback plugin
-    
+
     if (has_audio_filters(AF_TYPE_A) || mainw->ext_audio) {
       // convert to float, apply any analysers
       boolean memok = TRUE;
@@ -926,12 +926,12 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
 
         if (has_audio_filters(AF_TYPE_A)) weed_apply_audio_effects_rt(fltbuf, pulsed->in_achans, xnframes, pulsed->in_arate, tc, TRUE);
 
-	// new streaming API
-	pthread_mutex_lock(&mainw->vpp_stream_mutex);
-	if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
-	  (*mainw->vpp->render_audio_frame_float)(fltbuf, xnframes);
-	}
-	pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+        // new streaming API
+        pthread_mutex_lock(&mainw->vpp_stream_mutex);
+        if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+          (*mainw->vpp->render_audio_frame_float)(fltbuf, xnframes);
+        }
+        pthread_mutex_unlock(&mainw->vpp_stream_mutex);
         for (i = 0; i < pulsed->in_achans; i++) {
           lives_free(fltbuf[i]);
         }
@@ -944,8 +944,8 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
   if (pulsed->playing_file == -1 || (mainw->record && mainw->record_paused)) {
     pa_stream_drop(pulsed->pstream);
     if (pulsed->playing_file == -1) {
-     pa_operation *paop = pa_stream_flush(pulsed->pstream, NULL, NULL); // if not recording, flush the rest of audio (to reduce latency)
-     pa_operation_unref(paop);
+      pa_operation *paop = pa_stream_flush(pulsed->pstream, NULL, NULL); // if not recording, flush the rest of audio (to reduce latency)
+      pa_operation_unref(paop);
     }
     return;
   }
@@ -1264,7 +1264,8 @@ int64_t lives_pulse_get_time(pulse_driver_t *pulsed, boolean absolute) {
     return pulsed->audio_ticks * absolute + (int64_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
   }
 #else
-  if (pulsed->is_output) xtime = pulsed->audio_ticks * absolute + (int64_t)(frames_written / (double)pulsed->out_arate * TICKS_PER_SECOND_DBL);
+  if (pulsed->is_output) xtime = pulsed->audio_ticks * absolute + (int64_t)(frames_written / (double)pulsed->out_arate *
+                                   TICKS_PER_SECOND_DBL);
   else xtime = pulsed->audio_ticks * absolute + (int64_t)(frames_written / (double)afile->arate * TICKS_PER_SECOND_DBL);
   return xtime;
 #endif

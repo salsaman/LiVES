@@ -1256,10 +1256,10 @@ LIVES_INLINE int get_approx_ln(uint32_t x) {
 
 LIVES_INLINE int64_t lives_get_current_ticks(int64_t origsecs, int64_t origusecs) {
 #ifdef USE_MONOTONIC_TIME
-    return (lives_get_monotonic_time() - origusecs) * U_SEC_RATIO;
+    return (lives_get_monotonic_time() - origusecs) * USEC_TO_TICKS;
 #else
     gettimeofday(&tv, NULL);
-    return = U_SECL * (tv.tv_sec - origsecs) + tv.tv_usec * U_SEC_RATIO - origusecs * U_SEC_RATIO;
+    return = TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
 #endif
 }
 
@@ -1570,7 +1570,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
   *ntc = otc + dtc;
 
   // nframe is our new frame
-  nframe = cframe + myround((double)dtc / U_SEC * fps);
+  nframe = cframe + myround((double)dtc / TICKS_PER_SECOND_DBL * fps);
 
   if (nframe == cframe || mainw->foreign) return nframe;
 

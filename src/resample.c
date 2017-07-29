@@ -30,25 +30,25 @@ static boolean reorder_leave_back = FALSE;
 
 LIVES_INLINE weed_timecode_t q_gint64(weed_timecode_t in, double fps) {
   // quantise timecode to fps
-  if (in > (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)U_SEC * (long double)fps + (long double).5) /
-                                         (long double)fps) * (weed_timecode_t)U_SECL; // quantise to frame timing
-  if (in < (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)U_SEC * (long double)fps - (long double).5) /
-                                         (long double)fps) * (weed_timecode_t)U_SECL; // quantise to frame timing
+  if (in > (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps + (long double).5) /
+                                         (long double)fps) * (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
+  if (in < (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps - (long double).5) /
+                                         (long double)fps) * (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
 LIVES_INLINE weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps) {
-  if (in != (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)U_SEC * (long double)fps) / (long double)fps) *
-                                         (weed_timecode_t)U_SECL; // quantise to frame timing
+  if (in != (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps) / (long double)fps) *
+                                         (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
 LIVES_INLINE weed_timecode_t q_dbl(double in, double fps) {
   // quantise (double)in to fps
   if (in > 0.) return ((weed_timecode_t)((long double)in * (long double)fps + (long double).5) / (long double)fps) *
-                        (weed_timecode_t)U_SECL; // quantise to frame timing
+                        (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
   if (in < 0.) return ((weed_timecode_t)((long double)in * (long double)fps - (long double).5) / (long double)fps) *
-                        (weed_timecode_t)U_SECL; // quantise to frame timing
+                        (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
@@ -448,7 +448,7 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
 //////////////////////////////////////////////////////////////////
 
 weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
-  // new style event system, now we quantise from event_list_t *in_list to *out_list with period tl/U_SEC
+  // new style event system, now we quantise from event_list_t *in_list to *out_list with period tl/TICKS_PER_SECOND_DBL
 
   // the timecode of the midpoint of our last frame events will match as near as possible the old length
   // but out_list will have regular period of tl microseconds
@@ -492,7 +492,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
     tp = tc_end - tp;
   } else {
     // only one event, use cfile->fps
-    tp = (weed_timecode_t)(U_SEC / cfile->fps);
+    tp = (weed_timecode_t)(TICKS_PER_SECOND_DBL / cfile->fps);
   }
 
   tc_end += tp;
@@ -538,7 +538,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         tp -= in_tc;
       } else {
         // only one event, use cfile->fps
-        tp = (weed_timecode_t)(U_SEC / cfile->fps);
+        tp = (weed_timecode_t)(TICKS_PER_SECOND_DBL / cfile->fps);
       }
 #ifdef RESAMPLE_USE_MIDPOINTS
       // calc mid-point of in frame
@@ -991,7 +991,7 @@ void on_resample_vid_ok(LiVESButton *button, LiVESEntry *entry) {
         do_memory_error_dialog();
         return;
       }
-      in_time += (weed_timecode_t)(1. / cfile->fps * U_SEC + .5);
+      in_time += (weed_timecode_t)(1. / cfile->fps * TICKS_PER_SECOND_DBL + .5);
     }
     cfile->event_list = new_event_list;
   }
@@ -1984,7 +1984,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
     perf_end = old_frames;
   } else {
     time_start = get_event_timecode(get_first_event(cfile->event_list));
-    perf_start = (int)(cfile->fps * (double)time_start / U_SEC) + 1;
+    perf_start = (int)(cfile->fps * (double)time_start / TICKS_PER_SECOND_DBL) + 1;
     perf_end = perf_start + count_events(cfile->event_list, FALSE, 0, 0) - 1;
   }
   com = lives_strdup_printf("%s deorder \"%s\" %d %d %d \"%s\" %d", prefs->backend, cfile->handle,

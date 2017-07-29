@@ -3956,7 +3956,7 @@ void load_start_image(int frame) {
     return;
   }
 
-  tc = ((frame - 1.)) / cfile->fps * U_SECL;
+  tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
   if (!prefs->ce_maxspect || (mainw->double_size && mainw->playing_file > -1)) {
     threaded_dialog_spin(0.);
@@ -4127,7 +4127,7 @@ void load_end_image(int frame) {
     return;
   }
 
-  tc = ((frame - 1.)) / cfile->fps * U_SECL;
+  tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
   if (!prefs->ce_maxspect || (mainw->double_size && mainw->playing_file > -1)) {
     threaded_dialog_spin(0.);
@@ -4342,7 +4342,7 @@ void load_preview_image(boolean update_always) {
     pixbuf = lives_pixbuf_scale_simple(mainw->imframe, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST);
   } else {
     weed_plant_t *layer = weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_timecode_t tc = ((mainw->preview_frame - 1.)) / cfile->fps * U_SECL;
+    weed_timecode_t tc = ((mainw->preview_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (mainw->playing_file == -1 && cfile->clip_type == CLIP_TYPE_FILE &&
@@ -5418,7 +5418,7 @@ static void load_frame_cleanup(boolean noswitch) {
 
   // format is now msg|timecode|fgclip|fgframe|fgfps|
   lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH, (const char *)
-               (tmp = lives_strdup_printf("%.8f|%d|%d|%.3f|", (double)mainw->currticks / U_SEC,
+               (tmp = lives_strdup_printf("%.8f|%d|%d|%.3f|", (double)mainw->currticks / TICKS_PER_SECOND_DBL,
                                           mainw->current_file, mainw->actual_frame, cfile->pb_fps)));
   lives_free(tmp);
 }
@@ -6533,7 +6533,7 @@ void load_frame_image(int frame) {
 
     // format is now msg|timecode|fgclip|fgframe|fgfps|
     lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH, (const char *)
-                 (tmp = lives_strdup_printf("%.8f|%d|%d|%.3f|", (double)mainw->currticks / U_SEC,
+                 (tmp = lives_strdup_printf("%.8f|%d|%d|%.3f|", (double)mainw->currticks / TICKS_PER_SECOND_DBL,
                                             mainw->current_file, mainw->actual_frame, cfile->pb_fps)));
     lives_free(tmp);
 

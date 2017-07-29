@@ -198,7 +198,7 @@ void handle_cached_keys(void) {
 
   static int last_kb_time = 0, current_kb_time;
 
-  current_kb_time = mainw->currticks * (1000 / U_SEC_RATIO);
+  current_kb_time = mainw->currticks * (1000 / USEC_TO_TICKS);
 
   if (cached_key && current_kb_time - last_kb_time > KEY_RPT_INTERVAL * 10) {
     last_kb_time = current_kb_time;

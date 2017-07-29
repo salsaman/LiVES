@@ -9245,13 +9245,13 @@ void changed_fps_during_pb(LiVESSpinButton   *spinbutton, livespointer user_data
   double new_fps = (double)((int)(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)) * 1000) / 1000.);
 
   if ((!cfile->play_paused && cfile->pb_fps == new_fps) || (cfile->play_paused && new_fps == 0.)) {
-    mainw->period = U_SEC / cfile->pb_fps;
+    mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
     return;
   }
 
   cfile->pb_fps = new_fps;
 
-  mainw->period = U_SEC / cfile->pb_fps;
+  mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
 #ifdef ENABLE_JACK
@@ -9744,7 +9744,7 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
 
   if (cfile->play_paused) {
     cfile->pb_fps = cfile->freeze_fps;
-    if (cfile->pb_fps != 0.) mainw->period = U_SEC / cfile->pb_fps;
+    if (cfile->pb_fps != 0.) mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
     else mainw->period = INT_MAX;
     cfile->play_paused = FALSE;
   } else {
@@ -11045,7 +11045,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
     reget_afilesize(mainw->current_file);
     get_total_time(cfile);
     aud_end = cfile->laudio_time;
-    ins_pt = (mainw->files[old_file]->start - 1.) / mainw->files[old_file]->fps * U_SEC;
+    ins_pt = (mainw->files[old_file]->start - 1.) / mainw->files[old_file]->fps * TICKS_PER_SECOND_DBL;
 
     if (!prefs->conserve_space) {
       mainw->error = FALSE;
@@ -11065,7 +11065,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
 
     // copy audio from old clip to current
     render_audio_segment(1, &(mainw->current_file), old_file, &vel, &aud_start, ins_pt,
-                         ins_pt + (weed_timecode_t)((aud_end - aud_start)*U_SEC), &vol, vol, vol, NULL);
+                         ins_pt + (weed_timecode_t)((aud_end - aud_start)*TICKS_PER_SECOND_DBL), &vol, vol, vol, NULL);
 
     end_threaded_dialog();
     close_current_file(old_file);

@@ -3937,7 +3937,7 @@ void resize_play_window(void) {
 #endif
 #ifdef ENABLE_JACK
           if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
-	    if (*(mainw->vpp->init_audio)(mainw->jackd->sample_out_rate, mainw->jackd->num_output_channels, mainw->vpp->extra_argc, mainw->vpp->extra_argv)) 
+	    if ((*mainw->vpp->init_audio)(mainw->jackd->sample_out_rate, mainw->jackd->num_output_channels, mainw->vpp->extra_argc, mainw->vpp->extra_argv)) 
 	      ext_audio = TRUE;
 	  }
 #endif

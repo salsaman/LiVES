@@ -381,7 +381,7 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
   do {
 
     if (mainw->files[file]->frames > 0) {
-      weed_timecode_t tc = (frame - 1.) / mainw->files[file]->fps * U_SECL;
+      weed_timecode_t tc = (frame - 1.) / mainw->files[file]->fps * TICKS_PER_SECOND;
       if (mainw->files[file]->frames > 0 && mainw->files[file]->clip_type == CLIP_TYPE_FILE) {
         lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[file]->ext_src)->cdata;
         if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST) &&
@@ -809,7 +809,7 @@ boolean mt_auto_backup(livespointer user_data) {
   if (mt->auto_back_time == 0) mt->auto_back_time = stime;
 
   diff = stime - mt->auto_back_time;
-  if (diff >= prefs->mt_auto_back * U_SECL) {
+  if (diff >= prefs->mt_auto_back * TICKS_PER_SECOND) {
     // time to back up the event_list
     if (mt->idlefunc != 0) {
       lives_source_remove(mt->idlefunc);
@@ -933,7 +933,7 @@ static LIVES_INLINE double get_time_from_x(lives_mt *mt, int x) {
   double time = (double)x / (double)lives_widget_get_allocation_width(mt->timeline) * (mt->tl_max - mt->tl_min) + mt->tl_min;
   if (time < 0.) time = 0.;
   else if (time > mt->end_secs + 1. / mt->fps) time = mt->end_secs + 1. / mt->fps;
-  return q_dbl(time, mt->fps) / U_SEC;
+  return q_dbl(time, mt->fps) / TICKS_PER_SECOND_DBL;
 }
 
 
@@ -977,7 +977,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
   LiVESPixbuf *thumbnail = NULL;
 
   double tl_span = mt->tl_max - mt->tl_min;
-  double offset_startd = tc / U_SEC;
+  double offset_startd = tc / TICKS_PER_SECOND_DBL;
   double offset_endd;
 
   boolean needs_text = TRUE;
@@ -1005,7 +1005,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
   offset_start = (int)((offset_startd - mt->tl_min) / tl_span * lives_widget_get_allocation_width(eventbox) + .5);
   if ((x1 > 0 || x2 > 0) && offset_start > (x1 + x2)) return;
 
-  offset_endd = get_event_timecode(block->end_event) / U_SEC + (!is_audio_eventbox(eventbox)) / cfile->fps;
+  offset_endd = get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL + (!is_audio_eventbox(eventbox)) / cfile->fps;
   offset_end = (offset_endd - mt->tl_min) / tl_span * lives_widget_get_allocation_width(eventbox);
 
   //if (offset_end+offset_start>eventbox->allocation.width) offset_end=eventbox->allocation.width-offset_start;
@@ -1047,7 +1047,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
         last_framenum = -1;
         for (i = offset_start; i < offset_end; i += BLOCK_THUMB_WIDTH) {
           if (i > x2 - x1) break;
-          tc += tl_span / lives_widget_get_allocation_width(eventbox) * width * U_SEC;
+          tc += tl_span / lives_widget_get_allocation_width(eventbox) * width * TICKS_PER_SECOND_DBL;
           if (i + BLOCK_THUMB_WIDTH < x1) continue;
           event = get_frame_event_at(mt->event_list, tc, event, FALSE);
           if (i + width >= 0) {
@@ -1247,8 +1247,8 @@ static void draw_aparams(lives_mt *mt, LiVESWidget *eventbox, lives_painter_t *c
   start_tc = get_event_timecode(init_event);
   end_tc = get_event_timecode(deinit_event);
 
-  offset_start = (int)((start_tc / U_SEC - mt->tl_min) / tl_span * lives_widget_get_allocation_width(eventbox) + .5);
-  offset_end = (int)((end_tc / U_SEC - mt->tl_min + 1. / mt->fps) / tl_span * lives_widget_get_allocation_width(eventbox) + .5);
+  offset_start = (int)((start_tc / TICKS_PER_SECOND_DBL - mt->tl_min) / tl_span * lives_widget_get_allocation_width(eventbox) + .5);
+  offset_end = (int)((end_tc / TICKS_PER_SECOND_DBL - mt->tl_min + 1. / mt->fps) / tl_span * lives_widget_get_allocation_width(eventbox) + .5);
 
   if (offset_end < 0 || offset_start > lives_widget_get_allocation_width(eventbox)) {
     lives_free(in_params);
@@ -1271,7 +1271,7 @@ static void draw_aparams(lives_mt *mt, LiVESWidget *eventbox, lives_painter_t *c
   //lives_painter_set_operator (cr, LIVES_PAINTER_OPERATOR_DEST_OVER);
   for (i = startpos; i < startx + width; i++) {
     dtime = get_time_from_x(mt, i);
-    tc = dtime * U_SEC;
+    tc = dtime * TICKS_PER_SECOND_DBL;
     if (tc >= end_tc) break;
 
     if (pchainx != NULL) interpolate_params(inst, pchainx, tc);
@@ -1512,7 +1512,7 @@ static char *mt_params_label(lives_mt *mt) {
 
 
 LIVES_INLINE double mt_get_effect_time(lives_mt *mt) {
-  return q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * U_SEC, mt->fps) / U_SEC;
+  return q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
 }
 
 
@@ -1543,8 +1543,8 @@ boolean add_mt_param_box(lives_mt *mt) {
   tc = get_event_timecode((weed_plant_t *)mt->init_event);
   deinit_event = (weed_plant_t *)weed_get_voidptr_value(mt->init_event, WEED_LEAF_DEINIT_EVENT, &error);
 
-  fx_start_time = tc / U_SEC;
-  fx_end_time = get_event_timecode(deinit_event) / U_SEC;
+  fx_start_time = tc / TICKS_PER_SECOND_DBL;
+  fx_end_time = get_event_timecode(deinit_event) / TICKS_PER_SECOND_DBL;
 
   if (mt->fx_box != NULL) {
     lives_widget_destroy(mt->fx_box);
@@ -1582,7 +1582,7 @@ boolean add_mt_param_box(lives_mt *mt) {
 
 static track_rect *get_block_from_time(LiVESWidget *eventbox, double time, lives_mt *mt) {
   // return block (track_rect) at seconds time in eventbox
-  weed_timecode_t tc = time * U_SECL;
+  weed_timecode_t tc = time * TICKS_PER_SECOND;
   track_rect *block;
 
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "blocks");
@@ -1590,7 +1590,7 @@ static track_rect *get_block_from_time(LiVESWidget *eventbox, double time, lives
 
   while (block != NULL) {
     if (get_event_timecode(block->start_event) > tc) return NULL;
-    if (q_gint64(get_event_timecode(block->end_event) + (!is_audio_eventbox(eventbox))*U_SEC / mt->fps, mt->fps) > tc) break;
+    if (q_gint64(get_event_timecode(block->end_event) + (!is_audio_eventbox(eventbox))*TICKS_PER_SECOND_DBL / mt->fps, mt->fps) > tc) break;
     block = block->next;
   }
   return block;
@@ -1876,7 +1876,7 @@ void track_select(lives_mt *mt) {
            weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
     boolean xx;
     weed_timecode_t init_tc = get_event_timecode(mt->init_event);
-    tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * U_SEC + init_tc, mt->fps);
+    tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + init_tc, mt->fps);
 
     // must be done in this order: interpolate, update, preview
     xx = get_track_index(mt, tc);
@@ -2846,7 +2846,7 @@ static weed_timecode_t set_play_position(lives_mt *mt) {
   if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_START) && (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT)) {
     mt->pb_loop_event = get_first_frame_event(mt->event_list);
     has_pb_loop_event = TRUE;
-    tc = q_gint64(U_SEC * jack_transport_get_time(), cfile->fps);
+    tc = q_gint64(TICKS_PER_SECOND_DBL * jack_transport_get_time(), cfile->fps);
     if (!mainw->loop_cont) {
       if (tc > end_tc) {
         mainw->cancelled = CANCEL_VID_END;
@@ -2860,7 +2860,7 @@ static weed_timecode_t set_play_position(lives_mt *mt) {
     //////////////////////////////////////////
 
     // set actual playback start time, from mt->ptr_time
-    tc = q_gint64(mt->ptr_time * U_SEC, cfile->fps);
+    tc = q_gint64(mt->ptr_time * TICKS_PER_SECOND_DBL, cfile->fps);
     mt->pb_start_time = mt->ptr_time;
 
     //////////////////////////////////
@@ -2964,7 +2964,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
   // start "playback" at mt->ptr_time; we just "render" one frame
   curr_tc = set_play_position(mt);
-  actual_frame = (int)((double)(curr_tc / U_SECL) * cfile->fps + 1.4999);
+  actual_frame = (int)((double)(curr_tc / TICKS_PER_SECOND) * cfile->fps + 1.4999);
   mainw->frame_layer = NULL;
 
   if (mt->is_rendering && actual_frame <= cfile->frames) {
@@ -3108,7 +3108,7 @@ void mt_tl_move(lives_mt *mt, double pos) {
 
   if (mt->is_ready) unpaint_lines(mt);
 
-  pos = q_dbl(pos, mt->fps) / U_SEC;
+  pos = q_dbl(pos, mt->fps) / TICKS_PER_SECOND_DBL;
   if (pos < 0.) pos = 0.;
 
   // need to reference ONLY mt->ptr_time, since it may be outside the range of mt->timeline
@@ -3131,7 +3131,7 @@ void mt_tl_move(lives_mt *mt, double pos) {
   lives_widget_queue_draw(mt->timeline);
   if (mt->init_event != NULL && mt->poly_state == POLY_PARAMS && !mt->block_node_spin) {
     mt->block_tl_move = TRUE;
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton), pos - get_event_timecode(mt->init_event) / U_SEC);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton), pos - get_event_timecode(mt->init_event) / TICKS_PER_SECOND_DBL);
     mt->block_tl_move = FALSE;
   }
   time_to_string(mt, pos, TIMECODE_LENGTH);
@@ -3145,7 +3145,7 @@ void mt_tl_move(lives_mt *mt, double pos) {
 
   if (mt->selected_init_event != NULL) {
     int error;
-    weed_timecode_t tc = q_gint64(pos * U_SEC, mt->fps);
+    weed_timecode_t tc = q_gint64(pos * TICKS_PER_SECOND_DBL, mt->fps);
     weed_plant_t *deinit_event = (weed_plant_t *)weed_get_voidptr_value(mt->selected_init_event, WEED_LEAF_DEINIT_EVENT, &error);
     if (tc < get_event_timecode(mt->selected_init_event) || tc > get_event_timecode(deinit_event)) {
       mt->selected_init_event = NULL;
@@ -3240,8 +3240,8 @@ static void mt_zoom(lives_mt *mt, double scale) {
     mt->tl_min = 0.;
   }
 
-  mt->tl_min = q_gint64(mt->tl_min * U_SEC, mt->fps) / U_SEC;
-  mt->tl_max = q_gint64(mt->tl_max * U_SEC, mt->fps) / U_SEC;
+  mt->tl_min = q_gint64(mt->tl_min * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
+  mt->tl_max = q_gint64(mt->tl_max * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
 
   if (mt->tl_min == mt->tl_max) mt->tl_max = mt->tl_min + 1. / mt->fps;
 
@@ -3546,8 +3546,8 @@ static void select_block(lives_mt *mt) {
     else add_context_label(mt, (tmp2 = lives_strdup(_("Current track: Backing audio\n"))));
     lives_free(tmp2);
 
-    add_context_label(mt, (tmp2 = lives_strdup_printf(_("%.2f sec. to %.2f sec.\n"), get_event_timecode(block->start_event) / U_SEC,
-                                  get_event_timecode(block->end_event) / U_SEC + 1. / mt->fps)));
+    add_context_label(mt, (tmp2 = lives_strdup_printf(_("%.2f sec. to %.2f sec.\n"), get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL,
+                                  get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL + 1. / mt->fps)));
     lives_free(tmp2);
     add_context_label(mt, (tmp2 = lives_strdup_printf(_("Source: %s"), (tmp = lives_path_get_basename(mainw->files[filenum]->name)))));
     lives_free(tmp2);
@@ -3893,7 +3893,7 @@ void mt_spin_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_
   if (!mainw->interactive) return;
 
   lives_signal_handler_block(mt->spinbutton_start, mt->spin_start_func);
-  mt->region_start = q_dbl(lives_spin_button_get_value(spinbutton), mt->fps) / U_SEC;
+  mt->region_start = q_dbl(lives_spin_button_get_value(spinbutton), mt->fps) / TICKS_PER_SECOND_DBL;
   lives_spin_button_set_value(spinbutton, mt->region_start);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_end), mt->region_start, mt->end_secs);
   lives_widget_queue_draw(mt->timeline_reg);
@@ -3948,7 +3948,7 @@ void mt_spin_end_value_changed(LiVESSpinButton *spinbutton, livespointer user_da
   if (!mainw->interactive) return;
 
   lives_signal_handler_block(mt->spinbutton_end, mt->spin_end_func);
-  mt->region_end = q_dbl(lives_spin_button_get_value(spinbutton), mt->fps) / U_SEC;
+  mt->region_end = q_dbl(lives_spin_button_get_value(spinbutton), mt->fps) / TICKS_PER_SECOND_DBL;
   lives_spin_button_set_value(spinbutton, mt->region_end);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_start), 0., mt->region_end);
   lives_widget_queue_draw(mt->timeline_reg);
@@ -4842,7 +4842,7 @@ static void apply_avol_filter(lives_mt *mt) {
     }
 
     mt->region_start = 0.;
-    mt->region_end = (get_event_timecode(new_end_event) + U_SEC / mt->fps) / U_SEC;
+    mt->region_end = (get_event_timecode(new_end_event) + TICKS_PER_SECOND_DBL / mt->fps) / TICKS_PER_SECOND_DBL;
     if (mt->selected_tracks != NULL) {
       lives_list_free(mt->selected_tracks);
       mt->selected_tracks = NULL;
@@ -5481,7 +5481,7 @@ static boolean timecode_string_validate(LiVESEntry *entry, lives_mt *mt) {
 
   pos = mt->ptr_time;
 
-  pos = q_dbl(pos, mt->fps) / U_SEC;
+  pos = q_dbl(pos, mt->fps) / TICKS_PER_SECOND_DBL;
   if (pos < 0.) pos = 0.;
 
   time_to_string(mt, pos, TIMECODE_LENGTH);
@@ -5532,7 +5532,7 @@ static void after_timecode_changed(LiVESWidget *entry, LiVESXEventFocus *dir, li
 
   if (!timecode_string_validate(LIVES_ENTRY(entry), mt)) {
     pos = mt->ptr_time;
-    pos = q_dbl(pos, mt->fps) / U_SEC;
+    pos = q_dbl(pos, mt->fps) / TICKS_PER_SECOND_DBL;
     if (pos < 0.) pos = 0.;
     time_to_string(mt, pos, TIMECODE_LENGTH);
   }
@@ -8801,7 +8801,7 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
                 LIVES_ERROR("invalid atrack");
               } else {
                 if (avel[atrack] != 0.) {
-                  aval = aseek[atrack] + (tc - atc[atrack]) / U_SEC * avel[atrack];
+                  aval = aseek[atrack] + (tc - atc[atrack]) / TICKS_PER_SECOND_DBL * avel[atrack];
                   last_aclip = last_aclips[atrack];
                   if (aval > used_clips[last_aclip]) used_clips[last_aclip] = aval;
                 }
@@ -8816,7 +8816,7 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
                 LIVES_ERROR("invalid back atrack");
               } else {
                 if (neg_avel[atrack] != 0.) {
-                  aval = neg_aseek[atrack] + (tc - neg_atc[atrack]) / U_SEC * neg_avel[atrack];
+                  aval = neg_aseek[atrack] + (tc - neg_atc[atrack]) / TICKS_PER_SECOND_DBL * neg_avel[atrack];
                   last_aclip = neg_last_aclips[atrack];
                   if (aval > used_clips[last_aclip]) used_clips[last_aclip] = aval;
                 }
@@ -9585,7 +9585,7 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
                 if (tc == block_marker_uo_tc && int_array_contains_value(block_marker_uo_tracks, block_marker_uo_num_tracks, j))
                   ordered = FALSE;
                 // start a new rectangle
-                offset_start = calc_time_from_frame(renumbered_clips[clip_index[j]], frame_index[j]) * U_SEC;
+                offset_start = calc_time_from_frame(renumbered_clips[clip_index[j]], frame_index[j]) * TICKS_PER_SECOND_DBL;
                 add_block_start_point(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, j)), tc,
                                       renumbered_clips[clip_index[j]], offset_start, event, ordered);
               }
@@ -9659,7 +9659,7 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
                 avels[aclips[i] + 1] = aseeks[i + 1];
                 //}
                 if (avels[aclips[i] + 1] != 0.) {
-                  add_block_start_point(audio_draw, tc, renumbered_clips[aclips[i + 1]], aseeks[i]*U_SEC, event, TRUE);
+                  add_block_start_point(audio_draw, tc, renumbered_clips[aclips[i + 1]], aseeks[i]*TICKS_PER_SECOND_DBL, event, TRUE);
                 }
               }
             }
@@ -10937,8 +10937,8 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
 
 boolean block_overlap(LiVESWidget *eventbox, double time_start, double time_end) {
-  weed_timecode_t tc_start = time_start * U_SECL;
-  weed_timecode_t tc_end = time_end * U_SECL;
+  weed_timecode_t tc_start = time_start * TICKS_PER_SECOND;
+  weed_timecode_t tc_end = time_end * TICKS_PER_SECOND;
   track_rect *block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "blocks");
 
   while (block != NULL) {
@@ -10955,7 +10955,7 @@ static track_rect *get_block_before(LiVESWidget *eventbox, double time, boolean 
   // if allow_cur is TRUE, we may count blocks whose end is after "time" but whose start is
   // before or at time
 
-  weed_timecode_t tc = time * U_SECL;
+  weed_timecode_t tc = time * TICKS_PER_SECOND;
   track_rect *block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "blocks"), *last_block = NULL;
 
   while (block != NULL) {
@@ -10972,7 +10972,7 @@ static track_rect *get_block_after(LiVESWidget *eventbox, double time, boolean a
   // if allow_cur is TRUE, we may count blocks whose end is after "time" but whose start is
   // before or at time
 
-  weed_timecode_t tc = time * U_SECL;
+  weed_timecode_t tc = time * TICKS_PER_SECOND;
   track_rect *block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "blocks");
 
   while (block != NULL) {
@@ -11004,7 +11004,7 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
         (LiVESWidget *)lives_widget_object_get_data
         (LIVES_WIDGET_OBJECT(block->eventbox), "owner")) != NULL) {
     // if moving an audio block we move the associated video block first
-    block = get_block_from_time(oeventbox, start_tc / U_SEC, mt);
+    block = get_block_from_time(oeventbox, start_tc / TICKS_PER_SECOND_DBL, mt);
   }
 
   mt->block_selected = block;
@@ -11016,8 +11016,8 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
     weed_timecode_t tc = 0, tcnow;
     weed_timecode_t tclen = end_tc - start_tc;
     while (tc <= tclen) {
-      tcnow = q_gint64(tc + timesecs * U_SEC, mt->fps);
-      tc += U_SEC / mt->fps;
+      tcnow = q_gint64(tc + timesecs * TICKS_PER_SECOND_DBL, mt->fps);
+      tc += TICKS_PER_SECOND_DBL / mt->fps;
       if (old_track == new_track && tcnow >= start_tc && tcnow <= end_tc) continue; // ignore ourself !
       event = get_frame_event_at(mt->event_list, tcnow, event, TRUE);
       if (event == NULL) break; // must be end of timeline
@@ -11046,11 +11046,11 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
   if (old_track > -1) {
     clip = get_frame_event_clip(block->start_event, old_track);
     mt->insert_start = block->offset_start;
-    mt->insert_end = block->offset_start + end_tc - start_tc + q_gint64(U_SEC / mt->fps, mt->fps);
+    mt->insert_end = block->offset_start + end_tc - start_tc + q_gint64(TICKS_PER_SECOND_DBL / mt->fps, mt->fps);
   } else {
     clip = get_audio_frame_clip(block->start_event, old_track);
     mt->insert_avel = get_audio_frame_vel(block->start_event, old_track);
-    mt->insert_start = q_gint64(get_audio_frame_seek(block->start_event, old_track) * U_SEC, mt->fps);
+    mt->insert_start = q_gint64(get_audio_frame_seek(block->start_event, old_track) * TICKS_PER_SECOND_DBL, mt->fps);
     mt->insert_end = q_gint64(mt->insert_start + (end_tc - start_tc), mt->fps);
   }
 
@@ -11073,7 +11073,7 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
 
   mt->insert_start = mt->insert_end = -1;
 
-  new_start_tc = q_gint64(timesecs * U_SEC, mt->fps);
+  new_start_tc = q_gint64(timesecs * TICKS_PER_SECOND_DBL, mt->fps);
 
   remove_end_blank_frames(mt->event_list, FALSE); // leave filter inits
 
@@ -11094,20 +11094,20 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
     double oldr_end = mt->region_end;
     LiVESList *tracks_sel = NULL;
     track_rect *lblock;
-    double rtc = get_event_timecode(block->start_event) / U_SEC - 1. / mt->fps, rstart = 0., rend;
+    double rtc = get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL - 1. / mt->fps, rstart = 0., rend;
 
     if (mt->opts.grav_mode == GRAV_MODE_LEFT) {
       // gravity left - move left until we hit another block or time 0
       if (rtc >= 0.) {
         lblock = block->prev;
-        if (lblock != NULL) rstart = get_event_timecode(lblock->end_event) / U_SEC;
+        if (lblock != NULL) rstart = get_event_timecode(lblock->end_event) / TICKS_PER_SECOND_DBL;
       }
-      rend = get_event_timecode(block->end_event) / U_SEC;
+      rend = get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL;
     } else {
       // gravity right - move right until we hit the next block
       lblock = block->next;
-      rstart = get_event_timecode(block->start_event) / U_SEC;
-      rend = get_event_timecode(lblock->start_event) / U_SEC;
+      rstart = get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL;
+      rend = get_event_timecode(lblock->start_event) / TICKS_PER_SECOND_DBL;
     }
 
     mt->region_start = rstart;
@@ -11151,7 +11151,7 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
 
   if (!did_backup && mt->framedraw != NULL && mt->current_rfx != NULL && mt->init_event != NULL &&
       mt->poly_state == POLY_PARAMS && weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
-    weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * U_SEC +
+    weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL +
                                   get_event_timecode(mt->init_event), mt->fps);
     get_track_index(mt, tc);
   }
@@ -11278,7 +11278,7 @@ static void set_in_out_spin_ranges(lives_mt *mt, weed_timecode_t start_tc, weed_
   weed_timecode_t min_tc = 0, max_tc = -1;
   weed_timecode_t offset_start = get_event_timecode(block->start_event);
   int filenum;
-  double in_val = start_tc / U_SEC, out_val = end_tc / U_SEC, in_start_range = 0., out_start_range = in_val + 1. / mt->fps;
+  double in_val = start_tc / TICKS_PER_SECOND_DBL, out_val = end_tc / TICKS_PER_SECOND_DBL, in_start_range = 0., out_start_range = in_val + 1. / mt->fps;
   double out_end_range, real_out_end_range;
   double in_end_range = out_val - 1. / mt->fps, real_in_start_range = in_start_range;
   double avel = 1.;
@@ -11288,8 +11288,8 @@ static void set_in_out_spin_ranges(lives_mt *mt, weed_timecode_t start_tc, weed_
   lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
   lives_signal_handler_block(mt->spinbutton_in, mt->spin_in_func);
 
-  if (block->prev != NULL) min_tc = get_event_timecode(block->prev->end_event) + (double)(track >= 0) * U_SEC / mt->fps;
-  if (block->next != NULL) max_tc = get_event_timecode(block->next->start_event) - (double)(track >= 0) * U_SEC / mt->fps;
+  if (block->prev != NULL) min_tc = get_event_timecode(block->prev->end_event) + (double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps;
+  if (block->next != NULL) max_tc = get_event_timecode(block->next->start_event) - (double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps;
 
   if (track >= 0) {
     filenum = get_frame_event_clip(block->start_event, track);
@@ -11299,16 +11299,16 @@ static void set_in_out_spin_ranges(lives_mt *mt, weed_timecode_t start_tc, weed_
     out_end_range = count_resampled_frames(mainw->files[filenum]->frames, mainw->files[filenum]->fps, mt->fps) / mt->fps;
   } else {
     filenum = get_audio_frame_clip(block->start_event, track);
-    out_end_range = q_gint64(mainw->files[filenum]->laudio_time * U_SEC, mt->fps) / U_SEC;
+    out_end_range = q_gint64(mainw->files[filenum]->laudio_time * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
     avel = get_audio_frame_vel(block->start_event, track);
   }
   real_out_end_range = out_end_range;
 
   if (mt->opts.insert_mode != INSERT_MODE_OVERWRITE) {
-    if (!block->end_anchored && max_tc > -1 && (((max_tc - offset_start) / U_SEC * ABS(avel) + in_val) < out_end_range))
-      real_out_end_range = q_gint64((max_tc - offset_start) * ABS(avel) + in_val * U_SEC, mt->fps) / U_SEC;
-    if (!block->start_anchored && min_tc > -1 && (((min_tc - offset_start) / U_SEC * ABS(avel) + in_val) > in_start_range))
-      real_in_start_range = q_gint64((min_tc - offset_start) * ABS(avel) + in_val * U_SEC, mt->fps) / U_SEC;
+    if (!block->end_anchored && max_tc > -1 && (((max_tc - offset_start) / TICKS_PER_SECOND_DBL * ABS(avel) + in_val) < out_end_range))
+      real_out_end_range = q_gint64((max_tc - offset_start) * ABS(avel) + in_val * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
+    if (!block->start_anchored && min_tc > -1 && (((min_tc - offset_start) / TICKS_PER_SECOND_DBL * ABS(avel) + in_val) > in_start_range))
+      real_in_start_range = q_gint64((min_tc - offset_start) * ABS(avel) + in_val * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
     if (!block->start_anchored) out_end_range = real_out_end_range;
     if (!block->end_anchored) in_start_range = real_in_start_range;
   }
@@ -11348,7 +11348,7 @@ static void update_in_image(lives_mt *mt) {
   if (block != NULL) {
     track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "layer_number"));
     filenum = get_frame_event_clip(block->start_event, track);
-    frame_start = calc_frame_from_time(filenum, block->offset_start / U_SEC);
+    frame_start = calc_frame_from_time(filenum, block->offset_start / TICKS_PER_SECOND_DBL);
   } else {
     filenum = mt->file_selected;
     frame_start = mainw->files[filenum]->start;
@@ -11376,7 +11376,7 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
   if (block != NULL) {
     track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "layer_number"));
     filenum = get_frame_event_clip(block->start_event, track);
-    frame_end = calc_frame_from_time(filenum, end_tc / U_SEC - 1. / mt->fps);
+    frame_end = calc_frame_from_time(filenum, end_tc / TICKS_PER_SECOND_DBL - 1. / mt->fps);
   } else {
     filenum = mt->file_selected;
     frame_end = mainw->files[filenum]->end;
@@ -11439,7 +11439,7 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
   new_start_tc = q_dbl(new_start, mt->fps);
 
   if (new_start_tc == orig_start_tc || !block->ordered) {
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), new_start_tc / U_SEC);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), new_start_tc / TICKS_PER_SECOND_DBL);
     return;
   }
 
@@ -11450,13 +11450,13 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
     if (!mt->aud_track_selected) {
       if (mt->opts.pertrack_audio) {
         LiVESWidget *aeventbox = LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "atrack"));
-        ablock = get_block_from_time(aeventbox, tl_start / U_SEC, mt);
+        ablock = get_block_from_time(aeventbox, tl_start / TICKS_PER_SECOND_DBL, mt);
       }
       start_anchored = block->start_anchored;
     } else {
       LiVESWidget *eventbox = LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "owner"));
       ablock = block;
-      block = get_block_from_time(eventbox, tl_start / U_SEC, mt);
+      block = get_block_from_time(eventbox, tl_start / TICKS_PER_SECOND_DBL, mt);
       start_anchored = ablock->start_anchored;
     }
     filenum = get_frame_event_clip(block->start_event, track);
@@ -11487,7 +11487,7 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
             } else {
               remove_audio_for_track(ablock->start_event, track);
             }
-            aseek += q_gint64(avel * (double)(get_event_timecode(event) - get_event_timecode(ablock->start_event)), mt->fps) / U_SEC;
+            aseek += q_gint64(avel * (double)(get_event_timecode(event) - get_event_timecode(ablock->start_event)), mt->fps) / TICKS_PER_SECOND_DBL;
             ablock->start_event = event;
             ablock->offset_start = new_start_tc;
           }
@@ -11506,7 +11506,7 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
 
       if (ablock != NULL) {
         insert_audio_event_at(mt->event_list, ablock->start_event, track, aclip, aseek, avel);
-        ablock->offset_start = q_dbl(aseek * U_SEC, mt->fps) / U_SEC;
+        ablock->offset_start = q_dbl(aseek * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
       }
 
       // move filter_inits right, and deinits left
@@ -11548,13 +11548,13 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
 
         remove_audio_for_track(ablock->start_event, track);
 
-        aseek += q_gint64(new_start_tc - ablock->offset_start, mt->fps) / U_SEC;
+        aseek += q_gint64(new_start_tc - ablock->offset_start, mt->fps) / TICKS_PER_SECOND_DBL;
         ablock->start_event = get_frame_event_at_or_before(mt->event_list,
                               q_gint64(tl_start + (new_start_tc - ablock->offset_start) / avel, mt->fps),
                               get_prev_frame_event(ablock->start_event));
 
         insert_audio_event_at(mt->event_list, ablock->start_event, track, aclip, aseek, avel);
-        ablock->offset_start = q_dbl(aseek * U_SEC, mt->fps) / U_SEC;
+        ablock->offset_start = q_dbl(aseek * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
       }
       if (block != ablock) {
         // do an insert from offset_start down
@@ -11588,29 +11588,29 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
   } else {
     // start is anchored, do a re-insert from start to end
     lives_mt_insert_mode_t insert_mode = mt->opts.insert_mode;
-    offset_end = q_gint64((block->offset_start = new_start_tc) + (weed_timecode_t)(U_SEC / mt->fps) +
+    offset_end = q_gint64((block->offset_start = new_start_tc) + (weed_timecode_t)(TICKS_PER_SECOND_DBL / mt->fps) +
                           (get_event_timecode(block->end_event) - get_event_timecode(block->start_event)), mt->fps);
     mt->opts.insert_mode = INSERT_MODE_OVERWRITE;
     if (track >= 0) insert_frames(filenum, new_start_tc, offset_end, tl_start, DIRECTION_POSITIVE, block->eventbox, mt, block);
     if (ablock != NULL) {
       aclip = get_audio_frame_clip(ablock->start_event, track);
       aseek = get_audio_frame_seek(ablock->start_event, track);
-      aseek += q_gint64(new_start_tc - orig_start_tc, mt->fps) / U_SEC;
+      aseek += q_gint64(new_start_tc - orig_start_tc, mt->fps) / TICKS_PER_SECOND_DBL;
       insert_audio_event_at(mt->event_list, ablock->start_event, track, aclip, aseek, avel);
-      ablock->offset_start = q_gint64(aseek * U_SEC, mt->fps);
+      ablock->offset_start = q_gint64(aseek * TICKS_PER_SECOND_DBL, mt->fps);
     }
     mt->opts.insert_mode = insert_mode;
   }
 
-  offset_end = (new_start_tc = block->offset_start) + (weed_timecode_t)((double)(track >= 0) * U_SEC / mt->fps) +
+  offset_end = (new_start_tc = block->offset_start) + (weed_timecode_t)((double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps) +
                avel * (get_event_timecode(block->end_event) - get_event_timecode(block->start_event));
 
   if (mt->poly_state == POLY_IN_OUT) {
     lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
     lives_signal_handler_block(mt->spinbutton_in, mt->spin_in_func);
     set_in_out_spin_ranges(mt, new_start_tc, offset_end);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), offset_end / U_SEC);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), new_start_tc / U_SEC);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), offset_end / TICKS_PER_SECOND_DBL);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), new_start_tc / TICKS_PER_SECOND_DBL);
     lives_spin_button_update(LIVES_SPIN_BUTTON(mt->spinbutton_out));
     lives_spin_button_update(LIVES_SPIN_BUTTON(mt->spinbutton_in));
     lives_signal_handler_unblock(mt->spinbutton_out, mt->spin_out_func);
@@ -11668,7 +11668,7 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
     return;
   }
 
-  start_val = block->offset_start / U_SEC;
+  start_val = block->offset_start / TICKS_PER_SECOND_DBL;
   event = block->end_event;
   track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "layer_number"));
 
@@ -11679,13 +11679,13 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
     if (!mt->aud_track_selected) {
       if (mt->opts.pertrack_audio) {
         LiVESWidget *aeventbox = LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "atrack"));
-        ablock = get_block_from_time(aeventbox, tl_end / U_SEC - 1. / mt->fps, mt);
+        ablock = get_block_from_time(aeventbox, tl_end / TICKS_PER_SECOND_DBL - 1. / mt->fps, mt);
       }
       end_anchored = block->end_anchored;
     } else {
       LiVESWidget *eventbox = LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "owner"));
       ablock = block;
-      block = get_block_from_time(eventbox, tl_end / U_SEC - 1. / mt->fps, mt);
+      block = get_block_from_time(eventbox, tl_end / TICKS_PER_SECOND_DBL - 1. / mt->fps, mt);
       end_anchored = ablock->end_anchored;
     }
     filenum = get_frame_event_clip(block->start_event, track);
@@ -11697,14 +11697,14 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
   }
 
   // offset_end is timecode of end event within source (scaled for velocity)
-  offset_end = q_gint64(block->offset_start + (weed_timecode_t)((double)(track >= 0) * U_SEC / mt->fps) +
+  offset_end = q_gint64(block->offset_start + (weed_timecode_t)((double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps) +
                         (weed_timecode_t)((double)(get_event_timecode(block->end_event) -
                                           get_event_timecode(block->start_event)) * avel), mt->fps);
 
   if (track >= 0 && new_end > mainw->files[filenum]->frames / mainw->files[filenum]->fps) new_end = mainw->files[filenum]->frames /
         mainw->files[filenum]->fps;
 
-  new_end_tc = q_gint64(block->offset_start + (new_end - start_val) * U_SEC, mt->fps);
+  new_end_tc = q_gint64(block->offset_start + (new_end - start_val) * TICKS_PER_SECOND_DBL, mt->fps);
   orig_end_tc = offset_end;
 
 #ifdef DEBUG_BL_MOVE
@@ -11712,9 +11712,9 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
           get_event_timecode(block->start_event), new_end, orig_end_tc, new_end_tc);
 #endif
 
-  if (ABS(new_end_tc - orig_end_tc) < (.5 * U_SEC) / mt->fps || !block->ordered) {
+  if (ABS(new_end_tc - orig_end_tc) < (.5 * TICKS_PER_SECOND_DBL) / mt->fps || !block->ordered) {
     lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), new_end_tc / U_SEC);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), new_end_tc / TICKS_PER_SECOND_DBL);
     lives_signal_handler_unblock(mt->spinbutton_out, mt->spin_out_func);
     return;
   }
@@ -11722,9 +11722,9 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
   start_event = get_prev_frame_event(event);
 
   if (!end_anchored) {
-    new_tl_tc = q_gint64(get_event_timecode(block->start_event) + (new_end - start_val) * U_SEC / avel -
-                         (double)(track >= 0) * U_SEC / mt->fps, mt->fps);
-    if (track < 0) new_tl_tc -= (U_SEC / mt->fps);
+    new_tl_tc = q_gint64(get_event_timecode(block->start_event) + (new_end - start_val) * TICKS_PER_SECOND_DBL / avel -
+                         (double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps, mt->fps);
+    if (track < 0) new_tl_tc -= (TICKS_PER_SECOND_DBL / mt->fps);
 
 #ifdef DEBUG_BL_MOVE
     g_print("new tl tc is %ld %ld %.4f %.4f\n", new_tl_tc, tl_end, new_end, start_val);
@@ -11754,7 +11754,7 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
           weed_plant_t *shortcut = ablock->end_event;
           mt->event_list = insert_blank_frame_event_at(mt->event_list,
                            q_gint64(new_tl_tc + (weed_timecode_t)((double)(track >= 0) *
-                                    U_SEC / mt->fps), mt->fps),
+                                    TICKS_PER_SECOND_DBL / mt->fps), mt->fps),
                            &shortcut);
           ablock->end_event = shortcut;
         } else ablock->end_event = new_end_event;
@@ -11798,7 +11798,7 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
       // end increased, not anchored
       if (track >= 0) {
         // do an insert from end_tc up, starting with end_frame and finishing at new_end
-        insert_frames(filenum, offset_end, new_end_tc, tl_end + (weed_timecode_t)(U_SEC / mt->fps), DIRECTION_POSITIVE,
+        insert_frames(filenum, offset_end, new_end_tc, tl_end + (weed_timecode_t)(TICKS_PER_SECOND_DBL / mt->fps), DIRECTION_POSITIVE,
                       block->eventbox, mt, block);
         block->end_event = get_frame_event_at(mt->event_list, q_gint64(new_end_tc + tl_end - offset_end, mt->fps),
                                               block->end_event, TRUE);
@@ -11808,22 +11808,22 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
         weed_timecode_t final_tc = get_event_timecode(last_frame_event);
         shortcut = last_frame_event;
         while (final_tc < new_tl_tc) {
-          final_tc = q_gint64(final_tc + U_SEC / mt->fps, mt->fps);
+          final_tc = q_gint64(final_tc + TICKS_PER_SECOND_DBL / mt->fps, mt->fps);
           mt->event_list = insert_blank_frame_event_at(mt->event_list, final_tc, &shortcut);
         }
       }
       if (ablock != NULL) {
-        new_end_event = get_frame_event_at(mt->event_list, q_gint64(new_tl_tc + U_SEC / mt->fps, mt->fps), ablock->end_event, TRUE);
+        new_end_event = get_frame_event_at(mt->event_list, q_gint64(new_tl_tc + TICKS_PER_SECOND_DBL / mt->fps, mt->fps), ablock->end_event, TRUE);
         if (new_end_event == ablock->end_event) {
           lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
-          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), orig_end_tc / U_SEC);
+          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), orig_end_tc / TICKS_PER_SECOND_DBL);
           lives_signal_handler_unblock(mt->spinbutton_out, mt->spin_out_func);
           return;
         }
         remove_audio_for_track(ablock->end_event, track);
         if (new_end_event == NULL) {
           if (shortcut == NULL) shortcut = ablock->end_event;
-          mt->event_list = insert_blank_frame_event_at(mt->event_list, q_gint64(new_tl_tc + U_SEC / mt->fps, mt->fps), &shortcut);
+          mt->event_list = insert_blank_frame_event_at(mt->event_list, q_gint64(new_tl_tc + TICKS_PER_SECOND_DBL / mt->fps, mt->fps), &shortcut);
           ablock->end_event = shortcut;
         } else ablock->end_event = new_end_event;
 
@@ -11860,14 +11860,14 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
     lives_mt_insert_mode_t insert_mode = mt->opts.insert_mode;
 
     offset_end = q_gint64((offset_start = block->offset_start + new_end_tc - orig_end_tc) +
-                          (weed_timecode_t)((double)(track >= 0) * U_SEC / mt->fps) +
+                          (weed_timecode_t)((double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps) +
                           (get_event_timecode(block->end_event) - get_event_timecode(block->start_event)), mt->fps);
 
     mt->opts.insert_mode = INSERT_MODE_OVERWRITE;
 
-    // note: audio blocks end at the timecode, video blocks end at tc + U_SEC/mt->fps
+    // note: audio blocks end at the timecode, video blocks end at tc + TICKS_PER_SECOND_DBL/mt->fps
     if (track >= 0) insert_frames(filenum, offset_end, offset_start, tl_end +
-                                    (weed_timecode_t)((double)(track >= 0 && !mt->aud_track_selected)*U_SEC / mt->fps),
+                                    (weed_timecode_t)((double)(track >= 0 && !mt->aud_track_selected)*TICKS_PER_SECOND_DBL / mt->fps),
                                     DIRECTION_NEGATIVE, block->eventbox, mt, block);
 
     block->offset_start = q_gint64(offset_start, mt->fps);
@@ -11876,16 +11876,16 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
       aclip = get_audio_frame_clip(ablock->start_event, track);
       aseek = get_audio_frame_seek(ablock->start_event, track);
       avel = get_audio_frame_vel(ablock->start_event, track);
-      aseek += q_gint64(new_end_tc - orig_end_tc, mt->fps) / U_SEC;
+      aseek += q_gint64(new_end_tc - orig_end_tc, mt->fps) / TICKS_PER_SECOND_DBL;
       insert_audio_event_at(mt->event_list, ablock->start_event, track, aclip, aseek, avel);
-      ablock->offset_start = q_gint64(aseek * U_SEC, mt->fps);
+      ablock->offset_start = q_gint64(aseek * TICKS_PER_SECOND_DBL, mt->fps);
     }
 
     mt->opts.insert_mode = insert_mode;
   }
 
   // get new offset_end
-  new_end_tc = (block->offset_start + (weed_timecode_t)((double)(track >= 0) * U_SEC / mt->fps) +
+  new_end_tc = (block->offset_start + (weed_timecode_t)((double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps) +
                 (get_event_timecode(block->end_event) - get_event_timecode(block->start_event)) * avel);
 
 #ifdef DEBUG_BL_MOVE
@@ -11902,8 +11902,8 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
     lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
     lives_signal_handler_block(mt->spinbutton_in, mt->spin_in_func);
     set_in_out_spin_ranges(mt, block->offset_start, new_end_tc);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), block->offset_start / U_SEC);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), new_end_tc / U_SEC);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), block->offset_start / TICKS_PER_SECOND_DBL);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), new_end_tc / TICKS_PER_SECOND_DBL);
     lives_signal_handler_unblock(mt->spinbutton_out, mt->spin_out_func);
     lives_signal_handler_unblock(mt->spinbutton_in, mt->spin_in_func);
 
@@ -11937,14 +11937,14 @@ void avel_reverse_toggled(LiVESToggleButton *togglebutton, livespointer user_dat
   double old_out_val = lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->spinbutton_out));
 
   // update avel and aseek
-  aseek_end = aseek + (get_event_timecode(block->end_event) - get_event_timecode(block->start_event)) / U_SEC * (-avel);
+  aseek_end = aseek + (get_event_timecode(block->end_event) - get_event_timecode(block->start_event)) / TICKS_PER_SECOND_DBL * (-avel);
   insert_audio_event_at(mt->event_list, block->start_event, track, aclip, aseek_end, avel);
 
   lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
   lives_signal_handler_block(mt->spinbutton_in, mt->spin_in_func);
 
-  if (avel < 0.) set_in_out_spin_ranges(mt, old_in_val * U_SEC, old_out_val * U_SEC);
-  else set_in_out_spin_ranges(mt, old_out_val * U_SEC, old_in_val * U_SEC);
+  if (avel < 0.) set_in_out_spin_ranges(mt, old_in_val * TICKS_PER_SECOND_DBL, old_out_val * TICKS_PER_SECOND_DBL);
+  else set_in_out_spin_ranges(mt, old_out_val * TICKS_PER_SECOND_DBL, old_in_val * TICKS_PER_SECOND_DBL);
 
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), old_out_val);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), old_in_val);
@@ -11995,12 +11995,12 @@ void avel_spin_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
 
   if (!block->end_anchored) {
     new_end_tc = q_gint64(start_tc + ((orig_end_val =
-                                         lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->spinbutton_out))) * U_SEC - start_tc)
+                                         lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->spinbutton_out))) * TICKS_PER_SECOND_DBL - start_tc)
                           / new_avel, mt->fps);
 
     insert_audio_event_at(mt->event_list, block->start_event, track, aclip, aseek, new_avel);
 
-    new_tl_tc = q_gint64(get_event_timecode(block->start_event) + (orig_end_val * U_SEC - start_tc) / new_avel, mt->fps);
+    new_tl_tc = q_gint64(get_event_timecode(block->start_event) + (orig_end_val * TICKS_PER_SECOND_DBL - start_tc) / new_avel, mt->fps);
 
     // move end point (if we can)
     if (block->next != NULL && new_tl_tc >= get_event_timecode(block->next->start_event)) {
@@ -12009,7 +12009,7 @@ void avel_spin_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
       lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
       lives_signal_handler_block(mt->spinbutton_in, mt->spin_in_func);
       set_in_out_spin_ranges(mt, block->offset_start, new_end_tc);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), new_end_tc / U_SEC);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), new_end_tc / TICKS_PER_SECOND_DBL);
       lives_signal_handler_unblock(mt->spinbutton_in, mt->spin_in_func);
       lives_signal_handler_unblock(mt->spinbutton_out, mt->spin_out_func);
       return;
@@ -12035,7 +12035,7 @@ void avel_spin_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
       lives_widget_queue_draw((LiVESWidget *)mt->audio_draws->data);
       new_end_tc = start_tc + (get_event_timecode(block->end_event) - get_event_timecode(block->start_event)) * new_avel;
       lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), new_end_tc / U_SEC);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), new_end_tc / TICKS_PER_SECOND_DBL);
       lives_signal_handler_unblock(mt->spinbutton_out, mt->spin_out_func);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), orig_end_val);
 
@@ -12056,12 +12056,12 @@ void avel_spin_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   min_tc = 0;
   if (block->prev != NULL) min_tc = get_event_timecode(block->prev->end_event);
 
-  new_tl_tc = q_gint64(get_event_timecode(block->end_event) - (orig_end_val * U_SEC - start_tc) / new_avel, mt->fps);
-  new_end_tc = orig_end_val * U_SEC;
+  new_tl_tc = q_gint64(get_event_timecode(block->end_event) - (orig_end_val * TICKS_PER_SECOND_DBL - start_tc) / new_avel, mt->fps);
+  new_end_tc = orig_end_val * TICKS_PER_SECOND_DBL;
 
   if (new_tl_tc < min_tc) {
-    aseek -= (new_tl_tc - min_tc) / U_SEC;
-    start_tc = block->offset_start = aseek * U_SEC;
+    aseek -= (new_tl_tc - min_tc) / TICKS_PER_SECOND_DBL;
+    start_tc = block->offset_start = aseek * TICKS_PER_SECOND_DBL;
     new_tl_tc = min_tc;
     was_adjusted = TRUE;
   }
@@ -12091,7 +12091,7 @@ void avel_spin_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
     lives_signal_handler_block(mt->spinbutton_in, mt->spin_in_func);
 
     set_in_out_spin_ranges(mt, start_tc, new_end_tc);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), start_tc / U_SEC);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), start_tc / TICKS_PER_SECOND_DBL);
 
     if (!was_adjusted) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), orig_start_val);
 
@@ -12118,7 +12118,7 @@ void in_anchor_toggled(LiVESToggleButton *togglebutton, livespointer user_data) 
   }
 
   offset_end = block->offset_start + (double)(mt->current_track >= 0 && !mt->aud_track_selected) *
-               (weed_timecode_t)(U_SEC / mt->fps) + ((get_event_timecode(block->end_event) -
+               (weed_timecode_t)(TICKS_PER_SECOND_DBL / mt->fps) + ((get_event_timecode(block->end_event) -
                    get_event_timecode(block->start_event))) * avel;
 
   block->start_anchored = !block->start_anchored;
@@ -12148,7 +12148,7 @@ void in_anchor_toggled(LiVESToggleButton *togglebutton, livespointer user_data) 
       xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "atrack");
     }
     if (xeventbox != NULL) {
-      xblock = get_block_from_time(xeventbox, get_event_timecode(block->start_event) / U_SEC, mt);
+      xblock = get_block_from_time(xeventbox, get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL, mt);
       if (xblock != NULL) xblock->start_anchored = block->start_anchored;
     }
   }
@@ -12168,7 +12168,7 @@ void out_anchor_toggled(LiVESToggleButton *togglebutton, livespointer user_data)
   }
 
   offset_end = block->offset_start + (double)(mt->current_track >= 0 && !mt->aud_track_selected) *
-               (weed_timecode_t)(U_SEC / mt->fps) + ((get_event_timecode(block->end_event) -
+               (weed_timecode_t)(TICKS_PER_SECOND_DBL / mt->fps) + ((get_event_timecode(block->end_event) -
                    get_event_timecode(block->start_event))) * avel;
 
   block->end_anchored = !block->end_anchored;
@@ -12198,7 +12198,7 @@ void out_anchor_toggled(LiVESToggleButton *togglebutton, livespointer user_data)
       xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "atrack");
     }
     if (xeventbox != NULL) {
-      xblock = get_block_from_time(xeventbox, get_event_timecode(block->start_event) / U_SEC, mt);
+      xblock = get_block_from_time(xeventbox, get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL, mt);
       if (xblock != NULL) xblock->end_anchored = block->end_anchored;
     }
   }
@@ -12361,7 +12361,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     if (block != NULL) {
       track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "layer_number"));
 
-      offset_end = block->offset_start + (weed_timecode_t)((double)(track >= 0) * U_SEC / mt->fps) +
+      offset_end = block->offset_start + (weed_timecode_t)((double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps) +
                    ((get_event_timecode(block->end_event) - get_event_timecode(block->start_event)) * ABS(avel));
 
       start_anchored = block->start_anchored;
@@ -12390,8 +12390,8 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
         }
         filenum = get_frame_event_clip(block->start_event, track);
 
-        frame_start = calc_frame_from_time(filenum, block->offset_start / U_SEC);
-        frame_end = calc_frame_from_time(filenum, offset_end / U_SEC - 1. / mt->fps);
+        frame_start = calc_frame_from_time(filenum, block->offset_start / TICKS_PER_SECOND_DBL);
+        frame_end = calc_frame_from_time(filenum, offset_end / TICKS_PER_SECOND_DBL - 1. / mt->fps);
       }
 
       lives_container_set_border_width(LIVES_CONTAINER(mt->poly_box), 0);
@@ -12410,7 +12410,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
       lives_box_pack_start(LIVES_BOX(mt->poly_box), mt->avel_box, TRUE, TRUE, 0);
       lives_widget_show_all(mt->avel_box);
       avel = get_audio_frame_vel(block->start_event, track);
-      offset_end = block->offset_start + q_gint64((weed_timecode_t)((double)(track >= 0) * U_SEC / mt->fps) +
+      offset_end = block->offset_start + q_gint64((weed_timecode_t)((double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps) +
                    ((get_event_timecode(block->end_event) -
                      get_event_timecode(block->start_event)) * ABS(avel)), mt->fps);
     }
@@ -12435,8 +12435,8 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
 
     if (avel > 0.) {
       if (block != NULL) {
-        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_in), 0., offset_end / U_SEC - 1. / mt->fps);
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), block->offset_start / U_SEC);
+        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_in), 0., offset_end / TICKS_PER_SECOND_DBL - 1. / mt->fps);
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), block->offset_start / TICKS_PER_SECOND_DBL);
 
       } else {
         lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_in), 1., mainw->files[filenum]->frames);
@@ -12449,8 +12449,8 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
       lives_signal_handler_unblock(mt->checkbutton_avel_reverse, mt->check_avel_rev_func);
       lives_signal_handler_unblock(mt->checkbutton_start_anchored, mt->check_start_func);
     } else {
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_out), 0., offset_end / U_SEC - 1. / mt->fps);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), block->offset_start / U_SEC);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_out), 0., offset_end / TICKS_PER_SECOND_DBL - 1. / mt->fps);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), block->offset_start / TICKS_PER_SECOND_DBL);
       lives_signal_handler_block(mt->checkbutton_start_anchored, mt->check_start_func);
       lives_signal_handler_block(mt->checkbutton_avel_reverse, mt->check_avel_rev_func);
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt->checkbutton_start_anchored), start_anchored);
@@ -12469,12 +12469,12 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
       lives_image_set_from_pixbuf(LIVES_IMAGE(mt->out_image), thumb);
       if (thumb != NULL) lives_object_unref(thumb);
       out_end_range = count_resampled_frames(mainw->files[filenum]->frames, mainw->files[filenum]->fps, mt->fps) / mt->fps;
-    } else out_end_range = q_gint64(mainw->files[filenum]->laudio_time * U_SEC, mt->fps) / U_SEC;
+    } else out_end_range = q_gint64(mainw->files[filenum]->laudio_time * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
 
     if (avel > 0.) {
       if (block != NULL) {
-        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_out), block->offset_start / U_SEC + 1. / mt->fps, out_end_range);
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), offset_end / U_SEC);
+        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_out), block->offset_start / TICKS_PER_SECOND_DBL + 1. / mt->fps, out_end_range);
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), offset_end / TICKS_PER_SECOND_DBL);
         if (!block->start_anchored || !block->end_anchored) {
           lives_widget_set_sensitive(mt->spinbutton_avel, TRUE);
           lives_widget_set_sensitive(mt->avel_scale, TRUE);
@@ -12485,8 +12485,8 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
 
       lives_widget_grab_focus(mt->spinbutton_in);
     } else {
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_in), block->offset_start / U_SEC + 1. / mt->fps, out_end_range);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), offset_end / U_SEC);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_in), block->offset_start / TICKS_PER_SECOND_DBL + 1. / mt->fps, out_end_range);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), offset_end / TICKS_PER_SECOND_DBL);
       lives_widget_set_sensitive(mt->spinbutton_in, FALSE);
       lives_widget_set_sensitive(mt->spinbutton_out, FALSE);
       lives_widget_set_sensitive(mt->spinbutton_avel, FALSE);
@@ -12588,7 +12588,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
       else shortcut = NULL;
     } else shortcut = block->start_event;
 
-    tc = q_gint64(secs * U_SEC, mt->fps);
+    tc = q_gint64(secs * TICKS_PER_SECOND_DBL, mt->fps);
 
     frame_event = get_frame_event_at(mt->event_list, tc, shortcut, TRUE);
 
@@ -13195,7 +13195,7 @@ boolean on_track_release(LiVESWidget *eventbox, LiVESXEventButton *event, livesp
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
                            eventbox, &x, &y);
   timesecs = get_time_from_x(mt, x);
-  tc = timesecs * U_SECL;
+  tc = timesecs * TICKS_PER_SECOND;
 
   window = lives_display_get_window_at_pointer
            ((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
@@ -13270,7 +13270,7 @@ boolean on_track_release(LiVESWidget *eventbox, LiVESXEventButton *event, livesp
       start_tc = get_event_timecode(mt->putative_block->start_event);
 
       // timecodes per pixel
-      tcpp = U_SEC * ((mt->tl_max - mt->tl_min) /
+      tcpp = TICKS_PER_SECOND_DBL * ((mt->tl_max - mt->tl_min) /
                       (double)lives_widget_get_allocation_width(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, 0))));
 
       // need to move at least 1.5 pixels, or to another track
@@ -13420,12 +13420,12 @@ boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *event, livespoi
 
             int ebwidth = lives_widget_get_allocation_width(mt->timeline);
 
-            double width = ((end_secs = (get_event_timecode(block->end_event) / U_SEC)) -
-                            (start_secs = (get_event_timecode(block->start_event) / U_SEC)) + 1. / mt->fps);
+            double width = ((end_secs = (get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL)) -
+                            (start_secs = (get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL)) + 1. / mt->fps);
             int height;
 
             // start point must be on timeline to move a block
-            if (block != NULL && (mt->tl_min * U_SEC > get_event_timecode(block->start_event))) {
+            if (block != NULL && (mt->tl_min * TICKS_PER_SECOND_DBL > get_event_timecode(block->start_event))) {
               mt->putative_block = NULL;
               return TRUE;
             }
@@ -13577,7 +13577,7 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
 
 void animate_multitrack(lives_mt *mt) {
   // update timeline pointer(s)
-  double currtime = mainw->currticks / U_SEC;
+  double currtime = mainw->currticks / TICKS_PER_SECOND_DBL;
   double tl_page;
 
   int offset, offset_old;
@@ -13989,7 +13989,7 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
 
   //go through selected tracks, move each block as far left as possible
 
-  tc_last = q_gint64(mt->region_end * U_SEC, mt->fps);
+  tc_last = q_gint64(mt->region_end * TICKS_PER_SECOND_DBL, mt->fps);
 
   while (vsel != NULL || (mt->current_track == -1 && !audio_done)) {
     offset = 0;
@@ -14000,21 +14000,21 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
       track = -1;
       eventbox = (LiVESWidget *)mt->audio_draws->data;
     }
-    tc = mt->region_start * U_SEC;
+    tc = mt->region_start * TICKS_PER_SECOND_DBL;
     tc = q_gint64(tc, mt->fps);
 
     if (mt->opts.grav_mode != GRAV_MODE_RIGHT) {
       // adjust the region so it begins after any first partially contained block
-      block = get_block_before(eventbox, tc / U_SEC, TRUE);
+      block = get_block_before(eventbox, tc / TICKS_PER_SECOND_DBL, TRUE);
       if (block != NULL) {
-        new_tc = q_gint64(get_event_timecode(block->end_event) + (double)(track > -1) * U_SEC / mt->fps, mt->fps);
+        new_tc = q_gint64(get_event_timecode(block->end_event) + (double)(track > -1) * TICKS_PER_SECOND_DBL / mt->fps, mt->fps);
         if (new_tc > tc) tc = new_tc;
       }
     } else {
       // adjust the region so it ends before any last partially contained block
-      block = get_block_after(eventbox, tc_last / U_SEC, TRUE);
+      block = get_block_after(eventbox, tc_last / TICKS_PER_SECOND_DBL, TRUE);
       if (block != NULL) {
-        new_tc_last = q_gint64(get_event_timecode(block->start_event) - (double)(track > -1) * U_SEC / mt->fps, mt->fps);
+        new_tc_last = q_gint64(get_event_timecode(block->start_event) - (double)(track > -1) * TICKS_PER_SECOND_DBL / mt->fps, mt->fps);
         if (new_tc_last < tc_last) tc_last = new_tc_last;
       }
     }
@@ -14035,7 +14035,7 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
 
       while (tc <= tc_last) {
 
-        block = get_block_after(eventbox, tc / U_SEC, FALSE);
+        block = get_block_after(eventbox, tc / TICKS_PER_SECOND_DBL, FALSE);
         if (block == NULL) break;
 
         new_tc = get_event_timecode(block->start_event);
@@ -14052,12 +14052,12 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
           // save current selected_tracks, move_block may change this
           track_sel = mt->selected_tracks;
           mt->selected_tracks = NULL;
-          block = move_block(mt, block, tc / U_SEC, track, track);
+          block = move_block(mt, block, tc / TICKS_PER_SECOND_DBL, track, track);
           if (mt->selected_tracks != NULL) lives_list_free(mt->selected_tracks);
           mt->selected_tracks = track_sel;
           if (only_first && offset == 0) offset = new_tc - tc;
         }
-        tc = q_gint64(get_event_timecode(block->end_event) + (double)(track > -1) * U_SEC / mt->fps, mt->fps);
+        tc = q_gint64(get_event_timecode(block->end_event) + (double)(track > -1) * TICKS_PER_SECOND_DBL / mt->fps, mt->fps);
       }
       if (mt->current_track > -1) vsel = vsel->next;
       else audio_done = TRUE;
@@ -14072,14 +14072,14 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
       tc = tc_last;
       while (tc >= tc_first) {
 
-        block = get_block_before(eventbox, tc / U_SEC, FALSE);
+        block = get_block_before(eventbox, tc / TICKS_PER_SECOND_DBL, FALSE);
         if (block == NULL) break;
 
         new_tc = get_event_timecode(block->end_event);
         if (new_tc < tc_first) break;
 
         // subtract the length of the block to get the start point
-        block_tc = new_tc - get_event_timecode(block->start_event) + (double)(track > -1) * U_SEC / mt->fps;
+        block_tc = new_tc - get_event_timecode(block->start_event) + (double)(track > -1) * TICKS_PER_SECOND_DBL / mt->fps;
 
         if (tc > new_tc) {
           // move this block to tc
@@ -14093,12 +14093,12 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
           // save current selected_tracks, move_block may change this
           track_sel = mt->selected_tracks;
           mt->selected_tracks = NULL;
-          block = move_block(mt, block, tc / U_SEC, track, track);
+          block = move_block(mt, block, tc / TICKS_PER_SECOND_DBL, track, track);
           if (mt->selected_tracks != NULL) lives_list_free(mt->selected_tracks);
           mt->selected_tracks = track_sel;
           if (only_first && offset == 0) offset = tc - new_tc + block_tc;
         }
-        tc = q_gint64(get_event_timecode(block->start_event) - (double)(track > -1) * U_SEC / mt->fps, mt->fps);
+        tc = q_gint64(get_event_timecode(block->start_event) - (double)(track > -1) * TICKS_PER_SECOND_DBL / mt->fps, mt->fps);
       }
       if (mt->current_track > -1) vsel = vsel->next;
       else audio_done = TRUE;
@@ -14115,7 +14115,7 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
   mt->did_backup = did_backup;
   if (!did_backup && mt->framedraw != NULL && mt->current_rfx != NULL && mt->init_event != NULL &&
       mt->poly_state == POLY_PARAMS && weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
-    tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * U_SEC + get_event_timecode(mt->init_event), mt->fps);
+    tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + get_event_timecode(mt->init_event), mt->fps);
     get_track_index(mt, tc);
   }
 
@@ -14165,8 +14165,8 @@ static void split_block(lives_mt *mt, track_rect *block, weed_timecode_t tc, int
       // if we have an audio block, split it too
       LiVESWidget *aeventbox = LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "atrack"));
       if (aeventbox != NULL) {
-        track_rect *ablock = get_block_from_time(aeventbox, tc / U_SEC + 1. / mt->fps, mt);
-        if (ablock != NULL) split_block(mt, ablock, tc + U_SEC / mt->fps, track, TRUE);
+        track_rect *ablock = get_block_from_time(aeventbox, tc / TICKS_PER_SECOND_DBL + 1. / mt->fps, mt);
+        if (ablock != NULL) split_block(mt, ablock, tc + TICKS_PER_SECOND_DBL / mt->fps, track, TRUE);
       }
     }
     frame = get_frame_event_frame(event, track);
@@ -14175,19 +14175,19 @@ static void split_block(lives_mt *mt, track_rect *block, weed_timecode_t tc, int
     if (!no_recurse) {
       // if we have a video block, split it too
       LiVESWidget *oeventbox = LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "owner"));
-      if (oeventbox != NULL) split_block(mt, get_block_from_time(oeventbox, tc / U_SEC - 1. / mt->fps, mt), tc - U_SEC / mt->fps, track, TRUE);
+      if (oeventbox != NULL) split_block(mt, get_block_from_time(oeventbox, tc / TICKS_PER_SECOND_DBL - 1. / mt->fps, mt), tc - TICKS_PER_SECOND_DBL / mt->fps, track, TRUE);
     }
     clip = get_audio_frame_clip(start_event, track);
     seek = get_audio_frame_seek(start_event, track);
     vel = get_audio_frame_vel(start_event, track);
     event = block->end_event;
-    new_seek = seek + (get_event_timecode(event) / U_SEC - get_event_timecode(start_event) / U_SEC) * vel;
+    new_seek = seek + (get_event_timecode(event) / TICKS_PER_SECOND_DBL - get_event_timecode(start_event) / TICKS_PER_SECOND_DBL) * vel;
     insert_audio_event_at(mt->event_list, event, track, clip, new_seek, vel);
   }
 
   if (block->ordered ||
       (is_audio_eventbox(eventbox))) offset_start = block->offset_start - get_event_timecode(start_event) + get_event_timecode(event);
-  else offset_start = calc_time_from_frame(clip, frame) * U_SEC;
+  else offset_start = calc_time_from_frame(clip, frame) * TICKS_PER_SECOND_DBL;
 
   new_block = add_block_start_point(LIVES_WIDGET(eventbox), tc, clip, offset_start, event, block->ordered);
   new_block->end_event = old_end_event;
@@ -14268,7 +14268,7 @@ static void insgap_inner(lives_mt *mt, int tnum, boolean is_sel, int passnm) {
     while (event != NULL) {
       if (WEED_EVENT_IS_FRAME(event)) {
         tc = get_event_timecode(event);
-        new_tc = q_gint64(tc + (mt->region_end - mt->region_start) * U_SEC, mt->fps);
+        new_tc = q_gint64(tc + (mt->region_end - mt->region_start) * TICKS_PER_SECOND_DBL, mt->fps);
         new_event = event;
 
         if (tnum >= 0 && tc <= get_event_timecode(block->end_event)) {
@@ -14395,7 +14395,7 @@ static void insgap_inner(lives_mt *mt, int tnum, boolean is_sel, int passnm) {
 
   case 2:
     // FILTER_INITs
-    start_tc = q_gint64(mt->region_start * U_SEC, mt->fps);
+    start_tc = q_gint64(mt->region_start * TICKS_PER_SECOND_DBL, mt->fps);
     event = get_last_event(mt->event_list);
 
     while (event != NULL && (tc = get_event_timecode(event)) >= start_tc) {
@@ -14436,14 +14436,14 @@ static void insgap_inner(lives_mt *mt, int tnum, boolean is_sel, int passnm) {
         lives_free(in_tracks);
 
         // move filter_deinit
-        new_tc = q_gint64(tc + (mt->region_end - mt->region_start) * U_SEC, mt->fps);
+        new_tc = q_gint64(tc + (mt->region_end - mt->region_start) * TICKS_PER_SECOND_DBL, mt->fps);
         move_filter_deinit_event(mt->event_list, new_tc, event, mt->fps, TRUE);
 
         init_tc = get_event_timecode(init_event);
 
         if (init_tc >= start_tc) {
           // move filter init
-          new_init_tc = q_gint64(init_tc + (mt->region_end - mt->region_start) * U_SEC, mt->fps);
+          new_init_tc = q_gint64(init_tc + (mt->region_end - mt->region_start) * TICKS_PER_SECOND_DBL, mt->fps);
           move_filter_init_event(mt->event_list, new_init_tc, init_event, mt->fps);
         }
 
@@ -15013,7 +15013,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   weed_timecode_t start_tc = get_event_timecode(start_event);
   weed_timecode_t end_tc = get_event_timecode(end_event);
 
-  weed_timecode_t tc = q_gint64(timesecs * U_SEC, mt->fps);
+  weed_timecode_t tc = q_gint64(timesecs * TICKS_PER_SECOND_DBL, mt->fps);
 
   lives_rfx_t *rfx;
 
@@ -15103,7 +15103,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   lives_free(rfx);
 
   init_event = mt->init_event;
-  mt_tl_move(mt, start_tc / U_SEC);
+  mt_tl_move(mt, start_tc / TICKS_PER_SECOND_DBL);
   mt->init_event = init_event;
 
   if (has_params) {
@@ -15144,8 +15144,8 @@ void mt_add_region_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   weed_plant_t *end_event;
   weed_plant_t *last_frame_event = NULL;
 
-  weed_timecode_t start_tc = q_gint64(mt->region_start * U_SEC, mt->fps);
-  weed_timecode_t end_tc = q_gint64(mt->region_end * U_SEC - U_SEC / mt->fps, mt->fps);
+  weed_timecode_t start_tc = q_gint64(mt->region_start * TICKS_PER_SECOND_DBL, mt->fps);
+  weed_timecode_t end_tc = q_gint64(mt->region_end * TICKS_PER_SECOND_DBL - TICKS_PER_SECOND_DBL / mt->fps, mt->fps);
   weed_timecode_t last_frame_tc = 0;
 
   char *filter_name;
@@ -15173,7 +15173,7 @@ void mt_add_region_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mt->event_list != NULL &&
       ((last_frame_event = get_last_frame_event(mt->event_list)) != NULL)) last_frame_tc = get_event_timecode(last_frame_event);
   if (end_tc > last_frame_tc) mt->event_list = add_blank_frames_up_to(mt->event_list, last_frame_event,
-        end_tc - (double)(tracks[0] < 0) * U_SEC / mt->fps,
+        end_tc - (double)(tracks[0] < 0) * TICKS_PER_SECOND_DBL / mt->fps,
         mt->fps);
 
   if (menuitem != NULL) mt->current_fx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem), "idx"));
@@ -15213,8 +15213,8 @@ void mt_add_region_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   }
   lives_free(tracks);
 
-  d_print(_("Added %s %s to %s from %.4f to %.4f\n"), tname, filter_name, track_desc, start_tc / U_SEC, q_gint64(end_tc + U_SEC / mt->fps,
-          mt->fps) / U_SEC);
+  d_print(_("Added %s %s to %s from %.4f to %.4f\n"), tname, filter_name, track_desc, start_tc / TICKS_PER_SECOND_DBL, q_gint64(end_tc + TICKS_PER_SECOND_DBL / mt->fps,
+          mt->fps) / TICKS_PER_SECOND_DBL);
 
   lives_free(filter_name);
   lives_free(tname);
@@ -15250,7 +15250,7 @@ void mt_add_block_effect(LiVESMenuItem *menuitem, livespointer user_data) {
 
   d_print(_("Added effect %s to track %s from %.4f to %.4f\n"), filter_name,
           (tmp = get_track_name(mt, selected_track, mt->aud_track_selected)),
-          start_tc / U_SEC, q_gint64(end_tc + U_SEC / mt->fps, mt->fps) / U_SEC);
+          start_tc / TICKS_PER_SECOND_DBL, q_gint64(end_tc + TICKS_PER_SECOND_DBL / mt->fps, mt->fps) / TICKS_PER_SECOND_DBL);
 
   lives_free(tmp);
   lives_free(filter_name);
@@ -15305,7 +15305,7 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   deinit_event = (weed_plant_t *)weed_get_voidptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
   filter_name = weed_filter_idx_get_name(mt->current_fx);
   start_tc = get_event_timecode(init_event);
-  end_tc = get_event_timecode(deinit_event) + U_SEC / mt->fps;
+  end_tc = get_event_timecode(deinit_event) + TICKS_PER_SECOND_DBL / mt->fps;
 
   numtracks = weed_leaf_num_elements(init_event, WEED_LEAF_IN_TRACKS);
   tracks = weed_get_int_array(init_event, WEED_LEAF_IN_TRACKS, &error);
@@ -15337,7 +15337,7 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   remove_filter_from_event_list(mt->event_list, mt->selected_init_event);
   remove_end_blank_frames(mt->event_list, TRUE);
 
-  d_print(_("Deleted %s %s from %s from %.4f to %.4f\n"), tname, filter_name, track_desc, start_tc / U_SEC, end_tc / U_SEC);
+  d_print(_("Deleted %s %s from %s from %.4f to %.4f\n"), tname, filter_name, track_desc, start_tc / TICKS_PER_SECOND_DBL, end_tc / TICKS_PER_SECOND_DBL);
   lives_free(filter_name);
   lives_free(track_desc);
 
@@ -15356,12 +15356,12 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 static void mt_jumpto(lives_mt *mt, lives_direction_t dir) {
   track_rect *block;
 
-  weed_timecode_t tc = q_gint64(mt->ptr_time * U_SEC, mt->fps);
+  weed_timecode_t tc = q_gint64(mt->ptr_time * TICKS_PER_SECOND_DBL, mt->fps);
   weed_timecode_t start_tc, end_tc;
 
   LiVESWidget *eventbox;
 
-  double secs = tc / U_SEC;
+  double secs = tc / TICKS_PER_SECOND_DBL;
   double offs = 1.;
 
   if (mt->current_track > -1 && !mt->aud_track_selected) eventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, mt->current_track);
@@ -15376,12 +15376,12 @@ static void mt_jumpto(lives_mt *mt, lives_direction_t dir) {
       if (tc == (start_tc = get_event_timecode(block->start_event))) {
         secs -= 1. / mt->fps;
         block = NULL;
-      } else secs = start_tc / U_SEC;
+      } else secs = start_tc / TICKS_PER_SECOND_DBL;
     } else {
-      if (tc == q_gint64((end_tc = get_event_timecode(block->end_event)) + (offs * U_SEC) / mt->fps, mt->fps)) {
+      if (tc == q_gint64((end_tc = get_event_timecode(block->end_event)) + (offs * TICKS_PER_SECOND_DBL) / mt->fps, mt->fps)) {
         secs += 1. / mt->fps;
         block = NULL;
-      } else secs = end_tc / U_SEC + offs / mt->fps;
+      } else secs = end_tc / TICKS_PER_SECOND_DBL + offs / mt->fps;
     }
   }
   if (block == NULL) {
@@ -15389,14 +15389,14 @@ static void mt_jumpto(lives_mt *mt, lives_direction_t dir) {
       block = get_block_before(eventbox, secs, TRUE);
       if (block == NULL) secs = 0.;
       else {
-        if (tc == q_gint64((end_tc = get_event_timecode(block->end_event)) + (offs * U_SEC) / mt->fps, mt->fps)) {
-          secs = get_event_timecode(block->start_event) / U_SEC;
-        } else secs = end_tc / U_SEC + offs / mt->fps;
+        if (tc == q_gint64((end_tc = get_event_timecode(block->end_event)) + (offs * TICKS_PER_SECOND_DBL) / mt->fps, mt->fps)) {
+          secs = get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL;
+        } else secs = end_tc / TICKS_PER_SECOND_DBL + offs / mt->fps;
       }
     } else {
       block = get_block_after(eventbox, secs, FALSE);
       if (block == NULL) return;
-      secs = get_event_timecode(block->start_event) / U_SEC;
+      secs = get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL;
     }
   }
 
@@ -15954,7 +15954,7 @@ void on_split_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (!did_backup) mt_backup(mt, MT_UNDO_SPLIT, 0);
 
-  tc = q_gint64(timesecs * U_SEC, mt->fps);
+  tc = q_gint64(timesecs * TICKS_PER_SECOND_DBL, mt->fps);
 
   split_block(mt, mt->putative_block, tc, mt->current_track, FALSE);
   mt->did_backup = did_backup;
@@ -15980,7 +15980,7 @@ void on_split_curr_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (!did_backup) mt_backup(mt, MT_UNDO_SPLIT, 0);
 
-  tc = q_gint64(timesecs * U_SEC, mt->fps);
+  tc = q_gint64(timesecs * TICKS_PER_SECOND_DBL, mt->fps);
 
   if (mt->current_track == -1) eventbox = (LiVESWidget *)mt->audio_draws->data;
   else eventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, mt->current_track);
@@ -16020,7 +16020,7 @@ void on_split_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     track = LIVES_POINTER_TO_INT(selt->data);
     eventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, track);
     block = get_block_from_time(eventbox, timesecs, mt);
-    if (block != NULL) split_block(mt, block, timesecs * U_SEC, track, FALSE);
+    if (block != NULL) split_block(mt, block, timesecs * TICKS_PER_SECOND_DBL, track, FALSE);
     selt = selt->next;
   }
   mt->did_backup = did_backup;
@@ -16071,7 +16071,7 @@ static void on_delblock_activate(LiVESMenuItem *menuitem, livespointer user_data
   if ((aeventbox = LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "atrack"))) != NULL) {
     int current_track = mt->current_track;
     mt->current_track = track;
-    mt->block_selected = get_block_from_time(aeventbox, get_event_timecode(block->start_event) / U_SEC, mt);
+    mt->block_selected = get_block_from_time(aeventbox, get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL, mt);
     if (mt->block_selected != NULL) on_delblock_activate(NULL, user_data);
     mt->block_selected = block;
     mt->current_track = current_track;
@@ -16133,10 +16133,10 @@ static void on_delblock_activate(LiVESMenuItem *menuitem, livespointer user_data
 
   if (mt->current_track != -1 && !is_audio_eventbox(eventbox)) {
     d_print(_("Deleted frames from time %.4f to %.4f on track %s\n"),
-            (start_tc) / U_SEC, (end_tc) / U_SEC + 1. / mt->fps, tmp);
+            (start_tc) / TICKS_PER_SECOND_DBL, (end_tc) / TICKS_PER_SECOND_DBL + 1. / mt->fps, tmp);
   } else {
     d_print(_("Deleted audio from time %.4f to %.4f on track %s\n"),
-            (start_tc) / U_SEC, (end_tc) / U_SEC + 1. / mt->fps, tmp);
+            (start_tc) / TICKS_PER_SECOND_DBL, (end_tc) / TICKS_PER_SECOND_DBL + 1. / mt->fps, tmp);
   }
   lives_free(tmp);
 
@@ -16155,11 +16155,11 @@ static void on_delblock_activate(LiVESMenuItem *menuitem, livespointer user_data
     }
 
     if (mt->opts.grav_mode == GRAV_MODE_LEFT) {
-      mt->region_start = start_tc / U_SEC;
+      mt->region_start = start_tc / TICKS_PER_SECOND_DBL;
       mt->region_end = mt->end_secs;
     } else {
       mt->region_start = 0.;
-      mt->region_end = end_tc / U_SEC;
+      mt->region_end = end_tc / TICKS_PER_SECOND_DBL;
     }
 
     remove_first_gaps(NULL, mt);
@@ -16194,7 +16194,7 @@ static void on_delblock_activate(LiVESMenuItem *menuitem, livespointer user_data
   mt->did_backup = did_backup;
   if (!did_backup && mt->framedraw != NULL && mt->current_rfx != NULL && mt->init_event != NULL &&
       mt->poly_state == POLY_PARAMS && weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
-    weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * U_SEC +
+    weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL +
                                   get_event_timecode(mt->init_event), mt->fps);
     get_track_index(mt, tc);
   }
@@ -16480,7 +16480,7 @@ void mt_sensitise(lives_mt *mt) {
   if (mt->block_selected) {
     lives_widget_set_sensitive(mt->delblock, TRUE);
     if (mt->poly_state == POLY_IN_OUT && mt->block_selected->ordered) {
-      weed_timecode_t offset_end = mt->block_selected->offset_start + (weed_timecode_t)(U_SEC / mt->fps) +
+      weed_timecode_t offset_end = mt->block_selected->offset_start + (weed_timecode_t)(TICKS_PER_SECOND_DBL / mt->fps) +
                                    (get_event_timecode(mt->block_selected->end_event) - get_event_timecode(mt->block_selected->start_event));
 
       lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
@@ -16621,7 +16621,7 @@ void mt_post_playback(lives_mt *mt) {
     if (mt->poly_state == POLY_PARAMS) {
       if (mt->init_event != NULL) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton),
-                                    mt->ptr_time - get_event_timecode(mt->init_event) / U_SEC);
+                                    mt->ptr_time - get_event_timecode(mt->init_event) / TICKS_PER_SECOND_DBL);
         lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
       }
     }
@@ -16691,7 +16691,7 @@ void multitrack_playall(lives_mt *mt) {
         // otherwise jack transport set us out of range
 
         if (mt->playing_sel)
-          mt->pb_loop_event = get_frame_event_at(mt->event_list, q_gint64(mt->region_start * U_SEC, mt->fps), NULL, TRUE);
+          mt->pb_loop_event = get_frame_event_at(mt->event_list, q_gint64(mt->region_start * TICKS_PER_SECOND_DBL, mt->fps), NULL, TRUE);
         else if (mt->is_paused) mt->pb_loop_event = pb_loop_event;
 
         on_preview_clicked(NULL, LIVES_INT_TO_POINTER(1));
@@ -16760,8 +16760,8 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
 
   LiVESWidget *eventbox;
 
-  weed_timecode_t ins_start = (sfile->start - 1.) / sfile->fps * U_SEC;
-  weed_timecode_t ins_end = (double)(sfile->end) / sfile->fps * U_SEC;
+  weed_timecode_t ins_start = (sfile->start - 1.) / sfile->fps * TICKS_PER_SECOND_DBL;
+  weed_timecode_t ins_end = (double)(sfile->end) / sfile->fps * TICKS_PER_SECOND_DBL;
 
   boolean did_backup = mt->did_backup;
 
@@ -16787,7 +16787,7 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mt->opts.ign_ins_sel) {
     // ignore selection limits
     ins_start = 0;
-    ins_end = (double)(sfile->frames) / sfile->fps * U_SEC;
+    ins_end = (double)(sfile->frames) / sfile->fps * TICKS_PER_SECOND_DBL;
   }
 
   if (mt->insert_start != -1) {
@@ -16803,8 +16803,8 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
     weed_timecode_t tclen = ins_end - ins_start;
 
     while (tc <= tclen) {
-      tcnow = q_gint64(tc + secs * U_SEC, mt->fps);
-      tc += U_SEC / mt->fps;
+      tcnow = q_gint64(tc + secs * TICKS_PER_SECOND_DBL, mt->fps);
+      tc += TICKS_PER_SECOND_DBL / mt->fps;
       event = get_frame_event_at(mt->event_list, tcnow, event, TRUE);
       if (event == NULL) break; // must be end of timeline
       // is video track, if we have a non-blank frame, abort
@@ -16814,7 +16814,7 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (!did_backup) mt_backup(mt, MT_UNDO_INSERT_BLOCK, 0);
 
-  insert_frames(mt->file_selected, ins_start, ins_end, secs * U_SECL, DIRECTION_POSITIVE, eventbox, mt, NULL);
+  insert_frames(mt->file_selected, ins_start, ins_end, secs * TICKS_PER_SECOND, DIRECTION_POSITIVE, eventbox, mt, NULL);
 
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "block_last");
 
@@ -16831,12 +16831,12 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
     mt->selected_tracks = lives_list_append(mt->selected_tracks, LIVES_INT_TO_POINTER(mt->current_track));
 
     if (mt->opts.grav_mode == GRAV_MODE_LEFT) {
-      if (block->prev != NULL) mt->region_start = get_event_timecode(block->prev->end_event) / U_SEC;
+      if (block->prev != NULL) mt->region_start = get_event_timecode(block->prev->end_event) / TICKS_PER_SECOND_DBL;
       else mt->region_start = 0.;
-      mt->region_end = get_event_timecode(block->start_event) / U_SEC;
+      mt->region_end = get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL;
     } else {
-      mt->region_start = get_event_timecode(block->end_event) / U_SEC;
-      mt->region_end = get_event_timecode(block->next->start_event) / U_SEC;
+      mt->region_start = get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL;
+      mt->region_end = get_event_timecode(block->next->start_event) / TICKS_PER_SECOND_DBL;
     }
 
     remove_first_gaps(NULL, mt);
@@ -16874,7 +16874,7 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!did_backup && mt->framedraw != NULL && mt->current_rfx != NULL && mt->init_event != NULL && mt->poly_state == POLY_PARAMS &&
       weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
     weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) *
-                                  U_SEC + get_event_timecode(mt->init_event), mt->fps);
+                                  TICKS_PER_SECOND_DBL + get_event_timecode(mt->init_event), mt->fps);
     get_track_index(mt, tc);
   }
 
@@ -16895,8 +16895,8 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
 
   LiVESWidget *eventbox = (LiVESWidget *)mt->audio_draws->data;
 
-  weed_timecode_t ins_start = q_gint64((sfile->start - 1.) / sfile->fps * U_SEC, mt->fps);
-  weed_timecode_t ins_end = q_gint64((double)sfile->end / sfile->fps * U_SEC, mt->fps);
+  weed_timecode_t ins_start = q_gint64((sfile->start - 1.) / sfile->fps * TICKS_PER_SECOND_DBL, mt->fps);
+  weed_timecode_t ins_end = q_gint64((double)sfile->end / sfile->fps * TICKS_PER_SECOND_DBL, mt->fps);
 
   boolean did_backup = mt->did_backup;
 
@@ -16921,15 +16921,15 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
 
   if (sfile->frames == 0 || mt->opts.ign_ins_sel) {
     ins_start = 0;
-    ins_end = q_gint64(sfile->laudio_time * U_SEC, mt->fps);
+    ins_end = q_gint64(sfile->laudio_time * TICKS_PER_SECOND_DBL, mt->fps);
   }
 
-  if (ins_start > q_gint64(sfile->laudio_time * U_SEC, mt->fps)) {
+  if (ins_start > q_gint64(sfile->laudio_time * TICKS_PER_SECOND_DBL, mt->fps)) {
     return FALSE;
   }
 
-  if (ins_end > q_gint64(sfile->laudio_time * U_SEC, mt->fps)) {
-    ins_end = q_gint64(sfile->laudio_time * U_SEC, mt->fps);
+  if (ins_end > q_gint64(sfile->laudio_time * TICKS_PER_SECOND_DBL, mt->fps)) {
+    ins_end = q_gint64(sfile->laudio_time * TICKS_PER_SECOND_DBL, mt->fps);
   }
 
   if (mt->insert_start != -1) {
@@ -16946,11 +16946,11 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
     weed_timecode_t tc = 0, tcnow;
     weed_timecode_t tclen = ins_end - ins_start;
 
-    //if (dir==DIRECTION_NEGATIVE) tc+=U_SEC/mt->fps; // TODO - check if we need this
+    //if (dir==DIRECTION_NEGATIVE) tc+=TICKS_PER_SECOND_DBL/mt->fps; // TODO - check if we need this
 
     while (tc <= tclen) {
-      tcnow = q_gint64(tc + secs * U_SEC, mt->fps);
-      tc += U_SEC / mt->fps;
+      tcnow = q_gint64(tc + secs * TICKS_PER_SECOND_DBL, mt->fps);
+      tc += TICKS_PER_SECOND_DBL / mt->fps;
       event = get_frame_event_at(mt->event_list, tcnow, event, TRUE);
       if (event == NULL) break; // must be end of timeline
       // is audio track, see if we are in an audio block
@@ -16962,7 +16962,7 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
 
   if (!did_backup) mt_backup(mt, MT_UNDO_INSERT_AUDIO_BLOCK, 0);
 
-  insert_audio(mt->file_selected, ins_start, ins_end, secs * U_SECL, mt->insert_avel, dir, eventbox, mt, NULL);
+  insert_audio(mt->file_selected, ins_start, ins_end, secs * TICKS_PER_SECOND, mt->insert_avel, dir, eventbox, mt, NULL);
 
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "block_last");
 
@@ -16980,12 +16980,12 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
     mt->current_track = -1;
 
     if (mt->opts.grav_mode == GRAV_MODE_LEFT) {
-      if (block->prev != NULL) mt->region_start = get_event_timecode(block->prev->end_event) / U_SEC;
+      if (block->prev != NULL) mt->region_start = get_event_timecode(block->prev->end_event) / TICKS_PER_SECOND_DBL;
       else mt->region_start = 0.;
-      mt->region_end = get_event_timecode(block->start_event) / U_SEC;
+      mt->region_end = get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL;
     } else {
-      mt->region_start = get_event_timecode(block->end_event) / U_SEC;
-      mt->region_end = get_event_timecode(block->next->start_event) / U_SEC;
+      mt->region_start = get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL;
+      mt->region_end = get_event_timecode(block->next->start_event) / TICKS_PER_SECOND_DBL;
     }
 
     remove_first_gaps(NULL, mt);
@@ -17000,7 +17000,7 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
   mt->did_backup = did_backup;
 
   d_print(_("Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f to %.4f\n"),
-          ins_start / U_SEC, ins_end / U_SEC, (tmp = lives_path_get_basename(sfile->name)), secs, secs + (ins_end - ins_start) / U_SEC);
+          ins_start / TICKS_PER_SECOND_DBL, ins_end / TICKS_PER_SECOND_DBL, (tmp = lives_path_get_basename(sfile->name)), secs, secs + (ins_end - ins_start) / TICKS_PER_SECOND_DBL);
   lives_free(tmp);
 
   if (!resize_timeline(mt) && !did_backup) {
@@ -17032,7 +17032,7 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
   if (!did_backup && mt->framedraw != NULL && mt->current_rfx != NULL && mt->init_event != NULL &&
       mt->poly_state == POLY_PARAMS && weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
     weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) *
-                                  U_SEC + get_event_timecode(mt->init_event), mt->fps);
+                                  TICKS_PER_SECOND_DBL + get_event_timecode(mt->init_event), mt->fps);
     get_track_index(mt, tc);
   }
 
@@ -17081,7 +17081,7 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
 
   boolean isfirst = TRUE;
 
-  int frame = ((double)(offset_start / U_SEC) * mt->fps + 1.4999);
+  int frame = ((double)(offset_start / TICKS_PER_SECOND_DBL) * mt->fps + 1.4999);
   int track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "layer_number"));
   int numframes, i;
   int render_file = mainw->current_file;
@@ -17095,7 +17095,7 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
   last_offset = offset_start_tc = q_gint64(offset_start, mt->fps);
   offset_end = q_gint64(offset_end, mt->fps);
   start_tc = q_gint64(tc, mt->fps);
-  if (direction == DIRECTION_NEGATIVE) tc -= U_SEC / mt->fps;
+  if (direction == DIRECTION_NEGATIVE) tc -= TICKS_PER_SECOND_DBL / mt->fps;
   last_tc = q_gint64(tc, mt->fps);
 
   if (direction == DIRECTION_POSITIVE) {
@@ -17199,7 +17199,7 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
             } else {
               weed_plant_t *nframe;
               if ((nframe = get_next_frame_event(shortcut1)) == NULL) {
-                mt->event_list = insert_blank_frame_event_at(mt->event_list, q_gint64(last_tc + U_SEC / mt->fps, mt->fps), &shortcut1);
+                mt->event_list = insert_blank_frame_event_at(mt->event_list, q_gint64(last_tc + TICKS_PER_SECOND_DBL / mt->fps, mt->fps), &shortcut1);
                 nframe = shortcut1;
               }
               insert_audio_event_at(mt->event_list, nframe, track, filenum, 0., 0.);
@@ -17214,11 +17214,11 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
     lives_freep((void **)&frames);
 
     if (direction == DIRECTION_POSITIVE) {
-      last_tc += U_SEC / mt->fps;
+      last_tc += TICKS_PER_SECOND_DBL / mt->fps;
       last_tc = q_gint64(last_tc, mt->fps);
     } else {
-      if (last_tc < U_SEC / mt->fps) break;
-      last_tc -= U_SEC / mt->fps;
+      if (last_tc < TICKS_PER_SECOND_DBL / mt->fps) break;
+      last_tc -= TICKS_PER_SECOND_DBL / mt->fps;
       last_tc = q_gint64(last_tc, mt->fps);
     }
     if (sfile->event_list == NULL) if ((direction == DIRECTION_POSITIVE && (++frame > sfile->frames)) ||
@@ -17263,7 +17263,7 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
     d_print(_("Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"),
             sfile->start, sfile->end, (tmp1 = lives_path_get_basename(sfile->name)),
             (tmp = get_track_name(mt, mt->current_track, FALSE)),
-            (orig_st + start_tc) / U_SEC, (orig_end + start_tc) / U_SEC);
+            (orig_st + start_tc) / TICKS_PER_SECOND_DBL, (orig_end + start_tc) / TICKS_PER_SECOND_DBL);
     lives_free(tmp);
     lives_free(tmp1);
 
@@ -17300,25 +17300,25 @@ void insert_audio(int filenum, weed_timecode_t offset_start, weed_timecode_t off
   }
 
   // if already block at tc, return
-  if ((block = get_block_from_time((LiVESWidget *)mt->audio_draws->data, start_tc / U_SEC, mt)) != NULL &&
+  if ((block = get_block_from_time((LiVESWidget *)mt->audio_draws->data, start_tc / TICKS_PER_SECOND_DBL, mt)) != NULL &&
       get_event_timecode(block->end_event) > start_tc) return;
 
   // insert blank frames up to end_tc
   last_frame_event = get_last_frame_event(mt->event_list);
   mt->event_list = add_blank_frames_up_to(mt->event_list, last_frame_event, end_tc, mt->fps);
 
-  block = get_block_before((LiVESWidget *)mt->audio_draws->data, start_tc / U_SEC, TRUE);
+  block = get_block_before((LiVESWidget *)mt->audio_draws->data, start_tc / TICKS_PER_SECOND_DBL, TRUE);
   if (block != NULL) shortcut = block->end_event;
 
-  block = get_block_after((LiVESWidget *)mt->audio_draws->data, start_tc / U_SEC, FALSE);
+  block = get_block_after((LiVESWidget *)mt->audio_draws->data, start_tc / TICKS_PER_SECOND_DBL, FALSE);
 
   // insert audio seek at tc
   frame_event = get_frame_event_at(mt->event_list, start_tc, shortcut, TRUE);
 
   if (direction == DIRECTION_POSITIVE) {
-    insert_audio_event_at(mt->event_list, frame_event, -1, filenum, offset_start / U_SEC, avel);
+    insert_audio_event_at(mt->event_list, frame_event, -1, filenum, offset_start / TICKS_PER_SECOND_DBL, avel);
   } else {
-    insert_audio_event_at(mt->event_list, frame_event, -1, filenum, offset_end / U_SEC, avel);
+    insert_audio_event_at(mt->event_list, frame_event, -1, filenum, offset_end / TICKS_PER_SECOND_DBL, avel);
     offset_start = offset_start - offset_end + offset_end * mt->insert_avel;
   }
 
@@ -17360,8 +17360,8 @@ void multitrack_view_sel_events(LiVESMenuItem *menuitem, livespointer user_data)
   lives_mt *mt = (lives_mt *)user_data;
   LiVESWidget *elist_dialog;
 
-  weed_timecode_t tc_start = q_gint64(mt->region_start * U_SECL, mt->fps);
-  weed_timecode_t tc_end = q_gint64(mt->region_end * U_SECL, mt->fps);
+  weed_timecode_t tc_start = q_gint64(mt->region_start * TICKS_PER_SECOND, mt->fps);
+  weed_timecode_t tc_end = q_gint64(mt->region_end * TICKS_PER_SECOND, mt->fps);
 
   if ((prefs->event_window_show_frame_events && count_events(mt->event_list, TRUE, tc_start, tc_end) > 1000) ||
       (!prefs->event_window_show_frame_events && ((count_events(mt->event_list, TRUE, tc_start, tc_end)
@@ -17483,7 +17483,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
     event = block->start_event;
     tc = get_event_timecode(event);
 
-    offset_startd = tc / U_SEC;
+    offset_startd = tc / TICKS_PER_SECOND_DBL;
     if (offset_startd > mt->tl_max) {
       if (afd != -1) lives_close_buffered(afd);
       return;
@@ -17495,7 +17495,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
       return;
     }
 
-    offset_endd = get_event_timecode(block->end_event) / U_SEC; //+1./cfile->fps;
+    offset_endd = get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL; //+1./cfile->fps;
     offset_end = (offset_endd - mt->tl_min) / tl_span * lives_widget_get_allocation_width(ebox);
 
     if (offset_end < mt->tl_min) {
@@ -17730,7 +17730,7 @@ void get_region_overlap(lives_mt *mt) {
     return;
   }
 
-  tc = q_gint64(mt->region_start * U_SECL, mt->fps);
+  tc = q_gint64(mt->region_start * TICKS_PER_SECOND, mt->fps);
   event = get_frame_event_at(mt->event_list, tc, NULL, TRUE);
 
   while (all_present(event, mt->selected_tracks)) {
@@ -17748,9 +17748,9 @@ void get_region_overlap(lives_mt *mt) {
   }
 
   if (event == NULL) mt->region_start = 0.;
-  else mt->region_start = get_event_timecode(event) / U_SEC;
+  else mt->region_start = get_event_timecode(event) / TICKS_PER_SECOND_DBL;
 
-  tc = q_gint64(mt->region_end * U_SECL, mt->fps);
+  tc = q_gint64(mt->region_end * TICKS_PER_SECOND, mt->fps);
   event = get_frame_event_at(mt->event_list, tc, NULL, TRUE);
 
   while (all_present(event, mt->selected_tracks)) {
@@ -17768,7 +17768,7 @@ void get_region_overlap(lives_mt *mt) {
   }
 
   if (event == NULL) mt->region_end = 0.;
-  mt->region_end = get_event_timecode(event) / U_SEC + 1. / mt->fps;
+  mt->region_end = get_event_timecode(event) / TICKS_PER_SECOND_DBL + 1. / mt->fps;
 
   if (mt->event_list != NULL && get_first_event(mt->event_list) != NULL) {
     lives_widget_set_sensitive(mt->view_sel_events, mt->region_start != mt->region_end);
@@ -17884,7 +17884,7 @@ boolean on_timeline_release(LiVESWidget *eventbox, LiVESXEventButton *event, liv
     lives_widget_set_sensitive(mt->remove_gaps, FALSE);
     lives_widget_set_sensitive(mt->remove_first_gaps, FALSE);
     if (mt->init_event != NULL && mt->poly_state == POLY_PARAMS)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton), pos - get_event_timecode(mt->init_event) / U_SEC);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton), pos - get_event_timecode(mt->init_event) / TICKS_PER_SECOND_DBL);
   }
 
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_start), mt->region_start);
@@ -18120,7 +18120,7 @@ void on_prev_fm_clicked(LiVESWidget *button, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   weed_timecode_t tc;
   double secs = mt->ptr_time;
-  tc = q_gint64(secs * U_SEC, mt->fps);
+  tc = q_gint64(secs * TICKS_PER_SECOND_DBL, mt->fps);
   weed_plant_t *event;
 
   event = get_frame_event_at(mt->event_list, tc, mt->fm_edit_event, TRUE);
@@ -18129,7 +18129,7 @@ void on_prev_fm_clicked(LiVESWidget *button, livespointer user_data) {
 
   if (event != NULL) tc = get_event_timecode(event);
 
-  mt_tl_move(mt, tc / U_SEC);
+  mt_tl_move(mt, tc / TICKS_PER_SECOND_DBL);
 }
 
 
@@ -18138,7 +18138,7 @@ void on_next_fm_clicked(LiVESWidget *button, livespointer user_data) {
   weed_timecode_t tc;
   weed_plant_t *event;
   double secs = mt->ptr_time;
-  tc = q_gint64(secs * U_SEC, mt->fps);
+  tc = q_gint64(secs * TICKS_PER_SECOND_DBL, mt->fps);
 
   event = get_frame_event_at(mt->event_list, tc, mt->fm_edit_event, TRUE);
 
@@ -18146,7 +18146,7 @@ void on_next_fm_clicked(LiVESWidget *button, livespointer user_data) {
 
   if (event != NULL) tc = get_event_timecode(event);
 
-  mt_tl_move(mt, tc / U_SEC);
+  mt_tl_move(mt, tc / TICKS_PER_SECOND_DBL);
 }
 
 
@@ -18212,7 +18212,7 @@ static boolean is_node_tc(lives_mt *mt, weed_timecode_t tc) {
 void on_node_spin_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   weed_timecode_t init_tc = get_event_timecode(mt->init_event);
-  weed_timecode_t otc = lives_spin_button_get_value(spinbutton) * U_SEC + init_tc;
+  weed_timecode_t otc = lives_spin_button_get_value(spinbutton) * TICKS_PER_SECOND_DBL + init_tc;
   weed_timecode_t tc = q_gint64(otc, mt->fps);
   double timesecs;
   boolean auto_prev = mt->opts.fx_auto_preview;
@@ -18220,7 +18220,7 @@ void on_node_spin_value_changed(LiVESSpinButton *spinbutton, livespointer user_d
   lives_signal_handlers_block_by_func(spinbutton, (livespointer)on_node_spin_value_changed, (livespointer)mt);
 
   if (!mt->block_tl_move) {
-    timesecs = otc / U_SEC;
+    timesecs = otc / TICKS_PER_SECOND_DBL;
     mt->block_node_spin = TRUE;
     mt_tl_move(mt, timesecs);
     mt->block_node_spin = FALSE;
@@ -18267,9 +18267,9 @@ void on_node_spin_value_changed(LiVESSpinButton *spinbutton, livespointer user_d
 void on_next_node_clicked(LiVESWidget *button, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   weed_timecode_t init_tc = get_event_timecode(mt->init_event);
-  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * U_SEC + init_tc, mt->fps);
+  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + init_tc, mt->fps);
   weed_timecode_t next_tc = get_next_node_tc(mt, tc);
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton), (next_tc - init_tc) / U_SEC);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton), (next_tc - init_tc) / TICKS_PER_SECOND_DBL);
   if (mt->current_track >= 0) mt_show_current_frame(mt, FALSE);
   lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
 }
@@ -18278,9 +18278,9 @@ void on_next_node_clicked(LiVESWidget *button, livespointer user_data) {
 void on_prev_node_clicked(LiVESWidget *button, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   weed_timecode_t init_tc = get_event_timecode(mt->init_event);
-  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * U_SEC + init_tc, mt->fps);
+  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + init_tc, mt->fps);
   weed_timecode_t prev_tc = get_prev_node_tc(mt, tc);
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton), (prev_tc - init_tc) / U_SEC);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton), (prev_tc - init_tc) / TICKS_PER_SECOND_DBL);
   if (mt->current_track >= 0) mt_show_current_frame(mt, FALSE);
   lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
 }
@@ -18297,7 +18297,7 @@ void on_del_node_clicked(LiVESWidget *button, livespointer user_data) {
   weed_plant_t *prev_pchange, *next_pchange;
 
   weed_timecode_t ev_tc;
-  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * U_SEC +
+  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL +
                                 get_event_timecode(mt->init_event), mt->fps);
 
   char *filter_name;
@@ -18460,7 +18460,7 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
 
   int error;
 
-  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * U_SEC +
+  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL +
                                 get_event_timecode(mt->init_event), mt->fps);
 
   int *tracks;
@@ -18554,7 +18554,7 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
     tname = lives_strdup(_("audio"));
   }
 
-  d_print(_("Set parameter values for %s %s on %s at time %.4f\n"), tname, filter_name, track_desc, tc / U_SEC);
+  d_print(_("Set parameter values for %s %s on %s at time %.4f\n"), tname, filter_name, track_desc, tc / TICKS_PER_SECOND_DBL);
   lives_free(filter_name);
   lives_free(tname);
   lives_free(track_desc);
@@ -18914,7 +18914,7 @@ void add_markers(lives_mt *mt, weed_plant_t *event_list, boolean add_block_ids) 
         block = (track_rect *)blist->data;
         if (block != NULL) {
           if (block->prev != NULL && (get_event_timecode(block->prev->end_event) ==
-                                      q_gint64(tc - U_SEC / mt->fps, mt->fps)) && (tc == get_event_timecode(block->start_event)) &&
+                                      q_gint64(tc - TICKS_PER_SECOND_DBL / mt->fps, mt->fps)) && (tc == get_event_timecode(block->start_event)) &&
               (get_frame_event_clip(block->prev->end_event, track) == get_frame_event_clip(block->start_event, track))) {
 
             insert_marker_event_at(mt->event_list, event, EVENT_MARKER_BLOCK_START, LIVES_INT_TO_POINTER(track));
@@ -19658,7 +19658,7 @@ static char *add_missing_atrack_closers(weed_plant_t *event_list, double fps, ch
 
   if (!is_blank_frame(last_frame, TRUE)) {
     weed_plant_t *shortcut = last_frame;
-    event_list = insert_blank_frame_event_at(event_list, q_gint64(tc + 1. / U_SEC, fps), &shortcut);
+    event_list = insert_blank_frame_event_at(event_list, q_gint64(tc + 1. / TICKS_PER_SECOND_DBL, fps), &shortcut);
   }
 
   while (alist != NULL) {
@@ -19776,7 +19776,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
       continue;
     }
     tc = get_event_timecode(event);
-    tc = q_gint64(tc + U_SEC / (2.*fps) - 1, fps);
+    tc = q_gint64(tc + TICKS_PER_SECOND_DBL / (2.*fps) - 1, fps);
     weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
 
     ev_count++;
@@ -20448,7 +20448,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
             ebuf = rec_error_add(ebuf, "Inserted missing blank frame", -1, cur_tc);
           }
         }
-        cur_tc += U_SEC / fps;
+        cur_tc += TICKS_PER_SECOND_DBL / fps;
         cur_tc = q_gint64(cur_tc, fps);
       }
       last_tc = tc;
@@ -22032,7 +22032,7 @@ int mt_get_block_count(lives_mt *mt, int ntrack) {
 double mt_get_block_sttime(lives_mt *mt, int ntrack, int iblock) {
   track_rect *block = get_nth_block_for_track(mt, ntrack, iblock);
   if (block == NULL) return -1; ///< invalid track or block number
-  return (double)get_event_timecode(block->start_event) / U_SEC;
+  return (double)get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL;
 }
 
 
@@ -22040,7 +22040,7 @@ double mt_get_block_sttime(lives_mt *mt, int ntrack, int iblock) {
 double mt_get_block_entime(lives_mt *mt, int ntrack, int iblock) {
   track_rect *block = get_nth_block_for_track(mt, ntrack, iblock);
   if (block == NULL) return -1; ///< invalid track or block number
-  return (double)get_event_timecode(block->end_event) / U_SEC + 1. / mt->fps;
+  return (double)get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL + 1. / mt->fps;
 }
 
 
@@ -22128,11 +22128,11 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
   for (i = 0; i < nvids; i++) {
     if (i == track) continue; ///< cannot transition with self !
     oblock = get_block_from_time((LiVESWidget *)lives_list_nth_data(mt->video_draws, i),
-                                 (double)sttc / U_SEC + 0.5 / mt->fps, mt);
+                                 (double)sttc / TICKS_PER_SECOND_DBL + 0.5 / mt->fps, mt);
 
     if (oblock != NULL) {
       if (get_event_timecode(oblock->end_event) <= get_event_timecode(block->end_event)) {
-        endtc = q_gint64(get_event_timecode(oblock->end_event) + U_SEC / mt->fps, mt->fps);
+        endtc = q_gint64(get_event_timecode(oblock->end_event) + TICKS_PER_SECOND_DBL / mt->fps, mt->fps);
         break;
       } else oblock = NULL;
     }
@@ -22153,8 +22153,8 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
 
     mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
     did_backup = mt->did_backup = TRUE;
-    mt->region_start = sttc / U_SEC;
-    mt->region_end = endtc / U_SEC;
+    mt->region_start = sttc / TICKS_PER_SECOND_DBL;
+    mt->region_end = endtc / TICKS_PER_SECOND_DBL;
     mt_add_region_effect(NULL, mt);
 
     nparams = weed_leaf_num_elements(mt->init_event, WEED_LEAF_IN_PARAMETERS);
@@ -22198,7 +22198,7 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
   // part 2, check if there is a transition out
 
   oblock = NULL;
-  endtc = q_gint64(get_event_timecode(block->end_event) + U_SEC / mt->fps, mt->fps);
+  endtc = q_gint64(get_event_timecode(block->end_event) + TICKS_PER_SECOND_DBL / mt->fps, mt->fps);
 
   if (mt->selected_tracks != NULL) {
     lives_list_free(mt->selected_tracks);
@@ -22208,7 +22208,7 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
   for (i = 0; i < nvids; i++) {
     if (i == track) continue; ///< cannot transition with self !
     oblock = get_block_from_time((LiVESWidget *)lives_list_nth_data(mt->video_draws, i),
-                                 (double)endtc / U_SEC + 0.5 / mt->fps, mt);
+                                 (double)endtc / TICKS_PER_SECOND_DBL + 0.5 / mt->fps, mt);
 
     if (oblock != NULL) {
       sttc = get_event_timecode(oblock->start_event);
@@ -22224,8 +22224,8 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
 
     if (!did_backup) mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
     did_backup = mt->did_backup = TRUE;
-    mt->region_start = sttc / U_SEC;
-    mt->region_end = endtc / U_SEC;
+    mt->region_start = sttc / TICKS_PER_SECOND_DBL;
+    mt->region_end = endtc / TICKS_PER_SECOND_DBL;
     mt_add_region_effect(NULL, mt);
 
     nparams = weed_leaf_num_elements(mt->init_event, WEED_LEAF_IN_PARAMETERS);

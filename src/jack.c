@@ -691,7 +691,7 @@ static int audio_process(nframes_t nframes, void *arg) {
               }
 
               if (!pl_error && has_audio_filters(AF_TYPE_ANY)) {
-                uint64_t tc = jackd->audio_ticks + (uint64_t)(jackd->frames_written / (double)jackd->sample_out_rate * U_SEC);
+                uint64_t tc = jackd->audio_ticks + (uint64_t)(jackd->frames_written / (double)jackd->sample_out_rate * TICKS_PER_SECOND_DBL);
                 // apply any audio effects with in_channels
                 weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels, numFramesToWrite, jackd->sample_out_rate, tc, FALSE);
               }
@@ -713,7 +713,7 @@ static int audio_process(nframes_t nframes, void *arg) {
               }
 
               if (has_audio_filters(AF_TYPE_ANY) && jackd->playing_file != mainw->ascrap_file) {
-                uint64_t tc = jackd->audio_ticks + (uint64_t)(jackd->frames_written / (double)jackd->sample_out_rate * U_SEC);
+                uint64_t tc = jackd->audio_ticks + (uint64_t)(jackd->frames_written / (double)jackd->sample_out_rate * TICKS_PER_SECOND_DBL);
                 // apply any audio effects with in_channels
                 weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels, numFramesToWrite, jackd->sample_out_rate, tc, FALSE);
               }
@@ -1130,7 +1130,7 @@ static int audio_read(nframes_t nframes, void *arg) {
     // we may wish to analyse the audio for example, or push it to a video generator
 
     if (has_audio_filters(AF_TYPE_A)) {
-      uint64_t tc = jackd->audio_ticks + (uint64_t)(jackd->frames_written / (double)jackd->sample_in_rate * U_SEC);
+      uint64_t tc = jackd->audio_ticks + (uint64_t)(jackd->frames_written / (double)jackd->sample_in_rate * TICKS_PER_SECOND_DBL);
 
       if (mainw->audio_frame_buffer != NULL && prefs->audio_src == AUDIO_SRC_EXT) {
         // if we have audio triggered gens., push audio to it
@@ -1711,8 +1711,8 @@ uint64_t lives_jack_get_time(jack_driver_t *jackd, boolean absolute) {
   frames_written = jackd->frames_written;
   if (frames_written < 0.) frames_written = 0.;
 
-  if (jackd->is_output) xtime = jackd->audio_ticks * absolute + (uint64_t)(frames_written / (double)jackd->sample_out_rate * U_SEC);
-  else xtime = jackd->audio_ticks * absolute + (uint64_t)(frames_written / (double)jackd->sample_in_rate * U_SEC);
+  if (jackd->is_output) xtime = jackd->audio_ticks * absolute + (uint64_t)(frames_written / (double)jackd->sample_out_rate * TICKS_PER_SECOND_DBL);
+  else xtime = jackd->audio_ticks * absolute + (uint64_t)(frames_written / (double)jackd->sample_in_rate * TICKS_PER_SECOND_DBL);
   return xtime;
 }
 

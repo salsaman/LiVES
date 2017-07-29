@@ -2215,7 +2215,7 @@ void play_file(void) {
   mainw->reverse_pb = FALSE;
 
   cfile->play_paused = FALSE;
-  mainw->period = U_SEC / cfile->pb_fps;
+  mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
 
   if (audio_player == AUD_PLAYER_JACK) audio_cache_init();
 

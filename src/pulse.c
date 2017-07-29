@@ -539,7 +539,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             }
 
             if (memok) {
-              int64_t tc = pulsed->audio_ticks + (int64_t)(pulsed->frames_written / (double)pulsed->out_arate * U_SEC);
+              int64_t tc = pulsed->audio_ticks + (int64_t)(pulsed->frames_written / (double)pulsed->out_arate * TICKS_PER_SECOND_DBL);
               // apply any audio effects with in_channels
 
               if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
@@ -622,7 +622,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               }
 
               if (memok) {
-                int64_t tc = pulsed->audio_ticks + (int64_t)(pulsed->frames_written / (double)pulsed->out_arate * U_SEC);
+                int64_t tc = pulsed->audio_ticks + (int64_t)(pulsed->frames_written / (double)pulsed->out_arate * TICKS_PER_SECOND_DBL);
                 // apply any audio effects with in_channels
 
                 if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fp, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
@@ -921,7 +921,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
       }
 
       if (memok) {
-        int64_t tc = pulsed->audio_ticks + (int64_t)(pulsed->frames_written / (double)pulsed->in_arate * U_SEC);
+        int64_t tc = pulsed->audio_ticks + (int64_t)(pulsed->frames_written / (double)pulsed->in_arate * TICKS_PER_SECOND_DBL);
         // apply any audio effects with in channels but no out channels
 
         if (has_audio_filters(AF_TYPE_A)) weed_apply_audio_effects_rt(fltbuf, pulsed->in_achans, xnframes, pulsed->in_arate, tc, TRUE);
@@ -1261,11 +1261,11 @@ int64_t lives_pulse_get_time(pulse_driver_t *pulsed, boolean absolute) {
   {
     pa_usec_t usec;
     pa_stream_get_time(pulsed->pstream, &usec);
-    return pulsed->audio_ticks * absolute + (int64_t)((usec - pulsed->usec_start) * U_SEC_RATIO);
+    return pulsed->audio_ticks * absolute + (int64_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
   }
 #else
-  if (pulsed->is_output) xtime = pulsed->audio_ticks * absolute + (int64_t)(frames_written / (double)pulsed->out_arate * U_SEC);
-  else xtime = pulsed->audio_ticks * absolute + (int64_t)(frames_written / (double)afile->arate * U_SEC);
+  if (pulsed->is_output) xtime = pulsed->audio_ticks * absolute + (int64_t)(frames_written / (double)pulsed->out_arate * TICKS_PER_SECOND_DBL);
+  else xtime = pulsed->audio_ticks * absolute + (int64_t)(frames_written / (double)afile->arate * TICKS_PER_SECOND_DBL);
   return xtime;
 #endif
 }

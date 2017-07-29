@@ -2970,18 +2970,18 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
   if (mainw->playing_file != -1 && tc > curr_tc) {
     // next event is in our future
     if (mainw->multitrack != NULL && mainw->last_display_ticks > 0) {
-      if ((mainw->fixed_fpsd > 0. && (curr_tc - mainw->last_display_ticks) / U_SEC >= 1. / mainw->fixed_fpsd) ||
+      if ((mainw->fixed_fpsd > 0. && (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
           (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
-           (curr_tc - mainw->last_display_ticks) / U_SEC >= 1. / mainw->vpp->fixed_fpsd)) {
+           (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd)) {
         // ...but playing at fixed fps, which is faster than mt fps
         mainw->pchains = pchains;
         load_frame_image(cfile->last_frameno >= 1 ? cfile->last_frameno : cfile->start);
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = curr_tc;
         else {
           if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
-            mainw->last_display_ticks += U_SEC / mainw->vpp->fixed_fpsd;
+            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
           else if (mainw->fixed_fpsd > 0.)
-            mainw->last_display_ticks += U_SEC / mainw->fixed_fpsd;
+            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
           else mainw->last_display_ticks = curr_tc;
         }
         mainw->pchains = NULL;
@@ -3009,7 +3009,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       double *aseeks = weed_get_double_array(next_event, WEED_LEAF_AUDIO_SEEKS, &error);
 
       if (aclips[1] > 0) {
-        aseek_tc = aseeks[0] * U_SEC;
+        aseek_tc = aseeks[0] * TICKS_PER_SECOND_DBL;
         stored_avel = aseeks[1];
       }
 
@@ -3039,17 +3039,17 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     // if we are in multitrack mode, we will just set up NULL layers and let the effects pull our frames
     if (mainw->multitrack != NULL) {
       if ((mainw->fixed_fpsd <= 0. && (mainw->vpp == NULL || mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback))
-          || (mainw->fixed_fpsd > 0. && (curr_tc - mainw->last_display_ticks) / U_SEC >= 1. / mainw->fixed_fpsd) ||
+          || (mainw->fixed_fpsd > 0. && (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
           (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
-           (curr_tc - mainw->last_display_ticks) / U_SEC >= 1. / mainw->vpp->fixed_fpsd)) {
+           (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd)) {
         mainw->pchains = pchains;
         load_frame_image(cfile->frameno);
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = curr_tc;
         else {
           if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
-            mainw->last_display_ticks += U_SEC / mainw->vpp->fixed_fpsd;
+            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
           else if (mainw->fixed_fpsd > 0.)
-            mainw->last_display_ticks += U_SEC / mainw->fixed_fpsd;
+            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
           else mainw->last_display_ticks = curr_tc;
         }
         mainw->pchains = NULL;
@@ -3086,7 +3086,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           mainw->files[new_file]->vsize = cfile->vsize;
           current_file = mainw->current_file;
           mainw->current_file = new_file;
-          mainw->aframeno = (double)(aseek_tc / U_SEC) * cfile->fps;
+          mainw->aframeno = (double)(aseek_tc / TICKS_PER_SECOND_DBL) * cfile->fps;
           mainw->pchains = pchains;
           load_frame_image(cfile->frameno);
           mainw->pchains = NULL;
@@ -3098,7 +3098,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         if (mainw->multitrack != NULL && new_file == mainw->multitrack->render_file) {
           cfile->frameno = 0; // will force blank frame creation
         } else cfile->frameno = mainw->frame_index[i - 1];
-        mainw->aframeno = (double)(aseek_tc / U_SEC) * cfile->fps;
+        mainw->aframeno = (double)(aseek_tc / TICKS_PER_SECOND_DBL) * cfile->fps;
         mainw->pchains = pchains;
         load_frame_image(cfile->frameno);
         mainw->pchains = NULL;
@@ -3381,7 +3381,7 @@ lives_render_error_t render_events(boolean reset) {
   if (reset) {
     progress = frame = 1;
     event = cfile->next_event;
-    out_frame = (int)((double)(get_event_timecode(event) / U_SECL) * cfile->fps + mainw->play_start);
+    out_frame = (int)((double)(get_event_timecode(event) / TICKS_PER_SECOND) * cfile->fps + mainw->play_start);
     if (cfile->frames < out_frame) out_frame = cfile->frames + 1;
     cfile->undo_start = out_frame;
     // store this, because if the user previews and there is no audio file yet, achans will get reset
@@ -3578,7 +3578,7 @@ lives_render_error_t render_events(boolean reset) {
           mainw->read_failed = mainw->write_failed = FALSE;
           lives_freep((void **)&mainw->read_failed_file);
           render_audio_segment(0, NULL, mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file,
-                               NULL, NULL, atime * U_SEC, q_gint64(tc + (U_SEC / cfile->fps * !is_blank), cfile->fps),
+                               NULL, NULL, atime * TICKS_PER_SECOND_DBL, q_gint64(tc + (TICKS_PER_SECOND_DBL / cfile->fps * !is_blank), cfile->fps),
                                chvols, 1., 1., NULL);
 
           if (mainw->write_failed) {
@@ -3633,7 +3633,7 @@ lives_render_error_t render_events(boolean reset) {
                 chvols[0] = 1.;
               }
 
-              if (flush_audio_tc > 0 || q_gint64(tc, cfile->fps) / U_SEC > atime) {
+              if (flush_audio_tc > 0 || q_gint64(tc, cfile->fps) / TICKS_PER_SECOND_DBL > atime) {
                 cfile->achans = cfile->undo_achans;
                 cfile->arate = cfile->undo_arate;
                 cfile->arps = cfile->undo_arps;
@@ -3650,8 +3650,8 @@ lives_render_error_t render_events(boolean reset) {
                 lives_freep((void **)&mainw->read_failed_file);
 
                 render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file :
-                                     mainw->current_file, xavel, xaseek, (atime * U_SEC + .5),
-                                     q_gint64(tc + (U_SEC / cfile->fps * !is_blank), cfile->fps), chvols, 1., 1., NULL);
+                                     mainw->current_file, xavel, xaseek, (atime * TICKS_PER_SECOND_DBL + .5),
+                                     q_gint64(tc + (TICKS_PER_SECOND_DBL / cfile->fps * !is_blank), cfile->fps), chvols, 1., 1., NULL);
 
                 if (mainw->write_failed) {
                   int outfile = (mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file);
@@ -3674,10 +3674,10 @@ lives_render_error_t render_events(boolean reset) {
 
                 for (i = 0; i < natracks; i++) {
                   if (xaclips[i] > 0) {
-                    xaseek[i] += (q_gint64(tc, cfile->fps) / U_SEC + 1. / cfile->fps - atime) * xavel[i];
+                    xaseek[i] += (q_gint64(tc, cfile->fps) / TICKS_PER_SECOND_DBL + 1. / cfile->fps - atime) * xavel[i];
                   }
                 }
-                atime = q_gint64(tc, cfile->fps) / U_SEC + 1. / cfile->fps;
+                atime = q_gint64(tc, cfile->fps) / TICKS_PER_SECOND_DBL + 1. / cfile->fps;
               }
               for (i = 0; i < num_aclips; i += 2) {
                 if (aclips[i + 1] > 0) { // clipnum
@@ -3698,7 +3698,7 @@ lives_render_error_t render_events(boolean reset) {
 
         if (pixbuf == NULL) break;
         if (next_frame_event == NULL && is_blank) break; // don't render final blank frame
-        next_out_tc = (weed_timecode_t)((out_frame - mainw->play_start) / cfile->fps * U_SEC); // calculate tc of next out frame
+        next_out_tc = (weed_timecode_t)((out_frame - mainw->play_start) / cfile->fps * TICKS_PER_SECOND_DBL); // calculate tc of next out frame
 
         if (next_frame_event != NULL) {
           if (next_tc < next_out_tc || next_tc - next_out_tc < next_out_tc - tc) break;
@@ -4021,7 +4021,7 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
   if (mainw->effects_paused) {
     // pressed "Keep", render audio to end of segment
     mainw->effects_paused = FALSE;
-    flush_audio_tc = q_gint64((double)cfile->undo_end / cfile->fps * U_SEC, cfile->fps);
+    flush_audio_tc = q_gint64((double)cfile->undo_end / cfile->fps * TICKS_PER_SECOND_DBL, cfile->fps);
 
     render_events(FALSE);
     flush_audio_tc = 0;
@@ -4095,7 +4095,7 @@ int count_resampled_events(weed_plant_t *event_list, double fps) {
         marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, &error);
         if (marker_type == EVENT_MARKER_RECORD_END) {
           // add (resampled) frames for one recording stretch
-          if (seg_start) rframes += 1 + ((double)(seg_end_tc - seg_start_tc)) / U_SEC * fps;
+          if (seg_start) rframes += 1 + ((double)(seg_end_tc - seg_start_tc)) / TICKS_PER_SECOND_DBL * fps;
           seg_start = FALSE;
         }
       }
@@ -4103,7 +4103,7 @@ int count_resampled_events(weed_plant_t *event_list, double fps) {
     event = get_next_event(event);
   }
 
-  if (seg_start) rframes += 1 + ((double)(seg_end_tc - seg_start_tc)) / U_SEC * fps;
+  if (seg_start) rframes += 1 + ((double)(seg_end_tc - seg_start_tc)) / TICKS_PER_SECOND_DBL * fps;
 
   return rframes;
 }
@@ -4116,7 +4116,7 @@ weed_timecode_t event_list_get_end_tc(weed_plant_t *event_list) {
 
 
 double event_list_get_end_secs(weed_plant_t *event_list) {
-  return (event_list_get_end_tc(event_list) / U_SEC);
+  return (event_list_get_end_tc(event_list) / TICKS_PER_SECOND_DBL);
 }
 
 
@@ -4127,7 +4127,7 @@ weed_timecode_t event_list_get_start_tc(weed_plant_t *event_list) {
 
 
 double event_list_get_start_secs(weed_plant_t *event_list) {
-  return (event_list_get_start_tc(event_list) / U_SEC);
+  return (event_list_get_start_tc(event_list) / TICKS_PER_SECOND_DBL);
 }
 
 
@@ -4934,8 +4934,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       lives_free(final);
 
       // timecode
-      tc_secs = tc / U_SECL;
-      tc -= tc_secs * U_SECL;
+      tc_secs = tc / TICKS_PER_SECOND;
+      tc -= tc_secs * TICKS_PER_SECOND;
       text = lives_strdup_printf(_("Timecode=%"PRId64".%"PRId64), tc_secs, tc);
       label = lives_standard_label_new(text);
       lives_free(text);

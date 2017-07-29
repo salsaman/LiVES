@@ -571,7 +571,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     img_ext = get_image_ext_for_type(cfile->img_type);
   }
 
-  tc = ((mainw->framedraw_frame - 1.)) / cfile->fps * U_SECL;
+  tc = ((mainw->framedraw_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
   pixbuf = pull_lives_pixbuf_at_size(mainw->current_file, mainw->framedraw_frame, (char *)img_ext,
                                      tc, (double)cfile->hsize,
                                      (double)cfile->vsize, LIVES_INTERP_BEST);
@@ -609,7 +609,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
     // can happen if we preview for rendered generators
     if ((mainw->multitrack == NULL || mainw->current_file != mainw->multitrack->render_file) && mainw->framedraw_frame == 0) return;
 
-    tc = ((mainw->framedraw_frame - 1.)) / cfile->fps * U_SECL;
+    tc = ((mainw->framedraw_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
     pixbuf = pull_lives_pixbuf_at_size(mainw->current_file, mainw->framedraw_frame, img_ext, tc,
                                        (double)cfile->hsize, (double)cfile->vsize,
                                        LIVES_INTERP_BEST);

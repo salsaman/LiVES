@@ -9569,8 +9569,8 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
       if (xnum > j) last_valued = last_valuesd[j];
       else last_valued = get_default_element_double(param, j, 1, 0);
 
-      valds[j] = last_valued + (double)(next_valuesd[j] - last_valued) / (double)(tc_diff / U_SEC) *
-                 (double)((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error)) / U_SEC);
+      valds[j] = last_valued + (double)(next_valuesd[j] - last_valued) / (double)(tc_diff / TICKS_PER_SECOND_DBL) *
+                 (double)((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error)) / TICKS_PER_SECOND_DBL);
 
       lives_free(last_valuesd);
       lives_free(next_valuesd);
@@ -9623,10 +9623,10 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
 
           if (next_valuesi == NULL) continue; // can happen if we recorded a param change
 
-          valis[k] = last_valueir + (next_valuesi[k] - last_valueir) / (tc_diff / U_SEC) *
-                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / U_SEC) + .5;
-          valis[k + 1] = last_valueig + (next_valuesi[k + 1] - last_valueig) / (tc_diff / U_SEC) * (tc_diff2 / U_SEC) + .5;
-          valis[k + 2] = last_valueib + (next_valuesi[k + 2] - last_valueib) / (tc_diff / U_SEC) * (tc_diff2 / U_SEC) + .5;
+          valis[k] = last_valueir + (next_valuesi[k] - last_valueir) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / TICKS_PER_SECOND_DBL) + .5;
+          valis[k + 1] = last_valueig + (next_valuesi[k + 1] - last_valueig) / (tc_diff / TICKS_PER_SECOND_DBL) * (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+          valis[k + 2] = last_valueib + (next_valuesi[k + 2] - last_valueib) / (tc_diff / TICKS_PER_SECOND_DBL) * (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
 
           lives_free(last_valuesi);
           lives_free(next_valuesi);
@@ -9669,10 +9669,10 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             last_valuedg = get_default_element_double(param, j, 3, 1);
             last_valuedb = get_default_element_double(param, j, 3, 2);
           }
-          valds[k] = last_valuedr + (next_valuesd[k] - last_valuedr) / (tc_diff / U_SEC) *
-                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / U_SEC);
-          valds[k + 1] = last_valuedg + (next_valuesd[k + 1] - last_valuedg) / (tc_diff / U_SEC) * (tc_diff2 / U_SEC) + .5;
-          valds[k + 2] = last_valuedb + (next_valuesd[k + 2] - last_valuedb) / (tc_diff / U_SEC) * (tc_diff2 / U_SEC) + .5;
+          valds[k] = last_valuedr + (next_valuesd[k] - last_valuedr) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / TICKS_PER_SECOND_DBL);
+          valds[k + 1] = last_valuedg + (next_valuesd[k + 1] - last_valuedg) / (tc_diff / TICKS_PER_SECOND_DBL) * (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+          valds[k + 2] = last_valuedb + (next_valuesd[k + 2] - last_valuedb) / (tc_diff / TICKS_PER_SECOND_DBL) * (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
 
           lives_free(last_valuesd);
           lives_free(next_valuesd);
@@ -9725,8 +9725,8 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
         if (xnum > j) last_valuei = last_valuesi[j];
         else last_valuei = get_default_element_int(param, j, 1, 0);
 
-        valis[j] = last_valuei + (next_valuesi[j] - last_valuei) / (tc_diff / U_SEC) *
-                   ((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error)) / U_SEC) + .5;
+        valis[j] = last_valuei + (next_valuesi[j] - last_valuei) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                   ((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error)) / TICKS_PER_SECOND_DBL) + .5;
 
         lives_free(last_valuesi);
         lives_free(next_valuesi);

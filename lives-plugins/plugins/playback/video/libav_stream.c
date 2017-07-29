@@ -111,7 +111,7 @@ const char *module_check_init(void) {
 
   fmtctx = NULL;
   encctx = NULL;
-  
+
   av_register_all();
   avformat_network_init();
 
@@ -150,7 +150,7 @@ uint64_t get_capabilities(int palette) {
 
 
 /*
-  parameter template, these are returned as argc, argv in init_screen() and init_audio() 
+  parameter template, these are returned as argc, argv in init_screen() and init_audio()
 */
 const char *get_init_rfx(void) {
   // intention allows switching between different tailored interfaces
@@ -160,7 +160,7 @@ const char *get_init_rfx(void) {
   switch (intent) {
   case 0: // LiVES VPP (streaming output)
     return					\
-      "<define>\\n\
+                    "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
@@ -200,7 +200,7 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill| \\n\
 
   case 1: // LiVES transcoding (test)
     return					\
-      "<define>\\n\
+                    "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
@@ -286,27 +286,27 @@ static AVFrame *alloc_picture(enum AVPixelFormat pix_fmt, int width, int height)
 
 
 static AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
-				  uint64_t channel_layout,
-				  int sample_rate, int nb_samples) {
+                                  uint64_t channel_layout,
+                                  int sample_rate, int nb_samples) {
   AVFrame *frame = av_frame_alloc();
   int ret;
- 
+
   if (!frame) {
     fprintf(stderr, "Error allocating an audio frame\n");
     return NULL;
   }
- 
+
   frame->format = sample_fmt;
   frame->channel_layout = channel_layout;
   frame->sample_rate = sample_rate;
   frame->nb_samples = nb_samples;
- 
+
   ret = av_frame_get_buffer(frame, 0);
   if (ret < 0) {
     fprintf(stderr, "Error allocating an audio buffer\n");
     return NULL;
   }
- 
+
   return frame;
 }
 
@@ -317,7 +317,7 @@ static boolean open_audio() {
   AVDictionary *opt = NULL;
   int ret;
   int i;
-  
+
   codec = osta.codec;
   c = osta.enc;
 
@@ -326,8 +326,8 @@ static boolean open_audio() {
     c->sample_fmt = codec->sample_fmts[0];
     for (i = 0; codec->sample_fmts[i]; i++) {
       if (codec->sample_fmts[i] == AV_SAMPLE_FMT_FLTP) {
-	c->sample_fmt = AV_SAMPLE_FMT_FLTP;
-	break;
+        c->sample_fmt = AV_SAMPLE_FMT_FLTP;
+        break;
       }
     }
   }
@@ -337,21 +337,21 @@ static boolean open_audio() {
     c->sample_rate = codec->supported_samplerates[0];
     for (i = 0; codec->supported_samplerates[i]; i++) {
       if (codec->supported_samplerates[i] == out_sample_rate) {
-	c->sample_rate = out_sample_rate;
-	break;
+        c->sample_rate = out_sample_rate;
+        break;
       }
     }
   }
   out_sample_rate = c->sample_rate;
-  
+
   c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
-  c->channel_layout = (out_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
+  c->channel_layout = (out_nchans == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO);
   if (codec->channel_layouts) {
     c->channel_layout = codec->channel_layouts[0];
     for (i = 0; codec->channel_layouts[i]; i++) {
-      if (codec->channel_layouts[i] == (out_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO)) {
-	c->channel_layout = (out_nchans == 2 ? AV_CH_LAYOUT_STEREO: AV_CH_LAYOUT_MONO);
-	break;
+      if (codec->channel_layouts[i] == (out_nchans == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO)) {
+        c->channel_layout = (out_nchans == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO);
+        break;
       }
     }
   }
@@ -367,8 +367,7 @@ static boolean open_audio() {
 
   if (c->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) {
     fprintf(stderr, "varaudio\n");
-  }
-  else {
+  } else {
     out_nb_samples = c->frame_size;
     fprintf(stderr, "nb samples is %d\n", out_nb_samples);
   }
@@ -379,15 +378,15 @@ static boolean open_audio() {
     fprintf(stderr, "Could not allocate resampler context\n");
     return FALSE;
   }
-  
+
   /* set options */
-  av_opt_set_int       (osta.swr_ctx, "in_channel_count",   in_nchans,       0);
-  av_opt_set_int       (osta.swr_ctx, "in_sample_rate",     in_sample_rate,    0);
-  av_opt_set_sample_fmt(osta.swr_ctx, "in_sample_fmt",      AV_SAMPLE_FMT_FLTP,0);
-  av_opt_set_int       (osta.swr_ctx, "out_channel_count",  c->channels,       0);
-  av_opt_set_int       (osta.swr_ctx, "out_sample_rate",    c->sample_rate,    0);
+  av_opt_set_int(osta.swr_ctx, "in_channel_count",   in_nchans,       0);
+  av_opt_set_int(osta.swr_ctx, "in_sample_rate",     in_sample_rate,    0);
+  av_opt_set_sample_fmt(osta.swr_ctx, "in_sample_fmt",      AV_SAMPLE_FMT_FLTP, 0);
+  av_opt_set_int(osta.swr_ctx, "out_channel_count",  c->channels,       0);
+  av_opt_set_int(osta.swr_ctx, "out_sample_rate",    c->sample_rate,    0);
   av_opt_set_sample_fmt(osta.swr_ctx, "out_sample_fmt",     c->sample_fmt, 0);
- 
+
   /* initialize the resampling context */
   if ((ret = swr_init(osta.swr_ctx)) < 0) {
     fprintf(stderr, "Failed to initialize the resampling context\n");
@@ -399,22 +398,22 @@ static boolean open_audio() {
   if (out_nb_samples != 0) {
     /* compute src number of samples */
     in_nb_samples = av_rescale_rnd(swr_get_delay(osta.swr_ctx, c->sample_rate) + out_nb_samples,
-				    in_sample_rate, c->sample_rate, AV_ROUND_DOWN);
+                                   in_sample_rate, c->sample_rate, AV_ROUND_DOWN);
 
     /* confirm destination number of samples */
     int dst_nb_samples = av_rescale_rnd(in_nb_samples,
-				    c->sample_rate, in_sample_rate, AV_ROUND_UP);
+                                        c->sample_rate, in_sample_rate, AV_ROUND_UP);
 
     av_assert0(dst_nb_samples == out_nb_samples);
   }
-  
-  if (out_nb_samples > 0) 
+
+  if (out_nb_samples > 0)
     osta.frame = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, out_nb_samples);
   else
     osta.frame = NULL;
 
   spill_buffers = NULL;
-  
+
   if (in_nb_samples != 0) {
     spill_buffers = (float **) malloc(in_nchans * sizeof(float *));
     for (i = 0; i < in_nchans; i++) {
@@ -424,15 +423,17 @@ static boolean open_audio() {
   spb_len = 0;
 
   osta.samples_count = 0;
-  
-  osta.st->time_base = (AVRational){ 1, c->sample_rate };
+
+  osta.st->time_base = (AVRational) {
+    1, c->sample_rate
+  };
 
   /* copy the stream parameters to the muxer */
   /*     ret = avcodec_parameters_from_context(ost->st->codecpar, c);
-	 if (ret < 0) {
+   if (ret < 0) {
          fprintf(stderr, "Could not copy the stream parameters\n");
          exit(1);
-	 }*/
+   }*/
 
   fprintf(stderr, "Opened audio stream\n");
   fprintf(stderr, "%d %d - %d %d %d\n", in_nchans, in_sample_rate, c->channels, c->sample_rate, c->sample_fmt);
@@ -441,14 +442,14 @@ static boolean open_audio() {
 
 
 static boolean add_stream(OutputStream *ost, AVFormatContext *oc,
-			  AVCodec **codec,
-			  enum AVCodecID codec_id) {
+                          AVCodec **codec,
+                          enum AVCodecID codec_id) {
   AVCodecContext *c;
 
   *codec = avcodec_find_encoder(codec_id);
   if (!(*codec)) {
     fprintf(stderr, "Could not find encoder for '%s'\n",
-	    avcodec_get_name(codec_id));
+            avcodec_get_name(codec_id));
     return FALSE;
   }
 
@@ -465,7 +466,7 @@ static boolean add_stream(OutputStream *ost, AVFormatContext *oc,
   }
 
   ost->st->codec = ost->enc = c;
-  ost->st->id = oc->nb_streams-1;
+  ost->st->id = oc->nb_streams - 1;
 
   /* Some formats want stream headers to be separate. */
   if (!stream_encode && oc->oformat->flags & AVFMT_GLOBALHEADER)
@@ -488,16 +489,16 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   AVCodec *codec, *acodec;
 
   const char *fmtstring;
-  
+
   //AVDictionary *opts = NULL;
   char uri[PATH_MAX];
-  
+
   int vcodec_id;
   int acodec_id;
   int ret;
 
-  fprintf(stderr,"init_screen %d x %d %d\n", width, height, argc);
-  
+  fprintf(stderr, "init_screen %d x %d %d\n", width, height, argc);
+
   ostv.frame = osta.frame = NULL;
   vStream = aStream = NULL;
 
@@ -518,7 +519,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   maxvbitrate = 3000000;
 
   if (argc > 0) {
-    switch(atoi(argv[0])) {
+    switch (atoi(argv[0])) {
     case 0:
       fmtstring = "flv";
       vcodec_id = AV_CODEC_ID_H264;
@@ -549,13 +550,13 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     }
 
   }
-  
+
   ret = avformat_alloc_output_context2(&fmtctx, NULL, fmtstring, uri);
   if (ret < 0) {
     fprintf(stderr, "Could not open fmt '%s': %s\n", fmtstring,
-	    av_err2str(ret));
+            av_err2str(ret));
   }
-  
+
   if (!fmtctx) {
     printf("Could not deduce output format from file extension %s: using flv.\n", fmtstring);
     avformat_alloc_output_context2(&fmtctx, NULL, "flv", uri);
@@ -566,17 +567,19 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   add_stream(&ostv, fmtctx, &codec, vcodec_id);
   vStream = ostv.st;
   ostv.codec = codec;
-  
+
   ostv.enc = encctx = vStream->codec;
 
   // override defaults
-  vStream->time_base = (AVRational){1, target_fps};
+  vStream->time_base = (AVRational) {
+    1, target_fps
+  };
   vStream->codec->time_base = vStream->time_base;
-  
+
   vStream->codec->width = width;
   vStream->codec->height = height;
   vStream->codec->pix_fmt = avpalette;
-  
+
   vStream->codec->bit_rate = maxvbitrate;
   if (vcodec_id == AV_CODEC_ID_H264)
     av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
@@ -601,7 +604,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   }
 
   // audio
-  
+
   if (in_sample_rate > 0) {
     add_stream(&osta, fmtctx, &acodec, acodec_id);
     osta.codec = acodec;
@@ -611,30 +614,37 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     out_nchans = 2;
     out_sample_rate = 44100;
     maxabitrate = 320000;
-  
+
     if (argc > 0) {
       out_nchans = atoi(argv[2]) + 1;
-      switch(atoi(argv[3])) {
-	case 0: out_sample_rate = 22050; break; 
-	case 1: out_sample_rate = 44100; break; 
-	case 2: out_sample_rate = 48000; break; 
-	default: break;
-	}
+      switch (atoi(argv[3])) {
+      case 0:
+        out_sample_rate = 22050;
+        break;
+      case 1:
+        out_sample_rate = 44100;
+        break;
+      case 2:
+        out_sample_rate = 48000;
+        break;
+      default:
+        break;
+      }
       maxabitrate = atoi(argv[4]);
     }
-    fprintf(stderr,"added audio stream\n");
-    open_audio(); 
+    fprintf(stderr, "added audio stream\n");
+    open_audio();
   }
-  
+
   // container
-  
+
   /* open output file */
   if (!(fmtctx->oformat->flags & AVFMT_NOFILE)) {
     fprintf(stderr, "opening file\n");
     ret = avio_open(&fmtctx->pb, uri, AVIO_FLAG_WRITE);
     if (ret < 0) {
       fprintf(stderr, "Could not open '%s': %s\n", uri,
-	      av_err2str(ret));
+              av_err2str(ret));
       return FALSE;
     }
 
@@ -642,11 +652,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     ret = avformat_write_header(fmtctx, NULL);
     if (ret < 0) {
       fprintf(stderr, "Error occurred when writing header: %s\n",
-	      av_err2str(ret));
+              av_err2str(ret));
     }
   }
 
-  
+
   /* create (container) libav video frame */
   ostv.frame = alloc_picture(avpalette, width, height);
   if (ostv.frame == NULL) {
@@ -655,7 +665,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   }
 
   av_dump_format(fmtctx, 0, uri , 1);
-  
+
   ostv.next_pts = osta.next_pts = 0;
   return TRUE;
 }
@@ -670,10 +680,10 @@ boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void *
 static void log_packet(const AVPacket *pkt) {
   AVRational *time_base = &fmtctx->streams[pkt->stream_index]->time_base;
   printf("pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
-	 av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
-	 av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
-	 av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
-	 pkt->stream_index);
+         av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
+         av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
+         av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
+         pkt->stream_index);
 }
 
 
@@ -691,11 +701,11 @@ static int write_frame(const AVRational *time_base, AVStream *stream, AVPacket *
 }
 
 
-static void copy_yuv_image(AVFrame *pict, int width, int height, const uint8_t * const *pixel_data) {
+static void copy_yuv_image(AVFrame *pict, int width, int height, const uint8_t *const *pixel_data) {
   int y, ret;
   int hwidth = width >> 1;
   int hheight = height >> 1;
-  
+
   /* when we pass a frame to the encoder, it may keep a reference to it
    * internally;
    * make sure we do not overwrite it here
@@ -705,7 +715,7 @@ static void copy_yuv_image(AVFrame *pict, int width, int height, const uint8_t *
 
   /* Y */
   for (y = 0; y < height; y++)
-    memcpy(&pict->data[0][y * pict->linesize[0]], &pixel_data[0][y*width], width);
+    memcpy(&pict->data[0][y * pict->linesize[0]], &pixel_data[0][y * width], width);
   /* Cb and Cr */
   for (y = 0; y < hheight; y++) {
     memcpy(&pict->data[1][y * pict->linesize[1]], &pixel_data[1][y * hwidth], hwidth);
@@ -714,7 +724,7 @@ static void copy_yuv_image(AVFrame *pict, int width, int height, const uint8_t *
 }
 
 
-static AVFrame *get_video_frame(const uint8_t * const *pixel_data, int hsize, int vsize) {
+static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int vsize) {
   AVCodecContext *c = ostv.enc;
   int istrides[3];
 
@@ -722,18 +732,18 @@ static AVFrame *get_video_frame(const uint8_t * const *pixel_data, int hsize, in
     sws_freeContext(ostv.sws_ctx);
     ostv.sws_ctx = NULL;
   }
-  
+
   if (hsize != c->width || vsize != c->height) {
     if (ostv.sws_ctx == NULL) {
       ostv.sws_ctx = sws_getContext(hsize, vsize,
-				    avpalette,
-				    c->width, c->height,
-				    avpalette,
-				    SCALE_FLAGS, NULL, NULL, NULL);
+                                    avpalette,
+                                    c->width, c->height,
+                                    avpalette,
+                                    SCALE_FLAGS, NULL, NULL, NULL);
       if (ostv.sws_ctx == NULL) {
-	fprintf(stderr,
-		"libav_stream: Could not initialize the conversion context\n");
-	return NULL;
+        fprintf(stderr,
+                "libav_stream: Could not initialize the conversion context\n");
+        return NULL;
       }
       ohsize = hsize;
       ovsize = vsize;
@@ -741,13 +751,12 @@ static AVFrame *get_video_frame(const uint8_t * const *pixel_data, int hsize, in
       istrides[1] = istrides[2] = hsize >> 1;
     }
     sws_scale(ostv.sws_ctx,
-	      (const uint8_t * const *)pixel_data, istrides,
-	      0, vsize, ostv.frame->data, ostv.frame->linesize);
-  }
-  else {
+              (const uint8_t *const *)pixel_data, istrides,
+              0, vsize, ostv.frame->data, ostv.frame->linesize);
+  } else {
     copy_yuv_image(ostv.frame, hsize, vsize, pixel_data);
   }
-  
+
   ostv.frame->pts = ostv.next_pts++;
   return ostv.frame;
 }
@@ -756,9 +765,9 @@ static AVFrame *get_video_frame(const uint8_t * const *pixel_data, int hsize, in
 boolean render_audio_frame_float(float **audio, int nsamps)  {
   AVCodecContext *c = osta.enc;
   AVPacket pkt = { 0 }; // data and size must be 0;
-  
+
   float *abuff[in_nchans];
-  
+
   int ret;
   int got_packet;
   int nb_samples;
@@ -766,67 +775,69 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
 
   av_init_packet(&pkt);
 
-  for (i= 0; i < in_nchans; i++) {
+  for (i = 0; i < in_nchans; i++) {
     abuff[i] = audio[i];
   }
 
   while (nsamps > 0) {
     if (out_nb_samples != 0) {
       if (nsamps + spb_len < in_nb_samples) {
-	// have l.t. one full buffer to send, store this for next time
-	for (i= 0; i < in_nchans; i++) {
-	  memcpy(&(spill_buffers[i][spb_len]), abuff[i], nsamps * sizeof(float));
-	}
-	spb_len += nsamps;
-	return TRUE;
+        // have l.t. one full buffer to send, store this for next time
+        for (i = 0; i < in_nchans; i++) {
+          memcpy(&(spill_buffers[i][spb_len]), abuff[i], nsamps * sizeof(float));
+        }
+        spb_len += nsamps;
+        return TRUE;
       }
-    
+
       if (spb_len > 0) {
-	// have data in buffers from last call. fill these up and clear them first 
-	for (i= 0; i < in_nchans; i++) {
-	  memcpy(&(spill_buffers[i][spb_len]), audio[i], (in_nb_samples - spb_len) * sizeof(float));
-	}
+        // have data in buffers from last call. fill these up and clear them first
+        for (i = 0; i < in_nchans; i++) {
+          memcpy(&(spill_buffers[i][spb_len]), audio[i], (in_nb_samples - spb_len) * sizeof(float));
+        }
       }
       nb_samples = out_nb_samples;
-    }
-    else {
+    } else {
       // codec accepts variable nb_samples, so encode all
       in_nb_samples = nsamps;
       nb_samples = av_rescale_rnd(in_nb_samples,
-				  c->sample_rate, in_sample_rate, AV_ROUND_UP);
+                                  c->sample_rate, in_sample_rate, AV_ROUND_UP);
       osta.frame = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, nb_samples);
     }
-      
+
     ret = av_frame_make_writable(osta.frame);
     if (ret < 0) return FALSE;
 
     ret = swr_convert(osta.swr_ctx,
-		      osta.frame->data, nb_samples,
-		      spb_len == 0 ? (const uint8_t **)abuff : (const uint8_t **)spill_buffers, in_nb_samples);
+                      osta.frame->data, nb_samples,
+                      spb_len == 0 ? (const uint8_t **)abuff : (const uint8_t **)spill_buffers, in_nb_samples);
     if (ret < 0) {
       fprintf(stderr, "Error while converting audio\n");
       return FALSE;
     }
 
-    osta.frame->pts = av_rescale_q(osta.samples_count, (AVRational){1, c->sample_rate}, c->time_base);
+    osta.frame->pts = av_rescale_q(osta.samples_count, (AVRational) {
+      1, c->sample_rate
+    }, c->time_base);
     osta.samples_count += nb_samples;
-    
+
     ret = avcodec_encode_audio2(c, &pkt, osta.frame, &got_packet);
     if (ret < 0) {
-      fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps, nb_samples, c->sample_rate, c->sample_fmt, c->channel_layout);
+      fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps, nb_samples, c->sample_rate, c->sample_fmt,
+              c->channel_layout);
       return FALSE;
     }
 
     if (got_packet) {
       ret = write_frame(&c->time_base, aStream, &pkt);
       if (ret < 0) {
-	fprintf(stderr, "Error while writing audio frame: %s\n",
-		av_err2str(ret));
-	return FALSE;
+        fprintf(stderr, "Error while writing audio frame: %s\n",
+                av_err2str(ret));
+        return FALSE;
       }
     }
 
-    for (i= 0; i < in_nchans; i++) {
+    for (i = 0; i < in_nchans; i++) {
       abuff[i] += in_nb_samples - spb_len;
     }
 
@@ -853,7 +864,7 @@ boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data) {
   c = ostv.enc;
 
   // copy and scale pixel_data
-  if ((ostv.frame = get_video_frame((const uint8_t * const *)pixel_data, hsize, vsize)) != NULL) {
+  if ((ostv.frame = get_video_frame((const uint8_t *const *)pixel_data, hsize, vsize)) != NULL) {
     av_init_packet(&pkt);
 
     /* encode the image */
@@ -905,16 +916,16 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
       ret = avcodec_encode_video2(c, &pkt, NULL, &got_packet);
 
       if (ret < 0) {
-	fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(ret));
-	break;
+        fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(ret));
+        break;
       }
       if (got_packet) {
-	ret = write_frame(&c->time_base, vStream, &pkt);
+        ret = write_frame(&c->time_base, vStream, &pkt);
       } else {
-	ret = 0;
+        ret = 0;
       }
       if (ret < 0) {
-	break;
+        break;
       }
     } while (got_packet);
   }
@@ -926,7 +937,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
        * av_write_trailer() may try to use memory that was freed on
        * av_codec_close(). */
       av_write_trailer(fmtctx);
-  
+
     /* Close the output file. */
     avio_closep(&fmtctx->pb);
   }
@@ -961,7 +972,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     }
     free(spill_buffers);
   }
-  
+
   in_sample_rate = 0;
 }
 

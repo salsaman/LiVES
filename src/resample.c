@@ -30,15 +30,18 @@ static boolean reorder_leave_back = FALSE;
 
 LIVES_INLINE weed_timecode_t q_gint64(weed_timecode_t in, double fps) {
   // quantise timecode to fps
-  if (in > (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps + (long double).5) /
+  if (in > (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps +
+                                         (long double).5) /
                                          (long double)fps) * (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
-  if (in < (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps - (long double).5) /
+  if (in < (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps -
+                                         (long double).5) /
                                          (long double)fps) * (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
 LIVES_INLINE weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps) {
-  if (in != (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps) / (long double)fps) *
+  if (in != (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps) /
+                                          (long double)fps) *
                                          (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
   return (weed_timecode_t)0;
 }

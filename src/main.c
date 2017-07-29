@@ -358,7 +358,7 @@ void get_monitors(void) {
 
   widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0;
   widget_opts.screen = mainw->mgeom[widget_opts.monitor].screen;
-  
+
   mainw->scr_width = mainw->mgeom[widget_opts.monitor].width;
   mainw->scr_height = mainw->mgeom[widget_opts.monitor].height;
 }
@@ -1244,7 +1244,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     if (!mainw->foreign) {
       // set random seeds
-      
+
       randres = -1;
 
       // try to get randomness from /dev/urandom
@@ -1278,7 +1278,7 @@ static void lives_init(_ign_opts *ign_opts) {
       fastsrand(rseed);
 
       // set various prefs
-      
+
       prefs->midi_check_rate = get_int_pref(PREF_MIDI_CHECK_RATE);
       if (prefs->midi_check_rate == 0) prefs->midi_check_rate = DEF_MIDI_CHECK_RATE;
 
@@ -3038,7 +3038,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GDK_WINDOWING_X11
   XInitThreads();
 #endif
-  
+
 #ifdef GUI_GTK
   gtk_init(&argc, &argv);
 #endif
@@ -3052,7 +3052,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   g_log_set_default_handler(lives_log_handler, NULL);
 #endif
-  
+
   theme_expected = pre_init();
 
   // mainw->foreign is set if we are grabbing an external window
@@ -3379,15 +3379,14 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   get_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
   if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
     mainw->vpp = open_vid_playback_plugin(buff, TRUE);
-  }
-  else if (prefs->startup_phase == 1 || prefs->startup_phase == -1) {
+  } else if (prefs->startup_phase == 1 || prefs->startup_phase == -1) {
     mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, FALSE);
     if (mainw->vpp != NULL) {
       lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
       set_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
     }
   }
-  
+
   lives_idle_add(lives_startup, NULL);
 
 #ifdef GUI_GTK

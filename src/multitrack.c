@@ -1248,7 +1248,8 @@ static void draw_aparams(lives_mt *mt, LiVESWidget *eventbox, lives_painter_t *c
   end_tc = get_event_timecode(deinit_event);
 
   offset_start = (int)((start_tc / TICKS_PER_SECOND_DBL - mt->tl_min) / tl_span * lives_widget_get_allocation_width(eventbox) + .5);
-  offset_end = (int)((end_tc / TICKS_PER_SECOND_DBL - mt->tl_min + 1. / mt->fps) / tl_span * lives_widget_get_allocation_width(eventbox) + .5);
+  offset_end = (int)((end_tc / TICKS_PER_SECOND_DBL - mt->tl_min + 1. / mt->fps) / tl_span * lives_widget_get_allocation_width(
+                       eventbox) + .5);
 
   if (offset_end < 0 || offset_start > lives_widget_get_allocation_width(eventbox)) {
     lives_free(in_params);
@@ -3546,7 +3547,8 @@ static void select_block(lives_mt *mt) {
     else add_context_label(mt, (tmp2 = lives_strdup(_("Current track: Backing audio\n"))));
     lives_free(tmp2);
 
-    add_context_label(mt, (tmp2 = lives_strdup_printf(_("%.2f sec. to %.2f sec.\n"), get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL,
+    add_context_label(mt, (tmp2 = lives_strdup_printf(_("%.2f sec. to %.2f sec.\n"),
+                                  get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL,
                                   get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL + 1. / mt->fps)));
     lives_free(tmp2);
     add_context_label(mt, (tmp2 = lives_strdup_printf(_("Source: %s"), (tmp = lives_path_get_basename(mainw->files[filenum]->name)))));
@@ -11278,7 +11280,8 @@ static void set_in_out_spin_ranges(lives_mt *mt, weed_timecode_t start_tc, weed_
   weed_timecode_t min_tc = 0, max_tc = -1;
   weed_timecode_t offset_start = get_event_timecode(block->start_event);
   int filenum;
-  double in_val = start_tc / TICKS_PER_SECOND_DBL, out_val = end_tc / TICKS_PER_SECOND_DBL, in_start_range = 0., out_start_range = in_val + 1. / mt->fps;
+  double in_val = start_tc / TICKS_PER_SECOND_DBL, out_val = end_tc / TICKS_PER_SECOND_DBL, in_start_range = 0.,
+         out_start_range = in_val + 1. / mt->fps;
   double out_end_range, real_out_end_range;
   double in_end_range = out_val - 1. / mt->fps, real_in_start_range = in_start_range;
   double avel = 1.;
@@ -12473,7 +12476,8 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
 
     if (avel > 0.) {
       if (block != NULL) {
-        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_out), block->offset_start / TICKS_PER_SECOND_DBL + 1. / mt->fps, out_end_range);
+        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_out), block->offset_start / TICKS_PER_SECOND_DBL + 1. / mt->fps,
+                                    out_end_range);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), offset_end / TICKS_PER_SECOND_DBL);
         if (!block->start_anchored || !block->end_anchored) {
           lives_widget_set_sensitive(mt->spinbutton_avel, TRUE);
@@ -13271,7 +13275,7 @@ boolean on_track_release(LiVESWidget *eventbox, LiVESXEventButton *event, livesp
 
       // timecodes per pixel
       tcpp = TICKS_PER_SECOND_DBL * ((mt->tl_max - mt->tl_min) /
-                      (double)lives_widget_get_allocation_width(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, 0))));
+                                     (double)lives_widget_get_allocation_width(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, 0))));
 
       // need to move at least 1.5 pixels, or to another track
       if ((track != mt->current_track || (tc - start_tc > (tcpp * 3 / 2)) || (start_tc - tc > (tcpp * 3 / 2))) &&
@@ -14115,7 +14119,8 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
   mt->did_backup = did_backup;
   if (!did_backup && mt->framedraw != NULL && mt->current_rfx != NULL && mt->init_event != NULL &&
       mt->poly_state == POLY_PARAMS && weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
-    tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + get_event_timecode(mt->init_event), mt->fps);
+    tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + get_event_timecode(
+                    mt->init_event), mt->fps);
     get_track_index(mt, tc);
   }
 
@@ -14175,7 +14180,8 @@ static void split_block(lives_mt *mt, track_rect *block, weed_timecode_t tc, int
     if (!no_recurse) {
       // if we have a video block, split it too
       LiVESWidget *oeventbox = LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "owner"));
-      if (oeventbox != NULL) split_block(mt, get_block_from_time(oeventbox, tc / TICKS_PER_SECOND_DBL - 1. / mt->fps, mt), tc - TICKS_PER_SECOND_DBL / mt->fps, track, TRUE);
+      if (oeventbox != NULL) split_block(mt, get_block_from_time(oeventbox, tc / TICKS_PER_SECOND_DBL - 1. / mt->fps, mt),
+                                           tc - TICKS_PER_SECOND_DBL / mt->fps, track, TRUE);
     }
     clip = get_audio_frame_clip(start_event, track);
     seek = get_audio_frame_seek(start_event, track);
@@ -15213,8 +15219,9 @@ void mt_add_region_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   }
   lives_free(tracks);
 
-  d_print(_("Added %s %s to %s from %.4f to %.4f\n"), tname, filter_name, track_desc, start_tc / TICKS_PER_SECOND_DBL, q_gint64(end_tc + TICKS_PER_SECOND_DBL / mt->fps,
-          mt->fps) / TICKS_PER_SECOND_DBL);
+  d_print(_("Added %s %s to %s from %.4f to %.4f\n"), tname, filter_name, track_desc, start_tc / TICKS_PER_SECOND_DBL,
+          q_gint64(end_tc + TICKS_PER_SECOND_DBL / mt->fps,
+                   mt->fps) / TICKS_PER_SECOND_DBL);
 
   lives_free(filter_name);
   lives_free(tname);
@@ -15337,7 +15344,8 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   remove_filter_from_event_list(mt->event_list, mt->selected_init_event);
   remove_end_blank_frames(mt->event_list, TRUE);
 
-  d_print(_("Deleted %s %s from %s from %.4f to %.4f\n"), tname, filter_name, track_desc, start_tc / TICKS_PER_SECOND_DBL, end_tc / TICKS_PER_SECOND_DBL);
+  d_print(_("Deleted %s %s from %s from %.4f to %.4f\n"), tname, filter_name, track_desc, start_tc / TICKS_PER_SECOND_DBL,
+          end_tc / TICKS_PER_SECOND_DBL);
   lives_free(filter_name);
   lives_free(track_desc);
 
@@ -17000,7 +17008,8 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
   mt->did_backup = did_backup;
 
   d_print(_("Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f to %.4f\n"),
-          ins_start / TICKS_PER_SECOND_DBL, ins_end / TICKS_PER_SECOND_DBL, (tmp = lives_path_get_basename(sfile->name)), secs, secs + (ins_end - ins_start) / TICKS_PER_SECOND_DBL);
+          ins_start / TICKS_PER_SECOND_DBL, ins_end / TICKS_PER_SECOND_DBL, (tmp = lives_path_get_basename(sfile->name)), secs,
+          secs + (ins_end - ins_start) / TICKS_PER_SECOND_DBL);
   lives_free(tmp);
 
   if (!resize_timeline(mt) && !did_backup) {
@@ -18267,7 +18276,8 @@ void on_node_spin_value_changed(LiVESSpinButton *spinbutton, livespointer user_d
 void on_next_node_clicked(LiVESWidget *button, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   weed_timecode_t init_tc = get_event_timecode(mt->init_event);
-  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + init_tc, mt->fps);
+  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + init_tc,
+                                mt->fps);
   weed_timecode_t next_tc = get_next_node_tc(mt, tc);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton), (next_tc - init_tc) / TICKS_PER_SECOND_DBL);
   if (mt->current_track >= 0) mt_show_current_frame(mt, FALSE);
@@ -18278,7 +18288,8 @@ void on_next_node_clicked(LiVESWidget *button, livespointer user_data) {
 void on_prev_node_clicked(LiVESWidget *button, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   weed_timecode_t init_tc = get_event_timecode(mt->init_event);
-  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + init_tc, mt->fps);
+  weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + init_tc,
+                                mt->fps);
   weed_timecode_t prev_tc = get_prev_node_tc(mt, tc);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton), (prev_tc - init_tc) / TICKS_PER_SECOND_DBL);
   if (mt->current_track >= 0) mt_show_current_frame(mt, FALSE);

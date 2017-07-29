@@ -1162,7 +1162,7 @@ _entryw *create_rename_dialog(int type) {
   // type 7 = rename track in mt
 
   // type 8 = export theme
-  
+
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;

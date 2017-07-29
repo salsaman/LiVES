@@ -486,11 +486,11 @@ void clean_images_from_virtual(lives_clip_t *sfile, int oldsframe, int oldframes
   // then undone
 
   // oldsframe is > 1 if we rendered to a selection
-  
+
   // should be threadsafe, provided the frame_index does not change
 
   // the only purpose of this is to reclaim disk space
-  
+
   register int i;
   char *iname = NULL;
 

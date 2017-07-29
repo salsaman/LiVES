@@ -2143,7 +2143,7 @@ void play_file(void) {
     if (mainw->event_list != NULL) {
       // play performance data
       if (event_list_get_end_secs(mainw->event_list) > cfile->frames / cfile->fps && !mainw->playing_sel) {
-	mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.) * cfile->arate / cfile->arps;
+        mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.) * cfile->arate / cfile->arps;
       }
     }
 
@@ -2151,7 +2151,7 @@ void play_file(void) {
       mainw->audio_start = calc_time_from_frame(mainw->current_file, mainw->play_start) * cfile->fps + 1. * cfile->arate / cfile->arps;
       mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1. * cfile->arate / cfile->arps;
       if (!mainw->playing_sel) {
-	mainw->audio_end = 0;
+        mainw->audio_end = 0;
       }
     }
   }
@@ -2349,15 +2349,15 @@ void play_file(void) {
     if (mainw->vpp != NULL && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
       // fixed o/p size for stream
       if (!(mainw->vpp->fwidth * mainw->vpp->fheight)) {
-	/*	mainw->vpp->fwidth = cfile->hsize;
-        mainw->vpp->fheight = cfile->vsize;
-        calc_maxspect(MAX_VPP_HSIZE, MAX_VPP_VSIZE, &mainw->vpp->fwidth, &mainw->vpp->fheight);*/
-	mainw->vpp->fwidth = MAX_VPP_HSIZE;
-	mainw->vpp->fheight = MAX_VPP_VSIZE;
+        /*	mainw->vpp->fwidth = cfile->hsize;
+              mainw->vpp->fheight = cfile->vsize;
+              calc_maxspect(MAX_VPP_HSIZE, MAX_VPP_VSIZE, &mainw->vpp->fwidth, &mainw->vpp->fheight);*/
+        mainw->vpp->fwidth = MAX_VPP_HSIZE;
+        mainw->vpp->fheight = MAX_VPP_VSIZE;
       }
       if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
-	mainw->pwidth = mainw->vpp->fwidth;
-	mainw->pheight = mainw->vpp->fheight;
+        mainw->pwidth = mainw->vpp->fwidth;
+        mainw->pheight = mainw->vpp->fheight;
       }
     }
 

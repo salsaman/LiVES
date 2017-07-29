@@ -733,7 +733,7 @@ void on_params_ok(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   register int i;
-  
+
   for (i = 0; i < rfxbuilder->onum_params; i++) {
     lives_free(rfxbuilder->params[i].name);
     lives_free(rfxbuilder->params[i].label);

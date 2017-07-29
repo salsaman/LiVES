@@ -585,7 +585,7 @@ void on_vppa_cancel_clicked(LiVESButton *button, livespointer user_data) {
 void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
   _vppaw *vppw = (_vppaw *)user_data;
   uint64_t xwinid = 0;
-  
+
   const char *fixed_fps = NULL;
   const char *tmp;
 
@@ -659,9 +659,9 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
           if (!strcmp(cur_pal, weed_palette_get_name(pal_list[i]))) {
             vpp->palette = pal_list[i];
             if (mainw->ext_playback) {
-	      pthread_mutex_lock(&mainw->vpp_stream_mutex);
-	      mainw->ext_audio = FALSE;
-	      pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+              pthread_mutex_lock(&mainw->vpp_stream_mutex);
+              mainw->ext_audio = FALSE;
+              pthread_mutex_unlock(&mainw->vpp_stream_mutex);
               lives_grab_remove(mainw->LiVES);
               mainw->ext_keyboard = FALSE;
               if (mainw->vpp->exit_screen != NULL) {
@@ -694,27 +694,27 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
               }
 
 #endif
-	      if (vpp->init_audio != NULL && prefs->stream_audio_out) {
+              if (vpp->init_audio != NULL && prefs->stream_audio_out) {
 #ifdef HAVE_PULSE_AUDIO
-		if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
-		  if ((*vpp->init_audio)(mainw->pulsed->out_arate, mainw->pulsed->out_achans, vpp->extra_argc, vpp->extra_argv)) 
-		    mainw->ext_audio = TRUE;
-		}
+                if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+                  if ((*vpp->init_audio)(mainw->pulsed->out_arate, mainw->pulsed->out_achans, vpp->extra_argc, vpp->extra_argv))
+                    mainw->ext_audio = TRUE;
+                }
 #endif
 #ifdef ENABLE_JACK
-		if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
-		  if ((*vpp->init_audio)(mainw->jackd->sample_out_rate, mainw->jackd->num_output_channels, vpp->extra_argc, vpp->extra_argv)) 
-		    ext_audio = TRUE;
-		}
+                if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+                  if ((*vpp->init_audio)(mainw->jackd->sample_out_rate, mainw->jackd->num_output_channels, vpp->extra_argc, vpp->extra_argv))
+                    ext_audio = TRUE;
+                }
 #endif
-	      }
+              }
 
               if (vpp->init_screen != NULL) {
                 (*vpp->init_screen)(mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
-				    mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
-				    TRUE, xwinid, vpp->extra_argc, vpp->extra_argv);
+                                    mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
+                                    TRUE, xwinid, vpp->extra_argc, vpp->extra_argv);
               }
-	      mainw->ext_audio = ext_audio; // cannot set this until after init_screen()
+              mainw->ext_audio = ext_audio; // cannot set this until after init_screen()
               if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && prefs->play_monitor == 0) {
                 lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), TRUE);
                 mainw->ext_keyboard = TRUE;
@@ -1085,9 +1085,9 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
       mainw->ext_keyboard = FALSE;
       lives_grab_remove(mainw->LiVES);
       if (mainw->ext_playback) {
-	  pthread_mutex_lock(&mainw->vpp_stream_mutex);
-	  mainw->ext_audio = FALSE;
-	  pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+        pthread_mutex_lock(&mainw->vpp_stream_mutex);
+        mainw->ext_audio = FALSE;
+        pthread_mutex_unlock(&mainw->vpp_stream_mutex);
         if (mainw->vpp->exit_screen != NULL)
           (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
 #ifdef RT_AUDIO
@@ -1169,7 +1169,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     char *msg = lives_strdup_printf(_("\n\nFailed to open playback plugin %s\nError was %s\n"), plugname, dlerror());
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
       if (prefsw != NULL) do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
-							       LIVES_WINDOW(mainw->LiVES));
+            LIVES_WINDOW(mainw->LiVES));
       else do_error_dialog(msg);
     }
     LIVES_ERROR(msg);
@@ -1226,12 +1226,11 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   }
 
   if ((pl_error = (*vpp->module_check_init)()) != NULL) {
-      msg = lives_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"), pl_error);
+    msg = lives_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"), pl_error);
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
       do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
-                                         LIVES_WINDOW(mainw->LiVES));
-    }
-    else {
+                                           LIVES_WINDOW(mainw->LiVES));
+    } else {
       LIVES_ERROR(msg);
     }
     lives_free(msg);
@@ -1471,7 +1470,7 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
   // i.e. cross-check video list with astreamer list
 
   // only for plugins which want to stream audiom but dont provide a render_audio_frame()
-  
+
   int *fmts, *sfmts;
   int ret = AUDIO_CODEC_NONE;
   int i, j = 0, nfmts;
@@ -3045,21 +3044,21 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
   }
 
-  
+
   boolean get_bool_param(void *value) {
     boolean ret;
     lives_memcpy(&ret, value, 4);
     return ret;
   }
 
-  
+
   int get_int_param(void *value) {
     int ret;
     lives_memcpy(&ret, value, sizint);
     return ret;
   }
 
-  
+
   double get_double_param(void *value) {
     double ret;
     lives_memcpy(&ret, value, sizdbl);
@@ -3070,17 +3069,17 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     lives_memcpy(rgb, value, sizeof(lives_colRGB48_t));
   }
 
-  
+
   void get_colRGBA32_param(void *value, lives_colRGBA64_t *rgba) {
     lives_memcpy(rgba, value, sizeof(lives_colRGBA64_t));
   }
 
-  
+
   void set_bool_param(void *value, boolean _const) {
     set_int_param(value, !!_const);
   }
 
-  
+
   void set_int_param(void *value, int _const) {
     lives_memcpy(value, &_const, sizint);
   }
@@ -3202,7 +3201,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       rpar[i].special_type_index = 0;
       rpar[i].value = NULL;
       rpar[i].def = NULL;
-      
+
       if (flags & WEED_PARAMETER_VARIABLE_ELEMENTS && !(flags & WEED_PARAMETER_ELEMENT_PER_CHANNEL)) {
         rpar[i].hidden |= HIDDEN_MULTI;
         rpar[i].multi = PVAL_MULTI_ANY;

@@ -72,13 +72,13 @@ boolean lives_pulse_init(short startup_phase) {
 
   pa_state = pa_context_get_state(pcon);
 
-  stime = lives_get_current_ticks();
+  stime = lives_get_current_ticks(0, 0);
 
   while (pa_state != PA_CONTEXT_READY && ntime < LIVES_SHORT_TIMEOUT) {
     lives_usleep(prefs->sleep_time);
     sched_yield();
     pa_state = pa_context_get_state(pcon);
-    ntime = lives_get_current_ticks() - stime;
+    ntime = lives_get_current_ticks(0, 0) - stime;
   }
 
   if (ntime >= LIVES_SHORT_TIMEOUT) {
@@ -1025,7 +1025,6 @@ int pulse_audio_init(void) {
   pulsed.aPlayPtr->data = NULL;
   pulsed.aPlayPtr->size = 0;
   pulsed.aPlayPtr->max_size = 0;
-  gettimeofday(&pulsed.last_reconnect_attempt, 0);
   pulsed.in_achans = 2;
   pulsed.out_achans = 2;
   pulsed.out_asamps = 16;
@@ -1059,7 +1058,6 @@ int pulse_audio_read_init(void) {
   pulsed_reader.chunk_size = 0;
   pulsed_reader.astream_fd = -1;
   pulsed_reader.pulsed_died = FALSE;
-  gettimeofday(&pulsed_reader.last_reconnect_attempt, 0);
   pulsed_reader.in_achans = 2;
   pulsed_reader.in_asamps = 16;
   pulsed_reader.mute = FALSE;
@@ -1215,6 +1213,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 void pulse_driver_uncork(pulse_driver_t *pdriver) {
   pa_operation *paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
   pa_operation_unref(paop);
+
+  // TODO: wait for flush callback before uncorking ?
   pa_stream_cork(pdriver->pstream, 0, NULL, NULL);
 }
 

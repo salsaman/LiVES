@@ -1254,12 +1254,12 @@ LIVES_INLINE int get_approx_ln(uint32_t x) {
 /**  return current (wallclock) time in ticks (units of 10 nanoseconds)
  */
 
-LIVES_INLINE int64_t lives_get_current_ticks(void) {
+LIVES_INLINE int64_t lives_get_current_ticks(int64_t origsecs, int64_t origusecs) {
 #ifdef USE_MONOTONIC_TIME
-  return lives_get_monotonic_time() * U_SEC_RATIO;
+    return (lives_get_monotonic_time() - origusecs) * U_SEC_RATIO;
 #else
-  gettimeofday(&tv, NULL);
-  return U_SECL * tv.tv_sec + tv.tv_usec * U_SEC_RATIO;
+    gettimeofday(&tv, NULL);
+    return = U_SECL * (tv.tv_sec - origsecs) + tv.tv_usec * U_SEC_RATIO - origusecs * U_SEC_RATIO;
 #endif
 }
 
@@ -1284,7 +1284,7 @@ int lives_alarm_set(int64_t ticks) {
   }
 
   // get current ticks
-  cticks = lives_get_current_ticks();
+  cticks = lives_get_current_ticks(0, 0);
 
   // set to now + offset
   mainw->alarms[mainw->next_free_alarm] = cticks + ticks;
@@ -1328,7 +1328,7 @@ boolean lives_alarm_get(int alarm_handle) {
   }
 
   // get current ticks
-  cticks = lives_get_current_ticks();
+  cticks = lives_get_current_ticks(0, 0);
 
   if (cticks > mainw->alarms[alarm_handle]) {
     // reached alarm time, free up this timer and return TRUE

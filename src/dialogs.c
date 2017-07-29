@@ -45,6 +45,9 @@ static volatile boolean dlg_thread_ready = FALSE;
 
 static volatile boolean display_ready;
 
+static int64_t sttime;
+
+
 void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   LiVESWidget *tbutton;
 
@@ -906,13 +909,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 static void cancel_process(boolean visible) {
   if (prefs->show_player_stats && !visible && mainw->fps_measure > 0.) {
     // statistics
-#ifdef USE_MONOTONIC_TIME
-    mainw->fps_measure /= ((lives_get_monotonic_time() - mainw->origusecs) * U_SEC_RATIO) / U_SEC;
-#else
-    gettimeofday(&tv, NULL);
-    mainw->fps_measure /= (double)(U_SECL * (tv.tv_sec - mainw->origsecs) + tv.tv_usec * U_SEC_RATIO - mainw->origusecs *
-                                   U_SEC_RATIO - mainw->offsetticks) / U_SEC;
-#endif
+    mainw->fps_measure /= (lives_get_current_ticks(mainw->origsecs, mainw->origusecs) / U_SEC);
   }
   if (visible) {
     if (mainw->preview_box != NULL && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
@@ -974,12 +971,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
   if (progress_count++ >= mainw->is_rendering ? PROG_LOOP_VAL / 4 : PROG_LOOP_VAL) {
     if (frames_done <= sfile->progress_end && sfile->progress_end > 0 && !mainw->effects_paused &&
         frames_done > 0) {
-#ifdef USE_MONOTONIC_TIME
-      mainw->currticks = (lives_get_monotonic_time() - mainw->origusecs) * U_SEC_RATIO;
-#else
-      gettimeofday(&tv, NULL);
-      mainw->currticks = U_SECL * (tv.tv_sec - mainw->origsecs) + tv.tv_usec * U_SEC_RATIO - mainw->origusecs * U_SEC_RATIO;
-#endif
+      mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
       timesofar = (mainw->currticks - mainw->timeout_ticks) / U_SEC;
 
       fraction_done = (double)(frames_done - sfile->progress_start) / (double)(sfile->progress_end - sfile->progress_start + 1.);
@@ -1081,12 +1073,8 @@ boolean process_one(boolean visible) {
       // soundcard time is only updated after sending audio
       // so if we get the same value back we interpolate using the system clock
 
-#ifdef USE_MONOTONIC_TIME
-      current_ticks = (lives_get_monotonic_time() - mainw->origusecs) * U_SEC_RATIO;
-#else
-      gettimeofday(&tv, NULL);
-      current_ticks = U_SECL * (tv.tv_sec - mainw->origsecs) + tv.tv_usec * U_SEC_RATIO - mainw->origusecs * U_SEC_RATIO;
-#endif
+      current_ticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+
       if (sc_ticks != last_sc_ticks) {
         last_sc_ticks = sc_ticks;
 
@@ -1127,12 +1115,7 @@ boolean process_one(boolean visible) {
 
     if (time_source == LIVES_TIME_SOURCE_NONE) {
       // get time from system clock
-#ifdef USE_MONOTONIC_TIME
-      mainw->currticks = (lives_get_monotonic_time() - mainw->origusecs) * U_SEC_RATIO;
-#else
-      gettimeofday(&tv, NULL);
-      mainw->currticks = U_SECL * (tv.tv_sec - mainw->origsecs) + tv.tv_usec * U_SEC_RATIO - mainw->origusecs * U_SEC_RATIO;
-#endif
+      mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
       if (LIVES_UNLIKELY(mainw->currticks < prev_ticks)) mainw->currticks = prev_ticks;
       time_source = LIVES_TIME_SOURCE_SYSTEM;
       prev_ticks = mainw->currticks;
@@ -1333,12 +1316,7 @@ boolean process_one(boolean visible) {
       if (cfile->opening && cfile->clip_type == CLIP_TYPE_DISK && !cfile->opening_only_audio &&
           (cfile->hsize > 0 || cfile->vsize > 0 || cfile->frames > 0) && (!mainw->effects_paused || !shown_paused_frames)) {
         uint32_t apxl;
-#ifdef USE_MONOTONIC_TIME
-        mainw->currticks = (lives_get_monotonic_time() - mainw->origusecs) * U_SEC_RATIO;
-#else
-        gettimeofday(&tv, NULL);
-        mainw->currticks = U_SECL * (tv.tv_sec - mainw->origsecs) + tv.tv_usec * U_SEC_RATIO - mainw->origusecs * U_SEC_RATIO;
-#endif
+	mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
         if ((mainw->currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
             ((apxl = get_approx_ln((uint32_t)mainw->opening_frames)) < 200 ? apxl : 200) ||
             (mainw->effects_paused && !shown_paused_frames)) {
@@ -1913,13 +1891,7 @@ finish:
   } else {
     if (prefs->show_player_stats) {
       if (mainw->fps_measure > 0.) {
-#ifdef USE_MONOTONIC_TIME
-        mainw->fps_measure /= ((lives_get_monotonic_time() - mainw->origusecs) * U_SEC_RATIO) / U_SEC;
-#else
-        gettimeofday(&tv, NULL);
-        mainw->fps_measure /= (double)(U_SECL * (tv.tv_sec - mainw->origsecs) + tv.tv_usec * U_SEC_RATIO -
-                                       mainw->origusecs * U_SEC_RATIO - mainw->offsetticks) / U_SEC;
-#endif
+        mainw->fps_measure /= (lives_get_current_ticks(mainw->origsecs, mainw->origusecs) / U_SEC);
       }
     }
     mainw->is_processing = TRUE;
@@ -1964,12 +1936,7 @@ boolean do_auto_dialog(const char *text, int type) {
   int alarm_handle = 0;
 
   if (type == 1 && mainw->rec_end_time != -1.) {
-#ifdef USE_MONOTONIC_TIME
-    stime = lives_get_monotonic_time();
-#else
-    gettimeofday(&tv, NULL);
-    stime = tv.tv_sec * 1000000. + tv.tv_usec; // time in microseconds
-#endif
+    stime = lives_get_current_ticks(0, 0);
   }
 
   mainw->error = FALSE;
@@ -2014,16 +1981,12 @@ boolean do_auto_dialog(const char *text, int type) {
     lives_widget_context_update();
     lives_usleep(prefs->sleep_time);
     if (type == 1 && mainw->rec_end_time != -1.) {
-#ifdef USE_MONOTONIC_TIME
-      time = lives_get_monotonic_time();
-#else
-      gettimeofday(&tv, NULL);
-      time = tv.tv_sec * 1000000. + tv.tv_usec; // current time in microseconds
-#endif
+      time = lives_get_current_ticks(0, 0);
+
       // subtract start time
       time -= stime;
 
-      time_rem = (int)((double)(mainw->rec_end_time - time) / 1000000. + .5);
+      time_rem = (int)(mainw->rec_end_time - (double)time / U_SEC + .5);
       if (time_rem >= 0 && time_rem < last_time_rem) {
         label_text = lives_strdup_printf(_("\nTime remaining: %d sec"), time_rem);
         lives_label_set_text(LIVES_LABEL(proc_ptr->label2), label_text);
@@ -2769,8 +2732,6 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 }
 
 
-static double sttime;
-
 void threaded_dialog_spin(double fraction) {
   double timesofar;
   int progress;
@@ -2782,8 +2743,7 @@ void threaded_dialog_spin(double fraction) {
   if (procw == NULL || !procw->is_ready || !mainw->is_ready) return;
 
   if (fraction > 0.) {
-    gettimeofday(&tv, NULL);
-    timesofar = (double)(tv.tv_sec * 1000000 + tv.tv_usec - sttime) * U_SEC_RATIO / U_SEC;
+    timesofar = (double)(lives_get_current_ticks(0, 0) - sttime) / U_SEC;
     disp_fraction(fraction, timesofar, procw);
   } else {
     if (mainw->current_file < 0 || cfile == NULL || cfile->progress_start == 0 || cfile->progress_end == 0 ||
@@ -2798,8 +2758,7 @@ void threaded_dialog_spin(double fraction) {
     } else {
       // show fraction
       double fraction_done = (double)(progress - cfile->progress_start) / (double)(cfile->progress_end - cfile->progress_start + 1.);
-      gettimeofday(&tv, NULL);
-      timesofar = (double)(tv.tv_sec * 1000000 + tv.tv_usec - sttime) * U_SEC_RATIO / U_SEC;
+      timesofar = (double)(lives_get_current_ticks(0, 0) - sttime) / U_SEC;
       disp_fraction(fraction_done, timesofar, procw);
     }
   }
@@ -2830,8 +2789,7 @@ void do_threaded_dialog(char *trans_text, boolean has_cancel) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
-  gettimeofday(&tv, NULL);
-  sttime = tv.tv_sec * 1000000 + tv.tv_usec;
+  sttime = lives_get_current_ticks(0, 0);
 
   mainw->threaded_dialog = TRUE;
   clear_mainw_msg();

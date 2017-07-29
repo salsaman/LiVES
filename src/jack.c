@@ -1258,14 +1258,14 @@ int jack_open_device(jack_driver_t *jackd) {
 
   // TODO - use alarm
 
-  stime = lives_get_current_ticks();
+  stime = lives_get_current_ticks(0, 0);
 
   while (jackd->client == NULL && ntime < LIVES_SHORT_TIMEOUT) {
     jackd->client = jack_client_open(client_name, options, &status, server_name);
 
     lives_usleep(prefs->sleep_time);
 
-    ntime = lives_get_current_ticks() - stime;
+    ntime = lives_get_current_ticks(0, 0) - stime;
   }
 
   if (jackd->client == NULL) {
@@ -1638,7 +1638,6 @@ int jack_audio_init(void) {
     jackd->num_calls = 0;
     jackd->astream_fd = -1;
     jackd->jackd_died = FALSE;
-    gettimeofday(&jackd->last_reconnect_attempt, 0);
     jackd->num_output_channels = 2;
     jackd->play_when_stopped = FALSE;
     jackd->mute = FALSE;
@@ -1671,7 +1670,6 @@ int jack_audio_read_init(void) {
     jackd->num_calls = 0;
     jackd->astream_fd = -1;
     jackd->jackd_died = FALSE;
-    gettimeofday(&jackd->last_reconnect_attempt, 0);
     jackd->num_input_channels = 2;
     jackd->play_when_stopped = FALSE;
     jackd->mute = FALSE;

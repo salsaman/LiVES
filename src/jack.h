@@ -87,7 +87,6 @@ typedef struct {
 
   /* variables used for trying to restart the connection to jack */
   boolean             jackd_died;                    /**< true if jackd has died and we should try to restart it */
-  struct timeval   last_reconnect_attempt;
 
   boolean play_when_stopped; ///< if we should play audio even when jack transport is stopped
   uint64_t audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio

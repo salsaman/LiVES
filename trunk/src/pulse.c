@@ -236,9 +236,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     case ASERVER_CMD_FILE_OPEN:
       new_file = atoi((char *)msg->data);
       if (pulsed->playing_file != new_file) {
-        if (pulsed->is_opening) filename = lives_build_filename(prefs->workdir, mainw->files[new_file]->handle,
-                                             "audiodump.pcm", NULL);
-        else filename = lives_build_filename(prefs->workdir, mainw->files[new_file]->handle, "audio", NULL);
+        filename = lives_get_audio_file_name(new_file);
         pulsed->fd = lives_open2(filename, O_RDONLY);
         if (pulsed->fd == -1) {
           // dont show gui errors - we are running in realtime thread
@@ -1393,8 +1391,7 @@ void pulse_aud_pb_ready(int fileno) {
     if (sfile->achans > 0 && (!mainw->preview || (mainw->preview && mainw->is_processing)) &&
         (sfile->laudio_time > 0. || sfile->opening ||
          (mainw->multitrack != NULL && mainw->multitrack->is_rendering &&
-          lives_file_test((tmpfilename = lives_build_filename(prefs->workdir, sfile->handle, "audio", NULL)),
-                          LIVES_FILE_TEST_EXISTS)))) {
+          lives_file_test((tmpfilename = lives_get_audio_file_name(fileno)), LIVES_FILE_TEST_EXISTS)))) {
       boolean timeout;
       int alarm_handle;
 
@@ -1404,8 +1401,6 @@ void pulse_aud_pb_ready(int fileno) {
       mainw->pulsed->in_arate = sfile->arate;
       mainw->pulsed->usigned = !asigned;
       mainw->pulsed->seek_end = sfile->afilesize;
-      if (sfile->opening) mainw->pulsed->is_opening = TRUE;
-      else mainw->pulsed->is_opening = FALSE;
 
       if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
         mainw->pulsed->reverse_endian = TRUE;

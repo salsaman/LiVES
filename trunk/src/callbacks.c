@@ -1859,7 +1859,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 // TODO - split into undo.c
 void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char *com;
+  char *com, *tmp;
   char msg[256];
 
   boolean bad_header = FALSE;
@@ -2033,7 +2033,10 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     do_progress_dialog(TRUE, FALSE, _("Undoing"));
 
     if (cfile->undo_action != UNDO_ATOMIC_RESAMPLE_RESIZE) {
-      audfile = lives_strdup_printf("%s/%s/audio.%s", prefs->workdir, cfile->handle, LIVES_FILE_EXT_BAK);
+      audfile = lives_get_audio_file_name(mainw->current_file);
+      tmp = lives_strdup_printf("%s.%s", audfile, LIVES_FILE_EXT_BAK);
+      lives_free(audfile);
+      audfile = tmp;
       if (lives_file_test(audfile, LIVES_FILE_TEST_EXISTS)) {
         // restore overwritten audio
         com = lives_strdup_printf("%s undo_audio \"%s\"", prefs->backend_sync, cfile->handle);
@@ -11073,8 +11076,9 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
     if (mainw->write_failed) {
       // on failure
       int outfile = (mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file);
-      char *outfilename = lives_build_filename(prefs->workdir, mainw->files[outfile]->handle, "audio", NULL);
+      char *outfilename = lives_get_audio_file_name(outfile);
       do_write_failed_error_s(outfilename, NULL);
+      lives_free(outfilename);
 
       if (!prefs->conserve_space && type == 1) {
         // try to recover backup

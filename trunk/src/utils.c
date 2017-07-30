@@ -2651,7 +2651,6 @@ void remove_layout_files(LiVESList *map) {
   save_layout_map(NULL, NULL, NULL, NULL);
 }
 
-#define TEST_AUDLEVELS
 
 void get_play_times(void) {
   // update the on-screen timer bars,
@@ -2669,12 +2668,10 @@ void get_play_times(void) {
   int current_file = mainw->current_file;
   int afd = -1;
 
-#ifdef TEST_AUDLEVELS
   char *filename;
   double atime;
   float vol;
   register int i;
-#endif
 
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
 
@@ -2784,25 +2781,18 @@ void get_play_times(void) {
       // unselected
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
 
-#ifdef TEST_AUDLEVELS
       lives_painter_rectangle(cr, 0, prefs->bar_height * 1.5,
                               offset_left,
                               prefs->bar_height);
       lives_painter_rectangle(cr, offset_right, prefs->bar_height * 1.5,
                               cfile->raudio_time / cfile->total_time * allocwidth - offset_right,
                               prefs->bar_height);
-#else
-      lives_painter_rectangle(cr, 0, 0,
-                              cfile->laudio_time / cfile->total_time * allocwidth - 1,
-                              prefs->bar_height);
-#endif
       lives_painter_fill(cr);
 
       if (offset_left < cfile->laudio_time / cfile->total_time * allocwidth) {
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
 
-#ifdef TEST_AUDLEVELS
-        filename = lives_build_filename(prefs->workdir, cfile->handle, "audio", NULL);
+        filename = lives_get_audio_file_name(mainw->current_file);
         afd = lives_open2(filename, O_RDONLY);
         lives_free(filename);
 
@@ -2814,13 +2804,6 @@ void get_play_times(void) {
           lives_painter_line_to(cr, i, (double)prefs->bar_height * (2. - vol));
         }
         lives_painter_stroke(cr);
-#else
-        lives_painter_rectangle(cr, offset_left, 0,
-                                offset_right - offset_left,
-                                prefs->bar_height);
-
-        lives_painter_fill(cr);
-#endif
       }
 
       lives_painter_destroy(cr);
@@ -2833,25 +2816,17 @@ void get_play_times(void) {
         // unselected
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
 
-#ifdef TEST_AUDLEVELS
         lives_painter_rectangle(cr, 0, prefs->bar_height * 1.5,
                                 offset_left,
                                 prefs->bar_height);
         lives_painter_rectangle(cr, offset_right, prefs->bar_height * 1.5,
                                 cfile->raudio_time / cfile->total_time * allocwidth - offset_right,
                                 prefs->bar_height);
-#else
-        lives_painter_rectangle(cr, 0, prefs->bar_height,
-                                cfile->raudio_time / cfile->total_time * allocwidth - 1,
-                                prefs->bar_height * 2);
-#endif
-
         lives_painter_fill(cr);
 
         if (offset_left < cfile->laudio_time / cfile->total_time * allocwidth) {
           lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
 
-#ifdef TEST_AUDLEVELS
           for (i = offset_left; i < offset_right; i++) {
             atime = i / allocwidth * cfile->total_time;
             lives_painter_move_to(cr, i, prefs->bar_height * 2);
@@ -2859,14 +2834,6 @@ void get_play_times(void) {
             lives_painter_line_to(cr, i, (double)prefs->bar_height * (2. - vol));
           }
           lives_painter_stroke(cr);
-#else
-          lives_painter_rectangle(cr, offset_left, 0,
-                                  offset_right - offset_left,
-                                  prefs->bar_height);
-
-          lives_painter_fill(cr);
-#endif
-
         }
         lives_painter_destroy(cr);
       }
@@ -4015,6 +3982,7 @@ void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
   lives_free(com);
 }
 
+
 void lives_suspend_resume_process(const char *dirname, boolean suspend) {
   char *com;
 #ifndef IS_MINGW
@@ -4079,6 +4047,7 @@ gboolean check_dir_access(const char *dir) {
   return is_OK;
 }
 
+
 boolean check_dev_busy(char *devstr) {
 #ifndef IS_MINGW
   int ret;
@@ -4103,6 +4072,7 @@ boolean check_dev_busy(char *devstr) {
   return FALSE;
 }
 
+
 void activate_url_inner(const char *link) {
 #if GTK_CHECK_VERSION(2, 14, 0)
   LiVESError *err = NULL;
@@ -4115,9 +4085,11 @@ void activate_url_inner(const char *link) {
 #endif
 }
 
+
 void activate_url(LiVESAboutDialog *about, const char *link, livespointer data) {
   activate_url_inner(link);
 }
+
 
 void show_manual_section(const char *lang, const char *section) {
   char *tmp = NULL, *tmp2 = NULL;
@@ -4132,12 +4104,14 @@ void show_manual_section(const char *lang, const char *section) {
   if (tmp2 != NULL) lives_free(tmp2);
 }
 
+
 uint64_t get_file_size(int fd) {
   // get the size of file fd
   struct stat filestat;
   fstat(fd, &filestat);
   return (uint64_t)(filestat.st_size);
 }
+
 
 uint64_t sget_file_size(const char *name) {
   // get the size of file fd
@@ -4155,8 +4129,9 @@ uint64_t sget_file_size(const char *name) {
   return (uint64_t)(filestat.st_size);
 }
 
-void wait_for_bg_audio_sync(lives_clip_t *sfile) {
-  char *afile = lives_build_filename(prefs->workdir, sfile->handle, "audio", NULL);
+
+void wait_for_bg_audio_sync(int fileno) {
+  char *afile = lives_get_audio_file_name(fileno);
   boolean timeout;
   int alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
   int fd;
@@ -4169,6 +4144,7 @@ void wait_for_bg_audio_sync(lives_clip_t *sfile) {
   lives_alarm_clear(alarm_handle);
 }
 
+
 void reget_afilesize(int fileno) {
   // re-get the audio file size
   char *afile;
@@ -4177,8 +4153,8 @@ void reget_afilesize(int fileno) {
 
   if (mainw->multitrack != NULL) return; // otherwise achans gets set to 0...
 
-  if (!sfile->opening) afile = lives_build_filename(prefs->workdir, sfile->handle, "audio", NULL);
-  else afile = lives_build_filename(prefs->workdir, sfile->handle, "audiodump.pcm", NULL);
+  afile = lives_get_audio_file_name(fileno);
+
   if ((sfile->afilesize = sget_file_size(afile)) == 0l) {
     if (!sfile->opening && fileno != mainw->ascrap_file && fileno != mainw->scrap_file) {
       if (sfile->arate != 0 || sfile->achans != 0 || sfile->asampsize != 0 || sfile->arps != 0) {
@@ -4203,6 +4179,7 @@ void reget_afilesize(int fileno) {
   lives_free(afile);
 }
 
+
 boolean create_event_space(int length) {
   // try to create desired events
   // if we run out of memory, all events requested are freed, and we return FALSE
@@ -4221,6 +4198,7 @@ boolean create_event_space(int length) {
   return TRUE;
 }
 
+
 int lives_list_strcmp_index(LiVESList *list, livesconstpointer data) {
   // find data in list, using strcmp
 
@@ -4235,6 +4213,7 @@ int lives_list_strcmp_index(LiVESList *list, livesconstpointer data) {
   }
   return -1;
 }
+
 
 void add_to_recent(const char *filename, double start, int frames, const char *extra_params) {
   char buff[PATH_MAX];
@@ -4348,6 +4327,7 @@ int verhash(char *version) {
   return major * 1000000 + minor * 1000 + micro;
 }
 
+
 #ifdef PRODUCE_LOG
 // disabled by default
 void lives_log(const char *what) {
@@ -4391,6 +4371,7 @@ void set_undoable(const char *what, boolean sensitive) {
   lives_log(what);
 #endif
 }
+
 
 void set_redoable(const char *what, boolean sensitive) {
   if (mainw->current_file > -1) {

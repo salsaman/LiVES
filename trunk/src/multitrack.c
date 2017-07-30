@@ -17534,7 +17534,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
     if (fnum != aofile) {
       // does not make sense to use buffer reads, as we may read very sparsely from the file
       if (afd != -1) close(afd);
-      filename = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, "audio", NULL);
+      filename = lives_get_audio_file_name(fnum);
       afd = lives_open2(filename, O_RDONLY);
       lives_free(filename);
       aofile = fnum;
@@ -17555,7 +17555,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
     block = block->next;
 
     if (mainw->read_failed) {
-      filename = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, "audio", NULL);
+      filename = lives_get_audio_file_name(fnum);
       do_read_failed_error_s(filename, NULL);
       lives_free(filename);
     }

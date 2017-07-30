@@ -362,7 +362,12 @@ enum {
 #define LIVES_FILE_EXT_SRT "srt"
 #define LIVES_FILE_EXT_SUB "sub"
 
+#define LIVES_FILE_EXT_PCM "pcm"
 #define LIVES_FILE_EXT_WAV "wav"
+
+// file names
+#define CLIP_AUDIO_FILE "audio"
+
 
 // filters
 

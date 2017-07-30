@@ -216,10 +216,6 @@ arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
 mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 \
 fname|_Output file|string|| \\n\
-ip2||string|0|3| \\n\
-ip3||string|0|3| \\n\
-ip4||string|1|3| \\n\
-port|_port|num0|8000|1024|65535|\\n\
 </params> \\n\
 <param_window> \\n\
 </param_window> \\n\
@@ -597,6 +593,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     vStream->codec->mb_decision = 2;
   }
 
+  fprintf(stderr, "init_screen2 %d x %d %d\n", width, height, argc);
+
   /* open vido codec */
   if (avcodec_open2(encctx, codec, NULL) < 0) {
     fprintf(stderr, "Could not open codec\n");
@@ -655,7 +653,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
               av_err2str(ret));
     }
   }
-
 
   /* create (container) libav video frame */
   ostv.frame = alloc_picture(avpalette, width, height);
@@ -775,6 +772,26 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
 
   av_init_packet(&pkt);
 
+  if (audio == NULL || nsamps == 0) {
+    // flush buffers
+    ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
+    if (ret < 0) {
+      fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps, nb_samples, c->sample_rate, c->sample_fmt,
+	      c->channel_layout);
+      return FALSE;
+    }
+
+    if (got_packet) {
+      ret = write_frame(&c->time_base, aStream, &pkt);
+      if (ret < 0) {
+	fprintf(stderr, "Error while writing audio frame: %s\n",
+		av_err2str(ret));
+	return FALSE;
+      }
+    }
+    return TRUE;
+  }
+  
   for (i = 0; i < in_nchans; i++) {
     abuff[i] = audio[i];
   }
@@ -907,6 +924,32 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   int i;
 
   if (!stream_encode && !(fmtctx->oformat->flags & AVFMT_NOFILE)) {
+
+    if (in_sample_rate != 0) {
+      // flush final audio
+      c = osta.enc;
+
+      do {
+	av_init_packet(&pkt);
+	
+	ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
+	if (ret < 0) {
+	  fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), 0, 0, c->sample_rate, c->sample_fmt,
+		  c->channel_layout);
+	  break;
+	}
+
+	if (got_packet) {
+	  ret = write_frame(&c->time_base, aStream, &pkt);
+	  if (ret < 0) {
+	    fprintf(stderr, "Error while writing audio frame: %s\n",
+		    av_err2str(ret));
+	    break;
+	  }
+	}
+      } while (got_packet);
+    }
+
     // flush final few frames
     c = ostv.enc;
 
@@ -971,6 +1014,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
       free(spill_buffers[i]);
     }
     free(spill_buffers);
+    spill_buffers = NULL;
   }
 
   in_sample_rate = 0;

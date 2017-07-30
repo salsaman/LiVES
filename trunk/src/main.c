@@ -6474,7 +6474,7 @@ void load_frame_image(int frame) {
       }
     }
 
-    if (mainw->play_window != NULL && !mainw->fs) {
+    if (mainw->play_window != NULL && (!mainw->fs || mainw->ext_playback)) {
       mainw->pwidth = lives_widget_get_allocation_width(mainw->play_window);
       mainw->pheight = lives_widget_get_allocation_height(mainw->play_window);
     } else if (!mainw->fs || (mainw->multitrack != NULL && !mainw->sep_win)) {
@@ -7357,8 +7357,6 @@ void load_frame_image(int frame) {
           } else mainw->pulsed->in_arate = mainw->files[new_file]->arate;
           mainw->pulsed->usigned = !asigned;
           mainw->pulsed->seek_end = mainw->files[new_file]->afilesize;
-          if (mainw->files[new_file]->opening) mainw->pulsed->is_opening = TRUE;
-          else mainw->pulsed->is_opening = FALSE;
 
           if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
               (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
@@ -7372,9 +7370,6 @@ void load_frame_image(int frame) {
 
           pulse_message.command = ASERVER_CMD_FILE_OPEN;
 
-          if (mainw->files[new_file]->opening) {
-            mainw->pulsed->is_opening = TRUE;
-          }
           pulse_message.data = lives_strdup_printf("%d", new_file);
 
           pulse_message2.command = ASERVER_CMD_FILE_SEEK;

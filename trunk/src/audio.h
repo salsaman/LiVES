@@ -63,17 +63,12 @@ typedef struct _aserver_message_t {
   volatile struct _aserver_message_t *next;
 } aserver_message_t;
 
-
-
 typedef enum {
   LIVES_NOP_OPERATION = 0,
   LIVES_READ_OPERATION,
   LIVES_WRITE_OPERATION,
   LIVES_CONVERT_OPERATION
 } lives_operation_t;
-
-
-
 
 typedef struct {
   lives_operation_t operation; // read, write, or convert [readonly by server]
@@ -124,7 +119,6 @@ typedef struct {
   size_t samples_filled; ///< number of samples filled (readonly client)
   size_t start_sample; ///< used for reading (readonly server)
 
-
   // private fields (used by server)
   uint8_t *_filebuffer; ///< raw data to/from file - can be cast to int16_t
   ssize_t _cbytesize; ///< current _filebuffer bytesize; if this changes we need to realloc _filebuffer
@@ -140,7 +134,6 @@ typedef struct {
   volatile boolean die;  ///< set to TRUE to shut down thread
 } lives_audio_buf_t;
 
-
 //////////////////////////////////////////
 
 typedef enum lives_audio_loop {
@@ -148,7 +141,6 @@ typedef enum lives_audio_loop {
   AUDIO_LOOP_FORWARD,
   AUDIO_LOOP_PINGPONG
 } lives_audio_loop_t;
-
 
 float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans);
 
@@ -204,9 +196,7 @@ void pulse_rec_audio_end(boolean close_dev, boolean close_fd);
 
 void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, boolean exact);
 
-
 boolean resync_audio(int frameno);
-
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, boolean get_audstate,
     boolean exact);
@@ -240,5 +230,7 @@ boolean start_audio_stream(void);
 void stop_audio_stream(void);
 void clear_audio_stream(void);
 void audio_stream(void *buff, size_t nbytes, int fd);
+
+char *lives_get_audio_file_name(int fnum);
 
 #endif

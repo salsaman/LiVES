@@ -592,11 +592,14 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
   char *cur_pal = NULL;
 
   int *pal_list, i = 0;
-
+  int intention = 0;
+  
   boolean ext_audio = FALSE;
 
   _vid_playback_plugin *vpp = vppw->plugin;
 
+  if (user_data != NULL) intention = LIVES_POINTER_TO_INT(user_data);
+  
   if (vpp == mainw->vpp) {
     if (vppw->spinbuttonw != NULL) mainw->vpp->fwidth = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));
     if (vppw->spinbuttonh != NULL) mainw->vpp->fheight = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));

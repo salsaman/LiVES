@@ -588,7 +588,7 @@ boolean do_startup_tests(boolean tshoot) {
     lives_rm(cfile->info_file);
 
     // write 1 second of silence
-    afile = lives_build_filename(prefs->workdir, cfile->handle, "audio", NULL);
+    afile = lives_get_audio_file_name(mainw->current_file);
     out_fd = lives_open3(afile, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
 
     if (out_fd < 0) mainw->write_failed = TRUE;

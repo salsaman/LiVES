@@ -998,7 +998,7 @@ boolean read_file_details(const char *file_name, boolean only_check_for_audio);
 boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
 boolean reload_clip(int fileno, int maxframe);
-void wait_for_bg_audio_sync(lives_clip_t *sfile);
+void wait_for_bg_audio_sync(int fileno);
 void reget_afilesize(int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
 ulong open_file(const char *filename);

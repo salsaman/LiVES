@@ -3583,8 +3583,9 @@ lives_render_error_t render_events(boolean reset) {
 
           if (mainw->write_failed) {
             int outfile = (mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file);
-            char *outfilename = lives_build_filename(prefs->workdir, mainw->files[outfile]->handle, "audio", NULL);
+            char *outfilename = lives_get_audio_file_name(outfile);
             do_write_failed_error_s(outfilename, NULL);
+	    lives_free(outfilename);
             read_write_error = LIVES_RENDER_ERROR_WRITE_AUDIO;
           }
 
@@ -3655,8 +3656,9 @@ lives_render_error_t render_events(boolean reset) {
 
                 if (mainw->write_failed) {
                   int outfile = (mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file);
-                  char *outfilename = lives_build_filename(prefs->workdir, mainw->files[outfile]->handle, "audio", NULL);
+                  char *outfilename = lives_get_audio_file_name(outfile);
                   do_write_failed_error_s(outfilename, NULL);
+		  lives_free(outfilename);
                   read_write_error = LIVES_RENDER_ERROR_WRITE_AUDIO;
                 }
 

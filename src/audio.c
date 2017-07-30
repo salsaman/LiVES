@@ -40,6 +40,17 @@ static void audio_reset_stored_fnames(void) {
 }
 
 
+LIVES_INLINE char *lives_get_audio_file_name(int fnum) {
+  char *fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_AUDIO_FILE, NULL);
+  if (mainw->files[fnum]->opening && !lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+    char *tmp = lives_strdup_printf("%s.%s", fname, LIVES_FILE_EXT_PCM);
+    lives_free(fname);
+    return tmp;
+  }
+  return fname;
+}
+
+
 void audio_free_fnames(void) {
   // cleanup stored filehandles after playback/fade/render
 
@@ -269,6 +280,8 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   // convert 8 bit audio to 16 bit audio
 
+  // endianess will be machine endian
+  
   register int nSrcCount, nDstCount;
   register float src_offset_f = 0.f;
   register int src_offset_i = 0;
@@ -297,7 +310,8 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
       nDstCount--;
 
       ptr = src + ccount + src_offset_i;
-      ptr = ptr > src ? (ptr < (src_end + ccount) ? ptr : (src_end + ccount)) : src;
+      ptr = ptr > src
+	? (ptr < (src_end + ccount) ? ptr : (src_end + ccount)) : src;
 
       if (!swap_sign) *(dst++) = *(ptr) << 8;
       else if (swap_sign == SWAP_U_TO_S) *(dst++) = ((short)(*(ptr)) - 128) << 8;
@@ -1046,7 +1060,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (to_file > -1) {
     // prepare outfile stuff
-    outfilename = lives_build_filename(prefs->workdir, outfile->handle, "audio", NULL);
+    outfilename = lives_get_audio_file_name(to_file);
 #ifdef DEBUG_ARENDER
     g_print("writing to %s\n", outfilename);
 #endif
@@ -1123,7 +1137,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       zavel = avels[track] * (double)in_arate[track] / (double)out_arate * in_asamps[track] * in_achans[track] / sizeof(float);
       if (ABS(zavel) > zavel_max) zavel_max = ABS(zavel);
 
-      infilename = lives_build_filename(prefs->workdir, infile->handle, "audio", NULL);
+      infilename = lives_get_audio_file_name(from_files[track]);
 
       // try to speed up access by keeping some files open
       if (track < NSTOREDFDS && storedfnames[track] != NULL && !strcmp(infilename, storedfnames[track])) {
@@ -1417,13 +1431,15 @@ LIVES_INLINE void aud_fade(int fileno, double startt, double endt, double startv
   render_audio_segment(1, &fileno, fileno, &vel, &startt, startt * TICKS_PER_SECOND, endt * TICKS_PER_SECOND, &vol, startv, endv, NULL);
 
   if (mainw->write_failed) {
-    char *outfilename = lives_build_filename(prefs->workdir, mainw->files[fileno]->handle, "audio", NULL);
+    char *outfilename = lives_get_audio_file_name(fileno);
     do_write_failed_error_s(outfilename, NULL);
+    lives_free(outfilename);
   }
 
   if (mainw->read_failed) {
-    char *infilename = lives_build_filename(prefs->workdir, mainw->files[fileno]->handle, "audio", NULL);
+    char *infilename = lives_get_audio_file_name(fileno);
     do_read_failed_error_s(infilename, NULL);
+    lives_free(infilename);
   }
 }
 
@@ -1455,7 +1471,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   outfile = mainw->files[fileno];
 
   if (mainw->aud_rec_fd == -1) {
-    char *outfilename = lives_build_filename(prefs->workdir, outfile->handle, "audio", NULL);
+    char *outfilename = lives_get_audio_file_name(fileno);
     do {
       retval = 0;
       mainw->aud_rec_fd = lives_open3(outfilename, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
@@ -1599,7 +1615,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   outfile = mainw->files[fileno];
 
   if (mainw->aud_rec_fd == -1) {
-    char *outfilename = lives_build_filename(prefs->workdir, outfile->handle, "audio", NULL);
+    char *outfilename = lives_get_audio_file_name(fileno);
     do {
       retval = 0;
       mainw->aud_rec_fd = lives_open3(outfilename, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
@@ -2702,7 +2718,7 @@ boolean apply_rte_audio_init(void) {
   }
 
   audio_pos = (double)((cfile->start - 1) * cfile->arate * cfile->achans * cfile->asampsize / 8) / cfile->fps;
-  audio_file = lives_build_filename(prefs->workdir, cfile->handle, "audio", NULL);
+  audio_file = lives_get_audio_file_name(mainw->current_file);
 
   audio_fd = lives_open3(audio_file, O_RDWR | O_CREAT, DEF_FILE_PERMS);
 

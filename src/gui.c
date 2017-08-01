@@ -3585,6 +3585,8 @@ void resize_widgets_for_monitor(boolean get_play_times) {
       lives_window_unmaximize(LIVES_WINDOW(mainw->multitrack->window));
       lives_window_maximize(LIVES_WINDOW(mainw->multitrack->window));
     }
+    mainw->multitrack->dft_width = mainw->multitrack->dft_height = 0;
+    set_mt_play_sizes(mainw->multitrack, cfile->hsize, cfile->vsize);
   }
 
   if (mainw->play_window != NULL) {

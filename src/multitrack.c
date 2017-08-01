@@ -118,6 +118,8 @@ static int ce_sepwin_type;
 
 static boolean needs_clear;
 
+static int scr_width;
+
 ////////////////////////////
 
 // menuitem callbacks - TODO : make static
@@ -2863,13 +2865,16 @@ static weed_timecode_t set_play_position(lives_mt *mt) {
 
     // set actual playback start time, from mt->ptr_time
     tc = q_gint64(mt->ptr_time * TICKS_PER_SECOND_DBL, cfile->fps);
+
+    if (!mt->is_paused)
+      mt->pb_unpaused_start_time = mt->ptr_time;
+      
     mt->pb_start_time = mt->ptr_time;
 
     //////////////////////////////////
 #ifdef ENABLE_JACK_TRANSPORT
   }
 #endif
-
   // get the start event to play from
   if (tc > event_list_get_end_tc(mt->event_list) || tc == 0) mt->pb_start_event = get_first_frame_event(mt->event_list);
   else {
@@ -4951,9 +4956,8 @@ static char *mt_set_vals_string(void) {
 }
 
 
-static void set_mt_play_sizes(lives_mt *mt, int width, int height) {
-  //int xwidth = width, xheight = height;
-  if (!mt->opts.show_ctx) {
+void set_mt_play_sizes(lives_mt *mt, int width, int height) {
+  /*  if (!mt->opts.show_ctx) {
     // double size
     mt->play_width = MIN(width, MT_PLAY_WIDTH_EXP);
     mt->play_height = MIN(height, MT_PLAY_HEIGHT_EXP);
@@ -4965,13 +4969,23 @@ static void set_mt_play_sizes(lives_mt *mt, int width, int height) {
     mt->play_height = MIN(height, MT_PLAY_HEIGHT_SMALL);
     mt->play_window_width = MT_PLAY_WIDTH_SMALL;
     mt->play_window_height = MT_PLAY_HEIGHT_SMALL;
+    }*/
+
+  if (mt->dft_width == 0 || mt->dft_height == 0) {
+    calc_maxspect(lives_widget_get_allocation_width(mt->play_box), lives_widget_get_allocation_height(mt->play_box), 
+		  &width, &height);
+    mt->dft_width = width;
+    mt->dft_height = height;
+    if (width > 10000 || height > 10000) g_print("oversize frame %d x %d\n", width, height);
   }
-  /*
-  calc_maxspect(lives_widget_get_allocation_width(mt->play_box), lives_widget_get_allocation_height(mt->play_box), 
-		&xwidth, &xheight);
-  mt->play_width = xwidth;
-  mt->play_height = xheight;
-  */
+  else {
+    width = mt->dft_width;
+    height = mt->dft_height;
+  }
+  
+  mt->play_width = mt->play_window_width = width;
+  mt->play_height = mt->play_window_height = height;
+
 }
 
 
@@ -5835,9 +5849,6 @@ void set_mt_colours(lives_mt *mt) {
 
     lives_widget_set_bg_color(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-    lives_widget_set_bg_color(mt->eview_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mt->eview_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
 
     lives_widget_set_bg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -6009,7 +6020,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *scrollbar;
   LiVESWidget *hbox;
   LiVESWidget *vbox;
-  LiVESWidget *view_ctx;
   LiVESWidget *eventbox;
   LiVESWidget *ign_ins_sel;
   LiVESWidget *recent_submenu;
@@ -6055,7 +6065,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   char *cname, *tname, *msg;
   char *tmp, *tmp2;
-  int scr_width, dph;
+  int dph;
   int num_filters;
   int error;
   int dpw = widget_opts.packing_width;
@@ -6097,6 +6107,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->undo_offset = mainw->sl_undo_offset;
   }
 
+  mt->dft_width = mt->dft_height = 0;
+  
   mt->apply_fx_button = NULL;
 
   mt->cursor_style = LIVES_CURSOR_NORMAL;
@@ -7410,14 +7422,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->view_audio), mt->opts.show_audio);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mt->view_audio);
 
-  view_ctx = lives_check_menu_item_new_with_mnemonic(_("Compact View"));
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(view_ctx), mt->opts.show_ctx);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), view_ctx);
-
-  lives_widget_add_accelerator(view_ctx, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
-                               LIVES_KEY_d, (LiVESXModifierType)0,
-                               LIVES_ACCEL_VISIBLE);
-
   mt->change_max_disp = lives_menu_item_new_with_mnemonic(_("Maximum Tracks to Display..."));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mt->change_max_disp);
 
@@ -7635,9 +7639,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->view_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(mt_view_audio_toggled),
-                       (livespointer)mt);
-  lives_signal_connect(LIVES_GUI_OBJECT(view_ctx), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(mt_view_ctx_toggled),
                        (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->change_max_disp), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(mt_change_max_disp_tracks),
@@ -7864,19 +7865,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mt->btoolbarx), FALSE);
 
   lives_toolbar_set_style(LIVES_TOOLBAR(mt->btoolbarx), LIVES_TOOLBAR_TEXT);
-
-  mt->eview_button = lives_tool_button_new(NULL, NULL);
-
-  mt->eview_label = lives_label_new(_("Expanded View (d)"));
-  lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(mt->eview_button), mt->eview_label);
-
-  if (!mt->opts.show_ctx) lives_label_set_text(LIVES_LABEL(mt->eview_label), _("Compact View (d)"));
-
-  lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbarx), LIVES_TOOL_ITEM(mt->eview_button), -1);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->eview_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_comp_exp),
-                       (livespointer)view_ctx);
 
   mt->btoolbar3 = lives_toolbar_new();
   lives_box_pack_start(LIVES_BOX(hbox), mt->btoolbar3, FALSE, FALSE, 0);
@@ -8127,7 +8115,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   // notebook goes in paned: so we have paned -> nb-> poly_box
   lives_paned_pack(1, LIVES_PANED(mt->hpaned), mt->nb, TRUE, FALSE);
-  lives_paned_set_position(LIVES_PANED(mt->hpaned), scr_width / 2);
 
   // poly clip scroll
   mt->clip_scroll = lives_scrolled_window_new(NULL, NULL);
@@ -10932,6 +10919,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   redraw_all_event_boxes(multi);
+  lives_paned_set_position(LIVES_PANED(multi->hpaned), (scr_width - multi->play_width) * .75);
 
   // this must be done right at the end
   // it slows down every single call to g_main_context_iteration - therefore it should be disabled before calling that
@@ -13909,6 +13897,13 @@ void mt_view_ctx_toggled(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mt->opts.show_ctx = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem));
 
+  // disable auto-backup while we redraw the screen
+  if (mt->idlefunc > 0) {
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc = 0;
+    needs_idlefunc = TRUE;
+  }
+
   lives_widget_context_update();
 
   set_mt_play_sizes(mt, cfile->hsize, cfile->vsize);
@@ -13933,12 +13928,6 @@ void mt_view_ctx_toggled(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_hide(mt->context_frame);
   }
 
-  // disable auto-backup while we redraw the screen
-  if (mt->idlefunc > 0) {
-    lives_source_remove(mt->idlefunc);
-    mt->idlefunc = 0;
-    needs_idlefunc = TRUE;
-  }
   if (poly_state != POLY_PARAMS) {
     polymorph(mt, POLY_NONE);
     if (poly_state == POLY_IN_OUT) lives_widget_context_update();
@@ -16615,7 +16604,7 @@ void mt_post_playback(lives_mt *mt) {
   if (mainw->cancelled != CANCEL_USER_PAUSED && !((mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_NO_MORE_PREVIEW) &&
       mt->is_paused)) {
     lives_widget_set_sensitive(mt->stop, FALSE);
-    mt_tl_move(mt, mt->pb_start_time);
+    mt_tl_move(mt, mt->pb_unpaused_start_time);
 
     if (mt->opts.follow_playback) {
       double currtime = mt->ptr_time;

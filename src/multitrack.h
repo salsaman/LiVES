@@ -518,6 +518,7 @@ struct _mt {
   boolean moving_block; ///< moving block flag
 
   double pb_start_time; ///< playback start time in seconds. If play is stopped (not paused) we return to here.
+  double pb_unpaused_start_time; ///< playback start time in seconds. If play is stopped (not paused) we return to here.
 
   //////////////////////////////
 
@@ -615,6 +616,10 @@ struct _mt {
   int play_window_width;
   int play_window_height;
 
+  /* dynamic defaults for playback image in gui */
+  int dft_width;
+  int dft_height;
+  
   int selected_filter; ///< filter selected in poly window tab
 
   int top_track; ///< top (video) track in scrolled window
@@ -738,9 +743,10 @@ boolean multitrack_delete(lives_mt *, boolean save);
 // morph the poly window
 void polymorph(lives_mt *, lives_mt_poly_state_t poly);
 
-// sens/desens
+// gui related
 void mt_desensitise(lives_mt *);
 void mt_sensitise(lives_mt *);
+void set_mt_play_sizes(lives_mt *mt, int width, int height);
 
 void add_aparam_menuitems(lives_mt *);
 

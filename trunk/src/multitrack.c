@@ -785,6 +785,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   stime = lives_get_current_ticks(0, 0);
   mt->auto_back_time = stime;
 
+  gettimeofday(&otv, NULL);
   tmp = lives_datetime(&otv);
   d_print("Auto backup of timeline at %s\n", tmp);
   lives_free(tmp);
@@ -2970,9 +2971,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
   if (mt->is_rendering && actual_frame <= cfile->frames) {
     // get the actual frame if it has already been rendered
-    mainw->frame_layer = weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(mainw->frame_layer, WEED_LEAF_CLIP, mainw->current_file);
-    weed_set_int_value(mainw->frame_layer, WEED_LEAF_FRAME, actual_frame);
+    mainw->frame_layer = weed_layer_new_for_frame(mainw->current_file, actual_frame);
     pull_frame(mainw->frame_layer, get_image_ext_for_type(cfile->img_type), curr_tc);
   } else {
     mainw->is_rendering = TRUE;
@@ -3069,7 +3068,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
 
     pixbuf = layer_to_pixbuf(mainw->frame_layer);
-    weed_plant_free(mainw->frame_layer);
+    weed_layer_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
 
     if (mt->framedraw != NULL) pixbuf = mt_framedraw(mt, pixbuf);
@@ -4953,17 +4952,26 @@ static char *mt_set_vals_string(void) {
 
 
 static void set_mt_play_sizes(lives_mt *mt, int width, int height) {
+  //int xwidth = width, xheight = height;
   if (!mt->opts.show_ctx) {
+    // double size
     mt->play_width = MIN(width, MT_PLAY_WIDTH_EXP);
     mt->play_height = MIN(height, MT_PLAY_HEIGHT_EXP);
     mt->play_window_width = MT_PLAY_WIDTH_EXP;
     mt->play_window_height = MT_PLAY_HEIGHT_EXP;
   } else {
+    // normal size
     mt->play_width = MIN(width, MT_PLAY_WIDTH_SMALL);
     mt->play_height = MIN(height, MT_PLAY_HEIGHT_SMALL);
     mt->play_window_width = MT_PLAY_WIDTH_SMALL;
     mt->play_window_height = MT_PLAY_HEIGHT_SMALL;
   }
+  /*
+  calc_maxspect(lives_widget_get_allocation_width(mt->play_box), lives_widget_get_allocation_height(mt->play_box), 
+		&xwidth, &xheight);
+  mt->play_width = xwidth;
+  mt->play_height = xheight;
+  */
 }
 
 
@@ -5232,7 +5240,7 @@ char *set_values_from_defs(lives_mt *mt, boolean from_prefs) {
     mt->avol_init_event = NULL;
   }
 
-  set_mt_play_sizes(mt, cfile->hsize, cfile->vsize);
+  //set_mt_play_sizes(mt, cfile->hsize, cfile->vsize);
 
   set_audio_filter_channel_values(mt);
 
@@ -7923,7 +7931,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_widget_show_all(mt->grav_submenu); // needed
 
-  if (mainw->mgeom[prefs->gui_monitor - 1].width > MENUBAR_MIN) in_menubar = FALSE;
+  if (mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].width > MENUBAR_MIN) in_menubar = FALSE;
 
   if (in_menubar) {
     menuitemsep = lives_menu_item_new_with_label("|");
@@ -8050,14 +8058,14 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->play_blank = lives_image_new_from_pixbuf(mainw->imframe);
   mt->preview_frame = lives_standard_frame_new(_("Preview"), 0.5, FALSE);
-  lives_box_pack_start(LIVES_BOX(mt->hbox), mt->preview_frame, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(mt->hbox), mt->preview_frame, TRUE, TRUE, 0);
   mt->fd_frame = mt->preview_frame;
 
   mt->preview_eventbox = lives_event_box_new();
-  lives_widget_set_size_request(mt->preview_eventbox, mt->play_window_width, mt->play_window_height);
+  //lives_widget_set_size_request(mt->preview_eventbox, mt->play_window_width, mt->play_window_height);
   mt->play_box = lives_vbox_new(FALSE, widget_opts.border_width);
   lives_widget_set_app_paintable(mt->preview_eventbox, TRUE);
-  lives_widget_set_size_request(mt->play_box, mt->play_window_width, mt->play_window_height);
+  //lives_widget_set_size_request(mt->play_box, mt->play_window_width, mt->play_window_height);
 
   lives_widget_set_hexpand(mt->play_box, FALSE);
   lives_widget_set_vexpand(mt->play_box, FALSE);
@@ -10922,6 +10930,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   lives_widget_context_update();
 
+  set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   redraw_all_event_boxes(multi);
 
   // this must be done right at the end
@@ -13899,6 +13908,8 @@ void mt_view_ctx_toggled(LiVESMenuItem *menuitem, livespointer user_data) {
   boolean needs_idlefunc = FALSE;
 
   mt->opts.show_ctx = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem));
+
+  lives_widget_context_update();
 
   set_mt_play_sizes(mt, cfile->hsize, cfile->vsize);
   mt_show_current_frame(mt, FALSE);
@@ -18603,7 +18614,7 @@ LiVESList *load_layout_map(void) {
   // one could use a layout.map and a layout file as a template for
   // rendering many different sets]
 
-  // this is called from recover_layout_map() in saveplay.c, where the map entries are assigned
+  // this is called from recover_layout_map() in saveplay.c, where the map entries entry->list are assigned
   // to files (clips)
 
   char **array;
@@ -18705,6 +18716,7 @@ LiVESList *load_layout_map(void) {
         }
         if (err) break;
         lmap = lives_list_append(lmap, lmap_entry);
+	//g_print("add layout %p %p %p\n", lmap, lmap_entry, lmap_entry->list);
       }
     }
 
@@ -20975,7 +20987,7 @@ void on_clear_event_list_activate(LiVESMenuItem *menuitem, livespointer user_dat
       return;
     }
 
-    lmap_file = lives_build_filename("workdir", mainw->set_name, "layouts", mt->layout_name, NULL);
+    lmap_file = lives_build_filename(WORKDIR_LITERAL, mainw->set_name, "layouts", mt->layout_name, NULL);
     layout_map = lives_list_append(layout_map, lmap_file);
     remove_layout_files(layout_map);
     lives_free(lmap_file);

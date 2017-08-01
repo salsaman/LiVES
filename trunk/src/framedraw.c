@@ -620,7 +620,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
       weed_layer_free(mainw->fd_layer_orig);
     }
 
-    mainw->fd_layer_orig = weed_layer_new(0, 0, NULL, WEED_PALETTE_END);
+    mainw->fd_layer_orig = weed_layer_create(0, 0, NULL, WEED_PALETTE_END);
 
     if (!pixbuf_to_layer(mainw->fd_layer_orig, pixbuf)) lives_object_unref(pixbuf);
 

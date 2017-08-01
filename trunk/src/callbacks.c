@@ -2689,11 +2689,13 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int current_file = mainw->current_file;
+
+  
   on_copy_activate(menuitem, user_data);
   if (mainw->cancelled) {
     return;
   }
-  on_delete_activate(menuitem, user_data);
+  on_delete_activate(NULL, user_data);
   if (mainw->current_file == current_file) {
     set_undoable(_("Cut"), TRUE);
     cfile->undo_action = UNDO_CUT;
@@ -3546,6 +3548,7 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
   }
 
+  // TODO: in case of "cut" we should show these warnings before copying 
   if (menuitem != NULL) {
     if (!(prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_FRAMES)) {
       if ((mainw->xlays = layout_frame_is_affected(mainw->current_file, cfile->end - frames_cut)) != NULL) {

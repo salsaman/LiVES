@@ -149,7 +149,7 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *) WARN_UNUSED;
 
 weed_plant_t *weed_layer_copy(weed_plant_t *dlayer, weed_plant_t *slayer);
 void weed_layer_free(weed_plant_t *layer);
-weed_plant_t *weed_layer_new(int width, int height, int *rowstrides, int current_palette);
+weed_plant_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette);
 int weed_layer_get_palette(weed_plant_t *layer);
 
 lives_painter_t *layer_to_lives_painter(weed_plant_t *layer);

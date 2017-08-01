@@ -4,8 +4,8 @@ Fix "undo render to same clip" after rendering to selection.
 Add new libav_stream playback plugin (WIP).
 Set openGL playback plugin (if present) as the default for new installs.
 (Multi monitor support) always show dialog windows on the gui monitor.
-Re-enable recording from external sources (Was inadvertantly disabled).
-
+Re-enable audio recording from external sources (Was inadvertantly disabled).
+Fix possible problems with layout reloading (regression).
 
 
 

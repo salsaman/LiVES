@@ -3450,11 +3450,9 @@ lives_render_error_t render_events(boolean reset) {
 
           if (scrap_track != -1) {
             // do not apply fx, just pull frame
-            layer = weed_plant_new(WEED_PLANT_CHANNEL);
-            weed_set_int_value(layer, WEED_LEAF_CLIP, mainw->clip_index[scrap_track]);
-            weed_set_int_value(layer, WEED_LEAF_FRAME, mainw->frame_index[scrap_track]);
+            layer = weed_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
             if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
-              weed_plant_free(layer);
+              weed_layer_free(layer);
               layer = NULL;
             }
           } else {
@@ -3474,9 +3472,7 @@ lives_render_error_t render_events(boolean reset) {
 
             for (i = 0; i < num_tracks; i++) {
               if (mainw->clip_index[i] > 0 && mainw->frame_index[i] > 0 && mainw->multitrack != NULL) is_blank = FALSE;
-              layers[i] = weed_plant_new(WEED_PLANT_CHANNEL);
-              weed_set_int_value(layers[i], WEED_LEAF_CLIP, mainw->clip_index[i]);
-              weed_set_int_value(layers[i], WEED_LEAF_FRAME, mainw->frame_index[i]);
+              layers[i] = weed_layer_new_for_frame(mainw->clip_index[i], mainw->frame_index[i]);
               weed_set_voidptr_value(layers[i], WEED_LEAF_PIXEL_DATA, NULL);
 
               if ((oclip = mainw->old_active_track_list[i]) != (nclip = mainw->active_track_list[i])) {
@@ -3528,7 +3524,7 @@ lives_render_error_t render_events(boolean reset) {
             for (i = 0; layers[i] != NULL; i++) {
               if (layer != layers[i]) {
                 check_layer_ready(layers[i]);
-                weed_plant_free(layers[i]);
+                weed_layer_free(layers[i]);
               }
             }
             lives_free(layers);
@@ -3548,7 +3544,7 @@ lives_render_error_t render_events(boolean reset) {
             resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
             convert_layer_palette(layer, layer_palette, 0);
             pixbuf = layer_to_pixbuf(layer);
-            weed_plant_free(layer);
+            weed_layer_free(layer);
           }
 
           mainw->blend_file = blend_file;

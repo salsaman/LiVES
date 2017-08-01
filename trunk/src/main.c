@@ -3970,9 +3970,7 @@ void load_start_image(int frame) {
       }
     }
 
-    layer = weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(layer, WEED_LEAF_CLIP, mainw->current_file);
-    weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
+    layer = weed_layer_new_for_frame(mainw->current_file, frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                            WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
@@ -3980,7 +3978,7 @@ void load_start_image(int frame) {
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       start_pixbuf = layer_to_pixbuf(layer);
     }
-    weed_plant_free(layer);
+    weed_layer_free(layer);
 
     if (LIVES_IS_PIXBUF(start_pixbuf)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image), start_pixbuf, NULL);
@@ -4029,10 +4027,7 @@ void load_start_image(int frame) {
       }
     }
 
-    layer = weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(layer, WEED_LEAF_CLIP, mainw->current_file);
-    weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
-
+    layer = weed_layer_new_for_frame(mainw->current_file, frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
       resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
@@ -4141,10 +4136,7 @@ void load_end_image(int frame) {
       }
     }
 
-    layer = weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(layer, WEED_LEAF_CLIP, mainw->current_file);
-    weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
-
+    layer = weed_layer_new_for_frame(mainw->current_file, frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                            WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
@@ -4197,10 +4189,7 @@ void load_end_image(int frame) {
       }
     }
 
-    layer = weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(layer, WEED_LEAF_CLIP, mainw->current_file);
-    weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
-
+    layer = weed_layer_new_for_frame(mainw->current_file, frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
       resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
@@ -4340,7 +4329,7 @@ void load_preview_image(boolean update_always) {
   if (mainw->preview_frame < 1 || mainw->preview_frame > cfile->frames) {
     pixbuf = lives_pixbuf_scale_simple(mainw->imframe, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST);
   } else {
-    weed_plant_t *layer = weed_plant_new(WEED_PLANT_CHANNEL);
+    weed_plant_t *layer = weed_layer_new_for_frame(mainw->current_file, mainw->preview_frame);
     weed_timecode_t tc = ((mainw->preview_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
@@ -4353,8 +4342,6 @@ void load_preview_image(boolean update_always) {
       }
     }
 
-    weed_set_int_value(layer, WEED_LEAF_CLIP, mainw->current_file);
-    weed_set_int_value(layer, WEED_LEAF_FRAME, mainw->preview_frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, mainw->pwidth, mainw->pheight,
                            WEED_PALETTE_RGB24)) {
       LiVESInterpType interp = get_interp_value(prefs->pb_quality);
@@ -4698,7 +4685,7 @@ boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp) {
 #endif
 
 
-static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer, const char *fname, int width,
+static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, const char *fname, int width,
     int height, const char *img_ext) {
   LiVESPixbuf *pixbuf = NULL;
 
@@ -5014,9 +5001,9 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         boolean ret;
         char *fname = make_image_file_name(sfile, frame, image_ext);
         if (height * width == 0) {
-          ret = weed_layer_new_from_file_progressive(layer, fname, 0, 0, image_ext);
+          ret = weed_layer_create_from_file_progressive(layer, fname, 0, 0, image_ext);
         } else {
-          ret = weed_layer_new_from_file_progressive(layer, fname, width, height, image_ext);
+          ret = weed_layer_create_from_file_progressive(layer, fname, width, height, image_ext);
         }
         lives_free(fname);
 
@@ -5073,7 +5060,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
     // special handling for clips where host controls size
     // Note: vlayer is actually the out channel of the generator, so we should
     // never free it
-    vlayer = weed_layer_new_from_generator((weed_plant_t *)sfile->ext_src, tc);
+    vlayer = weed_layer_create_from_generator((weed_plant_t *)sfile->ext_src, tc);
     weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
     weed_set_voidptr_value(vlayer, WEED_LEAF_PIXEL_DATA, NULL);
     mainw->osc_block = FALSE;
@@ -5169,9 +5156,8 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
   // the WEED_LEAF_CLIP and WEED_LEAF_FRAME leaves must be set in layer
 
   // done in a threaded fashion
+  // call check_layer_ready() to block until the frame thread is completed
 
-  // may only be used on "virtual" frames
-  //#define NO_FRAME_THREAD
 #ifdef NO_FRAME_THREAD
   pull_frame(layer, img_ext, tc);
   return;
@@ -5200,11 +5186,8 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
   // pixbuf will be sized to width x height pixels using interp
 
   LiVESPixbuf *pixbuf = NULL;
-  weed_plant_t *layer = weed_plant_new(WEED_PLANT_CHANNEL);
+  weed_plant_t *layer = weed_layer_new_for_frame(clip, frame);
   int palette;
-
-  weed_set_int_value(layer, WEED_LEAF_CLIP, clip);
-  weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
 
 #ifndef ALLOW_PNG24
   if (!strcmp(image_ext, LIVES_FILE_EXT_PNG)) palette = WEED_PALETTE_RGBA32;
@@ -5761,9 +5744,7 @@ void load_frame_image(int frame) {
 
         if (mainw->clip_index[0] == mainw->scrap_file && mainw->clip_index[0] > -1 && mainw->num_tracks == 1) {
           // do not apply fx, just pull frame
-          mainw->frame_layer = weed_plant_new(WEED_PLANT_CHANNEL);
-          weed_set_int_value(mainw->frame_layer, WEED_LEAF_CLIP, mainw->clip_index[0]);
-          weed_set_int_value(mainw->frame_layer, WEED_LEAF_FRAME, mainw->frame_index[0]);
+          mainw->frame_layer = weed_layer_new_for_frame(mainw->clip_index[0], mainw->frame_index[0]);
           if (!pull_frame(mainw->frame_layer, get_image_ext_for_type(cfile->img_type), tc)) {
             weed_plant_free(mainw->frame_layer);
             mainw->frame_layer = NULL;
@@ -5785,9 +5766,7 @@ void load_frame_image(int frame) {
           }
 
           for (i = 0; i < mainw->num_tracks; i++) {
-            layers[i] = weed_plant_new(WEED_PLANT_CHANNEL);
-            weed_set_int_value(layers[i], WEED_LEAF_CLIP, mainw->clip_index[i]);
-            weed_set_int_value(layers[i], WEED_LEAF_FRAME, mainw->frame_index[i]);
+            layers[i] = weed_layer_new_for_frame(mainw->clip_index[i], mainw->frame_index[i]);
             weed_set_int_value(layers[i], WEED_LEAF_CURRENT_PALETTE, (mainw->clip_index[i] == -1 ||
                                mainw->files[mainw->clip_index[i]]->img_type ==
                                IMG_TYPE_JPEG) ? WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32);
@@ -5850,9 +5829,7 @@ void load_frame_image(int frame) {
       } else {
         // normal playback in the clip editor, or applying a non-realtime effect
         if (!mainw->preview || cfile->clip_type == CLIP_TYPE_FILE || lives_file_test(fname_next, LIVES_FILE_TEST_EXISTS)) {
-          mainw->frame_layer = weed_plant_new(WEED_PLANT_CHANNEL);
-          weed_set_int_value(mainw->frame_layer, WEED_LEAF_CLIP, mainw->current_file);
-          weed_set_int_value(mainw->frame_layer, WEED_LEAF_FRAME, mainw->actual_frame);
+          mainw->frame_layer = weed_layer_new_for_frame(mainw->current_file, mainw->actual_frame);
           if (img_ext == NULL) img_ext = get_image_ext_for_type(cfile->img_type);
 
           if (mainw->preview && mainw->frame_layer == NULL && (mainw->event_list == NULL || cfile->opening)) {
@@ -6119,7 +6096,7 @@ void load_frame_image(int frame) {
         int retwidth = mainw->pwidth / weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
         int retheight = mainw->pheight;
 
-        return_layer = weed_layer_new(retwidth, retheight, NULL, mainw->vpp->palette);
+        return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
         if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
           weed_set_int_value(return_layer, WEED_LEAF_YUV_CLAMPING, mainw->vpp->YUV_clamping);
@@ -6363,7 +6340,7 @@ void load_frame_image(int frame) {
         int retwidth = mainw->pwidth / weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
         int retheight = mainw->pheight;
 
-        return_layer = weed_layer_new(retwidth, retheight, NULL, mainw->vpp->palette);
+        return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
         if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
           weed_set_int_value(return_layer, WEED_LEAF_YUV_CLAMPING, mainw->vpp->YUV_clamping);

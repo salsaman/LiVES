@@ -1253,6 +1253,20 @@ static boolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array) {
 }
 
 
+LIVES_INLINE weed_plant_t *weed_layer_new(void) {
+  return weed_plant_new(WEED_PLANT_LAYER);
+}
+
+
+weed_plant_t *weed_layer_new_for_frame(int clip, int frame) {
+  // create a layer ready to receive a frame from a clip
+  weed_plant_t *layer = weed_layer_new();
+  weed_set_int_value(layer, WEED_LEAF_CLIP, clip);
+  weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
+  return layer;
+}
+
+
 static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
 #ifndef HAVE_POSIX_MEMALIGN
   return FALSE;
@@ -3480,7 +3494,7 @@ audinst1:
     for (i = 0; i < ntracks; i++) {
       // create audio layers, and copy/combine separated audio into each layer
 
-      layers[i] = weed_plant_new(WEED_PLANT_CHANNEL);
+      layers[i] = weed_layer_new();
 
       // copy audio into layer audio
       in_abuf = (float *)lives_malloc(nchans * nsf);
@@ -3804,7 +3818,7 @@ apply_inst3:
 
   if (output == -1) {
     // blank frame - e.g. for multitrack
-    weed_plant_t *layer = weed_layer_new(opwidth > 4 ? opwidth : 4, opheight > 4 ? opheight : 4, NULL, WEED_PALETTE_RGB24);
+    weed_plant_t *layer = weed_layer_create(opwidth > 4 ? opwidth : 4, opheight > 4 ? opheight : 4, NULL, WEED_PALETTE_RGB24);
     create_empty_pixel_data(layer, TRUE, TRUE);
     return layer;
   }
@@ -7251,7 +7265,7 @@ void weed_deinit_all(boolean shutdown) {
 /////////////////////
 // special handling for generators (sources)
 
-weed_plant_t *weed_layer_new_from_generator(weed_plant_t *inst, weed_timecode_t tc) {
+weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode_t tc) {
   weed_plant_t *channel, **out_channels;
   weed_plant_t *filter;
   weed_plant_t *chantmpl;

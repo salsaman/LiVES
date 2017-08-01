@@ -369,6 +369,9 @@ enum {
 #define CLIP_AUDIO_FILE "audio"
 
 
+#define WORKDIR_LITERAL "workdir"
+#define WORKDIR_LITERAL_LEN 7
+
 // filters
 
 #define LIVES_SUBS_FILTER  {"*.srt", "*.sub", NULL}

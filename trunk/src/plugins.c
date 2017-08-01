@@ -592,14 +592,11 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
   char *cur_pal = NULL;
 
   int *pal_list, i = 0;
-  int intention = 0;
   
   boolean ext_audio = FALSE;
 
   _vid_playback_plugin *vpp = vppw->plugin;
 
-  if (user_data != NULL) intention = LIVES_POINTER_TO_INT(user_data);
-  
   if (vpp == mainw->vpp) {
     if (vppw->spinbuttonw != NULL) mainw->vpp->fwidth = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));
     if (vppw->spinbuttonh != NULL) mainw->vpp->fheight = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));
@@ -872,6 +869,9 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   int *pal_list;
 
+  int intention = 0;
+  int hsize, vsize;
+  
   LiVESList *fps_list_strings = NULL;
   LiVESList *pal_list_strings = NULL;
 
@@ -888,6 +888,8 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   char *com;
 
   // TODO - set default values from tmpvpp
+
+  if (user_data != NULL) intention = LIVES_POINTER_TO_INT(user_data);
 
   if (strlen(future_prefs->vpp_name)) {
     if ((tmpvpp = open_vid_playback_plugin(future_prefs->vpp_name, FALSE)) == NULL) return NULL;
@@ -941,29 +943,31 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       }
     }
 
-    // fps
-    combo = lives_standard_combo_new((tmp = lives_strdup(_("_FPS"))), TRUE, fps_list_strings,
-                                     LIVES_BOX(dialog_vbox), (tmp2 = lives_strdup(_("Fixed framerate for plugin.\n"))));
 
-    lives_free(tmp);
-    lives_free(tmp2);
-    vppa->fps_entry = lives_combo_get_entry(LIVES_COMBO(combo));
-    lives_entry_set_width_chars(LIVES_ENTRY(lives_combo_get_entry(LIVES_COMBO(combo))), SPBWIDTHCHARS);
+    if (intention == 0) {
+      // fps
+      combo = lives_standard_combo_new((tmp = lives_strdup(_("_FPS"))), TRUE, fps_list_strings,
+				       LIVES_BOX(dialog_vbox), (tmp2 = lives_strdup(_("Fixed framerate for plugin.\n"))));
 
-    lives_list_free_all(&fps_list_strings);
-    lives_strfreev(array);
-
-    if (tmpvpp->fixed_fps_numer > 0) {
-      char *tmp = lives_strdup_printf("%d:%d", tmpvpp->fixed_fps_numer, tmpvpp->fixed_fps_denom);
-      lives_entry_set_text(LIVES_ENTRY(vppa->fps_entry), tmp);
       lives_free(tmp);
-    } else {
-      char *tmp = remove_trailing_zeroes(tmpvpp->fixed_fpsd);
-      lives_entry_set_text(LIVES_ENTRY(vppa->fps_entry), tmp);
-      lives_free(tmp);
+      lives_free(tmp2);
+      vppa->fps_entry = lives_combo_get_entry(LIVES_COMBO(combo));
+      lives_entry_set_width_chars(LIVES_ENTRY(lives_combo_get_entry(LIVES_COMBO(combo))), SPBWIDTHCHARS);
+
+      lives_list_free_all(&fps_list_strings);
+      lives_strfreev(array);
+
+      if (tmpvpp->fixed_fps_numer > 0) {
+	char *tmp = lives_strdup_printf("%d:%d", tmpvpp->fixed_fps_numer, tmpvpp->fixed_fps_denom);
+	lives_entry_set_text(LIVES_ENTRY(vppa->fps_entry), tmp);
+	lives_free(tmp);
+      } else {
+	char *tmp = remove_trailing_zeroes(tmpvpp->fixed_fpsd);
+	lives_entry_set_text(LIVES_ENTRY(vppa->fps_entry), tmp);
+	lives_free(tmp);
+      }
     }
   }
-
   // frame size
 
   if (!(tmpvpp->capabilities & VPP_LOCAL_DISPLAY)) {
@@ -972,58 +976,67 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     add_fill_to_box(LIVES_BOX(hbox));
 
+    hsize = tmpvpp->fwidth > 0 ? tmpvpp->fwidth : MAX_VPP_HSIZE;
+
+    if (intention == 1) hsize = cfile->hsize;
+    
     vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"), TRUE,
-                        tmpvpp->fwidth > 0 ? tmpvpp->fwidth : MAX_VPP_HSIZE,
+                        hsize,
                         4., MAX_FRAME_WIDTH, 4., 4., 0, LIVES_BOX(hbox), NULL);
 
     add_fill_to_box(LIVES_BOX(hbox));
 
+    vsize = tmpvpp->fheight > 0 ? tmpvpp->fheight : MAX_VPP_VSIZE;
+			      
+    if (intention == 1) vsize = cfile->vsize;
+
     vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"), TRUE,
-                        tmpvpp->fheight > 0 ? tmpvpp->fheight : MAX_VPP_VSIZE,
+						       vsize,
                         4., MAX_FRAME_HEIGHT, 4., 4., 0, LIVES_BOX(hbox), NULL);
 
     add_fill_to_box(LIVES_BOX(hbox));
   }
 
-  // palette
 
-  if (tmpvpp->get_palette_list != NULL && (pal_list = (*tmpvpp->get_palette_list)()) != NULL) {
-    int i;
+  if (intention == 0) {
+    if (tmpvpp->get_palette_list != NULL && (pal_list = (*tmpvpp->get_palette_list)()) != NULL) {
+      int i;
 
-    for (i = 0; pal_list[i] != WEED_PALETTE_END; i++) {
-      int j = 0;
-      string = weed_palette_get_name(pal_list[i]);
-      if (weed_palette_is_yuv_palette(pal_list[i]) && tmpvpp->get_yuv_palette_clamping != NULL) {
-        int *clampings = (*tmpvpp->get_yuv_palette_clamping)(pal_list[i]);
-        while (clampings[j] != -1) {
-          char *string2 = lives_strdup_printf("%s (%s)", string, weed_yuv_clamping_get_name(clampings[j]));
-          pal_list_strings = lives_list_append(pal_list_strings, string2);
-          j++;
-        }
+      for (i = 0; pal_list[i] != WEED_PALETTE_END; i++) {
+	int j = 0;
+	string = weed_palette_get_name(pal_list[i]);
+	if (weed_palette_is_yuv_palette(pal_list[i]) && tmpvpp->get_yuv_palette_clamping != NULL) {
+	  int *clampings = (*tmpvpp->get_yuv_palette_clamping)(pal_list[i]);
+	  while (clampings[j] != -1) {
+	    char *string2 = lives_strdup_printf("%s (%s)", string, weed_yuv_clamping_get_name(clampings[j]));
+	    pal_list_strings = lives_list_append(pal_list_strings, string2);
+	    j++;
+	  }
+	}
+	if (j == 0) {
+	  pal_list_strings = lives_list_append(pal_list_strings, lives_strdup(string));
+	}
       }
-      if (j == 0) {
-        pal_list_strings = lives_list_append(pal_list_strings, lives_strdup(string));
+
+      combo = lives_standard_combo_new((tmp = lives_strdup(_("_Colourspace"))), TRUE, pal_list_strings,
+				       LIVES_BOX(dialog_vbox), tmp2 = lives_strdup(_("Colourspace input to the plugin.\n")));
+      lives_free(tmp);
+      lives_free(tmp2);
+      vppa->pal_entry = lives_combo_get_entry(LIVES_COMBO(combo));
+
+      if (tmpvpp->get_yuv_palette_clamping != NULL && weed_palette_is_yuv_palette(tmpvpp->palette)) {
+	int *clampings = tmpvpp->get_yuv_palette_clamping(tmpvpp->palette);
+	if (clampings[0] != -1)
+	  ctext = lives_strdup_printf("%s (%s)", weed_palette_get_name(tmpvpp->palette),
+				      weed_yuv_clamping_get_name(tmpvpp->YUV_clamping));
       }
+      if (ctext == NULL) ctext = lives_strdup(weed_palette_get_name(tmpvpp->palette));
+      lives_entry_set_text(LIVES_ENTRY(vppa->pal_entry), ctext);
+      lives_free(ctext);
+      lives_list_free_all(&pal_list_strings);
     }
-
-    combo = lives_standard_combo_new((tmp = lives_strdup(_("_Colourspace"))), TRUE, pal_list_strings,
-                                     LIVES_BOX(dialog_vbox), tmp2 = lives_strdup(_("Colourspace input to the plugin.\n")));
-    lives_free(tmp);
-    lives_free(tmp2);
-    vppa->pal_entry = lives_combo_get_entry(LIVES_COMBO(combo));
-
-    if (tmpvpp->get_yuv_palette_clamping != NULL && weed_palette_is_yuv_palette(tmpvpp->palette)) {
-      int *clampings = tmpvpp->get_yuv_palette_clamping(tmpvpp->palette);
-      if (clampings[0] != -1)
-        ctext = lives_strdup_printf("%s (%s)", weed_palette_get_name(tmpvpp->palette),
-                                    weed_yuv_clamping_get_name(tmpvpp->YUV_clamping));
-    }
-    if (ctext == NULL) ctext = lives_strdup(weed_palette_get_name(tmpvpp->palette));
-    lives_entry_set_text(LIVES_ENTRY(vppa->pal_entry), ctext);
-    lives_free(ctext);
-    lives_list_free_all(&pal_list_strings);
   }
-
+  
   // extra params
 
   if (tmpvpp->get_init_rfx != NULL) {

@@ -540,7 +540,7 @@ boolean is_virtual_frame(int sfileno, int frame) {
 }
 
 /// experimental feature
-#define TEST_TRANSCODE
+//#define TEST_TRANSCODE
 #ifdef TEST_TRANSCODE
 
 #if HAVE_SYSTEM_WEED
@@ -572,7 +572,7 @@ boolean transcode(int start, int end) {
 
   ssize_t in_bytes;
   
-  const char *img_ext;
+  const char *img_ext = NULL;
 
   char *afname = NULL;
   
@@ -606,6 +606,11 @@ boolean transcode(int start, int end) {
     goto tr_err;
   }
 
+  // reset these for the current clip
+  if (vpp->set_fps != NULL) (*vpp->set_fps)(cfile->fps);
+  if (vpp->set_palette != NULL) (*vpp->set_palette)(WEED_PALETTE_YUV420);
+  if (vpp->set_YUVClamping != NULL) (*vpp->set_YUVClamping)(WEED_CLAMPING_CLAMPED);
+  
   if (vpp->init_audio != NULL && mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
     int in_arate = cfile->arps * cfile->arps / cfile->arate;
     if ((*vpp->init_audio)(in_arate, cfile->achans, mainw->vpp->extra_argc, mainw->vpp->extra_argv)) {
@@ -656,14 +661,17 @@ boolean transcode(int start, int end) {
   
   (*vpp->init_screen)(cfile->hsize, cfile->vsize, FALSE, 0, vpp->extra_argc, vpp->extra_argv);
 
-  frame_layer = weed_plant_new(WEED_PLANT_CHANNEL);
+  // create a frame layer, 
+  frame_layer = weed_layer_new();
   weed_set_int_value(frame_layer, WEED_LEAF_CLIP, mainw->current_file);
+
+  // need img_ext for pulling the frame
   img_ext = get_image_ext_for_type(cfile->img_type);
 
   // encoding loop
   
   for (i = start; i <= end; i++) {
-  // loop:
+    // set the frame number to pull
     weed_set_int_value(frame_layer, WEED_LEAF_FRAME, i);
 
     // - pull next frame (thread)
@@ -699,19 +707,27 @@ boolean transcode(int start, int end) {
     }
 
     // get frame, send it
-    check_layer_ready(frame_layer); // ensure all threads are complete
+    if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
+    check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
+
+    // convert to the plugin's palette
     convert_layer_palette(frame_layer, vpp->palette, vpp->YUV_clamping);
 
     // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
     compact_rowstrides(frame_layer);
 
+    // get a void ** to the planar pixel_data
     pd_array = weed_get_voidptr_array(frame_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
 
-    error = !(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
-					 weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error),
-					 currticks, pd_array, NULL, NULL);
+    if (pd_array != NULL) {
+      error = !(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
+					   weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error),
+					   currticks, pd_array, NULL, NULL);
 
-    lives_free(pd_array);
+      lives_free(pd_array);
+    }
+
+    // free pixel_data, but keep same layer around
     weed_layer_pixel_data_free(frame_layer);
 
     if (error) goto tr_err;
@@ -720,6 +736,7 @@ boolean transcode(int start, int end) {
 
  tr_err:
 
+  // cleanup
   weed_layer_free(frame_layer);
   
   if (fd >= 0) lives_close_buffered(fd);
@@ -739,12 +756,20 @@ boolean transcode(int start, int end) {
   }
 
   // close vpp, unless mainw->vpp
-  if (ovpp != NULL && vpp->handle != ovpp->handle) {
+  if (ovpp == NULL || (vpp->handle != ovpp->handle)) {
     close_vid_playback_plugin(vpp);
   }
 
-  mainw->vpp = ovpp;
+  if (ovpp != NULL && (vpp->handle == ovpp->handle)) {
+    // we "borrowed" the playback plugin, so set these back how they were
+    if (ovpp->set_fps != NULL) (*ovpp->set_fps)(ovpp->fixed_fpsd);
+    if (ovpp->set_palette != NULL) (*ovpp->set_palette)(ovpp->palette);
+    if (ovpp->set_YUVClamping != NULL) (*ovpp->set_YUVClamping)(ovpp->YUVClamping);
+    mainw->vpp = ovpp;
+  }
 
+  lives_freep((void **)&ing_ext);
+  
   return !error;
 }
 

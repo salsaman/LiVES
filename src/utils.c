@@ -2521,12 +2521,12 @@ char *repl_workdir(const char *entry, boolean fwd) {
   if (fwd) {
     if (!strncmp(entry, prefs->workdir, strlen(prefs->workdir))) {
       lives_free(string);
-      string = lives_strdup_printf("workdir%s", entry + strlen(prefs->workdir));
+      string = lives_strdup_printf("%s%s", WORKDIR_LITERAL, entry + strlen(prefs->workdir));
     }
   } else {
-    if (!strncmp(entry, "workdir", 6)) {
+    if (!strncmp(entry, WORKDIR_LITERAL, WORKDIR_LITERAL_LEN)) {
       lives_free(string);
-      string = lives_build_filename(prefs->workdir, entry + 6, NULL);
+      string = lives_build_filename(prefs->workdir, entry + WORKDIR_LITERAL_LEN, NULL);
     }
   }
   return string;

@@ -629,12 +629,9 @@ lives_render_error_t realfx_progress(boolean reset) {
   if (has_video_filters(FALSE) || resize_instance != NULL) {
     mainw->rowstride_alignment = mainw->rowstride_alignment_hint;
 
-    layer = weed_plant_new(WEED_PLANT_CHANNEL);
-    weed_set_int_value(layer, WEED_LEAF_CLIP, mainw->current_file);
-    weed_set_int_value(layer, WEED_LEAF_FRAME, i);
-
     frameticks = (i - cfile->start + 1.) / cfile->fps * TICKS_PER_SECOND;
 
+    layer = weed_layer_new_for_frame(mainw->current_file, i);
     if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
       lives_snprintf(mainw->msg, 256, "error|missing image %d", i);
@@ -935,8 +932,9 @@ deint1:
 
 
 weed_plant_t *get_blend_layer(weed_timecode_t tc) {
-  lives_clip_t *blend_file;
   static weed_timecode_t blend_tc = 0;
+
+  lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
 
   if (mainw->blend_file == -1 || mainw->files[mainw->blend_file] == NULL) return NULL;
@@ -955,10 +953,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
   blend_tc = ntc;
 
-  mainw->blend_layer = weed_plant_new(WEED_PLANT_CHANNEL);
-  weed_set_int_value(mainw->blend_layer, WEED_LEAF_CLIP, mainw->blend_file);
-  weed_set_int_value(mainw->blend_layer, WEED_LEAF_FRAME, blend_file->frameno);
-
+  mainw->blend_layer = weed_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
   pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), tc);
 
   return mainw->blend_layer;

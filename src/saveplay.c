@@ -5142,7 +5142,6 @@ void recover_layout_map(int numclips) {
       while (lmap_node != NULL) {
         lmap_node_next = lmap_node->next;
         lmap_entry = (layout_map *)lmap_node->data;
-
         check_handle = lives_strdup(mainw->files[i]->handle);
 
         if (strstr(lmap_entry->handle, "/") == NULL) {
@@ -5160,12 +5159,13 @@ void recover_layout_map(int numclips) {
             lmap_entry_list_next = lmap_entry_list->next;
             array = lives_strsplit((char *)lmap_entry_list->data, "|", -1);
             if (!lives_file_test(array[0], LIVES_FILE_TEST_EXISTS)) {
+	      //g_print("removing layout because no file %s\n", array[0]);
               // layout file has been deleted, remove this entry
               if (lmap_entry_list->prev != NULL) lmap_entry_list->prev->next = lmap_entry_list_next;
-              else lmap_entry->list = lmap_node_next;
+              else lmap_entry->list = lmap_entry_list_next;
               if (lmap_entry_list_next != NULL) lmap_entry_list_next->prev = lmap_entry_list->prev;
               lives_free((livespointer)lmap_entry_list->data);
-              //lives_free(lmap_entry_list);    // i don't know why, but this causes a segfault
+              lives_free(lmap_entry_list);
             }
             lives_strfreev(array);
             lmap_entry_list = lmap_entry_list_next;

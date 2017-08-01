@@ -9852,8 +9852,8 @@ static LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width
 
 LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   // create a weed layer from a pixbuf
-  // layer "pixel_data" is then either shared with with the pixbuf pixels, or set to NULL
-
+  // layer "pixel_data" is then either copied to the pixbuf pixels, or the contents shared with the pixbuf and array value set to NULL
+  
   LiVESPixbuf *pixbuf;
 
   uint8_t *pixel_data, *pixels, *end;
@@ -10986,8 +10986,8 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_plant_t *layer) {
 
 #endif
 
-weed_plant_t *weed_layer_new(int width, int height, int *rowstrides, int current_palette) {
-  weed_plant_t *layer = weed_plant_new(WEED_PLANT_CHANNEL);
+weed_plant_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette) {
+  weed_plant_t *layer = weed_plant_new(WEED_PLANT_LAYER);
 
   weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
   weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
@@ -11025,7 +11025,7 @@ weed_plant_t *weed_layer_copy(weed_plant_t *dlayer, weed_plant_t *slayer) {
   register int i;
 
   if (dlayer == NULL) {
-    layer = weed_plant_new(WEED_PLANT_CHANNEL);
+    layer = weed_layer_new();
     deep = TRUE;
   } else layer = dlayer;
 

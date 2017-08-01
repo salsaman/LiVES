@@ -43,6 +43,10 @@ typedef enum {
   FX_LIST_HASHNAME,
 } lives_fx_list_t;
 
+#ifndef WEED_PLANT_LAYER
+#define WEED_PLANT_LAYER WEED_PLANT_CHANNEL
+#endif
+
 #define WEED_LEAF_TYPE "type"
 #define WEED_LEAF_PLUGIN_INFO "plugin_info"
 #define WEED_LEAF_FILTERS "filters"
@@ -314,11 +318,14 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float *
     double arate, weed_timecode_t tc, double *vis);
 
 boolean weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
-weed_plant_t *weed_layer_new_from_generator(weed_plant_t *inst, weed_timecode_t tc);
 void weed_generator_end(weed_plant_t *inst);
 boolean weed_playback_gen_start(void);
 void weed_bg_generator_end(weed_plant_t *inst);
 void wge_inner(weed_plant_t *inst, boolean unref); ///< deinit instance(s) for generator
+
+weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode_t tc);
+weed_plant_t *weed_layer_new();
+weed_plant_t *weed_layer_new_for_frame();
 
 /// for multitrack
 void backup_weed_instances(void);

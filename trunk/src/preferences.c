@@ -3084,6 +3084,8 @@ _prefsw *create_prefs_dialog(void) {
     lives_widget_set_sensitive(prefsw->audio_command_entry, FALSE);
   }
 
+  add_fill_to_box(LIVES_BOX(vbox));
+
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
@@ -3101,9 +3103,13 @@ _prefsw *create_prefs_dialog(void) {
                                  (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE);
   lives_widget_set_sensitive(prefsw->checkbutton_aclips, is_realtime_aplayer(prefs->audio_player));
 
+  add_fill_to_box(LIVES_BOX(vbox));
+  add_hsep_to_box(LIVES_BOX(vbox));
+  add_fill_to_box(LIVES_BOX(vbox));
+
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  label = lives_standard_label_new(_("Source:"));
+  label = lives_standard_label_new(_("Audio Source:"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -3111,7 +3117,7 @@ _prefsw *create_prefs_dialog(void) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  prefsw->rextaudio = lives_standard_radio_button_new(_("_External (requires jack or pulse audio player)"),
+  prefsw->rextaudio = lives_standard_radio_button_new(_("_External [monitor]"),
                       TRUE, &asrc_group, LIVES_BOX(hbox), NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefs->audio_src == AUDIO_SRC_EXT);

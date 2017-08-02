@@ -387,8 +387,10 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mainw->current_file = new_file;
 
-  if (!strlen(prefs->yuvin))
-    filename = lives_build_filename(prefs->workdir, "stream.yuv", NULL);
+  if (!strlen(prefs->yuvin)) {
+    filename = choose_file(NULL, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_OPEN, _("Open _yuv4mpeg stream (fifo)"), NULL);
+    if (filename == NULL) return;
+  }
   else
     filename = lives_strdup(prefs->yuvin);
 

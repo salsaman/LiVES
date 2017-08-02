@@ -1377,8 +1377,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->open_lives2lives);
 
   if (capable->smog_version_correct) {
-    mainw->open_yuv4m = lives_menu_item_new_with_mnemonic((tmp = lives_strdup_printf(_("Open _yuv4mpeg stream on %sstream.yuv..."),
-                        prefs->workdir)));
+    mainw->open_yuv4m = lives_menu_item_new_with_mnemonic((tmp = lives_strdup(_("Open _yuv4mpeg stream..."))));
     lives_free(tmp);
 #ifdef HAVE_YUV4MPEG
     lives_menu_add_separator(LIVES_MENU(advanced_menu));

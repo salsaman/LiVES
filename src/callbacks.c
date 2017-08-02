@@ -4132,10 +4132,12 @@ void on_rewind_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_stop_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  // stop during playback
+  
   if (mainw->multitrack != NULL && mainw->multitrack->is_paused && mainw->playing_file == -1) {
     mainw->multitrack->is_paused = FALSE;
     mainw->multitrack->playing_sel = FALSE;
-    mt_tl_move(mainw->multitrack, mainw->multitrack->ptr_time);
+    mt_tl_move(mainw->multitrack, mainw->multitrack->pb_unpaused_start_time);
     lives_widget_set_sensitive(mainw->stop, FALSE);
     lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
     return;

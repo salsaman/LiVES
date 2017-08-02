@@ -2293,6 +2293,7 @@ void perf_mem_warning(void) {
     _("\n\nLiVES was unable to record a performance. There is currently insufficient memory available.\nTry recording for just a selection of the file."));
 }
 
+
 boolean do_clipboard_fps_warning(void) {
   if (prefs->warning_mask & WARN_MASK_FPS) {
     return TRUE;
@@ -2304,6 +2305,7 @@ boolean do_clipboard_fps_warning(void) {
            WARN_MASK_FPS);
 }
 
+
 boolean do_yuv4m_open_warning(void) {
   char *msg;
   boolean resp;
@@ -2311,7 +2313,8 @@ boolean do_yuv4m_open_warning(void) {
     return TRUE;
   }
   msg = lives_strdup_printf(
-          _("When opening a yuvmpeg stream, you should first create a fifo file in:\n\n%sstream.yuv\n\n and then write yuv4mpeg frames to it.\n"
+          _("When opening a yuvmpeg stream, you should first create a fifo file, and then write yuv4mpeg frames to it.\n"
+	    "Now you will get a chance to browse for the fifo file here.\nFollowing that,\n"
             "LiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, otherwise, click Cancel."),
           prefs->workdir);
   resp = do_warning_dialog_with_check(msg, WARN_MASK_OPEN_YUV4M);

@@ -8885,34 +8885,40 @@ static boolean spaces_inited = FALSE;
 
 LiVESWidget *add_fill_to_box(LiVESBox *box) {
   LiVESWidget *widget = NULL;
+  
+  if (LIVES_IS_HBOX(box)) {
+    LiVESWidget *blank_label;
+    static int old_spaces = -1;
+    static char *xspaces = NULL;
 
-  LiVESWidget *blank_label;
-  static int old_spaces = -1;
-  static char *xspaces = NULL;
-
-  if (!spaces_inited) {
-    register int i;
-    for (i = 0; i < W_MAX_FILLER_LEN; i++) {
-      lives_snprintf(spaces + i, 1, " ");
+    if (!spaces_inited) {
+      register int i;
+      for (i = 0; i < W_MAX_FILLER_LEN; i++) {
+	lives_snprintf(spaces + i, 1, " ");
+      }
     }
+
+    if (widget_opts.filler_len > W_MAX_FILLER_LEN || widget_opts.filler_len < 0) return NULL;
+
+    if (widget_opts.filler_len != old_spaces) {
+      if (xspaces != NULL) lives_free(xspaces);
+      xspaces = lives_strndup(spaces, widget_opts.filler_len);
+      old_spaces = widget_opts.filler_len;
+    }
+
+    blank_label = lives_standard_label_new(xspaces);
+
+    lives_box_pack_start(box, blank_label, TRUE, TRUE, 0);
+    lives_widget_set_hexpand(blank_label, TRUE);
+    if (!widget_opts.no_gui)
+      lives_widget_show(blank_label);
+    widget = blank_label;
   }
-
-  if (widget_opts.filler_len > W_MAX_FILLER_LEN || widget_opts.filler_len < 0) return NULL;
-
-  if (widget_opts.filler_len != old_spaces) {
-    if (xspaces != NULL) lives_free(xspaces);
-    xspaces = lives_strndup(spaces, widget_opts.filler_len);
-    old_spaces = widget_opts.filler_len;
+  else {
+    widget = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(box, widget, FALSE, TRUE, widget_opts.packing_height);
   }
-
-  blank_label = lives_standard_label_new(xspaces);
-
-  lives_box_pack_start(box, blank_label, TRUE, TRUE, 0);
-  lives_widget_set_hexpand(blank_label, TRUE);
-  if (!widget_opts.no_gui)
-    lives_widget_show(blank_label);
-  widget = blank_label;
-
+  
   return widget;
 }
 

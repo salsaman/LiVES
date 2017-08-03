@@ -133,7 +133,7 @@ uint64_t get_capabilities(int palette) {
 }
 
 
-const char *get_init_rfx(void) {
+const char *get_init_rfx(int intention) {
 #ifdef HAVE_SDL2
   return					\
                   "<define>\\n\
@@ -260,8 +260,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
-
-  if (1 || !fullscreen) {
+  if (!fullscreen) {
     window = SDL_CreateWindowFrom((const void *)window_id);
   } else {
     if (fsover) fullscreen = FALSE;

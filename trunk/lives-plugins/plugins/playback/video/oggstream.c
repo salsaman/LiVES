@@ -181,7 +181,7 @@ const int *get_audio_fmts() {
 }
 
 
-const char *get_init_rfx(void) {
+const char *get_init_rfx(int intention) {
   char homedir[PATH_MAX];
 
   snprintf(homedir, PATH_MAX, "%s", getenv("HOME"));

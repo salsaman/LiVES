@@ -75,7 +75,7 @@ typedef struct {
   const char *(*get_fps_list)(int palette);
   boolean(*set_fps)(double fps);
 
-  const char *(*get_init_rfx)(void);
+  const char *(*get_init_rfx)(int intention);
 
   ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
   const weed_plant_t **(*get_play_params)(weed_bootstrap_f f);
@@ -84,9 +84,9 @@ typedef struct {
   int *(*get_yuv_palette_sampling)(int palette);
   int *(*get_yuv_palette_clamping)(int palette);
   int *(*get_yuv_palette_subspace)(int palette);
-  int (*set_yuv_palette_sampling)(int palette);
-  int (*set_yuv_palette_clamping)(int palette);
-  int (*set_yuv_palette_subspace)(int palette);
+  int (*set_yuv_palette_sampling)(int sampling_type);
+  int (*set_yuv_palette_clamping)(int clamping_type);
+  int (*set_yuv_palette_subspace)(int subspace_type);
 
   // audio streaming (deprecated, use init_audio(), render_audio_frame())
   int *(*get_audio_fmts)(void);

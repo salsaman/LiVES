@@ -540,16 +540,18 @@ boolean is_virtual_frame(int sfileno, int frame) {
 }
 
 /// experimental feature
-//#define TEST_TRANSCODE
+#define TEST_TRANSCODE
 #ifdef TEST_TRANSCODE
 
 #if HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-palettes.h>
 #include <weed/weed-host.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-effects.h"
+#include "../libweed/weed-palettes.h"
 #include "../libweed/weed-host.h"
 #endif
 
@@ -608,8 +610,8 @@ boolean transcode(int start, int end) {
 
   // reset these for the current clip
   if (vpp->set_fps != NULL) (*vpp->set_fps)(cfile->fps);
-  if (vpp->set_palette != NULL) (*vpp->set_palette)(WEED_PALETTE_YUV420);
-  if (vpp->set_YUVClamping != NULL) (*vpp->set_YUVClamping)(WEED_CLAMPING_CLAMPED);
+  if (vpp->set_palette != NULL) (*vpp->set_palette)(WEED_PALETTE_YUV420P);
+  if (vpp->set_yuv_palette_clamping != NULL) (*vpp->set_yuv_palette_clamping)(WEED_YUV_CLAMPING_CLAMPED);
   
   if (vpp->init_audio != NULL && mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
     int in_arate = cfile->arps * cfile->arps / cfile->arate;
@@ -707,7 +709,7 @@ boolean transcode(int start, int end) {
     }
 
     // get frame, send it
-    if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
+    //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
 
     // convert to the plugin's palette
@@ -732,7 +734,6 @@ boolean transcode(int start, int end) {
 
     if (error) goto tr_err;
   }
-
 
  tr_err:
 
@@ -764,11 +765,10 @@ boolean transcode(int start, int end) {
     // we "borrowed" the playback plugin, so set these back how they were
     if (ovpp->set_fps != NULL) (*ovpp->set_fps)(ovpp->fixed_fpsd);
     if (ovpp->set_palette != NULL) (*ovpp->set_palette)(ovpp->palette);
-    if (ovpp->set_YUVClamping != NULL) (*ovpp->set_YUVClamping)(ovpp->YUVClamping);
+    if (ovpp->set_yuv_palette_clamping != NULL) (*ovpp->set_yuv_palette_clamping)(ovpp->YUV_clamping);
     mainw->vpp = ovpp;
   }
 
-  lives_freep((void **)&ing_ext);
   
   return !error;
 }

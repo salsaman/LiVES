@@ -76,7 +76,7 @@ typedef int boolean;
 const char *module_check_init(void);
 const char *version(void);
 const char *get_description(void);   ///< optional
-const char *get_init_rfx(void);   ///< optional
+const char *get_init_rfx(int intention);   ///< optional
 
 ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
 const void **get_play_params(func_ptr func);

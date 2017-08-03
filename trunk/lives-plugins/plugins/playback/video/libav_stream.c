@@ -152,9 +152,8 @@ uint64_t get_capabilities(int palette) {
 /*
   parameter template, these are returned as argc, argv in init_screen() and init_audio()
 */
-const char *get_init_rfx(void) {
+const char *get_init_rfx(int intention) {
   // intention allows switching between different tailored interfaces
-  int intention = 0;
   intent = intention;
 
   switch (intent) {

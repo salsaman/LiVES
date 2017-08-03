@@ -1043,7 +1043,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
     LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V / 2, vbox);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
-    com = lives_strdup_printf("%s -e \"%s\"", capable->echo_cmd, (*tmpvpp->get_init_rfx)());
+    com = lives_strdup_printf("%s -e \"%s\"", capable->echo_cmd, (*tmpvpp->get_init_rfx)(intention));
     plugin_run_param_window(com, LIVES_VBOX(vbox), &(vppa->rfx));
     lives_free(com);
     if (tmpvpp->extra_argv != NULL && tmpvpp->extra_argc > 0) {
@@ -1064,10 +1064,15 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  savebutton = lives_button_new_from_stock(LIVES_STOCK_SAVE_AS, NULL);
-  lives_dialog_add_action_widget(LIVES_DIALOG(vppa->dialog), savebutton, 1);
-  lives_widget_set_can_focus(savebutton, TRUE);
-  lives_widget_set_tooltip_text(savebutton, _("Save settings to an alternate file.\n"));
+  if (intention == 0) {
+    savebutton = lives_button_new_from_stock(LIVES_STOCK_SAVE_AS, NULL);
+    lives_dialog_add_action_widget(LIVES_DIALOG(vppa->dialog), savebutton, 1);
+    lives_widget_set_can_focus(savebutton, TRUE);
+    lives_widget_set_tooltip_text(savebutton, _("Save settings to an alternate file.\n"));
+    lives_signal_connect(LIVES_GUI_OBJECT(savebutton), LIVES_WIDGET_CLICKED_SIGNAL,
+			 LIVES_GUI_CALLBACK(on_vppa_save_clicked),
+			 vppa);
+  }
 
   okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(vppa->dialog), okbutton, LIVES_RESPONSE_OK);
@@ -1075,10 +1080,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_vppa_cancel_clicked),
-                       vppa);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(savebutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_vppa_save_clicked),
                        vppa);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,

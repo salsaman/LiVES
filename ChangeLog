@@ -7,6 +7,7 @@ Set openGL playback plugin (if present) as the default for new installs.
 Re-enable audio recording from external sources (Was inadvertantly disabled).
 Fix possible problems with layout reloading (regression).
 Reset to correct playback position when stop is pressed during / after pause (multitrack),
+Increase size of playback area in multitrack mode.
 
 
 

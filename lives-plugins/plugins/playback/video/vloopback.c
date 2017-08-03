@@ -160,7 +160,7 @@ uint64_t get_capabilities(int palette) {
 
 const char rfx[32768];
 
-const char *get_init_rfx(void) {
+const char *get_init_rfx(int intention) {
   char **vdevs = get_vloopback_devices();
   char devstr[30000];
   size_t slen = 0;

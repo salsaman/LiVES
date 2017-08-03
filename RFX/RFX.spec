@@ -30,6 +30,7 @@ d1.6 Added string_list parameter type
 - Add "special|password"
 - Fix text errors, add note about "$fps"
 - Clarify max length for fileread special keyword.
+- tighten up wording a little bit
 
 TODO: 	- split into RFX layout and RFX plugin components (?)
 
@@ -47,6 +48,8 @@ See: http://www.gnu.org/copyleft/fdl.html
 
 
 
+1. Introduction
+     
 RFX is a system for generating parameter windows and plugins, e.g. rendered 
 effects from scripts. It currently has features for:
 
@@ -70,12 +73,11 @@ The <name> section is also required, but can be generated ad-hoc by the host.
 --------------------------------------------------------------------
 
 
-In the present RFX implementation for LiVES, pre/loop/post code and triggers 
-must be written in LiVES-perl (language code 0xF0), which is based on Perl 
-but with extra default variables and some subroutines to make frame (image) 
-processing easier.
 
-The following section describes a script file, and the rules which must be 
+2. RFX Scripts
+
+
+The following section describes a full RFX script, and the rules which must be 
 implemented in order to comply with the RFX script version 1.8
 
 
@@ -83,15 +85,28 @@ NOTE: for RFX, the shell variable LC_NUMERIC should be set to "C"; that implies 
 numeric values is "."
 
 
-Script files
+Scripts
 ------------
 
-Script files are the beginning point for all effects/tools/utilities in RFX.
-From the script file, a plugin can be generated for a particular host 
+Scripts are the beginning point for all effects/tools/utilities in RFX.
+From the script, an interface and or plugin can be generated for a particular host 
 application. The details of the plugin generation are left to the authors of 
 the relevant host applications. RFX script files are abstracted in the sense 
 that they are not tied to any particular widget set, or to any particular 
 method of transferring data between host and plugin.
+
+The function of the plugin is to return the data in each section as requested by the host. If applicable, it
+should also execute the code in the relevant code sections <onchange>, <pre>, <post>, <loop>. One may think of a builder tool which
+takes a script and generates a plugin, which the host can then load and use. For example there is the build_lives_rfx_plugin tool for the LiVES video editor
+which can generate an executable Perl plugin from a full RFX script.
+
+The function of the host is build an interface as defined by either the parameters, parameter_window sections, or by combining both.
+The host should then run this parameter window and marshall the parameters back to the plugin.
+
+Some RFX scripts may use only the parameter_window and the other mandatory sections.
+
+
+
 
 Here are the sections (some mandatory, some optional) which comprise an RFX 
 script file. Each section in the script file is laid out as follows:
@@ -384,6 +399,16 @@ the list is simply a guide to some subset of possible values.
 
 
 
+
+
+
+
+
+RFX Interface Section
+---------------------
+
+
+
 <param_window> [optional] [list]
 
 This section is used to provide layout hints to the host about how to draw a 
@@ -422,10 +447,9 @@ hseparator == horizontal line separator
 e.g:
 
 <param_window>
-layout|p0|
+layout|p0|"this is a label"|
 layout|p5|
-layout|p1|
-layout|p2|
+layout|p1|fill|p2|
 layout|hseparator|
 layout|p3|fill|
 layout|p4|fill|
@@ -435,7 +459,7 @@ layout|p4|fill|
 
 A second keyword which can be used in the param_window section is "special".
 This indicates that the host can optionally add a widget to the window which 
-links together some of the parameters in a special way.
+links together some of the parameters in a special way, or has some variant functionality.
 
 Two examples are:
 
@@ -482,6 +506,15 @@ Special type "fileread" - 1 string parameter : the linked string parameter shoul
 Special type "password" - 1 string parameter : the host may hide/obscure the input to this string
 
 
+
+
+================================== end interface section ========================================================
+
+
+
+
+
+
 <properties> [optional]
 
 this is a bitmap field (currently 32 bit). Hexadecimal values are allowed.
@@ -492,16 +525,15 @@ some bits are defined already
 0x0004 == batch mode generator
 
 If the "may resize" bit is set, _all_ frames in the processing block may be 
-resized to a new width and height. The plugin should inform the host about 
-the new frame width and height. The exact mechanism for this information to 
-be passed back to the host is still to be decided.
+resized to a new width and height. The host should take measures to determine the new width / height of the output using its
+standard discovery methods.
 
 
 A "batch mode" generator is a plugin with 0 in channels, and which generates all frames in a single pass (i.e. the loop code is only to be run once).
 
 
 
-0x8000 == reserved. This bit is reserved by the LiVES video editor.
+0x8000 == reserved, may be ignored / set / reset.
 
 If the value of properties is not defined, it is assumed to be 0x0000.
 

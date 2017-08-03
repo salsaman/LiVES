@@ -213,7 +213,7 @@ boolean set_palette(int palette) {
   return FALSE;
 }
 
-const char *get_init_rfx(void) {
+const char *get_init_rfx(int intention) {
   return \
          "<define>\\n\
 |1.7\\n\

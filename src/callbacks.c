@@ -981,7 +981,11 @@ void on_save_as_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     on_export_audio_activate(NULL, NULL);
     return;
   }
-
+#define TEST_TRANSCODE
+#ifdef TEST_TRANSCODE
+  transcode(1, cfile->frames);
+  return;
+#endif
   save_file(mainw->current_file, 1, cfile->frames, NULL);
 }
 

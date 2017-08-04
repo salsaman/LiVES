@@ -652,6 +652,14 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
+#ifdef LIBAV_TRANSCODE
+  mainw->transcode = lives_menu_item_new_with_mnemonic(_("_Quick Transcode (beta)..."));
+  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->transcode);
+  lives_widget_set_sensitive(mainw->transcode, FALSE);
+
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+#endif
+  
   mainw->save_as = lives_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_SAVE, mainw->accel_group);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->save_as);
   lives_widget_set_sensitive(mainw->save_as, FALSE);
@@ -1245,6 +1253,10 @@ void create_LiVES(void) {
   mainw->resample_audio = lives_menu_item_new_with_mnemonic(_("_Resample Audio..."));
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->resample_audio);
   lives_widget_set_sensitive(mainw->resample_audio, FALSE);
+
+  mainw->adj_audio_sync = lives_menu_item_new_with_mnemonic(_("_Adjust Audio Sync..."));
+  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->adj_audio_sync);
+  lives_widget_set_sensitive(mainw->adj_audio_sync, FALSE);
 
   info = lives_menu_item_new_with_mnemonic(_("_Info"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), info);
@@ -2300,6 +2312,11 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->save_as), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_save_as_activate),
                        NULL);
+#ifdef LIBAV_TRANSCODE
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->transcode), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_transcode_activate),
+                       NULL);
+#endif
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->save_selection), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_save_selection_activate),
                        NULL);
@@ -2504,6 +2521,9 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->resample_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_resample_audio_activate),
                        NULL);
+  /* lives_signal_connect(LIVES_GUI_OBJECT(mainw->adj_audio_sync), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_adj_audio_sync_activate),
+                       NULL);*/
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->load_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_load_audio_activate),
                        NULL);

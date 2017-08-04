@@ -39,6 +39,10 @@ void on_open_utube_activate(LiVESMenuItem *, livespointer);
 
 void on_stop_clicked(LiVESMenuItem *, livespointer);
 
+#ifdef LIBAV_TRANSCODE
+void on_transcode_activate(LiVESMenuItem *, livespointer);
+#endif
+
 void on_save_selection_activate(LiVESMenuItem *, livespointer);
 
 void on_save_as_activate(LiVESMenuItem *, livespointer);

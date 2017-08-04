@@ -158,8 +158,14 @@ endif
 if HAVE_SWSCALE
 if HAVE_AVCODEC
 if HAVE_AVUTIL
+if HAVE_SWSCALE
 swscale_LDADD=@LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
 swscale_CFLAGS=@LIBSWSCALE_CFLAGS@ @LIBAVUTIL_CFLAGS@ -DUSE_SWSCALE=1
+if HAVE_SWRESAMPLE
+transcode_SOURCES=transcode.c transcode.h
+transcode_CFLAGS=-DLIBAV_TRANSCODE=1
+endif
+endif
 endif
 endif
 endif
@@ -211,6 +217,7 @@ lives_exe_SOURCES = \
 	cvirtual.c cvirtual.h \
 	startup.c startup.h \
 	pangotext.c pangotext.h \
+	$(transcode_SOURCES) \
 	$(unicap_SOURCES) \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
@@ -227,7 +234,7 @@ lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(j
 
 
 AM_CFLAGS = -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
-	$(oil_CFLAGS) $(wayland_CFLAGS) \
+	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(mingw_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)

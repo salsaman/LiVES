@@ -1077,6 +1077,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(vppa->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
+  lives_widget_grab_default(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_vppa_cancel_clicked),
@@ -1438,9 +1439,10 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   cached_key = cached_mod = 0;
 
   d_print(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"), name,
-          vpp->palette, (tmp = weed_palette_get_name_full(vpp->palette, vpp->YUV_clamping,
-                               WEED_YUV_SUBSPACE_YCBCR)));
+	  vpp->palette, (tmp = weed_palette_get_name_full(vpp->palette, vpp->YUV_clamping,
+							  WEED_YUV_SUBSPACE_YCBCR)));
   lives_free(tmp);
+
   lives_free(plugname);
 
   while (mainw->noswitch) {
@@ -3082,6 +3084,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     return ret;
   }
 
+  
   void get_colRGB24_param(void *value, lives_colRGB48_t *rgb) {
     lives_memcpy(rgb, value, sizeof(lives_colRGB48_t));
   }
@@ -3097,6 +3100,13 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   }
 
 
+  void set_string_param(void *value, const char* _const, size_t maxlen) {
+    size_t len = strlen(_const);
+    if (len > maxlen) len = maxlen;
+    lives_memcpy(value, &_const, len);
+  }
+
+  
   void set_int_param(void *value, int _const) {
     lives_memcpy(value, &_const, sizint);
   }
@@ -3105,6 +3115,16 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   void set_double_param(void *value, double _const) {
     lives_memcpy(value, &_const, sizdbl);
 
+  }
+
+  
+  boolean set_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, const char *value, boolean update_visual) {
+    size_t len = strlen(value);
+    const lives_param_t *param = find_rfx_param_by_name(rfx, name);
+    if (param == NULL) return FALSE;
+    set_string_param(param->value, value, len > RFX_MAXSTRINGLEN ? RFX_MAXSTRINGLEN : len);
+    if (update_visual) update_visual_params(rfx, FALSE);
+    return TRUE;
   }
 
 
@@ -3148,6 +3168,17 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   }
 
 
+  const lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
+    int i;
+    for (i = 0; i < rfx->num_params; i++) {
+      if (!strcmp(name, rfx->params[i].name)) {
+	return &rfx->params[i];
+      }
+    }
+    return NULL;
+  }
+
+  
   lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_reinits) {
     int i, j;
     lives_param_t *rpar = (lives_param_t *)lives_malloc(npar * sizeof(lives_param_t));

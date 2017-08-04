@@ -98,15 +98,15 @@
 #define TREE_ROW_HEIGHT ((int)(60.*widget_opts.scale))
 
 // a few GUI specific settings
-#define DEFAULT_FRAME_HSIZE ((int)(320.*widget_opts.scale))
-#define DEFAULT_FRAME_VSIZE ((int)(200.*widget_opts.scale))
+#define DEFAULT_FRAME_HSIZE ((int)(640.*widget_opts.scale))
+#define DEFAULT_FRAME_VSIZE ((int)(400.*widget_opts.scale))
 
 
 #define FRAMEBLANK_MIN_WIDTH ((int)(240.*widget_opts.scale))
-#define FRAMEBLANK_MAX_WIDTH ((int)(400.*widget_opts.scale))
+#define FRAMEBLANK_MAX_WIDTH ((int)(600.*widget_opts.scale))
 
 #define FRAMEBLANK_MIN_HEIGHT ((int)(180.*widget_opts.scale))
-#define FRAMEBLANK_MAX_HEIGHT ((int)(300.*widget_opts.scale))
+#define FRAMEBLANK_MAX_HEIGHT ((int)(400.*widget_opts.scale))
 
 #define IMSEP_MAX_HEIGHT ((int)(86.*widget_opts.scale))
 #define IMSEP_MAX_WIDTH (mainw->scr_width-20)
@@ -785,6 +785,9 @@ typedef struct {
   LiVESWidget *recent3;
   LiVESWidget *recent4;
   LiVESWidget *save_as;
+#ifdef LIBAV_TRANSCODE
+  LiVESWidget *transcode;
+#endif
   LiVESWidget *backup;
   LiVESWidget *restore;
   LiVESWidget *save_selection;
@@ -862,6 +865,7 @@ typedef struct {
   LiVESWidget *fade_aud_in;
   LiVESWidget *fade_aud_out;
   LiVESWidget *resample_audio;
+  LiVESWidget *adj_audio_sync;
   LiVESWidget *resample_video;
   LiVESWidget *preferences;
   LiVESWidget *rename;

@@ -534,6 +534,9 @@ A "batch mode" generator is a plugin with 0 in channels, and which generates all
 
 
 0x8000 == reserved, may be ignored / set / reset.
+0x4000 == reserved, may be ignored / set / reset.
+0x2000 == reserved, may be ignored / set / reset.
+0x1000 == reserved, may be ignored / set / reset.
 
 If the value of properties is not defined, it is assumed to be 0x0000.
 

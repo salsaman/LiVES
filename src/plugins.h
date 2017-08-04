@@ -534,13 +534,18 @@ int find_rfx_plugin_by_name(const char *name, short status);
 
 void rfx_copy(lives_rfx_t *src, lives_rfx_t *dest, boolean full);
 
-void rfx_params_free(lives_rfx_t *rfx);
+void rfx_params_free(lives_rfx_t *);
 
-void rfx_free(lives_rfx_t *rfx);
+void rfx_free(lives_rfx_t *);
 
 void rfx_free_all(void);
 
 void param_copy(lives_param_t *src, lives_param_t *dest, boolean full);
+
+const lives_param_t *find_rfx_param_by_name(lives_rfx_t *, const char *name);
+
+boolean set_rfx_param_by_name_string(lives_rfx_t *, const char *name, const char *value, boolean update_visual);
+
 
 
 typedef struct {

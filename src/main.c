@@ -3508,6 +3508,9 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->restore, TRUE);
   lives_widget_set_sensitive(mainw->recent_menu, TRUE);
   lives_widget_set_sensitive(mainw->save_as, mainw->current_file > 0 && capable->has_encoder_plugins);
+#ifdef LIBAV_TRANSCODE
+  lives_widget_set_sensitive(mainw->transcode, mainw->current_file > 0 && cfile->frames > 0);
+#endif
   lives_widget_set_sensitive(mainw->backup, mainw->current_file > 0);
   lives_widget_set_sensitive(mainw->save_selection, mainw->current_file > 0 && cfile->frames > 0 && capable->has_encoder_plugins);
   lives_widget_set_sensitive(mainw->clear_ds, TRUE);
@@ -3702,6 +3705,9 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->midi_save, FALSE);
   lives_widget_set_sensitive(mainw->load_cdtrack, FALSE);
   lives_widget_set_sensitive(mainw->save_as, FALSE);
+#ifdef LIBAV_TRANSCODE
+  lives_widget_set_sensitive(mainw->transcode, FALSE);
+#endif
   lives_widget_set_sensitive(mainw->backup, FALSE);
   lives_widget_set_sensitive(mainw->playsel, FALSE);
   lives_widget_set_sensitive(mainw->playclip, FALSE);
@@ -5982,7 +5988,6 @@ void load_frame_image(int frame) {
       if (size_ok) {
         if ((mainw->rte != 0 || mainw->is_rendering) && (mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL)) {
           mainw->frame_layer = on_rte_apply(mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
-
         }
       } else {
         if (!mainw->resizing && !cfile->opening) {

@@ -393,11 +393,11 @@ static boolean open_audio() {
   if (out_nb_samples != 0) {
     /* compute src number of samples */
     in_nb_samples = av_rescale_rnd(swr_get_delay(osta.swr_ctx, c->sample_rate) + out_nb_samples,
-                                   in_sample_rate, c->sample_rate, AV_ROUND_DOWN);
+                                   in_sample_rate, c->sample_rate, AV_ROUND_UP);
 
     /* confirm destination number of samples */
     int dst_nb_samples = av_rescale_rnd(in_nb_samples,
-                                        c->sample_rate, in_sample_rate, AV_ROUND_UP);
+                                        c->sample_rate, in_sample_rate, AV_ROUND_DOWN);
 
     av_assert0(dst_nb_samples == out_nb_samples);
   }
@@ -505,8 +505,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
-  snprintf(uri, PATH_MAX, "%s", "filevid.flv");
-
   fmtstring = "flv";
   vcodec_id = AV_CODEC_ID_H264;
 
@@ -576,9 +574,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   vStream->codec->pix_fmt = avpalette;
 
   vStream->codec->bit_rate = maxvbitrate;
-  if (vcodec_id == AV_CODEC_ID_H264)
+  //if (vcodec_id == AV_CODEC_ID_H264) {
     av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
-
+    av_opt_set(encctx->priv_data, "crf", "0", 0);
+    av_opt_set(encctx->priv_data, "qscale", "1", 0);
+    //}
   vStream->codec->gop_size = 10;
 
   if (vcodec_id == AV_CODEC_ID_MPEG2VIDEO) {
@@ -633,11 +633,13 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     open_audio();
   }
 
+  av_dump_format(fmtctx, 0, uri , 1);
+
   // container
 
   /* open output file */
   if (!(fmtctx->oformat->flags & AVFMT_NOFILE)) {
-    fprintf(stderr, "opening file\n");
+    fprintf(stderr, "opening file %s\n", uri);
     ret = avio_open(&fmtctx->pb, uri, AVIO_FLAG_WRITE);
     if (ret < 0) {
       fprintf(stderr, "Could not open '%s': %s\n", uri,
@@ -650,6 +652,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     if (ret < 0) {
       fprintf(stderr, "Error occurred when writing header: %s\n",
               av_err2str(ret));
+      return FALSE;
     }
   }
 
@@ -659,8 +662,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr, "Could not allocate video frame\n");
     return FALSE;
   }
-
-  av_dump_format(fmtctx, 0, uri , 1);
 
   ostv.next_pts = osta.next_pts = 0;
   return TRUE;
@@ -672,7 +673,7 @@ boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void *
   return render_fn(hsize, vsize, pixel_data);
 }
 
-
+/*
 static void log_packet(const AVPacket *pkt) {
   AVRational *time_base = &fmtctx->streams[pkt->stream_index]->time_base;
   printf("pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
@@ -681,7 +682,7 @@ static void log_packet(const AVPacket *pkt) {
          av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
          pkt->stream_index);
 }
-
+*/
 
 static int write_frame(const AVRational *time_base, AVStream *stream, AVPacket *pkt) {
   int ret;
@@ -817,7 +818,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
       // codec accepts variable nb_samples, so encode all
       in_nb_samples = nsamps;
       nb_samples = av_rescale_rnd(in_nb_samples,
-                                  c->sample_rate, in_sample_rate, AV_ROUND_UP);
+                                  c->sample_rate, in_sample_rate, AV_ROUND_DOWN);
       osta.frame = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, nb_samples);
     }
 

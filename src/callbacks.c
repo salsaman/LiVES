@@ -30,6 +30,10 @@
 #include "paramwindow.h"
 #include "ce_thumbs.h"
 
+#ifdef LIBAV_TRANSCODER
+#include "transcode.h"
+#endif
+
 #ifdef HAVE_YUV4MPEG
 #include "lives-yuv4mpeg.h"
 #endif
@@ -981,13 +985,16 @@ void on_save_as_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     on_export_audio_activate(NULL, NULL);
     return;
   }
-#define TEST_TRANSCODE
-#ifdef TEST_TRANSCODE
-  transcode(1, cfile->frames);
-  return;
-#endif
-  save_file(mainw->current_file, 1, cfile->frames, NULL);
+  save_file(mainw->current_file, cfile->start, cfile->end, NULL);
 }
+
+
+#ifdef LIBAV_TRANSCODE
+void on_transcode_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  if (mainw->current_file < 1 || mainw->files[mainw->current_file] == NULL) return;
+  transcode(cfile->start, cfile->end);
+}
+#endif
 
 
 void on_save_selection_activate(LiVESMenuItem *menuitem, livespointer user_data) {

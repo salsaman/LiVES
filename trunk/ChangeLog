@@ -8,7 +8,10 @@ Re-enable audio recording from external sources (Was inadvertantly disabled).
 Fix possible problems with layout reloading (regression).
 Reset to correct playback position when stop is pressed during / after pause (multitrack),
 Increase size of playback area in multitrack mode.
+Increase preview window size for video part open.
+Add quick transcode menu option (beta).
 
+	
 
 
 Version 2.8.7 (29 June 2017)

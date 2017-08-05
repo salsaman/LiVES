@@ -2508,6 +2508,7 @@ uint64_t make_version_hash(const char *ver) {
   return hash;
 }
 
+
 char *repl_workdir(const char *entry, boolean fwd) {
   // replace prefs->workdir with string workdir or vice-versa. This allows us to relocate workdir if necessary.
   // used for layout.map file
@@ -2531,6 +2532,7 @@ char *repl_workdir(const char *entry, boolean fwd) {
   }
   return string;
 }
+
 
 void remove_layout_files(LiVESList *map) {
   // removes a LiVESList of layouts from the set layout map

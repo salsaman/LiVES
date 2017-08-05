@@ -138,7 +138,8 @@ const char *get_description(void) {
 
 
 const int *get_palette_list(void) {
-  palette_list[0] = WEED_PALETTE_YUV420P;
+  //palette_list[0] = WEED_PALETTE_YUV420P;
+  palette_list[0] = WEED_PALETTE_RGB24;
   palette_list[1] = WEED_PALETTE_END;
   return palette_list;
 }
@@ -217,6 +218,7 @@ mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 fname|_Output file|string|| \\n\
 </params> \\n\
 <param_window> \\n\
+layout|p5|| \\n\
 </param_window> \\n\
 <onchange> \\n\
 </onchange> \\n\
@@ -238,20 +240,16 @@ const int *get_yuv_palette_clamping(int palette) {
 
 boolean set_yuv_palette_clamping(int clamping_type) {
   myclamp = clamping_type;
-  avpalette = weed_palette_to_avi_pix_fmt(mypalette, &myclamp);
+  avpalette = weed_palette_to_avi_pix_fmt(WEED_PALETTE_YUV420P, &myclamp);
   return TRUE;
 }
 
 
 boolean set_palette(int palette) {
-  if (palette == WEED_PALETTE_YUV420P) {
-    mypalette = palette;
-    render_fn = &render_frame_yuv420;
-    avpalette = weed_palette_to_avi_pix_fmt(palette, &myclamp);
-    return TRUE;
-  }
-  // invalid palette
-  return FALSE;
+  mypalette = palette;
+  render_fn = &render_frame_yuv420;
+  avpalette = PIX_FMT_YUV420P;//weed_palette_to_avi_pix_fmt(WEED_PALETTE_YUV420P, &myclamp);
+  return TRUE;
 }
 
 
@@ -544,6 +542,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   }
 
+  if (strlen(uri) == 0) {
+    fprintf(stderr, "No output location set\n");
+    return FALSE;
+  }
+  
   ret = avformat_alloc_output_context2(&fmtctx, NULL, fmtstring, uri);
   if (ret < 0) {
     fprintf(stderr, "Could not open fmt '%s': %s\n", fmtstring,
@@ -723,17 +726,17 @@ static void copy_yuv_image(AVFrame *pict, int width, int height, const uint8_t *
 
 static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int vsize) {
   AVCodecContext *c = ostv.enc;
-  int istrides[3];
+  static int istrides[3];
 
   if (ostv.sws_ctx != NULL && (hsize != ohsize || vsize != ovsize)) {
     sws_freeContext(ostv.sws_ctx);
     ostv.sws_ctx = NULL;
   }
 
-  if (hsize != c->width || vsize != c->height) {
+  if (hsize != c->width || vsize != c->height || mypalette != avpalette) {
     if (ostv.sws_ctx == NULL) {
       ostv.sws_ctx = sws_getContext(hsize, vsize,
-                                    avpalette,
+				    weed_palette_to_avi_pix_fmt(mypalette, &myclamp),
                                     c->width, c->height,
                                     avpalette,
                                     SCALE_FLAGS, NULL, NULL, NULL);
@@ -744,8 +747,13 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
       }
       ohsize = hsize;
       ovsize = vsize;
-      istrides[0] = hsize;
-      istrides[1] = istrides[2] = hsize >> 1;
+      if (mypalette == WEED_PALETTE_YUV420P) {
+	istrides[0] = hsize;
+	istrides[1] = istrides[2] = hsize >> 1;
+      }
+      else {
+	istrides[0] = hsize * 3;
+      }
     }
     sws_scale(ostv.sws_ctx,
               (const uint8_t *const *)pixel_data, istrides,

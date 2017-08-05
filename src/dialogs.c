@@ -1754,8 +1754,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         cfile->proc_ptr->frames_done = atoi(mainw->msg);
       else
         cfile->proc_ptr->frames_done = 0;
-      if (progress_count == 0) check_storage_space(cfile, TRUE);
-      progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
+
+      if (!mainw->effects_paused) {
+	if (progress_count == 0) check_storage_space(cfile, TRUE);
+	progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
+      }
     }
 
     //#define DEBUG

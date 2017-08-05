@@ -48,7 +48,8 @@ boolean transcode(int start, int end) {
   const char *img_ext = NULL;
 
   char *afname = NULL;
-  char *pname;
+  char *pname = NULL;
+  char *msg = NULL;
   
   double spf = 0., ospf;
   
@@ -56,6 +57,8 @@ boolean transcode(int start, int end) {
   _vppaw *vppa;
   weed_plant_t *frame_layer = NULL;
 
+  lives_rfx_t *rfx = NULL;
+  
   void *abuff = NULL;
 
   void **pd_array;
@@ -70,45 +73,60 @@ boolean transcode(int start, int end) {
   
   mainw->suppress_dprint = FALSE;
   mainw->no_switch_dprint = TRUE;
-  
-  pname = lives_build_filename(capable->home_dir, DEF_TRANSCODE_FILENAME, NULL);
-  d_print(_("Quick transcoding to %s..."), pname);
-  
+
   if (vpp == NULL) {
-    d_print(_("failed. Plugin %s not found.\n"), TRANSCODE_PLUGIN_NAME);
+    d_print(_("Plugin %s not found.\n"), TRANSCODE_PLUGIN_NAME);
     mainw->no_switch_dprint = FALSE;
     return FALSE;
   }
 
+  pname = lives_build_filename(capable->home_dir, DEF_TRANSCODE_FILENAME, NULL);
+
+  // for now we can only have one instance of a vpp: TODO - make vpp plugins re-entrant
   memset(future_prefs->vpp_name, 0, 1);
   ovpp = mainw->vpp;
   mainw->vpp = vpp;
 
+  // create the param window for the plugin
   vppa = on_vpp_advanced_clicked(NULL, LIVES_INT_TO_POINTER(1));
 
-  // this is not working, value not set
-  set_rfx_param_by_name_string(vppa->rfx, TRANSCODE_PARAM_FILENAME, pname, TRUE);
-  
+  // keep this, stop it from being freed
+  rfx = vppa->rfx;
+  vppa->keep_rfx = TRUE;
+
+  // set the default value in the param window
+  set_rfx_param_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, pname, TRUE);
+
+  // run the param window
   resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
 
+  // get the param value ourselves
+  lives_freep((void **)&pname);
+  get_rfx_param_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, (char **)&pname);
+  rfx_free(rfx);
+  lives_free(rfx);
+
+  msg = lives_strdup_printf(_("Quick transcoding to %s..."), pname);
+  d_print(msg);
+  
   if (resp == LIVES_RESPONSE_CANCEL) {
     mainw->cancelled = CANCEL_USER;
-    error = TRUE;
     goto tr_err2;
   }
 
   mainw->cancelled = CANCEL_NONE;
   
-  do_threaded_dialog(_("Quick transcoding"), TRUE);
-  
-  // reset these for the current clip
+  // (re)set these for the current clip
   if (vpp->set_fps != NULL) (*vpp->set_fps)(cfile->fps);
-  if (vpp->set_palette != NULL) (*vpp->set_palette)(WEED_PALETTE_YUV420P);
+  if (vpp->set_palette != NULL) (*vpp->set_palette)(WEED_PALETTE_RGB24);
   if (vpp->set_yuv_palette_clamping != NULL) (*vpp->set_yuv_palette_clamping)(WEED_YUV_CLAMPING_CLAMPED);
   
   if (vpp->init_audio != NULL && mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
     int in_arate = (int)((float)cfile->arps / (float)cfile->arate * (float)cfile->arps);
     if ((*vpp->init_audio)(in_arate, cfile->achans, mainw->vpp->extra_argc, mainw->vpp->extra_argv)) {
+      // we will buffer audio and send it in packets of one frame worth of audio
+      // buffers will be used to convert to float audio
+      
       audio = TRUE;
       ospf = spf = (double)in_arate / cfile->fps;
 
@@ -156,7 +174,10 @@ boolean transcode(int start, int end) {
     }
   }
   
-  if (!(*vpp->init_screen)(cfile->hsize, cfile->vsize, FALSE, 0, vpp->extra_argc, vpp->extra_argv)) goto tr_err;
+  if (!(*vpp->init_screen)(vpp->fwidth, vpp->fheight, FALSE, 0, vpp->extra_argc, vpp->extra_argv)) {
+    error = TRUE;
+    goto tr_err;
+  }
 
   // create a frame layer, 
   frame_layer = weed_layer_new();
@@ -164,6 +185,8 @@ boolean transcode(int start, int end) {
 
   // need img_ext for pulling the frame
   img_ext = get_image_ext_for_type(cfile->img_type);
+
+  do_threaded_dialog(msg, TRUE);
 
   // encoding loop
   for (i = start; i <= end; i++) {
@@ -187,6 +210,7 @@ boolean transcode(int start, int end) {
 
       if (in_bytes == 0) {
 	// eof, flush audio
+	// exit_screen() will flush anything left over
 	(*mainw->vpp->render_audio_frame_float)(NULL, 0);
       }
       else {
@@ -224,6 +248,7 @@ boolean transcode(int start, int end) {
     pd_array = weed_get_voidptr_array(frame_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
 
     if (pd_array != NULL) {
+      // send pixel data to the vidoe frame renderer
       error = !(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
 					   weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error),
 					   currticks, pd_array, NULL, NULL);
@@ -236,6 +261,7 @@ boolean transcode(int start, int end) {
 
     if (error) goto tr_err;
 
+    // update progress dialog with fraction done
     threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
 
     if (mainw->cancelled != CANCEL_NONE) {
@@ -244,6 +270,7 @@ boolean transcode(int start, int end) {
   }
 
  tr_err:
+  // flush streams, write headers, plugin cleanup
   if (vpp != NULL && vpp->exit_screen != NULL) {
     (*vpp->exit_screen)(0, 0);
   }
@@ -261,11 +288,13 @@ boolean transcode(int start, int end) {
     mainw->vpp = ovpp;
   }
 
+  // terminate the progress dialog
   end_threaded_dialog();
   
  tr_err2:
   if (mainw->cancelled != CANCEL_NONE) {
     d_print_cancelled();
+    mainw->cancelled = CANCEL_NONE;
   }
   else {
     if (!error) d_print_done();
@@ -274,7 +303,8 @@ boolean transcode(int start, int end) {
 
   mainw->no_switch_dprint = FALSE;
 
-  lives_free(pname);
+  lives_freep((void **)&pname);
+  lives_freep((void **)&msg);
 
   weed_layer_free(frame_layer);
   

@@ -16,7 +16,6 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-
 // generic plugins
 
 LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const char *plugdir, const char *filter_ext);
@@ -35,7 +34,6 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 #define PLUGIN_EFFECTS_WEED "weed"
 #define PLUGIN_WEED_FX_BUILTIN "effects/realtime/weed"
 
-
 LiVESList *plugin_request(const char *plugin_type, const char *plugin_name, const char *request);
 LiVESList *plugin_request_with_blanks(const char *plugin_type, const char *plugin_name, const char *request);
 LiVESList *plugin_request_by_line(const char *plugin_type, const char *plugin_name, const char *request);
@@ -49,7 +47,6 @@ typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *value, int num_
 
 /// video playback plugins
 typedef boolean(*plugin_keyfunc)(boolean down, uint16_t unicode, uint16_t keymod);
-
 
 typedef struct {
   // playback
@@ -126,7 +123,6 @@ typedef struct {
   int num_alpha_chans;
 } _vid_playback_plugin;
 
-
 #define DEFAULT_VPP "openGL"
 
 #define MAX_VPP_HSIZE 1024.
@@ -138,7 +134,6 @@ void close_vid_playback_plugin(_vid_playback_plugin *);
 int64_t get_best_audio(_vid_playback_plugin *);
 void save_vpp_defaults(_vid_playback_plugin *, char *file);
 void load_vpp_defaults(_vid_playback_plugin *, char *file);
-
 
 const weed_plant_t *pp_get_param(weed_plant_t **pparams, int idx);
 const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx);
@@ -152,7 +147,6 @@ const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx);
 #define HI_MPEG_FORMAT "hi-mpg"
 #define HI_H_MKV_FORMAT "hi_h-mkv"
 #define HI_H_AVI_FORMAT "hi_h-avi"
-
 
 void do_plugin_encoder_error(const char *plugin_name_or_null);
 
@@ -174,14 +168,12 @@ typedef struct {
 #define AUDIO_CODEC_RAW 7       // reserved
 #define AUDIO_CODEC_WMA2 8
 
-
 #define AUDIO_CODEC_MAX 31
   //
 #define AUDIO_CODEC_NONE 32
 #define AUDIO_CODEC_UNKNOWN 33
 
   uint32_t capabilities;
-
 
 #define HAS_RFX (1<<0)
 
@@ -198,10 +190,8 @@ typedef struct {
 }
 _encoder;
 
-
 // defined in plugins.c for the whole app
 extern const char *anames[AUDIO_CODEC_MAX];
-
 
 // decoder plugins
 
@@ -213,7 +203,6 @@ extern const char *anames[AUDIO_CODEC_MAX];
 /// not so good
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
-
 
 // must be exactly the same as in decplugin.h
 
@@ -279,11 +268,8 @@ typedef struct {
 
   int sync_hint;
 
-
   void *priv; ///< private data for demuxer/decoder - host should not touch this
 } lives_clip_data_t;
-
-
 
 typedef struct {
   // playback
@@ -319,17 +305,10 @@ typedef struct {
   void (*module_unload)(void);
 } lives_decoder_sys_t;
 
-
-
-
 typedef struct {
   const lives_decoder_sys_t *decoder;
   lives_clip_data_t *cdata;
 } lives_decoder_t;
-
-
-
-
 
 const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata);
 void close_decoder_plugin(lives_decoder_t *);
@@ -341,9 +320,7 @@ boolean decplugin_supports_palette(const lives_decoder_t *dplug, int palette);
 
 lives_decoder_t *clone_decoder(int fileno);
 
-
 // RFX plugins
-
 
 /// external rendered fx plugins (RFX plugins)
 #define PLUGIN_RENDERED_EFFECTS_BUILTIN "effects/rendered/"
@@ -362,13 +339,11 @@ lives_decoder_t *clone_decoder(int fileno);
 /// scraps are passed between programs to generate param windows
 #define PLUGIN_RFX_SCRAP ""
 
-
 /// max number of display widgets per parameter (currently 5 for RGBA spinbuttons + colorbutton)
 #define MAX_PARAM_WIDGETS 5
 
 /// length of max string (not including terminating NULL) for LiVES-perl
-#define RFX_MAXSTRINGLEN 1024
-
+#define RFX_MAXSTRINGLEN (PATH_MAX - 1)
 
 typedef enum {
   LIVES_PARAM_UNKNOWN = 0,
@@ -382,12 +357,10 @@ typedef enum {
   LIVES_PARAM_UNDISPLAYABLE = 65536
 } lives_param_type_t;
 
-
 typedef enum {
   LIVES_RFX_SOURCE_RFX = 0,
   LIVES_RFX_SOURCE_WEED
 } lives_rfx_source_t;
-
 
 typedef enum {
   LIVES_PARAM_SPECIAL_TYPE_NONE = 0, // normal parameter type
@@ -406,7 +379,6 @@ typedef enum {
   LIVES_PARAM_SPECIAL_TYPE_MERGEALIGN,
   LIVES_PARAM_SPECIAL_TYPE_ASPECT_RATIO
 } lives_param_special_t;
-
 
 typedef struct {
   // weed style part
@@ -470,7 +442,6 @@ typedef struct {
   int special_type_index; // index within special_type (e.g for DEMASK, 0==left, 1==top, 2==width, 3==height)
 } lives_param_t;
 
-
 typedef enum {
   RFX_STATUS_BUILTIN = 0, ///< factory presets
   RFX_STATUS_CUSTOM = 1, ///< custom effects in the custom menu
@@ -484,9 +455,6 @@ typedef enum {
   RFX_STATUS_RENAME = 129 ///< indicates a copy operation to test
 } lives_rfx_status_t;
 
-
-
-
 typedef struct {
   char *name;  ///< the name of the executable (so we can run it !)
   char *menu_text; ///< for Weed, this is the filter_class "name"
@@ -495,12 +463,10 @@ typedef struct {
   int num_in_channels;
   lives_rfx_status_t status;
 
-
   uint32_t props;
 #define RFX_PROPS_SLOW        0x0001  ///< hint to GUI
 #define RFX_PROPS_MAY_RESIZE  0x0002 ///< is a tool
 #define RFX_PROPS_BATCHG      0x0004 ///< is a batch generator
-
 
 #define RFX_PROPS_RESERVED1   0x1000
 #define RFX_PROPS_RESERVED2   0x2000
@@ -512,7 +478,6 @@ typedef struct {
   uint32_t flags; /// internal use
 #define RFX_FLAGS_NO_SLIDERS 0x0001
 
-
   lives_param_t *params;
   lives_rfx_source_t source_type;
   void *source;  ///< points to the source (e.g. a weed_plant_t)
@@ -520,7 +485,6 @@ typedef struct {
   char delim[2];
   boolean is_template;
 } lives_rfx_t;
-
 
 boolean check_rfx_for_lives(lives_rfx_t *);
 
@@ -542,11 +506,11 @@ void rfx_free_all(void);
 
 void param_copy(lives_param_t *src, lives_param_t *dest, boolean full);
 
-const lives_param_t *find_rfx_param_by_name(lives_rfx_t *, const char *name);
+lives_param_t *find_rfx_param_by_name(lives_rfx_t *, const char *name);
 
 boolean set_rfx_param_by_name_string(lives_rfx_t *, const char *name, const char *value, boolean update_visual);
 
-
+boolean get_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, char **return_value);
 
 typedef struct {
   LiVESList *list; ///< list of filter_idx from which user can delegate
@@ -561,10 +525,6 @@ typedef struct {
 #define FX_CANDIDATE_DEINTERLACE 2
 
 #define MAX_FX_CANDIDATE_TYPES 3
-
-
-
-
 
 boolean get_bool_param(void *value);
 int get_int_param(void *value);
@@ -600,6 +560,7 @@ typedef struct {
   LiVESWidget *fps_entry;
   LiVESWidget *pal_entry;
   lives_rfx_t *rfx;
+  boolean keep_rfx;
 } _vppaw;
 
 _vppaw *on_vpp_advanced_clicked(LiVESButton *, livespointer);
@@ -607,8 +568,6 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data);
 
 LiVESList *get_external_window_hints(lives_rfx_t *rfx);
 boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, boolean save_all);
-
-
 
 /// for realtime effects, see effects-weed.h
 

@@ -2672,7 +2672,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_render_prompt), !prefs->render_prompt);
 
   frame = add_video_options(&prefsw->spinbutton_mt_def_width, prefs->mt_def_width, &prefsw->spinbutton_mt_def_height,
-                            prefs->mt_def_height, &prefsw->spinbutton_mt_def_fps, prefs->mt_def_fps, FALSE);
+                            prefs->mt_def_height, &prefsw->spinbutton_mt_def_fps, prefs->mt_def_fps, FALSE, NULL);
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), frame, FALSE, FALSE, widget_opts.packing_height);
 

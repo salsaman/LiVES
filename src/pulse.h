@@ -19,6 +19,9 @@
 #define LIVES_PA_BUFF_TARGET 1024
 #define LIVES_PA_BUFF_FRAGSIZE 4096
 
+#define PA_SAMPSIZE 16
+#define PA_ACHANS 2
+
 typedef struct {
   size_t size;
   size_t max_size;

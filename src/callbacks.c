@@ -30,7 +30,7 @@
 #include "paramwindow.h"
 #include "ce_thumbs.h"
 
-#ifdef LIBAV_TRANSCODER
+#ifdef LIBAV_TRANSCODE
 #include "transcode.h"
 #endif
 

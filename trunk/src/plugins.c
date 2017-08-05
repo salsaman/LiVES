@@ -568,7 +568,7 @@ void on_vppa_cancel_clicked(LiVESButton *button, livespointer user_data) {
     close_vid_playback_plugin(vpp);
   }
 
-  if (vppw->rfx != NULL) {
+  if (vppw->rfx != NULL && !vppw->keep_rfx) {
     rfx_free(vppw->rfx);
     lives_free(vppw->rfx);
   }
@@ -905,6 +905,8 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   vppa->spinbuttonh = vppa->spinbuttonw = NULL;
   vppa->pal_entry = vppa->fps_entry = NULL;
 
+  vppa->keep_rfx = FALSE;
+  
   pversion = (tmpvpp->version)();
 
   title = lives_strdup_printf("%s", pversion);
@@ -3100,10 +3102,9 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   }
 
 
-  void set_string_param(void *value, const char* _const, size_t maxlen) {
-    size_t len = strlen(_const);
-    if (len > maxlen) len = maxlen;
-    lives_memcpy(value, &_const, len);
+  void set_string_param(void **value_ptr, const char* _const, size_t maxlen) {
+    lives_freep(value_ptr);
+    *value_ptr = lives_strndup(_const, maxlen);
   }
 
   
@@ -3120,10 +3121,26 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   
   boolean set_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, const char *value, boolean update_visual) {
     size_t len = strlen(value);
-    const lives_param_t *param = find_rfx_param_by_name(rfx, name);
+    lives_param_t *param = find_rfx_param_by_name(rfx, name);
     if (param == NULL) return FALSE;
-    set_string_param(param->value, value, len > RFX_MAXSTRINGLEN ? RFX_MAXSTRINGLEN : len);
-    if (update_visual) update_visual_params(rfx, FALSE);
+    set_string_param((void **)&param->value, value, len > RFX_MAXSTRINGLEN ? RFX_MAXSTRINGLEN : len);
+    if (update_visual) {
+      LiVESList *list = NULL;
+      char *tmp, *tmp2;
+      list = lives_list_append(list, lives_strdup_printf("\"%s\"", (tmp = U82L(tmp2 = subst(value, "\"", "\\\"")))));
+      lives_free(tmp);
+      lives_free(tmp2);
+      set_param_from_list(list, param, 0, FALSE, TRUE);
+      lives_list_free_all(&list);
+    }
+    return TRUE;
+  }
+
+  
+  boolean get_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, char **return_value) {
+    lives_param_t *param = find_rfx_param_by_name(rfx, name);
+    if (param == NULL) return FALSE;
+    *return_value = lives_strndup(param->value, RFX_MAXSTRINGLEN);
     return TRUE;
   }
 
@@ -3168,7 +3185,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   }
 
 
-  const lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
+  lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
     int i;
     for (i = 0; i < rfx->num_params; i++) {
       if (!strcmp(name, rfx->params[i].name)) {
@@ -3672,6 +3689,11 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
     // the string which is returned is the marshalled values of the parameters
 
+
+    // NOTE: if vbox is not NULL, we create the window inside vbox, without running it
+    // in this case, vbox should be packed in its own dialog window, which should then be run
+
+    
     FILE *sfile;
 
     lives_rfx_t *rfx = (lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));

@@ -4290,6 +4290,8 @@ boolean render_to_clip(boolean new_clip) {
 
   init_track_decoders();
 
+  g_print("rendering at %d x %d\n", cfile->hsize, cfile->vsize);
+  
   if (start_render_effect_events(mainw->event_list)) { // re-render, applying effects
     // and reordering/resampling/resizing if necessary
 
@@ -5089,6 +5091,7 @@ void rdetw_spinh_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
 void rdetw_spinw_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   render_details *rdet = (render_details *)user_data;
   rdet->width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+  g_print("upd to %d\n", rdet->width);
 }
 
 
@@ -5099,7 +5102,7 @@ void rdetw_spinf_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
 
 
 LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget **spheight, int defheight,
-                               LiVESWidget **spfps, double deffps, boolean add_aspect) {
+                               LiVESWidget **spfps, double deffps, boolean add_aspect, LiVESWidget *extra) {
   // add video options to multitrack enter, etc
   static lives_param_t aspect_width, aspect_height;
 
@@ -5138,6 +5141,8 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
   *spfps = lives_standard_spin_button_new
            (_("_Frames per second"), TRUE, deffps, 1., FPS_MAX, 1., 10., 0, LIVES_BOX(hbox), NULL);
 
+  if (extra != NULL) lives_box_pack_start(LIVES_BOX(vbox), extra, FALSE, FALSE, widget_opts.packing_height);
+
   return frame;
 }
 
@@ -5155,13 +5160,27 @@ LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertra
 }
 
 
+static void on_setclipvals_clicked(LiVESButton *button, livespointer user_data) {
+  const lives_special_aspect_t *aspect = NULL;
+  render_details *rdet = (render_details *)user_data;
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_width), (double)cfile->hsize);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_height), (double)cfile->vsize);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps), cfile->fps);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(rdet->spinbutton_width));
+  aspect = paramspecial_get_aspect();
+  if (aspect != NULL && aspect->checkbutton != NULL) lives_widget_show(aspect->checkbutton);
+  if (aspect != NULL && aspect->label != NULL) lives_widget_show(aspect->label);
+
+  lives_widget_queue_draw(rdet->dialog);
+}
+
+
 static void rdet_use_current(LiVESButton *button, livespointer user_data) {
+  render_details *rdet = (render_details *)user_data;
   char *arate, *achans, *asamps;
   int aendian;
 
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_width), cfile->hsize);
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_height), cfile->vsize);
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps), cfile->fps);
+  on_setclipvals_clicked(NULL, user_data);
 
   if (cfile->achans > 0) {
     rdet->ratio_fps = cfile->ratio_fps;
@@ -5193,7 +5212,6 @@ static void rdet_use_current(LiVESButton *button, livespointer user_data) {
     }
   }
 
-  lives_widget_queue_draw(rdet->dialog);
 }
 
 
@@ -5219,6 +5237,8 @@ render_details *create_render_details(int type) {
   LiVESList *ofmt = NULL;
   LiVESList *encoders = NULL;
 
+  const lives_special_aspect_t *aspect = NULL;
+  
   char **array;
 
   char *tmp, *tmp2, *tmp3;
@@ -5323,11 +5343,27 @@ render_details *create_render_details(int type) {
     lives_box_pack_start(LIVES_BOX(top_vbox), rdet->always_hbox, TRUE, TRUE, 0);
   }
 
+  hbox = NULL;
+  
+  if (type == 2) {
+    if (mainw->current_file > 0 && cfile != NULL && cfile->frames > 0) {
+      hbox = lives_hbox_new(FALSE, 0);
+      rdet->usecur_button = lives_button_new_with_label(_("Use current clip values"));
+      lives_box_pack_start(LIVES_BOX(hbox), rdet->usecur_button, FALSE, FALSE, widget_opts.packing_width);
+      add_fill_to_box(LIVES_BOX(hbox));
+      lives_signal_connect(LIVES_GUI_OBJECT(rdet->usecur_button), LIVES_WIDGET_CLICKED_SIGNAL,
+			   LIVES_GUI_CALLBACK(on_setclipvals_clicked),
+			   (livespointer)rdet);
+    }
+  }
+
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps, rdet->fps,
-                            type == 1);
+                            type == 1 || type == 2, hbox);
   if (type != 1) lives_box_pack_start(LIVES_BOX(top_vbox), frame, TRUE, TRUE, 0);
 
   if (type == 2) {
+    aspect = paramspecial_get_aspect();
+    
     // add clip name entry
     rdet->clipname_entry = lives_standard_entry_new((tmp = lives_strdup(_("New clip name"))), FALSE,
                            (tmp2 = get_untitled_name(mainw->untitled_number)),
@@ -5338,6 +5374,10 @@ render_details *create_render_details(int type) {
     lives_free(tmp3);
   }
 
+  // call these here since adding the widgets may have altered their values
+  rdetw_spinw_changed(LIVES_SPIN_BUTTON(rdet->spinbutton_width), (livespointer)rdet);
+  rdetw_spinh_changed(LIVES_SPIN_BUTTON(rdet->spinbutton_height), (livespointer)rdet);
+  
   lives_signal_connect_after(LIVES_GUI_OBJECT(rdet->spinbutton_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(rdetw_spinw_changed),
                              rdet);
@@ -5511,7 +5551,7 @@ render_details *create_render_details(int type) {
     if (mainw->current_file != -1 && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file && type == 3) {
       rdet->usecur_button = lives_button_new_with_mnemonic(_("_Use current clip values"));
       lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), rdet->usecur_button, LIVES_RESPONSE_RESET);
-      lives_signal_connect(LIVES_COMBO(rdet->usecur_button), LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current), rdet);
+      lives_signal_connect(LIVES_COMBO(rdet->usecur_button), LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current), (livespointer)rdet);
     }
   }
 
@@ -5531,7 +5571,11 @@ render_details *create_render_details(int type) {
 
   lives_widget_show_all(rdet->dialog);
   lives_widget_hide(rdet->always_hbox);
-
+  if (aspect != NULL && type == 2) {
+    lives_widget_hide(aspect->checkbutton);
+    lives_widget_hide(aspect->label);
+  }
+  
   if (type == 4) lives_widget_hide(resaudw->aud_hbox);
 
   if (needs_new_encoder) {

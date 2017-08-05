@@ -5986,7 +5986,7 @@ void load_frame_image(int frame) {
         }
       }
       if (size_ok) {
-        if ((mainw->rte != 0 || mainw->is_rendering) && (mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL)) {
+  if ((mainw->rte != 0 || (mainw->is_rendering && mainw->event_list == NULL)) && (mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL)) {
           mainw->frame_layer = on_rte_apply(mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
         }
       } else {

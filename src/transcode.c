@@ -92,6 +92,7 @@ boolean transcode(int start, int end) {
   resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
 
   if (resp == LIVES_RESPONSE_CANCEL) {
+    mainw->cancelled = CANCEL_USER;
     error = TRUE;
     goto tr_err2;
   }
@@ -238,8 +239,6 @@ boolean transcode(int start, int end) {
     threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
 
     if (mainw->cancelled != CANCEL_NONE) {
-      d_print_cancelled();
-      error = TRUE;
       break;
     }
   }
@@ -265,9 +264,12 @@ boolean transcode(int start, int end) {
   end_threaded_dialog();
   
  tr_err2:
-  if (!error) d_print_done();
-  else if (mainw->cancelled == CANCEL_NONE) {
-    d_print_failed();
+  if (mainw->cancelled != CANCEL_NONE) {
+    d_print_cancelled();
+  }
+  else {
+    if (!error) d_print_done();
+    else d_print_failed();
   }
 
   mainw->no_switch_dprint = FALSE;

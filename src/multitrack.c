@@ -2868,7 +2868,7 @@ static weed_timecode_t set_play_position(lives_mt *mt) {
 
     if (!mt->is_paused)
       mt->pb_unpaused_start_time = mt->ptr_time;
-      
+
     mt->pb_start_time = mt->ptr_time;
 
     //////////////////////////////////
@@ -4972,17 +4972,16 @@ void set_mt_play_sizes(lives_mt *mt, int width, int height) {
     }*/
 
   if (mt->dft_width == 0 || mt->dft_height == 0) {
-    calc_maxspect(lives_widget_get_allocation_width(mt->play_box), lives_widget_get_allocation_height(mt->play_box), 
-		  &width, &height);
+    calc_maxspect(lives_widget_get_allocation_width(mt->play_box), lives_widget_get_allocation_height(mt->play_box),
+                  &width, &height);
     mt->dft_width = width;
     mt->dft_height = height;
     if (width > 10000 || height > 10000) g_print("oversize frame %d x %d\n", width, height);
-  }
-  else {
+  } else {
     width = mt->dft_width;
     height = mt->dft_height;
   }
-  
+
   mt->play_width = mt->play_window_width = width;
   mt->play_height = mt->play_window_height = height;
 
@@ -6108,7 +6107,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   }
 
   mt->dft_width = mt->dft_height = 0;
-  
+
   mt->apply_fx_button = NULL;
 
   mt->cursor_style = LIVES_CURSOR_NORMAL;
@@ -18705,7 +18704,7 @@ LiVESList *load_layout_map(void) {
         }
         if (err) break;
         lmap = lives_list_append(lmap, lmap_entry);
-	//g_print("add layout %p %p %p\n", lmap, lmap_entry, lmap_entry->list);
+        //g_print("add layout %p %p %p\n", lmap, lmap_entry, lmap_entry->list);
       }
     }
 

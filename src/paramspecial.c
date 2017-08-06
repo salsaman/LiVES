@@ -253,13 +253,13 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
       lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), box, FALSE, FALSE, widget_opts.packing_height * 2);
 
       aspect.checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Maintain _Aspect Ratio"))), TRUE,
-							   LIVES_BOX(box), (tmp2 = lives_strdup(_("Maintain aspect ratio of original frame"))));
+                           LIVES_BOX(box), (tmp2 = lives_strdup(_("Maintain aspect ratio of original frame"))));
 
       lives_free(tmp);
       lives_free(tmp2);
 
       aspect.label = widget_opts.last_label;
-      
+
       add_fill_to_box(LIVES_BOX(box));
 
       lives_widget_show_all(box);

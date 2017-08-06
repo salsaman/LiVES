@@ -9853,7 +9853,7 @@ static LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width
 LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   // create a weed layer from a pixbuf
   // layer "pixel_data" is then either copied to the pixbuf pixels, or the contents shared with the pixbuf and array value set to NULL
-  
+
   LiVESPixbuf *pixbuf;
 
   uint8_t *pixel_data, *pixels, *end;

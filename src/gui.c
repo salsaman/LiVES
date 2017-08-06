@@ -659,7 +659,7 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 #endif
-  
+
   mainw->save_as = lives_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_SAVE, mainw->accel_group);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->save_as);
   lives_widget_set_sensitive(mainw->save_as, FALSE);

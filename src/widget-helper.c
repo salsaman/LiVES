@@ -2603,7 +2603,7 @@ LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float 
   alignment = gtk_frame_new(NULL);
   gtk_frame_set_shadow_type(LIVES_FRAME(alignment), GTK_SHADOW_NONE);
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-    // TODO: check with gtk_widget_set_margin_start()
+  // TODO: check with gtk_widget_set_margin_start()
   if (xalign == 0.5) gtk_widget_set_halign(alignment, GTK_ALIGN_CENTER);
   if (xalign == 0. && xscale == 1.) gtk_widget_set_halign(alignment, GTK_ALIGN_FILL);
   if (xalign == 0. && xscale == 0.) gtk_widget_set_halign(alignment, GTK_ALIGN_START);
@@ -8888,7 +8888,7 @@ static boolean spaces_inited = FALSE;
 
 LiVESWidget *add_fill_to_box(LiVESBox *box) {
   LiVESWidget *widget = NULL;
-  
+
   if (LIVES_IS_HBOX(box)) {
     LiVESWidget *blank_label;
     static int old_spaces = -1;
@@ -8897,7 +8897,7 @@ LiVESWidget *add_fill_to_box(LiVESBox *box) {
     if (!spaces_inited) {
       register int i;
       for (i = 0; i < W_MAX_FILLER_LEN; i++) {
-	lives_snprintf(spaces + i, 1, " ");
+        lives_snprintf(spaces + i, 1, " ");
       }
     }
 
@@ -8916,12 +8916,11 @@ LiVESWidget *add_fill_to_box(LiVESBox *box) {
     if (!widget_opts.no_gui)
       lives_widget_show(blank_label);
     widget = blank_label;
-  }
-  else {
+  } else {
     widget = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(box, widget, FALSE, TRUE, widget_opts.packing_height);
   }
-  
+
   return widget;
 }
 

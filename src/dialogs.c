@@ -1756,8 +1756,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         cfile->proc_ptr->frames_done = 0;
 
       if (!mainw->effects_paused) {
-	if (progress_count == 0) check_storage_space(cfile, TRUE);
-	progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
+        if (progress_count == 0) check_storage_space(cfile, TRUE);
+        progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
       }
     }
 
@@ -2317,7 +2317,7 @@ boolean do_yuv4m_open_warning(void) {
   }
   msg = lives_strdup_printf(
           _("When opening a yuvmpeg stream, you should first create a fifo file, and then write yuv4mpeg frames to it.\n"
-	    "Now you will get a chance to browse for the fifo file here.\nFollowing that,\n"
+            "Now you will get a chance to browse for the fifo file here.\nFollowing that,\n"
             "LiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, otherwise, click Cancel."),
           prefs->workdir);
   resp = do_warning_dialog_with_check(msg, WARN_MASK_OPEN_YUV4M);

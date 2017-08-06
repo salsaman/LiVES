@@ -5738,7 +5738,7 @@ void load_frame_image(int frame) {
 
     do {
       if (mainw->frame_layer != NULL) {
-	// free the old mainw->frame_layer
+        // free the old mainw->frame_layer
         check_layer_ready(mainw->frame_layer); // ensure all threads are complete
         weed_layer_free(mainw->frame_layer);
         mainw->frame_layer = NULL;
@@ -5853,7 +5853,7 @@ void load_frame_image(int frame) {
               }
             }
           } else {
-	    pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
+            pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
           }
         }
         if ((cfile->next_event == NULL && mainw->is_rendering && !mainw->switch_during_pb &&
@@ -5876,7 +5876,7 @@ void load_frame_image(int frame) {
         img_ext = NULL;
 
         if (mainw->internal_messaging) {
-	  // here we are rendering to an effect or timeline, need to keep mainw->frame_layer and return
+          // here we are rendering to an effect or timeline, need to keep mainw->frame_layer and return
           mainw->noswitch = noswitch;
           lives_freep((void **)&framecount);
           check_layer_ready(mainw->frame_layer);
@@ -5930,7 +5930,7 @@ void load_frame_image(int frame) {
             lives_free(fname_next);
             check_layer_ready(mainw->frame_layer);
 
-	    // end of playback, so this is no longer needed
+            // end of playback, so this is no longer needed
             if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
             mainw->frame_layer = NULL;
 
@@ -5986,7 +5986,8 @@ void load_frame_image(int frame) {
         }
       }
       if (size_ok) {
-  if ((mainw->rte != 0 || (mainw->is_rendering && mainw->event_list == NULL)) && (mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL)) {
+        if ((mainw->rte != 0 || (mainw->is_rendering && mainw->event_list == NULL)) && (mainw->current_file != mainw->scrap_file ||
+            mainw->multitrack != NULL)) {
           mainw->frame_layer = on_rte_apply(mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
         }
       } else {
@@ -6402,7 +6403,7 @@ void load_frame_image(int frame) {
       }
 
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
-	// frame display was handled by a playback plugin, skip the rest
+        // frame display was handled by a playback plugin, skip the rest
         load_frame_cleanup(noswitch);
         lives_freep((void **)&framecount);
         return;

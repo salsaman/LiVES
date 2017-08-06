@@ -2701,7 +2701,7 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int current_file = mainw->current_file;
 
-  
+
   on_copy_activate(menuitem, user_data);
   if (mainw->cancelled) {
     return;
@@ -3559,7 +3559,7 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
   }
 
-  // TODO: in case of "cut" we should show these warnings before copying 
+  // TODO: in case of "cut" we should show these warnings before copying
   if (menuitem != NULL) {
     if (!(prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_FRAMES)) {
       if ((mainw->xlays = layout_frame_is_affected(mainw->current_file, cfile->end - frames_cut)) != NULL) {
@@ -4144,7 +4144,7 @@ void on_rewind_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_stop_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // stop during playback
-  
+
   if (mainw->multitrack != NULL && mainw->multitrack->is_paused && mainw->playing_file == -1) {
     mainw->multitrack->is_paused = FALSE;
     mainw->multitrack->playing_sel = FALSE;

@@ -2602,12 +2602,15 @@ LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float 
 #if GTK_CHECK_VERSION(3, 0, 0)
   alignment = gtk_frame_new(NULL);
   gtk_frame_set_shadow_type(LIVES_FRAME(alignment), GTK_SHADOW_NONE);
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+    // TODO: check with gtk_widget_set_margin_start()
   if (xalign == 0.5) gtk_widget_set_halign(alignment, GTK_ALIGN_CENTER);
   if (xalign == 0. && xscale == 1.) gtk_widget_set_halign(alignment, GTK_ALIGN_FILL);
   if (xalign == 0. && xscale == 0.) gtk_widget_set_halign(alignment, GTK_ALIGN_START);
   if (yalign == 0.5) gtk_widget_set_valign(alignment, GTK_ALIGN_CENTER);
   if (yalign == 0. && yscale == 1.) gtk_widget_set_valign(alignment, GTK_ALIGN_FILL);
   if (yalign == 0. && yscale == 0.) gtk_widget_set_valign(alignment, GTK_ALIGN_START);
+  G_GNUC_END_IGNORE_DEPRECATIONS
 #else
   alignment = gtk_alignment_new(xalign, yalign, xscale, yscale);
 #endif

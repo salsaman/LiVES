@@ -619,7 +619,7 @@ struct _mt {
   /* dynamic defaults for playback image in gui */
   int dft_width;
   int dft_height;
-  
+
   int selected_filter; ///< filter selected in poly window tab
 
   int top_track; ///< top (video) track in scrolled window

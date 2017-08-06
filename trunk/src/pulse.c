@@ -333,7 +333,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
       } else {
         if (LIVES_LIKELY(pulsed->fd >= 0)) {
-	  int playfile = mainw->playing_file;
+          int playfile = mainw->playing_file;
           if ((pulsed->playing_file == mainw->ascrap_file && !mainw->preview) && playfile >= -1
               && mainw->files[playfile] != NULL && mainw->files[playfile]->achans > 0) {
             xfile = mainw->files[playfile];
@@ -899,7 +899,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
       size_t xnframes = (size_t)(rbytes / (pulsed->in_asamps >> 3) / pulsed->in_achans);
 
       if (fltbuf == NULL) return;
-      
+
       for (i = 0; i < pulsed->in_achans; i++) {
         // convert s16 to non-interleaved float
         fltbuf[i] = (float *)lives_try_malloc(xnframes * sizeof(float));

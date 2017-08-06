@@ -5159,7 +5159,7 @@ void recover_layout_map(int numclips) {
             lmap_entry_list_next = lmap_entry_list->next;
             array = lives_strsplit((char *)lmap_entry_list->data, "|", -1);
             if (!lives_file_test(array[0], LIVES_FILE_TEST_EXISTS)) {
-	      //g_print("removing layout because no file %s\n", array[0]);
+              //g_print("removing layout because no file %s\n", array[0]);
               // layout file has been deleted, remove this entry
               if (lmap_entry_list->prev != NULL) lmap_entry_list->prev->next = lmap_entry_list_next;
               else lmap_entry->list = lmap_entry_list_next;

@@ -281,7 +281,7 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
   // convert 8 bit audio to 16 bit audio
 
   // endianess will be machine endian
-  
+
   register int nSrcCount, nDstCount;
   register float src_offset_f = 0.f;
   register int src_offset_i = 0;
@@ -311,7 +311,7 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
 
       ptr = src + ccount + src_offset_i;
       ptr = ptr > src
-	? (ptr < (src_end + ccount) ? ptr : (src_end + ccount)) : src;
+            ? (ptr < (src_end + ccount) ? ptr : (src_end + ccount)) : src;
 
       if (!swap_sign) *(dst++) = *(ptr) << 8;
       else if (swap_sign == SWAP_U_TO_S) *(dst++) = ((short)(*(ptr)) - 128) << 8;

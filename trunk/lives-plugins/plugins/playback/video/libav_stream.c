@@ -546,7 +546,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr, "No output location set\n");
     return FALSE;
   }
-  
+
   ret = avformat_alloc_output_context2(&fmtctx, NULL, fmtstring, uri);
   if (ret < 0) {
     fprintf(stderr, "Could not open fmt '%s': %s\n", fmtstring,
@@ -578,10 +578,10 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   vStream->codec->bit_rate = maxvbitrate;
   //if (vcodec_id == AV_CODEC_ID_H264) {
-    av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
-    av_opt_set(encctx->priv_data, "crf", "0", 0);
-    av_opt_set(encctx->priv_data, "qscale", "1", 0);
-    //}
+  av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
+  av_opt_set(encctx->priv_data, "crf", "0", 0);
+  av_opt_set(encctx->priv_data, "qscale", "1", 0);
+  //}
   vStream->codec->gop_size = 10;
 
   if (vcodec_id == AV_CODEC_ID_MPEG2VIDEO) {
@@ -736,7 +736,7 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
   if (hsize != c->width || vsize != c->height || mypalette != avpalette) {
     if (ostv.sws_ctx == NULL) {
       ostv.sws_ctx = sws_getContext(hsize, vsize,
-				    weed_palette_to_avi_pix_fmt(mypalette, &myclamp),
+                                    weed_palette_to_avi_pix_fmt(mypalette, &myclamp),
                                     c->width, c->height,
                                     avpalette,
                                     SCALE_FLAGS, NULL, NULL, NULL);
@@ -748,11 +748,10 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
       ohsize = hsize;
       ovsize = vsize;
       if (mypalette == WEED_PALETTE_YUV420P) {
-	istrides[0] = hsize;
-	istrides[1] = istrides[2] = hsize >> 1;
-      }
-      else {
-	istrides[0] = hsize * 3;
+        istrides[0] = hsize;
+        istrides[1] = istrides[2] = hsize >> 1;
+      } else {
+        istrides[0] = hsize * 3;
       }
     }
     sws_scale(ostv.sws_ctx,
@@ -785,21 +784,21 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
     ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
     if (ret < 0) {
       fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps, nb_samples, c->sample_rate, c->sample_fmt,
-	      c->channel_layout);
+              c->channel_layout);
       return FALSE;
     }
 
     if (got_packet) {
       ret = write_frame(&c->time_base, aStream, &pkt);
       if (ret < 0) {
-	fprintf(stderr, "Error while writing audio frame: %s\n",
-		av_err2str(ret));
-	return FALSE;
+        fprintf(stderr, "Error while writing audio frame: %s\n",
+                av_err2str(ret));
+        return FALSE;
       }
     }
     return TRUE;
   }
-  
+
   for (i = 0; i < in_nchans; i++) {
     abuff[i] = audio[i];
   }
@@ -938,23 +937,23 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
       c = osta.enc;
 
       do {
-	av_init_packet(&pkt);
-	
-	ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
-	if (ret < 0) {
-	  fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), 0, 0, c->sample_rate, c->sample_fmt,
-		  c->channel_layout);
-	  break;
-	}
+        av_init_packet(&pkt);
 
-	if (got_packet) {
-	  ret = write_frame(&c->time_base, aStream, &pkt);
-	  if (ret < 0) {
-	    fprintf(stderr, "Error while writing audio frame: %s\n",
-		    av_err2str(ret));
-	    break;
-	  }
-	}
+        ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
+        if (ret < 0) {
+          fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), 0, 0, c->sample_rate, c->sample_fmt,
+                  c->channel_layout);
+          break;
+        }
+
+        if (got_packet) {
+          ret = write_frame(&c->time_base, aStream, &pkt);
+          if (ret < 0) {
+            fprintf(stderr, "Error while writing audio frame: %s\n",
+                    av_err2str(ret));
+            break;
+          }
+        }
       } while (got_packet);
     }
 

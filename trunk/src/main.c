@@ -470,7 +470,6 @@ static boolean pre_init(void) {
   prefs->show_splash = FALSE;
   prefs->show_playwin = TRUE;
   prefs->sepwin_type = 1;
-  prefs->show_framecount = TRUE;
   prefs->audio_player = AUD_PLAYER_SOX;
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
   prefs->open_decorated = TRUE;
@@ -1240,6 +1239,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->mt_load_fuzzy = FALSE;
 
+    prefs->hide_framebar = FALSE;
+    
     //////////////////////////////////////////////////////////////////
 
     if (!mainw->foreign) {
@@ -4366,8 +4367,7 @@ void load_preview_image(boolean update_always) {
     switch (mainw->prv_link) {
     case PRV_PTR:
       //cf. hrule_reset
-      cfile->pointer_time = calc_time_from_frame(mainw->current_file, mainw->preview_frame);
-      lives_ruler_set_value(LIVES_RULER(mainw->hruler), cfile->pointer_time);
+      cfile->pointer_time = lives_ce_update_timeline(mainw->preview_frame, 0.);
       if (cfile->pointer_time > 0.) {
         lives_widget_set_sensitive(mainw->rewind, TRUE);
         lives_widget_set_sensitive(mainw->trim_to_pstart, cfile->achans > 0);
@@ -5653,7 +5653,7 @@ void load_frame_image(int frame) {
 
       if ((!mainw->fs || prefs->play_monitor != prefs->gui_monitor ||
            (mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)))
-          && prefs->show_framecount) {
+          && !prefs->hide_framebar) {
         lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
         lives_widget_queue_draw(mainw->framecounter);
       }
@@ -5675,7 +5675,7 @@ void load_frame_image(int frame) {
       if (cfile->opening || (cfile->next_event != NULL && cfile->proc_ptr == NULL)) {
         fname_next = make_image_file_name(cfile, frame + 1, get_image_ext_for_type(cfile->img_type));
 
-        if (!mainw->fs && prefs->show_framecount && !mainw->is_rendering) {
+        if (!mainw->fs && !prefs->hide_framebar && !mainw->is_rendering) {
           lives_freep((void **)&framecount);
           if (cfile->frames > 0 && cfile->frames != 123456789) {
             framecount = lives_strdup_printf("%9d/%d", frame, cfile->frames);
@@ -7067,7 +7067,7 @@ void load_frame_image(int frame) {
     }
 
     if (new_file > 0) {
-      lives_ruler_set_value(LIVES_RULER(mainw->hruler), cfile->pointer_time);
+      lives_ce_update_timeline(0, cfile->pointer_time);
     }
 
     if (cfile->opening || !(cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {

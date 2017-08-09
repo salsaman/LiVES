@@ -2625,12 +2625,14 @@ LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float 
 LIVES_INLINE boolean lives_alignment_set(LiVESAlignment *alignment, float xalign, float yalign, float xscale, float yscale) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   if (xalign == 0.5) gtk_widget_set_halign((GtkWidget *)alignment, GTK_ALIGN_CENTER);
   if (xalign == 0. && xscale == 1.) gtk_widget_set_halign((GtkWidget *)alignment, GTK_ALIGN_FILL);
   if (xalign == 0. && xscale == 0.) gtk_widget_set_halign((GtkWidget *)alignment, GTK_ALIGN_START);
   if (yalign == 0.5) gtk_widget_set_valign((GtkWidget *)alignment, GTK_ALIGN_CENTER);
   if (yalign == 0. && yscale == 1.) gtk_widget_set_valign((GtkWidget *)alignment, GTK_ALIGN_FILL);
   if (yalign == 0. && yscale == 0.) gtk_widget_set_valign((GtkWidget *)alignment, GTK_ALIGN_START);
+  G_GNUC_END_IGNORE_DEPRECATIONS
 #else
   gtk_alignment_set(alignment, xalign, yalign, xscale, yscale);
   return TRUE;

@@ -1442,6 +1442,15 @@ LIVES_INLINE int calc_frame_from_time3(int filenum, double time) {
 }
 
 
+LIVES_INLINE int calc_frame_from_time4(int filenum, double time) {
+  // return the nearest frame (rounded) for a given time, no maximum
+  int frame = 0;
+  if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
+  frame = (int)(time * mainw->files[filenum]->fps + 1.49999);
+  return frame;
+}
+
+
 LIVES_INLINE boolean is_realtime_aplayer(int ptype) {
   if (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE) return TRUE;
   return FALSE;
@@ -2654,6 +2663,55 @@ void remove_layout_files(LiVESList *map) {
 }
 
 
+double lives_ce_update_timeline(int frame, double x) {
+  // update clip editor timeline
+
+  // if frame == 0 then x must be a time value
+
+  if (!prefs->show_gui || lives_widget_get_allocation_width(mainw->vidbar) <= 0) {
+    return 0.;
+  }
+  
+  if (mainw->current_file < 0 || cfile == NULL) {
+    if (!prefs->hide_framebar) {
+      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");
+      lives_widget_queue_draw(mainw->framecounter);
+    }
+    return -1.;
+  }
+
+  if (x < 0.) x = 0.;
+  
+  if (frame == 0) frame = calc_frame_from_time4(mainw->current_file, x);
+
+  x = calc_time_from_frame(mainw->current_file, frame);
+  if (x > cfile->total_time) x = cfile->total_time;
+
+  lives_ruler_set_value(LIVES_RULER(mainw->hruler), x);
+  lives_widget_queue_draw(mainw->hruler);
+  
+  if (prefs->show_gui && !prefs->hide_framebar && cfile->frames > 0) {
+    char *framecount;
+    if (cfile->frames > 0) framecount = lives_strdup_printf("%9d/%d", frame, cfile->frames);
+    else framecount = lives_strdup_printf("%9d", frame);
+    lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
+    lives_freep((void **)&framecount);
+    lives_widget_queue_draw(mainw->framecounter);
+  }
+
+  if (mainw->playing_file == -1 && mainw->play_window != NULL && cfile->is_loaded && mainw->multitrack == NULL) {
+    if (mainw->prv_link == PRV_PTR && mainw->preview_frame != calc_frame_from_time(mainw->current_file, x)) {
+      double pointer_time = cfile->pointer_time;
+      cfile->pointer_time = x;
+      load_preview_image(FALSE);
+      cfile->pointer_time = pointer_time;
+    }
+  }
+
+  return x;
+}
+
+
 void get_play_times(void) {
   // update the on-screen timer bars,
   // and if we are not playing,
@@ -2850,8 +2908,7 @@ void get_play_times(void) {
       draw_little_bars((mainw->actual_frame - 1.) / cfile->fps);
     }
     if (cfile->frames == 0) {
-      lives_ruler_set_value(LIVES_RULER(mainw->hruler), offset * cfile->total_time / allocwidth);
-      lives_widget_queue_draw(mainw->hruler);
+      lives_ce_update_timeline(0, offset);
     }
   }
 
@@ -2959,6 +3016,7 @@ void get_play_times(void) {
   mainw->current_file = current_file;
 }
 
+
 void draw_little_bars(double ptrtime) {
   //draw the vertical player bars
   double allocheight = lives_widget_get_allocation_height(mainw->video_draw) - prefs->bar_height;
@@ -3004,6 +3062,7 @@ void draw_little_bars(double ptrtime) {
   }
 
   if (mainw->playing_file > -1) {
+    lives_ruler_set_value(LIVES_RULER(mainw->hruler), ptrtime);
     if (cfile->achans > 0 && cfile->is_loaded && prefs->audio_src != AUDIO_SRC_EXT) {
       if (is_realtime_aplayer(prefs->audio_player) && (mainw->event_list == NULL || !mainw->preview)) {
 #ifdef ENABLE_JACK
@@ -3119,6 +3178,7 @@ void get_total_time(lives_clip_t *file) {
     file->achans = file->afilesize = file->asampsize = file->arate = file->arps = 0;
   }
 }
+
 
 void find_when_to_stop(void) {
   // work out when to stop playing

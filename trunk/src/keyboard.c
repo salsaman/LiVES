@@ -459,7 +459,7 @@ boolean fade_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval,
 
 
 boolean showfct_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showfct), !prefs->show_framecount);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showfct), prefs->hide_framebar);
   return TRUE;
 }
 

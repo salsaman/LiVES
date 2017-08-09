@@ -2685,7 +2685,7 @@ double lives_ce_update_timeline(int frame, double x) {
   if (frame == 0) frame = calc_frame_from_time4(mainw->current_file, x);
 
   x = calc_time_from_frame(mainw->current_file, frame);
-  if (x > cfile->total_time) x = cfile->total_time;
+  if (x > CLIP_TOTAL_TIME(mainw->current_file)) x = CLIP_TOTAL_TIME(mainw->current_file);
 
   lives_ruler_set_value(LIVES_RULER(mainw->hruler), x);
   lives_widget_queue_draw(mainw->hruler);
@@ -2792,8 +2792,8 @@ void get_play_times(void) {
   }
 
   if (cfile->frames > 0) {
-    offset_left = (cfile->start - 1) / cfile->fps / cfile->total_time * allocwidth;
-    offset_right = (cfile->end) / cfile->fps / cfile->total_time * allocwidth;
+    offset_left = (cfile->start - 1) / cfile->fps / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth;
+    offset_right = (cfile->end) / cfile->fps / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth;
 
     if (mainw->video_drawable != NULL) {
       lives_painter_t *cr = lives_painter_create(mainw->video_drawable);
@@ -2802,7 +2802,7 @@ void get_play_times(void) {
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
 
       lives_painter_rectangle(cr, 0, 0,
-                              cfile->video_time / cfile->total_time * allocwidth - 1,
+                              cfile->video_time / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth - 1,
                               prefs->bar_height);
 
       lives_painter_fill(cr);
@@ -2823,17 +2823,17 @@ void get_play_times(void) {
   if (cfile->achans > 0) {
     if (mainw->playing_file > -1) {
       offset_left = ((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
-                     cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps / cfile->total_time * allocwidth;
+                     cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth;
       if (mainw->audio_end && !mainw->loop) {
         offset_right = ((is_realtime_aplayer(prefs->audio_player)) ?
-                        cfile->end : mainw->audio_end) / cfile->fps / cfile->total_time * allocwidth;
+                        cfile->end : mainw->audio_end) / cfile->fps / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth;
       } else {
-        offset_right = allocwidth * cfile->laudio_time / cfile->total_time;
+        offset_right = allocwidth * cfile->laudio_time / CLIP_TOTAL_TIME(mainw->current_file);
       }
     }
 
-    if (offset_right > cfile->laudio_time / cfile->total_time * allocwidth)
-      offset_right = cfile->laudio_time / cfile->total_time * allocwidth;
+    if (offset_right > cfile->laudio_time / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth)
+      offset_right = cfile->laudio_time / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth;
 
     if (mainw->laudio_drawable != NULL) {
       lives_painter_t *cr = lives_painter_create(mainw->laudio_drawable);
@@ -2845,11 +2845,11 @@ void get_play_times(void) {
                               offset_left,
                               prefs->bar_height);
       lives_painter_rectangle(cr, offset_right, prefs->bar_height * 1.5,
-                              cfile->raudio_time / cfile->total_time * allocwidth - offset_right,
+                              cfile->raudio_time / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth - offset_right,
                               prefs->bar_height);
       lives_painter_fill(cr);
 
-      if (offset_left < cfile->laudio_time / cfile->total_time * allocwidth) {
+      if (offset_left < cfile->laudio_time / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth) {
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
 
         filename = lives_get_audio_file_name(mainw->current_file);
@@ -2857,7 +2857,7 @@ void get_play_times(void) {
         lives_free(filename);
 
         for (i = offset_left; i < offset_right; i++) {
-          atime = i / allocwidth * cfile->total_time;
+          atime = i / allocwidth * CLIP_TOTAL_TIME(mainw->current_file);
 
           lives_painter_move_to(cr, i, prefs->bar_height * 2);
           vol = get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
@@ -2880,15 +2880,15 @@ void get_play_times(void) {
                                 offset_left,
                                 prefs->bar_height);
         lives_painter_rectangle(cr, offset_right, prefs->bar_height * 1.5,
-                                cfile->raudio_time / cfile->total_time * allocwidth - offset_right,
+                                cfile->raudio_time / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth - offset_right,
                                 prefs->bar_height);
         lives_painter_fill(cr);
 
-        if (offset_left < cfile->laudio_time / cfile->total_time * allocwidth) {
+        if (offset_left < cfile->laudio_time / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth) {
           lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
 
           for (i = offset_left; i < offset_right; i++) {
-            atime = i / allocwidth * cfile->total_time;
+            atime = i / allocwidth * CLIP_TOTAL_TIME(mainw->current_file);
             lives_painter_move_to(cr, i, prefs->bar_height * 2);
             vol = get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
             lives_painter_line_to(cr, i, (double)prefs->bar_height * (2. - vol));
@@ -2913,7 +2913,7 @@ void get_play_times(void) {
   }
 
   if (mainw->playing_file == -1 || (mainw->switch_during_pb && !mainw->faded)) {
-    if (cfile->total_time > 0.) {
+    if (CLIP_TOTAL_TIME(mainw->current_file) > 0.) {
       // set the range of the timeline
       if (!cfile->opening_loc) {
         if (!lives_widget_is_visible(mainw->hruler)) {
@@ -2928,7 +2928,7 @@ void get_play_times(void) {
         lives_widget_show(mainw->raudio_draw);
       }
 
-      lives_ruler_set_upper(LIVES_RULER(mainw->hruler), cfile->total_time);
+      lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CLIP_TOTAL_TIME(mainw->current_file));
       lives_widget_queue_draw(mainw->hruler);
 
       draw_little_bars(cfile->pointer_time);
@@ -3021,7 +3021,7 @@ void draw_little_bars(double ptrtime) {
   //draw the vertical player bars
   double allocheight = lives_widget_get_allocation_height(mainw->video_draw) - prefs->bar_height;
   double allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
-  double offset = ptrtime / cfile->total_time * allocwidth;
+  double offset = ptrtime / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth;
 
   int frame;
 
@@ -3068,16 +3068,16 @@ void draw_little_bars(double ptrtime) {
 #ifdef ENABLE_JACK
         if (mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
           offset = allocwidth * ((double)mainw->jackd->seek_pos / cfile->arate / cfile->achans /
-                                 cfile->asampsize * 8) / cfile->total_time;
+                                 cfile->asampsize * 8) / CLIP_TOTAL_TIME(mainw->current_file);
         }
 #endif
 #ifdef HAVE_PULSE_AUDIO
         if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
           offset = allocwidth * ((double)mainw->pulsed->seek_pos / cfile->arate / cfile->achans /
-                                 cfile->asampsize * 8) / cfile->total_time;
+                                 cfile->asampsize * 8) / CLIP_TOTAL_TIME(mainw->current_file);
         }
 #endif
-      } else offset = allocwidth * (mainw->aframeno - .5) / cfile->fps / cfile->total_time;
+      } else offset = allocwidth * (mainw->aframeno - .5) / cfile->fps / CLIP_TOTAL_TIME(mainw->current_file);
     }
   }
 
@@ -3151,17 +3151,17 @@ void draw_little_bars(double ptrtime) {
 void get_total_time(lives_clip_t *file) {
   // get times (video, left and right audio)
 
-  file->laudio_time = file->raudio_time = file->video_time = file->total_time = 0.;
+  file->laudio_time = file->raudio_time = file->video_time = 0.;
 
   if (file->opening && file->frames != 123456789) {
     if (file->frames * file->fps > 0) {
-      file->video_time = file->total_time = file->frames / file->fps;
+      file->video_time = file->frames / file->fps;
     }
     return;
   }
 
   if (file->fps > 0.) {
-    file->total_time = file->video_time = file->frames / file->fps;
+    file->video_time = file->frames / file->fps;
   }
 
   if (file->asampsize * file->arate * file->achans) {
@@ -3170,9 +3170,6 @@ void get_total_time(lives_clip_t *file) {
       file->raudio_time = file->laudio_time;
     }
   }
-
-  if (file->laudio_time > file->total_time) file->total_time = file->laudio_time;
-  if (file->raudio_time > file->total_time) file->total_time = file->raudio_time;
 
   if (file->laudio_time + file->raudio_time == 0. && !file->opening) {
     file->achans = file->afilesize = file->asampsize = file->arate = file->arps = 0;

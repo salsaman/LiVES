@@ -4034,7 +4034,7 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
   reget_afilesize(mainw->current_file);
   get_total_time(cfile);
 
-  if (cfile->total_time == 0) {
+  if (CLIP_TOTAL_TIME(mainw->current_file) == 0.) {
     d_print(_("nothing rendered.\n"));
     return FALSE;
   }

@@ -520,10 +520,10 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                   cfile->end = cfile->frames;
                   load_end_image(cfile->end);
                 }
-                if (cfile->total_time > cfile->video_time) {
+                if (CLIP_TOTAL_TIME(mainw->current_file) > cfile->video_time) {
                   if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_START) {
                     cfile->undo1_dbl = 0.;
-                    cfile->undo2_dbl = cfile->total_time - cfile->video_time;
+                    cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->video_time;
                     d_print(_("Auto trimming %.2f seconds of audio at start..."), cfile->undo2_dbl);
                     if (on_del_audio_activate(NULL, NULL)) d_print_done();
                     else d_print("\n");
@@ -531,17 +531,17 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                   }
                   if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_END) {
                     cfile->undo1_dbl = cfile->video_time;
-                    cfile->undo2_dbl = cfile->total_time;
+                    cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file);
                     d_print(_("Auto trimming %.2f seconds of audio at end..."), cfile->undo2_dbl - cfile->undo1_dbl);
                     if (on_del_audio_activate(NULL, NULL)) d_print_done();
                     else d_print("\n");
                     cfile->changed = FALSE;
                   }
                 }
-                if (!mainw->effects_paused && cfile->afilesize > 0 && cfile->total_time > cfile->laudio_time) {
+                if (!mainw->effects_paused && cfile->afilesize > 0 && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time) {
                   if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_START) {
                     cfile->undo1_dbl = 0.;
-                    cfile->undo2_dbl = cfile->total_time - cfile->laudio_time;
+                    cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
                     cfile->undo_arate = cfile->arate;
                     cfile->undo_signed_endian = cfile->signed_endian;
                     cfile->undo_achans = cfile->achans;
@@ -554,7 +554,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                   }
                   if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_END) {
                     cfile->undo1_dbl = cfile->laudio_time;
-                    cfile->undo2_dbl = cfile->total_time - cfile->laudio_time;
+                    cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
                     cfile->undo_arate = cfile->arate;
                     cfile->undo_signed_endian = cfile->signed_endian;
                     cfile->undo_achans = cfile->achans;
@@ -903,9 +903,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   reget_afilesize(mainw->current_file);
   get_total_time(cfile);
 
-  if (cfile->ext_src == NULL && start != 0. && cfile->total_time > cfile->video_time) {
+  if (cfile->ext_src == NULL && start != 0. && CLIP_TOTAL_TIME(mainw->current_file) > cfile->video_time) {
     cfile->undo1_dbl = cfile->video_time;
-    cfile->undo2_dbl = cfile->total_time;
+    cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file);
     d_print(_("Auto trimming %.2f seconds of audio at end..."), cfile->undo2_dbl - cfile->undo1_dbl);
     if (on_del_audio_activate(NULL, NULL)) d_print_done();
     else d_print("\n");
@@ -3284,7 +3284,7 @@ void create_cfile(void) {
   cfile->opening_audio = cfile->opening = cfile->opening_only_audio = FALSE;
   cfile->pointer_time = 0.;
   cfile->restoring = cfile->opening_loc = cfile->nopreview = cfile->is_loaded = FALSE;
-  cfile->video_time = cfile->total_time = cfile->laudio_time = cfile->raudio_time = 0.;
+  cfile->video_time = cfile->laudio_time = cfile->raudio_time = 0.;
   cfile->freeze_fps = 0.;
   cfile->frameno = cfile->last_frameno = 0;
   cfile->proc_ptr = NULL;

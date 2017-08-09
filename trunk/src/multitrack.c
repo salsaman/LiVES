@@ -9091,7 +9091,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     if (mt->audio_vols != NULL) lives_list_free(mt->audio_vols);
   }
 
-  if (cfile->total_time == 0.) close_current_file(mt->file_selected);
+  if (CLIP_TOTAL_TIME(mainw->current_file) == 0.) close_current_file(mt->file_selected);
 
   if (mt->video_draws != NULL) {
     for (i = 0; i < mt->num_video_tracks; i++) {

@@ -718,7 +718,7 @@ static boolean call_set_current_time(livespointer data) {
         mt_tl_move(mainw->multitrack, idata->stime);
       }
     } else {
-      if (mainw->current_file > 0 && idata->stime >= 0. && idata->stime <= cfile->total_time) {
+      if (mainw->current_file > 0 && idata->stime >= 0. && idata->stime <= CLIP_TOTAL_TIME(mainw->current_file)) {
         cfile->pointer_time = lives_ce_update_timeline(0, idata->stime);
         get_play_times();
       }

@@ -582,12 +582,18 @@ typedef struct {
   boolean nokeep;
 
   // various times; total time is calculated as the longest of video, laudio and raudio
-  double total_time;
   double video_time;
   double laudio_time;
   double raudio_time;
   double pointer_time;
 
+#define IS_VALID_CLIP(clip) (clip >= 0 && mainw->files[clip] != NULL)
+#define CLIP_VIDEO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->video_time : 0.))
+#define CLIP_LEFT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->laudio_time : 0.))
+#define CLIP_RIGHT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (mainw->files[clip]->achans > 1 ? mainw->files[clip]->raudio_time : 0.) : 0.))
+#define CLIP_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (CLIP_LEFT_AUDIO_TIME(clip) >= CLIP_RIGHT_AUDIO_TIME(clip) ? CLIP_LEFT_AUDIO_TIME(clip) : CLIP_RIGHT_AUDIO_TIME(clip)) : 0.))
+#define CLIP_TOTAL_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : CLIP_AUDIO_TIME(clip)) : 0.))
+  
   // used only for insert_silence, holds pre-padding length for undo
   double old_laudio_time;
   double old_raudio_time;

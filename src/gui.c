@@ -1038,7 +1038,7 @@ void create_LiVES(void) {
                                LIVES_KEY_h, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showfct), capable->smog_version_correct && prefs->show_framecount);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showfct), !prefs->hide_framebar);
 
   mainw->showsubs = lives_check_menu_item_new_with_mnemonic(_("Show Subtitles"));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->showsubs);
@@ -1561,7 +1561,7 @@ void create_LiVES(void) {
       pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
       lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     }
-
+    
     mainw->m_sepwinbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_sepwinbutton), 0);
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show the play window (s)"));
@@ -1785,6 +1785,10 @@ void create_LiVES(void) {
 
   lives_box_pack_start(LIVES_BOX(mainw->tb_hbox), t_label, FALSE, FALSE, 0);
 
+
+
+  // framebar menu bar - only appears during playback
+  
   vbox4 = lives_vbox_new(FALSE, 0);
 
   mainw->eventbox = lives_event_box_new();
@@ -2801,7 +2805,11 @@ void show_lives(void) {
   lives_widget_hide(mainw->toy_tv);
 # endif
   lives_widget_hide(mainw->tb_hbox);
-  lives_widget_hide(mainw->framebar);
+
+  if (prefs->hide_framebar) {
+    lives_widget_hide(mainw->framebar);
+  }
+  
   lives_widget_hide(mainw->playframe);
 
   if (capable->smog_version_correct && prefs->show_recent) {

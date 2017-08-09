@@ -2421,7 +2421,7 @@ void play_file(void) {
   mainw->last_blend_file = -1;
 
   // show the framebar
-  if (mainw->multitrack == NULL && (prefs->show_framecount &&
+  if (mainw->multitrack == NULL && (!prefs->hide_framebar &&
                                     (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1 && mainw->sep_win) ||
                                      (mainw->vpp != NULL && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
                                     ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
@@ -2975,7 +2975,9 @@ void play_file(void) {
 
   if (mainw->multitrack == NULL) {
     // update screen for internal players
-    lives_widget_hide(mainw->framebar);
+    if (prefs->hide_framebar) {
+      lives_widget_hide(mainw->framebar);
+    }
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");
     lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL);
   }
@@ -5051,7 +5053,7 @@ int save_to_scrap_file(weed_plant_t *layer) {
     lives_free(dir);
   }
 
-  if ((!mainw->fs || prefs->play_monitor != prefs->gui_monitor) && prefs->show_framecount) {
+  if ((!mainw->fs || prefs->play_monitor != prefs->gui_monitor) && !prefs->hide_framebar) {
     if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
       // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
       framecount = lives_strdup_printf(_("rec %.2f MB"), scrap_mb + ascrap_mb);

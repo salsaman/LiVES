@@ -1220,6 +1220,7 @@ void set_menu_text(LiVESWidget *menu, const char *text, boolean use_mnemonic);
 void get_menu_text(LiVESWidget *menu, char *text);
 void get_menu_text_long(LiVESWidget *menuitem, char *text);
 void reset_clipmenu(void);
+double lives_ce_update_timeline(int frame, double x);
 void get_play_times(void);
 void get_total_time(lives_clip_t *file);
 uint32_t get_signed_endian(boolean is_signed, boolean little_endian);
@@ -1250,6 +1251,7 @@ double calc_time_from_frame(int clip, int frame);
 int calc_frame_from_time(int filenum, double time);   ///< nearest frame start
 int calc_frame_from_time2(int filenum, double time);  ///< nearest frame end
 int calc_frame_from_time3(int filenum, double time);  ///< nearest frame mid
+int calc_frame_from_time3(int filenum, double time);  ///< nearest frame start, no maximum
 
 boolean check_for_ratio_fps(double fps);
 double get_ratio_fps(const char *string);

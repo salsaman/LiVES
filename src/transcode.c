@@ -179,6 +179,9 @@ boolean transcode(int start, int end) {
     goto tr_err;
   }
 
+  //av_log_set_level(AV_LOG_FATAL);
+  mainw->rowstride_alignment_hint = 16;
+
   // create a frame layer,
   frame_layer = weed_layer_new();
   weed_set_int_value(frame_layer, WEED_LEAF_CLIP, mainw->current_file);

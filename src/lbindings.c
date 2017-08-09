@@ -719,9 +719,7 @@ static boolean call_set_current_time(livespointer data) {
       }
     } else {
       if (mainw->current_file > 0 && idata->stime >= 0. && idata->stime <= cfile->total_time) {
-        cfile->pointer_time = idata->stime;
-        lives_ruler_set_value(LIVES_RULER(mainw->hruler), cfile->pointer_time);
-        lives_widget_queue_draw(mainw->hruler);
+        cfile->pointer_time = lives_ce_update_timeline(0, idata->stime);
         get_play_times();
       }
     }

@@ -146,7 +146,7 @@ typedef struct {
 #define SEPWIN_TYPE_STICKY 1
 
   boolean show_player_stats;
-  boolean show_framecount;
+  //  boolean show_framecount; - use hide_framebar
   boolean show_subtitles;
   boolean loop_recording;
   boolean discard_tv;
@@ -370,6 +370,8 @@ typedef struct {
   int max_disp_vtracks;
 
   boolean mt_load_fuzzy;
+
+  boolean hide_framebar;
 } _prefs;
 
 enum {

@@ -7123,6 +7123,12 @@ void on_boolean_toggled(LiVESObject *obj, livespointer user_data) {
 }
 
 
+void after_audio_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
+  if (!mainw->interactive) return;
+  pref_factory_bool(PREF_REC_EXT_AUDIO, prefs->audio_src == AUDIO_SRC_EXT);
+}
+
+
 void on_loop_video_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->current_file == 0) return;
   mainw->loop = !mainw->loop;

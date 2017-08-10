@@ -1635,6 +1635,33 @@ void create_LiVES(void) {
     mainw->m_mutebutton = lives_menu_item_new();
   }
 
+  mainw->int_audio_checkbutton = NULL;
+  
+#if GTK_CHECK_VERSION(3, 0, 0)
+  // insert audio src buttons
+  if (prefs->lamp_buttons) {
+    mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
+    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->int_audio_checkbutton), -1);
+
+    //lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(mainw->int_audio_checkbutton), FALSE);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
+                         LIVES_GUI_CALLBACK(draw_cool_toggle),
+                         NULL);
+    lives_widget_set_bg_color(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+    lives_widget_set_bg_color(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
+
+    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                               LIVES_GUI_CALLBACK(lives_cool_toggled),
+                               NULL);
+    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                               LIVES_GUI_CALLBACK(after_audio_toggled),
+                               NULL);
+    lives_cool_toggled(LIVES_TOGGLE_BUTTON(mainw->int_audio_checkbutton), NULL);
+  }
+#endif
+
+  if (mainw->int_audio_checkbutton == NULL) mainw->int_audio_checkbutton = lives_check_button_new();
+  
   adj = lives_adjustment_new(mainw->volume, 0., 1., 0.01, 0.1, 0.);
 
   mainw->volume_scale = lives_volume_button_new(LIVES_ORIENTATION_HORIZONTAL, adj, mainw->volume);
@@ -1787,7 +1814,7 @@ void create_LiVES(void) {
 
 
 
-  // framebar menu bar - only appears during playback
+  // framebar menu bar
   
   vbox4 = lives_vbox_new(FALSE, 0);
 

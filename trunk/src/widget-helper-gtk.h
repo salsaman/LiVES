@@ -832,6 +832,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
 #define LIVES_IS_SPIN_BUTTON(widget) GTK_IS_SPIN_BUTTON(widget)
 #define LIVES_IS_TOGGLE_BUTTON(widget) GTK_IS_TOGGLE_BUTTON(widget)
+#define LIVES_IS_TOGGLE_TOOL_BUTTON(widget) GTK_IS_TOGGLE_TOOL_BUTTON(widget)
 #define LIVES_IS_IMAGE(widget) GTK_IS_IMAGE(widget)
 #define LIVES_IS_ENTRY(widget) GTK_IS_ENTRY(widget)
 #define LIVES_IS_RANGE(widget) GTK_IS_RANGE(widget)

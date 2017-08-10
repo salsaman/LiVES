@@ -990,6 +990,9 @@ typedef struct {
   LiVESWidget *fs1;
   LiVESWidget *vbox1;
 
+  LiVESWidget *int_audio_checkbutton;
+  LiVESWidget *ext_audio_checkbutton;
+  
   LiVESWidget *volume_scale;
   LiVESWidget *vol_toolitem;
   LiVESWidget *vol_label;

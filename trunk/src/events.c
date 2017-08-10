@@ -5091,7 +5091,6 @@ void rdetw_spinh_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
 void rdetw_spinw_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   render_details *rdet = (render_details *)user_data;
   rdet->width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-  g_print("upd to %d\n", rdet->width);
 }
 
 

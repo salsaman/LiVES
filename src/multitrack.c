@@ -5177,28 +5177,6 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
 }
 
 
-static void on_insa_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
-  lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return;
-  mt->opts.insert_audio = lives_toggle_button_get_active(tbutton);
-  if (prefs->lamp_buttons) {
-    if (mt->opts.insert_audio) lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
-    else lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
-  }
-}
-
-
-static void on_snapo_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
-  lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return;
-  mt->opts.snap_over = lives_toggle_button_get_active(tbutton);
-  if (prefs->lamp_buttons) {
-    if (mt->opts.snap_over) lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
-    else lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
-  }
-}
-
-
 char *set_values_from_defs(lives_mt *mt, boolean from_prefs) {
   // set various multitrack state flags from either defaults or user preferences
 
@@ -5568,126 +5546,6 @@ static boolean expose_pb(LiVESWidget *widget, lives_painter_t *cr, livespointer 
   set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), mt->frame_pixbuf, cr);
   return TRUE;
 }
-
-
-static boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
-  double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
-  double rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
-
-  double rad;
-
-  double scalex = 1.;
-  double scaley = .8;
-
-  lives_painter_translate(cr, rwidth * (1. - scalex) / 2., rheight * (1. - scaley) / 2.);
-
-  rwidth *= scalex;
-  rheight *= scaley;
-
-  // draw the inside
-
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) {
-    lives_painter_set_source_rgba(cr, palette->light_green.red, palette->light_green.green,
-                                  palette->light_green.blue, 1.);
-  } else {
-    lives_painter_set_source_rgba(cr, palette->dark_red.red, palette->dark_red.green,
-                                  palette->dark_red.blue, 1.);
-  }
-
-  // draw rounded rctangle
-  lives_painter_rectangle(cr, 0, rwidth / 4,
-                          rwidth,
-                          rheight - rwidth / 2);
-  lives_painter_fill(cr);
-
-  lives_painter_rectangle(cr, rwidth / 4, 0,
-                          rwidth / 2,
-                          rwidth / 4);
-  lives_painter_fill(cr);
-
-  lives_painter_rectangle(cr, rwidth / 4, rheight - rwidth / 4,
-                          rwidth / 2,
-                          rwidth / 4);
-  lives_painter_fill(cr);
-
-  rad = rwidth / 4.;
-
-  lives_painter_move_to(cr, rwidth / 4., rwidth / 4.);
-  lives_painter_line_to(cr, 0., rwidth / 4.);
-  lives_painter_arc(cr, rwidth / 4., rwidth / 4., rad, M_PI, 1.5 * M_PI);
-  lives_painter_line_to(cr, rwidth / 4., rwidth / 4.);
-  lives_painter_fill(cr);
-
-  lives_painter_move_to(cr, rwidth / 4.*3., rwidth / 4.);
-  lives_painter_line_to(cr, rwidth / 4.*3., 0.);
-  lives_painter_arc(cr, rwidth / 4.*3., rwidth / 4., rad, -M_PI / 2., 0.);
-  lives_painter_line_to(cr, rwidth / 4.*3., rwidth / 4.);
-  lives_painter_fill(cr);
-
-  lives_painter_move_to(cr, rwidth / 4., rheight - rwidth / 4.);
-  lives_painter_line_to(cr, rwidth / 4., rheight);
-  lives_painter_arc(cr, rwidth / 4., rheight - rwidth / 4., rad, M_PI / 2., M_PI);
-  lives_painter_line_to(cr, rwidth / 4., rheight - rwidth / 4.);
-  lives_painter_fill(cr);
-
-  lives_painter_move_to(cr, rwidth / 4.*3., rheight - rwidth / 4.);
-  lives_painter_line_to(cr, rwidth, rheight - rwidth / 4.);
-  lives_painter_arc(cr, rwidth / 4.*3., rheight - rwidth / 4., rad, 0., M_PI / 2.);
-  lives_painter_line_to(cr, rwidth / 4.*3., rheight - rwidth / 4.);
-  lives_painter_fill(cr);
-
-  // draw the surround
-
-  lives_painter_new_path(cr);
-
-  lives_painter_set_source_rgba(cr, 0., 0., 0., .8);
-  lives_painter_set_line_width(cr, 1.);
-
-  lives_painter_arc(cr, rwidth / 4., rwidth / 4., rad, M_PI, 1.5 * M_PI);
-  lives_painter_stroke(cr);
-  lives_painter_arc(cr, rwidth / 4.*3., rwidth / 4., rad, -M_PI / 2., 0.);
-  lives_painter_stroke(cr);
-  lives_painter_arc(cr, rwidth / 4., rheight - rwidth / 4., rad, M_PI / 2., M_PI);
-  lives_painter_stroke(cr);
-  lives_painter_arc(cr, rwidth / 4.*3., rheight - rwidth / 4., rad, 0., M_PI / 2.);
-
-  lives_painter_stroke(cr);
-
-  lives_painter_move_to(cr, rwidth / 4., 0);
-  lives_painter_line_to(cr, rwidth / 4.*3., 0);
-
-  lives_painter_stroke(cr);
-
-  lives_painter_move_to(cr, rwidth / 4., rheight);
-  lives_painter_line_to(cr, rwidth / 4.*3., rheight);
-
-  lives_painter_stroke(cr);
-
-  lives_painter_move_to(cr, 0., rwidth / 4.);
-  lives_painter_line_to(cr, 0., rheight - rwidth / 4.);
-
-  lives_painter_stroke(cr);
-
-  lives_painter_move_to(cr, rwidth, rwidth / 4.);
-  lives_painter_line_to(cr, rwidth, rheight - rwidth / 4.);
-
-  lives_painter_stroke(cr);
-
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) {
-    lives_painter_set_source_rgba(cr, 1., 1., 1., .6);
-
-    lives_painter_move_to(cr, rwidth / 4., rwidth / 4.);
-    lives_painter_line_to(cr, rwidth / 4.*3., rheight - rwidth / 4.);
-    lives_painter_stroke(cr);
-
-    lives_painter_move_to(cr, rwidth / 4., rheight - rwidth / 4.);
-    lives_painter_line_to(cr, rwidth / 4.*3., rwidth / 4.);
-    lives_painter_stroke(cr);
-  }
-
-  return TRUE;
-}
-
 #endif
 
 
@@ -7740,9 +7598,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   widget_opts.packing_width = 2.*widget_opts.scale;
   mt->insa_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Insert With _Audio"))), TRUE, LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("Select whether video clips are inserted and moved with their audio or not"))));
-  widget_opts.packing_width = dpw;
   lives_free(tmp);
   lives_free(tmp2);
+  widget_opts.packing_width = dpw;
 
   mt->insa_label = widget_opts.last_label;
 
@@ -7793,11 +7651,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt->insa_checkbutton), mt->opts.insert_audio);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mt->insa_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_insa_toggled),
-                             mt);
+                             LIVES_GUI_CALLBACK(lives_cool_toggled),
+                             &mt->opts.insert_audio);
 
   if (prefs->lamp_buttons) {
-    on_insa_toggled(LIVES_TOGGLE_BUTTON(mt->insa_checkbutton), mt);
+    lives_cool_toggled(LIVES_TOGGLE_BUTTON(mt->insa_checkbutton), &mt->opts.insert_audio);
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(mt->insa_checkbutton), FALSE);
 
     lives_widget_set_bg_color(mt->insa_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
@@ -7826,8 +7684,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton), mt->opts.snap_over);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mt->snapo_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_snapo_toggled),
-                             mt);
+                             LIVES_GUI_CALLBACK(lives_cool_toggled),
+                             &mt->opts.snap_over);
 
   if (prefs->lamp_buttons) {
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton), FALSE);
@@ -7839,7 +7697,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_bg_color(mt->snapo_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(mt->snapo_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
-    on_snapo_toggled(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton), mt);
+    lives_cool_toggled(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton), &mt->opts.snap_over);
   }
 
   // TODO - add a vbox with two hboxes
@@ -21537,20 +21395,6 @@ static void on_amixer_reset_clicked(LiVESButton *button, lives_mt *mt) {
 
 static void after_amixer_gang_toggled(LiVESToggleButton *toggle, lives_amixer_t *amixer) {
   lives_widget_set_sensitive(amixer->inv_checkbutton, (lives_toggle_button_get_active(toggle)));
-  if (prefs->lamp_buttons) {
-    if (lives_toggle_button_get_active(toggle))
-      lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
-    else lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_ACTIVE, &palette->dark_red);
-  }
-}
-
-
-static void after_amixer_inv_toggled(LiVESToggleButton *toggle, lives_amixer_t *amixer) {
-  if (prefs->lamp_buttons) {
-    if (lives_toggle_button_get_active(toggle))
-      lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
-    else lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
-  }
 }
 
 
@@ -21820,10 +21664,10 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
     lives_widget_set_bg_color(amixer->inv_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(amixer->inv_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_amixer_inv_toggled),
-                               (livespointer)amixer);
+                               LIVES_GUI_CALLBACK(lives_cool_toggled),
+                               NULL);
 
-    after_amixer_inv_toggled(LIVES_TOGGLE_BUTTON(amixer->inv_checkbutton), amixer);
+    lives_cool_toggled(LIVES_TOGGLE_BUTTON(amixer->inv_checkbutton), NULL);
 
   } else amixer->inv_checkbutton = lives_check_button_new();
 
@@ -21920,7 +21764,11 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
   lives_signal_connect_after(LIVES_GUI_OBJECT(amixer->gang_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(after_amixer_gang_toggled),
                              (livespointer)amixer);
+  lives_signal_connect_after(LIVES_GUI_OBJECT(amixer->gang_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                             LIVES_GUI_CALLBACK(lives_cool_toggled),
+                             NULL);
 
+  lives_cool_toggled(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton), NULL);
   after_amixer_gang_toggled(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton), amixer);
 
   lives_widget_grab_focus(close_button);

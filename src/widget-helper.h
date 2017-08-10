@@ -824,10 +824,12 @@ boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
 void toggle_button_toggle(LiVESToggleButton *);
 
 
-void set_child_colour(LiVESWidget *widget, boolean set_all);
-void set_child_alt_colour(LiVESWidget *widget, boolean set_all);
+void set_child_colour(LiVESWidget *, boolean set_all);
+void set_child_alt_colour(LiVESWidget *, boolean set_all);
 
 void funkify_dialog(LiVESWidget *dialog);
+boolean draw_cool_toggle(LiVESWidget *, lives_painter_t *, livespointer);
+void lives_cool_toggled(LiVESWidget *tbutton, livespointer);
 
 void unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);

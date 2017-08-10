@@ -8820,6 +8820,148 @@ void funkify_dialog(LiVESWidget *dialog) {
 }
 
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+
+void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
+  // connect toggled event to this
+  boolean *ret = (boolean *)user_data, active;
+  if (!mainw->interactive) return;
+  active = ((LIVES_IS_TOGGLE_BUTTON(tbutton) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbutton))) ||
+	    (LIVES_IS_TOGGLE_TOOL_BUTTON(tbutton) && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOO_BUTTON(tbutton))));
+  if (prefs->lamp_buttons) {
+    if (active)
+      lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+    else lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
+  }
+  if (ret != NULL) *ret = active;
+}
+
+
+boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
+  // connect expose event to this
+  
+  double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
+  double rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
+
+  double rad;
+
+  double scalex = 1.;
+  double scaley = .8;
+
+  lives_painter_translate(cr, rwidth * (1. - scalex) / 2., rheight * (1. - scaley) / 2.);
+
+  rwidth *= scalex;
+  rheight *= scaley;
+
+  // draw the inside
+
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) {
+    lives_painter_set_source_rgba(cr, palette->light_green.red, palette->light_green.green,
+                                  palette->light_green.blue, 1.);
+  } else {
+    lives_painter_set_source_rgba(cr, palette->dark_red.red, palette->dark_red.green,
+                                  palette->dark_red.blue, 1.);
+  }
+
+  // draw rounded rctangle
+  lives_painter_rectangle(cr, 0, rwidth / 4,
+                          rwidth,
+                          rheight - rwidth / 2);
+  lives_painter_fill(cr);
+
+  lives_painter_rectangle(cr, rwidth / 4, 0,
+                          rwidth / 2,
+                          rwidth / 4);
+  lives_painter_fill(cr);
+
+  lives_painter_rectangle(cr, rwidth / 4, rheight - rwidth / 4,
+                          rwidth / 2,
+                          rwidth / 4);
+  lives_painter_fill(cr);
+
+  rad = rwidth / 4.;
+
+  lives_painter_move_to(cr, rwidth / 4., rwidth / 4.);
+  lives_painter_line_to(cr, 0., rwidth / 4.);
+  lives_painter_arc(cr, rwidth / 4., rwidth / 4., rad, M_PI, 1.5 * M_PI);
+  lives_painter_line_to(cr, rwidth / 4., rwidth / 4.);
+  lives_painter_fill(cr);
+
+  lives_painter_move_to(cr, rwidth / 4.*3., rwidth / 4.);
+  lives_painter_line_to(cr, rwidth / 4.*3., 0.);
+  lives_painter_arc(cr, rwidth / 4.*3., rwidth / 4., rad, -M_PI / 2., 0.);
+  lives_painter_line_to(cr, rwidth / 4.*3., rwidth / 4.);
+  lives_painter_fill(cr);
+
+  lives_painter_move_to(cr, rwidth / 4., rheight - rwidth / 4.);
+  lives_painter_line_to(cr, rwidth / 4., rheight);
+  lives_painter_arc(cr, rwidth / 4., rheight - rwidth / 4., rad, M_PI / 2., M_PI);
+  lives_painter_line_to(cr, rwidth / 4., rheight - rwidth / 4.);
+  lives_painter_fill(cr);
+
+  lives_painter_move_to(cr, rwidth / 4.*3., rheight - rwidth / 4.);
+  lives_painter_line_to(cr, rwidth, rheight - rwidth / 4.);
+  lives_painter_arc(cr, rwidth / 4.*3., rheight - rwidth / 4., rad, 0., M_PI / 2.);
+  lives_painter_line_to(cr, rwidth / 4.*3., rheight - rwidth / 4.);
+  lives_painter_fill(cr);
+
+  // draw the surround
+
+  lives_painter_new_path(cr);
+
+  lives_painter_set_source_rgba(cr, 0., 0., 0., .8);
+  lives_painter_set_line_width(cr, 1.);
+
+  lives_painter_arc(cr, rwidth / 4., rwidth / 4., rad, M_PI, 1.5 * M_PI);
+  lives_painter_stroke(cr);
+  lives_painter_arc(cr, rwidth / 4.*3., rwidth / 4., rad, -M_PI / 2., 0.);
+  lives_painter_stroke(cr);
+  lives_painter_arc(cr, rwidth / 4., rheight - rwidth / 4., rad, M_PI / 2., M_PI);
+  lives_painter_stroke(cr);
+  lives_painter_arc(cr, rwidth / 4.*3., rheight - rwidth / 4., rad, 0., M_PI / 2.);
+
+  lives_painter_stroke(cr);
+
+  lives_painter_move_to(cr, rwidth / 4., 0);
+  lives_painter_line_to(cr, rwidth / 4.*3., 0);
+
+  lives_painter_stroke(cr);
+
+  lives_painter_move_to(cr, rwidth / 4., rheight);
+  lives_painter_line_to(cr, rwidth / 4.*3., rheight);
+
+  lives_painter_stroke(cr);
+
+  lives_painter_move_to(cr, 0., rwidth / 4.);
+  lives_painter_line_to(cr, 0., rheight - rwidth / 4.);
+
+  lives_painter_stroke(cr);
+
+  lives_painter_move_to(cr, rwidth, rwidth / 4.);
+  lives_painter_line_to(cr, rwidth, rheight - rwidth / 4.);
+
+  lives_painter_stroke(cr);
+
+  if ((LIVES_IS_TOGGLE_BUTTON(widget) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) ||
+      (LIVES_IS_TOGGLE_TOOL_BUTTON(widget) && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(widget)))
+      ) {
+    lives_painter_set_source_rgba(cr, 1., 1., 1., .6);
+
+    lives_painter_move_to(cr, rwidth / 4., rwidth / 4.);
+    lives_painter_line_to(cr, rwidth / 4.*3., rheight - rwidth / 4.);
+    lives_painter_stroke(cr);
+
+    lives_painter_move_to(cr, rwidth / 4., rheight - rwidth / 4.);
+    lives_painter_line_to(cr, rwidth / 4.*3., rwidth / 4.);
+    lives_painter_stroke(cr);
+  }
+
+  return TRUE;
+}
+
+#endif
+
+
 void get_border_size(LiVESWidget *win, int *bx, int *by) {
 #ifdef GUI_GTK
   GdkRectangle rect;

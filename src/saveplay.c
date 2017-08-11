@@ -2569,6 +2569,7 @@ void play_file(void) {
       if (mainw->multitrack != NULL) init_jack_audio_buffers(cfile->achans, cfile->arate, exact_preview);
       else init_jack_audio_buffers(DEFAULT_AUDIO_CHANS, DEFAULT_AUDIO_RATE, FALSE);
       has_audio_buffers = TRUE;
+      
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
@@ -2595,7 +2596,14 @@ void play_file(void) {
           init_track_decoders();
 
         if (has_audio_buffers) {
+	  lives_signal_handler_block(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
+	  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), FALSE);
+	  lives_signal_handler_unblock(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
 
+	  lives_signal_handler_block(mainw->int_audio_checkbutton, mainw->int_audio_func);
+	  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), TRUE);
+	  lives_signal_handler_unblock(mainw->int_audio_checkbutton, mainw->int_audio_func);
+	  
 #ifdef ENABLE_JACK
           if (audio_player == AUD_PLAYER_JACK) {
             int i;
@@ -2863,6 +2871,14 @@ void play_file(void) {
     close(mainw->files[mainw->scrap_file]->cb_src);
     mainw->files[mainw->scrap_file]->cb_src = -1;
   }
+
+  lives_signal_handler_block(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
+  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
+  lives_signal_handler_unblock(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
+
+  lives_signal_handler_block(mainw->int_audio_checkbutton, mainw->int_audio_func);
+  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
+  lives_signal_handler_unblock(mainw->int_audio_checkbutton, mainw->int_audio_func);
 
   if (mainw->foreign) {
     // recording from external window capture

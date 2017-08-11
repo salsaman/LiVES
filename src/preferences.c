@@ -657,7 +657,7 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
       }
     } else {
       if (mainw->playing_file == -1 || (mainw->playing_file > -1 && !prefs->hide_framebar &&
-                                        (!mainw->fs || (mainw->vpp != NULL &&
+                                        (!mainw->fs || (mainw->ext_playback && mainw->vpp != NULL &&
                                             !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
                                             !(mainw->vpp->capabilities & VPP_CAN_RESIZE))))) {
         lives_widget_show(mainw->framebar);

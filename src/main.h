@@ -593,7 +593,7 @@ typedef struct {
 #define CLIP_RIGHT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (mainw->files[clip]->achans > 1 ? mainw->files[clip]->raudio_time : 0.) : 0.))
 #define CLIP_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (CLIP_LEFT_AUDIO_TIME(clip) >= CLIP_RIGHT_AUDIO_TIME(clip) ? CLIP_LEFT_AUDIO_TIME(clip) : CLIP_RIGHT_AUDIO_TIME(clip)) : 0.))
 #define CLIP_TOTAL_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : CLIP_AUDIO_TIME(clip)) : 0.))
-  
+
   // used only for insert_silence, holds pre-padding length for undo
   double old_laudio_time;
   double old_raudio_time;

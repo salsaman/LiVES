@@ -401,6 +401,7 @@ void create_LiVES(void) {
   char *tmp;
   char *fnamex;
 
+  int i;
   int dpw;
   boolean woat;
 
@@ -1561,7 +1562,7 @@ void create_LiVES(void) {
       pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
       lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     }
-    
+
     mainw->m_sepwinbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_sepwinbutton), 0);
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show the play window (s)"));
@@ -1635,15 +1636,21 @@ void create_LiVES(void) {
     mainw->m_mutebutton = lives_menu_item_new();
   }
 
+  for (i = 0; i < 3; i++) {
+    lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  }
+  mainw->l1_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Audio source:"));
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
   mainw->int_audio_checkbutton = NULL;
-  
+
 #if GTK_CHECK_VERSION(3, 0, 0)
   // insert audio src buttons
   if (prefs->lamp_buttons) {
     mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->int_audio_checkbutton), -1);
 
-    //lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(mainw->int_audio_checkbutton), FALSE);
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                          LIVES_GUI_CALLBACK(draw_cool_toggle),
                          NULL);
@@ -1653,15 +1660,63 @@ void create_LiVES(void) {
     lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(lives_cool_toggled),
                                NULL);
-    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_audio_toggled),
+    lives_cool_toggled(mainw->int_audio_checkbutton, NULL);
+  }
+#endif
+  if (mainw->int_audio_checkbutton == NULL) mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
+  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
+
+  mainw->int_audio_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                          LIVES_GUI_CALLBACK(after_audio_toggled),
+                          NULL);
+
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->int_audio_checkbutton), -1);
+
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  mainw->l2_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Internal"));
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  mainw->ext_audio_checkbutton = NULL;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+  // insert audio src buttons
+  if (prefs->lamp_buttons) {
+    mainw->ext_audio_checkbutton = lives_toggle_tool_button_new();
+
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
+                         LIVES_GUI_CALLBACK(draw_cool_toggle),
+                         NULL);
+    lives_widget_set_bg_color(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+    lives_widget_set_bg_color(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
+
+    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                               LIVES_GUI_CALLBACK(lives_cool_toggled),
                                NULL);
-    lives_cool_toggled(LIVES_TOGGLE_BUTTON(mainw->int_audio_checkbutton), NULL);
+    lives_cool_toggled(mainw->ext_audio_checkbutton, NULL);
   }
 #endif
 
-  if (mainw->int_audio_checkbutton == NULL) mainw->int_audio_checkbutton = lives_check_button_new();
-  
+  if (mainw->ext_audio_checkbutton == NULL) mainw->ext_audio_checkbutton = lives_toggle_tool_button_new();
+  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
+
+  mainw->ext_audio_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                          LIVES_GUI_CALLBACK(after_audio_toggled),
+                          NULL);
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->ext_audio_checkbutton), -1);
+
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  mainw->l3_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("External"));
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  if (!is_realtime_aplayer(prefs->audio_player)) {
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
+  }
+
   adj = lives_adjustment_new(mainw->volume, 0., 1., 0.01, 0.1, 0.);
 
   mainw->volume_scale = lives_volume_button_new(LIVES_ORIENTATION_HORIZONTAL, adj, mainw->volume);
@@ -1685,20 +1740,9 @@ void create_LiVES(void) {
 #endif
 
   lives_container_add(LIVES_CONTAINER(mainw->vol_toolitem), mainw->volume_scale);
-  if (capable->smog_version_correct) {
-#ifdef GUI_GTK
-    register int i;
-    for (i = 0; i < 4; i++) {
-      GtkToolItem *spacer;
-      spacer = gtk_separator_tool_item_new();
-      gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(spacer), FALSE);
-      gtk_tool_item_set_homogeneous(LIVES_TOOL_ITEM(spacer), FALSE);
-      gtk_tool_item_set_expand(LIVES_TOOL_ITEM(spacer), TRUE);
-      lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(spacer), -1);
-    }
-#endif
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_toolitem), -1);
-  }
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_toolitem), -1);
+
   lives_widget_set_tooltip_text(mainw->vol_toolitem, _("Audio volume (1.00)"));
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->volume_scale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -1815,7 +1859,7 @@ void create_LiVES(void) {
 
 
   // framebar menu bar
-  
+
   vbox4 = lives_vbox_new(FALSE, 0);
 
   mainw->eventbox = lives_event_box_new();
@@ -2833,10 +2877,10 @@ void show_lives(void) {
 # endif
   lives_widget_hide(mainw->tb_hbox);
 
-  if (prefs->hide_framebar) {
+  if (prefs->hide_framebar || prefs->hfbwnp) {
     lives_widget_hide(mainw->framebar);
   }
-  
+
   lives_widget_hide(mainw->playframe);
 
   if (capable->smog_version_correct && prefs->show_recent) {
@@ -3265,6 +3309,8 @@ void fullscreen_internal(void) {
 
     lives_widget_hide(mainw->menu_hbox);
 
+    lives_widget_hide(mainw->framebar);
+
     if (mainw->playing_file == -1) {
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL);
     }
@@ -3624,11 +3670,9 @@ void resize_widgets_for_monitor(boolean get_play_times) {
   if (mainw->multitrack == NULL) {
     if (prefs->gui_monitor != 0) {
       lives_window_center(LIVES_WINDOW(mainw->LiVES));
-
     }
     if (prefs->open_maximised && prefs->show_gui) {
-      lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
-      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
+      resize(1);
     }
   } else {
     if (prefs->gui_monitor != 0) {

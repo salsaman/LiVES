@@ -2555,9 +2555,6 @@ void play_file(void) {
     }
   }
 
-
-
-
   find_when_to_stop();
 
   if (mainw->foreign || weed_playback_gen_start()) {
@@ -2640,13 +2637,11 @@ void play_file(void) {
             mainw->abufs_to_fill = 0;
             pthread_mutex_unlock(&mainw->abuf_mutex);
             mainw->pulsed->in_use = TRUE;
-
           }
 #endif
           // let transport roll
           mainw->video_seek_ready = TRUE;
         }
-
       }
 
       if (mainw->multitrack == NULL || mainw->multitrack->pb_start_event == NULL) {
@@ -2669,7 +2664,6 @@ void play_file(void) {
           pthread_mutex_unlock(&mainw->abuf_mutex);
         }
 #endif
-
       } else {
         // play from middle of mt timeline
         cfile->next_event = mainw->multitrack->pb_start_event;
@@ -2809,7 +2803,6 @@ void play_file(void) {
   lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED, "");
 
   mainw->video_seek_ready = FALSE;
-
 
   // PLAY FINISHED...
   // allow this to fail - not all sub-commands may be present
@@ -2975,7 +2968,7 @@ void play_file(void) {
 
   if (mainw->multitrack == NULL) {
     // update screen for internal players
-    if (prefs->hide_framebar) {
+    if (prefs->hfbwnp) {
       lives_widget_hide(mainw->framebar);
     }
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");

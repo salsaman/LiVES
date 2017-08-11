@@ -16,6 +16,7 @@
 #define PREFS_COLOURS_CHANGED (1<<3)
 #define PREFS_XCOLOURS_CHANGED (1<<4)
 #define PREFS_IMAGES_CHANGED (1<<5)
+#define PREFS_MONITOR_CHANGED (1<<6)
 
 #define PULSE_AUDIO_URL "http://www.pulseaudio.org"
 #define JACK_URL "http://jackaudio.org"
@@ -372,6 +373,10 @@ typedef struct {
   boolean mt_load_fuzzy;
 
   boolean hide_framebar;
+
+  boolean hfbwnp;
+
+  boolean show_asrc;
 } _prefs;
 
 enum {
@@ -572,6 +577,8 @@ typedef struct {
   LiVESWidget *checkbutton_auto_trim;
   LiVESWidget *checkbutton_nobord;
   LiVESWidget *checkbutton_concat_images;
+  LiVESWidget *checkbutton_show_asrc;
+  LiVESWidget *checkbutton_hfbwnp;
   LiVESWidget *forcesmon;
   LiVESWidget *forcesmon_hbox;
   LiVESList *pbq_list;
@@ -681,7 +688,7 @@ void pref_change_colours(void);
 
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
-
+// NOTE: the following definitions must match with equivalent keys in smogrify
 // factories (pseudo prefs), called from cpp binding
 
 #define PREF_REC_EXT_AUDIO "rec_ext_audio"
@@ -689,7 +696,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_SEPWIN_STICKY "sepwin_sticky"
 #define PREF_MT_EXIT_RENDER "mt_exit_render"
 
-
+// factories non-cpp
+#define PREF_SHOW_ASRC "show_audio_src"
+#define PREF_HFBWNP "hide_framebar_when_not_playing"
 
 // normal prefs
 

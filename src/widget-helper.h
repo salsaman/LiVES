@@ -450,6 +450,10 @@ boolean lives_toggle_button_get_active(LiVESToggleButton *);
 boolean lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
 boolean lives_toggle_button_set_mode(LiVESToggleButton *, boolean drawind);
 
+LiVESWidget *lives_toggle_tool_button_new(void);
+boolean lives_toggle_tool_button_get_active(LiVESToggleToolButton *);
+boolean lives_toggle_tool_button_set_active(LiVESToggleToolButton *, boolean active);
+
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size);
 
 void lives_tooltips_set(LiVESWidget *, const char *tip_text);
@@ -507,6 +511,7 @@ boolean lives_color_button_set_use_alpha(LiVESColorButton *, boolean use_alpha);
 
 LiVESToolItem *lives_tool_button_new(LiVESWidget *icon_widget, const char *label);
 LiVESToolItem *lives_tool_item_new(void);
+LiVESToolItem *lives_separator_tool_item_new(void);
 boolean lives_tool_button_set_icon_widget(LiVESToolButton *, LiVESWidget *icon);
 boolean lives_tool_button_set_label_widget(LiVESToolButton *, LiVESWidget *label);
 boolean lives_tool_button_set_use_underline(LiVESToolButton *, boolean use_underline);
@@ -840,6 +845,9 @@ LiVESWidget *add_hsep_to_box(LiVESBox *);
 LiVESWidget *add_vsep_to_box(LiVESBox *);
 
 LiVESWidget *add_fill_to_box(LiVESBox *);
+
+LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *);
+LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *text);
 
 #endif // cplusplus
 

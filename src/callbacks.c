@@ -6564,11 +6564,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         if (!mainw->faded) {
           fade_background();
         }
-
         fullscreen_internal();
-	if (prefs->hide_framebar) {
-	  lives_widget_hide(mainw->framebar);
-	}
       }
 
       if (mainw->sep_win) {
@@ -7014,9 +7010,9 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           }
           if (mainw->multitrack == NULL) {
             lives_widget_show(mainw->playframe);
-	    if (prefs->hide_framebar) {
-	      lives_widget_hide(mainw->framebar);
-	    }
+            if (prefs->hide_framebar) {
+              lives_widget_hide(mainw->framebar);
+            }
             if (!mainw->faded) fade_background();
             fullscreen_internal();
             lives_widget_context_update();
@@ -7052,7 +7048,7 @@ void on_showfct_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_widget_show(mainw->framebar);
     } else {
       if (prefs->hide_framebar) {
-	lives_widget_hide(mainw->framebar);
+        lives_widget_hide(mainw->framebar);
       }
     }
   }
@@ -7123,9 +7119,9 @@ void on_boolean_toggled(LiVESObject *obj, livespointer user_data) {
 }
 
 
-void after_audio_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
+void after_audio_toggled(LiVESWidget *tbutton, livespointer user_data) {
   if (!mainw->interactive) return;
-  pref_factory_bool(PREF_REC_EXT_AUDIO, prefs->audio_src == AUDIO_SRC_EXT);
+  pref_factory_bool(PREF_REC_EXT_AUDIO, prefs->audio_src != AUDIO_SRC_EXT);
 }
 
 
@@ -9361,7 +9357,7 @@ boolean on_mouse_sel_update(LiVESWidget *widget, LiVESXEventMotion *event, lives
                                           (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
     else
       sel_current = calc_frame_from_time(mainw->current_file,
-					 (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                                         (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
 
     if (mainw->sel_move == SEL_MOVE_SINGLE) {
       sel_current = calc_frame_from_time3(mainw->current_file,
@@ -9488,14 +9484,15 @@ boolean on_hrule_enter(LiVESWidget *widget, LiVESXEventCrossing *event, livespoi
 
 boolean on_hrule_update(LiVESWidget *widget, LiVESXEventMotion *event, livespointer user_data) {
   int x;
-  
+
   if (!mainw->interactive) return FALSE;
 
   if (mainw->current_file <= 0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            mainw->vidbar, &x, NULL);
-  cfile->pointer_time = lives_ce_update_timeline(0, (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));  
+  cfile->pointer_time = lives_ce_update_timeline(0,
+                        (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
   get_play_times();
 
   return FALSE;
@@ -9512,7 +9509,8 @@ boolean on_hrule_reset(LiVESWidget *widget, LiVESXEventButton  *event, livespoin
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            mainw->LiVES, &x, NULL);
-  cfile->pointer_time = lives_ce_update_timeline(0, (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));  
+  cfile->pointer_time = lives_ce_update_timeline(0,
+                        (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
   get_play_times();
   if (!mainw->hrule_blocked) {
     lives_signal_handler_block(mainw->eventbox5, mainw->hrule_func);
@@ -9547,8 +9545,9 @@ boolean on_hrule_set(LiVESWidget *widget, LiVESXEventButton *event, livespointer
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            mainw->LiVES, &x, NULL);
-  
-  cfile->pointer_time = lives_ce_update_timeline(0, (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));  
+
+  cfile->pointer_time = lives_ce_update_timeline(0,
+                        (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
   get_play_times();
   if (mainw->hrule_blocked) {
     lives_signal_handler_unblock(mainw->eventbox5, mainw->hrule_func);

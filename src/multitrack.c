@@ -7655,7 +7655,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                              &mt->opts.insert_audio);
 
   if (prefs->lamp_buttons) {
-    lives_cool_toggled(LIVES_TOGGLE_BUTTON(mt->insa_checkbutton), &mt->opts.insert_audio);
+    lives_cool_toggled(mt->insa_checkbutton, &mt->opts.insert_audio);
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(mt->insa_checkbutton), FALSE);
 
     lives_widget_set_bg_color(mt->insa_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
@@ -7697,7 +7697,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_bg_color(mt->snapo_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(mt->snapo_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
-    lives_cool_toggled(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton), &mt->opts.snap_over);
+    lives_cool_toggled(mt->snapo_checkbutton, &mt->opts.snap_over);
   }
 
   // TODO - add a vbox with two hboxes
@@ -7730,7 +7730,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_toolbar_set_style(LIVES_TOOLBAR(mt->btoolbar3), LIVES_TOOLBAR_TEXT);
 
-  mt->sep1 = gtk_separator_tool_item_new();
+  mt->sep1 = lives_separator_tool_item_new();
   lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar3), mt->sep1, -1);
 
   mt->grav_menuitem = lives_menu_tool_button_new(NULL, NULL);
@@ -7784,7 +7784,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_container_add(LIVES_CONTAINER(mt->menubar), menuitemsep);
     mt->sep2 = NULL;
   } else {
-    mt->sep2 = gtk_separator_tool_item_new();
+    mt->sep2 = lives_separator_tool_item_new();
     lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar3), mt->sep2, -1);
   }
 
@@ -7831,7 +7831,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_container_add(LIVES_CONTAINER(mt->menubar), menuitemsep);
     mt->sep3 = NULL;
   } else {
-    mt->sep3 = gtk_separator_tool_item_new();
+    mt->sep3 = lives_separator_tool_item_new();
     lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar3), mt->sep3, -1);
   }
 
@@ -7864,7 +7864,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_show_all(mt->ins_submenu); // needed
 
   if (!in_menubar) {
-    mt->sep4 = gtk_separator_tool_item_new();
+    mt->sep4 = lives_separator_tool_item_new();
     lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar3), mt->sep4, -1);
   } else mt->sep4 = NULL;
 
@@ -21667,7 +21667,7 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
                                LIVES_GUI_CALLBACK(lives_cool_toggled),
                                NULL);
 
-    lives_cool_toggled(LIVES_TOGGLE_BUTTON(amixer->inv_checkbutton), NULL);
+    lives_cool_toggled(amixer->inv_checkbutton, NULL);
 
   } else amixer->inv_checkbutton = lives_check_button_new();
 
@@ -21768,7 +21768,7 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
                              LIVES_GUI_CALLBACK(lives_cool_toggled),
                              NULL);
 
-  lives_cool_toggled(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton), NULL);
+  lives_cool_toggled(amixer->gang_checkbutton, NULL);
   after_amixer_gang_toggled(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton), amixer);
 
   lives_widget_grab_focus(close_button);

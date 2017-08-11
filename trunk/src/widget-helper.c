@@ -3505,6 +3505,32 @@ LIVES_INLINE boolean lives_toggle_button_set_mode(LiVESToggleButton *button, boo
 }
 
 
+LIVES_INLINE LiVESWidget *lives_toggle_tool_button_new() {
+  LiVESWidget *button = NULL;
+#ifdef GUI_GTK
+  button = LIVES_WIDGET(gtk_toggle_tool_button_new());
+#endif
+  return button;
+}
+
+
+LIVES_INLINE boolean lives_toggle_tool_button_get_active(LiVESToggleToolButton *button) {
+#ifdef GUI_GTK
+  return gtk_toggle_tool_button_get_active(button);
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_toggle_tool_button_set_active(LiVESToggleToolButton *button, boolean active) {
+#ifdef GUI_GTK
+  gtk_toggle_tool_button_set_active(button, active);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE LiVESWidget *lives_radio_button_new(LiVESSList *group) {
   LiVESWidget *button = NULL;
 #ifdef GUI_GTK
@@ -4260,6 +4286,18 @@ LIVES_INLINE LiVESToolItem *lives_tool_item_new(void) {
   LiVESToolItem *item = NULL;
 #ifdef GUI_GTK
   item = gtk_tool_item_new();
+#endif
+#ifdef GUI_QT
+  item = new LiVESToolItem;
+#endif
+  return item;
+}
+
+
+LIVES_INLINE LiVESToolItem *lives_separator_tool_item_new(void) {
+  LiVESToolItem *item = NULL;
+#ifdef GUI_GTK
+  item = gtk_separator_tool_item_new();
 #endif
 #ifdef GUI_QT
   item = new LiVESToolItem;
@@ -8827,7 +8865,7 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
   boolean *ret = (boolean *)user_data, active;
   if (!mainw->interactive) return;
   active = ((LIVES_IS_TOGGLE_BUTTON(tbutton) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbutton))) ||
-	    (LIVES_IS_TOGGLE_TOOL_BUTTON(tbutton) && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOO_BUTTON(tbutton))));
+            (LIVES_IS_TOGGLE_TOOL_BUTTON(tbutton) && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))));
   if (prefs->lamp_buttons) {
     if (active)
       lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
@@ -8839,7 +8877,7 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
 
 boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   // connect expose event to this
-  
+
   double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
   double rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
 
@@ -8848,6 +8886,9 @@ boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer 
   double scalex = 1.;
   double scaley = .8;
 
+  boolean active = ((LIVES_IS_TOGGLE_BUTTON(widget) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) ||
+                    (LIVES_IS_TOGGLE_TOOL_BUTTON(widget) && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(widget))));
+
   lives_painter_translate(cr, rwidth * (1. - scalex) / 2., rheight * (1. - scaley) / 2.);
 
   rwidth *= scalex;
@@ -8855,7 +8896,7 @@ boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer 
 
   // draw the inside
 
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) {
+  if (active) {
     lives_painter_set_source_rgba(cr, palette->light_green.red, palette->light_green.green,
                                   palette->light_green.blue, 1.);
   } else {
@@ -8942,9 +8983,7 @@ boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer 
 
   lives_painter_stroke(cr);
 
-  if ((LIVES_IS_TOGGLE_BUTTON(widget) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) ||
-      (LIVES_IS_TOGGLE_TOOL_BUTTON(widget) && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(widget)))
-      ) {
+  if (active) {
     lives_painter_set_source_rgba(cr, 1., 1., 1., .6);
 
     lives_painter_move_to(cr, rwidth / 4., rwidth / 4.);
@@ -8970,6 +9009,8 @@ void get_border_size(LiVESWidget *win, int *bx, int *by) {
   gdk_window_get_origin(lives_widget_get_xwindow(win), &wx, &wy);
   *bx = wx - rect.x;
   *by = wy - rect.y;
+  if (rect.x == 0) *bx = 0;
+  if (rect.y == 0) *by = 0;
 #endif
 #ifdef GUI_QT
   win->winId();
@@ -9066,6 +9107,32 @@ LiVESWidget *add_fill_to_box(LiVESBox *box) {
   }
 
   return widget;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *bar) {
+  LiVESWidget *spacer = NULL;
+#ifdef GUI_GTK
+  spacer = LIVES_WIDGET(lives_separator_tool_item_new());
+  gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(spacer), FALSE);
+  gtk_tool_item_set_homogeneous(LIVES_TOOL_ITEM(spacer), FALSE);
+  gtk_tool_item_set_expand(LIVES_TOOL_ITEM(spacer), widget_opts.expand != LIVES_EXPAND_NONE);
+  lives_toolbar_insert(LIVES_TOOLBAR(bar), LIVES_TOOL_ITEM(spacer), -1);
+#endif
+  return spacer;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *bar, const char *text) {
+  LiVESWidget *item = NULL;
+  widget_opts.last_label = NULL;
+#ifdef GUI_GTK
+  item = LIVES_WIDGET(lives_tool_item_new());
+  widget_opts.last_label = lives_label_new(text);
+  lives_container_add(LIVES_CONTAINER(item), widget_opts.last_label);
+  lives_toolbar_insert(bar, LIVES_TOOL_ITEM(item), -1);
+#endif
+  return item;
 }
 
 

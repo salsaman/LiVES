@@ -416,6 +416,7 @@ typedef GtkMenu                           LiVESMenu;
 typedef GtkMenuShell                      LiVESMenuShell;
 typedef GtkMenuItem                       LiVESMenuItem;
 typedef GtkMenuToolButton                 LiVESMenuToolButton;
+typedef GtkToggleToolButton               LiVESToggleToolButton;
 typedef GtkCheckMenuItem                  LiVESCheckMenuItem;
 typedef GtkImageMenuItem                  LiVESImageMenuItem;
 typedef GtkRadioMenuItem                  LiVESRadioMenuItem;
@@ -757,6 +758,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #endif
 
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
+#define LIVES_TOGGLE_TOOL_BUTTON(widget) GTK_TOGGLE_TOOL_BUTTON(widget)
 #define LIVES_TEXT_VIEW(widget) GTK_TEXT_VIEW(widget)
 #define LIVES_TEXT_BUFFER(widget) GTK_TEXT_BUFFER(widget)
 

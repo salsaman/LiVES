@@ -601,6 +601,13 @@ static boolean pre_init(void) {
   }
 #endif
 
+  prefs->audio_src = get_int_pref(PREF_AUDIO_SRC);
+
+  if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
+        capable->has_pulse_audio))) {
+    prefs->audio_src = AUDIO_SRC_INT;
+  }
+
   future_prefs->jack_opts = get_int_pref(PREF_JACK_OPTS);
   prefs->jack_opts = future_prefs->jack_opts;
 
@@ -671,6 +678,9 @@ static boolean pre_init(void) {
 
   prefs->max_modes_per_key = 0;
   mainw->debug = FALSE;
+
+  prefs->show_asrc = get_boolean_pref(PREF_SHOW_ASRC);
+  prefs->hfbwnp = get_boolean_pref(PREF_HFBWNP);
 
   mainw->next_free_alarm = 0;
 
@@ -893,13 +903,6 @@ static void lives_init(_ign_opts *ign_opts) {
   }
 
   prefs->rec_opts |= (REC_FPS + REC_FRAMES);
-
-  prefs->audio_src = get_int_pref(PREF_AUDIO_SRC);
-
-  if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
-        capable->has_pulse_audio))) {
-    prefs->audio_src = AUDIO_SRC_INT;
-  }
 
   mainw->new_clip = -1;
   mainw->record = FALSE;
@@ -1240,7 +1243,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->mt_load_fuzzy = FALSE;
 
     prefs->hide_framebar = FALSE;
-    
+
     //////////////////////////////////////////////////////////////////
 
     if (!mainw->foreign) {
@@ -3551,6 +3554,11 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->export_proj, mainw->current_file > 0);
   lives_widget_set_sensitive(mainw->import_proj, mainw->current_file == -1);
 
+  if (is_realtime_aplayer(prefs->audio_player)) {
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
+  }
+
   if (!mainw->foreign) {
     for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
          mainw->num_rendered_effects_test; i++)
@@ -3758,7 +3766,7 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->fade_aud_in, FALSE);
   lives_widget_set_sensitive(mainw->fade_aud_out, FALSE);
   lives_widget_set_sensitive(mainw->ins_silence, FALSE);
-  lives_widget_set_sensitive(mainw->loop_video, is_realtime_aplayer(prefs->audio_player == AUD_PLAYER_JACK));
+  lives_widget_set_sensitive(mainw->loop_video, is_realtime_aplayer(prefs->audio_player));
   if (!is_realtime_aplayer(prefs->audio_player)) lives_widget_set_sensitive(mainw->mute_audio, FALSE);
   lives_widget_set_sensitive(mainw->load_audio, FALSE);
   lives_widget_set_sensitive(mainw->load_subs, FALSE);
@@ -3778,6 +3786,10 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->import_proj, FALSE);
   lives_widget_set_sensitive(mainw->recaudio_sel, FALSE);
   lives_widget_set_sensitive(mainw->mt_menu, FALSE);
+
+  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
+
 
   if (mainw->current_file >= 0 && (mainw->playing_file == -1 || mainw->foreign)) {
     //  if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {

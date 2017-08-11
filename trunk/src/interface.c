@@ -152,6 +152,10 @@ xprocess *create_processing(const char *text) {
   widget_opts.non_modal = FALSE;
   widget_opts.no_gui = no_gui;
 
+  if (prefs->gui_monitor != 0) {
+    lives_window_set_screen(LIVES_WINDOW(procw->processing), mainw->mgeom[prefs->gui_monitor - 1].screen);
+  }
+
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), accel_group);
 
   if (prefs->show_gui) {

@@ -323,6 +323,7 @@ if (defined($ARGV[0])) {
                 &rc_set_if_not_set("prefix_dir", "/opt/$dyneversion/");
             }
 
+	    # NOTE: the following definitions must match with equivalent keys in preferences.h
             &rc_set_if_not_set("video_open_command", "$video_open_command");
             &rc_set_if_not_set("audio_play_command", "$audio_play_command");
             &rc_set_if_not_set("audio_player", $audio_player);
@@ -400,6 +401,10 @@ if (defined($ARGV[0])) {
             &rc_set_if_not_set("show_button_icons", "false");
 
             &rc_set_if_not_set("max_disp_vtracks", 5);
+
+	    &rc_set_if_not_set("show_audio_src", "true");
+
+	    &rc_set_if_not_set("hide_framebar_when_not_playing", "false");
 
             $workdir = &rc_get("tempdir");
             &write_bootstrap_file;

@@ -2671,7 +2671,7 @@ double lives_ce_update_timeline(int frame, double x) {
   if (!prefs->show_gui || lives_widget_get_allocation_width(mainw->vidbar) <= 0) {
     return 0.;
   }
-  
+
   if (mainw->current_file < 0 || cfile == NULL) {
     if (!prefs->hide_framebar) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");
@@ -2681,7 +2681,7 @@ double lives_ce_update_timeline(int frame, double x) {
   }
 
   if (x < 0.) x = 0.;
-  
+
   if (frame == 0) frame = calc_frame_from_time4(mainw->current_file, x);
 
   x = calc_time_from_frame(mainw->current_file, frame);
@@ -2689,7 +2689,7 @@ double lives_ce_update_timeline(int frame, double x) {
 
   lives_ruler_set_value(LIVES_RULER(mainw->hruler), x);
   lives_widget_queue_draw(mainw->hruler);
-  
+
   if (prefs->show_gui && !prefs->hide_framebar && cfile->frames > 0) {
     char *framecount;
     if (cfile->frames > 0) framecount = lives_strdup_printf("%9d/%d", frame, cfile->frames);
@@ -3199,6 +3199,7 @@ void find_when_to_stop(void) {
   else mainw->whentostop = STOP_ON_VID_END; // tada...
 }
 
+
 #define ASPECT_ALLOWANCE 0.005
 
 void minimise_aspect_delta(double aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height) {
@@ -3321,10 +3322,14 @@ boolean switch_aud_to_jack(void) {
     jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
   }
 
+  lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
+  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
+
   return TRUE;
 #endif
   return FALSE;
 }
+
 
 boolean switch_aud_to_pulse(void) {
 #ifdef HAVE_PULSE_AUDIO
@@ -3372,12 +3377,16 @@ boolean switch_aud_to_pulse(void) {
 
 #endif
 
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
+
     return retval;
   }
 
 #endif
   return FALSE;
 }
+
 
 void switch_aud_to_sox(boolean set_in_prefs) {
   prefs->audio_player = AUD_PLAYER_SOX;
@@ -3418,7 +3427,13 @@ void switch_aud_to_sox(boolean set_in_prefs) {
     pulse_shutdown();
   }
 #endif
+  pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
+
+  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
+
 }
+
 
 void switch_aud_to_mplayer(boolean set_in_prefs) {
   int i;
@@ -3445,30 +3460,10 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
   }
 
-#ifdef ENABLE_JACK
-  if (mainw->jackd_read != NULL) {
-    jack_close_device(mainw->jackd_read);
-    mainw->jackd_read = NULL;
-  }
+  pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
 
-  if (mainw->jackd != NULL) {
-    jack_close_device(mainw->jackd);
-    mainw->jackd = NULL;
-  }
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed_read != NULL) {
-    pulse_close_client(mainw->pulsed_read);
-    mainw->pulsed_read = NULL;
-  }
-
-  if (mainw->pulsed != NULL) {
-    pulse_close_client(mainw->pulsed);
-    mainw->pulsed = NULL;
-    pulse_shutdown();
-  }
-#endif
+  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
 }
 
 void switch_aud_to_mplayer2(boolean set_in_prefs) {
@@ -3496,30 +3491,10 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
   }
 
-#ifdef ENABLE_JACK
-  if (mainw->jackd_read != NULL) {
-    jack_close_device(mainw->jackd_read);
-    mainw->jackd_read = NULL;
-  }
+  pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
 
-  if (mainw->jackd != NULL) {
-    jack_close_device(mainw->jackd);
-    mainw->jackd = NULL;
-  }
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed_read != NULL) {
-    pulse_close_client(mainw->pulsed_read);
-    mainw->pulsed_read = NULL;
-  }
-
-  if (mainw->pulsed != NULL) {
-    pulse_close_client(mainw->pulsed);
-    mainw->pulsed = NULL;
-    pulse_shutdown();
-  }
-#endif
+  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
 }
 
 boolean prepare_to_play_foreign(void) {

@@ -611,6 +611,13 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
       else
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rintaudio), TRUE);
     }
+    lives_signal_handler_block(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
+    lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
+    lives_signal_handler_unblock(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
+
+    lives_signal_handler_block(mainw->int_audio_checkbutton, mainw->int_audio_func);
+    lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
+    lives_signal_handler_unblock(mainw->int_audio_checkbutton, mainw->int_audio_func);
   }
   if (!strcmp(prefidx, PREF_SEPWIN_STICKY)) {
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sticky), newval);
@@ -619,6 +626,43 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
     prefs->mt_exit_render = newval;
     if (prefsw != NULL)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
+  }
+  if (!strcmp(prefidx, PREF_SHOW_ASRC)) {
+    prefs->show_asrc = newval;
+    set_boolean_pref(PREF_SHOW_ASRC, prefs->show_asrc);
+    if (prefsw != NULL)
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_show_asrc), prefs->show_asrc);
+    if (!newval) {
+      lives_widget_hide(mainw->int_audio_checkbutton);
+      lives_widget_hide(mainw->ext_audio_checkbutton);
+      lives_widget_hide(mainw->l1_tb);
+      lives_widget_hide(mainw->l2_tb);
+      lives_widget_hide(mainw->l3_tb);
+    } else {
+      lives_widget_show(mainw->int_audio_checkbutton);
+      lives_widget_show(mainw->ext_audio_checkbutton);
+      lives_widget_show(mainw->l1_tb);
+      lives_widget_show(mainw->l2_tb);
+      lives_widget_show(mainw->l3_tb);
+    }
+  }
+  if (!strcmp(prefidx, PREF_HFBWNP)) {
+    prefs->hfbwnp = newval;
+    set_boolean_pref(PREF_HFBWNP, prefs->hfbwnp);
+    if (prefsw != NULL)
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_hfbwnp), prefs->hfbwnp);
+    if (newval) {
+      if (mainw->playing_file == -1) {
+        lives_widget_hide(mainw->framebar);
+      }
+    } else {
+      if (mainw->playing_file == -1 || (mainw->playing_file > -1 && !prefs->hide_framebar &&
+                                        (!mainw->fs || (mainw->vpp != NULL &&
+                                            !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
+                                            !(mainw->vpp->capabilities & VPP_CAN_RESIZE))))) {
+        lives_widget_show(mainw->framebar);
+      }
+    }
   }
 
   if (prefsw != NULL) {
@@ -763,6 +807,8 @@ boolean apply_prefs(boolean skip_warn) {
   boolean mouse_scroll = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mouse_scroll));
   boolean ce_maxspect = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_ce_maxspect));
   boolean show_button_icons = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_button_icons));
+  boolean show_asrc = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_show_asrc));
+  boolean hfbwnp = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_hfbwnp));
 
   int fsize_to_warn = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_fsize));
   int dl_bwidth = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_bwidth));
@@ -1088,6 +1134,14 @@ boolean apply_prefs(boolean skip_warn) {
   if (show_button_icons != (widget_opts.show_button_images)) {
     widget_opts.show_button_images = show_button_icons;
     set_boolean_pref(PREF_SHOW_BUTTON_ICONS, show_button_icons);
+  }
+
+  if (show_asrc != (prefs->show_asrc)) {
+    pref_factory_bool(PREF_SHOW_ASRC, show_asrc);
+  }
+
+  if (hfbwnp != (prefs->hfbwnp)) {
+    pref_factory_bool(PREF_HFBWNP, hfbwnp);
   }
 
   if (ce_maxspect != (prefs->ce_maxspect)) {
@@ -2539,6 +2593,19 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->checkbutton_button_icons =
     lives_standard_check_button_new(_("Show icons in buttons"), TRUE, LIVES_BOX(hbox), NULL);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_button_icons), widget_opts.show_button_images);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->checkbutton_hfbwnp =
+    lives_standard_check_button_new(_("Hide framebar when not playing"), TRUE, LIVES_BOX(hbox), NULL);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_hfbwnp), prefs->hfbwnp);
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  prefsw->checkbutton_show_asrc =
+    lives_standard_check_button_new(_("Show audio source in toolbar"), TRUE, LIVES_BOX(hbox), NULL);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_show_asrc), prefs->show_asrc);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -4755,6 +4822,10 @@ _prefsw *create_prefs_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->ce_thumbs), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_button_icons), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_hfbwnp), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_asrc), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rb_startup_ce), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);

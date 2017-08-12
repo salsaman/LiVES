@@ -1,4 +1,4 @@
-     // preferences.c
+// preferences.c
 // LiVES (lives-exe)
 // (c) G. Finch 2004 - 2017
 // released under the GNU GPL 3 or later
@@ -696,8 +696,8 @@ void pref_factory_float(const char *prefidx, float newval) {
     set_double_pref(PREF_AHOLD_THRESHOLD, prefs->ahold_threshold);
   }
 
- done_float:
-  
+done_float:
+
   if (prefsw != NULL) {
     prefsw->ignore_apply = FALSE;
   }
@@ -3348,9 +3348,10 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
   add_fill_to_box(LIVES_BOX(hbox));
-  prefsw->spinbutton_ext_aud_thresh = lives_standard_spin_button_new(_("Delay recording playback start until external audio volume reaches "), FALSE,
-								     prefs->ahold_threshold * 100., 0., 100., 1., 10., 0,
-								     LIVES_BOX(hbox), NULL);
+  prefsw->spinbutton_ext_aud_thresh = lives_standard_spin_button_new(_("Delay recording playback start until external audio volume reaches "),
+                                      FALSE,
+                                      prefs->ahold_threshold * 100., 0., 100., 1., 10., 0,
+                                      LIVES_BOX(hbox), NULL);
 
   label = lives_standard_label_new("%");
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
@@ -4971,7 +4972,8 @@ _prefsw *create_prefs_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rclips), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->raudio), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rextaudio), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ext_aud_thresh), LIVES_WIDGET_VALUE_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ext_aud_thresh), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_rec_gb), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),

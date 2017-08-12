@@ -10,8 +10,9 @@ Reset to correct playback position when stop is pressed during / after pause (mu
 Increase size of playback area in multitrack mode.
 Increase preview window size for video part open.
 Add quick transcode menu option (beta).
+Keep showing framebar when not playing (can be overriden in prefs).
+Show audio source in framebar (overridden by pref).
 
-	
 
 
 Version 2.8.7 (29 June 2017)

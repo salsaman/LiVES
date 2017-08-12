@@ -1640,12 +1640,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
 #ifdef HAVE_PULSE_AUDIO
 
-  
+
   // start audio recording now
   if (mainw->pulsed_read != NULL) {
     pulse_driver_uncork(mainw->pulsed_read);
   }
-  
+
   if (mainw->record && !mainw->record_paused && prefs->audio_src == AUDIO_SRC_EXT && prefs->ahold_threshold > 0.) {
     do_threaded_dialog(_("Waiting for external audio"), TRUE);
     while (mainw->pulsed_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
@@ -2737,7 +2737,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
     lives_widget_set_can_focus_and_default(cancelbutton);
 
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group,
-				 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
     lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_dth_cancel_clicked),

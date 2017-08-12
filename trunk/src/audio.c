@@ -461,7 +461,7 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
   // convert 16 bit audio to float audio
 
   // returns abs(maxvol heard)
-  
+
   register float svolp, svoln;
 
 #ifdef ENABLE_OIL

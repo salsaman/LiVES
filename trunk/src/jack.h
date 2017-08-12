@@ -1,6 +1,6 @@
 // jack.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2013
+// (c) G. Finch 2005 - 2017
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -8,9 +8,6 @@
 #define HAS_LIVES_JACK_H
 
 #ifdef ENABLE_JACK
-
-
-
 
 /////////////////////////////////////////////////////////////////
 // Transport
@@ -27,7 +24,6 @@ int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *po
 void jack_pb_start(void);  /** start playback transport master */
 void jack_pb_stop(void);  /** pause playback transport master */
 
-
 ////////////////////////////////////////////////////////////////////////////
 // Audio
 
@@ -38,9 +34,7 @@ void jack_pb_stop(void);  /** pause playback transport master */
 
 #define ERR_PORT_NOT_FOUND 10
 
-
 typedef jack_nframes_t nframes_t;
-
 
 
 // let's hope these are well above the standard jack transport states...
@@ -111,12 +105,12 @@ typedef struct {
   volatile int read_abuf;
 
   volatile int astream_fd;
-} jack_driver_t;
 
+  volatile float abs_maxvol_heard;
+} jack_driver_t;
 
 #define JACK_MAX_OUTDEVICES 10
 #define JACK_MAX_INDEVICES 10
-
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -137,7 +131,6 @@ boolean jack_try_reconnect(void);
 
 void jack_aud_pb_ready(int fileno);
 
-
 // utils
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
 uint64_t lives_jack_get_time(jack_driver_t *, boolean absolute); ///< get time from jack, in 10^-8 seconds
@@ -150,8 +143,6 @@ uint64_t jack_transport_get_time(void);
 
 double lives_jack_get_pos(jack_driver_t *);
 
-
 #endif
-
 
 #endif

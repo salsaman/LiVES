@@ -708,8 +708,8 @@ static int audio_process(nframes_t nframes, void *arg) {
 
             } else {
               for (i = 0; i < jackd->num_output_channels; i++) {
-                sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite,
-                                      jackd->num_output_channels, afile->signed_endian & AFORM_UNSIGNED, FALSE, vol);
+                jackd->abs_maxvol_heard = sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite,
+								jackd->num_output_channels, afile->signed_endian & AFORM_UNSIGNED, FALSE, vol);
               }
 
               if (has_audio_filters(AF_TYPE_ANY) && jackd->playing_file != mainw->ascrap_file) {
@@ -1637,6 +1637,7 @@ int jack_audio_init(void) {
     jackd->msgq = NULL;
     jackd->num_calls = 0;
     jackd->astream_fd = -1;
+    jackd->abs_maxvol_heard = 0.;
     jackd->jackd_died = FALSE;
     jackd->num_output_channels = 2;
     jackd->play_when_stopped = FALSE;
@@ -1669,6 +1670,7 @@ int jack_audio_read_init(void) {
     jackd->msgq = NULL;
     jackd->num_calls = 0;
     jackd->astream_fd = -1;
+    jackd->abs_maxvol_heard = 0.;
     jackd->jackd_died = FALSE;
     jackd->num_input_channels = 2;
     jackd->play_when_stopped = FALSE;

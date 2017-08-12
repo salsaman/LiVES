@@ -1613,6 +1613,17 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   // MUST do re-seek after setting origsecs in order to set our clock properly
   // re-seek to new playback start
 #ifdef ENABLE_JACK
+  if (mainw->record && !mainw->record_paused && prefs->audio_src == AUDIO_SRC_EXT && prefs->ahold_threshold > 0.) {
+    do_threaded_dialog(_("Waiting for external audio"), TRUE);
+    while (mainw->jackd_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
+      lives_usleep(prefs->sleep_time);
+      threaded_dialog_spin(0.);
+      lives_widget_context_update();
+    }
+    end_threaded_dialog();
+    if (mainw->cancelled != CANCEL_NONE) return FALSE;
+  }
+
   if (prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd != NULL && mainw->jackd->playing_file > -1) {
     if (!jack_audio_seek_frame(mainw->jackd, mainw->play_start)) {

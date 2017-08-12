@@ -534,7 +534,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 break;
               }
 
-              pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i, numFramesToWrite, pulsed->out_achans, FALSE, FALSE, 1.0);
+              pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i, numFramesToWrite, pulsed->out_achans, FALSE,
+                                         FALSE, 1.0);
             }
 
             if (memok) {
@@ -891,7 +892,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     // or stream it to the video playback plugin
 
     if ((prefs->audio_src == AUDIO_SRC_EXT && !mainw->video_seek_ready && prefs->ahold_threshold > pulsed->abs_maxvol_heard)
-	|| has_audio_filters(AF_TYPE_A) || mainw->ext_audio) {
+        || has_audio_filters(AF_TYPE_A) || mainw->ext_audio) {
       // convert to float, apply any analysers
       boolean memok = TRUE;
       float **fltbuf = (float **)lives_malloc(pulsed->in_achans * sizeof(float *));
@@ -913,7 +914,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
         }
 
         pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)(data) + i, xnframes, pulsed->in_achans, FALSE, FALSE, 1.0);
-	
+
         if (mainw->audio_frame_buffer != NULL && prefs->audio_src == AUDIO_SRC_EXT) {
           // if we have audio triggered gens., push audio to it
           pthread_mutex_lock(&mainw->abuf_frame_mutex);

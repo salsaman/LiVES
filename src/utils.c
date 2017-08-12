@@ -2669,7 +2669,7 @@ double lives_ce_update_timeline(int frame, double x) {
   // if frame == 0 then x must be a time value
 
   static int last_current_file = -1;
-  
+
   if (!prefs->show_gui || lives_widget_get_allocation_width(mainw->vidbar) <= 0) {
     return 0.;
   }

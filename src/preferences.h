@@ -1,6 +1,6 @@
 // preferences.h
 // LiVES (lives-exe)
-// (c) G. Finch (salsaman@gmail.com) 2004 - 2016
+// (c) G. Finch (salsaman_lives@gmail.com) 2004 - 2017
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -377,6 +377,8 @@ typedef struct {
   boolean hfbwnp;
 
   boolean show_asrc;
+
+  float ahold_threshold;
 } _prefs;
 
 enum {

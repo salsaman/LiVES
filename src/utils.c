@@ -2668,6 +2668,8 @@ double lives_ce_update_timeline(int frame, double x) {
 
   // if frame == 0 then x must be a time value
 
+  static int last_current_file = -1;
+  
   if (!prefs->show_gui || lives_widget_get_allocation_width(mainw->vidbar) <= 0) {
     return 0.;
   }
@@ -2708,6 +2710,13 @@ double lives_ce_update_timeline(int frame, double x) {
     }
   }
 
+  if (mainw->playing_file == -1 && !prefs->hide_framebar && mainw->current_file != last_current_file) {
+    lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
+    lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
+  }
+
+  last_current_file = mainw->current_file;
   return x;
 }
 

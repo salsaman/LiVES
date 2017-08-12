@@ -1640,9 +1640,22 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
 #ifdef HAVE_PULSE_AUDIO
 
+  
   // start audio recording now
-  if (mainw->pulsed_read != NULL) pulse_driver_uncork(mainw->pulsed_read);
-
+  if (mainw->pulsed_read != NULL) {
+    pulse_driver_uncork(mainw->pulsed_read);
+  }
+  
+  //#define TEST_PLAYHOLD
+#ifdef TEST_PLAYHOLD
+  prefs->ahold_threshold = .1;
+#endif
+  if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT) {
+    while (mainw->pulsed_read->abs_maxvol_heard < prefs->ahold_threshold) {
+      lives_usleep(prefs->sleep_time);
+    }
+  }
+  
   if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed != NULL && mainw->pulsed->playing_file > -1) {
     if (!pulse_audio_seek_frame(mainw->pulsed, mainw->play_start)) {

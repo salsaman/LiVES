@@ -2233,6 +2233,7 @@ void play_file(void) {
   if (!mainw->preview || !cfile->opening) {
     enable_record();
     desensitize();
+    lives_widget_set_sensitive(mainw->spinbutton_pb_fps, TRUE);
   }
 
   if (mainw->record) {
@@ -2981,6 +2982,8 @@ void play_file(void) {
     lives_widget_set_sensitive(mainw->stop, FALSE);
     lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
   }
+
+  lives_widget_set_sensitive(mainw->spinbutton_pb_fps, FALSE);
 
   if (mainw->multitrack == NULL) {
     // update screen for internal players

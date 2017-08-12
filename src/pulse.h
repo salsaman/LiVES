@@ -101,6 +101,10 @@ typedef struct {
   uint64_t chunk_size;
 
   volatile int astream_fd;
+
+  volatile float abs_maxvol_heard;
+
+  volatile boolean waitforop;
 } pulse_driver_t;
 
 

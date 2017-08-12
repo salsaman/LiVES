@@ -534,7 +534,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 break;
               }
 
-              sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i, numFramesToWrite, pulsed->out_achans, FALSE, FALSE, 1.0);
+              pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i, numFramesToWrite, pulsed->out_achans, FALSE, FALSE, 1.0);
             }
 
             if (memok) {
@@ -659,7 +659,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               // write generated audio to ascrap_file
               size_t rbytes = numFramesToWrite * mainw->files[mainw->ascrap_file]->achans *
                               mainw->files[mainw->ascrap_file]->asampsize >> 3;
-              //pulse_flush_read_data(pulsed, mainw->ascrap_file, nbytes, mainw->files[mainw->ascrap_file]->signed_endian & AFORM_BIG_ENDIAN, buf);
+              pulse_flush_read_data(pulsed, mainw->ascrap_file, nbytes, mainw->files[mainw->ascrap_file]->signed_endian & AFORM_BIG_ENDIAN, buf);
               mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
             }
           }
@@ -856,7 +856,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
   size_t rbytes = nbytes;
 
   if (!pulsed->in_use || (mainw->playing_file < 0 && prefs->audio_src == AUDIO_SRC_EXT) || mainw->effects_paused) {
-    if (pulsed->playing_file == -1) {
+    if (pulsed->playing_file == -1 && prefs->audio_src == AUDIO_SRC_INT) {
       pa_operation *paop = pa_stream_cork(pstream, 1, NULL, NULL);
       pa_operation_unref(paop);
     }
@@ -890,7 +890,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     // we may wish to analyse the audio for example, or push it to a video generator
     // or stream it to the video playback plugin
 
-    if (has_audio_filters(AF_TYPE_A) || mainw->ext_audio) {
+    if (1 || has_audio_filters(AF_TYPE_A) || mainw->ext_audio) {
       // convert to float, apply any analysers
       boolean memok = TRUE;
       float **fltbuf = (float **)lives_malloc(pulsed->in_achans * sizeof(float *));
@@ -910,8 +910,10 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
           }
           break;
         }
-        sample_move_d16_float(fltbuf[i], (short *)(data) + i, xnframes, pulsed->in_achans, FALSE, FALSE, 1.0);
 
+        pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)(data) + i, xnframes, pulsed->in_achans, FALSE, FALSE, 1.0);
+	g_print("VAL 1: %p %f\n", pulsed, pulsed->abs_maxvol_heard);
+	
         if (mainw->audio_frame_buffer != NULL && prefs->audio_src == AUDIO_SRC_EXT) {
           // if we have audio triggered gens., push audio to it
           pthread_mutex_lock(&mainw->abuf_frame_mutex);
@@ -945,6 +947,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
   if (pulsed->playing_file == -1 || (mainw->record && mainw->record_paused)) {
     pa_stream_drop(pulsed->pstream);
     if (pulsed->playing_file == -1) {
+      // This is NECESSARY to reduce / eliminate huge latencies.
       pa_operation *paop = pa_stream_flush(pulsed->pstream, NULL, NULL); // if not recording, flush the rest of audio (to reduce latency)
       pa_operation_unref(paop);
     }
@@ -1021,6 +1024,8 @@ int pulse_audio_init(void) {
   pulsed.num_calls = 0;
   pulsed.chunk_size = 0;
   pulsed.astream_fd = -1;
+  pulsed.abs_maxvol_heard = 0.;
+  pulsed.waitforop = FALSE;
   pulsed.pulsed_died = FALSE;
   pulsed.aPlayPtr = (audio_buffer_t *)lives_malloc(sizeof(audio_buffer_t));
   pulsed.aPlayPtr->data = NULL;
@@ -1058,6 +1063,8 @@ int pulse_audio_read_init(void) {
   pulsed_reader.num_calls = 0;
   pulsed_reader.chunk_size = 0;
   pulsed_reader.astream_fd = -1;
+  pulsed_reader.abs_maxvol_heard = 0.;
+  pulsed_reader.waitforop = FALSE;
   pulsed_reader.pulsed_died = FALSE;
   pulsed_reader.in_achans = PA_ACHANS;
   pulsed_reader.in_asamps = PA_SAMPSIZE;
@@ -1194,6 +1201,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pdriver->frames_written = 0;
     pdriver->usec_start = 0;
     pdriver->in_use = FALSE;
+    pdriver->abs_maxvol_heard = 0.;
     prb = 0;
 
     pa_stream_set_read_callback(pdriver->pstream, pulse_audio_read_process, pdriver);
@@ -1211,11 +1219,33 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 }
 
 
+
+static void paop_done(pa_stream *s, int success, void *userdata) {
+  pulse_driver_t *pdriver = (pulse_driver_t *)userdata;
+  pdriver->waitforop = FALSE;
+}
+
+
 void pulse_driver_uncork(pulse_driver_t *pdriver) {
-  pa_operation *paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
+  int alarm_handle;
+  pa_operation *paop;
+
+  pdriver->abs_maxvol_heard = 0.;
+
+  pdriver->waitforop = TRUE;
+
+  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+
+  paop = pa_stream_flush(pdriver->pstream, paop_done, pdriver);
+
+  while (!pdriver->waitforop && !lives_alarm_get(alarm_handle)) {
+    lives_usleep(prefs->sleep_time);
+  }
+
+  lives_alarm_clear(alarm_handle);
+
   pa_operation_unref(paop);
 
-  // TODO: wait for flush callback before uncorking ?
   pa_stream_cork(pdriver->pstream, 0, NULL, NULL);
 }
 

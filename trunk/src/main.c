@@ -1244,6 +1244,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->hide_framebar = FALSE;
 
+    prefs->ahold_threshold = 0.;
+    
     //////////////////////////////////////////////////////////////////
 
     if (!mainw->foreign) {

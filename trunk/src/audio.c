@@ -457,17 +457,21 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 }
 
 
-void sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian, float vol) {
+float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian, float vol) {
   // convert 16 bit audio to float audio
 
+  // returns abs(maxvol heard)
+  
   register float svolp, svoln;
 
 #ifdef ENABLE_OIL
   float val = 0.; // set a value to stop valgrind complaining
+  float maxval = 0.;
   double xn, xp, xa;
   double y = 0.f;
 #else
   register float val;
+  register float maxval = 0.;
   register short valss;
 #endif
 
@@ -510,9 +514,13 @@ void sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t s
 #endif
     }
 
+    if (val > 0. && val > maxval) maxval = val;
+    else if (val < 0. && -val > maxval) maxval = -val;
+
     *(dst++) = val;
     src += src_skip;
   }
+  return maxval;
 }
 
 

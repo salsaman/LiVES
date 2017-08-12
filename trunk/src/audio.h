@@ -157,7 +157,7 @@ void sample_move_d16_d16(short *dst, short *src,
 void sample_move_d16_d8(uint8_t *dst, short *src,
                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
 
-void sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian, float vol);
+float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian, float vol);
 
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned,
                               boolean swap_endian, boolean float_interleaved, float vol); ///< returns frames output

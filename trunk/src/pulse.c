@@ -890,7 +890,8 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     // we may wish to analyse the audio for example, or push it to a video generator
     // or stream it to the video playback plugin
 
-    if (1 || has_audio_filters(AF_TYPE_A) || mainw->ext_audio) {
+    if ((prefs->audio_src == AUDIO_SRC_EXT && !mainw->video_seek_ready && prefs->ahold_threshold > pulsed->abs_maxvol_heard)
+	|| has_audio_filters(AF_TYPE_A) || mainw->ext_audio) {
       // convert to float, apply any analysers
       boolean memok = TRUE;
       float **fltbuf = (float **)lives_malloc(pulsed->in_achans * sizeof(float *));
@@ -912,7 +913,6 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
         }
 
         pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)(data) + i, xnframes, pulsed->in_achans, FALSE, FALSE, 1.0);
-	g_print("VAL 1: %p %f\n", pulsed, pulsed->abs_maxvol_heard);
 	
         if (mainw->audio_frame_buffer != NULL && prefs->audio_src == AUDIO_SRC_EXT) {
           // if we have audio triggered gens., push audio to it

@@ -557,6 +557,7 @@ typedef struct {
   LiVESWidget *checkbutton_start_ajack;
   LiVESWidget *checkbutton_afollow;
   LiVESWidget *checkbutton_aclips;
+  LiVESWidget *spinbutton_ext_aud_thresh;
   LiVESWidget *spinbutton_mt_def_width;
   LiVESWidget *spinbutton_mt_def_height;
   LiVESWidget *spinbutton_mt_def_fps;
@@ -742,7 +743,6 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_CURRENT_AUTOTRANS "current_autotrans"
 #define PREF_DEF_AUTOTRANS "def_autotrans"  // readonly
 
-
 ////////////////////// utf8 values
 
 #define PREF_OMC_MIDI_FNAME "omc_midi_fname"
@@ -848,19 +848,16 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_SAVE_DIRECTORIES "save_directories"
 #define PREF_CONSERVE_SPACE "conserve_space"
 
-
-
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"
 
 #define PREF_DEFAULT_FPS "default_fps"
 
-
+///////// float values
+#define PREF_AHOLD_THRESHOLD "ahold_threshold"
 
 ////////// list values
 #define PREF_DISABLED_DECODERS "disabled_decoders"
-
-
 
 // defaults (readonly)
 /////////////// string values
@@ -868,10 +865,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_MPLAYER_AUDIO_COMMAND "mplayer_audio_command"
 #define PREF_MPLAYER2_AUDIO_COMMAND "mplayer2_audio_command"
 
-
-
 void pref_factory_bool(const char *prefidx, boolean newval);
 void pref_factory_int(const char *prefidx, int newval);
+void pref_factory_float(const char *prefidx, float newval);
 void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval);
 
 

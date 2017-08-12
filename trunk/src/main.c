@@ -1244,7 +1244,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->hide_framebar = FALSE;
 
-    prefs->ahold_threshold = 0.;
+    prefs->ahold_threshold = get_double_pref(PREF_AHOLD_THRESHOLD);
     
     //////////////////////////////////////////////////////////////////
 

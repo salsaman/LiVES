@@ -1646,16 +1646,17 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     pulse_driver_uncork(mainw->pulsed_read);
   }
   
-  //#define TEST_PLAYHOLD
-#ifdef TEST_PLAYHOLD
-  prefs->ahold_threshold = .1;
-#endif
-  if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT) {
-    while (mainw->pulsed_read->abs_maxvol_heard < prefs->ahold_threshold) {
+  if (mainw->record && !mainw->record_paused && prefs->audio_src == AUDIO_SRC_EXT && prefs->ahold_threshold > 0.) {
+    do_threaded_dialog(_("Waiting for external audio"), TRUE);
+    while (mainw->pulsed_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
       lives_usleep(prefs->sleep_time);
+      threaded_dialog_spin(0.);
+      lives_widget_context_update();
     }
+    end_threaded_dialog();
+    if (mainw->cancelled != CANCEL_NONE) return FALSE;
   }
-  
+
   if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed != NULL && mainw->pulsed->playing_file > -1) {
     if (!pulse_audio_seek_frame(mainw->pulsed, mainw->play_start)) {
@@ -2734,6 +2735,9 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
     lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), cancelbutton, LIVES_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default(cancelbutton);
+
+    lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group,
+				 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
     lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_dth_cancel_clicked),

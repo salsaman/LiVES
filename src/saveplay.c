@@ -5355,7 +5355,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   int retval;
   int new_file, clipnum = 0;
   int maxframe;
-
+  int last_good_file = -1;
+  
   boolean last_was_normal_file = FALSE;
   boolean is_scrap;
   boolean is_ascrap;
@@ -5395,7 +5396,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 
-
   mainw->is_ready = TRUE;
   do_threaded_dialog(_("Recovering files"), FALSE);
   d_print(_("Recovering files..."));
@@ -5430,7 +5430,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       break;
     }
 
-
     memset(buff + strlen(buff) - strlen("\n"), 0, 1);
 
     if (!strcmp(buff + strlen(buff) - 1, "*")) {
@@ -5458,7 +5457,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
     } else {
       // load single file
-
       if (!strncmp(buff, "scrap|", 6)) {
         is_scrap = TRUE;
         buffptr = buff + 6;
@@ -5495,7 +5493,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         d_print_failed();
         return TRUE;
       }
-      // TODO - dirsep
       if (strstr(buffptr, "/clips/")) {
         char **array;
         threaded_dialog_spin(0.);
@@ -5594,9 +5591,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         // read the playback fps, play frame, and name
         threaded_dialog_spin(0.);
 
-
         open_set_file(mainw->set_name, ++clipnum);
-
 
         threaded_dialog_spin(0.);
 
@@ -5605,7 +5600,15 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         if (mainw->current_file < 1) continue;
 
         get_total_time(cfile);
-        if (cfile->achans) cfile->aseek_pos = (int64_t)((double)(cfile->frameno - 1.) / cfile->fps * cfile->arate *
+
+	if (CLIP_TOTAL_TIME(mainw->current_file) == 0.) {
+	  close_current_file(last_good_file);
+	  continue;
+	}
+
+	last_good_file = mainw->current_file;
+	
+	if (cfile->achans) cfile->aseek_pos = (int64_t)((double)(cfile->frameno - 1.) / cfile->fps * cfile->arate *
                                                 cfile->achans * (cfile->asampsize / 8));
 
         if (cfile->needs_update) {
@@ -5640,7 +5643,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           reget_afilesize(mainw->current_file);
           mainw->multitrack = multi;
           get_total_time(cfile);
-          mainw->current_file = mainw->multitrack->render_file;
+	  mainw->current_file = mainw->multitrack->render_file;
           mt_init_clips(mainw->multitrack, current_file, TRUE);
           lives_widget_context_update();
           mt_clip_select(mainw->multitrack, TRUE);

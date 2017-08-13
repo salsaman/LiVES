@@ -4138,7 +4138,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
       }
       if (rename_mode) {
         LiVESList *nmlist = NULL;
-        char *xname = ensure_extension(name, ".script");
+        char *xname = ensure_extension(name, LIVES_FILE_EXT_RFX_SCRIPT);
 
         if (name != NULL && lives_list_find((nmlist = get_script_list(status)), xname) != NULL) {
           do_blocking_error_dialog(_("\n\nThere is already a test script with this name.\nScript name must be unique.\n"));

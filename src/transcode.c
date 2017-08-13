@@ -192,160 +192,160 @@ boolean transcode(int start, int end) {
       // and reordering/resampling/resizing if necessary
 
       if (mainw->multitrack == NULL && mainw->event_list != NULL) {
-	if (!new_clip) {
-	  // this is needed in case we render to same clip, and then undo ///////
-	  if (cfile->event_list_back != NULL) event_list_free(cfile->event_list_back);
-	  cfile->event_list_back = mainw->event_list;
-	  ///////////////////////////////////////////////////////////////////////
-	} else event_list_free(mainw->event_list);
+        if (!new_clip) {
+          // this is needed in case we render to same clip, and then undo ///////
+          if (cfile->event_list_back != NULL) event_list_free(cfile->event_list_back);
+          cfile->event_list_back = mainw->event_list;
+          ///////////////////////////////////////////////////////////////////////
+        } else event_list_free(mainw->event_list);
       }
 
-    goto tr_err:
-  }
+goto tr_err:
+    }
 #endif
-  //av_log_set_level(AV_LOG_FATAL);
-  mainw->rowstride_alignment_hint = 16;
+    //av_log_set_level(AV_LOG_FATAL);
+    mainw->rowstride_alignment_hint = 16;
 
-  // create a frame layer,
-  frame_layer = weed_layer_new();
-  weed_set_int_value(frame_layer, WEED_LEAF_CLIP, mainw->current_file);
+    // create a frame layer,
+    frame_layer = weed_layer_new();
+    weed_set_int_value(frame_layer, WEED_LEAF_CLIP, mainw->current_file);
 
-  // need img_ext for pulling the frame
-  img_ext = get_image_ext_for_type(cfile->img_type);
+    // need img_ext for pulling the frame
+    img_ext = get_image_ext_for_type(cfile->img_type);
 
-  do_threaded_dialog(msg, TRUE);
+    do_threaded_dialog(msg, TRUE);
 
-  // encoding loop
-  for (i = start; i <= end; i++) {
-    // set the frame number to pull
-    weed_set_int_value(frame_layer, WEED_LEAF_FRAME, i);
+    // encoding loop
+    for (i = start; i <= end; i++) {
+      // set the frame number to pull
+      weed_set_int_value(frame_layer, WEED_LEAF_FRAME, i);
 
-    // - pull next frame (thread)
-    pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)(currticks = lives_get_current_ticks(0, 0)));
+      // - pull next frame (thread)
+      pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)(currticks = lives_get_current_ticks(0, 0)));
 
-    // TODO - allow user to select apply / dont apply effects
-    frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);
+      // TODO - allow user to select apply / dont apply effects
+      frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);
 
-    if (audio) {
-      // - read 1 frame worth of audio, to float, send
-      mainw->read_failed = FALSE;
-      in_bytes = lives_read_buffered(fd, abuff, (size_t)spf * cfile->achans * (cfile->asampsize >> 3), TRUE);
-      if (mainw->read_failed || in_bytes < 0) {
-        error = TRUE;
-        goto tr_err;
-      }
-
-      if (in_bytes == 0) {
-        // eof, flush audio
-        // exit_screen() will flush anything left over
-        (*mainw->vpp->render_audio_frame_float)(NULL, 0);
-      } else {
-        nsamps = in_bytes / cfile->achans / (cfile->asampsize >> 3);
-
-        for (j = 0; j < cfile->achans; j++) {
-          // convert to float
-          if (cfile->asampsize == 16) {
-            sample_move_d16_float(fltbuf[j], (short *)abuff, (uint64_t)nsamps, cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian,
-                                  1.0);
-          } else {
-            sample_move_d8_d16(sbuff, (uint8_t *)abuff, (uint64_t)nsamps, in_bytes,
-                               1.0, cfile->achans, cfile->achans, !asigned ? SWAP_U_TO_S : 0);
-            sample_move_d16_float(fltbuf[j], sbuff, (uint64_t)nsamps, cfile->achans, AFORM_SIGNED, FALSE, 1.0);
-          }
+      if (audio) {
+        // - read 1 frame worth of audio, to float, send
+        mainw->read_failed = FALSE;
+        in_bytes = lives_read_buffered(fd, abuff, (size_t)spf * cfile->achans * (cfile->asampsize >> 3), TRUE);
+        if (mainw->read_failed || in_bytes < 0) {
+          error = TRUE;
+          goto tr_err;
         }
 
-        (*mainw->vpp->render_audio_frame_float)(fltbuf, nsamps);
+        if (in_bytes == 0) {
+          // eof, flush audio
+          // exit_screen() will flush anything left over
+          (*mainw->vpp->render_audio_frame_float)(NULL, 0);
+        } else {
+          nsamps = in_bytes / cfile->achans / (cfile->asampsize >> 3);
+
+          for (j = 0; j < cfile->achans; j++) {
+            // convert to float
+            if (cfile->asampsize == 16) {
+              sample_move_d16_float(fltbuf[j], (short *)abuff, (uint64_t)nsamps, cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian,
+                                    1.0);
+            } else {
+              sample_move_d8_d16(sbuff, (uint8_t *)abuff, (uint64_t)nsamps, in_bytes,
+                                 1.0, cfile->achans, cfile->achans, !asigned ? SWAP_U_TO_S : 0);
+              sample_move_d16_float(fltbuf[j], sbuff, (uint64_t)nsamps, cfile->achans, AFORM_SIGNED, FALSE, 1.0);
+            }
+          }
+
+          (*mainw->vpp->render_audio_frame_float)(fltbuf, nsamps);
+        }
+        // account for rounding errors
+        spf = ospf + (spf - (double)((int)spf));
       }
-      // account for rounding errors
-      spf = ospf + (spf - (double)((int)spf));
+
+      // get frame, send it
+      //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
+      check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
+
+      // convert to the plugin's palette
+      convert_layer_palette(frame_layer, vpp->palette, vpp->YUV_clamping);
+
+      // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
+      compact_rowstrides(frame_layer);
+
+      // get a void ** to the planar pixel_data
+      pd_array = weed_get_voidptr_array(frame_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
+
+      if (pd_array != NULL) {
+        // send pixel data to the vidoe frame renderer
+        error = !(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
+                                             weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error),
+                                             currticks, pd_array, NULL, NULL);
+
+        lives_free(pd_array);
+      }
+
+      // free pixel_data, but keep same layer around
+      weed_layer_pixel_data_free(frame_layer);
+
+      if (error) goto tr_err;
+
+      // update progress dialog with fraction done
+      threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
+
+      if (mainw->cancelled != CANCEL_NONE) {
+        break;
+      }
     }
-
-    // get frame, send it
-    //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
-    check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
-
-    // convert to the plugin's palette
-    convert_layer_palette(frame_layer, vpp->palette, vpp->YUV_clamping);
-
-    // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
-    compact_rowstrides(frame_layer);
-
-    // get a void ** to the planar pixel_data
-    pd_array = weed_get_voidptr_array(frame_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
-
-    if (pd_array != NULL) {
-      // send pixel data to the vidoe frame renderer
-      error = !(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
-                                           weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error),
-                                           currticks, pd_array, NULL, NULL);
-
-      lives_free(pd_array);
-    }
-
-    // free pixel_data, but keep same layer around
-    weed_layer_pixel_data_free(frame_layer);
-
-    if (error) goto tr_err;
-
-    // update progress dialog with fraction done
-    threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
-
-    if (mainw->cancelled != CANCEL_NONE) {
-      break;
-    }
-  }
 
 tr_err:
-  // flush streams, write headers, plugin cleanup
-  if (vpp != NULL && vpp->exit_screen != NULL) {
-    (*vpp->exit_screen)(0, 0);
-  }
+    // flush streams, write headers, plugin cleanup
+    if (vpp != NULL && vpp->exit_screen != NULL) {
+      (*vpp->exit_screen)(0, 0);
+    }
 
-  // close vpp, unless mainw->vpp
-  if (ovpp == NULL || (vpp->handle != ovpp->handle)) {
-    close_vid_playback_plugin(vpp);
-  }
+    // close vpp, unless mainw->vpp
+    if (ovpp == NULL || (vpp->handle != ovpp->handle)) {
+      close_vid_playback_plugin(vpp);
+    }
 
-  if (ovpp != NULL && (vpp->handle == ovpp->handle)) {
-    // we "borrowed" the playback plugin, so set these back how they were
-    if (ovpp->set_fps != NULL)(*ovpp->set_fps)(ovpp->fixed_fpsd);
-    if (ovpp->set_palette != NULL)(*ovpp->set_palette)(ovpp->palette);
-    if (ovpp->set_yuv_palette_clamping != NULL)(*ovpp->set_yuv_palette_clamping)(ovpp->YUV_clamping);
-    mainw->vpp = ovpp;
-  }
+    if (ovpp != NULL && (vpp->handle == ovpp->handle)) {
+      // we "borrowed" the playback plugin, so set these back how they were
+      if (ovpp->set_fps != NULL)(*ovpp->set_fps)(ovpp->fixed_fpsd);
+      if (ovpp->set_palette != NULL)(*ovpp->set_palette)(ovpp->palette);
+      if (ovpp->set_yuv_palette_clamping != NULL)(*ovpp->set_yuv_palette_clamping)(ovpp->YUV_clamping);
+      mainw->vpp = ovpp;
+    }
 
-  // terminate the progress dialog
-  end_threaded_dialog();
+    // terminate the progress dialog
+    end_threaded_dialog();
 
 tr_err2:
-  if (mainw->cancelled != CANCEL_NONE) {
-    d_print_cancelled();
-    mainw->cancelled = CANCEL_NONE;
-  } else {
-    if (!error) d_print_done();
-    else d_print_failed();
+    if (mainw->cancelled != CANCEL_NONE) {
+      d_print_cancelled();
+      mainw->cancelled = CANCEL_NONE;
+    } else {
+      if (!error) d_print_done();
+      else d_print_failed();
+    }
+
+    mainw->no_switch_dprint = FALSE;
+
+    lives_freep((void **)&pname);
+    lives_freep((void **)&msg);
+
+    weed_layer_free(frame_layer);
+
+    if (fd >= 0) lives_close_buffered(fd);
+
+    lives_freep((void **)&afname);
+
+    lives_freep((void **)&abuff);
+    if (fltbuf != NULL) {
+      for (i = 0; i < cfile->achans; lives_freep((void **) & (fltbuf[i++])));
+      lives_free(fltbuf);
+    }
+
+    lives_freep((void **)&sbuff);
+
+    return !error;
   }
-
-  mainw->no_switch_dprint = FALSE;
-
-  lives_freep((void **)&pname);
-  lives_freep((void **)&msg);
-
-  weed_layer_free(frame_layer);
-
-  if (fd >= 0) lives_close_buffered(fd);
-
-  lives_freep((void **)&afname);
-
-  lives_freep((void **)&abuff);
-  if (fltbuf != NULL) {
-    for (i = 0; i < cfile->achans; lives_freep((void **) & (fltbuf[i++])));
-    lives_free(fltbuf);
-  }
-
-  lives_freep((void **)&sbuff);
-
-  return !error;
-}
 
 #endif

@@ -621,7 +621,7 @@ void load_rte_defs(void) {
         mainw->read_failed = FALSE;
         d_print(_("Loading real time effect defaults from %s..."), prefs->fxdefsfile);
 
-	msg = lives_strdup_printf("%s\n", FX_DEFS_VERSIONSTRING_1_1);
+        msg = lives_strdup_printf("%s\n", FX_DEFS_VERSIONSTRING_1_1);
         buf = lives_malloc(strlen(msg));
         bytes = lives_read_buffered(fd, buf, strlen(msg), TRUE);
 
@@ -660,7 +660,7 @@ void load_rte_defs(void) {
       } else {
         d_print(_("Loading generator default sizes from %s..."), prefs->fxsizesfile);
 
-	msg = lives_strdup_printf("%s\n", FX_SIZES_VERSIONSTRING_2);
+        msg = lives_strdup_printf("%s\n", FX_SIZES_VERSIONSTRING_2);
         buf = lives_malloc(strlen(msg));
         bytes = lives_read_buffered(fd, buf, strlen(msg), TRUE);
         if (bytes == strlen(msg) && !strncmp((char *)buf, msg, strlen(msg))) {

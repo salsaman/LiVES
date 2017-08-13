@@ -21019,8 +21019,8 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
               size_t origlen = strlen(array[0]);
               char *tmp2 = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, array[0] + chlen, NULL);
               if (lives_file_test(tmp2, LIVES_FILE_TEST_EXISTS)) {
-		tmp2 = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
-					   prefs->workdir, new_set_name, old_set_name, array[0] + chlen);
+                tmp2 = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
+                                           prefs->workdir, new_set_name, old_set_name, array[0] + chlen);
               }
               tmp = lives_strdup_printf("%s%s", tmp2, (char *)map->data + origlen);
               lives_free(tmp2);
@@ -21045,8 +21045,8 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
         tmp = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, (char *)map->data + chlen, NULL);
         if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
           lives_free(tmp);
-	  tmp = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
-				    prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
+          tmp = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
+                                    prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
         }
         lives_free((livespointer)map->data);
         map->data = tmp;

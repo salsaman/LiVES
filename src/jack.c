@@ -263,7 +263,7 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
   cache_buffer->out_achans = jackd->num_output_channels;
 
   cache_buffer->in_asamps = afile->asampsize;
-  cache_buffer->out_asamps = -32;  ///< 32 bit float :: TODO - should this be 16, since 
+  cache_buffer->out_asamps = -32;  ///< 32 bit float :: TODO - should this be 16, since
 
   cache_buffer->shrink_factor = shrink_factor;
 
@@ -507,7 +507,7 @@ static int audio_process(nframes_t nframes, void *arg) {
 
             if (!wait_cache_buffer && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL)) {
               push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
-	    }
+            }
             if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
               pthread_mutex_lock(&mainw->abuf_frame_mutex);
             }
@@ -638,7 +638,8 @@ static int audio_process(nframes_t nframes, void *arg) {
       if (numFramesToWrite) {
         if (!from_memory) {
           //	if (((int)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
-          if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf != NULL) && !jackd->mute) { // TODO - try buffer16 instead of bufferf
+          if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf != NULL) &&
+              !jackd->mute) { // TODO - try buffer16 instead of bufferf
             float *fbuffer = NULL;
 
             if (mainw->agen_key != 0 || mainw->agen_needs_reinit) {
@@ -709,7 +710,7 @@ static int audio_process(nframes_t nframes, void *arg) {
             } else {
               for (i = 0; i < jackd->num_output_channels; i++) {
                 jackd->abs_maxvol_heard = sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite,
-								jackd->num_output_channels, afile->signed_endian & AFORM_UNSIGNED, FALSE, vol);
+                                          jackd->num_output_channels, afile->signed_endian & AFORM_UNSIGNED, FALSE, vol);
               }
 
               if (has_audio_filters(AF_TYPE_ANY) && jackd->playing_file != mainw->ascrap_file) {

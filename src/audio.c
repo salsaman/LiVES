@@ -200,7 +200,7 @@ float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int
   // return audio level between -1.0 and +1.0
 
   // afd must be opened with lives_open_buffered_rdonly()
-  
+
   lives_clip_t *afile = mainw->files[fnum];
   int64_t bytes;
   off_t apos;
@@ -2232,7 +2232,7 @@ static void *cache_my_audio(void *arg) {
   // currently only jack audio player uses this during playback
 
   // currently the output is always in the s16 buffer, resampling is done
-  
+
   lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)arg;
   char *filename;
   register int i;
@@ -2447,7 +2447,7 @@ static void *cache_my_audio(void *arg) {
     if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) {
 #ifdef HAVE_POSIX_FADVISE
       if (cbuffer->sequential) {
-	posix_fadvise(cbuffer->_fd, cbuffer->seek, 0, POSIX_FADV_SEQUENTIAL);
+        posix_fadvise(cbuffer->_fd, cbuffer->seek, 0, POSIX_FADV_SEQUENTIAL);
       }
 #endif
       lseek64(cbuffer->_fd, cbuffer->seek, SEEK_SET);
@@ -2769,7 +2769,7 @@ void apply_rte_audio_end(boolean del) {
 
 boolean apply_rte_audio(int nframes) {
   // CALLED When we are rendering audio to a file
-  
+
   // - read nframes from clip or generator
   // - convert to float if necessary
   // - send to rte audio effects
@@ -2818,7 +2818,7 @@ boolean apply_rte_audio(int nframes) {
 
   if (mainw->agen_key == 0) {
     // read from audio_fd
-    
+
     mainw->read_failed = FALSE;
 
     tbytes = lives_read(audio_fd, in_buff, tbytes, FALSE);
@@ -2860,7 +2860,7 @@ boolean apply_rte_audio(int nframes) {
 
   } else {
     // read from plugin. This should already be float.
-    
+
     fltbufni = (float *)lives_try_malloc(nframes * cfile->achans * sizeof(float));
     if (fltbufni == NULL) {
       lives_free(fltbuf);
@@ -2884,7 +2884,7 @@ boolean apply_rte_audio(int nframes) {
   if (!(has_audio_filters(AF_TYPE_NONA) || mainw->agen_key != 0)) {
     // analysers only - no need to save
     // or, audio is being generated
-    
+
     audio_pos += tbytes;
 
     if (fltbufni == NULL) {
@@ -2921,7 +2921,7 @@ boolean apply_rte_audio(int nframes) {
     lives_write(audio_fd, in_buff, tbytes, FALSE);
     audio_pos += tbytes;
   }
-  
+
   if (shortbuf != (short *)in_buff) lives_free(shortbuf);
   lives_free(in_buff);
 

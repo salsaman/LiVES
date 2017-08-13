@@ -130,7 +130,7 @@ boolean transcode(int start, int end) {
       audio = TRUE;
       ospf = spf = (double)in_arate / cfile->fps;
 
-      afname = lives_build_filename(prefs->workdir, cfile->handle, CLIP_AUDIO_FILE, NULL);
+      afname = lives_build_filename(prefs->workdir, cfile->handle, CLIP_AUDIO_FILENAME, NULL);
       fd = lives_open_buffered_rdonly(afname);
 
       if (fd < 0) {
@@ -179,6 +179,30 @@ boolean transcode(int start, int end) {
     goto tr_err;
   }
 
+#ifdef TEST_TRANSCODE_LAYOUT
+  // if we have an event_list we render via a different route
+  if (mainw->event_list != NULL) {
+    prefs->render_audio = rendaud;
+
+    init_track_decoders();
+
+    g_print("rendering at %d x %d\n", cfile->hsize, cfile->vsize);
+
+    if (start_render_effect_events(mainw->event_list)) { // re-render, applying effects
+      // and reordering/resampling/resizing if necessary
+
+      if (mainw->multitrack == NULL && mainw->event_list != NULL) {
+	if (!new_clip) {
+	  // this is needed in case we render to same clip, and then undo ///////
+	  if (cfile->event_list_back != NULL) event_list_free(cfile->event_list_back);
+	  cfile->event_list_back = mainw->event_list;
+	  ///////////////////////////////////////////////////////////////////////
+	} else event_list_free(mainw->event_list);
+      }
+
+    goto tr_err:
+  }
+#endif
   //av_log_set_level(AV_LOG_FATAL);
   mainw->rowstride_alignment_hint = 16;
 

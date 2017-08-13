@@ -334,6 +334,7 @@ enum {
 #define LIVES_FILE_EXT_SCRAP "scrap"
 #define LIVES_FILE_EXT_TEXT "txt"
 #define LIVES_FILE_EXT_BAK "bak"
+#define LIVES_FILE_EXT_WEBM "webm"
 
 #define LIVES_FILE_EXT_BACKUP "lv1"
 #define LIVES_FILE_EXT_PROJECT "lv2"
@@ -346,17 +347,34 @@ enum {
 #define LIVES_FILE_EXT_PCM "pcm"
 #define LIVES_FILE_EXT_WAV "wav"
 
+#define LIVES_FILE_EXT_LAYOUT "lay"
+
+#define LIVES_FILE_EXT_RFX_SCRIPT "script"
+
 // file names
-#define CLIP_AUDIO_FILE "audio"
+#define CLIP_AUDIO_FILENAME "audio"
 
 #define WORKDIR_LITERAL "workdir"
-#define WORKDIR_LITERAL_LEN 7
+#define WORKDIR_LITERAL_LEN (strlen(WORKDIR_LITERAL))
 
 #define FX_DEFS_FILENAME "fxdefs"
 #define FX_SIZES_FILENAME "fxsizes"
 
 #define FX_DEFS_VERSIONSTRING_1_1 "LiVES filter defaults file version 1.1"
 #define FX_SIZES_VERSIONSTRING_2 "LiVES generator default sizes file version 2"
+
+#define SUBS_FILENAME "subs"
+
+#define CLIP_ORDER_FILENAME "order"
+
+#define SET_LOCK_FILENAME "lock"
+
+#define LAYOUT_MAP_FILENAME "layout.map"
+
+// directory names
+#define LAYOUTS_DIRNAME "layouts"
+#define CLIPS_DIRNAME "clips"
+#define IMPORTS_DIRNAME "imports"
 
 // filters
 

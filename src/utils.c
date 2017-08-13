@@ -2463,7 +2463,15 @@ char *get_extension(const char *filename) {
 
 
 char *ensure_extension(const char *fname, const char *ext) {
-  if (!strcmp(fname + strlen(fname) - strlen(ext), ext)) return lives_strdup(fname);
+  char *dotted = (char *)ext;
+  if (ext[0] != '.') {
+    dotted = lives_strdup_printf(".%s", ext);
+  }
+  if (!strcmp(fname + strlen(fname) - strlen(dotted), dotted)) {
+    if (dotted != ext) lives_free(dotted);
+    return lives_strdup(fname);
+  }
+  if (dotted != ext) lives_free(dotted);
   return lives_strconcat(fname, ext, NULL);
 }
 

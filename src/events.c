@@ -4290,8 +4290,6 @@ boolean render_to_clip(boolean new_clip) {
 
   init_track_decoders();
 
-  g_print("rendering at %d x %d\n", cfile->hsize, cfile->vsize);
-
   if (start_render_effect_events(mainw->event_list)) { // re-render, applying effects
     // and reordering/resampling/resizing if necessary
 

@@ -41,7 +41,7 @@ static void audio_reset_stored_fnames(void) {
 
 
 LIVES_INLINE char *lives_get_audio_file_name(int fnum) {
-  char *fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_AUDIO_FILE, NULL);
+  char *fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_AUDIO_FILENAME, NULL);
   if (mainw->files[fnum]->opening && !lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
     char *tmp = lives_strdup_printf("%s.%s", fname, LIVES_FILE_EXT_PCM);
     lives_free(fname);
@@ -2988,7 +2988,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   // plugin will get float, so we first convert to that
   if (abuf->bufferf == NULL) {
 
-    // try 8 bit -> 16 -> float
+    // try 8 bit -> 16
     if (abuf->buffer8 != NULL && abuf->buffer16 == NULL) {
       int swap = 0;
       if (!abuf->s8_signed) swap = SWAP_U_TO_S;

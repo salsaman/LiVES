@@ -217,6 +217,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_slist_append(list, data) g_slist_append(list, data)
 
 #define lives_build_filename(...) g_build_filename(__VA_ARGS__)
+#define lives_build_path(...) g_build_path(LIVES_DIR_SEP, __VA_ARGS__)
 #define lives_filename_to_utf8(a, b, c, d, e) g_filename_to_utf8(a, b, c, d, e)
 #define lives_filename_from_utf8(a, b, c, d, e) g_filename_from_utf8(a, b, c, d, e)
 

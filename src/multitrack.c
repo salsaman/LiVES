@@ -8431,7 +8431,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->timeline_eb = NULL;
 
   if (prefs->ar_layout && mt->event_list == NULL && !mainw->recoverable_layout) {
-    char *eload_file = lives_build_filename(prefs->workdir, mainw->set_name, "layouts", prefs->ar_layout_name, NULL);
+    char *eload_file = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, prefs->ar_layout_name, NULL);
     mt->auto_reloading = TRUE;
     set_pref(PREF_AR_LAYOUT, ""); // in case we crash...
     mainw->event_list = mt->event_list = load_event_list(mt, eload_file);
@@ -18469,7 +18469,7 @@ LiVESList *load_layout_map(void) {
   uint64_t unique_id;
   ssize_t bytes;
 
-  char *lmap_name = lives_build_filename(prefs->workdir, mainw->set_name, "layouts", "layout.map", NULL);
+  char *lmap_name = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, LAYOUT_MAP_FILENAME, NULL);
   char *handle;
   char *entry;
   char *string;
@@ -18638,10 +18638,10 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
     if (file != NULL && (mainw->current_layouts_map == NULL ||
                          !lives_list_find(mainw->current_layouts_map, file)))
       mainw->current_layouts_map = lives_list_append(mainw->current_layouts_map, lives_strdup(file));
-    if (dir == NULL) ldir = lives_build_filename(prefs->workdir, mainw->set_name, "layouts", NULL);
+    if (dir == NULL) ldir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
     else ldir = lives_strdup(dir);
 
-    map_name = lives_build_filename(ldir, "layout.map", NULL);
+    map_name = lives_build_filename(ldir, LAYOUT_MAP_FILENAME, NULL);
 
     lives_mkdir_with_parents(ldir, capable->umask);
   }
@@ -18868,7 +18868,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
 
   lives_mt *mt = (lives_mt *)user_data;
 
-  char *filt[] = {"*.lay", NULL};
+  char *filt[] = {"*."LIVES_FILE_EXT_LAYOUT, NULL};
 
   int *layout_map;
 
@@ -18952,7 +18952,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     return FALSE;
   }
 
-  esave_dir = lives_build_filename(prefs->workdir, mainw->set_name, "layouts", LIVES_DIR_SEP, NULL);
+  esave_dir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
   lives_mkdir_with_parents(esave_dir, capable->umask);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -18999,7 +18999,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     return FALSE;
   }
 
-  esave_file = ensure_extension(esave_file, ".lay");
+  esave_file = ensure_extension(esave_file, LIVES_FILE_EXT_LAYOUT);
 
   lives_snprintf(xlayout_name, PATH_MAX, "%s", esave_file);
   get_basename(xlayout_name);
@@ -20460,7 +20460,7 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
   LiVESWidget *hbox;
   LiVESWidget *ar_checkbutton;
 
-  char *filt[] = {"*.lay", NULL};
+  char *filt[] = {"*."LIVES_FILE_EXT_LAYOUT, NULL};
 
   char *eload_dir;
   char *eload_file;
@@ -20473,7 +20473,7 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
     return NULL;
   }
 
-  eload_dir = lives_build_filename(prefs->workdir, mainw->set_name, "layouts", LIVES_DIR_SEP, NULL);
+  eload_dir = lives_build_path(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
 
   mainw->com_failed = FALSE;
   lives_mkdir_with_parents(eload_dir, capable->umask);
@@ -20833,7 +20833,7 @@ void on_clear_event_list_activate(LiVESMenuItem *menuitem, livespointer user_dat
       return;
     }
 
-    lmap_file = lives_build_filename(WORKDIR_LITERAL, mainw->set_name, "layouts", mt->layout_name, NULL);
+    lmap_file = lives_build_filename(WORKDIR_LITERAL, mainw->set_name, LAYOUTS_DIRNAME, mt->layout_name, NULL);
     layout_map = lives_list_append(layout_map, lmap_file);
     remove_layout_files(layout_map);
     lives_free(lmap_file);
@@ -20950,7 +20950,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
   // TODO - dirsep
 
   if (old_set_name != NULL) {
-    changefrom = lives_build_filename(prefs->workdir, old_set_name, "layouts/", NULL);
+    changefrom = lives_build_filename(prefs->workdir, old_set_name, LAYOUTS_DIRNAME LIVES_DIR_SEP, NULL);
     chlen = strlen(changefrom);
   } else chlen = 0;
 
@@ -20991,11 +20991,11 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
 
     if (old_set_name != NULL && !strncmp((char *)map->data, changefrom, chlen)) {
       // update entries in mainw->current_layouts_map
-      tmp = lives_build_filename(prefs->workdir, new_set_name, "layouts", (char *)map->data + chlen, NULL);
+      tmp = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, (char *)map->data + chlen, NULL);
       if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
         // prevent duplication of layouts
         lives_free(tmp);
-        tmp = lives_strdup_printf("%s"LIVES_DIR_SEP"%s"LIVES_DIR_SEP"layouts"LIVES_DIR_SEP"%s-%s",
+        tmp = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
                                   prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
         lives_mv((const char *)map->data, tmp);
       }
@@ -21017,9 +21017,10 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
 
               char **array = lives_strsplit((char *)map->data, "|", -1);
               size_t origlen = strlen(array[0]);
-              char *tmp2 = lives_build_filename(prefs->workdir, new_set_name, "layouts", array[0] + chlen, NULL);
+              char *tmp2 = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, array[0] + chlen, NULL);
               if (lives_file_test(tmp2, LIVES_FILE_TEST_EXISTS)) {
-                tmp2 = lives_strdup_printf("%s/%s/layouts/%s-%s", prefs->workdir, new_set_name, old_set_name, array[0] + chlen);
+		tmp2 = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
+					   prefs->workdir, new_set_name, old_set_name, array[0] + chlen);
               }
               tmp = lives_strdup_printf("%s%s", tmp2, (char *)map->data + origlen);
               lives_free(tmp2);
@@ -21041,10 +21042,11 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
     if ((old_set_name != NULL && !strncmp((char *)map->data, changefrom, chlen)) ||
         (old_set_name == NULL && (strstr((char *)map->data, new_set_name) == NULL))) {
       if (strcmp(mainw->string_constants[LIVES_STRING_CONSTANT_CL], (char *)map->data + chlen)) {
-        tmp = lives_build_filename(prefs->workdir, new_set_name, "layouts", (char *)map->data + chlen, NULL);
+        tmp = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, (char *)map->data + chlen, NULL);
         if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
           lives_free(tmp);
-          tmp = lives_strdup_printf("%s/%s/layouts/%s-%s", prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
+	  tmp = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
+				    prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
         }
         lives_free((livespointer)map->data);
         map->data = tmp;

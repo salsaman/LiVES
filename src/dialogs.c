@@ -1613,7 +1613,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   // MUST do re-seek after setting origsecs in order to set our clock properly
   // re-seek to new playback start
 #ifdef ENABLE_JACK
-  if (mainw->record && !mainw->record_paused && prefs->audio_src == AUDIO_SRC_EXT && prefs->ahold_threshold > 0.) {
+  if (mainw->record && !mainw->record_paused && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read != NULL && prefs->ahold_threshold > 0.) {
+    mainw->jackd_read->abs_maxvol_heard = 0.;
+    cfile->progress_end = 0;
     do_threaded_dialog(_("Waiting for external audio"), TRUE);
     while (mainw->jackd_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
       lives_usleep(prefs->sleep_time);
@@ -1651,13 +1653,13 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
 #ifdef HAVE_PULSE_AUDIO
 
-
   // start audio recording now
   if (mainw->pulsed_read != NULL) {
     pulse_driver_uncork(mainw->pulsed_read);
   }
 
-  if (mainw->record && !mainw->record_paused && prefs->audio_src == AUDIO_SRC_EXT && prefs->ahold_threshold > 0.) {
+  if (mainw->record && !mainw->record_paused && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_PULSE && prefs->ahold_threshold > 0.) {
+    cfile->progress_end = 0;
     do_threaded_dialog(_("Waiting for external audio"), TRUE);
     while (mainw->pulsed_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
       lives_usleep(prefs->sleep_time);
@@ -2692,7 +2694,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
   procw = (xprocess *)(lives_calloc(1, sizeof(xprocess)));
 
-  if (!(lives_has_toplevel_focus())) widget_opts.no_gui = TRUE;
+  if (!lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) widget_opts.no_gui = TRUE;
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
   widget_opts.no_gui = nogui;
 
@@ -2729,7 +2731,6 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
   if (has_cancel) {
     LiVESWidget *cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-    lives_widget_show(cancelbutton);
 
     if (mainw->current_file > -1 && cfile != NULL && cfile->opening_only_audio) {
       LiVESWidget *enoughbutton = lives_button_new_with_mnemonic(_("_Enough"));
@@ -2756,8 +2757,8 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
     mainw->cancel_type = CANCEL_SOFT;
   }
-
-  if (lives_has_toplevel_focus())
+  
+  if (lives_has_toplevel_focus(LIVES_WINDOW(procw->processing)))
     lives_widget_show_all(procw->processing);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, procw->processing);
@@ -2785,9 +2786,9 @@ void threaded_dialog_spin(double fraction) {
       // pulse the progress bar
       //#define GDB
 #ifndef GDB
-      if (lives_has_toplevel_focus()) {
+      //if (lives_has_toplevel_focus(procw->processing) || lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) {
         if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
-      }
+	//}
 #endif
     } else {
       // show fraction
@@ -2797,13 +2798,13 @@ void threaded_dialog_spin(double fraction) {
     }
   }
 
-  if (1 || lives_has_toplevel_focus()) {
+  //if (lives_has_toplevel_focus(procw->processing) || lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) {
     if (LIVES_IS_WIDGET(procw->processing)) {
       lives_widget_show_all(procw->processing);
       lives_widget_queue_draw(procw->processing);
     }
     lives_widget_context_update();
-  }
+    //}
 }
 
 
@@ -2852,7 +2853,7 @@ void end_threaded_dialog(void) {
   mainw->threaded_dialog = FALSE;
 
   if (mainw->is_ready)
-    if (lives_has_toplevel_focus()) {
+    if (lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) {
       lives_widget_context_update();
     }
 }

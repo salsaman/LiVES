@@ -558,7 +558,11 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
 
 
 LIVES_INLINE int lives_open_buffered_rdonly(const char *pathname) {
-  return lives_open_real_buffered(pathname, O_RDONLY, 0, TRUE);
+  int fd = lives_open_real_buffered(pathname, O_RDONLY, 0, TRUE);
+#ifdef HAVE_POSIX_FADVISE
+  posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+#endif
+  return fd;
 }
 
 
@@ -610,7 +614,10 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
 
   if (fbuff->buffer == NULL) fbuff->buffer = (uint8_t *)lives_malloc(BUFFER_FILL_BYTES);
 
+  lseek(fbuff->fd, fbuff->offset, SEEK_SET);
   res = lives_read(fbuff->fd, fbuff->buffer, BUFFER_FILL_BYTES, TRUE);
+
+  //g_print("SEEK to %ld\n", fbuff->offset);
 
   if (res < 0) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed
@@ -628,9 +635,24 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
 }
 
 
-off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
-  // seek +/- offset from current
+static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, off_t offset) {
+  if (fbuff->offset < -offset) offset = -fbuff->offset;
 
+  fbuff->ptr += offset;
+  fbuff->bytes -= offset;
+
+  if (fbuff->bytes <= 0 || fbuff->ptr < fbuff->buffer) {
+    // moved beyond edge of buffer. Prepare for buffer fill next time read is called.
+    fbuff->bytes = 0;
+    if (fbuff->ptr < fbuff->buffer) fbuff->eof = FALSE;
+  }
+
+  return fbuff->offset + (fbuff->ptr - fbuff->buffer);
+}
+
+
+off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
+  // seek relative
   lives_file_buffer_t *fbuff;
 
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
@@ -638,19 +660,25 @@ off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
     return lseek(fd, offset, SEEK_CUR);
   }
 
-  fbuff->ptr += offset;
-  fbuff->bytes -= offset;
+  _lives_lseek_buffered_rdonly_relative(fbuff, offset);
 
-  fbuff->offset += offset;
+  return fbuff->offset + (fbuff->ptr - fbuff->buffer);
+}
 
-  if (fbuff->offset < 0) fbuff->offset = 0;
 
-  if (fbuff->bytes <= 0 || fbuff->ptr < fbuff->buffer) {
-    fbuff->bytes = 0;
-    if (fbuff->ptr < fbuff->buffer) fbuff->eof = FALSE;
+off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
+  lives_file_buffer_t *fbuff;
+
+
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    LIVES_DEBUG("lives_lseek_buffered_rdonly_absolute: no file buffer found");
+    return lseek(fd, offset, SEEK_SET);
   }
 
-  return lseek(fd, offset, SEEK_CUR);
+  offset -= fbuff->offset + (fbuff->ptr - fbuff->buffer);
+  offset = _lives_lseek_buffered_rdonly_relative(fbuff, offset);
+
+  return fbuff->offset + (fbuff->ptr - fbuff->buffer);
 }
 
 
@@ -673,27 +701,30 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   // read bytes from fbuff
   while (1) {
     if (fbuff->bytes == 0 && !fbuff->eof) {
+      // refill the buffer
+      fbuff->offset += fbuff->ptr - fbuff->buffer;
       res = file_buffer_fill(fbuff);
       if (res < 0) return res;
     }
-
     if (fbuff->bytes < count) {
+      // use up buffer
       lives_memcpy(ptr, fbuff->ptr, fbuff->bytes);
       retval += fbuff->bytes;
       count -= fbuff->bytes;
-      ptr += fbuff->bytes;
+      fbuff->ptr += fbuff->bytes;
       fbuff->bytes = 0;
       if (fbuff->eof) {
         break;
       }
-    } else {
-      lives_memcpy(ptr, fbuff->ptr, count);
-      retval += count;
-      fbuff->ptr += count;
-      fbuff->bytes -= count;
-      count = 0;
-      break;
+      continue;
     }
+    // buffer is sufficient
+    lives_memcpy(ptr, fbuff->ptr, count);
+    retval += count;
+    fbuff->ptr += count;
+    fbuff->bytes -= count;
+    count = 0;
+    break;
   }
 
   if (!allow_less && count > 0) {
@@ -2668,9 +2699,15 @@ double lives_ce_update_timeline(int frame, double x) {
 
   // if frame == 0 then x must be a time value
 
+  // returns the pointer time (quantised to frame)
+
   static int last_current_file = -1;
 
-  if (!prefs->show_gui || lives_widget_get_allocation_width(mainw->vidbar) <= 0) {
+  if (!prefs->show_gui) {
+    return 0.;
+  }
+
+  if (lives_widget_get_allocation_width(mainw->vidbar) <= 0) {
     return 0.;
   }
 
@@ -2862,7 +2899,7 @@ void get_play_times(void) {
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
 
         filename = lives_get_audio_file_name(mainw->current_file);
-        afd = lives_open2(filename, O_RDONLY);
+        afd = lives_open_buffered_rdonly(filename);
         lives_free(filename);
 
         for (i = offset_left; i < offset_right; i++) {
@@ -2893,7 +2930,7 @@ void get_play_times(void) {
                                 prefs->bar_height);
         lives_painter_fill(cr);
 
-        if (offset_left < cfile->laudio_time / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth) {
+        if (offset_left < cfile->raudio_time / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth) {
           lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
 
           for (i = offset_left; i < offset_right; i++) {
@@ -2903,13 +2940,14 @@ void get_play_times(void) {
             lives_painter_line_to(cr, i, (double)prefs->bar_height * (2. - vol));
           }
           lives_painter_stroke(cr);
+          if (afd != -1) lives_close_buffered(afd);
         }
         lives_painter_destroy(cr);
       }
     }
   }
 
-  if (afd != -1) close(afd);
+  if (afd != -1) lives_close_buffered(afd);
 
   // playback cursors
   if (mainw->playing_file > -1) {
@@ -3032,9 +3070,38 @@ void draw_little_bars(double ptrtime) {
   double allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
   double offset = ptrtime / CLIP_TOTAL_TIME(mainw->current_file) * allocwidth;
 
+#ifdef TEST_VOL_LIGHTS
+  float maxvol = 0.;
+  static int last_maxvol_lights = 0;
+  int maxvol_lights;
+  int i;
+#endif
+
   int frame;
 
   if (!prefs->show_gui) return;
+
+#ifdef TEST_VOL_LIGHTS
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    if (mainw->pulsed_read != NULL) maxvol = mainw->pulsed_read->abs_maxvol_heard;
+    else if (mainw->pulsed != NULL) maxvol = mainw->pulsed->abs_maxvol_heard;
+  }
+#endif
+#ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+    if (mainw->jackd_read != NULL) maxvol = mainw->jackd_read->abs_maxvol_heard;
+    else if (mainw->jackd != NULL) maxvol = mainw->jackd->abs_maxvol_heard;
+  }
+#endif
+  maxvol_lights = (int)(maxvol * (float)NUM_VOL_LIGHTS + .5);
+  if (maxvol_lights != last_maxvol_lights) {
+    last_maxvol_lights = maxvol_lights;
+    for (i = 0; i < NUM_VOL_LIGHTS; i++) {
+      lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->vol_checkbuttons[i][0]), i < maxvol_lights);
+    }
+  }
+#endif
 
   if (!(frame = calc_frame_from_time(mainw->current_file, ptrtime)))
     frame = cfile->frames;
@@ -3782,10 +3849,9 @@ void reset_clipmenu(void) {
   // sometimes the clip menu gets messed up, e.g. after reloading a set.
   // This function will clean up the 'x's and so on.
 
-  register int i;
-
   if (mainw->current_file > 0 && cfile != NULL && cfile->menuentry != NULL) {
 #ifdef GTK_RADIO_MENU_BUG
+    register int i;
     for (i = 1; i < MAX_FILES; i++) {
       if (i != mainw->current_file && mainw->files[i] != NULL && mainw->files[i]->menuentry != NULL) {
         lives_signal_handler_block(mainw->files[i]->menuentry, mainw->files[i]->menuentry_func);

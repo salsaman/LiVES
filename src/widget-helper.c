@@ -7238,10 +7238,10 @@ LIVES_INLINE LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *disp, LiV
 // compound functions
 
 
-boolean lives_has_toplevel_focus() {
+boolean lives_has_toplevel_focus(LiVESWindow *window) {
   LiVESWidget *widget;
   lives_widget_context_update();
-  widget = lives_window_get_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  widget = lives_window_get_focus(window);
   if (!LIVES_IS_WIDGET(widget)) return FALSE;
   return lives_widget_has_focus(widget);
 }

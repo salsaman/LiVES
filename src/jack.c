@@ -252,6 +252,9 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
                               size_t in_bytes, size_t nframes, double shrink_factor) {
   // push a cache_buffer for another thread to fill
 
+  if (mainw->ascrap_file > -1 && jackd->playing_file == mainw->ascrap_file) cache_buffer->sequential = TRUE;
+  else cache_buffer->sequential = FALSE;
+
   cache_buffer->fileno = jackd->playing_file;
   cache_buffer->seek = jackd->seek_pos;
   cache_buffer->bytesize = in_bytes;
@@ -260,7 +263,7 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
   cache_buffer->out_achans = jackd->num_output_channels;
 
   cache_buffer->in_asamps = afile->asampsize;
-  cache_buffer->out_asamps = -32;  ///< 32 bit float
+  cache_buffer->out_asamps = -32;  ///< 32 bit float :: TODO - should this be 16, since 
 
   cache_buffer->shrink_factor = shrink_factor;
 
@@ -277,12 +280,9 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
 }
 
 
-static lives_audio_buf_t *pop_cache_buffer(void) {
+static LIVES_INLINE lives_audio_buf_t *pop_cache_buffer(void) {
   // get next available cache_buffer
-
-  lives_audio_buf_t *cache_buffer = audio_cache_get_buffer();
-  if (cache_buffer != NULL) return cache_buffer;
-  return NULL;
+  return audio_cache_get_buffer();
 }
 
 
@@ -505,9 +505,9 @@ static int audio_process(nframes_t nframes, void *arg) {
               }
             }
 
-            if (!wait_cache_buffer && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL))
+            if (!wait_cache_buffer && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL)) {
               push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
-
+	    }
             if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
               pthread_mutex_lock(&mainw->abuf_frame_mutex);
             }
@@ -638,7 +638,7 @@ static int audio_process(nframes_t nframes, void *arg) {
       if (numFramesToWrite) {
         if (!from_memory) {
           //	if (((int)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
-          if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf != NULL) && !jackd->mute) {
+          if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf != NULL) && !jackd->mute) { // TODO - try buffer16 instead of bufferf
             float *fbuffer = NULL;
 
             if (mainw->agen_key != 0 || mainw->agen_needs_reinit) {
@@ -925,8 +925,9 @@ static int audio_process(nframes_t nframes, void *arg) {
     }
 
     if (!from_memory) {
-      if (!wait_cache_buffer && mainw->agen_key == 0)
+      if (!wait_cache_buffer && mainw->agen_key == 0) {
         push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
+      }
       if (shrink_factor > 0.) jackd->seek_pos += xin_bytes;
     }
 
@@ -1055,6 +1056,9 @@ int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *po
 
 static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofileno, int nframes,
                                double out_scale, boolean rev_endian, boolean out_unsigned, size_t rbytes) {
+
+  // read audio and write it to aud_rec_fd
+
   int frames_out;
 
   void *holding_buff = lives_try_malloc(rbytes);

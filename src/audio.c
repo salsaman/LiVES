@@ -199,6 +199,8 @@ void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
 float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans) {
   // return audio level between -1.0 and +1.0
 
+  // afd must be opened with lives_open_buffered_rdonly()
+  
   lives_clip_t *afile = mainw->files[fnum];
   int64_t bytes;
   off_t apos;
@@ -223,18 +225,18 @@ float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int
 
   apos += afile->asampsize / 8 * chnum;
 
-  lseek(afd, apos, SEEK_SET);
+  lives_lseek_buffered_rdonly_absolute(afd, apos);
 
   if (afile->asampsize == 8) {
     // 8 bit sample size
-    lives_read(afd, &val8, 1, FALSE);
+    lives_read_buffered(afd, &val8, 1, FALSE);
     if (!(afile->signed_endian & AFORM_UNSIGNED)) val = val8 >= 128 ? val8 - 256 : val8;
     else val = val8 - 127;
     val /= 127.;
   } else {
     // 16 bit sample size
-    lives_read(afd, &val8, 1, TRUE);
-    lives_read(afd, &val8b, 1, TRUE);
+    lives_read_buffered(afd, &val8, 1, TRUE);
+    lives_read_buffered(afd, &val8b, 1, TRUE);
     if (afile->signed_endian & AFORM_BIG_ENDIAN) val16 = (uint16_t)(val8 << 8) + val8b;
     else val16 = (uint16_t)(val8b << 8) + val8;
     if (!(afile->signed_endian & AFORM_UNSIGNED)) val = val16 >= 32768 ? val16 - 65536 : val16;
@@ -2222,6 +2224,15 @@ static lives_audio_buf_t *cache_buffer = NULL;
 static pthread_t athread;
 
 static void *cache_my_audio(void *arg) {
+  // run as a thread (from audio_cache_init())
+  //
+  // read audio from file into cache
+  // must be done in real time since other threads may be waiting on the cache
+
+  // currently only jack audio player uses this during playback
+
+  // currently the output is always in the s16 buffer, resampling is done
+  
   lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)arg;
   char *filename;
   register int i;
@@ -2229,7 +2240,7 @@ static void *cache_my_audio(void *arg) {
   cbuffer->is_ready = TRUE;
 
   while (!cbuffer->die) {
-    // wait for request from client
+    // wait for request from client (setting cbuffer->is_ready or cbuffer->die)
     while (cbuffer->is_ready && !cbuffer->die) {
       sched_yield();
       lives_usleep(prefs->sleep_time);
@@ -2434,6 +2445,11 @@ static void *cache_my_audio(void *arg) {
     }
 
     if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) {
+#ifdef HAVE_POSIX_FADVISE
+      if (cbuffer->sequential) {
+	posix_fadvise(cbuffer->_fd, cbuffer->seek, 0, POSIX_FADV_SEQUENTIAL);
+      }
+#endif
       lseek64(cbuffer->_fd, cbuffer->seek, SEEK_SET);
     }
 
@@ -2450,7 +2466,6 @@ static void *cache_my_audio(void *arg) {
         cbuffer->is_ready = TRUE;
         continue;
       }
-
     }
 
     // read from file
@@ -2520,6 +2535,7 @@ lives_audio_buf_t *audio_cache_init(void) {
   cache_buffer->_cin_interleaf = FALSE;
   cache_buffer->eof = FALSE;
   cache_buffer->die = FALSE;
+  cache_buffer->sequential = FALSE;
 
   cache_buffer->_cfileno = -1;
   cache_buffer->_cseek = -1;
@@ -2752,6 +2768,14 @@ void apply_rte_audio_end(boolean del) {
 
 
 boolean apply_rte_audio(int nframes) {
+  // CALLED When we are rendering audio to a file
+  
+  // - read nframes from clip or generator
+  // - convert to float if necessary
+  // - send to rte audio effects
+  // - convert back to s16 or s8
+  // - save to audio_fd
+
   size_t tbytes;
   uint8_t *in_buff;
   float **fltbuf, *fltbufni = NULL;
@@ -2793,6 +2817,8 @@ boolean apply_rte_audio(int nframes) {
   fltbuf = (float **)lives_malloc(cfile->achans * sizeof(float *));
 
   if (mainw->agen_key == 0) {
+    // read from audio_fd
+    
     mainw->read_failed = FALSE;
 
     tbytes = lives_read(audio_fd, in_buff, tbytes, FALSE);
@@ -2833,6 +2859,8 @@ boolean apply_rte_audio(int nframes) {
     }
 
   } else {
+    // read from plugin. This should already be float.
+    
     fltbufni = (float *)lives_try_malloc(nframes * cfile->achans * sizeof(float));
     if (fltbufni == NULL) {
       lives_free(fltbuf);
@@ -2855,6 +2883,8 @@ boolean apply_rte_audio(int nframes) {
 
   if (!(has_audio_filters(AF_TYPE_NONA) || mainw->agen_key != 0)) {
     // analysers only - no need to save
+    // or, audio is being generated
+    
     audio_pos += tbytes;
 
     if (fltbufni == NULL) {
@@ -2883,13 +2913,15 @@ boolean apply_rte_audio(int nframes) {
 
   lives_free(fltbuf);
 
-  // save to file
-  mainw->write_failed = FALSE;
-  lseek64(audio_fd, audio_pos, SEEK_SET);
-  tbytes = onframes * cfile->achans * cfile->asampsize / 8;
-  lives_write(audio_fd, in_buff, tbytes, FALSE);
-  audio_pos += tbytes;
-
+  if (audio_fd >= 0) {
+    // save to file
+    mainw->write_failed = FALSE;
+    lseek64(audio_fd, audio_pos, SEEK_SET);
+    tbytes = onframes * cfile->achans * cfile->asampsize / 8;
+    lives_write(audio_fd, in_buff, tbytes, FALSE);
+    audio_pos += tbytes;
+  }
+  
   if (shortbuf != (short *)in_buff) lives_free(shortbuf);
   lives_free(in_buff);
 
@@ -2908,6 +2940,9 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
   // NB: if player is jack, we will have non-interleaved float
   // if player is pulse, we will have interleaved S16
+
+  // this is currently only used to push audio to generators
+
   float *dst, *src;
 
   weed_plant_t *ctmpl;
@@ -2952,6 +2987,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
   // plugin will get float, so we first convert to that
   if (abuf->bufferf == NULL) {
+
     // try 8 bit -> 16 -> float
     if (abuf->buffer8 != NULL && abuf->buffer16 == NULL) {
       int swap = 0;
@@ -2959,7 +2995,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
       abuf->s16_signed = TRUE;
       abuf->buffer16 = (int16_t **)lives_malloc(abuf->out_achans * sizeof(int16_t *));
       for (i = 0; i < abuf->out_achans; i++) {
-        abuf->bufferf[i] = (float *)lives_malloc(abuf->samples_filled * 2);
+        abuf->buffer16[i] = (short *)lives_malloc(abuf->samples_filled * 2);
         sample_move_d8_d16(abuf->buffer16[i], abuf->buffer8[i], abuf->samples_filled, abuf->samples_filled * 2,
                            1.0, abuf->out_achans, abuf->out_achans, swap);
 
@@ -3028,7 +3064,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
 
 ////////////////////////////////////////
-// audio streaming
+// audio streaming, older API
 
 lives_pgid_t astream_pgid = 0;
 

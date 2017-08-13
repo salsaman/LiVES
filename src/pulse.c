@@ -244,6 +244,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           LIVES_ERROR(filename);
           pulsed->playing_file = -1;
         } else {
+#ifdef HAVE_POSIX_FADVISE
+          if (new_file == mainw->ascrap_file) {
+            posix_fadvise(pulsed->fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+          }
+#endif
           pulsed->seek_pos = 0;
           pulsed->playing_file = new_file;
           pulsed->audio_ticks = mainw->currticks;

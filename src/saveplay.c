@@ -4702,6 +4702,9 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
     fd = lives_open2(oname, O_RDONLY);
     lives_free(oname);
     if (fd < 0) return FALSE;
+#ifdef HAVE_POSIX_FADVISE
+    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+#endif
     mainw->files[mainw->scrap_file]->cb_src = fd;
   } else fd = mainw->files[mainw->scrap_file]->cb_src;
 

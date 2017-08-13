@@ -1,13 +1,11 @@
 // mainwindow.h
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman@gmail.com> 2003 - 2015
+// (c) G. Finch <salsaman+lives@gmail.com> 2003 - 2017
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-
 #ifndef HAS_LIVES_MAINWINDOW_H
 #define HAS_LIVES_MAINWINDOW_H
-
 
 #include <pthread.h>
 
@@ -38,7 +36,6 @@
 #define LIVES_LONGER_TIMEOUT  (20. * TICKS_PER_SECOND_DBL) // 20 sec timeout
 #define LIVES_LONGEST_TIMEOUT  (30. * TICKS_PER_SECOND_DBL) // 30 sec timeout
 
-
 /// rate to change pb fps when faster/slower pressed (TODO: make pref)
 #define PB_CHANGE_RATE .0005
 
@@ -47,7 +44,6 @@
 
 /// adjustment amount for effect parameter via keyboard (TODO: make pref)
 #define BLEND_AMOUNT 0.2
-
 
 /////// GUI related constants /////////////////////////////////////////////////////////
 
@@ -63,7 +59,6 @@
 
 /// char width of start / end spinbuttons
 #define SPBWIDTHCHARS 12
-
 
 /// char width of framecounter
 #define FCWIDTHCHARS 18
@@ -101,7 +96,6 @@
 #define DEFAULT_FRAME_HSIZE ((int)(640.*widget_opts.scale))
 #define DEFAULT_FRAME_VSIZE ((int)(400.*widget_opts.scale))
 
-
 #define FRAMEBLANK_MIN_WIDTH ((int)(240.*widget_opts.scale))
 #define FRAMEBLANK_MAX_WIDTH ((int)(600.*widget_opts.scale))
 
@@ -110,7 +104,6 @@
 
 #define IMSEP_MAX_HEIGHT ((int)(86.*widget_opts.scale))
 #define IMSEP_MAX_WIDTH (mainw->scr_width-20)
-
 
 #define MAIN_SPIN_SPACER ((int)52.*widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
 
@@ -166,7 +159,6 @@ typedef enum {
   EXT_CNTL_MIDI = 1
 } lives_ext_cntl_t;
 
-
 /// timebase sources
 typedef enum {
   LIVES_TIME_SOURCE_NONE = 0,
@@ -175,15 +167,12 @@ typedef enum {
   LIVES_TIME_SOURCE_EXTERNAL
 } lives_time_source_t;
 
-
-
 typedef enum {
   LIVES_TOY_NONE = 0,
   LIVES_TOY_MAD_FRAMES,
   LIVES_TOY_TV,
   LIVES_TOY_AUTOLIVES
 } lives_toy_t;
-
 
 typedef enum {
   LIVES_DIALOG_INFO,
@@ -194,7 +183,6 @@ typedef enum {
   LIVES_DIALOG_QUESTION,
   LIVES_DIALOG_ABORT_CANCEL_RETRY
 } lives_dialog_t;
-
 
 /// various return conditions from rendering (multitrack or after recording)
 typedef enum {
@@ -211,7 +199,6 @@ typedef enum {
   LIVES_RENDER_ERROR_WRITE_FRAME,
 } lives_render_error_t;
 
-
 /// disk/storage status values
 typedef enum {
   LIVES_STORAGE_STATUS_UNKNOWN = 0,
@@ -220,7 +207,6 @@ typedef enum {
   LIVES_STORAGE_STATUS_CRITICAL,
   LIVES_STORAGE_STATUS_OFFLINE
 } lives_storage_status_t;
-
 
 #define DVD_AUDIO_CHAN_MIN 128
 #define DVD_AUDIO_CHAN_DEFAULT 128
@@ -234,7 +220,6 @@ enum {
   LIVES_DEVICE_TV_CARD, // 4
   LIVES_DEVICE_FW_CARD, // 5
 };
-
 
 #define THEME_DETAIL_NAME "theme_name"
 #define THEME_DETAIL_STYLE "theme_style"
@@ -258,7 +243,6 @@ enum {
 #define THEME_DETAIL_FRAME_SURROUND "frame_surround"
 #define THEME_DETAIL_CE_SEL "ce_sel"
 #define THEME_DETAIL_CE_UNSEL "ce_unsel"
-
 
 /// set in set_palette_colours()
 typedef struct {
@@ -286,7 +270,6 @@ typedef struct {
   LiVESWidgetColor banner_fade_text;
 
   // set via theme API
-
 
   LiVESWidgetColor normal_back;
   LiVESWidgetColor normal_fore;
@@ -336,14 +319,12 @@ enum {
   NUM_LIVES_STRING_CONSTANTS
 };
 
-
 // image types (string)
 #define LIVES_IMAGE_TYPE_JPEG "jpeg"
 #define LIVES_IMAGE_TYPE_PNG "png"
 
 // audio types (string)
 #define LIVES_AUDIO_TYPE_PCM "pcm"
-
 
 // file extensions
 #define LIVES_FILE_EXT_PNG "png"
@@ -368,9 +349,14 @@ enum {
 // file names
 #define CLIP_AUDIO_FILE "audio"
 
-
 #define WORKDIR_LITERAL "workdir"
 #define WORKDIR_LITERAL_LEN 7
+
+#define FX_DEFS_FILENAME "fxdefs"
+#define FX_SIZES_FILENAME "fxsizes"
+
+#define FX_DEFS_VERSIONSTRING_1_1 "LiVES filter defaults file version 1.1"
+#define FX_SIZES_VERSIONSTRING_2 "LiVES generator default sizes file version 2"
 
 // filters
 
@@ -378,6 +364,7 @@ enum {
 #define LIVES_AUDIO_LOAD_FILTER  {"*.it", "*.mp3", "*.wav", "*.ogg", "*.mod", "*.xm", "*.wma", "*.flac", NULL}
 #define LIVES_TV_CARD_TYPES  {"v4l2", "v4l", "bsdbt848", "dummy", "*autodetect", "yv12", "*", "rgb32", "rgb24", "rgb16", "rgb15", "uyvy", "yuy2", "i2420", NULL}
 
+#define NUM_VOL_LIGHTS 10
 
 typedef struct {
   double top;
@@ -386,13 +373,11 @@ typedef struct {
   double height;
 } lives_rect_t;
 
-
 typedef struct {
   char *name;
   lives_rect_t *rects; // for future use
   int z_index; // for future use
 } lives_screen_area_t;
-
 
 /// where do we add the builtin tools in the tools menu
 #define RFX_TOOL_MENU_POSN 2
@@ -447,7 +432,6 @@ typedef struct {
   int ptr_y;
 
   double fps_measure; ///< show fps stats after playback
-
 
   // flags
   boolean save_with_sound;
@@ -505,7 +489,6 @@ typedef struct {
   // recording from an external window
   uint32_t foreign_key;
 
-
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   Window foreign_id;
@@ -538,7 +521,6 @@ typedef struct {
   boolean last_transition_loop_to_fit;
   boolean last_transition_align_start;
   boolean last_transition_ins_frames;
-
 
   uint64_t rte; ///< current max for VJ mode == 64 effects on fg clip
 
@@ -593,7 +575,6 @@ typedef struct {
 
   /// for the framedraw preview - TODO use lives_framedraw_t array
   int framedraw_frame;
-
 
   /////////////////////////////////////////////////
 
@@ -650,7 +631,6 @@ typedef struct {
   int osc_enc_width;
   int osc_enc_height;
   float osc_enc_fps;
-
 
   /// fixed fps playback; usually fixed_fpsd==0.
   int fixed_fps_numer;
@@ -899,6 +879,8 @@ typedef struct {
   LiVESWidget *rename_test_rfx;
   LiVESWidget *delete_test_rfx;
   LiVESWidget *promote_test_rfx;
+
+  LiVESWidget *vol_checkbuttons[NUM_VOL_LIGHTS][2];
 
   /// for the fileselection preview
   LiVESWidget *fs_playarea;
@@ -1200,7 +1182,6 @@ typedef struct {
   /// multi-head support
   lives_mgeometry_t *mgeom;
 
-
   /// external control inputs
   boolean ext_cntl[MAX_EXT_CNTL];
 
@@ -1224,7 +1205,6 @@ typedef struct {
 #define SPLASH_LEVEL_LOAD_APLAYER .6
 #define SPLASH_LEVEL_LOAD_RFX .8
 #define SPLASH_LEVEL_COMPLETE 1.
-
 
   boolean recoverable_layout;
 
@@ -1381,7 +1361,6 @@ extern _merge_opts *merge_opts;
 /// 0 for rfx, 1 for rte
 extern LiVESWidget *fx_dialog[2];
 
-
 #define LIVES_SIGKILL SIGKILL
 #define LIVES_SIGINT  SIGINT
 #define LIVES_SIGPIPE SIGPIPE
@@ -1391,7 +1370,6 @@ extern LiVESWidget *fx_dialog[2];
 #define LIVES_SIGHUP  SIGHUP
 #define LIVES_SIGTERM SIGTERM
 #define LIVES_SIGQUIT SIGQUIT
-
 
 #ifdef ENABLE_JACK
 volatile aserver_message_t jack_message;

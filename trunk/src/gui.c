@@ -1733,18 +1733,18 @@ void create_LiVES(void) {
       lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_checkbuttons[i][0]), -1);
 
       lives_signal_connect(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_EXPOSE_EVENT,
-			   LIVES_GUI_CALLBACK(draw_cool_toggle),
-			   NULL);
+                           LIVES_GUI_CALLBACK(draw_cool_toggle),
+                           NULL);
       lives_widget_set_bg_color(mainw->vol_checkbuttons[i][0], LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
       lives_widget_set_bg_color(mainw->vol_checkbuttons[i][0], LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
       lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_TOGGLED_SIGNAL,
-				 LIVES_GUI_CALLBACK(lives_cool_toggled),
-				 NULL);
+                                 LIVES_GUI_CALLBACK(lives_cool_toggled),
+                                 NULL);
       lives_cool_toggled(mainw->vol_checkbuttons[i][0], NULL);
     }
   }
-#endif  
+#endif
 #endif
 
   adj = lives_adjustment_new(mainw->volume, 0., 1., 0.01, 0.1, 0.);
@@ -4242,7 +4242,7 @@ char *get_menu_name(lives_clip_t *sfile) {
 
 void add_to_clipmenu(void) {
   // TODO - indicate "opening"
-  char *fname=NULL;
+  char *fname = NULL;
 
 #ifdef TEST_NOTIFY
   char *tmp, *detail;

@@ -523,11 +523,11 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
   register int i;
 
   if (prefs->fxdefsfile == NULL) {
-    prefs->fxdefsfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "fxdefs", NULL);
+    prefs->fxdefsfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, FX_DEFS_FILENAME, NULL);
   }
 
   if (prefs->fxsizesfile == NULL) {
-    prefs->fxsizesfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "fxsizes", NULL);
+    prefs->fxsizesfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, FX_SIZES_FILENAME, NULL);
   }
 
   d_print(_("Saving real time effect defaults to %s..."), prefs->fxdefsfile);
@@ -541,7 +541,7 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
       retval = do_abort_cancel_retry_dialog(msg, LIVES_WINDOW(rte_window));
       lives_free(msg);
     } else {
-      msg = lives_strdup("LiVES filter defaults file version 1.1\n");
+      msg = lives_strdup_printf("%s\n", FX_DEFS_VERSIONSTRING_1_1);
       mainw->write_failed = FALSE;
       lives_write_buffered(fd, msg, strlen(msg), TRUE);
       lives_free(msg);
@@ -569,7 +569,7 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
       retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, lives_strerror(errno), LIVES_WINDOW(rte_window));
       lives_free(msg);
     } else {
-      msg = lives_strdup("LiVES generator default sizes file version 2\n");
+      msg = lives_strdup_printf("%s\n", FX_SIZES_VERSIONSTRING_2);
       mainw->write_failed = FALSE;
       lives_write_buffered(fd, msg, strlen(msg), TRUE);
       lives_free(msg);
@@ -609,7 +609,7 @@ void load_rte_defs(void) {
   int retval;
 
   if (prefs->fxdefsfile == NULL) {
-    prefs->fxdefsfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "fxdefs", NULL);
+    prefs->fxdefsfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, FX_DEFS_FILENAME, NULL);
   }
 
   if (lives_file_test(prefs->fxdefsfile, LIVES_FILE_TEST_EXISTS)) {
@@ -621,7 +621,7 @@ void load_rte_defs(void) {
         mainw->read_failed = FALSE;
         d_print(_("Loading real time effect defaults from %s..."), prefs->fxdefsfile);
 
-        msg = lives_strdup("LiVES filter defaults file version 1.1\n");
+	msg = lives_strdup_printf("%s\n", FX_DEFS_VERSIONSTRING_1_1);
         buf = lives_malloc(strlen(msg));
         bytes = lives_read_buffered(fd, buf, strlen(msg), TRUE);
 
@@ -648,7 +648,7 @@ void load_rte_defs(void) {
   }
 
   if (prefs->fxsizesfile == NULL) {
-    prefs->fxsizesfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "fxsizes", NULL);
+    prefs->fxsizesfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, FX_SIZES_FILENAME, NULL);
   }
 
   if (lives_file_test(prefs->fxsizesfile, LIVES_FILE_TEST_EXISTS)) {
@@ -660,7 +660,7 @@ void load_rte_defs(void) {
       } else {
         d_print(_("Loading generator default sizes from %s..."), prefs->fxsizesfile);
 
-        msg = lives_strdup("LiVES generator default sizes file version 2\n");
+	msg = lives_strdup_printf("%s\n", FX_SIZES_VERSIONSTRING_2);
         buf = lives_malloc(strlen(msg));
         bytes = lives_read_buffered(fd, buf, strlen(msg), TRUE);
         if (bytes == strlen(msg) && !strncmp((char *)buf, msg, strlen(msg))) {

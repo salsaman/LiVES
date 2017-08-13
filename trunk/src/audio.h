@@ -99,6 +99,7 @@ typedef struct {
 
   size_t samp_space; ///< buffer space in samples (* by sizeof(type) to get bytesize) [if interleaf, also * by chans]
 
+  boolean sequential; ///< hint that we will read sequentially starting from seek
 
   // in or out buffers
   uint8_t **buffer8; ///< sample data in 8 bit format (or NULL)

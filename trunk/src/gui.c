@@ -1255,8 +1255,12 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->resample_audio);
   lives_widget_set_sensitive(mainw->resample_audio, FALSE);
 
+  //mainw->normalize_audio = lives_menu_item_new_with_mnemonic(_("_Normalize Audio..."));
+  //lives_container_add(LIVES_CONTAINER(audio_menu), mainw->normalize_audio);
+  //lives_widget_set_sensitive(mainw->normalize_audio, FALSE);
+
   mainw->adj_audio_sync = lives_menu_item_new_with_mnemonic(_("_Adjust Audio Sync..."));
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->adj_audio_sync);
+  //lives_container_add(LIVES_CONTAINER(audio_menu), mainw->adj_audio_sync);
   lives_widget_set_sensitive(mainw->adj_audio_sync, FALSE);
 
   info = lives_menu_item_new_with_mnemonic(_("_Info"));
@@ -1716,6 +1720,32 @@ void create_LiVES(void) {
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
   }
+
+#ifdef TEST_VOL_LIGHTS
+#if GTK_CHECK_VERSION(3, 0, 0)
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  for (i = 0; i < NUM_VOL_LIGHTS; i++) {
+    // insert audio src buttons
+    if (prefs->lamp_buttons) {
+      mainw->vol_checkbuttons[i][0] = lives_toggle_tool_button_new();
+      lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_checkbuttons[i][0]), -1);
+
+      lives_signal_connect(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_EXPOSE_EVENT,
+			   LIVES_GUI_CALLBACK(draw_cool_toggle),
+			   NULL);
+      lives_widget_set_bg_color(mainw->vol_checkbuttons[i][0], LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+      lives_widget_set_bg_color(mainw->vol_checkbuttons[i][0], LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
+
+      lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_TOGGLED_SIGNAL,
+				 LIVES_GUI_CALLBACK(lives_cool_toggled),
+				 NULL);
+      lives_cool_toggled(mainw->vol_checkbuttons[i][0], NULL);
+    }
+  }
+#endif  
+#endif
 
   adj = lives_adjustment_new(mainw->volume, 0., 1., 0.01, 0.1, 0.);
 
@@ -4064,7 +4094,6 @@ void resize_play_window(void) {
         start_ce_thumb_mode();
       }
     } else {
-
       if (mainw->ce_thumbs) {
         end_ce_thumb_mode();
       }
@@ -4108,7 +4137,6 @@ point1:
   } else {
     // not playing
     if (mainw->fs && mainw->playing_file == -2 && mainw->sep_win && prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
-
       if (mainw->ce_thumbs) {
         end_ce_thumb_mode();
       }
@@ -4214,14 +4242,18 @@ char *get_menu_name(lives_clip_t *sfile) {
 
 void add_to_clipmenu(void) {
   // TODO - indicate "opening"
-  char *fname;
+  char *fname=NULL;
 
 #ifdef TEST_NOTIFY
   char *tmp, *detail;
 #endif
 
 #ifndef GTK_RADIO_MENU_BUG
+#ifndef TEST_NOTIFY
+  char *tmp;
+#endif
   cfile->menuentry = lives_radio_menu_item_new_with_label(mainw->clips_group, tmp = get_menu_name(cfile));
+  lives_free(tmp);
   mainw->clips_group = lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));
 #else
   cfile->menuentry = lives_check_menu_item_new_with_label(fname = get_menu_name(cfile));
@@ -4251,7 +4283,7 @@ void add_to_clipmenu(void) {
   lives_free(detail);
 #endif
 
-  lives_free(fname);
+  lives_freep((void **)&fname);
 }
 
 

@@ -17392,7 +17392,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
       // does not make sense to use buffer reads, as we may read very sparsely from the file
       if (afd != -1) close(afd);
       filename = lives_get_audio_file_name(fnum);
-      afd = lives_open2(filename, O_RDONLY);
+      afd = lives_open_buffered_rdonly(filename);
       lives_free(filename);
       aofile = fnum;
     }
@@ -17420,7 +17420,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
 
   lives_painter_destroy(cr);
 
-  if (afd != -1) close(afd);
+  if (afd != -1) lives_close_buffered(afd);
 }
 
 

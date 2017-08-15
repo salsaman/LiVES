@@ -3268,6 +3268,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_from_stock(const char 
     button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_SAVE_AS);
   } else if (!strcmp(stock_id, LIVES_STOCK_OPEN)) {
     button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_OPEN);
+  } else if (!strcmp(stock_id, LIVES_STOCK_SELECT_ALL)) {
+    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_SELECT_ALL);
   } else if (!strcmp(stock_id, LIVES_STOCK_QUIT)) {
     button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_QUIT);
   } else if (!strcmp(stock_id, LIVES_STOCK_GO_FORWARD)) {
@@ -3309,7 +3311,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_from_stock(const char 
         qbutton->setIcon(qp);
       }
 #endif
-
     }
 
 #else
@@ -8282,6 +8283,7 @@ boolean widget_helper_init(void) {
   lives_snprintf(LIVES_STOCK_LABEL_MEDIA_PAUSE, 32, "%s", (_("P_ause")));
   lives_snprintf(LIVES_STOCK_LABEL_MEDIA_STOP, 32, "%s", (_("_Stop")));
   lives_snprintf(LIVES_STOCK_LABEL_MEDIA_RECORD, 32, "%s", (_("_Record")));
+  lives_snprintf(LIVES_STOCK_LABEL_SELECT_ALL, 32, "%s", (_("_Select All")));
 #endif
 
   widget_opts = def_widget_opts;

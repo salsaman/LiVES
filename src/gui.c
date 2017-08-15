@@ -338,7 +338,9 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
 
 void create_LiVES(void) {
+  LiVESWidget *hbox;
   LiVESWidget *hbox1;
+  LiVESWidget *vbox;
   LiVESWidget *vbox2;
   LiVESWidget *menuitem;
   LiVESWidget *menuitem_menu;
@@ -1643,7 +1645,7 @@ void create_LiVES(void) {
   for (i = 0; i < 3; i++) {
     lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   }
-  mainw->l1_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Audio source:"));
+  mainw->l1_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Audio Source:"));
   widget_opts.expand = LIVES_EXPAND_NONE;
   lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
@@ -1886,8 +1888,6 @@ void create_LiVES(void) {
 
   lives_box_pack_start(LIVES_BOX(mainw->tb_hbox), t_label, FALSE, FALSE, 0);
 
-
-
   // framebar menu bar
 
   vbox4 = lives_vbox_new(FALSE, 0);
@@ -2053,9 +2053,21 @@ void create_LiVES(void) {
   mainw->sel_label = lives_standard_label_new(NULL);
 
   set_sel_label(mainw->sel_label);
-  lives_widget_show(mainw->sel_label);
-  lives_box_pack_start(LIVES_BOX(hbox3), mainw->sel_label, FALSE, FALSE, 0);
 
+  vbox = lives_vbox_new(FALSE, 2.);
+  
+  lives_box_pack_start(LIVES_BOX(hbox3), vbox, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), mainw->sel_label, FALSE, FALSE, 0);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  mainw->sa_button = lives_button_new_from_stock(LIVES_STOCK_SELECT_ALL, NULL);
+  lives_widget_set_tooltip_text(mainw->sa_button, _("Select all frames in this clip"));
+  lives_box_pack_start(LIVES_BOX(hbox), mainw->sa_button, TRUE, TRUE, 0);
+  add_fill_to_box(LIVES_BOX(hbox));
+  
   mainw->arrow2 = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_box_pack_start(LIVES_BOX(hbox3), mainw->arrow2, FALSE, FALSE, 0);
 
@@ -2852,9 +2864,12 @@ void create_LiVES(void) {
                         NULL);
     lives_signal_handler_block(mainw->eventbox5, mainw->hrule_func);
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_hrule_enter), NULL);
-
   }
 
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->sa_button), LIVES_WIDGET_CLICKED_SIGNAL,
+		       LIVES_GUI_CALLBACK(on_select_all_activate),
+		       NULL);
+  
   mainw->hrule_blocked = TRUE;
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
                        LIVES_GUI_CALLBACK(on_hrule_reset),
@@ -2975,8 +2990,11 @@ void set_interactive(boolean interactive) {
         list = list->next;
       }
     }
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->spinbutton_start, FALSE);
     lives_widget_set_sensitive(mainw->spinbutton_end, FALSE);
+    lives_widget_set_sensitive(mainw->sa_button, FALSE);
 
     if (mainw->current_file > -1 && cfile != NULL && cfile->proc_ptr != NULL) {
       lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
@@ -3043,8 +3061,11 @@ void set_interactive(boolean interactive) {
         list = list->next;
       }
     }
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
     lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
+    lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames));
 
     if (mainw->current_file > -1 && cfile != NULL && cfile->proc_ptr != NULL) {
       lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, TRUE);

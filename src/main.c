@@ -3865,6 +3865,7 @@ void procw_desensitize(void) {
     lives_widget_set_sensitive(mainw->preview_spinbutton, FALSE);
   }
 
+  lives_widget_set_sensitive(mainw->sa_button, FALSE);
   lives_widget_set_sensitive(mainw->select_submenu, FALSE);
   lives_widget_set_sensitive(mainw->toy_tv, FALSE);
   lives_widget_set_sensitive(mainw->toy_autolives, FALSE);
@@ -7127,6 +7128,7 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->trim_to_pstart, (cfile->achans > 0 && cfile->pointer_time > 0.));
       lives_widget_set_sensitive(mainw->delaudio_submenu, (cfile->achans > 0));
       lives_widget_set_sensitive(mainw->delsel_audio, (cfile->frames > 0));
+      lives_widget_set_sensitive(mainw->sa_button, cfile->frames > 0 && (cfile->start > 1 || cfile->end < cfile->frames));
       lives_widget_set_sensitive(mainw->resample_audio, (cfile->achans > 0 && capable->has_sox_sox));
       lives_widget_set_sensitive(mainw->fade_aud_in, cfile->achans > 0);
       lives_widget_set_sensitive(mainw->fade_aud_out, cfile->achans > 0);

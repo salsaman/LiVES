@@ -3767,11 +3767,11 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_select_all_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_select_all_activate(LiVESWidget *widget, livespointer user_data) {
   if (mainw->current_file == -1) return;
 
   if (mainw->selwidth_locked) {
-    if (menuitem != NULL) do_error_dialog(_("\n\nSelection is locked.\n"));
+    if (widget != NULL) do_error_dialog(_("\n\nSelection is locked.\n"));
     return;
   }
 
@@ -3869,12 +3869,19 @@ void on_select_from_start_activate(LiVESMenuItem *menuitem, livespointer user_da
 void on_lock_selwidth_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->selwidth_locked = !mainw->selwidth_locked;
   lives_widget_set_sensitive(mainw->select_submenu, !mainw->selwidth_locked);
+
+  if (mainw->selwidth_locked) {
+    lives_widget_set_sensitive(mainw->sa_button, FALSE);
+  }
+  else if (CURRENT_CLIP_HAS_VIDEO && mainw->playing_file == -1 && !mainw->is_processing &&
+	   (cfile->start > 1 || cfile->end < cfile->frames)) {
+    lives_widget_set_sensitive(mainw->sa_button, TRUE);
+  }
 }
 
 
 void on_menubar_activate_menuitem(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_menu_item_activate(menuitem);
-  //gtk_menu_shell_set_take_focus(GTK_MENU_SHELL(mainw->menubar),TRUE);
 }
 
 
@@ -8548,10 +8555,12 @@ void on_prv_link_toggled(LiVESToggleButton *togglebutton, livespointer user_data
 
 
 void on_spinbutton_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
-  int start, ostart = cfile->start;
+  int start, ostart;
 
-  if (mainw->playing_file == -1 && mainw->current_file == 0) return;
+  if (mainw->current_file <= 0 || cfile == NULL) return;
 
+  ostart = cfile->start;
+  
   if ((start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))) == cfile->start) return;
   cfile->start = start;
 
@@ -8566,12 +8575,17 @@ void on_spinbutton_start_value_changed(LiVESSpinButton *spinbutton, livespointer
       mainw->selwidth_locked = TRUE;
     }
   }
-
   else {
     if ((cfile->start == 1 || cfile->end == cfile->frames) && !(cfile->start == 1 && cfile->end == cfile->frames)) {
       lives_widget_set_sensitive(mainw->select_invert, TRUE);
     } else {
       lives_widget_set_sensitive(mainw->select_invert, FALSE);
+    }
+    if (cfile->start > 1 || cfile->end < cfile->frames) {
+      lives_widget_set_sensitive(mainw->sa_button, TRUE);
+    }
+    else {
+      lives_widget_set_sensitive(mainw->sa_button, FALSE);
     }
   }
 
@@ -8593,10 +8607,12 @@ void on_spinbutton_start_value_changed(LiVESSpinButton *spinbutton, livespointer
 
 
 void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
-  int end, oend = cfile->end;
+  int end, oend;
 
-  if (mainw->playing_file == -1 && mainw->current_file == 0) return;
+  if (mainw->current_file <= 0 || cfile == NULL) return;
 
+  oend = cfile->end;
+  
   if ((end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))) == cfile->end) return;
   cfile->end = end;
 
@@ -8617,6 +8633,12 @@ void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer u
       lives_widget_set_sensitive(mainw->select_invert, TRUE);
     } else {
       lives_widget_set_sensitive(mainw->select_invert, FALSE);
+    }
+    if (cfile->start > 1 || cfile->end < cfile->frames) {
+      lives_widget_set_sensitive(mainw->sa_button, TRUE);
+    }
+    else {
+      lives_widget_set_sensitive(mainw->sa_button, FALSE);
     }
   }
 
@@ -9469,7 +9491,6 @@ boolean on_mouse_sel_start(LiVESWidget *widget, LiVESXEventButton *event, livesp
 
 boolean on_hrule_enter(LiVESWidget *widget, LiVESXEventCrossing *event, livespointer user_data) {
   if (!mainw->interactive) return FALSE;
-
   if (mainw->cursor_style != LIVES_CURSOR_NORMAL) return FALSE;
   lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR, widget);
   return FALSE;

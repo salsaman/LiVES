@@ -40,7 +40,7 @@ static void audio_reset_stored_fnames(void) {
 }
 
 
-LIVES_INLINE char *lives_get_audio_file_name(int fnum) {
+LIVES_GLOBAL_INLINE char *lives_get_audio_file_name(int fnum) {
   char *fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_AUDIO_FILENAME, NULL);
   if (mainw->files[fnum]->opening && !lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
     char *tmp = lives_strdup_printf("%s.%s", fname, LIVES_FILE_EXT_PCM);
@@ -249,7 +249,7 @@ float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int
 }
 
 
-LIVES_INLINE void sample_silence_dS(float *dst, uint64_t nsamples) {
+LIVES_GLOBAL_INLINE void sample_silence_dS(float *dst, uint64_t nsamples) {
   // send silence to the jack player
   memset(dst, 0, nsamples * sizeof(float));
 }
@@ -1434,7 +1434,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 }
 
 
-LIVES_INLINE void aud_fade(int fileno, double startt, double endt, double startv, double endv) {
+void aud_fade(int fileno, double startt, double endt, double startv, double endv) {
   double vel = 1., vol = 1.;
 
   mainw->read_failed = mainw->write_failed = FALSE;
@@ -3204,7 +3204,7 @@ void clear_audio_stream(void) {
 }
 
 
-LIVES_INLINE void audio_stream(void *buff, size_t nbytes, int fd) {
+LIVES_GLOBAL_INLINE void audio_stream(void *buff, size_t nbytes, int fd) {
   if (fd != -1) {
     lives_write(fd, buff, nbytes, TRUE);
   }

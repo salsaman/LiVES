@@ -272,9 +272,11 @@ typedef int lives_pgid_t;
 #endif
 
 #ifndef IS_SOLARIS
-#define LIVES_INLINE inline
+#define LIVES_INLINE static inline
+#define LIVES_GLOBAL_INLINE inline
 #else
 #define LIVES_INLINE
+#define LIVES_GLOBAL_INLINE
 #endif
 
 #include <limits.h>
@@ -303,6 +305,7 @@ typedef int lives_pgid_t;
 #endif
 
 #ifdef PRODUCE_LOG
+// disabled by default
 #define LIVES_LOG "lives.log"
 #endif
 

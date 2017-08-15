@@ -12,6 +12,10 @@ Increase preview window size for video part open.
 Add quick transcode menu option (beta).
 Keep showing framebar when not playing (can be overriden in prefs).
 Show audio source in framebar (overridden by pref).
+Optimise redrawing of audio waveforms in clip editor.
+Implement external audio trigger for recording.
+Various optimisations.
+
 
 
 

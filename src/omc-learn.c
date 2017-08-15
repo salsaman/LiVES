@@ -109,7 +109,7 @@ static void remove_all_nodes(boolean every, omclearn_w *omclw) {
 }
 
 
-static LIVES_INLINE int js_index(const char *string) {
+LIVES_INLINE int js_index(const char *string) {
   // js index, or midi channel number
   char **array = lives_strsplit(string, " ", -1);
   int res = atoi(array[1]);
@@ -118,7 +118,7 @@ static LIVES_INLINE int js_index(const char *string) {
 }
 
 
-static LIVES_INLINE int midi_index(const char *string) {
+LIVES_INLINE int midi_index(const char *string) {
   // midi controller number
   char **array;
   int res;
@@ -216,7 +216,7 @@ char *js_mangle(void) {
 }
 
 
-static LIVES_INLINE int js_msg_type(const char *string) {
+LIVES_INLINE int js_msg_type(const char *string) {
   return atoi(string);
 }
 
@@ -480,7 +480,7 @@ char *midi_mangle(void) {
 #endif //OMC_MIDI_IMPL
 
 
-static LIVES_INLINE char *cut_string_elems(const char *string, int nelems) {
+LIVES_INLINE char *cut_string_elems(const char *string, int nelems) {
   // remove elements after nelems
 
   char *retval = lives_strdup(string);
@@ -1659,7 +1659,7 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *si
   }*/
 
 
-static LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char *string2) {
+LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char *string2) {
   // count how many (non-space) elements match
   // e.g "a b c" and "a b d" returns 2
 
@@ -1679,7 +1679,7 @@ static LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char
 }
 
 
-static LIVES_INLINE int get_nth_elem(const char *string, int idx) {
+LIVES_INLINE int get_nth_elem(const char *string, int idx) {
   char **array = lives_strsplit(string, " ", -1);
   int retval = atoi(array[idx]);
   lives_strfreev(array);

@@ -1,6 +1,6 @@
 // startup.c
 // LiVES
-// (c) G. Finch 2010 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2017 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -472,8 +472,8 @@ static boolean fail_test(LiVESWidget *table, int row, char *ftext) {
 }
 
 
-static LIVES_INLINE char *get_resource(char *fname) {
-  return lives_strdup_printf("%s%sresources/%s", prefs->prefix_dir, DATA_DIR, fname);
+LIVES_INLINE char *get_resource(char *fname) {
+  return lives_build_filename(prefs->prefix_dir, DATA_DIR, "resources", fname, NULL);
 }
 
 

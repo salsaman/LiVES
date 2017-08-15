@@ -33,7 +33,7 @@ static boolean has_last_delta_ticks;
 static char *hdr = NULL;
 static boolean fps_can_change;
 
-static LIVES_INLINE int64_t abs64(int64_t a) {
+LIVES_INLINE int64_t abs64(int64_t a) {
   return ((a > 0) ? a : -a);
 }
 

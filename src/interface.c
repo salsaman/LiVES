@@ -2029,7 +2029,7 @@ static void chooser_check_dir(LiVESFileChooser *chooser, livespointer user_data)
 }
 
 
-LIVES_INLINE static void chooser_response(LiVESWidget *widget, int response, livespointer udata) {
+LIVES_INLINE void chooser_response(LiVESWidget *widget, int response, livespointer udata) {
   mainw->fc_buttonresponse = response;
 }
 

@@ -2129,7 +2129,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext) 
 //////////////////////////////////////////////////////
 // decoder plugins
 
-LIVES_INLINE boolean decplugin_supports_palette(const lives_decoder_t *dplug, int palette) {
+boolean decplugin_supports_palette(const lives_decoder_t *dplug, int palette) {
   register int i = 0;
   int cpal;
   while ((cpal = dplug->cdata->palettes[i++]) != WEED_PALETTE_END) if (cpal == palette) return TRUE;

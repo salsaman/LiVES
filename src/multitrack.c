@@ -173,12 +173,12 @@ static void mt_ac_audio_toggled(LiVESMenuItem *, livespointer mt);
 #define LIVES_AVOL_SCALE ((double)1000000.)
 
 
-static LIVES_INLINE int mt_file_from_clip(lives_mt *mt, int clip) {
+LIVES_INLINE int mt_file_from_clip(lives_mt *mt, int clip) {
   return clips_to_files[clip];
 }
 
 
-static LIVES_INLINE int mt_clip_from_file(lives_mt *mt, int file) {
+LIVES_INLINE int mt_clip_from_file(lives_mt *mt, int file) {
   register int i;
   for (i = 0; i < MAX_FILES; i++) {
     if (clips_to_files[i] == file) return i;
@@ -193,7 +193,7 @@ int get_track_for_block(track_rect *block) {
 }
 
 
-static LIVES_INLINE boolean is_empty_track(LiVESObject *track) {
+LIVES_INLINE boolean is_empty_track(LiVESObject *track) {
   return (lives_widget_object_get_data(track, "blocks") == NULL);
 }
 
@@ -932,7 +932,7 @@ char *get_track_name(lives_mt *mt, int track_num, boolean is_audio) {
 }
 
 
-static LIVES_INLINE double get_time_from_x(lives_mt *mt, int x) {
+LIVES_INLINE double get_time_from_x(lives_mt *mt, int x) {
   double time = (double)x / (double)lives_widget_get_allocation_width(mt->timeline) * (mt->tl_max - mt->tl_min) + mt->tl_min;
   if (time < 0.) time = 0.;
   else if (time > mt->end_secs + 1. / mt->fps) time = mt->end_secs + 1. / mt->fps;
@@ -940,7 +940,7 @@ static LIVES_INLINE double get_time_from_x(lives_mt *mt, int x) {
 }
 
 
-static LIVES_INLINE void set_params_unchanged(lives_rfx_t *rfx) {
+LIVES_INLINE void set_params_unchanged(lives_rfx_t *rfx) {
   int i;
   for (i = 0; i < rfx->num_params; i++) rfx->params[i].changed = FALSE;
 }
@@ -1515,7 +1515,7 @@ static char *mt_params_label(lives_mt *mt) {
 }
 
 
-LIVES_INLINE double mt_get_effect_time(lives_mt *mt) {
+LIVES_GLOBAL_INLINE double mt_get_effect_time(lives_mt *mt) {
   return q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
 }
 
@@ -3165,7 +3165,7 @@ void mt_tl_move(lives_mt *mt, double pos) {
 }
 
 
-static LIVES_INLINE void mt_tl_move_relative(lives_mt *mt, double pos_rel) {
+LIVES_INLINE void mt_tl_move_relative(lives_mt *mt, double pos_rel) {
   mt_tl_move(mt, mt->ptr_time + pos_rel);
 }
 
@@ -3332,17 +3332,17 @@ boolean mt_trup(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVES
 
 
 
-static LIVES_INLINE int poly_page_to_tab(uint32_t page) {
+LIVES_INLINE int poly_page_to_tab(uint32_t page) {
   return ++page;
 }
 
 
-static LIVES_INLINE int poly_tab_to_page(uint32_t tab) {
+LIVES_INLINE int poly_tab_to_page(uint32_t tab) {
   return --tab;
 }
 
 
-static LIVES_INLINE lives_mt_poly_state_t get_poly_state_from_page(lives_mt *mt) {
+LIVES_INLINE lives_mt_poly_state_t get_poly_state_from_page(lives_mt *mt) {
   return (lives_mt_poly_state_t)poly_page_to_tab(lives_notebook_get_current_page(LIVES_NOTEBOOK(mt->nb)));
 }
 
@@ -5332,7 +5332,7 @@ void stored_event_list_free_all(boolean wiped) {
 }
 
 
-static LIVES_INLINE void print_layout_wiped(void) {
+LIVES_INLINE void print_layout_wiped(void) {
   d_print(_("Layout was wiped.\n"));
 }
 
@@ -5398,7 +5398,7 @@ boolean check_for_layout_del(lives_mt *mt, boolean exiting) {
 }
 
 
-static LIVES_INLINE void on_comp_exp(LiVESButton *button, livespointer user_data) {
+LIVES_INLINE void on_comp_exp(LiVESButton *button, livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(user_data), !lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(user_data)));
 }
 

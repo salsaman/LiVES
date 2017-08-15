@@ -350,7 +350,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 }
 
 
-LIVES_INLINE LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *parent) {
+LIVES_GLOBAL_INLINE LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *parent) {
   LiVESWidget *dialog = create_message_dialog(LIVES_DIALOG_QUESTION, text, parent, 0, TRUE);
   lives_window_set_title(LIVES_WINDOW(dialog), title);
   return dialog;
@@ -2866,21 +2866,21 @@ void response_ok(LiVESButton *button, livespointer user_data) {
 }
 
 
-LIVES_INLINE void d_print_cancelled(void) {
+LIVES_GLOBAL_INLINE void d_print_cancelled(void) {
   d_print(_("cancelled.\n"));
   lives_notify(LIVES_OSC_NOTIFY_CANCELLED, "");
 }
 
-LIVES_INLINE void d_print_failed(void) {
+LIVES_GLOBAL_INLINE void d_print_failed(void) {
   d_print(_("failed.\n"));
   lives_notify(LIVES_OSC_NOTIFY_FAILED, "");
 }
 
-LIVES_INLINE void d_print_done(void) {
+LIVES_GLOBAL_INLINE void d_print_done(void) {
   d_print(_("done.\n"));
 }
 
-LIVES_INLINE void d_print_file_error_failed(void) {
+LIVES_GLOBAL_INLINE void d_print_file_error_failed(void) {
   d_print(_("error in file. Failed.\n"));
 }
 

@@ -51,8 +51,6 @@ typedef struct {
 #define AUDIO_PLAYER_MPLAYER "mplayer"
 #define AUDIO_PLAYER_MPLAYER2 "mplayer2"
 
-
-
   char aplayer[512]; // name, eg. "jack","pulse","sox","mplayer","mplayer2"
 
   /// frame quantisation type
@@ -72,7 +70,6 @@ typedef struct {
   // locale encoding
   char prefix_dir[PATH_MAX];
   char lib_dir[PATH_MAX];
-
 
   char image_ext[16];
 
@@ -160,7 +157,6 @@ typedef struct {
 #define REC_CLIPS (1<<3)
 #define REC_AUDIO (1<<4)
 #define REC_AFTER_PB (1<<5)
-
 
   int audio_src;
 #define AUDIO_SRC_INT 0
@@ -323,13 +319,11 @@ typedef struct {
   /** default 0; 1==use old (bad) behaviour on bigendian machines (r/w bigend ints/doubles); 2==bad reads, good writes */
   int bigendbug;
 
-
   // these are defualt values; actual values can be adjusted in Preferences
 #define DEF_DS_WARN_LEVEL 250000000  // 250MB
   uint64_t ds_warn_level; ///< diskspace warn level bytes
 #define DEF_DS_CRIT_LEVEL 20000000 // 20MB
   uint64_t ds_crit_level; ///< diskspace critical level bytes
-
 
 #define LIVES_CDISK_LEAVE_ORPHAN_SETS (1<<0)
 #define LIVES_CDISK_LEAVE_BFILES (1<<1)
@@ -339,7 +333,6 @@ typedef struct {
 
 #define LIVES_CDISK_REMOVE_LOCK_FILES (1<<5) ///< not yet implemented - TODO
 #define LIVES_CDISK_REBUILD_ORDER_FILES (1<<6) ///< not yet implemented - TODO
-
 
   uint32_t clear_disk_opts;
 
@@ -404,7 +397,6 @@ enum {
   LIST_NUM,
   N_COLUMNS
 };
-
 
 #define PREFWIN_WIDTH (mainw->scr_width*.9)
 #define PREFWIN_HEIGHT (mainw->scr_height*.9)
@@ -649,7 +641,6 @@ typedef struct {
 
   int nfx_threads;
 
-
   LiVESList *disabled_decoders;
   LiVESList *disabled_decoders_new;
 } _future_prefs;
@@ -687,7 +678,6 @@ void prefsw_set_rec_after_settings(_vid_playback_plugin *);
 void pref_change_images(void);
 void pref_change_xcolours(void);
 void pref_change_colours(void);
-
 
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
@@ -761,11 +751,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_RECENT3 "recent3"
 #define PREF_RECENT4 "recent4"
 
-
 /////////////////// integer64 values
 #define PREF_DS_WARN_LEVEL "ds_warn_level"
 #define PREF_DS_CRIT_LEVEL "ds_crit_level"
-
 
 /////////////////// integer32 values
 #define PREF_STARTUP_PHASE "startup_phase"
@@ -816,7 +804,6 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_WARN_FILE_SIZE "warn_file_size"
 
 #define PREF_DL_BANDWIDTH_K "dl_bandwidth_K"
-
 
 ////////// boolean values
 #define PREF_SHOW_RECENT_FILES "show_recent_files"
@@ -870,7 +857,6 @@ void pref_factory_int(const char *prefidx, int newval);
 void pref_factory_float(const char *prefidx, float newval);
 void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval);
 
-
 int get_pref(const char *key, char *val, int maxlen);
 int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen);
 int get_pref_utf8(const char *key, char *val, int maxlen);
@@ -902,6 +888,5 @@ void set_palette_prefs(void);
 #define LIVES_PERM_OSC_PORTS 1
 
 boolean lives_ask_permission(int what);
-
 
 #endif

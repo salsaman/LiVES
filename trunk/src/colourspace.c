@@ -841,7 +841,7 @@ LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
 
 
 LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
-                                  uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) {
+                           uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) {
   register int a;
   if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) yuv->y0 = max_Y;
   else yuv->y0 = a < min_Y ? min_Y : a;
@@ -869,7 +869,7 @@ LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *
 
 
 LIVES_INLINE void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g0, uint8_t *b0,
-                                  uint8_t *r1, uint8_t *g1, uint8_t *b1) {
+                           uint8_t *r1, uint8_t *g1, uint8_t *b1) {
   yuv2rgb(uyvy->y0, uyvy->u0, uyvy->v0, r0, g0, b0);
   yuv2rgb(uyvy->y1, uyvy->u0, uyvy->v0, r1, g1, b1);
   //if (uyvy->y0>240||uyvy->u0>240||uyvy->v0>240||uyvy->y1>240) lives_printerr("got unclamped !\n");
@@ -877,7 +877,7 @@ LIVES_INLINE void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g0, uint
 
 
 LIVES_INLINE void yuyv2rgb(yuyv_macropixel *yuyv, uint8_t *r0, uint8_t *g0, uint8_t *b0,
-                                  uint8_t *r1, uint8_t *g1, uint8_t *b1) {
+                           uint8_t *r1, uint8_t *g1, uint8_t *b1) {
   yuv2rgb(yuyv->y0, yuyv->u0, yuyv->v0, r0, g0, b0);
   yuv2rgb(yuyv->y1, yuyv->u0, yuyv->v0, r1, g1, b1);
 }

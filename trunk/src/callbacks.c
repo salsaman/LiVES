@@ -8707,7 +8707,7 @@ EXPOSE_FN_DECL(expose_vid_event, widget) {
     lives_painter_destroy(cairo);
   }
   return TRUE;
- }
+}
 }
 
 

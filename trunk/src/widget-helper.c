@@ -51,7 +51,8 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_widget(Li
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_pixbuf(lives_painter_t *cr, const LiVESPixbuf *pixbuf, double pixbuf_x, double pixbuf_y) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_pixbuf(lives_painter_t *cr, const LiVESPixbuf *pixbuf, double pixbuf_x,
+    double pixbuf_y) {
   // blit pixbuf to cairo at x,y
 #ifdef PAINTER_CAIRO
   gdk_cairo_set_source_pixbuf(cr, pixbuf, pixbuf_x, pixbuf_y);
@@ -67,7 +68,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_pixbuf(lives_painte
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_surface(lives_painter_t *cr, lives_painter_surface_t *surface, double x, double y) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_surface(lives_painter_t *cr, lives_painter_surface_t *surface, double x,
+    double y) {
 #ifdef PAINTER_CAIRO
   cairo_set_source_surface(cr, surface, x, y);
   return TRUE;
@@ -152,7 +154,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_painter_t *cr, double x, double y, double width,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_painter_t *cr, double x, double y,
+    double width,
     double height) {
 #ifdef PAINTER_CAIRO
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -277,7 +280,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_rectangle(lives_painter_t *cr,
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_arc(lives_painter_t *cr, double xc, double yc, double radius, double angle1, double angle2) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_arc(lives_painter_t *cr, double xc, double yc, double radius, double angle1,
+    double angle2) {
 #ifdef PAINTER_CAIRO
   cairo_arc(cr, xc, yc, radius, angle1, angle2);
   return TRUE;
@@ -326,7 +330,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb(lives_painter_t
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgba(lives_painter_t *cr, double red, double green, double blue, double alpha) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgba(lives_painter_t *cr, double red, double green, double blue,
+    double alpha) {
   // r,g,b,a values 0.0 -> 1.0
 #ifdef PAINTER_CAIRO
   cairo_set_source_rgba(cr, red, green, blue, alpha);
@@ -366,7 +371,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_flush(lives_painter_su
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t format,
+WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data,
+    lives_painter_format_t format,
     int width, int height, int stride) {
   lives_painter_surface_t *surf = NULL;
 #ifdef PAINTER_CAIRO
@@ -379,7 +385,8 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *widget, lives_painter_content_t content,
+WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *widget,
+    lives_painter_content_t content,
     int width, int height) {
   lives_painter_surface_t *surf = NULL;
 #ifdef PAINTER_CAIRO
@@ -401,7 +408,8 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_surface_creat
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height) {
+WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width,
+    int height) {
   lives_painter_surface_t *surf = NULL;
 #ifdef PAINTER_CAIRO
   surf = cairo_image_surface_create(format, width, height);
@@ -1106,7 +1114,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widge
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_text_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_text_color(LiVESWidget *widget, LiVESWidgetState state,
+    const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_set_fg_color(widget, state, color);
@@ -1123,7 +1132,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_text_color(LiVESWidget *wid
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidgetState state,
+    const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_set_bg_color(widget, state, color);
@@ -1890,7 +1900,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_accel_group_disconnect(LiVESAccelGroup
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_add_accelerator(LiVESWidget *widget, const char *accel_signal, LiVESAccelGroup *accel_group,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_add_accelerator(LiVESWidget *widget, const char *accel_signal,
+    LiVESAccelGroup *accel_group,
     uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags) {
 #ifdef GUI_GTK
   gtk_widget_add_accelerator(widget, accel_signal, accel_group, accel_key, accel_mods, accel_flags);
@@ -2178,7 +2189,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPi
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixilate) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation,
+    boolean pixilate) {
 #ifdef GUI_GTK
   gdk_pixbuf_saturate_and_pixelate(src, dest, saturation, pixilate);
   return TRUE;
@@ -2297,7 +2309,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_vbox_new(boolean homogeneous, int
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_start(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_start(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill,
+    uint32_t padding) {
 #ifdef GUI_GTK
   gtk_box_pack_start(box, child, expand, fill, padding);
   return TRUE;
@@ -3061,7 +3074,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_set_text(LiVESTextBuffer *
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextIter *start, LiVESTextIter *end, boolean inc_hidden_chars) {
+WIDGET_HELPER_GLOBAL_INLINE char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextIter *start, LiVESTextIter *end,
+    boolean inc_hidden_chars) {
 #ifdef GUI_GTK
   return gtk_text_buffer_get_text(tbuff, start, end, inc_hidden_chars);
 #endif
@@ -4036,7 +4050,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_foreach(LiVESContainer *cont
 }
 
 
-static WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_forall(LiVESContainer *cont, LiVESWidgetCallback callback, livespointer cb_data) {
+static WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_forall(LiVESContainer *cont, LiVESWidgetCallback callback,
+    livespointer cb_data) {
   // includes internal children
 #ifdef GUI_GTK
   gtk_container_forall(cont, callback, cb_data);
@@ -5333,7 +5348,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_tree_view_get_hadjustment(LiV
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESTreeViewColumn *lives_tree_view_column_new_with_attributes(const char *title, LiVESCellRenderer *crend, ...) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESTreeViewColumn *lives_tree_view_column_new_with_attributes(const char *title, LiVESCellRenderer *crend,
+    ...) {
   LiVESTreeViewColumn *tvcol = NULL;
   va_list args;
   va_start(args, crend);
@@ -5396,7 +5412,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_view_column_set_fixed_width(LiVES
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_selection_get_selected(LiVESTreeSelection *tsel, LiVESTreeModel **tmod, LiVESTreeIter *titer) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_selection_get_selected(LiVESTreeSelection *tsel, LiVESTreeModel **tmod,
+    LiVESTreeIter *titer) {
 #ifdef GUI_GTK
   return gtk_tree_selection_get_selected(tsel, tmod, titer);
 #endif
@@ -6829,8 +6846,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_table_resize(LiVESTable *table, uint32
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_table_attach(LiVESTable *table, LiVESWidget *child, uint32_t left, uint32_t right,
-                                        uint32_t top, uint32_t bottom, LiVESAttachOptions xoptions, LiVESAttachOptions yoptions,
-                                        uint32_t xpad, uint32_t ypad) {
+    uint32_t top, uint32_t bottom, LiVESAttachOptions xoptions, LiVESAttachOptions yoptions,
+    uint32_t xpad, uint32_t ypad) {
 #ifdef GUI_GTK
 #if LIVES_TABLE_IS_GRID  // required for grid remove row
   gtk_grid_attach(table, child, left, top, right - left, bottom - top);

@@ -10675,6 +10675,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   if (prefs->show_gui) {
+    scroll_track_on_screen(multi, 0);
     lives_widget_show_all(multi->window);
 
     if (multi->nb_label != NULL) {

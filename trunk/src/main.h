@@ -505,6 +505,25 @@ typedef enum {
 
 #define CLIP_NAME_MAXLEN 256
 
+#define IS_VALID_CLIP(clip) (clip >= 0 && mainw->files[clip] != NULL)
+#define CURRENT_CLIP_IS_VALID IS_VALID_CLIP(mainw->current_file)
+
+#define CLIP_HAS_VIDEO(clip) (IS_VALID_CLIP(clip) && mainw->files[clip]->frames > 0)
+#define CURRENT_CLIP_HAS_VIDEO CLIP_HAS_VIDEO(mainw->current_file)
+
+#define CLIP_HAS_AUDIO(clip) (IS_VALID_CLIP(clip) && mainw->files[clip]->achans > 0 && mainw->files[clip]->asampsize > 0)
+#define CURRENT_CLIP_HAS_AUDIO CLIP_HAS_AUDIO(mainw->current_file)
+
+#define CLIP_VIDEO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->video_time : 0.))
+
+#define CLIP_LEFT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->laudio_time : 0.))
+
+#define CLIP_RIGHT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (mainw->files[clip]->achans > 1 ? mainw->files[clip]->raudio_time : 0.) : 0.))
+
+#define CLIP_AUDIO_TIME(clip) ((double)(CLIP_LEFT_AUDIO_TIME(clip) >= CLIP_RIGHT_AUDIO_TIME(clip) ? CLIP_LEFT_AUDIO_TIME(clip) : CLIP_RIGHT_AUDIO_TIME(clip)))
+
+#define CLIP_TOTAL_TIME(clip) ((double)(CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : CLIP_AUDIO_TIME(clip)))
+
 /// corresponds to one clip in the GUI
 typedef struct {
   // basic info (saved during backup)
@@ -582,17 +601,10 @@ typedef struct {
   boolean nokeep;
 
   // various times; total time is calculated as the longest of video, laudio and raudio
-  double video_time;
+  double video_time; // TODO: deprecate, calculate CLIP_VIDEO_TIME from frames and fps
   double laudio_time;
   double raudio_time;
   double pointer_time;
-
-#define IS_VALID_CLIP(clip) (clip >= 0 && mainw->files[clip] != NULL)
-#define CLIP_VIDEO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->video_time : 0.))
-#define CLIP_LEFT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->laudio_time : 0.))
-#define CLIP_RIGHT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (mainw->files[clip]->achans > 1 ? mainw->files[clip]->raudio_time : 0.) : 0.))
-#define CLIP_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (CLIP_LEFT_AUDIO_TIME(clip) >= CLIP_RIGHT_AUDIO_TIME(clip) ? CLIP_LEFT_AUDIO_TIME(clip) : CLIP_RIGHT_AUDIO_TIME(clip)) : 0.))
-#define CLIP_TOTAL_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : CLIP_AUDIO_TIME(clip)) : 0.))
 
   // used only for insert_silence, holds pre-padding length for undo
   double old_laudio_time;

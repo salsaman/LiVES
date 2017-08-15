@@ -924,6 +924,8 @@ typedef struct {
   LiVESWidget *spinbutton_end;
   LiVESWidget *spinbutton_start;
 
+  LiVESWidget *sa_button;
+
   LiVESWidget *arrow1;
   LiVESWidget *arrow2;
 

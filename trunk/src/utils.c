@@ -4641,6 +4641,7 @@ void set_redoable(const char *what, boolean sensitive) {
   lives_widget_set_sensitive(mainw->redo, sensitive);
 }
 
+
 void set_sel_label(LiVESWidget *sel_label) {
   char *tstr, *frstr, *tmp;
   char *sy, *sz;

@@ -4,7 +4,6 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-
 #ifndef HAS_LIVES_EFFECTS_WEED_H
 #define HAS_LIVES_EFFECTS_WEED_H
 
@@ -35,7 +34,6 @@ typedef enum {
   /// values >= 512 are info
   FILTER_INFO_REINITED = 512
 } lives_filter_error_t;
-
 
 typedef enum {
   FX_LIST_NAME,
@@ -121,7 +119,6 @@ typedef enum {
 #define WEED_LEAF_TRANSITION "transition"
 #define WEED_LEAF_IS_VOLUME_MASTER "is_volume_master"
 
-
 // audio
 #define WEED_LEAF_IS_AUDIO "is_audio"
 #define WEED_LEAF_AUDIO_DATA "audio_data"
@@ -147,10 +144,8 @@ typedef enum {
 #define WEED_LEAF_RFX_STRINGS "rfx_strings"
 #define WEED_LEAF_RFX_DELIM "rfx_delim"
 
-
 // plugin specific values
 #define WEED_LEAF_PLUGIN_UNSTABLE "plugin_unstable" // plugin hint to host
-
 
 // internal values
 #define WEED_LEAF_HOST_AUDIO_PLAYER "host_audio_player" // exported to plugins
@@ -186,12 +181,10 @@ typedef enum {
 #define WEED_LEAF_CLIP "clip"
 #define WEED_LEAF_FRAME "frame"
 
-
-
 /// bootstrap function for weed plugins
 weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions, int *plugin_versions);
 
-weed_plant_t *get_weed_filter(int filter_idx);
+weed_plant_t *get_weed_filter(int filter_idx); // TODO: make const
 char *weed_filter_idx_get_name(int filter_idx) WARN_UNUSED;
 char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) WARN_UNUSED;
 char *make_weed_hashname(int filter_idx, boolean fullname,
@@ -254,7 +247,6 @@ void add_param_connections(weed_plant_t *inst);
 lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compound);
 void weed_reinit_all(void);
 
-
 int weed_flagset_array_count(weed_plant_t **array, boolean set_readonly);
 
 int num_alpha_channels(weed_plant_t *filter, boolean out);
@@ -275,7 +267,6 @@ boolean is_perchannel_multiw(weed_plant_t *param);
 boolean has_perchannel_multiw(weed_plant_t *filter);
 boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_plant_t *ptmpl);
 
-
 /// parameter interpolation
 boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc);
 boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc);
@@ -285,7 +276,6 @@ void filter_mutex_unlock(int key); // 0 based key
 
 boolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
 weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem);
-
 
 /// record a parameter value change in our event_list
 void rec_param_change(weed_plant_t *inst, int pnum);
@@ -331,7 +321,6 @@ weed_plant_t *weed_layer_new_for_frame();
 void backup_weed_instances(void);
 void restore_weed_instances(void);
 
-
 //////////////////////////////////////////////////////////
 // WARNING !! "key" here starts at 1, "mode" starts at 0
 
@@ -361,15 +350,12 @@ int rte_key_getmaxmode(int key); ///< returns highest mode which is set
 
 weed_plant_t *get_new_inst_for_keymode(int key, int mode); ///< get new inst (during recording playback)
 
-
 boolean rte_key_setmode(int key, int newmode);  ///< set mode for a given key; if key==0 then the active key is used
 
 ///< returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
 int rte_switch_keymode(int key, int mode, const char *hashname);
 
 //boolean rte_key_is_enabled(int key);
-
-
 
 /////////////////////////////////////////////////////////////
 
@@ -388,11 +374,9 @@ boolean read_key_defaults(int fd, int nparams, int key, int mode, int version);
 void set_key_defaults(weed_plant_t *inst, int key, int mode);
 boolean has_key_defaults(void);
 
-
 //////////////////////////////////////////////////////
 // 0 based keys
 void rte_swap_fg_bg(void);
-
 
 int rte_bg_gen_key(void) GNU_PURE;
 
@@ -400,8 +384,6 @@ int rte_fg_gen_key(void) GNU_PURE;
 
 int rte_bg_gen_mode(void) GNU_PURE;
 int rte_fg_gen_mode(void) GNU_PURE;
-
-
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -428,7 +410,6 @@ void update_host_info(weed_plant_t *inst);
 /// add default filler values to a parameter or pchange.
 void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot);
 
-
 // some general utilities
 
 #define WEED_PLANT_IS_PLUGIN_INFO(plant) (weed_get_plant_type(plant) == WEED_PLANT_PLUGIN_INFO ? 1 : 0)
@@ -440,6 +421,5 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot)
 #define WEED_PLANT_IS_PARAMETER(plant) (weed_get_plant_type(plant) == WEED_PLANT_PARAMETER ? 1 : 0)
 #define WEED_PLANT_IS_PARAMETER_TEMPLATE(plant) (weed_get_plant_type(plant) == WEED_PLANT_PARAMETER_TEMPLATE ? 1 : 0)
 #define WEED_PLANT_IS_GUI(plant) (weed_get_plant_type(plant) == WEED_PLANT_GUI ? 1 : 0)
-
 
 #endif

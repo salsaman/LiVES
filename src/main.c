@@ -618,6 +618,8 @@ static boolean pre_init(void) {
 
   get_monitors();
 
+  widget_opts.scale = (double)mainw->scr_width / 1200.;
+  
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate = -1;
     mainw->fx_candidates[i].list = NULL;

@@ -17,7 +17,6 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 */
 
-
 // begin legal warning
 /*
     NO WARRANTY
@@ -44,12 +43,10 @@ POSSIBILITY OF SUCH DAMAGES.
 */
 // end legal warning
 
-
 // Have fun, and let's fight for Free Speech, Open Media and True Creativity !
 // - Salsaman
 
-
-// note: preferred coding style is: astyle --style=java -H -Y -s2 -U -k3 -W3 -xC140 -xL
+// note: preferred coding style is: astyle --style=java -H -Y -s2 -U -k3 -W3 -xC140 -xL -p
 
 #ifndef HAS_LIVES_MAIN_H
 #define HAS_LIVES_MAIN_H

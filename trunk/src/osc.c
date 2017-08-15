@@ -210,7 +210,7 @@ void lives_osc_close_notify_socket(void) {
 }
 
 
-static LIVES_INLINE const char *get_value_of(const int what) {
+LIVES_INLINE const char *get_value_of(const int what) {
   lives_snprintf(constval, OSC_CONSTLEN, "%d", what);
   return (const char *)&constval;
 }

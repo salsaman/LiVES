@@ -3296,7 +3296,7 @@ void create_cfile(void) {
 }
 
 
-LIVES_INLINE char *get_untitled_name(int number) {
+LIVES_GLOBAL_INLINE char *get_untitled_name(int number) {
   // utility function to get clip name
   return lives_strdup_printf(_("Untitled%d"), number);
 }

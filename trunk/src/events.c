@@ -38,12 +38,12 @@ static weed_timecode_t flush_audio_tc = 0;
 static void **pchains[FX_KEYS_MAX]; // each pchain is an array of void *, these are parameter changes used for rendering
 ///////////////////////////////////////////////////////
 
-__attribute__((__pure__)) void ** *get_event_pchains(void) {
+GNU_PURE void ** *get_event_pchains(void) {
   return pchains;
 }
 
 
-LIVES_INLINE weed_timecode_t get_event_timecode(weed_plant_t *plant) {
+LIVES_GLOBAL_INLINE weed_timecode_t get_event_timecode(weed_plant_t *plant) {
   weed_timecode_t tc;
   int error;
   if (plant == NULL) return (weed_timecode_t)0;
@@ -52,7 +52,7 @@ LIVES_INLINE weed_timecode_t get_event_timecode(weed_plant_t *plant) {
 }
 
 
-LIVES_INLINE int get_event_hint(weed_plant_t *plant) {
+LIVES_GLOBAL_INLINE int get_event_hint(weed_plant_t *plant) {
   int hint;
   int error;
   if (plant == NULL) return 0;
@@ -61,7 +61,7 @@ LIVES_INLINE int get_event_hint(weed_plant_t *plant) {
 }
 
 
-LIVES_INLINE weed_plant_t *get_prev_event(weed_plant_t *event) {
+LIVES_GLOBAL_INLINE weed_plant_t *get_prev_event(weed_plant_t *event) {
   int error;
   if (event == NULL) return NULL;
   if (!weed_plant_has_leaf(event, WEED_LEAF_PREVIOUS)) return NULL;
@@ -69,7 +69,7 @@ LIVES_INLINE weed_plant_t *get_prev_event(weed_plant_t *event) {
 }
 
 
-LIVES_INLINE weed_plant_t *get_next_event(weed_plant_t *event) {
+LIVES_GLOBAL_INLINE weed_plant_t *get_next_event(weed_plant_t *event) {
   int error;
   if (event == NULL) return NULL;
   if (!weed_plant_has_leaf(event, WEED_LEAF_NEXT)) return NULL;
@@ -77,7 +77,7 @@ LIVES_INLINE weed_plant_t *get_next_event(weed_plant_t *event) {
 }
 
 
-LIVES_INLINE weed_plant_t *get_first_event(weed_plant_t *event_list) {
+LIVES_GLOBAL_INLINE weed_plant_t *get_first_event(weed_plant_t *event_list) {
   int error;
   if (event_list == NULL) return NULL;
   if (!weed_plant_has_leaf(event_list, WEED_LEAF_FIRST)) return NULL;
@@ -85,7 +85,7 @@ LIVES_INLINE weed_plant_t *get_first_event(weed_plant_t *event_list) {
 }
 
 
-LIVES_INLINE weed_plant_t *get_last_event(weed_plant_t *event_list) {
+LIVES_GLOBAL_INLINE weed_plant_t *get_last_event(weed_plant_t *event_list) {
   int error;
   if (event_list == NULL) return NULL;
   if (!weed_plant_has_leaf(event_list, WEED_LEAF_LAST)) return NULL;
@@ -1347,7 +1347,7 @@ weed_plant_t *insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_
 }
 
 
-LIVES_INLINE weed_plant_t *insert_blank_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t **shortcut) {
+LIVES_GLOBAL_INLINE weed_plant_t *insert_blank_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t **shortcut) {
   int clip = -1;
   int frame = 0;
 
@@ -1425,7 +1425,7 @@ static boolean remove_event_from_filter_map(weed_plant_t *fmap, weed_plant_t *ev
   return (!(j == 0 || (j == 1 && event == NULL)));
 }
 
-LIVES_INLINE boolean init_event_in_list(void **init_events, int num_inits, weed_plant_t *event) {
+LIVES_GLOBAL_INLINE boolean init_event_in_list(void **init_events, int num_inits, weed_plant_t *event) {
   register int i;
   if (init_events == NULL || init_events[0] == NULL) return FALSE;
   for (i = 0; i < num_inits; i++) {

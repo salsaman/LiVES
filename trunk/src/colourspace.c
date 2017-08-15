@@ -101,7 +101,7 @@ static pthread_t cthreads[MAX_FX_THREADS];
 
 static boolean unal_inited = FALSE;
 
-LIVES_INLINE int get_rowstride_value(int rowstride) {
+LIVES_GLOBAL_INLINE int get_rowstride_value(int rowstride) {
 #ifdef GUI_GTK
   // from gdk-pixbuf.c
   /* Always align rows to 32-bit boundaries */
@@ -112,7 +112,7 @@ LIVES_INLINE int get_rowstride_value(int rowstride) {
 }
 
 
-LIVES_INLINE int get_last_rowstride_value(int width, int nchans) {
+LIVES_GLOBAL_INLINE int get_last_rowstride_value(int width, int nchans) {
 #ifdef GUI_GTK
   // from gdk pixbuf docs
   return width * (((nchans << 3) + 7) >> 3);
@@ -793,13 +793,13 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 // pixel conversions
 
 
-static LIVES_INLINE uint8_t avg_chroma(size_t x, size_t y) {
+LIVES_INLINE uint8_t avg_chroma(size_t x, size_t y) {
   // cavg == cavgc for clamped, cavgu for unclamped
   return *(cavg + (x << 8) + y);
 }
 
 
-static LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) {
+LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) {
   register short a;
   if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) a = max_Y;
   *y = a < min_Y ? min_Y : a;
@@ -810,7 +810,7 @@ static LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y,
 }
 
 
-static LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, uyvy_macropixel *uyvy) {
+LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, uyvy_macropixel *uyvy) {
   register short a;
   if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) uyvy->y0 = max_Y;
   else uyvy->y0 = a < min_Y ? min_Y : a;
@@ -825,7 +825,7 @@ static LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1
 }
 
 
-static LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, yuyv_macropixel *yuyv) {
+LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, yuyv_macropixel *yuyv) {
   register short a;
   if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) yuyv->y0 = max_Y;
   else yuyv->y0 = a < min_Y ? min_Y : a;
@@ -840,7 +840,7 @@ static LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1
 }
 
 
-static LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
+LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                                   uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) {
   register int a;
   if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) yuv->y0 = max_Y;
@@ -861,14 +861,14 @@ static LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1
 }
 
 
-static LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
+LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
   *r = CLAMP0255((RGB_Y[y] + R_Cr[v]) >> FP_BITS);
   *g = CLAMP0255((RGB_Y[y] + G_Cb[u] + G_Cr[v]) >> FP_BITS);
   *b = CLAMP0255((RGB_Y[y] + B_Cb[u]) >> FP_BITS);
 }
 
 
-static LIVES_INLINE void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g0, uint8_t *b0,
+LIVES_INLINE void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g0, uint8_t *b0,
                                   uint8_t *r1, uint8_t *g1, uint8_t *b1) {
   yuv2rgb(uyvy->y0, uyvy->u0, uyvy->v0, r0, g0, b0);
   yuv2rgb(uyvy->y1, uyvy->u0, uyvy->v0, r1, g1, b1);
@@ -876,50 +876,50 @@ static LIVES_INLINE void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g
 }
 
 
-static LIVES_INLINE void yuyv2rgb(yuyv_macropixel *yuyv, uint8_t *r0, uint8_t *g0, uint8_t *b0,
+LIVES_INLINE void yuyv2rgb(yuyv_macropixel *yuyv, uint8_t *r0, uint8_t *g0, uint8_t *b0,
                                   uint8_t *r1, uint8_t *g1, uint8_t *b1) {
   yuv2rgb(yuyv->y0, yuyv->u0, yuyv->v0, r0, g0, b0);
   yuv2rgb(yuyv->y1, yuyv->u0, yuyv->v0, r1, g1, b1);
 }
 
 
-static LIVES_INLINE void yuv888_2_rgb(uint8_t *yuv, uint8_t *rgb, boolean add_alpha) {
+LIVES_INLINE void yuv888_2_rgb(uint8_t *yuv, uint8_t *rgb, boolean add_alpha) {
   yuv2rgb(yuv[0], yuv[1], yuv[2], &(rgb[0]), &(rgb[1]), &(rgb[2]));
   if (add_alpha) rgb[3] = 255;
 }
 
 
-static LIVES_INLINE void yuva8888_2_rgba(uint8_t *yuva, uint8_t *rgba, boolean del_alpha) {
+LIVES_INLINE void yuva8888_2_rgba(uint8_t *yuva, uint8_t *rgba, boolean del_alpha) {
   yuv2rgb(yuva[0], yuva[1], yuva[2], &(rgba[0]), &(rgba[1]), &(rgba[2]));
   if (!del_alpha) rgba[3] = yuva[3];
 }
 
 
-static LIVES_INLINE void yuv888_2_bgr(uint8_t *yuv, uint8_t *bgr, boolean add_alpha) {
+LIVES_INLINE void yuv888_2_bgr(uint8_t *yuv, uint8_t *bgr, boolean add_alpha) {
   yuv2rgb(yuv[0], yuv[1], yuv[2], &(bgr[2]), &(bgr[1]), &(bgr[0]));
   if (add_alpha) bgr[3] = 255;
 }
 
 
-static LIVES_INLINE void yuva8888_2_bgra(uint8_t *yuva, uint8_t *bgra, boolean del_alpha) {
+LIVES_INLINE void yuva8888_2_bgra(uint8_t *yuva, uint8_t *bgra, boolean del_alpha) {
   yuv2rgb(yuva[0], yuva[1], yuva[2], &(bgra[2]), &(bgra[1]), &(bgra[0]));
   if (!del_alpha) bgra[3] = yuva[3];
 }
 
 
-static LIVES_INLINE void yuv888_2_argb(uint8_t *yuv, uint8_t *argb) {
+LIVES_INLINE void yuv888_2_argb(uint8_t *yuv, uint8_t *argb) {
   argb[0] = 255;
   yuv2rgb(yuv[0], yuv[1], yuv[2], &(argb[1]), &(argb[2]), &(argb[3]));
 }
 
 
-static LIVES_INLINE void yuva8888_2_argb(uint8_t *yuva, uint8_t *argb) {
+LIVES_INLINE void yuva8888_2_argb(uint8_t *yuva, uint8_t *argb) {
   argb[0] = yuva[3];
   yuv2rgb(yuva[0], yuva[1], yuva[2], &(argb[1]), &(argb[2]), &(argb[3]));
 }
 
 
-static LIVES_INLINE void uyvy_2_yuv422(uyvy_macropixel *uyvy, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) {
+LIVES_INLINE void uyvy_2_yuv422(uyvy_macropixel *uyvy, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) {
   *u0 = uyvy->u0;
   *y0 = uyvy->y0;
   *v0 = uyvy->v0;
@@ -927,7 +927,7 @@ static LIVES_INLINE void uyvy_2_yuv422(uyvy_macropixel *uyvy, uint8_t *y0, uint8
 }
 
 
-static LIVES_INLINE void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) {
+LIVES_INLINE void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) {
   *y0 = yuyv->y0;
   *u0 = yuyv->u0;
   *y1 = yuyv->y1;
@@ -937,22 +937,22 @@ static LIVES_INLINE void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8
 /////////////////////////////////////////////////
 //utilities
 
-LIVES_INLINE boolean weed_palette_is_alpha_palette(int pal) {
+LIVES_GLOBAL_INLINE boolean weed_palette_is_alpha_palette(int pal) {
   return (pal >= 1024 && pal < 2048) ? TRUE : FALSE;
 }
 
 
-LIVES_INLINE boolean weed_palette_is_rgb_palette(int pal) {
+LIVES_GLOBAL_INLINE boolean weed_palette_is_rgb_palette(int pal) {
   return (pal < 512) ? TRUE : FALSE;
 }
 
 
-LIVES_INLINE boolean weed_palette_is_yuv_palette(int pal) {
+LIVES_GLOBAL_INLINE boolean weed_palette_is_yuv_palette(int pal) {
   return (pal >= 512 && pal < 1024) ? TRUE : FALSE;
 }
 
 
-LIVES_INLINE int weed_palette_get_numplanes(int pal) {
+LIVES_GLOBAL_INLINE int weed_palette_get_numplanes(int pal) {
   if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 ||
       pal == WEED_PALETTE_ARGB32 || pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV411 ||
       pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_AFLOAT || pal == WEED_PALETTE_A8 ||
@@ -963,13 +963,13 @@ LIVES_INLINE int weed_palette_get_numplanes(int pal) {
 }
 
 
-LIVES_INLINE boolean weed_palette_is_valid_palette(int pal) {
+LIVES_GLOBAL_INLINE boolean weed_palette_is_valid_palette(int pal) {
   if (weed_palette_get_numplanes(pal) == 0) return FALSE;
   return TRUE;
 }
 
 
-LIVES_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
+LIVES_GLOBAL_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
   if (pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P ||
       pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P) return 8;
   if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) return 24;
@@ -985,26 +985,26 @@ LIVES_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
 }
 
 
-LIVES_INLINE int weed_palette_get_pixels_per_macropixel(int pal) {
+LIVES_GLOBAL_INLINE int weed_palette_get_pixels_per_macropixel(int pal) {
   if (pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888) return 2;
   if (pal == WEED_PALETTE_YUV411) return 4;
   return 1;
 }
 
 
-LIVES_INLINE boolean weed_palette_is_float_palette(int pal) {
+LIVES_GLOBAL_INLINE boolean weed_palette_is_float_palette(int pal) {
   return (pal == WEED_PALETTE_RGBAFLOAT || pal == WEED_PALETTE_AFLOAT || pal == WEED_PALETTE_RGBFLOAT) ? TRUE : FALSE;
 }
 
 
-LIVES_INLINE boolean weed_palette_has_alpha_channel(int pal) {
+LIVES_GLOBAL_INLINE boolean weed_palette_has_alpha_channel(int pal) {
   return (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 ||
           pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_RGBAFLOAT ||
           weed_palette_is_alpha_palette(pal)) ? TRUE : FALSE;
 }
 
 
-LIVES_INLINE double weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
+LIVES_GLOBAL_INLINE double weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
   // return ratio of plane[n] width/plane[0] width;
   if (plane == 0) return 1.0;
   if (plane == 1 || plane == 2) {
@@ -1018,7 +1018,7 @@ LIVES_INLINE double weed_palette_get_plane_ratio_horizontal(int pal, int plane) 
 }
 
 
-LIVES_INLINE double weed_palette_get_plane_ratio_vertical(int pal, int plane) {
+LIVES_GLOBAL_INLINE double weed_palette_get_plane_ratio_vertical(int pal, int plane) {
   // return ratio of plane[n] height/plane[n] height
   if (plane == 0) return 1.0;
   if (plane == 1 || plane == 2) {
@@ -9837,7 +9837,7 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
 }
 
 
-static LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int height, uint8_t *buf) {
+LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int height, uint8_t *buf) {
   // we can cheat if our buffer is correctly sized
   LiVESPixbuf *pixbuf;
   int channels = has_alpha ? 4 : 3;

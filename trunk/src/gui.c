@@ -4228,7 +4228,7 @@ void add_to_playframe(void) {
 }
 
 
-LIVES_INLINE void frame_size_update(void) {
+LIVES_GLOBAL_INLINE void frame_size_update(void) {
   // update widgets when the frame size changes
   on_double_size_activate(NULL, LIVES_INT_TO_POINTER(1));
 }

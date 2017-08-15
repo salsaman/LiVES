@@ -28,7 +28,7 @@ static boolean reorder_leave_back = FALSE;
 
 /////////////////////////////////////////////////////
 
-LIVES_INLINE weed_timecode_t q_gint64(weed_timecode_t in, double fps) {
+LIVES_GLOBAL_INLINE weed_timecode_t q_gint64(weed_timecode_t in, double fps) {
   // quantise timecode to fps
   if (in > (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps +
                                          (long double).5) /
@@ -39,14 +39,14 @@ LIVES_INLINE weed_timecode_t q_gint64(weed_timecode_t in, double fps) {
   return (weed_timecode_t)0;
 }
 
-LIVES_INLINE weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps) {
+LIVES_GLOBAL_INLINE weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps) {
   if (in != (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps) /
                                           (long double)fps) *
                                          (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
-LIVES_INLINE weed_timecode_t q_dbl(double in, double fps) {
+LIVES_GLOBAL_INLINE weed_timecode_t q_dbl(double in, double fps) {
   // quantise (double)in to fps
   if (in > 0.) return ((weed_timecode_t)((long double)in * (long double)fps + (long double).5) / (long double)fps) *
                         (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
@@ -56,7 +56,7 @@ LIVES_INLINE weed_timecode_t q_dbl(double in, double fps) {
 }
 
 
-LIVES_INLINE int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps) {
+LIVES_GLOBAL_INLINE int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps) {
   int res_frames;
   if (resampled_fps < orig_fps) return ((res_frames = (int)((double)in_frames / orig_fps * resampled_fps)) < 1) ? 1 : res_frames;
   else return ((res_frames = (int)((double)in_frames / orig_fps * resampled_fps + .49999)) < 1) ? 1 : res_frames;

@@ -367,7 +367,7 @@ boolean rte_key_setmode(int key, int newmode);  ///< set mode for a given key; i
 ///< returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
 int rte_switch_keymode(int key, int mode, const char *hashname);
 
-boolean rte_key_is_enabled(int key);
+//boolean rte_key_is_enabled(int key);
 
 
 

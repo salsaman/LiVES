@@ -8581,6 +8581,8 @@ void on_spinbutton_start_value_changed(LiVESSpinButton *spinbutton, livespointer
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start);
   }
   set_sel_label(mainw->sel_label);
+  if (mainw->laudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
+  if (mainw->raudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
   get_play_times();
 
   if (mainw->playing_file == -1 && mainw->play_window != NULL && cfile->is_loaded) {
@@ -8625,6 +8627,8 @@ void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer u
   }
 
   set_sel_label(mainw->sel_label);
+  if (mainw->laudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
+  if (mainw->raudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
   get_play_times();
 
   if (mainw->playing_file == -1 && mainw->play_window != NULL && cfile->is_loaded) {
@@ -8702,21 +8706,19 @@ EXPOSE_FN_DECL(expose_vid_event, widget) {
   if (event != NULL) {
     lives_painter_destroy(cairo);
   }
-
   return TRUE;
-}
+ }
 }
 
 
 static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
-  int width;
+  static int owidth = 0, oheight = 0;
+  int width = lives_widget_get_allocation_width(mainw->laudio_draw);
+  int height = lives_widget_get_allocation_height(mainw->laudio_draw);
 
   if (mainw->laudio_drawable != NULL) {
     // check if a resize happened
-
-    width = lives_painter_image_surface_get_width(mainw->laudio_drawable);
-
-    if (width != lives_widget_get_allocation_width(mainw->LiVES)) {
+    if (owidth != width || oheight != height) {
       lives_painter_surface_destroy(mainw->laudio_drawable);
       mainw->laudio_drawable = NULL;
     }
@@ -8725,29 +8727,30 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   if (mainw->laudio_drawable == NULL) {
     mainw->laudio_drawable = lives_painter_surface_create_from_widget(mainw->laudio_draw,
                              LIVES_PAINTER_CONTENT_COLOR,
-                             lives_widget_get_allocation_width(mainw->laudio_draw),
-                             lives_widget_get_allocation_height(mainw->laudio_draw));
+                             width,
+                             height);
 
     block_expose();
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
     get_play_times();
     unblock_expose();
-
-    if (1 || mainw->current_file == -1) mainw->blank_laudio_drawable = mainw->laudio_drawable;
-    else cfile->laudio_drawable = mainw->laudio_drawable;
   }
 
   if (mainw->current_file == -1) {
     lives_painter_t *cr = lives_painter_create(mainw->laudio_drawable);
 
     lives_painter_render_background(mainw->laudio_draw, cr, 0, 0,
-                                    lives_widget_get_allocation_width(mainw->video_draw),
-                                    lives_widget_get_allocation_height(mainw->video_draw));
+                                    width,
+                                    height);
     lives_painter_destroy(cr);
   }
 
   lives_painter_set_source_surface(cr, mainw->laudio_drawable, 0., 0.);
   lives_painter_rectangle(cr, ex, ey, ew, eh);
   lives_painter_fill(cr);
+
+  owidth = width;
+  oheight = height;
 }
 
 
@@ -8759,7 +8762,7 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
     width = lives_painter_image_surface_get_width(mainw->raudio_drawable);
 
-    if (width != lives_widget_get_allocation_width(mainw->LiVES)) {
+    if (width != 0 && width != lives_widget_get_allocation_width(mainw->raudio_draw)) {
       lives_painter_surface_destroy(mainw->raudio_drawable);
       mainw->raudio_drawable = NULL;
     }
@@ -8770,7 +8773,7 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
                              LIVES_PAINTER_CONTENT_COLOR,
                              lives_widget_get_allocation_width(mainw->raudio_draw),
                              lives_widget_get_allocation_height(mainw->raudio_draw));
-
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
     block_expose();
     get_play_times();
     unblock_expose();
@@ -8779,13 +8782,10 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   if (mainw->current_file == -1) {
     lives_painter_t *cr = lives_painter_create(mainw->raudio_drawable);
     lives_painter_render_background(mainw->raudio_draw, cr, 0, 0,
-                                    lives_widget_get_allocation_width(mainw->video_draw),
-                                    lives_widget_get_allocation_height(mainw->video_draw));
+                                    lives_widget_get_allocation_width(mainw->raudio_draw),
+                                    lives_widget_get_allocation_height(mainw->raudio_draw));
     lives_painter_destroy(cr);
   }
-
-  if (1 || mainw->current_file == -1) mainw->blank_raudio_drawable = mainw->raudio_drawable;
-  else cfile->raudio_drawable = mainw->raudio_drawable;
 
   lives_painter_set_source_surface(cr, mainw->raudio_drawable, 0., 0.);
   lives_painter_rectangle(cr, ex, ey, ew, eh);

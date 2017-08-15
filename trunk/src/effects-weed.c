@@ -619,7 +619,7 @@ void restore_weed_instances(void) {
 }
 
 
-LIVES_INLINE int step_val(int val, int step) {
+int step_val(int val, int step) {
   int ret = (int)(val / step + .5) * step;
   return ret == 0 ? step : ret;
 }
@@ -1253,7 +1253,7 @@ static boolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array) {
 }
 
 
-LIVES_INLINE weed_plant_t *weed_layer_new(void) {
+LIVES_GLOBAL_INLINE weed_plant_t *weed_layer_new(void) {
   return weed_plant_new(WEED_PLANT_LAYER);
 }
 
@@ -1371,12 +1371,9 @@ static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
 }
 
 
-LIVES_INLINE int weed_flagset_array_count(weed_plant_t **array, boolean set_readonly) {
-  int i = 0;
-  while (array[i] != NULL) {
-    if (set_readonly) weed_add_plant_flags(array[i], WEED_LEAF_READONLY_PLUGIN);
-    i++;
-  }
+int weed_flagset_array_count(weed_plant_t **array, boolean set_readonly) {
+  register int i;
+  for (i = 0; array[i] != NULL; set_readonly ? weed_add_plant_flags(array[i++], WEED_LEAF_READONLY_PLUGIN) : i++);
   return i;
 }
 
@@ -8529,7 +8526,7 @@ weed_plant_t *get_new_inst_for_keymode(int key, int mode)  {
 
 ////////////////////////////////////////////////////////////////////////
 
-static LIVES_INLINE char *weed_instance_get_type(weed_plant_t *inst, boolean getsub) {
+LIVES_INLINE char *weed_instance_get_type(weed_plant_t *inst, boolean getsub) {
   // return value should be free'd after use
   weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
   return weed_filter_get_type(filter, getsub, TRUE);

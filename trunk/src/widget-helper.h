@@ -7,6 +7,11 @@
 #ifndef HAS_LIVES_WIDGET_HELPER_H
 #define HAS_LIVES_WIDGET_HELPER_H
 
+#ifndef IS_SOLARIS
+#define WIDGET_HELPER_GLOBAL_INLINE inline
+#else
+#define WIDGET_HELPER_GLOBAL_INLINE
+#endif
 
 #ifndef M_PI
 #define M_PI 3.1415926536
@@ -22,7 +27,6 @@ typedef enum {
   LIVES_DISPLAY_TYPE_WIN32,
   LIVES_DISPLAY_TYPE_WAYLAND
 } lives_display_t;
-
 
 #define W_PACKING_WIDTH  10 // packing width for widgets with labels
 #define W_PACKING_HEIGHT 10 // packing height for widgets
@@ -76,7 +80,6 @@ boolean lives_painter_set_operator(lives_painter_t *, lives_painter_operator_t);
 
 boolean lives_painter_set_fill_rule(lives_painter_t *, lives_painter_fill_rule_t);
 
-
 lives_painter_surface_t *lives_painter_get_target(lives_painter_t *);
 int lives_painter_format_stride_for_width(lives_painter_format_t, int width);
 
@@ -85,9 +88,6 @@ int lives_painter_image_surface_get_width(lives_painter_surface_t *);
 int lives_painter_image_surface_get_height(lives_painter_surface_t *);
 int lives_painter_image_surface_get_stride(lives_painter_surface_t *);
 lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surface_t *);
-
-
-
 
 // utils
 
@@ -101,7 +101,6 @@ void lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr, lives_colR
 
 boolean lives_rgba_equal(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);
 void lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);
-
 
 // object funcs.
 
@@ -118,7 +117,6 @@ void lives_object_ref_sink(livespointer);
 #else
 livespointer lives_object_ref_sink(livespointer);
 #endif
-
 
 // lives_pixbuf functions
 
@@ -139,14 +137,12 @@ LiVESWidget *lives_image_new_from_pixbuf(LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width, int height, boolean preserve_aspect_ratio,
     LiVESError **error);
 
-
 LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, int dest_height,
                                        LiVESInterpType interp_type);
 
 boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixilate);
 
 // basic widget fns (TODO - amend all void to return boolean)
-
 
 #ifdef GUI_GTK
 
@@ -211,7 +207,6 @@ boolean lives_label_set_mnemonic_widget(LiVESLabel *, LiVESWidget *widget);
 LiVESWidget *lives_label_get_mnemonic_widget(LiVESLabel *);
 
 boolean lives_label_set_selectable(LiVESLabel *, boolean setting);
-
 
 LiVESWidget *lives_button_new(void);
 LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label);
@@ -373,9 +368,7 @@ boolean lives_text_view_set_cursor_visible(LiVESTextView *, boolean setting);
 boolean lives_text_view_set_wrap_mode(LiVESTextView *, LiVESWrapMode wrapmode);
 boolean lives_text_view_set_justification(LiVESTextView *, LiVESJustification justify);
 
-
 boolean lives_text_view_scroll_mark_onscreen(LiVESTextView *, LiVESTextMark *mark);
-
 
 LiVESTextBuffer *lives_text_buffer_new(void);
 char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextIter *start, LiVESTextIter *end, boolean inc_hidden_chars);
@@ -396,7 +389,6 @@ boolean lives_text_buffer_delete_mark(LiVESTextBuffer *, LiVESTextMark *);
 boolean lives_text_buffer_delete(LiVESTextBuffer *, LiVESTextIter *start, LiVESTextIter *end);
 
 boolean lives_text_buffer_get_iter_at_mark(LiVESTextBuffer *, LiVESTextIter *, LiVESTextMark *);
-
 
 boolean lives_tree_model_get(LiVESTreeModel *, LiVESTreeIter *, ...);
 boolean lives_tree_model_get_iter(LiVESTreeModel *, LiVESTreeIter *, LiVESTreePath *);
@@ -423,7 +415,6 @@ int lives_tree_view_append_column(LiVESTreeView *, LiVESTreeViewColumn *);
 boolean lives_tree_view_set_headers_visible(LiVESTreeView *, boolean vis);
 LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *);
 LiVESTreeSelection *lives_tree_view_get_selection(LiVESTreeView *);
-
 
 LiVESTreeViewColumn *lives_tree_view_column_new_with_attributes(const char *title, LiVESCellRenderer *, ...);
 boolean lives_tree_view_column_set_sizing(LiVESTreeViewColumn *, LiVESTreeViewColumnSizing type);
@@ -571,7 +562,6 @@ double lives_range_get_value(LiVESRange *);
 boolean lives_editable_set_editable(LiVESEditable *, boolean editable);
 boolean lives_editable_select_region(LiVESEditable *, int start_pos, int end_pos);
 
-
 LiVESWidget *lives_entry_new(void);
 boolean lives_entry_set_editable(LiVESEntry *, boolean editable);
 const char *lives_entry_get_text(LiVESEntry *);
@@ -595,7 +585,6 @@ boolean lives_table_attach(LiVESTable *, LiVESWidget *child, uint32_t left, uint
 
 boolean lives_table_set_column_homogeneous(LiVESTable *, boolean homogeneous);
 boolean lives_table_set_row_homogeneous(LiVESTable *, boolean homogeneous);
-
 
 #if LIVES_TABLE_IS_GRID
 LiVESWidget *lives_grid_new(void);
@@ -649,7 +638,6 @@ LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAcc
 LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
 boolean lives_menu_tool_button_set_menu(LiVESMenuToolButton *, LiVESWidget *menu);
 
-
 #if !GTK_CHECK_VERSION(3, 10, 0)
 
 boolean lives_image_menu_item_set_image(LiVESImageMenuItem *, LiVESWidget *image);
@@ -665,9 +653,7 @@ boolean lives_check_menu_item_get_active(LiVESCheckMenuItem *);
 
 boolean lives_menu_set_title(LiVESMenu *, const char *title);
 
-
 int lives_display_get_n_screens(LiVESXDisplay *);
-
 
 char *lives_file_chooser_get_filename(LiVESFileChooser *);
 LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser *);
@@ -698,7 +684,6 @@ LiVESXDisplay *lives_widget_get_display(LiVESWidget *);
 lives_display_t lives_widget_get_display_type(LiVESWidget *);
 
 uint64_t lives_widget_get_xwinid(LiVESWidget *, const char *failure_msg);
-
 
 LiVESWidget *lives_scrolled_window_new(LiVESAdjustment *hadj, LiVESAdjustment *vadj);
 LiVESAdjustment *lives_scrolled_window_get_hadjustment(LiVESScrolledWindow *);
@@ -732,9 +717,6 @@ boolean lives_widget_set_vexpand(LiVESWidget *, boolean state);
 boolean lives_image_menu_item_set_always_show_image(LiVESImageMenuItem *, boolean show);
 boolean lives_scale_button_set_orientation(LiVESScaleButton *, LiVESOrientation orientation);
 boolean lives_window_set_auto_startup_notification(boolean set);
-
-
-
 
 // compound functions (composed of basic functions)
 boolean lives_has_toplevel_focus(LiVESWindow *window);
@@ -775,7 +757,6 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boole
 
 LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbuff);
 
-
 LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x, int y);
 
 // util functions
@@ -805,19 +786,13 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 char *lives_text_view_get_text(LiVESTextView *);
 boolean lives_text_view_set_text(LiVESTextView *, const char *text, int len);
 
-
 boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *, const char *text);
 boolean lives_text_view_scroll_onscreen(LiVESTextView *);
-
-
-
 
 void lives_general_button_clicked(LiVESButton *, livespointer data_to_free);
 
 void lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper,
                                  double step_increment, double page_increment);
-
-
 
 size_t calc_spin_button_width(double min, double max, int dp);
 
@@ -827,7 +802,6 @@ boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *
 boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
 
 void toggle_button_toggle(LiVESToggleButton *);
-
 
 void set_child_colour(LiVESWidget *, boolean set_all);
 void set_child_alt_colour(LiVESWidget *, boolean set_all);
@@ -855,7 +829,6 @@ LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *text);
 
 #define W_MAX_FILLER_LEN 65535
 
-
 typedef enum {
   LIVES_CURSOR_NORMAL = 0, ///< must be zero
   LIVES_CURSOR_BUSY,
@@ -881,7 +854,6 @@ typedef enum {
   LIVES_EXPAND_EXTRA
 } lives_expand_t;
 
-
 typedef struct {
   boolean no_gui; // show nothing !
   boolean swap_label; // swap label/widget position
@@ -904,7 +876,6 @@ typedef struct {
   LiVESXScreen *screen;
   boolean show_button_images;
 } widget_opts_t;
-
 
 widget_opts_t widget_opts;
 

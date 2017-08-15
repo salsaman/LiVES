@@ -280,7 +280,7 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
 }
 
 
-static LIVES_INLINE lives_audio_buf_t *pop_cache_buffer(void) {
+LIVES_INLINE lives_audio_buf_t *pop_cache_buffer(void) {
   // get next available cache_buffer
   return audio_cache_get_buffer();
 }

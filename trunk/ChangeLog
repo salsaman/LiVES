@@ -15,7 +15,7 @@ Show audio source in framebar (overridden by pref).
 Optimise redrawing of audio waveforms in clip editor.
 Implement external audio trigger for recording.
 Various optimisations.
-
+Scale many widget sizes based on screen resolution.
 
 
 

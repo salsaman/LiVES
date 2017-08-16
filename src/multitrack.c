@@ -2563,7 +2563,7 @@ static void time_to_string(lives_mt *mt, double secs, int length) {
   secs -= mins * 60.;
   rest = (secs - ((int)secs) * 1.) * 100. + .5;
   secs = (int)secs * 1.;
-  string = lives_strdup_printf("   %02d:%02d:%02d.%02d", hours, mins, (int)secs, rest);
+  string = lives_strdup_printf("%02d:%02d:%02d.%02d", hours, mins, (int)secs, rest);
   lives_entry_set_text(LIVES_ENTRY(mt->timecode), string);
   lives_free(string);
 }
@@ -7591,8 +7591,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   widget_opts.apply_theme = FALSE;
   widget_opts.expand = LIVES_EXPAND_NONE;
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mt->timecode = lives_standard_entry_new(NULL, FALSE, NULL, TIMECODE_LENGTH, TIMECODE_LENGTH, LIVES_BOX(hbox), NULL);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   dpw = widget_opts.packing_width;
   widget_opts.packing_width = 2.*widget_opts.scale;
@@ -9694,7 +9696,7 @@ LiVESWidget *add_audio_track(lives_mt *mt, int track, boolean behind) {
 
   lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
-  widget_opts.justify = widget_opts.default_justify;
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_object_ref(label);
 
   arrow = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
@@ -12702,7 +12704,7 @@ static void mouse_select_start(LiVESWidget *widget, LiVESXEventButton *event, li
   lives_widget_set_sensitive(mt->mm_menuitem, FALSE);
   lives_widget_set_sensitive(mt->view_sel_events, FALSE);
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            mt->timeline, &mt->sel_x, &mt->sel_y);
   timesecs = get_time_from_x(mt, mt->sel_x);
   mt->region_start = mt->region_end = mt->region_init = timesecs;
@@ -12711,7 +12713,7 @@ static void mouse_select_start(LiVESWidget *widget, LiVESXEventButton *event, li
   on_timeline_update(mt->timeline_eb, NULL, mt);
   mt->region_updating = FALSE;
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            mt->tl_eventbox, &mt->sel_x, &mt->sel_y);
   lives_widget_get_position(mt->timeline_eb, &min_x, NULL);
 

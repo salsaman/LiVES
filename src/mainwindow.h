@@ -714,7 +714,6 @@ typedef struct {
   ulong vidbar_func;
   ulong laudbar_func;
   ulong raudbar_func;
-  ulong hrule_func;
   ulong toy_func_none;
   ulong toy_func_random_frames;
   ulong toy_func_lives_tv;
@@ -734,7 +733,6 @@ typedef struct {
   // selection pointers
   ulong mouse_fn1;
   boolean mouse_blocked;
-  boolean hrule_blocked;
 
   /// stored clips
   int clipstore[FN_KEYS - 1];

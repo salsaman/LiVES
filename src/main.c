@@ -3048,7 +3048,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(4, 0, 0)
+  gtk_init();
+#else
   gtk_init(&argc, &argv);
+#endif
 #endif
 
 #ifdef GUI_GTK

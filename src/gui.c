@@ -198,6 +198,8 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_fg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colf2);
+    
+  lives_widget_set_bg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colb);
 
   if (mainw->plug != NULL)
     lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -1903,7 +1905,7 @@ void create_LiVES(void) {
                        NULL);
 
   mainw->framebar = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox4), mainw->framebar, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox4), mainw->framebar, FALSE, FALSE, 2.);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->framebar), 2 * widget_opts.scale);
 
   /* TRANSLATORS: please keep the translated string the same length */
@@ -2125,7 +2127,7 @@ void create_LiVES(void) {
 
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, TRUE, TRUE, 0);
 
-  mainw->video_draw = lives_drawing_area_new();
+  mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_vid_event), &mainw->vidbar_func);
   // need to set this even if theme is none
   lives_widget_set_bg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_fg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -2138,7 +2140,7 @@ void create_LiVES(void) {
 
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, TRUE, TRUE, 0);
 
-  mainw->laudio_draw = lives_drawing_area_new();
+  mainw->laudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_laud_event), &mainw->laudbar_func);
   lives_widget_set_app_paintable(mainw->laudio_draw, TRUE);
 
   // need to set this even if theme is none
@@ -2152,7 +2154,7 @@ void create_LiVES(void) {
 
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, TRUE, TRUE, 0);
 
-  mainw->raudio_draw = lives_drawing_area_new();
+  mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_raud_event), &mainw->raudbar_func);
   lives_widget_set_app_paintable(mainw->raudio_draw, TRUE);
   // need to set this even if theme is none
   lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -2353,15 +2355,6 @@ void create_LiVES(void) {
   mainw->config_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
                        LIVES_GUI_CALLBACK(config_event),
                        NULL);
-  mainw->vidbar_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_EXPOSE_EVENT,
-                       LIVES_GUI_CALLBACK(expose_vid_event),
-                       NULL);
-  mainw->laudbar_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->laudio_draw), LIVES_WIDGET_EXPOSE_EVENT,
-                        LIVES_GUI_CALLBACK(expose_laud_event),
-                        NULL);
-  mainw->raudbar_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->raudio_draw), LIVES_WIDGET_EXPOSE_EVENT,
-                        LIVES_GUI_CALLBACK(expose_raud_event),
-                        NULL);
   mainw->pb_fps_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(changed_fps_during_pb),
                        NULL);
@@ -2857,24 +2850,18 @@ void create_LiVES(void) {
                          LIVES_GUI_CALLBACK(on_mouse_sel_start),
                          NULL);
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
-                         LIVES_GUI_CALLBACK(return_true),
-                         NULL);
-    mainw->hrule_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
-                        LIVES_GUI_CALLBACK(on_hrule_update),
-                        NULL);
-    lives_signal_handler_block(mainw->eventbox5, mainw->hrule_func);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_hrule_enter), NULL);
+			 LIVES_GUI_CALLBACK(on_hrule_update),
+			 NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_hrule_enter), NULL);
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->sa_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		       LIVES_GUI_CALLBACK(on_select_all_activate),
 		       NULL);
-  
-  mainw->hrule_blocked = TRUE;
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
                        LIVES_GUI_CALLBACK(on_hrule_reset),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(on_hrule_set),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox3), LIVES_WIDGET_BUTTON_PRESS_EVENT,

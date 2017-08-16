@@ -1023,10 +1023,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widge
     css_string = tmp;
   }
 
+#if GTK_CHECK_VERSION(4, 0, 0)
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
+                                  css_string,
+                                  -1);
+#else
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                   css_string,
                                   -1, NULL);
-
+#endif
+  
   g_free(colref);
   g_free(widget_name);
   g_free(wname);
@@ -1088,9 +1094,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widge
 
   css_string = g_strdup_printf(" %s {\n color: %s;\n }\n }\n", wname, colref);
 
+#if GTK_CHECK_VERSION(4, 0, 0)
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
+                                  css_string,
+                                  -1);
+#else
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                   css_string,
                                   -1, NULL);
+#endif
 
   g_free(colref);
   g_free(widget_name);
@@ -1153,7 +1165,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_base_color(LiVESWidget *wid
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_fg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  gtk_style_context_get_color(gtk_widget_get_style_context(widget), LIVES_WIDGET_STATE_NORMAL, color);
+#if GTK_CHECK_VERSION(4, 0, 0)
+  gtk_style_context_get_color(gtk_widget_get_style_context(widget), color);
+#else
+  gtk_style_context_get_color(gtk_widget_get_style_context(widget), lives_widget_get_state(widget), color);
+#endif
 #else
   lives_widget_color_copy(color, &gtk_widget_get_style(widget)->fg[LIVES_WIDGET_STATE_NORMAL]);
 #endif
@@ -1171,7 +1187,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_bg_state_color(LiVESWidget 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  gtk_style_context_get_background_color(gtk_widget_get_style_context(widget), LIVES_WIDGET_STATE_NORMAL, color);
+  gtk_style_context_get_background_color(gtk_widget_get_style_context(widget), lives_widget_get_state(widget), color);
   G_GNUC_END_IGNORE_DEPRECATIONS
 #else
   lives_widget_color_copy(color, &gtk_widget_get_style(widget)->bg[LIVES_WIDGET_STATE_NORMAL]);
@@ -2635,19 +2651,17 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_alignment_new(float xalign, float
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_alignment_set(LiVESAlignment *alignment, float xalign, float yalign, float xscale, float yscale) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_alignment_set(LiVESWidget *alignment, float xalign, float yalign, float xscale, float yscale) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  if (xalign == 0.5) gtk_widget_set_halign((GtkWidget *)alignment, GTK_ALIGN_CENTER);
-  if (xalign == 0. && xscale == 1.) gtk_widget_set_halign((GtkWidget *)alignment, GTK_ALIGN_FILL);
-  if (xalign == 0. && xscale == 0.) gtk_widget_set_halign((GtkWidget *)alignment, GTK_ALIGN_START);
-  if (yalign == 0.5) gtk_widget_set_valign((GtkWidget *)alignment, GTK_ALIGN_CENTER);
-  if (yalign == 0. && yscale == 1.) gtk_widget_set_valign((GtkWidget *)alignment, GTK_ALIGN_FILL);
-  if (yalign == 0. && yscale == 0.) gtk_widget_set_valign((GtkWidget *)alignment, GTK_ALIGN_START);
-  G_GNUC_END_IGNORE_DEPRECATIONS
+  if (xalign == 0.5) gtk_widget_set_halign(alignment, GTK_ALIGN_CENTER);
+  if (xalign == 0. && xscale == 1.) gtk_widget_set_halign(alignment, GTK_ALIGN_FILL);
+  if (xalign == 0. && xscale == 0.) gtk_widget_set_halign(alignment, GTK_ALIGN_START);
+  if (yalign == 0.5) gtk_widget_set_valign(alignment, GTK_ALIGN_CENTER);
+  if (yalign == 0. && yscale == 1.) gtk_widget_set_valign(alignment, GTK_ALIGN_FILL);
+  if (yalign == 0. && yscale == 0.) gtk_widget_set_valign(alignment, GTK_ALIGN_START);
 #else
-  gtk_alignment_set(alignment, xalign, yalign, xscale, yscale);
+  gtk_alignment_set(LIVES_ALIGNMENT(alignment), xalign, yalign, xscale, yscale);
   return TRUE;
 #endif
 #endif
@@ -3813,6 +3827,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_remove_accelerator(LiVESWidget 
 
 
 boolean lives_widget_get_preferred_size(LiVESWidget *widget, LiVESRequisition *min_size, LiVESRequisition *nat_size) {
+  // for GTK 4.x we will use widget::measure()
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   gtk_widget_get_preferred_size(widget, min_size, nat_size);
@@ -5772,6 +5787,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_has_frame(LiVESEntry *entry,
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_alignment(LiVESEntry *entry, float align) {
+#ifdef GUI_GTK
+  gtk_entry_set_alignment(entry, align);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE const char *lives_entry_get_text(LiVESEntry *entry) {
 #ifdef GUI_GTK
   return gtk_entry_get_text(entry);
@@ -7000,10 +7024,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_color_button_set_use_alpha(LiVESColorB
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_pointer(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y) {
+
+WIDGET_HELPER_LOCAL_INLINE boolean lives_widget_get_mods(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y, LiVESXModifierType *modmask) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 0, 0)
-  // try: gdk_event_get_device (event)
   LiVESXWindow *xwin;
   if (widget == NULL) xwin = gdk_get_default_root_window();
   else xwin = lives_widget_get_xwindow(widget);
@@ -7011,20 +7034,24 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_pointer(LiVESXDevice *devic
     LIVES_ERROR("Tried to get pointer for windowless widget");
     return TRUE;
   }
-  gdk_window_get_device_position(xwin, device, x, y, NULL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+  gdk_window_get_device_position(xwin, device, x, y, modmask);
 #else
-  gtk_widget_get_pointer(widget, x, y);
+  gdk_window_get_pointer(xwin, x, y, modmask);
 #endif
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  QPoint p = QCursor::pos(device);
-  if (widget != NULL) p = widget->mapFromGlobal(p);
-  *x = p.x();
-  *y = p.y();
   return TRUE;
 #endif
   return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_pointer(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y) {
+  return lives_widget_get_mods(device, widget, x, y, NULL);
+}
+
+ 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_modmask(LiVESXDevice *device, LiVESWidget *widget, LiVESXModifierType *modmask) {
+  return lives_widget_get_mods(device, widget, NULL, NULL, modmask);
 }
 
 
@@ -7355,6 +7382,23 @@ LiVESWidget *lives_standard_label_new(const char *text) {
   lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
 
   return label;
+}
+
+
+LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *ret_fn) {
+  LiVESWidget *darea = NULL;
+#ifdef GUI_GTK
+  darea = gtk_drawing_area_new();
+#if GTK_CHECK_VERSION(4, 0, 0)
+  gtk_drawing_area_set_draw_func(darea, callback, NULL, NULL);
+  *ret_fn = NULL; // TODO
+#else
+  *ret_fn = lives_signal_connect_after(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
+				       LIVES_GUI_CALLBACK(callback),
+				       NULL);
+#endif
+#endif
+  return darea;
 }
 
 
@@ -7730,7 +7774,15 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
     if (tooltip != NULL) lives_tooltips_copy(label, entry);
   }
-
+  else {
+    if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
+      lives_entry_set_alignment(LIVES_ENTRY(entry), 0.5);
+    }
+    else if (widget_opts.justify != LIVES_JUSTIFY_RIGHT) {
+      lives_entry_set_alignment(LIVES_ENTRY(entry), 0.5);
+    }
+  }
+  
   if (box != NULL) {
     if (LIVES_IS_HBOX(box)) hbox = LIVES_WIDGET(box);
     else {

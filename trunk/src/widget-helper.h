@@ -9,8 +9,10 @@
 
 #ifndef IS_SOLARIS
 #define WIDGET_HELPER_GLOBAL_INLINE inline
+#define WIDGET_HELPER_LOCAL_INLINE static inline
 #else
 #define WIDGET_HELPER_GLOBAL_INLINE
+#define WIDGET_HELPER_LOCAL_INLINE
 #endif
 
 #ifndef M_PI
@@ -331,7 +333,7 @@ LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *);
 LiVESWidget *lives_arrow_new(LiVESArrowType, LiVESShadowType);
 
 LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale);
-boolean lives_alignment_set(LiVESAlignment *, float xalign, float yalign, float xscale, float yscale);
+boolean lives_alignment_set(LiVESWidget *, float xalign, float yalign, float xscale, float yscale);
 
 LiVESWidget *lives_expander_new_with_mnemonic(const char *label);
 LiVESWidget *lives_expander_new(const char *label);
@@ -571,6 +573,7 @@ boolean lives_entry_set_max_length(LiVESEntry *, int len);
 boolean lives_entry_set_activates_default(LiVESEntry *, boolean act);
 boolean lives_entry_set_visibility(LiVESEntry *, boolean vis);
 boolean lives_entry_set_has_frame(LiVESEntry *, boolean has);
+boolean lives_entry_set_alignment(LiVESEntry *, float align);
 
 double lives_scale_button_get_value(LiVESScaleButton *);
 boolean lives_scale_button_set_value(LiVESScaleButton *, double value);
@@ -676,6 +679,7 @@ boolean lives_widget_add_accelerator(LiVESWidget *, const char *accel_signal, Li
                                      uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags);
 
 boolean lives_widget_get_pointer(LiVESXDevice *, LiVESWidget *, int *x, int *y);
+boolean lives_widget_get_modmask(LiVESXDevice *, LiVESWidget *, LiVESXModifierType *modmask);
 LiVESXWindow *lives_display_get_window_at_pointer(LiVESXDevice *, LiVESXDisplay *, int *win_x, int *win_y);
 boolean lives_display_get_pointer(LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESXModifierType *mask);
 boolean lives_display_warp_pointer(LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
@@ -725,6 +729,8 @@ void lives_label_set_hpadding(LiVESLabel *label, int pad);
 
 LiVESWidget *lives_standard_label_new(const char *text);
 LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget);
+
+LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *ret_fn);
 
 LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invisible_outline);
 
@@ -822,6 +828,8 @@ LiVESWidget *add_fill_to_box(LiVESBox *);
 
 LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *);
 LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *text);
+
+boolean lives_widget_get_mod_mask(LiVESWidget *, LiVESXModifierType *modmask);
 
 #endif // cplusplus
 

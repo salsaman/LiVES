@@ -6021,9 +6021,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
         height = oheight;
       }
 
-      lives_alignment_set((LiVESAlignment *)(mainw->fs_playalign), 0.5,
-                          0.5, 0.,
-                          (float)height / (float)fheight);
+      lives_alignment_set(mainw->fs_playalign, 0.5, 0.5, 0., (float)height / (float)fheight);
 
       lives_widget_context_update();
 
@@ -9498,19 +9496,26 @@ boolean on_hrule_enter(LiVESWidget *widget, LiVESXEventCrossing *event, livespoi
 
 
 boolean on_hrule_update(LiVESWidget *widget, LiVESXEventMotion *event, livespointer user_data) {
+  LiVESXModifierType modmask;
+  LiVESXDevice *device;
+  
   int x;
 
-  if (!mainw->interactive) return FALSE;
+  if (!mainw->interactive) return TRUE;
 
-  if (mainw->current_file <= 0) return FALSE;
+  if (mainw->current_file <= 0) return TRUE;
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
-                           mainw->vidbar, &x, NULL);
+  device = (LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device;
+  
+  lives_widget_get_modmask(device, widget, &modmask);
+  
+  if (!(modmask & LIVES_BUTTON1_MASK)) return TRUE;
+  
+  lives_widget_get_pointer(device, widget, &x, NULL);
   cfile->pointer_time = lives_ce_update_timeline(0,
-                        (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                        (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
   get_play_times();
-
-  return FALSE;
+  return TRUE;
 }
 
 
@@ -9523,14 +9528,11 @@ boolean on_hrule_reset(LiVESWidget *widget, LiVESXEventButton  *event, livespoin
   if (mainw->current_file <= 0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
-                           mainw->LiVES, &x, NULL);
+                           widget, &x, NULL);
   cfile->pointer_time = lives_ce_update_timeline(0,
-                        (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                        (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
   get_play_times();
-  if (!mainw->hrule_blocked) {
-    lives_signal_handler_block(mainw->eventbox5, mainw->hrule_func);
-    mainw->hrule_blocked = TRUE;
-  }
+
   if (cfile->pointer_time > 0.) {
     lives_widget_set_sensitive(mainw->rewind, TRUE);
     lives_widget_set_sensitive(mainw->trim_to_pstart, (cfile->achans * cfile->frames > 0));
@@ -9559,17 +9561,13 @@ boolean on_hrule_set(LiVESWidget *widget, LiVESXEventButton *event, livespointer
   if (mainw->current_file <= 0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
-                           mainw->LiVES, &x, NULL);
+                           widget, &x, NULL);
 
   cfile->pointer_time = lives_ce_update_timeline(0,
-                        (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                        (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
   get_play_times();
-  if (mainw->hrule_blocked) {
-    lives_signal_handler_unblock(mainw->eventbox5, mainw->hrule_func);
-    mainw->hrule_blocked = FALSE;
-  }
 
-  return FALSE;
+  return TRUE;
 }
 
 

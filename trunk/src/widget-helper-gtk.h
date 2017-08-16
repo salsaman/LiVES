@@ -303,11 +303,19 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #endif
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(4, 0, 0)
+#define EXPOSE_FN_DECL(fn, widget) boolean fn(LiVESWidget *widget, lives_painter_t *cairo, int width, int height, livespointer user_data) { \
+    LiVESXEventExpose *event = NULL; \
+    event = event; // avoid compiler warnings
+#define EXPOSE_FN_EVENT
+#define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, lives_painter_t *, int, int, livespointer);
+#else
 #define EXPOSE_FN_DECL(fn, widget) boolean fn(LiVESWidget *widget, lives_painter_t *cairo, livespointer user_data) { \
     LiVESXEventExpose *event = NULL; \
     event = event; // avoid compiler warnings
 #define EXPOSE_FN_EVENT
 #define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, lives_painter_t *, livespointer);
+#endif
 #else
 #define EXPOSE_FN_DECL(fn, widget) boolean fn(LiVESWidget *widget, LiVESXEventExpose *event, livespointer user_data) { \
     lives_painter_t *cairo = NULL; \
@@ -317,7 +325,11 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #endif
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(4, 0, 0)
+#define LIVES_WIDGET_EXPOSE_EVENT "snapshot"
+#else
 #define LIVES_WIDGET_EXPOSE_EVENT "draw"
+#endif
 #define LIVES_GUI_OBJECT(a)                     a
 #else
 #define LIVES_GUI_OBJECT(a)                     GTK_OBJECT(a)
@@ -999,6 +1011,12 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 #define LIVES_ALT_MASK     GDK_MOD1_MASK
 #define LIVES_SHIFT_MASK   GDK_SHIFT_MASK
 #define LIVES_LOCK_MASK    GDK_LOCK_MASK
+
+#define LIVES_BUTTON1_MASK    GDK_BUTTON1_MASK
+#define LIVES_BUTTON2_MASK    GDK_BUTTON2_MASK
+#define LIVES_BUTTON3_MASK    GDK_BUTTON3_MASK
+#define LIVES_BUTTON4_MASK    GDK_BUTTON4_MASK
+#define LIVES_BUTTON5_MASK    GDK_BUTTON5_MASK
 
 #ifdef GDK_KEY_a
 #define LIVES_KEY_Left GDK_KEY_Left

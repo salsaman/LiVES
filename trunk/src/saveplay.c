@@ -495,7 +495,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               wait_for_bg_audio_sync(mainw->current_file);
 
               reget_afilesize(mainw->current_file);
-              get_total_time(cfile);
 
               if (prefs->auto_trim_audio) {
                 if ((cdata->sync_hint & SYNC_HINT_VIDEO_PAD_START) && cdata->video_start_time <= 1.) {
@@ -886,7 +885,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   }
 
   reget_afilesize(mainw->current_file);
-  get_total_time(cfile);
 
   if (cfile->ext_src == NULL && start != 0. && CLIP_TOTAL_TIME(mainw->current_file) > cfile->video_time) {
     cfile->undo1_dbl = cfile->video_time;
@@ -5479,7 +5477,12 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           get_frames_sizes(mainw->current_file, 1);
           cfile->needs_update = TRUE;
         }
-        if (is_ascrap && cfile->afilesize == 0) reget_afilesize(mainw->current_file);
+        if (is_ascrap && cfile->afilesize == 0) {
+	  int current_file = mainw->current_file;
+	  mainw->current_file = -1; // prevent drawing of timeline bars for now
+	  reget_afilesize(current_file);
+	  mainw->current_file = current_file;
+	}
       }
 
       if (!is_scrap && !is_ascrap) {
@@ -5596,6 +5599,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   mainw->is_ready = TRUE;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   mainw->is_ready = is_ready;
+  update_play_times();
   return TRUE;
 }
 

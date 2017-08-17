@@ -1,6 +1,6 @@
 // callbacks.h
 // LiVES
-// (c) G. Finch <salsaman@gmail.com> 2003 - 2016
+// (c) G. Finch <salsaman+lives@gmail.com> 2003 - 2017
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -10,6 +10,8 @@
 void lives_exit(int signum);
 
 void lives_notify(int msgnumber, const char *msgstring);
+
+void lives_notify_int(int msgnumber, int msgint);
 
 void on_effects_paused(LiVESButton *, livespointer);
 

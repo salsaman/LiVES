@@ -199,7 +199,9 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colf2);
     
-  lives_widget_set_bg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colf2);
+  lives_widget_set_bg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colb2);
+  set_child_colour(mainw->sa_button, TRUE);
 
   if (mainw->plug != NULL)
     lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -3699,7 +3701,7 @@ void play_window_set_title(void) {
 }
 
 
-void resize_widgets_for_monitor(boolean get_play_times) {
+void resize_widgets_for_monitor(boolean do_get_play_times) {
   // resize widgets if we are aware that monitor resolution has changed
 
   mainw->scr_width = mainw->mgeom[widget_opts.monitor].width;
@@ -3711,6 +3713,11 @@ void resize_widgets_for_monitor(boolean get_play_times) {
     }
     if (prefs->open_maximised && prefs->show_gui) {
       resize(1);
+    }
+    if (do_get_play_times) {
+      if (mainw->laudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
+      if (mainw->raudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
+      get_play_times();
     }
   } else {
     if (prefs->gui_monitor != 0) {
@@ -3728,12 +3735,6 @@ void resize_widgets_for_monitor(boolean get_play_times) {
   if (mainw->play_window != NULL) {
     resize_play_window();
   }
-
-  /*  if (mainw->multitrack==NULL&&get_play_times) {
-    if (mainw->current_file>-1&&!mainw->recoverable_layout) {
-      get_play_times();
-    }
-    }*/
 }
 
 

@@ -76,6 +76,13 @@ void lives_notify(int msgnumber, const char *msgstring) {
 }
 
 
+LIVES_GLOBAL_INLINE void lives_notify_int(int msgnumber, int msgint) {
+  char *tmp = lives_strdup_printf("%d", msgint);
+  lives_notify(msgnumber, tmp);
+  lives_free(tmp);
+}
+
+
 boolean on_LiVES_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
   if (!mainw->interactive) return TRUE;
   on_quit_activate(NULL, NULL);
@@ -2013,7 +2020,6 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
     reget_afilesize(mainw->current_file);
-    get_play_times();
 
     if (bad_header) do_header_write_error(mainw->current_file);
   }
@@ -3259,7 +3265,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     if (with_sound) {
       reget_afilesize(mainw->current_file);
     }
-    get_play_times();
+    else get_play_times();
     d_print_done();
   }
 
@@ -3375,7 +3381,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
   if (with_sound == 1) {
     reget_afilesize(mainw->current_file);
   }
-  get_play_times();
+  else get_play_times();
   d_print_done();
 
   // last remainder frames
@@ -3691,7 +3697,8 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->ccpd_with_sound) {
     reget_afilesize(mainw->current_file);
   }
-
+  else get_play_times();
+  
   if (cfile->frames == 0) {
     if (cfile->afilesize == 0l) {
       close_current_file(0);
@@ -3952,8 +3959,7 @@ void on_playsel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // in case we are rendering and previewing, in case we now have audio
   if (mainw->preview && mainw->is_rendering && mainw->is_processing) reget_afilesize(mainw->current_file);
-
-  get_play_times();
+  else get_play_times();
   mainw->noswitch = FALSE;
 }
 
@@ -5060,6 +5066,9 @@ boolean reload_set(const char *set_name) {
             load_start_image(cfile->start);
             load_end_image(cfile->end);
           }
+	  // force a redraw
+	  update_play_times();
+
           lives_widget_context_update();
         }
       } else {
@@ -7779,7 +7788,6 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
     reget_afilesize(mainw->current_file);
-    get_play_times();
     mainw->noswitch = FALSE;
     return;
   }
@@ -7817,7 +7825,6 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
     reget_afilesize(mainw->current_file);
-    get_play_times();
     mainw->noswitch = FALSE;
     if (mainw->error) d_print_failed();
     return;
@@ -7870,7 +7877,6 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
     reget_afilesize(mainw->current_file);
-    get_play_times();
     mainw->noswitch = FALSE;
     return;
   }
@@ -7904,7 +7910,6 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
     reget_afilesize(mainw->current_file);
-    get_play_times();
     mainw->noswitch = FALSE;
     return;
   }
@@ -8042,7 +8047,7 @@ void on_load_cdtrack_ok_clicked(LiVESButton *button, livespointer user_data) {
 
     mainw->current_file = new_file;
     lives_snprintf(cfile->type, 40, "CD track %d on %s", (int)mainw->fx1_val, prefs->cdplay_device);
-    get_play_times();
+    update_play_times();
     add_to_clipmenu();
     was_new = TRUE;
     cfile->opening = cfile->opening_audio = cfile->opening_only_audio = TRUE;
@@ -8074,8 +8079,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton *button, livespointer user_data) {
 
     sensitize();
     reget_afilesize(mainw->current_file);
-    get_play_times();
-
     mainw->noswitch = FALSE;
     if (was_new) close_current_file(0);
     return;
@@ -8105,8 +8108,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton *button, livespointer user_data) {
 
       sensitize();
       reget_afilesize(mainw->current_file);
-      get_play_times();
-
     }
 
     mainw->noswitch = FALSE;
@@ -8147,7 +8148,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton *button, livespointer user_data) {
 
       sensitize();
       reget_afilesize(mainw->current_file);
-      get_play_times();
     }
 
     mainw->noswitch = FALSE;
@@ -8243,7 +8243,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton *button, livespointer user_data) {
   if (bad_header) do_header_write_error(mainw->current_file);
 
   reget_afilesize(mainw->current_file);
-  get_play_times();
   cfile->changed = TRUE;
   d_print_done();
   d_print(P_("New audio: %d Hz %d channel %d bps\n", "New audio: %d Hz %d channels %d bps\n", cfile->achans),
@@ -8593,9 +8592,7 @@ void on_spinbutton_start_value_changed(LiVESSpinButton *spinbutton, livespointer
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start);
   }
   set_sel_label(mainw->sel_label);
-  if (mainw->laudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
-  if (mainw->raudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
-  get_play_times();
+  update_play_times();
 
   if (mainw->playing_file == -1 && mainw->play_window != NULL && cfile->is_loaded) {
     if (mainw->prv_link == PRV_START && mainw->preview_frame != cfile->start)
@@ -8647,9 +8644,7 @@ void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer u
   }
 
   set_sel_label(mainw->sel_label);
-  if (mainw->laudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
-  if (mainw->raudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
-  get_play_times();
+  update_play_times();
 
   if (mainw->playing_file == -1 && mainw->play_window != NULL && cfile->is_loaded) {
     if (mainw->prv_link == PRV_END && mainw->preview_frame != cfile->end)
@@ -8706,7 +8701,7 @@ EXPOSE_FN_DECL(expose_vid_event, widget) {
                             lives_widget_get_allocation_height(mainw->video_draw));
 
     block_expose();
-    get_play_times();
+    update_timer_bars(ex, ey, ew, eh, 1);
     unblock_expose();
   }
 
@@ -8727,7 +8722,7 @@ EXPOSE_FN_DECL(expose_vid_event, widget) {
     lives_painter_destroy(cairo);
   }
   return TRUE;
-}
+ }
 }
 
 
@@ -8752,7 +8747,7 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
     block_expose();
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
-    get_play_times();
+    update_timer_bars(ex, ey, ew, eh, 2);
     unblock_expose();
   }
 
@@ -8795,7 +8790,7 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
                              lives_widget_get_allocation_height(mainw->raudio_draw));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
     block_expose();
-    get_play_times();
+    update_timer_bars(ex, ey, ew, eh, 3);
     unblock_expose();
   }
 
@@ -8898,8 +8893,7 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
       mainw->scr_height = scr_height;
       resize_widgets_for_monitor(FALSE);
     }
-
-    if (mainw->current_file > -1 && !mainw->recoverable_layout) {
+    else if (mainw->current_file > -1 && !mainw->recoverable_layout) {
       get_play_times();
     }
   }
@@ -8909,7 +8903,6 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
     mainw->scr_height = scr_height;
 
     if (prefs->startup_interface == STARTUP_CE) {
-
 #ifdef ENABLE_JACK
       if (mainw->jackd != NULL) {
         jack_driver_activate(mainw->jackd);
@@ -8945,7 +8938,6 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
   if (mainw->iochan != NULL || cfile->opening) {
     // pause during encoding (if we start using mainw->iochan for other things, this will
     // need changing...)
-
     if (!mainw->effects_paused) {
       lives_suspend_resume_process(cfile->handle, TRUE);
 
@@ -8955,7 +8947,6 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
         d_print(_("paused..."));
       }
     }
-
     else {
       lives_suspend_resume_process(cfile->handle, FALSE);
 
@@ -10395,7 +10386,6 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
     lives_free(com);
     reget_afilesize(mainw->current_file);
-    get_play_times();
     if (mainw->error) d_print_failed();
     if (mainw->multitrack != NULL) {
       mt_sensitise(mainw->multitrack);
@@ -10437,7 +10427,6 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_snprintf(mainw->audio_dir, PATH_MAX, "%s", file_name);
       reget_afilesize(mainw->current_file);
       cfile->changed = TRUE;
-      get_play_times();
       d_print_done();
     }
   }
@@ -10532,7 +10521,6 @@ void on_trim_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   reget_afilesize(mainw->current_file);
-  get_play_times();
   cfile->changed = TRUE;
   d_print_done();
   if (has_lmap_error) popup_lmap_errors(NULL, NULL);
@@ -10808,7 +10796,6 @@ boolean on_del_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   cfile->undo_action = UNDO_DELETE_AUDIO;
 
   reget_afilesize(mainw->current_file);
-  get_play_times();
   cfile->changed = TRUE;
   sensitize();
 
@@ -11053,7 +11040,6 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
     do_threaded_dialog(_("Committing audio"), FALSE);
     aud_start = 0.;
     reget_afilesize(mainw->current_file);
-    get_total_time(cfile);
     aud_end = cfile->laudio_time;
     ins_pt = (mainw->files[old_file]->start - 1.) / mainw->files[old_file]->fps * TICKS_PER_SECOND_DBL;
 
@@ -11256,7 +11242,6 @@ boolean on_ins_silence_activate(LiVESMenuItem *menuitem, livespointer user_data)
   cfile->undo_action = UNDO_INSERT_SILENCE;
 
   reget_afilesize(mainw->current_file);
-  get_play_times();
   cfile->changed = TRUE;
 
   save_clip_values(mainw->current_file);

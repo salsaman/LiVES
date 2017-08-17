@@ -1164,7 +1164,6 @@ static void lives_init(_ign_opts *ign_opts) {
     }
 
     if (prefs->open_maximised && prefs->show_gui) {
-      lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
       lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
     }
 
@@ -7103,13 +7102,6 @@ void load_frame_image(int frame) {
 
     if (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE) {
       reget_afilesize(mainw->current_file);
-
-      /*      if (cfile->afilesize>0&&cfile->achans==0) {
-      	char *msgx=lives_strdup_printf("Audio file but no channels, %s",cfile->handle);
-      	LIVES_WARN(msgx);
-      	lives_free(msgx);
-      	}*/
-
     }
 
     if (!mainw->switch_during_pb) {

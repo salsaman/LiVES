@@ -619,7 +619,7 @@ void restore_weed_instances(void) {
 }
 
 
-int step_val(int val, int step) {
+LIVES_GLOBAL_INLINE int step_val(int val, int step) {
   int ret = (int)(val / step + .5) * step;
   return ret == 0 ? step : ret;
 }
@@ -3255,7 +3255,6 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float *
 
   } else {
     // when processing an event list, we pass an init_event
-
     was_init_event = TRUE;
     if (weed_plant_has_leaf(init_event, WEED_LEAF_HOST_TAG)) {
       char *keystr = weed_get_string_value(init_event, WEED_LEAF_HOST_TAG, &error);
@@ -3391,7 +3390,6 @@ audinst1:
     }
 
     weed_set_int_value(channel, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
-
   }
 
   if (needs_reinit) {
@@ -3480,8 +3478,8 @@ audinst1:
       weed_set_double_array(in_params[vmaster], WEED_LEAF_VALUE, nvals, fvols);
       filter_mutex_unlock(key);
       set_copy_to(instance, vmaster, TRUE);
-      lives_free(fvols);
-      lives_free(in_params);
+      lives_freep((void **)&fvols);
+      lives_freep((void **)&in_params);
     }
   }
 
@@ -3546,8 +3544,8 @@ audret1:
     }
     lives_free(layers);
   }
-  lives_free(in_tracks);
-  lives_free(out_tracks);
+  lives_freep((void **)&in_tracks);
+  lives_freep((void **)&out_tracks);
 
   return retval;
 }
@@ -3688,7 +3686,7 @@ apply_inst2:
       }
     }
 
-    lives_free(init_events);
+    lives_freep((void **)&init_events);
   }
 }
 
@@ -3863,7 +3861,7 @@ void weed_apply_audio_effects(weed_plant_t *filter_map, float **abuf, int nbtrac
       init_event = (weed_plant_t *)init_events[i];
       fhash = weed_get_string_value(init_event, WEED_LEAF_FILTER, &error);
       filter = get_weed_filter(weed_get_idx_for_hashname(fhash, TRUE));
-      lives_free(fhash);
+      lives_freep((void **)&fhash);
       if (has_audio_chans_in(filter, FALSE) && !has_video_chans_in(filter, FALSE) && !has_video_chans_out(filter, FALSE)) {
         filter_error = weed_apply_audio_instance(init_event, abuf, nbtracks, nchans, nsamps, arate, tc, vis);
         filter_error = filter_error; // stop compiler complaining
@@ -10082,6 +10080,31 @@ int *weed_get_indices_from_template(const char *pkg, const char *fxname, const c
 weed_plant_t *get_weed_filter(int idx) {
   if (idx > -1 && idx < num_weed_filters) return weed_filters[idx];
   return NULL;
+}
+
+
+LIVES_GLOBAL_INLINE void **weed_layer_get_pixel_data(weed_plant_t *layer) {
+  return weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &weed_general_error);
+}
+
+
+LIVES_GLOBAL_INLINE int *weed_layer_get_rowstrides(weed_plant_t *layer) {
+  return weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &weed_general_error);
+}
+
+
+LIVES_GLOBAL_INLINE int weed_layer_get_width(weed_plant_t *layer) {
+  return weed_get_int_value(layer, WEED_LEAF_WIDTH, &weed_general_error);
+}
+
+
+LIVES_GLOBAL_INLINE int weed_layer_get_height(weed_plant_t *layer) {
+  return weed_get_int_value(layer, WEED_LEAF_HEIGHT, &weed_general_error);
+}
+
+
+LIVES_GLOBAL_INLINE int weed_layer_get_current_palette(weed_plant_t *layer) {
+  return weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &weed_general_error);
 }
 
 

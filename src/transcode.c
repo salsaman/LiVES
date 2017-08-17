@@ -28,11 +28,42 @@
 
 #include "effects-weed.h"
 
+
+
+boolean send_layer(weed_plant_t *layer, _vid_playback_plugin *vpp, int64_t timecode) {
+  // send a weed layer to a (prepared) video playback plugin
+  // warning: will quite likely change the pixel_data of layer
+
+  // returns: TRUE on rendering error
+  
+  void **pd_array;
+  boolean error = FALSE;
+  
+  // convert to the plugin's palette
+  convert_layer_palette(layer, vpp->palette, vpp->YUV_clamping);
+
+  // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
+  compact_rowstrides(layer);
+
+  // get a void ** to the planar pixel_data
+  pd_array = weed_layer_get_pixel_data(layer);
+
+  if (pd_array != NULL) {
+    // send pixel data to the vidoe frame renderer
+    error = !(*vpp->render_frame)(weed_layer_get_width(layer),
+				  weed_layer_get_height(layer),
+				  timecode, pd_array, NULL, NULL);
+    
+    lives_free(pd_array);
+  }
+  return error;
+}
+
+
 boolean transcode(int start, int end) {
   int fd = -1;
   int resp;
   int asigned = 0, aendian = 0;
-  int weed_error;
   int nsamps;
 
   register int i, j;
@@ -60,8 +91,6 @@ boolean transcode(int start, int end) {
   lives_rfx_t *rfx = NULL;
 
   void *abuff = NULL;
-
-  void **pd_array;
 
   short *sbuff = NULL;
 
@@ -200,6 +229,10 @@ boolean transcode(int start, int end) {
         } else event_list_free(mainw->event_list);
       }
 
+      mainw->effects_paused = FALSE;
+      free_track_decoders();
+      deinit_render_effects();
+      audio_free_fnames();
 goto tr_err:
     }
 #endif
@@ -264,23 +297,7 @@ goto tr_err:
       //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
       check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
 
-      // convert to the plugin's palette
-      convert_layer_palette(frame_layer, vpp->palette, vpp->YUV_clamping);
-
-      // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
-      compact_rowstrides(frame_layer);
-
-      // get a void ** to the planar pixel_data
-      pd_array = weed_get_voidptr_array(frame_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
-
-      if (pd_array != NULL) {
-        // send pixel data to the vidoe frame renderer
-        error = !(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
-                                             weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error),
-                                             currticks, pd_array, NULL, NULL);
-
-        lives_free(pd_array);
-      }
+      error = send_layer(frame_layer, vpp, currticks);
 
       // free pixel_data, but keep same layer around
       weed_layer_pixel_data_free(frame_layer);

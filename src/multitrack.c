@@ -2151,7 +2151,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
 
   lives_container_add(LIVES_CONTAINER(mt->tl_eventbox), mt->timeline_table);
 
-  lives_table_set_row_spacings(LIVES_TABLE(mt->timeline_table), widget_opts.packing_height >> 1);
+  lives_table_set_row_spacings(LIVES_TABLE(mt->timeline_table), widget_opts.packing_height * widget_opts.scale);
   lives_table_set_col_spacings(LIVES_TABLE(mt->timeline_table), 0);
 
   lives_widget_set_vexpand(mt->timeline_table, FALSE);
@@ -9854,9 +9854,9 @@ static int add_video_track(lives_mt *mt, boolean behind) {
   LiVESWidget *arrow;
   LiVESWidget *eventbox;  // each track has an eventbox, which we store in LiVESList *video_draws
   LiVESWidget *aeventbox; // each track has optionally an associated audio track, which we store in LiVESList *audio_draws
-  int i;
   LiVESList *liste;
   int max_disp_vtracks = prefs->max_disp_vtracks;
+  int i;
   char *tmp;
 
   if (mt->audio_draws != NULL && mt->audio_draws->data != NULL && mt->opts.back_audio_tracks > 0 &&
@@ -10767,8 +10767,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   mainw_was_ready = mainw->is_ready;
   mainw->is_ready = TRUE;
 
-  lives_notify(LIVES_OSC_NOTIFY_MODE_CHANGED, (tmp = lives_strdup_printf("%d", STARTUP_MT)));
-  lives_free(tmp);
+  lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
 
   multi->no_expose = FALSE;
 
@@ -17401,9 +17400,8 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
     }
 
     for (i = offset_start; i <= offset_end; i++) {
-      secs = (double)i / awid;
-      secs += seek;
-      if (secs > mainw->files[fnum]->laudio_time) break;
+      secs = (double)i / awid + seek;
+      if (secs > (chnum == 0 ? mainw->files[fnum]->laudio_time : mainw->files[fnum]->raudio_time)) break;
 
       // seek and read
       ypos = get_float_audio_val_at_time(fnum, afd, secs, chnum, cfile->achans) * .5;

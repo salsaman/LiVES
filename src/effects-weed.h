@@ -313,9 +313,15 @@ boolean weed_playback_gen_start(void);
 void weed_bg_generator_end(weed_plant_t *inst);
 void wge_inner(weed_plant_t *inst, boolean unref); ///< deinit instance(s) for generator
 
+// layers
 weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode_t tc);
 weed_plant_t *weed_layer_new();
 weed_plant_t *weed_layer_new_for_frame();
+void **weed_layer_get_pixel_data(weed_plant_t *layer);
+int *weed_layer_get_rowstrides(weed_plant_t *layer);
+int weed_layer_get_width(weed_plant_t *layer);
+int weed_layer_get_height(weed_plant_t *layer);
+int weed_layer_current_palette(weed_plant_t *layer);
 
 /// for multitrack
 void backup_weed_instances(void);
@@ -421,5 +427,7 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot)
 #define WEED_PLANT_IS_PARAMETER(plant) (weed_get_plant_type(plant) == WEED_PLANT_PARAMETER ? 1 : 0)
 #define WEED_PLANT_IS_PARAMETER_TEMPLATE(plant) (weed_get_plant_type(plant) == WEED_PLANT_PARAMETER_TEMPLATE ? 1 : 0)
 #define WEED_PLANT_IS_GUI(plant) (weed_get_plant_type(plant) == WEED_PLANT_GUI ? 1 : 0)
+
+int weed_general_error;
 
 #endif

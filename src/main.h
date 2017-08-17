@@ -1239,8 +1239,10 @@ void set_menu_text(LiVESWidget *menu, const char *text, boolean use_mnemonic);
 void get_menu_text(LiVESWidget *menu, char *text);
 void get_menu_text_long(LiVESWidget *menuitem, char *text);
 void reset_clipmenu(void);
-double lives_ce_update_timeline(int frame, double x);
-void get_play_times(void);
+double lives_ce_update_timeline(int frame, double x);  ///< pointer position in timeline
+void get_play_times(void); ///< recalculate video / audio lengths and draw the timer bars
+void update_play_times(void); ///< like get_play_times, but will force redraw audio waveforms
+void update_timer_bars(int posx, int posy, int width, int height, int which); ///< draw the timer bars,
 void get_total_time(lives_clip_t *file);
 uint32_t get_signed_endian(boolean is_signed, boolean little_endian);
 void fullscreen_internal(void);
@@ -1306,7 +1308,7 @@ int verhash(char *version);
 void set_undoable(const char *what, boolean sensitive);
 void set_redoable(const char *what, boolean sensitive);
 void zero_spinbuttons(void);
-void draw_little_bars(double ptrtime);
+void draw_little_bars(double ptrtime, int which);
 void set_sel_label(LiVESWidget *label);
 void clear_mainw_msg(void);
 int get_token_count(const char *string, int delim);

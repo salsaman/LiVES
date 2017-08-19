@@ -2900,7 +2900,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
 
       lives_painter_rectangle(cr, posx, 0,
-                              NORMAL_CLAMP(offset_left - posx, xwidth);
+                              NORMAL_CLAMP(offset_left - posx, xwidth),
                               prefs->bar_height);
 
       lives_painter_fill(cr);

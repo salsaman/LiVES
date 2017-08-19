@@ -3115,7 +3115,6 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
   void set_double_param(void *value, double _const) {
     lives_memcpy(value, &_const, sizdbl);
-
   }
 
 

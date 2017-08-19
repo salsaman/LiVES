@@ -3201,6 +3201,10 @@ boolean get_temp_handle(int index, boolean create) {
 
 
 void create_cfile(void) {
+  // create a new "clip" with default values
+
+  // call close_current_file() to close it
+
   char *stfile;
 
   // any cfile (clip) initialisation goes in here
@@ -3255,6 +3259,7 @@ void create_cfile(void) {
   cfile->keep_without_preview = FALSE;
   cfile->cb_src = -1;
   cfile->needs_update = FALSE;
+  cfile->audio_waveform = NULL;
 
   if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
   else cfile->img_type = IMG_TYPE_PNG;
@@ -5478,11 +5483,11 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           cfile->needs_update = TRUE;
         }
         if (is_ascrap && cfile->afilesize == 0) {
-	  int current_file = mainw->current_file;
-	  mainw->current_file = -1; // prevent drawing of timeline bars for now
-	  reget_afilesize(current_file);
-	  mainw->current_file = current_file;
-	}
+          int current_file = mainw->current_file;
+          mainw->current_file = -1; // prevent drawing of timeline bars for now
+          reget_afilesize(current_file);
+          mainw->current_file = current_file;
+        }
       }
 
       if (!is_scrap && !is_ascrap) {

@@ -745,6 +745,7 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
   int arate, achans, asampsize, arps;
   int asigned = 1, aendian = 1;
   int cur_signed, cur_endian;
+  int i;
 
   if (button != NULL) {
     arps = arate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
@@ -832,6 +833,11 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
     }
   }
 
+  if (cfile->audio_waveform != NULL) {
+    for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+    lives_freep((void **)&cfile->audio_waveform);
+  }
+  
   cfile->arate = arate;
   cfile->achans = achans;
   cfile->asampsize = asampsize;

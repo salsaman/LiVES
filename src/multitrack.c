@@ -1496,7 +1496,7 @@ draw1:
 
   return TRUE;
 }
-}
+EXPOSE_FN_END
 
 
 static char *mt_params_label(lives_mt *mt) {
@@ -8724,8 +8724,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   int *layout_map;
   double *layout_map_audio = NULL;
 
-  char *tmp;
-
   boolean transfer_focus = FALSE;
   boolean needs_idlefunc = FALSE;
 
@@ -9026,8 +9024,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     lives_free(xtrabit);
   }
 
-  lives_notify(LIVES_OSC_NOTIFY_MODE_CHANGED, (tmp = lives_strdup_printf("%d", STARTUP_CE)));
-  lives_free(tmp);
+  lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
 
   return TRUE;
 }
@@ -10494,9 +10491,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   //returns TRUE if we go into mt mode
   lives_mt *multi;
 
-  char buff[32768];
-
-  char *tmp;
+  char buff[256];
 
   boolean response;
   boolean transfer_focus = FALSE;
@@ -17313,7 +17308,7 @@ static EXPOSE_FN_DECL(expose_timeline_reg_event, timeline) {
 
   return TRUE;
 }
-}
+EXPOSE_FN_END
 
 
 static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int chnum, lives_mt *mt) {
@@ -17514,7 +17509,7 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox) {
 
   return TRUE;
 }
-}
+EXPOSE_FN_END
 
 
 ////////////////////////////////////////////////////

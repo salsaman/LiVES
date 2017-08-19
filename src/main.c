@@ -619,7 +619,7 @@ static boolean pre_init(void) {
   get_monitors();
 
   widget_opts.scale = (double)mainw->scr_width / 1200.;
-  
+
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate = -1;
     mainw->fx_candidates[i].list = NULL;
@@ -2935,8 +2935,7 @@ static boolean lives_startup(livespointer data) {
 
   mainw->go_away = FALSE;
 
-  lives_notify(LIVES_OSC_NOTIFY_MODE_CHANGED, (tmp = lives_strdup_printf("%d", STARTUP_CE)));
-  lives_free(tmp);
+  lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
 
   return FALSE;
 } // end lives_startup()
@@ -6739,9 +6738,7 @@ void load_frame_image(int frame) {
           mainw->current_file != mainw->ascrap_file &&
           (mainw->multitrack == NULL || mainw->current_file != mainw->multitrack->render_file)) {
         d_print(_("Closed file %s\n"), cfile->file_name);
-
         lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED, "");
-
       }
 
       // resize frame widgets to default
@@ -6788,7 +6785,6 @@ void load_frame_image(int frame) {
         // kill any active processes: for other OSes the backend does this
         lives_kill_subprocesses(cfile->handle, TRUE);
 #endif
-
         com = lives_strdup_printf("%s close \"%s\"", prefs->backend_sync, cfile->handle);
         lives_system(com, TRUE);
         lives_free(com);
@@ -6821,6 +6817,11 @@ void load_frame_image(int frame) {
 
       if (cfile->raudio_drawable != NULL) {
         lives_painter_surface_destroy(cfile->raudio_drawable);
+      }
+
+      if (cfile->audio_waveform != NULL) {
+	for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
+	lives_free(cfile->audio_waveform);
       }
 
       lives_freep((void **)&cfile);

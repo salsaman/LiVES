@@ -524,6 +524,8 @@ typedef enum {
 
 #define CLIP_TOTAL_TIME(clip) ((double)(CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : CLIP_AUDIO_TIME(clip)))
 
+#define CURRENT_CLIP_TOTAL_TIME CLIP_TOTAL_TIME(mainw->current_file)
+
 /// corresponds to one clip in the GUI
 typedef struct {
   // basic info (saved during backup)
@@ -708,6 +710,8 @@ typedef struct {
   int cb_src; ///< source clip for clipboard
 
   boolean needs_update; ///< loaded values were incorrect, update header
+
+  float **audio_waveform; ///< values for drawing the audio wave
 } lives_clip_t;
 
 typedef struct {
@@ -1239,11 +1243,14 @@ void set_menu_text(LiVESWidget *menu, const char *text, boolean use_mnemonic);
 void get_menu_text(LiVESWidget *menu, char *text);
 void get_menu_text_long(LiVESWidget *menuitem, char *text);
 void reset_clipmenu(void);
+
 double lives_ce_update_timeline(int frame, double x);  ///< pointer position in timeline
 void get_play_times(void); ///< recalculate video / audio lengths and draw the timer bars
 void update_play_times(void); ///< like get_play_times, but will force redraw audio waveforms
-void update_timer_bars(int posx, int posy, int width, int height, int which); ///< draw the timer bars,
-void get_total_time(lives_clip_t *file);
+void update_timer_bars(int posx, int posy, int width, int height, int which); ///< draw the timer bars
+void redraw_timer_bars(double oldx, double newx, int which); ///< paint a damage region
+void get_total_time(lives_clip_t *file); ///< calculate laudio, raudio and video time (may be deprecated and replaced with macros)
+
 uint32_t get_signed_endian(boolean is_signed, boolean little_endian);
 void fullscreen_internal(void);
 void switch_to_int_player(void);

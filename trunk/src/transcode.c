@@ -35,10 +35,10 @@ boolean send_layer(weed_plant_t *layer, _vid_playback_plugin *vpp, int64_t timec
   // warning: will quite likely change the pixel_data of layer
 
   // returns: TRUE on rendering error
-  
+
   void **pd_array;
   boolean error = FALSE;
-  
+
   // convert to the plugin's palette
   convert_layer_palette(layer, vpp->palette, vpp->YUV_clamping);
 
@@ -51,9 +51,9 @@ boolean send_layer(weed_plant_t *layer, _vid_playback_plugin *vpp, int64_t timec
   if (pd_array != NULL) {
     // send pixel data to the vidoe frame renderer
     error = !(*vpp->render_frame)(weed_layer_get_width(layer),
-				  weed_layer_get_height(layer),
-				  timecode, pd_array, NULL, NULL);
-    
+                                  weed_layer_get_height(layer),
+                                  timecode, pd_array, NULL, NULL);
+
     lives_free(pd_array);
   }
   return error;

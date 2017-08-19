@@ -198,7 +198,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_fg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colf2);
-    
+
   lives_widget_set_fg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colf2);
   lives_widget_set_bg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colb2);
   set_child_colour(mainw->sa_button, TRUE);
@@ -2059,7 +2059,7 @@ void create_LiVES(void) {
   set_sel_label(mainw->sel_label);
 
   vbox = lives_vbox_new(FALSE, 2.);
-  
+
   lives_box_pack_start(LIVES_BOX(hbox3), vbox, FALSE, FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), mainw->sel_label, FALSE, FALSE, 0);
 
@@ -2071,7 +2071,7 @@ void create_LiVES(void) {
   lives_widget_set_tooltip_text(mainw->sa_button, _("Select all frames in this clip"));
   lives_box_pack_start(LIVES_BOX(hbox), mainw->sa_button, TRUE, TRUE, 0);
   add_fill_to_box(LIVES_BOX(hbox));
-  
+
   mainw->arrow2 = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_box_pack_start(LIVES_BOX(hbox3), mainw->arrow2, FALSE, FALSE, 0);
 
@@ -2852,14 +2852,14 @@ void create_LiVES(void) {
                          LIVES_GUI_CALLBACK(on_mouse_sel_start),
                          NULL);
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
-			 LIVES_GUI_CALLBACK(on_hrule_update),
-			 NULL);
+                         LIVES_GUI_CALLBACK(on_hrule_update),
+                         NULL);
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_hrule_enter), NULL);
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->sa_button), LIVES_WIDGET_CLICKED_SIGNAL,
-		       LIVES_GUI_CALLBACK(on_select_all_activate),
-		       NULL);
+                       LIVES_GUI_CALLBACK(on_select_all_activate),
+                       NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
                        LIVES_GUI_CALLBACK(on_hrule_reset),
                        NULL);

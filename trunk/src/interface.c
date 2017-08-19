@@ -273,7 +273,6 @@ xprocess *create_processing(const char *text) {
   if (mainw->show_procd) lives_widget_show_all(procw->processing);
   lives_widget_hide(procw->preview_button);
   lives_widget_hide(procw->pause_button);
-  //lives_widget_hide(procw->cancel_button);
   lives_widget_hide(procw->stop_button);
 
   return procw;

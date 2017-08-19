@@ -1032,7 +1032,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widge
                                   css_string,
                                   -1, NULL);
 #endif
-  
+
   g_free(colref);
   g_free(widget_name);
   g_free(wname);
@@ -7030,7 +7030,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_color_button_set_use_alpha(LiVESColorB
 
 
 
-WIDGET_HELPER_LOCAL_INLINE boolean lives_widget_get_mods(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y, LiVESXModifierType *modmask) {
+WIDGET_HELPER_LOCAL_INLINE boolean lives_widget_get_mods(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y,
+    LiVESXModifierType *modmask) {
 #ifdef GUI_GTK
   LiVESXWindow *xwin;
   if (widget == NULL) xwin = gdk_get_default_root_window();
@@ -7054,7 +7055,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_pointer(LiVESXDevice *devic
   return lives_widget_get_mods(device, widget, x, y, NULL);
 }
 
- 
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_modmask(LiVESXDevice *device, LiVESWidget *widget, LiVESXModifierType *modmask) {
   return lives_widget_get_mods(device, widget, NULL, NULL, modmask);
 }
@@ -7399,8 +7400,8 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *r
   *ret_fn = NULL; // TODO
 #else
   *ret_fn = lives_signal_connect_after(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
-				       LIVES_GUI_CALLBACK(callback),
-				       NULL);
+                                       LIVES_GUI_CALLBACK(callback),
+                                       NULL);
 #endif
 #endif
   return darea;
@@ -7778,16 +7779,14 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
     widget_opts.last_label = label;
 
     if (tooltip != NULL) lives_tooltips_copy(label, entry);
-  }
-  else {
+  } else {
     if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
       lives_entry_set_alignment(LIVES_ENTRY(entry), 0.5);
-    }
-    else if (widget_opts.justify != LIVES_JUSTIFY_RIGHT) {
+    } else if (widget_opts.justify != LIVES_JUSTIFY_RIGHT) {
       lives_entry_set_alignment(LIVES_ENTRY(entry), 0.5);
     }
   }
-  
+
   if (box != NULL) {
     if (LIVES_IS_HBOX(box)) hbox = LIVES_WIDGET(box);
     else {
@@ -8579,7 +8578,7 @@ void set_child_alt_colour_internal(LiVESWidget *widget, livespointer set_allx) {
   }
 
   if (set_all || LIVES_IS_LABEL(widget)) {
-    lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_FOCUSED, TRUE);
   }
 
   return;

@@ -8110,12 +8110,14 @@ weed_plant_t *weed_filter_in_paramtmpl(weed_plant_t *filter, int param_num, bool
     ptmpl = in_params[i];
     if (!weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_INTERNAL_CONNECTION)) {
       if (count == param_num) {
+	lives_free(in_params);
         return ptmpl;
       }
       count++;
     }
   }
 
+  lives_free(in_params);
   return NULL;
 }
 

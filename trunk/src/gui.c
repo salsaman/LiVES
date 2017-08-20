@@ -236,9 +236,17 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
   lives_widget_set_bg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, colf2);
-
-  lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf2);
+  
+  if (mainw->faded && mainw->playing_file > -1) {
+    //lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb);
+    //lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf);
+    //set_child_colour(mainw->btoolbar, TRUE);
+  }
+  else {
+    lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb2);
+    lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf2);
+    set_child_alt_colour(mainw->btoolbar, TRUE);
+  }
 
   lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -3085,7 +3093,7 @@ void fade_background(void) {
 
   lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
 
-  set_colours(&palette->normal_fore, &palette->fade_colour, &palette->menu_and_bars_fore, &palette->menu_and_bars,	\
+  set_colours(&palette->normal_fore, &palette->fade_colour, &palette->menu_and_bars_fore, &palette->menu_and_bars,
               &palette->info_base, &palette->info_text);
 
   lives_widget_set_app_paintable(mainw->freventbox0, FALSE);
@@ -3111,7 +3119,8 @@ void fade_background(void) {
   lives_widget_hide(mainw->hruler);
   lives_widget_hide(mainw->eventbox5);
   lives_widget_hide(mainw->message_box);
-
+  lives_widget_hide(mainw->sa_button);
+  
   if (!mainw->foreign) {
     lives_widget_show(mainw->t_forward);
     lives_widget_show(mainw->t_back);
@@ -3235,6 +3244,7 @@ void unfade_background(void) {
   lives_widget_show(mainw->arrow2);
   lives_widget_show(mainw->spinbutton_pb_fps);
   lives_widget_show(mainw->message_box);
+  lives_widget_show(mainw->sa_button);
 
   if (stop_closure != NULL && prefs->show_gui) {
     lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), stop_closure);
@@ -3315,7 +3325,7 @@ void unfade_background(void) {
   lives_widget_set_app_paintable(mainw->freventbox0, TRUE);
   lives_widget_set_app_paintable(mainw->freventbox1, TRUE);
 
-  set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars,	\
+  set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars,
               &palette->info_base, &palette->info_text);
 }
 

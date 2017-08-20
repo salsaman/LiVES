@@ -9938,7 +9938,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
     }
   } while (!done);
 
-  if (!cheat) {
+  if (!cheat && LIVES_IS_PIXBUF(pixbuf)) {
     // copy the pixel data
     boolean done = FALSE;
     pixels = lives_pixbuf_get_pixels(pixbuf);

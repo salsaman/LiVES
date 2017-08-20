@@ -1,6 +1,6 @@
 // multitrack.h
 // LiVES
-// (c) G. Finch 2005 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2017 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -9,9 +9,7 @@
 #ifndef HAS_LIVES_MULTITRACK_H
 #define HAS_LIVES_MULTITRACK_H
 
-
 ////////////////////// GUI constants ///////////////////////
-
 
 #define CLIP_THUMB_WIDTH ((int)(72.*widget_opts.scale))
 #define CLIP_THUMB_HEIGHT ((int)(72.*widget_opts.scale))
@@ -62,7 +60,6 @@ typedef enum {
   MOUSE_MODE_COPY
 } lives_mt_mouse_mode_t;
 
-
 typedef enum {
   INSERT_MODE_NORMAL,  ///< the default (only insert if it fits)
 
@@ -72,13 +69,11 @@ typedef enum {
   INSERT_MODE_FILL, ///< insert enough to fill gap (from selection start or end depending on gravity)
 } lives_mt_insert_mode_t;
 
-
 typedef enum {
   GRAV_MODE_NORMAL,
   GRAV_MODE_LEFT,
   GRAV_MODE_RIGHT
 } lives_mt_grav_mode_t;
-
 
 typedef enum {
   // undo actions
@@ -103,8 +98,6 @@ typedef enum {
   MT_UNDO_INSERT_GAP = 1029
 } lives_mt_undo_t;
 
-
-
 typedef enum {
   NB_ERROR_SEL,
   NB_ERROR_NOEFFECT,
@@ -112,8 +105,6 @@ typedef enum {
   NB_ERROR_NOCOMP,
   NB_ERROR_NOCLIP
 } lives_mt_nb_error_t;
-
-
 
 typedef enum {
   POLY_NONE = 0,
@@ -126,13 +117,10 @@ typedef enum {
   POLY_PARAMS
 } lives_mt_poly_state_t;
 
-
-
 typedef enum {
   DIRECTION_NEGATIVE,
   DIRECTION_POSITIVE
 } lives_direction_t;
-
 
 typedef enum {
   MT_LAST_FX_NONE = 0,
@@ -140,21 +128,17 @@ typedef enum {
   MT_LAST_FX_REGION
 } lives_mt_last_fx_type_t;
 
-
 typedef enum {
   FX_ORD_NONE = 0,
   FX_ORD_BEFORE,
   FX_ORD_AFTER
 } lives_mt_fx_order_t;
 
-
 typedef enum {
   // block state
   BLOCK_UNSELECTED = 0,
   BLOCK_SELECTED
 } lives_mt_block_state_t;
-
-
 
 struct _mt_opts {
   boolean set; ///< have we set opts (in mainw) ?
@@ -179,7 +163,6 @@ struct _mt_opts {
   boolean normalise_audp; ///< normalise audio
   LiVESList *aparam_view_list;
 };
-
 
 struct _mt {
   // widgets
@@ -593,7 +576,6 @@ struct _mt {
 
   int exact_preview;
 
-
   LiVESList *tl_marks;
 
   weed_plant_t *pb_start_event; ///< FRAME event from which we start playback
@@ -657,16 +639,12 @@ struct _mt {
   ///< Normally NULL except when called from language bindings.
 };  // lives_mt
 
-
-
-
 typedef struct {
   lives_mt_undo_t action;
   weed_timecode_t tc;
   void *extra;
   size_t data_len; ///< including this mt_undo
 } mt_undo;
-
 
 struct _lives_amixer_t {
   LiVESWidget *main_hbox;
@@ -677,7 +655,6 @@ struct _lives_amixer_t {
   int nchans;
   lives_mt *mt;
 };
-
 
 // reasons for track invisibility (bitmap)
 #define TRACK_I_HIDDEN_USER (1<<0)
@@ -706,13 +683,11 @@ struct _track_rect {
   *eventbox; ///< pointer to eventbox widget which contains this block; we can use its "layer_number" to get the track/layer number
 };
 
-
 /* translation table for matching event_id to init_event */
 typedef struct {
   uint64_t in;
   void *out;
 } ttable;
-
 
 /* clip->layout use mapping, from layout.map lives_clip_t */
 typedef struct {
@@ -721,10 +696,6 @@ typedef struct {
   char *name;
   LiVESList *list;
 } layout_map;
-
-
-
-
 
 //////////////////////////////////////////////////////////////////
 
@@ -769,11 +740,9 @@ track_rect *move_block(lives_mt *, track_rect *block, double timesecs, int old_t
 void update_grav_mode(lives_mt *);
 void update_insert_mode(lives_mt *);
 
-
 boolean on_render_activate(LiVESMenuItem *, livespointer mt);
 
 void mt_set_autotrans(int idx);
-
 
 // event_list functions
 weed_plant_t *add_blank_frames_up_to(weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);
@@ -804,7 +773,6 @@ void set_track_label_string(lives_mt *mt, int track, const char *label);
 
 LiVESWidget *get_eventbox_for_track(lives_mt *mt, int ntrack);
 void on_rename_track_activate(LiVESMenuItem *menuitem, livespointer mt);
-
 
 // track mouse movement
 boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
@@ -846,7 +814,6 @@ track_rect *get_block_from_track_and_time(lives_mt *mt, int track, double time);
 int get_track_for_block(track_rect *block);
 int get_clip_for_block(track_rect *block);
 
-
 // timeline functions
 boolean resize_timeline(lives_mt *);
 void mt_tl_move(lives_mt *, double pos_abs);
@@ -866,6 +833,8 @@ void multitrack_clear_marks(LiVESMenuItem *, livespointer mt);
 void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
 void mt_clear_timeline(lives_mt *mt);
 
+void mt_zoom_in(LiVESMenuItem *, livespointer mt);
+void mt_zoom_out(LiVESMenuItem *, livespointer mt);
 
 // context box text
 void clear_context(lives_mt *);
@@ -884,7 +853,6 @@ void unpaint_lines(lives_mt *);
 
 void mt_prepare_for_playback(lives_mt *);
 void mt_post_playback(lives_mt *);
-
 
 // effect node controls
 void on_next_node_clicked(LiVESWidget *, livespointer mt);
@@ -920,8 +888,6 @@ boolean set_new_set_name(lives_mt *);
 
 LiVESPixbuf *make_thumb(lives_mt *, int file, int width, int height, int frame, boolean noblanks);
 
-
-
 // event_list utilities
 boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2,
                             int ctrack); ///< ctrack can be -1 to compare all events, else we cf for ctrack
@@ -935,7 +901,6 @@ void mt_fixup_events(lives_mt *, weed_plant_t *old_event, weed_plant_t *new_even
 char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload);
 weed_plant_t *load_event_list(lives_mt *, char *eload_file);
 boolean on_save_event_list_activate(LiVESMenuItem *, livespointer mt);
-
 
 // layouts and layout maps
 LiVESList *load_layout_map(void);
@@ -958,7 +923,6 @@ void stored_event_list_free_all(boolean wiped);
 void stored_event_list_free_undos(void);
 void remove_current_from_affected_layouts(lives_mt *);
 
-
 // auto backup
 uint32_t mt_idle_add(lives_mt *);
 void recover_layout(void);
@@ -966,18 +930,15 @@ void recover_layout_cancelled(boolean is_startup);
 boolean write_backup_layout_numbering(lives_mt *);
 boolean mt_auto_backup(livespointer mt);
 
-
 // amixer funcs
 void amixer_show(LiVESButton *, livespointer mt);
 void on_amixer_close_clicked(LiVESButton *, lives_mt *mt);
 LiVESWidget *amixer_add_channel_slider(lives_mt *, int i);
 
-
 // misc
 void mt_change_disp_tracks_ok(LiVESButton *, livespointer mt);
 void mt_swap_play_pause(lives_mt *, boolean put_pause);
 char *set_values_from_defs(lives_mt *, boolean from_prefs);
-
 
 // clip boxes
 void mt_clip_select(lives_mt *, boolean scroll);
@@ -1004,8 +965,6 @@ typedef enum {
   /* info */
   LMAP_INFO_SETNAME_CHANGED = 1024
 } lives_lmap_error_t;
-
-
 
 // array max: TODO - use dynamic arrays to bypass track limits
 

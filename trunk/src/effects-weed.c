@@ -9582,7 +9582,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
 
       valds[j] = last_valued + (double)(next_valuesd[j] - last_valued) / (double)(tc_diff / TICKS_PER_SECOND_DBL) *
                  (double)((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error)) / TICKS_PER_SECOND_DBL);
-
+  
       lives_free(last_valuesd);
       lives_free(next_valuesd);
       break;

@@ -10175,8 +10175,8 @@ static void weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, bo
       lives_memcpy(*mem, value, (size_t)vlen);
       *mem += vlen;
     }
-    lives_freep((void **)&value);
     if (valuer != value) lives_freep((void **)&valuer);
+    lives_freep((void **)&value);
   }
 
   // write errors will be checked for by the calling function

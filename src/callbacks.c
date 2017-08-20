@@ -9355,13 +9355,18 @@ boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespoin
 
   if (!prefs->mouse_scroll_clips || mainw->noswitch) return FALSE;
 
+  kstate = (LiVESXModifierType)event->state;
+
   if (mainw->multitrack != NULL) {
+    if (widget == mainw->multitrack->window && kstate == LIVES_CONTROL_MASK) {
+      if (event->direction == LIVES_SCROLL_UP) mt_zoom_in(NULL, mainw->multitrack);
+      else if (event->direction == LIVES_SCROLL_DOWN) mt_zoom_out(NULL, mainw->multitrack);
+      return FALSE;
+    }
     if (event->direction == LIVES_SCROLL_UP) mt_prevclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
     else if (event->direction == LIVES_SCROLL_DOWN) mt_nextclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
     return FALSE;
   }
-
-  kstate = (LiVESXModifierType)event->state;
 
   if (kstate == LIVES_SHIFT_MASK) type = 2; // bg
   else if (kstate == LIVES_CONTROL_MASK) type = 0; // fg or bg

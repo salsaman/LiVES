@@ -372,7 +372,7 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
     return NULL;
   }
 
-  if (width < 2 || height < 2) return NULL;
+  if (width < 4 || height < 4) return NULL;
 
   if (mt != NULL && mt->idlefunc > 0) {
     needs_idlefunc = TRUE;
@@ -513,7 +513,7 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
         // create a small thumb
         twidth = BLOCK_THUMB_WIDTH;
         if ((i + twidth) > width) twidth = width - i;
-        if (twidth >= 2) {
+        if (twidth >= 4) {
           thumbnail = make_thumb(mt, clip, twidth, height, frame_start + (int)((double)i / (double)width * frames_width), FALSE);
           // render it in the eventbox
           if (thumbnail != NULL) {
@@ -1610,6 +1610,8 @@ static int track_to_channel(weed_plant_t *ievent, int track) {
 
   int error, ntracks = weed_leaf_num_elements(ievent, WEED_LEAF_IN_TRACKS);
   int *in_tracks;
+  int *carray = NULL;
+  int nc = 0, rpts;
 
   register int i;
 
@@ -1617,13 +1619,23 @@ static int track_to_channel(weed_plant_t *ievent, int track) {
 
   in_tracks = weed_get_int_array(ievent, WEED_LEAF_IN_TRACKS, &error);
 
+  if (weed_plant_has_leaf(ievent, WEED_LEAF_IN_COUNT)) {
+    // account for repeated channels
+    nc = weed_leaf_num_elements(ievent, WEED_LEAF_IN_COUNT);
+    carray = weed_get_int_array(ievent, WEED_LEAF_IN_COUNT, &error);
+  }
+  
   for (i = 0; i < ntracks; i++) {
-    if (in_tracks[i] == track) {
+    rpts = nc < i ? 1 : carray[i];
+    if (in_tracks[i] + rpts > track) {
       lives_free(in_tracks);
+      lives_freep((void **)&carray);
       return i;
     }
+    track -= rpts - 1;
   }
   lives_free(in_tracks);
+  lives_freep((void **)&carray);
   return -1;
 }
 
@@ -6135,6 +6147,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mt->window), FALSE);
+
+  lives_widget_set_events(mt->window, LIVES_SCROLL_MASK);
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->window), LIVES_WIDGET_SCROLL_EVENT,
+                       LIVES_GUI_CALLBACK(on_mouse_scroll),
+                       mt);
 
 #ifdef GUI_GTK
   gtk_drag_dest_set(mt->window, GTK_DEST_DEFAULT_ALL, mainw->target_table, 2,
@@ -13043,13 +13060,13 @@ boolean on_track_release(LiVESWidget *eventbox, LiVESXEventButton *event, livesp
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            eventbox, &x, &y);
   timesecs = get_time_from_x(mt, x);
   tc = timesecs * TICKS_PER_SECOND;
 
   window = lives_display_get_window_at_pointer
-           ((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+           ((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
             mt->display, &win_x, &win_y);
 
   if (cfile->achans > 0) {
@@ -13094,9 +13111,9 @@ boolean on_track_release(LiVESWidget *eventbox, LiVESXEventButton *event, livesp
       int abs_x, abs_y;
 
       int height = lives_widget_get_allocation_height(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, 0)));
-      lives_display_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+      lives_display_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                                 mt->display, &screen, &abs_x, &abs_y, NULL);
-      lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+      lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                                  mt->display, screen, abs_x + mt->hotspot_x, abs_y + mt->hotspot_y - height / 2);
       mt->hotspot_x = mt->hotspot_y = 0;
       // we need to call this to warp the pointer

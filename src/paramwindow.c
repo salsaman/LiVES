@@ -1853,7 +1853,6 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
 
       if (weed_leaf_seed_type(wparam, WEED_LEAF_VALUE) == WEED_SEED_DOUBLE) {
-	/*
         valds = weed_get_double_array(wparam, WEED_LEAF_VALUE, &error);
         if (param->dp > 0) valds[index] = new_double;
         else valds[index] = (double)new_int;
@@ -1862,7 +1861,6 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
         filter_mutex_unlock(key);
         copyto = set_copy_to(inst, param_number, TRUE);
         lives_freep((void **)&valds);
-	*/
       } else {
         valis = weed_get_int_array(wparam, WEED_LEAF_VALUE, &error);
         valis[index] = new_int;
@@ -3285,4 +3283,3 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
   }
   lives_free(in_params);
 }
-

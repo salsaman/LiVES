@@ -5281,7 +5281,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (mainw->multitrack != NULL) {
         mt_sensitise(mainw->multitrack);
       }
-
       return FALSE;
     }
   }

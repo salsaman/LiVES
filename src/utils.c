@@ -2770,8 +2770,9 @@ double lives_ce_update_timeline(int frame, double x) {
   return x;
 }
 
-#define NORMAL_CLAMP(a, b) ((int)(a + .5)  < 0 ? 0 : (int)(a + .5) > b ? b : (int)(a + .5))
-#define UTIL_CLAMP(a, b) (NORMAL_CLAMP(a, b) == 0 ? b : a)
+#define ROUND_I(a) ((int)((double)a + .5))
+#define NORMAL_CLAMP(a, b) (ROUND_I(a)  < 0 ? 0 : ROUND_I(a) > ROUND_I(b) ? ROUND_I(b) : ROUND_I(a))
+#define UTIL_CLAMP(a, b) (NORMAL_CLAMP(a, b) == 0 ? ROUND_I(b) : ROUND_I(a))
 #define OVERDRAW_MARGIN 16
 
 void update_timer_bars(int posx, int posy, int width, int height, int which) {
@@ -2790,14 +2791,15 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   char *filename;
 
   double offset = 0;
-  double offset_left = 0;
-  double offset_right = 0;
-  double offset_end;
   double allocwidth;
   double allocheight;
   double atime;
   double scalex;
   double ptrtime;
+
+  int offset_left = 0;
+  int offset_right = 0;
+  int offset_end;
 
   int current_file = mainw->current_file;
   int xwidth, zwidth;
@@ -2884,13 +2886,13 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       lives_painter_destroy(cr);
     }
   }
-
+  
   if (cfile->frames > 0 && mainw->video_drawable != NULL && (which == 0 || which == 1)) {
     allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
     allocheight = lives_widget_get_allocation_height(mainw->video_draw);
     scalex = (double)allocwidth / CURRENT_CLIP_TOTAL_TIME;
-    offset_left = (double)(cfile->start - 1.) / cfile->fps * scalex;
-    offset_right = (double)(cfile->end) / cfile->fps * scalex;
+    offset_left = ROUND_I((double)(cfile->start - 1.) / cfile->fps * scalex);
+    offset_right = ROUND_I((double)(cfile->end) / cfile->fps * scalex);
 
     cr = lives_painter_create(mainw->video_drawable);
     xwidth = UTIL_CLAMP(width, allocwidth);
@@ -2921,7 +2923,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
     if (offset_right < posx + xwidth) {
       if (posx > offset_right) offset_right = posx;
-      zwidth = cfile->video_time * scalex - offset_right;
+      zwidth = ROUND_I(cfile->video_time * scalex) - offset_right;
       if (posx < offset_right) xwidth -= offset_right - posx;
       zwidth = NORMAL_CLAMP(zwidth, xwidth);
       // unselected
@@ -2940,9 +2942,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     allocwidth = lives_widget_get_allocation_width(mainw->laudio_draw);
     allocheight = lives_widget_get_allocation_height(mainw->laudio_draw);
     scalex = (double)allocwidth / CURRENT_CLIP_TOTAL_TIME;
-    offset_left = (double)(cfile->start - 1.) / cfile->fps * scalex;
-    offset_right = (double)(cfile->end) / cfile->fps * scalex;
-    offset_end = cfile->laudio_time * scalex;
+    offset_left = ROUND_I((double)(cfile->start - 1.) / cfile->fps * scalex);
+    offset_right = ROUND_I((double)(cfile->end) / cfile->fps * scalex);
+    offset_end = ROUND_I(cfile->laudio_time * scalex);
 
     if (cfile->audio_waveform[0] == NULL) {
       // re-read the audio
@@ -2960,13 +2962,13 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 	cfile->audio_waveform[0][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
       }
       if (mainw->playing_file > -1) {
-	offset_left = ((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
-		       cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex;
+	offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
+			       cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex);
 	if (mainw->audio_end && !mainw->loop) {
-	  offset_right = (double)((is_realtime_aplayer(prefs->audio_player)) ?
-				  cfile->end : mainw->audio_end) / cfile->fps * scalex;
+	  offset_right = ROUND_I((double)((is_realtime_aplayer(prefs->audio_player)) ?
+					  (double)cfile->end : mainw->audio_end) / cfile->fps * scalex);
 	} else {
-	  offset_right = cfile->laudio_time * scalex;
+	  offset_right = ROUND_I(cfile->laudio_time * scalex);
 	}
       }
 
@@ -3005,7 +3007,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
 	  for (i = posx; i < offset_left && i < offset_end; i++) {
 	    lives_painter_move_to(crx, i, prefs->bar_height * 2);
-	    lives_painter_line_to(crx, i, (double)prefs->bar_height * (2. - cfile->audio_waveform[0][i]));
+	    lives_painter_line_to(crx, i, ROUND_I((double)prefs->bar_height * (2. - cfile->audio_waveform[0][i])));
 	  }
 	  lives_painter_stroke(crx);
 
@@ -3014,7 +3016,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
 	  for (; i < offset_right && i < offset_end; i++) {
 	    lives_painter_move_to(crx, i, prefs->bar_height * 2);
-	    lives_painter_line_to(crx, i, (double)prefs->bar_height * (2. - cfile->audio_waveform[0][i]));
+	    lives_painter_line_to(crx, i, ROUND_I((double)prefs->bar_height * (2. - cfile->audio_waveform[0][i])));
 	  }
 	  lives_painter_stroke(crx);
 
@@ -3023,7 +3025,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
 	  for (; i < offset_end; i++) {
 	    lives_painter_move_to(crx, i, prefs->bar_height * 2);
-	    lives_painter_line_to(crx, i, (double)prefs->bar_height * (2. - cfile->audio_waveform[0][i]));
+	    lives_painter_line_to(crx, i, ROUND_I((double)prefs->bar_height * (2. - cfile->audio_waveform[0][i])));
 	  }
 	  lives_painter_stroke(crx);
 	  lives_painter_destroy(crx);
@@ -3046,9 +3048,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     allocwidth = lives_widget_get_allocation_width(mainw->raudio_draw);
     allocheight = lives_widget_get_allocation_height(mainw->raudio_draw);
     scalex = (double)allocwidth / CURRENT_CLIP_TOTAL_TIME;
-    offset_left = (double)(cfile->start - 1.) / cfile->fps * scalex;
-    offset_right = (double)(cfile->end) / cfile->fps * scalex;
-    offset_end = cfile->raudio_time * scalex;
+    offset_left = ROUND_I((double)(cfile->start - 1.) / cfile->fps * scalex);
+    offset_right = ROUND_I((double)(cfile->end) / cfile->fps * scalex);
+    offset_end = ROUND_I(cfile->raudio_time * scalex);
 
     if (cfile->audio_waveform[1] == NULL) {
       // re-read the audio
@@ -3069,13 +3071,13 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       }
       
       if (mainw->playing_file > -1) {
-	offset_left = ((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
-		       cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex;
+	offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
+			       cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex);
 	if (mainw->audio_end && !mainw->loop) {
-	  offset_right = (double)((is_realtime_aplayer(prefs->audio_player)) ?
-				  cfile->end : mainw->audio_end) / cfile->fps * scalex;
+	  offset_right = ROUND_I((double)((is_realtime_aplayer(prefs->audio_player)) ?
+					  (double)cfile->end : mainw->audio_end) / cfile->fps * scalex);
 	} else {
-	  offset_right = cfile->raudio_time * scalex;
+	  offset_right = ROUND_I(cfile->raudio_time * scalex);
 	}
       }
 
@@ -3114,7 +3116,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
 	  for (i = posx; i < offset_left && i < offset_end; i++) {
 	    lives_painter_move_to(crx, i, prefs->bar_height * 2);
-	    lives_painter_line_to(crx, i, (double)prefs->bar_height * (2. - cfile->audio_waveform[1][i]));
+	    lives_painter_line_to(crx, i, ROUND_I((double)prefs->bar_height * (2. - cfile->audio_waveform[1][i])));
 	  }
 	  lives_painter_stroke(crx);
 
@@ -3123,7 +3125,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
 	  for (; i < offset_right && i < offset_end; i++) {
 	    lives_painter_move_to(crx, i, prefs->bar_height * 2);
-	    lives_painter_line_to(crx, i, (double)prefs->bar_height * (2. - cfile->audio_waveform[1][i]));
+	    lives_painter_line_to(crx, i, ROUND_I((double)prefs->bar_height * (2. - cfile->audio_waveform[1][i])));
 	  }
 	  lives_painter_stroke(crx);
 
@@ -3318,11 +3320,11 @@ void redraw_timer_bars(double oldx, double newx, int which) {
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
   }
   if (newx > oldx) {
-    if ((int)(((newx - oldx) * scalex)) > 0) update_timer_bars(oldx * scalex, 0, (newx - oldx) * scalex, 0, which);
+    if ((int)(((newx - oldx) * scalex)) > 0) update_timer_bars(ROUND_I(oldx * scalex), 0, ROUND_I((newx - oldx) * scalex), 0, which);
   }
   else {
     // not sure why we need to double the width, but otherwise we sometimes leave pixels on the RHS of end...
-    if ((int)(((oldx - newx) * scalex)) > 0) update_timer_bars(newx * scalex, 0, (oldx - newx) * scalex  * 2., 0, which);
+    if ((int)(((oldx - newx) * scalex)) > 0) update_timer_bars(ROUND_I(newx * scalex), 0, ROUND_I((oldx - newx) * scalex  * 2.), 0, which);
   }
 }
 

@@ -4858,16 +4858,16 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
           if (hint == WEED_EVENT_HINT_PARAM_CHANGE && (!strcmp(propnames[i], WEED_LEAF_INDEX)) && seed_type == WEED_SEED_INT) {
             char *pname = NULL; // want the parameter name for the index
             weed_plant_t *ptmpl = NULL;
-	    ievent = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, &error);
-	    if (ievent != NULL) {
-	      lives_freep((void **)&iname);
-	      iname = weed_get_string_value(ievent, WEED_LEAF_FILTER, &error);
-	      if (iname != NULL) {
-		ie_idx = weed_get_idx_for_hashname(iname, TRUE);
-	      }
-	      lives_freep((void **)&iname);
-	      ptmpl = weed_filter_in_paramtmpl(get_weed_filter(ie_idx), intval[j], TRUE);
-	    }
+            ievent = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, &error);
+            if (ievent != NULL) {
+              lives_freep((void **)&iname);
+              iname = weed_get_string_value(ievent, WEED_LEAF_FILTER, &error);
+              if (iname != NULL) {
+                ie_idx = weed_get_idx_for_hashname(iname, TRUE);
+              }
+              lives_freep((void **)&iname);
+              ptmpl = weed_filter_in_paramtmpl(get_weed_filter(ie_idx), intval[j], TRUE);
+            }
             if (ptmpl != NULL)
               pname = weed_get_string_value(ptmpl, WEED_LEAF_NAME, &error);
             else pname = lives_strdup("???");

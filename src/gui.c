@@ -239,7 +239,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
   lives_widget_set_bg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, colf2);
-  
+
   lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf2);
   set_child_alt_colour(mainw->btoolbar, TRUE);
@@ -3115,7 +3115,7 @@ void fade_background(void) {
   lives_widget_hide(mainw->eventbox5);
   lives_widget_hide(mainw->message_box);
   lives_widget_hide(mainw->sa_button);
-  
+
   if (!mainw->foreign) {
     lives_widget_show(mainw->t_forward);
     lives_widget_show(mainw->t_back);

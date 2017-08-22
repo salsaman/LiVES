@@ -6820,8 +6820,8 @@ void load_frame_image(int frame) {
       }
 
       if (cfile->audio_waveform != NULL) {
-	for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
-	lives_free(cfile->audio_waveform);
+        for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
+        lives_free(cfile->audio_waveform);
       }
 
       lives_freep((void **)&cfile);

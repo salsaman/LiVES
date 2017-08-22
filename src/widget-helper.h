@@ -525,7 +525,7 @@ boolean lives_toolbar_set_show_arrow(LiVESToolbar *, boolean show);
 LiVESIconSize lives_toolbar_get_icon_size(LiVESToolbar *);
 boolean lives_toolbar_set_icon_size(LiVESToolbar *, LiVESIconSize icon_size);
 boolean lives_toolbar_set_style(LiVESToolbar *, LiVESToolbarStyle style);
-  
+
 int lives_widget_get_allocation_x(LiVESWidget *);
 int lives_widget_get_allocation_y(LiVESWidget *);
 int lives_widget_get_allocation_width(LiVESWidget *);

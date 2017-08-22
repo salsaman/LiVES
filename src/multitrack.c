@@ -1622,7 +1622,7 @@ static int track_to_channel(weed_plant_t *ievent, int track) {
     nc = weed_leaf_num_elements(ievent, WEED_LEAF_IN_COUNT);
     carray = weed_get_int_array(ievent, WEED_LEAF_IN_COUNT, &error);
   }
-  
+
   for (i = 0; i < ntracks; i++) {
     rpts = nc < i ? 1 : carray[i];
     if (in_tracks[i] + rpts > track) {
@@ -3058,7 +3058,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     mt->frame_pixbuf = NULL;
   }
 #endif
-  
+
   if (mt->frame_pixbuf != NULL && mt->frame_pixbuf == mainw->imframe) {
     // size_request, reset pla
     // try to expand
@@ -3066,7 +3066,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     else scr_width = mainw->mgeom[prefs->gui_monitor - 1].width;
     if (prefs->gui_monitor == 0) scr_height = mainw->scr_height;
     else scr_height = mainw->mgeom[prefs->gui_monitor - 1].width;
-    
+
     lives_widget_set_size_request(mt->preview_eventbox, scr_width / 3, scr_height / 3);
   }
 
@@ -6002,7 +6002,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->dumlabel1 = mt->dumlabel2 = mt->tl_label = mt->timeline = mt->timeline_eb = mt->timeline_reg = NULL;
 
   mt->play_width = mt->play_height = 0;
-  
+
   if (mainw->multi_opts.set) {
     mt->opts.move_effects = mainw->multi_opts.move_effects;
     mt->opts.fx_auto_preview = mainw->multi_opts.fx_auto_preview;
@@ -7921,12 +7921,12 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->preview_frame = lives_standard_frame_new(_("Preview"), 0.5, FALSE);
   lives_box_pack_start(LIVES_BOX(mt->hbox), mt->preview_frame, FALSE, FALSE, 0);
   mt->fd_frame = mt->preview_frame;
-  
+
   mt->preview_eventbox = lives_event_box_new();
 
   if (prefs->gui_monitor == 0) scr_width = mainw->scr_width;
   else scr_width = mainw->mgeom[prefs->gui_monitor - 1].width;
-  
+
   if (prefs->gui_monitor == 0) scr_height = mainw->scr_height;
   else scr_height = mainw->mgeom[prefs->gui_monitor - 1].height;
 
@@ -7970,7 +7970,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_signal_connect(LIVES_GUI_OBJECT(mt->preview_eventbox), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_framedraw_enter), NULL);
 
   mt->hpaned = lives_hpaned_new();
-  lives_widget_set_size_request(mt->hpaned, mainw->scr_width * 2 / 3, mainw->scr_height / 3); 
+  lives_widget_set_size_request(mt->hpaned, mainw->scr_width * 2 / 3, mainw->scr_height / 3);
   lives_box_pack_start(LIVES_BOX(mt->hbox), mt->hpaned, TRUE, TRUE, 0);
 
   lives_signal_connect(LIVES_GUI_OBJECT(mt->hpaned), LIVES_WIDGET_ACCEPT_POSITION_SIGNAL,
@@ -10525,7 +10525,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   int orig_file;
   int scr_width;
-  
+
   xachans = xarate = xasamps = xse = 0;
   ptaud = prefs->mt_pertrack_audio;
   btaud = prefs->mt_backaudio;
@@ -11271,7 +11271,7 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
 
   calc_maxspect(lives_widget_get_allocation_width(mt->in_image),
                 lives_widget_get_allocation_height(mt->in_image),
-		&width, &height);
+                &width, &height);
 
   thumb = make_thumb(mt, filenum, width, height, frame_end, FALSE);
   lives_image_set_from_pixbuf(LIVES_IMAGE(mt->out_image), thumb);
@@ -21087,7 +21087,7 @@ void show_frame_events_activate(LiVESMenuItem *menuitem, livespointer user_data)
   prefs->event_window_show_frame_events = !prefs->event_window_show_frame_events;
 }
 
- 
+
 void mt_change_max_disp_tracks(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESWidget *dialog;
   lives_mt *mt = (lives_mt *)user_data;

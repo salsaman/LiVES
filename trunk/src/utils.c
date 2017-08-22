@@ -5017,6 +5017,7 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
   return key;
 }
 
+
 boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
   time_t old_time = 0, new_time = 0;
   struct stat mystat;
@@ -5030,8 +5031,8 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   int retval2 = LIVES_RESPONSE_NONE;
 
   if (mainw->cached_list == NULL) {
-    lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, "header.lives", NULL);
-    old_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, "header", NULL);
+    lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
+    old_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER_OLD, NULL);
 
     // TODO - remove this some time before 2038
     if (!stat(old_header, &mystat)) old_time = mystat.st_mtime;
@@ -5133,6 +5134,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   return TRUE;
 }
 
+
 void save_clip_value(int which, lives_clip_details_t what, void *val) {
   char *lives_header;
   char *com, *tmp;
@@ -5145,7 +5147,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   if (which == 0 || which == mainw->scrap_file) return;
 
-  lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, "header.lives", NULL);
+  lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
   key = clip_detail_to_string(what, NULL);
 
   if (key == NULL) {
@@ -5261,6 +5263,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   return;
 }
+
 
 LiVESList *get_set_list(const char *dir, boolean utf8) {
   // get list of sets in top level dir

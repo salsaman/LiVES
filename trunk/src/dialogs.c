@@ -3099,7 +3099,7 @@ int do_header_read_error_with_retry(int clip) {
   char *hname;
   if (mainw->files[clip] == NULL) return 0;
 
-  hname = lives_build_filename(prefs->workdir, mainw->files[clip]->handle, "header.lives", NULL);
+  hname = lives_build_filename(prefs->workdir, mainw->files[clip]->handle, LIVES_CLIP_HEADER, NULL);
 
   ret = do_read_failed_error_s_with_retry(hname, NULL, NULL);
 
@@ -3116,7 +3116,7 @@ boolean do_header_write_error(int clip) {
 
   if (mainw->files[clip] == NULL) return TRUE;
 
-  hname = lives_build_filename(prefs->workdir, mainw->files[clip]->handle, "header.lives", NULL);
+  hname = lives_build_filename(prefs->workdir, mainw->files[clip]->handle, LIVES_CLIP_HEADER, NULL);
   retval = do_write_failed_error_s_with_retry(hname, NULL, NULL);
   if (retval == LIVES_RESPONSE_RETRY && save_clip_values(clip)) retval = 0; // on retry try to save all values
   lives_free(hname);
@@ -3130,7 +3130,7 @@ int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
   char *hname, *key, *msg;
   if (mainw->files[clip] == NULL) return 0;
 
-  hname = lives_build_filename(prefs->workdir, mainw->files[clip]->handle, "header.lives", NULL);
+  hname = lives_build_filename(prefs->workdir, mainw->files[clip]->handle, LIVES_CLIP_HEADER, NULL);
 
   key = clip_detail_to_string(detail, NULL);
 

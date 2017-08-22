@@ -1933,7 +1933,7 @@ boolean set_palette_colours(boolean force_reload) {
 
   lives_colRGBA64_t lcol;
 
-  char *themedir, *themefile, *tmp;
+  char *themedir, *themefile, *fname, *tmp;
   char pstyle[8];
 
   boolean is_OK = TRUE;
@@ -2077,30 +2077,33 @@ boolean set_palette_colours(boolean force_reload) {
       }
     }
 
-    tmp = lives_build_filename(themedir, "main.jpg", NULL);
+    fname = lives_strdup_printf("%s.%s", THEME_SEP_IMG_LITERAL, LIVES_FILE_EXT_JPG);
+    tmp = lives_build_filename(themedir, fname, NULL);
+    lives_free(fname);
     lives_snprintf(mainw->sepimg_path, PATH_MAX, "%s", tmp);
     lives_free(tmp);
 
-    tmp = lives_build_filename(themedir, "frame.jpg", NULL);
+    fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_JPG);
+    tmp = lives_build_filename(themedir, fname, NULL);
+    lives_free(fname);
     lives_snprintf(mainw->frameblank_path, PATH_MAX, "%s", tmp);
     lives_free(tmp);
 
     // load from file
-    themefile = lives_build_filename(themedir, "header.theme", NULL);
+    themefile = lives_build_filename(themedir, THEME_HEADER, NULL);
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3, 0, 0)
     lives_free(themefile);
-    themefile = lives_build_filename(themedir, "header.theme_gtk2", NULL);
+    themefile = lives_build_filename(themedir, THEME_HEADER_2, NULL);
 #endif
 #endif
-
     if (!lives_file_test(themefile, LIVES_FILE_TEST_EXISTS)) {
       lives_free(themefile);
-      themefile = lives_build_filename(themedir, "header.theme_gtk2", NULL);
+      themefile = lives_build_filename(themedir, THEME_HEADER_2, NULL);
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3, 0, 0)
       lives_free(themefile);
-      themefile = lives_build_filename(themedir, "header.theme", NULL);
+      themefile = lives_build_filename(themedir, THEME_HEADER, NULL);
 #endif
 #endif
       if (!lives_file_test(themefile, LIVES_FILE_TEST_EXISTS)) {

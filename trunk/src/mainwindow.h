@@ -357,6 +357,16 @@ enum {
 #define WORKDIR_LITERAL "workdir"
 #define WORKDIR_LITERAL_LEN (strlen(WORKDIR_LITERAL))
 
+#define THEME_LITERAL "theme"
+#define THEME_SEP_IMG_LITERAL "main"
+#define THEME_FRAME_IMG_LITERAL "frame"
+#define THEME_HEADER "header.theme"
+#define THEME_HEADER_2 "header.theme_gtk2"
+
+#define LIVES_CLIP_HEADER "header.lives"
+#define LIVES_CLIP_HEADER_OLD "header"
+#define LIVES_CLIP_HEADER_OLD2 "header2"
+
 #define FX_DEFS_FILENAME "fxdefs"
 #define FX_SIZES_FILENAME "fxsizes"
 

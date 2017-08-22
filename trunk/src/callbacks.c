@@ -1377,7 +1377,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int response;
 
   desensitize();
-  
+
   do {
     // prompt for a set name, advise user to save set
     renamew = create_rename_dialog(8);
@@ -1409,7 +1409,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   sepimg_ext = get_extension(mainw->sepimg_path);
   frameimg_ext = get_extension(mainw->frameblank_path);
-  
+
   thfile = lives_strdup_printf("%s%d", THEME_LITERAL, capable->mainpid);
   themedir = lives_build_filename(prefs->workdir, thfile, NULL);
   themefile = lives_build_filename(themedir, THEME_HEADER, NULL);
@@ -1421,11 +1421,11 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 #endif
   lives_free(thfile);
 
-  thfile = lives_strdup_printf("%s.%s", THEME_SEP_IMG_LITERAL, sepimg_ext); 
+  thfile = lives_strdup_printf("%s.%s", THEME_SEP_IMG_LITERAL, sepimg_ext);
   sepimg = lives_build_filename(themedir, thfile, NULL);
   lives_free(thfile);
 
-  thfile = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, frameimg_ext); 
+  thfile = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, frameimg_ext);
   frameimg = lives_build_filename(themedir, thfile, NULL);
 
   lives_free(sepimg_ext);
@@ -1548,7 +1548,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *theme_file;
 
   desensitize();
-  
+
   theme_file = choose_file(NULL, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
 
   if (theme_file == NULL) {
@@ -2105,7 +2105,6 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           //cfile->may_be_damaged=TRUE;
           return;
         }
-        reget_afilesize(mainw->current_file);
       }
       lives_free(audfile);
     }
@@ -2245,10 +2244,12 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free(com);
 
     if (mainw->com_failed) {
+      reget_afilesize(mainw->current_file);
       d_print_failed();
       return;
     }
     if (!do_auto_dialog(_("Undoing"), 0)) {
+      reget_afilesize(mainw->current_file);
       d_print_failed();
       return;
     }
@@ -2292,6 +2293,8 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
     save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned);
     if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+
+    reget_afilesize(mainw->current_file);
 
     if (bad_header) do_header_write_error(mainw->current_file);
   }
@@ -2558,6 +2561,7 @@ void on_redo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free(com);
 
     if (mainw->com_failed) {
+      reget_afilesize(mainw->current_file);
       d_print_failed();
       return;
     }
@@ -2566,6 +2570,7 @@ void on_redo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     do_progress_dialog(TRUE, FALSE, _("Redoing"));
 
     if (mainw->error) {
+      reget_afilesize(mainw->current_file);
       d_print_failed();
       return;
     }
@@ -2593,6 +2598,7 @@ void on_redo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // show a progress dialog, not cancellable
   do_progress_dialog(TRUE, FALSE, _("Redoing"));
+  reget_afilesize(mainw->current_file);
 
   if (mainw->error) {
     d_print_failed();

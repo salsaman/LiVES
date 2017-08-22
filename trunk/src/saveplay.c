@@ -5604,6 +5604,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   mainw->is_ready = is_ready;
   update_play_times();
+  mainw->last_dprint_file = -1;
+  d_print("");
   return TRUE;
 }
 

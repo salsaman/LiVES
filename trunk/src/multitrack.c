@@ -119,49 +119,46 @@ static boolean needs_clear;
 
 ////////////////////////////
 
-// menuitem callbacks - TODO : make static
-void on_add_video_track_activate(LiVESMenuItem *, livespointer mt);
-void multitrack_adj_start_end(LiVESMenuItem *, livespointer mt);
+// menuitem callbacks
+static void multitrack_adj_start_end(LiVESMenuItem *, livespointer mt);
 boolean multitrack_audio_insert(LiVESMenuItem *, livespointer mt);
-void multitrack_view_events(LiVESMenuItem *, livespointer mt);
-void multitrack_view_sel_events(LiVESMenuItem *, livespointer mt);
-void on_prerender_aud_activate(LiVESMenuItem *, livespointer mt);
-void on_jumpnext_activate(LiVESMenuItem *, livespointer mt);
-void on_jumpback_activate(LiVESMenuItem *, livespointer mt);
+static void multitrack_view_events(LiVESMenuItem *, livespointer mt);
+static void multitrack_view_sel_events(LiVESMenuItem *, livespointer mt);
+static void on_prerender_aud_activate(LiVESMenuItem *, livespointer mt);
+static void on_jumpnext_activate(LiVESMenuItem *, livespointer mt);
+static void on_jumpback_activate(LiVESMenuItem *, livespointer mt);
 static void on_delblock_activate(LiVESMenuItem *, livespointer mt);
-void on_seltrack_activate(LiVESMenuItem *, livespointer mt);
-void multitrack_view_details(LiVESMenuItem *, livespointer mt);
-void mt_add_region_effect(LiVESMenuItem *, livespointer mt);
-void mt_add_block_effect(LiVESMenuItem *, livespointer mt);
-void on_clear_event_list_activate(LiVESMenuItem *, livespointer mt);
-void show_frame_events_activate(LiVESMenuItem *, livespointer);
-void mt_save_vals_toggled(LiVESMenuItem *, livespointer mt);
-void mt_load_vals_toggled(LiVESMenuItem *, livespointer mt);
-void mt_load_vals_toggled(LiVESMenuItem *, livespointer mt);
-void mt_render_vid_toggled(LiVESMenuItem *, livespointer mt);
-void mt_render_aud_toggled(LiVESMenuItem *, livespointer mt);
-void mt_norm_aud_toggled(LiVESMenuItem *, livespointer mt);
-void mt_fplay_toggled(LiVESMenuItem *, livespointer mt);
-void mt_change_vals_activate(LiVESMenuItem *, livespointer mt);
-void on_set_pvals_clicked(LiVESWidget *button, livespointer mt);
-void on_move_fx_changed(LiVESMenuItem *, livespointer mt);
-void select_all_time(LiVESMenuItem *, livespointer mt);
-void select_from_zero_time(LiVESMenuItem *, livespointer mt);
-void select_to_end_time(LiVESMenuItem *, livespointer mt);
-void select_all_vid(LiVESMenuItem *, livespointer mt);
-void select_no_vid(LiVESMenuItem *, livespointer mt);
-void on_split_sel_activate(LiVESMenuItem *, livespointer mt);
-void on_split_curr_activate(LiVESMenuItem *, livespointer mt);
-void multitrack_undo(LiVESMenuItem *, livespointer mt);
-void multitrack_redo(LiVESMenuItem *, livespointer mt);
-void on_mt_showkeys_activate(LiVESMenuItem *, livespointer);
-void on_mt_list_fx_activate(LiVESMenuItem *, livespointer mt);
-void on_mt_delfx_activate(LiVESMenuItem *, livespointer mt);
-void on_mt_fx_edit_activate(LiVESMenuItem *, livespointer mt);
-void mt_view_audio_toggled(LiVESMenuItem *, livespointer mt);
-void mt_view_ctx_toggled(LiVESMenuItem *, livespointer mt);
-void mt_ign_ins_sel_toggled(LiVESMenuItem *, livespointer mt);
-void mt_change_max_disp_tracks(LiVESMenuItem *, livespointer mt);
+static void on_seltrack_activate(LiVESMenuItem *, livespointer mt);
+static void multitrack_view_details(LiVESMenuItem *, livespointer mt);
+static void mt_add_region_effect(LiVESMenuItem *, livespointer mt);
+static void mt_add_block_effect(LiVESMenuItem *, livespointer mt);
+static void on_clear_event_list_activate(LiVESMenuItem *, livespointer mt);
+static void show_frame_events_activate(LiVESMenuItem *, livespointer);
+static void mt_load_vals_toggled(LiVESMenuItem *, livespointer mt);
+static void mt_load_vals_toggled(LiVESMenuItem *, livespointer mt);
+static void mt_render_vid_toggled(LiVESMenuItem *, livespointer mt);
+static void mt_render_aud_toggled(LiVESMenuItem *, livespointer mt);
+static void mt_norm_aud_toggled(LiVESMenuItem *, livespointer mt);
+static void mt_fplay_toggled(LiVESMenuItem *, livespointer mt);
+static void mt_change_vals_activate(LiVESMenuItem *, livespointer mt);
+static void on_set_pvals_clicked(LiVESWidget *button, livespointer mt);
+static void on_move_fx_changed(LiVESMenuItem *, livespointer mt);
+static void select_all_time(LiVESMenuItem *, livespointer mt);
+static void select_from_zero_time(LiVESMenuItem *, livespointer mt);
+static void select_to_end_time(LiVESMenuItem *, livespointer mt);
+static void select_all_vid(LiVESMenuItem *, livespointer mt);
+static void select_no_vid(LiVESMenuItem *, livespointer mt);
+static void on_split_sel_activate(LiVESMenuItem *, livespointer mt);
+static void on_split_curr_activate(LiVESMenuItem *, livespointer mt);
+static void multitrack_undo(LiVESMenuItem *, livespointer mt);
+static void multitrack_redo(LiVESMenuItem *, livespointer mt);
+static void on_mt_showkeys_activate(LiVESMenuItem *, livespointer);
+static void on_mt_list_fx_activate(LiVESMenuItem *, livespointer mt);
+static void on_mt_delfx_activate(LiVESMenuItem *, livespointer mt);
+static void on_mt_fx_edit_activate(LiVESMenuItem *, livespointer mt);
+static void mt_view_audio_toggled(LiVESMenuItem *, livespointer mt);
+static void mt_ign_ins_sel_toggled(LiVESMenuItem *, livespointer mt);
+static void mt_change_max_disp_tracks(LiVESMenuItem *, livespointer mt);
 
 static void mt_ac_audio_toggled(LiVESMenuItem *, livespointer mt);
 
@@ -347,7 +344,6 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
       threaded_dialog_spin(0.);
     }
   }
-  g_print("END %d\n", mainw->write_failed);
   if (mainw->write_failed) return FALSE;
   return TRUE;
 

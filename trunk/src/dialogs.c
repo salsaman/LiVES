@@ -2866,22 +2866,32 @@ void response_ok(LiVESButton *button, livespointer user_data) {
 }
 
 
-LIVES_GLOBAL_INLINE void d_print_cancelled(void) {
-  d_print(_("cancelled.\n"));
-  lives_notify(LIVES_OSC_NOTIFY_CANCELLED, "");
+static void d_print_utility(const char *text, int osc_note, const char *osc_detail) {
+  boolean nsdp = mainw->no_switch_dprint;
+  mainw->no_switch_dprint = TRUE;
+  d_print(text);
+  if (osc_note != LIVES_OSC_NOTIFY_NONE) lives_notify(osc_note, osc_detail);
+  if (!nsdp) {
+    mainw->no_switch_dprint = FALSE;
+    d_print("");
+  }
 }
 
+LIVES_GLOBAL_INLINE void d_print_cancelled(void) {
+  d_print_utility(_("cancelled.\n"), LIVES_OSC_NOTIFY_CANCELLED, "");
+}
+
+
 LIVES_GLOBAL_INLINE void d_print_failed(void) {
-  d_print(_("failed.\n"));
-  lives_notify(LIVES_OSC_NOTIFY_FAILED, "");
+  d_print_utility(_("failed.\n"), LIVES_OSC_NOTIFY_FAILED, "");
 }
 
 LIVES_GLOBAL_INLINE void d_print_done(void) {
-  d_print(_("done.\n"));
+  d_print_utility(_("done.\n"), 0, NULL);
 }
 
 LIVES_GLOBAL_INLINE void d_print_file_error_failed(void) {
-  d_print(_("error in file. Failed.\n"));
+  d_print_utility(_("error in file. Failed.\n"), 0, NULL);
 }
 
 

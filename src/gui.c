@@ -201,7 +201,8 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
   lives_widget_set_fg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colf2);
   lives_widget_set_bg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colb2);
-
+  set_child_colour(mainw->sa_hbox, TRUE);
+  
   lives_widget_set_fg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colf2);
   lives_widget_set_bg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colb2);
   set_child_colour(mainw->sa_button, TRUE);
@@ -2067,7 +2068,7 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(vbox), mainw->sel_label, FALSE, FALSE, 0);
 
   mainw->sa_hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, 2);
   add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
 
   mainw->sa_button = lives_button_new_from_stock(LIVES_STOCK_SELECT_ALL, NULL);

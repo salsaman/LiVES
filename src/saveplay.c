@@ -45,7 +45,7 @@ boolean save_clip_values(int which) {
 
   asigned = !(mainw->files[which]->signed_endian & AFORM_UNSIGNED);
   endian = mainw->files[which]->signed_endian & AFORM_BIG_ENDIAN;
-  lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, "header.lives", NULL);
+  lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
 
   do {
     mainw->clip_header = fopen(lives_header, "w");
@@ -3844,7 +3844,7 @@ boolean write_headers(lives_clip_t *file) {
   char *hdrfile;
 
   // save the file details
-  hdrfile = lives_build_filename(prefs->workdir, file->handle, "header", NULL);
+  hdrfile = lives_build_filename(prefs->workdir, file->handle, LIVES_CLIP_HEADER_OLD, NULL);
 
   do {
     retval = 0;
@@ -3876,7 +3876,7 @@ boolean write_headers(lives_clip_t *file) {
 
   if (retval != LIVES_RESPONSE_CANCEL) {
     // more file details (since version 0.7.5)
-    hdrfile = lives_build_filename(prefs->workdir, file->handle, "header2", NULL);
+    hdrfile = lives_build_filename(prefs->workdir, file->handle, LIVES_CLIP_HEADER_OLD2, NULL);
 
     do {
       retval = 0;
@@ -3913,8 +3913,8 @@ boolean read_headers(const char *file_name) {
   char buff[1024];
   char version[32];
   char *com, *tmp;
-  char *old_hdrfile = lives_build_filename(prefs->workdir, cfile->handle, "header", NULL);
-  char *lives_header = lives_build_filename(prefs->workdir, cfile->handle, "header.lives", NULL);
+  char *old_hdrfile = lives_build_filename(prefs->workdir, cfile->handle, LIVES_CLIP_HEADER_OLD, NULL);
+  char *lives_header = lives_build_filename(prefs->workdir, cfile->handle, LIVES_CLIP_HEADER, NULL);
 
   int header_size;
   int version_hash;

@@ -250,16 +250,18 @@ double get_double_pref(const char *key) {
 boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
   char buffer[64];
   char **array;
+  int ntoks;
 
   if (get_pref(key, buffer, 64) != LIVES_RESPONSE_NONE) return FALSE;
   if (strlen(buffer) == 0) return FALSE;
-  if (get_token_count(buffer, ' ') < 4) return FALSE;
+  if ((ntoks = get_token_count(buffer, ' ')) < 3) return FALSE;
 
   array = lives_strsplit(buffer, " ", 4);
   lcol->red = atoi(array[0]);
   lcol->green = atoi(array[1]);
   lcol->blue = atoi(array[2]);
-  lcol->alpha = atoi(array[3]);
+  if (ntoks == 4) lcol->alpha = atoi(array[3]);
+  else lcol->alpha = 65535;
   lives_strfreev(array);
 
   return TRUE;
@@ -269,16 +271,18 @@ boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
 boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol) {
   char buffer[64];
   char **array;
+  int ntoks;
 
   if (get_pref_from_file(themefile, key, buffer, 64) != LIVES_RESPONSE_NONE) return FALSE;
   if (strlen(buffer) == 0) return FALSE;
-  if (get_token_count(buffer, ' ') < 4) return FALSE;
+  if ((ntoks = get_token_count(buffer, ' ')) < 3) return FALSE;
 
   array = lives_strsplit(buffer, " ", 4);
   lcol->red = atoi(array[0]);
   lcol->green = atoi(array[1]);
   lcol->blue = atoi(array[2]);
-  lcol->alpha = atoi(array[3]);
+  if (ntoks == 4) lcol->alpha = atoi(array[3]);
+  else lcol->alpha = 65535;
   lives_strfreev(array);
 
   return TRUE;
@@ -287,9 +291,7 @@ boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colR
 
 void delete_pref(const char *key) {
   char *com = lives_strdup_printf("%s delete_pref \"%s\"", prefs->backend_sync, key);
-  if (lives_system(com, TRUE)) {
-    workdir_warning();
-  }
+  if (lives_system(com, TRUE)) workdir_warning();
   lives_free(com);
 }
 
@@ -391,26 +393,18 @@ void set_list_pref(const char *key, LiVESList *values) {
 
 
 void set_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol) {
-  char *com;
-  char *myval;
-
-  myval = lives_strdup_printf("%d %d %d %d", lcol->red, lcol->green, lcol->blue, lcol->alpha);
-  com = lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"", prefs->backend_sync, themefile, key, myval);
+  char *myval = lives_strdup_printf("%d %d %d", lcol->red, lcol->green, lcol->blue);
+  char *com = lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"", prefs->backend_sync, themefile, key, myval);
   lives_system(com, FALSE);
-
   lives_free(com);
   lives_free(myval);
 }
 
 
 void set_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
-  char *com;
-  char *myval;
-
-  myval = lives_strdup_printf("%d %d %d %d", lcol->red, lcol->green, lcol->blue, lcol->alpha);
-  com = lives_strdup_printf("%s set_pref \"%s\" \"%s\"", prefs->backend_sync, key, myval);
+  char *myval = lives_strdup_printf("%d %d %d %d", lcol->red, lcol->green, lcol->blue, lcol->alpha);
+  char *com = lives_strdup_printf("%s set_pref \"%s\" \"%s\"", prefs->backend_sync, key, myval);
   lives_system(com, FALSE);
-
   lives_free(com);
   lives_free(myval);
 }
@@ -5176,6 +5170,10 @@ _prefsw *create_prefs_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->closebutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_prefs_close_clicked),
                        prefsw);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->prefs_dialog), LIVES_WIDGET_DELETE_EVENT,
+                       LIVES_GUI_CALLBACK(on_prefs_close_clicked),
+                       NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->applybutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_prefs_apply_clicked),

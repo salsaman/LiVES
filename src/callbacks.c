@@ -1371,11 +1371,13 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   char *file_name, *tmp, *tmp2, *com, *fname;
   char *sepimg_ext, *frameimg_ext, *sepimg, *frameimg;
-  char *dfile, *themefile;
+  char *themedir, *thfile, *themefile;
   char *pstyle;
 
   int response;
 
+  desensitize();
+  
   do {
     // prompt for a set name, advise user to save set
     renamew = create_rename_dialog(8);
@@ -1400,26 +1402,36 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
+  lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+  lives_widget_context_update();
+
   // create a header.theme file in tmp, then zip it up with the images
 
   sepimg_ext = get_extension(mainw->sepimg_path);
   frameimg_ext = get_extension(mainw->frameblank_path);
-
-  dfile = lives_strdup_printf("%s"LIVES_DIR_SEP"theme%d"LIVES_DIR_SEP, prefs->workdir, capable->mainpid);
-  themefile = lives_build_filename(dfile, "header.theme", NULL);
+  
+  thfile = lives_strdup_printf("%s%d", THEME_LITERAL, capable->mainpid);
+  themedir = lives_build_filename(prefs->workdir, thfile, NULL);
+  themefile = lives_build_filename(themedir, THEME_HEADER, NULL);
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_free(themefile);
-  themefile = lives_build_filename(dfile, "header.theme_gtk2", NULL);
+  themefile = lives_build_filename(themedir, THEME_HEADER_2, NULL);
 #endif
 #endif
-  sepimg = lives_strdup_printf("%s"LIVES_DIR_SEP"main.%s", dfile, sepimg_ext);
-  frameimg = lives_strdup_printf("%s"LIVES_DIR_SEP"frame.%s", dfile, frameimg_ext);
+  lives_free(thfile);
+
+  thfile = lives_strdup_printf("%s.%s", THEME_SEP_IMG_LITERAL, sepimg_ext); 
+  sepimg = lives_build_filename(themedir, thfile, NULL);
+  lives_free(thfile);
+
+  thfile = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, frameimg_ext); 
+  frameimg = lives_build_filename(themedir, thfile, NULL);
 
   lives_free(sepimg_ext);
   lives_free(frameimg_ext);
 
-  lives_mkdir_with_parents(dfile, capable->umask);
+  lives_mkdir_with_parents(themedir, capable->umask);
 
   set_theme_pref(themefile, THEME_DETAIL_NAME, theme_name);
 
@@ -1478,11 +1490,12 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(sepimg);
 
   if (mainw->com_failed) {
-    lives_rmdir(dfile, TRUE);
+    lives_rmdir(themedir, TRUE);
     lives_free(frameimg);
     lives_free(file_name);
-    lives_free(dfile);
+    lives_free(themedir);
     d_print_failed();
+    sensitize();
     return;
   }
 
@@ -1490,16 +1503,17 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(frameimg);
 
   if (mainw->com_failed) {
-    lives_rmdir(dfile, TRUE);
+    lives_rmdir(themedir, TRUE);
     lives_free(file_name);
-    lives_free(dfile);
+    lives_free(themedir);
     d_print_failed();
+    sensitize();
     return;
   }
 
   com = lives_strdup_printf("%s create_package \"%s\" \"%s\"", prefs->backend_sync,
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
-                            (tmp2 = lives_filename_from_utf8(dfile, -1, NULL, NULL, NULL)));
+                            (tmp2 = lives_filename_from_utf8(themedir, -1, NULL, NULL, NULL)));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -1510,15 +1524,18 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_system(com, TRUE);
   lives_free(com);
 
-  lives_rmdir(dfile, TRUE);
-  lives_free(dfile);
+  lives_rmdir(themedir, TRUE);
+  lives_free(themedir);
 
   if (mainw->com_failed) {
     d_print_failed();
+    sensitize();
     return;
   }
 
   d_print_done();
+  sensitize();
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 }
 
 
@@ -1530,12 +1547,15 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com, *msg;
   char *theme_file;
 
+  desensitize();
+  
   theme_file = choose_file(NULL, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
 
-  if (theme_file == NULL) return;
-
+  if (theme_file == NULL) {
+    sensitize();
+    return;
+  }
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-
   lives_widget_context_update();
 
   importcheckdir = lives_build_filename(prefs->workdir, IMPORTS_DIRNAME, NULL);
@@ -1552,10 +1572,11 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free(importcheckdir);
     lives_free(theme_file);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+    sensitize();
     return;
   }
 
-  themeheader = lives_build_filename(prefs->workdir, IMPORTS_DIRNAME, "header.theme", NULL);
+  themeheader = lives_build_filename(prefs->workdir, IMPORTS_DIRNAME, THEME_HEADER, NULL);
 
   if (get_pref_from_file(themeheader, THEME_DETAIL_NAME, tname, 128) != LIVES_RESPONSE_NONE) {
     // failed to get name
@@ -1565,6 +1586,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     do_bad_theme_import_error(theme_file);
     lives_free(theme_file);
+    sensitize();
     return;
   }
 
@@ -1593,6 +1615,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_free(themedir);
       lives_free(theme_file);
       d_print_failed();
+      sensitize();
       return;
     }
     lives_rmdir(themedir, TRUE);
@@ -1612,6 +1635,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free(themedir);
     d_print_failed();
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+    sensitize();
     return;
   }
 
@@ -1624,6 +1648,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_snprintf(prefs->theme, 64, "%s", future_prefs->theme);
     d_print_failed();
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+    sensitize();
     return;
   }
 
@@ -1636,6 +1661,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   pref_change_xcolours();
 
   d_print_done();
+  sensitize();
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 }
 
@@ -2659,6 +2685,7 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (mainw->com_failed) {
     d_print_failed();
+    sensitize();
     return;
   }
 
@@ -10663,6 +10690,7 @@ void on_fade_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_alarm_clear(alarm_handle);
       end_threaded_dialog();
       d_print_failed();
+      sensitize();
       return;
     }
   }

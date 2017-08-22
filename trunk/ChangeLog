@@ -4,7 +4,7 @@ Fix "undo render to same clip" after rendering to selection.
 Add new libav_stream playback plugin (WIP).
 Set openGL playback plugin (if present) as the default for new installs.
 (Multi monitor support) always show dialog windows on the gui monitor.
-Re-enable audio recording from external sources (Was inadvertantly disabled).
+Re-enable audio recording from external sources (was inadvertantly disabled).
 Fix possible problems with layout reloading (regression).
 Reset to correct playback position when stop is pressed during / after pause (multitrack),
 Increase size of playback area in multitrack mode.
@@ -14,9 +14,12 @@ Keep showing framebar when not playing (can be overriden in prefs).
 Show audio source in framebar (overridden by pref).
 Optimise redrawing of audio waveforms in clip editor.
 Implement external audio trigger for recording.
+Theme fixes for buttons.
 Various optimisations.
 Scale many widget sizes based on screen resolution.
-
+Fix crash in multitrack parameter adjustment for effects with repeated channels.
+Ctrl + mouse scroll can be used to zoom in / out in multitrack.
+	
 
 
 Version 2.8.7 (29 June 2017)

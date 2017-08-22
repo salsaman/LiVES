@@ -8110,7 +8110,7 @@ weed_plant_t *weed_filter_in_paramtmpl(weed_plant_t *filter, int param_num, bool
     ptmpl = in_params[i];
     if (!weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_INTERNAL_CONNECTION)) {
       if (count == param_num) {
-	lives_free(in_params);
+        lives_free(in_params);
         return ptmpl;
       }
       count++;
@@ -9582,7 +9582,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
 
       valds[j] = last_valued + (double)(next_valuesd[j] - last_valued) / (double)(tc_diff / TICKS_PER_SECOND_DBL) *
                  (double)((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error)) / TICKS_PER_SECOND_DBL);
-  
+
       lives_free(last_valuesd);
       lives_free(next_valuesd);
       break;

@@ -5282,8 +5282,7 @@ void pref_change_colours(void) {
       scroll_tracks(mainw->multitrack, mainw->multitrack->top_track, FALSE);
       track_select(mainw->multitrack);
       mt_clip_select(mainw->multitrack, FALSE);
-    }
-    else update_play_times();
+    } else update_play_times();
   }
 }
 

@@ -1924,8 +1924,8 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_rm(cfile->info_file);
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform != NULL) {
-	for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
-	lives_freep((void **)&cfile->audio_waveform);
+        for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+        lives_freep((void **)&cfile->audio_waveform);
       }
     }
 
@@ -2010,8 +2010,8 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
     if (reset_achans > 0) {
       if (cfile->audio_waveform != NULL) {
-	for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
-	lives_freep((void **)&cfile->audio_waveform);
+        for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+        lives_freep((void **)&cfile->audio_waveform);
       }
       asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
       aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
@@ -3147,10 +3147,10 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
         if (clipboard->achans > 0 && clipboard->afilesize == 0l) {
           if (prefs->conserve_space) {
             // oops...
-	    if (clipboard->audio_waveform != NULL) {
-	      for (i = 0; i < clipboard->achans; lives_freep((void **)&clipboard->audio_waveform[i++]));
-	      lives_freep((void **)&clipboard->audio_waveform);
-	    }
+            if (clipboard->audio_waveform != NULL) {
+              for (i = 0; i < clipboard->achans; lives_freep((void **)&clipboard->audio_waveform[i++]));
+              lives_freep((void **)&clipboard->audio_waveform);
+            }
             clipboard->achans = clipboard->arate = clipboard->asampsize = 0;
             with_sound = FALSE;
             do_error_dialog
@@ -8676,7 +8676,7 @@ void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer u
   if (cfile->fps > 0.) {
     redraw_timer_bars((double)(oend) / cfile->fps, (double)(cfile->end) / cfile->fps, 0);
   }
-  
+
   if (mainw->playing_file == -1 && mainw->play_window != NULL && cfile->is_loaded) {
     if (mainw->prv_link == PRV_END && mainw->preview_frame != cfile->end)
       load_preview_image(FALSE);
@@ -8770,10 +8770,10 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
   if (mainw->laudio_drawable == NULL) {
     mainw->laudio_drawable = lives_painter_surface_create_from_widget(mainw->laudio_draw,
-								      LIVES_PAINTER_CONTENT_COLOR,
-								      lives_widget_get_allocation_width(mainw->raudio_draw),
-								      lives_widget_get_allocation_height(mainw->raudio_draw));
-      
+                             LIVES_PAINTER_CONTENT_COLOR,
+                             lives_widget_get_allocation_width(mainw->raudio_draw),
+                             lives_widget_get_allocation_height(mainw->raudio_draw));
+
     block_expose();
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
     update_timer_bars(0, 0, 0, 0, 2);
@@ -8784,8 +8784,8 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
     lives_painter_t *cr = lives_painter_create(mainw->laudio_drawable);
 
     lives_painter_render_background(mainw->laudio_draw, cr, 0, 0,
-				    lives_widget_get_allocation_width(mainw->raudio_draw),
-				    lives_widget_get_allocation_height(mainw->raudio_draw));
+                                    lives_widget_get_allocation_width(mainw->raudio_draw),
+                                    lives_widget_get_allocation_height(mainw->raudio_draw));
     lives_painter_destroy(cr);
   }
 
@@ -8812,9 +8812,9 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
   if (mainw->raudio_drawable == NULL) {
     mainw->raudio_drawable = lives_painter_surface_create_from_widget(mainw->raudio_draw,
-								      LIVES_PAINTER_CONTENT_COLOR,
-								      lives_widget_get_allocation_width(mainw->raudio_draw),
-								      lives_widget_get_allocation_height(mainw->raudio_draw));
+                             LIVES_PAINTER_CONTENT_COLOR,
+                             lives_widget_get_allocation_width(mainw->raudio_draw),
+                             lives_widget_get_allocation_height(mainw->raudio_draw));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
     block_expose();
     update_timer_bars(0, 0, 0, 0, 3);
@@ -11172,8 +11172,8 @@ boolean on_ins_silence_activate(LiVESMenuItem *menuitem, livespointer user_data)
     // redo
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform != NULL) {
-	for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
-	lives_freep((void **)&cfile->audio_waveform);
+        for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+        lives_freep((void **)&cfile->audio_waveform);
       }
     }
     if (cfile->audio_waveform != NULL) {

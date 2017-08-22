@@ -202,7 +202,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_fg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colf2);
   lives_widget_set_bg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colb2);
   set_child_colour(mainw->sa_hbox, TRUE);
-  
+
   lives_widget_set_fg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colf2);
   lives_widget_set_bg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colb2);
   set_child_colour(mainw->sa_button, TRUE);

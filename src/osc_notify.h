@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+#define LIVES_OSC_NOTIFY_NONE 0
+
 #define LIVES_OSC_NOTIFY_FRAME_SYNCH 1 ///< sent when a frame is displayed
 #define LIVES_OSC_NOTIFY_PLAYBACK_STARTED 2 ///< sent when a/v playback starts or clip is switched
 #define LIVES_OSC_NOTIFY_PLAYBACK_STOPPED 3 ///< sent when a/v playback ends

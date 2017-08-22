@@ -3218,7 +3218,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new(void) {
 #ifdef GUI_QT
   button = new LiVESButton;
 #endif
-  if (button != NULL) lives_widget_apply_theme2(button, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  if (widget_opts.apply_theme) {
+    if (button != NULL) set_child_colour(button, TRUE);
+  }
   return button;
 }
 
@@ -3234,7 +3236,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_with_mnemonic(const ch
   qlabel = qlabel.replace('_', '&');
   button = new LiVESButton(qlabel);
 #endif
-  if (button != NULL) lives_widget_apply_theme2(button, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  if (widget_opts.apply_theme) {
+    if (button != NULL) set_child_colour(button, TRUE);
+  }
   return button;
 }
 
@@ -3248,7 +3252,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_with_label(const char 
   QString qlabel = QString::fromUtf8(label);
   button = new LiVESButton(qlabel);
 #endif
-  if (button != NULL) lives_widget_apply_theme2(button, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  if (widget_opts.apply_theme) {
+    if (button != NULL) set_child_colour(button, TRUE);
+  }
   return button;
 }
 
@@ -3342,9 +3348,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_from_stock(const char 
     if (label != NULL)
       gtk_button_set_label(GTK_BUTTON(button), label);
 #endif
-
-    lives_widget_apply_theme2(button, LIVES_WIDGET_STATE_NORMAL, TRUE);
-
+    if (widget_opts.apply_theme) {
+      set_child_colour(button, TRUE);
+    }
     return button;
   }
 
@@ -3654,6 +3660,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_grab_focus(LiVESWidget *widget)
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_grab_default(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_grab_default(widget);
+  if (widget_opts.apply_theme) {
+    if (LIVES_IS_BUTTON(widget)) set_child_alt_colour(widget, TRUE);
+  }
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -8431,7 +8440,6 @@ void lives_widget_apply_theme(LiVESWidget *widget, LiVESWidgetState state) {
   if (palette->style & STYLE_1) {
     lives_widget_set_fg_color(widget, state, &palette->normal_fore);
     lives_widget_set_bg_color(widget, state, &palette->normal_back);
-    if (LIVES_IS_BUTTON(widget)) set_child_colour(widget, TRUE);
   }
 }
 
@@ -8442,7 +8450,6 @@ void lives_widget_apply_theme2(LiVESWidget *widget, LiVESWidgetState state, bool
     if (set_fg)
       lives_widget_set_fg_color(widget, state, &palette->menu_and_bars_fore);
     lives_widget_set_bg_color(widget, state, &palette->menu_and_bars);
-    if (LIVES_IS_BUTTON(widget)) set_child_alt_colour(widget, TRUE);
   }
 }
 
@@ -8452,7 +8459,6 @@ void lives_widget_apply_theme3(LiVESWidget *widget, LiVESWidgetState state) {
   if (palette->style & STYLE_1) {
     lives_widget_set_text_color(widget, state, &palette->info_text);
     lives_widget_set_base_color(widget, state, &palette->info_base);
-    if (LIVES_IS_BUTTON(widget)) set_child_alt_colour(widget, TRUE);
   }
 }
 

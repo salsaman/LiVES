@@ -2751,12 +2751,11 @@ weed_plant_t *append_filter_deinit_event(weed_plant_t *event_list, weed_timecode
   event = weed_plant_new(WEED_PLANT_EVENT);
   weed_set_voidptr_value(event, WEED_LEAF_NEXT, NULL);
 
-  // TODO - error check
   weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
   weed_set_int_value(event, WEED_LEAF_HINT, WEED_EVENT_HINT_FILTER_DEINIT);
   weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENT, init_event);
+  weed_leaf_delete((weed_plant_t *)init_event, WEED_LEAF_DEINIT_EVENT); // delete since we assign a placeholder with int64 type
   weed_set_voidptr_value((weed_plant_t *)init_event, WEED_LEAF_DEINIT_EVENT, event);
-
   if (pchain != NULL) {
     int error;
     char *filter_hash = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_FILTER, &error);

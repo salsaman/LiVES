@@ -199,6 +199,9 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colf2);
 
+  lives_widget_set_fg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colf2);
+  lives_widget_set_bg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colb2);
+
   lives_widget_set_fg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colf2);
   lives_widget_set_bg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colb2);
   set_child_colour(mainw->sa_button, TRUE);
@@ -237,16 +240,9 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, colf2);
   
-  if (mainw->faded && mainw->playing_file > -1) {
-    //lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb);
-    //lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf);
-    //set_child_colour(mainw->btoolbar, TRUE);
-  }
-  else {
-    lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb2);
-    lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf2);
-    set_child_alt_colour(mainw->btoolbar, TRUE);
-  }
+  lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf2);
+  set_child_alt_colour(mainw->btoolbar, TRUE);
 
   lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -350,7 +346,6 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
 
 void create_LiVES(void) {
-  LiVESWidget *hbox;
   LiVESWidget *hbox1;
   LiVESWidget *vbox;
   LiVESWidget *vbox2;
@@ -2071,14 +2066,14 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(hbox3), vbox, FALSE, FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), mainw->sel_label, FALSE, FALSE, 0);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
-  add_fill_to_box(LIVES_BOX(hbox));
+  mainw->sa_hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, 0);
+  add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
 
   mainw->sa_button = lives_button_new_from_stock(LIVES_STOCK_SELECT_ALL, NULL);
   lives_widget_set_tooltip_text(mainw->sa_button, _("Select all frames in this clip"));
-  lives_box_pack_start(LIVES_BOX(hbox), mainw->sa_button, TRUE, TRUE, 0);
-  add_fill_to_box(LIVES_BOX(hbox));
+  lives_box_pack_start(LIVES_BOX(mainw->sa_hbox), mainw->sa_button, TRUE, TRUE, 0);
+  add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
 
   mainw->arrow2 = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_box_pack_start(LIVES_BOX(hbox3), mainw->arrow2, FALSE, FALSE, 0);

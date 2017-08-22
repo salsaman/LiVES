@@ -5261,6 +5261,7 @@ void pref_change_xcolours(void) {
       resize_timeline(mainw->multitrack);
       set_mt_colours(mainw->multitrack);
     } else {
+      update_play_times();
       lives_widget_queue_draw(mainw->LiVES);
     }
   }
@@ -5282,6 +5283,7 @@ void pref_change_colours(void) {
       track_select(mainw->multitrack);
       mt_clip_select(mainw->multitrack, FALSE);
     }
+    else update_play_times();
   }
 }
 

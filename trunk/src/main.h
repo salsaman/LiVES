@@ -1144,9 +1144,9 @@ void add_message_scroller(LiVESWidget *conter);
 void resize_widgets_for_monitor(boolean get_play_times);
 #if GTK_CHECK_VERSION(3, 0, 0)
 void calibrate_sepwin_size(void);
-boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data);
-boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data);
-boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data);
+boolean expose_pim(LiVESWidget *, lives_painter_t *, livespointer);
+boolean expose_sim(LiVESWidget *, lives_painter_t *, livespointer);
+boolean expose_eim(LiVESWidget *, lives_painter_t *, livespointer);
 #endif
 
 // system calls in utils.c
@@ -1164,6 +1164,7 @@ ssize_t lives_write(int fd, livesconstpointer buf, size_t count, boolean allow_f
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
+ssize_t file_buffer_flush(int fd);
 ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);

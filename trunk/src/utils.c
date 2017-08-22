@@ -44,7 +44,7 @@ char *filename_from_fd(char *val, int fd) {
 
   // in case of error we return val
 
-  // call like: foo=filename_from_fd(foo,fd);
+  // call like: foo = filename_from_fd(foo,fd); lives_free(foo);
 
 #ifndef IS_MINGW
   char *fdpath;
@@ -519,13 +519,46 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
   }
 }
 
-
 //// buffered io ////
+
+// explanation of values
+
+// read:
+// fbuff->buffer holds (fbuff->ptr - fbuff->buffer + fbuff->bytes) bytes
+// fbuff->offset is the next real read position
+
+// read x bytes : fbuff->ptr increases by x, fbuff->bytes decreases by x
+// if fbuff->bytes is < x, then we concat fbuff->bytes, refill buffer from file, concat remaining bytes
+// on read: fbuff->ptr = fbuff->buffer. fbuff->offset += bytes read, fbuff->bytes = bytes read
+
+// on seek (read only):
+// forward: seek by +z: if z < fbuff->bytes : fbuff->ptr += z, fbuff->bytes -= z
+// if z > fbuff->bytes: subtract fbuff->bytes from z. Increase fbuff->offset by remainder. Fill buffer.
+
+// backward: if fbuff->ptr - z >= fbuff->buffer : fbuff->ptr -= z, fbuff->bytes += z
+// fbuff->ptr - z < fbuff->buffer:  z -= (fbuff->ptr - fbuff->buffer) : fbuff->offset -= (fbuff->ptr - fbuff->buffer + fbuff->bytes - z) : Fill buffer
+
+// seek absolute: current vitual posn is fbuff->offset - fbuff->bytes : subtract this from absolute posn
+
+// return value is: fbuff->offset - fbuff->bytes ?
+
+// when writing we simply fill up the buffer until it full, then flush the buffer to file io
+// buffer is finally flushed when we close the file (or we call file_buffer_flush)
+
+// in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
 
 #define BUFFER_FILL_BYTES 65536
 
-static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
+ssize_t file_buffer_flush(int fd) {
+  // returns number of bytes written to file io, or error code
   ssize_t res = 0;
+  lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
+
+  if (fbuff == NULL) {
+    // normal non-buffered file
+    LIVES_DEBUG("file_buffer_flush: no file buffer found");
+    return res;
+  }
 
   if (fbuff->buffer != NULL) res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes, fbuff->allow_fail);
   if (res > 0) fbuff->offset += res;
@@ -595,7 +628,7 @@ int lives_close_buffered(int fd) {
     size_t bytes = fbuff->bytes;
 
     if (bytes > 0) {
-      ret = file_buffer_flush(fbuff);
+      ret = file_buffer_flush(fd);
       if (!allow_fail && ret < bytes) return ret; // this is correct, as flush will have called close again with should_close=FALSE;
     }
   }
@@ -617,8 +650,6 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
   lseek(fbuff->fd, fbuff->offset, SEEK_SET);
   res = lives_read(fbuff->fd, fbuff->buffer, BUFFER_FILL_BYTES, TRUE);
 
-  //g_print("SEEK to %ld\n", fbuff->offset);
-
   if (res < 0) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed
     return res;
@@ -636,20 +667,35 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
 
 
 static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, off_t offset) {
-  if (fbuff->offset < -offset) offset = -fbuff->offset;
-
-  fbuff->bytes -= offset;
-
-  if ((off_t)fbuff->ptr < -offset) offset = -(off_t)(fbuff->ptr);
-  fbuff->ptr += offset;
-
-  if (fbuff->bytes <= 0 || fbuff->ptr < fbuff->buffer) {
-    // moved beyond edge of buffer. Prepare for buffer fill next time read is called.
+  if (offset > 0) {
+    // seek forwards
+    if (offset < fbuff->bytes) {
+      fbuff->ptr += offset;
+      fbuff->bytes -= offset;
+      return fbuff->offset - fbuff->bytes;
+    }
+    offset -= fbuff->bytes;
+    fbuff->offset += offset;
     fbuff->bytes = 0;
-    if (fbuff->ptr < fbuff->buffer) fbuff->eof = FALSE;
+    return fbuff->offset;
   }
 
-  return fbuff->offset + (fbuff->ptr - fbuff->buffer);
+  // seek backwards
+  offset = -offset;
+  
+  if (offset <= fbuff->ptr - fbuff->buffer) {
+    fbuff->ptr -= offset;
+    fbuff->bytes += offset;
+    return fbuff->offset - fbuff->bytes;
+  }
+
+  offset -= fbuff->ptr - fbuff->buffer;
+  fbuff->offset = fbuff->offset - (fbuff->ptr - fbuff->buffer + fbuff->bytes + offset);
+  if (fbuff->offset < 0) fbuff->offset = 0;
+  fbuff->bytes = 0;
+  fbuff->eof = FALSE;
+
+  return fbuff->offset;
 }
 
 
@@ -662,25 +708,20 @@ off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
     return lseek(fd, offset, SEEK_CUR);
   }
 
-  _lives_lseek_buffered_rdonly_relative(fbuff, offset);
-
-  return fbuff->offset + (fbuff->ptr - fbuff->buffer);
+  return _lives_lseek_buffered_rdonly_relative(fbuff, offset);
 }
 
 
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
   lives_file_buffer_t *fbuff;
 
-
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
     LIVES_DEBUG("lives_lseek_buffered_rdonly_absolute: no file buffer found");
     return lseek(fd, offset, SEEK_SET);
   }
 
-  offset -= fbuff->offset + (fbuff->ptr - fbuff->buffer);
-  offset = _lives_lseek_buffered_rdonly_relative(fbuff, offset);
-
-  return fbuff->offset + (fbuff->ptr - fbuff->buffer);
+  offset -= fbuff->offset - fbuff->bytes;
+  return _lives_lseek_buffered_rdonly_relative(fbuff, offset);
 }
 
 
@@ -702,13 +743,15 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
   // read bytes from fbuff
   while (1) {
-    if (fbuff->bytes == 0) {
+    if (fbuff->bytes <= 0) {
       if (!fbuff->eof) {
         // refill the buffer
-        fbuff->offset += fbuff->ptr - fbuff->buffer;
+        //fbuff->offset += fbuff->ptr - fbuff->buffer;
         res = file_buffer_fill(fbuff);
         if (res < 0) return res;
-      } else break;
+	continue;
+      }
+      break;
     }
     if (fbuff->bytes < count) {
       // use up buffer
@@ -780,11 +823,10 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
   // write bytes from fbuff
   while (count) {
     space_left = BUFFER_FILL_BYTES - fbuff->bytes;
-
     if (space_left < count) {
       lives_memcpy(fbuff->ptr, buf, space_left);
       fbuff->bytes = BUFFER_FILL_BYTES;
-      res = file_buffer_flush(fbuff);
+      res = file_buffer_flush(fd);
       retval += res;
       if (res < BUFFER_FILL_BYTES) return (res < 0 ? res : retval);
       fbuff->bytes = 0;

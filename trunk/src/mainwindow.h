@@ -923,6 +923,7 @@ typedef struct {
   LiVESWidget *spinbutton_start;
 
   LiVESWidget *sa_button;
+  LiVESWidget *sa_hbox;
 
   LiVESWidget *arrow1;
   LiVESWidget *arrow2;

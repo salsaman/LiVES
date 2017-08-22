@@ -1174,7 +1174,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->q_type = Q_SMOOTH;
     prefs->bar_height = 5;
 
-    prefs->event_window_show_frame_events = TRUE;
+    prefs->event_window_show_frame_events = FALSE;
     if (!mainw->foreign) prefs->crash_recovery = TRUE;
     else prefs->crash_recovery = FALSE;
 

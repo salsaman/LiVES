@@ -2847,7 +2847,11 @@ void play_file(void) {
 
   // resize out of double size
   if ((mainw->double_size && !mainw->fs) && mainw->multitrack == NULL) {
+    lives_widget_context_update();
     resize(1);
+    load_start_image(cfile->start);
+    load_end_image(cfile->end);
+
     if (mainw->play_window != NULL) {
       resize_play_window();
       if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
@@ -2881,13 +2885,11 @@ void play_file(void) {
 
   if (prefs->show_gui && (lives_widget_get_allocation_height(mainw->eventbox) + lives_widget_get_allocation_height(mainw->menubar)
                           > GUI_SCREEN_HEIGHT - 2 || lives_widget_get_allocation_width(mainw->LiVES) > GUI_SCREEN_WIDTH - 2)) {
-    int wx, wy;
     // the screen grew too much...remaximise it
     lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
     mainw->noswitch = TRUE;
     lives_widget_context_update();
     mainw->noswitch = FALSE;
-    lives_window_get_position(LIVES_WINDOW(mainw->LiVES), &wx, &wy);
     if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(mainw->LiVES), 0, 0);
     lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
   }
@@ -2899,7 +2901,6 @@ void play_file(void) {
     lives_widget_show(mainw->eventbox3);
     lives_widget_show(mainw->eventbox4);
     disable_record();
-
     lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
   }
 
@@ -3139,7 +3140,6 @@ void play_file(void) {
 
   if (mainw->play_window != NULL) {
     resize_play_window();
-    //load_preview_image(FALSE);
   }
 }
 
@@ -5532,9 +5532,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         if (mainw->multitrack == NULL) {
           if (mainw->current_file > 0) {
             resize(1);
-            load_start_image(cfile->start);
-            load_end_image(cfile->end);
-            lives_widget_context_update();
           }
         }
 

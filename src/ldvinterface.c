@@ -83,28 +83,28 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   lives_box_pack_start(LIVES_BOX(vbox), hbuttonbox1, FALSE, FALSE, widget_opts.packing_height);
 
-  button3 = lives_button_new_from_stock(LIVES_STOCK_MEDIA_REWIND, NULL);
+  button3 = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_REWIND, NULL);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), button3);
   lives_widget_set_can_focus(button3, TRUE);
 
-  button4 = lives_button_new_from_stock(LIVES_STOCK_MEDIA_FORWARD, NULL);
+  button4 = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_FORWARD, NULL);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), button4);
   lives_widget_set_can_focus(button4, TRUE);
 
-  dvgrabw->stop = lives_button_new_from_stock(LIVES_STOCK_MEDIA_STOP, NULL);
+  dvgrabw->stop = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_STOP, NULL);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->stop);
   lives_widget_set_can_focus_and_default(dvgrabw->stop);
   lives_widget_set_sensitive(dvgrabw->stop, FALSE);
 
-  dvgrabw->play = lives_button_new_from_stock(LIVES_STOCK_MEDIA_PLAY, NULL);
+  dvgrabw->play = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_PLAY, NULL);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->play);
   lives_widget_set_can_focus_and_default(dvgrabw->play);
 
-  dvgrabw->grab = lives_button_new_from_stock(LIVES_STOCK_MEDIA_RECORD, _("_Grab"));
+  dvgrabw->grab = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_RECORD, _("_Grab"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->grab);
   lives_widget_set_can_focus_and_default(dvgrabw->grab);
@@ -116,7 +116,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   hbuttonbox2 = lives_hbutton_box_new();
   lives_box_pack_start(LIVES_BOX(vbox), hbuttonbox2, FALSE, FALSE, widget_opts.packing_height);
 
-  dvgrabw->quit = lives_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
+  dvgrabw->quit = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox2), dvgrabw->quit);
   lives_widget_set_can_focus_and_default(dvgrabw->quit);

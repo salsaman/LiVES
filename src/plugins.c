@@ -1059,7 +1059,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     vppa->rfx = NULL;
   }
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(vppa->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus(cancelbutton, TRUE);
 
@@ -1067,7 +1067,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (intention == 0) {
-    savebutton = lives_button_new_from_stock(LIVES_STOCK_SAVE_AS, NULL);
+    savebutton = lives_standard_button_new_from_stock(LIVES_STOCK_SAVE_AS, NULL);
     lives_dialog_add_action_widget(LIVES_DIALOG(vppa->dialog), savebutton, 1);
     lives_widget_set_can_focus(savebutton, TRUE);
     lives_widget_set_tooltip_text(savebutton, _("Save settings to an alternate file.\n"));
@@ -1076,10 +1076,10 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
                          vppa);
   }
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(vppa->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_vppa_cancel_clicked),
@@ -2601,10 +2601,10 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
     decoder_plugin = decoder_plugin->next;
   }
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 

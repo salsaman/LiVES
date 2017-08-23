@@ -1,6 +1,6 @@
 // merge.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2016 (salsaman@gmail.com)
+// (c) G. Finch 2003 - 2017 (salsaman+lives@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -46,7 +46,7 @@ void create_merge_dialog(void) {
 
   int idx = 0;
 
-  int scrw, scrh, width, height;
+  int width, height;
 
   int cb_frames = clipboard->frames;
   int defstart = 0;
@@ -82,16 +82,8 @@ void create_merge_dialog(void) {
     return;
   }
 
-  if (prefs->gui_monitor != 0) {
-    scrw = mainw->mgeom[prefs->gui_monitor - 1].width;
-    scrh = mainw->mgeom[prefs->gui_monitor - 1].height;
-  } else {
-    scrw = mainw->scr_width;
-    scrh = mainw->scr_height;
-  }
-
-  height = scrh - SCR_HEIGHT_SAFETY;
-  width = scrw - SCR_WIDTH_SAFETY;
+  width = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
+  height = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
   merge_opts->merge_dialog = lives_standard_dialog_new(_("Merge"), FALSE, width, height);
   lives_signal_handlers_disconnect_by_func(merge_opts->merge_dialog, return_true, NULL);
@@ -209,14 +201,14 @@ void create_merge_dialog(void) {
 
   // done !
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(merge_opts->merge_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus(cancelbutton, TRUE);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(merge_opts->merge_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_merge_cancel_clicked),

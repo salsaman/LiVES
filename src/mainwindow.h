@@ -70,8 +70,8 @@
 #define MIN_SEPWIN_HEIGHT 36
 
 /// sepwin/screen size safety margins in pixels
-#define SCR_HEIGHT_SAFETY ((int)(200.*widget_opts.scale))
 #define SCR_WIDTH_SAFETY ((int)(100.*widget_opts.scale))
+#define SCR_HEIGHT_SAFETY ((int)(200.*widget_opts.scale))
 
 /// default size for generators
 #define DEF_GEN_WIDTH 640
@@ -148,6 +148,9 @@
 #define MAX_FX_THREADS 65536
 
 #define LIVES_DCLICK_TIME 400 ///< double click time (milliseconds)
+
+#define GUI_SCREEN_WIDTH (mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].width)
+#define GUI_SCREEN_HEIGHT (mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].height)
 
 /// max ext_cntl + 1
 #define MAX_EXT_CNTL 2

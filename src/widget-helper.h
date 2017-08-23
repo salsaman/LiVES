@@ -727,6 +727,28 @@ boolean lives_has_toplevel_focus(LiVESWindow *window);
 
 void lives_label_set_hpadding(LiVESLabel *label, int pad);
 
+boolean lives_widget_grab_default_special(LiVESWidget *);
+
+#define BUTTON_DIM_VAL 24000
+
+LiVESWidget *lives_standard_button_new(void);
+LiVESWidget *lives_standard_button_new_with_mnemonic(const char *label);
+LiVESWidget *lives_standard_button_new_with_label(const char *label);
+LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const char *label);
+
+LiVESWidget *lives_standard_menu_item_new(void);
+LiVESWidget *lives_standard_menu_item_new_with_mnemonic(const char *label);
+LiVESWidget *lives_standard_menu_item_new_with_label(const char *label);
+
+LiVESWidget *lives_standard_image_menu_item_new_with_label(const char *label);
+LiVESWidget *lives_standard_image_menu_item_new_with_mnemonic(const char *label);
+LiVESWidget *lives_standard_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group);
+
+LiVESWidget *lives_standard_radio_menu_item_new_with_label(LiVESSList *group, const char *label);
+
+LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label);
+LiVESWidget *lives_standard_check_menu_item_new_with_mnemonic(const char *label);
+
 LiVESWidget *lives_standard_label_new(const char *text);
 LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget);
 

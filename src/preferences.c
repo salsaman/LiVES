@@ -2865,7 +2865,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_free(tmp2);
 
   // advanced instant opening
-  advbutton = lives_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"));
+  advbutton = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"));
   lives_box_pack_start(LIVES_BOX(hbox), advbutton, FALSE, FALSE, widget_opts.packing_width * 4);
 
   lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -3023,7 +3023,7 @@ _prefsw *create_prefs_dialog(void) {
   pp_combo = lives_standard_combo_new(_("_Plugin"), TRUE, vid_playback_plugins, LIVES_BOX(hbox), NULL);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  advbutton = lives_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"));
+  advbutton = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"));
   lives_box_pack_start(LIVES_BOX(hbox), advbutton, FALSE, FALSE, 40);
 
   lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -4756,7 +4756,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_signal_connect(prefsw->selection, LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_prefDomainChanged), NULL);
 
   // Preferences 'Revert' button
-  prefsw->cancelbutton = lives_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED, NULL);
+  prefsw->cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED, NULL);
   lives_widget_show(prefsw->cancelbutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_size_request(prefsw->cancelbutton, DEF_BUTTON_WIDTH * 2, -1);
@@ -4768,7 +4768,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_widget_set_sensitive(prefsw->cancelbutton, FALSE);
 
   // Preferences 'Apply' button
-  prefsw->applybutton = lives_button_new_from_stock(LIVES_STOCK_APPLY, NULL);
+  prefsw->applybutton = lives_standard_button_new_from_stock(LIVES_STOCK_APPLY, NULL);
   lives_widget_show(prefsw->applybutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->applybutton, 0);
   lives_widget_set_size_request(prefsw->applybutton, DEF_BUTTON_WIDTH * 2, -1);
@@ -4779,7 +4779,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_widget_set_sensitive(prefsw->applybutton, FALSE);
 
   // Preferences 'Close' button
-  prefsw->closebutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE, NULL);
+  prefsw->closebutton = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, NULL);
   lives_widget_show(prefsw->closebutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, LIVES_RESPONSE_OK);
   lives_widget_set_size_request(prefsw->closebutton, DEF_BUTTON_WIDTH * 2, -1);

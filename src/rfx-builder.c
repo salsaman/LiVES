@@ -1,6 +1,6 @@
 // rfx-builder.c
 // LiVES
-// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2017 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -131,8 +131,8 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
     title = lives_strdup(_("Edit Test RFX"));
   }
 
-  winsize_h = (PREF_RFXDIALOG_W < mainw->scr_width - SCR_WIDTH_SAFETY / 5.) ? PREF_RFXDIALOG_W : mainw->scr_width - SCR_WIDTH_SAFETY / 5.;
-  winsize_v = (PREF_RFXDIALOG_H < mainw->scr_height - SCR_HEIGHT_SAFETY / 2.) ? PREF_RFXDIALOG_H : mainw->scr_height - SCR_HEIGHT_SAFETY / 2.;
+  winsize_h = (PREF_RFXDIALOG_W < GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY / 5.) ? PREF_RFXDIALOG_W : GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY / 5.;
+  winsize_v = (PREF_RFXDIALOG_H < GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY / 2.) ? PREF_RFXDIALOG_H : GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY / 2.;
 
   rfxbuilder->dialog = lives_standard_dialog_new(title, FALSE, winsize_h, winsize_v);
   lives_free(title);
@@ -243,28 +243,28 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->requirements_button = lives_button_new_with_mnemonic(_("_Requirements..."));
+  rfxbuilder->requirements_button = lives_standard_button_new_with_mnemonic(_("_Requirements..."));
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->requirements_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(rfxbuilder->requirements_button,
                                 (_("Enter any binaries required by the plugin.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->properties_button = lives_button_new_with_mnemonic(_("_Properties..."));
+  rfxbuilder->properties_button = lives_standard_button_new_with_mnemonic(_("_Properties..."));
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->properties_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(rfxbuilder->properties_button,
                                 (_("Set properties for the plugin. Optional.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->params_button = lives_button_new_with_mnemonic(_("_Parameters..."));
+  rfxbuilder->params_button = lives_standard_button_new_with_mnemonic(_("_Parameters..."));
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->params_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(rfxbuilder->params_button,
                                 (_("Set up parameters used in pre/loop/post/trigger code. Optional.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->param_window_button = lives_button_new_with_mnemonic(_("Parameter _Window Hints..."));
+  rfxbuilder->param_window_button = lives_standard_button_new_with_mnemonic(_("Parameter _Window Hints..."));
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->param_window_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(rfxbuilder->param_window_button,
                                 (_("Set hints about how to lay out the parameter window. Optional.")));
@@ -282,36 +282,36 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->pre_button = lives_button_new_with_mnemonic(_("_Pre loop code..."));
+  rfxbuilder->pre_button = lives_standard_button_new_with_mnemonic(_("_Pre loop code..."));
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->pre_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(rfxbuilder->pre_button,
                                 (_("Code to be executed before the loop. Optional.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->loop_button = lives_button_new_with_mnemonic(_("_Loop code..."));
+  rfxbuilder->loop_button = lives_standard_button_new_with_mnemonic(_("_Loop code..."));
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->loop_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(rfxbuilder->loop_button,
                                 (_("Loop code to be applied to each frame.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->post_button = lives_button_new_with_mnemonic(_("_Post loop code..."));
+  rfxbuilder->post_button = lives_standard_button_new_with_mnemonic(_("_Post loop code..."));
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->post_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(rfxbuilder->post_button,
                                 (_("Code to be executed after the loop. Optional.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->trigger_button = lives_button_new_with_mnemonic(_("_Trigger code..."));
+  rfxbuilder->trigger_button = lives_standard_button_new_with_mnemonic(_("_Trigger code..."));
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->trigger_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(rfxbuilder->trigger_button,
                                 (_("Set trigger code for when the parameter window is shown, or when a parameter is changed. Optional (except for Utilities).")));
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(rfxbuilder->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(rfxbuilder->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
@@ -580,24 +580,24 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_box_pack_start(LIVES_BOX(hbox), button_box, FALSE, FALSE, 0);
 
-  rfxbuilder->new_entry_button = lives_button_new_with_mnemonic(_("_New Entry"));
+  rfxbuilder->new_entry_button = lives_standard_button_new_with_mnemonic(_("_New Entry"));
   lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->new_entry_button, FALSE, FALSE, widget_opts.packing_height);
   lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->new_entry_button), widget_opts.border_width);
 
-  rfxbuilder->edit_entry_button = lives_button_new_with_mnemonic(_("_Edit Entry"));
+  rfxbuilder->edit_entry_button = lives_standard_button_new_with_mnemonic(_("_Edit Entry"));
   lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->edit_entry_button, FALSE, FALSE, widget_opts.packing_height);
   lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->edit_entry_button), widget_opts.border_width);
 
-  rfxbuilder->remove_entry_button = lives_button_new_with_mnemonic(_("_Remove Entry"));
+  rfxbuilder->remove_entry_button = lives_standard_button_new_with_mnemonic(_("_Remove Entry"));
   lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->remove_entry_button, FALSE, FALSE, widget_opts.packing_height);
   lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->remove_entry_button), widget_opts.border_width);
 
   if (rfxbuilder->table_type == RFX_TABLE_TYPE_PARAM_WINDOW) {
-    rfxbuilder->move_up_button = lives_button_new_with_mnemonic(_("Move _Up"));
+    rfxbuilder->move_up_button = lives_standard_button_new_with_mnemonic(_("Move _Up"));
     lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->move_up_button, FALSE, FALSE, widget_opts.packing_height);
     lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->move_up_button), widget_opts.border_width);
 
-    rfxbuilder->move_down_button = lives_button_new_with_mnemonic(_("Move _Down"));
+    rfxbuilder->move_down_button = lives_standard_button_new_with_mnemonic(_("Move _Down"));
     lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->move_down_button, FALSE, FALSE, widget_opts.packing_height);
     lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->move_down_button), widget_opts.border_width);
 
@@ -616,13 +616,13 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
@@ -981,14 +981,14 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -1988,7 +1988,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   rfxbuilder->param_strdef_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), rfxbuilder->param_strdef_hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  rfxbuilder->param_strdef_button = lives_button_new();
+  rfxbuilder->param_strdef_button = lives_standard_button_new();
   lives_button_set_use_underline(LIVES_BUTTON(rfxbuilder->param_strdef_button), TRUE);
   lives_box_pack_start(LIVES_BOX(rfxbuilder->param_strdef_hbox), rfxbuilder->param_strdef_button, TRUE, TRUE, widget_opts.packing_width);
 
@@ -2820,11 +2820,11 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default(cancelbutton);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
@@ -4086,13 +4086,13 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
   lives_widget_grab_focus(name_entry);
   lives_entry_set_activates_default(LIVES_ENTRY(name_entry), TRUE);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  copy_script_okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  copy_script_okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), copy_script_okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(copy_script_okbutton);
-  lives_widget_grab_default(copy_script_okbutton);
+  lives_widget_grab_default_special(copy_script_okbutton);
 
   lives_widget_show_all(dialog);
 
@@ -4513,7 +4513,7 @@ void add_rfx_effects(void) {
     lives_widget_show(mainw->rte_separator);
   }
 
-  menuitem = lives_menu_item_new_with_mnemonic(mainw->rendered_fx[0].menu_text);
+  menuitem = lives_standard_menu_item_new_with_mnemonic(mainw->rendered_fx[0].menu_text);
   lives_widget_show(menuitem);
   // prepend before mainw->rte_separator
   lives_menu_shell_prepend(LIVES_MENU_SHELL(mainw->effects_menu), menuitem);
@@ -4575,7 +4575,7 @@ void add_rfx_effects(void) {
       // add resizing effects to tools menu later
       lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
       if (rfx->num_params) lives_strappend(txt, 64, "...");
-      menuitem = lives_image_menu_item_new_with_mnemonic(txt);
+      menuitem = lives_standard_image_menu_item_new_with_mnemonic(txt);
       if (prefs->show_gui) lives_widget_show(menuitem);
 
       switch (rfx->status) {
@@ -4691,7 +4691,7 @@ void add_rfx_effects(void) {
 
         lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
         if (rfx->num_params) lives_strappend(txt, 64, "...");
-        menuitem = lives_menu_item_new_with_mnemonic(txt);
+        menuitem = lives_standard_menu_item_new_with_mnemonic(txt);
         if (prefs->show_gui) lives_widget_show(menuitem);
 
         switch (rfx->status) {
@@ -4744,7 +4744,7 @@ void add_rfx_effects(void) {
 
         lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
         if (rfx->num_params) lives_strappend(txt, 64, "...");
-        menuitem = lives_menu_item_new_with_mnemonic(txt);
+        menuitem = lives_standard_menu_item_new_with_mnemonic(txt);
         if (prefs->show_gui) lives_widget_show(menuitem);
 
         switch (rfx->status) {

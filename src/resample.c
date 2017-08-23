@@ -1510,7 +1510,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
   }
 
   if (type < 3 || type > 4) {
-    cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+    cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
 
     lives_dialog_add_action_widget(LIVES_DIALOG(resaudw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default(cancelbutton);
@@ -1518,11 +1518,11 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     if (accel_group != NULL) lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
           LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-    okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
 
     lives_dialog_add_action_widget(LIVES_DIALOG(resaudw->dialog), okbutton, LIVES_RESPONSE_OK);
     lives_widget_set_can_focus_and_default(okbutton);
-    lives_widget_grab_default(okbutton);
+    lives_widget_grab_default_special(okbutton);
 
     if (type < 8 || type == 11) {
       lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1668,17 +1668,17 @@ void create_new_pb_speed(short type) {
 
   lives_box_pack_start(LIVES_BOX(vbox), ca_hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(new_pb_speed), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus(cancelbutton, TRUE);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  change_pb_ok = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  change_pb_ok = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(new_pb_speed), change_pb_ok, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(change_pb_ok);
-  lives_widget_grab_default(change_pb_ok);
+  lives_widget_grab_default_special(change_pb_ok);
   lives_widget_grab_focus(spinbutton_pb_speed);
 
   reorder_leave_back = FALSE;

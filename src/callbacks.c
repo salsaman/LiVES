@@ -8359,7 +8359,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
 
   add_warn_check(LIVES_BOX(vbox), WARN_MASK_LAYOUT_POPUP);
 
-  button = lives_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
+  button = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
 
   lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), button, LIVES_RESPONSE_OK);
 
@@ -8370,7 +8370,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default(button);
 
-  textwindow->clear_button = lives_button_new_from_stock(LIVES_STOCK_CLEAR, _("Clear _Errors"));
+  textwindow->clear_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLEAR, _("Clear _Errors"));
 
   lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), textwindow->clear_button, LIVES_RESPONSE_CANCEL);
 
@@ -8381,7 +8381,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->clear_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default(textwindow->clear_button);
 
-  textwindow->delete_button = lives_button_new_from_stock(LIVES_STOCK_DELETE, _("_Delete affected layouts"));
+  textwindow->delete_button = lives_standard_button_new_from_stock(LIVES_STOCK_DELETE, _("_Delete affected layouts"));
 
   lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), textwindow->delete_button, LIVES_RESPONSE_CANCEL);
 
@@ -8944,8 +8944,8 @@ EXPOSE_FN_END
 
 
 boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data) {
-  int scr_width = mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].width;
-  int scr_height = mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].height;
+  int scr_width = GUI_SCREEN_WIDTH;
+  int scr_height = GUI_SCREEN_HEIGHT;
 
   if (mainw->is_ready) {
     if (scr_width != mainw->scr_width || scr_height != mainw->scr_height) {
@@ -9396,8 +9396,15 @@ boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespoin
       else if (event->direction == LIVES_SCROLL_DOWN) mt_zoom_out(NULL, mainw->multitrack);
       return FALSE;
     }
-    if (event->direction == LIVES_SCROLL_UP) mt_prevclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
-    else if (event->direction == LIVES_SCROLL_DOWN) mt_nextclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
+    if (mainw->multitrack->poly_state == POLY_CLIPS) {
+      LiVESXWindow *window = lives_display_get_window_at_pointer
+	((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
+	 mainw->multitrack->display, NULL, NULL);
+      if (window == lives_widget_get_xwindow(mainw->multitrack->poly_box)) {
+	if (event->direction == LIVES_SCROLL_UP) mt_prevclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
+	else if (event->direction == LIVES_SCROLL_DOWN) mt_nextclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
+      }
+    }
     return FALSE;
   }
 
@@ -9670,7 +9677,7 @@ boolean frame_context(LiVESWidget *widget, LiVESXEventButton *event, livespointe
   }
 
   if (cfile->frames > 0 || mainw->multitrack != NULL) {
-    save_frame_as = lives_menu_item_new_with_mnemonic(_("_Save Frame as..."));
+    save_frame_as = lives_standard_menu_item_new_with_mnemonic(_("_Save Frame as..."));
     lives_signal_connect(LIVES_GUI_OBJECT(save_frame_as), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(save_frame),
                          LIVES_INT_TO_POINTER(frame));

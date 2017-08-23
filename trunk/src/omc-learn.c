@@ -1232,21 +1232,15 @@ static void close_learner_dialog(LiVESButton *button, livespointer user_data) {
 static omclearn_w *create_omclearn_dialog(void) {
   LiVESWidget *ok_button;
   LiVESWidget *scrolledwindow;
-  int winsize_h, scr_width = mainw->scr_width;
-  int winsize_v, scr_height = mainw->scr_height;
+  int winsize_h, winsize_v;
 
   omclearn_w *omclw = (omclearn_w *)lives_malloc(sizeof(omclearn_w));
 
   omclw->tbl_rows = 4;
   omclw->tbl_currow = -1;
 
-  if (prefs->gui_monitor != 0) {
-    scr_width = mainw->mgeom[prefs->gui_monitor - 1].width;
-    scr_height = mainw->mgeom[prefs->gui_monitor - 1].height;
-  }
-
-  winsize_h = scr_width - SCR_WIDTH_SAFETY;
-  winsize_v = scr_height - SCR_HEIGHT_SAFETY;
+  winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
+  winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
   omclw->dialog = lives_standard_dialog_new(_("OMC Learner"), FALSE, winsize_h, winsize_v);
   lives_signal_handlers_disconnect_by_func(omclw->dialog, return_true, NULL);
@@ -1261,7 +1255,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-  omclw->clear_button = lives_button_new_from_stock(LIVES_STOCK_CLEAR, _("Clear _unmatched"));
+  omclw->clear_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLEAR, _("Clear _unmatched"));
   lives_widget_set_size_request(omclw->clear_button, DEF_BUTTON_WIDTH * 4, -1);
   lives_container_set_border_width(LIVES_CONTAINER(omclw->clear_button), widget_opts.border_width);
 
@@ -1273,7 +1267,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_widget_set_sensitive(omclw->clear_button, FALSE);
 
-  omclw->del_all_button = lives_button_new_from_stock(LIVES_STOCK_DELETE, _("_Delete all"));
+  omclw->del_all_button = lives_standard_button_new_from_stock(LIVES_STOCK_DELETE, _("_Delete all"));
   lives_widget_set_size_request(omclw->del_all_button, DEF_BUTTON_WIDTH * 4, -1);
   lives_container_set_border_width(LIVES_CONTAINER(omclw->del_all_button), widget_opts.border_width);
 
@@ -1285,7 +1279,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_widget_set_sensitive(omclw->del_all_button, FALSE);
 
-  ok_button = lives_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
+  ok_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
   lives_widget_set_size_request(ok_button, DEF_BUTTON_WIDTH * 4, -1);
   lives_container_set_border_width(LIVES_CONTAINER(ok_button), widget_opts.border_width);
 
@@ -1293,7 +1287,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_widget_set_can_focus_and_default(ok_button);
 
-  lives_widget_grab_default(ok_button);
+  lives_widget_grab_default_special(ok_button);
 
   lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(close_learner_dialog),

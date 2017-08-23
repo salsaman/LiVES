@@ -1,6 +1,6 @@
 // effects-data.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2016 (salsaman@gmail.com)
+// (c) G. Finch 2005 - 2017 (salsaman+lives@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -4042,7 +4042,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
 
-  conxwp->add_button[idx] = lives_button_new_from_stock(LIVES_STOCK_ADD, NULL);
+  conxwp->add_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_ADD, NULL);
   lives_widget_set_tooltip_text(conxwp->add_button[idx], _("Add another connection for this output parameter"));
 
 
@@ -4055,7 +4055,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
                        (livespointer)conxwp);
 
 
-  conxwp->del_button[idx] = lives_button_new_from_stock(LIVES_STOCK_REMOVE, NULL);
+  conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL);
   lives_widget_set_tooltip_text(conxwp->del_button[idx], _("Delete this connection"));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -4091,7 +4091,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
 
-  conxwp->add_button[idx] = lives_button_new_from_stock(LIVES_STOCK_ADD, NULL);
+  conxwp->add_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_ADD, NULL);
   lives_widget_set_tooltip_text(conxwp->add_button[idx], _("Add another connection for this output channel"));
 
 
@@ -4104,7 +4104,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
                        (livespointer)conxwp);
 
 
-  conxwp->del_button[idx] = lives_button_new_from_stock(LIVES_STOCK_REMOVE, NULL);
+  conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL);
   lives_widget_set_tooltip_text(conxwp->del_button[idx], _("Delete this connection"));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -4686,8 +4686,6 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 
   LiVESAccelGroup *accel_group;
 
-  int scr_width, scr_height;
-
   int winsize_h;
   int winsize_v;
 
@@ -4719,16 +4717,8 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 
   conxw.ntabs = 0;
 
-  if (prefs->gui_monitor == 0) {
-    scr_width = mainw->scr_width;
-    scr_height = mainw->scr_height;
-  } else {
-    scr_width = mainw->mgeom[prefs->gui_monitor - 1].width;
-    scr_height = mainw->mgeom[prefs->gui_monitor - 1].height;
-  }
-
-  winsize_h = scr_width - SCR_WIDTH_SAFETY * 2;
-  winsize_v = scr_height - SCR_HEIGHT_SAFETY;
+  winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY * 2;
+  winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
   conxw.conx_dialog = lives_standard_dialog_new(_("Parameter and Alpha Channel Connections"), FALSE, winsize_h, winsize_v);
 
@@ -4738,7 +4728,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   if (conxw.num_alpha > 0) {
     conxw.dispc = (int *)lives_malloc(conxw.num_alpha * sizint);
 
-    conxw.acbutton = lives_button_new_with_mnemonic(_("Auto Connect Channels"));
+    conxw.acbutton = lives_standard_button_new_with_mnemonic(_("Auto Connect Channels"));
 
     lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.acbutton, LIVES_RESPONSE_NONE);
     lives_container_set_border_width(LIVES_CONTAINER(conxw.acbutton), widget_opts.border_width);
@@ -4753,7 +4743,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   }
 
   if (conxw.num_params > EXTRA_PARAMS_OUT) {
-    conxw.apbutton = lives_button_new_with_mnemonic(_("Auto Connect Parameters"));
+    conxw.apbutton = lives_standard_button_new_with_mnemonic(_("Auto Connect Parameters"));
     lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.apbutton, LIVES_RESPONSE_NONE);
     lives_container_set_border_width(LIVES_CONTAINER(conxw.apbutton), widget_opts.border_width);
 
@@ -4765,7 +4755,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 
   }
 
-  conxw.disconbutton = lives_button_new_with_mnemonic(_("Disconnect All"));
+  conxw.disconbutton = lives_standard_button_new_with_mnemonic(_("Disconnect All"));
   lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.disconbutton, LIVES_RESPONSE_NONE);
   //lives_container_set_border_width(LIVES_CONTAINER(conxw.disconbutton), widget_opts.border_width); !! dont - causes other buttons to exp. vert in gtk2
   lives_widget_set_sensitive(conxw.disconbutton, FALSE);
@@ -4792,14 +4782,14 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     if (cconx_get_nconns(conxw.cconx, 0) > 0) lives_widget_set_sensitive(conxw.acbutton, TRUE);
   }
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);

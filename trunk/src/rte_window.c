@@ -1,6 +1,6 @@
 // rte_window.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2016
+// (c) G. Finch 2005 - 2017
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1684,7 +1684,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
   }
 
-  ok_button = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  ok_button = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), ok_button, LIVES_RESPONSE_OK);
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
@@ -1695,7 +1695,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 #endif
 
   lives_widget_set_can_focus_and_default(ok_button);
-  lives_widget_grab_default(ok_button);
+  lives_widget_grab_default_special(ok_button);
 
   lives_widget_set_size_request(ok_button, DEF_BUTTON_WIDTH * 4, -1);
 
@@ -2084,8 +2084,6 @@ LiVESWidget *create_rte_window(void) {
   int winsize_h;
   int winsize_v;
 
-  int scr_width, scr_height;
-
   register int i, j;
 
   ///////////////////////////////////////////////////////////////////////////
@@ -2093,16 +2091,8 @@ LiVESWidget *create_rte_window(void) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_context_update();
 
-  if (prefs->gui_monitor == 0) {
-    scr_width = mainw->scr_width;
-    scr_height = mainw->scr_height;
-  } else {
-    scr_width = mainw->mgeom[prefs->gui_monitor - 1].width;
-    scr_height = mainw->mgeom[prefs->gui_monitor - 1].height;
-  }
-
-  winsize_h = scr_width - 100;
-  winsize_v = scr_height - 200;
+  winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
+  winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
   if (rte_window_back != NULL) {
     rte_window = rte_window_back;
@@ -2194,7 +2184,7 @@ LiVESWidget *create_rte_window(void) {
 
     mode_group = NULL;
 
-    clear_all_button = lives_button_new_from_stock(LIVES_STOCK_CLEAR, _("_Clear all effects"));
+    clear_all_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLEAR, _("_Clear all effects"));
 
     for (j = 0; j < modes; j++) {
       idx = i * modes + j;
@@ -2216,10 +2206,10 @@ LiVESWidget *create_rte_window(void) {
 
       type_labels[idx] = lives_standard_label_new("");
 
-      info_buttons[idx] = lives_button_new_with_label(_("Info"));
-      param_buttons[idx] = lives_button_new_with_label(_("Set Parameters"));
-      conx_buttons[idx] = lives_button_new_with_label(_("Set Connections"));
-      clear_buttons[idx] = lives_button_new_with_label(_("Clear"));
+      info_buttons[idx] = lives_standard_button_new_with_label(_("Info"));
+      param_buttons[idx] = lives_standard_button_new_with_label(_("Set Parameters"));
+      conx_buttons[idx] = lives_standard_button_new_with_label(_("Set Connections"));
+      clear_buttons[idx] = lives_standard_button_new_with_label(_("Clear"));
 
       vbox = lives_vbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
@@ -2296,17 +2286,17 @@ LiVESWidget *create_rte_window(void) {
   lives_container_add(LIVES_CONTAINER(hbuttonbox), clear_all_button);
   lives_widget_set_can_focus_and_default(clear_all_button);
 
-  save_keymap_button = lives_button_new_from_stock(LIVES_STOCK_SAVE_AS, _("_Save as default keymap"));
+  save_keymap_button = lives_standard_button_new_from_stock(LIVES_STOCK_SAVE_AS, _("_Save as default keymap"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), save_keymap_button);
   lives_widget_set_can_focus_and_default(save_keymap_button);
 
-  load_keymap_button = lives_button_new_from_stock(LIVES_STOCK_OPEN, _("_Load default keymap"));
+  load_keymap_button = lives_standard_button_new_from_stock(LIVES_STOCK_OPEN, _("_Load default keymap"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), load_keymap_button);
   lives_widget_set_can_focus_and_default(load_keymap_button);
 
-  ok_button = lives_button_new_from_stock(LIVES_STOCK_CLOSE, _("Close _window"));
+  ok_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("Close _window"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default(ok_button);

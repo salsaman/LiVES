@@ -726,7 +726,7 @@ static void replace_with_delegates(void) {
 
     if (mainw->resize_menuitem == NULL) {
       rfx->menu_text = lives_strdup(_("_Resize All Frames..."));
-      mainw->resize_menuitem = lives_menu_item_new_with_mnemonic(rfx->menu_text);
+      mainw->resize_menuitem = lives_standard_menu_item_new_with_mnemonic(rfx->menu_text);
       lives_widget_show(mainw->resize_menuitem);
       lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->tools_menu), mainw->resize_menuitem, RFX_TOOL_MENU_POSN);
     } else {
@@ -2055,7 +2055,7 @@ boolean set_palette_colours(boolean force_reload) {
     get_colour_pref(THEME_DETAIL_FXCOL, &palette->fxcol);
 
     get_colour_pref(THEME_DETAIL_MT_TLREG, &palette->mt_timeline_reg);
-    get_colour_pref(THEME_DETAIL_MT_MARK, &palette->mt_mark);
+    get_colour_preppf(THEME_DETAIL_MT_MARK, &palette->mt_mark);
     get_colour_pref(THEME_DETAIL_MT_EVBOX, &palette->mt_evbox);
 
     get_colour_pref(THEME_DETAIL_FRAME_SURROUND, &palette->frame_surround);
@@ -5260,8 +5260,8 @@ static void get_max_opsize(int *opwidth, int *opheight) {
       if (mainw->vpp->capabilities & VPP_CAN_RESIZE) {
         // plugin can resize. Set whichever is smaller of screen size, clip size.
         if (prefs->play_monitor == 0) {
-          *opwidth = mainw->scr_width;
-          *opheight = mainw->scr_height;
+          *opwidth = GUI_SCREEN_WIDTH;
+          *opheight = GUI_SCREEN_HEIGHT;
           if (capable->nmonitors > 1) {
             // spread over all monitors
             *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
@@ -5310,8 +5310,8 @@ static void get_max_opsize(int *opwidth, int *opheight) {
         // fullscreen, sepwin
         // use screen size. We dealt with pb plugins above
         if (prefs->play_monitor == 0) {
-          *opwidth = mainw->scr_width;
-          *opheight = mainw->scr_height;
+          *opwidth = GUI_SCREEN_WIDTH;
+          *opheight = GUI_SCREEN_HEIGHT;
           if (capable->nmonitors > 1  && !prefs->force_single_monitor) {
             // spread over all monitors
             *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
@@ -5341,8 +5341,8 @@ static void get_max_opsize(int *opwidth, int *opheight) {
         if (!mainw->ext_playback) {
           if (prefs->play_monitor == 0) {
             if (capable->nmonitors == 1) {
-              *opwidth = mainw->scr_width;
-              *opheight = mainw->scr_height;
+              *opwidth = GUI_SCREEN_WIDTH;
+              *opheight = GUI_SCREEN_HEIGHT;
             } else {
               // spread over all monitors
               *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
@@ -6202,8 +6202,8 @@ void load_frame_image(int frame) {
             }
           } else {
             if (prefs->play_monitor == 0) {
-              mainw->pwidth = mainw->scr_width;
-              mainw->pheight = mainw->scr_height;
+              mainw->pwidth = GUI_SCREEN_WIDTH;
+              mainw->pheight = GUI_SCREEN_HEIGHT;
               if (capable->nmonitors > 1) {
                 // spread over all monitors
                 mainw->pwidth = lives_screen_get_width(mainw->mgeom[0].screen);
@@ -6229,8 +6229,8 @@ void load_frame_image(int frame) {
       if (!mainw->is_rendering) {
         do {
           if (pmonitor == 0) {
-            if (mainw->pwidth > mainw->scr_width - SCR_WIDTH_SAFETY ||
-                mainw->pheight > mainw->scr_height - SCR_HEIGHT_SAFETY) {
+            if (mainw->pwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY ||
+                mainw->pheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY) {
               mainw->pheight = (mainw->pheight >> 2) << 1;
               mainw->pwidth = (mainw->pwidth >> 2) << 1;
               mainw->sepwin_scale /= 2.;
@@ -6336,8 +6336,8 @@ void load_frame_image(int frame) {
       pheight = weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error);
 
       if (mainw->fs && (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
-        mainw->vpp->fwidth = mainw->scr_width;
-        mainw->vpp->fheight = mainw->scr_height;
+        mainw->vpp->fwidth = GUI_SCREEN_WIDTH;
+        mainw->vpp->fheight = GUI_SCREEN_HEIGHT;
       }
 
       convert_layer_palette(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping);
@@ -6463,8 +6463,8 @@ void load_frame_image(int frame) {
         } while (mainw->pwidth * mainw->pheight == 0);
       } else {
         if (prefs->play_monitor == 0) {
-          mainw->pwidth = mainw->scr_width;
-          mainw->pheight = mainw->scr_height;
+          mainw->pwidth = GUI_SCREEN_WIDTH;
+          mainw->pheight = GUI_SCREEN_HEIGHT;
           if (capable->nmonitors > 1) {
             // spread over all monitors
             mainw->pwidth = lives_screen_get_width(mainw->mgeom[0].screen);
@@ -7554,18 +7554,12 @@ void load_frame_image(int frame) {
 
     // maximum values
     int hsize, vsize;
-    int w, h, scr_width, scr_height;
+    int w, h;
+    int scr_width = GUI_SCREEN_WIDTH;
+    int scr_height = GUI_SCREEN_HEIGHT;
 
     if (!prefs->show_gui || mainw->multitrack != NULL) return;
     get_border_size(mainw->LiVES, &bx, &by);
-
-    if (prefs->gui_monitor == 0) {
-      scr_width = mainw->scr_width;
-      scr_height = mainw->scr_height;
-    } else {
-      scr_width = mainw->mgeom[prefs->gui_monitor - 1].width;
-      scr_height = mainw->mgeom[prefs->gui_monitor - 1].height;
-    }
 
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
     vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));

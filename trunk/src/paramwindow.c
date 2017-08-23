@@ -672,8 +672,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
   boolean has_param;
 
-  int scrw, scrh;
-
   if (didx == 0 && !check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) return;
 
   // TODO - remove this and check in rfx / realfx activate
@@ -752,19 +750,9 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   }
 
   if (pbox == NULL) {
-    if (prefs->gui_monitor != 0) {
-      scrw = mainw->mgeom[prefs->gui_monitor - 1].width;
-      scrh = mainw->mgeom[prefs->gui_monitor - 1].height;
-    } else {
-      scrw = mainw->scr_width;
-      scrh = mainw->scr_height;
-    }
-
-    scrh -= SCR_HEIGHT_SAFETY;
-    scrw -= SCR_WIDTH_SAFETY;
-
+    int scrw;
     if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 && rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H;
-
+    else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
     widget_opts.non_modal = TRUE;
     fx_dialog[didx] = lives_standard_dialog_new(_(rfx->menu_text), FALSE, scrw, RFX_WINSIZE_V);
     widget_opts.non_modal = FALSE;
@@ -825,7 +813,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   // update widgets from onchange_init here
 
   if (top_dialog_vbox != NULL) {
-    cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+    cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
 
     fxw_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     lives_window_add_accel_group(LIVES_WINDOW(fx_dialog[didx]), fxw_accel_group);
@@ -836,20 +824,20 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
       if (is_defaults) {
-        okbutton = lives_button_new_from_stock(LIVES_STOCK_APPLY, _("Set as default"));
+        okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_APPLY, _("Set as default"));
         if (!has_param) lives_widget_set_sensitive(okbutton, FALSE);
-        resetbutton = lives_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED, _("Reset"));
+        resetbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED, _("Reset"));
         if (!has_param) lives_widget_set_sensitive(resetbutton, FALSE);
         lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), resetbutton, LIVES_RESPONSE_RESET);
-      } else okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+      } else okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
       lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), okbutton, LIVES_RESPONSE_OK);
     } else {
-      okbutton = lives_button_new_from_stock(LIVES_STOCK_APPLY, _("Set as default"));
+      okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_APPLY, _("Set as default"));
       if (!has_param) lives_widget_set_sensitive(okbutton, FALSE);
-      cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
+      cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
 
       if (rfx->status == RFX_STATUS_WEED) {
-        resetbutton = lives_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED, _("Reset"));
+        resetbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED, _("Reset"));
         lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), resetbutton, LIVES_RESPONSE_RESET);
         lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), okbutton, LIVES_RESPONSE_OK);
       }
@@ -875,10 +863,10 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
     if (lives_widget_get_parent(okbutton) != NULL) {
       lives_widget_set_can_focus_and_default(okbutton);
-      lives_widget_grab_default(okbutton);
+      lives_widget_grab_default_special(okbutton);
     } else {
       lives_widget_set_can_focus_and_default(cancelbutton);
-      lives_widget_grab_default(cancelbutton);
+      lives_widget_grab_default_special(cancelbutton);
     }
 
     lives_widget_show_all(fx_dialog[didx]);
@@ -1245,7 +1233,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     }
 
     if (mainw->multitrack == NULL || rfx->status != RFX_STATUS_WEED) {
-      if (mainw->scr_height >= mainw->overflow_height)
+      if (GUI_SCREEN_HEIGHT >= mainw->overflow_height)
         scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, top_hbox);
       else
         scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V >> 1, top_hbox);

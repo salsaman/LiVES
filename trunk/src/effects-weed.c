@@ -4913,7 +4913,7 @@ static void make_fx_defs_menu(void) {
             pkgstring = lives_strdup_printf(_(" - %s plugins -"), pkg);
             // create new submenu
 
-            pkg_menu = lives_menu_item_new_with_label(pkgstring);
+            pkg_menu = lives_standard_menu_item_new_with_label(pkgstring);
             lives_container_add(LIVES_CONTAINER(mainw->rte_defs), pkg_menu);
             lives_menu_reorder_child(LIVES_MENU(mainw->rte_defs), pkg_menu, pkg_posn++);
 
@@ -4939,7 +4939,7 @@ static void make_fx_defs_menu(void) {
         filter_type = weed_filter_get_type(filter, TRUE, FALSE);
         string = lives_strdup_printf("%s (%s)", filter_name, filter_type);
 
-        menuitem = lives_menu_item_new_with_label(string);
+        menuitem = lives_standard_menu_item_new_with_label(string);
         if (prefs->show_gui) {
           lives_widget_show(menuitem);
         }

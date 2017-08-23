@@ -104,13 +104,13 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   } else mainw->fs_playframe = mainw->fs_playalign = mainw->fs_playarea = NULL; // AUDIO_ONLY
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
-    preview_button = lives_button_new_with_mnemonic(_("Click here to _Preview any selected video, image or audio file"));
+    preview_button = lives_standard_button_new_with_mnemonic(_("Click here to _Preview any selected video, image or audio file"));
   } else if (preview_type == LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
-    preview_button = lives_button_new_with_mnemonic(_("Click here to _Preview any selected audio file"));
+    preview_button = lives_standard_button_new_with_mnemonic(_("Click here to _Preview any selected audio file"));
   } else if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
-    preview_button = lives_button_new_with_mnemonic(_("Click here to _Preview the video"));
+    preview_button = lives_standard_button_new_with_mnemonic(_("Click here to _Preview the video"));
   } else {
-    preview_button = lives_button_new_with_mnemonic(_("Click here to _Preview the file"));
+    preview_button = lives_standard_button_new_with_mnemonic(_("Click here to _Preview the file"));
   }
 
   lives_box_pack_start(for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
@@ -210,11 +210,11 @@ xprocess *create_processing(const char *text) {
     lives_standard_expander_new(_("Show Details"), FALSE, LIVES_BOX(vbox3), procw->scrolledwindow);
   }
 
-  procw->stop_button = lives_button_new_with_mnemonic(_("_Enough")); // used only for open location and for audio recording
-  procw->preview_button = lives_button_new_with_mnemonic(_("_Preview"));
+  procw->stop_button = lives_standard_button_new_with_mnemonic(_("_Enough")); // used only for open location and for audio recording
+  procw->preview_button = lives_standard_button_new_with_mnemonic(_("_Preview"));
 
-  if (cfile->nokeep) procw->pause_button = lives_button_new_with_mnemonic(_("Paus_e"));
-  else procw->pause_button = lives_button_new_with_mnemonic(_("Pause/_Enough"));
+  if (cfile->nokeep) procw->pause_button = lives_standard_button_new_with_mnemonic(_("Paus_e"));
+  else procw->pause_button = lives_standard_button_new_with_mnemonic(_("Pause/_Enough"));
 
   lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), procw->preview_button, 1);
   lives_widget_hide(procw->preview_button);
@@ -241,7 +241,7 @@ xprocess *create_processing(const char *text) {
     }
   }
 
-  procw->cancel_button = lives_button_new_with_mnemonic(_("_Cancel"));
+  procw->cancel_button = lives_standard_button_new_with_mnemonic(_("_Cancel"));
   lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), procw->cancel_button, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default(procw->cancel_button);
 
@@ -540,10 +540,10 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(filew->dialog));
   if (LIVES_IS_BUTTON_BOX(dialog_action_area)) lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_SPREAD);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(filew->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
@@ -640,11 +640,11 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
   if (text2 != NULL) {
     label = lives_standard_label_new(text2);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
-    cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-    okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+    cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   } else {
-    cancelbutton = lives_button_new_with_mnemonic(_("Keep _my settings"));
-    okbutton = lives_button_new_with_mnemonic(_("Use _recommended settings"));
+    cancelbutton = lives_standard_button_new_with_mnemonic(_("Keep _my settings"));
+    okbutton = lives_standard_button_new_with_mnemonic(_("Use _recommended settings"));
   }
 
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -653,7 +653,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   lives_widget_show_all(dialog);
   return dialog;
@@ -727,9 +727,9 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   if (text != NULL || mainw->iochan != NULL || textwindow->table != NULL) {
     LiVESWidget *savebutton;
 
-    okbutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
+    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
 
-    savebutton = lives_button_new_from_stock(LIVES_STOCK_SAVE, _("_Save to file"));
+    savebutton = lives_standard_button_new_from_stock(LIVES_STOCK_SAVE, _("_Save to file"));
 
     if (textwindow->table == NULL) {
       lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), savebutton, LIVES_RESPONSE_YES);
@@ -883,13 +883,13 @@ _insertw *create_insert_dialog(void) {
 
   add_fill_to_box(LIVES_BOX(dialog_vbox));
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(insertw->insert_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(insertw->insert_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(insertw->with_sound), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_insertwsound_toggled),
@@ -982,13 +982,13 @@ LiVESWidget *create_opensel_dialog(void) {
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_EXPAND), widget_opts.packing_height * 4 + 2, 0);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(opensel_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(opensel_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   widget_add_preview(opensel_dialog, LIVES_BOX(dialog_vbox), LIVES_BOX(dialog_vbox), LIVES_BOX(dialog_vbox), LIVES_PREVIEW_TYPE_RANGE);
 
@@ -1121,14 +1121,14 @@ _entryw *create_location_dialog(int type) {
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   }
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(locw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default(cancelbutton);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(locw->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
@@ -1295,7 +1295,7 @@ _entryw *create_rename_dialog(int type) {
   }
 
   if (type == 6) {
-    dirbutton1 = lives_button_new();
+    dirbutton1 = lives_standard_button_new();
 
     dirimage1 = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_BUTTON);
 
@@ -1320,7 +1320,7 @@ _entryw *create_rename_dialog(int type) {
   lives_entry_set_activates_default(LIVES_ENTRY(renamew->entry), TRUE);
   lives_entry_set_width_chars(LIVES_ENTRY(renamew->entry), RW_ENTRY_DISPWIDTH);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
 
   if (!(type == 4 && !mainw->interactive)) {
     lives_dialog_add_action_widget(LIVES_DIALOG(renamew->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -1331,12 +1331,12 @@ _entryw *create_rename_dialog(int type) {
   }
 
   if (type == 6) {
-    okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD, _("_Next"));
-  } else okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_GO_FORWARD, _("_Next"));
+  } else okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
 
   lives_dialog_add_action_widget(LIVES_DIALOG(renamew->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   if (type != 3) {
     lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1626,7 +1626,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
     add_fill_to_box(LIVES_BOX(hbox));
 
-    tvcardw->advbutton = lives_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"));
+    tvcardw->advbutton = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"));
 
     lives_box_pack_start(LIVES_BOX(hbox), tvcardw->advbutton, TRUE, TRUE, widget_opts.packing_width * 4);
 
@@ -1700,14 +1700,14 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
   add_fill_to_box(LIVES_BOX(dialog_vbox));
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(cd_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(cd_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -1946,7 +1946,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
     commentsw->subt_entry = lives_standard_entry_new(_("Subtitle file"), FALSE, NULL, SHORT_ENTRY_WIDTH, -1, LIVES_BOX(hbox), NULL);
 
-    buttond = lives_button_new_with_mnemonic(_("Browse..."));
+    buttond = lives_standard_button_new_with_mnemonic(_("Browse..."));
 
     lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_save_subs_activate),
                          (livespointer)commentsw->subt_entry);
@@ -2383,12 +2383,12 @@ _entryw *create_cds_dialog(int type) {
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(cdsw->dialog), accel_group);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(cdsw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  discardbutton = lives_button_new_from_stock(LIVES_STOCK_DELETE, NULL);
+  discardbutton = lives_standard_button_new_from_stock(LIVES_STOCK_DELETE, NULL);
 
   lives_dialog_add_action_widget(LIVES_DIALOG(cdsw->dialog), discardbutton, 1 + (type == 2));
   lives_button_set_use_underline(LIVES_BUTTON(discardbutton), TRUE);
@@ -2398,14 +2398,14 @@ _entryw *create_cds_dialog(int type) {
   else if (type == 1) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
   else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
 
-  savebutton = lives_button_new_from_stock(LIVES_STOCK_SAVE, NULL);
+  savebutton = lives_standard_button_new_from_stock(LIVES_STOCK_SAVE, NULL);
 
   if (type == 0 || type == 3) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save layout"));
   else if (type == 1) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save clip set"));
   else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));
   if (type != 4) lives_dialog_add_action_widget(LIVES_DIALOG(cdsw->dialog), savebutton, 2 - (type == 2));
   lives_widget_set_can_focus_and_default(savebutton);
-  if (type == 1 || type == 2)lives_widget_grab_default(savebutton);
+  if (type == 1 || type == 2)lives_widget_grab_default_special(savebutton);
 
   lives_widget_show_all(cdsw->dialog);
 
@@ -2501,14 +2501,14 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
                              LIVES_GUI_CALLBACK(flip_cdisk_bit),
                              LIVES_INT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
 
-  resetbutton = lives_button_new_from_stock(LIVES_STOCK_REFRESH, _("_Reset to Defaults"));
+  resetbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, _("_Reset to Defaults"));
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), resetbutton, LIVES_RESPONSE_RETRY);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
 
   return dialog;
 }

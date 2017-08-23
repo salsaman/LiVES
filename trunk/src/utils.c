@@ -1337,7 +1337,7 @@ LIVES_GLOBAL_INLINE int64_t lives_get_current_ticks(int64_t origsecs, int64_t or
   return (lives_get_monotonic_time() - origusecs) * USEC_TO_TICKS;
 #else
   gettimeofday(&tv, NULL);
-  return = TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
+  return TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
 #endif
 }
 

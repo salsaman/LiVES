@@ -34,9 +34,6 @@
 
 static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
   // wait for USER type buffer
-#ifndef USE_MONOTONIC_TIME
-  struct timeval otv;
-#endif
   int64_t stime, dtime, timer;
   unicap_status_t status;
   int ncount;

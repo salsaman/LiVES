@@ -79,6 +79,11 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #endif
 
+#if !GTK_CHECK_VERSION(3, 0, 0)
+// borked in < 3.0
+#undef HAVE_WAYLAND
+#endif
+
 #ifdef HAVE_WAYLAND
 #include <gdk/gdkwayland.h>
 #endif

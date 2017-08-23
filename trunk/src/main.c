@@ -2055,7 +2055,7 @@ boolean set_palette_colours(boolean force_reload) {
     get_colour_pref(THEME_DETAIL_FXCOL, &palette->fxcol);
 
     get_colour_pref(THEME_DETAIL_MT_TLREG, &palette->mt_timeline_reg);
-    get_colour_preppf(THEME_DETAIL_MT_MARK, &palette->mt_mark);
+    get_colour_pref(THEME_DETAIL_MT_MARK, &palette->mt_mark);
     get_colour_pref(THEME_DETAIL_MT_EVBOX, &palette->mt_evbox);
 
     get_colour_pref(THEME_DETAIL_FRAME_SURROUND, &palette->frame_surround);

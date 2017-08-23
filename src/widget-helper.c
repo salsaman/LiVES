@@ -9087,9 +9087,8 @@ void funkify_dialog(LiVESWidget *dialog) {
 }
 
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-
 void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
+#if GTK_CHECK_VERSION(3, 0, 0)
   // connect toggled event to this
   boolean *ret = (boolean *)user_data, active;
   if (!mainw->interactive) return;
@@ -9101,10 +9100,12 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
     else lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
   }
   if (ret != NULL) *ret = active;
+#endif
 }
 
 
 boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
+#if GTK_CHECK_VERSION(3, 0, 0)
   // connect expose event to this
 
   double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
@@ -9225,9 +9226,9 @@ boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer 
   }
 
   return TRUE;
-}
-
 #endif
+  return FALSE;
+}
 
 
 void get_border_size(LiVESWidget *win, int *bx, int *by) {

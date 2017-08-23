@@ -788,10 +788,6 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
 
 boolean mt_auto_backup(livespointer user_data) {
-#ifndef USE_MONOTONIC_TIME
-  struct timeval otv;
-#endif
-
   int64_t stime, diff;
 
   lives_mt *mt = (lives_mt *)user_data;
@@ -1391,12 +1387,13 @@ static EXPOSE_FN_DECL(expose_track_event, eventbox) {
 
   if (width > lives_widget_get_allocation_width(eventbox) - startx) width = lives_widget_get_allocation_width(eventbox) - startx;
 
-  if (cairo == NULL) cr = lives_painter_create_from_widget(eventbox);
-  else cr = cairo;
 
   bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg");
 
 draw1:
+
+  if (cairo == NULL) cr = lives_painter_create_from_widget(eventbox);
+  else cr = cairo;
 
   if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "drawn"))) {
     if (bgimage != NULL && lives_painter_image_surface_get_width(bgimage) > 0) {

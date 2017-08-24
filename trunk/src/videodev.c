@@ -510,8 +510,8 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->fx1_val--;
   }
 
-  if (devices[devno].device != NULL) fname = lives_strdup_printf("%s", devices[devno].device);
-  else fname = lives_strdup_printf("%s", devices[devno].identifier);
+  if (strlen(devices[devno].device)) fname = lives_strdup(devices[devno].device);
+  else fname = lives_strdup(devices[devno].identifier);
 
   if (!get_new_handle(new_file, fname)) {
     lives_free(fname);

@@ -859,13 +859,12 @@ weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_
   } else layers[1] = NULL;
 
   if (resize_instance != NULL) {
-    lives_filter_error_t filter_error;
     weed_plant_t *init_event = weed_plant_new(WEED_PLANT_EVENT);
     weed_set_int_value(init_event, WEED_LEAF_IN_TRACKS, 0);
     weed_set_int_value(init_event, WEED_LEAF_OUT_TRACKS, 0);
 
-    filter_error = weed_apply_instance(resize_instance, init_event, layers, 0, 0, tc);
-    filter_error = filter_error; // stop compiler complaining
+    weed_apply_instance(resize_instance, init_event, layers, 0, 0, tc);
+
     retlayer = layers[0];
     weed_plant_free(init_event);
   } else {

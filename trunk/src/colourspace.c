@@ -10816,11 +10816,12 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 
 #ifdef GUI_GTK
 
+/*
 LIVES_INLINE int get_weed_palette_for_lives_painter(void) {
   // TODO - should move to weed-compat.h
   return (capable->byte_order == LIVES_BIG_ENDIAN) ? WEED_PALETTE_ARGB32 : WEED_PALETTE_BGRA32;
 }
-
+*/
 
 lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
   // convert a weed layer to lives_painter

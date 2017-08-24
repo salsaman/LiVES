@@ -6056,6 +6056,15 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_item_new_with_label(const ch
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_menu_item_set_accel_path(LiVESMenuItem *menuitem, const char *path) {
+#ifdef GUI_GTK
+  gtk_menu_item_set_accel_path(menuitem, path);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
@@ -6165,11 +6174,11 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(co
   menuitem = gtk_menu_item_new_with_mnemonic(xstock_id);
 
   if (!strcmp(xstock_id, LIVES_STOCK_LABEL_SAVE)) {
-    gtk_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem), "<LiVES>/save");
+    lives_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem), LIVES_ACCEL_PATH_SAVE);
   }
 
   if (!strcmp(xstock_id, LIVES_STOCK_LABEL_QUIT)) {
-    gtk_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem), "<LiVES>/quit");
+    lives_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem), LIVES_ACCEL_PATH_QUIT);
   }
   lives_free(xstock_id);
 #else
@@ -7131,13 +7140,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_display_warp_pointer
 WIDGET_HELPER_GLOBAL_INLINE lives_display_t lives_widget_get_display_type(LiVESWidget *widget) {
   lives_display_t dtype = LIVES_DISPLAY_TYPE_UNKNOWN;
 #ifdef GUI_GTK
-  LiVESXDisplay *display = gtk_widget_get_display(widget);
-  display = display; // stop compiler complaining
-  if (GDK_IS_X11_DISPLAY(display)) dtype = LIVES_DISPLAY_TYPE_X11;
+  if (GDK_IS_X11_DISPLAY(gtk_widget_get_display(widget))) dtype = LIVES_DISPLAY_TYPE_X11;
 #ifdef GDK_WINDOWING_WAYLAND
-  else if (GDK_IS_WAYLAND_DISPLAY(display)) dtype = LIVES_DISPLAY_TYPE_WAYLAND;
+  else if (GDK_IS_WAYLAND_DISPLAY(gtk_widget_get_display(widget))) dtype = LIVES_DISPLAY_TYPE_WAYLAND;
 #endif
-  else if (GDK_IS_WIN32_DISPLAY(display)) dtype = LIVES_DISPLAY_TYPE_WIN32;
+  else if (GDK_IS_WIN32_DISPLAY(gtk_widget_get_display(widget))) dtype = LIVES_DISPLAY_TYPE_WIN32;
 #endif
 #ifdef GUI_QT
 #ifdef Q_WS_X11
@@ -9379,6 +9386,17 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_button_width(LiVESButto
 #ifdef GUI_QT
   button->setMinimumWidth(min_width);
 #endif
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_accel_path_disconnect(LiVESAccelGroup *group, const char *path) {
+#ifdef GUI_GTK
+  GtkAccelKey key;
+  gtk_accel_map_lookup_entry(path, &key);
+  gtk_accel_group_disconnect_key(group, key.accel_key, key.accel_mods);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 

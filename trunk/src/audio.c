@@ -59,13 +59,12 @@ void audio_free_fnames(void) {
   if (!storedfdsset) return;
 
   for (i = 0; i < NSTOREDFDS; i++) {
-    if (storedfnames != NULL) {
-      lives_freep((void **)&storedfnames[i]);
-      if (storedfds[i] > -1) close(storedfds[i]);
-      storedfds[i] = -1;
-    }
+    lives_freep((void **)&storedfnames[i]);
+    if (storedfds[i] > -1) close(storedfds[i]);
+    storedfds[i] = -1;
   }
 }
+
 
 
 void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamples, int channum) {

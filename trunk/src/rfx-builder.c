@@ -3416,7 +3416,6 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
     } else rfxbuilder->props = atoi((char *)lives_list_nth_data(list, 0));
     lives_list_free_all(&list);
   }
-  if (rfxbuilder->props < 0) rfxbuilder->props = 0;
 
   if (rfxbuilder->props & RFX_PROPS_MAY_RESIZE) rfxbuilder->type = RFX_BUILD_TYPE_TOOL;
 
@@ -3640,7 +3639,7 @@ LiVESList *get_script_section(const char *section, const char *file, boolean str
 
   if ((script_file = fopen(outfile, "r"))) {
     while (fgets(buff, 65536, script_file)) {
-      if (buff != NULL) {
+      if (strlen(buff)) {
         if (strip) line = (lives_strstrip(buff));
         else line = buff;
         if ((linelen = strlen(line))) {

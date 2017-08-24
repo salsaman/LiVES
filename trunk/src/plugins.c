@@ -2480,19 +2480,19 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
 void get_mime_type(char *text, int maxlen, const lives_clip_data_t *cdata) {
   char *audname;
 
-  if (cdata->container_name == NULL || !strlen(cdata->container_name)) lives_snprintf(text, 40, "%s", _("unknown"));
+  if (!strlen(cdata->container_name)) lives_snprintf(text, 40, "%s", _("unknown"));
   else lives_snprintf(text, 40, "%s", cdata->container_name);
 
-  if ((cdata->video_name == NULL || !strlen(cdata->video_name)) && (cdata->audio_name == NULL || !strlen(cdata->audio_name))) return;
+  if (!strlen(cdata->video_name) && !strlen(cdata->audio_name)) return;
 
-  if (cdata->video_name == NULL) lives_strappend(text, 40, _("/unknown"));
+  if (!strlen(cdata->video_name)) lives_strappend(text, 40, _("/unknown"));
   else {
     char *vidname = lives_strdup_printf("/%s", cdata->video_name);
     lives_strappend(text, 40, vidname);
     lives_free(vidname);
   }
 
-  if (cdata->audio_name == NULL || !strlen(cdata->audio_name)) {
+  if (!strlen(cdata->audio_name)) {
     if (cfile->achans == 0) return;
     audname = lives_strdup_printf("/%s", _("unknown"));
   } else

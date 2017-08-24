@@ -371,7 +371,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           // the plugin gets a chance to do any internal cleanup in rip_audio_cleanup()
 
           int64_t stframe = cfile->fps * start + .5;
-          int64_t maxframe = stframe + (frames == 0) ? cfile->frames : frames;
+          int64_t maxframe = (stframe + (frames == 0)) ? cfile->frames : frames;
           int64_t nframes = AUDIO_FRAMES_TO_READ;
           char *afile = lives_strdup_printf("%s/%s/audiodump.pcm", prefs->workdir, cfile->handle);
 
@@ -2050,6 +2050,9 @@ void play_file(void) {
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_BackSpace, (LiVESXModifierType)LIVES_CONTROL_MASK,
                             (LiVESAccelFlags)0, (freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback), NULL, NULL)));
 
+  // disable ctrl-q since it can be activated by user error
+  lives_accel_path_disconnect(mainw->accel_group, LIVES_ACCEL_PATH_QUIT);
+  
   if (mainw->multitrack != NULL) {
     mainw->event_list = mainw->multitrack->event_list;
     pb_start_event = mainw->multitrack->pb_start_event;
@@ -2219,7 +2222,6 @@ void play_file(void) {
       mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
                               LIVES_GUI_CALLBACK(on_mouse_scroll),
                               NULL);
-
     }
   } else {
     if (mainw->sep_win) {
@@ -3135,6 +3137,8 @@ void play_file(void) {
 
   disable_record();
 
+  lives_menu_item_set_accel_path(LIVES_MENU_ITEM(mainw->quit), LIVES_ACCEL_PATH_QUIT);
+
   if (mainw->multitrack == NULL && mainw->current_file > -1)
     set_main_title(cfile->name, 0);
 
@@ -3368,7 +3372,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   } else {
     if (check_handle != NULL) {
       int npieces = get_token_count(mainw->msg, '|');
-      if (mainw->msg == NULL || npieces < 2) return FALSE;
+      if (npieces < 2) return FALSE;
 
       array = lives_strsplit(mainw->msg, "|", -1);
 
@@ -3944,7 +3948,7 @@ boolean read_headers(const char *file_name) {
 
       detail = CLIP_DETAILS_FRAMES;
       if (get_clip_value(mainw->current_file, detail, &cfile->frames, 0)) {
-        int asigned, aendian;
+        int asigned = 0, aendian = LIVES_LITTLE_ENDIAN;
         char *tmp;
         int alarm_handle;
 
@@ -5422,7 +5426,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           read_headers(".");
         } else {
           lives_clip_details_t detail;
-          int asigned, aendian;
+          int asigned = 0, aendian = LIVES_LITTLE_ENDIAN;
           detail = CLIP_DETAILS_ACHANS;
           retval = get_clip_value(mainw->current_file, detail, &cfile->achans, 0);
           if (!retval) cfile->achans = 0;

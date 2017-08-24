@@ -281,8 +281,6 @@ void on_ok_export_audio_clicked(LiVESButton *, livespointer);
 
 void on_append_audio_activate(LiVESMenuItem *, livespointer);
 
-void on_menubar_activate_menuitem(LiVESMenuItem *, livespointer);
-
 void on_rb_audrec_time_toggled(LiVESToggleButton *, livespointer);
 
 void on_recaudclip_activate(LiVESMenuItem *, livespointer);

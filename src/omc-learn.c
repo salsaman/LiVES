@@ -164,7 +164,7 @@ const char *get_js_filename(void) {
 boolean js_open(void) {
   if (!(prefs->omc_dev_opts & OMC_DEV_JS)) return TRUE;
 
-  if (prefs->omc_js_fname != NULL) {
+  if (strlen(prefs->omc_js_fname)) {
     js_fd = open(prefs->omc_js_fname, O_RDONLY | O_NONBLOCK);
     if (js_fd < 0) return FALSE;
   } else {
@@ -173,7 +173,7 @@ boolean js_open(void) {
       lives_snprintf(prefs->omc_js_fname, 256, "%s", tmp);
     }
   }
-  if (prefs->omc_js_fname == NULL) return FALSE;
+  if (strlen(prefs->omc_js_fname)) return FALSE;
 
   mainw->ext_cntl[EXT_CNTL_JS] = TRUE;
   d_print(_("Responding to joystick events from %s\n"), prefs->omc_js_fname);
@@ -278,7 +278,7 @@ boolean midi_open(void) {
 #endif
 
 #ifndef IS_MINGW
-    if (prefs->omc_midi_fname != NULL) {
+    if (strlen(prefs->omc_midi_fname)) {
       midi_fd = open(prefs->omc_midi_fname, O_RDONLY | O_NONBLOCK);
       if (midi_fd < 0) return FALSE;
     } else {
@@ -287,7 +287,7 @@ boolean midi_open(void) {
         lives_snprintf(prefs->omc_midi_fname, 256, "%s", tmp);
       }
     }
-    if (prefs->omc_midi_fname == NULL) return FALSE;
+    if (!strlen(prefs->omc_midi_fname)) return FALSE;
 
     d_print(_("Responding to MIDI events from %s\n"), prefs->omc_midi_fname);
 #endif
@@ -1652,7 +1652,7 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *si
   return NULL;
   }*/
 
-
+/*
 LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char *string2) {
   // count how many (non-space) elements match
   // e.g "a b c" and "a b d" returns 2
@@ -1671,7 +1671,7 @@ LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char *strin
 
   return match + 1;
 }
-
+*/
 
 LIVES_INLINE int get_nth_elem(const char *string, int idx) {
   char **array = lives_strsplit(string, " ", -1);

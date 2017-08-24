@@ -629,6 +629,8 @@ LiVESWidget *lives_menu_item_new(void);
 LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label);
 LiVESWidget *lives_menu_item_new_with_label(const char *label);
 
+boolean lives_menu_item_set_accel_path(LiVESMenuItem *, const char *path);
+
 LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *label);
 LiVESWidget *lives_check_menu_item_new_with_label(const char *label);
 boolean lives_check_menu_item_set_draw_as_radio(LiVESCheckMenuItem *, boolean setting);
@@ -850,6 +852,8 @@ LiVESWidget *add_fill_to_box(LiVESBox *);
 
 LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *);
 LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *text);
+
+boolean lives_accel_path_disconnect(LiVESAccelGroup *group, const char *path);
 
 boolean lives_widget_get_mod_mask(LiVESWidget *, LiVESXModifierType *modmask);
 

@@ -31,7 +31,8 @@ static double disp_fraction_done;
 
 static uint64_t last_open_check_ticks;
 
-static uint64_t prev_ticks, last_sc_ticks, consume_ticks;
+static uint64_t prev_ticks, last_sc_ticks;
+static int64_t consume_ticks;
 
 static boolean shown_paused_frames;
 static boolean force_show;
@@ -40,8 +41,6 @@ static double est_time;
 
 // how often to we count frames when opening
 #define OPEN_CHECK_TICKS (TICKS_PER_SECOND/10l)
-
-static volatile boolean dlg_thread_ready = FALSE;
 
 static volatile boolean display_ready;
 
@@ -1007,6 +1006,7 @@ boolean process_one(boolean visible) {
     // INTERNAL PLAYER
     if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
       do_quick_switch(mainw->new_clip);
+      mainw->pre_src_file = mainw->new_clip;
       mainw->new_clip = -1;
     }
 
@@ -1377,6 +1377,7 @@ boolean process_one(boolean visible) {
     // the audio thread wants to update the parameter scroll(s)
     if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
+    g_print("ctx\n");
     lives_widget_context_update();  // animate GUI, allow kb timer to run
 
     if (LIVES_UNLIKELY(mainw->cancelled != CANCEL_NONE)) {
@@ -1779,7 +1780,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
 
       // display progress fraction or pulse bar
-      if (mainw->msg != NULL && strlen(mainw->msg) > 0 && (frames_done = atoi(mainw->msg)) > 0)
+      if (strlen(mainw->msg) > 0 && (frames_done = atoi(mainw->msg)) > 0)
         cfile->proc_ptr->frames_done = atoi(mainw->msg);
       else
         cfile->proc_ptr->frames_done = 0;

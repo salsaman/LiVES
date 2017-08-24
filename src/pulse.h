@@ -23,7 +23,7 @@
 #define PA_ACHANS 2
 
 typedef struct {
-  size_t size;
+  ssize_t size;
   size_t max_size;
   void *data;
 } audio_buffer_t;

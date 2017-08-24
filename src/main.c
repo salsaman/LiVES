@@ -692,7 +692,7 @@ static boolean pre_init(void) {
 
   weed_memory_init();
 
-  needs_update = needs_update; // stop compiler warnings
+  needs_update = FALSE; // stop compiler warnings
 
   if (!lives_ascii_strcasecmp(prefs->theme, "none")) return FALSE;
 
@@ -3994,8 +3994,7 @@ void load_start_image(int frame) {
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
-        boolean resb = virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
-        resb = resb; // dont care (much) if it fails
+        virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
       }
     }
 
@@ -4050,9 +4049,7 @@ void load_start_image(int frame) {
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
-        boolean resb = virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
-        resb = resb; // dont care (much) if it fails
-
+        virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
       }
     }
 
@@ -4160,8 +4157,7 @@ void load_end_image(int frame) {
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
-        boolean resb = virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
-        resb = resb; // dont care (much) if it fails
+        virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
       }
     }
 
@@ -4213,8 +4209,7 @@ void load_end_image(int frame) {
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
-        boolean resb = virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
-        resb = resb; // dont care (much) if it fails
+        virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
       }
     }
 
@@ -4366,8 +4361,7 @@ void load_preview_image(boolean update_always) {
         is_virtual_frame(mainw->current_file, mainw->preview_frame) && cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
-        boolean resb = virtual_to_images(mainw->current_file, mainw->preview_frame, mainw->preview_frame, FALSE, NULL);
-        resb = resb; // dont care (much) if it fails
+        virtual_to_images(mainw->current_file, mainw->preview_frame, mainw->preview_frame, FALSE, NULL);
       }
     }
 

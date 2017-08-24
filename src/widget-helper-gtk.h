@@ -151,6 +151,9 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_TABLE_IS_GRID 1
 #endif
 
+#define LIVES_ACCEL_PATH_QUIT "<LiVES>/quit"
+#define LIVES_ACCEL_PATH_SAVE "<LiVES>/save"
+
 #define return_true gtk_true
 
 typedef void (*LiVESGuiCallback)(void);

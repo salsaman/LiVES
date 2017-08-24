@@ -1806,6 +1806,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (resp == LIVES_RESPONSE_CANCEL) {
         lives_widget_destroy(cdsw->dialog);
         lives_free(cdsw);
+	mainw->is_exiting = FALSE;
         if (mainw->multitrack != NULL) {
           mt_sensitise(mainw->multitrack);
           mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
@@ -2763,7 +2764,6 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int current_file = mainw->current_file;
 
-
   on_copy_activate(menuitem, user_data);
   if (mainw->cancelled) {
     return;
@@ -3004,7 +3004,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     }
   }
 
-  if ((!(prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_FRAMES) || (!prefs->warning_mask && WARN_MASK_LAYOUT_ALTER_FRAMES))) {
+  if (!(prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_FRAMES) || !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES)) {
     int insert_start;
     if (mainw->insert_after) {
       insert_start = cfile->end + 1;
@@ -3040,7 +3040,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
   }
 
   if (with_sound && (!(prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_AUDIO) ||
-                     (!prefs->warning_mask && WARN_MASK_LAYOUT_ALTER_AUDIO))) {
+                     !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_AUDIO))) {
     int insert_start;
     if (mainw->insert_after) {
       insert_start = cfile->end + 1;
@@ -3952,11 +3952,6 @@ void on_lock_selwidth_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 }
 
 
-void on_menubar_activate_menuitem(LiVESMenuItem *menuitem, livespointer user_data) {
-  lives_menu_item_activate(menuitem);
-}
-
-
 void on_playall_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->current_file <= 0) return;
 
@@ -4517,6 +4512,7 @@ boolean fps_reset_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
   return TRUE;
 }
 
+
 boolean prevclip_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   LiVESList *list_index;
   int i = 0;
@@ -4534,6 +4530,8 @@ boolean prevclip_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
 
   if (user_data != NULL) type = LIVES_POINTER_TO_INT(user_data);
 
+  if (type == 1 && mainw->new_clip != -1) return TRUE;
+  
   num_clips = lives_list_length(mainw->cliplist);
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
@@ -4570,6 +4568,8 @@ boolean nextclip_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
   if (mainw->current_file < 1 || mainw->preview || (mainw->is_processing && cfile->is_loaded) || mainw->cliplist == NULL) return TRUE;
 
   if (user_data != NULL) type = LIVES_POINTER_TO_INT(user_data);
+
+  if (type == 1 && mainw->new_clip != -1) return TRUE;
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
@@ -5670,8 +5670,7 @@ void switch_clip(int type, int newclip, boolean force) {
   if (!force && (newclip == mainw->current_file && (mainw->playing_file == -1 || mainw->playing_file == newclip))) return;
   if (!cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
 
-  if (mainw->playing_file > -1) {
-    mainw->pre_src_file = newclip;
+  if (mainw->playing_file > -1 && mainw->new_clip == -1) {
     mainw->new_clip = newclip;
   } else {
     if (force && newclip == mainw->current_file) mainw->current_file = 0;
@@ -6064,7 +6063,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       }
     } while (retval == LIVES_RESPONSE_RETRY);
 
-    if (mainw->msg != NULL && get_token_count(mainw->msg, '|') > 6) {
+    if (get_token_count(mainw->msg, '|') > 6) {
       array = lives_strsplit(mainw->msg, "|", -1);
       width = atoi(array[4]);
       height = atoi(array[5]);
@@ -9914,6 +9913,8 @@ boolean storeclip_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
   register int i;
 
   if (!mainw->interactive) return TRUE;
+
+  if (mainw->current_file < 1 || mainw->preview || (mainw->is_processing && cfile->is_loaded) || mainw->cliplist == NULL) return TRUE;
 
   if (clip >= FN_KEYS - 1) {
     // last fn key will clear all

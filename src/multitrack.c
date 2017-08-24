@@ -381,8 +381,7 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
         lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[file]->ext_src)->cdata;
         if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST) &&
             is_virtual_frame(file, frame)) {
-          boolean resb = virtual_to_images(file, frame, frame, FALSE, NULL);
-          resb = resb; // dont care (much) if it fails
+          virtual_to_images(file, frame, frame, FALSE, NULL);
         }
       }
       thumbnail = pull_lives_pixbuf_at_size(file, frame, get_image_ext_for_type(mainw->files[file]->img_type), tc,
@@ -5382,11 +5381,6 @@ boolean check_for_layout_del(lives_mt *mt, boolean exiting) {
   }
 
   return TRUE;
-}
-
-
-LIVES_INLINE void on_comp_exp(LiVESButton *button, livespointer user_data) {
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(user_data), !lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(user_data)));
 }
 
 

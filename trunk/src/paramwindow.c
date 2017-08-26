@@ -2298,9 +2298,9 @@ boolean after_param_text_focus_changed(LiVESWidget *hbox, LiVESWidget *child, li
 
   if (mainw->multitrack != NULL) {
     if (child != NULL)
-      lives_window_remove_accel_group(LIVES_WINDOW(mainw->multitrack->window), mainw->multitrack->accel_group);
+      lives_window_remove_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->multitrack->accel_group);
     else
-      lives_window_add_accel_group(LIVES_WINDOW(mainw->multitrack->window), mainw->multitrack->accel_group);
+      lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->multitrack->accel_group);
   }
 
   if (mainw->textwidget_focus != NULL) {

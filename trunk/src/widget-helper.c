@@ -8806,6 +8806,18 @@ int get_box_child_index(LiVESBox *box, LiVESWidget *tchild) {
 }
 
 
+boolean lives_container_child_set_shrinkable(LiVESContainer *c, LiVESWidget *child, boolean val) {
+#ifdef GUI_GTK
+  GValue bool = G_VALUE_INIT;
+  g_value_init(&bool, G_TYPE_BOOLEAN);
+  g_value_set_boolean(&bool, val);
+  gtk_container_child_set_property(c, child, "shrink", &bool);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 void lives_spin_button_configure(LiVESSpinButton *spinbutton,
                                  double value,
                                  double lower,
@@ -8921,12 +8933,9 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
   GdkCursorType ctype = GDK_X_CURSOR;
 
   if (widget == NULL) {
-    if (mainw->multitrack == NULL && mainw->is_ready) {
+    if ((mainw->multitrack == NULL && mainw->is_ready) || (mainw->multitrack != NULL && mainw->multitrack->is_ready)) {
       if (cstyle != LIVES_CURSOR_NORMAL && mainw->cursor_style == cstyle) return;
       window = lives_widget_get_xwindow(mainw->LiVES);
-    } else if (mainw->multitrack != NULL && mainw->multitrack->is_ready) {
-      if (cstyle != LIVES_CURSOR_NORMAL && mainw->multitrack->cursor_style == cstyle) return;
-      window = lives_widget_get_xwindow(mainw->multitrack->window);
     } else return;
   } else window = lives_widget_get_xwindow(widget);
 
@@ -9112,8 +9121,9 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
 
 
 boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
-#if GTK_CHECK_VERSION(3, 0, 0)
   // connect expose event to this
+
+  // only works for gtk+3
 
   double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
   double rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
@@ -9233,8 +9243,6 @@ boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer 
   }
 
   return TRUE;
-#endif
-  return FALSE;
 }
 
 

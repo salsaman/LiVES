@@ -828,6 +828,8 @@ size_t calc_spin_button_width(double min, double max, int dp);
 
 int get_box_child_index(LiVESBox *, LiVESWidget *child);
 
+boolean lives_container_child_set_shrinkable(LiVESContainer *, LiVESWidget *child, boolean val);
+
 boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
 boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
 

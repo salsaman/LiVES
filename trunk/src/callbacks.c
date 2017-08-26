@@ -332,9 +332,11 @@ void lives_exit(int signum) {
     }
 
     if (strlen(mainw->set_name)) {
-      char *set_lock_file = lives_strdup_printf("%s/%s/%s.%d", prefs->workdir, mainw->set_name, SET_LOCK_FILENAME, capable->mainpid);
-      lives_rm(set_lock_file);
+      char *set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
+      char *set_locker = lives_build_filename(prefs->workdir, mainw->set_name, set_lock_file, NULL);
+      lives_rm(set_locker);
       lives_free(set_lock_file);
+      lives_free(set_locker);
       threaded_dialog_spin(0.);
     }
 
@@ -1791,9 +1793,6 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // do not popup layout errors if the set name changes
   if (!mainw->only_close) mainw->is_exiting = TRUE;
 
-  if (mainw->scrap_file > -1) close_scrap_file();
-  if (mainw->ascrap_file > -1) close_ascrap_file();
-
   if (mainw->clips_available > 0) {
     char *set_name;
     _entryw *cdsw = create_cds_dialog(1);
@@ -1819,7 +1818,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           lives_widget_destroy(cdsw->dialog);
           lives_free(cdsw);
 
-          if (prefs->ar_clipset) set_pref(PREF_AR_CLIPSET, set_name);
+	  if (prefs->ar_clipset) set_pref(PREF_AR_CLIPSET, set_name);
           else set_pref(PREF_AR_CLIPSET, "");
           mainw->no_exit = FALSE;
           mainw->leave_recovery = FALSE;
@@ -1890,6 +1889,8 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   prefs->crash_recovery = FALSE;
+  
+  // do a lot of cleanup, delete files
   lives_exit(0);
   prefs->crash_recovery = TRUE;
 
@@ -4608,12 +4609,13 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   LiVESList *cliplist;
 
-  char new_handle[256];
-  char new_set_name[MAX_SET_NAME_LEN];
-
+  char new_handle[256] = {0};
+  char new_set_name[MAX_SET_NAME_LEN] = {0};
+  char buff[PATH_MAX] = {0};
+  
   char *old_set = lives_strdup(mainw->set_name);
   char *layout_map_file, *layout_map_dir, *new_clips_dir, *current_clips_dir;
-  char *tmp;
+  //char *tmp;
   char *text;
   char *new_dir;
   char *cwd;
@@ -4655,7 +4657,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (menuitem != NULL) {
     // this was called from the GUI
-
+    char *tmp;
     do {
       // prompt for a set name, advise user to save set
       renamew = create_rename_dialog(2);
@@ -4663,6 +4665,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
       if (response == LIVES_RESPONSE_CANCEL) return FALSE;
       lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s", (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
+      lives_free(tmp);
       lives_widget_destroy(renamew->dialog);
       lives_free(renamew);
       lives_widget_context_update();
@@ -4713,7 +4716,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   text = lives_strdup_printf(_("Saving set %s"), mainw->set_name);
   do_threaded_dialog(text, FALSE);
   lives_free(text);
-
+  
   /////////////////////////////////////////////////////////////
 
   mainw->com_failed = FALSE;
@@ -4781,9 +4784,12 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     else {
       char *oldval, *newval;
 
+      if (mainw->scrap_file > -1) close_scrap_file();
+      if (mainw->ascrap_file > -1) close_ascrap_file();
+
       mainw->write_failed = FALSE;
       cliplist = mainw->cliplist;
-
+      
       while (cliplist != NULL) {
         if (mainw->write_failed) break;
         threaded_dialog_spin(0.);
@@ -4794,8 +4800,10 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         i = LIVES_POINTER_TO_INT(cliplist->data);
         if (mainw->files[i] != NULL && (mainw->files[i]->clip_type == CLIP_TYPE_FILE ||
                                         mainw->files[i]->clip_type == CLIP_TYPE_DISK)) {
-          if ((tmp = strrchr(mainw->files[i]->handle, '/')) != NULL) {
-            lives_snprintf(new_handle, 256, "%s/%s%s", mainw->set_name, CLIPS_DIRNAME, tmp);
+	  lives_snprintf(buff, PATH_MAX, "%s", mainw->files[i]->handle);
+	  get_basename(buff);
+          if (strlen(buff)) {
+            lives_snprintf(new_handle, 256, "%s/%s%s", mainw->set_name, CLIPS_DIRNAME, buff);
           } else {
             lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, mainw->files[i]->handle);
           }
@@ -4835,7 +4843,6 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           ord_entry = lives_strdup_printf("%s\n", mainw->files[i]->handle);
           lives_write(ord_fd, ord_entry, strlen(ord_entry), FALSE);
           lives_free(ord_entry);
-
         }
 
         cliplist = cliplist->next;
@@ -4844,9 +4851,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (mainw->write_failed) {
         retval = do_write_failed_error_s_with_retry(ordfile, NULL, NULL);
       }
-
     }
-
   } while (retval == LIVES_RESPONSE_RETRY);
 
   close(ord_fd);
@@ -4934,6 +4939,8 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->leave_files = TRUE;
     if (mainw->multitrack != NULL && !mainw->only_close) mt_memory_free();
     else if (mainw->multitrack != NULL) wipe_layout(mainw->multitrack);
+    
+    // do a lot of cleanup here, but leave files
     lives_exit(0);
   } else end_threaded_dialog();
 
@@ -6278,16 +6285,10 @@ void drag_from_outside(LiVESWidget *widget, GdkDragContext *dcon, int x, int y,
     return;
   }
 
-  if (mainw->multitrack != NULL && widget == mainw->multitrack->window) {
-    if (!lives_widget_is_sensitive(mainw->multitrack->open_menu)) {
+  if ((mainw->multitrack != NULL && !lives_widget_is_sensitive(mainw->multitrack->open_menu)) ||
+      (mainw->multitrack == NULL && !lives_widget_is_sensitive(mainw->open))) {
       gtk_drag_finish(dcon, FALSE, FALSE, time);
       return;
-    }
-  } else {
-    if (!lives_widget_is_sensitive(mainw->open)) {
-      gtk_drag_finish(dcon, FALSE, FALSE, time);
-      return;
-    }
   }
 
   nfilelist = subst(filelist, "file://", "");
@@ -9381,31 +9382,41 @@ void changed_fps_during_pb(LiVESSpinButton   *spinbutton, livespointer user_data
 
 boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespointer user_data) {
   LiVESXModifierType kstate;
+  lives_mt *mt = (lives_mt *)user_data;
   uint32_t type = 1;
 
   if (!mainw->interactive) return FALSE;
 
-  if (!prefs->mouse_scroll_clips || mainw->noswitch) return FALSE;
-
   kstate = (LiVESXModifierType)event->state;
 
-  if (mainw->multitrack != NULL) {
-    if (widget == mainw->multitrack->window && kstate == LIVES_CONTROL_MASK) {
-      if (event->direction == LIVES_SCROLL_UP) mt_zoom_in(NULL, mainw->multitrack);
-      else if (event->direction == LIVES_SCROLL_DOWN) mt_zoom_out(NULL, mainw->multitrack);
+  if (mt != NULL) {
+    // multitrack mode
+    if (widget == LIVES_MAIN_WINDOW_WIDGET && kstate == LIVES_CONTROL_MASK) {
+      if (event->direction == LIVES_SCROLL_UP) mt_zoom_in(NULL, mt);
+      else if (event->direction == LIVES_SCROLL_DOWN) mt_zoom_out(NULL, mt);
       return FALSE;
     }
-    if (mainw->multitrack->poly_state == POLY_CLIPS) {
+
+    if (!prefs->mouse_scroll_clips) return FALSE;
+
+    if (mt->poly_state == POLY_CLIPS) {
+      // check if mouse pointer is over clip scroll tab
       LiVESXWindow *window = lives_display_get_window_at_pointer
 	((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
-	 mainw->multitrack->display, NULL, NULL);
-      if (window == lives_widget_get_xwindow(mainw->multitrack->poly_box)) {
+	 mt->display, NULL, NULL);
+      if (window == lives_widget_get_xwindow(mt->poly_box)) {
+	// scroll fwd / back in clips
 	if (event->direction == LIVES_SCROLL_UP) mt_prevclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
 	else if (event->direction == LIVES_SCROLL_DOWN) mt_nextclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
       }
     }
     return FALSE;
   }
+
+
+  // clip editor mode
+  
+  if (!prefs->mouse_scroll_clips) return FALSE;
 
   if (kstate == LIVES_SHIFT_MASK) type = 2; // bg
   else if (kstate == LIVES_CONTROL_MASK) type = 0; // fg or bg

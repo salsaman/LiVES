@@ -125,7 +125,7 @@
 #define DEF_DIALOG_WIDTH RFX_WINSIZE_H
 #define DEF_DIALOG_HEIGHT RFX_WINSIZE_V
 
-#define LIVES_MAIN_WINDOW_WIDGET (mainw->multitrack == NULL ? mainw->LiVES : mainw->multitrack->window)
+#define LIVES_MAIN_WINDOW_WIDGET (mainw->LiVES)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1002,7 +1002,7 @@ typedef struct {
   LiVESWidget *toolbar;
   LiVESWidget *tb_hbox;
   LiVESWidget *fs1;
-  LiVESWidget *vbox1;
+  LiVESWidget *top_vbox;
 
   LiVESWidget *l1_tb;
   LiVESWidget *l2_tb;

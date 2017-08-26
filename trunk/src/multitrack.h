@@ -166,7 +166,6 @@ struct _mt_opts {
 
 struct _mt {
   // widgets
-  LiVESWidget *window;
   LiVESWidget *menubar;
   LiVESWidget *top_vbox;
   LiVESWidget *hbox;

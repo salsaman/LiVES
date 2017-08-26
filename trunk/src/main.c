@@ -359,8 +359,8 @@ void get_monitors(void) {
   widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0;
   widget_opts.screen = mainw->mgeom[widget_opts.monitor].screen;
 
-  mainw->scr_width = mainw->mgeom[widget_opts.monitor].width;
-  mainw->scr_height = mainw->mgeom[widget_opts.monitor].height;
+  mainw->old_scr_width = GUI_SCREEN_WIDTH;
+  mainw->old_scr_height = GUI_SCREEN_HEIGHT;
 }
 
 
@@ -618,7 +618,7 @@ static boolean pre_init(void) {
 
   get_monitors();
 
-  widget_opts.scale = (double)mainw->scr_width / 1200.;
+  widget_opts.scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
 
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate = -1;
@@ -4085,6 +4085,7 @@ void load_start_image(int frame) {
   } while (rwidth != lives_widget_get_allocation_width(mainw->start_image) ||
            rheight != lives_widget_get_allocation_height(mainw->start_image));
 #else
+  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
   }
   while (FALSE);
 #endif
@@ -4245,6 +4246,7 @@ void load_end_image(int frame) {
     }
   } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) || rheight != lives_widget_get_allocation_height(mainw->end_image));
 #else
+  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
   }
   while (FALSE);
 #endif

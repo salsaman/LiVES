@@ -5303,6 +5303,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   d_print(_("Recovering files..."));
   mainw->is_ready = FALSE;
 
+  lives_widget_context_update();
   threaded_dialog_spin(0.);
 
   mainw->suppress_dprint = TRUE;

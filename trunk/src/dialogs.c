@@ -459,10 +459,8 @@ boolean do_yesno_dialog(const char *text) {
   int response;
 
   warning = create_message_dialog(LIVES_DIALOG_YESNO, text, transient, 0, TRUE);
-
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
-
   lives_widget_context_update();
   return (response == LIVES_RESPONSE_YES);
 }
@@ -2704,8 +2702,6 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
   procw = (xprocess *)(lives_calloc(1, sizeof(xprocess)));
 
-  //g_print("val %d\n", lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)));
-
   if (!lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) widget_opts.no_gui = TRUE;
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
   widget_opts.no_gui = nogui;
@@ -2812,18 +2808,14 @@ void threaded_dialog_spin(double fraction) {
     }
   }
   
-#if !GTK_CHECK_VERSION(3, 0, 0)
   if (!td_had_focus && lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
-#endif
     if (LIVES_IS_WIDGET(procw->processing)) {
       lives_widget_show_all(procw->processing);
       lives_widget_queue_draw(procw->processing);
     }
     td_had_focus = TRUE;
     lives_widget_context_update();
-#if !GTK_CHECK_VERSION(3, 0, 0)
   }
-#endif
 }
 
 

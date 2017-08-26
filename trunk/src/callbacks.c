@@ -8948,9 +8948,9 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
   int scr_height = GUI_SCREEN_HEIGHT;
 
   if (mainw->is_ready) {
-    if (scr_width != mainw->scr_width || scr_height != mainw->scr_height) {
-      mainw->scr_width = scr_width;
-      mainw->scr_height = scr_height;
+    if (scr_width != mainw->old_scr_width || scr_height != mainw->old_scr_height) {
+      mainw->old_scr_width = scr_width;
+      mainw->old_scr_height = scr_height;
       resize_widgets_for_monitor(FALSE);
     } else if (mainw->current_file > -1 && !mainw->recoverable_layout) {
       get_play_times();
@@ -8958,8 +8958,8 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
   }
 
   if (!mainw->is_ready) {
-    mainw->scr_width = scr_width;
-    mainw->scr_height = scr_height;
+    mainw->old_scr_width = scr_width;
+    mainw->old_scr_height = scr_height;
 
     if (prefs->startup_interface == STARTUP_CE) {
 #ifdef ENABLE_JACK

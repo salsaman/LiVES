@@ -151,7 +151,7 @@ text_window *textwindow;
 #define DEF_AUD_FADE_SECS 10. ///< default time to offer fade audio in/out for
 
 
-#define MIN_MSGBOX_WIDTH ((int)(mainw->scr_width > 1024 ? (820. * widget_opts.scale) : 600))
+#define MIN_MSGBOX_WIDTH ((int)(GUI_SCREEN_WIDTH > 1024 ? (820. * widget_opts.scale) : 600))
 
 // textboxes for clip info
 #define TB_WIDTH ((int)(200.*widget_opts.scale))

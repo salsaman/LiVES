@@ -93,6 +93,11 @@
 #define TREE_ROW_HEIGHT ((int)(60.*widget_opts.scale))
 
 // a few GUI specific settings
+#define GUI_SCREEN_WIDTH (mainw->mgeom[widget_opts.monitor].width)
+#define GUI_SCREEN_HEIGHT (mainw->mgeom[widget_opts.monitor].height)
+
+#define SCREEN_SCALE_DEF_WIDTH 1200
+
 #define DEFAULT_FRAME_HSIZE ((int)(640.*widget_opts.scale))
 #define DEFAULT_FRAME_VSIZE ((int)(400.*widget_opts.scale))
 
@@ -103,7 +108,7 @@
 #define FRAMEBLANK_MAX_HEIGHT ((int)(400.*widget_opts.scale))
 
 #define IMSEP_MAX_HEIGHT ((int)(86.*widget_opts.scale))
-#define IMSEP_MAX_WIDTH (mainw->scr_width-20)
+#define IMSEP_MAX_WIDTH (GUI_SCREEN_WIDTH - 20)
 
 #define MAIN_SPIN_SPACER ((int)52.*widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
 
@@ -117,7 +122,7 @@
 #define MAX_MSG_WIDTH_CHARS ((int)(100.*widget_opts.scale)) ///< max width of text on warning/error labels
 
 /// size of the fx dialog windows scrollwindow
-#define RFX_WINSIZE_H ((int)(mainw->scr_width >= 1024 ? (820.*widget_opts.scale) : 640))
+#define RFX_WINSIZE_H ((int)(GUI_SCREEN_WIDTH >= 1024 ? (820.*widget_opts.scale) : 640))
 #define RFX_WINSIZE_V ((int)(480.*widget_opts.scale))
 
 #define DEF_BUTTON_WIDTH ((int)(80.*widget_opts.scale))
@@ -148,9 +153,6 @@
 #define MAX_FX_THREADS 65536
 
 #define LIVES_DCLICK_TIME 400 ///< double click time (milliseconds)
-
-#define GUI_SCREEN_WIDTH (mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].width)
-#define GUI_SCREEN_HEIGHT (mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].height)
 
 /// max ext_cntl + 1
 #define MAX_EXT_CNTL 2
@@ -573,8 +575,6 @@ typedef struct {
   int pre_src_file; ///< video file we were playing before any ext input started
   int pre_src_audio_file; ///< audio file we were playing before any ext input started
 
-  int scr_width;
-  int scr_height;
   lives_toy_t toy_type;
   lives_pgid_t toy_alives_pgid; // 0, or thread for autolives toy
   boolean autolives_reset_fx;
@@ -610,6 +610,9 @@ typedef struct {
   /////////////////////////////////////////////////
 
   // end of static-ish info
+  int old_scr_width;
+  int old_scr_height;
+  
   char first_info_file[PATH_MAX];
   boolean leave_files;
   boolean was_set;

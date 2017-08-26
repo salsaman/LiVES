@@ -4786,6 +4786,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_container_set_border_width(LIVES_CONTAINER(prefsw->closebutton), widget_opts.border_width);
 
   lives_widget_set_can_focus_and_default(prefsw->closebutton);
+  lives_widget_grab_default(prefsw->closebutton);
 
   lives_widget_add_accelerator(prefsw->closebutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);

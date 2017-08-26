@@ -307,22 +307,24 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(4, 0, 0)
+// gtk+ 4
 #define EXPOSE_FN_DECL(fn, widget) boolean fn(LiVESWidget *widget, lives_painter_t *cairo, int width, int height, livespointer user_data) { \
     LiVESXEventExpose *event = NULL; \
-    event = event; // avoid compiler warnings
+    (void)event; // avoid compiler warnings
 #define EXPOSE_FN_EVENT
 #define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, lives_painter_t *, int, int, livespointer);
 #else
+// gtk+ 3
 #define EXPOSE_FN_DECL(fn, widget) boolean fn(LiVESWidget *widget, lives_painter_t *cairo, livespointer user_data) { \
     LiVESXEventExpose *event = NULL; \
-    event = event; // avoid compiler warnings
+    (void)event;
 #define EXPOSE_FN_EVENT
 #define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, lives_painter_t *, livespointer);
 #endif
 #else
+// gtk+ 2
 #define EXPOSE_FN_DECL(fn, widget) boolean fn(LiVESWidget *widget, LiVESXEventExpose *event, livespointer user_data) { \
-    lives_painter_t *cairo = NULL; \
-    cairo = cairo; // avoid compiler warnings
+    lives_painter_t *cairo = NULL;
 #define EXPOSE_FN_PAINTER
 #define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, LiVESXEventExpose *, livespointer);
 #endif
@@ -1011,6 +1013,8 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 #endif
 
 #endif
+
+#define LIVES_DEFAULT_MOD_MASK (gtk_accelerator_get_default_mod_mask ())
 
 #define LIVES_CONTROL_MASK GDK_CONTROL_MASK
 #define LIVES_ALT_MASK     GDK_MOD1_MASK

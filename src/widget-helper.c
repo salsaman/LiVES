@@ -2005,20 +2005,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_accel_groups_activate(LiVESObject *obj
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_has_toplevel_focus(LiVESWindow *window) {
-#ifdef GUI_GTK
-  return gtk_window_has_toplevel_focus(window);
-#endif
-#ifdef GUI_QT
-  if (LIVES_IS_WINDOW(window)) {
-    return QApplication::activeWindow() == static_cast<QWidget *>(window);
-  }
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
 WIDGET_HELPER_GLOBAL_INLINE LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height) {
 #ifdef GUI_GTK
   // alpha fmt is RGBA post mult
@@ -7286,12 +7272,11 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDis
 // compound functions
 
 
-boolean lives_has_toplevel_focus(LiVESWindow *window) {
-  LiVESWidget *widget;
-  lives_widget_context_update();
-  widget = lives_window_get_focus(window);
-  if (!LIVES_IS_WIDGET(widget)) return FALSE;
-  return lives_widget_has_focus(widget);
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_has_toplevel_focus(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  return gtk_window_has_toplevel_focus(LIVES_WINDOW(widget));
+#endif
+  return TRUE;
 }
 
 
@@ -8935,7 +8920,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
   if (widget == NULL) {
     if ((mainw->multitrack == NULL && mainw->is_ready) || (mainw->multitrack != NULL && mainw->multitrack->is_ready)) {
       if (cstyle != LIVES_CURSOR_NORMAL && mainw->cursor_style == cstyle) return;
-      window = lives_widget_get_xwindow(mainw->LiVES);
+      window = lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET);
     } else return;
   } else window = lives_widget_get_xwindow(widget);
 

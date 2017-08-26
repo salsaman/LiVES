@@ -1535,7 +1535,7 @@ void weed_reinit_all(void) {
 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
-      if (rte_key_is_enabled(1 +i)) {
+      if (rte_key_is_enabled(1 + i)) {
         mainw->osc_block = TRUE;
         if ((instance = key_to_instance[i][key_modes[i]]) == NULL) {
           mainw->osc_block = FALSE;
@@ -3724,11 +3724,11 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
   else {
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (rte_key_valid(i + 1, TRUE)) {
-        if (!(rte_key_is_enabled(1 +i))) {
+        if (!(rte_key_is_enabled(1 + i))) {
           // if anything is connected to ACTIVATE, the fx may be activated
           pconx_chain_data(i, key_modes[i]);
         }
-        if (rte_key_is_enabled(1 +i)) {
+        if (rte_key_is_enabled(1 + i)) {
           mainw->osc_block = TRUE;
           if ((instance = key_to_instance[i][key_modes[i]]) == NULL) {
             mainw->osc_block = FALSE;
@@ -3888,11 +3888,11 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, doubl
 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
-      if (!(rte_key_is_enabled(1 +i))) {
+      if (!(rte_key_is_enabled(1 + i))) {
         // if anything is connected to ACTIVATE, the fx may be activated
         pconx_chain_data(i, key_modes[i]);
       }
-      if (rte_key_is_enabled(1 +i)) {
+      if (rte_key_is_enabled(1 + i)) {
         mainw->osc_block = TRUE;
 
         // filter must not be deinited until we have processed it
@@ -3992,7 +3992,7 @@ boolean has_audio_filters(lives_af_t af_type) {
 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
-      if (rte_key_is_enabled(1 +i)) {
+      if (rte_key_is_enabled(1 + i)) {
         if ((instance = key_to_instance[i][key_modes[i]]) == NULL) continue;
         filter = weed_instance_get_filter(instance, FALSE);
         if (has_audio_chans_in(filter, FALSE) && !has_video_chans_in(filter, FALSE) && !has_video_chans_out(filter, FALSE)) {
@@ -4016,7 +4016,7 @@ boolean has_video_filters(boolean analysers_only) {
 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
-      if (rte_key_is_enabled(1 +i)) {
+      if (rte_key_is_enabled(1 + i)) {
         if ((instance = key_to_instance[i][key_modes[i]]) == NULL) continue;
         filter = weed_instance_get_filter(instance, FALSE);
         if (has_video_chans_in(filter, FALSE)) {
@@ -6128,7 +6128,7 @@ void weed_generator_end(weed_plant_t *inst) {
     filter_mutex_lock(bg_generator_key);
     key_to_instance[bg_generator_key][bg_generator_mode] = NULL;
     filter_mutex_unlock(bg_generator_key);
-    if (rte_key_is_enabled(1 +bg_generator_key)) mainw->rte ^= (GU641 << bg_generator_key);
+    if (rte_key_is_enabled(1 + bg_generator_key)) mainw->rte ^= (GU641 << bg_generator_key);
     bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
     pre_src_file = mainw->pre_src_file;
     mainw->pre_src_file = mainw->current_file;
@@ -6138,7 +6138,7 @@ void weed_generator_end(weed_plant_t *inst) {
     filter_mutex_lock(fg_generator_key);
     key_to_instance[fg_generator_key][fg_generator_mode] = NULL;
     filter_mutex_unlock(fg_generator_key);
-    if (rte_key_is_enabled(1 +fg_generator_key)) mainw->rte ^= (GU641 << fg_generator_key);
+    if (rte_key_is_enabled(1 + fg_generator_key)) mainw->rte ^= (GU641 << fg_generator_key);
     fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
     if (mainw->blend_file == mainw->current_file) mainw->blend_file = -1;
   }
@@ -6653,7 +6653,7 @@ boolean weed_init_effect(int hotkey) {
         int agen_key = mainw->agen_key - 1;
         weed_deinit_effect(agen_key);
 
-        if ((rte_key_is_enabled(1 +agen_key))) {
+        if ((rte_key_is_enabled(1 + agen_key))) {
           // need to do this in case starting another audio gen caused us to come here
           mainw->rte ^= (GU641 << agen_key);
           if (rte_window != NULL) rtew_set_keych(agen_key, FALSE);
@@ -7240,7 +7240,7 @@ void weed_deinit_all(boolean shutdown) {
       if (rte_window != NULL) rtew_set_keych(i, FALSE);
       if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
     }
-    if ((rte_key_is_enabled(1 +i))) {
+    if ((rte_key_is_enabled(1 + i))) {
       if ((instance = key_to_instance[i][key_modes[i]]) != NULL) {
         if (shutdown || mainw->playing_file == -1 || (enabled_in_channels(instance, FALSE) > 0)) {
           weed_deinit_effect(i);
@@ -7840,7 +7840,7 @@ deinit5:
         key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]] = NULL;
         bg_gen_to_start = -1;
         mainw->blend_file = -1;
-        if (rte_key_is_enabled(1 +ABS(bg_gen_to_start))) mainw->rte ^= (GU641 << ABS(bg_gen_to_start));
+        if (rte_key_is_enabled(1 + ABS(bg_gen_to_start))) mainw->rte ^= (GU641 << ABS(bg_gen_to_start));
         mainw->osc_block = FALSE;
         return FALSE;
       }
@@ -8626,7 +8626,7 @@ boolean weed_delete_effectkey(int key, int mode) {
         key_modes[key] = 0;
         if (was_started) {
           if (key_to_fx[key][0] != -1) weed_init_effect(modekey);
-          else if (rte_key_is_enabled(1 +key)) mainw->rte ^= (GU641 << key);
+          else if (rte_key_is_enabled(1 + key)) mainw->rte ^= (GU641 << key);
         }
       }
       break; // quit the loop
@@ -8925,7 +8925,7 @@ boolean rte_key_setmode(int key, int newmode) {
         // TODO - unblock template channel changes
         mainw->whentostop = whentostop;
         key = real_key;
-        if (rte_key_is_enabled(1 +key)) mainw->rte ^= (GU641 << key);
+        if (rte_key_is_enabled(1 + key)) mainw->rte ^= (GU641 << key);
         mainw->osc_block = FALSE;
         return FALSE;
       }

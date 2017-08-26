@@ -1805,7 +1805,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (resp == LIVES_RESPONSE_CANCEL) {
         lives_widget_destroy(cdsw->dialog);
         lives_free(cdsw);
-	mainw->is_exiting = FALSE;
+        mainw->is_exiting = FALSE;
         if (mainw->multitrack != NULL) {
           mt_sensitise(mainw->multitrack);
           mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
@@ -1818,7 +1818,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           lives_widget_destroy(cdsw->dialog);
           lives_free(cdsw);
 
-	  if (prefs->ar_clipset) set_pref(PREF_AR_CLIPSET, set_name);
+          if (prefs->ar_clipset) set_pref(PREF_AR_CLIPSET, set_name);
           else set_pref(PREF_AR_CLIPSET, "");
           mainw->no_exit = FALSE;
           mainw->leave_recovery = FALSE;
@@ -1889,7 +1889,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   prefs->crash_recovery = FALSE;
-  
+
   // do a lot of cleanup, delete files
   lives_exit(0);
   prefs->crash_recovery = TRUE;
@@ -4532,7 +4532,7 @@ boolean prevclip_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
   if (user_data != NULL) type = LIVES_POINTER_TO_INT(user_data);
 
   if (type == 1 && mainw->new_clip != -1) return TRUE;
-  
+
   num_clips = lives_list_length(mainw->cliplist);
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
@@ -4612,7 +4612,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char new_handle[256] = {0};
   char new_set_name[MAX_SET_NAME_LEN] = {0};
   char buff[PATH_MAX] = {0};
-  
+
   char *old_set = lives_strdup(mainw->set_name);
   char *layout_map_file, *layout_map_dir, *new_clips_dir, *current_clips_dir;
   //char *tmp;
@@ -4716,7 +4716,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   text = lives_strdup_printf(_("Saving set %s"), mainw->set_name);
   do_threaded_dialog(text, FALSE);
   lives_free(text);
-  
+
   /////////////////////////////////////////////////////////////
 
   mainw->com_failed = FALSE;
@@ -4789,7 +4789,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
       mainw->write_failed = FALSE;
       cliplist = mainw->cliplist;
-      
+
       while (cliplist != NULL) {
         if (mainw->write_failed) break;
         threaded_dialog_spin(0.);
@@ -4800,8 +4800,8 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         i = LIVES_POINTER_TO_INT(cliplist->data);
         if (mainw->files[i] != NULL && (mainw->files[i]->clip_type == CLIP_TYPE_FILE ||
                                         mainw->files[i]->clip_type == CLIP_TYPE_DISK)) {
-	  lives_snprintf(buff, PATH_MAX, "%s", mainw->files[i]->handle);
-	  get_basename(buff);
+          lives_snprintf(buff, PATH_MAX, "%s", mainw->files[i]->handle);
+          get_basename(buff);
           if (strlen(buff)) {
             lives_snprintf(new_handle, 256, "%s/%s%s", mainw->set_name, CLIPS_DIRNAME, buff);
           } else {
@@ -4939,7 +4939,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->leave_files = TRUE;
     if (mainw->multitrack != NULL && !mainw->only_close) mt_memory_free();
     else if (mainw->multitrack != NULL) wipe_layout(mainw->multitrack);
-    
+
     // do a lot of cleanup here, but leave files
     lives_exit(0);
   } else end_threaded_dialog();
@@ -6287,8 +6287,8 @@ void drag_from_outside(LiVESWidget *widget, GdkDragContext *dcon, int x, int y,
 
   if ((mainw->multitrack != NULL && !lives_widget_is_sensitive(mainw->multitrack->open_menu)) ||
       (mainw->multitrack == NULL && !lives_widget_is_sensitive(mainw->open))) {
-      gtk_drag_finish(dcon, FALSE, FALSE, time);
-      return;
+    gtk_drag_finish(dcon, FALSE, FALSE, time);
+    return;
   }
 
   nfilelist = subst(filelist, "file://", "");
@@ -9402,12 +9402,12 @@ boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespoin
     if (mt->poly_state == POLY_CLIPS) {
       // check if mouse pointer is over clip scroll tab
       LiVESXWindow *window = lives_display_get_window_at_pointer
-	((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
-	 mt->display, NULL, NULL);
+                             ((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
+                              mt->display, NULL, NULL);
       if (window == lives_widget_get_xwindow(mt->poly_box)) {
-	// scroll fwd / back in clips
-	if (event->direction == LIVES_SCROLL_UP) mt_prevclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
-	else if (event->direction == LIVES_SCROLL_DOWN) mt_nextclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
+        // scroll fwd / back in clips
+        if (event->direction == LIVES_SCROLL_UP) mt_prevclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
+        else if (event->direction == LIVES_SCROLL_DOWN) mt_nextclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
       }
     }
     return FALSE;
@@ -9415,7 +9415,7 @@ boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespoin
 
 
   // clip editor mode
-  
+
   if (!prefs->mouse_scroll_clips) return FALSE;
 
   if (kstate == LIVES_SHIFT_MASK) type = 2; // bg

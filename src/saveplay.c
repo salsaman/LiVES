@@ -2052,7 +2052,7 @@ void play_file(void) {
 
   // disable ctrl-q since it can be activated by user error
   lives_accel_path_disconnect(mainw->accel_group, LIVES_ACCEL_PATH_QUIT);
-  
+
   if (mainw->multitrack != NULL) {
     mainw->event_list = mainw->multitrack->event_list;
     pb_start_event = mainw->multitrack->pb_start_event;

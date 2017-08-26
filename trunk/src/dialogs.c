@@ -404,7 +404,6 @@ boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_n
     warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext, lives_widget_is_visible(LIVES_WIDGET(transient)) ? transient : NULL,
                                     warn_mask_number, TRUE);
     response = lives_dialog_run(LIVES_DIALOG(warning));
-    if (lives_has_toplevel_focus(warning)) lives_widget_grab_focus(mainw->textview1);
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);
 
@@ -430,7 +429,6 @@ boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_num
   do {
     warning = create_message_dialog(LIVES_DIALOG_YESNO, mytext, transient, warn_mask_number, TRUE);
     response = lives_dialog_run(LIVES_DIALOG(warning));
-    if (lives_has_toplevel_focus(warning)) lives_widget_grab_focus(mainw->textview1);
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);
 
@@ -463,7 +461,6 @@ boolean do_yesno_dialog(const char *text) {
   warning = create_message_dialog(LIVES_DIALOG_YESNO, text, transient, 0, TRUE);
 
   response = lives_dialog_run(LIVES_DIALOG(warning));
-  if (lives_has_toplevel_focus(warning)) lives_widget_grab_focus(mainw->textview1);
   lives_widget_destroy(warning);
 
   lives_widget_context_update();
@@ -485,9 +482,7 @@ int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
     warning = create_message_dialog(LIVES_DIALOG_ABORT_CANCEL_RETRY, mytext, transient, 0, TRUE);
 
     response = lives_dialog_run(LIVES_DIALOG(warning));
-    if (lives_has_toplevel_focus(warning)) lives_widget_grab_focus(mainw->textview1);
     lives_widget_destroy(warning);
-
     lives_widget_context_update();
 
     if (response == LIVES_RESPONSE_ABORT) {
@@ -2795,7 +2790,7 @@ void threaded_dialog_spin(double fraction) {
     return;
   }
 
-  if (procw == NULL || !procw->is_ready || !mainw->is_ready || !prefs->show_gui) return;
+  if (procw == NULL || !procw->is_ready || !prefs->show_gui) return;
 
   if (fraction > 0.) {
     timesofar = (double)(lives_get_current_ticks(0, 0) - sttime) / TICKS_PER_SECOND_DBL;
@@ -2816,15 +2811,19 @@ void threaded_dialog_spin(double fraction) {
       disp_fraction(fraction_done, timesofar, procw);
     }
   }
-
+  
+#if !GTK_CHECK_VERSION(3, 0, 0)
   if (!td_had_focus && lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
+#endif
     if (LIVES_IS_WIDGET(procw->processing)) {
       lives_widget_show_all(procw->processing);
       lives_widget_queue_draw(procw->processing);
     }
-    lives_widget_context_update();
     td_had_focus = TRUE;
+    lives_widget_context_update();
+#if !GTK_CHECK_VERSION(3, 0, 0)
   }
+#endif
 }
 
 

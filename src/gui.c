@@ -3708,8 +3708,10 @@ void play_window_set_title(void) {
 void resize_widgets_for_monitor(boolean do_get_play_times) {
   // resize widgets if we are aware that monitor resolution has changed
 
-  mainw->scr_width = GUI_SCREEN_WIDTH;
-  mainw->scr_height = GUI_SCREEN_HEIGHT;
+  mainw->old_scr_width = GUI_SCREEN_WIDTH;
+  mainw->old_scr_height = GUI_SCREEN_HEIGHT;
+
+  widget_opts.scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
 
   if (prefs->gui_monitor != 0) {
     lives_window_center(LIVES_WINDOW(mainw->LiVES));

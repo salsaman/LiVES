@@ -398,8 +398,8 @@ enum {
   N_COLUMNS
 };
 
-#define PREFWIN_WIDTH (mainw->scr_width*.9)
-#define PREFWIN_HEIGHT (mainw->scr_height*.9)
+#define PREFWIN_WIDTH (GUI_SCREEN_WIDTH * .9)
+#define PREFWIN_HEIGHT (GUI_SCREEN_HEIGHT * .9)
 
 #define DS_WARN_CRIT_MAX 1000000. ///< MB.
 

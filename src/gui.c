@@ -246,7 +246,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   set_child_alt_colour(mainw->btoolbar, TRUE);
 
   lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->top_vbox, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, colb);
 
@@ -504,11 +504,11 @@ void create_LiVES(void) {
 
   if (capable->smog_version_correct) lives_window_set_decorated(LIVES_WINDOW(mainw->LiVES), prefs->open_decorated);
 
-  mainw->vbox1 = lives_vbox_new(FALSE, 0);
-  lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->vbox1);
+  mainw->top_vbox = lives_vbox_new(FALSE, 0);
+  lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
 
   mainw->menu_hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(mainw->vbox1), mainw->menu_hbox, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->menu_hbox, FALSE, FALSE, 0);
 
   mainw->menubar = lives_menu_bar_new();
   lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
@@ -1664,7 +1664,6 @@ void create_LiVES(void) {
 
   mainw->int_audio_checkbutton = NULL;
 
-#if GTK_CHECK_VERSION(3, 0, 0)
   // insert audio src buttons
   if (prefs->lamp_buttons) {
     mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
@@ -1680,7 +1679,7 @@ void create_LiVES(void) {
                                NULL);
     lives_cool_toggled(mainw->int_audio_checkbutton, NULL);
   }
-#endif
+
   if (mainw->int_audio_checkbutton == NULL) mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
   lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
 
@@ -1698,7 +1697,6 @@ void create_LiVES(void) {
 
   mainw->ext_audio_checkbutton = NULL;
 
-#if GTK_CHECK_VERSION(3, 0, 0)
   // insert audio src buttons
   if (prefs->lamp_buttons) {
     mainw->ext_audio_checkbutton = lives_toggle_tool_button_new();
@@ -1714,7 +1712,6 @@ void create_LiVES(void) {
                                NULL);
     lives_cool_toggled(mainw->ext_audio_checkbutton, NULL);
   }
-#endif
 
   if (mainw->ext_audio_checkbutton == NULL) mainw->ext_audio_checkbutton = lives_toggle_tool_button_new();
   lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
@@ -1800,7 +1797,7 @@ void create_LiVES(void) {
 
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mainw->toolbar), FALSE);
 
-  lives_box_pack_start(LIVES_BOX(mainw->vbox1), mainw->tb_hbox, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->tb_hbox, FALSE, FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->tb_hbox), mainw->toolbar, TRUE, TRUE, 0);
 
   lives_toolbar_set_style(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOLBAR_ICONS);
@@ -1905,7 +1902,7 @@ void create_LiVES(void) {
   vbox4 = lives_vbox_new(FALSE, 0);
 
   mainw->eventbox = lives_event_box_new();
-  lives_box_pack_start(LIVES_BOX(mainw->vbox1), mainw->eventbox, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox, TRUE, TRUE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox), vbox4);
 
   lives_widget_set_events(mainw->eventbox, LIVES_SCROLL_MASK);
@@ -2181,7 +2178,7 @@ void create_LiVES(void) {
 
   lives_widget_set_vexpand(mainw->message_box, TRUE);
 
-  lives_box_pack_start(LIVES_BOX(mainw->vbox1), eventbox, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), eventbox, TRUE, TRUE, 0);
   lives_container_add(LIVES_CONTAINER(eventbox), mainw->message_box);
 
   mainw->textview1 = NULL;
@@ -2897,7 +2894,7 @@ void create_LiVES(void) {
 void show_lives(void) {
   char buff[PATH_MAX];
 
-  lives_widget_show_all(mainw->vbox1);
+  lives_widget_show_all(mainw->top_vbox);
 
   lives_widget_show(mainw->LiVES); // this calls the config_event()
 
@@ -3195,7 +3192,7 @@ void fade_background(void) {
     }
   }
 
-  lives_widget_queue_draw(mainw->vbox1);
+  lives_widget_queue_draw(mainw->top_vbox);
 }
 
 
@@ -3711,10 +3708,11 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   mainw->scr_width = GUI_SCREEN_WIDTH;
   mainw->scr_height = GUI_SCREEN_HEIGHT;
 
+  if (prefs->gui_monitor != 0) {
+    lives_window_center(LIVES_WINDOW(mainw->LiVES));
+  }
+
   if (mainw->multitrack == NULL) {
-    if (prefs->gui_monitor != 0) {
-      lives_window_center(LIVES_WINDOW(mainw->LiVES));
-    }
     if (prefs->open_maximised && prefs->show_gui) {
       resize(1);
     }
@@ -3724,13 +3722,9 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
       get_play_times();
     }
   } else {
-    if (prefs->gui_monitor != 0) {
-      lives_window_center(LIVES_WINDOW(mainw->multitrack->window));
-    }
-
     if ((prefs->gui_monitor != 0 || capable->nmonitors <= 1) && prefs->open_maximised) {
-      lives_window_unmaximize(LIVES_WINDOW(mainw->multitrack->window));
-      lives_window_maximize(LIVES_WINDOW(mainw->multitrack->window));
+      lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     }
     set_mt_play_sizes(mainw->multitrack, cfile->hsize, cfile->vsize);
   }

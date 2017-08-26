@@ -1204,11 +1204,9 @@ _entryw *create_rename_dialog(int type) {
   lives_window_add_accel_group(LIVES_WINDOW(renamew->dialog), accel_group);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack == NULL) {
-      if (mainw->is_ready) {
-        lives_window_set_transient_for(LIVES_WINDOW(renamew->dialog), LIVES_WINDOW(mainw->LiVES));
-      }
-    } else lives_window_set_transient_for(LIVES_WINDOW(renamew->dialog), LIVES_WINDOW(mainw->multitrack->window));
+    if (mainw->is_ready) {
+      lives_window_set_transient_for(LIVES_WINDOW(renamew->dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    }
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(renamew->dialog));
@@ -1426,11 +1424,7 @@ LiVESWidget *create_combo_dialog(int type, livespointer user_data) {
   if (title != NULL) lives_free(title);
 
   if (prefs->show_gui) {
-    if (type == 1) {
-      lives_window_set_transient_for(LIVES_WINDOW(combo_dialog), LIVES_WINDOW(mainw->LiVES));
-    } else {
-      lives_window_set_transient_for(LIVES_WINDOW(combo_dialog), LIVES_WINDOW(mainw->multitrack->window));
-    }
+    lives_window_set_transient_for(LIVES_WINDOW(combo_dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(combo_dialog));
@@ -1515,11 +1509,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   lives_signal_handlers_disconnect_by_func(cd_dialog, return_true, NULL);
 
   if (prefs->show_gui) {
-    if (type != LIVES_DEVICE_INTERNAL) {
-      lives_window_set_transient_for(LIVES_WINDOW(cd_dialog), LIVES_WINDOW(mainw->LiVES));
-    } else {
-      lives_window_set_transient_for(LIVES_WINDOW(cd_dialog), LIVES_WINDOW(mainw->multitrack->window));
-    }
+    lives_window_set_transient_for(LIVES_WINDOW(cd_dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cd_dialog));

@@ -5246,7 +5246,7 @@ void pref_change_images(void) {
     if (mainw->multitrack != NULL) {
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->multitrack->sep_image), mainw->imsep);
       mt_show_current_frame(mainw->multitrack, FALSE);
-      lives_widget_queue_draw(mainw->multitrack->window);
+      lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
     }
   }
 }

@@ -2123,7 +2123,7 @@ void play_file(void) {
     }
 
     if (mainw->foreign) {
-      lives_widget_show_all(mainw->vbox1);
+      lives_widget_show_all(mainw->top_vbox);
       lives_widget_context_update();
     }
 

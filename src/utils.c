@@ -2455,6 +2455,7 @@ void get_dirname(char *filename) {
   char *tmp;
   // get directory name from a file
   //filename should point to char[PATH_MAX]
+  // WARNING: will change contents of filename
 
   lives_snprintf(filename, PATH_MAX, "%s%s", (tmp = lives_path_get_dirname(filename)), LIVES_DIR_SEP);
   if (!strcmp(tmp, ".")) {
@@ -2469,6 +2470,7 @@ void get_dirname(char *filename) {
 
 
 char *get_dir(const char *filename) {
+  // get directory as string, should free after use
   char tmp[PATH_MAX];
   lives_snprintf(tmp, PATH_MAX, "%s", filename);
   get_dirname(tmp);
@@ -2479,7 +2481,8 @@ char *get_dir(const char *filename) {
 void get_basename(char *filename) {
   // get basename from a file
   // (filename without directory)
-  //filename should point to char[PATH_MAX]
+  // filename should point to char[PATH_MAX]
+  // WARNING: will change contents of filename
   char *tmp = lives_path_get_basename(filename);
   lives_snprintf(filename, PATH_MAX, "%s", tmp);
   lives_free(tmp);
@@ -2489,6 +2492,7 @@ void get_basename(char *filename) {
 void get_filename(char *filename, boolean strip_dir) {
   // get filename (part without extension) of a file
   //filename should point to char[PATH_MAX]
+  // WARNING: will change contents of filename
   char **array;
   if (strip_dir) get_basename(filename);
   array = lives_strsplit(filename, ".", -1);

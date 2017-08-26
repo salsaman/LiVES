@@ -435,8 +435,8 @@ LiVESWindow *get_transient_full() {
   if (prefs->show_gui) {
     if (prefsw != NULL && prefsw->prefs_dialog != NULL) transient = LIVES_WINDOW(prefsw->prefs_dialog);
     else {
-      if (mainw->multitrack == NULL && mainw->is_ready) transient = LIVES_WINDOW(mainw->LiVES);
-      else if (mainw->multitrack != NULL && mainw->multitrack->is_ready) transient = LIVES_WINDOW(mainw->multitrack->window);
+      if ((mainw->multitrack == NULL && mainw->is_ready) || (mainw->multitrack != NULL && mainw->multitrack->is_ready))
+	transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
     }
   }
   return transient;
@@ -1377,7 +1377,6 @@ boolean process_one(boolean visible) {
     // the audio thread wants to update the parameter scroll(s)
     if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
-    g_print("ctx\n");
     lives_widget_context_update();  // animate GUI, allow kb timer to run
 
     if (LIVES_UNLIKELY(mainw->cancelled != CANCEL_NONE)) {
@@ -2546,7 +2545,7 @@ void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
                 _("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\n"
                   "It is recommended to increase it to at least %d MB"),
                 memreq_mb);
-  do_error_dialog_with_check_transient(msg, TRUE, WARN_MASK_MT_BACKUP_SPACE, LIVES_WINDOW(mt->window));
+  do_error_dialog_with_check_transient(msg, TRUE, WARN_MASK_MT_BACKUP_SPACE, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   lives_free(msg);
 }
 
@@ -2761,7 +2760,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
     mainw->cancel_type = CANCEL_SOFT;
   }
 
-  if (lives_has_toplevel_focus(LIVES_WINDOW(procw->processing)))
+  if (lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)))
     lives_widget_show_all(procw->processing);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, procw->processing);
@@ -2801,13 +2800,13 @@ void threaded_dialog_spin(double fraction) {
     }
   }
 
-  //if (lives_has_toplevel_focus(procw->processing) || lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) {
-  if (LIVES_IS_WIDGET(procw->processing)) {
-    lives_widget_show_all(procw->processing);
-    lives_widget_queue_draw(procw->processing);
+  if (lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) {
+    if (LIVES_IS_WIDGET(procw->processing)) {
+      lives_widget_show_all(procw->processing);
+      lives_widget_queue_draw(procw->processing);
+    }
+    lives_widget_context_update();
   }
-  lives_widget_context_update();
-  //}
 }
 
 

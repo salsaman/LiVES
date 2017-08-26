@@ -196,7 +196,8 @@ void start_ce_thumb_mode(void) {
 
   top_hbox = lives_hbox_new(FALSE, 0);
   lives_widget_show(top_hbox);
-  lives_box_pack_start(LIVES_BOX(mainw->vbox1), top_hbox, TRUE, TRUE, 0);
+
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), top_hbox, TRUE, TRUE, 0);
 
   if (palette->style & STYLE_1) lives_widget_set_bg_color(top_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 

@@ -5559,13 +5559,13 @@ void set_mt_colours(lives_mt *mt) {
   lives_widget_set_text_color(mt->timecode, LIVES_WIDGET_STATE_INSENSITIVE, &palette->mt_timecode_fg);
 
 #ifdef ENABLE_GIW_3
-    // need to set this even if theme is none
-    lives_widget_set_bg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  // need to set this even if theme is none
+  lives_widget_set_bg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 #endif
-    
+
   mt_clip_select(mt, FALSE);
-  
+
   if (palette->style & STYLE_1) {
     lives_widget_set_bg_color(mt->top_vbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_fg_color(mt->top_vbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -10686,7 +10686,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   if (cfile->achans > 0 && !is_realtime_aplayer(prefs->audio_player)) {
     do_mt_no_jack_error(WARN_MASK_MT_NO_JACK);
   }
-  
+
   mainw->is_ready = TRUE;
 
   if (prefs->show_gui) {
@@ -10695,7 +10695,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   lives_container_add(LIVES_CONTAINER(mainw->LiVES), multi->top_vbox);
-  
+
   lives_paned_set_position(LIVES_PANED(multi->hpaned), (GUI_SCREEN_WIDTH - multi->play_width));
 
   lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
@@ -10717,7 +10717,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   multi->no_expose = FALSE;
 
   lives_container_child_set_shrinkable(LIVES_CONTAINER(multi->hpaned), multi->context_frame, TRUE);
-  
+
   lives_idle_add(mt_idle_show_current_frame, (livespointer)multi);
 
   // this must be done right at the end
@@ -11021,7 +11021,7 @@ void clear_context(lives_mt *mt) {
 
   mt->context_box = lives_vbox_new(FALSE, 4);
   lives_scrolled_window_add_with_viewport(LIVES_SCROLLED_WINDOW(mt->context_scroll), mt->context_box);
-  
+
   // Apply theme background to scrolled window
   if (palette->style & STYLE_1) {
     lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);

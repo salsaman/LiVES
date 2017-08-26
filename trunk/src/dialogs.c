@@ -436,7 +436,7 @@ LiVESWindow *get_transient_full() {
     if (prefsw != NULL && prefsw->prefs_dialog != NULL) transient = LIVES_WINDOW(prefsw->prefs_dialog);
     else {
       if ((mainw->multitrack == NULL && mainw->is_ready) || (mainw->multitrack != NULL && mainw->multitrack->is_ready))
-	transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
+        transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
     }
   }
   return transient;

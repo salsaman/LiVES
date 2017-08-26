@@ -754,6 +754,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
 
       end_threaded_dialog();
+      paint_lines(mt, mt->ptr_time, FALSE);
 
       if (retval) retval = write_backup_layout_numbering(mt);
 
@@ -1969,7 +1970,11 @@ static boolean on_mt_timeline_scroll(LiVESWidget *widget, LiVESXEventScroll *eve
 
   int cval;
 
-  if (!lives_window_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) return FALSE;
+  //if (!lives_window_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) return FALSE;
+
+  LiVESXModifierType kstate = (LiVESXModifierType)event->state;
+  g_print("pt aa %d\n", kstate);
+  if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_CONTROL_MASK) return on_mouse_scroll(widget, event, user_data);
 
   cval = lives_adjustment_get_value(lives_range_get_adjustment(LIVES_RANGE(mt->scrollbar)));
 
@@ -4374,8 +4379,6 @@ void mouse_mode_context(lives_mt *mt) {
     add_context_label(mt, (_("Mouse mode is: Move")));
     add_context_label(mt, (_("clips can be moved around.")));
   } else if (mt->opts.mouse_mode == MOUSE_MODE_SELECT) {
-    clear_context(mt);
-
     add_context_label(mt, (_("Mouse mode is: Select.")));
     add_context_label(mt, (_("Drag with mouse on timeline")));
     add_context_label(mt, (_("to select tracks and time.")));
@@ -5913,7 +5916,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   int num_filters;
   int error;
   int dpw = widget_opts.packing_width;
-  int scr_width = GUI_SCREEN_WIDTH;
+  int scr_width = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
   int scr_height = GUI_SCREEN_HEIGHT;
 
   register int i;
@@ -6044,7 +6047,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->last_fx_type = MT_LAST_FX_NONE;
 
-  mt->display = mainw->mgeom[prefs->gui_monitor == 0 ? 0 : prefs->gui_monitor - 1].disp;
+  mt->display = mainw->mgeom[widget_opts.monitor].disp;
 
   mt->moving_block = FALSE;
 
@@ -7550,11 +7553,16 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_m, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_mark_callback), (livespointer)mt, NULL));
 
+
   mt->top_eventbox = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->top_eventbox, FALSE, FALSE, 0);
+
+  lives_widget_add_events(mt->top_eventbox, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK |
+                          LIVES_SCROLL_MASK);
+
   lives_signal_connect(LIVES_GUI_OBJECT(mt->top_eventbox), LIVES_WIDGET_SCROLL_EVENT,
                        LIVES_GUI_CALLBACK(on_mouse_scroll),
-                       NULL);
+                       mt);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mt->top_eventbox), hbox);
@@ -7881,7 +7889,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->play_box = lives_vbox_new(FALSE, 0);
   lives_widget_set_app_paintable(mt->preview_eventbox, TRUE);
 
-  lives_widget_set_hexpand(mt->preview_frame, TRUE);
+  lives_widget_set_hexpand(mt->preview_frame, FALSE);
   lives_widget_set_vexpand(mt->preview_frame, FALSE);
 
   lives_widget_set_hexpand(mt->preview_eventbox, TRUE);
@@ -7958,8 +7966,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        mt);
 
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mt->clip_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_NEVER);
-
-  //lives_widget_set_hexpand(mt->clip_scroll, TRUE);
+  lives_widget_set_hexpand(mt->clip_scroll, TRUE);
 
   mt->clip_inner_box = lives_hbox_new(FALSE, widget_opts.packing_width);
 
@@ -11020,6 +11027,7 @@ void clear_context(lives_mt *mt) {
                                    LIVES_POLICY_AUTOMATIC);
 
   mt->context_box = lives_vbox_new(FALSE, 4);
+  lives_widget_set_hexpand(mt->context_scroll, TRUE);
   lives_scrolled_window_add_with_viewport(LIVES_SCROLLED_WINDOW(mt->context_scroll), mt->context_box);
 
   // Apply theme background to scrolled window
@@ -11028,6 +11036,7 @@ void clear_context(lives_mt *mt) {
     lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
+  add_context_label(mt, ("                                          ")); // info box stop from shrinking
   if (mt->opts.show_ctx) lives_widget_show_all(mt->context_frame);
 }
 

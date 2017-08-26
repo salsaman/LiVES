@@ -9381,17 +9381,15 @@ void changed_fps_during_pb(LiVESSpinButton   *spinbutton, livespointer user_data
 
 
 boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespointer user_data) {
-  LiVESXModifierType kstate;
   lives_mt *mt = (lives_mt *)user_data;
+  LiVESXModifierType kstate = (LiVESXModifierType)event->state;
   uint32_t type = 1;
 
   if (!mainw->interactive) return FALSE;
-
-  kstate = (LiVESXModifierType)event->state;
-
+  g_print("pt b\n");
   if (mt != NULL) {
     // multitrack mode
-    if (widget == LIVES_MAIN_WINDOW_WIDGET && kstate == LIVES_CONTROL_MASK) {
+    if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_CONTROL_MASK) {
       if (event->direction == LIVES_SCROLL_UP) mt_zoom_in(NULL, mt);
       else if (event->direction == LIVES_SCROLL_DOWN) mt_zoom_out(NULL, mt);
       return FALSE;
@@ -9404,7 +9402,8 @@ boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespoin
       LiVESXWindow *window = lives_display_get_window_at_pointer
                              ((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                               mt->display, NULL, NULL);
-      if (window == lives_widget_get_xwindow(mt->poly_box)) {
+
+      if (widget == mt->clip_scroll || window == lives_widget_get_xwindow(mt->poly_box)) {
         // scroll fwd / back in clips
         if (event->direction == LIVES_SCROLL_UP) mt_prevclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
         else if (event->direction == LIVES_SCROLL_DOWN) mt_nextclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);

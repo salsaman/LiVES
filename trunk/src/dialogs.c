@@ -36,6 +36,7 @@ static int64_t consume_ticks;
 
 static boolean shown_paused_frames;
 static boolean force_show;
+static boolean td_had_focus;
 
 static double est_time;
 
@@ -329,6 +330,14 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_widget_set_can_focus_and_default(okbutton);
     lives_widget_grab_default_special(okbutton);
     lives_widget_grab_focus(okbutton);
+  }
+
+  if (prefs->show_gui && mainw->is_ready) {
+    while (!lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
+      lives_usleep(prefs->sleep_time * 10);
+      lives_widget_context_update();
+      sched_yield();
+    }
   }
 
   lives_widget_show_all(dialog);
@@ -727,7 +736,7 @@ void pump_io_chan(LiVESIOChannel *iochan) {
     double max;
     LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(((xprocess *)(cfile->proc_ptr))->scrolledwindow));
     lives_text_buffer_insert_at_end(optextbuf, str_return);
-    max = gtk_adjustment_get_upper(adj);
+    max = lives_adjustment_get_upper(adj);
     lives_adjustment_set_value(adj, max);
 
     if ((plen = strlen(prefs->encoder.ptext)) > 0) {
@@ -2696,7 +2705,9 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
   procw = (xprocess *)(lives_calloc(1, sizeof(xprocess)));
 
-  if (!lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) widget_opts.no_gui = TRUE;
+  //g_print("val %d\n", lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)));
+
+  if (!lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) widget_opts.no_gui = TRUE;
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
   widget_opts.no_gui = nogui;
 
@@ -2760,10 +2771,13 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
     mainw->cancel_type = CANCEL_SOFT;
   }
 
-  if (lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)))
+  if (lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
     lives_widget_show_all(procw->processing);
+    td_had_focus = TRUE;
+  } else td_had_focus = FALSE;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, procw->processing);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
   procw->is_ready = TRUE;
 }
@@ -2777,7 +2791,7 @@ void threaded_dialog_spin(double fraction) {
     return;
   }
 
-  if (procw == NULL || !procw->is_ready || !mainw->is_ready) return;
+  if (procw == NULL || !procw->is_ready || !mainw->is_ready || !prefs->show_gui) return;
 
   if (fraction > 0.) {
     timesofar = (double)(lives_get_current_ticks(0, 0) - sttime) / TICKS_PER_SECOND_DBL;
@@ -2788,7 +2802,6 @@ void threaded_dialog_spin(double fraction) {
       // pulse the progress bar
       //#define GDB
 #ifndef GDB
-      //if (lives_has_toplevel_focus(procw->processing) || lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) {
       if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
       //}
 #endif
@@ -2800,12 +2813,13 @@ void threaded_dialog_spin(double fraction) {
     }
   }
 
-  if (lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) {
+  if (!td_had_focus && lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
     if (LIVES_IS_WIDGET(procw->processing)) {
       lives_widget_show_all(procw->processing);
       lives_widget_queue_draw(procw->processing);
     }
     lives_widget_context_update();
+    td_had_focus = TRUE;
   }
 }
 
@@ -2839,6 +2853,8 @@ void do_threaded_dialog(char *trans_text, boolean has_cancel) {
 
 
 void end_threaded_dialog(void) {
+  mainw->cancel_type = CANCEL_KILL;
+
   if (procw != NULL) {
     if (procw->processing != NULL) lives_widget_destroy(procw->processing);
   }
@@ -2851,13 +2867,10 @@ void end_threaded_dialog(void) {
     procw = NULL;
   }
 
-  mainw->cancel_type = CANCEL_KILL;
   mainw->threaded_dialog = FALSE;
 
-  if (mainw->is_ready)
-    if (lives_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) {
-      lives_widget_context_update();
-    }
+  if (mainw->is_ready && prefs->show_gui)
+    lives_widget_context_update();
 }
 
 

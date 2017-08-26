@@ -1664,6 +1664,7 @@ void create_LiVES(void) {
 
   mainw->int_audio_checkbutton = NULL;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
   // insert audio src buttons
   if (prefs->lamp_buttons) {
     mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
@@ -1679,6 +1680,7 @@ void create_LiVES(void) {
                                NULL);
     lives_cool_toggled(mainw->int_audio_checkbutton, NULL);
   }
+#endif
 
   if (mainw->int_audio_checkbutton == NULL) mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
   lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
@@ -1697,6 +1699,7 @@ void create_LiVES(void) {
 
   mainw->ext_audio_checkbutton = NULL;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
   // insert audio src buttons
   if (prefs->lamp_buttons) {
     mainw->ext_audio_checkbutton = lives_toggle_tool_button_new();
@@ -1712,6 +1715,7 @@ void create_LiVES(void) {
                                NULL);
     lives_cool_toggled(mainw->ext_audio_checkbutton, NULL);
   }
+#endif
 
   if (mainw->ext_audio_checkbutton == NULL) mainw->ext_audio_checkbutton = lives_toggle_tool_button_new();
   lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
@@ -2886,7 +2890,6 @@ void create_LiVES(void) {
   mainw->video_drawable = NULL;
   mainw->plug = NULL;
 
-  lives_widget_set_can_focus(mainw->LiVES, TRUE);
   lives_widget_grab_focus(mainw->textview1);
 }
 

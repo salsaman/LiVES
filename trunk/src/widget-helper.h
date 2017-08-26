@@ -294,8 +294,6 @@ boolean lives_window_add_accel_group(LiVESWindow *, LiVESAccelGroup *group);
 boolean lives_window_remove_accel_group(LiVESWindow *, LiVESAccelGroup *group);
 boolean lives_menu_set_accel_group(LiVESMenu *, LiVESAccelGroup *group);
 
-boolean lives_window_has_toplevel_focus(LiVESWindow *);
-
 LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper,
                                       double step_increment, double page_increment, double page_size);
 
@@ -715,6 +713,8 @@ boolean lives_scale_set_draw_value(LiVESScale *, boolean draw_value);
 boolean lives_scale_set_value_pos(LiVESScale *, LiVESPositionType ptype);
 boolean lives_scale_set_digits(LiVESScale *, int digits);
 
+boolean lives_has_toplevel_focus(LiVESWidget *window);
+
 // optional (return TRUE if implemented)
 
 boolean lives_dialog_set_has_separator(LiVESDialog *, boolean has);
@@ -725,7 +725,6 @@ boolean lives_scale_button_set_orientation(LiVESScaleButton *, LiVESOrientation 
 boolean lives_window_set_auto_startup_notification(boolean set);
 
 // compound functions (composed of basic functions)
-boolean lives_has_toplevel_focus(LiVESWindow *window);
 
 void lives_label_set_hpadding(LiVESLabel *label, int pad);
 

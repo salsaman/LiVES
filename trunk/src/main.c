@@ -2793,12 +2793,12 @@ static boolean lives_startup(livespointer data) {
                     add_rfx_effects();
                   }
 
-                  if (prefs->startup_interface != STARTUP_MT) {
+                  //if (prefs->startup_interface != STARTUP_MT) {
                     if (prefs->show_gui) {
                       // mainw->ready gets set here
                       show_lives();
                     }
-                  }
+		    //}
                 }
               }
             }
@@ -3948,15 +3948,18 @@ void load_start_image(int frame) {
   if (mainw->multitrack != NULL) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
 #endif
 
   if (mainw->current_file > -1 && cfile != NULL && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe == NULL) {
       LiVESError *error = NULL;
-      char *tmp = lives_build_filename(prefs->prefix_dir, THEME_DIR, "camera", "frame.jpg", NULL);
+      char *fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_JPG);
+      char *tmp = lives_build_filename(prefs->prefix_dir, THEME_DIR, LIVES_THEME_CAMERA, fname, NULL);
       mainw->camframe = lives_pixbuf_new_from_file(tmp, &error);
       if (mainw->camframe != NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);
+      lives_free(fname);
       lives_free(tmp);
     }
 
@@ -4085,7 +4088,6 @@ void load_start_image(int frame) {
   } while (rwidth != lives_widget_get_allocation_width(mainw->start_image) ||
            rheight != lives_widget_get_allocation_height(mainw->start_image));
 #else
-  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
   }
   while (FALSE);
 #endif
@@ -4112,6 +4114,7 @@ void load_end_image(int frame) {
   if (mainw->multitrack != NULL) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
 #endif
 
@@ -4246,7 +4249,6 @@ void load_end_image(int frame) {
     }
   } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) || rheight != lives_widget_get_allocation_height(mainw->end_image));
 #else
-  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
   }
   while (FALSE);
 #endif
@@ -7604,9 +7606,11 @@ void load_frame_image(int frame) {
         if (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV) {
           if (mainw->camframe == NULL) {
             LiVESError *error = NULL;
-            char *tmp = lives_build_filename(prefs->prefix_dir, THEME_DIR, "camera", "frame.jpg", NULL);
+	    char *fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_JPG);
+            char *tmp = lives_build_filename(prefs->prefix_dir, THEME_DIR, LIVES_THEME_CAMERA, fname, NULL);
             mainw->camframe = lives_pixbuf_new_from_file(tmp, &error);
             if (mainw->camframe != NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);
+            lives_free(fname);
             lives_free(tmp);
           }
           if (mainw->camframe == NULL) {

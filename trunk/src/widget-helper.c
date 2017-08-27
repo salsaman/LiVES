@@ -8512,8 +8512,8 @@ boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE void lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr, lives_colRGB48_t *col) {
-  lives_painter_set_source_rgb(cr,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr, lives_colRGB48_t *col) {
+  return lives_painter_set_source_rgb(cr,
                                (double)col->red / 65535.,
                                (double)col->green / 65535.,
                                (double)col->blue / 65535.
@@ -8521,12 +8521,21 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_painter_set_source_rgb_from_lives_rgb(liv
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE void lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr, lives_colRGBA64_t *col) {
-  lives_painter_set_source_rgb(cr,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr, lives_colRGBA64_t *col) {
+  return lives_painter_set_source_rgb(cr,
                                (double)col->red / 65535.,
                                (double)col->green / 65535.,
                                (double)col->blue / 65535.
                               );
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb_from_lives_widget_color(lives_painter_t *cr, LiVESWidgetColor *wcol) {
+  lives_colRGBA64_t col;
+  if (widget_color_to_lives_rgba(&col, wcol)) {
+    return lives_painter_set_source_rgb_from_lives_rgba(cr, &col);
+  }
+  return FALSE;
 }
 
 
@@ -9429,10 +9438,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_rgba_equal(lives_colRGBA64_t *col1, li
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE void lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2) {
   col1->red = col2->red;
   col1->green = col2->green;
   col1->blue = col2->blue;
   col1->alpha = col2->alpha;
+  return TRUE;
 }
 

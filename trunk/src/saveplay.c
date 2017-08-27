@@ -5265,9 +5265,17 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   boolean is_scrap;
   boolean is_ascrap;
   boolean did_set_check = FALSE;
-  boolean is_ready;
+  boolean is_ready = mainw->is_ready;
+  boolean mt_is_ready = FALSE;
 
   splash_end();
+
+  // setting is_ready allows us to get the correct transient window for dialogs
+  // otherwise the dialogs will appear behind the main interface
+  // we do this for mainwindow and multitrack
+
+  // we will reset these before returning
+  mainw->is_ready = TRUE;
 
   if (mainw->multitrack != NULL) {
     if (mainw->multitrack->idlefunc > 0) {
@@ -5275,14 +5283,17 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       mainw->multitrack->idlefunc = 0;
     }
     mt_desensitise(mainw->multitrack);
+    mt_is_ready = mainw->multitrack->is_ready;
+    mainw->multitrack->is_ready = TRUE;
   }
 
   if (!auto_recover) {
     if (!do_yesno_dialog
-        (_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
+	(_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
       lives_rm(recovery_file);
-
+      mainw->is_ready = is_ready;
       if (mainw->multitrack != NULL) {
+	mainw->multitrack->is_ready = mt_is_ready;
         mt_sensitise(mainw->multitrack);
       }
       return FALSE;
@@ -5294,14 +5305,16 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     rfile = fopen(recovery_file, "r");
     if (!rfile) {
       retval = do_read_failed_error_s_with_retry(recovery_file, lives_strerror(errno), NULL);
-      if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
+      if (retval == LIVES_RESPONSE_CANCEL) {
+	if (mainw->multitrack != NULL) mainw->multitrack->is_ready = mt_is_ready;
+	mainw->is_ready = is_ready;
+	return FALSE;
+      }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 
-  mainw->is_ready = TRUE;
   do_threaded_dialog(_("Recovering files"), FALSE);
   d_print(_("Recovering files..."));
-  mainw->is_ready = FALSE;
 
   lives_widget_context_update();
   threaded_dialog_spin(0.);
@@ -5393,12 +5406,14 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
         mainw->suppress_dprint = FALSE;
         d_print_failed();
+	if (mainw->multitrack != NULL) mainw->multitrack->is_ready = mt_is_ready;
+	mainw->is_ready = is_ready;
         return TRUE;
       }
-      if (strstr(buffptr, "/clips/")) {
+      if (strstr(buffptr, "/" CLIPS_DIRNAME "/")) {
         char **array;
         threaded_dialog_spin(0.);
-        array = lives_strsplit(buffptr, "/clips/", -1);
+        array = lives_strsplit(buffptr, "/" CLIPS_DIRNAME "/", -1);
         mainw->was_set = TRUE;
         lives_snprintf(mainw->set_name, 128, "%s", array[0]);
         lives_strfreev(array);
@@ -5548,7 +5563,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           mainw->multitrack = multi;
           get_total_time(cfile);
           mainw->current_file = mainw->multitrack->render_file;
-          mt_init_clips(mainw->multitrack, current_file, TRUE);
+	  mt_init_clips(mainw->multitrack, current_file, TRUE);
+	  set_poly_tab(mainw->multitrack, POLY_CLIPS);
           lives_widget_context_update();
           mt_clip_select(mainw->multitrack, TRUE);
           lives_widget_context_update();
@@ -5600,10 +5616,10 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   }
 
   mainw->suppress_dprint = FALSE;
-  if (mainw->is_ready) d_print_done();
-  is_ready = mainw->is_ready;
+  if (is_ready) d_print_done();
   mainw->is_ready = TRUE;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+  if (mainw->multitrack != NULL) mainw->multitrack->is_ready = mt_is_ready;
   mainw->is_ready = is_ready;
   update_play_times();
   mainw->last_dprint_file = -1;
@@ -5742,8 +5758,8 @@ boolean check_for_recovery_files(boolean auto_recover) {
   mainw->com_failed = FALSE;
 
   // check for layout recovery file
-  recovery_file = lives_strdup_printf("%s/layout.%d.%d.%d", prefs->workdir, luid, lgid, recpid);
-  recovery_numbering_file = lives_strdup_printf("%s/layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, recpid);
+  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid);
+  recovery_numbering_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, recpid);
 
   if (lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
     // move files temporarily to stop them being cleansed
@@ -5768,8 +5784,8 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_system(com, FALSE);
   lives_free(com);
 
-  recovery_file = lives_strdup_printf("%s/layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
-  recovery_numbering_file = lives_strdup_printf("%s/layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid);
+  recovery_numbering_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
 
   if (mainw->recoverable_layout) {
     // move files back

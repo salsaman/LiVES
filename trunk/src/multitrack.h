@@ -44,6 +44,8 @@
 #define BLOCK_DRAW_THUMB 2
 #define BLOCK_DRAW_TYPE BLOCK_DRAW_THUMB
 
+#define SELBLOCK_ALPHA 0.6
+
 #define DEF_TIME 120 ///< default seconds when there is no event_list
 
 typedef struct _mt lives_mt;
@@ -708,6 +710,7 @@ boolean multitrack_delete(lives_mt *, boolean save);
 
 // morph the poly window
 void polymorph(lives_mt *, lives_mt_poly_state_t poly);
+void set_poly_tab(lives_mt *mt, uint32_t tab);
 
 // gui related
 void mt_desensitise(lives_mt *);

@@ -4448,6 +4448,8 @@ void splash_end(void) {
   mainw->splash_window = NULL;
   lives_widget_context_update();
 
-  if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && mainw->multitrack == NULL)
+  if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && mainw->multitrack == NULL) {
     on_multitrack_activate(NULL, NULL);
+    mainw->is_ready = TRUE;
+  }
 }

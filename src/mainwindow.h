@@ -368,6 +368,8 @@ enum {
 #define THEME_HEADER "header.theme"
 #define THEME_HEADER_2 "header.theme_gtk2"
 
+#define LIVES_THEME_CAMERA "camera"
+
 #define LIVES_CLIP_HEADER "header.lives"
 #define LIVES_CLIP_HEADER_OLD "header"
 #define LIVES_CLIP_HEADER_OLD2 "header2"
@@ -385,6 +387,9 @@ enum {
 #define SET_LOCK_FILENAME "lock"
 
 #define LAYOUT_MAP_FILENAME "layout.map"
+
+#define LAYOUT_NUMBERING_FILENAME "layout_numbering"
+#define LAYOUT_FILENAME "layout"
 
 // directory names
 #define LAYOUTS_DIRNAME "layouts"

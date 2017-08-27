@@ -602,7 +602,7 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
 
   int fd, i, vali, hdlsize;
   double vald;
-  char *asave_file = lives_strdup_printf("%s/layout_numbering.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(),
+  char *asave_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
                                          capable->mainpid);
   LiVESList *clist = mainw->cliplist;
 
@@ -612,12 +612,11 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
   mainw->write_failed = FALSE;
 
   if (fd != -1) {
-    while (mainw->write_failed && clist != NULL) {
+    while (!mainw->write_failed && clist != NULL) {
       i = LIVES_POINTER_TO_INT(clist->data);
       if (mainw->files[i]->clip_type != CLIP_TYPE_DISK && mainw->files[i]->clip_type != CLIP_TYPE_FILE) {
         clist = clist->next;
         continue;
-
       }
       if (mt != NULL) {
         lives_write_le_buffered(fd, &i, 4, TRUE);
@@ -638,7 +637,7 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
         }
       }
       clist = clist->next;
-    }
+    } 
 
     lives_close_buffered(fd);
   }
@@ -674,7 +673,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 
   int fd, vari, clipn, offs;
   double vard;
-  char *aload_file = lives_strdup_printf("%s/layout_numbering.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(),
+  char *aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
                                          capable->mainpid);
   boolean isfirst = TRUE;
   char buf[256];
@@ -696,8 +695,10 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
             if (vari > 255) vari = 255;
             if (lives_read_buffered(fd, buf, vari, TRUE) == vari) {
               memset(buf + vari, 0, 1);
+	      g_print("CF .%s. .%s.\n", mainw->files[clipn + offs]->handle, buf);
               while (mainw->files[clipn + offs] != NULL && strcmp(mainw->files[clipn + offs]->handle, buf)) {
                 offs++;
+		g_print("CF2 .%s. .%s.\n", mainw->files[clipn + offs]->handle, buf);
               }
               if (mainw->files[clipn + offs] == NULL) break;
               // got a match - index the current clip order -> clip order in layout
@@ -723,7 +724,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   struct timeval otv;
   lives_mt_poly_state_t poly_state;
 
-  char *asave_file = lives_strdup_printf("%s/layout.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
+  char *asave_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid);
   char *tmp;
 
   boolean retval = TRUE;
@@ -748,6 +749,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
       set_signal_handlers((SignalHandlerPointer)defer_sigint);
 
       retval = save_event_list_inner(mt, fd, mt->event_list, NULL);
+      if (retval) retval = write_backup_layout_numbering(mt);
 
       if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
 
@@ -755,8 +757,6 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
       end_threaded_dialog();
       paint_lines(mt, mt->ptr_time, FALSE);
-
-      if (retval) retval = write_backup_layout_numbering(mt);
 
       remove_markers(mt->event_list);
       lives_close_buffered(fd);
@@ -836,14 +836,14 @@ uint32_t mt_idle_add(lives_mt *mt) {
 
 
 void recover_layout_cancelled(boolean is_startup) {
-  char *eload_file = lives_strdup_printf("%s/layout.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
+  char *eload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid);
 
   if (is_startup) mainw->recoverable_layout = FALSE;
 
   lives_rm(eload_file);
   lives_free(eload_file);
 
-  eload_file = lives_strdup_printf("%s/layout_numbering.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
+  eload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid);
   lives_rm(eload_file);
   lives_free(eload_file);
 
@@ -852,9 +852,9 @@ void recover_layout_cancelled(boolean is_startup) {
 
 
 static void mt_load_recovery_layout(lives_mt *mt) {
-  char *aload_file = lives_strdup_printf("%s/layout_numbering.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(),
+  char *aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
                                          capable->mainpid);
-  char *eload_file = lives_strdup_printf("%s/layout.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
+  char *eload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid);
 
   mt->auto_reloading = TRUE;
   mainw->event_list = mt->event_list = load_event_list(mt, eload_file);
@@ -899,9 +899,9 @@ void recover_layout(void) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     if (prefs->mt_auto_back == 0) mt_auto_backup(mainw->multitrack);
+    set_mt_play_sizes(mainw->multitrack, cfile->hsize, cfile->vsize);
   }
   mainw->recoverable_layout = FALSE;
-  set_mt_play_sizes(mainw->multitrack, cfile->hsize, cfile->vsize);
   do_after_crash_warning();
 }
 
@@ -1110,7 +1110,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
         lives_painter_rectangle(cr, offset_start, 0, offset_end - offset_start, lives_widget_get_allocation_height(eventbox));
         lives_painter_fill(cr);
       }
-      lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
       lives_painter_new_path(cr);
       lives_painter_rectangle(cr, offset_start, 0, offset_end - offset_start, lives_widget_get_allocation_height(eventbox));
       lives_painter_stroke(cr);
@@ -1162,16 +1162,11 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
   case BLOCK_SELECTED:
     lives_painter_new_path(cr);
 
-    // TODO: render background
-    lives_painter_set_source_rgba(cr,
-                                  0.,
-                                  0.,
-                                  0.,
-                                  0.6);
+    lives_painter_set_source_rgba(cr, 0., 0., 0., SELBLOCK_ALPHA);
+
     lives_painter_rectangle(cr, offset_start, 0, offset_end - offset_start, lives_widget_get_allocation_height(eventbox));
     lives_painter_fill(cr);
 
-    lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
     lives_painter_new_path(cr);
     lives_painter_rectangle(cr, offset_start, 0, offset_end - offset_start, lives_widget_get_allocation_height(eventbox));
 
@@ -1254,7 +1249,7 @@ static void draw_aparams(lives_mt *mt, LiVESWidget *eventbox, lives_painter_t *c
   track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "layer_number")) + mt->opts.back_audio_tracks;
 
   lives_painter_set_line_width(cr, 1.);
-  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+  lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
 
   if (weed_plant_has_leaf(init_event, WEED_LEAF_IN_PARAMETERS)) {
     if (weed_leaf_num_elements(init_event, WEED_LEAF_IN_PARAMETERS) > 0)
@@ -1973,7 +1968,6 @@ static boolean on_mt_timeline_scroll(LiVESWidget *widget, LiVESXEventScroll *eve
   //if (!lives_window_has_toplevel_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))) return FALSE;
 
   LiVESXModifierType kstate = (LiVESXModifierType)event->state;
-  g_print("pt aa %d\n", kstate);
   if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_CONTROL_MASK) return on_mouse_scroll(widget, event, user_data);
 
   cval = lives_adjustment_get_value(lives_range_get_adjustment(LIVES_RANGE(mt->scrollbar)));
@@ -2726,7 +2720,6 @@ void mt_clip_select(lives_mt *mt, boolean scroll) {
       polymorph(mt, POLY_FX_STACK);
     }
   } else polymorph(mt, POLY_CLIPS);
-
   if (mt->clip_selected < 0) {
     was_neg = TRUE;
     mt->clip_selected = -mt->clip_selected;
@@ -3522,7 +3515,7 @@ static boolean notebook_page(LiVESWidget *nb, LiVESWidget *nbp, uint32_t tab, li
 }
 
 
-static void set_poly_tab(lives_mt *mt, uint32_t tab) {
+void set_poly_tab(lives_mt *mt, uint32_t tab) {
   int page = poly_tab_to_page(tab);
   lives_widget_show(lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), page));
   if (page != lives_notebook_get_current_page(LIVES_NOTEBOOK(mt->nb))) {
@@ -5563,8 +5556,10 @@ void set_mt_colours(lives_mt *mt) {
 
 #ifdef ENABLE_GIW_3
   // need to set this even if theme is none
-  lives_widget_set_bg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  if (mt->timeline != NULL) {
+    lives_widget_set_bg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
 #endif
 
   mt_clip_select(mt, FALSE);
@@ -8155,7 +8150,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_object_ref(mt->in_out_box);
 
   vbox = lives_vbox_new(FALSE, 0);
-  lives_widget_set_vexpand(vbox, FALSE);
   lives_box_pack_start(LIVES_BOX(mt->in_out_box), vbox, FALSE, TRUE, 0);
 
   mt->in_image = lives_image_new();
@@ -10337,11 +10331,6 @@ void mt_init_clips(lives_mt *mt, int orig_file, boolean add) {
       if (thumbnail != NULL) lives_object_unref(thumbnail);
       lives_container_add(LIVES_CONTAINER(eventbox), vbox);
       lives_box_pack_start(LIVES_BOX(mt->clip_inner_box), eventbox, FALSE, FALSE, 0);
-      /*
-      if (palette->style&STYLE_1) {
-        lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-      }
-      */
 
       lives_snprintf(filename, PATH_MAX, "%s", (tmp = lives_path_get_basename(mainw->files[i]->name)));
       lives_free(tmp);
@@ -10705,8 +10694,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   lives_paned_set_position(LIVES_PANED(multi->hpaned), (GUI_SCREEN_WIDTH - multi->play_width));
 
-  lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
-
   if (prefs->show_gui && prefs->open_maximised) {
     int wx, wy;
     lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
@@ -10719,6 +10706,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   redraw_all_event_boxes(multi);
+  lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
 
   lives_widget_context_update();
   multi->no_expose = FALSE;
@@ -12734,7 +12722,7 @@ static void mouse_select_move(LiVESWidget *widget, LiVESXEventMotion *event, liv
   if (start_y < 0) start_y = 0;
 
   cr = lives_painter_create_from_widget(mt->tl_eventbox);
-  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+  lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
 
   lives_painter_rectangle(cr, start_x, start_y, width, height);
   lives_painter_fill(cr);
@@ -12825,6 +12813,7 @@ void do_block_context(lives_mt *mt, LiVESXEventButton *event, track_rect *block)
   LiVESWidget *avol;
   LiVESWidget *menu = lives_menu_new();
 
+  double block_start_time, block_end_time;
   int error;
 
   //mouse_select_end(NULL,mt);
@@ -12840,9 +12829,15 @@ void do_block_context(lives_mt *mt, LiVESXEventButton *event, track_rect *block)
                        (livespointer)mt);
 
   if (block->ordered) { // TODO
-    split_here = lives_standard_menu_item_new_with_mnemonic(_("_Split Block Here"));
+    split_here = lives_standard_menu_item_new_with_mnemonic(_("_Split Block At Cursor"));
     lives_container_add(LIVES_CONTAINER(menu), split_here);
 
+    // disable if cursor out block
+    block_start_time = get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL + 1. / cfile->fps;
+    block_end_time = get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL + (double)(!is_audio_eventbox(block->eventbox)) / cfile->fps;
+    if (mt->ptr_time < block_start_time || mt->ptr_time >= block_end_time)
+      lives_widget_set_sensitive(split_here, FALSE);
+    
     lives_signal_connect(LIVES_GUI_OBJECT(split_here), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_split_activate),
                          (livespointer)mt);
@@ -13159,6 +13154,7 @@ boolean on_track_between_release(LiVESWidget *widget, LiVESXEventButton *event, 
 
 boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
+
   track_rect *block;
 
   double timesecs;
@@ -13196,10 +13192,11 @@ boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *event, livespoi
       return TRUE;
     } else {
       // single click, TODO - locate the frame for the track in event_list
-
-      if (mainw->playing_file == -1) {
-        mt->fm_edit_event = NULL;
-        mt_tl_move(mt, timesecs);
+      if (event->button == 1) {
+	if (mainw->playing_file == -1) {
+	  mt->fm_edit_event = NULL;
+	  mt_tl_move(mt, timesecs);
+	}
       }
 
       // for a double click, gdk normally sends 2 single click events,
@@ -13210,68 +13207,69 @@ boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *event, livespoi
       // however, this is quite useful as we can skip the next bit
 
       if (event->time != dclick_time) {
-        show_track_info(mt, eventbox, track, timesecs);
-        if (block != NULL) {
-          if (!is_audio_eventbox(eventbox))
-            filenum = get_frame_event_clip(block->start_event, track);
-          else filenum = get_audio_frame_clip(block->start_event, -1);
-          if (filenum != mainw->scrap_file && filenum != mainw->ascrap_file) {
-            mt->clip_selected = mt_clip_from_file(mt, filenum);
-            mt_clip_select(mt, TRUE);
-          }
+	show_track_info(mt, eventbox, track, timesecs);
+	if (block != NULL) {
+	  if (!is_audio_eventbox(eventbox))
+	    filenum = get_frame_event_clip(block->start_event, track);
+	  else filenum = get_audio_frame_clip(block->start_event, -1);
+	  if (filenum != mainw->scrap_file && filenum != mainw->ascrap_file) {
+	    mt->clip_selected = mt_clip_from_file(mt, filenum);
+	    mt_clip_select(mt, TRUE);
+	  }
 
-          if (event->button != 3 && !mt->is_rendering) {
-            double start_secs, end_secs;
+	  if (!mt->is_rendering) {
+	    double start_secs, end_secs;
 
-            LiVESXScreen *screen;
-            int abs_x, abs_y;
+	    LiVESXScreen *screen;
+	    int abs_x, abs_y;
 
-            int ebwidth = lives_widget_get_allocation_width(mt->timeline);
+	    int ebwidth = lives_widget_get_allocation_width(mt->timeline);
 
-            double width = ((end_secs = (get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL)) -
-                            (start_secs = (get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL)) + 1. / mt->fps);
-            int height;
+	    double width = ((end_secs = (get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL)) -
+			    (start_secs = (get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL)) + 1. / mt->fps);
+	    int height;
 
-            // start point must be on timeline to move a block
-            if (block != NULL && (mt->tl_min * TICKS_PER_SECOND_DBL > get_event_timecode(block->start_event))) {
-              mt->putative_block = NULL;
-              return TRUE;
-            }
+	    // start point must be on timeline to move a block
+	    if (block != NULL && (mt->tl_min * TICKS_PER_SECOND_DBL > get_event_timecode(block->start_event))) {
+	      mt->putative_block = NULL;
+	      return TRUE;
+	    }
+	    if (event->button == 1) {
+	      if (!is_audio_eventbox(eventbox))
+		height = lives_widget_get_allocation_height(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, 0)));
+	      else height = lives_widget_get_allocation_height(LIVES_WIDGET(mt->audio_draws->data));
 
-            if (!is_audio_eventbox(eventbox))
-              height = lives_widget_get_allocation_height(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, 0)));
-            else height = lives_widget_get_allocation_height(LIVES_WIDGET(mt->audio_draws->data));
+	      width = (width / (mt->tl_max - mt->tl_min) * (double)ebwidth);
+	      if (width > ebwidth) width = ebwidth;
+	      if (width < 2) width = 2;
 
-            width = (width / (mt->tl_max - mt->tl_min) * (double)ebwidth);
-            if (width > ebwidth) width = ebwidth;
-            if (width < 2) width = 2;
-
-            mt->hotspot_x = x - (int)((ebwidth * ((double)start_secs - mt->tl_min) / (mt->tl_max - mt->tl_min)) + .5);
-            mt->hotspot_y = y;
-            lives_display_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
-                                      mt->display, &screen, &abs_x, &abs_y, NULL);
-            lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
-                                       mt->display, screen, abs_x - mt->hotspot_x, abs_y - y + height / 2);
-            if (track >= 0 && !mt->aud_track_selected) {
-              if (mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
-                lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
-                if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
-                  mt_set_cursor_style(mt, LIVES_CURSOR_VIDEO_BLOCK, width, height, filenum, 0, height / 2);
-                } else {
-                  mt_set_cursor_style(mt, LIVES_CURSOR_BLOCK, width, height, filenum, 0, height / 2);
-                }
-              } else {
-                mt_set_cursor_style(mt, LIVES_CURSOR_BLOCK, width, height, filenum, 0, height / 2);
-              }
-            } else mt_set_cursor_style(mt, LIVES_CURSOR_AUDIO_BLOCK, width, height, filenum, 0, height / 2);
-          }
-        }
+	      mt->hotspot_x = x - (int)((ebwidth * ((double)start_secs - mt->tl_min) / (mt->tl_max - mt->tl_min)) + .5);
+	      mt->hotspot_y = y;
+	      lives_display_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+					mt->display, &screen, &abs_x, &abs_y, NULL);
+	      lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+					 mt->display, screen, abs_x - mt->hotspot_x, abs_y - y + height / 2);
+	      if (track >= 0 && !mt->aud_track_selected) {
+		if (mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
+		  lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
+		  if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
+		    mt_set_cursor_style(mt, LIVES_CURSOR_VIDEO_BLOCK, width, height, filenum, 0, height / 2);
+		  } else {
+		    mt_set_cursor_style(mt, LIVES_CURSOR_BLOCK, width, height, filenum, 0, height / 2);
+		  }
+		} else {
+		  mt_set_cursor_style(mt, LIVES_CURSOR_BLOCK, width, height, filenum, 0, height / 2);
+		}
+	      } else mt_set_cursor_style(mt, LIVES_CURSOR_AUDIO_BLOCK, width, height, filenum, 0, height / 2);
+	    }
+	  }
+	}
       } else {
-        mt->putative_block = NULL; // please don't move the block
+	mt->putative_block = NULL; // please don't move the block
       }
     }
   }
-
+  
   mt->current_track = track;
   track_select(mt);
 
@@ -17131,7 +17129,22 @@ void draw_region(lives_mt *mt) {
   lives_painter_t *cr;
 
   double start, end;
-  if (mt->region_start == mt->region_end) return;
+  if (mt->region_start == mt->region_end) {
+    cr = lives_painter_create_from_widget(mt->timeline_reg);
+
+    if (palette->style & STYLE_3) {
+      lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->menu_and_bars);
+    }
+    else {
+      lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
+    }
+    
+    lives_painter_rectangle(cr, 0, 0,
+			    lives_widget_get_allocation_width(mt->timeline_reg),
+			    lives_widget_get_allocation_height(mt->timeline_reg));
+    lives_painter_fill(cr);
+    lives_painter_destroy(cr);
+  }
 
   if (mt->region_start < mt->region_end) {
     start = mt->region_start;
@@ -17150,7 +17163,20 @@ void draw_region(lives_mt *mt) {
   }
 
   cr = lives_painter_create_from_widget(mt->timeline_reg);
-  lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->mt_timeline_reg); ///< opaque black
+
+  if (palette->style & STYLE_3) {
+    lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->menu_and_bars);
+  }
+  else {
+    lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
+  }
+
+  lives_painter_rectangle(cr, 0, 0,
+                          lives_widget_get_allocation_width(mt->timeline_reg),
+                          lives_widget_get_allocation_height(mt->timeline_reg));
+  lives_painter_fill(cr);
+  
+  lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->mt_timeline_reg);
   lives_painter_rectangle(cr, (start - mt->tl_min)*lives_widget_get_allocation_width(mt->timeline) / (mt->tl_max - mt->tl_min),
                           0,
                           (end - start)*lives_widget_get_allocation_width(mt->timeline) / (mt->tl_max - mt->tl_min),
@@ -17678,14 +17704,19 @@ boolean on_timeline_release(LiVESWidget *eventbox, LiVESXEventButton *event, liv
 
 boolean on_timeline_press(LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  int x;
+
+  LiVESXModifierType modmask;
+  LiVESXDevice *device;
+
   double pos;
+
+  int x;
 
   if (!mainw->interactive) return FALSE;
 
   if (mainw->playing_file > -1) return FALSE;
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &x, NULL);
   pos = get_time_from_x(mt, x);
   if (widget == mt->timeline_reg) {
@@ -17694,19 +17725,24 @@ boolean on_timeline_press(LiVESWidget *widget, LiVESXEventButton *event, livespo
     mt->region_updating = TRUE;
   }
 
-  if (widget == mt->timeline_eb) {
-    mt->fm_edit_event = NULL;
-    mt_tl_move(mt, pos);
-    mt->tl_mouse = TRUE;
+  device = (LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device;
+  lives_widget_get_modmask(device, widget, &modmask);
+
+  if (event->button == 1) {
+    if (widget == mt->timeline_eb) {
+      mt->fm_edit_event = NULL;
+      mt_tl_move(mt, pos);
+      mt->tl_mouse = TRUE;
+    }
+
+    if (widget == mt->timeline) {
+      mt->fm_edit_event = NULL;
+      mt_tl_move(mt, pos);
+    }
+
+    if (mt->opts.mouse_mode == MOUSE_MODE_SELECT) mouse_select_start(widget, event, mt);
   }
-
-  if (widget == mt->timeline) {
-    mt->fm_edit_event = NULL;
-    mt_tl_move(mt, pos);
-  }
-
-  if (mt->opts.mouse_mode == MOUSE_MODE_SELECT) mouse_select_start(widget, event, mt);
-
+  
   return TRUE;
 }
 

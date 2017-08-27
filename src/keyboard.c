@@ -126,7 +126,7 @@ LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespoi
   key = xev->xkey.state;
   modifiers = xev->xkey.state;
 
-  modifiers = (lives_accelerator_get_default_mod_mask() & modifiers) | NEEDS_TRANSLATION;
+  modifiers = (LIVES_DEFAULT_MOD_MASK & modifiers) | NEEDS_TRANSLATION;
 
   // key down
   if (xev->type == LIVES_XEVENT_TYPE_KEYPRESS) return pl_key_function(TRUE, key, modifiers) ? LIVES_FILTER_REMOVE : LIVES_FILTER_CONTINUE;

@@ -5006,6 +5006,7 @@ boolean reload_set(const char *set_name) {
   char *subfname;
   char vid_open_dir[PATH_MAX];
   char *cwd;
+  char *tfile;
 
   boolean added_recovery = FALSE;
   boolean keep_threaded_dialog = FALSE;
@@ -5128,7 +5129,6 @@ boolean reload_set(const char *set_name) {
         lives_free(tmp);
 
         lives_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED, mainw->set_name);
-
       }
 
       threaded_dialog_spin(0.);
@@ -5140,7 +5140,6 @@ boolean reload_set(const char *set_name) {
           }
           // force a redraw
           update_play_times();
-
           lives_widget_context_update();
         }
       } else {
@@ -5168,7 +5167,7 @@ boolean reload_set(const char *set_name) {
 
     if (orderfile != NULL) {
       // newer style (0.9.6+)
-      char *tfile;
+      char *set_lock_file;
       char *clipdir = lives_build_filename(prefs->workdir, mainw->msg, NULL);
       if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
         lives_free(clipdir);
@@ -5203,9 +5202,12 @@ boolean reload_set(const char *set_name) {
       cfile->clip_type = CLIP_TYPE_DISK; // the default
 
       // lock the set
-      tfile = lives_strdup_printf("%s"LIVES_DIR_SEP"%s"LIVES_DIR_SEP"lock.%d", prefs->workdir, set_name, capable->mainpid);
+      threaded_dialog_spin(0.);
+      set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
+      tfile = lives_build_filename(prefs->workdir, mainw->set_name, set_lock_file, NULL);
       lives_touch(tfile);
       lives_free(tfile);
+      lives_free(set_lock_file);
     }
 
     //create a new cfile and fill in the details
@@ -9386,7 +9388,6 @@ boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespoin
   uint32_t type = 1;
 
   if (!mainw->interactive) return FALSE;
-  g_print("pt b\n");
   if (mt != NULL) {
     // multitrack mode
     if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_CONTROL_MASK) {
@@ -9417,8 +9418,8 @@ boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespoin
 
   if (!prefs->mouse_scroll_clips) return FALSE;
 
-  if (kstate == LIVES_SHIFT_MASK) type = 2; // bg
-  else if (kstate == LIVES_CONTROL_MASK) type = 0; // fg or bg
+  if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_SHIFT_MASK) type = 2; // bg
+  else if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_CONTROL_MASK) type = 0; // fg or bg
 
   if (event->direction == LIVES_SCROLL_UP) prevclip_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(type));
   else if (event->direction == LIVES_SCROLL_DOWN) nextclip_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(type));
@@ -9576,7 +9577,6 @@ boolean on_hrule_update(LiVESWidget *widget, LiVESXEventMotion *event, livespoin
   if (mainw->current_file <= 0) return TRUE;
 
   device = (LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device;
-
   lives_widget_get_modmask(device, widget, &modmask);
 
   if (!(modmask & LIVES_BUTTON1_MASK)) return TRUE;

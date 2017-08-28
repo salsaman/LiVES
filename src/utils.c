@@ -3053,7 +3053,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_unsel);
 
           for (i = posx; i < offset_left && i < offset_end; i++) {
-	    pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
             lives_painter_move_to(crx, i, prefs->bar_height * 2);
             lives_painter_line_to(crx, i, ROUND_I((double)prefs->bar_height * (2. - cfile->audio_waveform[0][pos])));
           }
@@ -3063,8 +3063,8 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_sel);
 
           for (; i < offset_right && i < offset_end; i++) {
-	    pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
-	    lives_painter_move_to(crx, i, prefs->bar_height * 2);
+            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+            lives_painter_move_to(crx, i, prefs->bar_height * 2);
             lives_painter_line_to(crx, i, ROUND_I((double)prefs->bar_height * (2. - cfile->audio_waveform[0][pos])));
           }
           lives_painter_stroke(crx);
@@ -3073,7 +3073,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_unsel);
 
           for (; i < offset_end; i++) {
-	    pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
             lives_painter_move_to(crx, i, prefs->bar_height * 2);
             lives_painter_line_to(crx, i, ROUND_I((double)prefs->bar_height * (2. - cfile->audio_waveform[0][pos])));
           }
@@ -3165,7 +3165,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_unsel);
 
           for (i = posx; i < offset_left && i < offset_end; i++) {
-	    pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
             lives_painter_move_to(crx, i, prefs->bar_height * 2);
             lives_painter_line_to(crx, i, ROUND_I((double)prefs->bar_height * (2. - cfile->audio_waveform[1][pos])));
           }
@@ -3175,7 +3175,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_sel);
 
           for (; i < offset_right && i < offset_end; i++) {
-	    pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
             lives_painter_move_to(crx, i, prefs->bar_height * 2);
             lives_painter_line_to(crx, i, ROUND_I((double)prefs->bar_height * (2. - cfile->audio_waveform[1][pos])));
           }
@@ -3185,7 +3185,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_unsel);
 
           for (; i < offset_end; i++) {
-	    pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
             lives_painter_move_to(crx, i, prefs->bar_height * 2);
             lives_painter_line_to(crx, i, (double)prefs->bar_height * (2. - cfile->audio_waveform[1][pos]));
           }
@@ -3432,22 +3432,22 @@ void draw_little_bars(double ptrtime, int which) {
         lives_painter_set_line_width(cr, 1.);
 
         if (frame >= cfile->start && frame <= cfile->end) {
-	  lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
+          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
           lives_painter_move_to(cr, offset, 0);
           lives_painter_line_to(cr, offset, prefs->bar_height);
         } else {
-	  lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
+          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
           lives_painter_move_to(cr, offset, 0);
           lives_painter_line_to(cr, offset, prefs->bar_height);
         }
         lives_painter_stroke(cr);
 
         if (palette->style & STYLE_3 || palette->style == STYLE_PLAIN) { // light style
-	  lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
+          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
           lives_painter_move_to(cr, offset, prefs->bar_height);
           lives_painter_line_to(cr, offset, allocheight);
         } else {
-	  lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
+          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
           lives_painter_move_to(cr, offset, prefs->bar_height);
           lives_painter_line_to(cr, offset, allocheight);
         }
@@ -3484,22 +3484,22 @@ void draw_little_bars(double ptrtime, int which) {
       lives_painter_set_line_width(cr, 1.);
 
       if (frame >= cfile->start && frame <= cfile->end) {
-	lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
+        lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
         lives_painter_move_to(cr, offset, 0);
         lives_painter_line_to(cr, offset, prefs->bar_height);
       } else {
-	lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
+        lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
         lives_painter_move_to(cr, offset, 0);
         lives_painter_line_to(cr, offset, prefs->bar_height);
       }
       lives_painter_stroke(cr);
 
       if (palette->style & STYLE_3 || palette->style == STYLE_PLAIN) { // light style
-	lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
+        lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
         lives_painter_move_to(cr, offset, prefs->bar_height);
         lives_painter_line_to(cr, offset, allocheight);
       } else {
-	lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
+        lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
         lives_painter_move_to(cr, offset, prefs->bar_height);
         lives_painter_line_to(cr, offset, allocheight);
       }
@@ -3514,22 +3514,22 @@ void draw_little_bars(double ptrtime, int which) {
         lives_painter_set_line_width(cr, 1.);
 
         if (frame >= cfile->start && frame <= cfile->end) {
-	  lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
+          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
           lives_painter_move_to(cr, offset, 0);
           lives_painter_line_to(cr, offset, prefs->bar_height);
         } else {
-	  lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
+          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
           lives_painter_move_to(cr, offset, 0);
           lives_painter_line_to(cr, offset, prefs->bar_height);
         }
         lives_painter_stroke(cr);
 
         if (palette->style & STYLE_3 || palette->style == STYLE_PLAIN) { // light style
-	  lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
+          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
           lives_painter_move_to(cr, offset, prefs->bar_height);
           lives_painter_line_to(cr, offset, allocheight);
         } else {
-	  lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
+          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
           lives_painter_move_to(cr, offset, prefs->bar_height);
           lives_painter_line_to(cr, offset, allocheight);
         }

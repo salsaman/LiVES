@@ -637,7 +637,7 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
         }
       }
       clist = clist->next;
-    } 
+    }
 
     lives_close_buffered(fd);
   }
@@ -695,10 +695,8 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
             if (vari > 255) vari = 255;
             if (lives_read_buffered(fd, buf, vari, TRUE) == vari) {
               memset(buf + vari, 0, 1);
-	      g_print("CF .%s. .%s.\n", mainw->files[clipn + offs]->handle, buf);
               while (mainw->files[clipn + offs] != NULL && strcmp(mainw->files[clipn + offs]->handle, buf)) {
                 offs++;
-		g_print("CF2 .%s. .%s.\n", mainw->files[clipn + offs]->handle, buf);
               }
               if (mainw->files[clipn + offs] == NULL) break;
               // got a match - index the current clip order -> clip order in layout
@@ -843,7 +841,8 @@ void recover_layout_cancelled(boolean is_startup) {
   lives_rm(eload_file);
   lives_free(eload_file);
 
-  eload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid);
+  eload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
+                                   capable->mainpid);
   lives_rm(eload_file);
   lives_free(eload_file);
 
@@ -12837,7 +12836,7 @@ void do_block_context(lives_mt *mt, LiVESXEventButton *event, track_rect *block)
     block_end_time = get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL + (double)(!is_audio_eventbox(block->eventbox)) / cfile->fps;
     if (mt->ptr_time < block_start_time || mt->ptr_time >= block_end_time)
       lives_widget_set_sensitive(split_here, FALSE);
-    
+
     lives_signal_connect(LIVES_GUI_OBJECT(split_here), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_split_activate),
                          (livespointer)mt);
@@ -13193,10 +13192,10 @@ boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *event, livespoi
     } else {
       // single click, TODO - locate the frame for the track in event_list
       if (event->button == 1) {
-	if (mainw->playing_file == -1) {
-	  mt->fm_edit_event = NULL;
-	  mt_tl_move(mt, timesecs);
-	}
+        if (mainw->playing_file == -1) {
+          mt->fm_edit_event = NULL;
+          mt_tl_move(mt, timesecs);
+        }
       }
 
       // for a double click, gdk normally sends 2 single click events,
@@ -13207,69 +13206,69 @@ boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *event, livespoi
       // however, this is quite useful as we can skip the next bit
 
       if (event->time != dclick_time) {
-	show_track_info(mt, eventbox, track, timesecs);
-	if (block != NULL) {
-	  if (!is_audio_eventbox(eventbox))
-	    filenum = get_frame_event_clip(block->start_event, track);
-	  else filenum = get_audio_frame_clip(block->start_event, -1);
-	  if (filenum != mainw->scrap_file && filenum != mainw->ascrap_file) {
-	    mt->clip_selected = mt_clip_from_file(mt, filenum);
-	    mt_clip_select(mt, TRUE);
-	  }
+        show_track_info(mt, eventbox, track, timesecs);
+        if (block != NULL) {
+          if (!is_audio_eventbox(eventbox))
+            filenum = get_frame_event_clip(block->start_event, track);
+          else filenum = get_audio_frame_clip(block->start_event, -1);
+          if (filenum != mainw->scrap_file && filenum != mainw->ascrap_file) {
+            mt->clip_selected = mt_clip_from_file(mt, filenum);
+            mt_clip_select(mt, TRUE);
+          }
 
-	  if (!mt->is_rendering) {
-	    double start_secs, end_secs;
+          if (!mt->is_rendering) {
+            double start_secs, end_secs;
 
-	    LiVESXScreen *screen;
-	    int abs_x, abs_y;
+            LiVESXScreen *screen;
+            int abs_x, abs_y;
 
-	    int ebwidth = lives_widget_get_allocation_width(mt->timeline);
+            int ebwidth = lives_widget_get_allocation_width(mt->timeline);
 
-	    double width = ((end_secs = (get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL)) -
-			    (start_secs = (get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL)) + 1. / mt->fps);
-	    int height;
+            double width = ((end_secs = (get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL)) -
+                            (start_secs = (get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL)) + 1. / mt->fps);
+            int height;
 
-	    // start point must be on timeline to move a block
-	    if (block != NULL && (mt->tl_min * TICKS_PER_SECOND_DBL > get_event_timecode(block->start_event))) {
-	      mt->putative_block = NULL;
-	      return TRUE;
-	    }
-	    if (event->button == 1) {
-	      if (!is_audio_eventbox(eventbox))
-		height = lives_widget_get_allocation_height(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, 0)));
-	      else height = lives_widget_get_allocation_height(LIVES_WIDGET(mt->audio_draws->data));
+            // start point must be on timeline to move a block
+            if (block != NULL && (mt->tl_min * TICKS_PER_SECOND_DBL > get_event_timecode(block->start_event))) {
+              mt->putative_block = NULL;
+              return TRUE;
+            }
+            if (event->button == 1) {
+              if (!is_audio_eventbox(eventbox))
+                height = lives_widget_get_allocation_height(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, 0)));
+              else height = lives_widget_get_allocation_height(LIVES_WIDGET(mt->audio_draws->data));
 
-	      width = (width / (mt->tl_max - mt->tl_min) * (double)ebwidth);
-	      if (width > ebwidth) width = ebwidth;
-	      if (width < 2) width = 2;
+              width = (width / (mt->tl_max - mt->tl_min) * (double)ebwidth);
+              if (width > ebwidth) width = ebwidth;
+              if (width < 2) width = 2;
 
-	      mt->hotspot_x = x - (int)((ebwidth * ((double)start_secs - mt->tl_min) / (mt->tl_max - mt->tl_min)) + .5);
-	      mt->hotspot_y = y;
-	      lives_display_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
-					mt->display, &screen, &abs_x, &abs_y, NULL);
-	      lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
-					 mt->display, screen, abs_x - mt->hotspot_x, abs_y - y + height / 2);
-	      if (track >= 0 && !mt->aud_track_selected) {
-		if (mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
-		  lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
-		  if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
-		    mt_set_cursor_style(mt, LIVES_CURSOR_VIDEO_BLOCK, width, height, filenum, 0, height / 2);
-		  } else {
-		    mt_set_cursor_style(mt, LIVES_CURSOR_BLOCK, width, height, filenum, 0, height / 2);
-		  }
-		} else {
-		  mt_set_cursor_style(mt, LIVES_CURSOR_BLOCK, width, height, filenum, 0, height / 2);
-		}
-	      } else mt_set_cursor_style(mt, LIVES_CURSOR_AUDIO_BLOCK, width, height, filenum, 0, height / 2);
-	    }
-	  }
-	}
+              mt->hotspot_x = x - (int)((ebwidth * ((double)start_secs - mt->tl_min) / (mt->tl_max - mt->tl_min)) + .5);
+              mt->hotspot_y = y;
+              lives_display_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+                                        mt->display, &screen, &abs_x, &abs_y, NULL);
+              lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+                                         mt->display, screen, abs_x - mt->hotspot_x, abs_y - y + height / 2);
+              if (track >= 0 && !mt->aud_track_selected) {
+                if (mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
+                  lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
+                  if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
+                    mt_set_cursor_style(mt, LIVES_CURSOR_VIDEO_BLOCK, width, height, filenum, 0, height / 2);
+                  } else {
+                    mt_set_cursor_style(mt, LIVES_CURSOR_BLOCK, width, height, filenum, 0, height / 2);
+                  }
+                } else {
+                  mt_set_cursor_style(mt, LIVES_CURSOR_BLOCK, width, height, filenum, 0, height / 2);
+                }
+              } else mt_set_cursor_style(mt, LIVES_CURSOR_AUDIO_BLOCK, width, height, filenum, 0, height / 2);
+            }
+          }
+        }
       } else {
-	mt->putative_block = NULL; // please don't move the block
+        mt->putative_block = NULL; // please don't move the block
       }
     }
   }
-  
+
   mt->current_track = track;
   track_select(mt);
 
@@ -17134,14 +17133,13 @@ void draw_region(lives_mt *mt) {
 
     if (palette->style & STYLE_3) {
       lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->menu_and_bars);
-    }
-    else {
+    } else {
       lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
     }
-    
+
     lives_painter_rectangle(cr, 0, 0,
-			    lives_widget_get_allocation_width(mt->timeline_reg),
-			    lives_widget_get_allocation_height(mt->timeline_reg));
+                            lives_widget_get_allocation_width(mt->timeline_reg),
+                            lives_widget_get_allocation_height(mt->timeline_reg));
     lives_painter_fill(cr);
     lives_painter_destroy(cr);
   }
@@ -17166,8 +17164,7 @@ void draw_region(lives_mt *mt) {
 
   if (palette->style & STYLE_3) {
     lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->menu_and_bars);
-  }
-  else {
+  } else {
     lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
   }
 
@@ -17175,7 +17172,7 @@ void draw_region(lives_mt *mt) {
                           lives_widget_get_allocation_width(mt->timeline_reg),
                           lives_widget_get_allocation_height(mt->timeline_reg));
   lives_painter_fill(cr);
-  
+
   lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->mt_timeline_reg);
   lives_painter_rectangle(cr, (start - mt->tl_min)*lives_widget_get_allocation_width(mt->timeline) / (mt->tl_max - mt->tl_min),
                           0,
@@ -17742,7 +17739,7 @@ boolean on_timeline_press(LiVESWidget *widget, LiVESXEventButton *event, livespo
 
     if (mt->opts.mouse_mode == MOUSE_MODE_SELECT) mouse_select_start(widget, event, mt);
   }
-  
+
   return TRUE;
 }
 

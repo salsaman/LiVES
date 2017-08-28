@@ -2807,7 +2807,7 @@ void threaded_dialog_spin(double fraction) {
       disp_fraction(fraction_done, timesofar, procw);
     }
   }
-  
+
   if (!td_had_focus && lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
     if (LIVES_IS_WIDGET(procw->processing)) {
       lives_widget_show_all(procw->processing);

@@ -2794,11 +2794,11 @@ static boolean lives_startup(livespointer data) {
                   }
 
                   //if (prefs->startup_interface != STARTUP_MT) {
-                    if (prefs->show_gui) {
-                      // mainw->ready gets set here
-                      show_lives();
-                    }
-		    //}
+                  if (prefs->show_gui) {
+                    // mainw->ready gets set here
+                    show_lives();
+                  }
+                  //}
                 }
               }
             }
@@ -7606,7 +7606,7 @@ void load_frame_image(int frame) {
         if (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV) {
           if (mainw->camframe == NULL) {
             LiVESError *error = NULL;
-	    char *fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_JPG);
+            char *fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_JPG);
             char *tmp = lives_build_filename(prefs->prefix_dir, THEME_DIR, LIVES_THEME_CAMERA, fname, NULL);
             mainw->camframe = lives_pixbuf_new_from_file(tmp, &error);
             if (mainw->camframe != NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);

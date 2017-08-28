@@ -5289,11 +5289,11 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   if (!auto_recover) {
     if (!do_yesno_dialog
-	(_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
+        (_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
       lives_rm(recovery_file);
       mainw->is_ready = is_ready;
       if (mainw->multitrack != NULL) {
-	mainw->multitrack->is_ready = mt_is_ready;
+        mainw->multitrack->is_ready = mt_is_ready;
         mt_sensitise(mainw->multitrack);
       }
       return FALSE;
@@ -5306,9 +5306,9 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     if (!rfile) {
       retval = do_read_failed_error_s_with_retry(recovery_file, lives_strerror(errno), NULL);
       if (retval == LIVES_RESPONSE_CANCEL) {
-	if (mainw->multitrack != NULL) mainw->multitrack->is_ready = mt_is_ready;
-	mainw->is_ready = is_ready;
-	return FALSE;
+        if (mainw->multitrack != NULL) mainw->multitrack->is_ready = mt_is_ready;
+        mainw->is_ready = is_ready;
+        return FALSE;
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
@@ -5406,8 +5406,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
         mainw->suppress_dprint = FALSE;
         d_print_failed();
-	if (mainw->multitrack != NULL) mainw->multitrack->is_ready = mt_is_ready;
-	mainw->is_ready = is_ready;
+        if (mainw->multitrack != NULL) mainw->multitrack->is_ready = mt_is_ready;
+        mainw->is_ready = is_ready;
         return TRUE;
       }
       if (strstr(buffptr, "/" CLIPS_DIRNAME "/")) {
@@ -5563,8 +5563,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           mainw->multitrack = multi;
           get_total_time(cfile);
           mainw->current_file = mainw->multitrack->render_file;
-	  mt_init_clips(mainw->multitrack, current_file, TRUE);
-	  set_poly_tab(mainw->multitrack, POLY_CLIPS);
+          mt_init_clips(mainw->multitrack, current_file, TRUE);
+          set_poly_tab(mainw->multitrack, POLY_CLIPS);
           lives_widget_context_update();
           mt_clip_select(mainw->multitrack, TRUE);
           lives_widget_context_update();

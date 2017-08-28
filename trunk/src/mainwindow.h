@@ -617,7 +617,7 @@ typedef struct {
   // end of static-ish info
   int old_scr_width;
   int old_scr_height;
-  
+
   char first_info_file[PATH_MAX];
   boolean leave_files;
   boolean was_set;

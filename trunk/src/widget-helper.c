@@ -8514,19 +8514,19 @@ boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr, lives_colRGB48_t *col) {
   return lives_painter_set_source_rgb(cr,
-                               (double)col->red / 65535.,
-                               (double)col->green / 65535.,
-                               (double)col->blue / 65535.
-                              );
+                                      (double)col->red / 65535.,
+                                      (double)col->green / 65535.,
+                                      (double)col->blue / 65535.
+                                     );
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr, lives_colRGBA64_t *col) {
   return lives_painter_set_source_rgb(cr,
-                               (double)col->red / 65535.,
-                               (double)col->green / 65535.,
-                               (double)col->blue / 65535.
-                              );
+                                      (double)col->red / 65535.,
+                                      (double)col->green / 65535.,
+                                      (double)col->blue / 65535.
+                                     );
 }
 
 

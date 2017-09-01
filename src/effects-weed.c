@@ -238,21 +238,21 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions
   case 131:
     value[0] = wdg; // bootstrap weed_default_get (the plugin's default_getter)
 
-    weed_set_int_value(host_info, "api_version", host_api_version);
+    weed_set_int_value(host_info, WEED_LEAF_API_VERSION, host_api_version);
 
     // here we set (void *)&fn_ptr
-    weed_set_voidptr_value(host_info, "weed_leaf_get_func", &wlg);
-    weed_set_voidptr_value(host_info, "weed_leaf_set_func", &wlsp);
-    weed_set_voidptr_value(host_info, "weed_plant_new_func", &wpn);
-    weed_set_voidptr_value(host_info, "weed_plant_list_leaves_func", &wpll);
-    weed_set_voidptr_value(host_info, "weed_leaf_num_elements_func", &wlne);
-    weed_set_voidptr_value(host_info, "weed_leaf_element_size_func", &wles);
-    weed_set_voidptr_value(host_info, "weed_leaf_seed_type_func", &wlst);
-    weed_set_voidptr_value(host_info, "weed_leaf_get_flags_func", &wlgf);
-    weed_set_voidptr_value(host_info, "weed_malloc_func", &weedmalloc);
-    weed_set_voidptr_value(host_info, "weed_free_func", &weedfree);
-    weed_set_voidptr_value(host_info, "weed_memset_func", &weedmemset);
-    weed_set_voidptr_value(host_info, "weed_memcpy_func", &weedmemcpy);
+    weed_set_voidptr_value(host_info, WEED_LEAF_GET_FUNC, &wlg);
+    weed_set_voidptr_value(host_info, WEED_LEAF_SET_FUNC, &wlsp);
+    weed_set_voidptr_value(host_info, WEED_PLANT_NEW_FUNC, &wpn);
+    weed_set_voidptr_value(host_info, WEED_PLANT_LIST_LEAVES_FUNC, &wpll);
+    weed_set_voidptr_value(host_info, WEED_LEAF_NUM_ELEMENTS_FUNC, &wlne);
+    weed_set_voidptr_value(host_info, WEED_LEAF_ELEMENT_SIZE_FUNC, &wles);
+    weed_set_voidptr_value(host_info, WEED_LEAF_SEED_TYPE_FUNC, &wlst);
+    weed_set_voidptr_value(host_info, WEED_LEAF_GET_FLAGS_FUNC, &wlgf);
+    weed_set_voidptr_value(host_info, WEED_LEAF_MALLOC_FUNC, &weedmalloc);
+    weed_set_voidptr_value(host_info, WEED_LEAF_FREE_FUNC, &weedfree);
+    weed_set_voidptr_value(host_info, WEED_LEAF_MEMSET_FUNC, &weedmemset);
+    weed_set_voidptr_value(host_info, WEED_LEAF_MEMCPY_FUNC, &weedmemcpy);
 
     weed_add_plant_flags(host_info, WEED_LEAF_READONLY_PLUGIN);
     break;
@@ -8718,17 +8718,15 @@ weed_plant_t *rte_keymode_get_filter(int key, int mode) {
 
 
 char *weed_filter_idx_get_name(int idx) {
-  // return value should be lives_free'd after use
+  // return value should be free'd after use
   weed_plant_t *filter;
   int error;
-  char *filter_name, *retval;
+  char *filter_name;
 
   if (idx == -1) return lives_strdup("");
   if ((filter = weed_filters[idx]) == NULL) return lives_strdup("");
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
-  retval = lives_strdup(filter_name); // copy so we can use lives_free() instead of lives_free()
-  lives_free(filter_name);
-  return retval;
+  return filter_name;
 }
 
 
@@ -8736,14 +8734,12 @@ char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_par
   // return value should be lives_free'd after use
   weed_plant_t *filter;
   int error;
-  char *filter_name, *retval;
+  char *filter_name;
 
   if (inst == NULL) return lives_strdup("");
   filter = weed_instance_get_filter(inst, get_compound_parent);
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
-  retval = lives_strdup(filter_name); // copy so we can use lives_free() instead of lives_free()
-  lives_free(filter_name);
-  return retval;
+  return filter_name;
 }
 
 
@@ -8760,7 +8756,6 @@ char *rte_keymode_get_plugin_name(int key, int mode) {
   weed_plant_t *filter, *plugin_info;
   char *name;
   int error;
-  char *retval;
 
   key--;
   if (!rte_keymode_valid(key + 1, mode, TRUE)) return lives_strdup("");
@@ -8768,10 +8763,7 @@ char *rte_keymode_get_plugin_name(int key, int mode) {
   filter = weed_filters[key_to_fx[key][mode]];
   plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
   name = weed_get_string_value(plugin_info, WEED_LEAF_NAME, &error);
-  // do this so we can lives_free() instead of lives_free();
-  retval = lives_strdup(name);
-  lives_free(name);
-  return retval;
+  return name;
 }
 
 

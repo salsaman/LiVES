@@ -51,6 +51,21 @@ typedef enum {
 #define WEED_LEAF_MAINTAINER "maintainer"
 #define WEED_LEAF_HOST_INFO "host_info"
 
+// host info
+#define WEED_LEAF_API_VERSION "api_version"
+#define WEED_LEAF_GET_FUNC "weed_leaf_get_func"
+#define WEED_LEAF_SET_FUNC "weed_leaf_set_func"
+#define WEED_PLANT_NEW_FUNC "weed_plant_new_func"
+#define WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"
+#define WEED_LEAF_NUM_ELEMENTS_FUNC "weed_leaf_num_elements_func"
+#define WEED_LEAF_ELEMENT_SIZE_FUNC "weed_leaf_element_size_func"
+#define WEED_LEAF_SEED_TYPE_FUNC "weed_leaf_seed_type_func"
+#define WEED_LEAF_GET_FLAGS_FUNC "weed_leaf_get_flags_func"
+#define WEED_LEAF_MALLOC_FUNC "weed_malloc_func"
+#define WEED_LEAF_FREE_FUNC "weed_free_func"
+#define WEED_LEAF_MEMSET_FUNC "weed_memset_func"
+#define WEED_LEAF_MEMCPY_FUNC "weed_memcpy_func"
+
 // filter_class
 #define WEED_LEAF_INIT_FUNC "init_func"
 #define WEED_LEAF_DEINIT_FUNC "deinit_func"

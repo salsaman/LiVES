@@ -277,9 +277,12 @@ typedef int lives_pgid_t;
 #define LIVES_INLINE static inline
 #define LIVES_GLOBAL_INLINE inline
 #else
-#define LIVES_INLINE
+#define LIVES_INLINE static
 #define LIVES_GLOBAL_INLINE
+#define LIVES_LOCAL_INLINE
 #endif
+
+#define LIVES_LOCAL_INLINE LIVES_INLINE
 
 #include <limits.h>
 #include <float.h>

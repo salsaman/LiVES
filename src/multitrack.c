@@ -117,6 +117,8 @@ static int ce_sepwin_type;
 
 static boolean needs_clear;
 
+static LiVESList *pkg_list;
+
 ////////////////////////////
 
 // menuitem callbacks
@@ -659,7 +661,6 @@ static void upd_layout_maps(weed_plant_t *event_list) {
 
   lives_free(layout_map);
   lives_free(layout_map_audio);
-
 }
 
 
@@ -1381,7 +1382,6 @@ static EXPOSE_FN_DECL(expose_track_event, eventbox) {
 
   if (width > lives_widget_get_allocation_width(eventbox) - startx) width = lives_widget_get_allocation_width(eventbox) - startx;
 
-
   bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg");
 
 draw1:
@@ -1700,6 +1700,8 @@ void track_select(lives_mt *mt) {
   int hidden = 0;
 
   register int i;
+
+  if (!prefs->show_gui) return;
 
   if (mt->current_track < 0) {
     // back aud sel
@@ -2540,7 +2542,7 @@ void multitrack_view_in_out(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   if (mt->block_selected == NULL) return;
   if (!nb_ignore) {
-    // workaround for...you guessed it....the wonderful gtk+
+    // workaround for possible UI issues
     polymorph(mt, POLY_IN_OUT);
     polymorph(mt, POLY_CLIPS);
     polymorph(mt, POLY_IN_OUT);
@@ -2590,7 +2592,6 @@ static void renumber_clips(void) {
 
   for (cclip = 1; i <= MAX_FILES; cclip++) {
     if (mainw->files[cclip] == NULL) {
-
       if (i != cclip) {
         mainw->files[cclip] = mainw->files[i];
 
@@ -2617,7 +2618,6 @@ static void renumber_clips(void) {
         if (mainw->first_free_file == cclip) mainw->first_free_file++;
 
         renumbered_clips[i] = cclip;
-
       }
       // process this clip again
       else cclip--;
@@ -2967,7 +2967,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
   // start "playback" at mt->ptr_time; we just "render" one frame
   curr_tc = set_play_position(mt);
-  actual_frame = (int)((double)(curr_tc / TICKS_PER_SECOND) * cfile->fps + 1.4999);
+  actual_frame = (int)((double)curr_tc / TICKS_PER_SECOND_DBL * cfile->fps + 1.4999);
   mainw->frame_layer = NULL;
 
   if (mt->is_rendering && actual_frame <= cfile->frames) {
@@ -3043,8 +3043,8 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 #endif
 
   if (mt->frame_pixbuf != NULL && mt->frame_pixbuf == mainw->imframe) {
-    // size_request, reset pla
-    // try to expand
+    // size_request, reset play frame size
+    // try to expand / shrink
     lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3, GUI_SCREEN_HEIGHT / 3);
   }
 
@@ -3117,7 +3117,8 @@ void mt_tl_move(lives_mt *mt, double pos) {
   pos = q_dbl(pos, mt->fps) / TICKS_PER_SECOND_DBL;
   if (pos < 0.) pos = 0.;
 
-  // need to reference ONLY mt->ptr_time, since it may be outside the range of mt->timeline
+  // after this, we need to reference ONLY mt->ptr_time, since it may become outside the range of mt->timeline
+  // thus we cannot rely on reading the value from mt->timeline
   mt->ptr_time = lives_ruler_set_value(LIVES_RULER(mt->timeline), pos);
 
   if (pos > 0.) {
@@ -3209,7 +3210,6 @@ boolean mt_tlback_frame(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
 static void scroll_track_on_screen(lives_mt *mt, int track) {
   if (track > mt->top_track) track = get_top_track_for(mt, track);
   scroll_tracks(mt, track, track != mt->top_track);
-
   return;
 }
 
@@ -3387,7 +3387,6 @@ static void notebook_error(LiVESNotebook *nb, uint32_t tab, lives_mt_nb_error_t 
   lives_widget_hide(mt->poly_box);
 
   lives_widget_queue_resize(mt->nb_label);
-
 }
 
 
@@ -3577,6 +3576,60 @@ static void select_block(lives_mt *mt) {
 }
 
 
+LIVES_LOCAL_INLINE int pkg_in_list(char *pkgstring) {
+  return lives_list_strcmp_index(pkg_list, pkgstring) + 1;
+}
+
+
+LIVES_LOCAL_INLINE int add_to_pkg_list(char *pkgstring) {
+  pkg_list = lives_list_append(pkg_list, pkgstring);
+  return lives_list_length(pkg_list);
+}
+
+LIVES_LOCAL_INLINE char *get_pkg_name(int pkgnum) {
+  return strdup(lives_list_nth_data(pkg_list, pkgnum - 1));
+}
+
+
+LIVES_LOCAL_INLINE void free_pkg_list(void) {
+  lives_list_free_all((LiVESList **)&pkg_list);
+}
+
+static void populate_filter_box(int ninchans, lives_mt *mt, int pkgnum);
+
+static boolean filter_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
+  lives_mt *mt = (lives_mt *)user_data;
+
+  int pkgnum;
+
+  if (mt->is_rendering) return FALSE;
+
+  if ((pkgnum = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "pkgnum"))) != 0) {
+    populate_filter_box(0, mt, pkgnum);
+    return FALSE;
+  }
+
+  mt->selected_filter = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "fxid"));
+
+  if (event->type != LIVES_BUTTON_PRESS) {
+    // double click
+    return FALSE;
+  }
+
+  if (mainw->playing_file == -1) {
+    // change cursor to mini block
+    if (mt->video_draws == NULL && mt->audio_draws == NULL) {
+      return FALSE;
+    } else {
+      mt_set_cursor_style(mt, LIVES_CURSOR_FX_BLOCK, FX_BLOCK_WIDTH, FX_BLOCK_HEIGHT, 0, 0, FX_BLOCK_HEIGHT / 2);
+      mt->hotspot_x = mt->hotspot_y = 0;
+    }
+  }
+
+  return FALSE;
+}
+
+
 static boolean on_drag_filter_end(LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
   LiVESXWindow *window;
   LiVESWidget *eventbox = NULL, *oeventbox;
@@ -3718,35 +3771,47 @@ static boolean on_drag_filter_end(LiVESWidget *widget, LiVESXEventButton *event,
 }
 
 
-static boolean filter_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
-  lives_mt *mt = (lives_mt *)user_data;
+static void add_to_listbox(lives_mt *mt, LiVESWidget *xeventbox, char *fname, boolean add_top) {
+  LiVESWidget *vbox, *label;
 
-  if (mt->is_rendering) return FALSE;
-
-  mt->selected_filter = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "fxid"));
-
-  if (event->type != LIVES_BUTTON_PRESS) {
-    // double click
-    return FALSE;
+  lives_widget_add_events(xeventbox, LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
+  if (palette->style & STYLE_1) {
+    lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  if (mainw->playing_file == -1) {
-    // change cursor to mini block
-    if (mt->video_draws == NULL && mt->audio_draws == NULL) {
-      return FALSE;
-    } else {
-      mt_set_cursor_style(mt, LIVES_CURSOR_FX_BLOCK, FX_BLOCK_WIDTH, FX_BLOCK_HEIGHT, 0, 0, FX_BLOCK_HEIGHT / 2);
-      mt->hotspot_x = mt->hotspot_y = 0;
-    }
-  }
+  vbox = lives_vbox_new(FALSE, 0);
 
-  return FALSE;
+  lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width >> 1);
+  lives_container_add(LIVES_CONTAINER(xeventbox), vbox);
+  label = lives_standard_label_new(fname);
+
+  if (palette->style & STYLE_1) {
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(vbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
+  lives_container_set_border_width(LIVES_CONTAINER(xeventbox), widget_opts.border_width >> 1);
+  lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
+
+  // pack pkgs and a/v transitions first
+  if (add_top)
+    lives_box_pack_end(LIVES_BOX(mt->fx_list_vbox), xeventbox, FALSE, FALSE, 0);
+  else lives_box_pack_start(LIVES_BOX(mt->fx_list_vbox), xeventbox, FALSE, FALSE, 0);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                       LIVES_GUI_CALLBACK(filter_ebox_pressed),
+                       (livespointer)mt);
+  lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+                       LIVES_GUI_CALLBACK(on_drag_filter_end),
+                       (livespointer)mt);
 }
 
 
-static void populate_filter_box(LiVESWidget *box, int ninchans, lives_mt *mt) {
-  LiVESWidget *eventbox = NULL, *xeventbox, *vbox, *label;
-  char *txt;
+static void populate_filter_box(int ninchans, lives_mt *mt, int pkgnum) {
+  static int oxninchans = 0;
+
+  LiVESWidget *eventbox = NULL, *xeventbox;
+  char *fname, *pkgstring = NULL, *pkg_name = NULL, *catstring;
   char *tmp;
 
   lives_fx_cat_t cat, subcat;
@@ -3756,9 +3821,35 @@ static void populate_filter_box(LiVESWidget *box, int ninchans, lives_mt *mt) {
 
   register int i;
 
+  if (mt->fx_list_scroll != NULL) lives_widget_destroy(mt->fx_list_scroll);
+  mt->fx_list_scroll = lives_scrolled_window_new(NULL, NULL);
+  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mt->fx_list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
+  lives_box_pack_start(LIVES_BOX(mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
+
+  mt->fx_list_vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
+  lives_container_set_border_width(LIVES_CONTAINER(mt->fx_list_vbox), widget_opts.border_width);
+  lives_scrolled_window_add_with_viewport(LIVES_SCROLLED_WINDOW(mt->fx_list_scroll), mt->fx_list_vbox);
+  lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mt->fx_list_vbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_show_all(mt->fx_list_scroll);
+
   if (mt->block_selected == NULL && ninchans == 1) return;
 
-  if (mt->block_selected) eventbox = mt->block_selected->eventbox;
+  if (mt->block_selected != NULL) eventbox = mt->block_selected->eventbox;
+
+  if (pkgnum != 0) {
+    ninchans = oxninchans;
+    if (pkgnum == -1) pkgnum = 0;
+    else pkg_name = get_pkg_name(pkgnum);
+  }
+
+  if (pkgnum == 0) free_pkg_list();
+
+  oxninchans = ninchans;
+
+  catstring = (ninchans == 1 ? lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT, TRUE) :
+               ninchans == 2 ? lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION, TRUE) :
+               lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR, TRUE));
 
   for (i = 0; i < nfilts; i++) {
     weed_plant_t *filter = get_weed_filter(i);
@@ -3770,59 +3861,84 @@ static void populate_filter_box(LiVESWidget *box, int ninchans, lives_mt *mt) {
       nins = enabled_in_channels(filter, TRUE);
 
       if ((nins == ninchans || (ninchans == 1000000 && nins >= ninchans)) && enabled_out_channels(filter, FALSE) == 1) {
-        if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
-            weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
-          if (!prefs->unstable_fx) continue;
-          tmp = weed_filter_idx_get_name(i);
-          txt = lives_strdup_printf(_("%s [unstable]"), tmp);
-          lives_free(tmp);
-        } else txt = weed_filter_idx_get_name(i);
+        pkgnum = 0;
+        fname = weed_filter_idx_get_name(i);
 
-        cat = weed_filter_categorise(filter, enabled_in_channels(filter, TRUE), enabled_out_channels(filter, FALSE));
-        if ((subcat = weed_filter_subcategorise(filter, cat, (cat == LIVES_FX_CAT_COMPOSITOR))) != 0) {
-          tmp = lives_strdup_printf("%s (%s)", txt, lives_fx_cat_to_text(subcat, FALSE));
-          lives_free(txt);
-          txt = tmp;
+        if ((pkgstring = strstr(fname, ": ")) != NULL) {
+          pkgstring = lives_strndup(fname, pkgstring - fname);
+          // filter is in package
+          if (pkg_name != NULL && strcmp(pkgstring, pkg_name)) {
+            // but wrong one
+            lives_free(fname);
+            lives_freep((void **)&pkgstring);
+            continue;
+          }
+          if (pkg_name == NULL || !strlen(pkg_name)) {
+            // no pkg requested
+            if (!(pkgnum = pkg_in_list(pkgstring))) {
+              // if this is the first for this package, add to list and show it
+              lives_free(fname);
+              fname = lives_strdup_printf(_("%s from %s package (click to show)     ---->"), catstring, pkgstring);
+              pkgnum = add_to_pkg_list(pkgstring); // list will free the string later
+              pkgstring = NULL;
+            } else {
+              // pkg already in list, skip
+              lives_free(fname);
+              lives_freep((void **)&pkgstring);
+              continue;
+            }
+          }
+          // pkg matched
+        }
+
+        if (!pkgnum) {
+          // filter is in no package
+          if (pkg_name != NULL && strlen(pkg_name) && pkgstring == NULL) {
+            // skip if pkg was requested
+            lives_free(fname);
+            continue;
+          }
+
+          cat = weed_filter_categorise(filter, enabled_in_channels(filter, TRUE), enabled_out_channels(filter, FALSE));
+          if ((subcat = weed_filter_subcategorise(filter, cat, (cat == LIVES_FX_CAT_COMPOSITOR))) != 0) {
+            char *tmp2;
+            tmp = lives_strdup_printf("%s (%s)", fname, (tmp2 = lives_fx_cat_to_text(subcat, FALSE)));
+            lives_free(tmp2);
+            lives_free(fname);
+            fname = tmp;
+          }
+
+          if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
+              weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
+            if (!prefs->unstable_fx) {
+              lives_free(fname);
+              continue;
+            }
+            tmp = lives_strdup_printf(_("%s [unstable]"), fname);
+            lives_free(fname);
+            fname = tmp;
+          }
         }
 
         xeventbox = lives_event_box_new();
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "fxid", LIVES_INT_TO_POINTER(i));
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "pkgnum", LIVES_INT_TO_POINTER(pkgnum));
 
-        lives_widget_add_events(xeventbox, LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
-        if (palette->style & STYLE_1) {
-          lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-        }
-
-        vbox = lives_vbox_new(FALSE, 0);
-
-        lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width >> 1);
-        lives_container_add(LIVES_CONTAINER(xeventbox), vbox);
-        label = lives_standard_label_new(txt);
-        lives_free(txt);
-
-        if (palette->style & STYLE_1) {
-          lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-          lives_widget_set_fg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-          lives_widget_set_fg_color(vbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-          lives_widget_set_fg_color(box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-        }
-        lives_container_set_border_width(LIVES_CONTAINER(xeventbox), widget_opts.border_width >> 1);
-        lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
-
-        // pack a/v transitions first
-        if (get_transition_param(filter, FALSE) == -1 || !has_video_chans_in(filter, FALSE))
-          lives_box_pack_end(LIVES_BOX(box), xeventbox, FALSE, FALSE, 0);
-        else lives_box_pack_start(LIVES_BOX(box), xeventbox, FALSE, FALSE, 0);
-
-        lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                             LIVES_GUI_CALLBACK(filter_ebox_pressed),
-                             (livespointer)mt);
-        lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                             LIVES_GUI_CALLBACK(on_drag_filter_end),
-                             (livespointer)mt);
+        add_to_listbox(mt, xeventbox, fname, (pkgnum != 0 || get_transition_param(filter, FALSE) == -1 || !has_video_chans_in(filter, FALSE)));
+        lives_free(fname);
       }
     }
   }
+  if (pkg_name != NULL) {
+    xeventbox = lives_event_box_new();
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "fxid", LIVES_INT_TO_POINTER(0));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "pkgnum", LIVES_INT_TO_POINTER(-1));
+    fname = lives_strdup_printf(_("<----     Show all %s"), catstring);
+    add_to_listbox(mt, xeventbox, fname, TRUE);
+  }
+  lives_free(catstring);
+  lives_freep((void **)&pkg_name);
+  lives_widget_show_all(mt->fx_list_box);
 }
 
 
@@ -12119,9 +12235,13 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
       mt->fm_edit_event = NULL;
       mt->context_time = -1.;
     }
+    break;
   case POLY_EFFECTS:
   case POLY_TRANS:
   case POLY_COMP:
+    free_pkg_list();
+    if (mt->fx_list_scroll != NULL) lives_widget_destroy(mt->fx_list_scroll);
+    mt->fx_list_scroll = NULL;
     break;
   default:
     break;
@@ -12391,11 +12511,11 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
       filter_map = mt->fm_edit_event = get_filter_map_before(frame_event, LIVES_TRACK_ANY, NULL);
 
     mt->fx_list_box = lives_vbox_new(FALSE, 0);
-    mt->fx_list_scroll = lives_scrolled_window_new(NULL, NULL);
-    //lives_widget_set_hexpand(mt->fx_list_scroll, TRUE);
 
+    mt->fx_list_scroll = lives_scrolled_window_new(NULL, NULL);
     lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mt->fx_list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
     lives_box_pack_start(LIVES_BOX(mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
+
     lives_box_pack_start(LIVES_BOX(mt->poly_box), mt->fx_list_box, TRUE, TRUE, 0);
 
     mt->fx_list_vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
@@ -12594,27 +12714,18 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     tab_set = TRUE;
     ++nins;
   case POLY_EFFECTS:
+    pkg_list = NULL;
     if (!tab_set) {
       set_poly_tab(mt, POLY_EFFECTS);
       clear_context(mt);
       add_context_label(mt, (_("Effects can be dragged\nonto blocks on the timeline.")));
     }
     mt->fx_list_box = lives_vbox_new(FALSE, 0);
-    mt->fx_list_scroll = lives_scrolled_window_new(NULL, NULL);
-    //lives_widget_set_hexpand(mt->fx_list_scroll, TRUE);
-    lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mt->fx_list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
-    lives_box_pack_start(LIVES_BOX(mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
     lives_box_pack_start(LIVES_BOX(mt->poly_box), mt->fx_list_box, TRUE, TRUE, 0);
-
-    mt->fx_list_vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
-    lives_container_set_border_width(LIVES_CONTAINER(mt->fx_list_vbox), widget_opts.border_width);
-    lives_scrolled_window_add_with_viewport(LIVES_SCROLLED_WINDOW(mt->fx_list_scroll), mt->fx_list_vbox);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    mt->fx_list_scroll = NULL;
 
     if (mt->poly_state == POLY_COMP) nins = 1000000;
-    populate_filter_box(mt->fx_list_vbox, nins, mt);
-
-    lives_widget_show_all(mt->fx_list_box);
+    populate_filter_box(nins, mt, 0);
     break;
 
   default:

@@ -505,7 +505,7 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
     //lseek(priv->fd,priv->input_position,SEEK_SET);
 
     if (tdts == -1 && priv->offs == 0) {
-      priv->avpkt.size = 1000000 + FF_INPUT_BUFFER_PADDING_SIZE;
+      priv->avpkt.size = 1000000 + AV_INPUT_BUFFER_PADDING_SIZE;
       priv->avpkt.data = malloc(priv->avpkt.size);
       memset(priv->avpkt.data, 0, priv->avpkt.size);
       //priv->offs=0;
@@ -1236,7 +1236,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
           if (size > 10 * 4 && size < (1 << 30)) {
             priv->st->codec->extradata_size = size - 10 * 4;
-            priv->st->codec->extradata = malloc(priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+            priv->st->codec->extradata = malloc(priv->st->codec->extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
             if (!priv->st->codec->extradata) {
               priv->st->codec->extradata_size = 0;
               return AVERROR(ENOMEM);
@@ -1290,7 +1290,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
           if (priv->st->codec->codec_tag == 0 && priv->st->codec->height > 0 && priv->st->codec->extradata_size < 1U << 30) {
             priv->st->codec->extradata_size += 9;
-            priv->st->codec->extradata = realloc(priv->st->codec->extradata, priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+            priv->st->codec->extradata = realloc(priv->st->codec->extradata, priv->st->codec->extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
             if (priv->st->codec->extradata)
               memcpy(priv->st->codec->extradata + priv->st->codec->extradata_size - 9, "BottomUp", 9);
           }

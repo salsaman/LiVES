@@ -76,7 +76,7 @@ static int file_filter(const struct dirent *a) {
 #define MAX_DEVICES 65
 
 static char **get_vloopback2_devices(void) {
-  char devname[256];
+  char devname[512];
   struct dirent **namelist;
   int n;
   int fd;

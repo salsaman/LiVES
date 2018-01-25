@@ -125,7 +125,7 @@ static inline void skip_bits(GetBitContext *s, int n) {
 
 /**
  * init GetBitContext.
- * @param buffer bitstream buffer, must be FF_INPUT_BUFFER_PADDING_SIZE bytes larger than the actual read bits
+ * @param buffer bitstream buffer, must be AV_INPUT_BUFFER_PADDING_SIZE bytes larger than the actual read bits
  * because some optimized bitstream readers read 32 or 64 bit at once and could read over the end
  * @param bit_size the size of the buffer in bits
  *
@@ -1035,7 +1035,7 @@ static void new_pes_packet(PESContext *pes, AVPacket *pkt) {
     fprintf(stderr, "mpegts_decoder: PES packet size mismatch\n");
     //pes->flags |= AV_PKT_FLAG_CORRUPT;
   }
-  memset(pkt->data + pkt->size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+  memset(pkt->data + pkt->size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
   // Separate out the AC3 substream from an HDMV combined TrueHD/AC3 PID
   if (pes->sub_st && pes->stream_type == 0x83 && pes->extended_stream_id == 0x76)
@@ -1192,7 +1192,7 @@ static int mpegts_push_data(lives_clip_data_t *cdata, MpegTSFilter *filter,
             pes->total_size = MAX_PES_PAYLOAD;
 
           /* allocate pes buffer */
-          pes->buffer = av_malloc(pes->total_size + FF_INPUT_BUFFER_PADDING_SIZE);
+          pes->buffer = av_malloc(pes->total_size + AV_INPUT_BUFFER_PADDING_SIZE);
           if (!pes->buffer)
             return AVERROR(ENOMEM);
 
@@ -1289,7 +1289,7 @@ skip:
         if (pes->data_index > 0 && pes->data_index + buf_size > pes->total_size) {
           new_pes_packet(pes, ts->pkt);
           pes->total_size = MAX_PES_PAYLOAD;
-          pes->buffer = av_malloc(pes->total_size + FF_INPUT_BUFFER_PADDING_SIZE);
+          pes->buffer = av_malloc(pes->total_size + AV_INPUT_BUFFER_PADDING_SIZE);
           if (!pes->buffer)
             return AVERROR(ENOMEM);
           ts->stop_parse = 1;
@@ -1454,7 +1454,7 @@ int ff_mp4_read_dec_config_descr(lives_clip_data_t *cdata, AVFormatContext *fc, 
     if (!len || (uint64_t)len > (1 << 30))
       return -1;
     av_free(st->codec->extradata);
-    st->codec->extradata = av_mallocz(len + FF_INPUT_BUFFER_PADDING_SIZE);
+    st->codec->extradata = av_mallocz(len + AV_INPUT_BUFFER_PADDING_SIZE);
     if (!st->codec->extradata)
       return AVERROR(ENOMEM);
     memcpy(st->codec->extradata, p, len);
@@ -1802,7 +1802,7 @@ int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVS
       //if (st->codec->extradata_size == 4 && memcmp(st->codec->extradata, *pp, 4))
       //av_log_ask_for_sample(fc, "DVB sub with multiple IDs\n");
       //} else {
-      st->codec->extradata = av_malloc(4 + FF_INPUT_BUFFER_PADDING_SIZE);
+      st->codec->extradata = av_malloc(4 + AV_INPUT_BUFFER_PADDING_SIZE);
       if (st->codec->extradata) {
         st->codec->extradata_size = 4;
         memcpy(st->codec->extradata, *pp, 4);

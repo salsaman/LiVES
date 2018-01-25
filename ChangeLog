@@ -19,7 +19,7 @@ Various optimisations.
 Scale many widget sizes based on screen resolution.
 Fix crash in multitrack parameter adjustment for effects with repeated channels.
 Ctrl + mouse scroll can be used to zoom in / out in multitrack.
-	
+Disable ctrl-q (quit) accelerator during playback to prevent accidental triggering.
 
 
 Version 2.8.7 (29 June 2017)

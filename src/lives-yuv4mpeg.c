@@ -228,7 +228,7 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
   sfile->fps = cfile->pb_fps = lives_strtod(lives_strdup_printf("%.8f", Y4M_RATIO_DBL
                                (y4m_si_get_framerate(&(yuv4mpeg->streaminfo)))), NULL);
 
-  if (!(sfile->hsize * sfile->vsize)) {
+  if (sfile->hsize * sfile->vsize == 0) {
     do_error_dialog(lives_strdup_printf(_("Video dimensions: %d x %d are invalid. Stream cannot be opened"),
                                         sfile->hsize, sfile->vsize));
     return FALSE;

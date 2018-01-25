@@ -68,9 +68,9 @@
 #else
 
 #ifdef __GNUC__
-#  define UNUSED  __attribute__((unused))
+#define UNUSED  __attribute__((unused))
 #else
-#  define UNUSED
+#define UNUSED
 #endif
 
 static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits,

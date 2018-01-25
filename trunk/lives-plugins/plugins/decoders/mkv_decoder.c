@@ -883,7 +883,7 @@ static void matroska_fix_ass_packet(MatroskaDemuxContext *matroska,
     es = ec /   100;
     ec -=    100 * es;
     *ptr++ = '\0';
-    len = 50 + end - ptr + FF_INPUT_BUFFER_PADDING_SIZE;
+    len = 50 + end - ptr + AV_INPUT_BUFFER_PADDING_SIZE;
     if (!(line = malloc(len)))
       return;
     snprintf(line, len, "Dialogue: %s,%d:%02d:%02d.%02d,%d:%02d:%02d.%02d,%s\r\n",
@@ -1544,7 +1544,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
         st->codec->extradata_size = extradata_size;
       } else if (track->codec_priv.data && track->codec_priv.size > 0) {
         st->codec->extradata = calloc(track->codec_priv.size +
-                                      FF_INPUT_BUFFER_PADDING_SIZE, 1);
+                                      AV_INPUT_BUFFER_PADDING_SIZE, 1);
         if (st->codec->extradata == NULL) {
           fprintf(stderr,
                   "mkv_decoder: Out of memory\n");

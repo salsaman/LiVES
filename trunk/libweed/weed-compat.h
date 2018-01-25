@@ -211,7 +211,7 @@ typedef struct AVCodecTag {
 #define MKTAG(a, b, c, d) ((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
 #endif
 
-
+  // TODO - invert these
 #if (LIBAVCODEC_VERSION_MAJOR > 54)
 #define CodecID AVCodecID
 

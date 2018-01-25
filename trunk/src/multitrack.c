@@ -5720,7 +5720,6 @@ void set_mt_colours(lives_mt *mt) {
     lives_widget_set_fg_color(mt->r_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
     set_child_colour(mt->in_out_box, FALSE);
-
     set_child_colour(mt->context_box, TRUE);
 
     if (palette->style & STYLE_4) {
@@ -8265,11 +8264,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_object_ref(mt->in_out_box);
 
   vbox = lives_vbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(mt->in_out_box), vbox, FALSE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(mt->in_out_box), vbox, FALSE, TRUE, 10);
 
   mt->in_image = lives_image_new();
   lives_widget_set_hexpand(mt->in_image, FALSE);
-  lives_widget_set_vexpand(mt->in_image, FALSE);
+  //lives_widget_set_vexpand(mt->in_image, FALSE);
 
   eventbox = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(eventbox), mt->in_image);
@@ -8287,13 +8286,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  add_fill_to_box(LIVES_BOX(hbox));
 
   mt->in_hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(hbox), mt->in_hbox, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), mt->in_hbox, FALSE, FALSE, widget_opts.packing_height);
+  add_fill_to_box(LIVES_BOX(mt->in_hbox));
 
   dpw = widget_opts.packing_width;
   widget_opts.packing_width = 0;
@@ -8307,7 +8303,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  add_fill_to_box(LIVES_BOX(hbox));
+  add_fill_to_box(LIVES_BOX(mt->in_hbox));
 
   mt->spin_in_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mt->spinbutton_in), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                      LIVES_GUI_CALLBACK(in_out_start_changed),
@@ -8319,7 +8315,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   vbox = lives_vbox_new(FALSE, 0);
 
-  lives_box_pack_end(LIVES_BOX(mt->in_out_box), vbox, FALSE, TRUE, 0);
+  lives_box_pack_end(LIVES_BOX(mt->in_out_box), vbox, FALSE, TRUE, 10);
   lives_widget_set_vexpand(vbox, FALSE);
 
   mt->out_image = lives_image_new();
@@ -8342,13 +8338,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  add_fill_to_box(LIVES_BOX(hbox));
-
   mt->out_hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(hbox), mt->out_hbox, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), mt->out_hbox, TRUE, TRUE, 0);
+  add_fill_to_box(LIVES_BOX(mt->out_hbox));
 
   dpw = widget_opts.packing_width;
   widget_opts.packing_width = 0;
@@ -8358,6 +8350,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->checkbutton_end_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _end"))), TRUE, LIVES_BOX(mt->out_hbox),
                                  (tmp2 = lives_strdup(_("Anchor the end point to the timeline"))));
+
+  add_fill_to_box(LIVES_BOX(mt->out_hbox));
 
   lives_free(tmp);
   lives_free(tmp2);

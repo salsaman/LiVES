@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-
 // various workarounds to provide backwards compatibility for libav
 
 // "If you libav developers could just stop breaking backwards compatibility..."
@@ -60,7 +59,6 @@
 #define av_packet_unref(a) av_free_packet(a)
 #endif
 
-
 #if !HAVE_AV_SET_PTS_INFO
 
 #if HAVE_AVFORMAT_INTERNAL_H && HAVE_AVPRIV_SET_PTS_INFO
@@ -74,8 +72,6 @@
 #else
 #  define UNUSED
 #endif
-
-
 
 static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits,
                                    unsigned int pts_num, unsigned int pts_den) {
@@ -100,7 +96,6 @@ static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits,
 #endif
 #endif
 
-
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55, 28, 1)
 #define av_frame_alloc()  avcodec_alloc_frame()
 #if !HAVE_AVFRAME_UNREF
@@ -112,12 +107,21 @@ static UNUSED void av_set_pts_info(AVStream *s, int pts_wrap_bits,
 #endif
 #endif
 
-
 #if !HAVE_AV_GET_BITS_PER_SAMPLE
 #define av_get_bits_per_sample(a) (av_get_bytes_per_sample(a) * 8)
 #endif
 
-
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(56, 56, 0)
+#ifndef FF_INPUT_BUFFER_PADDING_SIZE
+#define AV_INPUT_BUFFER_PADDING_SIZE FF_INPUT_BUFFER_MIN_SIZE
+#else
+#define AV_INPUT_BUFFER_PADDING_SIZE FF_INPUT_BUFFER_PADDING_SIZE
+#endif
+#else
+#ifndef AV_INPUT_BUFFER_PADDING_SIZE
+#define AV_INPUT_BUFFER_PADDING_SIZE AV_INPUT_BUFFER_MIN_SIZE
+#endif
+#endif
 
 #endif // HAVE_LIBAV_LIBS
 

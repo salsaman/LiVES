@@ -65,7 +65,6 @@ static void lives_avcodec_unlock(void) {
 }
 
 
-
 static int stream_peek(int fd, unsigned char *str, size_t len) {
   off_t cpos = lseek(fd, 0, SEEK_CUR); // get current posn
   int rv = pread(fd, str, len, cpos); // read len bytes without changing cpos
@@ -75,9 +74,6 @@ static int stream_peek(int fd, unsigned char *str, size_t len) {
   }
   return rv;
 }
-
-
-
 
 
 void get_samps_and_signed(enum AVSampleFormat sfmt, int *asamps, boolean *asigned) {
@@ -91,6 +87,7 @@ void get_samps_and_signed(enum AVSampleFormat sfmt, int *asamps, boolean *asigne
     *asigned = TRUE;
   }
 }
+
 
 static int64_t get_current_ticks(void) {
   struct timeval tv;
@@ -326,22 +323,14 @@ skip_probe:
 skip_init:
     s = priv->ic->streams[i];
 
+    cc = s->codec;
 
 #ifdef API_3_1
-    cc = avcodec_alloc_context3(NULL);
-    if (!cc) {
-      fprintf(stderr, "avcodec_decoder: out of memory\n");
-      return FALSE;
-    }
-
     ret = avcodec_parameters_to_context(cc, s->codecpar);
     if (ret < 0) {
       fprintf(stderr, "avcodec_decoder: avparms to context failed\n");
       return FALSE;
     }
-
-#else
-    cc = s->codec;
 #endif
 
     // vlc_fourcc_t fcc;
@@ -996,25 +985,15 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (tframe < 0 || tframe >= cdata->nframes || cdata->fps == 0.) return FALSE;
 
-
+  cc = s->codec;
 
 #ifdef API_3_1
-  cc = avcodec_alloc_context3(NULL);
-  if (!cc) {
-    fprintf(stderr, "avcodec_decoder: out of memory\n");
-    return FALSE;
-  }
-
   ret = avcodec_parameters_to_context(cc, s->codecpar);
   if (ret < 0) {
     fprintf(stderr, "avcodec_decoder: avparms to context failed\n");
     return FALSE;
   }
-
-#else
-  cc = s->codec;
 #endif
-
 
   //cc->get_buffer = our_get_buffer;
   //cc->release_buffer = our_release_buffer;

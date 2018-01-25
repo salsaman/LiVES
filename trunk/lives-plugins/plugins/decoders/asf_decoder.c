@@ -439,7 +439,7 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
 
 
   if (tdts == -1) {
-    priv->avpkt.size = priv->def_packet_size + FF_INPUT_BUFFER_PADDING_SIZE;
+    priv->avpkt.size = priv->def_packet_size + AV_INPUT_BUFFER_PADDING_SIZE;
     priv->avpkt.data = malloc(priv->avpkt.size);
     memset(priv->avpkt.data, 0, priv->avpkt.size);
   }
@@ -714,10 +714,10 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
             fprintf(stderr, "asf_decoder: buffer overflow reading vid packet (%d + %d > %d),\n increasing buffer size\n",
                     asf->packet_frag_offset, asf->packet_frag_size, priv->avpkt.size);
 
-            priv->avpkt.data = realloc(priv->avpkt.data, priv->def_packet_size * 2 + FF_INPUT_BUFFER_PADDING_SIZE);
+            priv->avpkt.data = realloc(priv->avpkt.data, priv->def_packet_size * 2 + AV_INPUT_BUFFER_PADDING_SIZE);
             memset(priv->avpkt.data + priv->avpkt.size, 0, priv->def_packet_size);
             priv->def_packet_size *= 2;
-            priv->avpkt.size = priv->def_packet_size + FF_INPUT_BUFFER_PADDING_SIZE;
+            priv->avpkt.size = priv->def_packet_size + AV_INPUT_BUFFER_PADDING_SIZE;
           }
 
           if (read(priv->fd, priv->avpkt.data + asf->packet_frag_offset, asf->packet_frag_size)
@@ -1436,8 +1436,8 @@ seek_skip:
           if (!got_vidst) {
             priv->st->codec->extradata_size = size - 40;
 
-            priv->st->codec->extradata = malloc(priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
-            memset(priv->st->codec->extradata, 0, priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+            priv->st->codec->extradata = malloc(priv->st->codec->extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
+            memset(priv->st->codec->extradata, 0, priv->st->codec->extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
 
             if (read(priv->fd, priv->st->codec->extradata,
                      priv->st->codec->extradata_size) < priv->st->codec->extradata_size) {

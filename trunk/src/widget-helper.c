@@ -3419,7 +3419,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_image(LiVESButton *button, 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_focus_on_click(LiVESButton *button, boolean focus) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 20, 0)
+  gtk_widget_set_focus_on_click(GTK_WIDGET(button), focus);
+#else
   gtk_button_set_focus_on_click(button, focus);
+#endif
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -6317,7 +6321,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_menu_set_title(LiVESMenu *menu, const 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_menu_popup(LiVESMenu *menu, LiVESXEventButton *event) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 22, 0)
+  gtk_menu_popup_at_pointer(menu, NULL);
+#else
   gtk_menu_popup(menu, NULL, NULL, NULL, NULL, event->button, event->time);
+#endif
   return TRUE;
 #endif
 #ifdef GUI_QT

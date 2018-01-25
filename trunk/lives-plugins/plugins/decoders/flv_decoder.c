@@ -465,7 +465,7 @@ static int flv_get_extradata(lives_clip_data_t *cdata, int size) {
   lives_flv_priv_t *priv = cdata->priv;
 
   av_free(priv->ctx->extradata);
-  priv->ctx->extradata = av_mallocz(size + FF_INPUT_BUFFER_PADDING_SIZE);
+  priv->ctx->extradata = av_mallocz(size + AV_INPUT_BUFFER_PADDING_SIZE);
   if (priv->ctx->extradata == NULL) return AVERROR(ENOMEM);
   priv->ctx->extradata_size = size;
   dummy = read(priv->fd, priv->ctx->extradata, priv->ctx->extradata_size);
@@ -1143,12 +1143,12 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   if (isclone) return TRUE;
 
-  pack.data = malloc(pack.size - priv->pack_offset + FF_INPUT_BUFFER_PADDING_SIZE);
+  pack.data = malloc(pack.size - priv->pack_offset + AV_INPUT_BUFFER_PADDING_SIZE);
 
   av_init_packet(&priv->avpkt);
 
   priv->avpkt.size = read(priv->fd, pack.data, pack.size - priv->pack_offset);
-  memset(pack.data + priv->avpkt.size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+  memset(pack.data + priv->avpkt.size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
   priv->input_position += pack.size + 4;
   priv->avpkt.data = pack.data;
   priv->avpkt.dts = priv->avpkt.pts = pack.dts;
@@ -1206,10 +1206,10 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
             continue;
           }
 
-          pack.data = malloc(pack.size - priv->pack_offset + FF_INPUT_BUFFER_PADDING_SIZE);
+          pack.data = malloc(pack.size - priv->pack_offset + AV_INPUT_BUFFER_PADDING_SIZE);
           if (priv->pack_offset != 5) lseek(priv->fd, priv->pack_offset - 5, SEEK_CUR);
           priv->avpkt.size = read(priv->fd, pack.data, pack.size - priv->pack_offset);
-          memset(pack.data + priv->avpkt.size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+          memset(pack.data + priv->avpkt.size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
           priv->avpkt.data = pack.data;
           break;
         }
@@ -1709,12 +1709,12 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
         continue;
       }
 
-      pack.data = malloc(pack.size - priv->pack_offset + FF_INPUT_BUFFER_PADDING_SIZE);
+      pack.data = malloc(pack.size - priv->pack_offset + AV_INPUT_BUFFER_PADDING_SIZE);
 
       if (priv->pack_offset != 1) lseek(priv->fd, priv->pack_offset - 1, SEEK_CUR);
 
       priv->avpkt.size = read(priv->fd, pack.data, pack.size - priv->pack_offset);
-      memset(pack.data + priv->avpkt.size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+      memset(pack.data + priv->avpkt.size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
       priv->avpkt.data = pack.data;
       priv->avpkt.dts = priv->avpkt.pts = pack.dts;
 

@@ -3960,7 +3960,7 @@ void resize_play_window(void) {
       if (lives_widget_is_visible(mainw->play_window)) {
         // store old postion of window
         lives_window_get_position(LIVES_WINDOW(mainw->play_window), &opwx, &opwy);
-        if (opwx * opwy) {
+        if (opwx * opwy > 0) {
           mainw->opwx = opwx;
           mainw->opwy = opwy;
         }
@@ -4009,7 +4009,7 @@ void resize_play_window(void) {
         }
         if (mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
           // fixed o/p size for stream
-          if (!(mainw->vpp->fwidth * mainw->vpp->fheight)) {
+          if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) {
             mainw->vpp->fwidth = MAX_VPP_HSIZE;
             mainw->vpp->fheight = MAX_VPP_VSIZE;
           }

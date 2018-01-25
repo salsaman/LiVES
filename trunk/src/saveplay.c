@@ -1316,7 +1316,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     lives_freep((void **)&resaudw);
   }
 
-  if (sfile->arate * sfile->achans) {
+  if (sfile->arate * sfile->achans != 0) {
     aud_start = calc_time_from_frame(clip, start) * sfile->arps / sfile->arate;
     aud_end = calc_time_from_frame(clip, end + 1) * sfile->arps / sfile->arate;
   }
@@ -3478,7 +3478,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       xduration = cfile->frames / cfile->fps;
     }
 
-    if (!(cfile->afilesize * cfile->asampsize * cfile->arate * cfile->achans) || cfile->frames < 2) {
+    if ((cfile->afilesize * cfile->asampsize * cfile->arate * cfile->achans == 0) || cfile->frames < 2) {
       if (cfile->frames != 1) {
         d_print(_("\nPlayback speed not found or invalid ! Using default fps of %.3f fps. \nDefault can be set in Tools | Preferences | Misc.\n"),
                 prefs->default_fps);

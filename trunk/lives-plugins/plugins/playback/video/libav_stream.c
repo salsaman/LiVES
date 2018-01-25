@@ -421,13 +421,6 @@ static boolean open_audio() {
     1, c->sample_rate
   };
 
-  /* copy the stream parameters to the muxer */
-  /*     ret = avcodec_parameters_from_context(ost->st->codecpar, c);
-   if (ret < 0) {
-         fprintf(stderr, "Could not copy the stream parameters\n");
-         exit(1);
-   }*/
-
   fprintf(stderr, "Opened audio stream\n");
   fprintf(stderr, "%d %d - %d %d %d\n", in_nchans, in_sample_rate, c->channels, c->sample_rate, c->sample_fmt);
   return TRUE;
@@ -566,6 +559,15 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   ostv.enc = encctx = vStream->codec;
 
+#ifdef API_3_1
+  // needs testing
+  ret = avcodec_parameters_from_context(vStream->codecpar, encctx);
+  if (ret < 0) {
+    fprintf(stderr, "avcodec_decoder: avparms from context failed\n");
+    return FALSE;
+  }
+#endif
+
   // override defaults
   vStream->time_base = (AVRational) {
     1, target_fps
@@ -610,6 +612,14 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     osta.codec = acodec;
     aStream = osta.st;
     osta.enc = aencctx = aStream->codec;
+
+#ifdef API_3_1
+  ret = avcodec_parameters_from_context(aStream->codecpar, aencctx);
+  if (ret < 0) {
+    fprintf(stderr, "avcodec_decoder: avparms from context failed\n");
+    return FALSE;
+  }
+#endif
 
     out_nchans = 2;
     out_sample_rate = 44100;

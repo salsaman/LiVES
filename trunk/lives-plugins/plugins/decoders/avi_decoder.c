@@ -49,20 +49,20 @@ static const char avi_headers[][8] = {
   { 0 }
 };
 
-static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
+static enum AVCodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
   int i;
-  for (i = 0; tags[i].id != CODEC_ID_NONE; i++) {
+  for (i = 0; tags[i].id != AV_CODEC_ID_NONE; i++) {
     if (tag == tags[i].tag)
       return tags[i].id;
   }
-  for (i = 0; tags[i].id != CODEC_ID_NONE; i++) {
+  for (i = 0; tags[i].id != AV_CODEC_ID_NONE; i++) {
     if (toupper((tag >> 0) & 0xFF) == toupper((tags[i].tag >> 0) & 0xFF)
         && toupper((tag >> 8) & 0xFF) == toupper((tags[i].tag >> 8) & 0xFF)
         && toupper((tag >> 16) & 0xFF) == toupper((tags[i].tag >> 16) & 0xFF)
         && toupper((tag >> 24) & 0xFF) == toupper((tags[i].tag >> 24) & 0xFF))
       return tags[i].id;
   }
-  return CODEC_ID_NONE;
+  return AV_CODEC_ID_NONE;
 }
 
 static inline int get_duration(AVIStream *ast, int len) {
@@ -560,7 +560,7 @@ resync:
     //av_log(s, AV_LOG_DEBUG, "dts:%"PRId64" offset:%"PRId64" %d/%d smpl_siz:%d base:%d st:%d size:%d\n", pkt->dts, ast->frame_offset, ast->scale, ast->rate, ast->sample_size, AV_TIME_BASE, avi->stream_index, size);
     priv->avpkt.stream_index = avi->stream_index;
 
-    if (priv->st->codec->codec_id == CODEC_ID_MPEG4) {
+    if (priv->st->codec->codec_id == AV_CODEC_ID_MPEG4) {
       int key = 1;
       int i;
       uint32_t state = -1;
@@ -1212,7 +1212,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
             priv->st->codec->width = avih_width;
             priv->st->codec->height = avih_height;
             priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
-            priv->st->codec->codec_id = CODEC_ID_AMV;
+            priv->st->codec->codec_id = AV_CODEC_ID_AMV;
             priv->input_position += size;
             lseek(priv->fd, priv->input_position, SEEK_SET);
             break;
@@ -1230,7 +1230,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
           if (tag1 == MKTAG('D', 'X', 'S', 'B') || tag1 == MKTAG('D', 'X', 'S', 'A')) {
             priv->st->codec->codec_type = AVMEDIA_TYPE_SUBTITLE;
             priv->st->codec->codec_tag = tag1;
-            priv->st->codec->codec_id = CODEC_ID_XSUB;
+            priv->st->codec->codec_id = AV_CODEC_ID_XSUB;
             break;
           }
 
@@ -1286,7 +1286,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
           if (tag1 == MKTAG('A', 'V', 'R', 'n') &&
               priv->st->codec->extradata_size >= 31 &&
               !memcmp(&priv->st->codec->extradata[28], "1:1", 3))
-            priv->st->codec->codec_id = CODEC_ID_RAWVIDEO;
+            priv->st->codec->codec_id = AV_CODEC_ID_RAWVIDEO;
 
           if (priv->st->codec->codec_tag == 0 && priv->st->codec->height > 0 && priv->st->codec->extradata_size < 1U << 30) {
             priv->st->codec->extradata_size += 9;
@@ -1306,14 +1306,14 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
         case AVMEDIA_TYPE_SUBTITLE:
           priv->input_position += size;
           lseek(priv->fd, priv->input_position, SEEK_SET);
-          priv->st->codec->codec_id = CODEC_ID_NONE;
+          priv->st->codec->codec_id = AV_CODEC_ID_NONE;
           priv->st->codec->codec_tag = 0;
           //priv->st->codec->codec_type = AVMEDIA_TYPE_SUBTITLE;
           //priv->st->request_probe= 1;
           break;
         default:
           priv->st->codec->codec_type = AVMEDIA_TYPE_DATA;
-          priv->st->codec->codec_id = CODEC_ID_NONE;
+          priv->st->codec->codec_id = AV_CODEC_ID_NONE;
           priv->st->codec->codec_tag = 0;
 
           priv->input_position += size;
@@ -1453,28 +1453,28 @@ fail:
   lseek(priv->fd, priv->input_position, SEEK_SET);
 
   switch (vidst->codec->codec_id) {
-  case CODEC_ID_WMV1:
+  case AV_CODEC_ID_WMV1:
     snprintf(cdata->video_name, 16, "wmv1");
     break;
-  case CODEC_ID_WMV2:
+  case AV_CODEC_ID_WMV2:
     snprintf(cdata->video_name, 16, "wmv2");
     break;
-  case CODEC_ID_WMV3:
+  case AV_CODEC_ID_WMV3:
     snprintf(cdata->video_name, 16, "wmv3");
     break;
-  case CODEC_ID_DVVIDEO:
+  case AV_CODEC_ID_DVVIDEO:
     snprintf(cdata->video_name, 16, "dv");
     break;
-  case CODEC_ID_MPEG4:
+  case AV_CODEC_ID_MPEG4:
     snprintf(cdata->video_name, 16, "mpeg4");
     break;
-  case CODEC_ID_H264:
+  case AV_CODEC_ID_H264:
     snprintf(cdata->video_name, 16, "h264");
     break;
-  case CODEC_ID_MPEG1VIDEO:
+  case AV_CODEC_ID_MPEG1VIDEO:
     snprintf(cdata->video_name, 16, "mpeg1");
     break;
-  case CODEC_ID_MPEG2VIDEO:
+  case AV_CODEC_ID_MPEG2VIDEO:
     snprintf(cdata->video_name, 16, "mpeg2");
     break;
   default:

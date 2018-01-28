@@ -65,20 +65,20 @@ const char *plugin_version = "LiVES asf/wmv decoder version 1.1";
 
 #include "asf_decoder.h"
 
-static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
+static enum AVCodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
   int i;
-  for (i = 0; tags[i].id != CODEC_ID_NONE; i++) {
+  for (i = 0; tags[i].id != AV_CODEC_ID_NONE; i++) {
     if (tag == tags[i].tag)
       return tags[i].id;
   }
-  for (i = 0; tags[i].id != CODEC_ID_NONE; i++) {
+  for (i = 0; tags[i].id != AV_CODEC_ID_NONE; i++) {
     if (toupper((tag >> 0) & 0xFF) == toupper((tags[i].tag >> 0) & 0xFF)
         && toupper((tag >> 8) & 0xFF) == toupper((tags[i].tag >> 8) & 0xFF)
         && toupper((tag >> 16) & 0xFF) == toupper((tags[i].tag >> 16) & 0xFF)
         && toupper((tag >> 24) & 0xFF) == toupper((tags[i].tag >> 24) & 0xFF))
       return tags[i].id;
   }
-  return CODEC_ID_NONE;
+  return AV_CODEC_ID_NONE;
 }
 
 static index_container_t **indices;
@@ -2106,28 +2106,28 @@ seek_skip:
   }
 
   switch (vidst->codec->codec_id) {
-  case CODEC_ID_WMV1:
+  case AV_CODEC_ID_WMV1:
     snprintf(cdata->video_name, 16, "wmv1");
     break;
-  case CODEC_ID_WMV2:
+  case AV_CODEC_ID_WMV2:
     snprintf(cdata->video_name, 16, "wmv2");
     break;
-  case CODEC_ID_WMV3:
+  case AV_CODEC_ID_WMV3:
     snprintf(cdata->video_name, 16, "wmv3");
     break;
-  case CODEC_ID_DVVIDEO:
+  case AV_CODEC_ID_DVVIDEO:
     snprintf(cdata->video_name, 16, "dv");
     break;
-  case CODEC_ID_MPEG4:
+  case AV_CODEC_ID_MPEG4:
     snprintf(cdata->video_name, 16, "mpeg4");
     break;
-  case CODEC_ID_H264:
+  case AV_CODEC_ID_H264:
     snprintf(cdata->video_name, 16, "h264");
     break;
-  case CODEC_ID_MPEG1VIDEO:
+  case AV_CODEC_ID_MPEG1VIDEO:
     snprintf(cdata->video_name, 16, "mpeg1");
     break;
-  case CODEC_ID_MPEG2VIDEO:
+  case AV_CODEC_ID_MPEG2VIDEO:
     snprintf(cdata->video_name, 16, "mpeg2");
     break;
   default:

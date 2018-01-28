@@ -996,17 +996,17 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       switch (vcodec) {
       case FLV_CODECID_H263  :
         sprintf(cdata->video_name, "%s", "flv1");
-        codec = avcodec_find_decoder(CODEC_ID_FLV1);
+        codec = avcodec_find_decoder(AV_CODEC_ID_FLV1);
         priv->pack_offset = 1;
         break;
       case FLV_CODECID_SCREEN:
         sprintf(cdata->video_name, "%s", "flashsv");
-        codec = avcodec_find_decoder(CODEC_ID_FLASHSV);
+        codec = avcodec_find_decoder(AV_CODEC_ID_FLASHSV);
         priv->pack_offset = 1;
         break;
       case FLV_CODECID_SCREEN2:
         sprintf(cdata->video_name, "%s", "flashsv2");
-        codec = avcodec_find_decoder(CODEC_ID_FLASHSV2);
+        codec = avcodec_find_decoder(AV_CODEC_ID_FLASHSV2);
         priv->pack_offset = 1;
         break;
       case FLV_CODECID_VP6   :
@@ -1015,11 +1015,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
         cdata->offs_y = (pack.data[1] & 0XF0) >> 5; // divide by 2 for offset
         if (cdata->width == 0) cdata->width = pack.data[7] * 16 - cdata->offs_x * 2;
         if (cdata->height == 0) cdata->height = pack.data[6] * 16 - cdata->offs_y * 2;
-        codec = avcodec_find_decoder(CODEC_ID_VP6F);
+        codec = avcodec_find_decoder(AV_CODEC_ID_VP6F);
         priv->pack_offset = 2;
         break;
       case FLV_CODECID_VP6A  :
-        codec = avcodec_find_decoder(CODEC_ID_VP6A);
+        codec = avcodec_find_decoder(AV_CODEC_ID_VP6A);
         priv->ctx = ctx = avcodec_alloc_context3(codec);
 
         sprintf(cdata->video_name, "%s", "vp6a");
@@ -1038,7 +1038,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       case FLV_CODECID_H264:
         // broken....
         sprintf(cdata->video_name, "%s", "h264");
-        codec = avcodec_find_decoder(CODEC_ID_H264);
+        codec = avcodec_find_decoder(AV_CODEC_ID_H264);
         priv->pack_offset = 5;
         break;
       default:

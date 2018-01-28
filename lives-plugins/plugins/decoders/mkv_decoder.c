@@ -117,20 +117,20 @@ const uint8_t ff_log2_tab[256] = {
 };
 
 
-static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
+static enum AVCodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
   int i;
-  for (i = 0; tags[i].id != CODEC_ID_NONE; i++) {
+  for (i = 0; tags[i].id != AV_CODEC_ID_NONE; i++) {
     if (tag == tags[i].tag)
       return tags[i].id;
   }
-  for (i = 0; tags[i].id != CODEC_ID_NONE; i++) {
+  for (i = 0; tags[i].id != AV_CODEC_ID_NONE; i++) {
     if (toupper((tag >> 0) & 0xFF) == toupper((tags[i].tag >> 0) & 0xFF)
         && toupper((tag >> 8) & 0xFF) == toupper((tags[i].tag >> 8) & 0xFF)
         && toupper((tag >> 16) & 0xFF) == toupper((tags[i].tag >> 16) & 0xFF)
         && toupper((tag >> 24) & 0xFF) == toupper((tags[i].tag >> 24) & 0xFF))
       return tags[i].id;
   }
-  return CODEC_ID_NONE;
+  return AV_CODEC_ID_NONE;
 }
 
 
@@ -1364,7 +1364,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
   for (i = 0; i < matroska->tracks.nb_elem; i++) {
 
     MatroskaTrack *track = &tracks[i];
-    enum CodecID codec_id = CODEC_ID_NONE;
+    enum AVCodecID codec_id = AV_CODEC_ID_NONE;
     EbmlList *encodings_list = &track->encodings;
     MatroskaTrackEncoding *encodings = encodings_list->elem;
     uint8_t *extradata = NULL;
@@ -1473,7 +1473,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       }
     }
 
-    for (j = 0; ff_mkv_codec_tags[j].id != CODEC_ID_NONE; j++) {
+    for (j = 0; ff_mkv_codec_tags[j].id != AV_CODEC_ID_NONE; j++) {
       if (!strncmp(ff_mkv_codec_tags[j].str, track->codec_id,
                    strlen(ff_mkv_codec_tags[j].str))) {
         codec_id = ff_mkv_codec_tags[j].id;
@@ -1501,15 +1501,15 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
                && (track->codec_priv.data != NULL)) {
       fourcc = AV_RL32(track->codec_priv.data);
       codec_id = ff_codec_get_id(codec_movvideo_tags, fourcc);
-    } else if (codec_id == CODEC_ID_RV10 || codec_id == CODEC_ID_RV20 ||
-               codec_id == CODEC_ID_RV30 || codec_id == CODEC_ID_RV40) {
+    } else if (codec_id == AV_CODEC_ID_RV10 || codec_id == AV_CODEC_ID_RV20 ||
+               codec_id == AV_CODEC_ID_RV30 || codec_id == AV_CODEC_ID_RV40) {
       extradata_offset = 26;
     }
 
 
     track->codec_priv.size -= extradata_offset;
 
-    if (codec_id == CODEC_ID_NONE) {
+    if (codec_id == AV_CODEC_ID_NONE) {
       fprintf(stderr,
               "mkv_decoder: Unknown video codec\n");
       return -42;
@@ -1571,7 +1571,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
                 st->codec->height * track->video.display_width,
                 st->codec->width * track->video.display_height,
                 255);
-      if (st->codec->codec_id != CODEC_ID_H264)
+      if (st->codec->codec_id != AV_CODEC_ID_H264)
         st->need_parsing = AVSTREAM_PARSE_HEADERS;
       if (track->default_duration)
         st->avg_frame_rate = av_d2q(1000000000.0 / track->default_duration, INT_MAX);
@@ -1618,53 +1618,53 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
   }
 
   switch (priv->vidst->codec->codec_id) {
-  case CODEC_ID_VP8  :
+  case AV_CODEC_ID_VP8  :
     sprintf(cdata->video_name, "%s", "vp8");
     break;
-  case CODEC_ID_THEORA  :
+  case AV_CODEC_ID_THEORA  :
     sprintf(cdata->video_name, "%s", "theora");
     break;
 
 #if FF_API_SNOW
-  case CODEC_ID_SNOW  :
+  case AV_CODEC_ID_SNOW  :
     sprintf(cdata->video_name, "%s", "snow");
     break;
 #endif
 
-  case CODEC_ID_DIRAC  :
+  case AV_CODEC_ID_DIRAC  :
     sprintf(cdata->video_name, "%s", "dirac");
     break;
-  case CODEC_ID_MJPEG  :
+  case AV_CODEC_ID_MJPEG  :
     sprintf(cdata->video_name, "%s", "mjpeg");
     break;
-  case CODEC_ID_MPEG1VIDEO  :
+  case AV_CODEC_ID_MPEG1VIDEO  :
     sprintf(cdata->video_name, "%s", "mpeg1");
     break;
-  case CODEC_ID_MPEG2VIDEO  :
+  case AV_CODEC_ID_MPEG2VIDEO  :
     sprintf(cdata->video_name, "%s", "mpeg2");
     break;
-  case CODEC_ID_MPEG4  :
+  case AV_CODEC_ID_MPEG4  :
     sprintf(cdata->video_name, "%s", "mpeg4");
     break;
-  case CODEC_ID_H264  :
+  case AV_CODEC_ID_H264  :
     sprintf(cdata->video_name, "%s", "h264");
     break;
-  case CODEC_ID_MSMPEG4V3  :
+  case AV_CODEC_ID_MSMPEG4V3  :
     sprintf(cdata->video_name, "%s", "msmpeg4");
     break;
-  case CODEC_ID_RV10  :
+  case AV_CODEC_ID_RV10  :
     sprintf(cdata->video_name, "%s", "rv10");
     break;
-  case CODEC_ID_RV20  :
+  case AV_CODEC_ID_RV20  :
     sprintf(cdata->video_name, "%s", "rv20");
     break;
-  case CODEC_ID_RV30  :
+  case AV_CODEC_ID_RV30  :
     sprintf(cdata->video_name, "%s", "rv30");
     break;
-  case CODEC_ID_RV40  :
+  case AV_CODEC_ID_RV40  :
     sprintf(cdata->video_name, "%s", "rv40");
     break;
-  case CODEC_ID_RAWVIDEO  :
+  case AV_CODEC_ID_RAWVIDEO  :
     sprintf(cdata->video_name, "%s", "raw");
     break;
   default  :
@@ -2661,20 +2661,20 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
           pkt->pts = timecode;
         pkt->pos = pos;
 
-        if (st->codec->codec_id == CODEC_ID_TEXT)
+        if (st->codec->codec_id == AV_CODEC_ID_TEXT)
           pkt->convergence_duration = duration;
 
         else if (track->type != MATROSKA_TRACK_TYPE_SUBTITLE)
           pkt->duration = duration;
 
-        if (st->codec->codec_id == CODEC_ID_SSA)
+        if (st->codec->codec_id == AV_CODEC_ID_SSA)
           matroska_fix_ass_packet(matroska, pkt, duration);
 
         if (matroska->prev_pkt &&
             timecode != AV_NOPTS_VALUE &&
             matroska->prev_pkt->pts == timecode &&
             matroska->prev_pkt->stream_index == st->index &&
-            st->codec->codec_id == CODEC_ID_SSA)
+            st->codec->codec_id == AV_CODEC_ID_SSA)
           matroska_merge_packets(matroska->prev_pkt, pkt);
         else {
           lives_dynarray_add(&matroska->packets, &matroska->num_packets, pkt);

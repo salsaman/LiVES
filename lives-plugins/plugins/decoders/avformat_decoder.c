@@ -443,7 +443,7 @@ skip_init:
 
 
     if( strncmp( p_sys->ic->iformat->name, "matroska", 8 ) == 0 &&
-              cc->codec_id == CODEC_ID_DVD_SUBTITLE &&
+              cc->codec_id == AV_CODEC_ID_DVD_SUBTITLE &&
               cc->extradata != NULL &&
               cc->extradata_size > 0 )
     {
@@ -496,7 +496,7 @@ skip_init:
     {
     input_attachment_t *p_attachment;
     psz_type = "attachment";
-    if( cc->codec_id == CODEC_ID_TTF )
+    if( cc->codec_id == AV_CODEC_ID_TTF )
     {
     p_attachment = vlc_input_attachment_New( s->filename, "application/x-truetype-font", NULL,
     cc->extradata, (int)cc->extradata_size );
@@ -525,7 +525,7 @@ skip_init:
     const uint8_t *p_extra = cc->extradata;
     unsigned      i_extra  = cc->extradata_size;
 
-    if( cc->codec_id == CODEC_ID_THEORA && b_ogg )
+    if( cc->codec_id == AV_CODEC_ID_THEORA && b_ogg )
     {
     unsigned pi_size[3];
     void     *pp_data[3];
@@ -549,7 +549,7 @@ skip_init:
     fmt.p_extra = NULL;
     }
     }
-    else if( cc->codec_id == CODEC_ID_SPEEX && b_ogg )
+    else if( cc->codec_id == AV_CODEC_ID_SPEEX && b_ogg )
     {
     uint8_t p_dummy_comment[] = {
     0, 0, 0, 0,

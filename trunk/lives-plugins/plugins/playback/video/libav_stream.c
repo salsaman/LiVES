@@ -91,12 +91,11 @@ typedef struct OutputStream {
 static OutputStream ostv; // video
 static OutputStream osta; // audio
 
-
 //////////////////////////////////////////////
-
 
 #define STR_EXPAND(tok) #tok
 #define STR(tok) STR_EXPAND(tok)
+
 
 const char *get_fps_list(int palette) {
   return STR(DEFAULT_FRAME_RATE);
@@ -248,7 +247,7 @@ boolean set_yuv_palette_clamping(int clamping_type) {
 boolean set_palette(int palette) {
   mypalette = palette;
   render_fn = &render_frame_yuv420;
-  avpalette = PIX_FMT_YUV420P;//weed_palette_to_avi_pix_fmt(WEED_PALETTE_YUV420P, &myclamp);
+  avpalette = weed_palette_to_avi_pix_fmt(WEED_PALETTE_YUV420P, &myclamp);
   return TRUE;
 }
 
@@ -435,7 +434,12 @@ static boolean add_stream(OutputStream *ost, AVFormatContext *oc,
   *codec = avcodec_find_encoder(codec_id);
   if (!(*codec)) {
     fprintf(stderr, "Could not find encoder for '%s'\n",
-            avcodec_get_name(codec_id));
+#ifdef HAVE_AVCODEC_GET_NAME
+            avcodec_get_name(codec_id)
+#else
+	    ((AVCodec *)(*codec))->name
+#endif
+	    );
     return FALSE;
   }
 
@@ -456,7 +460,7 @@ static boolean add_stream(OutputStream *ost, AVFormatContext *oc,
 
   /* Some formats want stream headers to be separate. */
   if (!stream_encode && oc->oformat->flags & AVFMT_GLOBALHEADER)
-    c->flags |= CODEC_FLAG_GLOBAL_HEADER;
+    c->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
   return TRUE;
 }
@@ -660,7 +664,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
       return FALSE;
     }
 
-
     ret = avformat_write_header(fmtctx, NULL);
     if (ret < 0) {
       fprintf(stderr, "Error occurred when writing header: %s\n",
@@ -696,6 +699,7 @@ static void log_packet(const AVPacket *pkt) {
          pkt->stream_index);
 }
 */
+
 
 static int write_frame(const AVRational *time_base, AVStream *stream, AVPacket *pkt) {
   int ret;
@@ -1041,5 +1045,4 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 void module_unload(void) {
   avformat_network_deinit();
 }
-
 

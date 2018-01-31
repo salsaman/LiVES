@@ -357,8 +357,12 @@ skip_init:
 
       get_samps_and_signed(cc->sample_fmt, &cdata->asamps, &cdata->asigned);
 
-      sprintf(cdata->audio_name, "%s", cc->codec_name);
-
+#ifdef HAVE_AVCODEC_GET_NAME
+      sprintf(cdata->audio_name, "%s", avcodec_get_name(cc->codec_id));
+#else
+      sprintf(cdata->audio_name, "%s", cc->codec->name);
+#endif
+      
       priv->astream = i;
       break;
 
@@ -397,7 +401,11 @@ skip_init:
         return FALSE;
       }
 
-      sprintf(cdata->video_name, "%s", cc->codec_name);
+#ifdef HAVE_AVCODEC_GET_NAME
+      sprintf(cdata->video_name, "%s", avcodec_get_name(cc->codec_id));
+#else
+      sprintf(cdata->video_name, "%s", cc->codec->name);
+#endif
 
       cdata->par = cc->sample_aspect_ratio.num / cc->sample_aspect_ratio.den;
       if (cdata->par == 0) cdata->par = 1;

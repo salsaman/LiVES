@@ -362,7 +362,7 @@ skip_init:
 #else
       sprintf(cdata->audio_name, "%s", cc->codec->name);
 #endif
-      
+
       priv->astream = i;
       break;
 

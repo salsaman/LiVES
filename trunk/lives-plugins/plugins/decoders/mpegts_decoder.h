@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+// additional defines for LiVES by G.Finch <salsaman+lives@gmail.com>
+
 #ifndef LIVES_MPEGTS_H
 #define LIVES_MPEGTS_H
 
@@ -103,11 +105,7 @@ int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVS
                               Mp4Descr *mp4_descr, int mp4_descr_count, int pid,
                               MpegTSContext *ts);
 
-
-
 // get_bits.h
-
-
 
 #if defined(ALT_BITSTREAM_READER_LE) && !defined(ALT_BITSTREAM_READER)
 #   define ALT_BITSTREAM_READER
@@ -121,9 +119,6 @@ int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVS
 //#define A32_BITSTREAM_READER
 #   endif
 #endif
-
-
-
 
 /* bit input */
 /* buffer, buffer_end and size_in_bits must be present and used by every reader */
@@ -140,10 +135,7 @@ typedef struct GetBitContext {
   int size_in_bits;
 } GetBitContext;
 
-
 static uint16_t lives_rb32(const uint8_t *x);
-
-
 
 #ifdef ALT_BITSTREAM_READER
 #   define MIN_CACHE_BITS 25
@@ -254,12 +246,7 @@ static inline void skip_bits_long(GetBitContext *s, int n) {
 
 #   define GET_CACHE(name, gb) name##_cache0
 
-
-
 #endif
-
-
-
 
 #ifndef NEG_SSR32
 #   define NEG_SSR32(a, s) ((( int32_t)(a)) >> (32 - (s)))
@@ -269,10 +256,6 @@ static inline void skip_bits_long(GetBitContext *s, int n) {
 #   define NEG_USR32(a, s) (((uint32_t)(a)) >> (32 - (s)))
 #endif
 
-
-
-
-
 #define MP4ODescrTag                    0x01
 #define MP4IODescrTag                   0x02
 #define MP4ESDescrTag                   0x03
@@ -280,49 +263,45 @@ static inline void skip_bits_long(GetBitContext *s, int n) {
 #define MP4DecSpecificDescrTag          0x05
 #define MP4SLDescrTag                   0x06
 
-
 /* http://www.mp4ra.org */
 /* ordered by muxing preference */
 const AVCodecTag ff_mp4_obj_type[] = {
-  { CODEC_ID_MOV_TEXT  , 0x08 },
-  { CODEC_ID_MPEG4     , 0x20 },
-  { CODEC_ID_H264      , 0x21 },
-  { CODEC_ID_AAC       , 0x40 },
-  { CODEC_ID_MP4ALS    , 0x40 }, /* 14496-3 ALS */
-  { CODEC_ID_MPEG2VIDEO, 0x61 }, /* MPEG2 Main */
-  { CODEC_ID_MPEG2VIDEO, 0x60 }, /* MPEG2 Simple */
-  { CODEC_ID_MPEG2VIDEO, 0x62 }, /* MPEG2 SNR */
-  { CODEC_ID_MPEG2VIDEO, 0x63 }, /* MPEG2 Spatial */
-  { CODEC_ID_MPEG2VIDEO, 0x64 }, /* MPEG2 High */
-  { CODEC_ID_MPEG2VIDEO, 0x65 }, /* MPEG2 422 */
-  { CODEC_ID_AAC       , 0x66 }, /* MPEG2 AAC Main */
-  { CODEC_ID_AAC       , 0x67 }, /* MPEG2 AAC Low */
-  { CODEC_ID_AAC       , 0x68 }, /* MPEG2 AAC SSR */
-  { CODEC_ID_MP3       , 0x69 }, /* 13818-3 */
-  { CODEC_ID_MP2       , 0x69 }, /* 11172-3 */
-  { CODEC_ID_MPEG1VIDEO, 0x6A }, /* 11172-2 */
-  { CODEC_ID_MP3       , 0x6B }, /* 11172-3 */
-  { CODEC_ID_MJPEG     , 0x6C }, /* 10918-1 */
-  { CODEC_ID_PNG       , 0x6D },
-  { CODEC_ID_JPEG2000  , 0x6E }, /* 15444-1 */
-  { CODEC_ID_VC1       , 0xA3 },
-  { CODEC_ID_DIRAC     , 0xA4 },
-  { CODEC_ID_AC3       , 0xA5 },
-  { CODEC_ID_DTS       , 0xA9 }, /* mp4ra.org */
-  { CODEC_ID_VORBIS    , 0xDD }, /* non standard, gpac uses it */
-  { CODEC_ID_DVD_SUBTITLE, 0xE0 }, /* non standard, see unsupported-embedded-subs-2.mp4 */
-  { CODEC_ID_QCELP     , 0xE1 },
-  { CODEC_ID_MPEG4SYSTEMS, 0x01 },
-  { CODEC_ID_MPEG4SYSTEMS, 0x02 },
-  { CODEC_ID_NONE      ,    0 },
+  { AV_CODEC_ID_MOV_TEXT  , 0x08 },
+  { AV_CODEC_ID_MPEG4     , 0x20 },
+  { AV_CODEC_ID_H264      , 0x21 },
+  { AV_CODEC_ID_AAC       , 0x40 },
+  { AV_CODEC_ID_MP4ALS    , 0x40 }, /* 14496-3 ALS */
+  { AV_CODEC_ID_MPEG2VIDEO, 0x61 }, /* MPEG2 Main */
+  { AV_CODEC_ID_MPEG2VIDEO, 0x60 }, /* MPEG2 Simple */
+  { AV_CODEC_ID_MPEG2VIDEO, 0x62 }, /* MPEG2 SNR */
+  { AV_CODEC_ID_MPEG2VIDEO, 0x63 }, /* MPEG2 Spatial */
+  { AV_CODEC_ID_MPEG2VIDEO, 0x64 }, /* MPEG2 High */
+  { AV_CODEC_ID_MPEG2VIDEO, 0x65 }, /* MPEG2 422 */
+  { AV_CODEC_ID_AAC       , 0x66 }, /* MPEG2 AAC Main */
+  { AV_CODEC_ID_AAC       , 0x67 }, /* MPEG2 AAC Low */
+  { AV_CODEC_ID_AAC       , 0x68 }, /* MPEG2 AAC SSR */
+  { AV_CODEC_ID_MP3       , 0x69 }, /* 13818-3 */
+  { AV_CODEC_ID_MP2       , 0x69 }, /* 11172-3 */
+  { AV_CODEC_ID_MPEG1VIDEO, 0x6A }, /* 11172-2 */
+  { AV_CODEC_ID_MP3       , 0x6B }, /* 11172-3 */
+  { AV_CODEC_ID_MJPEG     , 0x6C }, /* 10918-1 */
+  { AV_CODEC_ID_PNG       , 0x6D },
+  { AV_CODEC_ID_JPEG2000  , 0x6E }, /* 15444-1 */
+  { AV_CODEC_ID_VC1       , 0xA3 },
+  { AV_CODEC_ID_DIRAC     , 0xA4 },
+  { AV_CODEC_ID_AC3       , 0xA5 },
+  { AV_CODEC_ID_DTS       , 0xA9 }, /* mp4ra.org */
+  { AV_CODEC_ID_VORBIS    , 0xDD }, /* non standard, gpac uses it */
+  { AV_CODEC_ID_DVD_SUBTITLE, 0xE0 }, /* non standard, see unsupported-embedded-subs-2.mp4 */
+  { AV_CODEC_ID_QCELP     , 0xE1 },
+  { AV_CODEC_ID_MPEG4SYSTEMS, 0x01 },
+  { AV_CODEC_ID_MPEG4SYSTEMS, 0x02 },
+  { AV_CODEC_ID_NONE      ,    0 },
 };
 
-
-#define CODEC_ID_FIRST_AUDIO 0x10000
-#define CODEC_ID_FIRST_SUBTITLE 0x17000
-#define CODEC_ID_FIRST_UNKNOWN 0x18000
-
-
+#define AV_CODEC_ID_FIRST_AUDIO 0x10000
+#define AV_CODEC_ID_FIRST_SUBTITLE 0x17000
+#define AV_CODEC_ID_FIRST_UNKNOWN 0x18000
 
 typedef struct _index_entry index_entry;
 
@@ -340,7 +319,6 @@ typedef struct {
   lives_clip_data_t **clients;
   pthread_mutex_t mutex;
 } index_container_t;
-
 
 typedef struct {
   int fd;
@@ -368,13 +346,5 @@ typedef struct {
   boolean got_eof;
   boolean expect_eof;
 } lives_mpegts_priv_t;
-
-
-
-
-
-
-
-
 
 #endif /* LIVES_MPEGTS_H */

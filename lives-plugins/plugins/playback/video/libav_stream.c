@@ -437,9 +437,9 @@ static boolean add_stream(OutputStream *ost, AVFormatContext *oc,
 #ifdef HAVE_AVCODEC_GET_NAME
             avcodec_get_name(codec_id)
 #else
-	    ((AVCodec *)(*codec))->name
+            ((AVCodec *)(*codec))->name
 #endif
-	    );
+           );
     return FALSE;
   }
 
@@ -618,11 +618,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     osta.enc = aencctx = aStream->codec;
 
 #ifdef API_3_1
-  ret = avcodec_parameters_from_context(aStream->codecpar, aencctx);
-  if (ret < 0) {
-    fprintf(stderr, "avcodec_decoder: avparms from context failed\n");
-    return FALSE;
-  }
+    ret = avcodec_parameters_from_context(aStream->codecpar, aencctx);
+    if (ret < 0) {
+      fprintf(stderr, "avcodec_decoder: avparms from context failed\n");
+      return FALSE;
+    }
 #endif
 
     out_nchans = 2;

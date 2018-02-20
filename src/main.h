@@ -1,6 +1,6 @@
 // main.h
 // LiVES
-// (c) G. Finch (salsaman@gmail.com) 2003 - 2017
+// (c) G. Finch (salsaman@gmail.com) 2003 - 2018
 // see file ../COPYING for full licensing details
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -227,7 +227,7 @@ typedef int lives_pgid_t;
 
 #define LIVES_DEVICE_DIR "/dev/"
 
-#define LIVES_COPYRIGHT_YEARS "2002 - 2017"
+#define LIVES_COPYRIGHT_YEARS "2002 - 2018"
 
 #define LIVES_WEBSITE PACKAGE_URL
 #define LIVES_MANUAL_URL LIVES_WEBSITE "/manual/"

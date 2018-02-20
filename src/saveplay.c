@@ -2296,7 +2296,7 @@ void play_file(void) {
 
     if (mainw->vpp != NULL && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
       // fixed o/p size for stream
-      if (!(mainw->vpp->fwidth * mainw->vpp->fheight)) {
+      if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) {
         /*	mainw->vpp->fwidth = cfile->hsize;
               mainw->vpp->fheight = cfile->vsize;
               calc_maxspect(MAX_VPP_HSIZE, MAX_VPP_VSIZE, &mainw->vpp->fwidth, &mainw->vpp->fheight);*/

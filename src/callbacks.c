@@ -2970,7 +2970,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
   times_to_insert = mainw->fx1_val;
 
   // fit video to audio if requested
-  if (mainw->fx1_bool && (cfile->asampsize * cfile->arate * cfile->achans)) {
+  if (mainw->fx1_bool && (cfile->asampsize * cfile->arate * cfile->achans != 0)) {
     // "insert to fit audio" : number of inserts is (audio_time - video_time) / clipboard_time
     times_to_insert = (cfile->laudio_time - cfile->frames > 0 ? (double)cfile->frames / cfile->fps : 0.) / ((
                         double)clipboard->frames / clipboard->fps);
@@ -3242,7 +3242,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     if (!resample_clipboard(cfile->fps)) return;
   }
 
-  if (mainw->fx1_bool && (cfile->asampsize * cfile->arate * cfile->achans)) {
+  if (mainw->fx1_bool && (cfile->asampsize * cfile->arate * cfile->achans != 0)) {
     // in theory this should not change after resampling, but we will recalculate anyway
 
     // "insert to fit audio" : number of inserts is (audio_time - video_time) / clipboard_time

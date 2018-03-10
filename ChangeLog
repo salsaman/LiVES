@@ -20,6 +20,9 @@ Scale many widget sizes based on screen resolution.
 Fix crash in multitrack parameter adjustment for effects with repeated channels.
 Ctrl + mouse scroll can be used to zoom in / out in multitrack.
 Disable ctrl-q (quit) accelerator during playback to prevent accidental triggering.
+Updates for libav 3.5.
+Updated Ukrainian translation (Yuri Chernovian).
+
 
 
 Version 2.8.7 (29 June 2017)

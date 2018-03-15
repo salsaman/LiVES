@@ -4803,7 +4803,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           lives_snprintf(buff, PATH_MAX, "%s", mainw->files[i]->handle);
           get_basename(buff);
           if (strlen(buff)) {
-            lives_snprintf(new_handle, 256, "%s/%s%s", mainw->set_name, CLIPS_DIRNAME, buff);
+            lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, buff);
           } else {
             lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, mainw->files[i]->handle);
           }

@@ -2693,12 +2693,15 @@ void do_rmem_max_error(int size) {
 
 
 static xprocess *procw = NULL;
+static int64_t last_t;
 
 static void create_threaded_dialog(char *text, boolean has_cancel) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
   char tmp_label[256];
   boolean nogui = widget_opts.no_gui;
+
+  last_t = g_get_monotonic_time();
 
   procw = (xprocess *)(lives_calloc(1, sizeof(xprocess)));
 
@@ -2774,6 +2777,8 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY, procw->processing);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
+
+  
   procw->is_ready = TRUE;
 }
 
@@ -2797,8 +2802,10 @@ void threaded_dialog_spin(double fraction) {
       // pulse the progress bar
       //#define GDB
 #ifndef GDB
-      if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
-      //}
+      if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) {
+	lives_widget_context_update();
+	lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
+      }
 #endif
     } else {
       // show fraction

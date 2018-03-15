@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2018-02-27 01:24-0300\n"
+"POT-Creation-Date: 2018-03-15 13:21-0300\n"
 "PO-Revision-Date: 2015-04-06 05:53+0000\n"
 "Last-Translator: ☠Jay ZDLin☠ <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1259,7 +1259,7 @@ msgstr "Кликните сюда для _Предпросмотра видео"
 msgid "Click here to _Preview the file"
 msgstr "Кликните сюда для _Предпросмотра видео"
 
-#: src/interface.c:151 src/dialogs.c:2706
+#: src/interface.c:151 src/dialogs.c:2709
 #, fuzzy
 msgid "Processing..."
 msgstr "LiVES: - Обработка..."
@@ -1279,7 +1279,7 @@ msgstr ""
 "Не забудьте отключить эффекты (ctrl-0) позже!"
 
 #: src/interface.c:191 src/callbacks.c:9015 src/callbacks.c:9062
-#: src/dialogs.c:2731
+#: src/dialogs.c:2734
 msgid ""
 "\n"
 "Please Wait"
@@ -1291,7 +1291,7 @@ msgstr ""
 msgid "Show Details"
 msgstr "Показать сведения"
 
-#: src/interface.c:213 src/dialogs.c:2744
+#: src/interface.c:213 src/dialogs.c:2747
 msgid "_Enough"
 msgstr "_Достаточно"
 
@@ -5765,33 +5765,33 @@ msgid ""
 "echo %d > /proc/sys/net/core/rmem_max\n"
 msgstr ""
 
-#: src/dialogs.c:2889
+#: src/dialogs.c:2896
 msgid "cancelled.\n"
 msgstr "отменена.\n"
 
-#: src/dialogs.c:2894
+#: src/dialogs.c:2901
 msgid "failed.\n"
 msgstr "сбой.\n"
 
-#: src/dialogs.c:2898
+#: src/dialogs.c:2905
 msgid "done.\n"
 msgstr "готово.\n"
 
-#: src/dialogs.c:2902
+#: src/dialogs.c:2909
 msgid "error in file. Failed.\n"
 msgstr "Ошибка в файле. Ошибка.\n"
 
-#: src/dialogs.c:2936 src/dialogs.c:2989 src/dialogs.c:3013
+#: src/dialogs.c:2943 src/dialogs.c:2996 src/dialogs.c:3020
 #, c-format
 msgid "Additional info: %s\n"
 msgstr "Дополнительные сведения: %s\n"
 
-#: src/dialogs.c:2939
+#: src/dialogs.c:2946
 #, c-format
 msgid "The error value was %d%s\n"
 msgstr ""
 
-#: src/dialogs.c:2942
+#: src/dialogs.c:2949
 #, c-format
 msgid ""
 "\n"
@@ -5806,7 +5806,7 @@ msgstr ""
 "Пожалуйста, проверьте систему на ошибки.\n"
 "%s%s%s"
 
-#: src/dialogs.c:2992
+#: src/dialogs.c:2999
 #, c-format
 msgid ""
 "\n"
@@ -5816,7 +5816,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3016
+#: src/dialogs.c:3023
 #, c-format
 msgid ""
 "\n"
@@ -5826,7 +5826,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3063
+#: src/dialogs.c:3070
 #, c-format
 msgid ""
 "\n"
@@ -5835,7 +5835,7 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 
-#: src/dialogs.c:3066
+#: src/dialogs.c:3073
 #, c-format
 msgid ""
 "\n"
@@ -5845,7 +5845,7 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: src/dialogs.c:3095
+#: src/dialogs.c:3102
 #, c-format
 msgid ""
 "\n"
@@ -5854,7 +5854,7 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 
-#: src/dialogs.c:3098
+#: src/dialogs.c:3105
 #, c-format
 msgid ""
 "\n"
@@ -5864,12 +5864,12 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: src/dialogs.c:3163
+#: src/dialogs.c:3170
 #, c-format
 msgid "Value for \"%s\" could not be read."
 msgstr ""
 
-#: src/dialogs.c:3180
+#: src/dialogs.c:3187
 #, c-format
 msgid ""
 "\n"
@@ -5878,7 +5878,7 @@ msgid ""
 "Please check your system for errors.\n"
 msgstr ""
 
-#: src/dialogs.c:3188
+#: src/dialogs.c:3195
 #, c-format
 msgid ""
 "\n"
@@ -5887,7 +5887,7 @@ msgid ""
 "Please check the file permissions and try again."
 msgstr ""
 
-#: src/dialogs.c:3197
+#: src/dialogs.c:3204
 #, c-format
 msgid ""
 "\n"
@@ -5896,7 +5896,7 @@ msgid ""
 "Please check the directory permissions and try again."
 msgstr ""
 
-#: src/dialogs.c:3204
+#: src/dialogs.c:3211
 #, c-format
 msgid ""
 "\n"
@@ -5904,7 +5904,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/dialogs.c:3211
+#: src/dialogs.c:3218
 msgid ""
 "\n"
 "Abort and exit immediately from LiVES\n"
@@ -5914,7 +5914,7 @@ msgstr ""
 "Прервать и выйти немедленно из LiVES\n"
 "Вы действительно хотите выйти ?\n"
 
-#: src/dialogs.c:3216
+#: src/dialogs.c:3223
 #, c-format
 msgid ""
 "\n"
@@ -5922,13 +5922,13 @@ msgid ""
 "Please select another encoder from the list.\n"
 msgstr ""
 
-#: src/dialogs.c:3226
+#: src/dialogs.c:3233
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 msgstr ""
 
-#: src/dialogs.c:3232
+#: src/dialogs.c:3239
 #, c-format
 msgid ""
 "\n"
@@ -5943,7 +5943,7 @@ msgstr ""
 "- Проверьте, не используется ли устройство другой программой.\n"
 "- Проверьте, имеется ли само устройство.\n"
 
-#: src/dialogs.c:3241
+#: src/dialogs.c:3248
 msgid ""
 "\n"
 "This file already has subtitles loaded.\n"
@@ -5953,7 +5953,7 @@ msgstr ""
 "Этот файл уже имеет загруженные субтитры.\n"
 "Вы действительно хотите заменить существующие субтитры ?\n"
 
-#: src/dialogs.c:3245
+#: src/dialogs.c:3252
 #, fuzzy
 msgid ""
 "\n"
@@ -5962,7 +5962,7 @@ msgstr ""
 "\n"
 "В настоящее время LiVES поддерживает только субтитры формата .srt и .sub.\n"
 
-#: src/dialogs.c:3271
+#: src/dialogs.c:3278
 msgid ""
 "\n"
 "Erase all subtitles from this clip.\n"
@@ -5972,7 +5972,7 @@ msgstr ""
 "Стереть все субтитры из этого фргамента.\n"
 "Вы действительно хотите стереть ?\n"
 
-#: src/dialogs.c:3278
+#: src/dialogs.c:3285
 #, c-format
 msgid ""
 "\n"
@@ -5985,7 +5985,7 @@ msgstr ""
 "Щёлкните Отмена, чтобы назначить другое имя файла\n"
 "или OK, чтобы продолжить и сохранить как тип \"%s\"\n"
 
-#: src/dialogs.c:3287
+#: src/dialogs.c:3294
 msgid ""
 "\n"
 "Do you wish to move the current clip sets to the new directory ?\n"
@@ -5996,7 +5996,7 @@ msgstr ""
 "каталог ?\n"
 "(Если не уверены, щёлкните Да)\n"
 
-#: src/dialogs.c:3293
+#: src/dialogs.c:3300
 #, c-format
 msgid ""
 "\n"
@@ -6013,7 +6013,7 @@ msgstr ""
 "продолжения - OK\n"
 "."
 
-#: src/dialogs.c:3301
+#: src/dialogs.c:3308
 msgid ""
 "\n"
 "No video input devices could be found.\n"
@@ -6021,7 +6021,7 @@ msgstr ""
 "\n"
 "Устройства ввода видео не найдены.\n"
 
-#: src/dialogs.c:3306
+#: src/dialogs.c:3313
 msgid ""
 "\n"
 "All video input devices are already in use.\n"
@@ -6029,7 +6029,7 @@ msgstr ""
 "\n"
 "Все устройства ввода видео уже используются.\n"
 
-#: src/dialogs.c:3311
+#: src/dialogs.c:3318
 msgid ""
 "\n"
 "\n"
@@ -6037,7 +6037,7 @@ msgid ""
 "DO NOT SHUT DOWN OR CLOSE LIVES !\n"
 msgstr ""
 
-#: src/dialogs.c:3318
+#: src/dialogs.c:3325
 #, c-format
 msgid ""
 "\n"
@@ -6045,14 +6045,14 @@ msgid ""
 "The theme could not be loaded correctly.\n"
 msgstr ""
 
-#: src/dialogs.c:3325
+#: src/dialogs.c:3332
 #, c-format
 msgid ""
 "No clips were recovered for set (%s).\n"
 "Please check the spelling of the set name and try again.\n"
 msgstr ""
 
-#: src/dialogs.c:3338
+#: src/dialogs.c:3345
 #, c-format
 msgid ""
 "Some security issues have been fixed in this version of LiVES.\n"
@@ -6061,7 +6061,7 @@ msgid ""
 "directory. Would you like me to do this (recommended) ?"
 msgstr ""
 
-#: src/dialogs.c:3342
+#: src/dialogs.c:3349
 #, c-format
 msgid ""
 "\n"
@@ -6079,7 +6079,7 @@ msgstr ""
 "Файл -> Очистить диск\n"
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:3351
+#: src/dialogs.c:3358
 #, c-format
 msgid ""
 "\n"
@@ -6092,20 +6092,20 @@ msgstr ""
 "Добро пожаловать в LiVES версии %s !\n"
 "\n"
 
-#: src/dialogs.c:3357
+#: src/dialogs.c:3364
 msgid ""
 "\n"
 "You must have autolives.pl installed and in your path to use this toy.\n"
 "Consult your package distributor.\n"
 msgstr ""
 
-#: src/dialogs.c:3362
+#: src/dialogs.c:3369
 msgid ""
 "\n"
 "You must have a minimum of one clip loaded to use this toy.\n"
 msgstr ""
 
-#: src/dialogs.c:3367
+#: src/dialogs.c:3374
 msgid ""
 "\n"
 "LiVES lost its connection to jack and was unable to reconnect.\n"
@@ -6115,7 +6115,7 @@ msgstr ""
 "LiVES прервал соединение с jack и не смог выполнить повторное подключение.\n"
 "Рекомендуется выполнить перезапуск LiVES.\n"
 
-#: src/dialogs.c:3372
+#: src/dialogs.c:3379
 msgid ""
 "\n"
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
@@ -6126,13 +6126,13 @@ msgstr ""
 "подключение.\n"
 "Рекомендуется выполнить перезапуск LiVES.\n"
 
-#: src/dialogs.c:3377
+#: src/dialogs.c:3384
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr ""
 "Пожалуйста, выберите ваше устройство для проигрывания CD в Инструменты | "
 "Предпочтения | Прочее\n"
 
-#: src/dialogs.c:3382
+#: src/dialogs.c:3389
 #, c-format
 msgid ""
 "\n"
@@ -6141,7 +6141,7 @@ msgid ""
 "(Theme name not found).\n"
 msgstr ""
 
-#: src/dialogs.c:3390
+#: src/dialogs.c:3397
 #, c-format
 msgid ""
 "\n"
@@ -6150,7 +6150,7 @@ msgid ""
 "already exists. Would you like to overwrite it ?\n"
 msgstr ""
 
-#: src/dialogs.c:3406
+#: src/dialogs.c:3413
 #, c-format
 msgid ""
 "\n"

@@ -1,5 +1,12 @@
-Version 2.8.8
--------------
+Version 2.8.9 (15 March 2018)
+-----------------------------
+Fix dataloss and crash issues from 2.8.8
+
+
+
+
+Version 2.8.8 (10 March 2018)
+-----------------------------
 Fix "undo render to same clip" after rendering to selection.
 Add new libav_stream playback plugin (WIP).
 Set openGL playback plugin (if present) as the default for new installs.

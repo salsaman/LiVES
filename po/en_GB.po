@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2018-02-27 01:24-0300\n"
+"POT-Creation-Date: 2018-03-15 13:21-0300\n"
 "PO-Revision-Date: 2015-04-16 10:52+0000\n"
 "Last-Translator: Andi Chandler <Unknown>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -1247,7 +1247,7 @@ msgstr "Click here to _Preview the video"
 msgid "Click here to _Preview the file"
 msgstr "Click here to _Preview the video"
 
-#: src/interface.c:151 src/dialogs.c:2706
+#: src/interface.c:151 src/dialogs.c:2709
 #, fuzzy
 msgid "Processing..."
 msgstr "LiVES: - Processing..."
@@ -1267,7 +1267,7 @@ msgstr ""
 "Remember to switch off effects (ctrl-0) afterwards !"
 
 #: src/interface.c:191 src/callbacks.c:9015 src/callbacks.c:9062
-#: src/dialogs.c:2731
+#: src/dialogs.c:2734
 msgid ""
 "\n"
 "Please Wait"
@@ -1279,7 +1279,7 @@ msgstr ""
 msgid "Show Details"
 msgstr "Show Details"
 
-#: src/interface.c:213 src/dialogs.c:2744
+#: src/interface.c:213 src/dialogs.c:2747
 msgid "_Enough"
 msgstr "_Enough"
 
@@ -6000,33 +6000,33 @@ msgstr ""
 "\n"
 "echo %d > /proc/sys/net/core/rmem_max\n"
 
-#: src/dialogs.c:2889
+#: src/dialogs.c:2896
 msgid "cancelled.\n"
 msgstr "cancelled.\n"
 
-#: src/dialogs.c:2894
+#: src/dialogs.c:2901
 msgid "failed.\n"
 msgstr "failed.\n"
 
-#: src/dialogs.c:2898
+#: src/dialogs.c:2905
 msgid "done.\n"
 msgstr "done.\n"
 
-#: src/dialogs.c:2902
+#: src/dialogs.c:2909
 msgid "error in file. Failed.\n"
 msgstr "error in file. Failed.\n"
 
-#: src/dialogs.c:2936 src/dialogs.c:2989 src/dialogs.c:3013
+#: src/dialogs.c:2943 src/dialogs.c:2996 src/dialogs.c:3020
 #, c-format
 msgid "Additional info: %s\n"
 msgstr "Additional info: %s\n"
 
-#: src/dialogs.c:2939
+#: src/dialogs.c:2946
 #, c-format
 msgid "The error value was %d%s\n"
 msgstr "The error value was %d%s\n"
 
-#: src/dialogs.c:2942
+#: src/dialogs.c:2949
 #, c-format
 msgid ""
 "\n"
@@ -6041,7 +6041,7 @@ msgstr ""
 "Please check your system for errors.\n"
 "%s%s%s"
 
-#: src/dialogs.c:2992
+#: src/dialogs.c:2999
 #, c-format
 msgid ""
 "\n"
@@ -6056,7 +6056,7 @@ msgstr ""
 "Please check for possible error causes.\n"
 "%s"
 
-#: src/dialogs.c:3016
+#: src/dialogs.c:3023
 #, c-format
 msgid ""
 "\n"
@@ -6071,7 +6071,7 @@ msgstr ""
 "Please check for possible error causes.\n"
 "%s"
 
-#: src/dialogs.c:3063
+#: src/dialogs.c:3070
 #, c-format
 msgid ""
 "\n"
@@ -6084,7 +6084,7 @@ msgstr ""
 "%s\n"
 "Please check for possible error causes.\n"
 
-#: src/dialogs.c:3066
+#: src/dialogs.c:3073
 #, c-format
 msgid ""
 "\n"
@@ -6099,7 +6099,7 @@ msgstr ""
 "The error was\n"
 "%s.\n"
 
-#: src/dialogs.c:3095
+#: src/dialogs.c:3102
 #, c-format
 msgid ""
 "\n"
@@ -6112,7 +6112,7 @@ msgstr ""
 "%s\n"
 "Please check for possible error causes.\n"
 
-#: src/dialogs.c:3098
+#: src/dialogs.c:3105
 #, c-format
 msgid ""
 "\n"
@@ -6127,12 +6127,12 @@ msgstr ""
 "The error was\n"
 "%s.\n"
 
-#: src/dialogs.c:3163
+#: src/dialogs.c:3170
 #, c-format
 msgid "Value for \"%s\" could not be read."
 msgstr "Value for \"%s\" could not be read."
 
-#: src/dialogs.c:3180
+#: src/dialogs.c:3187
 #, c-format
 msgid ""
 "\n"
@@ -6145,7 +6145,7 @@ msgstr ""
 "%s\n"
 "Please check your system for errors.\n"
 
-#: src/dialogs.c:3188
+#: src/dialogs.c:3195
 #, c-format
 msgid ""
 "\n"
@@ -6157,24 +6157,24 @@ msgstr ""
 "LiVES was unable to write to the file:\n"
 "%s\n"
 "Please check the file permissions and try again."
-
-#: src/dialogs.c:3197
-#, c-format
-msgid ""
-"\n"
-"LiVES was unable to either create or write to the directory:\n"
-"%s\n"
-"Please check the directory permissions and try again."
-msgstr ""
-"\n"
-"LiVES was unable to either create or write to the directory:\n"
-"%s\n"
-"Please check the directory permissions and try again."
 
 #: src/dialogs.c:3204
 #, c-format
 msgid ""
 "\n"
+"LiVES was unable to either create or write to the directory:\n"
+"%s\n"
+"Please check the directory permissions and try again."
+msgstr ""
+"\n"
+"LiVES was unable to either create or write to the directory:\n"
+"%s\n"
+"Please check the directory permissions and try again."
+
+#: src/dialogs.c:3211
+#, c-format
+msgid ""
+"\n"
 "LiVES was unable to read from the directory:\n"
 "%s\n"
 msgstr ""
@@ -6182,7 +6182,7 @@ msgstr ""
 "LiVES was unable to read from the directory:\n"
 "%s\n"
 
-#: src/dialogs.c:3211
+#: src/dialogs.c:3218
 msgid ""
 "\n"
 "Abort and exit immediately from LiVES\n"
@@ -6192,7 +6192,7 @@ msgstr ""
 "Abort and exit immediately from LiVES\n"
 "Are you sure?\n"
 
-#: src/dialogs.c:3216
+#: src/dialogs.c:3223
 #, c-format
 msgid ""
 "\n"
@@ -6203,7 +6203,7 @@ msgstr ""
 "The %s cannot encode clips with image type %s.\n"
 "Please select another encoder from the list.\n"
 
-#: src/dialogs.c:3226
+#: src/dialogs.c:3233
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
@@ -6211,7 +6211,7 @@ msgstr ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 
-#: src/dialogs.c:3232
+#: src/dialogs.c:3239
 #, c-format
 msgid ""
 "\n"
@@ -6226,7 +6226,7 @@ msgstr ""
 "- Check if this device is in use by another program.\n"
 "- Check if the device actually exists.\n"
 
-#: src/dialogs.c:3241
+#: src/dialogs.c:3248
 msgid ""
 "\n"
 "This file already has subtitles loaded.\n"
@@ -6236,7 +6236,7 @@ msgstr ""
 "This file already has subtitles loaded.\n"
 "Do you wish to overwrite the existing subtitles ?\n"
 
-#: src/dialogs.c:3245
+#: src/dialogs.c:3252
 #, fuzzy
 msgid ""
 "\n"
@@ -6245,7 +6245,7 @@ msgstr ""
 "\n"
 "LiVES currently only supports subtitles of type .srt and .sub.\n"
 
-#: src/dialogs.c:3271
+#: src/dialogs.c:3278
 msgid ""
 "\n"
 "Erase all subtitles from this clip.\n"
@@ -6255,7 +6255,7 @@ msgstr ""
 "Erase all subtitles from this clip.\n"
 "Are you sure ?\n"
 
-#: src/dialogs.c:3278
+#: src/dialogs.c:3285
 #, c-format
 msgid ""
 "\n"
@@ -6268,7 +6268,7 @@ msgstr ""
 "Click 'Cancel' to set another file name\n"
 "or 'OK' to continue and save as type \"%s\"\n"
 
-#: src/dialogs.c:3287
+#: src/dialogs.c:3294
 msgid ""
 "\n"
 "Do you wish to move the current clip sets to the new directory ?\n"
@@ -6278,7 +6278,7 @@ msgstr ""
 "Do you wish to move the current clip sets to the new directory ?\n"
 "(If unsure, click Yes)\n"
 
-#: src/dialogs.c:3293
+#: src/dialogs.c:3300
 #, c-format
 msgid ""
 "\n"
@@ -6294,7 +6294,7 @@ msgstr ""
 "You are strongly advised to close the other copy, before clicking 'OK' to "
 "continue."
 
-#: src/dialogs.c:3301
+#: src/dialogs.c:3308
 msgid ""
 "\n"
 "No video input devices could be found.\n"
@@ -6302,27 +6302,27 @@ msgstr ""
 "\n"
 "No video input devices could be found.\n"
 
-#: src/dialogs.c:3306
+#: src/dialogs.c:3313
 msgid ""
 "\n"
 "All video input devices are already in use.\n"
 msgstr ""
 "\n"
 "All video input devices are already in use.\n"
-
-#: src/dialogs.c:3311
-msgid ""
-"\n"
-"\n"
-"CLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\n"
-"DO NOT SHUT DOWN OR CLOSE LIVES !\n"
-msgstr ""
-"\n"
-"\n"
-"CLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\n"
-"DO NOT SHUT DOWN OR CLOSE LIVES !\n"
 
 #: src/dialogs.c:3318
+msgid ""
+"\n"
+"\n"
+"CLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\n"
+"DO NOT SHUT DOWN OR CLOSE LIVES !\n"
+msgstr ""
+"\n"
+"\n"
+"CLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\n"
+"DO NOT SHUT DOWN OR CLOSE LIVES !\n"
+
+#: src/dialogs.c:3325
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6333,7 +6333,7 @@ msgstr ""
 "Some %s are missing from the layout%s\n"
 "Therefore it could not be loaded properly.\n"
 
-#: src/dialogs.c:3325
+#: src/dialogs.c:3332
 #, c-format
 msgid ""
 "No clips were recovered for set (%s).\n"
@@ -6342,7 +6342,7 @@ msgstr ""
 "No clips were recovered for set (%s).\n"
 "Please check the spelling of the set name and try again.\n"
 
-#: src/dialogs.c:3338
+#: src/dialogs.c:3345
 #, c-format
 msgid ""
 "Some security issues have been fixed in this version of LiVES.\n"
@@ -6351,7 +6351,7 @@ msgid ""
 "directory. Would you like me to do this (recommended) ?"
 msgstr ""
 
-#: src/dialogs.c:3342
+#: src/dialogs.c:3349
 #, c-format
 msgid ""
 "\n"
@@ -6369,7 +6369,7 @@ msgstr ""
 "File -> Clean up Diskspace\n"
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:3351
+#: src/dialogs.c:3358
 #, c-format
 msgid ""
 "\n"
@@ -6382,7 +6382,7 @@ msgstr ""
 "Welcome to LiVES version %s !\n"
 "\n"
 
-#: src/dialogs.c:3357
+#: src/dialogs.c:3364
 msgid ""
 "\n"
 "You must have autolives.pl installed and in your path to use this toy.\n"
@@ -6392,7 +6392,7 @@ msgstr ""
 "You must have autolives.pl installed and in your path to use this toy.\n"
 "Consult your package distributor.\n"
 
-#: src/dialogs.c:3362
+#: src/dialogs.c:3369
 msgid ""
 "\n"
 "You must have a minimum of one clip loaded to use this toy.\n"
@@ -6400,7 +6400,7 @@ msgstr ""
 "\n"
 "You must have a minimum of one clip loaded to use this toy.\n"
 
-#: src/dialogs.c:3367
+#: src/dialogs.c:3374
 msgid ""
 "\n"
 "LiVES lost its connection to jack and was unable to reconnect.\n"
@@ -6410,7 +6410,7 @@ msgstr ""
 "LiVES lost its connection to jack and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 
-#: src/dialogs.c:3372
+#: src/dialogs.c:3379
 msgid ""
 "\n"
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
@@ -6420,11 +6420,11 @@ msgstr ""
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 
-#: src/dialogs.c:3377
+#: src/dialogs.c:3384
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr "Please set your CD play device in Tools | Preferences | Misc\n"
 
-#: src/dialogs.c:3382
+#: src/dialogs.c:3389
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6438,7 +6438,7 @@ msgstr ""
 "The error was\n"
 "%s.\n"
 
-#: src/dialogs.c:3390
+#: src/dialogs.c:3397
 #, c-format
 msgid ""
 "\n"
@@ -6447,7 +6447,7 @@ msgid ""
 "already exists. Would you like to overwrite it ?\n"
 msgstr ""
 
-#: src/dialogs.c:3406
+#: src/dialogs.c:3413
 #, c-format
 msgid ""
 "\n"

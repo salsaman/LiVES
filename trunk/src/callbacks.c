@@ -10732,6 +10732,7 @@ void on_fade_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   d_print_done();
 
   cfile->changed = TRUE;
+  reget_afilesize(mainw->current_file);
 
   if (!prefs->conserve_space) {
     set_undoable(utxt, TRUE);

@@ -2514,6 +2514,11 @@ char *get_extension(const char *filename) {
 
 
 char *ensure_extension(const char *fname, const char *ext) {
+  // make sure filename fname has file extension ext
+  // if ext does not begin with a "." we prepend one to the start of ext
+  // we then check if fname ends with ext. If not we append ext to fname.
+  // we return a copy of fname, possibly modified. The string returned should be freed after use.
+  // NOTE: the original ext is not changed. 
   char *dotted = (char *)ext;
   if (ext[0] != '.') {
     dotted = lives_strdup_printf(".%s", ext);
@@ -2522,7 +2527,11 @@ char *ensure_extension(const char *fname, const char *ext) {
     if (dotted != ext) lives_free(dotted);
     return lives_strdup(fname);
   }
-  if (dotted != ext) lives_free(dotted);
+  if (dotted != ext) {
+    char *ret = lives_strconcat(fname, dotted, NULL);
+    lives_free(dotted);
+    return ret;
+  }
   return lives_strconcat(fname, ext, NULL);
 }
 

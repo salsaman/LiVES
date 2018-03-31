@@ -8250,7 +8250,7 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
   boolean copy_ok = FALSE;
   int copyto;
 
-  weed_plant_t **in_params;
+  weed_plant_t **in_params = NULL;
 
   weed_plant_t *gui = NULL;
   weed_plant_t *in_param = weed_inst_in_param(inst, pnum, FALSE, FALSE); // use this here in case of compound fx
@@ -8281,11 +8281,13 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
                                       weed_leaf_num_elements(paramtmpl2, WEED_LEAF_DEFAULT))) {
       copy_ok = TRUE;
     }
-    lives_free(in_params);
   }
 
-  if (!copy_ok) return -1;
-
+  if (!copy_ok) {
+    if (in_params != NULL) lives_free(in_params);
+    return -1;
+  }
+    
   if (update) {
     int key = -1;
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
@@ -8293,6 +8295,7 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
     weed_leaf_copy(in_params[copyto], WEED_LEAF_VALUE, in_param, WEED_LEAF_VALUE);
     filter_mutex_unlock(key);
   }
+  lives_free(in_params);
   return copyto;
 }
 

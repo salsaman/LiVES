@@ -1,6 +1,6 @@
 // rfx-builder.c
 // LiVES
-// (c) G. Finch 2004 - 2017 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -964,7 +964,7 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
-  rfxbuilder->prop_slow = lives_standard_check_button_new(_("_Slow (hint to GUI)"), TRUE, LIVES_BOX(dialog_vbox), NULL);
+  rfxbuilder->prop_slow = lives_standard_check_button_new(_("_Slow (hint to GUI)"), TRUE, FALSE, LIVES_BOX(dialog_vbox), NULL);
 
   if (rfxbuilder->type != RFX_BUILD_TYPE_EFFECT0) {
     lives_widget_show(rfxbuilder->prop_slow);
@@ -975,7 +975,7 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   if (rfxbuilder->type == RFX_BUILD_TYPE_EFFECT0) {
-    rfxbuilder->prop_batchg = lives_standard_check_button_new(_("_Batch mode generator"), TRUE, LIVES_BOX(dialog_vbox), NULL);
+    rfxbuilder->prop_batchg = lives_standard_check_button_new(_("_Batch mode generator"), TRUE, FALSE, LIVES_BOX(dialog_vbox), NULL);
     if (rfxbuilder->props & RFX_PROPS_BATCHG) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rfxbuilder->prop_batchg), TRUE);
     }
@@ -2068,7 +2068,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   rfxbuilder->param_wrap_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), rfxbuilder->param_wrap_hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  rfxbuilder->param_wrap_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Wrap value"))), TRUE,
+  rfxbuilder->param_wrap_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Wrap value"))), TRUE, FALSE,
                                        LIVES_BOX(rfxbuilder->param_wrap_hbox),
                                        (tmp2 = lives_strdup(_("Whether the value wraps max->min and min->max."))));
 

@@ -1,6 +1,6 @@
 // omc-learn.c
 // LiVES (lives-exe)
-// (c) G. Finch 2008 - 2017
+// (c) G. Finch 2008 - 2018 <salsaman+lives@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -22,6 +22,7 @@
 #include "paramwindow.h"
 #include "effects.h"
 #include "interface.h"
+#include "callbacks.h"
 
 #include "omc-learn.h"
 
@@ -173,7 +174,7 @@ boolean js_open(void) {
       lives_snprintf(prefs->omc_js_fname, 256, "%s", tmp);
     }
   }
-  if (strlen(prefs->omc_js_fname)) return FALSE;
+  if (!strlen(prefs->omc_js_fname)) return FALSE;
 
   mainw->ext_cntl[EXT_CNTL_JS] = TRUE;
   d_print(_("Responding to joystick events from %s\n"), prefs->omc_js_fname);
@@ -258,8 +259,9 @@ boolean midi_open(void) {
 #ifdef ALSA_MIDI
   if (prefs->use_alsa_midi) {
     d_print(_("Creating ALSA seq port..."));
+    mainw->alsa_midi_dummy = -1;
 
-    // ORL Ouverture d'un port ALSA
+    // Open an ALSA MIDI port
     if (snd_seq_open(&mainw->seq_handle, "default", SND_SEQ_OPEN_INPUT, SND_SEQ_NONBLOCK) < 0) {
       d_print_failed();
       return FALSE;
@@ -269,10 +271,24 @@ boolean midi_open(void) {
     if ((mainw->alsa_midi_port = snd_seq_create_simple_port(mainw->seq_handle, "LiVES",
                                  SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
                                  SND_SEQ_PORT_TYPE_APPLICATION | SND_SEQ_PORT_TYPE_PORT | SND_SEQ_PORT_TYPE_SOFTWARE)) < 0) {
+      snd_seq_close(mainw->seq_handle);
+      mainw->seq_handle = NULL;
       d_print_failed();
       return FALSE;
     }
-
+    if (prefs->alsa_midi_dummy) {
+      // create dummy MIDI out if asked to. Some clients use the name for reference.
+      if ((mainw->alsa_midi_dummy = snd_seq_create_simple_port(mainw->seq_handle,
+                                    "LiVES", // some external clients read this name, but will actually send to the WRITE port with same name
+                                    SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ, // need both
+                                    SND_SEQ_PORT_TYPE_APPLICATION | SND_SEQ_PORT_TYPE_PORT | SND_SEQ_PORT_TYPE_SOFTWARE)) < 0) {
+        snd_seq_delete_simple_port(mainw->seq_handle, mainw->alsa_midi_port);
+        snd_seq_close(mainw->seq_handle);
+        mainw->seq_handle = NULL;
+        d_print_failed();
+        return FALSE;
+      }
+    }
     d_print_done();
   } else {
 #endif
@@ -308,17 +324,16 @@ void midi_close(void) {
     if (mainw->seq_handle != NULL) {
       // close
       snd_seq_delete_simple_port(mainw->seq_handle, mainw->alsa_midi_port);
+      if (mainw->alsa_midi_dummy >= 0) snd_seq_delete_simple_port(mainw->seq_handle, mainw->alsa_midi_dummy);
       snd_seq_close(mainw->seq_handle);
       mainw->seq_handle = NULL;
     } else {
 #endif
-
       close(midi_fd);
 
 #ifdef ALSA_MIDI
     }
 #endif
-
     mainw->ext_cntl[EXT_CNTL_MIDI] = FALSE;
   }
 }
@@ -1214,10 +1229,10 @@ static void clear_unmatched(LiVESButton *button, livespointer user_data) {
 static void del_all(LiVESButton *button, livespointer user_data) {
   omclearn_w *omclw = (omclearn_w *)user_data;
 
-  if (!do_warning_dialog(_("\nClick OK to delete all entries\n"))) return;
+  // need to use the full version here to override the default transient window
+  if (!do_warning_dialog_with_check_transient(_("\nClick OK to delete all entries\n"), 0, LIVES_WINDOW(omclw->dialog))) return;
 
   // destroy everything in table
-
   lives_container_foreach(LIVES_CONTAINER(omclw->table), killit, NULL);
 
   remove_all_nodes(TRUE, omclw);
@@ -1421,6 +1436,11 @@ static void init_omc_macros(void) {
   omc_macros[25].info_text = lives_strdup(_("Set <value> of pth parameter for the playback plugin."));
   omc_macros[25].nparams = 2;
 
+  omc_macros[26].msg = lives_strdup("internal"); // handled internally
+  omc_macros[26].macro_text = lives_strdup(_("Send OSC notification message"));
+  omc_macros[26].info_text = lives_strdup(_("Send LIVES_OSC_NOTIFY_USER1 notification to all listeners, with variable <value>."));
+  omc_macros[26].nparams = 2;
+
   for (i = 0; i < N_OMC_MACROS; i++) {
     if (omc_macros[i].msg != NULL) {
       if (omc_macros[i].nparams > 0) {
@@ -1545,6 +1565,19 @@ static void init_omc_macros(void) {
   omc_macros[25].maxd[1] = 0.;
   omc_macros[25].vald[1] = 0.;
   omc_macros[25].pname[1] = lives_strdup(_("value"));
+
+  // variables for LIVES_OSC_NOTIFY_USER1
+  omc_macros[26].ptypes[0] = OMC_PARAM_INT;
+  omc_macros[26].mini[0] = 0;
+  omc_macros[26].vali[0] = 0;
+  omc_macros[26].maxi[0] = 100000;
+  omc_macros[26].pname[0] = lives_strdup(_("discrimination"));
+
+  omc_macros[26].ptypes[1] = OMC_PARAM_DOUBLE;
+  omc_macros[26].mini[1] = -1000000.;
+  omc_macros[26].vali[1] = 0.;
+  omc_macros[26].maxi[1] = 1000000.;
+  omc_macros[26].pname[1] = lives_strdup(_("data"));
 }
 
 
@@ -2136,23 +2169,25 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
 
   if (omacro.msg == NULL) return NULL;
 
-  OSC_resetBuffer(&obuf);
-
-  lives_snprintf(typetags, OSC_MAX_TYPETAGS, ",");
-
   nfixed = get_token_count(string, ' ') - mnode->nvars;
 
-  // get typetags
-  for (i = 0; i < omacro.nparams; i++) {
-    if (omacro.ptypes[i] == OMC_PARAM_SPECIAL) {
-      write_fx_tag(string, nfixed, mnode, &omacro, typetags);
-    } else {
-      if (omacro.ptypes[i] == OMC_PARAM_INT) lives_strappend(typetags, OSC_MAX_TYPETAGS, "i");
-      else lives_strappend(typetags, OSC_MAX_TYPETAGS, "f");
-    }
-  }
+  if (macro != 26) {
+    OSC_resetBuffer(&obuf);
 
-  OSC_writeAddressAndTypes(&obuf, omacro.msg, typetags);
+    lives_snprintf(typetags, OSC_MAX_TYPETAGS, ",");
+
+    // get typetags
+    for (i = 0; i < omacro.nparams; i++) {
+      if (omacro.ptypes[i] == OMC_PARAM_SPECIAL) {
+        write_fx_tag(string, nfixed, mnode, &omacro, typetags);
+      } else {
+        if (omacro.ptypes[i] == OMC_PARAM_INT) lives_strappend(typetags, OSC_MAX_TYPETAGS, "i");
+        else lives_strappend(typetags, OSC_MAX_TYPETAGS, "f");
+      }
+    }
+
+    OSC_writeAddressAndTypes(&obuf, omacro.msg, typetags);
+  }
 
   if (omacro.nparams > 0) {
     vals = omclearn_get_values(string, nfixed);
@@ -2237,10 +2272,16 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
               int oval = myround((double)(vals[j] + mnode->offs0[j]) * mnode->scale[j]) + mnode->offs1[j];
               if (i == 0) oval0 = oval;
               if (i == 1) oval1 = oval;
-              OSC_writeIntArg(&obuf, oval);
+              if (macro != 26) {
+                OSC_writeIntArg(&obuf, oval);
+              }
             } else {
               double oval = (double)(vals[j] + mnode->offs0[j]) * mnode->scale[j] + (double)mnode->offs1[j];
-              OSC_writeFloatArg(&obuf, oval);
+              if (macro == 26) {
+                char *tmp; // send OSC notificion USER1
+                lives_notify(LIVES_OSC_NOTIFY_USER1, (tmp = lives_strdup_printf("%d %f", oval0, oval)));
+                lives_free(tmp);
+              } else OSC_writeFloatArg(&obuf, oval);
             }
           }
         }

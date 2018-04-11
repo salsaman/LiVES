@@ -2445,6 +2445,9 @@ void play_file(void) {
 
   lives_free(com3);
 
+  // if recording, refrain from writing audio until we are ready
+  if (mainw->record) mainw->record_paused = TRUE;
+
   // if recording, set up recorder (jack or pulse)
   if (!mainw->foreign && !mainw->preview && (prefs->audio_src == AUDIO_SRC_EXT || (mainw->record && mainw->agen_key != 0)) &&
       ((audio_player == AUD_PLAYER_JACK) ||

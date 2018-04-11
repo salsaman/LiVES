@@ -1,6 +1,6 @@
 // preferences.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2017
+// (c) G. Finch 2004 - 2018
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -921,6 +921,7 @@ boolean apply_prefs(boolean skip_warn) {
 
 #ifdef ALSA_MIDI
   boolean use_alsa_midi = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->alsa_midi));
+  boolean alsa_midi_dummy = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->alsa_midi_dummy));
 #endif
 
 #endif
@@ -1725,9 +1726,26 @@ boolean apply_prefs(boolean skip_warn) {
     }
     set_omc_dev_opts = TRUE;
   }
+  if (alsa_midi_dummy != ((prefs->omc_dev_opts & OMC_DEV_MIDI_DUMMY) / OMC_DEV_MIDI_DUMMY)) {
+    if (!needs_midi_restart) {
+      needs_midi_restart = (mainw->ext_cntl[EXT_CNTL_MIDI]);
+    }
+
+    if (!alsa_midi_dummy) {
+      prefs->omc_dev_opts |= OMC_DEV_MIDI_DUMMY;
+      prefs->alsa_midi_dummy = FALSE;
+    } else {
+      prefs->omc_dev_opts ^= OMC_DEV_MIDI_DUMMY;
+      prefs->alsa_midi_dummy = TRUE;
+    }
+    set_omc_dev_opts = TRUE;
+  }
 #endif
 
-  if (needs_midi_restart) midi_open();
+  if (needs_midi_restart) {
+    midi_close();
+    midi_open();
+  }
 
 #endif
   if (set_omc_dev_opts) set_int_pref(PREF_OMC_DEV_OPTS, prefs->omc_dev_opts);
@@ -2068,6 +2086,7 @@ static void on_alsa_midi_toggled(LiVESToggleButton *tbutton, livespointer user_d
   else xprefsw = prefsw;
 
   lives_widget_set_sensitive(xprefsw->button_midid, !lives_toggle_button_get_active(tbutton));
+  lives_widget_set_sensitive(xprefsw->alsa_midi_dummy, lives_toggle_button_get_active(tbutton));
   lives_widget_set_sensitive(xprefsw->omc_midi_entry, !lives_toggle_button_get_active(tbutton));
   lives_widget_set_sensitive(xprefsw->spinbutton_midicr, !lives_toggle_button_get_active(tbutton));
   lives_widget_set_sensitive(xprefsw->spinbutton_midirpt, !lives_toggle_button_get_active(tbutton));
@@ -2562,65 +2581,56 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->fs_max_check =
-    lives_standard_check_button_new(_("Open file selection maximised"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->fs_max_check), prefs->fileselmax);
+    lives_standard_check_button_new(_("Open file selection maximised"), TRUE,  prefs->fileselmax, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->recent_check =
-    lives_standard_check_button_new(_("Show recent files in the File menu"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->recent_check), prefs->show_recent);
+    lives_standard_check_button_new(_("Show recent files in the File menu"), TRUE, prefs->show_recent, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->stop_screensaver_check =
-    lives_standard_check_button_new(_("Stop screensaver on playback    "), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->stop_screensaver_check), prefs->stop_screensaver);
+    lives_standard_check_button_new(_("Stop screensaver on playback    "), TRUE, prefs->stop_screensaver, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  prefsw->open_maximised_check = lives_standard_check_button_new(_("Open main window maximised"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->open_maximised_check), prefs->open_maximised);
+  prefsw->open_maximised_check = lives_standard_check_button_new(_("Open main window maximised"), TRUE, prefs->open_maximised,
+                                 LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->show_tool =
-    lives_standard_check_button_new(_("Show toolbar when background is blanked"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->show_tool), future_prefs->show_tool);
+    lives_standard_check_button_new(_("Show toolbar when background is blanked"), TRUE, future_prefs->show_tool, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->mouse_scroll =
-    lives_standard_check_button_new(_("Allow mouse wheel to switch clips"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->mouse_scroll), prefs->mouse_scroll_clips);
+    lives_standard_check_button_new(_("Allow mouse wheel to switch clips"), TRUE, prefs->mouse_scroll_clips, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_ce_maxspect =
-    lives_standard_check_button_new(_("Shrink previews to fit in interface"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_ce_maxspect), prefs->ce_maxspect);
+    lives_standard_check_button_new(_("Shrink previews to fit in interface"), TRUE, prefs->ce_maxspect, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->checkbutton_button_icons =
-    lives_standard_check_button_new(_("Show icons in buttons"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_button_icons), widget_opts.show_button_images);
+    lives_standard_check_button_new(_("Show icons in buttons"), TRUE, widget_opts.show_button_images, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_hfbwnp =
-    lives_standard_check_button_new(_("Hide framebar when not playing"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_hfbwnp), prefs->hfbwnp);
+    lives_standard_check_button_new(_("Hide framebar when not playing"), TRUE, prefs->hfbwnp, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->checkbutton_show_asrc =
-    lives_standard_check_button_new(_("Show audio source in toolbar"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_show_asrc), prefs->show_asrc);
+    lives_standard_check_button_new(_("Show audio source in toolbar"), TRUE, prefs->show_asrc, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -2677,15 +2687,13 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->forcesmon_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), prefsw->forcesmon_hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  prefsw->forcesmon = lives_standard_check_button_new((tmp = lives_strdup(_("Force single monitor"))), FALSE,
+  prefsw->forcesmon = lives_standard_check_button_new((tmp = lives_strdup(_("Force single monitor"))), FALSE, prefs->force_single_monitor,
                       LIVES_BOX(prefsw->forcesmon_hbox),
                       (tmp2 = lives_strdup(_("Ignore all except the first monitor."))));
   lives_free(tmp);
   lives_free(tmp2);
 
   add_fill_to_box(LIVES_BOX(hbox));
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->forcesmon), prefs->force_single_monitor);
 
   if (nmons <= 1) {
     lives_widget_set_sensitive(prefsw->spinbutton_gmoni, FALSE);
@@ -2699,14 +2707,12 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->ce_thumbs = lives_standard_check_button_new(_("Show clip thumbnails during playback"), TRUE,
+  prefsw->ce_thumbs = lives_standard_check_button_new(_("Show clip thumbnails during playback"), TRUE, prefs->ce_thumb_mode,
                       LIVES_BOX(hbox), NULL);
 
   lives_widget_set_sensitive(prefsw->ce_thumbs, prefs->play_monitor != prefs->gui_monitor &&
                              prefs->play_monitor != 0 && !prefs->force_single_monitor &&
                              capable->nmonitors > 0);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->ce_thumbs), prefs->ce_thumb_mode);
 
   pmoni_gmoni_changed(NULL, NULL);
 
@@ -2749,9 +2755,8 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, 0);
 
   prefsw->checkbutton_render_prompt = lives_standard_check_button_new(_("Use these same _values for rendering a new clip"), TRUE,
-                                      LIVES_BOX(hbox), NULL);
+                                      !prefs->render_prompt, LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_render_prompt), !prefs->render_prompt);
 
   frame = add_video_options(&prefsw->spinbutton_mt_def_width, prefs->mt_def_width, &prefsw->spinbutton_mt_def_height,
                             prefs->mt_def_height, &prefsw->spinbutton_mt_def_fps, prefs->mt_def_fps, FALSE, NULL);
@@ -2787,9 +2792,9 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_mt_exit_render = lives_standard_check_button_new(_("_Exit multitrack mode after rendering"), TRUE, LIVES_BOX(hbox),
+  prefsw->checkbutton_mt_exit_render = lives_standard_check_button_new(_("_Exit multitrack mode after rendering"), TRUE,
+                                       prefs->mt_exit_render, LIVES_BOX(hbox),
                                        NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
 
   hbox2 = lives_hbox_new(FALSE, 0);
 
@@ -2857,9 +2862,9 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_instant_open = lives_standard_check_button_new((tmp = lives_strdup(_("Use instant opening when possible"))), FALSE,
+                                     prefs->instant_open,
                                      LIVES_BOX(hbox),
                                      (tmp2 = lives_strdup(_("Enable instant opening of some file types using decoder plugins"))));
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open), prefs->instant_open);
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -2919,36 +2924,33 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_auto_deint = lives_standard_check_button_new((tmp = lives_strdup(_("Enable automatic deinterlacing when possible"))),
-                                   FALSE,
+                                   FALSE, prefs->auto_deint,
                                    LIVES_BOX(hbox),
                                    (tmp2 = lives_strdup(_("Automatically deinterlace frames when a plugin suggests it"))));
   lives_free(tmp);
   lives_free(tmp2);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_auto_deint), prefs->auto_deint);
-
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_auto_trim = lives_standard_check_button_new((tmp = lives_strdup(
-                                    _("Automatic trimming / padding of audio when possible"))), FALSE,
+                                    _("Automatic trimming / padding of audio when possible"))),
+                                  FALSE, prefs->auto_trim_audio,
                                   LIVES_BOX(hbox),
                                   (tmp2 = lives_strdup(_("Automatically trim or pad audio when a plugin suggests it"))));
   lives_free(tmp);
   lives_free(tmp2);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_auto_trim), prefs->auto_trim_audio);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_nobord = lives_standard_check_button_new((tmp = lives_strdup(_("Ignore blank borders when possible"))), FALSE,
-                               LIVES_BOX(hbox),
+                               prefs->auto_nobord, LIVES_BOX(hbox),
                                (tmp2 = lives_strdup(_("Clip any blank borders from frames where possible"))));
   lives_free(tmp);
   lives_free(tmp2);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_nobord), prefs->auto_nobord);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
 
@@ -2956,8 +2958,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_concat_images = lives_standard_check_button_new(_("When opening multiple files, concatenate images into one clip"),
-                                      FALSE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_concat_images), prefs->concat_images);
+                                      FALSE,  prefs->concat_images, LIVES_BOX(hbox), NULL);
 
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_decoding.png", NULL);
   pixbuf_decoding = lives_pixbuf_new_from_file(icon, NULL);
@@ -3008,8 +3009,8 @@ _prefsw *create_prefs_dialog(void) {
     lives_combo_set_active_index(LIVES_COMBO(prefsw->pbq_combo), 1);
   }
 
-  prefsw->checkbutton_show_stats = lives_standard_check_button_new(_("_Show FPS statistics"), TRUE, LIVES_BOX(vbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_show_stats), prefs->show_player_stats);
+  prefsw->checkbutton_show_stats = lives_standard_check_button_new(_("_Show FPS statistics"), TRUE, prefs->show_player_stats, LIVES_BOX(vbox),
+                                   NULL);
 
   add_hsep_to_box(LIVES_BOX(vbox));
 
@@ -3043,13 +3044,11 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw->checkbutton_stream_audio =
     lives_standard_check_button_new((tmp = lives_strdup(_("Stream audio"))),
-                                    TRUE, LIVES_BOX(vbox),
+                                    TRUE,  prefs->stream_audio_out, LIVES_BOX(vbox),
                                     (tmp2 = lives_strdup
                                         (_("Stream audio to playback plugin"))));
   lives_free(tmp);
   lives_free(tmp2);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio), prefs->stream_audio_out);
 
   prefsw_set_astream_settings(mainw->vpp);
 
@@ -3058,13 +3057,11 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw->checkbutton_rec_after_pb =
     lives_standard_check_button_new((tmp = lives_strdup(_("Record player output"))),
-                                    TRUE, LIVES_BOX(vbox),
+                                    TRUE, (prefs->rec_opts & REC_AFTER_PB), LIVES_BOX(vbox),
                                     (tmp2 = lives_strdup
                                         (_("Record output from player instead of input to player"))));
   lives_free(tmp);
   lives_free(tmp2);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb), (prefs->rec_opts & REC_AFTER_PB));
 
   prefsw_set_rec_after_settings(mainw->vpp);
 
@@ -3171,18 +3168,16 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_afollow = lives_standard_check_button_new(_("Audio follows video _rate/direction"), TRUE, LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_afollow = lives_standard_check_button_new(_("Audio follows video _rate/direction"), TRUE,
+                                (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_afollow),
-                                 (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) ? TRUE : FALSE);
   lives_widget_set_sensitive(prefsw->checkbutton_afollow, is_realtime_aplayer(prefs->audio_player));
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows _clip switches"), TRUE, LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows _clip switches"), TRUE,
+                               (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aclips),
-                                 (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE);
   lives_widget_set_sensitive(prefsw->checkbutton_aclips, is_realtime_aplayer(prefs->audio_player));
 
   add_fill_to_box(LIVES_BOX(vbox));
@@ -3244,14 +3239,13 @@ _prefsw *create_prefs_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->rdesk_audio = lives_standard_check_button_new(_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"),
-                        TRUE, LIVES_BOX(hbox), NULL);
+                        TRUE, prefs->rec_desktop_audio, LIVES_BOX(hbox), NULL);
 
 #ifndef RT_AUDIO
   lives_widget_set_sensitive(prefsw->rdesk_audio, FALSE);
 #endif
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rdesk_audio), prefs->rec_desktop_audio);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
 
@@ -3262,9 +3256,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->rframes = lives_standard_check_button_new(_("_Frame changes"), TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rframes), prefs->rec_opts & REC_FRAMES);
+  prefsw->rframes = lives_standard_check_button_new(_("_Frame changes"), TRUE, (prefs->rec_opts & REC_FRAMES), LIVES_BOX(hbox), NULL);
 
   if (prefs->rec_opts & REC_FPS || prefs->rec_opts & REC_CLIPS) {
     lives_widget_set_sensitive(prefsw->rframes, FALSE); // we must record these if recording fps changes or clip switches
@@ -3275,7 +3267,7 @@ _prefsw *create_prefs_dialog(void) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  prefsw->rfps = lives_standard_check_button_new(_("F_PS changes"), TRUE, LIVES_BOX(hbox), NULL);
+  prefsw->rfps = lives_standard_check_button_new(_("F_PS changes"), TRUE, (prefs->rec_opts & REC_FPS), LIVES_BOX(hbox), NULL);
 
   if (prefs->rec_opts & REC_CLIPS) {
     lives_widget_set_sensitive(prefsw->rfps, FALSE); // we must record these if recording clip switches
@@ -3285,12 +3277,10 @@ _prefsw *create_prefs_dialog(void) {
     lives_widget_set_sensitive(prefsw->rfps, FALSE);
   }
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rfps), prefs->rec_opts & REC_FPS);
-
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->reffects = lives_standard_check_button_new(_("_Real time effects"), TRUE, LIVES_BOX(hbox), NULL);
+  prefsw->reffects = lives_standard_check_button_new(_("_Real time effects"), TRUE, (prefs->rec_opts & REC_EFFECTS), LIVES_BOX(hbox), NULL);
 
   if (mainw->playing_file > 0 && mainw->record) {
     lives_widget_set_sensitive(prefsw->reffects, FALSE);
@@ -3298,20 +3288,14 @@ _prefsw *create_prefs_dialog(void) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->reffects), prefs->rec_opts & REC_EFFECTS);
-
-  prefsw->rclips = lives_standard_check_button_new(_("_Clip switches"), TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rclips), prefs->rec_opts & REC_CLIPS);
+  prefsw->rclips = lives_standard_check_button_new(_("_Clip switches"), TRUE, (prefs->rec_opts & REC_CLIPS), LIVES_BOX(hbox), NULL);
 
   if (mainw->playing_file > 0 && mainw->record) {
     lives_widget_set_sensitive(prefsw->rclips, FALSE);
   }
 
   prefsw->raudio = lives_standard_check_button_new(_("_Audio (requires jack or pulse audio player)"),
-                   TRUE, LIVES_BOX(prefsw->vbox_right_recording), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->raudio), prefs->rec_opts & REC_AUDIO);
+                   TRUE, (prefs->rec_opts & REC_AUDIO), LIVES_BOX(prefsw->vbox_right_recording), NULL);
 
   if (mainw->playing_file > 0 && mainw->record) {
     lives_widget_set_sensitive(prefsw->raudio, FALSE);
@@ -3452,9 +3436,8 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_antialias = lives_standard_check_button_new(_("Use _antialiasing when resizing"), TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_antialias), prefs->antialias);
+  prefsw->checkbutton_antialias = lives_standard_check_button_new(_("Use _antialiasing when resizing"), TRUE, prefs->antialias,
+                                  LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -3470,9 +3453,9 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_threads = lives_standard_check_button_new(_("Use _threads where possible when applying effects"), TRUE, LIVES_BOX(hbox),
+  prefsw->checkbutton_threads = lives_standard_check_button_new(_("Use _threads where possible when applying effects"), TRUE,
+                                future_prefs->nfx_threads > 1, LIVES_BOX(hbox),
                                 NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_threads), future_prefs->nfx_threads > 1);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -3727,15 +3710,13 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw->checkbutton_warn_fps = lives_standard_check_button_new(
                                    _("Warn on Insert / Merge if _frame rate of clipboard does not match frame rate of selection"),
-                                   TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps), !(prefs->warning_mask & WARN_MASK_FPS));
+                                   TRUE, !(prefs->warning_mask & WARN_MASK_FPS), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
-  prefsw->checkbutton_warn_fsize = lives_standard_check_button_new(_("Warn on Open if file _size exceeds "), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_fsize), !(prefs->warning_mask & WARN_MASK_FSIZE));
+  prefsw->checkbutton_warn_fsize = lives_standard_check_button_new(_("Warn on Open if file _size exceeds "), TRUE,
+                                   !(prefs->warning_mask & WARN_MASK_FSIZE), LIVES_BOX(hbox), NULL);
 
   prefsw->spinbutton_warn_fsize = lives_standard_spin_button_new(NULL, FALSE,
                                   prefs->warn_file_size, 1., 2048., 1., 10., 0,
@@ -3748,160 +3729,119 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_save_set = lives_standard_check_button_new(_("Show a warning before saving a se_t"),
-                                      TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set), !(prefs->warning_mask & WARN_MASK_SAVE_SET));
+                                      TRUE, !(prefs->warning_mask & WARN_MASK_SAVE_SET), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_mplayer = lives_standard_check_button_new
                                      (_("Show a warning if _mplayer/mplayer2, sox, composite or convert is not found when LiVES is started."),
-                                      TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mplayer), !(prefs->warning_mask & WARN_MASK_NO_MPLAYER));
+                                      TRUE, !(prefs->warning_mask & WARN_MASK_NO_MPLAYER), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_rendered_fx = lives_standard_check_button_new
                                          (_("Show a warning if no _rendered effects are found at startup."),
-                                          TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_rendered_fx), !(prefs->warning_mask & WARN_MASK_RENDERED_FX));
+                                          TRUE, !(prefs->warning_mask & WARN_MASK_RENDERED_FX), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_encoders = lives_standard_check_button_new
                                       (_("Show a warning if no _encoder plugins are found at startup."),
-                                       TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_encoders), !(prefs->warning_mask & WARN_MASK_NO_ENCODERS));
+                                       TRUE, !(prefs->warning_mask & WARN_MASK_NO_ENCODERS), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_dup_set = lives_standard_check_button_new
                                      (_("Show a warning if a _duplicate set name is entered."),
-                                      TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_dup_set), !(prefs->warning_mask & WARN_MASK_DUPLICATE_SET));
+                                      TRUE, !(prefs->warning_mask & WARN_MASK_DUPLICATE_SET), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_layout_clips = lives_standard_check_button_new
                                           (_("When a set is loaded, warn if clips are missing from _layouts."),
-                                              TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_clips),
-                                 !(prefs->warning_mask & WARN_MASK_LAYOUT_MISSING_CLIPS));
+                                              TRUE, !(prefs->warning_mask & WARN_MASK_LAYOUT_MISSING_CLIPS), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_layout_close = lives_standard_check_button_new
                                           (_("Warn if a clip used in a layout is about to be closed."),
-                                              TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_close),
-                                 !(prefs->warning_mask & WARN_MASK_LAYOUT_CLOSE_FILE));
+                                              TRUE, !(prefs->warning_mask & WARN_MASK_LAYOUT_CLOSE_FILE), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_layout_delete = lives_standard_check_button_new
       (_("Warn if frames used in a layout are about to be deleted."),
-       TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_delete),
-                                 !(prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_FRAMES));
+       TRUE, !(prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_FRAMES), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_layout_shift = lives_standard_check_button_new
                                           (_("Warn if frames used in a layout are about to be shifted."),
-                                              TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_shift),
-                                 !(prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_FRAMES));
+                                              TRUE, !(prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_FRAMES), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_layout_alter = lives_standard_check_button_new
                                           (_("Warn if frames used in a layout are about to be altered."),
-                                              TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_alter),
-                                 !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES));
+                                              TRUE, !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_layout_adel = lives_standard_check_button_new
                                          (_("Warn if audio used in a layout is about to be deleted."),
-                                          TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_adel),
-                                 !(prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_AUDIO));
+                                          TRUE, !(prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_AUDIO), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_layout_ashift = lives_standard_check_button_new
       (_("Warn if audio used in a layout is about to be shifted."),
-       TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_ashift),
-                                 !(prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_AUDIO));
+       TRUE, !(prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_AUDIO), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_layout_aalt = lives_standard_check_button_new
                                          (_("Warn if audio used in a layout is about to be altered."),
-                                          TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_aalt),
-                                 !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_AUDIO));
+                                          TRUE, !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_AUDIO), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_layout_popup = lives_standard_check_button_new
                                           (_("Popup layout errors after clip changes."),
-                                              TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_popup), !(prefs->warning_mask & WARN_MASK_LAYOUT_POPUP));
+                                              TRUE, !(prefs->warning_mask & WARN_MASK_LAYOUT_POPUP), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_discard_layout = lives_standard_check_button_new
       (_("Warn if the layout has not been saved when leaving multitrack mode."),
-       TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_discard_layout), !(prefs->warning_mask & WARN_MASK_EXIT_MT));
+       TRUE, !(prefs->warning_mask & WARN_MASK_EXIT_MT), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_mt_achans = lives_standard_check_button_new
                                        (_("Warn if multitrack has no audio channels, and a layout with audio is loaded."),
-                                        TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_achans), !(prefs->warning_mask & WARN_MASK_MT_ACHANS));
+                                        TRUE, !(prefs->warning_mask & WARN_MASK_MT_ACHANS), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_mt_no_jack = lives_standard_check_button_new
                                         (_("Warn if multitrack has audio channels, and your audio player is not \"jack\" or \"pulse audio\"."),
-                                         TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_no_jack), !(prefs->warning_mask & WARN_MASK_MT_NO_JACK));
+                                         TRUE, !(prefs->warning_mask & WARN_MASK_MT_NO_JACK), LIVES_BOX(hbox), NULL);
 
 #ifdef HAVE_LDVGRAB
   hbox = lives_hbox_new(FALSE, 0);
@@ -3909,9 +3849,7 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw->checkbutton_warn_after_dvgrab = lives_standard_check_button_new
                                           (_("Show info message after importing from firewire device."),
-                                              TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_dvgrab), !(prefs->warning_mask & WARN_MASK_AFTER_DVGRAB));
+                                              TRUE, !(prefs->warning_mask & WARN_MASK_AFTER_DVGRAB), LIVES_BOX(hbox), NULL);
 
 #else
   prefsw->checkbutton_warn_after_dvgrab = NULL;
@@ -3923,8 +3861,7 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw->checkbutton_warn_yuv4m_open = lives_standard_check_button_new
                                         (_("Show a warning before opening a yuv4mpeg stream (advanced)."),
-                                         TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4m_open), !(prefs->warning_mask & WARN_MASK_OPEN_YUV4M));
+                                         TRUE, !(prefs->warning_mask & WARN_MASK_OPEN_YUV4M), LIVES_BOX(hbox), NULL);
 #else
   prefsw->checkbutton_warn_yuv4m_open = NULL;
 #endif
@@ -3934,38 +3871,28 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw->checkbutton_warn_mt_backup_space = lives_standard_check_button_new
       (_("Show a warning when multitrack is low on backup space."),
-       TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_backup_space),
-                                 !(prefs->warning_mask & WARN_MASK_MT_BACKUP_SPACE));
+       TRUE, !(prefs->warning_mask & WARN_MASK_MT_BACKUP_SPACE), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_after_crash = lives_standard_check_button_new
                                          (_("Show a warning advising cleaning of disk space after a crash."),
-                                          TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_crash),
-                                 !(prefs->warning_mask & WARN_MASK_CLEAN_AFTER_CRASH));
+                                          TRUE, !(prefs->warning_mask & WARN_MASK_CLEAN_AFTER_CRASH), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_no_pulse = lives_standard_check_button_new
                                       (_("Show a warning if unable to connect to pulseaudio player."),
-                                       TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_no_pulse), !(prefs->warning_mask & WARN_MASK_NO_PULSE_CONNECT));
+                                       TRUE, !(prefs->warning_mask & WARN_MASK_NO_PULSE_CONNECT), LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_layout_wipe = lives_standard_check_button_new
                                          (_("Show a warning before wiping a layout which has unsaved changes."),
-                                          TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_wipe), !(prefs->warning_mask & WARN_MASK_LAYOUT_WIPE));
+                                          TRUE, !(prefs->warning_mask & WARN_MASK_LAYOUT_WIPE), LIVES_BOX(hbox), NULL);
 
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_warning.png", NULL);
   pixbuf_warnings = lives_pixbuf_new_from_file(icon, NULL);
@@ -3988,9 +3915,7 @@ _prefsw *create_prefs_dialog(void) {
 
   prefsw->check_midi = lives_standard_check_button_new
                        (_("Midi synch (requires the files midistart and midistop)"),
-                        TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->check_midi), prefs->midisynch);
+                        TRUE, prefs->midisynch, LIVES_BOX(hbox), NULL);
 
   lives_widget_set_sensitive(prefsw->check_midi, capable->has_midistartstop);
 
@@ -4195,11 +4120,11 @@ _prefsw *create_prefs_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  prefsw->theme_style3 = lives_standard_check_button_new((tmp = lives_strdup(_("Theme is _light"))), TRUE, LIVES_BOX(hbox),
+  prefsw->theme_style3 = lives_standard_check_button_new((tmp = lives_strdup(_("Theme is _light"))), TRUE, (palette->style & STYLE_3),
+                         LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("Affects some contrast details of the timeline"))));
   lives_free(tmp);
   lives_free(tmp2);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style3), palette->style & STYLE_3);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(prefsw->theme_style3, FALSE);
 
@@ -4208,9 +4133,8 @@ _prefsw *create_prefs_dialog(void) {
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
   prefsw->theme_style2 = lives_standard_check_button_new(_("Color the start/end frame spinbuttons (requires restart)"), FALSE,
-                         LIVES_BOX(hbox),
+                         (palette->style & STYLE_2), LIVES_BOX(hbox),
                          NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2), palette->style & STYLE_2);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(prefsw->theme_style3, FALSE);
 #else
@@ -4220,8 +4144,8 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->theme_style4 = lives_standard_check_button_new(_("Highlight horizontal separators in multitrack"), FALSE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style4), (palette->style & STYLE_4));
+  prefsw->theme_style4 = lives_standard_check_button_new(_("Highlight horizontal separators in multitrack"), FALSE,
+                         (palette->style & STYLE_4), LIVES_BOX(hbox), NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(prefsw->theme_style4, FALSE);
 
@@ -4434,7 +4358,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(hbox1), hbox, FALSE, FALSE, 0);
 
-  prefsw->enable_OSC = lives_standard_check_button_new(_("OMC remote control enabled"), FALSE, LIVES_BOX(hbox), NULL);
+  prefsw->enable_OSC = lives_standard_check_button_new(_("OMC remote control enabled"), FALSE, FALSE, LIVES_BOX(hbox), NULL);
 
 #ifndef ENABLE_OSC
   lives_widget_set_sensitive(prefsw->enable_OSC, FALSE);
@@ -4447,9 +4371,8 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_net), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->enable_OSC_start = lives_standard_check_button_new(_("Start OMC on startup"), FALSE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->enable_OSC_start), future_prefs->osc_start);
+  prefsw->enable_OSC_start = lives_standard_check_button_new(_("Start OMC on startup"), FALSE, future_prefs->osc_start, LIVES_BOX(hbox),
+                             NULL);
 
 #ifndef ENABLE_OSC
   lives_widget_set_sensitive(prefsw->spinbutton_osc_udp, FALSE);
@@ -4495,28 +4418,25 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_widget_set_sensitive(prefsw->jack_tserver_entry, FALSE); // unused for now
 
-  prefsw->checkbutton_start_tjack = lives_standard_check_button_new(_("Start _server on LiVES startup"), TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_tjack),
-                                 (future_prefs->jack_opts & JACK_OPTS_START_TSERVER) ? TRUE : FALSE);
-
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  prefsw->checkbutton_jack_master = lives_standard_check_button_new(_("Jack transport _master (start and stop)"), TRUE, LIVES_BOX(hbox),
-                                    NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master),
-                                 (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER) ? TRUE : FALSE);
+  prefsw->checkbutton_start_tjack = lives_standard_check_button_new(_("Start _server on LiVES startup"), TRUE,
+                                    (future_prefs->jack_opts & JACK_OPTS_START_TSERVER) ? TRUE : FALSE,
+                                    LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_jack_client = lives_standard_check_button_new(_("Jack transport _client (start and stop)"), TRUE, LIVES_BOX(hbox),
+  prefsw->checkbutton_jack_master = lives_standard_check_button_new(_("Jack transport _master (start and stop)"), TRUE,
+                                    (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER) ? TRUE : FALSE,
+                                    LIVES_BOX(hbox),
                                     NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client),
-                                 (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) ? TRUE : FALSE);
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->checkbutton_jack_client = lives_standard_check_button_new(_("Jack transport _client (start and stop)"), TRUE,
+                                    (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) ? TRUE : FALSE,
+                                    LIVES_BOX(hbox),
+                                    NULL);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_client), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(after_jack_client_toggled),
@@ -4525,11 +4445,10 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_jack_tb_start = lives_standard_check_button_new(_("Jack transport sets start position"), TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start),
-                                 (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_START) ?
-                                 (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client))) : FALSE);
+  prefsw->checkbutton_jack_tb_start = lives_standard_check_button_new(_("Jack transport sets start position"), TRUE,
+                                      (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_START) ?
+                                      (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client))) : FALSE,
+                                      LIVES_BOX(hbox), NULL);
 
   lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_start,
                              lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
@@ -4540,11 +4459,11 @@ _prefsw *create_prefs_dialog(void) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  prefsw->checkbutton_jack_tb_client = lives_standard_check_button_new(_("Jack transport timebase slave"), TRUE, LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_jack_tb_client = lives_standard_check_button_new(_("Jack transport timebase slave"), TRUE,
+                                       (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) ?
+                                       (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start))) : FALSE,
+                                       LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client),
-                                 (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) ?
-                                 (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start))) : FALSE);
 
   lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,
                              lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)));
@@ -4575,17 +4494,16 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_widget_set_sensitive(prefsw->jack_aserver_entry, FALSE);
 
-  prefsw->checkbutton_start_ajack = lives_standard_check_button_new(_("Start _server on LiVES startup"), TRUE, LIVES_BOX(hbox), NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),
-                                 (future_prefs->jack_opts & JACK_OPTS_START_ASERVER) ? TRUE : FALSE);
+  prefsw->checkbutton_start_ajack = lives_standard_check_button_new(_("Start _server on LiVES startup"), TRUE,
+                                    (future_prefs->jack_opts & JACK_OPTS_START_ASERVER) ? TRUE : FALSE,
+                                    LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_jack_pwp = lives_standard_check_button_new(_("Play audio even when transport is _paused"), TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp),
-                                 (future_prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED) ? FALSE : TRUE);
+  prefsw->checkbutton_jack_pwp = lives_standard_check_button_new(_("Play audio even when transport is _paused"), TRUE,
+                                 (future_prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED) ? FALSE : TRUE,
+                                 LIVES_BOX(hbox), NULL);
 
   lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp, prefs->audio_player == AUD_PLAYER_JACK);
 
@@ -4593,10 +4511,9 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_jack_read_autocon = lives_standard_check_button_new
-                                          (_("Automatically connect to System Out ports when 'playing' External Audio"), FALSE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_read_autocon),
-                                 (future_prefs->jack_opts & JACK_OPTS_NO_READ_AUTOCON) ? FALSE : TRUE);
+                                          (_("Automatically connect to System Out ports when 'playing' External Audio"), FALSE,
+                                              (future_prefs->jack_opts & JACK_OPTS_NO_READ_AUTOCON) ? FALSE : TRUE,
+                                              LIVES_BOX(hbox), NULL);
 
   lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon, prefs->audio_player == AUD_PLAYER_JACK);
 
@@ -4628,9 +4545,8 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_omc_js = lives_standard_check_button_new(_("_Joystick events"), TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_omc_js), prefs->omc_dev_opts & OMC_DEV_JS);
+  prefsw->checkbutton_omc_js = lives_standard_check_button_new(_("_Joystick events"), TRUE, (prefs->omc_dev_opts & OMC_DEV_JS),
+                               LIVES_BOX(hbox), NULL);
 
   label = lives_standard_label_new(_("Leave blank to use defaults"));
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
@@ -4660,9 +4576,8 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_omc_midi = lives_standard_check_button_new(_("_MIDI events"), TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_omc_midi), prefs->omc_dev_opts & OMC_DEV_MIDI);
+  prefsw->checkbutton_omc_midi = lives_standard_check_button_new(_("_MIDI events"), TRUE, (prefs->omc_dev_opts & OMC_DEV_MIDI),
+                                 LIVES_BOX(hbox), NULL);
 
   prefsw->midi_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), prefsw->midi_hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -4674,8 +4589,19 @@ _prefsw *create_prefs_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
+  prefsw->alsa_midi_dummy = lives_standard_check_button_new((tmp = lives_strdup(_("Create dummy MIDI output"))), TRUE, prefs->alsa_midi_dummy,
+                            LIVES_BOX(prefsw->midi_hbox),
+                            (tmp2 = lives_strdup(_("Create a dummy ALSA MIDI output port."))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_midi));
+
+  hbox = lives_hbox_new(FALSE, 0);
+
   raw_midi_button = lives_standard_radio_button_new((tmp = lives_strdup(_("Use _raw MIDI"))), TRUE, &alsa_midi_group,
-                    LIVES_BOX(prefsw->midi_hbox),
+                    LIVES_BOX(hbox),
                     (tmp2 = lives_strdup(_("Read directly from the MIDI device"))));
 
   lives_free(tmp);
@@ -4685,7 +4611,6 @@ _prefsw *create_prefs_dialog(void) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(raw_midi_button), !prefs->use_alsa_midi);
 #endif
 
-  hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->omc_midi_entry = lives_standard_entry_new((tmp = lives_strdup(_("_MIDI device"))), TRUE, prefs->omc_midi_fname,
@@ -4701,8 +4626,6 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_signal_connect(prefsw->button_midid, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
                        (livespointer)prefsw->omc_midi_entry);
-
-  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_midi));
 
   label = lives_standard_label_new(_("Advanced"));
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
@@ -5137,6 +5060,8 @@ _prefsw *create_prefs_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_omc_midi), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi_dummy), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(raw_midi_button), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->omc_midi_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);

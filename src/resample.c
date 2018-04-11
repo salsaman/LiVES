@@ -1,6 +1,6 @@
 // resample.c
 // LiVES
-// (c) G. Finch 2004 - 2017 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1318,7 +1318,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       resaudw->aud_hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(vbox2), resaudw->aud_hbox, FALSE, FALSE, 0);
 
-      resaudw->aud_checkbutton = lives_standard_check_button_new(_("_Enable audio"), TRUE, LIVES_BOX(resaudw->aud_hbox), NULL);
+      resaudw->aud_checkbutton = lives_standard_check_button_new(_("_Enable audio"), TRUE, FALSE, LIVES_BOX(resaudw->aud_hbox), NULL);
 
       if (rdet != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), rdet->achans > 0);
       else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), prefs->mt_def_achans > 0);
@@ -1664,7 +1664,7 @@ void create_new_pb_speed(short type) {
 
   ca_hbox = lives_hbox_new(FALSE, 0);
   change_audio_speed = lives_standard_check_button_new
-                       (_("Change the _audio speed as well"), TRUE, LIVES_BOX(ca_hbox), NULL);
+                       (_("Change the _audio speed as well"), TRUE, FALSE, LIVES_BOX(ca_hbox), NULL);
 
   lives_box_pack_start(LIVES_BOX(vbox), ca_hbox, TRUE, TRUE, widget_opts.packing_height);
 

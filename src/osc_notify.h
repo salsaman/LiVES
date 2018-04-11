@@ -55,6 +55,8 @@ extern "C" {
 
 #define LIVES_OSC_NOTIFY_MODE_CHANGED 4096 ///< mode changed to clip editor or to multitrack
 
+#define LIVES_OSC_NOTIFY_USER1 32768 ///< user defined notification (e.g. external sync)
+
 // >= 65536 reserved for custom
 
 

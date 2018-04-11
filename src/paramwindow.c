@@ -1,6 +1,6 @@
 // paramwindow.c
 // LiVES
-// (c) G. Finch 2004 - 2017 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -413,16 +413,15 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
     if (has_video_chans_in(filter, FALSE))
       lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
-    checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Crossfade audio"))), FALSE, LIVES_BOX(hbox2),
+    checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Crossfade audio"))), FALSE, FALSE, LIVES_BOX(hbox2),
                   (tmp2 = lives_strdup(_("Check the box to make audio transition with the video"))));
 
     lives_free(tmp);
     lives_free(tmp2);
 
-    if (!weed_plant_has_leaf(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION) ||
-        weed_get_boolean_value(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, &error) == WEED_FALSE)
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), FALSE);
-    else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), TRUE);
+    if (weed_plant_has_leaf(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION) &&
+        weed_get_boolean_value(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, &error) == WEED_TRUE)
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), TRUE);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(after_transaudio_toggled),
@@ -1334,8 +1333,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         param->widgets[1] = dlabel;
       }
 
-      checkbutton = lives_standard_check_button_new(name, use_mnemonic, (LiVESBox *)hbox, param->desc);
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), get_bool_param(param->value));
+      checkbutton = lives_standard_check_button_new(name, use_mnemonic, get_bool_param(param->value), (LiVESBox *)hbox, param->desc);
       lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                  LIVES_GUI_CALLBACK(after_boolean_param_toggled),
                                  (livespointer)rfx);

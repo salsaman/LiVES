@@ -1,15 +1,14 @@
 // omc-learn.h
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2012
+// (c) G. Finch 2003 - 2018
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
-
 
 #ifndef HAS_LIVES_OMC_LEARN_H
 #define HAS_LIVES_OMC_LEARN_H
 
 /** max number of macros */
-#define N_OMC_MACROS 32
+#define N_OMC_MACROS 64
 
 /** floating point precision */
 #define OMC_FP_FIX 4
@@ -20,7 +19,6 @@
 #endif
 
 #define OMC_MIDI_IMPL
-
 
 #ifdef OMC_JS_IMPL
 char *js_mangle(void);
@@ -62,9 +60,6 @@ typedef struct {
   double *vald;
 } lives_omc_macro_t;
 
-
-
-
 typedef struct {
   char *srch; ///< string to match
   int macro; ///< macro number this is linked to (or -1)
@@ -85,7 +80,6 @@ typedef struct {
   int *fvali; ///< mapping to fixed ints
   double *fvald; ///< mapping to fixed doubles
 
-
   ///////////////////////// following this is not saved/loaded
 
   LiVESWidget *treev1;
@@ -96,8 +90,6 @@ typedef struct {
 
   int *tmpvals;
 } lives_omc_match_node_t;
-
-
 
 typedef struct {
   LiVESWidget *dialog;
@@ -110,8 +102,6 @@ typedef struct {
   LiVESWidget *top_vbox;
 } omclearn_w;
 
-
-
 enum {
   TITLE_COLUMN,
   VALUE_COLUMN,
@@ -123,7 +113,6 @@ enum {
   NUM_COLUMNS
 };
 
-
 enum {
   TITLE2_COLUMN,
   VALUE2_COLUMN,
@@ -131,11 +120,9 @@ enum {
   NUM2_COLUMNS
 };
 
-
 #define OMC_JS 1
 #define OMC_JS_AXIS 2
 #define OMC_JS_BUTTON 3
-
 
 #define OMC_MIDI 128
 #define OMC_MIDI_NOTE 129
@@ -151,16 +138,12 @@ void on_midi_learn_activate(LiVESMenuItem *, livespointer);
 /// only need to set omclw if learn is TRUE
 boolean omc_process_string(int supertype, const char *string, boolean learn, omclearn_w *omclw);
 
-
-
 #define OMC_FILE_VSTRING "LiVES OMC map version 1.0"
 
 void on_midi_save_activate(LiVESMenuItem *, livespointer);
 void on_midi_load_activate(LiVESMenuItem *, livespointer);
 
-
 #include "osc.h"
-
 
 #define OSC_BUF_SIZE 1024
 #define OSC_MAX_TYPETAGS 64
@@ -168,8 +151,4 @@ void on_midi_load_activate(LiVESMenuItem *, livespointer);
 /// decode learnt behaviours
 OSCbuf *omc_learner_decode(int type, int index, const char *string);
 
-
 #endif // HAS_LIVES_OMC_LEARN_H
-
-
-

@@ -1,6 +1,6 @@
 // paramspecial.c
 // LiVES
-// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -252,7 +252,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
       box = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), box, FALSE, FALSE, widget_opts.packing_height * 2);
 
-      aspect.checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Maintain _Aspect Ratio"))), TRUE,
+      aspect.checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Maintain _Aspect Ratio"))), TRUE, FALSE,
                            LIVES_BOX(box), (tmp2 = lives_strdup(_("Maintain aspect ratio of original frame"))));
 
       lives_free(tmp);
@@ -324,7 +324,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
       hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(box)), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-      checkbutton = lives_standard_check_button_new(_("Display Password"), FALSE, LIVES_BOX(hbox), NULL);
+      checkbutton = lives_standard_check_button_new(_("Display Password"), FALSE, FALSE, LIVES_BOX(hbox), NULL);
 
       lives_button_set_focus_on_click(LIVES_BUTTON(checkbutton), FALSE);
 

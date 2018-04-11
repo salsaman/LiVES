@@ -1,6 +1,6 @@
 // ce_thumbs.c
 // LiVES
-// (c) G. Finch 2013 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2013 - 2018 <salsaman+lives@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -241,7 +241,7 @@ void start_ce_thumb_mode(void) {
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     tmp = lives_strdup_printf(_("Mapped to ctrl-%d"), i + 1);
-    key_checks[i] = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), tmp);
+    key_checks[i] = lives_standard_check_button_new(NULL, FALSE, (mainw->rte & (GU641 << i)), LIVES_BOX(hbox), tmp);
     lives_free(tmp);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]), mainw->rte & (GU641 << i));
@@ -523,7 +523,7 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   add_fill_to_box(LIVES_BOX(hbox));
 
   /* TRANSLATORS - "pin" as in "pinned to window" */
-  pin_check = lives_standard_check_button_new((tmp = lives_strdup(_("_Pin"))), TRUE, LIVES_BOX(hbox),
+  pin_check = lives_standard_check_button_new((tmp = lives_strdup(_("_Pin"))), TRUE, FALSE, LIVES_BOX(hbox),
               (tmp2 = lives_strdup(_("Pin the parameter box to the window"))));
   lives_free(tmp);
   lives_free(tmp2);

@@ -758,7 +758,7 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *r
 
 LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invisible_outline);
 
-LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, LiVESBox *box, const char *tooltip);
+LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, boolean active, LiVESBox *, const char *tooltip);
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList **rbgroup,
     LiVESBox *, const char *tooltip);
 LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_mnemonic, double val, double min,

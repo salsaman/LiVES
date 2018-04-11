@@ -1,6 +1,6 @@
 // interface.c
 // LiVES
-// (c) G. Finch 2003 - 2017 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2018 <salsaman+lives@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -27,9 +27,8 @@ void add_suffix_check(LiVESBox *box, const char *ext) {
 
   if (ext == NULL) ltext = lives_strdup(_("Let LiVES set the _file extension"));
   else ltext = lives_strdup_printf(_("Let LiVES set the _file extension (.%s)"), ext);
-  checkbutton = lives_standard_check_button_new(ltext, TRUE, box, NULL);
+  checkbutton = lives_standard_check_button_new(ltext, TRUE, mainw->fx1_bool, box, NULL);
   lives_free(ltext);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), mainw->fx1_bool);
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_boolean_toggled),
                              &mainw->fx1_bool);
@@ -39,7 +38,8 @@ void add_suffix_check(LiVESBox *box, const char *ext) {
 static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
   char *tmp, *tmp2;
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
-  LiVESWidget *checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Apply _Deinterlace"))), TRUE, LIVES_BOX(hbox),
+  LiVESWidget *checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Apply _Deinterlace"))), TRUE,  mainw->open_deint,
+                             LIVES_BOX(hbox),
                              (tmp2 = lives_strdup(_("If this is set, frames will be deinterlaced as they are imported."))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -53,7 +53,6 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
   } else lives_box_pack_start(for_deint, hbox, FALSE, FALSE, widget_opts.packing_height);
 
   lives_widget_set_can_focus_and_default(checkbutton);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), mainw->open_deint);
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_boolean_toggled),
                              &mainw->open_deint);
@@ -600,7 +599,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-    checkbutton = lives_standard_check_button_new(labeltext, TRUE, LIVES_BOX(hbox), NULL);
+    checkbutton = lives_standard_check_button_new(labeltext, TRUE, FALSE, LIVES_BOX(hbox), NULL);
 
     lives_free(labeltext);
 
@@ -615,7 +614,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     checkbutton2 = lives_standard_check_button_new
-                   ((tmp = lives_strdup(_("Use _letterboxing to maintain aspect ratio (optional)"))), TRUE, LIVES_BOX(hbox),
+                   ((tmp = lives_strdup(_("Use _letterboxing to maintain aspect ratio (optional)"))), TRUE, FALSE, LIVES_BOX(hbox),
                     (tmp2 = lives_strdup(_("Draw black rectangles either above or to the sides of the image, to prevent it from stretching."))));
 
     lives_free(tmp);
@@ -623,7 +622,6 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
     if (opt_resize) {
       lives_widget_set_sensitive(checkbutton2, FALSE);
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton2), FALSE);
     } else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton2), prefs->enc_letterbox);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -801,7 +799,7 @@ _insertw *create_insert_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(hbox1), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-  insertw->fit_checkbutton = lives_standard_check_button_new(_("_Insert to fit audio"), TRUE, LIVES_BOX(hbox), NULL);
+  insertw->fit_checkbutton = lives_standard_check_button_new(_("_Insert to fit audio"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
 
   lives_widget_set_sensitive(LIVES_WIDGET(insertw->fit_checkbutton), cfile->achans > 0 && clipboard->achans == 0);
 
@@ -1072,13 +1070,11 @@ _entryw *create_location_dialog(int type) {
   if (type == 1) {
     hbox = lives_hbox_new(FALSE, 0);
     checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Do not send bandwidth information"))),
-                  TRUE, LIVES_BOX(hbox),
+                  TRUE, prefs->no_bandwidth, LIVES_BOX(hbox),
                   (tmp2 = lives_strdup(_("Try this setting if you are having problems getting a stream"))));
 
     lives_free(tmp);
     lives_free(tmp2);
-
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), prefs->no_bandwidth);
 
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
@@ -1308,7 +1304,7 @@ _entryw *create_rename_dialog(int type) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 4);
 
-    checkbutton = lives_standard_check_button_new(_("Save extended colors"), TRUE, LIVES_BOX(hbox), NULL);
+    checkbutton = lives_standard_check_button_new(_("Save extended colors"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(on_boolean_toggled),
@@ -1924,11 +1920,10 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    commentsw->subt_checkbutton = lives_standard_check_button_new(_("Save _subtitles to file"), TRUE, LIVES_BOX(hbox), NULL);
+    commentsw->subt_checkbutton = lives_standard_check_button_new(_("Save _subtitles to file"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
 
     if (sfile->subt == NULL) {
       lives_widget_set_sensitive(commentsw->subt_checkbutton, FALSE);
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton), FALSE);
     } else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton), TRUE);
 
     hbox = lives_hbox_new(FALSE, 0);
@@ -2347,14 +2342,13 @@ _entryw *create_cds_dialog(int type) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    checkbutton = lives_standard_check_button_new(_("_Auto reload next time"), TRUE, LIVES_BOX(hbox), NULL);
+    checkbutton = lives_standard_check_button_new(_("_Auto reload next time"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
 
     if ((type == 0 && prefs->ar_layout) || (type == 1 && !mainw->only_close)) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), TRUE);
       if (type == 1) prefs->ar_clipset = TRUE;
       else prefs->ar_layout = TRUE;
     } else {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), FALSE);
       if (type == 1) prefs->ar_clipset = FALSE;
       else prefs->ar_layout = FALSE;
     }
@@ -2456,13 +2450,12 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Delete _Orphaned Clips"))), TRUE, LIVES_BOX(hbox),
+  checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Delete _Orphaned Clips"))), TRUE,
+                !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS), LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Delete any clips which are not currently loaded or part of a set"))));
 
   lives_free(tmp);
   lives_free(tmp2);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(flip_cdisk_bit),
@@ -2471,9 +2464,9 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = lives_standard_check_button_new(_("Clear _Backup Files from Closed Clips"), TRUE, LIVES_BOX(hbox), NULL);
+  checkbutton = lives_standard_check_button_new(_("Clear _Backup Files from Closed Clips"), TRUE,
+                !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_BFILES), LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_BFILES));
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(flip_cdisk_bit),
@@ -2482,10 +2475,8 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = lives_standard_check_button_new(_("Remove Sets which have _Layouts but no Clips"), TRUE, LIVES_BOX(hbox), NULL);
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),
-                                 (prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
+  checkbutton = lives_standard_check_button_new(_("Remove Sets which have _Layouts but no Clips"), TRUE,
+                (prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS), LIVES_BOX(hbox), NULL);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(flip_cdisk_bit),

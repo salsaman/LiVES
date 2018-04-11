@@ -1183,9 +1183,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pavol = pa_sw_volume_from_linear(mainw->volume);
     pa_cvolume_set(&out_vol, pdriver->out_achans, pavol);
 
-    // set write callback
-    set_process_callback_pulse(pdriver, TRUE);
-
 #ifdef PA_STREAM_START_UNMUTED
     pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr,
                                (pa_stream_flags_t)(PA_STREAM_START_UNMUTED | PA_STREAM_ADJUST_LATENCY |
@@ -1197,6 +1194,9 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                PA_STREAM_AUTO_TIMING_UPDATE),
                                &out_vol, NULL);
 #endif
+
+    // set write callback
+    set_process_callback_pulse(pdriver, TRUE);
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       lives_usleep(prefs->sleep_time);

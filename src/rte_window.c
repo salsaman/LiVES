@@ -2159,7 +2159,7 @@ LiVESWidget *create_rte_window(void) {
 
     hbox2 = lives_hbox_new(FALSE, 0);
 
-    key_checks[i] = lives_standard_check_button_new(_("Key active"), FALSE, LIVES_BOX(hbox2), NULL);
+    key_checks[i] = lives_standard_check_button_new(_("Key active"), FALSE, (mainw->rte & (GU641 << i)), LIVES_BOX(hbox2), NULL);
 
     lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 

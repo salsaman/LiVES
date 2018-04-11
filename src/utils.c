@@ -2518,21 +2518,24 @@ char *ensure_extension(const char *fname, const char *ext) {
   // if ext does not begin with a "." we prepend one to the start of ext
   // we then check if fname ends with ext. If not we append ext to fname.
   // we return a copy of fname, possibly modified. The string returned should be freed after use.
-  // NOTE: the original ext is not changed. 
-  char *dotted = (char *)ext;
-  if (ext[0] != '.') {
-    dotted = lives_strdup_printf(".%s", ext);
+  // NOTE: the original ext is not changed.
+  size_t se = strlen(ext), sf;
+  char *eptr = (char *)ext;
+
+  if (se == 0) return lives_strdup(fname);
+
+  if (eptr[0] == '.') {
+    eptr++;
+    se--;
   }
-  if (!strcmp(fname + strlen(fname) - strlen(dotted), dotted)) {
-    if (dotted != ext) lives_free(dotted);
-    return lives_strdup(fname);
+
+  sf = strlen(fname);
+
+  if (sf < se + 1 || strcmp(fname + sf - se, ext) || fname[sf - se - 1] != '.') {
+    return lives_strconcat(fname, '.', ext, NULL);
   }
-  if (dotted != ext) {
-    char *ret = lives_strconcat(fname, dotted, NULL);
-    lives_free(dotted);
-    return ret;
-  }
-  return lives_strconcat(fname, ext, NULL);
+
+  return lives_strdup(fname);
 }
 
 

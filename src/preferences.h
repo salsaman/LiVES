@@ -267,6 +267,7 @@ typedef struct {
 #define OMC_DEV_MIDI (1<<0)
 #define OMC_DEV_JS (1<<1)
 #define OMC_DEV_FORCE_RAW_MIDI (1<<2)
+#define OMC_DEV_MIDI_DUMMY (1<<3)
   uint32_t omc_dev_opts;
 
   char omc_js_fname[PATH_MAX];  ///< utf8
@@ -280,6 +281,7 @@ typedef struct {
 
 #ifdef ALSA_MIDI
   boolean use_alsa_midi;
+  boolean alsa_midi_dummy;
 #endif
 
   int startup_interface;
@@ -587,6 +589,7 @@ typedef struct {
   LiVESWidget *spinbutton_midicr;
   LiVESWidget *spinbutton_midirpt;
   LiVESWidget *alsa_midi;
+  LiVESWidget *alsa_midi_dummy;
   LiVESWidget *button_midid;
   LiVESWidget *rb_startup_ce;
   LiVESWidget *rb_startup_mt;

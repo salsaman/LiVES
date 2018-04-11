@@ -508,6 +508,7 @@ static boolean pre_init(void) {
 #endif
 
   prefs->show_splash = TRUE;
+  prefs->hide_framebar = FALSE;
 
   // from here onwards we can use get_pref() and friends  //////
 
@@ -662,10 +663,11 @@ static boolean pre_init(void) {
 
 #ifdef ALSA_MIDI
   prefs->use_alsa_midi = TRUE;
+  prefs->alsa_midi_dummy = FALSE;
   mainw->seq_handle = NULL;
 
   if (prefs->omc_dev_opts & OMC_DEV_FORCE_RAW_MIDI) prefs->use_alsa_midi = FALSE;
-
+  if (prefs->omc_dev_opts & OMC_DEV_MIDI_DUMMY) prefs->alsa_midi_dummy = TRUE;
 #endif
 
   mainw->volume = 1.f;
@@ -1242,8 +1244,6 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->max_disp_vtracks = get_int_pref(PREF_MAX_DISP_VTRACKS);
 
     prefs->mt_load_fuzzy = FALSE;
-
-    prefs->hide_framebar = FALSE;
 
     prefs->ahold_threshold = get_double_pref(PREF_AHOLD_THRESHOLD);
 

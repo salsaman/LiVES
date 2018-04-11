@@ -5180,11 +5180,11 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
 LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertrack) {
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
 
-  *cbbackaudio = lives_standard_check_button_new(_("Enable _backing audio track"), TRUE, LIVES_BOX(hbox), NULL);
+  *cbbackaudio = lives_standard_check_button_new(_("Enable _backing audio track"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  *cbpertrack = lives_standard_check_button_new(_("Audio track _per video track"), TRUE, LIVES_BOX(hbox), NULL);
+  *cbpertrack = lives_standard_check_button_new(_("Audio track _per video track"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
 
   return hbox;
 }
@@ -5350,7 +5350,7 @@ render_details *create_render_details(int type) {
   lives_container_set_border_width(LIVES_CONTAINER(top_vbox), 0);
 
   rdet->always_hbox = lives_hbox_new(TRUE, widget_opts.packing_width * 2);
-  rdet->always_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Always use these values"))), TRUE,
+  rdet->always_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Always use these values"))), TRUE, FALSE,
                              LIVES_BOX(rdet->always_hbox),
                              (tmp2 = lives_strdup(
                                        _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."))));

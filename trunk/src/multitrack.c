@@ -1,6 +1,6 @@
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2017 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -7688,7 +7688,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   dpw = widget_opts.packing_width;
   widget_opts.packing_width = 2.*widget_opts.scale;
-  mt->insa_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Insert With _Audio"))), TRUE, LIVES_BOX(hbox),
+  mt->insa_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Insert With _Audio"))), TRUE, mt->opts.insert_audio,
+                         LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("Select whether video clips are inserted and moved with their audio or not"))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -7736,8 +7737,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->tc_func = lives_signal_connect_after(LIVES_WIDGET_OBJECT(mt->timecode), LIVES_WIDGET_FOCUS_OUT_EVENT,
                 LIVES_GUI_CALLBACK(after_timecode_changed), (livespointer) mt);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt->insa_checkbutton), mt->opts.insert_audio);
-
   lives_signal_connect_after(LIVES_GUI_OBJECT(mt->insa_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(lives_cool_toggled),
                              &mt->opts.insert_audio);
@@ -7759,7 +7758,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   dpw = widget_opts.packing_width;
   widget_opts.packing_width = 2.*widget_opts.scale;
 
-  mt->snapo_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Select _Overlap"))), TRUE, LIVES_BOX(hbox),
+  mt->snapo_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Select _Overlap"))), TRUE, mt->opts.snap_over,
+                          LIVES_BOX(hbox),
                           (tmp2 = lives_strdup(_("Select whether timeline selection snaps to overlap between selected tracks or not"))));
   widget_opts.packing_width = dpw;
   lives_free(tmp);
@@ -7768,8 +7768,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
 
   mt->overlap_label = widget_opts.last_label;
-
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton), mt->opts.snap_over);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mt->snapo_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(lives_cool_toggled),
@@ -8232,7 +8230,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mt->avel_box), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
-  mt->checkbutton_avel_reverse = lives_standard_check_button_new(_("_Reverse playback  "), TRUE, LIVES_BOX(hbox), NULL);
+  mt->checkbutton_avel_reverse = lives_standard_check_button_new(_("_Reverse playback  "), TRUE, FALSE, LIVES_BOX(hbox), NULL);
 
   if (palette->style & STYLE_1) {
     lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -8297,7 +8295,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                       LIVES_BOX(mt->in_hbox), NULL);
   widget_opts.packing_width = dpw;
 
-  mt->checkbutton_start_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _start"))), TRUE, LIVES_BOX(mt->in_hbox),
+  mt->checkbutton_start_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _start"))), TRUE, FALSE,
+                                   LIVES_BOX(mt->in_hbox),
                                    (tmp2 = lives_strdup(_("Anchor the start point to the timeline"))));
 
   lives_free(tmp);
@@ -8348,7 +8347,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_BOX(mt->out_hbox), NULL);
   widget_opts.packing_width = dpw;
 
-  mt->checkbutton_end_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _end"))), TRUE, LIVES_BOX(mt->out_hbox),
+  mt->checkbutton_end_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _end"))), TRUE, FALSE, LIVES_BOX(mt->out_hbox),
                                  (tmp2 = lives_strdup(_("Anchor the end point to the timeline"))));
 
   add_fill_to_box(LIVES_BOX(mt->out_hbox));
@@ -18968,9 +18967,8 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
 
   hbox = lives_hbox_new(FALSE, 0);
 
-  ar_checkbutton = lives_standard_check_button_new(_("_Autoreload each time"), TRUE, LIVES_BOX(hbox), NULL);
+  ar_checkbutton = lives_standard_check_button_new(_("_Autoreload each time"), TRUE, prefs->ar_layout, LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(ar_checkbutton), prefs->ar_layout);
   lives_signal_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_autoreload_toggled),
                        LIVES_INT_TO_POINTER(2));
@@ -20497,9 +20495,8 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
   hbox = lives_hbox_new(FALSE, 0);
 
   if (allow_auto_reload) {
-    ar_checkbutton = lives_standard_check_button_new(_("_Autoreload each time"), TRUE, LIVES_BOX(hbox), NULL);
+    ar_checkbutton = lives_standard_check_button_new(_("_Autoreload each time"), TRUE, prefs->ar_layout, LIVES_BOX(hbox), NULL);
 
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(ar_checkbutton), prefs->ar_layout);
     lives_signal_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_autoreload_toggled),
                          LIVES_INT_TO_POINTER(2));

@@ -7573,7 +7573,7 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
 }
 
 
-LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, LiVESBox *box,
+LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, boolean active, LiVESBox *box,
     const char *tooltip) {
   LiVESWidget *checkbutton = NULL;
 
@@ -7635,6 +7635,8 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
                                LIVES_GUI_CALLBACK(set_label_state),
                                label);
   }
+
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), active);
 
   return checkbutton;
 }

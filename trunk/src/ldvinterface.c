@@ -1,6 +1,6 @@
 // ldvinterface.c
 // LiVES
-// (c) G. Finch 2006-2017 <salsaman@gmail.com>
+// (c) G. Finch 2006-2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -68,7 +68,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  dvgrabw->split = lives_standard_check_button_new(_("_Split into scenes"), TRUE, LIVES_BOX(hbox), NULL);
+  dvgrabw->split = lives_standard_check_button_new(_("_Split into scenes"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
 
   // TODO - widget_opts.editable
   dvgrabw->status_entry = lives_entry_new();

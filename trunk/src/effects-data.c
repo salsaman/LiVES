@@ -1,6 +1,6 @@
 // effects-data.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2017 (salsaman+lives@gmail.com)
+// (c) G. Finch 2005 - 2018 (salsaman+lives@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -3952,7 +3952,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
     hbox2 = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, 0);
 
-    conxwp->acheck[idx] = lives_standard_check_button_new(_("Autoscale"), FALSE, LIVES_BOX(hbox2), NULL);
+    conxwp->acheck[idx] = lives_standard_check_button_new(_("Autoscale"), FALSE, FALSE, LIVES_BOX(hbox2), NULL);
 
     lives_widget_set_sensitive(conxwp->acheck[idx], FALSE);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->acheck[idx]), "available", LIVES_INT_TO_POINTER(hasrange));
@@ -4290,10 +4290,8 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
                        (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    conxwp->allcheckc = lives_standard_check_button_new(_("Autoscale All"), FALSE, LIVES_BOX(hbox), NULL);
+    conxwp->allcheckc = lives_standard_check_button_new(_("Autoscale All"), FALSE, TRUE, LIVES_BOX(hbox), NULL);
     conxwp->allcheck_label = widget_opts.last_label;
-
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->allcheckc), TRUE);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(conxwp->allcheckc), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(on_allcheck_toggled),
@@ -4301,7 +4299,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
 
 
     if (EXTRA_PARAMS_OUT > 0) {
-
       lives_table_resize(LIVES_TABLE(conxwp->tablep), ++conxwp->trowsp, 7);
 
       nconns = conxwp->dispp[0];
@@ -4336,7 +4333,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
     }
 
     for (i = 0; i < conxwp->num_params - EXTRA_PARAMS_OUT; i++) {
-
       lives_table_resize(LIVES_TABLE(conxwp->tablep), ++conxwp->trowsp, 7);
 
       nconns = conxwp->dispp[i + EXTRA_PARAMS_OUT];
@@ -4349,7 +4345,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
         ptable_row_add_standard_widgets(conxwp, x + totchans);
 
         if (isfirst) {
-
           param = oparams[i];
 
           pname = weed_get_string_value(param, WEED_LEAF_NAME, &error);
@@ -4391,7 +4386,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
     }
 
     lives_free(oparams);
-
   }
 
   lives_free(fname);

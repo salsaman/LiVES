@@ -1,6 +1,6 @@
 // merge.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2017 (salsaman+lives@gmail.com)
+// (c) G. Finch 2003 - 2018 (salsaman+lives@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -158,7 +158,8 @@ void create_merge_dialog(void) {
                                LIVES_GUI_CALLBACK(after_spinbutton_loops_changed),
                                NULL);
 
-    fit_button = lives_standard_check_button_new(_("_Loop Clipboard to Fit Selection"), TRUE, LIVES_BOX(hbox), NULL);
+    fit_button = lives_standard_check_button_new(_("_Loop Clipboard to Fit Selection"), TRUE,  mainw->last_transition_loop_to_fit,
+                 LIVES_BOX(hbox), NULL);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(fit_button), mainw->last_transition_loop_to_fit);
 
     lives_signal_connect(LIVES_GUI_OBJECT(fit_button), LIVES_WIDGET_TOGGLED_SIGNAL,

@@ -1,6 +1,6 @@
 // dialogs.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2017
+// (c) G. Finch 2003 - 2018 <salsaman+lives@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -47,6 +47,7 @@ static volatile boolean display_ready;
 
 static int64_t sttime;
 
+static xprocess *procw = NULL;
 
 void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   LiVESWidget *tbutton;
@@ -114,7 +115,7 @@ void add_warn_check(LiVESBox *box, int warn_mask_number) {
 
   checkbutton = lives_standard_check_button_new(
                   _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
-                  TRUE, LIVES_BOX(box), NULL);
+                  TRUE, FALSE, LIVES_BOX(box), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_warn_mask_toggled),
@@ -333,7 +334,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   }
 
   if (prefs->show_gui && mainw->is_ready) {
-    while (!lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
+    while (!lives_has_toplevel_focus(LIVES_WIDGET(transient)) && !lives_has_toplevel_focus(LIVES_WIDGET(get_transient_full())) &&
+           (procw == NULL || !lives_has_toplevel_focus(procw->processing))) {
       lives_usleep(prefs->sleep_time * 10);
       lives_widget_context_update();
       sched_yield();
@@ -1566,6 +1568,42 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   mainw->origusecs = tv.tv_usec;
 #endif
 
+#ifdef ENABLE_JACK
+  if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_JACK &&
+      mainw->jackd_read != NULL && prefs->ahold_threshold > 0.) {
+    // if recording with external audio, wait for audio threshold before commencing
+    mainw->jackd_read->abs_maxvol_heard = 0.;
+    cfile->progress_end = 0;
+    do_threaded_dialog(_("Waiting for external audio"), TRUE);
+    while (mainw->jackd_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
+      lives_usleep(prefs->sleep_time);
+      threaded_dialog_spin(0.);
+      lives_widget_context_update();
+    }
+    end_threaded_dialog();
+    if (mainw->cancelled != CANCEL_NONE) return FALSE;
+  }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  // start audio recording now
+  if (mainw->pulsed_read != NULL) {
+    pulse_driver_uncork(mainw->pulsed_read);
+  }
+  if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_PULSE &&
+      prefs->ahold_threshold > 0.) {
+    cfile->progress_end = 0;
+    do_threaded_dialog(_("Waiting for external audio"), TRUE);
+    while (mainw->pulsed_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
+      lives_usleep(prefs->sleep_time);
+      threaded_dialog_spin(0.);
+      lives_widget_context_update();
+    }
+    end_threaded_dialog();
+    if (mainw->cancelled != CANCEL_NONE) return FALSE;
+  }
+#endif
+
   if (!visible) {
     // video playback
 
@@ -1619,20 +1657,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   // MUST do re-seek after setting origsecs in order to set our clock properly
   // re-seek to new playback start
 #ifdef ENABLE_JACK
-  if (mainw->record && !mainw->record_paused && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_JACK &&
-      mainw->jackd_read != NULL && prefs->ahold_threshold > 0.) {
-    mainw->jackd_read->abs_maxvol_heard = 0.;
-    cfile->progress_end = 0;
-    do_threaded_dialog(_("Waiting for external audio"), TRUE);
-    while (mainw->jackd_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
-      lives_usleep(prefs->sleep_time);
-      threaded_dialog_spin(0.);
-      lives_widget_context_update();
-    }
-    end_threaded_dialog();
-    if (mainw->cancelled != CANCEL_NONE) return FALSE;
-  }
-
   if (prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd != NULL && mainw->jackd->playing_file > -1) {
     if (!jack_audio_seek_frame(mainw->jackd, mainw->play_start)) {
@@ -1641,7 +1665,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     mainw->rec_aclip = mainw->current_file;
     mainw->rec_avel = cfile->pb_fps / cfile->fps;
-    if (!(mainw->record && !mainw->record_paused && (prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit)))
+    if (!(mainw->record && (prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit)))
       mainw->rec_aseek = (double)cfile->aseek_pos / (double)(cfile->arate * cfile->achans * (cfile->asampsize / 8));
     else {
       mainw->rec_aclip = mainw->ascrap_file;
@@ -1659,25 +1683,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-
-  // start audio recording now
-  if (mainw->pulsed_read != NULL) {
-    pulse_driver_uncork(mainw->pulsed_read);
-  }
-
-  if (mainw->record && !mainw->record_paused && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_PULSE &&
-      prefs->ahold_threshold > 0.) {
-    cfile->progress_end = 0;
-    do_threaded_dialog(_("Waiting for external audio"), TRUE);
-    while (mainw->pulsed_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
-      lives_usleep(prefs->sleep_time);
-      threaded_dialog_spin(0.);
-      lives_widget_context_update();
-    }
-    end_threaded_dialog();
-    if (mainw->cancelled != CANCEL_NONE) return FALSE;
-  }
-
   if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed != NULL && mainw->pulsed->playing_file > -1) {
     if (!pulse_audio_seek_frame(mainw->pulsed, mainw->play_start)) {
@@ -1686,7 +1691,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     mainw->rec_aclip = mainw->current_file;
     mainw->rec_avel = cfile->pb_fps / cfile->fps;
-    if (!(mainw->record && !mainw->record_paused && (prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit)))
+    if (!(mainw->record && (prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit)))
       mainw->rec_aseek = (double)cfile->aseek_pos / (double)(cfile->arate * cfile->achans * (cfile->asampsize / 8));
     else {
       mainw->rec_aclip = mainw->ascrap_file;
@@ -1725,6 +1730,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
                          NULL);
   }
 #endif
+
+  if (mainw->record) mainw->record_paused = FALSE;
 
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
@@ -2692,7 +2699,6 @@ void do_rmem_max_error(int size) {
 }
 
 
-static xprocess *procw = NULL;
 static int64_t last_t;
 
 static void create_threaded_dialog(char *text, boolean has_cancel) {
@@ -2778,7 +2784,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
 
-  
+
   procw->is_ready = TRUE;
 }
 
@@ -2803,8 +2809,8 @@ void threaded_dialog_spin(double fraction) {
       //#define GDB
 #ifndef GDB
       if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) {
-	lives_widget_context_update();
-	lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
+        lives_widget_context_update();
+        lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
       }
 #endif
     } else {

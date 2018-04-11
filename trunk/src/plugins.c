@@ -1,6 +1,6 @@
 // plugins.c
 // LiVES
-// (c) G. Finch 2003 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -2587,12 +2587,10 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     ltext = lives_strdup_printf("%s   (%s)", dpsys->name, (*dpsys->version)());
 
-    checkbutton = lives_standard_check_button_new(ltext, FALSE, LIVES_BOX(hbox), NULL);
+    checkbutton = lives_standard_check_button_new(ltext, FALSE, lives_list_strcmp_index(future_prefs->disabled_decoders, dpsys->name) == -1,
+                  LIVES_BOX(hbox), NULL);
 
     lives_free(ltext);
-
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),
-                                   lives_list_strcmp_index(future_prefs->disabled_decoders, dpsys->name) == -1);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(on_dpa_cb_toggled),

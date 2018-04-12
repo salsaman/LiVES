@@ -146,9 +146,11 @@ static void pulse_set_rec_avals(pulse_driver_t *pulsed, boolean is_forward) {
 }
 
 
+#if !HAVE_PA_STREAM_BEGIN_WRITE
 static void pulse_buff_free(void *ptr) {
   lives_free(ptr);
 }
+#endif
 
 
 static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t xbytes) {
@@ -156,15 +158,24 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
   if (xbytes <= 0) return;
   if (mainw->aplayer_broken) return;
   while (nbytes > 0) {
+#if HAVE_PA_STREAM_BEGIN_WRITE
+    xbytes = -1;
+    pa_stream_begin_write(pdriver->pstream, (void **)&buff, &xbytes);
+#endif
     if (nbytes < xbytes) xbytes = nbytes;
+#if !HAVE_PA_STREAM_BEGIN_WRITE
     buff = (uint8_t *)lives_try_malloc0(xbytes);
+#endif
     if (!buff) return;
+#if HAVE_PA_STREAM_BEGIN_WRITE
+    memset(buff, 0, xbytes);
+#endif
     if (pdriver->astream_fd != -1) audio_stream(buff, xbytes, pdriver->astream_fd); // old streaming API
 
     // new streaming API
     if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL && pdriver->playing_file != -1
         && pdriver->playing_file != mainw->ascrap_file) {
-      int nframes = nbytes / pdriver->out_achans / (pdriver->out_asamps >> 3);
+      int nframes = xbytes / pdriver->out_achans / (pdriver->out_asamps >> 3);
       sample_silence_stream(pdriver->out_achans, nframes);
     }
 
@@ -174,7 +185,11 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
       mainw->audio_frame_buffer->samples_filled += xbytes / 2;
       pthread_mutex_unlock(&mainw->abuf_frame_mutex);
     }
+#if !HAVE_PA_STREAM_BEGIN_WRITE
     pa_stream_write(pdriver->pstream, buff, xbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
+#else
+    pa_stream_write(pdriver->pstream, buff, xbytes, NULL, 0, PA_SEEK_RELATIVE);
+#endif
     nbytes -= xbytes;
   }
 }
@@ -699,14 +714,20 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if (xbytes / pulsed->out_achans / (pulsed->out_asamps >> 3) <= numFramesToWrite && offs == 0) {
             buffer = pulsed->sound_buffer;
           } else {
+#if HAVE_PA_STREAM_BEGIN_WRITE
+            xbytes = -1;
+            pa_stream_begin_write(pulsed->pstream, (void **)&buffer, &xbytes);
+            if (nbytes < xbytes) xbytes = nbytes;
+#else
             buffer = (uint8_t *)lives_try_malloc(xbytes);
-            if (!buffer) {
+#endif
+            if (!buffer || !pulsed->sound_buffer) {
               sample_silence_pulse(pulsed, nframes * pulsed->out_achans *
-                                   (pulsed->out_asamps >> 3), xbytes);
+                                   (pulsed->out_asamps >> 3), nbytes);
               if (!pulsed->is_paused) pulsed->frames_written += nframes;
               return;
             }
-            if (pulsed->sound_buffer) lives_memcpy(buffer, pulsed->sound_buffer + offs, xbytes);
+            lives_memcpy(buffer, pulsed->sound_buffer + offs, xbytes);
             offs += xbytes;
             needs_free = TRUE;
           }
@@ -717,12 +738,28 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             mainw->audio_frame_buffer->samples_filled += xbytes / 2;
             pthread_mutex_unlock(&mainw->abuf_frame_mutex);
           }
+#if !HAVE_PA_STREAM_BEGIN_WRITE
           pa_stream_write(pulsed->pstream, buffer, xbytes, buffer == pulsed->aPlayPtr->data ? NULL :
                           pulse_buff_free, 0, PA_SEEK_RELATIVE);
+#else
+          pa_stream_write(pulsed->pstream, buffer, xbytes, NULL, 0, PA_SEEK_RELATIVE);
+#endif
         } else {
           if (pulsed->read_abuf > -1 && !pulsed->mute) {
+#if HAVE_PA_STREAM_BEGIN_WRITE
+            xbytes = -1;
+            pa_stream_begin_write(pulsed->pstream, (void **)&shortbuffer, &xbytes);
+#endif
+            if (nbytes < xbytes) xbytes = nbytes;
+#if !HAVE_PA_STREAM_BEGIN_WRITE
             shortbuffer = (short *)lives_try_malloc0(xbytes);
-            if (!shortbuffer) return;
+#endif
+            if (!shortbuffer) {
+              sample_silence_pulse(pulsed, nframes * pulsed->out_achans *
+                                   (pulsed->out_asamps >> 3), nbytes);
+              if (!pulsed->is_paused) pulsed->frames_written += nframes;
+              return;
+            }
             sample_move_abuf_int16(shortbuffer, pulsed->out_achans, (xbytes >> 1) / pulsed->out_achans, pulsed->out_arate);
             if (pulsed->astream_fd != -1) audio_stream(shortbuffer, xbytes, pulsed->astream_fd);
             if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
@@ -731,7 +768,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               mainw->audio_frame_buffer->samples_filled += xbytes / 2;
               pthread_mutex_unlock(&mainw->abuf_frame_mutex);
             }
+#if !HAVE_PA_STREAM_BEGIN_WRITE
             pa_stream_write(pulsed->pstream, shortbuffer, xbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
+#else
+            pa_stream_write(pulsed->pstream, shortbuffer, xbytes, NULL, 0, PA_SEEK_RELATIVE);
+#endif
           } else {
             sample_silence_pulse(pulsed, xbytes, xbytes);
           }

@@ -5,7 +5,7 @@ ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES,2.8.9,https://sourceforge.net/p/lives/bugs/,,http://lives-video.com)
+AC_INIT(LiVES,2.10.0-svn,https://sourceforge.net/p/lives/bugs/,,http://lives-video.com)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -788,12 +788,18 @@ AM_CONDITIONAL(HAVE_ALSA,$HAVE_ALSA)
 
 
 HAVE_PULSE_AUDIO=false
+HAVE_PA_STREAM_BEGIN_WRITE=false
 dnl check for pulse-audio
 PKG_CHECK_MODULES(PULSE,libpulse >= 0.9.14,HAVE_PULSE_AUDIO=true,HAVE_PULSE_AUDIO=false)
+if test "$HAVE_PULSE_AUDIO" = "true" ; then
+AC_CHECK_LIB(pulse,pa_stream_begin_write,HAVE_PA_STREAM_BEGIN_WRITE=true,HAVE_PA_STREAM_BEGIN_WRITE=false)
+fi
+
 AC_SUBST(PULSE_CFLAGS)
 AC_SUBST(PULSE_LIBS)
 
 AM_CONDITIONAL(HAVE_PULSE_AUDIO,$HAVE_PULSE_AUDIO)
+AM_CONDITIONAL(HAVE_PA_STREAM_BEGIN_WRITE,$HAVE_PA_STREAM_BEGIN_WRITE)
 
 
 HAVE_LIBVISUAL=false

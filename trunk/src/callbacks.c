@@ -4066,7 +4066,6 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->playing_file > -1) {
     // we are playing a clip
     weed_timecode_t tc;
-
     if (!mainw->record || mainw->record_paused) {
       // recording is starting
       mainw->record_starting = TRUE;
@@ -4086,6 +4085,10 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 #ifdef ENABLE_JACK
           if (prefs->audio_player == AUD_PLAYER_JACK) {
+            char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle, LIVES_CLIP_HEADER, NULL);
+            mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
+            lives_free(lives_header);
+
             if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
               jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
               mainw->jackd_read->in_use = TRUE;
@@ -4095,11 +4098,17 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
                 mainw->jackd_read->in_use = TRUE;
               }
             }
+            if (mainw->clip_header != NULL) fclose(mainw->clip_header);
+            mainw->clip_header = NULL;
           }
 
 #endif
 #ifdef HAVE_PULSE_AUDIO
           if (prefs->audio_player == AUD_PLAYER_PULSE) {
+            char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle, LIVES_CLIP_HEADER, NULL);
+            mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
+            lives_free(lives_header);
+
             if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
               pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
               mainw->pulsed_read->in_use = TRUE;
@@ -4109,6 +4118,8 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
                 mainw->pulsed_read->in_use = TRUE;
               }
             }
+            if (mainw->clip_header != NULL) fclose(mainw->clip_header);
+            mainw->clip_header = NULL;
           }
 #endif
         }
@@ -4127,6 +4138,7 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           pulse_get_rec_avals(mainw->pulsed);
         }
 #endif
+
       }
       return;
     }

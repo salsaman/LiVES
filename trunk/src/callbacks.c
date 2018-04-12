@@ -1,6 +1,6 @@
 // callbacks.c
 // LiVES
-// (c) G. Finch 2003 - 2017 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -443,6 +443,7 @@ void lives_exit(int signum) {
   lives_freep((void **)&prefs->wm);
 
   lives_freep((void **)&mainw->recovery_file);
+  lives_freep((void **)&mainw->dp_cache);
 
   for (i = 0; i < NUM_LIVES_STRING_CONSTANTS; i++) lives_freep((void **)&mainw->string_constants[i]);
 
@@ -9686,7 +9687,7 @@ boolean frame_context(LiVESWidget *widget, LiVESXEventButton *event, livespointe
   }
 
   if (cfile->frames > 0 || mainw->multitrack != NULL) {
-    save_frame_as = lives_standard_menu_item_new_with_mnemonic(_("_Save Frame as..."));
+    save_frame_as = lives_standard_menu_item_new_with_label(_("_Save Frame as..."));
     lives_signal_connect(LIVES_GUI_OBJECT(save_frame_as), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(save_frame),
                          LIVES_INT_TO_POINTER(frame));

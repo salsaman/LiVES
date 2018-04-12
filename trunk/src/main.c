@@ -384,7 +384,7 @@ static boolean pre_init(void) {
   mainw->is_ready = mainw->fatal = FALSE;
   mainw->mgeom = NULL;
 
-  mainw->dp_cache = lives_strdup("");
+  mainw->dp_cache = NULL;
 
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
   mainw->string_constants[LIVES_STRING_CONSTANT_ANY] = lives_strdup(_("Any"));
@@ -728,7 +728,7 @@ static void replace_with_delegates(void) {
 
     if (mainw->resize_menuitem == NULL) {
       rfx->menu_text = lives_strdup(_("_Resize All Frames..."));
-      mainw->resize_menuitem = lives_standard_menu_item_new_with_mnemonic(rfx->menu_text);
+      mainw->resize_menuitem = lives_standard_menu_item_new_with_label(rfx->menu_text);
       lives_widget_show(mainw->resize_menuitem);
       lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->tools_menu), mainw->resize_menuitem, RFX_TOOL_MENU_POSN);
     } else {

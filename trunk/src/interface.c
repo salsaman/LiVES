@@ -103,13 +103,13 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   } else mainw->fs_playframe = mainw->fs_playalign = mainw->fs_playarea = NULL; // AUDIO_ONLY
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
-    preview_button = lives_standard_button_new_with_mnemonic(_("Click here to _Preview any selected video, image or audio file"));
+    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview any selected video, image or audio file"));
   } else if (preview_type == LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
-    preview_button = lives_standard_button_new_with_mnemonic(_("Click here to _Preview any selected audio file"));
+    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview any selected audio file"));
   } else if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
-    preview_button = lives_standard_button_new_with_mnemonic(_("Click here to _Preview the video"));
+    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the video"));
   } else {
-    preview_button = lives_standard_button_new_with_mnemonic(_("Click here to _Preview the file"));
+    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the file"));
   }
 
   lives_box_pack_start(for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
@@ -206,14 +206,14 @@ xprocess *create_processing(const char *text) {
 
     lives_widget_set_size_request(procw->scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
     lives_widget_context_update();
-    lives_standard_expander_new(_("Show Details"), FALSE, LIVES_BOX(vbox3), procw->scrolledwindow);
+    lives_standard_expander_new(_("Show Details"), LIVES_BOX(vbox3), procw->scrolledwindow);
   }
 
-  procw->stop_button = lives_standard_button_new_with_mnemonic(_("_Enough")); // used only for open location and for audio recording
-  procw->preview_button = lives_standard_button_new_with_mnemonic(_("_Preview"));
+  procw->stop_button = lives_standard_button_new_with_label(_("_Enough")); // used only for open location and for audio recording
+  procw->preview_button = lives_standard_button_new_with_label(_("_Preview"));
 
-  if (cfile->nokeep) procw->pause_button = lives_standard_button_new_with_mnemonic(_("Paus_e"));
-  else procw->pause_button = lives_standard_button_new_with_mnemonic(_("Pause/_Enough"));
+  if (cfile->nokeep) procw->pause_button = lives_standard_button_new_with_label(_("Paus_e"));
+  else procw->pause_button = lives_standard_button_new_with_label(_("Pause/_Enough"));
 
   lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), procw->preview_button, 1);
   lives_widget_hide(procw->preview_button);
@@ -240,7 +240,7 @@ xprocess *create_processing(const char *text) {
     }
   }
 
-  procw->cancel_button = lives_standard_button_new_with_mnemonic(_("_Cancel"));
+  procw->cancel_button = lives_standard_button_new_with_label(_("_Cancel"));
   lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), procw->cancel_button, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default(procw->cancel_button);
 
@@ -641,8 +641,8 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
     cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
     okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   } else {
-    cancelbutton = lives_standard_button_new_with_mnemonic(_("Keep _my settings"));
-    okbutton = lives_standard_button_new_with_mnemonic(_("Use _recommended settings"));
+    cancelbutton = lives_standard_button_new_with_label(_("Keep _my settings"));
+    okbutton = lives_standard_button_new_with_label(_("Use _recommended settings"));
   }
 
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -1931,7 +1931,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
     commentsw->subt_entry = lives_standard_entry_new(_("Subtitle file"), FALSE, NULL, SHORT_ENTRY_WIDTH, -1, LIVES_BOX(hbox), NULL);
 
-    buttond = lives_standard_button_new_with_mnemonic(_("Browse..."));
+    buttond = lives_standard_button_new_with_label(_("Browse..."));
 
     lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_save_subs_activate),
                          (livespointer)commentsw->subt_entry);
@@ -1963,13 +1963,11 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
       }
       lives_entry_set_text(LIVES_ENTRY(commentsw->subt_entry), osubfname);
       mainw->subt_save_file = osubfname; // assign instead of free
-
     }
 
     lives_widget_set_size_request(vbox, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
     lives_widget_context_update();
-    lives_standard_expander_new(_("_Options"), TRUE, LIVES_BOX(dialog_vbox), vbox);
-
+    lives_standard_expander_new(_("_Options"), LIVES_BOX(dialog_vbox), vbox);
   }
 
   lives_widget_show_all(commentsw->comments_dialog);
@@ -2375,7 +2373,7 @@ _entryw *create_cds_dialog(int type) {
   discardbutton = lives_standard_button_new_from_stock(LIVES_STOCK_DELETE, NULL);
 
   lives_dialog_add_action_widget(LIVES_DIALOG(cdsw->dialog), discardbutton, 1 + (type == 2));
-  lives_button_set_use_underline(LIVES_BUTTON(discardbutton), TRUE);
+
   if ((type == 0 && strlen(mainw->multitrack->layout_name) == 0) || type == 3 || type == 4)
     lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
   else if (type == 0) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Ignore changes"));

@@ -1924,9 +1924,11 @@ void d_print(const char *fmt, ...) {
   va_end(xargs);
 
   if (!mainw->is_ready && !(mainw->multitrack != NULL && mainw->multitrack->is_ready)) {
-    char *tmp = lives_strdup_printf("%s%s", mainw->dp_cache, text);
-    lives_free(mainw->dp_cache);
-    mainw->dp_cache = tmp;
+    if (mainw->dp_cache != NULL) {
+      char *tmp = lives_strdup_printf("%s%s", mainw->dp_cache, text);
+      lives_free(mainw->dp_cache);
+      mainw->dp_cache = tmp;
+    } else mainw->dp_cache = lives_strdup(text);
     return;
   }
 
@@ -3867,6 +3869,7 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
 }
 
+
 void switch_aud_to_mplayer2(boolean set_in_prefs) {
   int i;
   for (i = 1; i < MAX_FILES; i++) {
@@ -3897,6 +3900,7 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
   lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
 }
+
 
 boolean prepare_to_play_foreign(void) {
   // here we are going to 'play' a captured external window
@@ -4037,6 +4041,7 @@ boolean prepare_to_play_foreign(void) {
   return TRUE;
 }
 
+
 boolean after_foreign_play(void) {
   // read details from capture file
   int capture_fd;
@@ -4140,27 +4145,24 @@ boolean after_foreign_play(void) {
   return TRUE;
 }
 
+
 void set_menu_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic) {
   LiVESWidget *label;
   if (LIVES_IS_MENU_ITEM(menuitem)) {
     label = lives_bin_get_child(LIVES_BIN(menuitem));
-    if (use_mnemonic) {
-      lives_label_set_text_with_mnemonic(LIVES_LABEL(label), text);
-    } else {
-      lives_label_set_text(LIVES_LABEL(label), text);
-    }
+    widget_opts.mnemonic_label = use_mnemonic;
+    lives_label_set_text(LIVES_LABEL(label), text);
+    widget_opts.mnemonic_label = TRUE;
   }
 }
 
+
 void get_menu_text(LiVESWidget *menuitem, char *text) {
+  // text MUST be at least 255 chars long
   LiVESWidget *label = lives_bin_get_child(LIVES_BIN(menuitem));
   lives_snprintf(text, 255, "%s", lives_label_get_text(LIVES_LABEL(label)));
 }
 
-void get_menu_text_long(LiVESWidget *menuitem, char *text) {
-  LiVESWidget *label = lives_bin_get_child(LIVES_BIN(menuitem));
-  lives_snprintf(text, 32768, "%s", lives_label_get_text(LIVES_LABEL(label)));
-}
 
 LIVES_GLOBAL_INLINE boolean int_array_contains_value(int *array, int num_elems, int value) {
   int i;
@@ -4169,6 +4171,7 @@ LIVES_GLOBAL_INLINE boolean int_array_contains_value(int *array, int num_elems, 
   }
   return FALSE;
 }
+
 
 void reset_clipmenu(void) {
   // sometimes the clip menu gets messed up, e.g. after reloading a set.
@@ -4190,6 +4193,7 @@ void reset_clipmenu(void) {
     lives_signal_handler_unblock(cfile->menuentry, cfile->menuentry_func);
   }
 }
+
 
 boolean check_file(const char *file_name, boolean check_existing) {
   int check;
@@ -4236,6 +4240,7 @@ boolean check_file(const char *file_name, boolean check_existing) {
   return TRUE;
 }
 
+
 int lives_rmdir(const char *dir, boolean force) {
   // if force is TRUE, removes non-empty dirs, otherwise leaves them
   // may fail
@@ -4261,6 +4266,7 @@ int lives_rmdir(const char *dir, boolean force) {
   return retval;
 }
 
+
 int lives_rmdir_with_parents(const char *dir) {
   // may fail, will not remove empty dirs
   char *com = lives_strdup_printf("%s -p \"%s\" >\"%s\" 2>&1", capable->rmdir_cmd, dir, prefs->cmd_log);
@@ -4268,6 +4274,7 @@ int lives_rmdir_with_parents(const char *dir) {
   lives_free(com);
   return retval;
 }
+
 
 int lives_rm(const char *file) {
   // may fail
@@ -4284,6 +4291,7 @@ int lives_rm(const char *file) {
   return retval;
 }
 
+
 int lives_rmglob(const char *files) {
   // delete files with name "files"*
   // may fail
@@ -4299,6 +4307,7 @@ int lives_rmglob(const char *files) {
   return retval;
 }
 
+
 int lives_cp(const char *from, const char *to) {
   // may not fail
   char *com = lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
@@ -4306,6 +4315,7 @@ int lives_cp(const char *from, const char *to) {
   lives_free(com);
   return retval;
 }
+
 
 int lives_cp_keep_perms(const char *from, const char *to) {
   // may not fail
@@ -4315,6 +4325,7 @@ int lives_cp_keep_perms(const char *from, const char *to) {
   return retval;
 }
 
+
 int lives_mv(const char *from, const char *to) {
   // may not fail
   char *com = lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1", capable->mv_cmd, from, to, prefs->cmd_log);
@@ -4323,6 +4334,7 @@ int lives_mv(const char *from, const char *to) {
   return retval;
 }
 
+
 int lives_touch(const char *tfile) {
   // may not fail
   char *com = lives_strdup_printf("%s \"%s\" >\"%s\" 2>&1", capable->touch_cmd, tfile, prefs->cmd_log);
@@ -4330,6 +4342,7 @@ int lives_touch(const char *tfile) {
   lives_free(com);
   return retval;
 }
+
 
 int lives_ln(const char *from, const char *to) {
   // may not fail
@@ -4448,7 +4461,7 @@ void lives_suspend_resume_process(const char *dirname, boolean suspend) {
 }
 
 
-gboolean check_dir_access(const char *dir) {
+boolean check_dir_access(const char *dir) {
   // if a directory exists, make sure it is readable and writable
   // otherwise create it and then check
 

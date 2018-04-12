@@ -2568,6 +2568,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_label_new(const char *text) {
   LiVESWidget *label = NULL;
 #ifdef GUI_GTK
   label = gtk_label_new(text);
+  gtk_label_set_use_underline(LIVES_LABEL(label), widget_opts.mnemonic_label);
   gtk_label_set_justify(LIVES_LABEL(label), widget_opts.justify);
   gtk_label_set_line_wrap(LIVES_LABEL(label), widget_opts.line_wrap);
 #endif
@@ -2673,22 +2674,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_alignment_set(LiVESWidget *alignment, 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_expander_new_with_mnemonic(const char *label) {
-  LiVESWidget *expander = NULL;
-#ifdef GUI_GTK
-  expander = gtk_expander_new_with_mnemonic(label);
-#if GTK_CHECK_VERSION(3, 2, 0)
-  gtk_expander_set_resize_toplevel(GTK_EXPANDER(expander), TRUE);
-#endif
-#endif
-  return expander;
-}
-
-
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_expander_new(const char *label) {
   LiVESWidget *expander = NULL;
 #ifdef GUI_GTK
-  expander = gtk_expander_new(label);
+  if (!widget_opts.mnemonic_label) expander = gtk_expander_new(label);
+  else expander = gtk_expander_new_with_mnemonic(label);
 #if GTK_CHECK_VERSION(3, 2, 0)
   gtk_expander_set_resize_toplevel(GTK_EXPANDER(expander), TRUE);
 #endif
@@ -3213,25 +3203,10 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new(void) {
   LiVESWidget *button = NULL;
 #ifdef GUI_GTK
   button = gtk_button_new();
-  gtk_button_set_use_underline(GTK_BUTTON(button), TRUE);
+  gtk_button_set_use_underline(GTK_BUTTON(button), widget_opts.mnemonic_label);
 #endif
 #ifdef GUI_QT
   button = new LiVESButton;
-#endif
-  return button;
-}
-
-
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_with_mnemonic(const char *label) {
-  LiVESWidget *button = NULL;
-#ifdef GUI_GTK
-  button = gtk_button_new_with_mnemonic(label);
-#endif
-#ifdef GUI_QT
-  QString qlabel = QString::fromUtf8(label);
-  qlabel = qlabel.replace('&', "&&");
-  qlabel = qlabel.replace('_', '&');
-  button = new LiVESButton(qlabel);
 #endif
   return button;
 }
@@ -3241,6 +3216,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_with_label(const char 
   LiVESWidget *button = NULL;
 #ifdef GUI_GTK
   button = gtk_button_new_with_label(label);
+  gtk_button_set_use_underline(GTK_BUTTON(button), widget_opts.mnemonic_label);
 #endif
 #ifdef GUI_QT
   QString qlabel = QString::fromUtf8(label);
@@ -3259,47 +3235,47 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_from_stock(const char 
   // gtk 3.10 + -> we need to set the text ourselves
   if (!strcmp(stock_id, LIVES_STOCK_NO)) stock_id = "gtk-no";
   if (!strcmp(stock_id, LIVES_STOCK_APPLY)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_APPLY);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_APPLY);
   } else if (!strcmp(stock_id, LIVES_STOCK_OK)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_OK);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_OK);
   } else if (!strcmp(stock_id, LIVES_STOCK_CANCEL)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_CANCEL);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_CANCEL);
   } else if (!strcmp(stock_id, LIVES_STOCK_YES)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_YES);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_YES);
   } else if (!strcmp(stock_id, "gtk-no")) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_NO);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_NO);
   } else if (!strcmp(stock_id, LIVES_STOCK_CLOSE)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_CLOSE);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_CLOSE);
   } else if (!strcmp(stock_id, LIVES_STOCK_REVERT_TO_SAVED)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_REVERT);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_REVERT);
   } else if (!strcmp(stock_id, LIVES_STOCK_REFRESH)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_REFRESH);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_REFRESH);
   } else if (!strcmp(stock_id, LIVES_STOCK_DELETE)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_DELETE);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_DELETE);
   } else if (!strcmp(stock_id, LIVES_STOCK_SAVE)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_SAVE);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_SAVE);
   } else if (!strcmp(stock_id, LIVES_STOCK_SAVE_AS)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_SAVE_AS);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_SAVE_AS);
   } else if (!strcmp(stock_id, LIVES_STOCK_OPEN)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_OPEN);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_OPEN);
   } else if (!strcmp(stock_id, LIVES_STOCK_SELECT_ALL)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_SELECT_ALL);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_SELECT_ALL);
   } else if (!strcmp(stock_id, LIVES_STOCK_QUIT)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_QUIT);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_QUIT);
   } else if (!strcmp(stock_id, LIVES_STOCK_GO_FORWARD)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_GO_FORWARD);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_GO_FORWARD);
   } else if (!strcmp(stock_id, LIVES_STOCK_MEDIA_FORWARD)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_FORWARD);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_FORWARD);
   } else if (!strcmp(stock_id, LIVES_STOCK_MEDIA_REWIND)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_REWIND);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_REWIND);
   } else if (!strcmp(stock_id, LIVES_STOCK_MEDIA_STOP)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_STOP);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_STOP);
   } else if (!strcmp(stock_id, LIVES_STOCK_MEDIA_PLAY)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_PLAY);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_PLAY);
   } else if (!strcmp(stock_id, LIVES_STOCK_MEDIA_PAUSE)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_PAUSE);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_PAUSE);
   } else if (!strcmp(stock_id, LIVES_STOCK_MEDIA_RECORD)) {
-    button = lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_RECORD);
+    button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_RECORD);
   } else {
     // text not known
     button = lives_button_new();
@@ -3350,6 +3326,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_from_stock(const char 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_label(LiVESButton *button, const char *label) {
 #ifdef GUI_GTK
   gtk_button_set_label(button, label);
+  gtk_button_set_use_underline(button, widget_opts.mnemonic_label);
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -3359,19 +3336,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_label(LiVESButton *button, 
     qlabel = qlabel.replace('_', '&');
   }
   (dynamic_cast<QAbstractButton *>(button))->setText(qlabel);
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_use_underline(LiVESButton *button, boolean use) {
-#ifdef GUI_GTK
-  gtk_button_set_use_underline(button, use);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  button->set_use_underline(use);
   return TRUE;
 #endif
   return FALSE;
@@ -5575,7 +5539,8 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_label_get_text(LiVESLabel *label) 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_text(LiVESLabel *label, const char *text) {
 #ifdef GUI_GTK
-  gtk_label_set_text(label, text);
+  if (widget_opts.mnemonic_label) gtk_label_set_text_with_mnemonic(label, text);
+  else gtk_label_set_text(label, text);
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -5588,45 +5553,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_text(LiVESLabel *label, cons
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_text_with_mnemonic(LiVESLabel *label, const char *text) {
-#ifdef GUI_GTK
-  gtk_label_set_text_with_mnemonic(label, text);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  label->setTextFormat(Qt::PlainText);
-  label->setText(qmake_mnemonic(QString::fromUtf8(text)));
-  label->set_text(qmake_mnemonic(QString::fromUtf8(text)));
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_markup(LiVESLabel *label, const char *markup) {
 #ifdef GUI_GTK
-  gtk_label_set_markup(label, markup);
+  if (!widget_opts.mnemonic_label) gtk_label_set_markup(label, markup);
+  else gtk_label_set_markup_with_mnemonic(label, markup);
   return TRUE;
 #endif
 #ifdef GUI_QT
   label->setTextFormat(Qt::RichText);
   label->setText(QString::fromUtf8(markup));
   label->set_text(QString::fromUtf8(markup));
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_markup_with_mnemonic(LiVESLabel *label, const char *markup) {
-#ifdef GUI_GTK
-  gtk_label_set_markup_with_mnemonic(label, markup);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  label->setTextFormat(Qt::RichText);
-  label->setText(qmake_mnemonic(QString::fromUtf8(markup)));
-  label->set_text(qmake_mnemonic(QString::fromUtf8(markup)));
   return TRUE;
 #endif
   return FALSE;
@@ -6022,22 +5958,11 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_item_new(void) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label) {
-  LiVESWidget *menuitem = NULL;
-#ifdef GUI_GTK
-  menuitem = gtk_menu_item_new_with_mnemonic(label);
-#endif
-#ifdef GUI_QT
-  menuitem = new LiVESMenuItem(qmake_mnemonic(QString::fromUtf8(label)), mainw->LiVES);
-#endif
-  return menuitem;
-}
-
-
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
-  menuitem = gtk_menu_item_new_with_label(label);
+  if (!widget_opts.mnemonic_label) menuitem = gtk_menu_item_new_with_label(label);
+  else menuitem = gtk_menu_item_new_with_mnemonic(label);
 #endif
 #ifdef GUI_QT
   menuitem = new LiVESMenuItem(QString::fromUtf8(label), mainw->LiVES);
@@ -6059,9 +5984,11 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_with_label(co
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 10, 0)
-  menuitem = gtk_menu_item_new_with_label(label);
+  if (!widget_opts.mnemonic_label) menuitem = gtk_menu_item_new_with_label(label);
+  else menuitem = gtk_menu_item_new_with_mnemonic(label);
 #else
-  menuitem = gtk_image_menu_item_new_with_label(label);
+  if (!widget_opts.mnemonic_label) menuitem = gtk_image_menu_item_new_with_label(label);
+  else menuitem = gtk_image_menu_item_new_with_mnemonic(label);
 #endif
 #endif
 #ifdef GUI_QT
@@ -6071,26 +5998,11 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_with_label(co
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *label) {
-  LiVESWidget *menuitem = NULL;
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 10, 0)
-  menuitem = gtk_menu_item_new_with_mnemonic(label);
-#else
-  menuitem = gtk_image_menu_item_new_with_mnemonic(label);
-#endif
-#endif
-#ifdef GUI_QT
-  menuitem = new LiVESMenuItem(qmake_mnemonic(QString::fromUtf8(label)), mainw->LiVES);
-#endif
-  return menuitem;
-}
-
-
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_radio_menu_item_new_with_label(LiVESSList *group, const char *label) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
-  menuitem = gtk_radio_menu_item_new_with_label(group, label);
+  if (!widget_opts.mnemonic_label) menuitem = gtk_radio_menu_item_new_with_label(group, label);
+  else menuitem = gtk_radio_menu_item_new_with_mnemonic(group, label);
 #endif
 #ifdef GUI_QT
   QActionGroup *qag;
@@ -6125,23 +6037,11 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESSList *lives_radio_menu_item_get_group(LiVESRad
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
-  menuitem = gtk_check_menu_item_new_with_label(label);
+  if (!widget_opts.mnemonic_label) menuitem = gtk_check_menu_item_new_with_label(label);
+  else menuitem = gtk_check_menu_item_new_with_mnemonic(label);   // TODO - deprecated
 #endif
 #ifdef GUI_QT
   menuitem = new LiVESCheckMenuItem(QString::fromUtf8(label), mainw->LiVES);
-#endif
-  return menuitem;
-}
-
-
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *label) {
-  LiVESWidget *menuitem = NULL;
-#ifdef GUI_GTK
-  // TODO - deprecated
-  menuitem = gtk_check_menu_item_new_with_mnemonic(label);
-#endif
-#ifdef GUI_QT
-  menuitem = new LiVESCheckMenuItem(qmake_mnemonic(QString::fromUtf8(label)), mainw->LiVES);
 #endif
   return menuitem;
 }
@@ -7415,11 +7315,6 @@ LiVESWidget *lives_standard_button_new(void) {
 }
 
 
-LiVESWidget *lives_standard_button_new_with_mnemonic(const char *label) {
-  return prettify_button(lives_button_new_with_mnemonic(label));
-}
-
-
 LiVESWidget *lives_standard_button_new_with_label(const char *label) {
   return prettify_button(lives_button_new_with_label(label));
 }
@@ -7432,15 +7327,6 @@ LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const ch
 
 LiVESWidget *lives_standard_menu_item_new(void) {
   LiVESWidget *menuitem = lives_menu_item_new();
-  if (menuitem != NULL) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
-  return menuitem;
-}
-
-
-LiVESWidget *lives_standard_menu_item_new_with_mnemonic(const char *label) {
-  LiVESWidget *menuitem = lives_menu_item_new_with_mnemonic(label);
   if (menuitem != NULL) {
     lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
   }
@@ -7466,14 +7352,6 @@ LiVESWidget *lives_standard_image_menu_item_new_with_label(const char *label) {
 }
 
 
-LiVESWidget *lives_standard_image_menu_item_new_with_mnemonic(const char *label) {
-  LiVESWidget *menuitem = lives_image_menu_item_new_with_mnemonic(label);
-  if (menuitem != NULL) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
-  return menuitem;
-}
-
 
 LiVESWidget *lives_standard_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group) {
   LiVESWidget *menuitem = lives_image_menu_item_new_from_stock(stock_id, accel_group);
@@ -7493,17 +7371,9 @@ LiVESWidget *lives_standard_radio_menu_item_new_with_label(LiVESSList *group, co
 }
 
 
-LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label) {
+LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label, boolean active) {
   LiVESWidget *menuitem = lives_check_menu_item_new_with_label(label);
-  if (menuitem != NULL) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  }
-  return menuitem;
-}
-
-
-LiVESWidget *lives_standard_check_menu_item_new_with_mnemonic(const char *label) {
-  LiVESWidget *menuitem = lives_check_menu_item_new_with_mnemonic(label);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem), active);
   if (menuitem != NULL) {
     lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
   }
@@ -7536,11 +7406,11 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *r
 }
 
 
-LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget) {
+LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiVESWidget *mnemonic_widget) {
   LiVESWidget *label = NULL;
 
   label = lives_label_new("");
-  lives_label_set_text_with_mnemonic(LIVES_LABEL(label), text);
+  lives_label_set_text(LIVES_LABEL(label), text);
 
   lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
 
@@ -7593,7 +7463,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
     if (tooltip != NULL) lives_tooltips_copy(eventbox, checkbutton);
 
     if (use_mnemonic) {
-      label = lives_standard_label_new_with_mnemonic(labeltext, checkbutton);
+      label = lives_standard_label_new_with_mnemonic_widget(labeltext, checkbutton);
     } else label = lives_standard_label_new(labeltext);
 
     lives_container_add(LIVES_CONTAINER(eventbox), label);
@@ -7661,7 +7531,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
   if (labeltext != NULL) {
     if (use_mnemonic) {
-      label = lives_standard_label_new_with_mnemonic(labeltext, radiobutton);
+      label = lives_standard_label_new_with_mnemonic_widget(labeltext, radiobutton);
     } else label = lives_standard_label_new(labeltext);
 
     widget_opts.last_label = label;
@@ -7755,7 +7625,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
 
   if (labeltext != NULL) {
     if (use_mnemonic) {
-      label = lives_standard_label_new_with_mnemonic(labeltext, spinbutton);
+      label = lives_standard_label_new_with_mnemonic_widget(labeltext, spinbutton);
     } else label = lives_standard_label_new(labeltext);
 
     widget_opts.last_label = label;
@@ -7821,7 +7691,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, boolean use_mnemoni
 
   if (labeltext != NULL) {
     if (use_mnemonic) {
-      label = lives_standard_label_new_with_mnemonic(labeltext, LIVES_WIDGET(entry));
+      label = lives_standard_label_new_with_mnemonic_widget(labeltext, LIVES_WIDGET(entry));
     } else label = lives_standard_label_new(labeltext);
 
     widget_opts.last_label = label;
@@ -7901,7 +7771,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
   if (labeltext != NULL) {
     if (use_mnemonic) {
-      label = lives_standard_label_new_with_mnemonic(labeltext, entry);
+      label = lives_standard_label_new_with_mnemonic_widget(labeltext, entry);
     } else label = lives_standard_label_new(labeltext);
 
     widget_opts.last_label = label;
@@ -8117,15 +7987,12 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 }
 
 
-LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic, LiVESBox *parent, LiVESWidget *child) {
+LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox *parent, LiVESWidget *child) {
   LiVESWidget *expander = NULL;
 
 #ifdef GUI_GTK
   LiVESWidget *label;
-  if (use_mnemonic)
-    expander = lives_expander_new_with_mnemonic(ltext);
-  else
-    expander = lives_expander_new(ltext);
+  expander = lives_expander_new(ltext);
 
   label = lives_expander_get_label_widget(LIVES_EXPANDER(expander));
   lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
@@ -8334,7 +8201,7 @@ static void after_param_alpha_changedx(LiVESSpinButton *spinbutton, livespointer
 }
 
 
-LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boolean use_mnemonic, boolean use_alpha, lives_colRGBA64_t *rgba,
+LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, const char *name, boolean use_alpha, lives_colRGBA64_t *rgba,
     LiVESWidget **sb_red, LiVESWidget **sb_green, LiVESWidget **sb_blue, LiVESWidget **sb_alpha) {
   LiVESWidgetColor colr;
   LiVESWidget *cbutton, *labelcname;
@@ -8357,8 +8224,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boole
   cbutton = lives_color_button_new_with_color(&colr);
 
   // must do this before re-using translation string !
-  if (use_mnemonic) {
-    labelcname = lives_standard_label_new_with_mnemonic(name, cbutton);
+  if (widget_opts.mnemonic_label) {
+    labelcname = lives_standard_label_new_with_mnemonic_widget(name, cbutton);
   } else labelcname = lives_standard_label_new(name);
 
   lives_color_button_set_use_alpha(LIVES_COLOR_BUTTON(cbutton), use_alpha);
@@ -9317,44 +9184,22 @@ LiVESWidget *add_vsep_to_box(LiVESBox *box) {
 }
 
 
-static char spaces[W_MAX_FILLER_LEN + 1];
-static boolean spaces_inited = FALSE;
-
 LiVESWidget *add_fill_to_box(LiVESBox *box) {
-  LiVESWidget *widget = NULL;
+  LiVESWidget *widget = lives_hbox_new(FALSE, 0);
 
   if (LIVES_IS_HBOX(box)) {
-    LiVESWidget *blank_label;
-    static int old_spaces = -1;
-    static char *xspaces = NULL;
-
-    if (!spaces_inited) {
-      register int i;
-      for (i = 0; i < W_MAX_FILLER_LEN; i++) {
-        lives_snprintf(spaces + i, 1, " ");
-      }
-    }
-
-    if (widget_opts.filler_len > W_MAX_FILLER_LEN || widget_opts.filler_len < 0) return NULL;
-
-    if (widget_opts.filler_len != old_spaces) {
-      if (xspaces != NULL) lives_free(xspaces);
-      xspaces = lives_strndup(spaces, widget_opts.filler_len);
-      old_spaces = widget_opts.filler_len;
-    }
-
-    blank_label = lives_standard_label_new(xspaces);
-
-    lives_box_pack_start(box, blank_label, TRUE, TRUE, 0);
-    lives_widget_set_hexpand(blank_label, TRUE);
-    if (!widget_opts.no_gui)
-      lives_widget_show(blank_label);
-    widget = blank_label;
+    if (widget_opts.expand == LIVES_EXPAND_EXTRA) {
+      lives_box_pack_start(box, widget, TRUE, TRUE, widget_opts.filler_len / 2);
+      lives_widget_set_hexpand(widget, TRUE);
+    } else lives_box_pack_start(box, widget, FALSE, TRUE, widget_opts.filler_len / 2);
   } else {
-    widget = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(box, widget, FALSE, TRUE, widget_opts.packing_height);
+    if (widget_opts.expand == LIVES_EXPAND_EXTRA) {
+      lives_box_pack_start(box, widget, TRUE, TRUE, widget_opts.filler_len / 2);
+      lives_widget_set_vexpand(widget, TRUE);
+    } else lives_box_pack_start(box, widget, FALSE, TRUE, widget_opts.packing_height);
   }
 
+  if (!widget_opts.no_gui) lives_widget_show(widget);
   return widget;
 }
 

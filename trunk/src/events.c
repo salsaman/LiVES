@@ -3590,7 +3590,9 @@ lives_render_error_t render_events(boolean reset) {
           }
 
           if (cfile->proc_ptr != NULL) {
+            widget_opts.mnemonic_label = FALSE;
             lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label), blabel);
+            widget_opts.mnemonic_label = TRUE;
             lives_free(blabel);
             lives_widget_queue_draw(cfile->proc_ptr->processing);
             lives_widget_context_update();
@@ -3637,7 +3639,9 @@ lives_render_error_t render_events(boolean reset) {
 
                 if (cfile->proc_ptr != NULL) {
                   blabel = lives_strdup(lives_label_get_text(LIVES_LABEL(cfile->proc_ptr->label)));
+                  widget_opts.mnemonic_label = FALSE;
                   lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label), nlabel);
+                  widget_opts.mnemonic_label = TRUE;
                   lives_widget_queue_draw(cfile->proc_ptr->processing);
                   lives_widget_context_update();
                 }
@@ -3663,7 +3667,9 @@ lives_render_error_t render_events(boolean reset) {
                 }
 
                 if (cfile->proc_ptr != NULL) {
+                  widget_opts.mnemonic_label = FALSE;
                   lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label), blabel);
+                  widget_opts.mnemonic_label = TRUE;
                   lives_free(blabel);
                   lives_widget_queue_draw(cfile->proc_ptr->processing);
                   lives_widget_context_update();
@@ -5572,7 +5578,7 @@ render_details *create_render_details(int type) {
 
   if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
     if (mainw->current_file != -1 && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file && type == 3) {
-      rdet->usecur_button = lives_standard_button_new_with_mnemonic(_("_Use current clip values"));
+      rdet->usecur_button = lives_standard_button_new_with_label(_("_Use current clip values"));
       lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), rdet->usecur_button, LIVES_RESPONSE_RESET);
       lives_signal_connect(LIVES_COMBO(rdet->usecur_button), LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current),
                            (livespointer)rdet);

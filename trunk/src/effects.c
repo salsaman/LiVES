@@ -124,7 +124,7 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
     else return (lives_strdup(_("Audio Volume Controllers")));
   case LIVES_FX_CAT_VIDEO_ANALYSER:
     if (!plural) return (lives_strdup(_("video analyser")));
-    else return (lives_strdup(_("Video analysers")));
+    else return (lives_strdup(_("Video Analysers")));
   case LIVES_FX_CAT_AUDIO_ANALYSER:
     if (!plural) return (lives_strdup(_("audio analyser")));
     else return (lives_strdup(_("Audio Analysers")));

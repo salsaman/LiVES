@@ -84,7 +84,7 @@ static void add_xlays_widget(LiVESBox *box) {
   lives_widget_set_size_request(scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
   lives_widget_context_update();
 
-  expander = lives_standard_expander_new(_("Show affeced _layouts"), FALSE, LIVES_BOX(box), scrolledwindow);
+  expander = lives_standard_expander_new(_("Show affeced _layouts"), LIVES_BOX(box), scrolledwindow);
 
   if (palette->style & STYLE_1) {
     label = lives_expander_get_label_widget(LIVES_EXPANDER(expander));
@@ -137,7 +137,7 @@ static void add_clear_ds_button(LiVESDialog *dialog) {
 
 static void add_clear_ds_adv(LiVESBox *box) {
   // add a button which opens up  Recover/Repair widget
-  LiVESWidget *button = lives_standard_button_new_with_mnemonic(_(" _Advanced Settings >>"));
+  LiVESWidget *button = lives_standard_button_new_with_label(_(" _Advanced Settings >>"));
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
 
   lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 2);
@@ -303,7 +303,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   }
 
   if (mainw->iochan != NULL) {
-    LiVESWidget *details_button = lives_standard_button_new_with_mnemonic(_("Show _Details"));
+    LiVESWidget *details_button = lives_standard_button_new_with_label(_("Show _Details"));
     lives_dialog_add_action_widget(LIVES_DIALOG(dialog), details_button, LIVES_RESPONSE_SHOW_DETAILS);
 
     lives_signal_connect(LIVES_GUI_OBJECT(details_button), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1588,7 +1588,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #ifdef HAVE_PULSE_AUDIO
   // start audio recording now
   if (mainw->pulsed_read != NULL) {
+    pa_mloop_lock();
     pulse_driver_uncork(mainw->pulsed_read);
+    pa_mloop_unlock();
   }
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_PULSE &&
       prefs->ahold_threshold > 0.) {
@@ -2012,7 +2014,11 @@ boolean do_auto_dialog(const char *text, int type) {
     lives_widget_show(proc_ptr->stop_button);
     lives_widget_show(proc_ptr->cancel_button);
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed_read != NULL) pulse_driver_uncork(mainw->pulsed_read);
+    if (mainw->pulsed_read != NULL) {
+      pa_mloop_lock();
+      pulse_driver_uncork(mainw->pulsed_read);
+      pa_mloop_unlock();
+    }
 #endif
     if (mainw->rec_samples != 0) {
       lives_widget_context_update();
@@ -2750,7 +2756,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
     LiVESWidget *cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
 
     if (mainw->current_file > -1 && cfile != NULL && cfile->opening_only_audio) {
-      LiVESWidget *enoughbutton = lives_standard_button_new_with_mnemonic(_("_Enough"));
+      LiVESWidget *enoughbutton = lives_standard_button_new_with_label(_("_Enough"));
 
       lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), enoughbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_focus_and_default(enoughbutton);

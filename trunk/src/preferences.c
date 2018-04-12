@@ -4009,7 +4009,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->normal_fore);
-  prefsw->cbutton_fore = lives_standard_color_button_new(LIVES_BOX(hbox), _("        _Foreground Color"), TRUE, FALSE, &rgba, &sp_red,
+  prefsw->cbutton_fore = lives_standard_color_button_new(LIVES_BOX(hbox), _("        _Foreground Color"), FALSE, &rgba, &sp_red,
                          &sp_green,
                          &sp_blue, NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -4028,7 +4028,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->normal_back);
-  prefsw->cbutton_back = lives_standard_color_button_new(LIVES_BOX(hbox), _("        _Background Color"), TRUE, FALSE, &rgba, &sp_red,
+  prefsw->cbutton_back = lives_standard_color_button_new(LIVES_BOX(hbox), _("        _Background Color"), FALSE, &rgba, &sp_red,
                          &sp_green,
                          &sp_blue, NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -4047,7 +4047,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->menu_and_bars_fore);
-  prefsw->cbutton_mabf = lives_standard_color_button_new(LIVES_BOX(hbox), _("_Alt Foreground Color"), TRUE, FALSE, &rgba, &sp_red, &sp_green,
+  prefsw->cbutton_mabf = lives_standard_color_button_new(LIVES_BOX(hbox), _("_Alt Foreground Color"), FALSE, &rgba, &sp_red, &sp_green,
                          &sp_blue, NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
     lives_widget_set_sensitive(prefsw->cbutton_mabf, FALSE);
@@ -4065,7 +4065,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->menu_and_bars);
-  prefsw->cbutton_mab = lives_standard_color_button_new(LIVES_BOX(hbox), _("_Alt Background Color"), TRUE, FALSE, &rgba, &sp_red, &sp_green,
+  prefsw->cbutton_mab = lives_standard_color_button_new(LIVES_BOX(hbox), _("_Alt Background Color"), FALSE, &rgba, &sp_red, &sp_green,
                         &sp_blue, NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
     lives_widget_set_sensitive(prefsw->cbutton_mab, FALSE);
@@ -4083,7 +4083,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->info_text);
-  prefsw->cbutton_infot = lives_standard_color_button_new(LIVES_BOX(hbox), _("              Info _Text Color"), TRUE, FALSE, &rgba, &sp_red,
+  prefsw->cbutton_infot = lives_standard_color_button_new(LIVES_BOX(hbox), _("              Info _Text Color"), FALSE, &rgba, &sp_red,
                           &sp_green, &sp_blue,
                           NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -4102,7 +4102,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->info_base);
-  prefsw->cbutton_infob = lives_standard_color_button_new(LIVES_BOX(hbox), _("              Info _Base Color"), TRUE, FALSE, &rgba, &sp_red,
+  prefsw->cbutton_infob = lives_standard_color_button_new(LIVES_BOX(hbox), _("              Info _Base Color"), FALSE, &rgba, &sp_red,
                           &sp_green, &sp_blue,
                           NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -4202,7 +4202,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->cbutton_cesel = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Selected frames/audio (clip editor)"))),
-                          TRUE, FALSE, &palette->ce_sel, &sp_red, &sp_green, &sp_blue, NULL);
+                          FALSE, &palette->ce_sel, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4213,7 +4213,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->cbutton_ceunsel = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Unselected frames/audio (clip editor)"))),
-                            TRUE, FALSE, &palette->ce_unsel, &sp_red, &sp_green, &sp_blue, NULL);
+                            FALSE, &palette->ce_unsel, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4224,7 +4224,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->cbutton_evbox = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Track background (multitrack)"))),
-                          TRUE, FALSE, &palette->mt_evbox, &sp_red, &sp_green, &sp_blue, NULL);
+                          FALSE, &palette->mt_evbox, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4235,7 +4235,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->cbutton_vidcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Video block (multitrack)"))),
-                           TRUE, FALSE, &palette->vidcol, &sp_red, &sp_green, &sp_blue, NULL);
+                           FALSE, &palette->vidcol, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4246,7 +4246,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->cbutton_audcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Audio block (multitrack)"))),
-                           TRUE, FALSE, &palette->audcol, &sp_red, &sp_green, &sp_blue, NULL);
+                           FALSE, &palette->audcol, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4257,7 +4257,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->cbutton_fxcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Effects block (multitrack)"))),
-                          TRUE, FALSE, &palette->fxcol, &sp_red, &sp_green, &sp_blue, NULL);
+                          FALSE, &palette->fxcol, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4268,7 +4268,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->cbutton_mtmark = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Timeline mark (multitrack)"))),
-                           TRUE, FALSE, &palette->mt_mark, &sp_red, &sp_green, &sp_blue, NULL);
+                           FALSE, &palette->mt_mark, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4279,7 +4279,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->cbutton_tlreg = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Timeline selection (multitrack)"))),
-                          TRUE, FALSE, &palette->mt_timeline_reg, &sp_red, &sp_green, &sp_blue, NULL);
+                          FALSE, &palette->mt_timeline_reg, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4291,7 +4291,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->mt_timecode_bg);
   prefsw->cbutton_tcbg = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Timecode background (multitrack)"))),
-                         TRUE, FALSE, &rgba, &sp_red, &sp_green, &sp_blue, NULL);
+                         FALSE, &rgba, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4303,7 +4303,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->mt_timecode_fg);
   prefsw->cbutton_tcfg = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Timecode foreground (multitrack)"))),
-                         TRUE, FALSE, &rgba, &sp_red, &sp_green, &sp_blue, NULL);
+                         FALSE, &rgba, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4314,7 +4314,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->cbutton_fsur = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Frame surround"))),
-                         TRUE, FALSE, &palette->frame_surround, &sp_red, &sp_green, &sp_blue, NULL);
+                         FALSE, &palette->frame_surround, &sp_red, &sp_green, &sp_blue, NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(sp_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,

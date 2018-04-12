@@ -1,6 +1,6 @@
 // widget-helper.h
 // LiVES
-// (c) G. Finch 2012 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -30,9 +30,11 @@ typedef enum {
   LIVES_DISPLAY_TYPE_WAYLAND
 } lives_display_t;
 
+// values below are multiplied by scale
 #define W_PACKING_WIDTH  10 // packing width for widgets with labels
 #define W_PACKING_HEIGHT 10 // packing height for widgets
 #define W_BORDER_WIDTH   10 // default border width
+#define W_FILL_LENGTH    60 // default extra fill size
 
 #define ulong_random() lives_random()
 
@@ -145,7 +147,9 @@ LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, i
 
 boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixilate);
 
-// basic widget fns (TODO - amend all void to return boolean)
+// basic widget fns
+
+// TODO consider combining  get/set value, get/set label, get/set label widget
 
 #ifdef GUI_GTK
 
@@ -195,16 +199,13 @@ LiVESWidget *lives_event_box_new(void);
 boolean lives_event_box_set_above_child(LiVESEventBox *, boolean set);
 
 LiVESWidget *lives_label_new(const char *text);
-LiVESWidget *lives_label_new_with_mnemonic(const char *text);
 
 const char *lives_label_get_text(LiVESLabel *);
 boolean lives_label_set_text(LiVESLabel *, const char *text);
-boolean lives_label_set_text_with_mnemonic(LiVESLabel *, const char *text);
 
 boolean lives_label_set_xalign(LiVESLabel *, double align);
 
 boolean lives_label_set_markup(LiVESLabel *, const char *markup);
-boolean lives_label_set_markup_with_mnemonic(LiVESLabel *, const char *markup);
 
 boolean lives_label_set_mnemonic_widget(LiVESLabel *, LiVESWidget *widget);
 LiVESWidget *lives_label_get_mnemonic_widget(LiVESLabel *);
@@ -214,11 +215,9 @@ boolean lives_label_set_selectable(LiVESLabel *, boolean setting);
 LiVESWidget *lives_button_new(void);
 LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label);
 LiVESWidget *lives_button_new_with_label(const char *label);
-LiVESWidget *lives_button_new_with_mnemonic(const char *label);
 
 boolean lives_button_set_label(LiVESButton *, const char *label);
 
-boolean lives_button_set_use_underline(LiVESButton *, boolean use);
 boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
 boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);
 boolean lives_button_set_focus_on_click(LiVESButton *, boolean focus);
@@ -245,8 +244,6 @@ boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
 
 LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
 boolean lives_widget_color_equal(LiVESWidgetColor *, const LiVESWidgetColor *);
-
-LiVESWidget *lives_event_box_new(void);
 
 LiVESWidget *lives_image_new(void);
 LiVESWidget *lives_image_new_from_file(const char *filename);
@@ -334,7 +331,6 @@ LiVESWidget *lives_arrow_new(LiVESArrowType, LiVESShadowType);
 LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale);
 boolean lives_alignment_set(LiVESWidget *, float xalign, float yalign, float xscale, float yscale);
 
-LiVESWidget *lives_expander_new_with_mnemonic(const char *label);
 LiVESWidget *lives_expander_new(const char *label);
 LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expander);
 
@@ -448,8 +444,6 @@ boolean lives_toggle_tool_button_set_active(LiVESToggleToolButton *, boolean act
 
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size);
 
-void lives_tooltips_set(LiVESWidget *, const char *tip_text);
-
 LiVESSList *lives_radio_button_get_group(LiVESRadioButton *);
 LiVESSList *lives_radio_menu_item_get_group(LiVESRadioMenuItem *);
 
@@ -515,8 +509,8 @@ double lives_ruler_get_value(LiVESRuler *);
 double lives_ruler_set_value(LiVESRuler *, double value);
 
 void lives_ruler_set_range(LiVESRuler *, double lower, double upper, double position, double max_size);
-double lives_ruler_set_upper(LiVESRuler *, double value);
-double lives_ruler_set_lower(LiVESRuler *, double value);
+double lives_ruler_set_upper(LiVESRuler *, double upper);
+double lives_ruler_set_lower(LiVESRuler *, double lower);
 
 LiVESWidget *lives_toolbar_new(void);
 boolean lives_toolbar_insert(LiVESToolbar *, LiVESToolItem *, int pos);
@@ -537,7 +531,6 @@ LiVESWidget *lives_bin_get_child(LiVESBin *);
 
 boolean lives_widget_is_sensitive(LiVESWidget *);
 boolean lives_widget_is_visible(LiVESWidget *);
-
 boolean lives_widget_is_realized(LiVESWidget *);
 
 double lives_adjustment_get_upper(LiVESAdjustment *);
@@ -625,18 +618,15 @@ boolean lives_menu_shell_prepend(LiVESMenuShell *, LiVESWidget *child);
 boolean lives_menu_shell_append(LiVESMenuShell *, LiVESWidget *child);
 
 LiVESWidget *lives_menu_item_new(void);
-LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label);
 LiVESWidget *lives_menu_item_new_with_label(const char *label);
 
 boolean lives_menu_item_set_accel_path(LiVESMenuItem *, const char *path);
 
-LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *label);
 LiVESWidget *lives_check_menu_item_new_with_label(const char *label);
 boolean lives_check_menu_item_set_draw_as_radio(LiVESCheckMenuItem *, boolean setting);
 
 LiVESWidget *lives_radio_menu_item_new_with_label(LiVESSList *group, const char *label);
 LiVESWidget *lives_image_menu_item_new_with_label(const char *label);
-LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *label);
 LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group);
 
 LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
@@ -731,28 +721,24 @@ void lives_label_set_hpadding(LiVESLabel *label, int pad);
 
 boolean lives_widget_grab_default_special(LiVESWidget *);
 
-#define BUTTON_DIM_VAL 24000
+#define BUTTON_DIM_VAL 24000 // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535)
 
 LiVESWidget *lives_standard_button_new(void);
-LiVESWidget *lives_standard_button_new_with_mnemonic(const char *label);
-LiVESWidget *lives_standard_button_new_with_label(const char *label);
-LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const char *label);
+LiVESWidget *lives_standard_button_new_with_label(const char *labeltext);
+LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const char *labeltext);
 
 LiVESWidget *lives_standard_menu_item_new(void);
-LiVESWidget *lives_standard_menu_item_new_with_mnemonic(const char *label);
-LiVESWidget *lives_standard_menu_item_new_with_label(const char *label);
+LiVESWidget *lives_standard_menu_item_new_with_label(const char *labeltext);
 
-LiVESWidget *lives_standard_image_menu_item_new_with_label(const char *label);
-LiVESWidget *lives_standard_image_menu_item_new_with_mnemonic(const char *label);
+LiVESWidget *lives_standard_image_menu_item_new_with_label(const char *labeltext);
 LiVESWidget *lives_standard_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group);
 
-LiVESWidget *lives_standard_radio_menu_item_new_with_label(LiVESSList *group, const char *label);
+LiVESWidget *lives_standard_radio_menu_item_new_with_label(LiVESSList *group, const char *labeltext);
 
-LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label);
-LiVESWidget *lives_standard_check_menu_item_new_with_mnemonic(const char *label);
+LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *labeltext, boolean active);
 
-LiVESWidget *lives_standard_label_new(const char *text);
-LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget);
+LiVESWidget *lives_standard_label_new(const char *labeltext);
+LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiVESWidget *mnemonic_widget);
 
 LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *ret_fn);
 
@@ -776,13 +762,13 @@ LiVESWidget *lives_standard_hruler_new(void);
 
 LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child);
 
-LiVESWidget *lives_standard_expander_new(const char *label, boolean use_mnemonic, LiVESBox *parent, LiVESWidget *child);
+LiVESWidget *lives_standard_expander_new(const char *labeltext, LiVESBox *parent, LiVESWidget *child);
 
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *, double volume);
 
 LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir);
 
-LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boolean use_mnemonic, boolean use_alpha, lives_colRGBA64_t *rgba,
+LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, const char *name, boolean use_alpha, lives_colRGBA64_t *rgba,
     LiVESWidget **sb_red, LiVESWidget **sb_green, LiVESWidget **sb_blue, LiVESWidget **sb_alpha);
 
 LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbuff);
@@ -797,11 +783,11 @@ void lives_widget_apply_theme3(LiVESWidget *, LiVESWidgetState state); // info b
 
 boolean global_recent_manager_add(const char *file_name);
 
-void lives_cursor_unref(LiVESXCursor *cursor);
+void lives_cursor_unref(LiVESXCursor *);
 
 boolean lives_widget_context_update(void);
 
-LiVESWidget *lives_menu_add_separator(LiVESMenu *menu);
+LiVESWidget *lives_menu_add_separator(LiVESMenu *);
 
 boolean lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 
@@ -853,7 +839,7 @@ LiVESWidget *add_vsep_to_box(LiVESBox *);
 LiVESWidget *add_fill_to_box(LiVESBox *);
 
 LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *);
-LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *text);
+LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *labeltext);
 
 boolean lives_accel_path_disconnect(LiVESAccelGroup *group, const char *path);
 
@@ -862,8 +848,6 @@ boolean lives_widget_get_mod_mask(LiVESWidget *, LiVESXModifierType *modmask);
 #endif // cplusplus
 
 #define LIVES_JUSTIFY_DEFAULT (widget_opts.default_justify)
-
-#define W_MAX_FILLER_LEN 65535
 
 typedef enum {
   LIVES_CURSOR_NORMAL = 0, ///< must be zero
@@ -895,6 +879,7 @@ typedef struct {
   boolean swap_label; // swap label/widget position
   boolean pack_end;
   boolean line_wrap; // line wrapping for labels
+  boolean mnemonic_label; // if underscore in label text should be mnemonic accelerator
   boolean non_modal; // non-modal for dialogs
   lives_expand_t expand; // whether spin,check,radio buttons should expand
   boolean apply_theme; // whether to apply theming to widget
@@ -922,6 +907,7 @@ const widget_opts_t def_widget_opts = {
   FALSE, // swap_label
   FALSE, //pack_end
   FALSE, // line_wrap
+  TRUE, // mnemonic_label
   FALSE, // non_modal
   LIVES_EXPAND_DEFAULT, // default expand
   FALSE, // no themeing
@@ -929,7 +915,7 @@ const widget_opts_t def_widget_opts = {
   W_PACKING_WIDTH, // def packing width
   W_PACKING_HEIGHT, // def packing height
   W_BORDER_WIDTH, // def border width
-  8, // def fill width (in chars)
+  W_FILL_LENGTH, // def fill width (in pixels)
   NULL, // last_label
   LIVES_JUSTIFY_LEFT, // justify
   LIVES_JUSTIFY_LEFT, // default justify

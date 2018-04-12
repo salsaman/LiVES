@@ -254,6 +254,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           pulsed->audio_ticks = mainw->currticks;
           pulsed->frames_written = 0;
           pulsed->usec_start = 0;
+          pa_stream_trigger(pulsed->pstream, NULL, NULL);
         }
         lives_free(filename);
       }
@@ -277,6 +278,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       pulsed->audio_ticks = mainw->currticks;
       pulsed->frames_written = 0;
       pulsed->usec_start = 0;
+      pa_stream_trigger(pulsed->pstream, NULL, NULL);
       break;
     default:
       msg->data = NULL;

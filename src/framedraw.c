@@ -141,7 +141,6 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
   lives_box_pack_start(LIVES_BOX(box), hbox_rst, FALSE, FALSE, 0);
 
   lives_button_set_label(LIVES_BUTTON(mainw->framedraw_reset), _("_Reset Values"));
-  lives_button_set_use_underline(LIVES_BUTTON(mainw->framedraw_reset), TRUE);
   lives_box_pack_start(LIVES_BOX(hbox_rst), mainw->framedraw_reset, TRUE, FALSE, 0);
   lives_widget_set_sensitive(mainw->framedraw_reset, FALSE);
 

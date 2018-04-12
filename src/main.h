@@ -1250,7 +1250,6 @@ lives_image_type_t lives_image_type_to_image_type(const char *lives_img_type);
 
 void set_menu_text(LiVESWidget *menu, const char *text, boolean use_mnemonic);
 void get_menu_text(LiVESWidget *menu, char *text);
-void get_menu_text_long(LiVESWidget *menuitem, char *text);
 void reset_clipmenu(void);
 
 double lives_ce_update_timeline(int frame, double x);  ///< pointer position in timeline

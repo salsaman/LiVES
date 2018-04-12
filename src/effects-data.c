@@ -2745,7 +2745,9 @@ static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
     conxwp->pclabel[i] = conxwp->pclabel[i + 1];
 
     if (i == ours) {
+      widget_opts.mnemonic_label = FALSE;
       lives_label_set_text(LIVES_LABEL(conxwp->pclabel[i + 1]), lives_label_get_text(LIVES_LABEL(conxwp->pclabel[i])));
+      widget_opts.mnemonic_label = TRUE;
     }
 #endif
     conxwp->pfxcombo[i] = conxwp->pfxcombo[i + 1];
@@ -3025,7 +3027,9 @@ static void cdel_clicked(LiVESWidget *button, livespointer user_data) {
     conxwp->pclabel[i] = conxwp->pclabel[i + 1];
 
     if (i == ours) {
+      widget_opts.mnemonic_label = FALSE;
       lives_label_set_text(LIVES_LABEL(conxwp->pclabel[i + 1]), lives_label_get_text(LIVES_LABEL(conxwp->pclabel[i])));
+      widget_opts.mnemonic_label = TRUE;
     }
 #endif
     conxwp->cfxcombo[i] = conxwp->cfxcombo[i + 1];
@@ -4231,7 +4235,9 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
 
         if (isfirst) {
           channame = weed_get_string_value(chan, WEED_LEAF_NAME, &error);
+          widget_opts.mnemonic_label = FALSE;
           lives_label_set_text(LIVES_LABEL(conxwp->pclabel[x]), channame);
+          widget_opts.mnemonic_label = TRUE;
           lives_free(channame);
           isfirst = FALSE;
         }
@@ -4316,7 +4322,9 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
           ptype = weed_seed_type_to_text(WEED_SEED_BOOLEAN);
 
           text = lives_strdup_printf("%s (%s)", pname, ptype);
+          widget_opts.mnemonic_label = FALSE;
           lives_label_set_text(LIVES_LABEL(conxwp->pclabel[x + totchans]), text);
+          widget_opts.mnemonic_label = TRUE;
           lives_free(text);
           lives_free(pname);
           lives_free(ptype);
@@ -4369,7 +4377,9 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
           } else range = lives_strdup("");
 
           text = lives_strdup_printf("%s (%s%s) %s", pname, ptype, array_type, range);
+          widget_opts.mnemonic_label = FALSE;
           lives_label_set_text(LIVES_LABEL(conxwp->pclabel[x + totchans]), text);
+          widget_opts.mnemonic_label = TRUE;
           lives_free(text);
           lives_free(pname);
           lives_free(ptype);
@@ -4722,7 +4732,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   if (conxw.num_alpha > 0) {
     conxw.dispc = (int *)lives_malloc(conxw.num_alpha * sizint);
 
-    conxw.acbutton = lives_standard_button_new_with_mnemonic(_("Auto Connect Channels"));
+    conxw.acbutton = lives_standard_button_new_with_label(_("Auto Connect Channels"));
 
     lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.acbutton, LIVES_RESPONSE_NONE);
     lives_container_set_border_width(LIVES_CONTAINER(conxw.acbutton), widget_opts.border_width);
@@ -4737,7 +4747,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   }
 
   if (conxw.num_params > EXTRA_PARAMS_OUT) {
-    conxw.apbutton = lives_standard_button_new_with_mnemonic(_("Auto Connect Parameters"));
+    conxw.apbutton = lives_standard_button_new_with_label(_("Auto Connect Parameters"));
     lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.apbutton, LIVES_RESPONSE_NONE);
     lives_container_set_border_width(LIVES_CONTAINER(conxw.apbutton), widget_opts.border_width);
 
@@ -4749,7 +4759,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 
   }
 
-  conxw.disconbutton = lives_standard_button_new_with_mnemonic(_("Disconnect All"));
+  conxw.disconbutton = lives_standard_button_new_with_label(_("Disconnect All"));
   lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.disconbutton, LIVES_RESPONSE_NONE);
   //lives_container_set_border_width(LIVES_CONTAINER(conxw.disconbutton), widget_opts.border_width); !! dont - causes other buttons to exp. vert in gtk2
   lives_widget_set_sensitive(conxw.disconbutton, FALSE);

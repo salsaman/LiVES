@@ -39,7 +39,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   buttond = lives_standard_file_button_new(TRUE, NULL);
 
-  label = lives_standard_label_new_with_mnemonic(_("Save _directory :"), buttond);
+  label = lives_standard_label_new_with_mnemonic_widget(_("Save _directory :"), buttond);
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   lives_box_pack_start(LIVES_BOX(hbox), buttond, FALSE, FALSE, widget_opts.packing_width);

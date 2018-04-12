@@ -1477,8 +1477,10 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     rgba.blue = rgb.blue << 8;
     rgba.alpha = 65535;
 
-    cbutton = lives_standard_color_button_new(LIVES_BOX(hbox), _(name), use_mnemonic, FALSE, &rgba, &spinbutton_red, &spinbutton_green,
+    widget_opts.mnemonic_label = use_mnemonic;
+    cbutton = lives_standard_color_button_new(LIVES_BOX(hbox), _(name), FALSE, &rgba, &spinbutton_red, &spinbutton_green,
               &spinbutton_blue, NULL);
+    widget_opts.mnemonic_label = TRUE;
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "param_number", LIVES_INT_TO_POINTER(pnum));
     if (param->desc != NULL) lives_widget_set_tooltip_text(cbutton, param->desc);
@@ -1535,7 +1537,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       boolean woat;
 
       widget_opts.justify = LIVES_JUSTIFY_CENTER;
-      if (use_mnemonic) label = lives_standard_label_new_with_mnemonic(_(name), NULL);
+      if (use_mnemonic) label = lives_standard_label_new_with_mnemonic_widget(_(name), NULL);
       else label = lives_standard_label_new(_(name));
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
@@ -1577,7 +1579,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(textbuffer), "textview", textview);
 
     } else {
-      if (use_mnemonic) label = lives_standard_label_new_with_mnemonic(_(name), NULL);
+      if (use_mnemonic) label = lives_standard_label_new_with_mnemonic_widget(_(name), NULL);
       else label = lives_standard_label_new(_(name));
 
       lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
@@ -1658,9 +1660,9 @@ void add_param_label_to_box(LiVESBox *box, boolean do_trans, const char *text) {
     markup = strdup((const char *)qs.toHtmlEscaped().constData());
 #endif
     label = lives_standard_label_new(NULL);
-    lives_label_set_markup_with_mnemonic(LIVES_LABEL(label), markup);
+    lives_label_set_markup(LIVES_LABEL(label), markup);
     lives_free(markup);
-  } else label = lives_standard_label_new_with_mnemonic(text, NULL);
+  } else label = lives_standard_label_new_with_mnemonic_widget(text, NULL);
 
   if (LIVES_IS_HBOX(LIVES_WIDGET(box)))
     lives_box_pack_start(box, label, FALSE, FALSE, widget_opts.packing_width);
@@ -1752,7 +1754,9 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
 
       disp_string = get_weed_display_string(inst, param_number);
       if (disp_string != NULL) {
+        widget_opts.mnemonic_label = FALSE;
         lives_label_set_text(LIVES_LABEL(param->widgets[1]), disp_string);
+        widget_opts.mnemonic_label = TRUE;
         lives_free(disp_string);
       }
       if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
@@ -1865,7 +1869,9 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
       disp_string = get_weed_display_string(inst, param_number);
       if (disp_string != NULL) {
+        widget_opts.mnemonic_label = FALSE;
         lives_label_set_text(LIVES_LABEL(param->widgets[1]), disp_string);
+        widget_opts.mnemonic_label = TRUE;
         lives_free(disp_string);
       }
       if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {

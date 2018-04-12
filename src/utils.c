@@ -5280,7 +5280,6 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     lives_fputs(keystr_end, mainw->clip_header);
     lives_free(keystr_start);
     lives_free(keystr_end);
-
   } else {
     if (!mainw->signals_deferred) {
       set_signal_handlers((SignalHandlerPointer)defer_sigint);

@@ -4604,10 +4604,19 @@ boolean open_scrap_file(void) {
   char *dir;
   char *scrap_handle;
 
-  if (!get_temp_handle(new_file, TRUE)) return FALSE;
+  if (new_file == -1) {
+    too_many_files();
+    return FALSE;
+  }
+
+  mainw->files[new_file] = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
+  mainw->files[new_file]->clip_type = CLIP_TYPE_DISK; // the default
+  lives_snprintf(mainw->files[new_file]->handle, 256, "scrap%d", capable->mainpid);
+
   get_next_free_file();
 
   mainw->scrap_file = mainw->current_file = new_file;
+  create_cfile();
 
   lives_snprintf(cfile->type, 40, "scrap");
   cfile->frames = 0;
@@ -4615,16 +4624,15 @@ boolean open_scrap_file(void) {
   cfile->unique_id = 0;
 
   scrap_handle = lives_strdup_printf("scrap|%s", cfile->handle);
-
   add_to_recovery_file(scrap_handle);
+  lives_free(scrap_handle);
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
 
-  lives_free(scrap_handle);
-
   dir = lives_build_filename(prefs->workdir, cfile->handle, NULL);
+  lives_mkdir_with_parents(dir, capable->umask);
   free_mb = (double)get_fs_free(dir) / 1000000.;
   lives_free(dir);
 
@@ -4645,10 +4653,19 @@ boolean open_ascrap_file(void) {
   char *dir;
   char *ascrap_handle;
 
-  if (!get_temp_handle(new_file, TRUE)) return FALSE;
+  if (new_file == -1) {
+    too_many_files();
+    return FALSE;
+  }
+
+  mainw->files[new_file] = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
+  mainw->files[new_file]->clip_type = CLIP_TYPE_DISK; // the default
+  lives_snprintf(mainw->files[new_file]->handle, 256, "ascrap%d", capable->mainpid);
+
   get_next_free_file();
 
   mainw->ascrap_file = mainw->current_file = new_file;
+  create_cfile();
 
   lives_snprintf(cfile->type, 40, "ascrap");
 
@@ -4657,16 +4674,15 @@ boolean open_ascrap_file(void) {
   cfile->opening = FALSE;
 
   ascrap_handle = lives_strdup_printf("ascrap|%s", cfile->handle);
-
   add_to_recovery_file(ascrap_handle);
+  lives_free(ascrap_handle);
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
 
-  lives_free(ascrap_handle);
-
   dir = lives_build_filename(prefs->workdir, cfile->handle, NULL);
+  lives_mkdir_with_parents(dir, capable->umask);
   free_mb = (double)get_fs_free(dir) / 1000000.;
   lives_free(dir);
 

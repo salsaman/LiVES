@@ -1693,6 +1693,8 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
       aendian = !(outfile->signed_endian & AFORM_BIG_ENDIAN);
     }
 
+    outfile->header_version = LIVES_CLIP_HEADER_VERSION;
+    save_clip_value(fileno, CLIP_DETAILS_HEADER_VERSION, &outfile->header_version);
     save_clip_value(fileno, CLIP_DETAILS_ACHANS, &outfile->achans);
     save_clip_value(fileno, CLIP_DETAILS_ARATE, &outfile->arps);
     save_clip_value(fileno, CLIP_DETAILS_PB_ARATE, &outfile->arate);

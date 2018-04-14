@@ -1,6 +1,6 @@
 // stream.c
 // LiVES
-// (c) G. Finch 2008 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2008 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1102,8 +1102,8 @@ lives_pandh_w *create_pandh_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  pandhw->rb_anyhost = lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams from _any host")))
-                       , TRUE, &radiobutton_group, LIVES_BOX(hbox),
+  pandhw->rb_anyhost = lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams from _any host"))), &radiobutton_group,
+                       LIVES_BOX(hbox),
                        (tmp2 = lives_strdup(_("Accept incoming LiVES streams from any connected host."))));
 
   lives_free(tmp);
@@ -1116,8 +1116,8 @@ lives_pandh_w *create_pandh_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams only from the _specified host:")))
-                                  , TRUE, &radiobutton_group, LIVES_BOX(hbox),
+  lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams only from the _specified host:"))), &radiobutton_group,
+                                  LIVES_BOX(hbox),
                                   (tmp2 = lives_strdup(_("Accept LiVES streams from the specified host only."))));
 
   lives_free(tmp);
@@ -1128,10 +1128,10 @@ lives_pandh_w *create_pandh_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  pandhw->entry1 = lives_standard_entry_new("", FALSE, "127", 3, 3, LIVES_BOX(hbox), NULL);
-  pandhw->entry2 = lives_standard_entry_new(".", FALSE, "0", 3, 3, LIVES_BOX(hbox), NULL);
-  pandhw->entry3 = lives_standard_entry_new(".", FALSE, "0", 3, 3, LIVES_BOX(hbox), NULL);
-  pandhw->entry4 = lives_standard_entry_new(".", FALSE, "0", 3, 3, LIVES_BOX(hbox), NULL);
+  pandhw->entry1 = lives_standard_entry_new("", "127", 3, 3, LIVES_BOX(hbox), NULL);
+  pandhw->entry2 = lives_standard_entry_new(".", "0", 3, 3, LIVES_BOX(hbox), NULL);
+  pandhw->entry3 = lives_standard_entry_new(".", "0", 3, 3, LIVES_BOX(hbox), NULL);
+  pandhw->entry4 = lives_standard_entry_new(".", "0", 3, 3, LIVES_BOX(hbox), NULL);
 
   lives_widget_set_sensitive(pandhw->entry1, FALSE);
   lives_widget_set_sensitive(pandhw->entry2, FALSE);
@@ -1144,7 +1144,7 @@ lives_pandh_w *create_pandh_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  pandhw->port_spin = lives_standard_spin_button_new(_("Port"), FALSE, 48888., 1., 65535, 1., 1., 0, LIVES_BOX(hbox), NULL);
+  pandhw->port_spin = lives_standard_spin_button_new(_("Port"), 48888., 1., 65535, 1., 1., 0, LIVES_BOX(hbox), NULL);
 
   lives_widget_show_all(pandhw->dialog);
 

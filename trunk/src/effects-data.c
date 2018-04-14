@@ -4,12 +4,9 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-
 // functions for chaining and data passing between fx plugins
 
-
 //#define DEBUG_PCONX
-
 
 #if HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -220,7 +217,6 @@ static lives_pconnect_t *pconx_copy(lives_pconnect_t *spconx) {
 }
 
 
-
 char *pconx_list(int okey, int omode, int opnum) {
   char *st1 = lives_strdup(""), *st2;
   lives_pconnect_t *pconx = mainw->pconx;
@@ -250,9 +246,6 @@ char *pconx_list(int okey, int omode, int opnum) {
   }
   return st1;
 }
-
-
-
 
 
 void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum) {
@@ -380,7 +373,6 @@ void pconx_remap_mode(int key, int omode, int nmode) {
 }
 
 
-
 static void pconx_append(lives_pconnect_t *pconx) {
   lives_pconnect_t *opconx = mainw->pconx;
   lives_pconnect_t *last_pconx = opconx;
@@ -406,7 +398,6 @@ static lives_pconnect_t *pconx_find(int okey, int omode) {
   }
   return NULL;
 }
-
 
 
 static int pconx_get_numcons(lives_conx_w *conxwp, int pnum) {
@@ -439,7 +430,6 @@ static int pconx_get_nconns(lives_pconnect_t *pconx, int pnum) {
   }
   return totcons;
 }
-
 
 
 static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int omode, int opnum, int ikey, int imode, int ipnum,
@@ -593,7 +583,6 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 
 }
-
 
 
 void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, int ipnum, boolean autoscale) {
@@ -761,7 +750,6 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 }
 
 
-
 boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dparam, int okey, weed_plant_t *sparam, boolean autoscale) {
   // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed)
   weed_plant_t *dptmpl, *sptmpl;
@@ -807,7 +795,6 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
     nmax = weed_leaf_num_elements(dptmpl, WEED_LEAF_MAX);
     nmin = weed_leaf_num_elements(dptmpl, WEED_LEAF_MIN);
   }
-
 
   switch (stype) {
   case WEED_SEED_STRING:
@@ -1333,7 +1320,6 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 }
 
 
-
 boolean pconx_chain_data(int key, int mode) {
 
   weed_plant_t **inparams;
@@ -1369,7 +1355,6 @@ boolean pconx_chain_data(int key, int mode) {
     if (mainw->vpp == NULL) return FALSE;
     nparams = mainw->vpp->num_play_params;
   }
-
 
   if (key == FX_DATA_KEY_PLAYBACK_PLUGIN) inparams = mainw->vpp->play_params;
   else inparams = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
@@ -1486,7 +1471,6 @@ boolean pconx_chain_data_internal(weed_plant_t *inst) {
 // alpha channs
 
 
-
 void cconx_delete_all(void) {
   lives_cconnect_t *cconx = mainw->cconx, *cconx_next;
   while (cconx != NULL) {
@@ -1514,7 +1498,6 @@ static lives_cconnect_t *cconx_new(int okey, int omode) {
   cconx->nconns = NULL;
   return cconx;
 }
-
 
 
 static lives_cconnect_t *cconx_copy(lives_cconnect_t *scconx) {
@@ -1707,7 +1690,6 @@ void cconx_remap_mode(int key, int omode, int nmode) {
 }
 
 
-
 static void cconx_append(lives_cconnect_t *cconx) {
   lives_cconnect_t *occonx = mainw->cconx;
   lives_cconnect_t *last_cconx = occonx;
@@ -1734,7 +1716,6 @@ static lives_cconnect_t *cconx_find(int okey, int omode) {
 }
 
 
-
 static int cconx_get_numcons(lives_conx_w *conxwp, int cnum) {
   // get displayed number
   int totcons = 0;
@@ -1749,7 +1730,6 @@ static int cconx_get_numcons(lives_conx_w *conxwp, int cnum) {
 
   return totcons;
 }
-
 
 
 static int cconx_get_nconns(lives_cconnect_t *cconx, int cnum) {
@@ -1767,7 +1747,6 @@ static int cconx_get_nconns(lives_cconnect_t *cconx, int cnum) {
   }
   return totcons;
 }
-
 
 
 static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int omode, int ocnum, int ikey, int imode, int icnum) {
@@ -1902,7 +1881,6 @@ static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int 
 void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, int icnum) {
   cconx_add_connection_private(cconx_find(okey, omode), okey, omode, ocnum, ikey, imode, icnum);
 }
-
 
 
 static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, int icnum, int *okey, int *omode, int *ocnum) {
@@ -2071,8 +2049,6 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 }
 
 
-
-
 boolean cconx_chain_data(int key, int mode) {
   // ret TRUE if we should reinit inst (because of palette change)
 
@@ -2109,8 +2085,6 @@ boolean cconx_chain_data(int key, int mode) {
 }
 
 
-
-
 boolean cconx_chain_data_internal(weed_plant_t *ichan) {
   // special version for compound fx internal connections
   boolean needs_reinit = FALSE;
@@ -2122,7 +2096,6 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan) {
   }
   return needs_reinit;
 }
-
 
 
 boolean feeds_to_video_filters(int okey, int omode) {
@@ -2175,7 +2148,6 @@ boolean feeds_to_video_filters(int okey, int omode) {
 
   return FALSE;
 }
-
 
 
 boolean feeds_to_audio_filters(int okey, int omode) {
@@ -2233,13 +2205,9 @@ boolean feeds_to_audio_filters(int okey, int omode) {
 }
 
 
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // channel/param connection window
-
 
 enum {
   KEY_COLUMN,
@@ -2248,7 +2216,6 @@ enum {
   MODEVAL_COLUMN,
   NUM_COLUMNS
 };
-
 
 
 static void disconbutton_clicked(LiVESButton *button, livespointer user_data) {
@@ -2501,7 +2468,6 @@ static void padd_clicked(LiVESWidget *button, livespointer user_data) {
   // add another param row below the add button
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
-
   int totparams, totchans;
   int ours = -1, pidx;
 #if LIVES_TABLE_IS_GRID
@@ -2511,7 +2477,6 @@ static void padd_clicked(LiVESWidget *button, livespointer user_data) {
 #endif
 
   register int i;
-
 
   totparams = pconx_get_numcons(conxwp, FX_DATA_WILDCARD);
   totchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
@@ -2547,7 +2512,6 @@ static void padd_clicked(LiVESWidget *button, livespointer user_data) {
 
   conxwp->trowsp++;
 
-
 #if !LIVES_TABLE_IS_GRID
   lives_table_resize(LIVES_TABLE(conxwp->tablep), conxwp->trowsp, 7);
 
@@ -2559,7 +2523,6 @@ static void padd_clicked(LiVESWidget *button, livespointer user_data) {
     lives_table_attach(LIVES_TABLE(conxwp->tablep), hbox[i], i, i + 1, conxwp->trowsp - 1, conxwp->trowsp,
                        (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
-
 
   }
 
@@ -2624,7 +2587,6 @@ static void padd_clicked(LiVESWidget *button, livespointer user_data) {
   lives_widget_show_all(conxwp->tablep);
 
 }
-
 
 
 static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
@@ -2711,7 +2673,6 @@ static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
       conxwp->pclabel[totchans + i] = conxwp->pclabel[totchans + i + 1];
     }
 
-
     hbox[0] = hboxb[0];
 
     hboxb[1] = lives_widget_get_parent(conxwp->pfxcombo[i + 1]);
@@ -2764,7 +2725,6 @@ static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
 
   }
 
-
 #if !LIVES_TABLE_IS_GRID
   lives_widget_destroy(conxwp->clabel[conxwp->trowsp - 1 + totchans]);
   lives_widget_destroy(conxwp->add_button[conxwp->trowsp - 1 + totchans]);
@@ -2780,7 +2740,6 @@ static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
 #else
   lives_grid_remove_row(LIVES_GRID(conxwp->tablep), ours + 1);
 #endif
-
 
   conxwp->pclabel = (LiVESWidget **)lives_realloc(conxwp->pclabel, (totchans + totparams) * sizeof(LiVESWidget *));
 
@@ -2801,8 +2760,6 @@ static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
   conxwp->acheck = (LiVESWidget **)lives_realloc(conxwp->acheck, totparams * sizeof(LiVESWidget *));
 
 }
-
-
 
 
 static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
@@ -2853,7 +2810,6 @@ static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
 
   conxwp->trowsc++;
 
-
 #if !LIVES_TABLE_IS_GRID
   lives_table_resize(LIVES_TABLE(conxwp->tablec), conxwp->trowsc, 6);
 
@@ -2865,7 +2821,6 @@ static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
     lives_table_attach(LIVES_TABLE(conxwp->tablec), hbox[i], i, i + 1, conxwp->trowsc - 1, conxwp->trowsc,
                        (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
-
 
   }
 
@@ -2909,7 +2864,6 @@ static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
 
     conxwp->dpc_func[i + 1] = conxwp->dpc_func[i];
 
-
   }
 
   ctable_row_add_variable_widgets(conxwp, ours + 1, ours + 2, cidx);
@@ -2921,8 +2875,6 @@ static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
   lives_widget_show_all(conxwp->tablec);
 
 }
-
-
 
 
 static void cdel_clicked(LiVESWidget *button, livespointer user_data) {
@@ -3005,7 +2957,6 @@ static void cdel_clicked(LiVESWidget *button, livespointer user_data) {
       conxwp->pclabel[i] = conxwp->pclabel[i + 1];
     }
 
-
     hbox[0] = hboxb[0];
 
     hboxb[1] = lives_widget_get_parent(conxwp->cfxcombo[i + 1]);
@@ -3043,7 +2994,6 @@ static void cdel_clicked(LiVESWidget *button, livespointer user_data) {
 
   }
 
-
 #if !LIVES_TABLE_IS_GRID
   lives_widget_destroy(conxwp->clabel[conxwp->trowsc - 1]);
   lives_widget_destroy(conxwp->add_button[conxwp->trowsc - 1]);
@@ -3058,7 +3008,6 @@ static void cdel_clicked(LiVESWidget *button, livespointer user_data) {
 #else
   lives_grid_remove_row(LIVES_GRID(conxwp->tablec), ours + 1);
 #endif
-
 
   conxwp->pclabel = (LiVESWidget **)lives_realloc(conxwp->pclabel, (totchans + totparams) * sizeof(LiVESWidget *));
 
@@ -3075,10 +3024,7 @@ static void cdel_clicked(LiVESWidget *button, livespointer user_data) {
 
   conxwp->dpc_func = (ulong *)lives_realloc(conxwp->dpc_func, totchans * sizeof(ulong));
 
-
 }
-
-
 
 
 static void dfxc_changed(LiVESWidget *combo, livespointer user_data) {
@@ -3154,7 +3100,6 @@ static void dfxc_changed(LiVESWidget *combo, livespointer user_data) {
   lives_list_free_all(&clist);
 
 }
-
 
 
 static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
@@ -3370,7 +3315,6 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
 }
 
 
-
 static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
   // receiver param was set
 
@@ -3451,8 +3395,6 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
     return;
   }
 
-
-
   fxcombo = conxwp->pfxcombo[ours];
 
   if (!lives_combo_get_active_iter(LIVES_COMBO(fxcombo), &iter)) return;
@@ -3478,7 +3420,6 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
     lives_combo_set_active_string(LIVES_COMBO(combo), "");
     return;
   }
-
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -3514,11 +3455,9 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
 
   lives_free(paramname);
 
-
   lives_widget_set_sensitive(conxwp->del_button[nchans + ours], TRUE);
 
   if (setup) return;
-
 
   if (conxwp->ikeys[nchans + ours] != 0) pconx_delete(conxwp->okey, conxwp->omode, pidx,
         conxwp->ikeys[nchans + ours] - 1,
@@ -3539,7 +3478,6 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
   lives_widget_set_sensitive(conxwp->disconbutton, TRUE);
 
 }
-
 
 
 int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_plant_t **ichan_ret, int *idx_ret,
@@ -3581,9 +3519,6 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
   }
   return 0;
 }
-
-
-
 
 
 static void dpc_changed(LiVESWidget *combo, livespointer user_data) {
@@ -3652,7 +3587,6 @@ static void dpc_changed(LiVESWidget *combo, livespointer user_data) {
     return;
   }
 
-
   fxcombo = conxwp->cfxcombo[ours];
 
   if (!lives_combo_get_active_iter(LIVES_COMBO(fxcombo), &iter)) return;
@@ -3698,9 +3632,7 @@ static void dpc_changed(LiVESWidget *combo, livespointer user_data) {
   conxwp->idx[ours] = j;
 
   lives_widget_set_sensitive(conxwp->disconbutton, TRUE);
-
 }
-
 
 
 static void on_allcheck_toggled(LiVESToggleButton *button, livespointer user_data) {
@@ -3714,7 +3646,6 @@ static void on_allcheck_toggled(LiVESToggleButton *button, livespointer user_dat
   for (i = EXTRA_PARAMS_OUT; i < nparams; i++) {
     if (lives_widget_is_sensitive(conxwp->acheck[i])) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->acheck[i]), on);
   }
-
 }
 
 
@@ -3779,7 +3710,6 @@ static void on_acheck_toggled(LiVESToggleButton *acheck, livespointer user_data)
     j = i;
 
     lives_free(iparams);
-
   } else j = idx - EXTRA_PARAMS_IN;
 
   pidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(acheck), "pidx"));
@@ -3827,7 +3757,6 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
                        MODEVAL_COLUMN, 0,
                        -1);
 
-
   // go through all keys
   for (i = 1; i <= FX_KEYS_MAX_VIRTUAL; i++) {
     if (i == key + 1) continue;
@@ -3836,7 +3765,6 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
     keystr = lives_strdup_printf(_("Key slot %d"), i);
 
     for (j = 0; j < nmodes; j++) {
-
       if ((idx = rte_keymode_get_filter_idx(i, j)) == -1) continue;
 
       filter = get_weed_filter(idx);
@@ -3861,7 +3789,6 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
     }
 
     lives_free(keystr);
-
   }
 
   return (LiVESTreeModel *)tstore;
@@ -3889,7 +3816,6 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
   conxwp->pclabel[idx + totchans] = lives_standard_label_new(NULL);
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->pclabel[idx + totchans], FALSE, FALSE, widget_opts.packing_width);
 
-
   hbox = lives_hbox_new(FALSE, 0);
 
   conxwp->pfxcombo[idx] = lives_combo_new_with_model(pmodel);
@@ -3910,23 +3836,19 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
   hbox2 = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, 0);
 
-  conxwp->pcombo[idx] = lives_standard_combo_new("", FALSE, NULL, LIVES_BOX(hbox2), NULL);
+  conxwp->pcombo[idx] = lives_standard_combo_new("", NULL, LIVES_BOX(hbox2), NULL);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[idx]), "idx", LIVES_INT_TO_POINTER(-1));
   lives_widget_set_sensitive(conxwp->pcombo[idx], FALSE);
-
 
   lives_table_attach(LIVES_TABLE(conxwp->tablep), hbox, 3, 4, row, row + 1,
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(0), 0, 0);
 
-
   lives_signal_connect(LIVES_GUI_OBJECT(conxwp->pfxcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(dfxp_changed), (livespointer)conxwp);
 
-
   conxwp->dpp_func[idx] = lives_signal_connect(LIVES_GUI_OBJECT(conxwp->pcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(dpp_changed), (livespointer)conxwp);
-
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[idx]), "pidx", LIVES_INT_TO_POINTER(pidx));
 
@@ -3944,7 +3866,6 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
         hasrange = TRUE;
 
       lives_free(oparams);
-
     }
 
     hbox = lives_hbox_new(FALSE, 0);
@@ -3956,7 +3877,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
     hbox2 = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, 0);
 
-    conxwp->acheck[idx] = lives_standard_check_button_new(_("Autoscale"), FALSE, FALSE, LIVES_BOX(hbox2), NULL);
+    conxwp->acheck[idx] = lives_standard_check_button_new(_("Autoscale"), FALSE, LIVES_BOX(hbox2), NULL);
 
     lives_widget_set_sensitive(conxwp->acheck[idx], FALSE);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->acheck[idx]), "available", LIVES_INT_TO_POINTER(hasrange));
@@ -3971,7 +3892,6 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 }
 
 
-
 static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int row, int cidx) {
   LiVESWidget *hbox, *hbox2;
   LiVESWidget *fx_entry;
@@ -3984,7 +3904,6 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
   conxwp->pclabel[idx] = lives_standard_label_new(NULL);
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->pclabel[idx], FALSE, FALSE, widget_opts.packing_width);
-
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -4006,30 +3925,23 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
   hbox2 = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, 0);
 
-  conxwp->ccombo[idx] = lives_standard_combo_new("", FALSE, NULL, LIVES_BOX(hbox2), NULL);
+  conxwp->ccombo[idx] = lives_standard_combo_new("", NULL, LIVES_BOX(hbox2), NULL);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[idx]), "idx", LIVES_INT_TO_POINTER(-1));
   lives_widget_set_sensitive(conxwp->ccombo[idx], FALSE);
-
 
   lives_table_attach(LIVES_TABLE(conxwp->tablec), hbox, 3, 4, row, row + 1,
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(0), 0, 0);
 
-
   lives_signal_connect(LIVES_GUI_OBJECT(conxwp->cfxcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(dfxc_changed), (livespointer)conxwp);
-
 
   conxwp->dpc_func[idx] = lives_signal_connect(LIVES_GUI_OBJECT(conxwp->ccombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(dpc_changed), (livespointer)conxwp);
 
-
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[idx]), "cidx", LIVES_INT_TO_POINTER(cidx));
 
-
-
 }
-
 
 
 static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
@@ -4041,14 +3953,11 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(0), 0, 0);
 
-
   conxwp->clabel[idx] = lives_standard_label_new(lctext);
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
-
   conxwp->add_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_ADD, NULL);
   lives_widget_set_tooltip_text(conxwp->add_button[idx], _("Add another connection for this output parameter"));
-
 
   lives_table_attach(LIVES_TABLE(conxwp->tablep), conxwp->add_button[idx], 6, 7, conxwp->trowsp - 1, conxwp->trowsp,
                      (LiVESAttachOptions)(0),
@@ -4057,7 +3966,6 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
   lives_signal_connect(LIVES_GUI_OBJECT(conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(padd_clicked),
                        (livespointer)conxwp);
-
 
   conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL);
   lives_widget_set_tooltip_text(conxwp->del_button[idx], _("Delete this connection"));
@@ -4076,9 +3984,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
 
-
 }
-
 
 
 static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
@@ -4090,14 +3996,11 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(0), 0, 0);
 
-
   conxwp->clabel[idx] = lives_standard_label_new(lctext);
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
-
   conxwp->add_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_ADD, NULL);
   lives_widget_set_tooltip_text(conxwp->add_button[idx], _("Add another connection for this output channel"));
-
 
   lives_table_attach(LIVES_TABLE(conxwp->tablec), conxwp->add_button[idx], 5, 6, conxwp->trowsc - 1, conxwp->trowsc,
                      (LiVESAttachOptions)(0),
@@ -4106,7 +4009,6 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
   lives_signal_connect(LIVES_GUI_OBJECT(conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(cadd_clicked),
                        (livespointer)conxwp);
-
 
   conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL);
   lives_widget_set_tooltip_text(conxwp->del_button[idx], _("Delete this connection"));
@@ -4125,9 +4027,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
 
-
 }
-
 
 
 static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
@@ -4259,7 +4159,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
     add_hsep_to_box(LIVES_BOX(top_vbox));
   }
 
-
   if (conxwp->num_params > 0) {
     weed_plant_t **oparams = NULL;
 
@@ -4281,7 +4180,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
 
     lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
-
     conxwp->tablep = lives_table_new(1, 7, FALSE);
     lives_table_set_row_spacings(LIVES_TABLE(conxwp->tablep), widget_opts.packing_height);
     lives_table_set_col_spacings(LIVES_TABLE(conxwp->tablep), widget_opts.packing_width);
@@ -4296,13 +4194,12 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
                        (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    conxwp->allcheckc = lives_standard_check_button_new(_("Autoscale All"), FALSE, TRUE, LIVES_BOX(hbox), NULL);
+    conxwp->allcheckc = lives_standard_check_button_new(_("Autoscale All"), TRUE, LIVES_BOX(hbox), NULL);
     conxwp->allcheck_label = widget_opts.last_label;
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(conxwp->allcheckc), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(on_allcheck_toggled),
                                (livespointer)conxwp);
-
 
     if (EXTRA_PARAMS_OUT > 0) {
       lives_table_resize(LIVES_TABLE(conxwp->tablep), ++conxwp->trowsp, 7);
@@ -4442,7 +4339,6 @@ static void conxw_cancel_clicked(LiVESWidget *button, livespointer user_data) {
 }
 
 
-
 static void conxw_ok_clicked(LiVESWidget *button, livespointer user_data) {
   lives_cconnect_t *cconx_bak = mainw->cconx;
   lives_pconnect_t *pconx_bak = mainw->pconx;
@@ -4478,12 +4374,10 @@ static void set_to_keymode_vals(LiVESCombo *combo, int xkey, int xmode) {
     }
   } while (lives_tree_model_iter_next(model, &piter));
 
-
 iter_found:
   lives_combo_set_active_iter(combo, &iter);
 
 }
-
 
 
 static boolean show_existing(lives_conx_w *conxwp) {
@@ -4582,12 +4476,9 @@ static boolean show_existing(lives_conx_w *conxwp) {
 
   lives_free(ochans);
 
-
 show_ex_params:
 
-
   if (pconx == NULL) goto show_ex_done;
-
 
   posn = 0;
 
@@ -4676,9 +4567,6 @@ show_ex_done:
 }
 
 
-
-
-
 LiVESWidget *make_datacon_window(int key, int mode) {
   static lives_conx_w conxw;
 
@@ -4743,7 +4631,6 @@ LiVESWidget *make_datacon_window(int key, int mode) {
                          LIVES_GUI_CALLBACK(acbutton_clicked),
                          (livespointer)&conxw);
 
-
   }
 
   if (conxw.num_params > EXTRA_PARAMS_OUT) {
@@ -4776,7 +4663,6 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   scrolledwindow = conx_scroll_new(&conxw);
   show_existing(&conxw);
 
-
   lives_box_pack_start(LIVES_BOX(cbox), scrolledwindow, TRUE, TRUE, 0);
 
   if (conxw.num_params > EXTRA_PARAMS_OUT) {
@@ -4798,16 +4684,13 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(conxw_cancel_clicked),
                        (livespointer)&conxw);
 
-
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(conxw_ok_clicked),
                        (livespointer)&conxw);
-
 
   lives_widget_show_all(conxw.conx_dialog);
 

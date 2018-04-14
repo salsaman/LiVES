@@ -392,7 +392,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-  radiobutton_in = lives_standard_radio_button_new((tmp = lives_strdup(_("Transition _In"))), TRUE,
+  radiobutton_in = lives_standard_radio_button_new((tmp = lives_strdup(_("Transition _In"))),
                    &radiobutton_group, LIVES_BOX(hbox),
                    (tmp2 = lives_strdup(_("Click to set the transition parameter to show only the front frame"))));
   lives_free(tmp);
@@ -413,15 +413,13 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
     if (has_video_chans_in(filter, FALSE))
       lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
-    checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Crossfade audio"))), FALSE, FALSE, LIVES_BOX(hbox2),
-                  (tmp2 = lives_strdup(_("Check the box to make audio transition with the video"))));
+    checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Crossfade audio"))),
+                  weed_plant_has_leaf(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION) &&
+                  weed_get_boolean_value(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, &error) == WEED_TRUE,
+                  LIVES_BOX(hbox2), (tmp2 = lives_strdup(_("Check the box to make audio transition with the video"))));
 
     lives_free(tmp);
     lives_free(tmp2);
-
-    if (weed_plant_has_leaf(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION) &&
-        weed_get_boolean_value(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, &error) == WEED_TRUE)
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), TRUE);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(after_transaudio_toggled),
@@ -432,7 +430,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   }
 
   widget_opts.pack_end = TRUE;
-  radiobutton_out = lives_standard_radio_button_new((tmp = lives_strdup(_("Transition _Out"))), TRUE,
+  radiobutton_out = lives_standard_radio_button_new((tmp = lives_strdup(_("Transition _Out"))),
                     &radiobutton_group, LIVES_BOX(hbox),
                     (tmp2 = lives_strdup(_("Click to set the transition parameter to show only the rear frame"))));
 
@@ -502,7 +500,7 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
 
     if (def_fps == 0.) def_fps = prefs->default_fps;
 
-    spinbuttonf = lives_standard_spin_button_new(_("Target _FPS (plugin may override this)"), TRUE,
+    spinbuttonf = lives_standard_spin_button_new(_("Target _FPS (plugin may override this)"),
                   def_fps, 1., FPS_MAX, 1., 10., 3, LIVES_BOX(hbox), NULL);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbuttonf), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -551,7 +549,7 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     width_step = 1;
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_HSTEP)) width_step = weed_get_int_value(tmpl, WEED_LEAF_HSTEP, &error);
 
-    spinbuttonw = lives_standard_spin_button_new(_("_Width"), TRUE, def_width, 4., max_width, width_step == 1 ? 4 : width_step,
+    spinbuttonw = lives_standard_spin_button_new(_("_Width"), def_width, 4., max_width, width_step == 1 ? 4 : width_step,
                   width_step == 1 ? 16 : width_step * 4, 0,
                   LIVES_BOX(hbox), NULL);
 
@@ -569,7 +567,7 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     height_step = 1;
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_VSTEP)) height_step = weed_get_int_value(tmpl, WEED_LEAF_VSTEP, &error);
 
-    spinbuttonh = lives_standard_spin_button_new(_("_Height"), TRUE, def_height, 4., max_height, height_step == 1 ? 4 : height_step,
+    spinbuttonh = lives_standard_spin_button_new(_("_Height"), def_height, 4., max_height, height_step == 1 ? 4 : height_step,
                   height_step == 1 ? 16 : height_step * 4, 0,
                   LIVES_BOX(hbox), NULL);
 
@@ -614,7 +612,7 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Generate to _Clipboard"))),
-                TRUE, &radiobutton_group, LIVES_BOX(hbox),
+                &radiobutton_group, LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Generate frames to the clipboard"))));
 
   lives_free(tmp);
@@ -622,7 +620,7 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
 
   widget_opts.pack_end = TRUE;
   radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Generate to _New Clip"))),
-                TRUE, &radiobutton_group, LIVES_BOX(hbox),
+                &radiobutton_group, LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Generate frames to a new clip"))));
   widget_opts.pack_end = FALSE;
 
@@ -1333,10 +1331,12 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         param->widgets[1] = dlabel;
       }
 
-      checkbutton = lives_standard_check_button_new(name, use_mnemonic, get_bool_param(param->value), (LiVESBox *)hbox, param->desc);
+      widget_opts.mnemonic_label = use_mnemonic;
+      checkbutton = lives_standard_check_button_new(name, get_bool_param(param->value), (LiVESBox *)hbox, param->desc);
       lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                  LIVES_GUI_CALLBACK(after_boolean_param_toggled),
                                  (livespointer)rfx);
+      widget_opts.mnemonic_label = TRUE;
 
       // store parameter so we know whose trigger to use
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "param_number", LIVES_INT_TO_POINTER(pnum));
@@ -1356,7 +1356,9 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       if (group != NULL) rbgroup = group->rbgroup;
       else rbgroup = NULL;
 
-      radiobutton = lives_standard_radio_button_new(name, use_mnemonic, &rbgroup, LIVES_BOX(hbox), param->desc);
+      widget_opts.mnemonic_label = use_mnemonic;
+      radiobutton = lives_standard_radio_button_new(name, &rbgroup, LIVES_BOX(hbox), param->desc);
+      widget_opts.mnemonic_label = TRUE;
 
       if (group == NULL) {
         if (rfx->status == RFX_STATUS_WEED) {
@@ -1402,15 +1404,17 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       param->widgets[1] = dlabel;
     }
 
+    widget_opts.mnemonic_label = use_mnemonic;
     if (param->dp) {
-      spinbutton = lives_standard_spin_button_new(name, use_mnemonic, get_double_param(param->value), param->min,
+      spinbutton = lives_standard_spin_button_new(name, get_double_param(param->value), param->min,
                    param->max, param->step_size, param->step_size, param->dp,
                    (LiVESBox *)hbox, param->desc);
     } else {
-      spinbutton = lives_standard_spin_button_new(name, use_mnemonic, (double)get_int_param(param->value), param->min,
+      spinbutton = lives_standard_spin_button_new(name, (double)get_int_param(param->value), param->min,
                    param->max, param->step_size, param->step_size, param->dp,
                    (LiVESBox *)hbox, param->desc);
     }
+    widget_opts.mnemonic_label = TRUE;
 
     lives_spin_button_set_wrap(LIVES_SPIN_BUTTON(spinbutton), param->wrap);
 
@@ -1583,7 +1587,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       else label = lives_standard_label_new(_(name));
 
       lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
-      param->widgets[0] = entry = lives_standard_entry_new(NULL, FALSE, txt, (int)param->max, (int)param->max, LIVES_BOX(hbox), param->desc);
+      param->widgets[0] = entry = lives_standard_entry_new(NULL, txt, (int)param->max, (int)param->max, LIVES_BOX(hbox), param->desc);
 
       if (rfx->status == RFX_STATUS_WEED && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
         lives_signal_connect_after(LIVES_WIDGET_OBJECT(entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(after_param_text_changed),
@@ -1613,7 +1617,9 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
   case LIVES_PARAM_STRING_LIST:
     widget_opts.expand = LIVES_EXPAND_EXTRA;
-    combo = lives_standard_combo_new(name, use_mnemonic, param->list, (LiVESBox *)hbox, param->desc);
+    widget_opts.mnemonic_label = use_mnemonic;
+    combo = lives_standard_combo_new(name, param->list, (LiVESBox *)hbox, param->desc);
+    widget_opts.mnemonic_label = TRUE;
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
     if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) {

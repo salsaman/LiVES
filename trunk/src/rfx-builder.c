@@ -160,25 +160,25 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, FALSE, widget_opts.packing_width);
 
   string = lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT, FALSE);
-  rfxbuilder->type_effect1_radiobutton = lives_standard_radio_button_new(string, FALSE, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
+  rfxbuilder->type_effect1_radiobutton = lives_standard_radio_button_new(string, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
   lives_free(string);
 
   string = lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION, FALSE);
-  rfxbuilder->type_effect2_radiobutton = lives_standard_radio_button_new(string, FALSE, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
+  rfxbuilder->type_effect2_radiobutton = lives_standard_radio_button_new(string, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
   lives_free(string);
 
   string = lives_fx_cat_to_text(LIVES_FX_CAT_VIDEO_GENERATOR, FALSE);
-  rfxbuilder->type_effect0_radiobutton = lives_standard_radio_button_new(string, FALSE, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
+  rfxbuilder->type_effect0_radiobutton = lives_standard_radio_button_new(string, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
   lives_free(string);
 
-  rfxbuilder->type_tool_radiobutton = lives_standard_radio_button_new(_("tool"), FALSE, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
+  rfxbuilder->type_tool_radiobutton = lives_standard_radio_button_new(_("tool"), &radiobutton_type_group, LIVES_BOX(hbox), NULL);
   lives_widget_show(label);
 
-  rfxbuilder->type_utility_radiobutton = lives_standard_radio_button_new(_("utility"), FALSE, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
+  rfxbuilder->type_utility_radiobutton = lives_standard_radio_button_new(_("utility"), &radiobutton_type_group, LIVES_BOX(hbox), NULL);
 
   // name
 
-  rfxbuilder->name_entry = lives_standard_entry_new((tmp = lives_strdup(_("Name:          "))), FALSE, NULL, -1, -1,
+  rfxbuilder->name_entry = lives_standard_entry_new((tmp = lives_strdup(_("Name:          "))), NULL, -1, -1,
                            LIVES_BOX(top_vbox), (tmp2 = lives_strdup(_("The name of the plugin. No spaces allowed.")))
                                                    );
   lives_free(tmp);
@@ -188,7 +188,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  rfxbuilder->spinbutton_version = lives_standard_spin_button_new((tmp = lives_strdup(_("Version:       "))), FALSE,
+  rfxbuilder->spinbutton_version = lives_standard_spin_button_new((tmp = lives_strdup(_("Version:       "))),
                                    rfxbuilder->plugin_version, rfxbuilder->plugin_version, 1000000., 1., 1., 0,
                                    LIVES_BOX(hbox), (tmp2 = lives_strdup(_("The script version.")))
                                                                  );
@@ -197,7 +197,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   // author
 
-  rfxbuilder->author_entry = lives_standard_entry_new((tmp = lives_strdup(_("    Author:       "))), FALSE, NULL, -1, -1,
+  rfxbuilder->author_entry = lives_standard_entry_new((tmp = lives_strdup(_("    Author:       "))), NULL, -1, -1,
                              LIVES_BOX(hbox), (tmp2 = lives_strdup(_("The script author.")))
                                                      );
   lives_free(tmp);
@@ -205,7 +205,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   // URL
 
-  rfxbuilder->url_entry = lives_standard_entry_new((tmp = lives_strdup(_("    URL (optional):       "))), FALSE, NULL, -1, -1,
+  rfxbuilder->url_entry = lives_standard_entry_new((tmp = lives_strdup(_("    URL (optional):       "))), NULL, -1, -1,
                           LIVES_BOX(top_vbox), (tmp2 = lives_strdup(_("URL for the plugin maintainer.")))
                                                   );
   lives_free(tmp);
@@ -213,7 +213,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   // menu entry
 
-  rfxbuilder->menu_text_entry = lives_standard_entry_new((tmp = lives_strdup(_("Menu text:    "))), FALSE, NULL, -1, -1,
+  rfxbuilder->menu_text_entry = lives_standard_entry_new((tmp = lives_strdup(_("Menu text:    "))), NULL, -1, -1,
                                 LIVES_BOX(top_vbox), (tmp2 = lives_strdup(_("The text to show in the menu.")))
                                                         );
   lives_free(tmp);
@@ -226,12 +226,12 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   rfxbuilder->action_desc_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->action_desc_hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  rfxbuilder->action_desc_entry = lives_standard_entry_new((tmp = lives_strdup(_("Action description:        "))), FALSE, NULL, -1, -1,
+  rfxbuilder->action_desc_entry = lives_standard_entry_new((tmp = lives_strdup(_("Action description:        "))), NULL, -1, -1,
                                   LIVES_BOX(rfxbuilder->action_desc_hbox),
                                   (tmp2 = lives_strdup(_("Describe what the plugin is doing. E.g. \"Edge detecting\"")))
                                                           );
 
-  rfxbuilder->spinbutton_min_frames = lives_standard_spin_button_new((tmp = lives_strdup(_("Minimum frames:"))), FALSE,
+  rfxbuilder->spinbutton_min_frames = lives_standard_spin_button_new((tmp = lives_strdup(_("Minimum frames:"))),
                                       1., 1., 1000., 1., 1., 0,
                                       LIVES_BOX(top_vbox),
                                       (tmp2 = lives_strdup(_("Minimum number of frames this effect/tool can be applied to. Normally 1.")))
@@ -273,7 +273,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   langc = lives_list_append(langc, (livespointer)"0xF0 - LiVES-Perl");
 
-  rfxbuilder->langc_combo = lives_standard_combo_new((tmp = lives_strdup(_("_Language code:"))), TRUE, langc, LIVES_BOX(top_vbox),
+  rfxbuilder->langc_combo = lives_standard_combo_new((tmp = lives_strdup(_("_Language code:"))), langc, LIVES_BOX(top_vbox),
                             (tmp2 = lives_strdup(_("Language for pre/loop/post/triggers. Optional."))));
 
   lives_free(tmp);
@@ -964,7 +964,7 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
-  rfxbuilder->prop_slow = lives_standard_check_button_new(_("_Slow (hint to GUI)"), TRUE, FALSE, LIVES_BOX(dialog_vbox), NULL);
+  rfxbuilder->prop_slow = lives_standard_check_button_new(_("_Slow (hint to GUI)"), FALSE, LIVES_BOX(dialog_vbox), NULL);
 
   if (rfxbuilder->type != RFX_BUILD_TYPE_EFFECT0) {
     lives_widget_show(rfxbuilder->prop_slow);
@@ -975,7 +975,7 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   if (rfxbuilder->type == RFX_BUILD_TYPE_EFFECT0) {
-    rfxbuilder->prop_batchg = lives_standard_check_button_new(_("_Batch mode generator"), TRUE, FALSE, LIVES_BOX(dialog_vbox), NULL);
+    rfxbuilder->prop_batchg = lives_standard_check_button_new(_("_Batch mode generator"), FALSE, LIVES_BOX(dialog_vbox), NULL);
     if (rfxbuilder->props & RFX_PROPS_BATCHG) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rfxbuilder->prop_batchg), TRUE);
     }
@@ -1909,7 +1909,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 
   // name
 
-  rfxbuilder->param_name_entry = lives_standard_entry_new((tmp = lives_strdup(_("_Name:    "))), TRUE,
+  rfxbuilder->param_name_entry = lives_standard_entry_new((tmp = lives_strdup(_("_Name:    "))),
                                  pnum >= 0 ? rfxbuilder->copy_params[pnum].name : NULL,
                                  60.*widget_opts.scale, -1, LIVES_BOX(dialog_vbox),
                                  (tmp2 = lives_strdup((_("Name of the parameter, must be unique in the plugin.")))));
@@ -1921,7 +1921,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 
   // label
 
-  rfxbuilder->param_label_entry = lives_standard_entry_new((tmp = lives_strdup(_("_Label:    "))), TRUE,
+  rfxbuilder->param_label_entry = lives_standard_entry_new((tmp = lives_strdup(_("_Label:    "))),
                                   pnum >= 0 ? rfxbuilder->copy_params[pnum].label : NULL,
                                   60.*widget_opts.scale, -1, LIVES_BOX(dialog_vbox),
                                   (tmp2 = lives_strdup(_("Label to be shown by the parameter. An underscore represents mnemonic accelerator."))));
@@ -1936,7 +1936,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   typelist = lives_list_append(typelist, (livespointer)"colRGB24");
   typelist = lives_list_append(typelist, (livespointer)"string_list");
 
-  rfxbuilder->param_type_combo = lives_standard_combo_new((tmp = lives_strdup(_("_Type:         "))), TRUE, typelist,
+  rfxbuilder->param_type_combo = lives_standard_combo_new((tmp = lives_strdup(_("_Type:         "))), typelist,
                                  LIVES_BOX(dialog_vbox), (tmp2 = lives_strdup(_("Parameter type (select from list)."))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -1968,7 +1968,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 
   // dp
 
-  rfxbuilder->spinbutton_param_dp = lives_standard_spin_button_new(_("Decimal _places: "), TRUE,
+  rfxbuilder->spinbutton_param_dp = lives_standard_spin_button_new(_("Decimal _places: "),
                                     pnum >= 0 ? rfxbuilder->copy_params[pnum].dp : 0.,
                                     0., 16., 1., 1., 0,
                                     LIVES_BOX(dialog_vbox), NULL);
@@ -1978,7 +1978,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 
   // default val
 
-  rfxbuilder->spinbutton_param_def = lives_standard_spin_button_new(_("_Default value:    "), TRUE, 0., -LIVES_MAXINT, LIVES_MAXINT, 1., 1.,
+  rfxbuilder->spinbutton_param_def = lives_standard_spin_button_new(_("_Default value:    "), 0., -LIVES_MAXINT, LIVES_MAXINT, 1., 1.,
                                      0,
                                      LIVES_BOX(dialog_vbox), NULL);
   rfxbuilder->param_def_label = widget_opts.last_label;
@@ -1994,7 +1994,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   rfxbuilder->param_strlist_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), rfxbuilder->param_strlist_hbox, FALSE, FALSE, widget_opts.packing_width);
 
-  rfxbuilder->param_def_combo = lives_standard_combo_new(_("_Default: "), TRUE, NULL, LIVES_BOX(rfxbuilder->param_strlist_hbox), NULL);
+  rfxbuilder->param_def_combo = lives_standard_combo_new(_("_Default: "), NULL, LIVES_BOX(rfxbuilder->param_strlist_hbox), NULL);
 
   lives_label_set_mnemonic_widget(LIVES_LABEL(rfxbuilder->param_def_label), rfxbuilder->param_def_combo);
 
@@ -2027,7 +2027,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   rfxbuilder->hbox_bg = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), rfxbuilder->hbox_bg, FALSE, FALSE, widget_opts.packing_height);
 
-  rfxbuilder->spinbutton_param_group = lives_standard_spin_button_new((tmp = lives_strdup(_("Button _Group: "))), TRUE, 0., 0., 16., 1., 1.,
+  rfxbuilder->spinbutton_param_group = lives_standard_spin_button_new((tmp = lives_strdup(_("Button _Group: "))), 0., 0., 16., 1., 1.,
                                        0,
                                        LIVES_BOX(rfxbuilder->hbox_bg),
                                        (tmp2 = lives_strdup(_("A non-zero value can be used to group radio buttons."))));
@@ -2038,20 +2038,20 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 
   // min
 
-  rfxbuilder->spinbutton_param_min = lives_standard_spin_button_new(_("_Minimum value: "), TRUE, 0., -LIVES_MAXINT, LIVES_MAXINT, 1., 1., 0,
+  rfxbuilder->spinbutton_param_min = lives_standard_spin_button_new(_("_Minimum value: "), 0., -LIVES_MAXINT, LIVES_MAXINT, 1., 1., 0,
                                      LIVES_BOX(dialog_vbox), NULL);
   rfxbuilder->param_min_label = widget_opts.last_label;
 
   // max
 
-  rfxbuilder->spinbutton_param_max = lives_standard_spin_button_new(_("Ma_ximum value: "), TRUE, RFX_DEF_NUM_MAX, -LIVES_MAXINT, LIVES_MAXINT,
+  rfxbuilder->spinbutton_param_max = lives_standard_spin_button_new(_("Ma_ximum value: "), RFX_DEF_NUM_MAX, -LIVES_MAXINT, LIVES_MAXINT,
                                      1., 1., 0,
                                      LIVES_BOX(dialog_vbox), NULL);
   rfxbuilder->param_max_label = widget_opts.last_label;
 
   // step size
 
-  rfxbuilder->spinbutton_param_step = lives_standard_spin_button_new((tmp = lives_strdup(_("     _Step size:   "))), TRUE, 1., 1.,
+  rfxbuilder->spinbutton_param_step = lives_standard_spin_button_new((tmp = lives_strdup(_("     _Step size:   "))), 1., 1.,
                                       LIVES_MAXINT,
                                       1., 1., 0,
                                       LIVES_BOX(dialog_vbox),
@@ -2067,7 +2067,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   rfxbuilder->param_wrap_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), rfxbuilder->param_wrap_hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  rfxbuilder->param_wrap_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Wrap value"))), TRUE, FALSE,
+  rfxbuilder->param_wrap_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Wrap value"))), FALSE,
                                        LIVES_BOX(rfxbuilder->param_wrap_hbox),
                                        (tmp2 = lives_strdup(_("Whether the value wraps max->min and min->max."))));
 
@@ -2500,7 +2500,7 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
   kwlist = lives_list_append(kwlist, (livespointer)"layout");
   kwlist = lives_list_append(kwlist, (livespointer)"special");
 
-  rfxbuilder->paramw_kw_combo = lives_standard_combo_new(_("_Keyword:         "), TRUE, kwlist, LIVES_BOX(dialog_vbox), NULL);
+  rfxbuilder->paramw_kw_combo = lives_standard_combo_new(_("_Keyword:         "), kwlist, LIVES_BOX(dialog_vbox), NULL);
   lives_list_free(kwlist);
 
   if (pnum >= 0 && kw != NULL) {
@@ -2516,7 +2516,7 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
     splist = lives_list_append(splist, (livespointer)"mergealign");
   }
 
-  rfxbuilder->paramw_sp_combo = lives_standard_combo_new(_("Special _Type:         "), TRUE, splist, LIVES_BOX(dialog_vbox), NULL);
+  rfxbuilder->paramw_sp_combo = lives_standard_combo_new(_("Special _Type:         "), splist, LIVES_BOX(dialog_vbox), NULL);
   lives_list_free(splist);
 
   if (pnum >= 0 && sp != NULL) {
@@ -2532,7 +2532,7 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
   } else spsublist = lives_list_append(spsublist, (livespointer)"multirect");
   spsublist = lives_list_append(spsublist, (livespointer)"singlepoint");
 
-  rfxbuilder->paramw_spsub_combo = lives_standard_combo_new(_("Special _Subtype:         "), TRUE, spsublist, LIVES_BOX(dialog_vbox), NULL);
+  rfxbuilder->paramw_spsub_combo = lives_standard_combo_new(_("Special _Subtype:         "), spsublist, LIVES_BOX(dialog_vbox), NULL);
   lives_list_free(spsublist);
 
   if (pnum >= 0 && spsub != NULL) {
@@ -2541,7 +2541,7 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
 
   // paramwindow rest
 
-  rfxbuilder->paramw_rest_entry = lives_standard_entry_new(_("Row:    "), TRUE, pnum >= 0 && rest != NULL ? rest : NULL,
+  rfxbuilder->paramw_rest_entry = lives_standard_entry_new(_("Row:    "), pnum >= 0 && rest != NULL ? rest : NULL,
                                   -1, -1, LIVES_BOX(dialog_vbox), NULL);
   rfxbuilder->paramw_rest_label = widget_opts.last_label;
 
@@ -2671,7 +2671,7 @@ LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder) {
     }
   }
 
-  combo = lives_standard_combo_new(_("When:         "), FALSE, whenlist, LIVES_BOX(dialog_vbox), NULL);
+  combo = lives_standard_combo_new(_("When:         "), whenlist, LIVES_BOX(dialog_vbox), NULL);
   lives_list_free(whenlist);
 
   rfxbuilder->trigger_when_entry = lives_combo_get_entry(LIVES_COMBO(combo));
@@ -4028,7 +4028,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
   if (copy_mode) {
     lives_window_set_title(LIVES_WINDOW(dialog), _("Copy RFX Script"));
 
-    status_combo = lives_standard_combo_new(_("_From type:    "), TRUE, status_list, LIVES_BOX(hbox), NULL);
+    status_combo = lives_standard_combo_new(_("_From type:    "), status_list, LIVES_BOX(hbox), NULL);
 
     status_combo_entry = lives_combo_get_entry(LIVES_COMBO(status_combo));
 

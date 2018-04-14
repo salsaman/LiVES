@@ -1914,7 +1914,7 @@ void create_LiVES(void) {
 
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->vps_label, FALSE, FALSE, 0);
 
-  mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL, FALSE, 1, -FPS_MAX, FPS_MAX, 0.1, 0.01, 3,
+  mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL, 1, -FPS_MAX, FPS_MAX, 0.1, 0.01, 3,
                              LIVES_BOX(mainw->framebar), _("Vary the video speed"));
 
   lives_widget_set_sensitive(mainw->spinbutton_pb_fps, FALSE);
@@ -2041,7 +2041,7 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   widget_opts.apply_theme = FALSE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
-  mainw->spinbutton_start = lives_standard_spin_button_new(NULL, FALSE, 0., 0., 0., 1., 100., 0,
+  mainw->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 100., 0,
                             LIVES_BOX(hbox3), _("The first selected frame in this clip"));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = dpw;
@@ -2075,7 +2075,7 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   widget_opts.apply_theme = FALSE;
-  mainw->spinbutton_end = lives_standard_spin_button_new(NULL, FALSE, 0., 0., 0., 1., 100., 0,
+  mainw->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 100., 0,
                           LIVES_BOX(hbox3), _("The last selected frame in this clip"));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = dpw;
@@ -3474,7 +3474,7 @@ void make_preview_box(void) {
 
   lives_widget_set_bg_color(mainw->preview_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-  mainw->preview_spinbutton = lives_standard_spin_button_new(NULL, FALSE, (mainw->current_file > -1 && cfile->frames > 0.) ? 1. : 0.,
+  mainw->preview_spinbutton = lives_standard_spin_button_new(NULL, (mainw->current_file > -1 && cfile->frames > 0.) ? 1. : 0.,
                               (mainw->current_file > -1 && cfile->frames > 0.) ? 1. : 0.,
                               (mainw->current_file > -1 && cfile->frames > 0.) ? cfile->frames : 0.,
                               1., 10., 0,
@@ -3488,13 +3488,13 @@ void make_preview_box(void) {
 
   lives_entry_set_width_chars(LIVES_ENTRY(mainw->preview_spinbutton), PREVSBWIDTHCHARS);
 
-  radiobutton_free = lives_standard_radio_button_new((tmp = lives_strdup(_("_Free"))), TRUE, &radiobutton_group,
+  radiobutton_free = lives_standard_radio_button_new((tmp = lives_strdup(_("_Free"))), &radiobutton_group,
                      LIVES_BOX(mainw->preview_hbox),
                      (tmp2 = lives_strdup(_("Free choice of frame number"))));
   lives_free(tmp);
   lives_free(tmp2);
 
-  radiobutton_start = lives_standard_radio_button_new((tmp = lives_strdup(_("_Start"))), TRUE, &radiobutton_group,
+  radiobutton_start = lives_standard_radio_button_new((tmp = lives_strdup(_("_Start"))), &radiobutton_group,
                       LIVES_BOX(mainw->preview_hbox),
                       (tmp2 = lives_strdup(_("Frame number is linked to start frame"))));
   lives_free(tmp);
@@ -3502,14 +3502,14 @@ void make_preview_box(void) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_start), mainw->prv_link == PRV_START);
 
-  radiobutton_end = lives_standard_radio_button_new((tmp = lives_strdup(_("_End"))), TRUE, &radiobutton_group, LIVES_BOX(mainw->preview_hbox),
+  radiobutton_end = lives_standard_radio_button_new((tmp = lives_strdup(_("_End"))), &radiobutton_group, LIVES_BOX(mainw->preview_hbox),
                     (tmp2 = lives_strdup(_("Frame number is linked to end frame"))));
   lives_free(tmp);
   lives_free(tmp2);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_end), mainw->prv_link == PRV_END);
 
-  radiobutton_ptr = lives_standard_radio_button_new((tmp = lives_strdup(_("_Pointer"))), TRUE, &radiobutton_group,
+  radiobutton_ptr = lives_standard_radio_button_new((tmp = lives_strdup(_("_Pointer"))), &radiobutton_group,
                     LIVES_BOX(mainw->preview_hbox),
                     (tmp2 = lives_strdup(_("Frame number is linked to playback pointer"))));
   lives_free(tmp);

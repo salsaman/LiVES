@@ -1,6 +1,6 @@
 // framedraw.c
 // LiVES
-// (c) G. Finch (salsaman+lives@gmail.com) 2002 - 2017
+// (c) G. Finch (salsaman+lives@gmail.com) 2002 - 2018
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 // functions for the 'framedraw' widget - lets users draw on frames :-)
@@ -233,7 +233,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   mainw->framedraw_spinbutton = lives_standard_spin_button_new(_("_Frame"),
-                                TRUE, start, start, end, 1., 10., 0, LIVES_BOX(hbox), NULL);
+                                start, start, end, 1., 10., 0, LIVES_BOX(hbox), NULL);
 
   spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton));
 

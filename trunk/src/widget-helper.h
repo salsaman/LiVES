@@ -34,7 +34,7 @@ typedef enum {
 #define W_PACKING_WIDTH  10 // packing width for widgets with labels
 #define W_PACKING_HEIGHT 10 // packing height for widgets
 #define W_BORDER_WIDTH   10 // default border width
-#define W_FILL_LENGTH    60 // default extra fill size
+#define W_FILL_LENGTH    200 // default extra fill size
 
 #define ulong_random() lives_random()
 
@@ -744,16 +744,16 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *r
 
 LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invisible_outline);
 
-LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, boolean active, LiVESBox *, const char *tooltip);
-LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList **rbgroup,
+LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean active, LiVESBox *, const char *tooltip);
+LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList **rbgroup,
     LiVESBox *, const char *tooltip);
-LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_mnemonic, double val, double min,
+LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, double min,
     double max, double step, double page, int dp, LiVESBox *,
     const char *tooltip);
-LiVESWidget *lives_standard_combo_new(const char *labeltext, boolean use_mnemonic, LiVESList *list, LiVESBox *,
+LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, LiVESBox *,
                                       const char *tooltip);
 
-LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, const char *txt, int dispwidth, int maxchars, LiVESBox *,
+LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars, LiVESBox *,
                                       const char *tooltip);
 
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);

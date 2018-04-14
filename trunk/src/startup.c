@@ -1,6 +1,6 @@
 // startup.c
 // LiVES
-// (c) G. Finch 2010 - 2017 <salsaman+lives@gmail.com>
+// (c) G. Finch 2010 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -277,7 +277,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  radiobutton0 = lives_standard_radio_button_new(_("Use _pulse audio player"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton0 = lives_standard_radio_button_new(_("Use _pulse audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_PULSE;
 
@@ -296,7 +296,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  radiobutton1 = lives_standard_radio_button_new(_("Use _jack audio player"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton1 = lives_standard_radio_button_new(_("Use _jack audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   if (prefs->audio_player == AUD_PLAYER_JACK || !capable->has_pulse_audio || prefs->audio_player == -1) {
     prefs->audio_player = AUD_PLAYER_JACK;
@@ -314,7 +314,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton2 = lives_standard_radio_button_new(_("Use _sox audio player"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+    radiobutton2 = lives_standard_radio_button_new(_("Use _sox audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_SOX;
 
@@ -332,7 +332,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton3 = lives_standard_radio_button_new(_("Use _mplayer audio player"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+    radiobutton3 = lives_standard_radio_button_new(_("Use _mplayer audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_MPLAYER;
 
@@ -350,7 +350,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton4 = lives_standard_radio_button_new(_("Use _mplayer2 audio player"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+    radiobutton4 = lives_standard_radio_button_new(_("Use _mplayer2 audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_MPLAYER2;
 
@@ -959,7 +959,7 @@ void do_startup_interface_query(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  lives_standard_radio_button_new(_("Start in _Clip Edit mode"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+  lives_standard_radio_button_new(_("Start in _Clip Edit mode"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   label = lives_standard_label_new(_("This is the best choice for simple editing tasks and for VJs\n"));
 
@@ -967,7 +967,7 @@ void do_startup_interface_query(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  radiobutton = lives_standard_radio_button_new(_("Start in _Multitrack mode"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton = lives_standard_radio_button_new(_("Start in _Multitrack mode"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   label = lives_standard_label_new(_("This is a better choice for complex editing tasks involving multiple clips.\n"));
 

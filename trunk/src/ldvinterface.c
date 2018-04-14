@@ -45,7 +45,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   lives_box_pack_start(LIVES_BOX(hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
 
   dvgrabw->dirname = lives_filename_to_utf8(lives_get_current_dir(), -1, NULL, NULL, NULL);
-  dvgrabw->dirent = lives_standard_entry_new(NULL, FALSE, dvgrabw->dirname, -1, PATH_MAX,
+  dvgrabw->dirent = lives_standard_entry_new(NULL, dvgrabw->dirname, -1, PATH_MAX,
                     LIVES_BOX(hbox), NULL);
 
   lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)dvgrabw->dirent);
@@ -55,7 +55,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  dvgrabw->filent = lives_standard_entry_new(_("File_name:"), TRUE, type == CAM_FORMAT_DV ? "dvgrab-" : "hdvgrab-", -1, -1, LIVES_BOX(hbox),
+  dvgrabw->filent = lives_standard_entry_new(_("File_name:"), type == CAM_FORMAT_DV ? "dvgrab-" : "hdvgrab-", -1, -1, LIVES_BOX(hbox),
                     NULL);
 
   if (type == CAM_FORMAT_DV) label = lives_standard_label_new("%d.dv");
@@ -68,7 +68,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  dvgrabw->split = lives_standard_check_button_new(_("_Split into scenes"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
+  dvgrabw->split = lives_standard_check_button_new(_("_Split into scenes"), FALSE, LIVES_BOX(hbox), NULL);
 
   // TODO - widget_opts.editable
   dvgrabw->status_entry = lives_entry_new();

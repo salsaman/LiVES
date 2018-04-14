@@ -27,7 +27,7 @@ void add_suffix_check(LiVESBox *box, const char *ext) {
 
   if (ext == NULL) ltext = lives_strdup(_("Let LiVES set the _file extension"));
   else ltext = lives_strdup_printf(_("Let LiVES set the _file extension (.%s)"), ext);
-  checkbutton = lives_standard_check_button_new(ltext, TRUE, mainw->fx1_bool, box, NULL);
+  checkbutton = lives_standard_check_button_new(ltext, mainw->fx1_bool, box, NULL);
   lives_free(ltext);
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_boolean_toggled),
@@ -38,7 +38,7 @@ void add_suffix_check(LiVESBox *box, const char *ext) {
 static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
   char *tmp, *tmp2;
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
-  LiVESWidget *checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Apply _Deinterlace"))), TRUE,  mainw->open_deint,
+  LiVESWidget *checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Apply _Deinterlace"))), mainw->open_deint,
                              LIVES_BOX(hbox),
                              (tmp2 = lives_strdup(_("If this is set, frames will be deinterlaced as they are imported."))));
   lives_free(tmp);
@@ -599,7 +599,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-    checkbutton = lives_standard_check_button_new(labeltext, TRUE, FALSE, LIVES_BOX(hbox), NULL);
+    checkbutton = lives_standard_check_button_new(labeltext, FALSE, LIVES_BOX(hbox), NULL);
 
     lives_free(labeltext);
 
@@ -614,7 +614,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     checkbutton2 = lives_standard_check_button_new
-                   ((tmp = lives_strdup(_("Use _letterboxing to maintain aspect ratio (optional)"))), TRUE, FALSE, LIVES_BOX(hbox),
+                   ((tmp = lives_strdup(_("Use _letterboxing to maintain aspect ratio (optional)"))), FALSE, LIVES_BOX(hbox),
                     (tmp2 = lives_strdup(_("Draw black rectangles either above or to the sides of the image, to prevent it from stretching."))));
 
     lives_free(tmp);
@@ -789,7 +789,7 @@ _insertw *create_insert_dialog(void) {
   lives_box_pack_start(LIVES_BOX(hbox1), hbox, FALSE, FALSE, widget_opts.packing_width);
 
   insertw->spinbutton_times = lives_standard_spin_button_new(_("_Number of times to insert"),
-                              TRUE, 1., 1., 10000., 1., 10., 0., LIVES_BOX(hbox), NULL);
+                              1., 1., 10000., 1., 10., 0., LIVES_BOX(hbox), NULL);
 
   lives_widget_grab_focus(insertw->spinbutton_times);
 
@@ -799,7 +799,7 @@ _insertw *create_insert_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(hbox1), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-  insertw->fit_checkbutton = lives_standard_check_button_new(_("_Insert to fit audio"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
+  insertw->fit_checkbutton = lives_standard_check_button_new(_("_Insert to fit audio"), FALSE, LIVES_BOX(hbox), NULL);
 
   lives_widget_set_sensitive(LIVES_WIDGET(insertw->fit_checkbutton), cfile->achans > 0 && clipboard->achans == 0);
 
@@ -813,7 +813,7 @@ _insertw *create_insert_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
 
   radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Insert _before selection"))),
-                TRUE, &radiobutton1_group, LIVES_BOX(hbox),
+                &radiobutton1_group, LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Insert clipboard before selected frames"))));
 
   lives_free(tmp);
@@ -830,7 +830,7 @@ _insertw *create_insert_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
 
   radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Insert _after selection"))),
-                TRUE, &radiobutton1_group, LIVES_BOX(hbox),
+                &radiobutton1_group, LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Insert clipboard after selected frames"))));
 
   lives_table_attach(LIVES_TABLE(table), hbox, 0, 1, 1, 2,
@@ -843,10 +843,10 @@ _insertw *create_insert_dialog(void) {
 
   if (clipboard->achans == 0)
     insertw->with_sound = lives_standard_radio_button_new(_("Insert _with silence"),
-                          TRUE, &radiobutton2_group, LIVES_BOX(hbox), NULL);
+                          &radiobutton2_group, LIVES_BOX(hbox), NULL);
   else
     insertw->with_sound = lives_standard_radio_button_new(_("Insert _with sound"),
-                          TRUE, &radiobutton2_group, LIVES_BOX(hbox), NULL);
+                          &radiobutton2_group, LIVES_BOX(hbox), NULL);
 
   lives_table_attach(LIVES_TABLE(table), hbox, 2, 3, 0, 1,
                      (LiVESAttachOptions)(LIVES_FILL),
@@ -857,7 +857,7 @@ _insertw *create_insert_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
 
   insertw->without_sound = lives_standard_radio_button_new(_("Insert with_out sound"),
-                           TRUE, &radiobutton2_group, LIVES_BOX(hbox), NULL);
+                           &radiobutton2_group, LIVES_BOX(hbox), NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(insertw->without_sound),
                                  !((cfile->achans > 0 || clipboard->achans > 0) && mainw->ccpd_with_sound));
@@ -960,7 +960,7 @@ LiVESWidget *create_opensel_dialog(void) {
                      (LiVESAttachOptions)(0), 0, 0);
   lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
-  spinbutton = lives_standard_spin_button_new(NULL, FALSE, 0., 0., 1000000000., 1., 10., 2, NULL, NULL);
+  spinbutton = lives_standard_spin_button_new(NULL, 0., 0., 1000000000., 1., 10., 2, NULL, NULL);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_spin_value_changed),
@@ -970,7 +970,7 @@ LiVESWidget *create_opensel_dialog(void) {
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_EXPAND), widget_opts.packing_height * 4 + 2, 0);
 
-  spinbutton = lives_standard_spin_button_new(NULL, FALSE, 1000., 1., (double)LIVES_MAXINT, 1., 10., 0, NULL, NULL);
+  spinbutton = lives_standard_spin_button_new(NULL, 1000., 1., (double)LIVES_MAXINT, 1., 10., 0, NULL, NULL);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_spin_value_changed),
@@ -1064,13 +1064,13 @@ _entryw *create_location_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 2);
 
-  locw->entry = lives_standard_entry_new(type == 1 ? _("URL : ") : _("Youtube URL : "), FALSE, "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox),
+  locw->entry = lives_standard_entry_new(type == 1 ? _("URL : ") : _("Youtube URL : "), "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox),
                                          NULL);
 
   if (type == 1) {
     hbox = lives_hbox_new(FALSE, 0);
     checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Do not send bandwidth information"))),
-                  TRUE, prefs->no_bandwidth, LIVES_BOX(hbox),
+                  prefs->no_bandwidth, LIVES_BOX(hbox),
                   (tmp2 = lives_strdup(_("Try this setting if you are having problems getting a stream"))));
 
     lives_free(tmp);
@@ -1090,7 +1090,7 @@ _entryw *create_location_dialog(int type) {
 
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
-    locw->dir_entry = lives_standard_entry_new(_("Download to _Directory : "), TRUE, mainw->vid_dl_dir,
+    locw->dir_entry = lives_standard_entry_new(_("Download to _Directory : "), mainw->vid_dl_dir,
                       STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
     lives_entry_set_editable(LIVES_ENTRY(locw->dir_entry), FALSE);
@@ -1107,7 +1107,7 @@ _entryw *create_location_dialog(int type) {
 
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
-    locw->name_entry = lives_standard_entry_new(_("Download _File Name : "), TRUE, "",
+    locw->name_entry = lives_standard_entry_new(_("Download _File Name : "), "",
                        STD_ENTRY_WIDTH - 6., PATH_MAX, LIVES_BOX(hbox), NULL);
 
     lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)locw->dir_entry);
@@ -1304,7 +1304,7 @@ _entryw *create_rename_dialog(int type) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 4);
 
-    checkbutton = lives_standard_check_button_new(_("Save extended colors"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
+    checkbutton = lives_standard_check_button_new(_("Save extended colors"), FALSE, LIVES_BOX(hbox), NULL);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(on_boolean_toggled),
@@ -1529,19 +1529,21 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     label_text = lives_strdup(_("Device:        fw:"));
   }
 
+  widget_opts.mnemonic_label = FALSE;
   if (type == LIVES_DEVICE_CD || type == LIVES_DEVICE_DVD || type == LIVES_DEVICE_VCD) {
-    spinbutton = lives_standard_spin_button_new(label_text, FALSE, mainw->fx1_val,
+    spinbutton = lives_standard_spin_button_new(label_text, mainw->fx1_val,
                  1., 256., 1., 10., 0,
                  LIVES_BOX(hbox), NULL);
   } else if (type == LIVES_DEVICE_INTERNAL) {
-    spinbutton = lives_standard_spin_button_new(label_text, FALSE, mainw->fx1_val,
+    spinbutton = lives_standard_spin_button_new(label_text, mainw->fx1_val,
                  5., 15., 1., 1., 0,
                  LIVES_BOX(hbox), NULL);
   } else {
-    spinbutton = lives_standard_spin_button_new(label_text, FALSE, 0.,
+    spinbutton = lives_standard_spin_button_new(label_text, 0.,
                  0., 31., 1., 1., 0,
                  LIVES_BOX(hbox), NULL);
   }
+  widget_opts.mnemonic_label = TRUE;
 
   lives_free(label_text);
 
@@ -1556,11 +1558,11 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * ph_mult);
 
     if (type == LIVES_DEVICE_DVD) {
-      spinbutton = lives_standard_spin_button_new(_("Chapter  "), FALSE, mainw->fx2_val,
+      spinbutton = lives_standard_spin_button_new(_("Chapter  "), mainw->fx2_val,
                    1., 1024., 1., 10., 0,
                    LIVES_BOX(hbox), NULL);
     } else {
-      spinbutton = lives_standard_spin_button_new(_("Channel  "), FALSE, 1.,
+      spinbutton = lives_standard_spin_button_new(_("Channel  "), 1.,
                    1., 69., 1., 1., 0,
                    LIVES_BOX(hbox), NULL);
 
@@ -1574,7 +1576,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
       hbox = lives_hbox_new(FALSE, widget_opts.packing_width * 5);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * ph_mult);
 
-      spinbutton = lives_standard_spin_button_new(_("Audio ID  "), FALSE, mainw->fx3_val,
+      spinbutton = lives_standard_spin_button_new(_("Audio ID  "), mainw->fx3_val,
                    DVD_AUDIO_CHAN_MIN, DVD_AUDIO_CHAN_MAX, 1., 1., 0,
                    LIVES_BOX(hbox), NULL);
 
@@ -1626,14 +1628,14 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
-    tvcardw->spinbuttoni = lives_standard_spin_button_new(_("Input number"), FALSE,
+    tvcardw->spinbuttoni = lives_standard_spin_button_new(_("Input number"),
                            0., 0., 16., 1., 1., 0,
                            LIVES_BOX(hbox), NULL);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
-    tvcardw->radiobuttond = lives_standard_radio_button_new(_("Use default width, height and FPS"), FALSE,
+    tvcardw->radiobuttond = lives_standard_radio_button_new(_("Use default width, height and FPS"),
                             &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(tvcardw->radiobuttond), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -1643,22 +1645,21 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
-    lives_standard_radio_button_new(NULL, FALSE,
-                                    &radiobutton_group, LIVES_BOX(hbox), NULL);
+    lives_standard_radio_button_new(NULL, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
-    tvcardw->spinbuttonw = lives_standard_spin_button_new(_("Width"), FALSE,
+    tvcardw->spinbuttonw = lives_standard_spin_button_new(_("Width"),
                            640., 4., 4096., 2., 2., 0,
                            LIVES_BOX(hbox), NULL);
 
     lives_widget_set_sensitive(tvcardw->spinbuttonw, FALSE);
 
-    tvcardw->spinbuttonh = lives_standard_spin_button_new(_("Height"), FALSE,
+    tvcardw->spinbuttonh = lives_standard_spin_button_new(_("Height"),
                            480., 4., 4096., 2., 2., 0,
                            LIVES_BOX(hbox), NULL);
 
     lives_widget_set_sensitive(tvcardw->spinbuttonh, FALSE);
 
-    tvcardw->spinbuttonf = lives_standard_spin_button_new(_("FPS"), FALSE,
+    tvcardw->spinbuttonf = lives_standard_spin_button_new(_("FPS"),
                            25., 1., FPS_MAX, 1., 10., 3,
                            LIVES_BOX(hbox), NULL);
 
@@ -1666,10 +1667,10 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
     hbox = lives_hbox_new(FALSE, 0);
 
-    tvcardw->combod = lives_standard_combo_new(_("_Driver"), TRUE, dlist, LIVES_BOX(hbox), NULL);
+    tvcardw->combod = lives_standard_combo_new(_("_Driver"), dlist, LIVES_BOX(hbox), NULL);
     lives_combo_set_active_index(LIVES_COMBO(tvcardw->combod), 0);
 
-    tvcardw->comboo = lives_standard_combo_new(_("_Output format"), TRUE, olist, LIVES_BOX(hbox), NULL);
+    tvcardw->comboo = lives_standard_combo_new(_("_Output format"), olist, LIVES_BOX(hbox), NULL);
 
     lives_widget_show_all(hbox);
     lives_box_pack_start(LIVES_BOX(tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
@@ -1790,15 +1791,14 @@ aud_dialog_t *create_audfade_dialog(int type) {
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width * 5);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  lives_standard_radio_button_new(label_text2, FALSE, &radiobutton_group,
-                                  LIVES_BOX(hbox), NULL);
+  lives_standard_radio_button_new(label_text2, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   if (label_text2 != NULL) lives_free(label_text2);
 
   max = cfile->laudio_time;
 
   widget_opts.swap_label = TRUE;
-  audd->time_spin = lives_standard_spin_button_new(_("seconds."), FALSE,
+  audd->time_spin = lives_standard_spin_button_new(_("seconds."),
                     max / 2. > DEF_AUD_FADE_SECS ? DEF_AUD_FADE_SECS : max / 2., .1, max, 1., 10., 2,
                     LIVES_BOX(hbox), NULL);
   widget_opts.swap_label = FALSE;
@@ -1806,7 +1806,7 @@ aud_dialog_t *create_audfade_dialog(int type) {
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width * 5);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  rb_sel = lives_standard_radio_button_new(_("selection"), FALSE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+  rb_sel = lives_standard_radio_button_new(_("selection"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   audd->is_sel = FALSE;
 
@@ -1893,19 +1893,19 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
   lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
-  commentsw->title_entry = lives_standard_entry_new(NULL, FALSE, cfile->title, STD_ENTRY_WIDTH, -1, NULL, NULL);
+  commentsw->title_entry = lives_standard_entry_new(NULL, cfile->title, STD_ENTRY_WIDTH, -1, NULL, NULL);
 
   lives_table_attach(LIVES_TABLE(table), commentsw->title_entry, 1, 2, 0, 1,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
-  commentsw->author_entry = lives_standard_entry_new(NULL, FALSE, cfile->author, STD_ENTRY_WIDTH, -1, NULL, NULL);
+  commentsw->author_entry = lives_standard_entry_new(NULL, cfile->author, STD_ENTRY_WIDTH, -1, NULL, NULL);
 
   lives_table_attach(LIVES_TABLE(table), commentsw->author_entry, 1, 2, 1, 2,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
-  commentsw->comment_entry = lives_standard_entry_new(NULL, FALSE, cfile->comment, STD_ENTRY_WIDTH, 250, NULL, NULL);
+  commentsw->comment_entry = lives_standard_entry_new(NULL, cfile->comment, STD_ENTRY_WIDTH, 250, NULL, NULL);
 
   lives_table_attach(LIVES_TABLE(table), commentsw->comment_entry, 1, 2, 3, 4,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
@@ -1920,7 +1920,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    commentsw->subt_checkbutton = lives_standard_check_button_new(_("Save _subtitles to file"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
+    commentsw->subt_checkbutton = lives_standard_check_button_new(_("Save _subtitles to file"), FALSE, LIVES_BOX(hbox), NULL);
 
     if (sfile->subt == NULL) {
       lives_widget_set_sensitive(commentsw->subt_checkbutton, FALSE);
@@ -1929,7 +1929,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    commentsw->subt_entry = lives_standard_entry_new(_("Subtitle file"), FALSE, NULL, SHORT_ENTRY_WIDTH, -1, LIVES_BOX(hbox), NULL);
+    commentsw->subt_entry = lives_standard_entry_new(_("Subtitle file"), NULL, SHORT_ENTRY_WIDTH, -1, LIVES_BOX(hbox), NULL);
 
     buttond = lives_standard_button_new_with_label(_("Browse..."));
 
@@ -2334,13 +2334,13 @@ _entryw *create_cds_dialog(int type) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    cdsw->entry = lives_standard_entry_new(_("Clip set _name"), TRUE, strlen(mainw->set_name) ? mainw->set_name : "",
+    cdsw->entry = lives_standard_entry_new(_("Clip set _name"), strlen(mainw->set_name) ? mainw->set_name : "",
                                            SHORT_ENTRY_WIDTH, 128, LIVES_BOX(hbox), NULL);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    checkbutton = lives_standard_check_button_new(_("_Auto reload next time"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
+    checkbutton = lives_standard_check_button_new(_("_Auto reload next time"), FALSE, LIVES_BOX(hbox), NULL);
 
     if ((type == 0 && prefs->ar_layout) || (type == 1 && !mainw->only_close)) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), TRUE);
@@ -2448,7 +2448,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Delete _Orphaned Clips"))), TRUE,
+  checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Delete _Orphaned Clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS), LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Delete any clips which are not currently loaded or part of a set"))));
 
@@ -2462,7 +2462,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = lives_standard_check_button_new(_("Clear _Backup Files from Closed Clips"), TRUE,
+  checkbutton = lives_standard_check_button_new(_("Clear _Backup Files from Closed Clips"),
                 !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_BFILES), LIVES_BOX(hbox), NULL);
 
 
@@ -2473,7 +2473,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = lives_standard_check_button_new(_("Remove Sets which have _Layouts but no Clips"), TRUE,
+  checkbutton = lives_standard_check_button_new(_("Remove Sets which have _Layouts but no Clips"),
                 (prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS), LIVES_BOX(hbox), NULL);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,

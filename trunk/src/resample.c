@@ -1224,21 +1224,21 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
     tmp = lives_strdup_printf("%d", (int)mainw->fx1_val);
 
-    combo_entry2 = lives_standard_entry_new(_("Rate (Hz) "), FALSE, tmp, 10, 6, LIVES_BOX(hbox2), NULL);
+    combo_entry2 = lives_standard_entry_new(_("Rate (Hz) "), tmp, 10, 6, LIVES_BOX(hbox2), NULL);
     lives_free(tmp);
 
     lives_editable_set_editable(LIVES_EDITABLE(combo_entry2), FALSE);
     lives_widget_set_can_focus(combo_entry2, FALSE);
 
     tmp = lives_strdup_printf("%d", (int)mainw->fx2_val);
-    combo_entry3 = lives_standard_entry_new(_("Channels"), FALSE, tmp, 6, 2, LIVES_BOX(hbox2), NULL);
+    combo_entry3 = lives_standard_entry_new(_("Channels"), tmp, 6, 2, LIVES_BOX(hbox2), NULL);
     lives_free(tmp);
 
     lives_editable_set_editable(LIVES_EDITABLE(combo_entry3), FALSE);
     lives_widget_set_can_focus(combo_entry3, FALSE);
 
     tmp = lives_strdup_printf("%d", (int)mainw->fx3_val);
-    combo_entry1 = lives_standard_entry_new(_("Sample Size "), FALSE, tmp, 6, 2, LIVES_BOX(hbox2), NULL);
+    combo_entry1 = lives_standard_entry_new(_("Sample Size "), tmp, 6, 2, LIVES_BOX(hbox2), NULL);
     lives_free(tmp);
 
     lives_editable_set_editable(LIVES_EDITABLE(combo_entry1), FALSE);
@@ -1253,12 +1253,12 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton_s1 = lives_standard_radio_button_new(_("Signed"), FALSE, &s1_group, LIVES_BOX(hbox), NULL);
+    radiobutton_s1 = lives_standard_radio_button_new(_("Signed"), &s1_group, LIVES_BOX(hbox), NULL);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton_u1 = lives_standard_radio_button_new(_("Unsigned"), FALSE, &s1_group, LIVES_BOX(hbox), NULL);
+    radiobutton_u1 = lives_standard_radio_button_new(_("Unsigned"), &s1_group, LIVES_BOX(hbox), NULL);
 
     aendian = mainw->fx4_val;
 
@@ -1280,12 +1280,12 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton_l1 = lives_standard_radio_button_new(_("Little Endian"), FALSE, &e1_group, LIVES_BOX(hbox), NULL);
+    radiobutton_l1 = lives_standard_radio_button_new(_("Little Endian"), &e1_group, LIVES_BOX(hbox), NULL);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton_b1 = lives_standard_radio_button_new(_("Big Endian"), FALSE, &e1_group, LIVES_BOX(hbox), NULL);
+    radiobutton_b1 = lives_standard_radio_button_new(_("Big Endian"), &e1_group, LIVES_BOX(hbox), NULL);
 
     if (aendian & AFORM_BIG_ENDIAN) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_b1), TRUE);
@@ -1318,7 +1318,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       resaudw->aud_hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(vbox2), resaudw->aud_hbox, FALSE, FALSE, 0);
 
-      resaudw->aud_checkbutton = lives_standard_check_button_new(_("_Enable audio"), TRUE, FALSE, LIVES_BOX(resaudw->aud_hbox), NULL);
+      resaudw->aud_checkbutton = lives_standard_check_button_new(_("_Enable audio"), FALSE, LIVES_BOX(resaudw->aud_hbox), NULL);
 
       if (rdet != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), rdet->achans > 0);
       else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), prefs->mt_def_achans > 0);
@@ -1335,7 +1335,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     lives_container_set_border_width(LIVES_CONTAINER(hbox), widget_opts.border_width);
 
-    combo4 = lives_standard_combo_new(_("Rate (Hz) "), type >= 3 && type != 11, rate, LIVES_BOX(hbox), NULL);
+    combo4 = lives_standard_combo_new(_("Rate (Hz) "), rate, LIVES_BOX(hbox), NULL);
 
     resaudw->entry_arate = lives_combo_get_entry(LIVES_COMBO(combo4));
 
@@ -1349,7 +1349,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_entry_set_text(LIVES_ENTRY(resaudw->entry_arate), tmp);
     lives_free(tmp);
 
-    combo5 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Channels")) : (_("Channels"))), type >= 3 && type != 11,
+    combo5 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Channels")) : (_("Channels"))),
                                       channels, LIVES_BOX(hbox), NULL);
 
     if (type == 7) lives_widget_set_sensitive(combo5, FALSE);
@@ -1369,7 +1369,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       lives_widget_set_sensitive(combo5, FALSE);
     }
 
-    combo6 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Sample Size")) : (_("Sample Size"))), type >= 3 && type != 11,
+    combo6 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Sample Size")) : (_("Sample Size"))),
                                       sampsize, LIVES_BOX(hbox), NULL);
 
     if (type == 7) lives_widget_set_sensitive(combo6, FALSE);
@@ -1399,7 +1399,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_signed = lives_standard_radio_button_new(_("Signed"), FALSE, &s2_group, LIVES_BOX(hbox), NULL);
+    resaudw->rb_signed = lives_standard_radio_button_new(_("Signed"), &s2_group, LIVES_BOX(hbox), NULL);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed), TRUE);
     if (type == 7 || is_8bit) lives_widget_set_sensitive(resaudw->rb_signed, FALSE);
@@ -1407,7 +1407,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_unsigned = lives_standard_radio_button_new(_("Unsigned"), FALSE, &s2_group, LIVES_BOX(hbox), NULL);
+    resaudw->rb_unsigned = lives_standard_radio_button_new(_("Unsigned"), &s2_group, LIVES_BOX(hbox), NULL);
 
     if (type == 7 || !is_8bit) lives_widget_set_sensitive(resaudw->rb_unsigned, FALSE);
 
@@ -1431,14 +1431,14 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_littleend = lives_standard_radio_button_new(_("Little Endian"), FALSE, &e2_group, LIVES_BOX(hbox), NULL);
+    resaudw->rb_littleend = lives_standard_radio_button_new(_("Little Endian"), &e2_group, LIVES_BOX(hbox), NULL);
 
     if (type == 7) lives_widget_set_sensitive(resaudw->rb_littleend, FALSE);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_bigend = lives_standard_radio_button_new(_("Big Endian"), FALSE, &e2_group, LIVES_BOX(hbox), NULL);
+    resaudw->rb_bigend = lives_standard_radio_button_new(_("Big Endian"), &e2_group, LIVES_BOX(hbox), NULL);
 
     if (type == 7) lives_widget_set_sensitive(resaudw->rb_bigend, FALSE);
 
@@ -1466,7 +1466,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_container_add(LIVES_CONTAINER(frame), hbox);
     lives_container_set_border_width(LIVES_CONTAINER(hbox), widget_opts.border_width);
 
-    resaudw->fps_spinbutton = lives_standard_spin_button_new(_("_Frames Per Second "), TRUE,
+    resaudw->fps_spinbutton = lives_standard_spin_button_new(_("_Frames Per Second "),
                               prefs->default_fps, 1., FPS_MAX, 1., 1., 3, LIVES_BOX(hbox), NULL);
   }
 
@@ -1477,19 +1477,19 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
     if (type != 6 && type != 7) {
-      radiobutton = lives_standard_radio_button_new(_("Record for maximum:  "), FALSE, &rbgroup, LIVES_BOX(hbox), NULL);
+      radiobutton = lives_standard_radio_button_new(_("Record for maximum:  "), &rbgroup, LIVES_BOX(hbox), NULL);
 
-      resaudw->hour_spinbutton = lives_standard_spin_button_new(_(" hours  "), FALSE, hours,
+      resaudw->hour_spinbutton = lives_standard_spin_button_new(_(" hours  "), hours,
                                  0., hours > 23 ? hours : 23, 1., 1., 0, LIVES_BOX(hbox), NULL);
 
-      resaudw->minute_spinbutton = lives_standard_spin_button_new(_(" minutes  "), FALSE, mins, 0., 59., 1., 1., 0, LIVES_BOX(hbox), NULL);
+      resaudw->minute_spinbutton = lives_standard_spin_button_new(_(" minutes  "), mins, 0., 59., 1., 1., 0, LIVES_BOX(hbox), NULL);
 
-      resaudw->second_spinbutton = lives_standard_spin_button_new(_(" seconds  "), FALSE, secs, 0., 59., 1., 1., 0, LIVES_BOX(hbox), NULL);
+      resaudw->second_spinbutton = lives_standard_spin_button_new(_(" seconds  "), secs, 0., 59., 1., 1., 0, LIVES_BOX(hbox), NULL);
 
       hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-      resaudw->unlim_radiobutton = lives_standard_radio_button_new(_("Unlimited"), FALSE, &rbgroup, LIVES_BOX(hbox), NULL);
+      resaudw->unlim_radiobutton = lives_standard_radio_button_new(_("Unlimited"), &rbgroup, LIVES_BOX(hbox), NULL);
 
       lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                            LIVES_GUI_CALLBACK(on_rb_audrec_time_toggled),
@@ -1638,12 +1638,12 @@ void create_new_pb_speed(short type) {
 
   if (type == 2) {
     add_fill_to_box(LIVES_BOX(hbox));
-    spinbutton_pb_speed = lives_standard_spin_button_new(NULL, FALSE, cfile->fps, 1., FPS_MAX, .01, .1, 3, LIVES_BOX(hbox), NULL);
+    spinbutton_pb_speed = lives_standard_spin_button_new(NULL, cfile->fps, 1., FPS_MAX, .01, .1, 3, LIVES_BOX(hbox), NULL);
     add_fill_to_box(LIVES_BOX(hbox));
   } else {
-    radiobutton1 = lives_standard_radio_button_new(NULL, FALSE, &rbgroup, LIVES_BOX(hbox), NULL);
+    radiobutton1 = lives_standard_radio_button_new(NULL, &rbgroup, LIVES_BOX(hbox), NULL);
 
-    spinbutton_pb_speed = lives_standard_spin_button_new(NULL, FALSE, cfile->fps, 1., FPS_MAX, .01, .1, 3, LIVES_BOX(hbox), NULL);
+    spinbutton_pb_speed = lives_standard_spin_button_new(NULL, cfile->fps, 1., FPS_MAX, .01, .1, 3, LIVES_BOX(hbox), NULL);
 
     label2 = lives_standard_label_new_with_mnemonic_widget(_("OR enter the desired clip length in _seconds"), NULL);
     lives_box_pack_start(LIVES_BOX(vbox), label2, TRUE, TRUE, widget_opts.packing_height);
@@ -1651,9 +1651,9 @@ void create_new_pb_speed(short type) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton2 = lives_standard_radio_button_new(NULL, FALSE, &rbgroup, LIVES_BOX(hbox), NULL);
+    radiobutton2 = lives_standard_radio_button_new(NULL, &rbgroup, LIVES_BOX(hbox), NULL);
 
-    spinbutton_pb_time = lives_standard_spin_button_new(NULL, FALSE,
+    spinbutton_pb_time = lives_standard_spin_button_new(NULL,
                          (double)((int)(cfile->frames / cfile->fps * 100.)) / 100.,
                          1. / FPS_MAX, cfile->frames, 1., 10., 2, LIVES_BOX(hbox), NULL);
 
@@ -1664,7 +1664,7 @@ void create_new_pb_speed(short type) {
 
   ca_hbox = lives_hbox_new(FALSE, 0);
   change_audio_speed = lives_standard_check_button_new
-                       (_("Change the _audio speed as well"), TRUE, FALSE, LIVES_BOX(ca_hbox), NULL);
+                       (_("Change the _audio speed as well"), FALSE, LIVES_BOX(ca_hbox), NULL);
 
   lives_box_pack_start(LIVES_BOX(vbox), ca_hbox, TRUE, TRUE, widget_opts.packing_height);
 

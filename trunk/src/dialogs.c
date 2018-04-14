@@ -109,13 +109,12 @@ static void add_xlays_widget(LiVESBox *box) {
 }
 
 
-
 void add_warn_check(LiVESBox *box, int warn_mask_number) {
   LiVESWidget *checkbutton;
 
   checkbutton = lives_standard_check_button_new(
                   _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
-                  TRUE, FALSE, LIVES_BOX(box), NULL);
+                  FALSE, LIVES_BOX(box), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_warn_mask_toggled),

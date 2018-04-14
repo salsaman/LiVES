@@ -7443,7 +7443,7 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
 }
 
 
-LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, boolean active, LiVESBox *box,
+LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean active, LiVESBox *box,
     const char *tooltip) {
   LiVESWidget *checkbutton = NULL;
 
@@ -7462,7 +7462,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
     eventbox = lives_event_box_new();
     if (tooltip != NULL) lives_tooltips_copy(eventbox, checkbutton);
 
-    if (use_mnemonic) {
+    if (widget_opts.mnemonic_label) {
       label = lives_standard_label_new_with_mnemonic_widget(labeltext, checkbutton);
     } else label = lives_standard_label_new(labeltext);
 
@@ -7512,8 +7512,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 }
 
 
-LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList **rbgroup,
-    LiVESBox *box, const char *tooltip) {
+LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList **rbgroup, LiVESBox *box, const char *tooltip) {
   LiVESWidget *radiobutton = NULL;
 
   // pack a themed check button into box
@@ -7530,7 +7529,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
   widget_opts.last_label = NULL;
 
   if (labeltext != NULL) {
-    if (use_mnemonic) {
+    if (widget_opts.mnemonic_label) {
       label = lives_standard_label_new_with_mnemonic_widget(labeltext, radiobutton);
     } else label = lives_standard_label_new(labeltext);
 
@@ -7591,7 +7590,7 @@ size_t calc_spin_button_width(double min, double max, int dp) {
 }
 
 
-LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_mnemonic, double val, double min,
+LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, double min,
     double max, double step, double page, int dp, LiVESBox *box,
     const char *tooltip) {
   LiVESWidget *spinbutton = NULL;
@@ -7624,7 +7623,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   widget_opts.last_label = NULL;
 
   if (labeltext != NULL) {
-    if (use_mnemonic) {
+    if (widget_opts.mnemonic_label) {
       label = lives_standard_label_new_with_mnemonic_widget(labeltext, spinbutton);
     } else label = lives_standard_label_new(labeltext);
 
@@ -7671,8 +7670,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
 }
 
 
-LiVESWidget *lives_standard_combo_new(const char *labeltext, boolean use_mnemonic, LiVESList *list, LiVESBox *box,
-                                      const char *tooltip) {
+LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, LiVESBox *box, const char *tooltip) {
   LiVESWidget *combo = NULL;
 
   // pack a themed combo box into box
@@ -7690,7 +7688,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, boolean use_mnemoni
   widget_opts.last_label = NULL;
 
   if (labeltext != NULL) {
-    if (use_mnemonic) {
+    if (widget_opts.mnemonic_label) {
       label = lives_standard_label_new_with_mnemonic_widget(labeltext, LIVES_WIDGET(entry));
     } else label = lives_standard_label_new(labeltext);
 
@@ -7749,7 +7747,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, boolean use_mnemoni
 }
 
 
-LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, const char *txt, int dispwidth, int maxchars,
+LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars,
                                       LiVESBox *box, const char *tooltip) {
   LiVESWidget *entry = NULL;
   LiVESWidget *label = NULL;
@@ -7770,7 +7768,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
   widget_opts.last_label = NULL;
 
   if (labeltext != NULL) {
-    if (use_mnemonic) {
+    if (widget_opts.mnemonic_label) {
       label = lives_standard_label_new_with_mnemonic_widget(labeltext, entry);
     } else label = lives_standard_label_new(labeltext);
 
@@ -7779,8 +7777,6 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
     if (tooltip != NULL) lives_tooltips_copy(label, entry);
   } else {
     if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
-      lives_entry_set_alignment(LIVES_ENTRY(entry), 0.5);
-    } else if (widget_opts.justify != LIVES_JUSTIFY_RIGHT) {
       lives_entry_set_alignment(LIVES_ENTRY(entry), 0.5);
     }
   }
@@ -8241,21 +8237,21 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, const char *name,
 
   lives_box_pack_start(LIVES_BOX(parent), labelcname, FALSE, FALSE, (int)(4.*widget_opts.scale));
 
-  spinbutton_red = lives_standard_spin_button_new((tmp = lives_strdup(_("_Red"))), TRUE, rgba->red / 255., 0., 255., 1., 1., 0,
+  spinbutton_red = lives_standard_spin_button_new((tmp = lives_strdup(_("_Red"))), rgba->red / 255., 0., 255., 1., 1., 0,
                    (LiVESBox *)parent, (tmp2 = lives_strdup(_("The red value (0 - 255)"))));
   lives_free(tmp);
   lives_free(tmp2);
-  spinbutton_green = lives_standard_spin_button_new((tmp = lives_strdup(_("_Green"))), TRUE, rgba->green / 255., 0., 255., 1., 1., 0,
+  spinbutton_green = lives_standard_spin_button_new((tmp = lives_strdup(_("_Green"))), rgba->green / 255., 0., 255., 1., 1., 0,
                      (LiVESBox *)parent, (tmp2 = lives_strdup(_("The green value (0 - 255)"))));
   lives_free(tmp);
   lives_free(tmp2);
-  spinbutton_blue = lives_standard_spin_button_new((tmp = lives_strdup(_("_Blue"))), TRUE, rgba->blue / 255., 0., 255., 1., 1., 0,
+  spinbutton_blue = lives_standard_spin_button_new((tmp = lives_strdup(_("_Blue"))), rgba->blue / 255., 0., 255., 1., 1., 0,
                     (LiVESBox *)parent, (tmp2 = lives_strdup(_("The blue value (0 - 255)"))));
   lives_free(tmp);
   lives_free(tmp2);
 
   if (use_alpha) {
-    spinbutton_alpha = lives_standard_spin_button_new((tmp = lives_strdup(_("_Alpha"))), TRUE, rgba->alpha / 255., 0., 255., 1., 1., 0,
+    spinbutton_alpha = lives_standard_spin_button_new((tmp = lives_strdup(_("_Alpha"))), rgba->alpha / 255., 0., 255., 1., 1., 0,
                        (LiVESBox *)parent, (tmp2 = lives_strdup(_("The alpha value (0 - 255)"))));
     lives_free(tmp);
     lives_free(tmp2);
@@ -9185,8 +9181,11 @@ LiVESWidget *add_vsep_to_box(LiVESBox *box) {
 
 
 LiVESWidget *add_fill_to_box(LiVESBox *box) {
-  LiVESWidget *widget = lives_hbox_new(FALSE, 0);
-
+#ifdef SHOW_FILL
+  LiVESWidget *widget = lives_label_new("fill");
+#else
+  LiVESWidget *widget = lives_label_new("");
+#endif
   if (LIVES_IS_HBOX(box)) {
     if (widget_opts.expand == LIVES_EXPAND_EXTRA) {
       lives_box_pack_start(box, widget, TRUE, TRUE, widget_opts.filler_len / 2);

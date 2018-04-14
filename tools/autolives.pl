@@ -31,6 +31,7 @@ else {
 $remote_host="localhost";
 $remote_port=49999; #command port to app
 $local_port=49998; #status port from app
+$notify_port=49997; #notify port from app
 
 if (defined($ARGV[0])) {
     $remote_host=$ARGV[0];
@@ -51,7 +52,7 @@ else {
     $sendOMC="sendOSC -h $remote_host $remote_port";
 }
 
-
+print "autolives starting...\n";
 
 ###################
 # ready our listener
@@ -70,11 +71,26 @@ if ($remote_host eq "localhost") {
     $my_ip_addr="localhost";
 }
 
+#$noty = 1;
+
+print "Opening status port UDP $local_port on $my_ip_addr...\n";
+
 
 my $ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
         LocalAddr => $my_ip_addr)
     or die "error creating UDP listener for $my_ip_addr  $@\n";
 $s->add($ip1);
+
+print "Status port ready.\n";
+
+
+if ($noty) {
+    print "Opening notify port UDP $local_port on $my_ip_addr...\n";
+    my $ip2=IO::Socket::INET->new(LocalPort => $notify_port, Proto=>'udp',
+				  LocalAddr => $my_ip_addr)
+	or die "error creating UDP notification listener for $my_ip_addr  $@\n";
+    $s->add($ip2);
+}
 
 
 $timeout=1;
@@ -84,6 +100,8 @@ $timeout=1;
 #################################################################
 # start sending OMC commands
 
+print "Beggining OMC handshake...\n";
+
 if ($^O eq "MSWin32") {
     `$sendOMC /lives/open_status_socket s $my_ip_addr i $local_port`;
 }
@@ -91,6 +109,8 @@ else {
     `$sendOMC /lives/open_status_socket,$my_ip_addr,$local_port`;
 }
 
+
+print "Sent request to open status socket. Sending ping.\n";
 
 `$sendOMC /lives/ping`;
 my $retmsg=&get_newmsg;
@@ -142,6 +162,15 @@ if (!$numclips) {
     exit 3;
 }
 
+if ($noty) {
+    if ($^O eq "MSWin32") {
+	`$sendOMC /lives/open_notify_socket s $my_ip_addr i $notify_port`;
+    }
+    else {
+	`$sendOMC /lives/open_notify_socket,$my_ip_addr,$notify_port`;
+    }
+}
+
 
 # TODO - check if app is playing
 
@@ -151,7 +180,15 @@ if (!$numclips) {
 # switch clips randomly
 
 while (1) {
-    sleep 1;
+    if ($noty) {
+	for ($ii=0;$ii<4;$ii++) {
+	    get_notify();
+	}
+    }
+    else {
+	sleep 1;
+    }
+    
     $action=int(rand(18))+1;
     
     if ($action<6) {
@@ -231,14 +268,22 @@ exit 0;
 
 sub get_newmsg {
     my $newmsg;
-    foreach $server($s->can_read($timeout)){
-	$server->recv($newmsg,1024);
-	my ($rport,$ripaddr) = sockaddr_in($server->peername);
+    while (1) {
+	foreach $server($s->can_read($timeout)){
+	    $server->recv($newmsg,1024);
+	    ($rport,$ripaddr) = sockaddr_in($server->peername);
+	    ($lport,$lipaddr) = sockaddr_in($server->sockname);
+	    #print "check $lport $local_port\n";
+
+	    next if ($lport != $local_port);
 	
-	# TODO - check from address is our host
-	#print "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
+	    # TODO - check from address is our host
+	    #print "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
 	
-	last;
+	    last;
+	}
+	#print "OK $lport $local_port : $newmsg\n";
+	last if ($lport == $local_port);
     }
     # remove terminating NULL
     $newmsg=substr($newmsg,0,length($newmsg)-1);
@@ -247,7 +292,30 @@ sub get_newmsg {
 }
 
 
+sub get_notify {
+    my $newmsg;
+    while (1) {
+	foreach $server($s->can_read()){
+	    $server->recv($newmsg,1024);
+	    ($rport,$ripaddr) = sockaddr_in($server->peername);
+	    ($lport,$lipaddr) = sockaddr_in($server->sockname);
+	    #print "check $lport $notify_port $newmsg\n";
 
+	    next if ($lport != $notify_port);
+	
+	    # TODO - check from address is our host
+	    #print "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
+	
+	    last;
+	}
+	last if ($lport == $notify_port && $newmsg =~ /^32768\|(.*)/);
+    }
+    # remove terminating NULL
+    $newmsg=substr($newmsg,0,length($newmsg)-1);
+    chomp ($newmsg);
+    #print "notify message = $newmsg\n";
+    return $newmsg;
+}
 
 
 sub location {

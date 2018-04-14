@@ -40,7 +40,6 @@ typedef struct {
 
 lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt);
 
-
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *entry;
@@ -64,7 +63,6 @@ typedef struct __insertw {
 
 _insertw *create_insert_dialog(void);
 
-
 typedef struct __commentsw {
   LiVESWidget *comments_dialog;
   LiVESWidget *title_entry;
@@ -76,7 +74,6 @@ typedef struct __commentsw {
 
 _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename);
 
-
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *clear_button;
@@ -87,13 +84,11 @@ typedef struct {
 
 text_window *create_text_window(const char *title_part, const char *text, LiVESTextBuffer *);
 
-
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *time_spin;
   boolean is_sel;
 } aud_dialog_t;
-
 
 typedef struct {
   boolean use_advanced;
@@ -121,7 +116,6 @@ typedef struct {
 #define LIVES_FILE_SELECTION_VIDEO_RANGE 4
 #define LIVES_FILE_SELECTION_IMAGE_ONLY 5
 
-
 aud_dialog_t *create_audfade_dialog(int type);
 LiVESWidget *create_combo_dialog(int type, livespointer user_data);
 
@@ -140,18 +134,15 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int preview_type);
 void add_suffix_check(LiVESBox *box, const char *ext);
 
-
 _commentsw *commentsw;
 _entryw *renamew;
 _entryw *locw;
 _insertw *insertw;
 text_window *textwindow;
 
-
 #define DEF_AUD_FADE_SECS 10. ///< default time to offer fade audio in/out for
 
-
-#define MIN_MSGBOX_WIDTH ((int)(GUI_SCREEN_WIDTH > 1024 ? (820. * widget_opts.scale) : 600))
+#define MIN_MSGBOX_WIDTH ((int)(620. * widget_opts.scale))
 
 // textboxes for clip info
 #define TB_WIDTH ((int)(200.*widget_opts.scale))

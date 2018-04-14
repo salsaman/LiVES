@@ -112,9 +112,6 @@
 
 #define MAIN_SPIN_SPACER ((int)52.*widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
 
-/// blank label to show so our message dialogs are not too small
-#define PROCW_STRETCHER "                                                                                                                            "
-
 #define ENC_DETAILS_WIN_H ((int)(640.*widget_opts.scale)) ///< horizontal size in pixels of the encoder output window
 #define ENC_DETAILS_WIN_V ((int)(240.*widget_opts.scale)) ///< vertical size in pixels of the encoder output window
 

@@ -171,7 +171,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
-    dialog = lives_message_dialog_new(NULL, (LiVESDialogFlags)0,
+    dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_WARNING, LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Warning !"));
     okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
@@ -182,7 +182,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
     break;
   case LIVES_DIALOG_ERROR:
-    dialog = lives_message_dialog_new(NULL, (LiVESDialogFlags)0,
+    dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Error !"));
     okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
@@ -192,7 +192,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
                          NULL);
     break;
   case LIVES_DIALOG_INFO:
-    dialog = lives_message_dialog_new(NULL, (LiVESDialogFlags)0,
+    dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_INFO, LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Information"));
     okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
@@ -248,6 +248,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   }
 
   lives_window_set_default_size(LIVES_WINDOW(dialog), MIN_MSGBOX_WIDTH, -1);
+  lives_widget_set_minimum_size(dialog, MIN_MSGBOX_WIDTH, -1);
 
   if (widget_opts.apply_theme && (palette->style & STYLE_1)) {
     lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
@@ -333,8 +334,20 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   }
 
   if (prefs->show_gui && mainw->is_ready) {
-    while (!lives_has_toplevel_focus(LIVES_WIDGET(transient)) && !lives_has_toplevel_focus(LIVES_WIDGET(get_transient_full())) &&
-           (procw == NULL || !lives_has_toplevel_focus(procw->processing))) {
+    boolean has_focus = FALSE;
+    LiVESList *toplevels;
+    LiVESWidget *window;
+    while (1) {
+      toplevels = gtk_window_list_toplevels();
+      do {
+        window = (LiVESWidget *)toplevels->data;
+        if (lives_has_toplevel_focus(window)) {
+          has_focus = TRUE;
+          break;
+        }
+        toplevels = toplevels->next;
+      } while (toplevels != NULL);
+      if (has_focus) break;
       lives_usleep(prefs->sleep_time * 10);
       lives_widget_context_update();
       sched_yield();
@@ -398,6 +411,8 @@ boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_n
   if (prefs->warning_mask & warn_mask_number) {
     return TRUE;
   }
+
+  if (transient == NULL) transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
 
   mytext = lives_strdup(text); // must copy this because of translation issues
 
@@ -2746,9 +2761,10 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(vbox), procw->label2, FALSE, FALSE, 0);
 
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  procw->label3 = lives_standard_label_new(PROCW_STRETCHER);
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  procw->label3 = lives_hbox_new(FALSE, 0);
+  add_fill_to_box(LIVES_BOX(procw->label3));
+  add_fill_to_box(LIVES_BOX(procw->label3));
+  add_fill_to_box(LIVES_BOX(procw->label3));
   lives_box_pack_start(LIVES_BOX(vbox), procw->label3, FALSE, FALSE, 0);
 
   if (has_cancel) {
@@ -2787,8 +2803,6 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, procw->processing);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-
-
 
   procw->is_ready = TRUE;
 }

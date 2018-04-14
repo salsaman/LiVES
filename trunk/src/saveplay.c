@@ -1,6 +1,6 @@
 // saveplay.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2017
+// (c) G. Finch 2003 - 2018 (salsaman+lives@gmail.com)
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1168,6 +1168,8 @@ void save_file(int clip, int start, int end, const char *filename) {
   char *full_file_name = NULL;
   char *enc_exec_name, *cmd;
 
+  boolean recheck_name = FALSE;
+
   int new_stderr = -1;
   int retval;
   int startframe = 1;
@@ -1257,6 +1259,7 @@ void save_file(int clip, int start, int end, const char *filename) {
                             strcmp(n_file_name + strlen(n_file_name) - strlen(prefs->encoder.of_def_ext),
                                    prefs->encoder.of_def_ext))) {
       full_file_name = lives_strconcat(n_file_name, ".", prefs->encoder.of_def_ext, NULL);
+      recheck_name = TRUE;
     }
   }
 
@@ -1264,7 +1267,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     full_file_name = lives_strdup(n_file_name);
   }
 
-  if (filename == NULL) {
+  if (filename == NULL && recheck_name) {
     if (!check_file(full_file_name, strcmp(full_file_name, n_file_name))) {
       lives_free(full_file_name);
       if (rdet != NULL) {
@@ -3634,8 +3637,6 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
 
   // TODO - allow overwriting in sandbox
   if (from_osc && lives_file_test(full_file_name, LIVES_FILE_TEST_EXISTS)) return FALSE;
-
-  if (!check_file(full_file_name, !allow_over)) return FALSE;
 
   tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL);
 

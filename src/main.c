@@ -2317,15 +2317,15 @@ capability *get_capabilities(void) {
   capable->can_write_to_home = TRUE;
 
 #ifndef IS_MINGW
-  lives_snprintf(prefs->backend_sync, PATH_MAX, "%s", "smogrify");
-  lives_snprintf(prefs->backend, PATH_MAX, "%s", "smogrify");
-  if ((tmp = lives_find_program_in_path("smogrify")) == NULL) return capable;
+  lives_snprintf(prefs->backend_sync, PATH_MAX, "%s", BACKEND_NAME);
+  lives_snprintf(prefs->backend, PATH_MAX, "%s", BACKEND_NAME);
+  if ((tmp = lives_find_program_in_path(BACKEND_NAME)) == NULL) return capable;
   lives_free(tmp);
 
 #else
 
-  lives_snprintf(prefs->backend_sync, PATH_MAX, "perl \"%s\\smogrify\"", prefs->prefix_dir);
-  lives_snprintf(prefs->backend, PATH_MAX, "START /MIN /B perl \"%s\\smogrify\"", prefs->prefix_dir);
+  lives_snprintf(prefs->backend_sync, PATH_MAX, "perl \"%s\\%s\"", prefs->prefix_dir, BACKEND_NAME);
+  lives_snprintf(prefs->backend, PATH_MAX, "START /MIN /B perl \"%s\\%s\"", prefs->prefix_dir, BACKEND_NAME);
 
 #endif
 

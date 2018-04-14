@@ -1335,11 +1335,6 @@ void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_rm((tmp = lives_filename_from_utf8(proj_file, -1, NULL, NULL, NULL)));
   lives_free(tmp);
 
-  if (!check_file(proj_file, FALSE)) {
-    lives_free(proj_file);
-    return;
-  }
-
   d_print(_("Exporting project %s..."), proj_file);
 
   com = lives_strdup_printf("%s export_project \"%s\" \"%s\" \"%s\"", prefs->backend, cfile->handle, mainw->set_name, proj_file);
@@ -7604,8 +7599,6 @@ void on_save_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char xfname[512];
   char xfname2[512];
 
-  LiVESEntry *entry = (LiVESEntry *)user_data;
-
   // try to repaint the screen, as it may take a few seconds to get a directory listing
   lives_widget_context_update();
 
@@ -7618,9 +7611,6 @@ void on_save_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   subfile = choose_file(xfname, xfname2, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
 
   if (subfile == NULL) return; // cancelled
-
-  if (check_file(subfile, FALSE))
-    lives_entry_set_text(entry, subfile);
 
   lives_free(subfile);
 }
@@ -10310,11 +10300,6 @@ void on_export_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (filename == NULL) return;
   file_name = ensure_extension(filename, LIVES_FILE_EXT_WAV);
   lives_free(filename);
-
-  if (!check_file(file_name, FALSE)) {
-    lives_free(file_name);
-    return;
-  }
 
   // warn if arps!=arate
   if ((prefs->audio_player == AUD_PLAYER_SOX || is_realtime_aplayer(prefs->audio_player)) && cfile->arate != cfile->arps) {

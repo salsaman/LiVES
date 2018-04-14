@@ -2521,8 +2521,11 @@ char *ensure_extension(const char *fname, const char *ext) {
   // we then check if fname ends with ext. If not we append ext to fname.
   // we return a copy of fname, possibly modified. The string returned should be freed after use.
   // NOTE: the original ext is not changed.
+
   size_t se = strlen(ext), sf;
   char *eptr = (char *)ext;
+
+  if (fname == NULL) return NULL;
 
   if (se == 0) return lives_strdup(fname);
 
@@ -2532,9 +2535,8 @@ char *ensure_extension(const char *fname, const char *ext) {
   }
 
   sf = strlen(fname);
-
-  if (sf < se + 1 || strcmp(fname + sf - se, ext) || fname[sf - se - 1] != '.') {
-    return lives_strconcat(fname, '.', ext, NULL);
+  if (sf < se + 1 || strcmp(fname + sf - se, eptr) || fname[sf - se - 1] != '.') {
+    return lives_strconcat(fname, ".", eptr, NULL);
   }
 
   return lives_strdup(fname);

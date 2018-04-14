@@ -192,10 +192,9 @@ xprocess *create_processing(const char *text) {
 
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label2, FALSE, FALSE, 0);
 
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  procw->label3 = lives_standard_label_new(PROCW_STRETCHER);
+  procw->label3 = lives_hbox_new(FALSE, 0);
+  add_fill_to_box(LIVES_BOX(procw->label3));
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label3, FALSE, FALSE, 0);
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   if (mainw->iochan != NULL) {
     // add "show details" arrow
@@ -1067,6 +1066,8 @@ _entryw *create_location_dialog(int type) {
   locw->entry = lives_standard_entry_new(type == 1 ? _("URL : ") : _("Youtube URL : "), "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox),
                                          NULL);
 
+  add_fill_to_box(LIVES_BOX(hbox));
+
   if (type == 1) {
     hbox = lives_hbox_new(FALSE, 0);
     checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Do not send bandwidth information"))),
@@ -1088,7 +1089,7 @@ _entryw *create_location_dialog(int type) {
   if (type == 2) {
     hbox = lives_hbox_new(FALSE, 0);
 
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 2);
 
     locw->dir_entry = lives_standard_entry_new(_("Download to _Directory : "), mainw->vid_dl_dir,
                       STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
@@ -1099,22 +1100,24 @@ _entryw *create_location_dialog(int type) {
     // add dir, with filechooser button
     buttond = lives_standard_file_button_new(TRUE, NULL);
     lives_label_set_mnemonic_widget(LIVES_LABEL(widget_opts.last_label), buttond);
-    lives_box_pack_start(LIVES_BOX(hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start(LIVES_BOX(hbox), buttond, FALSE, FALSE, widget_opts.packing_width / 2);
 
     add_fill_to_box(LIVES_BOX(hbox));
 
     hbox = lives_hbox_new(FALSE, 0);
 
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 2);
 
     locw->name_entry = lives_standard_entry_new(_("Download _File Name : "), "",
-                       STD_ENTRY_WIDTH - 6., PATH_MAX, LIVES_BOX(hbox), NULL);
+                       -1, PATH_MAX, LIVES_BOX(hbox), NULL);
 
     lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)locw->dir_entry);
 
-    label = lives_standard_label_new(_(".webm"));
+    label = lives_standard_label_new("." LIVES_FILE_EXT_WEBM);
 
-    lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
+
+    add_fill_to_box(LIVES_BOX(hbox));
   }
 
   cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);

@@ -55,6 +55,8 @@ POSSIBILITY OF SUCH DAMAGES.
 #undef HAVE_UNICAP
 #endif
 
+#define BACKEND_NAME "smogrify"
+
 #ifndef GUI_QT
 #define GUI_GTK
 #define PAINTER_CAIRO

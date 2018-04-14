@@ -3208,6 +3208,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           memset(prefs->ar_clipset_name, 0, 1);
           prefs->ar_clipset = FALSE;
           ign_opts.ign_clipset = TRUE;
+          set_pref(PREF_AR_CLIPSET, "");
           continue;
         }
         if (!strcmp(charopt, "set") && optarg != NULL) {

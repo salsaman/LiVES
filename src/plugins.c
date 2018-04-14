@@ -948,7 +948,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     if (intention == 0) {
       // fps
-      combo = lives_standard_combo_new((tmp = lives_strdup(_("_FPS"))), TRUE, fps_list_strings,
+      combo = lives_standard_combo_new((tmp = lives_strdup(_("_FPS"))), fps_list_strings,
                                        LIVES_BOX(dialog_vbox), (tmp2 = lives_strdup(_("Fixed framerate for plugin.\n"))));
 
       lives_free(tmp);
@@ -982,7 +982,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     if (intention == 1) hsize = cfile->hsize;
 
-    vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"), TRUE,
+    vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"),
                         hsize,
                         4., MAX_FRAME_WIDTH, 4., 4., 0, LIVES_BOX(hbox), NULL);
 
@@ -992,7 +992,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     if (intention == 1) vsize = cfile->vsize;
 
-    vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"), TRUE,
+    vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"),
                         vsize,
                         4., MAX_FRAME_HEIGHT, 4., 4., 0, LIVES_BOX(hbox), NULL);
 
@@ -1020,7 +1020,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
         }
       }
 
-      combo = lives_standard_combo_new((tmp = lives_strdup(_("_Colourspace"))), TRUE, pal_list_strings,
+      combo = lives_standard_combo_new((tmp = lives_strdup(_("_Colourspace"))), pal_list_strings,
                                        LIVES_BOX(dialog_vbox), tmp2 = lives_strdup(_("Colourspace input to the plugin.\n")));
       lives_free(tmp);
       lives_free(tmp2);
@@ -2587,8 +2587,10 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     ltext = lives_strdup_printf("%s   (%s)", dpsys->name, (*dpsys->version)());
 
-    checkbutton = lives_standard_check_button_new(ltext, FALSE, lives_list_strcmp_index(future_prefs->disabled_decoders, dpsys->name) == -1,
+    widget_opts.mnemonic_label = FALSE;
+    checkbutton = lives_standard_check_button_new(ltext, lives_list_strcmp_index(future_prefs->disabled_decoders, dpsys->name) == -1,
                   LIVES_BOX(hbox), NULL);
+    widget_opts.mnemonic_label = TRUE;
 
     lives_free(ltext);
 

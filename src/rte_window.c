@@ -1,6 +1,6 @@
 // rte_window.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2017
+// (c) G. Finch 2005 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -2159,7 +2159,7 @@ LiVESWidget *create_rte_window(void) {
 
     hbox2 = lives_hbox_new(FALSE, 0);
 
-    key_checks[i] = lives_standard_check_button_new(_("Key active"), FALSE, (mainw->rte & (GU641 << i)), LIVES_BOX(hbox2), NULL);
+    key_checks[i] = lives_standard_check_button_new(_("Key active"), (mainw->rte & (GU641 << i)), LIVES_BOX(hbox2), NULL);
 
     lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
@@ -2173,7 +2173,7 @@ LiVESWidget *create_rte_window(void) {
     hbox2 = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
-    key_grabs[i] = lives_standard_radio_button_new((tmp = lives_strdup(_("Key grab"))), FALSE, &grab_group, LIVES_BOX(hbox2),
+    key_grabs[i] = lives_standard_radio_button_new((tmp = lives_strdup(_("Key grab"))), &grab_group, LIVES_BOX(hbox2),
                    (tmp2 = lives_strdup(_("Grab keyboard for this effect key"))));
     lives_free(tmp);
     lives_free(tmp2);
@@ -2197,7 +2197,7 @@ LiVESWidget *create_rte_window(void) {
       hbox2 = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
-      mode_radios[idx] = lives_standard_radio_button_new(_("Mode active"), FALSE, &mode_group, LIVES_BOX(hbox2), NULL);
+      mode_radios[idx] = lives_standard_radio_button_new(_("Mode active"), &mode_group, LIVES_BOX(hbox2), NULL);
 
       if (rte_key_getmode(i + 1) == j) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[idx]), TRUE);
 

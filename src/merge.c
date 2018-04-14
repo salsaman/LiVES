@@ -121,11 +121,11 @@ void create_merge_dialog(void) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  align_start_button = lives_standard_radio_button_new(_("Align _Starts"), TRUE, &radiobutton_align_group, LIVES_BOX(hbox), NULL);
+  align_start_button = lives_standard_radio_button_new(_("Align _Starts"), &radiobutton_align_group, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  align_end_button = lives_standard_radio_button_new(_("Align _Ends"), TRUE, &radiobutton_align_group, LIVES_BOX(hbox), NULL);
+  align_end_button = lives_standard_radio_button_new(_("Align _Ends"), &radiobutton_align_group, LIVES_BOX(hbox), NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(align_end_button), !mainw->last_transition_align_start);
 
@@ -137,18 +137,18 @@ void create_merge_dialog(void) {
     label = lives_standard_label_new(_("What to do with extra clipboard frames -"));
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
-    merge_opts->ins_frame_button = lives_standard_radio_button_new(_("_Insert Frames"), TRUE, &radiobutton_insdrop_group, LIVES_BOX(hbox),
+    merge_opts->ins_frame_button = lives_standard_radio_button_new(_("_Insert Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox),
                                    NULL);
 
     merge_opts->ins_frame_function = lives_signal_connect(LIVES_GUI_OBJECT(merge_opts->ins_frame_button),
                                      LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_ins_frames_toggled), NULL);
 
-    merge_opts->drop_frame_button = lives_standard_radio_button_new(_("_Drop Frames"), TRUE, &radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
+    merge_opts->drop_frame_button = lives_standard_radio_button_new(_("_Drop Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(merge_opts->drop_frame_button), !mainw->last_transition_ins_frames);
   } else if ((cfile->end - cfile->start + 1) > cb_frames) {
     merge_opts->spinbutton_loops = lives_standard_spin_button_new
-                                   (_("Number of Times to Loop Clipboard"), FALSE, 1., 1.,
+                                   (_("Number of Times to Loop Clipboard"), 1., 1.,
                                     (int)((cfile->end - cfile->start + 1) / cb_frames), 1., 10., 0, LIVES_BOX(hbox), NULL);
 
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops), mainw->last_transition_loops);
@@ -158,7 +158,7 @@ void create_merge_dialog(void) {
                                LIVES_GUI_CALLBACK(after_spinbutton_loops_changed),
                                NULL);
 
-    fit_button = lives_standard_check_button_new(_("_Loop Clipboard to Fit Selection"), TRUE,  mainw->last_transition_loop_to_fit,
+    fit_button = lives_standard_check_button_new(_("_Loop Clipboard to Fit Selection"), mainw->last_transition_loop_to_fit,
                  LIVES_BOX(hbox), NULL);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(fit_button), mainw->last_transition_loop_to_fit);
 
@@ -172,7 +172,7 @@ void create_merge_dialog(void) {
   hbox = lives_hbox_new(TRUE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  transition_combo = lives_standard_combo_new(_("_Transition Method:"), TRUE, merge_opts->trans_list, LIVES_BOX(hbox), NULL);
+  transition_combo = lives_standard_combo_new(_("_Transition Method:"), merge_opts->trans_list, LIVES_BOX(hbox), NULL);
 
   lives_combo_set_active_index(LIVES_COMBO(transition_combo), defstart);
 

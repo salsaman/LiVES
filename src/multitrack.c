@@ -4436,7 +4436,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
   widget_opts.apply_theme = FALSE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
-  mt->spinbutton_start = lives_standard_spin_button_new(NULL, FALSE, 0., 0., 0., 1. / mt->fps, 1. / mt->fps, 3,
+  mt->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 0., 1. / mt->fps, 1. / mt->fps, 3,
                          NULL, NULL);
   widget_opts.apply_theme = woat;
   widget_opts.packing_width = dpw;
@@ -4457,7 +4457,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
   widget_opts.apply_theme = FALSE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
-  mt->spinbutton_end = lives_standard_spin_button_new(NULL, FALSE, 0., 0., 0., 1. / mt->fps, 1. / mt->fps, 3,
+  mt->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 0., 1. / mt->fps, 1. / mt->fps, 3,
                        NULL, NULL);
 
   widget_opts.apply_theme = woat;
@@ -7717,7 +7717,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   widget_opts.apply_theme = FALSE;
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  mt->timecode = lives_standard_entry_new(NULL, FALSE, NULL, TIMECODE_LENGTH, TIMECODE_LENGTH, LIVES_BOX(hbox), NULL);
+  mt->timecode = lives_standard_entry_new(NULL, NULL, TIMECODE_LENGTH, TIMECODE_LENGTH, LIVES_BOX(hbox), NULL);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
@@ -7731,7 +7731,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   dpw = widget_opts.packing_width;
   widget_opts.packing_width = 2. * widget_opts.scale;
-  mt->insa_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Insert With _Audio"))), TRUE, mt->opts.insert_audio,
+  mt->insa_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Insert With _Audio"))), mt->opts.insert_audio,
                          LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("Select whether video clips are inserted and moved with their audio or not"))));
   lives_free(tmp);
@@ -7766,7 +7766,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   dpw = widget_opts.packing_width;
   widget_opts.packing_width = 2. * widget_opts.scale;
 
-  mt->snapo_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Select _Overlap"))), TRUE, mt->opts.snap_over,
+  mt->snapo_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Select _Overlap"))), mt->opts.snap_over,
                           LIVES_BOX(hbox),
                           (tmp2 = lives_strdup(_("Select whether timeline selection snaps to overlap between selected tracks or not"))));
   widget_opts.packing_width = dpw;
@@ -8228,7 +8228,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mt->avel_box), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
-  mt->checkbutton_avel_reverse = lives_standard_check_button_new(_("_Reverse playback  "), TRUE, FALSE, LIVES_BOX(hbox), NULL);
+  mt->checkbutton_avel_reverse = lives_standard_check_button_new(_("_Reverse playback  "), FALSE, LIVES_BOX(hbox), NULL);
 
   if (palette->style & STYLE_1) {
     lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -8242,7 +8242,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   hbox = lives_hbox_new(FALSE, 8);
   lives_box_pack_start(LIVES_BOX(mt->avel_box), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  mt->spinbutton_avel = lives_standard_spin_button_new(_("_Velocity  "), TRUE, 1., 0.5, 2., .1, 1., 2,
+  mt->spinbutton_avel = lives_standard_spin_button_new(_("_Velocity  "), 1., 0.5, 2., .1, 1., 2,
                         LIVES_BOX(hbox), NULL);
 
   mt->spin_avel_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mt->spinbutton_avel), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -8289,11 +8289,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   dpw = widget_opts.packing_width;
   widget_opts.packing_width = 0;
-  mt->spinbutton_in = lives_standard_spin_button_new(NULL, FALSE, 0., 0., 1000000., 1. / mt->fps, 1., 2,
+  mt->spinbutton_in = lives_standard_spin_button_new(NULL, 0., 0., 1000000., 1. / mt->fps, 1., 2,
                       LIVES_BOX(mt->in_hbox), NULL);
   widget_opts.packing_width = dpw;
 
-  mt->checkbutton_start_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _start"))), TRUE, FALSE,
+  mt->checkbutton_start_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _start"))), FALSE,
                                    LIVES_BOX(mt->in_hbox),
                                    (tmp2 = lives_strdup(_("Anchor the start point to the timeline"))));
 
@@ -8341,11 +8341,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   dpw = widget_opts.packing_width;
   widget_opts.packing_width = 0;
-  mt->spinbutton_out = lives_standard_spin_button_new(NULL, FALSE, 0., 0., 1000000., 1. / mt->fps, 1., 2,
+  mt->spinbutton_out = lives_standard_spin_button_new(NULL, 0., 0., 1000000., 1. / mt->fps, 1., 2,
                        LIVES_BOX(mt->out_hbox), NULL);
   widget_opts.packing_width = dpw;
 
-  mt->checkbutton_end_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _end"))), TRUE, FALSE, LIVES_BOX(mt->out_hbox),
+  mt->checkbutton_end_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _end"))), FALSE, LIVES_BOX(mt->out_hbox),
                                  (tmp2 = lives_strdup(_("Anchor the end point to the timeline"))));
 
   add_fill_to_box(LIVES_BOX(mt->out_hbox));
@@ -18975,7 +18975,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
 
   hbox = lives_hbox_new(FALSE, 0);
 
-  ar_checkbutton = lives_standard_check_button_new(_("_Autoreload each time"), TRUE, prefs->ar_layout, LIVES_BOX(hbox), NULL);
+  ar_checkbutton = lives_standard_check_button_new(_("_Autoreload each time"), prefs->ar_layout, LIVES_BOX(hbox), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_autoreload_toggled),
@@ -20503,7 +20503,7 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
   hbox = lives_hbox_new(FALSE, 0);
 
   if (allow_auto_reload) {
-    ar_checkbutton = lives_standard_check_button_new(_("_Autoreload each time"), TRUE, prefs->ar_layout, LIVES_BOX(hbox), NULL);
+    ar_checkbutton = lives_standard_check_button_new(_("_Autoreload each time"), prefs->ar_layout, LIVES_BOX(hbox), NULL);
 
     lives_signal_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_autoreload_toggled),

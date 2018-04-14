@@ -2121,7 +2121,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  radiobutton = lives_standard_radio_button_new(_("_Preview events"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton = lives_standard_radio_button_new(_("_Preview events"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
 
@@ -2133,7 +2133,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-    radiobutton = lives_standard_radio_button_new(_("Render events to _same clip"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+    radiobutton = lives_standard_radio_button_new(_("Render events to _same clip"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(set_render_choice),
@@ -2143,7 +2143,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  radiobutton = lives_standard_radio_button_new(_("Render events to _new clip"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton = lives_standard_radio_button_new(_("Render events to _new clip"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(set_render_choice),
@@ -2152,7 +2152,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  radiobutton = lives_standard_radio_button_new(_("View/edit events in _multitrack window (test)"), TRUE, &radiobutton_group, LIVES_BOX(hbox),
+  radiobutton = lives_standard_radio_button_new(_("View/edit events in _multitrack window (test)"), &radiobutton_group, LIVES_BOX(hbox),
                 NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -2164,7 +2164,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  radiobutton = lives_standard_radio_button_new(_("View/edit events in _event window"), TRUE, &radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton = lives_standard_radio_button_new(_("View/edit events in _event window"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(set_render_choice),
@@ -5153,10 +5153,10 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   *spwidth = lives_standard_spin_button_new
-             (_("_Width"), TRUE, defwidth, 4., MAX_FRAME_WIDTH, 4., 16., 0, LIVES_BOX(hbox), NULL);
+             (_("_Width"), defwidth, 4., MAX_FRAME_WIDTH, 4., 16., 0, LIVES_BOX(hbox), NULL);
 
   *spheight = lives_standard_spin_button_new
-              (_("_Height"), TRUE, defheight, 4., MAX_FRAME_WIDTH, 4., 16., 0, LIVES_BOX(hbox), NULL);
+              (_("_Height"), defheight, 4., MAX_FRAME_WIDTH, 4., 16., 0, LIVES_BOX(hbox), NULL);
 
   // add aspect button ?
   if (add_aspect) {
@@ -5175,7 +5175,7 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   *spfps = lives_standard_spin_button_new
-           (_("_Frames per second"), TRUE, deffps, 1., FPS_MAX, 1., 10., 0, LIVES_BOX(hbox), NULL);
+           (_("_Frames per second"), deffps, 1., FPS_MAX, 1., 10., 0, LIVES_BOX(hbox), NULL);
 
   if (extra != NULL) lives_box_pack_start(LIVES_BOX(vbox), extra, FALSE, FALSE, widget_opts.packing_height);
 
@@ -5186,11 +5186,11 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
 LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertrack) {
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
 
-  *cbbackaudio = lives_standard_check_button_new(_("Enable _backing audio track"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
+  *cbbackaudio = lives_standard_check_button_new(_("Enable _backing audio track"), FALSE, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  *cbpertrack = lives_standard_check_button_new(_("Audio track _per video track"), TRUE, FALSE, LIVES_BOX(hbox), NULL);
+  *cbpertrack = lives_standard_check_button_new(_("Audio track _per video track"), FALSE, LIVES_BOX(hbox), NULL);
 
   return hbox;
 }
@@ -5356,7 +5356,7 @@ render_details *create_render_details(int type) {
   lives_container_set_border_width(LIVES_CONTAINER(top_vbox), 0);
 
   rdet->always_hbox = lives_hbox_new(TRUE, widget_opts.packing_width * 2);
-  rdet->always_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Always use these values"))), TRUE, FALSE,
+  rdet->always_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Always use these values"))), FALSE,
                              LIVES_BOX(rdet->always_hbox),
                              (tmp2 = lives_strdup(
                                        _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."))));
@@ -5394,7 +5394,7 @@ render_details *create_render_details(int type) {
     aspect = paramspecial_get_aspect();
 
     // add clip name entry
-    rdet->clipname_entry = lives_standard_entry_new((tmp = lives_strdup(_("New clip name"))), FALSE,
+    rdet->clipname_entry = lives_standard_entry_new((tmp = lives_strdup(_("New clip name"))),
                            (tmp2 = get_untitled_name(mainw->untitled_number)),
                            STD_ENTRY_WIDTH, 256, LIVES_BOX(top_vbox),
                            (tmp3 = lives_strdup(_("The name to give the clip in the Clips menu"))));
@@ -5488,7 +5488,7 @@ render_details *create_render_details(int type) {
     rdet->encoder_name = lives_strdup(prefs->encoder.name);
   }
 
-  rdet->encoder_combo = lives_standard_combo_new(NULL, FALSE, encoders, LIVES_BOX(top_vbox), NULL);
+  rdet->encoder_combo = lives_standard_combo_new(NULL, encoders, LIVES_BOX(top_vbox), NULL);
 
   rdet->encoder_name_fn = lives_signal_connect_after(LIVES_COMBO(rdet->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(on_encoder_entry_changed), rdet);
@@ -5526,7 +5526,7 @@ render_details *create_render_details(int type) {
   label = lives_standard_label_new(_("Output format"));
   lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, 0);
 
-  rdet->ofmt_combo = lives_standard_combo_new(NULL, FALSE, ofmt, LIVES_BOX(top_vbox), NULL);
+  rdet->ofmt_combo = lives_standard_combo_new(NULL, ofmt, LIVES_BOX(top_vbox), NULL);
 
   lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
 
@@ -5543,7 +5543,7 @@ render_details *create_render_details(int type) {
 
     prefs->acodec_list = lives_list_append(prefs->acodec_list, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
     lives_box_pack_start(LIVES_BOX(top_vbox), alabel, FALSE, FALSE, 0);
-    rdet->acodec_combo = lives_standard_combo_new(NULL, FALSE, prefs->acodec_list, LIVES_BOX(top_vbox), NULL);
+    rdet->acodec_combo = lives_standard_combo_new(NULL, prefs->acodec_list, LIVES_BOX(top_vbox), NULL);
   } else {
     add_fill_to_box(LIVES_BOX(top_vbox));
     lives_box_pack_start(LIVES_BOX(top_vbox), alabel, FALSE, FALSE, 0);
@@ -5551,7 +5551,7 @@ render_details *create_render_details(int type) {
     lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), prefs->encoder.of_desc);
     lives_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
-    rdet->acodec_combo = lives_standard_combo_new(NULL, FALSE, NULL, LIVES_BOX(top_vbox), NULL);
+    rdet->acodec_combo = lives_standard_combo_new(NULL, NULL, LIVES_BOX(top_vbox), NULL);
 
     check_encoder_restrictions(TRUE, FALSE, TRUE);
     future_prefs->encoder.of_allowed_acodecs = prefs->encoder.of_allowed_acodecs;

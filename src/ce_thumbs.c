@@ -241,7 +241,7 @@ void start_ce_thumb_mode(void) {
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     tmp = lives_strdup_printf(_("Mapped to ctrl-%d"), i + 1);
-    key_checks[i] = lives_standard_check_button_new(NULL, FALSE, (mainw->rte & (GU641 << i)), LIVES_BOX(hbox), tmp);
+    key_checks[i] = lives_standard_check_button_new(NULL, (mainw->rte & (GU641 << i)), LIVES_BOX(hbox), tmp);
     lives_free(tmp);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]), mainw->rte & (GU641 << i));
@@ -251,7 +251,7 @@ void start_ce_thumb_mode(void) {
     ch_fns[i] = lives_signal_connect_after(LIVES_GUI_OBJECT(key_checks[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
                                            LIVES_GUI_CALLBACK(rte_on_off_callback_hook), LIVES_INT_TO_POINTER(i + 1));
 
-    fxcombos[i] = lives_standard_combo_new(NULL, FALSE, fxlist, LIVES_BOX(hbox), NULL);
+    fxcombos[i] = lives_standard_combo_new(NULL, fxlist, LIVES_BOX(hbox), NULL);
 
     if (fxlist != NULL) {
       lives_list_free_all(&fxlist);
@@ -313,7 +313,7 @@ void start_ce_thumb_mode(void) {
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     // radiobuttons for fx
-    rb_fx_areas[i] = lives_standard_radio_button_new("", FALSE, &rb_fx_areas_group, LIVES_BOX(hbox),
+    rb_fx_areas[i] = lives_standard_radio_button_new("", &rb_fx_areas_group, LIVES_BOX(hbox),
                      (tmp = lives_strdup_printf(_("Show / apply effects to %s\n"),
                             mainw->screen_areas[i].name)));
     lives_free(tmp);
@@ -324,7 +324,7 @@ void start_ce_thumb_mode(void) {
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, TRUE, 0);
 
     // radiobuttons for fx
-    rb_clip_areas[i] = lives_standard_radio_button_new("", FALSE,
+    rb_clip_areas[i] = lives_standard_radio_button_new("",
                        &rb_clip_areas_group, LIVES_BOX(hbox),
                        (tmp = lives_strdup_printf(_("Select clip for %s\n"),
                               mainw->screen_areas[i].name)));
@@ -523,7 +523,7 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   add_fill_to_box(LIVES_BOX(hbox));
 
   /* TRANSLATORS - "pin" as in "pinned to window" */
-  pin_check = lives_standard_check_button_new((tmp = lives_strdup(_("_Pin"))), TRUE, FALSE, LIVES_BOX(hbox),
+  pin_check = lives_standard_check_button_new((tmp = lives_strdup(_("_Pin"))), FALSE, LIVES_BOX(hbox),
               (tmp2 = lives_strdup(_("Pin the parameter box to the window"))));
   lives_free(tmp);
   lives_free(tmp2);

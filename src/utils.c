@@ -3799,6 +3799,7 @@ void switch_aud_to_sox(boolean set_in_prefs) {
   if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
   set_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
+
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
@@ -3806,6 +3807,11 @@ void switch_aud_to_sox(boolean set_in_prefs) {
 
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
+
+    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
+
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
   }
 
 #ifdef ENABLE_JACK
@@ -3832,11 +3838,6 @@ void switch_aud_to_sox(boolean set_in_prefs) {
     pulse_shutdown();
   }
 #endif
-  pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
-
-  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
-  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
-
 }
 
 
@@ -3856,6 +3857,7 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
   if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_MPLAYER);
   set_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
+
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
@@ -3863,12 +3865,38 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
 
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
+
+    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
+
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
   }
 
-  pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
+#ifdef ENABLE_JACK
+  if (mainw->jackd_read != NULL) {
+    jack_close_device(mainw->jackd_read);
+    mainw->jackd_read = NULL;
+  }
 
-  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
-  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
+  if (mainw->jackd != NULL) {
+    jack_close_device(mainw->jackd);
+    mainw->jackd = NULL;
+  }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed_read != NULL) {
+    pulse_close_client(mainw->pulsed_read);
+    mainw->pulsed_read = NULL;
+  }
+
+  if (mainw->pulsed != NULL) {
+    pulse_close_client(mainw->pulsed);
+    mainw->pulsed = NULL;
+    pulse_shutdown();
+  }
+#endif
+
 }
 
 
@@ -3888,6 +3916,7 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
   if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER2);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_MPLAYER2);
   set_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
+
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
@@ -3895,12 +3924,38 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
 
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
+
+    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
+
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
   }
 
-  pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
+#ifdef ENABLE_JACK
+  if (mainw->jackd_read != NULL) {
+    jack_close_device(mainw->jackd_read);
+    mainw->jackd_read = NULL;
+  }
 
-  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
-  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
+  if (mainw->jackd != NULL) {
+    jack_close_device(mainw->jackd);
+    mainw->jackd = NULL;
+  }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed_read != NULL) {
+    pulse_close_client(mainw->pulsed_read);
+    mainw->pulsed_read = NULL;
+  }
+
+  if (mainw->pulsed != NULL) {
+    pulse_close_client(mainw->pulsed);
+    mainw->pulsed = NULL;
+    pulse_shutdown();
+  }
+#endif
+
 }
 
 

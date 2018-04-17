@@ -617,6 +617,7 @@ typedef struct {
   boolean ign_clipset;
   boolean ign_osc;
   boolean ign_aplayer;
+  boolean ign_asource;
   boolean ign_stmode;
   boolean ign_vppdefs;
 } _ign_opts;

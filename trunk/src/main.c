@@ -1,6 +1,6 @@
 // main.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2017
+// (c) G. Finch 2003 - 2018 <salsaman+lives@gmail.com>
 
 /*  This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 3 or higher as published by
@@ -15,6 +15,18 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 */
+
+// flow is: main() -> real_main() [entry point for liblives]
+// real_main() -> pre_init() [early initialisation, initialise prefs system]
+// real_main() [parse startup opts]
+// real_main() -> lives_startup() [added as idle function]
+// real_main() -> gtk_main()
+
+// lives_startup() [handle any prefs touched by opts which are needed for the GUI]
+// lives_startup() -> create_LiVES() [create the GUI interface]
+// lives_startup() -> lives_init() [set remaining variables and preferences]
+
+
 
 #ifdef USE_GLIB
 #include <glib.h>
@@ -86,6 +98,7 @@ ssize_t sizint, sizdbl, sizshrt;
 mainwindow *mainw;
 
 //////////////////////////////////////////
+static char buff[256];
 
 static boolean no_recover = FALSE, auto_recover = FALSE;
 static boolean upgrade_error = FALSE;
@@ -227,7 +240,6 @@ void catch_sigint(int signum) {
 
 
 void get_monitors(void) {
-  char buff[256];
 
 #ifdef GUI_GTK
   GSList *dlist, *dislist;
@@ -369,8 +381,6 @@ static boolean pre_init(void) {
   // returns TRUE if we expect to load a theme
 
   pthread_mutexattr_t mattr;
-
-  char buff[256];
 
   boolean needs_update = FALSE;
 
@@ -570,45 +580,6 @@ static boolean pre_init(void) {
   get_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device, PATH_MAX);
   prefs->warning_mask = (uint32_t)get_int_pref(PREF_LIVES_WARNING_MASK);
 
-  get_pref(PREF_AUDIO_PLAYER, buff, 256);
-
-  if (!strcmp(buff, AUDIO_PLAYER_MPLAYER))
-    prefs->audio_player = AUD_PLAYER_MPLAYER;
-  if (!strcmp(buff, AUDIO_PLAYER_MPLAYER2))
-    prefs->audio_player = AUD_PLAYER_MPLAYER2;
-  if (!strcmp(buff, AUDIO_PLAYER_JACK))
-    prefs->audio_player = AUD_PLAYER_JACK;
-  if (!strcmp(buff, AUDIO_PLAYER_PULSE))
-    prefs->audio_player = AUD_PLAYER_PULSE;
-  lives_snprintf(prefs->aplayer, 512, "%s", buff);
-
-#ifdef HAVE_PULSE_AUDIO
-  if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_pulse_audio) {
-    prefs->audio_player = AUD_PLAYER_PULSE;
-    lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
-    set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
-  } else {
-#endif
-
-#ifdef ENABLE_JACK
-    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_jackd) {
-      prefs->audio_player = AUD_PLAYER_JACK;
-      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
-      set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
-    }
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-  }
-#endif
-
-  prefs->audio_src = get_int_pref(PREF_AUDIO_SRC);
-
-  if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
-        capable->has_pulse_audio))) {
-    prefs->audio_src = AUDIO_SRC_INT;
-  }
-
   future_prefs->jack_opts = get_int_pref(PREF_JACK_OPTS);
   prefs->jack_opts = future_prefs->jack_opts;
 
@@ -759,7 +730,6 @@ static void lives_init(_ign_opts *ign_opts) {
   LiVESList *encoders = NULL;
   LiVESList *encoder_capabilities = NULL;
 
-  char buff[256];
   char mppath[PATH_MAX];
 
   char *weed_plugin_path;
@@ -2560,6 +2530,8 @@ void print_opthelp(void) {
 #ifdef ENABLE_OSC
   lives_printerr("%s", _("-oscstart <port> : start OSC listener on UDP port <port>\n"));
   lives_printerr("%s", _("-nooscstart      : do not start OSC listener\n"));
+  lives_printerr("%s",
+                 _("-asource <source>          : set the initial audio source; <source> can be 'internal' or 'external' (only for jack and pulse audio players)\n"));
 #endif
   lives_printerr("%s", _("-aplayer <ap>    : start with selected audio player. <ap> can be mplayer, mplayer2"));
 #ifdef HAVE_PULSE_AUDIO
@@ -2570,8 +2542,9 @@ void print_opthelp(void) {
   lives_printerr("%s", _(", sox or jack\n"));
   lives_printerr("%s",
                  _("-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack transport client,"
-                   "2 = jack transport master, 4 = start jack transport server, 8 = pause audio when video paused,"
-                   "16 = start jack audio server] \n"));
+                   "2 = jack transport master, 4 = start jack transport server, \n"
+		   "                      "
+		   "8 = pause audio when video paused, 16 = start jack audio server] \n"));
 #else
   lives_printerr("%s", _(" or sox\n"));
 #endif
@@ -2605,6 +2578,48 @@ static boolean lives_startup(livespointer data) {
   if (!mainw->foreign) {
     if (prefs->show_splash) splash_init();
     print_notice();
+  }
+
+  if (!ign_opts.ign_aplayer) {
+    get_pref(PREF_AUDIO_PLAYER, buff, 256);
+
+    if (!strcmp(buff, AUDIO_PLAYER_MPLAYER))
+      prefs->audio_player = AUD_PLAYER_MPLAYER;
+    if (!strcmp(buff, AUDIO_PLAYER_MPLAYER2))
+      prefs->audio_player = AUD_PLAYER_MPLAYER2;
+    if (!strcmp(buff, AUDIO_PLAYER_JACK))
+      prefs->audio_player = AUD_PLAYER_JACK;
+    if (!strcmp(buff, AUDIO_PLAYER_PULSE))
+      prefs->audio_player = AUD_PLAYER_PULSE;
+    lives_snprintf(prefs->aplayer, 512, "%s", buff);
+  }
+
+#ifdef HAVE_PULSE_AUDIO
+  if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_pulse_audio) {
+    prefs->audio_player = AUD_PLAYER_PULSE;
+    lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
+    set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
+  } else {
+#endif
+
+#ifdef ENABLE_JACK
+    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_jackd) {
+      prefs->audio_player = AUD_PLAYER_JACK;
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
+      set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
+    }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  }
+#endif
+
+  if (!ign_opts.ign_asource) prefs->audio_src = get_int_pref(PREF_AUDIO_SRC);
+
+  if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
+        capable->has_pulse_audio)) && prefs->audio_src == AUDIO_SRC_EXT) {
+    prefs->audio_src = AUDIO_SRC_INT;
+    set_int_pref(PREF_AUDIO_SRC, prefs->audio_src);
   }
 
   splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
@@ -2992,7 +3007,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
   ssize_t mynsize;
   char fbuff[PATH_MAX];
-  char buff[256];
   char *tmp;
 
 #ifdef GUI_QT
@@ -3004,7 +3018,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw = NULL;
   set_signal_handlers((SignalHandlerPointer)catch_sigint);
 
-  ign_opts.ign_clipset = ign_opts.ign_osc = ign_opts.ign_aplayer = ign_opts.ign_stmode = ign_opts.ign_vppdefs = FALSE;
+  ign_opts.ign_clipset = ign_opts.ign_osc = ign_opts.ign_aplayer = ign_opts.ign_asource = ign_opts.ign_stmode = ign_opts.ign_vppdefs = FALSE;
 
 #ifdef ENABLE_OIL
   oil_init();
@@ -3039,7 +3053,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   if (iResult != 0) {
     printf("WSAStartup failed: %d\n", iResult);
     exit(1);
-
   }
 #endif
 #endif
@@ -3112,6 +3125,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     } else {
       struct option longopts[] = {
         {"aplayer", 1, 0, 0},
+        {"asource", 1, 0, 0},
         {"tmpdir", 1, 0, 0},
         {"yuvin", 1, 0, 0},
         {"set", 1, 0, 0},
@@ -3282,6 +3296,20 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
           if (apl_valid) ign_opts.ign_aplayer = TRUE;
           else lives_printerr(_("Invalid audio player %s\n"), buff);
+          continue;
+        }
+        if (!strcmp(charopt, "asource")) {
+          lives_snprintf(buff, 256, "%s", optarg);
+          // override audio source
+          if (!strcmp(buff, _("external")) || !strcmp(buff, "external")) { // handle translated and original strings
+            prefs->audio_src = AUDIO_SRC_EXT;
+            ign_opts.ign_asource = TRUE;
+          } else if (strcmp(buff, _("internal")) && strcmp(buff, "internal")) { // handle translated and original strings
+            lives_printerr(_("Invalid audio source %s\n"), buff);
+          } else {
+            prefs->audio_src = AUDIO_SRC_INT;
+            ign_opts.ign_asource = TRUE;
+          }
           continue;
         }
         if (!strcmp(charopt, "nogui")) {
@@ -4454,13 +4482,13 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   png_structp png_ptr;
   png_infop info_ptr;
 
-  unsigned char buff[8];
+  unsigned char ibuff[8];
 
   unsigned char *mem, *ptr;
   unsigned char **row_ptrs;
 
-  size_t bsize = fread(buff, 1, 8, fp), framesize;
-  boolean is_png = !png_sig_cmp(buff, 0, bsize);
+  size_t bsize = fread(ibuff, 1, 8, fp), framesize;
+  boolean is_png = !png_sig_cmp(ibuff, 0, bsize);
 
   float screen_gamma = SCREEN_GAMMA;
   float pref_gamma = SCREEN_GAMMA * 1.0; // a larger value is brighter
@@ -4722,7 +4750,7 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
 #ifdef GUI_GTK
   GdkPixbufLoader *pbload;
 #endif
-  uint8_t buff[IMG_BUFF_SIZE];
+  uint8_t ibuff[IMG_BUFF_SIZE];
   size_t bsize;
 
   int fd = lives_open2(fname, O_RDONLY);
@@ -4756,9 +4784,9 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
                        NULL);
 
   while (1) {
-    if (!(bsize = read(fd, buff, IMG_BUFF_SIZE))) break;
+    if (!(bsize = read(fd, ibuff, IMG_BUFF_SIZE))) break;
     sched_yield();
-    if (!gdk_pixbuf_loader_write(pbload, buff, bsize, &gerror)) {
+    if (!gdk_pixbuf_loader_write(pbload, ibuff, bsize, &gerror)) {
       close(fd);
       return FALSE;
     }

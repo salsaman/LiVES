@@ -2543,8 +2543,8 @@ void print_opthelp(void) {
   lives_printerr("%s",
                  _("-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack transport client,"
                    "2 = jack transport master, 4 = start jack transport server, \n"
-		   "                      "
-		   "8 = pause audio when video paused, 16 = start jack audio server] \n"));
+                   "                      "
+                   "8 = pause audio when video paused, 16 = start jack audio server] \n"));
 #else
   lives_printerr("%s", _(" or sox\n"));
 #endif

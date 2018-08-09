@@ -2842,10 +2842,6 @@ void play_file(void) {
     return;
   }
 
-  if (mainw->toy_type == LIVES_TOY_AUTOLIVES) {
-    on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
-  }
-
   lives_widget_hide(mainw->playarea);
 
   // unblank the background

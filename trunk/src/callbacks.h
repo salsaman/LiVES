@@ -349,6 +349,8 @@ void on_toolbar_hide(LiVESButton *, livespointer);
 
 void on_toy_activate(LiVESMenuItem *, livespointer old_toy_p);
 
+void autolives_toggle(LiVESMenuItem *, livespointer);
+
 void on_preview_spinbutton_changed(LiVESSpinButton *, livespointer);
 
 boolean prevclip_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer);

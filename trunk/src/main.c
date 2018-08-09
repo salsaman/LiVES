@@ -1022,7 +1022,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->jack_trans_poll = FALSE;
 
-  mainw->toy_alives_pgid = 0;
+  mainw->alives_pgid = 0;
   mainw->autolives_reset_fx = FALSE;
 
   mainw->aplayer_broken = FALSE;

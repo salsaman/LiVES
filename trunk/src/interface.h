@@ -103,7 +103,6 @@ typedef struct {
   LiVESWidget *radiobuttond;
 } lives_tvcardw_t;
 
-
 #define LIVES_PREVIEW_TYPE_VIDEO_AUDIO 1
 #define LIVES_PREVIEW_TYPE_AUDIO_ONLY 2
 #define LIVES_PREVIEW_TYPE_RANGE 3
@@ -129,6 +128,20 @@ void make_preview_box(void);
 void play_window_set_title(void);
 void add_to_playframe(void);
 LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data);
+
+#ifdef ENABLE_OSC2
+LiVESWidget *autolives_pre_dialog(void);
+
+typedef struct {
+  LiVESWidget *dialog;
+  LiVESWidget *atrigger_button;
+  LiVESWidget *atrigger_spin;
+  LiVESWidget *textview;
+  LiVESWidget *table;
+} text_window;
+
+#endif
+
 LiVESTextView *create_output_textview(void);
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra);
 LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int preview_type);

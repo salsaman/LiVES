@@ -7277,6 +7277,7 @@ LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustme
 
 
 boolean lives_widget_grab_default_special(LiVESWidget *widget) {
+  // grab default and set colour scheme
   if (!lives_widget_set_can_default(widget, TRUE)) return FALSE;
   if (!lives_widget_grab_default(widget)) return FALSE;
   if (widget_opts.apply_theme && LIVES_IS_BUTTON(widget)) {

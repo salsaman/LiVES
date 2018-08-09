@@ -2765,3 +2765,42 @@ void do_mt_keys_window(void) {
   lives_free(tmp);
 }
 
+
+#ifdef ENABLE_OSC2
+LiVESWidget *autolives_pre_dialog(void) {
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *scrollw;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
+
+  char *tmp, *tmp2;
+
+  dialog = lives_standard_dialog_new(_("Autolives Options"), FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
+
+  if (prefs->show_gui) {
+    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  }
+
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+
+  vbox = lives_vbox_new(FALSE, 0);
+  lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width * 2);
+
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
+
+  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+  lives_widget_set_can_focus_and_default(cancelbutton);
+
+  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
+
+  lives_widget_set_can_focus_and_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
+
+  lives_widget_show_all(dialog);
+  return dialog;
+}
+#endif

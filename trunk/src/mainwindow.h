@@ -1,6 +1,6 @@
 // mainwindow.h
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman+lives@gmail.com> 2003 - 2017
+// (c) G. Finch <salsaman+lives@gmail.com> 2003 - 2018
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -172,8 +172,7 @@ typedef enum {
 typedef enum {
   LIVES_TOY_NONE = 0,
   LIVES_TOY_MAD_FRAMES,
-  LIVES_TOY_TV,
-  LIVES_TOY_AUTOLIVES
+  LIVES_TOY_TV
 } lives_toy_t;
 
 typedef enum {
@@ -578,7 +577,7 @@ typedef struct {
   int pre_src_audio_file; ///< audio file we were playing before any ext input started
 
   lives_toy_t toy_type;
-  lives_pgid_t toy_alives_pgid; // 0, or thread for autolives toy
+  lives_pgid_t alives_pgid; // 0, or procid for autolives
   boolean autolives_reset_fx;
 
   boolean toy_go_wild;
@@ -735,7 +734,6 @@ typedef struct {
   ulong toy_func_none;
   ulong toy_func_random_frames;
   ulong toy_func_lives_tv;
-  ulong toy_func_autolives;
   ulong hnd_id;
   ulong loop_cont_func;
   ulong mute_audio_func;

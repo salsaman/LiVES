@@ -113,6 +113,10 @@ void lives_exit(int signum) {
       on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
     }
 
+    if (mainw->alives_pgid > 0) {
+      autolives_toggle(NULL, NULL);
+    }
+
     if (mainw->stored_event_list != NULL || mainw->sl_undo_mem != NULL) {
       stored_event_list_free_all(FALSE);
     }
@@ -8406,7 +8410,99 @@ void on_rename_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_show_all(renamew->dialog);
 }
 
+ 
+void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
+#ifdef ENABLE_OSC
+#ifdef ENABLE_OSC2
+  LiVESWidget *dialog;
+#endif
+#ifndef IS_MINGW
+  char string[PATH_MAX];
+#endif
+  char *com;
 
+  if (mainw->alives_pgid > 0) {
+      lives_killpg(mainw->alives_pgid, LIVES_SIGHUP);
+      mainw->alives_pgid = 0;
+   
+      // switch off rte so as not to cause alarm
+      if (mainw->autolives_reset_fx)
+	rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(0));
+      mainw->autolives_reset_fx = FALSE;
+      return;
+   }
+
+    if (mainw->current_file < 1) {
+      do_autolives_needs_clips_error();
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_none), TRUE);
+      return;
+    }
+
+    if ((mainw->current_file > -1 && cfile != NULL && (
+           cfile->event_list != NULL ||
+           cfile->opening
+         )) ||
+        mainw->multitrack != NULL ||
+        mainw->is_processing ||
+        mainw->preview
+       ) {
+      // ignore if doing something more important
+      return;
+    }
+
+#ifndef IS_MINGW
+    // search for autolives.pl
+    if (!capable->has_autolives) {
+      get_location("autolives.pl", string, PATH_MAX);
+      if (strlen(string)) capable->has_autolives = TRUE;
+      else {
+        do_no_autolives_error();
+        return;
+      }
+    }
+#endif
+
+#ifdef ENABLE_OSC2
+    dialog = autolives_pre_dialog();
+    if (lives_dialog_run(LIVES_DIALOG(dialog)) == LIVES_RESPONSE_CANCEL) {
+      lives_widget_destroy(dialog);
+      return;
+    }
+    lives_widget_destroy(dialog);
+#endif
+
+    // chek if osc is started; if not ask permission
+    if (!prefs->osc_udp_started) {
+      if (!lives_ask_permission(LIVES_PERM_OSC_PORTS)) {
+        // permission not given
+         return;
+      }
+
+      // try: start up osc
+      prefs->osc_udp_started = lives_osc_init(prefs->osc_udp_port);
+      if (!prefs->osc_udp_started) {
+        return;
+      }
+    }
+
+    // TODO *** store full fx state and restore it
+    if (mainw->rte == EFFECT_NONE) {
+      mainw->autolives_reset_fx = TRUE;
+    }
+    
+#ifndef IS_MINGW
+    com = lives_strdup_printf("autolives.pl localhost %d %d -waitforplay", prefs->osc_udp_port, prefs->osc_udp_port - 1);
+#else
+    com = lives_strdup_printf("START /MIN /B perl \"%s\\bin\\autolives.pl\" localhost %d %d -waitforplay >NUL 2>&1",
+                              prefs->prefix_dir, prefs->osc_udp_port, prefs->osc_udp_port - 1);
+#endif
+    mainw->alives_pgid = lives_fork(com);
+
+    lives_free(com);
+#endif
+}
+
+   
 void on_rename_set_name(LiVESButton *button, livespointer user_data) {
   char title[256];
   boolean bad_header = FALSE;
@@ -8435,13 +8531,6 @@ void on_rename_set_name(LiVESButton *button, livespointer user_data) {
 
 
 void on_toy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-#ifdef ENABLE_OSC
-#ifndef IS_MINGW
-  char string[PATH_MAX];
-#endif
-  char *com;
-#endif
-
   if (menuitem != NULL && mainw->toy_type == LIVES_POINTER_TO_INT(user_data)) {
     // switch is off
     user_data = LIVES_INT_TO_POINTER(LIVES_TOY_NONE);
@@ -8449,20 +8538,6 @@ void on_toy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   switch (mainw->toy_type) {
   // old status
-  case LIVES_TOY_AUTOLIVES:
-    lives_signal_handler_block(mainw->toy_autolives, mainw->toy_func_autolives);
-    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_autolives), FALSE);
-    lives_signal_handler_unblock(mainw->toy_autolives, mainw->toy_func_autolives);
-
-    if (mainw->toy_alives_pgid > 1) {
-      lives_killpg(mainw->toy_alives_pgid, LIVES_SIGHUP);
-    }
-
-    // switch off rte so as not to cause alarm
-    if (mainw->autolives_reset_fx)
-      rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(0));
-    mainw->autolives_reset_fx = FALSE;
-    break;
   case LIVES_TOY_MAD_FRAMES:
     lives_signal_handler_block(mainw->toy_random_frames, mainw->toy_func_random_frames);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_random_frames), FALSE);
@@ -8496,73 +8571,6 @@ void on_toy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_none), TRUE);
     lives_signal_handler_unblock(mainw->toy_none, mainw->toy_func_none);
     return;
-#ifdef ENABLE_OSC
-  case LIVES_TOY_AUTOLIVES:
-    if (mainw->current_file < 1) {
-      do_autolives_needs_clips_error();
-      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_none), TRUE);
-      return;
-    }
-
-    if ((mainw->current_file > -1 && cfile != NULL && (
-           cfile->event_list != NULL ||
-           cfile->opening
-         )) ||
-        mainw->multitrack != NULL ||
-        mainw->is_processing ||
-        mainw->preview
-       ) {
-      // ignore if doing something more important
-
-      on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
-      return;
-    }
-
-#ifndef IS_MINGW
-    // search for autolives.pl
-    if (!capable->has_autolives) {
-      get_location("autolives.pl", string, PATH_MAX);
-      if (strlen(string)) capable->has_autolives = TRUE;
-      else {
-        do_no_autolives_error();
-        on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
-        return;
-      }
-    }
-#endif
-
-    // chek if osc is started; if not ask permission
-    if (!prefs->osc_udp_started) {
-      if (!lives_ask_permission(LIVES_PERM_OSC_PORTS)) {
-        // permission not given
-        on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
-        return;
-      }
-
-      // try: start up osc
-      prefs->osc_udp_started = lives_osc_init(prefs->osc_udp_port);
-      if (!prefs->osc_udp_started) {
-        on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
-        return;
-      }
-    }
-
-    // TODO *** store full fx state and restore it
-    if (mainw->rte == EFFECT_NONE) {
-      mainw->autolives_reset_fx = TRUE;
-    }
-
-#ifndef IS_MINGW
-    com = lives_strdup_printf("autolives.pl localhost %d %d", prefs->osc_udp_port, prefs->osc_udp_port - 1);
-#else
-    com = lives_strdup_printf("START /MIN /B perl \"%s\\bin\\autolives.pl\" localhost %d %d >NUL 2>&1",
-                              prefs->prefix_dir, prefs->osc_udp_port, prefs->osc_udp_port - 1);
-#endif
-    mainw->toy_alives_pgid = lives_fork(com);
-
-    lives_free(com);
-    break;
-#endif
   case LIVES_TOY_MAD_FRAMES:
     break;
   case LIVES_TOY_TV:

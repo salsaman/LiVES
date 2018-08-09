@@ -1799,8 +1799,6 @@ void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
     if (!do_warning_dialog(
           _("\nChanging the speed will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
       lives_list_free_all(&mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays = NULL;
       return;
     }
     add_lmap_error(LMAP_ERROR_SHIFT_AUDIO, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, 0, 0.,

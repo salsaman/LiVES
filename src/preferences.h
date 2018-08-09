@@ -284,6 +284,9 @@ typedef struct {
   boolean alsa_midi_dummy;
 #endif
 
+  int midi_rcv_channel;
+  boolean midi_channel_filter;
+
   int startup_interface;
 
 #define STARTUP_CE 0

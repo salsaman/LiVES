@@ -20,6 +20,7 @@
 # v 2.11 change fussy order of -pass option
 # v 2.12 add h264/aac/mp4, wmv2, ffv1 and mjpeg; show missing libraries
 # v 2.13 add qtrel, add quality settings
+# v 2.14 change qscale to q:v and b to b:v
 #######################################################################
 
 if (!defined($standalone)) {
@@ -41,7 +42,7 @@ else {
 
 
 if ($command eq "version") {
-    print "ffmpeg encoder plugin v2.13\n";
+    print "ffmpeg encoder plugin v2.14\n";
     exit 0;
 }
 
@@ -355,6 +356,12 @@ if ($command eq "encode") {
 
     $ncpus=&get_num_procs;
 
+    $bug1 = "";
+
+    if ($ffver>=57) {
+	$bug1 = "-auto-alt-ref 0";
+    }
+    
     # default seems to be divx
     $vcodec="";
     
@@ -390,26 +397,26 @@ if ($command eq "encode") {
 	$vcodec="-f flv";
     }
     elsif ($otype eq "webmh") {
-	$vcodec="-f webm -c:v libvpx -g 60 -qscale 1 -b 1G";
+	$vcodec="-f webm -c:v libvpx -g 60 -q:v 1 -b:v 1G $bug1";
     }
     elsif ($otype eq "webmm") {
-	$vcodec="-f webm -c:v libvpx -g 60 -qscale 1 -b 500M";
+	$vcodec="-f webm -c:v libvpx -g 60 -q:v 1 -b:v 500M $bug1";
     }
     elsif ($otype eq "webml") {
-	$vcodec="-f webm -c:v libvpx -g 60 -qscale 31";
+	$vcodec="-f webm -c:v libvpx -g 60 -q:v 31 $bug1";
     }
     elsif ($otype eq "x264") { 
-	$vcodec="-c:v libx264 -qscale $quality -s $fwidth"."X$fheight";
+	$vcodec="-c:v libx264 -q:v $quality -s $fwidth"."X$fheight";
 	if ($force420) {
 	    $vcodec.=" -pix_fmt yuv420p";
 	}
     }
     elsif ($otype eq "qtrle") { 
-	$vcodec="-c:v qtrle -qscale $quality";
+	$vcodec="-c:v qtrle -q:v $quality";
     }
 
     if ($otype eq "flv-youtubex") {
-	$vcodec.=" -b 1024k -bt 256k -maxrate 1024k -minrate 1024k -bufsize 8192k";
+	$vcodec.=" -b:v 1024k -bt 256k -maxrate 1024k -minrate 1024k -bufsize 8192k";
     }
 
     # video stream

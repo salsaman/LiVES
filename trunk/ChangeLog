@@ -10,14 +10,14 @@ Fix hang when clearing matches in the MIDI / JS learner window (GUI issue).
 	Add pref for creating a dummy alsa MIDI output port.
 	Add "OMC notify" to MIDI mapper (MIDI -> OSC, sends USER1 notify event to all listeners).
 	Code cleanup. Standard checkbuttons and check menuitems now have their state set in the creation function.
-	Remove "use_mnemonic" parameter for widget functions. Use widget_opts.mnemonic_labels instead. (in progress)
-	Amend the autolives toy so it can be triggered via OSC (WIP).
+	Remove "use_mnemonic" parameter for widget functions. Use widget_opts.mnemonic_labels instead.
+	Amend the autolives toy so it can be triggered via OSC (WIP - add GUI in Toys menu, move to vj menu).
 	MIDI channel can now used as a filter instead of a parameter to be matched (TODO).
 	Device mappings can now be shipped with builds (TODO).
 	Improved a/v synch with pulse audio.
 	Correct some minor GUI issues.
 	--noset startup option now has a permanent effect.
-	Add --asource [internal | external] startup option (TODO).
+	Add --asource [internal | external] startup option.
 	
 
 

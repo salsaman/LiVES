@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# (c) Salsaman 2004 - 2012
+# (c) Salsaman (salsaman+lives@gmail.com) 2004 - 2018
 
 # released under the GPL 3 or later
 # see file COPYING or www.gnu.org for details
@@ -8,30 +8,19 @@
 #Communicate with LiVES and do auto VJing
 
 
-# syntax is autolives.pl host cmd_port status_port
+# syntax is autolives.pl host cmd_port status_port [options]
 # e.g. autolives.pl localhost 49999 49998
 # or just autolives.pl to use defaults 
 
-$DEBUG=1;
+#options can be any combination of:
+# -waitforplay
+# -omc notify_port
+# -debug
 
-if ($^O eq "MSWin32") {
-    use IO::Socket::INET;
-}
-else {
-    $SIG{'HUP'} = 'HUP_handler';
-
-    if (&location("sendOSC") eq "") {
-	print "You must have sendOSC installed to run this.\n";
-	exit 1;
-    }
-
-    use IO::Socket::UNIX;
-}
 
 $remote_host="localhost";
 $remote_port=49999; #command port to app
 $local_port=49998; #status port from app
-$notify_port=49997; #notify port from app
 
 if (defined($ARGV[0])) {
     $remote_host=$ARGV[0];
@@ -52,7 +41,36 @@ else {
     $sendOMC="sendOSC -h $remote_host $remote_port";
 }
 
-print "autolives starting...\n";
+while (($opt = shift) ne "") {
+    if ($opt eq "-omc") {
+	$noty = 1;
+	$notify_port = shift;
+    }
+    if ($opt eq "-waitforplay") {
+	$waitforplay = 1;
+    }
+    if ($opt eq "-debug") {
+	$DEBUG = 1;
+    }
+}
+
+
+if ($^O eq "MSWin32") {
+    use IO::Socket::INET;
+}
+else {
+    $SIG{'HUP'} = 'HUP_handler';
+
+    if (&location("sendOSC") eq "") {
+	print STDERR "You must have sendOSC installed to run this.\n";
+	exit 1;
+    }
+
+    use IO::Socket::UNIX;
+}
+
+
+print STDERR "autolives starting...\n";
 
 ###################
 # ready our listener
@@ -73,7 +91,7 @@ if ($remote_host eq "localhost") {
 
 #$noty = 1;
 
-print "Opening status port UDP $local_port on $my_ip_addr...\n";
+print STDERR "Opening status port UDP $local_port on $my_ip_addr...\n";
 
 
 my $ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
@@ -81,11 +99,11 @@ my $ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
     or die "error creating UDP listener for $my_ip_addr  $@\n";
 $s->add($ip1);
 
-print "Status port ready.\n";
+print STDERR "Status port ready.\n";
 
 
 if ($noty) {
-    print "Opening notify port UDP $local_port on $my_ip_addr...\n";
+    print STDERR "Opening notify port UDP $local_port on $my_ip_addr...\n";
     my $ip2=IO::Socket::INET->new(LocalPort => $notify_port, Proto=>'udp',
 				  LocalAddr => $my_ip_addr)
 	or die "error creating UDP notification listener for $my_ip_addr  $@\n";
@@ -100,7 +118,7 @@ $timeout=1;
 #################################################################
 # start sending OMC commands
 
-print "Beggining OMC handshake...\n";
+print STDERR "Beginning OMC handshake...\n";
 
 if ($^O eq "MSWin32") {
     `$sendOMC /lives/open_status_socket s $my_ip_addr i $local_port`;
@@ -110,28 +128,28 @@ else {
 }
 
 
-print "Sent request to open status socket. Sending ping.\n";
+print STDERR "Sent request to open status socket. Sending ping.\n";
 
 `$sendOMC /lives/ping`;
 my $retmsg=&get_newmsg;
 
-print "got $retmsg\n";
+print STDERR "got $retmsg\n";
 
 unless ($retmsg eq "pong") {
-    print "Could not connect to LiVES\n";
+    print STDERR "Could not connect to LiVES\n";
     exit 2;
 }
 
 
-# get number of realtime effect keys, print and exit
+# get number of realtime effect keys, print STDERR and exit
 `$sendOMC /effect_key/count`;
 
 my $numeffectkeys=&get_newmsg;
 
 
-print "LiVES has $numeffectkeys realtime keys !\n";
+print STDERR "LiVES has $numeffectkeys realtime keys !\n";
 
-print "getting effect key layout...\n";
+print STDERR "getting effect key layout...\n";
 
 
 
@@ -140,25 +158,25 @@ print "getting effect key layout...\n";
 $nummodes=&get_newmsg;
 
 
-print "there are $nummodes modes per key\n";
+print STDERR "there are $nummodes modes per key\n";
 
 
 &print_layout($numeffectkeys,$nummodes);
 
 
-print "done !\n";
+print STDERR "done !\n";
 
-# get number of clips, print and exit
+# get number of clips, print STDERR and exit
 `$sendOMC /clip/count`;
 
 
 $numclips=&get_newmsg;
 
 
-print "LiVES has $numclips clips open !\n";
+print STDERR "LiVES has $numclips clips open !\n";
 
 if (!$numclips) {
-    print "Please open some clips first !\n";
+    print STDERR "Please open some clips first !\n";
     exit 3;
 }
 
@@ -171,13 +189,41 @@ if ($noty) {
     }
 }
 
+if ($^O eq "MSWin32") {
+    `$sendOMC /lives/constant/value/get LIVES_STATUS_PLAYING`;
+}
+else {
+    `$sendOMC /lives/constant/value/get,LIVES_STATUS_PLAYING`;
+}
 
-# TODO - check if app is playing
 
-`$sendOMC /video/play`;
+$playstat=&get_newmsg;
 
+if (!$waitforplay) {
+    `$sendOMC /video/play`;
+    
+    for ($i=0;$i<5;$i++) {
+	`$sendOMC /lives/status/get`;
+	$status=&get_newmsg;
+	if ($status != $playstat) {
+	    sleep 1;
+	}
+	else {
+	    last;
+	}
+    }
 
-# switch clips randomly
+    if ($status != $playstat) {
+	print STDERR "Playback not started, status was $status, wanted $playstat (playing)\n";
+	exit 4;
+    }
+
+    print STDERR "Status is $status (playing)\n";
+}
+
+$waittime = 1.;
+
+print STDERR "Performing magic...\n";
 
 while (1) {
     if ($noty) {
@@ -186,7 +232,7 @@ while (1) {
 	}
     }
     else {
-	sleep 1;
+	select(undef, undef, undef, $waittime);
     }
     
     $action=int(rand(18))+1;
@@ -253,37 +299,55 @@ while (1) {
     else {
 	#18
 	    `$sendOMC /video/play/reverse`;
+    }
+
+    if (!$waitforplay) {
+	`$sendOMC /lives/status/get`;
+	$status=&get_newmsg;
+	if ($status != $playstat) {
+	    print STDERR "playback stopped, exiting\n";
+	    last;
 	}
+    }
+    else {
+	while (1) {
+	    `$sendOMC /lives/status/get`;
+	    $status=&get_newmsg;
+	    if ($status != $playstat) {
+		sleep 1;
+	    }
+	    else {
+		last;
+	    }
+	}
+    }
 	
 }
-
 
 exit 0;
 
 #####################################################################
 
 
-
-
-
 sub get_newmsg {
     my $newmsg;
     while (1) {
+	$lport = -1;
 	foreach $server($s->can_read($timeout)){
 	    $server->recv($newmsg,1024);
 	    ($rport,$ripaddr) = sockaddr_in($server->peername);
 	    ($lport,$lipaddr) = sockaddr_in($server->sockname);
-	    #print "check $lport $local_port\n";
+	    #print STDERR "check $lport $local_port\n";
 
 	    next if ($lport != $local_port);
 	
 	    # TODO - check from address is our host
-	    #print "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
+	    #print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
 	
 	    last;
 	}
-	#print "OK $lport $local_port : $newmsg\n";
-	last if ($lport == $local_port);
+	#print STDERR "OK $lport $local_port : $newmsg\n";
+	last if ($lport == $local_port || $lport == -1);
     }
     # remove terminating NULL
     $newmsg=substr($newmsg,0,length($newmsg)-1);
@@ -299,12 +363,12 @@ sub get_notify {
 	    $server->recv($newmsg,1024);
 	    ($rport,$ripaddr) = sockaddr_in($server->peername);
 	    ($lport,$lipaddr) = sockaddr_in($server->sockname);
-	    #print "check $lport $notify_port $newmsg\n";
+	    #print STDERR "check $lport $notify_port $newmsg\n";
 
 	    next if ($lport != $notify_port);
 	
 	    # TODO - check from address is our host
-	    #print "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
+	    #print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
 	
 	    last;
 	}
@@ -313,7 +377,7 @@ sub get_notify {
     # remove terminating NULL
     $newmsg=substr($newmsg,0,length($newmsg)-1);
     chomp ($newmsg);
-    #print "notify message = $newmsg\n";
+    #print STDERR "notify message = $newmsg\n";
     return $newmsg;
 }
 
@@ -340,14 +404,14 @@ sub print_layout {
 	    }
 	    $name=&get_newmsg;
 	    unless ($name eq "") {
-		print "key $i, mode $j: $name    ";
+		print STDERR "key $i, mode $j: $name    ";
 		if ($name eq "infinite"||$name eq "jess"||$name eq "oinksie") {
 		    # avoid libvisual for now
 		    $key_to_avoid=$i;
 		}
 	    }
 	}
-	print "\n";
+	print STDERR "\n";
     }
 }
 
@@ -356,9 +420,7 @@ sub HUP_handler {
     # close all files.
 
     # send error message to log file.
-    if ($DEBUG) {
-	print STDERR "autolives.pl exiting now\n";
-    }
+    print STDERR "autolives.pl exiting now\n";
 
     exit(0);
 }

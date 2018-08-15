@@ -4590,6 +4590,7 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->midi_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), prefsw->midi_hbox, FALSE, FALSE, widget_opts.packing_height);
 
+#ifdef ALSA_MIDI
   prefsw->alsa_midi = lives_standard_radio_button_new((tmp = lives_strdup(_("Use _ALSA MIDI (recommended)"))), &alsa_midi_group,
                       LIVES_BOX(prefsw->midi_hbox),
                       (tmp2 = lives_strdup(_("Create an ALSA MIDI port which other MIDI devices can be connected to"))));
@@ -4605,6 +4606,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_free(tmp2);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_midi));
+#endif
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -5078,9 +5080,11 @@ _prefsw *create_prefs_dialog(void) {
 #ifdef OMC_MIDI_IMPL
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_omc_midi), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+#ifdef ALSA_MIDI
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi_dummy), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
+#endif
   lives_signal_connect(LIVES_GUI_OBJECT(raw_midi_button), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->omc_midi_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);

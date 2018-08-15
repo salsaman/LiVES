@@ -280,6 +280,7 @@ typedef struct {
   boolean safe_symlinks;
 
 #ifdef ALSA_MIDI
+
   boolean use_alsa_midi;
   boolean alsa_midi_dummy;
 #endif

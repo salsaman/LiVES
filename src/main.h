@@ -55,6 +55,8 @@ POSSIBILITY OF SUCH DAMAGES.
 #undef HAVE_UNICAP
 #endif
 
+#define ENABLE_OSC2
+
 #define BACKEND_NAME "smogrify"
 
 #ifndef GUI_QT

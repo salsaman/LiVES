@@ -2760,6 +2760,9 @@ void play_file(void) {
 
   mainw->video_seek_ready = FALSE;
 
+  // terminate autolives if running
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
+
   // PLAY FINISHED...
   // allow this to fail - not all sub-commands may be present
   if (prefs->stop_screensaver) {

@@ -169,11 +169,18 @@ typedef enum {
   LIVES_TIME_SOURCE_EXTERNAL
 } lives_time_source_t;
 
+/// toy types
 typedef enum {
   LIVES_TOY_NONE = 0,
   LIVES_TOY_MAD_FRAMES,
   LIVES_TOY_TV
 } lives_toy_t;
+
+/// compatibility types
+typedef enum {
+  LIVES_COMPAT_NONE = 0,
+  LIVES_COMPAT_MIXXX ///< compatibility with MIXXX
+} lives_compat_t;
 
 typedef enum {
   LIVES_DIALOG_INFO,
@@ -885,7 +892,7 @@ typedef struct {
   LiVESWidget *toy_none;
   LiVESWidget *toy_random_frames;
   LiVESWidget *toy_tv;
-  LiVESWidget *toy_autolives;
+  LiVESWidget *autolives;
   LiVESWidget *show_file_info;
   LiVESWidget *show_file_comments;
   LiVESWidget *show_clipboard_info;
@@ -1369,6 +1376,8 @@ typedef struct {
   uint64_t aud_data_written;
 
   char *dp_cache;
+
+  lives_compat_t compat; ///< bitmap of compatibility modes
   ////////////////////
 } mainwindow;
 

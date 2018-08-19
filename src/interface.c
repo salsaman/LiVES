@@ -2767,40 +2767,119 @@ void do_mt_keys_window(void) {
 
 
 #ifdef ENABLE_OSC2
-LiVESWidget *autolives_pre_dialog(void) {
-  LiVESWidget *dialog;
+autolives_window *autolives_pre_dialog(void) {
+  // dialog for autolives activation
+  // options: trigger: auto, time
+  //                   omc - user1
+
+  // TODO: add port numbers, add change types and probabilities.
+  autolives_window *alwindow;
+
+  LiVESWidget *trigframe;
   LiVESWidget *dialog_vbox;
-  LiVESWidget *scrollw;
+  LiVESWidget *label;
   LiVESWidget *vbox;
   LiVESWidget *hbox;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
+  LiVESWidget *radiobutton;
+
+  LiVESSList *radiobutton1_group = NULL;
+  LiVESSList *radiobutton2_group = NULL;
 
   char *tmp, *tmp2;
 
-  dialog = lives_standard_dialog_new(_("Autolives Options"), FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
+  alwindow = (autolives_window *)lives_malloc(sizeof(autolives_window));
+
+  alwindow->dialog = lives_standard_dialog_new(_("Autolives Options"), FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
 
   if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_window_set_transient_for(LIVES_WINDOW(alwindow->dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(alwindow->dialog));
+
+  trigframe = lives_standard_frame_new(_("Trigger"), 0., FALSE);
+
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), trigframe, FALSE, FALSE, widget_opts.packing_height);
 
   vbox = lives_vbox_new(FALSE, 0);
-  lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width * 2);
+  lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width);
+  lives_container_add(LIVES_CONTAINER(trigframe), vbox);
+
+  hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+  alwindow->atrigger_button = lives_standard_radio_button_new((tmp = lives_strdup(_("Timed:"))),
+                              &radiobutton1_group, LIVES_BOX(hbox),
+                              (tmp2 = lives_strdup(_("Trigger a change based on time"))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  alwindow->atrigger_spin = lives_standard_spin_button_new(_("change time (seconds)"), 1., 1., 1800., 1., 10., 0, LIVES_BOX(hbox), NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+  radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("OMC"))),
+                &radiobutton1_group, LIVES_BOX(hbox),
+                (tmp2 = lives_strdup(_("Trigger a change based on receiving an OSC message"))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  if ((mainw->compat & LIVES_COMPAT_MIXXX) != 0) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
+
+  vbox = lives_vbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, FALSE, widget_opts.packing_height * 2.);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  label = lives_standard_label_new(_("Playback start:"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, TRUE, 0);
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+  alwindow->apb_button = lives_standard_radio_button_new((tmp = lives_strdup(_("Automatic"))),
+                         &radiobutton2_group, LIVES_BOX(hbox),
+                         (tmp2 = lives_strdup(_("Start playback automatically"))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Manual"))),
+                &radiobutton2_group, LIVES_BOX(hbox),
+                (tmp2 = lives_strdup(_("Wait for the user to start playback"))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  add_hsep_to_box(LIVES_BOX(dialog_vbox));
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  alwindow->debug_button = lives_standard_check_button_new
+                           ((tmp = lives_strdup(_("Debug mode"))), FALSE, LIVES_BOX(hbox),
+                            (tmp2 = lives_strdup(_("Show debug output on stderr."))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
 
   cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
 
-  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget(LIVES_DIALOG(alwindow->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default(cancelbutton);
 
-  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
+  lives_dialog_add_action_widget(LIVES_DIALOG(alwindow->dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default_special(okbutton);
 
-  lives_widget_show_all(dialog);
-  return dialog;
+  lives_widget_show_all(alwindow->dialog);
+  return alwindow;
 }
 #endif

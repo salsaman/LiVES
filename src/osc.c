@@ -642,8 +642,8 @@ boolean lives_osc_cb_set_loop(void *context, int arglen, const void *vargs, OSCT
     } else if (mainw->loop_cont) on_loop_button_activate(NULL, NULL);
 
     if (lmode & atoi(get_omc_const("LIVES_LOOP_MODE_FIT_AUDIO"))) {
-      if (mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video), !mainw->loop);
-    } else if (!mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video), !mainw->loop);
+      if (!mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video), TRUE);
+    } else if (mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video), FALSE);
   }
 
   return lives_osc_notify_success(NULL);

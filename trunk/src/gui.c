@@ -1496,9 +1496,9 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(vj_menu));
 
-  mainw->toy_autolives = lives_standard_check_menu_item_new_with_label(_("_Automatic Mode (autolives)"), FALSE);
+  mainw->autolives = lives_standard_check_menu_item_new_with_label(_("_Automatic Mode (autolives)..."), FALSE);
 #ifdef ENABLE_OSC
-  lives_container_add(LIVES_CONTAINER(vj_menu), mainw->toy_autolives);
+  lives_container_add(LIVES_CONTAINER(vj_menu), mainw->autolives);
 #endif
 
   mainw->toys = lives_standard_menu_item_new_with_label(_("To_ys"));
@@ -2729,7 +2729,7 @@ void create_LiVES(void) {
                          LIVES_GUI_CALLBACK(on_toy_activate),
                          NULL);
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->toy_autolives), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->autolives), LIVES_WIDGET_ACTIVATE_SIGNAL,
                              LIVES_GUI_CALLBACK(autolives_toggle),
                              NULL);
 

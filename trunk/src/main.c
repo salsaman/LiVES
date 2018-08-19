@@ -1099,6 +1099,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->rendered_fx = NULL;
 
+  mainw->compat = LIVES_COMPAT_NONE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -3677,7 +3679,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->midi_learn, TRUE);
   lives_widget_set_sensitive(mainw->midi_save, TRUE);
   lives_widget_set_sensitive(mainw->toy_tv, TRUE);
-  lives_widget_set_sensitive(mainw->toy_autolives, TRUE);
+  lives_widget_set_sensitive(mainw->autolives, TRUE);
   lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
   lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);
   lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
@@ -3902,7 +3904,7 @@ void procw_desensitize(void) {
   lives_widget_set_sensitive(mainw->sa_button, FALSE);
   lives_widget_set_sensitive(mainw->select_submenu, FALSE);
   lives_widget_set_sensitive(mainw->toy_tv, FALSE);
-  lives_widget_set_sensitive(mainw->toy_autolives, FALSE);
+  lives_widget_set_sensitive(mainw->autolives, FALSE);
   lives_widget_set_sensitive(mainw->trim_submenu, FALSE);
   lives_widget_set_sensitive(mainw->delaudio_submenu, FALSE);
   lives_widget_set_sensitive(mainw->load_cdtrack, FALSE);
@@ -6745,7 +6747,7 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->recent_menu, TRUE);
       lives_widget_set_sensitive(mainw->restore, TRUE);
       lives_widget_set_sensitive(mainw->toy_tv, TRUE);
-      lives_widget_set_sensitive(mainw->toy_autolives, TRUE);
+      lives_widget_set_sensitive(mainw->autolives, TRUE);
       lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
       lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
       lives_widget_set_sensitive(mainw->clear_ds, TRUE);

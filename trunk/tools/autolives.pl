@@ -14,13 +14,16 @@
 
 #options can be any combination of:
 # -waitforplay
-# -omc notify_port
+# -omc <notify_port>
+# -time <secs> (ignored if -omc is passed)
 # -debug
 
 
 $remote_host="localhost";
 $remote_port=49999; #command port to app
 $local_port=49998; #status port from app
+$ctime = 1; # default change time
+$DEBUG = 0;
 
 if (defined($ARGV[0])) {
     $remote_host=$ARGV[0];
@@ -46,6 +49,9 @@ while (($opt = shift) ne "") {
 	$noty = 1;
 	$notify_port = shift;
     }
+    if ($opt eq "-time") {
+	$ctime = shift;
+    }
     if ($opt eq "-waitforplay") {
 	$waitforplay = 1;
     }
@@ -62,7 +68,7 @@ else {
     $SIG{'HUP'} = 'HUP_handler';
 
     if (&location("sendOSC") eq "") {
-	print STDERR "You must have sendOSC installed to run this.\n";
+	if ($DEBUG) {print STDERR "You must have sendOSC installed to run this.\n"};
 	exit 1;
     }
 
@@ -70,7 +76,7 @@ else {
 }
 
 
-print STDERR "autolives starting...\n";
+if ($DEBUG) {print STDERR "autolives starting...\n"};
 
 ###################
 # ready our listener
@@ -91,7 +97,7 @@ if ($remote_host eq "localhost") {
 
 #$noty = 1;
 
-print STDERR "Opening status port UDP $local_port on $my_ip_addr...\n";
+if ($DEBUG) {print STDERR "Opening status port UDP $local_port on $my_ip_addr...\n"};
 
 
 my $ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
@@ -99,11 +105,11 @@ my $ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
     or die "error creating UDP listener for $my_ip_addr  $@\n";
 $s->add($ip1);
 
-print STDERR "Status port ready.\n";
+if ($DEBUG) {print STDERR "Status port ready.\n"};
 
 
 if ($noty) {
-    print STDERR "Opening notify port UDP $local_port on $my_ip_addr...\n";
+    if ($DEBUG) {print STDERR "Opening notify port UDP $local_port on $my_ip_addr...\n"};
     my $ip2=IO::Socket::INET->new(LocalPort => $notify_port, Proto=>'udp',
 				  LocalAddr => $my_ip_addr)
 	or die "error creating UDP notification listener for $my_ip_addr  $@\n";
@@ -118,7 +124,7 @@ $timeout=1;
 #################################################################
 # start sending OMC commands
 
-print STDERR "Beginning OMC handshake...\n";
+if ($DEBUG) {print STDERR "Beginning OMC handshake...\n"};
 
 if ($^O eq "MSWin32") {
     `$sendOMC /lives/open_status_socket s $my_ip_addr i $local_port`;
@@ -128,28 +134,28 @@ else {
 }
 
 
-print STDERR "Sent request to open status socket. Sending ping.\n";
+if ($DEBUG) {print STDERR "Sent request to open status socket. Sending ping.\n"};
 
 `$sendOMC /lives/ping`;
 my $retmsg=&get_newmsg;
 
-print STDERR "got $retmsg\n";
+if ($DEBUG) {print STDERR "got $retmsg\n"};
 
 unless ($retmsg eq "pong") {
-    print STDERR "Could not connect to LiVES\n";
+    if ($DEBUG) {print STDERR "Could not connect to LiVES\n"};
     exit 2;
 }
 
 
-# get number of realtime effect keys, print STDERR and exit
+# get number of realtime effect keys, if ($DEBUG) {print STDERR and exit
 `$sendOMC /effect_key/count`;
 
 my $numeffectkeys=&get_newmsg;
 
 
-print STDERR "LiVES has $numeffectkeys realtime keys !\n";
+if ($DEBUG) {print STDERR "LiVES has $numeffectkeys realtime keys !\n"};
 
-print STDERR "getting effect key layout...\n";
+if ($DEBUG) {print STDERR "getting effect key layout...\n"};
 
 
 
@@ -158,25 +164,25 @@ print STDERR "getting effect key layout...\n";
 $nummodes=&get_newmsg;
 
 
-print STDERR "there are $nummodes modes per key\n";
+if ($DEBUG) {print STDERR "there are $nummodes modes per key\n"};
 
 
 &print_layout($numeffectkeys,$nummodes);
 
 
-print STDERR "done !\n";
+if ($DEBUG) {print STDERR "done !\n"};
 
-# get number of clips, print STDERR and exit
+# get number of clips, if ($DEBUG) {print STDERR and exit
 `$sendOMC /clip/count`;
 
 
 $numclips=&get_newmsg;
 
 
-print STDERR "LiVES has $numclips clips open !\n";
+if ($DEBUG) {print STDERR "LiVES has $numclips clips open !\n"};
 
 if (!$numclips) {
-    print STDERR "Please open some clips first !\n";
+    if ($DEBUG) {print STDERR "Please open some clips first !\n"};
     exit 3;
 }
 
@@ -190,7 +196,7 @@ if ($noty) {
 }
 
 if ($^O eq "MSWin32") {
-    `$sendOMC /lives/constant/value/get LIVES_STATUS_PLAYING`;
+    `$sendOMC /lives/constant/value/get s LIVES_STATUS_PLAYING`;
 }
 else {
     `$sendOMC /lives/constant/value/get,LIVES_STATUS_PLAYING`;
@@ -199,7 +205,28 @@ else {
 
 $playstat=&get_newmsg;
 
+if ($^O eq "MSWin32") {
+    `$sendOMC /lives/constant/value/get s LIVES_LOOP_MODE_CONTINUOUS`;
+}
+else {
+    `$sendOMC /lives/constant/value/get,LIVES_LOOP_MODE_CONTINUOUS`;
+}
+$loopconst=&get_newmsg;
+
+
+`$sendOMC /video/loop/get`;
+$currloop=&get_newmsg;
+
+
+
+
 if (!$waitforplay) {
+    if ($^O eq "MSWin32") {
+	`$sendOMC /video/loop/set i $loopconst`;
+    } else {
+	`$sendOMC /video/loop/set,$loopconst`;
+    }
+
     `$sendOMC /video/play`;
     
     for ($i=0;$i<5;$i++) {
@@ -214,16 +241,14 @@ if (!$waitforplay) {
     }
 
     if ($status != $playstat) {
-	print STDERR "Playback not started, status was $status, wanted $playstat (playing)\n";
+	if ($DEBUG) {print STDERR "Playback not started, status was $status, wanted $playstat (playing)\n"};
 	exit 4;
     }
 
-    print STDERR "Status is $status (playing)\n";
+    if ($DEBUG) {print STDERR "Status is $status (playing)\n"};
 }
 
-$waittime = 1.;
-
-print STDERR "Performing magic...\n";
+if ($DEBUG) {print STDERR "Performing magic...\n"};
 
 while (1) {
     if ($noty) {
@@ -232,9 +257,18 @@ while (1) {
 	}
     }
     else {
-	select(undef, undef, undef, $waittime);
+	select(undef, undef, undef, $ctime);
     }
     
+    if ($waitforplay) {
+	`$sendOMC /lives/status/get`;
+	$status=&get_newmsg;
+	if ($status != $playstat) {
+	    sleep 1;
+	    next;
+	}
+    }
+
     $action=int(rand(18))+1;
     
     if ($action<6) {
@@ -298,27 +332,22 @@ while (1) {
 
     else {
 	#18
-	    `$sendOMC /video/play/reverse`;
+	`$sendOMC /video/play/reverse`;
     }
 
     if (!$waitforplay) {
 	`$sendOMC /lives/status/get`;
 	$status=&get_newmsg;
 	if ($status != $playstat) {
-	    print STDERR "playback stopped, exiting\n";
+	    #playback stopped
+	    #reset loop mode
+	    if ($^O eq "MSWin32") {
+		`$sendOMC /video/loop/set i $currloop`;
+	    } else {
+		`$sendOMC /video/loop/set,$currloop`;
+	    }
+	    if ($DEBUG) {print STDERR "playback stopped, exiting\n"};
 	    last;
-	}
-    }
-    else {
-	while (1) {
-	    `$sendOMC /lives/status/get`;
-	    $status=&get_newmsg;
-	    if ($status != $playstat) {
-		sleep 1;
-	    }
-	    else {
-		last;
-	    }
 	}
     }
 	
@@ -337,16 +366,16 @@ sub get_newmsg {
 	    $server->recv($newmsg,1024);
 	    ($rport,$ripaddr) = sockaddr_in($server->peername);
 	    ($lport,$lipaddr) = sockaddr_in($server->sockname);
-	    #print STDERR "check $lport $local_port\n";
+	    #if ($DEBUG) {print STDERR "check $lport $local_port\n"};
 
 	    next if ($lport != $local_port);
 	
 	    # TODO - check from address is our host
-	    #print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
+	    #if ($DEBUG) {print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
 	
 	    last;
 	}
-	#print STDERR "OK $lport $local_port : $newmsg\n";
+	#if ($DEBUG) {print STDERR "OK $lport $local_port : $newmsg\n"};
 	last if ($lport == $local_port || $lport == -1);
     }
     # remove terminating NULL
@@ -363,12 +392,12 @@ sub get_notify {
 	    $server->recv($newmsg,1024);
 	    ($rport,$ripaddr) = sockaddr_in($server->peername);
 	    ($lport,$lipaddr) = sockaddr_in($server->sockname);
-	    #print STDERR "check $lport $notify_port $newmsg\n";
+	    #if ($DEBUG) {print STDERR "check $lport $notify_port $newmsg\n"};
 
 	    next if ($lport != $notify_port);
 	
 	    # TODO - check from address is our host
-	    #print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
+	    #if ($DEBUG) {print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
 	
 	    last;
 	}
@@ -377,7 +406,7 @@ sub get_notify {
     # remove terminating NULL
     $newmsg=substr($newmsg,0,length($newmsg)-1);
     chomp ($newmsg);
-    #print STDERR "notify message = $newmsg\n";
+    #if ($DEBUG) {print STDERR "notify message = $newmsg\n"};
     return $newmsg;
 }
 
@@ -404,14 +433,14 @@ sub print_layout {
 	    }
 	    $name=&get_newmsg;
 	    unless ($name eq "") {
-		print STDERR "key $i, mode $j: $name    ";
+		if ($DEBUG) {print STDERR "key $i, mode $j: $name    "};
 		if ($name eq "infinite"||$name eq "jess"||$name eq "oinksie") {
 		    # avoid libvisual for now
 		    $key_to_avoid=$i;
 		}
 	    }
 	}
-	print STDERR "\n";
+	if ($DEBUG) {print STDERR "\n"};
     }
 }
 
@@ -420,7 +449,7 @@ sub HUP_handler {
     # close all files.
 
     # send error message to log file.
-    print STDERR "autolives.pl exiting now\n";
+    if ($DEBUG) {print STDERR "autolives.pl exiting now\n"};
 
     exit(0);
 }

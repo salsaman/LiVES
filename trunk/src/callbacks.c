@@ -8412,9 +8412,15 @@ void on_rename_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
+  // TODO: allow mapping of change types to random ranges in the backend
+  // TODO: allow user selection of omc notify port
 #ifdef ENABLE_OSC
 #ifdef ENABLE_OSC2
-  LiVESWidget *dialog;
+  autolives_window *alwindow;
+  int trigtime;
+  char *apb;
+  char *trigopt;
+  char *debug;
 #endif
 #ifndef IS_MINGW
   char string[PATH_MAX];
@@ -8432,9 +8438,11 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
+  if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->autolives))) return;
+
   if (mainw->current_file < 1) {
     do_autolives_needs_clips_error();
-    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_none), TRUE);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
     return;
   }
 
@@ -8457,30 +8465,55 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
     if (strlen(string)) capable->has_autolives = TRUE;
     else {
       do_no_autolives_error();
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
       return;
     }
   }
 #endif
 
 #ifdef ENABLE_OSC2
-  dialog = autolives_pre_dialog();
-  if (lives_dialog_run(LIVES_DIALOG(dialog)) == LIVES_RESPONSE_CANCEL) {
-    lives_widget_destroy(dialog);
+  alwindow = autolives_pre_dialog();
+  if (alwindow == NULL) {
     return;
   }
-  lives_widget_destroy(dialog);
+  if (lives_dialog_run(LIVES_DIALOG(alwindow->dialog)) == LIVES_RESPONSE_CANCEL) {
+    lives_widget_destroy(alwindow->dialog);
+    lives_free(alwindow);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
+    return;
+  }
+
+  trigtime = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(alwindow->atrigger_spin));
+  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(alwindow->apb_button))) apb = lives_strdup(" -waitforplay");
+  else apb = lives_strdup("");
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(alwindow->atrigger_button))) {
+    // timed
+    trigopt = lives_strdup_printf(" -time %d", trigtime);
+  } else {
+    // omc
+    trigopt = lives_strdup_printf(" -omc %d", prefs->osc_udp_port - 2);
+  }
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(alwindow->debug_button))) {
+    debug = lives_strdup(" -debug");
+  } else {
+    debug = lives_strdup("");
+  }
+  lives_widget_destroy(alwindow->dialog);
+  lives_free(alwindow);
 #endif
 
   // chek if osc is started; if not ask permission
   if (!prefs->osc_udp_started) {
     if (!lives_ask_permission(LIVES_PERM_OSC_PORTS)) {
       // permission not given
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
       return;
     }
 
     // try: start up osc
     prefs->osc_udp_started = lives_osc_init(prefs->osc_udp_port);
     if (!prefs->osc_udp_started) {
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
       return;
     }
   }
@@ -8491,13 +8524,18 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
 #ifndef IS_MINGW
-  com = lives_strdup_printf("autolives.pl localhost %d %d -waitforplay", prefs->osc_udp_port, prefs->osc_udp_port - 1);
+  com = lives_strdup_printf("autolives.pl localhost %d %d%s%s%s", prefs->osc_udp_port, prefs->osc_udp_port - 1, apb, trigopt, debug);
 #else
-  com = lives_strdup_printf("START /MIN /B perl \"%s\\bin\\autolives.pl\" localhost %d %d -waitforplay >NUL 2>&1",
-                            prefs->prefix_dir, prefs->osc_udp_port, prefs->osc_udp_port - 1);
+  com = lives_strdup_printf("START /MIN /B perl \"%s\\bin\\autolives.pl\" localhost %d %d%s%s%s >NUL 2>&1",
+                            prefs->prefix_dir, prefs->osc_udp_port, prefs->osc_udp_port - 1, apb, trigopt, debug);
 #endif
   mainw->alives_pgid = lives_fork(com);
 
+#ifdef ENABLE_OSC2
+  lives_free(debug);
+  lives_free(trigopt);
+  lives_free(apb);
+#endif
   lives_free(com);
 #endif
 }

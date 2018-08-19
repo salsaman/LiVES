@@ -1,6 +1,6 @@
 // interface.h
 // LiVES
-// (c) G. Finch 2003 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2018 <salsaman+lives@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -130,16 +130,15 @@ void add_to_playframe(void);
 LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data);
 
 #ifdef ENABLE_OSC2
-LiVESWidget *autolives_pre_dialog(void);
-
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *atrigger_button;
   LiVESWidget *atrigger_spin;
-  LiVESWidget *textview;
-  LiVESWidget *table;
-} text_window;
+  LiVESWidget *apb_button;
+  LiVESWidget *debug_button;
+} autolives_window;
 
+autolives_window *autolives_pre_dialog(void);
 #endif
 
 LiVESTextView *create_output_textview(void);

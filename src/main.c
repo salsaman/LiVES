@@ -671,7 +671,7 @@ static boolean pre_init(void) {
   // create devicemaps directory in home
   create_devicemap_directory();
 #endif
-  
+
   if (!lives_ascii_strcasecmp(prefs->theme, "none")) return FALSE;
 
   return TRUE;

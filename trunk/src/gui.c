@@ -2718,10 +2718,10 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_midi_learn_activate),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->midi_save), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_midi_save_activate),
+                       LIVES_GUI_CALLBACK(on_devicemap_save_activate),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(midi_load), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_midi_load_activate),
+                       LIVES_GUI_CALLBACK(on_devicemap_load_activate),
                        NULL);
 #endif
 

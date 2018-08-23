@@ -2766,7 +2766,6 @@ void do_mt_keys_window(void) {
 }
 
 
-#ifdef ENABLE_OSC2
 autolives_window *autolives_pre_dialog(void) {
   // dialog for autolives activation
   // options: trigger: auto, time
@@ -2882,4 +2881,4 @@ autolives_window *autolives_pre_dialog(void) {
   lives_widget_show_all(alwindow->dialog);
   return alwindow;
 }
-#endif
+

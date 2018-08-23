@@ -203,6 +203,7 @@ typedef int lives_pgid_t;
 #define DESKTOP_ICON_DIR "/share/icons/hicolor/48x48/apps"
 #define DATA_DIR "/share/lives/"
 #define LIVES_CONFIG_DIR ".lives-dir/"
+#define LIVES_DEVICEMAP_DIR "devicemaps"
 #define LIVES_WORK_NAME "livesprojects"
 
 #else // IS_MINGW
@@ -1207,6 +1208,7 @@ int lives_rmdir_with_parents(const char *dir);
 int lives_rm(const char *file);
 int lives_rmglob(const char *files);
 int lives_cp(const char *from, const char *to);
+int lives_cp_recursive(const char *from, const char *to);
 int lives_cp_keep_perms(const char *from, const char *to);
 int lives_mv(const char *from, const char *to);
 int lives_touch(const char *tfile);

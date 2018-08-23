@@ -5,4 +5,4 @@ resourcesdir = "$(datadir)/$(PACKAGE)/resources/"
 resources_DATA = vidtest.avi
 
 
-EXTRA_DIST = $(resources_DATA)
+EXTRA_DIST = $(resources_DATA) devicemaps/*

@@ -86,8 +86,8 @@ installdirs:
 	$(MKDIR_P) "$(DESTDIR)$(docdir)" \
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/applications/" \
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/pixmaps/" \
-	$(MKDIR_P) "$(DESTDIR)$(sharedir)$(PACKAGE)/resources/" \
-	$(MKDIR_P) "$(DESTDIR)$(sharedir)$(PACKAGE)/tools/"
+	$(MKDIR_P) "$(DESTDIR)$(sharedir)/$(PACKAGE)/resources/" \
+	$(MKDIR_P) "$(DESTDIR)$(sharedir)/$(PACKAGE)/tools/"
 
 install-data-local:
 	make docs-doxygen
@@ -115,6 +115,9 @@ endif
 	cp -f "$(srcdir)/menu-entries/lives.xpm" "$(DESTDIR)$(sharedir)/pixmaps/"
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/icons/hicolor/48x48/apps/"
 	cp -f "$(srcdir)/menu-entries/lives.png" "$(DESTDIR)$(sharedir)/icons/hicolor/48x48/apps/"
+	$(MKDIR_P) "$(DESTDIR)$(sharedir)/$(PACKAGE)/devicemaps/"
+	cp -rf "$(srcdir)/resources/devicemaps/" "$(DESTDIR)$(sharedir)/$(PACKAGE)/"
+
 
 install-exec-local:
 	rm -rf "$(DESTDIR)$(bindir)/lives"
@@ -143,6 +146,7 @@ uninstall-local:
 	rm -rf "$(bindir)/build-lives-rfx-plugin-multi"
 	rm -rf "$(datadir)/$(PACKAGE)"
 	rm -rf "$(libdir)/$(PACKAGE)"
+	rm -rf "$(sharedir)/$(PACKAGE)"
 	rm -rf "$(docdir)"
 	rm -rf "$(sharedir)/applications/LiVES.desktop"
 	rm -rf "$(sharedir)/pixmaps/lives.xmp"

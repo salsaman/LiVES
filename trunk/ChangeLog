@@ -12,7 +12,7 @@ Fix hang when clearing matches in the MIDI / JS learner window (GUI issue).
 	Code cleanup. Standard checkbuttons and check menuitems now have their state set in the creation function.
 	Remove "use_mnemonic" parameter for widget functions. Use widget_opts.mnemonic_labels instead.
 	Amend the autolives toy so it can be triggered via OSC (and move to vj menu, add startup options).
-	MIDI channel can now used as a filter instead of a parameter to be matched (TODO).
+	MIDI channel can now used as a filter instead of a parameter to be matched.
 	Device mappings can now be shipped with builds (TODO).
 	Improved a/v synch with pulse audio.
 	Correct some minor GUI issues.

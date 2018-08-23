@@ -286,7 +286,6 @@ typedef struct {
 #endif
 
   int midi_rcv_channel;
-  boolean midi_channel_filter;
 
   int startup_interface;
 
@@ -592,6 +591,7 @@ typedef struct {
   LiVESWidget *omc_midi_entry;
   LiVESWidget *spinbutton_midicr;
   LiVESWidget *spinbutton_midirpt;
+  LiVESWidget *midichan_combo;
   LiVESWidget *alsa_midi;
   LiVESWidget *alsa_midi_dummy;
   LiVESWidget *button_midid;
@@ -787,6 +787,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_MIDI_CHECK_RATE "midi_check_rate"
 #define PREF_MIDI_RPT "midi_rpt"
+
+#define PREF_MIDI_RCV_CHANNEL "midi_rcv_channel"
 
 #define PREF_ENCODER_ACODEC "encoder_acodec"
 

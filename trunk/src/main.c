@@ -641,6 +641,8 @@ static boolean pre_init(void) {
   if (prefs->omc_dev_opts & OMC_DEV_MIDI_DUMMY) prefs->alsa_midi_dummy = TRUE;
 #endif
 
+  prefs->midi_rcv_channel = get_int_pref(PREF_MIDI_RCV_CHANNEL);
+
   mainw->volume = 1.f;
   mainw->ccpd_with_sound = TRUE;
 
@@ -1100,6 +1102,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->rendered_fx = NULL;
 
   mainw->compat = LIVES_COMPAT_NONE;
+
+  mainw->midi_channel_lock = FALSE;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -6769,7 +6773,7 @@ void load_frame_image(int frame) {
       if (cfile->clip_type != CLIP_TYPE_GENERATOR && mainw->current_file != mainw->scrap_file &&
           mainw->current_file != mainw->ascrap_file &&
           (mainw->multitrack == NULL || mainw->current_file != mainw->multitrack->render_file)) {
-        d_print(_("Closed file %s\n"), cfile->file_name);
+        d_print(_("Closed clip %s\n"), cfile->file_name);
         lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED, "");
       }
 

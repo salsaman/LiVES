@@ -1233,6 +1233,8 @@ typedef struct {
   int alsa_midi_dummy;
 #endif
 
+  boolean midi_channel_lock;
+
   weed_plant_t *rte_textparm; ///< send keyboard input to this paramter (usually NULL)
 
   int write_abuf; ///< audio buffer number to write to (for multitrack)

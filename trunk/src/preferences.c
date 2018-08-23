@@ -918,6 +918,7 @@ boolean apply_prefs(boolean skip_warn) {
   const char *omc_midi_fname = lives_entry_get_text(LIVES_ENTRY(prefsw->omc_midi_entry));
   int midicr = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_midicr));
   int midirpt = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_midirpt));
+  char *midichan = lives_combo_get_active_text(LIVES_COMBO(prefsw->midichan_combo));
 
 #ifdef ALSA_MIDI
   boolean use_alsa_midi = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->alsa_midi));
@@ -1684,6 +1685,16 @@ boolean apply_prefs(boolean skip_warn) {
 #endif
 
 #ifdef OMC_MIDI_IMPL
+  if (strlen(midichan) > 2) {
+    if (prefs->midi_rcv_channel != -1) {
+      prefs->midi_rcv_channel = -1;
+      set_int_pref(PREF_MIDI_RCV_CHANNEL, prefs->midi_rcv_channel);
+    }
+  } else if (prefs->midi_rcv_channel != atoi(midichan)) {
+    prefs->midi_rcv_channel = atoi(midichan);
+    set_int_pref(PREF_MIDI_RCV_CHANNEL, prefs->midi_rcv_channel);
+  }
+
   if (strcmp(omc_midi_fname, prefs->omc_midi_fname)) {
     lives_snprintf(prefs->omc_midi_fname, PATH_MAX, "%s", omc_midi_fname);
     set_pref_utf8(PREF_OMC_MIDI_FNAME, omc_midi_fname);
@@ -2468,6 +2479,7 @@ _prefsw *create_prefs_dialog(void) {
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
   LiVESSList *alsa_midi_group = NULL;
+  LiVESList *mchanlist = NULL;
 #endif
 #endif
 
@@ -2491,6 +2503,12 @@ _prefsw *create_prefs_dialog(void) {
   char **array;
   char *tmp, *tmp2, *tmp3;
   char *theme;
+
+#ifdef ENABLE_OSC
+#ifdef OMC_MIDI_IMPL
+  char *midichan;
+#endif
+#endif
 
   boolean pfsm;
   boolean has_ap_rec = FALSE;
@@ -4587,6 +4605,28 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->checkbutton_omc_midi = lives_standard_check_button_new(_("_MIDI events"), (prefs->omc_dev_opts & OMC_DEV_MIDI),
                                  LIVES_BOX(hbox), NULL);
 
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  if (!(mainw->midi_channel_lock && prefs->midi_rcv_channel > -1)) mchanlist = lives_list_append(mchanlist, lives_strdup(_("All channels")));
+  for (i = 0; i < 16; i++) {
+    midichan = lives_strdup_printf("%d", i);
+    mchanlist = lives_list_append(mchanlist, midichan);
+  }
+
+  midichan = lives_strdup_printf("%d", prefs->midi_rcv_channel);
+
+  prefsw->midichan_combo = lives_standard_combo_new(_("MIDI receive _channel"), mchanlist, LIVES_BOX(hbox), NULL);
+
+  lives_list_free_all(&mchanlist);
+
+  if (prefs->midi_rcv_channel > -1) {
+    lives_combo_set_active_string(LIVES_COMBO(prefsw->midichan_combo), midichan);
+  }
+
+  lives_free(midichan);
+
+  if (mainw->midi_channel_lock && prefs->midi_rcv_channel == -1) lives_widget_set_sensitive(prefsw->midichan_combo, FALSE);
+
   prefsw->midi_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), prefsw->midi_hbox, FALSE, FALSE, widget_opts.packing_height);
 
@@ -5022,6 +5062,8 @@ _prefsw *create_prefs_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_wipe), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->check_midi), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->midichan_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->ins_speed), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(ins_resample), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cdplay_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),

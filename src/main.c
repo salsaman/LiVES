@@ -26,8 +26,6 @@
 // lives_startup() -> create_LiVES() [create the GUI interface]
 // lives_startup() -> lives_init() [set remaining variables and preferences]
 
-
-
 #ifdef USE_GLIB
 #include <glib.h>
 #endif
@@ -669,6 +667,11 @@ static boolean pre_init(void) {
 
   needs_update = FALSE; // stop compiler warnings
 
+#ifdef ENABLE_OSC
+  // create devicemaps directory in home
+  create_devicemap_directory();
+#endif
+  
   if (!lives_ascii_strcasecmp(prefs->theme, "none")) return FALSE;
 
   return TRUE;
@@ -3249,7 +3252,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           lives_snprintf(devmap, PATH_MAX, "%s", (tmp = lives_build_filename(dir, devmap, NULL)));
           lives_free(tmp);
           lives_free(dir);
-          on_midi_load_activate(NULL, devmap);
+          on_devicemap_load_activate(NULL, devmap);
           continue;
         }
 #endif

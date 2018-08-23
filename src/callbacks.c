@@ -8415,13 +8415,11 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   // TODO: allow mapping of change types to random ranges in the backend
   // TODO: allow user selection of omc notify port
 #ifdef ENABLE_OSC
-#ifdef ENABLE_OSC2
   autolives_window *alwindow;
   int trigtime;
   char *apb;
   char *trigopt;
   char *debug;
-#endif
 #ifndef IS_MINGW
   char string[PATH_MAX];
 #endif
@@ -8471,7 +8469,6 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 #endif
 
-#ifdef ENABLE_OSC2
   alwindow = autolives_pre_dialog();
   if (alwindow == NULL) {
     return;
@@ -8500,9 +8497,8 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   }
   lives_widget_destroy(alwindow->dialog);
   lives_free(alwindow);
-#endif
 
-  // chek if osc is started; if not ask permission
+  // check if osc is started; if not ask permission
   if (!prefs->osc_udp_started) {
     if (!lives_ask_permission(LIVES_PERM_OSC_PORTS)) {
       // permission not given
@@ -8531,11 +8527,9 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
 #endif
   mainw->alives_pgid = lives_fork(com);
 
-#ifdef ENABLE_OSC2
   lives_free(debug);
   lives_free(trigopt);
   lives_free(apb);
-#endif
   lives_free(com);
 #endif
 }

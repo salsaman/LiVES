@@ -141,8 +141,11 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
 #define OMC_FILE_VSTRING "LiVES OMC map version 1.1"
 #define OMC_FILE_VSTRING_1_0 "LiVES OMC map version 1.0"
 
-void on_midi_save_activate(LiVESMenuItem *, livespointer);
-void on_midi_load_activate(LiVESMenuItem *, livespointer);
+#define LIVES_DEVICEMAPS_DIR "devicemaps"
+
+void create_devicemap_directory(void);
+void on_devicemap_save_activate(LiVESMenuItem *, livespointer);
+void on_devicemap_load_activate(LiVESMenuItem *, livespointer);
 
 #include "osc.h"
 

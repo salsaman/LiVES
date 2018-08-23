@@ -4374,6 +4374,15 @@ int lives_cp(const char *from, const char *to) {
 }
 
 
+int lives_cp_recursive(const char *from, const char *to) {
+  // may not fail
+  char *com = lives_strdup_printf("%s -r \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
+  int retval = lives_system(com, FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
 int lives_cp_keep_perms(const char *from, const char *to) {
   // may not fail
   char *com = lives_strdup_printf("%s -a \"%s\" \"%s/\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);

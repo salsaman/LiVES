@@ -129,7 +129,6 @@ void play_window_set_title(void);
 void add_to_playframe(void);
 LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data);
 
-#ifdef ENABLE_OSC2
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *atrigger_button;
@@ -139,7 +138,6 @@ typedef struct {
 } autolives_window;
 
 autolives_window *autolives_pre_dialog(void);
-#endif
 
 LiVESTextView *create_output_textview(void);
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra);

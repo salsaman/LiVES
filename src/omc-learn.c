@@ -107,6 +107,7 @@ static void remove_all_nodes(boolean every, omclearn_w *omclw) {
 
   lives_widget_set_sensitive(omclw->clear_button, FALSE);
   if (slist == NULL) lives_widget_set_sensitive(omclw->del_all_button, FALSE);
+  mainw->midi_channel_lock = FALSE;
 }
 
 
@@ -119,14 +120,68 @@ LIVES_INLINE int js_index(const char *string) {
 }
 
 
+static int midi_msg_type(const char *string) {
+  int type = atoi(string);
+
+  if ((type & 0XF0) == 0X90) return OMC_MIDI_NOTE; // data: note, velocity
+  if ((type & 0XF0) == 0x80) return OMC_MIDI_NOTE_OFF; // data: note, velocity
+  if ((type & 0XF0) == 0xB0) return OMC_MIDI_CONTROLLER; // data: controller number, data
+  if ((type & 0XF0) == 0xC0) return OMC_MIDI_PGM_CHANGE; // data: program number
+  if ((type & 0XF0) == 0xE0) return OMC_MIDI_PITCH_BEND; // data: lsb, msb
+
+  // other types are currently ignored:
+
+  // 0XA0 is polyphonic aftertouch, has note and pressure
+
+  // 0xD0 is channel aftertouch, 1 byte pressure
+
+  // 0XF0 - 0xFF is sysex
+
+  return 0;
+}
+
+
+static int get_nfixed(int type, const char *string) {
+  int nfixed = 0;
+
+  switch (type) {
+  case OMC_JS_BUTTON:
+    nfixed = 3; // type, index, value
+    break;
+  case OMC_JS_AXIS:
+    nfixed = 2; // type, index
+    break;
+#ifdef OMC_MIDI_IMPL
+  case OMC_MIDI:
+    type = midi_msg_type(string);
+    return get_nfixed(type, NULL);
+  case OMC_MIDI_CONTROLLER:
+    if (prefs->midi_rcv_channel > -1) nfixed = 2; // type, cnum
+    else nfixed = 3;   // type, channel, cnum
+    break;
+  case OMC_MIDI_NOTE:
+  case OMC_MIDI_NOTE_OFF:
+  case OMC_MIDI_PITCH_BEND:
+  case OMC_MIDI_PGM_CHANGE:
+    if (prefs->midi_rcv_channel > -1) nfixed = 1; // type
+    else nfixed = 2; // type, channel
+    break;
+#endif
+  }
+  return nfixed;
+}
+
+
 LIVES_INLINE int midi_index(const char *string) {
   // midi controller number
   char **array;
   int res;
-  if (get_token_count(string, ' ') < 3) return -1;
+  int nfixed = get_nfixed(OMC_MIDI_CONTROLLER, NULL);
+
+  if (get_token_count(string, ' ') < nfixed) return -1;
 
   array = lives_strsplit(string, " ", -1);
-  res = atoi(array[2]);
+  res = atoi(array[nfixed - 1]);
   lives_strfreev(array);
   return res;
 }
@@ -258,7 +313,7 @@ boolean midi_open(void) {
 
 #ifdef ALSA_MIDI
   if (prefs->use_alsa_midi) {
-    d_print(_("Creating ALSA seq port..."));
+    d_print(_("Creating ALSA MIDI port(s)..."));
     mainw->alsa_midi_dummy = -1;
 
     // Open an ALSA MIDI port
@@ -267,7 +322,10 @@ boolean midi_open(void) {
       return FALSE;
     }
 
+    d_print("\n");
+
     snd_seq_set_client_name(mainw->seq_handle, "LiVES");
+    d_print(_("MIDI IN port..."));
     if ((mainw->alsa_midi_port = snd_seq_create_simple_port(mainw->seq_handle, "LiVES",
                                  SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
                                  SND_SEQ_PORT_TYPE_APPLICATION | SND_SEQ_PORT_TYPE_PORT | SND_SEQ_PORT_TYPE_SOFTWARE)) < 0) {
@@ -277,6 +335,8 @@ boolean midi_open(void) {
       return FALSE;
     }
     if (prefs->alsa_midi_dummy) {
+      d_print_done();
+      d_print(_("dummy MIDI OUT port..."));
       // create dummy MIDI out if asked to. Some clients use the name for reference.
       if ((mainw->alsa_midi_dummy = snd_seq_create_simple_port(mainw->seq_handle,
                                     "LiVES", // some external clients read this name, but will actually send to the WRITE port with same name
@@ -344,34 +404,11 @@ static int get_midi_len(int msgtype) {
   case OMC_MIDI_CONTROLLER:
   case OMC_MIDI_NOTE:
   case OMC_MIDI_PITCH_BEND:
-    return 3;
   case OMC_MIDI_NOTE_OFF:
+    return 3;
   case OMC_MIDI_PGM_CHANGE:
     return 2;
   }
-  return 0;
-}
-
-
-static int midi_msg_type(const char *string) {
-  int type = atoi(string);
-
-  if ((type & 0XF0) == 0X90) return OMC_MIDI_NOTE;
-  if ((type & 0XF0) == 0x80) return OMC_MIDI_NOTE_OFF;
-  if ((type & 0XF0) == 0xB0) return OMC_MIDI_CONTROLLER;
-  if ((type & 0XF0) == 0xC0) return OMC_MIDI_PGM_CHANGE;
-  if ((type & 0XF0) == 0xE0) return OMC_MIDI_PITCH_BEND;
-
-  // other types are currently ignored
-  // 0XA0 is aftertouch, has key and value
-
-  // OxC0 is patch change, with 2 bytes parm
-  // 0xD0 is channel pressure, 1 byte parm
-
-  // 0xE0 is pitch bend: lsb 7 bits, msb 7 bits
-
-  // 0XF0 is sysex
-
   return 0;
 }
 
@@ -414,31 +451,54 @@ char *midi_mangle(void) {
 
         switch (ev->type) {
         case SND_SEQ_EVENT_CONTROLLER:
+          if (prefs->midi_rcv_channel != -1 && ev->data.control.channel != prefs->midi_rcv_channel) break;
           typeNumber = 176;
-          string = lives_strdup_printf("%d %d %u %d", typeNumber + ev->data.control.channel, ev->data.control.channel, ev->data.control.param,
-                                       ev->data.control.value);
+          if (prefs->midi_rcv_channel == -1)
+            string = lives_strdup_printf("%d %d %u %d", typeNumber + ev->data.control.channel, ev->data.control.channel, ev->data.control.param,
+                                         ev->data.control.value);
+          else
+            string = lives_strdup_printf("%d %u %d", typeNumber, ev->data.control.param,
+                                         ev->data.control.value);
 
           break;
         case SND_SEQ_EVENT_PITCHBEND:
+          if (prefs->midi_rcv_channel != -1 && ev->data.control.channel != prefs->midi_rcv_channel) break;
           typeNumber = 224;
-          string = lives_strdup_printf("%d %d %d", typeNumber + ev->data.control.channel, ev->data.control.channel, ev->data.control.value);
+          if (prefs->midi_rcv_channel == -1)
+            string = lives_strdup_printf("%d %d %d", typeNumber + ev->data.control.channel, ev->data.control.channel, ev->data.control.value);
+          else
+            string = lives_strdup_printf("%d %d", typeNumber, ev->data.control.value);
           break;
 
         case SND_SEQ_EVENT_NOTEON:
+          if (prefs->midi_rcv_channel != -1 && ev->data.note.channel != prefs->midi_rcv_channel) break;
           typeNumber = 144;
-          string = lives_strdup_printf("%d %d %d %d", typeNumber + ev->data.note.channel, ev->data.note.channel, ev->data.note.note,
-                                       ev->data.note.velocity);
+          if (prefs->midi_rcv_channel == -1)
+            string = lives_strdup_printf("%d %d %d %d", typeNumber + ev->data.note.channel, ev->data.note.channel, ev->data.note.note,
+                                         ev->data.note.velocity);
+          else
+            string = lives_strdup_printf("%d %d %d", typeNumber, ev->data.note.note,
+                                         ev->data.note.velocity);
 
           break;
         case SND_SEQ_EVENT_NOTEOFF:
+          if (prefs->midi_rcv_channel != -1 && ev->data.note.channel != prefs->midi_rcv_channel) break;
           typeNumber = 128;
-          string = lives_strdup_printf("%d %d %d %d", typeNumber + ev->data.note.channel, ev->data.note.channel, ev->data.note.note,
-                                       ev->data.note.off_velocity);
+          if (prefs->midi_rcv_channel == -1)
+            string = lives_strdup_printf("%d %d %d %d", typeNumber + ev->data.note.channel, ev->data.note.channel, ev->data.note.note,
+                                         ev->data.note.off_velocity);
+          else
+            string = lives_strdup_printf("%d %d %d", typeNumber, ev->data.note.note,
+                                         ev->data.note.off_velocity);
 
           break;
         case SND_SEQ_EVENT_PGMCHANGE:
+          if (prefs->midi_rcv_channel != -1 && ev->data.note.channel != prefs->midi_rcv_channel) break;
           typeNumber = 192;
-          string = lives_strdup_printf("%d %d %d", typeNumber + ev->data.note.channel, ev->data.note.channel, ev->data.control.value);
+          if (prefs->midi_rcv_channel == -1)
+            string = lives_strdup_printf("%d %d %d", typeNumber + ev->data.note.channel, ev->data.note.channel, ev->data.control.value);
+          else
+            string = lives_strdup_printf("%d %d", typeNumber, ev->data.control.value);
 
           break;
         }
@@ -479,10 +539,18 @@ char *midi_mangle(void) {
 
     idx = (midbuf[0] & 0x0F);
 
-    if (target == 2) string = lives_strdup_printf("%u %u %u", midbuf[0], idx, midbuf[1]);
-    else if (target == 3) string = lives_strdup_printf("%u %u %u %u", midbuf[0], idx, midbuf[1], midbuf[2]);
-    else string = lives_strdup_printf("%u %u %u %u %u", midbuf[0], idx, midbuf[1], midbuf[2], midbuf[3]);
+    if (prefs->midi_rcv_channel != -1 && idx != prefs->midi_rcv_channel) return NULL; // wrong channel, ignore it
 
+    if (prefs->midi_rcv_channel == -1) {
+      if (target == 2) string = lives_strdup_printf("%u %u %u", midbuf[0], idx, midbuf[1]);
+      else if (target == 3) string = lives_strdup_printf("%u %u %u %u", midbuf[0], idx, midbuf[1], midbuf[2]);
+      else string = lives_strdup_printf("%u %u %u %u %u", midbuf[0], idx, midbuf[1], midbuf[2], midbuf[3]);
+    } else {
+      midbuf[0] = midbuf[0] & 0xF0;
+      if (target == 2) string = lives_strdup_printf("%u %u", midbuf[0], midbuf[1]);
+      else if (target == 3) string = lives_strdup_printf("%u %u %u", midbuf[0], midbuf[1], midbuf[2]);
+      else string = lives_strdup_printf("%u %u %u %u", midbuf[0], midbuf[1], midbuf[2], midbuf[3]);
+    }
 #ifdef ALSA_MIDI
   }
 #endif
@@ -519,7 +587,6 @@ LIVES_INLINE char *cut_string_elems(const char *string, int nelems) {
 static char *omc_learn_get_pname(int type, int idx) {
   switch (type) {
   case OMC_MIDI_CONTROLLER:
-  case OMC_MIDI_PITCH_BEND:
   case OMC_MIDI_PGM_CHANGE:
     return lives_strdup(_("data"));
   case OMC_MIDI_NOTE:
@@ -527,6 +594,7 @@ static char *omc_learn_get_pname(int type, int idx) {
     if (idx == 1) return lives_strdup(_("velocity"));
     return lives_strdup(_("note"));
   case OMC_JS_AXIS:
+  case OMC_MIDI_PITCH_BEND:
     return lives_strdup(_("value"));
   default:
     return lives_strdup(_("state"));
@@ -537,16 +605,9 @@ static char *omc_learn_get_pname(int type, int idx) {
 static int omc_learn_get_pvalue(int type, int idx, const char *string) {
   char **array = lives_strsplit(string, " ", -1);
   int res;
+  int nfixed = get_nfixed(type, NULL);
 
-  switch (type) {
-  case OMC_MIDI_CONTROLLER:
-    res = atoi(array[3 + idx]);
-    break;
-  default:
-    res = atoi(array[2 + idx]);
-    break;
-  }
-
+  res = atoi(array[nfixed + idx]);
   lives_strfreev(array);
   return res;
 }
@@ -912,6 +973,17 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
 }
 
 
+static char *get_chan_string(const char *string) {
+  char *chstr;
+  if (prefs->midi_rcv_channel == -1) {
+    int chan = js_index(string);
+    // TRANSLATORS: ch is abbreviation for MIDI "channel"
+    chstr = lives_strdup_printf(_(" ch %d"), chan);
+  } else chstr = lives_strdup("");
+  return chstr;
+}
+
+
 static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mnode, const char *string, omclearn_w *omclw) {
   LiVESWidget *label, *combo;
   LiVESObject *spinadj;
@@ -924,8 +996,9 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   char *strval, *strval2, *strval3, *strval4, *vname, *valstr;
   char *oldval = NULL, *final = NULL;
   char *labelt = NULL;
+  char *chstr = NULL;
 
-  int chan, val;
+  int val;
   register int i;
 
   omclw->tbl_rows++;
@@ -987,24 +1060,24 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
   switch (type) {
   case OMC_MIDI_NOTE:
-    chan = js_index(string);
-    labelt = lives_strdup_printf(_("MIDI ch %d note on"), chan);
+    chstr = get_chan_string(string);
+    labelt = lives_strdup_printf(_("MIDI%s note on"), chstr);
     break;
   case OMC_MIDI_NOTE_OFF:
-    chan = js_index(string);
-    labelt = lives_strdup_printf(_("MIDI ch %d note off"), chan);
+    chstr = get_chan_string(string);
+    labelt = lives_strdup_printf(_("MIDI%s note off"), chstr);
     break;
   case OMC_MIDI_CONTROLLER:
-    chan = js_index(string);
-    labelt = lives_strdup_printf(_("MIDI ch %d controller %d"), chan, detail);
+    chstr = get_chan_string(string);
+    labelt = lives_strdup_printf(_("MIDI%s controller %d"), chstr, detail);
     break;
   case OMC_MIDI_PITCH_BEND:
-    chan = js_index(string);
-    labelt = lives_strdup_printf(_("MIDI ch %d pitch bend"), chan, detail);
+    chstr = get_chan_string(string);
+    labelt = lives_strdup_printf(_("MIDI%s pitch bend"), chstr);
     break;
   case OMC_MIDI_PGM_CHANGE:
-    chan = js_index(string);
-    labelt = lives_strdup_printf(_("MIDI ch %d pgm change"), chan);
+    chstr = get_chan_string(string);
+    labelt = lives_strdup_printf(_("MIDI%s pgm change"), chstr);
     break;
   case OMC_JS_BUTTON:
     labelt = lives_strdup_printf(_("Joystick button %d"), detail);
@@ -1013,6 +1086,8 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
     labelt = lives_strdup_printf(_("Joystick axis %d"), detail);
     break;
   }
+
+  if (chstr != NULL) lives_free(chstr);
 
   label = lives_standard_label_new(labelt);
   lives_widget_show(label);
@@ -1184,14 +1259,17 @@ static void show_existing(omclearn_w *omclw) {
       char *tmp;
 
       type = midi_msg_type(array[1]);
-      if (get_token_count(srch, ' ') > 3) idx = atoi(array[3]);
+      if (get_token_count(srch, ' ') > (prefs->midi_rcv_channel == -1 ? 3 : 2)) idx = atoi(array[prefs->midi_rcv_channel == -1 ? 3 : 2]);
       else idx = -1;
       srch = lives_strdup(mnode->srch);
-      tmp = cut_string_elems(srch, 1);
-      blen = strlen(tmp);
-      tmp = lives_strdup(srch + blen + 1);
-      lives_free(srch);
-      srch = tmp;
+      if (prefs->midi_rcv_channel == -1) {
+        // remove the channel if it is in the string
+        tmp = cut_string_elems(srch, 1);
+        blen = strlen(tmp);
+        tmp = lives_strdup(srch + blen + 1);
+        lives_free(srch);
+        srch = tmp;
+      }
     } else {
 #endif
       type = supertype;
@@ -1581,35 +1659,6 @@ static void init_omc_macros(void) {
 }
 
 
-static int get_nfixed(int type, const char *string) {
-  int nfixed = 0;
-
-  switch (type) {
-  case OMC_JS_BUTTON:
-    nfixed = 3; // type, index, value
-    break;
-  case OMC_JS_AXIS:
-    nfixed = 2; // type, index
-    break;
-#ifdef OMC_MIDI_IMPL
-  case OMC_MIDI:
-    type = midi_msg_type(string);
-    return get_nfixed(type, NULL);
-  case OMC_MIDI_CONTROLLER:
-    nfixed = 3;   // type, channel, cnum
-    break;
-  case OMC_MIDI_NOTE:
-  case OMC_MIDI_NOTE_OFF:
-  case OMC_MIDI_PITCH_BEND:
-  case OMC_MIDI_PGM_CHANGE:
-    nfixed = 2; // type, channel
-    break;
-#endif
-  }
-  return nfixed;
-}
-
-
 static boolean match_filtered_params(lives_omc_match_node_t *mnode, const char *sig, int nfixed) {
   int i;
   char **array = lives_strsplit(sig, " ", -1);
@@ -1721,6 +1770,7 @@ static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index,
   lives_omc_match_node_t *mnode = (lives_omc_match_node_t *)lives_malloc(sizeof(lives_omc_match_node_t));
 
   if (str_type == OMC_MIDI) {
+    mainw->midi_channel_lock = TRUE;
     if (index > -1) srch_str = lives_strdup_printf("%d %d %s", str_type, index, (tmp = cut_string_elems(string, nfixed < 0 ? -1 : nfixed)));
     else srch_str = lives_strdup_printf("%d %s", str_type, (tmp = cut_string_elems(string, nfixed < 0 ? -1 : nfixed)));
     lives_free(tmp);
@@ -1729,7 +1779,7 @@ static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index,
     lives_free(tmp);
   }
 
-  //g_print("srch_str was %d %d .%s. %d\n",str_type,index,srch_str,nfixed);
+  //g_print("srch_str was %d %d .%s. %d\n", str_type, index, srch_str, nfixed);
 
   mnode->srch = srch_str;
   mnode->macro = -1;
@@ -1832,7 +1882,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
 
   // next, we check if signifier is already matched to a macro
 
-  // if not we allow the user to match it to any macro that has n or less parameters, where n is the number of variables in string
+  // if not we allow the user to match it to any macro that has n or fewer parameters, where n is the number of variables in string
 
   lives_omc_match_node_t *mnode;
 
@@ -1942,7 +1992,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
 // here we process a string which is formed of (supertype) (type) [(idx)] [(values)]
 // eg "val_for_js js_button idx_1  1"  => "2 3 1
 
-// in learn mode we store the sting + its meaning
+// in learn mode we store the string + its meaning
 
 // in playback mode, we match the string with our database, and then convert/append the variables
 
@@ -1968,7 +2018,6 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
 #ifdef OMC_MIDI_IMPL
   case OMC_MIDI:
     type = midi_msg_type(string);
-    //idx=midi_index(string);
     idx = -1;
 #endif
   }
@@ -1982,7 +2031,6 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
       }
     } else {
       OSCbuf *oscbuf = omc_learner_decode(supertype, idx, string);
-
       // if not playing, the only commands we allow are:
       // /video/play
       // /clip/foreground/retrigger
@@ -1992,7 +2040,7 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
 
       // further checks are performed when enabling/toggling an effect to see whether it is a generator
 
-      if (oscbuf != NULL) {
+      if (oscbuf != NULL && !OSC_isBufferEmpty(oscbuf)) {
         if (mainw->playing_file == -1
             && strcmp(oscbuf->buffer, "/video/play")
             && strcmp(oscbuf->buffer, "/clip/foreground/retrigger")
@@ -2171,9 +2219,9 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
 
   nfixed = get_token_count(string, ' ') - mnode->nvars;
 
-  if (macro != 26) {
-    OSC_resetBuffer(&obuf);
+  OSC_resetBuffer(&obuf);
 
+  if (macro != 26) {
     lives_snprintf(typetags, OSC_MAX_TYPETAGS, ",");
 
     // get typetags
@@ -2185,7 +2233,6 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
         else lives_strappend(typetags, OSC_MAX_TYPETAGS, "f");
       }
     }
-
     OSC_writeAddressAndTypes(&obuf, omacro.msg, typetags);
   }
 
@@ -2270,22 +2317,23 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
           } else {
             if (omacro.ptypes[i] == OMC_PARAM_INT) {
               int oval = myround((double)(vals[j] + mnode->offs0[j]) * mnode->scale[j]) + mnode->offs1[j];
+
               if (i == 0) oval0 = oval;
               if (i == 1) oval1 = oval;
               if (macro != 26) {
                 OSC_writeIntArg(&obuf, oval);
+              } else {
+                double oval = (double)(vals[j] + mnode->offs0[j]) * mnode->scale[j] + (double)mnode->offs1[j];
+                if (macro == 26) {
+                  char *tmp; // send OSC notificion USER1
+                  lives_notify(LIVES_OSC_NOTIFY_USER1, (tmp = lives_strdup_printf("%d %f", oval0, oval)));
+                  lives_free(tmp);
+                } else OSC_writeFloatArg(&obuf, oval);
               }
-            } else {
-              double oval = (double)(vals[j] + mnode->offs0[j]) * mnode->scale[j] + (double)mnode->offs1[j];
-              if (macro == 26) {
-                char *tmp; // send OSC notificion USER1
-                lives_notify(LIVES_OSC_NOTIFY_USER1, (tmp = lives_strdup_printf("%d %f", oval0, oval)));
-                lives_free(tmp);
-              } else OSC_writeFloatArg(&obuf, oval);
             }
           }
         }
-      } else {
+      } else if (macro != 26) {
         if (omacro.ptypes[i] == OMC_PARAM_INT) {
           OSC_writeIntArg(&obuf, mnode->fvali[i]);
           if (i == 0) oval0 = mnode->fvali[i];
@@ -2324,6 +2372,8 @@ void on_midi_save_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   register int i;
 
+  uint8_t omnimidi;
+
   save_file = choose_file(NULL, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
 
   if (save_file == NULL || !strlen(save_file)) return;
@@ -2343,6 +2393,11 @@ void on_midi_save_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       mainw->write_failed = FALSE;
 
       lives_write(fd, OMC_FILE_VSTRING, strlen(OMC_FILE_VSTRING), TRUE);
+
+      if (prefs->midi_rcv_channel == -1) omnimidi = 1;
+      else omnimidi = 0;
+
+      lives_write(fd, &omnimidi, 1, TRUE);
 
       nnodes = lives_slist_length(omc_node_list);
       lives_write_le(fd, &nnodes, 4, TRUE);
@@ -2434,9 +2489,12 @@ void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *load_file = NULL;
   char *srch;
 
+  uint8_t omnimidi = 1;
+
   uint32_t srchlen, nnodes, macro, nvars, supertype;
   int idx = -1;
   int fd;
+  int new_midi_rcv_channel = prefs->midi_rcv_channel;
 
   register int i, j;
 
@@ -2476,10 +2534,20 @@ void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (strncmp(tstring, OMC_FILE_VSTRING, strlen(OMC_FILE_VSTRING))) {
-    do_midi_version_error(load_file);
-    lives_free(load_file);
-    close(fd);
-    return;
+    if (strncmp(tstring, OMC_FILE_VSTRING_1_0, strlen(OMC_FILE_VSTRING_1_0))) {
+      do_midi_version_error(load_file);
+      lives_free(load_file);
+      close(fd);
+      return;
+    }
+  } else {
+    bytes = lives_read(fd, &omnimidi, 1, TRUE);
+    if (bytes < 1) {
+      do_midi_load_error(load_file);
+      lives_free(load_file);
+      close(fd);
+      return;
+    }
   }
 
   bytes = lives_read_le(fd, &nnodes, 4, TRUE);
@@ -2547,6 +2615,11 @@ void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 #endif
 #ifdef OMC_MIDI_IMPL
     case OMC_MIDI:
+      if (omnimidi && prefs->midi_rcv_channel > -1) {
+        new_midi_rcv_channel = -1;
+      } else if (!omnimidi && prefs->midi_rcv_channel == -1) {
+        new_midi_rcv_channel = 0;
+      }
       idx = -1;
 
       // cut first value (supertype) as we will be added back in match_node_new
@@ -2661,6 +2734,17 @@ void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 #ifdef OMC_JS_IMPL
   if (!mainw->ext_cntl[EXT_CNTL_JS]) js_open();
 #endif
+
+  if (new_midi_rcv_channel != prefs->midi_rcv_channel) {
+    char *dpr;
+    if (new_midi_rcv_channel == -1) dpr = lives_strdup(_("MIDI receive channel was set to ALL CHANNELS\n"));
+    else dpr = lives_strdup_printf(_("MIDI receive channel was set to channel %d\n"), new_midi_rcv_channel);
+    prefs->midi_rcv_channel = new_midi_rcv_channel;
+    d_print(dpr);
+    lives_free(dpr);
+    do_warning_dialog(
+      _("The MIDI receive channel setting was updated by the device map.\nPlease review the setting in Preferences and adjust it if necessary.\n"));
+  }
 }
 
 #endif

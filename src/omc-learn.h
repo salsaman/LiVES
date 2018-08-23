@@ -138,7 +138,8 @@ void on_midi_learn_activate(LiVESMenuItem *, livespointer);
 /// only need to set omclw if learn is TRUE
 boolean omc_process_string(int supertype, const char *string, boolean learn, omclearn_w *omclw);
 
-#define OMC_FILE_VSTRING "LiVES OMC map version 1.0"
+#define OMC_FILE_VSTRING "LiVES OMC map version 1.1"
+#define OMC_FILE_VSTRING_1_0 "LiVES OMC map version 1.0"
 
 void on_midi_save_activate(LiVESMenuItem *, livespointer);
 void on_midi_load_activate(LiVESMenuItem *, livespointer);

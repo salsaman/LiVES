@@ -131,18 +131,14 @@ AC_CHECK_FUNCS(posix_memalign)
 dnl Check for posix_fadvise
 AC_CHECK_FUNCS(posix_fadvise)
 
-
 AC_PATH_PROGS(PERL, perl perl5)
 
 
 dnl check for profiling
 
-
-
-AC_ARG_ENABLE( profiling, [  --enable-profiling     Enable profiling with gmon.] , profiling=yes, profiling=no)
+AC_ARG_ENABLE(profiling, [  --enable-profiling     Enable profiling with gmon.] , profiling=yes, profiling=no)
 
 AM_CONDITIONAL(ENABLE_PROFILING, test $profiling != no)
-
 
 
 dnl Check for pkg-config
@@ -159,7 +155,7 @@ fi
 
 dnl Check for doxygen
 
-AC_ARG_ENABLE( doxygen, [  --disable-doxygen     Disable doxygen documentation.] , disable_doxygen=yes)
+AC_ARG_ENABLE(doxygen, [  --disable-doxygen     Disable doxygen documentation.] , disable_doxygen=yes)
 
 if test "x$disable_doxygen" != "xyes" ; then
 
@@ -175,7 +171,6 @@ else
 fi
 
 AM_CONDITIONAL(HAVE_DOXYGEN, test x$DOXYGEN != xno)
-
 
 
 dnl OSC
@@ -197,8 +192,8 @@ AC_CHECK_HEADERS(linux/joystick.h, HAVE_JS_HEADER=true, HAVE_JS_HEADER=false)
 HAVE_JACK=false
 HAVE_JACK_TRANSPORT=false
 
-AC_ARG_ENABLE( jack, [  --disable-jack     Disable jack support.] , disable_jack=yes)
-AC_ARG_ENABLE( jack-transport, [  --disable-jack-transport     Disable jack transport support.] , disable_jack_transport=yes)
+AC_ARG_ENABLE(jack, [  --disable-jack     Disable jack support.] , disable_jack=yes)
+AC_ARG_ENABLE(jack-transport, [  --disable-jack-transport     Disable jack transport support.] , disable_jack_transport=yes)
 
 if test "x$disable_jack" != "xyes" ; then
 
@@ -260,7 +255,7 @@ AM_CONDITIONAL(HAVE_XRENDER,$HAVE_XRENDER)
 HAVE_GTK_VERSION3=false
 GTK310_WARN=false
 
-AC_ARG_ENABLE( gtk3, [  --disable-gtk3     Disable gtk+ 3.x and compile with gtk+ 2.x] , disable_gtk3=yes)
+AC_ARG_ENABLE(gtk3, [  --disable-gtk3     Disable gtk+ 3.x and compile with gtk+ 2.x] , disable_gtk3=yes)
 
 if test "x$disable_gtk3" != "xyes" ; then
 
@@ -281,13 +276,9 @@ echo "Not checking for gtk+ 3.x"
 fi
 
 if test "x$HAVE_GTK_VERSION3" = "xfalse"; then
-
 echo -n "checking for GTK+ >= 2.4.0... "
-
 PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.4.0)
-
 PKG_CHECK_EXISTS([gtk+-2.0 >= 2.16.0],[HAVE_GTK_VERSION216=true],[HAVE_GTK_VERSION216=false])
-
 PKG_CHECK_EXISTS([gtk+-2.0 >= 2.6.0],[HAVE_GTK_VERSION206=true],[HAVE_GTK_VERSION206=false])
 
 echo "- Compiling with gtk+ 2.x -"
@@ -297,9 +288,7 @@ GTK3_VERSION=`$PKG_CONFIG --modversion gtk+-3.0`
 
 echo "- Compiling with gtk+ version " $GTK3_VERSION " -"
 
-
 PKG_CHECK_EXISTS([gtk+-3.0 >= 3.10.0],[HAVE_GTK_VERSION310=true],[HAVE_GTK_VERSION310=false])
-
 PKG_CHECK_EXISTS([gtk+-3.0 >= 3.11.0],[HAVE_GTK_VERSION311=true],[HAVE_GTK_VERSION311=false])
 
 HAVE_GTK_VERSION216=true
@@ -310,7 +299,6 @@ if test "$HAVE_GTK_VERSION311" = "false"; then
 GTK310_WARN=true
 fi
 fi
-
 
 fi
 
@@ -325,7 +313,7 @@ PKG_CHECK_EXISTS([glib-2.0 >= 2.4.0],[HAVE_GLIB_VERSION24=true],[HAVE_GLIB_VERSI
 
 
 DISABLE_GLSLICE=true
-AC_ARG_ENABLE( glib-slice-allocator, [  --disable-glib-slice-allocator           Disable the glib slice allocator (not recommended).] , disable_glslice=yes)
+AC_ARG_ENABLE(glib-slice-allocator, [  --disable-glib-slice-allocator           Disable the glib slice allocator (not recommended).] , disable_glslice=yes)
 if test "x$disable_glslice" != "xyes" ; then
 DISABLE_GLSLICE=false
 if test "x$HAVE_GLIB_VERSION24" = "xfalse"; then
@@ -360,10 +348,6 @@ AC_SUBST(GLIB_LIBS)
 AM_CONDITIONAL(DISABLE_GLSLICE,$DISABLE_GLSLICE)
 
 
-
-
-
-
 dnl giw
 if test "x$HAVE_GTK_VERSION206" = "xfalse"; then
 HAVE_GIW=false
@@ -381,14 +365,12 @@ fi
 AM_CONDITIONAL(ENABLE_GIW,$HAVE_GIW)
 
 
-
-
 HAVE_SDL=false
 HAVE_SDL2=false
 FORCE_SDL=false
 TRY_SDL=true
 
-AC_ARG_ENABLE( sdl, [  --enable-sdl             Enable SDL1.x playback plugin support without checking for it.] , force_sdl=yes)
+AC_ARG_ENABLE(sdl, [  --enable-sdl             Enable SDL1.x playback plugin support without checking for it.] , force_sdl=yes)
 
 
 AC_ARG_ENABLE(sdl,
@@ -409,30 +391,23 @@ if test "$HAVE_SDL2" = "false"; then
 
 dnl check for SDL
 
- ifdef([m4_pattern_allow],
-      [m4_pattern_allow([^AM_PATH_SDL])])
+ifdef([m4_pattern_allow],
+[m4_pattern_allow([^AM_PATH_SDL])])
 
+ifdef([$AM_PATH_SDL"],
 
- ifdef([$AM_PATH_SDL"],
-
- [AM_PATH_SDL([1.2],[
-        HAVE_SDL=true
-        SDL_LIBS=`$SDL_CONFIG --libs`
-	SDL_CFLAGS=`$SDL_CONFIG --cflags`]
- ,[AC_MSG_WARN([*** Unable to find SDL ***])])],
+[AM_PATH_SDL([1.2],[
+HAVE_SDL=true
+SDL_LIBS=`$SDL_CONFIG --libs`
+SDL_CFLAGS=`$SDL_CONFIG --cflags`]
+,[AC_MSG_WARN([*** Unable to find SDL ***])])],
 
 [
-
 dnl if AM_PATH_SDL fails, try pkg-config
 PKG_CHECK_MODULES(SDL,sdl >= 1.2,HAVE_SDL=true,HAVE_SDL=false)
 
 fi
-
-
 ])
-
-
-
 fi
 
 else FORCE_SDL=true
@@ -451,26 +426,21 @@ AM_CONDITIONAL(HAVE_SDL,$HAVE_SDL)
 AM_CONDITIONAL(HAVE_SDL2,$HAVE_SDL2)
 AM_CONDITIONAL(FORCE_SDL,$FORCE_SDL)
 
-
 HAVE_AVCODEC=false
 HAVE_AVFORMAT=false
 HAVE_AVUTIL=false
 HAVE_SWSCALE=false
 HAVE_SWRESAMPLE=false
 
-AC_ARG_ENABLE( ffmpeg, [  --disable-ffmpeg            Disable ffmpeg (avcodec) support.] , disable_ffmpeg=yes)
+AC_ARG_ENABLE(ffmpeg, [  --disable-ffmpeg            Disable ffmpeg (avcodec) support.] , disable_ffmpeg=yes)
 if test "x$disable_ffmpeg" != "xyes" ; then
 
 dnl check for avcodec, avformat, avutil, swscale
 
 PKG_CHECK_MODULES(LIBAVCODEC,libavcodec >= 53.0.0,HAVE_AVCODEC=true,HAVE_AVCODEC=false)
-
 PKG_CHECK_MODULES(LIBAVFORMAT,libavformat,HAVE_AVFORMAT=true,HAVE_AVFORMAT=false)
-
 PKG_CHECK_MODULES(LIBAVUTIL,libavutil,HAVE_AVUTIL=true,HAVE_AVUTIL=false)
-
 PKG_CHECK_MODULES(LIBSWSCALE,libswscale,HAVE_SWSCALE=true,HAVE_SWSCALE=false)
-
 PKG_CHECK_MODULES(LIBSWRESAMPLE,libswresample,HAVE_SWRESAMPLE=true,HAVE_SWRESAMPLE=false)
 
 fi
@@ -491,7 +461,6 @@ AM_CONDITIONAL(HAVE_AVFORMAT,$HAVE_AVFORMAT)
 AM_CONDITIONAL(HAVE_AVUTIL,$HAVE_AVUTIL)
 AM_CONDITIONAL(HAVE_SWSCALE,$HAVE_SWSCALE)
 AM_CONDITIONAL(HAVE_SWRESAMPLE,$HAVE_SWRESAMPLE)
-
 
 HAVE_AVCODEC_OPEN2=false
 HAVE_AVCODEC_ALLOC_CONTEXT3=false
@@ -525,11 +494,8 @@ AC_CHECK_LIB(avformat,av_set_pts_info,HAVE_AV_SET_PTS_INFO=true,HAVE_AV_SET_PTS_
 if test "$HAVE_AV_SET_PTS_INFO" = "false"; then
 AC_CHECK_LIB(avformat,avpriv_set_pts_info,HAVE_AVPRIV_SET_PTS_INFO=true,HAVE_AVPRIV_SET_PTS_INFO=false)
 if test "$HAVE_AV_SET_PTS_INFO" = "true"; then
-
 AC_CHECK_HEADERS(libavformat/internal.h,HAVE_AVFORMAT_INTERNAL_H=true,HAVE_AVFORMAT_INTERNAL_H=false)
-
 fi
-
 fi
 
 fi
@@ -562,7 +528,6 @@ if test "HAVE_OPENCV" = "true" ; then
 OPENCV_LIBS_ONLY_L = `pkg-config opencv --libs-only-L`
 fi
 
-
 AC_SUBST(OPENCV_CFLAGS)
 AC_SUBST(OPENCV_LIBS_ONLY_L)
 
@@ -583,7 +548,7 @@ AM_CONDITIONAL(HAVE_FFTW3F,$HAVE_FFTW3F)
 dnl check for libfreenect
 
 HAVE_LIBFREENECT=false
-AC_ARG_ENABLE( libfreenect, [  --disable-libfreenect     Disable libfreenect support.] , disable_libfreenect=yes)
+AC_ARG_ENABLE(libfreenect, [  --disable-libfreenect     Disable libfreenect support.] , disable_libfreenect=yes)
 if test "x$disable_libfreenect" != "xyes" ; then
 
 PKG_CHECK_MODULES(LIBFREENECT, libfreenect, HAVE_LIBFREENECT=true, HAVE_LIBFREENECT=false)
@@ -595,17 +560,17 @@ AC_SUBST(LIBFREENECT_LIBS)
 AM_CONDITIONAL(HAVE_LIBFREENECT,$HAVE_LIBFREENECT)
 
 TURBO=false
-AC_ARG_ENABLE( turbo, [  --enable-turbo     Most optimised compile.] , TURBO=true, TURBO=false)
+AC_ARG_ENABLE(turbo, [  --enable-turbo     Most optimised compile.] , TURBO=true, TURBO=false)
 AM_CONDITIONAL(TURBO,$TURBO)
 
 ENABLE_TOONZ=false
-AC_ARG_ENABLE( toonz, [  --enable-toonz     Enable plugins ported from toonz. Requires c++11 compiler support and opencv.] , ENABLE_TOONZ=true, ENABLE_TOONZ=false)
+AC_ARG_ENABLE(toonz, [  --enable-toonz     Enable plugins ported from toonz. Requires c++11 compiler support and opencv.] , ENABLE_TOONZ=true, ENABLE_TOONZ=false)
 AM_CONDITIONAL(ENABLE_TOONZ,$ENABLE_TOONZ)
 
 
 dnl check for openGL
 HAVE_OPENGL=false
-AC_ARG_ENABLE( opengl, [  --disable-opengl     Disable openGL support.] , disable_opengl=yes)
+AC_ARG_ENABLE(opengl, [  --disable-opengl     Disable openGL support.] , disable_opengl=yes)
 if test "x$disable_opengl" != "xyes" ; then
 
 PKG_CHECK_MODULES(GL,gl,HAVE_OPENGL=true,HAVE_OPENGL=false)
@@ -617,7 +582,6 @@ AC_SUBST(GL_LIBS)
 AM_CONDITIONAL(HAVE_OPENGL,$HAVE_OPENGL)
 
 
-
 dnl check for GLU
 PKG_CHECK_MODULES(GLU,glu,HAVE_GLU=true,HAVE_GLU=false)
 AC_SUBST(GLU_CFLAGS)
@@ -626,13 +590,10 @@ AC_SUBST(GLU_LIBS)
 AM_CONDITIONAL(HAVE_GLU,$HAVE_GLU)
 
 
-
 dnl check for mjpegtools
 HAVE_MJPEGTOOLS=false
-AC_ARG_ENABLE( mjpegtools, [  --disable-mjpegtools    Disable mjpegtools (yuv4mpeg) support.] , disable_mjpegtools=yes)
+AC_ARG_ENABLE(mjpegtools, [  --disable-mjpegtools    Disable mjpegtools (yuv4mpeg) support.] , disable_mjpegtools=yes)
 if test "x$disable_mjpegtools" != "xyes" ; then
-
-
 PKG_CHECK_MODULES(MJPEGTOOLS,mjpegtools >= 1.6.2,HAVE_MJPEGTOOLS=true,HAVE_MJPEGTOOLS=false)
 fi
 
@@ -644,9 +605,8 @@ AM_CONDITIONAL(HAVE_MJPEGTOOLS,$HAVE_MJPEGTOOLS)
 
 dnl check for libpng
 HAVE_LIBPNG=false
-AC_ARG_ENABLE( libpng, [  --disable-libpng    Disable direct libpng support.] , disable_libpng=yes)
+AC_ARG_ENABLE(libpng, [  --disable-libpng    Disable direct libpng support.] , disable_libpng=yes)
 if test "x$disable_libpng" != "xyes" ; then
-
 PKG_CHECK_MODULES(PNG,libpng > 1.2.0,HAVE_LIBPNG=true,HAVE_LIBPNG=false)
 fi
 
@@ -656,9 +616,8 @@ AC_SUBST(PNG_LIBS)
 AM_CONDITIONAL(HAVE_LIBPNG,$HAVE_LIBPNG)
 
 
-
 HAVE_ZLIB=false
-AC_ARG_ENABLE( libz, [  --disable-libz    Disable libz support.] , disable_libz=yes)
+AC_ARG_ENABLE(libz, [  --disable-libz    Disable libz support.] , disable_libz=yes)
 if test "x$disable_libz" != "xyes" ; then
 
 dnl check for libz
@@ -672,7 +631,7 @@ AM_CONDITIONAL(CONFIG_ZLIB,$HAVE_LIBZ)
 
 
 HAVE_BZLIB=false
-AC_ARG_ENABLE( libbz, [  --disable-libbz    Disable libbz support.] , disable_libbz=yes)
+AC_ARG_ENABLE(libbz, [  --disable-libbz    Disable libbz support.] , disable_libbz=yes)
 if test "x$disable_libbz" != "xyes" ; then
 
 dnl check for libz
@@ -690,7 +649,7 @@ AM_CONDITIONAL(CONFIG_BZLIB,$HAVE_LIBBZ)
 
 
 HAVE_LADSPA=false
-AC_ARG_ENABLE( ladspa, [  --disable-ladspa    Disable LADSPA support.] , disable_ladspa=yes)
+AC_ARG_ENABLE(ladspa, [  --disable-ladspa    Disable LADSPA support.] , disable_ladspa=yes)
 if test "x$disable_ladspa" != "xyes" ; then
 
 dnl check for libz
@@ -701,9 +660,8 @@ AM_CONDITIONAL(HAVE_LADSPA,$HAVE_LADSPA)
 
 
 HAVE_UNICAP=false
-AC_ARG_ENABLE( unicap, [  --disable-unicap    Disable unicap support.] , disable_unicap=yes)
+AC_ARG_ENABLE(unicap, [  --disable-unicap    Disable unicap support.] , disable_unicap=yes)
 if test "x$disable_unicap" != "xyes" ; then
-
 dnl check for unicap
 PKG_CHECK_MODULES(UNICAP,libunicap,HAVE_UNICAP=true,HAVE_UNICAP=false)
 fi
@@ -729,7 +687,6 @@ AC_SUBST(v4l1_INCFILE)
 
 AC_CHECK_HEADERS(linux/videodev2.h, HAVE_LIBv4l2=true, HAVE_LIBv4l2=false)
 AM_CONDITIONAL(HAVE_LIBv4l2,$HAVE_LIBv4l2)
-
 
 
 HAVE_LIBDV=false
@@ -803,7 +760,7 @@ AM_CONDITIONAL(HAVE_PA_STREAM_BEGIN_WRITE,$HAVE_PA_STREAM_BEGIN_WRITE)
 
 
 HAVE_LIBVISUAL=false
-AC_ARG_ENABLE( libvisual, [  --disable-libvisual     Disable libvisual support.] , disable_libvisual=yes)
+AC_ARG_ENABLE(libvisual, [  --disable-libvisual     Disable libvisual support.] , disable_libvisual=yes)
 if test "x$disable_libvisual" != "xyes" ; then
 
 dnl check for libvisual
@@ -819,7 +776,7 @@ AM_CONDITIONAL(HAVE_LIBVISUAL,$HAVE_LIBVISUAL)
 
 
 HAVE_PROJECTM=false
-AC_ARG_ENABLE( projectM, [  --disable-projectM     Disable projectM support.] , disable_projectM=yes)
+AC_ARG_ENABLE(projectM, [  --disable-projectM     Disable projectM support.] , disable_projectM=yes)
 if test "x$disable_projectM" != "xyes" ; then
 
 dnl check for projectM
@@ -831,11 +788,10 @@ fi
 AM_CONDITIONAL(HAVE_PROJECTM,$HAVE_PROJECTM)
 
 
-
 HAVE_LIBOIL=false
 HAVE_LIBORC=false
 
-AC_ARG_ENABLE( liboil, [  --disable-liboil     Disable liboil support.] , disable_liboil=yes)
+AC_ARG_ENABLE(liboil, [  --disable-liboil     Disable liboil support.] , disable_liboil=yes)
 if test "x$disable_liboil" != "xyes" ; then
 
 dnl check for liboil
@@ -849,7 +805,6 @@ AC_SUBST(ORC_CFLAGS)
 AC_SUBST(ORC_LIBS)
 fi
 
-
 fi
 
 AM_CONDITIONAL(HAVE_LIBOIL,$HAVE_LIBOIL)
@@ -859,9 +814,8 @@ AM_CONDITIONAL(HAVE_LIBORC,$HAVE_LIBORC)
 AM_CONDITIONAL(ENABLE_LIBORC,$HAVE_LIBORC)
 
 
-
 HAVE_FREI0R=false
-AC_ARG_ENABLE( frei0r, [  --disable-frei0r     Disable frei0r support.] , disable_frei0r=yes)
+AC_ARG_ENABLE(frei0r, [  --disable-frei0r     Disable frei0r support.] , disable_frei0r=yes)
 if test "x$disable_freior" != "xyes" ; then
 
 dnl check for frei0r
@@ -872,7 +826,7 @@ fi
 
 HAVE_LDVGRAB=false
 
-AC_ARG_ENABLE( ldvgrab, [  --disable-ldvgrab     Disable LiVES-dvgrab.] , disable_ldvgrab=yes)
+AC_ARG_ENABLE(ldvgrab, [  --disable-ldvgrab     Disable LiVES-dvgrab.] , disable_ldvgrab=yes)
 if test "x$disable_ldvgrab" != "xyes" ; then
 
 dnl check for ldvgrab requirements
@@ -951,7 +905,7 @@ AM_CONDITIONAL(HAVE_SYSTEM_WEED_PLUGIN,$HAVE_SYSTEM_WEED_PLUGIN)
 
 AM_CONDITIONAL(BUILD_EXPERIMENTAL,false)
 
-AC_ARG_ENABLE( liblives, [  --enable-liblives     Build additional liblives static library.] , liblives=yes, liblives=no)
+AC_ARG_ENABLE(liblives, [  --enable-liblives     Build additional liblives static library.] , liblives=yes, liblives=no)
 
 if test "$liblives" = "yes"; then
 if test "$disable_glslice" = "yes" ; then
@@ -1048,6 +1002,5 @@ echo "In this case you MUST also manually update the library paths in libweed/*.
 echo ""
 echo "Remember to do \"sudo ldconfig\" or equivalent after installing."
 echo  "*******************************************************************"
-
 
 

@@ -8413,11 +8413,12 @@ void on_rename_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   // TODO: allow mapping of change types to random ranges in the backend
-  // TODO: allow user selection of omc notify port
+  // TODO: allow user selection of all ports
 #ifdef ENABLE_OSC
   autolives_window *alwindow;
   int trigtime;
   char *apb;
+  char *mute;
   char *trigopt;
   char *debug;
 #ifndef IS_MINGW
@@ -8483,6 +8484,8 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   trigtime = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(alwindow->atrigger_spin));
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(alwindow->apb_button))) apb = lives_strdup(" -waitforplay");
   else apb = lives_strdup("");
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(alwindow->mute_button))) mute = lives_strdup(" -mute");
+  else mute = lives_strdup("");
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(alwindow->atrigger_button))) {
     // timed
     trigopt = lives_strdup_printf(" -time %d", trigtime);
@@ -8520,16 +8523,17 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
 #ifndef IS_MINGW
-  com = lives_strdup_printf("autolives.pl localhost %d %d%s%s%s", prefs->osc_udp_port, prefs->osc_udp_port - 1, apb, trigopt, debug);
+  com = lives_strdup_printf("autolives.pl localhost %d %d%s%s%s%s", prefs->osc_udp_port, prefs->osc_udp_port - 1, apb, trigopt, mute, debug);
 #else
-  com = lives_strdup_printf("START /MIN /B perl \"%s\\bin\\autolives.pl\" localhost %d %d%s%s%s >NUL 2>&1",
-                            prefs->prefix_dir, prefs->osc_udp_port, prefs->osc_udp_port - 1, apb, trigopt, debug);
+  com = lives_strdup_printf("START /MIN /B perl \"%s\\bin\\autolives.pl\" localhost %d %d%s%s%s%s >NUL 2>&1",
+                            prefs->prefix_dir, prefs->osc_udp_port, prefs->osc_udp_port - 1, apb, trigopt, mute, debug);
 #endif
   mainw->alives_pgid = lives_fork(com);
 
   lives_free(debug);
   lives_free(trigopt);
   lives_free(apb);
+  lives_free(mute);
   lives_free(com);
 #endif
 }

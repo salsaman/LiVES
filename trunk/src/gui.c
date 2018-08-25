@@ -1484,6 +1484,7 @@ void create_LiVES(void) {
   mainw->midi_save = lives_standard_menu_item_new_with_label(_("_Save Device Mapping..."));
 
   lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_save);
+  lives_widget_set_sensitive(mainw->midi_save, FALSE);
 
   midi_load = lives_standard_menu_item_new_with_label(_("_Load Device Mapping..."));
 

@@ -13,11 +13,11 @@ Code cleanup. Standard checkbuttons and check menuitems now have their state set
 Remove "use_mnemonic" parameter for widget functions. Use widget_opts.mnemonic_labels instead.
 Amend the autolives toy so it can be triggered via OSC (and move to vj menu, add startup options).
 MIDI channel can now used as a filter instead of a parameter to be matched.
-Device mappings can now be shipped with builds (TODO).
+Device mappings can now be shipped with builds.
 Improved a/v synch with pulse audio.
 Correct some minor GUI issues.
---noset startup option now has a permanent effect.
-Add --asource [internal | external] startup option.
+-noset startup option now has a permanent effect.
+Add -asource [internal | external] startup option.
 Fix bug in setting loop mode via OSC.
 
 

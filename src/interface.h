@@ -134,6 +134,7 @@ typedef struct {
   LiVESWidget *atrigger_button;
   LiVESWidget *atrigger_spin;
   LiVESWidget *apb_button;
+  LiVESWidget *mute_button;
   LiVESWidget *debug_button;
 } autolives_window;
 

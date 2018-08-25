@@ -15,6 +15,7 @@
 #include "interface.h"
 #include "merge.h"
 #include "support.h"
+#include "omc-learn.h" // for OSC_NOTIFY mapping
 
 // functions called in multitrack.c
 extern void multitrack_preview_clicked(LiVESButton *, livespointer user_data);
@@ -2779,8 +2780,6 @@ autolives_window *autolives_pre_dialog(void) {
   LiVESWidget *label;
   LiVESWidget *vbox;
   LiVESWidget *hbox;
-  LiVESWidget *cancelbutton;
-  LiVESWidget *okbutton;
   LiVESWidget *radiobutton;
 
   LiVESSList *radiobutton1_group = NULL;
@@ -2790,7 +2789,7 @@ autolives_window *autolives_pre_dialog(void) {
 
   alwindow = (autolives_window *)lives_malloc(sizeof(autolives_window));
 
-  alwindow->dialog = lives_standard_dialog_new(_("Autolives Options"), FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
+  alwindow->dialog = lives_standard_dialog_new(_("Autolives Options"), TRUE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(alwindow->dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -2817,7 +2816,7 @@ autolives_window *autolives_pre_dialog(void) {
 
   alwindow->atrigger_spin = lives_standard_spin_button_new(_("change time (seconds)"), 1., 1., 1800., 1., 10., 0, LIVES_BOX(hbox), NULL);
 
-  hbox = lives_hbox_new(FALSE, 0);
+  hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
   radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("OMC"))),
                 &radiobutton1_group, LIVES_BOX(hbox),
@@ -2826,7 +2825,9 @@ autolives_window *autolives_pre_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  if ((mainw->compat & LIVES_COMPAT_MIXXX) != 0) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
+  if (has_devicemap(OSC_NOTIFY)) {
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
+  }
 
   vbox = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, FALSE, widget_opts.packing_height * 2.);
@@ -2855,6 +2856,18 @@ autolives_window *autolives_pre_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
+  hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 2);
+
+  alwindow->mute_button = lives_standard_check_button_new
+                          ((tmp = lives_strdup(_("Mute audio during playback"))), FALSE, LIVES_BOX(hbox),
+                           (tmp2 = lives_strdup(_("Mute the audio in LiVES during playback."))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(alwindow->mute_button), TRUE);
+
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -2866,17 +2879,6 @@ autolives_window *autolives_pre_dialog(void) {
 
   lives_free(tmp);
   lives_free(tmp2);
-
-  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
-
-  lives_dialog_add_action_widget(LIVES_DIALOG(alwindow->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default(cancelbutton);
-
-  lives_dialog_add_action_widget(LIVES_DIALOG(alwindow->dialog), okbutton, LIVES_RESPONSE_OK);
-
-  lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
 
   lives_widget_show_all(alwindow->dialog);
   return alwindow;

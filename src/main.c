@@ -3684,7 +3684,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->vj_save_set, mainw->current_file > 0);
   lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
   lives_widget_set_sensitive(mainw->midi_learn, TRUE);
-  lives_widget_set_sensitive(mainw->midi_save, TRUE);
+  lives_widget_set_sensitive(mainw->midi_save, has_devicemap(-1));
   lives_widget_set_sensitive(mainw->toy_tv, TRUE);
   lives_widget_set_sensitive(mainw->autolives, TRUE);
   lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
@@ -6759,7 +6759,7 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
       lives_widget_set_sensitive(mainw->clear_ds, TRUE);
       lives_widget_set_sensitive(mainw->midi_learn, TRUE);
-      lives_widget_set_sensitive(mainw->midi_save, TRUE);
+      lives_widget_set_sensitive(mainw->midi_save, has_devicemap(-1));
       lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
       lives_widget_set_sensitive(mainw->mt_menu, TRUE);
       lives_widget_set_sensitive(mainw->unicap, TRUE);

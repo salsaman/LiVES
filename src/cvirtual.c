@@ -238,8 +238,27 @@ mismatch:
 }
 
 
+boolean check_if_all_virtual(int fileno, int start, int end) {
+  // check if all frames ar virtual from start to end inclusive in clip fileno
+  register int i;
+  lives_clip_t *sfile = mainw->files[fileno];
+
+  if (sfile->frame_index == NULL) return FALSE;
+  for (i = start; i <= end; i++) {
+    if (sfile->frame_index[i - 1] == -1) return FALSE;
+  }
+
+  return TRUE;
+}
+
+
 boolean check_if_non_virtual(int fileno, int start, int end) {
   // check if there are no virtual frames from start to end inclusive in clip fileno
+
+  // return FALSE if any virtual frames are found in the region
+  // return TRUE if all frames in region are non-virtual
+
+  // also may change the clip_type and the interlace
 
   register int i;
   lives_clip_t *sfile = mainw->files[fileno];

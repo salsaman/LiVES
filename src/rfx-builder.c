@@ -3634,7 +3634,10 @@ LiVESList *get_script_section(const char *section, const char *file, boolean str
   lives_system(com, FALSE);
   lives_free(com);
 
-  if (mainw->com_failed) return NULL;
+  if (mainw->com_failed) {
+    lives_free(outfile);
+    return NULL;
+  }
 
   if ((script_file = fopen(outfile, "r"))) {
     while (fgets(buff, 65536, script_file)) {

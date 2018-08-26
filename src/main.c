@@ -4834,6 +4834,7 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
 #endif
 
   if (gerror != NULL) {
+    LIVES_ERROR(gerror->message);
     lives_error_free(gerror);
     pixbuf = NULL;
   }
@@ -6645,6 +6646,7 @@ void load_frame_image(int frame) {
         lives_free(tmp);
 
         do {
+          // TODO ***: add a timeout here
           if (gerror != NULL) lives_error_free(gerror);
           lives_pixbuf_save(pixbuf, fname, cfile->img_type, 100, FALSE, &gerror);
         } while (gerror != NULL);

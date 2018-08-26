@@ -2065,6 +2065,7 @@ boolean do_auto_dialog(const char *text, int type) {
     mainw->read_failed = FALSE;
     lives_fgets(mainw->msg, 512, infofile);
     fclose(infofile);
+    infofile = NULL;
     if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
 
     while (!lives_alarm_get(alarm_handle)) {
@@ -2074,6 +2075,8 @@ boolean do_auto_dialog(const char *text, int type) {
     }
     lives_alarm_clear(alarm_handle);
   }
+
+  if (infofile != NULL) fclose(infofile);
 
   if (proc_ptr != NULL) {
     lives_widget_destroy(proc_ptr->processing);

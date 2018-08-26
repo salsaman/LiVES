@@ -160,7 +160,7 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
     }
 
     if (lives_alarm_get(alarm_handle)) {
-      // timeout - kill thread and wait for it to terminate
+      // timeout - kill thread and wait for it to terminateo
       pthread_cancel(y4thread);
       pthread_join(y4thread, NULL);
       lives_alarm_clear(alarm_handle);

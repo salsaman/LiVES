@@ -5948,11 +5948,12 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
         lives_alarm_clear(alarm_handle);
 
-        if (!timeout) {
+        if (!timeout || ifile != NULL) {
           mainw->read_failed = FALSE;
           lives_fgets(mainw->msg, 512, ifile);
-          fclose(ifile);
         }
+
+        if (ifile != NULL) fclose(ifile);
 
         if (timeout || mainw->read_failed) {
           retval = do_read_failed_error_s_with_retry(info_file, NULL, NULL);

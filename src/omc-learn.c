@@ -855,7 +855,6 @@ static void on_omc_combo_entry_changed(LiVESCombo *combo, livespointer ptr) {
 
     mnode->map = mnode->fvali = NULL;
     mnode->fvald = NULL;
-
   }
 
   if (!strcmp(macro_text, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -863,7 +862,7 @@ static void on_omc_combo_entry_changed(LiVESCombo *combo, livespointer ptr) {
     return;
   }
 
-  for (i = 0; i <= N_OMC_MACROS; i++) {
+  for (i = 0; i < N_OMC_MACROS; i++) {
     if (!strcmp(macro_text, omc_macros[i].macro_text)) break;
   }
 

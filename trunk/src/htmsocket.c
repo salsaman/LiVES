@@ -54,6 +54,7 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
     hostsEntry = gethostbyname(host);
 
     if (hostsEntry == NULL) {
+      lives_free(o);
       return NULL;
     }
 

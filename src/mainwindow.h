@@ -176,12 +176,6 @@ typedef enum {
   LIVES_TOY_TV
 } lives_toy_t;
 
-/// compatibility types
-typedef enum {
-  LIVES_COMPAT_NONE = 0,
-  LIVES_COMPAT_MIXXX ///< compatibility with MIXXX
-} lives_compat_t;
-
 typedef enum {
   LIVES_DIALOG_INFO,
   LIVES_DIALOG_ERROR,
@@ -1379,7 +1373,6 @@ typedef struct {
 
   char *dp_cache;
 
-  lives_compat_t compat; ///< bitmap of compatibility modes
   ////////////////////
 } mainwindow;
 

@@ -1104,8 +1104,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->rendered_fx = NULL;
 
-  mainw->compat = LIVES_COMPAT_NONE;
-
   mainw->midi_channel_lock = FALSE;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^

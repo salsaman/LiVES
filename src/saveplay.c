@@ -1989,12 +1989,11 @@ void save_file(int clip, int start, int end, const char *filename) {
                          (tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)))));
     lives_free(tmp);
     lives_free(mesg);
-  }
-  else {
+  } else {
     lives_rm((tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)));
     lives_free(tmp);
   }
-  
+
   lives_free(full_file_name);
 }
 

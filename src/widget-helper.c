@@ -1462,6 +1462,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialo
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_add_action_widget(LiVESDialog *dialog, LiVESWidget *widget, int response) {
+  // TODO: use lives_dialog_add_button, lives_dialog_add_button_from_stock
 #ifdef GUI_GTK
   gtk_dialog_add_action_widget(dialog, widget, response);
   return TRUE;
@@ -7939,7 +7940,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
         lives_container_add(LIVES_CONTAINER(align), child);
         lives_scrolled_window_add_with_viewport(LIVES_SCROLLED_WINDOW(scrolledwindow), align);
       } else {
-        lives_scrolled_window_add_with_viewport(LIVES_SCROLLED_WINDOW(scrolledwindow), child);
+        lives_container_add(LIVES_CONTAINER(scrolledwindow), child);
       }
     }
 #endif

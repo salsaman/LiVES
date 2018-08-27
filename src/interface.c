@@ -201,11 +201,10 @@ xprocess *create_processing(const char *text) {
     // add "show details" arrow
     boolean woat = widget_opts.apply_theme;
     widget_opts.apply_theme = FALSE;
+    widget_opts.expand = LIVES_EXPAND_EXTRA;
     procw->scrolledwindow = lives_standard_scrolled_window_new(ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, LIVES_WIDGET(mainw->optextview));
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
     widget_opts.apply_theme = woat;
-
-    lives_widget_set_size_request(procw->scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-    lives_widget_context_update();
     lives_standard_expander_new(_("Show Details"), LIVES_BOX(vbox3), procw->scrolledwindow);
   }
 
@@ -537,12 +536,14 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(filew->dialog));
-  if (LIVES_IS_BUTTON_BOX(dialog_action_area)) lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_SPREAD);
 
   okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(filew->dialog), okbutton, LIVES_RESPONSE_OK);
+
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default_special(okbutton);
+
+  if (LIVES_IS_BUTTON_BOX(dialog_action_area)) lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_SPREAD);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),

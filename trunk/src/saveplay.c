@@ -2797,6 +2797,7 @@ void play_file(void) {
     }
   }
 
+  // TODO ***: use MIDI output port for this
   if (!mainw->foreign && prefs->midisynch) lives_system("midistop", TRUE);
 
   if (mainw->ext_playback) {

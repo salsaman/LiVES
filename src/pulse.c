@@ -678,7 +678,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             lives_freep((void **)&fbuffer);
             free(fp);
 
-            if (mainw->record && mainw->ascrap_file != -1 && mainw->playing_file > 0) {
+            if (mainw->record && !mainw->record_paused && mainw->ascrap_file != -1 && mainw->playing_file > 0) {
               // write generated audio to ascrap_file
               size_t rbytes = numFramesToWrite * mainw->files[mainw->ascrap_file]->achans *
                               mainw->files[mainw->ascrap_file]->asampsize >> 3;
@@ -930,7 +930,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
   nframes = (size_t)((double)((rbytes / (pulsed->in_asamps >> 3) / pulsed->in_achans)) / out_scale + .5);
 
   // should really be frames_read here
-  pulsed->frames_written += nframes;
+  if (!pulsed->is_paused) pulsed->frames_written += nframes;
 
   if (prefs->audio_src == AUDIO_SRC_EXT && (pulsed->playing_file == -1 || pulsed->playing_file == mainw->ascrap_file)) {
     // - (do not call this when recording ext window or voiceover)
@@ -1350,6 +1350,7 @@ int64_t lives_pulse_get_time(pulse_driver_t *pulsed, boolean absolute) {
   return xtime;
 #endif
 }
+
 
 double lives_pulse_get_pos(pulse_driver_t *pulsed) {
   // get current time position (seconds) in audio file

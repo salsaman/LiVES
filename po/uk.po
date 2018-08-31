@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2018-08-27 02:32-0300\n"
+"POT-Creation-Date: 2018-08-30 23:16-0300\n"
 "PO-Revision-Date: 2018-02-17 19:09+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -12003,12 +12003,12 @@ msgstr "fps_ratio"
 msgid "discrimination"
 msgstr ""
 
-#: src/omc-learn.c:2403
+#: src/omc-learn.c:2402
 #, c-format
 msgid "Saving device mapping to file %s..."
 msgstr "Збереження карти відображення пристроїв до файла %s…"
 
-#: src/omc-learn.c:2505
+#: src/omc-learn.c:2504
 #, c-format
 msgid ""
 "\n"
@@ -12021,7 +12021,7 @@ msgstr ""
 "Помилка під час обробки файла\n"
 "%s\n"
 
-#: src/omc-learn.c:2513
+#: src/omc-learn.c:2512
 #, c-format
 msgid ""
 "\n"
@@ -12034,12 +12034,12 @@ msgstr ""
 "Некоректна версія у файлі\n"
 "%s\n"
 
-#: src/omc-learn.c:2553
+#: src/omc-learn.c:2552
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr "Завантаження карти відображення пристрої з файла %s…"
 
-#: src/omc-learn.c:2556
+#: src/omc-learn.c:2555
 #, c-format
 msgid ""
 "\n"
@@ -12054,16 +12054,16 @@ msgstr ""
 "%s\n"
 "Код помилки: %d\n"
 
-#: src/omc-learn.c:2784
+#: src/omc-learn.c:2783
 msgid "MIDI receive channel was set to ALL CHANNELS\n"
 msgstr ""
 
-#: src/omc-learn.c:2785
+#: src/omc-learn.c:2784
 #, c-format
 msgid "MIDI receive channel was set to channel %d\n"
 msgstr ""
 
-#: src/omc-learn.c:2790
+#: src/omc-learn.c:2789
 msgid ""
 "The MIDI receive channel setting was updated by the device map.\n"
 "Please review the setting in Preferences and adjust it if necessary.\n"
@@ -12119,8 +12119,9 @@ msgid "Adjusting contrast of"
 msgstr "_Коригувати %s"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "Adjusting noise on"
-msgstr ""
+msgstr "_Коригувати %s"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -12533,8 +12534,9 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _end"
-msgstr ""
+msgstr "Поступове наростання гучності"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -12581,8 +12583,9 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "Keep _Centered"
-msgstr ""
+msgstr "Ctrl-Enter"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Keep image aspect _ratio"
@@ -12827,8 +12830,9 @@ msgid "Swirl s_tep"
 msgstr "Зафіксувати по_чаток"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl"
-msgstr ""
+msgstr "Зафіксувати по_чаток"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirling"
@@ -12916,8 +12920,9 @@ msgid "_Bottom"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "_Calculate"
-msgstr ""
+msgstr "По_казати лічильник кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
@@ -12925,8 +12930,9 @@ msgid "_Cycle Start"
 msgstr "П_очаток"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "_Decrease Contrast"
-msgstr ""
+msgstr "_Коригувати %s"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -12954,8 +12960,9 @@ msgstr "Лише _останній кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "_Fade level"
-msgstr ""
+msgstr "Поступове наростання гучності"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -12975,8 +12982,9 @@ msgid "_First frame"
 msgstr "Перший кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Flash for"
-msgstr ""
+msgstr "Поступове зменшення гучності"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -13014,8 +13022,9 @@ msgid "_Image"
 msgstr "_Файл"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "_Increase Contrast"
-msgstr ""
+msgstr "_Коригувати %s"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_Init Size X:"
@@ -13085,8 +13094,9 @@ msgid "_Point size"
 msgstr "В_казівник"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius end"
-msgstr ""
+msgstr "П_очаток"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -13096,8 +13106,9 @@ msgstr "П_очаток"
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#, fuzzy
 msgid "_Radius"
-msgstr ""
+msgstr "П_очаток"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
@@ -13317,8 +13328,9 @@ msgid "despeckle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#, fuzzy
 msgid "dream"
-msgstr ""
+msgstr "Потокове мовлення"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "edge_detect"
@@ -13356,8 +13368,9 @@ msgid "flop"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "frame_calculator"
-msgstr ""
+msgstr "По_казати лічильник кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -13389,24 +13402,27 @@ msgid "hue_change"
 msgstr "Змі_нюється частота кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "image_overlay"
-msgstr ""
+msgstr "Позначене пере_кривається"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "modulate"
-msgstr ""
+msgstr "Вставка"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "negate"
-msgstr ""
+msgstr "Вставка"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"

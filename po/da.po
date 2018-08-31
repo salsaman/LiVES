@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2018-08-27 02:32-0300\n"
+"POT-Creation-Date: 2018-08-30 23:16-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Danish <da@li.org>\n"
@@ -10529,12 +10529,12 @@ msgstr ""
 msgid "discrimination"
 msgstr ""
 
-#: src/omc-learn.c:2403
+#: src/omc-learn.c:2402
 #, c-format
 msgid "Saving device mapping to file %s..."
 msgstr ""
 
-#: src/omc-learn.c:2505
+#: src/omc-learn.c:2504
 #, c-format
 msgid ""
 "\n"
@@ -10543,7 +10543,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/omc-learn.c:2513
+#: src/omc-learn.c:2512
 #, c-format
 msgid ""
 "\n"
@@ -10556,12 +10556,12 @@ msgstr ""
 "Ugyldig version i fil\n"
 "%s\n"
 
-#: src/omc-learn.c:2553
+#: src/omc-learn.c:2552
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr ""
 
-#: src/omc-learn.c:2556
+#: src/omc-learn.c:2555
 #, c-format
 msgid ""
 "\n"
@@ -10576,16 +10576,16 @@ msgstr ""
 "%s\n"
 "Fejlkode %d\n"
 
-#: src/omc-learn.c:2784
+#: src/omc-learn.c:2783
 msgid "MIDI receive channel was set to ALL CHANNELS\n"
 msgstr ""
 
-#: src/omc-learn.c:2785
+#: src/omc-learn.c:2784
 #, c-format
 msgid "MIDI receive channel was set to channel %d\n"
 msgstr ""
 
-#: src/omc-learn.c:2790
+#: src/omc-learn.c:2789
 msgid ""
 "The MIDI receive channel setting was updated by the device map.\n"
 "Please review the setting in Preferences and adjust it if necessary.\n"
@@ -10816,8 +10816,9 @@ msgid "Cycle _Step"
 msgstr "_X Start"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+#, fuzzy
 msgid "Deinterlace"
-msgstr ""
+msgstr "- internt -"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlacing"
@@ -11802,8 +11803,9 @@ msgid "cycle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+#, fuzzy
 msgid "deinterlace"
-msgstr ""
+msgstr "- internt -"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "despeckle"

@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2018-08-27 02:32-0300\n"
-"PO-Revision-Date: 2013-03-14 12:31+0000\n"
-"Last-Translator: Launchpad Translations Administrators <Unknown>\n"
+"POT-Creation-Date: 2018-08-30 23:16-0300\n"
+"PO-Revision-Date: 2018-07-23 13:17+0000\n"
+"Last-Translator: Pavel Borecki <Unknown>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2013-03-28 10:41+0000\n"
-"X-Generator: Launchpad (build 16546)\n"
+"X-Launchpad-Export-Date: 2018-08-31 02:12+0000\n"
+"X-Generator: Launchpad (build 18766)\n"
 "X-Poedit-Country: CZECH REPUBLIC\n"
 "X-Poedit-Language: Czech\n"
 
@@ -32,44 +32,35 @@ msgstr ""
 #: src/main.c:163
 #, c-format
 msgid "%s Warning: %s\n"
-msgstr ""
+msgstr "%s Varování: %s\n"
 
 #: src/main.c:167
 #, c-format
 msgid "%s Critical error: %s\n"
-msgstr ""
+msgstr "%s Kritická chyba: %s\n"
 
 #: src/main.c:168
 #, c-format
 msgid "%s Fatal error: %s\n"
-msgstr ""
+msgstr "%s Fatální chyba: %s\n"
 
 #: src/main.c:208
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
 "Please report this bug at %s\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
-"\n"
-"Niestety LiVES rozbił.\n"
-"Proszę zgłosić ten błąd na http://sourceforge.net/tracker/?"
-"group_id=64341&atid=507139\n"
-"Dzięki. Odzyskiwanie powinno być możliwe po uruchomieniu LiVES.\n"
 
 #: src/main.c:210
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
 "When reporting crashes, please include details of your operating system, "
 "distribution, and the LiVES version (%s)\n"
 msgstr ""
-"\n"
-"\n"
-"Przy zgłaszaniu awarii, należy podać szczegółowe informacje na temat systemu "
-"operacyjnego, dystrybucję i wersję LiVES ("
 
 #: src/main.c:214
 msgid ""
@@ -120,7 +111,7 @@ msgstr "zakázáno!"
 #. TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
 #: src/main.c:406
 msgid "**The current layout**"
-msgstr "**Bieżący układ**"
+msgstr "**Stávající rozvržení**"
 
 #. TRANSLATORS: adjective for "Built in" type effects
 #: src/main.c:408
@@ -138,27 +129,24 @@ msgid "Test"
 msgstr "Test"
 
 #: src/main.c:475
-#, fuzzy
 msgid "LiVES: - "
-msgstr "LiVES: - Sloučit"
+msgstr ""
 
 #: src/main.c:699
 msgid "Resizing"
-msgstr "Měním velikost"
+msgstr "Změna velikosti"
 
 #: src/main.c:706
-#, fuzzy
 msgid "_Resize All Frames..."
-msgstr "Změnit velikost všech _snímků"
+msgstr ""
 
 #: src/main.c:1080
 msgid "Foreground"
-msgstr ""
+msgstr "Popředí"
 
 #: src/main.c:1081
-#, fuzzy
 msgid "Background"
-msgstr "_Prázdné pozadí"
+msgstr "Pozadí"
 
 #: src/main.c:1598
 msgid "Loading realtime effect plugins..."
@@ -190,27 +178,26 @@ msgstr ""
 
 #: src/main.c:1730
 msgid "Starting pulse audio server..."
-msgstr ""
+msgstr "Spouští se pulse audio server…"
 
 #: src/main.c:1792
-#, fuzzy, c-format
+#, c-format
 msgid "%s...detected... "
-msgstr "mplayer... nalezen..."
+msgstr "%s…zjištěno… "
 
 #: src/main.c:1793
-#, fuzzy, c-format
+#, c-format
 msgid "%s...NOT DETECTED... "
-msgstr "mplayer... NENALEZEN..."
+msgstr ""
 
 #: src/main.c:1801
-#, fuzzy
 msgid "Checking optional dependencies: "
-msgstr "Kontrola dodatečných závislostí:"
+msgstr ""
 
 #: src/main.c:1833
 #, c-format
 msgid "Windows version %04X"
-msgstr ""
+msgstr "Verze Windows %04X"
 
 #: src/main.c:1836
 msgid "UNKNOWN - please patch me !"
@@ -235,7 +222,7 @@ msgstr "počet nalezených monitorů: %d\n"
 #: src/main.c:1844
 #, c-format
 msgid "Number of CPUs detected: %d "
-msgstr ""
+msgstr "Počet nalezených procesorů: %d "
 
 #: src/main.c:1847 src/multitrack.c:5071
 msgid "little endian"
@@ -396,13 +383,10 @@ msgid ""
 msgstr ""
 
 #: src/main.c:2543
-#, fuzzy
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer, "
 "mplayer2"
 msgstr ""
-"-aplayer <ap>    : spustit se zvoleným zvukovým přehrávačem. <ap> může být "
-"mplayer"
 
 #. TRANSLATORS: pulse (audio)
 #: src/main.c:2546
@@ -507,14 +491,14 @@ msgid ""
 msgstr ""
 
 #: src/main.c:2718
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to use the working directory\n"
 "%s\n"
 "\n"
 "%s"
-msgstr "LiVES nemohl zachytit toto okno. Sorry.\n"
+msgstr ""
 
 #: src/main.c:2726
 msgid ""
@@ -534,48 +518,32 @@ msgstr ""
 "Díky.\n"
 
 #: src/main.c:2732
-#, fuzzy
 msgid ""
 "\n"
 "LiVES currently requires 'mplayer', 'mplayer2' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
-"\n"
-"LiVES pro provoz momentálně vyžaduje 'mplayer', nebo 'sox'. Nainstalujte "
-"jeden z nich a zkuste to znovu.\n"
 
 #: src/main.c:2737
-#, fuzzy
 msgid ""
 "\n"
 "LiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to function. "
 "Please install these, and try again.\n"
 msgstr ""
-"\n"
-"LiVES pro provoz momentálně vyžaduje 'mplayer', nebo 'sox'. Nainstalujte "
-"jeden z nich a zkuste to znovu.\n"
 
 #: src/main.c:2750
-#, fuzzy
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. You may wish to "
 "install one of these to use LiVES more fully.\n"
 msgstr ""
-"\n"
-"LiVES nebyl schopen najít 'mplayer'. Instalací 'mplayer' získáte plně "
-"funkční LiVES.\n"
 
 #: src/main.c:2756
-#, fuzzy
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer' or 'mplayer2'. You may wish to install "
 "one of these to use LiVES more fully.\n"
 msgstr ""
-"\n"
-"LiVES nebyl schopen najít 'mplayer'. Instalací 'mplayer' získáte plně "
-"funkční LiVES.\n"
 
 #: src/main.c:2764
 msgid ""
@@ -638,19 +606,17 @@ msgid "Invalid audio player %s\n"
 msgstr "Neplatný zvukový přehrávač %s\n"
 
 #: src/main.c:3311
-#, fuzzy
 msgid "external"
-msgstr "- vnitřní -"
+msgstr ""
 
 #: src/main.c:3314
-#, fuzzy
 msgid "internal"
-msgstr "- vnitřní -"
+msgstr ""
 
 #: src/main.c:3315
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid audio source %s\n"
-msgstr "Neplatný zvukový přehrávač %s\n"
+msgstr ""
 
 #: src/main.c:3511 src/main.c:3520
 #, c-format
@@ -693,9 +659,9 @@ msgstr ""
 "\n"
 
 #: src/main.c:6779
-#, fuzzy, c-format
+#, c-format
 msgid "Closed clip %s\n"
-msgstr "Zavřený soubor %s\n"
+msgstr ""
 
 #: src/main.c:6957 src/gui.c:734 src/utils.c:4877 src/utils.c:4906
 #: src/saveplay.c:3300 src/multitrack.c:4687 src/multitrack.c:6507
@@ -720,7 +686,6 @@ msgid "Right Audio"
 msgstr "Pravý zvuk"
 
 #: src/main.c:7045
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -728,11 +693,6 @@ msgid ""
 "mplayer or mplayer2.\n"
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
-"\n"
-"\n"
-"V případě, že jako zvukový přehrávač je nastaven MPlayer, LiVES nemůže "
-"přepínat klipy při otevírání.\n"
-"Upravte nastavení přehrávání v Nastavení a zkuste to znova.\n"
 
 #: src/startup.c:20
 #, c-format
@@ -855,9 +815,8 @@ msgid ""
 msgstr ""
 
 #: src/startup.c:265
-#, fuzzy
 msgid "Choose an audio player"
-msgstr "LiVES: - Zvolte zvukový přehrávač"
+msgstr ""
 
 #: src/startup.c:280
 msgid "Use _pulse audio player"
@@ -876,9 +835,8 @@ msgid "Use _mplayer audio player"
 msgstr "Použijte _mplayer audio přehrávač"
 
 #: src/startup.c:353
-#, fuzzy
 msgid "Use _mplayer2 audio player"
-msgstr "Použijte _mplayer audio přehrávač"
+msgstr ""
 
 #: src/startup.c:374 src/startup.c:549 src/interface.c:1333
 msgid "_Next"
@@ -945,14 +903,10 @@ msgid "Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"
 msgstr ""
 
 #: src/startup.c:677
-#, fuzzy
 msgid ""
 "You should install mplayer, mplayer2 or mpv to be able to use all the "
 "decoding features in LiVES"
 msgstr ""
-"\n"
-"\n"
-"Musíte nainstalovat mplayer pro náhled tohoto souboru.\n"
 
 #: src/startup.c:685
 msgid "Checking for \"mplayer\" or \"mplayer2\" presence"
@@ -1130,14 +1084,12 @@ msgid "Click here to _Preview the video"
 msgstr "Kliknutím zobrazíte _náhled vybraného videa"
 
 #: src/interface.c:113
-#, fuzzy
 msgid "Click here to _Preview the file"
-msgstr "Kliknutím zobrazíte _náhled vybraného videa"
+msgstr ""
 
 #: src/interface.c:151 src/dialogs.c:2738
-#, fuzzy
 msgid "Processing..."
-msgstr "LiVES: - Zpracovávám..."
+msgstr ""
 
 #: src/interface.c:186
 msgid ""
@@ -1187,9 +1139,8 @@ msgid "_Cancel"
 msgstr "_Zrušit"
 
 #: src/interface.c:325
-#, fuzzy
 msgid "Multitrack Details"
-msgstr "_Detaily o multitracku"
+msgstr ""
 
 #: src/interface.c:356
 msgid "Format"
@@ -1232,9 +1183,8 @@ msgid "Rate/size"
 msgstr "Pomer(rate)/velikost"
 
 #: src/interface.c:593
-#, fuzzy
 msgid "Encoding Options"
-msgstr "LiVES: - Nastavení kódování"
+msgstr ""
 
 #: src/interface.c:597
 msgid "<------------- (Check the box to re_size as suggested)"
@@ -1300,9 +1250,8 @@ msgid "Insert clipboard after selected frames"
 msgstr "Vložit obsah schránky za vybrané snímky"
 
 #: src/interface.c:846
-#, fuzzy
 msgid "Insert _with silence"
-msgstr "Vložit _se zvukem"
+msgstr ""
 
 #: src/interface.c:849
 msgid "Insert _with sound"
@@ -1313,9 +1262,8 @@ msgid "Insert with_out sound"
 msgstr "Vložit _bez zvuku"
 
 #: src/interface.c:935
-#, fuzzy
 msgid "Open Selection"
-msgstr "_Kopírovat výběr"
+msgstr ""
 
 #: src/interface.c:952
 msgid "Selection start time (sec)"
@@ -1326,16 +1274,14 @@ msgid "Number of frames to open"
 msgstr ""
 
 #: src/interface.c:1027
-#, fuzzy
 msgid "Open Location"
-msgstr "LiVES: - Otevřít umístění"
+msgstr ""
 
 #: src/interface.c:1029
 msgid "Open Youtube Clip"
 msgstr ""
 
 #: src/interface.c:1048
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -1344,12 +1290,6 @@ msgid ""
 "Also make sure you have set your bandwidth in Preferences|Streaming\n"
 "\n"
 msgstr ""
-"\n"
-"\n"
-"K otevření streamu se ujistěte, zda máte v MPlayeru zkompilované správné "
-"knihovny.\n"
-"Dále se ujistěte, zda máte nastavenou šířku pásma v Nastavení > Streamování\n"
-"\n"
 
 #: src/interface.c:1052
 msgid ""
@@ -1392,34 +1332,28 @@ msgid "Download _File Name : "
 msgstr ""
 
 #: src/interface.c:1189
-#, fuzzy
 msgid "Rename Clip"
-msgstr "Otočit klip"
+msgstr ""
 
 #: src/interface.c:1191
-#, fuzzy
 msgid "Enter Set Name to Save as"
-msgstr "LiVES: - Zadejte jméno sestavy"
+msgstr ""
 
 #: src/interface.c:1193
-#, fuzzy
 msgid "Enter a Set Name to Reload"
-msgstr "LiVES: - Zadejte jméno sestavy"
+msgstr ""
 
 #: src/interface.c:1195
-#, fuzzy
 msgid "Choose a Working Directory"
-msgstr "Pracovní adresář LiVES."
+msgstr ""
 
 #: src/interface.c:1197 src/multitrack.c:7013
-#, fuzzy
 msgid "Rename Current Track"
-msgstr "_Vybrat stávající stopu"
+msgstr ""
 
 #: src/interface.c:1199
-#, fuzzy
 msgid "Enter a Name for Your Theme"
-msgstr "LiVES: - Zadejte jméno sestavy"
+msgstr ""
 
 #: src/interface.c:1217
 msgid ""
@@ -1465,9 +1399,8 @@ msgid "Set name "
 msgstr "Zadat jméno "
 
 #: src/interface.c:1253
-#, fuzzy
 msgid "Theme name "
-msgstr "Nové jméno "
+msgstr ""
 
 #: src/interface.c:1312
 msgid "Save extended colors"
@@ -1483,38 +1416,32 @@ msgid "_Advanced"
 msgstr "_Pokročilé"
 
 #: src/interface.c:1421
-#, fuzzy
 msgid "Select input device"
-msgstr "Vybrat do _konce"
+msgstr ""
 
 #: src/interface.c:1434
 msgid "Select input device:"
 msgstr ""
 
 #: src/interface.c:1497
-#, fuzzy
 msgid "Load CD Track"
-msgstr "Zavést _CD stopu"
+msgstr ""
 
 #: src/interface.c:1499
-#, fuzzy
 msgid "Select DVD Title/Chapter"
-msgstr "LiVES:- Zvolit DVD titul/kapitolu"
+msgstr ""
 
 #: src/interface.c:1501
-#, fuzzy
 msgid "Select VCD Title"
-msgstr "LiVES:- Zvolit VCD titul"
+msgstr ""
 
 #: src/interface.c:1503
-#, fuzzy
 msgid "Change Maximum Visible Tracks"
-msgstr "Maximální počet stop k zobrazení"
+msgstr ""
 
 #: src/interface.c:1505
-#, fuzzy
 msgid "Device details"
-msgstr "_Detaily o multitracku"
+msgstr ""
 
 #: src/interface.c:1524
 #, c-format
@@ -1578,14 +1505,12 @@ msgid "_Output format"
 msgstr ""
 
 #: src/interface.c:1765
-#, fuzzy
 msgid "Fade Audio In"
-msgstr "_Zesílit zvuk..."
+msgstr ""
 
 #: src/interface.c:1767
-#, fuzzy
 msgid "Fade Audio Out"
-msgstr "_Ztišit zvuk..."
+msgstr ""
 
 #: src/interface.c:1784
 msgid "Fade in over  "
@@ -1612,19 +1537,18 @@ msgid "selection"
 msgstr "výběr"
 
 #: src/interface.c:1850
-#, fuzzy
 msgid " (Optional)"
-msgstr "LiVES: - Komentáře k souborům (volitelné)"
+msgstr ""
 
 #: src/interface.c:1853
-#, fuzzy, c-format
+#, c-format
 msgid "File Comments%s"
-msgstr "LiVES: - Komentáře k souborům (volitelné)"
+msgstr ""
 
 #: src/interface.c:1867
-#, fuzzy, c-format
+#, c-format
 msgid "File Name: %s"
-msgstr "Titul/název : "
+msgstr ""
 
 #: src/interface.c:1879
 msgid "Title/Name : "
@@ -1716,13 +1640,10 @@ msgstr ""
 "Co chcete učinit?\n"
 
 #: src/interface.c:2323
-#, fuzzy
 msgid ""
 "The current layout has *NOT BEEN CHANGED* since it was last saved.\n"
 "What would you like to do ?\n"
 msgstr ""
-"Obecny układ nie został zmieniony od ostatniego zapisania.\n"
-"Co chcesz zrobić ?\n"
 
 #: src/interface.c:2327
 msgid ""
@@ -1732,9 +1653,8 @@ msgid ""
 msgstr ""
 
 #: src/interface.c:2330
-#, fuzzy
 msgid "Cancel/Discard/Save"
-msgstr "LiVES: - Zrušit/zahodit/uložit"
+msgstr ""
 
 #: src/interface.c:2342
 msgid "Clip set _name"
@@ -1812,9 +1732,8 @@ msgid ""
 msgstr ""
 
 #: src/interface.c:2605
-#, fuzzy
 msgid "ctrl-left"
-msgstr "přeskočit dozadu (kontrol+levá šipka)"
+msgstr ""
 
 #: src/interface.c:2605
 msgid "skip back\n"
@@ -1825,9 +1744,8 @@ msgid "ctrl-right"
 msgstr ""
 
 #: src/interface.c:2608
-#, fuzzy
 msgid "skip forwards\n"
-msgstr "skip_forwards"
+msgstr ""
 
 #: src/interface.c:2611
 msgid "ctrl-up"
@@ -1838,23 +1756,20 @@ msgid "faster/increase effect\n"
 msgstr ""
 
 #: src/interface.c:2614
-#, fuzzy
 msgid "ctrl-down"
-msgstr "Ctrl-%d"
+msgstr ""
 
 #: src/interface.c:2614
 msgid "slower/decrease effect\n"
 msgstr ""
 
 #: src/interface.c:2617
-#, fuzzy
 msgid "ctrl-enter"
-msgstr "_Jiný střed"
+msgstr ""
 
 #: src/interface.c:2617
-#, fuzzy
 msgid "reset frame rate\n"
-msgstr "_První snímek"
+msgstr ""
 
 #: src/interface.c:2620 src/interface.c:2749
 msgid "ctrl-space"
@@ -1901,33 +1816,28 @@ msgid "next clip\n"
 msgstr ""
 
 #: src/interface.c:2640
-#, fuzzy
 msgid "ctrl-1"
-msgstr "Ctrl-%d"
+msgstr ""
 
 #: src/interface.c:2640
-#, fuzzy
 msgid "toggle real-time effect 1\n"
-msgstr "Načítám pluginy pro efekty v reálném času..."
+msgstr ""
 
 #: src/interface.c:2643
-#, fuzzy
 msgid "ctrl-2"
-msgstr "Ctrl-%d"
+msgstr ""
 
 #: src/interface.c:2643
-#, fuzzy
 msgid "toggle real-time effect 2\n"
-msgstr "Načítám pluginy pro efekty v reálném času..."
+msgstr ""
 
 #: src/interface.c:2646 src/interface.c:2676
 msgid "...etc...\n"
 msgstr ""
 
 #: src/interface.c:2648
-#, fuzzy
 msgid "ctrl-0"
-msgstr "Ctrl-%d"
+msgstr ""
 
 #: src/interface.c:2648
 msgid "real-time effects off\n"
@@ -1950,9 +1860,8 @@ msgid "enter text parameter (when effect has keyboard grab)\n"
 msgstr ""
 
 #: src/interface.c:2666
-#, fuzzy
 msgid "tab"
-msgstr "tap"
+msgstr ""
 
 #: src/interface.c:2667
 msgid "leave text parameter (when effect has keyboard grab)\n"
@@ -1983,43 +1892,36 @@ msgid "clear function keys\n"
 msgstr ""
 
 #: src/interface.c:2684
-#, fuzzy
 msgid "Other playback keys\n"
-msgstr "_Otočit přehrávání  "
+msgstr ""
 
 #: src/interface.c:2688
-#, fuzzy
 msgid "play all\n"
-msgstr "Přehrát vše"
+msgstr ""
 
 #: src/interface.c:2691
-#, fuzzy
 msgid "play selection\n"
-msgstr "Přehrát výběr"
+msgstr ""
 
 #: src/interface.c:2694
 msgid "stop\n"
 msgstr ""
 
 #: src/interface.c:2697
-#, fuzzy
 msgid "fullscreen\n"
-msgstr "_Plná obrazovka"
+msgstr ""
 
 #: src/interface.c:2700
-#, fuzzy
 msgid "separate window\n"
-msgstr "Přehraj v odděleném okně (s)"
+msgstr ""
 
 #: src/interface.c:2703
-#, fuzzy
 msgid "double size\n"
-msgstr "_Dvojitá velikost"
+msgstr ""
 
 #: src/interface.c:2706
-#, fuzzy
 msgid "ping pong loops\n"
-msgstr "Pin_g Pong Smyčky"
+msgstr ""
 
 #: src/interface.c:2713
 msgid "Multitrack Keys"
@@ -2068,73 +1970,64 @@ msgid "ctrl-up-arrow"
 msgstr ""
 
 #: src/interface.c:2737
-#, fuzzy
 msgid "move current track up\n"
-msgstr "_Vybrat stávající stopu"
+msgstr ""
 
 #: src/interface.c:2740
 msgid "ctrl-down-arrow"
 msgstr ""
 
 #: src/interface.c:2740
-#, fuzzy
 msgid "move current track down\n"
-msgstr "_Vybrat stávající stopu"
+msgstr ""
 
 #: src/interface.c:2743
 msgid "select previous clip\n"
 msgstr ""
 
 #: src/interface.c:2746
-#, fuzzy
 msgid "select next clip\n"
-msgstr "_Vložit vybraný klip"
+msgstr ""
 
 #: src/interface.c:2749
-#, fuzzy
 msgid "select/deselect current track\n"
-msgstr "_Vybrat stávající stopu"
+msgstr ""
 
 #: src/interface.c:2752
 msgid "ctrl-plus"
 msgstr ""
 
 #: src/interface.c:2752
-#, fuzzy
 msgid "zoom in\n"
-msgstr "_Přiblížit"
+msgstr ""
 
 #: src/interface.c:2755
 msgid "ctrl-minus"
 msgstr ""
 
 #: src/interface.c:2755
-#, fuzzy
 msgid "zoom out\n"
-msgstr "_Oddálit"
+msgstr ""
 
 #: src/interface.c:2758
 msgid "make a mark on the timeline (during playback)\n"
 msgstr ""
 
 #: src/interface.c:2761
-#, fuzzy
 msgid "rewind to play start.\n"
-msgstr "Zpět na začátek (w)"
+msgstr ""
 
 #: src/interface.c:2766
 msgid "For other keys, see the menus.\n"
 msgstr ""
 
 #: src/interface.c:2793
-#, fuzzy
 msgid "Autolives Options"
-msgstr "LiVES: - Nastavení kódování"
+msgstr ""
 
 #: src/interface.c:2801
-#, fuzzy
 msgid "Trigger"
-msgstr "LiVES: - RFX spouštěče"
+msgstr ""
 
 #: src/interface.c:2811
 msgid "Timed:"
@@ -2145,9 +2038,8 @@ msgid "Trigger a change based on time"
 msgstr ""
 
 #: src/interface.c:2818
-#, fuzzy
 msgid "change time (seconds)"
-msgstr "_Časová osa (seconds)"
+msgstr ""
 
 #: src/interface.c:2822
 msgid "OMC"
@@ -2158,9 +2050,8 @@ msgid "Trigger a change based on receiving an OSC message"
 msgstr ""
 
 #: src/interface.c:2839
-#, fuzzy
 msgid "Playback start:"
-msgstr "Přehrát"
+msgstr ""
 
 #: src/interface.c:2846
 msgid "Automatic"
@@ -2325,33 +2216,32 @@ msgid "Exporting project"
 msgstr "Exportuji projekt"
 
 #: src/callbacks.c:1394 src/callbacks.c:1603
-#, fuzzy
 msgid "Theme"
-msgstr "Nové jméno "
+msgstr ""
 
 #: src/callbacks.c:1399
 msgid "Choose a directory to export to"
 msgstr ""
 
 #: src/callbacks.c:1485
-#, fuzzy, c-format
+#, c-format
 msgid "Exporting theme as %s..."
-msgstr "Exportování zvuku jako %s..."
+msgstr ""
 
 #: src/callbacks.c:1599
-#, fuzzy, c-format
+#, c-format
 msgid "Importing theme \"%s\" from %s..."
-msgstr "Exportování zvuku jako %s..."
+msgstr ""
 
 #: src/callbacks.c:1678
-#, fuzzy, c-format
+#, c-format
 msgid "Backup as %s File"
-msgstr "Zálohovat jako .lv1 rejstřík"
+msgstr ""
 
 #: src/callbacks.c:1700
-#, fuzzy, c-format
+#, c-format
 msgid "Restore %s File"
-msgstr "Obnovit .lv1 soubor"
+msgstr ""
 
 #: src/callbacks.c:1840
 msgid ""
@@ -2418,14 +2308,14 @@ msgid "Redoing"
 msgstr "Opakuji"
 
 #: src/callbacks.c:2650
-#, fuzzy, c-format
+#, c-format
 msgid "Copying frames %d to %d (with sound) to the clipboard..."
-msgstr "Kopírování snímků %d do %d%s do schránky ..."
+msgstr ""
 
 #: src/callbacks.c:2652
-#, fuzzy, c-format
+#, c-format
 msgid "Copying frames %d to %d to the clipboard..."
-msgstr "Kopírování snímků %d do %d%s do schránky ..."
+msgstr ""
 
 #: src/callbacks.c:2707
 msgid "Copying to the clipboard"
@@ -2436,9 +2326,8 @@ msgid "Cut"
 msgstr "Vyjmout"
 
 #: src/callbacks.c:2816 src/callbacks.c:3221 src/callbacks.c:7483
-#, fuzzy
 msgid "Pulling frames from clipboard"
-msgstr "Vkládání %d%s snímků ze schránky..."
+msgstr ""
 
 #: src/callbacks.c:2829
 #, c-format
@@ -2832,9 +2721,8 @@ msgstr ""
 msgid "translator_credits"
 msgstr ""
 "Launchpad Contributions:\n"
-"  Jakub Žáček https://launchpad.net/~dawon\n"
 "  Martin Svoboda https://launchpad.net/~martin-svobodicz\n"
-"  Roman Horník https://launchpad.net/~roman.hornik\n"
+"  Pavel Borecki https://launchpad.net/~pavel-borecki\n"
 "  milzou https://launchpad.net/~vonfsro\n"
 "  salsaman https://launchpad.net/~salsaman"
 
@@ -2853,27 +2741,19 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:6015
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "You need to install mplayer or mplayer2 to be able to preview this file.\n"
 msgstr ""
-"\n"
-"\n"
-"Musíte nainstalovat mplayer pro náhled tohoto souboru.\n"
 
 #: src/callbacks.c:6017
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "You need to install mplayer, mplayer2 or imageMagick to be able to preview "
 "this file.\n"
 msgstr ""
-"\n"
-"\n"
-"Musíte nainstalovat mplayer pro náhled tohoto souboru.\n"
 
 #: src/callbacks.c:6431
 #, c-format
@@ -2957,9 +2837,8 @@ msgid "Subtitles were erased.\n"
 msgstr ""
 
 #: src/callbacks.c:7676
-#, fuzzy
 msgid "Select Audio File"
-msgstr "Vymazat zvuk"
+msgstr ""
 
 #: src/callbacks.c:7713 src/callbacks.c:8092
 msgid ""
@@ -3011,9 +2890,8 @@ msgid "Error loading CD track\n"
 msgstr "Chyba při otvírání CD stopy\n"
 
 #: src/callbacks.c:8362
-#, fuzzy
 msgid "Layout Errors"
-msgstr "chyby rozložení"
+msgstr ""
 
 #: src/callbacks.c:8383
 msgid "Clear _Errors"
@@ -3051,17 +2929,13 @@ msgid "Enough"
 msgstr ""
 
 #: src/callbacks.c:9088
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Paused\n"
 "(click %s to keep what you have and stop)\n"
 "(click Resume to continue processing)"
 msgstr ""
-"\n"
-"Pozastaveno\n"
-"(kliknout Podržet pro zachování toho co máme a stop)\n"
-"(kliknout Pokračovat pro pokračování)"
 
 #: src/callbacks.c:9109
 msgid "Cancel"
@@ -3072,14 +2946,12 @@ msgid "Stop"
 msgstr ""
 
 #: src/callbacks.c:9729 src/multitrack.c:13013
-#, fuzzy
 msgid "Selected Frame"
-msgstr "Vybrat všechny snímky"
+msgstr ""
 
 #: src/callbacks.c:9737
-#, fuzzy
 msgid "_Save Frame as..."
-msgstr "_Uložit rozložení jako..."
+msgstr ""
 
 #: src/callbacks.c:9960
 #, c-format
@@ -3196,9 +3068,8 @@ msgid "Exporting audio"
 msgstr "Exportování zvuku"
 
 #: src/callbacks.c:10430
-#, fuzzy
 msgid "Append Audio File"
-msgstr "Připojit zvuk"
+msgstr ""
 
 #: src/callbacks.c:10481
 #, c-format
@@ -3458,14 +3329,14 @@ msgid "_Close This Clip"
 msgstr "_Zavřít tento klip"
 
 #: src/gui.c:694
-#, fuzzy, c-format
+#, c-format
 msgid "_Backup Clip as .%s..."
-msgstr "_Zálohovat klip jako lv1..."
+msgstr ""
 
 #: src/gui.c:703
-#, fuzzy, c-format
+#, c-format
 msgid "_Restore Clip from .%s..."
-msgstr "_Obnovit klip z .lv1..."
+msgstr ""
 
 #: src/gui.c:714
 msgid "Encode/Load/Backup _with Sound"
@@ -3772,9 +3643,8 @@ msgid "_Resample Audio..."
 msgstr "_Převzorkovat zvuk..."
 
 #: src/gui.c:1262
-#, fuzzy
 msgid "_Adjust Audio Sync..."
-msgstr "_Připojit zvuk"
+msgstr ""
 
 #: src/gui.c:1266
 msgid "_Info"
@@ -3857,39 +3727,36 @@ msgid "Re_build all RFX plugins"
 msgstr "_Rekonstruovat všechny RFX pluginy"
 
 #: src/gui.c:1387
-#, fuzzy
 msgid "Receive _LiVES Stream from..."
-msgstr "_Poslat LiVES proud do ..."
+msgstr ""
 
 #: src/gui.c:1391
-#, fuzzy
 msgid "_Send LiVES Stream to..."
-msgstr "_Poslat LiVES proud do ..."
+msgstr ""
 
 #: src/gui.c:1397
-#, fuzzy
 msgid "Open _yuv4mpeg stream..."
-msgstr "Otevřít _yuv4mpeg stream na %sstream.yuv"
+msgstr ""
 
 #: src/gui.c:1414
-#, fuzzy, c-format
+#, c-format
 msgid "_Import Project (.%s)..."
-msgstr "_Importovat projekt (.lv2)..."
+msgstr ""
 
 #: src/gui.c:1419
-#, fuzzy, c-format
+#, c-format
 msgid "E_xport Project (.%s)..."
-msgstr "E_xportovat projekt (.lv2)"
+msgstr ""
 
 #: src/gui.c:1427
-#, fuzzy, c-format
+#, c-format
 msgid "_Import Custom Theme (.%s)..."
-msgstr "_Importovat projekt (.lv2)..."
+msgstr ""
 
 #: src/gui.c:1432
-#, fuzzy, c-format
+#, c-format
 msgid "E_xport Theme (.%s)..."
-msgstr "E_xportovat projekt (.lv2)"
+msgstr ""
 
 #: src/gui.c:1440
 msgid "_VJ"
@@ -3924,9 +3791,8 @@ msgstr ""
 "LiVES."
 
 #: src/gui.c:1467
-#, fuzzy
 msgid "_Reset All Playback Speeds and Positions"
-msgstr "_Resetování všech rychlosti přehrávání a pozice"
+msgstr ""
 
 #: src/gui.c:1469
 msgid ""
@@ -3934,24 +3800,20 @@ msgid ""
 msgstr ""
 
 #: src/gui.c:1471
-#, fuzzy
 msgid "_MIDI/Joystick Interface"
-msgstr "Rozhraní _MIDI/Joystick"
+msgstr ""
 
 #: src/gui.c:1480
-#, fuzzy
 msgid "_MIDI/Joystick Learner..."
-msgstr "Rozhraní _MIDI/Joystick"
+msgstr ""
 
 #: src/gui.c:1484
-#, fuzzy
 msgid "_Save Device Mapping..."
-msgstr "_Uložit mapu zařízení..."
+msgstr ""
 
 #: src/gui.c:1489
-#, fuzzy
 msgid "_Load Device Mapping..."
-msgstr "_Načíst mapu zařízení..."
+msgstr ""
 
 #: src/gui.c:1495
 msgid "Show VJ _Keys"
@@ -3986,24 +3848,20 @@ msgid "_Manual (opens in browser)"
 msgstr "_Manuál (otevře se v prohlížeči)"
 
 #: src/gui.c:1532 src/multitrack.c:7452
-#, fuzzy
 msgid "_Donate to the Project !"
-msgstr "_Věnovat prostředky na projekt !"
+msgstr ""
 
 #: src/gui.c:1535 src/multitrack.c:7455
-#, fuzzy
 msgid "_Email the Author"
-msgstr "_E-mail autora"
+msgstr ""
 
 #: src/gui.c:1538
-#, fuzzy
 msgid "Report a _Bug"
-msgstr "_Nahlásit chybu"
+msgstr ""
 
 #: src/gui.c:1541 src/multitrack.c:7461
-#, fuzzy
 msgid "Suggest a _Feature"
-msgstr "Navrhněte _funkci"
+msgstr ""
 
 #: src/gui.c:1544 src/multitrack.c:7464
 msgid "Assist with _Translating"
@@ -4034,19 +3892,16 @@ msgid "Play selection (y)"
 msgstr "Přehrát výběr (y)"
 
 #: src/gui.c:1649 src/preferences.c:3207
-#, fuzzy
 msgid "Audio Source:"
-msgstr "Zvukový kodek"
+msgstr ""
 
 #: src/gui.c:1685
-#, fuzzy
 msgid "Internal"
-msgstr "- vnitřní -"
+msgstr ""
 
 #: src/gui.c:1719
-#, fuzzy
 msgid "External"
-msgstr "- vnitřní -"
+msgstr ""
 
 #: src/gui.c:1763
 msgid "Volume"
@@ -4112,9 +3967,8 @@ msgid "The first selected frame in this clip"
 msgstr "První vybraný snímek v tomto klipu"
 
 #: src/gui.c:2071
-#, fuzzy
 msgid "Select all frames in this clip"
-msgstr "Poslední vybraný snímek v tomto klipu"
+msgstr ""
 
 #: src/gui.c:2082
 msgid "The last selected frame in this clip"
@@ -4200,14 +4054,13 @@ msgid " (%d %% scale)"
 msgstr ""
 
 #: src/gui.c:3678
-#, fuzzy
 msgid "Streaming"
-msgstr "Aplikují zasnění"
+msgstr ""
 
 #: src/gui.c:3680
-#, fuzzy, c-format
+#, c-format
 msgid "Play Window%s"
-msgstr "Schovat přehrávací okno"
+msgstr ""
 
 #: src/gui.c:3812
 msgid "Hide Play Window"
@@ -4218,14 +4071,14 @@ msgid "Show Play Window"
 msgstr "Zobrazit přehrávací okno"
 
 #: src/gui.c:4284
-#, fuzzy, c-format
+#, c-format
 msgid "'LiVES opened the file' '%s'"
-msgstr "LiVES není schopen otevřít tento soubor"
+msgstr ""
 
 #: src/gui.c:4303
-#, fuzzy, c-format
+#, c-format
 msgid "'LiVES closed the file' '%s'"
-msgstr "Nechat LiVES nastavit _příponu souboru"
+msgstr ""
 
 #: src/ce_thumbs.c:243
 #, c-format
@@ -4246,9 +4099,9 @@ msgid "Show / apply effects to %s\n"
 msgstr ""
 
 #: src/ce_thumbs.c:329
-#, fuzzy, c-format
+#, c-format
 msgid "Select clip for %s\n"
-msgstr "_Smazat klipy"
+msgstr ""
 
 #: src/ce_thumbs.c:526
 msgid "_Pin"
@@ -4429,31 +4282,25 @@ msgstr ""
 "Vyberte jiné jméno.\n"
 
 #: src/utils.c:2236
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "%s names may not be blank.\n"
 msgstr ""
-"\n"
-"Jméno souboru nesmí být prázdné\n"
 
 #: src/utils.c:2244
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "%s names may not be longer than %d characters.\n"
 msgstr ""
-"\n"
-"Jméno nesmí obsahovat mezery nebo znaky%s.\n"
 
 #: src/utils.c:2252
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "%s names may not contain spaces or the characters%s.\n"
 msgstr ""
-"\n"
-"Jméno nesmí obsahovat mezery nebo znaky%s.\n"
 
 #: src/utils.c:2261
 #, c-format
@@ -4535,9 +4382,8 @@ msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr "LiVES nemůže při načítání klipů přepnout na mplayer."
 
 #: src/utils.c:3908
-#, fuzzy
 msgid "LiVES cannot switch to mplayer2 whilst clips are loading."
-msgstr "LiVES nemůže při načítání klipů přepnout na mplayer."
+msgstr ""
 
 #: src/utils.c:4164
 msgid "Cleaning up clip"
@@ -4663,28 +4509,19 @@ msgstr ""
 "Prosím, pro více informací zkontrolujte okno terminálu.\n"
 
 #: src/saveplay.c:858
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "You may need to install mplayer, mplayer2 or mpv to open this file.\n"
 msgstr ""
-"\n"
-"\n"
-"K otevření tohoto souboru musíte nainstalovat mplayer.\n"
 
 #: src/saveplay.c:869
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "Please check the setting of Video Open Command in\n"
 "Tools|Preferences|Decoding\n"
 msgstr ""
-"\n"
-"\n"
-"Zkontrolujte nastavení příkazu pro otevření videa v\n"
-"Nástrojích|Předvolbách|Dekodování\n"
 
 #: src/saveplay.c:942
 msgid "Adding image..."
@@ -4696,19 +4533,17 @@ msgid "Subtitles were saved as %s\n"
 msgstr ""
 
 #: src/saveplay.c:1109
-#, fuzzy, c-format
+#, c-format
 msgid "Save Frame %d"
-msgstr "Zadat jméno "
+msgstr ""
 
 #: src/saveplay.c:1112
-#, fuzzy
 msgid "Save Frame"
-msgstr "Poslední snímek"
+msgstr ""
 
 #: src/saveplay.c:1237
-#, fuzzy
 msgid "Save Clip"
-msgstr "Otočit klip"
+msgstr ""
 
 #: src/saveplay.c:1298
 msgid ""
@@ -4878,14 +4713,14 @@ msgid "%s none\n"
 msgstr "%s nic\n"
 
 #: src/saveplay.c:3538
-#, fuzzy, c-format
+#, c-format
 msgid " - Author: %s\n"
-msgstr "Autor: %s"
+msgstr ""
 
 #: src/saveplay.c:3541
-#, fuzzy, c-format
+#, c-format
 msgid " - Title: %s\n"
-msgstr " - Komentář: %s\n"
+msgstr ""
 
 #: src/saveplay.c:3544
 #, c-format
@@ -4975,9 +4810,8 @@ msgid "Recovering files..."
 msgstr ""
 
 #: src/dialogs.c:87
-#, fuzzy
 msgid "Show affeced _layouts"
-msgstr "Zobrazit postižených _rozložení"
+msgstr ""
 
 #: src/dialogs.c:116
 msgid ""
@@ -4996,28 +4830,24 @@ msgid " _Advanced Settings >>"
 msgstr ""
 
 #: src/dialogs.c:176 src/dialogs.c:213
-#, fuzzy
 msgid "Warning !"
-msgstr "Varování"
+msgstr ""
 
 #: src/dialogs.c:187
-#, fuzzy
 msgid "Error !"
-msgstr "$error"
+msgstr ""
 
 #: src/dialogs.c:197
-#, fuzzy
 msgid "Information"
-msgstr "LiVES: Zpráva pro %s"
+msgstr ""
 
 #: src/dialogs.c:222
 msgid "Question"
 msgstr ""
 
 #: src/dialogs.c:236
-#, fuzzy
 msgid "File Error"
-msgstr "Vymazat _chyby"
+msgstr ""
 
 #: src/dialogs.c:237
 msgid "_Abort"
@@ -5131,7 +4961,7 @@ msgstr ""
 "Zavřete soubor a zkuste to znova."
 
 #: src/dialogs.c:2110
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LiVES was unable to write to its working directory.\n"
 "\n"
@@ -5141,46 +4971,27 @@ msgid ""
 "\n"
 "Please make sure you can write to this directory."
 msgstr ""
-"LiVES nemohl zapisovat dočasného adresáře.\n"
-"\n"
-"Aktuální dočasný adresář je:\n"
-"\n"
-"%s\n"
-"\n"
-"Ujistěte se, že do tohoto adresáře můžete zapisovat."
 
 #: src/dialogs.c:2122
-#, fuzzy
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer', 'mplayer2', or 'sox' to function. "
 "Please install one or other of these, and try again.\n"
 msgstr ""
-"\n"
-"LiVES pro provoz momentálně vyžaduje 'mplayer', nebo 'sox'. Nainstalujte "
-"jeden z nich a zkuste to znovu.\n"
 
 #: src/dialogs.c:2129
-#, fuzzy
 msgid ""
 "\n"
 "This function requires either mplayer or mplayer2 to operate.\n"
 "You may wish to install one or other of these and try again.\n"
 msgstr ""
-"\n"
-"LiVES pro provoz momentálně vyžaduje 'mplayer', nebo 'sox'. Nainstalujte "
-"jeden z nich a zkuste to znovu.\n"
 
 #: src/dialogs.c:2135
-#, fuzzy
 msgid ""
 "\n"
 "This function requires either mplayer, mplayer2 or mpv to operate.\n"
 "You may wish to install one or other of these and try again.\n"
 msgstr ""
-"\n"
-"LiVES pro provoz momentálně vyžaduje 'mplayer', nebo 'sox'. Nainstalujte "
-"jeden z nich a zkuste to znovu.\n"
 
 #: src/dialogs.c:2141
 msgid ""
@@ -5409,15 +5220,11 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:2473
-#, fuzzy
 msgid ""
 "Sorry, unknown audio type.\n"
 "\n"
 " (Filenames must end in"
 msgstr ""
-"Se omlouván, neznámý typ zvukového souboru.\n"
-"\n"
-" (Soubory musí mít příponu .mp3, .ogg, .wav, .mod, .xm nebo .it)"
 
 #: src/dialogs.c:2495
 msgid "failed (unknown type)\n"
@@ -5629,34 +5436,22 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:2651
-#, fuzzy
 msgid ""
 "LiVES currently requires composite from ImageMagick to do letterboxing.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
-"\n"
-"LiVES pro provoz momentálně vyžaduje 'mplayer', nebo 'sox'. Nainstalujte "
-"jeden z nich a zkuste to znovu.\n"
 
 #: src/dialogs.c:2657
-#, fuzzy
 msgid ""
 "LiVES currently requires convert from ImageMagick to do letterboxing.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
-"\n"
-"LiVES pro provoz momentálně vyžaduje 'mplayer', nebo 'sox'. Nainstalujte "
-"jeden z nich a zkuste to znovu.\n"
 
 #: src/dialogs.c:2663
-#, fuzzy
 msgid ""
 "LiVES currently requires convert from ImageMagick resize frames.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
-"\n"
-"LiVES pro provoz momentálně vyžaduje 'mplayer', nebo 'sox'. Nainstalujte "
-"jeden z nich a zkuste to znovu.\n"
 
 #: src/dialogs.c:2668
 msgid ""
@@ -5959,15 +5754,12 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:3353
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "The theme file %s has missing elements.\n"
 "The theme could not be loaded correctly.\n"
 msgstr ""
-"%s\n"
-"Některé %s scházejí v rozložení%s\n"
-"Z toho důvodu nemohly být otevřeny správně.\n"
 
 #: src/dialogs.c:3360
 #, c-format
@@ -6038,17 +5830,13 @@ msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr "Označte vaše zařízení pro hraní CD v Nástroje | Předvolby | Různé\n"
 
 #: src/dialogs.c:3417
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to import the theme file\n"
 "%s\n"
 "(Theme name not found).\n"
 msgstr ""
-"\n"
-"LiVES neschopno zapsat rejstřík:\n"
-"%s\n"
-"podivejte se na zapisovací povolení rejstříku"
 
 #: src/dialogs.c:3425
 #, c-format
@@ -6318,14 +6106,12 @@ msgid "Read only property"
 msgstr ""
 
 #: src/effects-weed.c:340
-#, fuzzy
 msgid "Invalid element"
-msgstr "Neplatný parametr"
+msgstr ""
 
 #: src/effects-weed.c:342
-#, fuzzy
 msgid "Invalid property"
-msgstr "Neplatný parametr"
+msgstr ""
 
 #: src/effects-weed.c:344
 msgid "Incorrect property type"
@@ -6344,14 +6130,12 @@ msgid "Initialization error"
 msgstr ""
 
 #: src/effects-weed.c:352
-#, fuzzy
 msgid "Invalid plugin"
-msgstr "Neplatný řádek %d v %s\n"
+msgstr ""
 
 #: src/effects-weed.c:357
-#, fuzzy
 msgid "No error"
-msgstr "$error"
+msgstr ""
 
 #: src/effects-weed.c:500
 msgid "integer"
@@ -6548,9 +6332,9 @@ msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
 #: src/effects-weed.c:6797
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to start instance %s, (%s)\n"
-msgstr "Nelze spustit ukázku %s, chybový kód %d\n"
+msgstr ""
 
 #: src/effects-weed.c:6876
 #, c-format
@@ -6558,14 +6342,14 @@ msgid "Unable to start generator %s\n"
 msgstr "Nelze spustit generátor %s\n"
 
 #: src/effects-weed.c:7728
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to start generator %s (%s)\n"
-msgstr "Nepodařilo se spustit generátor %s\n"
+msgstr ""
 
 #: src/effects-weed.c:7828
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to start generator %s, (%s)\n"
-msgstr "Nepodařilo se spustit generátor %s\n"
+msgstr ""
 
 #: src/effects-weed.c:9074
 #, c-format
@@ -6595,9 +6379,8 @@ msgid "Add another connection for this output parameter"
 msgstr ""
 
 #: src/effects-data.c:3971 src/effects-data.c:4014
-#, fuzzy
 msgid "Delete this connection"
-msgstr "_Odstranit tento efekt"
+msgstr ""
 
 #: src/effects-data.c:4003
 msgid "Add another connection for this output channel"
@@ -6906,9 +6689,9 @@ msgid ""
 msgstr ""
 
 #: src/plugins.c:2358
-#, fuzzy, c-format
+#, c-format
 msgid " using %s"
-msgstr "Otvírání%s"
+msgstr ""
 
 #: src/plugins.c:2429
 #, c-format
@@ -6934,9 +6717,8 @@ msgid "/unknown"
 msgstr "/unknown"
 
 #: src/plugins.c:2567
-#, fuzzy
 msgid "Decoder Plugins"
-msgstr "Dekódování"
+msgstr ""
 
 #: src/plugins.c:2581
 msgid "Enabled Video Decoders (uncheck to disable)"
@@ -6953,14 +6735,12 @@ msgid "%s advanced settings"
 msgstr "%s pokročilé nastavení"
 
 #: src/rfx-builder.c:129
-#, fuzzy
 msgid "New Test RFX"
-msgstr "LiVES: - Nový Test RFX"
+msgstr ""
 
 #: src/rfx-builder.c:131
-#, fuzzy
 msgid "Edit Test RFX"
-msgstr "LiVES: - Editovat Test RFX"
+msgstr ""
 
 #: src/rfx-builder.c:159
 msgid "Type:"
@@ -7120,24 +6900,20 @@ msgstr ""
 "%s\n"
 
 #: src/rfx-builder.c:507
-#, fuzzy
 msgid "RFX Requirements"
-msgstr "LiVES: - RFX požadavky"
+msgstr ""
 
 #: src/rfx-builder.c:510
-#, fuzzy
 msgid "RFX Parameters"
-msgstr "Nastavit parametry"
+msgstr ""
 
 #: src/rfx-builder.c:513
-#, fuzzy
 msgid "RFX Parameter Window Hints"
-msgstr "LiVES: - RFX parametry okna nápověda"
+msgstr ""
 
 #: src/rfx-builder.c:516
-#, fuzzy
 msgid "RFX Triggers"
-msgstr "LiVES: - RFX spouštěče"
+msgstr ""
 
 #: src/rfx-builder.c:583
 msgid "_New Entry"
@@ -7160,9 +6936,8 @@ msgid "Move _Down"
 msgstr "Posun_dolu"
 
 #: src/rfx-builder.c:958
-#, fuzzy
 msgid "RFX Properties"
-msgstr "LiVES: - RFX vlastnosti"
+msgstr ""
 
 #: src/rfx-builder.c:967
 msgid "_Slow (hint to GUI)"
@@ -7199,14 +6974,12 @@ msgstr ""
 "Zkontrolujte kód spouštěče.\n"
 
 #: src/rfx-builder.c:1894
-#, fuzzy
 msgid "New RFX Parameter"
-msgstr "LiVES: - Nový RFX Parametr"
+msgstr ""
 
 #: src/rfx-builder.c:1896
-#, fuzzy
 msgid "Edit RFX Parameter"
-msgstr "LiVES: - Editovat RFX Parametr"
+msgstr ""
 
 #: src/rfx-builder.c:1912
 msgid "_Name:    "
@@ -7309,14 +7082,12 @@ msgid "Maximum length (chars): "
 msgstr "Maximální délka (znaků): "
 
 #: src/rfx-builder.c:2460
-#, fuzzy
 msgid "New RFX Parameter Window Hint"
-msgstr "LiVES: - Nový RFX Parametr nápovědy okna"
+msgstr ""
 
 #: src/rfx-builder.c:2462
-#, fuzzy
 msgid "Edit RFX Parameter Window Hint"
-msgstr "LiVES: - Editovat RFX Parametr nápovědy okna"
+msgstr ""
 
 #: src/rfx-builder.c:2503
 msgid "_Keyword:         "
@@ -7348,43 +7119,37 @@ msgid "Linked parameters (2):    "
 msgstr "Propojené parametry (2):    "
 
 #: src/rfx-builder.c:2644
-#, fuzzy
 msgid "New RFX Trigger"
-msgstr "LiVES: - Nový RFX spouštěč"
+msgstr ""
 
 #: src/rfx-builder.c:2646
-#, fuzzy
 msgid "Edit RFX Trigger"
-msgstr "LiVES: - Upravitt RFX spouštěč"
+msgstr ""
 
 #: src/rfx-builder.c:2674
 msgid "When:         "
 msgstr "Pokud:         "
 
 #: src/rfx-builder.c:2766
-#, fuzzy
 msgid "Pre Loop Code"
-msgstr "LiVES: - Před smyčkový kód"
+msgstr ""
 
 #: src/rfx-builder.c:2773
-#, fuzzy
 msgid "Loop Code"
-msgstr "_Kód smyčky..."
+msgstr ""
 
 #: src/rfx-builder.c:2780
-#, fuzzy
 msgid "Post Loop Code"
-msgstr "LiVES: - Po smyčkový kód"
+msgstr ""
 
 #: src/rfx-builder.c:2793
-#, fuzzy, c-format
+#, c-format
 msgid "Default text (max length %d)"
-msgstr "LiVES: -Výchozí text (max. délka %d)"
+msgstr ""
 
 #: src/rfx-builder.c:2805
-#, fuzzy
 msgid "Enter values, one per line"
-msgstr "LiVES: - Zadejte hodnoty, jedna na řádek"
+msgstr ""
 
 #: src/rfx-builder.c:2910
 msgid ""
@@ -7640,9 +7405,8 @@ msgid ""
 msgstr ""
 
 #: src/rfx-builder.c:3867
-#, fuzzy
 msgid "Export Script"
-msgstr "Exportuji projekt"
+msgstr ""
 
 #: src/rfx-builder.c:3874 src/rfx-builder.c:3946
 #, c-format
@@ -7650,9 +7414,8 @@ msgid "Copying %s to %s..."
 msgstr "Kopírování %s do %s..."
 
 #: src/rfx-builder.c:3896
-#, fuzzy
 msgid "Import Script"
-msgstr "Importuji projekt"
+msgstr ""
 
 #: src/rfx-builder.c:3939
 #, c-format
@@ -7670,9 +7433,8 @@ msgstr ""
 "Nejprve jej vymažte nebo přejmenujte importovaný skript.\n"
 
 #: src/rfx-builder.c:4032
-#, fuzzy
 msgid "Copy RFX Script"
-msgstr "LiVES: - Kopírovat RFX skript"
+msgstr ""
 
 #: src/rfx-builder.c:4034
 msgid "_From type:    "
@@ -7683,18 +7445,16 @@ msgid "   Script:    "
 msgstr "   Skript :    "
 
 #: src/rfx-builder.c:4048
-#, fuzzy
 msgid "Rename Test RFX Script"
-msgstr "_Přejmenovat RFX Skript"
+msgstr ""
 
 #: src/rfx-builder.c:4049
 msgid "From script: "
 msgstr "Ze skriptu : "
 
 #: src/rfx-builder.c:4053
-#, fuzzy
 msgid "RFX Script Name"
-msgstr "LiVES: - Jméno RFX  skriptu"
+msgstr ""
 
 #: src/rfx-builder.c:4054
 msgid "Script name: "
@@ -7747,9 +7507,8 @@ msgid "_Apply Real Time Effects to Selection"
 msgstr "_Použití Real time efektů na výběr"
 
 #: src/rfx-builder.c:4372
-#, fuzzy
 msgid "Applying Current Real Time Effects to"
-msgstr "_Použití Real time efektů na výběr"
+msgstr ""
 
 #: src/rfx-builder.c:4425
 #, c-format
@@ -7817,7 +7576,6 @@ msgid ""
 msgstr ""
 
 #: src/preferences.c:1231
-#, fuzzy
 msgid ""
 "You have chosen to change the working directory.\n"
 "Please make sure you have no other copies of LiVES open.\n"
@@ -7828,25 +7586,15 @@ msgid ""
 "Alternatively, press Cancel to restore the working directory to its original "
 "setting."
 msgstr ""
-"Rozhodli jste se změnit dočasný adresář. \n"
-"Ujistěte se, že nemáte spuštěné LiVES víckrát.\n"
-"\n"
-"Pokud tomu tak je, zavřete je před tím, než stisknete OK. \n"
-"\n"
-"Stisknutím 'Zrušit' obnovíte výchozí nastavení dočasného adresáře."
 
 #: src/preferences.c:1609
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Unable to switch audio players to jack\n"
 "jackd must be installed first.\n"
 "See %s\n"
 msgstr ""
-"\n"
-"Nelze přepnout audio přehrávač na jack - jackd musí být nejprve "
-"nainstalován.\n"
-"Viz. http://jackaudio.org\n"
 
 #: src/preferences.c:1616
 msgid ""
@@ -7857,26 +7605,21 @@ msgstr ""
 "Přepnutí audio přehrávačů vyžaduje restart (jackd nesmí být používán)\n"
 
 #: src/preferences.c:1643
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Unable to switch audio players to pulse audio\n"
 "pulseaudio must be installed first.\n"
 "See %s\n"
 msgstr ""
-"\n"
-"Nelze přepnout audio přehrávač na jack - jackd musí být nejprve "
-"nainstalován.\n"
-"Viz. http://jackaudio.org\n"
 
 #: src/preferences.c:1968
 msgid "PCM (highest quality; largest files)"
 msgstr "PCM (nejvyšší kvalita; největší soubory)"
 
 #: src/preferences.c:2526
-#, fuzzy
 msgid "Preferences"
-msgstr "_Nastavení..."
+msgstr ""
 
 #: src/preferences.c:2602
 msgid "Open file selection maximised"
@@ -8009,9 +7752,8 @@ msgid "_Never"
 msgstr "_Nikdy"
 
 #: src/preferences.c:2859
-#, fuzzy
 msgid "Maximum number of visible tracks"
-msgstr "Maximální počet stop k zobrazení"
+msgstr ""
 
 #: src/preferences.c:2867
 msgid "Multitrack/Render"
@@ -8183,9 +7925,8 @@ msgid ""
 msgstr ""
 
 #: src/preferences.c:3270
-#, fuzzy
 msgid "What to record when 'r' is pressed"
-msgstr "      Co nahrát po stisku 'r'   "
+msgstr ""
 
 #: src/preferences.c:3277
 msgid "_Frame changes"
@@ -8217,9 +7958,8 @@ msgid "GB"
 msgstr ""
 
 #: src/preferences.c:3341
-#, fuzzy
 msgid "External Audio Source"
-msgstr "Zvukový kodek"
+msgstr ""
 
 #: src/preferences.c:3347
 msgid "Delay recording playback start until external audio volume reaches "
@@ -8230,9 +7970,8 @@ msgid "Recording"
 msgstr "Nahrávání"
 
 #: src/preferences.c:3374
-#, fuzzy
 msgid "You can also change these values when encoding a clip"
-msgstr "Pro změnu těchto hodnot můžete kliknout na Náhled"
+msgstr ""
 
 #: src/preferences.c:3386
 msgid "Encoder"
@@ -8476,9 +8215,8 @@ msgid "Show a warning if unable to connect to pulseaudio player."
 msgstr ""
 
 #: src/preferences.c:3929
-#, fuzzy
 msgid "Show a warning before wiping a layout which has unsaved changes."
-msgstr "Zobrazit varování před uložením se_tu"
+msgstr ""
 
 #: src/preferences.c:3936
 msgid "Warnings"
@@ -8525,34 +8263,28 @@ msgid "Main Theme Details"
 msgstr ""
 
 #: src/preferences.c:4038
-#, fuzzy
 msgid "        _Foreground Color"
-msgstr "_Barva pozadí"
+msgstr ""
 
 #: src/preferences.c:4057
-#, fuzzy
 msgid "        _Background Color"
-msgstr "_Barva pozadí"
+msgstr ""
 
 #: src/preferences.c:4076
-#, fuzzy
 msgid "_Alt Foreground Color"
-msgstr "_Barva pozadí"
+msgstr ""
 
 #: src/preferences.c:4094
-#, fuzzy
 msgid "_Alt Background Color"
-msgstr "_Barva pozadí"
+msgstr ""
 
 #: src/preferences.c:4112
-#, fuzzy
 msgid "              Info _Text Color"
-msgstr "          _Výška      "
+msgstr ""
 
 #: src/preferences.c:4131
-#, fuzzy
 msgid "              Info _Base Color"
-msgstr "          _Výška      "
+msgstr ""
 
 #: src/preferences.c:4149
 msgid "Theme is _light"
@@ -8571,9 +8303,8 @@ msgid "Highlight horizontal separators in multitrack"
 msgstr ""
 
 #: src/preferences.c:4181
-#, fuzzy
 msgid "Frame blank image"
-msgstr "Změny _snímku"
+msgstr ""
 
 #: src/preferences.c:4183
 msgid "The frame image which is shown when there is no clip loaded."
@@ -8600,9 +8331,8 @@ msgid "Unselected frames/audio (clip editor)"
 msgstr ""
 
 #: src/preferences.c:4252
-#, fuzzy
 msgid "Track background (multitrack)"
-msgstr "Vyplň pozadí (b)"
+msgstr ""
 
 #: src/preferences.c:4263
 msgid "Video block (multitrack)"
@@ -8621,28 +8351,24 @@ msgid "Timeline mark (multitrack)"
 msgstr ""
 
 #: src/preferences.c:4307
-#, fuzzy
 msgid "Timeline selection (multitrack)"
-msgstr "Časová osa (vteřiny)"
+msgstr ""
 
 #: src/preferences.c:4319
 msgid "Timecode background (multitrack)"
 msgstr ""
 
 #: src/preferences.c:4331
-#, fuzzy
 msgid "Timecode foreground (multitrack)"
-msgstr "_Začátek oblasti"
+msgstr ""
 
 #: src/preferences.c:4342
-#, fuzzy
 msgid "Frame surround"
-msgstr "_Snímky za vteřinu"
+msgstr ""
 
 #: src/preferences.c:4355
-#, fuzzy
 msgid "Themes/Colors"
-msgstr "Témata"
+msgstr ""
 
 #: src/preferences.c:4370
 msgid "Download bandwidth (Kb/s)       "
@@ -8832,10 +8558,8 @@ msgid "(Warning: setting this value too high can slow down playback.)"
 msgstr ""
 
 #: src/preferences.c:4725
-#, fuzzy
 msgid "Midi program synch (requires the files midistart and midistop)"
 msgstr ""
-"Identifikační signál bloku Midi (vyžaduje rejstříky midistart a midistop)"
 
 #: src/preferences.c:4734
 msgid "MIDI/Joystick learner"
@@ -8856,10 +8580,9 @@ msgid ""
 msgstr ""
 
 #: src/preferences.c:5304
-#, fuzzy
 msgid ""
 "Disabling the theme will not take effect until the next time you start LiVES."
-msgstr "Změny témat budou patrné po restartování LiVES."
+msgstr ""
 
 #: src/preferences.c:5309
 msgid "Jack options will not take effect until the next time you start LiVES."
@@ -8958,14 +8681,12 @@ msgid "Resample"
 msgstr "Převzorkovat"
 
 #: src/resample.c:1193
-#, fuzzy
 msgid "New Clip Audio"
-msgstr "Nový zvuk"
+msgstr ""
 
 #: src/resample.c:1195
-#, fuzzy
 msgid "External Clip Settings"
-msgstr "LiVES: - Nastavení externího klipu"
+msgstr ""
 
 #: src/resample.c:1217
 msgid "Current"
@@ -9000,9 +8721,8 @@ msgid "Big Endian"
 msgstr "Big Endian"
 
 #: src/resample.c:1305
-#, fuzzy
 msgid "New Audio Details"
-msgstr "Nový zvuk"
+msgstr ""
 
 #: src/resample.c:1306
 msgid "New"
@@ -9053,14 +8773,12 @@ msgid "Click OK to begin recording, or Cancel to quit."
 msgstr "Kliněte na OK pro nahrávání, Zrušit pro ukončení."
 
 #: src/resample.c:1601
-#, fuzzy
 msgid "Change Playback Speed"
-msgstr "_Změnit přehrávání / Uložit rychlost"
+msgstr ""
 
 #: src/resample.c:1603
-#, fuzzy
 msgid "Resample Video"
-msgstr "Převzorkování videa"
+msgstr ""
 
 #: src/resample.c:1625
 #, c-format
@@ -9335,9 +9053,9 @@ msgstr ""
 "\n"
 
 #: src/rte_window.c:1618
-#, fuzzy, c-format
+#, c-format
 msgid "Information for %s"
-msgstr "LiVES: Zpráva pro %s"
+msgstr ""
 
 #: src/rte_window.c:1626
 #, c-format
@@ -9379,9 +9097,9 @@ msgid "License: %s"
 msgstr ""
 
 #: src/rte_window.c:1682
-#, fuzzy, c-format
+#, c-format
 msgid "Copyright: %s"
-msgstr "Kopírování %s do %s..."
+msgstr ""
 
 #: src/rte_window.c:1884
 msgid ""
@@ -9403,9 +9121,8 @@ msgid "LiVES could not locate the effect %s.\n"
 msgstr "LiVES nemůže najít efekt %s.\n"
 
 #: src/rte_window.c:2125
-#, fuzzy
 msgid "Real Time Effect Mapping"
-msgstr "Mapování real time _efektu"
+msgstr ""
 
 #: src/rte_window.c:2155
 #, c-format
@@ -9482,9 +9199,8 @@ msgid "Unable to open the incoming video stream\n"
 msgstr ""
 
 #: src/lives-yuv4mpeg.c:207
-#, fuzzy
 msgid "Unable to read the stream header\n"
-msgstr "Nelze otevřít yuv4mpeg stream %s\n"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:223
 msgid "got header\n"
@@ -9509,9 +9225,8 @@ msgid "yuv4mpeg stream"
 msgstr ""
 
 #: src/lives-yuv4mpeg.c:391
-#, fuzzy
 msgid "Open _yuv4mpeg stream (fifo)"
-msgstr "Otevřít _yuv4mpeg stream na %sstream.yuv"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:415
 msgid "yu4mpeg stream in"
@@ -9573,9 +9288,9 @@ msgid "Backing audio"
 msgstr ""
 
 #: src/multitrack.c:1487
-#, fuzzy, c-format
+#, c-format
 msgid "%s : parameters for %s"
-msgstr "Žádné parametry"
+msgstr ""
 
 #: src/multitrack.c:1918 src/multitrack.c:3552
 #, c-format
@@ -9693,9 +9408,8 @@ msgid "to select a time region.\n"
 msgstr "vyberte časové pásmo.\n"
 
 #: src/multitrack.c:4177
-#, fuzzy
 msgid "Selected Clip"
-msgstr "_Vložit vybraný klip"
+msgstr ""
 
 #: src/multitrack.c:4180
 msgid "_Adjust Start and End Points"
@@ -9706,19 +9420,16 @@ msgid "_Edit/Encode in Clip Editor"
 msgstr ""
 
 #: src/multitrack.c:4195
-#, fuzzy
 msgid "_Show Clip Information"
-msgstr "Zobrazit _Informace o klipu"
+msgstr ""
 
 #: src/multitrack.c:4202
-#, fuzzy
 msgid "_Close this Clip"
-msgstr "_Zavřít tento klip"
+msgstr ""
 
 #: src/multitrack.c:4419
-#, fuzzy
 msgid "Audio Mixer (ctrl-m)"
-msgstr "Audio Mixery"
+msgstr ""
 
 #: src/multitrack.c:4484
 msgid "Single click on timeline"
@@ -9923,29 +9634,24 @@ msgid "_Import from Device"
 msgstr "Importovat ze zařízení"
 
 #: src/multitrack.c:6365
-#, fuzzy
 msgid "_Close the Selected Clip"
-msgstr "_Vložit vybraný klip"
+msgstr ""
 
 #: src/multitrack.c:6445
-#, fuzzy
 msgid "_Save Layout as..."
-msgstr "_Uložit rozložení jako..."
+msgstr ""
 
 #: src/multitrack.c:6453
-#, fuzzy
 msgid "_Load Layout..."
-msgstr "_Uložit rozložení jako..."
+msgstr ""
 
 #: src/multitrack.c:6457
-#, fuzzy
 msgid "_Wipe/Delete Layout..."
-msgstr "_Vyčistit/Smazat rozložení..."
+msgstr ""
 
 #: src/multitrack.c:6481
-#, fuzzy
 msgid "_Ignore Width, Height and Audio Values from Loaded Layouts"
-msgstr "_Ignorovat šířku, výšku a hodnoty zvuku v otevřeném rozložení"
+msgstr ""
 
 #: src/multitrack.c:6485
 msgid "Auto Load _Subtitles with Clips"
@@ -9964,29 +9670,24 @@ msgid "_Insert selected clip"
 msgstr "_Vložit vybraný klip"
 
 #: src/multitrack.c:6587
-#, fuzzy
 msgid "_Insert Selected Clip Audio"
-msgstr "_Vložit vybraný zvukový klip"
+msgstr ""
 
 #: src/multitrack.c:6595
-#, fuzzy
 msgid "_Delete Selected Block"
-msgstr "_Smazat vybraný blok"
+msgstr ""
 
 #: src/multitrack.c:6606
-#, fuzzy
 msgid "_Jump to Previous Block Boundary"
-msgstr "_Přeskočit na hranici předchozího bloku"
+msgstr ""
 
 #: src/multitrack.c:6615
-#, fuzzy
 msgid "_Jump to Next Block Boundary"
-msgstr "_Přeskočit na hranici následujícího bloku"
+msgstr ""
 
 #: src/multitrack.c:6628
-#, fuzzy
 msgid "Clear _Marks from Timeline"
-msgstr "Smazat _značky z časové osy"
+msgstr ""
 
 #: src/multitrack.c:6636
 msgid "Ignore Selection Limits when Inserting"
@@ -9997,52 +9698,44 @@ msgid "_Play from Timeline Position"
 msgstr ""
 
 #: src/multitrack.c:6660
-#, fuzzy
 msgid "Pla_y Selected Time Only"
-msgstr "_Přehrát výběr"
+msgstr ""
 
 #: src/multitrack.c:6733
-#, fuzzy
 msgid "_Move Effects with Blocks"
-msgstr "_Přesunout efekty s bloky"
+msgstr ""
 
 #: src/multitrack.c:6744
-#, fuzzy
 msgid "Select _Autotransition Effect..."
-msgstr "Vybrat poslední _efekt"
+msgstr ""
 
 #: src/multitrack.c:6750
 msgid "Crossfade Audio with Autotransition"
 msgstr ""
 
 #: src/multitrack.c:6757
-#, fuzzy
 msgid "View/_Edit Selected Effect"
-msgstr "Vybrat poslední _efekt"
+msgstr ""
 
 #: src/multitrack.c:6761
-#, fuzzy
 msgid "_Delete Selected Effect"
-msgstr "_Smazat vybraný efekt"
+msgstr ""
 
 #: src/multitrack.c:6769
-#, fuzzy
 msgid "Apply Effect to _Block..."
-msgstr "Použít efekt na _blok..."
+msgstr ""
 
 #: src/multitrack.c:6803
-#, fuzzy
 msgid "Apply Effect to _Region..."
-msgstr "Použít efekt na _oblast..."
+msgstr ""
 
 #: src/multitrack.c:7007
 msgid "_Tracks"
 msgstr "_Stopy"
 
 #: src/multitrack.c:7020
-#, fuzzy
 msgid "Make _Backing Audio Current Track"
-msgstr "Přesun aktuální zvukové stopy na _pozadí"
+msgstr ""
 
 #: src/multitrack.c:7031
 msgid "Add Video Track at _Rear"
@@ -10053,19 +9746,16 @@ msgid "Add Video Track at _Front"
 msgstr "Přidat video stopu na _začátek"
 
 #: src/multitrack.c:7049
-#, fuzzy
 msgid "_Split Current Track at Cursor"
-msgstr "_Vybrat stávající stopu"
+msgstr ""
 
 #: src/multitrack.c:7060
-#, fuzzy
 msgid "_Split Selected Video Tracks"
-msgstr "_Rozdělit vybrané video stopy"
+msgstr ""
 
 #: src/multitrack.c:7072
-#, fuzzy
 msgid "Insert Gap in Selected Tracks/Time"
-msgstr "_Vložit vybraný klip"
+msgstr ""
 
 #: src/multitrack.c:7080
 msgid "Insert Gap in Current Track/Selected Time"
@@ -10084,120 +9774,100 @@ msgid "_Select Current Track"
 msgstr "_Vybrat stávající stopu"
 
 #: src/multitrack.c:7129
-#, fuzzy
 msgid "Select _All Video Tracks"
-msgstr "Vybrat _všechny video stopy"
+msgstr ""
 
 #: src/multitrack.c:7136
-#, fuzzy
 msgid "Select _No Video Tracks"
-msgstr "_Nevybrat video stopu"
+msgstr ""
 
 #: src/multitrack.c:7143
-#, fuzzy
 msgid "Select All _Time"
-msgstr "Vybrat _vše"
+msgstr ""
 
 #: src/multitrack.c:7154
-#, fuzzy
 msgid "Select from _Zero Time"
-msgstr "Vybrat od _začátku"
+msgstr ""
 
 #: src/multitrack.c:7161
-#, fuzzy
 msgid "Select to _End Time"
-msgstr "Vybrat do _konce"
+msgstr ""
 
 #: src/multitrack.c:7168
 msgid "_Copy..."
 msgstr "_Kopírovat..."
 
 #: src/multitrack.c:7174
-#, fuzzy
 msgid "_Timecode to Region Start"
-msgstr "_Začátek oblasti"
+msgstr ""
 
 #: src/multitrack.c:7181
-#, fuzzy
 msgid "_Timecode to Region End"
-msgstr "_Konec oblasti"
+msgstr ""
 
 #: src/multitrack.c:7188
-#, fuzzy
 msgid "_Region Start to Timecode"
-msgstr "_Spustit v čase"
+msgstr ""
 
 #: src/multitrack.c:7195
-#, fuzzy
 msgid "_Region End to Timecode"
-msgstr "_Ukončit v čase"
+msgstr ""
 
 #: src/multitrack.c:7209
-#, fuzzy
 msgid "Select/Deselect Block at Current Track/Time"
-msgstr "_Vybrat stávající stopu"
+msgstr ""
 
 #: src/multitrack.c:7228
-#, fuzzy
 msgid "_Change Width, Height and Audio Values..."
-msgstr "_Změnit šířku, výšku a hodnoty zvuku..."
+msgstr ""
 
 #: src/multitrack.c:7275
 msgid "_Render"
 msgstr "_Render"
 
 #: src/multitrack.c:7281
-#, fuzzy
 msgid "_Render All to New Clip"
-msgstr "Generovat do _Nového klipu"
+msgstr ""
 
 #: src/multitrack.c:7295
-#, fuzzy
 msgid "Render _Video"
-msgstr "Rendrovat_video"
+msgstr ""
 
 #: src/multitrack.c:7300
-#, fuzzy
 msgid "Render _Audio"
-msgstr "Rendrovat _zvuk"
+msgstr ""
 
 #: src/multitrack.c:7309
 msgid "_Normalise Rendered Audio"
 msgstr ""
 
 #: src/multitrack.c:7314
-#, fuzzy
 msgid "_Pre-render Audio"
-msgstr "Rendrovat _zvuk"
+msgstr ""
 
 #: src/multitrack.c:7321
 msgid "_View"
 msgstr "_Pohled"
 
 #: src/multitrack.c:7334
-#, fuzzy
 msgid "Block _In/Out Points"
-msgstr "Blokovat _In/out body"
+msgstr ""
 
 #: src/multitrack.c:7343
-#, fuzzy
 msgid "_Effects at Current"
-msgstr "_Aktuální efekty"
+msgstr ""
 
 #: src/multitrack.c:7361
-#, fuzzy
 msgid "Audio Parameters"
-msgstr "Zvukové parametry"
+msgstr ""
 
 #: src/multitrack.c:7367
-#, fuzzy
 msgid "Show Backing _Audio Track"
-msgstr "Zobraz _zvukovou stopu na pozadí"
+msgstr ""
 
 #: src/multitrack.c:7370
-#, fuzzy
 msgid "Maximum Tracks to Display..."
-msgstr "Maximální počet stop k zobrazení"
+msgstr ""
 
 #: src/multitrack.c:7377
 msgid "Scroll to Follow Playback"
@@ -10208,19 +9878,16 @@ msgid "_Center on Cursor"
 msgstr ""
 
 #: src/multitrack.c:7387
-#, fuzzy
 msgid "_Zoom In"
-msgstr "_Přiblížit"
+msgstr ""
 
 #: src/multitrack.c:7398
-#, fuzzy
 msgid "_Zoom Out"
-msgstr "_Oddálit"
+msgstr ""
 
 #: src/multitrack.c:7409
-#, fuzzy
 msgid "Multitrack _Details"
-msgstr "_Detaily o multitracku"
+msgstr ""
 
 #: src/multitrack.c:7420
 msgid "_Event Window"
@@ -10231,23 +9898,20 @@ msgid "_Event Window (selected time only)"
 msgstr ""
 
 #: src/multitrack.c:7428
-#, fuzzy
 msgid "_Show FRAME Events"
-msgstr "_Zobraz události SNÍMKU"
+msgstr ""
 
 #: src/multitrack.c:7438
-#, fuzzy
 msgid "_Show Multitrack Keys"
-msgstr "_Zobraz klávesy mutlitracku"
+msgstr ""
 
 #: src/multitrack.c:7458
 msgid "Report a _bug"
 msgstr "_Nahlásit chybu"
 
 #: src/multitrack.c:7734
-#, fuzzy
 msgid "Insert With _Audio"
-msgstr "_Vložit do délky zvuku"
+msgstr ""
 
 #: src/multitrack.c:7736
 msgid ""
@@ -10255,9 +9919,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:7769
-#, fuzzy
 msgid "Select _Overlap"
-msgstr "Překrýt textem"
+msgstr ""
 
 #: src/multitrack.c:7771
 msgid ""
@@ -10278,14 +9941,12 @@ msgid "Gravity: _Right"
 msgstr ""
 
 #: src/multitrack.c:7879
-#, fuzzy
 msgid "Mouse Mode: _Move"
-msgstr "Mód myši: _Posun"
+msgstr ""
 
 #: src/multitrack.c:7903
-#, fuzzy
 msgid "Mouse Mode: _Select"
-msgstr "Mód myši: _Výběr"
+msgstr ""
 
 #: src/multitrack.c:7923
 msgid "Insert Mode: _Normal"
@@ -10395,24 +10056,20 @@ msgid " %s"
 msgstr " %s"
 
 #: src/multitrack.c:10112
-#, fuzzy
 msgid "Selected Effect"
-msgstr "Vybrat poslední _efekt"
+msgstr ""
 
 #: src/multitrack.c:10119
-#, fuzzy
 msgid "_View/Edit this Effect"
-msgstr "Zobrazit/Upra_vit tento efekt"
+msgstr ""
 
 #: src/multitrack.c:10121
-#, fuzzy
 msgid "_View this Effect"
-msgstr "Zobra_zit tento efekt"
+msgstr ""
 
 #: src/multitrack.c:10129
-#, fuzzy
 msgid "_Delete this Effect"
-msgstr "_Odstranit tento efekt"
+msgstr ""
 
 #: src/multitrack.c:10184
 msgid "Cannot insert after this effect"
@@ -10539,24 +10196,20 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:12929
-#, fuzzy
 msgid "Selected Block/Frame"
-msgstr "LiVES: Vybraný blok/snímek"
+msgstr ""
 
 #: src/multitrack.c:12931
-#, fuzzy
 msgid "_Select this Block"
-msgstr "_Zvolit tento blok"
+msgstr ""
 
 #: src/multitrack.c:12939
-#, fuzzy
 msgid "_Split Block At Cursor"
-msgstr "Zde _rozdělit blok"
+msgstr ""
 
 #: src/multitrack.c:12953
-#, fuzzy
 msgid "List _Effects Here"
-msgstr "Seznam _efektů"
+msgstr ""
 
 #: src/multitrack.c:12962 src/multitrack.c:13036
 #, c-format
@@ -10564,19 +10217,16 @@ msgid "_Adjust %s"
 msgstr "_Upravit %s"
 
 #: src/multitrack.c:12975
-#, fuzzy
 msgid "_Delete this Block"
-msgstr "_Vymazat tento blok"
+msgstr ""
 
 #: src/multitrack.c:13019
-#, fuzzy
 msgid "_Insert Here"
-msgstr "_Vložit zde"
+msgstr ""
 
 #: src/multitrack.c:13024
-#, fuzzy
 msgid "_Insert Audio Here"
-msgstr "_Zvuk vložit sem"
+msgstr ""
 
 #: src/multitrack.c:14342
 #, c-format
@@ -10651,9 +10301,9 @@ msgid "Deleted frames from time %.4f to %.4f on track %s\n"
 msgstr ""
 
 #: src/multitrack.c:15990
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted audio from time %.4f to %.4f on track %s\n"
-msgstr "Vymazáváni zvuku od %.2f do %.2f sekund..."
+msgstr ""
 
 #: src/multitrack.c:16378
 msgid "_Pause"
@@ -10778,9 +10428,8 @@ msgid "_Autoreload each time"
 msgstr "_Automatické otevření (pokaždé)"
 
 #: src/multitrack.c:19033
-#, fuzzy
 msgid "Saving layout"
-msgstr "_Uložit rozložení"
+msgstr ""
 
 #: src/multitrack.c:19055
 #, c-format
@@ -10856,18 +10505,14 @@ msgid "Multitrack fps set to %.3f\n"
 msgstr "Multitrack fps nastaven na %.3f\n"
 
 #: src/multitrack.c:20857
-#, fuzzy
 msgid ""
 "The current layout has changes which have not been saved.\n"
 "Are you sure you wish to wipe it ?\n"
 msgstr ""
-"Současné rozložení nebylo uloženo.\n"
-"Co chcete učinit?\n"
 
 #: src/multitrack.c:21604
-#, fuzzy
 msgid "Multitrack Audio Mixer"
-msgstr "Vícestopa/Převod"
+msgstr ""
 
 #: src/multitrack.c:21631
 msgid "_Reset values"
@@ -11297,12 +10942,12 @@ msgstr ""
 msgid "discrimination"
 msgstr ""
 
-#: src/omc-learn.c:2403
+#: src/omc-learn.c:2402
 #, c-format
 msgid "Saving device mapping to file %s..."
 msgstr ""
 
-#: src/omc-learn.c:2505
+#: src/omc-learn.c:2504
 #, c-format
 msgid ""
 "\n"
@@ -11311,7 +10956,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/omc-learn.c:2513
+#: src/omc-learn.c:2512
 #, c-format
 msgid ""
 "\n"
@@ -11320,12 +10965,12 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/omc-learn.c:2553
+#: src/omc-learn.c:2552
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr ""
 
-#: src/omc-learn.c:2556
+#: src/omc-learn.c:2555
 #, c-format
 msgid ""
 "\n"
@@ -11335,16 +10980,16 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/omc-learn.c:2784
+#: src/omc-learn.c:2783
 msgid "MIDI receive channel was set to ALL CHANNELS\n"
 msgstr ""
 
-#: src/omc-learn.c:2785
+#: src/omc-learn.c:2784
 #, c-format
 msgid "MIDI receive channel was set to channel %d\n"
 msgstr ""
 
-#: src/omc-learn.c:2790
+#: src/omc-learn.c:2789
 msgid ""
 "The MIDI receive channel setting was updated by the device map.\n"
 "Please review the setting in Preferences and adjust it if necessary.\n"
@@ -11366,15 +11011,15 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "180 _degrees             "
-msgstr "180 _stupňů             "
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "90 degrees _Anticlockwise"
-msgstr "90° do_leva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "90 degrees _Clockwise    "
-msgstr "90° ve do_prava    "
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Active _animation"
@@ -11382,225 +11027,222 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Add _Border"
-msgstr "Přidat _okraj"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Add noise"
-msgstr "Přidat šum"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "Adjust contrast"
-msgstr "Upravit kontrast"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "Adjusting contrast of"
-msgstr "Upravuji kontrast"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Adjusting noise on"
-msgstr "Upravuji šum na"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
-msgstr "Aplikuji uhel na"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Applying forward skip to"
-msgstr "Použití sépie pro"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Applying sepia to"
-msgstr "Použití sépie pro"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "B/W Threshold"
-msgstr "Č/B práh"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "B/W thresholding"
-msgstr "Č/B práh"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank _Colour"
-msgstr "Zářivá  _barva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blank frames"
-msgstr "Prázdné snímky"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blanking"
-msgstr "Vyprazdňuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Block _height"
-msgstr "_Výška bloku"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Block _width"
-msgstr "_Šířka bloku"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
-msgstr "Rozostření"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Bluring"
-msgstr "Rozostřuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Border _Colour"
-msgstr "_Zdrojová barva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 msgid "Brightness _end"
-msgstr "Jas _konec"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 msgid "Brightness _start"
-msgstr "Jas _start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 msgid "Brightness change"
-msgstr "Změna jasu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Brightness end"
-msgstr "Ukončit jas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Brightness start"
-msgstr "Začátek jasu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _X"
-msgstr "Vystředit _X"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _Y"
-msgstr "Vystředit _Y"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 msgid "Changing brightness of"
-msgstr "Měním jas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Changing gamma of"
-msgstr "Měním gamma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "Changing hue of"
-msgstr "Měním odstín"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "Changing saturation of"
-msgstr "Měním sytost"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Charcoal"
-msgstr "Uhel"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "Checkerboard"
-msgstr "Inspektor plochy"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "Checkerboarding"
-msgstr "Kontroluji plochu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Clipboard _over selection"
-msgstr "Schránka _nad výběrem"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Clipboard _under selection"
-msgstr "Schránka _pod výběrem"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
-msgstr "Obarvit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorizing"
-msgstr "Obarvuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "Colour cycle"
-msgstr "Barevný cyklus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "Colour cycling"
-msgstr "Barevný cyklus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "Colour filter"
-msgstr "Barevný filter"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "Colour filtering"
-msgstr "Aplikuiji barevný filter"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "Colour replace"
-msgstr "Nahrazení barev"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
-msgstr "Stálá hladina šumu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "Cycle _Step"
-msgstr "_Krok cyklu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlace"
-msgstr "Odstranit prokládání"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlacing"
-msgstr "Odstraňuij prokládání"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "Despeckle"
-msgstr "Vyhladit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "Despeckling"
-msgstr "Vyhlazuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "Dream"
-msgstr "Zasnít"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "Dreamifying"
-msgstr "Aplikují zasnění"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "E_nd %"
-msgstr "_Konec%"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "Edge detect"
-msgstr "Najít obrysy"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "Edge detecting"
-msgstr "Hledám obrysy"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
-msgstr "Reliéf"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Embossing"
-msgstr "Aplikuji reliéf"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "End _Alpha:"
@@ -11616,35 +11258,32 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 msgid "Enhance"
-msgstr "Vylepšit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 msgid "Enhancing"
-msgstr "Vylepšuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Envelope length"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _colour"
-msgstr "Zářivá  _barva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Fade _end"
-msgstr "Stmívání _konec"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _in"
-msgstr "Stmívání _konec"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _out"
-msgstr "Ztlumit zvuk"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "Fade video to or from color"
@@ -11652,143 +11291,135 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
-msgstr "Stmívat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fading video"
-msgstr "Převzorkování videa"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
-msgstr "Stmívám"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Fina_l frame"
-msgstr "Pos_lední snímek"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Flash _colour"
-msgstr "Zářivá  _barva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
-msgstr "Převrátit svisle"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Flop horizontally"
-msgstr "Převrátit vodorovně"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frame Calculator"
-msgstr "Kalkulátor snímků"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Frame _Colour"
-msgstr "Zářivá  _barva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _height"
-msgstr "Výš_ka rámce"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Frame _in frame position of clipboard..."
-msgstr "Snímek _ve snímku v pozici schránky..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Frame _in frame position of top frame..."
-msgstr "Snímek _ve snímku v pozici horního snímku..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _width"
-msgstr "Šířka _rámce"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
-msgstr "Snímků _za sekundu (FPS)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma _end"
-msgstr "Gamma _konec"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma _start"
-msgstr "Gamma _start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma change"
-msgstr "Gamma změna"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 msgid "Generate blank frames"
-msgstr "Generovat prázdné rámce"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generate clip from image"
-msgstr "Vytvářím klip z obrázku"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generate coloured frames"
-msgstr "Vytvářím barevná políčka"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generate title frames"
-msgstr "Generovat prázdné rámce"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generating blank frames"
-msgstr "Generovat prázdné rámce"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Generating clip from image"
-msgstr "Vytvářím klip z obrázku"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "Generating coloured frames"
-msgstr "Vytvářím barevná políčka"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generating title frames"
-msgstr "Vytvářím barevná políčka"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
-msgstr "Překlopit horizontálně"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Horizontal shifting"
-msgstr "Posunuji horizontálně"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "Hue _end"
-msgstr "Odstín _konec"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "Hue _start"
-msgstr "Odstín _start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "Hue change"
-msgstr "Změna odstínu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Hue end"
-msgstr "Konec odstínu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Hue start"
-msgstr "Počátek odstínu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Image overlay"
-msgstr "Překrýt textem"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -11804,15 +11435,15 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "Jumble"
-msgstr "Zpřeházet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "Jumbling"
-msgstr "Přehazuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Keep _Centered"
-msgstr "Podrž _vycentrované"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Keep image aspect _ratio"
@@ -11820,270 +11451,266 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "L_eft"
-msgstr "V_levo"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Making monochrome"
-msgstr "Převádím na černobílou"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Modulate (BSH)"
-msgstr "Modulovat (BSH)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Modulating"
-msgstr "Moduluji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
-msgstr "Černobílé"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "Negate"
-msgstr "Negative"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "Negating"
-msgstr "Negativuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
-msgstr "Typ šumu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noisify"
-msgstr "Upravuji šum"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 msgid "Normalize"
-msgstr "Normalizovat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 msgid "Normalizing"
-msgstr "Normalizuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Number of _frames"
-msgstr "Počet _rámců"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Overlaying an image onto video"
-msgstr "Překrývám textem"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
-msgstr "Překrývám textem"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Photo/still"
-msgstr "Fotografie"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Pixilate"
-msgstr "Pixelovat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "Pixilating"
-msgstr "Pixeluji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
-msgstr "Posterizovat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterizing"
-msgstr "Posterizuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
-msgstr "Náhodný zoom"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zooming"
-msgstr "Náhoný zoom"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Reduce noise"
-msgstr "Uber šum"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Reduction radius"
-msgstr "Zmenšit poloměr"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "Replacing colours in"
-msgstr "Nahrazuji barvy v"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 msgid "Resize All Frames"
-msgstr "Změnit velikost všech snímků"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "Rotate Clip"
-msgstr "Otočit klip"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "Rotating"
-msgstr "Otáčím"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "S_tart %"
-msgstr "S_tart %"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "Saturation _end"
-msgstr "Nasycení _konec"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "Saturation _start"
-msgstr "Nasycení _start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "Saturation change"
-msgstr "Změna nasycení"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Saturation end"
-msgstr "Ukončit nasycení"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Saturation start"
-msgstr "Počátek nasycení"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
-msgstr "Sépie"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Shift horizontally"
-msgstr "Vodorovný posun"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "Shift vertically"
-msgstr "Posun svisle"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Shrink/Expand"
-msgstr "Zmenšit/Roztáhnout"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Shrinking/Expanding"
-msgstr "Zmenšuji/Roztahuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Skip forward"
-msgstr "Přeskočit vpřed"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Solarize"
-msgstr "Solarizace"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Solarizing"
-msgstr "Solarizuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
-msgstr "Otočení"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spinning"
-msgstr "Otáčím"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "Splice"
-msgstr "Spojit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "Splicing"
-msgstr "Spojuji"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spread"
-msgstr "Rozprostřít"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spreading"
-msgstr "Rozprostírám"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Step _Value"
-msgstr "Hodnota _kroku"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Step per _Frame"
-msgstr "Krok na _Snímek"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl _start"
-msgstr "Vír _start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl s_tep"
-msgstr "_Tep víru"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl"
-msgstr "Vír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirling"
-msgstr "Aplikuji vír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Text Overlay"
-msgstr "Překrýt textem"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
-msgstr "_Práh"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Trim frames/Add Border"
-msgstr "Oříznout snímky/Přidat okraj"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trimming"
-msgstr "Ořezávám"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "Tunnel"
-msgstr "Tunel"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "Tunneling"
-msgstr "Tunneling"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Use _Natural Size"
-msgstr "Použít _antialiasing při změně velikosti"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Use _Natural image size"
-msgstr "Použít _antialiasing při změně velikosti"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Vertical flipping"
-msgstr "Překlápím svisle"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "Vertical shifting"
-msgstr "Vertikální posunutí"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "Wave"
-msgstr "Vlna"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "Waving"
-msgstr "Aplikuji vlny"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
@@ -12092,45 +11719,45 @@ msgstr "Aplikuji vlny"
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "_Background Colour"
-msgstr "_Barva pozadí"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Background colour"
-msgstr "_Barva pozadí"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
-msgstr "_Černobílá kamera"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_Black is transparent"
-msgstr "_Černá je transparentní"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Bottom"
-msgstr "_Spodní hrana"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Calculate"
-msgstr "_Počítat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "_Cycle Start"
-msgstr "_Cyklus Start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Decrease Contrast"
-msgstr "_Snížit kontrast"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "_Diffmax"
-msgstr "_Diffmax"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_End Colour"
-msgstr "_Koncová barva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_End Size X:"
@@ -12142,66 +11769,65 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "_End amount"
-msgstr "_Koncové množství"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "_Fade level"
-msgstr "Úroveň _stmívání"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "_Fade start"
-msgstr "_Stmívání start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Fill colour"
-msgstr "_Vyplnit barvou"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_First frame"
-msgstr "_První snímek"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Flash for"
-msgstr "_Záblesk"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
-msgstr "_Písmo"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Frames per second"
-msgstr "_Snímky za vteřinu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Frames"
-msgstr "_Snímky"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Hold for"
-msgstr "_Rezervovat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
-msgstr "_Horizontální prvky"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Image File"
-msgstr "Soubor _obrázku"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "_Image"
-msgstr "Soubor _obrázku"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
-msgstr "_Zvýšit kontrast"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_Init Size X:"
@@ -12213,463 +11839,459 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "_Levels"
-msgstr "_Levels"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Link start and end colours"
-msgstr "_Spoj počáteční a koncové barvy"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "_Max zoom x 10"
-msgstr "_Max zoom x 10"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Middle"
-msgstr "_Uprostřed"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-#, fuzzy
 msgid "_Midtone"
-msgstr "_Uprostřed"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Negate"
-msgstr "_Negativ"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Number of frames"
-msgstr "Počet s_nímků"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset X"
-msgstr "_Odsazení X"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset Y"
-msgstr "_Odsazení Y"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Other Center"
-msgstr "_Jiný střed"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "_Other"
-msgstr "_Jiný"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Point size"
-msgstr "_Velikost bodu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "_Radius end"
-msgstr "_Poloměr konec"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "_Radius start"
-msgstr "_Poloměr start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "_Radius"
-msgstr "_Poloměr"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Random colour each frame"
-msgstr "_Náhodná barva pro každý snímek"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "_Randomness"
-msgstr "_Nepravidelnost"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Right"
-msgstr "_Vpravo"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Rotate Selection by"
-msgstr "_Otoč výběr o"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
-msgstr "_Přizpůsobit otočené okno velikosti snímku"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "_Sigma end"
-msgstr "_Sigma konec"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "_Sigma start"
-msgstr "_Sigma start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Skip ahead"
-msgstr "_Přeskočit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
-msgstr "_Přeskočit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "_Source Colour"
-msgstr "_Zdrojová barva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "_Splice"
-msgstr "_Spojit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Start Colour"
-msgstr "_Počáteční barva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "_Start Value"
-msgstr "_Počáteční hodnota"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "_Start amount"
-msgstr "_Počáteční množství"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Stroke colour"
-msgstr "_Vytáhnout barvu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "_Target Colour"
-msgstr "_Cílová barva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Text"
-msgstr "_Text"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Time (seconds)"
-msgstr "_Časová osa (seconds)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Top left is clipboard"
-msgstr "_Schránka je vlevo nahoře"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Vertical segments"
-msgstr "_Vertikální prvky"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "_Wavemax"
-msgstr "_Maximální vlny"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
-msgstr "_Bílá je transparentní"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "_Wrap Around"
-msgstr "_Zalomení"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_X Center"
-msgstr "_X Střed"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
-msgstr "_X End"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X Start"
-msgstr "_X Start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_X offset"
-msgstr "_X odsazení"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Y Center"
-msgstr "_Y Střed"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
-msgstr "_Y Konec"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y Start"
-msgstr "_Y Start"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Y offset"
-msgstr "_Y odsazení"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "_degrees"
-msgstr "_°"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "_then"
-msgstr "_pak"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "blank_frames"
-msgstr "prázdné_snímky"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
-msgstr "rozostření"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 msgid "brightness_change"
-msgstr "změna_jasu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "charcoal"
-msgstr "uhel"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "colorize"
-msgstr "obarvit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "colour_filter"
-msgstr "barevný_filtr"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "colour_replace"
-msgstr "colour_replace"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "contrast"
-msgstr "kontrast"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "cycle"
-msgstr "cyklus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "deinterlace"
-msgstr "odstranit prokládání"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "despeckle"
-msgstr "vyhlazení"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "dream"
-msgstr "zasnít"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "edge_detect"
-msgstr "detekce_obrysu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "emboss"
-msgstr "zpracovat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 msgid "enhance"
-msgstr "vylepšit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
-msgstr "každý"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "fade_in_out"
-msgstr "Ztlumit zvuk"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
-msgstr "fc"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "flip"
-msgstr "převrátit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "flop"
-msgstr "překlopit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "frame_calculator"
-msgstr "_kalkulátor snímků"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "gamma_change"
-msgstr "gamma_změna"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 msgid "gen_blank_frames"
-msgstr "gen_blank_frames"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "gen_clip_from_image"
-msgstr "gen_clip_from_image"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "gen_coloured_frames"
-msgstr "gen_coloured_frames"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
-msgstr "gen_text"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "hue_change"
-msgstr "změna_odstínu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "image_overlay"
-msgstr "Překrýt textem"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"
-msgstr "zpřeházet"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "modulate"
-msgstr "modulovat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
-msgstr "černobílý"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "negate"
-msgstr "negativ"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
-msgstr "zašumět"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 msgid "normalize"
-msgstr "normalizovat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
-msgstr "foto_grafie"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 msgid "pixilate"
-msgstr "pixelovat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "posterize"
-msgstr "posterizovat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
-msgstr "náhodný zoom"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 msgid "resize"
-msgstr "změnit velikost"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "rotate"
-msgstr "otočit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "saturation_change"
-msgstr "změna_nasycení"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "sepia"
-msgstr "sépie"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "shift_horizontal"
-msgstr "posun_vodorovně"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "shift_vertical"
-msgstr "posun_svisle"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "shrink_expand"
-msgstr "zmenšit_roztáhnout"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "skip_forwards"
-msgstr "skip_forwards"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "solarize"
-msgstr "solarizovat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
-msgstr "otočení"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "spread"
-msgstr "rozptýlit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "swirl"
-msgstr "vír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
-msgstr "textover"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "transition_bwthresh"
-msgstr "přechod_čbpráh"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "transition_checkerboard"
-msgstr "přechod_inspektor plochy"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "transition_fade2"
-msgstr "přechod_stmívání2"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "transition_splice"
-msgstr "přechod_spojit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "trim_frames"
-msgstr "oříznout_snímky"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "tunnel"
-msgstr "tunnel"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "wave"
-msgstr "vlna"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Unable to open output file !"
-msgstr "Nelze otevřít výstupní soubor !"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "LiVES could not write to $nfile."
-msgstr "LiVES nemůže zapsat do $nfile."
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Unable to locate the program $rfx_builder_multi"
-msgstr "Nemohu nalézt program $rfx_builder_multi"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "$file"
-msgstr "$file"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "could not be found"
@@ -12677,7 +12299,7 @@ msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "LiVES was unable to open it."
-msgstr "LiVES není schopen toto otevřít."
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Please check the file name and try again."
@@ -12697,376 +12319,40 @@ msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "This does not appear to be a valid video or image file"
-msgstr "Nevypadá to na platné video, nebo obrázek."
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Error creating new backup."
-msgstr "Chyba při tvorbě nové zálohy."
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "This does not appear to be a valid backup file"
-msgstr "Nezdá se, že by toto bylo platným záložním souborem"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "LiVES was not able to open the file"
-msgstr "LiVES není schopen otevřít tento soubor"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "LiVES audio error."
-msgstr "LiVES: nastala chyba se zvukem"
+msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "cdda2wav or icedax is required for this function."
-msgstr "pro tuto funkci je potřeba cdda2wav"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Please install it first."
-msgstr "Nejdříve si to prosím nainstalujte."
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "You must set the CD device first in Preferences."
-msgstr "Nejdříve musíte v Nastavení nastavit CD mechaniku"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "$plugin_name failed:"
-msgstr "$plugin_name selhalo:"
+msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "$error"
-msgstr "$error"
-
-#, fuzzy
-#~ msgid "Audio source:"
-#~ msgstr "Zvukový kodek"
-
-#, fuzzy
-#~ msgid "Compact View"
-#~ msgstr "Kompaktní pohled"
-
-#~ msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
-#~ msgstr ""
-#~ "LiVES-%s: <Bezejmenný%d> %dx%d : %d snímků, %d bitů na pixel, %.3f snímků/"
-#~ "s"
-
-#~ msgid "mplayer...detected..."
-#~ msgstr "mplayer... nalezen..."
-
-#~ msgid "mplayer...NOT DETECTED..."
-#~ msgstr "mplayer... NENALEZEN..."
-
-#, fuzzy
-#~ msgid "mplayer2...detected..."
-#~ msgstr "mplayer... nalezen..."
-
-#, fuzzy
-#~ msgid "mplayer2...NOT DETECTED..."
-#~ msgstr "mplayer... NENALEZEN..."
-
-#~ msgid "convert...detected..."
-#~ msgstr "convert... nalezen..."
-
-#~ msgid "convert...NOT DETECTED..."
-#~ msgstr "convert... NENALEZEN..."
-
-#~ msgid "composite...detected..."
-#~ msgstr "composite... nalezen..."
-
-#~ msgid "composite...NOT DETECTED..."
-#~ msgstr "composite... NENALEZEN..."
-
-#~ msgid "sox...detected\n"
-#~ msgstr "sox... nalezen\n"
-
-#~ msgid "sox...NOT DETECTED\n"
-#~ msgstr "sox... NENALEZEN\n"
-
-#, fuzzy
-#~ msgid "cdda2wav/icedax...detected..."
-#~ msgstr "cdda2wav... nalezen..."
-
-#, fuzzy
-#~ msgid "cdda2wav/icedax...NOT DETECTED..."
-#~ msgstr "cdda2wav... NENALEZEN..."
-
-#~ msgid "jackd...detected..."
-#~ msgstr "jackd... nalezen..."
-
-#~ msgid "jackd...NOT DETECTED..."
-#~ msgstr "jackd... NENALEZEN..."
-
-#~ msgid "pulse audio...detected..."
-#~ msgstr "pulse audio...wykryto..."
-
-#~ msgid "pulse audio...NOT DETECTED..."
-#~ msgstr "pulse audio...NIE WYKRYTO..."
-
-#~ msgid "python...detected..."
-#~ msgstr "python... nalezen..."
-
-#~ msgid "python...NOT DETECTED..."
-#~ msgstr "python... NENALEZEN..."
-
-#~ msgid "dvgrab...detected..."
-#~ msgstr "dvgrab... nalezen..."
-
-#~ msgid "dvgrab...NOT DETECTED..."
-#~ msgstr "dvgrab... NENALEZEN..."
-
-#~ msgid "xwininfo...detected..."
-#~ msgstr "xwininfo... nalezeno..."
-
-#~ msgid "xwininfo...NOT DETECTED..."
-#~ msgstr "xwininfo... NENALEZENO..."
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "LiVES currently requires either 'mplayer', 'mplayer2', 'mpv', or 'sox' to "
-#~ "function. Please install one or other of these, and try again.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "LiVES pro provoz momentálně vyžaduje 'mplayer', nebo 'sox'. Nainstalujte "
-#~ "jeden z nich a zkuste to znovu.\n"
-
-#~ msgid "Check the terminal window for more details."
-#~ msgstr "Pro více podrobností se podívejte se do okna Terminálu."
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "LiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. "
-#~ msgstr ""
-#~ "\n"
-#~ "LiVES nebyl schopen najít 'mplayer'. Instalací 'mplayer' získáte plně "
-#~ "funkční LiVES.\n"
-
-#~ msgid "Failed to start generator %s, error %d\n"
-#~ msgstr "Nepodařilo se spustit generátor %s, chyba %d\n"
-
-#~ msgid "Right audio"
-#~ msgstr "Pravý zvuk"
-
-#, fuzzy
-#~ msgid "f"
-#~ msgstr "fc"
-
-#~ msgid "Show affected _layouts"
-#~ msgstr "Zobrazit postižených _rozložení"
-
-#~ msgid ""
-#~ "You can use the following keys during playback to control LiVES:-\n"
-#~ "\n"
-#~ "Recordable keys (press 'r' before playback to make a recording)\n"
-#~ "-----------------------\n"
-#~ "ctrl-left                     skip back\n"
-#~ "ctrl-right                   skip forwards\n"
-#~ "ctrl-up                      faster/increase effect\n"
-#~ "ctrl-down                 slower/decrease effect\n"
-#~ "ctrl-enter                    reset frame rate\n"
-#~ "ctrl-space                reverse direction\n"
-#~ "ctrl-backspace         freeze frame\n"
-#~ "n                             nervous\n"
-#~ "ctrl-page up            previous clip\n"
-#~ "ctrl-page down        next clip\n"
-#~ "\n"
-#~ "ctrl-1                       toggle real-time effect 1\n"
-#~ "ctrl-2                       toggle real-time effect 2\n"
-#~ "                                          ...etc...\n"
-#~ "ctrl-0                       real-time effects off\n"
-#~ "\n"
-#~ "k           grab keyboard for last activated effect\n"
-#~ "m         switch effect mode (when effect has keyboard grab)\n"
-#~ "x                     swap background/foreground\n"
-#~ "f1                           store/switch to clip mnemonic 1\n"
-#~ "f2                           store/switch to clip mnemonic 2\n"
-#~ "                                          ...etc...\n"
-#~ "f12                          clear function keys\n"
-#~ "\n"
-#~ "\n"
-#~ " Other playback keys\n"
-#~ "-----------------------------\n"
-#~ "p                             play all\n"
-#~ "y                             play selection\n"
-#~ "q                             stop\n"
-#~ "f                               fullscreen\n"
-#~ "s                              separate window\n"
-#~ "d                             double size\n"
-#~ "g                             ping pong loops\n"
-#~ msgstr ""
-#~ "Můžete použít následující tlačítka během přehrávání ovládat LiVES:-\n"
-#~ "\n"
-#~ "Zapisovatelné klíče (press 'r' před přehrávání, aby se nahrávání)\n"
-#~ "-----------------------\n"
-#~ "ctrl-levý dozadu\n"
-#~ "ctrl-pravý přeskočit vpřed\n"
-#~ "ctrl-rychleji / zvýšení účinku\n"
-#~ "ctrl-dolů pomaleji / snížení účinku\n"
-#~ "ctrl-poslat reset frame rate\n"
-#~ "ctrl-prostor opačném směru\n"
-#~ "ctrl-backspace Freeze Frame\n"
-#~ "n nervózní\n"
-#~ "ctrl-page up předchozí klip\n"
-#~ "ctrl-strana dole další klip\n"
-#~ "\n"
-#~ "ctrl-1 přepínat v reálném čase efekt 1\n"
-#~ "ctrl-2 kloubovými v reálném čase efekt 2\n"
-#~ "... atd. ..\n"
-#~ "ctrl-0 v reálném čase efekty off\n"
-#~ "\n"
-#~ "k uchopení klávesnice pro poslední aktivovaný efekt\n"
-#~ "m přepnout efekt režimu (při efekt klávesnice drapák)\n"
-#~ "x swap pozadí / popředí\n"
-#~ "F1 / přejít na klip mnemotechnický 1\n"
-#~ "f2 ukládání a přejít na klip mnemotechnický 2\n"
-#~ "... atd. ..\n"
-#~ "f12 jasné funkční klávesy\n"
-#~ "\n"
-#~ "\n"
-#~ "Ostatní tlačítka přehrávání\n"
-#~ "-----------------------------\n"
-#~ "p hrát všechny\n"
-#~ "y hrát výběr\n"
-#~ "q stop\n"
-#~ "f celou obrazovku\n"
-#~ "s samostatném okně\n"
-#~ "d dvojí rozměr\n"
-#~ "g smyčky ping pong\n"
-
-#~ msgid "mplayer"
-#~ msgstr "mplayer"
-
-#, fuzzy
-#~ msgid "mplayer2"
-#~ msgstr "mplayer"
-
-#~ msgid "Multitrack _details"
-#~ msgstr "_Detaily o multitracku"
-
-#~ msgid "LiVES: - Play Window"
-#~ msgstr "LiVES: - Přehrávací okno"
-
-#~ msgid "LiVES: - Insert"
-#~ msgstr "LiVES: - Vložit"
-
-#~ msgid "LiVES: - Open Selection"
-#~ msgstr "LiVES: - Otevřít výběr"
-
-#~ msgid "LiVES: - Rename Clip"
-#~ msgstr "LiVES: - Přejmenovat klip"
-
-#~ msgid "LiVES:- Load CD Track"
-#~ msgstr "LiVES:- Zavést CD stopu"
-
-#~ msgid "LiVES:- Fade Audio In"
-#~ msgstr "LiVES: - Postupně zesílit zvuk"
-
-#~ msgid "LiVES:- Fade Audio Out"
-#~ msgstr "LiVES: - Postupně ztišit zvuk"
-
-#~ msgid "LiVES: Selected frame"
-#~ msgstr "LiVES: Vybrané snímky"
-
-#~ msgid "LiVES: - Warning !"
-#~ msgstr "LiVES: - Varování !"
-
-#, fuzzy
-#~ msgid "LiVES: - Error !"
-#~ msgstr "LiVES: - Varování !"
-
-#~ msgid "LiVES: - Select Colour"
-#~ msgstr "LiVES: - Výběr barvy"
-
-#~ msgid "Click to set the colour"
-#~ msgstr "Klikněte pro nastavení barvy"
-
-#~ msgid "The red value (0 - 255)"
-#~ msgstr "Červená (0 - 255)"
-
-#~ msgid "The green value (0 - 255)"
-#~ msgstr "Zelená (0 -255)"
-
-#~ msgid "The blue value (0 - 255)"
-#~ msgstr "Modrá (0 - 255)"
-
-#~ msgid "LiVES: - RFX Parameters"
-#~ msgstr "LiVES: - RFX parametry"
-
-#~ msgid "LiVES: - Loop Code"
-#~ msgstr "LiVES: - Smyčkový kód"
-
-#~ msgid "LiVES: - Rename test RFX Script"
-#~ msgstr "LiVES: - Přejmenovat testovací RFX skript"
-
-#~ msgid "LiVES: - Preferences"
-#~ msgstr "LiVES: - Předvolby"
-
-#~ msgid "LiVES: - Resample Audio"
-#~ msgstr "LiVES: - Převzorkovat zvuk"
-
-#~ msgid "LiVES: - Insert Silence"
-#~ msgstr "LiVES: - Vsunout ticho"
-
-#~ msgid "LiVES: - New Clip Audio"
-#~ msgstr "LiVES: - Nový zvukový klip"
-
-#~ msgid "LiVES: - Change playback speed"
-#~ msgstr "LiVES: - Změnit rychlost přehrávání"
-
-#~ msgid "LiVES: - Resample Video"
-#~ msgstr "LiVES: - Převzorkovat video"
-
-#~ msgid "LiVES: Real time effect mapping"
-#~ msgstr "LiVES: Zobrazování real time efektu"
-
-#~ msgid "_Mouse mode: Move"
-#~ msgstr "_Mód myši: Posun"
-
-#~ msgid "_Mouse mode: Select"
-#~ msgstr "_Mód myši: Výběr"
-
-#~ msgid "LiVES: Selected effect"
-#~ msgstr "LiVES: Vybraný efekt"
-
-#~ msgid "_Width           "
-#~ msgstr "_Šířka           "
-
-#~ msgid "Unable to resize, please install imageMagick\n"
-#~ msgstr "Nelze změnit velikost, nainstalujete imageMagick\n"
-
-#~ msgid "Close _Window"
-#~ msgstr "_Zavřít okno"
-
-#~ msgid "Pause"
-#~ msgstr "Pauza"
-
-#~ msgid "Start frame"
-#~ msgstr "První snímek"
-
-#~ msgid "End frame"
-#~ msgstr "Poslední snímek"
-
-#~ msgid "                                                            "
-#~ msgstr "                                                            "
-
-#~ msgid "warning"
-#~ msgstr "varování"
-
-#~ msgid "LiVES: recover layout ?"
-#~ msgstr "LiVES: zpět layout ?"
-
-#~ msgid "Couldn't find pixmap file: %s"
-#~ msgstr "Nenalezen pixmap soubor: %s"
-
-#~ msgid "No Description"
-#~ msgstr "Bez popisu"
-
-#~ msgid "Default value:    "
-#~ msgstr "Výchozí hodnota:    "
-
-#~ msgid "Minimum value: "
-#~ msgstr "Minimální hodnota: "
-
-#~ msgid "Maximum value: "
-#~ msgstr "Maximální hodnota: "
+msgstr ""

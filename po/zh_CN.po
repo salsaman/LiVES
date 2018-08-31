@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2018-08-27 02:32-0300\n"
+"POT-Creation-Date: 2018-08-30 23:16-0300\n"
 "PO-Revision-Date: 2015-04-05 16:35+0000\n"
 "Last-Translator: Timothy Gu <timothy_gu@hotmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -10965,12 +10965,12 @@ msgstr "帧率(_R)"
 msgid "discrimination"
 msgstr ""
 
-#: src/omc-learn.c:2403
+#: src/omc-learn.c:2402
 #, c-format
 msgid "Saving device mapping to file %s..."
 msgstr "正在将设备映射保存为文件 %s..."
 
-#: src/omc-learn.c:2505
+#: src/omc-learn.c:2504
 #, c-format
 msgid ""
 "\n"
@@ -10983,7 +10983,7 @@ msgstr ""
 "解析文件出错\n"
 "%s\n"
 
-#: src/omc-learn.c:2513
+#: src/omc-learn.c:2512
 #, c-format
 msgid ""
 "\n"
@@ -10996,12 +10996,12 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/omc-learn.c:2553
+#: src/omc-learn.c:2552
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr "正从文件 %s 加载设备映射..."
 
-#: src/omc-learn.c:2556
+#: src/omc-learn.c:2555
 #, c-format
 msgid ""
 "\n"
@@ -11016,16 +11016,16 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/omc-learn.c:2784
+#: src/omc-learn.c:2783
 msgid "MIDI receive channel was set to ALL CHANNELS\n"
 msgstr ""
 
-#: src/omc-learn.c:2785
+#: src/omc-learn.c:2784
 #, c-format
 msgid "MIDI receive channel was set to channel %d\n"
 msgstr ""
 
-#: src/omc-learn.c:2790
+#: src/omc-learn.c:2789
 msgid ""
 "The MIDI receive channel setting was updated by the device map.\n"
 "Please review the setting in Preferences and adjust it if necessary.\n"
@@ -11263,8 +11263,9 @@ msgid "Cycle _Step"
 msgstr "起始(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+#, fuzzy
 msgid "Deinterlace"
-msgstr ""
+msgstr "指针(_P)"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlacing"
@@ -12269,8 +12270,9 @@ msgid "cycle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+#, fuzzy
 msgid "deinterlace"
-msgstr ""
+msgstr "指针(_P)"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "despeckle"

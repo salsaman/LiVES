@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: lives 2.10.0-svn\n"
+"Project-Id-Version: lives 2.10.0\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2018-08-27 02:32-0300\n"
+"POT-Creation-Date: 2018-08-30 23:16-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -10409,12 +10409,12 @@ msgstr ""
 msgid "discrimination"
 msgstr ""
 
-#: src/omc-learn.c:2403
+#: src/omc-learn.c:2402
 #, c-format
 msgid "Saving device mapping to file %s..."
 msgstr ""
 
-#: src/omc-learn.c:2505
+#: src/omc-learn.c:2504
 #, c-format
 msgid ""
 "\n"
@@ -10423,7 +10423,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/omc-learn.c:2513
+#: src/omc-learn.c:2512
 #, c-format
 msgid ""
 "\n"
@@ -10432,12 +10432,12 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/omc-learn.c:2553
+#: src/omc-learn.c:2552
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr ""
 
-#: src/omc-learn.c:2556
+#: src/omc-learn.c:2555
 #, c-format
 msgid ""
 "\n"
@@ -10447,16 +10447,16 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/omc-learn.c:2784
+#: src/omc-learn.c:2783
 msgid "MIDI receive channel was set to ALL CHANNELS\n"
 msgstr ""
 
-#: src/omc-learn.c:2785
+#: src/omc-learn.c:2784
 #, c-format
 msgid "MIDI receive channel was set to channel %d\n"
 msgstr ""
 
-#: src/omc-learn.c:2790
+#: src/omc-learn.c:2789
 msgid ""
 "The MIDI receive channel setting was updated by the device map.\n"
 "Please review the setting in Preferences and adjust it if necessary.\n"

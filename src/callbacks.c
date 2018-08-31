@@ -9898,6 +9898,8 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
     if (!cfile->play_paused && prefs->audio_player == AUD_PLAYER_JACK && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) &&
         mainw->jackd != NULL && mainw->jackd->playing_file == mainw->current_file) {
       mainw->jackd->sample_in_rate = cfile->arate * cfile->pb_fps / cfile->fps;
+      mainw->jackd->audio_ticks = mainw->currticks;
+      mainw->jackd->frames_written = 0;
     }
     mainw->jackd->is_paused = cfile->play_paused;
   }
@@ -9905,9 +9907,12 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
   else jack_pb_start();
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+  if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
     if (!cfile->play_paused && mainw->pulsed != NULL && mainw->pulsed->playing_file == mainw->current_file) {
       mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps;
+      mainw->pulsed->audio_ticks = mainw->currticks;
+      mainw->pulsed->frames_written = 0;
+      mainw->pulsed->usec_start = 0;
     }
     mainw->pulsed->is_paused = cfile->play_paused;
   }

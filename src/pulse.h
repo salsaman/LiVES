@@ -78,7 +78,8 @@ typedef struct {
 
   boolean is_paused;
 
-  volatile int64_t audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
+  volatile int64_t
+  audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio, in tandem with frames_written
 
   int fd; /**< if >0 we are playing from a lives_clip_t */
   volatile off_t seek_pos;

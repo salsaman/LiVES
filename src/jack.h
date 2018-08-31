@@ -83,8 +83,9 @@ typedef struct {
   boolean             jackd_died;                    /**< true if jackd has died and we should try to restart it */
 
   boolean play_when_stopped; ///< if we should play audio even when jack transport is stopped
-  uint64_t audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
-  uint64_t frames_written;
+  volatile uint64_t
+  audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio in tandem with frames_written
+  volatile uint64_t frames_written;
 
   int out_chans_available;
   int in_chans_available;

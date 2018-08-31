@@ -5,11 +5,10 @@ ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES,2.10.0-svn,https://sourceforge.net/p/lives/bugs/,,http://lives-video.com)
+AC_INIT(LiVES,2.10.0,https://sourceforge.net/p/lives/bugs/,,http://lives-video.com)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
-
 
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -144,7 +143,7 @@ AM_CONDITIONAL(ENABLE_PROFILING, test $profiling != no)
 dnl Check for pkg-config
 
 if test "$IS_MINGW" = "true"; then
-AC_PATH_PROG(PKG_CONFIG, i686-pc-mingw32-pkg-config, no)
+AC_PATH_PROG(PKG_CONFIG, i686-w64-mingw32-pkg-config, no)
 else
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 fi

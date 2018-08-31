@@ -6152,7 +6152,7 @@ void load_frame_image(int frame) {
 
       pd_array = weed_get_voidptr_array(frame_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
 
-      if (mainw->stream_ticks == -1) mainw->stream_ticks = (mainw->currticks);
+      if (mainw->stream_ticks == -1) mainw->stream_ticks = mainw->currticks;
 
       if (rec_after_pb) {
         // record output from playback plugin
@@ -6393,7 +6393,7 @@ void load_frame_image(int frame) {
 
       }
 
-      if (mainw->stream_ticks == -1) mainw->stream_ticks = (mainw->currticks);
+      if (mainw->stream_ticks == -1) mainw->stream_ticks = mainw->currticks;
 
       // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
       compact_rowstrides(frame_layer);

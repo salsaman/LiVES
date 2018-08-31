@@ -1421,6 +1421,23 @@ static void clock_upd(GdkFrameClock *clock, gpointer user_data) {
 #endif
 
 
+static void reset_timebase() {
+  // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
+#ifdef USE_MONOTONIC_TIME
+  mainw->origsecs = 0; // not used
+  mainw->origusecs = lives_get_monotonic_time();
+#else
+
+  /***************************************************/
+  gettimeofday(&tv, NULL);
+  /***************************************************/
+
+  mainw->origsecs = tv.tv_sec;
+  mainw->origusecs = tv.tv_usec;
+#endif
+}
+
+
 boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text) {
   // monitor progress, return FALSE if the operation was cancelled
 
@@ -1568,19 +1585,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   last_sc_ticks = 0;
   consume_ticks = 0;
 
-  // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
-#ifdef USE_MONOTONIC_TIME
-  mainw->origsecs = 0; // not used
-  mainw->origusecs = lives_get_monotonic_time();
-#else
-
-  /***************************************************/
-  gettimeofday(&tv, NULL);
-  /***************************************************/
-
-  mainw->origsecs = tv.tv_sec;
-  mainw->origusecs = tv.tv_usec;
-#endif
+  reset_timebase();
 
 #ifdef ENABLE_JACK
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_JACK &&
@@ -1596,7 +1601,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     }
     end_threaded_dialog();
     if (mainw->cancelled != CANCEL_NONE) return FALSE;
+    reset_timebase();
   }
+  if (mainw->jackd_read != NULL) mainw->jackd_read->is_paused = FALSE;
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
@@ -1617,8 +1624,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     }
     end_threaded_dialog();
     if (mainw->cancelled != CANCEL_NONE) return FALSE;
+    reset_timebase();
   }
+  if (mainw->pulsed_read != NULL) mainw->pulsed_read->is_paused = FALSE;
 #endif
+
+  if (mainw->record) mainw->record_paused = FALSE;
 
   if (!visible) {
     // video playback

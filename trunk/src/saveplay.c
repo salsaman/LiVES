@@ -2479,12 +2479,12 @@ void play_file(void) {
           mainw->jackd->in_use = TRUE;
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
             jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-          mainw->jackd_read->in_use = TRUE;
         } else {
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
             jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-          mainw->jackd_read->in_use = TRUE;
         }
+        mainw->jackd_read->is_paused = TRUE;
+        mainw->jackd_read->in_use = TRUE;
       }
       mainw->jackd->frames_written = 0;
 #endif
@@ -2498,12 +2498,12 @@ void play_file(void) {
           mainw->pulsed->in_use = TRUE;
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
             pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-          mainw->pulsed_read->in_use = TRUE;
         } else {
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
             pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-          mainw->pulsed_read->in_use = TRUE;
         }
+        mainw->pulsed_read->is_paused = TRUE;
+        mainw->pulsed_read->in_use = TRUE;
       }
       mainw->pulsed->frames_written = 0;
 #endif
@@ -2524,7 +2524,6 @@ void play_file(void) {
       if (mainw->multitrack != NULL) init_jack_audio_buffers(cfile->achans, cfile->arate, exact_preview);
       else init_jack_audio_buffers(DEFAULT_AUDIO_CHANS, DEFAULT_AUDIO_RATE, FALSE);
       has_audio_buffers = TRUE;
-
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO

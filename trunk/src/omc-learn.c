@@ -2342,14 +2342,13 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
               if (i == 1) oval1 = oval;
               if (macro != OSC_NOTIFY) {
                 OSC_writeIntArg(&obuf, oval);
-              } else {
-                double oval = (double)(vals[j] + mnode->offs0[j]) * mnode->scale[j] + (double)mnode->offs1[j];
-                if (macro == OSC_NOTIFY) {
-                  char *tmp; // send OSC notificion USER1
-                  lives_notify(LIVES_OSC_NOTIFY_USER1, (tmp = lives_strdup_printf("%d %f", oval0, oval)));
-                  lives_free(tmp);
-                } else OSC_writeFloatArg(&obuf, oval);
               }
+            } else {
+              double oval = (double)(vals[j] + mnode->offs0[j]) * mnode->scale[j] + (double)mnode->offs1[j];
+              if (macro == OSC_NOTIFY) {
+                char *tmp; // send OSC notificion USER1
+                lives_notify(LIVES_OSC_NOTIFY_USER1, (tmp = lives_strdup_printf("%d %f", oval0, oval)));
+              } else OSC_writeFloatArg(&obuf, oval);
             }
           }
         }

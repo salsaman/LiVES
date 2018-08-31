@@ -1,6 +1,6 @@
 // liblives.hpp
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman@gmail.com> 2015 - 2017
+// (c) G. Finch <salsaman+lives@gmail.com> 2015 - 2018
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 

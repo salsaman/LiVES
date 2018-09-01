@@ -823,7 +823,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->pre_src_file = -2;
   mainw->pre_src_audio_file = -1;
 
-  mainw->size_warn = FALSE;
+  mainw->size_warn = 0;
   mainw->dvgrab_preview = FALSE;
 
   mainw->file_open_params = NULL;
@@ -3242,14 +3242,20 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef ENABLE_OSC
         if (!strcmp(charopt, "devicemap") && optarg != NULL) {
           // force devicemap loading
-          char *dir;
+          char *dir, *devmap2;
           char devmap[PATH_MAX];
           lives_snprintf(devmap, PATH_MAX, "%s", optarg);
+          devmap2 = lives_strdup(devmap);
           dir = get_dir(devmap);
           get_basename(devmap);
+          if (!strcmp(devmap, devmap2)) {
+            lives_free(dir);
+            dir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, LIVES_DEVICEMAPS_DIR, NULL);
+          }
           lives_snprintf(devmap, PATH_MAX, "%s", (tmp = lives_build_filename(dir, devmap, NULL)));
           lives_free(tmp);
           lives_free(dir);
+          lives_free(devmap2);
           on_devicemap_load_activate(NULL, devmap);
           continue;
         }
@@ -6050,7 +6056,7 @@ void load_frame_image(int frame) {
       } else {
         if (!mainw->resizing && !cfile->opening) {
           // warn the user after playback that badly sized frames were found
-          mainw->size_warn = TRUE;
+          mainw->size_warn = mainw->current_file;
         }
       }
     }

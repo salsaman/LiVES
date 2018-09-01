@@ -19,7 +19,8 @@ Correct some minor GUI issues.
 -noset startup option now has a permanent effect.
 Add -asource [internal | external] startup option.
 Fix bug in setting loop mode via OSC.
-
+Fix broken framerate after pause / unpause during realtime playback.
+Updated translation to Czech (thanks to Pavel Borecki).
 
 
 

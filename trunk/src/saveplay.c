@@ -3052,9 +3052,14 @@ void play_file(void) {
     }
   }
   if (mainw->size_warn) {
-    do_error_dialog(
-      _("\n\nSome frames in this clip are wrongly sized.\nYou should click on Tools--->Resize All\nand resize all frames to the current size.\n"));
-    mainw->size_warn = FALSE;
+    if (mainw->size_warn > 0 && mainw->files[mainw->size_warn] != NULL) {
+      char *smsg = lives_strdup_printf(
+                     _("\n\nSome frames in the clip\n%s\nare wrongly sized.\nYou should click on Tools--->Resize All\nand resize all frames to the current size.\n"),
+                     mainw->files[mainw->size_warn]->name);
+      do_error_dialog(smsg);
+      lives_free(smsg);
+    }
+    mainw->size_warn = 0;
   }
   mainw->is_processing = mainw->preview;
 

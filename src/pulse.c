@@ -1,6 +1,6 @@
 // pulse.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2017
+// (c) G. Finch <salsaman+lives@gmail.com> 2005 - 2018
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1261,12 +1261,10 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       lives_usleep(prefs->sleep_time);
     }
-
   }
 
   return 0;
 }
-
 
 
 static void paop_done(pa_stream *s, int success, void *userdata) {

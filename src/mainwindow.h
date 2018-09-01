@@ -647,7 +647,7 @@ typedef struct {
   uint64_t stream_ticks;  ///< ticks since first frame sent to playback plugin
   uint64_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
 
-  boolean size_warn; ///< warn the user that incorrectly sized frames were found
+  int size_warn; ///< warn the user that incorrectly sized frames were found
 
   /// set to TRUE during frame load/display operation. If TRUE we should not switch clips,
   /// close the current clip, or call load_frame_image()

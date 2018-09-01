@@ -2275,7 +2275,6 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
               int omax = mnode->max[j];
               int mini = weed_get_int_value(ptmpl, WEED_LEAF_MIN, &error);
               int maxi = weed_get_int_value(ptmpl, WEED_LEAF_MAX, &error);
-
               int oval = (int)((double)(vals[j] - omin) / (double)(omax - omin) * (double)(maxi - mini)) + mini;
               OSC_writeIntArg(&obuf, oval);
             } else {
@@ -2284,7 +2283,6 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
               int omax = mnode->max[j];
               double minf = weed_get_double_value(ptmpl, WEED_LEAF_MIN, &error);
               double maxf = weed_get_double_value(ptmpl, WEED_LEAF_MAX, &error);
-
               double oval = (double)(vals[j] - omin) / (double)(omax - omin) * (maxf - minf) + minf;
               OSC_writeFloatArg(&obuf, (float)oval);
             } // end float
@@ -2316,7 +2314,6 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
                     int omax = mnode->max[j];
                     int mini = weed_get_int_value(ptmpl, WEED_LEAF_MIN, &error);
                     int maxi = weed_get_int_value(ptmpl, WEED_LEAF_MAX, &error);
-
                     int oval = (int)((double)(vals[j] - omin) / (double)(omax - omin) * (double)(maxi - mini)) + mini;
                     OSC_writeIntArg(&obuf, oval);
                   } else {
@@ -2325,7 +2322,6 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
                     int omax = mnode->max[j];
                     double minf = weed_get_double_value(ptmpl, WEED_LEAF_MIN, &error);
                     double maxf = weed_get_double_value(ptmpl, WEED_LEAF_MAX, &error);
-
                     double oval = (double)(vals[j] - omin) / (double)(omax - omin) * (maxf - minf) + minf;
                     OSC_writeFloatArg(&obuf, (float)oval);
                   } // end float
@@ -2337,7 +2333,6 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
           } else {
             if (omacro.ptypes[i] == OMC_PARAM_INT) {
               int oval = myround((double)(vals[j] + mnode->offs0[j]) * mnode->scale[j]) + mnode->offs1[j];
-
               if (i == 0) oval0 = oval;
               if (i == 1) oval1 = oval;
               if (macro != OSC_NOTIFY) {

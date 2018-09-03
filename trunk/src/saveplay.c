@@ -5719,7 +5719,6 @@ void rewrite_recovery_file(void) {
 
   if ((mainw->multitrack != NULL && mainw->multitrack->event_list != NULL) || mainw->stored_event_list != NULL)
     write_backup_layout_numbering(mainw->multitrack);
-
 }
 
 

@@ -4414,6 +4414,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
   }
 
   if (mainw->event_list == NULL) {
+    close_scrap_file();
+    close_ascrap_file();
     dprint_recneg();
     return FALSE;
   }

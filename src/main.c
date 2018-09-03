@@ -6802,10 +6802,11 @@ void load_frame_image(int frame) {
           if ((list_index = lives_list_previous(list_index)) == NULL) list_index = lives_list_last(mainw->cliplist);
           index = LIVES_POINTER_TO_INT(lives_list_nth_data(list_index, 0));
         } while ((mainw->files[index] == NULL || mainw->files[index]->opening || mainw->files[index]->restoring ||
-                  (index == mainw->scrap_file && index > -1) || (!mainw->files[index]->frames && mainw->playing_file > -1)) &&
+                  (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1) || (!mainw->files[index]->frames &&
+                      mainw->playing_file > -1)) &&
                  index != mainw->current_file);
         if (index == mainw->current_file) index = -1;
-        if (mainw->current_file != mainw->scrap_file) remove_from_clipmenu();
+        if (mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) remove_from_clipmenu();
       }
 
       if ((cfile->clip_type == CLIP_TYPE_FILE || cfile->clip_type == CLIP_TYPE_DISK) && cfile->ext_src != NULL) {

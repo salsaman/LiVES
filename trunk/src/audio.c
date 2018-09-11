@@ -879,6 +879,10 @@ static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer,
 
 static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned, boolean big_endian) {
   // fill to ins_pt with zeros (or 0x80.. for unsigned)
+  // oins_size is the current file length, ins_size is the point where we want append to (both in bytes)
+  // if ins size < oins_size we just seek to ins_size
+  // otherwise we pad from oins_size to ins_size
+
   uint8_t *zero_buff;
   size_t sblocksize = SILENCE_BLOCK_SIZE;
   int sbytes = ins_size - oins_size;
@@ -916,7 +920,7 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
     }
     lives_free(zero_buff);
   } else if (sbytes <= 0) {
-    lseek64(out_fd, oins_size + sbytes, SEEK_SET);
+    lseek64(out_fd, ins_size, SEEK_SET);
   }
   return retval;
 }
@@ -1095,7 +1099,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
     // fill to ins_pt with zeros
     pad_with_silence(out_fd, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
-
   } else {
     if (mainw->event_list != NULL) cfile->aseek_pos = fromtime[0];
 
@@ -1103,11 +1106,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     tc_start = 0;
 
     if (tsamples > obuf->samp_space - obuf->samples_filled) tsamples = obuf->samp_space - obuf->samples_filled;
-
   }
 
 #ifdef DEBUG_ARENDER
-  g_print("here %d %lld %lld %d\n", nfiles, tc_start, tc_end, to_file);
+  g_print("here %d %ld %ld %d\n", nfiles, tc_start, tc_end, to_file);
 #endif
 
   for (track = 0; track < nfiles; track++) {
@@ -1571,7 +1573,8 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   d_print(_("Recording audio..."));
   mainw->suppress_dprint = TRUE;
   if (rec_type == RECA_NEW_CLIP) {
-    do_auto_dialog(_("Recording audio"), 1);
+    mainw->jackd_read->in_use = TRUE;
+    do_auto_dialog(_("Recording audio..."), 1);
   } else {
     int current_file = mainw->current_file;
     mainw->current_file = old_file;
@@ -1723,10 +1726,14 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   mainw->suppress_dprint = FALSE;
   d_print(_("Recording audio..."));
   mainw->suppress_dprint = TRUE;
-  if (rec_type == RECA_NEW_CLIP) do_auto_dialog(_("Recording audio"), 1);
-  else {
+  if (rec_type == RECA_NEW_CLIP) {
+    mainw->pulsed_read->in_use = TRUE;
+    do_auto_dialog(_("Recording audio..."), 1);
+  } else {
     int current_file = mainw->current_file;
     mainw->current_file = old_file;
+    mainw->pulsed_read->is_paused = TRUE;
+    mainw->pulsed_read->in_use = TRUE;
     on_playsel_activate(NULL, NULL);
     mainw->current_file = current_file;
   }

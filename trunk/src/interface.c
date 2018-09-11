@@ -135,6 +135,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 
 xprocess *create_processing(const char *text) {
   LiVESWidget *dialog_vbox;
+  LiVESWidget *hbox;
   LiVESWidget *vbox2;
   LiVESWidget *vbox3;
 
@@ -184,18 +185,19 @@ xprocess *create_processing(const char *text) {
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   if (mainw->internal_messaging && mainw->rte != 0) {
     procw->label2 = lives_standard_label_new(_("\n\nPlease Wait\n\nRemember to switch off effects (ctrl-0) afterwards !"));
-  }
-#ifdef RT_AUDIO
-  else if (mainw->jackd_read != NULL || mainw->pulsed_read != NULL) procw->label2 = lives_label_new("");
-#endif
-  else procw->label2 = lives_standard_label_new(_("\nPlease Wait"));
+  } else procw->label2 = lives_standard_label_new(_("\nPlease Wait"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label2, FALSE, FALSE, 0);
 
-  procw->label3 = lives_hbox_new(FALSE, 0);
-  add_fill_to_box(LIVES_BOX(procw->label3));
+  procw->label3 = lives_standard_label_new("");
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label3, FALSE, FALSE, 0);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  add_fill_to_box(LIVES_BOX(hbox));
+  add_fill_to_box(LIVES_BOX(hbox));
+  add_fill_to_box(LIVES_BOX(hbox));
+  lives_box_pack_start(LIVES_BOX(vbox3), hbox, FALSE, FALSE, 0);
 
   if (mainw->iochan != NULL) {
     // add "show details" arrow

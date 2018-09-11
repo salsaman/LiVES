@@ -412,12 +412,13 @@ boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_n
     return TRUE;
   }
 
-  if (transient == NULL) transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
+  if (transient == NULL && prefs->show_gui) transient = get_transient_full();
 
   mytext = lives_strdup(text); // must copy this because of translation issues
 
   do {
-    warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext, lives_widget_is_visible(LIVES_WIDGET(transient)) ? transient : NULL,
+    warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext, (transient != NULL &&
+                                    lives_widget_is_visible(LIVES_WIDGET(transient))) ? transient : NULL,
                                     warn_mask_number, TRUE);
     response = lives_dialog_run(LIVES_DIALOG(warning));
     lives_widget_destroy(warning);
@@ -2051,8 +2052,7 @@ boolean do_auto_dialog(const char *text, int type) {
     }
   }
 
-  while ((type == 0 || ((type == 1 || type == 2) && mainw->cancelled == CANCEL_NONE))
-         && ((type == 1 || ((type == 0 || type == 2) && !(infofile = fopen(cfile->info_file, "r")))))) {
+  while (mainw->cancelled == CANCEL_NONE && !(infofile = fopen(cfile->info_file, "r"))) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
     lives_widget_context_update();
     lives_usleep(prefs->sleep_time);
@@ -2068,7 +2068,7 @@ boolean do_auto_dialog(const char *text, int type) {
         lives_label_set_text(LIVES_LABEL(proc_ptr->label2), label_text);
         lives_free(label_text);
         last_time_rem = time_rem;
-      }
+      } else if (time_rem < 0) break;
     }
   }
 
@@ -2078,7 +2078,6 @@ boolean do_auto_dialog(const char *text, int type) {
     fclose(infofile);
     infofile = NULL;
     if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
-
     while (!lives_alarm_get(alarm_handle)) {
       lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
       lives_widget_context_update();
@@ -2738,6 +2737,7 @@ static int64_t last_t;
 static void create_threaded_dialog(char *text, boolean has_cancel) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
+  LiVESWidget *hbox;
   char tmp_label[256];
   boolean nogui = widget_opts.no_gui;
 
@@ -2775,11 +2775,14 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(vbox), procw->label2, FALSE, FALSE, 0);
 
-  procw->label3 = lives_hbox_new(FALSE, 0);
-  add_fill_to_box(LIVES_BOX(procw->label3));
-  add_fill_to_box(LIVES_BOX(procw->label3));
-  add_fill_to_box(LIVES_BOX(procw->label3));
+  procw->label3 = lives_standard_label_new("");
   lives_box_pack_start(LIVES_BOX(vbox), procw->label3, FALSE, FALSE, 0);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  add_fill_to_box(LIVES_BOX(hbox));
+  add_fill_to_box(LIVES_BOX(hbox));
+  add_fill_to_box(LIVES_BOX(hbox));
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   if (has_cancel) {
     LiVESWidget *cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);

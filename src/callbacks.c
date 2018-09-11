@@ -972,7 +972,7 @@ void on_stop_clicked(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed != NULL && mainw->pulsed_read != NULL && mainw->pulsed->in_use) {
+  if (mainw->pulsed != NULL && mainw->pulsed_read != NULL && mainw->pulsed_read->in_use) {
     mainw->cancelled = CANCEL_KEEP;
     return;
   }
@@ -10004,11 +10004,12 @@ void on_toolbar_hide(LiVESButton *button, livespointer user_data) {
 
 
 void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  int curr_file = mainw->current_file;
-  char *com;
   char **array;
-  int response;
   double rec_end_time = -1.;
+  char *com;
+  boolean sgui;
+  int curr_file = mainw->current_file;
+  int response;
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
 #ifndef GDK_WINDOWING_X11
@@ -10101,9 +10102,13 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
   lives_widget_context_update();
 
+  sgui = prefs->show_gui;
+  prefs->show_gui = FALSE;
+
   if (!(do_warning_dialog(
           _("Capture an External Window:\n\nClick on 'OK', then click on any window to capture it\nClick 'Cancel' to cancel\n\n")))) {
-    if (prefs->show_gui) {
+    if (sgui) {
+      prefs->show_gui = TRUE;
       lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
     }
     d_print(_("External window was released.\n"));
@@ -10113,6 +10118,8 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
     return;
   }
+
+  prefs->show_gui = sgui;
 
   // an example of using 'get_temp_handle()' ////////
   if (!get_temp_handle(mainw->first_free_file, TRUE)) {
@@ -11059,14 +11066,16 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
   cfile->achans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
   cfile->asampsize = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
 
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->unlim_radiobutton))) {
-    mainw->rec_end_time = -1.;
-    mainw->rec_samples = -1;
-  } else {
-    mainw->rec_end_time = (lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->hour_spinbutton)) * 60.
-                           + lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->minute_spinbutton))) * 60.
-                          + lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->second_spinbutton));
-    mainw->rec_samples = mainw->rec_end_time * cfile->arate;
+  mainw->rec_samples = -1;
+  mainw->rec_end_time = -1.;
+
+  if (type == 0) {
+    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->unlim_radiobutton))) {
+      mainw->rec_end_time = (lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->hour_spinbutton)) * 60.
+                             + lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->minute_spinbutton))) * 60.
+                            + lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->second_spinbutton));
+      mainw->rec_samples = mainw->rec_end_time * cfile->arate;
+    }
   }
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
@@ -11128,13 +11137,11 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
     jack_rec_audio_to_clip(mainw->current_file, old_file, type == 0 ? RECA_NEW_CLIP : RECA_EXISTING);
-    mainw->jackd_read->in_use = TRUE;
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
     pulse_rec_audio_to_clip(mainw->current_file, old_file, type == 0 ? RECA_NEW_CLIP : RECA_EXISTING);
-    mainw->pulsed_read->in_use = TRUE;
   }
 #endif
 
@@ -11177,9 +11184,19 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
     aud_start = 0.;
     reget_afilesize(mainw->current_file);
     aud_end = cfile->laudio_time;
+
+    if (aud_end == 0.) {
+      end_threaded_dialog();
+      close_current_file(old_file);
+      mainw->suppress_dprint = FALSE;
+      d_print("nothing recorded...");
+      d_print_failed();
+      return;
+    }
+
     ins_pt = (mainw->files[old_file]->start - 1.) / mainw->files[old_file]->fps * TICKS_PER_SECOND_DBL;
 
-    if (!prefs->conserve_space) {
+    if (!prefs->conserve_space && oachans > 0) {
       mainw->error = FALSE;
       com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, mainw->files[old_file]->handle);
       lives_system(com, FALSE);
@@ -11187,6 +11204,8 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
 
       if (mainw->error) {
         end_threaded_dialog();
+        close_current_file(old_file);
+        mainw->suppress_dprint = FALSE;
         d_print_failed();
         return;
       }
@@ -11195,7 +11214,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
     mainw->read_failed = mainw->write_failed = FALSE;
     lives_freep((void **)&mainw->read_failed_file);
 
-    // copy audio from old clip to current
+    // insert audio from old (new) clip to current
     render_audio_segment(1, &(mainw->current_file), old_file, &vel, &aud_start, ins_pt,
                          ins_pt + (weed_timecode_t)((aud_end - aud_start)*TICKS_PER_SECOND_DBL), &vol, vol, vol, NULL);
 

@@ -2261,7 +2261,6 @@ capability *get_capabilities(void) {
 #endif
 
   memset(capable->startup_msg, 0, 1);
-
   // optional
   capable->has_mplayer = FALSE;
   capable->has_mplayer2 = FALSE;
@@ -2305,7 +2304,6 @@ capability *get_capabilities(void) {
   lives_snprintf(prefs->backend, PATH_MAX, "START /MIN /B perl \"%s\\%s\"", prefs->prefix_dir, BACKEND_NAME);
 
 #endif
-
   lives_snprintf(string, 256, "%s report \"%s\" 2>%s", prefs->backend_sync,
                  (tmp = lives_filename_from_utf8(safer_bfile, -1, NULL, NULL, NULL)),
                  LIVES_DEVNULL);
@@ -2582,78 +2580,78 @@ static boolean lives_startup(livespointer data) {
   boolean got_files = FALSE;
   char *tmp;
 
-  if (!mainw->foreign) {
-    if (prefs->show_splash) splash_init();
-    print_notice();
-  }
+  if (capable->smog_version_correct) {
+    if (!mainw->foreign) {
+      if (prefs->show_splash) splash_init();
+      print_notice();
+    }
 
-  if (!ign_opts.ign_aplayer) {
-    get_pref(PREF_AUDIO_PLAYER, buff, 256);
+    if (!ign_opts.ign_aplayer) {
+      get_pref(PREF_AUDIO_PLAYER, buff, 256);
 
-    if (!strcmp(buff, AUDIO_PLAYER_MPLAYER))
-      prefs->audio_player = AUD_PLAYER_MPLAYER;
-    if (!strcmp(buff, AUDIO_PLAYER_MPLAYER2))
-      prefs->audio_player = AUD_PLAYER_MPLAYER2;
-    if (!strcmp(buff, AUDIO_PLAYER_JACK))
-      prefs->audio_player = AUD_PLAYER_JACK;
-    if (!strcmp(buff, AUDIO_PLAYER_PULSE))
-      prefs->audio_player = AUD_PLAYER_PULSE;
-    lives_snprintf(prefs->aplayer, 512, "%s", buff);
-  }
+      if (!strcmp(buff, AUDIO_PLAYER_MPLAYER))
+        prefs->audio_player = AUD_PLAYER_MPLAYER;
+      if (!strcmp(buff, AUDIO_PLAYER_MPLAYER2))
+        prefs->audio_player = AUD_PLAYER_MPLAYER2;
+      if (!strcmp(buff, AUDIO_PLAYER_JACK))
+        prefs->audio_player = AUD_PLAYER_JACK;
+      if (!strcmp(buff, AUDIO_PLAYER_PULSE))
+        prefs->audio_player = AUD_PLAYER_PULSE;
+      lives_snprintf(prefs->aplayer, 512, "%s", buff);
+    }
 
 #ifdef HAVE_PULSE_AUDIO
-  if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_pulse_audio) {
-    prefs->audio_player = AUD_PLAYER_PULSE;
-    lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
-    set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
-  } else {
+    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_pulse_audio) {
+      prefs->audio_player = AUD_PLAYER_PULSE;
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
+      set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
+    } else {
 #endif
 
 #ifdef ENABLE_JACK
-    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_jackd) {
-      prefs->audio_player = AUD_PLAYER_JACK;
-      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
-      set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
-    }
+      if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_jackd) {
+        prefs->audio_player = AUD_PLAYER_JACK;
+        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
+        set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
+      }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-  }
+    }
 #endif
 
-  if (!ign_opts.ign_asource) prefs->audio_src = get_int_pref(PREF_AUDIO_SRC);
+    if (!ign_opts.ign_asource) prefs->audio_src = get_int_pref(PREF_AUDIO_SRC);
 
-  if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
-        capable->has_pulse_audio)) && prefs->audio_src == AUDIO_SRC_EXT) {
-    prefs->audio_src = AUDIO_SRC_INT;
-    set_int_pref(PREF_AUDIO_SRC, prefs->audio_src);
-  }
+    if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
+          capable->has_pulse_audio)) && prefs->audio_src == AUDIO_SRC_EXT) {
+      prefs->audio_src = AUDIO_SRC_INT;
+      set_int_pref(PREF_AUDIO_SRC, prefs->audio_src);
+    }
 
-  splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
+    splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
 
-  if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
-  create_LiVES();
-  widget_opts.apply_theme = FALSE;
+    if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
+    create_LiVES();
+    widget_opts.apply_theme = FALSE;
 
-  set_interactive(mainw->interactive);
+    set_interactive(mainw->interactive);
 
-  // needed to avoid priv->pulse2 > priv->pulse1 gtk error
-  lives_widget_context_update();
+    // needed to avoid priv->pulse2 > priv->pulse1 gtk error
+    lives_widget_context_update();
 
 #ifdef GUI_GTK
-  icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives.png", NULL);
-  gtk_window_set_default_icon_from_file(icon, &gerr);
-  lives_free(icon);
+    icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives.png", NULL);
+    gtk_window_set_default_icon_from_file(icon, &gerr);
+    lives_free(icon);
 
-  if (gerr != NULL) lives_error_free(gerr);
+    if (gerr != NULL) lives_error_free(gerr);
 #endif
 
-  lives_widget_queue_draw(mainw->LiVES);
-  lives_widget_context_update();
+    lives_widget_queue_draw(mainw->LiVES);
+    lives_widget_context_update();
 
-  mainw->startup_error = FALSE;
+    mainw->startup_error = FALSE;
 
-  if (capable->smog_version_correct) {
     if (theme_expected && palette->style == STYLE_PLAIN && !mainw->foreign) {
       // non-fatal errors
       char *tmp2;
@@ -3431,14 +3429,16 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   if (!ign_opts.ign_vppdefs)
     lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s/%svpp_defaults", capable->home_dir, LIVES_CONFIG_DIR);
 
-  get_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
-  if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
-    mainw->vpp = open_vid_playback_plugin(buff, TRUE);
-  } else if (prefs->startup_phase == 1 || prefs->startup_phase == -1) {
-    mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
-    if (mainw->vpp != NULL) {
-      lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
-      set_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
+  if (capable->smog_version_correct) {
+    get_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
+    if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
+      mainw->vpp = open_vid_playback_plugin(buff, TRUE);
+    } else if (prefs->startup_phase == 1 || prefs->startup_phase == -1) {
+      mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
+      if (mainw->vpp != NULL) {
+        lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
+        set_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
+      }
     }
   }
 
@@ -5770,7 +5770,7 @@ void load_frame_image(int frame) {
           } else {
             img_ext = LIVES_FILE_EXT_PRE;
           }
-          fname_next = make_image_file_name(cfile, frame + 1, LIVES_FILE_EXT_PRE);
+          fname_next = make_image_file_name(cfile, frame + 1, img_ext);
         }
       }
       mainw->actual_frame = frame;

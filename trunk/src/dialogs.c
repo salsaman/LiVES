@@ -1008,7 +1008,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
 }
 
 
-boolean process_one(boolean visible) {
+int process_one(boolean visible) {
   uint64_t new_ticks;
   uint64_t current_ticks;
   uint64_t sc_ticks = 0;
@@ -1233,9 +1233,9 @@ boolean process_one(boolean visible) {
       lives_widget_context_update(); // animate GUI, allow kb timer to run
 
       if (cfile->next_event == NULL && mainw->preview) mainw->cancelled = CANCEL_EVENT_LIST_END;
-      if (mainw->cancelled == CANCEL_NONE) return TRUE;
+      if (mainw->cancelled == CANCEL_NONE) return 0;
       cancel_process(visible);
-      return FALSE;
+      return mainw->cancelled;
     }
 
     // free playback
@@ -1404,13 +1404,13 @@ boolean process_one(boolean visible) {
 
     if (LIVES_UNLIKELY(mainw->cancelled != CANCEL_NONE)) {
       cancel_process(visible);
-      return FALSE;
+      return 1000000 + mainw->cancelled;
     }
-    return TRUE;
+    return 0;
   }
   cancel_process(visible);
 
-  return FALSE;
+  return 2000000 + mainw->cancelled;
 }
 
 #ifdef USE_GDK_FRAME_CLOCK
@@ -1768,8 +1768,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
                                             is_realtime_aplayer(prefs->audio_player)))) ||
                                           !lives_file_test(cfile->info_file, LIVES_FILE_TEST_EXISTS))) {
       // just pulse the progress bar, or play video
-      // returns FALSE if playback ended
-      if (!process_one(visible)) {
+      // returns a code if pb stopped
+      int ret;
+      if ((ret = process_one(visible))) {
+        //g_print("pb stopped, reason %d\n", ret);
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
         if (mainw->current_file > -1 && cfile != NULL) lives_freep((void **)&cfile->op_dir);
 #ifdef USE_GDK_FRAME_CLOCK
@@ -1892,7 +1894,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
 
       // do a processing pass
-      if (!process_one(visible)) {
+      if (process_one(visible)) {
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
         if (mainw->current_file > -1 && cfile != NULL) lives_freep((void **)&cfile->op_dir);
 #ifdef USE_GDK_FRAME_CLOCK

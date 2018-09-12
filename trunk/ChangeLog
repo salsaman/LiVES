@@ -5,7 +5,9 @@ Fix invisible window pre external window capture (regression).
 Fix regression in some preview displays.
 Fixes for Record External Audio.
 Fixes for showing time remaining in progress dialog (partial regression from 2.10.0)
+Ensure playback does not stop too soon in autolives mode.
 
+	
 
 	
 Version 2.10.0 (4 Sep 2018)

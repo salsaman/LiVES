@@ -17,6 +17,7 @@
 # -omc <notify_port>
 # -time <secs> (ignored if -omc is passed)
 # -mute
+# -loop (set continuous looping, ignored if -waitforplay is passed)
 # -debug
 
 $remote_host="localhost";
@@ -24,6 +25,7 @@ $remote_port=49999; #command port to app
 $local_port=49998; #status port from app
 $ctime = 1; # default change time
 $mute = 0;
+$loop = 0;
 $DEBUG = 0;
 
 if (defined($ARGV[0])) {
@@ -58,6 +60,9 @@ while (($opt = shift) ne "") {
     }
     if ($opt eq "-waitforplay") {
 	$waitforplay = 1;
+    }
+    if ($opt eq "-loop") {
+	$loop = 1;
     }
     if ($opt eq "-debug") {
 	$DEBUG = 1;
@@ -207,17 +212,19 @@ else {
 
 $playstat=&get_newmsg;
 
-if ($^O eq "MSWin32") {
-    `$sendOMC /lives/constant/value/get s LIVES_LOOP_MODE_CONTINUOUS`;
-}
-else {
-    `$sendOMC /lives/constant/value/get,LIVES_LOOP_MODE_CONTINUOUS`;
-}
-$loopconst=&get_newmsg;
+if ($loop) {
+    if ($^O eq "MSWin32") {
+	`$sendOMC /lives/constant/value/get s LIVES_LOOP_MODE_CONTINUOUS`;
+    }
+    else {
+	`$sendOMC /lives/constant/value/get,LIVES_LOOP_MODE_CONTINUOUS`;
+    }
+    $loopconst=&get_newmsg;
 
-# get current loop mode
-`$sendOMC /video/loop/get`;
-$currloop=&get_newmsg;
+    # get current loop mode
+    `$sendOMC /video/loop/get`;
+    $currloop=&get_newmsg;
+}
 
 if ($mute) {
     #mute the sound if requested
@@ -235,10 +242,12 @@ if ($mute) {
 
 if (!$waitforplay) {
     #trigger playback
-    if ($^O eq "MSWin32") {
-	`$sendOMC /video/loop/set i $loopconst`;
-    } else {
-	`$sendOMC /video/loop/set,$loopconst`;
+    if ($loop) {
+	if ($^O eq "MSWin32") {
+	    `$sendOMC /video/loop/set i $loopconst`;
+	} else {
+	    `$sendOMC /video/loop/set,$loopconst`;
+	}
     }
 
     `$sendOMC /video/play`;
@@ -371,11 +380,13 @@ exit 0;
 
 sub finish {
 
-    #reset loop mode
-    if ($^O eq "MSWin32") {
-	`$sendOMC /video/loop/set i $currloop`;
-    } else {
-	`$sendOMC /video/loop/set,$currloop`;
+    if ($loop) {
+	#reset loop mode
+	if ($^O eq "MSWin32") {
+	    `$sendOMC /video/loop/set i $currloop`;
+	} else {
+	    `$sendOMC /video/loop/set,$currloop`;
+	}
     }
 
     # reset mute status

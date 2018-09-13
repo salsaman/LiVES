@@ -1387,7 +1387,6 @@ int process_one(boolean visible) {
       else mainw->cancelled = CANCEL_ERROR;
       if (vend == cfile->end) cfile->fx_frame_pump = 0; // all frames were realised
     }
-
   }
 
   if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
@@ -1568,7 +1567,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
                                    (LiVESXModifierType)0, (LiVESAccelFlags)0);
       accelerators_swapped = TRUE;
     }
-
   }
 
   if (cfile->next_event != NULL) event_start = get_event_timecode(cfile->next_event);
@@ -1799,7 +1797,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // this is for encoder output
         pump_io_chan(mainw->iochan);
       }
-
     }
 
     if (!mainw->internal_messaging) {
@@ -1916,7 +1913,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
 
       lives_usleep(prefs->sleep_time);
-
     } else break;
   }
 
@@ -1990,6 +1986,7 @@ finish:
 #endif
   return TRUE;
 }
+
 
 #define MIN_FLASH_TIME 100000000
 
@@ -2117,6 +2114,7 @@ void too_many_files(void) {
   lives_free(warn);
 }
 
+
 void workdir_warning(void) {
   char *tmp, *com = lives_strdup_printf(
                       _("LiVES was unable to write to its working directory.\n\nThe current working directory is:\n\n%s\n\n"
@@ -2155,6 +2153,7 @@ void do_audio_warning(void) {
   do_error_dialog(_("Audio was not loaded; please install mplayer,mplayer2 or mpv if you expected audio for this clip.\n"));
 #endif
 }
+
 
 void do_encoder_sox_error(void) {
   do_error_dialog(
@@ -2559,6 +2558,7 @@ static void do_extra_jack_warning(void) {
       "Please check your ~/.jackdrc file and remove this option if present.\nAlternately, select a different audio player in Preferences.\n"));
 }
 
+
 void do_jack_noopen_warn(void) {
   do_blocking_error_dialog(
     _("\nUnable to start up jack. Please ensure that alsa is set up correctly on your machine\n"
@@ -2570,6 +2570,7 @@ void do_jack_noopen_warn(void) {
 void do_jack_noopen_warn3(void) {
   do_blocking_error_dialog(_("\nUnable to connect to jack server. Please start jack before starting LiVES\n"));
 }
+
 
 void do_jack_noopen_warn4(void) {
 #ifdef HAVE_PULSE_AUDIO
@@ -2597,6 +2598,7 @@ void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
   lives_free(msg);
 }
 
+
 boolean do_set_rename_old_layouts_warning(const char *new_set) {
   char *msg = lives_strdup_printf(
                 _("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"), new_set);
@@ -2605,15 +2607,18 @@ boolean do_set_rename_old_layouts_warning(const char *new_set) {
   return retcode;
 }
 
+
 void do_mt_undo_mem_error(void) {
   do_error_dialog(
     _("\nLiVES was unable to reserve enough memory for multitrack undo.\nEither close some other applications, or reduce the undo memory\n"
       "using Preferences/Multitrack/Undo Memory\n"));
 }
 
+
 void do_mt_undo_buf_error(void) {
   do_error_dialog(_("\nOut of memory for undo.\nYou may need to increase the undo memory\nusing Preferences/Multitrack/Undo Memory\n"));
 }
+
 
 void do_mt_set_mem_error(boolean has_mt, boolean trans) {
   char *msg1 = (_("\nLiVES was unable to reserve enough memory for the multitrack undo buffer.\n"));
@@ -2637,9 +2642,11 @@ void do_mt_audchan_error(int warn_mask) {
     warn_mask, FALSE, NULL);
 }
 
+
 void do_mt_no_audchan_error(void) {
   do_error_dialog(_("The current layout has audio, so audio channels may not be set to zero.\n"));
 }
+
 
 void do_mt_no_jack_error(int warn_mask) {
   do_error_dialog_with_check(
@@ -2647,11 +2654,13 @@ void do_mt_no_jack_error(int warn_mask) {
     warn_mask);
 }
 
+
 boolean do_mt_rect_prompt(void) {
   return do_yesno_dialog(
            _("Errors were detected in the layout (which may be due to transferring from another system, or from an older version of LiVES).\n"
              "Should I try to repair the disk copy of the layout ?\n"));
 }
+
 
 void do_bad_layout_error(void) {
   do_error_dialog(_("LiVES was unable to load the layout.\nSorry.\n"));
@@ -2680,6 +2689,7 @@ void do_audrate_error_dialog(void) {
   do_error_dialog(_("\n\nAudio rate must be greater than 0.\n"));
 }
 
+
 boolean do_event_list_warning(void) {
   return do_yesno_dialog(_("\nEvent list will be very large\nand may take a long time to display.\nAre you sure you wish to view it ?\n"));
 }
@@ -2696,10 +2706,12 @@ void do_nojack_rec_error(void) {
       "You may need to select one of these in Tools/Preferences/Playback.\n"));
 }
 
+
 void do_vpp_palette_error(void) {
   do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"), TRUE, 0,
                                        prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(mainw->LiVES));
 }
+
 
 void do_decoder_palette_error(void) {
   do_blocking_error_dialog(_("Decoder plugin failed to initialise palette !\n"));
@@ -2936,6 +2948,7 @@ static void d_print_utility(const char *text, int osc_note, const char *osc_deta
   }
 }
 
+
 LIVES_GLOBAL_INLINE void d_print_cancelled(void) {
   d_print_utility(_("cancelled.\n"), LIVES_OSC_NOTIFY_CANCELLED, "");
 }
@@ -2945,9 +2958,11 @@ LIVES_GLOBAL_INLINE void d_print_failed(void) {
   d_print_utility(_("failed.\n"), LIVES_OSC_NOTIFY_FAILED, "");
 }
 
+
 LIVES_GLOBAL_INLINE void d_print_done(void) {
   d_print_utility(_("done.\n"), 0, NULL);
 }
+
 
 LIVES_GLOBAL_INLINE void d_print_file_error_failed(void) {
   d_print_utility(_("error in file. Failed.\n"), 0, NULL);
@@ -3291,6 +3306,7 @@ void do_dev_busy_error(const char *devstr) {
 boolean do_existing_subs_warning(void) {
   return do_yesno_dialog(_("\nThis file already has subtitles loaded.\nDo you wish to overwrite the existing subtitles ?\n"));
 }
+
 
 void do_invalid_subs_error(void) {
   char *msg = lives_strdup(_("\nLiVES currently only supports subtitles of type"));

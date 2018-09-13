@@ -5190,6 +5190,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_store_append(LiVESTreeStore *tsto
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_store_prepend(LiVESTreeStore *tstore, LiVESTreeIter *titer, LiVESTreeIter *parent) {
+#ifdef GUI_GTK
+  gtk_tree_store_prepend(tstore, titer, parent);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_store_set(LiVESTreeStore *tstore, LiVESTreeIter *titer, ...) {
   boolean res = FALSE;
   va_list argList;

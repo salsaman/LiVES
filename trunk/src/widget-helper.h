@@ -402,6 +402,7 @@ int *lives_tree_path_get_indices(LiVESTreePath *);
 
 LiVESTreeStore *lives_tree_store_new(int ncols, ...);
 boolean lives_tree_store_append(LiVESTreeStore *, LiVESTreeIter *, LiVESTreeIter *parent);
+boolean lives_tree_store_prepend(LiVESTreeStore *, LiVESTreeIter *, LiVESTreeIter *parent);
 boolean lives_tree_store_set(LiVESTreeStore *, LiVESTreeIter *, ...);
 
 LiVESWidget *lives_tree_view_new(void);

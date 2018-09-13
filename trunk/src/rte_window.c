@@ -2026,7 +2026,7 @@ static LiVESTreeModel *rte_window_fx_model(void) {
         memset(pkgstring, 0, 1);
         /* TRANSLATORS: example " - LADSPA plugins -" */
         pkgstring = lives_strdup_printf(_(" - %s plugins -"), pkg);
-        lives_tree_store_append(tstore, &iter1, NULL);
+        lives_tree_store_prepend(tstore, &iter1, NULL);
         lives_tree_store_set(tstore, &iter1, NAME_TYPE_COLUMN, pkgstring, NAME_COLUMN, fxname,
                              HASH_COLUMN, lives_list_nth_data(hash_list, fx_idx), -1);
         lives_free(pkgstring);

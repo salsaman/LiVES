@@ -53,7 +53,6 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 #include "../OSC-client.h"
 #include "htmsocket.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #ifndef IS_MINGW
@@ -62,6 +61,7 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
+#include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 

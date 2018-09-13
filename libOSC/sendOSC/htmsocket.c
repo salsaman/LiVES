@@ -33,15 +33,8 @@ Adrian Freed
    in addition to X.X.X.X addresses.
 */
 
-
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#include <sys/param.h>
-
 #ifndef IS_MINGW
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/time.h>
 
@@ -59,21 +52,19 @@ Adrian Freed
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-
 #include <fcntl.h>
 #undef _S_IREAD
 #undef _S_IWRITE
 
 #define _S_IREAD 256
 #define _S_IWRITE 128
-int mkstemp(char *tmpl) {
-  int ret = -1;
-  mktemp(tmpl);
-  ret = open(tmpl, O_RDWR | O_BINARY | O_CREAT | O_EXCL | _O_SHORT_LIVED, _S_IREAD | _S_IWRITE);
-  return ret;
-}
 
 #endif
+
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/param.h>
 
 #if IS_SOLARIS
 #include <sys/filio.h>
@@ -112,7 +103,6 @@ typedef struct {
 /* if host is 0 then UNIX protocol is used (i.e. local communication */
 
 void *OpenHTMSocket(char *host, int portnumber) {
-  //#ifndef IS_MINGW
   int sockfd;
   struct sockaddr_in  cl_addr;
 #ifndef IS_MINGW

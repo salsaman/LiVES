@@ -67,6 +67,9 @@ case "{$target_os}" in
  *mingw*)
    IS_MINGW="true"
   ;;
+ *msys*)
+   IS_MINGW="true"
+  ;;
  *)
   ;;
 esac
@@ -142,11 +145,7 @@ AM_CONDITIONAL(ENABLE_PROFILING, test $profiling != no)
 
 dnl Check for pkg-config
 
-if test "$IS_MINGW" = "true"; then
-AC_PATH_PROG(PKG_CONFIG, i686-w64-mingw32-pkg-config, no)
-else
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-fi
 
 if test x$PKG_CONFIG = xno; then
    AC_MSG_ERROR([Cannot find pkg-config, make sure it is installed and in your PATH])

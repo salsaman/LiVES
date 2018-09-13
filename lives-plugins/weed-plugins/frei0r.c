@@ -47,8 +47,9 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "weed-utils-code.c" // optional
-#include "weed-plugin-utils.c" // optional
 
+#define NEED_ALPHA_SORT
+#include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
 typedef f0r_instance_t (*f0r_construct_f)(unsigned int width, unsigned int height);
@@ -265,7 +266,6 @@ int frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info;
   if (FREI0R_MAJOR_VERSION < 1 || FREI0R_MINOR_VERSION < 1) return NULL;
@@ -273,8 +273,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
 
   if (plugin_info != NULL) {
+    dlink_list_t *list = NULL;
     int *pal;
-    int pnum, wnum, num_weed_params;
+
     char **rfx_strings = NULL;
 
     char *blacklist[2] = {"Timeout indicator", NULL};
@@ -288,6 +289,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     int num_filters = 0;
 
     int finished = 0;
+    int pnum, wnum, num_weed_params;
 
     char vdir1[PATH_MAX] = "/usr/lib/frei0r-1/";
     char vdir2[PATH_MAX] = "/usr/local/lib/frei0r-1/";
@@ -382,7 +384,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
         }
         vdirval = 5;
       }
-
 
       if (vdirval > 9) {
         char *fpp_copy = strdup(fpp);
@@ -901,7 +902,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
             break;
           }
 
-          weed_plugin_info_add_filter_class(plugin_info, filter_class);
+          list = add_to_list_sorted(list, filter_class, f0rinfo.name);
+
           // end plugin
         }
         // end vendor dir
@@ -922,6 +924,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       fprintf(stderr, "No frei0r plugins found; if you have them installed please set the FREI0R_PATH environment variable to point to them.\n");
       return NULL;
     }
+
+    add_filters_from_list(plugin_info, list);
+
     weed_set_int_value(plugin_info, "version", package_version);
   }
 

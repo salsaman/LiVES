@@ -15,7 +15,6 @@
 #include "../../libweed/weed-effects.h"
 #endif
 
-
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions = 1; // number of different weed api versions supported
@@ -32,6 +31,8 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "weed-utils-code.c" // optional
+
+#define NEED_ALPHA_SORT
 #include "weed-plugin-utils.c" // optional
 
 #include <string.h>
@@ -68,7 +69,6 @@ typedef struct {
   LADSPA_Handle handle_r;
   int activated_r;
 } _sdata;
-
 
 #define DEF_ARATE 44100
 
@@ -132,9 +132,7 @@ static int float_interleave(float *fbuffer, int nsamps, int nchans) {
 }
 
 
-
 /////////////////////////////////////////////////////////////
-
 
 int ladspa_init(weed_plant_t *inst) {
   int error;
@@ -198,7 +196,6 @@ int ladspa_init(weed_plant_t *inst) {
   }
 
   return WEED_NO_ERROR;
-
 }
 
 
@@ -224,9 +221,7 @@ int ladspa_deinit(weed_plant_t *inst) {
   }
 
   return WEED_NO_ERROR;
-
 }
-
 
 
 int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
@@ -263,7 +258,6 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", &error);
 
   register int i;
-
 
   if (weed_plant_has_leaf(inst, "in_channels")) {
     in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
@@ -355,7 +349,6 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         }
       }
     }
-
   }
 
   if (weed_plant_has_leaf(inst, "in_parameters")) {
@@ -368,7 +361,6 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     ioutp = weed_leaf_num_elements(inst, "out_parameters");
     out_params = (weed_plant_t **)weed_get_plantptr_array(inst, "out_parameters", &error);
   }
-
 
   if (ioutp > 0) outvals = weed_malloc(ioutp * sizeof(float));
   if (iinp > 0) invals = weed_malloc(iinp * sizeof(float));
@@ -401,14 +393,11 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         }
       }
     }
-
   }
-
 
   (*lad_run_func)(handle, nsamps);
 
   handle = sdata->handle_r;
-
 
   if (pinc > 0 || poutc > 0) {
     if (ioutc > 0 || iinc > 0) {
@@ -435,9 +424,7 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     }
   }
 
-
   if (iinp > 0 || ioutp > 0) {
-
     if (pinp < iinp || poutp < ioutp) {
       // need to use second instance
       for (i = 0; i < laddes->PortCount; i++) {
@@ -467,11 +454,8 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
           }
         }
       }
-
     }
-
   }
-
 
   if (dual)(*lad_run_func)(handle, nsamps);
 
@@ -507,7 +491,6 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     if (float_interleave(dst, nsamps, ooutc) != WEED_NO_ERROR) return WEED_ERROR_HARDWARE;
   }
 
-
   return WEED_NO_ERROR;
 }
 
@@ -525,6 +508,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     char *lpp = getenv("LADSPA_PATH");
 
+    dlink_list_t *list = NULL;
     char **rfx_strings = NULL;
     weed_plant_t **out_chantmpls = NULL, **in_chantmpls = NULL;
     weed_plant_t **in_params = NULL, **out_params = NULL, *gui;
@@ -673,7 +657,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
             }
           }
 
-
           // do we need to double up the channels ?
           // if we have 0,1 or 2 input channels, 1 outputs
           // 1 input, 0 or 2 outputs
@@ -730,7 +713,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
               gui = weed_parameter_template_get_gui(in_params[ninps]);
               weed_set_boolean_value(gui, "hidden", WEED_TRUE);
             }
-
           } else in_params = NULL;
 
           if (noutps > 0) {
@@ -837,7 +819,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                     in_params[cninps] = weed_float_init(laddes->PortNames[i], label, defval, lbound, ubound);
                     if (dual) in_params[cninps + oninps] = weed_float_init(laddes->PortNames[i], label, defval, lbound, ubound);
                   }
-
                 }
 
                 if (ladphintdes & LADSPA_HINT_SAMPLE_RATE) weed_set_boolean_value(in_params[cninps], "plugin_sample_rate", WEED_TRUE);
@@ -914,7 +895,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                     out_params[cnoutps] = weed_out_param_float_init(laddes->PortNames[i], defval, lbound, ubound);
                     if (dual) out_params[cnoutps + onoutps] = weed_out_param_float_init(laddes->PortNames[i], defval, lbound, ubound);
                   }
-
                 }
 
                 if (ladphintdes & LADSPA_HINT_SAMPLE_RATE) weed_set_boolean_value(out_params[cnoutps], "plugin_sample_rate", WEED_TRUE);
@@ -927,10 +907,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
                 cnoutps++;
               }
-
-
             }
-
           }
 
           snprintf(weed_name, PATH_MAX, "LADSPA: %s", laddes->Name);
@@ -969,7 +946,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                 gui = weed_parameter_template_get_gui(in_params[j + oninps]);
                 weed_set_int_value(gui, "copy_value_to", j);
               }
-
             }
           } else weed_set_boolean_value(filter_class, "plugin_dual", WEED_FALSE);
 
@@ -983,26 +959,27 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           weed_set_int_value(filter_class, "plugin_in_params", oninps);
           weed_set_int_value(filter_class, "plugin_out_params", onoutps);
 
-          weed_plugin_info_add_filter_class(plugin_info, filter_class);
+          list = add_to_list_sorted(list, filter_class, laddes->Name);
+
           num_plugins++;
           num_filters++;
           //fprintf(stderr,"DONE\n");
         }
       }
     }
-
 #ifndef DEBUG
     dup2(new_stdout, 1);
     dup2(new_stderr, 2);
 #endif
-
   }
-
 
   if (num_filters == 0) {
     fprintf(stderr, "No LADSPA plugins found; if you have them installed please set the LADSPA_PATH environment variable to point to them.\n");
     return NULL;
   }
+
+  add_filters_from_list(plugin_info, list);
+
   weed_set_int_value(plugin_info, "version", package_version);
 
   return plugin_info;

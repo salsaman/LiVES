@@ -9,9 +9,7 @@
  (c) 2004, project authors
 */
 
-
 // WARNING ! Only "jack" and "host audio" inputs are multi threaded
-
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -22,7 +20,6 @@
 #include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
 #endif
-
 
 ///////////////////////////////////////////////////////////////////
 
@@ -40,6 +37,8 @@ static int package_version = 2; // version of this package
 #endif
 
 #include "weed-utils-code.c" // optional
+
+#define NEED_ALPHA_SORT
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -135,14 +134,12 @@ int libvis_init(weed_plant_t *inst) {
     }
   } else libvis->input = old_visinput;
 
-
   // host supplied audio buffers
 
   if (libvis->input == NULL) { // wish this worked
     weed_free(libvis);
     return WEED_ERROR_INIT_ERROR;
   }
-
 
   libvis->video = visual_video_new();
 
@@ -205,7 +202,6 @@ int libvis_deinit(weed_plant_t *inst) {
 }
 
 
-
 static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
   // convert float audio to s16le, append to libvis->audio
 
@@ -252,7 +248,6 @@ static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
 }
 
 
-
 int libvis_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_libvis_t *libvis = (weed_libvis_t *)weed_get_voidptr_value(inst, "plugin_internal", &error);
@@ -273,6 +268,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
 
   if (plugin_info != NULL) {
+    dlink_list_t *list = NULL;
     int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
     weed_plant_t *out_chantmpls[2];
     char *name = NULL;
@@ -326,7 +322,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       vdir = strtok(NULL, ":");
     }
 
-
     in_params[1] = NULL;
     out_chantmpls[1] = NULL;
 
@@ -339,10 +334,12 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                             in_chantmpls, out_chantmpls, in_params, NULL);
       weed_set_double_value(filter_class, "target_fps", 50.); // set reasonable default fps
 
-      weed_plugin_info_add_filter_class(plugin_info, filter_class);
+      list = add_to_list_sorted(list, filter_class, (const char *)name);
     }
+
+    add_filters_from_list(plugin_info, list);
+
     weed_set_int_value(plugin_info, "version", package_version);
-    //weed_plant_free(out_chantmpls[0]);
   }
   return plugin_info;
 }

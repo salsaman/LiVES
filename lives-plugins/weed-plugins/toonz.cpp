@@ -126,13 +126,6 @@ enum {
   FILTER_PARAFFIN,
 };
 
-
-
-
-
-
-
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -145,8 +138,6 @@ enum {
 using namespace cv;
 
 #define DEBUG_PRINT(a) fprintf(stderr, "%s\n", a)
-
-
 
 //////////////////////////////////////////////////////////
 
@@ -303,17 +294,7 @@ private:
 
 }
 
-
-
-
 ///////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
 
 template <typename VecT>
 int phatch_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
@@ -428,7 +409,6 @@ int phatch_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
 }
 
 
-
 template <typename VecT>
 int lglare_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   using value_type = typename VecT::value_type;
@@ -499,7 +479,6 @@ int lglare_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
 
   cv::filter2D(src, src, -1, kernel);
 
-
   for (int y = 0; y < size.height; ++y) {
     cv::Vec3f const *s = src.ptr<cv::Vec3f>(y);
     VecT *d = retimg.ptr<VecT>(y);
@@ -530,7 +509,6 @@ int lglare_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
 }
 
 
-
 template <typename VecT>
 int lbloom_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   using value_type = typename VecT::value_type;
@@ -551,7 +529,6 @@ int lbloom_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   Mat src(size, CV_32FC3);
 
   if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) psize = 3;
-
 
   // transform color space
   {
@@ -575,7 +552,6 @@ int lbloom_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
 
   // generate bloom
   tnzu::generate_bloom(src, level, radius);
-
 
   // transform color space
   float const scale = gain;
@@ -609,7 +585,6 @@ int lbloom_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
 }
 
 
-
 template <typename VecT>
 int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   using value_type = typename VecT::value_type;
@@ -640,7 +615,6 @@ int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params)
     b = cvals[2];
   }
 
-
   weed_free(cvals);
 
   // define paraffin shadow
@@ -670,7 +644,6 @@ int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params)
 
   // blur bar
   cv::GaussianBlur(shadow, shadow, cv::Size(s, s), 0.0);
-
 
   // init color table
   tnzu::linear_color_space_converter<sizeof(value_type) * 8> converter(1.0f,
@@ -708,9 +681,6 @@ int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params)
   }
   return 0;
 }
-
-
-
 
 
 static int common_process(weed_plant_t *inst, weed_timecode_t tc, int filter_type) {
@@ -855,7 +825,6 @@ int cnoise_compute(Mat &retimg, weed_plant_t **in_params, double sec) {
     field *= gain / 5;
     field += bias;
 
-
     for (int y = 0; y < size.height; ++y) {
       float *dst = retimg.ptr<float>(y);
       float const *src = field.ptr<float>(y);
@@ -865,13 +834,11 @@ int cnoise_compute(Mat &retimg, weed_plant_t **in_params, double sec) {
     }
 
     return 0;
-
   } catch (cv::Exception const &e) {
     DEBUG_PRINT(e.what());
     return 1;
   }
 }
-
 
 
 int cnoise_process(weed_plant_t *inst, weed_timecode_t tc) {
@@ -948,12 +915,10 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_plant_t *filter_class;
 
-    // pencil hatching
-    filter_class = weed_filter_class_init("Toonz: Pencil Hatching", "DWANGO co.", 1, 0, NULL,
-                                          &phatch_process, NULL,
-                                          in_chantmpls, out_chantmpls, in_paramsa, NULL);
-
-    weed_set_boolean_value(in_paramsa[PARAMa_ANGLE], "wrap", WEED_TRUE);
+    // coherent noise
+    filter_class = weed_filter_class_init("Toonz: Coherent Noise", "DWANGO co.", 1, 0, NULL,
+                                          &cnoise_process, NULL,
+                                          NULL, out_chantmplsx, in_paramsc, NULL);
 
     weed_set_string_value(filter_class, "extra_authors", "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
@@ -962,6 +927,17 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
+    // light bloom
+    filter_class = weed_filter_class_init("Toonz: Light Bloom", "DWANGO co.", 1, 0, NULL,
+                                          &lbloom_process, NULL,
+                                          in_chantmpls, out_chantmpls, in_paramsd, NULL);
+
+    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
+    weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
+    weed_set_string_value(filter_class, "license", "BSD 3-clause");
+
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
     // light glare
     filter_class = weed_filter_class_init("Toonz: Light Glare", "DWANGO co.", 1, 0, NULL,
@@ -975,39 +951,24 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-
-    // coherent noise
-    filter_class = weed_filter_class_init("Toonz: Coherent Noise", "DWANGO co.", 1, 0, NULL,
-                                          &cnoise_process, NULL,
-                                          NULL, out_chantmplsx, in_paramsc, NULL);
-
-    weed_set_string_value(filter_class, "extra_authors", "salsaman");
-    weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
-    weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
-    weed_set_string_value(filter_class, "license", "BSD 3-clause");
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-
-    // light bloom
-
-    filter_class = weed_filter_class_init("Toonz: Light Bloom", "DWANGO co.", 1, 0, NULL,
-                                          &lbloom_process, NULL,
-                                          in_chantmpls, out_chantmpls, in_paramsd, NULL);
-
-    weed_set_string_value(filter_class, "extra_authors", "salsaman");
-    weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
-    weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
-    weed_set_string_value(filter_class, "license", "BSD 3-clause");
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-
     // paraffin
-
     filter_class = weed_filter_class_init("Toonz: Paraffin", "DWANGO co.", 1, 0, NULL,
                                           &paraffin_process, NULL,
                                           in_chantmpls, out_chantmpls, in_paramse, NULL);
+
+    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
+    weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
+    weed_set_string_value(filter_class, "license", "BSD 3-clause");
+
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+    // pencil hatching
+    filter_class = weed_filter_class_init("Toonz: Pencil Hatching", "DWANGO co.", 1, 0, NULL,
+                                          &phatch_process, NULL,
+                                          in_chantmpls, out_chantmpls, in_paramsa, NULL);
+
+    weed_set_boolean_value(in_paramsa[PARAMa_ANGLE], "wrap", WEED_TRUE);
 
     weed_set_string_value(filter_class, "extra_authors", "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");

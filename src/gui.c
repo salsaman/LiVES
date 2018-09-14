@@ -120,10 +120,12 @@ void add_message_scroller(LiVESWidget *conter) {
   }
 
   if (mainw->scrolledwindow != NULL) {
-    lives_widget_destroy(mainw->scrolledwindow);
+    lives_object_unref(mainw->scrolledwindow);
+    //lives_widget_destroy(mainw->scrolledwindow);
   }
 
   mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
+  lives_object_ref(mainw->scrolledwindow);
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
   lives_widget_set_vexpand(mainw->scrolledwindow, TRUE);
 
@@ -3483,8 +3485,7 @@ void make_preview_box(void) {
                               1., 10., 0,
                               LIVES_BOX(mainw->preview_hbox), _("Frame number to preview"));
 
-  mainw->preview_scale = lives_hscale_new(lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->preview_spinbutton)));
-  lives_scale_set_draw_value(LIVES_SCALE(mainw->preview_scale), FALSE);
+  mainw->preview_scale = lives_standard_hscale_new(lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->preview_spinbutton)));
 
   lives_box_pack_start(LIVES_BOX(mainw->preview_controls), mainw->preview_scale, FALSE, FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->preview_controls), mainw->preview_hbox, FALSE, FALSE, 0);

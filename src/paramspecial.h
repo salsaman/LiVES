@@ -1,6 +1,6 @@
 // paramspecial.h
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -21,12 +21,11 @@ typedef struct {
   lives_param_t *xend_param;
   lives_param_t *yend_param;
 
-  int stdwidgets; // 2 for singlepoint, 4 for demask, multrect
+  int stdwidgets; // 2 for singlepoint, 4 for demask, multirect
   int *extra_params;
   int num_extra;
   LiVESWidget **extra_widgets;
 } lives_special_framedraw_rect_t;
-
 
 typedef struct {
   lives_param_t *height_param;
@@ -71,4 +70,3 @@ boolean is_perchannel_multi(lives_rfx_t *rfx, int pnum);
 lives_special_mergealign_t mergealign;
 
 #endif
-

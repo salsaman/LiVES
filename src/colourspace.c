@@ -10929,11 +10929,7 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_plant_t *layer) {
   height = lives_painter_image_surface_get_height(surface);
   rowstride = lives_painter_image_surface_get_stride(surface);
 
-  if (weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) {
-    int error;
-    pixel_data = weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-    if (pixel_data != NULL && pixel_data != src) lives_free(pixel_data);
-  }
+  weed_layer_pixel_data_free(layer);
 
   pixel_data = lives_try_malloc(CEIL(height * rowstride, 32));
 

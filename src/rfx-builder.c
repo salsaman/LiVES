@@ -2526,10 +2526,7 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
   // subtype
 
   spsublist = lives_list_append(spsublist, (livespointer)"rectdemask");
-  if (pnum >= 0 && spsub != NULL) {
-    // deprecated value
-    if (!strcmp(spsub, "multrect")) spsublist = lives_list_append(spsublist, (livespointer)"multrect");
-  } else spsublist = lives_list_append(spsublist, (livespointer)"multirect");
+  spsublist = lives_list_append(spsublist, (livespointer)"multirect");
   spsublist = lives_list_append(spsublist, (livespointer)"singlepoint");
 
   rfxbuilder->paramw_spsub_combo = lives_standard_combo_new(_("Special _Subtype:         "), spsublist, LIVES_BOX(dialog_vbox), NULL);
@@ -2615,8 +2612,7 @@ void on_paramw_spsub_changed(LiVESCombo *combo, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   char *ctext = lives_combo_get_active_text(combo);
 
-  if (!strcmp(ctext, "rectdemask") ||
-      !strcmp(ctext, "multrect") || !strcmp(ctext, "multirect")) {
+  if (!strcmp(ctext, "rectdemask") || !strcmp(ctext, "multirect")) {
     lives_label_set_text(LIVES_LABEL(rfxbuilder->paramw_rest_label), (_("Linked parameters (4):    ")));
   } else if (!strcmp(ctext, "singlepoint")) {
     lives_label_set_text(LIVES_LABEL(rfxbuilder->paramw_rest_label), (_("Linked parameters (2):    ")));

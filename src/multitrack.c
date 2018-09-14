@@ -1557,8 +1557,12 @@ boolean add_mt_param_box(lives_mt *mt) {
 
   lives_widget_show_all(mt->fx_base_box);
 
-  if (res) lives_widget_show(mt->fx_contents_box);
-  else lives_widget_hide(mt->fx_contents_box);
+  if (!res) {
+    lives_widget_hide(mt->apply_fx_button);
+    lives_widget_hide(mt->del_node_button);
+    lives_widget_hide(mt->prev_node_button);
+    lives_widget_hide(mt->next_node_button);
+  }
 
   mt->prev_fx_time = mt_get_effect_time(mt);
   return res;
@@ -2979,6 +2983,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     mainw->frame_layer = weed_layer_new_for_frame(mainw->current_file, actual_frame);
     pull_frame(mainw->frame_layer, get_image_ext_for_type(cfile->img_type), curr_tc);
   } else {
+    weed_plant_t *vanilla_inst = NULL;
     mainw->is_rendering = TRUE;
 
     if (mt->pb_start_event != NULL) {
@@ -2997,11 +3002,27 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       // if we are previewing a specific effect we also need to init it
       if (mt->current_rfx != NULL && mt->init_event != NULL) {
         if (mt->current_rfx->source_type == LIVES_RFX_SOURCE_WEED && mt->current_rfx->source != NULL) {
-          weed_plant_t *inst = (weed_plant_t *)mt->current_rfx->source;
-          do {
-            weed_call_init_func(inst);
-          } while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE) &&
-                   (inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error)) != NULL);
+          vanilla_inst = (weed_plant_t *)mt->current_rfx->source;
+
+          // we want to swap our current instance (a vanilla one created in weed_to_rfx) for a properly configured instance
+          // from get_audio_and_effects_state_at()
+
+          // this instance will be freed in deinit_render_effects(), so we need to keep the vanilla instance around so it can be freed eventually in rfx_free()
+
+          if (weed_plant_has_leaf(mt->init_event, WEED_LEAF_HOST_TAG)) {
+            char *keystr = weed_get_string_value(mt->init_event, WEED_LEAF_HOST_TAG, &error);
+            int key = atoi(keystr) + 1;
+            lives_freep((void **)&keystr);
+            mt->current_rfx->source = (void *)rte_keymode_get_instance(key, 0);
+            // for the preview we will use a copy of the current in_params from the vanilla instance
+            // interpolation is OFF here so we will see exactly the current values
+            if (mt->current_rfx->source != NULL) {
+              weed_in_parameters_free((weed_plant_t *)mt->current_rfx->source);
+              weed_leaf_copy((weed_plant_t *)mt->current_rfx->source, WEED_LEAF_IN_PARAMETERS, vanilla_inst, WEED_LEAF_IN_PARAMETERS);
+              mt->solo_inst = mt->current_rfx->source;  // TODO: add a checkbutton for this
+              mt->preview_layer = weed_get_int_value(mt->init_event, WEED_LEAF_OUT_TRACKS, &error); // want to see the image from first output track
+            }
+          }
         }
       }
 
@@ -3013,18 +3034,20 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       // render one frame
       process_events(mt->pb_start_event, FALSE, 0);
       free_track_decoders();
+      mt->preview_layer = -100000;
+      mt->solo_inst = NULL;
       mainw->internal_messaging = internal_messaging;
       mainw->current_file = current_file;
+
+      if (vanilla_inst != NULL && mt->current_rfx->source != NULL && (weed_plant_t *)mt->current_rfx->source != vanilla_inst)
+        weed_leaf_delete((weed_plant_t *)mt->current_rfx->source, WEED_LEAF_IN_PARAMETERS);
+
       deinit_render_effects();
 
-      // if we are previewing an effect we now need to deinit it
+      // if we are previewing an effect we now need to restore the vanilla inst
       if (mt->current_rfx != NULL && mt->init_event != NULL) {
-        if (mt->current_rfx->source_type == LIVES_RFX_SOURCE_WEED && mt->current_rfx->source != NULL) {
-          weed_plant_t *inst = (weed_plant_t *)mt->current_rfx->source;
-          do {
-            weed_call_deinit_func(inst);
-          } while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE) &&
-                   (inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error)) != NULL);
+        if (mt->current_rfx->source_type == LIVES_RFX_SOURCE_WEED && vanilla_inst != NULL) {
+          mt->current_rfx->source = (void *)vanilla_inst;
         }
       }
 
@@ -6072,6 +6095,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->undo_offset = mainw->sl_undo_offset;
   }
 
+  mt->preview_layer = -1000000;
+
+  mt->solo_inst = NULL;
+
   mt->apply_fx_button = NULL;
 
   mt->cursor_style = LIVES_CURSOR_NORMAL;
@@ -8037,6 +8064,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        (livespointer)mt);
 
   mt->nb = lives_notebook_new();
+  lives_container_set_border_width(LIVES_CONTAINER(mt->nb), widget_opts.border_width);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -8101,39 +8129,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   // add a dummy hbox to nb
 
-  tname = get_tab_name(POLY_EFFECTS);
-  mt->nb_label4 = lives_label_new(tname);
-  lives_free(tname);
-
-  hbox = lives_hbox_new(FALSE, 0);
-
-  lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 3), mt->nb_label4);
-
-  // add a dummy hbox to nb
-
-  tname = get_tab_name(POLY_TRANS);
-  mt->nb_label5 = lives_label_new(tname);
-  lives_free(tname);
-
-  hbox = lives_hbox_new(FALSE, 0);
-
-  lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 4), mt->nb_label5);
-
-  // add a dummy hbox to nb
-
-  tname = get_tab_name(POLY_COMP);
-  mt->nb_label6 = lives_label_new(tname);
-  lives_free(tname);
-
-  hbox = lives_hbox_new(FALSE, 0);
-
-  lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 5), mt->nb_label6);
-
-  // add a dummy hbox to nb
-
   tname = get_tab_name(POLY_PARAMS);
   mt->nb_label7 = lives_label_new(tname);
   lives_free(tname);
@@ -8141,7 +8136,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   hbox = lives_hbox_new(FALSE, 0);
 
   lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 6), mt->nb_label7);
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 3), mt->nb_label7);
 
   // params contents
 
@@ -8169,8 +8164,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->node_adj = (LiVESObject *)lives_adjustment_new(0., 0., 0., 1. / mt->fps, 10. / mt->fps, 0.);
 
-  mt->node_scale = lives_hscale_new(LIVES_ADJUSTMENT(mt->node_adj));
-  lives_scale_set_draw_value(LIVES_SCALE(mt->node_scale), FALSE);
+  mt->node_scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(mt->node_adj));
   mt->node_spinbutton = lives_spin_button_new(LIVES_ADJUSTMENT(mt->node_adj), 0, 3);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mt->node_spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -8217,6 +8211,39 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->fx_label = lives_standard_label_new("");
   lives_box_pack_end(LIVES_BOX(hbox), mt->fx_label, FALSE, FALSE, widget_opts.packing_width * 2);
 
+  // add a dummy hbox to nb
+
+  tname = get_tab_name(POLY_EFFECTS);
+  mt->nb_label4 = lives_label_new(tname);
+  lives_free(tname);
+
+  hbox = lives_hbox_new(FALSE, 0);
+
+  lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 4), mt->nb_label4);
+
+  // add a dummy hbox to nb
+
+  tname = get_tab_name(POLY_TRANS);
+  mt->nb_label5 = lives_label_new(tname);
+  lives_free(tname);
+
+  hbox = lives_hbox_new(FALSE, 0);
+
+  lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 5), mt->nb_label5);
+
+  // add a dummy hbox to nb
+
+  tname = get_tab_name(POLY_COMP);
+  mt->nb_label6 = lives_label_new(tname);
+  lives_free(tname);
+
+  hbox = lives_hbox_new(FALSE, 0);
+
+  lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 6), mt->nb_label6);
+
   set_mt_title(mt);
 
   mt_init_clips(mt, orig_file, FALSE);
@@ -8251,24 +8278,24 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mt->spinbutton_avel));
 
-  mt->avel_scale = lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
+  mt->avel_scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
   lives_box_pack_start(LIVES_BOX(hbox), mt->avel_scale, TRUE, TRUE, widget_opts.packing_width);
-  lives_scale_set_draw_value(LIVES_SCALE(mt->avel_scale), FALSE);
 
   // poly in_out_box
   mt->in_out_box = lives_hbox_new(FALSE, 0);
   lives_object_ref(mt->in_out_box);
 
   vbox = lives_vbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(mt->in_out_box), vbox, FALSE, TRUE, 10);
+  lives_box_pack_start(LIVES_BOX(mt->in_out_box), vbox, TRUE, TRUE, 2);
+  lives_widget_set_hexpand(vbox, TRUE);
 
   mt->in_image = lives_image_new();
-  lives_widget_set_hexpand(mt->in_image, FALSE);
-  //lives_widget_set_vexpand(mt->in_image, FALSE);
 
   eventbox = lives_event_box_new();
+  lives_widget_set_vexpand(eventbox, TRUE);
+
   lives_container_add(LIVES_CONTAINER(eventbox), mt->in_image);
-  lives_box_pack_start(LIVES_BOX(vbox), eventbox, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), eventbox, TRUE, FALSE, widget_opts.packing_height);
 
   lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(in_out_ebox_pressed),
@@ -8282,16 +8309,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-
   mt->in_hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), mt->in_hbox, FALSE, FALSE, widget_opts.packing_height);
-  add_fill_to_box(LIVES_BOX(mt->in_hbox));
+  lives_box_pack_start(LIVES_BOX(vbox), mt->in_hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  dpw = widget_opts.packing_width;
-  widget_opts.packing_width = 0;
+  add_spring_to_box(LIVES_BOX(mt->in_hbox), 0);
+
   mt->spinbutton_in = lives_standard_spin_button_new(NULL, 0., 0., 1000000., 1. / mt->fps, 1., 2,
                       LIVES_BOX(mt->in_hbox), NULL);
-  widget_opts.packing_width = dpw;
 
   mt->checkbutton_start_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _start"))), FALSE,
                                    LIVES_BOX(mt->in_hbox),
@@ -8300,8 +8324,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  add_fill_to_box(LIVES_BOX(mt->in_hbox));
-
+  add_spring_to_box(LIVES_BOX(mt->in_hbox), 0);
+  
   mt->spin_in_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mt->spinbutton_in), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                      LIVES_GUI_CALLBACK(in_out_start_changed),
                      mt);
@@ -8311,17 +8335,17 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                          mt);
 
   vbox = lives_vbox_new(FALSE, 0);
+  lives_widget_set_hexpand(vbox, TRUE);
 
-  lives_box_pack_end(LIVES_BOX(mt->in_out_box), vbox, FALSE, TRUE, 10);
-  lives_widget_set_vexpand(vbox, FALSE);
+  lives_box_pack_end(LIVES_BOX(mt->in_out_box), vbox, TRUE, TRUE, 2);
 
   mt->out_image = lives_image_new();
-  lives_widget_set_hexpand(mt->out_image, FALSE);
-  lives_widget_set_vexpand(mt->out_image, FALSE);
 
   eventbox = lives_event_box_new();
+  lives_widget_set_vexpand(eventbox, TRUE);
+  
   lives_container_add(LIVES_CONTAINER(eventbox), mt->out_image);
-  lives_box_pack_start(LIVES_BOX(vbox), eventbox, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), eventbox, TRUE, FALSE, widget_opts.packing_height);
 
   lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(in_out_ebox_pressed),
@@ -8336,19 +8360,18 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   }
 
   mt->out_hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), mt->out_hbox, TRUE, TRUE, 0);
-  add_fill_to_box(LIVES_BOX(mt->out_hbox));
+  lives_box_pack_start(LIVES_BOX(vbox), mt->out_hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  dpw = widget_opts.packing_width;
-  widget_opts.packing_width = 0;
+  add_spring_to_box(LIVES_BOX(mt->out_hbox), 0);
+
   mt->spinbutton_out = lives_standard_spin_button_new(NULL, 0., 0., 1000000., 1. / mt->fps, 1., 2,
                        LIVES_BOX(mt->out_hbox), NULL);
-  widget_opts.packing_width = dpw;
 
   mt->checkbutton_end_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _end"))), FALSE, LIVES_BOX(mt->out_hbox),
                                  (tmp2 = lives_strdup(_("Anchor the end point to the timeline"))));
 
-  add_fill_to_box(LIVES_BOX(mt->out_hbox));
+  
+  add_spring_to_box(LIVES_BOX(mt->out_hbox), 0);
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -10074,6 +10097,7 @@ void on_mt_fx_edit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mt->selected_init_event == NULL) return;
   fubar(mt);
   polymorph(mt, POLY_PARAMS);
+  mt_show_current_frame(mt, FALSE);
   lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
 }
 
@@ -11262,7 +11286,7 @@ static void update_in_image(lives_mt *mt) {
     frame_start = mainw->files[filenum]->start;
   }
 
-  calc_maxspect(lives_widget_get_allocation_width(mt->out_image),
+  calc_maxspect(lives_widget_get_allocation_width(mt->out_hbox),
                 lives_widget_get_allocation_height(mt->out_image),
                 &width, &height);
 
@@ -11290,7 +11314,7 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
     frame_end = mainw->files[filenum]->end;
   }
 
-  calc_maxspect(lives_widget_get_allocation_width(mt->in_image),
+  calc_maxspect(lives_widget_get_allocation_width(mt->in_hbox),
                 lives_widget_get_allocation_height(mt->in_image),
                 &width, &height);
 
@@ -12108,6 +12132,8 @@ void out_anchor_toggled(LiVESToggleButton *togglebutton, livespointer user_data)
   }
 }
 
+ 
+#define POLY_HEIGHT_MARGIN 180 // need some way to calculate this - perhaps a vslider between the 2 frames
 
 void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
   LiVESPixbuf *thumb;
@@ -12156,24 +12182,12 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
   int frame_start, frame_end = 0;
   int filenum;
 
-  static int xxwidth, xxheight;
+  static int xxwidth = 0, xxheight = 0;
 
   register int i, j;
 
   if (poly == mt->poly_state && poly != POLY_PARAMS && poly != POLY_FX_STACK) {
     return;
-  }
-
-  if (lives_widget_get_allocation_width(mt->poly_box) > 1 && lives_widget_get_allocation_height(mt->poly_box) > 1) {
-    calc_maxspect(lives_widget_get_allocation_width(mt->poly_box) / 2 - widget_opts.packing_width,
-                  lives_widget_get_allocation_height(mt->poly_box) -
-                  ((block == NULL || block->ordered) ? lives_widget_get_allocation_height(mainw->spinbutton_start) : 0), &width, &height);
-
-    xxwidth = width;
-    xxheight = height;
-  } else {
-    width = xxwidth;
-    height = xxheight;
   }
 
   switch (mt->poly_state) {
@@ -12255,8 +12269,28 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
 
   switch (poly) {
   case (POLY_IN_OUT) :
+
     set_poly_tab(mt, POLY_IN_OUT);
 
+    while (xxwidth < 1 || xxheight < 1) {
+      if (lives_widget_get_allocation_width(mt->poly_box) > 1 && lives_widget_get_allocation_height(mt->poly_box) > 1) {
+	calc_maxspect(lives_widget_get_allocation_width(mt->poly_box) / 2 - POLY_HEIGHT_MARGIN,
+		      lives_widget_get_allocation_height(mt->poly_box) - POLY_HEIGHT_MARGIN - 
+		      ((block == NULL || block->ordered) ? lives_widget_get_allocation_height(mainw->spinbutton_start): 0), &width, &height);
+	
+	xxwidth = width;
+	xxheight = height;
+      }
+      else {
+	lives_widget_show(mt->in_hbox);
+	lives_widget_context_update();
+	lives_usleep(prefs->sleep_time);
+      }
+    }
+
+    width = xxwidth;
+    height = xxheight;
+    
     mt->init_event = NULL;
     if (block == NULL || block->ordered) {
       lives_widget_show(mt->in_hbox);
@@ -12477,9 +12511,12 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     } else {
       add_context_label(mt, _("Effect has no parameters.\n"));
     }
-    lives_widget_show_all(mt->fx_box);
+    lives_widget_show_all(mt->fx_base_box);
     if (!has_params) {
-      lives_widget_hide(mt->fx_contents_box);
+      lives_widget_hide(mt->apply_fx_button);
+      lives_widget_hide(mt->del_node_button);
+      lives_widget_hide(mt->prev_node_button);
+      lives_widget_hide(mt->next_node_button);
     }
     set_poly_tab(mt, POLY_PARAMS);
     break;
@@ -13612,6 +13649,7 @@ void selblock_cb(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void list_fx_here_cb(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
+  mt_tl_move(mt, mt->context_time);
   mt->context_time = -1.;
   on_mt_list_fx_activate(NULL, user_data);
 }

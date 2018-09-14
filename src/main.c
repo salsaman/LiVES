@@ -2359,6 +2359,9 @@ capability *get_capabilities(void) {
   lives_snprintf(string, 256, "%s", array[0]);
 
   if (strcmp(string, LiVES_VERSION)) {
+    char *msg = lives_strdup_printf("Version mistmatch: smogrify = %s, LiVES = %s\n", string, LiVES_VERSION);
+    LIVES_ERROR(msg);
+    lives_free(msg);
     lives_strfreev(array);
     return capable;
   }
@@ -4895,9 +4898,8 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
 
   size = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error) / 32;
 
-  col_white.red = col_white.green = col_white.blue = col_white.alpha = 65535;
-  col_black_a.red = col_black_a.green = col_black_a.blue = 0;
-  col_black_a.alpha = 20480;
+  col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
+  col_black_a = lives_rgba_col_new(0, 0, 0, 20480);
 
   if (sfile->subt->text != NULL) {
     char *tmp;

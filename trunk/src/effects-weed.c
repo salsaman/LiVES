@@ -3553,7 +3553,7 @@ audret1:
 
 static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, void ***pchains) {
   weed_plant_t *instance;
-  weed_plant_t *init_event, *deinit_event;
+  weed_plant_t *init_event;
 
   char *keystr;
 
@@ -3592,50 +3592,7 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
     init_events = weed_get_voidptr_array(filter_map, WEED_LEAF_INIT_EVENTS, &error);
     for (i = 0; i < num_inst; i++) {
       init_event = (weed_plant_t *)init_events[i];
-      if (mainw->playing_file == -1 && mainw->multitrack != NULL && mainw->multitrack->current_rfx != NULL &&
-          mainw->multitrack->init_event != NULL) {
-        if (mainw->multitrack->current_rfx->source_type == LIVES_RFX_SOURCE_WEED &&
-            mainw->multitrack->current_rfx->source != NULL) {
-          deinit_event = (weed_plant_t *)weed_get_voidptr_value(mainw->multitrack->init_event, WEED_LEAF_DEINIT_EVENT, &error);
-          if (tc >= get_event_timecode(mainw->multitrack->init_event) && tc <= get_event_timecode(deinit_event)) {
-            // we are previewing an effect in multitrack - use current unapplied values
-            // and display only the currently selected filter (unless it is a "process_last" effect (like audio mixer))
-            // TODO - if current fx
-            void **pchain = mt_get_pchain();
-            instance = (weed_plant_t *)mainw->multitrack->current_rfx->source;
 
-            if (is_pure_audio(instance, FALSE)) continue; // audio effects are applied in the audio renderer
-
-            // interpolation can be switched of by setting mainw->no_interp
-            if (!mainw->no_interp && pchain != NULL) {
-              interpolate_params(instance, pchain, tc); // interpolate parameters for preview
-            }
-
-apply_inst1:
-
-            if (weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
-              // chain any internal data pipelines for compound fx
-              needs_reinit = pconx_chain_data_internal(instance);
-              if (needs_reinit) {
-                weed_reinit_effect(instance, FALSE);
-              }
-            }
-
-            filter_error = weed_apply_instance(instance, mainw->multitrack->init_event, layers, 0, 0, tc);
-            if (filter_error == WEED_NO_ERROR && weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
-              // handling for compound fx
-              instance = weed_get_plantptr_value(instance, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
-
-              goto apply_inst1;
-            }
-
-            if (!init_event_is_process_last(mainw->multitrack->init_event)) break;
-            continue;
-          }
-        }
-      }
-
-      // else we are previewing or rendering from an event_list
       if (weed_plant_has_leaf(init_event, WEED_LEAF_HOST_TAG)) {
         keystr = weed_get_string_value(init_event, WEED_LEAF_HOST_TAG, &error);
         key = atoi(keystr);
@@ -3645,8 +3602,19 @@ apply_inst1:
 
           if (is_pure_audio(instance, FALSE)) continue; // audio effects are applied in the audio renderer
 
-          if (pchains != NULL && pchains[key] != NULL) {
-            interpolate_params(instance, pchains[key], tc); // interpolate parameters during playback
+          if (mainw->playing_file == -1 && mainw->multitrack != NULL && mainw->multitrack->solo_inst != NULL) {
+            if (instance == mainw->multitrack->solo_inst) {
+              void **pchain = mt_get_pchain();
+
+              // interpolation can be switched of by setting mainw->no_interp
+              if (!mainw->no_interp && pchain != NULL) {
+                interpolate_params(instance, pchain, tc); // interpolate parameters for preview
+              }
+            } else continue;
+          } else {
+            if (pchains != NULL && pchains[key] != NULL) {
+              interpolate_params(instance, pchains[key], tc); // interpolate parameters during playback
+            }
           }
 
           /*
@@ -3682,6 +3650,8 @@ apply_inst2:
           }
 
           //if (filter_error!=FILTER_NO_ERROR) lives_printerr("Render error was %d\n",filter_error);
+          if (mainw->playing_file == -1 && mainw->multitrack != NULL && mainw->multitrack->solo_inst != NULL &&
+              instance == mainw->multitrack->solo_inst) break;
         }
       }
     }
@@ -3797,17 +3767,23 @@ apply_inst3:
 
     if (layers[i] == mainw->blend_layer) mainw->blend_layer = NULL;
 
-    if ((weed_plant_has_leaf(layers[i], WEED_LEAF_PIXEL_DATA) && weed_get_voidptr_value(layers[i], WEED_LEAF_PIXEL_DATA, &error) != NULL) ||
-        (weed_get_int_value(layers[i], WEED_LEAF_FRAME, &error) != 0 &&
-         (mainw->playing_file > -1 || mainw->multitrack == NULL || mainw->multitrack->current_rfx == NULL ||
-          (mainw->multitrack->init_event == NULL || tc < get_event_timecode(mainw->multitrack->init_event) ||
-           (mainw->multitrack->init_event == mainw->multitrack->avol_init_event) ||
-           tc > get_event_timecode((weed_plant_t *)weed_get_voidptr_value
-                                   (mainw->multitrack->init_event, WEED_LEAF_DEINIT_EVENT, &error)))))) {
+    if ((mainw->multitrack != NULL && i == mainw->multitrack->preview_layer) || ((mainw->multitrack == NULL ||
+        mainw->multitrack->preview_layer < 0) &&
+        ((weed_plant_has_leaf(layers[i], WEED_LEAF_PIXEL_DATA) && weed_get_voidptr_value(layers[i],
+            WEED_LEAF_PIXEL_DATA, &error) != NULL) ||
+         (weed_get_int_value(layers[i], WEED_LEAF_FRAME, &error) != 0 &&
+          (mainw->playing_file > -1 || mainw->multitrack == NULL || mainw->multitrack->current_rfx == NULL ||
+           (mainw->multitrack->init_event == NULL || tc < get_event_timecode(mainw->multitrack->init_event) ||
+            (mainw->multitrack->init_event == mainw->multitrack->avol_init_event) ||
+            tc > get_event_timecode((weed_plant_t *)weed_get_voidptr_value
+                                    (mainw->multitrack->init_event, WEED_LEAF_DEINIT_EVENT, &error)))))))) {
       if (output != -1 || weed_get_int_value(layers[i], WEED_LEAF_CLIP, &error) == -1) {
         if (!weed_plant_has_leaf(layers[i], WEED_LEAF_PIXEL_DATA)) continue;
         weed_layer_pixel_data_free(layers[i]);
       } else output = i;
+    } else {
+      if (!weed_plant_has_leaf(layers[i], WEED_LEAF_PIXEL_DATA)) continue;
+      weed_layer_pixel_data_free(layers[i]);
     }
   }
 
@@ -5999,6 +5975,7 @@ void weed_in_parameters_free(weed_plant_t *inst) {
   num_parameters = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
   parameters = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
   weed_in_params_free(parameters, num_parameters);
+  weed_leaf_delete(inst, WEED_LEAF_IN_PARAMETERS);
 }
 
 static void weed_out_parameters_free(weed_plant_t *inst) {

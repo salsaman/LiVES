@@ -159,13 +159,16 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   // the redraw button should be connected to an appropriate redraw function
   // after calling this function
 
-  // an example of this is in 'trim frames'
   LiVESAdjustment *spinbutton_adj;
 
   LiVESWidget *vseparator;
   LiVESWidget *vbox;
   LiVESWidget *hbox;
+  LiVESWidget *label;
+  LiVESWidget *scale;
+  LiVESWidget *cbutton;
   LiVESWidget *frame;
+  lives_colRGBA64_t opcol;
 
   lives_rfx_t *rfx;
 
@@ -218,7 +221,6 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 
   lives_box_pack_start(LIVES_BOX(hbox), fbord_eventbox, FALSE, FALSE, 0);
 
-  //lives_container_add(LIVES_CONTAINER(frame), fbord_eventbox);
   lives_container_add(LIVES_CONTAINER(fbord_eventbox), mainw->framedraw);
 
   if (palette->style & STYLE_1) {
@@ -229,6 +231,19 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_EXPOSE_EVENT,
                              LIVES_GUI_CALLBACK(expose_fd_event), NULL);
 
+
+  // colour and opacity controls
+  mainw->framedraw_maskbox = lives_hbox_new(FALSE, 2);
+  lives_box_pack_start(LIVES_BOX(vbox), mainw->framedraw_maskbox, FALSE, FALSE, widget_opts.packing_height);
+  label = lives_standard_label_new(_("Display mask: "));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  spinbutton_adj = lives_adjustment_new(0.5, 0.0, 1.0, 0.1, 0.1, 0);
+  scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
+  lives_box_pack_start(LIVES_BOX(hbox), scale, TRUE, TRUE, 0);
+  opcol = lives_rgba_col_new(0, 0, 0, 65535);
+  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox), _("mask color"), FALSE, &opcol, NULL, NULL, NULL, NULL);
+  lives_widget_hide(cbutton); // stop compiler complaining
+
   hbox = lives_hbox_new(FALSE, 2);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
@@ -237,9 +252,8 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 
   spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton));
 
-  mainw->framedraw_scale = lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
+  mainw->framedraw_scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
   lives_box_pack_start(LIVES_BOX(hbox), mainw->framedraw_scale, TRUE, TRUE, 0);
-  lives_scale_set_draw_value(LIVES_SCALE(mainw->framedraw_scale), FALSE);
 
   rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(lives_widget_get_toplevel(LIVES_WIDGET(box))), "rfx");
   mainw->framedraw_preview = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, _("_Preview"));
@@ -257,8 +271,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 
 
 void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload, LiVESPixbuf *pixbuf) {
-  // this will draw the mask (framedraw_bitmap) and optionally reload the image
-  // and then combine them
+  // this will draw the overlay and optionally reload the image
 
   int fd_height;
   int fd_width;
@@ -305,45 +318,6 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
   // her we dont offset because we are drawing in the pixbuf, not the widget
 
   switch (framedraw->type) {
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT: // deprecated
-    // scale values
-    if (framedraw->xstart_param->dp == 0) {
-      xstartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
-      xstartf = xstartf / (double)cfile->hsize * (double)width;
-    } else {
-      xstartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
-      xstartf = xstartf * (double)width;
-    }
-
-    if (framedraw->xend_param->dp == 0) {
-      xendf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]));
-      xendf = xendf / (double)cfile->hsize * (double)width;
-    } else {
-      xendf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]));
-      xendf = xendf * (double)width;
-    }
-
-    if (framedraw->ystart_param->dp == 0) {
-      ystartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
-      ystartf = ystartf / (double)cfile->vsize * (double)height;
-    } else {
-      ystartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
-      ystartf = ystartf * (double)height;
-    }
-
-    if (framedraw->yend_param->dp == 0) {
-      yendf = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]));
-      yendf = yendf / (double)cfile->vsize * (double)height;
-    } else {
-      yendf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]));
-      yendf = yendf * (double)height;
-    }
-
-    lives_painter_set_source_rgb(cr, 1., 0., 0.);
-    lives_painter_rectangle(cr, xstartf - 1., ystartf - 1., xendf + 2., yendf + 2.);
-    lives_painter_stroke(cr);
-
-    break;
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
 
@@ -379,9 +353,9 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
       yendf = yendf * (double)height;
     }
 
-    if (b1_held || framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT) {
+    if (framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT) {
       lives_painter_set_source_rgb(cr, 1., 0., 0.);
-      lives_painter_rectangle(cr, xstartf - 1., ystartf - 1., xendf - xstartf + 2., yendf - ystartf + 2.);
+      lives_painter_rectangle(cr, xstartf - 1., ystartf - 1., xendf, yendf);
       lives_painter_stroke(cr);
     } else {
       if (!b1_held) {
@@ -390,9 +364,13 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
         lives_painter_rectangle(cr, 0, 0, width, height);
         lives_painter_rectangle(cr, xstartf, ystartf, xendf - xstartf + 1., yendf - ystartf + 1.);
         lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DEST_OUT);
-        lives_painter_set_source_rgba(cr, .0, .0, .0, .5);
+        lives_painter_set_source_rgba(cr, .0, .0, .0, .75);  // TODO - make this adjustable by the user
         lives_painter_set_fill_rule(cr, LIVES_PAINTER_FILL_RULE_EVEN_ODD);
         lives_painter_fill(cr);
+      } else {
+        lives_painter_set_source_rgb(cr, 1., 0., 0.);
+        lives_painter_rectangle(cr, xstartf - 1., ystartf - 1., xendf - xstartf + 2., yendf - ystartf + 2.);
+        lives_painter_stroke(cr);
       }
     }
 
@@ -596,7 +574,9 @@ void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton, lives
 
 void load_framedraw_image(LiVESPixbuf *pixbuf) {
   // this is for the single frame framedraw widget
-  // it should be called whenever mainw->framedraw_bitmap changes
+  // it should be called whenever mainw->framedraw_frame changes
+  // the pixbuf will be loaded if it is NULL
+  // then it is converted to fd_layer_orig
 
   weed_timecode_t tc;
 
@@ -692,7 +672,6 @@ boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, live
 
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
     if (mainw->multitrack == NULL) {
       lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->framedraw);
@@ -728,6 +707,8 @@ boolean on_framedraw_leave(LiVESWidget *widget, LiVESXEventCrossing *event, live
 boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, lives_special_framedraw_rect_t *framedraw) {
   // user clicked in the framedraw widget (or multitrack playback widget)
 
+  double xend, yend;
+
   int fd_height;
   int fd_width;
 
@@ -753,8 +734,7 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
                            widget, &xstarti, &ystarti);
 
-  if ((framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT ||
-       framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT ||
+  if ((framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT ||
        framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK) &&
       (mainw->multitrack == NULL || mainw->multitrack->cursor_style == 0)) {
     if (mainw->multitrack == NULL) {
@@ -775,8 +755,8 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
   xstart /= (double)width;
   ystart /= (double)height;
 
-  xcurrent = xstart;
-  ycurrent = ystart;
+  xend = xcurrent = xstart;
+  yend = ycurrent = ystart;
 
   noupdate = TRUE;
 
@@ -794,8 +774,9 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
 
     break;
 
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
+    xend = yend = 0.;
+
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
 
     if (framedraw->xstart_param->dp > 0)
@@ -807,19 +788,14 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
     else
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)(ystart * (double)cfile->vsize + .5));
 
-    if (framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT) {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), 0.);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), 0.);
-    } else {
-      if (framedraw->xend_param->dp > 0)
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), xstart);
-      else
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), (int)(xstart * (double)cfile->hsize + .5));
-      if (framedraw->xend_param->dp > 0)
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), ystart);
-      else
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (int)(ystart * (double)cfile->vsize + .5));
-    }
+    if (framedraw->xend_param->dp > 0)
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), xend);
+    else
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), (int)(xend * (double)cfile->hsize + .5));
+    if (framedraw->xend_param->dp > 0)
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), yend);
+    else
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (int)(yend * (double)cfile->vsize + .5));
 
     break;
   default:
@@ -875,7 +851,8 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
   noupdate = TRUE;
 
   switch (framedraw->type) {
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT: {
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT: {
+    // end parameters provide a scale relative to the output channel
     double xscale, yscale;
 
     xscale = xcurrent - xstart;
@@ -910,12 +887,11 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)(ycurrent * (double)cfile->vsize + .5));
       }
     }
-
   }
   break;
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
 
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
+    // end parameters provide the absolute point, in output channel ratio
     if (xcurrent > xstart) {
       if (framedraw->xend_param->dp > 0)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), xcurrent);
@@ -950,7 +926,6 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
 
   default:
     break;
-
   }
 
   if (mainw->framedraw_reset != NULL) {
@@ -977,8 +952,7 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
   if (framedraw == NULL) return FALSE;
   if (mainw->multitrack != NULL && mainw->multitrack->track_index == -1) return FALSE;
 
-  if ((framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT ||
-       framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT ||
+  if ((framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT ||
        framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK) &&
       (mainw->multitrack == NULL || mainw->multitrack->cursor_style == 0)) {
     if (mainw->multitrack == NULL) {

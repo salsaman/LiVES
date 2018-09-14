@@ -113,10 +113,10 @@ typedef enum {
   POLY_CLIPS,
   POLY_IN_OUT,
   POLY_FX_STACK,
+  POLY_PARAMS,
   POLY_EFFECTS,
   POLY_TRANS,
-  POLY_COMP,
-  POLY_PARAMS
+  POLY_COMP
 } lives_mt_poly_state_t;
 
 typedef enum {
@@ -576,6 +576,10 @@ struct _mt {
   int user_signed_endian;
 
   int exact_preview;
+
+  int preview_layer;
+
+  weed_plant_t *solo_inst; ///< instance to view solo in the frame preview
 
   LiVESList *tl_marks;
 

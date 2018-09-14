@@ -1911,7 +1911,6 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
       // increase seek values
       audstate[i].seek += audstate[i].vel * (fill_tc - last_tc) / TICKS_PER_SECOND_DBL;
     }
-
   }
 
   return audstate;

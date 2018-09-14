@@ -367,7 +367,6 @@ typedef enum {
 
   // framedraw types
   LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK,  ///< type may be used in framedraw
-  LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT,  ///< type may be used in framedraw
   LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT,  ///< type may be used in framedraw
   LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT,  ///< type may be used in framedraw
 

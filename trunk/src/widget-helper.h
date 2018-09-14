@@ -97,6 +97,7 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 boolean widget_helper_init(void);
 
+lives_colRGBA64_t lives_rgba_col_new(int red, int green, int blue, int alpha);
 boolean widget_color_to_lives_rgba(lives_colRGBA64_t *, LiVESWidgetColor *);
 boolean lives_rgba_to_widget_color(LiVESWidgetColor *, lives_colRGBA64_t *);
 
@@ -314,7 +315,7 @@ LiVESWidget *lives_vbutton_box_new(void);
 boolean lives_button_box_set_layout(LiVESButtonBox *, LiVESButtonBoxStyle bstyle);
 boolean lives_button_box_set_button_width(LiVESButtonBox *, LiVESWidget *button, int min_width);
 
-LiVESWidget *lives_hscale_new(LiVESAdjustment *);
+LiVESWidget *lives_standard_hscale_new(LiVESAdjustment *);
 LiVESWidget *lives_vscale_new(LiVESAdjustment *);
 
 LiVESWidget *lives_hpaned_new(void);
@@ -838,6 +839,7 @@ LiVESWidget *add_hsep_to_box(LiVESBox *);
 LiVESWidget *add_vsep_to_box(LiVESBox *);
 
 LiVESWidget *add_fill_to_box(LiVESBox *);
+LiVESWidget *add_spring_to_box(LiVESBox *, int min);
 
 LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *);
 LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *labeltext);

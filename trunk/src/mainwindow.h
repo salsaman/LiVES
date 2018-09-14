@@ -930,6 +930,7 @@ typedef struct {
   LiVESWidget *framedraw_preview; ///< the 'redraw' button
   LiVESWidget *framedraw_spinbutton; ///< the frame number button
   LiVESWidget *framedraw_scale; ///< the slider
+  LiVESWidget *framedraw_maskbox; ///< box for opacity controls
   LiVESWidget *fd_frame; ///< surrounding frame widget
 
   weed_plant_t *fd_layer_orig; ///< original layer uneffected

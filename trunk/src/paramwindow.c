@@ -795,7 +795,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     } else {
       if (!(rfx->props & RFX_PROPS_BATCHG)) {
         mainw->framedraw_frame = 0;
-        widget_add_framedraw(LIVES_VBOX(pbox), 1, 1, TRUE, MAX_PRE_X, MAX_PRE_Y);
+        widget_add_framedraw(LIVES_VBOX(pbox), 1, 1, TRUE, MAX_PRE_X, MAX_PRE_Y); // create a (drawable on) preview window
       }
     }
 
@@ -805,6 +805,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     }
   }
 
+  // add the param widgets; here we also set parameters for any special widgets in the framedraw
   has_param = make_param_box(LIVES_VBOX(pbox), rfx);
 
   // update widgets from onchange_init here
@@ -852,7 +853,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 #endif
         lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH * 4, -1);
       }
-
     }
 
     lives_widget_set_can_focus(cancelbutton, TRUE);
@@ -1110,7 +1110,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       } else if (!strncmp((char *)lives_list_nth_data(hints, i), istring, 9)) {
         layout = lives_list_append(layout, lives_strdup((char *)lives_list_nth_data(hints, i) + 9));
       } else if (!strncmp((char *)lives_list_nth_data(hints, i), sstring, 8)) {
-        add_to_special((char *)lives_list_nth_data(hints, i) + 8, rfx);
+        add_to_special((char *)lives_list_nth_data(hints, i) + 8, rfx); // add any special actions to the framedraw preview
       }
     }
     lives_list_free_all(&hints);
@@ -1222,11 +1222,12 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   if (!chk_params) {
     if (!has_param) {
+      widget_opts.justify = LIVES_JUSTIFY_CENTER;
+      LiVESWidget *label = lives_standard_label_new(_("No parameters"));
       hbox = lives_hbox_new(FALSE, 0);
-      lives_box_pack_start(LIVES_BOX(param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
-      add_fill_to_box(LIVES_BOX(hbox));
-      add_param_label_to_box(LIVES_BOX(hbox), FALSE, _("No parameters"));
-      add_fill_to_box(LIVES_BOX(hbox));
+      lives_box_pack_start(LIVES_BOX(param_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 4.);
+      lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, FALSE, 0);
+      widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     }
 
     if (mainw->multitrack == NULL || rfx->status != RFX_STATUS_WEED) {
@@ -1434,8 +1435,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       if (!prefs->lamp_buttons) {
 #endif
         if (add_slider) {
-          scale = lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-          lives_scale_set_draw_value(LIVES_SCALE(scale), FALSE);
+          scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
           lives_box_pack_start(LIVES_BOX(hbox), scale, TRUE, TRUE, 0);
         }
 #ifdef ENABLE_GIW
@@ -1449,8 +1449,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->black);
         lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_orange);
         if (add_slider) {
-          scale2 = lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-          lives_scale_set_draw_value(LIVES_SCALE(scale2), FALSE);
+          scale2 = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
           lives_box_pack_start(LIVES_BOX(hbox), scale2, TRUE, TRUE, 0);
           if (!LIVES_IS_HBOX(LIVES_WIDGET(box))) add_fill_to_box(LIVES_BOX(hbox));
 
@@ -1677,6 +1676,7 @@ void add_param_label_to_box(LiVESBox *box, boolean do_trans, const char *text) {
   lives_widget_show(label);
 }
 
+
 LiVESSList *add_usrgrp_to_livesgrp(LiVESSList *u2l, LiVESSList *rbgroup, int usr_number) {
   lives_widget_group_t *wgroup = (lives_widget_group_t *)lives_malloc(sizeof(lives_widget_group_t));
   wgroup->usr_number = usr_number;
@@ -1697,7 +1697,6 @@ lives_widget_group_t *livesgrp_from_usrgrp(LiVESSList *u2l, int usrgrp) {
   }
   return NULL;
 }
-
 
 
 void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *rfx) {

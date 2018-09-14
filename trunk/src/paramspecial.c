@@ -85,14 +85,7 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
       framedraw.xend_param = &rfx->params[atoi(array[4])];
       framedraw.yend_param = &rfx->params[atoi(array[5])];
       framedraw.stdwidgets = 4;
-    } else if (!strcmp(array[1], "multrect")) {
-      framedraw.type = LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT;
-      framedraw.xstart_param = &rfx->params[atoi(array[2])];
-      framedraw.ystart_param = &rfx->params[atoi(array[3])];
-      framedraw.xend_param = &rfx->params[atoi(array[4])];
-      framedraw.yend_param = &rfx->params[atoi(array[5])];
-      framedraw.stdwidgets = 4;
-    } else if (!strcmp(array[1], "multirect")) {
+    } else if (!strcmp(array[1], "multirect") || !strcmp(array[1], "multrect")) { // allow for spelling errors in earlier draft
       framedraw.type = LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT;
       framedraw.xstart_param = &rfx->params[atoi(array[2])];
       framedraw.ystart_param = &rfx->params[atoi(array[3])];
@@ -489,7 +482,6 @@ void setmergealign(void) {
 LiVESPixbuf *mt_framedraw(lives_mt *mt, LiVESPixbuf *pixbuf) {
   if (framedraw.added) {
     switch (framedraw.type) {
-    case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
     case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
       if (mt->track_index == -1) {
         // TODO - hide widgets
@@ -503,6 +495,7 @@ LiVESPixbuf *mt_framedraw(lives_mt *mt, LiVESPixbuf *pixbuf) {
     }
 
     framedraw_redraw(&framedraw, TRUE, pixbuf);
+
     pixbuf = layer_to_pixbuf(mainw->fd_layer);
 
     weed_plant_free(mainw->fd_layer);

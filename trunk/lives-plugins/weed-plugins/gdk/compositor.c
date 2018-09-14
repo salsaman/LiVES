@@ -164,8 +164,6 @@ int compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
   int up_interp = GDK_INTERP_HYPER;
   int down_interp = GDK_INTERP_BILINEAR;
 
-
-
   if (weed_plant_has_leaf(inst, "in_channels")) {
     num_in_channels = weed_leaf_num_elements(inst, "in_channels");
     in_channels = weed_get_plantptr_array(inst, "in_channels", &error);
@@ -222,8 +220,8 @@ int compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
     out_width = (owidth * myscalex + .5);
     out_height = (oheight * myscaley + .5);
-
-    if (out_width * out_height > 0) {
+    
+    if (out_width * out_height > 3) {
       in_width = weed_get_int_value(in_channels[z], "width", &error);
       in_height = weed_get_int_value(in_channels[z], "height", &error);
 
@@ -247,7 +245,6 @@ int compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
       out_width = gdk_pixbuf_get_width(out_pixbuf);
       out_height = gdk_pixbuf_get_height(out_pixbuf);
       irowstride = gdk_pixbuf_get_rowstride(out_pixbuf);
-
 
       for (y = myoffsy; y < oheight && y < myoffsy + out_height; y++) {
         for (x = myoffsx; x < owidth && x < myoffsx + out_width; x++) {
@@ -286,7 +283,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *gui = weed_filter_class_get_gui(filter_class);
 
     // define RFX layout
-    char *rfx_strings[] = {"layout|p0|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|", "layout|p5|", "special|framedraw|multrect|0|1|2|3|4|"};
+    char *rfx_strings[] = {"layout|p0|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|", "layout|p5|", "special|framedraw|multirect|0|1|2|3|4|"};
 
     int api_used = weed_get_api_version(plugin_info);
     // set 0 to infinite repeats

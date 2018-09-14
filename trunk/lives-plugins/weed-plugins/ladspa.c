@@ -971,17 +971,17 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     dup2(new_stdout, 1);
     dup2(new_stderr, 2);
 #endif
+
+    if (num_filters == 0) {
+      fprintf(stderr, "No LADSPA plugins found; if you have them installed please set the LADSPA_PATH environment variable to point to them.\n");
+      return NULL;
+    }
+
+    add_filters_from_list(plugin_info, list);
+
+    weed_set_int_value(plugin_info, "version", package_version);
   }
-
-  if (num_filters == 0) {
-    fprintf(stderr, "No LADSPA plugins found; if you have them installed please set the LADSPA_PATH environment variable to point to them.\n");
-    return NULL;
-  }
-
-  add_filters_from_list(plugin_info, list);
-
-  weed_set_int_value(plugin_info, "version", package_version);
-
+  
   return plugin_info;
 }
 

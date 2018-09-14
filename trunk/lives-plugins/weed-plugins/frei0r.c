@@ -7,9 +7,6 @@
    (c) 2005 - 2012, Salsaman
 */
 
-
-
-
 #include <frei0r.h>
 #include <stdio.h>
 #include <stdlib.h>

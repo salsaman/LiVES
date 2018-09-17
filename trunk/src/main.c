@@ -2581,6 +2581,7 @@ static boolean lives_startup(livespointer data) {
 #endif
 
   boolean got_files = FALSE;
+  boolean layout_recovered = FALSE;
   char *tmp;
 
   if (capable->smog_version_correct) {
@@ -2927,7 +2928,18 @@ static boolean lives_startup(livespointer data) {
   if (prefs->osc_start) prefs->osc_udp_started = lives_osc_init(prefs->osc_udp_port);
 #endif
 
-  if (mainw->recoverable_layout) do_layout_recover_dialog();
+  if (mainw->recoverable_layout) layout_recovered = do_layout_recover_dialog();
+
+  if (mainw->ascrap_file != -1) {
+    if (!layout_recovered || mainw->multitrack == NULL || !used_in_current_layout(mainw->multitrack, mainw->ascrap_file)) {
+      close_ascrap_file(FALSE); // ignore but leave file on disk for recovery purposes
+    }
+  }
+  if (mainw->scrap_file != -1) {
+    if (!layout_recovered || mainw->multitrack == NULL || !used_in_current_layout(mainw->multitrack, mainw->scrap_file)) {
+      close_scrap_file(FALSE); // ignore leave file on disk for recovery purposes
+    }
+  }
 
   if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
     mainw->is_ready = TRUE;
@@ -6188,9 +6200,9 @@ void load_frame_image(int frame) {
       if (!(mainw->preview || mainw->is_rendering)) {
         // chain any data pipelines
         if (mainw->pconx != NULL) {
-          pconx_chain_data(-2, 0);
+          pconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0);
         }
-        if (mainw->cconx != NULL) cconx_chain_data(-2, 0);
+        if (mainw->cconx != NULL) cconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0);
       }
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),

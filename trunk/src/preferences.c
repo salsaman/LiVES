@@ -2375,7 +2375,7 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer dummy) {
         if (nmons <= 1) {
           lives_widget_hide(prefsw->forcesmon_hbox);
 #if !LIVES_HAS_GRID_WIDGET
-          lives_widget_hide(prefsw->ce_thumbs);
+          lives_widget_hide(lives_widget_get_parent(prefsw->ce_thumbs));
 #endif
         }
         prefs_current_page = LIST_ENTRY_GUI;

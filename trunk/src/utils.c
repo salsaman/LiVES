@@ -5507,6 +5507,19 @@ int get_token_count(const char *string, int delim) {
   return pieces;
 }
 
+char *get_nth_token(const char *string, int delim, int pnumber) {
+  char **array;
+  char *ret = NULL;
+  register int i;
+  if (pnumber < 0 || pnumber >= get_token_count(string, delim)) return NULL;
+  array = lives_strsplit(string, delim, pnumber + 1);
+  for (i = 0; i < pnumber; i++) {
+    if (i == pnumber) ret = array[i];
+    else lives_free(array[i]);
+  }
+  lives_free(array);
+  return ret;
+}
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2) {
   char *s1u = lives_utf8_normalize(s1, strlen(s1), LIVES_NORMALIZE_DEFAULT);

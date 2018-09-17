@@ -73,6 +73,13 @@ void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamp
 
   if (!prefs->push_audio_to_gens) return;
 
+  pthread_mutex_lock(&mainw->abuf_mutex);
+
+  if (abuf == NULL) {
+    pthread_mutex_unlock(&mainw->abuf_mutex);
+    return;
+  }
+
   if (abuf->bufferf == NULL) free_audio_frame_buffer(abuf);
 
   nsampsize = (abuf->samples_filled + nsamples) * sizeof(float);
@@ -89,6 +96,7 @@ void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamp
   channum--;
   abuf->bufferf[channum] = (float *)lives_realloc(abuf->bufferf[channum], nsampsize * sizeof(float));
   lives_memcpy(&abuf->bufferf[channum][abuf->samples_filled], src, nsamples * sizeof(float));
+  pthread_mutex_unlock(&mainw->abuf_mutex);
 }
 
 
@@ -96,10 +104,14 @@ void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamp
   // append 16 bit audio to the audio frame buffer
   size_t nsampsize;
 
-  if (abuf == NULL) return;
-
   if (!prefs->push_audio_to_gens) return;
 
+  pthread_mutex_lock(&mainw->abuf_mutex);
+
+  if (abuf == NULL) {
+    pthread_mutex_unlock(&mainw->abuf_mutex);
+    return;
+  }
   if (abuf->buffer16 == NULL) free_audio_frame_buffer(abuf);
 
   nsampsize = (abuf->samples_filled + nsamples) * 2;
@@ -118,6 +130,7 @@ void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamp
 #ifdef DEBUG_AFB
   g_print("append16 to afb\n");
 #endif
+  pthread_mutex_unlock(&mainw->abuf_mutex);
 }
 
 
@@ -969,7 +982,6 @@ static void audio_process_events_to(weed_timecode_t tc) {
   mainw->audio_event = event;
 }
 
-
 int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime,
                              weed_timecode_t tc_start, weed_timecode_t tc_end, double *chvol, double opvol_start,
                              double opvol_end, lives_audio_buf_t *obuf) {
@@ -1068,8 +1080,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (!storedfdsset) audio_reset_stored_fnames();
 
-  if (mainw->event_list == NULL || (mainw->multitrack == NULL && nfiles == 1 &&
-                                    from_files[0] == mainw->ascrap_file)) render_block_size *= 100;
+  if (!(is_fade) && (mainw->event_list == NULL || (mainw->multitrack == NULL && nfiles == 1 &&
+						   from_files[0] == mainw->ascrap_file))) render_block_size *= 100;
 
   if (to_file > -1) {
     // prepare outfile stuff
@@ -1372,6 +1384,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
         frames_out = sample_move_float_int((void *)finish_buff, chunk_float_buffer, blocksize, 1., out_achans,
                                            out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
+	g_print("render %ld frames at %f\n", frames_out, opvol);
         lives_write(out_fd, finish_buff, frames_out * out_asamps * out_achans, TRUE);
         threaded_dialog_spin(0.);
         tot_frames += frames_out;
@@ -1439,7 +1452,8 @@ void aud_fade(int fileno, double startt, double endt, double startv, double endv
   double vel = 1., vol = 1.;
 
   mainw->read_failed = mainw->write_failed = FALSE;
-  render_audio_segment(1, &fileno, fileno, &vel, &startt, startt * TICKS_PER_SECOND, endt * TICKS_PER_SECOND, &vol, startv, endv, NULL);
+  render_audio_segment(1, &fileno, fileno, &vel, &startt, (weed_timecode_t)(startt * TICKS_PER_SECOND_DBL),
+                       (weed_timecode_t)(endt * TICKS_PER_SECOND_DBL), &vol, startv, endv, NULL);
 
   if (mainw->write_failed) {
     char *outfilename = lives_get_audio_file_name(fileno);
@@ -3052,19 +3066,23 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
   // copy data from abuf->bufferf[] to WEED_LEAF_AUDIO_DATA
   for (i = 0; i < tchans; i++) {
+    pthread_mutex_lock(&mainw->abuf_mutex);
     src = abuf->bufferf[i % abuf->out_achans] + offs;
-    if (!tinter) {
-      if ((int)abuf->arate == trate) {
-        lives_memcpy(dst, src, alen * sizeof(float));
+    if (src != NULL) {
+      if (!tinter) {
+        if ((int)abuf->arate == trate) {
+          lives_memcpy(dst, src, alen * sizeof(float));
+        } else {
+          // needs resample
+          sample_move_float_float(dst, src, alen, scale, 1);
+        }
+        dst += alen;
       } else {
-        // needs resample
-        sample_move_float_float(dst, src, alen, scale, 1);
+        sample_move_float_float(dst, src, alen, scale, tchans);
+        dst++;
       }
-      dst += alen;
-    } else {
-      sample_move_float_float(dst, src, alen, scale, tchans);
-      dst++;
     }
+    pthread_mutex_unlock(&mainw->abuf_mutex);
   }
   return TRUE;
 }

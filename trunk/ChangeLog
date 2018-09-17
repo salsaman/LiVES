@@ -2,10 +2,14 @@ Version 2.10.1
 --------------
 Fixes for showing time remaining in progress dialog (partial regression from 2.10.0)
 Fix invisible window pre external window capture (regression).
-Fix regression in some preview displays.
+Fix regression in some preview displays in the clip editor.
+Fix preview for Compositor effect in multitrack.
 Fixes for Record External Audio.
 Sort plugins alphabetically within packages.
 Ensure playback does not stop too soon in autolives mode.
+Fix audio fade in / out, using smaller chunk sizes.
+Allow effect output parameters to feed to internal macros, similar to MIDI / joystick controller.
+Improve effect previews in multitrack mode.
 
 
 

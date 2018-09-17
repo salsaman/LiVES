@@ -9,11 +9,11 @@
     =end comment
 =cut
     
-    ##################################################################
+##################################################################
     
-    # these MUST match with the definition in the GUI
+# these MUST match with the definition in the GUI
     
-    $rfx_builder_multi = "build-lives-rfx-plugin-multi";
+$rfx_builder_multi = "build-lives-rfx-plugin-multi";
 
 $umask = 0177;
 # ->        -rw-------
@@ -28,7 +28,7 @@ $GUI_NAME = "LiVES";
 # Do not change these except for testing !
 
 $background = 1;
-$version = "2.10.1-svn";
+$version = "2.10.1";
 #$dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -7927,7 +7927,7 @@ sub weed {
     unless ($opts & 0x10) {
 	# clean up a few extra remnants
         smog_chdir("$workdir");
-        unlink glob ".* rfx.* smogplugin.*";
+        unlink glob ".* rfx.* smogplugin.* lock.*";
         unless (!defined($new_work)||$new_work eq "") {
             unlink glob "firew.* encoder_log_* stream.*";
         }

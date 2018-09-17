@@ -9,9 +9,10 @@
 
 #define FX_DATA_KEY_SUBTITLES -1
 #define FX_DATA_KEY_PLAYBACK_PLUGIN -2
+#define FX_DATA_KEY_OMC_MACRO -3
 
-#define EXTRA_PARAMS_OUT 1
-#define EXTRA_PARAMS_IN 1
+#define EXTRA_PARAMS_OUT 1 // Activate
+#define EXTRA_PARAMS_IN 1 // Activated
 
 #define FX_DATA_PARAM_ACTIVE -1
 
@@ -34,11 +35,14 @@ struct _lives_pconnect_t {
   // index to parameters which are to be copied (|params|)
   int *params;
 
+  // previous vals, so we can see when state changed
+  int *last_boolval;
+
   // number of connections for each param
   int *nconns;
 
   // each param is mapped to nconns[i] of these
-  int *ikey;  ///< ikey is 0 based
+  int *ikey;  ///< ikey is 0 based :: values < 0 indicate an FX_DATA_KEY_*
   int *imode;
   int *ipnum;
   boolean *autoscale;
@@ -57,8 +61,11 @@ void pconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
 
 void pconx_remap_mode(int key, int omode, int nmode);
 
-// chain any output data into fx key/mode
+// chain any output data into fx key/mode (pull)
 boolean pconx_chain_data(int key, int mode);
+
+// chain any output data into OMC Macros (push)
+int pconx_chain_data_omc(weed_plant_t *instance, int key, int mode);
 
 // return list of in keys/modes/params/autoscale
 char *pconx_list(int okey, int omode, int opnum);

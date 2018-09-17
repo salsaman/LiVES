@@ -827,6 +827,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   if (URI == NULL && cdata != NULL) {
     // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     cdata = avf_clone(cdata);
+    if (cdata == NULL) return NULL;
     priv = cdata->priv;
     if (priv->longer_seek) goto rescan;
     return cdata;

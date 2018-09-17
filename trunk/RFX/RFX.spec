@@ -1,8 +1,8 @@
 ﻿The RFX (Rendered Effects System)
 ---------------------------------
 
-Author: salsaman@gmail.com
-Date: 3/3/2013
+Author: salsaman+lives@gmail.com
+Last edit date: 13/09/2018
 API Version: 1.8 GPL
 
 Changes
@@ -31,6 +31,7 @@ d1.6 Added string_list parameter type
 - Fix text errors, add note about "$fps"
 - Clarify max length for fileread special keyword.
 - tighten up wording a little bit
+- Correct description of "multirect", remove mention of "multrect"
 
 TODO: 	- split into RFX layout and RFX plugin components (?)
 
@@ -482,19 +483,17 @@ Suggested interpretation:
 Special type "framedraw" - allows user drawing on a preview frame to control some parameters and vice-versa; origin is top-left
 
 	If a linked parameter has 0 decimal places, then the value is in pixels. If more than 0 decimal places, the value is a ratio 
-	where {1.0,1.0} is the bottom right of the image [as of version 1.8]
+	where {1.0,1.0} is the bottom right of the image [as of version 1.8]. For multi-valued parameters the size of the first output channel may be used.
 
-  Subtype "rectdemask" - >= 4 numeric parameters : demask (only show) a region on the preview frame, from position p0[n],p1[n] to 
-                                           p2[n],p3[n]
+Subtype "rectdemask" - >= 4 numeric parameters : demask (only show) a region on the preview frame, from position p0[n],p1[n] to p2[n],p3[n]
 
-  Subtype "multrect" - >= 4 numeric parameters : draw a rectangle (outline) on preview frame, offset p0[n]*out_channel1_width,p1[n]*out_channel1_height, scaled by p2[n]*out_channel_width,p3[n]*out_channel_width; [deprecated as of version 1.8]
+Subtype "multirect" - >= 4 numeric parameters : draw a rectangle (outline) on preview frame, offset p0[n]*out_channel0_width, p1[n]*out_channel0_height, scaled by p2[n]*out_channel0_width,
+					   p3[n]*out_channel0_height
 
-  Subtype "multirect" - >= 4 numeric parameters : draw a rectangle (outline) on preview frame, position p0[n],p1[n], to position p2[n],p3[n]
-
-  Subtype "singlepoint" - >= 2 numeric parameters : draw a "target" point (e.g. crosshair) on the frame, at offset 
+Subtype "singlepoint" - >= 2 numeric parameters : draw a "target" point (e.g. crosshair) on the frame, at offset 
                                             p0[n],p1[n]
 
-
+					    
 Special type "aspect" - 2 numeric parameters : p0 and p1 may optionally be aspect ratio locked to the corresponding in channel 
                                        width and height; host should provide a way to select/deselect this
 

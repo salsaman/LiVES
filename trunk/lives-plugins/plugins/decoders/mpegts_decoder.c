@@ -2633,6 +2633,7 @@ static lives_clip_data_t *init_cdata(void) {
   cdata->seek_flag = 0;
 
   priv->ctx = NULL;
+  priv->idxc = NULL;
   priv->codec = NULL;
   priv->picture = NULL;
   priv->inited = FALSE;
@@ -2667,7 +2668,7 @@ static index_entry *mpegts_read_seek(const lives_clip_data_t *cdata, uint32_t ti
 
   index_entry *idx;
 
-  if (!priv->idxc->idxhh) return NULL;
+  if (priv->idxc == NULL || !priv->idxc->idxhh) return NULL;
 
   pthread_mutex_lock(&priv->idxc->mutex);
   timestamp = FFMIN(timestamp, frame_to_dts(cdata, cdata->nframes));
@@ -2744,9 +2745,14 @@ static void idxc_release(lives_clip_data_t *cdata) {
 
   pthread_mutex_lock(&indices_mutex);
 
+  for (i = 0; i < idxc->nclients; i++) {
+    if (idxc->clients[i] == cdata) {
+      mpegts_save_index(idxc->clients[i]);
+      break;
+    }
+  }
+  
   if (idxc->nclients == 1) {
-    mpegts_save_index(idxc->clients[0]);
-
     // remove this index
     index_free(idxc->idxhh);
     free(idxc->clients);
@@ -3857,7 +3863,7 @@ donerd:
   return max_dts;
 
 failrd:
-  if (priv->idxc->idxhh != NULL) idxc_release(cdata);
+  if (priv->idxc != NULL && priv->idxc->idxhh != NULL) idxc_release(cdata);
 
   close(fd);
   return 0;

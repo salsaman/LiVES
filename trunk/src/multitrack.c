@@ -851,7 +851,8 @@ void recover_layout_cancelled(boolean is_startup) {
 }
 
 
-static void mt_load_recovery_layout(lives_mt *mt) {
+static boolean mt_load_recovery_layout(lives_mt *mt) {
+  boolean recovered = TRUE;
   char *aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
                                          capable->mainpid);
   char *eload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid);
@@ -878,23 +879,28 @@ static void mt_load_recovery_layout(lives_mt *mt) {
     }
     mt->fps = prefs->mt_def_fps;
     lives_free(uldir);
+    recovered = FALSE;
   }
 
   lives_free(eload_file);
   lives_free(aload_file);
+  return recovered;
 }
 
 
-void recover_layout(void) {
+boolean recover_layout(void) {
+  boolean loaded = TRUE;
+
   if (prefs->startup_interface == STARTUP_CE) {
     if (!on_multitrack_activate(NULL, NULL)) {
+      loaded = FALSE;
       multitrack_delete(mainw->multitrack, FALSE);
       do_bad_layout_error();
     }
   } else {
     mainw->multitrack->auto_reloading = TRUE;
     set_pref(PREF_AR_LAYOUT, ""); // in case we crash...
-    mt_load_recovery_layout(mainw->multitrack);
+    loaded = mt_load_recovery_layout(mainw->multitrack);
     mainw->multitrack->auto_reloading = FALSE;
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
@@ -903,6 +909,7 @@ void recover_layout(void) {
   }
   mainw->recoverable_layout = FALSE;
   do_after_crash_warning();
+  return loaded;
 }
 
 
@@ -5520,8 +5527,8 @@ boolean check_for_layout_del(lives_mt *mt, boolean exiting) {
     event_list_free_undos(mt);
     mt->event_list = NULL;
     mt_clear_timeline(mt);
-    close_scrap_file();
-    close_ascrap_file();
+    close_scrap_file(TRUE);
+    close_ascrap_file(TRUE);
     print_layout_wiped();
   }
 
@@ -8325,7 +8332,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_free(tmp2);
 
   add_spring_to_box(LIVES_BOX(mt->in_hbox), 0);
-  
+
   mt->spin_in_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mt->spinbutton_in), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                      LIVES_GUI_CALLBACK(in_out_start_changed),
                      mt);
@@ -8343,7 +8350,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   eventbox = lives_event_box_new();
   lives_widget_set_vexpand(eventbox, TRUE);
-  
+
   lives_container_add(LIVES_CONTAINER(eventbox), mt->out_image);
   lives_box_pack_start(LIVES_BOX(vbox), eventbox, TRUE, FALSE, widget_opts.packing_height);
 
@@ -8370,7 +8377,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->checkbutton_end_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _end"))), FALSE, LIVES_BOX(mt->out_hbox),
                                  (tmp2 = lives_strdup(_("Anchor the end point to the timeline"))));
 
-  
+
   add_spring_to_box(LIVES_BOX(mt->out_hbox), 0);
 
   lives_free(tmp);
@@ -12132,7 +12139,7 @@ void out_anchor_toggled(LiVESToggleButton *togglebutton, livespointer user_data)
   }
 }
 
- 
+
 #define POLY_HEIGHT_MARGIN 180 // need some way to calculate this - perhaps a vslider between the 2 frames
 
 void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
@@ -12274,23 +12281,22 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
 
     while (xxwidth < 1 || xxheight < 1) {
       if (lives_widget_get_allocation_width(mt->poly_box) > 1 && lives_widget_get_allocation_height(mt->poly_box) > 1) {
-	calc_maxspect(lives_widget_get_allocation_width(mt->poly_box) / 2 - POLY_HEIGHT_MARGIN,
-		      lives_widget_get_allocation_height(mt->poly_box) - POLY_HEIGHT_MARGIN - 
-		      ((block == NULL || block->ordered) ? lives_widget_get_allocation_height(mainw->spinbutton_start): 0), &width, &height);
-	
-	xxwidth = width;
-	xxheight = height;
-      }
-      else {
-	lives_widget_show(mt->in_hbox);
-	lives_widget_context_update();
-	lives_usleep(prefs->sleep_time);
+        calc_maxspect(lives_widget_get_allocation_width(mt->poly_box) / 2 - POLY_HEIGHT_MARGIN,
+                      lives_widget_get_allocation_height(mt->poly_box) - POLY_HEIGHT_MARGIN -
+                      ((block == NULL || block->ordered) ? lives_widget_get_allocation_height(mainw->spinbutton_start) : 0), &width, &height);
+
+        xxwidth = width;
+        xxheight = height;
+      } else {
+        lives_widget_show(mt->in_hbox);
+        lives_widget_context_update();
+        lives_usleep(prefs->sleep_time);
       }
     }
 
     width = xxwidth;
     height = xxheight;
-    
+
     mt->init_event = NULL;
     if (block == NULL || block->ordered) {
       lives_widget_show(mt->in_hbox);
@@ -18972,7 +18978,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     return FALSE;
   }
 
-  if (mainw->ascrap_file != -1 && layout_map[mainw->ascrap_file] != 0) {
+  if (mainw->ascrap_file != -1 && layout_map_audio[mainw->ascrap_file] != 0) {
     // can't save if we have recorded audio
     do_layout_ascrap_file_error();
     lives_free(layout_map);
@@ -20808,8 +20814,8 @@ void wipe_layout(lives_mt *mt) {
 
   print_layout_wiped();
 
-  close_scrap_file();
-  close_ascrap_file();
+  close_scrap_file(TRUE);
+  close_ascrap_file(TRUE);
 
   recover_layout_cancelled(FALSE);
 

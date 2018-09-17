@@ -8084,7 +8084,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
   if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_SUBSPACE)) isubspace = weed_get_int_value(layer, WEED_LEAF_YUV_SUBSPACE, &error);
   else isubspace = WEED_YUV_SUBSPACE_YUV;
 
-  // #define DEBUG_PCONV
+  //#define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   char *tmp2, *tmp3;
   g_print("converting palette %s(%s) to %s(%s)\n", weed_palette_get_name(inpl),

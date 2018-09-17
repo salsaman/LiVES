@@ -499,7 +499,7 @@ typedef GtkGrid                           LiVESGrid;
 typedef LiVESWidget                       LiVESGrid;
 #endif
 
-#ifdef LIVES_TABLE_IS_GRID
+#if LIVES_TABLE_IS_GRID
 typedef GtkGrid                           LiVESTable;
 #else
 typedef GtkTable                          LiVESTable;

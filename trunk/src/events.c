@@ -3978,8 +3978,11 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
   lives_mt *multi = mainw->multitrack;
 
   double old_pb_fps = cfile->pb_fps;
+
   int oundo_start = cfile->undo_start;
   int oundo_end = cfile->undo_end;
+
+  char *com;
 
   if (event_list == NULL) return TRUE; //oh, that was easy !
 
@@ -3999,6 +4002,12 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
   lives_widget_set_sensitive(mainw->undo, FALSE);
 
   cfile->undo_action = UNDO_RENDER;
+
+  // clear up any leftover old files
+  com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend, cfile->handle);
+  lives_system(com, FALSE);
+  lives_free(com);
+
   // play back the file as fast as possible, each time calling render_events()
   if ((!do_progress_dialog(TRUE, TRUE, "Rendering") && mainw->cancelled != CANCEL_KEEP) || mainw->error ||
       mainw->render_error >= LIVES_RENDER_ERROR
@@ -4403,6 +4412,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // record end
   mainw->record = FALSE;
   mainw->record_paused = FALSE;
+  mainw->record_starting = FALSE;
 
   lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf), FALSE);
@@ -4414,8 +4424,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
   }
 
   if (mainw->event_list == NULL) {
-    close_scrap_file();
-    close_ascrap_file();
+    close_scrap_file(TRUE);
+    close_ascrap_file(TRUE);
     dprint_recneg();
     return FALSE;
   }
@@ -4437,8 +4447,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
       if (mainw->current_file > -1) cfile->redoable = FALSE;
-      close_scrap_file();
-      close_ascrap_file();
+      close_scrap_file(TRUE);
+      close_ascrap_file(TRUE);
       sensitize();
       break;
     case RENDER_CHOICE_PREVIEW:
@@ -4473,8 +4483,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
       mainw->play_start = 1; ///< new clip frames always start  at 1
       if (!render_to_clip(TRUE)) render_choice = RENDER_CHOICE_PREVIEW;
       else {
-        close_scrap_file();
-        close_ascrap_file();
+        close_scrap_file(TRUE);
+        close_ascrap_file(TRUE);
       }
       prefs->mt_def_width = dw;
       prefs->mt_def_height = dh;
@@ -4490,8 +4500,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
       cfile->undo_start = mainw->play_start = oplay_start; ///< same clip frames start where recording started
       if (!render_to_clip(FALSE)) render_choice = RENDER_CHOICE_PREVIEW;
       else {
-        close_scrap_file();
-        close_ascrap_file();
+        close_scrap_file(TRUE);
+        close_ascrap_file(TRUE);
         d_print_done();
       }
       mainw->is_rendering = FALSE;

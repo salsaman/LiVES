@@ -1073,8 +1073,8 @@ boolean open_scrap_file(void);
 boolean open_ascrap_file(void);
 int save_to_scrap_file(weed_plant_t *layer);
 boolean load_from_scrap_file(weed_plant_t *layer, int frame);
-void close_ascrap_file(void);
-void close_scrap_file(void);
+void close_ascrap_file(boolean remove);
+void close_scrap_file(boolean remove);
 void add_to_ascrap_mb(uint64_t bytes);
 
 boolean check_for_disk_space(void);

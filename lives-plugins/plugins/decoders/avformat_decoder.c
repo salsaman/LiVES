@@ -198,7 +198,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   register int i;
 
-
   if (isclone && !priv->inited) {
     isclone = FALSE;
     if (cdata->fps > 0. && cdata->nframes > 0)
@@ -290,7 +289,6 @@ skip_probe:
     goto skip_init;
   }
 
-
   // fill cdata
 
   cdata->nclips = 1;
@@ -366,7 +364,6 @@ skip_init:
       priv->astream = i;
       break;
 
-
     case AVMEDIA_TYPE_VIDEO:
 
       if (!isclone && priv->vstream != -1) {
@@ -382,13 +379,11 @@ skip_init:
       cdata->frame_width = cdata->width = cc->width;
       cdata->frame_height = cdata->height = cc->height;
 
-
       /*if( cc->palctrl )
       {
       fmt.video.p_palette = malloc( sizeof(video_palette_t) );
       *fmt.video.p_palette = *(video_palette_t *)cc->palctrl;
       }*/
-
 
       cdata->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
       cdata->YUV_sampling = WEED_YUV_SAMPLING_DEFAULT;
@@ -447,8 +442,6 @@ skip_init:
       break;
 
     /*        case CODEC_TYPE_SUBTITLE:
-
-
 
     if( strncmp( p_sys->ic->iformat->name, "matroska", 8 ) == 0 &&
               cc->codec_id == AV_CODEC_ID_DVD_SUBTITLE &&
@@ -609,12 +602,8 @@ skip_init:
     return FALSE;
   }
 
-
   if (priv->ic->start_time != (int64_t)AV_NOPTS_VALUE)
     i_start_time = priv->ic->start_time * 1000000 / AV_TIME_BASE;
-
-
-
 
   fprintf(stderr, "AVFormat supported stream\n");
   fprintf(stderr, "    - format = %s (%s)\n",
@@ -623,8 +612,6 @@ skip_init:
   fprintf(stderr, "    - duration = %"PRId64"\n",
           (priv->ic->duration != (int64_t)AV_NOPTS_VALUE) ?
           priv->ic->duration * 1000000 / AV_TIME_BASE : -1);
-
-
 
 #ifdef HAVE_FFMPEG_CHAPTERS
   /*    if( p_sys->ic->nb_chapters > 0 )
@@ -647,10 +634,8 @@ skip_init:
   }*/
 #endif
 
-
   return TRUE;
 }
-
 
 
 static void detach_stream(lives_clip_data_t *cdata) {
@@ -680,14 +665,11 @@ static void detach_stream(lives_clip_data_t *cdata) {
 
   priv->astream = -1;
   priv->vstream = -1;
-
 }
 
 
 //////////////////////////////////////////
 // std functions
-
-
 
 const char *module_check_init(void) {
   lives_avcodec_lock();
@@ -700,7 +682,6 @@ const char *module_check_init(void) {
 const char *version(void) {
   return plugin_version;
 }
-
 
 
 static lives_clip_data_t *init_cdata(void) {
@@ -740,7 +721,6 @@ static lives_clip_data_t *init_cdata(void) {
 
   return cdata;
 }
-
 
 
 static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
@@ -811,7 +791,6 @@ static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
 
   return clone;
 }
-
 
 
 lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
@@ -905,7 +884,6 @@ rescan:
 }
 
 
-
 static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
   unsigned char *dst = idst;
   register int i;
@@ -954,7 +932,6 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
   }
   return idst - dst;
 }
-
 
 
 // tune this so small jumps forward are efficient
@@ -1095,7 +1072,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     do {
       if (priv->needs_packet) {
         do {
-
           ret = av_read_frame(priv->ic, &priv->packet);
 
 #ifdef DEBUG
@@ -1110,7 +1086,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
           }
 
         } while (priv->packet.stream_index != priv->vstream);
-
       }
 
       if (MyPts == -1) {
@@ -1154,8 +1129,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
         av_frame_unref(priv->pFrame);
         priv->pFrame = NULL;
       }
-
-
     } while (!(hit_target && gotFrame));
   }
 
@@ -1219,12 +1192,8 @@ framedone:
     }
   }
 
-
   return TRUE;
 }
-
-
-
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
@@ -1238,7 +1207,6 @@ void clip_data_free(lives_clip_data_t *cdata) {
   }
 
   free(cdata->priv);
-
 
   free(cdata);
 }

@@ -2290,7 +2290,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, cons
 
   lives_decoder_t *dplug;
 
-  LiVESList *dlist = NULL, *xdisabled;
+  LiVESList *xdisabled;
 
   lives_clip_t *sfile = mainw->files[fileno];
 
@@ -2321,34 +2321,22 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, cons
 
   if (fake_cdata != NULL) {
     get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX);
-
     if (strlen(decplugname)) {
       LiVESList *decoder_plugin = mainw->decoder_list;
-      if (!strncmp(decplugname, "zz", 2)) {
-        dlist = lives_list_copy(mainw->decoder_list);
-      }
-
+      xdisabled = lives_list_remove(xdisabled, decplugname);
       while (decoder_plugin != NULL) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
         if (!strcmp(dpsys->name, decplugname)) {
-          mainw->decoder_list = lives_list_move_to_first(mainw->decoder_list, decoder_plugin);
+          if (strncmp(decplugname, "zz", 2))
+            mainw->decoder_list = lives_list_move_to_first(mainw->decoder_list, decoder_plugin);
           break;
         }
         decoder_plugin = decoder_plugin->next;
       }
-
-      xdisabled = lives_list_remove(disabled, decplugname);
     }
   }
 
   dplug = try_decoder_plugins(fake_cdata == NULL ? sfile->file_name : NULL, xdisabled, fake_cdata);
-
-  if (strlen(decplugname)) {
-    if (!strncmp(decplugname, "zz", 2)) {
-      if (mainw->decoder_list != NULL) lives_list_free(mainw->decoder_list);
-      mainw->decoder_list = dlist;
-    }
-  }
 
   if (xdisabled != NULL) lives_list_free(xdisabled);
 

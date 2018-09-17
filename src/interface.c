@@ -2408,10 +2408,11 @@ _entryw *create_cds_dialog(int type) {
 }
 
 
-void do_layout_recover_dialog(void) {
-  if (!do_yesno_dialog(_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n")))
+boolean do_layout_recover_dialog(void) {
+  if (!do_yesno_dialog(_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"))) {
     recover_layout_cancelled(TRUE);
-  else recover_layout();
+    return FALSE;
+  } else return recover_layout();
 }
 
 

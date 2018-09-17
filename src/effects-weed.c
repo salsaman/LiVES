@@ -2759,7 +2759,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
   }
 
-  if (mainw->current_file > -1)
+  if (CURRENT_CLIP_IS_VALID)
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
   //...finally we are ready to apply the filter
@@ -2945,7 +2945,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
       // run it only if it outputs into effects which have audio chans
       if (!feeds_to_audio_filters(key, rte_key_getmode(key + 1))) return FILTER_ERROR_NO_IN_CHANNELS;
 
-      if (mainw->current_file > -1)
+      if (CURRENT_CLIP_IS_VALID)
         // data processing effect; just call the process_func
         weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
@@ -3154,7 +3154,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
     }
   }
 
-  if (mainw->current_file > -1)
+  if (CURRENT_CLIP_IS_VALID)
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
   //...finally we are ready to apply the filter
@@ -3749,6 +3749,10 @@ apply_inst3:
 
             goto apply_inst3;
           }
+
+          if (mainw->pconx != NULL && (filter_error == FILTER_NO_ERROR || filter_error == FILTER_INFO_REINITED)) {
+            pconx_chain_data_omc(key_to_instance[i][key_modes[i]], i, key_modes[i]);
+          }
         }
       }
     }
@@ -3952,6 +3956,9 @@ apply_audio_inst2:
 #endif
         mainw->osc_block = FALSE;
 
+        if (mainw->pconx != NULL && (filter_error == FILTER_NO_ERROR || filter_error == FILTER_INFO_REINITED)) {
+          pconx_chain_data_omc(key_to_instance[i][key_modes[i]], i, key_modes[i]);
+        }
       }
     }
   }
@@ -7359,7 +7366,8 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     }
   }
 
-  weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
+  if (CURRENT_CLIP_IS_VALID)
+    weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
   filter = weed_instance_get_filter(inst, FALSE);
   cwd = cd_to_plugin_dir(filter);

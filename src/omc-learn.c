@@ -63,7 +63,20 @@ static lives_omc_macro_t omc_macros[N_OMC_MACROS];
 static LiVESSList *omc_node_list;
 static boolean omc_macros_inited = FALSE;
 
+static void init_omc_macros(void);
+
 //////////////////////////////////////////////////////////////
+const lives_omc_macro_t *get_omc_macro(int idx) {
+  if (!omc_macros_inited) {
+    init_omc_macros();
+    omc_macros_inited = TRUE;
+    OSC_initBuffer(&obuf, OSC_BUF_SIZE, byarr);
+  }
+
+  if (idx >= N_OMC_MACROS || omc_macros[idx].msg == NULL) return NULL;
+
+  return &omc_macros[idx];
+}
 
 
 boolean has_devicemap(int target) {
@@ -700,7 +713,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   int mfrom;
   register int i;
 
-  mnode->gtkstore2 = lives_tree_store_new(NUM2_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_OBJECT);
+  mnode->gtkstore2 = lives_tree_store_new(OMC_NUM2_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_OBJECT);
 
   if (macro.nparams == 0) return;
 
@@ -1019,7 +1032,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   omclw->tbl_rows++;
   lives_table_resize(LIVES_TABLE(omclw->table), omclw->tbl_rows, 4);
 
-  mnode->gtkstore = lives_tree_store_new(NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_BOOLEAN,
+  mnode->gtkstore = lives_tree_store_new(OMC_NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_BOOLEAN,
                                          LIVES_COL_TYPE_STRING,
                                          LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 
@@ -2022,12 +2035,22 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
   // retruns FALSE otherwise
 
   boolean ret = FALSE;
-  int type = 0, idx = -1;
+  int type = -1, idx = -1;
   lives_omc_match_node_t *mnode;
 
   if (string == NULL)  return FALSE;
 
+  if (!omc_macros_inited) {
+    init_omc_macros();
+    omc_macros_inited = TRUE;
+    OSC_initBuffer(&obuf, OSC_BUF_SIZE, byarr);
+  }
+
   switch (supertype) {
+  case OMC_INTERNAL:
+    supertype = type = js_msg_type(string);
+    idx = js_index(string);
+    break;
   case OMC_JS:
 #ifdef OMC_JS_IMPL
     supertype = type = js_msg_type(string);
@@ -2040,7 +2063,7 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
     idx = -1;
 #endif
   }
-  if (type > 0) {
+  if (type > -1) {
     if (learn) {
       // pass to learner
       mnode = omc_learn(string, type, idx, omclw);
@@ -2215,34 +2238,41 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
   int macro, nfixed;
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
+  double oval = 0.;
   int oval0 = 1, oval1 = 0;
   int error, ntmpls, hint, flags;
 
   register int i, j, k;
 
-  int *vals;
+  int *vals = NULL;
 
   char typetags[OSC_MAX_TYPETAGS];
 
-  mnode = omc_match_sig(type, idx, string);
+  if (type == OMC_INTERNAL) {
+    if (idx < 0 || idx >= N_OMC_MACROS || omc_macros[idx].msg == NULL) return NULL;
+    macro = idx;
+  } else {
+    mnode = omc_match_sig(type, idx, string);
 
-  if (mnode == NULL) return NULL;
+    if (mnode == NULL) return NULL;
 
-  macro = mnode->macro;
+    macro = mnode->macro;
 
-  if (macro == UNMATCHED) return NULL;
+    if (macro == UNMATCHED) return NULL;
+  }
 
   omacro = omc_macros[macro];
 
   if (omacro.msg == NULL) return NULL;
 
-  nfixed = get_token_count(string, ' ') - mnode->nvars;
+  if (type != OMC_INTERNAL) nfixed = get_token_count(string, ' ') - mnode->nvars;
 
   OSC_resetBuffer(&obuf);
 
   if (macro != OSC_NOTIFY) {
     lives_snprintf(typetags, OSC_MAX_TYPETAGS, ",");
 
+    // TODO ***: OMC_INTERNAL...we want to set param number token[2] with value token[3]
     // get typetags
     for (i = 0; i < omacro.nparams; i++) {
       if (omacro.ptypes[i] == OMC_PARAM_SPECIAL) {
@@ -2256,12 +2286,12 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
   }
 
   if (omacro.nparams > 0) {
-    vals = omclearn_get_values(string, nfixed);
+    if (type != OMC_INTERNAL) vals = omclearn_get_values(string, nfixed);
 
     for (i = 0; i < omacro.nparams; i++) {
       // get fixed val or map from
-      j = mnode->map[i];
-
+      if (type != OMC_INTERNAL) j = mnode->map[i];
+      else j = -1; // TODO *****, get from token[2]
       if (j > -1) {
         if (macro == SET_VPP_PARAMETER_VALUE && i == 1 && mainw->vpp != NULL && mainw->vpp->play_params != NULL &&
             oval0 < mainw->vpp->num_play_params) {
@@ -2275,15 +2305,15 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
               int omax = mnode->max[j];
               int mini = weed_get_int_value(ptmpl, WEED_LEAF_MIN, &error);
               int maxi = weed_get_int_value(ptmpl, WEED_LEAF_MAX, &error);
-              int oval = (int)((double)(vals[j] - omin) / (double)(omax - omin) * (double)(maxi - mini)) + mini;
-              OSC_writeIntArg(&obuf, oval);
+              oval0 = (int)((double)(vals[j] - omin) / (double)(omax - omin) * (double)(maxi - mini)) + mini;
+              OSC_writeIntArg(&obuf, oval0);
             } else {
               // float
               int omin = mnode->min[j];
               int omax = mnode->max[j];
               double minf = weed_get_double_value(ptmpl, WEED_LEAF_MIN, &error);
               double maxf = weed_get_double_value(ptmpl, WEED_LEAF_MAX, &error);
-              double oval = (double)(vals[j] - omin) / (double)(omax - omin) * (maxf - minf) + minf;
+              oval = (double)(vals[j] - omin) / (double)(omax - omin) * (maxf - minf) + minf;
               OSC_writeFloatArg(&obuf, (float)oval);
             } // end float
           }
@@ -2322,7 +2352,7 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
                     int omax = mnode->max[j];
                     double minf = weed_get_double_value(ptmpl, WEED_LEAF_MIN, &error);
                     double maxf = weed_get_double_value(ptmpl, WEED_LEAF_MAX, &error);
-                    double oval = (double)(vals[j] - omin) / (double)(omax - omin) * (maxf - minf) + minf;
+                    oval = (double)(vals[j] - omin) / (double)(omax - omin) * (maxf - minf) + minf;
                     OSC_writeFloatArg(&obuf, (float)oval);
                   } // end float
                 }
@@ -2332,32 +2362,50 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
             lives_free(ptmpls);
           } else {
             if (omacro.ptypes[i] == OMC_PARAM_INT) {
-              int oval = myround((double)(vals[j] + mnode->offs0[j]) * mnode->scale[j]) + mnode->offs1[j];
-              if (i == 0) oval0 = oval;
-              if (i == 1) oval1 = oval;
+              int oval;
+              if (type != OMC_INTERNAL) oval = myround((double)(vals[j] + mnode->offs0[j]) * mnode->scale[j]) + mnode->offs1[j];
+              else oval = 0; // TODO ****
+              if (i == 0) oval0 = (int)oval;
+              if (i == 1) oval1 = (int)oval;
               if (macro != OSC_NOTIFY) {
                 OSC_writeIntArg(&obuf, oval);
               }
             } else {
-              double oval = (double)(vals[j] + mnode->offs0[j]) * mnode->scale[j] + (double)mnode->offs1[j];
-              if (macro == OSC_NOTIFY) {
-                char *tmp; // send OSC notificion USER1
-                lives_notify(LIVES_OSC_NOTIFY_USER1, (tmp = lives_strdup_printf("%d %f", oval0, oval)));
-              } else OSC_writeFloatArg(&obuf, oval);
+              double oval;
+              if (type != OMC_INTERNAL) oval = (double)(vals[j] + mnode->offs0[j]) * mnode->scale[j] + (double)mnode->offs1[j];
+              else oval = 0.; //
+              if (macro != OSC_NOTIFY)  OSC_writeFloatArg(&obuf, oval);
             }
           }
         }
-      } else if (macro != OSC_NOTIFY) {
+      } else {                      // use default vals
         if (omacro.ptypes[i] == OMC_PARAM_INT) {
-          OSC_writeIntArg(&obuf, mnode->fvali[i]);
-          if (i == 0) oval0 = mnode->fvali[i];
-          if (i == 1) oval1 = mnode->fvali[i];
+          if (macro != OSC_NOTIFY) OSC_writeIntArg(&obuf, mnode->fvali[i]);
+          if (type != OMC_INTERNAL) {
+            if (i == 0) oval0 = mnode->fvali[i];
+            if (i == 1) oval1 = mnode->fvali[i];
+          } else {
+            if (i == 0) oval0 = omacro.vali[i];
+            if (i == 1) oval1 = omacro.vali[i];
+          }
         } else {
-          OSC_writeFloatArg(&obuf, (float)mnode->fvald[i]);
+          if (type != OMC_INTERNAL) {
+            oval = mnode->fvald[i];
+          } else {
+            oval = omacro.vald[i];
+          }
+          if (macro != OSC_NOTIFY) OSC_writeFloatArg(&obuf, (float)oval);
         }
       }
     }
-    lives_free(vals);
+    if (vals != NULL) lives_free(vals);
+  }
+
+  if (macro == OSC_NOTIFY) {
+    char *tmp; // send OSC notificion USER1
+    g_print("sending noti\n");
+    lives_notify(LIVES_OSC_NOTIFY_USER1, (tmp = lives_strdup_printf("%d %f", oval0, oval)));
+    lives_free(tmp);
   }
 
   return &obuf;

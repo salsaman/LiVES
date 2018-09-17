@@ -5031,16 +5031,15 @@ int save_to_scrap_file(weed_plant_t *layer) {
 }
 
 
-void close_scrap_file(void) {
+void close_scrap_file(boolean remove) {
   int current_file = mainw->current_file;
 
   if (mainw->scrap_file == -1) return;
 
   mainw->current_file = mainw->scrap_file;
-
   if (cfile->cb_src >= 0) close(cfile->cb_src);
-
-  close_current_file(current_file);
+  if (remove) close_current_file(current_file);
+  else mainw->current_file = current_file;
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_remove(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->scrap_file));
@@ -5052,13 +5051,15 @@ void close_scrap_file(void) {
 }
 
 
-void close_ascrap_file(void) {
+void close_ascrap_file(boolean remove) {
   int current_file = mainw->current_file;
 
   if (mainw->ascrap_file == -1) return;
 
-  mainw->current_file = mainw->ascrap_file;
-  close_current_file(current_file);
+  if (remove) {
+    mainw->current_file = mainw->ascrap_file;
+    close_current_file(current_file);
+  }
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_remove(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->ascrap_file));
@@ -5798,8 +5799,8 @@ boolean check_for_recovery_files(boolean auto_recover) {
     lives_free(xfile);
     mainw->recoverable_layout = TRUE;
   } else {
-    if (mainw->scrap_file != -1) close_scrap_file();
-    if (mainw->ascrap_file != -1) close_ascrap_file();
+    if (mainw->scrap_file != -1) close_scrap_file(TRUE);
+    if (mainw->ascrap_file != -1) close_ascrap_file(TRUE);
   }
 
   lives_free(recovery_file);

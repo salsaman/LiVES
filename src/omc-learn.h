@@ -94,21 +94,21 @@ typedef struct {
   char *srch; ///< string to match
   int macro; ///< macro number this is linked to (or -1)
 
-  int nvars; ///< number of params
-  int *offs0; ///< offs to add to params before scale
-  double *scale; ///< scale for params
-  int *offs1; ///< offs to add to params after scale
+  int nvars; ///< number of input params
+  int *offs0; ///< offs to add to params before scale (pre-bias)
+  double *scale; ///< scale for params (unbiased scale)
+  int *offs1; ///< offs to add to params after scale (post bias)
 
-  int *min; ///< min values of params
-  int *max; ///< max values of params
+  int *min; ///< min values of input params
+  int *max; ///< max values of input params
 
-  boolean *matchp; ///< do we need to match this pval ?
+  boolean *matchp; ///< do we additionally need to match this param val in the input ?
   int *matchi; ///< match value
 
   // enumerated by number of params in target macro
-  int *map; ///< reverse mapping to params of OSC message
-  int *fvali; ///< mapping to fixed ints
-  double *fvald; ///< mapping to fixed doubles
+  int *map; ///< mapping macro parameters to variables in the input (whether we use a default or a variable) (reverse ordered, starting from the last macro parameter)
+  int *fvali; ///< defaults, mapping to fixed ints
+  double *fvald; ///< defaults, mapping to fixed doubles
 
   ///////////////////////// following this is not saved/loaded
 
@@ -140,15 +140,17 @@ enum {
   OFFS1_COLUMN,
   SCALE_COLUMN,
   OFFS2_COLUMN,
-  NUM_COLUMNS
+  OMC_NUM_COLUMNS
 };
 
 enum {
   TITLE2_COLUMN,
   VALUE2_COLUMN,
   ADJUSTMENT,
-  NUM2_COLUMNS
+  OMC_NUM2_COLUMNS
 };
+
+#define OMC_INTERNAL 0
 
 #define OMC_JS 1
 #define OMC_JS_AXIS 2
@@ -160,6 +162,9 @@ enum {
 #define OMC_MIDI_CONTROLLER 131
 #define OMC_MIDI_PITCH_BEND 132
 #define OMC_MIDI_PGM_CHANGE 133
+
+// get a macro
+const lives_omc_macro_t *get_omc_macro(int idx);
 
 /// start learning MIDI inputs
 void on_midi_learn_activate(LiVESMenuItem *, livespointer);

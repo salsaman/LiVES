@@ -811,14 +811,14 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
         memset(hashname + hlen, 0, 1);
 
-        if (omode < 0 || omode > maxmodes) is_valid = FALSE;
+        if (omode < 0 || omode >= maxmodes) is_valid = FALSE;
 
         if (is_valid) {
           // if we had bad/missing fx, adjust the omode value
           for (i = 0; i < omode; i++) omode -= badkeymap[okey][omode];
         }
 
-        if (omode < 0 || omode > maxmodes) is_valid = FALSE;
+        if (omode < 0 || omode >= maxmodes) is_valid = FALSE;
 
         if (is_valid) {
           int fidx = rte_keymode_get_filter_idx(okey + 1, omode);
@@ -903,14 +903,14 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
             memset(hashname + hlen, 0, 1);
 
-            if (imode < 0 || imode > maxmodes) is_valid2 = FALSE;
+            if (imode < 0 || (ikey >= 0 && imode >= maxmodes)) is_valid2 = FALSE;
 
             if (is_valid2) {
               // if we had bad/missing fx, adjust the omode value
               for (k = 0; k < imode; k++) imode -= badkeymap[ikey][imode];
             }
 
-            if (imode < 0 || imode > maxmodes) is_valid2 = FALSE;
+            if (imode < 0 || (ikey >= 0 && imode >= maxmodes)) is_valid2 = FALSE;
 
             if (is_valid2) {
               int fidx = rte_keymode_get_filter_idx(ikey + 1, imode);
@@ -1004,14 +1004,14 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
         memset(hashname + hlen, 0, 1);
 
-        if (omode < 0 || omode > maxmodes) is_valid = FALSE;
+        if (omode < 0 || omode >= maxmodes) is_valid = FALSE;
 
         if (is_valid) {
           // if we had bad/missing fx, adjust the omode value
           for (i = 0; i < omode; i++) omode -= badkeymap[okey][omode];
         }
 
-        if (omode < 0 || omode > maxmodes) is_valid = FALSE;
+        if (omode < 0 || omode >= maxmodes) is_valid = FALSE;
 
         if (is_valid) {
           int fidx = rte_keymode_get_filter_idx(okey + 1, omode);
@@ -1091,16 +1091,16 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
             memset(hashname + hlen, 0, 1);
 
-            if (imode < 0 || imode > maxmodes) is_valid2 = FALSE;
+            if (imode < 0 || (ikey >= 0 && imode >= maxmodes)) is_valid2 = FALSE;
 
-            if (is_valid2) {
+            if (is_valid2 && ikey >= 0) {
               // if we had bad/missing fx, adjust the omode value
               for (k = 0; k < imode; k++) imode -= badkeymap[ikey][imode];
             }
 
-            if (imode < 0 || imode > maxmodes) is_valid2 = FALSE;
+            if (imode < 0 || (ikey >= 0 && imode >= maxmodes)) is_valid2 = FALSE;
 
-            if (is_valid2) {
+            if (is_valid2 && ikey >= 0) {
               int fidx = rte_keymode_get_filter_idx(ikey + 1, imode);
               if (fidx == -1) is_valid2 = FALSE;
               else {
@@ -1123,15 +1123,17 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
               break;
             }
 
-            // check ipnum
-            filter = rte_keymode_get_filter(ikey + 1, imode);
-            niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
-            if (ipnum >= niparams) is_valid2 = FALSE;
-            else {
-              if (ipnum >= 0) {
-                iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
-                if (weed_plant_has_leaf(iparams[ipnum], WEED_LEAF_HOST_INTERNAL_CONNECTION)) is_valid2 = FALSE;
-                lives_free(iparams);
+            if (ikey >= 0) {
+              // check ipnum
+              filter = rte_keymode_get_filter(ikey + 1, imode);
+              niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
+              if (ipnum >= niparams) is_valid2 = FALSE;
+              else {
+                if (ipnum >= 0) {
+                  iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
+                  if (weed_plant_has_leaf(iparams[ipnum], WEED_LEAF_HOST_INTERNAL_CONNECTION)) is_valid2 = FALSE;
+                  lives_free(iparams);
+                }
               }
             }
 
@@ -1479,7 +1481,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       int idx = (key - 1) * modes + mode;
       int fx_idx = rte_keymode_get_filter_idx(key, mode);
 
-      rtew_combo_set_text(key, mode, (tmp = rte_keymode_get_filter_name(key, mode)));
+      rtew_combo_set_text(key - 1, mode, (tmp = rte_keymode_get_filter_name(key, mode)));
       lives_free(tmp);
 
       if (fx_idx != -1) {

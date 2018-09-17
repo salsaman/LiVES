@@ -22,6 +22,7 @@
 #include "effects.h"
 #include "support.h"
 #include "ce_thumbs.h"
+#include "omc-learn.h"
 
 static lives_pconnect_t *spconx;
 static lives_cconnect_t *scconx;
@@ -48,6 +49,36 @@ static LiVESTreeModel *cmodel;
 
 static char *lctext;
 
+static char *get_param_name(weed_plant_t *param, int pnum, boolean is_in) {
+  int error;
+  char *name = weed_get_string_value(param, WEED_LEAF_NAME, &error);
+  if (!strlen(name)) {
+    lives_free(name);
+    name = NULL;
+  }
+  if (name == NULL) {
+    if (is_in) name = lives_strdup_printf(_("In param %d"), pnum);
+    else name = lives_strdup_printf(_("Out param %d"), pnum);
+  }
+  return name;
+}
+
+
+static char *get_chan_name(weed_plant_t *chan, int cnum, boolean is_in) {
+  int error;
+  char *name = weed_get_string_value(chan, WEED_LEAF_NAME, &error);
+  if (!strlen(name)) {
+    lives_free(name);
+    name = NULL;
+  }
+  if (name == NULL) {
+    if (is_in) name = lives_strdup_printf(_("In channel %d"), cnum);
+    else name = lives_strdup_printf(_("Out channel %d"), cnum);
+  }
+  return name;
+}
+
+
 static void switch_fx_state(int okey, int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabbable_effect = mainw->last_grabbable_effect;
@@ -61,6 +92,7 @@ static void switch_fx_state(int okey, int hotkey) {
   mainw->last_grabbable_effect = last_grabbable_effect;
 
 }
+
 
 void override_if_active_input(int hotkey) {
   // if we have a connection from oparam -1 to iparam -1 for key/mode then set autoscale to TRUE
@@ -94,6 +126,7 @@ void override_if_active_input(int hotkey) {
     pconx = pconx->next;
   }
 }
+
 
 void end_override_if_activate_output(int hotkey) {
   // if any iparam -1 has key/mode/-1 as oparam, set autoscale to FALSE
@@ -143,6 +176,7 @@ void pconx_delete_all(void) {
     pconx_next = pconx->next;
     lives_free(pconx->params);
     lives_free(pconx->nconns);
+    lives_free(pconx->last_boolval);
     lives_free(pconx->ikey);
     lives_free(pconx->imode);
     lives_free(pconx->ipnum);
@@ -163,6 +197,7 @@ static lives_pconnect_t *pconx_new(int okey, int omode) {
   pconx->okey = okey;
   pconx->omode = omode;
   pconx->nparams = 0;
+  pconx->last_boolval = NULL;
   pconx->nconns = NULL;
   return pconx;
 }
@@ -184,6 +219,7 @@ static lives_pconnect_t *pconx_copy(lives_pconnect_t *spconx) {
 
     dpconx->nconns = (int *)lives_malloc(dpconx->nparams * sizint);
     dpconx->params = (int *)lives_malloc(dpconx->nparams * sizint);
+    dpconx->last_boolval = (int *)lives_malloc(dpconx->nparams * sizint);
 
     dpconx->ikey = dpconx->imode = dpconx->ipnum = NULL;
     dpconx->autoscale = NULL;
@@ -193,6 +229,7 @@ static lives_pconnect_t *pconx_copy(lives_pconnect_t *spconx) {
     for (i = 0; i < dpconx->nparams; i++) {
       dpconx->params[i] = spconx->params[i];
       dpconx->nconns[i] = spconx->nconns[i];
+      dpconx->last_boolval[i] = spconx->last_boolval[i];
       totcons += dpconx->nconns[i];
 
       dpconx->ikey = (int *)lives_realloc(dpconx->ikey, totcons * sizint);
@@ -255,7 +292,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
   int totcons = 0, maxcons = 0;
 
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->data_mutex[i]);
+  if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->data_mutex[i]);
 
   while (pconx != NULL) {
     pconx_next = pconx->next;
@@ -265,6 +302,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
         // delete entire node
         lives_free(pconx->params);
+        lives_free(pconx->last_boolval);
         lives_free(pconx->nconns);
         lives_free(pconx->ikey);
         lives_free(pconx->imode);
@@ -273,7 +311,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
         lives_free(pconx);
         if (mainw->pconx == pconx) mainw->pconx = pconx_next;
         else pconx_prev->next = pconx_next;
-        for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+        if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
         return;
       }
 
@@ -294,7 +332,6 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
         }
 
         for (; j < totcons; j++) {
-
           if (pconx->ikey[j] == ikey && pconx->imode[j] == imode && (ipnum == FX_DATA_WILDCARD || pconx->ipnum[j] == ipnum)) {
             maxcons--;
             for (k = j; k < maxcons; k++) {
@@ -315,6 +352,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
               pconx->nparams--;
               for (k = i; k < pconx->nparams; k++) {
                 pconx->params[k] = pconx->params[k + 1];
+                pconx->last_boolval[k] = pconx->last_boolval[k + 1];
                 pconx->nconns[k] = pconx->nconns[k + 1];
               }
 
@@ -325,6 +363,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
                 lives_free(pconx->ikey);
                 lives_free(pconx->imode);
                 lives_free(pconx->ipnum);
+                lives_free(pconx->last_boolval);
                 lives_free(pconx->autoscale);
                 lives_free(pconx);
                 if (mainw->pconx == pconx) {
@@ -345,7 +384,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
     pconx_prev = pconx;
     pconx = pconx_next;
   }
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+  if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 }
 
 
@@ -440,7 +479,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
   // delete any existing connection to the input param
   pconx_delete(FX_DATA_WILDCARD, 0, 0, ikey, imode, ipnum);
 
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->data_mutex[i]);
+  if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->data_mutex[i]);
 
   if (pconx == NULL) {
     // add whole new node
@@ -448,9 +487,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
     pconx_append(pconx);
   } else {
     // see if already in params
-
     for (i = 0; i < pconx->nparams; i++) {
-
       if (pconx->params[i] == opnum) {
         // located !
         // add connection to existing
@@ -467,14 +504,13 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
         for (j = posn; j < posn + pconx->nconns[i]; j++) {
           if (pconx->ikey[j] == ikey && pconx->imode[j] == imode && pconx->ipnum[j] == ipnum) {
             pconx->autoscale[j] = autoscale;
-            for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+            if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
             return;
           }
 
           // add in order key/mode/chan
           if (pconx->ikey[j] > ikey || (pconx->ikey[j] == ikey && pconx->imode[j] > imode) ||
               (pconx->ikey[j] == ikey && pconx->imode[j] == imode && pconx->ipnum[j] > ipnum)) break;
-
         }
 
         // increment nconns for this param
@@ -504,11 +540,10 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
         pconx->ipnum[posn] = ipnum;
         pconx->autoscale[posn] = autoscale;
 
-        for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+        if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 
         return;
       }
-
     }
 
     // so, we have data for key/mode but this is a new param to be mapped
@@ -525,6 +560,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
     // make space for new
     pconx->nconns = (int *)lives_realloc(pconx->nconns, posn * sizint);
     pconx->params = (int *)lives_realloc(pconx->params, posn * sizint);
+    pconx->last_boolval = (int *)lives_realloc(pconx->last_boolval, posn * sizint);
 
     pconx->ikey = (int *)lives_realloc(pconx->ikey, totcons * sizint);
     pconx->imode = (int *)lives_realloc(pconx->imode, totcons * sizint);
@@ -532,6 +568,8 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
     pconx->autoscale = (boolean *)lives_realloc(pconx->autoscale, totcons * sizint);
 
     pconx->params[posn - 1] = opnum;
+
+    pconx->last_boolval[posn - 1] = WEED_FALSE;  // TODO ***: get value from default
 
     pconx->nconns[posn - 1] = 1;
 
@@ -547,10 +585,9 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
     g_print("added another pconx from %d %d %d to %d %d %d\n", okey, omode, opnum, ikey, imode, ipnum);
 #endif
 
-    for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+    if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 
     return;
-
   }
 
   // add new
@@ -563,6 +600,9 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
 
   pconx->params = (int *)lives_realloc(pconx->params, pconx->nparams * sizint);
   pconx->params[pconx->nparams - 1] = opnum;
+
+  pconx->last_boolval = (int *)lives_realloc(pconx->last_boolval, pconx->nparams * sizint);
+  pconx->last_boolval[pconx->nparams - 1] = WEED_FALSE; // TODO: ****
 
   pconx->ikey = (int *)lives_realloc(pconx->ikey, totcons * sizint);
   pconx->ikey[totcons - 1] = ikey;
@@ -580,8 +620,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
   g_print("added new pconx from %d %d %d to %d %d %d (%d)\n", okey, omode, opnum, ikey, imode, ipnum, autoscale);
 #endif
 
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
-
+  if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 }
 
 
@@ -596,6 +635,8 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
   // then all we need do is copy the "value" leaf
 
   // use_filt is TRUE if we should use the filter template (otherwise we use the instance)
+
+  // TODO: OMC
 
   lives_pconnect_t *pconx = mainw->pconx;
 
@@ -643,7 +684,6 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
             param = active_dummy;
             pthread_mutex_unlock(&mainw->fxd_active_mutex);
           } else {
-
             if (use_filt) {
               weed_plant_t **outparams = weed_get_plantptr_array(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
               if (pconx->params[i] < weed_leaf_num_elements(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES)) {
@@ -1320,8 +1360,70 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 }
 
 
-boolean pconx_chain_data(int key, int mode) {
+int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
+  // push anything to connected OMC macros
+  lives_pconnect_t *pconx = mainw->pconx;
 
+  char *valstr = NULL;
+
+  int totcons, pidx, error;
+  int actions = 0;
+
+  boolean cbval, lbval;
+
+  register int i, j;
+
+  // check for any inkeys == FX_DATA_KEY_OMC_MACRO and matching okey, omode
+  // for each match we construct a string and send it to the OMC learner
+
+  while (pconx != NULL) {
+    if (pconx->okey == okey && pconx->omode == omode) {
+      totcons = 0;
+      j = 0;
+      for (i = 0; i < pconx->nparams; i++) {
+        totcons += pconx->nconns[i];
+        pidx = pconx->params[i];
+        lbval = pconx->last_boolval[i];
+        for (; j < totcons; j++) {
+          if (pconx->ikey[j] == FX_DATA_KEY_OMC_MACRO) {
+            // out param is "ACTIVATED"
+            if (pidx >= 0) {
+              weed_plant_t *oparam = weed_inst_out_param(inst, pidx);
+              switch (weed_leaf_seed_type(oparam, WEED_LEAF_VALUE)) {
+              case WEED_SEED_BOOLEAN:
+                cbval = weed_get_boolean_value(oparam, WEED_LEAF_VALUE, &error);
+                if (cbval == WEED_TRUE && lbval == WEED_FALSE) {
+                  // state changed, so trigger act
+                  valstr = lives_strdup_printf("%d", cbval);
+                }
+                pconx->last_boolval[i] = cbval;
+                break;
+              default:
+                break;
+              }
+            } else {
+              valstr = lives_strdup_printf("%d", WEED_TRUE);
+              pconx->last_boolval[i] = WEED_TRUE;
+            }
+          }
+          if (valstr != NULL) {
+            // construct string to pass
+            char *msgstring = lives_strdup_printf("%d %d %d %s", OMC_INTERNAL, pconx->imode[j], pconx->ipnum[j], valstr);
+            lives_free(valstr);
+            omc_process_string(OMC_INTERNAL, (const char *)msgstring, FALSE, NULL);
+            actions++;
+            lives_free(msgstring);
+          }
+        }
+      }
+    }
+    pconx = pconx->next;
+  }
+  return actions;
+}
+
+
+boolean pconx_chain_data(int key, int mode) {
   weed_plant_t **inparams;
   weed_plant_t *oparam, *inparam;
   weed_plant_t *inst = NULL;
@@ -1360,7 +1462,6 @@ boolean pconx_chain_data(int key, int mode) {
   else inparams = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
   for (i = -EXTRA_PARAMS_IN; i < nparams; i++) {
-
     if ((oparam = pconx_get_out_param(FALSE, key, mode, i, &okey, NULL, NULL, &autoscale)) != NULL) {
       //#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
@@ -2169,6 +2270,7 @@ boolean feeds_to_audio_filters(int okey, int omode) {
     array = lives_strsplit(chlist, " ", -1);
     for (j = 0; j < niparams; j += 4) {
       ikey = atoi(array[j]);
+      if (ikey < 0) continue;
       imode = atoi(array[j + 1]);
       if (imode != rte_key_getmode(ikey + 1)) continue;
       filter = rte_keymode_get_filter(ikey + 1, imode);
@@ -2188,6 +2290,7 @@ boolean feeds_to_audio_filters(int okey, int omode) {
     array = lives_strsplit(chlist, " ", -1);
     for (j = 0; j < niparams; j += 3) {
       ikey = atoi(array[j]);
+      if (ikey < 0) continue;
       imode = atoi(array[j + 1]);
       if (imode != rte_key_getmode(ikey + 1)) continue;
       filter = rte_keymode_get_filter(ikey + 1, imode);
@@ -2214,7 +2317,7 @@ enum {
   NAME_COLUMN,
   KEYVAL_COLUMN,
   MODEVAL_COLUMN,
-  NUM_COLUMNS
+  EFD_NUM_COLUMNS
 };
 
 
@@ -2251,7 +2354,6 @@ static void disconbutton_clicked(LiVESButton *button, livespointer user_data) {
       lives_widget_set_sensitive(conxwp->del_button[i + totchans], pidx == pidx_last);
     }
   }
-
 }
 
 
@@ -2284,6 +2386,14 @@ static void apbutton_clicked(LiVESButton *button, livespointer user_data) {
   model = lives_combo_get_model(LIVES_COMBO(combo));
 
   lives_tree_model_get(model, &iter, KEYVAL_COLUMN, &key, MODEVAL_COLUMN, &mode, -1);
+
+  if (key == FX_DATA_KEY_OMC_MACRO) {
+    // match with OMC macro
+
+
+    return;
+  }
+
   fidx = rte_keymode_get_filter_idx(key, mode);
 
   if (fidx == -1) return;
@@ -2350,7 +2460,6 @@ static void apbutton_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_free(iparams);
   lives_free(oparams);
-
 }
 
 
@@ -2512,6 +2621,12 @@ static void padd_clicked(LiVESWidget *button, livespointer user_data) {
 
   conxwp->trowsp++;
 
+  for (i = conxwp->trowsp - 3; i > ours; i--) {
+    conxwp->del_button[i + 1] = conxwp->del_button[i];
+    conxwp->add_button[i + 1] = conxwp->add_button[i];
+    conxwp->clabel[i + 1] = conxwp->clabel[i];
+  }
+
 #if !LIVES_TABLE_IS_GRID
   lives_table_resize(LIVES_TABLE(conxwp->tablep), conxwp->trowsp, 7);
 
@@ -2575,7 +2690,6 @@ static void padd_clicked(LiVESWidget *button, livespointer user_data) {
     conxwp->idx[i + 1] = conxwp->idx[i];
 
     conxwp->dpp_func[i + 1] = conxwp->dpp_func[i];
-
   }
 
   ptable_row_add_variable_widgets(conxwp, ours + 1, ours + 2, pidx);
@@ -2584,8 +2698,9 @@ static void padd_clicked(LiVESWidget *button, livespointer user_data) {
 
   conxwp->dispp[pidx + EXTRA_PARAMS_OUT]++;
 
-  lives_widget_show_all(conxwp->tablep);
+  lives_widget_set_sensitive(conxwp->del_button[ours + 1], TRUE);
 
+  lives_widget_show_all(conxwp->tablep);
 }
 
 
@@ -2722,7 +2837,6 @@ static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
     conxwp->idx[i] = conxwp->idx[i + 1];
 
     conxwp->dpp_func[i] = conxwp->dpp_func[i + 1];
-
   }
 
 #if !LIVES_TABLE_IS_GRID
@@ -2810,6 +2924,12 @@ static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
 
   conxwp->trowsc++;
 
+  for (i = conxwp->trowsc - 3; i > ours; i--) {
+    conxwp->del_button[i + 1] = conxwp->del_button[i];
+    conxwp->add_button[i + 1] = conxwp->add_button[i];
+    conxwp->clabel[i + 1] = conxwp->clabel[i];
+  }
+
 #if !LIVES_TABLE_IS_GRID
   lives_table_resize(LIVES_TABLE(conxwp->tablec), conxwp->trowsc, 6);
 
@@ -2871,6 +2991,8 @@ static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
   conxwp->ikeys[ours + 1] = conxwp->imodes[ours + 1] = conxwp->idx[i + 1] = 0;
 
   conxwp->dispc[cidx]++;
+
+  lives_widget_set_sensitive(conxwp->del_button[ours + 1], TRUE);
 
   lives_widget_show_all(conxwp->tablec);
 
@@ -3085,7 +3207,7 @@ static void dfxc_changed(LiVESWidget *combo, livespointer user_data) {
 
     if (!has_alpha_palette(chan)) continue;
 
-    channame = weed_get_string_value(chan, WEED_LEAF_NAME, &error);
+    channame = get_chan_name(chan, i, TRUE);
     clist = lives_list_append(clist, channame);
   }
 
@@ -3145,83 +3267,117 @@ static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
   model = lives_combo_get_model(LIVES_COMBO(combo));
 
   lives_tree_model_get(model, &iter, KEYVAL_COLUMN, &key, MODEVAL_COLUMN, &mode, -1);
-  fidx = rte_keymode_get_filter_idx(key, mode);
 
-  pidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "pidx"));
+  if (key == FX_DATA_KEY_OMC_MACRO) {
+    // match with OMC macro
+    int nmatchparams = 0;
+    weed_plant_t *ofilter;
+    LiVESWidget *fxcombo = conxwp->pcombo[ours];
 
-  if (fidx == -1) {
-    LiVESWidget *acheck = conxwp->acheck[ours];
-    if (acheck != NULL) {
-      lives_signal_handler_block(acheck, conxwp->acheck_func[ours]);
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck), FALSE);
-      lives_widget_set_sensitive(acheck, FALSE);
-      lives_signal_handler_unblock(acheck, conxwp->acheck_func[ours]);
-    }
+    // get type for out_param
+    pidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fxcombo), "pidx"));
+    ofilter = conxwp->filter;
 
-    lives_combo_set_active_index(LIVES_COMBO(combo), 0);
-
-    lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), NULL);
-    lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
-
-    if (pconx_get_nconns(conxwp->pconx, 0) == 0 && pidx == 0) lives_widget_set_sensitive(conxwp->apbutton, FALSE);
-
-    lives_widget_set_sensitive(conxwp->pcombo[ours], FALSE);
-
-    return;
-  }
-
-  // find the receiving filter/instance
-  filter = get_weed_filter(fidx);
-
-  if (weed_plant_has_leaf(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES)) {
-    iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
-    niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
-  }
-
-  // populate pcombo with all in params
-  for (i = -EXTRA_PARAMS_IN; i < niparams; i++) {
-    if (i == FX_DATA_PARAM_ACTIVE) {
-      ptype = weed_seed_type_to_text(WEED_SEED_BOOLEAN);
-      text = lives_strdup_printf(_("ACTIVATE (%s)"), ptype);
+    if (pidx >= 0) {
+      weed_plant_t **oparams = weed_get_plantptr_array(ofilter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
+      weed_plant_t *oparam = oparams[pidx];
+      lives_free(oparams);
+      stype = weed_leaf_seed_type(oparam, WEED_LEAF_DEFAULT);
     } else {
-      param = iparams[j++];
-
-      if (weed_plant_has_leaf(param, WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
-
-      if (weed_plant_has_leaf(param, WEED_LEAF_GROUP) && weed_get_int_value(param, WEED_LEAF_GROUP, &error) != 0) continue;
-
-      paramname = weed_get_string_value(param, WEED_LEAF_NAME, &error);
-
-      ptype = weed_seed_type_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
-
-      pflags = weed_get_int_value(param, WEED_LEAF_FLAGS, &error);
-
-      if (pflags & WEED_PARAMETER_VARIABLE_ELEMENTS) array_type = lives_strdup("[]");
-      else if ((defelems = weed_leaf_num_elements(param, WEED_LEAF_DEFAULT)) > 1) array_type = lives_strdup_printf("[%d]", defelems);
-      else array_type = lives_strdup("");
-
-      if (weed_plant_has_leaf(param, WEED_LEAF_MAX) && weed_plant_has_leaf(param, WEED_LEAF_MIN)) {
-        if (stype == WEED_SEED_INT) {
-          range = lives_strdup_printf("Range: %d to %d", weed_get_int_value(param, WEED_LEAF_MIN, &error), weed_get_int_value(param, WEED_LEAF_MAX,
-                                      &error));
-        } else if (stype == WEED_SEED_DOUBLE) {
-          range = lives_strdup_printf("Range: %f to %f", weed_get_double_value(param, WEED_LEAF_MIN, &error), weed_get_double_value(param,
-                                      WEED_LEAF_MAX,
-                                      &error));
-        } else range = lives_strdup("");
-      } else range = lives_strdup("");
-
-      text = lives_strdup_printf("%s (%s%s) %s", paramname, ptype, array_type, range);
-      lives_free(paramname);
-      lives_free(array_type);
-      lives_free(range);
+      // invent an "ACTIVATED" param
+      stype = WEED_SEED_BOOLEAN;
     }
-    lives_free(ptype);
-    plist = lives_list_append(plist, text);
 
+    // check omc_macros[mode]; show all params with matching type
+
+    // TODO...
+
+    // if nothing matched, then
+
+    // if out is boolean, we can link to ACTIVATE, we can choose FALSE -> TRUE (TODO: or TRUE -> FALSE)
+    //
+    if (nmatchparams == 0 && stype == WEED_SEED_BOOLEAN) {
+      text = lives_strdup_printf(_("False to True -> TRIGGER (%s)"), weed_seed_type_to_text(WEED_SEED_BOOLEAN));
+      plist = lives_list_append(plist, text);
+    }
+  } else {
+    fidx = rte_keymode_get_filter_idx(key, mode);
+
+    pidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "pidx"));
+
+    if (fidx == -1) {
+      LiVESWidget *acheck = conxwp->acheck[ours];
+      if (acheck != NULL) {
+        lives_signal_handler_block(acheck, conxwp->acheck_func[ours]);
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck), FALSE);
+        lives_widget_set_sensitive(acheck, FALSE);
+        lives_signal_handler_unblock(acheck, conxwp->acheck_func[ours]);
+      }
+
+      lives_combo_set_active_index(LIVES_COMBO(combo), 0);
+
+      lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), NULL);
+      lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
+
+      if (pconx_get_nconns(conxwp->pconx, 0) == 0 && pidx == 0) lives_widget_set_sensitive(conxwp->apbutton, FALSE);
+
+      lives_widget_set_sensitive(conxwp->pcombo[ours], FALSE);
+
+      return;
+    }
+
+    // find the receiving filter/instance
+    filter = get_weed_filter(fidx);
+
+    if (weed_plant_has_leaf(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES)) {
+      iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
+      niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
+    }
+
+    // populate pcombo with all in params
+    for (i = -EXTRA_PARAMS_IN; i < niparams; i++) {
+      if (i == FX_DATA_PARAM_ACTIVE) {
+        ptype = weed_seed_type_to_text(WEED_SEED_BOOLEAN);
+        text = lives_strdup_printf(_("ACTIVATE (%s)"), ptype);
+      } else {
+        param = iparams[j++];
+
+        if (weed_plant_has_leaf(param, WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
+
+        if (weed_plant_has_leaf(param, WEED_LEAF_GROUP) && weed_get_int_value(param, WEED_LEAF_GROUP, &error) != 0) continue;
+
+        paramname = get_param_name(param, j - 1, TRUE);
+
+        ptype = weed_seed_type_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
+
+        pflags = weed_get_int_value(param, WEED_LEAF_FLAGS, &error);
+
+        if (pflags & WEED_PARAMETER_VARIABLE_ELEMENTS) array_type = lives_strdup("[]");
+        else if ((defelems = weed_leaf_num_elements(param, WEED_LEAF_DEFAULT)) > 1) array_type = lives_strdup_printf("[%d]", defelems);
+        else array_type = lives_strdup("");
+
+        if (weed_plant_has_leaf(param, WEED_LEAF_MAX) && weed_plant_has_leaf(param, WEED_LEAF_MIN)) {
+          if (stype == WEED_SEED_INT) {
+            range = lives_strdup_printf("Range: %d to %d", weed_get_int_value(param, WEED_LEAF_MIN, &error), weed_get_int_value(param, WEED_LEAF_MAX,
+                                        &error));
+          } else if (stype == WEED_SEED_DOUBLE) {
+            range = lives_strdup_printf("Range: %f to %f", weed_get_double_value(param, WEED_LEAF_MIN, &error), weed_get_double_value(param,
+                                        WEED_LEAF_MAX,
+                                        &error));
+          } else range = lives_strdup("");
+        } else range = lives_strdup("");
+
+        text = lives_strdup_printf("%s\n (%s%s) %s", paramname, ptype, array_type, range);
+        lives_free(paramname);
+        lives_free(array_type);
+        lives_free(range);
+      }
+      lives_free(ptype);
+      plist = lives_list_append(plist, text);
+    }
+
+    if (iparams != NULL) lives_free(iparams);
   }
-
-  if (iparams != NULL) lives_free(iparams);
 
   lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), plist);
   lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
@@ -3244,6 +3400,8 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
   int niparams, error, idx;
 
   register int i, j = 0;
+
+  // TODO :: key FX_DATA_KEY_OMC_MACRO == OMC Macro
 
   if (opnum >= 0) {
     oparams = weed_get_plantptr_array(ofilter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
@@ -3301,7 +3459,7 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
   if (idx_ret != NULL) *idx_ret = idx;
 
   if (!setup) {
-    if (pconx_get_out_param(TRUE, ikey - 1, imode, ipnum, okey, omode, oopnum, NULL) != NULL) {
+    if (pconx_get_out_param(TRUE, ikey > 0 ? ikey - 1 : ikey, imode, ipnum, okey, omode, oopnum, NULL) != NULL) {
       // dest param already has a connection
       return -1;
     }
@@ -3342,7 +3500,7 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
   int nparams, nchans;
   int okey, omode, opnum;
 
-  int pidx, key, mode, ours = -1, error, ret;
+  int pidx, key, mode, ours = -1, ret;
   int idx = lives_combo_get_active(LIVES_COMBO(combo));
   int j;
 
@@ -3406,7 +3564,6 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
   idx -= EXTRA_PARAMS_IN;
 
   //// check if connection may be made
-
   ret = pconx_check_connection(conxwp->filter, pidx, key, mode, idx, setup, &iparam, &j, &okey, &omode, &opnum);
 
   if (ret == -1) {
@@ -3446,8 +3603,10 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
     }
   }
 
-  if (iparam == active_dummy) paramname = lives_strdup(_("ACTIVATE"));
-  else paramname = weed_get_string_value(iparam, WEED_LEAF_NAME, &error);
+  if (iparam == active_dummy) {
+    if (key == FX_DATA_KEY_OMC_MACRO) paramname = lives_strdup(_("TRIGGER"));
+    else paramname = lives_strdup(_("ACTIVATE"));
+  } else paramname = get_param_name(iparam, idx - EXTRA_PARAMS_IN, TRUE);
 
   lives_signal_handler_block(combo, conxwp->dpp_func[ours]);
   lives_combo_set_active_string(LIVES_COMBO(combo), paramname);
@@ -3466,7 +3625,7 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
 
   conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
 
-  pconx_add_connection_private(conxwp->pconx, conxwp->okey, conxwp->omode, pidx, key - 1, mode, j, acheck != NULL ?
+  pconx_add_connection_private(conxwp->pconx, conxwp->okey, conxwp->omode, pidx, key > 0 ? key - 1 : key, mode, j, acheck != NULL ?
                                lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(acheck)) : FALSE);
 
   conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
@@ -3476,7 +3635,6 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
   conxwp->idx[nchans + ours] = j;
 
   lives_widget_set_sensitive(conxwp->disconbutton, TRUE);
-
 }
 
 
@@ -3539,7 +3697,7 @@ static void dpc_changed(LiVESWidget *combo, livespointer user_data) {
 
   int nchans, nparams;
 
-  int key, mode, cidx, ours = -1, error, ret, j;
+  int key, mode, cidx, ours = -1, ret, j;
   int okey, omode, ocnum;
 
   int idx = lives_combo_get_active(LIVES_COMBO(combo));
@@ -3559,7 +3717,6 @@ static void dpc_changed(LiVESWidget *combo, livespointer user_data) {
   cidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "cidx"));
 
   if (idx == -1) {
-
     for (i = 0; i < nchans; i++) if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i])) > -1) {
         hasone = TRUE;
         break;
@@ -3605,7 +3762,7 @@ static void dpc_changed(LiVESWidget *combo, livespointer user_data) {
   }
 
   lives_signal_handler_block(combo, conxwp->dpc_func[ours]);
-  channame = weed_get_string_value(ichan, WEED_LEAF_NAME, &error);
+  channame = get_chan_name(ichan, idx, TRUE);
   lives_combo_set_active_string(LIVES_COMBO(combo), channame);
   lives_signal_handler_unblock(combo, conxwp->dpc_func[ours]);
 
@@ -3691,26 +3848,33 @@ static void on_acheck_toggled(LiVESToggleButton *acheck, livespointer user_data)
 
   if (key == 0) return;
 
-  if (idx >= EXTRA_PARAMS_IN) {
-    fidx = rte_keymode_get_filter_idx(key, mode);
+  if (key == FX_DATA_KEY_OMC_MACRO) {
+    // match with OMC macro
 
-    // find the receiving filter/instance
-    filter = get_weed_filter(fidx);
 
-    iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
-    niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
+    return;
+  } else {
+    if (idx >= EXTRA_PARAMS_IN) {
+      fidx = rte_keymode_get_filter_idx(key, mode);
 
-    for (i = 0; i < niparams; i++) {
-      param = iparams[j];
-      if (weed_plant_has_leaf(param, WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
-      if (j == idx) break;
-      j++;
-    }
+      // find the receiving filter/instance
+      filter = get_weed_filter(fidx);
 
-    j = i;
+      iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
+      niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
 
-    lives_free(iparams);
-  } else j = idx - EXTRA_PARAMS_IN;
+      for (i = 0; i < niparams; i++) {
+        param = iparams[j];
+        if (weed_plant_has_leaf(param, WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
+        if (j == idx) break;
+        j++;
+      }
+
+      j = i;
+
+      lives_free(iparams);
+    } else j = idx - EXTRA_PARAMS_IN;
+  }
 
   pidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(acheck), "pidx"));
 
@@ -3718,13 +3882,12 @@ static void on_acheck_toggled(LiVESToggleButton *acheck, livespointer user_data)
     pconx_delete(conxwp->okey, conxwp->omode, pidx, key - 1, mode, j);
     conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
   }
-  pconx_add_connection_private(conxwp->pconx, conxwp->okey, conxwp->omode, pidx, key - 1, mode, j, on);
+  pconx_add_connection_private(conxwp->pconx, conxwp->okey, conxwp->omode, pidx, key > 0 ? key - 1 : key, mode, j, on);
   conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
 
   conxwp->ikeys[nchans + ours] = key;
   conxwp->imodes[nchans + ours] = mode;
   conxwp->idx[nchans + ours] = j;
-
 }
 
 
@@ -3747,7 +3910,7 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
 
   register int i, j;
 
-  tstore = lives_tree_store_new(NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_INT, LIVES_COL_TYPE_INT);
+  tstore = lives_tree_store_new(EFD_NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_INT, LIVES_COL_TYPE_INT);
 
   lives_tree_store_append(tstore, &iter1, NULL);   /* Acquire an iterator */
   lives_tree_store_set(tstore, &iter1,
@@ -3756,6 +3919,21 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
                        KEYVAL_COLUMN, 0,
                        MODEVAL_COLUMN, 0,
                        -1);
+
+  if (!is_chans) {
+    // add OMC Macros
+    keystr = lives_strdup(_("OMC Macros"));
+    lives_tree_store_append(tstore, &iter1, NULL);   /* Acquire an iterator */
+    lives_tree_store_set(tstore, &iter1, KEY_COLUMN, keystr, NAME_COLUMN, keystr, KEYVAL_COLUMN, 0, MODEVAL_COLUMN, 0, -1);
+
+    for (i = 0; get_omc_macro(i) != NULL; i++) {
+      text = get_omc_macro(i)->macro_text;
+      lives_tree_store_append(tstore, &iter2, &iter1);
+      lives_tree_store_set(tstore, &iter2, KEY_COLUMN, text, NAME_COLUMN, text, KEYVAL_COLUMN, FX_DATA_KEY_OMC_MACRO, MODEVAL_COLUMN, i, -1);
+    }
+
+    lives_free(keystr);
+  }
 
   // go through all keys
   for (i = 1; i <= FX_KEYS_MAX_VIRTUAL; i++) {
@@ -4134,7 +4312,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
         ctable_row_add_standard_widgets(conxwp, x);
 
         if (isfirst) {
-          channame = weed_get_string_value(chan, WEED_LEAF_NAME, &error);
+          channame = get_chan_name(chan, j - 1, FALSE);
           widget_opts.mnemonic_label = FALSE;
           lives_label_set_text(LIVES_LABEL(conxwp->pclabel[x]), channame);
           widget_opts.mnemonic_label = TRUE;
@@ -4209,6 +4387,8 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
       isfirst = TRUE;
 
       do {
+        // TODO: for OMC, adjust the pmodel for each oparam type
+
         ptable_row_add_variable_widgets(conxwp, x, conxwp->trowsp - 1, -EXTRA_PARAMS_OUT);
 
         ptable_row_add_standard_widgets(conxwp, x + totchans);
@@ -4252,7 +4432,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
         if (isfirst) {
           param = oparams[i];
 
-          pname = weed_get_string_value(param, WEED_LEAF_NAME, &error);
+          pname = get_param_name(param, i, FALSE);
 
           ptype = weed_seed_type_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
 
@@ -4273,7 +4453,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
             } else range = lives_strdup("");
           } else range = lives_strdup("");
 
-          text = lives_strdup_printf("%s (%s%s) %s", pname, ptype, array_type, range);
+          text = lives_strdup_printf("%s\n (%s%s) %s", pname, ptype, array_type, range);
           widget_opts.mnemonic_label = FALSE;
           lives_label_set_text(LIVES_LABEL(conxwp->pclabel[x + totchans]), text);
           widget_opts.mnemonic_label = TRUE;
@@ -4369,7 +4549,7 @@ static void set_to_keymode_vals(LiVESCombo *combo, int xkey, int xmode) {
     if (lives_tree_model_iter_children(model, &iter, &piter)) {
       do {
         lives_tree_model_get(model, &iter, KEYVAL_COLUMN, &key, MODEVAL_COLUMN, &mode, -1);
-        if (key == xkey + 1 && mode == xmode) goto iter_found;
+        if (key == (key > -0 ? xkey + 1 : key) && mode == xmode) goto iter_found;
       } while (lives_tree_model_iter_next(model, &iter));
     }
   } while (lives_tree_model_iter_next(model, &piter));
@@ -4519,6 +4699,8 @@ show_ex_params:
 
       ipnum = pconx->ipnum[j];
 
+      // TODO ****: OMC
+
       if (ipnum == FX_DATA_PARAM_ACTIVE) {
         pidx = FX_DATA_PARAM_ACTIVE;
       } else {
@@ -4541,7 +4723,7 @@ show_ex_params:
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pcombo), "setup", LIVES_INT_TO_POINTER(TRUE));
 
-      conxwp->ikeys[totchans + l] = ikey + 1;
+      conxwp->ikeys[totchans + l] = ikey > 0 ? ikey + 1 : ikey;
       conxwp->imodes[totchans + l] = imode;
       conxwp->idx[totchans + l] = ipnum;
 
@@ -4711,7 +4893,7 @@ static void do_chan_connected_error(lives_conx_w *conxwp, int key, int mode, int
   ochans = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
   ctmpl = ochans[cnum];
   lives_free(ochans);
-  cname = weed_get_string_value(ctmpl, WEED_LEAF_NAME, &error);
+  cname = get_chan_name(ctmpl, cnum, TRUE);
   msg = lives_strdup_printf(_("Input channel is already connected from (%d,%d) %s"), key + 1, mode + 1, cname);
   do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(conxwp->conx_dialog));
   lives_free(msg);
@@ -4722,11 +4904,10 @@ static void do_chan_connected_error(lives_conx_w *conxwp, int key, int mode, int
 static void do_param_connected_error(lives_conx_w *conxwp, int key, int mode, int pnum) {
   weed_plant_t *filter, *ptmpl;
   char *msg, *pname;
-  int error;
   filter = rte_keymode_get_filter(key + 1, mode);
   if (pnum >= 0) {
     ptmpl = weed_filter_out_paramtmpl(filter, pnum);
-    pname = weed_get_string_value(ptmpl, WEED_LEAF_NAME, &error);
+    pname = get_param_name(ptmpl, pnum, TRUE);
   } else pname = lives_strdup(_("ACTIVATED"));
   msg = lives_strdup_printf(_("Input parameter is already connected from (%d,%d) %s"), key + 1, mode + 1, pname);
   do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(conxwp->conx_dialog));
@@ -4736,7 +4917,5 @@ static void do_param_connected_error(lives_conx_w *conxwp, int key, int mode, in
 
 
 static void do_param_incompatible_error(lives_conx_w *conxwp) {
-
   do_error_dialog_with_check_transient(_("Input and output parameters are not compatible"), TRUE, 0, LIVES_WINDOW(conxwp->conx_dialog));
-
 }

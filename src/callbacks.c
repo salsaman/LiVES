@@ -2087,7 +2087,7 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     cfile->progress_end = cfile->undo_end;
     do_progress_dialog(TRUE, FALSE, _("Undoing"));
 
-    if (cfile->undo_action != UNDO_ATOMIC_RESAMPLE_RESIZE) {
+    if (cfile->undo_action == UNDO_RENDER || cfile->undo_action == UNDO_MERGE) {
       audfile = lives_get_audio_file_name(mainw->current_file);
       tmp = lives_strdup_printf("%s.%s", audfile, LIVES_FILE_EXT_BAK);
       lives_free(audfile);
@@ -4796,8 +4796,8 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     else {
       char *oldval, *newval;
 
-      if (mainw->scrap_file > -1) close_scrap_file();
-      if (mainw->ascrap_file > -1) close_ascrap_file();
+      if (mainw->scrap_file > -1) close_scrap_file(TRUE);
+      if (mainw->ascrap_file > -1) close_ascrap_file(TRUE);
 
       mainw->write_failed = FALSE;
       cliplist = mainw->cliplist;

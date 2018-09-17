@@ -6190,7 +6190,8 @@ boolean lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *v
   lives_osc_parse_int_argument(vargs, &pnum1);
 
   if (key0 < 1 || key0 >= FX_KEYS_MAX_VIRTUAL || mode0 < 1 || mode0 > rte_getmodespk()) return lives_osc_notify_failure();
-  if (key1 < -2 || key1 == 0 || key1 >= FX_KEYS_MAX_VIRTUAL || mode1 < 1 || mode1 > rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1 < -2 || key1 == 0 || key1 >= FX_KEYS_MAX_VIRTUAL || mode1 < 1 || (key1 >= 0 &&
+      mode1 > rte_getmodespk())) return lives_osc_notify_failure();
 
   if (key0 == key1) lives_osc_notify_failure();
 

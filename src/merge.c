@@ -309,10 +309,15 @@ void on_merge_cancel_clicked(LiVESButton *button, livespointer user_data) {
 
 
 void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
+  lives_rfx_t *rfx;
+
+  char *com;
+
   int start, end;
 
   int cb_start = 1;
   boolean cb_video_change = FALSE;
+
   int current_file = mainw->current_file;
   int old_frames = clipboard->frames;
 
@@ -322,7 +327,6 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
   int cb_end, excess_frames;
   int times_to_loop = 1;
 
-  lives_rfx_t *rfx;
 
   if (merge_opts->spinbutton_loops != NULL)
     mainw->last_transition_loops = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops));
@@ -367,6 +371,11 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   d_print(_("Merging clipboard with selection..."));
+
+  // clear up any leftover old files
+  com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend, cfile->handle);
+  lives_system(com, FALSE);
+  lives_free(com);
 
   excess_frames = clipboard->frames - (cfile->end - cfile->start + 1);
   if (excess_frames < 0) excess_frames = 0;

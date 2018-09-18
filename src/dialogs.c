@@ -242,6 +242,17 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_RETRY);
     break;
 
+  case LIVES_DIALOG_CANCEL_RETRY_BROWSE:
+    dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Missing file"));
+    cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, _("_Retry"));
+    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_RETRY);
+    abortbutton = lives_standard_button_new_from_stock(LIVES_STOCK_QUIT, _("_Browse"));
+    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), abortbutton, LIVES_RESPONSE_BROWSE);
+    break;
+
   default:
     return NULL;
     break;
@@ -2533,14 +2544,17 @@ boolean do_layout_alter_audio_warning(void) {
 }
 
 
-boolean do_original_lost_warning(const char *fname) {
+int do_original_lost_warning(const char *fname) {
   char *msg = lives_strdup_printf(
-                _("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, click 'OK' to browse to the new location.\n"
+                _("\nThe original file\n%s\ncould not be found.\nClick Retry to try again, or Browse to browse to the new location.\n"
                   "Otherwise click Cancel to skip loading this file.\n"),
                 fname);
-  boolean retcode = do_warning_dialog(msg);
+  LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, TRUE);
+  int response = lives_dialog_run(LIVES_DIALOG(warning));
+  lives_widget_destroy(warning);
+  lives_widget_context_update();
   lives_free(msg);
-  return retcode;
+  return response;
 }
 
 

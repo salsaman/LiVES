@@ -155,6 +155,9 @@ void fd_tweak(lives_rfx_t *rfx) {
       lives_widget_set_sensitive(mainw->framedraw_scale, TRUE);
     }
   }
+  if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK) {
+    lives_widget_show(mainw->framedraw_maskbox);
+  }
 }
 
 

@@ -183,7 +183,8 @@ typedef enum {
   LIVES_DIALOG_WARN_WITH_CANCEL,
   LIVES_DIALOG_YESNO,
   LIVES_DIALOG_QUESTION,
-  LIVES_DIALOG_ABORT_CANCEL_RETRY
+  LIVES_DIALOG_ABORT_CANCEL_RETRY,
+  LIVES_DIALOG_CANCEL_RETRY_BROWSE
 } lives_dialog_t;
 
 /// various return conditions from rendering (multitrack or after recording)
@@ -931,6 +932,8 @@ typedef struct {
   LiVESWidget *framedraw_spinbutton; ///< the frame number button
   LiVESWidget *framedraw_scale; ///< the slider
   LiVESWidget *framedraw_maskbox; ///< box for opacity controls
+  LiVESWidget *framedraw_opscale; ///< opacity
+  LiVESWidget *framedraw_cbutton; ///< colour for mask
   LiVESWidget *fd_frame; ///< surrounding frame widget
 
   weed_plant_t *fd_layer_orig; ///< original layer uneffected

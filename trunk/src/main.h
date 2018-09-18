@@ -977,7 +977,7 @@ void do_vpp_palette_error(void);
 void do_vpp_fps_error(void);
 void do_decoder_palette_error(void);
 void do_rmem_max_error(int size);
-boolean do_original_lost_warning(const char *fname);
+int do_original_lost_warning(const char *fname);
 void do_no_decoder_error(const char *fname);
 void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);

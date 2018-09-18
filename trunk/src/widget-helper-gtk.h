@@ -559,6 +559,7 @@ typedef int LiVESResponseType;
 #define LIVES_RESPONSE_ABORT 2
 #define LIVES_RESPONSE_RESET 3
 #define LIVES_RESPONSE_SHOW_DETAILS 4
+#define LIVES_RESPONSE_BROWSE 5
 
 typedef GtkAttachOptions LiVESAttachOptions;
 #define LIVES_EXPAND GTK_EXPAND

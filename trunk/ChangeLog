@@ -10,8 +10,11 @@ Ensure playback does not stop too soon in autolives mode.
 Fix audio fade in / out, using smaller chunk sizes.
 Allow effect output parameters to feed to internal macros, similar to MIDI / joystick controller.
 Improve effect previews in multitrack mode.
+Make the mask colour / opacity configurable in Trim Frames / Add Border tool.
+When an original clip is not found, allow the user to retry as well as browse - to allow for unmounted disks, etc.
+	
 
-
+	
 
 Version 2.10.0 (4 Sep 2018)
 ---------------------------

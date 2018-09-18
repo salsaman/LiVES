@@ -867,6 +867,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     }
 
     lives_widget_show_all(fx_dialog[didx]);
+    lives_widget_hide(mainw->framedraw_maskbox);
 
     if (no_process && !is_defaults) {
       if (!is_realtime) {

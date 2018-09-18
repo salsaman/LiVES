@@ -5163,6 +5163,8 @@ boolean reload_clip(int fileno, int maxframe) {
 
   boolean was_renamed = FALSE;
 
+  int response;
+  
   lives_chdir(ppath, FALSE);
   lives_free(ppath);
 
@@ -5173,87 +5175,94 @@ boolean reload_clip(int fileno, int maxframe) {
     fake_cdata->fps = sfile->fps;
     fake_cdata->nframes = maxframe;
 
+    response = LIVES_RESPONSE_NONE;
+
     if ((cdata = get_decoder_cdata(fileno, prefs->disabled_decoders, fake_cdata->fps != 0. ? fake_cdata : NULL)) == NULL) {
       if (mainw->error) {
-        if (do_original_lost_warning(sfile->file_name)) {
-          int resp;
-          char fname[PATH_MAX], dirname[PATH_MAX], *newname;
-          LiVESWidget *chooser;
+	response = do_original_lost_warning(sfile->file_name);
+	if (response == LIVES_RESPONSE_RETRY) {
+	  lives_freep((void **)&fake_cdata->URI);
+	  continue;
+	}
+	if (response == LIVES_RESPONSE_BROWSE) {
+	    int resp;
+	    char fname[PATH_MAX], dirname[PATH_MAX], *newname;
+	    LiVESWidget *chooser;
 
-          lives_snprintf(dirname, PATH_MAX, "%s", sfile->file_name);
-          lives_snprintf(fname, PATH_MAX, "%s", sfile->file_name);
+	    lives_snprintf(dirname, PATH_MAX, "%s", sfile->file_name);
+	    lives_snprintf(fname, PATH_MAX, "%s", sfile->file_name);
 
-          get_dirname(dirname);
-          get_basename(fname);
+	    get_dirname(dirname);
+	    get_basename(fname);
 
-          chooser = choose_file_with_preview(dirname, fname, NULL, LIVES_FILE_SELECTION_VIDEO_AUDIO);
+	    chooser = choose_file_with_preview(dirname, fname, NULL, LIVES_FILE_SELECTION_VIDEO_AUDIO);
 
-          resp = lives_dialog_run(LIVES_DIALOG(chooser));
+	    resp = lives_dialog_run(LIVES_DIALOG(chooser));
 
-          end_fs_preview();
+	    end_fs_preview();
 
-          if (resp == LIVES_RESPONSE_ACCEPT) {
-            newname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
-            lives_widget_destroy(LIVES_WIDGET(chooser));
+	    if (resp == LIVES_RESPONSE_ACCEPT) {
+	      newname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
+	      lives_widget_destroy(LIVES_WIDGET(chooser));
 
-            if (newname != NULL) {
-              if (strlen(newname)) {
-                char *tmp;
-                lives_snprintf(sfile->file_name, PATH_MAX, "%s", (tmp = lives_filename_to_utf8(newname, -1, NULL, NULL, NULL)));
-                lives_free(tmp);
-              }
-              lives_free(newname);
-            }
+	      if (newname != NULL) {
+		if (strlen(newname)) {
+		  char *tmp;
+		  lives_snprintf(sfile->file_name, PATH_MAX, "%s", (tmp = lives_filename_to_utf8(newname, -1, NULL, NULL, NULL)));
+		  lives_free(tmp);
+		}
+		lives_free(newname);
+	      }
 
-            lives_freep((void **)&fake_cdata->URI);
+	      lives_freep((void **)&fake_cdata->URI);
 
-            //re-scan for these
-            sfile->fps = 0.;
-            sfile->frames = 0;
+	      //re-scan for these
+	      sfile->fps = 0.;
+	      sfile->frames = 0;
 
-            was_renamed = TRUE;
-            continue;
-          }
-          lives_widget_destroy(LIVES_WIDGET(chooser));
-        } else {
-          // deleted : TODO ** - show layout errors
-        }
+	      was_renamed = TRUE;
+	      continue;
+	    }
+	    lives_widget_destroy(LIVES_WIDGET(chooser));
+	}
+	else {
+	  // deleted : TODO ** - show layout errors
+	}
       } else {
-        do_no_decoder_error(sfile->file_name);
+	do_no_decoder_error(sfile->file_name);
       }
-
+    
       // NOT found, switch to another clip (if any)
 
       // index stuff
       sfile = NULL;
-
+    
       if (fileno == mainw->current_file) {
-        if (mainw->cliplist != NULL) {
-          LiVESList *list_index;
-          int index = -1;
-
-          list_index = lives_list_last(mainw->cliplist);
-          do {
-            if ((list_index = lives_list_previous(list_index)) == NULL) list_index = lives_list_last(mainw->cliplist);
-            index = LIVES_POINTER_TO_INT(list_index->data);
-          } while ((mainw->files[index] == NULL ||
-                    ((index == mainw->scrap_file || index == mainw->ascrap_file) && index > -1)) && index != fileno);
-          if (index == fileno) index = -1;
-
-          mainw->current_file = index;
-        } else mainw->current_file = -1;
+	if (mainw->cliplist != NULL) {
+	  LiVESList *list_index;
+	  int index = -1;
+	  list_index = lives_list_last(mainw->cliplist);
+	  do {
+	    if ((list_index = lives_list_previous(list_index)) == NULL) list_index = lives_list_last(mainw->cliplist);
+	    index = LIVES_POINTER_TO_INT(list_index->data);
+	  } while ((mainw->files[index] == NULL ||
+		    ((index == mainw->scrap_file || index == mainw->ascrap_file) && index > -1)) && index != fileno);
+	  if (index == fileno) index = -1;
+	  mainw->current_file = index;
+	} else mainw->current_file = -1;
       }
       lives_freep((void **)&fake_cdata->URI);
       lives_free(fake_cdata);
       return FALSE;
     }
+    
     // got cdata
     threaded_dialog_spin(0.);
     lives_freep((void **)&fake_cdata->URI);
     lives_free(fake_cdata);
     break;
   }
-
+  
   sfile->clip_type = CLIP_TYPE_FILE;
   get_mime_type(sfile->type, 40, cdata);
   sfile->img_type = IMG_TYPE_BEST; // read_headers() will have set this to "jpeg" (default)

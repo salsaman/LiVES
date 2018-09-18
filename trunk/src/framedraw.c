@@ -89,12 +89,35 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
 }
 
 
+static void framedraw_redraw_cb(LiVESWidget *widget, lives_special_framedraw_rect_t *framedraw) {
+  framedraw_redraw(framedraw, FALSE, NULL);
+}
+
+
+static void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton, lives_special_framedraw_rect_t *framedraw) {
+  // update the single frame/framedraw preview
+  // after the "frame number" spinbutton has changed
+  mainw->framedraw_frame = lives_spin_button_get_value_as_int(spinbutton);
+  if (lives_widget_is_visible(mainw->framedraw_preview)) {
+    if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, FALSE);
+    lives_widget_context_update();
+    load_rfx_preview(framedraw->rfx);
+  } else framedraw_redraw(framedraw, TRUE, NULL);
+}
+
+
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *framedraw, lives_rfx_t *rfx) {
   framedraw->rfx = rfx;
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(after_framedraw_frame_spinbutton_changed),
                              framedraw);
+  lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_opscale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(framedraw_redraw_cb),
+                             framedraw);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw_cbutton), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                       LIVES_GUI_CALLBACK(framedraw_redraw_cb),
+                       framedraw);
 }
 
 
@@ -165,7 +188,6 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   LiVESWidget *vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
-  LiVESWidget *scale;
   LiVESWidget *cbutton;
   LiVESWidget *frame;
   lives_colRGBA64_t opcol;
@@ -214,6 +236,10 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_widget_set_size_request(mainw->framedraw, width, height);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->framedraw), 1);
 
+  if (palette->style & STYLE_1) {
+    lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
+
   lives_widget_set_events(mainw->framedraw, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK |
                           LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK | LIVES_LEAVE_NOTIFY_MASK);
 
@@ -231,18 +257,17 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_EXPOSE_EVENT,
                              LIVES_GUI_CALLBACK(expose_fd_event), NULL);
 
-
-  // colour and opacity controls
+  // mask colour and opacity controls
   mainw->framedraw_maskbox = lives_hbox_new(FALSE, 2);
   lives_box_pack_start(LIVES_BOX(vbox), mainw->framedraw_maskbox, FALSE, FALSE, widget_opts.packing_height);
-  label = lives_standard_label_new(_("Display mask: "));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
-  spinbutton_adj = lives_adjustment_new(0.5, 0.0, 1.0, 0.1, 0.1, 0);
-  scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-  lives_box_pack_start(LIVES_BOX(hbox), scale, TRUE, TRUE, 0);
+  label = lives_standard_label_new(_("Mask: opacity"));
+  lives_box_pack_start(LIVES_BOX(mainw->framedraw_maskbox), label, FALSE, FALSE, widget_opts.packing_width);
+  spinbutton_adj = lives_adjustment_new(0.25, 0.0, 1.0, 0.1, 0.1, 0);
+  mainw->framedraw_opscale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
+  lives_box_pack_start(LIVES_BOX(mainw->framedraw_maskbox), mainw->framedraw_opscale, TRUE, TRUE, 0);
   opcol = lives_rgba_col_new(0, 0, 0, 65535);
-  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox), _("mask color"), FALSE, &opcol, NULL, NULL, NULL, NULL);
-  lives_widget_hide(cbutton); // stop compiler complaining
+  cbutton = lives_standard_color_button_new(LIVES_BOX(mainw->framedraw_maskbox), _("color"), FALSE, &opcol, NULL, NULL, NULL, NULL);
+  mainw->framedraw_cbutton = cbutton; // stop compiler complaining
 
   hbox = lives_hbox_new(FALSE, 2);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -252,12 +277,16 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 
   spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton));
 
-  mainw->framedraw_scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-  lives_box_pack_start(LIVES_BOX(hbox), mainw->framedraw_scale, TRUE, TRUE, 0);
-
   rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(lives_widget_get_toplevel(LIVES_WIDGET(box))), "rfx");
   mainw->framedraw_preview = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, _("_Preview"));
   lives_box_pack_start(LIVES_BOX(hbox), mainw->framedraw_preview, TRUE, FALSE, 0);
+
+  hbox = lives_hbox_new(FALSE, 2);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  mainw->framedraw_scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
+  lives_box_pack_start(LIVES_BOX(hbox), mainw->framedraw_scale, TRUE, TRUE, widget_opts.border_width);
+
   lives_widget_set_sensitive(mainw->framedraw_spinbutton, FALSE);
   lives_widget_set_sensitive(mainw->framedraw_scale, FALSE);
   lives_signal_connect(mainw->framedraw_preview, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(start_preview), rfx);
@@ -267,6 +296,8 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   if (!add_preview_button) {
     lives_widget_hide(mainw->framedraw_preview);
   }
+
+  lives_widget_hide(mainw->framedraw_maskbox);
 }
 
 
@@ -320,7 +351,6 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
-
     if (framedraw->xstart_param->dp == 0) {
       xstartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
       xstartf = xstartf / (double)cfile->hsize * (double)width;
@@ -358,20 +388,20 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
       lives_painter_rectangle(cr, xstartf - 1., ystartf - 1., xendf, yendf);
       lives_painter_stroke(cr);
     } else {
-      if (!b1_held) {
-        // create a mask which is only opaque within the clipping area
-
-        lives_painter_rectangle(cr, 0, 0, width, height);
-        lives_painter_rectangle(cr, xstartf, ystartf, xendf - xstartf + 1., yendf - ystartf + 1.);
-        lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DEST_OUT);
-        lives_painter_set_source_rgba(cr, .0, .0, .0, .75);  // TODO - make this adjustable by the user
-        lives_painter_set_fill_rule(cr, LIVES_PAINTER_FILL_RULE_EVEN_ODD);
-        lives_painter_fill(cr);
-      } else {
+      if (b1_held) {
         lives_painter_set_source_rgb(cr, 1., 0., 0.);
         lives_painter_rectangle(cr, xstartf - 1., ystartf - 1., xendf - xstartf + 2., yendf - ystartf + 2.);
         lives_painter_stroke(cr);
       }
+      // create a mask which is only opaque within the clipping area
+      LiVESWidgetColor maskcol;
+      double opacity = lives_range_get_value(LIVES_RANGE(mainw->framedraw_opscale));
+      lives_color_button_get_color(LIVES_COLOR_BUTTON(mainw->framedraw_cbutton), &maskcol);
+      lives_painter_rectangle(cr, 0, 0, width, height);
+      lives_painter_rectangle(cr, xstartf, ystartf, xendf - xstartf + 1., yendf - ystartf + 1.);
+      lives_painter_set_source_rgba(cr, maskcol.red, maskcol.green, maskcol.blue, opacity);
+      lives_painter_set_fill_rule(cr, LIVES_PAINTER_FILL_RULE_EVEN_ODD);
+      lives_painter_fill(cr);
     }
 
     break;
@@ -557,18 +587,6 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   redraw_framedraw_image();
 
   mainw->current_file = current_file;
-}
-
-
-void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton, lives_special_framedraw_rect_t *framedraw) {
-  // update the single frame/framedraw preview
-  // after the "frame number" spinbutton has changed
-  mainw->framedraw_frame = lives_spin_button_get_value_as_int(spinbutton);
-  if (lives_widget_is_visible(mainw->framedraw_preview)) {
-    if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, FALSE);
-    lives_widget_context_update();
-    load_rfx_preview(framedraw->rfx);
-  } else framedraw_redraw(framedraw, TRUE, NULL);
 }
 
 
@@ -762,7 +780,6 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
 
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
-
     if (framedraw->xstart_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
     else
@@ -778,7 +795,6 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
     xend = yend = 0.;
 
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
-
     if (framedraw->xstart_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
     else

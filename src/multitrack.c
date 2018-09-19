@@ -9214,7 +9214,7 @@ static boolean on_tleb_enter(LiVESWidget *widget, LiVESXEventCrossing *event, li
 }
 
 
-static void reset_renumbering(lives_mt *mt) {
+void reset_renumbering(void) {
   int i;
 
   for (i = 1; i <= MAX_FILES; i++) {
@@ -9688,7 +9688,7 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
     mt_tl_move(mt, 0.);
   } else mt->was_undo_redo = FALSE;
 
-  reset_renumbering(mt);
+  reset_renumbering();
 }
 
 

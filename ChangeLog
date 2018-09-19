@@ -15,7 +15,7 @@ When an original clip is not found, allow the user to retry as well as browse - 
 Add menu option VJ / Pre-decode all frames.
 Improve pulse audio sync when recording / playing from external audio.
 Create set lock file in correct location during crash recovery.
-	
+Improve timing accuracy of realtime recording.
 
 	
 

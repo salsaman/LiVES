@@ -5507,7 +5507,7 @@ int get_token_count(const char *string, int delim) {
   return pieces;
 }
 
-char *get_nth_token(const char *string, int delim, int pnumber) {
+char *get_nth_token(const char *string, const char *delim, int pnumber) {
   char **array;
   char *ret = NULL;
   register int i;

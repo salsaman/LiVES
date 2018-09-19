@@ -2779,6 +2779,7 @@ void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
+  char *msg;
   int old_file = mainw->current_file, current_file;
   int i;
 
@@ -2806,24 +2807,15 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->fx1_val = 1;
   mainw->fx1_bool = FALSE;
 
-  if (!check_if_non_virtual(0, 1, clipboard->frames)) {
-    int current_file = mainw->current_file;
-    boolean retb;
-    mainw->cancelled = CANCEL_NONE;
-    mainw->current_file = 0;
-    cfile->progress_start = 1;
-    cfile->progress_end = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
-    do_threaded_dialog(_("Pulling frames from clipboard"), TRUE);
-    retb = virtual_to_images(mainw->current_file, 1, cfile->frames, TRUE, NULL);
-    end_threaded_dialog();
-    mainw->current_file = current_file;
+  msg = lives_strdup(_("Pulling frames from clipboard..."));
 
-    if (mainw->cancelled != CANCEL_NONE || !retb) {
-      sensitize();
-      mainw->cancelled = CANCEL_USER;
-      return;
-    }
+  if (!realize_all_frames(0, msg)) {
+    lives_free(msg);
+    sensitize();
+    return;
   }
+
+  lives_free(msg);
 
   mainw->no_switch_dprint = TRUE;
   d_print(_("Pasting %d frames to new clip %s..."), cfile->frames, cfile->name);
@@ -3212,22 +3204,13 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
   }
 
   if (!virtual_ins && clipboard->frame_index != NULL) {
-    int current_file = mainw->current_file;
-    boolean retb;
-    mainw->cancelled = CANCEL_NONE;
-    mainw->current_file = 0;
-    cfile->progress_start = 1;
-    cfile->progress_end = count_virtual_frames(cfile->frame_index, 1, cb_end);
-    do_threaded_dialog(_("Pulling frames from clipboard"), TRUE);
-    retb = virtual_to_images(mainw->current_file, 1, cb_end, TRUE, NULL);
-    end_threaded_dialog();
-    mainw->current_file = current_file;
-
-    if (mainw->cancelled != CANCEL_NONE || !retb) {
+    char *msg = lives_strdup(_("Pulling frames from clipboard..."));
+    if (!realize_all_frames(0, msg)) {
+      lives_free(msg);
       sensitize();
-      mainw->cancelled = CANCEL_USER;
       return;
     }
+    lives_free(msg);
   }
 
   // if pref is set, resample clipboard video
@@ -5216,7 +5199,7 @@ boolean reload_set(const char *set_name) {
       // lock the set
       threaded_dialog_spin(0.);
       set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
-      tfile = lives_build_filename(prefs->workdir, mainw->set_name, set_lock_file, NULL);
+      tfile = lives_build_filename(prefs->workdir, set_name, set_lock_file, NULL);
       lives_touch(tfile);
       lives_free(tfile);
       lives_free(set_lock_file);
@@ -5494,6 +5477,20 @@ void on_cleardisk_advanced_clicked(LiVESWidget *widget, livespointer user_data) 
 
 void on_show_keys_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   do_keys_window();
+}
+
+
+void on_vj_realize_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  char *msg = lives_strdup(_("Pre-decoding all frames in this clip..."));
+  d_print(msg);
+
+  desensitize();
+
+  if (!realize_all_frames(mainw->current_file, msg)) d_print_cancelled();
+  else d_print_done();
+  lives_free(msg);
+
+  sensitize();
 }
 
 
@@ -7475,20 +7472,14 @@ void on_rev_clipboard_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 
   if (!check_if_non_virtual(0, 1, cfile->frames)) {
     lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+    char *msg = lives_strdup(_("Pulling frames from clipboard..."));
     if (!(cdata->seek_flag & LIVES_SEEK_FAST)) {
-      boolean retb;
-      mainw->cancelled = CANCEL_NONE;
-      cfile->progress_start = 1;
-      cfile->progress_end = cfile->frames;
-      do_threaded_dialog(_("Pulling frames from clipboard"), TRUE);
-      retb = virtual_to_images(mainw->current_file, 1, cfile->frames, TRUE, NULL);
-      end_threaded_dialog();
-
-      if (mainw->cancelled != CANCEL_NONE || !retb) {
+      if (!realize_all_frames(0, msg)) {
+        lives_free(msg);
         sensitize();
-        mainw->cancelled = CANCEL_USER;
         return;
       }
+      lives_free(msg);
     }
   }
 

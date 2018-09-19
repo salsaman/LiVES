@@ -1466,9 +1466,16 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(vj_menu));
 
+  mainw->vj_realize = lives_standard_menu_item_new_with_label(_("_Pre-decode all frames"));
+  lives_container_add(LIVES_CONTAINER(vj_menu), mainw->vj_realize);
+  lives_widget_set_tooltip_text(mainw->vj_realize,
+                                (_("Decode all frames to images. This can improve reverse playback and random seek times,\nat the cost of diskspace.")));
+  lives_widget_set_sensitive(mainw->vj_realize, FALSE);
+
   mainw->vj_reset = lives_standard_menu_item_new_with_label(_("_Reset All Playback Speeds and Positions"));
   lives_container_add(LIVES_CONTAINER(vj_menu), mainw->vj_reset);
   lives_widget_set_tooltip_text(mainw->vj_reset, (_("Reset all playback positions to frame 1, and reset all playback frame rates.")));
+  lives_widget_set_sensitive(mainw->vj_reset, FALSE);
 
   midi_submenu = lives_standard_menu_item_new_with_label(_("_MIDI/Joystick Interface"));
 
@@ -2715,6 +2722,9 @@ void create_LiVES(void) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_reset), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_vj_reset_activate),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_realize), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_vj_realize_activate),
                        NULL);
 #ifdef ENABLE_OSC
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->midi_learn), LIVES_WIDGET_ACTIVATE_SIGNAL,

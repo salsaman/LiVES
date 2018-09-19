@@ -2751,7 +2751,7 @@ static void idxc_release(lives_clip_data_t *cdata) {
       break;
     }
   }
-  
+
   if (idxc->nclients == 1) {
     // remove this index
     index_free(idxc->idxhh);

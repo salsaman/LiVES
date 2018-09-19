@@ -380,6 +380,30 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 }
 
 
+boolean realize_all_frames(int clipno, const char *msg) {
+  int current_file = mainw->current_file;
+  mainw->cancelled = CANCEL_NONE;
+  if (!IS_VALID_CLIP(clipno)) return FALSE;
+
+  if (!check_if_non_virtual(clipno, 1, mainw->files[clipno]->frames)) {
+    boolean retb;
+    mainw->current_file = clipno;
+    cfile->progress_start = 1;
+    cfile->progress_end = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
+    do_threaded_dialog((char *)msg, TRUE);
+    retb = virtual_to_images(mainw->current_file, 1, cfile->frames, TRUE, NULL);
+    end_threaded_dialog();
+    mainw->current_file = current_file;
+
+    if (mainw->cancelled != CANCEL_NONE || !retb) {
+      mainw->cancelled = CANCEL_USER;
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+
 void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_index, int start) {
   // insert physical (frames) images (or virtual possibly) into sfile at position where [0 = before first frame]
   // this is the virtual (book-keeping) part

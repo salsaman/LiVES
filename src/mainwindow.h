@@ -909,6 +909,7 @@ typedef struct {
   LiVESWidget *rte_defs;
   LiVESWidget *save_rte_defs;
   LiVESWidget *vj_reset;
+  LiVESWidget *vj_realize;
   LiVESWidget *mt_menu;
   LiVESWidget *troubleshoot;
   LiVESWidget *export_custom_rfx;
@@ -1364,8 +1365,10 @@ typedef struct {
   boolean gen_started_play;
   boolean fx_is_auto;
 
-  lives_audio_buf_t *audio_frame_buffer; ///< used for buffering / feeding audio to video generators
+  volatile lives_audio_buf_t *audio_frame_buffer; ///< used for buffering / feeding audio to video generators
+  lives_audio_buf_t *afb[2]; ///< used for buffering / feeding audio to video generators
   int afbuffer_clients;
+  int afbuffer_clients_read;
 
   pthread_t *libthread;
   ulong id;

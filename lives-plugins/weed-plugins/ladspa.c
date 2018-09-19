@@ -981,7 +981,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_set_int_value(plugin_info, "version", package_version);
   }
-  
+
   return plugin_info;
 }
 

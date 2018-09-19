@@ -383,6 +383,8 @@ void on_show_keys_activate(LiVESMenuItem *, livespointer);
 
 void on_vj_reset_activate(LiVESMenuItem *, livespointer);
 
+void on_vj_realize_activate(LiVESMenuItem *, livespointer);
+
 void on_prv_link_toggled(LiVESToggleButton *, livespointer);
 
 boolean on_del_audio_activate(LiVESMenuItem *, livespointer);

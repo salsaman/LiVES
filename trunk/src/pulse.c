@@ -913,7 +913,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     if (pulsed->playing_file == -1 && prefs->audio_src == AUDIO_SRC_INT) {
       pa_operation *paop = pa_stream_cork(pstream, 1, NULL, NULL);
       pa_operation_unref(paop);
-    }
+    } else pa_stream_drop(pulsed->pstream);
     return;
   }
 

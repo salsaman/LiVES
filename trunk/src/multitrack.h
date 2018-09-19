@@ -880,6 +880,7 @@ void on_fx_insa_clicked(LiVESWidget *button, livespointer mt);
 // utils
 uint32_t event_list_get_byte_size(lives_mt *, weed_plant_t *event_list, int *num_events);  ///< returns bytes and sets num_events
 boolean event_list_rectify(lives_mt *, weed_plant_t *event_listy);
+void reset_renumbering(void);
 boolean make_backup_space(lives_mt *, size_t space_needed);
 void activate_mt_preview(lives_mt *); ///< sensitize Show Preview and Apply buttons
 void **mt_get_pchain(void);

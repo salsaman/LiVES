@@ -5615,6 +5615,7 @@ void load_frame_image(int frame) {
 
       // record performance
       if ((mainw->record && !mainw->record_paused) || mainw->record_starting) {
+        uint64_t actual_ticks;
         int fg_file = mainw->current_file;
         int fg_frame = mainw->actual_frame;
         int bg_file = mainw->blend_file > 0 && mainw->blend_file != mainw->current_file &&
@@ -5641,15 +5642,17 @@ void load_frame_image(int frame) {
           bg_frame = 0;
         }
 
+        actual_ticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+
         if (mainw->record_starting) {
           // mark record start
           //pthread_mutex_lock(&mainw->event_list_mutex);
-          event_list = append_marker_event(mainw->event_list, mainw->currticks, EVENT_MARKER_RECORD_START);
+          event_list = append_marker_event(mainw->event_list, actual_ticks, EVENT_MARKER_RECORD_START);
           if (mainw->event_list == NULL) mainw->event_list = event_list;
 
           if (prefs->rec_opts & REC_EFFECTS) {
             // add init events and pchanges for all active fx
-            add_filter_init_events(mainw->event_list, mainw->currticks);
+            add_filter_init_events(mainw->event_list, actual_ticks);
           }
           //pthread_mutex_unlock(&mainw->event_list_mutex);
 
@@ -5684,7 +5687,7 @@ void load_frame_image(int frame) {
         }
         if (framecount != NULL) lives_free(framecount);
         pthread_mutex_lock(&mainw->event_list_mutex);
-        if ((event_list = append_frame_event(mainw->event_list, mainw->currticks, numframes, clips, frames)) != NULL) {
+        if ((event_list = append_frame_event(mainw->event_list, actual_ticks, numframes, clips, frames)) != NULL) {
           if (mainw->event_list == NULL) mainw->event_list = event_list;
           if (mainw->rec_aclip != -1 && ((prefs->rec_opts & REC_AUDIO))) {
             weed_plant_t *event = get_last_frame_event(mainw->event_list);

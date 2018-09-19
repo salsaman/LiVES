@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2018-09-17 13:04-0300\n"
+"POT-Creation-Date: 2018-09-19 11:18-0300\n"
 "PO-Revision-Date: 2018-07-23 13:17+0000\n"
 "Last-Translator: Pavel Borecki <Unknown>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -148,23 +148,23 @@ msgstr "Popředí"
 msgid "Background"
 msgstr "Pozadí"
 
-#: src/main.c:1598
+#: src/main.c:1599
 msgid "Loading realtime effect plugins..."
 msgstr "Načítám pluginy pro efekty v reálném času..."
 
-#: src/main.c:1663
+#: src/main.c:1664
 msgid "Starting jack audio server..."
 msgstr "Spouštím zvukový server JACK..."
 
-#: src/main.c:1665
+#: src/main.c:1666
 msgid "Starting jack transport server..."
 msgstr ""
 
-#: src/main.c:1666
+#: src/main.c:1667
 msgid "Connecting to jack transport server..."
 msgstr ""
 
-#: src/main.c:1696
+#: src/main.c:1697
 #, c-format
 msgid ""
 "\n"
@@ -176,34 +176,34 @@ msgid ""
 "Alternatively, try to start lives with either \"lives -jackopts 16\", or "
 msgstr ""
 
-#: src/main.c:1730
+#: src/main.c:1731
 msgid "Starting pulse audio server..."
 msgstr "Spouští se pulse audio server…"
 
-#: src/main.c:1792
+#: src/main.c:1793
 #, c-format
 msgid "%s...detected... "
 msgstr "%s…zjištěno… "
 
-#: src/main.c:1793
+#: src/main.c:1794
 #, c-format
 msgid "%s...NOT DETECTED... "
 msgstr ""
 
-#: src/main.c:1801
+#: src/main.c:1802
 msgid "Checking optional dependencies: "
 msgstr ""
 
-#: src/main.c:1833
+#: src/main.c:1834
 #, c-format
 msgid "Windows version %04X"
 msgstr "Verze Windows %04X"
 
-#: src/main.c:1836
+#: src/main.c:1837
 msgid "UNKNOWN - please patch me !"
 msgstr ""
 
-#: src/main.c:1838
+#: src/main.c:1839
 #, c-format
 msgid ""
 "\n"
@@ -214,68 +214,68 @@ msgstr ""
 "\n"
 "Správcem oken je \"%s\"; "
 
-#: src/main.c:1841
+#: src/main.c:1842
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "počet nalezených monitorů: %d\n"
 
-#: src/main.c:1844
+#: src/main.c:1845
 #, c-format
 msgid "Number of CPUs detected: %d "
 msgstr "Počet nalezených procesorů: %d "
 
-#: src/main.c:1847 src/multitrack.c:5101
+#: src/main.c:1848 src/multitrack.c:5101
 msgid "little endian"
 msgstr "malý endian"
 
-#: src/main.c:1848 src/multitrack.c:5100
+#: src/main.c:1849 src/multitrack.c:5100
 msgid "big endian"
 msgstr "velký endian"
 
-#: src/main.c:1849
+#: src/main.c:1850
 #, c-format
 msgid "(%d bits, %s)\n"
 msgstr ""
 
-#: src/main.c:1853
+#: src/main.c:1854
 msgid "GUI type is: "
 msgstr ""
 
-#: src/main.c:1858
+#: src/main.c:1859
 #, c-format
 msgid "GTK+ version %d.%d.%d (compiled with %d.%d.%d)"
 msgstr ""
 
-#: src/main.c:1870
+#: src/main.c:1871
 #, c-format
 msgid "GTK+ (compiled with %d.%d.%d)"
 msgstr ""
 
-#: src/main.c:1882
+#: src/main.c:1883
 msgid ", with cairo support"
 msgstr ""
 
-#: src/main.c:1889
+#: src/main.c:1890
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Složka pro dočasné soubory je %s\n"
 
-#: src/main.c:1893
+#: src/main.c:1894
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
 
-#: src/main.c:1896
+#: src/main.c:1897
 msgid "Compiled with jack support, good !\n"
 msgstr "Zkompilováno s podporou Jacku, dobrá práce!\n"
 
-#: src/main.c:1899
+#: src/main.c:1900
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Kompilován s podporou pulse audio, skvělé !\n"
 
-#: src/main.c:1903
+#: src/main.c:1904
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -284,7 +284,7 @@ msgstr ""
 "Vítejte v LiVES verze %s.\n"
 "\n"
 
-#: src/main.c:2518
+#: src/main.c:2519
 #, c-format
 msgid ""
 "\n"
@@ -293,111 +293,111 @@ msgstr ""
 "\n"
 "Startovací syntaxe je: %s [opts] [filename [start_time] [frames]]\n"
 
-#: src/main.c:2519
+#: src/main.c:2520
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr "Kde: název souboru je název media souboru nebo záložního souboru.\n"
 
-#: src/main.c:2520
+#: src/main.c:2521
 msgid "start_time : filename start time in seconds\n"
 msgstr "počáteční _čas : čas do spuštění souboru ve vteřinách\n"
 
-#: src/main.c:2521
+#: src/main.c:2522
 msgid "frames : maximum number of frames to open\n"
 msgstr "snímků : maximální počet snímků, které lze otevřít\n"
 
-#: src/main.c:2523
+#: src/main.c:2524
 msgid "opts can be:\n"
 msgstr "opts může být:\n"
 
-#: src/main.c:2524
+#: src/main.c:2525
 msgid "-help            : show this help text and exit\n"
 msgstr "-help            : zobrazit tuto nápovědu a ukončit\n"
 
-#: src/main.c:2525
+#: src/main.c:2526
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 
-#: src/main.c:2526
+#: src/main.c:2527
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr "-set <setname>   : automaticky otevřít sestavu klipu\n"
 
-#: src/main.c:2527
+#: src/main.c:2528
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset           : při spuštění nenahrávat sestavu\n"
 
-#: src/main.c:2528
+#: src/main.c:2529
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-norecover       : nenahrávat havarijní zálohu\n"
 
-#: src/main.c:2529
+#: src/main.c:2530
 msgid "-recover         : force loading of crash recovery\n"
 msgstr "-recover         : nahrát havarijní zálohu\n"
 
-#: src/main.c:2530
+#: src/main.c:2531
 msgid ""
 "-nothreaddialog  : does nothing - retained for backwards compatibility\n"
 msgstr ""
 
-#: src/main.c:2531
+#: src/main.c:2532
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui           : nezobrazovat GUI\n"
 
-#: src/main.c:2532
+#: src/main.c:2533
 msgid "-nosplash        : do not show the splash window\n"
 msgstr ""
 
-#: src/main.c:2533
+#: src/main.c:2534
 msgid "-noplaywin       : do not show the play window\n"
 msgstr ""
 
-#: src/main.c:2534
+#: src/main.c:2535
 msgid "-noninteractive  : disable menu interactivity\n"
 msgstr ""
 
-#: src/main.c:2535
+#: src/main.c:2536
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr ""
 
-#: src/main.c:2536
+#: src/main.c:2537
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr ""
 
-#: src/main.c:2537
+#: src/main.c:2538
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
 msgstr ""
 
-#: src/main.c:2539
+#: src/main.c:2540
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr "-oscstart <port> : spustit OSC naslouchač na UDP portu <port>\n"
 
-#: src/main.c:2540
+#: src/main.c:2541
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart      : nespouštět OSC naslouchač\n"
 
-#: src/main.c:2542
+#: src/main.c:2543
 msgid ""
 "-asource <source>          : set the initial audio source; <source> can be "
 "'internal' or 'external' (only for jack and pulse audio players)\n"
 msgstr ""
 
-#: src/main.c:2544
+#: src/main.c:2545
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer, "
 "mplayer2"
 msgstr ""
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2547
+#: src/main.c:2548
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:2550
+#: src/main.c:2551
 msgid ", sox or jack\n"
 msgstr ", sox, nebo jack\n"
 
-#: src/main.c:2552
+#: src/main.c:2553
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client,2 = jack transport master, 4 = start jack transport "
@@ -406,29 +406,29 @@ msgid ""
 "audio server] \n"
 msgstr ""
 
-#: src/main.c:2557
+#: src/main.c:2558
 msgid " or sox\n"
 msgstr " lub sox\n"
 
-#: src/main.c:2559
+#: src/main.c:2560
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr "-devicemap <nazwa mapy> : automatycznie Pokaż urządzenie ładunkowe\n"
 
-#: src/main.c:2561
+#: src/main.c:2562
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
 msgstr ""
 
-#: src/main.c:2562
+#: src/main.c:2563
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr "-debug : próby debugowania awarii (wymaga 'gdb' zainstalowane)\n"
 
-#: src/main.c:2635 src/gui.c:1118
+#: src/main.c:2636 src/gui.c:1118
 msgid "Starting GUI..."
 msgstr "Startuji grafické rozhraní..."
 
-#: src/main.c:2663
+#: src/main.c:2664
 #, c-format
 msgid ""
 "\n"
@@ -439,7 +439,7 @@ msgid ""
 "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"
 msgstr ""
 
-#: src/main.c:2682
+#: src/main.c:2683
 #, c-format
 msgid ""
 "\n"
@@ -447,7 +447,7 @@ msgid ""
 "Please make sure you have write access to %s and try again.\n"
 msgstr ""
 
-#: src/main.c:2688
+#: src/main.c:2689
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -461,7 +461,7 @@ msgstr ""
 "Prosím přečtěte si ještě jednou README soubor, který byl dodán s instalačním "
 "balíkem než spustíte LiVES.\n"
 
-#: src/main.c:2695
+#: src/main.c:2696
 #, c-format
 msgid ""
 "\n"
@@ -471,7 +471,7 @@ msgid ""
 "Please check the file permissions for this file and try again.\n"
 msgstr ""
 
-#: src/main.c:2703
+#: src/main.c:2704
 #, c-format
 msgid ""
 "\n"
@@ -482,7 +482,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:2714
+#: src/main.c:2715
 #, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -490,7 +490,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:2720
+#: src/main.c:2721
 #, c-format
 msgid ""
 "\n"
@@ -500,7 +500,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/main.c:2728
+#: src/main.c:2729
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -517,35 +517,35 @@ msgstr ""
 "instalačním balíkem než spustíte LiVES.\n"
 "Díky.\n"
 
-#: src/main.c:2734
+#: src/main.c:2735
 msgid ""
 "\n"
 "LiVES currently requires 'mplayer', 'mplayer2' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2739
+#: src/main.c:2740
 msgid ""
 "\n"
 "LiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to function. "
 "Please install these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2752
+#: src/main.c:2753
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. You may wish to "
 "install one of these to use LiVES more fully.\n"
 msgstr ""
 
-#: src/main.c:2758
+#: src/main.c:2759
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer' or 'mplayer2'. You may wish to install "
 "one of these to use LiVES more fully.\n"
 msgstr ""
 
-#: src/main.c:2766
+#: src/main.c:2767
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -555,7 +555,7 @@ msgstr ""
 "LiVES nebyl schopen najít 'convert'. Chcete-li využívat renderovacích "
 "efektů, měli byste nainstalovat convert a image-magick.\n"
 
-#: src/main.c:2771
+#: src/main.c:2772
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -565,7 +565,7 @@ msgstr ""
 "LiVES nebyl schopen najít 'composite'. Pakliže chcete využívat funkci "
 "slučování, měli byste nainstalovat composite a image-magick.\n"
 
-#: src/main.c:2775
+#: src/main.c:2776
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -575,7 +575,7 @@ msgstr ""
 "LiVES nemohlo nalézt 'sox'. Některé zvukové funkce nejspíše nebudou "
 "fungovat. Měli byste nainstalovat 'sox'.\n"
 
-#: src/main.c:2780
+#: src/main.c:2781
 #, c-format
 msgid ""
 "\n"
@@ -586,71 +586,71 @@ msgid ""
 "You may need to change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/main.c:2816
+#: src/main.c:2817
 msgid "Loading rendered effect plugins..."
 msgstr ""
 
-#: src/main.c:2918
+#: src/main.c:2919
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Automaticky načítám sadu %s..."
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:3130
+#: src/main.c:3131
 msgid "LiVES"
 msgstr ""
 
-#: src/main.c:3324
+#: src/main.c:3325
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Neplatný zvukový přehrávač %s\n"
 
-#: src/main.c:3330
+#: src/main.c:3331
 msgid "external"
 msgstr ""
 
-#: src/main.c:3333
+#: src/main.c:3334
 msgid "internal"
 msgstr ""
 
-#: src/main.c:3334
+#: src/main.c:3335
 #, c-format
 msgid "Invalid audio source %s\n"
 msgstr ""
 
-#: src/main.c:3532 src/main.c:3541
+#: src/main.c:3533 src/main.c:3542
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d snímků, %d bitů na pixel, %.3f snímků/s"
 
-#: src/main.c:3538
+#: src/main.c:3539
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? snímků ???, bitů na pixel, %.3f snímků/s"
 
-#: src/main.c:3548
+#: src/main.c:3549
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <žádný soubor>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:5699
+#: src/main.c:5704
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:5704
+#: src/main.c:5709
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:5984 src/main.c:5985 src/gui.c:1977 src/gui.c:3207
-#: src/saveplay.c:2122
+#: src/main.c:5989 src/main.c:5990 src/gui.c:1984 src/gui.c:3217
+#: src/saveplay.c:2117
 msgid "Play"
 msgstr "Přehrát"
 
-#: src/main.c:6681
+#: src/main.c:6686
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -658,34 +658,34 @@ msgstr ""
 "LiVES nebyl schopen zachytit tento obrázek\n"
 "\n"
 
-#: src/main.c:6799
+#: src/main.c:6806
 #, c-format
 msgid "Closed clip %s\n"
 msgstr ""
 
-#: src/main.c:6978 src/gui.c:736 src/utils.c:4878 src/utils.c:4907
-#: src/saveplay.c:3305 src/multitrack.c:4717 src/multitrack.c:6541
+#: src/main.c:6985 src/gui.c:736 src/utils.c:4878 src/utils.c:4907
+#: src/saveplay.c:3310 src/multitrack.c:4717 src/multitrack.c:6541
 msgid "_Undo"
 msgstr "_Zpět"
 
-#: src/main.c:6979 src/gui.c:751 src/utils.c:4879 src/utils.c:4908
-#: src/saveplay.c:3306 src/multitrack.c:4736 src/multitrack.c:6564
+#: src/main.c:6986 src/gui.c:751 src/utils.c:4879 src/utils.c:4908
+#: src/saveplay.c:3311 src/multitrack.c:4736 src/multitrack.c:6564
 msgid "_Redo"
 msgstr "_Znovu"
 
-#: src/main.c:7018 src/interface.c:344 src/gui.c:2130 src/resample.c:1462
+#: src/main.c:7025 src/interface.c:344 src/gui.c:2137 src/resample.c:1462
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:7019 src/interface.c:449 src/gui.c:2143
+#: src/main.c:7026 src/interface.c:449 src/gui.c:2150
 msgid "Left Audio"
 msgstr "Levý zvuk"
 
-#: src/main.c:7020 src/interface.c:495 src/gui.c:2157
+#: src/main.c:7027 src/interface.c:495 src/gui.c:2164
 msgid "Right Audio"
 msgstr "Pravý zvuk"
 
-#: src/main.c:7066
+#: src/main.c:7073
 msgid ""
 "\n"
 "\n"
@@ -1063,10 +1063,10 @@ msgstr ""
 "Je-li zapnuto, ze snímků bude odstraněno prokládání tak, jak jsou "
 "importovány."
 
-#: src/interface.c:85 src/callbacks.c:9319 src/callbacks.c:9341
-#: src/callbacks.c:9342 src/gui.c:3209 src/gui.c:3785 src/saveplay.c:2124
-#: src/saveplay.c:2890 src/dialogs.c:1563 src/dialogs.c:1564 src/dialogs.c:1856
-#: src/dialogs.c:1857 src/framedraw.c:199 src/multitrack.c:8021
+#: src/interface.c:85 src/callbacks.c:9310 src/callbacks.c:9332
+#: src/callbacks.c:9333 src/gui.c:3219 src/gui.c:3795 src/saveplay.c:2119
+#: src/saveplay.c:2895 src/dialogs.c:1574 src/dialogs.c:1575 src/dialogs.c:1867
+#: src/dialogs.c:1868 src/framedraw.c:221 src/multitrack.c:8021
 msgid "Preview"
 msgstr "Náhled"
 
@@ -1087,7 +1087,7 @@ msgstr "Kliknutím zobrazíte _náhled vybraného videa"
 msgid "Click here to _Preview the file"
 msgstr ""
 
-#: src/interface.c:152 src/dialogs.c:2763
+#: src/interface.c:152 src/dialogs.c:2777
 msgid "Processing..."
 msgstr ""
 
@@ -1105,8 +1105,8 @@ msgstr ""
 "\n"
 "Nezapomeňte poté vypnout (ctrl-0) efekty!"
 
-#: src/interface.c:188 src/callbacks.c:9063 src/callbacks.c:9110
-#: src/dialogs.c:2788
+#: src/interface.c:188 src/callbacks.c:9054 src/callbacks.c:9101
+#: src/dialogs.c:2802
 msgid ""
 "\n"
 "Please Wait"
@@ -1118,19 +1118,19 @@ msgstr ""
 msgid "Show Details"
 msgstr ""
 
-#: src/interface.c:213 src/dialogs.c:2805
+#: src/interface.c:213 src/dialogs.c:2819
 msgid "_Enough"
 msgstr "_Dost"
 
-#: src/interface.c:214 src/framedraw.c:259
+#: src/interface.c:214 src/framedraw.c:281
 msgid "_Preview"
 msgstr "_Náhled"
 
-#: src/interface.c:216 src/callbacks.c:9062 src/callbacks.c:9108
+#: src/interface.c:216 src/callbacks.c:9053 src/callbacks.c:9099
 msgid "Paus_e"
 msgstr ""
 
-#: src/interface.c:217 src/callbacks.c:9107
+#: src/interface.c:217 src/callbacks.c:9098
 msgid "Pause/_Enough"
 msgstr ""
 
@@ -1212,7 +1212,7 @@ msgstr "Uložit _má nastavení"
 msgid "Use _recommended settings"
 msgstr "Použít _doporučené nastavení"
 
-#: src/interface.c:731 src/callbacks.c:8372 src/paramwindow.c:835
+#: src/interface.c:731 src/callbacks.c:8363 src/paramwindow.c:835
 #: src/omc-learn.c:1406
 msgid "_Close Window"
 msgstr "_Zavřít okno"
@@ -1221,7 +1221,7 @@ msgstr "_Zavřít okno"
 msgid "_Save to file"
 msgstr "_Zapisz do pliku"
 
-#: src/interface.c:776 src/callbacks.c:3560
+#: src/interface.c:776 src/callbacks.c:3543
 msgid "Insert"
 msgstr "Vložit"
 
@@ -2273,7 +2273,7 @@ msgstr "Mazání sestavy"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "Sestava %s byla trvale smazána z disku.\n"
 
-#: src/callbacks.c:1946 src/callbacks.c:11407 src/resample.c:1191
+#: src/callbacks.c:1946 src/callbacks.c:11398 src/resample.c:1191
 msgid "Insert Silence"
 msgstr "Vložit ticho"
 
@@ -2325,31 +2325,32 @@ msgstr "Kopírování do schránky"
 msgid "Cut"
 msgstr "Vyjmout"
 
-#: src/callbacks.c:2816 src/callbacks.c:3221 src/callbacks.c:7483
-msgid "Pulling frames from clipboard"
-msgstr ""
+#: src/callbacks.c:2810 src/callbacks.c:3207 src/callbacks.c:7475
+#, fuzzy
+msgid "Pulling frames from clipboard..."
+msgstr "Vkládání %d%s snímků ze schránky..."
 
-#: src/callbacks.c:2829
+#: src/callbacks.c:2821
 #, c-format
 msgid "Pasting %d frames to new clip %s..."
 msgstr ""
 
-#: src/callbacks.c:2851
+#: src/callbacks.c:2843
 msgid "Pasting"
 msgstr "Vkládání"
 
-#: src/callbacks.c:2871
+#: src/callbacks.c:2863
 msgid "...added audio..."
 msgstr ""
 
-#: src/callbacks.c:2954
+#: src/callbacks.c:2946
 msgid ""
 "This operation requires resizing or converting of frames.\n"
 "Please install 'convert' from the Image-magick package, and then restart "
 "LiVES.\n"
 msgstr ""
 
-#: src/callbacks.c:2981
+#: src/callbacks.c:2973
 msgid ""
 "\n"
 "\n"
@@ -2363,7 +2364,7 @@ msgstr ""
 "Zkuste označit všechny snímky a potom použít \n"
 "'Oříznout zvuk' ze Zvukového menu."
 
-#: src/callbacks.c:3000
+#: src/callbacks.c:2992
 msgid ""
 "LiVES cannot insert because the audio rates do not match.\n"
 "Please install 'sox', and try again."
@@ -2371,7 +2372,7 @@ msgstr ""
 "LiVES nemohl vložit protože poměr zvuku nesedí.\n"
 "Prosím instalujte 'sox' a zkuste znovu."
 
-#: src/callbacks.c:3017
+#: src/callbacks.c:3009
 msgid ""
 "\n"
 "Insertion will cause frames to shift in some multitrack layouts.\n"
@@ -2381,7 +2382,7 @@ msgstr ""
 "Vložením dojde k posunu snímků v některých vícestopých rozvrženích.\n"
 "Opravdu pokračovat ?\n"
 
-#: src/callbacks.c:3053 src/callbacks.c:11336
+#: src/callbacks.c:3045 src/callbacks.c:11327
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2391,11 +2392,11 @@ msgstr ""
 "Vložením dojde k posunu zvuku v některých vícestopých rozvrženích.\n"
 "Opravdu pokračovat ?\n"
 
-#: src/callbacks.c:3143 src/callbacks.c:3172
+#: src/callbacks.c:3135 src/callbacks.c:3164
 msgid "Resampling clipboard audio"
 msgstr "Převzorkovat zvuk ve schráce"
 
-#: src/callbacks.c:3191
+#: src/callbacks.c:3183
 msgid ""
 "\n"
 "\n"
@@ -2407,7 +2408,7 @@ msgstr ""
 "LiVES nemohl převzorkovat zvuk ve schránce.\n"
 "Zvuk ze schránky byl vymazán.\n"
 
-#: src/callbacks.c:3204
+#: src/callbacks.c:3196
 msgid ""
 "\n"
 "\n"
@@ -2421,32 +2422,32 @@ msgstr ""
 "chcete pokračovat s vkládáním\n"
 "s nezměněným zvukem ?\n"
 
-#: src/callbacks.c:3291 src/callbacks.c:3458
+#: src/callbacks.c:3274 src/callbacks.c:3441
 #, c-format
 msgid "Inserting %d%s frames from the clipboard..."
 msgstr "Vkládání %d%s snímků ze schránky..."
 
-#: src/callbacks.c:3314 src/callbacks.c:3381 src/callbacks.c:3484
+#: src/callbacks.c:3297 src/callbacks.c:3364 src/callbacks.c:3467
 msgid "Inserting"
 msgstr "Vkládám"
 
-#: src/callbacks.c:3344
+#: src/callbacks.c:3327
 #, c-format
 msgid "Inserting %d times from the clipboard%s..."
 msgstr "Vložit %d krát ze schránky%s..."
 
-#: src/callbacks.c:3348
+#: src/callbacks.c:3331
 #, c-format
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "Vložit %d snímků ze schránky%s..."
 
-#: src/callbacks.c:3399 src/callbacks.c:7887 src/callbacks.c:7940
-#: src/callbacks.c:8176 src/callbacks.c:8216 src/callbacks.c:8258
-#: src/callbacks.c:10520
+#: src/callbacks.c:3382 src/callbacks.c:7878 src/callbacks.c:7931
+#: src/callbacks.c:8167 src/callbacks.c:8207 src/callbacks.c:8249
+#: src/callbacks.c:10511
 msgid "Cancelling"
 msgstr "Ruší se"
 
-#: src/callbacks.c:3625
+#: src/callbacks.c:3608
 msgid ""
 "\n"
 "Deleting all frames will close this file.\n"
@@ -2456,7 +2457,7 @@ msgstr ""
 "Vymazání všech snímků zavře tento soubor.\n"
 "Opravdu to chcete ?"
 
-#: src/callbacks.c:3635
+#: src/callbacks.c:3618
 msgid ""
 "\n"
 "Deletion will cause missing frames in some multitrack layouts.\n"
@@ -2466,8 +2467,8 @@ msgstr ""
 "Smazání způsobí chybějící snímky v některých vícestopých rozloženích.\n"
 "Opravdu pokračovat ?\n"
 
-#: src/callbacks.c:3651 src/callbacks.c:10602 src/callbacks.c:10821
-#: src/callbacks.c:10874
+#: src/callbacks.c:3634 src/callbacks.c:10593 src/callbacks.c:10812
+#: src/callbacks.c:10865
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2477,7 +2478,7 @@ msgstr ""
 "Smazání způsobí chybějící zvuk v některých vícestopých rozloženích.\n"
 "Opravdu pokračovat ?\n"
 
-#: src/callbacks.c:3666
+#: src/callbacks.c:3649
 msgid ""
 "\n"
 "Deletion will cause frames to shift in some multitrack layouts.\n"
@@ -2487,7 +2488,7 @@ msgstr ""
 "Smazání způsobí posun snímků v některých vícestopých rozloženích.\n"
 "Opravdu pokračovat ?\n"
 
-#: src/callbacks.c:3681 src/callbacks.c:10860
+#: src/callbacks.c:3664 src/callbacks.c:10851
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2497,20 +2498,20 @@ msgstr ""
 "Smazání způsobí posun zvuku v některých vícestopých rozloženích.\n"
 "Opravdu pokračovat ?\n"
 
-#: src/callbacks.c:3729
+#: src/callbacks.c:3712
 #, c-format
 msgid "Deleting frames %d to %d%s..."
 msgstr "Mazání snímků %d do %d%s..."
 
-#: src/callbacks.c:3751
+#: src/callbacks.c:3734
 msgid "Deleting"
 msgstr "Mažu"
 
-#: src/callbacks.c:3831
+#: src/callbacks.c:3814
 msgid "Delete"
 msgstr "Smazat"
 
-#: src/callbacks.c:3848
+#: src/callbacks.c:3831
 msgid ""
 "\n"
 "\n"
@@ -2520,7 +2521,7 @@ msgstr ""
 "\n"
 "Výběr je uzamčený.\n"
 
-#: src/callbacks.c:4184
+#: src/callbacks.c:4167
 msgid ""
 "Ready to record. Use 'control' and cursor keys during playback to record "
 "your performance.\n"
@@ -2528,11 +2529,11 @@ msgid ""
 "play.)\n"
 msgstr ""
 
-#: src/callbacks.c:4190
+#: src/callbacks.c:4173
 msgid "Record cancelled.\n"
 msgstr "Nahrávání přerušeno.\n"
 
-#: src/callbacks.c:4317
+#: src/callbacks.c:4300
 #, c-format
 msgid ""
 "\n"
@@ -2545,7 +2546,7 @@ msgstr ""
 "Zpráva tohoto pluginu '%s':\n"
 "%s\n"
 
-#: src/callbacks.c:4320
+#: src/callbacks.c:4303
 #, c-format
 msgid ""
 "\n"
@@ -2558,7 +2559,7 @@ msgstr ""
 "Nelze najít 'init' metodu v pluginu %s.\n"
 "Plugin je možná poškozený nebo není správně instalován."
 
-#: src/callbacks.c:4655
+#: src/callbacks.c:4638
 #, c-format
 msgid ""
 "Saving the set will cause copies of all loaded clips to remain on the disk"
@@ -2570,22 +2571,22 @@ msgstr ""
 "\n"
 "Klikněte ''Zrušit' pokud nesouhlasíte.\n"
 
-#: src/callbacks.c:4728
+#: src/callbacks.c:4711
 #, c-format
 msgid "Saving set %s"
 msgstr "Ukládádání %s"
 
-#: src/callbacks.c:5051
+#: src/callbacks.c:5034
 #, c-format
 msgid "Loading clips from set %s"
 msgstr "Otvírání klipů ze sady %s"
 
-#: src/callbacks.c:5139
+#: src/callbacks.c:5122
 #, c-format
 msgid "%d clips and %d layouts were recovered from set (%s).\n"
 msgstr ""
 
-#: src/callbacks.c:5344
+#: src/callbacks.c:5327
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -2596,24 +2597,29 @@ msgstr ""
 "Pokračujte POUZE pokud nemáte spuštěnou další kopii LiVES.\n"
 "Pokračujete kliknutím OK.\n"
 
-#: src/callbacks.c:5351
+#: src/callbacks.c:5334
 msgid "Cleaning up disk space..."
 msgstr "Čistím diskový prostor..."
 
-#: src/callbacks.c:5418
+#: src/callbacks.c:5401
 msgid "Recovering disk space"
 msgstr ""
 
-#: src/callbacks.c:5466
+#: src/callbacks.c:5449
 #, c-format
 msgid "%s of disk space was recovered.\n"
 msgstr ""
 
-#: src/callbacks.c:5509
+#: src/callbacks.c:5484
+#, fuzzy
+msgid "Pre-decoding all frames in this clip..."
+msgstr "První vybraný snímek v tomto klipu"
+
+#: src/callbacks.c:5506
 msgid "Resetting frame rates and frame values..."
 msgstr ""
 
-#: src/callbacks.c:5551
+#: src/callbacks.c:5548
 #, c-format
 msgid ""
 "\n"
@@ -2621,12 +2627,12 @@ msgid ""
 "Internal: %s (%d bpp) / %s\n"
 msgstr ""
 
-#: src/callbacks.c:5553
+#: src/callbacks.c:5550
 msgid "buffered"
 msgstr ""
 
-#: src/callbacks.c:5567 src/callbacks.c:5585 src/callbacks.c:5601
-#: src/callbacks.c:5634
+#: src/callbacks.c:5564 src/callbacks.c:5582 src/callbacks.c:5598
+#: src/callbacks.c:5631
 msgid ""
 "\n"
 "  Opening..."
@@ -2634,32 +2640,32 @@ msgstr ""
 "\n"
 "  Otvírání..."
 
+#: src/callbacks.c:5570
+#, c-format
+msgid ""
+"\n"
+"(%d virtual)"
+msgstr ""
+"\n"
+"(%d virtual)"
+
 #: src/callbacks.c:5573
 #, c-format
 msgid ""
 "\n"
-"(%d virtual)"
-msgstr ""
-"\n"
-"(%d virtual)"
-
-#: src/callbacks.c:5576
-#, c-format
-msgid ""
-"\n"
 "(%d decoded)"
 msgstr ""
 "\n"
 "(%d decoded)"
 
-#: src/callbacks.c:5587 src/callbacks.c:5603 src/callbacks.c:5636
+#: src/callbacks.c:5584 src/callbacks.c:5600 src/callbacks.c:5633
 #, c-format
 msgid ""
 "\n"
 "  %.2f sec."
 msgstr ""
 
-#: src/callbacks.c:5595
+#: src/callbacks.c:5592
 msgid ""
 "\n"
 "  Unknown"
@@ -2667,23 +2673,23 @@ msgstr ""
 "\n"
 "  Neznámo"
 
-#: src/callbacks.c:5607 src/callbacks.c:5621
+#: src/callbacks.c:5604 src/callbacks.c:5618
 msgid "unsigned"
 msgstr ""
 
-#: src/callbacks.c:5608 src/callbacks.c:5622
+#: src/callbacks.c:5605 src/callbacks.c:5619
 msgid "signed"
 msgstr ""
 
-#: src/callbacks.c:5610 src/callbacks.c:5624
+#: src/callbacks.c:5607 src/callbacks.c:5621
 msgid "big-endian"
 msgstr ""
 
-#: src/callbacks.c:5611 src/callbacks.c:5625
+#: src/callbacks.c:5608 src/callbacks.c:5622
 msgid "little-endian"
 msgstr ""
 
-#: src/callbacks.c:5613 src/callbacks.c:5627
+#: src/callbacks.c:5610 src/callbacks.c:5624
 #, c-format
 msgid ""
 "  %d Hz %d bit\n"
@@ -2692,7 +2698,7 @@ msgstr ""
 "  %d Hz %d bit\n"
 "%s %s"
 
-#: src/callbacks.c:5726
+#: src/callbacks.c:5723
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -2709,15 +2715,15 @@ msgid ""
 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"
 msgstr ""
 
-#: src/callbacks.c:5740
+#: src/callbacks.c:5737
 msgid "A video editor and VJ program."
 msgstr ""
 
-#: src/callbacks.c:5741
+#: src/callbacks.c:5738
 msgid "About LiVES"
 msgstr ""
 
-#: src/callbacks.c:5743
+#: src/callbacks.c:5740
 msgid "translator_credits"
 msgstr ""
 "Launchpad Contributions:\n"
@@ -2726,7 +2732,7 @@ msgstr ""
 "  milzou https://launchpad.net/~vonfsro\n"
 "  salsaman https://launchpad.net/~salsaman"
 
-#: src/callbacks.c:5778
+#: src/callbacks.c:5775
 #, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -2740,14 +2746,14 @@ msgid ""
 "Homepage: %s"
 msgstr ""
 
-#: src/callbacks.c:6015
+#: src/callbacks.c:6012
 msgid ""
 "\n"
 "\n"
 "You need to install mplayer or mplayer2 to be able to preview this file.\n"
 msgstr ""
 
-#: src/callbacks.c:6017
+#: src/callbacks.c:6014
 msgid ""
 "\n"
 "\n"
@@ -2755,92 +2761,92 @@ msgid ""
 "this file.\n"
 msgstr ""
 
-#: src/callbacks.c:6431
+#: src/callbacks.c:6428
 #, c-format
 msgid ""
 "Text was saved as\n"
 "%s\n"
 msgstr ""
 
-#: src/callbacks.c:6607
+#: src/callbacks.c:6604
 msgid "Encoder Debug Output"
 msgstr ""
 
-#: src/callbacks.c:6642 src/gui.c:1849
+#: src/callbacks.c:6639 src/gui.c:1856
 msgid "Fullscreen playback (f)"
 msgstr "Přehrát celou obrazovku (f)"
 
-#: src/callbacks.c:6643
+#: src/callbacks.c:6640
 msgid "Fullscreen playback off (f)"
 msgstr "Vypnout přehrávání na celou obrazovku (f)"
 
-#: src/callbacks.c:6837 src/gui.c:1834
+#: src/callbacks.c:6834 src/gui.c:1841
 msgid "Double size (d)"
 msgstr "Dvojitá velikost (d)"
 
-#: src/callbacks.c:6843
+#: src/callbacks.c:6840
 msgid "Single size (d)"
 msgstr "Jednoduchá velikost (d)"
 
-#: src/callbacks.c:6965 src/callbacks.c:6966
+#: src/callbacks.c:6962 src/callbacks.c:6963
 msgid "Hide the play window (s)"
 msgstr "Schovej přehrávací okno (s)"
 
-#: src/callbacks.c:6974 src/gui.c:1577
+#: src/callbacks.c:6971 src/gui.c:1584
 msgid "Show the play window (s)"
 msgstr "Zobraz hrací okno (s)"
 
-#: src/callbacks.c:6975 src/gui.c:1823
+#: src/callbacks.c:6972 src/gui.c:1830
 msgid "Play in separate window (s)"
 msgstr "Přehraj v odděleném okně (s)"
 
-#: src/callbacks.c:7248
+#: src/callbacks.c:7245
 msgid "Switch continuous looping off (o)"
 msgstr "Vypnout opakované hraní (o)"
 
-#: src/callbacks.c:7254 src/gui.c:1624
+#: src/callbacks.c:7251 src/gui.c:1631
 msgid "Switch continuous looping on (o)"
 msgstr "Zapnout opakované hraní (o)"
 
-#: src/callbacks.c:7303
+#: src/callbacks.c:7300
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "Hlasitost zvuku (%.2f)"
 
-#: src/callbacks.c:7341 src/callbacks.c:7342 src/gui.c:3597
+#: src/callbacks.c:7338 src/callbacks.c:7339 src/gui.c:3607
 msgid "Unmute the audio (z)"
 msgstr "Pustit zvuk (z)"
 
-#: src/callbacks.c:7352 src/callbacks.c:7353 src/gui.c:1637 src/gui.c:3596
+#: src/callbacks.c:7349 src/callbacks.c:7350 src/gui.c:1644 src/gui.c:3606
 msgid "Mute the audio (z)"
 msgstr "Ztišit zvuk (z)"
 
-#: src/callbacks.c:7495
+#: src/callbacks.c:7486
 msgid "Reversing clipboard..."
 msgstr "Obracení přechodné paměti..."
 
-#: src/callbacks.c:7509
+#: src/callbacks.c:7500
 msgid "Reversing clipboard"
 msgstr "Obracení přechodné paměti"
 
-#: src/callbacks.c:7537
+#: src/callbacks.c:7528
 msgid "Load Subtitles"
 msgstr ""
 
-#: src/callbacks.c:7595 src/saveplay.c:901
+#: src/callbacks.c:7586 src/saveplay.c:901
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr ""
 
-#: src/callbacks.c:7654
+#: src/callbacks.c:7645
 msgid "Subtitles were erased.\n"
 msgstr ""
 
-#: src/callbacks.c:7676
+#: src/callbacks.c:7667
 msgid "Select Audio File"
 msgstr ""
 
-#: src/callbacks.c:7713 src/callbacks.c:8092
+#: src/callbacks.c:7704 src/callbacks.c:8083
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -2853,82 +2859,82 @@ msgstr ""
 "Opravdu chcete pokračovat ?\n"
 "."
 
-#: src/callbacks.c:7845
+#: src/callbacks.c:7836
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "Otvíráni zvuku %s, typu %s..."
 
-#: src/callbacks.c:7878 src/saveplay.c:458
+#: src/callbacks.c:7869 src/saveplay.c:458
 msgid "Opening audio"
 msgstr "Otevřít zvuk"
 
-#: src/callbacks.c:7992 src/callbacks.c:8300 src/callbacks.c:10556
-#: src/callbacks.c:11183
+#: src/callbacks.c:7983 src/callbacks.c:8291 src/callbacks.c:10547
+#: src/callbacks.c:11174
 msgid "Committing audio"
 msgstr "Vykonávání zvuku"
 
-#: src/callbacks.c:8007 src/callbacks.c:8329
+#: src/callbacks.c:7998 src/callbacks.c:8320
 msgid "New Audio"
 msgstr "Nový zvuk"
 
-#: src/callbacks.c:8116
+#: src/callbacks.c:8107
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "Otevirání CD stopy %d z %s..."
 
-#: src/callbacks.c:8119
+#: src/callbacks.c:8110
 #, c-format
 msgid "CD track %d"
 msgstr "CD stopa %d"
 
-#: src/callbacks.c:8162
+#: src/callbacks.c:8153
 msgid "Opening CD track..."
 msgstr "Otvírání CD stopy..."
 
-#: src/callbacks.c:8202 src/callbacks.c:8247
+#: src/callbacks.c:8193 src/callbacks.c:8238
 msgid "Error loading CD track\n"
 msgstr "Chyba při otvírání CD stopy\n"
 
-#: src/callbacks.c:8362
+#: src/callbacks.c:8353
 msgid "Layout Errors"
 msgstr ""
 
-#: src/callbacks.c:8383
+#: src/callbacks.c:8374
 msgid "Clear _Errors"
 msgstr "Vymazat _chyby"
 
-#: src/callbacks.c:8394
+#: src/callbacks.c:8385
 msgid "_Delete affected layouts"
 msgstr "_Smazat zasažené rozvržení"
 
-#: src/callbacks.c:9054 src/callbacks.c:9076
+#: src/callbacks.c:9045 src/callbacks.c:9067
 msgid "Resume"
 msgstr "Pokračovat"
 
-#: src/callbacks.c:9055
+#: src/callbacks.c:9046
 msgid ""
 "\n"
 "Paused\n"
 "(click Resume to continue processing)"
 msgstr ""
 
-#: src/callbacks.c:9056 src/callbacks.c:9093
+#: src/callbacks.c:9047 src/callbacks.c:9084
 msgid "paused..."
 msgstr "pozastaveno..."
 
-#: src/callbacks.c:9064 src/callbacks.c:9111
+#: src/callbacks.c:9055 src/callbacks.c:9102
 msgid "resumed..."
 msgstr "pokračovat..."
 
-#: src/callbacks.c:9081
+#: src/callbacks.c:9072
 msgid "Keep"
 msgstr "Zachovat"
 
-#: src/callbacks.c:9083
+#: src/callbacks.c:9074
 msgid "Enough"
 msgstr ""
 
-#: src/callbacks.c:9088
+#: src/callbacks.c:9079
 #, c-format
 msgid ""
 "\n"
@@ -2937,28 +2943,28 @@ msgid ""
 "(click Resume to continue processing)"
 msgstr ""
 
-#: src/callbacks.c:9109
+#: src/callbacks.c:9100
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: src/callbacks.c:9253
+#: src/callbacks.c:9244
 msgid "Stop"
 msgstr ""
 
-#: src/callbacks.c:9729 src/multitrack.c:13056
+#: src/callbacks.c:9720 src/multitrack.c:13056
 msgid "Selected Frame"
 msgstr ""
 
-#: src/callbacks.c:9737
+#: src/callbacks.c:9728
 msgid "_Save Frame as..."
 msgstr ""
 
-#: src/callbacks.c:9965
+#: src/callbacks.c:9956
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:10016
+#: src/callbacks.c:10007
 msgid ""
 "\n"
 "\n"
@@ -2967,7 +2973,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10022
+#: src/callbacks.c:10013
 msgid ""
 "\n"
 "\n"
@@ -2980,7 +2986,7 @@ msgstr ""
 "\"xwininfo\"\n"
 "\n"
 
-#: src/callbacks.c:10094 src/callbacks.c:11103
+#: src/callbacks.c:10085 src/callbacks.c:11094
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2988,7 +2994,7 @@ msgstr ""
 "\n"
 "Doba nahrávání musí být větší než 0.\n"
 
-#: src/callbacks.c:10109
+#: src/callbacks.c:10100
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -3002,17 +3008,17 @@ msgstr ""
 "Vyberte 'Zrušit' pro zrušení\n"
 "\n"
 
-#: src/callbacks.c:10114
+#: src/callbacks.c:10105
 msgid "External window was released.\n"
 msgstr "Externí. okno bylo spuštěno.\n"
 
-#: src/callbacks.c:10150
+#: src/callbacks.c:10141
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
 
-#: src/callbacks.c:10183
+#: src/callbacks.c:10174
 #, c-format
 msgid ""
 "\n"
@@ -3027,19 +3033,19 @@ msgstr ""
 "Stop nebo 'q' pro ukončení.\n"
 "(Bude použito výchozí nastavení %.3f snímků za sekundu.)\n"
 
-#: src/callbacks.c:10206
+#: src/callbacks.c:10197
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES nemohl zachytit toto okno. Sorry.\n"
 
-#: src/callbacks.c:10351
+#: src/callbacks.c:10342
 msgid "Export Selected Audio as..."
 msgstr "Vyexportovat vybraný zvuk jako..."
 
-#: src/callbacks.c:10354
+#: src/callbacks.c:10345
 msgid "Export Audio as..."
 msgstr "Vyexportovat zvuk jako..."
 
-#: src/callbacks.c:10364
+#: src/callbacks.c:10355
 msgid ""
 "\n"
 "\n"
@@ -3053,86 +3059,86 @@ msgstr ""
 "Klikněte na 'OK'  pro export s novou rychlostí nebo 'Zrušit' a exportovat "
 "originálním poměrem(rate).\n"
 
-#: src/callbacks.c:10370
+#: src/callbacks.c:10361
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Exportování zvuku %d do %d jako %s..."
 
-#: src/callbacks.c:10374
+#: src/callbacks.c:10365
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Exportování zvuku jako %s..."
 
-#: src/callbacks.c:10400
+#: src/callbacks.c:10391
 msgid "Exporting audio"
 msgstr "Exportování zvuku"
 
-#: src/callbacks.c:10442
+#: src/callbacks.c:10433
 msgid "Append Audio File"
 msgstr ""
 
-#: src/callbacks.c:10493
+#: src/callbacks.c:10484
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "Připojování zvukového soubor %s..."
 
-#: src/callbacks.c:10510
+#: src/callbacks.c:10501
 msgid "Appending audio"
 msgstr "Připojování zvuku"
 
-#: src/callbacks.c:10570
+#: src/callbacks.c:10561
 msgid "Append Audio"
 msgstr "Připojit zvuk"
 
-#: src/callbacks.c:10626
+#: src/callbacks.c:10617
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10628
+#: src/callbacks.c:10619
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "Oříznutí zvuku z %.2f na %.2f sekundy..."
 
-#: src/callbacks.c:10647
+#: src/callbacks.c:10638
 msgid "Trimming/Padding audio"
 msgstr "Oříznout/Doplnit zvuk"
 
-#: src/callbacks.c:10655
+#: src/callbacks.c:10646
 msgid "Trim/Pad Audio"
 msgstr "Oříznout/Doplnit zvuk"
 
-#: src/callbacks.c:10721
+#: src/callbacks.c:10712
 msgid "Fading audio in"
 msgstr "Zesilování zvuku"
 
-#: src/callbacks.c:10722
+#: src/callbacks.c:10713
 msgid "Fade audio in"
 msgstr "Zesilování zvuku"
 
-#: src/callbacks.c:10726
+#: src/callbacks.c:10717
 msgid "Fading audio out"
 msgstr "Ztišování zvuku"
 
-#: src/callbacks.c:10727
+#: src/callbacks.c:10718
 msgid "Fade audio out"
 msgstr "Ztlumit zvuk"
 
-#: src/callbacks.c:10746
+#: src/callbacks.c:10737
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s na %.1f vteřin"
 
-#: src/callbacks.c:10748
+#: src/callbacks.c:10739
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10755
+#: src/callbacks.c:10746
 msgid "Fading audio..."
 msgstr "Ztišování..."
 
-#: src/callbacks.c:10845
+#: src/callbacks.c:10836
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -3142,33 +3148,33 @@ msgstr ""
 "Vymazání audia způsobí zavření tohoto souboru.\n"
 "Pokračovat ?"
 
-#: src/callbacks.c:10848
+#: src/callbacks.c:10839
 msgid "Deleting all audio..."
 msgstr "Vymazáváni zvuku kompletně"
 
-#: src/callbacks.c:10853
+#: src/callbacks.c:10844
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Vymazáváni zvuku od %.2f do %.2f sekund..."
 
-#: src/callbacks.c:10927
+#: src/callbacks.c:10918
 msgid "Deleting Audio"
 msgstr "Mazání zvuku"
 
-#: src/callbacks.c:10934
+#: src/callbacks.c:10925
 msgid "Delete Audio"
 msgstr "Vymazat zvuk"
 
-#: src/callbacks.c:11262
+#: src/callbacks.c:11253
 msgid "Record new audio"
 msgstr "Nahrát nový zvuk"
 
-#: src/callbacks.c:11362
+#: src/callbacks.c:11353
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Vkládání ticha od %.2f do %.2f sekund..."
 
-#: src/callbacks.c:11392
+#: src/callbacks.c:11383
 msgid "Inserting Silence"
 msgstr "Vkládání ticha"
 
@@ -3791,291 +3797,303 @@ msgstr ""
 "LiVES."
 
 #: src/gui.c:1469
+#, fuzzy
+msgid "_Pre-decode all frames"
+msgstr "Vybrat všechny snímky"
+
+#: src/gui.c:1472
+msgid ""
+"Decode all frames to images. This can improve reverse playback and random "
+"seek times,\n"
+"at the cost of diskspace."
+msgstr ""
+
+#: src/gui.c:1475
 msgid "_Reset All Playback Speeds and Positions"
 msgstr ""
 
-#: src/gui.c:1471
+#: src/gui.c:1477
 msgid ""
 "Reset all playback positions to frame 1, and reset all playback frame rates."
 msgstr ""
 
-#: src/gui.c:1473
+#: src/gui.c:1480
 msgid "_MIDI/Joystick Interface"
 msgstr ""
 
-#: src/gui.c:1482
+#: src/gui.c:1489
 msgid "_MIDI/Joystick Learner..."
 msgstr ""
 
-#: src/gui.c:1486
+#: src/gui.c:1493
 msgid "_Save Device Mapping..."
 msgstr ""
 
-#: src/gui.c:1491
+#: src/gui.c:1498
 msgid "_Load Device Mapping..."
 msgstr ""
 
-#: src/gui.c:1497
+#: src/gui.c:1504
 msgid "Show VJ _Keys"
 msgstr "Zobrazit VJ klávesy"
 
-#: src/gui.c:1502
+#: src/gui.c:1509
 msgid "_Automatic Mode (autolives)..."
 msgstr ""
 
-#: src/gui.c:1507
+#: src/gui.c:1514
 msgid "To_ys"
 msgstr "Hračky"
 
-#: src/gui.c:1513
+#: src/gui.c:1520
 msgid "_None"
 msgstr "_Nic"
 
-#: src/gui.c:1516
+#: src/gui.c:1523
 msgid "_Mad Frames"
 msgstr "_Bláznivé snímky"
 
-#: src/gui.c:1519
+#: src/gui.c:1526
 msgid "_LiVES TV (broadband)"
 msgstr "_LiVES TV (širokopásmová)"
 
-#: src/gui.c:1523 src/multitrack.c:7466
+#: src/gui.c:1530 src/multitrack.c:7466
 msgid "_Help"
 msgstr "_Pomoc"
 
-#: src/gui.c:1529 src/multitrack.c:7479
+#: src/gui.c:1536 src/multitrack.c:7479
 msgid "_Manual (opens in browser)"
 msgstr "_Manuál (otevře se v prohlížeči)"
 
-#: src/gui.c:1534 src/multitrack.c:7486
+#: src/gui.c:1541 src/multitrack.c:7486
 msgid "_Donate to the Project !"
 msgstr ""
 
-#: src/gui.c:1537 src/multitrack.c:7489
+#: src/gui.c:1544 src/multitrack.c:7489
 msgid "_Email the Author"
 msgstr ""
 
-#: src/gui.c:1540
+#: src/gui.c:1547
 msgid "Report a _Bug"
 msgstr ""
 
-#: src/gui.c:1543 src/multitrack.c:7495
+#: src/gui.c:1550 src/multitrack.c:7495
 msgid "Suggest a _Feature"
 msgstr ""
 
-#: src/gui.c:1546 src/multitrack.c:7498
+#: src/gui.c:1553 src/multitrack.c:7498
 msgid "Assist with _Translating"
 msgstr ""
 
-#: src/gui.c:1551 src/multitrack.c:7503
+#: src/gui.c:1558 src/multitrack.c:7503
 msgid "_Troubleshoot"
 msgstr ""
 
-#: src/gui.c:1554 src/multitrack.c:7506
+#: src/gui.c:1561 src/multitrack.c:7506
 msgid "_About"
 msgstr "_O LiVES"
 
-#: src/gui.c:1583
+#: src/gui.c:1590
 msgid "Rewind to start (w)"
 msgstr "Zpět na začátek (w)"
 
-#: src/gui.c:1591 src/multitrack.c:16429
+#: src/gui.c:1598 src/multitrack.c:16429
 msgid "Play all (p)"
 msgstr "Přehrát vše (p)"
 
-#: src/gui.c:1598 src/gui.c:1804
+#: src/gui.c:1605 src/gui.c:1811
 msgid "Stop playback (q)"
 msgstr "Zastavit přehrávání (q)"
 
-#: src/gui.c:1609
+#: src/gui.c:1616
 msgid "Play selection (y)"
 msgstr "Přehrát výběr (y)"
 
-#: src/gui.c:1651 src/preferences.c:3207
+#: src/gui.c:1658 src/preferences.c:3207
 msgid "Audio Source:"
 msgstr ""
 
-#: src/gui.c:1687
+#: src/gui.c:1694
 msgid "Internal"
 msgstr ""
 
-#: src/gui.c:1721
+#: src/gui.c:1728
 msgid "External"
 msgstr ""
 
-#: src/gui.c:1765
+#: src/gui.c:1772
 msgid "Volume"
 msgstr "Hlasitost"
 
-#: src/gui.c:1782
+#: src/gui.c:1789
 msgid "Audio volume (1.00)"
 msgstr "Hlasitost zvuku (1.00)"
 
-#: src/gui.c:1810
+#: src/gui.c:1817
 msgid "Unblank background (b)"
 msgstr "Vyplň pozadí (b)"
 
-#: src/gui.c:1855
+#: src/gui.c:1862
 msgid "Play slower (ctrl-down)"
 msgstr "Hrát pomaleji (ctrl-šipka dolů)"
 
-#: src/gui.c:1861
+#: src/gui.c:1868
 msgid "Play faster (ctrl-up)"
 msgstr "Hrát rychleji (ctrl+šipka nahoru)"
 
-#: src/gui.c:1867
+#: src/gui.c:1874
 msgid "Skip back (ctrl-left)"
 msgstr "přeskočit dozadu (kontrol+levá šipka)"
 
-#: src/gui.c:1873
+#: src/gui.c:1880
 msgid "Skip forward (ctrl-right)"
 msgstr "Přeskočit dopředu (ctrl+pravá šipka)"
 
-#: src/gui.c:1879
+#: src/gui.c:1886
 msgid "Show clip info (i)"
 msgstr "Zobrazt informace o klipu (i)"
 
-#: src/gui.c:1885
+#: src/gui.c:1892
 msgid "Hide this toolbar"
 msgstr "Schovat tuto lištu"
 
-#: src/gui.c:1887
+#: src/gui.c:1894
 msgid ""
 "Press \"s\" to toggle separate play window for improved performance, \"q\" "
 "to stop."
 msgstr ""
 
 #. TRANSLATORS: please keep the translated string the same length
-#: src/gui.c:1914
+#: src/gui.c:1921
 msgid "     Video playback speed (frames per second)        "
 msgstr "     Rychlost přehrávání videa (snímků za sekundu)        "
 
-#: src/gui.c:1923
+#: src/gui.c:1930
 msgid "Vary the video speed"
 msgstr "Změnit rychlost videa"
 
-#: src/gui.c:1957 src/gui.c:3205
+#: src/gui.c:1964 src/gui.c:3215
 msgid "First Frame"
 msgstr "První snímek"
 
-#: src/gui.c:1998 src/gui.c:3212
+#: src/gui.c:2005 src/gui.c:3222
 msgid "Last Frame"
 msgstr "Poslední snímek"
 
-#: src/gui.c:2050
+#: src/gui.c:2057
 msgid "The first selected frame in this clip"
 msgstr "První vybraný snímek v tomto klipu"
 
-#: src/gui.c:2073
+#: src/gui.c:2080
 msgid "Select all frames in this clip"
 msgstr ""
 
-#: src/gui.c:2084
+#: src/gui.c:2091
 msgid "The last selected frame in this clip"
 msgstr "Poslední vybraný snímek v tomto klipu"
 
-#: src/gui.c:2346
+#: src/gui.c:2353
 msgid "Starting...\n"
 msgstr "Začíná.....\n"
 
-#: src/gui.c:3078
+#: src/gui.c:3088
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr "    Stisknutím 'q' ukončíte nahrávání.  NEPŘEKRÝVEJTE HRACÍ OKNO !   "
 
-#: src/gui.c:3486
+#: src/gui.c:3496
 msgid "Frame number to preview"
 msgstr "Číslo snímku k náhledu"
 
-#: src/gui.c:3495
+#: src/gui.c:3505
 msgid "_Free"
 msgstr "Vo_lné"
 
-#: src/gui.c:3497
+#: src/gui.c:3507
 msgid "Free choice of frame number"
 msgstr "Volný výběr čísla snímku"
 
-#: src/gui.c:3501
+#: src/gui.c:3511
 msgid "_Start"
 msgstr "_Start"
 
-#: src/gui.c:3503
+#: src/gui.c:3513
 msgid "Frame number is linked to start frame"
 msgstr ""
 
-#: src/gui.c:3509
+#: src/gui.c:3519
 msgid "_End"
 msgstr "Kon_ec"
 
-#: src/gui.c:3510
+#: src/gui.c:3520
 msgid "Frame number is linked to end frame"
 msgstr ""
 
-#: src/gui.c:3516
+#: src/gui.c:3526
 msgid "_Pointer"
 msgstr "_Kurzor"
 
-#: src/gui.c:3518
+#: src/gui.c:3528
 msgid "Frame number is linked to playback pointer"
 msgstr ""
 
-#: src/gui.c:3538
+#: src/gui.c:3548
 msgid "Rewind"
 msgstr "Převinout"
 
-#: src/gui.c:3549 src/dialogs.c:937 src/dialogs.c:939 src/dialogs.c:1937
-#: src/dialogs.c:1939
+#: src/gui.c:3559 src/dialogs.c:948 src/dialogs.c:950 src/dialogs.c:1948
+#: src/dialogs.c:1950
 msgid "Play all"
 msgstr "Přehrát vše"
 
-#: src/gui.c:3562
+#: src/gui.c:3572
 msgid "Play Selection"
 msgstr "Přehrát výběr"
 
-#: src/gui.c:3576
+#: src/gui.c:3586
 msgid "Loop On/Off"
 msgstr "Opakování zapnuto/vypnuto"
 
-#: src/gui.c:3653
+#: src/gui.c:3663
 msgid "Start _recording"
 msgstr "Spustit _nahrávání"
 
-#: src/gui.c:3659
+#: src/gui.c:3669
 msgid "Stop _recording"
 msgstr "Zastavit _nahrávání"
 
-#: src/gui.c:3664
+#: src/gui.c:3674
 msgid "_Record Performance"
 msgstr ""
 
-#: src/gui.c:3674 src/saveplay.c:2868 src/saveplay.c:2973 src/saveplay.c:2991
+#: src/gui.c:3684 src/saveplay.c:2873 src/saveplay.c:2978 src/saveplay.c:2996
 #: src/multitrack.c:9102 src/multitrack.c:10815
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/gui.c:3679
+#: src/gui.c:3689
 msgid "Streaming"
 msgstr ""
 
-#: src/gui.c:3681
+#: src/gui.c:3691
 #, c-format
 msgid "Play Window%s"
 msgstr ""
 
-#: src/gui.c:3813
+#: src/gui.c:3823
 msgid "Hide Play Window"
 msgstr "Schovat přehrávací okno"
 
-#: src/gui.c:4210
+#: src/gui.c:4220
 msgid "Show Play Window"
 msgstr "Zobrazit přehrávací okno"
 
-#: src/gui.c:4285
+#: src/gui.c:4295
 #, c-format
 msgid "'LiVES opened the file' '%s'"
 msgstr ""
 
-#: src/gui.c:4304
+#: src/gui.c:4314
 #, c-format
 msgid "'LiVES closed the file' '%s'"
 msgstr ""
@@ -4451,7 +4469,7 @@ msgstr "Otvírání%s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Otvírání%s začátek %.2f sek. snímků %d"
 
-#: src/saveplay.c:308 src/saveplay.c:3749
+#: src/saveplay.c:308 src/saveplay.c:3754
 msgid " without sound"
 msgstr " bez zvuku"
 
@@ -4557,34 +4575,35 @@ msgstr ""
 "\n"
 "Tak co, pokračovat ?"
 
-#: src/saveplay.c:1411 src/saveplay.c:1529 src/saveplay.c:1603
-#: src/saveplay.c:3762
-msgid "Pulling frames from clip"
-msgstr ""
+#: src/saveplay.c:1411 src/saveplay.c:1529 src/saveplay.c:1600
+#: src/saveplay.c:3763
+#, fuzzy
+msgid "Pulling frames from clip..."
+msgstr "Vkládání %d%s snímků ze schránky..."
 
 #: src/saveplay.c:1466 src/saveplay.c:1570
 msgid "Linking selection"
 msgstr "Spojuji výběr"
 
-#: src/saveplay.c:1618
+#: src/saveplay.c:1613
 msgid " (with no sound)\n"
 msgstr " (bez zvuku)\n"
 
-#: src/saveplay.c:1624
+#: src/saveplay.c:1619
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr "Ukládání snímků %d do %d%s jako \"%s\" : enkoder = %s : formát = %s..."
 
-#: src/saveplay.c:1628
+#: src/saveplay.c:1623
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr "Ukládání snímků 1 do %d%s jako \"%s\" : enkoder = %s : formát = %s..."
 
-#: src/saveplay.c:1748
+#: src/saveplay.c:1743
 msgid "Saving [can take a long time]"
 msgstr "Ukládám [může to chvíli trvat]"
 
-#: src/saveplay.c:1868
+#: src/saveplay.c:1863
 msgid ""
 "\n"
 "\n"
@@ -4594,33 +4613,33 @@ msgstr ""
 "\n"
 "Chyba enkoderu - výstupní soubor nebyl vytvořen !\n"
 
-#: src/saveplay.c:1903
+#: src/saveplay.c:1898
 msgid "Clearing letterbox"
 msgstr ""
 
-#: src/saveplay.c:1977
+#: src/saveplay.c:1972
 #, c-format
 msgid "File size was %s\n"
 msgstr ""
 
-#: src/saveplay.c:2074
+#: src/saveplay.c:2069
 msgid "recording aborted by preview.\n"
 msgstr "nahrávání přerušeno náhledem.\n"
 
-#: src/saveplay.c:2077
+#: src/saveplay.c:2072
 msgid "recording aborted by clipboard playback.\n"
 msgstr "nahrávání přerušeno přehráváním náhledu.\n"
 
-#: src/saveplay.c:2079
+#: src/saveplay.c:2074
 msgid "Recording performance..."
 msgstr "Nahrávání produkce..."
 
-#: src/saveplay.c:3051
+#: src/saveplay.c:3056
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Průměrná hodnota FPS byla %.4f\n"
 
-#: src/saveplay.c:3057
+#: src/saveplay.c:3062
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -4637,21 +4656,21 @@ msgstr ""
 "Klikněte na Nástroje--->Změnit velikost všech snímků \n"
 "a změňte všechny velikost všech snímků na současnou hodnotu.\n"
 
-#: src/saveplay.c:3232
+#: src/saveplay.c:3237
 msgid "Unknown"
 msgstr "Neznámé"
 
-#: src/saveplay.c:3322
+#: src/saveplay.c:3327
 #, c-format
 msgid "Untitled%d"
 msgstr "Bez jména%d"
 
-#: src/saveplay.c:3385
+#: src/saveplay.c:3390
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d snímků je dost !\n"
 
-#: src/saveplay.c:3395
+#: src/saveplay.c:3400
 #, c-format
 msgid ""
 "\n"
@@ -4659,13 +4678,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/saveplay.c:3397
+#: src/saveplay.c:3402
 msgid ""
 "\n"
 "An error occurred opening the file\n"
 msgstr ""
 
-#: src/saveplay.c:3409
+#: src/saveplay.c:3414
 #, c-format
 msgid ""
 "\n"
@@ -4673,7 +4692,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3497
+#: src/saveplay.c:3502
 #, c-format
 msgid ""
 "\n"
@@ -4685,14 +4704,14 @@ msgstr ""
 "(snímků za sekundu). \n"
 "Výchozí hodnoty lze nastavit v Nástroje | Předvolby | Různé\n"
 
-#: src/saveplay.c:3507
+#: src/saveplay.c:3512
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Rychlost přehrávání byla upravena na %.3f snímků za sekundu, aby odpovídal "
 "zvuku.\n"
 
-#: src/saveplay.c:3523
+#: src/saveplay.c:3528
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4701,7 +4720,7 @@ msgstr ""
 "Snímky=%d typ=%s velikost=%dx%d *bpp=Šedá škála* snímků za sekundu  =%.3f\n"
 "Zvuk:"
 
-#: src/saveplay.c:3527 src/saveplay.c:4477
+#: src/saveplay.c:3532 src/saveplay.c:4474
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4710,54 +4729,54 @@ msgstr ""
 "Snímků=%d typ=%s velikost=%dx%d bpp=%d snímků za sekundu =%.3f\n"
 "Zvuk:"
 
-#: src/saveplay.c:3532 src/saveplay.c:4482
+#: src/saveplay.c:3537 src/saveplay.c:4479
 #, c-format
 msgid "%s none\n"
 msgstr "%s nic\n"
 
-#: src/saveplay.c:3543
+#: src/saveplay.c:3548
 #, c-format
 msgid " - Author: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3546
+#: src/saveplay.c:3551
 #, c-format
 msgid " - Title: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3549
+#: src/saveplay.c:3554
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Komentář: %s\n"
 
-#: src/saveplay.c:3652
+#: src/saveplay.c:3657
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Uložení snímků %d jako %s..."
 
-#: src/saveplay.c:3746
+#: src/saveplay.c:3751
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "zZálohování %s jako %s"
 
-#: src/saveplay.c:3797
+#: src/saveplay.c:3794
 msgid "Backing up"
 msgstr "Zálohuji"
 
-#: src/saveplay.c:3831
+#: src/saveplay.c:3828
 msgid "performance data was backed up..."
 msgstr "data byly zazálohovány"
 
-#: src/saveplay.c:4385
+#: src/saveplay.c:4382
 #, c-format
 msgid "Restoring %s..."
 msgstr "Obnovování %s..."
 
-#: src/saveplay.c:4413
+#: src/saveplay.c:4410
 msgid "Restoring"
 msgstr "Obnovování"
 
-#: src/saveplay.c:4431
+#: src/saveplay.c:4428
 #, c-format
 msgid ""
 "\n"
@@ -4770,7 +4789,7 @@ msgstr ""
 "Soubor %s je poškozen.\n"
 "LiVES ho nemohl obnovit.\n"
 
-#: src/saveplay.c:4859
+#: src/saveplay.c:4856
 #, c-format
 msgid ""
 "\n"
@@ -4779,22 +4798,22 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:5012
+#: src/saveplay.c:5009
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:5017
+#: src/saveplay.c:5014
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:5020
+#: src/saveplay.c:5017
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:5321
+#: src/saveplay.c:5326
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4804,11 +4823,11 @@ msgstr ""
 "Byly nalezeny soubory z předchozího spuštění LiVES.\n"
 "Pokusit se o jejich obnovení?\n"
 
-#: src/saveplay.c:5345
+#: src/saveplay.c:5350
 msgid "Recovering files"
 msgstr "Obnovuji soubory"
 
-#: src/saveplay.c:5346
+#: src/saveplay.c:5351
 msgid "Recovering files..."
 msgstr ""
 
@@ -4856,15 +4875,24 @@ msgstr ""
 msgid "_Abort"
 msgstr ""
 
-#: src/dialogs.c:241
+#: src/dialogs.c:241 src/dialogs.c:250
 msgid "_Retry"
 msgstr ""
 
-#: src/dialogs.c:306
+#: src/dialogs.c:247
+#, fuzzy
+msgid "Missing file"
+msgstr "Tento soubor"
+
+#: src/dialogs.c:252
+msgid "_Browse"
+msgstr ""
+
+#: src/dialogs.c:317
 msgid "Show _Details"
 msgstr "Zobrazit _Detaily"
 
-#: src/dialogs.c:606
+#: src/dialogs.c:617
 #, c-format
 msgid ""
 "FREE SPACE IN THE PARTITION CONTAINING\n"
@@ -4875,7 +4903,7 @@ msgid ""
 "(Disk warning levels can be configured in Preferences.)"
 msgstr ""
 
-#: src/dialogs.c:625
+#: src/dialogs.c:636
 #, c-format
 msgid ""
 "Free space in the partition containing\n"
@@ -4887,11 +4915,11 @@ msgid ""
 "Preferences.)"
 msgstr ""
 
-#: src/dialogs.c:638
+#: src/dialogs.c:649
 msgid "Audio players cannot be switched during playback."
 msgstr "Audio přehrávače nemohou být přepnuty během přehrávání."
 
-#: src/dialogs.c:644
+#: src/dialogs.c:655
 msgid ""
 "\n"
 "\n"
@@ -4903,18 +4931,18 @@ msgstr ""
 "LiVES nemohl vykonat tuto operaci kvůli nedostatek paměti.\n"
 "Co takhle zkusit zavřít ostatní prográmky ...\n"
 
-#: src/dialogs.c:802
+#: src/dialogs.c:813
 msgid "Processing has been paused."
 msgstr ""
 
-#: src/dialogs.c:976
+#: src/dialogs.c:987
 #, c-format
 msgid ""
 "\n"
 "%s%d%% done. Time remaining: %u sec%s\n"
 msgstr ""
 
-#: src/dialogs.c:1357
+#: src/dialogs.c:1368
 #, c-format
 msgid ""
 "\n"
@@ -4923,14 +4951,14 @@ msgstr ""
 "\n"
 "Otevřeno %d z %d snímků. Zbývající čas je přibližně %us.\n"
 
-#: src/dialogs.c:1359
+#: src/dialogs.c:1370
 #, c-format
 msgid ""
 "\n"
 "%d/%d frames opened.\n"
 msgstr ""
 
-#: src/dialogs.c:1362
+#: src/dialogs.c:1373
 #, c-format
 msgid ""
 "\n"
@@ -4939,11 +4967,11 @@ msgstr ""
 "\n"
 "%d snímků otevřeno.\n"
 
-#: src/dialogs.c:1595 src/dialogs.c:1618
+#: src/dialogs.c:1606 src/dialogs.c:1629
 msgid "Waiting for external audio"
 msgstr ""
 
-#: src/dialogs.c:2066
+#: src/dialogs.c:2077
 #, c-format
 msgid ""
 "\n"
@@ -4952,7 +4980,7 @@ msgstr ""
 "\n"
 "Zbývající čas: %d sec"
 
-#: src/dialogs.c:2112
+#: src/dialogs.c:2123
 #, c-format
 msgid ""
 "\n"
@@ -4963,7 +4991,7 @@ msgstr ""
 "Nezlobte se, ale LiVES může otevřít pouze %d souborů najednou.\n"
 "Zavřete soubor a zkuste to znova."
 
-#: src/dialogs.c:2120
+#: src/dialogs.c:2131
 #, c-format
 msgid ""
 "LiVES was unable to write to its working directory.\n"
@@ -4975,40 +5003,40 @@ msgid ""
 "Please make sure you can write to this directory."
 msgstr ""
 
-#: src/dialogs.c:2132
+#: src/dialogs.c:2143
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer', 'mplayer2', or 'sox' to function. "
 "Please install one or other of these, and try again.\n"
 msgstr ""
 
-#: src/dialogs.c:2139
+#: src/dialogs.c:2150
 msgid ""
 "\n"
 "This function requires either mplayer or mplayer2 to operate.\n"
 "You may wish to install one or other of these and try again.\n"
 msgstr ""
 
-#: src/dialogs.c:2145
+#: src/dialogs.c:2156
 msgid ""
 "\n"
 "This function requires either mplayer, mplayer2 or mpv to operate.\n"
 "You may wish to install one or other of these and try again.\n"
 msgstr ""
 
-#: src/dialogs.c:2151
+#: src/dialogs.c:2162
 msgid ""
 "Audio was not loaded; please install mplayer or mplayer2 if you expected "
 "audio for this clip.\n"
 msgstr ""
 
-#: src/dialogs.c:2153
+#: src/dialogs.c:2164
 msgid ""
 "Audio was not loaded; please install mplayer,mplayer2 or mpv if you expected "
 "audio for this clip.\n"
 msgstr ""
 
-#: src/dialogs.c:2160
+#: src/dialogs.c:2171
 msgid ""
 "Audio resampling is required for this format.\n"
 "Please install 'sox'\n"
@@ -5018,7 +5046,7 @@ msgstr ""
 "Prosím nainstalujte 'sox'\n"
 "Nebo vyberte jiný formát kódování v Nástroje | Nastavení | Encoding\n"
 
-#: src/dialogs.c:2166
+#: src/dialogs.c:2177
 msgid ""
 "\n"
 "\n"
@@ -5030,7 +5058,7 @@ msgstr ""
 "Tento formát nelze použít s vybraným zvukovým kodekem.\n"
 "Nastavte zvukový kodek v Nástroje|Nastavení|Encoding\n"
 
-#: src/dialogs.c:2171
+#: src/dialogs.c:2182
 msgid ""
 "This layout includes generated frames.\n"
 "It cannot be saved, you must render it to a clip first.\n"
@@ -5038,13 +5066,13 @@ msgstr ""
 "Toto rozvržení obsahuje vygenerované snímky.\n"
 "Nelze ho uložit. Nejprve ho vyrendrujte klip.\n"
 
-#: src/dialogs.c:2176
+#: src/dialogs.c:2187
 msgid ""
 "This layout includes generated or recorded audio.\n"
 "It cannot be saved, you must render it to a clip first.\n"
 msgstr ""
 
-#: src/dialogs.c:2184 src/dialogs.c:2277
+#: src/dialogs.c:2195 src/dialogs.c:2288
 #, c-format
 msgid ""
 "\n"
@@ -5055,7 +5083,7 @@ msgstr ""
 "\n"
 "Z důvodu omezení ve %s formátu\n"
 
-#: src/dialogs.c:2204
+#: src/dialogs.c:2215
 msgid ""
 "LiVES recommends the following settings:\n"
 "\n"
@@ -5063,43 +5091,43 @@ msgstr ""
 "LiVES doporučuje následující nastavení:\n"
 "\n"
 
-#: src/dialogs.c:2210 src/dialogs.c:2312 src/resample.c:871
+#: src/dialogs.c:2221 src/dialogs.c:2323 src/resample.c:871
 msgid ", signed"
 msgstr ", označeno"
 
-#: src/dialogs.c:2211 src/dialogs.c:2313 src/resample.c:873
+#: src/dialogs.c:2222 src/dialogs.c:2324 src/resample.c:873
 msgid ", unsigned"
 msgstr ", neoznačeno"
 
-#: src/dialogs.c:2215 src/dialogs.c:2317 src/resample.c:878
+#: src/dialogs.c:2226 src/dialogs.c:2328 src/resample.c:878
 msgid ", little-endian"
 msgstr ", malý endian"
 
-#: src/dialogs.c:2216 src/dialogs.c:2318 src/resample.c:880
+#: src/dialogs.c:2227 src/dialogs.c:2329 src/resample.c:880
 msgid ", big-endian"
 msgstr ", velký endian"
 
-#: src/dialogs.c:2221
+#: src/dialogs.c:2232
 #, c-format
 msgid "Use an audio rate of %d Hz%s%s\n"
 msgstr ""
 
-#: src/dialogs.c:2229
+#: src/dialogs.c:2240
 #, c-format
 msgid "Set video rate to %.3f frames per second\n"
 msgstr "Nastavení videa na %.3f snímků za sekundu\n"
 
-#: src/dialogs.c:2232
+#: src/dialogs.c:2243
 #, c-format
 msgid "Set video rate to %d:%d frames per second\n"
 msgstr "Nastavení videa na %d:%d snímků za sekundu\n"
 
-#: src/dialogs.c:2237 src/dialogs.c:2345
+#: src/dialogs.c:2248 src/dialogs.c:2356
 #, c-format
 msgid "Set video size to %d x %d pixels\n"
 msgstr "Nastav velikost videa na %d x %d pixelů\n"
 
-#: src/dialogs.c:2245 src/dialogs.c:2344
+#: src/dialogs.c:2256 src/dialogs.c:2355
 msgid ""
 "\n"
 "You may wish to:\n"
@@ -5107,35 +5135,35 @@ msgstr ""
 "\n"
 "Přejete si:\n"
 
-#: src/dialogs.c:2248 src/dialogs.c:2336
+#: src/dialogs.c:2259 src/dialogs.c:2347
 #, c-format
 msgid "resize video to %d x %d pixels\n"
 msgstr "změnit velikost videa %d x %d pixelů\n"
 
-#: src/dialogs.c:2252
+#: src/dialogs.c:2263
 msgid "disable audio, since the target encoder cannot encode audio\n"
 msgstr ""
 
-#: src/dialogs.c:2308
+#: src/dialogs.c:2319
 msgid "LiVES must:\n"
 msgstr "LiVES musí:\n"
 
-#: src/dialogs.c:2322
+#: src/dialogs.c:2333
 #, c-format
 msgid "resample audio to %d Hz%s%s\n"
 msgstr ""
 
-#: src/dialogs.c:2329
+#: src/dialogs.c:2340
 #, c-format
 msgid "resample video to %.3f frames per second\n"
 msgstr "převzorkování videa na %.3f snímků za sekundu\n"
 
-#: src/dialogs.c:2332
+#: src/dialogs.c:2343
 #, c-format
 msgid "resample video to %d:%d frames per second\n"
 msgstr "převzorkování videa na %d:%d snímků za sekundu\n"
 
-#: src/dialogs.c:2350
+#: src/dialogs.c:2361
 msgid ""
 "\n"
 "You will be able to undo these changes afterwards.\n"
@@ -5149,7 +5177,7 @@ msgstr ""
 "Vyberte `OK` pro pokračování, `Zrušit` pro storno.\n"
 "\n"
 
-#: src/dialogs.c:2352
+#: src/dialogs.c:2363
 msgid ""
 "\n"
 "Changes applied to the selection will not be permanent.\n"
@@ -5159,7 +5187,7 @@ msgstr ""
 "Změny použité na výběr nebudou trvalé.\n"
 "\n"
 
-#: src/dialogs.c:2372
+#: src/dialogs.c:2383
 msgid ""
 "\n"
 "\n"
@@ -5172,7 +5200,7 @@ msgstr ""
 "LiVES nemohl nahrát produkci. Nedostatek paměti \n"
 "Zkuste nahrát jen vybranou část souboru"
 
-#: src/dialogs.c:2381
+#: src/dialogs.c:2392
 msgid ""
 "The playback speed (fps), or the audio rate\n"
 " of the clipboard does not match\n"
@@ -5189,7 +5217,7 @@ msgstr ""
 "Vložení bude upraveno, aby se vešlo do klipu\n"
 "Vyberte 'Zrušit' a ukončíte vkládání nebo 'OK' a pokračovat."
 
-#: src/dialogs.c:2395
+#: src/dialogs.c:2406
 msgid ""
 "When opening a yuvmpeg stream, you should first create a fifo file, and then "
 "write yuv4mpeg frames to it.\n"
@@ -5200,18 +5228,18 @@ msgid ""
 "click Cancel."
 msgstr ""
 
-#: src/dialogs.c:2456
+#: src/dialogs.c:2467
 msgid "Message History"
 msgstr "Historie zpráv"
 
-#: src/dialogs.c:2464
+#: src/dialogs.c:2475
 #, c-format
 msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
 "in your %s file"
 msgstr ""
 
-#: src/dialogs.c:2475
+#: src/dialogs.c:2486
 #, c-format
 msgid ""
 "\n"
@@ -5222,25 +5250,25 @@ msgid ""
 "or change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/dialogs.c:2484
+#: src/dialogs.c:2495
 msgid ""
 "Sorry, unknown audio type.\n"
 "\n"
 " (Filenames must end in"
 msgstr ""
 
-#: src/dialogs.c:2506
+#: src/dialogs.c:2517
 msgid "failed (unknown type)\n"
 msgstr "nezdařilo se(neznámý typ)\n"
 
-#: src/dialogs.c:2512
+#: src/dialogs.c:2523
 msgid ""
 "\n"
 "Do you wish to remove the layout files associated with this set ?\n"
 "(They will not be usable without the set).\n"
 msgstr ""
 
-#: src/dialogs.c:2518
+#: src/dialogs.c:2529
 #, c-format
 msgid ""
 "\n"
@@ -5253,7 +5281,7 @@ msgstr ""
 "Kliknutím na 'OK' přidáte aktuální klipy a rozložení k existujícímu.\n"
 "Klikněte na 'Zrušit' pro výběr nového jména.\n"
 
-#: src/dialogs.c:2527
+#: src/dialogs.c:2538
 msgid ""
 "\n"
 "Frames from this clip are used in some multitrack layouts.\n"
@@ -5265,7 +5293,7 @@ msgstr ""
 "Opravdu pokračovat ?\n"
 "."
 
-#: src/dialogs.c:2532
+#: src/dialogs.c:2543
 msgid ""
 "\n"
 "Audio from this clip is used in some multitrack layouts.\n"
@@ -5277,18 +5305,18 @@ msgstr ""
 "Opravdu pokračovat ?\n"
 "."
 
-#: src/dialogs.c:2538
+#: src/dialogs.c:2549
 #, c-format
 msgid ""
 "\n"
 "The original file\n"
 "%s\n"
 "could not be found.\n"
-"If this file has been moved, click 'OK' to browse to the new location.\n"
+"Click Retry to try again, or Browse to browse to the new location.\n"
 "Otherwise click Cancel to skip loading this file.\n"
 msgstr ""
 
-#: src/dialogs.c:2548
+#: src/dialogs.c:2562
 #, c-format
 msgid ""
 "\n"
@@ -5298,7 +5326,7 @@ msgid ""
 "The clip could not be loaded.\n"
 msgstr ""
 
-#: src/dialogs.c:2557
+#: src/dialogs.c:2571
 msgid ""
 "\n"
 "Dear user, the jack developers decided to remove the -Z option from jackd.\n"
@@ -5306,7 +5334,7 @@ msgid ""
 "Alternately, select a different audio player in Preferences.\n"
 msgstr ""
 
-#: src/dialogs.c:2564
+#: src/dialogs.c:2578
 msgid ""
 "\n"
 "Unable to start up jack. Please ensure that alsa is set up correctly on your "
@@ -5315,13 +5343,13 @@ msgid ""
 "Automatic jack startup will be disabled now.\n"
 msgstr ""
 
-#: src/dialogs.c:2571
+#: src/dialogs.c:2585
 msgid ""
 "\n"
 "Unable to connect to jack server. Please start jack before starting LiVES\n"
 msgstr ""
 
-#: src/dialogs.c:2581
+#: src/dialogs.c:2595
 #, c-format
 msgid ""
 "\n"
@@ -5332,13 +5360,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/dialogs.c:2588
+#: src/dialogs.c:2602
 msgid ""
 "\n"
 "Alternately, you can restart LiVES and select another audio player.\n"
 msgstr ""
 
-#: src/dialogs.c:2594
+#: src/dialogs.c:2608
 #, c-format
 msgid ""
 "\n"
@@ -5348,7 +5376,7 @@ msgid ""
 "It is recommended to increase it to at least %d MB"
 msgstr ""
 
-#: src/dialogs.c:2604
+#: src/dialogs.c:2618
 #, c-format
 msgid ""
 "\n"
@@ -5357,7 +5385,7 @@ msgid ""
 "Do you wish to delete them ?\n"
 msgstr ""
 
-#: src/dialogs.c:2613
+#: src/dialogs.c:2627
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for multitrack undo.\n"
@@ -5370,7 +5398,7 @@ msgstr ""
 "Zavřete jinou aplikaci, nebo uberte paměť pro krok zpět\n"
 "v Nastavení/Multitrack/Paměť zpět\n"
 
-#: src/dialogs.c:2619
+#: src/dialogs.c:2633
 msgid ""
 "\n"
 "Out of memory for undo.\n"
@@ -5382,7 +5410,7 @@ msgstr ""
 "Zvyšte velikost paměti pro krok zpět\n"
 "v Nastavení/Multitrack/Paměť zpět\n"
 
-#: src/dialogs.c:2624
+#: src/dialogs.c:2638
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
@@ -5391,19 +5419,19 @@ msgstr ""
 "LiVES nemohl rezervovat dostatek paměť pro zásobník multistopého kroku "
 "zpět.\n"
 
-#: src/dialogs.c:2626
+#: src/dialogs.c:2640
 msgid "or enter a smaller value.\n"
 msgstr "nebo vložte menší hodnotu.\n"
 
-#: src/dialogs.c:2628
+#: src/dialogs.c:2642
 msgid "Try again from the clip editor, try closing some other applications\n"
 msgstr "Zkuste znovu z editoru klipů, zkuste uzavřít jiné aplikace\n"
 
-#: src/dialogs.c:2629
+#: src/dialogs.c:2643
 msgid "Try closing some other applications\n"
 msgstr "Zkuste zavřít jinou aplikaci\n"
 
-#: src/dialogs.c:2641
+#: src/dialogs.c:2655
 msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
@@ -5411,52 +5439,52 @@ msgstr ""
 "Multitrack má nastaveno 0 zvukových kanálu, ale rozložení obsahuje zvuk.\n"
 "Upravte nastavení zvuku v menu Nástroje.\n"
 
-#: src/dialogs.c:2647
+#: src/dialogs.c:2661
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 msgstr ""
 "Současná struktura obsahuje zvuk, proto zvukové kanály nemohou mít nulovou "
 "hodnotu.\n"
 
-#: src/dialogs.c:2653
+#: src/dialogs.c:2667
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulse audio\" audio player.\n"
 "You can set this in Tools|Preferences|Playback."
 msgstr ""
 
-#: src/dialogs.c:2660
+#: src/dialogs.c:2674
 msgid ""
 "Errors were detected in the layout (which may be due to transferring from "
 "another system, or from an older version of LiVES).\n"
 "Should I try to repair the disk copy of the layout ?\n"
 msgstr ""
 
-#: src/dialogs.c:2666
+#: src/dialogs.c:2680
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
 msgstr ""
 
-#: src/dialogs.c:2672
+#: src/dialogs.c:2686
 msgid ""
 "LiVES currently requires composite from ImageMagick to do letterboxing.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
 
-#: src/dialogs.c:2678
+#: src/dialogs.c:2692
 msgid ""
 "LiVES currently requires convert from ImageMagick to do letterboxing.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
 
-#: src/dialogs.c:2684
+#: src/dialogs.c:2698
 msgid ""
 "LiVES currently requires convert from ImageMagick resize frames.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
 
-#: src/dialogs.c:2689
+#: src/dialogs.c:2703
 msgid ""
 "\n"
 "\n"
@@ -5466,7 +5494,7 @@ msgstr ""
 "\n"
 "Audio poměr(rate) musí být větší než 0.\n"
 
-#: src/dialogs.c:2694
+#: src/dialogs.c:2708
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -5474,7 +5502,7 @@ msgid ""
 "Are you sure you wish to view it ?\n"
 msgstr ""
 
-#: src/dialogs.c:2699
+#: src/dialogs.c:2713
 msgid ""
 "\n"
 "\n"
@@ -5484,7 +5512,7 @@ msgstr ""
 "\n"
 "Pro používání této funkce musíte nainstalovat balík \"dvgrab\".\n"
 
-#: src/dialogs.c:2705
+#: src/dialogs.c:2719
 msgid ""
 "\n"
 "\n"
@@ -5493,25 +5521,25 @@ msgid ""
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
 
-#: src/dialogs.c:2711
+#: src/dialogs.c:2725
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr ""
 
-#: src/dialogs.c:2717
+#: src/dialogs.c:2731
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr ""
 
-#: src/dialogs.c:2722
+#: src/dialogs.c:2736
 msgid "Unable to set framerate of video plugin\n"
 msgstr ""
 
-#: src/dialogs.c:2728
+#: src/dialogs.c:2742
 msgid ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 msgstr ""
 
-#: src/dialogs.c:2741
+#: src/dialogs.c:2755
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -5520,33 +5548,33 @@ msgid ""
 "echo %d > /proc/sys/net/core/rmem_max\n"
 msgstr ""
 
-#: src/dialogs.c:2953
+#: src/dialogs.c:2967
 msgid "cancelled.\n"
 msgstr "přerušeno.\n"
 
-#: src/dialogs.c:2958
+#: src/dialogs.c:2972
 msgid "failed.\n"
 msgstr "selhalo.\n"
 
-#: src/dialogs.c:2963
+#: src/dialogs.c:2977
 msgid "done.\n"
 msgstr "hotovo.\n"
 
-#: src/dialogs.c:2968
+#: src/dialogs.c:2982
 msgid "error in file. Failed.\n"
 msgstr "chyba v souboru. Ukončeno.\n"
 
-#: src/dialogs.c:3002 src/dialogs.c:3055 src/dialogs.c:3079
+#: src/dialogs.c:3016 src/dialogs.c:3069 src/dialogs.c:3093
 #, c-format
 msgid "Additional info: %s\n"
 msgstr ""
 
-#: src/dialogs.c:3005
+#: src/dialogs.c:3019
 #, c-format
 msgid "The error value was %d%s\n"
 msgstr ""
 
-#: src/dialogs.c:3008
+#: src/dialogs.c:3022
 #, c-format
 msgid ""
 "\n"
@@ -5556,7 +5584,7 @@ msgid ""
 "%s%s%s"
 msgstr ""
 
-#: src/dialogs.c:3058
+#: src/dialogs.c:3072
 #, c-format
 msgid ""
 "\n"
@@ -5566,7 +5594,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3082
+#: src/dialogs.c:3096
 #, c-format
 msgid ""
 "\n"
@@ -5576,7 +5604,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3129
+#: src/dialogs.c:3143
 #, c-format
 msgid ""
 "\n"
@@ -5585,7 +5613,7 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 
-#: src/dialogs.c:3132
+#: src/dialogs.c:3146
 #, c-format
 msgid ""
 "\n"
@@ -5595,7 +5623,7 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: src/dialogs.c:3161
+#: src/dialogs.c:3175
 #, c-format
 msgid ""
 "\n"
@@ -5604,7 +5632,7 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 
-#: src/dialogs.c:3164
+#: src/dialogs.c:3178
 #, c-format
 msgid ""
 "\n"
@@ -5614,12 +5642,12 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: src/dialogs.c:3229
+#: src/dialogs.c:3243
 #, c-format
 msgid "Value for \"%s\" could not be read."
 msgstr ""
 
-#: src/dialogs.c:3246
+#: src/dialogs.c:3260
 #, c-format
 msgid ""
 "\n"
@@ -5628,7 +5656,7 @@ msgid ""
 "Please check your system for errors.\n"
 msgstr ""
 
-#: src/dialogs.c:3254
+#: src/dialogs.c:3268
 #, c-format
 msgid ""
 "\n"
@@ -5641,7 +5669,7 @@ msgstr ""
 "%s\n"
 "podivejte se na zapisovací povolení rejstříku"
 
-#: src/dialogs.c:3263
+#: src/dialogs.c:3277
 #, c-format
 msgid ""
 "\n"
@@ -5650,7 +5678,7 @@ msgid ""
 "Please check the directory permissions and try again."
 msgstr ""
 
-#: src/dialogs.c:3270
+#: src/dialogs.c:3284
 #, c-format
 msgid ""
 "\n"
@@ -5658,14 +5686,14 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/dialogs.c:3277
+#: src/dialogs.c:3291
 msgid ""
 "\n"
 "Abort and exit immediately from LiVES\n"
 "Are you sure ?\n"
 msgstr ""
 
-#: src/dialogs.c:3282
+#: src/dialogs.c:3296
 #, c-format
 msgid ""
 "\n"
@@ -5673,13 +5701,13 @@ msgid ""
 "Please select another encoder from the list.\n"
 msgstr ""
 
-#: src/dialogs.c:3292
+#: src/dialogs.c:3306
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 msgstr ""
 
-#: src/dialogs.c:3298
+#: src/dialogs.c:3312
 #, c-format
 msgid ""
 "\n"
@@ -5689,27 +5717,27 @@ msgid ""
 "- Check if the device actually exists.\n"
 msgstr ""
 
-#: src/dialogs.c:3307
+#: src/dialogs.c:3321
 msgid ""
 "\n"
 "This file already has subtitles loaded.\n"
 "Do you wish to overwrite the existing subtitles ?\n"
 msgstr ""
 
-#: src/dialogs.c:3312
+#: src/dialogs.c:3326
 msgid ""
 "\n"
 "LiVES currently only supports subtitles of type"
 msgstr ""
 
-#: src/dialogs.c:3338
+#: src/dialogs.c:3352
 msgid ""
 "\n"
 "Erase all subtitles from this clip.\n"
 "Are you sure ?\n"
 msgstr ""
 
-#: src/dialogs.c:3345
+#: src/dialogs.c:3359
 #, c-format
 msgid ""
 "\n"
@@ -5718,14 +5746,14 @@ msgid ""
 "or OK to continue and save as type \"%s\"\n"
 msgstr ""
 
-#: src/dialogs.c:3354
+#: src/dialogs.c:3368
 msgid ""
 "\n"
 "Do you wish to move the current clip sets to the new directory ?\n"
 "(If unsure, click Yes)\n"
 msgstr ""
 
-#: src/dialogs.c:3360
+#: src/dialogs.c:3374
 #, c-format
 msgid ""
 "\n"
@@ -5736,19 +5764,19 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:3368
+#: src/dialogs.c:3382
 msgid ""
 "\n"
 "No video input devices could be found.\n"
 msgstr ""
 
-#: src/dialogs.c:3373
+#: src/dialogs.c:3387
 msgid ""
 "\n"
 "All video input devices are already in use.\n"
 msgstr ""
 
-#: src/dialogs.c:3378
+#: src/dialogs.c:3392
 msgid ""
 "\n"
 "\n"
@@ -5756,7 +5784,7 @@ msgid ""
 "DO NOT SHUT DOWN OR CLOSE LIVES !\n"
 msgstr ""
 
-#: src/dialogs.c:3385
+#: src/dialogs.c:3399
 #, c-format
 msgid ""
 "\n"
@@ -5764,14 +5792,14 @@ msgid ""
 "The theme could not be loaded correctly.\n"
 msgstr ""
 
-#: src/dialogs.c:3392
+#: src/dialogs.c:3406
 #, c-format
 msgid ""
 "No clips were recovered for set (%s).\n"
 "Please check the spelling of the set name and try again.\n"
 msgstr ""
 
-#: src/dialogs.c:3405
+#: src/dialogs.c:3419
 #, c-format
 msgid ""
 "Some security issues have been fixed in this version of LiVES.\n"
@@ -5780,7 +5808,7 @@ msgid ""
 "directory. Would you like me to do this (recommended) ?"
 msgstr ""
 
-#: src/dialogs.c:3409
+#: src/dialogs.c:3423
 #, c-format
 msgid ""
 "\n"
@@ -5792,7 +5820,7 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:3418
+#: src/dialogs.c:3432
 #, c-format
 msgid ""
 "\n"
@@ -5801,38 +5829,38 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:3424
+#: src/dialogs.c:3438
 msgid ""
 "\n"
 "You must have autolives.pl installed and in your path to use this toy.\n"
 "Consult your package distributor.\n"
 msgstr ""
 
-#: src/dialogs.c:3429
+#: src/dialogs.c:3443
 msgid ""
 "\n"
 "You must have a minimum of one clip loaded to use this toy.\n"
 msgstr ""
 
-#: src/dialogs.c:3434
+#: src/dialogs.c:3448
 msgid ""
 "\n"
 "LiVES lost its connection to jack and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
 
-#: src/dialogs.c:3439
+#: src/dialogs.c:3453
 msgid ""
 "\n"
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
 
-#: src/dialogs.c:3444
+#: src/dialogs.c:3458
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr "Označte vaše zařízení pro hraní CD v Nástroje | Předvolby | Různé\n"
 
-#: src/dialogs.c:3449
+#: src/dialogs.c:3463
 #, c-format
 msgid ""
 "\n"
@@ -5841,7 +5869,7 @@ msgid ""
 "(Theme name not found).\n"
 msgstr ""
 
-#: src/dialogs.c:3457
+#: src/dialogs.c:3471
 #, c-format
 msgid ""
 "\n"
@@ -5850,7 +5878,7 @@ msgid ""
 "already exists. Would you like to overwrite it ?\n"
 msgstr ""
 
-#: src/dialogs.c:3473
+#: src/dialogs.c:3487
 #, c-format
 msgid ""
 "\n"
@@ -6329,32 +6357,32 @@ msgstr ""
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6632
+#: src/effects-weed.c:6636
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6781
+#: src/effects-weed.c:6785
 #, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:6860
+#: src/effects-weed.c:6864
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nelze spustit generátor %s\n"
 
-#: src/effects-weed.c:7713
+#: src/effects-weed.c:7745
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:7813
+#: src/effects-weed.c:7845
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9059
+#: src/effects-weed.c:9091
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -6474,36 +6502,36 @@ msgstr ""
 msgid "Input and output parameters are not compatible"
 msgstr ""
 
-#: src/framedraw.c:129
+#: src/framedraw.c:152
 msgid "You can click in Preview to change these values"
 msgstr "Pro změnu těchto hodnot můžete kliknout na Náhled"
 
-#: src/framedraw.c:143
+#: src/framedraw.c:166
 msgid "_Reset Values"
 msgstr "_Vynulovat hodnoty"
 
-#: src/framedraw.c:238
-msgid "Display mask: "
+#: src/framedraw.c:263
+msgid "Mask: opacity"
 msgstr ""
 
-#: src/framedraw.c:244
+#: src/framedraw.c:269
 #, fuzzy
-msgid "mask color"
-msgstr "Ztlumit zvuk"
+msgid "color"
+msgstr "Změna velikosti"
 
-#: src/framedraw.c:250
+#: src/framedraw.c:275
 msgid "_Frame"
 msgstr ""
 
-#: src/paramspecial.c:248
+#: src/paramspecial.c:251
 msgid "Maintain _Aspect Ratio"
 msgstr "Oprava ukazatele hlediska"
 
-#: src/paramspecial.c:249
+#: src/paramspecial.c:252
 msgid "Maintain aspect ratio of original frame"
 msgstr "Zachovat stejný poměr stran jako u originálního políčka"
 
-#: src/paramspecial.c:320
+#: src/paramspecial.c:323
 msgid "Display Password"
 msgstr ""
 
@@ -6587,11 +6615,11 @@ msgstr "Nastavit jako výchozí"
 msgid "Reset"
 msgstr ""
 
-#: src/paramwindow.c:1226
+#: src/paramwindow.c:1227
 msgid "No parameters"
 msgstr "Žádné parametry"
 
-#: src/paramwindow.c:1301
+#: src/paramwindow.c:1302
 msgid "Invalid parameter"
 msgstr "Neplatný parametr"
 
@@ -10589,19 +10617,19 @@ msgstr ""
 msgid "JACK server started\n"
 msgstr "JACK server spuštěn\n"
 
-#: src/jack.c:1279 src/jack.c:1343
+#: src/jack.c:1229 src/jack.c:1293
 msgid "Unable to connect to JACK server\n"
 msgstr "Nelze se připojit k JACK serveru\n"
 
-#: src/jack.c:1496
+#: src/jack.c:1446
 msgid "Started jack audio subsystem.\n"
 msgstr "Spuštěn podsystém jack audio.\n"
 
-#: src/jack.c:1601
+#: src/jack.c:1551
 msgid "Started jack audio reader.\n"
 msgstr "Spuštěna čtečka audio jacku .\n"
 
-#: src/jack.c:1814
+#: src/jack.c:1764
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
@@ -10641,7 +10669,7 @@ msgstr ""
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1440
+#: src/pulse.c:1459
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
@@ -12581,3 +12609,7 @@ msgstr ""
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr ""
+
+#, fuzzy
+#~ msgid "mask color"
+#~ msgstr "Ztlumit zvuk"

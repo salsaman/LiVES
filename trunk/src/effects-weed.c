@@ -6911,10 +6911,10 @@ deinit2:
 
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS) && (inc_count > 0 ||
       outc_count == 0)) {
+    uint64_t actual_ticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
     uint64_t rteval, new_rte;
-    // place this synchronous with the preceding frame
     pthread_mutex_lock(&mainw->event_list_mutex);
-    event_list = append_filter_init_event(mainw->event_list, mainw->currticks,
+    event_list = append_filter_init_event(mainw->event_list, actual_ticks,
                                           idx, -1, hotkey, new_instance);
     if (mainw->event_list == NULL) mainw->event_list = event_list;
     init_events[hotkey] = get_last_event(mainw->event_list);
@@ -6924,7 +6924,7 @@ deinit2:
     new_rte = GU641 << (hotkey);
     if (!(rteval & new_rte)) rteval |= new_rte;
     create_filter_map(rteval); // we create filter_map event_t * array with ordered effects
-    mainw->event_list = append_filter_map_event(mainw->event_list, mainw->currticks, filter_map);
+    mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, filter_map);
     pthread_mutex_unlock(&mainw->event_list_mutex);
   }
 
@@ -7181,9 +7181,9 @@ deinit3:
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && init_events[hotkey] != NULL &&
       (prefs->rec_opts & REC_EFFECTS) && num_in_chans > 0) {
     uint64_t rteval, new_rte;
-    // place this synchronous with the preceding frame
+    uint64_t actual_ticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
     pthread_mutex_lock(&mainw->event_list_mutex);
-    mainw->event_list = append_filter_deinit_event(mainw->event_list, mainw->currticks, init_events[hotkey], pchains[hotkey]);
+    mainw->event_list = append_filter_deinit_event(mainw->event_list, actual_ticks, init_events[hotkey], pchains[hotkey]);
     init_events[hotkey] = NULL;
     if (pchains[hotkey] != NULL) lives_free(pchains[hotkey]);
     pchains[hotkey] = NULL;
@@ -7191,7 +7191,7 @@ deinit3:
     new_rte = GU641 << (hotkey);
     if (rteval & new_rte) rteval ^= new_rte;
     create_filter_map(rteval); // we create filter_map event_t * array with ordered effects
-    mainw->event_list = append_filter_map_event(mainw->event_list, mainw->currticks, filter_map);
+    mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, filter_map);
     pthread_mutex_unlock(&mainw->event_list_mutex);
   }
 }
@@ -8326,21 +8326,22 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
 
 
 void rec_param_change(weed_plant_t *inst, int pnum) {
-  int error;
-  weed_timecode_t tc;
+  uint64_t actual_ticks;
   weed_plant_t *in_param;
   int key;
+  int error;
 
   // do not record changes for generators - those get recorded to scrap_file or ascrap_file
   if (enabled_in_channels(inst, FALSE) == 0) return;
 
+  actual_ticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+
   pthread_mutex_lock(&mainw->event_list_mutex);
-  tc = get_event_timecode(get_last_event(mainw->event_list));
   key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
 
   in_param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
 
-  mainw->event_list = append_param_change_event(mainw->event_list, tc, pnum, in_param, init_events[key], pchains[key]);
+  mainw->event_list = append_param_change_event(mainw->event_list, actual_ticks, pnum, in_param, init_events[key], pchains[key]);
   pthread_mutex_unlock(&mainw->event_list_mutex);
 }
 
@@ -8349,15 +8350,13 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
 
 void weed_set_blend_factor(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
-  weed_plant_t *inst, *in_param, *in_param2 = NULL, *paramtmpl;
+  weed_plant_t *inst, *in_param, *paramtmpl;
 
   LiVESList *list = NULL;
 
   weed_plant_t **in_params;
 
   double vald, mind, maxd;
-
-  weed_timecode_t tc = 0;
 
   int error;
   int vali, mini, maxi;
@@ -8393,11 +8392,9 @@ void weed_set_blend_factor(int hotkey) {
 
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS) && inc_count > 0) {
     pthread_mutex_lock(&mainw->event_list_mutex);
-    tc = get_event_timecode(get_last_event(mainw->event_list));
-    mainw->event_list = append_param_change_event(mainw->event_list, tc, pnum, in_param, init_events[hotkey], pchains[hotkey]);
+    rec_param_change(inst, pnum);
     if (copyto > -1) {
-      mainw->event_list = append_param_change_event(mainw->event_list, tc, copyto, in_param2, init_events[hotkey],
-                          pchains[hotkey]);
+      rec_param_change(inst, copyto);
     }
     pthread_mutex_unlock(&mainw->event_list_mutex);
   }
@@ -8466,11 +8463,9 @@ void weed_set_blend_factor(int hotkey) {
 
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS) && inc_count > 0) {
     pthread_mutex_lock(&mainw->event_list_mutex);
-    tc = get_event_timecode(get_last_event(mainw->event_list));
-    mainw->event_list = append_param_change_event(mainw->event_list, tc, pnum, in_param, init_events[hotkey], pchains[hotkey]);
+    rec_param_change(inst, pnum);
     if (copyto > -1) {
-      mainw->event_list = append_param_change_event(mainw->event_list, tc, copyto, in_param2, init_events[hotkey],
-                          pchains[hotkey]);
+      rec_param_change(inst, copyto);
     }
     pthread_mutex_unlock(&mainw->event_list_mutex);
   }

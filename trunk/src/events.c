@@ -513,6 +513,8 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
   weed_plant_t *event_before = NULL;
   weed_plant_t *filter;
 
+  weed_timecode_t in_tc;
+
   void *init_event, *new_init_event, **init_events;
   char *filter_hash;
 
@@ -524,6 +526,8 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
   register int i;
 
   if (in_event == NULL) return event_list;
+
+  in_tc = get_event_timecode(in_event);
 
   if (event_list == NULL) {
     event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
@@ -538,13 +542,17 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
     event_before = NULL;
   } else {
-    weed_timecode_t in_tc = get_event_timecode(in_event);
     event_before = get_last_event(event_list);
     while (event_before != NULL) {
       if (get_event_timecode(event_before) < in_tc || (get_event_timecode(event_before) == in_tc
           && (!WEED_EVENT_IS_FRAME(event_before) ||
               WEED_EVENT_IS_FILTER_DEINIT(in_event)))) break;
       event_before = get_prev_event(event_before);
+      //}
+      //      if (get_event_timecode(event_before) < in_tc || (get_event_timecode(event_before) == in_tc
+      //						       && (!WEED_EVENT_IS_FILTER_MAP(in_event) && ((!WEED_EVENT_IS_FRAME(event_before) && !WEED_EVENT_IS_FILTER_DEINIT(event_before)) ||
+      //												     WEED_EVENT_IS_FILTER_DEINIT(in_event))))) break;
+      //  event_before = get_prev_event(event_before);
     }
   }
 
@@ -618,6 +626,16 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     error = weed_set_voidptr_array(event, WEED_LEAF_INIT_EVENTS, num_events, init_events);
     lives_free(init_events);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+    /*
+    // remove any prior FILTER_MAPs at the same timecode
+    event_before = get_prev_event(event);
+    while (event_before != NULL) {
+      weed_plant_t *event_before_event_before = get_prev_event(event_before);
+      weed_timecode_t tc = get_event_timecode(event_before);
+      if (tc < in_tc) break;
+      if (tc == in_tc && (WEED_EVENT_IS_FILTER_MAP(event_before))) delete_event(event_list, event_before);
+      event_before = event_before_event_before;
+      }*/
     break;
   case WEED_EVENT_HINT_PARAM_CHANGE:
     init_event = weed_get_voidptr_value(in_event, WEED_LEAF_INIT_EVENT, &error);
@@ -4226,7 +4244,6 @@ boolean render_to_clip(boolean new_clip) {
     mainw->current_file = mainw->first_free_file;
 
     if (!get_new_handle(mainw->current_file, clipname)) {
-      // bummer...
       mainw->current_file = current_file;
 
       if (prefs->mt_enter_prompt) {
@@ -4279,7 +4296,6 @@ boolean render_to_clip(boolean new_clip) {
       lives_system(com, FALSE);
       lives_free(com);
       if (mainw->com_failed) return FALSE;
-
     } else {
       do_threaded_dialog(_("Clearing up clip..."), FALSE);
       com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend_sync, cfile->handle);
@@ -4287,6 +4303,14 @@ boolean render_to_clip(boolean new_clip) {
       lives_free(com);
     }
     end_threaded_dialog();
+  }
+
+  if (mainw->event_list != NULL) {
+    weed_plant_t *qevent_list = quantise_events(mainw->event_list, cfile->fps, FALSE);
+    if (qevent_list != NULL) {
+      event_list_replace_events(mainw->event_list, qevent_list);
+      weed_set_double_value(mainw->event_list, WEED_LEAF_FPS, cfile->fps);
+    }
   }
 
   if (mainw->multitrack != NULL && mainw->multitrack->pr_audio) d_print(_("Pre-rendering audio..."));
@@ -4339,7 +4363,6 @@ boolean render_to_clip(boolean new_clip) {
       lives_free(tmp);
       mainw->pre_src_file = mainw->current_file; // if a generator started playback, we will switch back to this file after
       lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
-
     } else {
       // rendered to same clip - update number of frames
       save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);

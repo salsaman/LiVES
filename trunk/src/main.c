@@ -1096,7 +1096,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->gen_started_play = FALSE;
 
   mainw->audio_frame_buffer = NULL;
-  mainw->afbuffer_clients = 0;
+  mainw->afbuffer_clients = mainw->afbuffer_clients_read = 0;
+  mainw->afb[0] = mainw->afb[1] = NULL;
 
   memset(mainw->recent_file, 0, 1);
 
@@ -3702,6 +3703,8 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->capture, TRUE);
   lives_widget_set_sensitive(mainw->vj_save_set, mainw->current_file > 0);
   lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
+  lives_widget_set_sensitive(mainw->vj_reset, mainw->current_file > 0);
+  lives_widget_set_sensitive(mainw->vj_realize, mainw->current_file > 0 && cfile->frame_index != NULL);
   lives_widget_set_sensitive(mainw->midi_learn, TRUE);
   lives_widget_set_sensitive(mainw->midi_save, has_devicemap(-1));
   lives_widget_set_sensitive(mainw->toy_tv, TRUE);
@@ -3848,6 +3851,8 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->toy_tv, FALSE);
   lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
   lives_widget_set_sensitive(mainw->vj_load_set, FALSE);
+  lives_widget_set_sensitive(mainw->vj_realize, FALSE);
+  lives_widget_set_sensitive(mainw->vj_reset, FALSE);
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
   lives_widget_set_sensitive(mainw->import_proj, FALSE);
   lives_widget_set_sensitive(mainw->recaudio_sel, FALSE);
@@ -6777,6 +6782,8 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->autolives, TRUE);
       lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
       lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
+      lives_widget_set_sensitive(mainw->vj_reset, mainw->current_file > 0);
+      lives_widget_set_sensitive(mainw->vj_realize, mainw->current_file > 0 && cfile->frame_index != NULL);
       lives_widget_set_sensitive(mainw->clear_ds, TRUE);
       lives_widget_set_sensitive(mainw->midi_learn, TRUE);
       lives_widget_set_sensitive(mainw->midi_save, has_devicemap(-1));

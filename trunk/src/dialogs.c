@@ -2896,7 +2896,7 @@ void threaded_dialog_spin(double fraction) {
 }
 
 
-void do_threaded_dialog(char *trans_text, boolean has_cancel) {
+void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
   // until end_threaded_dialog() is called
   //

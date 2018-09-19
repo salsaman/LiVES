@@ -8,10 +8,13 @@ Fixes for Record External Audio.
 Sort plugins alphabetically within packages.
 Ensure playback does not stop too soon in autolives mode.
 Fix audio fade in / out, using smaller chunk sizes.
-Allow effect output parameters to feed to internal macros, similar to MIDI / joystick controller.
+Allow effect output parameters to feed to internal macros, similar to MIDI / joystick controller (WIP).
 Improve effect previews in multitrack mode.
 Make the mask colour / opacity configurable in Trim Frames / Add Border tool.
 When an original clip is not found, allow the user to retry as well as browse - to allow for unmounted disks, etc.
+Add menu option VJ / Pre-decode all frames.
+Improve pulse audio sync when recording / playing from external audio.
+Create set lock file in correct location during crash recovery.
 	
 
 	

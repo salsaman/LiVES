@@ -6064,6 +6064,7 @@ void weed_generator_end(weed_plant_t *inst) {
   boolean is_bg = FALSE;
   boolean clip_switched = mainw->clip_switched;
   int current_file = mainw->current_file, pre_src_file = mainw->pre_src_file;
+  register int i;
 
   if (inst == NULL) {
     LIVES_WARN("inst was NULL !");
@@ -6102,11 +6103,14 @@ void weed_generator_end(weed_plant_t *inst) {
     mainw->afbuffer_clients--;
     if (mainw->afbuffer_clients == 0) {
       pthread_mutex_lock(&mainw->abuf_frame_mutex);
-      if (mainw->audio_frame_buffer != NULL) {
-        free_audio_frame_buffer(mainw->audio_frame_buffer);
-        lives_free(mainw->audio_frame_buffer);
-        mainw->audio_frame_buffer = NULL;
+      for (i = 0; i < 2; i++) {
+        if (mainw->afb[i] != NULL) {
+          free_audio_frame_buffer(mainw->afb[i]);
+          lives_free(mainw->afb[i]);
+          mainw->afb[i] = NULL;
+        }
       }
+      mainw->audio_frame_buffer = NULL;
       pthread_mutex_unlock(&mainw->abuf_frame_mutex);
     }
   }
@@ -7352,13 +7356,40 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   // if we have an optional audio channel, we can push audio to it
   if ((achan = get_enabled_audio_channel(inst, 0, TRUE)) != NULL) {
     if (mainw->audio_frame_buffer != NULL && mainw->audio_frame_buffer->samples_filled > 0) {
-      // lock the buffer, convert audio to format requested, and copy it to the audio channel data
+      lives_audio_buf_t *audbuf = mainw->audio_frame_buffer == mainw->afb[0] ? mainw->afb[0] : mainw->afb[1];
+
+      // lock the buffers
       pthread_mutex_lock(&mainw->abuf_frame_mutex);
-      if (mainw->audio_frame_buffer != NULL) {
-        push_audio_to_channel(achan, mainw->audio_frame_buffer);
-        free_audio_frame_buffer(mainw->audio_frame_buffer); // TODO: this needs reimplementing to handle the case where we have fg and bg gens
+
+      if (++mainw->afbuffer_clients_read >= mainw->afbuffer_clients) {
+        // swap buffers for writing
+        if (audbuf == mainw->afb[0]) mainw->audio_frame_buffer = mainw->afb[1];
+        else mainw->audio_frame_buffer = mainw->afb[0];
+        free_audio_frame_buffer(audbuf);
+        mainw->afbuffer_clients_read = 0;
       }
+
       pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+
+      // push read buffer to generator
+      if (audbuf != NULL) {
+        // convert audio to format requested, and copy it to the audio channel data
+        push_audio_to_channel(achan, audbuf);
+      }
+
+      // lock the buffers
+      pthread_mutex_lock(&mainw->abuf_frame_mutex);
+
+      if (++mainw->afbuffer_clients_read >= mainw->afbuffer_clients) {
+        // swap buffers for writing
+        if (audbuf == mainw->afb[0]) mainw->audio_frame_buffer = mainw->afb[1];
+        else mainw->audio_frame_buffer = mainw->afb[0];
+        free_audio_frame_buffer(audbuf);
+        mainw->afbuffer_clients_read = 0;
+      }
+
+      pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+
     } else {
       // no audio has been buffered
       weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, 0);
@@ -7548,7 +7579,8 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
     mainw->afbuffer_clients++;
     if (mainw->afbuffer_clients == 1) {
       pthread_mutex_lock(&mainw->abuf_frame_mutex);
-      init_audio_frame_buffer(prefs->audio_player);
+      init_audio_frame_buffers(prefs->audio_player);
+      mainw->afbuffer_clients_read = 0;
       pthread_mutex_unlock(&mainw->abuf_frame_mutex);
     }
   }

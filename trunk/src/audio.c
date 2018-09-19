@@ -66,14 +66,16 @@ void audio_free_fnames(void) {
 }
 
 
-
-void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamples, int channum) {
+void append_to_audio_bufferf(float *src, uint64_t nsamples, int channum) {
   // append float audio to the audio frame buffer
   size_t nsampsize;
+  lives_audio_buf_t *abuf;
 
   if (!prefs->push_audio_to_gens) return;
 
   pthread_mutex_lock(&mainw->abuf_mutex);
+
+  abuf = (lives_audio_buf_t *)mainw->audio_frame_buffer; // this is a pointer to either mainw->afb[0] or mainw->afb[1]
 
   if (abuf == NULL) {
     pthread_mutex_unlock(&mainw->abuf_mutex);
@@ -100,13 +102,16 @@ void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamp
 }
 
 
-void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamples, int channum) {
+void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
   // append 16 bit audio to the audio frame buffer
   size_t nsampsize;
+  lives_audio_buf_t *abuf;
 
   if (!prefs->push_audio_to_gens) return;
 
   pthread_mutex_lock(&mainw->abuf_mutex);
+
+  abuf = (lives_audio_buf_t *)mainw->audio_frame_buffer; // this is a pointer to either mainw->afb[0] or mainw->afb[1]
 
   if (abuf == NULL) {
     pthread_mutex_unlock(&mainw->abuf_mutex);
@@ -134,34 +139,53 @@ void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamp
 }
 
 
-void init_audio_frame_buffer(short aplayer) {
+void init_audio_frame_buffers(short aplayer) {
   // function should be called when the first video generator with audio input is enabled
+  register int i;
 
-  lives_audio_buf_t *abuf;
-  abuf = mainw->audio_frame_buffer = (lives_audio_buf_t *)lives_malloc0(sizeof(lives_audio_buf_t));
+  for (i = 0; i < 2; i++) {
+    lives_audio_buf_t *abuf;
+    mainw->afb[i] = abuf = (lives_audio_buf_t *)lives_malloc0(sizeof(lives_audio_buf_t));
 
-  abuf->samples_filled = 0;
-  abuf->swap_endian = FALSE;
-  abuf->out_achans = 0;
+    abuf->samples_filled = 0;
+    abuf->swap_endian = FALSE;
+    abuf->out_achans = 0;
 
-  switch (aplayer) {
+    switch (aplayer) {
 #ifdef HAVE_PULSE_AUDIO
-  case AUD_PLAYER_PULSE:
-    abuf->in_interleaf = TRUE;
-    abuf->s16_signed = TRUE;
-    abuf->arate = mainw->pulsed->out_arate;
-    break;
+    case AUD_PLAYER_PULSE:
+      abuf->in_interleaf = abuf->out_interleaf = TRUE;
+      abuf->s16_signed = TRUE;
+      if (mainw->pulsed_read != NULL) {
+        abuf->in_achans = abuf->out_achans = mainw->pulsed_read->in_achans;
+        abuf->arate = mainw->pulsed_read->in_arate;
+      } else if (mainw->pulsed != NULL) {
+        abuf->in_achans = abuf->out_achans = mainw->pulsed->out_achans;
+        abuf->arate = mainw->pulsed->out_arate;
+      }
+      break;
 #endif
 #ifdef ENABLE_JACK
-  case AUD_PLAYER_JACK:
-    abuf->in_interleaf = FALSE;
-    abuf->out_interleaf = FALSE;
-    abuf->arate = mainw->jackd->sample_out_rate;
-    break;
+    case AUD_PLAYER_JACK:
+      abuf->in_interleaf = abuf->out_interleaf = FALSE;
+      if (mainw->jackd_read != NULL && mainw->jackd_read->in_use) {
+        abuf->in_achans = abuf->out_achans = mainw->jackd_read->num_input_channels;
+        abuf->arate = mainw->jackd_read->sample_in_rate;
+        abuf->in_achans = abuf->out_achans = mainw->jackd_read->num_input_channels;
+      } else if (mainw->jackd != NULL) {
+        abuf->in_achans = abuf->out_achans = mainw->jackd->num_output_channels;
+        abuf->arate = mainw->jackd->sample_out_rate;
+        abuf->in_achans = abuf->out_achans = mainw->jackd->num_output_channels;
+      }
+      break;
 #endif
-  default:
-    break;
+    default:
+      break;
+    }
   }
+
+  mainw->audio_frame_buffer = mainw->afb[0];;
+
 #ifdef DEBUG_AFB
   g_print("init afb\n");
 #endif
@@ -290,6 +314,7 @@ void sample_silence_stream(int nchans, int nframes) {
 }
 
 
+// TODO: going from >1 channels to 1, we should average
 void sample_move_d8_d16(short *dst, uint8_t *src,
                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   // convert 8 bit audio to 16 bit audio
@@ -347,6 +372,7 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
 
 
 /* convert from any number of source channels to any number of destination channels - both interleaved */
+// TODO: going from >1 channels to 1, we should average
 void sample_move_d16_d16(int16_t *dst, int16_t *src,
                          uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign) {
   register int nSrcCount, nDstCount;
@@ -419,6 +445,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
 
 
 /* convert from any number of source channels to any number of destination channels - 8 bit output */
+// TODO: going from >1 channels to 1, we should average
 void sample_move_d16_d8(uint8_t *dst, short *src,
                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   register int nSrcCount, nDstCount;
@@ -528,8 +555,8 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 #endif
     }
 
-    if (val > 0. && val > maxval) maxval = val;
-    else if (val < 0. && -val > maxval) maxval = -val;
+    if (val > maxval) maxval = val;
+    else if (-val > maxval) maxval = -val;
 
     *(dst++) = val;
     src += src_skip;
@@ -540,7 +567,7 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 
 void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float scale, int dst_skip) {
   // copy one channel of float to a buffer, applying the scale (scale 2.0 to double the rate, etc)
-  volatile size_t offs = 0;
+  size_t offs = 0;
   float offs_f = 0.;
   register int i;
 
@@ -3027,12 +3054,13 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
     if (abuf->buffer16 != NULL) {
       abuf->bufferf = (float **)lives_malloc(abuf->out_achans * sizeof(float *));
       for (i = 0; i < abuf->out_achans; i++) {
-        abuf->bufferf[i] = (float *)lives_malloc(abuf->samples_filled * sizeof(float));
         if (!abuf->in_interleaf) {
+          abuf->bufferf[i] = (float *)lives_malloc(abuf->samples_filled * sizeof(float));
           sample_move_d16_float(abuf->bufferf[i], abuf->buffer16[i], abuf->samples_filled, 1,
                                 (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, 1.0);
         } else {
-          sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][i], abuf->samples_filled, abuf->out_achans,
+          abuf->bufferf[i] = (float *)lives_malloc(abuf->samples_filled * sizeof(float) / abuf->out_achans);
+          sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][i], abuf->samples_filled / abuf->out_achans, abuf->out_achans,
                                 (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, 1.0);
         }
       }
@@ -3044,6 +3072,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   // now we should have float
 
   samps = abuf->samples_filled;
+  if (abuf->in_interleaf) samps /= abuf->out_achans;
 
   // push to achan WEED_LEAF_AUDIO_DATA, taking into account WEED_LEAF_AUDIO_DATA_LENGTH, WEED_LEAF_AUDIO_INTERLEAF, WEED_LEAF_AUDIO_CHANNELS
 
@@ -3067,7 +3096,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   // copy data from abuf->bufferf[] to WEED_LEAF_AUDIO_DATA
   for (i = 0; i < tchans; i++) {
     pthread_mutex_lock(&mainw->abuf_mutex);
-    src = abuf->bufferf[i % abuf->out_achans] + offs;
+    src = abuf->bufferf[i % abuf->in_achans] + offs;
     if (src != NULL) {
       if (!tinter) {
         if ((int)abuf->arate == trate) {

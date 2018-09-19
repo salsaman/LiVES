@@ -220,7 +220,7 @@ int compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
     out_width = (owidth * myscalex + .5);
     out_height = (oheight * myscaley + .5);
-    
+
     if (out_width * out_height > 3) {
       in_width = weed_get_int_value(in_channels[z], "width", &error);
       in_height = weed_get_int_value(in_channels[z], "height", &error);

@@ -1011,7 +1011,7 @@ void do_bad_theme_import_error(const char *theme_file);
 boolean do_theme_exists_warn(const char *themename);
 
 int process_one(boolean visible);
-void do_threaded_dialog(char *translated_text, boolean has_cancel);
+void do_threaded_dialog(const char *translated_text, boolean has_cancel);
 void end_threaded_dialog(void);
 void threaded_dialog_spin(double fraction);
 void response_ok(LiVESButton *button, livespointer user_data);

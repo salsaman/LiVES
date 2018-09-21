@@ -7055,7 +7055,7 @@ WIDGET_HELPER_GLOBAL_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget
 #endif
 #ifdef GDK_WINDOWING_WIN32
     if (lives_widget_get_display_type(widget) == LIVES_DISPLAY_TYPE_WIN32)
-      xwin = (uint64_t)gdk_win32_drawable_get_handle(lives_widget_get_xwindow(widget));
+      xwin = (uint64_t)gdk_win32_window_get_handle(lives_widget_get_xwindow(widget));
     else
 #endif
 #endif

@@ -30,7 +30,7 @@ typedef gboolean                          boolean;
 #define GDK_IS_WIN32_DISPLAY(display) (TRUE)
 #endif
 
-typedef int                               boolean;
+typedef uint8_t                           boolean;
 
 #endif //GDK_WINDOWING_WIN32
 

@@ -6563,14 +6563,11 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 
         lives_free(xvals);
         lives_free(key);
-
       } else {
         lives_free(key);
         break;
       }
-
     }
-
   }
 
   return first_inst;
@@ -6835,7 +6832,6 @@ deinit2:
     }
 
     filter = weed_filters[idx];
-
   }
 
   if (inc_count == 0 && outc_count > 0 && !is_audio_gen && !all_out_alpha) {

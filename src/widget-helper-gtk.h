@@ -21,7 +21,7 @@
 
 #ifndef IS_MINGW
 typedef gboolean                          boolean;
-#endif
+#else
 
 #ifdef GDK_WINDOWING_WIN32
 #include <gdk/gdkwin32.h>
@@ -29,6 +29,8 @@ typedef gboolean                          boolean;
 #ifndef GDK_IS_WIN32_DISPLAY
 #define GDK_IS_WIN32_DISPLAY(display) (TRUE)
 #endif
+
+typedef int                               boolean;
 
 #endif //GDK_WINDOWING_WIN32
 

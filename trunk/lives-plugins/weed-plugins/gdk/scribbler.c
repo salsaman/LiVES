@@ -254,7 +254,6 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
     }
   }
 
-
   if (weed_plant_has_leaf(channel, "flags")) flags = weed_get_int_value(channel, "flags", &error);
   if (!(flags & WEED_CHANNEL_ALPHA_PREMULT)) {
     int pal = weed_get_int_value(channel, "current_palette", &error);
@@ -262,8 +261,6 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
     // un-premultiply the alpha
     alpha_unpremult(pixel_data, widthx, height, orowstride, pal, TRUE);
   }
-
-
 }
 
 
@@ -377,7 +374,6 @@ int scribbler_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   cent = weed_get_boolean_value(in_params[P_CENTER], "value", &error);
   rise = weed_get_boolean_value(in_params[P_RISE], "value", &error);
   top = weed_get_double_value(in_params[P_TOP], "value", &error);
-
 
   weed_free(in_params); // must weed free because we got an array
 

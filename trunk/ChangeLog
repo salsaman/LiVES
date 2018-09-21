@@ -16,7 +16,9 @@ Add menu option VJ / Pre-decode all frames.
 Improve pulse audio sync when recording / playing from external audio.
 Create set lock file in correct location during crash recovery.
 Improve timing accuracy of realtime recording.
-
+	Fix crash in subtitle rendering.
+	
+	
 	
 
 Version 2.10.0 (4 Sep 2018)

@@ -2341,7 +2341,6 @@ LiVESWidget *create_rte_window(void) {
                        LIVES_INT_TO_POINTER(1));
 
 rte_window_ready:
-
   lives_widget_show_all(rte_window);
   lives_widget_hide(dummy_radio);
 
@@ -2352,6 +2351,9 @@ rte_window_ready:
   if (prefs->open_maximised) {
     lives_window_maximize(LIVES_WINDOW(rte_window));
   }
+
+  lives_widget_context_update();
+
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, rte_window);
   return rte_window;
@@ -2415,6 +2417,7 @@ void rtew_set_mode_radio(int key, int mode) {
 
 
 void redraw_pwindow(int key, int mode) {
+  // called when the source inst is reinited / inited / deinited
   LiVESList *child_list;
   lives_rfx_t *rfx;
 
@@ -2434,7 +2437,6 @@ void redraw_pwindow(int key, int mode) {
       // rip out the contents
       content_area = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]));
       child_list = lives_container_get_children(LIVES_CONTAINER(content_area));
-      // remove focus from any widget we are ripping out
       for (i = 0; i < lives_list_length(child_list); i++) {
         LiVESWidget *widget = (LiVESWidget *)lives_list_nth_data(child_list, i);
         if (lives_widget_is_ancestor(LIVES_WIDGET(button), widget)) continue;

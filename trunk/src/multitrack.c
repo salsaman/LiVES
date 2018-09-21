@@ -19045,7 +19045,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     cdir = lives_build_filename(prefs->workdir, mainw->set_name, NULL);
     lives_rmdir(cdir, FALSE);
 
-    lives_free(esave_file);
+    lives_freep((void **)&esave_file);
     lives_free(esave_dir);
     lives_free(layout_map);
     lives_free(layout_map_audio);
@@ -19089,6 +19089,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
           mt->idlefunc = mt_idle_add(mt);
         }
         if (mt != NULL) mt_sensitise(mt);
+        lives_free(esave_file);
         return FALSE;
       }
     }

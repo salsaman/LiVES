@@ -7541,6 +7541,9 @@ void on_load_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   isubfname = lives_strdup_printf("%s.%s", filename, LIVES_FILE_EXT_SRT);
   lfile_name = lives_filename_from_utf8(isubfname, -1, NULL, NULL, NULL);
 
+  g_print("vals %s %s\n", filename, isubfname);
+
+
   if (lives_file_test(lfile_name, LIVES_FILE_TEST_EXISTS)) {
     subfname = lives_build_filename(prefs->workdir, cfile->handle, SUBS_FILENAME "." LIVES_FILE_EXT_SRT, NULL);
     subtype = SUBTITLE_TYPE_SRT;
@@ -7771,6 +7774,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
                               (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
     lives_free(tmp);
   } else {
+    lives_free(a_type);
     do_audio_import_error();
     mainw->noswitch = FALSE;
     if (mainw->multitrack != NULL) {
@@ -7834,6 +7838,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
 
   d_print(""); // force switchtext
   d_print(_("Opening audio %s, type %s..."), file_name, a_type);
+  lives_free(a_type);
 
   lives_rm(cfile->info_file);
   mainw->com_failed = FALSE;
@@ -10473,6 +10478,7 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
                               (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
     lives_free(tmp);
   } else {
+    lives_free(a_type);
     do_audio_import_error();
     if (mainw->multitrack != NULL) {
       mt_sensitise(mainw->multitrack);
@@ -10480,6 +10486,8 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
     return;
   }
+
+  lives_free(a_type);
 
   lives_snprintf(mainw->msg, 256, _("Appending audio file %s..."), file_name);
   d_print(""); // force switchtext

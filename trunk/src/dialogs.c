@@ -348,6 +348,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     boolean has_focus = FALSE;
     LiVESList *toplevels;
     LiVESWidget *window;
+    // TODO: try gtk_widget_device_is_shadowed ()
     while (1) {
       toplevels = gtk_window_list_toplevels();
       do {
@@ -2442,9 +2443,11 @@ boolean do_comments_dialog(int fileno, char *filename) {
           if (!do_sub_type_warning(ext, sfile->subt->type == SUBTITLE_TYPE_SRT ? LIVES_FILE_EXT_SRT : LIVES_FILE_EXT_SUB)) {
             lives_entry_set_text(LIVES_ENTRY(commentsw->subt_entry), mainw->subt_save_file);
             ok = FALSE;
+            lives_free(ext);
             continue;
           }
         }
+        lives_free(ext);
         lives_freep((void **)&mainw->subt_save_file);
         mainw->subt_save_file = lives_strdup(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
       } else {

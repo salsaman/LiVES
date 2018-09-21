@@ -2440,7 +2440,11 @@ void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data)
   save_file = choose_file(devmapdir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
   lives_free(devmapdir);
 
-  if (save_file == NULL || !strlen(save_file)) return;
+  if (save_file == NULL) return;
+  if (!strlen(save_file)) {
+    lives_free(save_file);
+    return;
+  }
 
   d_print(_("Saving device mapping to file %s..."), save_file);
 
@@ -2590,7 +2594,11 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
   else load_file = lives_strdup((char *)user_data);
   lives_free(devmapdir);
 
-  if (load_file == NULL || !strlen(load_file)) return;
+  if (load_file == NULL) return;
+  if (!strlen(load_file)) {
+    lives_free(load_file);
+    return;
+  }
 
   d_print(_("Loading device mapping from file %s..."), load_file);
 

@@ -2495,23 +2495,19 @@ void get_filename(char *filename, boolean strip_dir) {
   // get filename (part without extension) of a file
   //filename should point to char[PATH_MAX]
   // WARNING: will change contents of filename
-  char **array;
+  char *ptr;
   if (strip_dir) get_basename(filename);
-  array = lives_strsplit(filename, ".", -1);
-  lives_snprintf(filename, PATH_MAX, "%s", array[0]);
-  lives_strfreev(array);
+  ptr = strrchr(filename, '.');
+  if (ptr != NULL) memset((void *)ptr, 0, 1);
 }
 
 
 char *get_extension(const char *filename) {
   // return file extension without the "."
   char *tmp = lives_path_get_basename(filename);
-  int ntok = get_token_count((char *)filename, '.');
-  char **array = lives_strsplit(tmp, ".", -1);
-  char *ret = lives_strdup(array[ntok - 1]);
-  lives_strfreev(array);
-  lives_free(tmp);
-  return ret;
+  char *ptr = strrchr(tmp, '.');
+  if (ptr == NULL) return lives_strdup("");
+  return lives_strdup(ptr);
 }
 
 
@@ -5507,11 +5503,12 @@ int get_token_count(const char *string, int delim) {
   return pieces;
 }
 
+
 char *get_nth_token(const char *string, const char *delim, int pnumber) {
   char **array;
   char *ret = NULL;
   register int i;
-  if (pnumber < 0 || pnumber >= get_token_count(string, delim)) return NULL;
+  if (pnumber < 0 || pnumber >= get_token_count(string, (int)delim[0])) return NULL;
   array = lives_strsplit(string, delim, pnumber + 1);
   for (i = 0; i < pnumber; i++) {
     if (i == pnumber) ret = array[i];
@@ -5520,6 +5517,7 @@ char *get_nth_token(const char *string, const char *delim, int pnumber) {
   lives_free(array);
   return ret;
 }
+
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2) {
   char *s1u = lives_utf8_normalize(s1, strlen(s1), LIVES_NORMALIZE_DEFAULT);

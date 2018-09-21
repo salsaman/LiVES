@@ -138,6 +138,8 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
                                boolean center, boolean rising, double top, int offs_x, int width, int height) {
   // fontname may be eg. "Sans"
 
+  // size is in device units, i.e. pixels
+
   // ypos:
   // if "rising" is TRUE, text will be aligned to fit to bottom
   // if "rising" is FALSE,  "top" (0.0 -> 1.0) is used
@@ -177,7 +179,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 
     pango_layout_set_font_description(layout, font);
   }
-  pango_layout_set_text(layout, text, -1);
+  pango_layout_set_markup(layout, text, -1);
 #endif
 
 #ifdef GUI_QT
@@ -267,13 +269,13 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   if (layout) lives_object_unref(layout);
 
-  surface = lives_painter_get_target(cr);
-  src = lives_painter_image_surface_get_data(surface);
-  lives_free(src);
+  //surface = lives_painter_get_target(cr);
+  //src = lives_painter_image_surface_get_data(surface);
+  //lives_free(src);
+
   lives_painter_destroy(cr);
   return layer;
 }
-
 
 static const char *cr_str = "\x0D";
 static const char *lf_str = "\x0A";

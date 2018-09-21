@@ -1500,7 +1500,6 @@ reinit:
       // need to set this before calling deinit
       weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
       // redraw set defs window
-
     } else if (is_audio) filter_mutex_unlock(key);
 
     if (!deinit_first) {

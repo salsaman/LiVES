@@ -132,7 +132,7 @@ typedef struct {
   double alarm_time; // pre-set alarm timecode [set with pt_set_alarm( this, delta) ]
 
   gboolean alarm; // event wake up
-
+  
   off_t start; // start glyph (inclusive) in current string (0 based) for string/word/letter modes
   int64_t length; // length of substring in current string [0 to all] for string/word/letter modes
 
@@ -173,6 +173,9 @@ typedef struct {
 
   // per glyph/mode private data
   pt_letter_data_t *letter_data;
+
+  guchar *pixel_data;
+  
 } sdata_t;
 
 typedef struct {
@@ -335,7 +338,7 @@ static void getastring(sdata_t *sdata) {
 }
 
 
-static cairo_t *channel_to_cairo(weed_plant_t *channel) {
+static cairo_t *channel_to_cairo(sdata_t *sdata, weed_plant_t *channel) {
   // convert a weed channel to cairo
   // the channel shares pixel_data with cairo
   // so it should be copied before the cairo is destroyed
@@ -368,7 +371,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 
   src = (guchar *)weed_get_voidptr_value(channel, "pixel_data", &error);
 
-  pixel_data = (guchar *)weed_malloc(height * orowstride);
+  sdata->pixel_data = pixel_data = (guchar *)weed_malloc(height * orowstride);
 
   if (pixel_data == NULL) return NULL;
 
@@ -402,7 +405,6 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 
   cairo = cairo_create(surf);
   cairo_surface_destroy(surf);
-  weed_free(pixel_data);
 
   return cairo;
 }
@@ -542,6 +544,8 @@ static void setxypos(double dwidth, double dheight, double x, double y, int *x_t
 
 // set font size
 static void set_font_size(PangoLayout *layout, PangoFontDescription *font, int font_size) {
+  font_size = (int)((double)(font_size + 1.) / 4.) * 4;
+
   pango_font_description_set_size(font, font_size * PANGO_SCALE);
   pango_layout_set_font_description(layout, font);
 }
@@ -616,9 +620,10 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
     if (sdata->start > -1) {
       set_font_size(layout, font, 64);
-      // get pixel size of word
-      getlsize(layout, &dwidth, &dheight);
 
+      // get pixel size of word
+      pango_layout_set_text(layout, (char *)xtext, -1);
+      getlsize(layout, &dwidth, &dheight);
       setxypos(dwidth, dheight, width / 2, height / 2, &sdata->x_text, &sdata->y_text);
 
       sdata->dbl1 -= sdata->dbl1 / 3.5 + .5; // blur shrink
@@ -640,6 +645,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
           sdata->start = 0;
           sdata->length = 0;
           sdata->dbl1 = 0.;
+	  // time before next repeat
           pt_set_alarm(sdata, 1000); // milliseconds
         }
       } else {
@@ -649,6 +655,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
       if (sdata->length > 0) {
         if (sdata->start == sdata->wlength - 1) {
+	  // time between penultimate and last word ?
           pt_set_alarm(sdata, 1000); // milliseconds
         } else {
           // peek at last char of next word
@@ -662,10 +669,11 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
           weed_free(xsubst);
 
-          if (nxlast == '.' || nxlast == '!' || nxlast == '?') pt_set_alarm(sdata, 1000); // milliseconds
-          else if (nxlast == ',') pt_set_alarm(sdata, 700); // milliseconds
-          else if (nxlast == ';') pt_set_alarm(sdata, 800); // milliseconds
-          else pt_set_alarm(sdata, 500); // milliseconds
+	  // hold time
+          if (nxlast == '.' || nxlast == '!' || nxlast == '?') pt_set_alarm(sdata, 4000); // milliseconds
+          else if (nxlast == ',') pt_set_alarm(sdata, 2800); // milliseconds
+          else if (nxlast == ';') pt_set_alarm(sdata, 1600); // milliseconds
+          else pt_set_alarm(sdata, 1000); // milliseconds
         }
       }
     }
@@ -768,7 +776,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     // get pixel size of letter/word
     getlsize(layout, &dwidth, &dheight);
 
-    sdata->dbl1 += dwidth + 10.;
+    sdata->dbl1 += dwidth + 50.;
 
     setxypos(0, dheight, sdata->x_text, sdata->y_text, &sdata->x_text, &sdata->y_text);
 
@@ -791,6 +799,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     }
 
     set_font_size(layout, font, 2560. / (sdata->count + 19.));
+    pango_layout_set_text(layout, xtext, -1);
 
     // get pixel size of letter/word
     getlsize(layout, &dwidth, &dheight);
@@ -895,6 +904,8 @@ int puretext_init(weed_plant_t *inst) {
   sdata->alarm_time = 0.;
   sdata->alarm = FALSE;
 
+  sdata->pixel_data = NULL;
+  
   sdata->text_type = TEXT_TYPE_UTF8;
 
   if (!erropen) {
@@ -915,8 +926,6 @@ int puretext_init(weed_plant_t *inst) {
   }
   if (canstart < i) sdata->nstrings++;
 
-  g_print("got %d strings\n", sdata->nstrings);
-
   if (sdata->nstrings == 0) {
     fprintf(stderr, "No strings found in file.\n");
     return WEED_ERROR_INIT_ERROR;
@@ -932,7 +941,6 @@ int puretext_init(weed_plant_t *inst) {
       if ((uint8_t)buff[j] == 0x0A || (uint8_t)buff[i] == 0x0D) {
         if (canstart < j) {
           sdata->strings[i] = stringdup(&buff[canstart], j - canstart);
-          g_print("string %d is offs %d, len %d: %s\n", i, canstart, j - canstart, sdata->strings[i]);
           canstart = j + 1;
           break;
         }
@@ -941,7 +949,6 @@ int puretext_init(weed_plant_t *inst) {
     }
     if (canstart < j) {
       sdata->strings[i] = stringdup(&buff[canstart], j - canstart);
-      g_print("string %d is offs %d, len %d: %s\n", i, canstart, j - canstart, sdata->strings[i]);
     }
   }
 
@@ -1045,9 +1052,9 @@ int puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   // THINGS TO TO WITH TEXTS AND PANGO
   if ((!in_channel) || (in_channel == out_channel))
-    cairo = channel_to_cairo(out_channel);
+    cairo = channel_to_cairo(sdata, out_channel);
   else
-    cairo = channel_to_cairo(in_channel);
+    cairo = channel_to_cairo(sdata, in_channel);
 
   if (sdata->text == NULL) getastring(sdata);
 
@@ -1121,7 +1128,6 @@ int puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
                               sdata->fg_alpha);
 
         pango_layout_set_text(layout, (char *)xtext, -1);
-        weed_free(xtext);
 
         pango_cairo_show_layout(cairo, layout);
 
@@ -1129,33 +1135,38 @@ int puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
         pango_font_description_free(font);
         g_object_unref(layout);
+        weed_free(xtext);
       }
 
       sdata->count++;
     } // end loop
 
     cairo_to_channel(cairo, out_channel);
+    if (sdata->pixel_data != NULL) {
+      weed_free(sdata->pixel_data);
+      sdata->pixel_data = NULL;
+    }
     cairo_destroy(cairo);
   }
 
   if (sdata->mode == PT_WORD_COALESCE) {
     if (sdata->dbl1 > 0.) {
       guchar *b_data = bgdata;
-      int width3 = width * 3;
+      int width4 = width * 4;
       guchar *dstx = dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
 
       for (i = 0; i < height; i++) {
-        for (j = 0; j < width3; j += 3) {
+        for (j = 0; j < width4; j += 4) {
           if (dst[j] != b_data[j] || dst[j + 1] != b_data[j + 1] || dst[j + 2] != b_data[j + 2]) {
             // move point by sdata->dbl1 pixels
             double angle = rand_angle();
-            int x = j / 3 + sin(angle) * sdata->dbl1;
+            int x = j / 4 + sin(angle) * sdata->dbl1;
             int y = i + cos(angle) * sdata->dbl1;
             if (x > 0 && x < width && y > 0 && y < height) {
               // blur 1 pixel
-              memcpy(&dstx[y * orowstride + x * 3], &dst[j], 3);
+              memcpy(&dstx[y * orowstride + x * 4], &dst[j], 3);
               // protect blurred pixel
-              if (y >= i) memcpy(&bgdata[y * orowstride + x * 3], &dst[j], 3);
+              if (y >= i) memcpy(&bgdata[y * orowstride + x * 4], &dst[j], 3);
             }
             // replace original pixel
             memcpy(&dst[j], &b_data[j], 3);

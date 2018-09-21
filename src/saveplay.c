@@ -1120,11 +1120,19 @@ void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(filt[0]);
   lives_free(ttl);
 
-  if (filename == NULL || !strlen(filename)) return;
+  if (filename == NULL) return;
+  if (!strlen(filename)) {
+    lives_free(filename);
+    return;
+  }
 
-  if (!save_frame_inner(mainw->current_file, frame, filename, -1, -1, FALSE)) return;
+  if (!save_frame_inner(mainw->current_file, frame, filename, -1, -1, FALSE)) {
+    lives_free(filename);
+    return;
+  }
 
   lives_snprintf(mainw->image_dir, PATH_MAX, "%s", filename);
+  lives_free(filename);
   get_dirname(mainw->image_dir);
   if (prefs->save_directories) {
     set_pref_utf8(PREF_IMAGE_DIR, mainw->image_dir);
@@ -1158,7 +1166,7 @@ void save_file(int clip, int start, int end, const char *filename) {
 
   double aud_start = 0., aud_end = 0.;
 
-  const char *n_file_name;
+  char *n_file_name = NULL;
   char *fps_string;
   char *extra_params = NULL;
   char *redir = lives_strdup("1>&2 2>"LIVES_DEVNULL);
@@ -1236,6 +1244,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   if (filename == NULL) {
     char *ttl = lives_strdup(_("Save Clip"));
     do {
+      lives_freep((void **)&n_file_name);
       n_file_name = choose_file(mainw->vid_save_dir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, hbox);
       if (n_file_name == NULL) return;
     } while (!strlen(n_file_name));
@@ -1245,14 +1254,12 @@ void save_file(int clip, int start, int end, const char *filename) {
       set_pref_utf8(PREF_VID_SAVE_DIR, mainw->vid_save_dir);
     }
     lives_free(ttl);
-  } else n_file_name = filename;
+  } else n_file_name = lives_strdup(filename);
 
   //append default extension (if necessary)
   if (!strlen(prefs->encoder.of_def_ext)) {
     // encoder adds its own extension
-    if (strrchr(n_file_name, '.') != NULL) {
-      memset((void *)strrchr(n_file_name, '.'), 0, 1);
-    }
+    get_filename(n_file_name, FALSE);
   } else {
     if (mainw->fx1_bool && (strlen(n_file_name) <= strlen(prefs->encoder.of_def_ext) ||
                             strncmp(n_file_name + strlen(n_file_name) - strlen(prefs->encoder.of_def_ext) - 1, ".", 1) ||
@@ -1270,6 +1277,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   if (filename == NULL && recheck_name) {
     if (!check_file(full_file_name, strcmp(full_file_name, n_file_name))) {
       lives_free(full_file_name);
+      lives_free(n_file_name);
       if (rdet != NULL) {
         lives_widget_destroy(rdet->dialog);
         lives_free(rdet->encoder_name);

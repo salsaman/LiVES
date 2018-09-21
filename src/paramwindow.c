@@ -2507,7 +2507,7 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
       }
 
       if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
-        weed_reinit_effect(inst, FALSE);
+        weed_reinit_effect(inst, FALSE); // this will cause g_notify() to throw an error, because we destroy the combo in its own callback
         was_reinited = TRUE;
       }
     }

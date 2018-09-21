@@ -725,4 +725,26 @@ static int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) 
 
 #endif
 
+#ifdef NEED_RANDOM
+
+#include <stdlib.h>
+#include <sys/time.h>
+#include <stdio.h>
+
+static double drand(double max) {
+  double denom = (double)(2ul << 30) / max;
+  double num = (double)lrand48();
+  fprintf(stderr, "rnd %f %f\n", num, denom);
+  return (double)(num / denom);
+}
+
+
+static void seed_rand(void) {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  srand48(tv.tv_sec);
+}
+
+#endif
+
 

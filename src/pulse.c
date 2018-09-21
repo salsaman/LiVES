@@ -998,9 +998,9 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     }
   }
 
-  if (pulsed->playing_file == -1 || (mainw->record && mainw->record_paused)) {
+  if (pulsed->playing_file == -1 || (mainw->record && mainw->record_paused) || pulsed->is_paused) {
     pa_stream_drop(pulsed->pstream);
-    if (pulsed->playing_file == -1) {
+    if (pulsed->is_paused) {
       // This is NECESSARY to reduce / eliminate huge latencies.
       pa_operation *paop = pa_stream_flush(pulsed->pstream, NULL, NULL); // if not recording, flush the rest of audio (to reduce latency)
       pa_operation_unref(paop);

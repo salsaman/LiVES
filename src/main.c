@@ -2645,7 +2645,11 @@ static boolean lives_startup(livespointer data) {
     lives_widget_context_update();
 
 #ifdef GUI_GTK
+#ifndef IS_MINGW
     icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives.png", NULL);
+#else
+    icon = lives_build_filename(prefs->prefix_dir,ICON_DIR, "lives.png", NULL);
+#endif
     gtk_window_set_default_icon_from_file(icon, &gerr);
     lives_free(icon);
 
@@ -2837,12 +2841,16 @@ static boolean lives_startup(livespointer data) {
     // capture mode
     mainw->foreign_key = atoi(zargv[2]);
 
+#ifndef IS_MINGW
 #if GTK_CHECK_VERSION(3, 0, 0) || defined GUI_QT
     mainw->foreign_id = (Window)atoi(zargv[3]);
 #else
     mainw->foreign_id = (GdkNativeWindow)atoi(zargv[3]);
 #endif
-
+#else
+    mainw->foreign_id = (HWND)atoi(zargv[3]);
+#endif
+    
     mainw->foreign_width = atoi(zargv[4]);
     mainw->foreign_height = atoi(zargv[5]);
     lives_snprintf(prefs->image_ext, 16, "%s", zargv[6]);

@@ -36,8 +36,8 @@ void ce_thumbs_set_fx_area(int area);
 void ce_thumbs_update_current_clip(void);
 void ce_thumbs_highlight_current_clip(void);
 
-void ce_thumbs_liberate_clip_area(boolean liberate);
-void ce_thumbs_liberate_clip_area_register(boolean liberate);
+void ce_thumbs_liberate_clip_area(int area);
+void ce_thumbs_liberate_clip_area_register(int area);
 void ce_thumbs_apply_liberation(void);
 
 #endif // HAS_LIVES_CE_THUMBS_H

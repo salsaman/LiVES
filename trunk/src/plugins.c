@@ -1722,7 +1722,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
   // audio endianness check - what should we do for big-endian machines ?
   if (((mainw->save_with_sound || rdet != NULL) && (resaudw == NULL || resaudw->aud_checkbutton == NULL ||
        lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton))))
-      && prefs->encoder.audio_codec != AUDIO_CODEC_NONE && (arate * achans * asampsize)) {
+      && prefs->encoder.audio_codec != AUDIO_CODEC_NONE && arate != 0 && achans != 0 && asampsize != 0) {
     if (rdet != NULL && !rdet->is_encoding) {
       if (mainw->endian != AFORM_BIG_ENDIAN && (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))))
         swap_endian = TRUE;
@@ -1858,7 +1858,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
               lives_toggle_button_get_active
               (LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)))) &&
           prefs->encoder.audio_codec != AUDIO_CODEC_NONE
-          && (arate * achans * asampsize)) {
+          && arate != 0 && achans != 0 && asampsize != 0) {
         array = lives_strsplit(checks[r], "=", 2);
         if (!strcmp(array[1], "signed")) {
           asigned = 1;
@@ -1883,7 +1883,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
           lives_toggle_button_get_active
           (LIVES_TOGGLE_BUTTON
            (resaudw->aud_checkbutton)))) &&
-          prefs->encoder.audio_codec != AUDIO_CODEC_NONE && (arate * achans * asampsize)) {
+          prefs->encoder.audio_codec != AUDIO_CODEC_NONE && arate != 0 && achans != 0 && asampsize != 0) {
         // we only perform this test if we are encoding with audio
         // find next highest allowed rate from list,
         // if none are higher, use the highest

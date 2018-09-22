@@ -4,6 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
+#include "main.h"
+
 #include <errno.h>
 #include <sys/stat.h>
 
@@ -16,8 +18,6 @@
 #include "../libweed/weed-host.h"
 #include "../libweed/weed-effects.h"
 #endif
-
-#include "main.h"
 
 #include "support.h"
 #include "rte_window.h"

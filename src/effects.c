@@ -1,8 +1,10 @@
 // effects.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2016
+// (c) G. Finch <salsaman+lives@gmail.com> 2003 - 2018
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
+
+#include "main.h"
 
 #include <fcntl.h>
 #include <string.h>
@@ -21,7 +23,6 @@
 #include "../libweed/weed-host.h"
 #endif
 
-#include "main.h"
 #include "effects.h"
 #include "interface.h"
 #include "paramwindow.h"

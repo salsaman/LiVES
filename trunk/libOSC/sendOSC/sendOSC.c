@@ -50,17 +50,18 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 
 #define LIBOSC_VERSION "http://cnmat.berkeley.edu/OpenSoundControl/sendOSC-0.1.html"
 
-#include "../OSC-client.h"
-#include "htmsocket.h"
-
-#include <stdlib.h>
-#include <ctype.h>
 #ifndef IS_MINGW
 #include <netinet/in.h>
 #else
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
+
+#include "../OSC-client.h"
+#include "htmsocket.h"
+
+#include <stdlib.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>

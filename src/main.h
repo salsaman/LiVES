@@ -68,42 +68,13 @@ POSSIBILITY OF SUCH DAMAGES.
 #undef ENABLE_GIW
 #endif
 
-#ifdef GUI_GTK
-
-#define USE_GLIB
-
-#include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
-
-#if GTK_CHECK_VERSION(3, 0, 0)
-#ifdef ENABLE_GIW
-#define ENABLE_GIW_3
-#endif
-#endif
-
-#endif
-
-#if !GTK_CHECK_VERSION(3, 0, 0)
-// borked in < 3.0
-#undef HAVE_WAYLAND
-#endif
-
-#ifdef HAVE_WAYLAND
-#include <gdk/gdkwayland.h>
-#endif
-
-#ifdef GDK_WINDOWING_WAYLAND
-#ifndef GDK_IS_WAYLAND_DISPLAY
-#define GDK_IS_WAYLAND_DISPLAY(a) FALSE
-#endif
-#endif
-
 #ifdef IS_MINGW
 
 #ifndef WINVER
 #define WINVER 0x0500
 #endif
 
+#include <winsock2.h>
 #include <windows.h>
 #include <winbase.h>
 #include <tlhelp32.h>
@@ -136,6 +107,36 @@ typedef pid_t lives_pid_t;
 typedef int lives_pgid_t;
 
 #endif // IS_MINGW
+
+#ifdef GUI_GTK
+
+#define USE_GLIB
+
+#include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+#ifdef ENABLE_GIW
+#define ENABLE_GIW_3
+#endif
+#endif
+
+#endif
+
+#if !GTK_CHECK_VERSION(3, 0, 0)
+// borked in < 3.0
+#undef HAVE_WAYLAND
+#endif
+
+#ifdef HAVE_WAYLAND
+#include <gdk/gdkwayland.h>
+#endif
+
+#ifdef GDK_WINDOWING_WAYLAND
+#ifndef GDK_IS_WAYLAND_DISPLAY
+#define GDK_IS_WAYLAND_DISPLAY(a) FALSE
+#endif
+#endif
 
 #include <sys/stat.h>
 #include <stdlib.h>

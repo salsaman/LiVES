@@ -34,6 +34,8 @@ typedef uint8_t                           boolean;
 
 #endif //GDK_WINDOWING_WIN32
 
+#endif // IS_MINGW
+
 #ifdef GDK_WINDOWING_X11
 
 // needed for GDK_WINDOW_XID - for fileselector preview

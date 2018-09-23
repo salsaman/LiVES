@@ -4,13 +4,14 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+#include "main.h"
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "main.h"
 #include "interface.h"
 #include "support.h"
 #include "cvirtual.h"

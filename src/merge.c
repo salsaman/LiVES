@@ -4,13 +4,14 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+#include "main.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "main.h"
 #include "callbacks.h"
 #include "merge.h"
 #include "paramwindow.h"

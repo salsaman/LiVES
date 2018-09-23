@@ -10156,10 +10156,14 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   array = lives_strsplit(mainw->msg, "|", -1);
+#if IS_MINGW
+  mainw->foreign_id = (HWND)atoi(array[1]);
+#else
 #if GTK_CHECK_VERSION(3, 0, 0) || defined GUI_QT
   mainw->foreign_id = (Window)atoi(array[1]);
 #else
   mainw->foreign_id = (GdkNativeWindow)atoi(array[1]);
+#endif
 #endif
   mainw->foreign_width = atoi(array[2]);
   mainw->foreign_height = atoi(array[3]);

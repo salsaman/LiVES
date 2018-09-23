@@ -4,6 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
+#include "main.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -21,7 +23,6 @@
 #include <sys/filio.h>
 #endif
 
-#include "main.h"
 #include "htmsocket.h"
 
 typedef struct {

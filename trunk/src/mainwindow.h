@@ -8,6 +8,7 @@
 #define HAS_LIVES_MAINWINDOW_H
 
 #include <pthread.h>
+#include <inttypes.h>
 
 #include "effects-data.h"
 
@@ -1342,7 +1343,7 @@ typedef struct {
   int sepwin_minheight;
 
   uint32_t signal_caught;
-  boolean signals_deferred;
+  boolean sign1als_deferred;
 
   boolean ce_thumbs;
   boolean ce_upd_clip;
@@ -1412,6 +1413,7 @@ extern _merge_opts *merge_opts;
 /// 0 for rfx, 1 for rte
 extern LiVESWidget *fx_dialog[2];
 
+ifndef IS_MINGW
 #define LIVES_SIGKILL SIGKILL
 #define LIVES_SIGINT  SIGINT
 #define LIVES_SIGPIPE SIGPIPE
@@ -1421,6 +1423,17 @@ extern LiVESWidget *fx_dialog[2];
 #define LIVES_SIGHUP  SIGHUP
 #define LIVES_SIGTERM SIGTERM
 #define LIVES_SIGQUIT SIGQUIT
+#else
+#define LIVES_SIGKILL SIGKTERM
+#define LIVES_SIGINT  SIGINT
+#define LIVES_SIGPIPE SIGPIPE
+#define LIVES_SIGUSR1 SIGUSR1
+#define LIVES_SIGABRT SIGABRT
+#define LIVES_SIGSEGV SIGSEGV
+#define LIVES_SIGHUP  SIGINT
+#define LIVES_SIGTERM SIGTERM
+#define LIVES_SIGQUIT SIGQUIT
+#endif
 
 #ifdef ENABLE_JACK
 volatile aserver_message_t jack_message;

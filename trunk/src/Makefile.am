@@ -26,7 +26,7 @@ solaris_CFLAGS=-DIS_SOLARIS=1
 endif
 
 if IS_MINGW
-mingw_CFLAGS= -DIS_MINGW=1  -DUSE_SWSCALE=1
+mingw_CFLAGS= -DIS_MINGW=1
 #yuv4mpeg_SOURCES=lives-yuv4mpeg.c lives-yuv4mpeg.h
 #yuv4mpeg_CFLAGS = -DHAVE_MJPEGTOOLS=1
 gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -lpthread -Wl,/home/gabriel/lives-wine-test/ffmpeg/swscale-2.dll

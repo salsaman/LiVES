@@ -93,18 +93,17 @@ typedef PROCESS_INFORMATION *lives_pgid_t;
 
 #else // IS_MINGW
 
+#include <sys/types.h>
+#include <unistd.h>
+
+typedef pid_t lives_pid_t;
+typedef int lives_pgid_t;
+
 #ifdef GUI_GTK
 #ifndef GDK_WINDOWING_X11
 #define GDK_WINDOWING_X11
 #endif
-#else
-#include <sys/types.h>
-#include <unistd.h>
-
 #endif // GUI_GTK
-
-typedef pid_t lives_pid_t;
-typedef int lives_pgid_t;
 
 #endif // IS_MINGW
 

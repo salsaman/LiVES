@@ -27,7 +27,7 @@ endif
 
 if IS_MINGW
 mingw_CFLAGS = -DIS_MINGW=1
-mingw_LDADD = -lwsock32 -ws2_32
+mingw_LDFLAGS = -lwsock32 -lws2_32
 mingw_SOURCES = weed-utils_scripting.c
 #yuv4mpeg_SOURCES=lives-yuv4mpeg.c lives-yuv4mpeg.h
 #yuv4mpeg_CFLAGS = -DHAVE_MJPEGTOOLS=1
@@ -215,11 +215,11 @@ lives_exe_SOURCES = \
 	$(giw_SOURCES) \
 	$(mingw_SOURCES)
 
-lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
+lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS) $(mingw_LDFLAGS)
 
 lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
-	 $(giw_LDADD) $(v4l1_LDADD) $(mingw_LDADD) \
+	 $(giw_LDADD) $(v4l1_LDADD) \
 	@UNICAP_LIBS@
 
 AM_CFLAGS = -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \

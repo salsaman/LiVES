@@ -1413,7 +1413,7 @@ extern _merge_opts *merge_opts;
 /// 0 for rfx, 1 for rte
 extern LiVESWidget *fx_dialog[2];
 
-ifndef IS_MINGW
+#ifndef IS_MINGW
 #define LIVES_SIGKILL SIGKILL
 #define LIVES_SIGINT  SIGINT
 #define LIVES_SIGPIPE SIGPIPE

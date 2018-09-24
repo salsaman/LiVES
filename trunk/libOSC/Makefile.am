@@ -11,8 +11,8 @@ solaris_CFLAGS=-DIS_SOLARIS=1
 endif
 
 if IS_MINGW
-mingw_CFLAGS=-DIS_MINGW=1 -I/usr/i686-pc-mingw32/sys-root/mingw/include
-mingw_LIBFLAGS = -lws2_32
+mingw_CFLAGS=-DIS_MINGW=1
+mingw_LIBFLAGS = -lwsock32 -lws2_32
 AM_CPPFLAGS = -I "$(top_srcdir)" -I "$(top_srcdir)/libOSC"
 else
 AM_CPPFLAGS = -I "$(top_srcdir)" -I "$(top_srcdir)/libOSC" -I "$(includedir)"

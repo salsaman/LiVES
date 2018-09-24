@@ -2648,7 +2648,7 @@ static boolean lives_startup(livespointer data) {
 #ifndef IS_MINGW
     icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives.png", NULL);
 #else
-    icon = lives_build_filename(prefs->prefix_dir,ICON_DIR, "lives.png", NULL);
+    icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "lives.png", NULL);
 #endif
     gtk_window_set_default_icon_from_file(icon, &gerr);
     lives_free(icon);
@@ -2850,7 +2850,7 @@ static boolean lives_startup(livespointer data) {
 #else
     mainw->foreign_id = (HWND)atoi(zargv[3]);
 #endif
-    
+
     mainw->foreign_width = atoi(zargv[4]);
     mainw->foreign_height = atoi(zargv[5]);
     lives_snprintf(prefs->image_ext, 16, "%s", zargv[6]);

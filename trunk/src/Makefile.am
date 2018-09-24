@@ -215,11 +215,11 @@ lives_exe_SOURCES = \
 	$(giw_SOURCES) \
 	$(mingw_SOURCES)
 
-lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS) $(mingw_LDFLAGS)
+lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
 
 lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
-	 $(giw_LDADD) $(v4l1_LDADD) \
+	 $(giw_LDADD) $(v4l1_LDADD) $(mingw_LDADD) \
 	@UNICAP_LIBS@
 
 AM_CFLAGS = -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \

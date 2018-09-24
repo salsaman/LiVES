@@ -3141,7 +3141,9 @@ boolean start_audio_stream(void) {
 
   astream_name = lives_build_filename(prefs->workdir, astname, NULL);
 
+#ifndef IS_MINGW
   mkfifo(astream_name, S_IRUSR | S_IWUSR);
+#endif
 
   astream_name_out = lives_build_filename(prefs->workdir, astname_out, NULL);
 

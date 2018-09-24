@@ -299,13 +299,12 @@ char *js_mangle(void) {
   return ret;
 }
 
+#endif  // OMC_JS
 
 LIVES_INLINE int js_msg_type(const char *string) {
   return atoi(string);
 }
 
-
-#endif  // OMC_JS
 
 #ifdef OMC_MIDI_IMPL
 

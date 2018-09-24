@@ -4506,7 +4506,7 @@ void lives_suspend_resume_process(const char *dirname, boolean suspend) {
   ssize_t rlen;
   char val[16];
   lives_pid_t pid;
-  
+
   // get pid from backend
   com = lives_strdup_printf("%s get_pid_for_handle \"%s\"", prefs->backend_sync, dirname);
   rfile = popen(com, "r");

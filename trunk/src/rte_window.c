@@ -2342,7 +2342,7 @@ LiVESWidget *create_rte_window(void) {
 
 rte_window_ready:
   // TODO: ignore button clicks until window is fully shown
-  
+
   lives_widget_show_all(rte_window);
   lives_widget_hide(dummy_radio);
 

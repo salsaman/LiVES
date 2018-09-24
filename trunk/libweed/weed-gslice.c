@@ -412,7 +412,6 @@ static int _weed_leaf_get_flags(weed_plant_t *plant, const char *key) {
 }
 
 void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_f _memcpyf, weed_memset_f _memsetf) {
-
   switch (api) {
   // higher API versions may use different functions, or add to them
 
@@ -444,5 +443,4 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
   else weed_memcpy = (weed_memcpy_f)memcpy;
   if (_memsetf != NULL) weed_memset = _memsetf;
   else weed_memset = (weed_memset_f)memset;
-
 }

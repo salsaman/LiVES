@@ -26,14 +26,15 @@ solaris_CFLAGS=-DIS_SOLARIS=1
 endif
 
 if IS_MINGW
-mingw_CFLAGS= -DIS_MINGW=1
+mingw_CFLAGS = -DIS_MINGW=1
+mingw_LDADD = -lwsock32 -ws2_32
+mingw_SOURCES = weed-utils_scripting.c
 #yuv4mpeg_SOURCES=lives-yuv4mpeg.c lives-yuv4mpeg.h
 #yuv4mpeg_CFLAGS = -DHAVE_MJPEGTOOLS=1
-gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -lpthread -Wl,/home/gabriel/lives-wine-test/ffmpeg/swscale-2.dll
+gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -lpthread
 else
 gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -pthread
 endif
-
 
 AM_CPPFLAGS = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
@@ -47,7 +48,6 @@ AM_CPPFLAGS = \
 	@X11_CFLAGS@ \
 	$(darwin_CPPFLAGS)
 
-
 bin_PROGRAMS = lives-exe
 
 if HAVE_MJPEGTOOLS
@@ -59,7 +59,6 @@ if HAVE_UNICAP
 unicap_SOURCES=videodev.c videodev.h
 unicap_CFLAGS = -DHAVE_UNICAP=1
 endif
-
 
 if ENABLE_OSC
 osc_SOURCES=osc.c osc.h omc-learn.c omc-learn.h osc_notify.h
@@ -73,19 +72,15 @@ ldvgrab_CFLAGS = -DHAVE_LDVGRAB=1 -I libavc1394/avc1394.h -I libraw1394/raw1394.
 ldvgrab_LDADD = -lavc1394 -lraw1394 -lrom1394
 endif
 
-
 if ENABLE_JACK
 jack_CFLAGS = -DENABLE_JACK
 jack_SOURCES = jack.c jack.h
 jack_LDADD=-ljack
 
-
 if ENABLE_JACK_TRANSPORT
 jack_CFLAGS += -DENABLE_JACK_TRANSPORT
 endif
 endif
-
-
 
 if ENABLE_LIBOIL
 if IS_MINGW
@@ -105,23 +100,19 @@ oil_LIBFLAGS = @ORC_LIBS@ -lorc-0.4
 endif
 oil_CFLAGS =  @ORC_CFLAGS@ -DENABLE_ORC=1
 endif
-
-
 endif
-
 
 if HAVE_ALSA
 alsa_LDADD = @ALSA_LIBS@
 alsa_CFLAGS = @ALSA_CFLAGS@ -DALSA_MIDI=1
 endif
 
-
 if HAVE_WAYLAND
 wayland_LDADD=@WAYLAND_LIBS@
 wayland_CFLAGS=@WAYLAND_CFLAGS@ -DHAVE_WAYLAND=1
 endif
 
-
+if !IS_MINGW
 if DISABLE_GLSLICE
 if HAVE_SYSTEM_WEED
 libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
@@ -137,8 +128,7 @@ else
 libweed_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
 endif
 endif
-
-
+endif
 
 if HAVE_SYSTEM_WEED_COMPAT
 libweed_compat_CFLAGS = -DHAVE_SYSTEM_WEED_COMPAT=1
@@ -173,14 +163,11 @@ endif
 endif
 endif
 
-
 if ENABLE_GIW
 giw_SOURCES=giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h giw/giwled.c giw/giwled.h giw/giwtimeline.c giw/giwtimeline.h
 giw_LDADD=-lm
 giw_CFLAGS=-DENABLE_GIW=1
 endif
-
-
 
 lives_exe_SOURCES = \
 	widget-helper.c widget-helper.h \
@@ -225,24 +212,21 @@ lives_exe_SOURCES = \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
 	$(ldvgrab_SOURCES) \
-	$(giw_SOURCES)
-
+	$(giw_SOURCES) \
+	$(mingw_SOURCES)
 
 lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
 
 lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
-	 $(giw_LDADD) $(v4l1_LDADD) \
+	 $(giw_LDADD) $(v4l1_LDADD) $(mingw_LDADD) \
 	@UNICAP_LIBS@
-
 
 AM_CFLAGS = -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
 	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(mingw_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
-
-
 
 if HAVE_AVFORMAT
 if HAVE_AVCODEC
@@ -257,7 +241,6 @@ AM_CFLAGS += -pg
 endif
 
 AM_CXXFLAGS = $(AM_CFLAGS)
-
 
 if BUILD_LIBLIVES
 
@@ -275,14 +258,12 @@ liblives_la_LIBFLAGS = -fPIC -DPIC -module
 liblives_la_CFLAGS += -shared -fPIC -DPIC
 endif
 
-
 liblivesdir = $(libdir)
 
 extra_LDFLAGS = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ \
         $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) \
 	$(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
-
 
 if HAVE_SYSTEM_WEED
 libweed_scripting_LDADD = -lweed_slice_scripting -lweed-utils_scripting
@@ -301,10 +282,8 @@ install-exec-local:
 	$(MKDIR_P) "$(DESTDIR)$(includedir)/liblives/"
 	cp -f "$(srcdir)/liblives.hpp" "$(DESTDIR)$(includedir)/liblives/"
 
+
 uninstall-local:
 	rm -rf "$(includedir)/liblives"
 
 endif
-
-
-

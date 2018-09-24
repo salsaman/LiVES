@@ -411,3 +411,38 @@ void *weed_malloc(size_t n) {
 void *weed_memcpy(void *dest, const void *src, size_t n) {
   return memcpy(dest, src, n);
 }
+
+
+void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_f _memcpyf, weed_memset_f _memsetf) {
+  switch (api) {
+  // higher API versions may use different functions, or add to them
+
+  case 100:
+  case 110:
+  case 120:
+  case 130:
+  default:
+    weed_default_get = _weed_default_get;
+    weed_leaf_get = _weed_leaf_get;
+    weed_leaf_delete = _weed_leaf_delete;
+    weed_plant_free = _weed_plant_free;
+    weed_plant_new = _weed_plant_new;
+    weed_leaf_set = _weed_leaf_set;
+    weed_leaf_set_plugin = _weed_leaf_set_plugin;
+    weed_plant_list_leaves = _weed_plant_list_leaves;
+    weed_leaf_num_elements = _weed_leaf_num_elements;
+    weed_leaf_element_size = _weed_leaf_element_size;
+    weed_leaf_seed_type = _weed_leaf_seed_type;
+    weed_leaf_get_flags = _weed_leaf_get_flags;
+    weed_leaf_set_flags = _weed_leaf_set_flags;
+  }
+
+  if (_mallocf != NULL) weed_malloc = _mallocf;
+  else weed_malloc = (weed_malloc_f)malloc;
+  if (_freef != NULL) weed_free = _freef;
+  else weed_free = (weed_free_f)free;
+  if (_memcpyf != NULL) weed_memcpy = _memcpyf;
+  else weed_memcpy = (weed_memcpy_f)memcpy;
+  if (_memsetf != NULL) weed_memset = _memsetf;
+  else weed_memset = (weed_memset_f)memset;
+}

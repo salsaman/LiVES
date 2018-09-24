@@ -12,6 +12,8 @@ endif
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config.h.in \
                        stamp-h.in config.log config.cache config.status
 
+if !IS_MINGW
+
 if !HAVE_SYSTEM_WEED
 WEED_SUBDIRS=libweed
 endif
@@ -26,6 +28,8 @@ endif
 
 if !HAVE_SYSTEM_WEED_PLUGIN
 WEED_SUBDIRS=libweed
+endif
+
 endif
 
 SUBDIRS = $(OSC_SUBDIRS) intl $(WEED_SUBDIRS) src m4 lives-plugins po resources

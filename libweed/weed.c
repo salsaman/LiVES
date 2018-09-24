@@ -394,7 +394,6 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
   // *the plugin should never call this, instead the plugin functions are passed to the plugin
   // from the host in the "host_info" plant*
 
-
   switch (api) {
   // higher API versions may use different functions, or add to them
 
@@ -427,5 +426,4 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
   else weed_memcpy = (weed_memcpy_f)memcpy;
   if (_memsetf != NULL) weed_memset = _memsetf;
   else weed_memset = (weed_memset_f)memset;
-
 }

@@ -4483,7 +4483,7 @@ void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
   rlen = fread(val, 1, 16, rfile);
   pclose(rfile);
   memset(val + rlen, 0, 1);
-  if (strcmp(val), " ") {
+  if (strcmp(val, " ")) {
     pid = atoi(val);
     lives_win32_kill_subprocesses(pid, kill_parent);
   }
@@ -4505,7 +4505,8 @@ void lives_suspend_resume_process(const char *dirname, boolean suspend) {
   FILE *rfile;
   ssize_t rlen;
   char val[16];
-
+  lives_pid_t pid;
+  
   // get pid from backend
   com = lives_strdup_printf("%s get_pid_for_handle \"%s\"", prefs->backend_sync, dirname);
   rfile = popen(com, "r");

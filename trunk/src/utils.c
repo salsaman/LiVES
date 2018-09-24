@@ -5691,7 +5691,6 @@ boolean is_writeable_dir(const char *dir) {
   struct statvfs sbuf;
 #else
   char *tfile;
-  s
 #endif
 
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {

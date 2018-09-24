@@ -1343,7 +1343,7 @@ typedef struct {
   int sepwin_minheight;
 
   uint32_t signal_caught;
-  boolean sign1als_deferred;
+  boolean signals_deferred;
 
   boolean ce_thumbs;
   boolean ce_upd_clip;

@@ -132,7 +132,7 @@ typedef struct {
   double alarm_time; // pre-set alarm timecode [set with pt_set_alarm( this, delta) ]
 
   gboolean alarm; // event wake up
-  
+
   off_t start; // start glyph (inclusive) in current string (0 based) for string/word/letter modes
   int64_t length; // length of substring in current string [0 to all] for string/word/letter modes
 
@@ -175,7 +175,7 @@ typedef struct {
   pt_letter_data_t *letter_data;
 
   guchar *pixel_data;
-  
+
 } sdata_t;
 
 typedef struct {
@@ -645,7 +645,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
           sdata->start = 0;
           sdata->length = 0;
           sdata->dbl1 = 0.;
-	  // time before next repeat
+          // time before next repeat
           pt_set_alarm(sdata, 1000); // milliseconds
         }
       } else {
@@ -655,7 +655,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
       if (sdata->length > 0) {
         if (sdata->start == sdata->wlength - 1) {
-	  // time between penultimate and last word ?
+          // time between penultimate and last word ?
           pt_set_alarm(sdata, 1000); // milliseconds
         } else {
           // peek at last char of next word
@@ -669,7 +669,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
           weed_free(xsubst);
 
-	  // hold time
+          // hold time
           if (nxlast == '.' || nxlast == '!' || nxlast == '?') pt_set_alarm(sdata, 4000); // milliseconds
           else if (nxlast == ',') pt_set_alarm(sdata, 2800); // milliseconds
           else if (nxlast == ';') pt_set_alarm(sdata, 1600); // milliseconds
@@ -905,7 +905,7 @@ int puretext_init(weed_plant_t *inst) {
   sdata->alarm = FALSE;
 
   sdata->pixel_data = NULL;
-  
+
   sdata->text_type = TEXT_TYPE_UTF8;
 
   if (!erropen) {

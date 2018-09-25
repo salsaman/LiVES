@@ -2248,8 +2248,9 @@ capability *get_capabilities(void) {
   lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
 #else
   // TODO/REG - we will get from registry
-
-  lives_snprintf(capable->home_dir, PATH_MAX, "%s\\Application Data\\LiVES", g_get_home_dir());
+  tmp = get_registry(HKEY_CURRENT_USER, "Volatile Environment", "APPDATA"); 
+  lives_snprintf(capable->home_dir, PATH_MAX, "%s\\LiVES", tmp);
+  lives_free(tmp);
 #endif
 #endif
 
@@ -2684,7 +2685,7 @@ static boolean lives_startup(livespointer data) {
     // fatal errors
     if (!capable->can_write_to_home) {
       startup_message_fatal((tmp = lives_strdup_printf(
-                                     _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to %s and try again.\n"),
+                                     _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to the directory and try again.\n"),
                                      capable->home_dir)));
       lives_free(tmp);
     } else {

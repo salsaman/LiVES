@@ -138,6 +138,23 @@ LIVES_INLINE int sidhash(char *strsid) {
 #endif
 
 
+#ifdef IS_MINGW
+
+char *lives_win32_get_registry(HKEY key, LPCSTR subkey, LPCSTR value) {
+  HKEY hKey = 0;
+  char buf[255] = {0};
+  DWORD dwType = 0;
+  DWORD dwBufSize = sizeof(buf);
+  
+  if (RegGetValueA(hkey, subkey, value, RRF_RT_REG_SZ, &dwType, (BYTE*)buf, &dwBufSize) == ERROR_SUCCESS) {
+    retval = strdup(buf);
+  }
+  return retval;
+}
+
+#endif
+
+
 LIVES_GLOBAL_INLINE int lives_open3(const char *pathname, int flags, mode_t mode) {
   int fd = open(pathname, flags, mode);
 #ifdef IS_MINGW

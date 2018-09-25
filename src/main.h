@@ -1192,6 +1192,7 @@ boolean lives_freep(void **ptr);
 void lives_kill_subprocesses(const char *dirname, boolean kill_parent);
 void lives_suspend_resume_process(const char *dirname, boolean suspend);
 #ifdef IS_MINGW
+char *lives_win32_get_registry(HKEY key, LPCSTR subkey, LPCSTR value);
 boolean lives_win32_suspend_resume_process(DWORD pid, boolean suspend);
 boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent);
 int lives_win32_get_num_logical_cpus(void);

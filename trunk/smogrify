@@ -37,23 +37,17 @@ $uid = $ >;
 $gid = $);
 $gid =~ s/\W.*//;
 
-if ($^O eq "MSWin32") {
-    #TODO - get this from the registry when needed
-    #only if we installed perl ourselves
-    $installdir = "C:\\Program Files\\LiVES";
-
-    push @INC, "$installdir\\lib";
-
+if ($^O eq "MSWin32" || $^O eq "msys") {
     use File::Path qw(make_path);
 
     #TODO - get this from the registry when needed
     $login = getlogin;
-    $home = "C:\\users\\$login\\Application Data\\LiVES";
+    $home = "C:\\users\\$login\\AppData\\Roaming\\LiVES";
     $rc_filename = "LiVES.ini";
-    $lives_home_dir = "$home\\Config";
+    $lives_home_dir = "$home";
 
     # default temporary directory (can be overridden from the GUI)
-    $default_workdir = "$home\\livescache\\";
+    $default_workdir = "$home\\livesprojects\\";
     $is_mingw = 1;
     $nulfile = "NUL";
 
@@ -111,7 +105,7 @@ if (defined($ARGV[0])) {
             $curworkdir = "$workdir/$handle";
             $target_pid = " ";
 
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $pidfile = "$curworkdir/pid";
             } else {
                 $pidfile = "$curworkdir/.pid";
@@ -204,7 +198,7 @@ if (defined($ARGV[0])) {
 
 	    # write mini-info file
 
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $infofile="$workdir/info.$key";
             }
             else {
@@ -238,7 +232,7 @@ if (defined($ARGV[0])) {
             if (defined($ARGV[1])) {
                 $id = $ARGV[1];
 
-                if ($^O ne "MSWin32") {
+                if (!$is_mingw) {
                     open OUT, "> /tmp/.smogrify.$id" or exit 1;
                 } else {
                     open OUT, "> C:\\smogrify.$id" or exit 1;
@@ -278,7 +272,7 @@ if (defined($ARGV[0])) {
 
             if (! -d "$lives_home_dir") {
 		# this can fail here, but succeed later
-                if ($^O ne "MSWin32") {
+                if (!$is_mingw) {
                     smog_system("/bin/mkdir -p \"$lives_home_dir\"");
                 } else {
                     make_path("$lives_home_dir");
@@ -480,7 +474,7 @@ if (defined($ARGV[0])) {
                 print $value;
                 exit 0;
             }
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 open OUT, "> $workdir/smogval.$first.$second" or exit 1;
             } else {
                 open OUT, "> $workdir/.smogval.$first.$second" or exit 1;
@@ -508,7 +502,7 @@ if (defined($ARGV[0])) {
                 $value = "NULL";
             }
 
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 open OUT, "> $workdir/smogval.$first.$second" or exit 1;
             } else {
                 open OUT, "> $workdir/.smogval.$first.$second" or exit 1;
@@ -538,7 +532,7 @@ if (defined($ARGV[0])) {
             }
             $value = &location($exe);
 
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 open OUT, "> $workdir/smogval.$first.$second" or exit 1;
             } else {
                 open OUT, "> $workdir/.smogval.$first.$second" or exit 1;
@@ -550,7 +544,7 @@ if (defined($ARGV[0])) {
         }
 
         if ($command eq "pause") {
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $smres = smog_system("touch.exe \"$workdir\\$ARGV[1]\\pause\"");
                 if ($smres) {
                     sig_write_error("$workdir\\$ARGV[1]\\pause");
@@ -563,7 +557,7 @@ if (defined($ARGV[0])) {
                     exit 1;
                 }
             }
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
 		#smog_system("chmod.exe 600 \"$workdir\\$ARGV[1]\\pause\"");
             } else {
                 smog_system("/bin/chmod 600 \"$workdir/$ARGV[1]/pause\"");
@@ -598,7 +592,7 @@ if (defined($ARGV[0])) {
         if ($command eq "undo_audio") {
             $handle = $ARGV[1];
             $curworkdir = "$workdir/$handle";
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $statusfile = "$curworkdir/status";
             } else {
                 $statusfile = "$curworkdir/.status";
@@ -613,7 +607,7 @@ if (defined($ARGV[0])) {
         if ($command eq "backup_audio") {
             $handle = $ARGV[1];
             $curworkdir = "$workdir/$handle";
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $statusfile = "$curworkdir/status";
             } else {
                 $statusfile = "$curworkdir/.status";
@@ -643,7 +637,7 @@ if (defined($ARGV[0])) {
                 $vsize = $ARGV[5];
             }
 
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $statusfile = "$curworkdir/status";
             } else {
                 $statusfile = "$curworkdir/.status";
@@ -685,7 +679,7 @@ if (defined($ARGV[0])) {
 
             $curworkdir = "$workdir/$handle";
 
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $statusfile = "$curworkdir/status";
             } else {
                 $statusfile = "$curworkdir/.status";
@@ -797,7 +791,7 @@ if (defined($ARGV[0])) {
         }
 
         if ($command eq "build_rfx_plugins") {
-            if ($^O ne "MSWin32") {
+            if (!$is_mingw) {
                 if (&location($rfx_builder_multi) eq "") {
                     &sig_error("Unable to locate the program $rfx_builder_multi");
                     exit 1;
@@ -807,7 +801,7 @@ if (defined($ARGV[0])) {
             $type=$ARGV[1];
             $script_dir=$ARGV[2];
             $exec_dir=$ARGV[3];
-            if ($^O ne "MSWin32") {
+            if (!$is_mingw) {
                 smog_system("$rfx_builder_multi \"$type\" \"$script_dir\" \"$exec_dir\"");
             }
             else {
@@ -819,7 +813,7 @@ if (defined($ARGV[0])) {
         if ($command eq "make_thumb") {
             $handle=$ARGV[1];
             $curworkdir="$workdir/$handle";
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $statusfile="$curworkdir/status";
             }
             else {
@@ -873,7 +867,7 @@ if (defined($ARGV[0])) {
 	    #
             $handle=$ARGV[1];
             $curworkdir="$workdir/$handle";
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $statusfile="$curworkdir/status";
             }
             else {
@@ -904,7 +898,7 @@ if (defined($ARGV[0])) {
                         unlink <audiodump.wav audioclip>;
                     }
                     if ($areq&4) {
-                        if ($^O ne "MSWin32") {
+                        if (!$is_mingw) {
                             &clear_symlinks;
                         }
                     }
@@ -914,7 +908,7 @@ if (defined($ARGV[0])) {
 	    #need this again - something resets us
             smog_chdir("$curworkdir");
 
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
 		# filter by file ext
                 my $ext=&get_ext("$plugin");
                 if ($ext eq ".py") {
@@ -1062,7 +1056,7 @@ if (defined($ARGV[0])) {
                 $found = "none";
             }
 
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $infofile = "$workdir/info.$pid";
             } else {
                 $infofile = "$workdir/.info.$pid";
@@ -1146,7 +1140,7 @@ if (defined($ARGV[0])) {
         if ($command eq "mv_pre") {
             $handle = $ARGV[1];
             $curworkdir = "$workdir/$handle";
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $statusfile = "$curworkdir/status";
             } else {
                 $statusfile = "$curworkdir/.status";
@@ -1172,7 +1166,7 @@ if (defined($ARGV[0])) {
         if ($command eq "create_package") {
 	    # args are 1: pkg name, 2 dir to pack contents of
 
-            if ($^O ne "MSWin32") {
+            if (!$is_mingw) {
                 my $com = "tar czf \"$ARGV[1]\" -C \"$ARGV[2]\" .";
 
                 my $smerr = smog_system($com);
@@ -1210,7 +1204,7 @@ if (defined($ARGV[0])) {
             smog_system($com);
             chdir $ARGV[2];
 
-            if ($^O ne "MSWin32") {
+            if (!$is_mingw) {
                 $com = "tar xzf \"$ARGV[1]\" .";
 
                 my $smerr = smog_system($com);
@@ -1247,7 +1241,7 @@ if (defined($ARGV[0])) {
         }
 
 	####################################################################
-        if ($^O ne "MSWin32") {
+        if (!$is_mingw) {
 	    # run the rest in background
             if ($background == 1) {
                 if (fork()) {
@@ -1267,20 +1261,20 @@ if (defined($ARGV[0])) {
 
         $curworkdir = "$workdir/$handle";
 
-        if ($^O eq "MSWin32") {
+        if ($is_mingw) {
             $statusfile = $curworkdir."/status";
         } else {
             $statusfile = $curworkdir."/.status";
         }
 
         if ($command eq "play" || $command eq "play_opening_preview") {
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $pidfile = $curworkdir."/pidpb";
             } else {
                 $pidfile = $curworkdir."/.pidpb";
             }
         } else {
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $pidfile = $curworkdir."/pid";
             } else {
                 $pidfile = $curworkdir."/.pid";
@@ -1796,7 +1790,7 @@ if (defined($ARGV[0])) {
 			    print STDERR "\nMaybe you are missing a library in mpv (or it is not a valid media file) ?\n";
 			}
 		    }
-		    if ($^O eq "MSWin32") {
+		    if ($is_mingw) {
 			&sig_error("This does not appear to be a valid video or image file","$GUI_NAME was unable to open it."," ");
 		    }
 		    else {
@@ -1943,7 +1937,7 @@ if (defined($ARGV[0])) {
 	    if (defined(open IN,"< $pidfile")) {
 		close IN;
 		# cancel any processing
-		if ($^O ne "MSWin32") {
+		if (!$is_mingw) {
 		    smog_system("smogrify stopsubsub \"$handle\"");
 		}
 	    }
@@ -1986,7 +1980,7 @@ if (defined($ARGV[0])) {
 		$handle=$ARGV[1];
 
 		$curworkdir="$workdir/$handle";
-		if ($^O eq "MSWin32") {
+		if ($is_mingw) {
 		    $statusfile="$curworkdir/status";
 		    $pidfile=$curworkdir."/pid";
 		}
@@ -2165,7 +2159,7 @@ if (defined($ARGV[0])) {
 			    exit 1;
 			};
 
-			if ($^O ne "MSWin32") {
+			if (!$is_mingw) {
 			    $fstype=&get_fs_type($curworkdir);
 			}
 
@@ -2175,7 +2169,7 @@ if (defined($ARGV[0])) {
 			    $name=&mkname($i);
 			    $from=&mkname($i+$start-1);
 			    if (-f "$curworkdir$from$img_ext") {
-				if ($^O eq "MSWin32") {
+				if ($is_mingw) {
 				    $smerr=smog_system ("cp.exe \"$curworkdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
 				    if ($smerr) {
 					sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir$name$img_ext\"",$smerr);
@@ -2206,7 +2200,7 @@ if (defined($ARGV[0])) {
 			if (-f $audiofile) {
 			    my $xaudiofile=(split(/\//,$audiofile))[-1];
 			    if (! -f "$linksdir$xaudiofile") {
-				if ($^O eq "MSWin32") {
+				if ($is_mingw) {
 				    $smerr=smog_system ("cp.exe \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
 				    if ($smerr) {
 					sig_system_error("Copying \"$curworkdir/$audiofile\" to \"$linksdir$xaudiofile\"",$smerr);
@@ -2254,7 +2248,7 @@ if (defined($ARGV[0])) {
 		    $extra_opts="-v";
 		}
 
-		if ($^O eq "MSWin32") {
+		if ($is_mingw) {
 		    # adjust depending on file ext
 		    my $ext=&get_ext("$plugin");
 		    if ($ext eq ".py") {
@@ -2337,7 +2331,7 @@ if (defined($ARGV[0])) {
 		$linksdir="$curworkdir/lives-symlinks/";
 
 		if (-d $linksdir) {
-		    if ($^O eq "MSWin32") {
+		    if ($is_mingw) {
 			smog_system("DEL /q \"$linksdir\"");
 			smog_system("RMDIR \"$linksdir\"");
 		    }
@@ -2346,7 +2340,7 @@ if (defined($ARGV[0])) {
 		    }
 		}
 
-		if ($^O eq "MSWin32") {
+		if ($is_mingw) {
 		    $com="mkdir.exe -p \"$linksdir\"";
 		}
 		else {
@@ -2397,7 +2391,7 @@ if (defined($ARGV[0])) {
 
 	    $img_ext=&get_img_ext($curworkdir,$start);
 
-	    if ($^O ne "MSWin32") {
+	    if (!$is_mingw) {
 		$fstype=&get_fs_type($curworkdir);
 	    }
 
@@ -2405,7 +2399,7 @@ if (defined($ARGV[0])) {
 		$name=&mkname($i);
 		$from=&mkname($i+$start-1);
 		if (-f "$curworkdir/$from$img_ext") {
-		    if ($^O eq "MSWin32") {
+		    if ($is_mingw) {
 			$smerr=smog_system ("cp.exe \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
 			if ($smerr) {
 			    sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
@@ -2603,7 +2597,7 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 
-	    if ($^O eq "MSWin32") {
+	    if ($is_mingw) {
 		$com="gzip.exe -S .lv1 temp.tar";
 	    }
 	    else {
@@ -2643,7 +2637,7 @@ if (defined($ARGV[0])) {
 
 	    smog_chdir("$curworkdir");
 
-	    if ($^O ne "MSWin32") {
+	    if (!$is_mingw) {
 		$com="tar -zxf \"$nfile\" 2>$nulfile";
 		smog_system ($com);
 
@@ -3087,7 +3081,7 @@ if (defined($ARGV[0])) {
 	    $extra_params = $ARGV[8];
 	    $mplayer_command = &get_mplayer_location;
 
-	    if ($^O ne "MSWin32") {
+	    if (!$is_mingw) {
 		$com = "\"$mplayer_command\" -quiet -wid $win -vo x11 -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile";
 	    } else {
 		$com = "\"$mplayer_command\" -quiet -wid $win -vo direct3d -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile";
@@ -3169,7 +3163,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    smog_rename("$audio_out", "$nfile");
-	    if ($^O eq "MSWin32") {
+	    if ($is_mingw) {
 		smog_system("chmod.exe 644 \"$nfile\" >$nulfile 2>&1");
 	    } else {
 		smog_system("/bin/chmod 644 \"$nfile\" >$nulfile 2>&1");
@@ -3276,7 +3270,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    # cat audio audio.new -> audiodump
-	    if ($^O eq "MSWin32") {
+	    if ($is_mingw) {
 		$smerr = smog_system("cat.exe \"$curworkdir/audio\" \"$audio_out\" > \"$curworkdir/audiodump\"");
 	    } else {
 		$smerr = smog_system("/bin/cat \"$curworkdir/audio\" \"$audio_out\" > \"$curworkdir/audiodump\"");
@@ -3524,7 +3518,7 @@ if (defined($ARGV[0])) {
 			unlink "$pidfile";
 			exit 1;
 		    }
-		    if ($^O eq "MSWin32") {
+		    if ($is_mingw) {
 			smog_system("cat.exe \"$audio_out\">>\"$audio_in\"");
 		    } else {
 			smog_system("/bin/cat \"$audio_out\">>\"$audio_in\"");
@@ -3560,7 +3554,7 @@ if (defined($ARGV[0])) {
 		    if (-f $audio_out) {
 			$smres = smog_rename("$audio_out", "$audio_bak");
 		    } else {
-			if ($^O eq "MSWin32") {
+			if ($is_mingw) {
 			    $smres = smog_system("touch.exe \"$audio_bak\"");
 			} else {
 			    $smres = smog_system("touch \"$audio_bak\"");
@@ -3597,7 +3591,7 @@ if (defined($ARGV[0])) {
 			    $smres = smog_rename("$audio_out", "$audio_bak");
 			    #aborts on failure
 			} else {
-			    if ($^O eq "MSWin32") {
+			    if ($is_mingw) {
 				$smres = smog_system("touch.exe \"$audio_bak\"");
 			    } else {
 				$smres = smog_system("touch \"$audio_bak\"");
@@ -3952,7 +3946,7 @@ if (defined($ARGV[0])) {
 		$plugin_dir = "$lives_home_dir/plugins/effects/rendered/test";
 		$plugin_name = "$plugin_dir/$command";
 	    }
-	    if ($^O eq "MSWin32") {
+	    if ($is_mingw) {
 		# adjust depending on file ext
 		my $ext = &get_ext("$plugin_name");
 		if ($ext eq ".py") {
@@ -3989,7 +3983,7 @@ if (defined($ARGV[0])) {
 
 	    $fps = 0;
 
-	    if ($^O eq "MSWin32") {
+	    if ($is_mingw) {
 		# adjust depending on file ext
 		my $ext = &get_ext("$plugin_name");
 		if ($ext eq ".py") {
@@ -4023,14 +4017,14 @@ if (defined($ARGV[0])) {
 		    shift;
 		}
 
-		if ($^O eq "MSWin32") {
+		if ($is_mingw) {
 		    push @INC, "$plugin_dir";
 		}
 
 		$ARGV[0] = "process";
 		if ($status > 1) {
 		    $error = "";
-		    if ($^O eq "MSWin32") {
+		    if ($is_mingw) {
 			unless(eval "require (\"$command\")") {
 			    $error = $@;
 			}
@@ -4043,7 +4037,7 @@ if (defined($ARGV[0])) {
 			&sig_error("$plugin_name failed:", "$error");
 		    }
 		} else {
-		    if ($^O eq "MSWin32") {
+		    if ($is_mingw) {
 			require("$command");
 		    } else {
 			require("$plugin_name");
@@ -4075,7 +4069,7 @@ if (defined($ARGV[0])) {
 		#img_ext is also in ARGV, but never mind
 
 		if ($num_in_channels == 2) {
-		    if ($^O eq "MSWin32") {
+		    if ($is_mingw) {
 			# adjust depending on file ext
 			my $ext = &get_ext("$plugin_name");
 			if ($ext eq ".py") {
@@ -4089,7 +4083,7 @@ if (defined($ARGV[0])) {
 		    }
 		}
 		elsif($num_in_channels == 1) {
-		    if ($^O eq "MSWin32") {
+		    if ($is_mingw) {
 			# adjust depending on file ext
 			my $ext = &get_ext("$plugin_name");
 			if ($ext eq ".py") {
@@ -4103,7 +4097,7 @@ if (defined($ARGV[0])) {
 		    }
 		}
 		else {
-		    if ($^O eq "MSWin32") {
+		    if ($is_mingw) {
 			# adjust depending on file ext
 			my $ext = &get_ext("$plugin_name");
 			if ($ext eq ".py") {
@@ -4267,7 +4261,7 @@ sub is_writeable {
     $exists=(-f "$nfile");
     if (!$exists) {
         umask 0;
-        if ($^O eq "MSWin32") {
+        if ($is_mingw) {
             $ret=smog_system("touch.exe \"$nfile\"");
         }
         else {
@@ -4276,7 +4270,7 @@ sub is_writeable {
         if ($ret) {
             return !$ret;
         }
-        if ($^O eq "MSWin32") {
+        if ($is_mingw) {
             smog_system("chmod.exe o+w \"$nfile\"");
         } else {
             smog_system("/bin/chmod o+w \"$nfile\"");
@@ -4641,7 +4635,7 @@ sub smog_copy {
     my($smfrom, $smto) = @_;
     my $smcomret;
 
-    if ($^O eq "MSWin32") {
+    if ($is_mingw) {
         $smcomret = system("cp.exe -f \"$smfrom\" \"$smto\"");
 
     } else {
@@ -5558,7 +5552,7 @@ sub get_file_info {
     }
 
     if (!defined $mplay_command || $mplay_command eq "") {
-        if ($^O ne "MSWin32") {
+        if (!$is_mingw) {
 	    # try to force language to English
             $mplay_command="LANGUAGE=en LANG=en $mp_command";
         }
@@ -5879,7 +5873,7 @@ sub clip_audio {
     $audio_out=$curworkdir."/audioclip";
 
     unlink "$audio_out";
-    if ($^O eq "MSWin32") {
+    if ($is_mingw) {
         $smres=smog_system("touch.exe \"$audio_out\"");
     }
     else {
@@ -5890,7 +5884,7 @@ sub clip_audio {
         return;
     }
 
-    if ($^O eq "MSWin32") {
+    if ($is_mingw) {
 	#smog_system("chmod.exe 600 \"$audio_out\"");
     }
     else {
@@ -6111,7 +6105,7 @@ sub insert_audio {
     my ($audio_temp)="$curworkdir/audio.temp";
 
     unlink "$audio_temp";
-    if ($^O eq "MSWin32") {
+    if ($is_mingw) {
 	$smres=smog_system("touch.exe \"$audio_temp\"");
     }
     else {
@@ -6123,7 +6117,7 @@ sub insert_audio {
 	return;
     }
 
-    if ($^O eq "MSWin32") {
+    if ($is_mingw) {
 	#smog_system("chmod.exe 600 \"$audio_temp\"");
     }
     else {
@@ -6293,7 +6287,7 @@ sub cut_audio {
         smog_rename("$audio_in","$audio_bak");
     }
     else {
-        if ($^O eq "MSWin32") {
+        if ($is_mingw) {
             $smres=smog_system("touch.exe \"$audio_temp\"");
         }
         else {
@@ -6303,7 +6297,7 @@ sub cut_audio {
             $panic=sig_write_error("$audio_temp");
             return;
         }
-        if ($^O eq "MSWin32") {
+        if ($is_mingw) {
 	    #smog_system("chmod.exe 600 \"$audio_temp\"");
         }
         else {
@@ -6392,7 +6386,7 @@ sub append_silence {
     }
 
     unless(-f $audio_file) {
-        if ($^O eq "MSWin32") {
+        if ($is_mingw) {
             $smres = smog_system("touch.exe \"$audio_file\"");
         } else {
             $smres = smog_system("touch \"$audio_file\"");
@@ -6401,7 +6395,7 @@ sub append_silence {
             $panic = sig_write_error("$audio_file");
             return;
         }
-        if ($^O eq "MSWin32") {
+        if ($is_mingw) {
 	    #smog_system("chmod.exe 600 \"$audio_file\"");
         } else {
             smog_system("/bin/chmod 600 \"$audio_file\"");
@@ -6417,7 +6411,7 @@ sub append_silence {
     if ($size > 0) {
         if ($asigned == 1) {
             $fdd_out = $audio_file;
-            if ($^O eq "MSWin32") {
+            if ($is_mingw) {
                 $smres = smog_system("touch.exe \"$audio_file\"");
                 if ($smres) {
                     $panic = sig_write_error("$audio_file");
@@ -6437,7 +6431,7 @@ sub append_silence {
             }
             return if $panic;
 	} else {
-	    if ($^O eq "MSWin32") {
+	    if ($is_mingw) {
                 $smres = smog_system("touch.exe \"$audio_file\"");
             } else {
                 $smres = smog_system("touch \"$audio_file\"");
@@ -7268,7 +7262,7 @@ sub location {
     # return the location of an executable
     my ($command)=shift;
 
-    if ($^O eq "MSWin32") {
+    if ($is_mingw) {
         return "$command.exe";
     }
 
@@ -7508,7 +7502,7 @@ sub fast_dd {
     seek FFIN,$skip,SEEK_START or $panic=sig_read_error("$fdd_in");
     return if $panic;
 
-    if ($^O eq "MSWin32") {
+    if ($is_mingw) {
         $smres=smog_system("touch.exe $fdd_out");
     }
     else {
@@ -7600,7 +7594,7 @@ sub fndset {
     # check if a directory is in a set (old style)
     # but useful for frontend marking the currently opened clips, so we do not prune them by accident
 
-    if ($^O eq "MSWin32") {
+    if ($is_mingw) {
         /^set/ or return;
     }
     else {
@@ -7685,7 +7679,7 @@ sub version_check_and_upgrade {
             $msg="!updmsg";
         }
 
-        if ($^O ne "MSWin32") {
+        if (!$is_mingw) {
             if ($new_version_hash>2008000&&$version_hash<=2008000) {
                 $msg="!updmsg2";
             }
@@ -7797,7 +7791,7 @@ sub get_form_request {
         return &get_format_request;
     }
     else {
-        if ($^O eq "MSWin32") {
+        if ($is_mingw) {
 	    # filter by file ext
             my $ext=&get_ext("$plugin");
             if ($ext eq ".py") {
@@ -7874,7 +7868,7 @@ sub weed {
                     $in_set=0;
                     find (\&fndset,"$workdir/$file/");
                     if (!$in_set && !($opts & 0x01)) {
-                        if ($^O eq "MSWin32") {
+                        if ($is_mingw) {
                             if (chdir("$workdir/$file")) {
                                 unlink glob "* *.* .*";
                                 smog_chdir("$workdir");
@@ -7996,7 +7990,7 @@ sub clear_symlinks {
 
     if (-d $linksdir) {
 	# remove directory + contents
-        if ($^O eq "MSWin32") {
+        if ($is_mingw) {
             smog_system("DEL /q \"$linksdir\"");
             smog_system("RMDIR \"$linksdir\"");
         }
@@ -8006,7 +8000,7 @@ sub clear_symlinks {
     }
 
     #create dir so next step works
-    if ($^O eq "MSWin32") {
+    if ($is_mingw) {
         smog_system("mkdir.exe /p \"$linksdir\"");
     }
     else {
@@ -8014,7 +8008,7 @@ sub clear_symlinks {
     }
 
     # remove dir + any empty parents
-    if ($^O eq "MSWin32") {
+    if ($is_mingw) {
         smog_system("rmdir.exe /p \"$linksdir\" 2>$nulfile");
     }
     else {

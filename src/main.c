@@ -2247,14 +2247,13 @@ capability *get_capabilities(void) {
 #ifndef IS_MINGW
   lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
 #else
-  // TODO/REG - we will get from registry
-  tmp = lives_win32_get_registry(HKEY_CURRENT_USER, "Volatile Environment", "APPDATA"); 
+  tmp = lives_win32_get_registry(HKEY_CURRENT_USER, "Volatile Environment", "APPDATA");
   lives_snprintf(capable->home_dir, PATH_MAX, "%s\\LiVES", tmp);
   lives_free(tmp);
 
-if (!is_writeable_dir(capable->home_dir)) {
-	ShellExecute( NULL, "runas", "mkdir", capable->home_dir, NULL, SW_SHOWNORMAL );
-}
+  if (!is_writeable_dir(capable->home_dir)) {
+    ShellExecute(NULL, "runas", "mkdir", capable->home_dir, NULL, SW_SHOWNORMAL);
+  }
 
 #endif
 #endif

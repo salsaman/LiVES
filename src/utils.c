@@ -141,12 +141,12 @@ LIVES_INLINE int sidhash(char *strsid) {
 #ifdef IS_MINGW
 
 char *lives_win32_get_registry(HKEY key, LPCSTR subkey, LPCSTR value) {
-  HKEY hKey = 0;
   char buf[255] = {0};
   DWORD dwType = 0;
   DWORD dwBufSize = sizeof(buf);
+	char *retval = NULL;
   
-  if (RegGetValueA(hkey, subkey, value, RRF_RT_REG_SZ, &dwType, (BYTE*)buf, &dwBufSize) == ERROR_SUCCESS) {
+  if (RegGetValueA(key, subkey, value, RRF_RT_REG_SZ, &dwType, (BYTE*)buf, &dwBufSize) == ERROR_SUCCESS) {
     retval = strdup(buf);
   }
   return retval;

@@ -2248,9 +2248,14 @@ capability *get_capabilities(void) {
   lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
 #else
   // TODO/REG - we will get from registry
-  tmp = get_registry(HKEY_CURRENT_USER, "Volatile Environment", "APPDATA"); 
+  tmp = lives_win32_get_registry(HKEY_CURRENT_USER, "Volatile Environment", "APPDATA"); 
   lives_snprintf(capable->home_dir, PATH_MAX, "%s\\LiVES", tmp);
   lives_free(tmp);
+
+if (!is_writeable_dir(capable->home_dir)) {
+	ShellExecute( NULL, "runas", "mkdir", capable->home_dir, NULL, SW_SHOWNORMAL );
+}
+
 #endif
 #endif
 
@@ -2290,7 +2295,7 @@ capability *get_capabilities(void) {
   safer_bfile = lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_BFILE_NAME".%d.%d", capable->home_dir, lives_getuid(), lives_getgid());
   lives_rm(safer_bfile);
 
-  // check that we can write to /tmp
+  // check that we can write to $HOME
   if (!check_file(safer_bfile, FALSE)) return capable;
   capable->can_write_to_home = TRUE;
 

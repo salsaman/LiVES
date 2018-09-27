@@ -1016,10 +1016,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widge
   }
 #endif
 
-  css_string = g_strdup_printf(" %s {\n background-color: %s;\n }\n }\n", wname, colref);
+  css_string = g_strdup_printf(" %s {\n background-color: %s;\n }\n", wname, colref);
 
   if (GTK_IS_FRAME(widget)) {
-    tmp = lives_strdup_printf("%s %s label {\n background-color: %s;\n }\n }\n", css_string, wname, colref);
+    tmp = lives_strdup_printf("%s %s label {\n background-color: %s;\n }\n", css_string, wname, colref);
     lives_free(css_string);
     css_string = tmp;
   }

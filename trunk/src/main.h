@@ -172,7 +172,7 @@ typedef int lives_pgid_t;
 #define PREFIX_DEFAULT "/usr"
 #else
 // TODO - get this from the installer
-#define PREFIX_DEFAULT "C:\\Program Files\\LiVES"
+#define PREFIX_DEFAULT "C:\\Program Files\\testlives"
 #endif
 #endif
 

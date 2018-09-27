@@ -2251,10 +2251,13 @@ capability *get_capabilities(void) {
   lives_snprintf(capable->home_dir, PATH_MAX, "%s\\LiVES", tmp);
   lives_free(tmp);
 
-  if (!is_writeable_dir(capable->home_dir)) {
-    ShellExecute(NULL, "runas", "mkdir", capable->home_dir, NULL, SW_SHOWNORMAL);
+  tmp = lives_strdup_printf("%s%s", capable->home_dir, LIVES_CONFIG_DIR);
+  
+  if (!is_writeable_dir(capable->home_dir LIVES_CONFIG_DIR)) {
+    ShellExecute(NULL, "runas", "mkdir", capable->home_dir LIVES_CONFIG_DIR, NULL, SW_SHOWNORMAL);
   }
 
+  lives_free(tmp);
 #endif
 #endif
 
@@ -2306,8 +2309,8 @@ capability *get_capabilities(void) {
 
 #else
 
-  lives_snprintf(prefs->backend_sync, PATH_MAX, "perl \"%s\\%s\"", prefs->prefix_dir, BACKEND_NAME);
-  lives_snprintf(prefs->backend, PATH_MAX, "START /MIN /B perl \"%s\\%s\"", prefs->prefix_dir, BACKEND_NAME);
+  lives_snprintf(prefs->backend_sync, PATH_MAX, "perl \"%s\\usr\\bin\\%s\"", prefs->prefix_dir, BACKEND_NAME);
+  lives_snprintf(prefs->backend, PATH_MAX, "START /MIN /B perl \"%s\\usr\\bin\\%s\"", prefs->prefix_dir, BACKEND_NAME);
 
 #endif
   lives_snprintf(string, 256, "%s report \"%s\" 2>%s", prefs->backend_sync,

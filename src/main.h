@@ -79,6 +79,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <winbase.h>
 #include <tlhelp32.h>
 #include <sddl.h>
+#include <Knownfolders.h>
 
 #define O_SYNC (FILE_FLAG_NO_BUFFERING|FILE_FLAG_WRITE_THROUGH)
 
@@ -1192,6 +1193,7 @@ boolean lives_freep(void **ptr);
 void lives_kill_subprocesses(const char *dirname, boolean kill_parent);
 void lives_suspend_resume_process(const char *dirname, boolean suspend);
 #ifdef IS_MINGW
+char *lives_win32_get_def_folder(const GUID rfid);
 char *lives_win32_get_registry(HKEY key, LPCSTR subkey, LPCSTR value);
 boolean lives_win32_suspend_resume_process(DWORD pid, boolean suspend);
 boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent);

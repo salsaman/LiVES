@@ -101,5 +101,10 @@ dkms.conf
 Makefile
 Makefile.in
 *.gmo
-*.libs/
-*.deps/
+.libs/
+.deps/
+libtool
+intl
+
+sendOSC
+lives-exe

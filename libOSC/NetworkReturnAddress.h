@@ -45,8 +45,9 @@ The OpenSound Control WWW page is
 
 /* Return sizeof(struct NetworkReturnAddressStruct). */
 int SizeOfNetworkReturnAddress(void);
-
+#if 0
 /* Send a packet back to the client, or do nothing if addr==0 */
 Boolean NetworkSendReturnMessage(NetworkReturnAddressPtr addr,
                                  int n,
                                  void *buf);
+#endif

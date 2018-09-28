@@ -49,6 +49,7 @@ int SizeOfNetworkReturnAddress(void) {
   return sizeof(struct NetworkReturnAddressStruct);
 }
 
+#if 0
 Boolean NetworkSendReturnMessage(NetworkReturnAddressPtr addr,
                                  int n,
                                  void *buf) {
@@ -56,3 +57,4 @@ Boolean NetworkSendReturnMessage(NetworkReturnAddressPtr addr,
 
   return n == sendto(addr->sockfd, buf, n, 0, &(addr->cl_addr), addr->clilen);
 }
+#endif

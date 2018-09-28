@@ -380,7 +380,9 @@ static boolean pre_init(void) {
 
   pthread_mutexattr_t mattr;
 
+#ifndef IS_MINGW
   boolean needs_update = FALSE;
+#endif
 
   register int i;
 
@@ -563,8 +565,6 @@ static boolean pre_init(void) {
   lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", prefs->prefix_dir);
 #endif
 
-  needs_update = FALSE;
-
   memset(mainw->sepimg_path, 0, 1);
   memset(mainw->frameblank_path, 0, 1);
 
@@ -664,8 +664,6 @@ static boolean pre_init(void) {
   }
 
   weed_memory_init();
-
-  needs_update = FALSE; // stop compiler warnings
 
 #ifdef ENABLE_OSC
   // create devicemaps directory in home
@@ -2247,14 +2245,21 @@ capability *get_capabilities(void) {
 #ifndef IS_MINGW
   lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
 #else
-  tmp = lives_win32_get_registry(HKEY_CURRENT_USER, "Volatile Environment", "APPDATA");
+  if ((tmp = lives_win32_get_def_folder(FOLDERID_RoamingAppData)) == NULL || strlen(tmp) == 0) {
+    tmp = lives_win32_get_registry(HKEY_CURRENT_USER, "Volatile Environment", "APPDATA");
+  }
+
+  if (tmp == NULL || strlen(tmp) == 0) {
+    LIVES_FATAL("Could not get appdata directory");
+  }
+
   lives_snprintf(capable->home_dir, PATH_MAX, "%s\\LiVES", tmp);
   lives_free(tmp);
 
   tmp = lives_strdup_printf("%s%s", capable->home_dir, LIVES_CONFIG_DIR);
-  
-  if (!is_writeable_dir(capable->home_dir LIVES_CONFIG_DIR)) {
-    ShellExecute(NULL, "runas", "mkdir", capable->home_dir LIVES_CONFIG_DIR, NULL, SW_SHOWNORMAL);
+
+  if (!is_writeable_dir(tmp)) {
+    ShellExecute(NULL, "runas", "mkdir", tmp, NULL, SW_SHOWNORMAL);
   }
 
   lives_free(tmp);
@@ -2309,8 +2314,10 @@ capability *get_capabilities(void) {
 
 #else
 
-  lives_snprintf(prefs->backend_sync, PATH_MAX, "perl \"%s\\usr\\bin\\%s\"", prefs->prefix_dir, BACKEND_NAME);
-  lives_snprintf(prefs->backend, PATH_MAX, "START /MIN /B perl \"%s\\usr\\bin\\%s\"", prefs->prefix_dir, BACKEND_NAME);
+  lives_snprintf(prefs->backend_sync, PATH_MAX, "perl -s -WINHOME=\"%s\" -- \"%s\\usr\\bin\\%s\"", capable->home_dir, prefs->prefix_dir,
+                 BACKEND_NAME);
+  lives_snprintf(prefs->backend, PATH_MAX, "START /MIN /B perl -s -WINHOME=\"%s\" -- \"%s\\usr\\bin\\%s\"", capable->home_dir,
+                 prefs->prefix_dir, BACKEND_NAME);
 
 #endif
   lives_snprintf(string, 256, "%s report \"%s\" 2>%s", prefs->backend_sync,

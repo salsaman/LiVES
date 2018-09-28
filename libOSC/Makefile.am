@@ -18,7 +18,7 @@ else
 AM_CPPFLAGS = -I "$(top_srcdir)" -I "$(top_srcdir)/libOSC" -I "$(includedir)"
 endif
 
-# libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS) $(mingw_CFLAGS)
+libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS) $(mingw_CFLAGS)
 
 if ENABLE_OSC
 libOSC_la_SOURCES = OSC-address-space.c OSC-address-space.h\

@@ -620,7 +620,7 @@ boolean do_startup_tests(boolean tshoot) {
       afile = lives_build_filename(prefs->workdir, cfile->handle, "testout.wav", NULL);
 
       mainw->com_failed = FALSE;
-      com = lives_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"", prefs->backend_sync, cfile->handle, afile);
+      com = lives_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 1 22050 \"%s\"", prefs->backend_sync, cfile->handle, afile);
       lives_system(com, TRUE);
       if (mainw->com_failed) {
         tmp = lives_strdup_printf(_("Command failed: %s"), com);

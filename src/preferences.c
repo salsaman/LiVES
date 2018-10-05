@@ -4957,11 +4957,13 @@ _prefsw *create_prefs_dialog(void) {
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->ofmt_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  if (capable->has_encoder_plugins) {
+    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->ofmt_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
-  if (prefsw->acodec_combo != NULL)
-    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                         NULL);
+    if (prefsw->acodec_combo != NULL)
+      lives_signal_connect(LIVES_GUI_OBJECT(prefsw->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+			   NULL);
+  }
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_antialias), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_rte_keys), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,

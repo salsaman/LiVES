@@ -37,19 +37,19 @@ Updated by G. Finch (salsaman) 2010
 version = '0.1'
 import os
 if os.name == 'nt':
-	convert = 'convert.exe'
-	mencoder = 'mencoder.exe'
-	oggenc = 'oggenc.exe'
+        convert = 'convert.exe'
+        mencoder = 'mencoder.exe'
+        oggenc = 'oggenc.exe'
         mkvmerge = 'mkvmerge.exe'
-	dirac_encoder = 'dirac_encoder.exe'
-	identify = 'identify.exe'
+        dirac_encoder = 'dirac_encoder.exe'
+        identify = 'identify.exe'
 else:
-	convert = 'convert'
-	mencoder = 'mencoder'
-	oggenc = 'oggenc'
+        convert = 'convert'
+        mencoder = 'mencoder'
+        oggenc = 'oggenc'
         mkvmerge = 'mkvmerge'
-	dirac_encoder = 'dirac_encoder'
-	identify = 'identify'
+        dirac_encoder = 'dirac_encoder'
+        identify = 'identify'
 
 usage = \
       """
@@ -365,10 +365,10 @@ def do_enhance():
             run(command)
         else:
             if os.path.exists(rimg_fname): os.remove(rimg_fname)
-	    try:
-            	os.symlink(eimg_fname, rimg_fname)
-	    except (IOError, OSError):
-		shutil.copy(eimg_fname, rimg_fname)
+            try:
+                os.symlink(eimg_fname, rimg_fname)
+            except (IOError, OSError):
+                shutil.copy(eimg_fname, rimg_fname)
         iframe+=1
 
 
@@ -388,8 +388,8 @@ def do_encode():
     fpsden = fps.split('/')[1]
     ffps = eval('float('+fpsnum+')/'+fpsden)
     mencoder_opts = '-mf type=%s:fps=%s ' % (ext[1:], ffps) + \
-		    '-nosound -vf hqdn3d=2:1:3,pp=va:128:8/ha:128:8/dr,' + \
-		    'dsize=%s,format=i420 -ovc raw -of rawvideo -o ' % aspect
+                    '-nosound -vf hqdn3d=2:1:3,pp=va:128:8/ha:128:8/dr,' + \
+                    'dsize=%s,format=i420 -ovc raw -of rawvideo -o ' % aspect
     dirac_opts = ''
     if vtype == 'll':
         dirac_opts = ' '.join([dirac_opts, '-lossless'])
@@ -425,10 +425,10 @@ def do_encode():
             frfile = os.path.join(source_dir, iframe)
             frlink = os.path.join(source_dir, syml + iframe)
             if os.path.islink(frlink): os.remove(frlink)
-	    try:
-            	os.symlink(frfile, frlink)
-	    except (IOError, OSError):
-		shutil.copy(frfile, frlink)
+            try:
+                os.symlink(frfile, frlink)
+            except (IOError, OSError):
+                shutil.copy(frfile, frlink)
     else:
         syml = ''
         numframes = len(glob.glob(os.path.join(source_dir, \

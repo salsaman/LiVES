@@ -180,14 +180,14 @@ def is_installed(prog):
         found  = 1
 
     if found:
-	if hassubproc:	
-		p = subprocess.Popen(['python', wprog, '-C'],stdout=subprocess.PIPE)
-		std_out_err=p.stdout
+        if hassubproc:  
+                p = subprocess.Popen(['python', wprog, '-C'],stdout=subprocess.PIPE)
+                std_out_err=p.stdout
 
-	else:
-        	(std_in, std_out_err) = os.popen4('python ' + wprog  + ' -C')
-        	std_in.close()
-	
+        else:
+                (std_in, std_out_err) = os.popen4('python ' + wprog  + ' -C')
+                std_in.close()
+        
 
         if 'command not found' in std_out_err.read():
             if verbose:
@@ -243,10 +243,10 @@ if __name__ == '__main__':
 
     hassubproc = False
     try:
-    	import subprocess
-    	hassubproc = True
+        import subprocess
+        hassubproc = True
     except ImportError:
-    	pass
+        pass
 
     tempdir = os.path.abspath(TEMPDIR)
 

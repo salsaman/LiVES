@@ -337,10 +337,10 @@ def do_enhance():
             run(command)
         else:
             if os.path.exists(rimg_fname): os.remove(rimg_fname)
-	    try:
-            	os.symlink(eimg_fname, rimg_fname)
-	    except (IOError, OSError):
-		shutil.copy(eimg_fname, rimg_fname)
+            try:
+                os.symlink(eimg_fname, rimg_fname)
+            except (IOError, OSError):
+                shutil.copy(eimg_fname, rimg_fname)
         iframe+=1
 
 
@@ -408,10 +408,10 @@ def do_encode():
             frfile = os.path.join(source_dir, iframe)
             frlink = os.path.join(source_dir, syml + iframe)
             if os.path.islink(frlink): os.remove(frlink)
-	    try:
-            	os.symlink(frfile, frlink)
-	    except (IOError, OSError):
-		shutil.copy(frfile, frlink)
+            try:
+                os.symlink(frfile, frlink)
+            except (IOError, OSError):
+                shutil.copy(frfile, frlink)
 
     else:
         syml = ''

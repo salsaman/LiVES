@@ -315,8 +315,8 @@ def frame2pixel_aspect(size, frame_aspect):
 
     divisor = gcd(pixel_num, pixel_den)
     if divisor > 1:
-	    pixel_num = pixel_num/divisor
-	    pixel_den = pixel_den/divisor
+            pixel_num = pixel_num/divisor
+            pixel_den = pixel_den/divisor
     pixel_aspect = (pixel_num, pixel_den)
     return pixel_aspect
 
@@ -370,10 +370,10 @@ def do_enhance():
             run(command)
         else:
             if os.path.exists(rimg_fname): os.remove(rimg_fname)
-	    try:
-            	os.symlink(eimg_fname, rimg_fname)
-	    except (IOError, OSError):
-		shutil.copy(eimg_fname, rimg_fname)
+            try:
+                os.symlink(eimg_fname, rimg_fname)
+            except (IOError, OSError):
+                shutil.copy(eimg_fname, rimg_fname)
         iframe+=1
 
 
@@ -445,10 +445,10 @@ def do_encode():
             frfile = os.path.join(source_dir, iframe)
             frlink = os.path.join(source_dir, syml + iframe)
             if os.path.islink(frlink): os.remove(frlink)
-	    try:
-            	os.symlink(frfile, frlink)
-	    except (IOError, OSError):
-		shutil.copy(frfile, frlink)
+            try:
+                os.symlink(frfile, frlink)
+            except (IOError, OSError):
+                shutil.copy(frfile, frlink)
     else:
         syml = ''
         numframes = len(glob.glob(os.path.join(source_dir, \
@@ -846,8 +846,8 @@ CHANGELOG:
 13 Oct 2004 : 0.0.3 : fix aspect ratio by using
                       pixel aspect ratio instead of
                       frame aspect ratio (j@v2v.cc).
-		      calculate frame size to do the above.
-		      fixed extension from ".ogv" to ".ogg".
+                      calculate frame size to do the above.
+                      fixed extension from ".ogv" to ".ogg".
 14 Oct 2004 : 0.0.4 : "size" is (width, height) (original
                       patch had assumed it switched).
 26 Oct 2004 : 0.0.5 : can handle arbitrary fps values.

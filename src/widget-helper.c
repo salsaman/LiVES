@@ -1093,7 +1093,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widge
   }
 #endif
 
-  css_string = g_strdup_printf(" %s {\n color: %s;\n }\n }\n", wname, colref);
+  css_string = g_strdup_printf(" %s {\n color: %s;\n }\n", wname, colref);
 
 #if GTK_CHECK_VERSION(4, 0, 0)
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),

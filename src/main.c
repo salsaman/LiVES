@@ -4033,8 +4033,9 @@ void load_start_image(int frame) {
   if (mainw->multitrack != NULL) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
+  lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
+  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
 #endif
 
   if (mainw->current_file > -1 && cfile != NULL && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -4051,7 +4052,9 @@ void load_start_image(int frame) {
     set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image), mainw->camframe, NULL);
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
+    lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
     lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
+    lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -4067,7 +4070,9 @@ void load_start_image(int frame) {
     threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
+    lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
     lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
+    lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -4107,7 +4112,9 @@ void load_start_image(int frame) {
     threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
+    lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
     lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
+    lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -4181,7 +4188,9 @@ void load_start_image(int frame) {
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
+  lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
   lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
+  lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
 }
 
@@ -4199,8 +4208,9 @@ void load_end_image(int frame) {
   if (mainw->multitrack != NULL) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
+  lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
+  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
 #endif
 
   if (mainw->current_file > -1 && cfile != NULL && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -4214,7 +4224,9 @@ void load_end_image(int frame) {
 
     set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image), mainw->camframe, NULL);
 #if GTK_CHECK_VERSION(3, 0, 0)
+    lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
+    lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
     lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
@@ -4230,7 +4242,9 @@ void load_end_image(int frame) {
     }
     threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3, 0, 0)
+    lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
+    lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
     lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
@@ -4270,7 +4284,9 @@ void load_end_image(int frame) {
     }
     threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3, 0, 0)
+    lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
+    lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
     lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
@@ -4342,7 +4358,9 @@ void load_end_image(int frame) {
   mainw->noswitch = noswitch;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+  lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
+  lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
   lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
 }

@@ -372,10 +372,10 @@ def do_enhance():
             run(command)
         else:
             if os.path.exists(rimg_fname): os.remove(rimg_fname)
-	    try:
-            	os.symlink(eimg_fname, rimg_fname)
-	    except (IOError, OSError):
-		shutil.copy(eimg_fname, rimg_fname)
+            try:
+                os.symlink(eimg_fname, rimg_fname)
+            except (IOError, OSError):
+                shutil.copy(eimg_fname, rimg_fname)
         iframe+=1
 
 

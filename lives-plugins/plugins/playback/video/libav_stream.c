@@ -797,7 +797,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
     // flush buffers
     ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
     if (ret < 0) {
-      fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps, nb_samples, c->sample_rate, c->sample_fmt,
+      fprintf(stderr, "Error encoding audio frame: %s %d %d %d %ld\n", av_err2str(ret), nsamps, c->sample_rate, c->sample_fmt,
               c->channel_layout);
       return FALSE;
     }

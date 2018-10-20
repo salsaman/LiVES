@@ -5417,7 +5417,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
 
   // remove the protective markers
   for (i = 0; i < MAX_FILES; i++) {
-    if (mainw->files[i] != NULL && mainw->files[i]->clip_type == CLIP_TYPE_DISK) {
+    if (mainw->files[i] != NULL && (mainw->files[i]->clip_type == CLIP_TYPE_DISK || mainw->files[i]->clip_type == CLIP_TYPE_FILE)) {
       markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, "set.", NULL);
       lives_rm(markerfile);
       lives_free(markerfile);

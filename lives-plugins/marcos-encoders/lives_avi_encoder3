@@ -24,10 +24,15 @@ It's a trivial program, but might as well GPL it, so see:
 http://www.gnu.org/copyleft/gpl.html for license.
 
 See my vids at http://amv.reimeika.ca !
+
+Copyright (C) 2008 - 2018 Salsaman (salsaman+lives@gmail.com)
 """
 
-version = '0.0.10'
-convert = 'convert'
+version = '0.0.19'
+if os.name == 'nt':
+    convert = 'mgkvert'
+else:
+    convert = 'convert'
 mencoder = 'mencoder'
 lameenc = 'lame'
 sox = 'sox'

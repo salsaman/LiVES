@@ -4680,15 +4680,16 @@ void add_rfx_effects(void) {
       if ((rfx->props & RFX_PROPS_MAY_RESIZE && rfx->num_in_channels == 1) || rfx->min_frames < 0) {
         // add resizing effects to tools menu
 
+        lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
+        if (rfx->num_params) lives_strappend(txt, 64, "...");
+        menuitem = lives_standard_menu_item_new_with_label(txt);
+
         if (!strcmp(rfx->name, "resize")) {
           if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate == -1) {
             mainw->resize_menuitem = menuitem;
           } else continue;
         }
 
-        lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
-        if (rfx->num_params) lives_strappend(txt, 64, "...");
-        menuitem = lives_standard_menu_item_new_with_label(txt);
         if (prefs->show_gui) lives_widget_show(menuitem);
 
         switch (rfx->status) {

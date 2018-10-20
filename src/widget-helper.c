@@ -5974,6 +5974,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_menu_item_set_accel_path(LiVESMenuItem
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_item_get_submenu(LiVESMenuItem *menuitem) {
+#ifdef GUI_GTK
+  return gtk_menu_item_get_submenu(menuitem);
+#endif
+  return NULL;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
@@ -7594,9 +7602,12 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   LiVESWidget *eventbox = NULL;
   LiVESWidget *label = NULL;
   LiVESWidget *hbox;
+  LiVESWidget *vbox;
   LiVESAdjustment *adj;
 
   boolean expand = FALSE;
+
+  lives_expand_t woe;
 
   int maxlen;
 
@@ -7643,6 +7654,15 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
     lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
 
+    vbox = lives_vbox_new(0, FALSE);
+    lives_box_pack_start(LIVES_BOX(hbox), vbox, widget_opts.expand == LIVES_EXPAND_EXTRA, FALSE, widget_opts.packing_width);
+
+    woe = widget_opts.expand;
+    widget_opts.expand = LIVES_EXPAND_NONE;
+    add_fill_to_box(LIVES_BOX(vbox));
+
+    hbox = lives_hbox_new(0, FALSE);
+
     if (!widget_opts.swap_label && eventbox != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
 
@@ -7654,6 +7674,11 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
     if (widget_opts.swap_label && eventbox != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
+
+    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    add_fill_to_box(LIVES_BOX(vbox));
+    widget_opts.expand = woe;
   }
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
@@ -8703,6 +8728,26 @@ boolean lives_container_child_set_shrinkable(LiVESContainer *c, LiVESWidget *chi
 }
 
 
+boolean set_submenu_colours(LiVESMenu *menu, LiVESWidgetColor *colf, LiVESWidgetColor *colb) {
+  LiVESList *children = lives_container_get_children(LIVES_CONTAINER(menu)), *list = children;
+  lives_widget_set_bg_color(LIVES_WIDGET(menu), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(LIVES_WIDGET(menu), LIVES_WIDGET_STATE_NORMAL, colf);
+  while (list != NULL) {
+    LiVESWidget *child = (LiVESWidget *)list->data;
+    if (LIVES_IS_MENU_ITEM(child)) {
+      if ((menu = (LiVESMenu *)lives_menu_item_get_submenu(LIVES_MENU_ITEM(child))) != NULL) set_submenu_colours(menu, colf, colb);
+      else {
+        lives_widget_set_bg_color(LIVES_WIDGET(child), LIVES_WIDGET_STATE_NORMAL, colb);
+        lives_widget_set_fg_color(LIVES_WIDGET(child), LIVES_WIDGET_STATE_NORMAL, colf);
+      }
+    }
+    list = list->next;
+  }
+  if (children != NULL) lives_list_free(children);
+  return TRUE;
+}
+
+
 void lives_spin_button_configure(LiVESSpinButton *spinbutton,
                                  double value,
                                  double lower,
@@ -9202,7 +9247,7 @@ LiVESWidget *add_fill_to_box(LiVESBox *box) {
 #ifdef SHOW_FILL
   LiVESWidget *widget = lives_label_new("fill");
 #else
-  LiVESWidget *widget = lives_label_new("");
+  LiVESWidget *widget = lives_standard_label_new("");
 #endif
   if (LIVES_IS_HBOX(box)) {
     if (widget_opts.expand == LIVES_EXPAND_EXTRA) {
@@ -9213,7 +9258,7 @@ LiVESWidget *add_fill_to_box(LiVESBox *box) {
     if (widget_opts.expand == LIVES_EXPAND_EXTRA) {
       lives_box_pack_start(box, widget, TRUE, TRUE, widget_opts.filler_len / 2);
       lives_widget_set_vexpand(widget, TRUE);
-    } else lives_box_pack_start(box, widget, FALSE, TRUE, widget_opts.packing_height);
+    } else lives_box_pack_start(box, widget, FALSE, TRUE, widget_opts.expand == LIVES_EXPAND_NONE ? 0 : widget_opts.packing_height);
   }
 
   if (!widget_opts.no_gui) lives_widget_show(widget);

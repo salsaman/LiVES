@@ -20,18 +20,32 @@ It's a trivial program, but might as well GPL it, so see:
 http://www.gnu.org/copyleft/gpl.html for license.
 
 See my vids at http://amv.reimeika.ca !
+
+Copyright (C) 2008 - 2018 Salsaman (salsaman+lives@gmail.com)
 """
 
 version = '0.1.9'
-convert = 'convert'
-mpeg2enc = 'mpeg2enc'
-mp2enc = 'mp2enc'
-sox = 'sox'
-png2yuv = 'png2yuv'
-jpeg2yuv = 'jpeg2yuv'
-yuvdenoise = 'yuvdenoise'
-yuvscaler = 'yuvscaler'
-mplex = 'mplex'
+import os
+if os.name == 'nt':
+    convert = 'mgkvert.exe'
+    mpeg2enc = 'mpeg2enc.exe'
+    mp2enc = 'mp2enc.exe'
+    sox = 'sox.exe'
+    png2yuv = 'png2yuv.exe'
+    jpeg2yuv = 'jpeg2yuv.exe'
+    yuvdenoise = 'yuvdenoise.exe'
+    yuvscaler = 'yuvscaler.exe'
+    mplex = 'mplex.exe'
+else:
+    convert = 'convert'
+    mpeg2enc = 'mpeg2enc'
+    mp2enc = 'mp2enc'
+    sox = 'sox'
+    png2yuv = 'png2yuv'
+    jpeg2yuv = 'jpeg2yuv'
+    yuvdenoise = 'yuvdenoise'
+    yuvscaler = 'yuvscaler'
+    mplex = 'mplex'
 
 usage = \
       """
@@ -672,7 +686,7 @@ if __name__ == '__main__':
     img_dir = opts.get('-d', '.')
     img_dir = os.path.abspath(img_dir)
     if ' ' in img_dir:
-        temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
+        temp_dir = tempfile.mkdtemp('', '.lives-', img_dir)
         try:
             os.symlink(img_dir, temp_dir + '/img_dir')
         except (IOError, OSError):
@@ -814,7 +828,7 @@ if __name__ == '__main__':
             raise SystemExit(1)
     if ' ' in work_dir:
         if temp_dir == '':
-            temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
+            temp_dir = tempfile.mkdtemp('', '.lives-', work_dir)
         try:
             os.symlink(work_dir, temp_dir + '/work_dir')
         except (IOError, OSError):

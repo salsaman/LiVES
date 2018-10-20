@@ -187,7 +187,6 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 
 void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
                  LiVESWidgetColor *colb2, LiVESWidgetColor *coli, LiVESWidgetColor *colt) {
-
 #if !GTK_CHECK_VERSION(3, 0, 0)
   if (!mainw->foreign) {
     gtk_widget_ensure_style(mainw->LiVES);
@@ -217,31 +216,29 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(mainw->laudbar, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->raudbar, LIVES_WIDGET_STATE_NORMAL, colb);
 
-#ifdef HAVE_WEBM
-  lives_widget_set_bg_color(mainw->open_loc_submenu, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->open_loc_submenu, LIVES_WIDGET_STATE_NORMAL, colf2);
-#endif
+  set_submenu_colours(LIVES_MENU(mainw->files_menu), colf2, colb2);
 
-  lives_widget_set_bg_color(mainw->open_vcd_submenu, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->open_vcd_submenu, LIVES_WIDGET_STATE_NORMAL, colf2);
+  set_submenu_colours(LIVES_MENU(mainw->edit_menu), colf2, colb2);
 
-  lives_widget_set_bg_color(mainw->open_device_submenu, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->open_device_submenu, LIVES_WIDGET_STATE_NORMAL, colf2);
+  set_submenu_colours(LIVES_MENU(mainw->play_menu), colf2, colb2);
 
-  lives_widget_set_bg_color(mainw->recent_submenu, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->recent_submenu, LIVES_WIDGET_STATE_NORMAL, colf2);
+  set_submenu_colours(LIVES_MENU(mainw->effects_menu), colf2, colb2);
 
-  lives_widget_set_bg_color(mainw->effects_menu, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->effects_menu, LIVES_WIDGET_STATE_NORMAL, colf2);
+  set_submenu_colours(LIVES_MENU(mainw->tools_menu), colf2, colb2);
 
-  lives_widget_set_bg_color(mainw->tools_menu, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->tools_menu, LIVES_WIDGET_STATE_NORMAL, colf2);
+  set_submenu_colours(LIVES_MENU(mainw->audio_menu), colf2, colb2);
 
-  lives_widget_set_bg_color(mainw->clipsmenu, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->clipsmenu, LIVES_WIDGET_STATE_NORMAL, colf2);
+  set_submenu_colours(LIVES_MENU(mainw->info_menu), colf2, colb2);
 
-  lives_widget_set_bg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, colf2);
+  set_submenu_colours(LIVES_MENU(mainw->clipsmenu), colf2, colb2);
+
+  set_submenu_colours(LIVES_MENU(mainw->advanced_menu), colf2, colb2);
+
+  set_submenu_colours(LIVES_MENU(mainw->vj_menu), colf2, colb2);
+
+  set_submenu_colours(LIVES_MENU(mainw->toys_menu), colf2, colb2);
+
+  set_submenu_colours(LIVES_MENU(mainw->help_menu), colf2, colb2);
 
   lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf2);
@@ -353,7 +350,6 @@ void create_LiVES(void) {
   LiVESWidget *vbox;
   LiVESWidget *vbox2;
   LiVESWidget *menuitem;
-  LiVESWidget *menuitem_menu;
   LiVESWidget *select_submenu_menu;
   LiVESWidget *submenu_menu;
   LiVESWidget *export_submenu_menu;
@@ -363,21 +359,11 @@ void create_LiVES(void) {
 #if LIVES_HAS_IMAGE_MENU_ITEM
   LiVESWidget *image;
 #endif
-  LiVESWidget *effects;
-  LiVESWidget *tools;
-  LiVESWidget *audio;
-  LiVESWidget *audio_menu;
-  LiVESWidget *info;
-  LiVESWidget *info_menu;
-  LiVESWidget *advanced;
-  LiVESWidget *advanced_menu;
   LiVESWidget *rfx_menu;
   LiVESWidget *rfx_submenu;
   LiVESWidget *midi_menu;
   LiVESWidget *midi_submenu;
   LiVESWidget *midi_load;
-  LiVESWidget *vj_menu;
-  LiVESWidget *toys_menu;
   LiVESWidget *win;
   LiVESWidget *about;
   LiVESWidget *show_manual;
@@ -518,27 +504,27 @@ void create_LiVES(void) {
   menuitem = lives_standard_menu_item_new_with_label(_("_File"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
-  menuitem_menu = lives_menu_new();
-  lives_menu_set_accel_group(LIVES_MENU(menuitem_menu), mainw->accel_group);
+  mainw->files_menu = lives_menu_new();
+  lives_menu_set_accel_group(LIVES_MENU(mainw->files_menu), mainw->accel_group);
 
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), menuitem_menu);
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->files_menu);
 
   mainw->open = lives_standard_menu_item_new_with_label(_("_Open File/Directory"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open);
   lives_widget_add_accelerator(mainw->open, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_o, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
   mainw->open_sel = lives_standard_menu_item_new_with_label(_("O_pen Part of File..."));
 
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_sel);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_sel);
 
   mainw->open_loc = lives_standard_menu_item_new_with_label(_("Open _Location/Stream..."));
 
 #ifdef HAVE_WEBM
 
   mainw->open_loc_menu = lives_standard_menu_item_new_with_label(_("Open _Location/Stream..."));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_loc_menu);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_loc_menu);
 
   mainw->open_loc_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->open_loc_menu), mainw->open_loc_submenu);
@@ -550,7 +536,7 @@ void create_LiVES(void) {
 
 #else
 
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_loc);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_loc);
 
 #endif
 
@@ -559,7 +545,7 @@ void create_LiVES(void) {
   // TODO: show these options, but give errors for no mplayer / mplayer2
   // TODO - mpv
 #ifdef ENABLE_DVD_GRAB
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_vcd_menu);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_vcd_menu);
 #endif
 
   mainw->open_vcd_submenu = lives_menu_new();
@@ -572,7 +558,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->open_vcd_submenu), mainw->open_vcd);
 
   mainw->open_device_menu = lives_standard_menu_item_new_with_label(_("_Import from Firewire"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_device_menu);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_device_menu);
   mainw->open_device_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->open_device_menu), mainw->open_device_submenu);
 
@@ -590,7 +576,7 @@ void create_LiVES(void) {
   mainw->tvdev = lives_standard_menu_item_new_with_label(_("Add _TV Device"));
 
 #if defined(HAVE_UNICAP) || defined(HAVE_YUV4MPEG)
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), menuitem);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), menuitem);
 
   submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
@@ -623,7 +609,7 @@ void create_LiVES(void) {
 #endif // defined HAVE_UNICAP || defined HAVE_YUV4MPEG
 
   mainw->recent_menu = lives_standard_menu_item_new_with_label(_("_Recent Files..."));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->recent_menu);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->recent_menu);
   mainw->recent_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->recent_menu), mainw->recent_submenu);
 
@@ -656,46 +642,46 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent3);
   lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent4);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
   mainw->vj_load_set = lives_standard_menu_item_new_with_label(_("_Reload Clip Set..."));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->vj_load_set);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->vj_load_set);
 
   mainw->vj_save_set = lives_standard_menu_item_new_with_label(_("Close/Sa_ve All Clips"));
   lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->vj_save_set);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->vj_save_set);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
 #ifdef LIBAV_TRANSCODE
   mainw->transcode = lives_standard_menu_item_new_with_label(_("_Quick Transcode (beta)..."));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->transcode);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->transcode);
   lives_widget_set_sensitive(mainw->transcode, FALSE);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 #endif
 
   mainw->save_as = lives_standard_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_SAVE, mainw->accel_group);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->save_as);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->save_as);
   lives_widget_set_sensitive(mainw->save_as, FALSE);
   set_menu_text(mainw->save_as, _("_Encode Clip As..."), TRUE);
 
   mainw->save_selection = lives_standard_menu_item_new_with_label(_("Encode _Selection As..."));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->save_selection);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->save_selection);
   lives_widget_set_sensitive(mainw->save_selection, FALSE);
 
   mainw->close = lives_standard_menu_item_new_with_label(_("_Close This Clip"));
   lives_widget_add_accelerator(mainw->close, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_w, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->close);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->close);
   lives_widget_set_sensitive(mainw->close, FALSE);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
   mainw->backup = lives_standard_menu_item_new_with_label((tmp = lives_strdup_printf(_("_Backup Clip as .%s..."), LIVES_FILE_EXT_BACKUP)));
   lives_free(tmp);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->backup);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->backup);
   lives_widget_set_sensitive(mainw->backup, FALSE);
 
   lives_widget_add_accelerator(mainw->backup, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -705,37 +691,37 @@ void create_LiVES(void) {
   mainw->restore = lives_standard_menu_item_new_with_label((tmp = lives_strdup_printf(_("_Restore Clip from .%s..."),
                    LIVES_FILE_EXT_BACKUP)));
   lives_free(tmp);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->restore);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->restore);
 
   lives_widget_add_accelerator(mainw->restore, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_r, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
   mainw->sw_sound = lives_standard_check_menu_item_new_with_label(_("Encode/Load/Backup _with Sound"), TRUE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->sw_sound);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->sw_sound);
 
   mainw->aload_subs = lives_standard_check_menu_item_new_with_label(_("Auto load subtitles"), prefs->autoload_subs);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->aload_subs);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->aload_subs);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
   mainw->clear_ds = lives_standard_menu_item_new_with_label(_("Clean _up Diskspace"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->clear_ds);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->clear_ds);
 
   mainw->quit = lives_standard_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_QUIT, mainw->accel_group);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->quit);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->quit);
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Edit"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
-  menuitem_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), menuitem_menu);
+  mainw->edit_menu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->edit_menu);
 
   mainw->undo = lives_standard_image_menu_item_new_with_label(_("_Undo"));
 
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->undo);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->undo);
   lives_widget_set_sensitive(mainw->undo, FALSE);
 
   lives_widget_add_accelerator(mainw->undo, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -749,7 +735,7 @@ void create_LiVES(void) {
 #endif
 
   mainw->redo = lives_standard_image_menu_item_new_with_label(_("_Redo"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->redo);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->redo);
   lives_widget_set_sensitive(mainw->redo, FALSE);
 
   lives_widget_add_accelerator(mainw->redo, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -762,19 +748,19 @@ void create_LiVES(void) {
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->redo), image);
 #endif
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->edit_menu));
 
   mainw->mt_menu = lives_standard_image_menu_item_new_with_label(_("_MULTITRACK mode"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->mt_menu);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->mt_menu);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->edit_menu));
 
   lives_widget_add_accelerator(mainw->mt_menu, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_m, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
   mainw->copy = lives_standard_image_menu_item_new_with_label(_("_Copy Selection"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->copy);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->copy);
   lives_widget_set_sensitive(mainw->copy, FALSE);
 
   lives_widget_add_accelerator(mainw->copy, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -782,7 +768,7 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->cut = lives_standard_image_menu_item_new_with_label(_("Cu_t Selection"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->cut);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->cut);
   lives_widget_set_sensitive(mainw->cut, FALSE);
 
   lives_widget_add_accelerator(mainw->cut, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -790,7 +776,7 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->insert = lives_standard_image_menu_item_new_with_label(_("_Insert from Clipboard..."));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->insert);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->insert);
   lives_widget_set_sensitive(mainw->insert, FALSE);
 
   lives_widget_add_accelerator(mainw->insert, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -804,7 +790,7 @@ void create_LiVES(void) {
 #endif
 
   mainw->paste_as_new = lives_standard_image_menu_item_new_with_label(_("Paste as _New"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->paste_as_new);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->paste_as_new);
   lives_widget_set_sensitive(mainw->paste_as_new, FALSE);
 
   lives_widget_add_accelerator(mainw->paste_as_new, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -813,11 +799,11 @@ void create_LiVES(void) {
 
   mainw->merge = lives_standard_menu_item_new_with_label(_("_Merge Clipboard with Selection..."));
 
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->merge);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->merge);
   lives_widget_set_sensitive(mainw->merge, FALSE);
 
   mainw->xdelete = lives_standard_image_menu_item_new_with_label(_("_Delete Selection"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->xdelete);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->xdelete);
   lives_widget_set_sensitive(mainw->xdelete, FALSE);
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
@@ -829,15 +815,15 @@ void create_LiVES(void) {
                                LIVES_KEY_d, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->edit_menu));
 
   mainw->ccpd_sound = lives_standard_check_menu_item_new_with_label(_("Decouple _Video from Audio"), !mainw->ccpd_with_sound);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->ccpd_sound);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->ccpd_sound);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->edit_menu));
 
   mainw->select_submenu = lives_standard_menu_item_new_with_label(_("_Select..."));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->select_submenu);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->select_submenu);
 
   select_submenu_menu = lives_menu_new();
 
@@ -886,20 +872,20 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->lock_selwidth = lives_standard_check_menu_item_new_with_label(_("_Lock Selection Width"), FALSE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->lock_selwidth);
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->lock_selwidth);
   lives_widget_set_sensitive(mainw->lock_selwidth, FALSE);
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Play"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
-  menuitem_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), menuitem_menu);
+  mainw->play_menu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->play_menu);
 
   mainw->playall = lives_standard_image_menu_item_new_with_label(_("_Play All"));
   lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_p, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->playall);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->playall);
   lives_widget_set_sensitive(mainw->playall, FALSE);
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
@@ -912,11 +898,11 @@ void create_LiVES(void) {
   lives_widget_add_accelerator(mainw->playsel, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_y, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->playsel);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->playsel);
   lives_widget_set_sensitive(mainw->playsel, FALSE);
 
   mainw->playclip = lives_standard_image_menu_item_new_with_label(_("Play _Clipboard"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->playclip);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->playclip);
   lives_widget_set_sensitive(mainw->playclip, FALSE);
 
   lives_widget_add_accelerator(mainw->playclip, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -936,7 +922,7 @@ void create_LiVES(void) {
 #endif
 
   mainw->stop = lives_standard_image_menu_item_new_with_label(_("_Stop"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->stop);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->stop);
   lives_widget_set_sensitive(mainw->stop, FALSE);
   lives_widget_add_accelerator(mainw->stop, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_q, (LiVESXModifierType)0,
@@ -948,7 +934,7 @@ void create_LiVES(void) {
 #endif
 
   mainw->rewind = lives_standard_image_menu_item_new_with_label(_("Re_wind"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->rewind);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->rewind);
   lives_widget_set_sensitive(mainw->rewind, FALSE);
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
@@ -969,26 +955,26 @@ void create_LiVES(void) {
                                LIVES_KEY_r, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->record_perf);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->record_perf);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->play_menu));
 
   mainw->full_screen = lives_standard_check_menu_item_new_with_label(_("_Full Screen"), FALSE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->full_screen);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->full_screen);
 
   lives_widget_add_accelerator(mainw->full_screen, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_f, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
   mainw->dsize = lives_standard_check_menu_item_new_with_label(_("_Double Size"), FALSE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->dsize);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->dsize);
 
   lives_widget_add_accelerator(mainw->dsize, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_d, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
   mainw->sepwin = lives_standard_check_menu_item_new_with_label(_("Play in _Separate Window"), FALSE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->sepwin);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->sepwin);
 
   lives_widget_add_accelerator(mainw->sepwin, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_s, (LiVESXModifierType)0,
@@ -1000,18 +986,18 @@ void create_LiVES(void) {
                                  LIVES_KEY_b, (LiVESXModifierType)0,
                                  LIVES_ACCEL_VISIBLE);
 
-    lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->fade);
+    lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->fade);
   }
 
   mainw->loop_video = lives_standard_check_menu_item_new_with_label(_("(Auto)_loop Video (to fit audio track)"), mainw->loop);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->loop_video);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->loop_video);
   lives_widget_set_sensitive(mainw->loop_video, FALSE);
   lives_widget_add_accelerator(mainw->loop_video, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_l, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
   mainw->loop_continue = lives_standard_check_menu_item_new_with_label(_("L_oop Continuously"), FALSE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->loop_continue);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->loop_continue);
   lives_widget_set_sensitive(mainw->loop_continue, FALSE);
 
   lives_widget_add_accelerator(mainw->loop_continue, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -1019,51 +1005,51 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->loop_ping_pong = lives_standard_check_menu_item_new_with_label(_("Pin_g Pong Loops"), FALSE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->loop_ping_pong);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->loop_ping_pong);
 
   lives_widget_add_accelerator(mainw->loop_ping_pong, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_g, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
   mainw->mute_audio = lives_standard_check_menu_item_new_with_label(_("_Mute"), FALSE);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->mute_audio);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->mute_audio);
   lives_widget_set_sensitive(mainw->mute_audio, FALSE);
 
   lives_widget_add_accelerator(mainw->mute_audio, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_z, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->play_menu));
 
   mainw->sticky = lives_standard_check_menu_item_new_with_label(_("Separate Window 'S_ticky' Mode"),
                   capable->smog_version_correct && prefs->sepwin_type == SEPWIN_TYPE_STICKY);
 
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->sticky);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->sticky);
 
   mainw->showfct = lives_standard_check_menu_item_new_with_label(_("S_how Frame Counter"), !prefs->hide_framebar);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->showfct);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->showfct);
 
   lives_widget_add_accelerator(mainw->showfct, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_h, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
   mainw->showsubs = lives_standard_check_menu_item_new_with_label(_("Show Subtitles"), prefs->show_subtitles);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->showsubs);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->showsubs);
 
   lives_widget_add_accelerator(mainw->showsubs, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_v, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
   mainw->letter = lives_standard_check_menu_item_new_with_label(_("Letterbox Mode"), prefs->letterbox);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->letter);
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->letter);
 
-  effects = lives_standard_menu_item_new_with_label(_("Effect_s"));
-  lives_container_add(LIVES_CONTAINER(mainw->menubar), effects);
-  lives_widget_set_tooltip_text(effects, (_("Effects are applied to the current selection.")));
+  menuitem = lives_standard_menu_item_new_with_label(_("Effect_s"));
+  lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
+  lives_widget_set_tooltip_text(menuitem, (_("Effects are applied to the current selection.")));
 
   // the dynamic effects menu
   mainw->effects_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(effects), mainw->effects_menu);
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->effects_menu);
 
   mainw->custom_effects_menu = NULL;
 
@@ -1072,12 +1058,12 @@ void create_LiVES(void) {
 
   mainw->num_rendered_effects_builtin = mainw->num_rendered_effects_custom = mainw->num_rendered_effects_test = 0;
 
-  tools = lives_standard_menu_item_new_with_label(_("_Tools"));
-  lives_container_add(LIVES_CONTAINER(mainw->menubar), tools);
-  lives_widget_set_tooltip_text(tools, (_("Tools are applied to complete clips.")));
+  menuitem = lives_standard_menu_item_new_with_label(_("_Tools"));
+  lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
+  lives_widget_set_tooltip_text(menuitem, (_("Tools are applied to complete clips.")));
 
   mainw->tools_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(tools), mainw->tools_menu);
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->tools_menu);
 
   mainw->rev_clipboard = lives_standard_menu_item_new_with_label(_("_Reverse Clipboard"));
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->rev_clipboard);
@@ -1151,21 +1137,21 @@ void create_LiVES(void) {
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->preferences), image);
 #endif
 
-  audio = lives_standard_menu_item_new_with_label(_("_Audio"));
-  lives_container_add(LIVES_CONTAINER(mainw->menubar), audio);
+  menuitem = lives_standard_menu_item_new_with_label(_("_Audio"));
+  lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
-  audio_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(audio), audio_menu);
+  mainw->audio_menu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->audio_menu);
 
   mainw->load_audio = lives_standard_menu_item_new_with_label(_("Load _New Audio for Clip..."));
 
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->load_audio);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->load_audio);
   lives_widget_set_sensitive(mainw->load_audio, FALSE);
 
   mainw->load_cdtrack = lives_standard_menu_item_new_with_label(_("Load _CD Track..."));
   mainw->eject_cd = lives_standard_menu_item_new_with_label(_("E_ject CD"));
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->load_cdtrack);
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->eject_cd);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->load_cdtrack);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->eject_cd);
 
   if (capable->smog_version_correct) {
     if (!capable->has_cdda2wav) {
@@ -1176,7 +1162,7 @@ void create_LiVES(void) {
 
   mainw->recaudio_submenu = lives_standard_menu_item_new_with_label(_("Record E_xternal Audio..."));
   if ((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE && capable->has_pulse_audio))
-    lives_container_add(LIVES_CONTAINER(audio_menu), mainw->recaudio_submenu);
+    lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->recaudio_submenu);
 
   submenu_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->recaudio_submenu), submenu_menu);
@@ -1188,21 +1174,21 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(submenu_menu), mainw->recaudio_sel);
   lives_widget_set_sensitive(mainw->recaudio_sel, FALSE);
 
-  lives_menu_add_separator(LIVES_MENU(audio_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->audio_menu));
 
   mainw->fade_aud_in = lives_standard_menu_item_new_with_label(_("Fade Audio _In..."));
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->fade_aud_in);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->fade_aud_in);
 
   mainw->fade_aud_out = lives_standard_menu_item_new_with_label(_("Fade Audio _Out..."));
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->fade_aud_out);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->fade_aud_out);
 
   lives_widget_set_sensitive(mainw->fade_aud_in, FALSE);
   lives_widget_set_sensitive(mainw->fade_aud_out, FALSE);
 
-  lives_menu_add_separator(LIVES_MENU(audio_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->audio_menu));
 
   mainw->export_submenu = lives_standard_menu_item_new_with_label(_("_Export Audio..."));
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->export_submenu);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->export_submenu);
 
   export_submenu_menu = lives_menu_new();
   lives_widget_set_sensitive(export_submenu_menu, FALSE);
@@ -1216,11 +1202,11 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(export_submenu_menu), mainw->export_allaudio);
 
   mainw->append_audio = lives_standard_menu_item_new_with_label(_("_Append Audio..."));
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->append_audio);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->append_audio);
   lives_widget_set_sensitive(mainw->append_audio, FALSE);
 
   mainw->trim_submenu = lives_standard_menu_item_new_with_label(_("_Trim/Pad Audio..."));
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->trim_submenu);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->trim_submenu);
 
   trimaudio_submenu_menu = lives_menu_new();
   lives_widget_set_sensitive(trimaudio_submenu_menu, FALSE);
@@ -1236,7 +1222,7 @@ void create_LiVES(void) {
   lives_widget_set_sensitive(mainw->trim_to_pstart, FALSE);
 
   mainw->delaudio_submenu = lives_standard_menu_item_new_with_label(_("_Delete Audio..."));
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->delaudio_submenu);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->delaudio_submenu);
 
   delaudio_submenu_menu = lives_menu_new();
 
@@ -1250,40 +1236,40 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(delaudio_submenu_menu), mainw->delall_audio);
 
   mainw->ins_silence = lives_standard_menu_item_new_with_label(_("Insert _Silence in Selection"));
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->ins_silence);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->ins_silence);
   lives_widget_set_sensitive(mainw->ins_silence, FALSE);
 
   mainw->resample_audio = lives_standard_menu_item_new_with_label(_("_Resample Audio..."));
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->resample_audio);
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->resample_audio);
   lives_widget_set_sensitive(mainw->resample_audio, FALSE);
 
   //mainw->normalize_audio = lives_standard_menu_item_new_with_label(_("_Normalize Audio..."));
-  //lives_container_add(LIVES_CONTAINER(audio_menu), mainw->normalize_audio);
+  //lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->normalize_audio);
   //lives_widget_set_sensitive(mainw->normalize_audio, FALSE);
 
   mainw->adj_audio_sync = lives_standard_menu_item_new_with_label(_("_Adjust Audio Sync..."));
-  //lives_container_add(LIVES_CONTAINER(audio_menu), mainw->adj_audio_sync);
+  //lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->adj_audio_sync);
   lives_widget_set_sensitive(mainw->adj_audio_sync, FALSE);
 
-  info = lives_standard_menu_item_new_with_label(_("_Info"));
-  lives_container_add(LIVES_CONTAINER(mainw->menubar), info);
+  menuitem = lives_standard_menu_item_new_with_label(_("_Info"));
+  lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
-  info_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(info), info_menu);
+  mainw->info_menu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->info_menu);
 
   mainw->show_file_info = lives_standard_image_menu_item_new_with_label(_("Show Clip _Info"));
   lives_widget_add_accelerator(mainw->show_file_info, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_i, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
-  lives_container_add(LIVES_CONTAINER(info_menu), mainw->show_file_info);
+  lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_file_info);
   lives_widget_set_sensitive(mainw->show_file_info, FALSE);
 
   mainw->show_file_comments = lives_standard_image_menu_item_new_with_label(_("Show/_Edit File Comments"));
-  lives_container_add(LIVES_CONTAINER(info_menu), mainw->show_file_comments);
+  lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_file_comments);
   lives_widget_set_sensitive(mainw->show_file_comments, FALSE);
 
   mainw->show_clipboard_info = lives_standard_image_menu_item_new_with_label(_("Show _Clipboard Info"));
-  lives_container_add(LIVES_CONTAINER(info_menu), mainw->show_clipboard_info);
+  lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_clipboard_info);
   lives_widget_set_sensitive(mainw->show_clipboard_info, FALSE);
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
@@ -1292,10 +1278,10 @@ void create_LiVES(void) {
 #endif
 
   mainw->show_messages = lives_standard_image_menu_item_new_with_label(_("Show _Messages"));
-  lives_container_add(LIVES_CONTAINER(info_menu), mainw->show_messages);
+  lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_messages);
 
   mainw->show_layout_errors = lives_standard_image_menu_item_new_with_label(_("Show _Layout Errors"));
-  lives_container_add(LIVES_CONTAINER(info_menu), mainw->show_layout_errors);
+  lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_layout_errors);
   lives_widget_set_sensitive(mainw->show_layout_errors, FALSE);
 
   win = lives_standard_menu_item_new_with_label(_("_Clips"));
@@ -1314,14 +1300,14 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitemsep);
   lives_widget_set_sensitive(menuitemsep, FALSE);
 
-  advanced = lives_standard_menu_item_new_with_label(_("A_dvanced"));
-  lives_container_add(LIVES_CONTAINER(mainw->menubar), advanced);
+  menuitem = lives_standard_menu_item_new_with_label(_("A_dvanced"));
+  lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
-  advanced_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(advanced), advanced_menu);
+  mainw->advanced_menu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->advanced_menu);
 
   rfx_submenu = lives_standard_menu_item_new_with_label(_("_RFX Effects/Tools/Utilities"));
-  lives_container_add(LIVES_CONTAINER(advanced_menu), rfx_submenu);
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), rfx_submenu);
 
   rfx_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(rfx_submenu), rfx_menu);
@@ -1388,20 +1374,20 @@ void create_LiVES(void) {
 
   mainw->open_lives2lives = lives_standard_menu_item_new_with_label(_("Receive _LiVES Stream from..."));
 
-  lives_menu_add_separator(LIVES_MENU(advanced_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 
   mainw->send_lives2lives = lives_standard_menu_item_new_with_label(_("_Send LiVES Stream to..."));
 
-  lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->send_lives2lives);
-  lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->open_lives2lives);
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->send_lives2lives);
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->open_lives2lives);
 
   if (capable->smog_version_correct) {
     mainw->open_yuv4m = lives_standard_menu_item_new_with_label((tmp = lives_strdup(_("Open _yuv4mpeg stream..."))));
     lives_free(tmp);
 #ifdef HAVE_YUV4MPEG
-    lives_menu_add_separator(LIVES_MENU(advanced_menu));
+    lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 
-    lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->open_yuv4m);
+    lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->open_yuv4m);
 
     // TODO - apply a deinterlace filter to yuv4mpeg frames
     /*mainw->yuv4m_deint = lives_standard_check_menu_item_new_with_label (_("_Deinterlace yuv4mpeg frames"));
@@ -1411,76 +1397,76 @@ void create_LiVES(void) {
 #endif
   }
 
-  lives_menu_add_separator(LIVES_MENU(advanced_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 
   mainw->import_proj = lives_standard_menu_item_new_with_label((tmp = lives_strdup_printf(_("_Import Project (.%s)..."),
                        LIVES_FILE_EXT_PROJECT)));
   lives_free(tmp);
-  lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->import_proj);
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->import_proj);
 
   mainw->export_proj = lives_standard_menu_item_new_with_label((tmp = lives_strdup_printf(_("E_xport Project (.%s)..."),
                        LIVES_FILE_EXT_PROJECT)));
   lives_free(tmp);
-  lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->export_proj);
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->export_proj);
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
 
-  lives_menu_add_separator(LIVES_MENU(advanced_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 
   mainw->import_theme = lives_standard_menu_item_new_with_label((tmp = lives_strdup_printf(_("_Import Custom Theme (.%s)..."),
                         LIVES_FILE_EXT_TAR_GZ)));
   lives_free(tmp);
-  lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->import_theme);
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->import_theme);
 
   mainw->export_theme = lives_standard_menu_item_new_with_label((tmp = lives_strdup_printf(_("E_xport Theme (.%s)..."),
                         LIVES_FILE_EXT_TAR_GZ)));
   lives_free(tmp);
-  lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->export_theme);
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->export_theme);
   lives_widget_set_sensitive(mainw->export_theme, (palette->style & STYLE_1));
 
   // VJ menu
 
-  mainw->vj_menu = lives_standard_menu_item_new_with_label(_("_VJ"));
-  lives_container_add(LIVES_CONTAINER(mainw->menubar), mainw->vj_menu);
+  menuitem = lives_standard_menu_item_new_with_label(_("_VJ"));
+  lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
-  vj_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->vj_menu), vj_menu);
+  mainw->vj_menu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->vj_menu);
 
   assign_rte_keys = lives_standard_menu_item_new_with_label(_("Real Time _Effect Mapping"));
-  lives_container_add(LIVES_CONTAINER(vj_menu), assign_rte_keys);
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), assign_rte_keys);
   lives_widget_add_accelerator(assign_rte_keys, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_v, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
   lives_widget_set_tooltip_text(assign_rte_keys, (_("Bind real time effects to ctrl-number keys.")));
 
   mainw->rte_defs_menu = lives_standard_menu_item_new_with_label(_("Set Real Time Effect _Defaults"));
-  lives_container_add(LIVES_CONTAINER(vj_menu), mainw->rte_defs_menu);
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->rte_defs_menu);
   lives_widget_set_tooltip_text(mainw->rte_defs_menu, (_("Set default parameter values for real time effects.")));
 
   mainw->rte_defs = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->rte_defs_menu), mainw->rte_defs);
 
   mainw->save_rte_defs = lives_standard_menu_item_new_with_label(_("Save Real Time Effect _Defaults"));
-  lives_container_add(LIVES_CONTAINER(vj_menu), mainw->save_rte_defs);
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->save_rte_defs);
   lives_widget_set_tooltip_text(mainw->save_rte_defs,
                                 (_("Save real time effect defaults so they will be restored each time you use LiVES.")));
 
-  lives_menu_add_separator(LIVES_MENU(vj_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
 
   mainw->vj_realize = lives_standard_menu_item_new_with_label(_("_Pre-decode all frames"));
-  lives_container_add(LIVES_CONTAINER(vj_menu), mainw->vj_realize);
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_realize);
   lives_widget_set_tooltip_text(mainw->vj_realize,
                                 (_("Decode all frames to images. This can improve reverse playback and random seek times,\nat the cost of diskspace.")));
   lives_widget_set_sensitive(mainw->vj_realize, FALSE);
 
   mainw->vj_reset = lives_standard_menu_item_new_with_label(_("_Reset All Playback Speeds and Positions"));
-  lives_container_add(LIVES_CONTAINER(vj_menu), mainw->vj_reset);
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_reset);
   lives_widget_set_tooltip_text(mainw->vj_reset, (_("Reset all playback positions to frame 1, and reset all playback frame rates.")));
   lives_widget_set_sensitive(mainw->vj_reset, FALSE);
 
   midi_submenu = lives_standard_menu_item_new_with_label(_("_MIDI/Joystick Interface"));
 
 #ifdef ENABLE_OSC
-  lives_container_add(LIVES_CONTAINER(vj_menu), midi_submenu);
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), midi_submenu);
 #endif
 
   midi_menu = lives_menu_new();
@@ -1499,67 +1485,67 @@ void create_LiVES(void) {
 
   lives_container_add(LIVES_CONTAINER(midi_menu), midi_load);
 
-  lives_menu_add_separator(LIVES_MENU(vj_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
 
   mainw->vj_show_keys = lives_standard_menu_item_new_with_label(_("Show VJ _Keys"));
-  lives_container_add(LIVES_CONTAINER(vj_menu), mainw->vj_show_keys);
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_show_keys);
 
-  lives_menu_add_separator(LIVES_MENU(vj_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
 
   mainw->autolives = lives_standard_check_menu_item_new_with_label(_("_Automatic Mode (autolives)..."), FALSE);
 #ifdef ENABLE_OSC
-  lives_container_add(LIVES_CONTAINER(vj_menu), mainw->autolives);
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->autolives);
 #endif
 
-  mainw->toys = lives_standard_menu_item_new_with_label(_("To_ys"));
-  lives_container_add(LIVES_CONTAINER(mainw->menubar), mainw->toys);
+  menuitem = lives_standard_menu_item_new_with_label(_("To_ys"));
+  lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
-  toys_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->toys), toys_menu);
+  mainw->toys_menu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->toys_menu);
 
   mainw->toy_none = lives_standard_check_menu_item_new_with_label(_("_None"), TRUE);
-  lives_container_add(LIVES_CONTAINER(toys_menu), mainw->toy_none);
+  lives_container_add(LIVES_CONTAINER(mainw->toys_menu), mainw->toy_none);
 
   mainw->toy_random_frames = lives_standard_check_menu_item_new_with_label(_("_Mad Frames"), FALSE);
-  lives_container_add(LIVES_CONTAINER(toys_menu), mainw->toy_random_frames);
+  lives_container_add(LIVES_CONTAINER(mainw->toys_menu), mainw->toy_random_frames);
 
   mainw->toy_tv = lives_standard_check_menu_item_new_with_label(_("_LiVES TV (broadband)"), FALSE);
 
-  lives_container_add(LIVES_CONTAINER(toys_menu), mainw->toy_tv);
+  lives_container_add(LIVES_CONTAINER(mainw->toys_menu), mainw->toy_tv);
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Help"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
-  menuitem_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), menuitem_menu);
+  mainw->help_menu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->help_menu);
 
   show_manual = lives_standard_menu_item_new_with_label(_("_Manual (opens in browser)"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), show_manual);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), show_manual);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
   donate = lives_standard_menu_item_new_with_label(_("_Donate to the Project !"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), donate);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), donate);
 
   email_author = lives_standard_menu_item_new_with_label(_("_Email the Author"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), email_author);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), email_author);
 
   report_bug = lives_standard_menu_item_new_with_label(_("Report a _Bug"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), report_bug);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), report_bug);
 
   suggest_feature = lives_standard_menu_item_new_with_label(_("Suggest a _Feature"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), suggest_feature);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), suggest_feature);
 
   help_translate = lives_standard_menu_item_new_with_label(_("Assist with _Translating"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), help_translate);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), help_translate);
 
-  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
   mainw->troubleshoot = lives_standard_menu_item_new_with_label(_("_Troubleshoot"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->troubleshoot);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->troubleshoot);
 
   about = lives_standard_menu_item_new_with_label(_("_About"));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), about);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), about);
 
   mainw->btoolbar = lives_toolbar_new();
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mainw->btoolbar), TRUE);
@@ -3096,8 +3082,10 @@ void fade_background(void) {
 
   lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
 
-  set_colours(&palette->normal_fore, &palette->fade_colour, &palette->menu_and_bars_fore, &palette->menu_and_bars,
-              &palette->info_base, &palette->info_text);
+  if (palette->style & STYLE_1) {
+    set_colours(&palette->normal_fore, &palette->fade_colour, &palette->menu_and_bars_fore, &palette->menu_and_bars,
+                &palette->info_base, &palette->info_text);
+  }
 
   lives_widget_set_app_paintable(mainw->freventbox0, FALSE);
   lives_widget_set_app_paintable(mainw->freventbox1, FALSE);
@@ -3328,8 +3316,10 @@ void unfade_background(void) {
   lives_widget_set_app_paintable(mainw->freventbox0, TRUE);
   lives_widget_set_app_paintable(mainw->freventbox1, TRUE);
 
-  set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars,
-              &palette->info_base, &palette->info_text);
+  if (palette->style & STYLE_1) {
+    set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars,
+                &palette->info_base, &palette->info_text);
+  }
 }
 
 

@@ -2144,8 +2144,9 @@ static LiVESList *load_decoders(void) {
   LiVESList *decoder_plugins_o = get_plugin_list(PLUGIN_DECODERS, TRUE, decplugdir, "-"DLL_NAME);
   LiVESList *decoder_plugins = decoder_plugins_o;
 
-  char *blacklist[2] = {
+  char *blacklist[3] = {
     "zyavformat_decoder",
+    "ogg_theora_decoder",
     NULL
   };
 
@@ -2398,11 +2399,6 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   char *plugname;
   boolean OK = TRUE;
   const char *err;
-
-  if (!strcmp(plname, "ogg_theora_decoder")) {
-    // no longer compatible
-    return NULL;
-  }
 
   dplug = (lives_decoder_sys_t *)lives_malloc(sizeof(lives_decoder_sys_t));
 

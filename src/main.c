@@ -913,7 +913,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->affected_layouts_map = mainw->current_layouts_map = NULL;
 
-  mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
   mainw->leave_recovery = TRUE;
 
   mainw->pchains = NULL;
@@ -1633,6 +1632,8 @@ static void lives_init(_ign_opts *ign_opts) {
         prefs->startup_phase = 3;
         set_int_pref(PREF_STARTUP_PHASE, 3);
       }
+
+      mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
 
       if (capable->has_jackd) naudp++;
       if (capable->has_pulse_audio) naudp++;
@@ -3934,19 +3935,21 @@ void procw_desensitize(void) {
   }
 
   current_file = mainw->current_file;
-  if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
+  if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
 
-  // stop the start and end from being changed
-  // better to clamp the range than make insensitive, this way we stop
-  // other widgets (like the video bar) updating it
-  lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
-  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end, cfile->end);
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
-  lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-  lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start, cfile->start);
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
-  lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+  if (CURRENT_CLIP_IS_VALID) {
+    // stop the start and end from being changed
+    // better to clamp the range than make insensitive, this way we stop
+    // other widgets (like the video bar) updating it
+    lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end, cfile->end);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
+    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+    lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start, cfile->start);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
+    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+  }
 
   mainw->current_file = current_file;
 

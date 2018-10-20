@@ -2349,7 +2349,7 @@ if (defined($ARGV[0])) {
 		    $com="mkdir.exe -p \"$linksdir\"";
 		}
 		else {
-		    $com="/bin/mkdir /p \"$linksdir\"";
+		    $com="/bin/mkdir -p \"$linksdir\"";
 		}
 		$smerr=smog_system($com);
 		if ($smerr) {
@@ -8041,3 +8041,5 @@ sub is_non_empty_dir {
     closedir TDIR;
     return 0;
 }
+
+1; # for require

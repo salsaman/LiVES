@@ -4962,7 +4962,7 @@ _prefsw *create_prefs_dialog(void) {
 
     if (prefsw->acodec_combo != NULL)
       lives_signal_connect(LIVES_GUI_OBJECT(prefsw->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
-			   NULL);
+                           NULL);
   }
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_antialias), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);

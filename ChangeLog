@@ -16,8 +16,8 @@ Add menu option VJ / Pre-decode all frames.
 Improve pulse audio sync when recording / playing from external audio.
 Create set lock file in correct location during crash recovery.
 Improve timing accuracy of realtime recording.
-	Fix crash in subtitle rendering.
-	
+Fix crash in subtitle rendering.
+Fix syntax problems with multi_encoder3 for python3.
 	
 	
 

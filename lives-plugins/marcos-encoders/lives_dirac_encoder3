@@ -32,12 +32,13 @@ http://www.gnu.org/copyleft/gpl.html for license.
 See my vids at http://amv.reimeika.ca !
 
 Updated by G. Finch (salsaman) 2010
+Copyright (C) 2008 - 2018 Salsaman (salsaman+lives@gmail.com)
 
 """
-version = '0.1'
+version = '0.1.1'
 import os
 if os.name == 'nt':
-        convert = 'convert.exe'
+        convert = 'mgkvert.exe'
         mencoder = 'mencoder.exe'
         oggenc = 'oggenc.exe'
         mkvmerge = 'mkvmerge.exe'

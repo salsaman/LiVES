@@ -902,7 +902,6 @@ typedef struct {
   LiVESAccelGroup *accel_group;
   LiVESWidget *sep_image;
   LiVESWidget *hruler;
-  LiVESWidget *vj_menu;
   LiVESWidget *vj_save_set;
   LiVESWidget *vj_load_set;
   LiVESWidget *vj_show_keys;
@@ -1076,9 +1075,20 @@ typedef struct {
   LiVESWidget *curf_label;
   LiVESWidget *banner;
 
-  // rendered effects
+  // (sub)menus
+  LiVESWidget *files_menu;
+  LiVESWidget *edit_menu;
+  LiVESWidget *play_menu;
   LiVESWidget *effects_menu;
   LiVESWidget *tools_menu;
+  LiVESWidget *audio_menu;
+  LiVESWidget *info_menu;
+  LiVESWidget *advanced_menu;
+  LiVESWidget *vj_menu;
+  LiVESWidget *toys_menu;
+  LiVESWidget *help_menu;
+
+  // rendered effects
   LiVESWidget *utilities_menu;
   LiVESWidget *utilities_submenu;
   LiVESWidget *gens_menu;

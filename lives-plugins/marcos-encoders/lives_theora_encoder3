@@ -20,9 +20,11 @@ It's a trivial program, but might as well GPL it, so see:
 http://www.gnu.org/copyleft/gpl.html for license.
 
 See my vids at http://amv.reimeika.ca !
+
+Copyright (C) 2008 - 2018 Salsaman (salsaman+lives@gmail.com)
 """
 
-version = '0.1.7'
+version = '0.1.8'
 import os
 if os.name == 'nt':
     convert = 'convert.exe'
@@ -559,18 +561,17 @@ def is_installed(prog):
         if prog == theora_encoder:
             if which(theora_encoder2) == '':
                 if which(theora_encoder3) == '':
-                    print theora_encoder + ' or ' + theora_encoder2 + ' or ' + theora_encoder3 + ': command not found'
-                    raise SystemExit, 1
+                    print (theora_encoder + ' or ' + theora_encoder2 + ' or ' + theora_encoder3 + ': command not found')
+                    raise SystemExit(1)
         else:
             if prog == mplayer:
                 if which(mplayer2) == '':
-                    print mplayer + ' or ' + mplayer2 + ': command not found'
-                    raise SystemExit, 1
+                    print (mplayer + ' or ' + mplayer2 + ': command not found')
+                    raise SystemExit(1)
 
             else:
-                if prog != theora_encoder2 and prog != theora_encoder3 and prog != mplayer2:
-                    print prog + ': command not found'
-                    raise SystemExit, 1
+                print (prog + ': command not found')
+                raise SystemExit(1)
         
     else:
         if verbose:
@@ -626,7 +627,7 @@ if __name__ == '__main__':
     else:
         quiet = False
 
-    for i in [mplayer, mplayer2, theora_encoder, theora_encoder2, theora_encoder3, sox, convert, identify]:
+    for i in [mplayer, theora_encoder, sox, convert, identify]:
         is_installed(i)
     if '-C' in opts: raise SystemExit
 

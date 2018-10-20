@@ -32,9 +32,9 @@ Frame Calculator|fc|-1|0|
 calc0|_Calculate|bool|0|1|
 calc1|_Calculate|bool|0|1|
 calc2|_Calculate|bool|1|1|
-frames|_Frames|num0|0|0|1000000|
-fps|Frames _per second (FPS)|num3|0|0|1000000|
-time|_Time (seconds)|num2|0|0|1000000|
+frames|_Frames|num0|0|0|10000|
+fps|Frames _per second (FPS)|num3|0|0|200.|
+time|_Time (seconds)|num2|0|0|3600.|
 </params>
 
 <param_window>

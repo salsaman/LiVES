@@ -369,6 +369,17 @@ struct _mt {
   LiVESWidget *hseparator;
   LiVESWidget *hseparator2;
 
+  LiVESWidget *files_menu;
+  LiVESWidget *edit_menu;
+  LiVESWidget *play_menu;
+  LiVESWidget *effects_menu;
+  LiVESWidget *tracks_menu;
+  LiVESWidget *selection_menu;
+  LiVESWidget *tools_menu;
+  LiVESWidget *render_menu;
+  LiVESWidget *view_menu;
+  LiVESWidget *help_menu;
+
   LiVESWidget *open_menu;
 #ifdef HAVE_WEBM
   LiVESWidget *open_loc_menu;

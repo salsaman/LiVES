@@ -26,11 +26,17 @@ It's a trivial program, but might as well GPL it, so see:
 http://www.gnu.org/copyleft/gpl.html for license.
 
 See my vids at http://amv.reimeika.ca !
+
+Copyright (C) 2008 - 2018 Salsaman (salsaman+lives@gmail.com)
 """
 
-version = '0.0.7'
-convert = 'convert'
-
+version = '0.0.8'
+import os
+if os.name == 'nt':
+    convert = 'mgkvert.exe'
+else:
+    convert = 'convert'
+    
 usage = \
       """
 lives_gif_encoder3 -h
@@ -478,7 +484,7 @@ if __name__ == '__main__':
     img_dir = opts.get('-d', '.')
     img_dir = os.path.abspath(img_dir)
     if ' ' in img_dir:
-        temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
+        temp_dir = tempfile.mkdtemp('', '.lives-', img_dir)
         try:
             os.symlink(img_dir, temp_dir + '/img_dir')
         except (IOError, OSError):
@@ -618,7 +624,7 @@ if __name__ == '__main__':
             raise SystemExit(1)
     if ' ' in work_dir:
         if temp_dir == '':
-            temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
+            temp_dir = tempfile.mkdtemp('', '.lives-', work_dir)
         try:
             os.symlink(work_dir, temp_dir + '/work_dir')
         except (IOError, OSError):

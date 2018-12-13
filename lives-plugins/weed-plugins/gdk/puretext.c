@@ -65,6 +65,7 @@ static int is_big_endian() {
 // defines for configure dialog elements
 enum DlgControls {
   P_TEXT = 0,
+  P_RAND,
   P_MODE,
   P_END
 };
@@ -681,6 +682,10 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     break;
 
   case (PT_LETTER_STARFIELD):
+    // LETTER_MODE:
+    // this is called for each letter from sdata->start to sdata->start + sdata->length - 1
+    // with sdata->count set to the current letter number
+
     if (sdata->timer == 0.) {
       sdata->start = 0;
       sdata->length = 0;
@@ -745,6 +750,10 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     break;
 
   case (PT_SPINNING_LETTERS):
+    // LETTER_MODE:
+    // this is called for each letter from sdata->start to sdata->start + sdata->length - 1
+    // with sdata->count set to the current letter number
+
     if (sdata->timer == 0.) {
       sdata->int1 = 0;
 
@@ -792,6 +801,10 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     break;
 
   case (PT_SPIRAL_TEXT):
+    // LETTER_MODE:
+    // this is called for each letter from sdata->start to sdata->start + sdata->length - 1
+    // with sdata->count set to the current letter number
+
     if (sdata->timer == 0.) {
       sdata->int1 = 0;
       sdata->start = 0;
@@ -835,11 +848,13 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     if (!strncmp(xtext, ".", 1)) sdata->int1++;
 
     if (sdata->alarm) {
-      pt_set_alarm(sdata, 250); // milliseconds
+      pt_set_alarm(sdata, 80); // milliseconds to get next letter
       if (sdata->start + sdata->length < sdata->tlength) {
         // add an extra letter
         sdata->length++;
       } else {
+        // no more letters...
+        // shrink from head to tail
         sdata->length -= 2;
         sdata->start += 2;
         sdata->dbl3 -= .0002;
@@ -847,15 +862,18 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
         sdata->dbl1 = sdata->dbl1 * .97;
         sdata->dbl2 = radY = sdata->dbl2 * .97;
 
-        // trip to lissajou
+        // trip to lissajou (unused for now)
         if (!sdata->bool1) sdata->bool1 = TRUE;
 
         if (sdata->length <= 0) {
+          // all letters gone - restart cycle
+          if (!sdata->rndorder) getastring(sdata);
           sdata->length = 1;
           sdata->start = 0;
           sdata->bool1 = FALSE;
-          sdata->dbl3 = -sdata->dbl3 / 12.;
-        } else pt_set_alarm(sdata, 50); // milliseconds
+          //sdata->dbl3 = -sdata->dbl3 / 12.;
+          sdata->int1 = 0;
+        } else pt_set_alarm(sdata, 40); // milliseconds (string disappearing)
       }
     }
     break;
@@ -953,7 +971,7 @@ int puretext_init(weed_plant_t *inst) {
   }
 
   sdata->start = sdata->length = 0;
-  sdata->cstring = 0;
+  sdata->cstring = -1;
   sdata->text = NULL;
   sdata->rndorder = TRUE;
 
@@ -1016,6 +1034,8 @@ int puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
   int mode = weed_get_int_value(in_params[P_MODE], "value", &error);
 
   register int i, j;
+
+  sdata->rndorder = weed_get_boolean_value(in_params[P_RAND], "value", &error);
 
   weed_free(in_params); // must weed free because we got an array
 
@@ -1115,7 +1135,7 @@ int puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
         // default colour - opaque white
         sdata->fg.red = sdata->fg.green = sdata->fg.blue = 255.;
-        sdata->fg_alpha = 1.;
+        sdata->fg_alpha = .5;
 
         cairo_save(cairo);
 
@@ -1268,6 +1288,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       flags = weed_get_int_value(in_params[P_TEXT], "flags", &error);
     flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
     weed_set_int_value(in_params[P_TEXT], "flags", flags);
+
+    in_params[P_RAND] = weed_switch_init("rand", "Select text lines _randomly", WEED_TRUE);
 
     in_params[P_MODE] = weed_string_list_init("mode", "Effect _mode", 0, modes);
     flags = 0;

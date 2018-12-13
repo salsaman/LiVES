@@ -227,7 +227,7 @@ void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
     abuf->out_achans = 0;
   }
 #ifdef DEBUG_AFB
-  g_print("clear afb\n");
+  g_print("clear afb %p\n", abuf);
 #endif
 }
 
@@ -1009,6 +1009,7 @@ static void audio_process_events_to(weed_timecode_t tc) {
   mainw->audio_event = event;
 }
 
+//#define DEBUG_ARENDER
 int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime,
                              weed_timecode_t tc_start, weed_timecode_t tc_end, double *chvol, double opvol_start,
                              double opvol_end, lives_audio_buf_t *obuf) {
@@ -1038,7 +1039,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   // 16 or 32 may be a more sensible default for realtime previewing
 
   // return (audio) frames rendered
-
   weed_plant_t *shortcut = NULL;
   lives_clip_t *outfile = to_file > -1 ? mainw->files[to_file] : NULL;
   uint8_t *in_buff;
@@ -1107,7 +1107,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (!storedfdsset) audio_reset_stored_fnames();
 
-  if (!(is_fade) && (mainw->event_list == NULL || (mainw->multitrack == NULL && nfiles == 1 &&
+  if (!(is_fade) && (mainw->event_list == NULL || (mainw->multitrack == NULL && nfiles == 1 && from_files != NULL &&
                      from_files[0] == mainw->ascrap_file))) render_block_size *= 100;
 
   if (to_file > -1) {
@@ -1128,6 +1128,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
     cur_size = get_file_size(out_fd);
 
+    if (opvol_start == opvol_end && opvol_start == 0.) ins_pt = tc_end / TICKS_PER_SECOND_DBL;
     ins_pt *= out_achans * out_arate * out_asamps;
     ins_size = ((int64_t)(ins_pt / out_achans / out_asamps + .5)) * out_achans * out_asamps;
 
@@ -1138,6 +1139,11 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
     // fill to ins_pt with zeros
     pad_with_silence(out_fd, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
+
+    if (opvol_start == opvol_end && opvol_start == 0.) {
+      close(out_fd);
+      return tsamples;
+    }
   } else {
     if (mainw->event_list != NULL) cfile->aseek_pos = fromtime[0];
 
@@ -2600,8 +2606,10 @@ void audio_cache_end(void) {
   lives_audio_buf_t *xcache_buffer;
   register int i;
 
+  pthread_mutex_lock(&mainw->cache_buffer_mutex);
   cache_buffer->die = TRUE; ///< tell cache thread to exit when possible
   pthread_join(athread, NULL);
+  pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
   // free all buffers
 
@@ -3005,7 +3013,6 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   int error;
 
   register int i;
-
   if (abuf->samples_filled == 0) {
     weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, 0);
     weed_set_voidptr_value(achan, WEED_LEAF_AUDIO_DATA, NULL);

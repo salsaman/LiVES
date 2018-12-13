@@ -67,7 +67,7 @@ vjack_output_la_CFLAGS = $(shared_cflags) $(weed_cflags)
 vjack_output_la_LDFLAGS = $(shared_ldflags) -ljack
 endif
 
-if HAVE_X11
+
 if HAVE_XRENDER
 if HAVE_OPENGL
 if HAVE_GLU

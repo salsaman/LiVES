@@ -885,8 +885,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   char *ctext = NULL;
 
-  char *com;
-
   // TODO - set default values from tmpvpp
 
   if (user_data != NULL) intention = LIVES_POINTER_TO_INT(user_data);
@@ -945,7 +943,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       }
     }
 
-
     if (intention == 0) {
       // fps
       combo = lives_standard_combo_new((tmp = lives_strdup(_("_FPS"))), fps_list_strings,
@@ -999,7 +996,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     add_fill_to_box(LIVES_BOX(hbox));
   }
 
-
   if (intention == 0) {
     if (tmpvpp->get_palette_list != NULL && (pal_list = (*tmpvpp->get_palette_list)()) != NULL) {
       int i;
@@ -1045,9 +1041,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
     LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V / 2, vbox);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
-    com = lives_strdup_printf("%s -e \"%s\"", capable->echo_cmd, (*tmpvpp->get_init_rfx)(intention));
-    plugin_run_param_window(com, LIVES_VBOX(vbox), &(vppa->rfx));
-    lives_free(com);
+    plugin_run_param_window(NULL, (*tmpvpp->get_init_rfx)(intention), LIVES_VBOX(vbox), &(vppa->rfx));
     if (tmpvpp->extra_argv != NULL && tmpvpp->extra_argc > 0) {
       // update with defaults
       LiVESList *plist = argv_to_marshalled_list(vppa->rfx, tmpvpp->extra_argc, tmpvpp->extra_argv);
@@ -3653,7 +3647,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   }
 
 
-  char *plugin_run_param_window(const char *get_com, LiVESVBox * vbox, lives_rfx_t **ret_rfx) {
+  char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVESVBox * vbox, lives_rfx_t **ret_rfx) {
 
     // here we create an rfx script from some fixed values and values from the plugin;
     // we will then compile the script to an rfx scrap and use the scrap to get info
@@ -3672,10 +3666,10 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
     // the string which is returned is the marshalled values of the parameters
 
-
     // NOTE: if vbox is not NULL, we create the window inside vbox, without running it
     // in this case, vbox should be packed in its own dialog window, which should then be run
 
+    // NOTE: pass in either get_com (command to be run to get rfx text), or else scrap_text, setting the unused value to NULL.
 
     FILE *sfile;
 
@@ -3706,6 +3700,11 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       } else {
         mainw->write_failed = FALSE;
         lives_fputs(string, sfile);
+        if (scrap_text != NULL) {
+          char *data = subst(scrap_text, "\\n", "\n");
+          lives_fputs(data, sfile);
+          lives_free(data);
+        }
         fclose(sfile);
         lives_free(string);
         if (mainw->write_failed) {
@@ -3715,15 +3714,17 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       }
     } while (retval == LIVES_RESPONSE_RETRY);
 
-    com = lives_strdup_printf("%s >> \"%s\"", get_com, rfxfile);
-    retval = lives_system(com, FALSE);
-    lives_free(com);
+    if (scrap_text == NULL) {
+      com = lives_strdup_printf("%s >> \"%s\"", get_com, rfxfile);
+      retval = lives_system(com, FALSE);
+      lives_free(com);
 
-    // command failed
-    if (retval) {
-      lives_rm(rfxfile);
-      lives_free(rfxfile);
-      return NULL;
+      // command failed
+      if (retval) {
+        lives_rm(rfxfile);
+        lives_free(rfxfile);
+        return NULL;
+      }
     }
 
     // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it

@@ -614,6 +614,8 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     weed_leaf_delete((weed_plant_t *)new_init_event, WEED_LEAF_EVENT_ID);
     error = weed_set_voidptr_value((weed_plant_t *)new_init_event, WEED_LEAF_EVENT_ID,
                                    (void *)new_init_event);  // useful later for event_list_rectify
+    weed_leaf_delete((weed_plant_t *)new_init_event, WEED_LEAF_DEINIT_EVENT); // delete since we assign a placeholder with int64 type
+    weed_set_voidptr_value((weed_plant_t *)new_init_event, WEED_LEAF_DEINIT_EVENT, event);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     break;
   case WEED_EVENT_HINT_FILTER_MAP:
@@ -3359,7 +3361,7 @@ lives_render_error_t render_events(boolean reset) {
   int *in_count = NULL;
 
   weed_plant_t **source_params, **in_params;
-  weed_plant_t **layers, *layer;
+  weed_plant_t **layers, *layer = NULL;
 
   register int i;
 
@@ -3373,11 +3375,13 @@ lives_render_error_t render_events(boolean reset) {
   int num_in_count = 0;
   int num_in_channels = 0, num_out_channels = 0;
   int track, mytrack;
+  int scrap_track = -1;
 
   static int progress;
   static int xaclips[MAX_AUDIO_TRACKS];
   static int out_frame;
   static int frame;
+  static int old_scrap_frame;
 
   int blend_file = mainw->blend_file;
 
@@ -3412,6 +3416,7 @@ lives_render_error_t render_events(boolean reset) {
     mainw->filter_map = NULL;
     mainw->afilter_map = NULL;
     mainw->audio_event = event;
+    old_scrap_frame = -1;
 
     for (i = 0; i < MAX_AUDIO_TRACKS; i++) {
       xaclips[i] = -1;
@@ -3446,7 +3451,6 @@ lives_render_error_t render_events(boolean reset) {
 
         if ((mainw->multitrack == NULL || (mainw->multitrack->opts.render_vidp && !mainw->multitrack->pr_audio)) &&
             !(!mainw->clip_switched && cfile->hsize * cfile->vsize == 0)) {
-          int scrap_track = -1;
 
           num_tracks = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
 
@@ -3468,10 +3472,19 @@ lives_render_error_t render_events(boolean reset) {
 
           if (scrap_track != -1) {
             // do not apply fx, just pull frame
-            layer = weed_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
-            if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
-              weed_layer_free(layer);
-              layer = NULL;
+            if (mainw->frame_index[scrap_track] == old_scrap_frame && mainw->scrap_pixbuf != NULL) {
+              pixbuf = mainw->scrap_pixbuf;
+            } else {
+              if (mainw->scrap_pixbuf != NULL) {
+                lives_object_unref(mainw->scrap_pixbuf);
+                mainw->scrap_pixbuf = NULL;
+              }
+              old_scrap_frame = mainw->frame_index[scrap_track];
+              layer = weed_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
+              if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
+                weed_layer_free(layer);
+                layer = NULL;
+              }
             }
           } else {
             int oclip, nclip;
@@ -3564,7 +3577,6 @@ lives_render_error_t render_events(boolean reset) {
             pixbuf = layer_to_pixbuf(layer);
             weed_layer_free(layer);
           }
-
           mainw->blend_file = blend_file;
         }
       } else tc = flush_audio_tc;
@@ -3591,9 +3603,9 @@ lives_render_error_t render_events(boolean reset) {
 
           mainw->read_failed = mainw->write_failed = FALSE;
           lives_freep((void **)&mainw->read_failed_file);
-          render_audio_segment(0, NULL, mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file,
+          render_audio_segment(1, NULL, mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file,
                                NULL, NULL, atime * TICKS_PER_SECOND_DBL, q_gint64(tc + (TICKS_PER_SECOND_DBL / cfile->fps * !is_blank), cfile->fps),
-                               chvols, 1., 1., NULL);
+                               chvols, 0., 0., NULL);
 
           if (mainw->write_failed) {
             int outfile = (mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file);
@@ -3667,7 +3679,6 @@ lives_render_error_t render_events(boolean reset) {
 
                 mainw->read_failed = mainw->write_failed = FALSE;
                 lives_freep((void **)&mainw->read_failed_file);
-
                 render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file :
                                      mainw->current_file, xavel, xaseek, (atime * TICKS_PER_SECOND_DBL + .5),
                                      q_gint64(tc + (TICKS_PER_SECOND_DBL / cfile->fps * !is_blank), cfile->fps), chvols, 1., 1., NULL);
@@ -3760,8 +3771,10 @@ lives_render_error_t render_events(boolean reset) {
         if (cfile->start == 0) cfile->start = 1;
         out_frame++;
       }
-      if (pixbuf != NULL) lives_object_unref(pixbuf);
 
+      // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number, save the pixbuf and re-use it
+      if (scrap_track != -1) mainw->scrap_pixbuf = pixbuf;
+      else if (pixbuf != NULL) lives_object_unref(pixbuf);
       break;
     case WEED_EVENT_HINT_FILTER_INIT:
       // effect init
@@ -4341,6 +4354,10 @@ boolean render_to_clip(boolean new_clip) {
       } else event_list_free(mainw->event_list);
     }
     mainw->event_list = NULL;
+    if (mainw->scrap_pixbuf != NULL) {
+      lives_object_unref(mainw->scrap_pixbuf);
+      mainw->scrap_pixbuf = NULL;
+    }
     if (new_clip) {
       char *tmp;
       int old_file = current_file;
@@ -5647,7 +5664,7 @@ render_details *create_render_details(int type) {
   if (needs_new_encoder) {
     lives_widget_set_sensitive(rdet->okbutton, FALSE);
     lives_widget_context_update(); // force showing of transient window
-    do_encoder_img_ftm_error(rdet);
+    do_encoder_img_fmt_error(rdet);
   }
 
   lives_signal_connect_after(LIVES_COMBO(rdet->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(rdet_acodec_changed), rdet);

@@ -1808,15 +1808,18 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   lives_rfx_t *rfx;
 
   if ((inst = rte_keymode_get_instance(key + 1, mode)) == NULL) {
+    // create a new detached instance for the dialog
     weed_plant_t *filter = rte_keymode_get_filter(key + 1, mode);
     if (filter == NULL) return;
     inst = weed_instance_from_filter(filter);
+    weed_set_boolean_value(inst, WEED_LEAF_HOST_NORECORD, WEED_TRUE);
 
     // do some fiddly stuff to show the key defs.
     weed_reinit_effect(inst, TRUE);
     apply_key_defaults(inst, key, mode);
     weed_reinit_effect(inst, TRUE);
   } else {
+    // or use the existing instance if available
     int error;
     weed_plant_t *ninst = inst;
     do {

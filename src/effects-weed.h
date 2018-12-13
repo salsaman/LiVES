@@ -187,6 +187,7 @@ typedef enum {
 #define WEED_LEAF_HOST_PLUGIN_PATH "host_plugin_path" // plugin path
 #define WEED_LEAF_HOST_HANDLE "host_handle" // dll handle
 #define WEED_LEAF_HOST_FILTER_LIST "host_filter_list" // host usable filters
+#define WEED_LEAF_HOST_NORECORD "host_norecord" // do not record parameter changes for this instance
 
 #define WEED_LEAF_HOST_INSTANCE "host_instance" // special value for text widgets
 #define WEED_LEAF_HOST_IDX "host_idx" // special value for text widgets

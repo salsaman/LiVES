@@ -1174,6 +1174,7 @@ typedef struct {
   pthread_mutex_t event_list_mutex; /// prevent simultaneous writing to event_list by audio and video threads
   pthread_mutex_t clip_list_mutex; /// prevent adding/removing to cliplist while another thread could be reading it
   pthread_mutex_t vpp_stream_mutex; /// prevent from writing audio when stream is closing
+  pthread_mutex_t cache_buffer_mutex; /// sync for jack playback termination
 
   volatile lives_rfx_t *vrfx_update;
 
@@ -1395,6 +1396,7 @@ typedef struct {
 
   char *dp_cache;
 
+  LiVESPixbuf *scrap_pixbuf;
   ////////////////////
 } mainwindow;
 

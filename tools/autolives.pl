@@ -160,8 +160,8 @@ my $numeffectkeys=&get_newmsg;
 
 if ($DEBUG) {print STDERR "LiVES has $numeffectkeys realtime keys !\n";}
 
-if ($numeffectkeys > 10) {
-    $numeffectkeys = 10;
+if ($numeffectkeys > 9) {
+    $numeffectkeys = 9;
     if ($DEBUG) {print STDERR "only messing with $numeffectkeys\n";}
 }
    

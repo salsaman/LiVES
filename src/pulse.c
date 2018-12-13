@@ -589,7 +589,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
             lives_free(fltbuf);
           }
-
         } else {
           // audio generator
           // get float audio from gen, convert it to S16
@@ -823,6 +822,11 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
 
   lives_clip_t *ofile;
 
+  if (data == NULL) {
+    data = prbuf;
+    rbytes = prb;
+  }
+
   if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
     if (prb == 0 || mainw->rec_samples == 0) return 0;
     if (prb <= PULSE_READ_BYTES * 2 && rbytes > 0) {
@@ -914,6 +918,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
       pa_operation *paop = pa_stream_cork(pstream, 1, NULL, NULL);
       pa_operation_unref(paop);
     } else pa_stream_drop(pulsed->pstream);
+    prb = 0;
     return;
   }
 
@@ -1025,7 +1030,10 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
   if (prb <= PULSE_READ_BYTES * 2) {
     lives_memcpy(&prbuf[prb - rbytes], data, rbytes);
     pulse_flush_read_data(pulsed, mainw->playing_file, prb, pulsed->reverse_endian, prbuf);
-  } else pulse_flush_read_data(pulsed, mainw->playing_file, rbytes, pulsed->reverse_endian, data);
+  } else {
+    pulse_flush_read_data(pulsed, mainw->playing_file, prb - rbytes, pulsed->reverse_endian, prbuf);
+    pulse_flush_read_data(pulsed, mainw->playing_file, rbytes, pulsed->reverse_endian, data);
+  }
 
   pa_stream_drop(pulsed->pstream);
 

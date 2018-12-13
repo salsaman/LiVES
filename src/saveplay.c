@@ -1382,7 +1382,7 @@ void save_file(int clip, int start, int end, const char *filename) {
                                 start, end, arate, sfile->achans, sfile->asampsize, asigned | aendian, aud_start, aud_end);
       lives_free(tmp);
     }
-    extra_params = plugin_run_param_window(com, NULL, NULL);
+    extra_params = plugin_run_param_window(com, NULL, NULL, NULL);
     lives_free(com);
 
     if (extra_params == NULL) {

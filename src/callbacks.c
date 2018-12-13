@@ -6601,7 +6601,9 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
 
 void on_details_button_clicked(void) {
   text_window *textwindow;
+  widget_opts.expand = LIVES_EXPAND_EXTRA;
   textwindow = create_text_window(_("Encoder Debug Output"), lives_text_view_get_text(mainw->optextview), NULL);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_widget_show_all(textwindow->dialog);
 }
 

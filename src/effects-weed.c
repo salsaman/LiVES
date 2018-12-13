@@ -7353,19 +7353,6 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     if (mainw->audio_frame_buffer != NULL && mainw->audio_frame_buffer->samples_filled > 0) {
       lives_audio_buf_t *audbuf = mainw->audio_frame_buffer == mainw->afb[0] ? mainw->afb[0] : mainw->afb[1];
 
-      // lock the buffers
-      pthread_mutex_lock(&mainw->abuf_frame_mutex);
-
-      if (++mainw->afbuffer_clients_read >= mainw->afbuffer_clients) {
-        // swap buffers for writing
-        if (audbuf == mainw->afb[0]) mainw->audio_frame_buffer = mainw->afb[1];
-        else mainw->audio_frame_buffer = mainw->afb[0];
-        free_audio_frame_buffer(audbuf);
-        mainw->afbuffer_clients_read = 0;
-      }
-
-      pthread_mutex_unlock(&mainw->abuf_frame_mutex);
-
       // push read buffer to generator
       if (audbuf != NULL) {
         // convert audio to format requested, and copy it to the audio channel data
@@ -7384,7 +7371,6 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
       }
 
       pthread_mutex_unlock(&mainw->abuf_frame_mutex);
-
     } else {
       // no audio has been buffered
       weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, 0);
@@ -8325,6 +8311,9 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   weed_plant_t *in_param;
   int key;
   int error;
+
+  // do not record changes for the floating fx dialog box (rte window params)
+  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD) && weed_get_boolean_value(inst, WEED_LEAF_HOST_NORECORD, &error)) return;
 
   // do not record changes for generators - those get recorded to scrap_file or ascrap_file
   if (enabled_in_channels(inst, FALSE) == 0) return;

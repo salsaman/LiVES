@@ -779,7 +779,7 @@ void pump_io_chan(LiVESIOChannel *iochan) {
       while (cptr < (str_return + retlen - plen)) {
         if (!strncmp(cptr, prefs->encoder.ptext + ispct, plen)) {
           cptr += plen;
-          while (*cptr == ' ' || *cptr == '\n') {
+          while (*cptr == ' ' || *cptr == '\n' || *cptr == '=') {
             if (*cptr == '\n') {
               linebrk = TRUE;
               break;
@@ -2570,18 +2570,10 @@ void do_no_decoder_error(const char *fname) {
 }
 
 
-static void do_extra_jack_warning(void) {
-  do_blocking_error_dialog(
-    _("\nDear user, the jack developers decided to remove the -Z option from jackd.\n"
-      "Please check your ~/.jackdrc file and remove this option if present.\nAlternately, select a different audio player in Preferences.\n"));
-}
-
-
 void do_jack_noopen_warn(void) {
   do_blocking_error_dialog(
     _("\nUnable to start up jack. Please ensure that alsa is set up correctly on your machine\n"
       "and also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"));
-  if (prefs->startup_phase != 2) do_extra_jack_warning();
 }
 
 
@@ -3296,7 +3288,7 @@ boolean do_abort_check(void) {
 }
 
 
-void do_encoder_img_ftm_error(render_details *rdet) {
+void do_encoder_img_fmt_error(render_details *rdet) {
   char *msg = lives_strdup_printf(_("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),
                                   prefs->encoder.name, get_image_ext_for_type(cfile->img_type));
 

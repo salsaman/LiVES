@@ -1,24 +1,30 @@
 Version 2.10.1
 --------------
+Fix regressions in rendering of internal audio.
+Fix frame rate when rendering after recording from generator plugins.
 Fixes for showing time remaining in progress dialog (partial regression from 2.10.0)
 Fix invisible window pre external window capture (regression).
 Fix regression in some preview displays in the clip editor.
 Fix preview for Compositor effect in multitrack.
 Fixes for Record External Audio.
+Fix regression in sending audio to audio triggered video generators (milkdrop, libvisual).
 Sort plugins alphabetically within packages.
 Ensure playback does not stop too soon in autolives mode.
 Fix audio fade in / out, using smaller chunk sizes.
 Allow effect output parameters to feed to internal macros, similar to MIDI / joystick controller (WIP).
 Improve effect previews in multitrack mode.
-Make the mask colour / opacity configurable in Trim Frames / Add Border tool.
+Make the display mask colour/opacity configurable in Trim Frames / Add Border tool.
 When an original clip is not found, allow the user to retry as well as browse - to allow for unmounted disks, etc.
-Add menu option VJ / Pre-decode all frames.
+Add menu option: VJ / Pre-decode all frames.
 Improve pulse audio sync when recording / playing from external audio.
 Create set lock file in correct location during crash recovery.
 Improve timing accuracy of realtime recording.
 Fix crash in subtitle rendering.
 Fix syntax problems with multi_encoder3 for python3.
-	
+Fix some problems with jack audio playback.
+
+
+
 	
 
 Version 2.10.0 (4 Sep 2018)

@@ -118,7 +118,7 @@ typedef struct {
   boolean s32_signed;
 
   // ring buffer
-  size_t samples_filled; ///< number of samples filled (readonly client)
+  volatile size_t samples_filled; ///< number of samples filled (readonly client)
   size_t start_sample; ///< used for reading (readonly server)
 
   // private fields (used by server)

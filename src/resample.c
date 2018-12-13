@@ -555,7 +555,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
       // event is before slot, note it and get next event
       if (out_clips != NULL) lives_free(out_clips);
       if (out_frames != NULL) lives_free(out_frames);
-
       numframes = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
       out_clips = weed_get_int_array(event, WEED_LEAF_CLIPS, &error);
       out_frames = weed_get_int_array(event, WEED_LEAF_FRAMES, &error);
@@ -574,6 +573,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
       //  in some cases we allow a gap before writing our first FRAME out event
       if (!(is_first && allow_gap)) {
+        if (last_audio_event == event && needs_audio) add_audio = TRUE;
         if (in_tc - (out_tc + tl) < nearest_tc) {
           if (event != NULL) {
             if (out_clips != NULL) lives_free(out_clips);
@@ -582,7 +582,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             numframes = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
             out_clips = weed_get_int_array(event, WEED_LEAF_CLIPS, &error);
             out_frames = weed_get_int_array(event, WEED_LEAF_FRAMES, &error);
-            if (last_audio_event == event && needs_audio) add_audio = TRUE;
             if (error == WEED_ERROR_MEMORY_ALLOCATION) {
               do_memory_error_dialog();
               event_list_free(out_list);

@@ -439,6 +439,8 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->vpp_stream_mutex, NULL);
 
+  pthread_mutex_init(&mainw->cache_buffer_mutex, NULL);
+
   for (i = 0; i < FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->data_mutex[i], &mattr); // because audio filters can enable/disable video filters and vice-versa
   }
@@ -1103,6 +1105,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->rendered_fx = NULL;
 
   mainw->midi_channel_lock = FALSE;
+
+  mainw->scrap_pixbuf = NULL;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 

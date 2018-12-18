@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2018-12-12 10:56-0300\n"
+"POT-Creation-Date: 2018-12-13 10:13-0300\n"
 "PO-Revision-Date: 2015-11-25 22:11+0000\n"
 "Last-Translator: Jean-Marc <Unknown>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -6584,17 +6584,17 @@ msgstr "Impossible de charger l'instance %s, code d'erreur %d\n"
 msgid "Unable to start generator %s\n"
 msgstr "Impossible de charger le générateur %s\n"
 
-#: src/effects-weed.c:7740
+#: src/effects-weed.c:7726
 #, fuzzy, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr "Impossible de démarrer le générateur %s.\n"
 
-#: src/effects-weed.c:7840
+#: src/effects-weed.c:7826
 #, fuzzy, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "Impossible de démarrer le générateur %s.\n"
 
-#: src/effects-weed.c:9084
+#: src/effects-weed.c:9070
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -11030,7 +11030,7 @@ msgstr ""
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES se termine et vous pouvez choisir un autre lecteur audio.\n"
 
-#: src/pulse.c:1458
+#: src/pulse.c:1467
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"

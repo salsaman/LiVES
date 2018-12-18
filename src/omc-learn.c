@@ -2234,8 +2234,8 @@ static void write_fx_tag(const char *string, int nfixed, lives_omc_match_node_t 
 
 
 OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
-  int macro, nfixed;
-  lives_omc_match_node_t *mnode;
+  int macro, nfixed = 0;
+  lives_omc_match_node_t *mnode = NULL;
   lives_omc_macro_t omacro;
   double oval = 0.;
   int oval0 = 1, oval1 = 0;

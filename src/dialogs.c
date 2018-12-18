@@ -345,28 +345,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_widget_grab_focus(okbutton);
   }
 
-  if (prefs->show_gui && mainw->is_ready) {
-    boolean has_focus = FALSE;
-    LiVESList *toplevels;
-    LiVESWidget *window;
-    // TODO: try gtk_widget_device_is_shadowed ()
-    while (1) {
-      toplevels = gtk_window_list_toplevels();
-      do {
-        window = (LiVESWidget *)toplevels->data;
-        if (lives_has_toplevel_focus(window)) {
-          has_focus = TRUE;
-          break;
-        }
-        toplevels = toplevels->next;
-      } while (toplevels != NULL);
-      if (has_focus) break;
-      lives_usleep(prefs->sleep_time * 10);
-      lives_widget_context_update();
-      sched_yield();
-    }
-  }
-
   lives_widget_show_all(dialog);
 
   lives_window_center(LIVES_WINDOW(dialog));

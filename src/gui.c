@@ -2941,7 +2941,6 @@ void show_lives(void) {
 
   if (prefs->present && prefs->show_gui)
     lives_window_present(LIVES_WINDOW(mainw->LiVES));
-
 }
 
 

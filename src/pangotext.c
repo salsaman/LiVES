@@ -242,10 +242,6 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   lives_painter_t *cr;
 
-  lives_painter_surface_t *surface;
-
-  void *src;
-
   LingoLayout *layout;
 
   int width, height, error;

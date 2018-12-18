@@ -646,6 +646,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
           sdata->start = 0;
           sdata->length = 0;
           sdata->dbl1 = 0.;
+          if (!sdata->rndorder) getastring(sdata);
           // time before next repeat
           pt_set_alarm(sdata, 1000); // milliseconds
         }
@@ -656,7 +657,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
       if (sdata->length > 0) {
         if (sdata->start == sdata->wlength - 1) {
-          // time between penultimate and last word ?
+          // time between each phrase
           pt_set_alarm(sdata, 1000); // milliseconds
         } else {
           // peek at last char of next word

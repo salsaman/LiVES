@@ -734,7 +734,6 @@ static int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) 
 static double drand(double max) {
   double denom = (double)(2ul << 30) / max;
   double num = (double)lrand48();
-  fprintf(stderr, "rnd %f %f\n", num, denom);
   return (double)(num / denom);
 }
 

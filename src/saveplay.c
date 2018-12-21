@@ -5739,26 +5739,21 @@ void rewrite_recovery_file(void) {
 boolean check_for_recovery_files(boolean auto_recover) {
   uint32_t recpid = 0;
 
-  ssize_t bytes;
-
   char *recovery_file, *recovery_numbering_file;
-  char *info_file = lives_strdup_printf("%s/.recovery.%d", prefs->workdir, capable->mainpid);
   char *com;
 
   boolean retval = FALSE;
 
-  int info_fd;
   int lgid = lives_getgid();
   int luid = lives_getuid();
 
   lives_pgid_t lpid = capable->mainpid;
 
-  com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery> \"%s\"", prefs->backend_sync, luid, lgid,
-                            capable->myname, info_file);
+  com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery", prefs->backend_sync, luid, lgid,
+                            capable->myname);
 
-  lives_rm(info_file);
   mainw->com_failed = FALSE;
-  lives_system(com, FALSE);
+  lives_popen(com, FALSE, mainw->msg, 256);
   lives_free(com);
 
   if (mainw->com_failed) {
@@ -5766,19 +5761,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
     return FALSE;
   }
 
-  info_fd = lives_open2(info_file, O_RDONLY);
-  if (info_fd > -1) {
-    if ((bytes = read(info_fd, mainw->msg, 256)) > 0) {
-      memset(mainw->msg + bytes, 0, 1);
-      if ((recpid = atoi(mainw->msg)) > 0) {
-
-      }
-    }
-    close(info_fd);
-  }
-  lives_rm(info_file);
-  lives_free(info_file);
-
+  recpid = atoi(mainw->msg);
   if (recpid == 0) return FALSE;
 
   retval = recover_files((recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, luid,

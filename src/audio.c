@@ -2786,12 +2786,12 @@ boolean apply_rte_audio_init(void) {
   char *com;
 
   if (!prefs->conserve_space) {
-    mainw->error = FALSE;
+    mainw->com_failed = FALSE;
     com = lives_strdup_printf("%s backup_audio %s", prefs->backend_sync, cfile->handle);
     lives_system(com, FALSE);
     lives_free(com);
 
-    if (mainw->error) {
+    if (mainw->com_failed) {
       d_print_failed();
       return FALSE;
     }

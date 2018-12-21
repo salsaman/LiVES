@@ -1489,11 +1489,9 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
   int *fmts, *sfmts;
   int ret = AUDIO_CODEC_NONE;
   int i, j = 0, nfmts;
-  size_t rlen;
   char *astreamer, *com;
   char buf[1024];
   char **array;
-  FILE *rfile;
 
   if (vpp != NULL && vpp->get_audio_fmts != NULL) {
     fmts = (*vpp->get_audio_fmts)(); // const, so do not free()
@@ -1504,11 +1502,7 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
     // create sfmts array and nfmts
 
     com = lives_strdup_printf("\"%s\" get_formats", astreamer);
-
-    rfile = popen(com, "r");
-    rlen = fread(buf, 1, 1023, rfile);
-    pclose(rfile);
-    memset(buf + rlen, 0, 1);
+    lives_popen(com, FALSE, buf, 1024);
     lives_free(com);
 
     nfmts = get_token_count(buf, '|');
@@ -1527,20 +1521,17 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
       if (int_array_contains_value(sfmts, nfmts, fmts[i])) {
 
         com = lives_strdup_printf("\"%s\" check %d", astreamer, fmts[i]);
+        mainw->com_failed = FALSE;
+        lives_popen(com, TRUE, buf, 1024);
+        lives_free(com);
 
-        rfile = popen(com, "r");
-        if (!rfile) {
-          // command failed
+        if (mainw->com_failed) {
           do_system_failed_error(com, 0, NULL);
           lives_free(astreamer);
           lives_free(com);
           lives_free(sfmts);
           return ret;
         }
-        rlen = fread(buf, 1, 1023, rfile);
-        pclose(rfile);
-        memset(buf + rlen, 0, 1);
-        lives_free(com);
 
         if (strlen(buf) > 0) {
           if (i == 0 && prefsw != NULL) {

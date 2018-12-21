@@ -1168,6 +1168,7 @@ boolean expose_eim(LiVESWidget *, lives_painter_t *, livespointer);
 
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);
+size_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buflen);
 lives_pid_t lives_fork(const char *com);
 int lives_open3(const char *pathname, int flags, mode_t mode);
 int lives_open2(const char *pathname, int flags);

@@ -2176,7 +2176,6 @@ static void stream_audio_toggled(LiVESToggleButton *togglebutton, livespointer u
 
     if (tmpvpp->audio_codec != AUDIO_CODEC_NONE) {
       // make audiostream plugin name
-      FILE *rfile;
       size_t rlen;
 
       char buf[1024];
@@ -2187,19 +2186,8 @@ static void stream_audio_toggled(LiVESToggleButton *togglebutton, livespointer u
       com = lives_strdup_printf("\"%s\" check %d", astreamer, tmpvpp->audio_codec);
       lives_free(astreamer);
 
-      rfile = popen(com, "r");
-      if (!rfile) {
-        // command failed
-        do_system_failed_error(com, 0, NULL);
-        lives_free(com);
-        return;
-      }
-
-      rlen = fread(buf, 1, 1023, rfile);
-      pclose(rfile);
-      memset(buf + rlen, 0, 1);
+      rlen = lives_popen(com, TRUE, buf, 1024);
       lives_free(com);
-
       if (rlen > 0) {
         lives_toggle_button_set_active(togglebutton, FALSE);
       }

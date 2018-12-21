@@ -214,7 +214,7 @@ void lives_exit(int signum) {
         // TODO *** - check for namespace collisions between sets in old dir and sets in new dir
 
         // use backend to move the sets
-        com = lives_strdup_printf("%s weed \"%s\" &", prefs->backend_sync, future_prefs->workdir);
+        com = lives_strdup_printf("%s weed \"%s\"", prefs->backend_sync, future_prefs->workdir);
         lives_system(com, FALSE);
         lives_free(com);
       }
@@ -1190,43 +1190,26 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
   char *filt[] = {"*."LIVES_FILE_EXT_PROJECT, NULL};
   char *proj_file = choose_file(NULL, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
-  char *info_file;
   char *new_set;
-  int info_fd;
-  ssize_t bytes;
   char *set_dir;
   char *msg;
 
   if (proj_file == NULL) return;
-  info_file = lives_strdup_printf("%s/.impname.%d", prefs->workdir, capable->mainpid);
-  lives_rm(info_file);
   mainw->com_failed = FALSE;
-  com = lives_strdup_printf("%s get_proj_set \"%s\">\"%s\"", prefs->backend_sync, proj_file, info_file);
-  lives_system(com, FALSE);
+  com = lives_strdup_printf("%s get_proj_set \"%s\"", prefs->backend_sync, proj_file);
+  lives_popen(com, FALSE, mainw->msg, 256);
   lives_free(com);
 
   if (mainw->com_failed) {
-    lives_free(info_file);
     lives_free(proj_file);
     return;
   }
 
-  info_fd = lives_open2(info_file, O_RDONLY);
-
-  if (info_fd >= 0 && ((bytes = read(info_fd, mainw->msg, 256)) > 0)) {
-    close(info_fd);
-    memset(mainw->msg + bytes, 0, 1);
-  } else {
-    if (info_fd >= 0) close(info_fd);
-    lives_rm(info_file);
-    lives_free(info_file);
+  if (strlen(mainw->msg) == 0) {
     lives_free(proj_file);
     do_error_dialog(_("\nInvalid project file.\n"));
     return;
   }
-
-  lives_rm(info_file);
-  lives_free(info_file);
 
   if (!is_legal_set_name(mainw->msg, TRUE)) return;
 
@@ -1243,6 +1226,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free(msg);
     lives_free(proj_file);
     lives_free(set_dir);
+    lives_free(new_set);
     return;
   }
 
@@ -1251,6 +1235,8 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   d_print(_("Importing the project %s as set %s..."), proj_file, new_set);
 
   if (!get_temp_handle(mainw->first_free_file, TRUE)) {
+    lives_free(proj_file);
+    lives_free(new_set);
     d_print_failed();
     return;
   }
@@ -1262,6 +1248,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(proj_file);
 
   if (mainw->com_failed) {
+    lives_free(new_set);
     d_print_failed();
     return;
   }
@@ -10765,12 +10752,12 @@ void on_fade_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   threaded_dialog_spin(0.);
 
   if (!prefs->conserve_space) {
-    mainw->error = FALSE;
+    mainw->com_failed = FALSE;
     com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
     lives_system(com, FALSE);
     lives_free(com);
 
-    if (mainw->error) {
+    if (mainw->com_failed) {
       lives_alarm_clear(alarm_handle);
       end_threaded_dialog();
       d_print_failed();
@@ -11202,12 +11189,12 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
     ins_pt = (mainw->files[old_file]->start - 1.) / mainw->files[old_file]->fps * TICKS_PER_SECOND_DBL;
 
     if (!prefs->conserve_space && oachans > 0) {
-      mainw->error = FALSE;
+      mainw->com_failed = FALSE;
       com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, mainw->files[old_file]->handle);
       lives_system(com, FALSE);
       lives_free(com);
 
-      if (mainw->error) {
+      if (mainw->com_failed) {
         end_threaded_dialog();
         close_current_file(old_file);
         mainw->suppress_dprint = FALSE;

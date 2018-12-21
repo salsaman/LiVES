@@ -320,7 +320,6 @@ int lives_system(const char *com, boolean allow_error) {
        (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-
     lives_widget_context_update();
   }
 
@@ -350,6 +349,59 @@ int lives_system(const char *com, boolean allow_error) {
   if (cnorm) lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   return retval;
+}
+
+
+size_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buflen) {
+  // runs com, fills buff with a NUL terminated string (total length <= buflen)
+  // returns number of bytes read. If an error occurs during popen or fread
+  // then mainw->com_failed is set, and if allow_error is FALSE then an an error dialog is displayed to the user
+
+  FILE *fp;
+  size_t bytes_read = 0;
+  int err;
+  boolean cnorm = FALSE;
+
+  //g_print("doing: %s\n",com);
+
+  if (mainw->is_ready && !mainw->is_exiting &&
+      ((mainw->multitrack == NULL && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
+       (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
+    cnorm = TRUE;
+    lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+    lives_widget_context_update();
+  }
+
+  fp = popen(com, "r");
+  if (fp == NULL) {
+    err = errno;
+  } else {
+    bytes_read = fread(buff, 1, buflen - 1, fp);
+    err = ferror(fp);
+    fclose(fp);
+  }
+
+  memset(buff + bytes_read, 0, 1);
+
+  if (bytes_read == 0) {
+    char *msg = NULL;
+    mainw->com_failed = TRUE;
+    if (!allow_error) {
+      msg = lives_strdup_printf("lives_popen failed with code %d: %s", err, com);
+      LIVES_ERROR(msg);
+      do_system_failed_error(com, err, NULL);
+    }
+#ifndef LIVES_NO_DEBUG
+    else {
+      msg = lives_strdup_printf("lives_popen failed with code %d: %s (not an error)", err, com);
+      LIVES_DEBUG(msg);
+    }
+#endif
+    if (msg != NULL) lives_free(msg);
+  }
+  if (cnorm) lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+
+  return bytes_read;
 }
 
 
@@ -2188,53 +2240,34 @@ boolean check_for_lock_file(const char *set_name, int type) {
   // smogrify indicates a lock very simply by by writing >0 bytes to stdout
   // we redirect the output to info_file and read it
 
-  int info_fd;
   char *msg = NULL;
-  ssize_t bytes;
+  char *com = lives_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d", prefs->backend_sync, set_name, capable->myname,
+                                  capable->mainpid);
 
-  char *info_file = lives_strdup_printf("%s/.locks.%d", prefs->workdir, capable->mainpid);
-  char *com = lives_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d >\"%s\"", prefs->backend_sync, set_name, capable->myname,
-                                  capable->mainpid, info_file);
-
-  lives_rm(info_file);
   threaded_dialog_spin(0.);
   mainw->com_failed = FALSE;
-  lives_system(com, FALSE);
+  lives_popen(com, FALSE, mainw->msg, 256);
   threaded_dialog_spin(0.);
   lives_free(com);
 
-  clear_mainw_msg();
-
   if (mainw->com_failed) return FALSE;
 
-  info_fd = open(info_file, O_RDONLY);
-  if (info_fd > -1) {
-    if ((bytes = read(info_fd, mainw->msg, 256)) > 0) {
-      close(info_fd);
-      memset(mainw->msg + bytes, 0, 1);
-
-      if (type == 0) {
-        msg = lives_strdup_printf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"), set_name);
-        threaded_dialog_spin(0.);
-        do_error_dialog(msg);
-        threaded_dialog_spin(0.);
-      } else if (type == 1) {
-        msg = lives_strdup_printf
-              (_("\nThe set %s is currently in use by another copy of LiVES.\nPlease choose another set name.\n"), set_name);
-        if (!mainw->osc_auto) do_blocking_error_dialog(msg);
-      }
-      if (msg != NULL) {
-        lives_free(msg);
-      }
-      lives_rm(info_file);
-      lives_free(info_file);
-      return FALSE;
+  if (strlen(mainw->msg) > 0) {
+    if (type == 0) {
+      msg = lives_strdup_printf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"), set_name);
+      threaded_dialog_spin(0.);
+      do_error_dialog(msg);
+      threaded_dialog_spin(0.);
+    } else if (type == 1) {
+      msg = lives_strdup_printf
+            (_("\nThe set %s is currently in use by another copy of LiVES.\nPlease choose another set name.\n"), set_name);
+      if (!mainw->osc_auto) do_blocking_error_dialog(msg);
     }
+    if (msg != NULL) {
+      lives_free(msg);
+    }
+    return FALSE;
   }
-  close(info_fd);
-  lives_rm(info_file);
-  lives_free(info_file);
-
   return TRUE;
 }
 
@@ -2409,42 +2442,20 @@ void get_frame_count(int idx) {
 
   // (CLIP_TYPE_FILE should use the decoder plugin frame count)
 
-  int info_fd;
-  int retval;
   ssize_t bytes;
-  char *info_file = lives_strdup_printf("%s/.check.%d", prefs->workdir, capable->mainpid);
-  char *com = lives_strdup_printf("%s count_frames \"%s\" \"%s\" > \"%s\"", prefs->backend_sync, mainw->files[idx]->handle,
-                                  get_image_ext_for_type(mainw->files[idx]->img_type), info_file);
+
+  char *com = lives_strdup_printf("%s count_frames \"%s\" %s\"", prefs->backend_sync, mainw->files[idx]->handle,
+                                  get_image_ext_for_type(mainw->files[idx]->img_type));
 
   mainw->com_failed = FALSE;
-  lives_system(com, FALSE);
+  bytes = lives_popen(com, FALSE, mainw->msg, 256);
   lives_free(com);
 
-  if (mainw->com_failed) {
-    lives_free(info_file);
-    return;
+  if (mainw->com_failed) return;
+
+  if (bytes > 0) {
+    mainw->files[idx]->frames = atoi(mainw->msg);
   }
-
-  do {
-    retval = 0;
-    info_fd = open(info_file, O_RDONLY);
-    if (info_fd < 0) {
-      retval = do_read_failed_error_s_with_retry(info_file, lives_strerror(errno), NULL);
-    } else {
-      if ((bytes = lives_read(info_fd, mainw->msg, 256, TRUE)) > 0) {
-        if (bytes == 0) {
-          retval = do_read_failed_error_s_with_retry(info_file, NULL, NULL);
-        } else {
-          memset(mainw->msg + bytes, 0, 1);
-          mainw->files[idx]->frames = atoi(mainw->msg);
-        }
-      }
-      close(info_fd);
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
-  lives_rm(info_file);
-  lives_free(info_file);
 }
 
 
@@ -2592,14 +2603,9 @@ void get_location(const char *exe, char *val, int maxlen) {
 
 uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   /// get version hash output for an executable from the backend
-  FILE *rfile;
-  ssize_t rlen;
   char val[16];
   char *com = lives_strdup_printf("%s get_version_hash \"%s\" \"%s\" %d", prefs->backend_sync, exe, sep, piece);
-  rfile = popen(com, "r");
-  rlen = fread(val, 1, 16, rfile);
-  pclose(rfile);
-  memset(val + rlen, 0, 1);
+  lives_popen(com, TRUE, val, 16);
   lives_free(com);
   return strtol(val, NULL, 10);
 }
@@ -4491,15 +4497,10 @@ void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
   lives_system(com, TRUE);
 #else
   // get pid from backend
-  FILE *rfile;
-  ssize_t rlen;
   char val[16];
   int pid;
   com = lives_strdup_printf("%s get_pid_for_handle \"%s\"", prefs->backend_sync, dirname);
-  rfile = popen(com, "r");
-  rlen = fread(val, 1, 16, rfile);
-  pclose(rfile);
-  memset(val + rlen, 0, 1);
+  lives_popen(com, FALSE, val, 16);
   if (strcmp(val, " ")) {
     pid = atoi(val);
     lives_win32_kill_subprocesses(pid, kill_parent);
@@ -4526,10 +4527,7 @@ void lives_suspend_resume_process(const char *dirname, boolean suspend) {
 
   // get pid from backend
   com = lives_strdup_printf("%s get_pid_for_handle \"%s\"", prefs->backend_sync, dirname);
-  rfile = popen(com, "r");
-  rlen = fread(val, 1, 16, rfile);
-  pclose(rfile);
-  memset(val + rlen, 0, 1);
+  lives_popen(com, FALSE, val, 16);
   pid = atoi(val);
 
   lives_win32_suspend_resume_process(pid, suspend);

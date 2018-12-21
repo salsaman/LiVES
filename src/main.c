@@ -2172,7 +2172,7 @@ capability *get_capabilities(void) {
   char *safer_bfile;
   char *tmp;
 
-  char buffer[4096 + PATH_MAX];
+  char buffer[8192 + PATH_MAX];
   char string[256];
 
   int err;
@@ -2183,11 +2183,6 @@ capability *get_capabilities(void) {
   mach_msg_type_number_t numProcessorInfo;
   natural_t numProcessors = 0U;
   kern_return_t kerr;
-#else
-#ifndef IS_MINGW
-  size_t len;
-  FILE *tfile;
-#endif
 #endif
 
   capable = (capability *)lives_malloc(sizeof(capability));
@@ -2509,12 +2504,7 @@ capability *get_capabilities(void) {
 
   //capable->ncpus=lives_win32_get_num_logical_cpus();
 #else
-
-  tfile = popen("cat /proc/cpuinfo 2>/dev/null | grep processor 2>/dev/null | wc -l 2>/dev/null", "r");
-  len = fread((void *)buffer, 1, 1024, tfile);
-  pclose(tfile);
-
-  memset(buffer + len, 0, 1);
+  lives_popen("cat /proc/cpuinfo 2>/dev/null | grep processor 2>/dev/null | wc -l 2>/dev/null", TRUE, buffer, 1024);
   capable->ncpus = atoi(buffer);
 #endif
 #endif

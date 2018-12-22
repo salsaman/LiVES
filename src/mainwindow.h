@@ -888,7 +888,6 @@ typedef struct {
   LiVESWidget *resample_video;
   LiVESWidget *preferences;
   LiVESWidget *rename;
-  LiVESWidget *toys;
   LiVESWidget *toy_none;
   LiVESWidget *toy_random_frames;
   LiVESWidget *toy_tv;

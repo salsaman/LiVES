@@ -1,4 +1,5 @@
-Version 2.10.1
+
+	Version 2.10.1
 --------------
 Fix regressions in rendering of internal audio.
 Fix frame rate when rendering after recording from generator plugins.

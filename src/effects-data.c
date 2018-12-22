@@ -1975,7 +1975,6 @@ static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int 
 #ifdef DEBUG_PCONX
   g_print("added new cconx from %d %d %d to %d %d %d\n", okey, omode, ocnum, ikey, imode, icnum);
 #endif
-
 }
 
 

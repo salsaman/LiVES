@@ -7530,9 +7530,6 @@ void on_load_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   isubfname = lives_strdup_printf("%s.%s", filename, LIVES_FILE_EXT_SRT);
   lfile_name = lives_filename_from_utf8(isubfname, -1, NULL, NULL, NULL);
 
-  g_print("vals %s %s\n", filename, isubfname);
-
-
   if (lives_file_test(lfile_name, LIVES_FILE_TEST_EXISTS)) {
     subfname = lives_build_filename(prefs->workdir, cfile->handle, SUBS_FILENAME "." LIVES_FILE_EXT_SRT, NULL);
     subtype = SUBTITLE_TYPE_SRT;
@@ -9182,7 +9179,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
       }*/
       if (!cfile->opening_only_audio) {
         mainw->toy_type = LIVES_TOY_NONE;
-        lives_widget_set_sensitive(mainw->toys, FALSE);
+        lives_widget_set_sensitive(mainw->toys_menu, FALSE);
       }
       if (mainw->multitrack == NULL && prefs->show_gui) lives_widget_show(mainw->LiVES);
 
@@ -9296,7 +9293,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
     cfile->end = oend;
 
     mainw->toy_type = (lives_toy_t)toy_type;
-    lives_widget_set_sensitive(mainw->toys, TRUE);
+    lives_widget_set_sensitive(mainw->toys_menu, TRUE);
 
     if (cfile->proc_ptr != NULL) {
       // proc_ptr can be NULL if we finished loading with a bg generator running

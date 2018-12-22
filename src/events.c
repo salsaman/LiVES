@@ -558,7 +558,9 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
   }
 
   event = weed_plant_copy(in_event);
-  //if (mainw->multitrack!=NULL) mt_fixup_events(mainw->multitrack,in_event,event);
+
+  // need to repoint our avol_init_event
+  if (mainw->multitrack != NULL) mt_fixup_events(mainw->multitrack, in_event, event);
   if (event == NULL) return NULL;
 
   if (event_before == NULL) {
@@ -3264,7 +3266,6 @@ filterinit1:
             lives_free(cwd);
           }
           set_param_gui_readonly(inst);
-
         }
 
         weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
@@ -3280,7 +3281,6 @@ filterinit1:
 
         weed_set_int_value(inst, WEED_LEAF_HOST_KEY, hostkey);
         weed_set_int_value(inst, WEED_LEAF_HOST_MODE, hostmode);
-
       }
 
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
@@ -3681,7 +3681,7 @@ lives_render_error_t render_events(boolean reset) {
                 lives_freep((void **)&mainw->read_failed_file);
                 render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file :
                                      mainw->current_file, xavel, xaseek, (atime * TICKS_PER_SECOND_DBL + .5),
-                                     q_gint64(tc + (TICKS_PER_SECOND_DBL / cfile->fps * !is_blank), cfile->fps), chvols, 1., 1., NULL);
+                                     q_gint64(tc + (TICKS_PER_SECOND_DBL / cfile->fps * (next_frame_event == NULL && !is_blank)), cfile->fps), chvols, 1., 1., NULL);
 
                 if (mainw->write_failed) {
                   int outfile = (mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file);
@@ -3707,10 +3707,11 @@ lives_render_error_t render_events(boolean reset) {
 
                 for (i = 0; i < natracks; i++) {
                   if (xaclips[i] > 0) {
-                    xaseek[i] += (q_gint64(tc, cfile->fps) / TICKS_PER_SECOND_DBL + 1. / cfile->fps - atime) * xavel[i];
+                    xaseek[i] += (q_gint64(tc + (TICKS_PER_SECOND_DBL / cfile->fps * (next_frame_event == NULL &&
+                                                 !is_blank)), cfile->fps) / TICKS_PER_SECOND_DBL - atime) * xavel[i];
                   }
                 }
-                atime = q_gint64(tc, cfile->fps) / TICKS_PER_SECOND_DBL + 1. / cfile->fps;
+                atime = q_gint64(tc + (TICKS_PER_SECOND_DBL / cfile->fps * (next_frame_event == NULL && !is_blank)), cfile->fps) / TICKS_PER_SECOND_DBL;
               }
               for (i = 0; i < num_aclips; i += 2) {
                 if (aclips[i + 1] > 0) { // clipnum
@@ -4319,7 +4320,7 @@ boolean render_to_clip(boolean new_clip) {
     end_threaded_dialog();
   }
 
-  if (mainw->event_list != NULL) {
+  if (mainw->event_list != NULL && (mainw->multitrack == NULL || mainw->unordered_blocks)) {
     weed_plant_t *qevent_list = quantise_events(mainw->event_list, cfile->fps, FALSE);
     if (qevent_list != NULL) {
       event_list_replace_events(mainw->event_list, qevent_list);
@@ -4563,6 +4564,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
         mainw->event_list = NULL;
         new_clip = TRUE;
       } else render_choice = RENDER_CHOICE_PREVIEW;
+      mainw->unordered_blocks = FALSE;
       break;
     case RENDER_CHOICE_EVENT_LIST:
       if (count_events(mainw->event_list, prefs->event_window_show_frame_events, 0, 0) > 1000) if (!do_event_list_warning()) {

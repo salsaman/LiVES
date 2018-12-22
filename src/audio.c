@@ -580,7 +580,7 @@ void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float sc
 
 
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps,
-                              int usigned, boolean little_endian, boolean interleaved, float vol) {
+                              int usigned, boolean rev_endian, boolean interleaved, float vol) {
   // convert float samples back to int
   // interleaved is for the float buffer; output int is always interleaved
 
@@ -614,7 +614,7 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
       if (usigned) valu = (val + SAMPLE_MAX_16BITI);
 
       if (asamps == 16) {
-        if (!little_endian) {
+        if (!rev_endian) {
           if (usigned) *(hbuffu + offs) = valu;
           else *(hbuffs + offs) = val;
         } else {
@@ -1291,7 +1291,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   finish_buff = lives_malloc(tsamples * out_achans * out_asamps);
 
 #ifdef DEBUG_ARENDER
-  g_print("  rendering %ld samples\n", tsamples);
+  g_print("  rendering %ld samples %f\n", tsamples, opvol);
 #endif
 
   while (tsamples > 0) {
@@ -1417,7 +1417,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
         frames_out = sample_move_float_int((void *)finish_buff, chunk_float_buffer, blocksize, 1., out_achans,
                                            out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
-        g_print("render %ld frames at %f\n", frames_out, opvol);
         lives_write(out_fd, finish_buff, frames_out * out_asamps * out_achans, TRUE);
         threaded_dialog_spin(0.);
         tot_frames += frames_out;
@@ -1434,6 +1433,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
         frames_out = sample_move_float_int((void *)finish_buff, float_buffer, xsamples, 1., out_achans,
                                            out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
+
         lives_write(out_fd, finish_buff, frames_out * out_asamps * out_achans, TRUE);
 #ifdef DEBUG_ARENDER
         g_print(".");

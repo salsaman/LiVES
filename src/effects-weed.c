@@ -3251,7 +3251,6 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float *
 
     out_tracks = (int *)lives_malloc(sizint);
     out_tracks[0] = 0;
-
   } else {
     // when processing an event list, we pass an init_event
     was_init_event = TRUE;
@@ -3277,6 +3276,8 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float *
       if (mainw->pchains != NULL && mainw->pchains[key] != NULL) {
         if (!pthread_mutex_trylock(&mainw->interp_mutex)) { // try to minimise thread locking
           pthread_mutex_unlock(&mainw->interp_mutex);
+          weed_plant_t **in_params = weed_get_plantptr_array(instance, WEED_LEAF_IN_PARAMETERS, &error);
+          int nvals = weed_leaf_num_elements(in_params[0], WEED_LEAF_VALUE);
           if (!interpolate_params(instance, mainw->pchains[key], tc)) {
             lives_freep((void **)&in_tracks);
             lives_freep((void **)&out_tracks);
@@ -3519,13 +3520,14 @@ audinst1:
     }
   }
 
-  out_abuf = (float *)weed_get_voidptr_value(layers[0], WEED_LEAF_AUDIO_DATA, &error);
+  out_abuf = (float *)weed_get_voidptr_value(layers[out_tracks[0] + nbtracks], WEED_LEAF_AUDIO_DATA, &error);
 
   if (numoutchans > 0) {
     // copy processed audio
 
     // inner function will set this if the plugin accepts/returns interleaved audio only
-    if (weed_get_boolean_value(layers[0], WEED_LEAF_AUDIO_INTERLEAF, &error) == WEED_TRUE) float_deinterleave(out_abuf, nsamps, nchans);
+    if (weed_get_boolean_value(layers[out_tracks[0] + nbtracks], WEED_LEAF_AUDIO_INTERLEAF, &error) == WEED_TRUE) float_deinterleave(out_abuf,
+          nsamps, nchans);
 
     // non-interleaved
     for (i = 0; i < nchans; i++) {

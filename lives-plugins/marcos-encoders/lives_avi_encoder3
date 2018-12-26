@@ -27,7 +27,7 @@ See my vids at http://amv.reimeika.ca !
 
 Copyright (C) 2008 - 2018 Salsaman (salsaman+lives@gmail.com)
 """
-
+import os
 version = '0.0.19'
 if os.name == 'nt':
     convert = 'mgkvert'

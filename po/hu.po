@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2018-12-20 18:08-0300\n"
+"POT-Creation-Date: 2018-12-22 12:16-0300\n"
 "PO-Revision-Date: 2012-08-08 08:49+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -1162,8 +1162,8 @@ msgstr ""
 "Ha ez be van állítva, a képkockák deinterlacelve lesznek amint importálják "
 "őket."
 
-#: src/interface.c:86 src/callbacks.c:9304 src/callbacks.c:9326
-#: src/callbacks.c:9327 src/gui.c:3206 src/gui.c:3784 src/saveplay.c:2127
+#: src/interface.c:86 src/callbacks.c:9301 src/callbacks.c:9323
+#: src/callbacks.c:9324 src/gui.c:3206 src/gui.c:3784 src/saveplay.c:2127
 #: src/saveplay.c:2903 src/dialogs.c:1554 src/dialogs.c:1555 src/dialogs.c:1847
 #: src/dialogs.c:1848 src/framedraw.c:221 src/multitrack.c:8031
 msgid "Preview"
@@ -1205,7 +1205,7 @@ msgstr ""
 "\n"
 "Ne felejtsd el kikapcsolni az effekteket (ctr-0) utána!"
 
-#: src/interface.c:189 src/callbacks.c:9048 src/callbacks.c:9095
+#: src/interface.c:189 src/callbacks.c:9045 src/callbacks.c:9092
 #: src/dialogs.c:2776
 msgid ""
 "\n"
@@ -1227,11 +1227,11 @@ msgstr "_Elég"
 msgid "_Preview"
 msgstr "_Előnézet"
 
-#: src/interface.c:217 src/callbacks.c:9047 src/callbacks.c:9093
+#: src/interface.c:217 src/callbacks.c:9044 src/callbacks.c:9090
 msgid "Paus_e"
 msgstr ""
 
-#: src/interface.c:218 src/callbacks.c:9092
+#: src/interface.c:218 src/callbacks.c:9089
 msgid "Pause/_Enough"
 msgstr ""
 
@@ -1315,7 +1315,7 @@ msgstr "Tartsd meg a _beállításaim"
 msgid "Use _recommended settings"
 msgstr "Használd a _javasolt beállításokat"
 
-#: src/interface.c:732 src/callbacks.c:8357 src/paramwindow.c:835
+#: src/interface.c:732 src/callbacks.c:8354 src/paramwindow.c:835
 #: src/omc-learn.c:1405
 msgid "_Close Window"
 msgstr "Ablak _bezárása"
@@ -2465,7 +2465,7 @@ msgstr "Beállítás törlése"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "%s beállítás törölve lett a lemezről.\n"
 
-#: src/callbacks.c:1933 src/callbacks.c:11399 src/resample.c:1190
+#: src/callbacks.c:1933 src/callbacks.c:11396 src/resample.c:1190
 msgid "Insert Silence"
 msgstr "Csend beszúrása"
 
@@ -2578,7 +2578,7 @@ msgstr ""
 "multitrack kimenetbe.\n"
 "Biztosan folytatni szeretnéd?\n"
 
-#: src/callbacks.c:3032 src/callbacks.c:11328
+#: src/callbacks.c:3032 src/callbacks.c:11325
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2638,9 +2638,9 @@ msgstr "%d idők beillesztése a %s vágólapról..."
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "%d képkockák beillesztése a %s vágólapról..."
 
-#: src/callbacks.c:3369 src/callbacks.c:7872 src/callbacks.c:7925
-#: src/callbacks.c:8161 src/callbacks.c:8201 src/callbacks.c:8243
-#: src/callbacks.c:10512
+#: src/callbacks.c:3369 src/callbacks.c:7869 src/callbacks.c:7922
+#: src/callbacks.c:8158 src/callbacks.c:8198 src/callbacks.c:8240
+#: src/callbacks.c:10509
 msgid "Cancelling"
 msgstr "Megszakítás"
 
@@ -2664,8 +2664,8 @@ msgstr ""
 "A törlés hiányzó képkockákat eredményezhet a kimeneteken.\n"
 "Biztosan szeretnéd folytatni?\n"
 
-#: src/callbacks.c:3621 src/callbacks.c:10594 src/callbacks.c:10813
-#: src/callbacks.c:10866
+#: src/callbacks.c:3621 src/callbacks.c:10591 src/callbacks.c:10810
+#: src/callbacks.c:10863
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2686,7 +2686,7 @@ msgstr ""
 "kimenetbe.\n"
 "Biztosan folytatni szeretnéd?\n"
 
-#: src/callbacks.c:3651 src/callbacks.c:10852
+#: src/callbacks.c:3651 src/callbacks.c:10849
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -3042,21 +3042,21 @@ msgstr "Vágólap megfordítása"
 msgid "Load Subtitles"
 msgstr ""
 
-#: src/callbacks.c:7578 src/saveplay.c:901
+#: src/callbacks.c:7575 src/saveplay.c:901
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr ""
 
-#: src/callbacks.c:7637
+#: src/callbacks.c:7634
 msgid "Subtitles were erased.\n"
 msgstr ""
 
-#: src/callbacks.c:7659
+#: src/callbacks.c:7656
 #, fuzzy
 msgid "Select Audio File"
 msgstr "Hang fájl kiválasztása"
 
-#: src/callbacks.c:7696 src/callbacks.c:8077
+#: src/callbacks.c:7693 src/callbacks.c:8074
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -3069,83 +3069,83 @@ msgstr ""
 "Biztosan folytatni szeretnéd?\n"
 "."
 
-#: src/callbacks.c:7829
+#: src/callbacks.c:7826
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "%s megnyitása, formátuma: %s..."
 
-#: src/callbacks.c:7863 src/saveplay.c:458
+#: src/callbacks.c:7860 src/saveplay.c:458
 msgid "Opening audio"
 msgstr "Hang megnyitása"
 
-#: src/callbacks.c:7977 src/callbacks.c:8285 src/callbacks.c:10548
-#: src/callbacks.c:11175
+#: src/callbacks.c:7974 src/callbacks.c:8282 src/callbacks.c:10545
+#: src/callbacks.c:11172
 msgid "Committing audio"
 msgstr "Hang hozzáadása"
 
-#: src/callbacks.c:7992 src/callbacks.c:8314
+#: src/callbacks.c:7989 src/callbacks.c:8311
 msgid "New Audio"
 msgstr "Új hang"
 
-#: src/callbacks.c:8101
+#: src/callbacks.c:8098
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "%d CD szám megnyitása innen: %s..."
 
-#: src/callbacks.c:8104
+#: src/callbacks.c:8101
 #, c-format
 msgid "CD track %d"
 msgstr "CD szám: %d"
 
-#: src/callbacks.c:8147
+#: src/callbacks.c:8144
 msgid "Opening CD track..."
 msgstr "CD szám megnyitása..."
 
-#: src/callbacks.c:8187 src/callbacks.c:8232
+#: src/callbacks.c:8184 src/callbacks.c:8229
 msgid "Error loading CD track\n"
 msgstr "Hiba a CD szám megnyitása közben\n"
 
-#: src/callbacks.c:8347
+#: src/callbacks.c:8344
 #, fuzzy
 msgid "Layout Errors"
 msgstr "kimeneti hibák"
 
-#: src/callbacks.c:8368
+#: src/callbacks.c:8365
 msgid "Clear _Errors"
 msgstr "_Hibák törlése"
 
-#: src/callbacks.c:8379
+#: src/callbacks.c:8376
 msgid "_Delete affected layouts"
 msgstr "_Érintett kimenetek törlése"
 
-#: src/callbacks.c:9039 src/callbacks.c:9061
+#: src/callbacks.c:9036 src/callbacks.c:9058
 msgid "Resume"
 msgstr "Folytatás"
 
-#: src/callbacks.c:9040
+#: src/callbacks.c:9037
 msgid ""
 "\n"
 "Paused\n"
 "(click Resume to continue processing)"
 msgstr ""
 
-#: src/callbacks.c:9041 src/callbacks.c:9078
+#: src/callbacks.c:9038 src/callbacks.c:9075
 msgid "paused..."
 msgstr "megállítva..."
 
-#: src/callbacks.c:9049 src/callbacks.c:9096
+#: src/callbacks.c:9046 src/callbacks.c:9093
 msgid "resumed..."
 msgstr "folytatva..."
 
-#: src/callbacks.c:9066
+#: src/callbacks.c:9063
 msgid "Keep"
 msgstr "Megtartás"
 
-#: src/callbacks.c:9068
+#: src/callbacks.c:9065
 msgid "Enough"
 msgstr ""
 
-#: src/callbacks.c:9073
+#: src/callbacks.c:9070
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -3158,30 +3158,30 @@ msgstr ""
 "(Kattints a 'Megtartás' gombra, hogy megtartsd amit készítettél)\n"
 "(Kattints a 'Folytatás' gombra, hogy folytatódjon a folyamat)"
 
-#: src/callbacks.c:9094
+#: src/callbacks.c:9091
 msgid "Cancel"
 msgstr "Mégse"
 
-#: src/callbacks.c:9238
+#: src/callbacks.c:9235
 msgid "Stop"
 msgstr ""
 
-#: src/callbacks.c:9714 src/multitrack.c:13066
+#: src/callbacks.c:9711 src/multitrack.c:13066
 #, fuzzy
 msgid "Selected Frame"
 msgstr "_Minden képkocka kijelölése"
 
-#: src/callbacks.c:9722
+#: src/callbacks.c:9719
 #, fuzzy
 msgid "_Save Frame as..."
 msgstr "_Kimenet mentése mint..."
 
-#: src/callbacks.c:9950
+#: src/callbacks.c:9947
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:10001
+#: src/callbacks.c:9998
 msgid ""
 "\n"
 "\n"
@@ -3190,7 +3190,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10007
+#: src/callbacks.c:10004
 msgid ""
 "\n"
 "\n"
@@ -3202,7 +3202,7 @@ msgstr ""
 "Fel kell telepítened az \"xwininfo\"-t ezen képesség használatához\n"
 "\n"
 
-#: src/callbacks.c:10079 src/callbacks.c:11095
+#: src/callbacks.c:10076 src/callbacks.c:11092
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -3210,7 +3210,7 @@ msgstr ""
 "\n"
 "A rögzítési időnek nagyobbnak kell lennie 0-nál.\n"
 
-#: src/callbacks.c:10094
+#: src/callbacks.c:10091
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -3224,11 +3224,11 @@ msgstr ""
 "Nyomj 'Mégse'-t a megszakításhoz\n"
 "\n"
 
-#: src/callbacks.c:10099
+#: src/callbacks.c:10096
 msgid "External window was released.\n"
 msgstr "Külső ablak felszabadítva.\n"
 
-#: src/callbacks.c:10135
+#: src/callbacks.c:10132
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -3236,7 +3236,7 @@ msgstr ""
 "Kattints az ablakra a rögzítéshez\n"
 "nyomj 'q'-t a felvétel megállításához"
 
-#: src/callbacks.c:10172
+#: src/callbacks.c:10169
 #, c-format
 msgid ""
 "\n"
@@ -3251,19 +3251,19 @@ msgstr ""
 "Stop vagy 'q' a befejezéshez.\n"
 "(Az alapértelmezett %.3f képkocka/másodperc lesz használva.)\n"
 
-#: src/callbacks.c:10195
+#: src/callbacks.c:10192
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "A LiVES nem képes rögzíteni ezt az ablakot. Elnézést.\n"
 
-#: src/callbacks.c:10340
+#: src/callbacks.c:10337
 msgid "Export Selected Audio as..."
 msgstr "Kijelölt hang exportálása mint..."
 
-#: src/callbacks.c:10343
+#: src/callbacks.c:10340
 msgid "Export Audio as..."
 msgstr "Hang exportálása mint..."
 
-#: src/callbacks.c:10353
+#: src/callbacks.c:10350
 msgid ""
 "\n"
 "\n"
@@ -3276,87 +3276,87 @@ msgstr ""
 "A hanglejátszás sebessége meg lett változtatva a klipben.\n"
 "'OK' az új sebesség exportálásához, vagy 'Mégse' az eredeti exportálásához.\n"
 
-#: src/callbacks.c:10359
+#: src/callbacks.c:10356
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "%d hang exportálása ide: %d, mint: %s..."
 
-#: src/callbacks.c:10363
+#: src/callbacks.c:10360
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Hang exportálása mint %s..."
 
-#: src/callbacks.c:10389
+#: src/callbacks.c:10386
 msgid "Exporting audio"
 msgstr "Hang exportálása"
 
-#: src/callbacks.c:10431
+#: src/callbacks.c:10428
 #, fuzzy
 msgid "Append Audio File"
 msgstr "Hang hozzáfűzés"
 
-#: src/callbacks.c:10485
+#: src/callbacks.c:10482
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "%s hang fájl hozzáfűzése..."
 
-#: src/callbacks.c:10502
+#: src/callbacks.c:10499
 msgid "Appending audio"
 msgstr "Hang hozzáfűzése"
 
-#: src/callbacks.c:10562
+#: src/callbacks.c:10559
 msgid "Append Audio"
 msgstr "Hang hozzáfűzés"
 
-#: src/callbacks.c:10618
+#: src/callbacks.c:10615
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10620
+#: src/callbacks.c:10617
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "Hang vágása %.2f -től %.2f másodpercig..."
 
-#: src/callbacks.c:10639
+#: src/callbacks.c:10636
 msgid "Trimming/Padding audio"
 msgstr "Hang nyesés/kitöltés"
 
-#: src/callbacks.c:10647
+#: src/callbacks.c:10644
 msgid "Trim/Pad Audio"
 msgstr "Hangot nyes/kitölt"
 
-#: src/callbacks.c:10713
+#: src/callbacks.c:10710
 msgid "Fading audio in"
 msgstr "Fokozatosan erősödő hang"
 
-#: src/callbacks.c:10714
+#: src/callbacks.c:10711
 msgid "Fade audio in"
 msgstr "Fokozatosan erősödő hang"
 
-#: src/callbacks.c:10718
+#: src/callbacks.c:10715
 msgid "Fading audio out"
 msgstr "Fokozatosan halkuló hang"
 
-#: src/callbacks.c:10719
+#: src/callbacks.c:10716
 msgid "Fade audio out"
 msgstr "Fokozatosan halkuló hang"
 
-#: src/callbacks.c:10738
+#: src/callbacks.c:10735
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s %.1f másodpercen túl..."
 
-#: src/callbacks.c:10740
+#: src/callbacks.c:10737
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s : %.2f másodperctől %.2f másodpercig..."
 
-#: src/callbacks.c:10747
+#: src/callbacks.c:10744
 msgid "Fading audio..."
 msgstr "Halkuló hang..."
 
-#: src/callbacks.c:10837
+#: src/callbacks.c:10834
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -3366,33 +3366,33 @@ msgstr ""
 "Az összes hang törlése bezárja a fájlt.\n"
 "Biztos vagy benne?"
 
-#: src/callbacks.c:10840
+#: src/callbacks.c:10837
 msgid "Deleting all audio..."
 msgstr "Minden hang törlése..."
 
-#: src/callbacks.c:10845
+#: src/callbacks.c:10842
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Hang törlése %.2f-től %.2f másodpercig..."
 
-#: src/callbacks.c:10919
+#: src/callbacks.c:10916
 msgid "Deleting Audio"
 msgstr "Hang törlése"
 
-#: src/callbacks.c:10926
+#: src/callbacks.c:10923
 msgid "Delete Audio"
 msgstr "Hang törlése"
 
-#: src/callbacks.c:11254
+#: src/callbacks.c:11251
 msgid "Record new audio"
 msgstr "Új hang rögzítése"
 
-#: src/callbacks.c:11354
+#: src/callbacks.c:11351
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Csend beszúrása a %.2f-től a %.2f másodpercig..."
 
-#: src/callbacks.c:11384
+#: src/callbacks.c:11381
 msgid "Inserting Silence"
 msgstr "Csend beszúrása"
 
@@ -6564,22 +6564,22 @@ msgstr "Helyreállítás"
 msgid "pointer"
 msgstr "_Mutató"
 
-#: src/effects-weed.c:4678
+#: src/effects-weed.c:4680
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Hiba: a(z) %s bővítménynek nincsenek beállításai.\n"
 
-#: src/effects-weed.c:4691
+#: src/effects-weed.c:4693
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4764
+#: src/effects-weed.c:4766
 #, c-format
 msgid "Found duplicate plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:4817
+#: src/effects-weed.c:4819
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -6588,175 +6588,175 @@ msgstr ""
 "Információ: Nem lehet betölteni a következő bővítményt: %s\n"
 "A hiba a következő volt: %s\n"
 
-#: src/effects-weed.c:4820 src/effects-weed.c:5899
+#: src/effects-weed.c:4822 src/effects-weed.c:5901
 msgid "Some plugin directories"
 msgstr ""
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:4892 src/rte_window.c:2033
+#: src/effects-weed.c:4894 src/rte_window.c:2033
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
 
-#: src/effects-weed.c:5077
+#: src/effects-weed.c:5079
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Sikeresen betöltött %d Weed szűrők\n"
 
-#: src/effects-weed.c:5235
+#: src/effects-weed.c:5237
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:5253
+#: src/effects-weed.c:5255
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5267
+#: src/effects-weed.c:5269
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5396
+#: src/effects-weed.c:5398
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5416
+#: src/effects-weed.c:5418
 #, fuzzy, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5431
+#: src/effects-weed.c:5433
 #, fuzzy, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5442
+#: src/effects-weed.c:5444
 #, fuzzy, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5456
+#: src/effects-weed.c:5458
 #, fuzzy, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5483
+#: src/effects-weed.c:5485
 #, fuzzy, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5517
+#: src/effects-weed.c:5519
 #, fuzzy, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5550
+#: src/effects-weed.c:5552
 #, fuzzy, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5561
+#: src/effects-weed.c:5563
 #, fuzzy, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5580
+#: src/effects-weed.c:5582
 #, fuzzy, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5593
+#: src/effects-weed.c:5595
 #, fuzzy, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5604
+#: src/effects-weed.c:5606
 #, fuzzy, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5619
+#: src/effects-weed.c:5621
 #, fuzzy, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5648
+#: src/effects-weed.c:5650
 #, fuzzy, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5659
+#: src/effects-weed.c:5661
 #, fuzzy, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5678
+#: src/effects-weed.c:5680
 #, fuzzy, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5689
+#: src/effects-weed.c:5691
 #, fuzzy, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5708
+#: src/effects-weed.c:5710
 #, fuzzy, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr "Érvénytelen %s effekt a %s-ben\n"
 
-#: src/effects-weed.c:5745
+#: src/effects-weed.c:5747
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5806
+#: src/effects-weed.c:5808
 #, fuzzy, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr "Sikeresen betöltött %d Weed szűrők\n"
 
-#: src/effects-weed.c:6632
+#: src/effects-weed.c:6634
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6781
+#: src/effects-weed.c:6783
 #, fuzzy, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr "Nem sikerült elindítani a(z) %s eseményt, hiba kód: %d\n"
 
-#: src/effects-weed.c:6859
+#: src/effects-weed.c:6861
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nem lehet elindítani a %s generátort\n"
 
-#: src/effects-weed.c:7726
+#: src/effects-weed.c:7728
 #, fuzzy, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr "Nem lehet elindítani a %s generátort\n"
 
-#: src/effects-weed.c:7826
+#: src/effects-weed.c:7828
 #, fuzzy, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "Nem lehet elindítani a %s generátort\n"
 
-#: src/effects-weed.c:9070
+#: src/effects-weed.c:9072
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -6781,103 +6781,103 @@ msgstr "    Csatornák "
 msgid "Out channel %d"
 msgstr "    Csatornák "
 
-#: src/effects-data.c:3300
+#: src/effects-data.c:3299
 #, c-format
 msgid "False to True -> TRIGGER (%s)"
 msgstr ""
 
-#: src/effects-data.c:3341
+#: src/effects-data.c:3340
 #, c-format
 msgid "ACTIVATE (%s)"
 msgstr ""
 
-#: src/effects-data.c:3607
+#: src/effects-data.c:3606
 msgid "TRIGGER"
 msgstr ""
 
-#: src/effects-data.c:3608
+#: src/effects-data.c:3607
 msgid "ACTIVATE"
 msgstr ""
 
-#: src/effects-data.c:3925
+#: src/effects-data.c:3924
 msgid "OMC Macros"
 msgstr ""
 
-#: src/effects-data.c:3944
+#: src/effects-data.c:3943
 #, c-format
 msgid "Key slot %d"
 msgstr ""
 
-#: src/effects-data.c:4059
+#: src/effects-data.c:4058
 #, fuzzy
 msgid "Autoscale"
 msgstr "* skála"
 
-#: src/effects-data.c:4139
+#: src/effects-data.c:4138
 msgid "Add another connection for this output parameter"
 msgstr ""
 
-#: src/effects-data.c:4150 src/effects-data.c:4193
+#: src/effects-data.c:4149 src/effects-data.c:4192
 #, fuzzy
 msgid "Delete this connection"
 msgstr "_Effekt törlése"
 
-#: src/effects-data.c:4182
+#: src/effects-data.c:4181
 msgid "Add another connection for this output channel"
 msgstr ""
 
-#: src/effects-data.c:4263
+#: src/effects-data.c:4262
 msgid "Connected to -->"
 msgstr ""
 
-#: src/effects-data.c:4283
+#: src/effects-data.c:4282
 #, fuzzy, c-format
 msgid "%s - Alpha Channel Connections"
 msgstr "LiVES: - RFX paraméter ablak tippek"
 
-#: src/effects-data.c:4357
+#: src/effects-data.c:4356
 #, fuzzy, c-format
 msgid "%s - Parameter Data Connections"
 msgstr "Ki_jelölés"
 
-#: src/effects-data.c:4376
+#: src/effects-data.c:4375
 msgid "Autoscale All"
 msgstr ""
 
-#: src/effects-data.c:4399 src/effects-data.c:4912
+#: src/effects-data.c:4398 src/effects-data.c:4911
 msgid "ACTIVATED"
 msgstr ""
 
-#: src/effects-data.c:4798
+#: src/effects-data.c:4797
 #, fuzzy
 msgid "Parameter and Alpha Channel Connections"
 msgstr "LiVES: - RFX paraméter ablak tippek"
 
-#: src/effects-data.c:4806
+#: src/effects-data.c:4805
 #, fuzzy
 msgid "Auto Connect Channels"
 msgstr "Ki_jelölés"
 
-#: src/effects-data.c:4820
+#: src/effects-data.c:4819
 #, fuzzy
 msgid "Auto Connect Parameters"
 msgstr "Paraméterek beállítása"
 
-#: src/effects-data.c:4832
+#: src/effects-data.c:4831
 msgid "Disconnect All"
 msgstr ""
 
-#: src/effects-data.c:4898
+#: src/effects-data.c:4897
 #, c-format
 msgid "Input channel is already connected from (%d,%d) %s"
 msgstr ""
 
-#: src/effects-data.c:4913
+#: src/effects-data.c:4912
 #, c-format
 msgid "Input parameter is already connected from (%d,%d) %s"
 msgstr ""
 
-#: src/effects-data.c:4921
+#: src/effects-data.c:4920
 msgid "Input and output parameters are not compatible"
 msgstr ""
 

@@ -94,7 +94,6 @@ endif
 endif
 endif
 endif
-endif
 
 if IS_MINGW
 else

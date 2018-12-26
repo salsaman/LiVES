@@ -28,7 +28,6 @@ endif
 if IS_MINGW
 mingw_CFLAGS = -DIS_MINGW=1
 mingw_LDFLAGS = -lwsock32 -lws2_32
-mingw_SOURCES = weed-utils_scripting.c
 #yuv4mpeg_SOURCES=lives-yuv4mpeg.c lives-yuv4mpeg.h
 #yuv4mpeg_CFLAGS = -DHAVE_MJPEGTOOLS=1
 gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -lpthread
@@ -212,8 +211,7 @@ lives_exe_SOURCES = \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
 	$(ldvgrab_SOURCES) \
-	$(giw_SOURCES) \
-	$(mingw_SOURCES)
+	$(giw_SOURCES)
 
 lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
 

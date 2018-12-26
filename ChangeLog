@@ -1,6 +1,5 @@
-
-	Version 2.10.1
---------------
+Version 2.10.1 (22 Dec 2018)
+----------------------------
 Fix regressions in rendering of internal audio.
 Fix frame rate when rendering after recording from generator plugins.
 Fixes for showing time remaining in progress dialog (partial regression from 2.10.0)
@@ -12,7 +11,7 @@ Fix regression in sending audio to audio triggered video generators (milkdrop, l
 Sort plugins alphabetically within packages.
 Ensure playback does not stop too soon in autolives mode.
 Fix audio fade in / out, using smaller chunk sizes.
-Allow effect output parameters to feed to internal macros, similar to MIDI / joystick controller (WIP).
+Allow effect output parameters to feed to internal macros, similar to MIDI / joystick controller.
 Improve effect previews in multitrack mode.
 Make the display mask colour/opacity configurable in Trim Frames / Add Border tool.
 When an original clip is not found, allow the user to retry as well as browse - to allow for unmounted disks, etc.
@@ -26,7 +25,7 @@ Fix some problems with jack audio playback.
 
 
 
-	
+
 
 Version 2.10.0 (4 Sep 2018)
 ---------------------------

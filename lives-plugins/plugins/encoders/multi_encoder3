@@ -189,7 +189,7 @@ def is_installed(prog):
                 std_in.close()
         
 
-        if 'command not found' in std_out_err.read():
+        if b'command not found' in std_out_err.read():
             if verbose:
                 print(prog + ': missing dependencies', file=sys.stderr)
             found = 0

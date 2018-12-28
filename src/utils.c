@@ -2535,7 +2535,7 @@ char *get_extension(const char *filename) {
   char *tmp = lives_path_get_basename(filename);
   char *ptr = strrchr(tmp, '.');
   if (ptr == NULL) return lives_strdup("");
-  return lives_strdup(ptr);
+  return lives_strdup(ptr + 1);
 }
 
 

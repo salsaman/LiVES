@@ -7292,9 +7292,6 @@ void load_frame_image(int frame) {
           lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1, cfile->frames);
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
           lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
-          load_start_image(cfile->start);
-          load_end_image(cfile->end);
-          load_frame_image(cfile->frameno);
         }
         if (mainw->double_size) {
           frame_size_update();
@@ -7311,6 +7308,10 @@ void load_frame_image(int frame) {
     // if the file was opening, continue...
     if (cfile->opening) {
       open_file(cfile->file_name);
+    } else {
+      load_start_image(cfile->start);
+      load_end_image(cfile->end);
+      load_frame_image(cfile->frameno);
     }
   }
 

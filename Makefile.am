@@ -71,8 +71,8 @@ EXTRA_DIST = \
 	COPYING \
 	INSTALL \
 	menu-entries/LiVES.desktop \
-	menu-entries/lives.png \
-	menu-entries/lives.xpm \
+	menu-entries/*.png \
+	menu-entries/*.xpm \
 	LiVES.doxygen \
 	liblives.doxygen \
 	src/liblives.cpp \

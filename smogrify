@@ -28,7 +28,7 @@ $GUI_NAME = "LiVES";
 # Do not change these except for testing !
 
 $background = 1;
-$version = "2.10.1";
+$version = "2.10.2";
 #$dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -3640,13 +3640,10 @@ if (defined($ARGV[0])) {
 	    my $url = $ARGV[2];
 	    my $dfile = $ARGV[3];
 
-	    print("OPEN $url\n");
 	    
 	    if ($url =~ /youtube/ || $url =~ /youtu\.be/) {
 		# youtube-dl
 
-		print("OK\n");
-		
 		if (-f $dfile) {
 		    unlink "$dfile";
 		}
@@ -3656,7 +3653,7 @@ if (defined($ARGV[0])) {
 		    exit 2;
 		}
 
-		$com = "youtube-dl -o \"$dfile\" -f 43 -q --no-part \"$url\"";
+		$com = "youtube-dl -o \"$dfile\" --merge-output-format mp4 -q --no-part \"$url\"";
 
 		print ("RUNNING $com\n");
 		

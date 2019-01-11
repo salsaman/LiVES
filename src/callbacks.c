@@ -816,7 +816,7 @@ void on_location_select(LiVESButton *button, livespointer user_data) {
 
 
 void on_utube_select(LiVESButton *button, livespointer user_data) {
-  char *fname = ensure_extension(lives_entry_get_text(LIVES_ENTRY(locw->name_entry)), LIVES_FILE_EXT_WEBM);
+  char *fname = ensure_extension(lives_entry_get_text(LIVES_ENTRY(locw->name_entry)), LIVES_FILE_EXT_MP4);
   char *url;
   char *dirname;
   char *dfile;
@@ -3220,7 +3220,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
                         double)clipboard->frames / clipboard->fps);
   }
 
-  switch_to_file(0, current_file);
+  switch_clip(1, current_file, TRUE);
 
   if (cb_end > clipboard->frames) {
     cb_end = clipboard->frames;
@@ -3394,7 +3394,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
       mainw->current_file = current_file;
     }
 
-    switch_to_file(0, current_file);
+    switch_clip(1, current_file, TRUE);
     set_undoable(NULL, FALSE);
     mainw->cancelled = CANCEL_USER;
     return;
@@ -3562,7 +3562,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
 
   if (bad_header) do_header_write_error(mainw->current_file);
 
-  switch_to_file(0, current_file);
+  switch_clip(1, current_file, TRUE);
   mainw->error = FALSE;
 
   if (has_lmap_error) popup_lmap_errors(NULL, NULL);

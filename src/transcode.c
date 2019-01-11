@@ -98,12 +98,14 @@ boolean transcode(int start, int end) {
 
   mainw->suppress_dprint = TRUE;
 
-  vpp = open_vid_playback_plugin(TRANSCODE_PLUGIN_NAME, TRUE);
+  ovpp = mainw->vpp;
+  vpp = open_vid_playback_plugin(TRANSCODE_PLUGIN_NAME, FALSE);
 
   mainw->suppress_dprint = FALSE;
   mainw->no_switch_dprint = TRUE;
 
   if (vpp == NULL) {
+    mainw->vpp = ovpp;
     d_print(_("Plugin %s not found.\n"), TRANSCODE_PLUGIN_NAME);
     mainw->no_switch_dprint = FALSE;
     return FALSE;
@@ -113,7 +115,6 @@ boolean transcode(int start, int end) {
 
   // for now we can only have one instance of a vpp: TODO - make vpp plugins re-entrant
   memset(future_prefs->vpp_name, 0, 1);
-  ovpp = mainw->vpp;
   mainw->vpp = vpp;
 
   // create the param window for the plugin
@@ -318,6 +319,10 @@ tr_err:
       (*vpp->exit_screen)(0, 0);
     }
 
+    // terminate the progress dialog
+    end_threaded_dialog();
+
+tr_err2:
     // close vpp, unless mainw->vpp
     if (ovpp == NULL || (vpp->handle != ovpp->handle)) {
       close_vid_playback_plugin(vpp);
@@ -328,13 +333,10 @@ tr_err:
       if (ovpp->set_fps != NULL)(*ovpp->set_fps)(ovpp->fixed_fpsd);
       if (ovpp->set_palette != NULL)(*ovpp->set_palette)(ovpp->palette);
       if (ovpp->set_yuv_palette_clamping != NULL)(*ovpp->set_yuv_palette_clamping)(ovpp->YUV_clamping);
-      mainw->vpp = ovpp;
     }
 
-    // terminate the progress dialog
-    end_threaded_dialog();
+    mainw->vpp = ovpp;
 
-tr_err2:
     if (mainw->cancelled != CANCEL_NONE) {
       d_print_cancelled();
       mainw->cancelled = CANCEL_NONE;

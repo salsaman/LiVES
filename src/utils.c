@@ -383,7 +383,7 @@ size_t lives_popen(const char *com, boolean allow_error, char *buff, size_t bufl
 
   memset(buff + bytes_read, 0, 1);
 
-  if (bytes_read == 0) {
+  if (bytes_read == 0 && err != 0) {
     char *msg = NULL;
     mainw->com_failed = TRUE;
     if (!allow_error) {
@@ -2246,7 +2246,7 @@ boolean check_for_lock_file(const char *set_name, int type) {
 
   threaded_dialog_spin(0.);
   mainw->com_failed = FALSE;
-  lives_popen(com, FALSE, mainw->msg, 256);
+  lives_popen(com, TRUE, mainw->msg, 256);
   threaded_dialog_spin(0.);
   lives_free(com);
 
@@ -2444,7 +2444,7 @@ void get_frame_count(int idx) {
 
   ssize_t bytes;
 
-  char *com = lives_strdup_printf("%s count_frames \"%s\" %s\"", prefs->backend_sync, mainw->files[idx]->handle,
+  char *com = lives_strdup_printf("%s count_frames \"%s\" %s", prefs->backend_sync, mainw->files[idx]->handle,
                                   get_image_ext_for_type(mainw->files[idx]->img_type));
 
   mainw->com_failed = FALSE;

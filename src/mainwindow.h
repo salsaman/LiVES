@@ -339,6 +339,7 @@ enum {
 #define LIVES_FILE_EXT_TEXT "txt"
 #define LIVES_FILE_EXT_BAK "bak"
 #define LIVES_FILE_EXT_WEBM "webm"
+#define LIVES_FILE_EXT_MP4 "mp4"
 
 #define LIVES_FILE_EXT_BACKUP "lv1"
 #define LIVES_FILE_EXT_PROJECT "lv2"

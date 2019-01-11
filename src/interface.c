@@ -1118,11 +1118,15 @@ _entryw *create_location_dialog(int type) {
 
     lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)locw->dir_entry);
 
-    label = lives_standard_label_new("." LIVES_FILE_EXT_WEBM);
+    label = lives_standard_label_new("." LIVES_FILE_EXT_MP4);
 
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
     add_fill_to_box(LIVES_BOX(hbox));
+
+    hbox = lives_hbox_new(FALSE, 0);
+
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 2);
   }
 
   cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);

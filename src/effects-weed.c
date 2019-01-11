@@ -3276,8 +3276,6 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float *
       if (mainw->pchains != NULL && mainw->pchains[key] != NULL) {
         if (!pthread_mutex_trylock(&mainw->interp_mutex)) { // try to minimise thread locking
           pthread_mutex_unlock(&mainw->interp_mutex);
-          weed_plant_t **in_params = weed_get_plantptr_array(instance, WEED_LEAF_IN_PARAMETERS, &error);
-          int nvals = weed_leaf_num_elements(in_params[0], WEED_LEAF_VALUE);
           if (!interpolate_params(instance, mainw->pchains[key], tc)) {
             lives_freep((void **)&in_tracks);
             lives_freep((void **)&out_tracks);

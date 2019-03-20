@@ -1382,7 +1382,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       continue;
 
     fprintf(stderr, "codid is %s\n", track->codec_id);
-    
+
     if (track->type == MATROSKA_TRACK_TYPE_VIDEO) {
 
       if (priv->has_video) {
@@ -1515,7 +1515,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     if (!strcmp(track->codec_id, "V_VP9")) {
       track->codec_priv.size = 0;
     }
-      
+
     if (codec_id == AV_CODEC_ID_NONE) {
       fprintf(stderr,
               "mkv_decoder: Unknown video codec\n");

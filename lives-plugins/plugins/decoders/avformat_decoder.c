@@ -214,7 +214,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
   if ((err = avformat_open_input(&fmt_ctx, cdata->URI,
-				 NULL, NULL)) < 0) {
+                                 NULL, NULL)) < 0) {
     fprintf(stderr, "avf_open failed\n");
     return FALSE;
   }

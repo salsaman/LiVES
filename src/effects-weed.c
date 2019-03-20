@@ -41,6 +41,8 @@ using namespace cv;
 
 ////////////////////////////////////////////////////////////////////////
 
+static boolean fx_inited = FALSE;
+
 struct _procvals {
   weed_plant_t *inst;
   weed_timecode_t tc;
@@ -5043,7 +5045,6 @@ void weed_load_all(void) {
         listlen--;
       }
       threaded_dialog_spin(0.);
-
     }
 
     // get 1 level of subdirs
@@ -5082,6 +5083,7 @@ void weed_load_all(void) {
   make_fx_defs_menu();
   threaded_dialog_spin(0.);
   if (num_weed_dupes > 0) merge_dupes();
+  fx_inited = TRUE;
 }
 
 
@@ -5823,6 +5825,8 @@ void weed_unload_all(void) {
   int error;
 
   register int i, j;
+
+  if (!fx_inited) return;
 
   mainw->num_tr_applied = 0;
   weed_deinit_all(TRUE);

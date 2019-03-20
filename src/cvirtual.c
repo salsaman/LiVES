@@ -390,7 +390,9 @@ boolean realize_all_frames(int clipno, const char *msg) {
     mainw->current_file = clipno;
     cfile->progress_start = 1;
     cfile->progress_end = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
+    cfile->opening_only_audio = TRUE; // TODO
     do_threaded_dialog((char *)msg, TRUE);
+    cfile->opening_only_audio = FALSE;
     retb = virtual_to_images(mainw->current_file, 1, cfile->frames, TRUE, NULL);
     end_threaded_dialog();
     mainw->current_file = current_file;

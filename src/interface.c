@@ -1100,7 +1100,6 @@ _entryw *create_location_dialog(int type) {
                       STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
     lives_entry_set_editable(LIVES_ENTRY(locw->dir_entry), FALSE);
-    lives_entry_set_max_length(LIVES_ENTRY(locw->dir_entry), PATH_MAX);
 
     // add dir, with filechooser button
     buttond = lives_standard_file_button_new(TRUE, NULL);
@@ -2197,7 +2196,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   mainw->fc_buttonresponse = LIVES_RESPONSE_NONE;
   lives_signal_connect(chooser, LIVES_WIDGET_RESPONSE_SIGNAL, LIVES_GUI_CALLBACK(chooser_response), NULL);
 
-  if (extra_widget == mainw->LiVES) {
+  if (extra_widget == mainw->LiVES && mainw->LiVES != NULL) {
     return (char *)chooser; // kludge to allow custom adding of extra widgets
   }
 

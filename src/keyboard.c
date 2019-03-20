@@ -288,7 +288,7 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     cached_mod = LIVES_CONTROL_MASK;
   }
 
-  if (mainw->rte_textparm != NULL && (keymod == 0 || keymod == LIVES_SHIFT_MASK || keymod == LIVES_LOCK_MASK)) {
+  if (mainw->rte_textparm != NULL && (keymod == 0 || keymod == LIVES_SHIFT_MASK || keymod == LIVES_LOCK_MASK || keymod == 16)) {
     if (unicode == LIVES_KEY_Return || unicode == 13) unicode = '\n'; // CR
     if (unicode == LIVES_KEY_BackSpace) unicode = 8; // bs
     if (unicode == LIVES_KEY_Tab || unicode == 9) mainw->rte_textparm = NULL;

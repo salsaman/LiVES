@@ -1381,6 +1381,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     if (track->codec_id == NULL)
       continue;
 
+    fprintf(stderr, "codid is %s\n", track->codec_id);
+    
     if (track->type == MATROSKA_TRACK_TYPE_VIDEO) {
 
       if (priv->has_video) {
@@ -1474,6 +1476,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     }
 
     for (j = 0; ff_mkv_codec_tags[j].id != AV_CODEC_ID_NONE; j++) {
+      fprintf(stderr, "cf %s and %s\n", ff_mkv_codec_tags[j].str, track->codec_id);
       if (!strncmp(ff_mkv_codec_tags[j].str, track->codec_id,
                    strlen(ff_mkv_codec_tags[j].str))) {
         codec_id = ff_mkv_codec_tags[j].id;
@@ -1509,6 +1512,10 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
     track->codec_priv.size -= extradata_offset;
 
+    if (!strcmp(track->codec_id, "V_VP9")) {
+      track->codec_priv.size = 0;
+    }
+      
     if (codec_id == AV_CODEC_ID_NONE) {
       fprintf(stderr,
               "mkv_decoder: Unknown video codec\n");

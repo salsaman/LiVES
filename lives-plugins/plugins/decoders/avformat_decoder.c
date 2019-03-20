@@ -184,17 +184,17 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get a handle
   lives_av_priv_t *priv = cdata->priv;
-  AVProbeData pd = {0};
   AVInputFormat *fmt;
-
   AVCodec *vdecoder;
-
   AVStream *s;
   AVCodecContext *cc;
+  AVFormatContext *fmt_ctx;
 
   int64_t i_start_time = 0;
 
   boolean is_partial_clone = FALSE;
+
+  int err;
 
   register int i;
 
@@ -205,28 +205,21 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     else priv->longer_seek = TRUE;
   }
 
-  if ((priv->fd = open(cdata->URI, O_RDONLY)) == -1) {
-    fprintf(stderr, "avformat_decoder: unable to open %s\n", cdata->URI);
-    return FALSE;
-  }
-
   if (isclone) goto skip_probe;
 
-  pd.filename = cdata->URI;
-
-  pd.buf = calloc(128, 32);
-
-  if ((pd.buf_size = stream_peek(priv->fd, pd.buf, AVPROBE_PADDING_SIZE)) < AVPROBE_PADDING_SIZE) {
-    fprintf(stderr, "couldn't peek stream %d\n", pd.buf_size);
+  fmt_ctx = avformat_alloc_context();
+  if (!fmt_ctx) {
+    fprintf(stderr, "No fmt_ctx\n");
     return FALSE;
   }
 
-  if (!(fmt = av_probe_input_format(&pd, TRUE))) {
-    fprintf(stderr, "couldn't guess format\n");
+  if ((err = avformat_open_input(&fmt_ctx, cdata->URI,
+				 NULL, NULL)) < 0) {
+    fprintf(stderr, "avf_open failed\n");
     return FALSE;
   }
 
-  free(pd.buf);
+  fmt = fmt_ctx->iformat;
 
   if (!strcmp(fmt->name, "redir") ||
       !strcmp(fmt->name, "sdp")) {
@@ -641,7 +634,6 @@ skip_init:
 static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_av_priv_t *priv = cdata->priv;
-  if (priv->fd > -1) close(priv->fd);
 
   // will close and free the context
   if (priv->ic != NULL) {
@@ -695,8 +687,6 @@ static lives_clip_data_t *init_cdata(void) {
   cdata->URI = NULL;
 
   cdata->priv = priv = malloc(sizeof(lives_av_priv_t));
-
-  priv->fd = -1;
 
   priv->ic = NULL;
 

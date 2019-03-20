@@ -29,7 +29,6 @@
 #include "effects-weed.h"
 
 
-
 boolean send_layer(weed_plant_t *layer, _vid_playback_plugin *vpp, int64_t timecode) {
   // send a weed layer to a (prepared) video playback plugin
   // warning: will quite likely change the pixel_data of layer

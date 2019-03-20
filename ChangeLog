@@ -1,5 +1,15 @@
-Version 2.10.2
+Version 2.10.3
 --------------
+Allow cancel in VJ / Pre-decode all frames
+Fix for "Delete Set" not removing files from disk.
+Fix crash when selecting project directory with new install.
+
+
+	
+
+
+Version 2.10.2 (9 Jan 2019)
+---------------------------
 Fix serious bug in lives_popen() - may prevent saving of new sets.
 Add in part of the fix for multi_encoder3 which was overlooked in 2.10.1
 Fix regression in get_extension().

@@ -119,7 +119,6 @@ static void winhide() {
 }
 
 
-
 static int resize_display(int width, int height) {
   int flags = SDL_OPENGL | SDL_HWSURFACE | SDL_RESIZABLE;
 
@@ -178,6 +177,9 @@ static int init_display(_sdata *sd) {
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, USE_DBLBUF);
+
+  //SDL_Window *win = SDL_CreateWindow("projectM", 0, 0, defwidth, defheight, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+  //SDL_GLContext glCtx = SDL_GL_CreateContext(win);
 
   if (resize_display(defwidth, defheight)) return 3;
 
@@ -270,6 +272,8 @@ static void *worker(void *data) {
 
   register int i = 0;
 
+  float heightWidthRatio = (float)sd->height / (float)sd->width;
+
   if (init_display(sd)) {
     //sd->worker_ready=true;
     sd->failed = true;
@@ -287,8 +291,17 @@ static void *worker(void *data) {
 
   // can fail here
   sd->globalPM = new projectM(config_filename);
-
   settings = sd->globalPM->settings();
+  settings.windowWidth = sd->width;
+  settings.windowHeight = sd->height;
+  settings.meshX = 300;
+  settings.meshY = settings.meshX * heightWidthRatio;
+  settings.smoothPresetDuration = 3; // seconds
+  settings.presetDuration = 7; // seconds
+  settings.beatSensitivity = 0.8;
+  settings.aspectCorrection = 1;
+  settings.shuffleEnabled = 1;
+  settings.softCutRatingsEnabled = 1; // ???
 
   sd->textureHandle = sd->globalPM->initRenderToTexture();
 

@@ -90,6 +90,50 @@ boolean on_LiVES_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, liv
 }
 
 
+static void cleanup_set_dir(void) {
+  char *lfiles, *ofile, *sdir;
+  char *cdir = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
+
+  do {
+    // keep trying until backend has deleted the clip
+    mainw->com_failed = FALSE;
+    lives_rmdir(cdir, FALSE);
+    if (lives_file_test(cdir, LIVES_FILE_TEST_IS_DIR)) {
+      if (mainw->threaded_dialog) threaded_dialog_spin(0.);
+      lives_widget_context_update();
+      lives_usleep(prefs->sleep_time);
+    }
+  } while (lives_file_test(cdir, LIVES_FILE_TEST_IS_DIR));
+
+  mainw->com_failed = FALSE;
+
+  lives_free(cdir);
+
+  lfiles = lives_build_filename(prefs->workdir, mainw->set_name, SET_LOCK_FILENAME, NULL);
+
+  lives_rmglob(lfiles);
+  lives_free(lfiles);
+
+  ofile = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME, NULL);
+  lives_rm(ofile);
+  lives_free(ofile);
+
+  lives_sync();
+
+  sdir = lives_build_filename(prefs->workdir, mainw->set_name, NULL);
+  lives_rmdir(sdir, FALSE);
+  lives_free(sdir);
+
+  if (prefs->ar_clipset && !strcmp(prefs->ar_clipset_name, mainw->set_name)) {
+    prefs->ar_clipset = FALSE;
+    memset(prefs->ar_clipset_name, 0, 1);
+    set_pref(PREF_AR_CLIPSET, "");
+  }
+  memset(mainw->set_name, 0, 1);
+  mainw->was_set = FALSE;
+}
+
+
 void lives_exit(int signum) {
   char *cwd, *tmp;
 
@@ -263,6 +307,9 @@ void lives_exit(int signum) {
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
 
+
+      // TODO check why repeating this (A)
+
       for (i = 0; i <= MAX_FILES; i++) {
         if (mainw->files[i] != NULL) {
           if ((!mainw->leave_files && !prefs->crash_recovery && strlen(mainw->set_name) == 0) ||
@@ -344,6 +391,9 @@ void lives_exit(int signum) {
       threaded_dialog_spin(0.);
     }
 
+    // TODO: check why repeating this (B)
+
+
     if (mainw->only_close) {
       mainw->suppress_dprint = TRUE;
       for (i = 1; i <= MAX_FILES; i++) {
@@ -356,10 +406,15 @@ void lives_exit(int signum) {
         }
       }
 
+      if (!mainw->leave_files) cleanup_set_dir();
+
+
+      // (B)
+
+
       mainw->suppress_dprint = FALSE;
       if (mainw->multitrack == NULL) resize(1);
       mainw->was_set = FALSE;
-      mainw->leave_files = FALSE;
       memset(mainw->set_name, 0, 1);
       mainw->only_close = FALSE;
       prefs->crash_recovery = TRUE;
@@ -1120,14 +1175,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (lmap_errors && !only_current && mainw->cliplist != NULL) popup_lmap_errors(NULL, NULL);
 
   if (mainw->cliplist == NULL && strlen(mainw->set_name) > 0) {
-    char *lfiles;
-    char *ofile;
-    char *sdir;
-    char *cdir;
-
     boolean has_layout_map = FALSE;
-
-    // TODO - combine this with lives_exit and make into a function
 
     // check for layout maps
     if (mainw->current_layouts_map != NULL) {
@@ -1139,44 +1187,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       recover_layout_cancelled(FALSE);
     }
 
-    cdir = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
-
-    do {
-      // keep trying until backend has deleted the clip
-      mainw->com_failed = FALSE;
-      lives_rmdir(cdir, FALSE);
-      if (lives_file_test(cdir, LIVES_FILE_TEST_IS_DIR)) {
-        lives_widget_context_update();
-        lives_usleep(prefs->sleep_time);
-      }
-    } while (lives_file_test(cdir, LIVES_FILE_TEST_IS_DIR));
-
-    mainw->com_failed = FALSE;
-
-    lives_free(cdir);
-
-    lfiles = lives_build_filename(prefs->workdir, mainw->set_name, SET_LOCK_FILENAME, NULL);
-
-    lives_rmglob(lfiles);
-    lives_free(lfiles);
-
-    ofile = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME, NULL);
-    lives_rm(ofile);
-    lives_free(ofile);
-
-    lives_sync();
-
-    sdir = lives_build_filename(prefs->workdir, mainw->set_name, NULL);
-    lives_rmdir(sdir, FALSE);
-    lives_free(sdir);
-
-    if (prefs->ar_clipset && !strcmp(prefs->ar_clipset_name, mainw->set_name)) {
-      prefs->ar_clipset = FALSE;
-      memset(prefs->ar_clipset_name, 0, 1);
-      set_pref(PREF_AR_CLIPSET, "");
-    }
-    memset(mainw->set_name, 0, 1);
-    mainw->was_set = FALSE;
+    cleanup_set_dir();
   }
 
   if (mainw->multitrack != NULL) {
@@ -1886,7 +1897,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     memset(mainw->set_name, 0, 1);
   }
 
-  mainw->leave_files = mainw->leave_recovery = TRUE;
+  mainw->leave_recovery = TRUE;
 }
 
 
@@ -4726,7 +4737,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
   } else {
     // saving as same name (or as new set)
-
+    g_print("HERE\n");
     dfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
     if (lives_mkdir_with_parents(dfile, capable->umask) == -1) {
       if (!check_dir_access(dfile)) {
@@ -4805,6 +4816,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             newval = lives_build_path(prefs->workdir, new_handle, NULL);
 
             lives_mv(oldval, newval);
+            g_print("moved from %s to %s\n", oldval, newval);
             lives_free(oldval);
             lives_free(newval);
 
@@ -4924,6 +4936,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     // do a lot of cleanup here, but leave files
     lives_exit(0);
+    mainw->leave_files = FALSE;
   } else end_threaded_dialog();
 
   lives_widget_set_sensitive(mainw->vj_load_set, TRUE);

@@ -623,7 +623,7 @@ typedef struct {
   int old_scr_height;
 
   char first_info_file[PATH_MAX];
-  boolean leave_files;
+  boolean leave_files;  ///< TRUE to leave clip files on disk even when closing (default FALSE)
   boolean was_set;
 
   /// extra parameters for opening special files

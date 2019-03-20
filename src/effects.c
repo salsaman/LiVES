@@ -520,12 +520,12 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       lives_memcpy(clipboard, cfile, sizeof(lives_clip_t));
       cfile->is_loaded = TRUE;
       mainw->suppress_dprint = TRUE;
-      mainw->only_close = TRUE;
+      mainw->leave_files = TRUE;
 
       close_current_file(current_file);
 
       mainw->suppress_dprint = FALSE;
-      mainw->only_close = FALSE;
+      mainw->leave_files = FALSE;
 
       new_file = current_file;
 

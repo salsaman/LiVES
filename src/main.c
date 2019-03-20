@@ -791,7 +791,7 @@ static void lives_init(_ign_opts *ign_opts) {
     mainw->endian = AFORM_BIG_ENDIAN;
   }
 
-  mainw->leave_files = TRUE;
+  mainw->leave_files = FALSE;
   mainw->was_set = FALSE;
   mainw->toy_go_wild = FALSE;
 
@@ -1617,25 +1617,6 @@ static void lives_init(_ign_opts *ign_opts) {
       get_pref(PREF_CURRENT_AUTOTRANS, buff, 256);
       if (strlen(buff) == 0) prefs->atrans_fx = -1;
       else prefs->atrans_fx = weed_get_idx_for_hashname(buff, FALSE);
-
-      if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
-        splash_end();
-        // get initial workdir
-        if (!do_workdir_query()) {
-          lives_exit(0);
-        }
-        prefs->startup_phase = 2;
-        set_int_pref(PREF_STARTUP_PHASE, 2);
-      }
-
-      if (prefs->startup_phase > 0 && prefs->startup_phase < 3) {
-        splash_end();
-        if (!do_startup_tests(FALSE)) {
-          lives_exit(0);
-        }
-        prefs->startup_phase = 3;
-        set_int_pref(PREF_STARTUP_PHASE, 3);
-      }
 
       mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
 
@@ -2585,6 +2566,8 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 /////////////////////////////////
 
+#include "license.h"
+
 static boolean lives_startup(livespointer data) {
 #ifdef GUI_GTK
   LiVESError *gerr = NULL;
@@ -2596,9 +2579,39 @@ static boolean lives_startup(livespointer data) {
   char *tmp;
 
   if (capable->smog_version_correct) {
+
+    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
+      // get initial workdir
+      if (!do_workdir_query()) {
+        lives_exit(0);
+      }
+      prefs->startup_phase = 2;
+      set_int_pref(PREF_STARTUP_PHASE, 2);
+    }
+
+    if (prefs->startup_phase > 0 && prefs->startup_phase < 3) {
+      if (!do_startup_tests(FALSE)) {
+        lives_exit(0);
+      }
+      prefs->startup_phase = 3;
+      set_int_pref(PREF_STARTUP_PHASE, 3);
+    }
+
+    get_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
+
     if (!mainw->foreign) {
       if (prefs->show_splash) splash_init();
       print_notice();
+    }
+
+    if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
+      mainw->vpp = open_vid_playback_plugin(buff, TRUE);
+    } else {
+      mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
+      if (mainw->vpp != NULL) {
+        lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
+        set_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
+      }
     }
 
     if (!ign_opts.ign_aplayer) {
@@ -3223,6 +3236,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           lives_snprintf(prefs->workdir, PATH_MAX, "%s", optarg);
           lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
           set_pref(PREF_SESSION_WORKDIR, prefs->workdir);
+          lives_snprintf(mainw->first_info_file, PATH_MAX, "%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d", prefs->workdir, capable->mainpid);
 
           if (lives_mkdir_with_parents(prefs->workdir, capable->umask) == -1) {
             if (!check_dir_access(prefs->workdir)) {
@@ -3462,19 +3476,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   if (!ign_opts.ign_vppdefs)
     lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s/%svpp_defaults", capable->home_dir, LIVES_CONFIG_DIR);
-
-  if (capable->smog_version_correct) {
-    get_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
-    if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
-      mainw->vpp = open_vid_playback_plugin(buff, TRUE);
-    } else if (prefs->startup_phase == 1 || prefs->startup_phase == -1) {
-      mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
-      if (mainw->vpp != NULL) {
-        lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
-        set_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
-      }
-    }
-  }
 
   lives_idle_add(lives_startup, NULL);
 
@@ -6888,7 +6889,7 @@ void load_frame_image(int frame) {
 
       lives_freep((void **)&cfile->op_dir);
 
-      if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->only_close) {
+      if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->leave_files) {
 #ifdef IS_MINGW
         // kill any active processes: for other OSes the backend does this
         lives_kill_subprocesses(cfile->handle, TRUE);

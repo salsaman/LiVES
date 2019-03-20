@@ -3672,7 +3672,7 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
       }
     }
 
-    com = lives_strdup_printf("%s save_frame %s %d %s %d %d", prefs->backend_sync, sfile->handle,
+    com = lives_strdup_printf("%s save_frame %s %d \"%s\" %d %d", prefs->backend_sync, sfile->handle,
                               frame, tmp, width, height);
     result = lives_system(com, FALSE);
     lives_free(com);

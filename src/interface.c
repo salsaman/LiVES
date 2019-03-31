@@ -1206,6 +1206,7 @@ _entryw *create_rename_dialog(int type) {
   }
 
   renamew->dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
+  lives_free(title);
   lives_signal_handlers_disconnect_by_func(renamew->dialog, return_true, NULL);
 
   lives_window_add_accel_group(LIVES_WINDOW(renamew->dialog), accel_group);

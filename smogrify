@@ -1463,7 +1463,7 @@ if (defined($ARGV[0])) {
         }
 
         if ($command eq "open_test") {
-            $mplay_command = $ARGV;
+            $mplay_command = $ARGV[2];
             shift(@ARGV);
             $command = "open";
             $opentest = 1;

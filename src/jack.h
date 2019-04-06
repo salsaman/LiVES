@@ -29,6 +29,18 @@ void jack_pb_stop(void);  /** pause playback transport master */
 
 #include "audio.h"
 
+#ifndef IS_DARWIN
+#define JACK_DRIVER_NAME "alsa"
+#else
+#ifdef IS_SOLARIS
+// use OSS on Solaris
+#define JACK_DRIVER_NAME "oss"
+#else
+// use coreaudio on Darwin
+#define JACK_DRIVER_NAME "coreaudio"
+#endif
+#endif
+
 #define JACK_MAX_OUTPUT_PORTS 10
 #define JACK_MAX_INPUT_PORTS 10
 

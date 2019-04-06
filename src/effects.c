@@ -993,6 +993,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
       // WARNING - if we start playing because a generator was started, we block here
       if (!(weed_init_effect(key - 1))) {
         // ran out of instance slots, no effect assigned, or some other error
+        // or gen started playback and then stopped
         pthread_mutex_lock(&mainw->event_list_mutex);
         if (mainw->rte & new_rte) mainw->rte ^= new_rte;
         pthread_mutex_unlock(&mainw->event_list_mutex);
@@ -1002,7 +1003,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
         return TRUE;
       }
 
-      if (!mainw->gen_started_play) {
+      if (!mainw->gen_started_play) { // should always be the case
         if (!(mainw->rte & new_rte)) mainw->rte |= new_rte;
 
         mainw->last_grabbable_effect = key - 1;

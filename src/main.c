@@ -380,6 +380,8 @@ static boolean pre_init(void) {
 
   pthread_mutexattr_t mattr;
 
+  boolean expect_theme = FALSE;
+
 #ifndef IS_MINGW
   boolean needs_update = FALSE;
 #endif
@@ -572,9 +574,12 @@ static boolean pre_init(void) {
 
   mainw->imsep = mainw->imframe = NULL;
 
-  if (!set_palette_colours(FALSE)) {
-    lives_snprintf(prefs->theme, 64, "none");
-    set_palette_colours(FALSE);
+  if (prefs->startup_phase == 0) {
+    expect_theme = TRUE;
+    if (!set_palette_colours(FALSE)) {
+      lives_snprintf(prefs->theme, 64, "none");
+      set_palette_colours(FALSE);
+    }
   }
 
   get_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device, PATH_MAX);
@@ -674,7 +679,7 @@ static boolean pre_init(void) {
 
   if (!lives_ascii_strcasecmp(prefs->theme, "none")) return FALSE;
 
-  return TRUE;
+  return expect_theme;
 }
 
 
@@ -5124,7 +5129,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         mainw->osc_block = FALSE;
         return res;
       } else {
-        // pull frame from decoded images
+        // pullw frame from decoded images
         boolean ret;
         char *fname = make_image_file_name(sfile, frame, image_ext);
         if (height * width == 0) {
@@ -6240,7 +6245,6 @@ void load_frame_image(int frame) {
         compact_rowstrides(return_layer);
 
         retdata = weed_get_voidptr_array(return_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
-
       }
 
       // chain any data to the playback plugin
@@ -7312,7 +7316,7 @@ void load_frame_image(int frame) {
     } else {
       load_start_image(cfile->start);
       load_end_image(cfile->end);
-      load_frame_image(cfile->frameno);
+      if (mainw->playing_file > -1) load_frame_image(cfile->frameno);
     }
   }
 

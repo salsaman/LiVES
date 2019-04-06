@@ -6594,6 +6594,7 @@ boolean weed_init_effect(int hotkey) {
   int ntracks;
   int error;
   int idx;
+  int playing_file = mainw->playing_file;
 
   mainw->error = FALSE;
 
@@ -6878,6 +6879,8 @@ deinit2:
       mainw->error = TRUE;
       return FALSE;
     }
+
+    if (playing_file == -1 && mainw->gen_started_play) return FALSE;
 
     // weed_generator_start can change the instance
     new_instance = key_to_instance[hotkey][key_modes[hotkey]];

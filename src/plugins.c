@@ -89,9 +89,9 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
         lives_free(msg);
       }
     }
-    lives_free(outfile);
     threaded_dialog_spin(0.);
     lives_rm(outfile);
+    lives_free(outfile);
     return list;
   }
   lives_free(com);

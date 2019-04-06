@@ -1,6 +1,6 @@
 // jack.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2014
+// (c) G. Finch 2005 - 2019
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -23,6 +23,10 @@ static size_t zero_buff_count = 0;
 
 static boolean seek_err;
 
+#ifdef USE_JACKCTL
+static jackctl_server_t *jackserver = NULL;
+#endif
+
 static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int fileno,
                                int nframes, double out_scale, boolean rev_endian, boolean out_unsigned, size_t rbytes);
 
@@ -44,11 +48,61 @@ static boolean check_zero_buff(size_t check_size) {
 
 boolean lives_jack_init(void) {
   char *jt_client = lives_strdup_printf("LiVES-%d", capable->mainpid);
-  const char *server_name = "default";
   jack_options_t options = JackServerName;
   jack_status_t status;
+#ifdef USE_JACKCTL
+  jackctl_driver_t *driver;
+#endif
+
+  const char *server_name = "default";
 
   jack_transport_client = NULL;
+
+#ifdef USE_JACKCTL
+  if ((prefs->jack_opts & JACK_OPTS_START_TSERVER) || (prefs->jack_opts & JACK_OPTS_START_ASERVER)) {
+    const JSList *drivers;
+#ifdef JACK_SYNC_MODE
+    const JSList *params;
+#endif
+    // start the server
+    jackserver = jackctl_server_create(NULL, NULL);
+    if (jackserver == NULL) return FALSE;
+
+#ifdef JACK_SYNC_MODE
+    // list server parameters
+    params = jackctl_server_get_parameters(jackserver);
+    while (params != NULL) {
+      jackctl_parameter_t *parameter = (jackctl_parameter_t *)params->data;
+      if (!strcmp(jackctl_parameter_get_name(parameter), "sync")) {
+        union jackctl_parameter_value value;
+        value.b = TRUE;
+        jackctl_parameter_set_value(parameter, &value);
+        break;
+      }
+      params = jack_slist_next(params);
+    }
+#endif
+
+    drivers = jackctl_server_get_drivers_list(jackserver);
+    while (drivers != NULL) {
+      driver = (jackctl_driver_t *)drivers->data;
+      if (!strcmp(jackctl_driver_get_name(driver), JACK_DRIVER_NAME)) {
+        break;
+      }
+      drivers = jack_slist_next(drivers);
+    }
+    if (drivers == NULL) return FALSE;
+
+    if (!jackctl_server_open(jackserver, driver)) {
+      return FALSE;
+    }
+
+    jackctl_server_start(jackserver);
+  }
+
+  options = (jack_options_t)((int)options | (int)JackNoStartServer);
+
+#else
 
   if ((prefs->jack_opts & JACK_OPTS_START_TSERVER) || (prefs->jack_opts & JACK_OPTS_START_ASERVER)) {
     unsetenv("JACK_NO_START_SERVER");
@@ -59,17 +113,7 @@ boolean lives_jack_init(void) {
       char jackd_loc[PATH_MAX];
       get_location("jackd", jackd_loc, PATH_MAX);
       if (strlen(jackd_loc)) {
-#ifndef IS_DARWIN
-        com = lives_strdup_printf("echo \"%s -d alsa\">\"%s\"", jackd_loc, prefs->jack_aserver);
-#else
-#ifdef IS_SOLARIS
-        // use OSS on Solaris
-        com = lives_strdup_printf("echo \"%s -d oss\">\"%s\"", jackd_loc, prefs->jack_aserver);
-#else
-        // use coreaudio on Darwin
-        com = lives_strdup_printf("echo \"%s -d coreaudio\">\"%s\"", jackd_loc, prefs->jack_aserver);
-#endif
-#endif
+        com = lives_strdup_printf("echo \"%s -d %s\">\"%s\"", jackd_loc, JACK_DRIVER_NAME, prefs->jack_aserver);
         lives_system(com, FALSE);
         lives_free(com);
         lives_chmod(prefs->jack_aserver, "o+x");
@@ -82,7 +126,9 @@ boolean lives_jack_init(void) {
     options = (jack_options_t)((int)options | (int)JackNoStartServer);
   }
 
-  // startup the server
+#endif
+
+  // startup the transport client now; we will open another later for audio
   jack_transport_client = jack_client_open(jt_client, options, &status, server_name);
   lives_free(jt_client);
 
@@ -184,6 +230,10 @@ void lives_jack_end(void) {
     jack_deactivate(client);
     jack_client_close(client);
   }
+#endif
+#ifdef USE_JACKCTL
+  if (jackserver != NULL) jackctl_server_destroy(jackserver);
+  jackserver = NULL;
 #endif
 }
 

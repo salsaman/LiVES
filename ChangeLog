@@ -3,9 +3,11 @@ Version 2.10.3
 Allow cancel in VJ / Pre-decode all frames
 Fix for "Delete Set" not removing files from disk.
 Fix crash when selecting project directory with new install.
+Fix crash when starting playback with some generators (e.g. plasma) [regression].
+Fix to prevent spurious file removal when checking for plugins in a non-existent directory.
+Load theme correctly on fresh installs.
 
 
-	
 
 
 Version 2.10.2 (9 Jan 2019)

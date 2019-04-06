@@ -2548,10 +2548,13 @@ void do_no_decoder_error(const char *fname) {
 }
 
 
+#ifdef ENABLE_JACK
 void do_jack_noopen_warn(void) {
-  do_blocking_error_dialog(
-    _("\nUnable to start up jack. Please ensure that alsa is set up correctly on your machine\n"
-      "and also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"));
+  char *tmp = lives_strdup_printf(_("\nUnable to start up jack. Please ensure that %s is set up correctly on your machine\n"
+                                    "and also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"), JACK_DRIVER_NAME);
+
+  do_blocking_error_dialog(tmp);
+  lives_free(tmp);
 }
 
 
@@ -2575,7 +2578,7 @@ void do_jack_noopen_warn4(void) {
 void do_jack_noopen_warn2(void) {
   do_blocking_info_dialog(_("\nAlternately, you can restart LiVES and select another audio player.\n"));
 }
-
+#endif
 
 void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
   char *msg = lives_strdup_printf(

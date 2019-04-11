@@ -507,7 +507,6 @@ void load_rfx_preview(lives_rfx_t *rfx) {
         if (is_virtual_frame(mainw->current_file, vend)) {
           retb = virtual_to_images(mainw->current_file, vend, vend, FALSE, NULL);
           if (!retb) {
-            fclose(infofile);
             return;
           }
         }

@@ -7358,16 +7358,17 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   // if we have an optional audio channel, we can push audio to it
   if ((achan = get_enabled_audio_channel(inst, 0, TRUE)) != NULL) {
     if (mainw->audio_frame_buffer != NULL && mainw->audio_frame_buffer->samples_filled > 0) {
-      lives_audio_buf_t *audbuf = mainw->audio_frame_buffer == mainw->afb[0] ? mainw->afb[0] : mainw->afb[1];
+      lives_audio_buf_t *audbuf;
+      // lock the buffers
+      pthread_mutex_lock(&mainw->abuf_frame_mutex);
+
+      audbuf = mainw->audio_frame_buffer == mainw->afb[0] ? mainw->afb[0] : mainw->afb[1];
 
       // push read buffer to generator
       if (audbuf != NULL) {
         // convert audio to format requested, and copy it to the audio channel data
         push_audio_to_channel(achan, audbuf);
       }
-
-      // lock the buffers
-      pthread_mutex_lock(&mainw->abuf_frame_mutex);
 
       if (++mainw->afbuffer_clients_read >= mainw->afbuffer_clients) {
         // swap buffers for writing

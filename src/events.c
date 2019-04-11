@@ -3422,6 +3422,7 @@ lives_render_error_t render_events(boolean reset) {
       xaclips[i] = -1;
       xaseek[i] = xavel[i] = 0;
     }
+    chvols[0] = 1.;
     atime = (double)(out_frame - 1.) / cfile->fps;
     has_audio = FALSE;
     read_write_error = LIVES_RENDER_ERROR_NONE;

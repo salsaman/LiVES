@@ -1049,6 +1049,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       param_demarshall(vppa->rfx, plist, FALSE, TRUE); // update widgets
       lives_list_free_all(&plist);
     }
+    widget_opts.apply_theme = TRUE;
   } else {
     vppa->rfx = NULL;
   }

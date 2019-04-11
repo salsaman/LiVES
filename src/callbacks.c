@@ -4821,6 +4821,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             lives_free(newval);
 
             if (mainw->com_failed) {
+              close(ord_fd);
               end_threaded_dialog();
               lives_free(ordfile);
               return FALSE;
@@ -5188,6 +5189,7 @@ boolean reload_set(const char *set_name) {
         recover_layout_map(MAX_FILES);
         lives_chdir(cwd, FALSE);
         lives_free(cwd);
+        fclose(orderfile);
         return FALSE;
       }
       mainw->current_file = new_file;
@@ -5945,7 +5947,8 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
         lives_alarm_clear(alarm_handle);
 
-        if (!timeout || ifile != NULL) {
+        if (ifile != NULL) {
+          timeout = FALSE;
           mainw->read_failed = FALSE;
           lives_fgets(mainw->msg, 512, ifile);
         }
@@ -6066,12 +6069,14 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
       if (!mainw->in_fs_preview) {
         // user cancelled
+        if (ifile) fclose(ifile);
         end_fs_preview();
         lives_free(info_file);
         return;
       }
 
-      if (!timeout) {
+      if (ifile != NULL) {
+        timeout = FALSE;
         mainw->read_failed = FALSE;
         lives_fgets(mainw->msg, 512, ifile);
         fclose(ifile);

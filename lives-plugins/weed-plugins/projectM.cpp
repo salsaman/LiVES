@@ -309,6 +309,7 @@ static void *worker(void *data) {
 
   sd->prnames = (volatile char **)weed_malloc(sd->nprs * sizeof(char *));
 
+  // TODO - copy strings here
   sd->prnames[0] = (volatile char *)"- Random -";
 
   for (i = 1; i < sd->nprs; i++) {
@@ -359,7 +360,6 @@ static void *worker(void *data) {
   }
 
   if (sd->globalPM != NULL) delete(sd->globalPM);
-
 
 fail:
 
@@ -460,7 +460,7 @@ static int projectM_init(weed_plant_t *inst) {
     }
 
     inited = 1;
-
+    // TODO : copy strings here
     weed_set_string_array(iparamgui, "choices", sd->nprs, (char **)sd->prnames);
   } else sd = statsd;
 

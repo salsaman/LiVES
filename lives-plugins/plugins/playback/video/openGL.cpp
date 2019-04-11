@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <assert.h>
 
-
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -31,7 +30,6 @@
 
 #include "../../../../lives-plugins/weed-plugins/weed-utils-code.c"
 #include "../../../../lives-plugins/weed-plugins/weed-plugin-utils.c"
-
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -86,7 +84,6 @@ static Window xWin;
 static GLXWindow glxWin;
 static GLXContext context;
 
-
 static boolean swapFlag = TRUE;
 static boolean is_direct;
 static boolean pbo_available;
@@ -108,9 +105,15 @@ static int m_HeightFS;
 static int window_width;
 static int window_height;
 
+#define DEF_NBUF 2
+#define DEF_FPS_MAX 60.
+
+#define SL(x) #x
+#define SE(x) SL(x)
+
 static int mode = 0;
 static int dblbuf = 1;
-static int nbuf = 32;
+static int nbuf = DEF_NBUF;
 static boolean fsover = FALSE;
 static boolean use_pbo = FALSE;
 
@@ -118,6 +121,7 @@ static float rquad;
 
 static pthread_t rthread;
 static pthread_mutex_t rthread_mutex;
+static pthread_mutex_t retthread_mutex;
 static pthread_mutex_t dpy_mutex;
 
 static volatile uint32_t imgWidth;
@@ -141,7 +145,6 @@ static weed_plant_t *params[7];
 static int zmode;
 static float zfft0;
 static char *zsubtitles;
-
 
 typedef struct {
   int width;
@@ -181,6 +184,7 @@ static int get_real_tnum(int tnum, bool do_assert) {
   return tnum;
 }
 
+
 static int get_texture_width(int tnum) {
   tnum = get_real_tnum(tnum, TRUE);
   return textures[tnum].width;
@@ -205,13 +209,14 @@ static int get_texture_type(int tnum) {
 }
 
 /*
-static int get_texture_typesize(int tnum) {
+  static int get_texture_typesize(int tnum) {
   tnum=get_real_tnum(tnum,TRUE);
   return textures[tnum].type;
-}
+  }
 */
 
 ///////////////////////////////////////////////
+
 
 const char *module_check_init(void) {
   if (!GL_ARB_texture_non_power_of_two) {
@@ -241,20 +246,22 @@ const char *module_check_init(void) {
 }
 
 
-
 const char *version(void) {
   return plugin_version;
 }
+
 
 const char *get_description(void) {
   return "The openGL plugin allows faster playback.\n";
 }
 
+
 uint64_t get_capabilities(int palette) {
   return VPP_CAN_RESIZE | VPP_CAN_RETURN | VPP_LOCAL_DISPLAY;
 }
 
-const char *get_init_rfx(void) {
+
+const char *get_init_rfx(int intention) {
   return \
          "<define>\\n\
 |1.7\\n\
@@ -264,8 +271,8 @@ const char *get_init_rfx(void) {
 </language_code>\\n\
 <params> \\n\
 mode|_Mode|string_list|0|Normal|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel|Particles|Dissolve\\n\
-tfps|Target _Framerate|num2|50.|1.|200.\\n\
-nbuf|Number of _buffered frames|num0|32|1|256\\n\
+tfps|Max render _Framerate|num2|" SE(DEF_FPS_MAX) "|1.|200.\\n	\
+nbuf|Number of _texture buffers|num0|" SE(DEF_NBUF) "|1|256\\n	\
 dbuf|Use _double buffering|bool|1|0 \\n\
 fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 </params> \\n\
@@ -334,7 +341,6 @@ boolean set_palette(int palette) {
 }
 
 
-
 static void setWindowDecorations(void) {
   unsigned char *pucData;
   int iFormat;
@@ -392,14 +398,11 @@ static void setWindowDecorations(void) {
 }
 
 
-
 static void alwaysOnTop() {
   long propvalue = 12;
   XChangeProperty(dpy, xWin, XA_WIN_LAYER, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&propvalue, 1);
   XRaiseWindow(dpy, xWin);
 }
-
-
 
 
 static boolean isWindowMapped(void) {
@@ -414,7 +417,6 @@ static boolean isWindowMapped(void) {
 }
 
 
-
 static void setFullScreen(void) {
   XWindowChanges changes;
   unsigned int valueMask = CWX | CWY | CWWidth | CWHeight;
@@ -427,7 +429,6 @@ static void setFullScreen(void) {
   XA_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(dpy, "_NET_WM_STATE_MAXIMIZED_VERT", False);
   XA_NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(dpy, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
   XA_NET_WM_STATE_FULLSCREEN = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False);
-
 
   if (isWindowMapped()) {
     XEvent e;
@@ -469,9 +470,6 @@ static void setFullScreen(void) {
 }
 
 
-
-
-
 static int get_size_for_type(int type) {
   switch (type) {
   case GL_RGBA:
@@ -493,40 +491,29 @@ static volatile uint8_t *buffer_free(volatile uint8_t *retbuf) {
 }
 
 
-static uint8_t *render_to_mainmem(int type) {
+static uint8_t *render_to_mainmem(int type, int window_width, int window_height) {
   // copy GL drawing buffer to main mem
-  XWindowAttributes attr;
-
   uint8_t *xretbuf;
-
-  XGetWindowAttributes(dpy, xWin, &attr);
-
-  window_width = attr.width;
-  window_height = attr.height;
-
-  glFlush();
 
   glPushAttrib(GL_PIXEL_MODE_BIT);
   glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
 
-  glReadBuffer(swapFlag ? GL_BACK : GL_FRONT);
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  if (!use_pbo) {
+  if (1 || !use_pbo) {
     xretbuf = (uint8_t *)malloc(window_width * window_height * get_size_for_type(type));
     if (!xretbuf) {
       glPopClientAttrib();
       glPopAttrib();
       return NULL;
     }
+    //glFinish();
     glReadPixels(0, 0, window_width, window_height, type, GL_UNSIGNED_BYTE, xretbuf);
   }
 
   return xretbuf;
 }
-
-
 
 
 static void render_to_gpumem_inner(int tnum, int width, int height, int type, int typesize, volatile uint8_t *texturebuf) {
@@ -553,16 +540,6 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, in
 }
 
 
-
-/*
-static void render_to_gpumem(int tnum, uint8_t *texturebuf) {
-  render_to_gpumem_inner(get_real_tnum(tnum,TRUE),get_texture_width(tnum),get_texture_height(tnum),
-			 get_texture_type(tnum),get_size_for_type(get_texture_type(tnum)),texturebuf);
-}
-
-*/
-
-
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   _xparms xparms;
 
@@ -581,8 +558,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   xparms.argv = argv;
 
   mode = 0;
-  tfps = 50.;
-  nbuf = 32;
+  tfps = DEF_FPS_MAX;
+  nbuf = DEF_NBUF;
   dblbuf = 1;
   fsover = FALSE;
 
@@ -629,8 +606,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   return TRUE;
 }
-
-
 
 
 static boolean init_screen_inner(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
@@ -847,7 +822,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glFlush();
+  glFinish();
   if (swapFlag) glXSwapBuffers(dpy, glxWin);
 
   type = GL_RGBA;
@@ -865,14 +840,13 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     is_direct = FALSE;
 
   /*
-  XMapWindow(dpy, xWin);
-  XSync(dpy, xWin);
-  XSetInputFocus(dpy, xWin, RevertToNone, CurrentTime);
-  XSelectInput(dpy, xWin, KeyPressMask | KeyReleaseMask);
+    XMapWindow(dpy, xWin);
+    XSync(dpy, xWin);
+    XSetInputFocus(dpy, xWin, RevertToNone, CurrentTime);
+    XSelectInput(dpy, xWin, KeyPressMask | KeyReleaseMask);
   */
   return TRUE;
 }
-
 
 
 static void set_priorities(void) {
@@ -903,8 +877,9 @@ static void set_priorities(void) {
   free(prios);
 }
 
+
 /*
-static void resize_buffer(uint8_t *out, int owidth, int oheight, uint8_t *in, int iwidth, int iheight, int type) {
+  static void resize_buffer(uint8_t *out, int owidth, int oheight, uint8_t *in, int iwidth, int iheight, int type) {
   int xi,xj;
   int typesize=get_size_for_type(type);
   float scalex,scaley;
@@ -919,26 +894,33 @@ static void resize_buffer(uint8_t *out, int owidth, int oheight, uint8_t *in, in
   dst=out;
 
   for (i=0;i<oheight;i++) {
-    xi=(float)i*scaley;
-    ptr=in+xi*iwidth*typesize;
-    for (j=0;j<owidth;j++) {
-      xj=(float)j*scalex;
-      memcpy(dst,ptr+xj*typesize,typesize);
-      dst+=typesize;
-    }
+  xi=(float)i*scaley;
+  ptr=in+xi*iwidth*typesize;
+  for (j=0;j<owidth;j++) {
+  xj=(float)j*scalex;
+  memcpy(dst,ptr+xj*typesize,typesize);
+  dst+=typesize;
+  }
 
   }
-}
+  }
 */
 
 
-static boolean Upload(int width, int height) {
+static boolean Upload(int width, int height, int *duration) {
   XWindowAttributes attr;
+
+  struct timespec now;
+  int ticks;
 
   int imgWidth = width;
   int imgHeight = height;
 
   int texID;
+
+  // time sync
+  clock_gettime(CLOCK_MONOTONIC, &now);
+  ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
   texID = get_texture_texID(0);
 
@@ -963,7 +945,6 @@ static boolean Upload(int width, int height) {
   }
 
   texID = get_texture_texID(0);
-
 
   ////////////////////////////////////////////////////////////
   // modes
@@ -1060,7 +1041,6 @@ static boolean Upload(int width, int height) {
     glBindTexture(m_TexTarget, texID);
     glColor4d(1.0, 1.0, 1.0, 1.0);
 
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glBegin(GL_TRIANGLES);                      // Drawing Using Triangles
@@ -1142,17 +1122,11 @@ static boolean Upload(int width, int height) {
   case 3: {
     // wobbler:
 
-    // sync to the clock with the clock_gettime function
-    struct timespec now;
-    int ticks;
-
     float vx = -1.0, vy = 1.0;
     float tx = 0.0, ty;
 
     float vz;
 
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
     ty = sin(ticks * 0.001) * 0.2;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1252,11 +1226,6 @@ static boolean Upload(int width, int height) {
   case 4: {
     // landscape:
 
-    // time sync
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    int ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
 
@@ -1309,7 +1278,6 @@ static boolean Upload(int width, int height) {
 #define XSPD2 0.15      // speed (along grid X)
 #define YSPD2 0.03      // speed (along grid Y)
 #define A22 0.05         // amplitude
-
 
     float vx = -1.0, vy = 1.0;
     float tx = 0.0, ty = -(ticks % 4000) * 0.00025;
@@ -1367,11 +1335,6 @@ static boolean Upload(int width, int height) {
     // insider:
 
     // time sync
-    struct timespec now;
-    int ticks;
-
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
@@ -1433,13 +1396,6 @@ static boolean Upload(int width, int height) {
   case 6: {
     // cube:
 
-    // time sync
-    struct timespec now;
-    int ticks;
-
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
 
@@ -1461,11 +1417,16 @@ static boolean Upload(int width, int height) {
     glBindTexture(m_TexTarget, texID);
 
     glEnable(m_TexTarget);
-
     glEnable(GL_DEPTH_TEST);
 
     // inner + outer cube
     for (int k = 0; k < 2; k++) {
+
+      if (k == 1) {
+        glCullFace(GL_FRONT);
+        glEnable(GL_CULL_FACE);
+      }
+
       glPushMatrix();
       glTranslatef(0.0, 0.0, -1.0);
 
@@ -1501,18 +1462,14 @@ static boolean Upload(int width, int height) {
       glPopMatrix();
     }
     glDisable(m_TexTarget);
+    glDisable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
   }
 
   break;
 
   case 7: {
     // turning:
-
-    // time sync
-    struct timespec now;
-    int ticks;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
@@ -1541,6 +1498,8 @@ static boolean Upload(int width, int height) {
     glEnable(m_TexTarget);
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
 
     // draw the cube with the texture
     for (int i = 0; i < 6; i++) {
@@ -1564,6 +1523,7 @@ static boolean Upload(int width, int height) {
       else if (i == 4) glRotatef(180, 1, 0, 0);
     }
 
+    glEnable(GL_CULL_FACE);
     glDisable(m_TexTarget);
   }
 
@@ -1572,13 +1532,8 @@ static boolean Upload(int width, int height) {
   case 8: {
     // tunnel:
 
-    // sync to the clock
-    struct timespec now;
-    int ticks;
     float tx = 0.0, ty;
 
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
     ty = (ticks % 2000) * 0.0005;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1621,8 +1576,6 @@ static boolean Upload(int width, int height) {
     // precalculate the gaps between grid points
 #define TX_PLUS2 (1.0/WX)
 #define TY_PLUS2 (1.0/160)
-
-
 
     for (int j = 0; j < TD; j++) {
       tx = 0.0;
@@ -1680,7 +1633,7 @@ static boolean Upload(int width, int height) {
 
 #define NOT_CREATED -1 	// a flag for a particle that was not created
 #define NOF_PARTS 10000  // the number of particles
-#define PIXEL_SIZE 1.0	// size of the particle pixels (1.0 = a pixel)
+#define PIXEL_SIZE (window_width / 240 > 0 ? window_width / 240 : 1)	// size of the particle pixels (1.0 = a pixel)
 
     static PARTICLE parts[NOF_PARTS]; // particle array
     static int parts_init = FALSE; // have been inited?
@@ -1689,12 +1642,6 @@ static boolean Upload(int width, int height) {
       for (int i = 0; i < NOF_PARTS; i++) parts[i].start_time = NOT_CREATED;
       parts_init = TRUE;
     }
-    // time sync
-    struct timespec now;
-    int ticks;
-
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
@@ -1707,7 +1654,7 @@ static boolean Upload(int width, int height) {
     glLoadIdentity();
     glTranslatef(0.0, 0.0, -2.3);
 
-    // turn the place
+    // turn the plane
     float rotx = sin(ticks * M_PI / 5000.0) * 5 - 15;
     float roty = sin(ticks * M_PI / 5000.0) * 5 + 45;
     float rotz = sin(ticks * M_PI / 5000.0) * 5;
@@ -1815,16 +1762,12 @@ static boolean Upload(int width, int height) {
 
     static int parts_init = FALSE; // have been inited?
 
+    float rotx, roty, rotz;
+
     if (!parts_init) {
       for (int i = 0; i < NOF_PARTS2; i++) parts[i].start_time = NOT_CREATED;
       parts_init = TRUE;
     }
-    // time sync
-    struct timespec now;
-    float rotx, roty, rotz;
-    int ticks;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, window_width, window_height);
@@ -1862,21 +1805,21 @@ static boolean Upload(int width, int height) {
 
     // draw the emitter with the texture
     /*
-    glBegin (GL_QUADS);
-    glColor3f(1,1,1);
-    	glTexCoord2f (0.0, 0.0);
-    	glVertex3f (-1.0, 1.0, 0.0);
+      glBegin (GL_QUADS);
+      glColor3f(1,1,1);
+      glTexCoord2f (0.0, 0.0);
+      glVertex3f (-1.0, 1.0, 0.0);
 
-    	glTexCoord2f (1.0, 0.0);
-    	glVertex3f (1.0, 1.0, 0.0);
+      glTexCoord2f (1.0, 0.0);
+      glVertex3f (1.0, 1.0, 0.0);
 
-    	glTexCoord2f (1.0, 1.0);
-    	glVertex3f (1.0, -1.0, 0.0);
+      glTexCoord2f (1.0, 1.0);
+      glVertex3f (1.0, -1.0, 0.0);
 
-    	glTexCoord2f (0.0, 1.0);
-    	glVertex3f (-1.0, -1.0, 0.0);
+      glTexCoord2f (0.0, 1.0);
+      glVertex3f (-1.0, -1.0, 0.0);
 
-    	glEnd ();
+      glEnd ();
     */
     // draw the squares
 
@@ -1929,18 +1872,25 @@ static boolean Upload(int width, int height) {
   break;
   }
 
+  if (swapFlag) glXSwapBuffers(dpy, glxWin);
+
   if (retdata != NULL) {
     // copy buffer to retbuf
+
+    pthread_mutex_lock(dblbuf ? &retthread_mutex : &rthread_mutex);
 
     if (retbuf != NULL) {
       buffer_free(retbuf);
     }
 
-    retbuf = render_to_mainmem(type);
+    retbuf = render_to_mainmem(type, window_width, window_height);
     return_ready = TRUE;
+    pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex);
   }
 
-  if (swapFlag) glXSwapBuffers(dpy, glxWin);
+  // time sync
+  clock_gettime(CLOCK_MONOTONIC, &now);
+  *duration = (now.tv_sec * 1000 + now.tv_nsec / 1000000 - ticks) * 1000;
 
   return TRUE;
 }
@@ -1948,6 +1898,8 @@ static boolean Upload(int width, int height) {
 
 static void *render_thread_func(void *data) {
   _xparms *xparms = (_xparms *)data;
+  int usec = 1000000. / tfps;
+  int timetowait = usec, duration;
 
   retbuf = NULL;
 
@@ -1956,10 +1908,13 @@ static void *render_thread_func(void *data) {
   rthread_ready = TRUE;
 
   while (playing) {
-    usleep(1000000. / tfps);
+    usleep(timetowait);
+    timetowait = usec;
     pthread_mutex_lock(&rthread_mutex);
     if (has_texture && playing) {
-      Upload(imgWidth, imgHeight);
+      Upload(imgWidth, imgHeight, &duration);
+      timetowait -= duration;
+      if (timetowait < 0) timetowait = 0;
     } else pthread_mutex_unlock(&rthread_mutex);
   }
 
@@ -1973,14 +1928,11 @@ static void *render_thread_func(void *data) {
 }
 
 
-
-
 boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return_data) {
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
   has_texture = TRUE;
   has_new_texture = TRUE;
-
 
   if (return_data != NULL) {
     size_t twidth = window_width * typesize;
@@ -1993,17 +1945,16 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
 
     texturebuf = (uint8_t *)pixel_data[0]; // no memcpy needed, as we will not free pixel_data until render_thread has used it
     return_ready = FALSE;
-    retdata = (uint8_t *)return_data[0]; // host created space for return data
+    dst = (uint8_t *)(retdata = (uint8_t *)return_data[0]); // host created space for return data
 
     imgWidth = hsize;
     imgHeight = vsize;
 
     pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
 
-    while (!return_ready) usleep(1000); // wait for return data
-    pthread_mutex_lock(&rthread_mutex); // lock render thread while we grab data
+    while (!return_ready) usleep(1000); // wait for return data - TODO - use pthread_cons_wait
+    pthread_mutex_lock(dblbuf ? &retthread_mutex : &rthread_mutex); // lock render thread while we grab data
 
-    dst = (uint8_t *)retdata;
     retdata = NULL;
 
     texturebuf = NULL;
@@ -2016,7 +1967,7 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
       dst += twidth;
       src -= twidth;
     }
-
+    pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex); // lock render thread while we grab data
   } else {
     if (hsize != imgWidth || vsize != imgHeight || texturebuf == NULL) {
       if (texturebuf != NULL) {
@@ -2031,23 +1982,17 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     imgHeight = vsize;
 
     retdata = NULL;
+    pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
   }
-
-  pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
 
   return TRUE;
 }
-
-
-
 
 
 boolean render_frame_unknown(int hsize, int vsize, void **pixel_data, void **return_data) {
   fprintf(stderr, "openGL plugin error: No palette was set !\n");
   return FALSE;
 }
-
-
 
 
 void decode_pparams(weed_plant_t **pparams) {
@@ -2081,8 +2026,6 @@ void decode_pparams(weed_plant_t **pparams) {
       weed_free(pname);
     } else {
       // must be an alpha channel
-
-
     }
     i++;
   }
@@ -2126,7 +2069,6 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   dpy = NULL;
   pthread_mutex_unlock(&dpy_mutex);
 }
-
 
 
 void module_unload(void) {

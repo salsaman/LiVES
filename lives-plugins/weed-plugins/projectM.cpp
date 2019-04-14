@@ -60,8 +60,8 @@ static int package_version = 1; // version of this package
 
 static int copies = 0;
 
-static pthread_cond_t cond;
-static pthread_mutex_t cond_mutex;
+static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct timespec ts;
 
 typedef struct {
@@ -371,9 +371,6 @@ static int projectM_deinit(weed_plant_t *inst) {
     sd->rendering = false;
   }
 
-  pthread_mutex_destroy(&cond_mutex);
-  pthread_cond_destroy(&cond);
-
   return WEED_NO_ERROR;
 }
 
@@ -388,7 +385,6 @@ static int projectM_init(weed_plant_t *inst) {
 
   if (!inited) {
     int rc = 0;
-    struct timeval tv;
 
     weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
     weed_plant_t *iparam = weed_get_plantptr_value(inst, "in_parameters", &error);
@@ -434,14 +430,11 @@ static int projectM_init(weed_plant_t *inst) {
     sd->prnames = NULL;
     sd->worker_ready = false;
 
-    pthread_mutex_init(&cond_mutex, NULL);
-    pthread_cond_init(&cond, NULL);
-
     // kick off a thread to init screean and render
     pthread_create(&sd->thread, NULL, worker, sd);
 
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    ts.tv_sec = tv.tv_sec + 30;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec += 30;
 
     // wait for worker thread ready
     while (!sd->worker_ready && rc == 0) {
@@ -628,7 +621,7 @@ void weed_desetup(void) {
     if (statsd->fbuffer != NULL) weed_free(statsd->fbuffer);
     if (statsd->audio != NULL) weed_free(statsd->audio);
     if (statsd->prnames != NULL) {
-      for (i = 0; i < statsd->nprs; i++) {
+      for (int i = 0; i < statsd->nprs; i++) {
         free(statsd->prnames[i]);
       }
       weed_free(statsd->prnames);

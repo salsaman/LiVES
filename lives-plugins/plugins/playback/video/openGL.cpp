@@ -89,7 +89,6 @@ static Window xWin;
 static GLXWindow glxWin;
 static GLXContext context;
 
-static boolean swapFlag = TRUE;
 static boolean is_direct;
 static boolean pbo_available;
 static boolean is_ext;
@@ -725,7 +724,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     width = attr.width;
     height = attr.height;
 
-    glXGetConfig(dpy, xvis, GLX_DOUBLEBUFFER, &swapFlag);
+    glXGetConfig(dpy, xvis, GLX_DOUBLEBUFFER, &dblbuf);
     XFree(xvis);
     is_ext = TRUE;
   } else {
@@ -737,12 +736,17 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
       ** buffered configuration first */
       fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy),
                                     doubleBufferAttributes, &numReturned);
-    }
 
-    if (fbConfigs == NULL) {    /* no double buffered configs available */
-      fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy),
-                                    singleBufferAttributess, &numReturned);
-      swapFlag = FALSE;
+      if (fbConfigs == NULL) {    /* no double buffered configs available */
+	fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy),
+				      singleBufferAttributess, &numReturned);
+	dblbuf = 0;
+      }
+    }
+    else {
+	fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy),
+				      singleBufferAttributess, &numReturned);
+	dblbuf = 0;
     }
 
     if (!fbConfigs) {
@@ -852,7 +856,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glFinish();
-  if (swapFlag) glXSwapBuffers(dpy, glxWin);
+  if (dblbuf) glXSwapBuffers(dpy, glxWin);
 
   type = GL_RGBA;
   if (mypalette == WEED_PALETTE_RGB24) type = GL_RGB;
@@ -1833,7 +1837,7 @@ static int Upload(void) {
   break;
   }
 
-  if (swapFlag) glXSwapBuffers(dpy, glxWin);
+  if (dblbuf) glXSwapBuffers(dpy, glxWin);
 
   if (retdata != NULL) {
     // copy buffer to retbuf

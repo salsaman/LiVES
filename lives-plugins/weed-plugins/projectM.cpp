@@ -34,11 +34,9 @@ static int package_version = 1; // version of this package
 #include "weed-utils-code.c" // optional
 #include "weed-plugin-utils.c" // optional
 
-
 /////////////////////////////////////////////////////////////
 
 #define USE_DBLBUF 1
-
 
 #include <libprojectM/projectM.hpp>
 
@@ -58,14 +56,13 @@ static int package_version = 1; // version of this package
 #include "projectM-ConfigFile.h"
 #include "projectM-getConfigFilename.h"
 
-#define TARGET_FPS 30.
+#define TARGET_FPS 60.
 
 static int copies = 0;
 
 static pthread_cond_t cond;
 static pthread_mutex_t cond_mutex;
 static struct timespec ts;
-
 
 typedef struct {
   projectM *globalPM;
@@ -77,7 +74,7 @@ typedef struct {
   volatile int pidx;
   int opidx;
   volatile int nprs;
-  volatile char **prnames;
+  char **volatile prnames;  // volatile ptr to non-volatile strings !!
   pthread_mutex_t mutex;
   pthread_mutex_t pcm_mutex;
   pthread_t thread;
@@ -90,7 +87,6 @@ typedef struct {
   volatile bool rendering;
 } _sdata;
 
-
 static _sdata *statsd;
 
 static int maxwidth, maxheight;
@@ -98,6 +94,7 @@ static int maxwidth, maxheight;
 static int inited = 0;
 
 static void winhide() {
+  // doesnt work !!
   SDL_SysWMinfo info;
 
   Atom atoms[2];
@@ -189,7 +186,6 @@ static int init_display(_sdata *sd) {
 }
 
 
-
 static int render_frame(_sdata *sdata) {
   sdata->globalPM->renderFrame();
 
@@ -275,17 +271,16 @@ static void *worker(void *data) {
   float heightWidthRatio = (float)sd->height / (float)sd->width;
 
   if (init_display(sd)) {
-    //sd->worker_ready=true;
     sd->failed = true;
+    sd->worker_ready = true;
 
     // tell main thread we are ready
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
-    pthread_mutex_lock(&cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
 
     goto fail;
   }
-
 
   atexit(do_exit);
 
@@ -307,13 +302,11 @@ static void *worker(void *data) {
 
   sd->nprs = sd->globalPM->getPlaylistSize() + 1;
 
-  sd->prnames = (volatile char **)weed_malloc(sd->nprs * sizeof(char *));
-
-  // TODO - copy strings here
-  sd->prnames[0] = (volatile char *)"- Random -";
+  sd->prnames = (char **volatile)weed_malloc(sd->nprs * sizeof(char *));
+  sd->prnames[0] = strdup("- Random -");
 
   for (i = 1; i < sd->nprs; i++) {
-    sd->prnames[i] = const_cast<volatile char *>((sd->globalPM->getPresetName(i - 1)).c_str());
+    sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
   };
 
   // tell main thread we are ready
@@ -355,7 +348,6 @@ static void *worker(void *data) {
       sd->update_size = false;
     }
     pthread_mutex_unlock(&sd->mutex);
-    settings.fps = sd->fps;
     render_frame(sd);
   }
 
@@ -379,9 +371,11 @@ static int projectM_deinit(weed_plant_t *inst) {
     sd->rendering = false;
   }
 
+  pthread_mutex_destroy(&cond_mutex);
+  pthread_cond_destroy(&cond);
+
   return WEED_NO_ERROR;
 }
-
 
 
 static int projectM_init(weed_plant_t *inst) {
@@ -393,7 +387,7 @@ static int projectM_init(weed_plant_t *inst) {
   copies++;
 
   if (!inited) {
-    int rc;
+    int rc = 0;
     struct timeval tv;
 
     weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
@@ -446,21 +440,23 @@ static int projectM_init(weed_plant_t *inst) {
     // kick off a thread to init screean and render
     pthread_create(&sd->thread, NULL, worker, sd);
 
-    gettimeofday(&tv, NULL);
+    clock_gettime(CLOCK_MONOTONIC, &ts);
     ts.tv_sec = tv.tv_sec + 30;
 
-    pthread_mutex_lock(&cond_mutex);
-    rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
-    pthread_mutex_unlock(&cond_mutex);
+    // wait for worker thread ready
+    while (!sd->worker_ready && rc == 0) {
+      pthread_mutex_lock(&cond_mutex);
+      rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
+      pthread_mutex_unlock(&cond_mutex);
+    }
 
-    if (rc == ETIMEDOUT || !sd->worker_ready) {
+    if (rc == ETIMEDOUT && !sd->worker_ready) {
       // if we timedout then die
       projectM_deinit(inst);
       return WEED_ERROR_INIT_ERROR;
     }
 
     inited = 1;
-    // TODO : copy strings here
     weed_set_string_array(iparamgui, "choices", sd->nprs, (char **)sd->prnames);
   } else sd = statsd;
 
@@ -474,7 +470,6 @@ static int projectM_init(weed_plant_t *inst) {
 
   return WEED_NO_ERROR;
 }
-
 
 
 static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
@@ -587,7 +582,6 @@ static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
@@ -626,8 +620,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 }
 
 
-
-
 void weed_desetup(void) {
   std::cout << "ProjectM EXITING3" << std::endl;
   if (inited && statsd != NULL) {
@@ -635,11 +627,14 @@ void weed_desetup(void) {
     pthread_join(statsd->thread, NULL);
     if (statsd->fbuffer != NULL) weed_free(statsd->fbuffer);
     if (statsd->audio != NULL) weed_free(statsd->audio);
-    if (statsd->prnames != NULL) weed_free(statsd->prnames);
+    if (statsd->prnames != NULL) {
+      for (i = 0; i < statsd->nprs; i++) {
+        free(statsd->prnames[i]);
+      }
+      weed_free(statsd->prnames);
+    }
     pthread_mutex_destroy(&statsd->mutex);
     pthread_mutex_destroy(&statsd->pcm_mutex);
-    pthread_mutex_destroy(&cond_mutex);
-    pthread_cond_destroy(&cond);
     weed_free(statsd);
     statsd = NULL;
   }

@@ -1,5 +1,5 @@
 // LiVES - openGL playback engine
-// (c) G. Finch 2012 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2019 <salsaman@gmail.com>
 // (c) OpenGL effects by Antti Silvast, 2012 <antti.silvast@iki.fi>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
+#include <errno.h>
+
+#include <iostream>
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -44,6 +47,8 @@ static int palette_list[5];
 static int mypalette;
 
 static boolean inited;
+
+static boolean npot;
 
 #include <math.h> // for sin and cos
 
@@ -102,10 +107,7 @@ static volatile uint8_t *retbuf;
 static int m_WidthFS;
 static int m_HeightFS;
 
-static int window_width;
-static int window_height;
-
-#define DEF_NBUF 2
+#define DEF_NBUF 1
 #define DEF_FPS_MAX 60.
 
 #define SL(x) #x
@@ -120,18 +122,27 @@ static boolean use_pbo = FALSE;
 static float rquad;
 
 static pthread_t rthread;
-static pthread_mutex_t rthread_mutex;
-static pthread_mutex_t retthread_mutex;
-static pthread_mutex_t dpy_mutex;
+static pthread_mutex_t rthread_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t retthread_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t dpy_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static volatile uint32_t imgWidth;
-static volatile uint32_t imgHeight;
+static pthread_cond_t cond;
+static pthread_mutex_t cond_mutex;
+static struct timespec ts;
 
 static void *render_thread_func(void *data);
 
 static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
+
+// size of img inside texture
+static volatile uint32_t imgWidth;
+static volatile uint32_t imgHeight;
+
+// size of texture
+static volatile uint32_t texWidth;
+static volatile uint32_t texHeight;
 
 static GLenum m_TexTarget = GL_TEXTURE_2D;
 
@@ -219,10 +230,7 @@ static int get_texture_type(int tnum) {
 
 
 const char *module_check_init(void) {
-  if (!GL_ARB_texture_non_power_of_two) {
-    snprintf(error, 256, "\n\nGL_ARB_texture_non_power_of_two unavailable.\nCannot use plugin.\n");
-    return error;
-  }
+  npot = FALSE;
 
   XInitThreads();
 
@@ -272,7 +280,7 @@ const char *get_init_rfx(int intention) {
 <params> \\n\
 mode|_Mode|string_list|0|Normal|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel|Particles|Dissolve\\n\
 tfps|Max render _Framerate|num2|" SE(DEF_FPS_MAX) "|1.|200.\\n	\
-nbuf|Number of _texture buffers|num0|" SE(DEF_NBUF) "|1|256\\n	\
+nbuf|Number of _texture buffers (ignored)|num0|" SE(DEF_NBUF) "|1|256\\n	\
 dbuf|Use _double buffering|bool|1|0 \\n\
 fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 </params> \\n\
@@ -516,6 +524,13 @@ static uint8_t *render_to_mainmem(int type, int window_width, int window_height)
 }
 
 
+static int next_pot(int val) {
+  int i = 2;
+  while (i < val) i *= 2;
+  return i;
+}
+
+
 static void render_to_gpumem_inner(int tnum, int width, int height, int type, int typesize, volatile uint8_t *texturebuf) {
   int mipMapLevel = 0;
   int texID = get_texture_texID(tnum);
@@ -568,7 +583,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     if (argc > 1) {
       tfps = atof(argv[1]);
       if (argc > 2) {
-        nbuf = atoi(argv[2]);
+        //nbuf = atoi(argv[2]);
         if (argc > 3) {
           dblbuf = atoi(argv[3]);
           if (argc > 4) {
@@ -594,13 +609,27 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   has_new_texture = FALSE;
   texturebuf = NULL;
 
+  imgWidth = imgHeight = texWidth = texHeight = 0;
+
+  pthread_mutex_init(&cond_mutex, NULL);
+  pthread_cond_init(&cond, NULL);
+
   pthread_create(&rthread, NULL, render_thread_func, &xparms);
 
-  // wait for render thread to start up
-  while (!rthread_ready) usleep(1000);
+  int rc = 0;
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  ts.tv_sec += 30;
 
-  if (!playing) {
-    fprintf(stderr, "openGL plugin error: Failed to start render thread\n");
+  // wait for render thread ready
+  while (!rthread_ready && rc == 0) {
+    pthread_mutex_lock(&cond_mutex);
+    rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
+    pthread_mutex_unlock(&cond_mutex);
+  }
+
+  if (!playing || (rc == ETIMEDOUT && !rthread_ready)) {
+    std::cerr << "openGL plugin error: Failed to start render thread" << std::endl;
     return FALSE;
   }
 
@@ -693,15 +722,15 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
 
     context = glXCreateContext(dpy, &xvis[0], 0, GL_TRUE);
 
-    width = window_width = attr.width;
-    height = window_height = attr.height;
+    width = attr.width;
+    height = attr.height;
 
     glXGetConfig(dpy, xvis, GLX_DOUBLEBUFFER, &swapFlag);
     XFree(xvis);
     is_ext = TRUE;
   } else {
-    width = window_width = fullscreen ? m_WidthFS : width;
-    height = window_height = fullscreen ? m_HeightFS : height;
+    width = fullscreen ? m_WidthFS : width;
+    height = fullscreen ? m_HeightFS : height;
 
     if (dblbuf) {
       /* Request a suitable framebuffer configuration - try for a double
@@ -878,45 +907,24 @@ static void set_priorities(void) {
 }
 
 
-/*
-  static void resize_buffer(uint8_t *out, int owidth, int oheight, uint8_t *in, int iwidth, int iheight, int type) {
-  int xi,xj;
-  int typesize=get_size_for_type(type);
-  float scalex,scaley;
-
-  register int i,j;
-
-  uint8_t *ptr, *dst;
-
-  scalex=(float)iwidth/(float)owidth;
-  scaley=(float)iheight/(float)oheight;
-
-  dst=out;
-
-  for (i=0;i<oheight;i++) {
-  xi=(float)i*scaley;
-  ptr=in+xi*iwidth*typesize;
-  for (j=0;j<owidth;j++) {
-  xj=(float)j*scalex;
-  memcpy(dst,ptr+xj*typesize,typesize);
-  dst+=typesize;
-  }
-
-  }
-  }
-*/
-
-
-static boolean Upload(int width, int height, int *duration) {
+static int Upload(void) {
   XWindowAttributes attr;
 
   struct timespec now;
+
   int ticks;
 
-  int imgWidth = width;
-  int imgHeight = height;
-
   int texID;
+
+  int window_width, window_height;
+
+  float aspect = (float)imgWidth / (float)imgHeight;
+
+  float scalex = (float)imgWidth / (float)texWidth, scaley = (float)imgHeight / (float)texHeight;
+
+  // scaling for particles
+  float partx = 2. / (float)imgWidth;
+  float party = 2. / (float)imgHeight;
 
   // time sync
   clock_gettime(CLOCK_MONOTONIC, &now);
@@ -933,7 +941,7 @@ static boolean Upload(int width, int height, int *duration) {
 
     has_new_texture = FALSE;
 
-    render_to_gpumem_inner(0, width, height, type, typesize, texturebuf);
+    render_to_gpumem_inner(0, texWidth, texHeight, type, typesize, texturebuf);
 
     set_priorities();
   }
@@ -954,16 +962,13 @@ static boolean Upload(int width, int height, int *duration) {
   window_width = attr.width;
   window_height = attr.height;
 
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glViewport(0, 0, window_width, window_height);
+
   switch (mode) {
   case 0: {
     // flat:
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glViewport(0, 0, window_width, window_height);
-
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glFrustum(-1, 1, -1, 1, 2, 10);
@@ -991,13 +996,13 @@ static boolean Upload(int width, int height, int *duration) {
     glColor4d(1.0, 1.0, 1.0, 1.0);
 
     glBegin(GL_QUADS);
-    glTexCoord2d(0, 1);
+    glTexCoord2d(0, scaley);
     glVertex3d(-1, -1, 0);
     glTexCoord2d(0, 0);
     glVertex3d(-1, 1, 0);
-    glTexCoord2d(1, 0);
+    glTexCoord2d(scalex, 0);
     glVertex3d(1, 1, 0);
-    glTexCoord2d(1, 1);
+    glTexCoord2d(scalex, scaley);
     glVertex3d(1, -1, 0);
     glEnd();
 
@@ -1009,13 +1014,6 @@ static boolean Upload(int width, int height, int *duration) {
   break;
 
   case 1: {
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glViewport(0, 0, window_width, window_height);
-
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
@@ -1045,13 +1043,13 @@ static boolean Upload(int width, int height, int *duration) {
 
     glBegin(GL_TRIANGLES);                      // Drawing Using Triangles
 
-    glTexCoord2f(0.5, 0.0);
+    glTexCoord2f(0.5 * scalex, 0.0);
     glVertex3f(0.0f, 1.0f, 0.0f);               // Top
 
-    glTexCoord2f(0.0, 1.0);
+    glTexCoord2f(0.0, scaley);
     glVertex3f(-1.0f, -1.0f, 0.0f);             // Bottom Left
 
-    glTexCoord2f(1.0, 1.0);
+    glTexCoord2f(scalex, scaley);
     glVertex3f(1.0f, -1.0f, 0.0f);              // Bottom Right
     glEnd();
 
@@ -1066,12 +1064,6 @@ static boolean Upload(int width, int height, int *duration) {
   break;
 
   case 2: {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glViewport(0, 0, window_width, window_height);
-
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glTranslatef(0.0, 0.0, -1.);
@@ -1104,13 +1096,13 @@ static boolean Upload(int width, int height, int *duration) {
     glTexCoord2f(0.0, 0.0);
     glVertex3f(-1.0, 1.1, 0.0);
 
-    glTexCoord2f(1.0, 0.0);
+    glTexCoord2f(scalex, 0.0);
     glVertex3f(1.0, 1.1, 0.0);
 
-    glTexCoord2f(1.0, 1.0);
+    glTexCoord2f(scalex, scaley);
     glVertex3f(1.0, -1.0, 0.0);
 
-    glTexCoord2f(0.0, 1.0);
+    glTexCoord2f(0.0, scaley);
     glVertex3f(-1.0, -1.0, 0.0);
 
     glEnd();
@@ -1129,13 +1121,9 @@ static boolean Upload(int width, int height, int *duration) {
 
     ty = sin(ticks * 0.001) * 0.2;
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glViewport(0, 0, window_width, window_height);
-
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1187,28 +1175,28 @@ static boolean Upload(int width, int height, int *duration) {
         glColor3f(col, col, col);
 
         vz = sin(ticks * TSPD1 + i * XSPD1 + j * YSPD1) * A1 + cos(ticks * TSPD2 + i * XSPD2 + j * YSPD2) * A2;
-        glTexCoord2f(tx, ty);
+        glTexCoord2f(tx * scalex, ty * scaley);
         glVertex3f(vx, vy, vz);
 
         vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + j * YSPD1) * A1 + cos(ticks * TSPD2 + (i + 1) * XSPD2 + j * YSPD2) * A2;
         col = 1.0 - sin((i + 1) * 0.05 + j * 0.06) * 1.0;
         glColor3f(col, col, col);
 
-        glTexCoord2f(tx + TX_PLUS, ty);
+        glTexCoord2f((tx + TX_PLUS) * scalex, ty * scaley);
         glVertex3f(vx + VX_PLUS, vy, vz);
 
         vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + (j + 1) * YSPD1) * A1 + cos(ticks * TSPD2 + (i + 1) * XSPD2 + (j + 1) * YSPD2) * A2;
         col = 1.0 - sin((i + 1) * 0.05 + (j + 1) * 0.06) * 1.0;
         glColor3f(col, col, col);
 
-        glTexCoord2f(tx + TX_PLUS, ty + TY_PLUS);
+        glTexCoord2f((tx + TX_PLUS) * scalex, (ty + TY_PLUS) * scaley);
         glVertex3f(vx + VX_PLUS, vy - VY_PLUS, vz);
 
         vz = sin(ticks * TSPD1 + i * XSPD1 + (j + 1) * YSPD1) * A1 + cos(ticks * TSPD2 + i * XSPD2 + (j + 1) * YSPD2) * A2;
         col = 1.0 - sin(i * 0.05 + (j + 1) * 0.06) * 1.0;
         glColor3f(col, col, col);
 
-        glTexCoord2f(tx, ty + TY_PLUS);
+        glTexCoord2f(tx * scalex, (ty + TY_PLUS) * scaley);
         glVertex3f(vx, vy - VY_PLUS, vz);
 
         glEnd();
@@ -1225,13 +1213,9 @@ static boolean Upload(int width, int height, int *duration) {
 
   case 4: {
     // landscape:
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, window_width, window_height);
-
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1294,28 +1278,28 @@ static boolean Upload(int width, int height, int *duration) {
         glColor3f(col, col, col);
 
         vz = sin(ticks * TSPD1 + i * XSPD1 + j * YSPD1) * A12 + cos(ticks * TSPD2 + i * XSPD2 + j * YSPD2) * A22;
-        glTexCoord2f(tx, ty);
+        glTexCoord2f(tx * scalex, ty * scaley);
         glVertex3f(vx, vy, vz);
 
         vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + j * YSPD1) * A12 + cos(ticks * TSPD2 + (i + 1) * XSPD2 + j * YSPD2) * A22;
         col = 1.0 - sin((i + 1) * 0.05 + j * 0.06) * 1.0;
         glColor3f(col, col, col);
 
-        glTexCoord2f(tx + TX_PLUS, ty);
+        glTexCoord2f((tx + TX_PLUS) * scalex, ty * scaley);
         glVertex3f(vx + VX_PLUS, vy, vz);
 
         vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + (j + 1) * YSPD1) * A12 + cos(ticks * TSPD2 + (i + 1) * XSPD2 + (j + 1) * YSPD2) * A22;
         col = 1.0 - sin((i + 1) * 0.05 + (j + 1) * 0.06) * 1.0;
         glColor3f(col, col, col);
 
-        glTexCoord2f(tx + TX_PLUS, ty + TY_PLUS);
+        glTexCoord2f((tx + TX_PLUS) * scalex, (ty + TY_PLUS) * scaley);
         glVertex3f(vx + VX_PLUS, vy - VY_PLUS, vz);
 
         vz = sin(ticks * TSPD1 + i * XSPD1 + (j + 1) * YSPD1) * A12 + cos(ticks * TSPD2 + i * XSPD2 + (j + 1) * YSPD2) * A22;
         col = 1.0 - sin(i * 0.05 + (j + 1) * 0.06) * 1.0;
         glColor3f(col, col, col);
 
-        glTexCoord2f(tx, ty + TY_PLUS);
+        glTexCoord2f(tx * scalex, (ty + TY_PLUS) * scaley);
         glVertex3f(vx, vy - VY_PLUS, vz);
 
         glEnd();
@@ -1333,15 +1317,9 @@ static boolean Upload(int width, int height, int *duration) {
 
   case 5: {
     // insider:
-
-    // time sync
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, window_width, window_height);
-
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1373,13 +1351,13 @@ static boolean Upload(int width, int height, int *duration) {
       glTexCoord2f(0.0, 0.0);
       glVertex3f(-1.0, 1.0, 1.0);
 
-      glTexCoord2f(1.0, 0.0);
+      glTexCoord2f(scalex, 0.0);
       glVertex3f(1.0, 1.0, 1.0);
 
-      glTexCoord2f(1.0, 1.0);
+      glTexCoord2f(scalex, scaley);
       glVertex3f(1.0, -1.0, 1.0);
 
-      glTexCoord2f(0.0, 1.0);
+      glTexCoord2f(0.0, scaley);
       glVertex3f(-1.0, -1.0, 1.0);
 
       glEnd();
@@ -1395,13 +1373,9 @@ static boolean Upload(int width, int height, int *duration) {
 
   case 6: {
     // cube:
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, window_width, window_height);
-
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1417,6 +1391,7 @@ static boolean Upload(int width, int height, int *duration) {
     glBindTexture(m_TexTarget, texID);
 
     glEnable(m_TexTarget);
+
     glEnable(GL_DEPTH_TEST);
 
     // inner + outer cube
@@ -1444,13 +1419,13 @@ static boolean Upload(int width, int height, int *duration) {
         glTexCoord2f(0.0, 0.0);
         glVertex3f(-1.0, 1.0, 1.0);
 
-        glTexCoord2f(1.0, 0.0);
+        glTexCoord2f(scalex, 0.0);
         glVertex3f(1.0, 1.0, 1.0);
 
-        glTexCoord2f(1.0, 1.0);
+        glTexCoord2f(scalex, scaley);
         glVertex3f(1.0, -1.0, 1.0);
 
-        glTexCoord2f(0.0, 1.0);
+        glTexCoord2f(0.0, scaley);
         glVertex3f(-1.0, -1.0, 1.0);
 
         glEnd();
@@ -1470,13 +1445,9 @@ static boolean Upload(int width, int height, int *duration) {
 
   case 7: {
     // turning:
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, window_width, window_height);
-
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1508,13 +1479,13 @@ static boolean Upload(int width, int height, int *duration) {
       glTexCoord2f(0.0, 0.0);
       glVertex3f(-1.0, 1.0, 1.0);
 
-      glTexCoord2f(1.0, 0.0);
+      glTexCoord2f(scalex, 0.0);
       glVertex3f(1.0, 1.0, 1.0);
 
-      glTexCoord2f(1.0, 1.0);
+      glTexCoord2f(scalex, scaley);
       glVertex3f(1.0, -1.0, 1.0);
 
-      glTexCoord2f(0.0, 1.0);
+      glTexCoord2f(0.0, scaley);
       glVertex3f(-1.0, -1.0, 1.0);
 
       glEnd();
@@ -1523,7 +1494,6 @@ static boolean Upload(int width, int height, int *duration) {
       else if (i == 4) glRotatef(180, 1, 0, 0);
     }
 
-    glEnable(GL_CULL_FACE);
     glDisable(m_TexTarget);
   }
 
@@ -1536,12 +1506,9 @@ static boolean Upload(int width, int height, int *duration) {
 
     ty = (ticks % 2000) * 0.0005;
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, window_width, window_height);
-
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1589,25 +1556,25 @@ static boolean Upload(int width, int height, int *duration) {
         glColor3f(col, col * 0.92, col * 0.93);
         glBegin(GL_QUADS);
 
-        glTexCoord2f(tx, ty);
+        glTexCoord2f(tx * scalex, ty * scaley);
         glVertex3f(vx, vy, vz);
 
         vx = cos((i + 1) * 2 * M_PI / TR) * SR;
         vy = sin((i + 1) * 2 * M_PI / TR) * SR;
         vz = -j * SD;
-        glTexCoord2f(tx + TX_PLUS2, ty);
+        glTexCoord2f((tx + TX_PLUS2) * scalex, ty * scaley);
         glVertex3f(vx, vy, vz);
 
         vx = cos((i + 1) * 2 * M_PI / TR) * SR;
         vy = sin((i + 1) * 2 * M_PI / TR) * SR;
         vz = -(j + 1) * SD;
-        glTexCoord2f(tx + TX_PLUS2, ty + TY_PLUS2);
+        glTexCoord2f((tx + TX_PLUS2) * scalex, (ty + TY_PLUS2) * scaley);
         glVertex3f(vx, vy, vz);
 
         vx = cos(i * 2 * M_PI / TR) * SR;
         vy = sin(i * 2 * M_PI / TR) * SR;
         vz = -(j + 1) * SD;
-        glTexCoord2f(tx, ty + TY_PLUS2);
+        glTexCoord2f(tx * scalex, (ty + TY_PLUS2) * scaley);
         glVertex3f(vx, vy, vz);
 
         glEnd();
@@ -1643,12 +1610,9 @@ static boolean Upload(int width, int height, int *duration) {
       parts_init = TRUE;
     }
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, window_width, window_height);
-
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1684,13 +1648,13 @@ static boolean Upload(int width, int height, int *duration) {
     glTexCoord2f(0.0, 0.0);
     glVertex3f(-1.0, 1.0, 0.0);
 
-    glTexCoord2f(1.0, 0.0);
+    glTexCoord2f(scalex, 0.0);
     glVertex3f(1.0, 1.0, 0.0);
 
-    glTexCoord2f(1.0, 1.0);
+    glTexCoord2f(scalex, scaley);
     glVertex3f(1.0, -1.0, 0.0);
 
-    glTexCoord2f(0.0, 1.0);
+    glTexCoord2f(0.0, scaley);
     glVertex3f(-1.0, -1.0, 0.0);
 
     glEnd();
@@ -1709,8 +1673,8 @@ static boolean Upload(int width, int height, int *duration) {
         parts[i].vz = 0.01;
         parts[i].end_time = 4000 + parts[i].start_time + rand() % 500;
 
-        parts[i].sx = PIXEL_SIZE * 2.0 / imgWidth;
-        parts[i].sy = PIXEL_SIZE * 2.0 / imgHeight;
+        parts[i].sx = PIXEL_SIZE * partx;
+        parts[i].sy = PIXEL_SIZE * party;
 
         parts[i].tx1 = ((parts[i].x + 1.0) / 2.0);
         parts[i].ty1 = (1.0 - (parts[i].y + 1.0) / 2.0);
@@ -1719,16 +1683,16 @@ static boolean Upload(int width, int height, int *duration) {
       }
       glBegin(GL_QUADS);
 
-      glTexCoord2f(parts[i].tx1, parts[i].ty1);
+      glTexCoord2f(parts[i].tx1 * scalex, parts[i].ty1 * scaley);
       glVertex3f(parts[i].x, parts[i].y, parts[i].z);
 
-      glTexCoord2f(parts[i].tx2, parts[i].ty1);
+      glTexCoord2f(parts[i].tx2 * scalex, parts[i].ty1 * scaley);
       glVertex3f(parts[i].x + parts[i].sx, parts[i].y, parts[i].z);
 
-      glTexCoord2f(parts[i].tx2, parts[i].ty2);
+      glTexCoord2f(parts[i].tx2 * scalex, parts[i].ty2 * scaley);
       glVertex3f(parts[i].x + parts[i].sx, parts[i].y - parts[i].sy, parts[i].z);
 
-      glTexCoord2f(parts[i].tx1, parts[i].ty2);
+      glTexCoord2f(parts[i].tx1 * scalex, parts[i].ty2 * scaley);
       glVertex3f(parts[i].x, parts[i].y - parts[i].sy, parts[i].z);
       glEnd();
 
@@ -1762,19 +1726,16 @@ static boolean Upload(int width, int height, int *duration) {
 
     static int parts_init = FALSE; // have been inited?
 
-    float rotx, roty, rotz;
-
     if (!parts_init) {
       for (int i = 0; i < NOF_PARTS2; i++) parts[i].start_time = NOT_CREATED;
       parts_init = TRUE;
     }
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0, 0, window_width, window_height);
+    float rotx, roty, rotz;
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, (float)imgWidth / (float)imgHeight, 0.01, 1135.0);
+    gluPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1837,8 +1798,8 @@ static boolean Upload(int width, int height, int *duration) {
         parts[i].vz = 0.01;
         parts[i].end_time = parts[i].start_time + 500 + rand() % 500;
 
-        parts[i].sx = PIXEL_SIZE2 * 2.0 / imgWidth;
-        parts[i].sy = PIXEL_SIZE2 * 2.0 / imgHeight;
+        parts[i].sx = PIXEL_SIZE2 * partx;
+        parts[i].sy = PIXEL_SIZE2 * party;
 
         parts[i].tx1 = ((parts[i].x + 1.0) / 2.0);
         parts[i].ty1 = (1.0 - (parts[i].y + 1.0) / 2.0);
@@ -1848,16 +1809,16 @@ static boolean Upload(int width, int height, int *duration) {
       glColor4f(1.0, 1.0, 1.0, 0.5 + (float)(parts[i].end_time - ticks) / (parts[i].end_time - parts[i].start_time));
       glBegin(GL_QUADS);
 
-      glTexCoord2f(parts[i].tx1, parts[i].ty1);
+      glTexCoord2f(parts[i].tx1 * scalex, parts[i].ty1 * scaley);
       glVertex3f(parts[i].x, parts[i].y, parts[i].z);
 
-      glTexCoord2f(parts[i].tx2, parts[i].ty1);
+      glTexCoord2f(parts[i].tx2 * scalex, parts[i].ty1 * scaley);
       glVertex3f(parts[i].x + parts[i].sx, parts[i].y, parts[i].z);
 
-      glTexCoord2f(parts[i].tx2, parts[i].ty2);
+      glTexCoord2f(parts[i].tx2 * scalex, parts[i].ty2 * scaley);
       glVertex3f(parts[i].x + parts[i].sx, parts[i].y - parts[i].sy, parts[i].z);
 
-      glTexCoord2f(parts[i].tx1, parts[i].ty2);
+      glTexCoord2f(parts[i].tx1 * scalex, parts[i].ty2 * scaley);
       glVertex3f(parts[i].x, parts[i].y - parts[i].sy, parts[i].z);
       glEnd();
 
@@ -1886,20 +1847,23 @@ static boolean Upload(int width, int height, int *duration) {
     retbuf = render_to_mainmem(type, window_width, window_height);
     return_ready = TRUE;
     pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex);
+
+    // tell main thread we are ready
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
   }
 
   // time sync
   clock_gettime(CLOCK_MONOTONIC, &now);
-  *duration = (now.tv_sec * 1000 + now.tv_nsec / 1000000 - ticks) * 1000;
-
-  return TRUE;
+  return (now.tv_sec * 1000 + now.tv_nsec / 1000000 - ticks) * 1000;
 }
 
 
 static void *render_thread_func(void *data) {
   _xparms *xparms = (_xparms *)data;
   int usec = 1000000. / tfps;
-  int timetowait = usec, duration;
+  int timetowait = usec;
 
   retbuf = NULL;
 
@@ -1907,13 +1871,16 @@ static void *render_thread_func(void *data) {
 
   rthread_ready = TRUE;
 
+  pthread_mutex_lock(&cond_mutex);
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&cond_mutex);
+
   while (playing) {
     usleep(timetowait);
     timetowait = usec;
     pthread_mutex_lock(&rthread_mutex);
     if (has_texture && playing) {
-      Upload(imgWidth, imgHeight, &duration);
-      timetowait -= duration;
+      timetowait -= Upload();
       if (timetowait < 0) timetowait = 0;
     } else pthread_mutex_unlock(&rthread_mutex);
   }
@@ -1929,35 +1896,69 @@ static void *render_thread_func(void *data) {
 
 
 boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return_data) {
+  int i;
+
+  // within the mutex lock we set imgWidth, imgHwight, texWidth, texHeight, texbuffer
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
+
+  imgWidth = hsize;
+  imgHeight = vsize;
 
   has_texture = TRUE;
   has_new_texture = TRUE;
 
+  if (!npot) {
+    hsize = next_pot(hsize);
+    vsize = next_pot(vsize);
+  }
+
   if (return_data != NULL) {
+    XWindowAttributes attr;
+    int window_width, window_height, rc = 0;
+
+    XGetWindowAttributes(dpy, xWin, &attr);
+
+    window_width = attr.width;
+    window_height = attr.height;
+
     size_t twidth = window_width * typesize;
     uint8_t *dst, *src;
-    register int i;
 
     if (texturebuf != NULL) {
       free((void *)texturebuf);
     }
 
-    texturebuf = (uint8_t *)pixel_data[0]; // no memcpy needed, as we will not free pixel_data until render_thread has used it
+    if (imgWidth == texWidth && imgHeight == texHeight) {
+      texturebuf = (uint8_t *)pixel_data[0]; // no memcpy needed, as we will not free pixel_data until render_thread has used it
+    } else {
+      texturebuf = (uint8_t *)malloc(hsize * vsize * typesize);
+      for (i = 0; i < imgHeight; i++) {
+        memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize, imgWidth * typesize);
+      }
+    }
+
     return_ready = FALSE;
     dst = (uint8_t *)(retdata = (uint8_t *)return_data[0]); // host created space for return data
 
-    imgWidth = hsize;
-    imgHeight = vsize;
+    texWidth = hsize;
+    texHeight = vsize;
 
     pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
 
-    while (!return_ready) usleep(1000); // wait for return data - TODO - use pthread_cons_wait
+    // window size must not change here
+
+    // wait for render thread ready
+    while (!return_ready && rc == 0) {
+      pthread_mutex_lock(&cond_mutex);
+      rc = pthread_cond_wait(&cond, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
+    }
+
     pthread_mutex_lock(dblbuf ? &retthread_mutex : &rthread_mutex); // lock render thread while we grab data
 
     retdata = NULL;
 
-    texturebuf = NULL;
+    if (texturebuf == (uint8_t *)pixel_data[0]) texturebuf = NULL;
 
     src = (uint8_t *)retbuf + (window_height - 1) * twidth;
 
@@ -1967,19 +1968,25 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
       dst += twidth;
       src -= twidth;
     }
-    pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex); // lock render thread while we grab data
+    pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex); // unlock render thread
   } else {
-    if (hsize != imgWidth || vsize != imgHeight || texturebuf == NULL) {
+    if (imgWidth != texWidth || imgHeight != texHeight || texturebuf == NULL) {
       if (texturebuf != NULL) {
         free((void *)texturebuf);
       }
       texturebuf = (uint8_t *)malloc(hsize * vsize * typesize);
     }
 
-    memcpy((void *)texturebuf, pixel_data[0], hsize * vsize * typesize);
+    texWidth = hsize;
+    texHeight = vsize;
 
-    imgWidth = hsize;
-    imgHeight = vsize;
+    if (texWidth == imgWidth && texHeight == imgHeight) {
+      memcpy((void *)texturebuf, pixel_data[0], texWidth * texHeight * typesize);
+    } else {
+      for (i = 0; i < imgHeight; i++) {
+        memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize, imgWidth * typesize);
+      }
+    }
 
     retdata = NULL;
     pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
@@ -2068,6 +2075,9 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   XCloseDisplay(dpy);
   dpy = NULL;
   pthread_mutex_unlock(&dpy_mutex);
+
+  pthread_mutex_destroy(&cond_mutex);
+  pthread_cond_destroy(&cond);
 }
 
 

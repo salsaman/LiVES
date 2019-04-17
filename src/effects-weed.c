@@ -6913,7 +6913,7 @@ deinit2:
 
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS) && (inc_count > 0 ||
       outc_count == 0)) {
-    uint64_t actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+    uint64_t actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
     uint64_t rteval, new_rte;
     pthread_mutex_lock(&mainw->event_list_mutex);
     event_list = append_filter_init_event(mainw->event_list, actual_ticks,
@@ -7183,7 +7183,7 @@ deinit3:
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && init_events[hotkey] != NULL &&
       (prefs->rec_opts & REC_EFFECTS) && num_in_chans > 0) {
     uint64_t rteval, new_rte;
-    uint64_t actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+    uint64_t actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
     pthread_mutex_lock(&mainw->event_list_mutex);
     mainw->event_list = append_filter_deinit_event(mainw->event_list, actual_ticks, init_events[hotkey], pchains[hotkey]);
     init_events[hotkey] = NULL;
@@ -8326,7 +8326,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   // do not record changes for generators - those get recorded to scrap_file or ascrap_file
   if (enabled_in_channels(inst, FALSE) == 0) return;
 
-  actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+  actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
 
   pthread_mutex_lock(&mainw->event_list_mutex);
   key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);

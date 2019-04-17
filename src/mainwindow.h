@@ -643,7 +643,7 @@ typedef struct {
 
   // for the internal player
   double period; ///< == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
-  uint64_t startticks; ///< effective ticks when last frame was (should have been) displayed
+  volatile uint64_t startticks; ///< effective ticks when last frame was (should have been) displayed
   uint64_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
   uint64_t origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
   uint64_t origusecs; ///< usecs at start of playback - ditto
@@ -1177,6 +1177,7 @@ typedef struct {
   pthread_mutex_t vpp_stream_mutex; /// prevent from writing audio when stream is closing
   pthread_mutex_t cache_buffer_mutex; /// sync for jack playback termination
   pthread_mutex_t audio_filewriteend_mutex; /// sync for ending writing audio to file
+  pthread_mutex_t audio_resync_mutex; /// sync for audio
 
   volatile lives_rfx_t *vrfx_update;
 

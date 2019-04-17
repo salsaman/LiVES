@@ -9848,7 +9848,6 @@ void on_back_pressed(LiVESButton *button, livespointer user_data) {
 
   mainw->deltaticks -= (int64_t)(change_speed * 3.*mainw->period);
   mainw->scratch = SCRATCH_BACK;
-
 }
 
 

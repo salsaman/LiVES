@@ -10,7 +10,7 @@ Render silence to end of video if necessary during rendering.
 Improvements to openGL playback plugin, including much smoother playback.
 Re-enable Advanced options for the openGL playback plugin.
 Allow cancel in VJ / Pre-decode all frames
-
+Refactor timebase calculations during playback.
 
 
 

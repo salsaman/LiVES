@@ -1384,6 +1384,7 @@ void pa_time_reset(pulse_driver_t *pulsed) {
   pa_stream_get_time(pulsed->pstream, &usec);
   pulsed->usec_start = usec;
   pulsed->frames_written = 0;
+  mainw->currticks = mainw->deltaticks = mainw->startticks = 0;
 }
 
 

@@ -445,6 +445,8 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->audio_filewriteend_mutex, NULL);
 
+  pthread_mutex_init(&mainw->audio_sync_mutex, NULL);
+
   for (i = 0; i < FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->data_mutex[i], &mattr); // because audio filters can enable/disable video filters and vice-versa
   }
@@ -5589,7 +5591,7 @@ void load_frame_image(int frame) {
     if (mainw->record && !mainw->record_paused) {
       // add blank frame
       weed_plant_t *event = get_last_event(mainw->event_list);
-      weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list, mainw->currticks, &event);
+      weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list, lives_get_relative_ticks(mainw->origsecs, mainw->origusecs), &event);
       if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO) && !mainw->record_starting && prefs->audio_src == AUDIO_SRC_INT &&
           !(has_audio_filters(AF_TYPE_NONA))) {
         // we are recording, and the audio clip changed; add audio
@@ -5692,7 +5694,7 @@ void load_frame_image(int frame) {
           bg_frame = 0;
         }
 
-        actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+        actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
 
         if (mainw->record_starting) {
           // mark record start

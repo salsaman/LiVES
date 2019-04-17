@@ -1157,35 +1157,40 @@ int process_one(boolean visible) {
       // new_ticks is the (adjusted) current time
       // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
       // and cfile->frameno is set to the frame to show
+      pthread_mutex_lock(&mainw->audio_sync_mutex);
       cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
 
     if (new_ticks != mainw->startticks) {
+      mainw->startticks = new_ticks;
+      pthread_mutex_unlock(&mainw->audio_sync_mutex);
       if (display_ready) {
         show_frame = TRUE;
 #ifdef USE_GDK_FRAME_CLOCK
         display_ready = FALSE;
 #endif
       }
-      mainw->startticks = new_ticks;
     }
+    else pthread_mutex_unlock(&mainw->audio_sync_mutex);
 
+    real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+    
     // play next frame
     if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
       // calculate the audio 'frame' for non-realtime audio players
       // for realtime players, we did this in calc_new_playback_position()
       if (!is_realtime_aplayer(prefs->audio_player)) {
-        mainw->aframeno = (int64_t)(mainw->currticks - mainw->firstticks) * cfile->fps / TICKS_PER_SECOND_DBL + audio_start;
+        mainw->aframeno = (real_ticks - mainw->first_ticks) / TICKS_PER_SECOND_DBL * cfile->fps + audio_start;
         if (LIVES_UNLIKELY(mainw->loop_cont && (mainw->aframeno > (mainw->audio_end ? mainw->audio_end :
                                                 cfile->laudio_time * cfile->fps)))) {
-          mainw->firstticks = mainw->startticks - mainw->deltaticks;
+          mainw->firstticks = real_ticks;
         }
       }
 
       if ((mainw->fixed_fpsd <= 0. && show_frame && (mainw->vpp == NULL ||
            mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) ||
-          (mainw->fixed_fpsd > 0. && (mainw->currticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
+          (mainw->fixed_fpsd > 0. && (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
           (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
-           (mainw->currticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd) || force_show) {
+           (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd) || force_show) {
         // time to show a new frame
 
 #ifdef ENABLE_JACK
@@ -1203,13 +1208,13 @@ int process_one(boolean visible) {
 
         // load and display the new frame
         load_frame_image(cfile->frameno);
-        if (mainw->last_display_ticks == 0) mainw->last_display_ticks = mainw->currticks;
+        if (mainw->last_display_ticks == 0) mainw->last_display_ticks = real_ticks;
         else {
           if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
             mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
           else if (mainw->fixed_fpsd > 0.)
             mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
-          else mainw->last_display_ticks = mainw->currticks;
+          else mainw->last_display_ticks = real_ticks;
         }
         force_show = FALSE;
       }
@@ -1230,7 +1235,9 @@ int process_one(boolean visible) {
     }
     // paused
     if (LIVES_UNLIKELY(cfile->play_paused)) {
+      pthread_mutex_lock(&mainw->audio_sync_mutex);
       mainw->startticks = mainw->currticks + mainw->deltaticks;
+      pthread_mutex_unlock(&mainw->audio_sync_mutex);
     }
   }
 
@@ -1398,10 +1405,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   mainw->render_error = LIVES_RENDER_ERROR_NONE;
 
   if (!visible) {
-    if (mainw->event_list != NULL) {
-      // get audio start time
-      audio_start = calc_time_from_frame(mainw->current_file, mainw->play_start) * cfile->fps;
-    }
     reset_frame_and_clip_index();
   }
 

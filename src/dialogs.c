@@ -1158,7 +1158,7 @@ int process_one(boolean visible) {
       // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
       // and cfile->frameno is set to the frame to show
       pthread_mutex_lock(&mainw->audio_sync_mutex);
-      cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
+    cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
 
     if (new_ticks != mainw->startticks) {
       mainw->startticks = new_ticks;
@@ -1169,11 +1169,10 @@ int process_one(boolean visible) {
         display_ready = FALSE;
 #endif
       }
-    }
-    else pthread_mutex_unlock(&mainw->audio_sync_mutex);
+    } else pthread_mutex_unlock(&mainw->audio_sync_mutex);
 
     real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
-    
+
     // play next frame
     if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
       // calculate the audio 'frame' for non-realtime audio players

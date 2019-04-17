@@ -5591,7 +5591,8 @@ void load_frame_image(int frame) {
     if (mainw->record && !mainw->record_paused) {
       // add blank frame
       weed_plant_t *event = get_last_event(mainw->event_list);
-      weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list, lives_get_relative_ticks(mainw->origsecs, mainw->origusecs), &event);
+      weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list, lives_get_relative_ticks(mainw->origsecs, mainw->origusecs),
+                                 &event);
       if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO) && !mainw->record_starting && prefs->audio_src == AUDIO_SRC_INT &&
           !(has_audio_filters(AF_TYPE_NONA))) {
         // we are recording, and the audio clip changed; add audio

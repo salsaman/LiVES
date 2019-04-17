@@ -9900,9 +9900,9 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
     mainw->jackd->is_paused = cfile->play_paused;
     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
         !has_audio_filters(AF_TYPE_NONA) && prefs->audio_src == AUDIO_SRC_INT) {
-      if (!cfile->play_paused) {
+      if (cfile->play_paused) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
-        insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
+        insert_audio_event_at(mainw->event_list, event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
       } else {
         jack_get_rec_avals(mainw->jackd);
       }
@@ -9919,9 +9919,9 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
     mainw->pulsed->is_paused = cfile->play_paused;
     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
         !has_audio_filters(AF_TYPE_NONA) && prefs->audio_src == AUDIO_SRC_INT) {
-      if (!cfile->play_paused) {
+      if (cfile->play_paused) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
-        insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
+        insert_audio_event_at(mainw->event_list, event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
       } else {
         pulse_get_rec_avals(mainw->pulsed);
       }

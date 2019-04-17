@@ -144,6 +144,8 @@ boolean jack_try_reconnect(void);
 
 void jack_aud_pb_ready(int fileno);
 
+size_t jack_flush_read_data(size_t rbytes, void *data);
+
 // utils
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
 uint64_t lives_jack_get_time(jack_driver_t *, boolean absolute); ///< get time from jack, in 10^-8 seconds

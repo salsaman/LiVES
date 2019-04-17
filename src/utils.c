@@ -1398,16 +1398,76 @@ LIVES_GLOBAL_INLINE int get_approx_ln(uint32_t x) {
 }
 
 
-/**  return current (wallclock) time in ticks (units of 10 nanoseconds)
- */
-
-LIVES_GLOBAL_INLINE int64_t lives_get_current_ticks(int64_t origsecs, int64_t origusecs) {
+LIVES_GLOBAL_INLINE int64_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs) {
 #ifdef USE_MONOTONIC_TIME
   return (lives_get_monotonic_time() - origusecs) * USEC_TO_TICKS;
 #else
   gettimeofday(&tv, NULL);
   return TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
 #endif
+}
+
+
+int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source) {
+  if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SYSTEM;
+
+  if (mainw->foreign || prefs->force_system_clock) {
+    return lives_get_relative_ticks(origsecs, origusecs);
+  }
+
+#ifdef ENABLE_JACK_TRANSPORT
+  if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) &&
+      (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) && !(mainw->record && !(prefs->rec_opts & REC_FRAMES))) {
+    // calculate the time from jack transport
+    if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_EXTERNAL;
+    return jack_transport_get_time() * TICKS_PER_SECOND_DBL;
+  }
+#endif
+
+  if (((prefs->audio_src == AUDIO_SRC_INT && cfile->achans > 0) || (prefs->audio_src == AUDIO_SRC_EXT && mainw->aud_rec_fd != -1)) &&
+      (!mainw->is_rendering || (mainw->multitrack != NULL && !cfile->opening && !mainw->multitrack->is_rendering)) &&
+      (!(mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
+    // get time from soundcard
+    // this is done so as to synch video stream with the audio
+    // we do this in two cases:
+    // - for internal audio, playing back a clip with audio (writing)
+    // - or when audio source is set to external (reading) and we are recording, no internal audio generator is running
+
+    // we ignore this if we are running with a playback plugin which requires a fixed framerate (e.g a streaming plugin)
+    // in that case we will adjust the audio rate to fit the system clock
+
+    // or if we are rendering
+
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK &&
+        ((mainw->jackd != NULL && mainw->jackd->in_use && prefs->audio_src == AUDIO_SRC_INT) || (mainw->jackd_read != NULL &&
+            mainw->jackd_read->in_use && prefs->audio_src == AUDIO_SRC_EXT))) {
+      if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
+      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+        return lives_jack_get_time(mainw->jackd_read, TRUE);
+      return lives_jack_get_time(mainw->jackd, TRUE);
+    }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE &&
+        ((mainw->pulsed != NULL && mainw->pulsed->in_use && prefs->audio_src == AUDIO_SRC_INT) || (mainw->pulsed_read != NULL &&
+            mainw->pulsed_read->in_use && prefs->audio_src == AUDIO_SRC_EXT))) {
+      if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
+      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+        return lives_pulse_get_time(mainw->pulsed_read);
+      return lives_pulse_get_time(mainw->pulsed);
+    }
+#endif
+  }
+
+  return lives_get_relative_ticks(origsecs, origusecs);
+}
+
+
+LIVES_GLOBAL_INLINE int64_t lives_get_current_ticks(void) {
+  //  return current (wallclock) time in ticks (units of 10 nanoseconds)
+  return lives_get_relative_ticks(0, 0);
 }
 
 
@@ -1431,7 +1491,7 @@ int lives_alarm_set(int64_t ticks) {
   }
 
   // get current ticks
-  cticks = lives_get_current_ticks(0, 0);
+  cticks = lives_get_current_ticks();
 
   // set to now + offset
   mainw->alarms[mainw->next_free_alarm] = cticks + ticks;
@@ -1475,7 +1535,7 @@ boolean lives_alarm_get(int alarm_handle) {
   }
 
   // get current ticks
-  cticks = lives_get_current_ticks(0, 0);
+  cticks = lives_get_current_ticks();
 
   if (cticks > mainw->alarms[alarm_handle]) {
     // reached alarm time, free up this timer and return TRUE
@@ -3616,12 +3676,13 @@ void find_when_to_stop(void) {
   // v>a    stop on video end    stop on video end           no stop
   // generator start - not playing : stop on vid_end, unless pure audio;
   if (mainw->alives_pgid > 0) mainw->whentostop = NEVER_STOP;
-  else if (cfile->clip_type == CLIP_TYPE_GENERATOR || mainw->aud_rec_fd != -1) mainw->whentostop = STOP_ON_VID_END;
+  else if (cfile->clip_type == CLIP_TYPE_GENERATOR || (mainw->aud_rec_fd != -1 &&
+           mainw->ascrap_file == -1)) mainw->whentostop = STOP_ON_VID_END;
   else if (mainw->multitrack != NULL && cfile->frames > 0) mainw->whentostop = STOP_ON_VID_END;
   else if (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE) mainw->whentostop = NEVER_STOP;
   else if (cfile->opening_only_audio) mainw->whentostop = STOP_ON_AUD_END;
   else if (cfile->opening_audio) mainw->whentostop = STOP_ON_VID_END;
-  else if (!mainw->preview && (mainw->loop_cont || (mainw->loop && prefs->audio_src == AUDIO_SRC_EXT))) mainw->whentostop = NEVER_STOP;
+  else if (!mainw->preview && (mainw->loop_cont)) mainw->whentostop = NEVER_STOP;
   else if (cfile->frames == 0 || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering && (mainw->audio_end / cfile->fps)
                                   < MAX(cfile->laudio_time, cfile->raudio_time) &&
                                   calc_time_from_frame(mainw->current_file, mainw->play_start) < cfile->laudio_time))
@@ -3703,7 +3764,7 @@ void zero_spinbuttons(void) {
 boolean switch_aud_to_jack(void) {
 #ifdef ENABLE_JACK
   if (mainw->is_ready) {
-    lives_jack_init();
+    if (!mainw->jack_inited) lives_jack_init();
     if (mainw->jackd == NULL) {
       jack_audio_init();
       jack_audio_read_init();
@@ -3798,11 +3859,12 @@ boolean switch_aud_to_pulse(void) {
       jack_close_device(mainw->jackd);
       mainw->jackd = NULL;
     }
+#endif
 
     if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
-      jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
+      pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
     }
-#endif
+
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
 

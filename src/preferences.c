@@ -592,10 +592,14 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
       mainw->aud_rec_fd = -1;
       if (prefs->perm_audio_reader) {
 #ifdef ENABLE_JACK
-        jack_rec_audio_end(TRUE, TRUE);
+        if (prefs->audio_player == AUD_PLAYER_JACK) {
+          jack_rec_audio_end(TRUE, TRUE);
+        }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-        pulse_rec_audio_end(TRUE, TRUE);
+        if (prefs->audio_player == AUD_PLAYER_PULSE) {
+          pulse_rec_audio_end(TRUE, TRUE);
+        }
 #endif
       }
     }

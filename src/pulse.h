@@ -1,6 +1,6 @@
 // pulse.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2012
+// (c) G. Finch 2005 - 2019
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -28,14 +28,13 @@ typedef struct {
   void *data;
 } audio_buffer_t;
 
-
 typedef struct {
   pa_threaded_mainloop *mloop;
   pa_context *con;
   pa_stream *pstream;
   pa_proplist *pa_props;
 
-  pa_usec_t usec_start;
+  volatile pa_usec_t usec_start;
 
   int str_idx;
 
@@ -78,9 +77,6 @@ typedef struct {
 
   boolean is_paused;
 
-  volatile int64_t
-  audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio, in tandem with frames_written
-
   int fd; /**< if >0 we are playing from a lives_clip_t */
   volatile off_t seek_pos;
   off_t seek_end;
@@ -108,9 +104,9 @@ typedef struct {
   volatile boolean waitforop;
 } pulse_driver_t;
 
-
-
 // TODO - rationalise names
+
+void pa_time_reset(pulse_driver_t *pulsed);
 
 boolean lives_pulse_init(short startup_phase);  ///< init server, mainloop and context
 
@@ -137,20 +133,17 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg
 
 int64_t pulse_audio_seek_bytes(pulse_driver_t *, int64_t bytes);  ///< seek to byte position
 
-int64_t lives_pulse_get_time(pulse_driver_t *, boolean absolute); ///< get time from pa, in 10^-8 seconds
+int64_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
 
 double lives_pulse_get_pos(pulse_driver_t *);
 
 void pa_mloop_lock(void);
 void pa_mloop_unlock(void);
 
-
 //////////////////////
 
 boolean pulse_audio_seek_frame(pulse_driver_t *, int frame);  ///< seek to (video) frame
 
 void pulse_get_rec_avals(pulse_driver_t *);
-
-
 
 #endif

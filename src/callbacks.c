@@ -9068,7 +9068,7 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
 
   if (mainw->iochan == NULL) {
     // pause during effects processing or opening
-    xticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+    xticks = lives_get_current_ticks();
     if (!mainw->effects_paused) {
       mainw->timeout_ticks -= xticks;
       com = lives_strdup_printf("%s pause \"%s\"", prefs->backend_sync, cfile->handle);
@@ -9178,7 +9178,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
 
   mainw->preview = TRUE;
   old_rte = mainw->rte;
-  xticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+  xticks = lives_get_current_ticks();
   mainw->timeout_ticks -= xticks;
 
   if (mainw->internal_messaging) {
@@ -9360,7 +9360,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
     unblock_expose();
     lives_widget_queue_draw(mainw->LiVES);
   }
-  xticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+  xticks = lives_get_current_ticks();
   mainw->timeout_ticks += xticks;
   mainw->filter_map = filter_map;
   mainw->afilter_map = afilter_map;
@@ -9910,9 +9910,6 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
   if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
     if (!cfile->play_paused && mainw->pulsed != NULL && mainw->pulsed->playing_file == mainw->current_file) {
       mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps;
-      mainw->pulsed->audio_ticks = mainw->currticks;
-      mainw->pulsed->frames_written = 0;
-      mainw->pulsed->usec_start = 0;
     }
     mainw->pulsed->is_paused = cfile->play_paused;
   }

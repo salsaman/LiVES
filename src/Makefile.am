@@ -25,15 +25,7 @@ if IS_SOLARIS
 solaris_CFLAGS=-DIS_SOLARIS=1
 endif
 
-if IS_MINGW
-mingw_CFLAGS = -DIS_MINGW=1
-mingw_LDFLAGS = -lwsock32 -lws2_32
-#yuv4mpeg_SOURCES=lives-yuv4mpeg.c lives-yuv4mpeg.h
-#yuv4mpeg_CFLAGS = -DHAVE_MJPEGTOOLS=1
-gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -lpthread
-else
 gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -pthread
-endif
 
 AM_CPPFLAGS = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
@@ -217,14 +209,13 @@ lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
 
 lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
-	 $(giw_LDADD) $(v4l1_LDADD) $(mingw_LDADD) \
-	@UNICAP_LIBS@ -lssl -lcrypto -ljson-glib-1.0
+	 $(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@
 
 AM_CFLAGS = -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
 	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) \
-	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(mingw_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
+	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
-	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def) -I/usr/include/json-glib-1.0
+	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
 if HAVE_AVFORMAT
 if HAVE_AVCODEC

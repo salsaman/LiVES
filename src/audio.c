@@ -396,6 +396,11 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
     if ((nSrcCount = nSrcChannels) == (nDstCount = nDstChannels) && !swap_endian && !swap_sign) {
       // same number of channels
 
+      if (scale == 1.f) {
+        lives_memcpy((void *)dst, (void *)src, tbytes);
+        return;
+      }
+
       ptr = src + src_offset_i;
       ptr = ptr > src ? (ptr < src_end ? ptr : src_end) : src;
 
@@ -570,6 +575,11 @@ void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float sc
   size_t offs = 0;
   float offs_f = 0.;
   register int i;
+
+  if (scale == 1.f && dst_skip == 1) {
+    lives_memcpy((void *)dst, (void *)src, nsamples * sizeof(float));
+    return;
+  }
 
   for (i = 0; i < nsamples; i++) {
     *dst = src[offs];
@@ -1635,11 +1645,19 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 void jack_rec_audio_end(boolean close_device, boolean close_fd) {
   // recording ended
 
+  pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
+  if (mainw->jackd_read->playing_file > -1)
+    jack_flush_read_data(0, NULL);
+
   if (close_device) {
     // stop recording
     if (mainw->jackd_read != NULL) jack_close_device(mainw->jackd_read);
     mainw->jackd_read = NULL;
-  } else mainw->jackd_read->in_use = FALSE;
+  } else {
+    mainw->jackd_read->in_use = FALSE;
+    mainw->jackd_read->playing_file = -1;
+  }
+  pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
 
   if (close_fd && mainw->aud_rec_fd != -1) {
     // close file
@@ -1794,6 +1812,7 @@ void pulse_rec_audio_end(boolean close_device, boolean close_fd) {
   // stop recording
 
   if (mainw->pulsed_read != NULL) {
+    pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
     if (mainw->pulsed_read->playing_file > -1)
       pulse_flush_read_data(mainw->pulsed_read, mainw->pulsed_read->playing_file, 0, mainw->pulsed_read->reverse_endian, NULL);
 
@@ -1804,6 +1823,7 @@ void pulse_rec_audio_end(boolean close_device, boolean close_fd) {
       mainw->pulsed_read->in_use = FALSE;
       mainw->pulsed_read->playing_file = -1;
     }
+    pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
   }
 
   if (mainw->aud_rec_fd != -1 && close_fd) {

@@ -39,7 +39,7 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
   int ncount;
 
   timer = timeout * TICKS_PER_SECOND;
-  stime = lives_get_current_ticks(0, 0);
+  stime = lives_get_current_ticks();
 
   while (1) {
     status = unicap_poll_buffer(ldev->handle, &ncount);
@@ -53,7 +53,7 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
       return TRUE;
     }
 
-    dtime = lives_get_current_ticks(0, 0);
+    dtime = lives_get_current_ticks();
     if (dtime - stime > timer) return FALSE;
 
     lives_usleep(prefs->sleep_time);
@@ -69,10 +69,10 @@ static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
   int64_t stime, dtime, timer;
 
   timer = timeout * TICKS_PER_SECOND;
-  stime = lives_get_current_ticks(0, 0);
+  stime = lives_get_current_ticks();
 
   while (ldev->buffer_ready == 0) {
-    dtime = lives_get_current_ticks(0, 0);
+    dtime = lives_get_current_ticks();
     if (dtime - stime > timer) return FALSE;
     lives_usleep(prefs->sleep_time);
     lives_widget_context_update();

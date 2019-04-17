@@ -443,6 +443,8 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->cache_buffer_mutex, NULL);
 
+  pthread_mutex_init(&mainw->audio_filewriteend_mutex, NULL);
+
   for (i = 0; i < FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->data_mutex[i], &mattr); // because audio filters can enable/disable video filters and vice-versa
   }
@@ -1112,6 +1114,10 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->midi_channel_lock = FALSE;
 
   mainw->scrap_pixbuf = NULL;
+
+#ifdef ENABLE_JACK
+  mainw->jack_inited = FALSE;
+#endif
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -5686,7 +5692,7 @@ void load_frame_image(int frame) {
           bg_frame = 0;
         }
 
-        actual_ticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+        actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
 
         if (mainw->record_starting) {
           // mark record start
@@ -5999,7 +6005,7 @@ void load_frame_image(int frame) {
             check_layer_ready(mainw->frame_layer);
             return;
           }
-          mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+          mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
         }
 
         img_ext = NULL;

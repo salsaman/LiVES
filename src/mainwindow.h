@@ -647,8 +647,8 @@ typedef struct {
   uint64_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
   uint64_t origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
   uint64_t origusecs; ///< usecs at start of playback - ditto
-  uint64_t offsetticks; ///< offset for external transport
-  uint64_t currticks; ///< current playback ticks (relative)
+  uint64_t offsetticks; ///< offset for multitrack playback start
+  volatile uint64_t currticks; ///< current playback ticks (relative)
   uint64_t deltaticks; ///< deltaticks for scratching
   uint64_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
   uint64_t stream_ticks;  ///< ticks since first frame sent to playback plugin
@@ -1122,6 +1122,7 @@ typedef struct {
 #ifdef ENABLE_JACK
   jack_driver_t *jackd; ///< jack audio playback device
   jack_driver_t *jackd_read; ///< jack audio recorder device
+  boolean jack_inited;
 #define RT_AUDIO
 #else
   void *jackd;  ///< dummy
@@ -1175,6 +1176,7 @@ typedef struct {
   pthread_mutex_t clip_list_mutex; /// prevent adding/removing to cliplist while another thread could be reading it
   pthread_mutex_t vpp_stream_mutex; /// prevent from writing audio when stream is closing
   pthread_mutex_t cache_buffer_mutex; /// sync for jack playback termination
+  pthread_mutex_t audio_filewriteend_mutex; /// sync for ending writing audio to file
 
   volatile lives_rfx_t *vrfx_update;
 

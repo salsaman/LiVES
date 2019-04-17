@@ -738,15 +738,14 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
                                     doubleBufferAttributes, &numReturned);
 
       if (fbConfigs == NULL) {    /* no double buffered configs available */
-	fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy),
-				      singleBufferAttributess, &numReturned);
-	dblbuf = 0;
+        fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy),
+                                      singleBufferAttributess, &numReturned);
+        dblbuf = 0;
       }
-    }
-    else {
-	fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy),
-				      singleBufferAttributess, &numReturned);
-	dblbuf = 0;
+    } else {
+      fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy),
+                                    singleBufferAttributess, &numReturned);
+      dblbuf = 0;
     }
 
     if (!fbConfigs) {

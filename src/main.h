@@ -1233,7 +1233,10 @@ uint64_t lives_10pow(int pow) GNU_CONST;
 double lives_fix(double val, int decimals) GNU_CONST;
 int get_approx_ln(uint32_t val) GNU_CONST;
 
-int64_t lives_get_current_ticks(int64_t delta_seconds, int64_t delta_usec);
+int64_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs);
+int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source);
+int64_t lives_get_current_ticks(void);
+
 boolean lives_alarm_get(int alarm_handle);
 int lives_alarm_set(int64_t ticks);
 void lives_alarm_clear(int alarm_handle);

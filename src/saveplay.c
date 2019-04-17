@@ -4691,6 +4691,23 @@ boolean open_ascrap_file(void) {
   cfile->unique_id = 0;
   cfile->opening = FALSE;
 
+  cfile->achans = 2;
+  cfile->arate = cfile->arps = DEFAULT_AUDIO_RATE;
+  cfile->asampsize = 16;
+  cfile->signed_endian = 0;
+
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read != NULL) {
+    cfile->arate = cfile->arps = mainw->pulsed_read->in_arate;
+  }
+#endif
+
+#ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read != NULL) {
+    cfile->arate = cfile->arps = mainw->jackd_read->sample_in_rate;
+  }
+#endif
+
   ascrap_handle = lives_strdup_printf("ascrap|%s", cfile->handle);
   add_to_recovery_file(ascrap_handle);
   lives_free(ascrap_handle);

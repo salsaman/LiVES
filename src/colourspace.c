@@ -10229,6 +10229,8 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   int iheight = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
   int iclamped = WEED_YUV_CLAMPING_UNCLAMPED;
 
+  if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) return FALSE;
+
   if (iwidth == width && iheight == height) return TRUE; // no resize needed
 
   if (width <= 0 || height <= 0) {

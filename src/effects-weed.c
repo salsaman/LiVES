@@ -6913,7 +6913,7 @@ deinit2:
 
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS) && (inc_count > 0 ||
       outc_count == 0)) {
-    uint64_t actual_ticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+    uint64_t actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
     uint64_t rteval, new_rte;
     pthread_mutex_lock(&mainw->event_list_mutex);
     event_list = append_filter_init_event(mainw->event_list, actual_ticks,
@@ -6958,8 +6958,8 @@ deinit2:
         if (mainw->pulsed_read != NULL && mainw->pulsed_read->in_use &&
             (mainw->pulsed_read->playing_file == -1 || mainw->pulsed_read->playing_file == mainw->ascrap_file)) {
           // if playing external audio, switch over to internal for an audio gen
-          mainw->pulsed->audio_ticks = mainw->currticks;
-          mainw->pulsed->frames_written = 0;
+          pa_time_reset(mainw->pulsed);
+          mainw->pulsed->usec_start -= mainw->pulsed_read->usec_start;
           pulse_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), FALSE);
         }
         if (mainw->pulsed != NULL && (mainw->pulsed_read == NULL || !mainw->pulsed_read->in_use)) {
@@ -6977,8 +6977,8 @@ deinit2:
         mainw->record = TRUE;
         if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-          mainw->pulsed->audio_ticks = mainw->currticks;
-          mainw->pulsed->frames_written = 0;
+          pa_time_reset(mainw->pulsed);
+          mainw->pulsed->usec_start -= mainw->currticks / USEC_TO_TICKS;
 #endif
         }
         if (prefs->audio_player == AUD_PLAYER_JACK) {
@@ -7104,7 +7104,7 @@ void weed_deinit_effect(int hotkey) {
           mainw->jackd->in_use = FALSE; // deactivate writer
           jack_rec_audio_to_clip(-1, 0, (lives_rec_audio_type_t)0); //activate reader
           mainw->jackd_read->frames_written += mainw->jackd->frames_written; // ensure time continues monotonically
-          if (mainw->record) mainw->jackd->playing_file = mainw->ascrap_file; // if recording, continue to write to
+          if (mainw->record) mainw->jackd->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
         }
 #endif
       }
@@ -7114,7 +7114,7 @@ void weed_deinit_effect(int hotkey) {
           mainw->pulsed->in_use = FALSE; // deactivate writer
           pulse_rec_audio_to_clip(-1, 0, (lives_rec_audio_type_t)0); //activate reader
           mainw->pulsed_read->frames_written += mainw->pulsed->frames_written; // ensure time continues monotonically
-          if (mainw->record) mainw->pulsed->playing_file = mainw->ascrap_file; // if recording, continue to write to
+          if (mainw->record) mainw->pulsed->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
         }
 #endif
       }
@@ -7183,7 +7183,7 @@ deinit3:
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && init_events[hotkey] != NULL &&
       (prefs->rec_opts & REC_EFFECTS) && num_in_chans > 0) {
     uint64_t rteval, new_rte;
-    uint64_t actual_ticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+    uint64_t actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
     pthread_mutex_lock(&mainw->event_list_mutex);
     mainw->event_list = append_filter_deinit_event(mainw->event_list, actual_ticks, init_events[hotkey], pchains[hotkey]);
     init_events[hotkey] = NULL;
@@ -8326,7 +8326,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   // do not record changes for generators - those get recorded to scrap_file or ascrap_file
   if (enabled_in_channels(inst, FALSE) == 0) return;
 
-  actual_ticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+  actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
 
   pthread_mutex_lock(&mainw->event_list_mutex);
   key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);

@@ -752,7 +752,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
         // this seems to help smoothing when recording, however I have only tested it on one machine
         // where frames were being generated and streamed and then received
         // - needs testing in other situations
-        currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+        currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
 
         if (mainw->record && !mainw->record_paused) {
           if (has_last_delta_ticks && (abs64(currticks - lstream->timecode)) < last_delta_ticks) {

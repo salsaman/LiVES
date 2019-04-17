@@ -27,6 +27,12 @@ static boolean seek_err;
 static jackctl_server_t *jackserver = NULL;
 #endif
 
+#define JACK_READ_BYTES 48000
+
+static uint8_t jrbuf[JACK_READ_BYTES * 2];
+
+static size_t jrb = 0;
+
 static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int fileno,
                                int nframes, double out_scale, boolean rev_endian, boolean out_unsigned, size_t rbytes);
 
@@ -55,6 +61,8 @@ boolean lives_jack_init(void) {
 #endif
 
   const char *server_name = "default";
+
+  mainw->jack_inited = TRUE;
 
   jack_transport_client = NULL;
 
@@ -718,6 +726,7 @@ static int audio_process(nframes_t nframes, void *arg) {
 
                 rbytes = audio_read_inner(jackd, out_buffer, mainw->ascrap_file, numFramesToWrite, 1.0,
                                           !(mainw->files[mainw->ascrap_file]->signed_endian & AFORM_BIG_ENDIAN), out_unsigned, rbytes);
+
                 mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
               }
             } else {
@@ -991,33 +1000,21 @@ int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *po
 }
 
 
-static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofileno, int nframes,
-                               double out_scale, boolean rev_endian, boolean out_unsigned, size_t rbytes) {
-
-  // read audio and write it to aud_rec_fd
-
-  int frames_out;
-
-  void *holding_buff = lives_try_malloc(rbytes);
-
-  lives_clip_t *ofile = mainw->files[ofileno];
-
+size_t jack_flush_read_data(size_t rbytes, void *data) {
+  // rbytes here is how many bytes to write
   size_t bytes = 0;
 
-  if (!holding_buff) return 0;
-
-  frames_out = sample_move_float_int((void *)holding_buff, in_buffer, nframes, out_scale, ofile->achans,
-                                     ofile->asampsize, out_unsigned, rev_endian, FALSE, 1.);
-
-  if (mainw->rec_samples > 0) {
-    if (frames_out > mainw->rec_samples) frames_out = mainw->rec_samples;
-    mainw->rec_samples -= frames_out;
+  if (data == NULL) {
+    // final flush at end
+    data = jrbuf;
+    rbytes = jrb;
   }
 
+  jrb = 0;
+
   if (mainw->bad_aud_file == NULL) {
-    size_t target = frames_out * (ofile->asampsize / 8) * ofile->achans;
     // use write not lives_write - because of potential threading issues
-    bytes = write(mainw->aud_rec_fd, holding_buff, target);
+    bytes = write(mainw->aud_rec_fd, data, rbytes);
     if (bytes > 0) {
       mainw->aud_data_written += bytes;
       if (mainw->ascrap_file != -1 && mainw->files[mainw->ascrap_file] != NULL && mainw->aud_rec_fd == mainw->files[mainw->ascrap_file]->cb_src)
@@ -1026,13 +1023,62 @@ static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofil
         mainw->aud_data_written = 0;
         check_for_disk_space();
       }
-      if (bytes < target) mainw->bad_aud_file = filename_from_fd(NULL, mainw->aud_rec_fd);
     }
+    if (bytes < rbytes) mainw->bad_aud_file = filename_from_fd(NULL, mainw->aud_rec_fd);
+  }
+  return bytes;
+}
+
+
+static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofileno, int nframes,
+                               double out_scale, boolean rev_endian, boolean out_unsigned, size_t rbytes) {
+
+  // read audio, buffer it and write it to aud_rec_fd
+
+  int frames_out;
+
+  size_t bytes_out;
+
+  void *holding_buff;
+
+  lives_clip_t *ofile = mainw->files[ofileno];
+
+  frames_out = (int64_t)((double)nframes / out_scale + 1.);
+  bytes_out = frames_out * ofile->achans * (ofile->asampsize >> 3);
+
+  holding_buff = lives_try_malloc(bytes_out);
+  if (!holding_buff) return 0;
+
+  frames_out = sample_move_float_int(holding_buff, in_buffer, nframes, out_scale, ofile->achans,
+                                     ofile->asampsize, out_unsigned, rev_endian, FALSE, 1.);
+
+  if (mainw->rec_samples > 0) {
+    if (frames_out > mainw->rec_samples) frames_out = mainw->rec_samples;
+    mainw->rec_samples -= frames_out;
+  }
+
+  rbytes = frames_out * (ofile->asampsize / 8) * ofile->achans;
+  jrb += rbytes;
+
+  // write to jrbuf
+  if (jrb < JACK_READ_BYTES && (mainw->rec_samples == -1 || frames_out < mainw->rec_samples)) {
+    // buffer until we have enough
+    lives_memcpy(&jrbuf[jrb - rbytes], holding_buff, rbytes);
+    return rbytes;
+  }
+
+  // if we have enough, flush it to file
+  if (jrb <= JACK_READ_BYTES * 2) {
+    lives_memcpy(&jrbuf[jrb - rbytes], holding_buff, rbytes);
+    jack_flush_read_data(jrb, jrbuf);
+  } else {
+    if (jrb > rbytes) jack_flush_read_data(jrb - rbytes, jrbuf);
+    jack_flush_read_data(rbytes, holding_buff);
   }
 
   lives_free(holding_buff);
 
-  return bytes;
+  return rbytes;
 }
 
 
@@ -1041,12 +1087,16 @@ static int audio_read(nframes_t nframes, void *arg) {
 
   // this is the jack callback for when we are recording audio
 
+  // for AUDIO_SRC_EXT, jackd->playing_file is actually the file we write audio to
+  // which can be either the ascrap file (for playback recording), or a normal file (for voiceovers), or -1 (just listening)
+
+  // TODO - get abs_maxvol_heard
+
   jack_driver_t *jackd = (jack_driver_t *)arg;
   float *in_buffer[jackd->num_input_channels];
   float out_scale;
-  int out_unsigned;
+  int out_unsigned = AFORM_UNSIGNED;
   int i;
-  int64_t frames_out;
 
   size_t rbytes;
 
@@ -1088,26 +1138,31 @@ static int audio_read(nframes_t nframes, void *arg) {
     }
   }
 
+  pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
+
   if (jackd->playing_file == -1 || (mainw->record && mainw->record_paused)) {
+    jrb = 0;
+    pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
     return 0;
   }
 
-  if (jackd->playing_file == -1) out_scale = 1.0; // just listening
-  else out_scale = (float)afile->arate / (float)jackd->sample_in_rate; // recording to ascrap_file
-
-  out_unsigned = afile->signed_endian & AFORM_UNSIGNED;
-
-  frames_out = (int64_t)((double)nframes / out_scale + 1.);
-  rbytes = frames_out * afile->achans * afile->asampsize / 8;
+  if (!IS_VALID_CLIP(jackd->playing_file)) out_scale = 1.0; // just listening
+  else {
+    out_scale = (float)afile->arate / (float)jackd->sample_in_rate; // recording to ascrap_file
+    out_unsigned = afile->signed_endian & AFORM_UNSIGNED;
+  }
 
   rbytes = audio_read_inner(jackd, in_buffer, jackd->playing_file, nframes, out_scale, jackd->reverse_endian,
                             out_unsigned, rbytes);
 
-  if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && mainw->ascrap_file != -1 && mainw->playing_file > 0) {
+  if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && mainw->ascrap_file != -1 && mainw->playing_file > 0 &&
+      IS_VALID_CLIP(mainw->playing_file)) {
     mainw->files[mainw->playing_file]->aseek_pos += rbytes;
     if (!mainw->record_paused && mainw->ascrap_file != mainw->playing_file) mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
     jackd->seek_pos += rbytes;
   }
+
+  pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
 
   if (mainw->rec_samples == 0 && mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_KEEP; // we wrote the required #
 
@@ -1199,14 +1254,14 @@ int jack_open_device(jack_driver_t *jackd) {
 
   // TODO - use alarm
 
-  stime = lives_get_current_ticks(0, 0);
+  stime = lives_get_current_ticks();
 
   while (jackd->client == NULL && ntime < LIVES_SHORT_TIMEOUT) {
     jackd->client = jack_client_open(client_name, options, &status, server_name);
 
     lives_usleep(prefs->sleep_time);
 
-    ntime = lives_get_current_ticks(0, 0) - stime;
+    ntime = lives_get_current_ticks() - stime;
   }
 
   if (jackd->client == NULL) {
@@ -1317,6 +1372,7 @@ int jack_open_device_read(jack_driver_t *jackd) {
      just decides to stop calling us. */
   jack_on_shutdown(jackd->client, jack_shutdown, jackd);
 
+  jrb = 0;
   // set process callback and start
   jack_set_process_callback(jackd->client, audio_read, jackd);
 
@@ -1738,7 +1794,7 @@ int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes) {
 
 
 boolean jack_try_reconnect(void) {
-  if (!lives_jack_init()) goto err123;
+  // if (!lives_jack_init()) goto err123;
 
   jack_audio_init();
   jack_audio_read_init();

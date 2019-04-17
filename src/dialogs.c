@@ -32,8 +32,7 @@ static double disp_fraction_done;
 
 static uint64_t last_open_check_ticks;
 
-static uint64_t prev_ticks, last_sc_ticks;
-static int64_t consume_ticks;
+static uint64_t prev_ticks;
 
 static boolean shown_paused_frames;
 static boolean force_show;
@@ -922,7 +921,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 static void cancel_process(boolean visible) {
   if (prefs->show_player_stats && !visible && mainw->fps_measure > 0.) {
     // statistics
-    mainw->fps_measure /= (lives_get_current_ticks(mainw->origsecs, mainw->origusecs) / TICKS_PER_SECOND_DBL);
+    mainw->fps_measure /= (lives_get_relative_ticks(mainw->origsecs, mainw->origusecs) / TICKS_PER_SECOND_DBL);
   }
   if (visible) {
     if (mainw->preview_box != NULL && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
@@ -984,7 +983,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
   if (progress_count++ >= (mainw->is_rendering ? PROG_LOOP_VAL / 4 : PROG_LOOP_VAL)) {
     if (frames_done <= sfile->progress_end && sfile->progress_end > 0 && !mainw->effects_paused &&
         frames_done > 0) {
-      mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+      mainw->currticks = lives_get_current_ticks();
       timesofar = (mainw->currticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
 
       fraction_done = (double)(frames_done - sfile->progress_start) / (double)(sfile->progress_end - sfile->progress_start + 1.);
@@ -1001,8 +1000,6 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
 
 int process_one(boolean visible) {
   uint64_t new_ticks;
-  uint64_t current_ticks;
-  uint64_t sc_ticks = 0;
 
   lives_time_source_t time_source;
   boolean show_frame;
@@ -1013,8 +1010,6 @@ int process_one(boolean visible) {
   double audio_stretch;
   uint64_t audio_ticks = 0;
 #endif
-
-  double sc_ratio = 1.;
 
   if (!visible) {
     // INTERNAL PLAYER
@@ -1036,113 +1031,27 @@ int process_one(boolean visible) {
     //   so, between updates we interpolate with the system clock and then adjust when we get a new value
     //   from the card
 
-    time_source = LIVES_TIME_SOURCE_NONE;
+    mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &time_source);
 
-#ifdef ENABLE_JACK_TRANSPORT
-    if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) &&
-        (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) && !(mainw->record && !(prefs->rec_opts & REC_FRAMES))) {
-      // calculate the time from jack transport
-      mainw->currticks = jack_transport_get_time() * TICKS_PER_SECOND_DBL;
-      time_source = LIVES_TIME_SOURCE_EXTERNAL;
-    }
-#endif
-
-    if (!mainw->ext_playback || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
-      // get time from soundcard
-
-#ifdef ENABLE_JACK
-      if (!prefs->force_system_clock &&
-          time_source == LIVES_TIME_SOURCE_NONE && !mainw->foreign && prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 &&
-          (!mainw->is_rendering || (mainw->multitrack != NULL && !cfile->opening && !mainw->multitrack->is_rendering)) &&
-          mainw->jackd != NULL && mainw->jackd->in_use) {
-        if (!(mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback))) {
-          last_sc_ticks = sc_ticks;
-          if (mainw->jackd_read != NULL && mainw->aud_rec_fd != -1 && mainw->agen_key == 0)
-            sc_ticks = lives_jack_get_time(mainw->jackd_read, TRUE);
-          else sc_ticks = lives_jack_get_time(mainw->jackd, TRUE);
-          time_source = LIVES_TIME_SOURCE_SOUNDCARD;
-        }
-      }
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-      if (!prefs->force_system_clock &&
-          time_source == LIVES_TIME_SOURCE_NONE && !mainw->foreign && prefs->audio_player == AUD_PLAYER_PULSE &&
-          cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL &&
-                                !cfile->opening && !mainw->multitrack->is_rendering)) &&
-          ((mainw->pulsed != NULL && mainw->pulsed->in_use) || mainw->pulsed_read != NULL)) {
-        if (!(mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback))) {
-          last_sc_ticks = sc_ticks;
-          if (mainw->pulsed_read != NULL && mainw->aud_rec_fd != -1 && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
-            sc_ticks = lives_pulse_get_time(mainw->pulsed_read, TRUE);
-          else sc_ticks = lives_pulse_get_time(mainw->pulsed, TRUE);
-
-          time_source = LIVES_TIME_SOURCE_SOUNDCARD;
-        }
-      }
-#endif
-    }
-
-    if (time_source == LIVES_TIME_SOURCE_SOUNDCARD) {
-      // soundcard time is only updated after sending audio
-      // so if we get the same value back we interpolate using the system clock
-
-      current_ticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
-
-      if (sc_ticks != last_sc_ticks) {
-        last_sc_ticks = sc_ticks;
-
-        // calculate ratio soundcard rate:sys clock rate
-        sc_ratio = (double)sc_ticks / (double)current_ticks;
-        if (sc_ratio == 0.) sc_ratio = 1.;
-
-        mainw->currticks += (current_ticks - prev_ticks) * sc_ratio;
-
-        // we got updated time from the soundcard
-        if (sc_ticks >= mainw->currticks) {
-          // timecard ahead of clock, so we resync with soundcard
-          mainw->currticks = sc_ticks;
-          consume_ticks = 0;
-        } else {
-          // soundcard time was before our interpolated time, so we will not update the clock
-          // but we will consume the extra ticks first
-          consume_ticks = mainw->currticks - sc_ticks;
-        }
-      } else {
-        // no update from soundcard
-        if (consume_ticks > 0) {
-          // we were ahead of the soundcard at the last update, so wait for it to catch up
-          // (estimated)
-          consume_ticks -= (current_ticks - prev_ticks) * sc_ratio;
-          if (consume_ticks < 0) {
-            // card should have caught up, so we start advancing the clock again
-            mainw->currticks += consume_ticks;
-            consume_ticks = 0;
-          }
-        } else {
-          // should be caught up now, so we keep advancing the system clock
-          mainw->currticks += (current_ticks - prev_ticks) * sc_ratio;
-        }
-      }
-      prev_ticks = current_ticks;
-    }
-
-    if (time_source == LIVES_TIME_SOURCE_NONE) {
-      // get time from system clock
-      mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+    if (time_source == LIVES_TIME_SOURCE_SYSTEM) {
+      // got time from system clock
       if (LIVES_UNLIKELY(mainw->currticks < prev_ticks)) mainw->currticks = prev_ticks;
-      time_source = LIVES_TIME_SOURCE_SYSTEM;
       prev_ticks = mainw->currticks;
     }
 
+#define ADJUST_AUDIO_RATE
+#ifdef ADJUST_AUDIO_RATE
     // adjust audio rate slightly if we are behind or ahead
+    // shouldn't need this since normally we sync video to soundcard
+    // - unless we are controlled externally (e.g. jack transport) or system clock is forced
     if (time_source != LIVES_TIME_SOURCE_SOUNDCARD) {
 #ifdef ENABLE_JACK
-      if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL &&
+      if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL &&
           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
           (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && (audio_ticks = lives_jack_get_time(mainw->jackd, TRUE)) >
           mainw->offsetticks) {
-        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2.) {
+        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
+            audio_stretch > 0.5) {
           // if audio_stretch is > 1. it means that audio is playing too fast
           // < 1. it is playing too slow
 
@@ -1162,12 +1071,13 @@ int process_one(boolean visible) {
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
+      if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
-          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && (audio_ticks = lives_pulse_get_time(mainw->pulsed, TRUE)) >
+          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && (audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
           mainw->offsetticks) {
         // fps is synched to external source, so we adjust the audio rate to fit
-        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2.) {
+        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
+            audio_stretch > 0.5) {
           // if audio_stretch is > 1. it means that audio is playing too fast
           // < 1. it is playing too slow
 
@@ -1186,38 +1096,43 @@ int process_one(boolean visible) {
       }
 #endif
     }
+#endif
 
+    // playing back an event_list
+    // here we need to add mainw->offsetticks, to get the correct position whe playing back in multitrack
     if (LIVES_UNLIKELY(cfile->proc_ptr == NULL && cfile->next_event != NULL)) {
       // playing an event_list
 
       if (mainw->scratch != SCRATCH_NONE && mainw->multitrack != NULL) {
 #ifdef ENABLE_JACK_TRANSPORT
-        // handle transport jump
+        // handle transport jump in multitrack : end current playback and restart it from the new position
         weed_timecode_t transtc = q_gint64(jack_transport_get_time() * TICKS_PER_SECOND_DBL, cfile->fps);
         mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
         if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
 #endif
-      } else if (mainw->currticks >= event_start) {
-        // see if we are playing a selection and reached the end
-        if (mainw->multitrack != NULL && mainw->multitrack->playing_sel && get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
-            mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
-        else {
-          cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
+      } else {
+        if (mainw->multitrack != NULL) mainw->currticks += mainw->offsetticks; // add the offset of playback start time
+        if (mainw->currticks >= event_start) {
+          // see if we are playing a selection and reached the end
+          if (mainw->multitrack != NULL && mainw->multitrack->playing_sel && get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
+              mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
+          else {
+            cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
 
-          // see if we need to fill an audio buffer
+            // see if we need to fill an audio buffer
 #ifdef ENABLE_JACK
-          if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
-            mainw->jackd->abufs[mainw->write_abuf]->samples_filled = 0;
-            fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
-          }
+            if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
+              mainw->jackd->abufs[mainw->write_abuf]->samples_filled = 0;
+              fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
+            }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-          if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->abufs_to_fill > 0) {
-            mainw->pulsed->abufs[mainw->write_abuf]->samples_filled = 0;
-            fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
-          }
-
+            if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->abufs_to_fill > 0) {
+              mainw->pulsed->abufs[mainw->write_abuf]->samples_filled = 0;
+              fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
+            }
 #endif
+          }
         }
       }
 
@@ -1230,7 +1145,7 @@ int process_one(boolean visible) {
     }
 
     // free playback
-    new_ticks = mainw->currticks + mainw->deltaticks;
+    new_ticks = mainw->currticks + mainw->deltaticks; // deltaticks are set by scratch methods
     cfile->last_frameno = cfile->frameno;
 
     handle_cached_keys();
@@ -1238,6 +1153,10 @@ int process_one(boolean visible) {
     show_frame = FALSE;
 
     if (cfile->pb_fps != 0.)
+      // mainw->startticks is the last time we showed a frame
+      // new_ticks is the (adjusted) current time
+      // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
+      // and cfile->frameno is set to the frame to show
       cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
 
     if (new_ticks != mainw->startticks) {
@@ -1330,7 +1249,7 @@ int process_one(boolean visible) {
       if (cfile->opening && cfile->clip_type == CLIP_TYPE_DISK && !cfile->opening_only_audio &&
           (cfile->hsize > 0 || cfile->vsize > 0 || cfile->frames > 0) && (!mainw->effects_paused || !shown_paused_frames)) {
         uint32_t apxl;
-        mainw->currticks = lives_get_current_ticks(mainw->origsecs, mainw->origusecs);
+        mainw->currticks = lives_get_current_ticks();
         if ((mainw->currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
             ((apxl = get_approx_ln((uint32_t)mainw->opening_frames)) < 200 ? apxl : 200) ||
             (mainw->effects_paused && !shown_paused_frames)) {
@@ -1425,6 +1344,10 @@ static void reset_timebase() {
 
   mainw->origsecs = tv.tv_sec;
   mainw->origusecs = tv.tv_usec;
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed != NULL) pa_time_reset(mainw->pulsed);
+  if (mainw->pulsed_read != NULL) pa_time_reset(mainw->pulsed_read);
 #endif
 }
 
@@ -1572,8 +1495,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   last_open_check_ticks = 0;
 
   prev_ticks = 0;
-  last_sc_ticks = 0;
-  consume_ticks = 0;
 
   reset_timebase();
 
@@ -1593,7 +1514,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     if (mainw->cancelled != CANCEL_NONE) return FALSE;
     reset_timebase();
   }
-  if (mainw->jackd_read != NULL) mainw->jackd_read->is_paused = FALSE;
+  if (mainw->jackd_read != NULL) {
+    mainw->jackd_read->audio_ticks = lives_get_current_ticks();
+    mainw->jackd_read->is_paused = FALSE;
+  }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
@@ -1616,7 +1540,13 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     if (mainw->cancelled != CANCEL_NONE) return FALSE;
     reset_timebase();
   }
-  if (mainw->pulsed_read != NULL) mainw->pulsed_read->is_paused = FALSE;
+  if (mainw->pulsed_read != NULL) {
+    pa_time_reset(mainw->pulsed_read);
+    mainw->pulsed_read->is_paused = FALSE;
+  }
+  if (mainw->pulsed != NULL) {
+    pa_time_reset(mainw->pulsed);
+  }
 #endif
 
   if (mainw->record) mainw->record_paused = FALSE;
@@ -1720,9 +1650,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       !mainw->multitrack->is_rendering && cfile->achans > 0) ||
       ((prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read != NULL) ||
        mainw->agen_key != 0))) {
-    mainw->pulsed->audio_ticks = mainw->offsetticks;
-    mainw->pulsed->frames_written = 0;
-    mainw->pulsed->usec_start = 0;
+    if (mainw->pulsed != NULL) pa_time_reset(mainw->pulsed);
+    if (mainw->pulsed_read != NULL) pa_time_reset(mainw->pulsed_read);
   }
 #endif
 
@@ -1953,7 +1882,7 @@ finish:
   } else {
     if (prefs->show_player_stats) {
       if (mainw->fps_measure > 0.) {
-        mainw->fps_measure /= (lives_get_current_ticks(mainw->origsecs, mainw->origusecs) / TICKS_PER_SECOND_DBL);
+        mainw->fps_measure /= (lives_get_relative_ticks(mainw->origsecs, mainw->origusecs) / TICKS_PER_SECOND_DBL);
       }
     }
     mainw->is_processing = TRUE;
@@ -1999,7 +1928,7 @@ boolean do_auto_dialog(const char *text, int type) {
   int alarm_handle = 0;
 
   if (type == 1 && mainw->rec_end_time != -1.) {
-    stime = lives_get_current_ticks(0, 0);
+    stime = lives_get_current_ticks();
   }
 
   mainw->error = FALSE;
@@ -2047,7 +1976,7 @@ boolean do_auto_dialog(const char *text, int type) {
     lives_widget_context_update();
     lives_usleep(prefs->sleep_time);
     if (type == 1 && mainw->rec_end_time != -1.) {
-      time = lives_get_current_ticks(0, 0);
+      time = lives_get_current_ticks();
 
       // subtract start time
       time -= stime;
@@ -2841,7 +2770,7 @@ void threaded_dialog_spin(double fraction) {
   if (procw == NULL || !procw->is_ready || !prefs->show_gui) return;
 
   if (fraction > 0.) {
-    timesofar = (double)(lives_get_current_ticks(0, 0) - sttime) / TICKS_PER_SECOND_DBL;
+    timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
     disp_fraction(fraction, timesofar, procw);
   } else {
     if (mainw->current_file < 0 || cfile == NULL || cfile->progress_start == 0 || cfile->progress_end == 0 ||
@@ -2857,7 +2786,7 @@ void threaded_dialog_spin(double fraction) {
     } else {
       // show fraction
       double fraction_done = (double)(progress - cfile->progress_start) / (double)(cfile->progress_end - cfile->progress_start + 1.);
-      timesofar = (double)(lives_get_current_ticks(0, 0) - sttime) / TICKS_PER_SECOND_DBL;
+      timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
       disp_fraction(fraction_done, timesofar, procw);
     }
   }
@@ -2889,7 +2818,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
-  sttime = lives_get_current_ticks(0, 0);
+  sttime = lives_get_current_ticks();
 
   mainw->threaded_dialog = TRUE;
   clear_mainw_msg();

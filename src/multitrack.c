@@ -776,7 +776,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
   lives_free(asave_file);
 
-  stime = lives_get_current_ticks(0, 0);
+  stime = lives_get_current_ticks();
   mt->auto_back_time = stime;
 
   gettimeofday(&otv, NULL);
@@ -796,7 +796,7 @@ boolean mt_auto_backup(livespointer user_data) {
     return FALSE;
   }
 
-  stime = lives_get_current_ticks(0, 0);
+  stime = lives_get_current_ticks();
   if (mt->auto_back_time == 0) mt->auto_back_time = stime;
 
   diff = stime - mt->auto_back_time;

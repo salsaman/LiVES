@@ -1000,6 +1000,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
 
 int process_one(boolean visible) {
   uint64_t new_ticks;
+  int64_t real_ticks;
 
   lives_time_source_t time_source;
   boolean show_frame;
@@ -1102,7 +1103,6 @@ int process_one(boolean visible) {
     // here we need to add mainw->offsetticks, to get the correct position whe playing back in multitrack
     if (LIVES_UNLIKELY(cfile->proc_ptr == NULL && cfile->next_event != NULL)) {
       // playing an event_list
-
       if (mainw->scratch != SCRATCH_NONE && mainw->multitrack != NULL) {
 #ifdef ENABLE_JACK_TRANSPORT
         // handle transport jump in multitrack : end current playback and restart it from the new position
@@ -1157,19 +1157,19 @@ int process_one(boolean visible) {
       // new_ticks is the (adjusted) current time
       // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
       // and cfile->frameno is set to the frame to show
-      pthread_mutex_lock(&mainw->audio_sync_mutex);
+      pthread_mutex_lock(&mainw->audio_resync_mutex);
     cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
 
     if (new_ticks != mainw->startticks) {
       mainw->startticks = new_ticks;
-      pthread_mutex_unlock(&mainw->audio_sync_mutex);
+      pthread_mutex_unlock(&mainw->audio_resync_mutex);
       if (display_ready) {
         show_frame = TRUE;
 #ifdef USE_GDK_FRAME_CLOCK
         display_ready = FALSE;
 #endif
       }
-    } else pthread_mutex_unlock(&mainw->audio_sync_mutex);
+    } else pthread_mutex_unlock(&mainw->audio_resync_mutex);
 
     real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
 
@@ -1178,7 +1178,7 @@ int process_one(boolean visible) {
       // calculate the audio 'frame' for non-realtime audio players
       // for realtime players, we did this in calc_new_playback_position()
       if (!is_realtime_aplayer(prefs->audio_player)) {
-        mainw->aframeno = (real_ticks - mainw->first_ticks) / TICKS_PER_SECOND_DBL * cfile->fps + audio_start;
+        mainw->aframeno = (real_ticks - mainw->firstticks) / TICKS_PER_SECOND_DBL * cfile->fps + audio_start;
         if (LIVES_UNLIKELY(mainw->loop_cont && (mainw->aframeno > (mainw->audio_end ? mainw->audio_end :
                                                 cfile->laudio_time * cfile->fps)))) {
           mainw->firstticks = real_ticks;
@@ -1230,13 +1230,12 @@ int process_one(boolean visible) {
         fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
       }
 #endif
-
     }
     // paused
     if (LIVES_UNLIKELY(cfile->play_paused)) {
-      pthread_mutex_lock(&mainw->audio_sync_mutex);
+      pthread_mutex_lock(&mainw->audio_resync_mutex);
       mainw->startticks = mainw->currticks + mainw->deltaticks;
-      pthread_mutex_unlock(&mainw->audio_sync_mutex);
+      pthread_mutex_unlock(&mainw->audio_resync_mutex);
     }
   }
 

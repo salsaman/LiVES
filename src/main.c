@@ -445,7 +445,7 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->audio_filewriteend_mutex, NULL);
 
-  pthread_mutex_init(&mainw->audio_sync_mutex, NULL);
+  pthread_mutex_init(&mainw->audio_resync_mutex, NULL);
 
   for (i = 0; i < FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->data_mutex[i], &mattr); // because audio filters can enable/disable video filters and vice-versa

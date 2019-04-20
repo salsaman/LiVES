@@ -49,6 +49,8 @@ static int64_t sttime;
 
 static xprocess *procw = NULL;
 
+static lives_time_source_t last_time_source;
+
 void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   LiVESWidget *tbutton;
 
@@ -1032,7 +1034,14 @@ int process_one(boolean visible) {
     //   so, between updates we interpolate with the system clock and then adjust when we get a new value
     //   from the card
 
+    time_source = LIVES_TIME_SOURCE_NONE;
     mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &time_source);
+    if (last_time_source != LIVES_TIME_SOURCE_NONE && time_source != last_time_source) {
+      // time source changed, make sure there is no discontinuity by adjusting deltaticks
+      int64_t delta = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &last_time_source);
+      mainw->deltaticks += delta - mainw->currticks;
+    }
+    last_time_source = time_source;
 
     if (time_source == LIVES_TIME_SOURCE_SYSTEM) {
       // got time from system clock
@@ -1049,7 +1058,7 @@ int process_one(boolean visible) {
 #ifdef ENABLE_JACK
       if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL &&
           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
-          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && (audio_ticks = lives_jack_get_time(mainw->jackd, TRUE)) >
+          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && (audio_ticks = lives_jack_get_time(mainw->jackd)) >
           mainw->offsetticks) {
         if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
             audio_stretch > 0.5) {
@@ -1145,32 +1154,32 @@ int process_one(boolean visible) {
     }
 
     // free playback
-    new_ticks = mainw->currticks + mainw->deltaticks; // deltaticks are set by scratch methods
+    new_ticks = mainw->currticks + mainw->deltaticks; // deltaticks are set by scratch and other methods
     cfile->last_frameno = cfile->frameno;
 
     handle_cached_keys();
 
     show_frame = FALSE;
 
-    if (cfile->pb_fps != 0.)
+    if (cfile->pb_fps != 0.) {
       // mainw->startticks is the last time we showed a frame
       // new_ticks is the (adjusted) current time
       // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
       // and cfile->frameno is set to the frame to show
       pthread_mutex_lock(&mainw->audio_resync_mutex);
-    cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
+      cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
 
-    if (new_ticks != mainw->startticks) {
-      mainw->startticks = new_ticks;
-      pthread_mutex_unlock(&mainw->audio_resync_mutex);
-      if (display_ready) {
-        show_frame = TRUE;
+      if (new_ticks != mainw->startticks) {
+        mainw->startticks = new_ticks;
+        pthread_mutex_unlock(&mainw->audio_resync_mutex);
+        if (display_ready) {
+          show_frame = TRUE;
 #ifdef USE_GDK_FRAME_CLOCK
-        display_ready = FALSE;
+          display_ready = FALSE;
 #endif
-      }
-    } else pthread_mutex_unlock(&mainw->audio_resync_mutex);
-
+        }
+      } else pthread_mutex_unlock(&mainw->audio_resync_mutex);
+    }
     real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
 
     // play next frame
@@ -1351,8 +1360,17 @@ static void reset_timebase() {
   mainw->origusecs = tv.tv_usec;
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed != NULL) pa_time_reset(mainw->pulsed);
-  if (mainw->pulsed_read != NULL) pa_time_reset(mainw->pulsed_read);
+  if (mainw->pulsed != NULL) pa_time_reset(mainw->pulsed, 0);
+  if (mainw->pulsed_read != NULL) pa_time_reset(mainw->pulsed_read, 0);
+#endif
+
+#ifdef ENABLE_JACK
+  if (mainw->jackd != NULL) {
+    jack_time_reset(mainw->jackd, 0);
+  }
+  if (mainw->jackd_read != NULL) {
+    jack_time_reset(mainw->jackd_read, 0);
+  }
 #endif
 }
 
@@ -1497,8 +1515,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   prev_ticks = 0;
 
-  reset_timebase();
-
 #ifdef ENABLE_JACK
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_JACK &&
       mainw->jackd_read != NULL && prefs->ahold_threshold > 0.) {
@@ -1513,12 +1529,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     }
     end_threaded_dialog();
     if (mainw->cancelled != CANCEL_NONE) return FALSE;
-    reset_timebase();
   }
-  if (mainw->jackd_read != NULL) {
-    mainw->jackd_read->audio_ticks = lives_get_current_ticks();
-    mainw->jackd_read->is_paused = FALSE;
-  }
+
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
@@ -1539,18 +1551,18 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     }
     end_threaded_dialog();
     if (mainw->cancelled != CANCEL_NONE) return FALSE;
-    reset_timebase();
-  }
-  if (mainw->pulsed_read != NULL) {
-    pa_time_reset(mainw->pulsed_read);
-    mainw->pulsed_read->is_paused = FALSE;
-  }
-  if (mainw->pulsed != NULL) {
-    pa_time_reset(mainw->pulsed);
   }
 #endif
 
-  if (mainw->record) mainw->record_paused = FALSE;
+  mainw->scratch = SCRATCH_NONE;
+  if (mainw->iochan != NULL) lives_widget_show(cfile->proc_ptr->pause_button);
+  display_ready = TRUE;
+
+  last_time_source = LIVES_TIME_SOURCE_NONE;
+
+  /////////////////////////
+  reset_timebase();
+  //////////////////////////
 
   if (!visible) {
     // video playback
@@ -1611,10 +1623,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->play_start);
     }
 
-    mainw->rec_aclip = mainw->current_file;
-    mainw->rec_avel = cfile->pb_fps / cfile->fps;
     if (!(mainw->record && (prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit)))
-      mainw->rec_aseek = (double)cfile->aseek_pos / (double)(cfile->arate * cfile->achans * (cfile->asampsize / 8));
+      jack_get_rec_avals(mainw->jackd);
     else {
       mainw->rec_aclip = mainw->ascrap_file;
       mainw->rec_avel = 1.;
@@ -1637,33 +1647,18 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, mainw->play_start);
     }
 
-    mainw->rec_aclip = mainw->current_file;
-    mainw->rec_avel = cfile->pb_fps / cfile->fps;
     if (!(mainw->record && (prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit)))
-      mainw->rec_aseek = (double)cfile->aseek_pos / (double)(cfile->arate * cfile->achans * (cfile->asampsize / 8));
+      pulse_get_rec_avals(mainw->pulsed);
     else {
       mainw->rec_aclip = mainw->ascrap_file;
       mainw->rec_avel = 1.;
       mainw->rec_aseek = 0;
     }
   }
-  if (prefs->audio_player == AUD_PLAYER_PULSE && ((mainw->pulsed != NULL && mainw->multitrack != NULL &&
-      !mainw->multitrack->is_rendering && cfile->achans > 0) ||
-      ((prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read != NULL) ||
-       mainw->agen_key != 0))) {
-    if (mainw->pulsed != NULL) pa_time_reset(mainw->pulsed);
-    if (mainw->pulsed_read != NULL) pa_time_reset(mainw->pulsed_read);
-  }
 #endif
-
-  if (mainw->iochan != NULL) lives_widget_show(cfile->proc_ptr->pause_button);
 
   // tell jack transport we are ready to play
   mainw->video_seek_ready = TRUE;
-
-  mainw->scratch = SCRATCH_NONE;
-
-  display_ready = TRUE;
 
 #ifdef USE_GDK_FRAME_CLOCK
   using_gdk_frame_clock = FALSE;
@@ -1675,6 +1670,17 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     lives_signal_connect(LIVES_GUI_OBJECT(gclock), "update",
                          LIVES_GUI_CALLBACK(clock_upd),
                          NULL);
+  }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed_read != NULL) {
+    mainw->pulsed_read->is_paused = FALSE;
+  }
+#endif
+#ifdef ENABLE_JACK
+  if (mainw->jackd_read != NULL) {
+    mainw->jackd_read->is_paused = FALSE;
   }
 #endif
 

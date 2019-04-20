@@ -1409,58 +1409,68 @@ LIVES_GLOBAL_INLINE int64_t lives_get_relative_ticks(int64_t origsecs, int64_t o
 
 
 int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source) {
-  if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SYSTEM;
+  // get the time using a variety of methods
+  // time_source may be NULL or LIVES_TIME_SOURCE_NONE to set auto
+  // or another value to force it (EXTERNAL cannot be forced)
+
+  if (time_source != NULL && *time_source == LIVES_TIME_SOURCE_EXTERNAL) *time_source = LIVES_TIME_SOURCE_NONE;
 
   if (mainw->foreign || prefs->force_system_clock) {
+    if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SYSTEM;
     return lives_get_relative_ticks(origsecs, origusecs);
   }
 
+  if (time_source == NULL || *time_source == LIVES_TIME_SOURCE_NONE) {
 #ifdef ENABLE_JACK_TRANSPORT
-  if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) &&
-      (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) && !(mainw->record && !(prefs->rec_opts & REC_FRAMES))) {
-    // calculate the time from jack transport
-    if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_EXTERNAL;
-    return jack_transport_get_time() * TICKS_PER_SECOND_DBL;
-  }
+    if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) &&
+        (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) && !(mainw->record && !(prefs->rec_opts & REC_FRAMES))) {
+      // calculate the time from jack transport
+      if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_EXTERNAL;
+      return jack_transport_get_time() * TICKS_PER_SECOND_DBL;
+    }
 #endif
+  }
 
-  if (((prefs->audio_src == AUDIO_SRC_INT && cfile->achans > 0) || (prefs->audio_src == AUDIO_SRC_EXT && mainw->aud_rec_fd != -1)) &&
-      (!mainw->is_rendering || (mainw->multitrack != NULL && !cfile->opening && !mainw->multitrack->is_rendering)) &&
-      (!(mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
-    // get time from soundcard
-    // this is done so as to synch video stream with the audio
-    // we do this in two cases:
-    // - for internal audio, playing back a clip with audio (writing)
-    // - or when audio source is set to external (reading) and we are recording, no internal audio generator is running
+  if (time_source == NULL || *time_source == LIVES_TIME_SOURCE_NONE || *time_source == LIVES_TIME_SOURCE_SOUNDCARD) {
+    if (((prefs->audio_src == AUDIO_SRC_INT && cfile->achans > 0) || prefs->audio_src == AUDIO_SRC_EXT) &&
+        (!mainw->is_rendering || (mainw->multitrack != NULL && !cfile->opening && !mainw->multitrack->is_rendering)) &&
+        (!(mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
+      // get time from soundcard
+      // this is done so as to synch video stream with the audio
+      // we do this in two cases:
+      // - for internal audio, playing back a clip with audio (writing)
+      // - or when audio source is set to external (reading) and we are recording, no internal audio generator is running
 
-    // we ignore this if we are running with a playback plugin which requires a fixed framerate (e.g a streaming plugin)
-    // in that case we will adjust the audio rate to fit the system clock
+      // we ignore this if we are running with a playback plugin which requires a fixed framerate (e.g a streaming plugin)
+      // in that case we will adjust the audio rate to fit the system clock
 
-    // or if we are rendering
+      // or if we are rendering
 
 #ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK &&
-        ((mainw->jackd != NULL && mainw->jackd->in_use && prefs->audio_src == AUDIO_SRC_INT) || (mainw->jackd_read != NULL &&
-            mainw->jackd_read->in_use && prefs->audio_src == AUDIO_SRC_EXT))) {
-      if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
-      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
-        return lives_jack_get_time(mainw->jackd_read, TRUE);
-      return lives_jack_get_time(mainw->jackd, TRUE);
-    }
+      if (prefs->audio_player == AUD_PLAYER_JACK &&
+          ((mainw->jackd != NULL && mainw->jackd->in_use && prefs->audio_src == AUDIO_SRC_INT) || (mainw->jackd_read != NULL &&
+              mainw->jackd_read->in_use && prefs->audio_src == AUDIO_SRC_EXT))) {
+        if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
+        if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+          return lives_jack_get_time(mainw->jackd_read);
+        return lives_jack_get_time(mainw->jackd);
+      }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE &&
-        ((mainw->pulsed != NULL && mainw->pulsed->in_use && prefs->audio_src == AUDIO_SRC_INT) || (mainw->pulsed_read != NULL &&
-            mainw->pulsed_read->in_use && prefs->audio_src == AUDIO_SRC_EXT))) {
-      if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
-      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
-        return lives_pulse_get_time(mainw->pulsed_read);
-      return lives_pulse_get_time(mainw->pulsed);
-    }
+      if (prefs->audio_player == AUD_PLAYER_PULSE &&
+          ((mainw->pulsed != NULL && mainw->pulsed->in_use && prefs->audio_src == AUDIO_SRC_INT) || (mainw->pulsed_read != NULL &&
+              mainw->pulsed_read->in_use && prefs->audio_src == AUDIO_SRC_EXT))) {
+        if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
+        if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+          return lives_pulse_get_time(mainw->pulsed_read);
+        return lives_pulse_get_time(mainw->pulsed);
+      }
 #endif
+    }
   }
 
+  if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SYSTEM;
   return lives_get_relative_ticks(origsecs, origusecs);
 }
 
@@ -3809,7 +3819,8 @@ boolean switch_aud_to_jack(void) {
     mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
 
   if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
-    jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
+    jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
+    mainw->jackd_read->in_use = FALSE;
   }
 
   lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
@@ -3862,7 +3873,8 @@ boolean switch_aud_to_pulse(void) {
 #endif
 
     if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
-      pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
+      pulse_rec_audio_to_clip(-1, -1, RECA_MONITOR);
+      mainw->pulsed_read->in_use = FALSE;
     }
 
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
@@ -4707,7 +4719,6 @@ uint64_t sget_file_size(const char *name) {
   int fd;
 
   if ((fd = open(name, O_RDONLY)) == -1) {
-    //g_print("could not open %s %s\n",name,lives_strerror(errno));
     return (uint32_t)0;
   }
 
@@ -4759,10 +4770,6 @@ void reget_afilesize(int fileno) {
       }
     }
   }
-
-  //g_print("pvalss %s %ld\n",afile,sfile->afilesize);
-
-  //g_print("sfa = %d\n",sfile->achans);
 
   lives_free(afile);
 

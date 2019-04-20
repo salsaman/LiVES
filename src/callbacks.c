@@ -4055,13 +4055,16 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if ((prefs->rec_opts & REC_AUDIO) && (mainw->agen_key != 0 || mainw->agen_needs_reinit || prefs->audio_src == AUDIO_SRC_EXT) &&
           ((prefs->audio_player == AUD_PLAYER_JACK) ||
            (prefs->audio_player == AUD_PLAYER_PULSE))) {
-
-        if (mainw->ascrap_file == -1) open_ascrap_file();
+        if (mainw->ascrap_file == -1) {
+          open_ascrap_file();
+        }
         if (mainw->ascrap_file != -1) {
           mainw->rec_samples = -1; // record unlimited
-
           mainw->rec_aclip = mainw->ascrap_file;
           mainw->rec_avel = 1.;
+          mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
+                             (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
+                                      mainw->files[mainw->ascrap_file]->asampsize >> 3);
 
 #ifdef ENABLE_JACK
           if (prefs->audio_player == AUD_PLAYER_JACK) {
@@ -4071,11 +4074,11 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
             if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
               jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+              mainw->jackd_read->is_paused = FALSE;
               mainw->jackd_read->in_use = TRUE;
             } else {
               if (mainw->jackd != NULL) {
                 jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-                mainw->jackd_read->in_use = TRUE;
               }
             }
             if (mainw->clip_header != NULL) fclose(mainw->clip_header);
@@ -4091,11 +4094,11 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
             if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
               pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+              mainw->pulsed_read->is_paused = FALSE;
               mainw->pulsed_read->in_use = TRUE;
             } else {
               if (mainw->pulsed != NULL) {
                 pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-                mainw->pulsed_read->in_use = TRUE;
               }
             }
             if (mainw->clip_header != NULL) fclose(mainw->clip_header);
@@ -4130,7 +4133,7 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 #ifdef RT_AUDIO
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
-          !has_audio_filters(AF_TYPE_NONA) && prefs->audio_src == AUDIO_SRC_INT) {
+          prefs->audio_src == AUDIO_SRC_INT) {
         weed_plant_t *last_frame = get_last_frame_event(mainw->event_list);
         insert_audio_event_at(mainw->event_list, last_frame, -1, mainw->rec_aclip, 0., 0.);
       }
@@ -9391,23 +9394,18 @@ void changed_fps_during_pb(LiVESSpinButton   *spinbutton, livespointer user_data
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
 #ifdef ENABLE_JACK
-    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
-        !has_audio_filters(AF_TYPE_NONA) &&
-        prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
-
+    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
       mainw->jackd->sample_in_rate = cfile->arate * cfile->pb_fps / cfile->fps;
-      if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && !has_audio_filters(AF_TYPE_NONA)) {
+      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
         jack_get_rec_avals(mainw->jackd);
       }
     }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
-        !has_audio_filters(AF_TYPE_NONA) &&
-        prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
       mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps;
-      if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && !has_audio_filters(AF_TYPE_NONA)) {
+      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
         pulse_get_rec_avals(mainw->pulsed);
       }
     }
@@ -9891,15 +9889,9 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
 #ifdef ENABLE_JACK
   if (mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK && (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED ||
       prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-    if (!cfile->play_paused && prefs->audio_player == AUD_PLAYER_JACK && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) &&
-        mainw->jackd != NULL && mainw->jackd->playing_file == mainw->current_file) {
-      mainw->jackd->sample_in_rate = cfile->arate * cfile->pb_fps / cfile->fps;
-      mainw->jackd->audio_ticks = mainw->currticks;
-      mainw->jackd->frames_written = 0;
-    }
     mainw->jackd->is_paused = cfile->play_paused;
     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
-        !has_audio_filters(AF_TYPE_NONA) && prefs->audio_src == AUDIO_SRC_INT) {
+        prefs->audio_src == AUDIO_SRC_INT) {
       if (cfile->play_paused) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
         insert_audio_event_at(mainw->event_list, event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
@@ -9913,12 +9905,9 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-    if (!cfile->play_paused && mainw->pulsed != NULL && mainw->pulsed->playing_file == mainw->current_file) {
-      mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps;
-    }
     mainw->pulsed->is_paused = cfile->play_paused;
     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
-        !has_audio_filters(AF_TYPE_NONA) && prefs->audio_src == AUDIO_SRC_INT) {
+        prefs->audio_src == AUDIO_SRC_INT) {
       if (cfile->play_paused) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
         insert_audio_event_at(mainw->event_list, event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off

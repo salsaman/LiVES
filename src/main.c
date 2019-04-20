@@ -4043,10 +4043,13 @@ void load_start_image(int frame) {
 
   if (mainw->multitrack != NULL) return;
 
+  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
+      (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
+
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
+  lives_widget_context_update();  // needed to clear away old images
 #endif
 
   if (mainw->current_file > -1 && cfile != NULL && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -4218,10 +4221,13 @@ void load_end_image(int frame) {
 
   if (mainw->multitrack != NULL) return;
 
+  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
+      (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
+
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-  lives_widget_context_update(); // needed to force focus back to mainwindow during startup
+  lives_widget_context_update(); // needed to clear away old images
 #endif
 
   if (mainw->current_file > -1 && cfile != NULL && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -5593,10 +5599,15 @@ void load_frame_image(int frame) {
       weed_plant_t *event = get_last_event(mainw->event_list);
       weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list, lives_get_relative_ticks(mainw->origsecs, mainw->origusecs),
                                  &event);
-      if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO) && !mainw->record_starting && prefs->audio_src == AUDIO_SRC_INT &&
-          !(has_audio_filters(AF_TYPE_NONA))) {
+      if (mainw->event_list == NULL) mainw->event_list = event_list;
+      if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO) && !mainw->record_starting) {
         // we are recording, and the audio clip changed; add audio
-        if (mainw->event_list == NULL) mainw->event_list = event_list;
+        if (mainw->rec_aclip == mainw->ascrap_file) {
+          mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
+                             (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
+                                      mainw->files[mainw->ascrap_file]->asampsize >> 3);
+          mainw->rec_avel = 1.;
+        }
         insert_audio_event_at(mainw->event_list, event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
         mainw->rec_aclip = -1;
       }
@@ -5627,14 +5638,11 @@ void load_frame_image(int frame) {
           if (prefs->audio_player == AUD_PLAYER_JACK && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) &&
               mainw->jackd != NULL && cfile->achans > 0 &&
               !(prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0)) {
-            if (mainw->jackd->playing_file != -1 && !jack_audio_seek_frame(mainw->jackd, frame)) {
+            if (mainw->jackd->playing_file == mainw->playing_file && !jack_audio_seek_frame(mainw->jackd, frame)) {
               if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, frame);
             }
-
-            if (!(mainw->record && !mainw->record_paused) && has_audio_filters(AF_TYPE_NONA)) {
-              mainw->rec_aclip = mainw->current_file;
-              mainw->rec_avel = cfile->pb_fps / cfile->fps;
-              mainw->rec_aseek = cfile->aseek_pos / (cfile->arate * cfile->achans * cfile->asampsize / 8);
+            if (mainw->record && !mainw->record_paused) {
+              jack_get_rec_avals(mainw->jackd);
             }
           }
 #endif
@@ -5642,20 +5650,18 @@ void load_frame_image(int frame) {
           if (prefs->audio_player == AUD_PLAYER_PULSE && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) &&
               mainw->pulsed != NULL && cfile->achans > 0 &&
               !(prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0)) {
-            if (mainw->pulsed->playing_file != -1 && !pulse_audio_seek_frame(mainw->pulsed, mainw->play_start)) {
-              if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, mainw->play_start);
+            if (mainw->pulsed->playing_file == mainw->playing_file && !pulse_audio_seek_frame(mainw->pulsed, frame)) {
+              if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, frame);
               else mainw->aplayer_broken = TRUE;
             }
-
-            if (!(mainw->record && !mainw->record_paused) && has_audio_filters(AF_TYPE_NONA)) {
-              mainw->rec_aclip = mainw->current_file;
-              mainw->rec_avel = cfile->pb_fps / cfile->fps;
-              mainw->rec_aseek = cfile->aseek_pos / (cfile->arate * cfile->achans * cfile->asampsize / 8);
+            if (mainw->record && !mainw->record_paused) {
+              pulse_get_rec_avals(mainw->pulsed);
             }
           }
 #endif
         }
       }
+
       if (mainw->opening_loc || (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE)) {
         framecount = lives_strdup_printf("%9d", mainw->actual_frame);
       } else {
@@ -5742,18 +5748,22 @@ void load_frame_image(int frame) {
         pthread_mutex_lock(&mainw->event_list_mutex);
         if ((event_list = append_frame_event(mainw->event_list, actual_ticks, numframes, clips, frames)) != NULL) {
           if (mainw->event_list == NULL) mainw->event_list = event_list;
-          if (mainw->rec_aclip != -1 && ((prefs->rec_opts & REC_AUDIO))) {
+
+          // TODO ***: do we need to perform more checks here ???
+          if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO)) {
             weed_plant_t *event = get_last_frame_event(mainw->event_list);
 
             if (mainw->rec_aclip == mainw->ascrap_file) {
               mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
                                  (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
                                           mainw->files[mainw->ascrap_file]->asampsize >> 3);
+              mainw->rec_avel = 1.;
 
             }
             insert_audio_event_at(mainw->event_list, event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
             mainw->rec_aclip = -1;
           }
+
           pthread_mutex_unlock(&mainw->event_list_mutex);
 
           /* TRANSLATORS: rec(ord) */
@@ -7404,16 +7414,16 @@ void load_frame_image(int frame) {
           mainw->jackd->msgq = &jack_message;
           mainw->jackd->in_use = TRUE;
 
+          while (mainw->jackd->msgq != NULL) {
+            lives_usleep(prefs->sleep_time);
+          }
+
           if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
             if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
               mainw->jackd->is_paused = mainw->files[new_file]->play_paused;
               mainw->jackd->is_silent = FALSE;
             }
-
-            mainw->rec_aclip = new_file;
-            mainw->rec_avel = mainw->files[new_file]->pb_fps / mainw->files[new_file]->fps;
-            mainw->rec_aseek = (double)mainw->files[new_file]->aseek_pos /
-                               (double)(mainw->files[new_file]->arate * mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8);
+            jack_get_rec_avals(mainw->jackd);
           }
         } else {
           if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
@@ -7490,7 +7500,6 @@ void load_frame_image(int frame) {
           // tell pulse server to open audio file and start playing it
 
           pulse_message.command = ASERVER_CMD_FILE_OPEN;
-
           pulse_message.data = lives_strdup_printf("%d", new_file);
 
           pulse_message2.command = ASERVER_CMD_FILE_SEEK;
@@ -7500,15 +7509,15 @@ void load_frame_image(int frame) {
           mainw->pulsed->msgq = &pulse_message;
           mainw->pulsed->in_use = TRUE;
 
+          while (mainw->pulsed->msgq != NULL) {
+            lives_usleep(prefs->sleep_time);
+          }
+
           if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
             if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
               mainw->pulsed->is_paused = mainw->files[new_file]->play_paused;
             }
-
-            mainw->rec_aclip = new_file;
-            mainw->rec_avel = mainw->files[new_file]->pb_fps / mainw->files[new_file]->fps;
-            mainw->rec_aseek = (double)mainw->files[new_file]->aseek_pos /
-                               (double)(mainw->files[new_file]->arate * mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8);
+            pulse_get_rec_avals(mainw->pulsed);
           }
         } else {
           if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {

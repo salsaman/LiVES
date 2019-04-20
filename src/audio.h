@@ -179,6 +179,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 void aud_fade(int fileno, double startt, double endt, double startv, double endv); ///< fade in/fade out
 
 typedef enum {
+  RECA_MONITOR = 0,
   RECA_WINDOW_GRAB,
   RECA_NEW_CLIP,
   RECA_EXISTING,

@@ -1521,18 +1521,20 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
   int retval;
 
+  // should we set is_paused ? (yes)
+  // should we reset time (no)
+
   if (fileno == -1) {
     // respond to external audio, but do not record it (yet)
-    mainw->jackd_read = jack_get_driver(0, FALSE);
-    mainw->jackd_read->playing_file = fileno;
-    mainw->jackd_read->frames_written = 0;
+    if (mainw->jackd_read == NULL) {
+      mainw->jackd_read = jack_get_driver(0, FALSE);
+      mainw->jackd_read->playing_file = fileno;
+      mainw->jackd_read->reverse_endian = FALSE;
 
-    mainw->jackd_read->reverse_endian = FALSE;
-
-    // start jack "recording"
-    jack_open_device_read(mainw->jackd_read);
-    jack_read_driver_activate(mainw->jackd_read, FALSE);
-
+      // start jack "recording"
+      jack_open_device_read(mainw->jackd_read);
+      jack_read_driver_activate(mainw->jackd_read, FALSE);
+    }
     return;
   }
 
@@ -1558,9 +1560,14 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   if (rec_type == RECA_GENERATED) {
     mainw->jackd->playing_file = fileno;
   } else {
-    if (!jackd_read_started) mainw->jackd_read = jack_get_driver(0, FALSE);
+    if (!jackd_read_started) {
+      mainw->jackd_read = jack_get_driver(0, FALSE);
+      jack_open_device_read(mainw->jackd_read);
+      jack_read_driver_activate(mainw->jackd_read, FALSE);
+      mainw->jackd_read->is_paused = TRUE;
+      jack_time_reset(mainw->jackd_read, 0);
+    }
     mainw->jackd_read->playing_file = fileno;
-    mainw->jackd_read->frames_written = 0;
   }
 
   if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED) {
@@ -1570,13 +1577,6 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
     if (rec_type == RECA_EXTERNAL) {
       mainw->jackd_read->reverse_endian = FALSE;
-
-      // start jack recording
-
-      if (!jackd_read_started) {
-        jack_open_device_read(mainw->jackd_read);
-        jack_read_driver_activate(mainw->jackd_read, FALSE);
-      }
 
       outfile->arate = outfile->arps = mainw->jackd_read->sample_in_rate;
       outfile->achans = mainw->jackd_read->num_input_channels;
@@ -1616,8 +1616,11 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     else mainw->jackd_read->reverse_endian = FALSE;
 
     // start jack recording
+    mainw->jackd_read = jack_get_driver(0, FALSE);
     jack_open_device_read(mainw->jackd_read);
     jack_read_driver_activate(mainw->jackd_read, TRUE);
+    mainw->jackd_read->is_paused = TRUE;
+    jack_time_reset(mainw->jackd_read, 0);
   }
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
@@ -1677,15 +1680,14 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   int retval;
 
   if (fileno == -1) {
-    mainw->pulsed_read = pulse_get_driver(FALSE);
-    mainw->pulsed_read->playing_file = -1;
-    mainw->pulsed_read->frames_written = 0;
-
-    mainw->pulsed_read->reverse_endian = FALSE;
-    mainw->aud_rec_fd = -1;
-
-    pulse_driver_activate(mainw->pulsed_read);
-
+    if (mainw->pulsed_read == NULL) {
+      mainw->pulsed_read = pulse_get_driver(FALSE);
+      mainw->pulsed_read->playing_file = -1;
+      mainw->pulsed_read->frames_written = 0;
+      mainw->pulsed_read->reverse_endian = FALSE;
+      mainw->aud_rec_fd = -1;
+      pulse_driver_activate(mainw->pulsed_read);
+    }
     return;
   }
 
@@ -2250,7 +2252,7 @@ boolean resync_audio(int frameno) {
   // or if we are looping a video selection
 
   // this is only active if "audio follows video rate/fps changes" is set
-
+  return FALSE;
   if (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
 
   // if recording external audio, we are intrinsically in sync
@@ -2262,11 +2264,8 @@ boolean resync_audio(int frameno) {
       if (mainw->jackd->playing_file != -1 && !jack_audio_seek_frame(mainw->jackd, frameno)) {
         if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, frameno);
       }
-
-      if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && !has_audio_filters(AF_TYPE_NONA)) {
-        mainw->rec_aclip = mainw->current_file;
-        mainw->rec_avel = cfile->pb_fps / cfile->fps;
-        mainw->rec_aseek = (double)mainw->jackd->seek_pos / (double)(cfile->arate * cfile->achans * cfile->asampsize / 8);
+      if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && prefs->audio_src == AUDIO_SRC_INT) {
+        jack_get_rec_avals(mainw->jackd);
       }
     }
 
@@ -2280,10 +2279,8 @@ boolean resync_audio(int frameno) {
       if (mainw->pulsed->playing_file != -1 && !pulse_audio_seek_frame(mainw->pulsed, frameno)) {
         if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, frameno);
       }
-      if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && !has_audio_filters(AF_TYPE_NONA)) {
-        mainw->rec_aclip = mainw->current_file;
-        mainw->rec_avel = cfile->pb_fps / cfile->fps;
-        mainw->rec_aseek = (double)mainw->pulsed->seek_pos / (double)(cfile->arate * cfile->achans * cfile->asampsize / 8);
+      if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && prefs->audio_src == AUDIO_SRC_INT) {
+        pulse_get_rec_avals(mainw->pulsed);
       }
     }
     return TRUE;
@@ -2958,8 +2955,8 @@ boolean apply_rte_audio(int nframes) {
   weed_apply_audio_effects_rt(fltbuf, cfile->achans, onframes, cfile->arate, aud_tc, FALSE);
 
   if (!(has_audio_filters(AF_TYPE_NONA) || mainw->agen_key != 0)) {
-    // analysers only - no need to save
-    // or, audio is being generated
+    // analysers only - no need to save (just render as normal)
+    // or, audio is being generated (we rendered it to ascrap file)
 
     audio_pos += tbytes;
 

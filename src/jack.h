@@ -46,6 +46,8 @@ void jack_pb_stop(void);  /** pause playback transport master */
 
 #define ERR_PORT_NOT_FOUND 10
 
+#define JACK_DEFAULT_SERVER_NAME "(default)"
+
 typedef jack_nframes_t nframes_t;
 
 
@@ -57,7 +59,7 @@ typedef jack_nframes_t nframes_t;
 typedef struct {
   int      dev_idx;                      /**< id of this device ??? */
   int64_t     sample_out_rate;                   /**< samples(frames) per second */
-  int64_t     sample_in_rate;                   /**< samples(frames) per second */
+  volatile int64_t     sample_in_rate;                   /**< samples(frames) per second */
   uint64_t    num_input_channels;            /**< number of input channels(1 is mono, 2 stereo etc..) */
   uint64_t    num_output_channels;           /**< number of output channels(1 is mono, 2 stereo etc..) */
   uint64_t    bytes_per_channel;
@@ -148,7 +150,8 @@ size_t jack_flush_read_data(size_t rbytes, void *data);
 
 // utils
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
-uint64_t lives_jack_get_time(jack_driver_t *, boolean absolute); ///< get time from jack, in 10^-8 seconds
+void jack_time_reset(jack_driver_t *jackd, int64_t offset);
+uint64_t lives_jack_get_time(jack_driver_t *); ///< get time from jack, in 10^-8 seconds
 boolean jack_audio_seek_frame(jack_driver_t *, int frame);  ///< seek to (video) frame
 int64_t jack_audio_seek_bytes(jack_driver_t *, int64_t bytes);  ///< seek to byte position
 

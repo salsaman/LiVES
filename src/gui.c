@@ -153,6 +153,8 @@ void make_custom_submenus(void) {
 #if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
+  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
+      (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   if (mainw->current_file > 0 && cfile != NULL) {
     load_start_image(cfile->start);
@@ -164,6 +166,8 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 
 boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
+  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
+      (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   if (mainw->current_file > 0 && cfile != NULL) {
     load_end_image(cfile->end);

@@ -41,7 +41,7 @@ typedef struct {
   pa_context_state_t state;
 
   // app side
-  int64_t in_arate; /**< samples(frames) per second */
+  volatile int64_t in_arate; /**< samples(frames) per second */
   uint64_t in_achans; /**< number of input channels(1 is mono, 2 stereo etc..) */
   uint64_t in_asamps;
 
@@ -102,11 +102,11 @@ typedef struct {
   volatile float abs_maxvol_heard;
 
   volatile boolean waitforop;
+
+  volatile boolean is_corked;
 } pulse_driver_t;
 
 // TODO - rationalise names
-
-void pa_time_reset(pulse_driver_t *pulsed);
 
 boolean lives_pulse_init(short startup_phase);  ///< init server, mainloop and context
 
@@ -125,6 +125,7 @@ void pulse_aud_pb_ready(int fileno);
 size_t pulse_flush_read_data(pulse_driver_t *, int fileno, size_t rbytes, boolean rev_endian, void *data);
 
 void pulse_driver_uncork(pulse_driver_t *);
+void pulse_driver_cork(pulse_driver_t *);
 
 boolean pulse_try_reconnect(void);
 
@@ -133,7 +134,9 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg
 
 int64_t pulse_audio_seek_bytes(pulse_driver_t *, int64_t bytes);  ///< seek to byte position
 
-int64_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
+void pa_time_reset(pulse_driver_t *pulsed, int64_t offset);
+
+uint64_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
 
 double lives_pulse_get_pos(pulse_driver_t *);
 

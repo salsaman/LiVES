@@ -2478,7 +2478,7 @@ void play_file(void) {
     if (audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
       if (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd != NULL) {
-        if (mainw->agen_key != 0) {
+        if (mainw->agen_key != 0 || mainw->agen_needs_reinit) {
           mainw->jackd->playing_file = mainw->current_file;
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
             jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
@@ -2486,14 +2486,12 @@ void play_file(void) {
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
             jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
         }
-        mainw->jackd->frames_written = 0;
         mainw->jackd->in_use = TRUE;
       }
       if (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read != NULL) {
         mainw->jackd_read->num_input_channels = mainw->jackd_read->num_output_channels = 2;
         mainw->jackd_read->sample_in_rate = mainw->jackd_read->sample_out_rate;
         mainw->jackd_read->is_paused = TRUE;
-        mainw->jackd_read->frames_written = 0;
         mainw->jackd_read->in_use = TRUE;
       }
 #endif
@@ -2509,7 +2507,6 @@ void play_file(void) {
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
             pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
         }
-        mainw->pulsed->frames_written = 0;
         mainw->pulsed->in_use = TRUE;
       }
       if (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read != NULL) {
@@ -2517,7 +2514,6 @@ void play_file(void) {
         mainw->pulsed_read->in_asamps = mainw->pulsed_read->out_asamps = PA_SAMPSIZE;
         mainw->pulsed_read->in_arate = mainw->pulsed_read->out_arate;
         mainw->pulsed_read->is_paused = TRUE;
-        mainw->pulsed_read->frames_written = 0;
         mainw->pulsed_read->in_use = TRUE;
       }
 #endif
@@ -2722,7 +2718,7 @@ void play_file(void) {
       jack_message.next = NULL;
       mainw->jackd->msgq = &jack_message;
     }
-    if (mainw->record && (prefs->rec_opts & REC_AUDIO)) {
+    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
       weed_plant_t *event = get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
     }
@@ -2733,6 +2729,13 @@ void play_file(void) {
 
       if (mainw->pulsed_read != NULL || mainw->aud_rec_fd != -1)
         pulse_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), TRUE);
+
+      if (mainw->pulsed_read != NULL) {
+        mainw->pulsed_read->in_use = FALSE;
+        pa_mloop_lock();
+        pulse_driver_cork(mainw->pulsed_read);
+        pa_mloop_unlock();
+      }
 
       // tell pulse client to close audio file
       if (mainw->pulsed != NULL && (mainw->pulsed->playing_file > 0 || mainw->pulsed->fd > 0)) {
@@ -2749,7 +2752,7 @@ void play_file(void) {
         pulse_message.next = NULL;
         mainw->pulsed->msgq = &pulse_message;
       }
-      if (mainw->record && (prefs->rec_opts & REC_AUDIO)) {
+      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
         insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
       }
@@ -4694,7 +4697,7 @@ boolean open_ascrap_file(void) {
   cfile->achans = 2;
   cfile->arate = cfile->arps = DEFAULT_AUDIO_RATE;
   cfile->asampsize = 16;
-  cfile->signed_endian = 0;
+  cfile->signed_endian = 0; // ???
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read != NULL) {

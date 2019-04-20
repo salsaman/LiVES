@@ -144,12 +144,11 @@ void pulse_get_rec_avals(pulse_driver_t *pulsed) {
 
 
 static void pulse_set_rec_avals(pulse_driver_t *pulsed, boolean is_forward) {
-  // record direction change
+  // record direction change (internal)
   mainw->rec_aclip = pulsed->playing_file;
   if (mainw->rec_aclip != -1) {
-    mainw->rec_avel = ABS(afile->pb_fps / afile->fps);
+    pulse_get_rec_avals(pulsed);
     if (!is_forward) mainw->rec_avel = -mainw->rec_avel;
-    mainw->rec_aseek = (double)pulsed->seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
   }
 }
 
@@ -279,7 +278,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
           pulsed->seek_pos = 0;
           pulsed->playing_file = new_file;
-          pa_time_reset(pulsed);
           pa_stream_trigger(pulsed->pstream, NULL, NULL);
         }
         lives_free(filename);
@@ -301,7 +299,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         lseek(pulsed->fd, xseek, SEEK_SET);
       }
       pulsed->seek_pos = seek;
-      pa_time_reset(pulsed);
       pa_stream_trigger(pulsed->pstream, NULL, NULL);
       break;
     default:
@@ -920,11 +917,13 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
   void *data;
   size_t rbytes = nbytes, zbytes;
 
+  pulsed->pstream = pstream;
+
+  if (pulsed->is_corked) return;
+
   if (!pulsed->in_use || (mainw->playing_file < 0 && prefs->audio_src == AUDIO_SRC_EXT) || mainw->effects_paused) {
-    if (pulsed->playing_file == -1 && prefs->audio_src == AUDIO_SRC_INT) {
-      pa_operation *paop = pa_stream_cork(pstream, 1, NULL, NULL);
-      pa_operation_unref(paop);
-    } else pa_stream_drop(pulsed->pstream);
+    pa_stream_peek(pulsed->pstream, (const void **)&data, &rbytes);
+    if (rbytes > 0) pa_stream_drop(pulsed->pstream);
     prb = 0;
     return;
   }
@@ -937,11 +936,8 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
   }
 
   if (pa_stream_peek(pulsed->pstream, (const void **)&data, &rbytes)) {
-    g_print("pa_stream_peek() failed: %s\n", pa_strerror(pa_context_errno(pcon)));
     return;
   }
-
-  //g_print("VAL is %ld, %ld  %ld, %p\n", nbytes, zbytes, rbytes, data);
 
   if (data == NULL) {
     if (rbytes > 0) {
@@ -1278,7 +1274,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 #ifdef PA_STREAM_START_UNMUTED
     pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr,
                                (pa_stream_flags_t)(PA_STREAM_START_UNMUTED | PA_STREAM_ADJUST_LATENCY |
-                                   PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE),
+                                   PA_STREAM_INTERPOLATE_TIMING |
+                                   PA_STREAM_AUTO_TIMING_UPDATE),
                                &out_vol, NULL);
 #else
     pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY |
@@ -1299,6 +1296,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pdriver->usec_start = 0;
     pdriver->in_use = FALSE;
     pdriver->abs_maxvol_heard = 0.;
+    pdriver->is_corked = TRUE;
     prb = 0;
 
     pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, NULL);
@@ -1307,7 +1305,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_stream_set_read_callback(pdriver->pstream, pulse_audio_read_process, pdriver);
 
     pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
-                             (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY));
+                             (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE));
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       lives_usleep(prefs->sleep_time);
@@ -1329,6 +1327,8 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
   pa_operation *paop;
 
   pdriver->abs_maxvol_heard = 0.;
+
+  if (!pdriver->is_corked) return;
 
   pdriver->waitforop = TRUE;
 
@@ -1359,6 +1359,46 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
   lives_alarm_clear(alarm_handle);
 
   pa_operation_unref(paop);
+
+  pdriver->is_corked = FALSE;
+}
+
+
+void pulse_driver_cork(pulse_driver_t *pdriver) {
+  int alarm_handle;
+  pa_operation *paop;
+
+  if (pdriver->is_corked) return;
+
+  pdriver->waitforop = TRUE;
+
+  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+
+  paop = pa_stream_flush(pdriver->pstream, paop_done, pdriver);
+
+  while (!pdriver->waitforop && !lives_alarm_get(alarm_handle)) {
+    lives_usleep(prefs->sleep_time);
+  }
+
+  lives_alarm_clear(alarm_handle);
+
+  pa_operation_unref(paop);
+
+  paop = pa_stream_cork(pdriver->pstream, 1, NULL, NULL);
+
+  pdriver->waitforop = TRUE;
+
+  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+
+  while (!pdriver->waitforop && !lives_alarm_get(alarm_handle)) {
+    lives_usleep(prefs->sleep_time);
+  }
+
+  lives_alarm_clear(alarm_handle);
+
+  pa_operation_unref(paop);
+
+  pdriver->is_corked = TRUE;
 }
 
 
@@ -1379,21 +1419,21 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
 }
 
 
-void pa_time_reset(pulse_driver_t *pulsed) {
+void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
   pa_usec_t usec;
   pa_stream_get_time(pulsed->pstream, &usec);
-  pulsed->usec_start = usec;
+  pulsed->usec_start = usec + offset / USEC_TO_TICKS;
   pulsed->frames_written = 0;
-  mainw->currticks = mainw->deltaticks = mainw->startticks = 0;
+  mainw->currticks = offset;
+  mainw->deltaticks = mainw->startticks = 0;
 }
 
 
-int64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
-  // get the time in ticks since either playback started or since last seek
-
+uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
+  // get the time in ticks since either playback started
   volatile aserver_message_t *msg = pulsed->msgq;
   pa_usec_t usec;
-
+  int err;
   if (msg != NULL && (msg->command == ASERVER_CMD_FILE_SEEK || msg->command == ASERVER_CMD_FILE_OPEN)) {
     boolean timeout;
     int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
@@ -1404,8 +1444,12 @@ int64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     lives_alarm_clear(alarm_handle);
   }
 
-  pa_stream_get_time(pulsed->pstream, &usec);
-  return (int64_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
+  do {
+    err = pa_stream_get_time(pulsed->pstream, &usec);
+    lives_usleep(prefs->sleep_time);
+  } while (usec == 0 && err == 0);
+
+  return (uint64_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
 }
 
 

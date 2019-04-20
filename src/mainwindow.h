@@ -1159,9 +1159,9 @@ typedef struct {
 
   mt_opts multi_opts; ///< some multitrack options that survive between mt calls
 
-  int rec_aclip;
-  double rec_avel;
-  double rec_aseek;
+  volatile int rec_aclip;
+  volatile double rec_avel;
+  volatile double rec_aseek;
 
   LiVESMemVTable alt_vtable;
 

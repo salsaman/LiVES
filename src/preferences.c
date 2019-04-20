@@ -573,7 +573,7 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
 #ifdef ENABLE_JACK
         if (prefs->perm_audio_reader) {
           // create reader connection now, if permanent
-          jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
+          jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
         }
 #endif
       }
@@ -581,7 +581,7 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
 #ifdef HAVE_PULSE_AUDIO
         if (prefs->perm_audio_reader) {
           // create reader connection now, if permanent
-          pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
+          pulse_rec_audio_to_clip(-1, -1, RECA_MONITOR);
         }
 #endif
       }

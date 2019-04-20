@@ -6941,9 +6941,7 @@ deinit2:
         if (mainw->jackd_read != NULL && mainw->jackd_read->in_use &&
             (mainw->jackd_read->playing_file == -1 || mainw->jackd_read->playing_file == mainw->ascrap_file)) {
           // if playing external audio, switch over to internal for an audio gen
-          mainw->jackd->audio_ticks = mainw->currticks;
-          mainw->jackd->frames_written = 0;
-
+          jack_time_reset(mainw->jackd, mainw->currticks);
           // close the reader
           jack_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), FALSE);
         }
@@ -6958,8 +6956,7 @@ deinit2:
         if (mainw->pulsed_read != NULL && mainw->pulsed_read->in_use &&
             (mainw->pulsed_read->playing_file == -1 || mainw->pulsed_read->playing_file == mainw->ascrap_file)) {
           // if playing external audio, switch over to internal for an audio gen
-          pa_time_reset(mainw->pulsed);
-          mainw->pulsed->usec_start -= mainw->pulsed_read->usec_start;
+          pa_time_reset(mainw->pulsed, -lives_pulse_get_time(mainw->pulsed_read));
           pulse_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), FALSE);
         }
         if (mainw->pulsed != NULL && (mainw->pulsed_read == NULL || !mainw->pulsed_read->in_use)) {
@@ -6975,21 +6972,13 @@ deinit2:
         on_record_perf_activate(NULL, NULL);
         mainw->record_starting = FALSE;
         mainw->record = TRUE;
-        if (prefs->audio_player == AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-          pa_time_reset(mainw->pulsed);
-          mainw->pulsed->usec_start -= mainw->currticks / USEC_TO_TICKS;
-#endif
-        }
         if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-          mainw->jackd->audio_ticks = mainw->currticks;
-          mainw->jackd->frames_written = 0;
+          jack_time_reset(mainw->jackd, lives_jack_get_time(mainw->jackd_read));
+          mainw->jackd->in_use = TRUE;
 #endif
         }
-
       }
-
     }
   }
 
@@ -7098,26 +7087,30 @@ void weed_deinit_effect(int hotkey) {
     // for external audio, switch back to reading
 
     if (mainw->playing_file > 0 && prefs->audio_src == AUDIO_SRC_EXT) {
-      if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
+      if (prefs->audio_player == AUD_PLAYER_JACK) {
         if (mainw->jackd_read == NULL || !mainw->jackd_read->in_use) {
           mainw->jackd->in_use = FALSE; // deactivate writer
-          jack_rec_audio_to_clip(-1, 0, (lives_rec_audio_type_t)0); //activate reader
-          mainw->jackd_read->frames_written += mainw->jackd->frames_written; // ensure time continues monotonically
-          if (mainw->record) mainw->jackd->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
+          jack_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
+          jack_time_reset(mainw->jackd_read, jack_get_time(mainw->jackd)); // ensure time continues monotonically
+          if (mainw->record) mainw->jackd_read->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
+          mainw->jackd_read->is_paused = FALSE;
+          mainw->jackd_read->in_use = TRUE;
         }
-#endif
       }
-      if (prefs->audio_player == AUD_PLAYER_PULSE) {
+#endif
 #ifdef HAVE_PULSE_AUDIO
+      if (prefs->audio_player == AUD_PLAYER_PULSE) {
         if (mainw->pulsed_read == NULL || !mainw->pulsed_read->in_use) {
           mainw->pulsed->in_use = FALSE; // deactivate writer
-          pulse_rec_audio_to_clip(-1, 0, (lives_rec_audio_type_t)0); //activate reader
-          mainw->pulsed_read->frames_written += mainw->pulsed->frames_written; // ensure time continues monotonically
-          if (mainw->record) mainw->pulsed->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
+          pulse_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
+          pa_time_reset(mainw->pulsed_read, -lives_pulse_get_time(mainw->pulsed)); // ensure time continues monotonically
+          if (mainw->record) mainw->pulsed_read->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
+          mainw->pulsed_read->is_paused = FALSE;
+          mainw->pulsed_read->in_use = TRUE;
         }
-#endif
       }
+#endif
     } else if (mainw->playing_file > 0) {
       // for internal, continue where we should
       if (is_realtime_aplayer(prefs->audio_player)) {

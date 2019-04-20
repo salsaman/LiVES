@@ -52,11 +52,12 @@ static int package_version = 1; // version of this package
 #include <sys/time.h>
 
 #include <errno.h>
+#include <unistd.h>
 
 #include "projectM-ConfigFile.h"
 #include "projectM-getConfigFilename.h"
 
-#define TARGET_FPS 60.
+#define TARGET_FPS 30.
 
 static int copies = 0;
 
@@ -256,10 +257,8 @@ static void do_exit(void) {
 
 
 static void *worker(void *data) {
-  std::string config_filename = getConfigFilename();
   std::string prname;
 
-  ConfigFile config(config_filename);
   projectM::Settings settings;
 
   bool rerand = true;
@@ -278,11 +277,20 @@ static void *worker(void *data) {
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
-
-    goto fail;
+    SDL_Quit();
+    return NULL;
   }
 
+  int new_stdout = dup(1);
+  int new_stderr = dup(2);
+
+  close(1);
+  close(2);
+
   atexit(do_exit);
+
+  std::string config_filename = getConfigFilename();
+  ConfigFile config(config_filename);
 
   // can fail here
   sd->globalPM = new projectM(config_filename);
@@ -353,10 +361,10 @@ static void *worker(void *data) {
 
   if (sd->globalPM != NULL) delete(sd->globalPM);
 
-fail:
+  dup2(new_stdout, 1);
+  dup2(new_stderr, 2);
 
   SDL_Quit();
-
   return NULL;
 }
 

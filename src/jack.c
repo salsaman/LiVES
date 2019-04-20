@@ -60,7 +60,7 @@ boolean lives_jack_init(void) {
   jackctl_driver_t *driver;
 #endif
 
-  const char *server_name = "default";
+  const char *server_name = JACK_DEFAULT_SERVER_NAME;
 
   mainw->jack_inited = TRUE;
 
@@ -297,7 +297,7 @@ void jack_get_rec_avals(jack_driver_t *jackd) {
 
 
 static void jack_set_rec_avals(jack_driver_t *jackd, boolean is_forward) {
-  // record direction change
+  // record direction change (internal)
   mainw->rec_aclip = jackd->playing_file;
   if (mainw->rec_aclip != -1) {
     mainw->rec_avel = ABS(afile->pb_fps / afile->fps);
@@ -412,8 +412,6 @@ static int audio_process(nframes_t nframes, void *arg) {
       xseek = atol((char *)msg->data);
       if (xseek < 0.) xseek = 0.;
       jackd->seek_pos = xseek;
-      jackd->audio_ticks = mainw->currticks;
-      jackd->frames_written = 0;
       break;
     default:
       msg->data = NULL;
@@ -713,7 +711,7 @@ static int audio_process(nframes_t nframes, void *arg) {
               }
 
               if (!pl_error && has_audio_filters(AF_TYPE_ANY)) {
-                uint64_t tc = jackd->audio_ticks + (uint64_t)(jackd->frames_written / (double)jackd->sample_out_rate * TICKS_PER_SECOND_DBL);
+                uint64_t tc = mainw->currticks;
                 // apply inplace any effects with audio in_channels
                 weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels, numFramesToWrite, jackd->sample_out_rate, tc, FALSE);
               }
@@ -747,7 +745,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
                 if (has_audio_filters(AF_TYPE_ANY) && jackd->playing_file != mainw->ascrap_file) {
-                  uint64_t tc = jackd->audio_ticks + (uint64_t)(jackd->frames_written / (double)jackd->sample_out_rate * TICKS_PER_SECOND_DBL);
+                  uint64_t tc = mainw->currticks;
                   // apply inplace any effects with audio in_channels
                   weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels, numFramesToWrite, jackd->sample_out_rate, tc, FALSE);
                 }
@@ -1121,7 +1119,7 @@ static int audio_read(nframes_t nframes, void *arg) {
     // we may wish to analyse the audio for example, or push it to a video generator
 
     if (has_audio_filters(AF_TYPE_A)) {
-      uint64_t tc = jackd->audio_ticks + (uint64_t)(jackd->frames_written / (double)jackd->sample_in_rate * TICKS_PER_SECOND_DBL);
+      uint64_t tc = mainw->currticks;
 
       if (mainw->audio_frame_buffer != NULL && prefs->audio_src == AUDIO_SRC_EXT) {
         // if we have audio triggered gens., push audio to it
@@ -1237,7 +1235,7 @@ static void jack_error_func(const char *desc) {
 // create a new client and connect it to jack, connect the ports
 int jack_open_device(jack_driver_t *jackd) {
   const char *client_name = "LiVES_audio_out";
-  const char *server_name = "default";
+  const char *server_name = JACK_DEFAULT_SERVER_NAME;
   jack_options_t options = (jack_options_t)((int)JackServerName | (int)JackNoStartServer);
   jack_status_t status;
   int i;
@@ -1317,7 +1315,7 @@ int jack_open_device(jack_driver_t *jackd) {
 int jack_open_device_read(jack_driver_t *jackd) {
   // open a device to read audio from jack
   const char *client_name = "LiVES_audio_in";
-  const char *server_name = "default";
+  const char *server_name = JACK_DEFAULT_SERVER_NAME;
   jack_options_t options = (jack_options_t)((int)JackServerName | (int)JackNoStartServer);
   jack_status_t status;
   int i;
@@ -1689,9 +1687,15 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
 }
 
 
-uint64_t lives_jack_get_time(jack_driver_t *jackd, boolean absolute) {
-  // get the time in ticks since either playback started or since last seek
+void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
+  mainw->currticks = jackd->audio_ticks = offset;
+  jackd->frames_written = 0;
+  mainw->deltaticks = mainw->startticks = 0;
+}
 
+
+uint64_t lives_jack_get_time(jack_driver_t *jackd) {
+  // get the time in ticks since playback started
   volatile aserver_message_t *msg = jackd->msgq;
   double frames_written;
 
@@ -1710,9 +1714,9 @@ uint64_t lives_jack_get_time(jack_driver_t *jackd, boolean absolute) {
   frames_written = jackd->frames_written;
   if (frames_written < 0.) frames_written = 0.;
 
-  if (jackd->is_output) xtime = jackd->audio_ticks * absolute + (uint64_t)(frames_written / (double)jackd->sample_out_rate *
+  if (jackd->is_output) xtime = jackd->audio_ticks  + (uint64_t)(frames_written / (double)jackd->sample_out_rate *
                                   TICKS_PER_SECOND_DBL);
-  else xtime = jackd->audio_ticks * absolute + (uint64_t)(frames_written / (double)jackd->sample_in_rate * TICKS_PER_SECOND_DBL);
+  else xtime = jackd->audio_ticks + (uint64_t)(frames_written / (double)jackd->sample_in_rate * TICKS_PER_SECOND_DBL);
   return xtime;
 }
 

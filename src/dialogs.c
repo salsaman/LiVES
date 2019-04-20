@@ -985,7 +985,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
   if (progress_count++ >= (mainw->is_rendering ? PROG_LOOP_VAL / 4 : PROG_LOOP_VAL)) {
     if (frames_done <= sfile->progress_end && sfile->progress_end > 0 && !mainw->effects_paused &&
         frames_done > 0) {
-      mainw->currticks = lives_get_relative_ticks();
+      mainw->currticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
       timesofar = (mainw->currticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
 
       fraction_done = (double)(frames_done - sfile->progress_start) / (double)(sfile->progress_end - sfile->progress_start + 1.);

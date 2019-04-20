@@ -57,7 +57,9 @@ static int package_version = 1; // version of this package
 #include "projectM-ConfigFile.h"
 #include "projectM-getConfigFilename.h"
 
-#define TARGET_FPS 30.
+#define TARGET_FPS 35.
+#define MESHSIZE 128
+#define DEF_TEXTURESIZE 1024
 
 static int copies = 0;
 
@@ -267,7 +269,7 @@ static void *worker(void *data) {
 
   register int i = 0;
 
-  float heightWidthRatio = (float)sd->height / (float)sd->width;
+  float hwratio = (float)sd->height / (float)sd->width;
 
   if (init_display(sd)) {
     sd->failed = true;
@@ -289,22 +291,25 @@ static void *worker(void *data) {
 
   atexit(do_exit);
 
-  std::string config_filename = getConfigFilename();
-  ConfigFile config(config_filename);
-
-  // can fail here
-  sd->globalPM = new projectM(config_filename);
-  settings = sd->globalPM->settings();
   settings.windowWidth = sd->width;
   settings.windowHeight = sd->height;
-  settings.meshX = 300;
-  settings.meshY = settings.meshX * heightWidthRatio;
-  settings.smoothPresetDuration = 3; // seconds
-  settings.presetDuration = 7; // seconds
-  settings.beatSensitivity = 0.8;
+  settings.meshX = MESHSIZE;
+  settings.meshY = settings.meshX * hwratio;
+  settings.fps = sd->fps;
+  settings.smoothPresetDuration = 2;
+  settings.presetDuration = 10;
+  settings.beatSensitivity = .5;
   settings.aspectCorrection = 1;
+  settings.softCutRatingsEnabled = 0;
   settings.shuffleEnabled = 1;
-  settings.softCutRatingsEnabled = 1; // ???
+  settings.presetURL = "/usr/share/projectM/presets";
+  settings.menuFontURL = "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf";
+  settings.titleFontURL = "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf";
+  settings.easterEgg = 1;
+  settings.textureSize = DEF_TEXTURESIZE;
+
+  // can fail here
+  sd->globalPM = new projectM(settings, 0);
 
   sd->textureHandle = sd->globalPM->initRenderToTexture();
 

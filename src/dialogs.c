@@ -2312,6 +2312,11 @@ boolean do_clipboard_fps_warning(void) {
 }
 
 
+boolean do_reload_set_query(void) {
+  return do_yesno_dialog(_("Current clips will be added to the clip set.\nIs that what you want ?\n"));
+}
+
+
 boolean do_yuv4m_open_warning(void) {
   char *msg;
   boolean resp;

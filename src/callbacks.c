@@ -267,6 +267,7 @@ void lives_exit(int signum) {
 
     if (mainw->leave_files && !mainw->fatal) {
       d_print(_("Saving as set %s..."), mainw->set_name);
+      mainw->suppress_dprint = TRUE;
     }
 
     cwd = lives_get_current_dir();
@@ -306,7 +307,6 @@ void lives_exit(int signum) {
 
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
-
 
       // TODO check why repeating this (A)
 
@@ -393,7 +393,6 @@ void lives_exit(int signum) {
 
     // TODO: check why repeating this (B)
 
-
     if (mainw->only_close) {
       mainw->suppress_dprint = TRUE;
       for (i = 1; i <= MAX_FILES; i++) {
@@ -408,9 +407,7 @@ void lives_exit(int signum) {
 
       if (!mainw->leave_files) cleanup_set_dir();
 
-
       // (B)
-
 
       mainw->suppress_dprint = FALSE;
       if (mainw->multitrack == NULL) resize(1);
@@ -4740,7 +4737,6 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
   } else {
     // saving as same name (or as new set)
-    g_print("HERE\n");
     dfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
     if (lives_mkdir_with_parents(dfile, capable->umask) == -1) {
       if (!check_dir_access(dfile)) {
@@ -4819,7 +4815,6 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             newval = lives_build_path(prefs->workdir, new_handle, NULL);
 
             lives_mv(oldval, newval);
-            g_print("moved from %s to %s\n", oldval, newval);
             lives_free(oldval);
             lives_free(newval);
 
@@ -4979,6 +4974,8 @@ char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_freep((void **)&set_name);
     } else {
       if (user_data == NULL) {
+	if (mainw->current_file != -1)
+	  if (!do_reload_set_query()) return NULL;
         reload_set(set_name);
         lives_free(set_name);
         return NULL;

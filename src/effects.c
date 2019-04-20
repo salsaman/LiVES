@@ -978,9 +978,11 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
     key = -key;
   }
 
-  new_rte = GU641 << (key - 1);
+  key--;
+  
+  new_rte = GU641 << (key);
 
-  if (key == EFFECT_NONE) {
+  if (key == (EFFECT_NONE - 1)) {
     // switch up/down keys to default (fps change)
     weed_deinit_all(FALSE);
   } else {
@@ -991,14 +993,14 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
     if (!(mainw->rte & new_rte)) {
       // switch is ON
       // WARNING - if we start playing because a generator was started, we block here
-      if (!(weed_init_effect(key - 1))) {
+      if (!(weed_init_effect(key))) {
         // ran out of instance slots, no effect assigned, or some other error
         // or gen started playback and then stopped
         pthread_mutex_lock(&mainw->event_list_mutex);
         if (mainw->rte & new_rte) mainw->rte ^= new_rte;
         pthread_mutex_unlock(&mainw->event_list_mutex);
-        if (rte_window != NULL) rtew_set_keych(key - 1, FALSE);
-        if (mainw->ce_thumbs) ce_thumbs_set_keych(key - 1, FALSE);
+        if (rte_window != NULL) rtew_set_keych(key, FALSE);
+        if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         mainw->osc_block = FALSE;
         return TRUE;
       }
@@ -1006,24 +1008,24 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
       if (!mainw->gen_started_play) { // should always be the case
         if (!(mainw->rte & new_rte)) mainw->rte |= new_rte;
 
-        mainw->last_grabbable_effect = key - 1;
-        if (rte_window != NULL) rtew_set_keych(key - 1, TRUE);
+        mainw->last_grabbable_effect = key;
+        if (rte_window != NULL) rtew_set_keych(key, TRUE);
         if (mainw->ce_thumbs) {
-          ce_thumbs_set_keych(key - 1, TRUE);
+          ce_thumbs_set_keych(key, TRUE);
 
           // if effect was auto (from ACTIVATE data connection), leave all param boxes
           // otherwise, remove any which are not "pinned"
-          if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key - 1, !mainw->fx_is_auto);
+          if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key, !mainw->fx_is_auto);
         }
       }
     } else {
       // effect is OFF
-      weed_deinit_effect(key - 1);
-      pthread_mutex_lock(&mainw->event_list_mutex);
+      filter_mutex_lock(key);
+      weed_deinit_effect(key);
       if (mainw->rte & new_rte) mainw->rte ^= new_rte;
-      pthread_mutex_unlock(&mainw->event_list_mutex);
-      if (rte_window != NULL) rtew_set_keych(key - 1, FALSE);
-      if (mainw->ce_thumbs) ce_thumbs_set_keych(key - 1, FALSE);
+      filter_mutex_unlock(key);
+      if (rte_window != NULL) rtew_set_keych(key, FALSE);
+      if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
     }
   }
 

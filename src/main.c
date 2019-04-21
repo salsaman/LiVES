@@ -7642,7 +7642,7 @@ void load_frame_image(int frame) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
     changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
 
-    if (!cfile->frameno && cfile->frames) cfile->frameno = 1;
+    if (!cfile->frameno && cfile->frames) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
     cfile->last_frameno = cfile->frameno;
 
     mainw->playing_file = new_file;

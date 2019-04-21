@@ -25,7 +25,6 @@
 #include "paramwindow.h"
 #include "ce_thumbs.h"
 
-static LiVESWidget *rte_window_back = NULL;
 static int old_rte_keys_virtual = 0;
 
 static LiVESWidget **key_checks;
@@ -1850,11 +1849,13 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
 
 
 static boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
+  old_rte_keys_virtual = prefs->rte_keys_virtual;
   if (user_data == NULL) {
-    rte_window_back = rte_window;
-    old_rte_keys_virtual = prefs->rte_keys_virtual;
+    // first time around we come here, and just hide the window
     lives_widget_hide(rte_window);
   } else {
+    // when we reshow it we check if the number of fx keys has changed. If so we come back to this branch
+    // and recreate the window from scratch
     lives_list_free_all(&hash_list);
     lives_list_free_all(&name_list);
     lives_list_free_all(&name_type_list);
@@ -1874,7 +1875,6 @@ static boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *even
     lives_free(conx_buttons);
     lives_free(clear_buttons);
   }
-  rte_window = NULL;
   return FALSE;
 }
 
@@ -2059,7 +2059,6 @@ static LiVESTreeModel *rte_window_fx_model(void) {
 
 
 LiVESWidget *create_rte_window(void) {
-  LiVESWidget *rte_window;
   LiVESWidget *table;
   LiVESWidget *hbox;
   LiVESWidget *hbox2;
@@ -2099,9 +2098,7 @@ LiVESWidget *create_rte_window(void) {
   winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
   winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
-  if (rte_window_back != NULL) {
-    rte_window = rte_window_back;
-    rte_window_back = NULL;
+  if (rte_window != NULL) {
     if (prefs->rte_keys_virtual != old_rte_keys_virtual) return refresh_rte_window();
     goto rte_window_ready;
   }
@@ -2380,11 +2377,6 @@ LiVESWidget *refresh_rte_window(void) {
 
 
 void on_assign_rte_keys_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  if (rte_window != NULL) {
-    on_rtew_ok_clicked(LIVES_BUTTON(dummy_radio), user_data);
-    return;
-  }
-
   rte_window = create_rte_window();
   rte_window_set_interactive(mainw->interactive);
   lives_widget_show(rte_window);

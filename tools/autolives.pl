@@ -315,7 +315,6 @@ while (1) {
     elsif ($action<15) {
 	# mess with effects
 	$nexteffectkey=int(rand($numeffectkeys)+1);
-	`$sendOMC /clip/select,$nextclip`;
 	if ($action<11) {
 	    # 6,7,8,9,10
 	    if ($nexteffectkey!=$key_to_avoid) {

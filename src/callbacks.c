@@ -4974,8 +4974,8 @@ char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_freep((void **)&set_name);
     } else {
       if (user_data == NULL) {
-	if (mainw->current_file != -1)
-	  if (!do_reload_set_query()) return NULL;
+        if (mainw->current_file != -1)
+          if (!do_reload_set_query()) return NULL;
         reload_set(set_name);
         lives_free(set_name);
         return NULL;

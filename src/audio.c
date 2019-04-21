@@ -2252,7 +2252,7 @@ boolean resync_audio(int frameno) {
   // or if we are looping a video selection
 
   // this is only active if "audio follows video rate/fps changes" is set
-  return FALSE;
+
   if (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
 
   // if recording external audio, we are intrinsically in sync

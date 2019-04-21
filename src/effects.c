@@ -979,7 +979,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
   }
 
   key--;
-  
+
   new_rte = GU641 << (key);
 
   if (key == (EFFECT_NONE - 1)) {

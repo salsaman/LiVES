@@ -1494,7 +1494,7 @@ reinit:
         lives_chdir(cwd, FALSE);
         lives_free(cwd);
         filter_mutex_unlock(key);
-	return FILTER_ERROR_COULD_NOT_REINIT;
+        return FILTER_ERROR_COULD_NOT_REINIT;
       }
 
       // need to set this before calling deinit
@@ -1536,7 +1536,7 @@ void weed_reinit_all(void) {
         mainw->osc_block = TRUE;
         if ((instance = key_to_instance[i][key_modes[i]]) == NULL) {
           mainw->osc_block = FALSE;
-	  filter_mutex_unlock(i);
+          filter_mutex_unlock(i);
           continue;
         }
         last_inst = instance;
@@ -3839,7 +3839,8 @@ void weed_apply_audio_effects(weed_plant_t *filter_map, float **abuf, int nbtrac
       fhash = weed_get_string_value(init_event, WEED_LEAF_FILTER, &error);
       filter = get_weed_filter(weed_get_idx_for_hashname(fhash, TRUE));
       lives_freep((void **)&fhash);
-      if (has_audio_chans_in(filter, FALSE) && !has_video_chans_in(filter, FALSE) && !has_video_chans_out(filter, FALSE)) {
+      if (has_audio_chans_in(filter, FALSE) && !has_video_chans_in(filter, FALSE) && !has_video_chans_out(filter, FALSE) &&
+          has_audio_chans_out(filter, FALSE)) {
         weed_apply_audio_instance(init_event, abuf, nbtracks, nchans, nsamps, arate, tc, vis);
       }
       // TODO *** - also run any pure data processing filters which feed into audio filters
@@ -6641,7 +6642,7 @@ boolean weed_init_effect(int hotkey) {
       if (mainw->agen_key != 0) {
         // we had an existing audio gen running - stop that one first
         int agen_key = mainw->agen_key - 1;
-	filter_mutex_lock(agen_key);
+        filter_mutex_lock(agen_key);
         weed_deinit_effect(agen_key);
 
         if ((rte_key_is_enabled(1 + agen_key))) {
@@ -6652,7 +6653,7 @@ boolean weed_init_effect(int hotkey) {
           }
           if (mainw->ce_thumbs) ce_thumbs_set_keych(agen_key, FALSE);
         }
-	filter_mutex_unlock(agen_key);
+        filter_mutex_unlock(agen_key);
       }
       is_audio_gen = TRUE;
     }
@@ -7745,7 +7746,7 @@ deinit4:
               if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, &error) == WEED_TRUE) goto deinit4;
             }
           }
-	  filter_mutex_unlock(fg_gen_to_start);
+          filter_mutex_unlock(fg_gen_to_start);
           fg_gen_to_start = -1;
           cfile->ext_src = NULL;
           mainw->osc_block = FALSE;
@@ -7791,7 +7792,7 @@ deinit4:
       if (key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]] == NULL) {
         // restart bg generator
         if (!weed_init_effect(bg_gen_to_start)) {
-	  filter_mutex_unlock(bg_gen_to_start);
+          filter_mutex_unlock(bg_gen_to_start);
           mainw->osc_block = FALSE;
           return TRUE;
         }
@@ -7853,7 +7854,7 @@ deinit5:
         mainw->blend_file = -1;
         if (rte_key_is_enabled(1 + ABS(bg_gen_to_start))) mainw->rte ^= (GU641 << ABS(bg_gen_to_start));
         mainw->osc_block = FALSE;
-	filter_mutex_unlock(bg_gen_to_start);
+        filter_mutex_unlock(bg_gen_to_start);
         return FALSE;
       }
       mainw->files[mainw->blend_file]->ext_src = inst;
@@ -8631,7 +8632,7 @@ boolean weed_delete_effectkey(int key, int mode) {
   int modekey = key;
 
   if (key_to_fx[key][mode] == -1) return FALSE;
-  
+
   filter_mutex_lock(key);
   if (key < FX_KEYS_MAX_VIRTUAL) free_key_defaults(key, mode);
 

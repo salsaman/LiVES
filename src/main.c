@@ -1117,6 +1117,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->scrap_pixbuf = NULL;
 
+  mainw->close_keep_frames = FALSE;
+
 #ifdef ENABLE_JACK
   mainw->jack_inited = FALSE;
 #endif
@@ -6912,7 +6914,7 @@ void load_frame_image(int frame) {
 
       lives_freep((void **)&cfile->op_dir);
 
-      if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->leave_files) {
+      if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->close_keep_frames) {
 #ifdef IS_MINGW
         // kill any active processes: for other OSes the backend does this
         lives_kill_subprocesses(cfile->handle, TRUE);

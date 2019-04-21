@@ -1114,6 +1114,7 @@ typedef struct {
 
   LiVESWidget *resize_menuitem;
 
+  boolean close_keep_frames; ///< special value for when generating to clipboard
   boolean only_close; ///< only close clips - do not exit
   volatile boolean is_exiting; ///< set during shutdown (inverse of only_close then)
 

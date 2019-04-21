@@ -117,19 +117,6 @@ void _lives_free(livespointer ptr) {
 }
 
 
-void filter_mutex_lock(int key) {
-  // lock a filter before setting the WEED_LEAF_VALUE of in_parameter or reading the WEED_LEAF_VALUE of an out_parameter
-  if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_lock(&mainw->data_mutex[key]);
-  //g_print ("lock %d\n",key);
-}
-
-
-void filter_mutex_unlock(int key) {
-  if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->data_mutex[key]);
-  //g_print ("unlock %d\n",key);
-}
-
-
 livespointer lives_memset(livespointer s, int c, size_t n) {
   return memset(s, c, n);
 }
@@ -263,6 +250,17 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions
   }
   return host_info;
 }
+
+#ifndef DEBUG_FILTER_MUTEXES
+LIVES_GLOBAL_INLINE void filter_mutex_lock(int key) {
+  if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_lock(&mainw->data_mutex[key]);
+}
+
+
+LIVES_GLOBAL_INLINE void filter_mutex_unlock(int key) {
+  if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->data_mutex[key]);
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // filter library functions
@@ -1446,11 +1444,11 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
 
   int error, retval, key = -1;
 
+  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+
   filter_mutex_lock(key);
 
 reinit:
-
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
 
   filter = weed_instance_get_filter(inst, FALSE);
 
@@ -3867,6 +3865,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, doubl
 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
+      filter_mutex_lock(i);
       if (!(rte_key_is_enabled(1 + i))) {
         // if anything is connected to ACTIVATE, the fx may be activated
         pconx_chain_data(i, key_modes[i]);
@@ -3874,11 +3873,6 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, doubl
       if (rte_key_is_enabled(1 + i)) {
         mainw->osc_block = TRUE;
 
-        // filter must not be deinited until we have processed it
-        if (pthread_mutex_trylock(&mainw->data_mutex[i])) {
-          mainw->osc_block = FALSE;
-          continue;
-        }
         if ((instance = key_to_instance[i][key_modes[i]]) == NULL) {
           filter_mutex_unlock(i);
           mainw->osc_block = FALSE;
@@ -3906,22 +3900,17 @@ apply_audio_inst2:
 
         if (mainw->pconx != NULL) {
           // chain any data pipelines
+          needs_reinit = pconx_chain_data(i, key_modes[i]);
 
-          if (!pthread_mutex_trylock(&mainw->data_mutex[i])) {
-            needs_reinit = pconx_chain_data(i, key_modes[i]);
-
-            // if anything is connected to ACTIVATE, the fx may be deactivated
-            if ((instance = key_to_instance[i][key_modes[i]]) == NULL) {
-              filter_mutex_unlock(i);
-              mainw->osc_block = FALSE;
-              continue;
-            }
-
-            if (needs_reinit) {
-              weed_reinit_effect(instance, FALSE);
-            }
-
+          // if anything is connected to ACTIVATE, the fx may be deactivated
+          if ((instance = key_to_instance[i][key_modes[i]]) == NULL) {
             filter_mutex_unlock(i);
+            mainw->osc_block = FALSE;
+            continue;
+          }
+
+          if (needs_reinit) {
+            weed_reinit_effect(instance, FALSE);
           }
         }
 
@@ -3931,7 +3920,6 @@ apply_audio_inst2:
           // chain any internal data pipelines for compound fx
           if (!pthread_mutex_trylock(&mainw->data_mutex[i])) {
             needs_reinit = pconx_chain_data_internal(instance);
-            filter_mutex_unlock(i);
             if (needs_reinit) {
               weed_reinit_effect(instance, FALSE);
             }
@@ -3958,7 +3946,7 @@ apply_audio_inst2:
         if (mainw->pconx != NULL && (filter_error == FILTER_NO_ERROR || filter_error == FILTER_INFO_REINITED)) {
           pconx_chain_data_omc(key_to_instance[i][key_modes[i]], i, key_modes[i]);
         }
-      }
+      } else filter_mutex_unlock(i);
     }
   }
 }
@@ -7850,15 +7838,16 @@ deinit5:
 
         }
         key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]] = NULL;
-        bg_gen_to_start = -1;
         mainw->blend_file = -1;
         if (rte_key_is_enabled(1 + ABS(bg_gen_to_start))) mainw->rte ^= (GU641 << ABS(bg_gen_to_start));
         mainw->osc_block = FALSE;
         filter_mutex_unlock(bg_gen_to_start);
+        bg_gen_to_start = -1;
         return FALSE;
       }
       mainw->files[mainw->blend_file]->ext_src = inst;
     }
+    filter_mutex_unlock(bg_gen_to_start);
   }
 
 setgui1:
@@ -7871,7 +7860,6 @@ setgui1:
     goto setgui1;
   }
 
-  filter_mutex_unlock(bg_gen_to_start);
   bg_gen_to_start = -1;
   mainw->osc_block = FALSE;
 
@@ -8505,16 +8493,19 @@ int weed_get_blend_factor(int hotkey) {
     mini = weed_get_int_value(paramtmpl, WEED_LEAF_MIN, &error);
     maxi = weed_get_int_value(paramtmpl, WEED_LEAF_MAX, &error);
     lives_free(in_params);
+    filter_mutex_unlock(hotkey);
     return (double)(vali - mini) / (double)(maxi - mini) * KEYSCALE;
   case WEED_HINT_FLOAT:
     vald = weed_get_double_value(in_param, WEED_LEAF_VALUE, &error);
     mind = weed_get_double_value(paramtmpl, WEED_LEAF_MIN, &error);
     maxd = weed_get_double_value(paramtmpl, WEED_LEAF_MAX, &error);
     lives_free(in_params);
+    filter_mutex_unlock(hotkey);
     return (vald - mind) / (maxd - mind) * KEYSCALE;
   case WEED_HINT_SWITCH:
     vali = weed_get_boolean_value(in_param, WEED_LEAF_VALUE, &error);
     lives_free(in_params);
+    filter_mutex_unlock(hotkey);
     return vali;
   }
   filter_mutex_unlock(hotkey);

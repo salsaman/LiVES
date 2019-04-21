@@ -446,4 +446,9 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot)
 
 int weed_general_error;
 
+#ifdef DEBUG_FILTER_MUTEXES
+#define filter_mutex_lock(key) {if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_lock(&mainw->data_mutex[key]); g_print ("lock %d at line %d in file %s\n",key,__LINE__,__FILE__);}
+#define filter_mutex_unlock(key) {if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->data_mutex[key]); g_print ("unlock %d at line %d in file %s\n\n",key,__LINE__,__FILE__);}
+#endif
+
 #endif

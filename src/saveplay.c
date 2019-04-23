@@ -2548,6 +2548,7 @@ void play_file(void) {
 #endif
 
     mainw->abufs_to_fill = 0;
+    lives_widget_context_update();
 
     //play until stopped or a stream finishes
     do {

@@ -7080,7 +7080,7 @@ void weed_deinit_effect(int hotkey) {
         if (mainw->jackd_read == NULL || !mainw->jackd_read->in_use) {
           mainw->jackd->in_use = FALSE; // deactivate writer
           jack_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
-          jack_time_reset(mainw->jackd_read, jack_get_time(mainw->jackd)); // ensure time continues monotonically
+          jack_time_reset(mainw->jackd_read, lives_jack_get_time(mainw->jackd)); // ensure time continues monotonically
           if (mainw->record) mainw->jackd_read->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
           mainw->jackd_read->is_paused = FALSE;
           mainw->jackd_read->in_use = TRUE;
@@ -7835,7 +7835,6 @@ deinit5:
             inst = next_inst;
             goto deinit5;
           }
-
         }
         key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]] = NULL;
         mainw->blend_file = -1;

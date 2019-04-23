@@ -110,7 +110,6 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
 
   weed_set_int_value(layer, WEED_LEAF_WIDTH, sfile->hsize /
                      weed_palette_get_pixels_per_macropixel(ldev->current_palette));
-
   weed_set_int_value(layer, WEED_LEAF_HEIGHT, sfile->vsize);
   weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, ldev->current_palette);
   weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_YCBCR); // TODO - handle bt.709
@@ -462,7 +461,6 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     status = unicap_enumerate_devices(NULL, &devices[i], i);
     if (!SUCCESS(status)) {
       if (i == 0) LIVES_INFO("Unicap failed to get any devices");
-      break;
     }
   }
 
@@ -483,13 +481,11 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     card_dialog = create_combo_dialog(1, (livespointer)devlist);
     response = lives_dialog_run(LIVES_DIALOG(card_dialog));
     lives_list_free(devlist);
+    lives_widget_destroy(card_dialog);
 
     if (response == LIVES_RESPONSE_CANCEL) {
-      lives_widget_destroy(card_dialog);
       return FALSE;
     }
-
-    lives_widget_destroy(card_dialog);
   } else {
     char *device = (char *)user_data;
     for (i = 0; i < dev_count; i++) {

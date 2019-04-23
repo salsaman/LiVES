@@ -644,5 +644,6 @@ void weed_desetup(void) {
     weed_free(statsd);
     statsd = NULL;
   }
+  inited = 0;
   std::cout << "ProjectM EXITING4" << std::endl;
 }

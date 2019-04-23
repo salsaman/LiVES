@@ -428,7 +428,7 @@ static int audio_process(nframes_t nframes, void *arg) {
   for (i = 0; i < jackd->num_output_channels; i++)
     out_buffer[i] = (float *) jack_port_get_buffer(jackd->output_port[i],
                     nframes);
-  if (mainw->agen_key == 0 || mainw->agen_needs_reinit || mainw->multitrack != NULL) {
+  if ((mainw->agen_key == 0 || mainw->agen_needs_reinit || mainw->multitrack != NULL) && jackd->in_use) {
     // if a plugin is generating audio we do not use cache_buffers, otherwise:
     if (jackd->read_abuf == -1) {
       // assign local copy from cache_buffers
@@ -1483,6 +1483,8 @@ int jack_driver_activate(jack_driver_t *jackd) {
 
   jackd->is_paused = FALSE;
 
+  jackd->usec_start = 0;
+
   d_print(_("Started jack audio subsystem.\n"));
 
   return 0;
@@ -1586,7 +1588,7 @@ jackreadactive:
 
   jackd->is_paused = FALSE;
 
-  jackd->audio_ticks = 0;
+  jackd->usec_start = 0;
 
   d_print(_("Started jack audio reader.\n"));
 
@@ -1688,8 +1690,10 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
 
 
 void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
-  mainw->currticks = jackd->audio_ticks = offset;
+  jackd->nframes_start = jack_last_frame_time(jackd) + (jack_nframes_t)((float)(offset / USEC_TO_TICKS) * (jack_get_sample_rate(
+                           jackd->client) / 1000000.));
   jackd->frames_written = 0;
+  mainw->currticks = offset;
   mainw->deltaticks = mainw->startticks = 0;
 }
 
@@ -1697,9 +1701,6 @@ void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
 uint64_t lives_jack_get_time(jack_driver_t *jackd) {
   // get the time in ticks since playback started
   volatile aserver_message_t *msg = jackd->msgq;
-  double frames_written;
-
-  int64_t xtime;
 
   if (msg != NULL && msg->command == ASERVER_CMD_FILE_SEEK) {
     boolean timeout;
@@ -1711,13 +1712,7 @@ uint64_t lives_jack_get_time(jack_driver_t *jackd) {
     lives_alarm_clear(alarm_handle);
   }
 
-  frames_written = jackd->frames_written;
-  if (frames_written < 0.) frames_written = 0.;
-
-  if (jackd->is_output) xtime = jackd->audio_ticks  + (uint64_t)(frames_written / (double)jackd->sample_out_rate *
-                                  TICKS_PER_SECOND_DBL);
-  else xtime = jackd->audio_ticks + (uint64_t)(frames_written / (double)jackd->sample_in_rate * TICKS_PER_SECOND_DBL);
-  return xtime;
+  return (uint64_t)((jack_last_frame_time(jackd) - jackd->nframes_start) * (1000000. / jack_get_sample_rate(jackd->client)) * USEC_TO_TICKS);
 }
 
 

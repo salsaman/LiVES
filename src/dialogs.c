@@ -503,7 +503,6 @@ int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
         exit(1);
       }
     }
-
   } while (response == LIVES_RESPONSE_ABORT);
 
   lives_freep((void **)&mytext);
@@ -606,6 +605,7 @@ char *ds_critical_msg(const char *dir, uint64_t dsval) {
   return msgx;
 }
 
+
 char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn) {
   char *msg;
   char *msgx;
@@ -630,6 +630,7 @@ void do_aud_during_play_error(void) {
   do_error_dialog_with_check_transient(_("Audio players cannot be switched during playback."),
                                        TRUE, 0, LIVES_WINDOW(prefsw->prefs_dialog));
 }
+
 
 void do_memory_error_dialog(void) {
   do_error_dialog(
@@ -715,6 +716,7 @@ boolean check_backend_return(lives_clip_t *sfile) {
 
   return TRUE;
 }
+
 
 void pump_io_chan(LiVESIOChannel *iochan) {
   // pump data from stdout to textbuffer
@@ -1630,14 +1632,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       mainw->rec_avel = 1.;
       mainw->rec_aseek = 0;
     }
-  }
-  if (prefs->audio_player == AUD_PLAYER_JACK && ((mainw->jackd != NULL && mainw->multitrack != NULL &&
-      !mainw->multitrack->is_rendering && cfile->achans > 0) ||
-      ((prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read != NULL) ||
-       mainw->agen_key != 0))) {
-    // have to set this here as we don't do a seek in multitrack, or when playing external audio, or from an audio gen
-    mainw->jackd->audio_ticks = mainw->offsetticks;
-    mainw->jackd->frames_written = 0;
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO

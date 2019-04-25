@@ -1,6 +1,6 @@
 // effects-data.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2018 (salsaman+lives@gmail.com)
+// (c) G. Finch 2005 - 2019 (salsaman+lives@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -655,6 +655,7 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
       if (inst != NULL) filter = weed_instance_get_filter(inst, TRUE); // inst could be NULL if we connected to "Activated"
       else filter = NULL;
     } else {
+      inst = NULL;
       filter = rte_keymode_get_filter(pconx->okey + 1, pconx->omode);
       if (filter == NULL) {
         pconx = pconx->next;
@@ -680,7 +681,7 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
               active_dummy = weed_plant_new(WEED_PLANT_PARAMETER);
               weed_set_plantptr_value(active_dummy, WEED_LEAF_TEMPLATE, NULL);
             }
-            if (!use_filt) weed_set_boolean_value(active_dummy, WEED_LEAF_VALUE, inst != NULL);
+            if (inst != NULL) weed_set_boolean_value(active_dummy, WEED_LEAF_VALUE, inst != NULL);
             param = active_dummy;
             pthread_mutex_unlock(&mainw->fxd_active_mutex);
           } else {
@@ -699,11 +700,13 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
           if (omode != NULL) *omode = pconx->omode;
           if (opnum != NULL) *opnum = pconx->params[i];
           if (autoscale != NULL) *autoscale = pconx->autoscale[j];
+          weed_instance_unref(inst);
           return param;
         }
       }
     }
     pconx = pconx->next;
+    if (inst != NULL) weed_instance_unref(inst);
   }
 
   return NULL;
@@ -1373,6 +1376,8 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
 
   register int i, j;
 
+  if (inst == NULL) return 0;
+
   // check for any inkeys == FX_DATA_KEY_OMC_MACRO and matching okey, omode
   // for each match we construct a string and send it to the OMC learner
 
@@ -1524,7 +1529,7 @@ boolean pconx_chain_data(int key, int mode) {
     }
   }
   if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams != NULL) lives_free(inparams);
-
+  if (inst != NULL) weed_instance_unref(inst);
   return reinit_inst;
 }
 
@@ -2008,6 +2013,7 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
 
       filter = weed_instance_get_filter(inst, TRUE);
     } else {
+      inst = NULL;
       filter = rte_keymode_get_filter(cconx->okey + 1, cconx->omode);
       if (filter == NULL) {
         cconx = cconx->next;
@@ -2015,6 +2021,7 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
       }
     }
     if (!weed_plant_has_leaf(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) {
+      weed_instance_unref(inst);
       cconx = cconx->next;
       continue;
     }
@@ -2042,11 +2049,13 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
           if (okey != NULL) *okey = cconx->okey;
           if (omode != NULL) *omode = cconx->omode;
           if (ocnum != NULL) *ocnum = cconx->chans[i];
+          weed_instance_unref(inst);
           return channel;
         }
       }
     }
     cconx = cconx->next;
+    weed_instance_unref(inst);
   }
 
   return NULL;
@@ -2181,6 +2190,7 @@ boolean cconx_chain_data(int key, int mode) {
       filter_mutex_unlock(key);
     }
   }
+  weed_instance_unref(inst);
   return needs_reinit;
 }
 

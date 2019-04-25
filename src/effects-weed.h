@@ -255,8 +255,9 @@ char *cd_to_plugin_dir(weed_plant_t *filter);
 boolean weed_init_effect(int hotkey); ///< hotkey starts at 1
 void weed_deinit_effect(int hotkey); ///< hotkey starts at 1
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
-void weed_instance_ref(weed_plant_t *inst);
-void weed_instance_unref(weed_plant_t *inst);
+int _wood_instance_ref(weed_plant_t *inst);
+int _wood_instance_unref(weed_plant_t *inst);
+weed_plant_t *_wood_instance_obtain(int line, char *file, int key, int mode);
 void weed_in_parameters_free(weed_plant_t *inst);
 void weed_in_params_free(weed_plant_t **parameters, int num_parameters);
 void add_param_connections(weed_plant_t *inst);
@@ -359,7 +360,7 @@ char *rte_keymode_get_type(int key, int mode) WARN_UNUSED;  ///< returns a strin
 lives_fx_cat_t rte_keymode_get_category(int key, int mode);
 #endif
 
-weed_plant_t *rte_keymode_get_instance(int key, int mode); ///< returns filter_instance bound to key/mode (or NULL)
+weed_plant_t *rte_keymode_get_instance(int key, int mode); ///< returns refcounted filter_instance bound to key/mode (or NULL)
 weed_plant_t *rte_keymode_get_filter(int key, int mode); ///< returns filter_class bound to key/mode (or NULL)
 
 boolean weed_delete_effectkey(int key, int mode);  ///< unbinds a filter_class from a key/mode
@@ -370,7 +371,7 @@ int weed_add_effectkey_by_idx(int key, int idx);  ///< see description
 int rte_key_getmode(int key);  ///< returns current active mode for a key (or -1)
 int rte_key_getmaxmode(int key); ///< returns highest mode which is set
 
-weed_plant_t *get_new_inst_for_keymode(int key, int mode); ///< get new inst (during recording playback)
+weed_plant_t *get_new_inst_for_keymode(int key, int mode); ///< get new refcounted inst (during recording playback)
 
 boolean rte_key_setmode(int key, int newmode);  ///< set mode for a given key; if key==0 then the active key is used
 
@@ -446,9 +447,26 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot)
 
 int weed_general_error;
 
+//#define DEBUG_FILTER_MUTEXES
 #ifdef DEBUG_FILTER_MUTEXES
 #define filter_mutex_lock(key) {if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_lock(&mainw->data_mutex[key]); g_print ("lock %d at line %d in file %s\n",key,__LINE__,__FILE__);}
 #define filter_mutex_unlock(key) {if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->data_mutex[key]); g_print ("unlock %d at line %d in file %s\n\n",key,__LINE__,__FILE__);}
+#endif
+
+#ifdef DEBUG_REFCOUNT
+#define weed_instance_ref(a) {g_print ("ref %p at line %d in file %s\n",a,__LINE__,__FILE__); _weed_instance_ref(a);}
+#define weed_instance_unref(a) {g_print ("unref %p at line %d in file %s\n",a,__LINE__,__FILE__); _weed_instance_unref(a);}
+#define weed_instance_obtain(a,b) _weed_instance_obtain(__LINE__, __FILE__, a, b)
+#endif
+
+int _weed_instance_ref(weed_plant_t *inst);
+int _weed_instance_unref(weed_plant_t *inst);
+weed_plant_t *_weed_instance_obtain(int line, char *file, int key, int mode);
+
+#ifndef DEBUG_REFCOUNT
+int weed_instance_ref(weed_plant_t *inst);
+int weed_instance_unref(weed_plant_t *inst);
+weed_plant_t *weed_instance_obtain(int key, int mode);
 #endif
 
 #endif

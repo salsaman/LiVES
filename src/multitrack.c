@@ -1247,6 +1247,7 @@ static void draw_aparams(lives_mt *mt, LiVESWidget *eventbox, lives_painter_t *c
 
   if (offset_end < 0 || offset_start > lives_widget_get_allocation_width(eventbox)) {
     lives_free(in_params);
+    weed_instance_unref(inst);
     return;
   }
 
@@ -1308,6 +1309,9 @@ static void draw_aparams(lives_mt *mt, LiVESWidget *eventbox, lives_painter_t *c
       plist = plist->next;
     }
   }
+
+  weed_instance_unref(inst);
+  weed_instance_unref(inst);
 
   lives_painter_stroke(cr);
   lives_painter_surface_flush(lives_painter_get_target(cr));
@@ -3016,6 +3020,8 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
           // this instance will be freed in deinit_render_effects(), so we need to keep the vanilla instance around so it can be freed eventually in rfx_free()
 
+          // NOTE: this may be uneccessary now that we use refcounting for instances
+
           if (weed_plant_has_leaf(mt->init_event, WEED_LEAF_HOST_TAG)) {
             char *keystr = weed_get_string_value(mt->init_event, WEED_LEAF_HOST_TAG, &error);
             int key = atoi(keystr) + 1;
@@ -3028,6 +3034,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
               weed_leaf_copy((weed_plant_t *)mt->current_rfx->source, WEED_LEAF_IN_PARAMETERS, vanilla_inst, WEED_LEAF_IN_PARAMETERS);
               mt->solo_inst = mt->current_rfx->source;  // TODO: add a checkbutton for this
               mt->preview_layer = weed_get_int_value(mt->init_event, WEED_LEAF_OUT_TRACKS, &error); // want to see the image from first output track
+              weed_instance_unref((weed_plant_t *)mt->current_rfx->source);
             }
           }
         }

@@ -77,7 +77,6 @@ typedef struct lives_osc_t {
 void lives_osc_free(lives_osc *o);
 void lives_osc_dump();
 
-
 boolean lives_osc_act(OSCbuf *msg);
 
 boolean lives_osc_init(uint32_t osc_udp_port);
@@ -85,9 +84,8 @@ boolean lives_osc_poll(livespointer data);
 void lives_osc_end(void);
 boolean lives_osc_notify(int msgtype, const char *msgstring);
 boolean lives_osc_notify_success(const char *msg);
-boolean lives_osc_notify_failure(void);
+boolean lives_osc_notify_failure(void) WARN_UNUSED;
 void lives_osc_notify_cancel(void);
-
 
 #endif //HAS_LIVES_OSC_H
 #endif //ENABLE_OSC

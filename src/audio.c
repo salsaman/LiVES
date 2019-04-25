@@ -2695,6 +2695,7 @@ getaud1:
 
     if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_RATE) && weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_RATE, &error) != arate) {
       // TODO - resample if audio rate is wrong
+      weed_instance_unref(inst);
       return FALSE;
     }
 
@@ -2702,7 +2703,10 @@ getaud1:
     if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_CHANNELS)) xnchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_CHANNELS, &error);
 
     // stop video thread from possibly interpolating/deiniting
-    if (pthread_mutex_trylock(&mainw->interp_mutex)) return FALSE;
+    if (pthread_mutex_trylock(&mainw->interp_mutex)) {
+      weed_instance_unref(inst);
+      return FALSE;
+    }
 
     // make sure values match, else we need to reinit the plugin
     if (xnchans != weed_get_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, &error) ||
@@ -2724,6 +2728,7 @@ getaud1:
       // allow main thread to complete the reinit so we do not delay; just return silence
       memset(fbuffer, 0, nsamps * nchans * sizeof(float));
       pthread_mutex_unlock(&mainw->interp_mutex);
+      weed_instance_unref(inst);
       return FALSE;
     }
 
@@ -2740,6 +2745,7 @@ getaud1:
         // allow main thread to complete the reinit so we do not delay; just return silence
         memset(fbuffer, 0, nsamps * nchans * sizeof(float));
         pthread_mutex_unlock(&mainw->interp_mutex);
+        weed_instance_unref(inst);
         return FALSE;
       }
     }
@@ -2750,12 +2756,16 @@ getaud1:
 
   if ((*process_func)(inst, tc) == WEED_ERROR_PLUGIN_INVALID) {
     pthread_mutex_unlock(&mainw->interp_mutex);
+    weed_instance_unref(inst);
     return FALSE;
   }
   pthread_mutex_unlock(&mainw->interp_mutex);
 
   if (channel != NULL && aint == WEED_TRUE) {
-    if (!float_deinterleave(fbuffer, nsamps, nchans)) return FALSE;
+    if (!float_deinterleave(fbuffer, nsamps, nchans)) {
+      weed_instance_unref(inst);
+      return FALSE;
+    }
   }
 
   if (xnchans == 1 && nchans == 2) {
@@ -2770,6 +2780,8 @@ getaud1:
   }
 
   mainw->agen_samps_count += nsamps;
+
+  weed_instance_unref(inst);
 
   return TRUE;
 }
@@ -2786,6 +2798,7 @@ void reinit_audio_gen(void) {
     mainw->agen_needs_reinit = FALSE;
     mainw->agen_key = agen_key;
   }
+  weed_instance_unref(inst);
 }
 
 
@@ -3106,6 +3119,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   offs = samps - alen;
 
   scale = (float)trate / (float)abuf->arate;
+  alen = (int)((float)alen * scale);
 
   // malloc audio_data
   dst = (float *)lives_malloc(alen * tchans * sizeof(float));

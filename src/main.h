@@ -791,8 +791,7 @@ typedef struct {
   char *myname_full;
   char *myname;
 
-  boolean has_stderr;
-
+  int stdout;
   int nmonitors;
 
   int ncpus;

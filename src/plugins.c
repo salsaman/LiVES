@@ -2933,9 +2933,13 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     dest->props = src->props;
     dest->source_type = src->source_type;
     dest->source = src->source;
+    if (dest->source_type == LIVES_RFX_SOURCE_WEED && dest->source != NULL) weed_instance_ref(dest->source);
     dest->is_template = src->is_template;
     lives_memcpy(dest->delim, src->delim, 2);
     if (!full) return;
+
+    // TODO
+
   }
 
 
@@ -2970,7 +2974,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       free(rfx->extra);
     }
     if (rfx->source_type == LIVES_RFX_SOURCE_WEED && rfx->source != NULL) {
-      weed_instance_unref((weed_plant_t *)rfx->source);
+      weed_instance_unref((weed_plant_t *)rfx->source); // remove the ref we held
     }
   }
 
@@ -3534,6 +3538,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
   lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
     // return an RFX for a weed effect; set rfx->source to an INSTANCE of the filter (first instance for compound fx)
+    // instance should be refcounted
     int error;
     weed_plant_t *filter, *inst;
 
@@ -3547,6 +3552,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       filter = plant;
       inst = weed_instance_from_filter(filter);
       // init and deinit the effect to allow the plugin to hide parameters, etc.
+      // rfx will inherit the refcount
       weed_reinit_effect(inst, TRUE);
       rfx->is_template = TRUE;
     }

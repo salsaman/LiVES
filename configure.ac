@@ -159,7 +159,7 @@ if test "x$disable_doxygen" != "xyes" ; then
 
 AC_PATH_PROG(DOXYGEN, doxygen, no)
 
-if test x$DOXYGEN = xno; then
+if test $DOXYGEN = no; then
    echo "Cannot find doxygen, will not build sourcecode documentation"
 fi
 
@@ -168,7 +168,7 @@ else
    DOXYGEN=no
 fi
 
-AM_CONDITIONAL(HAVE_DOXYGEN, test x$DOXYGEN != xno)
+AM_CONDITIONAL(HAVE_DOXYGEN, test $DOXYGEN != no)
 
 
 dnl OSC

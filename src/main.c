@@ -429,6 +429,8 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->interp_mutex, &mattr);
 
+  pthread_mutex_init(&mainw->instance_ref_mutex, &mattr);
+
   pthread_mutex_init(&mainw->abuf_mutex, NULL);
 
   pthread_mutex_init(&mainw->abuf_frame_mutex, NULL);
@@ -2291,7 +2293,7 @@ capability *get_capabilities(void) {
   capable->has_encoder_plugins = FALSE;
   capable->has_python = FALSE;
   capable->python_version = 0;
-  capable->has_stderr = TRUE;
+  capable->stdout = STDOUT_FILENO;
   capable->has_gconftool_2 = FALSE;
   capable->has_xdg_screensaver = FALSE;
 
@@ -2581,7 +2583,6 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 /////////////////////////////////
 
-#include "license.h"
 
 static boolean lives_startup(livespointer data) {
 #ifdef GUI_GTK
@@ -2926,14 +2927,12 @@ static boolean lives_startup(livespointer data) {
     on_capture2_activate();  // exits
   }
 
-#ifdef NOTTY
-  if (!mainw->foreign) {
-    close(2);
-    capable->has_stderr = FALSE;
-  }
-#endif
-
   do_start_messages();
+  //#define NOTTY
+#ifdef NOTTY
+  capable->stdout = dup(STDOUT_FILENO);
+  close(STDOUT_FILENO);
+#endif
 
   lives_list_free_all(&mainw->cached_list);
 

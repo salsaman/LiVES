@@ -1817,14 +1817,6 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
     weed_reinit_effect(inst, TRUE);
     apply_key_defaults(inst, key, mode);
     weed_reinit_effect(inst, TRUE);
-  } else {
-    // or use the existing instance if available
-    int error;
-    weed_plant_t *ninst = inst;
-    do {
-      weed_instance_ref(ninst);
-    } while (weed_plant_has_leaf(ninst, WEED_LEAF_HOST_NEXT_INSTANCE) &&
-             (ninst = weed_get_plantptr_value(ninst, WEED_LEAF_HOST_NEXT_INSTANCE, &error)) != NULL);
   }
 
   if (fx_dialog[1] != NULL) {
@@ -1833,7 +1825,7 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
     on_paramwindow_cancel_clicked2(NULL, rfx);
   }
 
-  rfx = weed_to_rfx(inst, FALSE);
+  rfx = weed_to_rfx(inst, FALSE); // rfx inherits the refcount
   rfx->min_frames = -1;
   keyw = key;
   modew = mode;
@@ -2459,7 +2451,7 @@ void restore_pwindow(lives_rfx_t *rfx) {
 void update_pwindow(int key, int i, LiVESList *list) {
   // called only from weed_set_blend_factor() and from setting param in ce_thumbs
 
-  const weed_plant_t *inst;
+  weed_plant_t *inst;
   lives_rfx_t *rfx;
   int keyw, modew;
 
@@ -2468,6 +2460,7 @@ void update_pwindow(int key, int i, LiVESList *list) {
     modew = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode"));
     if (key == keyw) {
       if ((inst = rte_keymode_get_instance(key + 1, modew)) == NULL) return;
+      weed_instance_unref(inst);
       rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
       mainw->block_param_updates = TRUE;
       set_param_from_list(list, &rfx->params[i], 0, TRUE, TRUE);
@@ -2475,6 +2468,7 @@ void update_pwindow(int key, int i, LiVESList *list) {
     }
   }
 }
+
 
 void rte_set_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int idx = LIVES_POINTER_TO_INT(user_data);

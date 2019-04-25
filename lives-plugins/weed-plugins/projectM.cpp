@@ -283,12 +283,6 @@ static void *worker(void *data) {
     return NULL;
   }
 
-  int new_stdout = dup(1);
-  int new_stderr = dup(2);
-
-  close(1);
-  close(2);
-
   atexit(do_exit);
 
   settings.windowWidth = sd->width;
@@ -365,9 +359,6 @@ static void *worker(void *data) {
   }
 
   if (sd->globalPM != NULL) delete(sd->globalPM);
-
-  dup2(new_stdout, 1);
-  dup2(new_stderr, 2);
 
   SDL_Quit();
   return NULL;

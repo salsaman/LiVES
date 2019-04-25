@@ -1,6 +1,6 @@
 // ce_thumbs.c
 // LiVES
-// (c) G. Finch 2013 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2013 - 2019 <salsaman+lives@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -464,7 +464,7 @@ void end_ce_thumb_mode(void) {
 
 void ce_thumbs_add_param_box(int key, boolean remove) {
   // when an effect with params is applied, show the parms in a box
-  weed_plant_t *inst, *ninst;
+  weed_plant_t *inst;
   lives_rfx_t *rfx;
 
   LiVESWidget *vbox;
@@ -475,7 +475,6 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   char *fname, *tmp, *tmp2;
 
   int mode = rte_key_getmode(key + 1);
-  int error;
 
   if (key >= rte_keys_virtual) return;
 
@@ -486,15 +485,10 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
     ce_thumbs_remove_param_boxes(FALSE);
   }
 
-  ninst = inst = rte_keymode_get_instance(key + 1, mode);
+  inst = rte_keymode_get_instance(key + 1, mode);
 
-  rfx = weed_to_rfx(inst, FALSE);
+  rfx = weed_to_rfx(inst, FALSE); // rfx will inherit the refcount
   rfx->min_frames = -1;
-
-  do {
-    weed_instance_ref(ninst);
-  } while (weed_plant_has_leaf(ninst, WEED_LEAF_HOST_NEXT_INSTANCE) &&
-           (ninst = weed_get_plantptr_value(ninst, WEED_LEAF_HOST_NEXT_INSTANCE, &error)) != NULL);
 
   // here we just check if we have any params to display
   if (!make_param_box(NULL, rfx)) {
@@ -636,6 +630,7 @@ void ce_thumbs_reset_combo(int key) {
 
   LiVESList *fxlist = NULL;
   int mode;
+
   register int j;
 
   if (key >= rte_keys_virtual) return;
@@ -644,11 +639,15 @@ void ce_thumbs_reset_combo(int key) {
   }
   lives_combo_populate(LIVES_COMBO(fxcombos[key]), fxlist);
   if (fxlist != NULL) {
+    weed_plant_t *inst;
     lives_widget_set_sensitive(key_checks[key], TRUE);
     lives_list_free_all(&fxlist);
     mode = rte_key_getmode(key + 1);
     ce_thumbs_set_mode_combo(key, mode);
-    if (rte_keymode_get_instance(key + 1, mode) != NULL) ce_thumbs_add_param_box(key, TRUE);
+    if ((inst = rte_keymode_get_instance(key + 1, mode)) != NULL) {
+      ce_thumbs_add_param_box(key, TRUE);
+      weed_instance_unref(inst);
+    }
   } else {
     lives_widget_set_sensitive(key_checks[key], FALSE);
     lives_combo_set_active_string(LIVES_COMBO(fxcombos[key]), "");

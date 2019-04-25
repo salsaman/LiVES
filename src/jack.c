@@ -1483,7 +1483,7 @@ int jack_driver_activate(jack_driver_t *jackd) {
 
   jackd->is_paused = FALSE;
 
-  jackd->usec_start = 0;
+  jackd->nframes_start = 0;
 
   d_print(_("Started jack audio subsystem.\n"));
 
@@ -1588,7 +1588,7 @@ jackreadactive:
 
   jackd->is_paused = FALSE;
 
-  jackd->usec_start = 0;
+  jackd->nframes_start = 0;
 
   d_print(_("Started jack audio reader.\n"));
 
@@ -1690,7 +1690,7 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
 
 
 void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
-  jackd->nframes_start = jack_last_frame_time(jackd) + (jack_nframes_t)((float)(offset / USEC_TO_TICKS) * (jack_get_sample_rate(
+  jackd->nframes_start = jack_last_frame_time(jackd->client) + (jack_nframes_t)((float)(offset / USEC_TO_TICKS) * (jack_get_sample_rate(
                            jackd->client) / 1000000.));
   jackd->frames_written = 0;
   mainw->currticks = offset;
@@ -1712,7 +1712,8 @@ uint64_t lives_jack_get_time(jack_driver_t *jackd) {
     lives_alarm_clear(alarm_handle);
   }
 
-  return (uint64_t)((jack_last_frame_time(jackd) - jackd->nframes_start) * (1000000. / jack_get_sample_rate(jackd->client)) * USEC_TO_TICKS);
+  return (uint64_t)((jack_last_frame_time(jackd->client) - jackd->nframes_start) * (1000000. / jack_get_sample_rate(
+                      jackd->client)) * USEC_TO_TICKS);
 }
 
 

@@ -881,27 +881,27 @@ typedef enum {
 } lives_expand_t;
 
 typedef struct {
-  boolean no_gui; // show nothing !
-  boolean swap_label; // swap label/widget position
-  boolean pack_end;
-  boolean line_wrap; // line wrapping for labels
-  boolean mnemonic_label; // if underscore in label text should be mnemonic accelerator
-  boolean non_modal; // non-modal for dialogs
-  lives_expand_t expand; // whether spin,check,radio buttons should expand
-  boolean apply_theme; // whether to apply theming to widget
-  double scale; // scale factor for all sizes
-  int packing_width; // default should be W_PACKING_WIDTH
-  int packing_height; // default should be W_PACKING_HEIGHT
-  int border_width; // default should be W_BORDER_WIDTH
-  int filler_len; // length of extra "fill" between widgets
-  LiVESWidget *last_label; // label widget of last standard widget (spin,radio,check,entry,combo) [readonly]
-  LiVESJustification justify; // justify for labels
-  LiVESJustification default_justify;
-  char **image_filter; /// NULL or NULL terminated list of image extensions which can be loaded
-  char *title_prefix; // Text which is prepended to window titles, etc.
-  int monitor;
-  LiVESXScreen *screen;
-  boolean show_button_images;
+  boolean no_gui; ///< show nothing !
+  boolean swap_label; ///< swap label/widget position
+  boolean pack_end; ///< pack widget at end or start
+  boolean line_wrap; ///< line wrapping for labels
+  boolean mnemonic_label; ///< if underscore in label text should be mnemonic accelerator
+  boolean non_modal; ///< non-modal for dialogs
+  lives_expand_t expand; ///< how much space to apply between widgets
+  boolean apply_theme; ///< whether to apply theming to widget
+  double scale; ///< scale factor for all sizes
+  int packing_width; ///< horizontal pixels between widgets
+  int packing_height; ///< vertical pixels between widgets
+  int border_width; ///< border width in pixels
+  int filler_len; ///< length of extra "fill" between widgets
+  LiVESWidget *last_label; ///< label widget of last standard widget (spin,radio,check,entry,combo) [readonly]
+  LiVESJustification justify; ///< justify for labels
+  LiVESJustification default_justify; ///< default value
+  char **image_filter; ///</ NULL or NULL terminated list of image extensions which can be loaded
+  char *title_prefix; ///< Text which is prepended to window titles, etc.
+  int monitor; ///< monitor we are displaying on
+  LiVESXScreen *screen; ///< screen we are displaying on
+  boolean show_button_images; ///< whether to show small images in buttons or not
 } widget_opts_t;
 
 widget_opts_t widget_opts;
@@ -909,27 +909,27 @@ widget_opts_t widget_opts;
 #ifdef NEED_DEF_WIDGET_OPTS
 
 const widget_opts_t def_widget_opts = {
-  FALSE, // no_gui
-  FALSE, // swap_label
-  FALSE, //pack_end
-  FALSE, // line_wrap
-  TRUE, // mnemonic_label
-  FALSE, // non_modal
-  LIVES_EXPAND_DEFAULT, // default expand
-  FALSE, // no themeing
-  1.0, // default scale
-  W_PACKING_WIDTH, // def packing width
-  W_PACKING_HEIGHT, // def packing height
-  W_BORDER_WIDTH, // def border width
-  W_FILL_LENGTH, // def fill width (in pixels)
-  NULL, // last_label
-  LIVES_JUSTIFY_LEFT, // justify
-  LIVES_JUSTIFY_LEFT, // default justify
-  NULL, // image_filter
-  "", // title_prefix
-  0, // monitor
-  NULL, // screen
-  FALSE // show button images
+  FALSE, ///< no_gui
+  FALSE, ///< swap_label
+  FALSE, ///<pack_end
+  FALSE, ///< line_wrap
+  TRUE, ///< mnemonic_label
+  FALSE, ///< non_modal
+  LIVES_EXPAND_DEFAULT, ///< default expand
+  FALSE, ///< no themeing
+  1.0, ///< default scale
+  W_PACKING_WIDTH, ///< def packing width
+  W_PACKING_HEIGHT, ///< def packing height
+  W_BORDER_WIDTH, ///< def border width
+  W_FILL_LENGTH, ///< def fill width (in pixels)
+  NULL, ///< last_label
+  LIVES_JUSTIFY_LEFT, ///< justify
+  LIVES_JUSTIFY_LEFT, ///< default justify
+  NULL, ///< image_filter
+  "", ///< title_prefix
+  0, ///< monitor
+  NULL, ///< screen
+  FALSE ///< show button images
 };
 
 #else

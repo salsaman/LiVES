@@ -2964,7 +2964,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
   weed_plant_t *next_frame_event, *return_event;
   weed_plant_t *filter;
-  weed_plant_t *inst;
+  weed_plant_t *inst, *orig_inst;
 
   weed_plant_t **citmpl = NULL, **cotmpl = NULL;
   weed_plant_t **bitmpl = NULL, **botmpl = NULL;
@@ -3225,7 +3225,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       }
 
       // reinit effect with saved parameters
-      inst = rte_keymode_get_instance(key + 1, 0);
+      orig_inst = inst = rte_keymode_get_instance(key + 1, 0);
 
       if (weed_plant_has_leaf(next_event, WEED_LEAF_IN_PARAMETERS)) {
         pchains[key] = weed_get_voidptr_array(next_event, WEED_LEAF_IN_PARAMETERS, &error);
@@ -3288,7 +3288,7 @@ filterinit1:
         inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
         goto filterinit1;
       }
-
+      weed_instance_unref(orig_inst);
     }
     break;
 
@@ -3311,9 +3311,10 @@ filterinit1:
 
       if (process_audio && !is_pure_audio(filter, FALSE)) break;
 
-      if (rte_keymode_get_instance(key + 1, 0) != NULL) {
+      if ((inst = rte_keymode_get_instance(key + 1, 0)) != NULL) {
         weed_deinit_effect(key);
         weed_delete_effectkey(key + 1, 0);
+        weed_instance_unref(inst);
       }
       // no freep !
       if (pchains[key] != NULL) lives_free(pchains[key]);
@@ -3354,7 +3355,7 @@ lives_render_error_t render_events(boolean reset) {
   weed_plant_t *filter;
   weed_plant_t **citmpl = NULL, **cotmpl = NULL;
   weed_plant_t **bitmpl = NULL, **botmpl = NULL;
-  weed_plant_t *inst;
+  weed_plant_t *inst, *orig_inst;
   weed_plant_t *next_frame_event;
   static weed_plant_t *event, *eventnext;
 
@@ -3866,7 +3867,7 @@ lives_render_error_t render_events(boolean reset) {
       }
 
       // reinit effect with saved parameters
-      inst = rte_keymode_get_instance(key + 1, 0);
+      orig_inst = inst = rte_keymode_get_instance(key + 1, 0);
 
       if (weed_plant_has_leaf(event, WEED_LEAF_IN_PARAMETERS)) {
         pchains[key] = weed_get_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, &weed_error);
@@ -3907,7 +3908,6 @@ filterinit2:
             lives_free(cwd);
           }
           set_param_gui_readonly(inst);
-
         }
 
         weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
@@ -3931,6 +3931,7 @@ filterinit2:
         inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &weed_error);
         goto filterinit2;
       }
+      weed_instance_unref(orig_inst);
 
       break;
     case WEED_EVENT_HINT_FILTER_DEINIT:
@@ -3947,13 +3948,16 @@ filterinit2:
       key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, &weed_error);
       key = atoi(key_string);
       lives_free(key_string);
-      if (rte_keymode_get_instance(key + 1, 0) != NULL) {
+      filter_mutex_lock(key);
+      if ((inst = rte_keymode_get_instance(key + 1, 0)) != NULL) {
         weed_deinit_effect(key);
         weed_delete_effectkey(key + 1, 0);
+        weed_instance_unref(inst);
       }
       // no freep !
       if (pchains[key] != NULL) lives_free(pchains[key]);
       pchains[key] = NULL;
+      filter_mutex_unlock(key);
       break;
     case WEED_EVENT_HINT_PARAM_CHANGE:
       break;
@@ -4704,7 +4708,9 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
               matrix[in_tracks[0] + nbtracks][j] *= (1. - trans);
               matrix[out_tracks[0] + nbtracks][j] = matrix[in_tracks[0] + nbtracks][j] + matrix[in_tracks[1] + nbtracks][j];
             }
-            weed_plant_free(inst);
+
+            weed_instance_unref(inst);
+            weed_instance_unref(inst);
           }
           lives_free(in_tracks);
           lives_free(out_tracks);

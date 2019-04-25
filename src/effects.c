@@ -885,7 +885,7 @@ weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_
 void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
   weed_plant_t **layers;
 
-  weed_plant_t *deint_filter, *deint_instance, *next_inst, *init_event;
+  weed_plant_t *deint_filter, *deint_instance, *next_inst, *init_event, *orig_instance;
 
   int deint_idx, error;
 
@@ -896,7 +896,7 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
 
   deint_filter = get_weed_filter(deint_idx);
 
-  deint_instance = weed_instance_from_filter(deint_filter);
+  orig_instance = deint_instance = weed_instance_from_filter(deint_filter);
 
   layers = (weed_plant_t **)lives_malloc(2 * sizeof(weed_plant_t *));
 
@@ -923,6 +923,8 @@ deint1:
     deint_instance = next_inst;
     goto deint1;
   }
+
+  weed_instance_unref(orig_instance);
 
   weed_plant_free(init_event);
 

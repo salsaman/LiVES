@@ -1179,6 +1179,7 @@ typedef struct {
   pthread_mutex_t cache_buffer_mutex; /// sync for jack playback termination
   pthread_mutex_t audio_filewriteend_mutex; /// sync for ending writing audio to file
   pthread_mutex_t audio_resync_mutex; /// sync for audio
+  pthread_mutex_t instance_ref_mutex; /// refcounting for instances
 
   volatile lives_rfx_t *vrfx_update;
 

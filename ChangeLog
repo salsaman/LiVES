@@ -13,7 +13,7 @@ Allow cancel in VJ / Pre-decode all frames
 Refactor code for timebase calculations during playback.
 Overhaul external audio and audio recording to improve accuracy and use fewer CPU cycles.
 Show correct effects state when reshowing effect mapper window.
-
+Eliminate some yrace conditions between the audio and video threads.
 
 
 

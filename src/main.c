@@ -2293,7 +2293,7 @@ capability *get_capabilities(void) {
   capable->has_encoder_plugins = FALSE;
   capable->has_python = FALSE;
   capable->python_version = 0;
-  capable->stdout = STDOUT_FILENO;
+  capable->xstdout = STDOUT_FILENO;
   capable->has_gconftool_2 = FALSE;
   capable->has_xdg_screensaver = FALSE;
 
@@ -2931,7 +2931,7 @@ static boolean lives_startup(livespointer data) {
   //#define NOTTY
 #ifdef NOTTY
   if (!mainw->foreign) {
-    capable->stdout = dup(STDOUT_FILENO);
+    capable->xstdout = dup(STDOUT_FILENO);
     close(STDOUT_FILENO);
   }
 #endif

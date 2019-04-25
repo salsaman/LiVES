@@ -791,7 +791,7 @@ typedef struct {
   char *myname_full;
   char *myname;
 
-  int stdout;
+  int xstdout;
   int nmonitors;
 
   int ncpus;

@@ -2930,8 +2930,10 @@ static boolean lives_startup(livespointer data) {
   do_start_messages();
   //#define NOTTY
 #ifdef NOTTY
-  capable->stdout = dup(STDOUT_FILENO);
-  close(STDOUT_FILENO);
+  if (!mainw->foreign) {
+    capable->stdout = dup(STDOUT_FILENO);
+    close(STDOUT_FILENO);
+  }
 #endif
 
   lives_list_free_all(&mainw->cached_list);

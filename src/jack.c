@@ -538,7 +538,7 @@ static int audio_process(nframes_t nframes, void *arg) {
           }
 
           // TODO - look into refactoring
-          if (jackd->mute) {
+          if (jackd->mute || cache_buffer == NULL) {
             // mute playback - as normal but we output silence
 
             if (shrink_factor > 0.f) jackd->seek_pos += in_bytes;
@@ -556,7 +556,7 @@ static int audio_process(nframes_t nframes, void *arg) {
               }
             }
 
-            if (!wait_cache_buffer && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL)) {
+            if (cache_buffer != NULL && !wait_cache_buffer && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL)) {
               push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
             }
 

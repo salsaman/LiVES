@@ -5871,7 +5871,6 @@ void weed_unload_all(void) {
     if (pinfo == NULL || lives_list_index(pinfo, plugin_info) == -1) pinfo = lives_list_append(pinfo, plugin_info);
 
     handle = weed_get_voidptr_value(plugin_info, WEED_LEAF_HOST_HANDLE, &error);
-    g_print("handle is %p %d %p %p\n", handle, prefs->startup_phase, dlsym(handle, "weed_desetup"), dlsym(handle, "weed_setup"));
     if (handle != NULL && prefs->startup_phase == 0) {
       if ((desetup_fn = (weed_desetup_f)dlsym(handle, "weed_desetup")) != NULL) {
         char *cwd = cd_to_plugin_dir(filter);
@@ -5879,12 +5878,9 @@ void weed_unload_all(void) {
         (*desetup_fn)();
         lives_chdir(cwd, FALSE);
         lives_free(cwd);
-        g_print("did desetup\n");
       }
 
-      g_print("diddling %s\n", weed_get_string_value(filter, WEED_LEAF_NAME, &error));
       dlclose(handle);
-      g_print("ok\n");
       threaded_dialog_spin(0.);
       handle = NULL;
       weed_set_voidptr_value(plugin_info, WEED_LEAF_HOST_HANDLE, handle);
@@ -7375,7 +7371,6 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   int flags;
   int palette;
   int filter_flags = 0;
-  int key = -1;
   int num_in_alpha = 0;
   int width, height;
 
@@ -7505,25 +7500,20 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   filter = weed_instance_get_filter(inst, FALSE);
   cwd = cd_to_plugin_dir(filter);
 
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
-
   // see if we can multithread
   if ((prefs->nfx_threads = future_prefs->nfx_threads) > 1 && weed_plant_has_leaf(filter, WEED_LEAF_FLAGS))
     filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, &error);
 
+  // cannot lock the filter here as we may be multithreading
   if (filter_flags & WEED_FILTER_HINT_MAY_THREAD) {
-    filter_mutex_lock(key);
     retval = process_func_threaded(inst, out_channels, tc);
-    filter_mutex_unlock(key);
     if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
   }
   if (!did_thread) {
     // normal single threaded version
     weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
     process_func = process_func_ptr_ptr[0];
-    filter_mutex_lock(key);
     (*process_func)(inst, tc);
-    filter_mutex_unlock(key);
   }
 
   lives_free(out_channels);

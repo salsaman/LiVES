@@ -3059,12 +3059,6 @@ void play_file(void) {
 
   if (mainw->multitrack == NULL) lives_widget_show(mainw->scrolledwindow);
 
-  if (mainw->current_file > -1) {
-    if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !cfile->opening) {
-      load_start_image(cfile->start);
-      load_end_image(cfile->end);
-    }
-  }
   if (prefs->show_player_stats) {
     if (mainw->fps_measure > 0.) {
       d_print(_("Average FPS was %.4f\n"), mainw->fps_measure);
@@ -3158,9 +3152,12 @@ void play_file(void) {
     mainw->osc_block = TRUE;
     weed_generator_end((weed_plant_t *)cfile->ext_src);
     mainw->osc_block = FALSE;
-    if (mainw->multitrack == NULL) {
-      if (mainw->files[current_file] != NULL) switch_to_file(mainw->current_file, current_file);
-      else if (mainw->pre_src_file != -1) switch_to_file(mainw->current_file, mainw->pre_src_file);
+  } else {
+    if (mainw->current_file > -1) {
+      if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !cfile->opening) {
+        load_start_image(cfile->start);
+        load_end_image(cfile->end);
+      }
     }
   }
 

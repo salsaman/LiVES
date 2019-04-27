@@ -7654,7 +7654,7 @@ void load_frame_image(int frame) {
     mainw->deltaticks = 0;
     mainw->startticks = mainw->currticks;
     // force loading of a frame from the new clip
-    if (!mainw->noswitch && (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
+    if (!mainw->noswitch && !mainw->is_rendering && (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
       weed_plant_t *frame_layer = mainw->frame_layer;
       mainw->frame_layer = NULL;
       load_frame_image(cfile->frameno);

@@ -36,7 +36,7 @@ static int package_version = 1; // version of this package
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
-#include <math.h>
+b#include <math.h>
 
 static short aSin[512];
 static uint8_t reflectionmap[256][256];
@@ -156,7 +156,7 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   lightx = aSin[sdata->sin_index];
   lighty = aSin[sdata->sin_index2];
 
-  weed_memset(dst, 0, orowstride);
+  weed_memset(dst, 0, width3);
   s1 = dst + orowstride;
 
   orowstride -= width3 - 3;
@@ -170,13 +170,9 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       normalx = bumpmap[x][y].x + lightx - x;
       normaly = bumpmap[x][y].y + temp;
 
-      if (normalx < 0)
+      if (normalx < 0 || normalx > 255)
         normalx = 0;
-      else if (normalx > 255)
-        normalx = 0;
-      if (normaly < 0)
-        normaly = 0;
-      else if (normaly > 255)
+      if (normaly < 0 || normaly > 255)
         normaly = 0;
 
       weed_memset(s1, reflectionmap[normalx][normaly], 3);
@@ -186,7 +182,7 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     s1 += orowstride;
   }
 
-  weed_memset(s1, 0, orowstride + width3 - 3);
+  weed_memset(s1, 0, width3);
 
   sdata->sin_index += 3;
   sdata->sin_index &= 511;

@@ -36,7 +36,7 @@ static int package_version = 1; // version of this package
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
-b#include <math.h>
+#include <math.h>
 
 static short aSin[512];
 static uint8_t reflectionmap[256][256];

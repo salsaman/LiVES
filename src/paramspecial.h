@@ -30,10 +30,12 @@ typedef struct {
 typedef struct {
   lives_param_t *height_param;
   lives_param_t *width_param;
-  LiVESWidget *checkbutton;
+  LiVESWidget *lockbutton;
   LiVESWidget *label;
   ulong width_func;
   ulong height_func;
+  double ratio;
+  int nwidgets;
 } lives_special_aspect_t;
 
 typedef struct {

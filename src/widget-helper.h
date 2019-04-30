@@ -456,6 +456,8 @@ boolean lives_widget_set_events(LiVESWidget *, int events);
 boolean lives_widget_remove_accelerator(LiVESWidget *, LiVESAccelGroup *, uint32_t accel_key, LiVESXModifierType accel_mods);
 boolean lives_widget_get_preferred_size(LiVESWidget *, LiVESRequisition *min_size, LiVESRequisition *nat_size);
 
+boolean lives_widget_set_no_show_all(LiVESWidget *, boolean set);
+
 boolean lives_container_remove(LiVESContainer *, LiVESWidget *);
 boolean lives_container_add(LiVESContainer *, LiVESWidget *);
 boolean lives_container_set_border_width(LiVESContainer *, uint32_t width);
@@ -479,7 +481,9 @@ boolean lives_spin_button_set_range(LiVESSpinButton *, double min, double max);
 
 boolean lives_spin_button_set_wrap(LiVESSpinButton *, boolean wrap);
 
+boolean lives_spin_button_set_step_increment(LiVESSpinButton *button, double step_increment);
 boolean lives_spin_button_set_snap_to_ticks(LiVESSpinButton *, boolean snap);
+boolean lives_spin_button_set_snap_to_multiples(LiVESSpinButton *, double mult);
 
 boolean lives_spin_button_set_digits(LiVESSpinButton *, uint32_t digits);
 
@@ -532,11 +536,13 @@ boolean lives_widget_is_realized(LiVESWidget *);
 double lives_adjustment_get_upper(LiVESAdjustment *);
 double lives_adjustment_get_lower(LiVESAdjustment *);
 double lives_adjustment_get_page_size(LiVESAdjustment *);
+double lives_adjustment_get_step_increment(LiVESAdjustment *);
 double lives_adjustment_get_value(LiVESAdjustment *);
 
 boolean lives_adjustment_set_upper(LiVESAdjustment *, double upper);
 boolean lives_adjustment_set_lower(LiVESAdjustment *, double lower);
 boolean lives_adjustment_set_page_size(LiVESAdjustment *, double page_size);
+boolean lives_adjustment_set_step_increment(LiVESAdjustment *, double step_increment);
 boolean lives_adjustment_set_value(LiVESAdjustment *, double value);
 
 boolean lives_adjustment_clamp_page(LiVESAdjustment *, double lower, double upper);
@@ -758,6 +764,8 @@ LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt,
 
 LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height, const char *tooltip);
 
+boolean lives_lock_button_get_locked(LiVESButton *lockbutton);
+
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);
 
 LiVESWidget *lives_standard_hruler_new(void);
@@ -826,6 +834,7 @@ boolean set_submenu_colours(LiVESMenu *, LiVESWidgetColor *colf, LiVESWidgetColo
 
 boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
 boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
+boolean label_act_lockbutton(LiVESWidget *, LiVESXEventButton *, LiVESButton *);
 
 void toggle_button_toggle(LiVESToggleButton *);
 

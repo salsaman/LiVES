@@ -44,9 +44,9 @@ layout|fill|p0|"% of normal"|fill4|
 layout|fill|p1|"% of normal"|fill4|
 layout|hseparator|
 layout|"Shrink/expand from..."|fill|
-layout|fill|p4|fill|
+layout|fill2|p4|fill|
 layout|fill|p5|p6|p7|fill|
-layout|fill|p8|fill|
+layout|fill2|p8|fill|
 layout|hseparator|
 layout|p9|fill|p2|p3|fill|
 </param_window>

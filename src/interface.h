@@ -147,6 +147,8 @@ void add_suffix_check(LiVESBox *box, const char *ext);
 
 boolean run_youtube_dialog(void);
 
+const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height, LiVESBox *container);
+
 _commentsw *commentsw;
 _entryw *renamew;
 _entryw *locw;

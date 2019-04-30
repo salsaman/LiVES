@@ -34,7 +34,8 @@ static LiVESList *passwd_widgets;
 void init_special(void) {
   framedraw.type = LIVES_PARAM_SPECIAL_TYPE_NONE;
   aspect.width_param = aspect.height_param = NULL;
-  aspect.checkbutton = NULL;
+  aspect.lockbutton = NULL;
+  aspect.nwidgets = 0;
   framedraw.xstart_param = framedraw.ystart_param = framedraw.xend_param = framedraw.yend_param = NULL;
   framedraw.stdwidgets = 0;
   framedraw.extra_params = NULL;
@@ -171,14 +172,22 @@ static void passwd_toggle_vis(LiVESToggleButton *b, livespointer entry) {
 }
 
 
+static void reset_aspect(LiVESButton *button, livespointer user_data) {
+  if (lives_lock_button_get_locked(button)) {
+    lives_special_aspect_t *aspect = (lives_special_aspect_t *)user_data;
+    double width = lives_spin_button_get_value(LIVES_SPIN_BUTTON(aspect->width_param->widgets[0]));
+    double height = lives_spin_button_get_value(LIVES_SPIN_BUTTON(aspect->height_param->widgets[0]));
+    aspect->ratio = width / height;
+  }
+}
+
+
 void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
   LiVESWidget *checkbutton;
   LiVESWidget *hbox;
   LiVESWidget *box;
   LiVESWidget *buttond;
   LiVESList *slist;
-
-  char *tmp, *tmp2;
 
   // check if this parameter is part of a special window
   // as we are drawing the paramwindow
@@ -234,31 +243,78 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
     }
 
     if (param == aspect.width_param) {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)cfile->hsize);
+      lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(param->widgets[0]), 4.);
+      if (CURRENT_CLIP_IS_VALID) lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)cfile->hsize);
+      lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
       aspect.width_func = lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(after_aspect_width_changed),
                           NULL);
+      aspect.nwidgets++;
     }
+
     if (param == aspect.height_param) {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)cfile->vsize);
+      lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(param->widgets[0]), 4.);
+      if (CURRENT_CLIP_IS_VALID) lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)cfile->vsize);
+      lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
       aspect.height_func = lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_aspect_height_changed),
                            NULL);
+      aspect.nwidgets++;
+    }
 
-      box = lives_hbox_new(FALSE, 0);
-      lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), box, FALSE, FALSE, widget_opts.packing_height * 2);
+    if ((param == aspect.width_param || param == aspect.height_param) && aspect.nwidgets == 2) {
+      boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
+      char *labeltext = lives_strdup(_("    Maintain _Aspect Ratio    "));
+      LiVESWidget *eventbox = lives_event_box_new();
 
-      aspect.checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Maintain _Aspect Ratio"))), FALSE,
-                           LIVES_BOX(box), (tmp2 = lives_strdup(_("Maintain aspect ratio of original frame"))));
+      aspect.lockbutton = lives_standard_lock_button_new(TRUE, 64, 64, _("Maintain aspect ratio"));
+      lives_signal_connect(aspect.lockbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(reset_aspect), (livespointer)&aspect);
+      reset_aspect(LIVES_BUTTON(aspect.lockbutton), &aspect);
 
-      lives_free(tmp);
-      lives_free(tmp2);
+      if (widget_opts.mnemonic_label) {
+        aspect.label = lives_standard_label_new_with_mnemonic_widget(labeltext, aspect.lockbutton);
+      } else aspect.label = lives_standard_label_new(labeltext);
+      lives_free(labeltext);
 
-      aspect.label = widget_opts.last_label;
+      lives_tooltips_copy(eventbox, aspect.lockbutton);
 
-      add_fill_to_box(LIVES_BOX(box));
+      lives_container_add(LIVES_CONTAINER(eventbox), aspect.label);
 
-      lives_widget_show_all(box);
+      lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                           LIVES_GUI_CALLBACK(label_act_lockbutton),
+                           aspect.lockbutton);
+
+      lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
+
+      hbox = lives_hbox_new(FALSE, 0);
+      lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
+      lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
+
+      if (!LIVES_IS_HBOX(pbox)) {
+        add_fill_to_box(LIVES_BOX(hbox));
+        lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
+      } else {
+        lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), hbox, FALSE, FALSE, 16. * widget_opts.scale);
+      }
+
+      if (widget_opts.swap_label)
+        lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, 0);
+
+      if (expand) add_fill_to_box(LIVES_BOX(hbox));
+
+      lives_box_pack_start(LIVES_BOX(hbox), aspect.lockbutton, widget_opts.expand == LIVES_EXPAND_EXTRA, FALSE, 0);
+
+      if (expand) add_fill_to_box(LIVES_BOX(hbox));
+
+      if (!widget_opts.swap_label)
+        lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, 0);
+
+      lives_widget_set_show_hide_parent(aspect.label);
+      lives_widget_set_show_hide_parent(aspect.lockbutton);
+
+      if (!LIVES_IS_HBOX(pbox)) {
+        add_spring_to_box(LIVES_BOX(hbox), 0);
+      }
     }
   }
 
@@ -340,61 +396,27 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
 
 
 void after_aspect_width_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(aspect.checkbutton))) {
-    boolean keepeven = FALSE;
-    int width = lives_spin_button_get_value_as_int(spinbutton);
-    int height = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]));
+  if (lives_lock_button_get_locked(LIVES_BUTTON(aspect.lockbutton))) {
+    int width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+    double height = (double)width / aspect.ratio;
     lives_signal_handler_block(aspect.height_param->widgets[0], aspect.height_func);
-
-    if (((cfile->hsize >> 1) << 1) == cfile->hsize && ((cfile->vsize >> 1) << 1) == cfile->vsize) {
-      // try to keep even
-      keepeven = TRUE;
-    }
-    height = (int)(width * cfile->vsize / cfile->hsize + .5);
-
-    if (keepeven && ((height >> 1) << 1) != height) {
-      int owidth = width;
-      height--;
-      width = (int)(height * cfile->hsize / cfile->vsize + .5);
-      if (width != owidth) {
-        height += 2;
-        width = owidth;
-      }
-    }
-
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]), (double)height);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]), height);
+    lives_spin_button_update(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]));
     lives_signal_handler_unblock(aspect.height_param->widgets[0], aspect.height_func);
+    height = lives_spin_button_get_value(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]));
   }
 }
 
 
 void after_aspect_height_changed(LiVESToggleButton *spinbutton, livespointer user_data) {
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(aspect.checkbutton))) {
-    boolean keepeven = FALSE;
+  if (lives_lock_button_get_locked(LIVES_BUTTON(aspect.lockbutton))) {
     int height = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    int width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]));
-
+    double width = (double)height * aspect.ratio;
     lives_signal_handler_block(aspect.width_param->widgets[0], aspect.width_func);
-
-    if (((cfile->hsize >> 1) << 1) == cfile->hsize && ((cfile->vsize >> 1) << 1) == cfile->vsize) {
-      // try to keep even
-      keepeven = TRUE;
-    }
-
-    width = (int)(height * cfile->hsize / cfile->vsize + .5);
-
-    if (keepeven && ((width >> 1) << 1) != width) {
-      int oheight = height;
-      width--;
-      height = (int)(width * cfile->vsize / cfile->hsize + .5);
-      if (height != oheight) {
-        width += 2;
-        height = oheight;
-      }
-    }
-
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]), (double)width);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]), width);
+    lives_spin_button_update(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]));
     lives_signal_handler_unblock(aspect.width_param->widgets[0], aspect.width_func);
+    width = lives_spin_button_get_value(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]));
   }
 }
 

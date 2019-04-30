@@ -1660,13 +1660,13 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     lives_standard_radio_button_new(NULL, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     tvcardw->spinbuttonw = lives_standard_spin_button_new(_("Width"),
-                           640., 4., 4096., 2., 2., 0,
+                           640., 4., 4096., 4., 16., 0,
                            LIVES_BOX(hbox), NULL);
 
     lives_widget_set_sensitive(tvcardw->spinbuttonw, FALSE);
 
     tvcardw->spinbuttonh = lives_standard_spin_button_new(_("Height"),
-                           480., 4., 4096., 2., 2., 0,
+                           480., 4., 4096., 4., 16., 0,
                            LIVES_BOX(hbox), NULL);
 
     lives_widget_set_sensitive(tvcardw->spinbuttonh, FALSE);
@@ -2894,6 +2894,20 @@ autolives_window *autolives_pre_dialog(void) {
 }
 
 
+const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height, LiVESBox *box) {
+  static lives_param_t aspect_width, aspect_height;
+
+  init_special();
+
+  aspect_width.widgets[0] = (LiVESWidget *)sp_width;
+  aspect_height.widgets[0] = (LiVESWidget *)sp_height;
+  set_aspect_ratio_widgets(&aspect_width, &aspect_height);
+  check_for_special(NULL, &aspect_width, box);
+  check_for_special(NULL, &aspect_height, box);
+
+  return paramspecial_get_aspect();
+}
+
 
 // prompt for the following:
 
@@ -2912,6 +2926,7 @@ autolives_window *autolives_pre_dialog(void) {
 // advanced :: save subs / sub language
 
 boolean run_youtube_dialog(void) {
+  const lives_special_aspect_t *aspect;
   LiVESWidget *dialog_vbox;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
@@ -2935,7 +2950,6 @@ boolean run_youtube_dialog(void) {
   LiVESWidget *radiobutton_choose;
   LiVESWidget *spinbutton_width;
   LiVESWidget *spinbutton_height;
-  LiVESWidget *aspbutton;
 
   char *fname;
 
@@ -3037,8 +3051,6 @@ boolean run_youtube_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(hbox), ext_label, FALSE, FALSE, 0);
 
-  add_fill_to_box(LIVES_BOX(hbox));
-
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
@@ -3072,12 +3084,12 @@ boolean run_youtube_dialog(void) {
   spinbutton_height = lives_standard_spin_button_new(_("X        _Height"), CURRENT_CLIP_HAS_VIDEO ? cfile->vsize : DEF_GEN_HEIGHT,
                       4., 100000., 4., 16., 0., LIVES_BOX(hbox), NULL);
 
-  label = lives_standard_label_new(_("pixels"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  label = lives_standard_label_new(_("    pixels"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
-
-  aspbutton = lives_standard_lock_button_new(TRUE, 16, 16, _("Lock / unlock aspect ratio"));
-  lives_box_pack_start(LIVES_BOX(hbox), aspbutton, FALSE, FALSE, widget_opts.packing_width);
+  // add "aspectratio" widget
+  aspect = add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbutton_width), LIVES_SPIN_BUTTON(spinbutton_height), LIVES_BOX(hbox));
+  lives_widget_set_no_show_all(lives_widget_get_parent(aspect->label), TRUE);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);

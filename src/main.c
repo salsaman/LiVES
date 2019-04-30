@@ -3140,7 +3140,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #endif
 
@@ -4899,7 +4899,8 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
 
   if (!gdk_pixbuf_loader_close(pbload, &gerror)) return FALSE;
 
-  pixbuf = (LiVESPixbuf *)lives_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
+  pixbuf = gdk_pixbuf_loader_get_pixbuf(pbload);
+  lives_object_ref(pixbuf);
   if (pbload != NULL) lives_object_unref(pbload);
 #endif
 

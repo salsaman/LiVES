@@ -1481,9 +1481,9 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       resaudw->hour_spinbutton = lives_standard_spin_button_new(_(" hours  "), hours,
                                  0., hours > 23 ? hours : 23, 1., 1., 0, LIVES_BOX(hbox), NULL);
 
-      resaudw->minute_spinbutton = lives_standard_spin_button_new(_(" minutes  "), mins, 0., 59., 1., 1., 0, LIVES_BOX(hbox), NULL);
+      resaudw->minute_spinbutton = lives_standard_spin_button_new(_(" minutes  "), mins, 0., 59., 1., 10., 0, LIVES_BOX(hbox), NULL);
 
-      resaudw->second_spinbutton = lives_standard_spin_button_new(_(" seconds  "), secs, 0., 59., 1., 1., 0, LIVES_BOX(hbox), NULL);
+      resaudw->second_spinbutton = lives_standard_spin_button_new(_(" seconds  "), secs, 0., 59., 1., 10., 0, LIVES_BOX(hbox), NULL);
 
       hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);

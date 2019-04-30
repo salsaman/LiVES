@@ -981,7 +981,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"),
                         hsize,
-                        4., MAX_FRAME_WIDTH, 4., 4., 0, LIVES_BOX(hbox), NULL);
+                        4., MAX_FRAME_WIDTH, 4., 16., 0, LIVES_BOX(hbox), NULL);
 
     add_fill_to_box(LIVES_BOX(hbox));
 
@@ -991,7 +991,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"),
                         vsize,
-                        4., MAX_FRAME_HEIGHT, 4., 4., 0, LIVES_BOX(hbox), NULL);
+                        4., MAX_FRAME_HEIGHT, 4., 16., 0, LIVES_BOX(hbox), NULL);
 
     add_fill_to_box(LIVES_BOX(hbox));
   }

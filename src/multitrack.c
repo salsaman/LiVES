@@ -4475,6 +4475,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   mt->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 10000000., 1. / mt->fps, 1. / mt->fps, 3,
                          NULL, NULL);
+  lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(mt->spinbutton_start), TRUE);
   widget_opts.apply_theme = woat;
   widget_opts.packing_width = dpw;
 
@@ -4496,6 +4497,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   mt->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 10000000., 1. / mt->fps, 1. / mt->fps, 3,
                        NULL, NULL);
+  lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(mt->spinbutton_end), TRUE);
 
   widget_opts.apply_theme = woat;
   widget_opts.packing_width = dpw;
@@ -8340,6 +8342,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->spinbutton_in = lives_standard_spin_button_new(NULL, 0., 0., 1000000., 1. / mt->fps, 1., 2,
                       LIVES_BOX(mt->in_hbox), NULL);
+  lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(mt->spinbutton_in), TRUE);
 
   mt->checkbutton_start_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _start"))), FALSE,
                                    LIVES_BOX(mt->in_hbox),
@@ -8390,6 +8393,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->spinbutton_out = lives_standard_spin_button_new(NULL, 0., 0., 1000000., 1. / mt->fps, 1., 2,
                        LIVES_BOX(mt->out_hbox), NULL);
+  lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(mt->spinbutton_out), TRUE);
 
   mt->checkbutton_end_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _end"))), FALSE, LIVES_BOX(mt->out_hbox),
                                  (tmp2 = lives_strdup(_("Anchor the end point to the timeline"))));

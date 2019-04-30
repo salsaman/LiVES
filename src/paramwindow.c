@@ -32,6 +32,7 @@
 #include "rte_window.h"
 #include "framedraw.h"
 #include "ce_thumbs.h"
+#include "interface.h"
 
 #ifdef ENABLE_GIW
 #include "giw/giwknob.h"
@@ -454,8 +455,6 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
 
 static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, lives_rfx_t *rfx) {
   // add size settings for generators and resize effects
-  static lives_param_t aspect_width, aspect_height;
-
   LiVESWidget *label, *hbox;
   LiVESWidget *spinbuttonh = NULL, *spinbuttonw = NULL;
   LiVESWidget *spinbuttonf;
@@ -546,11 +545,11 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     max_width = INT_MAX;
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_MAXWIDTH)) max_width = weed_get_int_value(tmpl, WEED_LEAF_MAXWIDTH, &error);
     if (def_width > max_width) def_width = max_width;
-    width_step = 1;
+    width_step = 4;
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_HSTEP)) width_step = weed_get_int_value(tmpl, WEED_LEAF_HSTEP, &error);
 
-    spinbuttonw = lives_standard_spin_button_new(_("_Width"), def_width, 4., max_width, width_step == 1 ? 4 : width_step,
-                  width_step == 1 ? 16 : width_step * 4, 0,
+    spinbuttonw = lives_standard_spin_button_new(_("_Width"), def_width, 4., max_width, width_step,
+                  width_step * 4, 0,
                   LIVES_BOX(hbox), NULL);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbuttonw), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -564,11 +563,11 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     max_height = INT_MAX;
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_MAXHEIGHT)) max_height = weed_get_int_value(tmpl, WEED_LEAF_MAXHEIGHT, &error);
     if (def_height > max_height) def_height = max_height;
-    height_step = 1;
+    height_step = 4;
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_VSTEP)) height_step = weed_get_int_value(tmpl, WEED_LEAF_VSTEP, &error);
 
-    spinbuttonh = lives_standard_spin_button_new(_("_Height"), def_height, 4., max_height, height_step == 1 ? 4 : height_step,
-                  height_step == 1 ? 16 : height_step * 4, 0,
+    spinbuttonh = lives_standard_spin_button_new(_("_Height"), def_height, 4., max_height, height_step,
+                  height_step * 4, 0,
                   LIVES_BOX(hbox), NULL);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbuttonh), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -576,22 +575,11 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
                                tmpl);
     weed_leaf_delete(tmpl, WEED_LEAF_HOST_HEIGHT); // force a reset
     gen_height_changed(LIVES_SPIN_BUTTON(spinbuttonh), tmpl);
-
   }
 
-  if (!chk_params) {
-    if (!rfx->is_template) {
-      // add "aspectratio" widget
-      init_special();
-
-      aspect_width.widgets[0] = spinbuttonw;
-      aspect_height.widgets[0] = spinbuttonh;
-
-      set_aspect_ratio_widgets(&aspect_width, &aspect_height);
-      check_for_special(rfx, &aspect_width, vbox);
-      check_for_special(rfx, &aspect_height, vbox);
-    }
-
+  if (!chk_params && !rfx->is_template && num_chans == 1) {
+    // add "aspectratio" widget
+    add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbuttonw), LIVES_SPIN_BUTTON(spinbuttonh), LIVES_BOX(vbox));
   }
 
   return added;
@@ -1801,6 +1789,8 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   int copyto = -1;
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
+
+  lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton));
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
 

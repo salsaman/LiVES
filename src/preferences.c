@@ -4360,7 +4360,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_net), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->spinbutton_bwidth = lives_standard_spin_button_new(_("Download bandwidth (Kb/s)       "),
-                              prefs->dl_bandwidth, 0, 100000, 1, 10, 0,
+                              prefs->dl_bandwidth, 0, 100000000., 1, 10, 0,
                               LIVES_BOX(hbox), NULL);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_net));
@@ -4676,7 +4676,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->spinbutton_midicr = lives_standard_spin_button_new((tmp = lives_strdup(_("MIDI check _rate"))),
-                              prefs->midi_check_rate, 1., 2000., 10., 100., 0,
+                              prefs->midi_check_rate, 1., 2000., 1., 10., 0,
                               LIVES_BOX(hbox),
                               (tmp2 = lives_strdup(
                                         _("Number of MIDI checks per keyboard tick. Increasing this may improve MIDI responsiveness, but may slow down playback."))));
@@ -4687,7 +4687,7 @@ _prefsw *create_prefs_dialog(void) {
   add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->spinbutton_midirpt = lives_standard_spin_button_new((tmp = lives_strdup(_("MIDI repeat"))),
-                               prefs->midi_rpt, 1., 10000., 100., 1000., 0,
+                               prefs->midi_rpt, 1., 10000., 10., 100., 0,
                                LIVES_BOX(hbox),
                                (tmp2 = lives_strdup(_("Number of non-reads allowed between succesive reads."))));
   lives_free(tmp);

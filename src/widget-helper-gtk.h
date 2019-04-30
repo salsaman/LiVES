@@ -917,10 +917,6 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_DIALOG_INFO "dialog-information"
 #define LIVES_STOCK_MISSING_IMAGE "image-missing"
 
-// custom values
-#define LIVES_LIVES_STOCK_LOCKED "locked"
-#define LIVES_LIVES_STOCK_UNLOCKED "unlocked"
-
 // these are set up in widget_helper_init()
 char LIVES_STOCK_LABEL_CANCEL[32];
 char LIVES_STOCK_LABEL_OK[32];
@@ -1029,8 +1025,15 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 #endif
 
 // custom values
+
+#if GTK_CHECK_VERSION(3, 2, 0)
+#define LIVES_LIVES_STOCK_LOCKED "changes-prevent"
+#define LIVES_LIVES_STOCK_UNLOCKED "changes-allow"
+#else
 #define LIVES_LIVES_STOCK_LOCKED "locked"
 #define LIVES_LIVES_STOCK_UNLOCKED "unlocked"
+#endif
+
 #define LIVES_LIVES_STOCK_LOOP "loop"
 
 #define LIVES_DEFAULT_MOD_MASK (gtk_accelerator_get_default_mod_mask ())

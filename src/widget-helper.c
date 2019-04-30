@@ -7365,6 +7365,22 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_label_set_hpadding(LiVESLabel *label, int
 }
 
 
+#define H_ALIGN_ADJ 22 // why 22 ? no idea
+
+WIDGET_HELPER_GLOBAL_INLINE boolean align_horizontal(LiVESWidget *thingtoadd, LiVESVBox *vboxtoaddto, LiVESWidget *thingtoalignwith) {
+#ifdef GUI_GTK
+  GtkAllocation alloc;
+  GtkWidget *fixed = gtk_fixed_new();
+  lives_box_pack_start(LIVES_BOX(vboxtoaddto), fixed, TRUE, FALSE, widget_opts.packing_height);
+  gtk_widget_get_allocation(thingtoalignwith, &alloc);
+  gtk_fixed_put(GTK_FIXED(fixed), thingtoadd, alloc.x - H_ALIGN_ADJ - widget_opts.padding_width,
+                0); // allow for 1 padding_width before adding the real widget
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 12, 0)
@@ -7611,7 +7627,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
     hbox = lives_hbox_new(FALSE, 0);
     lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
     if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
     } else {
       lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
@@ -7687,7 +7703,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
     hbox = lives_hbox_new(FALSE, 0);
     lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
     if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
     } else {
       lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
@@ -7803,7 +7819,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     hbox = lives_hbox_new(FALSE, 0);
     lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
     if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
     } else {
       lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
@@ -7870,7 +7886,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
     hbox = lives_hbox_new(FALSE, 0);
     lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
     if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
     } else {
       lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
@@ -7952,7 +7968,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
     hbox = lives_hbox_new(FALSE, 0);
     lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
     if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
     } else {
       lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
@@ -8255,7 +8271,7 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox *box, LiVES
     hbox = lives_hbox_new(FALSE, 0);
     lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
     if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
     } else {
       lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
@@ -8530,7 +8546,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     hbox = lives_hbox_new(FALSE, 0);
     lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
     if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
     } else {
       lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }

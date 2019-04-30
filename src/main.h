@@ -762,6 +762,7 @@ typedef struct {
   boolean has_gdb;
   boolean has_gconftool_2;
   boolean has_xdg_screensaver;
+  boolean has_zenity;
 
   /// home directory - default location for config file - locale encoding
   char home_dir[PATH_MAX];

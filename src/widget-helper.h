@@ -722,6 +722,8 @@ boolean lives_window_set_auto_startup_notification(boolean set);
 
 void lives_label_set_hpadding(LiVESLabel *label, int pad);
 
+boolean align_horizontal(LiVESWidget *thingtoadd, LiVESVBox *vboxtoaddto, LiVESWidget *thingtoalignwith);
+
 boolean lives_widget_grab_default_special(LiVESWidget *);
 
 #define BUTTON_DIM_VAL 24000 // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535)

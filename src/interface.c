@@ -1694,7 +1694,6 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     lives_widget_hide(tvcardw->adv_vbox);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cd_dialog), "tvcard_data", tvcardw);
-
   }
 
   add_fill_to_box(LIVES_BOX(dialog_vbox));
@@ -2909,6 +2908,13 @@ const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width,
 }
 
 
+static void on_freedom_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
+  LiVESWidget *label = (LiVESWidget *)user_data;
+  if (!lives_toggle_button_get_active(togglebutton)) lives_label_set_text(LIVES_LABEL(label), "." LIVES_FILE_EXT_WEBM);
+  else lives_label_set_text(LIVES_LABEL(label), "." LIVES_FILE_EXT_MP4);
+}
+
+
 // prompt for the following:
 
 // - URL
@@ -2999,7 +3005,13 @@ boolean run_youtube_dialog(void) {
 
   // TODO - check for zenity
 
-  checkbutton = lives_standard_check_button_new(_("<--- Auto update (may require your password)"), FALSE, LIVES_BOX(hbox), NULL);
+  checkbutton = lives_standard_check_button_new(_("<--- Auto update (may require your password.)"), FALSE, LIVES_BOX(hbox), NULL);
+
+  if (!capable->has_zenity) {
+    lives_widget_set_sensitive(checkbutton, FALSE);
+    label = lives_standard_label_new(_(" (REQUIRES ZENITY)."));
+    lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
+  }
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
@@ -3021,10 +3033,10 @@ boolean run_youtube_dialog(void) {
   dir_entry = lives_standard_direntry_new(_("Save to _Directory : "), mainw->vid_dl_dir,
                                           STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
-  add_fill_to_box(LIVES_BOX(hbox));
-
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 3);
+
+  ext_label = lives_standard_label_new("." LIVES_FILE_EXT_WEBM);
 
 #ifdef ALLOW_NONFREE_CODECS
   label = lives_standard_label_new(_("Format selection:"));
@@ -3037,19 +3049,37 @@ boolean run_youtube_dialog(void) {
 
   lives_free(tmp);
   lives_free(tmp2);
+#endif
+  name_entry = lives_standard_entry_new(_("_File Name : "), "", STD_ENTRY_WIDTH / 2, PATH_MAX, LIVES_BOX(hbox), NULL);
+
+  lives_box_pack_start(LIVES_BOX(hbox), ext_label, FALSE, FALSE, 0);
+
+#ifdef ALLOW_NONFREE_CODECS
+  //
+  hbox = lives_hbox_new(FALSE, 0);
+
+  lives_widget_show_all(dialog);
+  lives_widget_context_update();
+  align_horizontal(hbox, LIVES_VBOX(dialog_vbox), radiobutton_free);
+
+  //
+  // add_fill_to_box(LIVES_BOX(hbox));
 
   radiobutton_nonfree = lives_standard_radio_button_new((tmp = lives_strdup(_("_Non-free (eg. h264 / aac / mp4)"))), &radiobutton_group,
                         LIVES_BOX(hbox),
                         (tmp2 = lives_strdup(_("Download clip using non-free codecs"))));
   lives_free(tmp);
   lives_free(tmp2);
+
+  //add_fill_to_box(LIVES_BOX(hbox));
+  //add_fill_to_box(LIVES_BOX(hbox));
+
+  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_nonfree), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_freedom_toggled),
+                       LIVES_INT_TO_POINTER(ext_label));
 #endif
 
-  name_entry = lives_standard_entry_new(_("_File Name : "), "", STD_ENTRY_WIDTH / 2, PATH_MAX, LIVES_BOX(hbox), NULL);
-
-  ext_label = lives_standard_label_new("." LIVES_FILE_EXT_WEBM);
-
-  lives_box_pack_start(LIVES_BOX(hbox), ext_label, FALSE, FALSE, 0);
+  add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
@@ -3057,20 +3087,23 @@ boolean run_youtube_dialog(void) {
   label = lives_standard_label_new(_("Desired frame size:"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
-  radiobutton_approx = lives_standard_radio_button_new((tmp = lives_strdup(_("Approximately"))), &radiobutton_group2,
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
+
+  radiobutton_approx = lives_standard_radio_button_new((tmp = lives_strdup(_("- Approximately:"))), &radiobutton_group2,
                        LIVES_BOX(hbox),
                        (tmp2 = lives_strdup(_("Download the closest to this size"))));
 
   lives_free(tmp);
   lives_free(tmp2);
 
-  radiobutton_atleast = lives_standard_radio_button_new((tmp = lives_strdup(_("At _least"))), &radiobutton_group2,
+  radiobutton_atleast = lives_standard_radio_button_new((tmp = lives_strdup(_("- At _least"))), &radiobutton_group2,
                         LIVES_BOX(hbox),
                         (tmp2 = lives_strdup(_("Frame size should be at least this size"))));
   lives_free(tmp);
   lives_free(tmp2);
 
-  radiobutton_atmost = lives_standard_radio_button_new((tmp = lives_strdup(_("At _most  -  "))), &radiobutton_group2,
+  radiobutton_atmost = lives_standard_radio_button_new((tmp = lives_strdup(_("- At _most:"))), &radiobutton_group2,
                        LIVES_BOX(hbox),
                        (tmp2 = lives_strdup(_("Frame size should be at most this size"))));
   lives_free(tmp);
@@ -3102,7 +3135,7 @@ boolean run_youtube_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
-  radiobutton_smallest = lives_standard_radio_button_new((tmp = lives_strdup(_("The _smallest"))), &radiobutton_group2,
+  radiobutton_smallest = lives_standard_radio_button_new((tmp = lives_strdup(_("- The _smallest"))), &radiobutton_group2,
                          LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("Download the lowest resolution available"))));
 
@@ -3110,14 +3143,15 @@ boolean run_youtube_dialog(void) {
   lives_free(tmp2);
 
 
-  radiobutton_largest = lives_standard_radio_button_new((tmp = lives_strdup(_("The _largest"))), &radiobutton_group2,
+  radiobutton_largest = lives_standard_radio_button_new((tmp = lives_strdup(_("- The _largest"))), &radiobutton_group2,
                         LIVES_BOX(hbox),
                         (tmp2 = lives_strdup(_("Download the highest resolution available"))));
 
   lives_free(tmp);
   lives_free(tmp2);
 
-  radiobutton_choose = lives_standard_radio_button_new((tmp = lives_strdup(_("Let me choose (opens in new window)..."))), &radiobutton_group2,
+  radiobutton_choose = lives_standard_radio_button_new((tmp = lives_strdup(_("- Let me choose (opens in new window)..."))),
+                       &radiobutton_group2,
                        LIVES_BOX(hbox),
                        (tmp2 = lives_strdup(_("Choose the resolution from a list (opens in new window)"))));
 

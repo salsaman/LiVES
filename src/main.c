@@ -2287,6 +2287,7 @@ capability *get_capabilities(void) {
   capable->has_autolives = FALSE;
   capable->has_jackd = FALSE;
   capable->has_gdb = FALSE;
+  capable->has_zenity = FALSE;
   capable->has_pulse_audio = FALSE;
   capable->has_xwininfo = FALSE;
   capable->has_midistartstop = FALSE;
@@ -2460,6 +2461,9 @@ capability *get_capabilities(void) {
 
   get_location("gdb", string, 256);
   if (strlen(string)) capable->has_gdb = TRUE;
+
+  get_location("zenity", string, 256);
+  if (strlen(string)) capable->has_zenity = TRUE;
 
   get_location("pulseaudio", string, 256);
   if (strlen(string)) capable->has_pulse_audio = TRUE;
@@ -3140,7 +3144,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #endif
 

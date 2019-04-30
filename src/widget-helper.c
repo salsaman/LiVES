@@ -7373,8 +7373,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean align_horizontal(LiVESWidget *thingtoadd, Li
   GtkWidget *fixed = gtk_fixed_new();
   lives_box_pack_start(LIVES_BOX(vboxtoaddto), fixed, TRUE, FALSE, widget_opts.packing_height);
   gtk_widget_get_allocation(thingtoalignwith, &alloc);
-  gtk_fixed_put(GTK_FIXED(fixed), thingtoadd, alloc.x - H_ALIGN_ADJ - widget_opts.padding_width,
-                0); // allow for 1 padding_width before adding the real widget
+  gtk_fixed_put(GTK_FIXED(fixed), thingtoadd, alloc.x - H_ALIGN_ADJ - widget_opts.packing_width,
+                0); // allow for 1 packing_width before adding the real widget
   return TRUE;
 #endif
   return FALSE;

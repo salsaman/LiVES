@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-04-27 10:42-0300\n"
+"POT-Creation-Date: 2019-04-27 10:47-0300\n"
 "PO-Revision-Date: 2015-11-25 22:11+0000\n"
 "Last-Translator: Jean-Marc <Unknown>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -730,12 +730,12 @@ msgid "Closed clip %s\n"
 msgstr "Fichier Fermé %s\n"
 
 #: src/main.c:7053 src/gui.c:726 src/utils.c:4959 src/utils.c:4988
-#: src/saveplay.c:3322 src/multitrack.c:4724 src/multitrack.c:6558
+#: src/saveplay.c:3321 src/multitrack.c:4724 src/multitrack.c:6558
 msgid "_Undo"
 msgstr "_Annuler"
 
 #: src/main.c:7054 src/gui.c:741 src/utils.c:4960 src/utils.c:4989
-#: src/saveplay.c:3323 src/multitrack.c:4743 src/multitrack.c:6581
+#: src/saveplay.c:3322 src/multitrack.c:4743 src/multitrack.c:6581
 msgid "_Redo"
 msgstr "_Rétablir"
 
@@ -4668,7 +4668,7 @@ msgstr "Ouverture de %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Ouverture de %s début %.2f sec. %d images"
 
-#: src/saveplay.c:309 src/saveplay.c:3766
+#: src/saveplay.c:309 src/saveplay.c:3765
 msgid " without sound"
 msgstr " sans le son"
 
@@ -4786,7 +4786,7 @@ msgstr ""
 "Voulez-vous vraiment continuer ?"
 
 #: src/saveplay.c:1421 src/saveplay.c:1539 src/saveplay.c:1610
-#: src/saveplay.c:3775
+#: src/saveplay.c:3774
 #, fuzzy
 msgid "Pulling frames from clip..."
 msgstr "Insère %d%s images depuis le Presse-papiers..."
@@ -4870,21 +4870,21 @@ msgstr ""
 "Vous devez aller dans Outils--->Redimensionner toutes les images\n"
 "et redimensionner toutes les images aux dimensions actuelles.\n"
 
-#: src/saveplay.c:3249
+#: src/saveplay.c:3248
 msgid "Unknown"
 msgstr "Inconnu"
 
-#: src/saveplay.c:3339
+#: src/saveplay.c:3338
 #, c-format
 msgid "Untitled%d"
 msgstr "Sans Nom%d"
 
-#: src/saveplay.c:3402
+#: src/saveplay.c:3401
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d images sont en trop !\n"
 
-#: src/saveplay.c:3412
+#: src/saveplay.c:3411
 #, c-format
 msgid ""
 "\n"
@@ -4892,13 +4892,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/saveplay.c:3414
+#: src/saveplay.c:3413
 msgid ""
 "\n"
 "An error occurred opening the file\n"
 msgstr ""
 
-#: src/saveplay.c:3426
+#: src/saveplay.c:3425
 #, c-format
 msgid ""
 "\n"
@@ -4906,7 +4906,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3514
+#: src/saveplay.c:3513
 #, c-format
 msgid ""
 "\n"
@@ -4918,14 +4918,14 @@ msgstr ""
 "%.3f ips. \n"
 "La valeur par défaut peut être fixée dans Outils|Préférences|Divers.\n"
 
-#: src/saveplay.c:3524
+#: src/saveplay.c:3523
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "La vitesse de playback est ajustée à %.3f images par seconde pour "
 "correspondre au son.\n"
 
-#: src/saveplay.c:3540
+#: src/saveplay.c:3539
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4934,61 +4934,61 @@ msgstr ""
 "Cadres = %d genre = %s dimension = %d x %d *bpp = Greyscale* fps=%.3f\n"
 "Audio:"
 
-#: src/saveplay.c:3544 src/saveplay.c:4488
+#: src/saveplay.c:3543 src/saveplay.c:4487
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:3549 src/saveplay.c:4493
+#: src/saveplay.c:3548 src/saveplay.c:4492
 #, c-format
 msgid "%s none\n"
 msgstr "aucun %s\n"
 
-#: src/saveplay.c:3560
+#: src/saveplay.c:3559
 #, c-format
 msgid " - Author: %s\n"
 msgstr " - Auteur : %s\n"
 
-#: src/saveplay.c:3563
+#: src/saveplay.c:3562
 #, c-format
 msgid " - Title: %s\n"
 msgstr " - Titre : %s\n"
 
-#: src/saveplay.c:3566
+#: src/saveplay.c:3565
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Commentaires : %s\n"
 
-#: src/saveplay.c:3669
+#: src/saveplay.c:3668
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Enregistre Image %d comme %s..."
 
-#: src/saveplay.c:3763
+#: src/saveplay.c:3762
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Sauvegarde %s à %s"
 
-#: src/saveplay.c:3806
+#: src/saveplay.c:3805
 msgid "Backing up"
 msgstr "Sauvegarde"
 
-#: src/saveplay.c:3840
+#: src/saveplay.c:3839
 msgid "performance data was backed up..."
 msgstr "les données de la représentation sont sauvegardées..."
 
-#: src/saveplay.c:4396
+#: src/saveplay.c:4395
 #, c-format
 msgid "Restoring %s..."
 msgstr "Restauration de %s..."
 
-#: src/saveplay.c:4424
+#: src/saveplay.c:4423
 msgid "Restoring"
 msgstr "Restauration"
 
-#: src/saveplay.c:4442
+#: src/saveplay.c:4441
 #, c-format
 msgid ""
 "\n"
@@ -5001,7 +5001,7 @@ msgstr ""
 "Ce fichier %s est corrompu.\n"
 "LiVES est incapable de le restaurer.\n"
 
-#: src/saveplay.c:4887
+#: src/saveplay.c:4886
 #, c-format
 msgid ""
 "\n"
@@ -5010,22 +5010,22 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:5040
+#: src/saveplay.c:5039
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:5045
+#: src/saveplay.c:5044
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:5048
+#: src/saveplay.c:5047
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:5357
+#: src/saveplay.c:5356
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -5035,11 +5035,11 @@ msgstr ""
 "Des fichiers d'une précédente exécution de LiVES ont été trouvés.\n"
 "Voulez-vous essayer de les récupérer ?\n"
 
-#: src/saveplay.c:5381
+#: src/saveplay.c:5380
 msgid "Recovering files"
 msgstr "Récupération des fichiers"
 
-#: src/saveplay.c:5382
+#: src/saveplay.c:5381
 msgid "Recovering files..."
 msgstr "Récupération des fichiers..."
 
@@ -6433,7 +6433,7 @@ msgstr ""
 "Info: Impossible de charger le plugin %s\n"
 "L'erreur était: %s\n"
 
-#: src/effects-weed.c:4840 src/effects-weed.c:5924
+#: src/effects-weed.c:4840 src/effects-weed.c:5920
 msgid "Some plugin directories"
 msgstr ""
 
@@ -6576,32 +6576,32 @@ msgstr ""
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6725
+#: src/effects-weed.c:6721
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6870
+#: src/effects-weed.c:6866
 #, fuzzy, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr "Impossible de charger l'instance %s, code d'erreur %d\n"
 
-#: src/effects-weed.c:6948
+#: src/effects-weed.c:6944
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Impossible de charger le générateur %s\n"
 
-#: src/effects-weed.c:7872
+#: src/effects-weed.c:7868
 #, fuzzy, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr "Impossible de démarrer le générateur %s.\n"
 
-#: src/effects-weed.c:7986
+#: src/effects-weed.c:7982
 #, fuzzy, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "Impossible de démarrer le générateur %s.\n"
 
-#: src/effects-weed.c:9309
+#: src/effects-weed.c:9305
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""

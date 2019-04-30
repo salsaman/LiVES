@@ -50,7 +50,6 @@ typedef struct {
   short x, y;
 } BUMP;
 
-
 #define ABS(a)           (((a) < 0) ? -(a) : (a))
 
 /* precomputed tables */
@@ -61,7 +60,7 @@ static int Y_G[256];
 static int Y_B[256];
 
 
-static int myround(double n) {
+static inline int myround(double n) {
   if (n >= 0)
     return (int)(n + 0.5);
   else
@@ -140,21 +139,28 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
 
   uint16_t lightx, lighty, temp;
-  short normalx, normaly, x, y;
+  short normalx, normaly, x, y, xx;
   uint8_t *s1;
+
+  float aspect = (float)width / (float)height;
 
   BUMP bumpmap[width][height];
 
+  int yrow = irowstride;
+
   /* create bump map */
-  for (x = 0; x < width - 1; x++) {
-    for (y = 1; y < height - 1; y++) {
-      bumpmap[x][y].x = calc_luma(&src[y * irowstride + x * 3 + 3]) - calc_luma(&src[y * irowstride + x * 3]);
-      bumpmap[x][y].y = calc_luma(&src[y * irowstride + x * 3]) - calc_luma(&src[(y - 1) * irowstride + x * 3]);
+  for (y = 1; y < height - 1; y++) {
+    xx = 0;
+    for (x = 0; x < width3 - 3; x += 3) {
+      bumpmap[xx][y].x = calc_luma(&src[yrow + x + 3]) - calc_luma(&src[yrow + x]);
+      bumpmap[xx][y].y = calc_luma(&src[yrow + x]) - calc_luma(&src[yrow - irowstride + x]);
+      xx++;
     }
+    yrow += irowstride;
   }
 
-  lightx = aSin[sdata->sin_index];
-  lighty = aSin[sdata->sin_index2];
+  lightx = aSin[sdata->sin_index] / 100. * width / 2. + width / 2. + 128 * aspect;
+  lighty = aSin[sdata->sin_index2] / 100. * height / 2.  + height / 2 + 128;
 
   weed_memset(dst, 0, width3);
   s1 = dst + orowstride;
@@ -167,7 +173,7 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     s1 += 3;
 
     for (x = 1; x < width - 1; x++) {
-      normalx = bumpmap[x][y].x + lightx - x;
+      normalx = bumpmap[x][y].x + (lightx - x) / aspect;
       normaly = bumpmap[x][y].y + temp;
 
       if (normalx < 0 || normalx > 255)
@@ -201,7 +207,7 @@ void bumpmap_x_init(void) {
   /*create sin lookup table */
   for (i = 0; i < 512; i++) {
     rad = (float)i * 0.0174532 * 0.703125;
-    aSin[i] = (short)((sin(rad) * 100.0) + 256.0);
+    aSin[i] = (short)((sin(rad) * 100.0));
   }
 
   /* create reflection map */
@@ -217,7 +223,6 @@ void bumpmap_x_init(void) {
       reflectionmap[x][y] = Z;
     }
   }
-
 }
 
 

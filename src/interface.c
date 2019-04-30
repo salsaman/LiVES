@@ -2893,3 +2893,316 @@ autolives_window *autolives_pre_dialog(void) {
   return alwindow;
 }
 
+
+
+// prompt for the following:
+
+// - URL
+
+// save dir
+
+// format selection (free / nonfree) [NEW]
+
+// filename
+
+// approx file size
+
+// update youtube-dl : root passwd
+
+// advanced :: save subs / sub language
+
+boolean run_youtube_dialog(void) {
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *label;
+  LiVESWidget *ext_label;
+  LiVESWidget *hbox;
+  LiVESWidget *dialog;
+  LiVESWidget *entry;
+  LiVESWidget *name_entry;
+  LiVESWidget *dir_entry;
+  LiVESWidget *checkbutton;
+#ifdef ALLOW_NONFREE_CODECS
+  LiVESWidget *radiobutton_free;
+  LiVESWidget *radiobutton_nonfree;
+#endif
+  LiVESWidget *radiobutton_approx;
+  LiVESWidget *radiobutton_atleast;
+  LiVESWidget *radiobutton_atmost;
+  LiVESWidget *radiobutton_smallest;
+  LiVESWidget *radiobutton_largest;
+  LiVESWidget *radiobutton_choose;
+  LiVESWidget *spinbutton_width;
+  LiVESWidget *spinbutton_height;
+  LiVESWidget *aspbutton;
+
+  char *fname;
+
+#ifdef ALLOW_NONFREE_CODECS
+  LiVESSList *radiobutton_group = NULL;
+#endif
+  LiVESSList *radiobutton_group2 = NULL;
+
+  LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+
+  char *title, *tmp, *tmp2;
+
+  char *dfile = NULL, *url = NULL;
+
+  char dirname[PATH_MAX];
+
+  int response;
+
+  boolean onlyfree = TRUE;
+
+  title = lives_strdup(_("Open Youtube Clip"));
+
+  dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
+  lives_signal_handlers_disconnect_by_func(dialog, return_true, NULL);
+
+  lives_free(title);
+
+  lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
+
+  if (prefs->show_gui) {
+    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  }
+
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  label = lives_standard_label_new(
+            _("To open a clip from Youtube, LiVES will first download it with youtube-dl.\n"
+              "PLEASE MAKE SURE YOU HAVE THE MOST RECENT VERSION OF THAT TOOL INSTALLED !"));
+
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 2);
+
+  add_spring_to_box(LIVES_BOX(hbox), 0);
+
+  // TODO - check for zenity
+
+  checkbutton = lives_standard_check_button_new(_("<--- Auto update (may require your password)"), FALSE, LIVES_BOX(hbox), NULL);
+
+  add_spring_to_box(LIVES_BOX(hbox), 0);
+
+  label = lives_standard_label_new(_("Enter the URL of the clip below.\nE.g: http://www.youtube.com/watch?v=WCR6f6WzjP8"));
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 3);
+
+  entry = lives_standard_entry_new(_("Youtube URL : "), "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
+
+  dir_entry = lives_standard_direntry_new(_("Save to _Directory : "), mainw->vid_dl_dir,
+                                          STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 3);
+
+#ifdef ALLOW_NONFREE_CODECS
+  label = lives_standard_label_new(_("Format selection:"));
+
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
+  radiobutton_free = lives_standard_radio_button_new((tmp = lives_strdup(_("_Free (eg. vp9 / opus / webm)"))), &radiobutton_group,
+                     LIVES_BOX(hbox),
+                     (tmp2 = lives_strdup(_("Download clip using Free codecs"))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  radiobutton_nonfree = lives_standard_radio_button_new((tmp = lives_strdup(_("_Non-free (eg. h264 / aac / mp4)"))), &radiobutton_group,
+                        LIVES_BOX(hbox),
+                        (tmp2 = lives_strdup(_("Download clip using non-free codecs"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+#endif
+
+  name_entry = lives_standard_entry_new(_("_File Name : "), "", STD_ENTRY_WIDTH / 2, PATH_MAX, LIVES_BOX(hbox), NULL);
+
+  ext_label = lives_standard_label_new("." LIVES_FILE_EXT_WEBM);
+
+  lives_box_pack_start(LIVES_BOX(hbox), ext_label, FALSE, FALSE, 0);
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
+
+  label = lives_standard_label_new(_("Desired frame size:"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
+  radiobutton_approx = lives_standard_radio_button_new((tmp = lives_strdup(_("Approximately"))), &radiobutton_group2,
+                       LIVES_BOX(hbox),
+                       (tmp2 = lives_strdup(_("Download the closest to this size"))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  radiobutton_atleast = lives_standard_radio_button_new((tmp = lives_strdup(_("At _least"))), &radiobutton_group2,
+                        LIVES_BOX(hbox),
+                        (tmp2 = lives_strdup(_("Frame size should be at least this size"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  radiobutton_atmost = lives_standard_radio_button_new((tmp = lives_strdup(_("At _most  -  "))), &radiobutton_group2,
+                       LIVES_BOX(hbox),
+                       (tmp2 = lives_strdup(_("Frame size should be at most this size"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+
+
+  spinbutton_width = lives_standard_spin_button_new(_("_Width"), CURRENT_CLIP_HAS_VIDEO ? cfile->hsize : DEF_GEN_WIDTH,
+                     4., 100000., 4., 16., 0., LIVES_BOX(hbox), NULL);
+
+
+  spinbutton_height = lives_standard_spin_button_new(_("X        _Height"), CURRENT_CLIP_HAS_VIDEO ? cfile->vsize : DEF_GEN_HEIGHT,
+                      4., 100000., 4., 16., 0., LIVES_BOX(hbox), NULL);
+
+  label = lives_standard_label_new(_("pixels"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
+
+  aspbutton = lives_standard_lock_button_new(TRUE, 16, 16, _("Lock / unlock aspect ratio"));
+  lives_box_pack_start(LIVES_BOX(hbox), aspbutton, FALSE, FALSE, widget_opts.packing_width);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
+
+  label = lives_standard_label_new(_("or:"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
+  // TODO - add aspect button
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
+
+  radiobutton_smallest = lives_standard_radio_button_new((tmp = lives_strdup(_("The _smallest"))), &radiobutton_group2,
+                         LIVES_BOX(hbox),
+                         (tmp2 = lives_strdup(_("Download the lowest resolution available"))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+
+  radiobutton_largest = lives_standard_radio_button_new((tmp = lives_strdup(_("The _largest"))), &radiobutton_group2,
+                        LIVES_BOX(hbox),
+                        (tmp2 = lives_strdup(_("Download the highest resolution available"))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  radiobutton_choose = lives_standard_radio_button_new((tmp = lives_strdup(_("Let me choose (opens in new window)..."))), &radiobutton_group2,
+                       LIVES_BOX(hbox),
+                       (tmp2 = lives_strdup(_("Choose the resolution from a list (opens in new window)"))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  ///////
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 2);
+
+  add_spring_to_box(LIVES_BOX(hbox), 0);
+  lives_standard_expander_new(_("_Other options (e.g audio, subtitles)..."), LIVES_BOX(hbox), NULL);
+  add_spring_to_box(LIVES_BOX(hbox), 0);
+
+  // TODO - add other options
+
+  ///////
+
+  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+  lives_widget_set_can_focus_and_default(cancelbutton);
+
+  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
+  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
+  lives_widget_set_can_focus_and_default(okbutton);
+  lives_widget_grab_default_special(okbutton);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                       locw);
+
+  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+
+  lives_widget_show_all(dialog);
+
+  while (1) {
+    response = lives_dialog_run(LIVES_DIALOG(dialog));
+    if (response == LIVES_RESPONSE_CANCEL) {
+      mainw->cancelled = CANCEL_USER;
+      return FALSE;
+    }
+
+    ///////
+
+    if (!strlen(lives_entry_get_text(LIVES_ENTRY(name_entry)))) {
+      do_error_dialog_with_check_transient(_("Please enter the name of the file to save the clip as.\n"), TRUE, 0, LIVES_WINDOW(dialog));
+      continue;
+    }
+
+    url = lives_strdup(lives_entry_get_text(LIVES_ENTRY(locw->entry)));
+
+    if (!strlen(url)) {
+      lives_free(url);
+      do_error_dialog_with_check_transient(_("Please enter a valid URL for the download.\n"), TRUE, 0, LIVES_WINDOW(dialog));
+      continue;
+    }
+
+    fname  = ensure_extension(lives_entry_get_text(LIVES_ENTRY(name_entry)), onlyfree ? LIVES_FILE_EXT_WEBM : LIVES_FILE_EXT_MP4);
+    lives_snprintf(dirname, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(dir_entry)));
+    ensure_isdir(dirname);
+    dfile = lives_build_filename(dirname, fname, NULL);
+
+    if (!check_file(dfile, TRUE)) {
+      char *msg = lives_strdup_printf(_("Unable to write to the file\n%s\nPlease check the directory permissions and try again, or Cancel.\n"),
+                                      dfile);
+      lives_free(fname);
+      lives_free(url);
+      lives_free(dfile);
+      do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(dialog));
+      lives_free(msg);
+      continue;
+    }
+    break;
+  };
+
+  lives_snprintf(mainw->vid_dl_dir, PATH_MAX, "%s", dirname);
+
+  lives_widget_destroy(dialog);
+
+  lives_widget_context_update();
+
+  mainw->error = FALSE;
+  d_print(_("Downloading %s to %s..."), url, dfile);
+
+  /*  options.output = dfile;
+      options.url = url;
+      options.nonfree = nonfree; // TODO
+      options.sizetype = sizetype; // TODO
+      options.width = width; // TODO
+      options.height = height; // TODO
+      options.getsubs = getsubs; // TODO
+      options.sublang = sublang; // TODO
+      options.update = update; // TODO
+
+      return options;*/
+
+  return TRUE;
+}

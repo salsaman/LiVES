@@ -110,19 +110,11 @@ boolean lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);
 
 // object funcs.
 
-livespointer lives_object_ref(livespointer); ///< increase refcount by one
+boolean lives_object_ref(livespointer); ///< increase refcount by one
 boolean lives_object_unref(livespointer); ///< decrease refcount by one: if refcount==0, object is destroyed
 
 // remove any "floating" reference and add a new ref
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 0, 0)
-livespointer lives_object_ref_sink(livespointer);
-#else
-void lives_object_ref_sink(livespointer);
-#endif
-#else
-livespointer lives_object_ref_sink(livespointer);
-#endif
+boolean lives_object_ref_sink(livespointer);
 
 // lives_pixbuf functions
 
@@ -487,6 +479,8 @@ boolean lives_spin_button_set_range(LiVESSpinButton *, double min, double max);
 
 boolean lives_spin_button_set_wrap(LiVESSpinButton *, boolean wrap);
 
+boolean lives_spin_button_set_snap_to_ticks(LiVESSpinButton *, boolean snap);
+
 boolean lives_spin_button_set_digits(LiVESSpinButton *, uint32_t digits);
 
 boolean lives_spin_button_update(LiVESSpinButton *);
@@ -759,6 +753,11 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
 LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars, LiVESBox *,
                                       const char *tooltip);
 
+LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars, LiVESBox *,
+    const char *tooltip);
+
+LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height, const char *tooltip);
+
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);
 
 LiVESWidget *lives_standard_hruler_new(void);
@@ -784,6 +783,8 @@ void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state); // normal 
 void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state, boolean set_fg); // menu and bars colours
 void lives_widget_apply_theme3(LiVESWidget *, LiVESWidgetState state); // info base/text
 
+boolean lives_image_scale(LiVESImage *, int width, int height, LiVESInterpType interp_type);
+
 boolean global_recent_manager_add(const char *file_name);
 
 void lives_cursor_unref(LiVESXCursor *);
@@ -793,6 +794,8 @@ boolean lives_widget_context_update(void);
 LiVESWidget *lives_menu_add_separator(LiVESMenu *);
 
 boolean lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
+
+boolean lives_widget_set_show_hide_parent(LiVESWidget *);
 
 void lives_window_center(LiVESWindow *);
 

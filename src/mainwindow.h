@@ -58,8 +58,8 @@
 #define CE_FRAME_HSPACE ((int)(420.*widget_opts.scale))
 #endif
 
-/// char width of start / end spinbuttons
-#define SPBWIDTHCHARS 12
+/// char width of combo entries (default)
+#define COMBOWIDTHCHARS 12
 
 /// char width of framecounter
 #define FCWIDTHCHARS 18
@@ -75,8 +75,8 @@
 #define SCR_HEIGHT_SAFETY ((int)(200.*widget_opts.scale))
 
 /// default size for generators
-#define DEF_GEN_WIDTH 640
-#define DEF_GEN_HEIGHT 480
+#define DEF_GEN_WIDTH 1024
+#define DEF_GEN_HEIGHT 720
 
 /// height of preview widgets in sepwin
 #define PREVIEW_BOX_HT ((int)(100.*widget_opts.scale))

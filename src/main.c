@@ -3247,6 +3247,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           continue;
         }
         if (!strcmp(charopt, "tmpdir")) {
+          int ret,  myerrno;
           mainw->has_session_workdir = TRUE;
           // override tempdir (workdir) setting
           lives_snprintf(prefs->workdir, PATH_MAX, "%s", optarg);
@@ -3254,16 +3255,20 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           set_pref(PREF_SESSION_WORKDIR, prefs->workdir);
           lives_snprintf(mainw->first_info_file, PATH_MAX, "%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d", prefs->workdir, capable->mainpid);
 
-          if (lives_mkdir_with_parents(prefs->workdir, capable->umask) == -1) {
-            if (!check_dir_access(prefs->workdir)) {
-              // abort if we cannot create the new subdir
-              LIVES_ERROR("Could not create directory");
-              LIVES_ERROR(prefs->workdir);
-            }
+          ret = lives_mkdir_with_parents(prefs->workdir, capable->umask);
+          myerrno = errno;
+          if (!check_dir_access(prefs->workdir)) {
+            // abort if we cannot create the new subdir
+            if (myerrno == EINVAL) {
+              LIVES_ERROR("Could not write to directory");
+            } else LIVES_ERROR("Could not create directory");
+            LIVES_ERROR(prefs->workdir);
             capable->can_write_to_workdir = FALSE;
           } else {
-            LIVES_INFO("Created directory");
-            LIVES_INFO(prefs->workdir);
+            if (ret != -1) {
+              LIVES_INFO("Created directory");
+              LIVES_INFO(prefs->workdir);
+            }
           }
           mainw->com_failed = FALSE;
           continue;

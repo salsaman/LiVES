@@ -13,6 +13,8 @@ sepwin.png \
 volume_mute.png \
 zoom-in.png \
 zoom-out.png \
+locked.png \
+unlocked.png \
 pref_decoding.png \
 pref_directory.png \
 pref_effects.png \

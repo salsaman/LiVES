@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-04-27 10:42-0300\n"
+"POT-Creation-Date: 2019-04-27 10:47-0300\n"
 "PO-Revision-Date: 2018-07-23 13:17+0000\n"
 "Last-Translator: Pavel Borecki <Unknown>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -668,12 +668,12 @@ msgid "Closed clip %s\n"
 msgstr ""
 
 #: src/main.c:7053 src/gui.c:726 src/utils.c:4959 src/utils.c:4988
-#: src/saveplay.c:3322 src/multitrack.c:4724 src/multitrack.c:6558
+#: src/saveplay.c:3321 src/multitrack.c:4724 src/multitrack.c:6558
 msgid "_Undo"
 msgstr "_Zpět"
 
 #: src/main.c:7054 src/gui.c:741 src/utils.c:4960 src/utils.c:4989
-#: src/saveplay.c:3323 src/multitrack.c:4743 src/multitrack.c:6581
+#: src/saveplay.c:3322 src/multitrack.c:4743 src/multitrack.c:6581
 msgid "_Redo"
 msgstr "_Znovu"
 
@@ -4473,7 +4473,7 @@ msgstr "Otvírání%s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Otvírání%s začátek %.2f sek. snímků %d"
 
-#: src/saveplay.c:309 src/saveplay.c:3766
+#: src/saveplay.c:309 src/saveplay.c:3765
 msgid " without sound"
 msgstr " bez zvuku"
 
@@ -4580,7 +4580,7 @@ msgstr ""
 "Tak co, pokračovat ?"
 
 #: src/saveplay.c:1421 src/saveplay.c:1539 src/saveplay.c:1610
-#: src/saveplay.c:3775
+#: src/saveplay.c:3774
 #, fuzzy
 msgid "Pulling frames from clip..."
 msgstr "Vkládání %d%s snímků ze schránky..."
@@ -4660,21 +4660,21 @@ msgstr ""
 "Klikněte na Nástroje--->Změnit velikost všech snímků \n"
 "a změňte všechny velikost všech snímků na současnou hodnotu.\n"
 
-#: src/saveplay.c:3249
+#: src/saveplay.c:3248
 msgid "Unknown"
 msgstr "Neznámé"
 
-#: src/saveplay.c:3339
+#: src/saveplay.c:3338
 #, c-format
 msgid "Untitled%d"
 msgstr "Bez jména%d"
 
-#: src/saveplay.c:3402
+#: src/saveplay.c:3401
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d snímků je dost !\n"
 
-#: src/saveplay.c:3412
+#: src/saveplay.c:3411
 #, c-format
 msgid ""
 "\n"
@@ -4682,13 +4682,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/saveplay.c:3414
+#: src/saveplay.c:3413
 msgid ""
 "\n"
 "An error occurred opening the file\n"
 msgstr ""
 
-#: src/saveplay.c:3426
+#: src/saveplay.c:3425
 #, c-format
 msgid ""
 "\n"
@@ -4696,7 +4696,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3514
+#: src/saveplay.c:3513
 #, c-format
 msgid ""
 "\n"
@@ -4708,14 +4708,14 @@ msgstr ""
 "(snímků za sekundu). \n"
 "Výchozí hodnoty lze nastavit v Nástroje | Předvolby | Různé\n"
 
-#: src/saveplay.c:3524
+#: src/saveplay.c:3523
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Rychlost přehrávání byla upravena na %.3f snímků za sekundu, aby odpovídal "
 "zvuku.\n"
 
-#: src/saveplay.c:3540
+#: src/saveplay.c:3539
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4724,7 +4724,7 @@ msgstr ""
 "Snímky=%d typ=%s velikost=%dx%d *bpp=Šedá škála* snímků za sekundu  =%.3f\n"
 "Zvuk:"
 
-#: src/saveplay.c:3544 src/saveplay.c:4488
+#: src/saveplay.c:3543 src/saveplay.c:4487
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4733,54 +4733,54 @@ msgstr ""
 "Snímků=%d typ=%s velikost=%dx%d bpp=%d snímků za sekundu =%.3f\n"
 "Zvuk:"
 
-#: src/saveplay.c:3549 src/saveplay.c:4493
+#: src/saveplay.c:3548 src/saveplay.c:4492
 #, c-format
 msgid "%s none\n"
 msgstr "%s nic\n"
 
-#: src/saveplay.c:3560
+#: src/saveplay.c:3559
 #, c-format
 msgid " - Author: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3563
+#: src/saveplay.c:3562
 #, c-format
 msgid " - Title: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3566
+#: src/saveplay.c:3565
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Komentář: %s\n"
 
-#: src/saveplay.c:3669
+#: src/saveplay.c:3668
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Uložení snímků %d jako %s..."
 
-#: src/saveplay.c:3763
+#: src/saveplay.c:3762
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "zZálohování %s jako %s"
 
-#: src/saveplay.c:3806
+#: src/saveplay.c:3805
 msgid "Backing up"
 msgstr "Zálohuji"
 
-#: src/saveplay.c:3840
+#: src/saveplay.c:3839
 msgid "performance data was backed up..."
 msgstr "data byly zazálohovány"
 
-#: src/saveplay.c:4396
+#: src/saveplay.c:4395
 #, c-format
 msgid "Restoring %s..."
 msgstr "Obnovování %s..."
 
-#: src/saveplay.c:4424
+#: src/saveplay.c:4423
 msgid "Restoring"
 msgstr "Obnovování"
 
-#: src/saveplay.c:4442
+#: src/saveplay.c:4441
 #, c-format
 msgid ""
 "\n"
@@ -4793,7 +4793,7 @@ msgstr ""
 "Soubor %s je poškozen.\n"
 "LiVES ho nemohl obnovit.\n"
 
-#: src/saveplay.c:4887
+#: src/saveplay.c:4886
 #, c-format
 msgid ""
 "\n"
@@ -4802,22 +4802,22 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:5040
+#: src/saveplay.c:5039
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:5045
+#: src/saveplay.c:5044
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:5048
+#: src/saveplay.c:5047
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:5357
+#: src/saveplay.c:5356
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4827,11 +4827,11 @@ msgstr ""
 "Byly nalezeny soubory z předchozího spuštění LiVES.\n"
 "Pokusit se o jejich obnovení?\n"
 
-#: src/saveplay.c:5381
+#: src/saveplay.c:5380
 msgid "Recovering files"
 msgstr "Obnovuji soubory"
 
-#: src/saveplay.c:5382
+#: src/saveplay.c:5381
 msgid "Recovering files..."
 msgstr ""
 
@@ -6217,7 +6217,7 @@ msgid ""
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4840 src/effects-weed.c:5924
+#: src/effects-weed.c:4840 src/effects-weed.c:5920
 msgid "Some plugin directories"
 msgstr ""
 
@@ -6360,32 +6360,32 @@ msgstr ""
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6725
+#: src/effects-weed.c:6721
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6870
+#: src/effects-weed.c:6866
 #, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:6948
+#: src/effects-weed.c:6944
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nelze spustit generátor %s\n"
 
-#: src/effects-weed.c:7872
+#: src/effects-weed.c:7868
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:7986
+#: src/effects-weed.c:7982
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9309
+#: src/effects-weed.c:9305
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""

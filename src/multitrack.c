@@ -4473,7 +4473,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
   widget_opts.apply_theme = FALSE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
-  mt->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 0., 1. / mt->fps, 1. / mt->fps, 3,
+  mt->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 10000000., 1. / mt->fps, 1. / mt->fps, 3,
                          NULL, NULL);
   widget_opts.apply_theme = woat;
   widget_opts.packing_width = dpw;
@@ -4483,7 +4483,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   mt->l_sel_arrow = lives_arrow_new(LIVES_ARROW_LEFT, LIVES_SHADOW_OUT);
   lives_box_pack_start(LIVES_BOX(hbox), mt->l_sel_arrow, FALSE, FALSE, 0);
 
-  lives_entry_set_width_chars(LIVES_ENTRY(mt->spinbutton_start), SPBWIDTHCHARS);
+  lives_entry_set_width_chars(LIVES_ENTRY(mt->spinbutton_start), COMBOWIDTHCHARS);
   mt->sel_label = lives_standard_label_new(NULL);
 
   set_sel_label(mt->sel_label);
@@ -4494,13 +4494,13 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
   widget_opts.apply_theme = FALSE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
-  mt->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 0., 1. / mt->fps, 1. / mt->fps, 3,
+  mt->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 10000000., 1. / mt->fps, 1. / mt->fps, 3,
                        NULL, NULL);
 
   widget_opts.apply_theme = woat;
   widget_opts.packing_width = dpw;
 
-  lives_entry_set_width_chars(LIVES_ENTRY(mt->spinbutton_end), SPBWIDTHCHARS);
+  lives_entry_set_width_chars(LIVES_ENTRY(mt->spinbutton_end), COMBOWIDTHCHARS);
 
   lives_box_pack_start(LIVES_BOX(hbox), mt->spinbutton_end, TRUE, FALSE, MAIN_SPIN_SPACER);
 

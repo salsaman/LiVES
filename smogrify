@@ -82,7 +82,7 @@ if (defined($ARGV[0])) {
 
             if ($workdir eq "" || $command eq "report") {
                 $workdir = &rc_get("tempdir");
-                $priority = 1;
+                $priority = 1; ## set it as first key if not found in rc file
                 &rc_set("session_tempdir", "$workdir");
                 $priority = 0;
             }
@@ -7407,11 +7407,14 @@ sub rc_set {
             }
         }
         if ($found==0&&$delpref==0) {
+	    # we didnt find the key so we must add it
             if ($priority==1) {
+		#if $priority was 1 we set it as first
                 $priority=2;
                 &rc_set("$key","$value");
             }
             else {
+		# otherwise set it as last
                 print OUT "\n<$key>\n$value\n</$key>\n";
             }
         }

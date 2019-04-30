@@ -255,6 +255,8 @@ typedef int lives_pgid_t;
 
 #define DEF_FILE_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) ///< non-executable, is modified by the umask
 
+#define ALLOW_NONFREE_CODECS
+
 /// LiVES will show a warning if this (MBytes) is exceeded on load
 /// (can be overridden in prefs)
 #define WARN_FILE_SIZE 500

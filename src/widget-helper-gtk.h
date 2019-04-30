@@ -404,6 +404,8 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_WIDGET_ROW_EXPANDED_SIGNAL "row-expanded"
 #define LIVES_WIDGET_COLOR_SET_SIGNAL "color-set"
 #define LIVES_WIDGET_SET_FOCUS_CHILD_SIGNAL "set-focus-child"
+#define LIVES_WIDGET_SHOW_SIGNAL "show"
+#define LIVES_WIDGET_HIDE_SIGNAL "hide"
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 #define LIVES_WIDGET_STATE_CHANGED_SIGNAL "state-flags-changed"
@@ -595,12 +597,13 @@ typedef GtkFileChooserAction LiVESFileChooserAction;
 
 typedef GtkIconSize LiVESIconSize;
 #define LIVES_ICON_SIZE_INVALID GTK_ICON_SIZE_INVALID
-#define LIVES_ICON_SIZE_MENU GTK_ICON_SIZE_MENU
-#define LIVES_ICON_SIZE_SMALL_TOOLBAR GTK_ICON_SIZE_SMALL_TOOLBAR
-#define LIVES_ICON_SIZE_LARGE_TOOLBAR GTK_ICON_SIZE_LARGE_TOOLBAR
-#define LIVES_ICON_SIZE_BUTTON GTK_ICON_SIZE_BUTTON
-#define LIVES_ICON_SIZE_DND GTK_ICON_SIZE_DND
-#define LIVES_ICON_SIZE_DIALOG GTK_ICON_SIZE_DIALOG
+#define LIVES_ICON_SIZE_MENU GTK_ICON_SIZE_MENU // 16px
+#define LIVES_ICON_SIZE_SMALL_TOOLBAR GTK_ICON_SIZE_SMALL_TOOLBAR // 16px
+#define LIVES_ICON_SIZE_LARGE_TOOLBAR GTK_ICON_SIZE_LARGE_TOOLBAR // 24px
+#define LIVES_ICON_SIZE_BUTTON GTK_ICON_SIZE_BUTTON // 16px
+#define LIVES_ICON_SIZE_DND GTK_ICON_SIZE_DND // 32px
+#define LIVES_ICON_SIZE_DIALOG GTK_ICON_SIZE_DIALOG // 48px
+#define LIVES_ICON_SIZE_CUSTOM 1024
 
 // scrolledwindow policies
 typedef GtkPolicyType LiVESPolicyType;
@@ -835,6 +838,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_XEVENT(event) GDK_EVENT(event)
 
 #define LIVES_IS_WIDGET_OBJECT(object) G_IS_OBJECT(object)
+#define LIVES_IS_OBJECT(object) G_IS_OBJECT(object)
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
 #define LIVES_IS_WINDOW(widget) GTK_IS_WINDOW(widget)
 #define LIVES_IS_XWINDOW(widget) GDK_IS_WINDOW(widget)
@@ -882,6 +886,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_APPLY "gtk-apply"      // non-standard image ?
 #define LIVES_STOCK_CANCEL "gtk-cancel"    // non-standard image ?
 #define LIVES_STOCK_OK "gtk-ok"    // non-standard image ?
+
 #define LIVES_STOCK_UNDO "edit-undo"
 #define LIVES_STOCK_REDO "edit-redo"
 #define LIVES_STOCK_ADD "list-add"
@@ -911,6 +916,10 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_PREFERENCES "preferences-system"
 #define LIVES_STOCK_DIALOG_INFO "dialog-information"
 #define LIVES_STOCK_MISSING_IMAGE "image-missing"
+
+// custom values
+#define LIVES_LIVES_STOCK_LOCKED "locked"
+#define LIVES_LIVES_STOCK_UNLOCKED "unlocked"
 
 // these are set up in widget_helper_init()
 char LIVES_STOCK_LABEL_CANCEL[32];
@@ -1018,6 +1027,11 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 #endif
 
 #endif
+
+// custom values
+#define LIVES_LIVES_STOCK_LOCKED "locked"
+#define LIVES_LIVES_STOCK_UNLOCKED "unlocked"
+#define LIVES_LIVES_STOCK_LOOP "loop"
 
 #define LIVES_DEFAULT_MOD_MASK (gtk_accelerator_get_default_mod_mask ())
 

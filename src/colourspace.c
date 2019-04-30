@@ -10231,7 +10231,6 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 
   if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) return FALSE;
 
-  if (iwidth == width && iheight == height) return TRUE; // no resize needed
 
   if (width <= 0 || height <= 0) {
     char *msg = lives_strdup_printf("unable to scale layer to %d x %d for palette %d\n", width, height, palette);
@@ -10239,6 +10238,11 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
+
+  if (width < 4) width = 4;
+  if (height < 4) height = 4;
+
+  if (iwidth == width && iheight == height) return TRUE; // no resize needed
 
   // if in palette is a YUV palette which we cannot scale, convert to YUV888 (unclamped) or YUVA8888 (unclamped)
   // we can always scale these

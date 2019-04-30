@@ -1644,8 +1644,15 @@ void create_new_pb_speed(short type) {
 
     spinbutton_pb_speed = lives_standard_spin_button_new(NULL, cfile->fps, 1., FPS_MAX, .01, .1, 3, LIVES_BOX(hbox), NULL);
 
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+    add_fill_to_box(LIVES_BOX(hbox));
+
     label2 = lives_standard_label_new_with_mnemonic_widget(_("OR enter the desired clip length in _seconds"), NULL);
-    lives_box_pack_start(LIVES_BOX(vbox), label2, TRUE, TRUE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(hbox), label2, TRUE, TRUE, widget_opts.packing_width);
+
+    add_fill_to_box(LIVES_BOX(hbox));
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);

@@ -1,12 +1,11 @@
 // rfx-builder.h
 // LiVES
-// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
 #ifndef HAS_LIVES_RFX_BUILDER_H
 #define HAS_LIVES_RFX_BUILDER_H
-
 
 #define RFX_BUILDER "build-lives-rfx-plugin"
 
@@ -52,7 +51,7 @@ void on_export_rfx_activate(LiVESMenuItem *, livespointer status);
 #define RFXBUILD_MAX_TROWS 512
 
 
-#define PREF_RFXDIALOG_W ((int)(800.*widget_opts.scale))
+#define PREF_RFXDIALOG_W ((int)(720.*widget_opts.scale))
 #define PREF_RFXDIALOG_H ((int)(650.*widget_opts.scale))
 
 #define WINH_SAFETY
@@ -64,8 +63,6 @@ typedef struct {
   char *code;
 } rfx_trigger_t;
 
-
-
 typedef enum {
   RFX_BUILD_TYPE_EFFECT1,
   RFX_BUILD_TYPE_EFFECT2,
@@ -74,14 +71,12 @@ typedef enum {
   RFX_BUILD_TYPE_UTILITY
 } lives_rfx_build_type_t;
 
-
 typedef enum {
   RFX_TABLE_TYPE_REQUIREMENTS,
   RFX_TABLE_TYPE_PARAMS,
   RFX_TABLE_TYPE_TRIGGERS,
   RFX_TABLE_TYPE_PARAM_WINDOW
 } lives_rfx_table_type_t;
-
 
 typedef enum {
   RFX_CODE_TYPE_PRE,
@@ -91,14 +86,11 @@ typedef enum {
   RFX_CODE_TYPE_STRING_LIST
 } lives_rfx_code_type_t;
 
-
 typedef enum {
   RFX_BUILDER_MODE_NEW = 0,
   RFX_BUILDER_MODE_EDIT,
   RFX_BUILDER_MODE_COPY
 } lives_rfx_builder_mode_t;
-
-
 
 typedef struct {
   lives_rfx_build_type_t type;
@@ -244,8 +236,7 @@ void on_code_cancel(LiVESButton *, livespointer);
 void on_triggers_ok(LiVESButton *, livespointer rfxbuilder);
 void on_triggers_cancel(LiVESButton *, livespointer);
 
-
-
+////
 
 LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder);
 LiVESWidget *make_param_window_dialog(int hnum, rfx_build_window_t *rfxbuilder);
@@ -284,7 +275,6 @@ LiVESList *get_script_list(short status);
 
 boolean perform_rfxbuilder_checks(rfx_build_window_t *);
 boolean perform_param_checks(rfx_build_window_t *, int index, int rows);
-
 
 // read/write script files
 boolean rfxbuilder_to_script(rfx_build_window_t *);

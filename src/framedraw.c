@@ -150,7 +150,7 @@ void framedraw_add_label(LiVESVBox *box) {
 
   // TRANSLATORS - Preview refers to preview window; keep this phrase short
   label = lives_standard_label_new(_("You can click in Preview to change these values"));
-  lives_box_pack_start(LIVES_BOX(box), label, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(box), label, FALSE, FALSE, 4. * widget_opts.scale);
 }
 
 
@@ -161,7 +161,7 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
 
   mainw->framedraw_reset = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, NULL);
   hbox_rst = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(box), hbox_rst, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(box), hbox_rst, FALSE, FALSE, 4. * widget_opts.scale);
 
   lives_button_set_label(LIVES_BUTTON(mainw->framedraw_reset), _("_Reset Values"));
   lives_box_pack_start(LIVES_BOX(hbox_rst), mainw->framedraw_reset, TRUE, FALSE, 0);
@@ -229,6 +229,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_container_add(LIVES_CONTAINER(frame), hbox);
 
   if (palette->style & STYLE_1) {
+    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
@@ -319,6 +320,8 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
 
   fd_width = lives_widget_get_allocation_width(mainw->framedraw);
   fd_height = lives_widget_get_allocation_height(mainw->framedraw);
+
+  if (fd_width < 4 || fd_height < 4) return;
 
   width = cfile->hsize;
   height = cfile->vsize;

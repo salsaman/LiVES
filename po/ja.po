@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-04-27 10:42-0300\n"
+"POT-Creation-Date: 2019-04-27 10:47-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -725,12 +725,12 @@ msgid "Closed clip %s\n"
 msgstr "ファイル %s を閉じました\n"
 
 #: src/main.c:7053 src/gui.c:726 src/utils.c:4959 src/utils.c:4988
-#: src/saveplay.c:3322 src/multitrack.c:4724 src/multitrack.c:6558
+#: src/saveplay.c:3321 src/multitrack.c:4724 src/multitrack.c:6558
 msgid "_Undo"
 msgstr "元に戻す(_U)"
 
 #: src/main.c:7054 src/gui.c:741 src/utils.c:4960 src/utils.c:4989
-#: src/saveplay.c:3323 src/multitrack.c:4743 src/multitrack.c:6581
+#: src/saveplay.c:3322 src/multitrack.c:4743 src/multitrack.c:6581
 msgid "_Redo"
 msgstr "やり直す(_R)"
 
@@ -4829,7 +4829,7 @@ msgstr "%sを開きます"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "%sを開きます。開始時刻%.2f秒、%dフレーム"
 
-#: src/saveplay.c:309 src/saveplay.c:3766
+#: src/saveplay.c:309 src/saveplay.c:3765
 msgid " without sound"
 msgstr " 音声なし"
 
@@ -4954,7 +4954,7 @@ msgstr ""
 "それでも続けますか ?"
 
 #: src/saveplay.c:1421 src/saveplay.c:1539 src/saveplay.c:1610
-#: src/saveplay.c:3775
+#: src/saveplay.c:3774
 #, fuzzy
 msgid "Pulling frames from clip..."
 msgstr "クリップからフレームを抽出"
@@ -5036,21 +5036,21 @@ msgstr ""
 "ツール--->すべてリサイズ をクリックして\n"
 "すべてのフレームを現在のサイズにリサイズしてください。\n"
 
-#: src/saveplay.c:3249
+#: src/saveplay.c:3248
 msgid "Unknown"
 msgstr "不明"
 
-#: src/saveplay.c:3339
+#: src/saveplay.c:3338
 #, c-format
 msgid "Untitled%d"
 msgstr "無題%d"
 
-#: src/saveplay.c:3402
+#: src/saveplay.c:3401
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d フレームで十分です !\n"
 
-#: src/saveplay.c:3412
+#: src/saveplay.c:3411
 #, c-format
 msgid ""
 "\n"
@@ -5058,13 +5058,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/saveplay.c:3414
+#: src/saveplay.c:3413
 msgid ""
 "\n"
 "An error occurred opening the file\n"
 msgstr ""
 
-#: src/saveplay.c:3426
+#: src/saveplay.c:3425
 #, c-format
 msgid ""
 "\n"
@@ -5075,7 +5075,7 @@ msgstr ""
 "クリップ %s のファイル情報の取得でエラーが発生しました。\n"
 "このクリップに問題が発生している可能性があります。\n"
 
-#: src/saveplay.c:3514
+#: src/saveplay.c:3513
 #, c-format
 msgid ""
 "\n"
@@ -5086,12 +5086,12 @@ msgstr ""
 "無効な再生速度です。 %.3ffpsの標準設定を使います。 \n"
 "標準値は「ツール | 設定 | その他」で指定できます。\n"
 
-#: src/saveplay.c:3524
+#: src/saveplay.c:3523
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr "再生速度は音声に合わせて %.3f フレーム/秒に調整しました。\n"
 
-#: src/saveplay.c:3540
+#: src/saveplay.c:3539
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -5100,7 +5100,7 @@ msgstr ""
 "フレーム=%d タイプ=%s サイズ=%dx%d *bpp=グレースケール* fps=%.3f\n"
 "音声:"
 
-#: src/saveplay.c:3544 src/saveplay.c:4488
+#: src/saveplay.c:3543 src/saveplay.c:4487
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -5109,54 +5109,54 @@ msgstr ""
 "フレーム=%d タイプ=%s サイズ=%dx%d bpp=%d fps=%.3f\n"
 "音声:"
 
-#: src/saveplay.c:3549 src/saveplay.c:4493
+#: src/saveplay.c:3548 src/saveplay.c:4492
 #, c-format
 msgid "%s none\n"
 msgstr "%s なし\n"
 
-#: src/saveplay.c:3560
+#: src/saveplay.c:3559
 #, fuzzy, c-format
 msgid " - Author: %s\n"
 msgstr "作者: %s"
 
-#: src/saveplay.c:3563
+#: src/saveplay.c:3562
 #, fuzzy, c-format
 msgid " - Title: %s\n"
 msgstr " - コメント: %s\n"
 
-#: src/saveplay.c:3566
+#: src/saveplay.c:3565
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - コメント: %s\n"
 
-#: src/saveplay.c:3669
+#: src/saveplay.c:3668
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "フレーム%dを%sとして保存..."
 
-#: src/saveplay.c:3763
+#: src/saveplay.c:3762
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "%sから%sへバックアップします"
 
-#: src/saveplay.c:3806
+#: src/saveplay.c:3805
 msgid "Backing up"
 msgstr "バックアップします"
 
-#: src/saveplay.c:3840
+#: src/saveplay.c:3839
 msgid "performance data was backed up..."
 msgstr "パフォーマンスのデータをバックアップしました..."
 
-#: src/saveplay.c:4396
+#: src/saveplay.c:4395
 #, c-format
 msgid "Restoring %s..."
 msgstr "%sをリストアします..."
 
-#: src/saveplay.c:4424
+#: src/saveplay.c:4423
 msgid "Restoring"
 msgstr "リストアします"
 
-#: src/saveplay.c:4442
+#: src/saveplay.c:4441
 #, c-format
 msgid ""
 "\n"
@@ -5169,7 +5169,7 @@ msgstr ""
 "このファイル%sは壊れています。\n"
 "LiVESはリストアできませんでした。\n"
 
-#: src/saveplay.c:4887
+#: src/saveplay.c:4886
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5181,22 +5181,22 @@ msgstr ""
 "記録の停止レベルは「設定」で設定することができます。\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:5040
+#: src/saveplay.c:5039
 #, c-format
 msgid "rec %.2f MB"
 msgstr "%.2fMBを記録しました"
 
-#: src/saveplay.c:5045
+#: src/saveplay.c:5044
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "%.2fMBを記録しました"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:5048
+#: src/saveplay.c:5047
 msgid "rec ?? MB"
 msgstr "rec ?? MB"
 
-#: src/saveplay.c:5357
+#: src/saveplay.c:5356
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -5206,11 +5206,11 @@ msgstr ""
 "LiVESを前回起動した際のファイルを発見しました。\n"
 "復元を試しますか?\n"
 
-#: src/saveplay.c:5381
+#: src/saveplay.c:5380
 msgid "Recovering files"
 msgstr "ファイルの復元"
 
-#: src/saveplay.c:5382
+#: src/saveplay.c:5381
 msgid "Recovering files..."
 msgstr "ファイルを復元しています..."
 
@@ -6863,7 +6863,7 @@ msgstr ""
 "情報: プラグイン %s を読み込みできませんでした。\n"
 "エラー: %s\n"
 
-#: src/effects-weed.c:4840 src/effects-weed.c:5924
+#: src/effects-weed.c:4840 src/effects-weed.c:5920
 msgid "Some plugin directories"
 msgstr "プラグインディレクトリ"
 
@@ -7006,32 +7006,32 @@ msgstr ""
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6725
+#: src/effects-weed.c:6721
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6870
+#: src/effects-weed.c:6866
 #, fuzzy, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr "インスタンス %s を開始できません。エラーコード %d\n"
 
-#: src/effects-weed.c:6948
+#: src/effects-weed.c:6944
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "ジェネレーター%sを開始できません。\n"
 
-#: src/effects-weed.c:7872
+#: src/effects-weed.c:7868
 #, fuzzy, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr "ジェネレーター %s を開始できません。\n"
 
-#: src/effects-weed.c:7986
+#: src/effects-weed.c:7982
 #, fuzzy, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "ジェネレーター %s を開始できません。\n"
 
-#: src/effects-weed.c:9309
+#: src/effects-weed.c:9305
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr "%s [不安定] (%s)"

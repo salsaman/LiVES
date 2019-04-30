@@ -766,8 +766,7 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   }
 
-  locw = create_location_dialog(2);
-  lives_widget_show_all(locw->dialog);
+  run_youtube_dialog();
 }
 
 
@@ -868,49 +867,11 @@ void on_location_select(LiVESButton *button, livespointer user_data) {
 
 
 void on_utube_select(LiVESButton *button, livespointer user_data) {
-  char *fname = ensure_extension(lives_entry_get_text(LIVES_ENTRY(locw->name_entry)), LIVES_FILE_EXT_MP4);
   char *url;
   char *dirname;
   char *dfile;
   char *com;
   int current_file = mainw->current_file;
-
-  if (!strlen(fname)) {
-    do_blocking_error_dialog(_("Please enter the name of the file to save the clip as.\n"));
-    lives_free(fname);
-    return;
-  }
-
-  url = lives_strdup(lives_entry_get_text(LIVES_ENTRY(locw->entry)));
-
-  if (!strlen(url)) {
-    do_blocking_error_dialog(_("Please enter a valid URL for the download.\n"));
-    lives_free(fname);
-    lives_free(url);
-    return;
-  }
-
-  dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(locw->dir_entry)));
-  ensure_isdir(dirname);
-  lives_snprintf(mainw->vid_dl_dir, PATH_MAX, "%s", dirname);
-
-  lives_widget_destroy(locw->dialog);
-  lives_widget_context_update();
-  lives_free(locw);
-
-  dfile = lives_build_filename(dirname, fname, NULL);
-
-  if (!check_file(dfile, TRUE)) {
-    lives_free(dirname);
-    lives_free(fname);
-    lives_free(url);
-    lives_free(dfile);
-    return;
-  }
-
-  mainw->error = FALSE;
-
-  d_print(_("Downloading %s to %s..."), url, dfile);
 
   if (current_file == -1) {
     if (!get_temp_handle(mainw->first_free_file, TRUE)) {
@@ -974,7 +935,6 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
       lives_rm(dfile);
 
       lives_free(dirname);
-      lives_free(fname);
       lives_free(url);
       lives_free(dfile);
 
@@ -997,7 +957,6 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
   }
 
   lives_free(dirname);
-  lives_free(fname);
   lives_free(url);
 
   mainw->img_concat_clip = -1;

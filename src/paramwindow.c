@@ -1485,6 +1485,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     cbutton = lives_standard_color_button_new(LIVES_BOX(hbox), _(name), FALSE, &rgba, &spinbutton_red, &spinbutton_green,
               &spinbutton_blue, NULL);
     widget_opts.mnemonic_label = TRUE;
+    lives_widget_set_size_request(cbutton, DEF_BUTTON_WIDTH * 2., -1);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "param_number", LIVES_INT_TO_POINTER(pnum));
     if (param->desc != NULL) lives_widget_set_tooltip_text(cbutton, param->desc);

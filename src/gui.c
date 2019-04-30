@@ -351,6 +351,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
 void create_LiVES(void) {
   LiVESWidget *hbox1;
+  LiVESWidget *hbox;
   LiVESWidget *vbox;
   LiVESWidget *vbox2;
   LiVESWidget *menuitem;
@@ -1593,7 +1594,6 @@ void create_LiVES(void) {
     mainw->m_stopbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_stopbutton), -1);
     lives_widget_set_tooltip_text(mainw->m_stopbutton, _("Stop playback (q)"));
-
     lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
 
     fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "playsel.png", NULL);
@@ -1607,16 +1607,15 @@ void create_LiVES(void) {
 
     lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
 
-    fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "loop.png", NULL);
-    lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-    lives_free(fnamex);
-    tmp_toolbar_icon = lives_image_new_from_file(buff);
+    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
     if (lives_file_test(buff, LIVES_FILE_TEST_EXISTS)) {
       pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
       lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     }
 
+    lives_image_scale(LIVES_IMAGE(tmp_toolbar_icon), 16, 16, LIVES_INTERP_BEST);
     mainw->m_loopbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
+    lives_widget_set_bg_color(mainw->m_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_loopbutton), -1);
     lives_widget_set_tooltip_text(mainw->m_loopbutton, _("Switch continuous looping on (o)"));
 
@@ -1916,8 +1915,10 @@ void create_LiVES(void) {
 
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->vps_label, FALSE, FALSE, 0);
 
+  widget_opts.expand = LIVES_EXPAND_NONE;
   mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL, 1, -FPS_MAX, FPS_MAX, 0.1, 0.01, 3,
                              LIVES_BOX(mainw->framebar), _("Vary the video speed"));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_widget_set_sensitive(mainw->spinbutton_pb_fps, FALSE);
 
@@ -2038,52 +2039,75 @@ void create_LiVES(void) {
   hbox3 = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox4), hbox3, FALSE, TRUE, 0);
 
+  // "start" spin
+
   dpw = widget_opts.packing_width;
   woat = widget_opts.apply_theme;
-  widget_opts.expand = LIVES_EXPAND_EXTRA;
+  widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.apply_theme = FALSE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
-  mainw->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 100., 0,
+  mainw->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 10000000000., 0,
                             LIVES_BOX(hbox3), _("The first selected frame in this clip"));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = dpw;
   widget_opts.apply_theme = woat;
 
-  mainw->arrow1 = lives_arrow_new(LIVES_ARROW_LEFT, LIVES_SHADOW_OUT);
-  lives_box_pack_start(LIVES_BOX(hbox3), mainw->arrow1, FALSE, FALSE, 0);
+  add_spring_to_box(LIVES_BOX(hbox3), 0);
 
-  lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_start), SPBWIDTHCHARS);
+  // arrows and label
+
+  vbox = lives_vbox_new(FALSE, 2.);
+  lives_box_pack_start(LIVES_BOX(hbox3), vbox, FALSE, FALSE, 0);
+
+  hbox = lives_hbox_new(FALSE, 0.);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+  add_spring_to_box(LIVES_BOX(hbox), 0.);
+
+  mainw->arrow1 = lives_arrow_new(LIVES_ARROW_LEFT, LIVES_SHADOW_OUT);
+  lives_box_pack_start(LIVES_BOX(hbox), mainw->arrow1, FALSE, FALSE, 0);
+
   mainw->sel_label = lives_standard_label_new(NULL);
 
   set_sel_label(mainw->sel_label);
 
-  vbox = lives_vbox_new(FALSE, 2.);
-
-  lives_box_pack_start(LIVES_BOX(hbox3), vbox, FALSE, FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), mainw->sel_label, FALSE, FALSE, 0);
-
-  mainw->sa_hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, 2);
-  add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
-
-  mainw->sa_button = lives_standard_button_new_from_stock(LIVES_STOCK_SELECT_ALL, NULL);
-  lives_widget_set_tooltip_text(mainw->sa_button, _("Select all frames in this clip"));
-  lives_box_pack_start(LIVES_BOX(mainw->sa_hbox), mainw->sa_button, TRUE, TRUE, 0);
-  add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
+  lives_box_pack_start(LIVES_BOX(hbox), mainw->sel_label, FALSE, FALSE, 0);
 
   mainw->arrow2 = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
-  lives_box_pack_start(LIVES_BOX(hbox3), mainw->arrow2, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox), mainw->arrow2, FALSE, FALSE, 0);
 
-  widget_opts.expand = LIVES_EXPAND_EXTRA;
+  add_spring_to_box(LIVES_BOX(hbox), 0.);
+
+  //
+
+  mainw->sa_hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, 4. * widget_opts.scale);
+
+  add_spring_to_box(LIVES_BOX(mainw->sa_hbox), 0.);
+
+  vbox = lives_hbox_new(FALSE, 0.);
+  lives_box_pack_start(LIVES_BOX(mainw->sa_hbox), vbox, FALSE, FALSE, 0);
+
+  add_spring_to_box(LIVES_BOX(vbox), 0.);
+
+  mainw->sa_button = lives_standard_button_new_from_stock(LIVES_STOCK_SELECT_ALL, _("Select All Frames"));
+  lives_widget_set_tooltip_text(mainw->sa_button, _("Select all frames in this clip"));
+  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_button, TRUE, TRUE, 0);
+
+  add_spring_to_box(LIVES_BOX(mainw->sa_hbox), 0.);
+
+  //
+
+  add_spring_to_box(LIVES_BOX(hbox3), 0);
+
+  widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   widget_opts.apply_theme = FALSE;
-  mainw->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 100., 0,
+  mainw->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 10000000000., 0,
                           LIVES_BOX(hbox3), _("The last selected frame in this clip"));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = dpw;
   widget_opts.apply_theme = woat;
-
-  lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_end), SPBWIDTHCHARS);
 
   lives_widget_set_sensitive(mainw->spinbutton_start, FALSE);
   lives_widget_set_sensitive(mainw->spinbutton_end, FALSE);
@@ -3572,6 +3596,7 @@ void make_preview_box(void) {
   mainw->p_loopbutton = lives_standard_button_new();
   lives_widget_set_bg_color(mainw->p_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   lives_button_set_relief(LIVES_BUTTON(mainw->p_loopbutton), LIVES_RELIEF_NONE);
+  lives_image_scale(LIVES_IMAGE(loop_img), 16, 16, LIVES_INTERP_BEST);
   lives_container_add(LIVES_CONTAINER(mainw->p_loopbutton), loop_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_loopbutton, TRUE, TRUE, 0);
   lives_widget_show(mainw->p_loopbutton);

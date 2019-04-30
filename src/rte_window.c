@@ -1685,14 +1685,17 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
   }
 
+  abox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
+  if (LIVES_IS_BOX(abox)) add_spring_to_box(LIVES_BOX(abox), 0);
+
   ok_button = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), ok_button, LIVES_RESPONSE_OK);
 
-  abox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
+
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);
 #else
-  if (LIVES_IS_BOX(abox)) add_fill_to_box(LIVES_BOX(abox));
+  if (LIVES_IS_BOX(abox)) add_spring_to_box(LIVES_BOX(abox), 0);
 #endif
 
   lives_widget_set_can_focus_and_default(ok_button);

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-04-27 10:42-0300\n"
+"POT-Creation-Date: 2019-04-27 10:47-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -659,12 +659,12 @@ msgid "Closed clip %s\n"
 msgstr "Zamykanie przerw"
 
 #: src/main.c:7053 src/gui.c:726 src/utils.c:4959 src/utils.c:4988
-#: src/saveplay.c:3322 src/multitrack.c:4724 src/multitrack.c:6558
+#: src/saveplay.c:3321 src/multitrack.c:4724 src/multitrack.c:6558
 msgid "_Undo"
 msgstr "_Cofnij"
 
 #: src/main.c:7054 src/gui.c:741 src/utils.c:4960 src/utils.c:4989
-#: src/saveplay.c:3323 src/multitrack.c:4743 src/multitrack.c:6581
+#: src/saveplay.c:3322 src/multitrack.c:4743 src/multitrack.c:6581
 msgid "_Redo"
 msgstr "_Powtórz"
 
@@ -4360,7 +4360,7 @@ msgstr "Otwieranie %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:309 src/saveplay.c:3766
+#: src/saveplay.c:309 src/saveplay.c:3765
 msgid " without sound"
 msgstr ""
 
@@ -4461,7 +4461,7 @@ msgid ""
 msgstr ""
 
 #: src/saveplay.c:1421 src/saveplay.c:1539 src/saveplay.c:1610
-#: src/saveplay.c:3775
+#: src/saveplay.c:3774
 msgid "Pulling frames from clip..."
 msgstr ""
 
@@ -4532,21 +4532,21 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:3249
+#: src/saveplay.c:3248
 msgid "Unknown"
 msgstr "Nieznane"
 
-#: src/saveplay.c:3339
+#: src/saveplay.c:3338
 #, c-format
 msgid "Untitled%d"
 msgstr "Dokument_%d"
 
-#: src/saveplay.c:3402
+#: src/saveplay.c:3401
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr ""
 
-#: src/saveplay.c:3412
+#: src/saveplay.c:3411
 #, c-format
 msgid ""
 "\n"
@@ -4554,13 +4554,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/saveplay.c:3414
+#: src/saveplay.c:3413
 msgid ""
 "\n"
 "An error occurred opening the file\n"
 msgstr ""
 
-#: src/saveplay.c:3426
+#: src/saveplay.c:3425
 #, c-format
 msgid ""
 "\n"
@@ -4568,7 +4568,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3514
+#: src/saveplay.c:3513
 #, c-format
 msgid ""
 "\n"
@@ -4576,73 +4576,73 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:3524
+#: src/saveplay.c:3523
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:3540
+#: src/saveplay.c:3539
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:3544 src/saveplay.c:4488
+#: src/saveplay.c:3543 src/saveplay.c:4487
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:3549 src/saveplay.c:4493
+#: src/saveplay.c:3548 src/saveplay.c:4492
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:3560
+#: src/saveplay.c:3559
 #, fuzzy, c-format
 msgid " - Author: %s\n"
 msgstr "Autor: %s"
 
-#: src/saveplay.c:3563
+#: src/saveplay.c:3562
 #, c-format
 msgid " - Title: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3566
+#: src/saveplay.c:3565
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3669
+#: src/saveplay.c:3668
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:3763
+#: src/saveplay.c:3762
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:3806
+#: src/saveplay.c:3805
 msgid "Backing up"
 msgstr ""
 
-#: src/saveplay.c:3840
+#: src/saveplay.c:3839
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:4396
+#: src/saveplay.c:4395
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:4424
+#: src/saveplay.c:4423
 msgid "Restoring"
 msgstr "Przywracanie"
 
-#: src/saveplay.c:4442
+#: src/saveplay.c:4441
 #, c-format
 msgid ""
 "\n"
@@ -4651,7 +4651,7 @@ msgid ""
 "LiVES was unable to restore it.\n"
 msgstr ""
 
-#: src/saveplay.c:4887
+#: src/saveplay.c:4886
 #, c-format
 msgid ""
 "\n"
@@ -4660,33 +4660,33 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:5040
+#: src/saveplay.c:5039
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:5045
+#: src/saveplay.c:5044
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:5048
+#: src/saveplay.c:5047
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:5357
+#: src/saveplay.c:5356
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:5381
+#: src/saveplay.c:5380
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:5382
+#: src/saveplay.c:5381
 msgid "Recovering files..."
 msgstr ""
 
@@ -5991,7 +5991,7 @@ msgid ""
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4840 src/effects-weed.c:5924
+#: src/effects-weed.c:4840 src/effects-weed.c:5920
 msgid "Some plugin directories"
 msgstr ""
 
@@ -6134,32 +6134,32 @@ msgstr ""
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6725
+#: src/effects-weed.c:6721
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6870
+#: src/effects-weed.c:6866
 #, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:6948
+#: src/effects-weed.c:6944
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:7872
+#: src/effects-weed.c:7868
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:7986
+#: src/effects-weed.c:7982
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9309
+#: src/effects-weed.c:9305
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""

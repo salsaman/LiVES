@@ -951,7 +951,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       lives_free(tmp);
       lives_free(tmp2);
       vppa->fps_entry = lives_combo_get_entry(LIVES_COMBO(combo));
-      lives_entry_set_width_chars(LIVES_ENTRY(lives_combo_get_entry(LIVES_COMBO(combo))), SPBWIDTHCHARS);
+      lives_entry_set_width_chars(LIVES_ENTRY(lives_combo_get_entry(LIVES_COMBO(combo))), COMBOWIDTHCHARS);
 
       lives_list_free_all(&fps_list_strings);
       lives_strfreev(array);

@@ -145,6 +145,8 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int preview_type);
 void add_suffix_check(LiVESBox *box, const char *ext);
 
+boolean run_youtube_dialog(void);
+
 _commentsw *commentsw;
 _entryw *renamew;
 _entryw *locw;
@@ -164,7 +166,7 @@ text_window *textwindow;
 #define RW_ENTRY_DISPWIDTH ((int)(40.*widget_opts.scale))
 
 // download text entry
-#define STD_ENTRY_WIDTH ((int)(80.*widget_opts.scale))
+#define STD_ENTRY_WIDTH ((int)(64.*widget_opts.scale))
 #define SHORT_ENTRY_WIDTH ((int)(32.*widget_opts.scale))
 
 #endif

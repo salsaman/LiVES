@@ -3025,8 +3025,6 @@ boolean run_youtube_dialog(void) {
 
   entry = lives_standard_entry_new(_("Youtube URL : "), "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
 
-  add_fill_to_box(LIVES_BOX(hbox));
-
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
@@ -3049,6 +3047,9 @@ boolean run_youtube_dialog(void) {
 
   lives_free(tmp);
   lives_free(tmp2);
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
 #endif
   name_entry = lives_standard_entry_new(_("_File Name : "), "", STD_ENTRY_WIDTH / 2, PATH_MAX, LIVES_BOX(hbox), NULL);
 
@@ -3062,17 +3063,11 @@ boolean run_youtube_dialog(void) {
   lives_widget_context_update();
   align_horizontal(hbox, LIVES_VBOX(dialog_vbox), radiobutton_free);
 
-  //
-  // add_fill_to_box(LIVES_BOX(hbox));
-
   radiobutton_nonfree = lives_standard_radio_button_new((tmp = lives_strdup(_("_Non-free (eg. h264 / aac / mp4)"))), &radiobutton_group,
                         LIVES_BOX(hbox),
                         (tmp2 = lives_strdup(_("Download clip using non-free codecs"))));
   lives_free(tmp);
   lives_free(tmp2);
-
-  //add_fill_to_box(LIVES_BOX(hbox));
-  //add_fill_to_box(LIVES_BOX(hbox));
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_nonfree), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_freedom_toggled),
@@ -3109,6 +3104,7 @@ boolean run_youtube_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
+  add_fill_to_box(LIVES_BOX(hbox));
 
   spinbutton_width = lives_standard_spin_button_new(_("_Width"), CURRENT_CLIP_HAS_VIDEO ? cfile->hsize : DEF_GEN_WIDTH,
                      4., 100000., 4., 16., 0., LIVES_BOX(hbox), NULL);

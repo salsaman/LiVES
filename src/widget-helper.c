@@ -7365,7 +7365,7 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_label_set_hpadding(LiVESLabel *label, int
 }
 
 
-#define H_ALIGN_ADJ 22 // why 22 ? no idea
+#define H_ALIGN_ADJ (22. * widget_opts.scale) // why 22 ? no idea
 
 WIDGET_HELPER_GLOBAL_INLINE boolean align_horizontal(LiVESWidget *thingtoadd, LiVESVBox *vboxtoaddto, LiVESWidget *thingtoalignwith) {
 #ifdef GUI_GTK
@@ -8693,10 +8693,6 @@ boolean widget_helper_init(void) {
 #endif
 
   widget_opts = def_widget_opts;
-  widget_opts.border_width = (float)widget_opts.border_width * widget_opts.scale;
-  widget_opts.packing_width = (float)widget_opts.packing_width * widget_opts.scale;
-  widget_opts.packing_height = (float)widget_opts.packing_height * widget_opts.scale;
-  widget_opts.filler_len = (float)widget_opts.filler_len * widget_opts.scale;
 
 #ifdef GUI_GTK
   gtk_accel_map_add_entry("<LiVES>/save", LIVES_KEY_s, LIVES_CONTROL_MASK);
@@ -8726,6 +8722,16 @@ boolean widget_helper_init(void) {
     lives_list_free_all(&xlist);
   }
 
+  return TRUE;
+}
+
+
+boolean widget_opts_rescale(double scale) {
+  widget_opts.scale = scale;
+  widget_opts.border_width = (float)def_widget_opts.border_width * widget_opts.scale;
+  widget_opts.packing_width = (float)def_widget_opts.packing_width * widget_opts.scale;
+  widget_opts.packing_height = (float)def_widget_opts.packing_height * widget_opts.scale;
+  widget_opts.filler_len = (float)def_widget_opts.filler_len * widget_opts.scale;
   return TRUE;
 }
 

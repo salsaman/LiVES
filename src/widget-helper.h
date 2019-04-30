@@ -32,9 +32,9 @@ typedef enum {
 
 // values below are multiplied by scale
 #define W_PACKING_WIDTH  10 // packing width for widgets with labels
-#define W_PACKING_HEIGHT 10 // packing height for widgets
+#define W_PACKING_HEIGHT 8 // packing height for widgets
 #define W_BORDER_WIDTH   10 // default border width
-#define W_FILL_LENGTH    200 // default extra fill size
+#define W_FILL_LENGTH    128 // default extra fill size
 
 #define ulong_random() lives_random()
 
@@ -96,6 +96,7 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 // utils
 
 boolean widget_helper_init(void);
+boolean widget_opts_rescale(double scale);
 
 lives_colRGBA64_t lives_rgba_col_new(int red, int green, int blue, int alpha);
 boolean widget_color_to_lives_rgba(lives_colRGBA64_t *, LiVESWidgetColor *);

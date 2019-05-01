@@ -387,7 +387,7 @@ static boolean pre_init(void) {
 #endif
 
   double screen_scale;
-  
+
   register int i;
 
   sizint = sizeof(int);
@@ -606,9 +606,9 @@ static boolean pre_init(void) {
   screen_scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
   if (screen_scale < 1.) screen_scale = 1.;
   screen_scale = (screen_scale - 1.) / 2. + 1.;
-  
+
   widget_opts_rescale(screen_scale);
-  
+
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate = -1;
     mainw->fx_candidates[i].list = NULL;

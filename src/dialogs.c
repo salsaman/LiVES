@@ -1601,14 +1601,14 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     // WARNING: origticks could be negative
 #ifdef USE_MONOTONIC_TIME
-    int64_t origticks = mainw->origusecs * USEC_TO_TICKS -
-                        (mainw->offsetticks = get_event_timecode(mainw->multitrack->pb_start_event));
-    mainw->origusecs = ((int64_t)(origticks / USEC_TO_TICKS));
+    //int64_t origticks = mainw->origusecs * USEC_TO_TICKS -
+    mainw->offsetticks = get_event_timecode(mainw->multitrack->pb_start_event);
+			//mainw->origusecs = ((int64_t)(origticks / USEC_TO_TICKS));
 #else
-    int64_t origticks = mainw->origsecs * TICKS_PER_SECOND_DBL + mainw->origusecs * USEC_TO_TICKS -
-                        (mainw->offsetticks = get_event_timecode(mainw->multitrack->pb_start_event));
-    mainw->origsecs = origticks / TICKS_PER_SECOND_DBL;
-    mainw->origusecs = ((int64_t)(origticks / USEC_TO_TICKS) - mainw->origsecs * 1000000.);
+    //int64_t origticks = mainw->origsecs * TICKS_PER_SECOND_DBL + mainw->origusecs * USEC_TO_TICKS -
+    mainw->offsetticks = get_event_timecode(mainw->multitrack->pb_start_event);
+    // mainw->origsecs = origticks / TICKS_PER_SECOND_DBL;
+    //mainw->origusecs = ((int64_t)(origticks / USEC_TO_TICKS) - mainw->origsecs * 1000000.);
 #endif
   }
 

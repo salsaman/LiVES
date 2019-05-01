@@ -170,6 +170,7 @@ struct _mt {
   // widgets
   LiVESWidget *menubar;
   LiVESWidget *top_vbox;
+  LiVESWidget *xtravbox;
   LiVESWidget *hbox;
   LiVESWidget *play_blank;
   LiVESWidget *play_box;

@@ -2684,6 +2684,24 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_ty
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_halign(LiVESWidget *widget, LiVESAlign align) {
+#ifdef GUI_GTK
+  gtk_widget_set_halign(widget, align);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_valign(LiVESWidget *widget, LiVESAlign align) {
+#ifdef GUI_GTK
+  gtk_widget_set_valign(widget, align);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale) {
   LiVESWidget *alignment = NULL;
 #ifdef GUI_GTK
@@ -3274,7 +3292,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_with_label(const char 
   LiVESWidget *button = NULL;
   char *labeltext = (char *)label;
   if (widget_opts.expand != LIVES_EXPAND_NONE) {
-    labeltext = lives_strdup_printf("  %s  ", label);
+    labeltext = lives_strdup_printf("\n    %s    \n", label);
   }
 #ifdef GUI_GTK
   button = gtk_button_new_with_label(labeltext);
@@ -3390,7 +3408,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_label(LiVESButton *button, 
   char *labeltext = (char *)label;
 
   if (widget_opts.expand != LIVES_EXPAND_NONE) {
-    labeltext = lives_strdup_printf("  %s  ", label);
+    labeltext = lives_strdup_printf("\n    %s    \n", label);
   }
 
 #ifdef GUI_GTK

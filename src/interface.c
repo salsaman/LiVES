@@ -2477,7 +2477,6 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   checkbutton = lives_standard_check_button_new(_("Clear _Backup Files from Closed Clips"),
                 !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_BFILES), LIVES_BOX(hbox), NULL);
 
-
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(flip_cdisk_bit),
                              LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_BFILES));
@@ -2915,6 +2914,19 @@ static void on_freedom_toggled(LiVESToggleButton *togglebutton, livespointer use
 }
 
 
+static LiVESWidget *spinbutton_width;
+static LiVESWidget *spinbutton_height;
+static const lives_special_aspect_t *aspect;
+
+static void utsense(LiVESToggleButton *togglebutton, livespointer user_data) {
+  boolean sensitive = (boolean)LIVES_POINTER_TO_INT(user_data);
+  if (!lives_toggle_button_get_active(togglebutton)) return;
+  lives_widget_set_sensitive(spinbutton_width, sensitive);
+  lives_widget_set_sensitive(spinbutton_height, sensitive);
+  lives_widget_set_sensitive(aspect->lockbutton, sensitive);
+}
+
+
 // prompt for the following:
 
 // - URL
@@ -2932,7 +2944,6 @@ static void on_freedom_toggled(LiVESToggleButton *togglebutton, livespointer use
 // advanced :: save subs / sub language
 
 boolean run_youtube_dialog(void) {
-  const lives_special_aspect_t *aspect;
   LiVESWidget *dialog_vbox;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
@@ -2940,7 +2951,7 @@ boolean run_youtube_dialog(void) {
   LiVESWidget *ext_label;
   LiVESWidget *hbox;
   LiVESWidget *dialog;
-  LiVESWidget *entry;
+  LiVESWidget *url_entry;
   LiVESWidget *name_entry;
   LiVESWidget *dir_entry;
   LiVESWidget *checkbutton;
@@ -2954,8 +2965,6 @@ boolean run_youtube_dialog(void) {
   LiVESWidget *radiobutton_smallest;
   LiVESWidget *radiobutton_largest;
   LiVESWidget *radiobutton_choose;
-  LiVESWidget *spinbutton_width;
-  LiVESWidget *spinbutton_height;
 
   char *fname;
 
@@ -3023,7 +3032,7 @@ boolean run_youtube_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 3);
 
-  entry = lives_standard_entry_new(_("Youtube URL : "), "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
+  url_entry = lives_standard_entry_new(_("Youtube URL : "), "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
@@ -3071,7 +3080,7 @@ boolean run_youtube_dialog(void) {
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_nonfree), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_freedom_toggled),
-                       LIVES_INT_TO_POINTER(ext_label));
+                       (livespointer)ext_label);
 #endif
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
@@ -3092,17 +3101,29 @@ boolean run_youtube_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
+  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_approx), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(utsense),
+                       LIVES_INT_TO_POINTER(TRUE));
+
   radiobutton_atleast = lives_standard_radio_button_new((tmp = lives_strdup(_("- At _least"))), &radiobutton_group2,
                         LIVES_BOX(hbox),
                         (tmp2 = lives_strdup(_("Frame size should be at least this size"))));
   lives_free(tmp);
   lives_free(tmp2);
 
+  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_atleast), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(utsense),
+                       LIVES_INT_TO_POINTER(TRUE));
+
   radiobutton_atmost = lives_standard_radio_button_new((tmp = lives_strdup(_("- At _most:"))), &radiobutton_group2,
                        LIVES_BOX(hbox),
                        (tmp2 = lives_strdup(_("Frame size should be at most this size"))));
   lives_free(tmp);
   lives_free(tmp2);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_atmost), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(utsense),
+                       LIVES_INT_TO_POINTER(TRUE));
 
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -3139,12 +3160,20 @@ boolean run_youtube_dialog(void) {
   lives_free(tmp2);
 
 
+  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_smallest), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(utsense),
+                       LIVES_INT_TO_POINTER(FALSE));
+
   radiobutton_largest = lives_standard_radio_button_new((tmp = lives_strdup(_("- The _largest"))), &radiobutton_group2,
                         LIVES_BOX(hbox),
                         (tmp2 = lives_strdup(_("Download the highest resolution available"))));
 
   lives_free(tmp);
   lives_free(tmp2);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_largest), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(utsense),
+                       LIVES_INT_TO_POINTER(FALSE));
 
   radiobutton_choose = lives_standard_radio_button_new((tmp = lives_strdup(_("- Let me choose (opens in new window)..."))),
                        &radiobutton_group2,
@@ -3153,6 +3182,10 @@ boolean run_youtube_dialog(void) {
 
   lives_free(tmp);
   lives_free(tmp2);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_choose), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(utsense),
+                       LIVES_INT_TO_POINTER(FALSE));
 
   ///////
 

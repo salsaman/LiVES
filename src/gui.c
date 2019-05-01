@@ -191,13 +191,6 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 
 void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
                  LiVESWidgetColor *colb2, LiVESWidgetColor *coli, LiVESWidgetColor *colt) {
-#if !GTK_CHECK_VERSION(3, 0, 0)
-  if (!mainw->foreign) {
-    gtk_widget_ensure_style(mainw->LiVES);
-    lives_widget_hide(mainw->spinbutton_start);
-    lives_widget_show(mainw->spinbutton_start);
-  }
-#endif
 
   lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_fg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, colf);
@@ -2052,15 +2045,17 @@ void create_LiVES(void) {
   widget_opts.packing_width = dpw;
   widget_opts.apply_theme = woat;
 
-  add_spring_to_box(LIVES_BOX(hbox3), 0);
+  lives_widget_set_halign(mainw->spinbutton_start, LIVES_ALIGN_CENTER);
 
   // arrows and label
 
   vbox = lives_vbox_new(FALSE, 2.);
   lives_box_pack_start(LIVES_BOX(hbox3), vbox, FALSE, FALSE, 0);
+  gtk_widget_set_halign(vbox, GTK_ALIGN_CENTER);
 
   hbox = lives_hbox_new(FALSE, 0.);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+  lives_widget_set_valign(hbox, LIVES_ALIGN_START);
 
   add_spring_to_box(LIVES_BOX(hbox), 0.);
 
@@ -2090,15 +2085,14 @@ void create_LiVES(void) {
 
   add_spring_to_box(LIVES_BOX(vbox), 0.);
 
-  mainw->sa_button = lives_standard_button_new_from_stock(LIVES_STOCK_SELECT_ALL, _("Select All Frames"));
+  mainw->sa_button = lives_standard_button_new_from_stock(LIVES_STOCK_SELECT_ALL, _("  Select All Frames  "));
   lives_widget_set_tooltip_text(mainw->sa_button, _("Select all frames in this clip"));
   lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_button, TRUE, TRUE, 0);
+  lives_widget_set_valign(mainw->sa_button, LIVES_ALIGN_END);
 
   add_spring_to_box(LIVES_BOX(mainw->sa_hbox), 0.);
 
   //
-
-  add_spring_to_box(LIVES_BOX(hbox3), 0);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
@@ -2108,6 +2102,9 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = dpw;
   widget_opts.apply_theme = woat;
+
+  lives_box_set_homogeneous(LIVES_BOX(hbox3), TRUE);
+  lives_widget_set_halign(mainw->spinbutton_end, LIVES_ALIGN_CENTER);
 
   lives_widget_set_sensitive(mainw->spinbutton_start, FALSE);
   lives_widget_set_sensitive(mainw->spinbutton_end, FALSE);

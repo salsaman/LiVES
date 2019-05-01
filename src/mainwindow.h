@@ -88,7 +88,7 @@
 #define CE_HRULE_HEIGHT ((int)(20.*widget_opts.scale))
 
 /// clip edit vid/aud bar height
-#define CE_VIDBAR_HEIGHT ((int)(10.*widget_opts.scale))
+#define CE_VIDBAR_HEIGHT ((int)(4.*widget_opts.scale))
 
 /// (unexpanded) height of rows in treeviews
 #define TREE_ROW_HEIGHT ((int)(60.*widget_opts.scale))

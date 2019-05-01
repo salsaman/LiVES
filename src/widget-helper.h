@@ -189,6 +189,9 @@ boolean lives_widget_set_app_paintable(LiVESWidget *, boolean paintable);
 
 boolean lives_widget_has_focus(LiVESWidget *);
 
+boolean lives_widget_set_halign(LiVESWidget *, LiVESAlign align);
+boolean lives_widget_set_valign(LiVESWidget *, LiVESAlign align);
+
 LiVESWidget *lives_event_box_new(void);
 boolean lives_event_box_set_above_child(LiVESEventBox *, boolean set);
 

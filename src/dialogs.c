@@ -711,7 +711,7 @@ boolean check_backend_return(lives_clip_t *sfile) {
   mainw->read_failed = FALSE;
   lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
   fclose(infofile);
-  
+
   if (!strncmp(mainw->msg, "error", 5)) handle_backend_errors();
 
   return TRUE;

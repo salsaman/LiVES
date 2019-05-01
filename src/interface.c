@@ -3282,7 +3282,8 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
     ///////
 
     if (!strlen(lives_entry_get_text(LIVES_ENTRY(name_entry)))) {
-      do_error_dialog_with_check_transient(_("Please enter the name of the file to save the downloaded clip as.\n"), TRUE, 0, LIVES_WINDOW(dialog));
+      do_error_dialog_with_check_transient(_("Please enter the name of the file to save the downloaded clip as.\n"), TRUE, 0,
+                                           LIVES_WINDOW(dialog));
       continue;
     }
 

@@ -7634,8 +7634,8 @@ static LiVESWidget *make_label_eventbox(const char *labeltext, LiVESWidget *widg
 
   if (LIVES_IS_TOGGLE_BUTTON(widget)) {
     lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-			 LIVES_GUI_CALLBACK(label_act_toggle),
-			 widget);
+                         LIVES_GUI_CALLBACK(label_act_toggle),
+                         widget);
   }
 
   lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);

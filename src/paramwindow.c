@@ -977,7 +977,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   LiVESWidget *top_hbox = NULL;
   LiVESWidget *hbox = NULL;
   LiVESWidget *last_label = NULL;
-  
+
   // put whole thing in scrolled window
   LiVESWidget *scrolledwindow;
 
@@ -1143,9 +1143,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           has_box = TRUE;
           has_param = TRUE;
         }
-	
-	if (last_label != NULL) lives_widget_set_halign(last_label, LIVES_ALIGN_START);
-	if (add_param_to_box(LIVES_BOX(hbox), rfx, pnum, (j == (num_tok - 1)) && !noslid)) noslid = TRUE;
+
+        if (last_label != NULL) lives_widget_set_halign(last_label, LIVES_ALIGN_START);
+        if (add_param_to_box(LIVES_BOX(hbox), rfx, pnum, (j == (num_tok - 1)) && !noslid)) noslid = TRUE;
         used[pnum] = TRUE;
         has_param = TRUE;
       } else if (!j && !strcmp(array[j], "hseparator") && has_param) {
@@ -1167,7 +1167,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
         if (!has_box) {
           hbox = lives_hbox_new(FALSE, 0);
           lives_box_pack_start(LIVES_BOX(param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-	  last_label = NULL;
+          last_label = NULL;
         }
         lives_snprintf(label_text, 256, "%s", array[j] + 1);
         while (strcmp(array[j] + strlen(array[j]) - 1, "\"") && j < num_tok - 1) {
@@ -1177,10 +1177,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           if (!strcmp(label_text + strlen(label_text) - 1, "\"")) {
             memset(label_text + strlen(label_text) - 1, 0, 1);
           }
-	  if (last_label == NULL && !has_param) widget_opts.justify = LIVES_JUSTIFY_CENTER;
-	  else if (last_label != NULL) lives_widget_set_halign(last_label, LIVES_ALIGN_START);
+          if (last_label == NULL && !has_param) widget_opts.justify = LIVES_JUSTIFY_CENTER;
+          else if (last_label != NULL) lives_widget_set_halign(last_label, LIVES_ALIGN_START);
           last_label = add_param_label_to_box(LIVES_BOX(hbox), TRUE, label_text);
-	  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+          widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
         }
       }
     }

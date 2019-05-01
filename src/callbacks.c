@@ -893,15 +893,15 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     lives_rm(cfile->info_file);
 
     com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f %d %d %d", prefs->backend, cfile->handle, req->URI,
-			      dfile, req->format, req->desired_width, req->desired_height, req->matchsize, req->desired_fps, req->vidchoice, req->audchoice,
-			      req->do_update);
+                              dfile, req->format, req->desired_width, req->desired_height, req->matchsize, req->desired_fps, req->vidchoice, req->audchoice,
+                              req->do_update);
     mainw->com_failed = FALSE;
     lives_system(com, FALSE);
     lives_free(com);
 
     if (mainw->com_failed) {
       if (current_file == -1) {
-	close_temp_handle(mainw->current_file, -1);
+        close_temp_handle(mainw->current_file, -1);
       }
       lives_free(dfile);
       d_print_failed();
@@ -909,16 +909,16 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     }
 
     req->do_update = FALSE;
-    
+
     if (req->matchsize == LIVES_MATCH_CHOICE && req->vidchoice == 0) {
       // we expect to get back a list of available formats
       if (!do_auto_dialog(_("Getting format list"), 0)) {
-	lives_free(dfile);
-	d_print_failed();
-	if (current_file == -1) {
-	  close_temp_handle(mainw->current_file, -1);
-	}
-	return;
+        lives_free(dfile);
+        d_print_failed();
+        if (current_file == -1) {
+          close_temp_handle(mainw->current_file, -1);
+        }
+        return;
       }
       g_print("Got back %s\n", mainw->msg);
       // show a list of the video formats and let the user pick one
@@ -931,12 +931,11 @@ void on_utube_select(lives_remote_clip_request_t *req) {
       /* 	return; */
       /* } */
       // we try again, this time with req->vidchoice set
-    }
-    else break;
+    } else break;
   }
 
   // backend should now be downloading the clip
-  
+
   cfile->nopreview = TRUE;
   cfile->keep_without_preview = TRUE;
   cfile->no_proc_sys_errors = TRUE; ///< do not show processing error dialogs, we will show our own msg
@@ -954,7 +953,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
         lives_kill_subprocesses(cfile->handle, TRUE);
 #endif
         // we made a temp file so close it
-	close_temp_handle(mainw->current_file, -1);
+        close_temp_handle(mainw->current_file, -1);
       }
 
       if (mainw->error) {
@@ -1186,7 +1185,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *msg;
 
   int current_file = mainw->current_file;
-  
+
   if (proj_file == NULL) return;
   mainw->com_failed = FALSE;
   com = lives_strdup_printf("%s get_proj_set \"%s\"", prefs->backend_sync, proj_file);
@@ -5419,7 +5418,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   if (retval != LIVES_RESPONSE_CANCEL && !mainw->com_failed) {
     d_print_done();
     do_blocking_info_dialog(lives_strdup_printf(_("%s of disk space was recovered.\n"),
-						lives_format_storage_space_string((uint64_t)bytes)));
+                            lives_format_storage_space_string((uint64_t)bytes)));
     if (user_data != NULL) lives_widget_set_sensitive(lives_widget_get_toplevel(LIVES_WIDGET(user_data)), FALSE);
   } else d_print_failed();
 

@@ -1466,7 +1466,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_freep((void **)&cfile);
       if (mainw->first_free_file == -1 || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
-      
+
       switch_to_file(mainw->current_file, current_file);
       d_print_cancelled();
       lives_freep((void **)&mainw->subt_save_file);
@@ -3190,7 +3190,7 @@ int close_temp_handle(int clipno, int new_clip) {
 
   mainw->current_file = new_clip;
   if (!IS_VALID_CLIP(clipno)) return new_clip;
-  
+
   sfile = mainw->files[clipno];
   com = lives_strdup_printf("%s close \"%s\"", prefs->backend, sfile->handle);
   lives_system(com, TRUE);
@@ -3200,7 +3200,7 @@ int close_temp_handle(int clipno, int new_clip) {
     mainw->first_free_file = clipno;
   return new_clip;
 }
- 
+
 
 boolean get_temp_handle(int index, boolean create) {
   // we can call this to get a temp handle for returning info from the backend

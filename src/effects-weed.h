@@ -453,6 +453,7 @@ int weed_general_error;
 #define filter_mutex_unlock(key) {if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->data_mutex[key]); g_print ("unlock %d at line %d in file %s\n\n",key,__LINE__,__FILE__);}
 #endif
 
+//#define DEBUG_REFCOUNT
 #ifdef DEBUG_REFCOUNT
 #define weed_instance_ref(a) {g_print ("ref %p at line %d in file %s\n",a,__LINE__,__FILE__); _weed_instance_ref(a);}
 #define weed_instance_unref(a) {g_print ("unref %p at line %d in file %s\n",a,__LINE__,__FILE__); _weed_instance_unref(a);}

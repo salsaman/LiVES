@@ -363,11 +363,11 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       }
 
       if (progress % DS_SPACE_CHECK_FRAMES == 1) {
-	if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) {
-	  retval = LIVES_RESPONSE_CANCEL;
-	}
+        if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) {
+          retval = LIVES_RESPONSE_CANCEL;
+        }
       }
-      
+
       if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
 
       // another thread may have called check_if_non_virtual - TODO : use a mutex

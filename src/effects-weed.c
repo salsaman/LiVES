@@ -3268,7 +3268,7 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float *
 
   if (WEED_PLANT_IS_FILTER_INSTANCE(init_event)) {
     // for realtime, we pass a single instance instead of init_event
-    instance = init_event;
+    instance = init_event; // needs to be refcounted
     // set init_event to NULL before passing it to the inner function
     init_event = NULL;
 
@@ -3543,7 +3543,7 @@ audinst1:
     if ((instance = get_next_compound_inst(instance)) != NULL) goto audinst1;
   }
 
-  weed_instance_unref(orig_inst);
+  if (was_init_event) weed_instance_unref(orig_inst);
 
   out_abuf = (float *)weed_get_voidptr_value(layers[out_tracks[0] + nbtracks], WEED_LEAF_AUDIO_DATA, &error);
 
@@ -3911,6 +3911,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, doubl
           mainw->osc_block = FALSE;
           continue;
         }
+
         filter = weed_instance_get_filter(instance, FALSE);
 
         if (!has_audio_chans_in(filter, FALSE) || has_video_chans_in(filter, FALSE) || has_video_chans_out(filter, FALSE)) {
@@ -3950,8 +3951,6 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, doubl
 
         orig_inst = instance;
 
-        //weed_set_int_value(instance,WEED_LEAF_HOST_KEY,i);
-
 apply_audio_inst2:
 
         if (weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
@@ -3962,9 +3961,12 @@ apply_audio_inst2:
           }
         }
 
+        // will unref instance
         filter_error = weed_apply_audio_instance(instance, abuf, 0, nchans, nsamps, arate, tc, NULL);
 
-        if (filter_error == WEED_NO_ERROR && (instance = get_next_compound_inst(instance)) != NULL) goto apply_audio_inst2;
+        if (filter_error == WEED_NO_ERROR && (instance = get_next_compound_inst(instance)) != NULL) {
+          goto apply_audio_inst2;
+        }
 
         weed_instance_unref(orig_inst);
 
@@ -6097,7 +6099,7 @@ weed_plant_t *_weed_instance_obtain(int line, char *file, int key, int mode) {
 }
 
 
-#ifndef DEBUG_REFOUNT
+#ifndef DEBUG_REFCOUNT
 LIVES_GLOBAL_INLINE int weed_instance_ref(weed_plant_t *inst) {
   return _weed_instance_ref(inst);
 }

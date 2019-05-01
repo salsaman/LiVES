@@ -762,7 +762,8 @@ typedef struct {
   boolean has_gdb;
   boolean has_gconftool_2;
   boolean has_xdg_screensaver;
-  boolean has_zenity;
+  boolean has_ssh_askpass;
+  boolean has_youtube_dl;
 
   /// home directory - default location for config file - locale encoding
   char home_dir[PATH_MAX];
@@ -960,6 +961,7 @@ void do_aud_during_play_error(void);
 void do_rendered_fx_dialog(void);
 void do_layout_scrap_file_error(void);
 void do_layout_ascrap_file_error(void);
+void do_program_not_found_error(const char *progname);
 void do_lb_composite_error(void);
 void do_lb_convert_error(void);
 void do_ra_convert_error(void);

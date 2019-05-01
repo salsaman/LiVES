@@ -7,6 +7,8 @@
 #ifndef HAS_LIVES_CALLBACKS_H
 #define HAS_LIVES_CALLBACKS_H
 
+#include "interface.h"
+
 void lives_exit(int signum);
 
 void lives_notify(int msgnumber, const char *msgstring);
@@ -129,7 +131,7 @@ void open_sel_range_activate(void);
 
 void on_location_select(LiVESButton *, livespointer);
 
-void on_utube_select(LiVESButton *, livespointer);
+void on_utube_select(lives_remote_clip_request_t *req);
 
 void on_autoreload_toggled(LiVESToggleButton *, livespointer);
 

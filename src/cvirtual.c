@@ -359,7 +359,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
       if (update_progress) {
         // sig_progress...
-        lives_snprintf(mainw->msg, 256, "%d", progress++);
+        lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
         threaded_dialog_spin(0.);
         lives_widget_context_update();
       }

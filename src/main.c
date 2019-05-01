@@ -1843,30 +1843,30 @@ void do_start_messages(void) {
   if (prefs->wm == NULL)
     prefs->wm = lives_strdup((_("UNKNOWN - please patch me !")));
 
-  lives_snprintf(mainw->msg, 512, _("\n\nWindow manager reports as \"%s\"; "), prefs->wm);
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("\n\nWindow manager reports as \"%s\"; "), prefs->wm);
   d_print(mainw->msg);
 
-  lives_snprintf(mainw->msg, 512, _("number of monitors detected: %d\n"), capable->nmonitors);
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("number of monitors detected: %d\n"), capable->nmonitors);
   d_print(mainw->msg);
 
-  lives_snprintf(mainw->msg, 512, _("Number of CPUs detected: %d "), capable->ncpus);
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("Number of CPUs detected: %d "), capable->ncpus);
   d_print(mainw->msg);
 
   if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = lives_strdup(_("little endian"));
   else endian = lives_strdup(_("big endian"));
-  lives_snprintf(mainw->msg, 512, _("(%d bits, %s)\n"), capable->cpu_bits, endian);
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("(%d bits, %s)\n"), capable->cpu_bits, endian);
   d_print(mainw->msg);
   lives_free(endian);
 
-  lives_snprintf(mainw->msg, 512, "%s", _("GUI type is: "));
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", _("GUI type is: "));
   d_print(mainw->msg);
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  lives_snprintf(mainw->msg, 512, _("GTK+ "
-                                    "version %d.%d.%d ("
-                                    "compiled with %d.%d.%d"
-                                    ")"),
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("GTK+ "
+                 "version %d.%d.%d ("
+                 "compiled with %d.%d.%d"
+                 ")"),
                  gtk_get_major_version(),
                  gtk_get_minor_version(),
                  gtk_get_micro_version(),
@@ -1875,9 +1875,9 @@ void do_start_messages(void) {
                  GTK_MICRO_VERSION
                 );
 #else
-  lives_snprintf(mainw->msg, 512, _("GTK+ "
-                                    "(compiled with %d.%d.%d"
-                                    ")"),
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("GTK+ "
+                 "(compiled with %d.%d.%d"
+                 ")"),
                  GTK_MAJOR_VERSION,
                  GTK_MINOR_VERSION,
                  GTK_MICRO_VERSION
@@ -1887,14 +1887,14 @@ void do_start_messages(void) {
 #endif
 
 #ifdef PAINTER_CAIRO
-  lives_snprintf(mainw->msg, 512, "%s", _(", with cairo support"));
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", _(", with cairo support"));
   d_print(mainw->msg);
 #endif
 
-  lives_snprintf(mainw->msg, 512, "\n");
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "\n");
   d_print(mainw->msg);
 
-  lives_snprintf(mainw->msg, 512, _("Temp directory is %s\n"), prefs->workdir);
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("Temp directory is %s\n"), prefs->workdir);
   d_print(mainw->msg);
 
 #ifndef RT_AUDIO
@@ -1908,7 +1908,7 @@ void do_start_messages(void) {
 #endif
 #endif
 
-  lives_snprintf(mainw->msg, 512, _("Welcome to LiVES version %s.\n\n"), LiVES_VERSION);
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("Welcome to LiVES version %s.\n\n"), LiVES_VERSION);
   d_print(mainw->msg);
 }
 
@@ -2293,7 +2293,7 @@ capability *get_capabilities(void) {
   capable->has_autolives = FALSE;
   capable->has_jackd = FALSE;
   capable->has_gdb = FALSE;
-  capable->has_zenity = FALSE;
+  capable->has_ssh_askpass = FALSE;
   capable->has_pulse_audio = FALSE;
   capable->has_xwininfo = FALSE;
   capable->has_midistartstop = FALSE;
@@ -2468,8 +2468,11 @@ capability *get_capabilities(void) {
   get_location("gdb", string, 256);
   if (strlen(string)) capable->has_gdb = TRUE;
 
-  get_location("zenity", string, 256);
-  if (strlen(string)) capable->has_zenity = TRUE;
+  get_location("ssh-askpass", string, 256);
+  if (strlen(string)) capable->has_ssh_askpass = TRUE;
+
+  get_location("youtube-dl", string, 256);
+  if (strlen(string)) capable->has_youtube_dl = TRUE;
 
   get_location("pulseaudio", string, 256);
   if (strlen(string)) capable->has_pulse_audio = TRUE;
@@ -6065,7 +6068,7 @@ void load_frame_image(int frame) {
             do {
               retval = 0;
               mainw->read_failed = FALSE;
-              lives_fgets(mainw->msg, 512, fd);
+              lives_fgets(mainw->msg, MAINW_MSG_SIZE, fd);
               if (mainw->read_failed) retval = do_read_failed_error_s_with_retry(info_file, NULL, NULL);
             } while (retval == LIVES_RESPONSE_RETRY);
             fclose(fd);

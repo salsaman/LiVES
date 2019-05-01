@@ -323,6 +323,8 @@ enum {
   NUM_LIVES_STRING_CONSTANTS
 };
 
+#define BIN_YOUTUBE_DL "youtube-dl"
+
 // image types (string)
 #define LIVES_IMAGE_TYPE_JPEG "jpeg"
 #define LIVES_IMAGE_TYPE_PNG "png"
@@ -421,8 +423,10 @@ typedef struct {
 #define RFX_TOOL_MENU_POSN 2
 
 /// mainw->
+#define MAINW_MSG_SIZE 8192
+
 typedef struct {
-  char msg[512];
+  char msg[8192];
 
   // files
   int current_file;

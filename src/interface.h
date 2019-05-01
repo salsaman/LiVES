@@ -50,7 +50,7 @@ typedef struct {
 } _entryw;
 
 _entryw *create_rename_dialog(int type);
-_entryw *create_location_dialog(int type);
+_entryw *create_location_dialog(void);
 _entryw *create_cds_dialog(int type);
 
 typedef struct __insertw {
@@ -145,8 +145,6 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int preview_type);
 void add_suffix_check(LiVESBox *box, const char *ext);
 
-boolean run_youtube_dialog(void);
-
 const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height, LiVESBox *container);
 
 _commentsw *commentsw;
@@ -170,5 +168,34 @@ text_window *textwindow;
 // download text entry
 #define STD_ENTRY_WIDTH ((int)(64.*widget_opts.scale))
 #define SHORT_ENTRY_WIDTH ((int)(32.*widget_opts.scale))
+
+typedef enum {
+  LIVES_MATCH_UNDEFINED = 0,
+  LIVES_MATCH_NEAREST,
+  LIVES_MATCH_AT_LEAST,
+  LIVES_MATCH_AT_MOST,
+  LIVES_MATCH_HIGHEST,
+  LIVES_MATCH_LOWEST,
+  LIVES_MATCH_CHOICE
+} lives_size_match_t;
+
+typedef struct {
+  char URI[8192];
+  char save_dir[PATH_MAX];
+  char fname[PATH_MAX];
+  char format[256];
+  int desired_width;
+  int desired_height;
+  float desired_fps;  // unused for now
+  lives_size_match_t matchsize;
+  boolean do_update;
+  int vidchoice;
+  int audchoice;
+
+  // TODO: add audio bitrate ?, audio_lang, get_sub, sub_format, sub_language, etc.
+
+} lives_remote_clip_request_t;
+
+lives_remote_clip_request_t *run_youtube_dialog(void);
 
 #endif

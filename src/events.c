@@ -3746,7 +3746,7 @@ lives_render_error_t render_events(boolean reset) {
           lives_free(tmp);
         }
         // sig_progress...
-        lives_snprintf(mainw->msg, 256, "%d", progress++);
+        lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
 
         if (prefs->ocp == -1) prefs->ocp = get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
 
@@ -3989,7 +3989,7 @@ filterinit2:
         read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
         //	cfile->may_be_damaged=TRUE;
       }
-    } else lives_snprintf(mainw->msg, 512, "completed");
+    } else lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "completed");
 
     multi = mainw->multitrack;
     mainw->multitrack = NULL; // allow setting of audio filesize now

@@ -1369,7 +1369,7 @@ LIVES_GLOBAL_INLINE int myround(double n) {
 
 
 LIVES_GLOBAL_INLINE void clear_mainw_msg(void) {
-  memset(mainw->msg, 0, 512);
+  memset(mainw->msg, 0, MAINW_MSG_SIZE);
 }
 
 
@@ -2316,7 +2316,7 @@ boolean check_for_lock_file(const char *set_name, int type) {
 
   threaded_dialog_spin(0.);
   mainw->com_failed = FALSE;
-  lives_popen(com, TRUE, mainw->msg, 256);
+  lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
   threaded_dialog_spin(0.);
   lives_free(com);
 
@@ -2518,7 +2518,7 @@ void get_frame_count(int idx) {
                                   get_image_ext_for_type(mainw->files[idx]->img_type));
 
   mainw->com_failed = FALSE;
-  bytes = lives_popen(com, FALSE, mainw->msg, 256);
+  bytes = lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 
   if (mainw->com_failed) return;

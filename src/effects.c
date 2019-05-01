@@ -614,7 +614,7 @@ lives_render_error_t realfx_progress(boolean reset) {
   if (mainw->effects_paused) return LIVES_RENDER_EFFECTS_PAUSED;
 
   // sig_progress...
-  lives_snprintf(mainw->msg, 256, "%d", i);
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", i);
   // load, effect, save frame
 
   // skip resizing virtual frames
@@ -635,7 +635,7 @@ lives_render_error_t realfx_progress(boolean reset) {
     layer = weed_layer_new_for_frame(mainw->current_file, i);
     if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
-      lives_snprintf(mainw->msg, 256, "error|missing image %d", i);
+      lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "error|missing image %d", i);
       return LIVES_RENDER_WARNING_READ_FRAME;
     }
 

@@ -184,7 +184,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
     if (infofile != NULL) {
       timeout = FALSE;
       mainw->read_failed = FALSE;
-      lives_fgets(mainw->msg, 512, infofile);
+      lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
       fclose(infofile);
     }
 
@@ -1064,7 +1064,7 @@ boolean get_handle_from_info_file(int index) {
     if (infofile != NULL) {
       timeout = FALSE;
       mainw->read_failed = FALSE;
-      lives_fgets(mainw->msg, 256, infofile);
+      lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
       fclose(infofile);
     }
 
@@ -5775,7 +5775,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
                             capable->myname);
 
   mainw->com_failed = FALSE;
-  lives_popen(com, FALSE, mainw->msg, 256);
+  lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 
   if (mainw->com_failed) {

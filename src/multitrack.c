@@ -19736,7 +19736,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
     weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
 
     ev_count++;
-    lives_snprintf(mainw->msg, 256, "%d|", ev_count);
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d|", ev_count);
     if ((ev_count % 100) == 0) threaded_dialog_spin(0.);
 
     if (weed_get_plant_type(event) != WEED_PLANT_EVENT) {

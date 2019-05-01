@@ -750,12 +750,14 @@ void on_open_loc_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   }
 
-  locw = create_location_dialog(1);
+  locw = create_location_dialog();
   lives_widget_show_all(locw->dialog);
 }
 
 
 void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  lives_remote_clip_request_t *req;
+
   if (mainw->multitrack != NULL) {
     if (mainw->multitrack->idlefunc > 0) {
       lives_source_remove(mainw->multitrack->idlefunc);
@@ -766,7 +768,11 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   }
 
-  run_youtube_dialog();
+  req = run_youtube_dialog();
+  if (req == NULL) return;
+
+  on_utube_select(req);
+  lives_free(req);
 }
 
 
@@ -866,11 +872,8 @@ void on_location_select(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_utube_select(LiVESButton *button, livespointer user_data) {
-  char *url;
-  char *dirname;
-  char *dfile;
-  char *com;
+void on_utube_select(lives_remote_clip_request_t *req) {
+  char *com, *dfile;
   int current_file = mainw->current_file;
 
   if (current_file == -1) {
@@ -884,7 +887,11 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
 
   lives_rm(cfile->info_file);
 
-  com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\"", prefs->backend, cfile->handle, url, dfile);
+  dfile = lives_build_filename(req->save_dir, req->fname, NULL);
+
+  com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f %d %d %d", prefs->backend, cfile->handle, req->URI,
+                            dfile, req->format, req->desired_width, req->desired_height, req->matchsize, req->desired_fps, req->vidchoice, req->audchoice,
+                            req->do_update);
   mainw->com_failed = FALSE;
   lives_system(com, FALSE);
   lives_free(com);
@@ -897,9 +904,16 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
       lives_freep((void **)&cfile);
       mainw->current_file = -1;
     }
+    lives_free(dfile);
     d_print_failed();
     return;
   }
+
+  g_print("Got back %s\n", mainw->msg);
+  return;
+
+  // if the user selected size choice, show the options in a window
+  // then set vidchoice and audchoice (TODO)
 
   cfile->nopreview = TRUE;
   cfile->keep_without_preview = TRUE;
@@ -933,9 +947,6 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
       }
 
       lives_rm(dfile);
-
-      lives_free(dirname);
-      lives_free(url);
       lives_free(dfile);
 
       sensitize();
@@ -955,9 +966,6 @@ void on_utube_select(LiVESButton *button, livespointer user_data) {
     lives_freep((void **)&cfile);
     mainw->current_file = -1;
   }
-
-  lives_free(dirname);
-  lives_free(url);
 
   mainw->img_concat_clip = -1;
   mainw->no_switch_dprint = FALSE;
@@ -1164,7 +1172,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (proj_file == NULL) return;
   mainw->com_failed = FALSE;
   com = lives_strdup_printf("%s get_proj_set \"%s\"", prefs->backend_sync, proj_file);
-  lives_popen(com, FALSE, mainw->msg, 256);
+  lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 
   if (mainw->com_failed) {
@@ -4984,7 +4992,7 @@ boolean reload_set(const char *set_name) {
     return FALSE;
   }
 
-  lives_snprintf(mainw->msg, 256, "none");
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "none");
 
   // check if we already have a threaded dialog running (i.e. we are called from startup)
   if (mainw->threaded_dialog) keep_threaded_dialog = TRUE;
@@ -5048,7 +5056,7 @@ boolean reload_set(const char *set_name) {
         get_handle_from_info_file(new_file);
       }
     } else {
-      if (lives_fgets(mainw->msg, 512, orderfile) == NULL) clear_mainw_msg();
+      if (lives_fgets(mainw->msg, MAINW_MSG_SIZE, orderfile) == NULL) clear_mainw_msg();
       else memset(mainw->msg + strlen(mainw->msg) - strlen("\n"), 0, 1);
     }
 
@@ -5909,7 +5917,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
         if (ifile != NULL) {
           timeout = FALSE;
           mainw->read_failed = FALSE;
-          lives_fgets(mainw->msg, 512, ifile);
+          lives_fgets(mainw->msg, MAINW_MSG_SIZE, ifile);
         }
 
         if (ifile != NULL) fclose(ifile);
@@ -6037,7 +6045,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       if (ifile != NULL) {
         timeout = FALSE;
         mainw->read_failed = FALSE;
-        lives_fgets(mainw->msg, 512, ifile);
+        lives_fgets(mainw->msg, MAINW_MSG_SIZE, ifile);
         fclose(ifile);
       }
 
@@ -6490,7 +6498,7 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
       if (mainw->cancel_type != CANCEL_SOFT) {
         if ((infofile = fopen(cfile->info_file, "r")) != NULL) {
           mainw->read_failed = FALSE;
-          lives_fgets(mainw->msg, 512, infofile);
+          lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
           fclose(infofile);
         }
 
@@ -10327,11 +10335,11 @@ void on_export_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (cfile->start * cfile->end > 0 && !LIVES_POINTER_TO_INT(user_data)) {
-    lives_snprintf(mainw->msg, 256, _("Exporting audio frames %d to %d as %s..."), cfile->start, cfile->end, file_name);
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("Exporting audio frames %d to %d as %s..."), cfile->start, cfile->end, file_name);
     start = calc_time_from_frame(mainw->current_file, cfile->start);
     end = calc_time_from_frame(mainw->current_file, cfile->end);
   } else {
-    lives_snprintf(mainw->msg, 256, _("Exporting audio as %s..."), file_name);
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("Exporting audio as %s..."), file_name);
     start = 0.;
     end = 0.;
   }
@@ -10453,7 +10461,7 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_free(a_type);
 
-  lives_snprintf(mainw->msg, 256, _("Appending audio file %s..."), file_name);
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("Appending audio file %s..."), file_name);
   d_print(""); // force switchtext
   d_print(mainw->msg);
 

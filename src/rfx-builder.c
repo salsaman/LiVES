@@ -3317,13 +3317,13 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
 
   rfxbuilder->type = RFX_BUILD_TYPE_EFFECT1;
   if (!(list = get_script_section("define", script_file, TRUE))) {
-    lives_snprintf(mainw->msg, 512, "%s", (_("No <define> section found in script.\n")));
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", (_("No <define> section found in script.\n")));
     return FALSE;
   }
   tmp = (char *)lives_list_nth_data(list, 0);
   if (strlen(tmp) < 2) {
     lives_list_free_all(&list);
-    lives_snprintf(mainw->msg, 512, "%s", (_("Bad script version.\n")));
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", (_("Bad script version.\n")));
     return FALSE;
   }
 
@@ -3331,7 +3331,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
   if (make_version_hash(version) > make_version_hash(RFX_VERSION)) {
     lives_list_free_all(&list);
     lives_free(version);
-    lives_snprintf(mainw->msg, 512, "%s", (_("Bad script version.\n")));
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", (_("Bad script version.\n")));
     return FALSE;
   }
   lives_free(version);
@@ -3342,14 +3342,14 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
   lives_list_free_all(&list);
 
   if (!(list = get_script_section("name", script_file, TRUE))) {
-    lives_snprintf(mainw->msg, 512, "%s", (_("No <name> section found in script.\n")));
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", (_("No <name> section found in script.\n")));
     return FALSE;
   }
   lives_entry_set_text(LIVES_ENTRY(rfxbuilder->name_entry), (char *)lives_list_nth_data(list, 0));
   lives_list_free_all(&list);
 
   if (!(list = get_script_section("version", script_file, TRUE))) {
-    lives_snprintf(mainw->msg, 512, "%s", (_("No <version> section found in script.\n")));
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", (_("No <version> section found in script.\n")));
     return FALSE;
   }
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_version),
@@ -3357,7 +3357,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
   lives_list_free_all(&list);
 
   if (!(list = get_script_section("author", script_file, TRUE))) {
-    lives_snprintf(mainw->msg, 512, "%s", (_("No <author> section found in script.\n")));
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", (_("No <author> section found in script.\n")));
     return FALSE;
   }
   array = lives_strsplit((char *)lives_list_nth_data(list, 0), rfxbuilder->field_delim, 2);
@@ -3369,11 +3369,11 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
   lives_list_free_all(&list);
 
   if (!(list = get_script_section("description", script_file, TRUE))) {
-    lives_snprintf(mainw->msg, 512, "%s", (_("No <description> section found in script.\n")));
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", (_("No <description> section found in script.\n")));
     return FALSE;
   }
   if (get_token_count((char *)lives_list_nth_data(list, 0), (int)rfxbuilder->field_delim[0]) < 4) {
-    lives_snprintf(mainw->msg, 512, (_("Bad description. (%s)\n")), (char *)lives_list_nth_data(list, 0));
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, (_("Bad description. (%s)\n")), (char *)lives_list_nth_data(list, 0));
     lives_list_free_all(&list);
     return FALSE;
   }

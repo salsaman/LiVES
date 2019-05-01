@@ -689,10 +689,10 @@ void handle_backend_errors(void) {
 
   // for other types of errors...more info....
   // set mainw->error but not mainw->cancelled
-  lives_snprintf(mainw->msg, 512, "\n\n");
+  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "\n\n");
   for (i = pxstart; i < numtok; i++) {
-    lives_strappend(mainw->msg, 512, _(array[i]));
-    lives_strappend(mainw->msg, 512, "\n");
+    lives_strappend(mainw->msg, MAINW_MSG_SIZE, _(array[i]));
+    lives_strappend(mainw->msg, MAINW_MSG_SIZE, "\n");
   }
   lives_strfreev(array);
 
@@ -709,7 +709,7 @@ boolean check_backend_return(lives_clip_t *sfile) {
   if (!infofile) return FALSE;
 
   mainw->read_failed = FALSE;
-  lives_fgets(mainw->msg, 512, infofile);
+  lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
   fclose(infofile);
 
   if (!strncmp(mainw->msg, "error", 5)) handle_backend_errors();
@@ -1598,18 +1598,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (mainw->multitrack != NULL && !mainw->multitrack->is_rendering) {
     // playback start from middle of multitrack
     // calculate when we "would have started" at time 0
-
-    // WARNING: origticks could be negative
-#ifdef USE_MONOTONIC_TIME
-    //int64_t origticks = mainw->origusecs * USEC_TO_TICKS -
     mainw->offsetticks = get_event_timecode(mainw->multitrack->pb_start_event);
-			//mainw->origusecs = ((int64_t)(origticks / USEC_TO_TICKS));
-#else
-    //int64_t origticks = mainw->origsecs * TICKS_PER_SECOND_DBL + mainw->origusecs * USEC_TO_TICKS -
-    mainw->offsetticks = get_event_timecode(mainw->multitrack->pb_start_event);
-    // mainw->origsecs = origticks / TICKS_PER_SECOND_DBL;
-    //mainw->origusecs = ((int64_t)(origticks / USEC_TO_TICKS) - mainw->origsecs * 1000000.);
-#endif
   }
 
   // set initial audio seek position for current file
@@ -1725,7 +1714,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if ((infofile = fopen(cfile->info_file, "r"))) {
         // OK, now we might have some frames
         mainw->read_failed = FALSE;
-        lives_fgets(mainw->msg, 512, infofile);
+        lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
         fclose(infofile);
       }
     }
@@ -1994,7 +1983,7 @@ boolean do_auto_dialog(const char *text, int type) {
 
   if (type == 0 || type == 2) {
     mainw->read_failed = FALSE;
-    lives_fgets(mainw->msg, 512, infofile);
+    lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
     fclose(infofile);
     infofile = NULL;
     if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
@@ -2590,6 +2579,13 @@ boolean do_mt_rect_prompt(void) {
 
 void do_bad_layout_error(void) {
   do_error_dialog(_("LiVES was unable to load the layout.\nSorry.\n"));
+}
+
+
+void do_program_not_found_error(const char *progname) {
+  char *msg = lives_strdup_printf(_("The program %s is required to use this feature.\nPlease install it and try again."), progname);
+  do_blocking_error_dialog(msg);
+  lives_free(msg);
 }
 
 

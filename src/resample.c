@@ -1669,7 +1669,7 @@ void create_new_pb_speed(short type) {
   lives_label_set_mnemonic_widget(LIVES_LABEL(label), spinbutton_pb_speed);
 
   add_fill_to_box(LIVES_BOX(vbox));
-  
+
   ca_hbox = lives_hbox_new(FALSE, 0);
   change_audio_speed = lives_standard_check_button_new
                        (_("Change the _audio speed as well"), FALSE, LIVES_BOX(ca_hbox), NULL);

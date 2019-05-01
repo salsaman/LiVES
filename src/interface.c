@@ -1008,17 +1008,13 @@ LiVESWidget *create_opensel_dialog(void) {
 }
 
 
-_entryw *create_location_dialog(int type) {
-  // type 1 is open location
-  // type 2 is open youtube: - 3 fields:= URL, directory, file name
-
+_entryw *create_location_dialog(void) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *label;
   LiVESWidget *checkbutton;
   LiVESWidget *hbox;
-  LiVESWidget *buttond;
 
   _entryw *locw = (_entryw *)(lives_malloc(sizeof(_entryw)));
 
@@ -1026,10 +1022,7 @@ _entryw *create_location_dialog(int type) {
 
   char *title, *tmp, *tmp2;
 
-  if (type == 1)
-    title = lives_strdup(_("Open Location"));
-  else
-    title = lives_strdup(_("Open Youtube Clip"));
+  title = lives_strdup(_("Open Location"));
 
   locw->dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
   lives_signal_handlers_disconnect_by_func(locw->dialog, return_true, NULL);
@@ -1046,20 +1039,9 @@ _entryw *create_location_dialog(int type) {
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
 
-  if (type == 1) {
-    label = lives_standard_label_new(
-              _("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer (or mpv).\n"
-                "Also make sure you have set your bandwidth in Preferences|Streaming\n\n"));
-  } else {
-    label = lives_standard_label_new(
-              _("\n\nTo open a clip from Youtube, LiVES will first download it with youtube-dl.\n"
-                "Please make sure you have the latest version of that tool installed.\n\n"));
-
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
-
-    label = lives_standard_label_new(_("Enter the URL of the clip below.\nE.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n\n"));
-
-  }
+  label = lives_standard_label_new(
+            _("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer (or mpv).\n"
+              "Also make sure you have set your bandwidth in Preferences|Streaming\n\n"));
 
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
@@ -1068,65 +1050,25 @@ _entryw *create_location_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 2);
 
-  locw->entry = lives_standard_entry_new(type == 1 ? _("URL : ") : _("Youtube URL : "), "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox),
-                                         NULL);
+  locw->entry = lives_standard_entry_new(_("URL : "), "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  if (type == 1) {
-    hbox = lives_hbox_new(FALSE, 0);
-    checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Do not send bandwidth information"))),
-                  prefs->no_bandwidth, LIVES_BOX(hbox),
-                  (tmp2 = lives_strdup(_("Try this setting if you are having problems getting a stream"))));
+  hbox = lives_hbox_new(FALSE, 0);
+  checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Do not send bandwidth information"))),
+                prefs->no_bandwidth, LIVES_BOX(hbox),
+                (tmp2 = lives_strdup(_("Try this setting if you are having problems getting a stream"))));
 
-    lives_free(tmp);
-    lives_free(tmp2);
+  lives_free(tmp);
+  lives_free(tmp2);
 
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_boolean_toggled),
-                         &prefs->no_bandwidth);
+  lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_boolean_toggled),
+                       &prefs->no_bandwidth);
 
-    add_deinterlace_checkbox(LIVES_BOX(dialog_vbox));
-  }
-
-  if (type == 2) {
-    hbox = lives_hbox_new(FALSE, 0);
-
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 2);
-
-    locw->dir_entry = lives_standard_entry_new(_("Download to _Directory : "), mainw->vid_dl_dir,
-                      STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
-
-    lives_entry_set_editable(LIVES_ENTRY(locw->dir_entry), FALSE);
-
-    // add dir, with filechooser button
-    buttond = lives_standard_file_button_new(TRUE, NULL);
-    lives_label_set_mnemonic_widget(LIVES_LABEL(widget_opts.last_label), buttond);
-    lives_box_pack_start(LIVES_BOX(hbox), buttond, FALSE, FALSE, widget_opts.packing_width / 2);
-
-    add_fill_to_box(LIVES_BOX(hbox));
-
-    hbox = lives_hbox_new(FALSE, 0);
-
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 2);
-
-    locw->name_entry = lives_standard_entry_new(_("Download _File Name : "), "",
-                       -1, PATH_MAX, LIVES_BOX(hbox), NULL);
-
-    lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)locw->dir_entry);
-
-    label = lives_standard_label_new("." LIVES_FILE_EXT_MP4);
-
-    lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
-
-    add_fill_to_box(LIVES_BOX(hbox));
-
-    hbox = lives_hbox_new(FALSE, 0);
-
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 2);
-  }
+  add_deinterlace_checkbox(LIVES_BOX(dialog_vbox));
 
   cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(locw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -1141,15 +1083,9 @@ _entryw *create_location_dialog(int type) {
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
                        locw);
 
-  if (type == 1)
-    lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_location_select),
-                         NULL);
-
-  else if (type == 2)
-    lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_utube_select),
-                         NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_location_select),
+                       NULL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -2943,7 +2879,8 @@ static void utsense(LiVESToggleButton *togglebutton, livespointer user_data) {
 
 // advanced :: save subs / sub language
 
-boolean run_youtube_dialog(void) {
+lives_remote_clip_request_t *run_youtube_dialog(void) {
+  lives_remote_clip_request_t *req;
   LiVESWidget *dialog_vbox;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
@@ -2954,7 +2891,7 @@ boolean run_youtube_dialog(void) {
   LiVESWidget *url_entry;
   LiVESWidget *name_entry;
   LiVESWidget *dir_entry;
-  LiVESWidget *checkbutton;
+  LiVESWidget *checkbutton_update;
 #ifdef ALLOW_NONFREE_CODECS
   LiVESWidget *radiobutton_free;
   LiVESWidget *radiobutton_nonfree;
@@ -2975,15 +2912,25 @@ boolean run_youtube_dialog(void) {
 
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
-  char *title, *tmp, *tmp2;
+  char *title, *tmp, *tmp2, *msg;
 
   char *dfile = NULL, *url = NULL;
 
   char dirname[PATH_MAX];
+  char string[256];
 
   int response;
 
   boolean onlyfree = TRUE;
+
+  if (!capable->has_youtube_dl) {
+    get_location(BIN_YOUTUBE_DL, string, 256);
+    if (strlen(string)) capable->has_youtube_dl = TRUE;
+    if (!capable->has_youtube_dl) {
+      do_program_not_found_error(BIN_YOUTUBE_DL);
+      return NULL;
+    }
+  }
 
   title = lives_strdup(_("Open Youtube Clip"));
 
@@ -3001,9 +2948,10 @@ boolean run_youtube_dialog(void) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  label = lives_standard_label_new(
-            _("To open a clip from Youtube, LiVES will first download it with youtube-dl.\n"
-              "PLEASE MAKE SURE YOU HAVE THE MOST RECENT VERSION OF THAT TOOL INSTALLED !"));
+  msg = lives_strdup_printf(_("To open a clip from Youtube, LiVES will first download it with %s.\n"
+                              "PLEASE MAKE SURE YOU HAVE THE MOST RECENT VERSION OF THAT TOOL INSTALLED !"), BIN_YOUTUBE_DL);
+  label = lives_standard_label_new(msg);
+  lives_free(msg);
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
 
@@ -3012,14 +2960,17 @@ boolean run_youtube_dialog(void) {
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  // TODO - check for zenity
+  checkbutton_update = lives_standard_check_button_new(_("<--- Auto update youtube-dl ? (may require your password.)"), FALSE,
+                       LIVES_BOX(hbox), NULL);
 
-  checkbutton = lives_standard_check_button_new(_("<--- Auto update (may require your password.)"), FALSE, LIVES_BOX(hbox), NULL);
-
-  if (!capable->has_zenity) {
-    lives_widget_set_sensitive(checkbutton, FALSE);
-    label = lives_standard_label_new(_(" (REQUIRES ZENITY)."));
-    lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
+  if (!capable->has_ssh_askpass) {
+    get_location("ssh-askpass", string, 256);
+    if (strlen(string)) capable->has_ssh_askpass = TRUE;
+    if (!capable->has_ssh_askpass) {
+      lives_widget_set_sensitive(checkbutton_update, FALSE);
+      label = lives_standard_label_new(_(" (REQUIRES SSH-ASKPASS)."));
+      lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
+    }
   }
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
@@ -3222,7 +3173,7 @@ boolean run_youtube_dialog(void) {
     response = lives_dialog_run(LIVES_DIALOG(dialog));
     if (response == LIVES_RESPONSE_CANCEL) {
       mainw->cancelled = CANCEL_USER;
-      return FALSE;
+      return NULL;
     }
 
     ///////
@@ -3232,7 +3183,7 @@ boolean run_youtube_dialog(void) {
       continue;
     }
 
-    url = lives_strdup(lives_entry_get_text(LIVES_ENTRY(locw->entry)));
+    url = lives_strdup(lives_entry_get_text(LIVES_ENTRY(url_entry)));
 
     if (!strlen(url)) {
       lives_free(url);
@@ -3260,24 +3211,42 @@ boolean run_youtube_dialog(void) {
 
   lives_snprintf(mainw->vid_dl_dir, PATH_MAX, "%s", dirname);
 
-  lives_widget_destroy(dialog);
+  req = (lives_remote_clip_request_t *)lives_try_malloc(sizeof(lives_remote_clip_request_t));
+  if (req == NULL) {
+    lives_widget_destroy(dialog);
+    lives_widget_context_update();
 
-  lives_widget_context_update();
+    LIVES_ERROR("Could not alloc memory for remote clip request");
+    mainw->error = TRUE;
+    return NULL;
+  }
 
   mainw->error = FALSE;
   d_print(_("Downloading %s to %s..."), url, dfile);
 
-  /*  options.output = dfile;
-      options.url = url;
-      options.nonfree = nonfree; // TODO
-      options.sizetype = sizetype; // TODO
-      options.width = width; // TODO
-      options.height = height; // TODO
-      options.getsubs = getsubs; // TODO
-      options.sublang = sublang; // TODO
-      options.update = update; // TODO
+  lives_snprintf(req->URI, 8192, "%s", lives_entry_get_text(LIVES_ENTRY(url_entry)));
+  lives_snprintf(req->save_dir, PATH_MAX, "%s", dirname);
+  lives_snprintf(req->fname, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(name_entry)));
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_free)))
+    lives_snprintf(req->format, 256, "%s", LIVES_FILE_EXT_WEBM);
+  else
+    lives_snprintf(req->format, 256, "%s", LIVES_FILE_EXT_MP4);
+  req->desired_width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton_width));
+  req->desired_height = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton_height));
+  req->desired_fps = 0.;
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_approx))) req->matchsize = LIVES_MATCH_NEAREST;
+  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_atleast))) req->matchsize = LIVES_MATCH_AT_LEAST;
+  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_atmost))) req->matchsize = LIVES_MATCH_AT_MOST;
+  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_smallest))) req->matchsize = LIVES_MATCH_HIGHEST;
+  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_largest))) req->matchsize = LIVES_MATCH_LOWEST;
+  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_choose))) req->matchsize = LIVES_MATCH_CHOICE;
+  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton_update))) req->do_update = FALSE;
+  else req->do_update = TRUE;
 
-      return options;*/
+  req->vidchoice = req->audchoice = 0;
 
-  return TRUE;
+  lives_widget_destroy(dialog);
+  lives_widget_context_update();
+
+  return req;
 }

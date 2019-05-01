@@ -80,7 +80,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
         msg = lives_strdup_printf(_("\nPlugin error: %s failed with code %d"), command, error / 256);
         if (bytes) {
           msg2 = lives_strconcat(msg, lives_strdup_printf(_(" : message was %s\n"), buffer), NULL);
-          lives_snprintf(mainw->msg, 512, "%s", buffer);
+          lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", buffer);
         } else {
           msg2 = lives_strconcat(msg, "\n", NULL);
         }
@@ -147,7 +147,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
 
   if (error == 256) {
     mainw->error = TRUE;
-    lives_snprintf(mainw->msg, 512, "%s", buffer);
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", buffer);
     return list;
   }
 
@@ -2435,7 +2435,7 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
     err = (*dplug->module_check_init)();
 
     if (err != NULL) {
-      lives_snprintf(mainw->msg, 512, "%s", err);
+      lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", err);
       unload_decoder_plugin(dplug);
       lives_free(dplug);
       return NULL;

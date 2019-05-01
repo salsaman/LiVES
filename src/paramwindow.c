@@ -739,7 +739,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 && rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H;
     else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
     widget_opts.non_modal = TRUE;
-    fx_dialog[didx] = lives_standard_dialog_new(_(rfx->menu_text), FALSE, scrw, RFX_WINSIZE_V);
+    fx_dialog[didx] = lives_standard_dialog_new(_(rfx->menu_text[0] == '_' ? rfx->menu_text + 1 : rfx->menu_text), FALSE, scrw, RFX_WINSIZE_V);
     widget_opts.non_modal = FALSE;
   }
 
@@ -779,7 +779,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       mainw->framedraw_frame = cfile->start;
       widget_add_framedraw(LIVES_VBOX(pbox), cfile->start, cfile->end, !(rfx->props & RFX_PROPS_MAY_RESIZE),
                            cfile->hsize, cfile->vsize);
-
     } else {
       if (!(rfx->props & RFX_PROPS_BATCHG)) {
         mainw->framedraw_frame = 0;
@@ -977,7 +976,8 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   LiVESWidget *param_vbox = NULL;
   LiVESWidget *top_hbox = NULL;
   LiVESWidget *hbox = NULL;
-
+  LiVESWidget *last_label = NULL;
+  
   // put whole thing in scrolled window
   LiVESWidget *scrolledwindow;
 
@@ -1143,7 +1143,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           has_box = TRUE;
           has_param = TRUE;
         }
-        if (add_param_to_box(LIVES_BOX(hbox), rfx, pnum, (j == (num_tok - 1)) && !noslid)) noslid = TRUE;
+	
+	if (last_label != NULL) lives_widget_set_halign(last_label, LIVES_ALIGN_START);
+	if (add_param_to_box(LIVES_BOX(hbox), rfx, pnum, (j == (num_tok - 1)) && !noslid)) noslid = TRUE;
         used[pnum] = TRUE;
         has_param = TRUE;
       } else if (!j && !strcmp(array[j], "hseparator") && has_param) {
@@ -1165,7 +1167,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
         if (!has_box) {
           hbox = lives_hbox_new(FALSE, 0);
           lives_box_pack_start(LIVES_BOX(param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-          has_box = TRUE;
+	  last_label = NULL;
         }
         lives_snprintf(label_text, 256, "%s", array[j] + 1);
         while (strcmp(array[j] + strlen(array[j]) - 1, "\"") && j < num_tok - 1) {
@@ -1175,7 +1177,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           if (!strcmp(label_text + strlen(label_text) - 1, "\"")) {
             memset(label_text + strlen(label_text) - 1, 0, 1);
           }
-          add_param_label_to_box(LIVES_BOX(hbox), TRUE, label_text);
+	  if (last_label == NULL && !has_param) widget_opts.justify = LIVES_JUSTIFY_CENTER;
+	  else if (last_label != NULL) lives_widget_set_halign(last_label, LIVES_ALIGN_START);
+          last_label = add_param_label_to_box(LIVES_BOX(hbox), TRUE, label_text);
+	  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
         }
       }
     }
@@ -1640,7 +1645,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 }
 
 
-void add_param_label_to_box(LiVESBox *box, boolean do_trans, const char *text) {
+LiVESWidget *add_param_label_to_box(LiVESBox *box, boolean do_trans, const char *text) {
   LiVESWidget *label;
 
   lives_box_set_homogeneous(LIVES_BOX(box), FALSE);
@@ -1663,7 +1668,8 @@ void add_param_label_to_box(LiVESBox *box, boolean do_trans, const char *text) {
     lives_box_pack_start(box, label, FALSE, FALSE, widget_opts.packing_width);
   else
     lives_box_pack_start(box, label, FALSE, FALSE, widget_opts.packing_height);
-  lives_widget_show(label);
+
+  return label;
 }
 
 

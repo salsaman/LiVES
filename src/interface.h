@@ -119,6 +119,7 @@ aud_dialog_t *create_audfade_dialog(int type);
 LiVESWidget *create_combo_dialog(int type, livespointer user_data);
 
 xprocess *create_processing(const char *text);
+xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had_focus);
 void add_to_clipmenu(void);
 void remove_from_clipmenu(void);
 void make_play_window(void);

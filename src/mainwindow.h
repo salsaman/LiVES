@@ -49,13 +49,13 @@
 /////// GUI related constants /////////////////////////////////////////////////////////
 
 // parameters for resizing the image frames, and for capture
-#define V_RESIZE_ADJUST ((W_PACKING_WIDTH+2)*3)
-#define H_RESIZE_ADJUST ((W_PACKING_HEIGHT+2)*2)
+#define V_RESIZE_ADJUST ((W_PACKING_WIDTH + 2) * 3)
+#define H_RESIZE_ADJUST ((W_PACKING_HEIGHT + 2) * 2)
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-#define CE_FRAME_HSPACE ((int)(320.*widget_opts.scale))
+#define CE_FRAME_HSPACE ((int)(320. * widget_opts.scale))
 #else
-#define CE_FRAME_HSPACE ((int)(420.*widget_opts.scale))
+#define CE_FRAME_HSPACE ((int)(420. * widget_opts.scale))
 #endif
 
 /// char width of combo entries (default)
@@ -71,27 +71,27 @@
 #define MIN_SEPWIN_HEIGHT 36
 
 /// sepwin/screen size safety margins in pixels
-#define SCR_WIDTH_SAFETY ((int)(100.*widget_opts.scale))
-#define SCR_HEIGHT_SAFETY ((int)(200.*widget_opts.scale))
+#define SCR_WIDTH_SAFETY ((int)(100. * widget_opts.scale))
+#define SCR_HEIGHT_SAFETY ((int)(200. * widget_opts.scale))
 
 /// default size for generators
 #define DEF_GEN_WIDTH 1024
 #define DEF_GEN_HEIGHT 720
 
 /// height of preview widgets in sepwin
-#define PREVIEW_BOX_HT ((int)(100.*widget_opts.scale))
+#define PREVIEW_BOX_HT ((int)(100. * widget_opts.scale))
 
 /// height of msg area
-#define MSG_AREA_HEIGHT ((int)(50.*widget_opts.scale))
+#define MSG_AREA_HEIGHT ((int)(50. * widget_opts.scale))
 
 /// clip editor hrule height
-#define CE_HRULE_HEIGHT ((int)(20.*widget_opts.scale))
+#define CE_HRULE_HEIGHT ((int)(20. * widget_opts.scale))
 
 /// clip edit vid/aud bar height
-#define CE_VIDBAR_HEIGHT ((int)(4.*widget_opts.scale))
+#define CE_VIDBAR_HEIGHT ((int)(4. * widget_opts.scale))
 
 /// (unexpanded) height of rows in treeviews
-#define TREE_ROW_HEIGHT ((int)(60.*widget_opts.scale))
+#define TREE_ROW_HEIGHT ((int)(60. * widget_opts.scale))
 
 // a few GUI specific settings
 #define GUI_SCREEN_WIDTH (mainw->mgeom[widget_opts.monitor].width)
@@ -99,31 +99,31 @@
 
 #define SCREEN_SCALE_DEF_WIDTH 1200
 
-#define DEFAULT_FRAME_HSIZE ((int)(640.*widget_opts.scale))
-#define DEFAULT_FRAME_VSIZE ((int)(400.*widget_opts.scale))
+#define DEFAULT_FRAME_HSIZE ((int)(640. * widget_opts.scale))
+#define DEFAULT_FRAME_VSIZE ((int)(400. * widget_opts.scale))
 
-#define FRAMEBLANK_MIN_WIDTH ((int)(240.*widget_opts.scale))
-#define FRAMEBLANK_MAX_WIDTH ((int)(600.*widget_opts.scale))
+#define FRAMEBLANK_MIN_WIDTH ((int)(240. * widget_opts.scale))
+#define FRAMEBLANK_MAX_WIDTH ((int)(600. * widget_opts.scale))
 
-#define FRAMEBLANK_MIN_HEIGHT ((int)(180.*widget_opts.scale))
-#define FRAMEBLANK_MAX_HEIGHT ((int)(400.*widget_opts.scale))
+#define FRAMEBLANK_MIN_HEIGHT ((int)(180. * widget_opts.scale))
+#define FRAMEBLANK_MAX_HEIGHT ((int)(400. * widget_opts.scale))
 
-#define IMSEP_MAX_HEIGHT ((int)(86.*widget_opts.scale))
+#define IMSEP_MAX_HEIGHT ((int)(86. * widget_opts.scale))
 #define IMSEP_MAX_WIDTH (GUI_SCREEN_WIDTH - 20)
 
-#define MAIN_SPIN_SPACER ((int)52.*widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
+#define MAIN_SPIN_SPACER ((int)52. * widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
 
-#define ENC_DETAILS_WIN_H ((int)(640.*widget_opts.scale)) ///< horizontal size in pixels of the encoder output window
-#define ENC_DETAILS_WIN_V ((int)(240.*widget_opts.scale)) ///< vertical size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_H ((int)(640. * widget_opts.scale)) ///< horizontal size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_V ((int)(240. * widget_opts.scale)) ///< vertical size in pixels of the encoder output window
 
-#define MIN_MSG_WIDTH_CHARS ((int)(40.*widget_opts.scale)) ///< min width of text on warning/error labels
-#define MAX_MSG_WIDTH_CHARS ((int)(100.*widget_opts.scale)) ///< max width of text on warning/error labels
+#define MIN_MSG_WIDTH_CHARS ((int)(40. * widget_opts.scale)) ///< min width of text on warning/error labels
+#define MAX_MSG_WIDTH_CHARS ((int)(100. * widget_opts.scale)) ///< max width of text on warning/error labels
 
 /// size of the fx dialog windows scrollwindow
-#define RFX_WINSIZE_H ((int)(GUI_SCREEN_WIDTH >= 1024 ? (820.*widget_opts.scale) : 640))
-#define RFX_WINSIZE_V ((int)(480.*widget_opts.scale))
+#define RFX_WINSIZE_H ((int)(GUI_SCREEN_WIDTH >= SCREEN_SCALE_DEF_WIDTH ? (820. * widget_opts.scale) : 640))
+#define RFX_WINSIZE_V ((int)(480. * widget_opts.scale))
 
-#define DEF_BUTTON_WIDTH ((int)(80.*widget_opts.scale))
+#define DEF_BUTTON_WIDTH ((int)(80. * widget_opts.scale))
 
 #define DEF_DIALOG_WIDTH RFX_WINSIZE_H
 #define DEF_DIALOG_HEIGHT RFX_WINSIZE_V

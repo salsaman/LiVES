@@ -7,7 +7,6 @@
 
 #Communicate with LiVES and do auto VJing
 
-
 # syntax is autolives.pl host cmd_port status_port [options]
 # e.g. autolives.pl localhost 49999 49998
 # or just autolives.pl to use defaults 
@@ -28,6 +27,16 @@ $mute = 0;
 $loop = 0;
 $DEBUG = 0;
 
+$maxfx = 9; # e.g set to 7 if you want video gens and transitions to persist
+$allow_fxchanges = 1;
+$allow_clipswitch = 1;
+$allow_fgbgswap = 1;
+$allow_dirchange = 0; ## should be automatic, depending on whether current clip has virtual frames or not
+
+$play_dir = 0; ## assume forwards
+
+$timeout = 5;
+
 if (defined($ARGV[0])) {
     $remote_host=$ARGV[0];
 }
@@ -40,8 +49,9 @@ if (defined($ARGV[2])) {
     $local_port=$ARGV[2];
 }
 
-if ($^O eq "MSWin32") {
-    $sendOMC="perl sendOSC.pl $remote_host $remote_port";
+if ($^O eq "MSWin32" || $^O eq "msys") {
+    $is_mingw = 1;
+    $sendOMC="MSYS2_ARG_CONV_EXCL=\"*\" sendOSC -h $remote_host $remote_port >/dev/null 2>&1";
 }
 else {
     $sendOMC="sendOSC -h $remote_host $remote_port";
@@ -69,7 +79,7 @@ while (($opt = shift) ne "") {
     }
 }
 
-if ($^O eq "MSWin32") {
+if ($is_mingw) {
     use IO::Socket::INET;
 }
 else {
@@ -102,9 +112,7 @@ if ($remote_host eq "localhost") {
     $my_ip_addr="localhost";
 }
 
-
 if ($DEBUG) {print STDERR "Opening status port UDP $local_port on $my_ip_addr...\n";}
-
 
 my $ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
         LocalAddr => $my_ip_addr)
@@ -112,7 +120,6 @@ my $ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
 $s->add($ip1);
 
 if ($DEBUG) {print STDERR "Status port ready.\n";}
-
 
 if ($noty) {
     if ($DEBUG) {print STDERR "Opening notify port UDP $local_port on $my_ip_addr...\n";}
@@ -122,27 +129,18 @@ if ($noty) {
     $s->add($ip2);
 }
 
-
-$timeout=1;
-
-
+$timeout=5;
 
 #################################################################
 # start sending OMC commands
 
 if ($DEBUG) {print STDERR "Beginning OMC handshake...\n";}
 
-if ($^O eq "MSWin32") {
-    `$sendOMC /lives/open_status_socket s $my_ip_addr i $local_port`;
-}
-else {
-    `$sendOMC /lives/open_status_socket,$my_ip_addr,$local_port`;
-}
-
+    send_command("/lives/open_status_socket,$my_ip_addr,$local_port");
 
 if ($DEBUG) {print STDERR "Sent request to open status socket. Sending ping.\n";}
 
-`$sendOMC /lives/ping`;
+send_command("/lives/ping");
 my $retmsg=&get_newmsg;
 
 if ($DEBUG) {print STDERR "got $retmsg\n";}
@@ -152,43 +150,38 @@ unless ($retmsg eq "pong") {
     exit 2;
 }
 
+if ($allow_fxtoggle) {
+    # get number of realtime effect keys
+    send_command("/effect_key/count");
 
-# get number of realtime effect keys
-`$sendOMC /effect_key/count`;
+    my $numeffectkeys=&get_newmsg;
 
-my $numeffectkeys=&get_newmsg;
+    if ($DEBUG) {print STDERR "LiVES has $numeffectkeys realtime keys !\n";}
 
-if ($DEBUG) {print STDERR "LiVES has $numeffectkeys realtime keys !\n";}
-
-if ($numeffectkeys > 9) {
-    $numeffectkeys = 9;
-    if ($DEBUG) {print STDERR "only messing with $numeffectkeys\n";}
-}
+    if ($numeffectkeys > $maxfx) {
+	$numeffectkeys = $maxfx;
+	if ($DEBUG) {print STDERR "only messing with $numeffectkeys\n";}
+    }
    
+    if ($DEBUG) {print STDERR "getting effect key layout...\n";}
 
-if ($DEBUG) {print STDERR "getting effect key layout...\n";}
+    # get number of keymodes
 
+    send_command("/effect_key/maxmode/get");
 
-# get number of keymodes
+    $nummodes=&get_newmsg;
 
-`$sendOMC /effect_key/maxmode/get`;
+    if ($DEBUG) {print STDERR "there are $nummodes modes per key\n";}
 
-$nummodes=&get_newmsg;
+    if ($DEBUG) {&print_layout($numeffectkeys,$nummodes);}
 
-
-if ($DEBUG) {print STDERR "there are $nummodes modes per key\n";}
-
-
-if ($DEBUG) {&print_layout($numeffectkeys,$nummodes);}
-
-
-if ($DEBUG) {print STDERR "done !\n";}
+    if ($DEBUG) {print STDERR "done !\n";}
+}
 
 # get number of clips
-`$sendOMC /clip/count`;
+send_command("/clip/count");
 
 $numclips=&get_newmsg;
-
 
 if ($DEBUG) {print STDERR "LiVES has $numclips clips open !\n";}
 
@@ -198,68 +191,44 @@ if (!$numclips) {
 }
 
 if ($noty) {
-    if ($^O eq "MSWin32") {
-	`$sendOMC /lives/open_notify_socket s $my_ip_addr i $notify_port`;
-    }
-    else {
-	`$sendOMC /lives/open_notify_socket,$my_ip_addr,$notify_port`;
-    }
+    send_command("/lives/open_notify_socket,$my_ip_addr,$notify_port");
 }
-
 
 # get some constants we need
-if ($^O eq "MSWin32") {
-    `$sendOMC /lives/constant/value/get s LIVES_STATUS_PLAYING`;
-}
-else {
-    `$sendOMC /lives/constant/value/get,LIVES_STATUS_PLAYING`;
-}
+    send_command("/lives/constant/value/get,LIVES_STATUS_PLAYING");
 
 $playstat=&get_newmsg;
 
 if ($loop) {
-    if ($^O eq "MSWin32") {
-	`$sendOMC /lives/constant/value/get s LIVES_LOOP_MODE_CONTINUOUS`;
-    }
-    else {
-	`$sendOMC /lives/constant/value/get,LIVES_LOOP_MODE_CONTINUOUS`;
-    }
+    send_command("/lives/constant/value/get,LIVES_LOOP_MODE_CONTINUOUS");
+
     $loopconst=&get_newmsg;
 
     # get current loop mode
-    `$sendOMC /video/loop/get`;
+    send_command("/video/loop/get");
     $currloop=&get_newmsg;
 }
 
 if ($mute) {
     #mute the sound if requested
-    `$sendOMC /audio/mute/get`;
+    send_command("/audio/mute/get");
     $mute = 1 - &get_newmsg;
     if ($mute) {
-	if ($^O eq "MSWin32") {
-	    `$sendOMC /audio/mute/set i 1`;
-	}
-	else {
-	    `$sendOMC /audio/mute/set,1`;
-	}
+	    send_command("/audio/mute/set,1");
     }
 }
 
 if (!$waitforplay) {
     #trigger playback
     if ($loop) {
-	if ($^O eq "MSWin32") {
-	    `$sendOMC /video/loop/set i $loopconst`;
-	} else {
-	    `$sendOMC /video/loop/set,$loopconst`;
-	}
+	send_command("/video/loop/set,$loopconst");
     }
 
-    `$sendOMC /video/play`;
+    send_command("/video/play");
 
-    #wait 5 seconds for playback to start, else bail
-    for ($i=0;$i<5;$i++) {
-	`$sendOMC /lives/status/get`;
+    #wait $timeout seconds for playback to start, else bail
+    for ($i=0; $i<$timeout; $i++) {
+	send_command("/lives/status/get");
 	$status=&get_newmsg;
 	if ($status != $playstat) {
 	    sleep 1;
@@ -280,7 +249,6 @@ if (!$waitforplay) {
 
 if ($DEBUG) {print STDERR "Performing magic...\n";}
 
-
 while (1) {
     if ($noty) {
 	for ($ii=0;$ii<4;$ii++) {
@@ -292,7 +260,7 @@ while (1) {
     }
     
     if ($waitforplay) {
-	`$sendOMC /lives/status/get`;
+	send_command("/lives/status/get");
 	$status=&get_newmsg;
 	if ($status != $playstat) {
 	    sleep 1;
@@ -300,73 +268,65 @@ while (1) {
 	}
     }
 
-    $action=int(rand(18))+1;
+    $action=int(rand(20))+1;
     
     if ($action<6) {
 	# 1,2,3,4,5
 	# random clip switch
-	$nextclip=int(rand($numclips)+1);
-	if ($^O eq "MSWin32") {
-	    `$sendOMC /clip/select i $nextclip`;
-	} else {
-	    `$sendOMC /clip/select,$nextclip`;
+	if ($allow_clipswitch) {
+	    $nextclip=int(rand($numclips)+1);
+	    send_command("/clip/select,$nextclip");
 	}
     }
     elsif ($action<15) {
 	# mess with effects
-	$nexteffectkey=int(rand($numeffectkeys)+1);
-	if ($action<11) {
-	    # 6,7,8,9,10
-	    if ($nexteffectkey!=$key_to_avoid) {
-		`$sendOMC /effect_key/disable,$nexteffectkey`;
-		if ($^O eq "MSWin32") {
-		    `$sendOMC /effect_key/disable i $nexteffectkey`;
-		} else {
-		    `$sendOMC /effect_key/disable,$nexteffectkey`;
+	if ($allow_fxchanges) {
+	    $nexteffectkey=int(rand($numeffectkeys)+1);
+	    if ($action<11) {
+		# 6,7,8,9,10
+		if ($nexteffectkey!=$key_to_avoid) {
+		    send_command("/effect_key/disable,$nexteffectkey");
+		    send_command("/effect_key/disable,$nexteffectkey");
 		}
 	    }
-	}
-	elsif ($action<13) {
-	    #11,12
-	    if ($nexteffectkey!=$key_to_avoid) {
-		if ($^O eq "MSWin32") {
-		    `$sendOMC /effect_key/enable i $nexteffectkey`;
-		} else {
-		    `$sendOMC /effect_key/enable,$nexteffectkey`;
+	    elsif ($action<13) {
+		#11,12
+		if ($nexteffectkey!=$key_to_avoid) {
+		    send_command("/effect_key/enable,$nexteffectkey");
 		}
 	    }
-	}
-	else {
-	    #13,14,15,16
-	    if ($nexteffectkey!=$key_to_avoid) {
-		if ($^O eq "MSWin32") {
-		    `$sendOMC /effect_key/maxmode/get i $nexteffectkey`;
-		} else {
-		    `$sendOMC /effect_key/maxmode/get,$nexteffectkey`;
-		}
+	    else {
+		#13,14,15,16
+		if ($nexteffectkey!=$key_to_avoid) {
+		    send_command("/effect_key/maxmode/get,$nexteffectkey");
+		    
+		    $maxmode=&get_newmsg;
+		    $newmode=int(rand($maxmode))+1;
 
-		$maxmode=&get_newmsg;
-		$newmode=int(rand($maxmode))+1;
-
-		if ($^O eq "MSWin32") {
-		    `$sendOMC /effect_key/mode/set i $nexteffectkey i $newmode`;
-		} else {
-		    `$sendOMC /effect_key/mode/set,$nexteffectkey,$newmode`;
+		    send_command("/effect_key/mode/set,$nexteffectkey,$newmode");
 		}
 	    }
 	}
     }
     elsif ($action==17) {
-	`$sendOMC /clip/foreground/background/swap`;
+	if ($allow_fgbgswap) {
+	    send_command("/clip/foreground/background/swap");
+	}
     }
-
     else {
-	#18
-	`$sendOMC /video/play/reverse`;
+	#18, #19, #20
+	if ($allow_dirchange) {
+	    if ($play_reversed || $action == 18) {
+		#make flipping from backwards to forwards more likely
+		# so that we actually make some progress in the clip
+		$play_reversed = !$play_reversed;
+		send_command("/video/play/reverse");
+	    }
+	}
     }
 
     if (!$waitforplay) {
-	`$sendOMC /lives/status/get`;
+	send_command("/lives/status/get");
 	$status=&get_newmsg;
 	if ($status != $playstat) {
 	    &finish;
@@ -375,32 +335,31 @@ while (1) {
 	    last;
 	}
     }
-	
 }
 
 exit 0;
 
 #####################################################################
+sub send_command {
+    my ($command)="$sendOMC @_";
+    if (!$is_mingw) {
+	`$command`;
+    }
+    else {
+	system("bash.exe", "-l", "-c", $command);
+    }
+}
+
 
 sub finish {
-
     if ($loop) {
 	#reset loop mode
-	if ($^O eq "MSWin32") {
-	    `$sendOMC /video/loop/set i $currloop`;
-	} else {
-	    `$sendOMC /video/loop/set,$currloop`;
-	}
+	    send_command("/video/loop/set,$currloop");
     }
 
     # reset mute status
     if ($mute) {
-	if ($^O eq "MSWin32") {
-	    `$sendOMC /audio/mute/set i 0`;
-	}
-	else {
-	    `$sendOMC /audio/mute/set,0`;
-	}
+	    send_command("/audio/mute/set,0");
 	$mute = 0;
     }
 }
@@ -473,11 +432,7 @@ sub print_layout {
     my ($i,$j);
     for ($i=1;$i<=$keys;$i++) {
 	for ($j=1;$j<=$modes;$j++) {
-	    if ($^O eq "MSWin32") {
-		`$sendOMC /effect_key/name/get i $i i $j`;
-	    } else {
-		`$sendOMC /effect_key/name/get,$i,$j`;
-	    }
+		send_command("/effect_key/name/get,$i,$j");
 	    $name=&get_newmsg;
 	    unless ($name eq "") {
 		if ($DEBUG) {print STDERR "key $i, mode $j: $name    ";}
@@ -490,7 +445,6 @@ sub print_layout {
 	if ($DEBUG) {print STDERR "\n";}
     }
 }
-
 
 sub HUP_handler {
     &finish;

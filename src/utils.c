@@ -511,6 +511,17 @@ char *lives_fgets(char *s, int size, FILE *stream) {
 }
 
 
+size_t lives_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+  size_t bytes_read = fread(ptr, size, nmemb, stream);
+
+  if (ferror(stream)) {
+    mainw->read_failed = TRUE;
+  }
+
+  return bytes_read;
+}
+
+
 static lives_file_buffer_t *find_in_file_buffers(int fd) {
   lives_file_buffer_t *fbuff;
   LiVESList *fblist = mainw->file_buffers;

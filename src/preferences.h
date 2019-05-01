@@ -324,10 +324,10 @@ typedef struct {
   /** default 0; 1==use old (bad) behaviour on bigendian machines (r/w bigend ints/doubles); 2==bad reads, good writes */
   int bigendbug;
 
-  // these are defualt values; actual values can be adjusted in Preferences
-#define DEF_DS_WARN_LEVEL 250000000  // 250MB
+  // these are default values; actual values can be adjusted in Preferences
+#define DEF_DS_WARN_LEVEL 2500000000  // 2.5 GB
   uint64_t ds_warn_level; ///< diskspace warn level bytes
-#define DEF_DS_CRIT_LEVEL 20000000 // 20MB
+#define DEF_DS_CRIT_LEVEL 250000000 // 250MB
   uint64_t ds_crit_level; ///< diskspace critical level bytes
 
 #define LIVES_CDISK_LEAVE_ORPHAN_SETS (1<<0)

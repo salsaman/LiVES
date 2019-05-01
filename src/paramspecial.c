@@ -292,9 +292,10 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
 
       if (!LIVES_IS_HBOX(pbox)) {
         add_fill_to_box(LIVES_BOX(hbox));
+        add_fill_to_box(LIVES_BOX(hbox));
         lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
       } else {
-        lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), hbox, FALSE, FALSE, 16. * widget_opts.scale);
+        lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), hbox, FALSE, FALSE, widget_opts.packing_width * 1.5);
       }
 
       if (widget_opts.swap_label)

@@ -2145,7 +2145,9 @@ void create_LiVES(void) {
   vbox2 = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox2), vbox2);
 
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->vidbar = lives_standard_label_new(_("Video"));
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, TRUE, TRUE, 0);
 
@@ -2158,7 +2160,9 @@ void create_LiVES(void) {
   lives_widget_set_size_request(mainw->video_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_VIDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, TRUE, TRUE, 0);
 
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->laudbar = lives_standard_label_new(_("Left Audio"));
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, TRUE, TRUE, 0);
 
@@ -2172,7 +2176,9 @@ void create_LiVES(void) {
   lives_widget_set_size_request(mainw->laudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_VIDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudio_draw, TRUE, TRUE, 0);
 
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->raudbar = lives_standard_label_new(_("Right Audio"));
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, TRUE, TRUE, 0);
 
@@ -4404,7 +4410,9 @@ void splash_init(void) {
 
     if (splash_pix != NULL) lives_object_unref(splash_pix);
 
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
     mainw->splash_label = lives_standard_label_new("");
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
     lives_box_pack_start(LIVES_BOX(vbox), mainw->splash_label, TRUE, TRUE, 0);
 

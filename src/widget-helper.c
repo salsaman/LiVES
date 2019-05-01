@@ -4472,7 +4472,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_message_dialog_new(LiVESWindow *p
     LiVESButtonsType buttons, const char *msg_fmt, ...) {
   LiVESWidget *mdial = NULL;
 #ifdef GUI_GTK
-  mdial = gtk_message_dialog_new(parent, flags, type, buttons, msg_fmt, NULL);
+  mdial = gtk_message_dialog_new(parent, flags | GTK_DIALOG_DESTROY_WITH_PARENT, type, buttons, msg_fmt, NULL);
 #endif
 #ifdef GUI_QT
   LiVESMessageDialog *xmdial = new LiVESMessageDialog;
@@ -7404,7 +7404,7 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 #if GTK_CHECK_VERSION(2, 12, 0)
   char *text = gtk_widget_get_tooltip_text(source);
   lives_widget_set_tooltip_text(dest, text);
-  lives_free(text);
+  if (text != NULL) lives_free(text);
 #else
   GtkTooltipsData *td = gtk_tooltips_data_get(source);
   if (td == NULL) return;
@@ -7545,6 +7545,10 @@ LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label, bo
 LiVESWidget *lives_standard_label_new(const char *text) {
   LiVESWidget *label = NULL;
   label = lives_label_new(text);
+  if (widget_opts.justify == LIVES_JUSTIFY_DEFAULT) lives_widget_set_halign(label, LIVES_ALIGN_START);
+  else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
+  else if (widget_opts.justify == LIVES_JUSTIFY_FILL) lives_widget_set_halign(label, LIVES_ALIGN_FILL);
+  else lives_widget_set_halign(label, LIVES_ALIGN_END);
   lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
   return label;
 }
@@ -7570,10 +7574,8 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *r
 LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiVESWidget *mnemonic_widget) {
   LiVESWidget *label = NULL;
 
-  label = lives_label_new("");
+  label = lives_standard_label_new("");
   lives_label_set_text(LIVES_LABEL(label), text);
-
-  lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
 
   if (mnemonic_widget != NULL) lives_label_set_mnemonic_widget(LIVES_LABEL(label), mnemonic_widget);
 
@@ -7604,6 +7606,43 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
 }
 
 
+static LiVESWidget *make_inner_hbox(LiVESBox *box) {
+  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
+  lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
+  if (LIVES_IS_HBOX(box)) {
+    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
+  } else {
+    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
+  }
+
+  lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
+  return hbox;
+}
+
+
+static LiVESWidget *make_label_eventbox(const char *labeltext, LiVESWidget *widget) {
+  LiVESWidget *label;
+  LiVESWidget *eventbox = lives_event_box_new();
+  lives_tooltips_copy(eventbox, widget);
+
+  if (widget_opts.mnemonic_label) {
+    label = lives_standard_label_new_with_mnemonic_widget(labeltext, widget);
+  } else label = lives_standard_label_new(labeltext);
+
+  widget_opts.last_label = label;
+  lives_container_add(LIVES_CONTAINER(eventbox), label);
+
+  if (LIVES_IS_TOGGLE_BUTTON(widget)) {
+    lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+			 LIVES_GUI_CALLBACK(label_act_toggle),
+			 widget);
+  }
+
+  lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
+  return eventbox;
+}
+
+
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean active, LiVESBox *box,
     const char *tooltip) {
   LiVESWidget *checkbutton = NULL;
@@ -7617,40 +7656,16 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
   boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
 
   checkbutton = lives_check_button_new();
-  if (tooltip != NULL) lives_widget_set_tooltip_text(checkbutton, tooltip);
+  lives_widget_set_tooltip_text(checkbutton, tooltip);
 
   widget_opts.last_label = NULL;
 
   if (labeltext != NULL && box != NULL) {
-    // TODO: make function, and also call from paramspecial.c
-    eventbox = lives_event_box_new();
-    if (tooltip != NULL) lives_tooltips_copy(eventbox, checkbutton);
-
-    if (widget_opts.mnemonic_label) {
-      label = lives_standard_label_new_with_mnemonic_widget(labeltext, checkbutton);
-    } else label = lives_standard_label_new(labeltext);
-
-    lives_container_add(LIVES_CONTAINER(eventbox), label);
-
-    lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(label_act_toggle),
-                         checkbutton);
-
-    widget_opts.last_label = label;
-
-    lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
+    eventbox = make_label_eventbox(labeltext, checkbutton);
   }
 
   if (box != NULL) {
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
-    if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
-    } else {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
-    }
-
-    lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
+    hbox = make_inner_hbox(LIVES_BOX(box));
 
     if (widget_opts.swap_label && eventbox != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
@@ -7699,34 +7714,11 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
   widget_opts.last_label = NULL;
 
   if (labeltext != NULL && box != NULL) {
-    if (widget_opts.mnemonic_label) {
-      label = lives_standard_label_new_with_mnemonic_widget(labeltext, radiobutton);
-    } else label = lives_standard_label_new(labeltext);
-
-
-    widget_opts.last_label = label;
-
-    eventbox = lives_event_box_new();
-    if (tooltip != NULL) lives_tooltips_copy(eventbox, radiobutton);
-    lives_container_add(LIVES_CONTAINER(eventbox), label);
-
-    lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(label_act_toggle),
-                         radiobutton);
-
-    lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
+    eventbox = make_label_eventbox(labeltext, radiobutton);
   }
 
   if (box != NULL) {
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
-    if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
-    } else {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
-    }
-
-    lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
+    hbox = make_inner_hbox(LIVES_BOX(box));
 
     if (widget_opts.swap_label && eventbox != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, TRUE, FALSE, widget_opts.packing_width);
@@ -7820,29 +7812,11 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   widget_opts.last_label = NULL;
 
   if (labeltext != NULL && box != NULL) {
-    if (widget_opts.mnemonic_label) {
-      label = lives_standard_label_new_with_mnemonic_widget(labeltext, spinbutton);
-    } else label = lives_standard_label_new(labeltext);
-
-    widget_opts.last_label = label;
-
-    eventbox = lives_event_box_new();
-    if (tooltip != NULL) lives_tooltips_copy(eventbox, spinbutton);
-    lives_container_add(LIVES_CONTAINER(eventbox), label);
-
-    lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
+    eventbox = make_label_eventbox(labeltext, spinbutton);
   }
 
   if (box != NULL) {
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
-    if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
-    } else {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
-    }
-
-    lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
+    hbox = make_inner_hbox(LIVES_BOX(box));
 
     if (!widget_opts.swap_label && eventbox != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
@@ -7887,29 +7861,11 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
   widget_opts.last_label = NULL;
 
   if (labeltext != NULL && box != NULL) {
-    if (widget_opts.mnemonic_label) {
-      label = lives_standard_label_new_with_mnemonic_widget(labeltext, LIVES_WIDGET(entry));
-    } else label = lives_standard_label_new(labeltext);
-
-    widget_opts.last_label = label;
-
-    eventbox = lives_event_box_new();
-    if (tooltip != NULL) lives_tooltips_copy(eventbox, combo);
-    lives_container_add(LIVES_CONTAINER(eventbox), label);
-
-    lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
+    eventbox = make_label_eventbox(labeltext, LIVES_WIDGET(entry));
   }
 
   if (box != NULL) {
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
-    if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
-    } else {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
-    }
-
-    lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
+    hbox = make_inner_hbox(LIVES_BOX(box));
 
     if (!widget_opts.swap_label && eventbox != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
@@ -7967,7 +7923,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   widget_opts.last_label = NULL;
 
-  if (labeltext != NULL && box != NULL) {
+  if (labeltext != NULL) {
     if (widget_opts.mnemonic_label) {
       label = lives_standard_label_new_with_mnemonic_widget(labeltext, entry);
     } else label = lives_standard_label_new(labeltext);
@@ -7975,23 +7931,14 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
     widget_opts.last_label = label;
 
     if (tooltip != NULL) lives_tooltips_copy(label, entry);
-    lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
-  } else {
-    if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
-      lives_entry_set_alignment(LIVES_ENTRY(entry), 0.5);
-    }
+  }
+
+  if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
+    lives_widget_set_halign(entry, LIVES_ALIGN_CENTER);
   }
 
   if (box != NULL) {
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
-    if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
-    } else {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
-    }
-
-    lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
+    hbox = make_inner_hbox(LIVES_BOX(box));
 
     if (!widget_opts.swap_label && label != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
@@ -8286,15 +8233,7 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox *box, LiVES
 #endif
 
   if (box != NULL) {
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
-    if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
-    } else {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
-    }
-
-    lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
+    hbox = make_inner_hbox(LIVES_BOX(box));
 
     lives_box_pack_start(LIVES_BOX(hbox), expander, FALSE, FALSE, widget_opts.packing_width);
     lives_widget_set_show_hide_parent(expander);
@@ -8329,7 +8268,10 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbu
   lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
 
   lives_text_view_set_justification(LIVES_TEXT_VIEW(textview), widget_opts.justify);
-
+  if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
+    lives_widget_set_halign(textview, LIVES_JUSTIFY_CENTER);
+    lives_widget_set_valign(textview, LIVES_JUSTIFY_CENTER);
+  }
   return textview;
 }
 
@@ -8561,15 +8503,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
   widget_opts.last_label = NULL;
 
   if (box != NULL) {
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
-    if (LIVES_IS_HBOX(box)) {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
-    } else {
-      lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
-    }
-
-    lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
+    hbox = make_inner_hbox(LIVES_BOX(box));
   }
 
   colr.red = LIVES_WIDGET_COLOR_SCALE_65535(rgba->red);

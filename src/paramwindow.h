@@ -34,7 +34,7 @@ void on_fx_pre_activate(lives_rfx_t *, int didx, LiVESWidget *pbox);
 boolean make_param_box(LiVESVBox *, lives_rfx_t *);
 
 boolean add_param_to_box(LiVESBox *, lives_rfx_t *, int param_number, boolean add_slider);
-void add_param_label_to_box(LiVESBox *, boolean do_trans, const char *text);
+LiVESWidget *add_param_label_to_box(LiVESBox *, boolean do_trans, const char *text);
 
 LiVESSList *add_usrgrp_to_livesgrp(LiVESSList *u2l, LiVESSList *rbgroup, int usr_number);
 lives_widget_group_t *livesgrp_from_usrgrp(LiVESSList *u2l, int usrgrp);

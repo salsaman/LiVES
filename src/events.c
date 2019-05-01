@@ -5526,7 +5526,9 @@ render_details *create_render_details(int type) {
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
 
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new(_("Target encoder"));
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, 0);
 
   if (!specified) {
@@ -5571,7 +5573,9 @@ render_details *create_render_details(int type) {
     }
   }
 
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new(_("Output format"));
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, 0);
 
   rdet->ofmt_combo = lives_standard_combo_new(NULL, ofmt, LIVES_BOX(top_vbox), NULL);
@@ -5583,7 +5587,9 @@ render_details *create_render_details(int type) {
   rdet->encoder_ofmt_fn = lives_signal_connect_after(LIVES_COMBO(rdet->ofmt_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(on_encoder_ofmt_changed), rdet);
 
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   alabel = lives_standard_label_new(_("Audio format"));
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   if (!specified) {
     // add "Any" string

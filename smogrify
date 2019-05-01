@@ -3637,7 +3637,6 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($command eq "download_clip") {
-	    print STDERR "OK1\n";
 	    my $url = $ARGV[2];
 	    my $dfile = $ARGV[3];
 	    my $formreq = $ARGV[4];
@@ -3660,22 +3659,84 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
+	    $tdiag = sqrt($deswidth * $deswidth + $desheight * $desheight);
+	    $bestfmt = "";
+	    $ddelta = -1;
+	    
 	    ## next, list all the formats and select the we want (or return them)
-	    print STDERR "OK12\n";
 
 	    if ($vidchoice == 0 || $audchioce == 0) {
 		open (my $fh, "youtube-dl -F '$url' |");
 		my @lines;
+		my $count = 0;
 		while (defined(my $line = <$fh>)) {
-		    push (@lines, $line);
-		    print STDERR "GOT LINE: $line\n";
+		    $count++;
+		    my ($fcode, $ext, $reso, $note) = split ' ', $line;
+		    ## filter by extension, type
+		    next if ($reso eq "audio");
+		    next if ($reso eq "downloading");
+		    next if ($ext ne $formreq);
+
+		    ## then examine the frame size, note which is best fit
+		    my ($width, $height) = split 'x', $reso;
+		    my ($idiag) = sqrt($width * $width + $height * $height);
+		    
+		    if ($matchsize == 1) {
+			## nearest
+			if ($ddelta == -1 || abs($idiag - $tdiag) < $ddelta) {
+			    $ddelta = abs($idiag - $tdiag);
+			    $bestfmt = $fcode;
+			}
+		    }
+		    elsif ($matchsize == 2) {
+			## atleast
+			if ($idiag >= $tdiag && ($ddelta == -1 || $idiag - $tdiag < $ddelta)) {
+			    $ddelta = $idiag - $tdiag;
+			    $bestfmt = $fmt;
+			}
+		    }
+		    elsif ($matchsize == 3) {
+			## atmost
+			if ($idiag <= $tdiag && ($ddelta == -1 || $tdiag - $idiag < $ddelta)) {
+			    $ddelta = $tdiag - $idiag;
+			    $bestfmt = $fmt;
+			}
+		    }
+		    elsif ($matchsize == 4) {
+			## largest
+			if ($idiag > $tdiag) {
+			    $tdiag = $idiag;
+			    $bestfmt = $fmt;
+			}
+		    }
+		    elsif ($matchsize == 5) {
+			## smallest
+			if ($idiag < $tdiag) {
+			    $tdiag = $idiag;
+			    $bestfmt = $fmt;
+			}
+		    }
+		    elsif ($matchsize == 6) {
+			## choose
+			push (@lines, $line);
+		    }
 		}
-		
-		&sig_complete(@lines);
-		exit 0;
+		close $fh;
+
+		if ($count == 0) {
+		    &sig_error("The requested URL", $url, "could not be opened.");
+		    exit 1;
+		}
+
+		if ($matchsize == 6 && $vidchoice == 0) {
+		    &sig_complete(@lines);
+		    exit 0;
+		}
+	    }
+	    else {
+		$bestfmt = $vidchoice;
 	    }
 	    
-	    print STDERR "OK1xx\n";
 	    if ($url =~ /youtube/ || $url =~ /youtu\.be/) {
 		# youtube-dl
 
@@ -3688,7 +3749,11 @@ if (defined($ARGV[0])) {
 		    exit 2;
 		}
 		
-		$com = "youtube-dl -o \"$dfile\" --merge-output-format mp4 -q --no-part \"$url\"";
+		if ($formreq eq "mp4") {
+		    $com = "youtube-dl -o \"$dfile\" --merge-output-format mp4 -q --no-part --rm-cache-dir -f '$bestfmt+bestaudio' \"$url\"";
+		} elsif ($formreq eq "webm") {
+		    $com = "youtube-dl -o \"$dfile\" -q --no-part --rm-cache-dir -f '$bestfmt+bestaudio[ext=webm]' \"$url\"";
+		}
 
 		print ("RUNNING $com\n");
 		
@@ -3696,9 +3761,11 @@ if (defined($ARGV[0])) {
 
 		$res = smog_system("$com");
 
-		if ($res || !(-f $dfile) || -z $dfile) {
+		$dfile = "$dfile.$formreq";
+		
+		if ($res || ! -f $dfile || -z $dfile) {
 		    if (-f $dfile) {
-			unlink "$dfile";
+			unlink $dfile;
 		    }
 
 		    sig_system_error("$com", $res);
@@ -3706,7 +3773,6 @@ if (defined($ARGV[0])) {
 		    exit 1;
 		}
 	    }
-
 	    &sig_complete;
 	    exit 0;
 	}
@@ -7114,9 +7180,9 @@ sub sig_complete {
     return if (! -d "$curworkdir");
     my($status)="completed";
     foreach (@_) {
-        $status.="|".$_;
+        $status .= "|" . $_;
     }
-
+    
     smog_system_sync();
 
     if (-d $curworkdir) {

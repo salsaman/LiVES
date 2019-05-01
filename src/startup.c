@@ -50,8 +50,6 @@ static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable
 
 
 void close_file(int current_file, boolean tshoot) {
-  char *com;
-
   if (tshoot) close_current_file(current_file);
   else {
 #ifdef IS_MINGW
@@ -59,9 +57,7 @@ void close_file(int current_file, boolean tshoot) {
     lives_kill_subprocesses(cfile->handle, TRUE);
 #endif
 
-    com = lives_strdup_printf("%s close \"%s\"", prefs->backend_sync, cfile->handle);
-    lives_system(com, TRUE);
-    lives_free(com);
+    mainw->current_file = close_temp_handle(mainw->current_file, current_file);
   }
 }
 

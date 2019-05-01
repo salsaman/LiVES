@@ -1051,6 +1051,7 @@ void open_fw_device(void);
 char *get_untitled_name(int number);
 boolean get_new_handle(int index, const char *name);
 boolean get_temp_handle(int index, boolean create);
+int close_temp_handle(int clipno, int new_clip);
 boolean get_handle_from_info_file(int index);
 void create_cfile(void);
 void save_file(int clip, int start, int end, const char *filename);
@@ -1195,6 +1196,7 @@ ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_le
 int lives_chdir(const char *path, boolean allow_fail);
 int lives_fputs(const char *s, FILE *stream);
 char *lives_fgets(char *s, int size, FILE *stream);
+size_t lives_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
 pid_t lives_getpid(void);
 int lives_getgid(void);
 int lives_getuid(void);
@@ -1404,7 +1406,8 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 
 // inlines
 #define cfile mainw->files[mainw->current_file]
-#define clipboard mainw->files[0]
+#define CLIPBOARD_FILE 0
+#define clipboard mainw->files[CLIPBOARD_FILE]
 
 #define PREFS_TIMEOUT 10000000 ///< 10 seconds
 

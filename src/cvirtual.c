@@ -262,6 +262,7 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
 
   register int i;
   lives_clip_t *sfile = mainw->files[fileno];
+  char *ppath, *cwd;
   boolean bad_header = FALSE;
 
   if (sfile->clip_type != CLIP_TYPE_FILE) return TRUE;
@@ -279,6 +280,15 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
   sfile->clip_type = CLIP_TYPE_DISK;
   del_frame_index(sfile);
 
+  cwd = lives_get_current_dir();
+  ppath = lives_build_filename(prefs->workdir, sfile->handle, NULL);
+  lives_chdir(ppath, FALSE);
+  lives_free(ppath);
+  close_decoder_plugin((lives_decoder_t *)sfile->ext_src);
+  sfile->ext_src = NULL;
+  lives_chdir(cwd, FALSE);
+  lives_free(cwd);
+
   if (sfile->interlace != LIVES_INTERLACE_NONE) {
     sfile->interlace = LIVES_INTERLACE_NONE; // all frames should have been deinterlaced
     sfile->deinterlace = FALSE;
@@ -292,6 +302,7 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
   return TRUE;
 }
 
+#define DS_SPACE_CHECK_FRAMES 100
 
 boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_progress, LiVESPixbuf **pbr) {
   // pull frames from a clip to images
@@ -351,6 +362,12 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
         pixbuf = NULL;
       }
 
+      if (progress % DS_SPACE_CHECK_FRAMES == 1) {
+	if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) {
+	  retval = LIVES_RESPONSE_CANCEL;
+	}
+      }
+      
       if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
 
       // another thread may have called check_if_non_virtual - TODO : use a mutex

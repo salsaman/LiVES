@@ -709,9 +709,9 @@ boolean check_backend_return(lives_clip_t *sfile) {
   if (!infofile) return FALSE;
 
   mainw->read_failed = FALSE;
-  lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
+  lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
   fclose(infofile);
-
+  
   if (!strncmp(mainw->msg, "error", 5)) handle_backend_errors();
 
   return TRUE;
@@ -1714,7 +1714,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if ((infofile = fopen(cfile->info_file, "r"))) {
         // OK, now we might have some frames
         mainw->read_failed = FALSE;
-        lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
+        lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
         fclose(infofile);
       }
     }
@@ -1892,7 +1892,7 @@ finish:
   if (got_err) return FALSE;
 
 #ifdef DEBUG
-  g_print("exiting progress dialogue\n");
+  g_print("exiting progress dialog\n");
 #endif
   return TRUE;
 }
@@ -1933,6 +1933,9 @@ boolean do_auto_dialog(const char *text, int type) {
     lives_widget_show(proc_ptr->cancel_button);
     lives_widget_hide(proc_ptr->pause_button);
     mainw->cancel_type = CANCEL_SOFT;
+  }
+  if (type == 0) {
+    lives_widget_hide(proc_ptr->cancel_button);
   }
 
   lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(proc_ptr->progressbar), .01);
@@ -1983,7 +1986,7 @@ boolean do_auto_dialog(const char *text, int type) {
 
   if (type == 0 || type == 2) {
     mainw->read_failed = FALSE;
-    lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
+    lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
     fclose(infofile);
     infofile = NULL;
     if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
@@ -2652,12 +2655,6 @@ void do_after_crash_warning(void) {
 }
 
 
-static void on_dth_cancel_clicked(LiVESButton *button, livespointer user_data) {
-  if (LIVES_POINTER_TO_INT(user_data) == 1) mainw->cancelled = CANCEL_KEEP;
-  else mainw->cancelled = CANCEL_USER;
-}
-
-
 void do_rmem_max_error(int size) {
   char *msg = lives_strdup_printf((
                                     _("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\n"
@@ -2665,99 +2662,6 @@ void do_rmem_max_error(int size) {
                                   size);
   do_error_dialog(msg);
   lives_free(msg);
-}
-
-
-static int64_t last_t;
-
-static void create_threaded_dialog(char *text, boolean has_cancel) {
-  LiVESWidget *dialog_vbox;
-  LiVESWidget *vbox;
-  LiVESWidget *hbox;
-  char tmp_label[256];
-  boolean nogui = widget_opts.no_gui;
-
-  last_t = g_get_monotonic_time();
-
-  procw = (xprocess *)(lives_calloc(1, sizeof(xprocess)));
-
-  if (!lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) widget_opts.no_gui = TRUE;
-  procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
-  widget_opts.no_gui = nogui;
-
-  lives_window_add_accel_group(LIVES_WINDOW(procw->processing), mainw->accel_group);
-
-  lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-
-  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
-
-  vbox = lives_vbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
-
-  lives_snprintf(tmp_label, 256, "%s...\n", text);
-  procw->label = lives_standard_label_new(tmp_label);
-  lives_box_pack_start(LIVES_BOX(vbox), procw->label, FALSE, FALSE, 0);
-
-  procw->progressbar = lives_progress_bar_new();
-  lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(procw->progressbar), .01);
-  lives_box_pack_start(LIVES_BOX(vbox), procw->progressbar, FALSE, FALSE, 0);
-
-  if (widget_opts.apply_theme && (palette->style & STYLE_1)) {
-    lives_widget_set_fg_color(procw->progressbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  procw->label2 = lives_standard_label_new(_("\nPlease Wait"));
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-  lives_box_pack_start(LIVES_BOX(vbox), procw->label2, FALSE, FALSE, 0);
-
-  procw->label3 = lives_standard_label_new("");
-  lives_box_pack_start(LIVES_BOX(vbox), procw->label3, FALSE, FALSE, 0);
-
-  hbox = lives_hbox_new(FALSE, 0);
-  add_fill_to_box(LIVES_BOX(hbox));
-  add_fill_to_box(LIVES_BOX(hbox));
-  add_fill_to_box(LIVES_BOX(hbox));
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
-
-  if (has_cancel) {
-    LiVESWidget *cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-
-    if (mainw->current_file > -1 && cfile != NULL && cfile->opening_only_audio) {
-      LiVESWidget *enoughbutton = lives_standard_button_new_with_label(_("_Enough"));
-
-      lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), enoughbutton, LIVES_RESPONSE_CANCEL);
-      lives_widget_set_can_focus_and_default(enoughbutton);
-
-      lives_signal_connect(LIVES_GUI_OBJECT(enoughbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                           LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
-                           LIVES_INT_TO_POINTER(1));
-
-      mainw->cancel_type = CANCEL_SOFT;
-    }
-
-    lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), cancelbutton, LIVES_RESPONSE_CANCEL);
-    lives_widget_set_can_focus_and_default(cancelbutton);
-
-    lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group,
-                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
-    lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
-                         LIVES_INT_TO_POINTER(0));
-
-    mainw->cancel_type = CANCEL_SOFT;
-  }
-
-  if (lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
-    lives_widget_show_all(procw->processing);
-    td_had_focus = TRUE;
-  } else td_had_focus = FALSE;
-
-  lives_set_cursor_style(LIVES_CURSOR_BUSY, procw->processing);
-  lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-
-  procw->is_ready = TRUE;
 }
 
 
@@ -2825,7 +2729,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   mainw->threaded_dialog = TRUE;
   clear_mainw_msg();
 
-  create_threaded_dialog(copy_text, has_cancel);
+  procw = create_threaded_dialog(copy_text, has_cancel, &td_had_focus);
   lives_free(copy_text);
 
   lives_widget_context_update();

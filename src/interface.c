@@ -134,6 +134,111 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 }
 
 
+static void on_dth_cancel_clicked(LiVESButton *button, livespointer user_data) {
+  if (LIVES_POINTER_TO_INT(user_data) == 1) mainw->cancelled = CANCEL_KEEP;
+  else mainw->cancelled = CANCEL_USER;
+}
+
+
+static int64_t last_t;
+
+xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had_focus) {
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  xprocess *procw;
+  char tmp_label[256];
+  boolean nogui = widget_opts.no_gui;
+
+  last_t = g_get_monotonic_time();
+
+  procw = (xprocess *)(lives_calloc(1, sizeof(xprocess)));
+
+  if (!lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) widget_opts.no_gui = TRUE;
+  procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
+  widget_opts.no_gui = nogui;
+
+  lives_window_add_accel_group(LIVES_WINDOW(procw->processing), mainw->accel_group);
+
+  lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
+
+  vbox = lives_vbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
+
+  lives_snprintf(tmp_label, 256, "%s...\n", text);
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  procw->label = lives_standard_label_new(tmp_label);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  lives_box_pack_start(LIVES_BOX(vbox), procw->label, FALSE, FALSE, 0);
+
+  procw->progressbar = lives_progress_bar_new();
+  lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(procw->progressbar), .01);
+  lives_box_pack_start(LIVES_BOX(vbox), procw->progressbar, FALSE, FALSE, 0);
+
+  if (widget_opts.apply_theme && (palette->style & STYLE_1)) {
+    lives_widget_set_fg_color(procw->progressbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
+
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  procw->label2 = lives_standard_label_new(_("\nPlease Wait"));
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  lives_box_pack_start(LIVES_BOX(vbox), procw->label2, FALSE, FALSE, 0);
+
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  procw->label3 = lives_standard_label_new("");
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  lives_box_pack_start(LIVES_BOX(vbox), procw->label3, FALSE, FALSE, 0);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  add_fill_to_box(LIVES_BOX(hbox));
+  add_fill_to_box(LIVES_BOX(hbox));
+  add_fill_to_box(LIVES_BOX(hbox));
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+  if (has_cancel) {
+    LiVESWidget *cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
+
+    if (mainw->current_file > -1 && cfile != NULL && cfile->opening_only_audio) {
+      LiVESWidget *enoughbutton = lives_standard_button_new_with_label(_("_Enough"));
+
+      lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), enoughbutton, LIVES_RESPONSE_CANCEL);
+      lives_widget_set_can_focus_and_default(enoughbutton);
+
+      lives_signal_connect(LIVES_GUI_OBJECT(enoughbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                           LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
+                           LIVES_INT_TO_POINTER(1));
+
+      mainw->cancel_type = CANCEL_SOFT;
+    }
+
+    lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), cancelbutton, LIVES_RESPONSE_CANCEL);
+    lives_widget_set_can_focus_and_default(cancelbutton);
+
+    lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group,
+                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+
+    lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
+                         LIVES_INT_TO_POINTER(0));
+
+    mainw->cancel_type = CANCEL_SOFT;
+  }
+
+  if (lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
+    lives_widget_show_all(procw->processing);
+    *td_had_focus = TRUE;
+  } else *td_had_focus = FALSE;
+
+  lives_set_cursor_style(LIVES_CURSOR_BUSY, procw->processing);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+
+  procw->is_ready = TRUE;
+  return procw;
+}
+
+
 xprocess *create_processing(const char *text) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
@@ -173,7 +278,9 @@ xprocess *create_processing(const char *text) {
   lives_box_pack_start(LIVES_BOX(vbox2), vbox3, TRUE, TRUE, 0);
 
   lives_snprintf(tmp_label, 256, "%s...\n", text);
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   procw->label = lives_standard_label_new(tmp_label);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label, TRUE, TRUE, 0);
 
@@ -191,8 +298,10 @@ xprocess *create_processing(const char *text) {
 
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label2, FALSE, FALSE, 0);
 
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   procw->label3 = lives_standard_label_new("");
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label3, FALSE, FALSE, 0);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   hbox = lives_hbox_new(FALSE, 0);
   add_fill_to_box(LIVES_BOX(hbox));
@@ -284,7 +393,7 @@ static LiVESWidget *vid_text_view_new(void) {
   LiVESWidget *textview;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   textview = lives_standard_text_view_new(NULL, NULL);
-  widget_opts.justify = widget_opts.default_justify;
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_widget_set_size_request(textview, TB_WIDTH, TB_HEIGHT_VID);
   if (palette->style & STYLE_3) {
     lives_widget_set_bg_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -297,7 +406,7 @@ static LiVESWidget *aud_text_view_new(void) {
   LiVESWidget *textview;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   textview = lives_standard_text_view_new(NULL, NULL);
-  widget_opts.justify = widget_opts.default_justify;
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_widget_set_size_request(textview, TB_WIDTH, TB_HEIGHT_AUD);
   if (palette->style & STYLE_3) {
     lives_widget_set_bg_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -956,13 +1065,11 @@ LiVESWidget *create_opensel_dialog(void) {
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-  lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
   label = lives_standard_label_new(_("Number of frames to open"));
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 1, 2,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-  lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
   spinbutton = lives_standard_spin_button_new(NULL, 0., 0., 1000000000., 1., 10., 2, NULL, NULL);
 
@@ -1823,22 +1930,18 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-  lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
   label = lives_standard_label_new(_("Author/Artist : "));
 
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 1, 2,
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-  lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
   label = lives_standard_label_new(_("Comments : "));
 
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 3, 4,
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-
-  lives_label_set_halignment(LIVES_LABEL(label), 0.);
 
   commentsw->title_entry = lives_standard_entry_new(NULL, cfile->title, STD_ENTRY_WIDTH, -1, NULL, NULL);
 
@@ -3179,7 +3282,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
     ///////
 
     if (!strlen(lives_entry_get_text(LIVES_ENTRY(name_entry)))) {
-      do_error_dialog_with_check_transient(_("Please enter the name of the file to save the clip as.\n"), TRUE, 0, LIVES_WINDOW(dialog));
+      do_error_dialog_with_check_transient(_("Please enter the name of the file to save the downloaded clip as.\n"), TRUE, 0, LIVES_WINDOW(dialog));
       continue;
     }
 

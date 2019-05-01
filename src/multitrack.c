@@ -9801,7 +9801,7 @@ LiVESWidget *add_audio_track(lives_mt *mt, int track, boolean behind) {
     lives_free(tmp);
   }
 
-  lives_label_set_halignment(LIVES_LABEL(label), 0.);
+  lives_widget_set_halign(label, LIVES_ALIGN_START);
 
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_object_ref(label);

@@ -293,7 +293,7 @@ void lives_exit(int signum) {
 
         if ((mainw->files[i]->clip_type == CLIP_TYPE_FILE || mainw->files[i]->clip_type == CLIP_TYPE_DISK) && mainw->files[i]->ext_src != NULL) {
           // must do this before we move it
-          char *ppath = lives_build_filename(prefs->workdir, cfile->handle, NULL);
+          char *ppath = lives_build_filename(prefs->workdir, mainw->files[i]->handle, NULL);
           lives_chdir(ppath, FALSE);
           lives_free(ppath);
           threaded_dialog_spin(0.);
@@ -873,7 +873,7 @@ void on_location_select(LiVESButton *button, livespointer user_data) {
 
 
 void on_utube_select(lives_remote_clip_request_t *req) {
-  char *com, *dfile;
+  char *com, *dfile, *full_dfile;
   int current_file = mainw->current_file;
 
   if (current_file == -1) {
@@ -885,36 +885,58 @@ void on_utube_select(lives_remote_clip_request_t *req) {
 
   mainw->no_switch_dprint = TRUE;
 
-  lives_rm(cfile->info_file);
-
   dfile = lives_build_filename(req->save_dir, req->fname, NULL);
 
-  com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f %d %d %d", prefs->backend, cfile->handle, req->URI,
-                            dfile, req->format, req->desired_width, req->desired_height, req->matchsize, req->desired_fps, req->vidchoice, req->audchoice,
-                            req->do_update);
-  mainw->com_failed = FALSE;
-  lives_system(com, FALSE);
-  lives_free(com);
+  mainw->error = FALSE;
 
-  if (mainw->com_failed) {
-    if (current_file == -1) {
-      com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
-      lives_system(com, TRUE);
-      lives_free(com);
-      lives_freep((void **)&cfile);
-      mainw->current_file = -1;
+  while (1) {
+    lives_rm(cfile->info_file);
+
+    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f %d %d %d", prefs->backend, cfile->handle, req->URI,
+			      dfile, req->format, req->desired_width, req->desired_height, req->matchsize, req->desired_fps, req->vidchoice, req->audchoice,
+			      req->do_update);
+    mainw->com_failed = FALSE;
+    lives_system(com, FALSE);
+    lives_free(com);
+
+    if (mainw->com_failed) {
+      if (current_file == -1) {
+	close_temp_handle(mainw->current_file, -1);
+      }
+      lives_free(dfile);
+      d_print_failed();
+      return;
     }
-    lives_free(dfile);
-    d_print_failed();
-    return;
+
+    req->do_update = FALSE;
+    
+    if (req->matchsize == LIVES_MATCH_CHOICE && req->vidchoice == 0) {
+      // we expect to get back a list of available formats
+      if (!do_auto_dialog(_("Getting format list"), 0)) {
+	lives_free(dfile);
+	d_print_failed();
+	if (current_file == -1) {
+	  close_temp_handle(mainw->current_file, -1);
+	}
+	return;
+      }
+      g_print("Got back %s\n", mainw->msg);
+      // show a list of the video formats and let the user pick one
+      /* if (!utube_select_format(req)) { */
+      /* 	if (current_file == -1) { */
+      /* 	  close_temp_handle(mainw->current_file, -1); */
+      /* 	} */
+      /* 	lives_free(dfile); */
+      /* 	d_print_failed(); */
+      /* 	return; */
+      /* } */
+      // we try again, this time with req->vidchoice set
+    }
+    else break;
   }
 
-  g_print("Got back %s\n", mainw->msg);
-  return;
-
-  // if the user selected size choice, show the options in a window
-  // then set vidchoice and audchoice (TODO)
-
+  // backend should now be downloading the clip
+  
   cfile->nopreview = TRUE;
   cfile->keep_without_preview = TRUE;
   cfile->no_proc_sys_errors = TRUE; ///< do not show processing error dialogs, we will show our own msg
@@ -932,11 +954,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
         lives_kill_subprocesses(cfile->handle, TRUE);
 #endif
         // we made a temp file so close it
-        com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
-        lives_system(com, TRUE);
-        lives_free(com);
-        lives_freep((void **)&cfile);
-        mainw->current_file = -1;
+	close_temp_handle(mainw->current_file, -1);
       }
 
       if (mainw->error) {
@@ -960,17 +978,15 @@ void on_utube_select(lives_remote_clip_request_t *req) {
   cfile->keep_without_preview = FALSE;
 
   if (current_file == -1) {
-    com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
-    lives_system(com, TRUE);
-    lives_free(com);
-    lives_freep((void **)&cfile);
-    mainw->current_file = -1;
+    close_temp_handle(mainw->current_file, -1);
   }
 
   mainw->img_concat_clip = -1;
   mainw->no_switch_dprint = FALSE;
-  open_file(dfile);
+  full_dfile = lives_strdup_printf("%s.%s", dfile, req->format);
   lives_free(dfile);
+  open_file(full_dfile);
+  lives_free(full_dfile);
 
   if (mainw->multitrack != NULL) {
     polymorph(mainw->multitrack, POLY_NONE);
@@ -1169,6 +1185,8 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *set_dir;
   char *msg;
 
+  int current_file = mainw->current_file;
+  
   if (proj_file == NULL) return;
   mainw->com_failed = FALSE;
   com = lives_strdup_printf("%s get_proj_set \"%s\"", prefs->backend_sync, proj_file);
@@ -1230,12 +1248,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   do_progress_dialog(TRUE, FALSE, _("Importing project"));
 
-  com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
-  lives_system(com, TRUE);
-  lives_free(com);
-  lives_freep((void **)&cfile);
-  if (mainw->first_free_file == -1 || mainw->first_free_file > mainw->current_file) mainw->first_free_file = mainw->current_file;
-  mainw->current_file = -1;
+  mainw->current_file = close_temp_handle(mainw->current_file, current_file);
   sensitize();
 
   if (mainw->error) {
@@ -2063,7 +2076,7 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         lives_free(com);
         if (mainw->com_failed) return;
 
-        retvalb = do_auto_dialog(_("Restoring audio..."), 0);
+        retvalb = do_auto_dialog(_("Restoring audio"), 0);
         if (!retvalb) {
           d_print_failed();
           //cfile->may_be_damaged=TRUE;
@@ -2275,7 +2288,7 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->cancelled = CANCEL_NONE;
     mainw->error = FALSE;
 
-    if (!do_auto_dialog(_("Restoring audio..."), 0)) {
+    if (!do_auto_dialog(_("Restoring audio"), 0)) {
       d_print_failed();
       return;
     }
@@ -2673,12 +2686,8 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 #endif
 
     // close clipboard, it is invalid
+    mainw->current_file = close_temp_handle(CLIPBOARD_FILE, current_file);
 
-    com = lives_strdup_printf("%s close \"%s\"", prefs->backend, clipboard->handle);
-    lives_system(com, FALSE);
-    lives_free(com);
-    clipboard = NULL;
-    mainw->current_file = current_file;
     sensitize();
     mainw->cancelled = CANCEL_USER;
     return;
@@ -5377,12 +5386,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   }
 
   // close the temporary clip
-  com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
-  lives_system(com, FALSE);
-  lives_free(com);
-  lives_freep((void **)&cfile);
-  if (mainw->first_free_file == -1 || mainw->first_free_file > mainw->current_file)
-    mainw->first_free_file = mainw->current_file;
+  mainw->current_file = close_temp_handle(mainw->current_file, current_file);
 
   // remove the protective markers
   for (i = 0; i < MAX_FILES; i++) {
@@ -5398,7 +5402,6 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
     }
   }
 
-  mainw->current_file = current_file;
   sensitize();
 
   if (mainw->multitrack != NULL) {
@@ -5415,8 +5418,8 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
 
   if (retval != LIVES_RESPONSE_CANCEL && !mainw->com_failed) {
     d_print_done();
-    do_info_dialog(lives_strdup_printf(_("%s of disk space was recovered.\n"),
-                                       lives_format_storage_space_string((uint64_t)bytes)));
+    do_blocking_info_dialog(lives_strdup_printf(_("%s of disk space was recovered.\n"),
+						lives_format_storage_space_string((uint64_t)bytes)));
     if (user_data != NULL) lives_widget_set_sensitive(lives_widget_get_toplevel(LIVES_WIDGET(user_data)), FALSE);
   } else d_print_failed();
 
@@ -6498,7 +6501,7 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
       if (mainw->cancel_type != CANCEL_SOFT) {
         if ((infofile = fopen(cfile->info_file, "r")) != NULL) {
           mainw->read_failed = FALSE;
-          lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
+          lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
           fclose(infofile);
         }
 
@@ -7762,7 +7765,6 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
       || capable->has_mpv
 #endif
      ) {
-    char *com2;
     int current_file = mainw->current_file;
 
     // create temp handle to read file details into (otherwise it can mess up our current clip)
@@ -7788,12 +7790,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
       }
     }
 
-    com2 = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
-    lives_system(com2, TRUE);
-    lives_free(com2);
-    lives_freep((void **)&cfile);
-    mainw->current_file = current_file;
-
+    mainw->current_file = close_temp_handle(mainw->current_file, current_file);
   }
 
   if (!preparse) {
@@ -10139,13 +10136,8 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->foreign_visual = lives_strdup(array[5]);
   lives_strfreev(array);
 
-  com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
-  lives_system(com, TRUE);
-  lives_free(com);
-  lives_freep((void **)&cfile);
-  if (mainw->first_free_file == -1 || mainw->first_free_file > mainw->current_file) mainw->first_free_file = mainw->current_file;
+  mainw->current_file = close_temp_handle(mainw->current_file, curr_file);
 
-  mainw->current_file = curr_file;
   ////////////////////////////////////////
 
   d_print(_("\nExternal window captured. Width=%d, height=%d, bpp=%d. *Do not resize*\n\nStop or 'q' to finish.\n(Default of %.3f frames per second will be used.)\n"),

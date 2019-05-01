@@ -1,6 +1,6 @@
 // framedraw.c
 // LiVES
-// (c) G. Finch (salsaman+lives@gmail.com) 2002 - 2018
+// (c) G. Finch (salsaman+lives@gmail.com) 2002 - 2019
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 // functions for the 'framedraw' widget - lets users draw on frames :-)
@@ -149,8 +149,10 @@ void framedraw_add_label(LiVESVBox *box) {
   LiVESWidget *label;
 
   // TRANSLATORS - Preview refers to preview window; keep this phrase short
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new(_("You can click in Preview to change these values"));
-  lives_box_pack_start(LIVES_BOX(box), label, FALSE, FALSE, 4. * widget_opts.scale);
+  lives_box_pack_start(LIVES_BOX(box), label, FALSE, FALSE, widget_opts.packing_height / 2.);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 }
 
 

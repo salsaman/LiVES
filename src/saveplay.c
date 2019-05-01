@@ -184,7 +184,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
     if (infofile != NULL) {
       timeout = FALSE;
       mainw->read_failed = FALSE;
-      lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
+      lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
       fclose(infofile);
     }
 
@@ -1064,7 +1064,7 @@ boolean get_handle_from_info_file(int index) {
     if (infofile != NULL) {
       timeout = FALSE;
       mainw->read_failed = FALSE;
-      lives_fgets(mainw->msg, MAINW_MSG_SIZE, infofile);
+      lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
       fclose(infofile);
     }
 
@@ -1466,6 +1466,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_freep((void **)&cfile);
       if (mainw->first_free_file == -1 || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
+      
       switch_to_file(mainw->current_file, current_file);
       d_print_cancelled();
       lives_freep((void **)&mainw->subt_save_file);
@@ -1483,6 +1484,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_freep((void **)&cfile);
       if (mainw->first_free_file == -1 || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
+
       switch_to_file(mainw->current_file, current_file);
       if (mainw->error) d_print_failed();
       else d_print_cancelled();
@@ -3178,6 +3180,28 @@ void play_file(void) {
 }
 
 
+int close_temp_handle(int clipno, int new_clip) {
+  // close sfile and switch to new clip (may be -1)
+  // note this only closes the disk and basic resources, it does not affect the interface
+  // (c.f. close_current_file())
+  // returns new_clip
+  lives_clip_t *sfile;
+  char *com;
+
+  mainw->current_file = new_clip;
+  if (!IS_VALID_CLIP(clipno)) return new_clip;
+  
+  sfile = mainw->files[clipno];
+  com = lives_strdup_printf("%s close \"%s\"", prefs->backend, sfile->handle);
+  lives_system(com, TRUE);
+  lives_free(com);
+  lives_freep((void **)&sfile);
+  if (mainw->first_free_file == -1 || mainw->first_free_file > clipno)
+    mainw->first_free_file = clipno;
+  return new_clip;
+}
+ 
+
 boolean get_temp_handle(int index, boolean create) {
   // we can call this to get a temp handle for returning info from the backend
   // this function is also called from get_new_handle to create a permanent handle
@@ -3216,6 +3240,7 @@ boolean get_temp_handle(int index, boolean create) {
     if (!get_handle_from_info_file(index)) {
       // timed out
       lives_freep((void **)&mainw->files[index]);
+      mainw->current_file = current_file;
       return FALSE;
     }
 

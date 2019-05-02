@@ -3584,14 +3584,10 @@ void make_preview_box(void) {
   lives_widget_set_tooltip_text(mainw->p_playselbutton, _("Play Selection"));
   lives_widget_set_sensitive(mainw->p_playselbutton, mainw->current_file > -1 && cfile->frames > 0);
 
-  fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "loop.png", NULL);
-  lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-  lives_free(fnamex);
-  loop_img = lives_image_new_from_file(buff);
+  loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, 16);
   mainw->p_loopbutton = lives_standard_button_new();
   lives_widget_set_bg_color(mainw->p_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   lives_button_set_relief(LIVES_BUTTON(mainw->p_loopbutton), LIVES_RELIEF_NONE);
-  lives_image_scale(LIVES_IMAGE(loop_img), 16, 16, LIVES_INTERP_BEST);
   lives_container_add(LIVES_CONTAINER(mainw->p_loopbutton), loop_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_loopbutton, TRUE, TRUE, 0);
   lives_widget_show(mainw->p_loopbutton);

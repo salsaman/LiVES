@@ -1719,7 +1719,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
           if (rbytes > 0) pa_stream_drop(mainw->pulsed_read->pstream);
         } while (rbytes > 0);
         pa_mloop_unlock();
-	}*/
+      }*/
     }
   }
 

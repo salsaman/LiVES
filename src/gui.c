@@ -517,26 +517,18 @@ void create_LiVES(void) {
 
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_sel);
 
-  mainw->open_loc = lives_standard_menu_item_new_with_label(_("Open _Location/Stream..."));
+  mainw->open_loc = lives_standard_menu_item_new_with_label(_("Play Remote _Stream..."));
 
-#ifdef HAVE_WEBM
-
-  mainw->open_loc_menu = lives_standard_menu_item_new_with_label(_("Open _Location/Stream..."));
+  mainw->open_loc_menu = lives_standard_menu_item_new_with_label(_("Open _Online Clip..."));
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_loc_menu);
 
   mainw->open_loc_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->open_loc_menu), mainw->open_loc_submenu);
 
-  mainw->open_utube = lives_standard_menu_item_new_with_label(_("Open _Youtube Clip..."));
+  mainw->open_utube = lives_standard_menu_item_new_with_label(_("Download from _Youtube or other site..."));
   lives_container_add(LIVES_CONTAINER(mainw->open_loc_submenu), mainw->open_utube);
 
   lives_container_add(LIVES_CONTAINER(mainw->open_loc_submenu), mainw->open_loc);
-
-#else
-
-  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open_loc);
-
-#endif
 
   mainw->open_vcd_menu = lives_standard_menu_item_new_with_label(_("Import from _dvd/vcd..."));
 

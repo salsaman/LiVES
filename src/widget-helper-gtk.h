@@ -185,6 +185,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_snprintf(a, b, ...) g_snprintf(a, b, __VA_ARGS__)
 #define lives_strsplit(a, b, c) g_strsplit(a, b, c)
 #define lives_strfreev(a) g_strfreev(a)
+#define lives_strdup(a) g_strdup(a)
 #define lives_ascii_strcasecmp(a, b) g_ascii_strcasecmp(a, b)
 #define lives_ascii_strncasecmp(a, b, c) g_ascii_strncasecmp(a, b, c)
 #define lives_strconcat(a, ...) g_strconcat(a, __VA_ARGS__)
@@ -260,6 +261,10 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_cclosure_new(a, b, c) g_cclosure_new(a, b, c)
 
 #define lives_path_get_dirname(a) g_path_get_dirname(a)
+
+#ifndef lives_locale_to_utf8
+#define lives_locale_to_utf8(a, b, c, d, e) g_locale_to_utf8(a, b, c, d, e)
+#endif
 
 #define U82L(String) (g_locale_from_utf8(String, -1, NULL, NULL, NULL))
 #define L2U8(String) (g_locale_to_utf8(String, -1, NULL, NULL, NULL))

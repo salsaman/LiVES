@@ -476,6 +476,9 @@ typedef enum {
   /// cancelled and paused
   CANCEL_USER_PAUSED,
 
+  /// an error occured, retry the operation
+  CANCEL_RETRY,
+
   /// special cancel for TV toy
   CANCEL_KEEP_LOOPING = CANCEL_NONE + 100
 } lives_cancel_t;

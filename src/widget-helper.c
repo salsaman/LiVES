@@ -7385,17 +7385,17 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_label_set_hpadding(LiVESLabel *label, int
 
 #define H_ALIGN_ADJ (22. * widget_opts.scale) // why 22 ? no idea
 
-WIDGET_HELPER_GLOBAL_INLINE boolean align_horizontal(LiVESWidget *thingtoadd, LiVESVBox *vboxtoaddto, LiVESWidget *thingtoalignwith) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *align_horizontal_with(LiVESWidget *thingtoadd, LiVESWidget *thingtoalignwith) {
 #ifdef GUI_GTK
   GtkAllocation alloc;
   GtkWidget *fixed = gtk_fixed_new();
-  lives_box_pack_start(LIVES_BOX(vboxtoaddto), fixed, TRUE, FALSE, widget_opts.packing_height);
   gtk_widget_get_allocation(thingtoalignwith, &alloc);
-  gtk_fixed_put(GTK_FIXED(fixed), thingtoadd, alloc.x - H_ALIGN_ADJ - widget_opts.packing_width,
-                0); // allow for 1 packing_width before adding the real widget
-  return TRUE;
+  // allow for 1 packing_width before adding the real widget
+  gtk_fixed_put(GTK_FIXED(fixed), thingtoadd, alloc.x - H_ALIGN_ADJ - widget_opts.packing_width, 0);
+  lives_widget_set_show_hide_parent(thingtoadd);
+  return fixed;
 #endif
-  return FALSE;
+  return NULL;
 }
 
 

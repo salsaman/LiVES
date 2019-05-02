@@ -2967,20 +2967,13 @@ static void utsense(LiVESToggleButton *togglebutton, livespointer user_data) {
 
 
 // prompt for the following:
-
 // - URL
-
 // save dir
-
-// format selection (free / nonfree) [NEW]
-
+// format selection (free / nonfree)
 // filename
-
 // approx file size
-
-// update youtube-dl : root passwd
-
-// advanced :: save subs / sub language
+// update youtube-dl
+// advanced :: audio selection / save subs / sub language [TODO]
 
 lives_remote_clip_request_t *run_youtube_dialog(void) {
   lives_remote_clip_request_t *req;
@@ -3035,7 +3028,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
     }
   }
 
-  title = lives_strdup(_("Open Youtube Clip"));
+  title = lives_strdup(_("Open Online Clip"));
 
   dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
   lives_signal_handlers_disconnect_by_func(dialog, return_true, NULL);
@@ -3051,7 +3044,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  msg = lives_strdup_printf(_("To open a clip from Youtube, LiVES will first download it with %s.\n"
+  msg = lives_strdup_printf(_("To open a clip from Youtube or another video site, LiVES will first download it with %s.\n"
                               "PLEASE MAKE SURE YOU HAVE THE MOST RECENT VERSION OF THAT TOOL INSTALLED !"), BIN_YOUTUBE_DL);
   label = lives_standard_label_new(msg);
   lives_free(msg);
@@ -3063,7 +3056,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  checkbutton_update = lives_standard_check_button_new(_("<--- Auto update youtube-dl ? (may require your password.)"), FALSE,
+  checkbutton_update = lives_standard_check_button_new(_("<--- Auto update youtube-dl ? (will require your password.)"), FALSE,
                        LIVES_BOX(hbox), NULL);
 
   if (!capable->has_ssh_askpass) {
@@ -3086,16 +3079,10 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 3);
 
-  url_entry = lives_standard_entry_new(_("Youtube URL : "), "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
+  url_entry = lives_standard_entry_new(_("Clip URL : "), "", STD_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
-
-  dir_entry = lives_standard_direntry_new(_("Save to _Directory : "), mainw->vid_dl_dir,
-                                          STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
-
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 3);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 1);
 
   ext_label = lives_standard_label_new("." LIVES_FILE_EXT_WEBM);
 
@@ -3124,7 +3111,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   lives_widget_show_all(dialog);
   lives_widget_context_update();
-  align_horizontal(hbox, LIVES_VBOX(dialog_vbox), radiobutton_free);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), align_horizontal_with(hbox, radiobutton_free), TRUE, FALSE, widget_opts.packing_height);
 
   radiobutton_nonfree = lives_standard_radio_button_new((tmp = lives_strdup(_("_Non-free (eg. h264 / aac / mp4)"))), &radiobutton_group,
                         LIVES_BOX(hbox),
@@ -3136,6 +3123,12 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
                        LIVES_GUI_CALLBACK(on_freedom_toggled),
                        (livespointer)ext_label);
 #endif
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 3);
+
+  dir_entry = lives_standard_direntry_new(_("_Directory to save to: "), mainw->vid_dl_dir,
+                                          STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
@@ -3184,7 +3177,6 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   spinbutton_width = lives_standard_spin_button_new(_("_Width"), CURRENT_CLIP_HAS_VIDEO ? cfile->hsize : DEF_GEN_WIDTH,
                      4., 100000., 4., 16., 0., LIVES_BOX(hbox), NULL);
 
-
   spinbutton_height = lives_standard_spin_button_new(_("X        _Height"), CURRENT_CLIP_HAS_VIDEO ? cfile->vsize : DEF_GEN_HEIGHT,
                       4., 100000., 4., 16., 0., LIVES_BOX(hbox), NULL);
 
@@ -3198,10 +3190,8 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
-  label = lives_standard_label_new(_("or:"));
+  label = lives_standard_label_new(_(" or:"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
-
-  // TODO - add aspect button
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
@@ -3212,7 +3202,6 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   lives_free(tmp);
   lives_free(tmp2);
-
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_smallest), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(utsense),
@@ -3229,7 +3218,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
                        LIVES_GUI_CALLBACK(utsense),
                        LIVES_INT_TO_POINTER(FALSE));
 
-  radiobutton_choose = lives_standard_radio_button_new((tmp = lives_strdup(_("- Let me choose (opens in new window)..."))),
+  radiobutton_choose = lives_standard_radio_button_new((tmp = lives_strdup(_("- Let me choose..."))),
                        &radiobutton_group2,
                        LIVES_BOX(hbox),
                        (tmp2 = lives_strdup(_("Choose the resolution from a list (opens in new window)"))));
@@ -3265,7 +3254,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                       locw);
+                       NULL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -3299,19 +3288,14 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
     lives_snprintf(dirname, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(dir_entry)));
     ensure_isdir(dirname);
     dfile = lives_build_filename(dirname, fname, NULL);
-
+    lives_free(fname);
     if (!check_file(dfile, TRUE)) {
-      char *msg = lives_strdup_printf(_("Unable to write to the file\n%s\nPlease check the directory permissions and try again, or Cancel.\n"),
-                                      dfile);
-      lives_free(fname);
-      lives_free(url);
       lives_free(dfile);
-      do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(dialog));
-      lives_free(msg);
+      lives_free(url);
       continue;
     }
     break;
-  };
+  }
 
   lives_snprintf(mainw->vid_dl_dir, PATH_MAX, "%s", dirname);
 
@@ -3319,7 +3303,8 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   if (req == NULL) {
     lives_widget_destroy(dialog);
     lives_widget_context_update();
-
+    lives_free(url);
+    lives_free(dfile);
     LIVES_ERROR("Could not alloc memory for remote clip request");
     mainw->error = TRUE;
     return NULL;
@@ -3327,14 +3312,20 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   mainw->error = FALSE;
   d_print(_("Downloading %s to %s..."), url, dfile);
+  lives_free(dfile);
 
-  lives_snprintf(req->URI, 8192, "%s", lives_entry_get_text(LIVES_ENTRY(url_entry)));
+  lives_snprintf(req->URI, 8192, "%s", url);
+  lives_free(url);
   lives_snprintf(req->save_dir, PATH_MAX, "%s", dirname);
   lives_snprintf(req->fname, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(name_entry)));
+#ifdef ALLOW_NONFREE_CODECS
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_free)))
     lives_snprintf(req->format, 256, "%s", LIVES_FILE_EXT_WEBM);
   else
     lives_snprintf(req->format, 256, "%s", LIVES_FILE_EXT_MP4);
+#else
+  lives_snprintf(req->format, 256, "%s", LIVES_FILE_EXT_WEBM);
+#endif
   req->desired_width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton_width));
   req->desired_height = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton_height));
   req->desired_fps = 0.;
@@ -3347,7 +3338,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton_update))) req->do_update = FALSE;
   else req->do_update = TRUE;
 
-  req->vidchoice = req->audchoice = 0;
+  req->vidchoice = req->audchoice = -1;
 
   lives_widget_destroy(dialog);
   lives_widget_context_update();

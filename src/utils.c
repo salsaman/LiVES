@@ -4364,6 +4364,8 @@ boolean check_file(const char *file_name, boolean check_existing) {
   // file_name should be in utf8
   char *lfile_name = U82F(file_name);
 
+  mainw->error = FALSE;
+
   // check if file exists
   if (lives_file_test(lfile_name, LIVES_FILE_TEST_EXISTS)) {
     if (check_existing) {
@@ -4384,6 +4386,7 @@ boolean check_file(const char *file_name, boolean check_existing) {
   }
 
   if (check < 0) {
+    mainw->error = TRUE;
     if (mainw != NULL && mainw->is_ready) {
       if (errno == EACCES)
         do_file_perm_error(lfile_name);

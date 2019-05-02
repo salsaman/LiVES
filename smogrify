@@ -3,6 +3,14 @@
 # smogrify - Copyright G. Finch (salsaman+lives@gmail.com) 2003 - 2018
 # Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
 
+## TODO:
+
+#use Locale::gettext;
+#use POSIX;     # Needed for setlocale()
+#setlocale(LC_MESSAGES, "");
+#textdomain("LiVES");
+#print gettext("Welcome to my program"), "\n";
+
 # stop astyle indenting
 =begin comment
     // *INDENT-OFF*
@@ -3643,15 +3651,15 @@ if (defined($ARGV[0])) {
 	    my $deswidth = int($ARGV[5]);
 	    my $desheight = int($ARGV[6]);
 	    my $matchsize = int($ARGV[7]);
-	    my $desfps = $ARGV[8];
+	    my $desfps = $ARGV[8]; ## unused
 	    my $vidchoice = int($ARGV[9]);
-	    my $audchoice = int($ARGV[10]);
+	    my $audchoice = int($ARGV[10]); ## unused
 	    my $do_update = int($ARGV[11]);
 
 	    ## first of all deal with update
 	    my $sshaskpass = &location("ssh-askpass");
 	    if ($do_update) {
-		$smres = smog_system("export SUDO_ASKPASS=$sshaskpass; sudo -A youtube-dl -U");
+		my $smres = smog_system("export SUDO_ASKPASS=$sshaskpass; sudo -A youtube-dl -U");
 		if ($smres) {
 		    sig_write_error("youtube-dl");
 		    unlink "$pidfile";
@@ -3659,23 +3667,101 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
-	    $tdiag = sqrt($deswidth * $deswidth + $desheight * $desheight);
-	    $bestfmt = "";
-	    $ddelta = -1;
-	    
-	    ## next, list all the formats and select the we want (or return them)
+	    my $tdiag = sqrt($deswidth * $deswidth + $desheight * $desheight);
+	    if ($vidchoice != -1) {
+		$bestvideo = $vidchoice;
+	    }
+	    else {
+		$bestvideo = "";
+		$ddelta = -1;
+	    }
+	    my $bestaudio = "";
+	    my $xdfile = "$dfile.$formreq";
 
-	    if ($vidchoice == 0 || $audchioce == 0) {
-		open (my $fh, "youtube-dl -F '$url' |");
+	    if ($audchoice != -1) {
+		$bestaudio = "$audchoice";
+	    }
+	    my $xbestaudio = "";
+
+	    if ($vidchoice == -1 || $audchoice == -1) {
+		## next, list all the formats and select the we want (or return them)
+		my $best = "(best)";
+		my $video_only = "video only";
 		my @lines;
 		my $count = 0;
+
+		##print "DOING .youtube-dl -F '$url'\n";
+		
+		open (my $fh, "youtube-dl -F '$url' |");
 		while (defined(my $line = <$fh>)) {
-		    $count++;
-		    my ($fcode, $ext, $reso, $note) = split ' ', $line;
-		    ## filter by extension, type
-		    next if ($reso eq "audio");
+		    ##print "WE GOT $line.";
+		    my ($fcode, $ext, $reso, @notes) = split ' ', $line;
+		    my $note = join(" ", @notes);
 		    next if ($reso eq "downloading");
+		    next if ($formreq eq "webm" && $ext ne $formreq);
+
+		    next if ($fcode + 1 == 1 && $fcode ne "0");
+		    
+		    if (index($note, $best) != -1) {
+			$isbest = 1;
+		    }
+		    else {
+			$isbest = 0;
+		    }
+
+		    ## filter by extension, type
+		    if ($reso eq "audio") {
+			if ($audchoice == -1) {
+			    if ($isbest) {
+				$bestaudio = "$fcode";
+			    }
+			    elsif ($bestaudio eq "") {
+				if ($formreq eq "webm") {
+				    $bestaudio = "bestaudio[ext=webm]";
+				}
+				else {
+				    $bestaudio = "bestaudio";
+				}
+			    }
+			}
+			next;
+		    }
+
+		    if (index($note, $video_only) == -1) {
+			$vidonly = 0;
+		    }
+		    else {
+			$vidonly = 1;
+		    }
+
+		    if ($vidchoice == $fcode && $audchoice == -1 && !$vidonly) {
+			## bestaudio doesn't always work, so if the video has an audio track, use that
+			## to be safe
+			$xbestaudio = "";
+			$bestaudio = $fcode;
+			last;
+		    }
+		    
+		    next if ($vidchoice != -1);
 		    next if ($ext ne $formreq);
+		    
+		    $count++;
+
+		    if ($reso eq "unknown") {
+			if ($matchsize == 6) {
+			    push (@lines, $line);
+			}
+			if ($bestvideo eq "") {
+			    $bestvideo = $fcode;
+			    if ($matchsize == 4) {
+				$tdiag--;
+			    }
+			    elsif ($matchsize == 5) {
+				$tdiag++;
+			    }
+			}
+			next;
+		    }
 
 		    ## then examine the frame size, note which is best fit
 		    my ($width, $height) = split 'x', $reso;
@@ -3683,37 +3769,77 @@ if (defined($ARGV[0])) {
 		    
 		    if ($matchsize == 1) {
 			## nearest
-			if ($ddelta == -1 || abs($idiag - $tdiag) < $ddelta) {
-			    $ddelta = abs($idiag - $tdiag);
-			    $bestfmt = $fcode;
+			if ($ddelta == -1 || abs($idiag - $tdiag) <= $ddelta) {
+			    if ($ddelta == -1 ||abs($idiag - $tdiag) < $ddelta || $isbest) {
+				$ddelta = abs($idiag - $tdiag);
+				$bestvideo = $fcode;
+				if ($isbest && !$vidonly) { 
+				    $xbestaudio = $bestvideo;
+				}
+				else {
+				    $xbestaudio = "";
+				}
+			    }
 			}
 		    }
 		    elsif ($matchsize == 2) {
 			## atleast
-			if ($idiag >= $tdiag && ($ddelta == -1 || $idiag - $tdiag < $ddelta)) {
-			    $ddelta = $idiag - $tdiag;
-			    $bestfmt = $fmt;
+			if ($idiag >= $tdiag && ($ddelta == -1 || $idiag - $tdiag <= $ddelta)) {
+			    if ($ddelta == -1 || $idiag - $tdiag < $ddelta || $isbest) {
+				$ddelta = $idiag - $tdiag;
+				$bestvideo = $fcode;
+				if ($isbest && !$vidonly) { 
+				    $xbestaudio = $bestvideo;
+				}
+				else {
+				    $xbestaudio = "";
+				}
+			    }
 			}
 		    }
 		    elsif ($matchsize == 3) {
 			## atmost
-			if ($idiag <= $tdiag && ($ddelta == -1 || $tdiag - $idiag < $ddelta)) {
-			    $ddelta = $tdiag - $idiag;
-			    $bestfmt = $fmt;
+			if ($idiag <= $tdiag && ($ddelta == -1 || $tdiag - $idiag <= $ddelta)) {
+			    if ($ddelta == -1 || abs($idiag - $tdiag) < $ddelta || $isbest) {
+				$ddelta = $tdiag - $idiag;
+				$bestvideo = $fcode;
+				if ($isbest && !$vidonly) { 
+				    $xbestaudio = $bestvideo;
+				}
+				else {
+				    $xbestaudio = "";
+				}
+			    }
 			}
 		    }
 		    elsif ($matchsize == 4) {
 			## largest
-			if ($idiag > $tdiag) {
-			    $tdiag = $idiag;
-			    $bestfmt = $fmt;
+			if ($idiag >= $tdiag) {
+			    if ($bestvideo eq "" || $idiag > $tdiag || $isbest) {
+				$tdiag = $idiag;
+				$bestvideo = $fcode;
+				if ($isbest && !$vidonly) { 
+				    $xbestaudio = $bestvideo;
+				}
+				else {
+				    $xbestaudio = "";
+				}
+			    }
 			}
 		    }
 		    elsif ($matchsize == 5) {
 			## smallest
-			if ($idiag < $tdiag) {
-			    $tdiag = $idiag;
-			    $bestfmt = $fmt;
+			if ($idiag <= $tdiag) {
+			    if ($bestvideo eq "" || $idiag < $tdiag || $isbest) {
+				$tdiag = $idiag;
+				$bestvideo = $fcode;
+				if ($isbest && !$vidonly) { 
+				    $xbestaudio = $bestvideo;
+				}
+				else {
+				    $xbestaudio = "";
+				}
+			    }
 			}
 		    }
 		    elsif ($matchsize == 6) {
@@ -3723,60 +3849,74 @@ if (defined($ARGV[0])) {
 		}
 		close $fh;
 
-		if ($count == 0) {
-		    &sig_error("The requested URL", $url, "could not be opened.");
+		##print "SMOG OK $count\n";
+		if ($audchoice == -1 && $xbestaudio ne "") {
+		    $bestaudio = $xbestaudio;
+		}
+
+		if ($bestvideo eq "") {
+		    &sig_error("The requested URL", $url, "could not be opened with the requested format.", "\nPlease try again.");
 		    exit 1;
 		}
 
-		if ($matchsize == 6 && $vidchoice == 0) {
-		    &sig_complete(@lines);
+		if ($vidchoice == -1) {
+		    if ($matchsize == 6) {
+			&sig_complete(@lines);
+			exit 0;
+		    }
+
+		    &sig_complete("$bestvideo", "$bestaudio");
 		    exit 0;
 		}
 	    }
-	    else {
-		$bestfmt = $vidchoice;
+	    
+	    if (-f $xdfile) {
+		unlink "$xdfile";
+	    }
+
+	    if (-f $xdfile) {
+		&sig_error;
+		exit 2;
+	    }
+
+	    if ($bestaudio ne "") {
+		$xbestaudio = "+$bestaudio";
 	    }
 	    
-	    if ($url =~ /youtube/ || $url =~ /youtu\.be/) {
-		# youtube-dl
-
-		if (-f $dfile) {
-		    unlink "$dfile";
+	    if ($formreq eq "mp4") {
+		$com = "youtube-dl -o \"$xdfile\" --merge-output-format mp4 --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
+	    } elsif ($formreq eq "webm") {
+		if ($bestaudio eq "") {
+		    $dfile = $xdfile;
 		}
-
-		if (-f $dfile) {
-		    &sig_error;
-		    exit 2;
-		}
-		
-		if ($formreq eq "mp4") {
-		    $com = "youtube-dl -o \"$dfile\" --merge-output-format mp4 -q --no-part --rm-cache-dir -f '$bestfmt+bestaudio' \"$url\"";
-		} elsif ($formreq eq "webm") {
-		    $com = "youtube-dl -o \"$dfile\" -q --no-part --rm-cache-dir -f '$bestfmt+bestaudio[ext=webm]' \"$url\"";
-		}
-
-		print ("RUNNING $com\n");
-		
-		&sig_progress(1);
-
-		$res = smog_system("$com");
-
-		$dfile = "$dfile.$formreq";
-		
-		if ($res || ! -f $dfile || -z $dfile) {
-		    if (-f $dfile) {
-			unlink $dfile;
-		    }
-
-		    sig_system_error("$com", $res);
-		    unlink "$pidfile";
-		    exit 1;
-		}
+		$com = "youtube-dl -o \"$dfile\" --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
 	    }
+
+	    print ("RUNNING $com\n");
+	    
+	    &sig_progress(1);
+
+	    $res = smog_system("$com");
+
+	    if ($res || ! -f $xdfile || -z $xdfile) {
+		if (-f $xdfile) {
+		    unlink $xdfile;
+		}
+		if ($formreq eq "mp4") {
+		    unlink "$dfile.f$bestfmt.mp4";
+		    unlink "$dfile.temp.mp4";
+		    ##unlink "$dfile.mp4.f$audfmt"; ## need actual audfmt
+		}
+		sig_system_error("$com", $res);
+		unlink "$pidfile";
+		exit 1;
+	    }
+
 	    &sig_complete;
 	    exit 0;
 	}
 
+	
 	if ($command eq "cdopen") {
 	    $cdda2wav_command = &location("cdda2wav");
 	    if ($cdda2wav_command eq "") {

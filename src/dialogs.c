@@ -691,6 +691,7 @@ void handle_backend_errors(void) {
   // set mainw->error but not mainw->cancelled
   lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "\n\n");
   for (i = pxstart; i < numtok; i++) {
+    if (!strlen(array[i]) || !strcmp(array[i], "ERROR")) break;
     lives_strappend(mainw->msg, MAINW_MSG_SIZE, _(array[i]));
     lives_strappend(mainw->msg, MAINW_MSG_SIZE, "\n");
   }
@@ -1884,7 +1885,7 @@ finish:
   // get error message (if any)
   if (!strncmp(mainw->msg, "error", 5)) {
     handle_backend_errors();
-    if (mainw->cancelled) return FALSE;
+    if (mainw->cancelled || mainw->error) return FALSE;
   } else {
     if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) return FALSE;
   }
@@ -1984,21 +1985,21 @@ boolean do_auto_dialog(const char *text, int type) {
     }
   }
 
-  if (type == 0 || type == 2) {
-    mainw->read_failed = FALSE;
-    lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
-    fclose(infofile);
-    infofile = NULL;
-    if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
-    while (!lives_alarm_get(alarm_handle)) {
-      lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
-      lives_widget_context_update();
-      lives_usleep(prefs->sleep_time);
-    }
-    lives_alarm_clear(alarm_handle);
+  if (infofile != NULL) {
+    if (type == 0 || type == 2) {
+      mainw->read_failed = FALSE;
+      lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
+      fclose(infofile);
+      infofile = NULL;
+      if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
+      while (!lives_alarm_get(alarm_handle)) {
+        lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
+        lives_widget_context_update();
+        lives_usleep(prefs->sleep_time);
+      }
+      lives_alarm_clear(alarm_handle);
+    } else fclose(infofile);
   }
-
-  if (infofile != NULL) fclose(infofile);
 
   if (proc_ptr != NULL) {
     lives_widget_destroy(proc_ptr->processing);
@@ -2012,7 +2013,7 @@ boolean do_auto_dialog(const char *text, int type) {
   // get error message (if any)
   if (type != 1 && !strncmp(mainw->msg, "error", 5)) {
     handle_backend_errors();
-    if (mainw->cancelled) return FALSE;
+    if (mainw->cancelled || mainw->error) return FALSE;
   } else {
     if (mainw->current_file > -1 && cfile != NULL)
       if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) return FALSE;

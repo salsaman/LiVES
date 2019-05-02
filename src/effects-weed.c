@@ -3688,7 +3688,7 @@ apply_inst2:
         }
       }
     }
-      lives_freep((void **)&init_events);
+    lives_freep((void **)&init_events);
   }
 }
 

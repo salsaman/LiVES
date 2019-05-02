@@ -768,11 +768,14 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   }
 
-  req = run_youtube_dialog();
-  if (req == NULL) return;
+  do {
+    mainw->cancelled = CANCEL_NONE;
+    req = run_youtube_dialog();
+    if (req == NULL) return;
 
-  on_utube_select(req);
-  lives_free(req);
+    on_utube_select(req);
+    lives_free(req);
+  } while (mainw->cancelled == CANCEL_RETRY);
 }
 
 
@@ -895,6 +898,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f %d %d %d", prefs->backend, cfile->handle, req->URI,
                               dfile, req->format, req->desired_width, req->desired_height, req->matchsize, req->desired_fps, req->vidchoice, req->audchoice,
                               req->do_update);
+
     mainw->com_failed = FALSE;
     lives_system(com, FALSE);
     lives_free(com);
@@ -908,19 +912,39 @@ void on_utube_select(lives_remote_clip_request_t *req) {
       return;
     }
 
+    if (req->vidchoice != -1) break;
+
     req->do_update = FALSE;
 
-    if (req->matchsize == LIVES_MATCH_CHOICE && req->vidchoice == 0) {
-      // we expect to get back a list of available formats
-      if (!do_auto_dialog(_("Getting format list"), 0)) {
-        lives_free(dfile);
-        d_print_failed();
-        if (current_file == -1) {
-          close_temp_handle(mainw->current_file, -1);
-        }
-        return;
+    // we expect to get back a list of available formats
+    // or the selected format
+    if (!do_auto_dialog(_("Getting format list"), 0)) {
+      lives_free(dfile);
+      if (current_file == -1) {
+        close_temp_handle(mainw->current_file, -1);
       }
-      g_print("Got back %s\n", mainw->msg);
+      if (mainw->cancelled) d_print_cancelled();
+      if (mainw->error) {
+        d_print_failed();
+        do_blocking_error_dialog(mainw->msg);
+        mainw->error = FALSE;
+        mainw->cancelled = CANCEL_RETRY;
+      }
+      return;
+    }
+
+    if (!strlen(mainw->msg)) {
+      lives_free(dfile);
+      d_print_failed();
+      if (current_file == -1) {
+        close_temp_handle(mainw->current_file, -1);
+      }
+      do_blocking_error_dialog(
+        _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \nthe latest youtube-dl installed.\n"));
+      return;
+    }
+
+    if (req->matchsize == LIVES_MATCH_CHOICE && req->vidchoice == -1)  {
       // show a list of the video formats and let the user pick one
       /* if (!utube_select_format(req)) { */
       /* 	if (current_file == -1) { */
@@ -931,7 +955,14 @@ void on_utube_select(lives_remote_clip_request_t *req) {
       /* 	return; */
       /* } */
       // we try again, this time with req->vidchoice set
-    } else break;
+    } else {
+      // returned completed|vidchoice|audchoice
+      char **array = lives_strsplit(mainw->msg, "|", 3);
+      req->vidchoice = atoi(array[1]);
+      req->audchoice = atoi(array[2]);
+      if (req->audchoice == 0 && strcmp(array[2], "0")) req->audchoice = -1;
+      lives_strfreev(array);
+    }
   }
 
   // backend should now be downloading the clip
@@ -939,6 +970,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
   cfile->nopreview = TRUE;
   cfile->keep_without_preview = TRUE;
   cfile->no_proc_sys_errors = TRUE; ///< do not show processing error dialogs, we will show our own msg
+
   if (!do_progress_dialog(TRUE, TRUE, _("Downloading clip")) || mainw->error) {
     // user cancelled or error
     cfile->nopreview = FALSE;
@@ -948,10 +980,8 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     if (mainw->cancelled == CANCEL_KEEP && !mainw->error) {
       mainw->cancelled = CANCEL_NONE;
     } else {
+      lives_kill_subprocesses(cfile->handle, TRUE);
       if (current_file == -1) {
-#ifdef IS_MINGW
-        lives_kill_subprocesses(cfile->handle, TRUE);
-#endif
         // we made a temp file so close it
         close_temp_handle(mainw->current_file, -1);
       }
@@ -963,7 +993,15 @@ void on_utube_select(lives_remote_clip_request_t *req) {
         mainw->error = FALSE;
       }
 
-      lives_rm(dfile);
+      full_dfile = lives_strdup_printf("%s.%s", dfile, req->format);
+      lives_rm(full_dfile);
+      lives_free(full_dfile);
+      lives_free(dfile);
+
+      dfile = lives_strdup_printf("%s.f%d", req->fname, req->vidchoice);
+      full_dfile = lives_build_filename(req->save_dir, dfile, NULL);
+      lives_rm(full_dfile);
+      lives_free(full_dfile);
       lives_free(dfile);
 
       sensitize();

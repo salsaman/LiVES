@@ -2530,7 +2530,7 @@ void print_notice() {
   lives_printerr("\nLiVES %s\n", LiVES_VERSION);
   lives_printerr("Copyright "LIVES_COPYRIGHT_YEARS" Gabriel Finch ("LIVES_AUTHOR_EMAIL") and others.\n");
   lives_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\n"
-                 "under certain conditions;"
+                 "under certain conditions; "
                  "see the file COPYING for details.\n\n");
 }
 

@@ -3,6 +3,15 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+//#define TEST_CACHING - not working, frames seem to jump around with reverse pb
+#ifdef TEST_CACHING
+typedef struct priv_cache_t priv_cache_t;
+struct priv_cache_t {
+  priv_cache_t *next;
+  int64_t pts;
+  AVFrame *frame;
+};
+#endif
 
 typedef struct  {
   int fd;
@@ -27,5 +36,9 @@ typedef struct  {
   int last_frame;
 
   size_t pkt_offs;
+#ifdef TEST_CACHING
+  int cachemax;
+  priv_cache_t *cache;
+#endif
 } lives_av_priv_t;
 

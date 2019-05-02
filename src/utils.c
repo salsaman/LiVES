@@ -1819,7 +1819,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
   if (mainw->playing_file == fileno && !mainw->clip_switched) {
     last_frame = (mainw->playing_sel && !mainw->is_rendering) ? sfile->end : mainw->play_end;
     if (last_frame > sfile->frames) last_frame = sfile->frames;
-    first_frame = mainw->playing_sel ? sfile->start : mainw->play_start;
+    first_frame = mainw->playing_sel ? sfile->start : mainw->loop_video ? mainw->play_start : 1;
     if (first_frame > sfile->frames) first_frame = sfile->frames;
   } else {
     last_frame = sfile->frames;

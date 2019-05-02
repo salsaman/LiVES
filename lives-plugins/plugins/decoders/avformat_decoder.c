@@ -708,7 +708,10 @@ static lives_clip_data_t *init_cdata(void) {
   memset(cdata->author, 0, 1);
   memset(cdata->title, 0, 1);
   memset(cdata->comment, 0, 1);
-
+#ifdef TEST_CACHING
+  priv->cachemax = 128;
+  priv->cache = NULL;
+#endif
   return cdata;
 }
 
@@ -923,6 +926,77 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
   return idst - dst;
 }
 
+#ifdef TEST_CACHING
+#define DEF_CACHEFRAMES_MAX 16
+
+#ifndef ABS(a)
+#define ABS(a) (a >= 0ll ? a : -a)
+#endif
+
+static AVFrame *get_from_cache(lives_av_priv_t *priv, int64_t pts) {
+  priv_cache_t *cache = priv->cache;
+  while (cache != NULL) {
+    //fprintf(stderr, "CF %ld %ld %ld\n", cache->pts, pts, ABS(cache->pts - pts));
+    if (ABS(cache->pts - pts) <= 100) {
+      return cache->frame;
+    }
+    cache = cache->next;
+  }
+  return NULL;
+}
+
+
+static void remove_cache_above(priv_cache_t *cache, int maxe) {
+  priv_cache_t *lastcache = cache,  *nextcache;
+  int count = 0;
+
+  while (cache != NULL) {
+    nextcache = cache->next;
+    if (count++ >= maxe) {
+      if (lastcache != NULL) lastcache->next = NULL;
+      av_frame_unref(cache->frame);
+      free(cache);
+      lastcache = NULL;
+    } else lastcache = cache;
+    cache = nextcache;
+  }
+}
+
+
+static void add_to_cache(lives_av_priv_t *priv, int64_t pts) {
+  // if we have a frame with this pts in the list, ignore
+  // otherwise free the tail of the list and add this at the head
+  if (priv->cachemax < 1) return;
+  if (get_from_cache(priv, pts) != NULL) {
+    fprintf(stderr, "Dupe\n");
+    return;
+  } else {
+    priv_cache_t *cache = (priv_cache_t *)malloc(sizeof(priv_cache_t));
+    if (cache == NULL) return;
+    cache->frame = priv->pFrame;
+    cache->pts = pts;
+    cache->next = priv->cache;
+    priv->cache = cache;
+    remove_cache_above(cache, priv->cachemax);
+  }
+}
+
+
+static void free_cache(lives_av_priv_t *priv) {
+  // walk the list and free each element
+  remove_cache_above(priv->cache, 0);
+  priv->cache = NULL;
+}
+
+
+int begin_caching(const lives_clip_data_t *cdata, int maxframes) {
+  lives_av_priv_t *priv = cdata->priv;
+  if (maxframes == -1) maxframes = DEF_CACHEFRAMES_MAX;
+  priv->cachemax = maxframes;
+  if (maxframes == 0) free_cache(priv);
+  return maxframes;
+}
+#endif
 
 // tune this so small jumps forward are efficient
 #define JUMP_FRAMES_SLOW 64
@@ -1014,21 +1088,30 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       bleft = bright = 0;
     }
   }
+  //#define DEBUG
+
+  time = (double)tframe / cdata->fps;
+  target_pts = time * (double)AV_TIME_BASE;
+#ifdef TEST_CACHING
+  priv->pFrame = get_from_cache(priv, target_pts);
+#ifdef DEBUG
+  if (priv->pFrame != NULL) fprintf(stderr, "got frame from cache for target %ld %p %d\n", target_pts, priv->pFrame, pal);
+  else fprintf(stderr, "got frame from cache FAIL for target %ld %p %d\n", target_pts, priv->pFrame, pal);
+#endif
+  if (priv->pFrame != NULL) goto framedone2;
+#endif
 
   if (priv->pFrame == NULL || tframe != priv->last_frame) {
-    // same frame -> we reuse priv-pFrame;
+    // same frame -> we reuse priv-pFrame if we have it; otherwise we do this
 
-    //#define DEBUG
 #ifdef DEBUG
     fprintf(stderr, "pt a1 %d %ld\n", priv->last_frame, tframe);
 #endif
 
+#ifndef TEST_CACHING
     if (priv->pFrame != NULL) av_frame_unref(priv->pFrame);
+#endif
     priv->pFrame = NULL;
-
-    time = (double)tframe / cdata->fps;
-
-    target_pts = time * (double)AV_TIME_BASE;
 
     if (cdata->seek_flag & LIVES_SEEK_FAST) jump_frames = JUMP_FRAMES_FAST;
     else jump_frames = JUMP_FRAMES_SLOW;
@@ -1047,7 +1130,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       seek_target = av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
       av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
 #ifdef DEBUG
-      fprintf(stderr, "pt a2 %d %ld\n", priv->last_frame, seek_target);
+      fprintf(stderr, "new seek: %d %ld\n", priv->last_frame, seek_target);
 #endif
       avcodec_flush_buffers(cc);
       priv->black_fill = FALSE;
@@ -1074,7 +1157,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
             priv->black_fill = TRUE;
             goto framedone;
           }
-
         } while (priv->packet.stream_index != priv->vstream);
       }
 
@@ -1105,6 +1187,13 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       fprintf(stderr, "pt 1 %ld %d %ld\n", tframe, gotFrame, MyPts);
 #endif
 
+#ifdef TEST_CACHING
+      if (gotFrame && priv->cachemax > 0) {
+        add_to_cache(priv, MyPts);
+        fprintf(stderr, "adding to cache: %ld %p\n", MyPts, priv->pFrame);
+      }
+#endif
+
       if (priv->packet.size == 0) {
         priv->needs_packet = TRUE;
       }
@@ -1116,7 +1205,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       // otherwise discard this frame
       if (gotFrame) {
         MyPts += (double)AV_TIME_BASE / cdata->fps;
+#ifndef TEST_CACHING
         av_frame_unref(priv->pFrame);
+#endif
         priv->pFrame = NULL;
       }
     } while (!(hit_target && gotFrame));
@@ -1127,6 +1218,8 @@ framedone:
   if (timex > FAST_SEEK_LIMIT)((lives_clip_data_t *)cdata)->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
 
   priv->last_frame = tframe;
+
+framedone2:
 
   if (priv->pFrame == NULL || pixel_data == NULL) return TRUE;
 

@@ -1709,7 +1709,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     lives_free(outfilename);
     if (fileno == mainw->ascrap_file) {
       mainw->files[mainw->ascrap_file]->cb_src = mainw->aud_rec_fd;
-      if (mainw->pulsed_read != NULL) {
+      /*      if (mainw->pulsed_read != NULL) {
         // flush all data from buffer; this seems like the only way
         void *data;
         size_t rbytes;
@@ -1719,7 +1719,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
           if (rbytes > 0) pa_stream_drop(mainw->pulsed_read->pstream);
         } while (rbytes > 0);
         pa_mloop_unlock();
-      }
+	}*/
     }
   }
 

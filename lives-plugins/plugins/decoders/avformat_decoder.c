@@ -1190,7 +1190,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #ifdef TEST_CACHING
       if (gotFrame && priv->cachemax > 0) {
         add_to_cache(priv, MyPts);
-        fprintf(stderr, "adding to cache: %ld %p\n", MyPts, priv->pFrame);
+        fprintf(stderr, "adding to cache: %ld %p %p\n", MyPts, priv->pFrame, priv->pFrame->data);
       }
 #endif
 

@@ -3687,9 +3687,8 @@ apply_inst2:
           weed_instance_unref(orig_inst);
         }
       }
-
-      lives_freep((void **)&init_events);
     }
+      lives_freep((void **)&init_events);
   }
 }
 

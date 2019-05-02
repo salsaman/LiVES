@@ -1,4 +1,7 @@
 ## Process this with automake to create Makefile.in
+# some icons by Andrian Valeanu under cc3.0 [loop.png, lock.png, unlock.png]
+# https://creativecommons.org/licenses/by/3.0/legalcode
+
 
 install-exec-am:
 	/bin/rm -rf "$(DESTDIR)$(datadir)/$(PACKAGE)/"*

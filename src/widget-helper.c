@@ -1378,10 +1378,12 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_new_from_stock(const char *
     lives_free(fnamex);
     lives_free(fname);
     if (pixbuf != NULL) {
-      image = lives_image_new_from_pixbuf(pixbuf);
-      lives_object_unref(pixbuf);
       if (size != LIVES_ICON_SIZE_CUSTOM) {
-        lives_image_scale(LIVES_IMAGE(image), get_real_size_from_icon_size(size), get_real_size_from_icon_size(size), LIVES_INTERP_BEST);
+        LiVESPixbuf *new_pixbuf = lives_pixbuf_scale_simple(pixbuf, get_real_size_from_icon_size(size), get_real_size_from_icon_size(size),
+                                  LIVES_INTERP_BEST);
+        lives_object_unref(pixbuf);
+        image = lives_image_new_from_pixbuf(new_pixbuf);
+        lives_object_unref(new_pixbuf);
       }
     } else {
 #if GTK_CHECK_VERSION(3, 10, 0)
@@ -9088,7 +9090,8 @@ boolean lives_widget_context_update(void) {
       }
     }
 #ifdef GUI_GTK
-    while (!mainw->is_exiting && g_main_context_iteration(NULL, FALSE));
+    while (!mainw->is_exiting && gtk_events_pending()) gtk_main_iteration();
+    //while (!mainw->is_exiting && g_main_context_iteration(NULL, FALSE));
 #endif
 #ifdef GUI_QT
     QCoreApplication::processEvents();

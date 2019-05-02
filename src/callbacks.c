@@ -9480,25 +9480,25 @@ boolean on_mouse_sel_update(LiVESWidget *widget, LiVESXEventMotion *event, lives
 
     if (mainw->sel_move == SEL_MOVE_AUTO)
       sel_current = calc_frame_from_time3(mainw->current_file,
-                                          (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                                          (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
     else
       sel_current = calc_frame_from_time(mainw->current_file,
-                                         (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                                         (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
 
     if (mainw->sel_move == SEL_MOVE_SINGLE) {
       sel_current = calc_frame_from_time3(mainw->current_file,
-                                          (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                                          (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), sel_current);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), sel_current);
     }
 
     if (mainw->sel_move == SEL_MOVE_START || (mainw->sel_move == SEL_MOVE_AUTO && sel_current < mainw->sel_start)) {
       sel_current = calc_frame_from_time(mainw->current_file,
-                                         (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                                         (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), sel_current);
     } else if (mainw->sel_move == SEL_MOVE_END || (mainw->sel_move == SEL_MOVE_AUTO && sel_current > mainw->sel_start)) {
       sel_current = calc_frame_from_time2(mainw->current_file,
-                                          (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                                          (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), sel_current - 1);
     }
   }
@@ -9530,11 +9530,11 @@ boolean on_mouse_sel_start(LiVESWidget *widget, LiVESXEventButton *event, livesp
                            mainw->LiVES, &x, NULL);
 
   mainw->sel_start = calc_frame_from_time(mainw->current_file,
-                                          (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                                          (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
 
   if (event->button == 3 && !mainw->selwidth_locked) {
     mainw->sel_start = calc_frame_from_time3(mainw->current_file,
-                       (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                       (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), mainw->sel_start);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), mainw->sel_start);
     mainw->sel_move = SEL_MOVE_AUTO;
@@ -9543,7 +9543,7 @@ boolean on_mouse_sel_start(LiVESWidget *widget, LiVESXEventButton *event, livesp
   else {
     if (event->button == 2 && !mainw->selwidth_locked) {
       mainw->sel_start = calc_frame_from_time3(mainw->current_file,
-                         (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                         (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), mainw->sel_start);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), (int)mainw->sel_start);
       mainw->sel_move = SEL_MOVE_SINGLE;
@@ -9557,7 +9557,7 @@ boolean on_mouse_sel_start(LiVESWidget *widget, LiVESXEventButton *event, livesp
           mainw->sel_move = SEL_MOVE_START;
         } else {
           mainw->sel_start = calc_frame_from_time2(mainw->current_file,
-                             (double)x / (double)lives_widget_get_allocation_width(mainw->vidbar) * CLIP_TOTAL_TIME(mainw->current_file));
+                             (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), mainw->sel_start - 1);
           mainw->sel_move = SEL_MOVE_END;
         }

@@ -3338,7 +3338,8 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton_update))) req->do_update = FALSE;
   else req->do_update = TRUE;
 
-  req->vidchoice = req->audchoice = -1;
+  *req->vidchoice = 0;
+  *req->audchoice = 0;
 
   lives_widget_destroy(dialog);
   lives_widget_context_update();

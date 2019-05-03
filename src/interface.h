@@ -190,8 +190,8 @@ typedef struct {
   float desired_fps;  // unused for now
   lives_size_match_t matchsize;
   boolean do_update;
-  int vidchoice;
-  int audchoice;
+  char vidchoice[512];
+  char audchoice[512];
 
   // TODO: add audio bitrate ?, audio_lang, get_sub, sub_format, sub_language, etc.
 

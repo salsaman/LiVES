@@ -895,7 +895,8 @@ void on_utube_select(lives_remote_clip_request_t *req) {
   while (1) {
     lives_rm(cfile->info_file);
 
-    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f %d %d %d", prefs->backend, cfile->handle, req->URI,
+    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\" \"%s\" %d", prefs->backend, cfile->handle,
+                              req->URI,
                               dfile, req->format, req->desired_width, req->desired_height, req->matchsize, req->desired_fps, req->vidchoice, req->audchoice,
                               req->do_update);
 
@@ -913,7 +914,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
       return;
     }
 
-    if (req->vidchoice != -1) break;
+    if (strlen(req->vidchoice)) break;
 
     req->do_update = FALSE;
 
@@ -947,7 +948,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
       return;
     }
 
-    if (req->matchsize == LIVES_MATCH_CHOICE && req->vidchoice == -1)  {
+    if (req->matchsize == LIVES_MATCH_CHOICE && strlen(req->vidchoice) == 0)  {
       // show a list of the video formats and let the user pick one
       /* if (!utube_select_format(req)) { */
       /* 	if (current_file == -1) { */
@@ -961,9 +962,8 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     } else {
       // returned completed|vidchoice|audchoice
       char **array = lives_strsplit(mainw->msg, "|", 3);
-      req->vidchoice = atoi(array[1]);
-      req->audchoice = atoi(array[2]);
-      if (req->audchoice == 0 && strcmp(array[2], "0")) req->audchoice = -1;
+      lives_snprintf(req->vidchoice, 512, "%s", array[1]);
+      lives_snprintf(req->audchoice, 512, "%s", array[2]);
       lives_strfreev(array);
     }
   }
@@ -1001,7 +1001,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
       lives_free(full_dfile);
       lives_free(dfile);
 
-      dfile = lives_strdup_printf("%s.f%d", req->fname, req->vidchoice);
+      dfile = lives_strdup_printf("%s.f%s", req->fname, req->vidchoice);
       full_dfile = lives_build_filename(req->save_dir, dfile, NULL);
       lives_rm(full_dfile);
       lives_free(full_dfile);

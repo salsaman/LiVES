@@ -3652,8 +3652,8 @@ if (defined($ARGV[0])) {
 	    my $desheight = int($ARGV[6]);
 	    my $matchsize = int($ARGV[7]);
 	    my $desfps = $ARGV[8]; ## unused
-	    my $vidchoice = int($ARGV[9]);
-	    my $audchoice = int($ARGV[10]); ## unused
+	    my $vidchoice = $ARGV[9];
+	    my $audchoice = $ARGV[10]; ## unused
 	    my $do_update = int($ARGV[11]);
 
 	    ## first of all deal with update
@@ -3668,7 +3668,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    my $tdiag = sqrt($deswidth * $deswidth + $desheight * $desheight);
-	    if ($vidchoice != -1) {
+	    if ($vidchoice ne "") {
 		$bestvideo = $vidchoice;
 	    }
 	    else {
@@ -3678,12 +3678,12 @@ if (defined($ARGV[0])) {
 	    my $bestaudio = "";
 	    my $xdfile = "$dfile.$formreq";
 
-	    if ($audchoice != -1) {
+	    if ($audchoice ne "") {
 		$bestaudio = "$audchoice";
 	    }
 	    my $xbestaudio = "";
 
-	    if ($vidchoice == -1 || $audchoice == -1) {
+	    if ($vidchoice eq "" || $audchoice eq "") {
 		## next, list all the formats and select the we want (or return them)
 		my $best = "(best)";
 		my $video_only = "video only";
@@ -3700,8 +3700,6 @@ if (defined($ARGV[0])) {
 		    next if ($reso eq "downloading");
 		    next if ($formreq eq "webm" && $ext ne $formreq);
 
-		    next if ($fcode + 1 == 1 && $fcode ne "0");
-		    
 		    if (index($note, $best) != -1) {
 			$isbest = 1;
 		    }
@@ -3711,7 +3709,7 @@ if (defined($ARGV[0])) {
 
 		    ## filter by extension, type
 		    if ($reso eq "audio") {
-			if ($audchoice == -1) {
+			if ($audchoice eq "") {
 			    if ($isbest) {
 				$bestaudio = "$fcode";
 			    }
@@ -3734,7 +3732,7 @@ if (defined($ARGV[0])) {
 			$vidonly = 1;
 		    }
 
-		    if ($vidchoice == $fcode && $audchoice == -1 && !$vidonly) {
+		    if ($vidchoice eq $fcode && $audchoice eq "" && !$vidonly) {
 			## bestaudio doesn't always work, so if the video has an audio track, use that
 			## to be safe
 			$xbestaudio = "";
@@ -3742,7 +3740,7 @@ if (defined($ARGV[0])) {
 			last;
 		    }
 		    
-		    next if ($vidchoice != -1);
+		    next if ($vidchoice ne "");
 		    next if ($ext ne $formreq);
 		    
 		    $count++;
@@ -3850,7 +3848,7 @@ if (defined($ARGV[0])) {
 		close $fh;
 
 		##print "SMOG OK $count\n";
-		if ($audchoice == -1 && $xbestaudio ne "") {
+		if ($audchoice eq "" && $xbestaudio ne "") {
 		    $bestaudio = $xbestaudio;
 		}
 
@@ -3859,7 +3857,7 @@ if (defined($ARGV[0])) {
 		    exit 1;
 		}
 
-		if ($vidchoice == -1) {
+		if ($vidchoice eq "") {
 		    if ($matchsize == 6) {
 			&sig_complete(@lines);
 			exit 0;

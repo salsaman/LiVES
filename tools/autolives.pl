@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# (c) Salsaman (salsaman+lives@gmail.com) 2004 - 2018
+# (c) Salsaman (salsaman+lives@gmail.com) 2004 - 2019
 
 # released under the GPL 3 or later
 # see file COPYING or www.gnu.org for details
@@ -104,7 +104,7 @@ my $s=new IO::Select;
 
 chop($hostname = `hostname`);  
 (undef,undef,undef,undef,$myaddr) = gethostbyname($hostname);
- 
+
 @my_ip = unpack("C4", $myaddr);
 $my_ip_addr  = join(".", @my_ip);
 
@@ -115,8 +115,9 @@ if ($remote_host eq "localhost") {
 if ($DEBUG) {print STDERR "Opening status port UDP $local_port on $my_ip_addr...\n";}
 
 my $ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
-        LocalAddr => $my_ip_addr)
+			      LocalAddr => $my_ip_addr)
     or die "error creating UDP listener for $my_ip_addr  $@\n";
+
 $s->add($ip1);
 
 if ($DEBUG) {print STDERR "Status port ready.\n";}
@@ -129,14 +130,12 @@ if ($noty) {
     $s->add($ip2);
 }
 
-$timeout=5;
-
 #################################################################
 # start sending OMC commands
 
 if ($DEBUG) {print STDERR "Beginning OMC handshake...\n";}
 
-    send_command("/lives/open_status_socket,$my_ip_addr,$local_port");
+send_command("/lives/open_status_socket,$my_ip_addr,$local_port");
 
 if ($DEBUG) {print STDERR "Sent request to open status socket. Sending ping.\n";}
 
@@ -162,7 +161,7 @@ if ($allow_fxtoggle) {
 	$numeffectkeys = $maxfx;
 	if ($DEBUG) {print STDERR "only messing with $numeffectkeys\n";}
     }
-   
+    
     if ($DEBUG) {print STDERR "getting effect key layout...\n";}
 
     # get number of keymodes
@@ -171,11 +170,11 @@ if ($allow_fxtoggle) {
 
     $nummodes=&get_newmsg;
 
-    if ($DEBUG) {print STDERR "there are $nummodes modes per key\n";}
-
-    if ($DEBUG) {&print_layout($numeffectkeys,$nummodes);}
-
-    if ($DEBUG) {print STDERR "done !\n";}
+    if ($DEBUG) {
+	print STDERR "there are $nummodes modes per key\n";
+	&print_layout($numeffectkeys,$nummodes);
+	print STDERR "done !\n";
+    }
 }
 
 # get number of clips
@@ -195,7 +194,7 @@ if ($noty) {
 }
 
 # get some constants we need
-    send_command("/lives/constant/value/get,LIVES_STATUS_PLAYING");
+send_command("/lives/constant/value/get,LIVES_STATUS_PLAYING");
 
 $playstat=&get_newmsg;
 
@@ -214,7 +213,7 @@ if ($mute) {
     send_command("/audio/mute/get");
     $mute = 1 - &get_newmsg;
     if ($mute) {
-	    send_command("/audio/mute/set,1");
+	send_command("/audio/mute/set,1");
     }
 }
 
@@ -286,7 +285,6 @@ while (1) {
 		# 6,7,8,9,10
 		if ($nexteffectkey!=$key_to_avoid) {
 		    send_command("/effect_key/disable,$nexteffectkey");
-		    send_command("/effect_key/disable,$nexteffectkey");
 		}
 	    }
 	    elsif ($action<13) {
@@ -339,6 +337,7 @@ while (1) {
 
 exit 0;
 
+
 #####################################################################
 sub send_command {
     my ($command)="$sendOMC @_";
@@ -354,12 +353,12 @@ sub send_command {
 sub finish {
     if ($loop) {
 	#reset loop mode
-	    send_command("/video/loop/set,$currloop");
+	send_command("/video/loop/set,$currloop");
     }
 
     # reset mute status
     if ($mute) {
-	    send_command("/audio/mute/set,0");
+	send_command("/audio/mute/set,0");
 	$mute = 0;
     }
 }
@@ -376,10 +375,10 @@ sub get_newmsg {
 	    #if ($DEBUG) {print STDERR "check $lport $local_port\n";}
 
 	    next if ($lport != $local_port);
-	
+	    
 	    # TODO - check from address is our host
 	    #if ($DEBUG) {print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
-	
+	    
 	    last;
 	}
 	#if ($DEBUG) {print STDERR "OK $lport $local_port : $newmsg\n";}
@@ -402,10 +401,10 @@ sub get_notify {
 	    #if ($DEBUG) {print STDERR "check $lport $notify_port $newmsg\n";}
 
 	    next if ($lport != $notify_port);
-	
+	    
 	    # TODO - check from address is our host
 	    #if ($DEBUG) {print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
-	
+	    
 	    last;
 	}
 	last if ($lport == $notify_port && $newmsg =~ /^32768\|(.*)/);
@@ -432,7 +431,7 @@ sub print_layout {
     my ($i,$j);
     for ($i=1;$i<=$keys;$i++) {
 	for ($j=1;$j<=$modes;$j++) {
-		send_command("/effect_key/name/get,$i,$j");
+	    send_command("/effect_key/name/get,$i,$j");
 	    $name=&get_newmsg;
 	    unless ($name eq "") {
 		if ($DEBUG) {print STDERR "key $i, mode $j: $name    ";}
@@ -445,6 +444,7 @@ sub print_layout {
 	if ($DEBUG) {print STDERR "\n";}
     }
 }
+
 
 sub HUP_handler {
     &finish;

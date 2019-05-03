@@ -909,6 +909,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
       }
       lives_free(dfile);
       d_print_failed();
+      mainw->no_switch_dprint = FALSE;
       return;
     }
 
@@ -930,6 +931,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
         mainw->error = FALSE;
         mainw->cancelled = CANCEL_RETRY;
       }
+      mainw->no_switch_dprint = FALSE;
       return;
     }
 
@@ -941,6 +943,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
       }
       do_blocking_error_dialog(
         _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \nthe latest youtube-dl installed.\n"));
+      mainw->no_switch_dprint = FALSE;
       return;
     }
 

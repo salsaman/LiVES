@@ -395,7 +395,7 @@ static boolean pre_init(void) {
   sizshrt = sizeof(short);
 
   mainw = (mainwindow *)(calloc(1, sizeof(mainwindow)));
-  mainw->is_ready = mainw->fatal = FALSE;
+  mainw->is_ready = mainw->configured = mainw->fatal = FALSE;
   mainw->mgeom = NULL;
 
   mainw->dp_cache = NULL;
@@ -2878,6 +2878,7 @@ static boolean lives_startup(livespointer data) {
                   if (prefs->show_gui) {
                     // mainw->ready gets set here
                     show_lives();
+                    mainw->is_ready = TRUE;
                   }
                   //}
                 }
@@ -2962,7 +2963,7 @@ static boolean lives_startup(livespointer data) {
     prefs->startup_phase = 0;
   }
 
-  // splash_end() will start up multirack if in STARTUP_MT mode
+  // splash_end() will start up multitrack if in STARTUP_MT mode
   if (strlen(start_file) && strcmp(start_file, "-")) {
     splash_end();
     deduce_file(start_file, start, end);
@@ -2973,6 +2974,7 @@ static boolean lives_startup(livespointer data) {
 
   splash_end();
 
+  show_lives();
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
@@ -4024,6 +4026,8 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
     int cx = (rwidth - width) / 2;
     int cy = (rheight - height) / 2;
 
+    if (cx < 0) cx = 0;
+
     if (prefs->funky_widgets) {
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
       lives_painter_rectangle(cr, cx - 1, cy - 1,
@@ -4165,7 +4169,7 @@ void load_start_image(int frame) {
     // TODO *** - if width*height==0, show broken frame image
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-    rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
+    rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 3;
     rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 #else
     rwidth = lives_widget_get_allocation_width(mainw->start_image);
@@ -4338,7 +4342,7 @@ void load_end_image(int frame) {
     height = cfile->vsize;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-    rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
+    rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 3;
     rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 #else
     rwidth = lives_widget_get_allocation_width(mainw->end_image);
@@ -6976,6 +6980,7 @@ void load_frame_image(int frame) {
       if (cfile->audio_waveform != NULL) {
         for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
         lives_free(cfile->audio_waveform);
+        lives_free(cfile->aw_sizes);
       }
 
       lives_freep((void **)&cfile);
@@ -7166,6 +7171,13 @@ void load_frame_image(int frame) {
     mainw->current_file = new_file;
 
     if (mainw->playing_file == -1 && mainw->multitrack != NULL) return;
+
+    gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),
+        lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10);
+    //gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow), lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10);
+
+    lives_widget_queue_draw(mainw->message_box);
+    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
 
     if (cfile->frames) {
       mainw->pwidth = cfile->hsize;
@@ -7359,6 +7371,12 @@ void load_frame_image(int frame) {
       load_end_image(cfile->end);
       if (mainw->playing_file > -1) load_frame_image(cfile->frameno);
     }
+    gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),
+        lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10);
+    //gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow), lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10);
+
+    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
+    lives_widget_queue_draw(mainw->message_box);
   }
 
 
@@ -7712,6 +7730,16 @@ void load_frame_image(int frame) {
     if (!prefs->show_gui || mainw->multitrack != NULL) return;
     get_border_size(mainw->LiVES, &bx, &by);
 
+    w = lives_widget_get_allocation_width(mainw->LiVES);
+    h = lives_widget_get_allocation_height(mainw->LiVES);
+
+    if (prefs->open_maximised || w > scr_width - bx || h > scr_height - by) {
+      w = scr_width - bx;
+      h = scr_height - by;
+      lives_window_resize(LIVES_WINDOW(mainw->LiVES), w, h);
+      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
+    }
+
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
     vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));
 
@@ -7743,8 +7771,6 @@ void load_frame_image(int frame) {
 
     //if (!mainw->is_ready) return;
 
-    lives_widget_set_size_request(mainw->playframe, (int)hsize * scale + H_RESIZE_ADJUST, (int)vsize * scale + V_RESIZE_ADJUST);
-
     if (oscale == 2.) {
       if (hsize * 4 < scr_width - 70) {
         scale = 1.;
@@ -7752,7 +7778,7 @@ void load_frame_image(int frame) {
     }
 
     if (oscale > 0.) {
-      mainw->ce_frame_width = (int)hsize / scale + H_RESIZE_ADJUST;
+      mainw->ce_frame_width = (int)(hsize / scale + H_RESIZE_ADJUST);
       mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST;
 
       if (mainw->current_file > -1 && cfile != NULL) {
@@ -7776,13 +7802,26 @@ void load_frame_image(int frame) {
         }
       }
 
+      if (mainw->fs && !mainw->sep_win && cfile->frames > 0 && mainw->playing_file > -1) {
+        mainw->ce_frame_width = w;
+        mainw->ce_frame_height = h - lives_widget_get_allocation_height(mainw->menu_hbox);
+      }
+
+      // THE WIDTHS OF THE FRAME CONTAINERS
       lives_widget_set_size_request(mainw->frame1, (int)hsize / scale + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
       lives_widget_set_size_request(mainw->eventbox3, (int)hsize / scale + H_RESIZE_ADJUST, vsize + V_RESIZE_ADJUST);
       lives_widget_set_size_request(mainw->frame2, (int)hsize / scale + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
       lives_widget_set_size_request(mainw->eventbox4, (int)hsize / scale + H_RESIZE_ADJUST, vsize + V_RESIZE_ADJUST);
-    }
 
-    else {
+      lives_widget_set_size_request(mainw->start_image, (int)hsize / scale + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->end_image, (int)hsize / scale + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
+
+      lives_widget_set_size_request(mainw->playarea, mainw->ce_frame_width, mainw->ce_frame_height);
+      lives_widget_set_size_request(mainw->playframe, mainw->ce_frame_width, mainw->ce_frame_height);
+
+      // IMPORTANT (or the entire image will not be shown)
+      lives_widget_set_size_request(mainw->play_image, mainw->ce_frame_width, mainw->ce_frame_height);
+    } else {
       xsize = (scr_width - hsize * -oscale - H_RESIZE_ADJUST) / 2;
       if (xsize > 0) {
         lives_widget_set_size_request(mainw->frame1, xsize / scale, vsize + V_RESIZE_ADJUST);
@@ -7797,16 +7836,7 @@ void load_frame_image(int frame) {
         lives_widget_hide(mainw->frame2);
         lives_widget_hide(mainw->eventbox3);
         lives_widget_hide(mainw->eventbox4);
-        lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), 0);
       }
-    }
-
-    w = lives_widget_get_allocation_width(mainw->LiVES);
-    h = lives_widget_get_allocation_height(mainw->LiVES);
-
-    if (prefs->open_maximised || w > scr_width - bx || h > scr_height - by) {
-      lives_window_resize(LIVES_WINDOW(mainw->LiVES), scr_width - bx, scr_height - by);
-      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
     }
 
     if (!mainw->foreign && mainw->playing_file == -1 && mainw->current_file > 0 && cfile != NULL && (!cfile->opening ||

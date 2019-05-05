@@ -835,6 +835,7 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
   if (cfile->audio_waveform != NULL) {
     for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
     lives_freep((void **)&cfile->audio_waveform);
+    lives_freep((void **)&cfile->aw_sizes);
   }
 
   cfile->arate = arate;

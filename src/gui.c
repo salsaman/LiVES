@@ -1,10 +1,17 @@
 // gui.c
 // LiVES
-// (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
 // code for drawing the main window
+
+// frame image widgets:
+// start image: eventbox3 -> frame1 -> freventbox0 -> start_image
+// end image: eventbox4 -> frame2 -> freventbox1 -> end_image
+// pb image: playframe -> pl_eventbox -> playarea -> plug -> play_image
+// in mt mode, playarea is reparented in mt->play_box
+
 
 #include "main.h"
 #include "callbacks.h"
@@ -127,19 +134,20 @@ void add_message_scroller(LiVESWidget *conter) {
   mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
   lives_object_ref(mainw->scrolledwindow);
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
-  lives_widget_set_vexpand(mainw->scrolledwindow, TRUE);
 
   lives_container_add(LIVES_CONTAINER(conter), mainw->scrolledwindow);
 
   mainw->textview1 = lives_standard_text_view_new(all_text, NULL);
   lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
 
-  if (mainw->is_ready)
-    lives_widget_show_all(mainw->scrolledwindow);
+  lives_widget_show_all(conter);
 
   if (all_text != NULL) lives_free(all_text);
 
-  lives_widget_set_size_request(mainw->textview1, -1, MSG_AREA_HEIGHT);
+  if (mainw->configured) {
+    // TODO ***
+    //
+  }
 }
 
 
@@ -294,9 +302,6 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_bg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, colf);
-  lives_widget_set_bg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, colb);
-
   lives_widget_set_fg_color(mainw->banner, LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_fg_color(mainw->arrow1, LIVES_WIDGET_STATE_NORMAL, colf);
 
@@ -313,7 +318,8 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colf);
 
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_bg_color(lives_widget_get_parent(mainw->playframe), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(mainw->message_box, LIVES_WIDGET_STATE_NORMAL, colf);
+  //lives_widget_set_bg_color(lives_widget_get_parent(mainw->playframe), LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->framebar), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->framebar, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -343,7 +349,6 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
 
 void create_LiVES(void) {
-  LiVESWidget *hbox1;
   LiVESWidget *hbox;
   LiVESWidget *vbox;
   LiVESWidget *vbox2;
@@ -371,6 +376,7 @@ void create_LiVES(void) {
   LiVESWidget *suggest_feature;
   LiVESWidget *help_translate;
   LiVESWidget *vbox4;
+  LiVESWidget *vbox99;
   LiVESWidget *label;
   LiVESWidget *hbox3;
   LiVESWidget *t_label;
@@ -492,9 +498,12 @@ void create_LiVES(void) {
 
   mainw->top_vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
+  lives_widget_set_vexpand(mainw->top_vbox, TRUE);
+  lives_widget_set_valign(mainw->top_vbox, LIVES_ALIGN_START);
 
   mainw->menu_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->menu_hbox, FALSE, FALSE, 0);
+  lives_widget_set_valign(mainw->menu_hbox, LIVES_ALIGN_START);
 
   mainw->menubar = lives_menu_bar_new();
   lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
@@ -1875,11 +1884,16 @@ void create_LiVES(void) {
 
   // framebar menu bar
 
-  vbox4 = lives_vbox_new(FALSE, 0);
+  vbox99 = lives_vbox_new(FALSE, 0);
 
   mainw->eventbox = lives_event_box_new();
-  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox, TRUE, TRUE, 0);
-  lives_container_add(LIVES_CONTAINER(mainw->eventbox), vbox4);
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox, FALSE, FALSE, 0);
+
+  lives_container_add(LIVES_CONTAINER(mainw->eventbox), vbox99);
+  //lives_box_set_homogeneous(LIVES_BOX(vbox99), TRUE);
+
+  vbox4 = lives_vbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox99), vbox4, TRUE, TRUE, 0);
 
   lives_widget_set_events(mainw->eventbox, LIVES_SCROLL_MASK);
 
@@ -1888,17 +1902,10 @@ void create_LiVES(void) {
                        NULL);
 
   mainw->framebar = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox4), mainw->framebar, FALSE, FALSE, 2.);
-  lives_container_set_border_width(LIVES_CONTAINER(mainw->framebar), 2 * widget_opts.scale);
+  lives_box_pack_start(LIVES_BOX(vbox4), mainw->framebar, FALSE, FALSE, 0.);
 
-  /* TRANSLATORS: please keep the translated string the same length */
-  mainw->vps_label = lives_standard_label_new(_("     Video playback speed (frames per second)        "));
-  tmp = lives_strdup(lives_label_get_text(LIVES_LABEL(mainw->vps_label)));
-  if (strlen(tmp) > 55) memset(tmp + 55, 0, 1);
-  lives_label_set_text(LIVES_LABEL(mainw->vps_label), tmp);
-  lives_free(tmp);
-
-  lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->vps_label, FALSE, FALSE, 0);
+  mainw->vps_label = lives_standard_label_new(_("Video playback speed (frames per second)"));
+  lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->vps_label, FALSE, FALSE, widget_opts.packing_width);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL, 1, -FPS_MAX, FPS_MAX, 0.1, 0.01, 3,
@@ -1907,13 +1914,12 @@ void create_LiVES(void) {
 
   lives_widget_set_sensitive(mainw->spinbutton_pb_fps, FALSE);
 
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   if (palette->style == STYLE_PLAIN) {
     mainw->banner = lives_label_new("             = <  L i V E S > =                ");
   } else {
     mainw->banner = lives_label_new("                                                ");
   }
-  widget_opts.justify = widget_opts.default_justify;
+  lives_widget_set_halign(mainw->banner, LIVES_ALIGN_CENTER);
 
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->banner, TRUE, TRUE, 0);
 
@@ -1926,76 +1932,68 @@ void create_LiVES(void) {
 
   lives_widget_set_can_focus(mainw->framecounter, FALSE);
 
-  mainw->curf_label = lives_standard_label_new("                                                            ");
-  lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->curf_label, FALSE, FALSE, 0);
+  add_fill_to_box(LIVES_BOX(mainw->framebar));
 
-  hbox1 = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox4), hbox1, FALSE, FALSE, 0);
+  mainw->pf_grid = lives_table_new(1, 3, TRUE);
 
-  lives_widget_set_vexpand(hbox1, FALSE);
+  lives_box_pack_start(LIVES_BOX(vbox4), mainw->pf_grid, FALSE, FALSE, 0);
 
   mainw->eventbox3 = lives_event_box_new();
-  lives_box_pack_start(LIVES_BOX(hbox1), mainw->eventbox3, TRUE, FALSE, 0);
+  lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox3, 0, 1, 0, 1,
+                     (LiVESAttachOptions)(LIVES_FILL),
+                     (LiVESAttachOptions)(LIVES_FILL), 0, 0);
+  lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_CENTER);
 
-  mainw->frame1 = lives_standard_frame_new(_("First Frame"), 0.1, TRUE);
+  // IMPORTANT: need to set a default size here (the actual size will be set later)
+  lives_widget_set_size_request(mainw->eventbox3, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
 
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  mainw->frame1 = lives_standard_frame_new(_("First Frame"), 0.25, TRUE);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_container_add(LIVES_CONTAINER(mainw->eventbox3), mainw->frame1);
 
-  lives_widget_set_vexpand(mainw->frame1, FALSE);
-  lives_widget_set_hexpand(mainw->frame1, FALSE);
-
+  // This is necessary to provide correct padding for the image in the frame
   mainw->freventbox0 = lives_event_box_new();
-
-  lives_widget_set_vexpand(mainw->freventbox0, FALSE);
-  lives_widget_set_hexpand(mainw->freventbox0, FALSE);
-
   lives_container_add(LIVES_CONTAINER(mainw->frame1), mainw->freventbox0);
-
   lives_widget_set_app_paintable(mainw->freventbox0, TRUE);
-
   lives_container_add(LIVES_CONTAINER(mainw->freventbox0), mainw->start_image);
-  lives_widget_set_vexpand(mainw->start_image, FALSE);
-  lives_widget_set_hexpand(mainw->start_image, FALSE);
 
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->playframe = lives_standard_frame_new(_("Play"), 0.5, TRUE);
-
-  lives_box_pack_start(LIVES_BOX(hbox1), mainw->playframe, TRUE, FALSE, 0);
-  lives_widget_set_size_request(mainw->playframe, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
-
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   mainw->pl_eventbox = lives_event_box_new();
-
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
+  lives_widget_set_size_request(mainw->playframe, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
 
   mainw->playarea = lives_hbox_new(FALSE, 0);
-
   lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
-
   lives_widget_set_app_paintable(mainw->pl_eventbox, TRUE);
 
+  lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->playframe, 1, 2, 0, 1,
+                     (LiVESAttachOptions)(LIVES_FILL),
+                     (LiVESAttachOptions)(LIVES_FILL), 0, 0);
+  lives_widget_set_halign(mainw->playframe, LIVES_ALIGN_CENTER);
+  lives_widget_set_valign(mainw->playframe, LIVES_ALIGN_CENTER);
+
   mainw->eventbox4 = lives_event_box_new();
-  lives_box_pack_start(LIVES_BOX(hbox1), mainw->eventbox4, TRUE, FALSE, 0);
+  lives_widget_set_size_request(mainw->eventbox4, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
 
-  lives_widget_set_vexpand(mainw->eventbox4, FALSE);
-  lives_widget_set_hexpand(mainw->eventbox4, FALSE);
+  lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox4, 2, 3, 0, 1,
+                     (LiVESAttachOptions)(LIVES_FILL),
+                     (LiVESAttachOptions)(LIVES_FILL), 0, 0);
+  lives_widget_set_halign(mainw->eventbox4, LIVES_ALIGN_CENTER);
 
-  mainw->frame2 = lives_standard_frame_new(_("Last Frame"), 0.9, TRUE);
-
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  mainw->frame2 = lives_standard_frame_new(_("Last Frame"), 0.75, TRUE);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_container_add(LIVES_CONTAINER(mainw->eventbox4), mainw->frame2);
 
-  lives_widget_set_vexpand(mainw->frame2, FALSE);
-  lives_widget_set_hexpand(mainw->frame2, FALSE);
-
   mainw->freventbox1 = lives_event_box_new();
-
-  lives_widget_set_vexpand(mainw->freventbox1, FALSE);
-  lives_widget_set_hexpand(mainw->freventbox1, FALSE);
   lives_widget_set_app_paintable(mainw->freventbox1, TRUE);
-
   lives_container_add(LIVES_CONTAINER(mainw->frame2), mainw->freventbox1);
-
   lives_container_add(LIVES_CONTAINER(mainw->freventbox1), mainw->end_image);
-  lives_widget_set_vexpand(mainw->end_image, FALSE);
-  lives_widget_set_hexpand(mainw->end_image, FALSE);
 
   // default frame sizes
   mainw->def_width = DEFAULT_FRAME_HSIZE;
@@ -2016,13 +2014,15 @@ void create_LiVES(void) {
   lives_widget_show(mainw->play_image); // needed to get size
   lives_object_ref(mainw->play_image);
 
-  lives_widget_set_hexpand(mainw->play_image, TRUE);
-  lives_widget_set_vexpand(mainw->play_image, TRUE);
-
   lives_object_ref_sink(mainw->play_image);
 
+  // NECESSARY - size of image + padding
+  //
+  //
+
   hbox3 = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox4), hbox3, FALSE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox4), hbox3, FALSE, FALSE, 0);
+  add_spring_to_box(LIVES_BOX(hbox3), 0);
 
   // "start" spin
 
@@ -2038,18 +2038,19 @@ void create_LiVES(void) {
   widget_opts.apply_theme = woat;
 
   lives_widget_set_halign(mainw->spinbutton_start, LIVES_ALIGN_CENTER);
+  add_spring_to_box(LIVES_BOX(hbox3), 0);
 
   // arrows and label
 
-  vbox = lives_vbox_new(FALSE, 2.);
+  vbox = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(hbox3), vbox, FALSE, FALSE, 0);
-  gtk_widget_set_halign(vbox, GTK_ALIGN_CENTER);
+  lives_widget_set_halign(vbox, LIVES_ALIGN_CENTER);
+
+  //
 
   hbox = lives_hbox_new(FALSE, 0.);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
   lives_widget_set_valign(hbox, LIVES_ALIGN_START);
-
-  add_spring_to_box(LIVES_BOX(hbox), 0.);
 
   mainw->arrow1 = lives_arrow_new(LIVES_ARROW_LEFT, LIVES_SHADOW_OUT);
   lives_box_pack_start(LIVES_BOX(hbox), mainw->arrow1, FALSE, FALSE, 0);
@@ -2063,28 +2064,19 @@ void create_LiVES(void) {
   mainw->arrow2 = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_box_pack_start(LIVES_BOX(hbox), mainw->arrow2, FALSE, FALSE, 0);
 
-  add_spring_to_box(LIVES_BOX(hbox), 0.);
-
   //
 
   mainw->sa_hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, 4. * widget_opts.scale);
-
-  add_spring_to_box(LIVES_BOX(mainw->sa_hbox), 0.);
-
-  vbox = lives_hbox_new(FALSE, 0.);
-  lives_box_pack_start(LIVES_BOX(mainw->sa_hbox), vbox, FALSE, FALSE, 0);
-
-  add_spring_to_box(LIVES_BOX(vbox), 0.);
+  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, 0);
+  gtk_widget_set_margin_top(mainw->sa_hbox, 4.);
 
   mainw->sa_button = lives_standard_button_new_from_stock(LIVES_STOCK_SELECT_ALL, _("  Select All Frames  "));
   lives_widget_set_tooltip_text(mainw->sa_button, _("Select all frames in this clip"));
-  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_button, TRUE, TRUE, 0);
-  lives_widget_set_valign(mainw->sa_button, LIVES_ALIGN_END);
-
-  add_spring_to_box(LIVES_BOX(mainw->sa_hbox), 0.);
+  lives_box_pack_start(LIVES_BOX(mainw->sa_hbox), mainw->sa_button, TRUE, TRUE, 0);
+  lives_widget_set_halign(mainw->sa_button, LIVES_ALIGN_CENTER);
 
   //
+  add_spring_to_box(LIVES_BOX(hbox3), 0);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
@@ -2095,7 +2087,7 @@ void create_LiVES(void) {
   widget_opts.packing_width = dpw;
   widget_opts.apply_theme = woat;
 
-  lives_box_set_homogeneous(LIVES_BOX(hbox3), TRUE);
+  add_spring_to_box(LIVES_BOX(hbox3), 0.);
   lives_widget_set_halign(mainw->spinbutton_end, LIVES_ALIGN_CENTER);
 
   lives_widget_set_sensitive(mainw->spinbutton_start, FALSE);
@@ -2104,10 +2096,13 @@ void create_LiVES(void) {
   mainw->hseparator = lives_hseparator_new();
 
   if (palette->style & STYLE_1) {
-    lives_box_pack_start(LIVES_BOX(vbox4), mainw->sep_image, FALSE, TRUE, widget_opts.packing_height * 2);
+    lives_box_pack_start(LIVES_BOX(vbox4), mainw->sep_image, FALSE, FALSE, 4. * widget_opts.scale);
   } else {
     lives_box_pack_start(LIVES_BOX(vbox4), mainw->hseparator, TRUE, TRUE, 0);
   }
+
+  vbox4 = lives_vbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox99), vbox4, FALSE, TRUE, 0);
 
   mainw->eventbox5 = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->eventbox5, FALSE, FALSE, 0);
@@ -2128,11 +2123,11 @@ void create_LiVES(void) {
   lives_widget_add_events(mainw->eventbox5, LIVES_POINTER_MOTION_MASK | LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK |
                           LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
 
-  mainw->eventbox2 = lives_event_box_new();
-  lives_box_pack_start(LIVES_BOX(vbox4), mainw->eventbox2, TRUE, TRUE, 0);
-  lives_widget_add_events(mainw->eventbox2, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
+  //
 
-  lives_widget_set_vexpand(mainw->eventbox2, TRUE);
+  mainw->eventbox2 = lives_event_box_new();
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox2, FALSE, FALSE, 0);
+  lives_widget_add_events(mainw->eventbox2, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
 
   vbox2 = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox2), vbox2);
@@ -2141,7 +2136,7 @@ void create_LiVES(void) {
   mainw->vidbar = lives_standard_label_new(_("Video"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, FALSE, TRUE, widget_opts.packing_height);
 
   mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_vid_event), &mainw->vidbar_func);
   // need to set this even if theme is none
@@ -2150,13 +2145,13 @@ void create_LiVES(void) {
 
   lives_widget_set_app_paintable(mainw->video_draw, TRUE);
   lives_widget_set_size_request(mainw->video_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_VIDBAR_HEIGHT);
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, FALSE, TRUE, widget_opts.packing_height);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->laudbar = lives_standard_label_new(_("Left Audio"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, FALSE, TRUE, widget_opts.packing_height);
 
   mainw->laudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_laud_event), &mainw->laudbar_func);
   lives_widget_set_app_paintable(mainw->laudio_draw, TRUE);
@@ -2166,13 +2161,13 @@ void create_LiVES(void) {
   lives_widget_set_fg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
   lives_widget_set_size_request(mainw->laudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_VIDBAR_HEIGHT);
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudio_draw, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudio_draw, FALSE, TRUE, widget_opts.packing_height);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->raudbar = lives_standard_label_new(_("Right Audio"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, FALSE, TRUE, widget_opts.packing_height);
 
   mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_raud_event), &mainw->raudbar_func);
   lives_widget_set_app_paintable(mainw->raudio_draw, TRUE);
@@ -2180,16 +2175,14 @@ void create_LiVES(void) {
   lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_fg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_size_request(mainw->raudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_VIDBAR_HEIGHT);
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, TRUE, widget_opts.packing_height);
 
   eventbox = lives_event_box_new();
-  lives_widget_set_vexpand(eventbox, TRUE);
+  lives_widget_set_valign(eventbox, LIVES_ALIGN_FILL);
 
   mainw->message_box = lives_vbox_new(FALSE, 0);
 
-  lives_widget_set_vexpand(mainw->message_box, TRUE);
-
-  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), eventbox, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), eventbox, FALSE, TRUE, 0);
   lives_container_add(LIVES_CONTAINER(eventbox), mainw->message_box);
 
   mainw->textview1 = NULL;
@@ -2908,20 +2901,23 @@ void show_lives(void) {
   char buff[PATH_MAX];
 
   lives_widget_show_all(mainw->top_vbox);
-
   lives_widget_show(mainw->LiVES); // this calls the config_event()
 
-  if (palette->style & STYLE_1) {
+  /*  if (palette->style & STYLE_1) {
     lives_widget_hide(mainw->vidbar);
     lives_widget_hide(mainw->laudbar);
     lives_widget_hide(mainw->raudbar);
-    set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars, \
-                &palette->info_base, &palette->info_text);
   } else {
     lives_widget_show(mainw->vidbar);
     lives_widget_show(mainw->laudbar);
     lives_widget_show(mainw->raudbar);
-  }
+    }*/
+
+  gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),
+      lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10);
+  //add_message_scroller(mainw->message_box);
+  set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars, \
+              &palette->info_base, &palette->info_text);
 
   lives_widget_hide(mainw->redo);
 #ifdef LIVES_TV_CHANNEL1
@@ -3359,7 +3355,6 @@ void fullscreen_internal(void) {
     lives_widget_hide(mainw->eventbox4);
 
     lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
-    lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), 0);
 
     lives_widget_hide(mainw->t_bckground);
     lives_widget_hide(mainw->t_double);
@@ -3388,6 +3383,8 @@ void fullscreen_internal(void) {
     if (h > GUI_SCREEN_HEIGHT) h = GUI_SCREEN_HEIGHT;
 
     lives_widget_set_size_request(mainw->LiVES, w, h);
+
+    resize(1);
   } else {
     make_play_window();
   }
@@ -4231,11 +4228,7 @@ void kill_play_window(void) {
 
 
 void add_to_playframe(void) {
-  // plug the playback image into its frame in the main window
-
   lives_widget_show(mainw->playarea);
-
-  ///////////////////////////////////////////////////
   if (mainw->plug == NULL) {
     if (!mainw->foreign && (!mainw->sep_win || prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY)) {
       mainw->plug = lives_hbox_new(FALSE, 0);
@@ -4247,6 +4240,7 @@ void add_to_playframe(void) {
       lives_container_add(LIVES_CONTAINER(mainw->plug), mainw->play_image);
     }
   }
+  resize(1);
 }
 
 

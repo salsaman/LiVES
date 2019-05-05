@@ -1969,6 +1969,7 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (cfile->audio_waveform != NULL) {
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
+        lives_freep((void **)&cfile->aw_sizes);
       }
     }
 
@@ -2055,6 +2056,7 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (cfile->audio_waveform != NULL) {
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
+        lives_freep((void **)&cfile->aw_sizes);
       }
       asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
       aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
@@ -2333,9 +2335,12 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       return;
     }
 
-    if (cfile->audio_waveform != NULL) {
-      for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
-      lives_freep((void **)&cfile->audio_waveform);
+    if (cfile->achans != cfile->undo_achans) {
+      if (cfile->audio_waveform != NULL) {
+        for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+        lives_freep((void **)&cfile->audio_waveform);
+        lives_freep((void **)&cfile->aw_sizes);
+      }
     }
 
     cfile->achans = cfile->undo_achans;
@@ -2560,6 +2565,7 @@ void on_redo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (cfile->audio_waveform != NULL) {
       for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
+      lives_freep((void **)&cfile->aw_sizes);
     }
     cfile->arate = mainw->fx1_val;
     cfile->achans = mainw->fx2_val;
@@ -2753,6 +2759,7 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (clipboard->audio_waveform != NULL) {
       for (i = 0; i < clipboard->achans; lives_freep((void **)&clipboard->audio_waveform[i++]));
       lives_freep((void **)&clipboard->audio_waveform);
+      lives_freep((void **)&clipboard->aw_sizes);
     }
     clipboard->achans = cfile->achans;
     clipboard->asampsize = cfile->asampsize;
@@ -2864,6 +2871,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (cfile->audio_waveform != NULL) {
       for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
+      lives_freep((void **)&cfile->aw_sizes);
     }
     cfile->arate = clipboard->arate;
     cfile->arps = clipboard->arps;
@@ -3187,6 +3195,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
             if (clipboard->audio_waveform != NULL) {
               for (i = 0; i < clipboard->achans; lives_freep((void **)&clipboard->audio_waveform[i++]));
               lives_freep((void **)&clipboard->audio_waveform);
+              lives_freep((void **)&clipboard->aw_sizes);
             }
             clipboard->achans = clipboard->arate = clipboard->asampsize = 0;
             with_sound = FALSE;
@@ -6634,6 +6643,8 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESWidget *fs_img;
   char *fnamex;
 
+  static boolean inited = FALSE;
+
   if (mainw->current_file > -1 && !cfile->frames && mainw->multitrack == NULL) return;
 
   if (user_data == NULL) {
@@ -6661,6 +6672,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->playing_file > -1) {
     if (mainw->fs) {
       // switch TO full screen during pb
+
       if (mainw->multitrack == NULL && (!mainw->sep_win || prefs->play_monitor == prefs->gui_monitor) &&
           !(mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && mainw->sep_win)) {
         if (!mainw->faded) {
@@ -6701,6 +6713,15 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         load_frame_image(cfile->frameno);
         mainw->frame_layer = frame_layer;
       }
+
+      if (!inited) {
+        // not exactly sure why we need this, but for now we do...
+        inited = TRUE;
+        if (!mainw->sep_win) {
+          on_full_screen_activate(menuitem, NULL);
+          on_full_screen_activate(menuitem, NULL);
+        }
+      }
     } else {
       if (mainw->multitrack == NULL) {
         // switch FROM fullscreen during pb
@@ -6712,8 +6733,6 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         if (!prefs->hide_framebar) {
           lives_widget_show(mainw->framebar);
         }
-
-        lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
 
         lives_widget_set_sensitive(mainw->fade, TRUE);
         lives_widget_set_sensitive(mainw->dsize, TRUE);
@@ -6780,8 +6799,8 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           // in-frame window
           lives_widget_context_update();
 
-          mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
-          mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST;
+          mainw->pwidth = DEFAULT_FRAME_HSIZE - H_RESIZE_ADJUST;
+          mainw->pheight = DEFAULT_FRAME_VSIZE - V_RESIZE_ADJUST;
 
           // double size
           if (mainw->double_size) {
@@ -6871,8 +6890,8 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     block_expose();
     do {
       lives_widget_context_update();
-      mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
-      mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST;
+      mainw->pwidth = DEFAULT_FRAME_HSIZE - H_RESIZE_ADJUST;
+      mainw->pheight = DEFAULT_FRAME_VSIZE - V_RESIZE_ADJUST;
     } while (mainw->pwidth == 0 || mainw->pheight == 0);
     unblock_expose();
 
@@ -7015,7 +7034,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           if ((!mainw->faded && mainw->fs && ((prefs->play_monitor != prefs->gui_monitor && prefs->play_monitor > 0))) ||
               (mainw->fs && mainw->vpp != NULL &&
                !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
-            lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
+            //lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
             unfade_background();
             lives_widget_show(mainw->frame1);
             lives_widget_show(mainw->frame2);
@@ -7034,6 +7053,9 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           } else {
             if (mainw->faded) {
               lives_widget_hide(mainw->playframe);
+              lives_table_set_col_spacings(LIVES_TABLE(mainw->pf_grid), 0);
+              //			   - 3.0 * DEFAULT_FRAME_HSIZE);
+
             }
             if (mainw->double_size && mainw->multitrack == NULL) {
               resize(1);
@@ -9001,7 +9023,7 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
   int scr_width = GUI_SCREEN_WIDTH;
   int scr_height = GUI_SCREEN_HEIGHT;
 
-  if (mainw->is_ready) {
+  if (mainw->configured) {
     if (scr_width != mainw->old_scr_width || scr_height != mainw->old_scr_height) {
       mainw->old_scr_width = scr_width;
       mainw->old_scr_height = scr_height;
@@ -9011,7 +9033,7 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
     }
   }
 
-  if (!mainw->is_ready) {
+  if (!mainw->configured) {
     mainw->old_scr_width = scr_width;
     mainw->old_scr_height = scr_height;
 
@@ -9027,7 +9049,7 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
       }
 #endif
     }
-    mainw->is_ready = TRUE;
+    mainw->configured = TRUE;
     if (mainw->dp_cache != NULL) {
       mainw->no_switch_dprint = TRUE;
       d_print(mainw->dp_cache);
@@ -10945,6 +10967,7 @@ boolean on_del_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (cfile->audio_waveform != NULL) {
       for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
+      lives_freep((void **)&cfile->aw_sizes);
     }
     if (cfile->laudio_time == cfile->raudio_time) cfile->achans = 0;
     else cfile->achans = 1;
@@ -11297,11 +11320,8 @@ boolean on_ins_silence_activate(LiVESMenuItem *menuitem, livespointer user_data)
       if (cfile->audio_waveform != NULL) {
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
+        lives_freep((void **)&cfile->aw_sizes);
       }
-    }
-    if (cfile->audio_waveform != NULL) {
-      for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
-      lives_freep((void **)&cfile->audio_waveform);
     }
     start = cfile->undo1_dbl;
     end = cfile->undo2_dbl;

@@ -2870,7 +2870,7 @@ void play_file(void) {
     return;
   }
 
-  lives_widget_hide(mainw->playarea);
+  lives_widget_hide(mainw->playframe);
 
   // unblank the background
   if ((mainw->faded || mainw->fs) && mainw->multitrack == NULL) {
@@ -2908,9 +2908,11 @@ void play_file(void) {
     lives_widget_show(mainw->eventbox3);
     lives_widget_show(mainw->eventbox4);
     lives_widget_show(mainw->sep_image);
+    if (!prefs->hide_framebar) {
+      lives_widget_show(mainw->framebar);
+    }
     lives_frame_set_label(LIVES_FRAME(mainw->playframe), _("Preview"));
-    lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
-    resize(1);
+    //resize(1);
     lives_widget_show(mainw->t_bckground);
     lives_widget_show(mainw->t_double);
   }
@@ -2927,13 +2929,12 @@ void play_file(void) {
   }
 
   if (mainw->multitrack == NULL) {
-    lives_widget_hide(mainw->playframe);
     lives_widget_show(mainw->frame1);
     lives_widget_show(mainw->frame2);
     lives_widget_show(mainw->eventbox3);
     lives_widget_show(mainw->eventbox4);
     disable_record();
-    lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
+    resize(1);
   }
 
   if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
@@ -3003,6 +3004,7 @@ void play_file(void) {
           mainw->noswitch = TRUE;
 
           lives_widget_context_update();
+
           if (mainw->play_window != NULL) {
             char *title, *xtrabit;
 

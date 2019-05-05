@@ -734,6 +734,7 @@ typedef struct {
   boolean needs_update; ///< loaded values were incorrect, update header
 
   float **audio_waveform; ///< values for drawing the audio wave
+  int *aw_sizes; ///< size of each audio_waveform in floats
 } lives_clip_t;
 
 typedef struct {

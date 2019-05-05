@@ -133,7 +133,6 @@ int load_frame_index(int fileno) {
         mainw->read_failed = FALSE;
         retval = do_read_failed_error_s_with_retry(fname, NULL, NULL);
       }
-
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 

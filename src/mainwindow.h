@@ -480,6 +480,7 @@ typedef struct {
   boolean ccpd_with_sound;
   boolean selwidth_locked;
   boolean is_ready;
+  boolean configured;
   boolean fatal; ///< got fatal signal
   boolean opening_loc;  ///< opening location (streaming)
   boolean dvgrab_preview;
@@ -778,6 +779,7 @@ typedef struct {
   LiVESWidget *freventbox1;
   LiVESWidget *playframe;
   LiVESWidget *pl_eventbox;
+  LiVESWidget *pf_grid;
   LiVESPixbuf *imframe;
   LiVESPixbuf *camframe;
   LiVESPixbuf *imsep;
@@ -1076,7 +1078,6 @@ typedef struct {
   LiVESWidget *framecounter;
   LiVESWidget *spinbutton_pb_fps;
   LiVESWidget *vps_label;
-  LiVESWidget *curf_label;
   LiVESWidget *banner;
 
   // (sub)menus

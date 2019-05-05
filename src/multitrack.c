@@ -9088,6 +9088,9 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   }
   if (mainw->current_file > 0) sensitize();
   lives_widget_hide(mainw->playframe);
+
+  lives_table_set_col_spacings(LIVES_TABLE(mainw->pf_grid), lives_widget_get_allocation_width(mainw->LiVES)
+                               - 2 * DEFAULT_FRAME_HSIZE);
   mainw->is_rendering = FALSE;
 
   reset_clipmenu();

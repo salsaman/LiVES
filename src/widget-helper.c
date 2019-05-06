@@ -7631,13 +7631,10 @@ static LiVESWidget *make_inner_hbox(LiVESBox *box) {
   lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, 0);
   lives_widget_set_show_hide_parent(vbox);
   hbox = lives_hbox_new(FALSE, 0);
-  widget_opts.expand = LIVES_EXPAND_EXTRA;
   add_spring_to_box(LIVES_BOX(vbox), 0);
   widget_opts.expand = woe;
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
-  widget_opts.expand = LIVES_EXPAND_EXTRA;
   add_spring_to_box(LIVES_BOX(vbox), 0);
-  widget_opts.expand = woe;
   lives_widget_set_show_hide_parent(hbox);
   return hbox;
 }
@@ -7923,6 +7920,15 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
   }
 
   return combo;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_combo_new_with_model(LiVESTreeModel *model) {
+  LiVESWidget *combo = lives_standard_combo_new(NULL, NULL, NULL, NULL);
+
+
+
+
 }
 
 
@@ -8988,25 +8994,12 @@ boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *tbuff, const char *text
 
 
 boolean lives_text_view_scroll_onscreen(LiVESTextView *tview) {
-  LiVESTextIter iter;
-  LiVESTextMark *mark;
-  LiVESTextBuffer *tbuf;
-
   LiVESAdjustment *adj = NULL;
-
-  adj = gtk_scrolled_window_get_hadjustment(mainw->scrolledwindow);
+#ifdef GUI_GTK
+  adj = gtk_scrolled_window_get_hadjustment(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
   gtk_adjustment_set_value(adj, lives_adjustment_get_upper(adj) - lives_adjustment_get_page_size(adj));
-
-  /*  tbuf = lives_text_view_get_buffer(tview);
-  if (tbuf != NULL) {
-    lives_text_buffer_get_end_iter(tbuf, &iter);
-    mark = lives_text_buffer_create_mark(tbuf, NULL, &iter, FALSE);
-    if (mark != NULL) {
-      if (lives_text_view_scroll_mark_onscreen(tview, mark))
-        return lives_text_buffer_delete_mark(tbuf, mark);
-  }
-    gtk_text_view_scroll_to_iter(tview, &iter, 0., FALSE, 0., 1.);
-  }*/
+  return TRUE;
+#endif
   return FALSE;
 }
 

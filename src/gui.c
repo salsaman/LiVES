@@ -2016,10 +2016,6 @@ void create_LiVES(void) {
 
   lives_object_ref_sink(mainw->play_image);
 
-  // NECESSARY - size of image + padding
-  //
-  //
-
   hbox3 = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox4), hbox3, FALSE, FALSE, 0);
   add_spring_to_box(LIVES_BOX(hbox3), 0);
@@ -2136,7 +2132,9 @@ void create_LiVES(void) {
   mainw->vidbar = lives_standard_label_new(_("Video"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, FALSE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, FALSE, FALSE, 0);
+  gtk_widget_set_margin_top(mainw->vidbar, widget_opts.packing_height / 2);
+  gtk_widget_set_margin_bottom(mainw->vidbar, 0);
 
   mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_vid_event), &mainw->vidbar_func);
   // need to set this even if theme is none
@@ -2145,13 +2143,15 @@ void create_LiVES(void) {
 
   lives_widget_set_app_paintable(mainw->video_draw, TRUE);
   lives_widget_set_size_request(mainw->video_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_VIDBAR_HEIGHT);
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, FALSE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, FALSE, TRUE, widget_opts.packing_height / 2);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->laudbar = lives_standard_label_new(_("Left Audio"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, FALSE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, FALSE, FALSE, 0);
+  gtk_widget_set_margin_top(mainw->laudbar, widget_opts.packing_height / 2);
+  gtk_widget_set_margin_bottom(mainw->laudbar, 0);
 
   mainw->laudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_laud_event), &mainw->laudbar_func);
   lives_widget_set_app_paintable(mainw->laudio_draw, TRUE);
@@ -2160,22 +2160,24 @@ void create_LiVES(void) {
   lives_widget_set_bg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_fg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  lives_widget_set_size_request(mainw->laudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_VIDBAR_HEIGHT);
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudio_draw, FALSE, TRUE, widget_opts.packing_height);
+  lives_widget_set_size_request(mainw->laudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_AUDBAR_HEIGHT);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudio_draw, FALSE, TRUE, widget_opts.packing_height / 2);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->raudbar = lives_standard_label_new(_("Right Audio"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, FALSE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, FALSE, FALSE, 0);
+  gtk_widget_set_margin_top(mainw->raudbar, widget_opts.packing_height / 2);
+  gtk_widget_set_margin_bottom(mainw->raudbar, 0);
 
   mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_raud_event), &mainw->raudbar_func);
   lives_widget_set_app_paintable(mainw->raudio_draw, TRUE);
   // need to set this even if theme is none
   lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_fg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_size_request(mainw->raudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_VIDBAR_HEIGHT);
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, TRUE, widget_opts.packing_height);
+  lives_widget_set_size_request(mainw->raudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_AUDBAR_HEIGHT);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, TRUE, widget_opts.packing_height / 2);
 
   eventbox = lives_event_box_new();
   lives_widget_set_valign(eventbox, LIVES_ALIGN_FILL);
@@ -3718,6 +3720,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   mainw->old_scr_height = GUI_SCREEN_HEIGHT;
 
   widget_opts.scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
+  widget_opts_rescale(widget_opts.scale);
 
   if (prefs->gui_monitor != 0) {
     lives_window_center(LIVES_WINDOW(mainw->LiVES));
@@ -3955,8 +3958,8 @@ void resize_play_window(void) {
         mainw->pheight = scr_height;
         if (capable->nmonitors > 1) {
           // spread over all monitors
-          mainw->pwidth = lives_screen_get_width(mainw->mgeom[0].screen);
-          mainw->pheight = lives_screen_get_height(mainw->mgeom[0].screen);
+          mainw->pwidth = GUI_SCREEN_WIDTH;
+          mainw->pheight = GUI_SCREEN_HEIGHT;
         }
       } else {
         mainw->pwidth = mainw->mgeom[pmonitor - 1].width;
@@ -4397,6 +4400,7 @@ void splash_init(void) {
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
     lives_box_pack_start(LIVES_BOX(vbox), mainw->splash_label, TRUE, TRUE, 0);
+    lives_widget_set_valign(vbox, LIVES_ALIGN_END);
 
     mainw->splash_progress = lives_progress_bar_new();
     lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(mainw->splash_progress), .01);

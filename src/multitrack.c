@@ -348,7 +348,6 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
   }
   if (mainw->write_failed) return FALSE;
   return TRUE;
-
 }
 
 

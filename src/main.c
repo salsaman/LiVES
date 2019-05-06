@@ -7769,8 +7769,6 @@ void load_frame_image(int frame) {
     mainw->ce_frame_width = hsize;
     mainw->ce_frame_height = vsize;
 
-    //if (!mainw->is_ready) return;
-
     if (oscale == 2.) {
       if (hsize * 4 < scr_width - 70) {
         scale = 1.;

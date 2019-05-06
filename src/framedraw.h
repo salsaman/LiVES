@@ -11,7 +11,7 @@
 #define MIN_PRE_Y ((int)(32. * widget_opts.scale))
 
 #define MAX_PRE_X ((int)(480. * widget_opts.scale))
-#define MAX_PRE_Y ((int)(640. * widget_opts.scale))
+#define MAX_PRE_Y ((int)(280. * widget_opts.scale))
 
 // internal padding in pixels for LiVESFrame
 #define FD_HT_ADJ 12

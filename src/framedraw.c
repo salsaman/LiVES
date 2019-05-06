@@ -40,7 +40,7 @@ static double calc_fd_scale(int width, int height) {
   }
 
   if (width > MAX_PRE_X) scale = (double)width / (double)MAX_PRE_X;
-  if (height > MAX_PRE_Y && (height / MAX_PRE_Y > scale)) scale = (double)height / (double)MAX_PRE_Y;
+  if (height > MAX_PRE_Y && (height / MAX_PRE_Y < scale)) scale = (double)height / (double)MAX_PRE_Y;
   return scale;
 }
 

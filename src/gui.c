@@ -1550,7 +1550,7 @@ void create_LiVES(void) {
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mainw->btoolbar), TRUE);
 
   lives_toolbar_set_style(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOLBAR_ICONS);
-  lives_toolbar_set_icon_size(LIVES_TOOLBAR(mainw->btoolbar), LIVES_ICON_SIZE_MENU);
+  lives_toolbar_set_icon_size(LIVES_TOOLBAR(mainw->btoolbar), LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
   if (capable->smog_version_correct) {
     lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->btoolbar, TRUE, TRUE, 0);
@@ -1638,7 +1638,7 @@ void create_LiVES(void) {
   for (i = 0; i < 3; i++) {
     lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   }
-  mainw->l1_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Audio Source:"));
+  mainw->l1_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Audio Source:    "));
   widget_opts.expand = LIVES_EXPAND_NONE;
   lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
@@ -1675,7 +1675,7 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_NONE;
   lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   mainw->l2_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Internal"));
-  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), "            ");
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   mainw->ext_audio_checkbutton = NULL;
@@ -1908,7 +1908,7 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->vps_label, FALSE, FALSE, widget_opts.packing_width);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
-  mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL, 1, -FPS_MAX, FPS_MAX, 0.1, 0.01, 3,
+  mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL, 1, -FPS_MAX, FPS_MAX, 0.1, 1., 3,
                              LIVES_BOX(mainw->framebar), _("Vary the video speed"));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
@@ -1923,12 +1923,12 @@ void create_LiVES(void) {
 
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->banner, TRUE, TRUE, 0);
 
-  mainw->framecounter = lives_entry_new();
+  mainw->framecounter = lives_standard_entry_new("", "", FCWIDTHCHARS, FCWIDTHCHARS, NULL, NULL);
+
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
   lives_entry_set_editable(LIVES_ENTRY(mainw->framecounter), FALSE);
   lives_entry_set_has_frame(LIVES_ENTRY(mainw->framecounter), FALSE);
-
-  lives_entry_set_width_chars(LIVES_ENTRY(mainw->framecounter), FCWIDTHCHARS);
+  lives_widget_set_sensitive(mainw->framecounter, TRUE);
 
   lives_widget_set_can_focus(mainw->framecounter, FALSE);
 
@@ -2027,7 +2027,7 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.apply_theme = FALSE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
-  mainw->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 10000000000., 0,
+  mainw->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 1., 0,
                             LIVES_BOX(hbox3), _("The first selected frame in this clip"));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = dpw;
@@ -2077,7 +2077,7 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   widget_opts.apply_theme = FALSE;
-  mainw->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 10000000000., 0,
+  mainw->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 1., 0,
                           LIVES_BOX(hbox3), _("The last selected frame in this clip"));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = dpw;
@@ -3114,8 +3114,8 @@ void fade_background(void) {
   lives_frame_set_label(LIVES_FRAME(mainw->frame2), "");
 
   if (mainw->toy_type != LIVES_TOY_MAD_FRAMES || mainw->foreign) {
-    lives_widget_hide(mainw->start_image);
-    lives_widget_hide(mainw->end_image);
+    lives_widget_hide(mainw->frame1);
+    lives_widget_hide(mainw->frame2);
   }
   if (!mainw->foreign && future_prefs->show_tool) {
     lives_widget_show(mainw->tb_hbox);
@@ -3238,8 +3238,8 @@ void unfade_background(void) {
     }
     if (mainw->multitrack == NULL) lives_widget_show(mainw->scrolledwindow);
   }
-  lives_widget_show(mainw->start_image);
-  lives_widget_show(mainw->end_image);
+  lives_widget_show(mainw->frame1);
+  lives_widget_show(mainw->frame2);
   lives_widget_show(mainw->eventbox2);
   if (!cfile->opening) {
     lives_widget_show(mainw->hruler);
@@ -3503,7 +3503,7 @@ void make_preview_box(void) {
   mainw->preview_spinbutton = lives_standard_spin_button_new(NULL, (mainw->current_file > -1 && cfile->frames > 0.) ? 1. : 0.,
                               (mainw->current_file > -1 && cfile->frames > 0.) ? 1. : 0.,
                               (mainw->current_file > -1 && cfile->frames > 0.) ? cfile->frames : 0.,
-                              1., 10., 0,
+                              1., 1., 0,
                               LIVES_BOX(mainw->preview_hbox), _("Frame number to preview"));
 
   mainw->preview_scale = lives_standard_hscale_new(lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->preview_spinbutton)));

@@ -267,7 +267,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
       char *labeltext = lives_strdup(_("    Maintain _Aspect Ratio    "));
       LiVESWidget *eventbox = lives_event_box_new();
 
-      aspect.lockbutton = lives_standard_lock_button_new(TRUE, 64, 64, _("Maintain aspect ratio"));
+      // TODO: fix the width and height
+      aspect.lockbutton = lives_standard_lock_button_new(TRUE, 32, 32, _("Maintain aspect ratio"));
       lives_signal_connect(aspect.lockbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(reset_aspect), (livespointer)&aspect);
       reset_aspect(LIVES_BUTTON(aspect.lockbutton), &aspect);
 
@@ -303,7 +304,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
 
       if (expand) add_fill_to_box(LIVES_BOX(hbox));
 
-      lives_box_pack_start(LIVES_BOX(hbox), aspect.lockbutton, widget_opts.expand == LIVES_EXPAND_EXTRA, FALSE, 0);
+      lives_box_pack_start(LIVES_BOX(hbox), aspect.lockbutton, expand, FALSE, 0);
 
       if (expand) add_fill_to_box(LIVES_BOX(hbox));
 

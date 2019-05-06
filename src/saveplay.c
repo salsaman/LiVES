@@ -2870,12 +2870,12 @@ void play_file(void) {
     return;
   }
 
-  lives_widget_hide(mainw->playframe);
-
   // unblank the background
   if ((mainw->faded || mainw->fs) && mainw->multitrack == NULL) {
     unfade_background();
   }
+
+  lives_widget_hide(mainw->playframe);
 
   // resize out of double size
   if ((mainw->double_size && !mainw->fs) && mainw->multitrack == NULL) {

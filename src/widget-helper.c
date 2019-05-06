@@ -32,6 +32,7 @@ static void button_state_cb(LiVESWidget *button, LiVESWidgetState state, livespo
 
 static LiVESWidget *prettify_button(LiVESWidget *button) {
   if (!widget_opts.apply_theme || button == NULL) return button;
+
   lives_widget_apply_theme2(button, LIVES_WIDGET_STATE_NORMAL, TRUE);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "default_grabbed", LIVES_INT_TO_POINTER(FALSE));
   set_child_colour(button, TRUE);
@@ -1006,7 +1007,7 @@ boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, c
   char *state_str;
 
   gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
 
   widget_name = g_strdup(gtk_widget_get_name(widget));
 
@@ -1064,6 +1065,12 @@ boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, c
     css_string = tmp;
   }
 
+  if (GTK_IS_BUTTON(widget)) {
+    tmp = lives_strdup_printf("%s %s {\n padding: 4;\n }\n", css_string, wname);
+    lives_free(css_string);
+    css_string = tmp;
+  }
+
 #if GTK_CHECK_VERSION(4, 0, 0)
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                   css_string,
@@ -1102,15 +1109,17 @@ boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetState state, c
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(3, 16, 0)
 
-  GtkCssProvider *provider = gtk_css_provider_new();
-  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+  GtkCssProvider *provider;
+  GtkStyleContext *ctx;
 
   char *widget_name, *wname;
   char *colref;
   char *css_string;
 
+  provider = gtk_css_provider_new();
+  ctx = gtk_widget_get_style_context(widget);
   gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
 
   widget_name = g_strdup(gtk_widget_get_name(widget));
 
@@ -1378,13 +1387,14 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_new_from_stock(const char *
     lives_free(fnamex);
     lives_free(fname);
     if (pixbuf != NULL) {
+      LiVESPixbuf *new_pixbuf = pixbuf;
       if (size != LIVES_ICON_SIZE_CUSTOM) {
-        LiVESPixbuf *new_pixbuf = lives_pixbuf_scale_simple(pixbuf, get_real_size_from_icon_size(size), get_real_size_from_icon_size(size),
-                                  LIVES_INTERP_BEST);
+        new_pixbuf = lives_pixbuf_scale_simple(pixbuf, get_real_size_from_icon_size(size), get_real_size_from_icon_size(size),
+                                               LIVES_INTERP_BEST);
         lives_object_unref(pixbuf);
-        image = lives_image_new_from_pixbuf(new_pixbuf);
-        lives_object_unref(new_pixbuf);
       }
+      image = lives_image_new_from_pixbuf(new_pixbuf);
+      lives_object_unref(new_pixbuf);
     } else {
 #if GTK_CHECK_VERSION(3, 10, 0)
       image = gtk_image_new_from_icon_name(LIVES_STOCK_MISSING_IMAGE, size);
@@ -2862,6 +2872,15 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTreeModel *lives_combo_get_model(LiVESCombo *co
 
 #endif
   return model;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_model(LiVESCombo *combo, LiVESTreeModel *model) {
+#ifdef GUI_GTK
+  gtk_combo_box_set_model(combo, model);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
@@ -7087,7 +7106,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_color_button_set_use_alpha(LiVESColorB
 }
 
 
-
 WIDGET_HELPER_LOCAL_INLINE boolean lives_widget_get_mods(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y,
     LiVESXModifierType *modmask) {
 #ifdef GUI_GTK
@@ -7382,9 +7400,21 @@ static void set_label_state(LiVESWidget *widget, LiVESWidgetState state, livespo
 }
 
 
-static void set_spinbutton_colours(LiVESWidget *widget, LiVESWidgetState state, livespointer labelp) {
+static void set_entry_colours(LiVESWidget *widget, LiVESWidgetState state, livespointer labelp) {
+#ifdef GTK_ENTRY_BG_BUG
+  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+  if (!lives_widget_is_sensitive(widget)) set_child_dimmed_colour(widget, BUTTON_DIM_VAL);
+  else {
+    lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_INSENSITIVE);
+    set_child_colour(widget, TRUE);
+  }
+  if (LIVES_IS_COMBO(widget)) {
+    widget = lives_combo_get_entry(LIVES_COMBO(widget));
+    lives_widget_set_sensitive(widget, FALSE);
+  }
+  gtk_style_context_set_state(ctx, LIVES_WIDGET_STATE_INSENSITIVE);
+#endif
   if (labelp != NULL) set_label_state(widget, state, labelp);
-  //set_child_colour(widget, TRUE); // brokem - will not set bg for gtk 3, except for insensitive state
 }
 
 
@@ -7621,7 +7651,7 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
 static LiVESWidget *make_inner_hbox(LiVESBox *box) {
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
   LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
-  lives_expand_t woe = widget_opts.expand;
+
   lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
   if (LIVES_IS_HBOX(box)) {
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
@@ -7632,7 +7662,6 @@ static LiVESWidget *make_inner_hbox(LiVESBox *box) {
   lives_widget_set_show_hide_parent(vbox);
   hbox = lives_hbox_new(FALSE, 0);
   add_spring_to_box(LIVES_BOX(vbox), 0);
-  widget_opts.expand = woe;
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
   add_spring_to_box(LIVES_BOX(vbox), 0);
   lives_widget_set_show_hide_parent(hbox);
@@ -7676,6 +7705,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
   boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
 
   checkbutton = lives_check_button_new();
+  lives_widget_apply_theme(checkbutton, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_set_tooltip_text(checkbutton, tooltip);
 
   widget_opts.last_label = NULL;
@@ -7727,6 +7757,8 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
   boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
 
   radiobutton = lives_radio_button_new(*rbgroup);
+  lives_widget_apply_theme(radiobutton, LIVES_WIDGET_STATE_NORMAL);
+
   *rbgroup = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
 
   if (tooltip != NULL) lives_widget_set_tooltip_text(radiobutton, tooltip);
@@ -7816,6 +7848,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
   adj = lives_adjustment_new(val, min, max, step, page, 0.);
   spinbutton = lives_spin_button_new(adj, 1, dp);
+  lives_widget_apply_theme(spinbutton, LIVES_WIDGET_STATE_NORMAL);
+
   if (tooltip != NULL) lives_widget_set_tooltip_text(spinbutton, tooltip);
   if (dp == 0) lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(spinbutton), TRUE);
 
@@ -7854,8 +7888,9 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   }
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(set_spinbutton_colours),
-                             label);
+                             LIVES_GUI_CALLBACK(set_entry_colours),
+                             (livespointer)label);
+  set_entry_colours(spinbutton, lives_widget_get_state(spinbutton), (livespointer)label);
 
   return spinbutton;
 }
@@ -7874,6 +7909,8 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
   boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
 
   combo = lives_combo_new();
+  lives_widget_apply_theme(combo, LIVES_WIDGET_STATE_NORMAL);
+
   if (tooltip != NULL) lives_widget_set_tooltip_text(combo, tooltip);
 
   entry = (LiVESEntry *)lives_combo_get_entry(LIVES_COMBO(combo));
@@ -7919,16 +7956,20 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
                                label);
   }
 
+  lives_signal_connect_after(LIVES_GUI_OBJECT(combo), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(set_entry_colours),
+                             (livespointer)label);
+
+  set_entry_colours(LIVES_WIDGET(combo), lives_widget_get_state(combo), (livespointer)label);
+
   return combo;
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_combo_new_with_model(LiVESTreeModel *model) {
-  LiVESWidget *combo = lives_standard_combo_new(NULL, NULL, NULL, NULL);
-
-
-
-
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_combo_new_with_model(LiVESTreeModel *model, LiVESBox *box) {
+  LiVESWidget *combo = lives_standard_combo_new(NULL, NULL, box, NULL);
+  lives_combo_set_model(LIVES_COMBO(combo), model);
+  return combo;
 }
 
 
@@ -7941,6 +7982,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
   boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
 
   entry = lives_entry_new();
+  lives_widget_apply_theme(entry, LIVES_WIDGET_STATE_NORMAL);
 
   if (tooltip != NULL) lives_widget_set_tooltip_text(entry, tooltip);
 
@@ -7992,6 +8034,11 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
                                label);
   }
 
+  lives_signal_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(set_entry_colours),
+                             (livespointer)label);
+
+  lives_widget_set_sensitive(entry, FALSE);
   return entry;
 }
 
@@ -8344,6 +8391,7 @@ static void _on_lock_button_clicked(LiVESButton *button, livespointer user_data)
   lives_container_add(LIVES_CONTAINER(button), image);
   lives_widget_show(image);
   if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(image, LIVES_WIDGET_STATE_NORMAL);
     lives_widget_apply_theme(LIVES_WIDGET(button), LIVES_WIDGET_STATE_NORMAL);
   }
 }
@@ -8359,6 +8407,8 @@ boolean label_act_lockbutton(LiVESWidget *widget, LiVESXEventButton *event, LiVE
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height, const char *tooltip) {
   LiVESWidget *lockbutton;
   lockbutton = lives_button_new();
+  prettify_button(lockbutton);
+  lives_widget_set_size_request(lockbutton, width, height);
   if (tooltip != NULL) lives_widget_set_tooltip_text(lockbutton, tooltip);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lockbutton), "is_locked", LIVES_INT_TO_POINTER(!is_locked));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lockbutton), "width", LIVES_INT_TO_POINTER(width));
@@ -9309,7 +9359,7 @@ void funkify_dialog(LiVESWidget *dialog) {
     LiVESWidget *frame = lives_standard_frame_new(NULL, 0., FALSE);
     LiVESWidget *box = lives_vbox_new(FALSE, 0);
     LiVESWidget *content = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-    LiVESWidget *label = lives_label_new("");
+    LiVESWidget *action = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
 
     lives_container_set_border_width(LIVES_CONTAINER(dialog), 0);
     lives_container_set_border_width(LIVES_CONTAINER(frame), 0);
@@ -9322,13 +9372,13 @@ void funkify_dialog(LiVESWidget *dialog) {
 
     lives_box_pack_start(LIVES_BOX(box), content, TRUE, TRUE, 0);
 
-    lives_box_pack_start(LIVES_BOX(box), label, FALSE, TRUE, 0);
+    gtk_widget_set_margin_top(action, widget_opts.packing_height);
 
     lives_widget_show_all(frame);
 
     lives_container_set_border_width(LIVES_CONTAINER(box), widget_opts.border_width * 2);
   } else {
-    lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
+    lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width);
   }
 }
 
@@ -9538,6 +9588,7 @@ LiVESWidget *add_vsep_to_box(LiVESBox *box) {
   return vseparator;
 }
 
+
 //#define SHOW_FILL
 LiVESWidget *add_fill_to_box(LiVESBox *box) {
 #ifdef SHOW_FILL
@@ -9548,13 +9599,13 @@ LiVESWidget *add_fill_to_box(LiVESBox *box) {
   if (LIVES_IS_HBOX(box)) {
     if (widget_opts.expand == LIVES_EXPAND_EXTRA) {
       lives_box_pack_start(box, widget, TRUE, TRUE, widget_opts.filler_len / 2);
-      lives_widget_set_hexpand(widget, TRUE);
     } else lives_box_pack_start(box, widget, FALSE, TRUE, widget_opts.filler_len / 2);
+    //lives_widget_set_size_request(widget, 1, -1);
   } else {
     if (widget_opts.expand == LIVES_EXPAND_EXTRA) {
       lives_box_pack_start(box, widget, TRUE, TRUE, widget_opts.filler_len / 2);
-      lives_widget_set_vexpand(widget, TRUE);
     } else lives_box_pack_start(box, widget, FALSE, TRUE, widget_opts.expand == LIVES_EXPAND_NONE ? 0 : widget_opts.packing_height);
+    //lives_widget_set_size_request(widget, -1, 1);
   }
 
   return widget;

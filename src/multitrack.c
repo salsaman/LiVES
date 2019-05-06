@@ -4434,7 +4434,6 @@ void mt_init_start_end_spins(lives_mt *mt) {
   LiVESWidget *hbox;
 
   int dpw;
-  boolean woat;
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -4467,15 +4466,12 @@ void mt_init_start_end_spins(lives_mt *mt) {
                        LIVES_GUI_CALLBACK(amixer_show),
                        (livespointer)mt);
 
-  woat = widget_opts.apply_theme;
   dpw = widget_opts.packing_width;
 
-  widget_opts.apply_theme = FALSE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   mt->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 10000000., 1. / mt->fps, 1. / mt->fps, 3,
                          NULL, NULL);
   lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(mt->spinbutton_start), TRUE);
-  widget_opts.apply_theme = woat;
   widget_opts.packing_width = dpw;
 
   lives_box_pack_start(LIVES_BOX(hbox), mt->spinbutton_start, TRUE, FALSE, MAIN_SPIN_SPACER);
@@ -4492,13 +4488,11 @@ void mt_init_start_end_spins(lives_mt *mt) {
   mt->r_sel_arrow = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_box_pack_start(LIVES_BOX(hbox), mt->r_sel_arrow, FALSE, FALSE, 3);
 
-  widget_opts.apply_theme = FALSE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   mt->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 10000000., 1. / mt->fps, 1. / mt->fps, 3,
                        NULL, NULL);
   lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(mt->spinbutton_end), TRUE);
 
-  widget_opts.apply_theme = woat;
   widget_opts.packing_width = dpw;
 
   lives_entry_set_width_chars(LIVES_ENTRY(mt->spinbutton_end), COMBOWIDTHCHARS);
@@ -7743,7 +7737,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mt->btoolbar2), FALSE);
 
   lives_toolbar_set_style(LIVES_TOOLBAR(mt->btoolbar2), LIVES_TOOLBAR_ICONS);
-  lives_toolbar_set_icon_size(LIVES_TOOLBAR(mt->btoolbar2), LIVES_ICON_SIZE_SMALL_TOOLBAR);
+  lives_toolbar_set_icon_size(LIVES_TOOLBAR(mt->btoolbar2), LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
   lives_object_ref(mainw->m_sepwinbutton);
   lives_widget_unparent(mainw->m_sepwinbutton);
@@ -10863,7 +10857,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   lives_container_add(LIVES_CONTAINER(mainw->LiVES), multi->top_vbox);
 
   lives_paned_set_position(LIVES_PANED(multi->hpaned), (GUI_SCREEN_WIDTH - multi->play_width));
-  lives_paned_set_position(LIVES_PANED(multi->vpaned), ((float)GUI_SCREEN_HEIGHT / 4.));
+  lives_paned_set_position(LIVES_PANED(multi->vpaned), ((float)GUI_SCREEN_HEIGHT / 4.8));
 
   if (prefs->show_gui && prefs->open_maximised) {
     int wx, wy;
@@ -21581,9 +21575,7 @@ LiVESWidget *amixer_add_channel_slider(lives_mt *mt, int i) {
 
   i += mt->opts.back_audio_tracks;
 
-  adj = (LiVESObject *)lives_adjustment_new(0.5, 0., 4., 0.01, 0.1, 0.);
-
-  spinbutton = lives_spin_button_new(LIVES_ADJUSTMENT(adj), 0.1, 3);
+  adj = (LiVESObject *)lives_adjustment_new(0.5, 0., 4., 0.01, 0.01, 0.);
 
 #if ENABLE_GIW
   if (prefs->lamp_buttons) {
@@ -21624,7 +21616,9 @@ LiVESWidget *amixer_add_channel_slider(lives_mt *mt, int i) {
   vbox = lives_vbox_new(FALSE, widget_opts.packing_height * 1.5);
   lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height);
   lives_box_pack_start(LIVES_BOX(vbox), amixer->ch_sliders[i], TRUE, TRUE, widget_opts.packing_height * 5);
-  lives_box_pack_start(LIVES_BOX(vbox), spinbutton, FALSE, FALSE, widget_opts.packing_height);
+
+  spinbutton = lives_standard_spin_button_new(NULL, 0.5, 0., 4., 0.01, 0.01, 3, LIVES_BOX(vbox), NULL);
+  gtk_spin_button_set_adjustment(LIVES_SPIN_BUTTON(spinbutton), LIVES_ADJUSTMENT(adj));
 
   amixer->nchans++;
 
@@ -21770,16 +21764,12 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
       lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
 
-    lives_box_pack_start(LIVES_BOX(vbox), eventbox, FALSE, FALSE, widget_opts.packing_height);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    add_fill_to_box(LIVES_BOX(hbox));
-
+    lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
     lives_box_pack_start(LIVES_BOX(hbox), amixer->inv_checkbutton, FALSE, FALSE, 0);
     lives_widget_set_can_focus_and_default(amixer->inv_checkbutton);
-
-    add_fill_to_box(LIVES_BOX(hbox));
   }
 
   if (prefs->lamp_buttons) {
@@ -21815,12 +21805,8 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_end(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    add_fill_to_box(LIVES_BOX(hbox));
-
+    lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
     lives_box_pack_start(LIVES_BOX(hbox), amixer->gang_checkbutton, FALSE, FALSE, widget_opts.packing_width);
-    add_fill_to_box(LIVES_BOX(hbox));
-
-    lives_box_pack_end(LIVES_BOX(vbox), eventbox, FALSE, FALSE, widget_opts.packing_height);
     lives_widget_set_can_focus_and_default(amixer->gang_checkbutton);
   }
 

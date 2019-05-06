@@ -1177,7 +1177,7 @@ static void set_param_and_con_buttons(int key, int mode) {
     if (num_in_params(filter, TRUE, TRUE) > 0) lives_widget_set_sensitive(param_buttons[idx], TRUE);
     else lives_widget_set_sensitive(param_buttons[idx], FALSE);
     lives_widget_set_sensitive(combos[idx], TRUE);
-    if (mode < modes - 1) lives_widget_set_sensitive(combos[idx + 1], TRUE);
+    if (combos[idx + 1] != NULL && mode < modes - 1) lives_widget_set_sensitive(combos[idx + 1], TRUE);
   } else {
     lives_widget_set_sensitive(conx_buttons[idx], FALSE);
     lives_widget_set_sensitive(param_buttons[idx], FALSE);
@@ -2054,6 +2054,7 @@ static LiVESTreeModel *rte_window_fx_model(void) {
 
 
 LiVESWidget *create_rte_window(void) {
+  LiVESWidget *irte_window = rte_window;
   LiVESWidget *table;
   LiVESWidget *hbox;
   LiVESWidget *hbox2;
@@ -2093,7 +2094,7 @@ LiVESWidget *create_rte_window(void) {
   winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
   winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
-  if (rte_window != NULL) {
+  if (irte_window != NULL) {
     if (prefs->rte_keys_virtual != old_rte_keys_virtual) return refresh_rte_window();
     goto rte_window_ready;
   }
@@ -2114,13 +2115,13 @@ LiVESWidget *create_rte_window(void) {
   gr_fns = (ulong *)lives_malloc((prefs->rte_keys_virtual) * sizeof(ulong));
   mode_ra_fns = (ulong *)lives_malloc((prefs->rte_keys_virtual) * modes * sizeof(ulong));
 
-  rte_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+  irte_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
   if (palette->style & STYLE_1) {
-    lives_widget_set_bg_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_text_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(irte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_text_color(irte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  lives_window_set_title(LIVES_WINDOW(rte_window), _("Real Time Effect Mapping"));
-  lives_window_add_accel_group(LIVES_WINDOW(rte_window), mainw->accel_group);
+  lives_window_set_title(LIVES_WINDOW(irte_window), _("Real Time Effect Mapping"));
+  lives_window_add_accel_group(LIVES_WINDOW(irte_window), mainw->accel_group);
 
   table = lives_table_new(prefs->rte_keys_virtual, modes + 1, FALSE);
 
@@ -2139,7 +2140,7 @@ LiVESWidget *create_rte_window(void) {
 
   for (i = 0; i < prefs->rte_keys_virtual * modes; i++) {
     // create combo entry model
-    combos[i] = lives_combo_new_with_model(model);
+    combos[i] = NULL;
   }
 
   for (i = 0; i < prefs->rte_keys_virtual; i++) {
@@ -2213,18 +2214,17 @@ LiVESWidget *create_rte_window(void) {
       lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width);
 
       hbox = lives_hbox_new(FALSE, 0);
+
       lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
       nlabels[idx] = lives_standard_label_new(_("Effect name:"));
 
       lives_box_pack_start(LIVES_BOX(hbox), nlabels[idx], FALSE, FALSE, widget_opts.packing_width);
 
-      combo = combos[idx];
-
+      combos[idx] = combo = lives_standard_combo_new_with_model(model, LIVES_BOX(hbox));
       lives_combo_set_entry_text_column(LIVES_COMBO(combo), NAME_TYPE_COLUMN);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "hashname", empty_string);
-      lives_box_pack_start(LIVES_BOX(hbox), combo, TRUE, TRUE, widget_opts.packing_width);
       lives_box_pack_end(LIVES_BOX(hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
       lives_box_pack_end(LIVES_BOX(hbox), info_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
 
@@ -2269,7 +2269,7 @@ LiVESWidget *create_rte_window(void) {
   lives_box_pack_start(LIVES_BOX(top_vbox), dummy_radio, FALSE, FALSE, 0);
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
-  lives_container_add(LIVES_CONTAINER(rte_window), top_vbox);
+  lives_container_add(LIVES_CONTAINER(irte_window), top_vbox);
 
   hbuttonbox = lives_hbutton_box_new();
   label = add_fill_to_box(LIVES_BOX(hbuttonbox));
@@ -2310,12 +2310,12 @@ LiVESWidget *create_rte_window(void) {
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), ok_button, DEF_BUTTON_WIDTH);
 
   rtew_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-  lives_window_add_accel_group(LIVES_WINDOW(rte_window), rtew_accel_group);
+  lives_window_add_accel_group(LIVES_WINDOW(irte_window), rtew_accel_group);
 
   lives_widget_add_accelerator(ok_button, LIVES_WIDGET_CLICKED_SIGNAL, rtew_accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(rte_window), LIVES_WIDGET_DELETE_EVENT,
+  lives_signal_connect(LIVES_GUI_OBJECT(irte_window), LIVES_WIDGET_DELETE_EVENT,
                        LIVES_GUI_CALLBACK(on_rtew_ok_clicked),
                        NULL);
 
@@ -2338,22 +2338,22 @@ LiVESWidget *create_rte_window(void) {
 rte_window_ready:
   // TODO: ignore button clicks until window is fully shown
 
-  lives_widget_show_all(rte_window);
+  lives_widget_show_all(irte_window);
   lives_widget_hide(dummy_radio);
 
   if (prefs->gui_monitor != 0) {
-    lives_window_center(LIVES_WINDOW(rte_window));
+    lives_window_center(LIVES_WINDOW(irte_window));
   }
 
   if (prefs->open_maximised) {
-    lives_window_maximize(LIVES_WINDOW(rte_window));
+    lives_window_maximize(LIVES_WINDOW(irte_window));
   }
 
   lives_widget_context_update();
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL, rte_window);
-  return rte_window;
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
+  return irte_window;
 }
 
 

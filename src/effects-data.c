@@ -4006,10 +4006,9 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
   hbox = lives_hbox_new(FALSE, 0);
 
-  conxwp->pfxcombo[idx] = lives_combo_new_with_model(pmodel);
+  conxwp->pfxcombo[idx] = lives_standard_combo_new_with_model(pmodel, LIVES_BOX(hbox));
 
   lives_combo_set_entry_text_column(LIVES_COMBO(conxwp->pfxcombo[idx]), NAME_COLUMN);
-  lives_box_pack_start(LIVES_BOX(hbox), conxwp->pfxcombo[idx], FALSE, FALSE, 0);
 
   lives_table_attach(LIVES_TABLE(conxwp->tablep), hbox, 2, 3, row, row + 1,
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
@@ -4095,10 +4094,9 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
   hbox = lives_hbox_new(FALSE, 0);
 
-  conxwp->cfxcombo[idx] = lives_combo_new_with_model(cmodel);
+  conxwp->cfxcombo[idx] = lives_standard_combo_new_with_model(cmodel, LIVES_BOX(hbox));
 
   lives_combo_set_entry_text_column(LIVES_COMBO(conxwp->cfxcombo[idx]), NAME_COLUMN);
-  lives_box_pack_start(LIVES_BOX(hbox), conxwp->cfxcombo[idx], FALSE, FALSE, 0);
 
   lives_table_attach(LIVES_TABLE(conxwp->tablec), hbox, 2, 3, row, row + 1,
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),

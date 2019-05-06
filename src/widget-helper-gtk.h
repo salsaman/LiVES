@@ -14,6 +14,7 @@
 #define GTK_RADIO_MENU_BUG // a bug where gtk_radio_menu_item_set_active() does not update visually
 #define GTK_SUBMENU_SENS_BUG // a bug where setting a menuitem insensitive fails if it has a submenu
 #define GTK_TEXT_VIEW_DRAW_BUG // a bug where textview crashes if too much text in it
+#define GTK_ENTRY_BG_BUG // a bug where the bg of GtkEntry is ignored when sensitive
 
 #if !GTK_CHECK_VERSION(3, 18, 9) // fixed version 
 #define GTK_TEXT_VIEW_CSS_BUG // a bug where named textviews cannot be set by CSS
@@ -528,13 +529,13 @@ typedef GdkRGBA                           LiVESWidgetColor; ///< component value
 
 typedef GtkStateFlags LiVESWidgetState;
 
-#define LIVES_WIDGET_STATE_NORMAL         GTK_STATE_FLAG_NORMAL
+#define LIVES_WIDGET_STATE_NORMAL         GTK_STATE_FLAG_NORMAL        // 0
 #define LIVES_WIDGET_STATE_ACTIVE         GTK_STATE_FLAG_ACTIVE
 #define LIVES_WIDGET_STATE_PRELIGHT       GTK_STATE_FLAG_PRELIGHT
 #define LIVES_WIDGET_STATE_SELECTED       GTK_STATE_FLAG_SELECTED
-#define LIVES_WIDGET_STATE_INSENSITIVE    GTK_STATE_FLAG_INSENSITIVE
+#define LIVES_WIDGET_STATE_INSENSITIVE    GTK_STATE_FLAG_INSENSITIVE     // 8
 #define LIVES_WIDGET_STATE_INCONSISTENT   GTK_STATE_FLAG_INCONSISTENT
-#define LIVES_WIDGET_STATE_FOCUSED        GTK_STATE_FLAG_FOCUSED
+#define LIVES_WIDGET_STATE_FOCUSED        GTK_STATE_FLAG_FOCUSED         // 32
 #define LIVES_WIDGET_STATE_BACKDROP       GTK_STATE_FLAG_BACKDROP
 
 #else

@@ -39,12 +39,12 @@ bordc|Border _Colour|colRGB24|0|0|0|
 </params>
 
 <param_window>
-layout|p0|fill|p1|
-layout|p2|fill|p3|
+layout|p0|p1|
+layout|p2|p3|
 layout|p4|
 special|framedraw|rectdemask|0|1|2|3|
 layout|hseparator|
-layout|p7|p5|fill|p6|
+layout|p7|fill|p5|p6|
 layout|"Offset of frame within border"|p8|p9|
 special|aspect|5|6|
 </param_window>

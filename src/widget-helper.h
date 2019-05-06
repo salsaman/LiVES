@@ -335,8 +335,9 @@ boolean lives_label_set_width_chars(LiVESLabel *label, int nchars);
 boolean lives_label_set_halignment(LiVESLabel *, float yalign);
 
 LiVESWidget *lives_combo_new(void);
-LiVESWidget *lives_combo_new_with_model(LiVESTreeModel *);
+LiVESWidget *lives_combo_new_with_model(LiVESTreeModel *model);
 LiVESTreeModel *lives_combo_get_model(LiVESCombo *);
+boolean lives_combo_set_model(LiVESCombo *, LiVESTreeModel *);
 
 boolean lives_combo_append_text(LiVESCombo *, const char *text);
 boolean lives_combo_set_entry_text_column(LiVESCombo *, int column);
@@ -761,6 +762,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     const char *tooltip);
 LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, LiVESBox *,
                                       const char *tooltip);
+
+LiVESWidget *lives_standard_combo_new_with_model(LiVESTreeModel *, LiVESBox *);
 
 LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars, LiVESBox *,
                                       const char *tooltip);

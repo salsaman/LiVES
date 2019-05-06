@@ -5538,7 +5538,12 @@ render_details *create_render_details(int type) {
     rdet->encoder_name = lives_strdup(prefs->encoder.name);
   }
 
-  rdet->encoder_combo = lives_standard_combo_new(NULL, encoders, LIVES_BOX(top_vbox), NULL);
+  hbox = lives_hbox_new(FALSE, 0);
+  add_spring_to_box(LIVES_BOX(hbox), 0);
+  rdet->encoder_combo = lives_standard_combo_new(NULL, encoders, LIVES_BOX(hbox), NULL);
+  lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, 0);
+  lives_widget_set_halign(rdet->encoder_combo, LIVES_ALIGN_CENTER);
+  add_spring_to_box(LIVES_BOX(hbox), 0);
 
   rdet->encoder_name_fn = lives_signal_connect_after(LIVES_COMBO(rdet->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(on_encoder_entry_changed), rdet);
@@ -5578,7 +5583,12 @@ render_details *create_render_details(int type) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, 0);
 
-  rdet->ofmt_combo = lives_standard_combo_new(NULL, ofmt, LIVES_BOX(top_vbox), NULL);
+  hbox = lives_hbox_new(FALSE, 0);
+  add_spring_to_box(LIVES_BOX(hbox), 0);
+  rdet->ofmt_combo = lives_standard_combo_new(NULL, ofmt, LIVES_BOX(hbox), NULL);
+  lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, 0);
+  lives_widget_set_halign(rdet->ofmt_combo, LIVES_ALIGN_CENTER);
+  add_spring_to_box(LIVES_BOX(hbox), 0);
 
   lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
 
@@ -5588,6 +5598,7 @@ render_details *create_render_details(int type) {
                           LIVES_GUI_CALLBACK(on_encoder_ofmt_changed), rdet);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
+
   alabel = lives_standard_label_new(_("Audio format"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
@@ -5597,7 +5608,13 @@ render_details *create_render_details(int type) {
 
     prefs->acodec_list = lives_list_append(prefs->acodec_list, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
     lives_box_pack_start(LIVES_BOX(top_vbox), alabel, FALSE, FALSE, 0);
-    rdet->acodec_combo = lives_standard_combo_new(NULL, prefs->acodec_list, LIVES_BOX(top_vbox), NULL);
+
+    hbox = lives_hbox_new(FALSE, 0);
+    add_spring_to_box(LIVES_BOX(hbox), 0);
+    rdet->acodec_combo = lives_standard_combo_new(NULL, prefs->acodec_list, LIVES_BOX(hbox), NULL);
+    lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, 0);
+    lives_widget_set_halign(rdet->acodec_combo, LIVES_ALIGN_CENTER);
+    add_spring_to_box(LIVES_BOX(hbox), 0);
   } else {
     add_fill_to_box(LIVES_BOX(top_vbox));
     lives_box_pack_start(LIVES_BOX(top_vbox), alabel, FALSE, FALSE, 0);
@@ -5605,7 +5622,12 @@ render_details *create_render_details(int type) {
     lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), prefs->encoder.of_desc);
     lives_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
-    rdet->acodec_combo = lives_standard_combo_new(NULL, NULL, LIVES_BOX(top_vbox), NULL);
+    hbox = lives_hbox_new(FALSE, 0);
+    add_spring_to_box(LIVES_BOX(hbox), 0);
+    rdet->acodec_combo = lives_standard_combo_new(NULL, NULL, LIVES_BOX(hbox), NULL);
+    lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, 0);
+    lives_widget_set_halign(rdet->acodec_combo, LIVES_ALIGN_CENTER);
+    add_spring_to_box(LIVES_BOX(hbox), 0);
 
     check_encoder_restrictions(TRUE, FALSE, TRUE);
     future_prefs->encoder.of_allowed_acodecs = prefs->encoder.of_allowed_acodecs;

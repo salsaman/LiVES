@@ -1618,15 +1618,15 @@ void create_new_pb_speed(short type) {
 
   vbox = lives_vbox_new(FALSE, 0);
 
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, widget_opts.packing_height * 2);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
 
   if (type == 1) {
     lives_snprintf(label_text, 256,
-                   _("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the desired playback speed\nin _frames per second"),
+                   _("Current playback speed is %.3f frames per second.\n\nPlease enter the desired playback speed\nin _frames per second"),
                    cfile->fps);
   } else if (type == 2) {
     lives_snprintf(label_text, 256,
-                   _("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the _resampled rate\nin frames per second"),
+                   _("Current playback speed is %.3f frames per second.\n\nPlease enter the _resampled rate\nin frames per second"),
                    cfile->fps);
   }
 

@@ -476,6 +476,7 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
 
   int def_width = 0, max_width, width_step;
   int def_height = 0, max_height, height_step;
+  int wopw = widget_opts.packing_width;
 
   register int i;
 
@@ -557,6 +558,10 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
                                tmpl);
     weed_leaf_delete(tmpl, WEED_LEAF_HOST_WIDTH); // force a reset
     gen_width_changed(LIVES_SPIN_BUTTON(spinbuttonw), tmpl);
+
+    widget_opts.packing_width >>= 1;
+    add_fill_to_box(LIVES_BOX(hbox));
+    widget_opts.packing_width = wopw;
 
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_HOST_HEIGHT)) def_height = weed_get_int_value(tmpl, WEED_LEAF_HOST_HEIGHT, &error);
     if (def_height == 0) def_height = DEF_GEN_HEIGHT;
@@ -998,6 +1003,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   boolean has_param = FALSE;
   boolean chk_params = FALSE;
   boolean needs_sizes = FALSE;
+  boolean needs_spacer = FALSE;
 
   int pnum;
   int length;
@@ -1024,10 +1030,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     top_hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
 
     // param_vbox holds the dynamic parameters
-    param_vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
+    param_vbox = lives_vbox_new(FALSE, widget_opts.packing_height / 2);
 
     lives_box_pack_start(LIVES_BOX(top_hbox), param_vbox, TRUE, TRUE, widget_opts.packing_width);
-    lives_box_set_spacing(LIVES_BOX(param_vbox), widget_opts.packing_height / 2);
   }
 
   switch (rfx->status) {
@@ -1142,12 +1147,20 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           lives_box_pack_start(LIVES_BOX(param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
           has_box = TRUE;
           has_param = TRUE;
+          needs_spacer = FALSE;
         }
 
+        if (needs_spacer) {
+          int wopw = widget_opts.packing_width;
+          widget_opts.packing_width >>= 1;
+          add_fill_to_box(LIVES_BOX(hbox));
+          widget_opts.packing_width = wopw;
+        }
         if (last_label != NULL) lives_widget_set_halign(last_label, LIVES_ALIGN_START);
         if (add_param_to_box(LIVES_BOX(hbox), rfx, pnum, (j == (num_tok - 1)) && !noslid)) noslid = TRUE;
         used[pnum] = TRUE;
         has_param = TRUE;
+        needs_spacer = TRUE;
       } else if (!j && !strcmp(array[j], "hseparator") && has_param) {
         add_hsep_to_box(LIVES_BOX(param_vbox));
         j = num_tok; // ignore anything after hseparator
@@ -1162,8 +1175,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
         for (k = 0; k < length; k++) {
           add_fill_to_box(LIVES_BOX(hbox));
         }
+        needs_spacer = FALSE;
       } else if (!strncmp(array[j], "\"", 1)) {
         // label
+        needs_spacer = FALSE;
         if (!has_box) {
           hbox = lives_hbox_new(FALSE, 0);
           lives_box_pack_start(LIVES_BOX(param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -1439,7 +1454,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         lives_widget_set_size_request(scale, GIW_KNOB_WIDTH, GIW_KNOB_HEIGHT);
         giw_knob_set_legends_digits(GIW_KNOB(scale), 0);
         lives_box_pack_start(LIVES_BOX(hbox), scale, FALSE, FALSE, 0);
-        add_fill_to_box(LIVES_BOX(hbox));
+        //add_fill_to_box(LIVES_BOX(hbox));
         lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->black);
         lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_orange);
         if (add_slider) {

@@ -8040,7 +8040,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->preview_eventbox = lives_event_box_new();
 
-  lives_widget_set_size_request(mt->preview_eventbox, scr_width / 3., scr_height / 3.);
+  lives_widget_set_size_request(mt->preview_eventbox, scr_width / 3.5, scr_height / 3.);
   mt->play_box = lives_vbox_new(FALSE, 0);
   lives_widget_set_app_paintable(mt->preview_eventbox, TRUE);
 
@@ -9018,6 +9018,8 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_toolitem), -1);
   lives_object_unref(mainw->vol_toolitem);
 
+  //
+
   lives_object_ref(mainw->gens_menu);
   lives_menu_detach(LIVES_MENU(mainw->gens_menu));
 
@@ -9060,8 +9062,8 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   if (prefs->show_gui) {
     lives_widget_unparent(mt->top_vbox);
-    show_lives();
     lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
+    show_lives();
     mainw->is_ready = mainw_was_ready;
     unblock_expose();
   }
@@ -9082,8 +9084,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   if (mainw->current_file > 0) sensitize();
   lives_widget_hide(mainw->playframe);
 
-  lives_table_set_col_spacings(LIVES_TABLE(mainw->pf_grid), lives_widget_get_allocation_width(mainw->LiVES)
-                               - 2 * DEFAULT_FRAME_HSIZE);
   mainw->is_rendering = FALSE;
 
   reset_clipmenu();
@@ -10746,6 +10746,8 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
   multi = multitrack(event_list, orig_file, cfile->fps);
+
+  lives_widget_context_update();
 
   if (mainw->stored_event_list != NULL) {
     mainw->stored_event_list = NULL;
@@ -16439,14 +16441,14 @@ void mt_swap_play_pause(lives_mt *mt, boolean put_pause) {
 
   if (put_pause) {
 #if GTK_CHECK_VERSION(2, 6, 0)
-    tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PAUSE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+    tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PAUSE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mt->btoolbar)));
 #endif
     set_menu_text(mt->playall, _("_Pause"), TRUE);
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Pause (p)"));
     lives_widget_set_sensitive(mt->playall, TRUE);
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   } else {
-    tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+    tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mt->btoolbar)));
     set_menu_text(mt->playall, _("_Play from Timeline Position"), TRUE);
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all (p)"));
   }

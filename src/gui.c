@@ -119,35 +119,18 @@ void load_theme_images(void) {
 
 
 void add_message_scroller(LiVESWidget *conter) {
-  char *all_text = NULL;
+  if (mainw->scrolledwindow == NULL) {
+    mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
+    lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
+    lives_container_add(LIVES_CONTAINER(conter), mainw->scrolledwindow);
+  } else lives_widget_reparent(mainw->scrolledwindow, conter);
 
-  if (mainw->textview1 != NULL) {
-    all_text = lives_text_view_get_text(LIVES_TEXT_VIEW(mainw->textview1));
-    lives_widget_destroy(mainw->textview1);
+  if (mainw->textview1 == NULL) {
+    mainw->textview1 = lives_standard_text_view_new(NULL, NULL);
+    lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
   }
-
-  if (mainw->scrolledwindow != NULL) {
-    lives_object_unref(mainw->scrolledwindow);
-    //lives_widget_destroy(mainw->scrolledwindow);
-  }
-
-  mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
-  lives_object_ref(mainw->scrolledwindow);
-  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
-
-  lives_container_add(LIVES_CONTAINER(conter), mainw->scrolledwindow);
-
-  mainw->textview1 = lives_standard_text_view_new(all_text, NULL);
-  lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
 
   lives_widget_show_all(conter);
-
-  if (all_text != NULL) lives_free(all_text);
-
-  if (mainw->configured) {
-    // TODO ***
-    //
-  }
 }
 
 
@@ -2184,7 +2167,7 @@ void create_LiVES(void) {
 
   mainw->message_box = lives_vbox_new(FALSE, 0);
 
-  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), eventbox, FALSE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), eventbox, TRUE, TRUE, 0);
   lives_container_add(LIVES_CONTAINER(eventbox), mainw->message_box);
 
   mainw->textview1 = NULL;
@@ -2903,7 +2886,7 @@ void show_lives(void) {
   char buff[PATH_MAX];
 
   lives_widget_show_all(mainw->top_vbox);
-  lives_widget_show(mainw->LiVES); // this calls the config_event()
+  gtk_widget_show_now(mainw->LiVES); // this calls the config_event()
 
   /*  if (palette->style & STYLE_1) {
     lives_widget_hide(mainw->vidbar);

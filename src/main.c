@@ -4130,7 +4130,8 @@ void load_start_image(int frame) {
       }
     }
 
-    layer = weed_layer_new_for_frame(mainw->current_file, frame);
+    layer = weed_layer_new_for_frame(mainw->current_file, frame
+                                    );
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                            WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
@@ -7173,8 +7174,8 @@ void load_frame_image(int frame) {
     if (mainw->playing_file == -1 && mainw->multitrack != NULL) return;
 
     gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),
-        lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10);
-    //gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow), lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10);
+        MAX(lives_widget_get_allocation_height(mainw->message_box),
+            lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10));
 
     lives_widget_queue_draw(mainw->message_box);
     lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
@@ -7371,9 +7372,10 @@ void load_frame_image(int frame) {
       load_end_image(cfile->end);
       if (mainw->playing_file > -1) load_frame_image(cfile->frameno);
     }
+
     gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),
-        lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10);
-    //gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow), lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10);
+        MAX(lives_widget_get_allocation_height(mainw->message_box),
+            lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10));
 
     lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
     lives_widget_queue_draw(mainw->message_box);

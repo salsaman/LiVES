@@ -65,15 +65,15 @@ static void lives_avcodec_unlock(void) {
 }
 
 
-static int stream_peek(int fd, unsigned char *str, size_t len) {
-  off_t cpos = lseek(fd, 0, SEEK_CUR); // get current posn
-  int rv = pread(fd, str, len, cpos); // read len bytes without changing cpos
+/* static int stream_peek(int fd, unsigned char *str, size_t len) { */
+/*   off_t cpos = lseek(fd, 0, SEEK_CUR); // get current posn */
+/*   int rv = pread(fd, str, len, cpos); // read len bytes without changing cpos */
 
-  if (rv == -1) {
-    fprintf(stderr, "err is %d\n", errno);
-  }
-  return rv;
-}
+/*   if (rv == -1) { */
+/*     fprintf(stderr, "err is %d\n", errno); */
+/*   } */
+/*   return rv; */
+/* } */
 
 
 void get_samps_and_signed(enum AVSampleFormat sfmt, int *asamps, boolean *asigned) {
@@ -1130,7 +1130,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       seek_target = av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
       av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
 #ifdef DEBUG
-      fprintf(stderr, "new seek: %d %ld\n", priv->last_frame, seek_target);
+      fprintf(stderr, "new seek: %d %ld %ld\n", priv->last_frame, seek_target, priv->ic->start_time);
 #endif
       avcodec_flush_buffers(cc);
       priv->black_fill = FALSE;
@@ -1163,7 +1163,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if (MyPts == -1) {
         MyPts = priv->packet.pts;
         MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q) - priv->ic->start_time;
-        priv->found_pts = MyPts; // PTS of end of frame, set so start_time is zero
+        priv->found_pts = MyPts; // PTS of start of frame, set so start_time is zero
       }
 
 #ifdef DEBUG
@@ -1219,8 +1219,9 @@ framedone:
 
   priv->last_frame = tframe;
 
+#ifdef TEST_CACHING
 framedone2:
-
+#endif
   if (priv->pFrame == NULL || pixel_data == NULL) return TRUE;
 
   //height=cdata->height;

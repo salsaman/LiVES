@@ -103,8 +103,6 @@ static int clips_to_files[MAX_FILES];
 static boolean pb_audio_needs_prerender;
 static weed_plant_t *pb_loop_event, *pb_filter_map, *pb_afilter_map;
 
-static boolean mainw_was_ready;
-
 static boolean nb_ignore = FALSE;
 
 static LiVESWidget *dummy_menuitem;
@@ -9064,7 +9062,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     lives_widget_unparent(mt->top_vbox);
     lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
     show_lives();
-    mainw->is_ready = mainw_was_ready;
     unblock_expose();
   }
 
@@ -10771,6 +10768,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     // failed to load recovery layout
     multi->clip_selected = mt_clip_from_file(multi, orig_file);
     multi->file_selected = orig_file;
+    if (prefs->show_gui) unblock_expose();
     return FALSE;
   }
 

@@ -8671,10 +8671,30 @@ void on_toy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_preview_spinbutton_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   // update the play window preview
-  int preview_frame = lives_spin_button_get_value_as_int(spinbutton);
-  if ((preview_frame) == mainw->preview_frame) return;
+  int preview_frame;
+  static volatile boolean updated;
+
+  // prevent multiple updates from interfering
+  lives_signal_handler_block(mainw->preview_spinbutton, mainw->preview_spin_func);
+  updated = FALSE;
+  lives_widget_context_update();
+  if (updated) {
+    lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
+    return;
+  }
+  updated = TRUE;
+
+  if (mainw->current_file <= 0 || cfile == NULL) {
+    lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
+    return;
+  }
+  if ((preview_frame = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))) == mainw->preview_frame) {
+    lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
+    return;
+  }
   mainw->preview_frame = preview_frame;
   load_preview_image(TRUE);
+  lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
 }
 
 
@@ -8695,11 +8715,28 @@ void on_prv_link_toggled(LiVESToggleButton *togglebutton, livespointer user_data
 void on_spinbutton_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   int start, ostart;
 
-  if (mainw->current_file <= 0 || cfile == NULL) return;
+  static volatile boolean updated;
+
+  // prevent multiple updates from interfering
+  lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
+  updated = FALSE;
+  lives_widget_context_update();
+  if (updated) {
+    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+    return;
+  }
+  updated = TRUE;
+
+  if (mainw->current_file <= 0 || cfile == NULL) {
+    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+    return;
+  }
+  if ((start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))) == cfile->start) {
+    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+    return;
+  }
 
   ostart = cfile->start;
-
-  if ((start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))) == cfile->start) return;
   cfile->start = start;
 
   if (mainw->selwidth_locked) {
@@ -8737,17 +8774,35 @@ void on_spinbutton_start_value_changed(LiVESSpinButton *spinbutton, livespointer
     if (mainw->prv_link == PRV_START && mainw->preview_frame != cfile->start)
       load_preview_image(FALSE);
   }
+  lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
 }
 
 
 void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   int end, oend;
 
-  if (mainw->current_file <= 0 || cfile == NULL) return;
+  static volatile boolean updated;
+
+  // prevent multiple updates from interfering
+  lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
+  updated = FALSE;
+  lives_widget_context_update();
+  if (updated) {
+    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+    return;
+  }
+  updated = TRUE;
+
+  if (mainw->current_file <= 0 || cfile == NULL) {
+    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+    return;
+  }
+  if ((end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))) == cfile->end) {
+    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+    return;
+  }
 
   oend = cfile->end;
-
-  if ((end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))) == cfile->end) return;
   cfile->end = end;
 
   if (mainw->selwidth_locked) {
@@ -8790,6 +8845,7 @@ void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer u
     if (mainw->prv_link == PRV_END && mainw->preview_frame != cfile->end)
       load_preview_image(FALSE);
   }
+  lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
 }
 
 

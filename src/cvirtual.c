@@ -238,7 +238,7 @@ mismatch:
 
 
 boolean check_if_all_virtual(int fileno, int start, int end) {
-  // check if all frames ar virtual from start to end inclusive in clip fileno
+  // check if all frames are virtual from start to end inclusive in clip fileno
   register int i;
   lives_clip_t *sfile = mainw->files[fileno];
 

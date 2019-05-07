@@ -1181,13 +1181,13 @@ typedef struct {
   pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators
   pthread_mutex_t data_mutex[FX_KEYS_MAX];  ///< used to prevent data being connected while it is possibly being updated
   pthread_mutex_t fxd_active_mutex; ///< prevent simultaneous writing to active_dummy by audio and video threads
-  pthread_mutex_t event_list_mutex; /// prevent simultaneous writing to event_list by audio and video threads
-  pthread_mutex_t clip_list_mutex; /// prevent adding/removing to cliplist while another thread could be reading it
-  pthread_mutex_t vpp_stream_mutex; /// prevent from writing audio when stream is closing
-  pthread_mutex_t cache_buffer_mutex; /// sync for jack playback termination
-  pthread_mutex_t audio_filewriteend_mutex; /// sync for ending writing audio to file
-  pthread_mutex_t audio_resync_mutex; /// sync for audio
-  pthread_mutex_t instance_ref_mutex; /// refcounting for instances
+  pthread_mutex_t event_list_mutex; ///< prevent simultaneous writing to event_list by audio and video threads
+  pthread_mutex_t clip_list_mutex; ///< prevent adding/removing to cliplist while another thread could be reading it
+  pthread_mutex_t vpp_stream_mutex; ///< prevent from writing audio when stream is closing
+  pthread_mutex_t cache_buffer_mutex; ///< sync for jack playback termination
+  pthread_mutex_t audio_filewriteend_mutex; ///< sync for ending writing audio to file
+  pthread_mutex_t audio_resync_mutex; ///< sync for audio
+  pthread_mutex_t instance_ref_mutex; ///< refcounting for instances
 
   volatile lives_rfx_t *vrfx_update;
 

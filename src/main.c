@@ -2874,13 +2874,10 @@ static boolean lives_startup(livespointer data) {
                     add_rfx_effects();
                   }
 
-                  //if (prefs->startup_interface != STARTUP_MT) {
                   if (prefs->show_gui) {
-                    // mainw->ready gets set here
                     show_lives();
-                    mainw->is_ready = TRUE;
                   }
-                  //}
+                  mainw->is_ready = TRUE;
                 }
               }
             }
@@ -4130,8 +4127,8 @@ void load_start_image(int frame) {
       }
     }
 
-    layer = weed_layer_new_for_frame(mainw->current_file, frame
-                                    );
+    layer = weed_layer_new_for_frame(mainw->current_file, frame);
+
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                            WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);

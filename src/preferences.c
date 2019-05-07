@@ -960,10 +960,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   // TODO: move all into pref_factory_* functions
 
-  if (prefsw->theme_style2 != NULL)
-    pstyle2 = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2));
-  else
-    pstyle2 = 0;
+  pstyle2 = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2));
 
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_fore), &colf);
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_back), &colb);
@@ -2579,7 +2576,7 @@ _prefsw *create_prefs_dialog(void) {
   // -------------------,
   // gui controls       |
   // -------------------'
-  prefsw->vbox_right_gui = lives_vbox_new(FALSE, widget_opts.packing_height);
+  prefsw->vbox_right_gui = lives_vbox_new(FALSE, 0);
 
   prefsw->scrollw_right_gui = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_gui);
 
@@ -2767,7 +2764,6 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->checkbutton_render_prompt = lives_standard_check_button_new(_("Use these same _values for rendering a new clip"),
                                       !prefs->render_prompt, LIVES_BOX(hbox), NULL);
 
-
   frame = add_video_options(&prefsw->spinbutton_mt_def_width, prefs->mt_def_width, &prefsw->spinbutton_mt_def_height,
                             prefs->mt_def_height, &prefsw->spinbutton_mt_def_fps, prefs->mt_def_fps, FALSE, NULL);
 
@@ -2915,7 +2911,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
   label = lives_standard_label_new(_("(Check Help/Troubleshoot to see which image formats are supported)"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, widget_opts.packing_width);
 
   if (prefs->ocp == -1) prefs->ocp = get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
 
@@ -2982,7 +2978,7 @@ _prefsw *create_prefs_dialog(void) {
   // playback       |
   // ---------------'
 
-  prefsw->vbox_right_playback = lives_vbox_new(FALSE, widget_opts.packing_height);
+  prefsw->vbox_right_playback = lives_vbox_new(FALSE, 0);
   lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_playback), widget_opts.border_width * 2);
 
   prefsw->scrollw_right_playback = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_playback);
@@ -3355,7 +3351,7 @@ _prefsw *create_prefs_dialog(void) {
   // encoding       |
   // ---------------'
 
-  prefsw->vbox_right_encoding = lives_vbox_new(FALSE, widget_opts.packing_height * 4);
+  prefsw->vbox_right_encoding = lives_vbox_new(FALSE, 0);
   lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_encoding), widget_opts.border_width);
 
   prefsw->scrollw_right_encoding = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_encoding);
@@ -3493,11 +3489,15 @@ _prefsw *create_prefs_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
-  prefsw->wpp_entry = lives_standard_entry_new(_("Weed plugin path"), prefs->weed_plugin_path, -1, PATH_MAX,
+  /*  prefsw->wpp_entry = lives_standard_entry_new(_("Weed plugin path"), prefs->weed_plugin_path, -1, PATH_MAX,
                       LIVES_BOX(hbox), NULL);
   dirbutton = lives_standard_file_button_new(TRUE, NULL);
   lives_box_pack_start(LIVES_BOX(hbox), dirbutton, FALSE, FALSE, widget_opts.packing_width);
   lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), prefsw->wpp_entry);
+  */
+
+  prefsw->wpp_entry = lives_standard_direntry_new(_("Weed plugin path: "), prefs->weed_plugin_path,
+                      STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -3983,7 +3983,7 @@ _prefsw *create_prefs_dialog(void) {
   // Themes     |
   // -----------'
 
-  prefsw->vbox_right_themes = lives_vbox_new(FALSE, widget_opts.packing_height);
+  prefsw->vbox_right_themes = lives_vbox_new(FALSE, 0);
   lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_themes), widget_opts.border_width * 2);
 
   prefsw->scrollw_right_themes = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_themes);
@@ -4142,15 +4142,11 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-#if !GTK_CHECK_VERSION(3, 0, 0)
   prefsw->theme_style2 = lives_standard_check_button_new(_("Color the start/end frame spinbuttons (requires restart)"),
                          (palette->style & STYLE_2), LIVES_BOX(hbox),
                          NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(prefsw->theme_style3, FALSE);
-#else
-  prefsw->theme_style2 = NULL;
-#endif
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -5267,7 +5263,7 @@ void pref_change_colours(void) {
  *
  */
 void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
-  boolean needs_restart;
+  boolean needs_restart = FALSE;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, prefsw->prefs_dialog);
 

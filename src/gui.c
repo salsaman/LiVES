@@ -311,8 +311,6 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_text_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, colt);
 
   if (palette->style & STYLE_2) {
-    // background colour seems to be broken in gtk+3 !!!
-#if !GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, colb);
     lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, colb);
     lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -321,7 +319,6 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
     lives_widget_set_text_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, colf);
     lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, colf);
     lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, colf);
-#endif
   }
 
   lives_widget_set_fg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, colf);
@@ -2008,7 +2005,9 @@ void create_LiVES(void) {
   dpw = widget_opts.packing_width;
   woat = widget_opts.apply_theme;
   widget_opts.expand = LIVES_EXPAND_NONE;
-  widget_opts.apply_theme = FALSE;
+  if (!(palette->style & STYLE_2)) {
+    widget_opts.apply_theme = FALSE;
+  }
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   mainw->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 1., 0,
                             LIVES_BOX(hbox3), _("The first selected frame in this clip"));
@@ -2059,7 +2058,9 @@ void create_LiVES(void) {
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.packing_width = MAIN_SPIN_SPACER;
-  widget_opts.apply_theme = FALSE;
+  if (!(palette->style & STYLE_2)) {
+    widget_opts.apply_theme = FALSE;
+  }
   mainw->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 1., 0,
                           LIVES_BOX(hbox3), _("The last selected frame in this clip"));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;

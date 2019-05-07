@@ -32,7 +32,7 @@ typedef enum {
 
 // values below are multiplied by scale
 #define W_PACKING_WIDTH  10 // packing width for widgets with labels
-#define W_PACKING_HEIGHT 8 // packing height for widgets
+#define W_PACKING_HEIGHT 6 // packing height for widgets
 #define W_BORDER_WIDTH   10 // default border width
 #define W_FILL_LENGTH    128 // default extra fill size
 

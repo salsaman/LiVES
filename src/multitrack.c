@@ -7765,7 +7765,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   widget_opts.apply_theme = FALSE;
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  widget_opts.apply_theme = FALSE;
   mt->timecode = lives_standard_entry_new(NULL, NULL, TIMECODE_LENGTH, TIMECODE_LENGTH, LIVES_BOX(hbox), NULL);
+  widget_opts.apply_theme = TRUE;
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
@@ -9061,6 +9063,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   if (prefs->show_gui) {
     lives_widget_unparent(mt->top_vbox);
     lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
+    lives_object_unref(mainw->top_vbox);
     show_lives();
     unblock_expose();
   }

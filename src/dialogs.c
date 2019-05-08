@@ -262,6 +262,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   lives_window_set_default_size(LIVES_WINDOW(dialog), MIN_MSGBOX_WIDTH, -1);
   lives_widget_set_minimum_size(dialog, MIN_MSGBOX_WIDTH, -1);
+  if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(dialog), widget_opts.screen);
 
   if (widget_opts.apply_theme && (palette->style & STYLE_1)) {
     lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);

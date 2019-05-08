@@ -363,8 +363,6 @@ boolean lives_text_view_set_cursor_visible(LiVESTextView *, boolean setting);
 boolean lives_text_view_set_wrap_mode(LiVESTextView *, LiVESWrapMode wrapmode);
 boolean lives_text_view_set_justification(LiVESTextView *, LiVESJustification justify);
 
-boolean lives_text_view_scroll_mark_onscreen(LiVESTextView *, LiVESTextMark *mark);
-
 LiVESTextBuffer *lives_text_buffer_new(void);
 char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextIter *start, LiVESTextIter *end, boolean inc_hidden_chars);
 boolean lives_text_buffer_set_text(LiVESTextBuffer *, const char *, int len);
@@ -826,7 +824,8 @@ char *lives_text_view_get_text(LiVESTextView *);
 boolean lives_text_view_set_text(LiVESTextView *, const char *text, int len);
 
 boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *, const char *text);
-boolean lives_text_view_scroll_onscreen(LiVESTextView *);
+
+boolean lives_scroll_to_end(LiVESScrolledWindow *);
 
 void lives_general_button_clicked(LiVESButton *, livespointer data_to_free);
 

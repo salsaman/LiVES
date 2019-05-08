@@ -126,7 +126,6 @@ typedef struct {
   char audio_play_command[PATH_MAX * 2];
   char cdplay_device[PATH_MAX];  ///< locale encoding
   double default_fps;
-  int bar_height;
   boolean pause_effect_during_preview;
   boolean open_decorated;
   int sleep_time;

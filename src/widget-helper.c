@@ -912,8 +912,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_process_all_updates() {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_reparent(LiVESWidget *widget, LiVESWidget *new_parent) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 14, 0)
+  GtkWidget *parent = gtk_widget_get_parent(widget);
   g_object_ref(widget);
-  gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(widget)), widget);
+  if (parent != NULL) {
+    gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(widget)), widget);
+  }
   gtk_container_add(GTK_CONTAINER(new_parent), widget);
   g_object_unref(widget);
 #else
@@ -3113,20 +3116,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_set_justification(LiVESTextV
 #endif
 #ifdef GUI_QT
   tview->setAlignment(justify);
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_scroll_mark_onscreen(LiVESTextView *tview, LiVESTextMark *mark) {
-#ifdef GUI_GTK
-  gtk_text_view_scroll_mark_onscreen(tview, mark);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  // TODO
-  tview->scrollToAnchor(mark->get_name());
   return TRUE;
 #endif
   return FALSE;
@@ -8361,7 +8350,6 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbu
 
   if (text != NULL) {
     lives_text_view_set_text(LIVES_TEXT_VIEW(textview), text, -1);
-    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(textview));
   }
 
   lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
@@ -9068,12 +9056,15 @@ boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *tbuff, const char *text
 }
 
 
-boolean lives_text_view_scroll_onscreen(LiVESTextView *tview) {
-  LiVESAdjustment *adj = NULL;
+boolean lives_scroll_to_end(LiVESScrolledWindow *scrolledwindow) {
 #ifdef GUI_GTK
-  adj = gtk_scrolled_window_get_hadjustment(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
-  gtk_adjustment_set_value(adj, lives_adjustment_get_upper(adj) - lives_adjustment_get_page_size(adj));
+#if GTK_CHECK_VERSION(2, 8, 0)
+  LiVESWidget *vscroll = gtk_scrolled_window_get_vscrollbar(scrolledwindow);
+  LiVESAdjustment *adj = lives_range_get_adjustment(LIVES_RANGE(vscroll));
+  lives_range_set_value(LIVES_RANGE(vscroll), 99999999999.);
+  lives_adjustment_set_value(adj, 999999999.);
   return TRUE;
+#endif
 #endif
   return FALSE;
 }

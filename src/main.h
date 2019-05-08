@@ -1167,7 +1167,7 @@ void frame_size_update(void);
 void splash_init(void);
 void splash_end(void);
 void splash_msg(const char *msg, double pct);
-void add_message_scroller(LiVESWidget *conter);
+void add_message_scroller(LiVESWidget *conter, LiVESTextBuffer *);
 void resize_widgets_for_monitor(boolean get_play_times);
 #if GTK_CHECK_VERSION(3, 0, 0)
 void calibrate_sepwin_size(void);

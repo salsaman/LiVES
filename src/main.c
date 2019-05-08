@@ -1176,7 +1176,6 @@ static void lives_init(_ign_opts *ign_opts) {
     if (prefs->default_fps > FPS_MAX) prefs->default_fps = FPS_MAX;
 
     prefs->q_type = Q_SMOOTH;
-    prefs->bar_height = 5;
 
     prefs->event_window_show_frame_events = FALSE;
     if (!mainw->foreign) prefs->crash_recovery = TRUE;
@@ -3030,6 +3029,10 @@ static boolean lives_startup(livespointer data) {
     calibrate_sepwin_size();
   }
 #endif
+
+  if (mainw->current_file > -1 && mainw->multitrack == NULL) {
+    switch_clip(1, mainw->current_file, TRUE);
+  }
 
   mainw->go_away = FALSE;
 
@@ -7170,13 +7173,6 @@ void load_frame_image(int frame) {
 
     if (mainw->playing_file == -1 && mainw->multitrack != NULL) return;
 
-    gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),
-        MAX(lives_widget_get_allocation_height(mainw->message_box),
-            lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10));
-
-    lives_widget_queue_draw(mainw->message_box);
-    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
-
     if (cfile->frames) {
       mainw->pwidth = cfile->hsize;
       mainw->pheight = cfile->vsize;
@@ -7332,7 +7328,16 @@ void load_frame_image(int frame) {
       zero_spinbuttons();
     }
 
-    if (mainw->multitrack == NULL) resize(1);
+    if (mainw->multitrack == NULL) {
+      // need to shrink the message_box text then re-expand it after redrawing the widgets
+      // otherwise the main window can expand beyond the bottom of the screen
+      gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow), 1);
+      lives_widget_set_size_request(mainw->message_box, -1, 1);
+      lives_widget_set_size_request(mainw->scrolledwindow, -1, 1);
+      lives_widget_set_size_request(mainw->textview1, -1, 1);
+      lives_widget_context_update(); // update BEFORE we call resize()
+      resize(1);
+    }
 
     if (mainw->playing_file > -1) {
       if (mainw->fs) {
@@ -7370,12 +7375,23 @@ void load_frame_image(int frame) {
       if (mainw->playing_file > -1) load_frame_image(cfile->frameno);
     }
 
-    gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),
-        MAX(lives_widget_get_allocation_height(mainw->message_box),
-            lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10));
-
-    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
-    lives_widget_queue_draw(mainw->message_box);
+    if (prefs->show_gui && mainw->multitrack == NULL) {
+      // re-expand the message area to fit the empty space at the bottom
+      int height;
+      LiVESTextBuffer *tbuf = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
+      int lcount = gtk_text_buffer_get_line_count(tbuf);
+      LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(mainw->scrolledwindow);
+      gtk_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),
+          (height = lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) +
+                    lives_widget_get_allocation_height(mainw->message_box)));
+      if (height > 0) {
+        lives_widget_set_size_request(mainw->textview1, -1, height);
+        lives_widget_set_size_request(mainw->scrolledwindow, -1, height);
+        lives_widget_set_size_request(mainw->message_box, -1, height);
+        lives_widget_show(mainw->message_box);
+      } else lives_widget_hide(mainw->message_box);
+      lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+    }
   }
 
 

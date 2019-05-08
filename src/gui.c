@@ -118,15 +118,15 @@ void load_theme_images(void) {
 }
 
 
-void add_message_scroller(LiVESWidget *conter) {
+void add_message_scroller(LiVESWidget *conter, LiVESTextBuffer *tbuff) {
   if (mainw->scrolledwindow == NULL) {
     mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
     lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
     lives_container_add(LIVES_CONTAINER(conter), mainw->scrolledwindow);
-  } else lives_widget_reparent(mainw->scrolledwindow, conter);
+  }
 
   if (mainw->textview1 == NULL) {
-    mainw->textview1 = lives_standard_text_view_new(NULL, NULL);
+    mainw->textview1 = lives_standard_text_view_new(NULL, tbuff);
     lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
   }
 
@@ -307,8 +307,10 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->framebar), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->framebar, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_base_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, coli);
-  lives_widget_set_text_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, colt);
+  if (LIVES_IS_WIDGET(mainw->textview1)) {
+    lives_widget_set_base_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, coli);
+    lives_widget_set_text_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, colt);
+  }
 
   if (palette->style & STYLE_2) {
     lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -401,6 +403,7 @@ void create_LiVES(void) {
   ping_pong_closure = NULL;
 
   mainw->LiVES = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+  if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(mainw->LiVES), widget_opts.screen);
 
   ////////////////////////////////////
 
@@ -2117,8 +2120,8 @@ void create_LiVES(void) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, FALSE, FALSE, 0);
-  gtk_widget_set_margin_top(mainw->vidbar, widget_opts.packing_height / 2);
-  gtk_widget_set_margin_bottom(mainw->vidbar, 0);
+  gtk_widget_set_margin_top(mainw->vidbar, widget_opts.packing_height);
+  gtk_widget_set_margin_bottom(mainw->vidbar, widget_opts.packing_height / 2);
 
   mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_vid_event), &mainw->vidbar_func);
   // need to set this even if theme is none
@@ -2134,8 +2137,8 @@ void create_LiVES(void) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, FALSE, FALSE, 0);
-  gtk_widget_set_margin_top(mainw->laudbar, widget_opts.packing_height / 2);
-  gtk_widget_set_margin_bottom(mainw->laudbar, 0);
+  gtk_widget_set_margin_top(mainw->laudbar, widget_opts.packing_height);
+  gtk_widget_set_margin_bottom(mainw->laudbar, widget_opts.packing_height / 2);
 
   mainw->laudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_laud_event), &mainw->laudbar_func);
   lives_widget_set_app_paintable(mainw->laudio_draw, TRUE);
@@ -2152,8 +2155,8 @@ void create_LiVES(void) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, FALSE, FALSE, 0);
-  gtk_widget_set_margin_top(mainw->raudbar, widget_opts.packing_height / 2);
-  gtk_widget_set_margin_bottom(mainw->raudbar, 0);
+  gtk_widget_set_margin_top(mainw->raudbar, widget_opts.packing_height);
+  gtk_widget_set_margin_bottom(mainw->raudbar, widget_opts.packing_height / 2);
 
   mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_raud_event), &mainw->raudbar_func);
   lives_widget_set_app_paintable(mainw->raudio_draw, TRUE);
@@ -2161,19 +2164,25 @@ void create_LiVES(void) {
   lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_fg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_size_request(mainw->raudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_AUDBAR_HEIGHT);
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, TRUE, widget_opts.packing_height / 2);
-
-  eventbox = lives_event_box_new();
-  lives_widget_set_valign(eventbox, LIVES_ALIGN_FILL);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, FALSE, 0);
+  gtk_widget_set_margin_top(mainw->raudio_draw, widget_opts.packing_height / 2);
+  gtk_widget_set_margin_bottom(mainw->raudio_draw, widget_opts.packing_height * 4);
 
   mainw->message_box = lives_vbox_new(FALSE, 0);
-
-  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), eventbox, TRUE, TRUE, 0);
-  lives_container_add(LIVES_CONTAINER(eventbox), mainw->message_box);
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
 
   mainw->textview1 = NULL;
   mainw->scrolledwindow = NULL;
-  add_message_scroller(mainw->message_box);
+  add_message_scroller(mainw->message_box, NULL);
+  gtk_widget_set_redraw_on_allocate(mainw->message_box, FALSE);
+  gtk_widget_set_redraw_on_allocate(mainw->scrolledwindow, FALSE);
+  gtk_widget_set_redraw_on_allocate(mainw->textview1, FALSE);
+  /* lives_widget_set_valign(mainw->message_box, LIVES_ALIGN_FILL); */
+  /* lives_widget_set_vexpand(mainw->message_box, TRUE); */
+  /* lives_widget_set_valign(mainw->scrolledwindow, LIVES_ALIGN_FILL); */
+  /* lives_widget_set_vexpand(mainw->scrolledwindow, TRUE); */
+  /* lives_widget_set_valign(mainw->textview1, LIVES_ALIGN_FILL); */
+  /* lives_widget_set_vexpand(mainw->textview1, TRUE); */
 
   // accel keys
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
@@ -2884,24 +2893,27 @@ void create_LiVES(void) {
 
 
 void show_lives(void) {
+  int height;
   char buff[PATH_MAX];
 
   lives_widget_show_all(mainw->top_vbox);
   gtk_widget_show_now(mainw->LiVES); // this calls the config_event()
 
-  /*  if (palette->style & STYLE_1) {
-    lives_widget_hide(mainw->vidbar);
-    lives_widget_hide(mainw->laudbar);
-    lives_widget_hide(mainw->raudbar);
-  } else {
-    lives_widget_show(mainw->vidbar);
-    lives_widget_show(mainw->laudbar);
-    lives_widget_show(mainw->raudbar);
-    }*/
+  if (mainw->multitrack == NULL) {
+    LiVESTextBuffer *tbuf = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
+    int lcount = gtk_text_buffer_get_line_count(tbuf);
+    LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(mainw->scrolledwindow);
 
-  gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),
-      lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) - 10);
-  //add_message_scroller(mainw->message_box);
+    gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),
+        (height = lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) -
+                  lives_widget_get_allocation_height(mainw->message_box)));
+
+    lives_adjustment_set_lower(adj, 0.);
+    lives_adjustment_set_upper(adj, (double)lcount * 3.);
+    lives_adjustment_set_page_size(adj, 1.);
+    lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+  }
+
   set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars, \
               &palette->info_base, &palette->info_text);
 

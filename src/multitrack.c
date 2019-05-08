@@ -117,6 +117,9 @@ static boolean needs_clear;
 
 static LiVESList *pkg_list;
 
+static LiVESWidget *mainw_textview;
+static LiVESWidget *mainw_scrolledwindow;
+
 ////////////////////////////
 
 // menuitem callbacks
@@ -4029,6 +4032,9 @@ void mt_zoom_out(LiVESMenuItem *menuitem, livespointer user_data) {
 
 static void paned_pos(LiVESWidget *paned, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
+  int height = lives_widget_get_allocation_height(paned) - gtk_paned_get_position(paned);
+  gtk_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), height);
+  lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
   lives_widget_queue_draw(mt->timeline_table);
 }
 
@@ -6061,6 +6067,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *report_bug;
   LiVESWidget *suggest_feature;
   LiVESWidget *help_translate;
+  LiVESTextBuffer *tbuf;
 
   LiVESObject *vadjustment;
   LiVESAdjustment *spinbutton_adj;
@@ -8457,7 +8464,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   tl_vbox = lives_vbox_new(FALSE, 0);
   lives_container_set_border_width(LIVES_CONTAINER(tl_vbox), 0);
 
-  lives_container_add(LIVES_CONTAINER(mt->vpaned), tl_vbox);
+  lives_paned_pack(1, LIVES_PANED(mt->vpaned), tl_vbox, TRUE, FALSE);
 
   mt->timeline_table_header = lives_table_new(2, TIMELINE_TABLE_COLUMNS, TRUE);
   lives_table_set_row_spacings(LIVES_TABLE(mt->timeline_table_header), 0);
@@ -8573,7 +8580,12 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mainw->unordered_blocks = FALSE;
   }
 
-  add_message_scroller(mt->vpaned);
+  tbuf = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
+
+  mainw->scrolledwindow = NULL;
+  mainw->textview1 = NULL;
+
+  add_message_scroller(mt->vpaned, tbuf);
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_prevclip), mt, NULL));
@@ -8944,8 +8956,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   if (mt->clip_labels != NULL) lives_list_free(mt->clip_labels);
 
-  add_message_scroller(mainw->message_box);
-
   lives_signal_handler_block(mainw->full_screen, mainw->fullscreen_cb_func);
   lives_signal_handler_block(mainw->sepwin, mainw->sepwin_cb_func);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->full_screen), mainw->fs);
@@ -9060,6 +9070,9 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   lives_widget_destroy(mt->clip_scroll);
   lives_widget_destroy(mt->fx_base_box);
 
+  mainw->scrolledwindow = mainw_scrolledwindow;
+  mainw->textview1 = mainw_textview;
+
   if (prefs->show_gui) {
     lives_widget_unparent(mt->top_vbox);
     lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
@@ -9100,8 +9113,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   }
 
   lives_window_remove_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mt->accel_group);
-
-  lives_widget_context_update();
 
   if (prefs->show_gui && prefs->open_maximised) {
     int wx, wy;
@@ -10744,6 +10755,9 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   ce_sepwin_type = prefs->sepwin_type;
   if (ce_sepwin_type == SEPWIN_TYPE_STICKY) on_sticky_activate(NULL, NULL);
 
+  mainw_textview = mainw->textview1;
+  mainw_scrolledwindow = mainw->scrolledwindow;
+
   if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
   multi = multitrack(event_list, orig_file, cfile->fps);
 
@@ -10860,7 +10874,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   lives_container_add(LIVES_CONTAINER(mainw->LiVES), multi->top_vbox);
 
   lives_paned_set_position(LIVES_PANED(multi->hpaned), (GUI_SCREEN_WIDTH - multi->play_width));
-  lives_paned_set_position(LIVES_PANED(multi->vpaned), ((float)GUI_SCREEN_HEIGHT / 4.8));
+  lives_paned_set_position(LIVES_PANED(multi->vpaned), lives_widget_get_allocation_height(multi->vpaned) * 2. / 3.);
 
   if (prefs->show_gui && prefs->open_maximised) {
     int wx, wy;
@@ -10874,7 +10888,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   redraw_all_event_boxes(multi);
-  lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
+  lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
 
   lives_widget_context_update();
   multi->no_expose = FALSE;

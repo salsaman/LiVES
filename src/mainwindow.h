@@ -91,7 +91,7 @@
 #define CE_VIDBAR_HEIGHT ((int)(4. * widget_opts.scale))
 
 /// clip edit vid/aud bar height
-#define CE_AUDBAR_HEIGHT ((int)(12. * widget_opts.scale))
+#define CE_AUDBAR_HEIGHT ((int)(16. * widget_opts.scale))
 
 /// (unexpanded) height of rows in treeviews
 #define TREE_ROW_HEIGHT ((int)(60. * widget_opts.scale))

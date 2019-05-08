@@ -171,6 +171,7 @@ boolean lives_widget_set_sensitive(LiVESWidget *, boolean state);
 boolean lives_widget_get_sensitive(LiVESWidget *);
 
 boolean lives_widget_show(LiVESWidget *);
+boolean lives_widget_show_now(LiVESWidget *);
 boolean lives_widget_show_all(LiVESWidget *);
 boolean lives_widget_hide(LiVESWidget *);
 boolean lives_widget_destroy(LiVESWidget *);
@@ -249,6 +250,11 @@ LiVESWidget *lives_image_new_from_stock(const char *stock_id, LiVESIconSize size
 boolean lives_image_set_from_pixbuf(LiVESImage *, LiVESPixbuf *);
 LiVESPixbuf *lives_image_get_pixbuf(LiVESImage *);
 
+boolean lives_widget_set_margin_left(LiVESWidget *, int margin);
+boolean lives_widget_set_margin_right(LiVESWidget *, int margin);
+boolean lives_widget_set_margin_top(LiVESWidget *, int margin);
+boolean lives_widget_set_margin_bottom(LiVESWidget *, int margin);
+
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
 LiVESWidget *lives_dialog_get_action_area(LiVESDialog *);
 
@@ -318,6 +324,7 @@ LiVESWidget *lives_hpaned_new(void);
 LiVESWidget *lives_vpaned_new(void);
 
 boolean lives_paned_set_position(LiVESPaned *, int pos);
+int lives_paned_get_position(LiVESPaned *);
 boolean lives_paned_pack(int where, LiVESPaned *, LiVESWidget *child, boolean resize, boolean shrink);
 
 LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *);
@@ -495,6 +502,8 @@ boolean lives_spin_button_update(LiVESSpinButton *);
 LiVESWidget *lives_color_button_new_with_color(const LiVESWidgetColor *);
 boolean lives_color_button_get_color(LiVESColorButton *, LiVESWidgetColor *);
 boolean lives_color_button_set_color(LiVESColorButton *, const LiVESWidgetColor *);
+boolean lives_color_button_set_alpha(LiVESColorButton *, int16_t alpha);
+int16_t lives_color_button_get_alpha(LiVESColorButton *);
 boolean lives_color_button_set_title(LiVESColorButton *, const char *title);
 boolean lives_color_button_set_use_alpha(LiVESColorButton *, boolean use_alpha);
 
@@ -692,6 +701,9 @@ LiVESAdjustment *lives_scrolled_window_get_vadjustment(LiVESScrolledWindow *);
 
 boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *, LiVESPolicyType hpolicy, LiVESPolicyType vpolicy);
 boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *, LiVESWidget *child);
+
+boolean lives_scrolled_window_set_min_content_height(LiVESScrolledWindow *, int height);
+boolean lives_scrolled_window_set_min_content_width(LiVESScrolledWindow *, int width);
 
 boolean lives_xwindow_raise(LiVESXWindow *);
 boolean lives_xwindow_set_cursor(LiVESXWindow *, LiVESXCursor *);

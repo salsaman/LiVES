@@ -276,14 +276,15 @@ LIVES_GLOBAL_INLINE boolean lives_fsync(int fd) {
 }
 
 
-LIVES_GLOBAL_INLINE void lives_sync(void) {
-  // ret TRUE on success
+LIVES_GLOBAL_INLINE void lives_sync(int times) {
+  int i;
+  for (i = 0; i < times; i++) {
 #ifndef IS_MINGW
-  sync();
+    sync();
 #else
-  lives_system("sync.exe", TRUE);
-  return;
+    lives_system("sync.exe", TRUE);
 #endif
+  }
 }
 
 
@@ -2954,6 +2955,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   lives_painter_t *cr = NULL;
   lives_painter_surface_t *bgimage;
 
+  char *tmp;
   char *tmpstr;
   char *filename;
 
@@ -3411,30 +3413,26 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       if (cfile->achans == 0) {
         tmpstr = lives_strdup(_("(No audio)"));
       } else {
+        tmp = get_achannel_name(cfile->achans, 0);
         if (cfile->opening_audio) {
-          if (cfile->achans == 1) {
-            tmpstr = lives_strdup(_("Mono  [opening...]"));
-          } else {
-            tmpstr = lives_strdup(_("Left Audio [opening...]"));
-          }
+          tmpstr = lives_strdup_printf(_("%s [opening...]"), tmp);
         } else {
-          if (cfile->achans == 1) {
-            tmpstr = lives_strdup_printf(_("Mono [%.2f sec]"), cfile->laudio_time);
-          } else {
-            tmpstr = lives_strdup_printf(_("Left Audio [%.2f sec]"), cfile->laudio_time);
-          }
+          tmpstr = lives_strdup_printf(_("%s [%.2f sec]"), tmp, cfile->laudio_time);
         }
+        lives_free(tmp);
       }
       lives_label_set_text(LIVES_LABEL(mainw->laudbar), tmpstr);
       lives_widget_show(mainw->laudbar);
       lives_free(tmpstr);
 
       if (cfile->achans > 1) {
+        tmp = get_achannel_name(cfile->achans, 1);
         if (cfile->opening_audio) {
-          tmpstr = lives_strdup(_("Right Audio [opening...]"));
+          tmpstr = lives_strdup_printf(_("%s [opening...]"), tmp);
         } else {
-          tmpstr = lives_strdup_printf(_("Right Audio [%.2f sec]"), cfile->raudio_time);
+          tmpstr = lives_strdup_printf(_("%s [%.2f sec]"), tmp, cfile->raudio_time);
         }
+        lives_free(tmp);
         lives_label_set_text(LIVES_LABEL(mainw->raudbar), tmpstr);
         lives_widget_show(mainw->raudbar);
         lives_free(tmpstr);
@@ -4768,6 +4766,7 @@ void wait_for_bg_audio_sync(int fileno) {
   int fd;
 
   while ((fd = open(afile, O_RDONLY)) < 0 && !(timeout = lives_alarm_get(alarm_handle))) {
+    lives_sync(1);
     lives_usleep(prefs->sleep_time);
   }
   if (fd >= 0) close(fd);
@@ -4785,6 +4784,8 @@ void reget_afilesize(int fileno) {
   if (mainw->multitrack != NULL) return; // otherwise achans gets set to 0...
 
   afile = lives_get_audio_file_name(fileno);
+
+  lives_sync(1);
 
   if ((sfile->afilesize = sget_file_size(afile)) == 0l) {
     if (!sfile->opening && fileno != mainw->ascrap_file && fileno != mainw->scrap_file) {

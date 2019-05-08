@@ -1220,7 +1220,7 @@ void lives_srandom(unsigned int seed);
 ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
 boolean lives_setenv(const char *name, const char *value);
 boolean lives_fsync(int fd);
-void lives_sync(void);
+void lives_sync(int times);
 int lives_rmdir(const char *dir, boolean force);
 int lives_rmdir_with_parents(const char *dir);
 int lives_rm(const char *file);

@@ -634,7 +634,7 @@ boolean do_startup_tests(boolean tshoot) {
       if (info_fd != -1) {
         close(info_fd);
 
-        lives_sync();
+        lives_sync(1);
 
         fsize = sget_file_size(afile);
         lives_rm(afile);
@@ -796,7 +796,7 @@ boolean do_startup_tests(boolean tshoot) {
     if (info_fd != -1) {
       close(info_fd);
 
-      lives_sync();
+      lives_sync(1);
 
       cfile->img_type = IMG_TYPE_PNG;
       get_frame_count(mainw->current_file);

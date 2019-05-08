@@ -118,7 +118,7 @@ static void cleanup_set_dir(void) {
   lives_rm(ofile);
   lives_free(ofile);
 
-  lives_sync();
+  lives_sync(1);
 
   sdir = lives_build_filename(prefs->workdir, mainw->set_name, NULL);
   lives_rmdir(sdir, FALSE);
@@ -9238,7 +9238,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
   uint64_t old_rte; //TODO - block better
   int64_t xticks;
 
-  static boolean in_preview_func = FALSE;
+  static volatile boolean in_preview_func = FALSE;
 
   boolean resume_after;
   boolean ointernal_messaging = mainw->internal_messaging;
@@ -9251,6 +9251,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
   int current_file = mainw->current_file;
 
   if (in_preview_func) {
+    // called a second time from playback loop
     // this is a special value of cancel - don't propogate it to "open"
     mainw->cancelled = CANCEL_NO_PROPOGATE;
     return;
@@ -9353,9 +9354,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
     }
 
     if (ointernal_messaging) {
-      lives_sync();
-      lives_sync();
-      lives_sync();
+      lives_sync(3);
     }
     current_file = mainw->current_file;
     resize(1);
@@ -9691,11 +9690,9 @@ boolean on_hrule_enter(LiVESWidget *widget, LiVESXEventCrossing *event, livespoi
 boolean on_hrule_update(LiVESWidget *widget, LiVESXEventMotion *event, livespointer user_data) {
   LiVESXModifierType modmask;
   LiVESXDevice *device;
-
   int x;
 
   if (!mainw->interactive) return TRUE;
-
   if (mainw->current_file <= 0) return TRUE;
 
   device = (LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device;
@@ -9716,7 +9713,6 @@ boolean on_hrule_reset(LiVESWidget *widget, LiVESXEventButton  *event, livespoin
   int x;
 
   if (!mainw->interactive) return FALSE;
-
   if (mainw->current_file <= 0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
@@ -9749,7 +9745,6 @@ boolean on_hrule_set(LiVESWidget *widget, LiVESXEventButton *event, livespointer
   int x;
 
   if (!mainw->interactive) return FALSE;
-
   if (mainw->current_file <= 0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
@@ -9772,8 +9767,6 @@ boolean frame_context(LiVESWidget *widget, LiVESXEventButton *event, livespointe
   int frame = 0;
 
   if (!mainw->interactive) return FALSE;
-
-  // check if a file is loaded
   if (mainw->current_file <= 0) return FALSE;
 
   if (mainw->multitrack != NULL && mainw->multitrack->event_list == NULL) return FALSE;

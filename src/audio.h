@@ -236,4 +236,6 @@ void audio_stream(void *buff, size_t nbytes, int fd);
 
 char *lives_get_audio_file_name(int fnum);
 
+char *get_achannel_name(int totchans, int idx) WARN_UNUSED;
+
 #endif

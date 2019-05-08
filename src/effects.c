@@ -557,7 +557,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (!mainw->gen_to_clipboard) cfile->changed = TRUE;
   if (mainw->multitrack == NULL) {
     if (new_file != -1) {
-      lives_sync();
+      lives_sync(1);
       switch_to_file((mainw->current_file = 0), new_file);
     }
   } else {

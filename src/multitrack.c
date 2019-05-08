@@ -1,6 +1,6 @@
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2005 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -2198,8 +2198,6 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 6, 7, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "labelbox", labelbox);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "label", label);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "dummy", dummy);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "ahbox", ahbox);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ahbox), "eventbox", (livespointer)mt->audio_draws->data);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox), "layer_number", LIVES_INT_TO_POINTER(-1));
@@ -2232,6 +2230,13 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       if (expanded) {
         xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "achan0");
 
+        label = (LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "label")));
+        labelbox = lives_event_box_new();
+        hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
+        lives_container_add(LIVES_CONTAINER(labelbox), hbox);
+        lives_box_pack_end(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
+
+        lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 2, 6, 1, 2, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
         lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, 1, 2,
                            (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                            (LiVESAttachOptions)(LIVES_FILL), 0, 0);
@@ -2245,6 +2250,13 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
         if (cfile->achans > 1) {
           xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "achan1");
 
+          label = (LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "label")));
+          labelbox = lives_event_box_new();
+          hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
+          lives_container_add(LIVES_CONTAINER(labelbox), hbox);
+          lives_box_pack_end(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
+
+          lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 2, 6, 2, 3, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
           lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, 2, 3,
                              (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                              (LiVESAttachOptions)(LIVES_FILL), 0, 0);
@@ -2275,7 +2287,6 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
 
     if (hidden == 0) {
-
       label = (LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "label")));
       arrow = (LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "arrow")));
       checkbutton = (LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "checkbutton")));
@@ -2283,7 +2294,6 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
       ahbox = lives_event_box_new();
 
-      // seems to need doing twice...
       lives_widget_set_bg_color(LIVES_WIDGET(eventbox), LIVES_WIDGET_STATE_NORMAL, &col);
 
 #ifdef ENABLE_GIW
@@ -2310,10 +2320,8 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 6, 7, rows, rows + 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "labelbox", labelbox);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "label", label);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "hbox", hbox);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "ahbox", ahbox);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "arrow", arrow);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ahbox), "eventbox", eventbox);
 
       lives_table_attach(LIVES_TABLE(mt->timeline_table), eventbox, 7, TIMELINE_TABLE_COLUMNS, rows, rows + 1,
@@ -2387,9 +2395,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
           lives_table_attach(LIVES_TABLE(mt->timeline_table), ahbox, 6, 7, rows, rows + 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), "labelbox", labelbox);
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), "label", label);
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), "dummy", dummy);
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), "hbox", label);
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), "hbox", hbox);
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), "ahbox", ahbox);
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ahbox), "eventbox", aeventbox);
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox), "layer_number",
@@ -2432,12 +2438,22 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
             lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
 
             if (hidden == 0) {
+              label = (LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "label")));
+              labelbox = lives_event_box_new();
+              hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
+              lives_container_add(LIVES_CONTAINER(labelbox), hbox);
+              lives_box_pack_end(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
+
               lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),
                                              (double)((int)lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment)) - 1));
 
+              lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 2, 6, rows, rows + 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
               lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, rows, rows + 1,
                                  (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                                  (LiVESAttachOptions)(LIVES_FILL), 0, 0);
+
+              lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "labelbox", labelbox);
+              lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "hbox", hbox);
 
               lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &col);
               lives_widget_set_app_paintable(xeventbox, TRUE);
@@ -2455,12 +2471,22 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
               lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
 
               if (hidden == 0) {
+                label = (LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "label")));
+                labelbox = lives_event_box_new();
+                hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
+                lives_container_add(LIVES_CONTAINER(labelbox), hbox);
+                lives_box_pack_end(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
+
                 lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),
                                                (double)((int)lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment)) - 1));
 
+                lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 2, 6, rows, rows + 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
                 lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, rows, rows + 1,
                                    (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                                    (LiVESAttachOptions)(LIVES_FILL), 0, 0);
+
+                lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "labelbox", labelbox);
+                lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "hbox", hbox);
 
                 lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &col);
                 lives_widget_set_app_paintable(xeventbox, TRUE);
@@ -4032,8 +4058,8 @@ void mt_zoom_out(LiVESMenuItem *menuitem, livespointer user_data) {
 
 static void paned_pos(LiVESWidget *paned, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  int height = lives_widget_get_allocation_height(paned) - gtk_paned_get_position(paned);
-  gtk_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), height);
+  int height = lives_widget_get_allocation_height(paned) - lives_paned_get_position(LIVES_PANED(paned));
+  lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), height);
   lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
   lives_widget_queue_draw(mt->timeline_table);
 }
@@ -4437,7 +4463,7 @@ static boolean on_clipbox_enter(LiVESWidget *widget, LiVESXEventCrossing *event,
 void mt_init_start_end_spins(lives_mt *mt) {
   LiVESWidget *hbox;
 
-  int dpw;
+  int dpw = widget_opts.packing_width;
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -4469,8 +4495,6 @@ void mt_init_start_end_spins(lives_mt *mt) {
   lives_signal_connect(LIVES_GUI_OBJECT(mt->amixer_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(amixer_show),
                        (livespointer)mt);
-
-  dpw = widget_opts.packing_width;
 
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   mt->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 10000000., 1. / mt->fps, 1. / mt->fps, 3,
@@ -6076,9 +6100,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   char text[255];
 
   boolean in_menubar = TRUE;
+  boolean woat = widget_opts.apply_theme;
 
   char *cname, *tname, *msg;
   char *tmp, *tmp2;
+
   int dph, fln;
   int num_filters;
   int error;
@@ -7786,13 +7812,14 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->tc_func = lives_signal_connect_after(LIVES_WIDGET_OBJECT(mt->timecode), LIVES_WIDGET_FOCUS_OUT_EVENT,
                 LIVES_GUI_CALLBACK(after_timecode_changed), (livespointer) mt);
 
-  dpw = widget_opts.packing_width;
+  widget_opts.apply_theme = FALSE;
   widget_opts.packing_width = 2. * widget_opts.scale;
-  mt->insa_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Insert With _Audio"))), mt->opts.insert_audio,
+  mt->insa_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Insert with _Audio"))), mt->opts.insert_audio,
                          LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("Select whether video clips are inserted and moved with their audio or not"))));
   lives_free(tmp);
   lives_free(tmp2);
+  widget_opts.apply_theme = woat;
   widget_opts.packing_width = dpw;
 
   mt->insa_label = widget_opts.last_label;
@@ -7820,12 +7847,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   add_fill_to_box(LIVES_BOX(hbox));
   widget_opts.filler_len = fln;
 
-  dpw = widget_opts.packing_width;
   widget_opts.packing_width = 2. * widget_opts.scale;
 
+  widget_opts.apply_theme = FALSE;
   mt->snapo_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Select _Overlap"))), mt->opts.snap_over,
                           LIVES_BOX(hbox),
                           (tmp2 = lives_strdup(_("Select whether timeline selection snaps to overlap between selected tracks or not"))));
+  widget_opts.apply_theme = woat;
   widget_opts.packing_width = dpw;
   lives_free(tmp);
   lives_free(tmp2);
@@ -8670,6 +8698,12 @@ void delete_audio_track(lives_mt *mt, LiVESWidget *eventbox, boolean full) {
 
   xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "achan0");
   if (xeventbox != NULL) {
+    label = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "label");
+    lives_widget_destroy(label);
+    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden")) == 0) {
+      labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "labelbox");
+      if (labelbox != NULL) lives_widget_destroy(labelbox);
+    }
     if ((bgimg = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "bgimg")) != NULL) {
       lives_painter_surface_destroy(bgimg);
     }
@@ -8679,6 +8713,12 @@ void delete_audio_track(lives_mt *mt, LiVESWidget *eventbox, boolean full) {
   if (cfile->achans > 1) {
     xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "achan1");
     if (xeventbox != NULL) {
+      label = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "label");
+      lives_widget_destroy(label);
+      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden")) == 0) {
+        labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "labelbox");
+        if (labelbox != NULL) lives_widget_destroy(labelbox);
+      }
       if ((bgimg = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "bgimg")) != NULL) {
         lives_painter_surface_destroy(bgimg);
       }
@@ -9832,7 +9872,19 @@ LiVESWidget *add_audio_track(lives_mt *mt, int track, boolean behind) {
     pname = lives_strdup_printf("achan%d", i);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(audio_draw), pname, eventbox);
     lives_free(pname);
+
+    widget_opts.justify = LIVES_JUSTIFY_RIGHT;
+    tname = get_achannel_name(cfile->achans, i);
+    label = lives_label_new(tname);
+    lives_free(tname);
+
+    lives_widget_set_halign(label, LIVES_ALIGN_END);
+
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+    lives_object_ref(label);
+
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "owner", audio_draw);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "label", label);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "hidden", LIVES_INT_TO_POINTER(0));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg", NULL);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "channel", LIVES_INT_TO_POINTER(i));
@@ -10883,8 +10935,8 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   lives_widget_context_update();
 
-  lives_paned_set_position(LIVES_PANED(multi->hpaned), (GUI_SCREEN_WIDTH - multi->play_width));
-  lives_paned_set_position(LIVES_PANED(multi->vpaned), lives_widget_get_allocation_height(multi->vpaned) / 3.);
+  lives_paned_set_position(LIVES_PANED(multi->hpaned), lives_widget_get_allocation_width(mainw->LiVES) - multi->play_width);
+  lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .7);
 
   set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   redraw_all_event_boxes(multi);

@@ -302,7 +302,8 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_fg_color(mainw->message_box, LIVES_WIDGET_STATE_NORMAL, colf);
-  //lives_widget_set_bg_color(lives_widget_get_parent(mainw->playframe), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colf);
 
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->framebar), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->framebar, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -362,7 +363,6 @@ void create_LiVES(void) {
   LiVESWidget *label;
   LiVESWidget *hbox3;
   LiVESWidget *t_label;
-  LiVESWidget *eventbox;
 
 #if defined HAVE_YUV4MPEG || defined HAVE_UNICAP
   LiVESWidget *submenu;
@@ -2018,6 +2018,7 @@ void create_LiVES(void) {
   widget_opts.packing_width = dpw;
   widget_opts.apply_theme = woat;
 
+  lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_start), 10);
   lives_widget_set_halign(mainw->spinbutton_start, LIVES_ALIGN_CENTER);
   add_spring_to_box(LIVES_BOX(hbox3), 0);
 
@@ -2048,8 +2049,7 @@ void create_LiVES(void) {
   //
 
   mainw->sa_hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, 0);
-  gtk_widget_set_margin_top(mainw->sa_hbox, 4.);
+  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, !(lives_widget_set_margin_top(mainw->sa_hbox, 4)) * 4);
 
   mainw->sa_button = lives_standard_button_new_from_stock(LIVES_STOCK_SELECT_ALL, _("  Select All Frames  "));
   lives_widget_set_tooltip_text(mainw->sa_button, _("Select all frames in this clip"));
@@ -2071,6 +2071,7 @@ void create_LiVES(void) {
   widget_opts.apply_theme = woat;
 
   add_spring_to_box(LIVES_BOX(hbox3), 0.);
+  lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_end), 10);
   lives_widget_set_halign(mainw->spinbutton_end, LIVES_ALIGN_CENTER);
 
   lives_widget_set_sensitive(mainw->spinbutton_start, FALSE);
@@ -2119,9 +2120,9 @@ void create_LiVES(void) {
   mainw->vidbar = lives_standard_label_new(_("Video"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, FALSE, FALSE, 0);
-  gtk_widget_set_margin_top(mainw->vidbar, widget_opts.packing_height);
-  gtk_widget_set_margin_bottom(mainw->vidbar, widget_opts.packing_height / 2);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, FALSE, FALSE, !(lives_widget_set_margin_top(mainw->vidbar,
+                       widget_opts.packing_height)) * widget_opts.packing_height);
+  lives_widget_set_margin_bottom(mainw->vidbar, widget_opts.packing_height / 2);
 
   mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_vid_event), &mainw->vidbar_func);
   // need to set this even if theme is none
@@ -2132,13 +2133,15 @@ void create_LiVES(void) {
   lives_widget_set_size_request(mainw->video_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_VIDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, FALSE, TRUE, widget_opts.packing_height / 2);
 
+  tmp = get_achannel_name(2, 0);
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  mainw->laudbar = lives_standard_label_new(_("Left Audio"));
+  mainw->laudbar = lives_standard_label_new(tmp);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  lives_free(tmp);
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, FALSE, FALSE, 0);
-  gtk_widget_set_margin_top(mainw->laudbar, widget_opts.packing_height);
-  gtk_widget_set_margin_bottom(mainw->laudbar, widget_opts.packing_height / 2);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, FALSE, FALSE, !(lives_widget_set_margin_top(mainw->laudbar,
+                       widget_opts.packing_height)) * widget_opts.packing_height);
+  lives_widget_set_margin_bottom(mainw->laudbar, widget_opts.packing_height / 2);
 
   mainw->laudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_laud_event), &mainw->laudbar_func);
   lives_widget_set_app_paintable(mainw->laudio_draw, TRUE);
@@ -2150,13 +2153,15 @@ void create_LiVES(void) {
   lives_widget_set_size_request(mainw->laudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_AUDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudio_draw, FALSE, TRUE, widget_opts.packing_height / 2);
 
+  tmp = get_achannel_name(2, 1);
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  mainw->raudbar = lives_standard_label_new(_("Right Audio"));
+  mainw->raudbar = lives_standard_label_new(tmp);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  lives_free(tmp);
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, FALSE, FALSE, 0);
-  gtk_widget_set_margin_top(mainw->raudbar, widget_opts.packing_height);
-  gtk_widget_set_margin_bottom(mainw->raudbar, widget_opts.packing_height / 2);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, FALSE, FALSE, !(lives_widget_set_margin_top(mainw->raudbar,
+                       widget_opts.packing_height)) * widget_opts.packing_height);
+  lives_widget_set_margin_bottom(mainw->raudbar, widget_opts.packing_height / 2);
 
   mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_raud_event), &mainw->raudbar_func);
   lives_widget_set_app_paintable(mainw->raudio_draw, TRUE);
@@ -2165,8 +2170,8 @@ void create_LiVES(void) {
   lives_widget_set_fg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_size_request(mainw->raudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_AUDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, FALSE, 0);
-  gtk_widget_set_margin_top(mainw->raudio_draw, widget_opts.packing_height / 2);
-  gtk_widget_set_margin_bottom(mainw->raudio_draw, widget_opts.packing_height * 4);
+  lives_widget_set_margin_top(mainw->raudio_draw, widget_opts.packing_height / 2);
+  lives_widget_set_margin_bottom(mainw->raudio_draw, widget_opts.packing_height * 4);
 
   mainw->message_box = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
@@ -2174,15 +2179,6 @@ void create_LiVES(void) {
   mainw->textview1 = NULL;
   mainw->scrolledwindow = NULL;
   add_message_scroller(mainw->message_box, NULL);
-  gtk_widget_set_redraw_on_allocate(mainw->message_box, FALSE);
-  gtk_widget_set_redraw_on_allocate(mainw->scrolledwindow, FALSE);
-  gtk_widget_set_redraw_on_allocate(mainw->textview1, FALSE);
-  /* lives_widget_set_valign(mainw->message_box, LIVES_ALIGN_FILL); */
-  /* lives_widget_set_vexpand(mainw->message_box, TRUE); */
-  /* lives_widget_set_valign(mainw->scrolledwindow, LIVES_ALIGN_FILL); */
-  /* lives_widget_set_vexpand(mainw->scrolledwindow, TRUE); */
-  /* lives_widget_set_valign(mainw->textview1, LIVES_ALIGN_FILL); */
-  /* lives_widget_set_vexpand(mainw->textview1, TRUE); */
 
   // accel keys
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
@@ -2860,19 +2856,19 @@ void create_LiVES(void) {
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                          LIVES_GUI_CALLBACK(on_mouse_sel_start),
                          NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
                          LIVES_GUI_CALLBACK(on_hrule_update),
                          NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_hrule_enter), NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_hrule_enter), NULL);
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->sa_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_all_activate),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
                        LIVES_GUI_CALLBACK(on_hrule_reset),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->hruler), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(on_hrule_set),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox3), LIVES_WIDGET_BUTTON_PRESS_EVENT,
@@ -2897,20 +2893,13 @@ void show_lives(void) {
   char buff[PATH_MAX];
 
   lives_widget_show_all(mainw->top_vbox);
-  gtk_widget_show_now(mainw->LiVES); // this calls the config_event()
+  lives_widget_show_now(mainw->LiVES); // this calls the config_event()
 
   if (mainw->multitrack == NULL) {
-    LiVESTextBuffer *tbuf = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
-    int lcount = gtk_text_buffer_get_line_count(tbuf);
-    LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(mainw->scrolledwindow);
-
-    gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),
+    lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),
         (height = lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) -
                   lives_widget_get_allocation_height(mainw->message_box)));
 
-    lives_adjustment_set_lower(adj, 0.);
-    lives_adjustment_set_upper(adj, (double)lcount * 3.);
-    lives_adjustment_set_page_size(adj, 1.);
     lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
   }
 
@@ -2954,6 +2943,7 @@ void show_lives(void) {
         (prefs->audio_player == AUD_PLAYER_PULSE && capable->has_pulse_audio)))
     lives_widget_hide(mainw->vol_toolitem);
 
+  if (!LIVES_IS_RANGE(mainw->hruler)) lives_widget_set_sensitive(mainw->hruler, FALSE);
   lives_widget_hide(mainw->hruler);
 
   if (prefs->present && prefs->show_gui)

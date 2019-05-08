@@ -40,6 +40,16 @@ static void audio_reset_stored_fnames(void) {
 }
 
 
+LIVES_GLOBAL_INLINE char *get_achannel_name(int totchans, int idx) {
+  if (totchans == 1) return lives_strdup(_("Mono"));
+  if (totchans == 2) {
+    if (idx == 0) return lives_strdup(_("Left audio"));
+    if (idx == 1) return lives_strdup(_("Right audio"));
+  }
+  return lives_strdup_printf(_("Audio channel %d"), idx);
+}
+
+
 LIVES_GLOBAL_INLINE char *lives_get_audio_file_name(int fnum) {
   char *fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_AUDIO_FILENAME, NULL);
   if (mainw->files[fnum]->opening && !lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {

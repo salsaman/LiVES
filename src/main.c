@@ -6823,7 +6823,7 @@ void load_frame_image(int frame) {
 
   void close_current_file(int file_to_switch_to) {
     // close the current file, and free the file struct and all sub storage
-    char *com;
+    char *com, *tmp;
     LiVESList *list_index;
     int index = -1;
     int old_file = mainw->current_file;
@@ -7116,8 +7116,12 @@ void load_frame_image(int frame) {
     set_sel_label(mainw->sel_label);
 
     lives_label_set_text(LIVES_LABEL(mainw->vidbar), _("Video"));
-    lives_label_set_text(LIVES_LABEL(mainw->laudbar), _("Left Audio"));
-    lives_label_set_text(LIVES_LABEL(mainw->raudbar), _("Right Audio"));
+    tmp = get_achannel_name(2, 0);
+    lives_label_set_text(LIVES_LABEL(mainw->laudbar), tmp);
+    lives_free(tmp);
+    tmp = get_achannel_name(2, 1);
+    lives_label_set_text(LIVES_LABEL(mainw->raudbar), tmp);
+    lives_free(tmp);
 
     zero_spinbuttons();
     lives_widget_hide(mainw->hruler);
@@ -7331,7 +7335,7 @@ void load_frame_image(int frame) {
     if (mainw->multitrack == NULL) {
       // need to shrink the message_box text then re-expand it after redrawing the widgets
       // otherwise the main window can expand beyond the bottom of the screen
-      gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(mainw->scrolledwindow), 1);
+      lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), 1);
       lives_widget_set_size_request(mainw->message_box, -1, 1);
       lives_widget_set_size_request(mainw->scrolledwindow, -1, 1);
       lives_widget_set_size_request(mainw->textview1, -1, 1);
@@ -7378,10 +7382,7 @@ void load_frame_image(int frame) {
     if (prefs->show_gui && mainw->multitrack == NULL) {
       // re-expand the message area to fit the empty space at the bottom
       int height;
-      LiVESTextBuffer *tbuf = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
-      int lcount = gtk_text_buffer_get_line_count(tbuf);
-      LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(mainw->scrolledwindow);
-      gtk_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),
+      lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),
           (height = lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) +
                     lives_widget_get_allocation_height(mainw->message_box)));
       if (height > 0) {

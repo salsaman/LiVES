@@ -14,8 +14,9 @@
 #define GTK_RADIO_MENU_BUG // a bug where gtk_radio_menu_item_set_active() does not update visually
 #define GTK_SUBMENU_SENS_BUG // a bug where setting a menuitem insensitive fails if it has a submenu
 #define GTK_TEXT_VIEW_DRAW_BUG // a bug where textview crashes if too much text in it
+#if GTK_CHECK_VERSION(3, 0, 0)
 #define GTK_ENTRY_BG_BUG // a bug where the bg of GtkEntry is ignored when sensitive
-
+#endif
 #if !GTK_CHECK_VERSION(3, 18, 9) // fixed version 
 #define GTK_TEXT_VIEW_CSS_BUG // a bug where named textviews cannot be set by CSS
 #endif
@@ -173,6 +174,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define LIVES_MAXUINT32 G_MAXUINT32
 #define LIVES_MAXSIZE G_MAXSIZE
 #define LIVES_MAXFLOAT G_MAXFLOAT
+#define LIVES_MAXDOUBLE G_MAXDOUBLE
 
 #define LIVES_IS_RTL (gtk_widget_get_default_direction() == GTK_TEXT_DIR_RTL)
 
@@ -521,8 +523,8 @@ typedef GtkEditable                       LiVESEditable;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 #define LIVES_WIDGET_COLOR_HAS_ALPHA (1)
-#define LIVES_WIDGET_COLOR_SCALE(x) (x) ///< macro to get 0. to 1.
-#define LIVES_WIDGET_COLOR_STRETCH(x) (x*65535.) ///< macro to get 0. to 1.
+#define LIVES_WIDGET_COLOR_SCALE(x) (x) ///< macro to get 0. to 1. from widget colour
+#define LIVES_WIDGET_COLOR_STRETCH(x) (x*65535.) ///< macro to get 0. to 65535. from widget colour
 #define LIVES_WIDGET_COLOR_SCALE_65535(x) ((double)x/65535.) ///< macro to convert from (0. - 65535.) to widget color
 #define LIVES_WIDGET_COLOR_SCALE_255(x) ((double)x/255.) ///< macro to convert from (0. - 255.) to widget color
 typedef GdkRGBA                           LiVESWidgetColor; ///< component values are 0. to 1.
@@ -630,11 +632,20 @@ typedef GtkArrowType LiVESArrowType;
 #define LIVES_ARROW_RIGHT GTK_ARROW_RIGHT
 #define LIVES_ARROW_NONE GTK_ARROW_NONE
 
+#if GTK_CHECK_VERSION(3, 0, 0)
 typedef GtkAlign LiVESAlign;
 #define LIVES_ALIGN_FILL GTK_ALIGN_FILL
 #define LIVES_ALIGN_START GTK_ALIGN_START
 #define LIVES_ALIGN_END GTK_ALIGN_END
 #define LIVES_ALIGN_CENTER GTK_ALIGN_CENTER
+#else
+typedef int LiVESAlign;
+#define LIVES_ALIGN_FILL 0
+#define LIVES_ALIGN_START 1
+#define LIVES_ALIGN_END 2
+#define LIVES_ALIGN_CENTER 3
+#endif
+
 
 #if GTK_CHECK_VERSION(3, 10, 0)
 #define LIVES_ALIGN_BASELINE GTK_ALIGN_BASELINE

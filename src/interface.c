@@ -556,7 +556,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   if (audio_channels > 0) {
     char *tmp;
 
-    if (audio_channels > 1) tmp = lives_strdup(_("Left Audio"));
+    if (audio_channels > 1) tmp = get_achannel_name(2, 0);
     else tmp = lives_strdup(_("Audio"));
 
     laudframe = lives_standard_frame_new(tmp, 0., FALSE);
@@ -602,7 +602,9 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
                        (LiVESAttachOptions)(0), 0, 0);
 
     if (audio_channels > 1) {
-      raudframe = lives_standard_frame_new(_("Right Audio"), 0., FALSE);
+      tmp = get_achannel_name(2, 1);
+      raudframe = lives_standard_frame_new(tmp, 0., FALSE);
+      lives_free(tmp);
 
       lives_box_pack_start(LIVES_BOX(dialog_vbox), raudframe, TRUE, TRUE, widget_opts.packing_height);
 

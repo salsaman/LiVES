@@ -10873,9 +10873,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   lives_container_add(LIVES_CONTAINER(mainw->LiVES), multi->top_vbox);
 
-  lives_paned_set_position(LIVES_PANED(multi->hpaned), (GUI_SCREEN_WIDTH - multi->play_width));
-  lives_paned_set_position(LIVES_PANED(multi->vpaned), lives_widget_get_allocation_height(multi->vpaned) * 2. / 3.);
-
   if (prefs->show_gui && prefs->open_maximised) {
     int wx, wy;
     lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
@@ -10885,6 +10882,9 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   lives_widget_context_update();
+
+  lives_paned_set_position(LIVES_PANED(multi->hpaned), (GUI_SCREEN_WIDTH - multi->play_width));
+  lives_paned_set_position(LIVES_PANED(multi->vpaned), lives_widget_get_allocation_height(multi->vpaned) / 3.);
 
   set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   redraw_all_event_boxes(multi);

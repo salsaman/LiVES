@@ -713,7 +713,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
     // dummy values
     cfile->progress_start = 1;
-
   }
 
   if (!no_process && rfx->num_in_channels > 0) {

@@ -376,6 +376,8 @@ typedef struct {
   boolean show_asrc;
 
   float ahold_threshold;
+
+  double screen_gamma;
 } _prefs;
 
 enum {

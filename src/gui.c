@@ -147,10 +147,12 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
+  //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (mainw->current_file > 0 && cfile != NULL) {
     load_start_image(cfile->start);
   } else load_start_image(0);
   mainw->current_file = current_file;
+  if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
   return TRUE;
 }
 
@@ -160,9 +162,11 @@ boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
+  //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (mainw->current_file > 0 && cfile != NULL) {
     load_end_image(cfile->end);
   } else load_end_image(0);
+  if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
   mainw->current_file = current_file;
   return TRUE;
 }
@@ -172,7 +176,9 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   int current_file = mainw->current_file;
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   if (!mainw->draw_blocked) {
+    //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
     load_preview_image(FALSE);
+    //if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
   }
   mainw->current_file = current_file;
   return TRUE;
@@ -1923,9 +1929,10 @@ void create_LiVES(void) {
 
   mainw->eventbox3 = lives_event_box_new();
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox3, 0, 1, 0, 1,
-                     (LiVESAttachOptions)(LIVES_FILL),
-                     (LiVESAttachOptions)(LIVES_FILL), 0, 0);
+                     (LiVESAttachOptions)0,
+                     (LiVESAttachOptions)0, 0, 0);
   lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_CENTER);
+  lives_widget_set_valign(mainw->eventbox3, LIVES_ALIGN_CENTER);
 
   // IMPORTANT: need to set a default size here (the actual size will be set later)
   lives_widget_set_size_request(mainw->eventbox3, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
@@ -1955,7 +1962,7 @@ void create_LiVES(void) {
   lives_widget_set_app_paintable(mainw->pl_eventbox, TRUE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->playframe, 1, 2, 0, 1,
-                     (LiVESAttachOptions)(LIVES_FILL),
+                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(LIVES_FILL), 0, 0);
   lives_widget_set_halign(mainw->playframe, LIVES_ALIGN_CENTER);
   lives_widget_set_valign(mainw->playframe, LIVES_ALIGN_CENTER);
@@ -1964,9 +1971,10 @@ void create_LiVES(void) {
   lives_widget_set_size_request(mainw->eventbox4, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox4, 2, 3, 0, 1,
-                     (LiVESAttachOptions)(LIVES_FILL),
-                     (LiVESAttachOptions)(LIVES_FILL), 0, 0);
+                     (LiVESAttachOptions)0,
+                     (LiVESAttachOptions)0, 0, 0);
   lives_widget_set_halign(mainw->eventbox4, LIVES_ALIGN_CENTER);
+  lives_widget_set_valign(mainw->eventbox4, LIVES_ALIGN_CENTER);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   mainw->frame2 = lives_standard_frame_new(_("Last Frame"), 0.75, TRUE);

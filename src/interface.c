@@ -417,7 +417,7 @@ static LiVESWidget *aud_text_view_new(void) {
 
 lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   LiVESWidget *dialog_vbox;
-  LiVESWidget *dialog_action_area;
+  LiVESWidget *abox;
   LiVESWidget *table;
   LiVESWidget *label;
   LiVESWidget *vidframe;
@@ -649,15 +649,20 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     }
   }
 
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(filew->dialog));
+  abox = lives_dialog_get_action_area(LIVES_DIALOG(filew->dialog));
 
   okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(filew->dialog), okbutton, LIVES_RESPONSE_OK);
 
+#if !GTK_CHECK_VERSION(3, 0, 0)
+  lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);
+#else
+  LiVESWidget *spring = add_spring_to_box(LIVES_BOX(abox), 0);
+  lives_widget_set_hexpand(spring, TRUE);
+#endif
+
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default_special(okbutton);
-
-  if (LIVES_IS_BUTTON_BOX(dialog_action_area)) lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_SPREAD);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
@@ -672,8 +677,6 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   lives_widget_show_all(filew->dialog);
 
   lives_widget_set_size_request(okbutton, DEF_BUTTON_WIDTH * 4, -1);
-
-  lives_widget_context_update();
 
   return filew;
 }

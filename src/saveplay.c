@@ -423,7 +423,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               do_mplayer_audio_warning();
               }*/
           } else {
-
             mainw->com_failed = FALSE;
 
             // check if we have audio
@@ -668,6 +667,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     if (mainw->playing_file > -1) {
       do_quick_switch(current_file);
     } else {
+
+
       switch_to_file((mainw->current_file = (cfile->clip_type != CLIP_TYPE_FILE) ? old_file : current_file), current_file);
     }
 
@@ -2875,10 +2876,9 @@ void play_file(void) {
     unfade_background();
   }
 
-  lives_widget_hide(mainw->playframe);
-
   // resize out of double size
   if ((mainw->double_size && !mainw->fs) && mainw->multitrack == NULL) {
+    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
     lives_widget_context_update();
     resize(1);
     load_start_image(cfile->start);
@@ -2901,8 +2901,10 @@ void play_file(void) {
     lives_widget_show(mainw->scrolledwindow);
   }
 
+  lives_widget_hide(mainw->playframe);
+
   // switch out of full screen mode
-  if (mainw->fs && mainw->multitrack == NULL) {
+  if ((mainw->fs || mainw->double_size) && mainw->multitrack == NULL) {
     lives_widget_show(mainw->frame1);
     lives_widget_show(mainw->frame2);
     lives_widget_show(mainw->eventbox3);

@@ -2090,7 +2090,7 @@ void d_print(const char *fmt, ...) {
   if (LIVES_IS_TEXT_VIEW(mainw->textview1)) {
     lives_text_buffer_insert_at_end(tbuf, text);
     if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && mainw->multitrack == NULL &&
-        (mainw->current_file == -1 || cfile->clip_type != CLIP_TYPE_GENERATOR) && !mainw->no_switch_dprint) {
+        (mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
       if (mainw->current_file > 0) {
         switchtext = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile));
         lives_free(tmp);
@@ -2104,7 +2104,7 @@ void d_print(const char *fmt, ...) {
       lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
     }
 
-    if ((mainw->current_file == -1 || cfile->clip_type != CLIP_TYPE_GENERATOR) &&
+    if ((mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&
         (!mainw->no_switch_dprint || mainw->current_file != 0)) mainw->last_dprint_file = mainw->current_file;
   }
 
@@ -3463,12 +3463,12 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 }
 
 
-LIVES_GLOBAL_INLINE void get_play_times() {
+LIVES_GLOBAL_INLINE void get_play_times(void) {
   update_timer_bars(0, 0, 0, 0, 0);
 }
 
 
-void update_play_times() {
+void update_play_times(void) {
   // force a redraw, reread audio
   if (!CURRENT_CLIP_IS_VALID) return;
   if (cfile->audio_waveform != NULL) {

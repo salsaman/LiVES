@@ -9008,7 +9008,7 @@ int rte_fg_gen_mode(void) {
 }
 
 
-weed_plant_t *get_textparm() {
+weed_plant_t *get_textparm(void) {
   // for rte textmode, get first string parameter for current key/mode instance
   // we will then forward all keystrokes to this parm WEED_LEAF_VALUE until the exit key (TAB)
   // is pressed

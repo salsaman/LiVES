@@ -449,7 +449,7 @@ boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_num
 }
 
 
-LiVESWindow *get_transient_full() {
+LiVESWindow *get_transient_full(void) {
   LiVESWindow *transient = NULL;
   if (prefs->show_gui) {
     if (prefsw != NULL && prefsw->prefs_dialog != NULL) transient = LIVES_WINDOW(prefsw->prefs_dialog);
@@ -1349,7 +1349,7 @@ static void clock_upd(GdkFrameClock *clock, gpointer user_data) {
 #endif
 
 
-static void reset_timebase() {
+static void reset_timebase(void) {
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
 #ifdef USE_MONOTONIC_TIME
   mainw->origsecs = 0; // not used

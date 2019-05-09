@@ -5566,7 +5566,7 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
 
   if (cfile->frames > 0) {
     // type
-    lives_snprintf(buff, 512, _("\nExternal: %s\nInternal: %s (%d bpp) / %s\n"), cfile->type,
+    lives_snprintf(buff, 512, _("\n\nExternal: %s\nInternal: %s (%d bpp) / %s"), cfile->type,
                    (tmp = lives_strdup((cfile->clip_type == CLIP_TYPE_YUV4MPEG ||
                                         cfile->clip_type == CLIP_TYPE_VIDEODEV) ? (_("buffered")) :
                                        (cfile->img_type == IMG_TYPE_JPEG ? LIVES_IMAGE_TYPE_JPEG : LIVES_IMAGE_TYPE_PNG))),
@@ -5574,15 +5574,15 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
     lives_free(tmp);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_type), buff, -1);
     // fps
-    lives_snprintf(buff, 512, "\n  %.3f%s", cfile->fps, cfile->ratio_fps ? "..." : "");
+    lives_snprintf(buff, 512, "\n\n  %.3f%s", cfile->fps, cfile->ratio_fps ? "..." : "");
 
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_fps), buff, -1);
     // image size
-    lives_snprintf(buff, 512, "\n  %dx%d", cfile->hsize, cfile->vsize);
+    lives_snprintf(buff, 512, "\n\n  %dx%d", cfile->hsize, cfile->vsize);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_size), buff, -1);
     // frames
     if ((cfile->opening && !cfile->opening_audio && cfile->frames == 0) || cfile->frames == 123456789) {
-      lives_snprintf(buff, 512, "%s", _("\n  Opening..."));
+      lives_snprintf(buff, 512, "%s", _("\n\n  Opening..."));
     } else {
       lives_snprintf(buff, 512, "\n  %d", cfile->frames);
 
@@ -5600,23 +5600,23 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_frames), buff, -1);
     // video time
     if ((cfile->opening && !cfile->opening_audio && cfile->frames == 0) || cfile->frames == 123456789) {
-      lives_snprintf(buff, 512, "%s", _("\n  Opening..."));
+      lives_snprintf(buff, 512, "%s", _("\n\n  Opening..."));
     } else {
-      lives_snprintf(buff, 512, _("\n  %.2f sec."), cfile->video_time);
+      lives_snprintf(buff, 512, _("\n\n  %.2f sec."), cfile->video_time);
     }
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_vtime), buff, -1);
     // file size
     if (cfile->f_size >= 0l) {
       char *file_ds = lives_format_storage_space_string((uint64_t)cfile->f_size);
-      lives_snprintf(buff, 512, "\n  %s", file_ds);
+      lives_snprintf(buff, 512, "\n\n  %s", file_ds);
       lives_free(file_ds);
-    } else lives_snprintf(buff, 512, "%s", _("\n  Unknown"));
+    } else lives_snprintf(buff, 512, "%s", _("\n\n  Unknown"));
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_fsize), buff, -1);
   }
 
   if (cfile->achans > 0) {
     if (cfile->opening) {
-      lives_snprintf(buff, 512, "%s", _("\n  Opening..."));
+      lives_snprintf(buff, 512, "%s", _("\n\n  Opening..."));
     } else {
       lives_snprintf(buff, 512, _("\n  %.2f sec."), cfile->laudio_time);
     }
@@ -5628,7 +5628,7 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
     if (cfile->signed_endian & AFORM_BIG_ENDIAN) ends = lives_strdup(_("big-endian"));
     else ends = lives_strdup(_("little-endian"));
 
-    lives_snprintf(buff, 512, _("  %d Hz %d bit\n%s %s"), cfile->arate, cfile->asampsize, sigs, ends);
+    lives_snprintf(buff, 512, _("\n  %d Hz %d bit\n%s %s"), cfile->arate, cfile->asampsize, sigs, ends);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_lrate), buff, -1);
 
     lives_free(sigs);
@@ -5642,7 +5642,7 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
     if (cfile->signed_endian & AFORM_BIG_ENDIAN) ends = lives_strdup(_("big-endian"));
     else ends = lives_strdup(_("little-endian"));
 
-    lives_snprintf(buff, 512, _("  %d Hz %d bit\n%s %s"), cfile->arate, cfile->asampsize, sigs, ends);
+    lives_snprintf(buff, 512, _("\n  %d Hz %d bit\n%s %s"), cfile->arate, cfile->asampsize, sigs, ends);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_rrate), buff, -1);
 
     lives_free(sigs);
@@ -6804,6 +6804,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
           // double size
           if (mainw->double_size) {
+            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
             resize(2);
             mainw->pheight *= 2;
             mainw->pheight++;
@@ -6929,7 +6930,10 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             }
             lives_widget_hide(mainw->scrolledwindow);
           }
+          lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
           resize(2);
+          load_start_image(cfile->start);
+          load_end_image(cfile->end);
         }
         if (!prefs->ce_maxspect) {
           mainw->pheight *= 2;
@@ -6938,6 +6942,7 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           mainw->pwidth += 2;
         }
       } else {
+        lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
         resize(1);
         if (!prefs->ce_maxspect) {
           mainw->pheight--;
@@ -7058,6 +7063,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
             }
             if (mainw->double_size && mainw->multitrack == NULL) {
+              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
               resize(1);
               if (!mainw->faded) {
                 if (palette->style & STYLE_1) {
@@ -7115,12 +7121,14 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         }
         if (!mainw->fs && mainw->multitrack == NULL) {
           if (!mainw->double_size) {
+            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
             resize(1);
           } else {
             if (palette->style & STYLE_1) {
               lives_widget_hide(mainw->sep_image);
             }
             lives_widget_hide(mainw->scrolledwindow);
+            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
             resize(2);
           }
 

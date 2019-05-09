@@ -905,7 +905,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *wi
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_process_all_updates() {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_process_all_updates(void) {
 #ifdef GUI_GTK
   gdk_window_process_all_updates();
   return TRUE;
@@ -994,7 +994,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, i
 
 
 #if GTK_CHECK_VERSION(3, 16, 0)
-static char *make_random_string() {
+static char *make_random_string(void) {
   char *str = (char *)malloc(32);
   register int i;
 
@@ -1041,8 +1041,14 @@ boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, c
   else {
 #endif
     switch (state) {
+    // TODO: gtk+ 3.x can set multiple states
     case GTK_STATE_FLAG_ACTIVE:
       state_str = ":active";
+      break;
+    case GTK_STATE_FLAG_FOCUSED:
+#if GTK_CHECK_VERSION(3, 18, 0)
+      state_str = ":focus";
+#endif
       break;
     case GTK_STATE_FLAG_PRELIGHT:
 #if GTK_CHECK_VERSION(3, 18, 0)
@@ -1053,6 +1059,16 @@ boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, c
       break;
     case GTK_STATE_FLAG_SELECTED:
       state_str = ":selected";
+      break;
+    case GTK_STATE_FLAG_INCONSISTENT:
+#if GTK_CHECK_VERSION(3, 18, 0)
+      state_str = ":indeterminate";
+#endif
+      break;
+    case GTK_STATE_FLAG_BACKDROP:
+#if GTK_CHECK_VERSION(3, 18, 0)
+      state_str = ":backdrop";
+#endif
       break;
     case GTK_STATE_FLAG_INSENSITIVE:
 #if GTK_CHECK_VERSION(3, 18, 0)
@@ -1081,7 +1097,7 @@ boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, c
   }
 
   if (GTK_IS_BUTTON(widget)) {
-    tmp = lives_strdup_printf("%s %s {\n padding: 4;\n }\n", css_string, wname);
+    tmp = lives_strdup_printf("%s %s {\n padding: 4px;\n }\n", css_string, wname);
     lives_free(css_string);
     css_string = tmp;
   }
@@ -3411,7 +3427,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_with_label(const char 
   LiVESWidget *button = NULL;
   char *labeltext = (char *)label;
   if (widget_opts.expand != LIVES_EXPAND_NONE) {
-    //labeltext = lives_strdup_printf("\n    %s    \n", label);
     labeltext = lives_strdup_printf("\n%s\n", label);
   }
 #ifdef GUI_GTK
@@ -3716,7 +3731,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_set_mode(LiVESToggleButt
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_toggle_tool_button_new() {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_toggle_tool_button_new(void) {
   LiVESWidget *button = NULL;
 #ifdef GUI_GTK
   button = LIVES_WIDGET(gtk_toggle_tool_button_new());
@@ -7447,7 +7462,7 @@ boolean lives_source_remove(uint32_t handle) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_accelerator_get_default_mod_mask() {
+WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_accelerator_get_default_mod_mask(void) {
 #ifdef GUI_GTK
   return gtk_accelerator_get_default_mod_mask();
 #endif
@@ -8209,6 +8224,11 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   LiVESWidget *dialog = NULL;
 
   dialog = lives_dialog_new();
+
+  if (width <= 0) width = 8;
+  if (height <= 0) height = 8;
+
+  lives_window_set_transient_for(LIVES_WINDOW(dialog), get_transient_full());
 
   lives_widget_set_minimum_size(dialog, width, height);
 

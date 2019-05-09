@@ -380,6 +380,7 @@ skip_init:
 
       cdata->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
       cdata->YUV_sampling = WEED_YUV_SAMPLING_DEFAULT;
+      cdata->YUV_clamping = WEED_YUV_CLAMPING_CLAMPED;
 
       cdata->palettes[0] = avi_pix_fmt_to_weed_palette(cc->pix_fmt, &cdata->YUV_clamping);
       cdata->palettes[1] = WEED_PALETTE_END;
@@ -721,20 +722,20 @@ static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
   lives_av_priv_t *dpriv, *spriv;
 
   // copy from cdata to clone, with a new context for clone
-  clone->URI = strdup(cdata->URI);
-  clone->nclips = cdata->nclips;
+  clone->URI = strdup(cdata->URI);  // VALID for pclone
+  clone->nclips = cdata->nclips; // ???
   snprintf(clone->container_name, 512, "%s", cdata->container_name);
   clone->current_clip = cdata->current_clip;
   clone->width = cdata->width;
   clone->height = cdata->height;
-  clone->nframes = cdata->nframes;
+  clone->nframes = cdata->nframes;   // valid for pclone
   clone->interlace = cdata->interlace;
   clone->offs_x = cdata->offs_x;
   clone->offs_y = cdata->offs_y;
   clone->frame_width = cdata->frame_width;
   clone->frame_height = cdata->frame_height;
   clone->par = cdata->par;
-  clone->fps = cdata->fps;
+  clone->fps = cdata->fps;   // valid ? for pclone
   if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
   clone->current_palette = cdata->current_palette;
   clone->YUV_sampling = cdata->YUV_sampling;
@@ -1020,6 +1021,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   unsigned char black[4] = {0, 0, 0, 255};
 
   boolean hit_target = FALSE;
+  boolean did_seek = FALSE;
 
   int gotFrame;
 
@@ -1136,6 +1138,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       priv->black_fill = FALSE;
       MyPts = -1;
       priv->needs_packet = TRUE;
+      did_seek = TRUE;
     } else {
       MyPts = (priv->last_frame + 1.) / cdata->fps * (double)AV_TIME_BASE;
     }
@@ -1215,7 +1218,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 framedone:
   timex = get_current_ticks() - timex;
+
+  // TODO **: if we did a seek and had to decode multiple frames, set needs_calc; if seek direct don't
+  // then set fast depending on the time limit
   if (timex > FAST_SEEK_LIMIT)((lives_clip_data_t *)cdata)->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
+  //else if (did_seek) ((lives_clip_data_t *)cdata)->seek_flag = LIVES_SEEK_FAST;
 
   priv->last_frame = tframe;
 

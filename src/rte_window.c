@@ -1686,8 +1686,9 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
+#if GTK_CHECK_VERSION(3, 0, 0)
   if (LIVES_IS_BOX(abox)) add_spring_to_box(LIVES_BOX(abox), 0);
-
+#endif
   ok_button = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), ok_button, LIVES_RESPONSE_OK);
 

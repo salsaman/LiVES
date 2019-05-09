@@ -1410,6 +1410,8 @@ typedef struct {
   char *dp_cache;
 
   LiVESPixbuf *scrap_pixbuf;
+
+  volatile LiVESWidget *stop_emmission;
   ////////////////////
 } mainwindow;
 

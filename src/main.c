@@ -1131,6 +1131,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->jack_inited = FALSE;
 #endif
 
+  mainw->stop_emmission = NULL;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -1247,6 +1249,8 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->mt_load_fuzzy = FALSE;
 
     prefs->ahold_threshold = get_double_pref(PREF_AHOLD_THRESHOLD);
+
+    prefs->screen_gamma = DEF_SCREEN_GAMMA;
 
     //////////////////////////////////////////////////////////////////
 
@@ -2525,7 +2529,7 @@ capability *get_capabilities(void) {
 }
 
 
-void print_notice() {
+void print_notice(void) {
   lives_printerr("\nLiVES %s\n", LiVES_VERSION);
   lives_printerr("Copyright "LIVES_COPYRIGHT_YEARS" Gabriel Finch ("LIVES_AUTHOR_EMAIL") and others.\n");
   lives_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\n"
@@ -3157,6 +3161,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // don't crash on GTK+ fatals
   g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
+#else
+  g_print("DEBUGGING IS ON !!\n");
 #endif
 
   g_log_set_default_handler(lives_log_handler, NULL);
@@ -4092,8 +4098,6 @@ void load_start_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-    lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
-    lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -4110,15 +4114,15 @@ void load_start_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-    lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
-    lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
+    if (mainw->stop_emmission == mainw->start_image)
+      lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
 
   tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
-  if (!prefs->ce_maxspect || (mainw->double_size && mainw->playing_file > -1)) {
+  if (!prefs->ce_maxspect || (0 && mainw->double_size && mainw->playing_file > -1)) {
     threaded_dialog_spin(0.);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
@@ -4153,8 +4157,8 @@ void load_start_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-    lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
-    lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
+    if (mainw->stop_emmission == mainw->start_image)
+      lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -4229,8 +4233,8 @@ void load_start_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-  lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
-  lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
+  if (mainw->stop_emmission == mainw->start_image)
+    lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
 }
 
@@ -4269,8 +4273,8 @@ void load_end_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-    lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
-    lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
+    if (mainw->stop_emmission == mainw->end_image)
+      lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -4287,15 +4291,15 @@ void load_end_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-    lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
-    lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
+    if (mainw->stop_emmission == mainw->end_image)
+      lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
 
   tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
-  if (!prefs->ce_maxspect || (mainw->double_size && mainw->playing_file > -1)) {
+  if (!prefs->ce_maxspect || (0 && mainw->double_size && mainw->playing_file > -1)) {
     threaded_dialog_spin(0.);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
@@ -4329,8 +4333,8 @@ void load_end_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-    lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
-    lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
+    if (mainw->stop_emmission == mainw->end_image)
+      lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -4403,8 +4407,8 @@ void load_end_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-  lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
-  lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
+  if (mainw->stop_emmission == mainw->end_image)
+    lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
 }
 
@@ -4450,7 +4454,8 @@ void load_preview_image(boolean update_always) {
     lives_widget_set_size_request(mainw->preview_image, mainw->pwidth, mainw->pheight);
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->preview_image, (livespointer)expose_pim, NULL);
-    lives_signal_stop_emission_by_name(mainw->preview_image, LIVES_WIDGET_EXPOSE_EVENT);
+    if (mainw->stop_emmission == mainw->preview_image)
+      lives_signal_stop_emission_by_name(mainw->preview_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -4468,7 +4473,8 @@ void load_preview_image(boolean update_always) {
     } else set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->preview_image), NULL, NULL);
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->preview_image, (livespointer)expose_pim, NULL);
-    lives_signal_stop_emission_by_name(mainw->preview_image, LIVES_WIDGET_EXPOSE_EVENT);
+    if (mainw->stop_emmission == mainw->preview_image)
+      lives_signal_stop_emission_by_name(mainw->preview_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -4572,7 +4578,8 @@ void load_preview_image(boolean update_always) {
   if (pixbuf != NULL) lives_object_unref(pixbuf);
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_unblock_by_func(mainw->preview_image, (livespointer)expose_pim, NULL);
-  lives_signal_stop_emission_by_name(mainw->preview_image, LIVES_WIDGET_EXPOSE_EVENT);
+  if (mainw->stop_emmission == mainw->preview_image)
+    lives_signal_stop_emission_by_name(mainw->preview_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
 }
 
@@ -4606,9 +4613,6 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
   size_t bsize = fread(ibuff, 1, 8, fp), framesize;
   boolean is_png = !png_sig_cmp(ibuff, 0, bsize);
-
-  float screen_gamma = SCREEN_GAMMA;
-  float pref_gamma = SCREEN_GAMMA * 1.0; // a larger value is brighter
 
   double file_gamma;
 
@@ -4646,16 +4650,25 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   // progressive read calls png_row_callback on each row
   if (prog) png_set_read_status_fn(png_ptr, png_row_callback);
 
+  // read header info
+  png_read_info(png_ptr, info_ptr);
+
 #if PNG_LIBPNG_VER >= 10504
   png_set_alpha_mode(png_ptr, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
 #endif
-  if (png_get_gAMA(png_ptr, info_ptr, &file_gamma))
-    png_set_gamma(png_ptr, screen_gamma, file_gamma);
-  else
-    png_set_gamma(png_ptr, pref_gamma, 1. / screen_gamma);
+  if (png_get_gAMA(png_ptr, info_ptr, &file_gamma)) {
+    // loads frames with no gamma correction
+    //png_set_gamma(png_ptr, file_gamma, file_gamma);
+    //g_print("got file gamma !\n");
+    // loads frames gamma corrected for screen
+    png_set_gamma(png_ptr, prefs->screen_gamma, file_gamma);
+  } else {
+    // a) loads frames with no gamma correction
+    png_set_gamma(png_ptr, 1., 1.); // assume file_gamma is 1.0
 
-  // read header info
-  png_read_info(png_ptr, info_ptr);
+    // b) loads frames gamma corrected for screen
+    //png_set_gamma(png_ptr, prefs->screen_gamma, 1.); // assume file_gamma is 1.0 if not specified
+  }
 
   // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32 (or RGB24)
   color_type = png_get_color_type(png_ptr, info_ptr);
@@ -4708,6 +4721,8 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   else
     weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
 
+  weed_set_double_value(layer, "gamma", 1.0);
+
   // here we allocate ourselves, instead of calling create_empty_pixel data - in case rowbytes is different
 
   // some things, like swscale, expect all frames to be a multiple of 32 bytes
@@ -4759,8 +4774,6 @@ boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp) {
   png_infop info_ptr;
 
   unsigned char *ptr;
-
-  float screen_gamma = SCREEN_GAMMA;
 
   int width, height, palette, flags = 0, error;
   int rowstride;
@@ -4826,7 +4839,8 @@ boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp) {
   png_set_alpha_mode(png_ptr, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
 #endif
 
-  png_set_gamma(png_ptr, screen_gamma, 1.0 / screen_gamma);
+  // set gamma to 1.0 and write gAMA block
+  png_set_gAMA(png_ptr, info_ptr, 1.0);
 
   png_write_info(png_ptr, info_ptr);
 
@@ -6795,6 +6809,10 @@ void load_frame_image(int frame) {
 
     // do_chmod is ignored now
 
+    if (prefs->screen_gamma != -1) {
+      // inverse gamma correction
+    }
+
     if (imgtype == IMG_TYPE_JPEG) {
       char *qstr = lives_strdup_printf("%d", quality);
 #ifdef GUI_GTK
@@ -7786,7 +7804,7 @@ void load_frame_image(int frame) {
     mainw->ce_frame_height = vsize;
 
     if (oscale == 2.) {
-      if (hsize * 4 < scr_width - 70) {
+      if (hsize * 4 < scr_width - SCR_WIDTH_SAFETY) {
         scale = 1.;
       }
     }
@@ -7822,19 +7840,19 @@ void load_frame_image(int frame) {
       }
 
       // THE WIDTHS OF THE FRAME CONTAINERS
-      lives_widget_set_size_request(mainw->frame1, (int)hsize / scale + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->eventbox3, (int)hsize / scale + H_RESIZE_ADJUST, vsize + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->frame2, (int)hsize / scale + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->eventbox4, (int)hsize / scale + H_RESIZE_ADJUST, vsize + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->frame1, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->eventbox3, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->frame2, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->eventbox4, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
 
-      lives_widget_set_size_request(mainw->start_image, (int)hsize / scale + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->end_image, (int)hsize / scale + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->start_image, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->end_image, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
 
-      lives_widget_set_size_request(mainw->playarea, mainw->ce_frame_width, mainw->ce_frame_height);
-      lives_widget_set_size_request(mainw->playframe, mainw->ce_frame_width, mainw->ce_frame_height);
+      lives_widget_set_size_request(mainw->playarea, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->playframe, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
 
       // IMPORTANT (or the entire image will not be shown)
-      lives_widget_set_size_request(mainw->play_image, mainw->ce_frame_width, mainw->ce_frame_height);
+      lives_widget_set_size_request(mainw->play_image, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
     } else {
       xsize = (scr_width - hsize * -oscale - H_RESIZE_ADJUST) / 2;
       if (xsize > 0) {
@@ -7853,7 +7871,7 @@ void load_frame_image(int frame) {
       }
     }
 
-    if (!mainw->foreign && mainw->playing_file == -1 && mainw->current_file > 0 && cfile != NULL && (!cfile->opening ||
+    if (!mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
         cfile->clip_type == CLIP_TYPE_FILE)) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
@@ -7861,5 +7879,3 @@ void load_frame_image(int frame) {
       load_end_image(cfile->end);
     }
   }
-
-

@@ -12,7 +12,7 @@
 #define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_pixel_data_contiguous"
 #define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
 
-#define SCREEN_GAMMA 2.2
+#define DEF_SCREEN_GAMMA 2.2
 
 // rgb / yuv conversion factors ////////////
 #define FP_BITS 16 /// max fp bits
@@ -23,6 +23,9 @@
 
 #define KR_BT701 0.2126
 #define KB_BT701 0.0722
+
+#define KR_BT2020 0.2627
+#define KB_BT2020 0.0593
 
 #define YUV_CLAMP_MIN 16.
 #define YUV_CLAMP_MINI 16

@@ -7099,7 +7099,7 @@ lives_osc *lives_osc_allocate(int port_id) {
 }
 
 
-void lives_osc_dump() {
+void lives_osc_dump(void) {
   OSCPrintWholeAddressSpace();
 }
 

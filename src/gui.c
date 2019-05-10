@@ -4227,7 +4227,7 @@ void kill_play_window(void) {
   if (mainw->multitrack == NULL) {
     add_to_playframe();
   }
-  if (cfile->frames > 0 && mainw->multitrack == NULL) {
+  if (cfile->frames > 0 && mainw->multitrack == NULL && mainw->playing_file > -1) {
     lives_widget_show_all(mainw->playframe);
   }
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show Play Window"));
@@ -4471,3 +4471,31 @@ void splash_end(void) {
     mainw->is_ready = TRUE;
   }
 }
+
+
+void reset_message_area(boolean expand) {
+  int height;
+  if (!prefs->show_gui || mainw->multitrack != NULL) return;
+  if (!expand) {
+    // need to shrink the message_box text then re-expand it after redrawing the widgets
+    // otherwise the main window can expand beyond the bottom of the screen
+    lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), 1);
+    lives_widget_set_size_request(mainw->message_box, -1, 1);
+    lives_widget_set_size_request(mainw->scrolledwindow, -1, 1);
+    lives_widget_set_size_request(mainw->textview1, -1, 1);
+  } else {
+    // re-expand the message area to fit the empty space at the bottom
+    lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),
+        (height = lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) +
+                  lives_widget_get_allocation_height(mainw->message_box)));
+    if (height > 0) {
+      lives_widget_set_size_request(mainw->textview1, -1, height);
+      lives_widget_set_size_request(mainw->scrolledwindow, -1, height);
+      lives_widget_set_size_request(mainw->message_box, -1, height);
+      lives_widget_show_all(mainw->message_box);
+      lives_widget_queue_draw(mainw->message_box);
+    } else lives_widget_hide(mainw->message_box);
+    lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+  }
+}
+

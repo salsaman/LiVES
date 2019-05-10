@@ -2875,7 +2875,6 @@ void play_file(void) {
   if ((mainw->faded || mainw->fs) && mainw->multitrack == NULL) {
     unfade_background();
   }
-
   // resize out of double size
   if ((mainw->double_size || mainw->fs) && mainw->multitrack == NULL) {
     if (mainw->sep_win) add_to_playframe();
@@ -2905,8 +2904,6 @@ void play_file(void) {
     lives_widget_show(mainw->t_bckground);
     lives_widget_show(mainw->t_double);
 
-    resize(1);
-
     if (mainw->play_window != NULL) {
       if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
       else xtrabit = lives_strdup("");
@@ -2923,10 +2920,8 @@ void play_file(void) {
     lives_widget_show(mainw->scrolledwindow);
   }
 
-  lives_widget_hide(mainw->playframe);
-
-  if (prefs->show_gui && (lives_widget_get_allocation_height(mainw->eventbox) + lives_widget_get_allocation_height(mainw->menubar)
-                          > GUI_SCREEN_HEIGHT - 2 || lives_widget_get_allocation_width(mainw->LiVES) > GUI_SCREEN_WIDTH - 2)) {
+  if (prefs->show_gui && (lives_widget_get_allocation_height(mainw->LiVES) > GUI_SCREEN_HEIGHT ||
+                          lives_widget_get_allocation_width(mainw->LiVES) > GUI_SCREEN_WIDTH)) {
     // the screen grew too much...remaximise it
     lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
     mainw->noswitch = TRUE;
@@ -3043,6 +3038,8 @@ void play_file(void) {
       mainw->frame_layer = NULL;
     }
   }
+
+  lives_widget_hide(mainw->playframe);
 
   if (!mainw->foreign) {
     unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
@@ -3179,6 +3176,7 @@ void play_file(void) {
   if (mainw->multitrack == NULL && mainw->current_file > -1)
     set_main_title(cfile->name, 0);
 
+  reset_message_area(TRUE);
 }
 
 
@@ -5641,12 +5639,12 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         set_main_title(cfile->name, 0);
 
         if (mainw->multitrack == NULL) {
-          if (mainw->current_file > 0) {
-            resize(1);
-          }
-        }
-
-        if (mainw->multitrack != NULL) {
+          resize(1);
+          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
+          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
+          load_start_image(cfile->start);
+          load_end_image(cfile->end);
+        } else {
           int current_file = mainw->current_file;
           lives_mt *multi = mainw->multitrack;
           mainw->multitrack = NULL;

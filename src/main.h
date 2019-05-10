@@ -1169,6 +1169,7 @@ void splash_end(void);
 void splash_msg(const char *msg, double pct);
 void add_message_scroller(LiVESWidget *conter, LiVESTextBuffer *);
 void resize_widgets_for_monitor(boolean get_play_times);
+void reset_message_area(boolean expand);
 #if GTK_CHECK_VERSION(3, 0, 0)
 void calibrate_sepwin_size(void);
 boolean expose_pim(LiVESWidget *, lives_painter_t *, livespointer);

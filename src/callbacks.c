@@ -5304,12 +5304,7 @@ boolean reload_set(const char *set_name) {
     set_main_title(cfile->name, 0);
 
     if (mainw->multitrack == NULL) {
-      if (mainw->current_file > 0) {
-        resize(1);
-        load_start_image(cfile->start);
-        load_end_image(cfile->end);
-        lives_widget_context_update();
-      }
+      resize(1);
     }
 
     if (mainw->multitrack != NULL && mainw->multitrack->is_ready) {

@@ -7348,16 +7348,9 @@ void load_frame_image(int frame) {
       zero_spinbuttons();
     }
 
-    if (mainw->multitrack == NULL) {
-      // need to shrink the message_box text then re-expand it after redrawing the widgets
-      // otherwise the main window can expand beyond the bottom of the screen
-      lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), 1);
-      lives_widget_set_size_request(mainw->message_box, -1, 1);
-      lives_widget_set_size_request(mainw->scrolledwindow, -1, 1);
-      lives_widget_set_size_request(mainw->textview1, -1, 1);
-      lives_widget_context_update(); // update BEFORE we call resize()
-      resize(1);
-    }
+    reset_message_area(FALSE);
+    lives_widget_context_update(); // update BEFORE we call resize()
+    resize(1);
 
     if (mainw->playing_file > -1) {
       if (mainw->fs) {
@@ -7394,21 +7387,7 @@ void load_frame_image(int frame) {
       load_end_image(cfile->end);
       if (mainw->playing_file > -1) load_frame_image(cfile->frameno);
     }
-
-    if (prefs->show_gui && mainw->multitrack == NULL) {
-      // re-expand the message area to fit the empty space at the bottom
-      int height;
-      lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),
-          (height = lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) +
-                    lives_widget_get_allocation_height(mainw->message_box)));
-      if (height > 0) {
-        lives_widget_set_size_request(mainw->textview1, -1, height);
-        lives_widget_set_size_request(mainw->scrolledwindow, -1, height);
-        lives_widget_set_size_request(mainw->message_box, -1, height);
-        lives_widget_show(mainw->message_box);
-      } else lives_widget_hide(mainw->message_box);
-      lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
-    }
+    reset_message_area(TRUE);
   }
 
 

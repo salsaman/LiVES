@@ -2151,7 +2151,7 @@ void play_file(void) {
     if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY))) && (cfile->frames > 0 || mainw->foreign)) {
       // show the frame in the main window
       lives_widget_show_all(mainw->playframe);
-      lives_widget_context_update();
+      //lives_widget_context_update();
     }
   }
 
@@ -2382,10 +2382,10 @@ void play_file(void) {
   mainw->last_blend_file = -1;
 
   // show the framebar
-  if (mainw->multitrack == NULL && (!prefs->hide_framebar &&
-                                    (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1 && mainw->sep_win) ||
-                                     (mainw->vpp != NULL && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
-                                    ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
+  if (mainw->multitrack == NULL && !mainw->faded && (!prefs->hide_framebar &&
+      (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1 && mainw->sep_win) ||
+       (mainw->vpp != NULL && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
+      ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
     lives_widget_show(mainw->framebar);
   }
 
@@ -2877,15 +2877,37 @@ void play_file(void) {
   }
 
   // resize out of double size
-  if ((mainw->double_size && !mainw->fs) && mainw->multitrack == NULL) {
-    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-    lives_widget_context_update();
+  if ((mainw->double_size || mainw->fs) && mainw->multitrack == NULL) {
+    if (mainw->sep_win) add_to_playframe();
+
+    if (cfile->frames > 0 && mainw->multitrack == NULL) {
+      lives_widget_show_all(mainw->playframe);
+    }
+
+    if (!mainw->faded) {
+      if (palette->style & STYLE_1) {
+        lives_widget_show(mainw->sep_image);
+      }
+      lives_widget_show(mainw->scrolledwindow);
+    }
+
+    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+    lives_widget_show(mainw->frame1);
+    lives_widget_show(mainw->frame2);
+    lives_widget_show(mainw->eventbox3);
+    lives_widget_show(mainw->eventbox4);
+    lives_widget_show(mainw->sep_image);
+    if (!prefs->hide_framebar && !prefs->hfbwnp) {
+      lives_widget_show(mainw->framebar);
+    }
+    lives_frame_set_label(LIVES_FRAME(mainw->playframe), _("Preview"));
+
+    lives_widget_show(mainw->t_bckground);
+    lives_widget_show(mainw->t_double);
+
     resize(1);
-    load_start_image(cfile->start);
-    load_end_image(cfile->end);
 
     if (mainw->play_window != NULL) {
-      resize_play_window();
       if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
       else xtrabit = lives_strdup("");
       title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW
@@ -2902,22 +2924,6 @@ void play_file(void) {
   }
 
   lives_widget_hide(mainw->playframe);
-
-  // switch out of full screen mode
-  if ((mainw->fs || mainw->double_size) && mainw->multitrack == NULL) {
-    lives_widget_show(mainw->frame1);
-    lives_widget_show(mainw->frame2);
-    lives_widget_show(mainw->eventbox3);
-    lives_widget_show(mainw->eventbox4);
-    lives_widget_show(mainw->sep_image);
-    if (!prefs->hide_framebar) {
-      lives_widget_show(mainw->framebar);
-    }
-    lives_frame_set_label(LIVES_FRAME(mainw->playframe), _("Preview"));
-    //resize(1);
-    lives_widget_show(mainw->t_bckground);
-    lives_widget_show(mainw->t_double);
-  }
 
   if (prefs->show_gui && (lives_widget_get_allocation_height(mainw->eventbox) + lives_widget_get_allocation_height(mainw->menubar)
                           > GUI_SCREEN_HEIGHT - 2 || lives_widget_get_allocation_width(mainw->LiVES) > GUI_SCREEN_WIDTH - 2)) {
@@ -3002,10 +3008,10 @@ void play_file(void) {
           lives_free(title);
           lives_free(xtrabit);
 
-          lives_widget_queue_draw(mainw->LiVES);
+          //lives_widget_queue_draw(mainw->LiVES);
           mainw->noswitch = TRUE;
 
-          lives_widget_context_update();
+          //lives_widget_context_update();
 
           if (mainw->play_window != NULL) {
             char *title, *xtrabit;
@@ -3035,11 +3041,6 @@ void play_file(void) {
     if (mainw->frame_layer != NULL) {
       weed_layer_free(mainw->frame_layer);
       mainw->frame_layer = NULL;
-    }
-  } else {
-    if (mainw->multitrack == NULL) {
-      lives_widget_queue_draw(mainw->LiVES);
-      lives_widget_context_update();
     }
   }
 
@@ -3178,9 +3179,6 @@ void play_file(void) {
   if (mainw->multitrack == NULL && mainw->current_file > -1)
     set_main_title(cfile->name, 0);
 
-  if (mainw->play_window != NULL) {
-    resize_play_window();
-  }
 }
 
 
@@ -5062,7 +5060,7 @@ int save_to_scrap_file(weed_plant_t *layer) {
     lives_free(dir);
   }
 
-  if ((!mainw->fs || prefs->play_monitor != prefs->gui_monitor) && !prefs->hide_framebar) {
+  if ((!mainw->fs || prefs->play_monitor != prefs->gui_monitor) && !prefs->hide_framebar && !mainw->faded) {
     if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
       // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
       framecount = lives_strdup_printf(_("rec %.2f MB"), scrap_mb + ascrap_mb);

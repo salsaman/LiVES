@@ -2102,6 +2102,7 @@ void d_print(const char *fmt, ...) {
     }
     if (prefs->show_gui && mainw->multitrack == NULL) {
       lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+      lives_widget_queue_draw(mainw->scrolledwindow); // just in case
     }
 
     if ((mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&

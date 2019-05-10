@@ -1053,6 +1053,15 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 
 // custom values
 
+#define LIVES_LIVES_STOCK_FULLSCREEN "fullscreen"
+
+#if 0
+#define LIVES_LIVES_STOCK_VOLUME_MUTE "lives_volume_mute"
+#define LIVES_LIVES_STOCK_LOCKED "lives_locked"
+#define LIVES_LIVES_STOCK_UNLOCKED "lives_unlocked"
+#define LIVES_LIVES_STOCK_LOOP "lives_loop"
+#endif
+
 #if GTK_CHECK_VERSION(3, 2, 0)
 #define LIVES_LIVES_STOCK_LOCKED "changes-prevent"
 #define LIVES_LIVES_STOCK_UNLOCKED "changes-allow"

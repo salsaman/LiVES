@@ -6634,6 +6634,8 @@ void on_details_button_clicked(void) {
 
 void on_full_screen_pressed(LiVESButton *button, livespointer user_data) {
   // toolbar button (full screen)
+  // ignore if audio only clip
+  if (mainw->current_file > -1 && !cfile->frames && mainw->multitrack == NULL) return;
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->full_screen), !mainw->fs);
 }
 
@@ -6641,23 +6643,17 @@ void on_full_screen_pressed(LiVESButton *button, livespointer user_data) {
 void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char buff[PATH_MAX];
   LiVESWidget *fs_img;
-  char *fnamex;
 
-  static boolean inited = FALSE;
-
+  // ignore if audio only clip
   if (mainw->current_file > -1 && !cfile->frames && mainw->multitrack == NULL) return;
 
   if (user_data == NULL) {
+    // toggle can be overridden by setting user_data non-NULL
     mainw->fs = !mainw->fs;
   }
 
-  if (mainw->current_file == -1) return;
-
-  fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "fullscreen.png", NULL);
-  lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-  lives_free(fnamex);
-
-  fs_img = lives_image_new_from_file(buff);
+  // update the button icon
+  fs_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_FULLSCREEN, LIVES_ICON_SIZE_LARGE_TOOLBAR);
   lives_widget_show(fs_img);
   if (!mainw->fs) {
     if (lives_file_test(buff, LIVES_FILE_TEST_EXISTS)) {
@@ -6669,32 +6665,20 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_fullscreen), fs_img);
 
+  // return if no clip is open
+  if (mainw->current_file == -1) return;
+
   if (mainw->playing_file > -1) {
     if (mainw->fs) {
       // switch TO full screen during pb
-
-      if (mainw->multitrack == NULL && (!mainw->sep_win || prefs->play_monitor == prefs->gui_monitor) &&
-          !(mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && mainw->sep_win)) {
-        if (!mainw->faded) {
-          fade_background();
-        }
+      if (mainw->multitrack == NULL && !mainw->sep_win && cfile->frames > 0) {
         fullscreen_internal();
       }
-
       if (mainw->sep_win) {
-        if (prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
-          resize_play_window();
-        } else {
-          kill_play_window();
-          make_play_window();
-          if (mainw->play_window != NULL) {
-            hide_cursor(lives_widget_get_xwindow(mainw->play_window));
-            lives_widget_set_app_paintable(mainw->play_window, TRUE);
-          }
-        }
-        if (cfile->frames == 1 || cfile->play_paused) {
-          lives_widget_context_update();
-        }
+        resize_play_window();
+      }
+      if (cfile->frames == 1 || cfile->play_paused) {
+        lives_widget_context_update();
       }
 
       if (mainw->ext_playback && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
@@ -6713,25 +6697,18 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         load_frame_image(cfile->frameno);
         mainw->frame_layer = frame_layer;
       }
-
-      if (!inited) {
-        // not exactly sure why we need this, but for now we do...
-        inited = TRUE;
-        if (!mainw->sep_win) {
-          on_full_screen_activate(menuitem, NULL);
-          on_full_screen_activate(menuitem, NULL);
-        }
-      }
     } else {
       if (mainw->multitrack == NULL) {
         // switch FROM fullscreen during pb
-        lives_widget_show(mainw->frame1);
-        lives_widget_show(mainw->frame2);
-        lives_widget_show(mainw->eventbox3);
-        lives_widget_show(mainw->eventbox4);
+        if (!mainw->faded) {
+          lives_widget_show(mainw->frame1);
+          lives_widget_show(mainw->frame2);
+          lives_widget_show(mainw->eventbox3);
+          lives_widget_show(mainw->eventbox4);
 
-        if (!prefs->hide_framebar) {
-          lives_widget_show(mainw->framebar);
+          if (!prefs->hide_framebar) {
+            lives_widget_show(mainw->framebar);
+          }
         }
 
         lives_widget_set_sensitive(mainw->fade, TRUE);
@@ -6741,6 +6718,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         lives_widget_show(mainw->t_double);
 
         resize(1);
+
         if (mainw->multitrack == NULL) {
           if (cfile->is_loaded) {
             load_start_image(cfile->start);
@@ -6777,8 +6755,9 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           mainw->opwy = -1;
         } else {
           // non-sticky
-          kill_play_window();
-          make_play_window();
+          //kill_play_window();
+          //make_play_window();
+          resize_play_window();
           if (mainw->play_window != NULL) {
             hide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_app_paintable(mainw->play_window, TRUE);
@@ -6804,12 +6783,21 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
           // double size
           if (mainw->double_size) {
+            if (palette->style & STYLE_1) {
+              lives_widget_hide(mainw->sep_image);
+            }
+            lives_widget_hide(mainw->scrolledwindow);
             lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
             resize(2);
-            mainw->pheight *= 2;
-            mainw->pheight++;
-            mainw->pwidth *= 2;
-            mainw->pwidth += 2;
+            if (!prefs->ce_maxspect) {
+              mainw->pheight *= 2;
+              mainw->pheight++;
+              mainw->pwidth *= 2;
+              mainw->pwidth += 2;
+            }
+            load_start_image(cfile->start);
+            load_end_image(cfile->end);
+            //lives_widget_queue_draw(mainw->LiVES);
           }
         }
         if (!mainw->faded) {
@@ -6902,9 +6890,9 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         play_window_set_title();
       } else {
         if (mainw->play_window != NULL) {
-          kill_play_window();
-        }
-        make_play_window();
+          resize_play_window();
+          //kill_play_window();
+        } else make_play_window();
         if (mainw->play_window != NULL) {
           hide_cursor(lives_widget_get_xwindow(mainw->play_window));
           lives_widget_set_app_paintable(mainw->play_window, TRUE);
@@ -6932,14 +6920,12 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           }
           lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
           resize(2);
-          load_start_image(cfile->start);
-          load_end_image(cfile->end);
-        }
-        if (!prefs->ce_maxspect) {
-          mainw->pheight *= 2;
-          mainw->pheight++;
-          mainw->pwidth *= 2;
-          mainw->pwidth += 2;
+          if (!prefs->ce_maxspect) {
+            mainw->pheight *= 2;
+            mainw->pheight++;
+            mainw->pwidth *= 2;
+            mainw->pwidth += 2;
+          }
         }
       } else {
         lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
@@ -7033,7 +7019,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         // switch to separate window during pb
         if (mainw->multitrack == NULL) {
 
-          if (!prefs->hide_framebar && ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening)) {
+          if (!prefs->hide_framebar && !mainw->faded && ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening)) {
             lives_widget_show(mainw->framebar);
           }
           if ((!mainw->faded && mainw->fs && ((prefs->play_monitor != prefs->gui_monitor && prefs->play_monitor > 0))) ||
@@ -7058,9 +7044,6 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           } else {
             if (mainw->faded) {
               lives_widget_hide(mainw->playframe);
-              lives_table_set_col_spacings(LIVES_TABLE(mainw->pf_grid), 0);
-              //			   - 3.0 * DEFAULT_FRAME_HSIZE);
-
             }
             if (mainw->double_size && mainw->multitrack == NULL) {
               lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
@@ -7094,7 +7077,6 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             play_window_set_title();
             unfade_background();
           }
-
           resize(1);
           resize_play_window();
         }
@@ -7116,10 +7098,12 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         }
       } else {
         // switch from separate window during playback
-        if (cfile->frames > 0 && mainw->multitrack == NULL) {
-          lives_widget_show(mainw->playframe);
-        }
+        kill_play_window();
+
         if (!mainw->fs && mainw->multitrack == NULL) {
+          mainw->pwidth = DEFAULT_FRAME_HSIZE - H_RESIZE_ADJUST;
+          mainw->pheight = DEFAULT_FRAME_VSIZE - V_RESIZE_ADJUST;
+
           if (!mainw->double_size) {
             lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
             resize(1);
@@ -7130,24 +7114,20 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             lives_widget_hide(mainw->scrolledwindow);
             lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
             resize(2);
+            if (!prefs->ce_maxspect) {
+              mainw->pheight *= 2;
+              mainw->pheight++;
+              mainw->pwidth *= 2;
+              mainw->pwidth += 2;
+            }
           }
-
-          lives_widget_queue_draw(mainw->playframe);
-          lives_widget_context_update();
-          mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
-          mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST;
         } else {
+          // fullscreen
           if (mainw->ext_playback) {
             vid_playback_plugin_exit();
           }
-          if (mainw->multitrack == NULL) {
-            lives_widget_show(mainw->playframe);
-            if (prefs->hide_framebar) {
-              lives_widget_hide(mainw->framebar);
-            }
-            if (!mainw->faded) fade_background();
+          if (mainw->multitrack == NULL && cfile->frames > 0) {
             fullscreen_internal();
-            lives_widget_context_update();
           }
         }
         if (mainw->multitrack != NULL) {
@@ -7155,8 +7135,6 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           mainw->pwidth = mainw->multitrack->play_width;
           mainw->pheight = mainw->multitrack->play_height;
         }
-        kill_play_window();
-        if (mainw->multitrack == NULL) add_to_playframe();
 
         hide_cursor(lives_widget_get_xwindow(mainw->playarea));
         if (mainw->multitrack == NULL && (cfile->frames == 1 || cfile->play_paused) &&
@@ -7227,8 +7205,19 @@ void on_fade_pressed(LiVESButton *button, livespointer user_data) {
 void on_fade_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->faded = !mainw->faded;
   if (mainw->playing_file > -1 && (!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && mainw->play_window != NULL))) {
-    if (mainw->faded) fade_background();
-    else unfade_background();
+    if (mainw->faded) {
+      lives_widget_hide(mainw->framebar);
+      fade_background();
+    } else {
+      unfade_background();
+      lives_widget_show(mainw->frame1);
+      lives_widget_show(mainw->frame2);
+      lives_widget_show(mainw->eventbox3);
+      lives_widget_show(mainw->eventbox4);
+      if (!prefs->hide_framebar && !(prefs->hfbwnp && mainw->playing_file == -1)) {
+        lives_widget_show(mainw->framebar);
+      }
+    }
   }
 }
 
@@ -7276,25 +7265,16 @@ void on_loop_button_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_loop_cont_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char buff[PATH_MAX];
   LiVESWidget *loop_img;
-  char *fnamex;
 
   mainw->loop_cont = !mainw->loop_cont;
 
-  fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "loop.png", NULL);
-  lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-  lives_free(fnamex);
-
-  loop_img = lives_image_new_from_file(buff);
-
+  loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
   if (mainw->loop_cont) {
     lives_widget_set_tooltip_text(mainw->m_loopbutton, _("Switch continuous looping off (o)"));
   } else {
-    if (lives_file_test(buff, LIVES_FILE_TEST_EXISTS)) {
-      LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
-      if (pixbuf != NULL) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-    }
+    LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
+    if (pixbuf != NULL) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     lives_widget_set_tooltip_text(mainw->m_loopbutton, _("Switch continuous looping on (o)"));
   }
 

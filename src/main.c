@@ -2711,8 +2711,8 @@ static boolean lives_startup(livespointer data) {
     if (gerr != NULL) lives_error_free(gerr);
 #endif
 
-    lives_widget_queue_draw(mainw->LiVES);
-    lives_widget_context_update();
+    //lives_widget_queue_draw(mainw->LiVES);
+    //lives_widget_context_update();
 
     mainw->startup_error = FALSE;
 
@@ -4122,7 +4122,7 @@ void load_start_image(int frame) {
 
   tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
-  if (!prefs->ce_maxspect || (0 && mainw->double_size && mainw->playing_file > -1)) {
+  if (!prefs->ce_maxspect) {
     threaded_dialog_spin(0.);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
@@ -4299,7 +4299,7 @@ void load_end_image(int frame) {
 
   tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
-  if (!prefs->ce_maxspect || (0 && mainw->double_size && mainw->playing_file > -1)) {
+  if (!prefs->ce_maxspect) {
     threaded_dialog_spin(0.);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
@@ -5208,7 +5208,6 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         }
         lives_free(fname);
 #endif
-
         mainw->osc_block = FALSE;
         if (ret == FALSE) return FALSE;
       }
@@ -6348,7 +6347,6 @@ void load_frame_image(int frame) {
         lives_freep((void **)&framecount);
         return;
       }
-
     }
 
     if ((mainw->multitrack == NULL && mainw->double_size && (!prefs->ce_maxspect || mainw->sep_win)) ||

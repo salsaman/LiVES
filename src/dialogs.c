@@ -1697,7 +1697,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         reinit_audio_gen();
       }
 
-      if ((visible && !mainw->internal_messaging) || !visible) lives_usleep(prefs->sleep_time);
+      if ((visible && !mainw->internal_messaging)) lives_usleep(prefs->sleep_time);
 
       sched_yield();
 

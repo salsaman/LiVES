@@ -1591,12 +1591,9 @@ void create_LiVES(void) {
     lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
 
     tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-    if (lives_file_test(buff, LIVES_FILE_TEST_EXISTS)) {
-      pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-      lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-    }
+    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
+    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
 
-    lives_image_scale(LIVES_IMAGE(tmp_toolbar_icon), 16, 16, LIVES_INTERP_BEST);
     mainw->m_loopbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
     lives_widget_set_bg_color(mainw->m_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_loopbutton), -1);
@@ -3339,11 +3336,16 @@ void unfade_background(void) {
 
 void fullscreen_internal(void) {
   // resize for full screen, internal player, no separate window
-
   int bx, by;
-  int w, h;
+  int width, height;
 
   if (mainw->multitrack == NULL) {
+    lives_widget_hide(mainw->framebar);
+
+    if (!mainw->faded) fade_background();
+
+    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+
     lives_widget_hide(mainw->frame1);
     lives_widget_hide(mainw->frame2);
 
@@ -3354,33 +3356,35 @@ void fullscreen_internal(void) {
 
     lives_widget_hide(mainw->t_bckground);
     lives_widget_hide(mainw->t_double);
-
     lives_widget_hide(mainw->menu_hbox);
 
-    lives_widget_hide(mainw->framebar);
+    height = lives_widget_get_allocation_height(mainw->LiVES);
+    width = lives_widget_get_allocation_width(mainw->LiVES);
+
+    if (width > GUI_SCREEN_WIDTH) width = GUI_SCREEN_WIDTH;
+    if (height > GUI_SCREEN_HEIGHT) height = GUI_SCREEN_HEIGHT;
+
+    lives_widget_set_size_request(mainw->LiVES, width, height);
+
+    lives_widget_context_update();
+
+    get_border_size(mainw->LiVES, &bx, &by);
+    if (future_prefs->show_tool) by += lives_widget_get_allocation_height(mainw->tb_hbox);
+
+    width = lives_widget_get_allocation_width(mainw->LiVES) - bx;
+    height = lives_widget_get_allocation_height(mainw->LiVES) - by;
+
+    mainw->ce_frame_width = width;
+    mainw->ce_frame_height = height;
 
     if (mainw->playing_file == -1) {
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL);
     }
 
-    lives_widget_context_update();
-
-    get_border_size(mainw->LiVES, &bx, &by);
-
-    if (future_prefs->show_tool) by += lives_widget_get_allocation_height(mainw->tb_hbox);
-
-    lives_widget_set_size_request(mainw->playframe, lives_widget_get_allocation_width(mainw->LiVES) - bx,
-                                  lives_widget_get_allocation_height(mainw->LiVES) - by);
-
-    w = lives_widget_get_allocation_width(mainw->LiVES);
-    h = lives_widget_get_allocation_height(mainw->LiVES);
-
-    if (w > GUI_SCREEN_WIDTH) w = GUI_SCREEN_WIDTH;
-    if (h > GUI_SCREEN_HEIGHT) h = GUI_SCREEN_HEIGHT;
-
-    lives_widget_set_size_request(mainw->LiVES, w, h);
-
-    resize(1);
+    lives_widget_set_size_request(mainw->playframe, width, height);
+    lives_widget_set_size_request(mainw->playarea, width, height);
+    lives_widget_set_size_request(mainw->play_image, width, height);
+    lives_widget_queue_draw(mainw->pf_grid);
   } else {
     make_play_window();
   }
@@ -3542,7 +3546,7 @@ void make_preview_box(void) {
   hbox_buttons = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->preview_controls), hbox_buttons, TRUE, TRUE, 0);
 
-  rewind_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  rewind_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_LARGE_TOOLBAR);
   mainw->p_rewindbutton = lives_standard_button_new();
   lives_widget_set_bg_color(mainw->p_rewindbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   lives_button_set_relief(LIVES_BUTTON(mainw->p_rewindbutton), LIVES_RELIEF_NONE);
@@ -3553,7 +3557,7 @@ void make_preview_box(void) {
   lives_widget_set_tooltip_text(mainw->p_rewindbutton, _("Rewind"));
   lives_widget_set_sensitive(mainw->p_rewindbutton, mainw->current_file > -1 && cfile->pointer_time > 0.);
 
-  play_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  play_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_LARGE_TOOLBAR);
   mainw->p_playbutton = lives_standard_button_new();
   lives_widget_set_bg_color(mainw->p_playbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   lives_button_set_relief(LIVES_BUTTON(mainw->p_playbutton), LIVES_RELIEF_NONE);
@@ -3577,7 +3581,7 @@ void make_preview_box(void) {
   lives_widget_set_tooltip_text(mainw->p_playselbutton, _("Play Selection"));
   lives_widget_set_sensitive(mainw->p_playselbutton, mainw->current_file > -1 && cfile->frames > 0);
 
-  loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, LIVES_ICON_SIZE_SMALL_TOOLBAR);
+  loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, LIVES_ICON_SIZE_LARGE_TOOLBAR);
   mainw->p_loopbutton = lives_standard_button_new();
   lives_widget_set_bg_color(mainw->p_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   lives_button_set_relief(LIVES_BUTTON(mainw->p_loopbutton), LIVES_RELIEF_NONE);
@@ -4219,6 +4223,12 @@ void kill_play_window(void) {
     }
     if (LIVES_IS_WINDOW(mainw->play_window)) lives_widget_destroy(mainw->play_window);
     mainw->play_window = NULL;
+  }
+  if (mainw->multitrack == NULL) {
+    add_to_playframe();
+  }
+  if (cfile->frames > 0 && mainw->multitrack == NULL) {
+    lives_widget_show_all(mainw->playframe);
   }
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show Play Window"));
 }

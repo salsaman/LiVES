@@ -5342,6 +5342,8 @@ render_details *create_render_details(int type) {
 
   register int i;
 
+  mainw->no_context_update = TRUE;
+
   if (type == 1) specified = TRUE;
 
   rdet = (render_details *)lives_malloc(sizeof(render_details));
@@ -5691,6 +5693,8 @@ render_details *create_render_details(int type) {
   }
 
   lives_signal_connect_after(LIVES_COMBO(rdet->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(rdet_acodec_changed), rdet);
+
+  mainw->no_context_update = FALSE;
 
   return rdet;
 }

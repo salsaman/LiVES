@@ -321,7 +321,7 @@ int lives_system(const char *com, boolean allow_error) {
        (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    lives_widget_context_update();
+    //lives_widget_context_update();
   }
 
   retval = system(com);

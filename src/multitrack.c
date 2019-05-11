@@ -7796,12 +7796,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_object_unref(mainw->m_loopbutton);
 
   widget_opts.apply_theme = FALSE;
-  widget_opts.expand = LIVES_EXPAND_NONE;
+  //widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.apply_theme = FALSE;
   mt->timecode = lives_standard_entry_new(NULL, NULL, TIMECODE_LENGTH, TIMECODE_LENGTH, LIVES_BOX(hbox), NULL);
+  lives_widget_set_valign(mt->timecode, LIVES_ALIGN_CENTER);
   widget_opts.apply_theme = TRUE;
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  //widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   time_to_string(mt, 0., TIMECODE_LENGTH);

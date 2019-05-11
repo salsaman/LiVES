@@ -1412,6 +1412,8 @@ typedef struct {
   LiVESPixbuf *scrap_pixbuf;
 
   volatile LiVESWidget *stop_emmission;
+
+  boolean no_context_update;
   ////////////////////
 } mainwindow;
 

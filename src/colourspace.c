@@ -267,52 +267,57 @@ static boolean conv_YY_inited = FALSE;
 // gamma correction
 
 #ifdef TEST_GAMMA
-
 uint8_t gamma_lut[256];
-double current_gamma = -1.;
+int current_gamma = WEED_GAMMA_UNKNOWN;
+boolean current_gamma_fwd = FALSE;
 
 /* Updates the gamma look-up-table. */
 
-// adjust gamma just for display on monitors (I think)
-// this is already done when loading png
-
-static inline void update_gamma_lut(float gamma) {
+static inline void update_gamma_lut(boolean fwd, int gamma_type) {
+  // fwd will convert linear to gamma type
+  // otherwise do the inverse
   register int i;
-  float inv_gamma = (1.0 / gamma);
+  float gamma, inv_gamma;
+  float a, x;
 
   gamma_lut[0] = 0;
 
+  if (gamma_type == WEED_GAMMA_MONITOR) {
+    gamma = (float)prefs->screen_gamma;
+    inv_gamma = 1. / gamma;
+  }
+
   for (i = 1; i < 256; ++i) {
-    float a = (float)i / 255.;
+    a = (float)i / 255.;
+    if (gamma_type == WEED_GAMMA_MONITOR) {
+      x = powf(a, inv_gamma);
+      else
+        x = powf(a, gamma);
+    }
 
-    // naive
-    float x = powf(a, inv_gamma);
-
-    // rec 709 fwd gamma (linear to gamma)
+    // rec 709 fwd gamma ??? (linear to gamma)
     //x = (a <= 0.018) ? 4.5 * a : 1.099 * powf(a, 0.45) - 0.099;
 
-    // rec 709 back gamma (gamma to linear)
-    //x = (a <= 0.0031308) ? 12.92 * a : 1.055 * powf(a, 1.0 / 2.4) - 0.055;
-
-    // sRGB fwd (linear to gamma)
-    //x = (a <= 0.0031308) ? 12.92 * a : 1.055 * powf(a, 1.0 / 2.4) - 0.055;
-
-    // sRGB back (gamma to linear)
-    //x = (a <= 0.04045) ? a / 12.92 : powf((a + 0.055) / 1.055, 2.4);
+    if (gamma_type == WEED_GAMMA_SRGB) {
+      if (fwd)
+        x = (a <= 0.0031308) ? 12.92 * a : 1.055 * powf(a, 1.0 / 2.4) - 0.055;
+      else
+        x = (a <= 0.04045) ? a / 12.92 : powf((a + 0.055) / 1.055, 2.4);
+    }
 
     gamma_lut[i] = CLAMP0255(255.*x);
-
   }
+
   current_gamma = gamma;
+  current_gamma_dir = fwd;
 }
 
 #endif
 
 static void init_RGB_to_YUV_tables(void) {
   register int i;
-
   // Digital Y'UV proper [ITU-R BT.601-5] for digital NTSC (NTSC analog uses YIQ I think)
-  // a.k.a CCIR 601, aka bt470bg
+  // a.k.a CCIR 601, aka bt470bg (with gamma = 2.8 ?), bt470m (gamma = 2.2), aka SD
   // uses Kr = 0.299 and Kb = 0.114
   // offs U,V = 128
 
@@ -320,13 +325,19 @@ static void init_RGB_to_YUV_tables(void) {
 
   // this is used for e.g. theora encoding, and for most video cards
 
-  // apparently gamma correction should be done before conversion
-  // except for bt2020 which gamma corrects the Y (only) after conversion
+  // input is linear RGB, output is gamma corrected Y'UV
 
-  // as well as this and bt.709, there is also smpte 170, smpte 240, and bt2020
+  // bt.709 (HD)
 
-  // bt2020:
+  // input is linear RGB, output is gamma corrected Y'UV
 
+  // except for bt2020 which gamma corrects the Y (only) after conversion (?)
+
+  // there is also smpte 170 / smpte 240 (NTSC), bt.1886 (?), smpte2084, and bt2020
+
+  // bt.1886 : gamma 2.4
+
+  // bt2020: UHD, 10/12 bit colour
 
   double fac;
 
@@ -9858,20 +9869,20 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int h
 }
 
 
-double get_layer_gamma(weed_plant_t *layer) {
-  int error;
-  double gamma = 1.;
+int get_layer_gamma(weed_plant_t *layer) {
+  int gamma = 0; //WEED_GAMMA_LINEAR;
 #ifdef TEST_GAMMA
+  int error;
   if (weed_plant_has_leaf(layer, "gamma")) {
-    gamma = weed_get_double_value(layer, "gamma", &error);
+    gamma = weed_get_int_value(layer, "gamma", &error);
   }
 #endif
   return gamma;
 }
 
 
-void gamma_correct_pixbuf(boolean fwd, double gamma, LiVESPixbuf *pixbuf) {
-  // if fwd, convert from gamma 1.0 to "gamma"
+void gamma_correct_pixbuf(boolean fwd, int gamma, LiVESPixbuf *pixbuf) {
+  // if fwd, convert from linear to "gamma"
   // otherwise do inverse conversion
 #ifdef TEST_GAMMA
   register int j, k;
@@ -9880,7 +9891,7 @@ void gamma_correct_pixbuf(boolean fwd, double gamma, LiVESPixbuf *pixbuf) {
   int width, widthx, height, nchannels, orowstride;
   boolean done = FALSE;
 
-  if (current_gamma != gamma) update_gamma_lut(gamma);
+  if (current_gamma != gamma || current_gamma_direction != fwd) update_gamma_lut(fwd, gamma);
 
   nchannels = lives_pixbuf_get_n_channels(pixbuf);
 
@@ -9892,20 +9903,65 @@ void gamma_correct_pixbuf(boolean fwd, double gamma, LiVESPixbuf *pixbuf) {
   orowstride = lives_pixbuf_get_rowstride(pixbuf);
   end = pixels + height * orowstride;
 
-  if (fwd) {
-    for (; pixels < end && !done; pixels += orowstride) {
-      if (pixels + orowstride >= end) {
-        orowstride = get_last_rowstride_value(width, nchannels);
-        done = TRUE;
-      }
-      for (j = 0; j < widthx; j += nchannels) {
-        for (k = 0; k < 3; k++) pixels[j + k] = gamma_lut[pixels[j + k]];
-      }
+  for (; pixels < end && !done; pixels += orowstride) {
+    if (pixels + orowstride >= end) {
+      orowstride = get_last_rowstride_value(width, nchannels);
+      done = TRUE;
     }
-  } else {
-    //
+    for (j = 0; j < widthx; j += nchannels) {
+      for (k = 0; k < 3; k++) pixels[j + k] = gamma_lut[pixels[j + k]];
+    }
   }
 #endif
+}
+
+
+boolean gamma_correct_layer(int gamma, weed_plant_t *layer) {
+  // convert layer from current gamma to target
+#ifdef TEST_GAMMA
+  register int j, k;
+
+  uint8_t *pixels, *end;
+  int widthx;
+  int error;
+  int pal;
+  int start = 0;
+  int lgamma = get_layer_gamma(layer);
+
+  boolean done = FALSE;
+  boolean fwd = TRUE;
+
+  int orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
+  int pal = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
+  int width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
+
+  if (!weed_palette_is_rgb_palette(pal)) return FALSE; // yuv is always gammad
+
+  if (gamma == lgamma) return TRUE;
+
+  if (gamma != WEED_GAMMA_LINEAR && lgamma != WEED_GAMMA_LINEAR) return FALSE; // not handled
+
+  if (gamma == WEED_GAMMA_LINEAR) fwd = FALSE;
+  nchannels = weed_palette_get_bits_per_macropixel(pal) >> 3;
+  widthx = width * nchannels;
+
+  pixels = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
+  end = pixels + height * orowstride;
+
+  if (pal == WEED_PALETTE_ARGB32) start = 1;
+
+  // TODO - mutex lock the gamma_lut
+  if (current_gamma != gamma || current_gamma_direction != fwd) update_gamma_lut(fwd, gamma);
+  for (; pixels < end; pixels += orowstride) {
+    for (j = start; j < widthx; j += nchannels) {
+      for (k = 0; k < 3; k++) pixels[j + k] = gamma_lut[pixels[j + k]];
+    }
+  }
+
+  weed_set_int_value(layer, WEED_LEAF_GAMMA, gamma);
+#endif
+  return TRUE;
 }
 
 
@@ -9918,7 +9974,6 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   uint8_t *pixel_data, *pixels, *end;
 
   boolean cheat = FALSE, done;
-  boolean convert_gamma = TRUE;
 
   int error;
   int palette;
@@ -9935,14 +9990,6 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
     pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
     weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-#ifdef TEST_GAMMA
-    if (convert_gamma) {
-      // convert to prefs->screen_gamma
-      double gamma = get_layer_gamma(layer);
-      if (gamma != prefs->screen_gamma)
-        gamma_correct_pixbuf(TRUE, prefs->screen_gamma, pixbuf);
-    }
-#endif
     return pixbuf;
   }
 
@@ -10027,15 +10074,6 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
     }
     weed_layer_pixel_data_free(layer);
   }
-
-#ifdef TEST_GAMMA
-  if (convert_gamma) {
-    // convert to prefs->screen_gamma
-    double gamma = get_layer_gamma(layer);
-    if (gamma != prefs->screen_gamma)
-      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, pixbuf);
-  }
-#endif
   return pixbuf;
 }
 

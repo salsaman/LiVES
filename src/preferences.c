@@ -3,7 +3,6 @@
 // (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
-
 // functions dealing with getting/setting user preferences
 // TODO - use atom type system for prefs
 
@@ -32,7 +31,7 @@ static int nmons;
 
 static uint32_t prefs_current_page;
 
-static void select_pref_list_row(uint32_t selected_idx);
+static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
 #ifdef ENABLE_OSC
 static void on_osc_enable_toggled(LiVESToggleButton *t1, livespointer t2) {
@@ -665,7 +664,7 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
   }
 
   if (prefsw != NULL) {
-    lives_widget_context_update();
+    //lives_widget_context_update();
     prefsw->ignore_apply = FALSE;
   }
 }
@@ -959,6 +958,7 @@ boolean apply_prefs(boolean skip_warn) {
   char *cdplay_device = lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)), -1, NULL, NULL, NULL);
 
   // TODO: move all into pref_factory_* functions
+  mainw->no_context_update = TRUE;
 
   pstyle2 = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2));
 
@@ -1889,6 +1889,8 @@ boolean apply_prefs(boolean skip_warn) {
       write_backup_layout_numbering(mainw->multitrack);
   }
 
+  mainw->no_context_update = FALSE;
+
   return needs_restart;
 }
 
@@ -2042,6 +2044,7 @@ static void on_forcesmon_toggled(LiVESToggleButton *tbutton, livespointer user_d
 
 
 static void pmoni_gmoni_changed(LiVESWidget *sbut, livespointer user_data) {
+  _prefsw *prefsw = (_prefsw *)user_data;
   int gui_monitor = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
   int play_monitor = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   lives_widget_set_sensitive(prefsw->ce_thumbs, play_monitor != gui_monitor &&
@@ -2207,8 +2210,7 @@ static void stream_audio_toggled(LiVESToggleButton *togglebutton, livespointer u
 }
 
 
-void prefsw_set_astream_settings(_vid_playback_plugin *vpp) {
-
+void prefsw_set_astream_settings(_vid_playback_plugin *vpp, _prefsw *prefsw) {
   if (vpp != NULL && (vpp->audio_codec != AUDIO_CODEC_NONE || vpp->init_audio != NULL)) {
     lives_widget_set_sensitive(prefsw->checkbutton_stream_audio, TRUE);
     //lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
@@ -2219,7 +2221,7 @@ void prefsw_set_astream_settings(_vid_playback_plugin *vpp) {
 }
 
 
-void prefsw_set_rec_after_settings(_vid_playback_plugin *vpp) {
+void prefsw_set_rec_after_settings(_vid_playback_plugin *vpp, _prefsw *prefsw) {
   if (vpp != NULL && (vpp->capabilities & VPP_CAN_RETURN)) {
     lives_widget_set_sensitive(prefsw->checkbutton_rec_after_pb, TRUE);
     //lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
@@ -2271,11 +2273,13 @@ static void prefs_add_to_list(LiVESWidget *list, LiVESPixbuf *pix, const char *s
 /*
  * Callback function called when preferences list row changed
  */
-void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer dummy) {
+void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
   LiVESTreeIter iter;
   LiVESTreeModel *model;
 
   register int i;
+
+  _prefsw *prefsw = (_prefsw *)xprefsw;
 
   for (i = 0; i < 2; i++) {
     // for some reason gtk+ needs us to do this twice..
@@ -2507,7 +2511,7 @@ _prefsw *create_prefs_dialog(void) {
   register int i;
 
   // Allocate memory for the preferences structure
-  prefsw = (_prefsw *)(lives_malloc(sizeof(_prefsw)));
+  _prefsw *prefsw = (_prefsw *)(lives_malloc(sizeof(_prefsw)));
   prefsw->right_shown = NULL;
   mainw->prefs_need_restart = FALSE;
 
@@ -2721,7 +2725,7 @@ _prefsw *create_prefs_dialog(void) {
                              prefs->play_monitor != 0 && !prefs->force_single_monitor &&
                              capable->nmonitors > 0);
 
-  pmoni_gmoni_changed(NULL, NULL);
+  pmoni_gmoni_changed(NULL, (livespointer)prefsw);
 
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_gui.png", NULL);
   pixbuf_gui = lives_pixbuf_new_from_file(icon, NULL);
@@ -3056,7 +3060,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  prefsw_set_astream_settings(mainw->vpp);
+  prefsw_set_astream_settings(mainw->vpp, prefsw);
 
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_stream_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(stream_audio_toggled), NULL);
@@ -3069,7 +3073,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  prefsw_set_rec_after_settings(mainw->vpp);
+  prefsw_set_rec_after_settings(mainw->vpp, prefsw);
 
   if (palette->style & STYLE_1) {
     lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -3489,23 +3493,16 @@ _prefsw *create_prefs_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
-  /*  prefsw->wpp_entry = lives_standard_entry_new(_("Weed plugin path"), prefs->weed_plugin_path, -1, PATH_MAX,
-                      LIVES_BOX(hbox), NULL);
-  dirbutton = lives_standard_file_button_new(TRUE, NULL);
-  lives_box_pack_start(LIVES_BOX(hbox), dirbutton, FALSE, FALSE, widget_opts.packing_width);
-  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), prefsw->wpp_entry);
-  */
 
   prefsw->wpp_entry = lives_standard_direntry_new(_("Weed plugin path: "), prefs->weed_plugin_path,
                       STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
-  prefsw->frei0r_entry = lives_standard_entry_new(_("Frei0r plugin path"), prefs->frei0r_path, -1, PATH_MAX,
+
+  prefsw->frei0r_entry = lives_standard_direntry_new(_("Frei0r plugin path"), prefs->frei0r_path,
+                         STD_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
-  dirbutton = lives_standard_file_button_new(TRUE, NULL);
-  lives_box_pack_start(LIVES_BOX(hbox), dirbutton, FALSE, FALSE, widget_opts.packing_width);
-  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), prefsw->frei0r_entry);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, 0);
@@ -3515,11 +3512,8 @@ _prefsw *create_prefs_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
-  prefsw->ladspa_entry = lives_standard_entry_new(_("LADSPA plugin path"), prefs->ladspa_path, -1, PATH_MAX,
+  prefsw->ladspa_entry = lives_standard_direntry_new(_("LADSPA plugin path"), prefs->ladspa_path, STD_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
-  dirbutton = lives_standard_file_button_new(TRUE, NULL);
-  lives_box_pack_start(LIVES_BOX(hbox), dirbutton, FALSE, FALSE, widget_opts.packing_width);
-  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), prefsw->ladspa_entry);
 
   widget_opts.packing_height = dph;
 
@@ -3725,6 +3719,8 @@ _prefsw *create_prefs_dialog(void) {
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_warnings));
 
+  widget_opts.expand = LIVES_EXPAND_NONE;
+
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
@@ -3913,6 +3909,8 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->checkbutton_warn_layout_wipe = lives_standard_check_button_new
                                          (_("Show a warning before wiping a layout which has unsaved changes."),
                                           !(prefs->warning_mask & WARN_MASK_LAYOUT_WIPE), LIVES_BOX(hbox), NULL);
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_warning.png", NULL);
   pixbuf_warnings = lives_pixbuf_new_from_file(icon, NULL);
@@ -4718,7 +4716,7 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->selection = lives_tree_view_get_selection(LIVES_TREE_VIEW(prefsw->prefs_list));
   lives_tree_selection_set_mode(prefsw->selection, LIVES_SELECTION_SINGLE);
 
-  lives_signal_connect(prefsw->selection, LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_prefDomainChanged), NULL);
+  lives_signal_connect(prefsw->selection, LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_prefDomainChanged), (livespointer)prefsw);
 
   // Preferences 'Revert' button
   prefsw->cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED, NULL);
@@ -5157,12 +5155,12 @@ _prefsw *create_prefs_dialog(void) {
 
   if (prefs_current_page == -1) {
     if (mainw->multitrack == NULL)
-      select_pref_list_row(LIST_ENTRY_GUI);
+      select_pref_list_row(LIST_ENTRY_GUI, prefsw);
     else
-      select_pref_list_row(LIST_ENTRY_MULTITRACK);
-  } else select_pref_list_row(prefs_current_page);
+      select_pref_list_row(LIST_ENTRY_MULTITRACK, prefsw);
+  } else select_pref_list_row(prefs_current_page, prefsw);
 
-  on_prefDomainChanged(prefsw->selection, NULL);
+  on_prefDomainChanged(prefsw->selection, prefsw);
   lives_widget_queue_draw(prefsw->prefs_list);
 
   return prefsw;
@@ -5330,7 +5328,7 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
  * Function is used to select particular row in preferences selection list
  * selection is performed according to provided index which is one of LIST_ENTRY_* constants
  */
-static void select_pref_list_row(uint32_t selected_idx) {
+static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw) {
   LiVESTreeIter iter;
   LiVESTreeModel *model;
   boolean valid;

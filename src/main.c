@@ -1133,6 +1133,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->stop_emmission = NULL;
 
+  mainw->no_context_update = FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -4142,6 +4144,9 @@ void load_start_image(int frame) {
       resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       start_pixbuf = layer_to_pixbuf(layer);
+#ifdef TEST_GAMMA
+      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, start_pixbuf);
+#endif
     }
     weed_layer_free(layer);
 
@@ -4198,6 +4203,9 @@ void load_start_image(int frame) {
       resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       start_pixbuf = layer_to_pixbuf(layer);
+#ifdef TEST_GAMMA
+      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, start_pixbuf);
+#endif
     }
     weed_plant_free(layer);
 
@@ -4318,6 +4326,9 @@ void load_end_image(int frame) {
       resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       end_pixbuf = layer_to_pixbuf(layer);
+#ifdef TEST_GAMMA
+      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, end_pixbuf);
+#endif
     }
     weed_plant_free(layer);
 
@@ -4371,6 +4382,9 @@ void load_end_image(int frame) {
       resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       end_pixbuf = layer_to_pixbuf(layer);
+#ifdef TEST_GAMMA
+      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, end_pixbuf);
+#endif
     }
 
     weed_plant_free(layer);
@@ -4527,6 +4541,9 @@ void load_preview_image(boolean update_always) {
       resize_layer(layer, mainw->pwidth, mainw->pheight, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       pixbuf = layer_to_pixbuf(layer);
+#ifdef TEST_GAMMA
+      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, pixbuf);
+#endif
     }
     weed_plant_free(layer);
   }
@@ -4660,11 +4677,18 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
     // loads frames with no gamma correction
     //png_set_gamma(png_ptr, file_gamma, file_gamma);
     //g_print("got file gamma !\n");
-    // loads frames gamma corrected for screen
-    png_set_gamma(png_ptr, prefs->screen_gamma, file_gamma);
+    // loads frames with no gamma correction
+
+    png_set_gamma(png_ptr, file_gamma, file_gamma);
+
+
   } else {
     // a) loads frames with no gamma correction
     png_set_gamma(png_ptr, 1., 1.); // assume file_gamma is 1.0
+
+#ifdef TEST_GAMMA
+    weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_SRGB);
+#endif
 
     // b) loads frames gamma corrected for screen
     //png_set_gamma(png_ptr, prefs->screen_gamma, 1.); // assume file_gamma is 1.0 if not specified
@@ -4934,6 +4958,10 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
   pixbuf = gdk_pixbuf_loader_get_pixbuf(pbload);
   lives_object_ref(pixbuf);
   if (pbload != NULL) lives_object_unref(pbload);
+
+#ifdef TEST_GAMMA
+  weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_SRGB);
+#endif
 #endif
 
 # else //PROG_LOAD
@@ -4974,6 +5002,10 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
 
   if (!pixbuf_to_layer(layer, pixbuf)) {
     lives_object_unref(pixbuf);
+  } else {
+#ifdef TEST_GAMMA
+    weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_SRGB);
+#endif
   }
 
   return TRUE;
@@ -5054,6 +5086,10 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 #endif
 
   boolean is_thread = FALSE;
+
+#ifdef TEST_GAMMA
+  weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_LINEAR);
+#endif
 
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PTHREAD)) is_thread = TRUE;
 
@@ -5175,11 +5211,22 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         lives_free(pixel_data);
         lives_free(rowstrides);
 
-        // deinterlace
-        if (sfile->deinterlace || (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)) {
-          if (!is_thread) {
-            deinterlace_frame(layer, tc);
-          } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
+        if (res) {
+#ifdef TEST_GAMMA
+          weed_set_int_value(layer, WEED_LEAF_GAMMA, dplug->cdata->gamma);
+#endif
+          // get_frame may now update YUV_clamping, YUV_sampling, YUV_subspace
+          if (weed_palette_is_yuv_palette(dplug->cdata->current_palette)) {
+            weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, dplug->cdata->YUV_sampling);
+            weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, dplug->cdata->YUV_clamping);
+            weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, dplug->cdata->YUV_subspace);
+          }
+          // deinterlace
+          if (sfile->deinterlace || (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)) {
+            if (!is_thread) {
+              deinterlace_frame(layer, tc);
+            } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
+          }
         }
         mainw->osc_block = FALSE;
         return res;
@@ -6685,6 +6732,9 @@ void load_frame_image(int frame) {
     pixbuf = layer_to_pixbuf(mainw->frame_layer);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
+#ifdef TEST_GAMMA
+    gamma_correct_pixbuf(TRUE, prefs->screen_gamma, pixbuf);
+#endif
 
     mainw->noswitch = noswitch;
 
@@ -7347,9 +7397,10 @@ void load_frame_image(int frame) {
     if (cfile->frames == 0) {
       zero_spinbuttons();
     }
-
-    reset_message_area(FALSE);
-    lives_widget_context_update(); // update BEFORE we call resize()
+    if (mainw->playing_file == -1) {
+      reset_message_area(FALSE);
+      lives_widget_context_update(); // update BEFORE we call resize()
+    }
     resize(1);
 
     if (mainw->playing_file > -1) {
@@ -7387,7 +7438,9 @@ void load_frame_image(int frame) {
       load_end_image(cfile->end);
       if (mainw->playing_file > -1) load_frame_image(cfile->frameno);
     }
-    reset_message_area(TRUE);
+    if (mainw->playing_file == -1) {
+      reset_message_area(TRUE);
+    }
   }
 
 

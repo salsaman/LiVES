@@ -681,8 +681,8 @@ void populate_combo_box(LiVESCombo *, LiVESList *data);
 
 void set_combo_box_active_string(LiVESCombo *, char *active_str);
 
-void prefsw_set_astream_settings(_vid_playback_plugin *);
-void prefsw_set_rec_after_settings(_vid_playback_plugin *);
+void prefsw_set_astream_settings(_vid_playback_plugin *, _prefsw *);
+void prefsw_set_rec_after_settings(_vid_playback_plugin *, _prefsw *);
 
 void pref_change_images(void);
 void pref_change_xcolours(void);

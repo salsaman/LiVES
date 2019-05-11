@@ -2089,6 +2089,8 @@ LiVESWidget *create_rte_window(void) {
 
   ///////////////////////////////////////////////////////////////////////////
 
+  mainw->no_context_update = TRUE;
+
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_context_update();
 
@@ -2096,7 +2098,10 @@ LiVESWidget *create_rte_window(void) {
   winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
   if (irte_window != NULL) {
-    if (prefs->rte_keys_virtual != old_rte_keys_virtual) return refresh_rte_window();
+    if (prefs->rte_keys_virtual != old_rte_keys_virtual) {
+      mainw->no_context_update = FALSE;
+      return refresh_rte_window();
+    }
     goto rte_window_ready;
   }
 
@@ -2354,6 +2359,7 @@ rte_window_ready:
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
+  mainw->no_context_update = FALSE;
   return irte_window;
 }
 

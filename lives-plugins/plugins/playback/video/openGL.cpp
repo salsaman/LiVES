@@ -481,9 +481,11 @@ static int get_size_for_type(int type) {
   switch (type) {
   case GL_RGBA:
   case GL_BGRA:
+  case GL_SRGB_ALPHA:
     return 4;
   case GL_RGB:
   case GL_BGR:
+  case GL_SRGB:
     return 3;
   default:
     assert(0);
@@ -857,10 +859,15 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   glFinish();
   if (dblbuf) glXSwapBuffers(dpy, glxWin);
 
+#ifdef TEST_GAMMA
+  type = GL_SRGB_ALPHA;
+  if (mypalette == WEED_PALETTE_RGB24) type = GL_SRGB;
+#else
   type = GL_RGBA;
   if (mypalette == WEED_PALETTE_RGB24) type = GL_RGB;
   else if (mypalette == WEED_PALETTE_BGR24) type = GL_BGR;
   else if (mypalette == WEED_PALETTE_BGRA32) type = GL_BGRA;
+#endif
 
   typesize = get_size_for_type(type);
 

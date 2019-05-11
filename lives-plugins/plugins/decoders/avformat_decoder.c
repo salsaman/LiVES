@@ -967,6 +967,9 @@ static void remove_cache_above(priv_cache_t *cache, int maxe) {
 static void add_to_cache(lives_av_priv_t *priv, int64_t pts) {
   // if we have a frame with this pts in the list, ignore
   // otherwise free the tail of the list and add this at the head
+
+  // NOTE: void av_frame_move_ref(AVFrame *dst, AVFrame *src); int av_frame_copy(AVFrame *dst, const AVFrame *src);
+  // int av_frame_ref(AVFrame *dst, const AVFrame *src); AVFrame *av_frame_clone(const AVFrame *src);
   if (priv->cachemax < 1) return;
   if (get_from_cache(priv, pts) != NULL) {
     fprintf(stderr, "Dupe\n");
@@ -1187,7 +1190,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #endif
 
 #ifdef DEBUG
-      fprintf(stderr, "pt 1 %ld %d %ld\n", tframe, gotFrame, MyPts);
+      fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame ? priv->pFrame->best_effort_timestamp : 0, priv->pFrame->color_trc, priv->pFrame->color_range);
 #endif
 
 #ifdef TEST_CACHING
@@ -1231,6 +1234,11 @@ framedone2:
 #endif
   if (priv->pFrame == NULL || pixel_data == NULL) return TRUE;
 
+  if (priv->pFrame->color_range == AVCOL_RANGE_JPEG) 
+    cdata->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+  else
+    cdata->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+  
   //height=cdata->height;
 
   if (priv->black_fill) btop = cdata->frame_height;

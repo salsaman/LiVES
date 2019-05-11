@@ -7816,14 +7816,14 @@ static LiVESWidget *make_inner_hbox(LiVESBox *box) {
   if (LIVES_IS_HBOX(box)) {
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, 0);
   } else {
-    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.expand == LIVES_EXPAND_NONE ? 0 : widget_opts.packing_height);
   }
   lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, 0);
   lives_widget_set_show_hide_parent(vbox);
   hbox = lives_hbox_new(FALSE, 0);
-  add_spring_to_box(LIVES_BOX(vbox), 0);
+  if (widget_opts.expand != LIVES_EXPAND_NONE) add_spring_to_box(LIVES_BOX(vbox), 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
-  add_spring_to_box(LIVES_BOX(vbox), 0);
+  if (widget_opts.expand != LIVES_EXPAND_NONE) add_spring_to_box(LIVES_BOX(vbox), 0);
   lives_widget_set_show_hide_parent(hbox);
   return hbox;
 }
@@ -8036,7 +8036,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
 
-    lives_box_pack_start(LIVES_BOX(hbox), spinbutton, expand, FALSE, widget_opts.packing_width);
+    lives_box_pack_start(LIVES_BOX(hbox), spinbutton, expand, TRUE, widget_opts.packing_width);
 
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
 
@@ -9320,6 +9320,8 @@ void lives_spin_button_configure(LiVESSpinButton *spinbutton,
 
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
+
+  if (mainw->no_context_update) return FALSE;
 
   if (pthread_mutex_trylock(&mainw->gtk_mutex)) return FALSE;
 

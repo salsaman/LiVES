@@ -114,6 +114,10 @@ typedef enum {
 #define WEED_LEAF_PIXEL_ASPECT_RATIO "pixel_aspect_ratio"
 #define WEED_LEAF_ROWSTRIDE_ALIGNMENT_HINT "rowstride_alignment_hint"
 #define WEED_LEAF_MAX_REPEATS "max_repeats"
+#ifdef TEST_GAMMA
+#define WEED_LEAF_GAMMA "gamma"
+// will have various values including WEED_GAMMA_SRGB, WEED_GAMMA_LINEAR, WEED_GAMMA_MONITOR
+#endif
 
 // params / param tmpl
 #define WEED_LEAF_IN_PARAMETERS "in_parameters"

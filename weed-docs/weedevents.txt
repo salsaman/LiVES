@@ -263,7 +263,7 @@ may be necessary to add an additional blank frame.
      "filter" has no out channels : [an out track of -1 represents a
      separated audio track - see the WEED audio extension]
 
- * "event_id" : WEED_SEED_INT64 : used to refer to this filter_init by filter_map, filter_deinit and param_change events.
+ * "event_id" : WEED_SEED_INT64 : used to refer to this filter_init by filter_map, filter_deinit and param_change events. Must be unique in the event_list.
 
 
 === WEED_EVENT_HINT_FILTER_DEINIT ===

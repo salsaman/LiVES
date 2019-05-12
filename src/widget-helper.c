@@ -50,7 +50,7 @@ static LiVESWidget *prettify_button(LiVESWidget *button) {
 ////////////////////////////////////////////////////
 //lives_painter functions
 
-WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create(lives_painter_surface_t *target) {
+WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_surface(lives_painter_surface_t *target) {
   lives_painter_t *cr = NULL;
 #ifdef PAINTER_CAIRO
   cr = cairo_create(target);
@@ -2926,7 +2926,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_halignment(LiVESLabel *label
 #if GTK_CHECK_VERSION(3, 16, 0)
   gtk_label_set_xalign(label, xalign);
 #else
-  gtk_misc_set_alignment(GTK_MISC(label), 0., xalign);
+  lives_widget_set_halign(LIVES_WIDGET(label), xalign);
 #endif
   return TRUE;
 #endif
@@ -7041,6 +7041,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_table_set_row_homogeneous(LiVESTable *
 #if LIVES_TABLE_IS_GRID
   gtk_grid_set_row_homogeneous(table, homogeneous);
   return TRUE;
+#else
+  gtk_table_set_homogeneous(table, homogeneous);
 #endif
 #endif
   return FALSE;
@@ -7052,6 +7054,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_table_set_column_homogeneous(LiVESTabl
 #if LIVES_TABLE_IS_GRID
   gtk_grid_set_column_homogeneous(table, homogeneous);
   return TRUE;
+#else
+  gtk_table_set_homogeneous(table, homogeneous);
 #endif
 #endif
   return FALSE;
@@ -8337,8 +8341,8 @@ boolean lives_widget_set_show_hide_parent(LiVESWidget *widget) {
 
 extern void on_filesel_button_clicked(LiVESButton *, livespointer);
 
-LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars, LiVESBox *box,
-    const char *tooltip) {
+static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char *txt, const char *defdir, int dispwidth, int maxchars,
+    LiVESBox *box, const char *tooltip, boolean isdir) {
   LiVESWidget *direntry = NULL;
   LiVESWidget *buttond;
 
@@ -8348,13 +8352,25 @@ LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt,
   lives_entry_set_editable(LIVES_ENTRY(direntry), FALSE);
 
   // add dir, with filechooser button
-  buttond = lives_standard_file_button_new(TRUE, NULL);
+  buttond = lives_standard_file_button_new(isdir, defdir);
   lives_label_set_mnemonic_widget(LIVES_LABEL(widget_opts.last_label), buttond);
   lives_box_pack_start(LIVES_BOX(lives_widget_get_parent(direntry)), buttond, FALSE, FALSE, widget_opts.packing_width / 2);
 
   lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
                        (livespointer)direntry);
   return direntry;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars,
+    LiVESBox *box, const char *tooltip) {
+  return lives_standard_dfentry_new(labeltext, txt, txt, dispwidth, maxchars, box, tooltip, TRUE);
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt, const char *defdir,
+    int dispwidth, int maxchars, LiVESBox *box, const char *tooltip) {
+  return lives_standard_dfentry_new(labeltext, txt, defdir, dispwidth, maxchars, box, tooltip, FALSE);
 }
 
 
@@ -9089,12 +9105,13 @@ void lives_window_center(LiVESWindow *window) {
   if (!widget_opts.no_gui) {
     int xcen, ycen;
 
+    if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(window), widget_opts.screen);
+
     if (mainw->mgeom == NULL) {
+      // doesnt work properly for gtk+ 2.x. maybe because we have no transient at this point
       lives_window_set_position(LIVES_WINDOW(window), LIVES_WIN_POS_CENTER_ALWAYS);
       return;
     }
-
-    if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(window), widget_opts.screen);
 
     xcen = mainw->mgeom[widget_opts.monitor].x + (mainw->mgeom[widget_opts.monitor].width -
            lives_widget_get_allocation_width(LIVES_WIDGET(window))) / 2;

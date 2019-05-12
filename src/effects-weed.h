@@ -115,8 +115,8 @@ typedef enum {
 #define WEED_LEAF_ROWSTRIDE_ALIGNMENT_HINT "rowstride_alignment_hint"
 #define WEED_LEAF_MAX_REPEATS "max_repeats"
 #ifdef TEST_GAMMA
-#define WEED_LEAF_GAMMA "gamma"
-// will have various values including WEED_GAMMA_SRGB, WEED_GAMMA_LINEAR, WEED_GAMMA_MONITOR
+#define WEED_LEAF_GAMMA_TYPE "gamma_type"
+// values will be WEED_GAMMA_TYPE_SRGB, WEED_GAMMA_TYPE_LINEAR, WEED_GAMMA_TYPE_MONITOR
 #endif
 
 // params / param tmpl
@@ -195,6 +195,8 @@ typedef enum {
 
 #define WEED_LEAF_HOST_INSTANCE "host_instance" // special value for text widgets
 #define WEED_LEAF_HOST_IDX "host_idx" // special value for text widgets
+
+#define WEED_LEAF_HOST_SCRAP_FILE_OFFSET "scrap_file_offset" // special value for scrap_file
 
 // layer only values
 
@@ -295,8 +297,8 @@ boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t t
 void filter_mutex_lock(int key);  // 0 based key
 void filter_mutex_unlock(int key); // 0 based key
 
-boolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
-weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem);
+size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
+weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *plant);
 
 /// record a parameter value change in our event_list
 void rec_param_change(weed_plant_t *inst, int pnum);

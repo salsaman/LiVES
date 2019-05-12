@@ -347,6 +347,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_widget_grab_focus(okbutton);
   }
 
+  lives_window_center(LIVES_WINDOW(dialog));
+
   lives_widget_show_all(dialog);
 
   lives_window_center(LIVES_WINDOW(dialog));
@@ -456,6 +458,7 @@ LiVESWindow *get_transient_full(void) {
     else {
       if ((mainw->multitrack == NULL && mainw->is_ready) || (mainw->multitrack != NULL && mainw->multitrack->is_ready))
         transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
+      else if (mainw->LiVES != NULL) transient = LIVES_WINDOW(mainw->LiVES);
     }
   }
   return transient;
@@ -1166,9 +1169,14 @@ int process_one(boolean visible) {
     show_frame = FALSE;
 
     if (cfile->pb_fps != 0.) {
-      // mainw->startticks is the last time we showed a frame
+      // on calling:
+      // mainw->startticks is the timecode of the last frame shown
       // new_ticks is the (adjusted) current time
+      // cfile->last_frameno, cfile->pb_fps (if playing) or cfile->fps (if not) are also used in the calculation
+      // as well as selection bounds and loop mode settings (if appropriate)
+      //
       // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
+      // which will be <= the current time
       // and cfile->frameno is set to the frame to show
       pthread_mutex_lock(&mainw->audio_resync_mutex);
       cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);

@@ -86,6 +86,7 @@ typedef struct {
   volatile aserver_message_t   *msgq;          /**< linked list of messages we are sending to the callback process */
 
   off_t seek_pos;
+  volatile off_t real_seek_pos;
   off_t seek_end;
   boolean usigned;
   boolean reverse_endian;

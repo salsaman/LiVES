@@ -2298,9 +2298,9 @@ void play_file(void) {
         mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST;
         if (mainw->pwidth * mainw->pheight == 0) {
           lives_widget_queue_draw(mainw->playframe);
-          mainw->noswitch = TRUE;
-          lives_widget_context_update();
-          mainw->noswitch = FALSE;
+          //mainw->noswitch = TRUE;
+          //lives_widget_context_update();
+          //mainw->noswitch = FALSE;
         }
       } while (mainw->pwidth * mainw->pheight == 0);
       // double size
@@ -2551,7 +2551,7 @@ void play_file(void) {
 #endif
 
     mainw->abufs_to_fill = 0;
-    lives_widget_context_update();
+    //lives_widget_context_update();
 
     //play until stopped or a stream finishes
     do {
@@ -2843,9 +2843,9 @@ void play_file(void) {
     lives_free(stfile);
   }
 
-  if (mainw->scrap_file != -1 && mainw->files[mainw->scrap_file] != NULL && mainw->files[mainw->scrap_file]->cb_src >= 0) {
-    close(mainw->files[mainw->scrap_file]->cb_src);
-    mainw->files[mainw->scrap_file]->cb_src = -1;
+  if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->ext_src != NULL) {
+    lives_close_buffered(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src));
+    mainw->files[mainw->scrap_file]->ext_src = NULL;
   }
 
   lives_signal_handler_block(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
@@ -2904,6 +2904,10 @@ void play_file(void) {
     lives_widget_show(mainw->t_bckground);
     lives_widget_show(mainw->t_double);
 
+    resize(1.);
+
+    lives_widget_hide(mainw->playframe);
+
     if (mainw->play_window != NULL) {
       if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
       else xtrabit = lives_strdup("");
@@ -2924,9 +2928,9 @@ void play_file(void) {
                           lives_widget_get_allocation_width(mainw->LiVES) > GUI_SCREEN_WIDTH)) {
     // the screen grew too much...remaximise it
     lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
-    mainw->noswitch = TRUE;
-    lives_widget_context_update();
-    mainw->noswitch = FALSE;
+    /* mainw->noswitch = TRUE; */
+    /* lives_widget_context_update(); */
+    /* mainw->noswitch = FALSE; */
     if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(mainw->LiVES), 0, 0);
     lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
   }
@@ -3297,7 +3301,6 @@ void create_cfile(void) {
   cfile->progress_start = cfile->progress_end = 0;
   cfile->play_paused = cfile->nokeep = FALSE;
   cfile->undo_start = cfile->undo_end = 0;
-  cfile->rowstride = 0; // unknown
   cfile->ext_src = NULL;
   cfile->clip_type = CLIP_TYPE_DISK;
   cfile->ratio_fps = FALSE;
@@ -4631,7 +4634,6 @@ int save_event_frames(void) {
 /// this is used to record external audio during playback with record on (if the user requests this)
 /// afterwards the audio from it can be rendered/played back
 
-static double scrap_mb;  // MB written to frame file
 static double ascrap_mb;  // MB written to audio file
 static uint64_t free_mb; // MB free to write
 
@@ -4682,7 +4684,6 @@ boolean open_scrap_file(void) {
 
   mainw->current_file = current_file;
 
-  scrap_mb = 0.;
   if (mainw->ascrap_file == -1) ascrap_mb = 0.;
 
   return TRUE;
@@ -4750,7 +4751,6 @@ boolean open_ascrap_file(void) {
   mainw->current_file = current_file;
 
   ascrap_mb = 0.;
-  if (mainw->scrap_file == -1) scrap_mb = 0.;
 
   return TRUE;
 }
@@ -4765,131 +4765,25 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   char *oname;
 
-  ssize_t bytes;
-  ssize_t tsize;
-
-  void **pdata;
-
-  int *rowstrides;
-
-  int width, height, palette, nplanes;
-  int clamping, subspace, sampling;
+  lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
 
   int fd;
 
-#ifdef USE_LIBPNG
-  FILE *fp;
-  off_t end;
-#endif
+  if (!IS_VALID_CLIP(mainw->scrap_file)) return FALSE;
 
-  register int i;
-
-  if (mainw->files[mainw->scrap_file]->cb_src < 0) {
-    oname = make_image_file_name(mainw->files[mainw->scrap_file], 1, LIVES_FILE_EXT_SCRAP);
-    fd = lives_open2(oname, O_RDONLY);
+  if (scrapfile->ext_src == NULL) {
+    oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP);
+    fd = lives_open_buffered_rdonly(oname);
     lives_free(oname);
     if (fd < 0) return FALSE;
 #ifdef HAVE_POSIX_FADVISE
     posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+    posix_fadvise(fd, 0, 0, POSIX_FADV_WILLNEED);
 #endif
-    mainw->files[mainw->scrap_file]->cb_src = fd;
-  } else fd = mainw->files[mainw->scrap_file]->cb_src;
+    scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
+  } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
 
-  bytes = lives_read_le(fd, &palette, 4, TRUE);
-  if (bytes < 4) {
-    // old style file per frame
-    close(mainw->files[mainw->scrap_file]->cb_src);
-    mainw->files[mainw->scrap_file]->cb_src = -1;
-
-    oname = make_image_file_name(mainw->files[mainw->scrap_file], frame, LIVES_FILE_EXT_SCRAP);
-    fd = lives_open2(oname, O_RDONLY);
-    lives_free(oname);
-    if (fd < 0) return FALSE;
-    mainw->files[mainw->scrap_file]->cb_src = fd;
-    bytes = lives_read_le(fd, &palette, 4, TRUE);
-    if (bytes < sizint) {
-      return FALSE;
-    }
-  }
-
-#ifdef USE_LIBPNG
-  else if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_RGBA32 ||
-           palette == WEED_PALETTE_BGRA32) {
-    fp = fdopen(fd, "rb");
-    layer_from_png(fp, layer, TRUE);
-    end = ftell(fp);
-    lseek(fd, end, SEEK_SET);
-    return TRUE;
-  }
-#endif
-
-  weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, palette);
-
-  if (weed_palette_is_yuv_palette(palette)) {
-
-    bytes = lives_read_le(fd, &clamping, 4, TRUE);
-    if (bytes < 4) return FALSE;
-
-    weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, clamping);
-
-    bytes = lives_read_le(fd, &subspace, 4, TRUE);
-    if (bytes < 4) return FALSE;
-
-    weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, subspace);
-
-    bytes = lives_read_le(fd, &sampling, 4, TRUE);
-    if (bytes < 4) return FALSE;
-
-    weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, sampling);
-  }
-
-  bytes = lives_read_le(fd, &width, 4, TRUE);
-  if (bytes < 4) return FALSE;
-
-  weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
-
-  bytes = lives_read_le(fd, &height, 4, TRUE);
-  if (bytes < 4) return FALSE;
-
-  weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
-
-  nplanes = weed_palette_get_numplanes(palette);
-
-  rowstrides = (int *)lives_malloc(nplanes * sizint);
-
-  for (i = 0; i < nplanes; i++) {
-    bytes = lives_read_le(fd, &rowstrides[i], 4, TRUE);
-    if (bytes < 4) {
-      lives_free(rowstrides);
-      return FALSE;
-    }
-  }
-
-  weed_set_int_array(layer, WEED_LEAF_ROWSTRIDES, nplanes, rowstrides);
-
-  pdata = (void **)lives_malloc(nplanes * sizeof(void *));
-
-  for (i = 0; i < nplanes; i++) {
-    pdata[i] = NULL;
-  }
-
-  weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pdata);
-
-  for (i = 0; i < nplanes; i++) {
-    tsize = rowstrides[i] * height * weed_palette_get_plane_ratio_vertical(palette, i);
-    pdata[i] = lives_malloc(tsize);
-    bytes = read(fd, pdata[i], tsize);
-    if (bytes < tsize) {
-      lives_free(rowstrides);
-      lives_free(pdata);
-      return FALSE;
-    }
-  }
-
-  lives_free(rowstrides);
-
-  weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pdata);
-  lives_free(pdata);
+  layer = weed_plant_deserialise(fd, NULL, layer);
 
   return TRUE;
 }
@@ -4897,6 +4791,12 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
 boolean check_for_disk_space(void) {
   boolean wrtable = TRUE;
+  double scrap_mb = 0.;
+
+  if (IS_VALID_CLIP(mainw->scrap_file)) {
+    scrap_mb = (double)mainw->files[mainw->scrap_file]->f_size / 1000000.;
+  }
+
   // check if we have enough free space left on the volume (return FALSE if not)
   if ((int64_t)(((double)free_mb - (scrap_mb + ascrap_mb)) / 1000.) < prefs->rec_stop_gb) {
     // check free space again
@@ -4922,150 +4822,69 @@ boolean check_for_disk_space(void) {
 
 int save_to_scrap_file(weed_plant_t *layer) {
   // returns frame number
-
-  // dump the raw frame data to a file (in machine endian format)
-
-  // format is:
-  // (int)palette,[(int)YUV_clamping,(int)YUV_subspace,(int)YUV_sampling,](int)rowstrides[],(int)height,(char *)pixel_data[]
-
-  // sampling, clamping and subspace are only written for YUV palettes
-
-  // we also check if there is enough free space left; if not, recording is paused
-
-  // NOW, for RGB / BGR / RGBA / BGRA we write the palette followed by a png file. In this way we can reduce the io at cost of some CPU..
-
-  // NOW, we also use a single file and just append to it.
-
-  void **pdata;
-
-  char *framecount;
-
-  int *rowstrides;
+  // dump the raw layer (frame) data to disk
 
   size_t pdata_size;
 
-#ifdef USE_LIBPNG
-  FILE *fp;
-  off_t end;
-#endif
+  lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
 
-  boolean wrtable = TRUE;
-  boolean done = FALSE;
+  boolean writeable = TRUE;
 
-  int flags = O_WRONLY | O_CREAT | O_TRUNC;
-  int width, height, palette, nplanes, error;
-  int clamping, subspace, sampling;
+  char *framecount;
+
+  //int flags = O_WRONLY | O_CREAT | O_TRUNC;
   int fd;
 
-  register int i;
+  if (!IS_VALID_CLIP(mainw->scrap_file)) return -1;
 
-  if (mainw->files[mainw->scrap_file]->cb_src < 0) {
-    char *drnm;
-    char *oname = make_image_file_name(mainw->files[mainw->scrap_file], 1, LIVES_FILE_EXT_SCRAP);
+  if (mainw->frame_layer == NULL) return scrapfile->frames;
+
+  if (scrapfile->ext_src == NULL) {
+    char *oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP), *dirname;
 
 #ifdef O_NOATIME
-    flags |= O_NOATIME;
+    //flags |= O_NOATIME;
 #endif
 
-    drnm = lives_build_filename(prefs->workdir, mainw->files[mainw->scrap_file]->handle, NULL);
-    lives_mkdir_with_parents(drnm, capable->umask);
+    dirname = lives_build_filename(prefs->workdir, scrapfile->handle, NULL);
+    lives_mkdir_with_parents(dirname, capable->umask);
+    lives_free(dirname);
 
-    fd = lives_open3(oname, flags, S_IRUSR | S_IWUSR);
-
+    fd = lives_creat_buffered(oname, S_IRUSR | S_IWUSR);
     lives_free(oname);
 
-    if (fd < 0) return mainw->files[mainw->scrap_file]->frames;
-    mainw->files[mainw->scrap_file]->cb_src = fd;
+    if (fd < 0) return scrapfile->frames;
 
-  } else fd = mainw->files[mainw->scrap_file]->cb_src;
+    scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
 
-  palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
-
-  mainw->write_failed = FALSE;
-
-  // write current_palette, rowstrides and height
-  lives_write_le(fd, &palette, 4, TRUE);
-
-  if (mainw->write_failed) {
-    return mainw->files[mainw->scrap_file]->frames;
-  }
-
-#ifdef USE_LIBPNG
-  if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32 || palette == WEED_PALETTE_RGBA32) {
-    fp = fdopen(fd, "ab");
-    pdata_size = -ftell(fp);
-    save_to_png(fp, layer, 4);
-    end = ftell(fp);
-    lseek(fd, end, SEEK_SET);
-    pdata_size += end;
-    done = TRUE;
-  }
+#ifdef HAVE_POSIX_FADVISE
+    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+    posix_fadvise(fd, 0, 0, POSIX_FADV_WILLNEED);
 #endif
+  } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
 
-  if (!done) {
-    if (weed_palette_is_yuv_palette(palette)) {
-      if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_CLAMPING)) {
-        clamping = weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error);
-      } else clamping = WEED_YUV_CLAMPING_CLAMPED;
-      lives_write_le(fd, &clamping, 4, TRUE);
-
-      if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_SUBSPACE)) {
-        subspace = weed_get_int_value(layer, WEED_LEAF_YUV_SUBSPACE, &error);
-      } else subspace = WEED_YUV_SUBSPACE_YUV;
-      lives_write_le(fd, &subspace, 4, TRUE);
-
-      if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_SAMPLING)) {
-        sampling = weed_get_int_value(layer, WEED_LEAF_YUV_SAMPLING, &error);
-      } else sampling = WEED_YUV_SAMPLING_DEFAULT;
-      lives_write_le(fd, &sampling, 4, TRUE);
-    }
-
-    width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
-    lives_write_le(fd, &width, 4, TRUE);
-
-    height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
-    lives_write_le(fd, &height, 4, TRUE);
-
-    nplanes = weed_palette_get_numplanes(palette);
-
-    rowstrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
-
-    for (i = 0; i < nplanes; i++) {
-      lives_write_le(fd, &rowstrides[i], 4, TRUE);
-    }
-
-    // now write pixel_data planes
-
-    pdata = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
-    pdata_size = 0;
-
-    for (i = 0; i < nplanes; i++) {
-      pdata_size += rowstrides[i] * height * weed_palette_get_plane_ratio_vertical(palette, i);
-      lives_write(fd, pdata[i], pdata_size, TRUE);
-    }
-
-    lives_free(rowstrides);
-    lives_free(pdata);
-  }
-
-  scrap_mb += (double)(pdata_size) / 1000000.;
+  // serialise entire frame to scrap file
+  weed_set_int_value(mainw->frame_layer, WEED_LEAF_FRAME, ++scrapfile->frames);
+  pdata_size = weed_plant_serialise(fd, mainw->frame_layer, NULL);
+  scrapfile->f_size += pdata_size;
 
   // check free space every 1000 frames or every 10 MB of audio (TODO ****)
-  if (mainw->files[mainw->scrap_file]->frames % 1000 == 0) {
-    char *dir = lives_build_filename(prefs->workdir, mainw->files[mainw->scrap_file]->handle, NULL);
+  if (scrapfile->frames % 1000 == 0) {
+    char *dir = lives_build_filename(prefs->workdir, scrapfile->handle, NULL);
     free_mb = (double)get_fs_free(dir) / 1000000.;
-    if (free_mb == 0) wrtable = is_writeable_dir(dir);
+    if (free_mb == 0) writeable = is_writeable_dir(dir);
     lives_free(dir);
   }
 
   if ((!mainw->fs || prefs->play_monitor != prefs->gui_monitor) && !prefs->hide_framebar && !mainw->faded) {
+    double scrap_mb = (double)scrapfile->f_size / 1000000.;
     if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
       // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
       framecount = lives_strdup_printf(_("rec %.2f MB"), scrap_mb + ascrap_mb);
     } else {
       // warn if scrap_file > 3/4 of free space
       // TRANSLATORS: !rec(ord) %.2f M(ega)B(ytes)
-      if (wrtable)
+      if (writeable)
         framecount = lives_strdup_printf(_("!rec %.2f MB"), scrap_mb + ascrap_mb);
       else
         // TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
@@ -5079,17 +4898,18 @@ int save_to_scrap_file(weed_plant_t *layer) {
 
   check_for_disk_space();
 
-  return ++mainw->files[mainw->scrap_file]->frames;
+  return scrapfile->frames;
 }
 
 
 void close_scrap_file(boolean remove) {
   int current_file = mainw->current_file;
 
-  if (mainw->scrap_file == -1) return;
+  if (!IS_VALID_CLIP(mainw->scrap_file)) return;
 
   mainw->current_file = mainw->scrap_file;
-  if (cfile->cb_src >= 0) close(cfile->cb_src);
+  if (cfile->ext_src != NULL) lives_close_buffered(LIVES_POINTER_TO_INT(cfile->ext_src));
+  cfile->ext_src = NULL;
   if (remove) close_current_file(current_file);
   else mainw->current_file = current_file;
 

@@ -289,15 +289,24 @@ static inline void update_gamma_lut(boolean fwd, int gamma_type) {
 
   for (i = 1; i < 256; ++i) {
     a = (float)i / 255.;
+
+    // simple power law transformation
     if (gamma_type == WEED_GAMMA_MONITOR) {
-      x = powf(a, inv_gamma);
+      if (fwd)
+        x = powf(a, inv_gamma);
       else
         x = powf(a, gamma);
     }
 
-    // rec 709 fwd gamma ??? (linear to gamma)
-    //x = (a <= 0.018) ? 4.5 * a : 1.099 * powf(a, 0.45) - 0.099;
+    // rec 709 gamma (fwd is linear to gamma)
+    if (gamma_type == WEED_GAMMA_BT709) {
+      if (fwd)
+        x = (a <= 0.018) ? 4.5 * a : 1.099 * powf(a, 0.45) - 0.099;
+      else
+        x = (a <= 0.081) ? a / 4.5 : powf((a + 0.099) / 1.099, 1. / 0.045);
+    }
 
+    // sRGB gamma (fwd is linear to gamma)
     if (gamma_type == WEED_GAMMA_SRGB) {
       if (fwd)
         x = (a <= 0.0031308) ? 12.92 * a : 1.055 * powf(a, 1.0 / 2.4) - 0.055;
@@ -10997,8 +11006,8 @@ lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
 
   if (surf == NULL) return NULL;
 
-  cairo = lives_painter_create(surf); // surf is refcounted
-  lives_painter_surface_destroy(surf); // reduce refcount, so it is destroyed with the cairo
+  cairo = lives_painter_create_from_surface(surf); // surf is refcounted
+  lives_painter_surface_destroy(surf); // reduce refcount, so it is destroyed with the cairo context
 
   return cairo;
 }

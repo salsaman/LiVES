@@ -3058,6 +3058,18 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     mainw->clip_index = weed_get_int_array(next_event, WEED_LEAF_CLIPS, &error);
     mainw->frame_index = weed_get_int_array(next_event, WEED_LEAF_FRAMES, &error);
 
+    if (mainw->scrap_file != -1) {
+      int nclips = weed_leaf_num_elements(next_event, WEED_LEAF_CLIPS);
+      for (i = 0; i < nclips; i++) {
+        if (mainw->clip_index[i] == mainw->scrap_file) {
+          int64_t offs = weed_get_int64_value(next_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, & error);
+          if (mainw->files[mainw->scrap_file]->ext_src != NULL) {
+            lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), offs);
+          }
+        }
+      }
+    }
+
     // if we are in multitrack mode, we will just set up NULL layers and let the effects pull our frames
     if (mainw->multitrack != NULL) {
       if ((mainw->fixed_fpsd <= 0. && (mainw->vpp == NULL || mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback))
@@ -3473,6 +3485,7 @@ lives_render_error_t render_events(boolean reset) {
           }
 
           if (scrap_track != -1) {
+            int64_t offs;
             // do not apply fx, just pull frame
             if (mainw->frame_index[scrap_track] == old_scrap_frame && mainw->scrap_pixbuf != NULL) {
               pixbuf = mainw->scrap_pixbuf;
@@ -3483,6 +3496,11 @@ lives_render_error_t render_events(boolean reset) {
               }
               old_scrap_frame = mainw->frame_index[scrap_track];
               layer = weed_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
+              offs = weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &weed_error);
+              if (mainw->files[mainw->clip_index[scrap_track]]->ext_src != NULL) {
+                lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src), offs);
+              }
+
               if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
                 weed_layer_free(layer);
                 layer = NULL;
@@ -4485,6 +4503,15 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // need to retain play_start for rendering to same clip
   oplay_start = mainw->play_start;
 
+  if (IS_VALID_CLIP(mainw->scrap_file)) {
+    // reopen scrap file for reading
+
+
+
+
+
+  }
+
   do {
     e_rec_dialog = events_rec_dialog(TRUE);
     lives_widget_show_all(e_rec_dialog);
@@ -4582,10 +4609,17 @@ boolean deal_with_render_choice(boolean add_deinit) {
       render_choice = RENDER_CHOICE_PREVIEW;
       break;
     }
-    if
-    (mainw->current_file > 0 && mainw->files[mainw->current_file] != NULL) {
+    if (mainw->current_file > 0 && mainw->files[mainw->current_file] != NULL) {
       cfile->next_event = NULL;
     }
+
+    if (IS_VALID_CLIP(mainw->scrap_file)) {
+      if (mainw->files[mainw->scrap_file]->ext_src != NULL) {
+        // rewind scrap file to beginning
+        lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), 0);
+      }
+    }
+
   } while (render_choice == RENDER_CHOICE_PREVIEW);
 
   if (mainw->event_list != NULL) {

@@ -118,22 +118,6 @@ void load_theme_images(void) {
 }
 
 
-void add_message_scroller(LiVESWidget *conter, LiVESTextBuffer *tbuff) {
-  if (mainw->scrolledwindow == NULL) {
-    mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
-    lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
-    lives_container_add(LIVES_CONTAINER(conter), mainw->scrolledwindow);
-  }
-
-  if (mainw->textview1 == NULL) {
-    mainw->textview1 = lives_standard_text_view_new(NULL, tbuff);
-    lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
-  }
-
-  lives_widget_show_all(conter);
-}
-
-
 void make_custom_submenus(void) {
   mainw->custom_gens_submenu = lives_standard_menu_item_new_with_label(_("_Custom Generators"));
   mainw->custom_effects_submenu = lives_standard_menu_item_new_with_label(_("_Custom Effects"));
@@ -147,7 +131,7 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
-  //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
+  if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (mainw->current_file > 0 && cfile != NULL) {
     load_start_image(cfile->start);
   } else load_start_image(0);
@@ -162,7 +146,7 @@ boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
-  //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
+  if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (mainw->current_file > 0 && cfile != NULL) {
     load_end_image(cfile->end);
   } else load_end_image(0);
@@ -176,9 +160,9 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   int current_file = mainw->current_file;
   if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   if (!mainw->draw_blocked) {
-    //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
+    if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
     load_preview_image(FALSE);
-    //if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
+    if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
   }
   mainw->current_file = current_file;
   return TRUE;
@@ -338,8 +322,13 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
 
 void create_LiVES(void) {
-  LiVESWidget *hbox;
+#ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3, 0, 0)
+  LiVESWidget *alignment;
+#endif
+#endif
   LiVESWidget *vbox;
+  LiVESWidget *hbox;
   LiVESWidget *vbox2;
   LiVESWidget *menuitem;
   LiVESWidget *select_submenu_menu;
@@ -1876,7 +1865,6 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox, FALSE, FALSE, 0);
 
   lives_container_add(LIVES_CONTAINER(mainw->eventbox), vbox99);
-  //lives_box_set_homogeneous(LIVES_BOX(vbox99), TRUE);
 
   vbox4 = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox99), vbox4, TRUE, TRUE, 0);
@@ -1922,13 +1910,23 @@ void create_LiVES(void) {
 
   mainw->pf_grid = lives_table_new(1, 3, TRUE);
 
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->pf_grid, FALSE, FALSE, 0);
+#else
+  // for gtk+ 2.x
+  alignment = lives_alignment_new(0.5, 0.5, 1.0, 1.0);
+  lives_container_add(LIVES_CONTAINER(alignment), mainw->pf_grid);
+  lives_box_pack_start(LIVES_BOX(vbox4), alignment, FALSE, FALSE, 0);
+#endif
+#endif
 
   mainw->eventbox3 = lives_event_box_new();
+  lives_widget_set_app_paintable(mainw->eventbox3, TRUE);
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox3, 0, 1, 0, 1,
-                     (LiVESAttachOptions)0,
-                     (LiVESAttachOptions)0, 0, 0);
-  lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_CENTER);
+                     (LiVESAttachOptions)(0),
+                     (LiVESAttachOptions)(0), 0, 0);
+  lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_START);
   lives_widget_set_valign(mainw->eventbox3, LIVES_ALIGN_CENTER);
 
   // IMPORTANT: need to set a default size here (the actual size will be set later)
@@ -1942,12 +1940,12 @@ void create_LiVES(void) {
   // This is necessary to provide correct padding for the image in the frame
   mainw->freventbox0 = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(mainw->frame1), mainw->freventbox0);
-  lives_widget_set_app_paintable(mainw->freventbox0, TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->freventbox0), mainw->start_image);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->playframe = lives_standard_frame_new(_("Play"), 0.5, TRUE);
+  lives_widget_set_app_paintable(mainw->playframe, TRUE);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   mainw->pl_eventbox = lives_event_box_new();
@@ -1956,21 +1954,21 @@ void create_LiVES(void) {
 
   mainw->playarea = lives_hbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
-  lives_widget_set_app_paintable(mainw->pl_eventbox, TRUE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->playframe, 1, 2, 0, 1,
-                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
-                     (LiVESAttachOptions)(LIVES_FILL), 0, 0);
+                     (LiVESAttachOptions)(0),
+                     (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(mainw->playframe, LIVES_ALIGN_CENTER);
   lives_widget_set_valign(mainw->playframe, LIVES_ALIGN_CENTER);
 
   mainw->eventbox4 = lives_event_box_new();
+  lives_widget_set_app_paintable(mainw->freventbox1, TRUE);
   lives_widget_set_size_request(mainw->eventbox4, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox4, 2, 3, 0, 1,
-                     (LiVESAttachOptions)0,
-                     (LiVESAttachOptions)0, 0, 0);
-  lives_widget_set_halign(mainw->eventbox4, LIVES_ALIGN_CENTER);
+                     (LiVESAttachOptions)(0),
+                     (LiVESAttachOptions)(0), 0, 0);
+  lives_widget_set_halign(mainw->eventbox4, LIVES_ALIGN_END);
   lives_widget_set_valign(mainw->eventbox4, LIVES_ALIGN_CENTER);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
@@ -1979,7 +1977,6 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->eventbox4), mainw->frame2);
 
   mainw->freventbox1 = lives_event_box_new();
-  lives_widget_set_app_paintable(mainw->freventbox1, TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->frame2), mainw->freventbox1);
   lives_container_add(LIVES_CONTAINER(mainw->freventbox1), mainw->end_image);
 
@@ -2181,9 +2178,12 @@ void create_LiVES(void) {
   mainw->message_box = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
 
-  mainw->textview1 = NULL;
-  mainw->scrolledwindow = NULL;
-  add_message_scroller(mainw->message_box, NULL);
+  mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
+  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
+  lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->scrolledwindow, FALSE, FALSE, 0);
+
+  mainw->textview1 = lives_standard_text_view_new(NULL, NULL);
+  lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
 
   // accel keys
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
@@ -3121,6 +3121,7 @@ void fade_background(void) {
   lives_widget_hide(mainw->hruler);
   lives_widget_hide(mainw->eventbox5);
   lives_widget_hide(mainw->message_box);
+  lives_widget_hide(mainw->scrolledwindow);
   lives_widget_hide(mainw->sa_button);
 
   if (!mainw->foreign) {
@@ -3223,11 +3224,13 @@ void unfade_background(void) {
   lives_widget_show(mainw->menu_hbox);
   lives_widget_hide(mainw->tb_hbox);
   lives_widget_show(mainw->hseparator);
-  if (!mainw->double_size || mainw->sep_win) {
+  if (!mainw->double_size) {
     if (palette->style & STYLE_1) {
       lives_widget_show(mainw->sep_image);
     }
-    if (mainw->multitrack == NULL) lives_widget_show(mainw->scrolledwindow);
+    if (mainw->multitrack == NULL) {
+      lives_widget_show_all(mainw->message_box);
+    }
   }
   lives_widget_show(mainw->frame1);
   lives_widget_show(mainw->frame2);
@@ -3247,6 +3250,17 @@ void unfade_background(void) {
   lives_widget_show(mainw->spinbutton_pb_fps);
   lives_widget_show(mainw->message_box);
   lives_widget_show(mainw->sa_button);
+  lives_widget_show(mainw->sep_image);
+
+  //
+  mainw->pwidth = DEFAULT_FRAME_HSIZE - H_RESIZE_ADJUST;
+  mainw->pheight = DEFAULT_FRAME_VSIZE - V_RESIZE_ADJUST;
+
+  /* lives_widget_set_size_request(mainw->pl_eventbox, width, height); */
+  /* lives_widget_set_size_request(mainw->playframe, width, height); */
+  /* lives_widget_set_size_request(mainw->playarea, width, height); */
+  /* lives_widget_set_size_request(mainw->play_image, width, height); */
+  lives_widget_queue_draw(mainw->pf_grid);
 
   if (stop_closure != NULL && prefs->show_gui) {
     lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), stop_closure);
@@ -3357,6 +3371,7 @@ void fullscreen_internal(void) {
     lives_widget_hide(mainw->t_bckground);
     lives_widget_hide(mainw->t_double);
     lives_widget_hide(mainw->menu_hbox);
+    lives_widget_hide(mainw->scrolledwindow);
 
     height = lives_widget_get_allocation_height(mainw->LiVES);
     width = lives_widget_get_allocation_width(mainw->LiVES);
@@ -3381,6 +3396,7 @@ void fullscreen_internal(void) {
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL);
     }
 
+    lives_widget_set_size_request(mainw->pl_eventbox, width, height);
     lives_widget_set_size_request(mainw->playframe, width, height);
     lives_widget_set_size_request(mainw->playarea, width, height);
     lives_widget_set_size_request(mainw->play_image, width, height);

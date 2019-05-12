@@ -5128,7 +5128,14 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
       create_empty_pixel_data(layer, TRUE, TRUE);
       return TRUE;
     } else if (clip == mainw->scrap_file) {
-      return load_from_scrap_file(layer, frame);
+      boolean res = load_from_scrap_file(layer, frame);
+
+      // clip width and height may vary dynamically
+      cfile->hsize = weed_layer_get_width(layer);
+      cfile->vsize = weed_layer_get_height(layer);
+      g_print("PAL for %p is %d %d %d\n", layer, weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error), cfile->hsize, cfile->vsize);
+      mainw->osc_block = FALSE;
+      return res;
     } else {
       if (sfile->clip_type == CLIP_TYPE_FILE && sfile->frame_index != NULL && frame > 0 &&
           frame <= sfile->frames && is_virtual_frame(clip, frame)) {
@@ -5537,10 +5544,10 @@ static void get_max_opsize(int *opwidth, int *opheight) {
         do {
           *opwidth = lives_widget_get_allocation_width(mainw->playframe);
           *opheight = lives_widget_get_allocation_height(mainw->playframe);
-          if (*opwidth **opheight == 0) {
+          if (*opwidth * (*opheight) == 0) {
             lives_widget_context_update();
           }
-        } while (*opwidth **opheight == 0);
+        } while (*opwidth * (*opheight) == 0);
       } else {
         // sep win full screen
         if (!mainw->ext_playback) {
@@ -5580,10 +5587,10 @@ static void get_max_opsize(int *opwidth, int *opheight) {
           do {
             *opwidth = lives_widget_get_allocation_width(mainw->playframe);
             *opheight = lives_widget_get_allocation_height(mainw->playframe);
-            if (*opwidth **opheight == 0) {
+            if (*opwidth * (*opheight) == 0) {
               lives_widget_context_update();
             }
-          } while (*opwidth **opheight == 0);
+          } while (*opwidth * (*opheight) == 0);
 #endif
         } else {
           // in sep. window
@@ -5665,6 +5672,8 @@ void load_frame_image(int frame) {
 
   LiVESInterpType interp;
 
+  double scrap_file_size = -1;
+
   boolean was_preview;
   boolean rec_after_pb = FALSE;
   int weed_error;
@@ -5677,6 +5686,7 @@ void load_frame_image(int frame) {
   int pwidth, pheight;
   int lb_width = 0, lb_height = 0;
   int bad_frame_count = 0;
+  int fg_file = mainw->current_file;
 
 #define BFC_LIMIT 1000
 
@@ -5762,7 +5772,6 @@ void load_frame_image(int frame) {
       // record performance
       if ((mainw->record && !mainw->record_paused) || mainw->record_starting) {
         uint64_t actual_ticks;
-        int fg_file = mainw->current_file;
         int fg_frame = mainw->actual_frame;
         int bg_file = mainw->blend_file > 0 && mainw->blend_file != mainw->current_file &&
                       mainw->files[mainw->blend_file] != NULL ? mainw->blend_file : -1;
@@ -5784,6 +5793,7 @@ void load_frame_image(int frame) {
           if (mainw->scrap_file == -1) open_scrap_file();
           fg_file = mainw->scrap_file;
           fg_frame = mainw->files[mainw->scrap_file]->frames + 1;
+          scrap_file_size = mainw->files[mainw->scrap_file]->f_size;
           bg_file = -1;
           bg_frame = 0;
         }
@@ -5837,18 +5847,24 @@ void load_frame_image(int frame) {
           if (mainw->event_list == NULL) mainw->event_list = event_list;
 
           // TODO ***: do we need to perform more checks here ???
-          if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO)) {
+          if (scrap_file_size != -1 || (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO))) {
             weed_plant_t *event = get_last_frame_event(mainw->event_list);
 
-            if (mainw->rec_aclip == mainw->ascrap_file) {
-              mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
-                                 (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
-                                          mainw->files[mainw->ascrap_file]->asampsize >> 3);
-              mainw->rec_avel = 1.;
-
+            if (scrap_file_size != -1) {
+              weed_set_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, scrap_file_size);
             }
-            insert_audio_event_at(mainw->event_list, event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
-            mainw->rec_aclip = -1;
+
+            if (mainw->rec_aclip != -1) {
+              if (mainw->rec_aclip == mainw->ascrap_file) {
+                mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
+                                   (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
+                                            mainw->files[mainw->ascrap_file]->asampsize >> 3);
+                mainw->rec_avel = 1.;
+
+              }
+              insert_audio_event_at(mainw->event_list, event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
+              mainw->rec_aclip = -1;
+            }
           }
 
           pthread_mutex_unlock(&mainw->event_list_mutex);
@@ -5983,7 +5999,7 @@ void load_frame_image(int frame) {
         // here if we are rendering from multitrack, previewing a recording, or applying realtime effects to a selection
         weed_timecode_t tc = mainw->cevent_tc;
 
-        if (mainw->clip_index[0] == mainw->scrap_file && mainw->clip_index[0] > -1 && mainw->num_tracks == 1) {
+        if (mainw->scrap_file != -1 && mainw->clip_index[0] == mainw->scrap_file && mainw->num_tracks == 1) {
           // do not apply fx, just pull frame
           mainw->frame_layer = weed_layer_new_for_frame(mainw->clip_index[0], mainw->frame_index[0]);
           if (!pull_frame(mainw->frame_layer, get_image_ext_for_type(cfile->img_type), tc)) {
@@ -6262,11 +6278,7 @@ void load_frame_image(int frame) {
 #endif
 
     // save to scrap_file now if we have to
-    if (mainw->record && !rec_after_pb && !mainw->record_paused && (prefs->rec_opts & REC_EFFECTS) &&
-        ((cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE) ||
-         (mainw->blend_file != -1 && mainw->files[mainw->blend_file] != NULL &&
-          mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_DISK &&
-          mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_FILE))) {
+    if (mainw->record && !mainw->record_paused && mainw->scrap_file != -1 && fg_file == mainw->scrap_file) {
       if (!rec_after_pb) {
         check_layer_ready(mainw->frame_layer);
         save_to_scrap_file(mainw->frame_layer);

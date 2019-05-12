@@ -677,6 +677,8 @@ struct _lives_amixer_t {
 /// blocks MUST only contain frames from a single clip. They MAY NOT contain blank frames.
 ///
 /// start and end events MUST be FRAME events
+
+/// TODO: add scrap_file_offset so we can treat scrapfile like an ordinary clip
 struct _track_rect {
   ulong uid;
 

@@ -290,7 +290,7 @@ static float set_pulse(float *buf, size_t bufsz, int step) {
 void jack_get_rec_avals(jack_driver_t *jackd) {
   mainw->rec_aclip = jackd->playing_file;
   if (mainw->rec_aclip != -1) {
-    mainw->rec_aseek = jackd->seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
+    mainw->rec_aseek = jackd->real_seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
     mainw->rec_avel = afile->pb_fps / afile->fps;
   }
 }
@@ -300,9 +300,8 @@ static void jack_set_rec_avals(jack_driver_t *jackd, boolean is_forward) {
   // record direction change (internal)
   mainw->rec_aclip = jackd->playing_file;
   if (mainw->rec_aclip != -1) {
-    mainw->rec_avel = ABS(afile->pb_fps / afile->fps);
+    jack_get_rec_avals(jackd);
     if (!is_forward) mainw->rec_avel = -mainw->rec_avel;
-    mainw->rec_aseek = (double)jackd->seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
   }
 }
 
@@ -383,6 +382,8 @@ static int audio_process(nframes_t nframes, void *arg) {
 
   register int i;
 
+  jackd->real_seek_pos = jackd->seek_pos;
+
 #ifdef DEBUG_AJACK
   lives_printerr("nframes %ld, sizeof(float) == %d\n", (int64_t)nframes, sizeof(float));
 #endif
@@ -402,7 +403,7 @@ static int audio_process(nframes_t nframes, void *arg) {
       jackd->num_input_channels = afile->achans;
       jackd->sample_in_rate = (afile->arate * afile->pb_fps / afile->fps + .5);
       jackd->bytes_per_channel = afile->asampsize / 8;
-      jackd->seek_pos = 0;
+      jackd->seek_pos = jackd->real_seek_pos = 0;
       break;
     case ASERVER_CMD_FILE_CLOSE:
       jackd->playing_file = -1;
@@ -411,7 +412,7 @@ static int audio_process(nframes_t nframes, void *arg) {
       if (jackd->playing_file < 0) break;
       xseek = atol((char *)msg->data);
       if (xseek < 0.) xseek = 0.;
-      jackd->seek_pos = xseek;
+      jackd->seek_pos = jackd->real_seek_pos = xseek;
       break;
     default:
       msg->data = NULL;
@@ -1630,7 +1631,7 @@ int jack_audio_init(void) {
     for (j = 0; j < JACK_MAX_OUTPUT_PORTS; j++) jackd->volume[j] = 1.0f;
     jackd->state = (jack_transport_state_t)JackTClosed;
     jackd->sample_out_rate = jackd->sample_in_rate = 0;
-    jackd->seek_pos = jackd->seek_end = 0;
+    jackd->seek_pos = jackd->seek_end = jackd->real_seek_pos = 0;
     jackd->msgq = NULL;
     jackd->num_calls = 0;
     jackd->astream_fd = -1;
@@ -1663,7 +1664,7 @@ int jack_audio_read_init(void) {
     for (j = 0; j < JACK_MAX_INPUT_PORTS; j++) jackd->volume[j] = 1.0f;
     jackd->state = (jack_transport_state_t)JackTClosed;
     jackd->sample_out_rate = jackd->sample_in_rate = 0;
-    jackd->seek_pos = jackd->seek_end = 0;
+    jackd->seek_pos = jackd->seek_end = jackd->real_seek_pos = 0;
     jackd->msgq = NULL;
     jackd->num_calls = 0;
     jackd->astream_fd = -1;
@@ -1719,7 +1720,7 @@ uint64_t lives_jack_get_time(jack_driver_t *jackd) {
 
 double lives_jack_get_pos(jack_driver_t *jackd) {
   // get current time position (seconds) in audio file
-  return jackd->seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
+  return jackd->real_seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
 }
 
 

@@ -578,8 +578,6 @@ typedef struct {
 
 #define LIVES_CLIP_HEADER_VERSION 100
 
-  int rowstride;
-
   /// the processing window
   xprocess *proc_ptr;
 
@@ -1167,7 +1165,6 @@ void frame_size_update(void);
 void splash_init(void);
 void splash_end(void);
 void splash_msg(const char *msg, double pct);
-void add_message_scroller(LiVESWidget *conter, LiVESTextBuffer *);
 void resize_widgets_for_monitor(boolean get_play_times);
 void reset_message_area(boolean expand);
 #if GTK_CHECK_VERSION(3, 0, 0)

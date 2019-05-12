@@ -137,7 +137,7 @@ boolean lives_pulse_init(short startup_phase) {
 void pulse_get_rec_avals(pulse_driver_t *pulsed) {
   mainw->rec_aclip = pulsed->playing_file;
   if (mainw->rec_aclip != -1) {
-    mainw->rec_aseek = pulsed->seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
+    mainw->rec_aseek = pulsed->real_seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
     mainw->rec_avel = afile->pb_fps / afile->fps;
   }
 }
@@ -248,6 +248,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
   pa_volume_t pavol;
 
+  pulsed->real_seek_pos = pulsed->seek_pos;
+
   pulsed->pstream = pstream;
 
   if (xbytes > nbytes) xbytes = nbytes;
@@ -276,7 +278,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             posix_fadvise(pulsed->fd, 0, 0, POSIX_FADV_SEQUENTIAL);
           }
 #endif
-          pulsed->seek_pos = 0;
+          pulsed->real_seek_pos = pulsed->seek_pos = 0;
           pulsed->playing_file = new_file;
           pa_stream_trigger(pulsed->pstream, NULL, NULL);
         }
@@ -298,7 +300,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
         lseek(pulsed->fd, xseek, SEEK_SET);
       }
-      pulsed->seek_pos = seek;
+      pulsed->real_seek_pos = pulsed->seek_pos = seek;
       pa_stream_trigger(pulsed->pstream, NULL, NULL);
       break;
     default:
@@ -1109,7 +1111,7 @@ int pulse_audio_init(void) {
   pulsed.state = (pa_context_state_t)PA_STREAM_UNCONNECTED;
   pulsed.in_arate = 44100;
   pulsed.fd = -1;
-  pulsed.seek_pos = pulsed.seek_end = 0;
+  pulsed.seek_pos = pulsed.seek_end = pulsed.real_seek_pos = 0;
   pulsed.msgq = NULL;
   pulsed.num_calls = 0;
   pulsed.chunk_size = 0;
@@ -1455,7 +1457,7 @@ uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 
 double lives_pulse_get_pos(pulse_driver_t *pulsed) {
   // get current time position (seconds) in audio file
-  return pulsed->seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
+  return pulsed->real_seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
 }
 
 

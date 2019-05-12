@@ -133,10 +133,10 @@ livespointer lives_calloc(size_t nmemb, size_t size) {
 #endif
 
 
-LIVES_LOCAL_INLINE int weed_refs_count(weed_plant_t *inst) {
+LIVES_LOCAL_INLINE int weed_inst_refs_count(weed_plant_t *inst) {
   int error;
   if (inst == NULL) return -1;
-  if (!weed_plant_has_leaf(inst, WEED_LEAF_HOST_REFS)) return -100;
+  if (!weed_plant_has_leaf(inst, WEED_LEAF_HOST_REFS)) return 0;
   return weed_get_int_value(inst, WEED_LEAF_HOST_REFS, &error);
 }
 
@@ -10341,26 +10341,45 @@ LIVES_GLOBAL_INLINE int weed_layer_get_current_palette(weed_plant_t *layer) {
 }
 
 
-static void weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, boolean write_all, unsigned char **mem) {
-  void *value = NULL, *valuer = NULL;
+static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, boolean write_all, unsigned char **mem) {
+  // serialise a leaf with key "key" to memory or to file
+  // for file, set fd >= 0 and mem to NULL
+  // for memory, pass the address of a memory area (which must be large enough to accept the data)
+  // if write_all is set then we first write the key name
+  //
+  // serialisation format is 4 bytes "size" (little-endian for file) followed by the data
+  // - strings are not NULL terminated
+  // - pointer types are converted to uint64_t before writing
+
+  // returns bytesize of serialised leaf
+
+  // format is [key_len (4 bytes) | key (key_len bytes)] seed_type (4 bytes) n_elements (4 bytes)
+  // then for each element: value_size (4 bytes) value
+
+  void *value = NULL;
+
+  size_t totsize = 0;
+
   uint32_t vlen;
+  uint32_t keylen = (uint32_t)strlen(key);
+
   int st, ne;
   int j;
-  uint32_t i = (uint32_t)strlen(key);
 
   // write errors will be checked for by the calling function
 
   if (write_all) {
     // write byte length of key, followed by key in utf-8
     if (mem == NULL) {
-      lives_write_le_buffered(fd, &i, 4, TRUE);
-      lives_write_buffered(fd, key, (size_t)i, TRUE);
+      lives_write_le_buffered(fd, &keylen, 4, TRUE);
+      lives_write_buffered(fd, key, (size_t)keylen, TRUE);
     } else {
-      lives_memcpy(*mem, &i, 4);
+      lives_memcpy(*mem, &keylen, 4);
       *mem += 4;
-      lives_memcpy(*mem, key, (size_t)i);
-      *mem += i;
+      lives_memcpy(*mem, key, (size_t)keylen);
+      *mem += keylen;
     }
+    totsize += 4 + keylen;
   }
 
   // write seed type and number of elements
@@ -10378,48 +10397,68 @@ static void weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, bo
     *mem += 4;
   }
 
-  // write errors will be checked for by the calling function
+  totsize += 8;
 
-  // for each element, write the data size followed by the data
-  for (j = 0; j < ne; j++) {
-    vlen = (uint32_t)weed_leaf_element_size(plant, key, j);
-    if (st != WEED_SEED_STRING) {
-      value = lives_malloc((size_t)vlen);
-      weed_leaf_get(plant, key, j, value);
-    } else {
-      value = lives_malloc((size_t)(vlen + 1));
-      weed_leaf_get(plant, key, j, &value);
-    }
+  // for pixel_data we do special handling
+  // instead of writing size == 8 (4 bytes) and a voidptr (8 bytes)
+  // we write each plane's bytesize and the contents
+  if (mem == NULL && !strcmp(key, WEED_LEAF_PIXEL_DATA)) {
+    int error;
+    int *rowstrides = weed_get_int_array(plant, WEED_LEAF_ROWSTRIDES, &error);
+    int pal = weed_get_int_value(plant, WEED_LEAF_CURRENT_PALETTE, &error);
+    int height = weed_get_int_value(plant, WEED_LEAF_HEIGHT, &error);
+    int nplanes = weed_palette_get_numplanes(pal);
+    uint8_t **pixel_data = (uint8_t **)weed_get_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, &error);
 
-    if (mem == NULL && weed_leaf_seed_type(plant, key) >= 64) {
-      // save voidptr as 64 bit values (**NEW**)
-      valuer = (uint64_t *)lives_malloc(sizeof(uint64_t));
-      *((uint64_t *)valuer) = (uint64_t)(*((void **)value));
-      vlen = sizeof(uint64_t);
-    } else valuer = value;
-
-    if (mem == NULL) {
+    for (j = 0; j < nplanes; j++) {
+      vlen = (size_t)((double)height * weed_palette_get_plane_ratio_vertical(pal, j) * (double)rowstrides[j]);
       lives_write_le_buffered(fd, &vlen, 4, TRUE);
-      if (st != WEED_SEED_STRING) {
-        lives_write_le_buffered(fd, valuer, (size_t)vlen, TRUE);
-      } else lives_write_buffered(fd, (const char *)valuer, (size_t)vlen, TRUE);
-    } else {
-      lives_memcpy(*mem, &vlen, 4);
-      *mem += 4;
-      lives_memcpy(*mem, value, (size_t)vlen);
-      *mem += vlen;
+      lives_write_buffered(fd, (const char *)pixel_data[j], vlen, TRUE);
+      totsize += 4 + vlen;
     }
-    if (valuer != value) lives_freep((void **)&valuer);
-    lives_freep((void **)&value);
+    lives_free(rowstrides);
+    lives_free(pixel_data);
+  } else {
+    // for each element, write the data size followed by the data
+    for (j = 0; j < ne; j++) {
+      vlen = (uint32_t)weed_leaf_element_size(plant, key, j);
+      if (st != WEED_SEED_STRING) {
+        value = lives_malloc((size_t)vlen);
+        weed_leaf_get(plant, key, j, value);
+      } else {
+        // need to create a buffer to receive the string + terminating NULL
+        value = lives_malloc((size_t)(vlen + 1));
+        weed_leaf_get(plant, key, j, &value);
+      }
+
+      if (mem == NULL) {
+        lives_write_le_buffered(fd, &vlen, 4, TRUE);
+        lives_write_le_buffered(fd, value, (size_t)vlen, TRUE);
+      } else {
+        lives_memcpy(*mem, &vlen, 4);
+        *mem += 4;
+        lives_memcpy(*mem, value, (size_t)vlen);
+        *mem += vlen;
+      }
+      totsize += 4 + vlen;
+      lives_freep((void **)&value);
+    }
   }
 
-  // write errors will be checked for by the calling function
+  // write errors should be checked for by the calling function
+
+  return totsize;
 }
 
 
-boolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
-  // write errors will be checked for by the calling function
+size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
+  // serialise an entire plant
+  //
+  // write errors should be checked for by the calling function
 
+  // returns the bytesize of the serialised plant
+
+  size_t totsize = 0;
   int i = 0;
   char **proplist = weed_plant_list_leaves(plant);
   char *prop;
@@ -10431,26 +10470,40 @@ boolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
     *mem += 4;
   }
 
-  // write errors will be checked for by the calling function
+  totsize += 4;
 
-  weed_leaf_serialise(fd, plant, WEED_LEAF_TYPE, TRUE, mem);
-  i = 0;
+  // serialise the "type" leaf first, so that we know this is a new plant when deserialising
+  totsize += weed_leaf_serialise(fd, plant, WEED_LEAF_TYPE, TRUE, mem);
 
-  for (prop = proplist[0]; (prop = proplist[i]) != NULL; i++) {
+  for (i = 0; (prop = proplist[i]) != NULL; i++) {
     // write each leaf and key
-    if (strcmp(prop, WEED_LEAF_TYPE)) weed_leaf_serialise(fd, plant, prop, TRUE, mem);
+    if (strcmp(prop, WEED_LEAF_TYPE)) totsize += weed_leaf_serialise(fd, plant, prop, TRUE, mem);
     lives_freep((void **)&prop);
   }
   lives_freep((void **)&proplist);
-  return TRUE;
+  return totsize;
 }
 
 
 static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, unsigned char **mem,
                                  boolean check_key) {
-  // if plant is NULL, returns type
-  // WEED_LEAF_HOST_DEFAULT sets key; otherwise NULL
-  // check_key set to TRUE - check that we read the correct key
+  // if plant is NULL, returns "type"
+
+  // WEED_LEAF_HOST_DEFAULT and WEED_LEAF_TYPE sets key; otherwise we leave it as NULL to get the next
+
+  // if check_key set to TRUE - check that we read the correct key seed_type and n_elements
+
+
+  // return values:
+  // -1 : check_key key mismatch
+  // -2 : "type" leaf was not an INT
+  // -3 : "type" leaf has invalid element count
+  // -4 : short read
+  // -5 : memory allocation error
+  // -6 : unknown seed_type
+  // -7 : plant "type" mismatch
+  // -9 : key length mismatch
+  // - 10 : key length too long
 
   void **values;
 
@@ -10542,8 +10595,10 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     *mem += 4;
   }
 
-  if (ne > 0) values = (void **)lives_malloc(ne * sizeof(void *));
-  else values = NULL;
+  if (ne > 0) {
+    values = (void **)lives_malloc(ne * sizeof(void *));
+    if (values == NULL) return -5;
+  } else values = NULL;
 
   if (check_key && !strcmp(key, WEED_LEAF_TYPE)) {
     // for the WEED_LEAF_TYPE leaf perform some extra checks
@@ -10552,45 +10607,73 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     }
   }
 
-  for (i = 0; i < ne; i++) {
-    if (mem == NULL) {
+  // for pixel_data we do special handling
+  if (mem == NULL && !strcmp(key, WEED_LEAF_PIXEL_DATA)) {
+    for (j = 0; j < ne; j++) {
       bytes = lives_read_le_buffered(fd, &vlen, 4, TRUE);
       if (bytes < 4) {
-        for (--i; i >= 0; lives_freep((void **)&values[i--]));
+        for (--j; j >= 0; lives_freep((void **)&values[j--]));
         lives_freep((void **)&values);
         lives_freep((void **)&mykey);
         return -4;
       }
-    } else {
-      lives_memcpy(&vlen, *mem, 4);
-      *mem += 4;
-    }
-
-    if (st == WEED_SEED_STRING) {
-      values[i] = lives_malloc((size_t)vlen + 1);
-    } else {
-      if (vlen <= 8) {
-        values[i] = lives_malloc((size_t)vlen);
-      } else return -8;
-    }
-
-    if (mem == NULL) {
-      if (st != WEED_SEED_STRING)
-        bytes = lives_read_le_buffered(fd, values[i], vlen, TRUE);
-      else
-        bytes = lives_read_buffered(fd, values[i], vlen, TRUE);
-      if (bytes < vlen) {
-        for (--i; i >= 0; lives_freep((void **)&values[i--]));
-        lives_freep((void **)&values);
-        lives_freep((void **)&mykey);
-        return -4;
+      values[j] = lives_try_malloc(vlen);
+      if (values[j] == NULL) {
+        char *msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
+        LIVES_ERROR(msg);
+        lives_free(msg);
+        for (--j; j >= 0; j--) lives_free(values[j]);
+        lives_free(values);
+        weed_set_voidptr_value(plant, WEED_LEAF_PIXEL_DATA, NULL);
+        return -5;
       }
-    } else {
-      lives_memcpy(values[i], *mem, vlen);
-      *mem += vlen;
+      lives_read_buffered(fd, values[j], vlen, TRUE);
     }
-    if (st == WEED_SEED_STRING) {
-      memset((char *)values[i] + vlen, 0, 1);
+    weed_set_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, ne, values);
+    lives_free(values);
+    values = NULL;
+    goto done;
+  } else {
+    for (i = 0; i < ne; i++) {
+      if (mem == NULL) {
+        bytes = lives_read_le_buffered(fd, &vlen, 4, TRUE);
+        if (bytes < 4) {
+          for (--i; i >= 0; lives_freep((void **)&values[i--]));
+          lives_freep((void **)&values);
+          lives_freep((void **)&mykey);
+          return -4;
+        }
+      } else {
+        lives_memcpy(&vlen, *mem, 4);
+        *mem += 4;
+      }
+
+      if (st == WEED_SEED_STRING) {
+        values[i] = lives_malloc((size_t)vlen + 1);
+      } else {
+        if (vlen <= 8) {
+          values[i] = lives_malloc((size_t)vlen);
+        } else return -4;
+      }
+
+      if (mem == NULL) {
+        if (st != WEED_SEED_STRING)
+          bytes = lives_read_le_buffered(fd, values[i], vlen, TRUE);
+        else
+          bytes = lives_read_buffered(fd, values[i], vlen, TRUE);
+        if (bytes < vlen) {
+          for (--i; i >= 0; lives_freep((void **)&values[i--]));
+          lives_freep((void **)&values);
+          lives_freep((void **)&mykey);
+          return -4;
+        }
+      } else {
+        lives_memcpy(values[i], *mem, vlen);
+        *mem += vlen;
+      }
+      if (st == WEED_SEED_STRING) {
+        memset((char *)values[i] + vlen, 0, 1);
+      }
     }
   }
 
@@ -10605,7 +10688,22 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       case WEED_SEED_BOOLEAN:
         ints = (int *)lives_malloc(ne * 4);
         for (j = 0; j < ne; j++) ints[j] = *(int *)values[j];
-        weed_leaf_set(plant, key, st, ne, (void *)ints);
+        if (!strcmp(key, WEED_LEAF_TYPE)) {
+          if (weed_plant_has_leaf(plant, WEED_LEAF_TYPE)) {
+            int error;
+            if (ints[0] != weed_get_int_value(plant, WEED_LEAF_TYPE, &error)) {
+              char *msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
+                                              weed_get_int_value(plant, WEED_LEAF_TYPE, &error), ints[0]);
+              LIVES_ERROR(msg);
+              lives_free(msg);
+              return -7;
+            }
+          } else {
+            weed_leaf_set(plant, key, st, ne, (void *)ints);
+          }
+        } else {
+          weed_leaf_set(plant, key, st, ne, (void *)ints);
+        }
         lives_freep((void **)&ints);
         break;
       case WEED_SEED_DOUBLE:
@@ -10642,6 +10740,8 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     }
   }
 
+done:
+
   if (values != NULL) {
     for (i = 0; i < ne; i++) lives_freep((void **)&values[i]);
     lives_freep((void **)&values);
@@ -10652,15 +10752,14 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 }
 
 
-weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem) {
+weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *plant) {
+  // if plant is NULL we create a new one
   // deserialise a plant from file fd or mem
-  weed_plant_t *plant;
   int numleaves;
   ssize_t bytes;
   int err;
 
   // caller should clear and check mainw->read_failed
-
   if (mem == NULL) {
     if ((bytes = lives_read_le_buffered(fd, &numleaves, 4, TRUE)) < 4) {
       mainw->read_failed = FALSE; // we are allowed to EOF here
@@ -10671,8 +10770,10 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem) {
     *mem += 4;
   }
 
-  plant = weed_plant_new(WEED_PLANT_UNKNOWN);
-  weed_leaf_set_flags(plant, WEED_LEAF_TYPE, 0);
+  if (plant == NULL) {
+    plant = weed_plant_new(WEED_PLANT_UNKNOWN);
+    weed_leaf_set_flags(plant, WEED_LEAF_TYPE, 0);
+  }
 
   if ((err = weed_leaf_deserialise(fd, plant, WEED_LEAF_TYPE, mem, TRUE))) {
     // check the WEED_LEAF_TYPE leaf first

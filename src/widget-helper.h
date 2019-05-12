@@ -46,7 +46,7 @@ typedef enum {
 
 // lives_painter_functions
 
-lives_painter_t *lives_painter_create(lives_painter_surface_t *target);
+lives_painter_t *lives_painter_create_from_surface(lives_painter_surface_t *target);
 lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
 boolean lives_painter_set_source_pixbuf(lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
 boolean lives_painter_set_source_surface(lives_painter_t *, lives_painter_surface_t *, double x, double y);
@@ -780,6 +780,9 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
 LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars, LiVESBox *,
     const char *tooltip);
+
+LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt, const char *defdir, int dispwidth, int maxchars,
+    LiVESBox *box, const char *tooltip);
 
 LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height, const char *tooltip);
 

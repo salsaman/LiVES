@@ -1013,7 +1013,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
   if (offset_end < x1) return;
 
   if (surf == NULL) cr = cairo;
-  else cr = lives_painter_create(surf);
+  else cr = lives_painter_create_from_surface(surf);
 
   if (cr == NULL) return;
 
@@ -1436,7 +1436,7 @@ draw1:
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
     if (palette->style & STYLE_1) {
-      lives_painter_t *crx = lives_painter_create(bgimage);
+      lives_painter_t *crx = lives_painter_create_from_surface(bgimage);
       lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->mt_evbox);
       lives_painter_rectangle(crx, 0., 0., width, height);
       lives_painter_fill(crx);
@@ -2605,7 +2605,7 @@ static void time_to_string(lives_mt *mt, double secs, int length) {
   secs -= mins * 60.;
   rest = (secs - ((int)secs) * 1.) * 100. + .5;
   secs = (int)secs * 1.;
-  string = lives_strdup_printf("%02d:%02d:%02d.%02d", hours, mins, (int)secs, rest);
+  string = lives_strdup_printf("    %02d:%02d:%02d.%02d    ", hours, mins, (int)secs, rest);
   lives_entry_set_text(LIVES_ENTRY(mt->timecode), string);
   lives_free(string);
 }
@@ -5168,7 +5168,7 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
   double fps = -1;
   char *msg;
 
-  if (fd > 0 || mem != NULL) event_list = weed_plant_deserialise(fd, mem);
+  if (fd > 0 || mem != NULL) event_list = weed_plant_deserialise(fd, mem, NULL);
   else event_list = mainw->stored_event_list;
 
   if (mt != NULL) mt->layout_set_properties = FALSE;
@@ -5315,7 +5315,7 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
 
   do {
     if (mem != NULL && (*mem) >= mem_end) break;
-    event = weed_plant_deserialise(fd, mem);
+    event = weed_plant_deserialise(fd, mem, NULL);
     if (event != NULL) {
 #ifdef DEBUG_TTABLE
       uint64_t event_id;
@@ -5546,7 +5546,6 @@ boolean check_for_layout_del(lives_mt *mt, boolean exiting) {
       set_pref(PREF_AR_LAYOUT, "");
       memset(prefs->ar_layout_name, 0, 1);
     }
-
   }
 
   if (mainw->stored_event_list != NULL || mainw->sl_undo_mem != NULL) {
@@ -7796,13 +7795,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_object_unref(mainw->m_loopbutton);
 
   widget_opts.apply_theme = FALSE;
-  //widget_opts.expand = LIVES_EXPAND_NONE;
+  widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.apply_theme = FALSE;
   mt->timecode = lives_standard_entry_new(NULL, NULL, TIMECODE_LENGTH, TIMECODE_LENGTH, LIVES_BOX(hbox), NULL);
   lives_widget_set_valign(mt->timecode, LIVES_ALIGN_CENTER);
   widget_opts.apply_theme = TRUE;
-  //widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   time_to_string(mt, 0., TIMECODE_LENGTH);
@@ -8609,12 +8608,15 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mainw->unordered_blocks = FALSE;
   }
 
-  tbuf = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
+  tbuf = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw_textview));
 
-  mainw->scrolledwindow = NULL;
-  mainw->textview1 = NULL;
+  mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
+  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
+  //lives_paned_pack(2, LIVES_PANED(mt->vpaned), mainw->scrolledwindow, TRUE, FALSE);
+  lives_container_add(LIVES_CONTAINER(mt->vpaned), mainw->scrolledwindow);
 
-  add_message_scroller(mt->vpaned, tbuf);
+  mainw->textview1 = lives_standard_text_view_new(NULL, tbuf);
+  lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_prevclip), mt, NULL));
@@ -10845,7 +10847,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   if (prefs->show_gui) {
     scroll_track_on_screen(multi, 0);
     lives_widget_show_all(multi->top_vbox);
-
     if (multi->nb_label != NULL) {
       lives_widget_hide(multi->poly_box);
       lives_widget_queue_resize(multi->nb_label);
@@ -10941,10 +10942,11 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   redraw_all_event_boxes(multi);
-  lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
 
   lives_widget_context_update();
   multi->no_expose = FALSE;
+
+  lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
 
   lives_container_child_set_shrinkable(LIVES_CONTAINER(multi->hpaned), multi->context_frame, TRUE);
 
@@ -17471,7 +17473,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
   weed_plant_t *event;
   weed_timecode_t tc;
 
-  lives_painter_t *cr = lives_painter_create(surf);
+  lives_painter_t *cr = lives_painter_create_from_surface(surf);
 
   LiVESWidget *eventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "owner");
 
@@ -17636,7 +17638,7 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox) {
             height);
 
   if (palette->style & STYLE_1) {
-    lives_painter_t *crx = lives_painter_create(bgimage);
+    lives_painter_t *crx = lives_painter_create_from_surface(bgimage);
     lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->mt_evbox);
     lives_painter_rectangle(crx, 0., 0., width, height);
     lives_painter_fill(crx);

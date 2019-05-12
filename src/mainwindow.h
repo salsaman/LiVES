@@ -260,6 +260,8 @@ typedef struct {
 #define STYLE_3 (1<<2) ///< style is lightish - allow themeing of widgets with dark text, otherwise use menu bg
 #define STYLE_4 (1<<3) ///< separator col. in mt
 
+#define STYLE_LIGHT STYLE_3
+
   LiVESWidgetColor white;
   LiVESWidgetColor black;
   LiVESWidgetColor pink;

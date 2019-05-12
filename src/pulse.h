@@ -78,7 +78,8 @@ typedef struct {
   boolean is_paused;
 
   int fd; /**< if >0 we are playing from a lives_clip_t */
-  volatile off_t seek_pos;
+  off_t seek_pos;
+  volatile off_t real_seek_pos;
   off_t seek_end;
   boolean usigned;
   boolean reverse_endian;

@@ -3942,19 +3942,13 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->cdda_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), prefsw->cdda_hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->cdplay_entry = lives_standard_entry_new((tmp = lives_strdup(_("CD device           "))),
+  prefsw->cdplay_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("CD device           "))),
                          (tmp2 = lives_filename_to_utf8(prefs->cdplay_device, -1, NULL, NULL, NULL)),
-                         -1, PATH_MAX, LIVES_BOX(prefsw->cdda_hbox),
+                         LIVES_DEVICE_DIR, STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(prefsw->cdda_hbox),
                          (tmp3 = lives_strdup(_("LiVES can load audio tracks from this CD"))));
   lives_free(tmp);
   lives_free(tmp2);
   lives_free(tmp3);
-
-  buttond = lives_standard_file_button_new(FALSE, LIVES_DEVICE_DIR);
-  lives_box_pack_start(LIVES_BOX(prefsw->cdda_hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
-
-  lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                       (livespointer)prefsw->cdplay_entry);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -4018,7 +4012,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->normal_fore);
-  prefsw->cbutton_fore = lives_standard_color_button_new(LIVES_BOX(hbox), _("        _Foreground Color"), FALSE, &rgba, &sp_red,
+  prefsw->cbutton_fore = lives_standard_color_button_new(LIVES_BOX(hbox), _("_Foreground Color"), FALSE, &rgba, &sp_red,
                          &sp_green,
                          &sp_blue, NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -4037,7 +4031,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->normal_back);
-  prefsw->cbutton_back = lives_standard_color_button_new(LIVES_BOX(hbox), _("        _Background Color"), FALSE, &rgba, &sp_red,
+  prefsw->cbutton_back = lives_standard_color_button_new(LIVES_BOX(hbox), _("_Background Color"), FALSE, &rgba, &sp_red,
                          &sp_green,
                          &sp_blue, NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -4092,7 +4086,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->info_text);
-  prefsw->cbutton_infot = lives_standard_color_button_new(LIVES_BOX(hbox), _("              Info _Text Color"), FALSE, &rgba, &sp_red,
+  prefsw->cbutton_infot = lives_standard_color_button_new(LIVES_BOX(hbox), _("Info _Text Color"), FALSE, &rgba, &sp_red,
                           &sp_green, &sp_blue,
                           NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -4111,7 +4105,7 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba, &palette->info_base);
-  prefsw->cbutton_infob = lives_standard_color_button_new(LIVES_BOX(hbox), _("              Info _Base Color"), FALSE, &rgba, &sp_red,
+  prefsw->cbutton_infob = lives_standard_color_button_new(LIVES_BOX(hbox), _("Info _Base Color"), FALSE, &rgba, &sp_red,
                           &sp_green, &sp_blue,
                           NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -4157,20 +4151,17 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->frameblank_entry = lives_standard_entry_new((tmp = lives_strdup(_("Frame blank image"))), mainw->frameblank_path,
-                             -1, PATH_MAX, LIVES_BOX(hbox),
+  prefsw->frameblank_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("Frame blank image"))), mainw->frameblank_path,
+                             prefs->def_image_dir, STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                              (tmp2 = lives_strdup(_("The frame image which is shown when there is no clip loaded."))));
   lives_free(tmp);
   lives_free(tmp2);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(prefsw->frameblank_entry, FALSE);
 
-  filebutton = lives_standard_file_button_new(FALSE, prefs->def_image_dir);
-  lives_box_pack_start(LIVES_BOX(hbox), filebutton, FALSE, FALSE, widget_opts.packing_width);
+  filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(filebutton, FALSE);
-
-  lives_signal_connect(filebutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), prefsw->frameblank_entry);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton), "filter", widget_opts.image_filter);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton), "filesel_type", LIVES_INT_TO_POINTER(LIVES_FILE_SELECTION_IMAGE_ONLY));
@@ -4178,16 +4169,15 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->sepimg_entry = lives_standard_entry_new((tmp = lives_strdup(_("Separator image"))), mainw->sepimg_path,
-                         -1, PATH_MAX, LIVES_BOX(hbox),
+  prefsw->sepimg_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("Separator image"))), mainw->sepimg_path,
+                         prefs->def_image_dir, STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("The image shown in the center of the interface."))));
   lives_free(tmp);
   lives_free(tmp2);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(prefsw->sepimg_entry, FALSE);
 
-  filebutton = lives_standard_file_button_new(FALSE, prefs->def_image_dir);
-  lives_box_pack_start(LIVES_BOX(hbox), filebutton, FALSE, FALSE, widget_opts.packing_width);
+  filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
     lives_widget_set_sensitive(filebutton, FALSE);
 
@@ -5180,8 +5170,8 @@ void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   prefsw = create_prefs_dialog();
   lives_widget_show(prefsw->prefs_dialog);
+  lives_window_set_position(LIVES_WINDOW(prefsw->prefs_dialog), LIVES_WIN_POS_CENTER_ALWAYS);
   lives_widget_queue_draw(prefsw->prefs_dialog);
-
 }
 
 

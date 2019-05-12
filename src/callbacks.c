@@ -6712,15 +6712,18 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         lives_widget_show(mainw->t_bckground);
         lives_widget_show(mainw->t_double);
 
-        resize(1);
+        if (!mainw->double_size) {
+          lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+          resize(1);
 
-        if (mainw->multitrack == NULL) {
-          if (cfile->is_loaded) {
-            load_start_image(cfile->start);
-            load_end_image(cfile->end);
-          } else {
-            load_start_image(0);
-            load_end_image(0);
+          if (mainw->multitrack == NULL) {
+            if (cfile->is_loaded) {
+              load_start_image(cfile->start);
+              load_end_image(cfile->end);
+            } else {
+              load_start_image(0);
+              load_end_image(0);
+            }
           }
         }
       }
@@ -6783,7 +6786,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             }
             lives_widget_hide(mainw->scrolledwindow);
             lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-            resize(2);
+            resize(2.);
             if (!prefs->ce_maxspect) {
               mainw->pheight *= 2;
               mainw->pheight++;
@@ -6793,10 +6796,18 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             load_start_image(cfile->start);
             load_end_image(cfile->end);
             //lives_widget_queue_draw(mainw->LiVES);
+          } else {
+            /* lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE); */
+            /* resize(1.); */
+            /* load_start_image(cfile->start); */
+            /* load_end_image(cfile->end); */
           }
         }
         if (!mainw->faded) {
           unfade_background();
+          if (!mainw->double_size) {
+            lives_widget_show_all(mainw->message_box);
+          }
         } else {
           lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
         }
@@ -8885,7 +8896,7 @@ EXPOSE_FN_DECL(expose_vid_event, widget) {
   }
 
   if (mainw->current_file == -1) {
-    lives_painter_t *cr2 = lives_painter_create(mainw->video_drawable);
+    lives_painter_t *cr2 = lives_painter_create_from_surface(mainw->video_drawable);
 
     lives_painter_render_background(mainw->video_draw, cr2, 0, 0,
                                     lives_widget_get_allocation_width(mainw->video_draw),
@@ -8929,7 +8940,7 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   }
 
   if (mainw->current_file == -1) {
-    lives_painter_t *cr = lives_painter_create(mainw->laudio_drawable);
+    lives_painter_t *cr = lives_painter_create_from_surface(mainw->laudio_drawable);
 
     lives_painter_render_background(mainw->laudio_draw, cr, 0, 0,
                                     lives_widget_get_allocation_width(mainw->raudio_draw),
@@ -8970,7 +8981,7 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   }
 
   if (mainw->current_file == -1) {
-    lives_painter_t *cr = lives_painter_create(mainw->raudio_drawable);
+    lives_painter_t *cr = lives_painter_create_from_surface(mainw->raudio_drawable);
     lives_painter_render_background(mainw->raudio_draw, cr, 0, 0,
                                     lives_widget_get_allocation_width(mainw->raudio_draw),
                                     lives_widget_get_allocation_height(mainw->raudio_draw));

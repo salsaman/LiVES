@@ -1189,6 +1189,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       priv->packet.size = 0;
 #endif
 
+      //#define DEBUG
 #ifdef DEBUG
       fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame ? priv->pFrame->best_effort_timestamp : 0, priv->pFrame->color_trc, priv->pFrame->color_range);
 #endif
@@ -1234,15 +1235,24 @@ framedone2:
 #endif
   if (priv->pFrame == NULL || pixel_data == NULL) return TRUE;
 
-  if (priv->pFrame->color_range == AVCOL_RANGE_JPEG) 
-    cdata->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
-  else
-    cdata->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
-  
-  //height=cdata->height;
-
   if (priv->black_fill) btop = cdata->frame_height;
+  else {
+  // we are allowed to cast away const-ness just for this (and eventually gamma)
+    if (priv->pFrame->color_space == AVCOL_SPACE_BT709)
+      ((lives_clip_data_t *)cdata)->YUV_subspace = WEED_YUV_SUBSPACE_BT709;
 
+    if (priv->pFrame->color_range == AVCOL_RANGE_JPEG) 
+      ((lives_clip_data_t *)cdata)->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+    else
+      ((lives_clip_data_t *)cdata)->YUV_clamping = WEED_YUV_CLAMPING_CLAMPED;
+    y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
+
+    #ifdef TEST_GAMMA
+    ((lives_clip_data_t *)cdata)->gamma = WEED_GAMMA_LINEAR;
+    if (priv->pFrame->color_trc == AVCOL_TRC_IEC61966_2_1)
+      ((lives_clip_data_t *)cdata)->gamma = WEED_GAMMA_SRGB;
+    #endif
+  }
   for (p = 0; p < nplanes; p++) {
     dst = pixel_data[p];
     src = priv->pFrame->data[p];

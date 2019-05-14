@@ -331,7 +331,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
     if (update_progress) {
       threaded_dialog_spin(0.);
-      lives_widget_context_update();
+      lives_widget_process_updates(mainw->LiVES, TRUE);
     }
 
     if (sfile->frame_index[i - 1] >= 0) {
@@ -558,7 +558,7 @@ void clean_images_from_virtual(lives_clip_t *sfile, int oldsframe, int oldframes
 
   for (i = oldsframe; i <= oldframes; i++) {
     threaded_dialog_spin(0.);
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
     threaded_dialog_spin(0.);
 
     if ((i <= sfile->frames && sfile->frame_index[i - 1] != -1) || i > sfile->frames) {

@@ -547,7 +547,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     char plugin_name[PATH_MAX], weed_name[PATH_MAX], plug1[PATH_MAX];
     DIR *curvdir = NULL;
 
-    void *handle;
+    void *handle = NULL;
 
     int ninps, noutps, ninchs, noutchs;
     int oninps, onoutps, oninchs, onoutchs;
@@ -598,12 +598,14 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
         snprintf(plug1, PATH_MAX, "%s/%s", vdir, plugin_name);
 
         //fprintf(stderr,"checking %s\n",plug1);
-
+	if (handle != NULL) dlclose(handle);
+	
         handle = dlopen(plug1, RTLD_NOW);
         if (handle == NULL) continue;
 
         if ((lad_descriptor_func = dlsym(handle, "ladspa_descriptor")) == NULL) {
           dlclose(handle);
+	  handle = NULL;
           continue;
         }
 

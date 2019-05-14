@@ -32,7 +32,7 @@ static void force_widget_colours(LiVESWidget *widget, LiVESWidgetState state, li
       set_child_colour(widget, TRUE);
       lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_SELECTED, FALSE);
     } else {
-      lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
+      lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
       set_child_alt_colour(widget, TRUE);
     }
   }

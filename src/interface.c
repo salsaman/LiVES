@@ -1983,7 +1983,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
     }
 
     lives_widget_set_size_request(vbox, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
     lives_standard_expander_new(_("_Options"), LIVES_BOX(dialog_vbox), vbox);
   }
 
@@ -3065,7 +3065,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
 
   lives_widget_show_all(dialog);
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), align_horizontal_with(hbox, radiobutton_free), TRUE, FALSE, widget_opts.packing_height);
 
   radiobutton_nonfree = lives_standard_radio_button_new((tmp = lives_strdup(_("_Non-free (eg. h264 / aac / mp4)"))), &radiobutton_group,
@@ -3257,7 +3257,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   req = (lives_remote_clip_request_t *)lives_try_malloc(sizeof(lives_remote_clip_request_t));
   if (req == NULL) {
     lives_widget_destroy(dialog);
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
     lives_free(url);
     lives_free(dfile);
     LIVES_ERROR("Could not alloc memory for remote clip request");
@@ -3297,7 +3297,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   *req->audchoice = 0;
 
   lives_widget_destroy(dialog);
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
 
   return req;
 }

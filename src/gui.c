@@ -3337,7 +3337,7 @@ void unfade_background(void) {
     resize(1);
   }
 
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
 
   lives_widget_set_app_paintable(mainw->start_image, TRUE);
   lives_widget_set_app_paintable(mainw->end_image, TRUE);
@@ -3384,7 +3384,7 @@ void fullscreen_internal(void) {
     if (height > GUI_SCREEN_HEIGHT - by) nheight = GUI_SCREEN_HEIGHT - by;
     if (nwidth != width || nheight != height) {
       lives_window_resize(LIVES_WINDOW(mainw->LiVES), nwidth, nheight);
-      lives_widget_context_update();
+      lives_widget_process_updates(mainw->LiVES, TRUE);
     }
 
     width = lives_widget_get_allocation_width(mainw->LiVES) - bx;
@@ -3933,12 +3933,7 @@ void resize_play_window(void) {
         if (prefs->show_playwin) {
           lives_widget_show(mainw->play_window);
         }
-        // be careful, the user could switch out of sepwin here !
-        mainw->noswitch = TRUE;
-        lives_widget_context_update();
-        mainw->noswitch = FALSE;
-        if (mainw->play_window == NULL) return;
-        if (!mainw->fs || mainw->playing_file < 0) goto point1;
+        lives_widget_process_updates(mainw->LiVES, TRUE);
         mainw->opwx = mainw->opwy = -1;
       } else {
         if (pmonitor == 0) {
@@ -4118,7 +4113,6 @@ void resize_play_window(void) {
         end_ce_thumb_mode();
       }
 
-point1:
       if (mainw->playing_file == 0) {
         mainw->pheight = clipboard->vsize;
         mainw->pwidth = clipboard->hsize;

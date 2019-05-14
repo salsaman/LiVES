@@ -10516,6 +10516,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   uint32_t len, vlen;
 
   char *mykey = NULL;
+  char *msg;
 
   int32_t st; // seed type
   int32_t ne; // num elems
@@ -10620,7 +10621,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       }
       values[j] = lives_try_malloc(vlen);
       if (values[j] == NULL) {
-        char *msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
+        msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
         LIVES_ERROR(msg);
         lives_free(msg);
         for (--j; j >= 0; j--) lives_free(values[j]);
@@ -10691,13 +10692,13 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         for (j = 0; j < ne; j++) ints[j] = *(int32_t *)values[j];
         if (!strcmp(key, WEED_LEAF_TYPE)) {
           if (weed_plant_has_leaf(plant, WEED_LEAF_TYPE)) {
-            int mytype = weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
-            if (mytype == WEED_PLANT_UNKNOWN) {
+            type = weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
+            if (type == WEED_PLANT_UNKNOWN) {
               weed_set_int_value(plant, WEED_LEAF_TYPE, *ints);
             } else {
               if (*ints != type) {
-                char *msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
-                                                mytype, *ints);
+                msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
+                                          type, *ints);
                 lives_free(ints);
                 LIVES_ERROR(msg);
                 lives_free(msg);

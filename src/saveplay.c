@@ -174,7 +174,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
     alarm_handle = lives_alarm_set(LIVES_LONGEST_TIMEOUT);
 
     while (!((infofile = fopen(cfile->info_file, "r")) && !(timeout = lives_alarm_get(alarm_handle)))) {
-      lives_widget_context_update();
+      lives_widget_process_updates(mainw->LiVES, TRUE);
       threaded_dialog_spin(0.);
       lives_usleep(prefs->sleep_time);
     }
@@ -293,7 +293,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     lives_free(fname);
 
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
 
     if (frames == 0) {
       com = lives_strdup_printf(_("Opening %s"), file_name);
@@ -994,7 +994,7 @@ load_done:
     get_total_time(cfile);
     if (!mainw->is_generating) mainw->current_file = mainw->multitrack->render_file;
     mt_init_clips(mainw->multitrack, current_file, TRUE);
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
     mt_clip_select(mainw->multitrack, TRUE);
   }
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
@@ -2139,7 +2139,7 @@ void play_file(void) {
 
     if (mainw->foreign) {
       lives_widget_show_all(mainw->top_vbox);
-      lives_widget_context_update();
+      lives_widget_process_updates(mainw->LiVES, TRUE);
     }
 
     // blank the background if asked to
@@ -2151,7 +2151,7 @@ void play_file(void) {
     if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY))) && (cfile->frames > 0 || mainw->foreign)) {
       // show the frame in the main window
       lives_widget_show_all(mainw->playframe);
-      //lives_widget_context_update();
+      //lives_widget_process_updates(mainw->LiVES, TRUE);
     }
   }
 
@@ -2866,7 +2866,7 @@ void play_file(void) {
 
     lives_xwindow_set_keep_above(mainw->foreign_window, FALSE);
 
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
 
     return;
   }
@@ -3625,7 +3625,7 @@ void wait_for_stop(const char *stop_command) {
   // send another stop if necessary
   mainw->noswitch = TRUE;
   while (!(infofile = fopen(cfile->info_file, "r"))) {
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
     lives_usleep(prefs->sleep_time);
     time_waited += 1000000. / prefs->sleep_time;
     if (time_waited > SECOND_STOP_TIME && !sent_second_stop) {
@@ -5220,7 +5220,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         if (current_file != -1) switch_to_file((mainw->current_file = 0), current_file);
       }
       reset_clipmenu();
-      lives_widget_context_update();
+      lives_widget_process_updates(mainw->LiVES, TRUE);
       threaded_dialog_spin(0.);
 
       if (mainw->read_failed) {
@@ -5449,9 +5449,9 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           mainw->current_file = mainw->multitrack->render_file;
           mt_init_clips(mainw->multitrack, current_file, TRUE);
           set_poly_tab(mainw->multitrack, POLY_CLIPS);
-          lives_widget_context_update();
+          lives_widget_process_updates(mainw->LiVES, TRUE);
           mt_clip_select(mainw->multitrack, TRUE);
-          lives_widget_context_update();
+          lives_widget_process_updates(mainw->LiVES, TRUE);
           mainw->current_file = current_file;
         }
 

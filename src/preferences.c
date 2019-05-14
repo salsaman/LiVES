@@ -677,7 +677,7 @@ void pref_factory_int(const char *prefidx, int newval) {
   // ...
 
   if (prefsw != NULL) {
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
 }
@@ -719,7 +719,7 @@ void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval) {
   }
 
   if (prefsw != NULL) {
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
 }

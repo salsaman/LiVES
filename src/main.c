@@ -1950,7 +1950,7 @@ boolean set_palette_colours(boolean force_reload) {
   lives_rgba_to_widget_color(&palette->light_green, &lcol);
 
   // dark red
-  lcol.red = 35723;
+  lcol.red = 30723;
   lcol.green = 0;
   lcol.blue = 0;
   lives_rgba_to_widget_color(&palette->dark_red, &lcol);

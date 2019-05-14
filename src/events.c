@@ -3122,7 +3122,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           mainw->pchains = pchains;
           load_frame_image(cfile->frameno);
           mainw->pchains = NULL;
-          if (mainw->playing_file > -1) lives_widget_context_update();
+          if (mainw->playing_file > -1) lives_widget_process_updates(mainw->LiVES, TRUE);
           mainw->current_file = current_file;
         }
         break;
@@ -3136,7 +3136,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         mainw->pchains = NULL;
       }
     }
-    if (mainw->playing_file > -1 && mainw->multitrack == NULL) lives_widget_context_update();
+    if (mainw->playing_file > -1 && mainw->multitrack == NULL) lives_widget_process_updates(mainw->LiVES, TRUE);
     cfile->next_event = get_next_event(next_event);
     break;
   case WEED_EVENT_HINT_FILTER_INIT:
@@ -3616,7 +3616,7 @@ lives_render_error_t render_events(boolean reset) {
             blabel = lives_strdup(lives_label_get_text(LIVES_LABEL(cfile->proc_ptr->label)));
             lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label), nlabel);
             lives_widget_queue_draw(cfile->proc_ptr->processing);
-            lives_widget_context_update();
+            lives_widget_process_updates(mainw->LiVES, TRUE);
           }
 
           mainw->read_failed = mainw->write_failed = FALSE;
@@ -3644,7 +3644,7 @@ lives_render_error_t render_events(boolean reset) {
             widget_opts.mnemonic_label = TRUE;
             lives_free(blabel);
             lives_widget_queue_draw(cfile->proc_ptr->processing);
-            lives_widget_context_update();
+            lives_widget_process_updates(mainw->LiVES, TRUE);
           }
         }
       }
@@ -3692,7 +3692,7 @@ lives_render_error_t render_events(boolean reset) {
                   lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label), nlabel);
                   widget_opts.mnemonic_label = TRUE;
                   lives_widget_queue_draw(cfile->proc_ptr->processing);
-                  lives_widget_context_update();
+                  lives_widget_process_updates(mainw->LiVES, TRUE);
                 }
 
                 mainw->read_failed = mainw->write_failed = FALSE;
@@ -3720,7 +3720,7 @@ lives_render_error_t render_events(boolean reset) {
                   widget_opts.mnemonic_label = TRUE;
                   lives_free(blabel);
                   lives_widget_queue_draw(cfile->proc_ptr->processing);
-                  lives_widget_context_update();
+                  lives_widget_process_updates(mainw->LiVES, TRUE);
                 }
 
                 for (i = 0; i < natracks; i++) {
@@ -4501,21 +4501,12 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // need to retain play_start for rendering to same clip
   oplay_start = mainw->play_start;
 
-  if (IS_VALID_CLIP(mainw->scrap_file)) {
-    // reopen scrap file for reading
-
-
-
-
-
-  }
-
   do {
     e_rec_dialog = events_rec_dialog(TRUE);
     lives_widget_show_all(e_rec_dialog);
     lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
     lives_widget_destroy(e_rec_dialog);
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
       if (mainw->current_file > -1) cfile->redoable = FALSE;
@@ -5718,7 +5709,7 @@ render_details *create_render_details(int type) {
 
   if (needs_new_encoder) {
     lives_widget_set_sensitive(rdet->okbutton, FALSE);
-    lives_widget_context_update(); // force showing of transient window
+    lives_widget_process_updates(mainw->LiVES, TRUE); // force showing of transient window
     do_encoder_img_fmt_error(rdet);
   }
 

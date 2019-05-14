@@ -930,6 +930,7 @@ typedef struct {
   int border_width; ///< border width in pixels
   int filler_len; ///< length of extra "fill" between widgets
   LiVESWidget *last_label; ///< label widget of last standard widget (spin,radio,check,entry,combo) [readonly]
+  LiVESWindow *transient; ///< transient window for dialogs, if NULL then use the default
   LiVESJustification justify; ///< justify for labels
   LiVESJustification default_justify; ///< default value
   char **image_filter; ///</ NULL or NULL terminated list of image extensions which can be loaded
@@ -958,6 +959,7 @@ const widget_opts_t def_widget_opts = {
   W_BORDER_WIDTH, ///< def border width
   W_FILL_LENGTH, ///< def fill width (in pixels)
   NULL, ///< last_label
+  NULL, ///< transient window
   LIVES_JUSTIFY_LEFT, ///< justify
   LIVES_JUSTIFY_LEFT, ///< default justify
   NULL, ///< image_filter

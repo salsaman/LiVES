@@ -92,10 +92,6 @@ void create_merge_dialog(void) {
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(merge_opts->merge_dialog), accel_group);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(merge_opts->merge_dialog), LIVES_WINDOW(mainw->LiVES));
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(merge_opts->merge_dialog));
 
   vbox = lives_vbox_new(FALSE, 0);

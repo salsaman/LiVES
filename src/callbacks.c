@@ -6693,41 +6693,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         mainw->frame_layer = frame_layer;
       }
     } else {
-      if (mainw->multitrack == NULL) {
-        // switch FROM fullscreen during pb
-        if (!mainw->faded) {
-          lives_widget_show(mainw->frame1);
-          lives_widget_show(mainw->frame2);
-          lives_widget_show(mainw->eventbox3);
-          lives_widget_show(mainw->eventbox4);
-
-          if (!prefs->hide_framebar) {
-            lives_widget_show(mainw->framebar);
-          }
-        }
-
-        lives_widget_set_sensitive(mainw->fade, TRUE);
-        lives_widget_set_sensitive(mainw->dsize, TRUE);
-
-        lives_widget_show(mainw->t_bckground);
-        lives_widget_show(mainw->t_double);
-
-        if (!mainw->double_size) {
-          lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
-          resize(1);
-
-          if (mainw->multitrack == NULL) {
-            if (cfile->is_loaded) {
-              load_start_image(cfile->start);
-              load_end_image(cfile->end);
-            } else {
-              load_start_image(0);
-              load_end_image(0);
-            }
-          }
-        }
-      }
-
+      // switch from fullscreen during pb
       if (mainw->sep_win) {
         // separate window
 
@@ -6752,10 +6718,6 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           mainw->opwx = -1;
           mainw->opwy = -1;
         } else {
-          // non-sticky
-          //kill_play_window();
-          //make_play_window();
-          resize_play_window();
           if (mainw->play_window != NULL) {
             hide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_app_paintable(mainw->play_window, TRUE);
@@ -6772,46 +6734,47 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           }
         }
       } else {
+        // switch FROM fullscreen during pb
+        // in frame window
         if (mainw->multitrack == NULL) {
-          // in-frame window
-          lives_widget_context_update();
+          if (!mainw->faded) {
+            unfade_background();
+          } else {
+            lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
+          }
 
-          mainw->pwidth = DEFAULT_FRAME_HSIZE - H_RESIZE_ADJUST;
-          mainw->pheight = DEFAULT_FRAME_VSIZE - V_RESIZE_ADJUST;
+          lives_widget_set_sensitive(mainw->fade, TRUE);
+          lives_widget_set_sensitive(mainw->dsize, TRUE);
+
+          lives_widget_show(mainw->t_bckground);
+          lives_widget_show(mainw->t_double);
 
           // double size
           if (mainw->double_size) {
-            if (palette->style & STYLE_1) {
-              lives_widget_hide(mainw->sep_image);
+            lives_widget_show(mainw->eventbox3);
+            lives_widget_show(mainw->eventbox4);
+            if (mainw->toy_type != LIVES_TOY_MAD_FRAMES || mainw->foreign) {
+              if (mainw->faded) {
+                lives_widget_hide(mainw->frame1);
+                lives_widget_hide(mainw->frame2);
+              }
             }
+            lives_widget_hide(mainw->sep_image);
             lives_widget_hide(mainw->scrolledwindow);
-            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
             resize(2.);
-            if (!prefs->ce_maxspect) {
-              mainw->pheight *= 2;
-              mainw->pheight++;
-              mainw->pwidth *= 2;
-              mainw->pwidth += 2;
-            }
-            load_start_image(cfile->start);
-            load_end_image(cfile->end);
-            //lives_widget_queue_draw(mainw->LiVES);
+            /* if (!prefs->ce_maxspect) { */
+            /*   mainw->pheight *= 2; */
+            /*   mainw->pheight++; */
+            /*   mainw->pwidth *= 2; */
+            /*   mainw->pwidth += 2; */
+            /* } */
           } else {
-            /* lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE); */
-            /* resize(1.); */
-            /* load_start_image(cfile->start); */
-            /* load_end_image(cfile->end); */
+            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+            resize(1);
           }
-        }
-        if (!mainw->faded) {
-          unfade_background();
-          if (!mainw->double_size) {
-            lives_widget_show_all(mainw->message_box);
-          }
-        } else {
-          lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
         }
       }
+
       if ((cfile->frames == 1 || cfile->play_paused) && !mainw->noswitch && mainw->multitrack == NULL &&
           (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
         weed_plant_t *frame_layer = mainw->frame_layer;
@@ -6819,17 +6782,23 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         load_frame_image(cfile->frameno);
         mainw->frame_layer = frame_layer;
       }
-    }
+
+      /* if (mainw->multitrack == NULL && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening || */
+      /* 										    cfile->clip_type == CLIP_TYPE_FILE)) { */
+      /* 	load_start_image(cfile->start); */
+      /* 	load_end_image(cfile->end); */
+      /* } */
+
+    }  // end inframe
   } else {
+    // not playing
     if (mainw->multitrack == NULL) {
-      if (mainw->playing_file == -1) {
-        if (mainw->fs) {
-          lives_widget_set_sensitive(mainw->fade, FALSE);
-          lives_widget_set_sensitive(mainw->dsize, FALSE);
-        } else {
-          lives_widget_set_sensitive(mainw->fade, TRUE);
-          lives_widget_set_sensitive(mainw->dsize, TRUE);
-        }
+      if (mainw->fs) {
+        lives_widget_set_sensitive(mainw->fade, FALSE);
+        lives_widget_set_sensitive(mainw->dsize, FALSE);
+      } else {
+        lives_widget_set_sensitive(mainw->fade, TRUE);
+        lives_widget_set_sensitive(mainw->dsize, TRUE);
       }
     }
   }
@@ -6897,7 +6866,6 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       } else {
         if (mainw->play_window != NULL) {
           resize_play_window();
-          //kill_play_window();
         } else make_play_window();
         if (mainw->play_window != NULL) {
           hide_cursor(lives_widget_get_xwindow(mainw->play_window));
@@ -6926,22 +6894,22 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           }
           lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
           resize(2);
-          if (!prefs->ce_maxspect) {
-            mainw->pheight *= 2;
-            mainw->pheight++;
-            mainw->pwidth *= 2;
-            mainw->pwidth += 2;
-          }
+          /* if (!prefs->ce_maxspect) { */
+          /*   mainw->pheight *= 2; */
+          /*   mainw->pheight++; */
+          /*   mainw->pwidth *= 2; */
+          /*   mainw->pwidth += 2; */
+          /* } */
         }
       } else {
         lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
         resize(1);
-        if (!prefs->ce_maxspect) {
-          mainw->pheight--;
-          mainw->pheight /= 2;
-          mainw->pwidth -= 2;
-          mainw->pwidth /= 2;
-        }
+        /* if (!prefs->ce_maxspect) { */
+        /*   mainw->pheight--; */
+        /*   mainw->pheight /= 2; */
+        /*   mainw->pwidth -= 2; */
+        /*   mainw->pwidth /= 2; */
+        /* } */
         if (!mainw->faded) {
           if (palette->style & STYLE_1) {
             lives_widget_show(mainw->sep_image);
@@ -7120,12 +7088,12 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             lives_widget_hide(mainw->scrolledwindow);
             lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
             resize(2);
-            if (!prefs->ce_maxspect) {
-              mainw->pheight *= 2;
-              mainw->pheight++;
-              mainw->pwidth *= 2;
-              mainw->pwidth += 2;
-            }
+            /* if (!prefs->ce_maxspect) { */
+            /*   mainw->pheight *= 2; */
+            /*   mainw->pheight++; */
+            /*   mainw->pwidth *= 2; */
+            /*   mainw->pwidth += 2; */
+            /* } */
           }
         } else {
           // fullscreen

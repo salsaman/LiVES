@@ -2130,8 +2130,6 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
 
   e_rec_dialog = lives_standard_dialog_new(_("Events Recorded"), FALSE, -1, -1);
 
-  if (prefs->show_gui) lives_window_set_transient_for(LIVES_WINDOW(e_rec_dialog), LIVES_WINDOW(mainw->LiVES));
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(e_rec_dialog));
 
   vbox = lives_vbox_new(FALSE, 0);
@@ -5419,8 +5417,6 @@ render_details *create_render_details(int type) {
   rdet->dialog = lives_standard_dialog_new(title, FALSE, width, height);
 
   lives_free(title);
-
-  if (prefs->show_gui && mainw->is_ready) lives_window_set_transient_for(LIVES_WINDOW(rdet->dialog), LIVES_WINDOW(mainw->LiVES));
 
   rdet_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(rdet->dialog), rdet_accel_group);

@@ -156,11 +156,10 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 
   if (!lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) widget_opts.no_gui = TRUE;
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
+  lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   widget_opts.no_gui = nogui;
 
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), mainw->accel_group);
-
-  lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
 
@@ -256,6 +255,9 @@ xprocess *create_processing(const char *text) {
   widget_opts.no_gui = TRUE; // work around bugs in gtk+
   widget_opts.non_modal = TRUE;
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
+  if (prefs->show_gui) {
+    lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  }
   widget_opts.non_modal = FALSE;
   widget_opts.no_gui = no_gui;
 
@@ -264,10 +266,6 @@ xprocess *create_processing(const char *text) {
   }
 
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), accel_group);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
 
@@ -443,10 +441,6 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(filew->dialog), accel_group);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(filew->dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(filew->dialog));
 
@@ -806,10 +800,6 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   textwindow->dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(textwindow->dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
   textwindow->textview = textwindow->table = NULL;
@@ -892,10 +882,6 @@ _insertw *create_insert_dialog(void) {
   lives_signal_handlers_disconnect_by_func(insertw->insert_dialog, return_true, NULL);
 
   lives_window_add_accel_group(LIVES_WINDOW(insertw->insert_dialog), accel_group);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(insertw->insert_dialog), LIVES_WINDOW(mainw->LiVES));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(insertw->insert_dialog));
 
@@ -1050,11 +1036,10 @@ LiVESWidget *create_opensel_dialog(void) {
 
   widget_opts.no_gui = TRUE; // work around bugs in gtk+
   opensel_dialog = lives_standard_dialog_new(_("Open Selection"), FALSE, -1, -1);
-  widget_opts.no_gui = no_gui;
-
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(opensel_dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
+  widget_opts.no_gui = no_gui;
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(opensel_dialog));
 
@@ -1142,10 +1127,6 @@ _entryw *create_location_dialog(void) {
   lives_free(title);
 
   lives_window_add_accel_group(LIVES_WINDOW(locw->dialog), accel_group);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(locw->dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(locw->dialog));
 
@@ -1258,12 +1239,6 @@ _entryw *create_rename_dialog(int type) {
   lives_signal_handlers_disconnect_by_func(renamew->dialog, return_true, NULL);
 
   lives_window_add_accel_group(LIVES_WINDOW(renamew->dialog), accel_group);
-
-  if (prefs->show_gui) {
-    if (mainw->is_ready) {
-      lives_window_set_transient_for(LIVES_WINDOW(renamew->dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    }
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(renamew->dialog));
 
@@ -1479,10 +1454,6 @@ LiVESWidget *create_combo_dialog(int type, livespointer user_data) {
   combo_dialog = lives_standard_dialog_new(title, TRUE, -1, -1);
   if (title != NULL) lives_free(title);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(combo_dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(combo_dialog));
 
   if (type == 1) {
@@ -1563,10 +1534,6 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   cd_dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
   lives_free(title);
   lives_signal_handlers_disconnect_by_func(cd_dialog, return_true, NULL);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(cd_dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cd_dialog));
 
@@ -1825,10 +1792,6 @@ aud_dialog_t *create_audfade_dialog(int type) {
   lives_signal_handlers_disconnect_by_func(audd->dialog, return_true, NULL);
   lives_free(title);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(audd->dialog), LIVES_WINDOW(mainw->LiVES));
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(audd->dialog));
 
   hbox = lives_hbox_new(FALSE, TB_HEIGHT_AUD);
@@ -1910,10 +1873,6 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
   lives_free(title);
   lives_free(extrabit);
   lives_signal_handlers_disconnect_by_func(commentsw->comments_dialog, return_true, NULL);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(commentsw->comments_dialog), LIVES_WINDOW(mainw->LiVES));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(commentsw->comments_dialog));
 
@@ -2486,10 +2445,6 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   dialog = lives_standard_dialog_new(_("Disk Recovery Options"), FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   vbox = lives_vbox_new(FALSE, 0);
@@ -2842,10 +2797,6 @@ autolives_window *autolives_pre_dialog(void) {
 
   alwindow->dialog = lives_standard_dialog_new(_("Autolives Options"), TRUE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(alwindow->dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(alwindow->dialog));
 
   trigframe = lives_standard_frame_new(_("Trigger"), 0., FALSE);
@@ -3041,10 +2992,6 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   lives_free(title);
 
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 

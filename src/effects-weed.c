@@ -10691,7 +10691,8 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         if (!strcmp(key, WEED_LEAF_TYPE)) {
           if (weed_plant_has_leaf(plant, WEED_LEAF_TYPE)) {
             int error;
-            if (ints[0] != weed_get_int_value(plant, WEED_LEAF_TYPE, &error)) {
+            int type = weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
+            if (type != 0 && ints[0] != type) {
               char *msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
                                               weed_get_int_value(plant, WEED_LEAF_TYPE, &error), ints[0]);
               LIVES_ERROR(msg);

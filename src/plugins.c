@@ -915,10 +915,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(vppa->dialog), accel_group);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog), get_transient_full());
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(vppa->dialog));
 
   // the filling...
@@ -2535,10 +2531,6 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
   decoder_plugin = mainw->decoder_list;
 
   dialog = lives_standard_dialog_new(_("Decoder Plugins"), FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), get_transient_full());
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 

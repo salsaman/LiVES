@@ -84,7 +84,7 @@ static void add_xlays_widget(LiVESBox *box) {
   lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
 
   lives_widget_set_size_request(scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
 
   expander = lives_standard_expander_new(_("Show affeced _layouts"), LIVES_BOX(box), scrolledwindow);
 
@@ -419,7 +419,7 @@ boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_n
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);
 
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
   lives_freep((void **)&mytext);
 
   return (response == LIVES_RESPONSE_OK);
@@ -444,7 +444,7 @@ boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_num
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);
 
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
   lives_freep((void **)&mytext);
 
   return (response == LIVES_RESPONSE_YES);
@@ -474,7 +474,7 @@ boolean do_yesno_dialog(const char *text) {
   warning = create_message_dialog(LIVES_DIALOG_YESNO, text, transient, 0, TRUE);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
   return (response == LIVES_RESPONSE_YES);
 }
 
@@ -494,7 +494,7 @@ int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
 
     response = lives_dialog_run(LIVES_DIALOG(warning));
     lives_widget_destroy(warning);
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
 
     if (response == LIVES_RESPONSE_ABORT) {
       if (do_abort_check()) {
@@ -1496,7 +1496,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
             if (mainw->current_file > -1 && cfile != NULL) lives_freep((void **)&cfile->op_dir);
             return FALSE;
           }
-          lives_widget_context_update();
+          lives_widget_process_updates(mainw->LiVES, TRUE);
           if (cfile->clip_type != CLIP_TYPE_FILE) break;
         }
         cfile->fx_frame_pump += FX_FRAME_PUMP_VAL >> 1;
@@ -1952,7 +1952,7 @@ boolean do_auto_dialog(const char *text, int type) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, proc_ptr->processing);
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
 
   if (type == 0 || type == 2) {
     clear_mainw_msg();

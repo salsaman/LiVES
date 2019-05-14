@@ -2266,7 +2266,7 @@ void play_file(void) {
         if (mainw->multitrack == NULL) {
           block_expose();
           mainw->noswitch = TRUE;
-          lives_widget_context_update();
+          lives_widget_process_updates(mainw->LiVES, TRUE);
           mainw->noswitch = FALSE;
           unblock_expose();
         } else {
@@ -2871,24 +2871,25 @@ void play_file(void) {
     return;
   }
 
-  // unblank the background
-  if ((mainw->faded || mainw->fs) && mainw->multitrack == NULL) {
-    unfade_background();
-  }
-  // resize out of double size
-  if ((mainw->double_size || mainw->fs) && mainw->multitrack == NULL) {
+  disable_record();
+
+  if (mainw->multitrack == NULL) {
+
+    if ((mainw->faded || mainw->fs)) {
+      unfade_background();
+    }
+
     if (mainw->sep_win) add_to_playframe();
 
-    if (cfile->frames > 0 && mainw->multitrack == NULL) {
+    if (cfile->frames > 0) {
       lives_widget_show_all(mainw->playframe);
     }
 
-    if (!mainw->faded) {
-      if (palette->style & STYLE_1) {
-        lives_widget_show(mainw->sep_image);
-      }
-      lives_widget_show(mainw->scrolledwindow);
+    if (palette->style & STYLE_1) {
+      lives_widget_show(mainw->sep_image);
     }
+
+    lives_widget_show(mainw->scrolledwindow);
 
     lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
     lives_widget_show(mainw->frame1);
@@ -2896,9 +2897,11 @@ void play_file(void) {
     lives_widget_show(mainw->eventbox3);
     lives_widget_show(mainw->eventbox4);
     lives_widget_show(mainw->sep_image);
+
     if (!prefs->hide_framebar && !prefs->hfbwnp) {
       lives_widget_show(mainw->framebar);
     }
+
     lives_frame_set_label(LIVES_FRAME(mainw->playframe), _("Preview"));
 
     lives_widget_show(mainw->t_bckground);
@@ -2918,10 +2921,6 @@ void play_file(void) {
       lives_free(title);
       lives_free(xtrabit);
     }
-    if (palette->style & STYLE_1) {
-      lives_widget_show(mainw->sep_image);
-    }
-    lives_widget_show(mainw->scrolledwindow);
   }
 
   if (prefs->show_gui && (lives_widget_get_allocation_height(mainw->LiVES) > GUI_SCREEN_HEIGHT ||
@@ -2933,15 +2932,6 @@ void play_file(void) {
     /* mainw->noswitch = FALSE; */
     if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(mainw->LiVES), 0, 0);
     lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
-  }
-
-  if (mainw->multitrack == NULL) {
-    lives_widget_show(mainw->frame1);
-    lives_widget_show(mainw->frame2);
-    lives_widget_show(mainw->eventbox3);
-    lives_widget_show(mainw->eventbox4);
-    disable_record();
-    resize(1);
   }
 
   if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
@@ -2993,45 +2983,28 @@ void play_file(void) {
         }
       }
 
-      if (mainw->play_window != NULL) {
-        if (mainw->multitrack == NULL) {
-          mainw->playing_file = -2;
-          resize_play_window();
-          mainw->playing_file = -1;
+      if (mainw->multitrack == NULL) {
+        mainw->playing_file = -2;
+        resize_play_window();
+        mainw->playing_file = -1;
 
-          if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
-          else xtrabit = lives_strdup("");
-          title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW
-                                      (LIVES_MAIN_WINDOW_WIDGET)), xtrabit);
-          lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-          lives_free(title);
-          lives_free(xtrabit);
+        if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
+        else xtrabit = lives_strdup("");
+        title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW
+                                    (LIVES_MAIN_WINDOW_WIDGET)), xtrabit);
+        lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
+        lives_free(title);
+        lives_free(xtrabit);
 
-          //lives_widget_queue_draw(mainw->LiVES);
-          mainw->noswitch = TRUE;
+        //lives_widget_queue_draw(mainw->LiVES);
+        //mainw->noswitch = TRUE;
 
-          //lives_widget_context_update();
+        //lives_widget_context_update();
 
-          if (mainw->play_window != NULL) {
-            char *title, *xtrabit;
-
-            //load_preview_image(FALSE);
-
-            mainw->noswitch = FALSE;
-            if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
-            else xtrabit = lives_strdup("");
-            title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW
-                                        (LIVES_MAIN_WINDOW_WIDGET)), xtrabit);
-            lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-            lives_free(title);
-            lives_free(xtrabit);
-
-            if (prefs->show_playwin) {
-              lives_window_present(LIVES_WINDOW(mainw->play_window));
-              lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-            }
-            unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
-          }
+        if (prefs->show_playwin) {
+          lives_window_present(LIVES_WINDOW(mainw->play_window));
+          lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+          unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
         }
       }
     }
@@ -3042,8 +3015,6 @@ void play_file(void) {
       mainw->frame_layer = NULL;
     }
   }
-
-  lives_widget_hide(mainw->playframe);
 
   if (!mainw->foreign) {
     unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
@@ -3064,8 +3035,6 @@ void play_file(void) {
 
   // disable the freeze key
   lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), freeze_closure);
-
-  if (mainw->multitrack == NULL) lives_widget_show(mainw->scrolledwindow);
 
   if (prefs->show_player_stats) {
     if (mainw->fps_measure > 0.) {
@@ -3181,6 +3150,12 @@ void play_file(void) {
     set_main_title(cfile->name, 0);
 
   reset_message_area(TRUE);
+
+  if (mainw->multitrack == NULL && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
+      cfile->clip_type == CLIP_TYPE_FILE)) {
+    load_start_image(cfile->start);
+    load_end_image(cfile->end);
+  }
 }
 
 
@@ -5225,7 +5200,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   do_threaded_dialog(_("Recovering files"), FALSE);
   d_print(_("Recovering files..."));
 
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
   threaded_dialog_spin(0.);
 
   mainw->suppress_dprint = TRUE;

@@ -28,10 +28,6 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   dvgrabw->dialog = lives_standard_dialog_new(_("DVGrab"), FALSE, -1, -1);
   dvgrabw->playing = FALSE;
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
-
   vbox = lives_dialog_get_content_area(LIVES_DIALOG(dvgrabw->dialog));
 
   hbox = lives_hbox_new(FALSE, 0);

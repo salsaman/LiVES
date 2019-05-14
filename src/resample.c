@@ -899,7 +899,7 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
 
 static void on_resaudw_achans_changed(LiVESWidget *widg, livespointer user_data) {
   _resaudw *resaudw = (_resaudw *)user_data;
-  char *tmp;
+  //char *tmp;
 
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widg))) {
     lives_widget_set_sensitive(resaudw->rb_signed, FALSE);
@@ -912,11 +912,7 @@ static void on_resaudw_achans_changed(LiVESWidget *widg, livespointer user_data)
     if (prefsw != NULL) {
       lives_widget_set_sensitive(prefsw->pertrack_checkbutton, FALSE);
       lives_widget_set_sensitive(prefsw->backaudio_checkbutton, FALSE);
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->pertrack_checkbutton), FALSE);
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->backaudio_checkbutton), FALSE);
     } else if (rdet != NULL) {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rdet->pertrack_checkbutton), FALSE);
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rdet->backaudio_checkbutton), FALSE);
       lives_widget_set_sensitive(rdet->pertrack_checkbutton, FALSE);
       lives_widget_set_sensitive(rdet->backaudio_checkbutton, FALSE);
     }
@@ -936,11 +932,6 @@ static void on_resaudw_achans_changed(LiVESWidget *widg, livespointer user_data)
       lives_widget_set_sensitive(rdet->backaudio_checkbutton, TRUE);
       lives_widget_set_sensitive(rdet->pertrack_checkbutton, TRUE);
     }
-
-    tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_CHANS);
-    lives_entry_set_text(LIVES_ENTRY(resaudw->entry_achans), tmp);
-    lives_free(tmp);
-
   }
 }
 
@@ -1209,10 +1200,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     lives_window_add_accel_group(LIVES_WINDOW(resaudw->dialog), accel_group);
 
-    if (prefs->show_gui) {
-      lives_window_set_transient_for(LIVES_WINDOW(resaudw->dialog), LIVES_WINDOW(mainw->LiVES));
-    }
-
     dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(resaudw->dialog));
 
     vboxx = lives_vbox_new(FALSE, 0);
@@ -1328,7 +1315,8 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       resaudw->aud_checkbutton = lives_standard_check_button_new(_("_Enable audio"), FALSE, LIVES_BOX(resaudw->aud_hbox), NULL);
 
       if (rdet != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), rdet->achans > 0);
-      else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), prefs->mt_def_achans > 0);
+      else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton),
+                                            mainw->multitrack == NULL ? prefs->mt_def_achans > 0 : cfile->achans > 0);
     } else resaudw->aud_checkbutton = lives_check_button_new();
 
     hbox2 = lives_hbox_new(FALSE, 0);
@@ -1352,7 +1340,8 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     if (type < 3 || (type > 4 && type < 8) || type == 11) tmp = lives_strdup_printf("%d", (int)mainw->fx1_val);
     else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_RATE);
     else if (type == 3) tmp = lives_strdup_printf("%d", rdet->arate);
-    else tmp = lives_strdup_printf("%d", prefs->mt_def_arate);
+    else tmp = mainw->multitrack == NULL ||
+                 cfile->achans == 0 ? lives_strdup_printf("%d", prefs->mt_def_arate) : lives_strdup_printf("%d", cfile->arate);
     lives_entry_set_text(LIVES_ENTRY(resaudw->entry_arate), tmp);
     lives_free(tmp);
 
@@ -1367,7 +1356,8 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     if (type < 3 || (type > 4 && type < 8) || type == 11) tmp = lives_strdup_printf("%d", (int)mainw->fx2_val);
     else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_CHANS);
     else if (type == 3) tmp = lives_strdup_printf("%d", rdet->achans);
-    else tmp = lives_strdup_printf("%d", prefs->mt_def_achans == 0 ? DEFAULT_AUDIO_CHANS : prefs->mt_def_achans);
+    else tmp = lives_strdup_printf("%d", mainw->multitrack == NULL ||
+                                     cfile->achans == 0 ? (prefs->mt_def_achans == 0 ? DEFAULT_AUDIO_CHANS : prefs->mt_def_achans) : cfile->achans);
     lives_entry_set_text(LIVES_ENTRY(resaudw->entry_achans), tmp);
     lives_free(tmp);
 
@@ -1389,7 +1379,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     if (type < 3 || (type > 4 && type < 8) || type == 11) tmp = lives_strdup_printf("%d", (int)mainw->fx3_val);
     else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_SAMPS);
     else if (type == 3) tmp = lives_strdup_printf("%d", rdet->asamps);
-    else tmp = lives_strdup_printf("%d", prefs->mt_def_asamps);
+    else tmp = lives_strdup_printf("%d", mainw->multitrack == NULL || cfile->achans == 0 ? prefs->mt_def_asamps : cfile->asampsize);
     lives_entry_set_text(LIVES_ENTRY(resaudw->entry_asamps), tmp);
 
     if (!strcmp(tmp, "8")) is_8bit = TRUE;
@@ -1421,7 +1411,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     if (type < 3 || (type > 4 && type < 8) || type == 11) aendian = mainw->fx4_val;
     else if (type == 8) aendian = DEFAULT_AUDIO_SIGNED16 | ((capable->byte_order == LIVES_BIG_ENDIAN) ? AFORM_BIG_ENDIAN : 0);
     else if (type == 3) aendian = rdet->aendian;
-    else aendian = prefs->mt_def_signed_endian;
+    else aendian = mainw->multitrack == NULL || cfile->achans == 0 ? prefs->mt_def_signed_endian : cfile->signed_endian;
 
     if (aendian & AFORM_UNSIGNED) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned), TRUE);
@@ -1616,10 +1606,6 @@ void create_new_pb_speed(short type) {
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(new_pb_speed), accel_group);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(new_pb_speed), LIVES_WINDOW(mainw->LiVES));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(new_pb_speed));
 

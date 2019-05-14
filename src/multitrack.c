@@ -857,6 +857,12 @@ static boolean mt_load_recovery_layout(lives_mt *mt) {
                                          capable->mainpid);
   char *eload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid);
 
+  // check all possible recovery files, and return the first which doesn't have a matching pid in use
+
+
+
+
+
   mt->auto_reloading = TRUE;
   mainw->event_list = mt->event_list = load_event_list(mt, eload_file);
   mt->auto_reloading = FALSE;
@@ -8612,8 +8618,14 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
-  //lives_paned_pack(2, LIVES_PANED(mt->vpaned), mainw->scrolledwindow, TRUE, FALSE);
+
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_container_add(LIVES_CONTAINER(mt->vpaned), mainw->scrolledwindow);
+#else
+  lives_paned_pack(2, LIVES_PANED(mt->vpaned), mainw->scrolledwindow, TRUE, FALSE);
+#endif
+
+  lives_widget_queue_draw(mt->vpaned);
 
   mainw->textview1 = lives_standard_text_view_new(NULL, tbuf);
   lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
@@ -9117,11 +9129,13 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   mainw->textview1 = mainw_textview;
 
   if (prefs->show_gui) {
-    lives_widget_unparent(mt->top_vbox);
-    lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
-    lives_object_unref(mainw->top_vbox);
-    show_lives();
-    unblock_expose();
+    if (lives_widget_get_parent(mt->top_vbox) != NULL) {
+      lives_widget_unparent(mt->top_vbox);
+      lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
+      lives_object_unref(mainw->top_vbox);
+      show_lives();
+      unblock_expose();
+    }
   }
 
   lives_list_free(mt->tl_marks);
@@ -10937,8 +10951,8 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   lives_widget_context_update();
 
-  lives_paned_set_position(LIVES_PANED(multi->hpaned), lives_widget_get_allocation_width(mainw->LiVES) - multi->play_width);
-  lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .7);
+  lives_paned_set_position(LIVES_PANED(multi->hpaned), (float)lives_widget_get_allocation_width(multi->hpaned) * .8);
+  lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .6);
 
   set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   redraw_all_event_boxes(multi);
@@ -20283,7 +20297,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
         new_clip_index = (int *)lives_malloc(num_tracks * sizint);
         new_frame_index = (int *)lives_malloc(num_tracks * sizint);
         last_valid_frame = 0;
-        //#define DEBUG_MISSING_CLIPS
+#define DEBUG_MISSING_CLIPS
 #ifdef DEBUG_MISSING_CLIPS
         g_print("pt zzz %d\n", num_tracks);
 #endif

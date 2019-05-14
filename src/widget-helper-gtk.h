@@ -381,6 +381,7 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_FILTER_CONTINUE GDK_FILTER_CONTINUE
 
 // events
+#define LIVES_WIDGET_EVENT "event"
 #define LIVES_WIDGET_SCROLL_EVENT "scroll-event"
 #define LIVES_WIDGET_CONFIGURE_EVENT "configure-event"
 #define LIVES_WIDGET_ENTER_EVENT "enter-notify-event"

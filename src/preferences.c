@@ -931,7 +931,7 @@ boolean apply_prefs(boolean skip_warn) {
 #endif
 #endif
 
-  boolean pstyle2;
+  boolean pstyle2 = palette->style & STYLE_2;
   boolean pstyle3 = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style3));
   boolean pstyle4 = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style4));
 
@@ -960,7 +960,8 @@ boolean apply_prefs(boolean skip_warn) {
   // TODO: move all into pref_factory_* functions
   mainw->no_context_update = TRUE;
 
-  pstyle2 = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2));
+  if (prefsw->theme_style2 != NULL)
+    pstyle2 = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2));
 
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_fore), &colf);
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_back), &colb);
@@ -2521,10 +2522,6 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_window_set_default_size(LIVES_WINDOW(prefsw->prefs_dialog), PREFWIN_WIDTH, PREFWIN_HEIGHT);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
-
   prefsw->ignore_apply = FALSE;
 
   // Get dialog's vbox and show it
@@ -2768,8 +2765,10 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->checkbutton_render_prompt = lives_standard_check_button_new(_("Use these same _values for rendering a new clip"),
                                       !prefs->render_prompt, LIVES_BOX(hbox), NULL);
 
-  frame = add_video_options(&prefsw->spinbutton_mt_def_width, prefs->mt_def_width, &prefsw->spinbutton_mt_def_height,
-                            prefs->mt_def_height, &prefsw->spinbutton_mt_def_fps, prefs->mt_def_fps, FALSE, NULL);
+  frame = add_video_options(&prefsw->spinbutton_mt_def_width, mainw->multitrack == NULL ? prefs->mt_def_width : cfile->hsize,
+                            &prefsw->spinbutton_mt_def_height,
+                            mainw->multitrack == NULL ? prefs->mt_def_height : cfile->vsize, &prefsw->spinbutton_mt_def_fps,
+                            mainw->multitrack == NULL ? prefs->mt_def_fps : cfile->fps, FALSE, NULL);
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), frame, FALSE, FALSE, widget_opts.packing_height);
 
@@ -4134,11 +4133,14 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
+  prefsw->theme_style2 = NULL;
+#if GTK_CHECK_VERSION(3, 0, 0)
   prefsw->theme_style2 = lives_standard_check_button_new(_("Color the start/end frame spinbuttons (requires restart)"),
                          (palette->style & STYLE_2), LIVES_BOX(hbox),
                          NULL);
   if (!lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
-    lives_widget_set_sensitive(prefsw->theme_style3, FALSE);
+    lives_widget_set_sensitive(prefsw->theme_style2, FALSE);
+#endif
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);

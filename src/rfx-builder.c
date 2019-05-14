@@ -137,10 +137,6 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   rfxbuilder->dialog = lives_standard_dialog_new(title, FALSE, winsize_h, winsize_v);
   lives_free(title);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(rfxbuilder->dialog), LIVES_WINDOW(mainw->LiVES));
-  }
-
   lives_window_add_accel_group(LIVES_WINDOW(rfxbuilder->dialog), accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(rfxbuilder->dialog));
@@ -525,10 +521,6 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
   if (title != NULL) lives_free(title);
 
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(mainw->LiVES));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
@@ -955,12 +947,9 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
 
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
+  widget_opts.transient = LIVES_WINDOW(rfxbuilder->dialog);
   dialog = lives_standard_dialog_new(_("RFX Properties"), FALSE, -1, -1);
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(rfxbuilder->dialog));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
@@ -1901,10 +1890,6 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(mainw->LiVES));
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   // name
@@ -2465,10 +2450,6 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
   dialog = lives_standard_dialog_new(title, TRUE, -1, -1);
   lives_free(title);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(mainw->LiVES));
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   if (pnum >= 0) {
@@ -2645,10 +2626,6 @@ LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder) {
   dialog = lives_standard_dialog_new(title, TRUE, PREF_RFXDIALOG_W, PREF_RFXDIALOG_H);
   lives_free(title);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(mainw->LiVES));
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   // when
@@ -2719,10 +2696,6 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
   char *tmpx;
 
   dialog = lives_standard_dialog_new(NULL, FALSE, PREF_RFXDIALOG_W, PREF_RFXDIALOG_H);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(mainw->LiVES));
-  }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
@@ -4004,10 +3977,6 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
   }
 
   dialog = lives_standard_dialog_new(NULL, FALSE, -1, -1);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(mainw->LiVES));
-  }
 
   vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 

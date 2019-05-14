@@ -19,6 +19,29 @@ static void lives_widget_apply_theme_dimmed(LiVESWidget *widget, LiVESWidgetStat
 WIDGET_HELPER_LOCAL_INLINE void set_child_dimmed_colour(LiVESWidget *widget, int dimval);
 
 
+#ifdef GTK_ENTRY_BG_BUG
+static void set_entry_colours(LiVESWidget *widget, LiVESWidgetState state, livespointer user_data) {
+  boolean woat = widget_opts.apply_theme;
+  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+  widget_opts.apply_theme = TRUE;
+  if (!lives_widget_is_sensitive(widget)) set_child_dimmed_colour(widget, BUTTON_DIM_VAL);
+  else {
+    lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_INSENSITIVE);
+    set_child_colour(widget, TRUE);
+    lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_SELECTED, FALSE);
+  }
+
+  if (LIVES_IS_COMBO(widget)) {
+    widget = lives_combo_get_entry(LIVES_COMBO(widget));
+    set_entry_colours(widget, state, NULL);
+  }
+
+  gtk_style_context_set_state(ctx, LIVES_WIDGET_STATE_INSENSITIVE);
+  widget_opts.apply_theme = woat;
+}
+#endif
+
+
 static void button_state_cb(LiVESWidget *button, LiVESWidgetState state, livespointer user_data) {
   if (LIVES_IS_BUTTON(button)) {
     boolean woat = widget_opts.apply_theme;
@@ -849,7 +872,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_resize(LiVESWidget *widge
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_size_request(LiVESWidget *widget, int width, int height) {
 #ifdef GUI_GTK
-  gtk_widget_set_size_request(widget, width, height);
+  if (LIVES_IS_WINDOW(widget)) lives_window_resize(LIVES_WINDOW(widget), width, height);
+  else gtk_widget_set_size_request(widget, width, height);
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -1967,6 +1991,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_hide_titlebar_when_maximize
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_resize(LiVESWindow *window, int width, int height) {
 #ifdef GUI_GTK
   gtk_window_resize(window, width, height);
+  gtk_widget_set_size_request(GTK_WIDGET(window), width, height);
   return TRUE;
 #endif
   // TODO
@@ -7562,27 +7587,6 @@ static void set_label_state(LiVESWidget *widget, LiVESWidgetState state, livespo
 }
 
 
-#ifdef GTK_ENTRY_BG_BUG
-static void set_entry_colours(LiVESWidget *widget, LiVESWidgetState state, livespointer user_data) {
-  boolean woat = widget_opts.apply_theme;
-  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
-  widget_opts.apply_theme = TRUE;
-  if (!lives_widget_is_sensitive(widget)) set_child_dimmed_colour(widget, BUTTON_DIM_VAL);
-  else {
-    lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_INSENSITIVE);
-    set_child_colour(widget, TRUE);
-    lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_SELECTED, FALSE);
-  }
-  if (LIVES_IS_COMBO(widget)) {
-    widget = lives_combo_get_entry(LIVES_COMBO(widget));
-    lives_widget_set_sensitive(widget, FALSE);
-  }
-  gtk_style_context_set_state(ctx, LIVES_WIDGET_STATE_INSENSITIVE);
-  widget_opts.apply_theme = woat;
-}
-#endif
-
-
 WIDGET_HELPER_GLOBAL_INLINE void lives_label_set_hpadding(LiVESLabel *label, int pad) {
   const char *text = lives_label_get_text(label);
   lives_label_set_width_chars(label, strlen(text) + pad);
@@ -8133,7 +8137,11 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
     lives_signal_connect_after(LIVES_GUI_OBJECT(combo), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(set_entry_colours),
                                NULL);
-    set_entry_colours(LIVES_WIDGET(combo), lives_widget_get_state(combo), NULL);
+    lives_signal_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
+                               LIVES_GUI_CALLBACK(set_entry_colours),
+                               NULL);
+    set_entry_colours(combo, lives_widget_get_state(combo), NULL);
+    set_entry_colours(LIVES_WIDGET(entry), lives_widget_get_state(LIVES_WIDGET(entry)), NULL);
   }
 #endif
 
@@ -8232,7 +8240,12 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (width <= 0) width = 8;
   if (height <= 0) height = 8;
 
-  lives_window_set_transient_for(LIVES_WINDOW(dialog), get_transient_full());
+  if (!widget_opts.no_gui) {
+    if (widget_opts.transient == NULL)
+      lives_window_set_transient_for(LIVES_WINDOW(dialog), get_transient_full());
+    else
+      lives_window_set_transient_for(LIVES_WINDOW(dialog), widget_opts.transient);
+  }
 
   lives_widget_set_minimum_size(dialog, width, height);
 
@@ -9162,6 +9175,7 @@ static void set_child_colour_internal(LiVESWidget *widget, livespointer set_allx
 
   if (set_all || LIVES_IS_LABEL(widget)) {
     lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_INSENSITIVE);
   }
 }
 
@@ -9183,6 +9197,7 @@ static void set_child_dimmed_colour_internal(LiVESWidget *widget, livespointer d
   }
 
   lives_widget_apply_theme_dimmed(widget, LIVES_WIDGET_STATE_NORMAL, dimval);
+  lives_widget_apply_theme_dimmed(widget, LIVES_WIDGET_STATE_INSENSITIVE, dimval);
 }
 
 

@@ -1081,10 +1081,6 @@ lives_pandh_w *create_pandh_dialog(int type) {
 
   pandhw->dialog = lives_standard_dialog_new(_("Receive LiVES Stream"), TRUE, -1, -1);
 
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(pandhw->dialog), LIVES_WINDOW(mainw->LiVES));
-  }
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(pandhw->dialog));
 
   label = lives_standard_label_new(_("You can receive streams from another copy of LiVES."));

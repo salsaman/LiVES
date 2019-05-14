@@ -1618,12 +1618,15 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 
   tmp = lives_strdup_printf(_("Information for %s"), filter_name);
 
+  widget_opts.transient = LIVES_WINDOW(rte_window);
   dialog = lives_standard_dialog_new(tmp, FALSE, RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
+  widget_opts.transient = NULL;
 
   lives_free(tmp);
 
   vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new((tmp = lives_strdup_printf(_("Effect name: %s"), filter_name)));
   lives_free(tmp);
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
@@ -1684,6 +1687,8 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
     lives_free(tmp);
     lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
   }
+
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -1797,7 +1802,9 @@ static void on_datacon_clicked(LiVESButton *button, livespointer user_data) {
 
   //if (datacon_dialog!=NULL) on_datacon_cancel_clicked(NULL,NULL);
 
+  widget_opts.transient = LIVES_WINDOW(rte_window);
   datacon_dialog = make_datacon_window(key, mode);
+  widget_opts.transient = NULL;
 }
 
 
@@ -1833,7 +1840,9 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   rfx->min_frames = -1;
   keyw = key;
   modew = mode;
+  widget_opts.transient = LIVES_WINDOW(rte_window);
   on_fx_pre_activate(rfx, 1, NULL);
+  widget_opts.transient = NULL;
 
   // record the key so we know whose parameters to record later
   weed_set_int_value((weed_plant_t *)rfx->source, WEED_LEAF_HOST_KEY, key);
@@ -2451,7 +2460,9 @@ void redraw_pwindow(int key, int mode) {
 
 void restore_pwindow(lives_rfx_t *rfx) {
   if (fx_dialog[1] != NULL) {
+    widget_opts.transient = LIVES_WINDOW(rte_window);
     make_param_box(LIVES_VBOX(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))), rfx);
+    widget_opts.transient = NULL;
     lives_widget_show_all(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1])));
     lives_widget_queue_draw(fx_dialog[1]);
   }

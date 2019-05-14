@@ -7214,8 +7214,20 @@ void on_boolean_toggled(LiVESObject *obj, livespointer user_data) {
 }
 
 
-void after_audio_toggled(LiVESWidget *tbutton, livespointer user_data) {
+void on_audio_toggled(LiVESWidget *tbutton, livespointer user_data) {
   if (!mainw->interactive) return;
+  if (!lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))) {
+    // since this is a latch-on type button, clicking on it in an already active state
+    // should do nothing. It would be nice if we could pass in the handler id to block / unblock in user_data
+    // but that is not possible since we only receive the id when connecting the callback
+    if (tbutton == mainw->ext_audio_checkbutton) lives_signal_handler_block(tbutton, mainw->ext_audio_func);
+    else lives_signal_handler_block(tbutton, mainw->int_audio_func);
+    lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton), TRUE);
+    if (tbutton == mainw->ext_audio_checkbutton) lives_signal_handler_unblock(tbutton, mainw->ext_audio_func);
+    else lives_signal_handler_unblock(tbutton, mainw->int_audio_func);
+    lives_signal_stop_emission_by_name(tbutton, LIVES_WIDGET_TOGGLED_SIGNAL);
+    return;
+  }
   pref_factory_bool(PREF_REC_EXT_AUDIO, prefs->audio_src != AUDIO_SRC_EXT);
 }
 

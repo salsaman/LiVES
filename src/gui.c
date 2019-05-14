@@ -1621,22 +1621,20 @@ void create_LiVES(void) {
   lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  mainw->int_audio_checkbutton = NULL;
+  mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   // insert audio src buttons
   if (prefs->lamp_buttons) {
-    mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
-
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                          LIVES_GUI_CALLBACK(draw_cool_toggle),
                          NULL);
     lives_widget_set_bg_color(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                               LIVES_GUI_CALLBACK(lives_cool_toggled),
-                               NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                         LIVES_GUI_CALLBACK(lives_cool_toggled),
+                         NULL);
     lives_cool_toggled(mainw->int_audio_checkbutton, NULL);
   }
 #endif
@@ -1644,8 +1642,8 @@ void create_LiVES(void) {
   if (mainw->int_audio_checkbutton == NULL) mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
   lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
 
-  mainw->int_audio_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                          LIVES_GUI_CALLBACK(after_audio_toggled),
+  mainw->int_audio_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                          LIVES_GUI_CALLBACK(on_audio_toggled),
                           NULL);
 
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->int_audio_checkbutton), -1);
@@ -1656,12 +1654,11 @@ void create_LiVES(void) {
   lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), "            ");
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  mainw->ext_audio_checkbutton = NULL;
+  mainw->ext_audio_checkbutton = lives_toggle_tool_button_new();
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   // insert audio src buttons
   if (prefs->lamp_buttons) {
-    mainw->ext_audio_checkbutton = lives_toggle_tool_button_new();
 
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                          LIVES_GUI_CALLBACK(draw_cool_toggle),
@@ -1676,11 +1673,10 @@ void create_LiVES(void) {
   }
 #endif
 
-  if (mainw->ext_audio_checkbutton == NULL) mainw->ext_audio_checkbutton = lives_toggle_tool_button_new();
   lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
 
-  mainw->ext_audio_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                          LIVES_GUI_CALLBACK(after_audio_toggled),
+  mainw->ext_audio_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                          LIVES_GUI_CALLBACK(on_audio_toggled),
                           NULL);
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->ext_audio_checkbutton), -1);
 
@@ -2015,6 +2011,8 @@ void create_LiVES(void) {
   if (!(palette->style & STYLE_2)) {
     widget_opts.apply_theme = FALSE;
   }
+#else
+  widget_opts.apply_theme = FALSE;
 #endif
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   mainw->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 1., 0,
@@ -2070,6 +2068,8 @@ void create_LiVES(void) {
   if (!(palette->style & STYLE_2)) {
     widget_opts.apply_theme = FALSE;
   }
+#else
+  widget_opts.apply_theme = FALSE;
 #endif
   mainw->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 1., 0,
                           LIVES_BOX(hbox3), _("The last selected frame in this clip"));

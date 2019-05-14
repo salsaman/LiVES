@@ -10509,7 +10509,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
   ssize_t bytes;
 
-  int *ints;
+  int32_t *ints;
   double *dubs;
   int64_t *int64s;
 
@@ -10517,9 +10517,10 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
   char *mykey = NULL;
 
-  int st; // seed type
-  int ne; // num elems
-  int type = 0;
+  int32_t st; // seed type
+  int32_t ne; // num elems
+  int32_t type = 0;
+  int error;
 
   register int i, j;
 
@@ -10678,7 +10679,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   }
 
   if (plant == NULL && !strcmp(key, WEED_LEAF_TYPE)) {
-    type = *(int *)(values[0]);
+    type = *(int32_t *)(values[0]);
   } else {
     if (values == NULL) weed_leaf_set(plant, key, st, 0, NULL);
     else {
@@ -10686,18 +10687,23 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       case WEED_SEED_INT:
       // fallthrough
       case WEED_SEED_BOOLEAN:
-        ints = (int *)lives_malloc(ne * 4);
-        for (j = 0; j < ne; j++) ints[j] = *(int *)values[j];
+        ints = (int32_t *)lives_malloc(ne * 4);
+        for (j = 0; j < ne; j++) ints[j] = *(int32_t *)values[j];
         if (!strcmp(key, WEED_LEAF_TYPE)) {
           if (weed_plant_has_leaf(plant, WEED_LEAF_TYPE)) {
-            int error;
-            int type = weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
-            if (type != 0 && ints[0] != type) {
-              char *msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
-                                              weed_get_int_value(plant, WEED_LEAF_TYPE, &error), ints[0]);
-              LIVES_ERROR(msg);
-              lives_free(msg);
-              return -7;
+            int mytype = weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
+            if (mytype == WEED_PLANT_UNKNOWN) {
+              weed_set_int_value(plant, WEED_LEAF_TYPE, *ints);
+            } else {
+              if (*ints != type) {
+                char *msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
+                                                mytype, *ints);
+                lives_free(ints);
+                LIVES_ERROR(msg);
+                lives_free(msg);
+                return -7;
+              }
+              // type already OK
             }
           } else {
             weed_leaf_set(plant, key, st, ne, (void *)ints);
@@ -10759,7 +10765,6 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
   int numleaves;
   ssize_t bytes;
   int err;
-
   // caller should clear and check mainw->read_failed
   if (mem == NULL) {
     if ((bytes = lives_read_le_buffered(fd, &numleaves, 4, TRUE)) < 4) {
@@ -10790,10 +10795,12 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
       return NULL;
     }
   }
+
   if (weed_get_plant_type(plant) == WEED_PLANT_UNKNOWN) {
     weed_plant_free(plant);
     return NULL;
   }
+
   weed_leaf_set_flags(plant, WEED_LEAF_TYPE, WEED_LEAF_READONLY_PLUGIN | WEED_LEAF_READONLY_HOST);
 
   return plant;

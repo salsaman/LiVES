@@ -10,10 +10,16 @@ Render silence to end of video if necessary during rendering.
 Improvements to openGL playback plugin, including much smoother playback.
 Re-enable Advanced options for the openGL playback plugin.
 Allow cancel in VJ / Pre-decode all frames
-Refactor code for timebase calculations during playback.
+Refactor code for timebase calculations during playback (better a/v synch).
 Overhaul external audio and audio recording to improve accuracy and use fewer CPU cycles.
-Show correct effects state when reshowing effect mapper window.
-Eliminate some yrace conditions between the audio and video threads.
+Show correct effects state (on / off) when reshowing effect mapper window.
+Eliminate some race conditions between the audio and video threads.
+Implemented reference counting for realtime effect instances.
+Rewrote the main interface, cleaning up the code and making many visual improvements.
+Improvements to online video downloader, clip size and format can now be selected.
+Numerous optimisations and minor bugfixes.
+Optimised recording when video generators are running.
+
 
 
 

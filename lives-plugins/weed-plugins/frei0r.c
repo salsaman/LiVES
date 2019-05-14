@@ -357,6 +357,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     while (vdirval < 6 || vdirval > 9) {
       // step through each of our frei0r dirs
+      if (curvdir != NULL) closedir(curvdir);
+      curvdir = NULL;
+
       if (vdirval == 0) {
         curvdir = opendir(vdir3);
         if (curvdir == NULL) vdirval = 2;
@@ -364,7 +367,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       }
 
       if (vdirval == 2) {
-        if (curvdir != NULL) closedir(curvdir);
         curvdir = opendir(vdir2);
         if (curvdir == NULL) vdirval = 4;
         else {
@@ -373,7 +375,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       }
 
       if (vdirval == 4) {
-        if (curvdir != NULL) closedir(curvdir);
         curvdir = opendir(vdir1);
         if (curvdir == NULL) {
           vdirval = 6;
@@ -406,6 +407,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       weed_memset(vendor_name, 0, 1);
 
       do {
+        if (curdir != NULL) closedir(curdir);
+        curdir = NULL;
+
         snprintf(dir1, PATH_MAX, "%s/%s", vdir1, vendor_name);
 
         if (vdirval < 10) {
@@ -427,14 +431,12 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
             continue;
           }
         } else if (vdirval == 3) {
-          if (curdir != NULL) closedir(curdir);
           curdir = opendir(dir2);
           if (curdir == NULL) {
             if (vdirent == NULL) break;
             continue;
           }
         } else if (vdirval == 5 || vdirval > 9) {
-          if (curdir != NULL) closedir(curdir);
           curdir = opendir(dir1);
           if (curdir == NULL) {
             if (vdirent == NULL) break;
@@ -460,12 +462,16 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           snprintf(plug1, PATH_MAX, "%s/%s", dir1, plugin_name);
 
           if (vdirval < 10) {
+            if (handle != NULL) dlclose(handle);
+            handle = NULL;
+
             snprintf(plug2, PATH_MAX, "%s/%s", dir2, plugin_name);
             snprintf(plug3, PATH_MAX, "%s/%s", dir3, plugin_name);
 
             handle = dlopen(plug3, RTLD_NOW);
             if ((handle != NULL && (vdirval > 1)) || (handle == NULL && vdirval == 1)) {
               if (handle != NULL) dlclose(handle);
+              handle = NULL;
               continue;
             }
 
@@ -473,6 +479,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
               handle = dlopen(plug2, RTLD_NOW);
               if ((handle != NULL && (vdirval > 3)) || (handle == NULL && vdirval == 3)) {
                 if (handle != NULL) dlclose(handle);
+                handle = NULL;
                 continue;
               }
             }
@@ -485,31 +492,37 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
           if ((f0r_deinit = dlsym(handle, "f0r_deinit")) == NULL) {
             dlclose(handle);
+            handle = NULL;
             continue;
           }
 
           if ((f0r_init = dlsym(handle, "f0r_init")) == NULL) {
             dlclose(handle);
+            handle = NULL;
             continue;
           }
 
           if ((f0r_get_plugin_info = dlsym(handle, "f0r_get_plugin_info")) == NULL) {
             dlclose(handle);
+            handle = NULL;
             continue;
           }
 
           if ((f0r_get_param_info = dlsym(handle, "f0r_get_param_info")) == NULL) {
             dlclose(handle);
+            handle = NULL;
             continue;
           }
 
           if ((f0r_construct = dlsym(handle, "f0r_construct")) == NULL) {
             dlclose(handle);
+            handle = NULL;
             continue;
           }
 
           if ((f0r_destruct = dlsym(handle, "f0r_destruct")) == NULL) {
             dlclose(handle);
+            handle = NULL;
             continue;
           }
 
@@ -524,6 +537,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
             if (!strcmp(f0rinfo.name, blacklist[i])) {
               fprintf(stderr, "Warning, frei0r plugin skipping blacklisted plugin %s\n", f0rinfo.name);
               blacklisted = 1;
+              dlclose(handle);
+              handle = NULL;
               break;
             }
           }
@@ -531,6 +546,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           if (blacklisted || f0rinfo.frei0r_version != FREI0R_MAJOR_VERSION) {
             (*f0r_deinit)();
             dlclose(handle);
+            handle = NULL;
             continue;
           }
 
@@ -540,6 +556,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
             if ((f0r_update = dlsym(handle, "f0r_update")) == NULL) {
               (*f0r_deinit)();
               dlclose(handle);
+              handle = NULL;
               continue;
             }
             break;
@@ -548,12 +565,14 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
             if ((f0r_update2 = dlsym(handle, "f0r_update2")) == NULL) {
               (*f0r_deinit)();
               dlclose(handle);
+              handle = NULL;
               continue;
             }
             break;
           default:
             (*f0r_deinit)();
             dlclose(handle);
+            handle = NULL;
             continue;
           }
 
@@ -577,6 +596,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           } else {
             f0r_deinit();
             dlclose(handle);
+            handle = NULL;
             continue;
           }
 
@@ -647,6 +667,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           default:
             (*f0r_deinit)();
             dlclose(handle);
+            handle = NULL;
             weed_free(pal);
             weed_free(out_chantmpls);
             if (in_chantmpls != NULL) weed_free(in_chantmpls);
@@ -661,6 +682,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           if ((f0r_inst = (*f0r_construct)(640, 480)) == NULL) {
             (*f0r_deinit)();
             dlclose(handle);
+            handle = NULL;
             weed_free(out_chantmpls);
             if (in_chantmpls != NULL) weed_free(in_chantmpls);
             continue;
@@ -674,6 +696,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 #endif
               (*f0r_deinit)();
               dlclose(handle);
+              handle = NULL;
               weed_free(out_chantmpls);
               if (in_chantmpls != NULL) weed_free(in_chantmpls);
               continue;
@@ -684,6 +707,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
               f0r_destruct(f0r_inst);
               (*f0r_deinit)();
               dlclose(handle);
+              handle = NULL;
               weed_free(out_chantmpls);
               if (in_chantmpls != NULL) weed_free(in_chantmpls);
               continue;
@@ -834,6 +858,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 #endif
                 (*f0r_deinit)();
                 dlclose(handle);
+                handle = NULL;
                 weed_free(out_chantmpls);
                 if (in_chantmpls != NULL) weed_free(in_chantmpls);
                 if (in_params != NULL) weed_free(in_params);
@@ -909,8 +934,17 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       curvdir = NULL;
       vdirval++;
       if (curdir != NULL) closedir(curdir);
+      curdir = NULL;
     }
     // end frei0r dirs
+
+    if (curvdir != NULL) closedir(curvdir);
+    curvdir = NULL;
+    if (curdir != NULL) closedir(curdir);
+    curdir = NULL;
+
+    if (handle != NULL) dlclose(handle);
+    handle = NULL;
 
 #ifndef DEBUG
     dup2(new_stdout, 1);

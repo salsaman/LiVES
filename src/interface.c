@@ -190,10 +190,11 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(vbox), procw->label3, FALSE, FALSE, 0);
 
-  hbox = lives_hbox_new(FALSE, 0);
+  widget_opts.expand = LIVES_EXPAND_EXTRA;
+  hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 4);
   add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(hbox));
-  add_fill_to_box(LIVES_BOX(hbox));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   if (has_cancel) {
@@ -301,10 +302,12 @@ xprocess *create_processing(const char *text) {
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label3, FALSE, FALSE, 0);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  hbox = lives_hbox_new(FALSE, 0);
+  widget_opts.expand = LIVES_EXPAND_EXTRA;
+  hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 4);
   add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(hbox));
-  add_fill_to_box(LIVES_BOX(hbox));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
   lives_box_pack_start(LIVES_BOX(vbox3), hbox, FALSE, FALSE, 0);
 
   if (mainw->iochan != NULL) {

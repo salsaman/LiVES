@@ -5585,6 +5585,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   char *com;
 
   boolean retval = FALSE;
+  boolean found;
 
   int lgid = lives_getgid();
   int luid = lives_getuid();
@@ -5624,10 +5625,22 @@ boolean check_for_recovery_files(boolean auto_recover) {
   mainw->com_failed = FALSE;
 
   // check for layout recovery file
-  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid);
+  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid, LIVES_FILE_EXT_LAYOUT);
   recovery_numbering_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, recpid);
 
-  if (lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
+  found = FALSE;
+
+  if (!lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
+    lives_free(recovery_file);
+    recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid);
+    if (lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
+      found = TRUE;
+    }
+  } else {
+    found = TRUE;
+  }
+
+  if (found) {
     // move files temporarily to stop them being cleansed
     char *xfile = lives_strdup_printf("%s/keep_layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
     lives_mv(recovery_file, xfile);
@@ -5650,7 +5663,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_system(com, FALSE);
   lives_free(com);
 
-  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid);
+  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid, LIVES_FILE_EXT_LAYOUT);
   recovery_numbering_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
 
   if (mainw->recoverable_layout) {

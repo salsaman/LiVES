@@ -1952,7 +1952,9 @@ boolean do_auto_dialog(const char *text, int type) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, proc_ptr->processing);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  //lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_context_update();
+
 
   if (type == 0 || type == 2) {
     clear_mainw_msg();

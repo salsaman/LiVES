@@ -2443,6 +2443,11 @@ void redraw_pwindow(int key, int mode) {
     }
     if (rfx->is_template || (key == keyw && mode == modew)) {
       // rip out the contents
+      // TODO !!!:: if we got here by way of a widget callback which caused a reinit, we can crash
+      // since gtk+ will try to continue handling the callback with an invalid widget
+      // so, we should note the widget that received the signal and the signal type
+      // then stop emmission of the signal before destroying it
+
       content_area = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]));
       child_list = lives_container_get_children(LIVES_CONTAINER(content_area));
       for (i = 0; i < lives_list_length(child_list); i++) {

@@ -723,7 +723,8 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   struct timeval otv;
   lives_mt_poly_state_t poly_state;
 
-  char *asave_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid);
+  char *asave_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
+                                         capable->mainpid, LIVES_FILE_EXT_LAYOUT);
   char *tmp;
 
   boolean retval = TRUE;
@@ -855,13 +856,8 @@ static boolean mt_load_recovery_layout(lives_mt *mt) {
   boolean recovered = TRUE;
   char *aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
                                          capable->mainpid);
-  char *eload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid);
-
-  // check all possible recovery files, and return the first which doesn't have a matching pid in use
-
-
-
-
+  char *eload_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
+                                         capable->mainpid, LIVES_FILE_EXT_LAYOUT);
 
   mt->auto_reloading = TRUE;
   mainw->event_list = mt->event_list = load_event_list(mt, eload_file);
@@ -2603,7 +2599,7 @@ void multitrack_view_in_out(LiVESMenuItem *menuitem, livespointer user_data) {
 
 static void time_to_string(lives_mt *mt, double secs, int length) {
   int hours, mins, rest;
-  char *string;
+  char *string, *rests;
 
   hours = secs / 3600;
   secs -= hours * 3600.;
@@ -2611,7 +2607,10 @@ static void time_to_string(lives_mt *mt, double secs, int length) {
   secs -= mins * 60.;
   rest = (secs - ((int)secs) * 1.) * 100. + .5;
   secs = (int)secs * 1.;
-  string = lives_strdup_printf("    %02d:%02d:%02d.%02d    ", hours, mins, (int)secs, rest);
+  if (rest < 10) rests = lives_strdup_printf("%d0", rest);
+  else rests = lives_strdup_printf("%d", rest);
+  string = lives_strdup_printf("  %02d:%02d:%02d.%s ", hours, mins, (int)secs, rests);
+  lives_free(rests);
   lives_entry_set_text(LIVES_ENTRY(mt->timecode), string);
   lives_free(string);
 }
@@ -20297,7 +20296,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
         new_clip_index = (int *)lives_malloc(num_tracks * sizint);
         new_frame_index = (int *)lives_malloc(num_tracks * sizint);
         last_valid_frame = 0;
-#define DEBUG_MISSING_CLIPS
+        //#define DEBUG_MISSING_CLIPS
 #ifdef DEBUG_MISSING_CLIPS
         g_print("pt zzz %d\n", num_tracks);
 #endif

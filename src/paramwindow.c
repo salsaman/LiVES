@@ -1451,7 +1451,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_orange);
         if (add_slider) {
           scale2 = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-          lives_box_pack_start(LIVES_BOX(hbox), scale2, TRUE, TRUE, 0);
+          lives_box_pack_start(LIVES_BOX(hbox), scale2, TRUE, TRUE, widget_opts.packing_width);
           if (!LIVES_IS_HBOX(LIVES_WIDGET(box))) add_fill_to_box(LIVES_BOX(hbox));
 
           if (palette->style & STYLE_1) {

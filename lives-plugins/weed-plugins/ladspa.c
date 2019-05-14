@@ -574,6 +574,10 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       char *lpp_copy = strdup(lpp);
       getenv_piece(vdir, PATH_MAX, lpp, vdirval);
       free(lpp_copy);
+
+      if (curvdir != NULL) closedir(curvdir);
+      curvdir = NULL;
+
       if (!strlen(vdir) || vdir == NULL) break;
       curvdir = opendir(vdir);
       if (curvdir == NULL) break;

@@ -23,6 +23,8 @@
 #define LIVES_HAS_IMAGE_MENU_ITEM 0
 #define LIVES_HAS_DEVICE_MANAGER 0
 
+#define MIN_SPINBUTTON_SIZE 6 ///< min digits for spinbuttons
+
 typedef enum {
   LIVES_DISPLAY_TYPE_UNKNOWN = 0,
   LIVES_DISPLAY_TYPE_X11,
@@ -34,7 +36,7 @@ typedef enum {
 #define W_PACKING_WIDTH  10 // packing width for widgets with labels
 #define W_PACKING_HEIGHT 6 // packing height for widgets
 #define W_BORDER_WIDTH   10 // default border width
-#define W_FILL_LENGTH    128 // default extra fill size
+#define W_FILL_LENGTH    80 // default extra fill size
 
 #define ulong_random() lives_random()
 
@@ -520,7 +522,7 @@ LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDialogFlags flag
 double lives_ruler_get_value(LiVESRuler *);
 double lives_ruler_set_value(LiVESRuler *, double value);
 
-void lives_ruler_set_range(LiVESRuler *, double lower, double upper, double position, double max_size);
+boolean lives_ruler_set_range(LiVESRuler *, double lower, double upper, double position, double max_size);
 double lives_ruler_set_upper(LiVESRuler *, double upper);
 double lives_ruler_set_lower(LiVESRuler *, double lower);
 
@@ -739,6 +741,11 @@ void lives_label_set_hpadding(LiVESLabel *label, int pad);
 
 LiVESWidget *align_horizontal_with(LiVESWidget *thingtoadd, LiVESWidget *thingtoalignwith);
 
+// this is not the same as a GtkLayout
+LiVESWidget *lives_layout_new(LiVESBox *);
+LiVESWidget *lives_layout_hbox_new(LiVESTable *);
+int lives_layout_add_row(LiVESTable *layout);
+
 boolean lives_widget_grab_default_special(LiVESWidget *);
 
 #define BUTTON_DIM_VAL 24000 // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535)
@@ -817,7 +824,7 @@ boolean lives_image_scale(LiVESImage *, int width, int height, LiVESInterpType i
 
 boolean global_recent_manager_add(const char *file_name);
 
-void lives_cursor_unref(LiVESXCursor *);
+boolean lives_cursor_unref(LiVESXCursor *);
 
 boolean lives_widget_context_update(void);
 
@@ -831,7 +838,7 @@ void lives_window_center(LiVESWindow *);
 
 boolean lives_entry_set_completion_from_list(LiVESEntry *, LiVESList *);
 
-void lives_widget_unparent(LiVESWidget *);
+boolean lives_widget_unparent(LiVESWidget *);
 
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
@@ -844,8 +851,8 @@ boolean lives_scroll_to_end(LiVESScrolledWindow *);
 
 void lives_general_button_clicked(LiVESButton *, livespointer data_to_free);
 
-void lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper,
-                                 double step_increment, double page_increment);
+boolean lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper,
+                                    double step_increment, double page_increment);
 
 size_t calc_spin_button_width(double min, double max, int dp);
 
@@ -859,7 +866,7 @@ boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *
 boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
 boolean label_act_lockbutton(LiVESWidget *, LiVESXEventButton *, LiVESButton *);
 
-void toggle_button_toggle(LiVESToggleButton *);
+boolean toggle_button_toggle(LiVESToggleButton *);
 
 void set_child_colour(LiVESWidget *, boolean set_all);
 void set_child_alt_colour(LiVESWidget *, boolean set_all);
@@ -868,10 +875,10 @@ void funkify_dialog(LiVESWidget *dialog);
 boolean draw_cool_toggle(LiVESWidget *, lives_painter_t *, livespointer);
 void lives_cool_toggled(LiVESWidget *tbutton, livespointer);
 
-void unhide_cursor(LiVESXWindow *);
+boolean unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);
 
-void get_border_size(LiVESWidget *win, int *bx, int *by);
+boolean get_border_size(LiVESWidget *win, int *bx, int *by);
 
 LiVESWidget *add_hsep_to_box(LiVESBox *);
 LiVESWidget *add_vsep_to_box(LiVESBox *);

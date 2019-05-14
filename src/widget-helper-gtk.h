@@ -855,8 +855,10 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #if LIVES_TABLE_IS_GRID
 #define LIVES_TABLE(widget) GTK_GRID(widget)
+#define LIVES_IS_TABLE(widget) GTK_IS_GRID(widget)
 #else
 #define LIVES_TABLE(widget) GTK_TABLE(widget)
+#define LIVES_IS_TABLE(widget) GTK_IS_TABLE(widget)
 #endif
 
 #define LIVES_RANGE(widget) GTK_RANGE(widget)
@@ -873,6 +875,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_PIXBUF(widget) GDK_IS_PIXBUF(widget)
 #define LIVES_IS_CONTAINER(widget) GTK_IS_CONTAINER(widget)
 #define LIVES_IS_BIN(widget) GTK_IS_BIN(widget)
+#define LIVES_IS_TOOL_BUTTON(widget) GTK_IS_TOOL_BUTTON(widget)
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 #define LIVES_IS_HBOX(widget) (GTK_IS_BOX(widget) && gtk_orientable_get_orientation(GTK_ORIENTABLE(widget)) == GTK_ORIENTATION_HORIZONTAL)

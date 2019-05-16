@@ -7049,6 +7049,10 @@ deinit2:
           // if playing external audio, switch over to internal for an audio gen
           pa_time_reset(mainw->pulsed, -lives_pulse_get_time(mainw->pulsed_read));
           pulse_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), FALSE);
+          pa_mloop_lock();
+          pulse_driver_uncork(mainw->pulsed);
+          pulse_driver_cork(mainw->pulsed_read);
+          pa_mloop_unlock();
         }
         if (mainw->pulsed != NULL && (mainw->pulsed_read == NULL || !mainw->pulsed_read->in_use)) {
           mainw->pulsed->in_use = TRUE;
@@ -7204,9 +7208,15 @@ void weed_deinit_effect(int hotkey) {
 #ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_player == AUD_PLAYER_PULSE) {
         if (mainw->pulsed_read == NULL || !mainw->pulsed_read->in_use) {
-          mainw->pulsed->in_use = FALSE; // deactivate writer
+          if (mainw->pulsed != NULL) mainw->pulsed->in_use = FALSE; // deactivate writer
           pulse_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
-          pa_time_reset(mainw->pulsed_read, -lives_pulse_get_time(mainw->pulsed)); // ensure time continues monotonically
+          if (mainw->pulsed != NULL) {
+            pa_time_reset(mainw->pulsed_read, -lives_pulse_get_time(mainw->pulsed)); // ensure time continues monotonically
+            pa_mloop_lock();
+            pulse_driver_uncork(mainw->pulsed_read);
+            if (mainw->pulsed != NULL) pulse_driver_cork(mainw->pulsed);
+            pa_mloop_unlock();
+          }
           if (mainw->record) mainw->pulsed_read->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
           mainw->pulsed_read->is_paused = FALSE;
           mainw->pulsed_read->in_use = TRUE;

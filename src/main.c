@@ -2971,6 +2971,7 @@ static boolean lives_startup(livespointer data) {
   }
 
   show_lives();
+  mainw->is_ready = TRUE;
 
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
 
@@ -3005,8 +3006,9 @@ static boolean lives_startup(livespointer data) {
     mainw->is_ready = TRUE;
   }
 
+  // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer_end = FALSE;
-  //mainw->kb_timer = lives_timer_add(KEY_RPT_INTERVAL, &ext_triggers_poll, NULL);
+  mainw->kb_timer = lives_timer_add(KEY_RPT_INTERVAL, &ext_triggers_poll, NULL);
 
 #ifdef HAVE_YUV4MPEG
   if (strlen(prefs->yuvin) > 0) lives_idle_add(open_yuv4m_startup, NULL);
@@ -3160,7 +3162,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");

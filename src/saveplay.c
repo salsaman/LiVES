@@ -2758,7 +2758,6 @@ void play_file(void) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
         insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
       }
-
     } else {
 #endif
       if (!is_realtime_aplayer(audio_player) && stopcom != NULL) {
@@ -5637,6 +5636,11 @@ boolean check_for_recovery_files(boolean auto_recover) {
     }
   } else {
     found = TRUE;
+  }
+  if (found) {
+    if (!lives_file_test(recovery_numbering_file, LIVES_FILE_TEST_EXISTS)) {
+      found = FALSE;
+    }
   }
 
   if (found) {

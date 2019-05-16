@@ -7676,9 +7676,9 @@ LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustme
   lives_scale_button_set_orientation(LIVES_SCALE_BUTTON(volume_scale), orientation);
 #else
   if (orientation == LIVES_ORIENTATION_HORIZONTAL)
-    volume_scale = lives_hscale_new(adj);
+    volume_scale = gtk_hscale_new(adj);
   else
-    volume_scale = lives_vscale_new(adj);
+    volume_scale = gtk_vscale_new(adj);
 
   gtk_scale_set_draw_value(GTK_SCALE(volume_scale), FALSE);
 #endif
@@ -7686,7 +7686,6 @@ LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustme
 #ifdef GUI_QT
   // TODO
   //  volume_scale = lives_scale_button_new(adj);
-  //lives_scale_button_set_value(volume_scale, volume);
   //lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(volume_scale),orientation);
 #endif
   return volume_scale;

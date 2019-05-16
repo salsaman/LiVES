@@ -1199,7 +1199,7 @@ typedef struct {
 
   LiVESList *file_buffers;
 
-  float volume; ///< audio volume level (for jack)
+  volatile float volume; ///< audio volume level (for jack and pulse)
 
   int aud_rec_fd; ///< fd of file we are recording audio to
   double rec_end_time;

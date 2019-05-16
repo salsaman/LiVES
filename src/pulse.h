@@ -38,7 +38,7 @@ typedef struct {
 
   int str_idx;
 
-  pa_context_state_t state;
+  pa_stream_state_t state;
 
   // app side
   volatile int64_t in_arate; /**< samples(frames) per second */
@@ -65,7 +65,9 @@ typedef struct {
 
   uint8_t *sound_buffer; ///< transformed data
 
-  float volume[PULSE_MAX_OUTPUT_CHANS]; ///< amount volume, 1.0 is full volume
+  pa_cvolume volume;
+
+  //float volume[PULSE_MAX_OUTPUT_CHANS]; ///< amount volume, 1.0 is full volume (currently unused, see volume_linear)
 
   boolean in_use; /**< true if this device is currently in use */
   boolean mute;
@@ -97,6 +99,8 @@ typedef struct {
   volatile int read_abuf;
 
   uint64_t chunk_size;
+
+  volatile double volume_linear; ///< TODO: use perchannel volume[]
 
   volatile int astream_fd;
 

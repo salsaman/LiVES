@@ -1763,7 +1763,7 @@ void create_LiVES(void) {
 #endif
 #endif
 
-  adj = lives_adjustment_new(mainw->volume, 0., 1., 0.01, 0.1, 0.);
+  adj = lives_adjustment_new(mainw->volume, 0., 1., 0.01, 0.01, 0.);
 
   mainw->volume_scale = lives_volume_button_new(LIVES_ORIENTATION_HORIZONTAL, adj, mainw->volume);
 

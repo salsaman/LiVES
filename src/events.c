@@ -4092,7 +4092,6 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
     render_events(FALSE);
     flush_audio_tc = 0;
     mainw->multitrack = NULL; // allow setting of audio filesize now
-    reget_afilesize(mainw->current_file);
     mainw->multitrack = multi;
   }
 
@@ -4320,6 +4319,8 @@ boolean render_to_clip(boolean new_clip) {
 
     cfile->bpp = cfile->img_type == IMG_TYPE_JPEG ? 24 : 32;
     cfile->is_loaded = TRUE;
+
+    show_playbar_labels(mainw->current_file);
   } else if (mainw->multitrack == NULL) {
     // back up audio to audio.back (in case we overwrite it)
     if (prefs->rec_opts & REC_AUDIO) {

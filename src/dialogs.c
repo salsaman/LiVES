@@ -1952,9 +1952,7 @@ boolean do_auto_dialog(const char *text, int type) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, proc_ptr->processing);
-  //lives_widget_process_updates(mainw->LiVES, TRUE);
   lives_widget_context_update();
-
 
   if (type == 0 || type == 2) {
     clear_mainw_msg();
@@ -2473,7 +2471,7 @@ int do_original_lost_warning(const char *fname) {
   LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, TRUE);
   int response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
   lives_free(msg);
   return response;
 }
@@ -2697,7 +2695,7 @@ void threaded_dialog_spin(double fraction) {
       //#define GDB
 #ifndef GDB
       if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) {
-        lives_widget_context_update();
+        lives_widget_process_updates(mainw->LiVES, TRUE);
         lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
       }
 #endif
@@ -2715,7 +2713,7 @@ void threaded_dialog_spin(double fraction) {
       lives_widget_queue_draw(procw->processing);
     }
     td_had_focus = TRUE;
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
   }
 }
 
@@ -2744,7 +2742,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   procw = create_threaded_dialog(copy_text, has_cancel, &td_had_focus);
   lives_free(copy_text);
 
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
 }
 
 
@@ -2766,44 +2764,12 @@ void end_threaded_dialog(void) {
   mainw->threaded_dialog = FALSE;
 
   if (mainw->is_ready && prefs->show_gui)
-    lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
 }
 
 
 void response_ok(LiVESButton *button, livespointer user_data) {
   lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
-}
-
-
-static void d_print_utility(const char *text, int osc_note, const char *osc_detail) {
-  boolean nsdp = mainw->no_switch_dprint;
-  mainw->no_switch_dprint = TRUE;
-  d_print(text);
-  if (osc_note != LIVES_OSC_NOTIFY_NONE) lives_notify(osc_note, osc_detail);
-  if (!nsdp) {
-    mainw->no_switch_dprint = FALSE;
-    d_print("");
-  }
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_cancelled(void) {
-  d_print_utility(_("cancelled.\n"), LIVES_OSC_NOTIFY_CANCELLED, "");
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_failed(void) {
-  d_print_utility(_("failed.\n"), LIVES_OSC_NOTIFY_FAILED, "");
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_done(void) {
-  d_print_utility(_("done.\n"), 0, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_file_error_failed(void) {
-  d_print_utility(_("error in file. Failed.\n"), 0, NULL);
 }
 
 

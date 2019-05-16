@@ -1172,8 +1172,8 @@ int pulse_audio_read_init(void) {
 
 
 void set_process_callback_pulse(pulse_driver_t *pdriver, boolean activate) {
-  if (activate) pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
-  else pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process_dummy, pdriver);
+  //if (activate) pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
+  //else pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process_dummy, pdriver);
 }
 
 
@@ -1240,16 +1240,21 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_spec.format = PA_SAMPLE_S16LE;
   }
 
+  // rough results:
+  // connecting to a quiescent pa server (even without setting a callback)
+  // consumes approx 10% cpu on an unloaded system
+  // adding the callbacks doesnt affect this significantly
+
   if (pdriver->is_output) {
-    pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN;
-    pa_battr.tlength = LIVES_PA_BUFF_TARGET;
+    //pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN;
+    // pa_battr.tlength = LIVES_PA_BUFF_TARGET;
   } else {
-    pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN * 2;
-    pa_battr.fragsize = LIVES_PA_BUFF_FRAGSIZE * 4;
+    //pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN * 2;
+    //pa_battr.fragsize = LIVES_PA_BUFF_FRAGSIZE * 4;
   }
 
-  pa_battr.minreq = (uint32_t) - 1;
-  pa_battr.prebuf = 0;
+  //pa_battr.minreq = (uint32_t) - 1;
+  //pa_battr.prebuf = 0;
 
   if (pulse_server_rate == 0) {
     pa_op = pa_context_get_server_info(pdriver->con, pulse_server_cb, NULL);
@@ -1274,6 +1279,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_cvolume_set(&out_vol, pdriver->out_achans, pavol);
 
 #ifdef PA_STREAM_START_UNMUTED
+    g_print("OK !!\n");
     pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr,
                                (pa_stream_flags_t)(PA_STREAM_START_UNMUTED | PA_STREAM_ADJUST_LATENCY |
                                    PA_STREAM_INTERPOLATE_TIMING |
@@ -1286,32 +1292,33 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                &out_vol, NULL);
 #endif
 
-    // set write callback
-    set_process_callback_pulse(pdriver, TRUE);
+    /* // set write callback */
+    /* set_process_callback_pulse(pdriver, TRUE); */
 
-    while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
-      lives_usleep(prefs->sleep_time);
-    }
+    /* while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) { */
+    /*   lives_usleep(prefs->sleep_time); */
+    /* } */
+    //prefs->force_system_clock = FALSE;
   } else {
     // set read callback
     pdriver->frames_written = 0;
     pdriver->usec_start = 0;
     pdriver->in_use = FALSE;
     pdriver->abs_maxvol_heard = 0.;
-    pdriver->is_corked = TRUE;
+    //pdriver->is_corked = TRUE;
     prb = 0;
 
-    pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, NULL);
-    pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, NULL);
+    /* pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, NULL); */
+    /* pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, NULL); */
 
-    pa_stream_set_read_callback(pdriver->pstream, pulse_audio_read_process, pdriver);
+    /* pa_stream_set_read_callback(pdriver->pstream, pulse_audio_read_process, pdriver); */
 
-    pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
-                             (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE));
+    /* pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr, */
+    /*                        (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE)); */
 
-    while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
-      lives_usleep(prefs->sleep_time);
-    }
+    /* while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) { */
+    /*   lives_usleep(prefs->sleep_time); */
+    /* } */
   }
 
   return 0;
@@ -1369,7 +1376,7 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
 void pulse_driver_cork(pulse_driver_t *pdriver) {
   int alarm_handle;
   pa_operation *paop;
-
+  return;
   if (pdriver->is_corked) return;
 
   pdriver->waitforop = TRUE;

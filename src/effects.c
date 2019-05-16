@@ -1038,11 +1038,13 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
     load_frame_image(cfile->frameno);
   }
 
-  if (mainw->playing_file == -1 && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
-      (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
-      mainw->agen_key != 0)) {
-    lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
-  } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+  if (mainw->rendered_fx != NULL) {
+    if (mainw->playing_file == -1 && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
+        (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
+        mainw->agen_key != 0)) {
+      lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
+    } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+  }
 
   if (key > 0 && !mainw->fx_is_auto) {
     // user override any ACTIVATE data connection

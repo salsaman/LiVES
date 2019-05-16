@@ -172,7 +172,6 @@ typedef int lives_pgid_t;
 #ifndef IS_MINGW
 #define PREFIX_DEFAULT "/usr"
 #else
-// TODO - get this from the installer
 #define PREFIX_DEFAULT "C:\\Program Files\\testlives"
 #endif
 #endif
@@ -322,7 +321,33 @@ typedef int lives_pgid_t;
 #define LIVES_LOG "lives.log"
 #endif
 
+// math macros / functions
+
+// round to nearest integer
+#define ROUND_I(a) ((int)((double)a + .5))
+
+// clamp a between 0 and b; both values rounded to nearest int
+#define NORMAL_CLAMP(a, b) (ROUND_I(a)  < 0 ? 0 : ROUND_I(a) > ROUND_I(b) ? ROUND_I(b) : ROUND_I(a))
+
+// clamp 0 between 1 and b; both values rounded to nearest int; if rounded value of a
+#define UTIL_CLAMP(a, b) (NORMAL_CLAMP(a, b) == 0 ? ROUND_I(b) : ROUND_I(a))
+
+// round (double) a up to next (integer) multiple of (double) b
+#define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
+
+#ifdef NEED_ENDIAN_TEST
+#undef NEED_ENDIAN_TEST
+static int32_t testint = 0x12345678;
+#define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)
+#endif
+
+// utils.c math functions
+void lives_srandom(unsigned int seed);
 uint64_t lives_random(void);
+float LEFloat_to_BEFloat(float f) GNU_CONST;
+uint64_t lives_10pow(int pow) GNU_CONST;
+double lives_fix(double val, int decimals) GNU_CONST;
+int get_approx_ln(uint32_t val) GNU_CONST;
 
 typedef struct {
   uint16_t red;
@@ -530,10 +555,10 @@ typedef enum {
 #define IS_VALID_CLIP(clip) (clip >= 0 && mainw->files[clip] != NULL)
 #define CURRENT_CLIP_IS_VALID IS_VALID_CLIP(mainw->current_file)
 
-#define CLIP_HAS_VIDEO(clip) (IS_VALID_CLIP(clip) && mainw->files[clip]->frames > 0)
+#define CLIP_HAS_VIDEO(clip) (IS_VALID_CLIP(clip) ? mainw->files[clip]->frames > 0 : FALSE)
 #define CURRENT_CLIP_HAS_VIDEO CLIP_HAS_VIDEO(mainw->current_file)
 
-#define CLIP_HAS_AUDIO(clip) (IS_VALID_CLIP(clip) && mainw->files[clip]->achans > 0 && mainw->files[clip]->asampsize > 0)
+#define CLIP_HAS_AUDIO(clip) (IS_VALID_CLIP(clip) ? mainw->files[clip]->achans > 0 && mainw->files[clip]->asampsize > 0 : FALSE)
 #define CURRENT_CLIP_HAS_AUDIO CLIP_HAS_AUDIO(mainw->current_file)
 
 #define CLIP_VIDEO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->video_time : 0.))
@@ -547,6 +572,8 @@ typedef enum {
 #define CLIP_TOTAL_TIME(clip) ((double)(CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : CLIP_AUDIO_TIME(clip)))
 
 #define CURRENT_CLIP_TOTAL_TIME CLIP_TOTAL_TIME(mainw->current_file)
+
+#define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == 0)
 
 /// corresponds to one clip in the GUI
 typedef struct {
@@ -1159,6 +1186,7 @@ void disable_record(void);
 void make_custom_submenus(void);
 void fade_background(void);
 void unfade_background(void);
+void fullscreen_internal(void);
 void block_expose(void);
 void unblock_expose(void);
 void frame_size_update(void);
@@ -1214,7 +1242,6 @@ int lives_win32_get_num_logical_cpus(void);
 #endif
 int lives_kill(lives_pid_t pid, int sig);
 int lives_killpg(lives_pgid_t pgrp, int sig);
-void lives_srandom(unsigned int seed);
 ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
 boolean lives_setenv(const char *name, const char *value);
 boolean lives_fsync(int fd);
@@ -1236,11 +1263,6 @@ int lives_ln(const char *from, const char *to);
 int lives_utf8_strcasecmp(const char *s1, const char *s2);
 
 char *filename_from_fd(char *val, int fd);
-
-float LEFloat_to_BEFloat(float f) GNU_CONST;
-uint64_t lives_10pow(int pow) GNU_CONST;
-double lives_fix(double val, int decimals) GNU_CONST;
-int get_approx_ln(uint32_t val) GNU_CONST;
 
 int64_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs);
 int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source);
@@ -1277,15 +1299,11 @@ void set_menu_text(LiVESWidget *menu, const char *text, boolean use_mnemonic);
 void get_menu_text(LiVESWidget *menu, char *text);
 void reset_clipmenu(void);
 
-double lives_ce_update_timeline(int frame, double x);  ///< pointer position in timeline
-void get_play_times(void); ///< recalculate video / audio lengths and draw the timer bars
-void update_play_times(void); ///< like get_play_times, but will force redraw audio waveforms
-void update_timer_bars(int posx, int posy, int width, int height, int which); ///< draw the timer bars
-void redraw_timer_bars(double oldx, double newx, int which); ///< paint a damage region
 void get_total_time(lives_clip_t *file); ///< calculate laudio, raudio and video time (may be deprecated and replaced with macros)
+void get_play_times(void); ///< recalculate video / audio lengths and draw the timer bars
+void update_play_times(void); ///< like get_play_times, but will force redraw of audio waveforms
 
-uint32_t get_signed_endian(boolean is_signed, boolean little_endian);
-void fullscreen_internal(void);
+uint32_t get_signed_endian(boolean is_signed, boolean little_endian); ///< produce bitmapped value
 void switch_to_int_player(void);
 void switch_to_mplayer(void);
 void switch_aud_to_sox(boolean set_pref);
@@ -1309,10 +1327,11 @@ void activate_url(LiVESAboutDialog *about, const char *link, livespointer data);
 void show_manual_section(const char *lang, const char *section);
 
 double calc_time_from_frame(int clip, int frame);
-int calc_frame_from_time(int filenum, double time);   ///< nearest frame start
-int calc_frame_from_time2(int filenum, double time);  ///< nearest frame end
-int calc_frame_from_time3(int filenum, double time);  ///< nearest frame mid
-int calc_frame_from_time3(int filenum, double time);  ///< nearest frame start, no maximum
+int calc_frame_from_time(int filenum, double time);   ///< nearest frame [1, frames]
+int calc_frame_from_time2(int filenum, double time);  ///< nearest frame [1, frames+1]
+int calc_frame_from_time3(int filenum, double time);  ///< nearest frame rounded down, [1, frames+1]
+int calc_frame_from_time4(int filenum, double time);  ///<  nearest frame, no maximum
+
 
 boolean check_for_ratio_fps(double fps);
 double get_ratio_fps(const char *string);
@@ -1348,7 +1367,6 @@ int verhash(char *version);
 void set_undoable(const char *what, boolean sensitive);
 void set_redoable(const char *what, boolean sensitive);
 void zero_spinbuttons(void);
-void draw_little_bars(double ptrtime, int which);
 void set_sel_label(LiVESWidget *label);
 void clear_mainw_msg(void);
 int get_token_count(const char *string, int delim);
@@ -1414,15 +1432,6 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 #define PREFS_TIMEOUT 10000000 ///< 10 seconds
 
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
-
-// round (double) a up to next (integer) multiple of (double) b
-#define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
-
-#ifdef NEED_ENDIAN_TEST
-#undef NEED_ENDIAN_TEST
-static int32_t testint = 0x12345678;
-#define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)
-#endif
 
 char *dummychar;
 

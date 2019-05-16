@@ -736,7 +736,7 @@ static void replace_with_delegates(void) {
     mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx = rfx;
   }
 
-  lives_widget_set_sensitive(mainw->resize_menuitem, mainw->current_file > 0 && cfile->frames > 0);
+  lives_widget_set_sensitive(mainw->resize_menuitem, CURRENT_CLIP_HAS_VIDEO);
 
   deint_idx = weed_get_idx_for_hashname("deinterlacedeinterlace", FALSE);
   if (deint_idx > -1) {
@@ -1226,7 +1226,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->clear_disk_opts = get_int_pref(PREF_CLEAR_DISK_OPTS);
 
-    prefs->force_system_clock = FALSE; ///< prefer soundcard timing
+    prefs->force_system_clock = TRUE;
 
     prefs->alpha_post = FALSE; ///< allow pre-multiplied alpha internally
 
@@ -1355,8 +1355,8 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->mt_def_asamps = get_int_pref(PREF_MT_DEF_ASAMPS);
       prefs->mt_def_signed_endian = get_int_pref(PREF_MT_DEF_SIGNED_ENDIAN);
 
-      if (prefs->mt_def_width == 0) prefs->mt_def_width = DEFAULT_FRAME_HSIZE;
-      if (prefs->mt_def_height == 0) prefs->mt_def_height = DEFAULT_FRAME_VSIZE;
+      if (prefs->mt_def_width == 0) prefs->mt_def_width = DEFAULT_FRAME_HSIZE_UNSCALED;
+      if (prefs->mt_def_height == 0) prefs->mt_def_height = DEFAULT_FRAME_VSIZE_UNSCALED;
       if (prefs->mt_def_fps == 0.) prefs->mt_def_fps = prefs->default_fps;
       if (prefs->mt_def_arate == 0) prefs->mt_def_arate = DEFAULT_AUDIO_RATE;
       if (prefs->mt_def_asamps == 0) prefs->mt_def_asamps = DEFAULT_AUDIO_SAMPS;
@@ -1783,22 +1783,8 @@ static void lives_init(_ign_opts *ign_opts) {
     }
 
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL) mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
-
-    // toolbar buttons
-    lives_widget_set_bg_color(mainw->tb_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->toolbar, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->t_stopbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->t_bckground, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->t_sepwin, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->t_double, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->t_fullscreen, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->t_faster, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->t_slower, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->t_forward, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->t_back, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color(mainw->t_infobutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
   }
-}
+} // end of lives_init
 
 
 static void show_detected_or_not(boolean cap, const char *pname) {
@@ -2713,6 +2699,9 @@ static boolean lives_startup(livespointer data) {
     if (gerr != NULL) lives_error_free(gerr);
 #endif
 
+    lives_widget_queue_draw(mainw->LiVES);
+    lives_widget_context_update();
+
     mainw->startup_error = FALSE;
 
     if (theme_expected && palette->style == STYLE_PLAIN && !mainw->foreign) {
@@ -2873,13 +2862,22 @@ static boolean lives_startup(livespointer data) {
 
                   if (!mainw->foreign && capable->smog_version_correct) {
                     splash_msg(_("Loading rendered effect plugins..."), SPLASH_LEVEL_LOAD_RFX);
+                    // must call this at least to set up rendered_fx[0]
                     add_rfx_effects();
                   }
 
-                  if (prefs->show_gui) {
-                    show_lives();
+                  if (prefs->startup_interface == STARTUP_CE) {
+                    lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),
+                        lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) -
+                        lives_widget_get_allocation_height(mainw->message_box));
+
+                    lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
                   }
-                  mainw->is_ready = TRUE;
+
+                  /* if (prefs->show_gui) { */
+                  /*   //show_lives(); */
+                  /* } */
+                  /* mainw->is_ready = TRUE; */
                 }
               }
             }
@@ -2969,11 +2967,11 @@ static boolean lives_startup(livespointer data) {
     got_files = TRUE;
   } else {
     set_main_title(NULL, 0);
+    splash_end();
   }
 
-  splash_end();
-
   show_lives();
+
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
@@ -3008,7 +3006,7 @@ static boolean lives_startup(livespointer data) {
   }
 
   mainw->kb_timer_end = FALSE;
-  mainw->kb_timer = lives_timer_add(KEY_RPT_INTERVAL, &ext_triggers_poll, NULL);
+  //mainw->kb_timer = lives_timer_add(KEY_RPT_INTERVAL, &ext_triggers_poll, NULL);
 
 #ifdef HAVE_YUV4MPEG
   if (strlen(prefs->yuvin) > 0) lives_idle_add(open_yuv4m_startup, NULL);
@@ -3016,7 +3014,7 @@ static boolean lives_startup(livespointer data) {
 
 #ifdef GUI_GTK
 #if defined HAVE_X11 || defined IS_MINGW
-  gdk_window_add_filter(NULL, filter_func, NULL);
+  //gdk_window_add_filter(NULL, filter_func, NULL);
 #endif
 #endif
 
@@ -3039,6 +3037,10 @@ static boolean lives_startup(livespointer data) {
 
   mainw->go_away = FALSE;
 
+  if (mainw->current_file == -1) {
+    resize(1.);
+    reset_message_area(TRUE);
+  }
   lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
 
   return FALSE;
@@ -3158,7 +3160,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -3588,7 +3590,7 @@ void set_main_title(const char *file, int untitled) {
   char *title, *tmp;
   char short_file[256];
 
-  if (file != NULL) {
+  if (file != NULL && CURRENT_CLIP_IS_VALID) {
     if (untitled) {
       title = lives_strdup_printf(_("LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"), LiVES_VERSION, (tmp = get_untitled_name(untitled)),
                                   cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
@@ -3638,48 +3640,48 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->open_device_menu, TRUE);
   lives_widget_set_sensitive(mainw->restore, TRUE);
   lives_widget_set_sensitive(mainw->recent_menu, TRUE);
-  lives_widget_set_sensitive(mainw->save_as, mainw->current_file > 0 && capable->has_encoder_plugins);
+  lives_widget_set_sensitive(mainw->save_as, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && capable->has_encoder_plugins);
 #ifdef LIBAV_TRANSCODE
-  lives_widget_set_sensitive(mainw->transcode, mainw->current_file > 0 && cfile->frames > 0);
+  lives_widget_set_sensitive(mainw->transcode, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 #endif
-  lives_widget_set_sensitive(mainw->backup, mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->save_selection, mainw->current_file > 0 && cfile->frames > 0 && capable->has_encoder_plugins);
+  lives_widget_set_sensitive(mainw->backup, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->save_selection, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO && capable->has_encoder_plugins);
   lives_widget_set_sensitive(mainw->clear_ds, TRUE);
   lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
-  lives_widget_set_sensitive(mainw->playsel, mainw->current_file > 0 && cfile->frames > 0);
-  lives_widget_set_sensitive(mainw->copy, mainw->current_file > 0 && cfile->frames > 0);
-  lives_widget_set_sensitive(mainw->cut, mainw->current_file > 0 && cfile->frames > 0);
+  lives_widget_set_sensitive(mainw->playsel, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->copy, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->cut, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->rev_clipboard, !(clipboard == NULL));
   lives_widget_set_sensitive(mainw->playclip, !(clipboard == NULL));
   lives_widget_set_sensitive(mainw->paste_as_new, !(clipboard == NULL));
   lives_widget_set_sensitive(mainw->insert, !(clipboard == NULL));
-  lives_widget_set_sensitive(mainw->merge, (clipboard != NULL && cfile->frames > 0));
-  lives_widget_set_sensitive(mainw->xdelete, mainw->current_file > 0 && cfile->frames > 0);
-  lives_widget_set_sensitive(mainw->playall, mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->m_playbutton, mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->m_playselbutton, mainw->current_file > 0 && cfile->frames > 0);
-  lives_widget_set_sensitive(mainw->m_rewindbutton, mainw->current_file > 0 && cfile->pointer_time > 0.);
+  lives_widget_set_sensitive(mainw->merge, (clipboard != NULL && !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO));
+  lives_widget_set_sensitive(mainw->xdelete, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->playall, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->m_playbutton, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->m_playselbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->m_rewindbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->pointer_time > 0.);
   lives_widget_set_sensitive(mainw->m_loopbutton, TRUE);
   lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
   if (mainw->preview_box != NULL) {
-    lives_widget_set_sensitive(mainw->p_playbutton, mainw->current_file > 0);
-    lives_widget_set_sensitive(mainw->p_playselbutton, mainw->current_file > 0 && cfile->frames > 0);
-    lives_widget_set_sensitive(mainw->p_rewindbutton, mainw->current_file > 0 && cfile->pointer_time > 0.);
+    lives_widget_set_sensitive(mainw->p_playbutton, !CURRENT_CLIP_IS_CLIPBOARD);
+    lives_widget_set_sensitive(mainw->p_playselbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+    lives_widget_set_sensitive(mainw->p_rewindbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->pointer_time > 0.);
     lives_widget_set_sensitive(mainw->p_loopbutton, TRUE);
     lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
   }
 
-  lives_widget_set_sensitive(mainw->rewind, mainw->current_file > 0 && cfile->pointer_time > 0.);
-  lives_widget_set_sensitive(mainw->show_file_info, mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->show_file_comments, mainw->current_file > 0);
+  lives_widget_set_sensitive(mainw->rewind, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->pointer_time > 0.);
+  lives_widget_set_sensitive(mainw->show_file_info, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
+  lives_widget_set_sensitive(mainw->show_file_comments, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
   lives_widget_set_sensitive(mainw->full_screen, TRUE);
   lives_widget_set_sensitive(mainw->mt_menu, TRUE);
   lives_widget_set_sensitive(mainw->unicap, TRUE);
   lives_widget_set_sensitive(mainw->firewire, TRUE);
   lives_widget_set_sensitive(mainw->tvdev, TRUE);
 
-  lives_widget_set_sensitive(mainw->export_proj, mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->import_proj, mainw->current_file == -1);
+  lives_widget_set_sensitive(mainw->export_proj, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
+  lives_widget_set_sensitive(mainw->import_proj, TRUE);
 
   if (is_realtime_aplayer(prefs->audio_player)) {
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
@@ -3690,11 +3692,11 @@ void sensitize(void) {
     for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
          mainw->num_rendered_effects_test; i++)
       if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].min_frames >= 0)
-        lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, mainw->current_file > 0 && cfile->frames > 0);
+        lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 
-    if (mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
-                                    (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
-                                    mainw->agen_key != 0)) {
+    if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
+        (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
+        mainw->agen_key != 0)) {
       lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
     } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
   }
@@ -3714,38 +3716,38 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->custom_effects_submenu, TRUE);
 
   if (mainw->resize_menuitem != NULL) {
-    lives_widget_set_sensitive(mainw->resize_menuitem, mainw->current_file > 0 && cfile->frames > 0);
+    lives_widget_set_sensitive(mainw->resize_menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   }
 
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
-  lives_widget_set_sensitive(mainw->export_submenu, mainw->current_file > 0 && (cfile->achans > 0));
+  lives_widget_set_sensitive(mainw->export_submenu, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO));
   lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
-  lives_widget_set_sensitive(mainw->recaudio_sel, mainw->current_file > 0 && cfile->frames > 0);
-  lives_widget_set_sensitive(mainw->append_audio, mainw->current_file > 0 && cfile->achans > 0);
-  lives_widget_set_sensitive(mainw->trim_submenu, mainw->current_file > 0 && cfile->achans > 0);
-  lives_widget_set_sensitive(mainw->fade_aud_in, mainw->current_file > 0 && cfile->achans > 0);
-  lives_widget_set_sensitive(mainw->fade_aud_out, mainw->current_file > 0 && cfile->achans > 0);
-  lives_widget_set_sensitive(mainw->trim_audio, mainw->current_file > 0 && (cfile->achans * cfile->frames > 0));
-  lives_widget_set_sensitive(mainw->trim_to_pstart, mainw->current_file > 0 && (cfile->achans && cfile->pointer_time > 0.));
-  lives_widget_set_sensitive(mainw->delaudio_submenu, mainw->current_file > 0 && cfile->achans > 0);
-  lives_widget_set_sensitive(mainw->delsel_audio, mainw->current_file > 0 && cfile->frames > 0);
-  lives_widget_set_sensitive(mainw->resample_audio, mainw->current_file > 0 && (cfile->achans > 0 && capable->has_sox_sox));
+  lives_widget_set_sensitive(mainw->recaudio_sel, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->append_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+  lives_widget_set_sensitive(mainw->trim_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+  lives_widget_set_sensitive(mainw->fade_aud_in, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+  lives_widget_set_sensitive(mainw->fade_aud_out, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+  lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_TOTAL_TIME > 0.));
+  lives_widget_set_sensitive(mainw->trim_to_pstart, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO && cfile->pointer_time > 0.));
+  lives_widget_set_sensitive(mainw->delaudio_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+  lives_widget_set_sensitive(mainw->delsel_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->resample_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO && capable->has_sox_sox));
   lives_widget_set_sensitive(mainw->dsize, !(mainw->fs));
   lives_widget_set_sensitive(mainw->fade, !(mainw->fs));
   lives_widget_set_sensitive(mainw->mute_audio, TRUE);
-  lives_widget_set_sensitive(mainw->loop_video, mainw->current_file > 0 && (cfile->achans > 0 && cfile->frames > 0));
+  lives_widget_set_sensitive(mainw->loop_video, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_TOTAL_TIME > 0.));
   lives_widget_set_sensitive(mainw->loop_continue, TRUE);
   lives_widget_set_sensitive(mainw->load_audio, TRUE);
-  lives_widget_set_sensitive(mainw->load_subs, mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->erase_subs, mainw->current_file > 0 && cfile->subt != NULL);
+  lives_widget_set_sensitive(mainw->load_subs, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->erase_subs, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->subt != NULL);
   if (capable->has_cdda2wav && strlen(prefs->cdplay_device)) lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
-  lives_widget_set_sensitive(mainw->rename, mainw->current_file > 0 && !cfile->opening);
-  lives_widget_set_sensitive(mainw->change_speed, mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->resample_video, mainw->current_file > 0 && cfile->frames > 0);
-  lives_widget_set_sensitive(mainw->ins_silence, mainw->current_file > 0 && cfile->frames > 0);
-  lives_widget_set_sensitive(mainw->close, mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->select_submenu, mainw->current_file > 0 && !mainw->selwidth_locked && cfile->frames > 0);
-  lives_widget_set_sensitive(mainw->select_all, mainw->current_file > 0);
+  lives_widget_set_sensitive(mainw->rename, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && !cfile->opening);
+  lives_widget_set_sensitive(mainw->change_speed, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->resample_video, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->ins_silence, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->close, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->select_submenu, !CURRENT_CLIP_IS_CLIPBOARD && !mainw->selwidth_locked && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->select_all, !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->select_start_only, TRUE);
   lives_widget_set_sensitive(mainw->select_end_only, TRUE);
   lives_widget_set_sensitive(mainw->select_from_start, TRUE);
@@ -3754,17 +3756,17 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->open_yuv4m, TRUE);
 #endif
 
-  lives_widget_set_sensitive(mainw->select_new, mainw->current_file > 0 && (cfile->insert_start > 0));
-  lives_widget_set_sensitive(mainw->select_last, mainw->current_file > 0 && (cfile->undo_start > 0));
-  lives_widget_set_sensitive(mainw->lock_selwidth, mainw->current_file > 0 && cfile->frames > 0);
-  lives_widget_set_sensitive(mainw->undo, mainw->current_file > 0 && cfile->undoable);
-  lives_widget_set_sensitive(mainw->redo, mainw->current_file > 0 && cfile->redoable);
+  lives_widget_set_sensitive(mainw->select_new, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->insert_start > 0));
+  lives_widget_set_sensitive(mainw->select_last, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->undo_start > 0));
+  lives_widget_set_sensitive(mainw->lock_selwidth, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->undo, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->undoable);
+  lives_widget_set_sensitive(mainw->redo, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->redoable);
   lives_widget_set_sensitive(mainw->show_clipboard_info, !(clipboard == NULL));
   lives_widget_set_sensitive(mainw->capture, TRUE);
-  lives_widget_set_sensitive(mainw->vj_save_set, mainw->current_file > 0);
+  lives_widget_set_sensitive(mainw->vj_save_set, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
   lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
-  lives_widget_set_sensitive(mainw->vj_reset, mainw->current_file > 0);
-  lives_widget_set_sensitive(mainw->vj_realize, mainw->current_file > 0 && cfile->frame_index != NULL);
+  lives_widget_set_sensitive(mainw->vj_reset, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
+  lives_widget_set_sensitive(mainw->vj_realize, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->frame_index != NULL);
   lives_widget_set_sensitive(mainw->midi_learn, TRUE);
   lives_widget_set_sensitive(mainw->midi_save, has_devicemap(-1));
   lives_widget_set_sensitive(mainw->toy_tv, TRUE);
@@ -3774,13 +3776,14 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
   lives_widget_set_sensitive(mainw->troubleshoot, TRUE);
 
-  if (mainw->current_file > 0 && (cfile->start == 1 || cfile->end == cfile->frames) && !(cfile->start == 1 && cfile->end == cfile->frames)) {
+  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->start == 1 || cfile->end == cfile->frames) && !(cfile->start == 1 &&
+      cfile->end == cfile->frames)) {
     lives_widget_set_sensitive(mainw->select_invert, TRUE);
   } else {
     lives_widget_set_sensitive(mainw->select_invert, FALSE);
   }
 
-  if (mainw->current_file > 0 && !(cfile->menuentry == NULL)) {
+  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && !(cfile->menuentry == NULL)) {
     lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 1, cfile->frames);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
@@ -3946,19 +3949,19 @@ void procw_desensitize(void) {
 
   if (mainw->multitrack != NULL) return;
 
-  if (mainw->current_file > 0 && (cfile->menuentry != NULL || cfile->opening) && !mainw->preview) {
+  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->menuentry != NULL || cfile->opening) && !mainw->preview) {
     // an effect etc,
-    lives_widget_set_sensitive(mainw->loop_video, cfile->achans > 0 && cfile->frames > 0);
+    lives_widget_set_sensitive(mainw->loop_video, CURRENT_CLIP_HAS_AUDIO && CURRENT_CLIP_HAS_VIDEO);
     lives_widget_set_sensitive(mainw->loop_continue, TRUE);
 
-    if (cfile->achans > 0 && cfile->frames > 0) {
+    if (CURRENT_CLIP_HAS_AUDIO && CURRENT_CLIP_HAS_VIDEO) {
       mainw->loop = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video));
     }
-    if (cfile->achans > 0 && cfile->frames > 0) {
+    if (CURRENT_CLIP_HAS_AUDIO && CURRENT_CLIP_HAS_VIDEO) {
       mainw->mute = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->mute_audio));
     }
   }
-  if (mainw->current_file > 0 && cfile->menuentry == NULL) {
+  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->menuentry == NULL) {
     lives_widget_set_sensitive(mainw->rename, FALSE);
     if (cfile->opening || cfile->restoring) {
       // loading, restoring etc
@@ -4005,7 +4008,7 @@ void procw_desensitize(void) {
   lives_widget_set_sensitive(mainw->record_perf, FALSE);
   lives_widget_set_sensitive(mainw->unicap, FALSE);
 
-  if (mainw->current_file > 0 && cfile->nopreview) {
+  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->nopreview) {
     lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
     if (mainw->preview_box != NULL) lives_widget_set_sensitive(mainw->p_playbutton, FALSE);
     lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
@@ -4082,7 +4085,27 @@ void load_start_image(int frame) {
   lives_widget_process_updates(mainw->LiVES, TRUE);
 #endif
 
-  if (mainw->current_file > -1 && cfile != NULL && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
+  threaded_dialog_spin(0.);
+  if (!CURRENT_CLIP_IS_VALID || frame < 1 || frame > cfile->frames ||
+      (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE)) {
+    LiVESPixbuf *sepbuf;
+    int bx, by, hsize, vsize;
+    int scr_width = GUI_SCREEN_WIDTH;
+    int scr_height = GUI_SCREEN_HEIGHT;
+    int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
+    get_border_size(mainw->LiVES, &bx, &by);
+    hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
+    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
+    if (mainw->playing_file > -1 && mainw->double_size) {
+      hsize /= 2;
+      vsize /= 2;
+    }
+    lives_widget_set_size_request(mainw->start_image, hsize, vsize);
+    lives_widget_set_size_request(mainw->frame1, hsize, vsize);
+    lives_widget_set_size_request(mainw->eventbox3, hsize, vsize);
+  }
+
+  if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe == NULL) {
       LiVESError *error = NULL;
       char *fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_JPG);
@@ -4100,32 +4123,30 @@ void load_start_image(int frame) {
     if (mainw->stop_emmission == mainw->start_image)
       lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
+    threaded_dialog_spin(0.);
     return;
   }
 
-  if (mainw->current_file < 0 || cfile == NULL || frame < 1 || frame > cfile->frames ||
+  if (!CURRENT_CLIP_IS_VALID || frame < 1 || frame > cfile->frames ||
       (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE)) {
-    threaded_dialog_spin(0.);
     if (!(mainw->imframe == NULL)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image), mainw->imframe, NULL);
     } else {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image), NULL, NULL);
     }
-    threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
     if (mainw->stop_emmission == mainw->start_image)
       lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
+    threaded_dialog_spin(0.);
     return;
   }
 
   tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
   if (!prefs->ce_maxspect) {
-    threaded_dialog_spin(0.);
-
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (mainw->playing_file == -1 && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src != NULL) {
@@ -4164,14 +4185,12 @@ void load_start_image(int frame) {
     if (mainw->stop_emmission == mainw->start_image)
       lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
+    threaded_dialog_spin(0.);
     return;
   }
 
-  mainw->noswitch = TRUE;
-
-  threaded_dialog_spin(0.);
-
   do {
+    threaded_dialog_spin(0.);
     width = cfile->hsize;
     height = cfile->vsize;
 
@@ -4184,7 +4203,6 @@ void load_start_image(int frame) {
     rwidth = lives_widget_get_allocation_width(mainw->start_image);
     rheight = lives_widget_get_allocation_height(mainw->start_image);
 #endif
-
     calc_maxspect(rwidth, rheight, &width, &height);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
@@ -4261,7 +4279,27 @@ void load_end_image(int frame) {
   lives_widget_process_updates(mainw->LiVES, TRUE);
 #endif
 
-  if (mainw->current_file > -1 && cfile != NULL && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
+  threaded_dialog_spin(0.);
+  if (!CURRENT_CLIP_IS_VALID || frame < 1 || frame > cfile->frames ||
+      (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE)) {
+    LiVESPixbuf *sepbuf;
+    int bx, by, hsize, vsize;
+    int scr_width = GUI_SCREEN_WIDTH;
+    int scr_height = GUI_SCREEN_HEIGHT;
+    int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
+    get_border_size(mainw->LiVES, &bx, &by);
+    hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
+    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
+    if (mainw->playing_file > -1 && mainw->double_size) {
+      hsize /= 2;
+      vsize /= 2;
+    }
+    lives_widget_set_size_request(mainw->end_image, hsize, vsize);
+    lives_widget_set_size_request(mainw->frame2, hsize, vsize);
+    lives_widget_set_size_request(mainw->eventbox4, hsize, vsize);
+  }
+
+  if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe == NULL) {
       LiVESError *error = NULL;
       char *tmp = lives_build_filename(prefs->prefix_dir, THEME_DIR, "camera", "frame.jpg", NULL);
@@ -4277,32 +4315,30 @@ void load_end_image(int frame) {
     if (mainw->stop_emmission == mainw->end_image)
       lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
+    threaded_dialog_spin(0.);
     return;
   }
 
-  if (mainw->current_file < 0 || cfile == NULL || frame < 1 || frame > cfile->frames ||
+  if (!CURRENT_CLIP_IS_VALID || frame < 1 || frame > cfile->frames ||
       (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE)) {
-    threaded_dialog_spin(0.);
     if (!(mainw->imframe == NULL)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image), mainw->imframe, NULL);
     } else {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image), NULL, NULL);
     }
-    threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
     if (mainw->stop_emmission == mainw->end_image)
       lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
+    threaded_dialog_spin(0.);
     return;
   }
 
   tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
   if (!prefs->ce_maxspect) {
-    threaded_dialog_spin(0.);
-
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (mainw->playing_file == -1 && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src != NULL) {
@@ -4345,8 +4381,8 @@ void load_end_image(int frame) {
 
   mainw->noswitch = TRUE;
 
-  threaded_dialog_spin(0.);
   do {
+    threaded_dialog_spin(0.);
     width = cfile->hsize;
     height = cfile->vsize;
 
@@ -4396,12 +4432,12 @@ void load_end_image(int frame) {
 #if !GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_queue_resize(mainw->end_image);
     lives_widget_process_updates(mainw->LiVES, TRUE);
+    threaded_dialog_spin(0.);
   } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) || rheight != lives_widget_get_allocation_height(mainw->end_image));
 #else
   }
   while (FALSE);
 #endif
-
   threaded_dialog_spin(0.);
   mainw->noswitch = noswitch;
 
@@ -4436,7 +4472,7 @@ void load_preview_image(boolean update_always) {
   lives_signal_handlers_block_by_func(mainw->preview_image, (livespointer)expose_pim, NULL);
 #endif
 
-  if (mainw->current_file > -1 && cfile != NULL && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
+  if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe == NULL) {
       LiVESError *error = NULL;
       char *tmp = lives_build_filename(prefs->prefix_dir, THEME_DIR, "camera", "frame.jpg", NULL);
@@ -4461,7 +4497,7 @@ void load_preview_image(boolean update_always) {
     return;
   }
 
-  if (mainw->current_file < 0 || cfile == NULL || !cfile->frames || (cfile->clip_type != CLIP_TYPE_DISK &&
+  if (!CURRENT_CLIP_IS_VALID || !cfile->frames || (cfile->clip_type != CLIP_TYPE_DISK &&
       cfile->clip_type != CLIP_TYPE_FILE)) {
     mainw->preview_frame = 0;
     lives_signal_handler_block(mainw->preview_spinbutton, mainw->preview_spin_func);
@@ -4546,7 +4582,7 @@ void load_preview_image(boolean update_always) {
       cfile->pointer_time = lives_ce_update_timeline(mainw->preview_frame, 0.);
       if (cfile->pointer_time > 0.) {
         lives_widget_set_sensitive(mainw->rewind, TRUE);
-        lives_widget_set_sensitive(mainw->trim_to_pstart, cfile->achans > 0);
+        lives_widget_set_sensitive(mainw->trim_to_pstart, CURRENT_CLIP_HAS_AUDIO);
         lives_widget_set_sensitive(mainw->m_rewindbutton, TRUE);
         if (mainw->preview_box != NULL) {
           lives_widget_set_sensitive(mainw->p_rewindbutton, TRUE);
@@ -5120,7 +5156,6 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
       // clip width and height may vary dynamically
       cfile->hsize = weed_layer_get_width(layer);
       cfile->vsize = weed_layer_get_height(layer);
-      g_print("PAL for %p is %d %d %d\n", layer, weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error), cfile->hsize, cfile->vsize);
       mainw->osc_block = FALSE;
       return res;
     } else {
@@ -5474,7 +5509,6 @@ static void get_max_opsize(int *opwidth, int *opheight) {
         // use smaller of clip size, screen size
         if (cfile->hsize < *opwidth) *opwidth = cfile->hsize;
         if (cfile->vsize < *opheight) *opheight = cfile->vsize;
-
       } else {
         // ext plugin can't resize, use its fixed size
         *opwidth = mainw->vpp->fwidth;
@@ -5720,7 +5754,7 @@ void load_frame_image(int frame) {
           frame = mainw->actual_frame;
 #ifdef ENABLE_JACK
           if (prefs->audio_player == AUD_PLAYER_JACK && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) &&
-              mainw->jackd != NULL && cfile->achans > 0 &&
+              mainw->jackd != NULL && CURRENT_CLIP_HAS_AUDIO &&
               !(prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0)) {
             if (mainw->jackd->playing_file == mainw->playing_file && !jack_audio_seek_frame(mainw->jackd, frame)) {
               if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, frame);
@@ -5732,7 +5766,7 @@ void load_frame_image(int frame) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
           if (prefs->audio_player == AUD_PLAYER_PULSE && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) &&
-              mainw->pulsed != NULL && cfile->achans > 0 &&
+              mainw->pulsed != NULL && CURRENT_CLIP_HAS_AUDIO &&
               !(prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0)) {
             if (mainw->pulsed->playing_file == mainw->playing_file && !pulse_audio_seek_frame(mainw->pulsed, frame)) {
               if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, frame);
@@ -5915,7 +5949,7 @@ void load_frame_image(int frame) {
 
         if (!mainw->fs && !prefs->hide_framebar && !mainw->is_rendering) {
           lives_freep((void **)&framecount);
-          if (cfile->frames > 0 && cfile->frames != 123456789) {
+          if (CURRENT_CLIP_HAS_VIDEO && cfile->frames != 123456789) {
             framecount = lives_strdup_printf("%9d/%d", frame, cfile->frames);
           } else {
             framecount = lives_strdup_printf("%9d", frame);
@@ -6838,7 +6872,7 @@ void load_frame_image(int frame) {
     } else {
       if (frame > mainw->rec_vid_frames) {
         mainw->cancelled = CANCEL_KEEP;
-        if (cfile->frames > 0) cfile->frames = mainw->rec_vid_frames;
+        if (CURRENT_CLIP_HAS_VIDEO) cfile->frames = mainw->rec_vid_frames;
         return;
       }
 
@@ -6941,11 +6975,11 @@ void load_frame_image(int frame) {
 
   void close_current_file(int file_to_switch_to) {
     // close the current file, and free the file struct and all sub storage
-    char *com, *tmp;
     LiVESList *list_index;
+    char *com;
+    boolean need_new_blend_file = FALSE;
     int index = -1;
     int old_file = mainw->current_file;
-    boolean need_new_blend_file = FALSE;
 
     if (mainw->playing_file == -1) {
       if (mainw->current_file != mainw->scrap_file) desensitize();
@@ -6992,8 +7026,8 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->autolives, TRUE);
       lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
       lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
-      lives_widget_set_sensitive(mainw->vj_reset, mainw->current_file > 0);
-      lives_widget_set_sensitive(mainw->vj_realize, mainw->current_file > 0 && cfile->frame_index != NULL);
+      lives_widget_set_sensitive(mainw->vj_reset, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
+      lives_widget_set_sensitive(mainw->vj_realize, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->frame_index != NULL);
       lives_widget_set_sensitive(mainw->clear_ds, TRUE);
       lives_widget_set_sensitive(mainw->midi_learn, TRUE);
       lives_widget_set_sensitive(mainw->midi_save, has_devicemap(-1));
@@ -7008,7 +7042,7 @@ void load_frame_image(int frame) {
 #endif
     }
     //update the bar text
-    if (mainw->current_file > -1) {
+    if (CURRENT_CLIP_IS_VALID) {
       register int i;
       if (cfile->clip_type != CLIP_TYPE_GENERATOR && mainw->current_file != mainw->scrap_file &&
           mainw->current_file != mainw->ascrap_file &&
@@ -7179,81 +7213,64 @@ void load_frame_image(int frame) {
           }
         }
       }
+    }
 
-      // no other clips
-      mainw->current_file = -1;
-      mainw->blend_file = -1;
-      set_main_title(NULL, 0);
+    // no other clips
+    mainw->current_file = -1;
+    mainw->blend_file = -1;
+    set_main_title(NULL, 0);
 
-      lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
-      lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
-      lives_widget_set_sensitive(mainw->export_proj, FALSE);
-      lives_widget_set_sensitive(mainw->import_proj, FALSE);
+    lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
+    lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
+    lives_widget_set_sensitive(mainw->export_proj, FALSE);
+    lives_widget_set_sensitive(mainw->import_proj, FALSE);
 
-      if (mainw->multitrack != NULL) lives_widget_set_sensitive(mainw->multitrack->load_set, TRUE);
+    if (mainw->multitrack != NULL) lives_widget_set_sensitive(mainw->multitrack->load_set, TRUE);
 
-      // can't use set_undoable, as we don't have a cfile
-      set_menu_text(mainw->undo, _("_Undo"), TRUE);
-      set_menu_text(mainw->redo, _("_Redo"), TRUE);
-      lives_widget_hide(mainw->redo);
-      lives_widget_show(mainw->undo);
-      lives_widget_set_sensitive(mainw->undo, FALSE);
+    // can't use set_undoable, as we don't have a cfile
+    set_menu_text(mainw->undo, _("_Undo"), TRUE);
+    set_menu_text(mainw->redo, _("_Redo"), TRUE);
+    lives_widget_hide(mainw->redo);
+    lives_widget_show(mainw->undo);
+    lives_widget_set_sensitive(mainw->undo, FALSE);
 
-      if (!mainw->is_ready) return;
+    if (!mainw->is_ready) return;
 
-      if (mainw->playing_file == -1 && mainw->play_window != NULL) {
-        // if the clip is loaded
-        if (mainw->preview_box == NULL) {
-          // create the preview box that shows frames...
-          make_preview_box();
-        }
-        // add it the play window...
-        if (lives_widget_get_parent(mainw->preview_box) == NULL) {
-          lives_widget_queue_draw(mainw->play_window);
-          lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
-          lives_widget_grab_focus(mainw->preview_spinbutton);
-        }
-
-        lives_widget_hide(mainw->preview_controls);
-
-        // and resize it
-        resize_play_window();
-
-        play_window_set_title();
-
-        load_preview_image(FALSE);
+    if (mainw->playing_file == -1 && mainw->play_window != NULL) {
+      // if the clip is loaded
+      if (mainw->preview_box == NULL) {
+        // create the preview box that shows frames...
+        make_preview_box();
+      }
+      // add it the play window...
+      if (lives_widget_get_parent(mainw->preview_box) == NULL) {
+        lives_widget_queue_draw(mainw->play_window);
+        lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
+        lives_widget_grab_focus(mainw->preview_spinbutton);
       }
 
-      if (mainw->multitrack == NULL) {
-        resize(1);
-        load_start_image(0);
-        load_end_image(0);
-      }
+      lives_widget_hide(mainw->preview_controls);
+
+      // and resize it
+      resize_play_window();
+
+      play_window_set_title();
+
+      load_preview_image(FALSE);
+    }
+
+    if (mainw->multitrack == NULL) {
+      resize(1);
+      lives_widget_hide(mainw->playframe);
+      load_start_image(0);
+      load_end_image(0);
     }
 
     set_sel_label(mainw->sel_label);
 
-    lives_label_set_text(LIVES_LABEL(mainw->vidbar), _("Video"));
-    tmp = get_achannel_name(2, 0);
-    lives_label_set_text(LIVES_LABEL(mainw->laudbar), tmp);
-    lives_free(tmp);
-    tmp = get_achannel_name(2, 1);
-    lives_label_set_text(LIVES_LABEL(mainw->raudbar), tmp);
-    lives_free(tmp);
-
     zero_spinbuttons();
-    lives_widget_hide(mainw->hruler);
-    lives_widget_hide(mainw->eventbox5);
+    show_playbar_labels(-1);
 
-    if (palette->style & STYLE_1) {
-      lives_widget_hide(mainw->vidbar);
-      lives_widget_hide(mainw->laudbar);
-      lives_widget_hide(mainw->raudbar);
-    } else {
-      lives_widget_show(mainw->vidbar);
-      lives_widget_show(mainw->laudbar);
-      lives_widget_show(mainw->raudbar);
-    }
     if (!mainw->only_close) {
       lives_widget_queue_draw(mainw->LiVES);
       if (mainw->playing_file == -1) d_print("");
@@ -7295,7 +7312,7 @@ void load_frame_image(int frame) {
 
     if (mainw->playing_file == -1 && mainw->multitrack != NULL) return;
 
-    if (cfile->frames) {
+    if (CURRENT_CLIP_HAS_VIDEO) {
       mainw->pwidth = cfile->hsize;
       mainw->pheight = cfile->vsize;
 
@@ -7374,8 +7391,7 @@ void load_frame_image(int frame) {
     }
 
     if (cfile->opening || !(cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
-      load_start_image(0);
-      load_end_image(0);
+      resize(1);
       lives_widget_set_sensitive(mainw->rename, FALSE);
     }
 
@@ -7389,7 +7405,7 @@ void load_frame_image(int frame) {
 
     if (!mainw->switch_during_pb) {
       // switch on/off loop video if we have/don't have audio
-      if (cfile->achans == 0) {
+      if (!CURRENT_CLIP_HAS_AUDIO) {
         mainw->loop = FALSE;
       } else {
         mainw->loop = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video));
@@ -7397,21 +7413,21 @@ void load_frame_image(int frame) {
 
       lives_widget_set_sensitive(mainw->undo, cfile->undoable);
       lives_widget_set_sensitive(mainw->redo, cfile->redoable);
-      lives_widget_set_sensitive(mainw->export_submenu, (cfile->achans > 0));
+      lives_widget_set_sensitive(mainw->export_submenu, (CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
-      lives_widget_set_sensitive(mainw->recaudio_sel, (cfile->frames > 0));
-      lives_widget_set_sensitive(mainw->export_selaudio, (cfile->frames > 0));
-      lives_widget_set_sensitive(mainw->append_audio, (cfile->achans > 0));
-      lives_widget_set_sensitive(mainw->trim_submenu, (cfile->achans > 0));
-      lives_widget_set_sensitive(mainw->trim_audio, mainw->current_file > 0 && (cfile->achans * cfile->frames > 0));
-      lives_widget_set_sensitive(mainw->trim_to_pstart, (cfile->achans > 0 && cfile->pointer_time > 0.));
-      lives_widget_set_sensitive(mainw->delaudio_submenu, (cfile->achans > 0));
-      lives_widget_set_sensitive(mainw->delsel_audio, (cfile->frames > 0));
-      lives_widget_set_sensitive(mainw->sa_button, cfile->frames > 0 && (cfile->start > 1 || cfile->end < cfile->frames));
-      lives_widget_set_sensitive(mainw->resample_audio, (cfile->achans > 0 && capable->has_sox_sox));
-      lives_widget_set_sensitive(mainw->fade_aud_in, cfile->achans > 0);
-      lives_widget_set_sensitive(mainw->fade_aud_out, cfile->achans > 0);
-      lives_widget_set_sensitive(mainw->loop_video, (cfile->achans > 0 && cfile->frames > 0));
+      lives_widget_set_sensitive(mainw->recaudio_sel, (CURRENT_CLIP_HAS_VIDEO));
+      lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO));
+      lives_widget_set_sensitive(mainw->append_audio, (CURRENT_CLIP_HAS_AUDIO));
+      lives_widget_set_sensitive(mainw->trim_submenu, (CURRENT_CLIP_HAS_AUDIO));
+      lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD && (cfile->achans * CURRENT_CLIP_HAS_VIDEO));
+      lives_widget_set_sensitive(mainw->trim_to_pstart, (CURRENT_CLIP_HAS_AUDIO && cfile->pointer_time > 0.));
+      lives_widget_set_sensitive(mainw->delaudio_submenu, (CURRENT_CLIP_HAS_AUDIO));
+      lives_widget_set_sensitive(mainw->delsel_audio, (CURRENT_CLIP_HAS_VIDEO));
+      lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames));
+      lives_widget_set_sensitive(mainw->resample_audio, (CURRENT_CLIP_HAS_AUDIO && capable->has_sox_sox));
+      lives_widget_set_sensitive(mainw->fade_aud_in, CURRENT_CLIP_HAS_AUDIO);
+      lives_widget_set_sensitive(mainw->fade_aud_out, CURRENT_CLIP_HAS_AUDIO);
+      lives_widget_set_sensitive(mainw->loop_video, (CURRENT_CLIP_HAS_AUDIO && CURRENT_CLIP_HAS_VIDEO));
     }
 
     set_menu_text(mainw->undo, cfile->undo_text, TRUE);
@@ -7459,7 +7475,7 @@ void load_frame_image(int frame) {
       if (mainw->fs) {
         //on_full_screen_activate (NULL,LIVES_INT_TO_POINTER (1));
       } else {
-        if (!mainw->faded && cfile->frames > 0) {
+        if (!mainw->faded && CURRENT_CLIP_HAS_VIDEO) {
           lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
           lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 1, cfile->frames);
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
@@ -7710,7 +7726,7 @@ void load_frame_image(int frame) {
       if (!((mainw->fs && prefs->gui_monitor == prefs->play_monitor) || (mainw->faded && mainw->double_size && !mainw->fs) ||
             mainw->multitrack != NULL)) {
         switch_to_file(mainw->current_file = 0, new_file);
-        if (mainw->play_window != NULL && !mainw->double_size && !mainw->fs && mainw->current_file != -1 && cfile != NULL &&
+        if (mainw->play_window != NULL && !mainw->double_size && !mainw->fs && CURRENT_CLIP_IS_VALID &&
             (ohsize != cfile->hsize || ovsize != cfile->vsize)) {
           // for single size sepwin, we resize frames to fit the window
           mainw->must_resize = TRUE;
@@ -7722,7 +7738,7 @@ void load_frame_image(int frame) {
     }
 
     // reset old info file
-    if (cfile != NULL) {
+    if (CURRENT_CLIP_IS_VALID) {
       char *tmp;
       tmp = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
       lives_snprintf(cfile->info_file, PATH_MAX, "%s", tmp);
@@ -7740,7 +7756,7 @@ void load_frame_image(int frame) {
 
     mainw->whentostop = NEVER_STOP;
 
-    if (cfile != NULL && cfile->clip_type == CLIP_TYPE_GENERATOR && new_file != mainw->current_file &&
+    if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && new_file != mainw->current_file &&
         new_file != mainw->blend_file && !mainw->is_rendering) {
       if (mainw->files[new_file]->clip_type == CLIP_TYPE_DISK || mainw->files[new_file]->clip_type == CLIP_TYPE_FILE)
         mainw->pre_src_file = new_file;
@@ -7844,8 +7860,8 @@ void load_frame_image(int frame) {
     int scr_height = GUI_SCREEN_HEIGHT;
 
     if (!prefs->show_gui || mainw->multitrack != NULL) return;
-    get_border_size(mainw->LiVES, &bx, &by);
 
+    get_border_size(mainw->LiVES, &bx, &by);
     w = lives_widget_get_allocation_width(mainw->LiVES);
     h = lives_widget_get_allocation_height(mainw->LiVES);
 
@@ -7866,7 +7882,7 @@ void load_frame_image(int frame) {
       vsize = (scr_height - V_RESIZE_ADJUST - by) / scale;
     }
 
-    if (mainw->current_file == -1 || cfile == NULL || cfile->hsize == 0) {
+    if (!CURRENT_CLIP_IS_VALID || cfile->hsize == 0) {
       hsize = mainw->def_width - H_RESIZE_ADJUST;
     } else {
       if (cfile->hsize < hsize) {
@@ -7874,7 +7890,7 @@ void load_frame_image(int frame) {
       }
     }
 
-    if (mainw->current_file == -1 || cfile == NULL || cfile->vsize == 0) {
+    if (!CURRENT_CLIP_IS_VALID || cfile->vsize == 0) {
       vsize = mainw->def_height - V_RESIZE_ADJUST;
     } else {
       if (cfile->hsize > 0 && (cfile->vsize * hsize / cfile->hsize < vsize)) {
@@ -7895,7 +7911,7 @@ void load_frame_image(int frame) {
       mainw->ce_frame_width = (int)(hsize / scale + H_RESIZE_ADJUST);
       mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST;
 
-      if (mainw->current_file > -1 && cfile != NULL) {
+      if (CURRENT_CLIP_IS_VALID) {
         if (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV) {
           if (mainw->camframe == NULL) {
             LiVESError *error = NULL;
@@ -7916,7 +7932,7 @@ void load_frame_image(int frame) {
         }
       }
 
-      if (mainw->fs && !mainw->sep_win && cfile->frames > 0 && mainw->playing_file > -1) {
+      if (mainw->playing_file > -1 && mainw->fs && !mainw->sep_win && CURRENT_CLIP_HAS_VIDEO) {
         mainw->ce_frame_width = w;
         mainw->ce_frame_height = h - lives_widget_get_allocation_height(mainw->btoolbar);
       }
@@ -7936,6 +7952,9 @@ void load_frame_image(int frame) {
 
       // IMPORTANT (or the entire image will not be shown)
       lives_widget_set_size_request(mainw->play_image, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
+
+      if (mainw->current_file == -1) {
+      }
     } else {
       xsize = (scr_width - hsize * -oscale - H_RESIZE_ADJUST) / 2;
       if (xsize > 0) {
@@ -7954,9 +7973,24 @@ void load_frame_image(int frame) {
       }
     }
 
-    if (!mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
-        cfile->clip_type == CLIP_TYPE_FILE)) {
+    if (!mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening || cfile->clip_type == CLIP_TYPE_FILE)) {
       load_start_image(cfile->start);
       load_end_image(cfile->end);
+    }
+
+    if (!mainw->foreign && mainw->current_file == -1) {
+      // mostly needs overriding in load_start/end_image()
+
+      hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
+      vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
+      //hsize = mainw->def_width - H_RESIZE_ADJUST;
+      //vsize = mainw->def_height - V_RESIZE_ADJUST;
+      lives_widget_set_size_request(mainw->frame1, vsize, hsize);
+      lives_widget_set_size_request(mainw->eventbox3, vsize, hsize);
+      lives_widget_set_size_request(mainw->frame2, vsize, hsize);
+      lives_widget_set_size_request(mainw->eventbox4, vsize, hsize);
+      lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+      load_start_image(0);
+      load_end_image(0);
     }
   }

@@ -772,6 +772,8 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *r
 LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invisible_outline);
 
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean active, LiVESBox *, const char *tooltip);
+LiVESWidget *lives_glowing_check_button_new(const char *labeltext, boolean active, LiVESBox *box,
+    const char *tooltip, boolean *togglevalue);
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList **rbgroup,
     LiVESBox *, const char *tooltip);
 LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, double min,
@@ -821,6 +823,9 @@ void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state, boolean se
 void lives_widget_apply_theme3(LiVESWidget *, LiVESWidgetState state); // info base/text
 
 boolean lives_image_scale(LiVESImage *, int width, int height, LiVESInterpType interp_type);
+
+boolean lives_widget_queue_draw_if_visible(LiVESWidget *);
+boolean lives_widget_queue_draw_and_update(LiVESWidget *widget);
 
 boolean global_recent_manager_add(const char *file_name);
 
@@ -879,6 +884,7 @@ boolean unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);
 
 boolean get_border_size(LiVESWidget *win, int *bx, int *by);
+boolean lives_window_get_inner_size(LiVESWindow *, int *x, int *y);
 
 LiVESWidget *add_hsep_to_box(LiVESBox *);
 LiVESWidget *add_vsep_to_box(LiVESBox *);

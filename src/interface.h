@@ -7,6 +7,24 @@
 #ifndef HAS_LIVES_INTERFACE_H
 #define HAS_LIVES_INTERFACE_H
 
+// CE timeline bars
+#define OVERDRAW_MARGIN 16
+
+/// clip editor hrule height
+#define CE_HRULE_HEIGHT ((int)(20. * widget_opts.scale))
+
+/// clip edit vid/aud bar height
+#define CE_VIDBAR_HEIGHT ((int)(4. * widget_opts.scale))
+
+/// clip edit vid/aud bar height
+#define CE_AUDBAR_HEIGHT ((int)(16. * widget_opts.scale))
+
+void draw_little_bars(double ptrtime, int which);
+double lives_ce_update_timeline(int frame, double x);  ///< pointer position in timeline
+void update_timer_bars(int posx, int posy, int width, int height, int which); ///< draw the timer bars
+void redraw_timer_bars(double oldx, double newx, int which); ///< paint a damage region
+void show_playbar_labels(int clipno);
+
 LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking);
 LiVESWidget *create_opensel_dialog(void);
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);

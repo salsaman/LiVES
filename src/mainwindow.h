@@ -84,26 +84,22 @@
 /// height of msg area
 #define MSG_AREA_HEIGHT ((int)(50. * widget_opts.scale))
 
-/// clip editor hrule height
-#define CE_HRULE_HEIGHT ((int)(20. * widget_opts.scale))
-
-/// clip edit vid/aud bar height
-#define CE_VIDBAR_HEIGHT ((int)(4. * widget_opts.scale))
-
-/// clip edit vid/aud bar height
-#define CE_AUDBAR_HEIGHT ((int)(16. * widget_opts.scale))
-
 /// (unexpanded) height of rows in treeviews
 #define TREE_ROW_HEIGHT ((int)(60. * widget_opts.scale))
 
 // a few GUI specific settings
 #define GUI_SCREEN_WIDTH (mainw->mgeom[widget_opts.monitor].width)
 #define GUI_SCREEN_HEIGHT (mainw->mgeom[widget_opts.monitor].height)
+#define GUI_SCREEN_X (mainw->mgeom[widget_opts.monitor].x)
+#define GUI_SCREEN_Y (mainw->mgeom[widget_opts.monitor].y)
 
 #define SCREEN_SCALE_DEF_WIDTH 1200
 
-#define DEFAULT_FRAME_HSIZE ((int)(640. * widget_opts.scale))
-#define DEFAULT_FRAME_VSIZE ((int)(400. * widget_opts.scale))
+#define DEFAULT_FRAME_HSIZE_UNSCALED 640
+#define DEFAULT_FRAME_VSIZE_UNSCALED 480
+
+#define DEFAULT_FRAME_HSIZE ((int)((double)DEFAULT_FRAME_HSIZE_UNSCALED * widget_opts.scale))
+#define DEFAULT_FRAME_VSIZE ((int)((double)DEFAULT_FRAME_VSIZE_UNSCALED * widget_opts.scale))
 
 #define FRAMEBLANK_MIN_WIDTH ((int)(240. * widget_opts.scale))
 #define FRAMEBLANK_MAX_WIDTH ((int)(600. * widget_opts.scale))
@@ -950,6 +946,8 @@ typedef struct {
 
   weed_plant_t *fd_layer_orig; ///< original layer uneffected
   weed_plant_t *fd_layer; ///< framedraw preview layer
+
+  LiVESWidget *hbox3;  ///< hbox with start / end spins and selection label (C.E.)
 
   // bars here -> actually text above bars
   LiVESWidget *vidbar;

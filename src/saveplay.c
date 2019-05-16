@@ -283,7 +283,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
   weed_plant_t *mt_pb_start_event = NULL;
 
-  if (old_file == -1 || !cfile->opening) {
+  if (old_file == -1 || !CURRENT_CLIP_IS_VALID || !cfile->opening) {
     new_file = mainw->first_free_file;
 
     if (!get_new_handle(new_file, fname)) {
@@ -667,8 +667,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     if (mainw->playing_file > -1) {
       do_quick_switch(current_file);
     } else {
-
-
       switch_to_file((mainw->current_file = (cfile->clip_type != CLIP_TYPE_FILE) ? old_file : current_file), current_file);
     }
 
@@ -2931,7 +2929,8 @@ void play_file(void) {
     /* lives_widget_context_update(); */
     /* mainw->noswitch = FALSE; */
     if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(mainw->LiVES), 0, 0);
-    lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
+    if (prefs->open_maximised)
+      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
   }
 
   if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;

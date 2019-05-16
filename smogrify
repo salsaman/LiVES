@@ -1084,7 +1084,7 @@ if (defined($ARGV[0])) {
 
         if ($command eq "cleanup" || $command eq "weed") {
             smog_chdir("$workdir");
-            print "Cleaning up temporary space for $GUI_NAME.\n";
+            print "Cleaning up working directory for $GUI_NAME.\n";
             if ($command eq "cleanup") {
                 unlink glob "* .* *.*";
 		# will not remove directories
@@ -8118,7 +8118,6 @@ sub weed {
                                 smog_chdir("$workdir");
                                 rmdir "$workdir/$file";
                             }
-
                         }
                         else {
                             smog_system("/bin/rm -rf \"$workdir/$file\"");
@@ -8165,7 +8164,7 @@ sub weed {
     unless ($opts & 0x10) {
 	# clean up a few extra remnants
         smog_chdir("$workdir");
-        unlink glob ".* rfx.* smogplugin.* lock.*";
+        unlink glob ".* rfx.* smogplugin.* lock.* keep_layout*";
         unless (!defined($new_work)||$new_work eq "") {
             unlink glob "firew.* encoder_log_* stream.*";
         }

@@ -580,7 +580,7 @@ static boolean call_set_ping_pong(livespointer data) {
 static boolean call_set_pref_bool(livespointer data) {
   bpref *bdata = (bpref *)data;
   if (mainw != NULL && !mainw->go_away) {
-    pref_factory_bool(bdata->prefidx, bdata->val);
+    pref_factory_bool(bdata->prefidx, bdata->val, TRUE);
     ext_caller_return_int(bdata->id, TRUE);
   } else ext_caller_return_int(bdata->id, FALSE);
   lives_free(bdata->prefidx);

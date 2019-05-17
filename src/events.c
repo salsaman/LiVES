@@ -4519,7 +4519,13 @@ boolean deal_with_render_choice(boolean add_deinit) {
       // preview
       cfile->next_event = get_first_event(mainw->event_list);
       mainw->is_rendering = TRUE;
+      if (prefs->audio_src == AUDIO_SRC_EXT) {
+        pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, FALSE);
+      }
       on_preview_clicked(NULL, NULL);
+      if (future_prefs->audio_src == AUDIO_SRC_EXT) {
+        pref_factory_bool(PREF_REC_EXT_AUDIO, TRUE, FALSE);
+      }
       free_track_decoders();
       deinit_render_effects();
       mainw->is_processing = mainw->is_rendering = FALSE;

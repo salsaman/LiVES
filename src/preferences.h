@@ -628,6 +628,9 @@ typedef struct {
 } _ign_opts;
 
 typedef struct {
+  // if a pref also has an entry in future_prefs, be wary of changing its value
+  // seek to understand why it has a variant value
+
   char workdir[PATH_MAX];
   char theme[64];
   char vpp_name[64]; ///< new video playback plugin
@@ -639,6 +642,7 @@ typedef struct {
   int vpp_fwidth;
   int vpp_fheight;
   int vpp_argc;
+
   char **vpp_argv;
 
   _encoder encoder;
@@ -647,6 +651,8 @@ typedef struct {
   boolean osc_start;
   int startup_interface;
   uint32_t jack_opts;
+
+  int audio_src;
 
   int nfx_threads;
 
@@ -863,7 +869,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_MPLAYER_AUDIO_COMMAND "mplayer_audio_command"
 #define PREF_MPLAYER2_AUDIO_COMMAND "mplayer2_audio_command"
 
-void pref_factory_bool(const char *prefidx, boolean newval);
+void pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
 void pref_factory_int(const char *prefidx, int newval);
 void pref_factory_float(const char *prefidx, float newval);
 void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval);

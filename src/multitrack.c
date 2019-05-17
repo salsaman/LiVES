@@ -846,7 +846,8 @@ uint32_t mt_idle_add(lives_mt *mt) {
 
 
 void recover_layout_cancelled(boolean is_startup) {
-  char *eload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(), capable->mainpid);
+  char *eload_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
+                                         capable->mainpid, LIVES_FILE_EXT_LAYOUT);
 
   if (is_startup) mainw->recoverable_layout = FALSE;
 
@@ -8501,7 +8502,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   tl_vbox = lives_vbox_new(FALSE, 0);
   lives_container_set_border_width(LIVES_CONTAINER(tl_vbox), 0);
 
-  lives_paned_pack(1, LIVES_PANED(mt->vpaned), tl_vbox, TRUE, FALSE);
+  lives_paned_pack(1, LIVES_PANED(mt->vpaned), tl_vbox, FALSE, FALSE);
 
   mt->timeline_table_header = lives_table_new(2, TIMELINE_TABLE_COLUMNS, TRUE);
   lives_table_set_row_spacings(LIVES_TABLE(mt->timeline_table_header), 0);
@@ -9136,6 +9137,11 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   mainw->multitrack = NULL;
   mainw->event_list = NULL;
+
+  if (future_prefs->audio_src == AUDIO_SRC_EXT) {
+    // switch back to external audio
+    pref_factory_bool(PREF_REC_EXT_AUDIO, TRUE, FALSE);
+  }
 
   if (prefs->show_gui) {
     if (lives_widget_get_parent(mt->top_vbox) != NULL) {
@@ -10967,6 +10973,11 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   multi->no_expose = FALSE;
 
   lives_container_child_set_shrinkable(LIVES_CONTAINER(multi->hpaned), multi->context_frame, TRUE);
+
+  if (prefs->audio_src == AUDIO_SRC_EXT) {
+    // switch to internal audio for multitrack
+    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, FALSE);
+  }
 
   lives_idle_add(mt_idle_show_current_frame, (livespointer)multi);
 

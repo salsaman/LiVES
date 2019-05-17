@@ -100,13 +100,11 @@ typedef struct {
 
   uint64_t chunk_size;
 
-  volatile double volume_linear; ///< TODO: use perchannel volume[]
+  double volume_linear; ///< TODO: use perchannel volume[]
 
   volatile int astream_fd;
 
   volatile float abs_maxvol_heard;
-
-  volatile boolean waitforop;
 
   volatile boolean is_corked;
 } pulse_driver_t;
@@ -137,7 +135,7 @@ boolean pulse_try_reconnect(void);
 // utils
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg from msgq, or return NULL
 
-int64_t pulse_audio_seek_bytes(pulse_driver_t *, int64_t bytes);  ///< seek to byte position
+int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip_t *sfile);
 
 void pa_time_reset(pulse_driver_t *pulsed, int64_t offset);
 

@@ -2676,6 +2676,8 @@ static boolean lives_startup(livespointer data) {
       set_int_pref(PREF_AUDIO_SRC, prefs->audio_src);
     }
 
+    future_prefs->audio_src = prefs->audio_src;
+
     splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
 
     if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
@@ -2998,7 +3000,7 @@ static boolean lives_startup(livespointer data) {
   }
   if (mainw->scrap_file != -1) {
     if (!layout_recovered || mainw->multitrack == NULL || !used_in_current_layout(mainw->multitrack, mainw->scrap_file)) {
-      close_scrap_file(FALSE); // ignore leave file on disk for recovery purposes
+      close_scrap_file(FALSE); // ignore but leave file on disk for recovery purposes
     }
   }
 
@@ -3406,12 +3408,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           lives_snprintf(buff, 256, "%s", optarg);
           // override audio source
           if (!strcmp(buff, _("external")) || !strcmp(buff, "external")) { // handle translated and original strings
-            prefs->audio_src = AUDIO_SRC_EXT;
+            future_prefs->audio_src = prefs->audio_src = AUDIO_SRC_EXT;
             ign_opts.ign_asource = TRUE;
           } else if (strcmp(buff, _("internal")) && strcmp(buff, "internal")) { // handle translated and original strings
             lives_printerr(_("Invalid audio source %s\n"), buff);
           } else {
-            prefs->audio_src = AUDIO_SRC_INT;
+            future_prefs->audio_src = prefs->audio_src = AUDIO_SRC_INT;
             ign_opts.ign_asource = TRUE;
           }
           continue;
@@ -7868,10 +7870,14 @@ void load_frame_image(int frame) {
     h = lives_widget_get_allocation_height(mainw->LiVES);
 
     if (prefs->open_maximised || w > scr_width - bx || h > scr_height - by) {
-      w = scr_width - bx;
-      h = scr_height - by;
-      lives_window_resize(LIVES_WINDOW(mainw->LiVES), w, h);
-      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
+      if (w > scr_width - bx || h > scr_height - by) {
+        w = scr_width - bx;
+        h = scr_height - by;
+        lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
+        lives_window_resize(LIVES_WINDOW(mainw->LiVES), w, h);
+      }
+      if (prefs->open_maximised)
+        lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
     }
 
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)

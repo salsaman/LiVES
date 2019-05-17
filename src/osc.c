@@ -2784,7 +2784,7 @@ boolean lives_osc_cb_pref_set_audio_source(void *context, int arglen, const void
   if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs, &val);
   if (val != AUDIO_SRC_INT && val != AUDIO_SRC_EXT) return lives_osc_notify_failure();
-  pref_factory_bool(PREF_REC_EXT_AUDIO, val == AUDIO_SRC_EXT);
+  pref_factory_bool(PREF_REC_EXT_AUDIO, val == AUDIO_SRC_EXT, FALSE);
   return lives_osc_notify_success(NULL);
 }
 

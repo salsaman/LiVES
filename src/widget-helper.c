@@ -9386,6 +9386,7 @@ boolean lives_scroll_to_end(LiVESScrolledWindow *scrolledwindow) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 8, 0)
   LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(scrolledwindow));
+  lives_adjustment_set_upper(adj, 100.);
   lives_adjustment_set_value(adj, LIVES_MAXDOUBLE);
   return TRUE;
 #endif

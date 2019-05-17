@@ -2562,13 +2562,6 @@ void play_file(void) {
           init_track_decoders();
 
         if (has_audio_buffers) {
-          lives_signal_handler_block(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
-          lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), FALSE);
-          lives_signal_handler_unblock(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
-
-          lives_signal_handler_block(mainw->int_audio_checkbutton, mainw->int_audio_func);
-          lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), TRUE);
-          lives_signal_handler_unblock(mainw->int_audio_checkbutton, mainw->int_audio_func);
 
 #ifdef ENABLE_JACK
           if (audio_player == AUD_PLAYER_JACK) {
@@ -2753,7 +2746,7 @@ void play_file(void) {
         pulse_message.data = NULL;
         pulse_message.next = NULL;
         mainw->pulsed->msgq = &pulse_message;
-      }
+      } else if (mainw->pulsed != NULL) pulse_driver_cork(mainw->pulsed);
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
         insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
@@ -2844,14 +2837,6 @@ void play_file(void) {
     lives_close_buffered(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src));
     mainw->files[mainw->scrap_file]->ext_src = NULL;
   }
-
-  lives_signal_handler_block(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
-  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
-  lives_signal_handler_unblock(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
-
-  lives_signal_handler_block(mainw->int_audio_checkbutton, mainw->int_audio_func);
-  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
-  lives_signal_handler_unblock(mainw->int_audio_checkbutton, mainw->int_audio_func);
 
   if (mainw->foreign) {
     // recording from external window capture
@@ -5660,7 +5645,10 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_free(recovery_file);
   lives_free(recovery_numbering_file);
 
-  if (mainw->com_failed) return FALSE;
+  if (mainw->com_failed) {
+    rewrite_recovery_file();
+    return FALSE;
+  }
 
   com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\"", prefs->backend_sync, luid, lgid, capable->myname);
   lives_system(com, FALSE);

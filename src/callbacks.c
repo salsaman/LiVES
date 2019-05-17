@@ -7203,7 +7203,7 @@ void on_audio_toggled(LiVESWidget *tbutton, livespointer user_data) {
     lives_signal_stop_emission_by_name(tbutton, LIVES_WIDGET_TOGGLED_SIGNAL);
     return;
   }
-  pref_factory_bool(PREF_REC_EXT_AUDIO, prefs->audio_src != AUDIO_SRC_EXT);
+  pref_factory_bool(PREF_REC_EXT_AUDIO, prefs->audio_src != AUDIO_SRC_EXT, TRUE);
 }
 
 
@@ -7363,8 +7363,8 @@ void on_mute_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->playing_file > -1 && mainw->pulsed != NULL) {
     mainw->pulsed->mute = mainw->mute;
     if (mainw->pulsed->playing_file == mainw->current_file && CURRENT_CLIP_HAS_AUDIO && !mainw->is_rendering) {
-      if (!pulse_audio_seek_bytes(mainw->pulsed, mainw->pulsed->seek_pos)) {
-        if (pulse_try_reconnect()) pulse_audio_seek_bytes(mainw->pulsed, mainw->pulsed->seek_pos);
+      if (!pulse_audio_seek_bytes(mainw->pulsed, mainw->pulsed->seek_pos, cfile)) {
+        if (pulse_try_reconnect()) pulse_audio_seek_bytes(mainw->pulsed, mainw->pulsed->seek_pos, cfile);
       }
       mainw->pulsed->in_use = TRUE;
     }

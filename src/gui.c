@@ -2988,18 +2988,15 @@ void show_lives(void) {
     lives_widget_hide(mainw->merge);
   }
 
-  /* if (palette->style & STYLE_1 && mainw->current_file == -1) { */
-  /*   lives_widget_hide(mainw->vidbar); */
-  /*   lives_widget_hide(mainw->laudbar); */
-  /*   lives_widget_hide(mainw->raudbar); */
-  /* } */
+  if (!LIVES_IS_RANGE(mainw->hruler)) lives_widget_set_sensitive(mainw->hruler, FALSE);
+
+  if (palette->style & STYLE_1 && mainw->current_file == -1) {
+    show_playbar_labels(-1);
+  }
 
   if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) ||
         (prefs->audio_player == AUD_PLAYER_PULSE && capable->has_pulse_audio)))
     lives_widget_hide(mainw->vol_toolitem);
-
-  if (!LIVES_IS_RANGE(mainw->hruler)) lives_widget_set_sensitive(mainw->hruler, FALSE);
-  lives_widget_hide(mainw->hruler);
 
   if (prefs->present && prefs->show_gui)
     lives_window_present(LIVES_WINDOW(mainw->LiVES));

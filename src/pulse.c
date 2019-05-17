@@ -207,16 +207,6 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
 
 static short *shortbuffer = NULL;
 
-static void pulse_audio_write_process_dummy(pa_stream *pstream, size_t nbytes, void *arg) {
-  pulse_driver_t *pulsed = (pulse_driver_t *)arg;
-  uint64_t nsamples = nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
-  size_t xbytes = pa_stream_writable_size(pstream);
-  sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3), xbytes);
-  //g_print("pt a1 %ld\n",nsamples);
-  return;
-}
-
-
 static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *arg) {
   // PULSE AUDIO calls this periodically to get the next audio buffer
 
@@ -339,9 +329,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       if (!pulsed->is_paused) pulsed->frames_written += nsamples;
       if (pulsed->seek_pos < 0. && pulsed->playing_file > -1 && afile != NULL) {
         pulsed->seek_pos += nsamples * afile->achans * afile->asampsize / 8;
-        if (pulsed->seek_pos >= 0) pulse_audio_seek_bytes(pulsed, pulsed->seek_pos);
+        if (pulsed->seek_pos >= 0) pulse_audio_seek_bytes(pulsed, pulsed->seek_pos, afile);
       }
-      //g_print("pt a3 %d\n",pulsed->in_use);
+#ifdef DEBUG_PULSE
+      g_print("pt a3 %d\n", pulsed->in_use);
+#endif
       return;
     }
 
@@ -354,7 +346,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         // playing back from memory buffers instead of from file
         // this is used in multitrack
         from_memory = TRUE;
-
         numFramesToWrite = pulseFramesAvailable;
         pulsed->frames_written += numFramesToWrite;
         pulseFramesAvailable -= numFramesToWrite;
@@ -366,12 +357,14 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               && mainw->files[playfile] != NULL && mainw->files[playfile]->achans > 0) {
             xfile = mainw->files[playfile];
           }
-
           pulsed->aPlayPtr->size = 0;
           in_bytes = ABS((in_frames = ((double)pulsed->in_arate / (double)pulsed->out_arate *
                                        (double)pulseFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT32))))
                      * pulsed->in_achans * (pulsed->in_asamps >> 3);
-          //g_print("in bytes=%ld %ld %ld %ld %d %d\n",in_bytes,pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable,pulsed->in_achans,pulsed->in_asamps);
+#ifdef DEBUG_PULSE
+          g_print("in bytes=%ld %ld %ld %ld %ld %ld\n", in_bytes, pulsed->in_arate, pulsed->out_arate, pulseFramesAvailable, pulsed->in_achans,
+                  pulsed->in_asamps);
+#endif
           if ((shrink_factor = (float)in_frames / (float)pulseFramesAvailable) < 0.f) {
             // reverse playback
             if ((pulsed->seek_pos -= in_bytes) < 0) {
@@ -422,7 +415,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
                                  (pulsed->out_asamps >> 3), xbytes);
             pulsed->frames_written += nsamples;
-            //g_print("pt a4\n");
+#ifdef DEBUG_PULSE
+            g_print("pt a4\n");
+#endif
             return;
           } else {
             boolean loop_restart;
@@ -466,6 +461,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                       sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
                                            (pulsed->out_asamps >> 3), xbytes);
                       if (!pulsed->is_paused) pulsed->frames_written += nsamples;
+#ifdef DEBUG_PULSE
+                      g_print("pt X\n");
+#endif
                       return;
                     }
                     if (shrink_factor < 0.f) {
@@ -498,9 +496,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if (!pulsed->is_paused) pulsed->frames_written += nsamples;
           if (pulsed->seek_pos < 0. && pulsed->playing_file > -1 && afile != NULL) {
             pulsed->seek_pos += nsamples * afile->achans * afile->asampsize / 8;
-            if (pulsed->seek_pos >= 0) pulse_audio_seek_bytes(pulsed, pulsed->seek_pos);
+            if (pulsed->seek_pos >= 0) pulse_audio_seek_bytes(pulsed, pulsed->seek_pos, afile);
           }
-          //g_print("pt a5 %d %d\n",pulsed->in_use,in_bytes);
+#ifdef DEBUG_PULSE
+          g_print("pt a5 %d %ld\n", pulsed->in_use, in_bytes);
+#endif
           return;
         }
 
@@ -517,7 +517,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           numFramesToWrite = MIN(pulseFramesAvailable, (inputFramesAvailable / ABS(shrink_factor) + .001));
 
 #ifdef DEBUG_PULSE
-          lives_printerr("inputFramesAvailable after conversion %d\n", (uint64_t)((double)inputFramesAvailable / shrink_factor + .001));
+          lives_printerr("inputFramesAvailable after conversion %ld\n", (uint64_t)((double)inputFramesAvailable / shrink_factor + .001));
           lives_printerr("nsamples == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",  nsamples,
                          pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
 #endif
@@ -532,6 +532,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
                                    (pulsed->out_asamps >> 3), xbytes);
               if (!pulsed->is_paused) pulsed->frames_written += nsamples;
+#ifdef DEBUG_PULSE
+              g_print("pt X2\n");
+#endif
               return;
             }
 
@@ -704,11 +707,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       // playback from memory or file
 
       if (mainw->volume != pulsed->volume_linear) {
-        pa_operation *pa_op;
+        pa_operation *paop;
         pavol = pa_sw_volume_from_linear(mainw->volume);
         pa_cvolume_set(&pulsed->volume, pulsed->out_achans, pavol);
-        pa_op = pa_context_set_sink_input_volume(pulsed->con, pa_stream_get_index(pulsed->pstream), &pulsed->volume, NULL, NULL);
-        pa_operation_unref(pa_op);
+        paop = pa_context_set_sink_input_volume(pulsed->con, pa_stream_get_index(pulsed->pstream), &pulsed->volume, NULL, NULL);
+        pa_operation_unref(paop);
         pulsed->volume_linear = mainw->volume;
       }
 
@@ -730,6 +733,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
                                    (pulsed->out_asamps >> 3), nbytes);
               if (!pulsed->is_paused) pulsed->frames_written += nsamples;
+#ifdef DEBUG_PULSE
+              g_print("pt X3\n");
+#endif
               return;
             }
             lives_memcpy(buffer, pulsed->sound_buffer + offs, xbytes);
@@ -763,6 +769,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
                                    (pulsed->out_asamps >> 3), nbytes);
               if (!pulsed->is_paused) pulsed->frames_written += nsamples;
+#ifdef DEBUG_PULSE
+              g_print("pt X4\n");
+#endif
               return;
             }
             sample_move_abuf_int16(shortbuffer, pulsed->out_achans, (xbytes >> 1) / pulsed->out_achans, pulsed->out_arate);
@@ -802,7 +811,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     }
   } else {
 #ifdef DEBUG_PULSE
-    if (pulsed->state == PA_STREAM_UNCONNECTED || pulsed->stream == PA_STREAM_CREATING)
+    if (pulsed->state == PA_STREAM_UNCONNECTED || pulsed->state == PA_STREAM_CREATING)
       LIVES_INFO("pulseaudio stream UNCONNECTED or CREATING");
     else
       LIVES_WARN("pulseaudio stream FAILED or TERMINATED");
@@ -810,7 +819,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   }
 
 #ifdef DEBUG_PULSE
-  // lives_printerr("done\n");
+  lives_printerr("done\n");
 #endif
 }
 
@@ -1118,7 +1127,6 @@ int pulse_audio_init(void) {
   pulsed.chunk_size = 0;
   pulsed.astream_fd = -1;
   pulsed.abs_maxvol_heard = 0.;
-  pulsed.waitforop = FALSE;
   pulsed.pulsed_died = FALSE;
   pulsed.aPlayPtr = (audio_buffer_t *)lives_malloc(sizeof(audio_buffer_t));
   pulsed.aPlayPtr->data = NULL;
@@ -1159,7 +1167,6 @@ int pulse_audio_read_init(void) {
   pulsed_reader.chunk_size = 0;
   pulsed_reader.astream_fd = -1;
   pulsed_reader.abs_maxvol_heard = 0.;
-  pulsed_reader.waitforop = FALSE;
   pulsed_reader.pulsed_died = FALSE;
   pulsed_reader.in_achans = PA_ACHANS;
   pulsed_reader.in_asamps = PA_SAMPSIZE;
@@ -1171,12 +1178,6 @@ int pulse_audio_read_init(void) {
   pulsed_reader.sound_buffer = NULL;
 
   return 0;
-}
-
-
-void set_process_callback_pulse(pulse_driver_t *pdriver, boolean activate) {
-  if (activate) pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
-  else pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process_dummy, pdriver);
 }
 
 
@@ -1272,7 +1273,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   if (pulse_server_rate == 0) {
     pa_op = pa_context_get_server_info(pdriver->con, pulse_server_cb, NULL);
 
-    while (pa_operation_get_state(pa_op) != PA_OPERATION_DONE) {
+    while (pa_operation_get_state(pa_op) == PA_OPERATION_RUNNING) {
       lives_usleep(prefs->sleep_time);
     }
     pa_operation_unref(pa_op);
@@ -1285,6 +1286,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
   pa_spec.rate = pdriver->out_arate = pdriver->in_arate = pulse_server_rate;
 
+  pa_threaded_mainloop_lock(pa_mloop);
   pdriver->pstream = pa_stream_new_with_proplist(pdriver->con, pa_clientname, &pa_spec, &pa_map, pdriver->pa_props);
 
   if (pdriver->is_output) {
@@ -1306,13 +1308,15 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                PA_STREAM_AUTO_TIMING_UPDATE),
                                &pdriver->volume, NULL);
 #endif
+    pa_threaded_mainloop_unlock(pa_mloop);
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       lives_usleep(prefs->sleep_time);
     }
 
+    pa_threaded_mainloop_lock(pa_mloop);
     // set write callback
-    set_process_callback_pulse(pdriver, TRUE);
+    pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
 
     pdriver->volume_linear = -1;
 
@@ -1320,7 +1324,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     // get the volume from the server
     pa_op = pa_context_get_sink_info(pdriver->con, info_cb, &pdriver);
 
-    while (pa_operation_get_state(pa_op) != PA_OPERATION_DONE) {
+    while (pa_operation_get_state(pa_op) == PA_OPERATION_RUNNING) {
       lives_usleep(prefs->sleep_time);
     }
     pa_operation_unref(pa_op);
@@ -1349,13 +1353,27 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     }
   }
 
+  pa_threaded_mainloop_unlock(pa_mloop);
   return 0;
 }
 
 
-static void paop_done(pa_stream *s, int success, void *userdata) {
+//#define DEBUG_PULSE_CORK
+static void uncorked_cb(pa_stream *s, int success, void *userdata) {
   pulse_driver_t *pdriver = (pulse_driver_t *)userdata;
-  pdriver->waitforop = FALSE;
+#ifdef DEBUG_PULSE_CORK
+  g_print("uncorked %p\n", pdriver);
+#endif
+  pdriver->is_corked = FALSE;
+}
+
+
+static void corked_cb(pa_stream *s, int success, void *userdata) {
+  pulse_driver_t *pdriver = (pulse_driver_t *)userdata;
+#ifdef DEBUG_PULSE_CORK
+  g_print("corked %p\n", pdriver);
+#endif
+  pdriver->is_corked = TRUE;
 }
 
 
@@ -1368,13 +1386,14 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
   if (!pdriver->is_corked) return;
 
   if (!pdriver->is_output) {
-    pdriver->waitforop = TRUE;
-
+    // flush the stream if we are reading from it
     alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
-    paop = pa_stream_flush(pdriver->pstream, paop_done, pdriver);
+    pa_threaded_mainloop_lock(pa_mloop);
+    paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
+    pa_threaded_mainloop_unlock(pa_mloop);
 
-    while (!pdriver->waitforop && !lives_alarm_get(alarm_handle)) {
+    while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && !lives_alarm_get(alarm_handle)) {
       lives_usleep(prefs->sleep_time);
     }
 
@@ -1383,25 +1402,25 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
     pa_operation_unref(paop);
   }
 
-  paop = pa_stream_cork(pdriver->pstream, 0, NULL, NULL);
-
-  pdriver->waitforop = TRUE;
+  pa_threaded_mainloop_lock(pa_mloop);
+  pa_stream_cork(pdriver->pstream, 0, uncorked_cb, pdriver);
+  pa_threaded_mainloop_unlock(pa_mloop);
+  if (pdriver->is_output) return; // let it cork in its own time...
 
   alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
-  if (!pdriver->is_output) {
-    paop = pa_stream_flush(pdriver->pstream, paop_done, pdriver);
-  }
+  // flush the stream again if we are reading from it
+  pa_threaded_mainloop_lock(pa_mloop);
+  paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
+  pa_threaded_mainloop_unlock(pa_mloop);
 
-  while (!pdriver->waitforop && !lives_alarm_get(alarm_handle)) {
+  while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && !lives_alarm_get(alarm_handle)) {
     lives_usleep(prefs->sleep_time);
   }
 
   lives_alarm_clear(alarm_handle);
 
   pa_operation_unref(paop);
-
-  pdriver->is_corked = FALSE;
 }
 
 
@@ -1411,13 +1430,11 @@ void pulse_driver_cork(pulse_driver_t *pdriver) {
 
   if (pdriver->is_corked) return;
 
-  pdriver->waitforop = TRUE;
-
   alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
-  paop = pa_stream_flush(pdriver->pstream, paop_done, pdriver);
+  paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
 
-  while (!pdriver->waitforop && !lives_alarm_get(alarm_handle)) {
+  while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && !lives_alarm_get(alarm_handle)) {
     lives_usleep(prefs->sleep_time);
   }
 
@@ -1425,21 +1442,18 @@ void pulse_driver_cork(pulse_driver_t *pdriver) {
 
   pa_operation_unref(paop);
 
-  paop = pa_stream_cork(pdriver->pstream, 1, NULL, NULL);
-
-  pdriver->waitforop = TRUE;
+  pa_stream_cork(pdriver->pstream, 1, corked_cb, pdriver);
+  if (pdriver->is_output) return; // let it cork in its own time...
 
   alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
-  while (!pdriver->waitforop && !lives_alarm_get(alarm_handle)) {
+  while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && !lives_alarm_get(alarm_handle)) {
     lives_usleep(prefs->sleep_time);
   }
 
   lives_alarm_clear(alarm_handle);
 
   pa_operation_unref(paop);
-
-  pdriver->is_corked = TRUE;
 }
 
 
@@ -1453,6 +1467,7 @@ pulse_driver_t *pulse_get_driver(boolean is_output) {
 
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
   // force update - "volatile" doesn't seem to work...
+  // perhaps because the return type is also volatile
   char *tmp = lives_strdup_printf("%p %d", pulsed->msgq, pulsed->pulsed_died);
   lives_free(tmp);
   if (pulsed->pulsed_died || mainw->aplayer_broken) return NULL;
@@ -1462,7 +1477,9 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
 
 void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
   pa_usec_t usec;
+  pa_threaded_mainloop_lock(pa_mloop);
   pa_stream_get_time(pulsed->pstream, &usec);
+  pa_threaded_mainloop_unlock(pa_mloop);
   pulsed->usec_start = usec + offset / USEC_TO_TICKS;
   pulsed->frames_written = 0;
   mainw->currticks = offset;
@@ -1486,7 +1503,9 @@ uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   }
 
   do {
+    pa_threaded_mainloop_lock(pa_mloop);
     err = pa_stream_get_time(pulsed->pstream, &usec);
+    pa_threaded_mainloop_unlock(pa_mloop);
     lives_usleep(prefs->sleep_time);
   } while (usec == 0 && err == 0);
 
@@ -1526,47 +1545,50 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, int frame) {
   lives_alarm_clear(alarm_handle);
   if (frame > afile->frames) frame = afile->frames;
   seekstart = (int64_t)((double)(frame - 1.) / afile->fps * afile->arate) * afile->achans * (afile->asampsize / 8);
-  pulse_audio_seek_bytes(pulsed, seekstart);
+  pulse_audio_seek_bytes(pulsed, seekstart, afile);
   return TRUE;
 }
 
 
-int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes) {
+int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip_t *sfile) {
   // seek to position "bytes" in current audio file
   // position will be adjusted to (floor) nearest sample
 
   // if the position is > size of file, we will seek to the end of the file
   volatile aserver_message_t *pmsg;
-
-  boolean timeout;
-  int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-
   int64_t seekstart;
 
-  if (alarm_handle == -1) {
-    LIVES_WARN("Invalid alarm handle");
-    return 0;
-  }
+  if (!pulsed->is_corked) {
+    boolean timeout;
+    int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
-  do {
-    pmsg = pulse_get_msgq(pulsed);
-  } while (!(timeout = lives_alarm_get(alarm_handle)) && pmsg != NULL && pmsg->command != ASERVER_CMD_FILE_SEEK);
+    if (alarm_handle == -1) {
+      LIVES_WARN("Invalid alarm handle");
+      return 0;
+    }
 
-  if (timeout || pulsed->playing_file == -1) {
+    do {
+      pmsg = pulse_get_msgq(pulsed);
+    } while (!(timeout = lives_alarm_get(alarm_handle)) && pmsg != NULL && pmsg->command != ASERVER_CMD_FILE_SEEK);
+
+    if (timeout || pulsed->playing_file == -1) {
+      lives_alarm_clear(alarm_handle);
+      if (timeout) LIVES_WARN("PA connect timed out");
+      return 0;
+    }
     lives_alarm_clear(alarm_handle);
-    if (timeout) LIVES_WARN("PA connect timed out");
-    return 0;
   }
-  lives_alarm_clear(alarm_handle);
 
-  seekstart = ((int64_t)(bytes / afile->achans / (afile->asampsize / 8))) * afile->achans * (afile->asampsize / 8);
+  seekstart = ((int64_t)(bytes / sfile->achans / (sfile->asampsize / 8))) * sfile->achans * (sfile->asampsize / 8);
 
   if (seekstart < 0) seekstart = 0;
-  if (seekstart > afile->afilesize) seekstart = afile->afilesize;
-  pulse_message.command = ASERVER_CMD_FILE_SEEK;
-  pulse_message.next = NULL;
-  pulse_message.data = lives_strdup_printf("%"PRId64, seekstart);
-  pulsed->msgq = &pulse_message;
+  if (seekstart > sfile->afilesize) seekstart = sfile->afilesize;
+
+  pulse_message2.command = ASERVER_CMD_FILE_SEEK;
+  pulse_message2.next = NULL;
+  pulse_message2.data = lives_strdup_printf("%"PRId64, seekstart);
+  if (pulsed->msgq == NULL) pulsed->msgq = &pulse_message2;
+  else pulsed->msgq->next = &pulse_message2;
   return seekstart;
 }
 
@@ -1604,7 +1626,9 @@ void pulse_aud_pb_ready(int fileno) {
   int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
   int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
 
+  pa_threaded_mainloop_lock(pa_mloop);
   if (mainw->pulsed != NULL) pulse_driver_uncork(mainw->pulsed);
+  pa_threaded_mainloop_unlock(pa_mloop);
 
   // called at pb start and rec stop (after rec_ext_audio)
   if (mainw->pulsed != NULL && mainw->aud_rec_fd == -1) {
@@ -1649,10 +1673,9 @@ void pulse_aud_pb_ready(int fileno) {
         pulse_message.data = lives_strdup_printf("%d", fileno);
         pulse_message.next = NULL;
         mainw->pulsed->msgq = &pulse_message;
-
-        pulse_audio_seek_bytes(mainw->pulsed, sfile->aseek_pos);
+        pulse_audio_seek_bytes(mainw->pulsed, sfile->aseek_pos, sfile);
         if (seek_err) {
-          if (pulse_try_reconnect()) pulse_audio_seek_bytes(mainw->pulsed, sfile->aseek_pos);
+          if (pulse_try_reconnect()) pulse_audio_seek_bytes(mainw->pulsed, sfile->aseek_pos, sfile);
         }
         mainw->pulsed->in_use = TRUE;
         mainw->rec_aclip = fileno;

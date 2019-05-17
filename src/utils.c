@@ -3195,7 +3195,7 @@ void switch_aud_to_sox(boolean set_in_prefs) {
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
 
-    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
+    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
 
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
@@ -3253,7 +3253,7 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
 
-    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
+    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
 
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
@@ -3312,7 +3312,7 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
 
-    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE);
+    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
 
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);

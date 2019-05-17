@@ -1372,7 +1372,13 @@ static void reset_timebase(void) {
   mainw->origusecs = tv.tv_usec;
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed != NULL) pa_time_reset(mainw->pulsed, 0);
+  if (mainw->pulsed != NULL) {
+    /* while (mainw->pulsed->is_corked) { */
+    /*   lives_usleep(prefs->sleep_time); */
+    /*   sched_yield(); */
+    /* } */
+    pa_time_reset(mainw->pulsed, 0);
+  }
   if (mainw->pulsed_read != NULL) pa_time_reset(mainw->pulsed_read, 0);
 #endif
 

@@ -554,7 +554,7 @@ static void set_workdir_label_text(LiVESLabel *label) {
 }
 
 
-void pref_factory_bool(const char *prefidx, boolean newval) {
+void pref_factory_bool(const char *prefidx, boolean newval, boolean permanent) {
   // this is called from lbindings.c which in turn is called from liblives.cpp
 
   // can also be called from other places
@@ -566,7 +566,11 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
     boolean rec_ext_audio = newval;
     if (rec_ext_audio && prefs->audio_src == AUDIO_SRC_INT) {
       prefs->audio_src = AUDIO_SRC_EXT;
-      set_int_pref(PREF_AUDIO_SRC, AUDIO_SRC_EXT);
+
+      if (permanent) {
+        set_int_pref(PREF_AUDIO_SRC, AUDIO_SRC_EXT);
+        future_prefs->audio_src = prefs->audio_src;
+      }
 
       if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
@@ -586,7 +590,11 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
       }
     } else if (!rec_ext_audio && prefs->audio_src == AUDIO_SRC_EXT) {
       prefs->audio_src = AUDIO_SRC_INT;
-      set_int_pref(PREF_AUDIO_SRC, AUDIO_SRC_INT);
+
+      if (permanent) {
+        set_int_pref(PREF_AUDIO_SRC, AUDIO_SRC_INT);
+        future_prefs->audio_src = prefs->audio_src;
+      }
 
       mainw->aud_rec_fd = -1;
       if (prefs->perm_audio_reader) {
@@ -602,7 +610,7 @@ void pref_factory_bool(const char *prefidx, boolean newval) {
 #endif
       }
     }
-    if (prefsw != NULL) {
+    if (prefsw != NULL && permanent) {
       if (prefs->audio_src == AUDIO_SRC_EXT)
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), TRUE);
       else
@@ -1094,7 +1102,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
         capable->has_pulse_audio))) {
-    if (prefs->audio_src == AUDIO_SRC_EXT) prefs->audio_src = AUDIO_SRC_INT;
+    if (prefs->audio_src == AUDIO_SRC_EXT) future_prefs->audio_src = prefs->audio_src = AUDIO_SRC_INT;
   }
 
   if (rec_opts != prefs->rec_opts) {
@@ -1102,7 +1110,11 @@ boolean apply_prefs(boolean skip_warn) {
     set_int_pref(PREF_RECORD_OPTS, prefs->rec_opts);
   }
 
-  pref_factory_bool(PREF_REC_EXT_AUDIO, rec_ext_audio);
+  if (mainw->multitrack == NULL) {
+    pref_factory_bool(PREF_REC_EXT_AUDIO, rec_ext_audio, TRUE);
+  } else {
+    future_prefs->audio_src = rec_ext_audio ? AUDIO_SRC_EXT : AUDIO_SRC_INT;
+  }
 
   warn_mask = !warn_fps * WARN_MASK_FPS + !warn_save_set * WARN_MASK_SAVE_SET + !warn_fsize * WARN_MASK_FSIZE + !warn_mplayer *
               WARN_MASK_NO_MPLAYER + !warn_rendered_fx * WARN_MASK_RENDERED_FX + !warn_encoders *
@@ -1153,11 +1165,11 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   if (show_asrc != (prefs->show_asrc)) {
-    pref_factory_bool(PREF_SHOW_ASRC, show_asrc);
+    pref_factory_bool(PREF_SHOW_ASRC, show_asrc, TRUE);
   }
 
   if (hfbwnp != (prefs->hfbwnp)) {
-    pref_factory_bool(PREF_HFBWNP, hfbwnp);
+    pref_factory_bool(PREF_HFBWNP, hfbwnp, TRUE);
   }
 
   if (ce_maxspect != (prefs->ce_maxspect)) {
@@ -3199,7 +3211,7 @@ _prefsw *create_prefs_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  label = lives_standard_label_new(_("Audio Source:"));
+  label = lives_standard_label_new(_("Audio Source (clip editor only):"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -3210,7 +3222,7 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->rextaudio = lives_standard_radio_button_new(_("_External [monitor]"),
                       &asrc_group, LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefs->audio_src == AUDIO_SRC_EXT);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), future_prefs->audio_src == AUDIO_SRC_EXT);
   add_fill_to_box(LIVES_BOX(hbox));
 
   if (mainw->playing_file > 0 && mainw->record) {

@@ -140,28 +140,6 @@ static char *remove_first_line(char *text) {
 }
 
 
-static weed_plant_t *get_nth_info_message(int n) {
-  int m = 0;
-  int error;
-  weed_plant_t *msg = mainw->msg_list;
-  if (n < 0 || n >= mainw->n_messages) return NULL;
-  if (n >= (mainw->n_messages >> 1)) {
-    // nearer to end, go backwards
-    m = mainw->n_messages;
-    do {
-      msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
-      if (error != WEED_NO_ERROR) return NULL;
-    } while (--m > n);
-    return msg;
-  }
-  while (m++ < n) {
-    msg = weed_get_plantptr_value(msg, WEED_LEAF_NEXT, &error);
-    if (error != WEED_NO_ERROR) return NULL;
-  }
-  return msg;
-}
-
-
 void layout_to_lives_painter(LingoLayout *layout, lives_painter_t *cr, lives_text_mode_t mode, lives_colRGBA64_t *fg,
                              lives_colRGBA64_t *bg, int dwidth, int dheight, double x_pos, int y_pos) {
   double b_alpha = 1.;

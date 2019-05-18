@@ -2229,9 +2229,9 @@ void create_LiVES(void) {
   lives_widget_set_app_paintable(mainw->scrolledwindow, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->scrolledwindow), 0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->scrolledwindow), LIVES_WIDGET_EXPOSE_EVENT,
-                       LIVES_GUI_CALLBACK(expose_msg_scroll),
-                       NULL);
+  mainw->sw_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->scrolledwindow), LIVES_WIDGET_EXPOSE_EVENT,
+                                        LIVES_GUI_CALLBACK(expose_msg_scroll),
+                                        NULL);
 
   // accel keys
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
@@ -3443,6 +3443,7 @@ void block_expose(void) {
   lives_signal_handler_block(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_block(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_block(mainw->raudio_draw, mainw->raudbar_func);
+  lives_signal_handler_block(mainw->scrolledwindow, mainw->sw_func);
 #endif
 }
 
@@ -3455,6 +3456,7 @@ void unblock_expose(void) {
   lives_signal_handler_unblock(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_unblock(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_unblock(mainw->raudio_draw, mainw->raudbar_func);
+  lives_signal_handler_unblock(mainw->scrolledwindow, mainw->sw_func);
 #endif
 }
 

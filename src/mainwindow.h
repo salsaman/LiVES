@@ -753,6 +753,7 @@ typedef struct {
   ulong mute_audio_func;
   ulong fullscreen_cb_func;
   ulong sepwin_cb_func;
+  ulong sw_func; ///< scrolledwindow expose func
 
   // for jack transport
   boolean jack_can_stop;

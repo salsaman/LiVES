@@ -4193,7 +4193,7 @@ EXPOSE_FN_DECL(expose_msg_scroll, widget) {
           reset_message_area(TRUE);
           lives_widget_process_updates(mainw->LiVES, TRUE);
           lives_widget_context_update();
-          lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
+          //lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
           lives_signal_handlers_unblock_by_func(widget, (livespointer)expose_msg_scroll, NULL);
           return FALSE;
         }

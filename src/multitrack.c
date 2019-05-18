@@ -8635,11 +8635,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(expose_msg_scroll),
                        NULL);
 
-#if GTK_CHECK_VERSION(7, 0, 0)
-  lives_container_add(LIVES_CONTAINER(mt->vpaned), mt->scrolledwindow);
-#else
-  lives_paned_pack(2, LIVES_PANED(mt->vpaned), mt->scrolledwindow, TRUE, FALSE);
-#endif
+  lives_paned_pack(2, LIVES_PANED(mt->vpaned), mt->scrolledwindow, TRUE, TRUE);
 
   lives_widget_queue_draw(mt->vpaned);
 
@@ -9213,6 +9209,8 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     lives_free(title);
     lives_free(xtrabit);
   }
+
+  reset_message_area(TRUE);
 
   lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
 
@@ -10844,7 +10842,11 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   if (ce_sepwin_type == SEPWIN_TYPE_STICKY) on_sticky_activate(NULL, NULL);
 
   if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
+
+  ///////// CREATE MULTITRACK CONTENTS ////////////
   multi = multitrack(event_list, orig_file, cfile->fps);
+  ////////////////////////////////////////////////
+
   lives_widget_process_updates(mainw->LiVES, TRUE);
 
   if (mainw->stored_event_list != NULL) {
@@ -10855,6 +10857,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     if (multi->event_list == NULL) {
       multi->clip_selected = mt_clip_from_file(multi, orig_file);
       multi->file_selected = orig_file;
+      mainw->scrolledwindow = mainw->scrolledwindow;
       if (prefs->show_gui) unblock_expose();
       return FALSE;
     }
@@ -10869,6 +10872,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     // failed to load recovery layout
     multi->clip_selected = mt_clip_from_file(multi, orig_file);
     multi->file_selected = orig_file;
+    mainw->scrolledwindow = mainw->scrolledwindow;
     if (prefs->show_gui) unblock_expose();
     return FALSE;
   }
@@ -10942,8 +10946,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     lives_free(xtrabit);
   }
 
-  d_print(_("\n==============================\nSwitched to Multitrack mode\n"));
-
   if (cfile->achans > 0 && !is_realtime_aplayer(prefs->audio_player)) {
     do_mt_no_jack_error(WARN_MASK_MT_NO_JACK);
   }
@@ -10993,6 +10995,9 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   set_interactive(mainw->interactive);
+
+  d_print(_("\n==============================\nSwitched to Multitrack mode\n"));
+  reset_message_area(TRUE);
 
   lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
 

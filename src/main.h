@@ -1059,7 +1059,8 @@ void do_splash_progress(void);
 
 // message collection
 void d_print(const char *fmt, ...);
-char *dump_messages(int start, int end);
+char *dump_messages(int start, int end); // utils.c
+weed_plant_t *get_nth_info_message(int n); // utils.c
 int add_message_to_list(const char *fmt, ...);
 
 // d_print shortcuts

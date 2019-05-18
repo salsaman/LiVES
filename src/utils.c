@@ -2061,6 +2061,28 @@ void init_clipboard(void) {
 }
 
 
+weed_plant_t *get_nth_info_message(int n) {
+  int m = 0;
+  int error;
+  weed_plant_t *msg = mainw->msg_list;
+  if (n < 0 || n >= mainw->n_messages) return NULL;
+  if (n >= (mainw->n_messages >> 1)) {
+    // nearer to end, go backwards
+    m = mainw->n_messages - 1;
+    do {
+      msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
+      if (error != WEED_NO_ERROR) return NULL;
+    } while (--m > n);
+    return msg;
+  }
+  while (m++ < n) {
+    msg = weed_get_plantptr_value(msg, WEED_LEAF_NEXT, &error);
+    if (error != WEED_NO_ERROR) return NULL;
+  }
+  return msg;
+}
+
+
 char *dump_messages(int start, int end) {
   weed_plant_t *msg = mainw->msg_list;
   char *text = lives_strdup(""), *tmp, *msgtext;

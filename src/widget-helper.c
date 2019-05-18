@@ -996,30 +996,39 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, i
 
 
 #if GTK_CHECK_VERSION(3, 16, 0)
-static char *make_random_string(void) {
-  char *str = (char *)malloc(32);
+
+#define RND_STRLEN 16
+#define RND_STR_PREFIX "XXX"
+
+static char *make_random_string(const char *prefix) {
+  // give each widget a random name so we can style it individually
+  char *str;
+  size_t psize = strlen(prefix);
+  size_t rsize = RND_STRLEN << 1;
   register int i;
 
-  str[0] = str[1] = str[2] = 'X';
+  if (psize > RND_STRLEN) return NULL;
 
-  for (i = 3; i < 31; i++) str[i] = ((lives_random() & 15) + 65);
-  str[31] = 0;
+  str = (char *)malloc(rsize);
+  lives_snprintf(str, psize, "%s", prefix);
+
+  rsize--;
+
+  for (i = psize; i < rsize; i++) str[i] = ((lives_random() & 15) + 65);
+  str[rsize] = 0;
   return str;
 }
 #endif
 
+
 #include "giw/giwled.h"
 
-boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
+static boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const char *detail, const char *value) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 0, 0)
-#if GTK_CHECK_VERSION(3, 16, 0)
-
   GtkCssProvider *provider = gtk_css_provider_new();
   GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
 
   char *widget_name, *wname;
-  char *colref;
   char *css_string, *tmp;
   char *state_str;
 
@@ -1028,15 +1037,11 @@ boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, c
 
   widget_name = g_strdup(gtk_widget_get_name(widget));
 
-  if (strncmp(widget_name, "XXX", 3)) {
+  if (strncmp(widget_name, RND_STR_PREFIX, strlen(RND_STR_PREFIX))) {
     if (widget_name != NULL) g_free(widget_name);
-    widget_name = make_random_string();
+    widget_name = make_random_string(RND_STR_PREFIX);
     gtk_widget_set_name(widget, widget_name);
   }
-
-  gtk_widget_set_name(widget, widget_name);
-
-  colref = gdk_rgba_to_string(color);
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   if (GTK_IS_TEXT_VIEW(widget)) wname = g_strdup("GtkTextView");
@@ -1090,18 +1095,20 @@ boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, c
   }
 #endif
 
-  css_string = g_strdup_printf(" %s {\n background-color: %s; background: %s;\n }\n", wname, colref, colref);
+  css_string = g_strdup_printf(" %s {\n %s: %s;}\n", wname, detail, value);
 
   if (GTK_IS_FRAME(widget)) {
-    tmp = lives_strdup_printf("%s %s label {\n background-color: %s; background: %s;\n }\n", css_string, wname, colref, colref);
+    tmp = lives_strdup_printf("%s %s label {\n %s: %s;}\n", css_string, wname, detail, value);
     lives_free(css_string);
     css_string = tmp;
   }
 
-  if (GTK_IS_BUTTON(widget)) {
-    tmp = lives_strdup_printf("%s %s {\n padding: 4px;\n }\n", css_string, wname);
-    lives_free(css_string);
-    css_string = tmp;
+  if (widget_opts.expand != LIVES_EXPAND_NONE) {
+    if (LIVES_IS_BUTTON(widget)) {
+      tmp = lives_strdup_printf("%s %s {\n padding: 4px;\n }\n", css_string, wname);
+      lives_free(css_string);
+      css_string = tmp;
+    }
   }
 
 #if GTK_CHECK_VERSION(4, 0, 0)
@@ -1113,64 +1120,60 @@ boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, c
                                   css_string,
                                   -1, NULL);
 #endif
-
-  g_free(colref);
   g_free(widget_name);
   g_free(wname);
-
   g_free(css_string);
   g_object_unref(provider);
-
-#else
-  gtk_widget_override_background_color(widget, state, color);
-#endif
-#else
-  gtk_widget_modify_bg(widget, state, color);
-#endif
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  widget->set_bg_color(state, color);
   return TRUE;
 #endif
   return FALSE;
 }
 
 
-boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
-
-
-  css_string = g_strdup_printf(" %s {\n color: %s;\n }\n", wname, colref);
-
-#if GTK_CHECK_VERSION(4, 0, 0)
-  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                  css_string,
-                                  -1);
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(3, 16, 0)
+  char *colref = gdk_rgba_to_string(color);
+  boolean retb = set_css_value(widget, state, "background-color", colref);
+  if (retb) retb = lives_widget_set_base_color(widget, state, color);
+  lives_free(colref);
+  return retb;
 #else
-  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                  css_string,
-                                  -1, NULL);
+  gtk_widget_override_background_color(widget, state, color);
 #endif
+#else
+  gtk_widget_modify_bg(widget, state, color);
+#endif
+#ifdef GUI_QT
+  widget->set_bg_color(state, color);
+  return TRUE;
+#endif
+  return FALSE;
+#endif
+}
 
-  g_free(colref);
-  g_free(widget_name);
-  g_free(wname);
 
-  g_free(css_string);
-  g_object_unref(provider);
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(3, 16, 0)
+  char *colref = gdk_rgba_to_string(color);
+  boolean retb = set_css_value(widget, state, "color", colref);
+  lives_free(colref);
+  return retb;
 #else
   gtk_widget_override_color(widget, state, color);
 #endif
 #else
   gtk_widget_modify_fg(widget, state, color);
 #endif
-  return TRUE;
-#endif
 #ifdef GUI_QT
   widget->set_fg_color(state, color);
   return TRUE;
 #endif
   return FALSE;
+#endif
 }
 
 
@@ -1178,23 +1181,47 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_text_color(LiVESWidget *wid
     const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  lives_widget_set_fg_color(widget, state, color);
+#if GTK_CHECK_VERSION(3, 16, 0)
+  char *colref = gdk_rgba_to_string(color);
+  boolean retb = set_css_value(widget, state, "color", colref);
+  lives_free(colref);
+  return retb;
+#else
+  gtk_widget_override_color(widget, state, color);
+#endif
 #else
   gtk_widget_modify_text(widget, state, color);
-#endif
-  return TRUE;
 #endif
 #ifdef GUI_QT
   widget->set_text_color(state, color);
   return TRUE;
 #endif
   return FALSE;
+#endif
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidgetState state,
     const LiVESWidgetColor *color) {
-
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(3, 16, 0)
+  char *colref = gdk_rgba_to_string(color);
+  boolean retb = set_css_value(widget, state, "background", colref);
+  lives_free(colref);
+  return retb;
+#else
+  gtk_widget_override_color(widget, state, color);
+#endif
+#else
+  gtk_widget_modify_base(widget, state, color);
+#endif
+#ifdef GUI_QT
+  widget->set_base_color(state, color);
+  return TRUE;
+#endif
+  return FALSE;
+#endif
 }
 
 

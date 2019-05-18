@@ -8208,8 +8208,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->fx_base_box = lives_vbox_new(FALSE, 0);
   lives_object_ref(mt->fx_base_box);
 
-  lives_widget_set_bg_color(mt->fx_contents_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->fx_contents_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color(mt->fx_base_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mt->fx_base_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
   mt->fx_contents_box = lives_vbox_new(FALSE, 2);
 

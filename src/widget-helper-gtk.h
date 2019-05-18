@@ -202,7 +202,6 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_list_nth(list, i) g_list_nth(list, i)
 #define lives_list_length(list) g_list_length(list)
 #define lives_list_free(list) g_list_free(list)
-#define lives_slist_free(list) g_slist_free(list)
 #define lives_list_append(list, data) g_list_append(list, data)
 #define lives_list_prepend(list, data) g_list_prepend(list, data)
 #define lives_list_find(list, data) g_list_find(list, data)
@@ -223,6 +222,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_slist_length(list) g_slist_length(list)
 #define lives_slist_nth_data(list, i) g_slist_nth_data(list, i)
 #define lives_slist_append(list, data) g_slist_append(list, data)
+#define lives_slist_prepend(list, data) g_slist_prepend(list, data)
 
 #define lives_build_filename(...) g_build_filename(__VA_ARGS__)
 #define lives_build_path(...) g_build_path(LIVES_DIR_SEP, __VA_ARGS__)
@@ -1240,6 +1240,7 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 
 // pango stuff
 typedef PangoLayout LingoLayout;
+typedef PangoContext LingoContext;
 #define lingo_layout_set_alignment(a, b) pango_layout_set_alignment(a, b)
 
 #define LINGO_ALIGN_LEFT PANGO_ALIGN_LEFT
@@ -1248,8 +1249,10 @@ typedef PangoLayout LingoLayout;
 
 #define lingo_layout_set_text(a, b, c) pango_layout_set_text(a, b, c)
 #define lingo_painter_show_layout(a, b) pango_cairo_show_layout(a, b)
-
+#define lives_widget_get_lingo_context(a) gtk_widget_get_pango_context(a)
 #define lingo_layout_get_size(a, b, c, d, e) pango_layout_get_size(a, b, c)
+#define lingo_layout_new(a) pango_layout_new(a)
+#define lingo_layout_set_markup(a, b, c) pango_layout_set_markup(a, b, c)
 
 #define LINGO_SCALE PANGO_SCALE
 

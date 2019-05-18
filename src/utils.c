@@ -25,6 +25,12 @@
 #include "resample.h"
 #include "callbacks.h"
 
+#if HAVE_SYSTEM_WEED
+#include <weed/weed-host.h>
+#else
+#include "../libweed/weed-host.h"
+#endif
+
 static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
 typedef struct {
@@ -2055,8 +2061,83 @@ void init_clipboard(void) {
 }
 
 
+char *dump_messages(int start, int end) {
+  weed_plant_t *msg = mainw->msg_list;
+  char *text = lives_strdup(""), *tmp, *msgtext;
+  int msgno = 0;
+  int error;
+
+  while (msg != NULL) {
+    msgtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
+    if (error != WEED_NO_ERROR) break;
+    if (msgno >= start) {
+      tmp = lives_strdup_printf("%s%s", text, msgtext);
+      lives_free(text);
+      text = tmp;
+    }
+    lives_free(msgtext);
+    if (++msgno > end) if (end > -1) break;
+    msg = weed_get_plantptr_value(msg, WEED_LEAF_NEXT, &error);
+    if (error != WEED_NO_ERROR) break;
+  }
+  return text;
+}
+
+
+int add_message_to_list(const char *fmt, ...) {
+  // append a message to our message list
+  // if we hit the max message limit then free the oldest one
+  weed_plant_t *msg, *end, *next;
+  va_list xargs;
+  int error;
+  char *text;
+
+  if (prefs->max_messages <= 0) return WEED_NO_ERROR;
+
+  va_start(xargs, fmt);
+  text = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+
+  msg = weed_plant_new(WEED_PLANT_LIVES);
+  if (msg == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+
+  weed_set_int_value(msg, WEED_LEAF_LIVES_SUBTYPE, LIVES_WEED_SUBTYPE_MESSAGE);
+  weed_set_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, text);
+
+  weed_set_plantptr_value(msg, WEED_LEAF_NEXT, NULL);
+
+  if (mainw->msg_list == NULL) {
+    weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, NULL);
+    mainw->msg_list = msg;
+    mainw->n_messages = 1;
+    return WEED_NO_ERROR;
+  }
+
+  end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error);
+  weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, end);
+
+  if (++mainw->n_messages > prefs->max_messages) {
+    // retire the oldest if we reached the limit
+    next = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_NEXT, &error);
+    weed_plant_free(mainw->msg_list);
+    if (end != NULL) {
+      mainw->msg_list = next;
+      weed_set_plantptr_value(end, WEED_LEAF_NEXT, msg);
+      weed_set_plantptr_value(next, WEED_LEAF_PREVIOUS, msg);
+    } else mainw->msg_list = msg;
+  } else {
+    if (end == NULL) end = mainw->msg_list;
+    weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, end);
+    weed_set_plantptr_value(end, WEED_LEAF_NEXT, msg);
+    weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, msg);
+  }
+
+  return WEED_NO_ERROR;
+}
+
+
 void d_print(const char *fmt, ...) {
-  // print out output in the main message area (and info log)
+  // collect output for the main message area (and info log)
 
   // there are several small tweaks for this:
 
@@ -2064,59 +2145,31 @@ void d_print(const char *fmt, ...) {
   // mainw->no_switch_dprint :: TRUE - disable printing of switch message when maine->current_file changes
 
   // mainw->last_dprint_file :: clip number of last mainw->current_file;
-  LiVESTextBuffer *tbuf;
-
   va_list xargs;
 
-  char *switchtext, *tmp, *text;
+  char *tmp, *text;
 
   if (!prefs->show_gui) return;
-
   if (!capable->smog_version_correct) return;
-
   if (mainw->suppress_dprint) return;
 
   va_start(xargs, fmt);
-
   text = lives_strdup_vprintf(fmt, xargs);
-
   va_end(xargs);
 
-  if (!LIVES_IS_TEXT_VIEW(mainw->textview1) || (mainw->dp_cache != NULL && !mainw->no_switch_dprint)) {
-    // during startup / interface mode switches, we cache the messages
-    if (mainw->dp_cache != NULL) {
-      char *tmp = lives_strdup_printf("%s%s", mainw->dp_cache, text);
-      lives_free(mainw->dp_cache);
-      mainw->dp_cache = tmp;
-    } else mainw->dp_cache = lives_strdup(text);
-    return;
-  }
+  add_message_to_list("%s", text);
 
-  tbuf = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
-
-  if (LIVES_IS_TEXT_VIEW(mainw->textview1)) {
-    if (mainw->dp_cache != NULL && mainw->no_switch_dprint) {
-      // flush the cache when we can
-      lives_text_buffer_insert_at_end(tbuf, text);
-      lives_free(mainw->dp_cache);
-      mainw->dp_cache = NULL;
-    }
-    lives_text_buffer_insert_at_end(tbuf, text);
-    if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && mainw->multitrack == NULL &&
-        (mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
-      if (mainw->current_file > 0) {
-        switchtext = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile));
-        lives_free(tmp);
-      } else {
-        switchtext = lives_strdup(_("\n==============================\nSwitched to empty clip\n"));
-      }
-      lives_text_buffer_insert_at_end(tbuf, switchtext);
-      lives_free(switchtext);
+  if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && mainw->multitrack == NULL &&
+      (mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
+    if (mainw->current_file > 0) {
+      add_message_to_list(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile));
+    } else {
+      add_message_to_list(_("\n==============================\nSwitched to empty clip\n"));
     }
   }
 
   if (prefs->show_gui) {
-    lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+    reset_message_area(TRUE);
     lives_widget_queue_draw_if_visible(mainw->scrolledwindow);
   }
 
@@ -2248,6 +2301,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       text = lives_strdup_printf("%s\n", array[0]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
       lives_free(text);
+      // we could list all affected layouts, which could potentially be a lot !
       //mainw->affected_layouts_map=lives_list_append_unique(mainw->affected_layouts_map,array[0]);
       lives_strfreev(array);
       lmap = lmap->next;

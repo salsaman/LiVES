@@ -990,7 +990,6 @@ void do_startup_interface_query(void) {
   set_int_pref(PREF_STARTUP_INTERFACE, prefs->startup_interface);
 
   lives_widget_destroy(dialog);
-
   lives_widget_context_update();
 }
 

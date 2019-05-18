@@ -374,6 +374,19 @@ LIVES_GLOBAL_INLINE LiVESWidget *create_question_dialog(const char *title, const
 }
 
 
+boolean do_warning_dialogf(const char *fmt, ...) {
+  va_list xargs;
+  boolean resb;
+  char *textx;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  resb = do_warning_dialog_with_check(textx, 0);
+  lives_free(textx);
+  return resb;
+}
+
+
 boolean do_warning_dialog(const char *text) {
   return do_warning_dialog_with_check(text, 0);
 }
@@ -465,6 +478,26 @@ LiVESWindow *get_transient_full(void) {
 }
 
 
+boolean do_yesno_dialogf(const char *fmt, ...) {
+  // show Yes/No, returns TRUE if Yes
+  LiVESWidget *warning;
+  LiVESWindow *transient = get_transient_full();
+  int response;
+  va_list xargs;
+  char *textx;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+
+  warning = create_message_dialog(LIVES_DIALOG_YESNO, textx, transient, 0, TRUE);
+  lives_free(textx);
+  response = lives_dialog_run(LIVES_DIALOG(warning));
+  lives_widget_destroy(warning);
+  lives_widget_process_updates(mainw->LiVES, TRUE);
+  return (response == LIVES_RESPONSE_YES);
+}
+
+
 boolean do_yesno_dialog(const char *text) {
   // show Yes/No, returns TRUE if Yes
   LiVESWidget *warning;
@@ -514,14 +547,44 @@ int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
 }
 
 
-int do_error_dialog(const char *text) {
+int do_error_dialogf(const char *fmt, ...) {
+  // show error box
+  LiVESWindow *transient = get_transient_full();
+  int resi;
+  char *textx;
+  va_list xargs;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  resi = do_error_dialog_with_check_transient(textx, FALSE, 0, transient);
+  lives_free(textx);
+  return resi;
+}
+
+
+LIVES_GLOBAL_INLINE int do_error_dialog(const char *text) {
   // show error box
   LiVESWindow *transient = get_transient_full();
   return do_error_dialog_with_check_transient(text, FALSE, 0, transient);
 }
 
 
-int do_info_dialog(const char *text) {
+int do_info_dialogf(const char *fmt, ...) {
+  // show info box
+  LiVESWindow *transient = get_transient_full();
+  int resi;
+  char *textx;
+  va_list xargs;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  resi = do_info_dialog_with_transient(textx, FALSE, transient);
+  lives_free(textx);
+  return resi;
+}
+
+
+LIVES_GLOBAL_INLINE int do_info_dialog(const char *text) {
   // show info box
   LiVESWindow *transient = get_transient_full();
   return do_info_dialog_with_transient(text, FALSE, transient);
@@ -532,6 +595,36 @@ int do_error_dialog_with_check(const char *text, int warn_mask_number) {
   // show warning box
   LiVESWindow *transient = get_transient_full();
   return do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, transient);
+}
+
+
+int do_blocking_error_dialogf(const char *fmt, ...) {
+  // show error box - blocks until OK is pressed
+  LiVESWindow *transient = get_transient_full();
+  va_list xargs;
+  char *textx;
+  int resi;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  resi = do_error_dialog_with_check_transient(textx, TRUE, 0, transient);
+  lives_free(textx);
+  return resi;
+}
+
+
+int do_blocking_info_dialogf(const char *fmt, ...) {
+  // show info box - blocks until OK is pressed
+  LiVESWindow *transient = get_transient_full();
+  va_list xargs;
+  char *textx;
+  int resi;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  resi = do_info_dialog_with_transient(textx, TRUE, transient);
+  lives_free(textx);
+  return resi;
 }
 
 
@@ -1983,6 +2076,8 @@ boolean do_auto_dialog(const char *text, int type) {
   while (mainw->cancelled == CANCEL_NONE && !(infofile = fopen(cfile->info_file, "r"))) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
     lives_widget_context_update();
+    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(proc_ptr->processing, TRUE);
     lives_usleep(prefs->sleep_time);
     if (type == 1 && mainw->rec_end_time != -1.) {
       time = lives_get_current_ticks();
@@ -2387,7 +2482,7 @@ boolean do_comments_dialog(int fileno, char *filename) {
 
 
 void do_messages_window(void) {
-  char *text = lives_text_view_get_text(LIVES_TEXT_VIEW(mainw->textview1));
+  char *text = dump_messages(-1, -1);
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   create_text_window(_("Message History"), text, NULL);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
@@ -2694,6 +2789,9 @@ void threaded_dialog_spin(double fraction) {
   if (fraction > 0.) {
     timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
     disp_fraction(fraction, timesofar, procw);
+    lives_widget_context_update();
+    lives_widget_process_updates(procw->processing, TRUE);
+    lives_widget_process_updates(mainw->LiVES, TRUE);
   } else {
     if (mainw->current_file < 0 || cfile == NULL || cfile->progress_start == 0 || cfile->progress_end == 0 ||
         strlen(mainw->msg) == 0 || (progress = atoi(mainw->msg)) == 0) {
@@ -2701,6 +2799,8 @@ void threaded_dialog_spin(double fraction) {
       //#define GDB
 #ifndef GDB
       if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) {
+        lives_widget_context_update();
+        lives_widget_process_updates(procw->processing, TRUE);
         lives_widget_process_updates(mainw->LiVES, TRUE);
         lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
       }
@@ -2715,11 +2815,11 @@ void threaded_dialog_spin(double fraction) {
 
   if (!td_had_focus && lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
     if (LIVES_IS_WIDGET(procw->processing)) {
+      lives_widget_context_update();
       lives_widget_show_all(procw->processing);
       lives_widget_queue_draw(procw->processing);
     }
     td_had_focus = TRUE;
-    lives_widget_process_updates(mainw->LiVES, TRUE);
   }
 }
 

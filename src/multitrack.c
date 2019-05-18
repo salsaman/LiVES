@@ -127,7 +127,6 @@ static boolean needs_clear;
 
 static LiVESList *pkg_list;
 
-static LiVESWidget *mainw_textview;
 static LiVESWidget *mainw_scrolledwindow;
 
 ////////////////////////////
@@ -6110,7 +6109,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *report_bug;
   LiVESWidget *suggest_feature;
   LiVESWidget *help_translate;
-  LiVESTextBuffer *tbuf;
 
   LiVESObject *vadjustment;
   LiVESAdjustment *spinbutton_adj;
@@ -7814,7 +7812,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar2), LIVES_TOOL_ITEM(mainw->m_loopbutton), -1);
   lives_object_unref(mainw->m_loopbutton);
 
-  widget_opts.apply_theme = FALSE;
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.apply_theme = FALSE;
@@ -8211,7 +8208,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->fx_base_box = lives_vbox_new(FALSE, 0);
   lives_object_ref(mt->fx_base_box);
 
+  lives_widget_set_bg_color(mt->fx_contents_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mt->fx_contents_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
   mt->fx_contents_box = lives_vbox_new(FALSE, 2);
+
+  lives_widget_set_bg_color(mt->fx_contents_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mt->fx_contents_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
   dph = widget_opts.packing_height;
   widget_opts.packing_height = 0;
@@ -8223,6 +8226,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
   lives_box_pack_end(LIVES_BOX(mt->fx_contents_box), hbox, FALSE, FALSE, 0);
 
+  lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
   mt->apply_fx_button = lives_standard_button_new_with_label(_("_Apply"));
   lives_box_pack_start(LIVES_BOX(hbox), mt->apply_fx_button, FALSE, FALSE, 0);
 
@@ -8233,13 +8239,15 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->node_adj = (LiVESObject *)lives_adjustment_new(0., 0., 0., 1. / mt->fps, 10. / mt->fps, 0.);
 
   mt->node_scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(mt->node_adj));
-  mt->node_spinbutton = lives_spin_button_new(LIVES_ADJUSTMENT(mt->node_adj), 0, 3);
+
+  mt->node_spinbutton = lives_standard_spin_button_new(NULL, 0., 0., 0., 1. / mt->fps, 1. / mt->fps,
+                        3, LIVES_BOX(hbox), NULL);
+
+  lives_spin_button_set_adjustment(LIVES_SPIN_BUTTON(mt->node_spinbutton), LIVES_ADJUSTMENT(mt->node_adj));
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mt->node_spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_node_spin_value_changed),
                              (livespointer)mt);
-
-  lives_box_pack_start(LIVES_BOX(hbox), mt->node_spinbutton, FALSE, TRUE, 0);
 
   mt->time_label = lives_standard_label_new(_("Time"));
   lives_box_pack_start(LIVES_BOX(hbox), mt->time_label, FALSE, TRUE, 0);
@@ -8618,21 +8626,22 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mainw->unordered_blocks = FALSE;
   }
 
-  tbuf = lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw_textview));
+  mainw_scrolledwindow = mainw->scrolledwindow;
+  mainw->scrolledwindow = mt->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
+  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mt->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
+  lives_widget_set_app_paintable(mt->scrolledwindow, TRUE);
 
-  mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
-  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->scrolledwindow), LIVES_WIDGET_EXPOSE_EVENT,
+                       LIVES_GUI_CALLBACK(expose_msg_scroll),
+                       NULL);
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-  lives_container_add(LIVES_CONTAINER(mt->vpaned), mainw->scrolledwindow);
+#if GTK_CHECK_VERSION(7, 0, 0)
+  lives_container_add(LIVES_CONTAINER(mt->vpaned), mt->scrolledwindow);
 #else
-  lives_paned_pack(2, LIVES_PANED(mt->vpaned), mainw->scrolledwindow, TRUE, FALSE);
+  lives_paned_pack(2, LIVES_PANED(mt->vpaned), mt->scrolledwindow, TRUE, FALSE);
 #endif
 
   lives_widget_queue_draw(mt->vpaned);
-
-  mainw->textview1 = lives_standard_text_view_new(NULL, tbuf);
-  lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_prevclip), mt, NULL));
@@ -8678,7 +8687,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mainw->dp_cache = NULL;
   }
 
-  lives_widget_grab_focus(mainw->textview1);
+  lives_widget_grab_focus(mt->scrolledwindow);
 
   return mt;
 }
@@ -9130,9 +9139,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   lives_widget_destroy(mt->clip_scroll);
   lives_widget_destroy(mt->fx_base_box);
 
-  mainw->scrolledwindow = mainw_scrolledwindow;
-  mainw->textview1 = mainw_textview;
-
   lives_list_free(mt->tl_marks);
 
   mainw->multitrack = NULL;
@@ -9148,6 +9154,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
       lives_widget_unparent(mt->top_vbox);
       lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
       lives_object_unref(mainw->top_vbox);
+      mainw->scrolledwindow = mainw_scrolledwindow;
       show_lives();
       unblock_expose();
       resize(1.);
@@ -10836,9 +10843,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   ce_sepwin_type = prefs->sepwin_type;
   if (ce_sepwin_type == SEPWIN_TYPE_STICKY) on_sticky_activate(NULL, NULL);
 
-  mainw_textview = mainw->textview1;
-  mainw_scrolledwindow = mainw->scrolledwindow;
-
   if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
   multi = multitrack(event_list, orig_file, cfile->fps);
   lives_widget_process_updates(mainw->LiVES, TRUE);
@@ -10899,7 +10903,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   if (!multi->opts.show_ctx) {
     lives_widget_hide(multi->context_frame);
-    lives_widget_hide(mainw->scrolledwindow);
+    lives_widget_hide(multi->scrolledwindow);
     lives_widget_hide(multi->sep_image);
   }
 
@@ -10964,11 +10968,12 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   lives_widget_process_updates(mainw->LiVES, TRUE);
 
   lives_paned_set_position(LIVES_PANED(multi->hpaned), (float)lives_widget_get_allocation_width(multi->hpaned) * .8);
-  lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .6);
   set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   redraw_all_event_boxes(multi);
 
+  lives_widget_context_update();
   lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .6); // 0 == top
   reset_message_area(TRUE);
   multi->no_expose = FALSE;
 
@@ -12412,7 +12417,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
         xxheight = height;
       } else {
         lives_widget_show(mt->in_hbox);
-        lives_widget_process_updates(mainw->LiVES, TRUE);
+        lives_widget_context_update();
         lives_usleep(prefs->sleep_time);
       }
     }

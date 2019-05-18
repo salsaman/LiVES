@@ -1,6 +1,6 @@
 // resample.c
 // LiVES
-// (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -2024,7 +2024,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
 boolean resample_clipboard(double new_fps) {
   // resample the clipboard video - if we already did it once, it is
   // quicker the second time
-  char *msg, *com;
+  char *com;
   int current_file = mainw->current_file;
 
   mainw->no_switch_dprint = TRUE;
@@ -2066,9 +2066,7 @@ boolean resample_clipboard(double new_fps) {
     cfile->undo_action = UNDO_RESAMPLE;
     cfile->fps = cfile->undo1_dbl;
     cfile->undo1_dbl = old_fps;
-    msg = lives_strdup_printf(_("Clipboard was resampled to %d frames.\n"), cfile->frames);
-    d_print(msg);
-    lives_free(msg);
+    d_print(_("Clipboard was resampled to %d frames.\n"), cfile->frames);
     mainw->current_file = current_file;
   } else {
     if (clipboard->undo1_dbl < clipboard->fps) {

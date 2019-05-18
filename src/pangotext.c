@@ -30,9 +30,15 @@
 static int font_cmp(const void *p1, const void *p2);
 #endif
 
-//
-// code things from scribbler.c
-//
+
+static void fill_bckg(lives_painter_t *cr, double x, double y, double dx, double dy) {
+  lives_painter_new_path(cr);
+  lives_painter_rectangle(cr, x, y, dx, dy);
+  lives_painter_fill(cr);
+  lives_painter_new_path(cr);
+}
+
+
 static void getxypos(LingoLayout *layout, double *px, double *py, int width, int height, boolean cent, double *pw, double *ph) {
   // calc coords of text, text will fit so it goes to bottom. Set cent to center text.
 
@@ -47,35 +53,276 @@ static void getxypos(LingoLayout *layout, double *px, double *py, int width, int
   lingo_layout_get_size(layout, &w_, &h_, width, height);
 
   // scale width, height to pixels
-  if (pw)
-    *pw = ((double)w_) / LINGO_SCALE;
-  if (ph)
-    *ph = ((double)h_) / LINGO_SCALE;
-
-  // xpos (left or centered)
-
-  if (cent) {
-    d = ((double)w_) / LINGO_SCALE;
-    d /= 2.0;
-    d = (width >> 1) - d;
-  } else d = 0.0;
-
-  if (px) *px = d;
+  d = ((double)h_) / (double)LINGO_SCALE;
+  if (ph) *ph = d;
 
   // ypos (adjusted so text goes to bottom)
+  if (py) *py = height - (int)d;
 
-  d = ((double)h_) / LINGO_SCALE;
-  d = height - d;
+  d = ((double)w_) / (double)LINGO_SCALE;
+  if (pw) *pw = d;
 
-  if (py) *py = d;
+  if (px) *px = cent ? (double)(width >> 1) - d / 2. : 0.;
 }
 
 
-static void fill_bckg(lives_painter_t *cr, double x, double y, double dx, double dy) {
+static char *rewrap_text(char *text, int *totlines) {
+  // find the longest line and move the last word to the following line
+  // if there is no following line we add one
+  // if there are no spaces in the line we truncate the last letter (for now)
+  size_t maxlen = 0;
+
+  char **lines;
+  char *jtext, *first, *second, *tmp;
+
+  int i, j;
+  int numlines;
+  int maxline = -1;
+  boolean needs_nl = FALSE;
+
+  if (text == NULL || strlen(text) == 0) return NULL;
+
+  jtext = lives_strdup("");
+  lines = lives_strsplit(text, "\n", -1);
+  numlines = get_token_count(text, '\n');
+
+  for (i = 0; i < numlines; i++) {
+    if (strlen(lines[i]) > maxlen) {
+      maxlen = strlen(lines[i]);
+      maxline = i;
+    }
+  }
+
+  for (i = 0; i < numlines; i++) {
+    if (i == maxline) {
+      for (j = maxlen - 1; j > 0; j--) {
+        // skip the final character - if it's a space we aren't going to move it yet
+        // if it's not a space we aren't going to move it yet
+        if (lines[i][j - 1] == ' ') {
+          // up to and including space
+          first = lives_strndup(lines[i], j);
+          // after space
+          second = lines[i] + j;
+          tmp = lives_strdup_printf("%s%s%s\n%s", jtext, needs_nl ? "\n" : "", first, second);
+          lives_free(first);
+          lives_free(jtext);
+          jtext = tmp;
+          needs_nl = FALSE;
+          break;
+        }
+        // no space in line, truncate last char
+        lines[i][maxlen - 1] = 0;
+        needs_nl = TRUE;
+      }
+      continue;
+    }
+    tmp = lives_strdup_printf("%s%s%s", jtext, needs_nl ? "\n" : "", lines[i]);
+    lives_free(jtext);
+    jtext = tmp;
+    needs_nl = TRUE;
+  }
+
+  lives_strfreev(lines);
+
+  if (maxline == numlines - 1 && !needs_nl && totlines != NULL) ++*totlines;
+
+  return jtext;
+}
+
+
+static char *remove_first_line(char *text) {
+  int i;
+  size_t tlen = strlen(text);
+  for (i = 0; i < tlen; i++) {
+    if (text[i] == '\n') return strdup(text + i + 1);
+  }
+  return NULL;
+}
+
+
+static weed_plant_t *get_nth_info_message(int n) {
+  int m = 0;
+  int error;
+  weed_plant_t *msg = mainw->msg_list;
+  if (n < 0 || n >= mainw->n_messages) return NULL;
+  if (n >= (mainw->n_messages >> 1)) {
+    // nearer to end, go backwards
+    m = mainw->n_messages;
+    do {
+      msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
+      if (error != WEED_NO_ERROR) return NULL;
+    } while (--m > n);
+    return msg;
+  }
+  while (m++ < n) {
+    msg = weed_get_plantptr_value(msg, WEED_LEAF_NEXT, &error);
+    if (error != WEED_NO_ERROR) return NULL;
+  }
+  return msg;
+}
+
+
+void layout_to_lives_painter(LingoLayout *layout, lives_painter_t *cr, lives_text_mode_t mode, lives_colRGBA64_t *fg,
+                             lives_colRGBA64_t *bg, int dwidth, int dheight, double x_pos, int y_pos) {
+  double b_alpha = 1.;
+  double f_alpha = 1.;
+
+  if (bg != NULL) b_alpha = (double)bg->alpha / 65535.;
+  if (fg != NULL) f_alpha = (double)fg->alpha / 65535.;
+
+  if (cr == NULL) return;
+
+  switch (mode) {
+  case LIVES_TEXT_MODE_BACKGROUND_ONLY:
+    lingo_layout_set_text(layout, "", -1);
+  case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
+    lives_painter_set_source_rgba(cr, (double)bg->red / 66535., (double)bg->green / 66535., (double)bg->blue / 66535., b_alpha);
+    fill_bckg(cr, x_pos, y_pos, dwidth, dheight);
+    break;
+  default:
+    break;
+  }
+
   lives_painter_new_path(cr);
-  lives_painter_rectangle(cr, x, y, dx, dy);
-  lives_painter_fill(cr);
-  lives_painter_new_path(cr);
+  lives_painter_move_to(cr, x_pos, y_pos);
+  lives_painter_set_source_rgba(cr, (double)fg->red / 66535., (double)fg->green / 66535., (double)fg->blue / 66535., f_alpha);
+
+#ifdef GUI_QT
+  lingo_layout_set_coords(layout, x_pos, y_pos, dwidth, dheight);
+#endif
+}
+
+//#define DEBUG_MSGS
+LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWidget *widget, int *linecount) {
+  // create a layout, using text properties for widget
+  //
+  // nth message in mainw->messages should be at the bottom
+  // or if there are insufficient messages then we render from message 0
+
+  // also we want to justify text, splitting on words so that it fits width
+
+#ifdef GUI_GTK
+  LingoLayout *layout;
+  LingoContext *ctx;
+  weed_plant_t *msg;
+
+  char *readytext, *testtext, *newtext = NULL, *tmp;
+  int w, h, ph, pw;
+  int error;
+  int totlines = 0;
+
+  boolean heightdone = FALSE;
+
+  if (width < 32 || height < 32) return NULL;
+
+  ctx = lives_widget_get_lingo_context(widget);
+  layout = lingo_layout_new(ctx);
+
+  readytext = lives_strdup("");
+
+  msg = get_nth_info_message(n);
+
+#ifdef DEBUG_MSGS
+  g_print("Want msg number %d at bottom\n", n);
+#endif
+
+  while (1) {
+    // start with the nth message, with \n replaced with newlines
+    if (newtext == NULL) {
+      if (--n < 0) break;
+      msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
+      newtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
+      if (error != WEED_NO_ERROR) break;
+      if (newtext == NULL) {
+        break;
+      }
+      totlines += get_token_count(newtext, '\n');
+#ifdef DEBUG_MSGS
+      g_print("Got msg:%s\ntotal is now %d lines\n", newtext, totlines);
+#endif
+    }
+
+    testtext = lives_strdup_printf("%s%s", newtext, readytext);
+#ifdef DEBUG_MSGS
+    g_print("Testing with:%s:\n", testtext);
+#endif
+    lingo_layout_set_markup(layout, testtext, -1);
+    lingo_layout_get_size(layout, &pw, &ph, 0, 0);
+
+    w = pw / LINGO_SCALE;
+    h = ph / LINGO_SCALE;
+
+#ifdef DEBUG_MSGS
+    g_print("Sizes %d %d window, %d %d layout\n", width, height, w, h);
+#endif
+
+    if (h > height) {
+#ifdef DEBUG_MSGS
+      g_print("Too high !\n");
+#endif
+      heightdone = TRUE;
+      // text was too high, start removing lines from the top until it fits
+      tmp = remove_first_line(newtext);
+      lives_free(newtext);
+      newtext = tmp;
+      totlines--;
+      if (newtext == NULL) break; // no more to remove, we are done !
+#ifdef DEBUG_MSGS
+      g_print("Retry with (%d) |%s|\n", totlines, newtext);
+#endif
+      continue; // retry with first line removed
+    }
+
+    // height was ok, now let's check the width
+
+    if (w > width) {
+      // text was too wide
+#ifdef DEBUG_MSGS
+      g_print("Too wide !!!\n");
+#endif
+      while (w > width) {
+        // find the longest line and move the last word to the following line
+        // if there is no following line we add one
+        // if there are no spaces in the line we truncate the last letter (for now)
+        char *tmp = rewrap_text(newtext, &totlines);
+        lives_free(newtext);
+        newtext = tmp;
+#ifdef DEBUG_MSGS
+        g_print("Retry with (%d) |%s|\n", totlines, newtext);
+#endif
+        if (newtext == NULL) break;
+        // check width again, just looking at new part
+        lingo_layout_set_markup(layout, newtext, -1); // TODO
+        lingo_layout_get_size(layout, &pw, &ph, 0, 0);
+        w = pw / LINGO_SCALE;
+      }
+#ifdef DEBUG_MSGS
+      g_print("Width OK now\n");
+#endif
+      continue; // width is OK again, need to recheck height
+    }
+
+    lives_free(newtext);
+    newtext = NULL;
+    lives_free(readytext);
+    readytext = testtext;
+#ifdef DEBUG_MSGS
+    g_print("|%s| passed size tests\n", readytext);
+#endif
+    if (heightdone) break;
+  }
+
+  // result is now in readytext
+  lingo_layout_set_markup(layout, readytext, -1);
+
+  if (linecount != NULL) *linecount = totlines;
+
+#ifdef DEBUG_MSGS
+  g_print("|%s| FINAL !!\n", readytext);
+#endif
+  return layout;
+#endif
+  return NULL;
 }
 
 
@@ -135,7 +382,7 @@ static int font_cmp(const void *p1, const void *p2) {
 
 LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const char *text, const char *fontname,
                                double size, lives_text_mode_t mode, lives_colRGBA64_t *fg, lives_colRGBA64_t *bg,
-                               boolean center, boolean rising, double top, int offs_x, int width, int height) {
+                               boolean center, boolean rising, double top, int offs_x, double dwidth, double dheight) {
   // fontname may be eg. "Sans"
 
   // size is in device units, i.e. pixels
@@ -154,14 +401,6 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   LingoLayout *layout;
 
   double x_pos = 0., y_pos = 0.;
-  double x_text, y_text;
-  double dwidth = width, dheight = height;
-
-  double b_alpha = 1.;
-  double f_alpha = 1.;
-
-  if (bg != NULL) b_alpha = (double)bg->alpha / 65535.;
-  if (fg != NULL) f_alpha = (double)fg->alpha / 65535.;
 
   if (cr == NULL) return NULL;
 
@@ -189,14 +428,11 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 #ifndef GUI_QT
   if (rising || center || mode == LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND)
 #endif
-    getxypos(layout, &x_pos, &y_pos, width, height, center, &dwidth, &dheight);
+    getxypos(layout, &x_pos, &y_pos, dwidth, dheight, center, &dwidth, &dheight);
 
-  if (!rising) y_pos = y_text = height * top;
+  if (!rising) y_pos = dheight * top;
 
   if (!center) x_pos += offs_x;
-
-  x_text = x_pos;
-  y_text = y_pos;
 
   /*  lives_painter_new_path(cr);
   lives_painter_rectangle(cr,offs_x,0,width,height);
@@ -205,24 +441,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   if (center) lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
   else lingo_layout_set_alignment(layout, LINGO_ALIGN_LEFT);
 
-  switch (mode) {
-  case LIVES_TEXT_MODE_BACKGROUND_ONLY:
-    lingo_layout_set_text(layout, "", -1);
-  case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
-    lives_painter_set_source_rgba(cr, (double)bg->red / 66535., (double)bg->green / 66535., (double)bg->blue / 66535., b_alpha);
-    fill_bckg(cr, x_pos, y_pos, dwidth, dheight);
-    break;
-  default:
-    break;
-  }
-
-  lives_painter_new_path(cr);
-  lives_painter_move_to(cr, x_text, y_text);
-  lives_painter_set_source_rgba(cr, (double)fg->red / 66535., (double)fg->green / 66535., (double)fg->blue / 66535., f_alpha);
-
-#ifdef GUI_QT
-  lingo_layout_set_coords(layout, x_pos, y_pos, dwidth, dheight);
-#endif
+  layout_to_lives_painter(layout, cr, mode, fg, bg, dwidth, dheight, x_pos, y_pos);
 
 #ifdef GUI_GTK
   if (font != NULL) {

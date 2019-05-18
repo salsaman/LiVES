@@ -201,11 +201,11 @@ void on_spin_step_value_changed(LiVESSpinButton *, livespointer);
 
 void on_spin_end_value_changed(LiVESSpinButton *, livespointer);
 
-EXPOSE_FN_PROTOTYPE(expose_vid_event)
+EXPOSE_FN_PROTOTYPE(expose_vid_event);
 
-EXPOSE_FN_PROTOTYPE(expose_laud_event)
+EXPOSE_FN_PROTOTYPE(expose_laud_event);
 
-EXPOSE_FN_PROTOTYPE(expose_raud_event)
+EXPOSE_FN_PROTOTYPE(expose_raud_event);
 
 void on_preview_clicked(LiVESButton *, livespointer);
 

@@ -4126,3 +4126,136 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   return req;
 }
+
+
+EXPOSE_FN_DECL(expose_msg_scroll, widget) {
+  lives_painter_t *cr;
+
+  LingoLayout *layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
+  if (layout == NULL || !mainw->is_ready) return FALSE;
+  else {
+    if (mainw->multitrack == NULL) {
+      int scr_width = GUI_SCREEN_WIDTH;
+      int scr_height = GUI_SCREEN_HEIGHT;
+      int bx, by, w, h;
+
+      get_border_size(mainw->LiVES, &bx, &by);
+      w = lives_widget_get_allocation_width(mainw->LiVES);
+      h = lives_widget_get_allocation_height(mainw->LiVES);
+
+      if (w > scr_width - bx || h > scr_height - by) {
+        if (w > scr_width - bx || h > scr_height - by) {
+          int overflowx = w - (scr_width - bx);
+          int overflowy = h - (scr_height - by);
+
+          int mywidth = lives_widget_get_allocation_width(widget);
+          int myheight = lives_widget_get_allocation_height(widget);
+
+#ifdef DEBUG_OVERFLOW
+          g_print("overflow is %d X %d\n", overflowx, overflowy);
+#endif
+          if (overflowx > 0) mywidth -= overflowx;
+          if (overflowy > 0) myheight -= overflowy;
+          lives_signal_handlers_block_by_func(widget, (livespointer)expose_msg_scroll, NULL);
+
+          reset_message_area(FALSE);
+          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_context_update();
+          lives_widget_hide(widget);
+          lives_widget_hide(mainw->message_box);
+          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_context_update();
+
+          if (overflowx > 0 || overflowy > 0) {
+            lives_widget_set_size_request(widget, mywidth, myheight);
+            lives_widget_set_size_request(mainw->message_box, mywidth, myheight);
+          }
+          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_context_update();
+
+          w = scr_width - bx;
+          h = scr_height - by;
+          lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
+          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_context_update();
+          lives_window_resize(LIVES_WINDOW(mainw->LiVES), w, h);
+          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_context_update();
+
+          if (prefs->open_maximised)
+            lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
+          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_context_update();
+          lives_widget_show(widget);
+          lives_widget_show(mainw->message_box);
+          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_context_update();
+          reset_message_area(TRUE);
+          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_context_update();
+          lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
+          lives_signal_handlers_unblock_by_func(widget, (livespointer)expose_msg_scroll, NULL);
+          return FALSE;
+        }
+      }
+    }
+
+    if (layout != NULL) {
+      lives_colRGBA64_t fg, bg;
+      int height = lives_widget_get_allocation_height(LIVES_WIDGET(widget));
+      int width = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
+      if (width < 32 || height < 32) return FALSE;
+      widget_color_to_lives_rgba(&fg, &palette->info_text);
+      widget_color_to_lives_rgba(&bg, &palette->info_base);
+      if (cairo == NULL) cr = lives_painter_create_from_widget(widget);
+      else cr = cairo;
+      layout_to_lives_painter(layout, cr, LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &fg, &bg, width, height, 0., 0.);
+      lingo_painter_show_layout(cr, layout);
+      if (cr != cairo) lives_painter_destroy(cr);
+    }
+  }
+
+  return TRUE;
+}
+EXPOSE_FN_END
+
+
+void scroll_to_end(LiVESScrolledWindow *widget) {
+  // "scroll" the message area so that the last message appears at the bottom
+  LingoLayout *layout;
+  LiVESAdjustment *adj;
+  lives_painter_t *cr;
+  lives_colRGBA64_t fg, bg;
+
+  int width;
+  int height;
+  int nlines, n_messages = mainw->n_messages;
+
+  if (n_messages <= 0) return;
+
+  if (!LIVES_IS_WIDGET(widget)) return;
+
+  height = lives_widget_get_allocation_height(LIVES_WIDGET(widget));
+  width = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
+  if (width < 32 || height < 32) return;
+
+  layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
+  if (layout != NULL) lives_object_unref(layout);
+
+  layout = layout_nth_message_at_bottom(n_messages - 1, width, height, LIVES_WIDGET(widget), &nlines);
+
+  adj = lives_scrolled_window_get_vadjustment(widget);
+  lives_adjustment_set_lower(adj, 0.);
+  lives_adjustment_set_upper(adj, n_messages + nlines);
+  lives_adjustment_set_page_size(adj, nlines);
+  lives_adjustment_set_value(adj, n_messages);
+
+  widget_color_to_lives_rgba(&fg, &palette->info_text);
+  widget_color_to_lives_rgba(&bg, &palette->info_base);
+
+  cr = lives_painter_create_from_widget(LIVES_WIDGET(widget));
+  layout_to_lives_painter(layout, cr, LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &fg, &bg, width, height, 0., 0.);
+  lingo_painter_show_layout(cr, layout);
+  lives_painter_destroy(cr);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout", layout);
+}

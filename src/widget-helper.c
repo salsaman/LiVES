@@ -1138,84 +1138,7 @@ boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, c
 
 
 boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 0, 0)
-#if GTK_CHECK_VERSION(3, 16, 0)
 
-  GtkCssProvider *provider;
-  GtkStyleContext *ctx;
-
-  char *widget_name, *wname;
-  char *colref;
-  char *css_string;
-  char *state_str;
-
-  provider = gtk_css_provider_new();
-  ctx = gtk_widget_get_style_context(widget);
-  gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
-
-  widget_name = g_strdup(gtk_widget_get_name(widget));
-
-  if (strncmp(widget_name, "XXX", 3)) {
-    if (widget_name != NULL) g_free(widget_name);
-    widget_name = make_random_string();
-    gtk_widget_set_name(widget, widget_name);
-  }
-
-  colref = gdk_rgba_to_string(color);
-
-#ifdef GTK_TEXT_VIEW_CSS_BUG
-  if (GTK_IS_TEXT_VIEW(widget)) wname = g_strdup("GtkTextView");
-  else {
-#endif
-    switch (state) {
-    // TODO: gtk+ 3.x can set multiple states
-    case GTK_STATE_FLAG_ACTIVE:
-      state_str = ":active";
-      break;
-    case GTK_STATE_FLAG_FOCUSED:
-#if GTK_CHECK_VERSION(3, 18, 0)
-      state_str = ":focus";
-#endif
-      break;
-    case GTK_STATE_FLAG_PRELIGHT:
-#if GTK_CHECK_VERSION(3, 18, 0)
-      state_str = ":hover";
-#else
-      state_str = ":prelight";
-#endif
-      break;
-    case GTK_STATE_FLAG_SELECTED:
-      state_str = ":selected";
-      break;
-    case GTK_STATE_FLAG_INCONSISTENT:
-#if GTK_CHECK_VERSION(3, 18, 0)
-      state_str = ":indeterminate";
-#endif
-      break;
-    case GTK_STATE_FLAG_BACKDROP:
-#if GTK_CHECK_VERSION(3, 18, 0)
-      state_str = ":backdrop";
-#endif
-      break;
-    case GTK_STATE_FLAG_INSENSITIVE:
-#if GTK_CHECK_VERSION(3, 18, 0)
-      state_str = ":disabled";
-#else
-      state_str = ":insensitive";
-#endif
-      break;
-    default:
-      state_str = "";
-    }
-
-    if (GTK_IS_NOTEBOOK(widget)) wname = g_strdup_printf("#%s%s tab", widget_name, state_str);
-    else wname = g_strdup_printf("#%s%s", widget_name, state_str);
-
-#ifdef GTK_TEXT_VIEW_CSS_BUG
-  }
-#endif
 
   css_string = g_strdup_printf(" %s {\n color: %s;\n }\n", wname, colref);
 
@@ -1271,19 +1194,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_text_color(LiVESWidget *wid
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidgetState state,
     const LiVESWidgetColor *color) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 0, 0)
-  lives_widget_set_bg_color(widget, state, color);
-#else
-  gtk_widget_modify_base(widget, state, color);
-#endif
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  widget->set_base_color(state, color);
-  return TRUE;
-#endif
-  return FALSE;
+
 }
 
 
@@ -4479,6 +4390,16 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_spin_button_get_adjustment(Li
 #endif
 #ifdef GUI_QT
   adj = button->get_adj();
+#endif
+  return adj;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_spin_button_set_adjustment(LiVESSpinButton *button, LiVESAdjustment *adj) {
+#ifdef GUI_GTK
+  gtk_spin_button_set_adjustment(button, adj);
+#endif
+#ifdef GUI_QT
 #endif
   return adj;
 }
@@ -9075,7 +8996,7 @@ boolean widget_opts_rescale(double scale) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_if_visible(LiVESWidget *widget) {
-  if (gtk_widget_is_drawable(widget)) {
+  if (GTK_IS_WIDGET(widget) && gtk_widget_is_drawable(widget)) {
     lives_widget_queue_draw(widget);
     return TRUE;
   }
@@ -9378,19 +9299,6 @@ boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *tbuff, const char *text
   LiVESTextIter xiter;
   if (lives_text_buffer_get_end_iter(tbuff, &xiter))
     return lives_text_buffer_insert(tbuff, &xiter, text, -1);
-  return FALSE;
-}
-
-
-boolean lives_scroll_to_end(LiVESScrolledWindow *scrolledwindow) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2, 8, 0)
-  LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(scrolledwindow));
-  lives_adjustment_set_upper(adj, 100.);
-  lives_adjustment_set_value(adj, LIVES_MAXDOUBLE);
-  return TRUE;
-#endif
-#endif
   return FALSE;
 }
 

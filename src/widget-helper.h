@@ -487,6 +487,7 @@ double lives_spin_button_get_value(LiVESSpinButton *);
 int lives_spin_button_get_value_as_int(LiVESSpinButton *);
 
 LiVESAdjustment *lives_spin_button_get_adjustment(LiVESSpinButton *);
+LiVESAdjustment *lives_spin_button_set_adjustment(LiVESSpinButton *, LiVESAdjustment *adj);
 
 boolean lives_spin_button_set_value(LiVESSpinButton *, double value);
 boolean lives_spin_button_set_range(LiVESSpinButton *, double min, double max);
@@ -851,8 +852,6 @@ char *lives_text_view_get_text(LiVESTextView *);
 boolean lives_text_view_set_text(LiVESTextView *, const char *text, int len);
 
 boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *, const char *text);
-
-boolean lives_scroll_to_end(LiVESScrolledWindow *);
 
 void lives_general_button_clicked(LiVESButton *, livespointer data_to_free);
 

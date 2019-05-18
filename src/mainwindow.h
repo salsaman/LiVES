@@ -998,7 +998,6 @@ typedef struct {
   LiVESWidget *scrolledwindow;
   LiVESWidget *message_box;
 
-  LiVESWidget *textview1;
   LiVESWidget *clipsmenu;
   LiVESWidget *eventbox;
   LiVESWidget *eventbox2;
@@ -1414,8 +1413,19 @@ typedef struct {
   volatile LiVESWidget *stop_emmission;
 
   boolean no_context_update;
+
+  weed_plant_t *msg_list;
+  int n_messages;
   ////////////////////
 } mainwindow;
+
+// weed plants with type >= 512 are reserved for custom use, so let's take advantage of that
+#define WEED_PLANT_LIVES 31337
+
+#define WEED_LEAF_LIVES_SUBTYPE "subtype"
+#define WEED_LEAF_LIVES_MESSAGE_STRING "message_string"
+
+#define LIVES_WEED_SUBTYPE_MESSAGE 1
 
 extern _palette *palette;
 

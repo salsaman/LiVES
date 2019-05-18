@@ -987,7 +987,10 @@ load_done:
   } else {
     lives_mt *multi = mainw->multitrack;
     mainw->multitrack = NULL; // allow getting of afilesize
-    reget_afilesize(mainw->current_file);
+    current_file = mainw->current_file;
+    mainw->current_file = -1; // stop framebars from being drawn
+    reget_afilesize(current_file);
+    mainw->current_file = current_file;
     mainw->multitrack = multi;
     get_total_time(cfile);
     if (!mainw->is_generating) mainw->current_file = mainw->multitrack->render_file;
@@ -5490,6 +5493,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   mainw->is_ready = is_ready;
   update_play_times();
   mainw->last_dprint_file = -1;
+  mainw->no_switch_dprint = FALSE;
   d_print("");
   return TRUE;
 }

@@ -25,6 +25,10 @@ void update_timer_bars(int posx, int posy, int width, int height, int which); //
 void redraw_timer_bars(double oldx, double newx, int which); ///< paint a damage region
 void show_playbar_labels(int clipno);
 
+void scroll_to_end(LiVESScrolledWindow *widget);
+
+EXPOSE_FN_PROTOTYPE(expose_msg_scroll);
+
 LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking);
 LiVESWidget *create_opensel_dialog(void);
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);

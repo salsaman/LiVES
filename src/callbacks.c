@@ -1094,12 +1094,10 @@ void on_save_selection_activate(LiVESMenuItem *menuitem, livespointer user_data)
 static void check_remove_layout_files(void) {
   if (prompt_remove_layout_files()) {
     // delete layout directory
-    char *msg, *laydir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
+    char *laydir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
     lives_rmdir(laydir, TRUE);
     lives_free(laydir);
-    msg = lives_strdup_printf(_("Layouts were removed for set %s.\n"), mainw->set_name);
-    d_print(msg);
-    lives_free(msg);
+    d_print(_("Layouts were removed for set %s.\n"), mainw->set_name);
   }
 }
 
@@ -1501,9 +1499,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_free(themefile);
 
-  tmp = lives_strdup_printf(_("Exporting theme as %s..."), file_name);
-  d_print(tmp);
-  lives_free(tmp);
+  d_print(_("Exporting theme as %s..."), file_name);
 
   // copy images for packaging
   mainw->com_failed = FALSE;
@@ -1565,7 +1561,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char tname[128];
 
   char *importcheckdir, *themeheader, *themedir;
-  char *com, *msg;
+  char *com;
   char *theme_file;
 
   desensitize();
@@ -1616,9 +1612,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(importcheckdir);
   lives_free(themeheader);
 
-  msg = lives_strdup_printf(_("Importing theme \"%s\" from %s..."), tname, theme_file);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Importing theme \"%s\" from %s..."), tname, theme_file);
 
   if (!do_std_checks(U82F(tname), _("Theme"), 64, NULL)) {
     lives_free(theme_file);
@@ -7192,14 +7186,9 @@ void on_boolean_toggled(LiVESObject *obj, livespointer user_data) {
 void on_audio_toggled(LiVESWidget *tbutton, livespointer user_data) {
   if (!mainw->interactive) return;
   if (!lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))) {
-    // since this is a latch-on type button, clicking on it in an already active state
-    // should do nothing. It would be nice if we could pass in the handler id to block / unblock in user_data
-    // but that is not possible since we only receive the id when connecting the callback
-    if (tbutton == mainw->ext_audio_checkbutton) lives_signal_handler_block(tbutton, mainw->ext_audio_func);
-    else lives_signal_handler_block(tbutton, mainw->int_audio_func);
+    lives_signal_handlers_block_by_func(tbutton, (livespointer)on_audio_toggled, NULL);
     lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton), TRUE);
-    if (tbutton == mainw->ext_audio_checkbutton) lives_signal_handler_unblock(tbutton, mainw->ext_audio_func);
-    else lives_signal_handler_unblock(tbutton, mainw->int_audio_func);
+    lives_signal_handlers_unblock_by_func(tbutton, (livespointer)on_audio_toggled, NULL);
     lives_signal_stop_emission_by_name(tbutton, LIVES_WIDGET_TOGGLED_SIGNAL);
     return;
   }

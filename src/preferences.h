@@ -378,6 +378,10 @@ typedef struct {
   float ahold_threshold;
 
   double screen_gamma;
+
+  int max_messages;
+
+#define DEF_MAX_MESSAGES 10000
 } _prefs;
 
 enum {

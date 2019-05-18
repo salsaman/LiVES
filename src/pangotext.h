@@ -62,7 +62,12 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
 LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *, const char *text, const char *fontname,
                                double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col, lives_colRGBA64_t *bg_col,
-                               boolean center, boolean rising, double top, int start, int width, int height);
+                               boolean center, boolean rising, double top, int start, double dwidth, double dheight);
+
+void layout_to_lives_painter(LingoLayout *, lives_painter_t *, lives_text_mode_t mode, lives_colRGBA64_t *fg_col,
+                             lives_colRGBA64_t *bg_col, int win_width, int win_height, double x_pos, int y_pos);
+
+LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWidget *widget, int *linecount);
 
 #endif
 

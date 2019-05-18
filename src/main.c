@@ -1135,6 +1135,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->no_context_update = FALSE;
 
+  mainw->msg_list = NULL;
+  mainw->n_messages = 0;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -1254,6 +1257,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->screen_gamma = DEF_SCREEN_GAMMA;
 
+    prefs->max_messages = DEF_MAX_MESSAGES;
     //////////////////////////////////////////////////////////////////
 
     if (!mainw->foreign) {
@@ -2873,7 +2877,7 @@ static boolean lives_startup(livespointer data) {
                         lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) -
                         lives_widget_get_allocation_height(mainw->message_box));
 
-                    lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+                    scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
                   }
 
                   /* if (prefs->show_gui) { */
@@ -2978,9 +2982,7 @@ static boolean lives_startup(livespointer data) {
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
-    char *msg = lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name);
-    d_print(msg);
-    lives_free(msg);
+    d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
     if (!reload_set(prefs->ar_clipset_name) || mainw->current_file == -1) {
       set_pref(PREF_AR_CLIPSET, "");
       prefs->ar_clipset = FALSE;
@@ -3043,8 +3045,11 @@ static boolean lives_startup(livespointer data) {
 
   if (mainw->current_file == -1) {
     resize(1.);
-    reset_message_area(TRUE);
   }
+
+  reset_message_area(TRUE);
+  scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+
   lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
 
   return FALSE;

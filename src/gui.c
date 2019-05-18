@@ -291,11 +291,6 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->framebar), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->framebar, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  if (LIVES_IS_WIDGET(mainw->textview1)) {
-    lives_widget_set_base_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, coli);
-    lives_widget_set_text_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, colt);
-  }
-
   if (palette->style & STYLE_2) {
     lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, colb);
     lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, colb);
@@ -526,7 +521,6 @@ void create_LiVES(void) {
   //                  - raudio_drawable (cairo surface)
   // - message_box
   //      - scrolledwindow
-  //           - textview1
 
   mainw->menu_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->menu_hbox, FALSE, FALSE, 0);
@@ -2230,10 +2224,14 @@ void create_LiVES(void) {
 
   mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
-  lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->scrolledwindow, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->scrolledwindow, TRUE, TRUE, 0);
 
-  mainw->textview1 = lives_standard_text_view_new(NULL, NULL);
-  lives_container_add(LIVES_CONTAINER(mainw->scrolledwindow), mainw->textview1);
+  lives_widget_set_app_paintable(mainw->scrolledwindow, TRUE);
+  lives_container_set_border_width(LIVES_CONTAINER(mainw->scrolledwindow), 0);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->scrolledwindow), LIVES_WIDGET_EXPOSE_EVENT,
+                       LIVES_GUI_CALLBACK(expose_msg_scroll),
+                       NULL);
 
   // accel keys
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
@@ -2397,8 +2395,7 @@ void create_LiVES(void) {
     }
   }
 
-  lives_text_view_set_text(LIVES_TEXT_VIEW(mainw->textview1),
-                           _("Starting...\n"), -1);
+  add_message_to_list(_("Starting...\n"));
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->LiVES), LIVES_WIDGET_DELETE_EVENT,
                        LIVES_GUI_CALLBACK(on_LiVES_delete_event),
@@ -2939,7 +2936,7 @@ void create_LiVES(void) {
   mainw->video_drawable = NULL;
   mainw->plug = NULL;
 
-  lives_widget_grab_focus(mainw->textview1);
+  lives_widget_grab_focus(mainw->scrolledwindow);
 }
 
 
@@ -4518,6 +4515,7 @@ void splash_end(void) {
 
 void reset_message_area(boolean expand) {
   int height;
+  if (!mainw->is_ready) return;
   if (!prefs->show_gui) return;
   if (!expand) {
     if (mainw->multitrack != NULL) return;
@@ -4526,18 +4524,17 @@ void reset_message_area(boolean expand) {
     lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), 1);
     lives_widget_set_size_request(mainw->message_box, -1, 1);
     lives_widget_set_size_request(mainw->scrolledwindow, -1, 1);
-    lives_widget_set_size_request(mainw->textview1, -1, 1);
-  } else {
+  }
+
+  if (expand) {
     // re-expand the message area to fit the empty space at the bottom
     if (mainw->multitrack == NULL) {
       height = lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) +
-               lives_widget_get_allocation_height(mainw->message_box);
+               lives_widget_get_allocation_height(mainw->message_box) - lives_widget_get_allocation_height(mainw->menu_hbox);
     } else {
       height = lives_widget_get_allocation_height(mainw->multitrack->vpaned) - lives_paned_get_position(LIVES_PANED(mainw->multitrack->vpaned));
     }
     if (height > 0) {
-      lives_widget_show(mainw->scrolledwindow);
-      lives_widget_set_size_request(mainw->textview1, -1, height);
       lives_widget_set_size_request(mainw->scrolledwindow, -1, height);
       if (mainw->multitrack == NULL) {
         lives_widget_set_size_request(mainw->message_box, -1, height);
@@ -4546,7 +4543,9 @@ void reset_message_area(boolean expand) {
       }
       lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), height);
     } else lives_widget_hide(mainw->scrolledwindow);
-    lives_scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+
+    lives_widget_process_updates(mainw->LiVES, TRUE);
+    scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
   }
 }
 

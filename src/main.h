@@ -1057,6 +1057,11 @@ void pump_io_chan(LiVESIOChannel *iochan);
 
 void do_splash_progress(void);
 
+// message collection
+void d_print(const char *fmt, ...);
+char *dump_messages(int start, int end);
+int add_message_to_list(const char *fmt, ...);
+
 // d_print shortcuts
 void d_print_cancelled(void);
 void d_print_failed(void);
@@ -1283,7 +1288,6 @@ void get_filename(char *filename, boolean strip_dir);
 char *get_extension(const char *filename);
 uint64_t get_version_hash(const char *exe, const char *sep, int piece);
 uint64_t make_version_hash(const char *ver);
-void d_print(const char *fmt, ...);
 void init_clipboard(void);
 boolean cache_file_contents(const char *filename);
 char *get_val_from_cached_list(const char *key, size_t maxlen);

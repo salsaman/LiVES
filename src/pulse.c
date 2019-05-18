@@ -1343,14 +1343,16 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, NULL);
     pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, NULL);
 
-    pa_stream_set_read_callback(pdriver->pstream, pulse_audio_read_process, pdriver);
-
     pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
                              (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE));
+    pa_threaded_mainloop_unlock(pa_mloop);
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       lives_usleep(prefs->sleep_time);
     }
+
+    pa_threaded_mainloop_lock(pa_mloop);
+    pa_stream_set_read_callback(pdriver->pstream, pulse_audio_read_process, pdriver);
   }
 
   pa_threaded_mainloop_unlock(pa_mloop);

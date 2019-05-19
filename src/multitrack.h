@@ -211,6 +211,10 @@ struct _mt {
   LiVESWidget *jumpback;
   LiVESWidget *render;
   LiVESWidget *prerender_aud;
+  LiVESWidget *message_box;
+  LiVESWidget *msg_area;
+  LiVESWidget *msg_scrollbar;
+  LiVESAdjustment *msg_adj;
   LiVESWidget *fx_block;
   LiVESWidget *fx_blockv;
   LiVESWidget *fx_blocka;
@@ -458,6 +462,8 @@ struct _mt {
   ulong seltrack_func;
 
   ulong tc_func;
+
+  ulong sw_func;
 
   weed_plant_t *event_list;
 

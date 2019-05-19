@@ -327,7 +327,8 @@ int lives_system(const char *com, boolean allow_error) {
        (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    if (!mainw->go_away)
+      lives_widget_process_updates(mainw->LiVES, TRUE);
   }
 
   retval = system(com);
@@ -2086,6 +2087,7 @@ weed_plant_t *get_nth_info_message(int n) {
 char *dump_messages(int start, int end) {
   weed_plant_t *msg = mainw->msg_list;
   char *text = lives_strdup(""), *tmp, *msgtext;
+  boolean needs_newline = FALSE;
   int msgno = 0;
   int error;
 
@@ -2093,9 +2095,14 @@ char *dump_messages(int start, int end) {
     msgtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
     if (error != WEED_NO_ERROR) break;
     if (msgno >= start) {
-      tmp = lives_strdup_printf("%s%s", text, msgtext);
+#ifdef SHOW_MSG_LINENOS
+      tmp = lives_strdup_printf("%s%s(%d)%s", text, needs_newline ? "\n" : "", msgno, msgtext);
+#else
+      tmp = lives_strdup_printf("%s%s%s", text, needs_newline ? "\n" : "", msgtext);
+#endif
       lives_free(text);
       text = tmp;
+      needs_newline = TRUE;
     }
     lives_free(msgtext);
     if (++msgno > end) if (end > -1) break;
@@ -2106,54 +2113,101 @@ char *dump_messages(int start, int end) {
 }
 
 
-int add_message_to_list(const char *fmt, ...) {
-  // append a message to our message list
-  // if we hit the max message limit then free the oldest one
-  weed_plant_t *msg, *end, *next;
-  va_list xargs;
-  int error;
-  char *text;
-
-  if (prefs->max_messages <= 0) return WEED_NO_ERROR;
-
-  va_start(xargs, fmt);
-  text = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-
-  msg = weed_plant_new(WEED_PLANT_LIVES);
-  if (msg == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+static weed_plant_t *make_msg(const char *text) {
+  // make single msg. text should have no newlines in it, except possibly as the last character.
+  weed_plant_t *msg = weed_plant_new(WEED_PLANT_LIVES);
+  if (msg == NULL) return NULL;
 
   weed_set_int_value(msg, WEED_LEAF_LIVES_SUBTYPE, LIVES_WEED_SUBTYPE_MESSAGE);
   weed_set_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, text);
 
   weed_set_plantptr_value(msg, WEED_LEAF_NEXT, NULL);
+  weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, NULL);
+  return msg;
+}
 
-  if (mainw->msg_list == NULL) {
-    weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, NULL);
-    mainw->msg_list = msg;
-    mainw->n_messages = 1;
-    return WEED_NO_ERROR;
-  }
 
-  end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error);
-  weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, end);
+int add_messages_to_list(const char *text) {
+  // append text to our message list, splitting it into lines
+  // if we hit the max message limit then free the oldest one
+  // returns a weed error
+  weed_plant_t *msg, *end, *next;
+  char **lines;
+  int error, i, numlines;
 
-  if (++mainw->n_messages > prefs->max_messages) {
-    // retire the oldest if we reached the limit
-    next = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_NEXT, &error);
-    weed_plant_free(mainw->msg_list);
-    if (end != NULL) {
-      mainw->msg_list = next;
-      weed_set_plantptr_value(end, WEED_LEAF_NEXT, msg);
-      weed_set_plantptr_value(next, WEED_LEAF_PREVIOUS, msg);
-    } else mainw->msg_list = msg;
-  } else {
+  if (prefs->max_messages <= 0) return WEED_NO_ERROR;
+  if (text == NULL || strlen(text) == 0) return WEED_NO_ERROR;
+
+  // split text into lines
+  numlines = get_token_count(text, '\n');
+  lines = lives_strsplit(text, "\n", numlines);
+
+  for (i = 0; i < numlines; i++) {
+    if (mainw->msg_list == NULL) {
+      mainw->msg_list = make_msg(lines[i]);
+      if (mainw->msg_list == NULL) {
+        mainw->n_messages = 0;
+        lives_strfreev(lines);
+        return WEED_ERROR_MEMORY_ALLOCATION;
+      }
+      mainw->n_messages = 1;
+      continue;
+    }
+
+    end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error);
+    if (error != WEED_NO_ERROR) {
+      lives_strfreev(lines);
+      return error;
+    }
     if (end == NULL) end = mainw->msg_list;
-    weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, end);
-    weed_set_plantptr_value(end, WEED_LEAF_NEXT, msg);
-    weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, msg);
-  }
 
+    if (i == 0) {
+      // append first line to text of last msg
+      char *strg2, *strg = weed_get_string_value(end, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
+      if (error != WEED_NO_ERROR) {
+        lives_strfreev(lines);
+        return error;
+      }
+      strg2 = lives_strdup_printf("%s%s", strg, lines[0]);
+      weed_set_string_value(end, WEED_LEAF_LIVES_MESSAGE_STRING, strg2);
+      lives_free(strg);
+      lives_free(strg2);
+      continue;
+    }
+
+    if (mainw->n_messages + 1 > prefs->max_messages) {
+      // retire the oldest if we reached the limit
+      next = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_NEXT, &error); // becomes new head
+      if (error != WEED_NO_ERROR) {
+        lives_strfreev(lines);
+        return error;
+      }
+      weed_plant_free(mainw->msg_list);
+      mainw->msg_list = next;
+      mainw->n_messages--;
+      if (mainw->msg_list == NULL) {
+        i = numlines - 2;
+        continue;
+      }
+      if (next == end) weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, NULL);
+      else weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, end);
+    }
+
+    msg = make_msg(lines[i]);
+    if (msg == NULL) {
+      lives_strfreev(lines);
+      return WEED_ERROR_MEMORY_ALLOCATION;
+    }
+
+    mainw->n_messages++;
+
+    // head will get new previous (us)
+    weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, msg);
+    // we will get new previous (end)
+    weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, end);
+    // end will get new next (us)
+    weed_set_plantptr_value(end, WEED_LEAF_NEXT, msg);
+  }
   return WEED_NO_ERROR;
 }
 
@@ -2179,26 +2233,28 @@ void d_print(const char *fmt, ...) {
   text = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
 
-  add_message_to_list("%s", text);
+  add_messages_to_list(text);
+  lives_free(text);
 
   if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && mainw->multitrack == NULL &&
       (mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
     if (mainw->current_file > 0) {
-      add_message_to_list(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile));
+      text = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile));
+      lives_free(tmp);
+      add_messages_to_list(text);
+      lives_free(text);
     } else {
-      add_message_to_list(_("\n==============================\nSwitched to empty clip\n"));
+      add_messages_to_list(_("\n==============================\nSwitched to empty clip\n"));
     }
   }
 
   if (prefs->show_gui) {
     reset_message_area(TRUE);
-    lives_widget_queue_draw_if_visible(mainw->scrolledwindow);
+    lives_widget_queue_draw_if_visible(mainw->msg_area);
   }
 
   if ((mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&
       (!mainw->no_switch_dprint || mainw->current_file != 0)) mainw->last_dprint_file = mainw->current_file;
-
-  lives_free(text);
 }
 
 
@@ -2835,7 +2891,7 @@ uint64_t make_version_hash(const char *ver) {
   if (ver == NULL) return 0;
 
   ntok = get_token_count((char *)ver, '.');
-  array = lives_strsplit(ver, ".", -1);
+  array = lives_strsplit(ver, ".", ntok);
 
   hash = atoi(array[0]) * VER_MAJOR_MULT;
 

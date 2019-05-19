@@ -81,9 +81,6 @@
 /// height of preview widgets in sepwin
 #define PREVIEW_BOX_HT ((int)(100. * widget_opts.scale))
 
-/// height of msg area
-#define MSG_AREA_HEIGHT ((int)(50. * widget_opts.scale))
-
 /// (unexpanded) height of rows in treeviews
 #define TREE_ROW_HEIGHT ((int)(60. * widget_opts.scale))
 
@@ -996,8 +993,10 @@ typedef struct {
   LiVESWidget *end_image;
   LiVESWidget *playarea;
   LiVESWidget *hseparator;
-  LiVESWidget *scrolledwindow;
   LiVESWidget *message_box;
+  LiVESWidget *msg_area;
+  LiVESWidget *msg_scrollbar;
+  LiVESAdjustment *msg_adj;
 
   LiVESWidget *clipsmenu;
   LiVESWidget *eventbox;

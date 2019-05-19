@@ -5038,10 +5038,10 @@ void weed_load_all(void) {
   // first we parse the weed_plugin_path
 #ifndef IS_MINGW
   numdirs = get_token_count(weed_plugin_path, ':');
-  dirs = lives_strsplit(weed_plugin_path, ":", -1);
+  dirs = lives_strsplit(weed_plugin_path, ":", numdirs);
 #else
   numdirs = get_token_count(weed_plugin_path, ';');
-  dirs = lives_strsplit(weed_plugin_path, ";", -1);
+  dirs = lives_strsplit(weed_plugin_path, ";", numdirs);
 #endif
   threaded_dialog_spin(0.);
 

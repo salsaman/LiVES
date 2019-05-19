@@ -175,9 +175,14 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colb);
   set_child_colour(mainw->sa_hbox, TRUE);
 
-  lives_widget_set_fg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colf2);
-  lives_widget_set_bg_color(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, colb2);
-  set_child_colour(mainw->sa_button, TRUE);
+  // TODO: use theme colour functions, like this:
+
+  // button background
+  // TRUE / FALSE irrelevant, as only the label has fg (gtk+ 2.x)
+  lives_widget_apply_theme2(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  lives_widget_apply_theme2(mainw->sa_button, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
+  // sets button label dimmed when insensitive
+  set_child_dimmed_colour2(mainw->sa_button, BUTTON_DIM_VAL);
 
   if (mainw->plug != NULL)
     lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -520,7 +525,8 @@ void create_LiVES(void) {
   //           - raudio_draw
   //                  - raudio_drawable (cairo surface)
   // - message_box
-  //      - scrolledwindow
+  //      - msg_area
+  //      - msg_scrollbar
 
   mainw->menu_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->menu_hbox, FALSE, FALSE, 0);
@@ -2219,19 +2225,30 @@ void create_LiVES(void) {
   lives_widget_set_margin_top(mainw->raudio_draw, widget_opts.packing_height / 2);
   lives_widget_set_margin_bottom(mainw->raudio_draw, widget_opts.packing_height * 4);
 
-  mainw->message_box = lives_vbox_new(FALSE, 0);
+  mainw->message_box = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
 
-  mainw->scrolledwindow = lives_scrolled_window_new(NULL, NULL);
-  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
-  lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->scrolledwindow, TRUE, TRUE, 0);
+  mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mainw->sw_func);
+  lives_widget_set_app_paintable(mainw->msg_area, TRUE);
+  lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
+  lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
+  lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
 
-  lives_widget_set_app_paintable(mainw->scrolledwindow, TRUE);
-  lives_container_set_border_width(LIVES_CONTAINER(mainw->scrolledwindow), 0);
+  lives_widget_set_events(mainw->msg_area, LIVES_SCROLL_MASK);
 
-  mainw->sw_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->scrolledwindow), LIVES_WIDGET_EXPOSE_EVENT,
-                                        LIVES_GUI_CALLBACK(expose_msg_scroll),
-                                        NULL);
+  mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
+  lives_box_pack_end(LIVES_BOX(mainw->message_box), mainw->msg_scrollbar, FALSE, TRUE, 0);
+
+  mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mainw->msg_scrollbar));
+
+  lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj),
+                             LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(msg_area_scroll),
+                             (livespointer)mainw->msg_area);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
+                       LIVES_GUI_CALLBACK(on_msg_area_scroll),
+                       (livespointer)mainw->msg_adj);
 
   // accel keys
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
@@ -2394,8 +2411,6 @@ void create_LiVES(void) {
       }
     }
   }
-
-  add_message_to_list(_("Starting...\n"));
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->LiVES), LIVES_WIDGET_DELETE_EVENT,
                        LIVES_GUI_CALLBACK(on_LiVES_delete_event),
@@ -2936,7 +2951,8 @@ void create_LiVES(void) {
   mainw->video_drawable = NULL;
   mainw->plug = NULL;
 
-  lives_widget_grab_focus(mainw->scrolledwindow);
+  lives_widget_set_can_focus(mainw->message_box, TRUE);
+  lives_widget_grab_focus(mainw->message_box);
 }
 
 
@@ -2944,7 +2960,12 @@ void show_lives(void) {
   char buff[PATH_MAX];
 
   lives_widget_show_all(mainw->top_vbox);
-  lives_widget_show_all(mainw->LiVES); // this calls the config_event()
+
+  if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
+    lives_widget_show_now(mainw->LiVES); //this calls the config_event()
+  } else {
+    lives_widget_show_all(mainw->LiVES);
+  }
 
   reset_message_area(TRUE);
 
@@ -3159,7 +3180,6 @@ void fade_background(void) {
   lives_widget_hide(mainw->eventbox5);
   lives_widget_hide(mainw->hseparator);
   lives_widget_hide(mainw->sep_image);
-  lives_widget_hide(mainw->scrolledwindow);
   lives_widget_hide(mainw->eventbox2);
   lives_widget_hide(mainw->message_box);
 
@@ -3443,7 +3463,7 @@ void block_expose(void) {
   lives_signal_handler_block(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_block(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_block(mainw->raudio_draw, mainw->raudbar_func);
-  lives_signal_handler_block(mainw->scrolledwindow, mainw->sw_func);
+  lives_signal_handler_block(mainw->message_box, mainw->sw_func);
 #endif
 }
 
@@ -3456,7 +3476,7 @@ void unblock_expose(void) {
   lives_signal_handler_unblock(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_unblock(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_unblock(mainw->raudio_draw, mainw->raudbar_func);
-  lives_signal_handler_unblock(mainw->scrolledwindow, mainw->sw_func);
+  lives_signal_handler_unblock(mainw->message_box, mainw->sw_func);
 #endif
 }
 
@@ -4308,12 +4328,10 @@ void add_to_clipmenu(void) {
 #endif
 
 #ifndef GTK_RADIO_MENU_BUG
-#ifndef TEST_NOTIFY
-  char *tmp;
-#endif
+  char *tmp2;
   if (!CURRENT_CLIP_IS_VALID) return;
   widget_opts.mnemonic_label = FALSE;
-  cfile->menuentry = lives_standard_radio_menu_item_new_with_label(mainw->clips_group, tmp = get_menu_name(cfile));
+  cfile->menuentry = lives_standard_radio_menu_item_new_with_label(mainw->clips_group, tmp2 = get_menu_name(cfile));
   lives_free(tmp);
   mainw->clips_group = lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));
 #else
@@ -4504,11 +4522,9 @@ void splash_end(void) {
 
   mainw->threaded_dialog = FALSE;
   mainw->splash_window = NULL;
+  lives_widget_context_update();
 
   if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && mainw->multitrack == NULL) {
-    show_lives();
-    lives_widget_hide(mainw->LiVES);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
     on_multitrack_activate(NULL, NULL);
     mainw->is_ready = TRUE;
   }
@@ -4517,15 +4533,13 @@ void splash_end(void) {
 
 void reset_message_area(boolean expand) {
   int height;
-  if (!mainw->is_ready) return;
-  if (!prefs->show_gui) return;
+  if (!mainw->is_ready || !prefs->show_gui) return;
   if (!expand) {
-    if (mainw->multitrack != NULL) return;
-    // need to shrink the message_box text then re-expand it after redrawing the widgets
+    // need to shrink the message_box then re-expand it after redrawing the widgets
     // otherwise the main window can expand beyond the bottom of the screen
-    lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), 1);
     lives_widget_set_size_request(mainw->message_box, -1, 1);
-    lives_widget_set_size_request(mainw->scrolledwindow, -1, 1);
+    lives_widget_set_size_request(mainw->msg_area, -1, 1);
+    lives_widget_set_size_request(mainw->msg_scrollbar, -1, 1);
   }
 
   if (expand) {
@@ -4536,18 +4550,15 @@ void reset_message_area(boolean expand) {
     } else {
       height = lives_widget_get_allocation_height(mainw->multitrack->vpaned) - lives_paned_get_position(LIVES_PANED(mainw->multitrack->vpaned));
     }
-    if (height > 0) {
-      lives_widget_set_size_request(mainw->scrolledwindow, -1, height);
-      if (mainw->multitrack == NULL) {
-        lives_widget_set_size_request(mainw->message_box, -1, height);
-        lives_widget_show_all(mainw->message_box);
-        lives_widget_queue_draw(mainw->message_box);
-      }
-      lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow), height);
-    } else lives_widget_hide(mainw->scrolledwindow);
 
+    if (height > 0) {
+      lives_widget_show_all(mainw->message_box);
+      lives_widget_set_size_request(mainw->message_box, -1, height);
+      lives_widget_set_size_request(mainw->msg_area, -1, height);
+      lives_widget_set_size_request(mainw->msg_scrollbar, -1, height);
+    } else lives_widget_hide(mainw->message_box);
     lives_widget_process_updates(mainw->LiVES, TRUE);
-    scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+    msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
   }
 }
 

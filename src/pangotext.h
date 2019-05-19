@@ -64,8 +64,8 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *, const cha
                                double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col, lives_colRGBA64_t *bg_col,
                                boolean center, boolean rising, double top, int start, double dwidth, double dheight);
 
-void layout_to_lives_painter(LingoLayout *, lives_painter_t *, lives_text_mode_t mode, lives_colRGBA64_t *fg_col,
-                             lives_colRGBA64_t *bg_col, int win_width, int win_height, double x_pos, int y_pos);
+void layout_to_lives_painter(LingoLayout *layout, lives_painter_t *cr, lives_text_mode_t mode, lives_colRGBA64_t *fg,
+                             lives_colRGBA64_t *bg, int dwidth, int dheight, double x_bg, double y_bg, double x_text, double y_text);
 
 LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWidget *widget, int *linecount);
 

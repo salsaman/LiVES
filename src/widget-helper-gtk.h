@@ -1,6 +1,6 @@
 // widget-helper-gtk.h
 // LiVES
-// (c) G. Finch 2012 - 2017 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -11,11 +11,20 @@
 
 #ifdef GUI_GTK
 
-#define GTK_RADIO_MENU_BUG // a bug where gtk_radio_menu_item_set_active() does not update visually
-#define GTK_SUBMENU_SENS_BUG // a bug where setting a menuitem insensitive fails if it has a submenu
-#define GTK_TEXT_VIEW_DRAW_BUG // a bug where textview crashes if too much text in it
-#if !GTK_CHECK_VERSION(3, 18, 9) // fixed version 
-#define GTK_TEXT_VIEW_CSS_BUG // a bug where named textviews cannot be set by CSS
+// a bug where gtk_radio_menu_item_set_active() does not update visually
+// workaround: use check menuitems and update manually
+#define GTK_RADIO_MENU_BUG
+
+// a bug where setting a menuitem insensitive fails if it has a submenu
+// workaround: (?) unparent submenu, change its state, reparent it
+#define GTK_SUBMENU_SENS_BUG
+
+// a bug where textview crashes if too much text in it (maybe not a bug, was missing expose function ?)
+#define GTK_TEXT_VIEW_DRAW_BUG
+
+#if !GTK_CHECK_VERSION(3, 18, 9) // fixed version
+// a bug where named textviews cannot be set by CSS
+#define GTK_TEXT_VIEW_CSS_BUG
 #endif
 
 #ifndef IS_MINGW
@@ -60,47 +69,6 @@ typedef uint8_t                           boolean;
 
 #endif // GUI_GTK
 
-#ifdef PAINTER_CAIRO
-
-#ifndef GUI_GTK
-#include <cairo/cairo.h>
-#endif
-
-typedef cairo_t lives_painter_t;
-typedef cairo_surface_t lives_painter_surface_t;
-
-boolean lives_painter_surface_destroy(lives_painter_surface_t *);
-
-typedef cairo_format_t lives_painter_format_t;
-
-#define LIVES_PAINTER_FORMAT_A1   CAIRO_FORMAT_A1
-#define LIVES_PAINTER_FORMAT_A8   CAIRO_FORMAT_A8
-#define LIVES_PAINTER_FORMAT_ARGB32 CAIRO_FORMAT_ARGB32
-
-typedef cairo_content_t lives_painter_content_t; // eg. color, alpha, color+alpha
-
-#define LIVES_PAINTER_CONTENT_COLOR CAIRO_CONTENT_COLOR
-
-typedef cairo_operator_t lives_painter_operator_t;
-
-#define LIVES_PAINTER_OPERATOR_UNKNOWN CAIRO_OPERATOR_OVER
-#define LIVES_PAINTER_OPERATOR_DEFAULT CAIRO_OPERATOR_OVER
-
-#define LIVES_PAINTER_OPERATOR_DEST_OUT CAIRO_OPERATOR_DEST_OUT
-#if CAIRO_VERSION < CAIRO_VERSION_ENCODE(1, 10, 0)
-#define LIVES_PAINTER_OPERATOR_DIFFERENCE CAIRO_OPERATOR_OVER
-#define LIVES_PAINTER_OPERATOR_OVERLAY CAIRO_OPERATOR_OVER
-#else
-#define LIVES_PAINTER_OPERATOR_DIFFERENCE CAIRO_OPERATOR_DIFFERENCE
-#define LIVES_PAINTER_OPERATOR_OVERLAY CAIRO_OPERATOR_OVERLAY
-#endif
-
-typedef cairo_fill_rule_t lives_painter_fill_rule_t;
-
-#define LIVES_PAINTER_FILL_RULE_WINDING  CAIRO_FILL_RULE_WINDING
-#define LIVES_PAINTER_FILL_RULE_EVEN_ODD CAIRO_FILL_RULE_EVEN_ODD
-
-#endif
 
 #ifdef GUI_GTK
 
@@ -403,7 +371,7 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_WIDGET_DRAG_DATA_RECEIVED_SIGNAL "drag-data-received"
 #define LIVES_WIDGET_SIZE_PREPARED_SIGNAL "size-prepared"
 #define LIVES_WIDGET_MODE_CHANGED_SIGNAL "mode-changed"
-#define LIVES_WIDGET_ACCEPT_POSITION_SIGNAL "accept-position"
+#define LIVES_WIDGET_ACCEPT_POSITION_SIGNAL "accept-position" // need to use position::notify
 #define LIVES_WIDGET_SWITCH_PAGE_SIGNAL "switch-page"
 #define LIVES_WIDGET_UNMAP_SIGNAL "unmap"
 #define LIVES_WIDGET_EDITED_SIGNAL "edited"
@@ -1237,24 +1205,6 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 #define LIVES_INT_TO_POINTER  GINT_TO_POINTER
 #define LIVES_UINT_TO_POINTER GUINT_TO_POINTER
 #define LIVES_POINTER_TO_INT  GPOINTER_TO_INT
-
-// pango stuff
-typedef PangoLayout LingoLayout;
-typedef PangoContext LingoContext;
-#define lingo_layout_set_alignment(a, b) pango_layout_set_alignment(a, b)
-
-#define LINGO_ALIGN_LEFT PANGO_ALIGN_LEFT
-#define LINGO_ALIGN_RIGHT PANGO_ALIGN_RIGHT
-#define LINGO_ALIGN_CENTER PANGO_ALIGN_CENTER
-
-#define lingo_layout_set_text(a, b, c) pango_layout_set_text(a, b, c)
-#define lingo_painter_show_layout(a, b) pango_cairo_show_layout(a, b)
-#define lives_widget_get_lingo_context(a) gtk_widget_get_pango_context(a)
-#define lingo_layout_get_size(a, b, c, d, e) pango_layout_get_size(a, b, c)
-#define lingo_layout_new(a) pango_layout_new(a)
-#define lingo_layout_set_markup(a, b, c) pango_layout_set_markup(a, b, c)
-
-#define LINGO_SCALE PANGO_SCALE
 
 #endif
 

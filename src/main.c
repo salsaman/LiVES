@@ -582,6 +582,13 @@ static boolean pre_init(void) {
 
   mainw->imsep = mainw->imframe = NULL;
 
+  weed_memory_init();
+
+  prefs->max_messages = DEF_MAX_MESSAGES;
+  mainw->msg_list = NULL;
+  mainw->n_messages = 0;
+  add_messages_to_list(_("Starting...\n"));
+
   if (prefs->startup_phase == 0) {
     expect_theme = TRUE;
     if (!set_palette_colours(FALSE)) {
@@ -681,8 +688,6 @@ static boolean pre_init(void) {
   for (i = 0; i < LIVES_MAX_ALARMS; i++) {
     mainw->alarms[i] = LIVES_NO_ALARM_TICKS;
   }
-
-  weed_memory_init();
 
 #ifdef ENABLE_OSC
   // create devicemaps directory in home
@@ -1135,9 +1140,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->no_context_update = FALSE;
 
-  mainw->msg_list = NULL;
-  mainw->n_messages = 0;
-
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -1257,7 +1259,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->screen_gamma = DEF_SCREEN_GAMMA;
 
-    prefs->max_messages = DEF_MAX_MESSAGES;
     //////////////////////////////////////////////////////////////////
 
     if (!mainw->foreign) {
@@ -1800,8 +1801,7 @@ static void show_detected_or_not(boolean cap, const char *pname) {
 void do_start_messages(void) {
   char *endian;
 
-  d_print("\n");
-  d_print(_("Checking optional dependencies: "));
+  d_print(_("\nChecking optional dependencies: "));
 
   show_detected_or_not(capable->has_mplayer, "mplayer");
   if (!capable->has_mplayer) {
@@ -1838,62 +1838,52 @@ void do_start_messages(void) {
   if (prefs->wm == NULL)
     prefs->wm = lives_strdup((_("UNKNOWN - please patch me !")));
 
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("\n\nWindow manager reports as \"%s\"; "), prefs->wm);
-  d_print(mainw->msg);
+  d_print(_("\n\nWindow manager reports as \"%s\"; "), prefs->wm);
 
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("number of monitors detected: %d\n"), capable->nmonitors);
-  d_print(mainw->msg);
+  d_print(_("number of monitors detected: %d\n"), capable->nmonitors);
 
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("Number of CPUs detected: %d "), capable->ncpus);
-  d_print(mainw->msg);
+  d_print(_("Number of CPUs detected: %d "), capable->ncpus);
 
   if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = lives_strdup(_("little endian"));
   else endian = lives_strdup(_("big endian"));
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("(%d bits, %s)\n"), capable->cpu_bits, endian);
-  d_print(mainw->msg);
+  d_print(_("(%d bits, %s)\n"), capable->cpu_bits, endian);
   lives_free(endian);
 
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", _("GUI type is: "));
-  d_print(mainw->msg);
+  d_print("%s", _("GUI type is: "));
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("GTK+ "
-                 "version %d.%d.%d ("
-                 "compiled with %d.%d.%d"
-                 ")"),
-                 gtk_get_major_version(),
-                 gtk_get_minor_version(),
-                 gtk_get_micro_version(),
-                 GTK_MAJOR_VERSION,
-                 GTK_MINOR_VERSION,
-                 GTK_MICRO_VERSION
-                );
+  d_print(_("GTK+ "
+            "version %d.%d.%d ("
+            "compiled with %d.%d.%d"
+            ")"),
+          gtk_get_major_version(),
+          gtk_get_minor_version(),
+          gtk_get_micro_version(),
+          GTK_MAJOR_VERSION,
+          GTK_MINOR_VERSION,
+          GTK_MICRO_VERSION
+         );
 #else
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("GTK+ "
-                 "(compiled with %d.%d.%d"
-                 ")"),
-                 GTK_MAJOR_VERSION,
-                 GTK_MINOR_VERSION,
-                 GTK_MICRO_VERSION
-                );
+  d_print(_("GTK+ "
+            "(compiled with %d.%d.%d"
+            ")"),
+          GTK_MAJOR_VERSION,
+          GTK_MINOR_VERSION,
+          GTK_MICRO_VERSION
+         );
 #endif
-  d_print(mainw->msg);
-#endif
-
-#ifdef PAINTER_CAIRO
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", _(", with cairo support"));
-  d_print(mainw->msg);
 #endif
 
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "\n");
-  d_print(mainw->msg);
+#ifdef LIVES_PAINTER_IS_CAIRO
+  d_print(_(", with cairo support"));
+#endif
 
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("Temp directory is %s\n"), prefs->workdir);
-  d_print(mainw->msg);
+  d_print(_("\nWorking directory is %s\n"), prefs->workdir);
 
 #ifndef RT_AUDIO
-  d_print(_("WARNING - this version of LiVES was compiled without either\njack or pulse audio support.\nMany audio features will be unavailable.\n"));
+  d_print(_("WARNING - this version of LiVES was compiled without either\njack or pulse audio support.\n"
+            "Many audio features will be unavailable.\n"));
 # else
 #ifdef ENABLE_JACK
   d_print(_("Compiled with jack support, good !\n"));
@@ -1903,8 +1893,7 @@ void do_start_messages(void) {
 #endif
 #endif
 
-  lives_snprintf(mainw->msg, MAINW_MSG_SIZE, _("Welcome to LiVES version %s.\n\n"), LiVES_VERSION);
-  d_print(mainw->msg);
+  d_print(_("Welcome to LiVES version %s.\n\n"), LiVES_VERSION);
 }
 
 
@@ -2873,11 +2862,7 @@ static boolean lives_startup(livespointer data) {
                   }
 
                   if (prefs->startup_interface == STARTUP_CE) {
-                    lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),
-                        lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) -
-                        lives_widget_get_allocation_height(mainw->message_box));
-
-                    scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+                    msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
                   }
 
                   /* if (prefs->show_gui) { */
@@ -3048,7 +3033,7 @@ static boolean lives_startup(livespointer data) {
   }
 
   reset_message_area(TRUE);
-  scroll_to_end(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow));
+  msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
 
   lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
 

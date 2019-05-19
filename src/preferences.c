@@ -150,7 +150,7 @@ LiVESList *get_list_pref(const char *key) {
   if (!strlen(buf)) return NULL;
 
   nvals = get_token_count(buf, '\n');
-  array = lives_strsplit(buf, "\n", -1);
+  array = lives_strsplit(buf, "\n", nvals);
   for (i = 0; i < nvals; i++) {
     retlist = lives_list_append(retlist, lives_strdup(array[i]));
   }

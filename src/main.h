@@ -61,7 +61,8 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #ifndef GUI_QT
 #define GUI_GTK
-#define PAINTER_CAIRO
+#define LIVES_PAINTER_IS_CAIRO
+#define LIVES_LINGO_IS_PANGO
 #else
 #define PAINTER_QPAINTER
 #define NO_PROG_LOAD
@@ -1061,7 +1062,7 @@ void do_splash_progress(void);
 void d_print(const char *fmt, ...);
 char *dump_messages(int start, int end); // utils.c
 weed_plant_t *get_nth_info_message(int n); // utils.c
-int add_message_to_list(const char *fmt, ...);
+int add_messages_to_list(const char *text);
 
 // d_print shortcuts
 void d_print_cancelled(void);

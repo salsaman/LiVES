@@ -40,11 +40,79 @@ typedef enum {
 
 #define ulong_random() lives_random()
 
-#if defined (GUI_GTK) || defined (PAINTER_CAIRO)
+#if defined (GUI_GTK) || defined (LIVES_PAINTER_IS_CAIRO)
 #include "widget-helper-gtk.h"
 #endif
 
 // basic functions (wrappers for Toolkit functions)
+
+#ifdef LIVES_LINGO_IS_PANGO
+// pango stuff. I suppose it should be here on the offchance that it might one day be used with a non-gtk+ toolkit
+typedef PangoLayout LingoLayout;
+typedef PangoContext LingoContext;
+#define lingo_layout_set_alignment(a, b) pango_layout_set_alignment(a, b)
+
+#define LINGO_ALIGN_LEFT PANGO_ALIGN_LEFT
+#define LINGO_ALIGN_RIGHT PANGO_ALIGN_RIGHT
+#define LINGO_ALIGN_CENTER PANGO_ALIGN_CENTER
+
+#define lingo_layout_set_text(a, b, c) pango_layout_set_text(a, b, c)
+#ifdef LIVES_PAINTER_IS_CAIRO
+#define lingo_painter_show_layout(a, b) pango_cairo_show_layout(a, b)
+#endif
+#ifdef GUI_GTK
+#define lives_widget_get_lingo_context(a) gtk_widget_get_pango_context(a)
+#endif
+#define lingo_layout_get_size(a, b, c, d, e) pango_layout_get_size(a, b, c)
+#define lingo_layout_new(a) pango_layout_new(a)
+#define lingo_layout_set_markup(a, b, c) pango_layout_set_markup(a, b, c)
+
+#define LINGO_IS_LAYOUT(a) PANGO_IS_LAYOUT(a)
+
+#define LINGO_SCALE PANGO_SCALE
+#endif
+
+#ifdef LIVES_PAINTER_IS_CAIRO
+// likewise with cairo
+#ifndef GUI_GTK
+#include <cairo/cairo.h>
+#endif
+
+typedef cairo_t lives_painter_t;
+typedef cairo_surface_t lives_painter_surface_t;
+
+boolean lives_painter_surface_destroy(lives_painter_surface_t *);
+
+typedef cairo_format_t lives_painter_format_t;
+
+#define LIVES_PAINTER_FORMAT_A1   CAIRO_FORMAT_A1
+#define LIVES_PAINTER_FORMAT_A8   CAIRO_FORMAT_A8
+#define LIVES_PAINTER_FORMAT_ARGB32 CAIRO_FORMAT_ARGB32
+
+typedef cairo_content_t lives_painter_content_t; // eg. color, alpha, color+alpha
+
+#define LIVES_PAINTER_CONTENT_COLOR CAIRO_CONTENT_COLOR
+
+typedef cairo_operator_t lives_painter_operator_t;
+
+#define LIVES_PAINTER_OPERATOR_UNKNOWN CAIRO_OPERATOR_OVER
+#define LIVES_PAINTER_OPERATOR_DEFAULT CAIRO_OPERATOR_OVER
+
+#define LIVES_PAINTER_OPERATOR_DEST_OUT CAIRO_OPERATOR_DEST_OUT
+#if CAIRO_VERSION < CAIRO_VERSION_ENCODE(1, 10, 0)
+#define LIVES_PAINTER_OPERATOR_DIFFERENCE CAIRO_OPERATOR_OVER
+#define LIVES_PAINTER_OPERATOR_OVERLAY CAIRO_OPERATOR_OVER
+#else
+#define LIVES_PAINTER_OPERATOR_DIFFERENCE CAIRO_OPERATOR_DIFFERENCE
+#define LIVES_PAINTER_OPERATOR_OVERLAY CAIRO_OPERATOR_OVERLAY
+#endif
+
+typedef cairo_fill_rule_t lives_painter_fill_rule_t;
+
+#define LIVES_PAINTER_FILL_RULE_WINDING  CAIRO_FILL_RULE_WINDING
+#define LIVES_PAINTER_FILL_RULE_EVEN_ODD CAIRO_FILL_RULE_EVEN_ODD
+
+#endif
 
 // lives_painter_functions
 
@@ -749,7 +817,7 @@ int lives_layout_add_row(LiVESTable *layout);
 
 boolean lives_widget_grab_default_special(LiVESWidget *);
 
-#define BUTTON_DIM_VAL 24000 // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535)
+#define BUTTON_DIM_VAL (0.6 * 65535.) // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535)
 
 LiVESWidget *lives_standard_button_new(void);
 LiVESWidget *lives_standard_button_new_with_label(const char *labeltext);
@@ -819,8 +887,21 @@ LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x
 
 // util functions
 
+// THEME COLOURS (will be done more logically in the future)
 void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state); // normal theme colours
+void lives_widget_apply_theme_dimmed(LiVESWidget *widget, LiVESWidgetState state, int dimval); // dimmed normal theme
+void set_child_dimmed_colour(LiVESWidget *widget, int dim); // dimmed normal theme for children (insensitive state only)
+
+// if set_all, set the widget itself (labels always set_all; buttons are ignored if set_all is FALSE)
+void set_child_colour(LiVESWidget *, boolean set_all); // normal theme, sensitive and insensitive
+
 void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state, boolean set_fg); // menu and bars colours
+void lives_widget_apply_theme_dimmed2(LiVESWidget *widget, LiVESWidgetState state, int dimval);
+void set_child_dimmed_colour2(LiVESWidget *widget, int dim); // dimmed m & b for children (insensitive state only)
+
+// like set_child_colour, but with menu and bars colours
+void set_child_alt_colour(LiVESWidget *, boolean set_all);
+
 void lives_widget_apply_theme3(LiVESWidget *, LiVESWidgetState state); // info base/text
 
 boolean lives_image_scale(LiVESImage *, int width, int height, LiVESInterpType interp_type);
@@ -871,9 +952,6 @@ boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
 boolean label_act_lockbutton(LiVESWidget *, LiVESXEventButton *, LiVESButton *);
 
 boolean toggle_button_toggle(LiVESToggleButton *);
-
-void set_child_colour(LiVESWidget *, boolean set_all);
-void set_child_alt_colour(LiVESWidget *, boolean set_all);
 
 void funkify_dialog(LiVESWidget *dialog);
 boolean draw_cool_toggle(LiVESWidget *, lives_painter_t *, livespointer);

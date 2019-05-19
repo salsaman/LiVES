@@ -53,9 +53,10 @@ const lives_special_aspect_t *paramspecial_get_aspect() {
 
 
 void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
-  char **array = lives_strsplit(sp_string, "|", -1);
   int num_widgets = get_token_count(sp_string, '|') - 2;
   int pnum;
+
+  char **array = lives_strsplit(sp_string, "|", num_widgets + 2);
 
   register int i;
 

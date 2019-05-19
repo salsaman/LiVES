@@ -2206,7 +2206,7 @@ void play_file(void) {
   }
 
   if (mainw->double_size && mainw->multitrack == NULL) {
-    lives_widget_hide(mainw->scrolledwindow);
+    lives_widget_hide(mainw->message_box);
   }
 
   lives_widget_set_sensitive(mainw->stop, TRUE);
@@ -2874,7 +2874,7 @@ void play_file(void) {
       lives_widget_show(mainw->sep_image);
     }
 
-    lives_widget_show(mainw->scrolledwindow);
+    lives_widget_show(mainw->message_box);
 
     lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
     lives_widget_show(mainw->frame1);
@@ -3363,8 +3363,6 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   // file information has been retrieved, set struct cfile with details
   // contained in mainw->msg. We do this twice, once before opening the file, once again after.
   // The first time, frames and afilesize may not be correct.
-  int pieces;
-
   char *mesg, *mesg1;
   char **array;
   char *test_fps_string1;
@@ -3393,7 +3391,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       int npieces = get_token_count(mainw->msg, '|');
       if (npieces < 2) return FALSE;
 
-      array = lives_strsplit(mainw->msg, "|", -1);
+      array = lives_strsplit(mainw->msg, "|", npieces);
 
       if (!strcmp(array[0], "error")) {
         if (npieces >= 3) {
@@ -3436,15 +3434,13 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       cfile->signed_endian = get_signed_endian(atoi(array[12]), atoi(array[13]));
       cfile->afilesize = strtol(array[14], NULL, 10);
 
-      pieces = get_token_count(mainw->msg, '|');
-
-      if (!strlen(cfile->title) && pieces > 14 && array[15] != NULL) {
+      if (!strlen(cfile->title) && npieces > 15 && array[15] != NULL) {
         lives_snprintf(cfile->title, 256, "%s", lives_strstrip(array[15]));
       }
-      if (!strlen(cfile->author) && pieces > 15 && array[16] != NULL) {
+      if (!strlen(cfile->author) && npieces > 16 && array[16] != NULL) {
         lives_snprintf(cfile->author, 256, "%s", lives_strstrip(array[16]));
       }
-      if (!strlen(cfile->comment) && pieces > 16 && array[17] != NULL) {
+      if (!strlen(cfile->comment) && npieces > 17 && array[17] != NULL) {
         lives_snprintf(cfile->comment, 256, "%s", lives_strstrip(array[17]));
       }
 
@@ -5429,7 +5425,9 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           int current_file = mainw->current_file;
           lives_mt *multi = mainw->multitrack;
           mainw->multitrack = NULL;
-          reget_afilesize(mainw->current_file);
+          mainw->current_file = -1;
+          reget_afilesize(current_file);
+          mainw->current_file = current_file;
           mainw->multitrack = multi;
           get_total_time(cfile);
           mainw->current_file = mainw->multitrack->render_file;

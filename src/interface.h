@@ -19,15 +19,20 @@
 /// clip edit vid/aud bar height
 #define CE_AUDBAR_HEIGHT ((int)(16. * widget_opts.scale))
 
+#define MSG_AREA_VMARGIN 10
+#define LAYOUT_SIZE_MIN 32
+
 void draw_little_bars(double ptrtime, int which);
 double lives_ce_update_timeline(int frame, double x);  ///< pointer position in timeline
 void update_timer_bars(int posx, int posy, int width, int height, int which); ///< draw the timer bars
 void redraw_timer_bars(double oldx, double newx, int which); ///< paint a damage region
 void show_playbar_labels(int clipno);
 
-void scroll_to_end(LiVESScrolledWindow *widget);
+void msg_area_scroll(LiVESAdjustment *, livespointer userdata);
+void msg_area_scroll_to_end(LiVESWidget *, LiVESAdjustment *);
+boolean on_msg_area_scroll(LiVESWidget *, LiVESXEventScroll *, livespointer user_data);
 
-EXPOSE_FN_PROTOTYPE(expose_msg_scroll);
+EXPOSE_FN_PROTOTYPE(expose_msg_area);
 
 LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking);
 LiVESWidget *create_opensel_dialog(void);

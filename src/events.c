@@ -3987,6 +3987,7 @@ filterinit2:
     event = eventnext;
   } else {
     lives_mt *multi;
+    int current_file;
 
     if (cfile->old_frames == 0) cfile->undo_start = cfile->undo_end = 0;
     if (mainw->multitrack == NULL || !mainw->multitrack->pr_audio) {
@@ -4008,8 +4009,11 @@ filterinit2:
     } else lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "completed");
 
     multi = mainw->multitrack;
-    mainw->multitrack = NULL; // allow setting of audio filesize now
-    reget_afilesize(mainw->current_file);
+    current_file = mainw->current_file;
+    mainw->current_file = -1;
+    mainw->multitrack = NULL; // allow getting of audio file size
+    reget_afilesize(current_file);
+    mainw->current_file = current_file;
     mainw->multitrack = multi;
     mainw->filter_map = NULL;
     mainw->afilter_map = NULL;
@@ -4028,8 +4032,6 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
   // it will do a reorder/resample/resize/effect apply all in one pass
 
   // return FALSE in case of serious error
-
-  lives_mt *multi = mainw->multitrack;
 
   double old_pb_fps = cfile->pb_fps;
 
@@ -4091,8 +4093,6 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
 
     render_events(FALSE);
     flush_audio_tc = 0;
-    mainw->multitrack = NULL; // allow setting of audio filesize now
-    mainw->multitrack = multi;
   }
 
   mainw->cancel_type = CANCEL_KILL;

@@ -15,18 +15,16 @@
 // static defns
 static void set_child_colour_internal(LiVESWidget *widget, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *widget, livespointer set_allx);
-static void lives_widget_apply_theme_dimmed(LiVESWidget *widget, LiVESWidgetState state, int dimval);
-WIDGET_HELPER_LOCAL_INLINE void set_child_dimmed_colour(LiVESWidget *widget, int dimval);
-
 
 static void button_state_cb(LiVESWidget *button, LiVESWidgetState state, livespointer user_data) {
   if (LIVES_IS_BUTTON(button)) {
     boolean woat = widget_opts.apply_theme;
     widget_opts.apply_theme = TRUE;
-    if (!lives_widget_is_sensitive(button)) set_child_dimmed_colour(button, BUTTON_DIM_VAL);
+    if (!lives_widget_is_sensitive(button)) set_child_dimmed_colour(button, BUTTON_DIM_VAL); // insens, themecols 1, child only
     else {
-      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "default_grabbed"))) set_child_alt_colour(button, TRUE);
-      else set_child_colour(button, TRUE);
+      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "default_grabbed")))
+        set_child_alt_colour(button, TRUE); // state normal, theme2
+      else set_child_colour(button, TRUE); // state normal, theme1
     }
     widget_opts.apply_theme = woat;
   }
@@ -52,7 +50,7 @@ static LiVESWidget *prettify_button(LiVESWidget *button) {
 
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_surface(lives_painter_surface_t *target) {
   lives_painter_t *cr = NULL;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cr = cairo_create(target);
 #endif
 #ifdef PAINTER_QPAINTER
@@ -64,7 +62,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_surface(l
 
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_widget(LiVESWidget *widget) {
   lives_painter_t *cr = NULL;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
 #ifdef GUI_GTK
   LiVESXWindow *window = lives_widget_get_xwindow(widget);
   if (window != NULL) {
@@ -83,7 +81,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_widget(Li
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_pixbuf(lives_painter_t *cr, const LiVESPixbuf *pixbuf, double pixbuf_x,
     double pixbuf_y) {
   // blit pixbuf to cairo at x,y
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   gdk_cairo_set_source_pixbuf(cr, pixbuf, pixbuf_x, pixbuf_y);
   return TRUE;
 #endif
@@ -99,7 +97,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_pixbuf(lives_painte
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_surface(lives_painter_t *cr, lives_painter_surface_t *surface, double x,
     double y) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_set_source_surface(cr, surface, x, y);
   return TRUE;
 #endif
@@ -113,7 +111,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_surface(lives_paint
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_paint(lives_painter_t *cr) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_paint(cr);
   return TRUE;
 #endif
@@ -125,7 +123,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_paint(lives_painter_t *cr) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_fill(lives_painter_t *cr) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_fill(cr);
   return TRUE;
 #endif
@@ -140,7 +138,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_fill(lives_painter_t *cr) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_stroke(lives_painter_t *cr) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_stroke(cr);
   return TRUE;
 #endif
@@ -155,7 +153,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_stroke(lives_painter_t *cr) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_clip(lives_painter_t *cr) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_clip(cr);
   return TRUE;
 #endif
@@ -170,7 +168,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_clip(lives_painter_t *cr) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_destroy(cr);
   return TRUE;
 #endif
@@ -186,7 +184,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_painter_t *cr, double x, double y,
     double width,
     double height) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
 #if GTK_CHECK_VERSION(3, 0, 0)
   GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
   gtk_render_background(ctx, cr, x, y, width, height);
@@ -216,7 +214,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget 
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_destroy(lives_painter_surface_t *surf) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_surface_destroy(surf);
   return TRUE;
 #endif
@@ -229,7 +227,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_destroy(lives_painter_
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_new_path(lives_painter_t *cr) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_new_path(cr);
   return TRUE;
 #endif
@@ -243,7 +241,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_new_path(lives_painter_t *cr) 
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_translate(lives_painter_t *cr, double x, double y) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_translate(cr, x, y);
   return TRUE;
 #endif
@@ -258,7 +256,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_translate(lives_painter_t *cr,
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_line_width(lives_painter_t *cr, double width) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_set_line_width(cr, width);
   return TRUE;
 #endif
@@ -271,7 +269,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_line_width(lives_painter_t
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_move_to(lives_painter_t *cr, double x, double y) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_move_to(cr, x, y);
   return TRUE;
 #endif
@@ -284,7 +282,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_move_to(lives_painter_t *cr, d
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_line_to(lives_painter_t *cr, double x, double y) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_line_to(cr, x, y);
   return TRUE;
 #endif
@@ -297,7 +295,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_line_to(lives_painter_t *cr, d
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_rectangle(lives_painter_t *cr, double x, double y, double width, double height) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_rectangle(cr, x, y, width, height);
   return TRUE;
 #endif
@@ -311,7 +309,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_rectangle(lives_painter_t *cr,
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_arc(lives_painter_t *cr, double xc, double yc, double radius, double angle1,
     double angle2) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_arc(cr, xc, yc, radius, angle1, angle2);
   return TRUE;
 #endif
@@ -331,7 +329,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_arc(lives_painter_t *cr, doubl
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_operator(lives_painter_t *cr, lives_painter_operator_t op) {
   // if op was not LIVES_PAINTER_OPERATOR_DEFAULT, and FALSE is returned, then the operation failed,
   // and op was set to the default
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_set_operator(cr, op);
   if (op == LIVES_PAINTER_OPERATOR_UNKNOWN) return FALSE;
   return TRUE;
@@ -346,7 +344,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_operator(lives_painter_t *
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb(lives_painter_t *cr, double red, double green, double blue) {
   // r,g,b values 0.0 -> 1.0
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_set_source_rgb(cr, red, green, blue);
   return TRUE;
 #endif
@@ -362,7 +360,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb(lives_painter_t
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgba(lives_painter_t *cr, double red, double green, double blue,
     double alpha) {
   // r,g,b,a values 0.0 -> 1.0
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_set_source_rgba(cr, red, green, blue, alpha);
   return TRUE;
 #endif
@@ -376,7 +374,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgba(lives_painter_
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_fill_rule(lives_painter_t *cr, lives_painter_fill_rule_t fill_rule) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_set_fill_rule(cr, fill_rule);
   return TRUE;
 #endif
@@ -389,7 +387,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_fill_rule(lives_painter_t 
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_flush(lives_painter_surface_t *surf) {
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   cairo_surface_flush(surf);
   return TRUE;
 #endif
@@ -404,7 +402,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
     lives_painter_format_t format,
     int width, int height, int stride) {
   lives_painter_surface_t *surf = NULL;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   surf = cairo_image_surface_create_for_data(data, format, width, height, stride);
 #endif
 #ifdef PAINTER_QPAINTER
@@ -418,7 +416,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_surface_creat
     lives_painter_content_t content,
     int width, int height) {
   lives_painter_surface_t *surf = NULL;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   LiVESXWindow *window = lives_widget_get_xwindow(widget);
   if (window != NULL) {
 #if G_ENCODE_VERSION(GDK_MAJOR_VERSION, GDK_MINOR_VERSION) >= G_ENCODE_VERSION(2, 22)
@@ -440,7 +438,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_surface_creat
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width,
     int height) {
   lives_painter_surface_t *surf = NULL;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   surf = cairo_image_surface_create(format, width, height);
 #endif
 #ifdef PAINTER_QPAINTER
@@ -454,7 +452,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
 
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_get_target(lives_painter_t *cr) {
   lives_painter_surface_t *surf = NULL;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   surf = cairo_get_target(cr);
 #endif
 #ifdef PAINTER_QPAINTER
@@ -466,7 +464,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_get_target(li
 
 WIDGET_HELPER_GLOBAL_INLINE int lives_painter_format_stride_for_width(lives_painter_format_t form, int width) {
   int stride = -1;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   stride = cairo_format_stride_for_width(form, width);
 #endif
 #ifdef PAINTER_QPAINTER
@@ -478,7 +476,7 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_painter_format_stride_for_width(lives_pain
 
 WIDGET_HELPER_GLOBAL_INLINE uint8_t *lives_painter_image_surface_get_data(lives_painter_surface_t *surf) {
   uint8_t *data = NULL;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   data = cairo_image_surface_get_data(surf);
 #endif
 #ifdef PAINTER_QPAINTER
@@ -489,7 +487,7 @@ WIDGET_HELPER_GLOBAL_INLINE uint8_t *lives_painter_image_surface_get_data(lives_
 
 WIDGET_HELPER_GLOBAL_INLINE int lives_painter_image_surface_get_width(lives_painter_surface_t *surf) {
   int width = 0;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   width = cairo_image_surface_get_width(surf);
 #endif
 #ifdef PAINTER_QPAINTER
@@ -501,7 +499,7 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_painter_image_surface_get_width(lives_pain
 
 WIDGET_HELPER_GLOBAL_INLINE int lives_painter_image_surface_get_height(lives_painter_surface_t *surf) {
   int height = 0;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   height = cairo_image_surface_get_height(surf);
 #endif
 #ifdef PAINTER_QPAINTER
@@ -513,7 +511,7 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_painter_image_surface_get_height(lives_pai
 
 WIDGET_HELPER_GLOBAL_INLINE int lives_painter_image_surface_get_stride(lives_painter_surface_t *surf) {
   int stride = 0;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   stride = cairo_image_surface_get_stride(surf);
 #endif
 #ifdef PAINTER_QPAINTER
@@ -525,7 +523,7 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_painter_image_surface_get_stride(lives_pai
 
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surface_t *surf) {
   lives_painter_format_t format = (lives_painter_format_t)0;
-#ifdef PAINTER_CAIRO
+#ifdef LIVES_PAINTER_IS_CAIRO
   format = cairo_image_surface_get_format(surf);
 #endif
 #ifdef PAINTER_QPAINTER
@@ -1023,8 +1021,9 @@ static char *make_random_string(const char *prefix) {
 
 #include "giw/giwled.h"
 
-static boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const char *detail, const char *value) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 16, 0)
+static boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const char *detail, const char *value) {
   GtkCssProvider *provider = gtk_css_provider_new();
   GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
 
@@ -1125,9 +1124,9 @@ static boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const 
   g_free(css_string);
   g_object_unref(provider);
   return TRUE;
-#endif
-  return FALSE;
 }
+#endif
+#endif
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
@@ -9124,7 +9123,7 @@ void lives_widget_apply_theme3(LiVESWidget *widget, LiVESWidgetState state) {
 }
 
 
-static void lives_widget_apply_theme_dimmed(LiVESWidget *widget, LiVESWidgetState state, int dimval) {
+void lives_widget_apply_theme_dimmed(LiVESWidget *widget, LiVESWidgetState state, int dimval) {
   if (!widget_opts.apply_theme) return;
   if (palette->style & STYLE_1) {
     LiVESWidgetColor dimmed_fg;
@@ -9132,6 +9131,18 @@ static void lives_widget_apply_theme_dimmed(LiVESWidget *widget, LiVESWidgetStat
     lives_widget_color_mix(&dimmed_fg, &palette->normal_back, (float)dimval / 65535.);
     lives_widget_set_fg_color(widget, state, &dimmed_fg);
     lives_widget_set_bg_color(widget, state, &palette->normal_back);
+  }
+}
+
+
+void lives_widget_apply_theme_dimmed2(LiVESWidget *widget, LiVESWidgetState state, int dimval) {
+  if (!widget_opts.apply_theme) return;
+  if (palette->style & STYLE_1) {
+    LiVESWidgetColor dimmed_fg;
+    lives_widget_color_copy(&dimmed_fg, &palette->menu_and_bars_fore);
+    lives_widget_color_mix(&dimmed_fg, &palette->menu_and_bars, (float)dimval / 65535.);
+    lives_widget_set_fg_color(widget, state, &dimmed_fg);
+    lives_widget_set_bg_color(widget, state, &palette->menu_and_bars);
   }
 }
 
@@ -9237,7 +9248,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean toggle_button_toggle(LiVESToggleButton *tbut
 static void set_child_colour_internal(LiVESWidget *widget, livespointer set_allx) {
   boolean set_all = LIVES_POINTER_TO_INT(set_allx);
 
-  if (!set_all && LIVES_IS_BUTTON(widget)) return;
+  if (!set_all && LIVES_IS_BUTTON(widget)) return; // avoids a problem with filechooser
 
   if (LIVES_IS_CONTAINER(widget)) {
     lives_container_forall(LIVES_CONTAINER(widget), set_child_colour_internal, set_allx);
@@ -9254,7 +9265,6 @@ static void set_child_colour_internal(LiVESWidget *widget, livespointer set_allx
 WIDGET_HELPER_GLOBAL_INLINE void set_child_colour(LiVESWidget *widget, boolean set_all) {
   // set widget and all children widgets
   // if set_all is FALSE, we only set labels (and ignore labels in buttons)
-
   set_child_colour_internal(widget, LIVES_INT_TO_POINTER(set_all));
 }
 
@@ -9267,12 +9277,11 @@ static void set_child_dimmed_colour_internal(LiVESWidget *widget, livespointer d
     return;
   }
 
-  lives_widget_apply_theme_dimmed(widget, LIVES_WIDGET_STATE_NORMAL, dimval);
   lives_widget_apply_theme_dimmed(widget, LIVES_WIDGET_STATE_INSENSITIVE, dimval);
 }
 
 
-WIDGET_HELPER_LOCAL_INLINE void set_child_dimmed_colour(LiVESWidget *widget, int dim) {
+WIDGET_HELPER_GLOBAL_INLINE void set_child_dimmed_colour(LiVESWidget *widget, int dim) {
   // set widget and all children widgets
   // fg is affected dim value
   // dim takes a value from 0 (full fg) -> 65535 (full bg)
@@ -9280,7 +9289,27 @@ WIDGET_HELPER_LOCAL_INLINE void set_child_dimmed_colour(LiVESWidget *widget, int
 }
 
 
-void set_child_alt_colour_internal(LiVESWidget *widget, livespointer set_allx) {
+static void set_child_dimmed_colour2_internal(LiVESWidget *widget, livespointer dim) {
+  int dimval = LIVES_POINTER_TO_INT(dim);
+
+  if (LIVES_IS_CONTAINER(widget)) {
+    lives_container_forall(LIVES_CONTAINER(widget), set_child_dimmed_colour2_internal, dim);
+    return;
+  }
+
+  lives_widget_apply_theme_dimmed2(widget, LIVES_WIDGET_STATE_INSENSITIVE, dimval);
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE void set_child_dimmed_colour2(LiVESWidget *widget, int dim) {
+  // set widget and all children widgets
+  // fg is affected dim value
+  // dim takes a value from 0 (full fg) -> 65535 (full bg)
+  set_child_dimmed_colour2_internal(widget, LIVES_INT_TO_POINTER(dim));
+}
+
+
+static void set_child_alt_colour_internal(LiVESWidget *widget, livespointer set_allx) {
   boolean set_all = LIVES_POINTER_TO_INT(set_allx);
 
   if (!set_all && LIVES_IS_BUTTON(widget)) return;

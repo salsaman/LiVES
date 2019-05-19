@@ -832,8 +832,8 @@ void on_code_ok(LiVESButton *button, livespointer user_data) {
   }
   case RFX_CODE_TYPE_STRING_LIST: {
     char *values = lives_text_view_get_text(LIVES_TEXT_VIEW(rfxbuilder->code_textview));
-    char **lines = lives_strsplit(values, "\n", -1);
     int numlines = get_token_count(values, '\n');
+    char **lines = lives_strsplit(values, "\n", numlines);
     int i;
     int defindex = get_int_param(rfxbuilder->copy_params[rfxbuilder->edit_param].def);
 
@@ -3234,7 +3234,7 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
         int numtok = get_token_count(rfxbuilder->triggers[i].code, '\n');
 
         buf = rfxbuilder->triggers[i].when ? lives_strdup_printf("%d", rfxbuilder->triggers[i].when - 1) : lives_strdup("init");
-        array = lives_strsplit(rfxbuilder->triggers[i].code, "\n", -1);
+        array = lives_strsplit(rfxbuilder->triggers[i].code, "\n", numtok);
         for (j = 0; j < numtok; j++) {
           lives_fputs(buf, sfile);
           lives_fputs(rfxbuilder->field_delim, sfile);
@@ -3397,7 +3397,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
       // TODO - error check
       line = (char *)lives_list_nth_data(list, i);
 
-      len = get_token_count(line, (int)rfxbuilder->field_delim[0]);
+      len = get_token_count(line, (int)rfxbuilder->field_delim[0]); // will fail if field_delim contains repeated chars !
       array = lives_strsplit(line, rfxbuilder->field_delim, -1);
       lives_free(line);
       rfxbuilder->params[i].name = lives_strdup(array[0]);

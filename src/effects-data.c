@@ -2224,7 +2224,7 @@ boolean feeds_to_video_filters(int okey, int omode) {
   for (i = 0; i < nparams; i++) {
     chlist = pconx_list(okey, omode, i);
     niparams = get_token_count(chlist, ' ') / 4;
-    array = lives_strsplit(chlist, " ", -1);
+    array = lives_strsplit(chlist, " ", niparams * 4);
     for (j = 0; j < niparams; j += 4) {
       ikey = atoi(array[j]);
       imode = atoi(array[j + 1]);
@@ -2243,7 +2243,7 @@ boolean feeds_to_video_filters(int okey, int omode) {
   for (i = 0; i < nparams; i++) {
     chlist = cconx_list(okey, omode, i);
     niparams = get_token_count(chlist, ' ') / 3;
-    array = lives_strsplit(chlist, " ", -1);
+    array = lives_strsplit(chlist, " ", niparams * 3);
     for (j = 0; j < niparams; j += 3) {
       ikey = atoi(array[j]);
       imode = atoi(array[j + 1]);
@@ -2276,7 +2276,7 @@ boolean feeds_to_audio_filters(int okey, int omode) {
   for (i = 0; i < nparams; i++) {
     chlist = pconx_list(okey, omode, i);
     niparams = get_token_count(chlist, ' ') / 4;
-    array = lives_strsplit(chlist, " ", -1);
+    array = lives_strsplit(chlist, " ", niparams * 4);
     for (j = 0; j < niparams; j += 4) {
       ikey = atoi(array[j]);
       if (ikey < 0) continue;
@@ -2296,7 +2296,7 @@ boolean feeds_to_audio_filters(int okey, int omode) {
   for (i = 0; i < nparams; i++) {
     chlist = cconx_list(okey, omode, i);
     niparams = get_token_count(chlist, ' ') / 3;
-    array = lives_strsplit(chlist, " ", -1);
+    array = lives_strsplit(chlist, " ", niparams * 3);
     for (j = 0; j < niparams; j += 3) {
       ikey = atoi(array[j]);
       if (ikey < 0) continue;

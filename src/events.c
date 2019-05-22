@@ -5449,7 +5449,8 @@ render_details *create_render_details(int type) {
   daa = lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog));
 
   if (!LIVES_IS_BOX(daa)) {
-    lives_box_pack_start(LIVES_BOX(top_vbox), rdet->always_hbox, TRUE, TRUE, 0);
+    lives_box_pack_end(LIVES_BOX(top_vbox), rdet->always_hbox, TRUE, TRUE, 0);
+    lives_widget_set_valign(rdet->always_checkbutton, LIVES_ALIGN_START);
   }
 
   hbox = NULL;

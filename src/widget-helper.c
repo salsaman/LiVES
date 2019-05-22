@@ -122,8 +122,9 @@ static void button_state_cb(LiVESWidget *button, LiVESWidgetState state, livespo
         lives_widget_color_copy(&dimmed_fg, &palette->normal_fore);
         lives_widget_color_mix(&dimmed_fg, &palette->normal_back, (float)dimval / 65535.);
         lives_tool_button_set_border_colour(button, state, &dimmed_fg);
+#if GTK_CHECK_VERSION(3, 0, 0)
         lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_BACKDROP, &dimmed_fg);
-        lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_BACKDROP, &dimmed_fg);
+#endif
         lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_PRELIGHT, &dimmed_fg);
         lives_widget_apply_theme2(label, state, TRUE);
       }
@@ -8214,7 +8215,9 @@ LiVESToolItem *lives_standard_menu_tool_button_new(LiVESWidget *icon, const char
       LiVESWidget *widget = (LiVESWidget *)list->data;
       if (LIVES_IS_VBOX(widget)) {
         lives_widget_set_bg_color(widget, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+#if GTK_CHECK_VERSION(3, 0, 0)
         lives_widget_set_bg_color(widget, LIVES_WIDGET_STATE_BACKDROP, &palette->menu_and_bars);
+#endif
         break;
       }
       list = list->next;
@@ -8335,8 +8338,9 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
   adj = lives_adjustment_new(val, min, max, step, page, 0.);
   spinbutton = lives_spin_button_new(adj, 1, dp);
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_apply_theme(spinbutton, LIVES_WIDGET_STATE_NORMAL);
-
+#endif
   if (tooltip != NULL) lives_widget_set_tooltip_text(spinbutton, tooltip);
   if (dp == 0) lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(spinbutton), TRUE);
 
@@ -8397,8 +8401,9 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
   boolean expand;
 
   combo = lives_combo_new();
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_apply_theme(combo, LIVES_WIDGET_STATE_NORMAL);
-
+#endif
   if (tooltip != NULL) lives_widget_set_tooltip_text(combo, tooltip);
 
   entry = (LiVESEntry *)lives_combo_get_entry(LIVES_COMBO(combo));
@@ -8466,7 +8471,10 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
   boolean expand;
 
   entry = lives_entry_new();
+
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_apply_theme(entry, LIVES_WIDGET_STATE_NORMAL);
+#endif
   lives_widget_set_font_size(entry, LIVES_WIDGET_STATE_NORMAL, widget_opts.font_size);
 
   if (tooltip != NULL) lives_widget_set_tooltip_text(entry, tooltip);
@@ -8540,7 +8548,13 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
       lives_window_set_transient_for(LIVES_WINDOW(dialog), widget_opts.transient);
   }
 
-  lives_widget_set_minimum_size(dialog, width, height);
+#if !GTK_CHECK_VERSION(3, 0, 0)
+  if (height > 8 && width > 8) {
+#endif
+    lives_widget_set_minimum_size(dialog, width, height);
+#if !GTK_CHECK_VERSION(3, 0, 0)
+  }
+#endif
 
   if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(dialog), widget_opts.screen);
 
@@ -9377,7 +9391,10 @@ void lives_widget_apply_theme(LiVESWidget *widget, LiVESWidgetState state) {
   if (palette->style & STYLE_1) {
     lives_widget_set_fg_color(widget, state, &palette->normal_fore);
     lives_widget_set_bg_color(widget, state, &palette->normal_back);
+#if GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_set_base_color(widget, state, &palette->normal_back);
+    lives_widget_set_text_color(widget, state, &palette->normal_fore);
+#endif
   }
 }
 
@@ -9472,10 +9489,9 @@ void lives_window_center(LiVESWindow *window) {
   if (!widget_opts.no_gui) {
     int xcen, ycen;
     int width, height;
+    int bx, by;
 
     if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(window), widget_opts.screen);
-
-    lives_window_set_position(LIVES_WINDOW(window), LIVES_WIN_POS_CENTER_ALWAYS);
 
     if (mainw->mgeom == NULL) {
       lives_widget_show(LIVES_WIDGET(window));
@@ -9488,6 +9504,10 @@ void lives_window_center(LiVESWindow *window) {
     width = lives_widget_get_allocation_width(LIVES_WIDGET(window));
     if (width == 0) width = ((int)(620. * widget_opts.scale)); // MIN_MSGBOX_WIDTH in interface.h
     height = lives_widget_get_allocation_height(LIVES_WIDGET(window));
+
+    get_border_size(LIVES_WIDGET(window), &bx, &by);
+    width += bx;
+    height += by;
 
     xcen = mainw->mgeom[widget_opts.monitor].x + ((mainw->mgeom[widget_opts.monitor].width - width) >> 1);
 
@@ -10310,10 +10330,12 @@ boolean lives_tool_button_set_border_colour(LiVESWidget *button, LiVESWidgetStat
     LiVESWidget *widget, *parent;
     widget = lives_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(button));
     if (widget == NULL) widget = lives_tool_button_get_label_widget(LIVES_TOOL_BUTTON(button));
-    parent  = lives_widget_get_parent(widget);
-    lives_widget_set_bg_color(parent, state, colour);
-    lives_widget_set_valign(widget, LIVES_ALIGN_FILL);
-    lives_widget_set_halign(widget, LIVES_ALIGN_FILL);
+    if (widget != NULL) {
+      parent  = lives_widget_get_parent(widget);
+      if (parent != NULL) lives_widget_set_bg_color(parent, state, colour);
+      lives_widget_set_valign(widget, LIVES_ALIGN_FILL);
+      lives_widget_set_halign(widget, LIVES_ALIGN_FILL);
+    }
     return TRUE;
   }
   return FALSE;

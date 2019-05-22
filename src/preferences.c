@@ -3389,7 +3389,7 @@ _prefsw *create_prefs_dialog(void) {
     encoders = get_plugin_list(PLUGIN_ENCODERS, TRUE, NULL, NULL);
   }
 
-  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_gui));
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_encoding));
   hbox = lives_layout_hbox_new(LIVES_TABLE(layout));
 
   label = lives_standard_label_new(_("Encoder"));

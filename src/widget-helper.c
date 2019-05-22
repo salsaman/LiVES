@@ -99,7 +99,13 @@ static void button_state_cb(LiVESWidget *button, LiVESWidgetState state, livespo
   // state change callback
 
   if (LIVES_IS_TOOL_BUTTON(button)) {
-    LiVESWidget *label = gtk_tool_button_get_label_widget(LIVES_TOOL_BUTTON(button));
+    LiVESWidget *label;
+    LiVESWidget *icon = gtk_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(button));
+    if (icon != NULL) {
+      lives_tool_button_set_border_colour(button, state, &palette->menu_and_bars);
+      return;
+    }
+    label = gtk_tool_button_get_label_widget(LIVES_TOOL_BUTTON(button));
     if (label != NULL) {
       float dimval;
       LiVESWidgetColor dimmed_fg;
@@ -116,8 +122,6 @@ static void button_state_cb(LiVESWidget *button, LiVESWidgetState state, livespo
         lives_tool_button_set_border_colour(button, state, &dimmed_fg);
         lives_widget_apply_theme2(label, state, TRUE);
       }
-    } else {
-      lives_tool_button_set_border_colour(LIVES_WIDGET(button), state, &palette->menu_and_bars);
     }
     return;
   }
@@ -10243,14 +10247,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_button_width(LiVESButto
 
 boolean lives_tool_button_set_border_colour(LiVESWidget *button, LiVESWidgetState state, LiVESWidgetColor *colour) {
   if (LIVES_IS_TOOL_BUTTON(button)) {
-    LiVESWidget *image, *parent;
-    image = lives_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(button));
-    if (image == NULL) image = lives_tool_button_get_label_widget(LIVES_TOOL_BUTTON(button));
-    parent  = lives_widget_get_parent(image);
+    LiVESWidget *widget, *parent;
+    widget = lives_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(button));
+    if (widget == NULL) widget = lives_tool_button_get_label_widget(LIVES_TOOL_BUTTON(button));
+    parent  = lives_widget_get_parent(widget);
     lives_widget_set_bg_color(parent, state, colour);
-    lives_widget_set_bg_color(image, state, colour);
-    lives_widget_set_valign(image, LIVES_ALIGN_FILL);
-    lives_widget_set_halign(image, LIVES_ALIGN_FILL);
+    lives_widget_set_valign(widget, LIVES_ALIGN_FILL);
+    lives_widget_set_halign(widget, LIVES_ALIGN_FILL);
     return TRUE;
   }
   return FALSE;

@@ -1393,9 +1393,10 @@ static void corked_cb(pa_stream *s, int success, void *userdata) {
 
 
 void pulse_driver_uncork(pulse_driver_t *pdriver) {
+#if 0
   int alarm_handle;
   pa_operation *paop;
-
+#endif
   pdriver->abs_maxvol_heard = 0.;
 
   if (!pdriver->is_corked) return;

@@ -2747,19 +2747,15 @@ void play_file(void) {
         pulse_message.data = NULL;
         pulse_message.next = NULL;
         mainw->pulsed->msgq = &pulse_message;
-        g_print("pt aa1\n");
         while (mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0) {
           sched_yield();
           lives_usleep(prefs->sleep_time);
         }
-        g_print("pt aa12\n");
       }
       if (mainw->pulsed != NULL) {
-        g_print("pt aa13\n");
         pa_mloop_lock();
         pulse_driver_cork(mainw->pulsed);
         pa_mloop_unlock();
-        g_print("pt aa14\n");
       }
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);

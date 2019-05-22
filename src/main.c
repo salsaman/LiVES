@@ -753,7 +753,7 @@ static void replace_with_delegates(void) {
 
   if (mainw->resize_menuitem != NULL) lives_widget_set_sensitive(mainw->resize_menuitem, CURRENT_CLIP_HAS_VIDEO);
 
-  deint_idx = weed_get_idx_for_hashname("deinterlacedeinterlace", FALSE);
+  deint_idx = weed_get_idx_for_hashname("deinterlcedeinterlace", FALSE);
   if (deint_idx > -1) {
     mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list = lives_list_append(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
         LIVES_INT_TO_POINTER(deint_idx));
@@ -4106,6 +4106,12 @@ void load_start_image(int frame) {
     lives_widget_set_size_request(mainw->start_image, hsize, vsize);
     lives_widget_set_size_request(mainw->frame1, hsize, vsize);
     lives_widget_set_size_request(mainw->eventbox3, hsize, vsize);
+
+    lives_widget_set_hexpand(mainw->frame1, FALSE);
+    lives_widget_set_vexpand(mainw->frame1, FALSE);
+
+    lives_widget_set_hexpand(mainw->eventbox3, TRUE);
+    lives_widget_set_vexpand(mainw->eventbox3, TRUE);
   }
 
   if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -4300,6 +4306,12 @@ void load_end_image(int frame) {
     lives_widget_set_size_request(mainw->end_image, hsize, vsize);
     lives_widget_set_size_request(mainw->frame2, hsize, vsize);
     lives_widget_set_size_request(mainw->eventbox4, hsize, vsize);
+
+    lives_widget_set_hexpand(mainw->frame2, FALSE);
+    lives_widget_set_vexpand(mainw->frame2, FALSE);
+
+    lives_widget_set_hexpand(mainw->eventbox4, TRUE);
+    lives_widget_set_vexpand(mainw->eventbox4, TRUE);
   }
 
   if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {

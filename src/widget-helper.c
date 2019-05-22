@@ -8214,11 +8214,21 @@ LiVESToolItem *lives_standard_menu_tool_button_new(LiVESWidget *icon, const char
     while (list != NULL) {
       LiVESWidget *widget = (LiVESWidget *)list->data;
       if (LIVES_IS_VBOX(widget)) {
+        LiVESList *children2 = lives_container_get_children(LIVES_CONTAINER(toolitem)), *list2 = children2;
+        while (list2 != NULL) {
+          LiVESWidget *child = (LiVESWidget *)list2->data;
+          lives_widget_set_valign(child, LIVES_ALIGN_FILL);
+          lives_widget_set_halign(child, LIVES_ALIGN_FILL);
+          lives_widget_set_margin_left(child, 0.);
+          lives_widget_set_margin_right(child, 0.);
+          lives_widget_set_margin_top(child, 0.);
+          list2 = list2->next;
+        }
         lives_widget_set_bg_color(widget, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 #if GTK_CHECK_VERSION(3, 0, 0)
         lives_widget_set_bg_color(widget, LIVES_WIDGET_STATE_BACKDROP, &palette->menu_and_bars);
 #endif
-        break;
+        list2 = list2->next;
       }
       list = list->next;
     }
@@ -10186,12 +10196,27 @@ boolean get_border_size(LiVESWidget *win, int *bx, int *by) {
 #ifdef GUI_GTK
   GdkRectangle rect;
   gint wx, wy;
+  GdkWindow *xwin = lives_widget_get_xwindow(win);
+  if (xwin == NULL) {
+    gtk_widget_realize(win);
+    lives_widget_context_update();
+    xwin = lives_widget_get_xwindow(win);
+    if (xwin == NULL) {
+      if (bx != NULL) *bx = 0;
+      if (by != NULL) *by = 0;
+      return FALSE;
+    }
+  }
   gdk_window_get_frame_extents(lives_widget_get_xwindow(win), &rect);
   gdk_window_get_origin(lives_widget_get_xwindow(win), &wx, &wy);
-  *bx = wx - rect.x;
-  *by = wy - rect.y;
-  if (rect.x == 0) *bx = 0;
-  if (rect.y == 0) *by = 0;
+  if (bx != NULL) {
+    *bx = wx - rect.x;
+    if (rect.x == 0) *bx = 0;
+  }
+  if (by != NULL) {
+    *by = wy - rect.y;
+    if (rect.y == 0) *by = 0;
+  }
   return TRUE;
 #endif
 #ifdef GUI_QT

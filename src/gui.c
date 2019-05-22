@@ -216,40 +216,31 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->top_vbox, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_apply_theme(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->frame1, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->start_image, LIVES_WIDGET_STATE_NORMAL);
 
-  lives_widget_set_bg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_fg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, colf);
-
-  lives_widget_set_bg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
-
-  lives_widget_set_bg_color(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, colb);
-
-  lives_widget_set_bg_color(mainw->start_image, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
 
   lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_fg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, colf);
-  lives_widget_set_bg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, colb);
-
-  lives_widget_set_bg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colf);
-
-  lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, colb);
-
-  lives_widget_set_bg_color(mainw->end_image, LIVES_WIDGET_STATE_NORMAL, colb);
-
-  lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_apply_theme(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_set_fg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_apply_theme(mainw->frame2, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_set_fg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_apply_theme(mainw->end_image, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_set_fg_color(mainw->end_image, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_set_bg_color(mainw->eventbox5, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_bg_color(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_fg_color(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL, colf);
-  lives_widget_set_bg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_fg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_apply_theme(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->hruler, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_set_fg_color(mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, colf);
 
@@ -263,8 +254,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
   lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, colf);
-  lives_widget_set_bg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_apply_theme(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_set_fg_color(mainw->banner, LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_fg_color(mainw->arrow1, LIVES_WIDGET_STATE_NORMAL, colf);
@@ -275,19 +265,21 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
   lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_bg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, colf);
 
-  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
-  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colf);
 
-  //lives_widget_set_bg_color(lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colb);
+
   lives_widget_set_fg_color(mainw->message_box, LIVES_WIDGET_STATE_NORMAL, colf);
 
   lives_widget_set_bg_color(mainw->msg_scrollbar, LIVES_WIDGET_STATE_NORMAL, colb2);
 
-  lives_widget_set_bg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_fg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_apply_theme(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_set_fg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->framebar), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->framebar, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -4558,7 +4550,7 @@ void reset_message_area(boolean expand) {
       lives_widget_hide(mainw->message_box);
     }
     lives_widget_context_update();
-    msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+    msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
 #if !GTK_CHECK_VERSION(3, 0, 0)
     expose_msg_area(mainw->msg_area, NULL, &mainw->sw_func);
 #endif

@@ -415,11 +415,6 @@ skip_init:
 
       priv->ctx = cc;
 
-      if (priv->ctx->ticks_per_frame == 2) {
-        // needs checking
-        cdata->interlace = LIVES_INTERLACE_BOTTOM_FIRST;
-      }
-
 #ifdef DEBUG
       fprintf(stderr, "fps is %.4f %d %d %d %d %d\n", cdata->fps, s->time_base.den, s->time_base.num, cc->time_base.den, cc->time_base.num,
               priv->ctx->ticks_per_frame);
@@ -1239,8 +1234,29 @@ framedone2:
   if (priv->black_fill) btop = cdata->frame_height;
   else {
     // we are allowed to cast away const-ness just for this (and eventually gamma)
-    if (priv->pFrame->color_space == AVCOL_SPACE_BT709)
+    // yuv_subspace, yuv_clamping, yuv_sampling and interlace
+
+    if (priv->pFrame->interlaced_frame) {
+      if (priv->pFrame->top_field_first)((lives_clip_data_t *)cdata)->interlace = LIVES_INTERLACE_TOP_FIRST;
+      else ((lives_clip_data_t *)cdata)->interlace = LIVES_INTERLACE_BOTTOM_FIRST;
+    } else ((lives_clip_data_t *)cdata)->interlace = LIVES_INTERLACE_NONE;
+
+    ((lives_clip_data_t *)cdata)->YUV_sampling = WEED_YUV_SAMPLING_DEFAULT;
+
+    if (priv->pFrame->chroma_location == AVCHROMA_LOC_LEFT)
+      ((lives_clip_data_t *)cdata)->YUV_sampling = WEED_YUV_SAMPLING_JPEG;
+
+    if (priv->pFrame->chroma_location == AVCHROMA_LOC_CENTER)
+      ((lives_clip_data_t *)cdata)->YUV_sampling = WEED_YUV_SAMPLING_MPEG;
+
+    if (priv->pFrame->chroma_location == AVCHROMA_LOC_TOPLEFT)
+      ((lives_clip_data_t *)cdata)->YUV_sampling = WEED_YUV_SAMPLING_DVNTSC;
+
+    if (priv->pFrame->colorspace == AVCOL_SPC_BT709)
       ((lives_clip_data_t *)cdata)->YUV_subspace = WEED_YUV_SUBSPACE_BT709;
+    else
+      ((lives_clip_data_t *)cdata)->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
+
 
     if (priv->pFrame->color_range == AVCOL_RANGE_JPEG)
       ((lives_clip_data_t *)cdata)->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;

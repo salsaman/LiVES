@@ -598,14 +598,14 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
         snprintf(plug1, PATH_MAX, "%s/%s", vdir, plugin_name);
 
         //fprintf(stderr,"checking %s\n",plug1);
-	if (handle != NULL) dlclose(handle);
-	
+        if (handle != NULL) dlclose(handle);
+
         handle = dlopen(plug1, RTLD_NOW);
         if (handle == NULL) continue;
 
         if ((lad_descriptor_func = dlsym(handle, "ladspa_descriptor")) == NULL) {
           dlclose(handle);
-	  handle = NULL;
+          handle = NULL;
           continue;
         }
 

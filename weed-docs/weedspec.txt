@@ -1795,14 +1795,14 @@ specified otherwise.
 
  * WEED_YUV_SAMPLING_MPEG  1  : Same as JPEG, but Chroma samples are
    horizontally aligned. There is notion of fields. Note: only mpeg2 uses this, mpeg1 uses JPEG sampling.
-   (YUV 4:2:0 only) (like yuvy-yuvy)
+   (YUV 4:2:0 only) (like yuvy-yuvy) (left sampling)
 
  * WEED_YUV_SAMPLING_DVPAL  2  : Subsampling per field, chroma samples
    are located above and below luma samples, and CB and CR samples are located on alternate lines (YUV 4:2:0) 
 
  * WEED_YUV_SAMPLING_DVNTSC  3  : Chroma is sampled at a reduced
    horizontal frequency but is aligned horizontally with luma samples
-   (YUV 4:2:2 / YUV 4:1:1) [similar to mpeg, but vertically aligned]
+   (YUV 4:2:2 / YUV 4:1:1) [similar to mpeg, but vertically aligned] (top left)
 
 Sampling types >=1024 are reserved for custom samplings.
 

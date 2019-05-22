@@ -4290,10 +4290,9 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
         lives_signal_handlers_block_by_func(widget, (livespointer)expose_msg_area, NULL);
 
         reset_message_area(FALSE);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-        lives_widget_context_update();
         lives_widget_hide(widget);
         lives_widget_hide(mainw->message_box);
+
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
         lives_widget_context_update();
 

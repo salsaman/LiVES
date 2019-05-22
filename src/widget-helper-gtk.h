@@ -380,7 +380,6 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_WIDGET_DRAG_DATA_RECEIVED_SIGNAL "drag-data-received"
 #define LIVES_WIDGET_SIZE_PREPARED_SIGNAL "size-prepared"
 #define LIVES_WIDGET_MODE_CHANGED_SIGNAL "mode-changed"
-#define LIVES_WIDGET_ACCEPT_POSITION_SIGNAL "accept-position" // need to use position::notify
 #define LIVES_WIDGET_SWITCH_PAGE_SIGNAL "switch-page"
 #define LIVES_WIDGET_UNMAP_SIGNAL "unmap"
 #define LIVES_WIDGET_EDITED_SIGNAL "edited"
@@ -395,6 +394,8 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #else
 #define LIVES_WIDGET_STATE_CHANGED_SIGNAL "state-changed"
 #endif
+
+#define LIVES_WIDGET_NOTIFY_SIGNAL "notify::"
 
 typedef GtkWidget                         LiVESWidget;
 typedef GtkWindow                         LiVESWindow;

@@ -1694,8 +1694,7 @@ LIVES_GLOBAL_INLINE int calc_frame_from_time4(int filenum, double time) {
 
 
 LIVES_GLOBAL_INLINE boolean is_realtime_aplayer(int ptype) {
-  if (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE) return TRUE;
-  return FALSE;
+  return (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE);
 }
 
 
@@ -2264,7 +2263,7 @@ void d_print(const char *fmt, ...) {
   }
 
   if (prefs->show_gui) {
-    //reset_message_area(TRUE);
+    msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
     lives_widget_queue_draw_if_visible(mainw->msg_area);
   }
 

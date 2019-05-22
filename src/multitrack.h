@@ -163,6 +163,8 @@ struct _mt_opts {
   boolean render_vidp; ///< render video
   boolean render_audp; ///< render audio
   boolean normalise_audp; ///< normalise audio
+  int hpaned_pos;
+  int vpaned_pos;
   LiVESList *aparam_view_list;
 };
 

@@ -102,6 +102,8 @@ static void button_state_cb(LiVESWidget *button, LiVESWidgetState state, livespo
     LiVESWidget *label;
     LiVESWidget *icon = gtk_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(button));
     if (icon != NULL) {
+      lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
       lives_tool_button_set_border_colour(button, state, &palette->menu_and_bars);
       return;
     }
@@ -120,10 +122,22 @@ static void button_state_cb(LiVESWidget *button, LiVESWidgetState state, livespo
         lives_widget_color_copy(&dimmed_fg, &palette->normal_fore);
         lives_widget_color_mix(&dimmed_fg, &palette->normal_back, (float)dimval / 65535.);
         lives_tool_button_set_border_colour(button, state, &dimmed_fg);
+        lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_BACKDROP, &dimmed_fg);
+        lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_BACKDROP, &dimmed_fg);
+        lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_PRELIGHT, &dimmed_fg);
         lives_widget_apply_theme2(label, state, TRUE);
       }
+      // menutoolbuttons will also have an arrow
+      LiVESList *children = lives_container_get_children(LIVES_CONTAINER(button)), *list = children;
+      while (list != NULL) {
+        LiVESWidget *widget = (LiVESWidget *)list->data;
+        if (LIVES_IS_VBOX(widget)) {
+          lives_widget_set_bg_color(widget, state, &palette->menu_and_bars);
+        }
+        list = list->next;
+      }
+      return;
     }
-    return;
   }
   if (LIVES_IS_BUTTON(button)) {
     boolean woat = widget_opts.apply_theme;
@@ -1149,7 +1163,7 @@ static char *make_random_string(const char *prefix) {
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
-static boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const char *detail, const char *value) {
+static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *detail, const char *value) {
   GtkCssProvider *provider = gtk_css_provider_new();
   GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
 
@@ -1270,6 +1284,23 @@ static boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const 
   g_free(wname);
   g_free(css_string);
   g_object_unref(provider);
+  return TRUE;
+}
+
+
+static boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const char *detail, const char *value) {
+#ifdef SEPARATE_GTK_STATES
+  if (state & GTK_STATE_FLAG_NORMAL) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_NORMAL, detail, value);
+  if (state & GTK_STATE_FLAG_ACTIVE) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_ACTIVE, detail, value);
+  if (state & GTK_STATE_FLAG_PRELIGHT) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_PRELIGHT, detail, value);
+  if (state & GTK_STATE_FLAG_SELECTED) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_SELECTED, detail, value);
+  if (state & GTK_STATE_FLAG_INSENSITIVE) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_INSENSITIVE, detail, value);
+  if (state & GTK_STATE_FLAG_INCONSISTENT) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_INCONSISTENT, detail, value);
+  if (state & GTK_STATE_FLAG_FOCUSED) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_FOCUSED, detail, value);
+  if (state & GTK_STATE_FLAG_BACKDROP) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_BACKDROP, detail, value);
+#else
+  set_css_value_for_state_flag(widget, state, detail, value);
+#endif
   return TRUE;
 }
 #endif
@@ -8172,6 +8203,34 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, boolean activ
 }
 
 
+LiVESToolItem *lives_standard_menu_tool_button_new(LiVESWidget *icon, const char *label) {
+  LiVESToolItem *toolitem = NULL;
+#ifdef GUI_GTK
+  toolitem = lives_menu_tool_button_new(icon, label);
+  if (widget_opts.apply_theme) {
+    lives_widget_set_bg_color(LIVES_WIDGET(toolitem), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    LiVESList *children = lives_container_get_children(LIVES_CONTAINER(toolitem)), *list = children;
+    while (list != NULL) {
+      LiVESWidget *widget = (LiVESWidget *)list->data;
+      if (LIVES_IS_VBOX(widget)) {
+        lives_widget_set_bg_color(widget, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+        lives_widget_set_bg_color(widget, LIVES_WIDGET_STATE_BACKDROP, &palette->menu_and_bars);
+        break;
+      }
+      list = list->next;
+    }
+  }
+  /* lives_signal_connect_after(LIVES_GUI_OBJECT(toolitem), LIVES_WIDGET_STATE_CHANGED_SIGNAL, */
+  /* 			     LIVES_GUI_CALLBACK(button_state_cb), */
+  /* 			     NULL); */
+#endif
+#ifdef GUI_QT
+  toolitem = new LiVESMenuToolButton(QString::fromUtf8(label), mainw->LiVES, icon);
+#endif
+  return toolitem;
+}
+
+
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList **rbgroup, LiVESBox *box, const char *tooltip) {
   LiVESWidget *radiobutton = NULL;
 
@@ -9318,6 +9377,7 @@ void lives_widget_apply_theme(LiVESWidget *widget, LiVESWidgetState state) {
   if (palette->style & STYLE_1) {
     lives_widget_set_fg_color(widget, state, &palette->normal_fore);
     lives_widget_set_bg_color(widget, state, &palette->normal_back);
+    lives_widget_set_base_color(widget, state, &palette->normal_back);
   }
 }
 
@@ -10276,6 +10336,7 @@ LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *bar, GtkWidget *icon_w
     lives_signal_connect_after(LIVES_GUI_OBJECT(tbutton), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(button_state_cb),
                                NULL);
+    button_state_cb(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_NORMAL, NULL);
   }
   if (tooltips != NULL) lives_widget_set_tooltip_text(LIVES_WIDGET(tbutton), tooltips);
   if (bar != NULL) lives_toolbar_insert(bar, tbutton, -1);

@@ -918,7 +918,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 
     lives_box_pack_start(for_preview, mainw->fs_playframe, FALSE, FALSE, 0);
 
-    lives_widget_set_size_request(mainw->fs_playarea, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE / 2);
+    lives_widget_set_size_request(mainw->fs_playarea, DEFAULT_FRAME_HSIZE_UNSCALED / 2, DEFAULT_FRAME_VSIZE_UNSCALED / 2);
 
     lives_container_add(LIVES_CONTAINER(mainw->fs_playframe), mainw->fs_playalign);
     lives_container_add(LIVES_CONTAINER(mainw->fs_playalign), mainw->fs_playarea);

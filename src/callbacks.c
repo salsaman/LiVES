@@ -5939,8 +5939,8 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       mainw->error = FALSE;
 
       // make thumb from any image file
-      com = lives_strdup_printf("%s make_thumb thm%d %d %d \"%s\" \"%s\"", prefs->backend_sync, pid, DEFAULT_FRAME_HSIZE,
-                                DEFAULT_FRAME_VSIZE, prefs->image_ext, (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
+      com = lives_strdup_printf("%s make_thumb thm%d %d %d \"%s\" \"%s\"", prefs->backend_sync, pid, DEFAULT_FRAME_HSIZE_UNSCALED,
+                                DEFAULT_FRAME_VSIZE_UNSCALED, prefs->image_ext, (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
       lives_free(tmp);
       lives_system(com, FALSE);
       lives_free(com);
@@ -6103,8 +6103,8 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       height = atoi(array[5]);
       lives_strfreev(array);
     } else {
-      width = DEFAULT_FRAME_HSIZE / 2;
-      height = DEFAULT_FRAME_VSIZE / 2;
+      width = DEFAULT_FRAME_HSIZE_UNSCALED / 2;
+      height = DEFAULT_FRAME_VSIZE_UNSCALED / 2;
     }
 
     lives_rm(info_file);

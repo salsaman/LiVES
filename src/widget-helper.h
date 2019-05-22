@@ -872,6 +872,8 @@ LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt,
 LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt, const char *defdir, int dispwidth, int maxchars,
     LiVESBox *box, const char *tooltip);
 
+LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
+
 LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height, const char *tooltip);
 
 boolean lives_lock_button_get_locked(LiVESButton *lockbutton);
@@ -892,6 +894,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, const char *name,
     LiVESWidget **sb_red, LiVESWidget **sb_green, LiVESWidget **sb_blue, LiVESWidget **sb_alpha);
 
 LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbuff);
+
+LiVESToolItem *lives_standard_menu_tool_button_new(LiVESWidget *icon, const char *label);
 
 LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x, int y);
 

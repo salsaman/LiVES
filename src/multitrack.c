@@ -5811,12 +5811,18 @@ void set_mt_colours(lives_mt *mt) {
 
     lives_widget_set_bg_color(mt->grav_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mt->grav_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_tool_button_set_border_colour(mt->grav_menuitem, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    set_child_alt_colour(mt->grav_menuitem, TRUE);
 
     lives_widget_set_bg_color(mt->mm_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mt->mm_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_tool_button_set_border_colour(mt->mm_menuitem, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    set_child_alt_colour(mt->mm_menuitem, TRUE);
 
     lives_widget_set_bg_color(mt->ins_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mt->ins_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_tool_button_set_border_colour(mt->ins_menuitem, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    set_child_alt_colour(mt->ins_menuitem, TRUE);
 
     lives_widget_set_fg_color(mt->l_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_fg_color(mt->r_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -5824,7 +5830,11 @@ void set_mt_colours(lives_mt *mt) {
     lives_widget_apply_theme2(mt->amixer_button, LIVES_WIDGET_STATE_NORMAL, TRUE);
     set_child_alt_colour(mt->amixer_button, TRUE);
 
-    set_child_colour(mt->in_out_box, FALSE); // is the "FALSE" relevant ?
+    lives_widget_apply_theme2(mainw->vol_toolitem, LIVES_WIDGET_STATE_NORMAL, FALSE);
+    if (mainw->vol_label != NULL) lives_widget_apply_theme2(mainw->vol_label, LIVES_WIDGET_STATE_NORMAL, FALSE);
+    lives_widget_apply_theme2(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, FALSE);
+
+    set_child_colour(mt->in_out_box, FALSE);
 
     if (palette->style & STYLE_4) {
       lives_widget_show(mt->hseparator);
@@ -5868,6 +5878,7 @@ void set_mt_colours(lives_mt *mt) {
 
     lives_widget_set_bg_color(mt->btoolbary, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mt->btoolbary, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    set_child_alt_colour(mt->btoolbary, TRUE);
 
     lives_widget_set_fg_color(mt->tlx_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_bg_color(mt->tlx_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -7785,6 +7796,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        mt);
 
   hbox = lives_hbox_new(FALSE, 0);
+  lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  lives_widget_set_fg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
   lives_container_add(LIVES_CONTAINER(mt->top_eventbox), hbox);
 
   mt->btoolbar2 = lives_toolbar_new();
@@ -7934,7 +7948,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_toolbar_insert_space(LIVES_TOOLBAR(mt->btoolbar3));
 
-  mt->grav_menuitem = lives_menu_tool_button_new(NULL, NULL);
+  mt->grav_menuitem = LIVES_WIDGET(lives_standard_menu_tool_button_new(NULL, NULL));
   lives_tool_button_set_use_underline(LIVES_TOOL_BUTTON(mt->grav_menuitem), TRUE);
 
   mt->grav_normal = lives_standard_check_menu_item_new_with_label(_("Gravity: _Normal"), mt->opts.grav_mode == GRAV_MODE_NORMAL);
@@ -7990,7 +8004,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->mm_menuitem), mt->mm_submenu);
     lives_container_add(LIVES_CONTAINER(mt->menubar), mt->mm_menuitem);
   } else {
-    mt->mm_menuitem = LIVES_WIDGET(lives_menu_tool_button_new(NULL, NULL));
+    mt->mm_menuitem = LIVES_WIDGET(lives_standard_menu_tool_button_new(NULL, NULL));
     lives_tool_button_set_use_underline(LIVES_TOOL_BUTTON(mt->mm_menuitem), TRUE);
 
     get_menu_text(mt->mm_move, text);
@@ -8032,7 +8046,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->ins_menuitem), mt->ins_submenu);
     lives_container_add(LIVES_CONTAINER(mt->menubar), mt->ins_menuitem);
   } else {
-    mt->ins_menuitem = LIVES_WIDGET(lives_menu_tool_button_new(NULL, NULL));
+    mt->ins_menuitem = LIVES_WIDGET(lives_standard_menu_tool_button_new(NULL, NULL));
     lives_tool_button_set_use_underline(LIVES_TOOL_BUTTON(mt->ins_menuitem), TRUE);
     get_menu_text(mt->ins_normal, text);
     mt->ins_label = lives_label_new(text);
@@ -8079,6 +8093,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_unparent(mainw->vol_toolitem);
   lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbary), LIVES_TOOL_ITEM(mainw->vol_toolitem), -1);
   lives_object_unref(mainw->vol_toolitem);
+
+  lives_widget_apply_theme2(mainw->vol_toolitem, LIVES_WIDGET_STATE_NORMAL, FALSE);
+  if (mainw->vol_label != NULL) lives_widget_apply_theme2(mainw->vol_label, LIVES_WIDGET_STATE_NORMAL, FALSE);
+  lives_widget_apply_theme2(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, FALSE);
 
   hseparator = lives_hseparator_new();
   lives_box_pack_start(LIVES_BOX(mt->xtravbox), hseparator, FALSE, FALSE, 0);

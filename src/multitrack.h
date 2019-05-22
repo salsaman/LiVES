@@ -237,7 +237,7 @@ struct _mt {
   LiVESWidget *mm_select;
   LiVESWidget *ins_menuitem;
   LiVESWidget *ins_normal;
-  LiVESToolItem *grav_menuitem;
+  LiVESWidget *grav_menuitem;
   LiVESWidget *grav_label;
   LiVESWidget *grav_normal;
   LiVESWidget *grav_left;

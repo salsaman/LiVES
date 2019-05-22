@@ -9,42 +9,33 @@
 #include "main.h"
 #include "interface.h"
 
+static boolean allpassed;
 
 static boolean prompt_existing_dir(char *dirname, uint64_t freespace, boolean wrtable) {
-  char *msg;
-  boolean res = FALSE;
-
+  boolean res;
   if (wrtable) {
     char *fspstr = lives_format_storage_space_string(freespace);
-    msg = lives_strdup_printf
-          (_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"), dirname, fspstr);
+    res = do_yesno_dialogf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"), dirname,
+                           fspstr);
     lives_free(fspstr);
-    res = do_yesno_dialog(msg);
   } else {
-    msg = lives_strdup_printf
-          (_("A directory named\n%s\nalready exists.\nLiVES could not write to this directory or read its free space.\nPlease select another location.\n"),
-           dirname);
-    do_error_dialog(msg);
+    res = do_error_dialogf(
+            _("A directory named\n%s\nalready exists.\nLiVES could not write to this directory or read its free space.\nPlease select another location.\n"),
+            dirname);
   }
-  lives_free(msg);
   return res;
 }
 
 
 static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable) {
-  boolean res = FALSE;
-  char *msg;
+  boolean res;
   if (wrtable) {
     char *fspstr = lives_format_storage_space_string(freespace);
-    msg = lives_strdup_printf(_("\nCreate the directory\n%s\n?\n\n(Free space = %s)"), dirname, fspstr);
+    res = do_warning_dialogf(_("\nCreate the directory\n%s\n?\n\n(Free space = %s)"), dirname, fspstr);
     lives_free(fspstr);
-    res = do_warning_dialog(msg);
   } else {
-    msg = lives_strdup_printf(_("\nLiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n"), dirname);
-    do_error_dialog(msg);
+    res = do_error_dialogf(_("\nLiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n"), dirname);
   }
-
-  lives_free(msg);
   return res;
 }
 
@@ -56,7 +47,6 @@ void close_file(int current_file, boolean tshoot) {
     // kill any active processes: for other OSes the backend does this
     lives_kill_subprocesses(cfile->handle, TRUE);
 #endif
-
     mainw->current_file = close_temp_handle(mainw->current_file, current_file);
   }
 }
@@ -70,8 +60,9 @@ boolean do_workdir_query(void) {
 
   char *dirname;
 
-top:
+  widget_opts.apply_theme = TRUE;
 
+top:
   renamew = create_rename_dialog(6);
 
   while (!ok) {
@@ -149,6 +140,8 @@ top:
   lives_snprintf(mainw->first_info_file, PATH_MAX, "%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d", prefs->workdir, capable->mainpid);
 
   lives_free(dirname);
+
+  widget_opts.apply_theme = FALSE;
   return TRUE;
 }
 
@@ -200,6 +193,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
   char *txt0, *txt1, *txt2, *txt3, *txt4, *txt5, *txt6, *txt7, *msg;
 
   int response;
+
+  widget_opts.apply_theme = TRUE;
 
   if (startup_phase == 2) {
     txt0 = lives_strdup(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
@@ -384,6 +379,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   response = lives_dialog_run(LIVES_DIALOG(dialog));
 
   lives_widget_destroy(dialog);
+  widget_opts.apply_theme = FALSE;
 
   if (!is_realtime_aplayer(prefs->audio_player)) {
     lives_widget_hide(mainw->vol_toolitem);
@@ -391,7 +387,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     lives_widget_hide(mainw->recaudio_submenu);
   }
 
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
 
   return (response == LIVES_RESPONSE_OK);
 }
@@ -415,7 +411,7 @@ static void add_test(LiVESWidget *table, int row, char *ttext, boolean noskip) {
     lives_widget_show(image);
   }
 
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
 }
 
 
@@ -435,7 +431,7 @@ static boolean pass_test(LiVESWidget *table, int row) {
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
   return TRUE;
 }
 
@@ -462,13 +458,13 @@ static boolean fail_test(LiVESWidget *table, int row, char *ftext) {
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
-  lives_widget_context_update();
-
+  lives_widget_process_updates(mainw->LiVES, TRUE);
+  allpassed = FALSE;
   return FALSE;
 }
 
 
-LIVES_INLINE char *get_resource(char *fname) {
+LIVES_LOCAL_INLINE char *get_resource(char *fname) {
   return lives_build_filename(prefs->prefix_dir, DATA_DIR, "resources", fname, NULL);
 }
 
@@ -504,6 +500,10 @@ boolean do_startup_tests(boolean tshoot) {
   int current_file = mainw->current_file;
 
   int out_fd, info_fd;
+
+  if (!tshoot) widget_opts.apply_theme = TRUE;
+
+  allpassed = TRUE;
 
   mainw->suppress_dprint = TRUE;
   mainw->cancelled = CANCEL_NONE;
@@ -565,7 +565,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (!capable->has_sox_sox) {
     success = fail_test(table, 0, _("You should install sox to be able to use all the audio features in LiVES"));
-
+    lives_widget_grab_focus(cancelbutton);
   } else {
     success = pass_test(table, 0);
   }
@@ -660,6 +660,7 @@ boolean do_startup_tests(boolean tshoot) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
 
+    if (!tshoot) widget_opts.apply_theme = FALSE;
     return FALSE;
   }
 
@@ -688,7 +689,8 @@ boolean do_startup_tests(boolean tshoot) {
   if (!success2) {
     if (!success) {
       lives_widget_destroy(dialog);
-      lives_widget_context_update();
+      lives_widget_process_updates(mainw->LiVES, TRUE);
+
       do_no_mplayer_sox_error();
       close_file(current_file, tshoot);
       mainw->suppress_dprint = FALSE;
@@ -698,6 +700,7 @@ boolean do_startup_tests(boolean tshoot) {
         mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
       }
 
+      if (!tshoot) widget_opts.apply_theme = FALSE;
       return FALSE;
     }
   } else {
@@ -825,6 +828,7 @@ boolean do_startup_tests(boolean tshoot) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
 
+    if (!tshoot) widget_opts.apply_theme = FALSE;
     return FALSE;
   }
 
@@ -890,6 +894,12 @@ boolean do_startup_tests(boolean tshoot) {
   mainw->current_file = current_file;
 
   lives_widget_set_sensitive(okbutton, TRUE);
+  if (!tshoot) {
+    if (allpassed)
+      lives_widget_grab_focus(okbutton);
+    else
+      lives_widget_grab_focus(cancelbutton);
+  }
 
   if (!capable->has_mplayer && !capable->has_mplayer2 && capable->has_mpv) {
     label = lives_standard_label_new(
@@ -922,6 +932,8 @@ boolean do_startup_tests(boolean tshoot) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 
+  if (!tshoot) widget_opts.apply_theme = FALSE;
+
   return (response == LIVES_RESPONSE_OK);
 }
 
@@ -934,6 +946,8 @@ void do_startup_interface_query(void) {
   LiVESWidget *hbox;
   LiVESSList *radiobutton_group = NULL;
   char *txt1, *txt2, *txt3, *msg;
+
+  widget_opts.apply_theme = TRUE;
 
   txt1 = lives_strdup(_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
   txt2 = lives_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
@@ -990,7 +1004,8 @@ void do_startup_interface_query(void) {
   set_int_pref(PREF_STARTUP_INTERFACE, prefs->startup_interface);
 
   lives_widget_destroy(dialog);
-  lives_widget_context_update();
+  lives_widget_process_updates(mainw->LiVES, TRUE);
+  widget_opts.apply_theme = FALSE;
 }
 
 

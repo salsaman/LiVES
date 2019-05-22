@@ -6103,8 +6103,8 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       height = atoi(array[5]);
       lives_strfreev(array);
     } else {
-      width = DEFAULT_FRAME_HSIZE;
-      height = DEFAULT_FRAME_VSIZE;
+      width = DEFAULT_FRAME_HSIZE / 2;
+      height = DEFAULT_FRAME_VSIZE / 2;
     }
 
     lives_rm(info_file);
@@ -6113,12 +6113,10 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       owidth = width;
       oheight = height;
 
-      // -20 since border width was set to 10 pixels
-      fwidth = lives_widget_get_allocation_width(mainw->fs_playalign) - 20;
-      fheight = lives_widget_get_allocation_height(mainw->fs_playalign) - 20;
+      fwidth = lives_widget_get_allocation_width(mainw->fs_playalign) - widget_opts.border_width * 2;
+      fheight = lives_widget_get_allocation_height(mainw->fs_playalign) - widget_opts.border_width * 2;
 
-      calc_maxspect(fwidth, fheight,
-                    &width, &height);
+      calc_maxspect(fwidth, fheight, &width, &height);
 
       width = (width >> 1) << 1;
       height = (height >> 1) << 1;
@@ -6194,7 +6192,8 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     // loop here until preview has finished, or the user presses OK or Cancel
 
     while ((!(ifile = fopen(info_file, "r"))) && mainw->in_fs_preview && mainw->fc_buttonresponse == LIVES_RESPONSE_NONE) {
-      lives_widget_process_updates(mainw->LiVES, TRUE);
+      lives_widget_context_update();
+      sched_yield();
       lives_usleep(prefs->sleep_time);
     }
 
@@ -6958,7 +6957,6 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (mainw->sep_win) {
         // switch to separate window during pb
         if (mainw->multitrack == NULL) {
-
           if (!prefs->hide_framebar && !mainw->faded && ((!mainw->preview && (CURRENT_CLIP_HAS_VIDEO || mainw->foreign)) || cfile->opening)) {
             lives_widget_show(mainw->framebar);
           }

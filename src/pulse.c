@@ -273,13 +273,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       }
       break;
     case ASERVER_CMD_FILE_CLOSE:
+      pulsed->playing_file = -1;
       if (mainw->playing_file == -1) pulse_driver_cork(pulsed);
       if (pulsed->fd >= 0) close(pulsed->fd);
       pulsed->fd = -1;
       lives_freep((void **)&pulsed->aPlayPtr->data);
       pulsed->aPlayPtr->max_size = 0;
       pulsed->aPlayPtr->size = 0;
-      pulsed->playing_file = -1;
       break;
     case ASERVER_CMD_FILE_SEEK:
       if (pulsed->fd < 0) break;

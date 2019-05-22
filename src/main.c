@@ -18,13 +18,23 @@
 
 // flow is: main() -> real_main() [entry point for liblives]
 // real_main() -> pre_init() [early initialisation, initialise prefs system]
+//   initialise prefs
+//   initialise weed_memory
+//   initialise message log
+//   initialise widget_helper
 // real_main() [parse startup opts]
 // real_main() -> lives_startup() [added as idle function]
 // real_main() -> gtk_main()
 
+// idlefuncion:
 // lives_startup() [handle any prefs touched by opts which are needed for the GUI]
-// lives_startup() -> create_LiVES() [create the GUI interface]
-// lives_startup() -> lives_init() [set remaining variables and preferences]
+//   on fresh install: do_workdir_query()
+//   create_LiVES() [create the GUI interface]
+//   splash_end -> create MT interface if wanted
+//   show_lives()
+//   check_for_recovery files, load them if wanted
+//   do_layout_recovery
+//   lives_init() [set remaining variables and preferences]
 
 #ifdef USE_GLIB
 #include <glib.h>
@@ -587,14 +597,14 @@ static boolean pre_init(void) {
   prefs->max_messages = DEF_MAX_MESSAGES;
   mainw->msg_list = NULL;
   mainw->n_messages = 0;
+  mainw->ref_message = NULL;
+  mainw->ref_message_n = 0;
   add_messages_to_list(_("Starting...\n"));
 
-  if (prefs->startup_phase == 0) {
-    expect_theme = TRUE;
-    if (!set_palette_colours(FALSE)) {
-      lives_snprintf(prefs->theme, 64, "none");
-      set_palette_colours(FALSE);
-    }
+  expect_theme = TRUE;
+  if (!set_palette_colours(FALSE)) {
+    lives_snprintf(prefs->theme, 64, "none");
+    set_palette_colours(FALSE);
   }
 
   get_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device, PATH_MAX);
@@ -741,7 +751,7 @@ static void replace_with_delegates(void) {
     mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx = rfx;
   }
 
-  lives_widget_set_sensitive(mainw->resize_menuitem, CURRENT_CLIP_HAS_VIDEO);
+  if (mainw->resize_menuitem != NULL) lives_widget_set_sensitive(mainw->resize_menuitem, CURRENT_CLIP_HAS_VIDEO);
 
   deint_idx = weed_get_idx_for_hashname("deinterlacedeinterlace", FALSE);
   if (deint_idx > -1) {
@@ -1917,9 +1927,9 @@ boolean set_palette_colours(boolean force_reload) {
   lives_rgba_to_widget_color(&palette->white, &lcol);
 
   // salmon
-  lcol.red = 64250;
-  lcol.green = 64250;
-  lcol.blue = 64250;
+  lcol.red = 63750;
+  lcol.green = 32767;
+  lcol.blue = 29070;
   lives_rgba_to_widget_color(&palette->light_red, &lcol);
 
   // SeaGreen3
@@ -2592,7 +2602,6 @@ static boolean lives_startup(livespointer data) {
   char *tmp;
 
   if (capable->smog_version_correct) {
-
     if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
       // get initial workdir
       if (!do_workdir_query()) {
@@ -2648,7 +2657,6 @@ static boolean lives_startup(livespointer data) {
       set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
     } else {
 #endif
-
 #ifdef ENABLE_JACK
       if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_jackd) {
         prefs->audio_player = AUD_PLAYER_JACK;
@@ -2656,7 +2664,6 @@ static boolean lives_startup(livespointer data) {
         set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
       }
 #endif
-
 #ifdef HAVE_PULSE_AUDIO
     }
 #endif
@@ -2961,7 +2968,7 @@ static boolean lives_startup(livespointer data) {
     splash_end();
   }
 
-  show_lives();
+  if (prefs->startup_phase == 0) show_lives();
   mainw->is_ready = TRUE;
 
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
@@ -3031,6 +3038,8 @@ static boolean lives_startup(livespointer data) {
   if (mainw->current_file == -1) {
     resize(1.);
   }
+
+  lives_widget_context_update();
 
   reset_message_area(TRUE);
   msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
@@ -7126,7 +7135,7 @@ void load_frame_image(int frame) {
 
       if (cfile->audio_waveform != NULL) {
         for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
-        lives_free(cfile->audio_waveform);
+        lives_freep((void **)&cfile->audio_waveform);
         lives_free(cfile->aw_sizes);
       }
 

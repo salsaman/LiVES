@@ -2063,23 +2063,33 @@ void init_clipboard(void) {
 
 
 weed_plant_t *get_nth_info_message(int n) {
+  const char *leaf;
   int m = 0;
   int error;
   weed_plant_t *msg = mainw->msg_list;
+
   if (n < 0 || n >= mainw->n_messages) return NULL;
+
   if (n >= (mainw->n_messages >> 1)) {
-    // nearer to end, go backwards
     m = mainw->n_messages - 1;
-    do {
-      msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
-      if (error != WEED_NO_ERROR) return NULL;
-    } while (--m > n);
-    return msg;
+    msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
   }
-  while (m++ < n) {
-    msg = weed_get_plantptr_value(msg, WEED_LEAF_NEXT, &error);
+  if (mainw->ref_message != NULL && ABS(mainw->ref_message_n - n) < ABS(m - n)) {
+    m = mainw->ref_message_n;
+    msg = mainw->ref_message;
+  }
+
+  if (m > n) leaf = WEED_LEAF_PREVIOUS;
+  else leaf = WEED_LEAF_NEXT;
+
+  while (m != n) {
+    msg = weed_get_plantptr_value(msg, leaf, &error);
     if (error != WEED_NO_ERROR) return NULL;
+    if (m > n) m--;
+    else m++;
   }
+  mainw->ref_message = msg;
+  mainw->ref_message_n = n;
   return msg;
 }
 
@@ -2185,6 +2195,11 @@ int add_messages_to_list(const char *text) {
       weed_plant_free(mainw->msg_list);
       mainw->msg_list = next;
       mainw->n_messages--;
+      if (mainw->ref_message != NULL) {
+        if (--mainw->ref_message_n < 0) mainw->ref_message = NULL;
+      }
+      if (mainw->msg_adj != NULL)
+        lives_adjustment_set_value(mainw->msg_adj, lives_adjustment_get_value(mainw->msg_adj) - 1.);
       if (mainw->msg_list == NULL) {
         i = numlines - 2;
         continue;
@@ -2249,7 +2264,7 @@ void d_print(const char *fmt, ...) {
   }
 
   if (prefs->show_gui) {
-    reset_message_area(TRUE);
+    //reset_message_area(TRUE);
     lives_widget_queue_draw_if_visible(mainw->msg_area);
   }
 

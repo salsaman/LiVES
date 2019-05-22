@@ -345,6 +345,15 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_FILTER_REMOVE GDK_FILTER_REMOVE
 #define LIVES_FILTER_CONTINUE GDK_FILTER_CONTINUE
 
+// font sizes
+#define LIVES_FONT_SIZE_XX_SMALL "xx-small"
+#define LIVES_FONT_SIZE_X_SMALL "x-small"
+#define LIVES_FONT_SIZE_SMALL "small"
+#define LIVES_FONT_SIZE_MEDIUM "medium"
+#define LIVES_FONT_SIZE_LARGE "large"
+#define LIVES_FONT_SIZE_X_LARGE "x-large"
+#define LIVES_FONT_SIZE_XX_LARGE "xx-large"
+
 // events
 #define LIVES_WIDGET_EVENT "event"
 #define LIVES_WIDGET_SCROLL_EVENT "scroll-event"
@@ -505,6 +514,11 @@ typedef GtkStateFlags LiVESWidgetState;
 #define LIVES_WIDGET_STATE_INCONSISTENT   GTK_STATE_FLAG_INCONSISTENT
 #define LIVES_WIDGET_STATE_FOCUSED        GTK_STATE_FLAG_FOCUSED         // 32
 #define LIVES_WIDGET_STATE_BACKDROP       GTK_STATE_FLAG_BACKDROP
+
+// 128 == ?
+// 64 ? (backdrop ?)
+
+
 
 #else
 #define LIVES_WIDGET_COLOR_HAS_ALPHA (0)
@@ -840,6 +854,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_PIXBUF(widget) GDK_IS_PIXBUF(widget)
 #define LIVES_IS_CONTAINER(widget) GTK_IS_CONTAINER(widget)
 #define LIVES_IS_BIN(widget) GTK_IS_BIN(widget)
+#define LIVES_IS_SCROLLBAR(widget) GTK_IS_SCROLLBAR(widget)
 #define LIVES_IS_TOOL_BUTTON(widget) GTK_IS_TOOL_BUTTON(widget)
 
 #if GTK_CHECK_VERSION(3, 0, 0)

@@ -171,18 +171,11 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colf2);
 
-  lives_widget_set_fg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_bg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colb);
-  set_child_colour(mainw->sa_hbox, TRUE);
+  lives_widget_set_bg_color(mainw->sa_toolbar, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  // TODO: use theme colour functions, like this:
-
-  // button background
-  // TRUE / FALSE irrelevant, as only the label has fg (gtk+ 2.x)
-  lives_widget_apply_theme2(mainw->sa_button, LIVES_WIDGET_STATE_NORMAL, TRUE);
-  lives_widget_apply_theme2(mainw->sa_button, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
-  // sets button label dimmed when insensitive
-  set_child_dimmed_colour2(mainw->sa_button, BUTTON_DIM_VAL);
+  lives_widget_apply_theme2(mainw->vol_toolitem, LIVES_WIDGET_STATE_NORMAL, FALSE);
+  lives_widget_apply_theme2(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, FALSE);
 
   if (mainw->plug != NULL)
     lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -218,7 +211,6 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
   lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf2);
-  set_child_alt_colour(mainw->btoolbar, TRUE);
 
   lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->top_vbox, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -288,8 +280,11 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colf);
 
-  lives_widget_set_bg_color(lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, colb);
+  //lives_widget_set_bg_color(lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_fg_color(mainw->message_box, LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_bg_color(mainw->msg_scrollbar, LIVES_WIDGET_STATE_NORMAL, colb2);
+
   lives_widget_set_bg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_fg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colf);
 
@@ -508,7 +503,8 @@ void create_LiVES(void) {
   //                                      - sel_label
   //                                      - arrow2
   //                                 - sa_hbox
-  //                                      - sa_button
+  //                                      - sa_toolbar (to get text colour)
+  //                                            - sa_button
   //                          - end_spinbutton
   //                  - sepimg / hseparator
   //
@@ -1591,30 +1587,25 @@ void create_LiVES(void) {
       lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     }
 
-    mainw->m_sepwinbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_sepwinbutton), 0);
-    lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show the play window (s)"));
+    mainw->m_sepwinbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                            _("Show the play window (s)"));
 
     tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
-    mainw->m_rewindbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_rewindbutton), -1);
-    lives_widget_set_tooltip_text(mainw->m_rewindbutton, _("Rewind to start (w)"));
+    mainw->m_rewindbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                            _("Rewind to start (w)"));
 
     lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
 
     tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
-    mainw->m_playbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_playbutton), -1);
-    lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all (p)"));
+    mainw->m_playbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "", _("Play all (p)"));
     lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
 
     tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_STOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
-    mainw->m_stopbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_stopbutton), -1);
-    lives_widget_set_tooltip_text(mainw->m_stopbutton, _("Stop playback (q)"));
+    mainw->m_stopbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                          _("Stop playback (q)"));
     lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
 
     fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "playsel.png", NULL);
@@ -1622,9 +1613,8 @@ void create_LiVES(void) {
     lives_free(fnamex);
     tmp_toolbar_icon = lives_image_new_from_file(buff);
 
-    mainw->m_playselbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_playselbutton), -1);
-    lives_widget_set_tooltip_text(mainw->m_playselbutton, _("Play selection (y)"));
+    mainw->m_playselbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                             _("Play selection (y)"));
 
     lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
 
@@ -1632,10 +1622,8 @@ void create_LiVES(void) {
     pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
     lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
 
-    mainw->m_loopbutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
-    lives_widget_set_bg_color(mainw->m_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_loopbutton), -1);
-    lives_widget_set_tooltip_text(mainw->m_loopbutton, _("Switch continuous looping on (o)"));
+    mainw->m_loopbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                          _("Switch continuous looping on (o)"));
 
     fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "volume_mute.png", NULL);
     lives_snprintf(buff, PATH_MAX, "%s", fnamex);
@@ -1646,9 +1634,8 @@ void create_LiVES(void) {
       lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     }
 
-    mainw->m_mutebutton = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->m_mutebutton), -1);
-    lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Mute the audio (z)"));
+    mainw->m_mutebutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                          _("Mute the audio (z)"));
   } else {
     mainw->m_sepwinbutton = lives_standard_menu_item_new();
     mainw->m_rewindbutton = lives_standard_menu_item_new();
@@ -2084,6 +2071,7 @@ void create_LiVES(void) {
   hbox = lives_hbox_new(FALSE, 0.);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
   lives_widget_set_valign(hbox, LIVES_ALIGN_START);
+  lives_widget_set_halign(hbox, LIVES_ALIGN_CENTER);
 
   mainw->arrow1 = lives_arrow_new(LIVES_ARROW_LEFT, LIVES_SHADOW_OUT);
   lives_box_pack_start(LIVES_BOX(hbox), mainw->arrow1, FALSE, FALSE, 0);
@@ -2097,17 +2085,23 @@ void create_LiVES(void) {
   mainw->arrow2 = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_box_pack_start(LIVES_BOX(hbox), mainw->arrow2, FALSE, FALSE, 0);
 
-  //
-
-  mainw->sa_hbox = lives_hbox_new(FALSE, 0);
+  // sa_button will be a toolbutton, so that we can adjust the text colour in realtime
+  // thus it also needs its own mini toolbar to contain it
+  mainw->sa_hbox = lives_hbox_new(TRUE, 0);
+  mainw->sa_toolbar = lives_toolbar_new();
+  add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
   lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, !(lives_widget_set_margin_top(mainw->sa_hbox, 4)) * 4);
+  lives_box_pack_start(LIVES_BOX(mainw->sa_hbox), mainw->sa_toolbar, FALSE, TRUE, 0);
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->sa_toolbar));
+  mainw->sa_button = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->sa_toolbar), NULL, _(" Select All Frames  "),
+                     (tmp = lives_strdup(_("Select all frames in this clip"))));
+  lives_free(tmp);
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->sa_toolbar));
+  add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
 
-  mainw->sa_button = lives_standard_button_new_from_stock(LIVES_STOCK_SELECT_ALL, _("  Select All Frames  "));
-  lives_widget_set_tooltip_text(mainw->sa_button, _("Select all frames in this clip"));
-  lives_box_pack_start(LIVES_BOX(mainw->sa_hbox), mainw->sa_button, TRUE, TRUE, 0);
   lives_widget_set_halign(mainw->sa_button, LIVES_ALIGN_CENTER);
+  lives_widget_set_halign(mainw->sa_toolbar, LIVES_ALIGN_CENTER);
 
-  //
   add_spring_to_box(LIVES_BOX(mainw->hbox3), 0);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
@@ -2233,6 +2227,7 @@ void create_LiVES(void) {
   lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
   lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
   lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
+  lives_widget_set_font_size(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL, LIVES_FONT_SIZE_LARGE);
 
   lives_widget_set_events(mainw->msg_area, LIVES_SCROLL_MASK);
 
@@ -2967,8 +2962,6 @@ void show_lives(void) {
     lives_widget_show_all(mainw->LiVES);
   }
 
-  reset_message_area(TRUE);
-
   if (prefs->show_gui)
     set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars, \
                 &palette->info_base, &palette->info_text);
@@ -3107,10 +3100,12 @@ void set_interactive(boolean interactive) {
 
       lives_widget_set_sensitive(mainw->multitrack->spinbutton_start, TRUE);
       lives_widget_set_sensitive(mainw->multitrack->spinbutton_end, TRUE);
+
+      lives_widget_set_sensitive(mainw->m_rewindbutton, mainw->multitrack->ptr_time > 0.);
+      lives_widget_set_sensitive(mainw->m_stopbutton, mainw->multitrack->is_paused);
+
       lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
-      lives_widget_set_sensitive(mainw->m_stopbutton, TRUE);
       lives_widget_set_sensitive(mainw->m_loopbutton, TRUE);
-      lives_widget_set_sensitive(mainw->m_rewindbutton, TRUE);
       lives_widget_set_sensitive(mainw->m_sepwinbutton, TRUE);
       lives_widget_set_sensitive(mainw->multitrack->btoolbar, TRUE);
       lives_widget_set_sensitive(mainw->multitrack->btoolbar2, TRUE);
@@ -4525,6 +4520,8 @@ void splash_end(void) {
   lives_widget_context_update();
 
   if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && mainw->multitrack == NULL) {
+    // realize the window so it gets added to wm toplevels
+    lives_widget_realize(mainw->LiVES);
     on_multitrack_activate(NULL, NULL);
     mainw->is_ready = TRUE;
   }
@@ -4556,9 +4553,14 @@ void reset_message_area(boolean expand) {
       lives_widget_set_size_request(mainw->message_box, -1, height);
       lives_widget_set_size_request(mainw->msg_area, -1, height);
       lives_widget_set_size_request(mainw->msg_scrollbar, -1, height);
-    } else lives_widget_hide(mainw->message_box);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    } else {
+      lives_widget_hide(mainw->message_box);
+    }
+    lives_widget_context_update();
     msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+#if !GTK_CHECK_VERSION(3, 0, 0)
+    expose_msg_area(mainw->msg_area, NULL, &mainw->sw_func);
+#endif
   }
 }
 

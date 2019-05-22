@@ -2154,9 +2154,7 @@ void play_file(void) {
       lives_widget_show_all(mainw->playframe);
       //lives_widget_process_updates(mainw->LiVES, TRUE);
     }
-  }
 
-  if (mainw->multitrack == NULL) {
     // plug the plug into the playframe socket if we need to
     add_to_playframe();
   }
@@ -2749,7 +2747,11 @@ void play_file(void) {
         pulse_message.data = NULL;
         pulse_message.next = NULL;
         mainw->pulsed->msgq = &pulse_message;
-      } else if (mainw->pulsed != NULL) pulse_driver_cork(mainw->pulsed);
+      } else if (mainw->pulsed != NULL) {
+        pa_mloop_lock();
+        pulse_driver_cork(mainw->pulsed);
+        pa_mloop_unlock();
+      }
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
         insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
@@ -2859,7 +2861,6 @@ void play_file(void) {
   disable_record();
 
   if (mainw->multitrack == NULL) {
-
     if ((mainw->faded || mainw->fs)) {
       unfade_background();
     }
@@ -2887,37 +2888,17 @@ void play_file(void) {
       lives_widget_show(mainw->framebar);
     }
 
-    lives_frame_set_label(LIVES_FRAME(mainw->playframe), _("Preview"));
-
-    lives_widget_show(mainw->t_bckground);
-    lives_widget_show(mainw->t_double);
-
-    resize(1.);
-
-    lives_widget_hide(mainw->playframe);
-
-    if (mainw->play_window != NULL) {
-      if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
-      else xtrabit = lives_strdup("");
-      title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW
-                                  (LIVES_MAIN_WINDOW_WIDGET)), xtrabit);
-      if (mainw->play_window != NULL)
-        lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-      lives_free(title);
-      lives_free(xtrabit);
+    if (prefs->show_gui && (lives_widget_get_allocation_height(mainw->LiVES) > GUI_SCREEN_HEIGHT ||
+                            lives_widget_get_allocation_width(mainw->LiVES) > GUI_SCREEN_WIDTH)) {
+      // the screen grew too much...remaximise it
+      lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
+      /* mainw->noswitch = TRUE; */
+      /* lives_widget_context_update(); */
+      /* mainw->noswitch = FALSE; */
+      if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(mainw->LiVES), 0, 0);
+      if (prefs->open_maximised)
+        lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
     }
-  }
-
-  if (prefs->show_gui && (lives_widget_get_allocation_height(mainw->LiVES) > GUI_SCREEN_HEIGHT ||
-                          lives_widget_get_allocation_width(mainw->LiVES) > GUI_SCREEN_WIDTH)) {
-    // the screen grew too much...remaximise it
-    lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
-    /* mainw->noswitch = TRUE; */
-    /* lives_widget_context_update(); */
-    /* mainw->noswitch = FALSE; */
-    if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(mainw->LiVES), 0, 0);
-    if (prefs->open_maximised)
-      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
   }
 
   if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;

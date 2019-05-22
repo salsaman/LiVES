@@ -957,6 +957,7 @@ typedef struct {
 
   LiVESWidget *sa_button;
   LiVESWidget *sa_hbox;
+  LiVESWidget *sa_toolbar;
 
   LiVESWidget *arrow1;
   LiVESWidget *arrow2;
@@ -1416,6 +1417,8 @@ typedef struct {
 
   weed_plant_t *msg_list;
   int n_messages;
+  weed_plant_t *ref_message; // weak ref
+  int ref_message_n;
   ////////////////////
 } mainwindow;
 
@@ -1426,6 +1429,7 @@ typedef struct {
 #define WEED_LEAF_LIVES_MESSAGE_STRING "message_string"
 
 #define LIVES_WEED_SUBTYPE_MESSAGE 1
+#define LIVES_WEED_SUBTYPE_WIDGET 2
 
 extern _palette *palette;
 

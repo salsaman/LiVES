@@ -918,7 +918,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 
     lives_box_pack_start(for_preview, mainw->fs_playframe, FALSE, FALSE, 0);
 
-    lives_widget_set_size_request(mainw->fs_playarea, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
+    lives_widget_set_size_request(mainw->fs_playarea, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE / 2);
 
     lives_container_add(LIVES_CONTAINER(mainw->fs_playframe), mainw->fs_playalign);
     lives_container_add(LIVES_CONTAINER(mainw->fs_playalign), mainw->fs_playarea);
@@ -2084,13 +2084,19 @@ _entryw *create_rename_dialog(int type) {
   }
 
   if (type == 6) {
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
     label = lives_standard_label_new
-            (_("Welcome to LiVES !\nThis startup wizard will guide you through the\ninitial install so that you can get the most from this application.\n"));
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
+            (_("Welcome to LiVES !"));
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     label = lives_standard_label_new
-            (_("\nFirst of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available.\n"));
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
+            (_("This startup wizard will guide you through the\ninitial install so that you can get the most from this application."));
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+
+    label = lives_standard_label_new
+            (_("First of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available."));
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -3106,14 +3112,66 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
                      LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
                      preview_type);
 
+
   if (prefs->fileselmax) {
-    lives_window_set_resizable(LIVES_WINDOW(chooser), TRUE);
-    lives_window_maximize(LIVES_WINDOW(chooser));
-    lives_widget_queue_draw(chooser);
+    // the expose event for the message area is a good opportunity to recheck the window size
+
+    int scr_width = GUI_SCREEN_WIDTH;
+    int scr_height = GUI_SCREEN_HEIGHT;
+    int bx, by, w, h;
+
+    lives_widget_show_all(chooser);
+    lives_widget_process_updates(chooser, TRUE);
+    lives_widget_context_update();
+
+    get_border_size(chooser, &bx, &by);
+    w = lives_widget_get_allocation_width(chooser);
+    h = lives_widget_get_allocation_height(chooser);
+
+    if (w > scr_width - bx || h > scr_height - by) {
+      if (w > scr_width - bx || h > scr_height - by) {
+        int overflowx = w - (scr_width - bx);
+        int overflowy = h - (scr_height - by);
+
+        int mywidth = lives_widget_get_allocation_width(chooser);
+        int myheight = lives_widget_get_allocation_height(chooser);
+
+#ifdef DEBUG_OVERFLOW
+        g_print("overflow is %d X %d\n", overflowx, overflowy);
+#endif
+        if (overflowx > 0) mywidth -= overflowx;
+        if (overflowy > 0) myheight -= overflowy;
+
+        lives_widget_process_updates(chooser, TRUE);
+        lives_widget_context_update();
+
+        if (overflowx > 0 || overflowy > 0) {
+          lives_widget_set_size_request(chooser, mywidth, myheight);
+        }
+        lives_widget_process_updates(chooser, TRUE);
+        lives_widget_context_update();
+
+        w = scr_width - bx;
+        h = scr_height - by;
+
+        lives_window_unmaximize(LIVES_WINDOW(chooser));
+        lives_widget_process_updates(chooser, TRUE);
+        lives_widget_context_update();
+        lives_window_resize(LIVES_WINDOW(chooser), w, h);
+        lives_widget_process_updates(chooser, TRUE);
+        lives_widget_context_update();
+
+        if (prefs->open_maximised) {
+          lives_window_maximize(LIVES_WINDOW(chooser));
+          lives_widget_process_updates(chooser, TRUE);
+          lives_widget_context_update();
+        }
+
+        lives_widget_process_updates(chooser, TRUE);
+        lives_widget_context_update();
+      }
+    }
   }
-
-  lives_widget_show_all(chooser);
-
   return chooser;
 }
 
@@ -3732,12 +3790,13 @@ const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width,
 }
 
 
+#ifdef ALLOW_NONFREE_CODECS
 static void on_freedom_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   LiVESWidget *label = (LiVESWidget *)user_data;
   if (!lives_toggle_button_get_active(togglebutton)) lives_label_set_text(LIVES_LABEL(label), "." LIVES_FILE_EXT_WEBM);
   else lives_label_set_text(LIVES_LABEL(label), "." LIVES_FILE_EXT_MP4);
 }
-
+#endif
 
 static LiVESWidget *spinbutton_width;
 static LiVESWidget *spinbutton_height;
@@ -4167,7 +4226,7 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
   if (recompute) {
     double linesize = lh / nlines;
     double page_size = (double)((int)((double)height / linesize));
-    //g_print("VALS lh = %d, nlines = %d, lsize = %f, height = %d, ps = %f\n", lh, nlines, linesize, height, page_size);
+    //g_print("VALS3 lh = %d, nlines = %d, lsize = %f, height = %d, ps = %f\n", lh, nlines, linesize, height, page_size);
     lives_object_freeze_notify(LIVES_WIDGET_OBJECT(adj));
     lives_adjustment_set_lower(adj, page_size - 2);
     lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 1));
@@ -4269,19 +4328,21 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
       }
     }
 
-
     // check if we could request more
     lheight = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_height"));
+    if (lheight == 0) return FALSE;
 
     if (height != last_height) wiggle_room = 0;
     last_height = height;
 
     height -= MSG_AREA_VMARGIN;
 
+    //g_print("VALS %d, %d %d\n", lheight, height, wiggle_room);
+
     if (lheight < height - wiggle_room) {
       llines = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_lines"));
-      if (lheight == 0) return FALSE;
       lineheight = CEIL(lheight / llines, 1);
+      //g_print("VALS2 %d %d %d\n", height / lineheight, llines + 1, llast);
       if (height / lineheight >= llines + 1 && llast > llines) {
         // recompute if the window grew
         msg_area_scroll_to(widget, llast, TRUE, mainw->msg_adj); // window grew, re-get layout

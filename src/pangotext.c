@@ -73,9 +73,12 @@ static char *rewrap_text(char *text) {
   size_t maxlen = 0;
 
   char **lines;
-  char *jtext, *first, *second, *tmp;
-
-  int i, j;
+  char *jtext, *tmp;
+#ifdef REFLOW_TEXT
+  char *first, *second;
+  int j;
+#endif
+  int i;
   int numlines;
   int maxline = -1;
   boolean needs_nl = FALSE;
@@ -98,6 +101,7 @@ static char *rewrap_text(char *text) {
   }
   for (i = 0; i < numlines; i++) {
     if (i == maxline) {
+#ifdef REFLOW_TEXT
       for (j = maxlen - 1; j > 0; j--) {
         // skip the final character - if it's a space we aren't going to move it yet
         // if it's not a space we aren't going to move it yet
@@ -119,12 +123,17 @@ static char *rewrap_text(char *text) {
           lives_snprintf(&lines[i][maxlen - 4], 4, "%s", "...");
         needs_nl = TRUE;
       }
-    } else {
-      tmp = lives_strdup_printf("%s%s%s", jtext, needs_nl ? "\n" : "", lines[i]);
-      lives_free(jtext);
-      jtext = tmp;
-      needs_nl = TRUE;
+#endif
+      //g_print("maxlen %ld for %s\n", maxlen, lines[i]);
+      lines[i][maxlen - 1] = 0;
+      if (maxlen > 5)
+        lives_snprintf(&lines[i][maxlen - 4], 4, "%s", "...");
+      //g_print("Trying with %s\n", lines[i]);
     }
+    tmp = lives_strdup_printf("%s%s%s", jtext, needs_nl ? "\n" : "", lines[i]);
+    lives_free(jtext);
+    jtext = tmp;
+    needs_nl = TRUE;
   }
   lives_strfreev(lines);
   return jtext;
@@ -184,10 +193,12 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   LingoContext *ctx;
   weed_plant_t *msg;
 
-  char *readytext, *testtext, *newtext = NULL, *tmp;
+  char *readytext, *testtext, *newtext = NULL, *tmp, *xx;
   int w = 0, h = 0, pw;
   int error;
   int totlines = 0;
+  int whint = 0;
+  int slen;
 
   boolean heightdone = FALSE;
   boolean needs_newline = FALSE;
@@ -221,7 +232,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 
     testtext = lives_strdup_printf("%s%s%s", newtext, needs_newline ? "\n" : "", readytext);
     needs_newline = TRUE;
-    lingo_layout_set_markup(layout, testtext, -1);
+    lingo_layout_set_text(layout, testtext, -1);
     lingo_layout_get_size(layout, &w, &h, 0, 0);
 
     h /= LINGO_SCALE;
@@ -253,7 +264,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         g_print("Testing with:%s:\n", testtext);
 #endif
         pango_layout_set_width(layout, width * LINGO_SCALE);
-        lingo_layout_set_markup(layout, testtext, -1);
+        lingo_layout_set_text(layout, testtext, -1);
         lingo_layout_get_size(layout, NULL, &h, 0, 0);
 
         h /= LINGO_SCALE;
@@ -263,32 +274,56 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     }
 
     // height was ok, now let's check the width
-
     if (w > width) {
+      int jumpval = 1, dirn = -1, tjump = 0;
+      //double nscale = 2.;
       // text was too wide
 #ifdef DEBUG_MSGS
       g_print("Too wide !!!\n");
 #endif
       totlines -= get_token_count(newtext, '\n');
-      while (w > width) {
-        // find the longest line and move the last word to the following line
-        // if there is no following line we add one
-        // if there are no spaces in the line we truncate the last letter (for now)
-        tmp = rewrap_text(newtext);
-        lives_free(newtext);
-        newtext = tmp;
+      slen = (int)strlen(newtext);
+      while (1) {
+        // for now we just truncate and elipsise lines
+        tjump = dirn * jumpval;
+        /* if (tjump >= slen && dirn == -1) { */
+        /*   jumpval = slen / 2; */
+        /*   tjump = dirn * jumpval; */
+        /* } */
+        /* g_print("pt b %d %d %d\n", tjump, dirn, jumpval); */
+        if (whint == 0 || whint + 4 > slen) {
+          xx = lives_strndup(newtext, slen + tjump);
+        } else {
+          xx = lives_strndup(newtext, whint + 4 + tjump);
+        }
+        tmp = rewrap_text(xx);
+        lives_free(xx);
 #ifdef DEBUG_MSGS
-        g_print("Retry with (%d) |%s|\n", totlines, newtext);
+        g_print("Retry with (%d) |%s|\n", totlines, xx);
 #endif
-        if (newtext == NULL) break;
+        if (tmp == NULL) break;
         // check width again, just looking at new part
-        lingo_layout_set_markup(layout, newtext, -1);
+        lingo_layout_set_text(layout, tmp, -1);
         lingo_layout_get_size(layout, &pw, NULL, 0, 0);
         w = pw / LINGO_SCALE;
+        if (w >= width) {
+          //dirn = -1;
+          jumpval++;
+          if (whint <= 0 || (int)strlen(tmp) < whint) whint = (int)strlen(tmp);
+        } else {
+          break;
+        }
+        /*   if (jumpval == 1) break; */
+        /*   dirn = 1; */
+        /*   nscale = 0.5; */
+        /* } */
+        /* if (jumpval > 1) jumpval = (int)(jumpval * nscale + .9); */
       }
 #ifdef DEBUG_MSGS
       g_print("Width OK now\n");
 #endif
+      lives_free(newtext);
+      newtext = tmp;
       totlines += get_token_count(newtext, '\n');
       continue; // width is OK again, need to recheck height
     }
@@ -304,7 +339,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   }
 
   // result is now in readytext
-  lingo_layout_set_markup(layout, readytext, -1);
+  lingo_layout_set_text(layout, readytext, -1);
 
   if (linecount != NULL) *linecount = totlines;
 

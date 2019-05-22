@@ -364,7 +364,7 @@ struct _mt {
   LiVESToolItem *sep1;
   LiVESToolItem *sep2;
   LiVESToolItem *sep3;
-  LiVESToolItem *sep4;
+  LiVESWidget *sep4;
 
   LiVESWidget *btoolbar;
   LiVESWidget *btoolbar2;

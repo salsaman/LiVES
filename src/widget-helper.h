@@ -245,6 +245,7 @@ boolean lives_widget_show_now(LiVESWidget *);
 boolean lives_widget_show_all(LiVESWidget *);
 boolean lives_widget_hide(LiVESWidget *);
 boolean lives_widget_destroy(LiVESWidget *);
+boolean lives_widget_realize(LiVESWidget *);
 
 boolean lives_widget_queue_draw(LiVESWidget *);
 boolean lives_widget_queue_draw_area(LiVESWidget *, int x, int y, int width, int height);
@@ -285,6 +286,7 @@ LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label
 LiVESWidget *lives_button_new_with_label(const char *label);
 
 boolean lives_button_set_label(LiVESButton *, const char *label);
+LiVESWidget *lives_button_get_label_widget(LiVESButton *);
 
 boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
 boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);
@@ -305,6 +307,11 @@ boolean lives_widget_set_fg_color(LiVESWidget *, LiVESWidgetState state, const L
 boolean lives_widget_set_text_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 boolean lives_widget_set_base_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 
+boolean lives_widget_set_border_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
+boolean lives_widget_set_outline_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
+
+boolean lives_widget_set_font_size(LiVESWidget *, LiVESWidgetState state, const char *size);
+
 boolean lives_widget_get_fg_state_color(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
 boolean lives_widget_get_bg_state_color(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
 
@@ -312,6 +319,7 @@ boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
 
 LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
 boolean lives_widget_color_equal(LiVESWidgetColor *, const LiVESWidgetColor *);
+boolean lives_widget_color_mix(LiVESWidgetColor *c1, const LiVESWidgetColor *c2, float mixval);
 
 LiVESWidget *lives_image_new(void);
 LiVESWidget *lives_image_new_from_file(const char *filename);
@@ -386,6 +394,8 @@ LiVESWidget *lives_vbutton_box_new(void);
 
 boolean lives_button_box_set_layout(LiVESButtonBox *, LiVESButtonBoxStyle bstyle);
 boolean lives_button_box_set_button_width(LiVESButtonBox *, LiVESWidget *button, int min_width);
+
+boolean lives_button_set_border_colour(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
 
 LiVESWidget *lives_standard_hscale_new(LiVESAdjustment *);
 LiVESWidget *lives_vscale_new(LiVESAdjustment *);
@@ -817,7 +827,7 @@ int lives_layout_add_row(LiVESTable *layout);
 
 boolean lives_widget_grab_default_special(LiVESWidget *);
 
-#define BUTTON_DIM_VAL (0.6 * 65535.) // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535)
+#define BUTTON_DIM_VAL (0.2 * 65535.) // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535)
 
 LiVESWidget *lives_standard_button_new(void);
 LiVESWidget *lives_standard_button_new_with_label(const char *labeltext);
@@ -885,6 +895,8 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbu
 
 LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x, int y);
 
+void set_button_image_border_colour(LiVESButton *, LiVESWidgetState state, LiVESWidgetColor *);
+
 // util functions
 
 // THEME COLOURS (will be done more logically in the future)
@@ -903,6 +915,7 @@ void set_child_dimmed_colour2(LiVESWidget *widget, int dim); // dimmed m & b for
 void set_child_alt_colour(LiVESWidget *, boolean set_all);
 
 void lives_widget_apply_theme3(LiVESWidget *, LiVESWidgetState state); // info base/text
+void set_child_colour3(LiVESWidget *, boolean set_all);
 
 boolean lives_image_scale(LiVESImage *, int width, int height, LiVESInterpType interp_type);
 
@@ -971,8 +984,10 @@ LiVESWidget *add_spring_to_box(LiVESBox *, int min);
 
 LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *);
 LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *labeltext);
+LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *, GtkWidget *icon_widget, const char *label, const char *tooltips);
+boolean lives_tool_button_set_border_colour(LiVESWidget *button, LiVESWidgetState state, LiVESWidgetColor *);
 
-boolean lives_accel_path_disconnect(LiVESAccelGroup *group, const char *path);
+boolean lives_accel_path_disconnect(LiVESAccelGroup *, const char *path);
 
 boolean lives_widget_get_mod_mask(LiVESWidget *, LiVESXModifierType *modmask);
 
@@ -999,11 +1014,20 @@ typedef enum {
 
 void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *);
 
-typedef enum {
-  LIVES_EXPAND_DEFAULT,
-  LIVES_EXPAND_NONE,
-  LIVES_EXPAND_EXTRA
-} lives_expand_t;
+typedef int lives_expand_t;
+#define LIVES_EXPAND_NONE 0
+#define LIVES_EXPAND_DEFAULT_HEIGHT 1
+#define LIVES_EXPAND_DEFAULT_WIDTH 2
+#define LIVES_EXPAND_DEFAULT (LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_DEFAULT_WIDTH)
+#define LIVES_EXPAND_EXTRA_HEIGHT 4
+#define LIVES_EXPAND_EXTRA_WIDTH 8
+#define LIVES_EXPAND_EXTRA (LIVES_EXPAND_EXTRA_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH)
+
+#define LIVES_SHOULD_EXPAND_DEFAULT_FOR(box) ((LIVES_IS_HBOX(box) && (widget_opts.expand & LIVES_EXPAND_DEFAULT_WIDTH)) || (LIVES_IS_VBOX(box) && (widget_opts.expand & LIVES_EXPAND_DEFAULT_HEIGHT)))
+
+#define LIVES_SHOULD_EXPAND_EXTRA_FOR(box) ((LIVES_IS_HBOX(box) && (widget_opts.expand & LIVES_EXPAND_EXTRA_WIDTH)) || (LIVES_IS_VBOX(box) && (widget_opts.expand & LIVES_EXPAND_EXTRA_HEIGHT)))
+
+#define LIVES_SHOULD_EXPAND_FOR(box) (LIVES_SHOULD_EXPAND_DEFAULT_FOR(box) || LIVES_SHOULD_EXPAND_EXTRA_FOR(box))
 
 typedef struct {
   boolean no_gui; ///< show nothing !
@@ -1023,6 +1047,7 @@ typedef struct {
   LiVESWindow *transient; ///< transient window for dialogs, if NULL then use the default
   LiVESJustification justify; ///< justify for labels
   LiVESJustification default_justify; ///< default value
+  const char *font_size; ///<
   char **image_filter; ///</ NULL or NULL terminated list of image extensions which can be loaded
   char *title_prefix; ///< Text which is prepended to window titles, etc.
   int monitor; ///< monitor we are displaying on
@@ -1052,6 +1077,7 @@ const widget_opts_t def_widget_opts = {
   NULL, ///< transient window
   LIVES_JUSTIFY_LEFT, ///< justify
   LIVES_JUSTIFY_LEFT, ///< default justify
+  LIVES_FONT_SIZE_MEDIUM, ///< default font size
   NULL, ///< image_filter
   "", ///< title_prefix
   0, ///< monitor

@@ -2144,7 +2144,7 @@ int add_messages_to_list(const char *text) {
   char **lines;
   int error, i, numlines;
 
-  if (prefs->max_messages <= 0) return WEED_NO_ERROR;
+  if (prefs->max_messages == 0) return WEED_NO_ERROR;
   if (text == NULL || strlen(text) == 0) return WEED_NO_ERROR;
 
   // split text into lines
@@ -2184,7 +2184,7 @@ int add_messages_to_list(const char *text) {
       continue;
     }
 
-    if (mainw->n_messages + 1 > prefs->max_messages) {
+    if (prefs->max_messages != -1 && mainw->n_messages + 1 > prefs->max_messages) {
       // retire the oldest if we reached the limit
       next = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_NEXT, &error); // becomes new head
       if (error != WEED_NO_ERROR) {

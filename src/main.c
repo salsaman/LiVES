@@ -3044,6 +3044,8 @@ static boolean lives_startup(livespointer data) {
   reset_message_area(TRUE);
   msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
 
+  draw_little_bars(0., 0);
+
   lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
 
   return FALSE;
@@ -3163,7 +3165,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -7971,9 +7973,6 @@ void load_frame_image(int frame) {
 
       // IMPORTANT (or the entire image will not be shown)
       lives_widget_set_size_request(mainw->play_image, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
-
-      if (mainw->current_file == -1) {
-      }
     } else {
       xsize = (scr_width - hsize * -oscale - H_RESIZE_ADJUST) / 2;
       if (xsize > 0) {
@@ -8002,8 +8001,6 @@ void load_frame_image(int frame) {
 
       hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
       vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
-      //hsize = mainw->def_width - H_RESIZE_ADJUST;
-      //vsize = mainw->def_height - V_RESIZE_ADJUST;
       lives_widget_set_size_request(mainw->frame1, vsize, hsize);
       lives_widget_set_size_request(mainw->eventbox3, vsize, hsize);
       lives_widget_set_size_request(mainw->frame2, vsize, hsize);

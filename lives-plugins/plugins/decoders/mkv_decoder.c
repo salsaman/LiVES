@@ -1476,7 +1476,9 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     }
 
     for (j = 0; ff_mkv_codec_tags[j].id != AV_CODEC_ID_NONE; j++) {
+#ifdef DEBUG_CODEC_MATCH
       fprintf(stderr, "cf %s and %s\n", ff_mkv_codec_tags[j].str, track->codec_id);
+#endif
       if (!strncmp(ff_mkv_codec_tags[j].str, track->codec_id,
                    strlen(ff_mkv_codec_tags[j].str))) {
         codec_id = ff_mkv_codec_tags[j].id;

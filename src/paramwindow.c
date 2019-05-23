@@ -1445,13 +1445,13 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         giw_knob_set_wrap(GIW_KNOB(scale), param->wrap);
         lives_widget_set_size_request(scale, GIW_KNOB_WIDTH, GIW_KNOB_HEIGHT);
         giw_knob_set_legends_digits(GIW_KNOB(scale), 0);
-        lives_box_pack_start(LIVES_BOX(hbox), scale, FALSE, FALSE, 0);
+        lives_box_pack_start(LIVES_BOX(hbox), scale, FALSE, FALSE, widget_opts.packing_width >> 1);
         //add_fill_to_box(LIVES_BOX(hbox));
         lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->black);
         lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_orange);
         if (add_slider) {
           scale2 = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-          lives_box_pack_start(LIVES_BOX(hbox), scale2, TRUE, TRUE, widget_opts.packing_width);
+          lives_box_pack_start(LIVES_BOX(hbox), scale2, TRUE, TRUE, widget_opts.packing_width >> 1);
           if (!LIVES_IS_HBOX(LIVES_WIDGET(box))) add_fill_to_box(LIVES_BOX(hbox));
 
           if (palette->style & STYLE_1) {

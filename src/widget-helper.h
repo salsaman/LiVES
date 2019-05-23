@@ -36,7 +36,7 @@ typedef enum {
 #define W_PACKING_WIDTH  10 // packing width for widgets with labels
 #define W_PACKING_HEIGHT 6 // packing height for widgets
 #define W_BORDER_WIDTH   10 // default border width
-#define W_FILL_LENGTH    80 // default extra fill size
+#define W_FILL_LENGTH    (W_PACKING_WIDTH * 4) // default extra fill size
 
 #define ulong_random() lives_random()
 
@@ -521,6 +521,7 @@ int lives_event_get_time(LiVESXEvent *);
 boolean lives_toggle_button_get_active(LiVESToggleButton *);
 boolean lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
 boolean lives_toggle_button_set_mode(LiVESToggleButton *, boolean drawind);
+boolean lives_toggle_button_toggle(LiVESToggleButton *);
 
 LiVESWidget *lives_toggle_tool_button_new(void);
 boolean lives_toggle_tool_button_get_active(LiVESToggleToolButton *);
@@ -1027,9 +1028,23 @@ typedef int lives_expand_t;
 #define LIVES_EXPAND_EXTRA_WIDTH 8
 #define LIVES_EXPAND_EXTRA (LIVES_EXPAND_EXTRA_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH)
 
-#define LIVES_SHOULD_EXPAND_DEFAULT_FOR(box) ((LIVES_IS_HBOX(box) && (widget_opts.expand & LIVES_EXPAND_DEFAULT_WIDTH)) || (LIVES_IS_VBOX(box) && (widget_opts.expand & LIVES_EXPAND_DEFAULT_HEIGHT)))
+#define LIVES_SHOULD_EXPAND (widget_opts.expand != LIVES_EXPAND_NONE)
+#define LIVES_SHOULD_EXPAND_DEFAULT (widget_opts.expand == LIVES_EXPAND_DEFAULT)
+#define LIVES_SHOULD_EXPAND_EXTRA (widget_opts.expand == LIVES_EXPAND_EXTRA)
 
-#define LIVES_SHOULD_EXPAND_EXTRA_FOR(box) ((LIVES_IS_HBOX(box) && (widget_opts.expand & LIVES_EXPAND_EXTRA_WIDTH)) || (LIVES_IS_VBOX(box) && (widget_opts.expand & LIVES_EXPAND_EXTRA_HEIGHT)))
+#define LIVES_SHOULD_EXPAND_WIDTH (widget_opts.expand & (LIVES_EXPAND_DEFAULT_WIDTH | LIVES_EXPAND_EXTRA_WIDTH))
+#define LIVES_SHOULD_EXPAND_HEIGHT (widget_opts.expand & (LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_HEIGHT))
+
+#define LIVES_SHOULD_EXPAND_EXTRA_WIDTH (widget_opts.expand & LIVES_EXPAND_EXTRA_WIDTH)
+#define LIVES_SHOULD_EXPAND_EXTRA_HEIGHT (widget_opts.expand & LIVES_EXPAND_EXTRA_HEIGHT)
+
+#define LIVES_SHOULD_EXPAND_DEFAULT_WIDTH (LIVES_SHOULD_EXPAND_WIDTH && !LIVES_SHOULD_EXPAND_EXTRA_WIDTH)
+#define LIVES_SHOULD_EXPAND_DEFAULT_HEIGHT (LIVES_SHOULD_EXPAND_HEIGHT && !LIVES_SHOULD_EXPAND_EXTRA_HEIGHT)
+
+
+#define LIVES_SHOULD_EXPAND_DEFAULT_FOR(box) ((LIVES_IS_HBOX(box) && LIVES_SHOULD_EXPAND_DEFAULT_WIDTH) || (LIVES_IS_VBOX(box) && LIVES_EXPAND_DEFAULT_HEIGHT))
+
+#define LIVES_SHOULD_EXPAND_EXTRA_FOR(box) ((LIVES_IS_HBOX(box) && LIVES_SHOULD_EXPAND_EXTRA_WIDTH) || (LIVES_IS_VBOX(box) && LIVES_SHOULD_EXPAND_EXTRA_HEIGHT))
 
 #define LIVES_SHOULD_EXPAND_FOR(box) (LIVES_SHOULD_EXPAND_DEFAULT_FOR(box) || LIVES_SHOULD_EXPAND_EXTRA_FOR(box))
 

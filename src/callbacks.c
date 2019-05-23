@@ -8855,6 +8855,9 @@ EXPOSE_FN_DECL(expose_vid_event, widget) {
   if (event != NULL) {
     lives_painter_destroy(cairo);
   }
+
+  if (mainw->playing_file == -1 && CURRENT_CLIP_IS_VALID) draw_little_bars(cfile->pointer_time, 1);
+
   return TRUE;
 }
 EXPOSE_FN_END
@@ -8895,7 +8898,6 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   lives_painter_set_source_surface(cr, mainw->laudio_drawable, 0., 0.);
   lives_painter_rectangle(cr, ex, ey, ew, eh);
   lives_painter_fill(cr);
-
 }
 
 
@@ -8971,6 +8973,7 @@ EXPOSE_FN_DECL(expose_laud_event, widget) {
 
   if (event != NULL) lives_painter_destroy(cairo);
 
+  if (mainw->playing_file == -1 && CURRENT_CLIP_IS_VALID) draw_little_bars(cfile->pointer_time, 2);
   return TRUE;
 }
 EXPOSE_FN_END
@@ -9008,6 +9011,7 @@ EXPOSE_FN_DECL(expose_raud_event, widget) {
 
   if (event != NULL) lives_painter_destroy(cairo);
 
+  if (mainw->playing_file == -1 && CURRENT_CLIP_IS_VALID) draw_little_bars(cfile->pointer_time, 3);
   return TRUE;
 }
 EXPOSE_FN_END

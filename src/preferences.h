@@ -541,6 +541,9 @@ typedef struct {
   LiVESWidget *jpeg;
   LiVESWidget *mt_enter_prompt;
   LiVESWidget *spinbutton_ocp;
+  LiVESWidget *nmessages_spin;
+  LiVESWidget *msgs_unlimited;
+  LiVESWidget *msg_fontsize_combo;
   LiVESWidget *acodec_combo;
   LiVESWidget *spinbutton_osc_udp;
   LiVESWidget *spinbutton_rte_keys;

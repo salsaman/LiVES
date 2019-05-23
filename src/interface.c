@@ -737,7 +737,7 @@ void draw_little_bars(double ptrtime, int which) {
   int bar_height;
   int allocy;
   double allocwidth = (double)lives_widget_get_allocation_width(mainw->video_draw), allocheight;
-  double offset = ptrtime / CURRENT_CLIP_TOTAL_TIME * allocwidth;
+  double offset;
 
 #ifdef TEST_VOL_LIGHTS
   float maxvol = 0.;
@@ -750,6 +750,9 @@ void draw_little_bars(double ptrtime, int which) {
 
   if (!prefs->show_gui) return;
 
+  if (!CURRENT_CLIP_IS_VALID) return;
+
+  offset = ptrtime / CURRENT_CLIP_TOTAL_TIME * allocwidth;
 #ifdef TEST_VOL_LIGHTS
   if (which == 0) {
 #ifdef HAVE_PULSE_AUDIO
@@ -780,7 +783,7 @@ void draw_little_bars(double ptrtime, int which) {
     if (palette->style & STYLE_LIGHT) {
       lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->black);
     } else {
-      lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->black);
+      lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->white);
     }
 
     if (!(frame = calc_frame_from_time(mainw->current_file, ptrtime)))
@@ -1016,7 +1019,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   lives_box_pack_start(LIVES_BOX(vbox), procw->label3, FALSE, FALSE, 0);
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
-  hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 4);
+  hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
   add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(hbox));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
@@ -1128,7 +1131,7 @@ xprocess *create_processing(const char *text) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
-  hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 4);
+  hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
   add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(hbox));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;

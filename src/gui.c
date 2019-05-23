@@ -521,6 +521,9 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->menu_hbox, FALSE, FALSE, 0);
   lives_widget_set_valign(mainw->menu_hbox, LIVES_ALIGN_START);
 
+  LiVESWidget *hseparator = lives_hseparator_new();
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), hseparator, FALSE, FALSE, 0);
+
   mainw->menubar = lives_menu_bar_new();
   lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
 

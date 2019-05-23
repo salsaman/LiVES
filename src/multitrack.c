@@ -4561,6 +4561,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
 
 void mouse_mode_context(lives_mt *mt) {
+  char *fname, *text;
   clear_context(mt);
 
   if (mt->opts.mouse_mode == MOUSE_MODE_MOVE) {
@@ -4578,6 +4579,13 @@ void mouse_mode_context(lives_mt *mt) {
     add_context_label(mt, (_("Drag with mouse on timeline")));
     add_context_label(mt, (_("to select tracks and time.")));
   }
+  if (prefs->atrans_fx != -1) fname = weed_filter_idx_get_name(prefs->atrans_fx);
+  else fname = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+  add_context_label(mt, (_("\nAutotransition effect is:")));
+  text = lives_strdup_printf("<b>%s</b>", fname);
+  add_context_label(mt, (text));
+  lives_free(text);
+  lives_free(fname);
 }
 
 
@@ -5172,7 +5180,7 @@ void set_mt_play_sizes(lives_mt *mt, int width, int height) {
     mt->idlefunc = 0;
   }
 
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_context_update();
 
   if (needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
 
@@ -5700,6 +5708,7 @@ void mt_set_autotrans(int idx) {
   atrans_hash = make_weed_hashname(prefs->atrans_fx, FALSE, FALSE);
   set_pref(PREF_CURRENT_AUTOTRANS, atrans_hash);
   lives_free(atrans_hash);
+  mouse_mode_context(mainw->multitrack);
 }
 
 
@@ -6150,12 +6159,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   char text[255];
 
   boolean in_menubar = TRUE;
-  boolean woat = widget_opts.apply_theme;
 
   char *cname, *tname, *msg;
   char *tmp, *tmp2;
 
-  int dph, fln;
+  int dph;
   int num_filters;
   int error;
   int dpw = widget_opts.packing_width;
@@ -7839,7 +7847,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar2), LIVES_TOOL_ITEM(mainw->m_loopbutton), -1);
   lives_object_unref(mainw->m_loopbutton);
 
-  widget_opts.expand = LIVES_EXPAND_EXTRA_HEIGHT;
+  //  widget_opts.expand = LIVES_EXPAND_EXTRA_HEIGHT;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.apply_theme = FALSE;
   widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
@@ -7858,61 +7866,27 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->tc_func = lives_signal_connect_after(LIVES_WIDGET_OBJECT(mt->timecode), LIVES_WIDGET_FOCUS_OUT_EVENT,
                 LIVES_GUI_CALLBACK(after_timecode_changed), (livespointer) mt);
 
-  fln = widget_opts.filler_len;
-  widget_opts.filler_len = 40. * widget_opts.scale;
   add_fill_to_box(LIVES_BOX(hbox));
-  widget_opts.filler_len = fln;
 
-  widget_opts.apply_theme = FALSE;
-  widget_opts.packing_width = 2. * widget_opts.scale;
   mt->insa_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Insert with _Audio  "))), mt->opts.insert_audio,
                          LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("Select whether video clips are inserted and moved with their audio or not"))), &mt->opts.insert_audio);
   lives_free(tmp);
   lives_free(tmp2);
-  widget_opts.apply_theme = woat;
-  widget_opts.packing_width = dpw;
-
-  lives_widget_set_valign(mt->insa_checkbutton, LIVES_ALIGN_FILL);
 
   mt->insa_label = widget_opts.last_label;
 
-  widget_opts.packing_width = 2. * widget_opts.scale;
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  fln = widget_opts.filler_len;
-  widget_opts.filler_len = 40. * widget_opts.scale;
   add_fill_to_box(LIVES_BOX(hbox));
-  widget_opts.filler_len = fln;
 
-  widget_opts.apply_theme = FALSE;
-  mt->snapo_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("  Select _Overlap  "))), mt->opts.snap_over,
+  mt->snapo_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Select _Overlap  "))), mt->opts.snap_over,
                           LIVES_BOX(hbox),
-                          (tmp2 = lives_strdup(_("Select whether timeline selection snaps to overlap between selected tracks or not"))));
-  widget_opts.apply_theme = woat;
-  widget_opts.packing_width = dpw;
+                          (tmp2 = lives_strdup(_("Select whether timeline selection snaps to overlap between selected tracks or not"))), &mt->opts.snap_over);
   lives_free(tmp);
   lives_free(tmp2);
 
-  if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
-
   mt->overlap_label = widget_opts.last_label;
-
-  lives_signal_connect_after(LIVES_GUI_OBJECT(mt->snapo_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(lives_cool_toggled),
-                             &mt->opts.snap_over);
-
-  if (prefs->lamp_buttons) {
-    lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton), FALSE);
-#if GTK_CHECK_VERSION(3, 0, 0)
-    lives_signal_connect(LIVES_GUI_OBJECT(mt->snapo_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
-                         LIVES_GUI_CALLBACK(draw_cool_toggle),
-                         NULL);
-#endif
-    lives_widget_set_bg_color(mt->snapo_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
-    lives_widget_set_bg_color(mt->snapo_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
-
-    lives_cool_toggled(mt->snapo_checkbutton, &mt->opts.snap_over);
-  }
 
   // TODO - add a vbox with two hboxes
   // in each hbox we have 16 images
@@ -7926,8 +7900,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add(LIVES_CONTAINER(volind),mainw->volind_hbox);
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->vol_label),7);
   */
-
-  // compact view and expanded view buttons
 
   mt->btoolbarx = lives_toolbar_new();
   lives_box_pack_start(LIVES_BOX(hbox), mt->btoolbarx, FALSE, FALSE, widget_opts.packing_width * 2);
@@ -8102,7 +8074,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_start(LIVES_BOX(mt->xtravbox), hseparator, FALSE, FALSE, 0);
 
   mt->hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(mt->xtravbox), mt->hbox, TRUE, TRUE, widget_opts.border_width);
+  lives_box_pack_start(LIVES_BOX(mt->xtravbox), mt->hbox, TRUE, TRUE, 0);
 
   mt->play_blank = lives_image_new_from_pixbuf(mainw->imframe);
   mt->preview_frame = lives_standard_frame_new(_("Preview"), 0.5, FALSE);
@@ -8166,6 +8138,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   tname = get_tab_name(POLY_CLIPS);
   mt->nb_label1 = lives_standard_label_new(tname);
+  lives_widget_set_base_color(mt->nb_label1, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   lives_free(tname);
 
   // prepare polymorph box
@@ -8203,6 +8176,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   tname = get_tab_name(POLY_IN_OUT);
   mt->nb_label2 = lives_label_new(tname);
   lives_free(tname);
+  lives_widget_set_base_color(mt->nb_label2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -8661,6 +8635,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   // msg_area NOT showing for gtk+2.x
   mt->msg_area = mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mt->sw_func);
   mainw->sw_func = mt->sw_func;
+  lives_signal_handler_block(mt->msg_area, mt->sw_func);
 
   lives_widget_set_events(mt->msg_area, LIVES_SCROLL_MASK);
 
@@ -10824,7 +10799,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   if (prefs->show_gui) {
     lives_widget_process_updates(mainw->LiVES, TRUE); // force showing of transient window
-    //lives_widget_context_update();
   }
 
   // create new file for rendering to
@@ -11011,13 +10985,20 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
   }
 
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  // calls widget_context_update() ///////////////////////
+  //set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
+  ////////////////////////////////////////////////////////
 
-  set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   redraw_all_event_boxes(multi);
+
+  lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->insa_checkbutton));
+  lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->snapo_checkbutton));
 
   lives_widget_context_update();
   lives_widget_process_updates(mainw->LiVES, TRUE);
+
+  lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->insa_checkbutton));
+  lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->snapo_checkbutton));
 
   if (multi->opts.hpaned_pos != -1)
     lives_paned_set_position(LIVES_PANED(multi->hpaned), multi->opts.hpaned_pos);
@@ -11373,7 +11354,8 @@ void add_context_label(lives_mt *mt, const char *text) {
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.line_wrap = TRUE;
-  label = lives_standard_label_new(text);
+  label = lives_standard_label_new(NULL);
+  lives_label_set_markup(LIVES_LABEL(label), text);
   widget_opts.line_wrap = FALSE;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 

@@ -2550,8 +2550,8 @@ _prefsw *create_prefs_dialog(void) {
   lives_widget_show(dialog_table);
 
   if (palette->style & STYLE_1) {
-    lives_widget_set_bg_color(dialog_table, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(dialog_hpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_apply_theme(dialog_table, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(dialog_hpaned, LIVES_WIDGET_STATE_NORMAL);
   }
 
   // Create preferences list with invisible headers
@@ -2559,8 +2559,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_widget_show(prefsw->prefs_list);
 
   if (palette->style & STYLE_1) {
-    lives_widget_set_bg_color(prefsw->prefs_list, LIVES_WIDGET_STATE_SELECTED, &palette->normal_back);
-    lives_widget_set_fg_color(prefsw->prefs_list, LIVES_WIDGET_STATE_SELECTED, &palette->normal_fore);
+    lives_widget_apply_theme(prefsw->prefs_list, LIVES_WIDGET_STATE_SELECTED);
   }
 
   lives_tree_view_set_headers_visible(LIVES_TREE_VIEW(prefsw->prefs_list), FALSE);
@@ -2577,8 +2576,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_container_add(LIVES_CONTAINER(list_scroll), prefsw->prefs_list);
 
   if (palette->style & STYLE_1) {
-    lives_widget_set_bg_color(prefsw->prefs_list, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-    lives_widget_set_fg_color(prefsw->prefs_list, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+    lives_widget_apply_theme3(prefsw->prefs_list, LIVES_WIDGET_STATE_NORMAL);
   }
 
   lives_paned_pack(1, LIVES_PANED(dialog_hpaned), list_scroll, TRUE, FALSE);
@@ -2654,13 +2652,19 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->checkbutton_show_asrc =
     lives_standard_check_button_new(_("Show audio source in toolbar"), prefs->show_asrc, LIVES_BOX(hbox), NULL);
 
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
+
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   label = lives_standard_label_new(_("Startup mode:"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, TRUE, 0);
 
+  add_fill_to_box(LIVES_BOX(hbox));
+
   prefsw->rb_startup_ce = lives_standard_radio_button_new(_("_Clip editor"), &st_interface_group, LIVES_BOX(hbox), NULL);
+
+  add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->rb_startup_mt = lives_standard_radio_button_new(_("_Multitrack mode"), &st_interface_group, LIVES_BOX(hbox), NULL);
 
@@ -2740,7 +2744,40 @@ _prefsw *create_prefs_dialog(void) {
 
   pmoni_gmoni_changed(NULL, (livespointer)prefsw);
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_gui.png", NULL);
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->nmessages_spin = lives_standard_spin_button_new(_("    Number of _Info Messages to Buffer    "),
+                           prefs->max_messages, 0., 100000., 1., 1., 0,
+                           LIVES_BOX(hbox), NULL);
+
+  prefsw->msgs_unlimited = lives_standard_check_button_new(_("_Unlimited"),
+                           prefs->max_messages == -1, LIVES_BOX(hbox), NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  //textsize_list = make_textsize_list();
+
+  LiVESList *textsize_list = NULL;
+  textsize_list = lives_list_append(textsize_list, "Extra extra small");
+  textsize_list = lives_list_append(textsize_list, "Extra small");
+  textsize_list = lives_list_append(textsize_list, "Small");
+  textsize_list = lives_list_append(textsize_list, "Medium");
+  textsize_list = lives_list_append(textsize_list, "Large");
+  textsize_list = lives_list_append(textsize_list, "Extra large");
+  textsize_list = lives_list_append(textsize_list, "Extra extra large");
+
+  prefsw->msg_fontsize_combo = lives_standard_combo_new(_("Message Area _Font Size"), textsize_list,
+                               LIVES_BOX(hbox), NULL);
+
+  lives_list_free(textsize_list);
+
+
+  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_gui.png", NULL
+                             );
   pixbuf_gui = lives_pixbuf_new_from_file(icon, NULL);
   lives_free(icon);
 
@@ -2826,7 +2863,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), hbox2, FALSE, FALSE, widget_opts.packing_height);
 
   label = lives_standard_label_new(_("Auto backup layouts"));
-  lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, TRUE, widget_opts.packing_width);
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->mt_autoback_every = lives_standard_radio_button_new(_("_Every"), &autoback_group, LIVES_BOX(hbox), NULL);
@@ -2921,7 +2958,11 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
+  add_fill_to_box(LIVES_BOX(hbox));
+
   prefsw->jpeg = lives_standard_radio_button_new(_("_jpeg"), &jpeg_png, LIVES_BOX(hbox), NULL);
+
+  add_fill_to_box(LIVES_BOX(hbox));
 
   png = lives_standard_radio_button_new(_("_png"), &jpeg_png, LIVES_BOX(hbox), NULL);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(png), !strcmp(prefs->image_ext, LIVES_FILE_EXT_PNG));
@@ -2937,11 +2978,20 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->spinbutton_ocp = lives_standard_spin_button_new(_("Open/render compression"), prefs->ocp, 0., 100., 1., 5., 0,
-                           LIVES_BOX(hbox), NULL);
+  label = lives_standard_label_new(_("Open/render compression"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
-  label = lives_standard_label_new(_(" %     ( lower = slower, larger files; for jpeg, higher quality )"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width >> 1);
+  widget_opts.swap_label = TRUE;
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
+  prefsw->spinbutton_ocp = lives_standard_spin_button_new(("%"), prefs->ocp, 0., 100., 1., 5., 0,
+                           LIVES_BOX(hbox), NULL);
+  widget_opts.swap_label = FALSE;
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  label = lives_standard_label_new(_("( lower = slower, larger files; for jpeg, higher quality )"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
 
@@ -3137,8 +3187,11 @@ _prefsw *create_prefs_dialog(void) {
 
   has_ap_rec = FALSE;
 
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
   prefsw->jack_int_label = lives_standard_label_new(_("(See also the Jack Integration tab for jack startup options)"));
-  lives_box_pack_start(LIVES_BOX(vbox), prefsw->jack_int_label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(hbox), prefsw->jack_int_label, FALSE, FALSE, widget_opts.packing_width);
 
   prefsw->audp_name = NULL;
 
@@ -3274,9 +3327,12 @@ _prefsw *create_prefs_dialog(void) {
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
 
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
+
   label = lives_standard_label_new(_("What to record when 'r' is pressed"));
 
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -3345,8 +3401,11 @@ _prefsw *create_prefs_dialog(void) {
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
 
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height * 4);
+
   label = lives_standard_label_new(_("External Audio Source"));
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
@@ -3963,7 +4022,7 @@ _prefsw *create_prefs_dialog(void) {
 
   label = lives_standard_label_new(_("When inserting/merging frames:  "));
 
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width * 2);
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   prefsw->ins_speed = lives_standard_radio_button_new(_("_Speed Up/Slow Down Insertion"), &rb_group2, LIVES_BOX(hbox), NULL);
 

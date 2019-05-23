@@ -1004,11 +1004,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_minimum_size(LiVESWidget *w
 #ifdef GUI_GTK
   GdkGeometry geom;
   GdkWindowHints mask;
-  geom.min_width = width;
-  geom.min_height = height;
-  mask = GDK_HINT_MIN_SIZE;
-  gtk_window_set_geometry_hints(GTK_WINDOW(gtk_widget_get_toplevel(widget)), widget, &geom, mask);
-  return TRUE;
+  GtkWidget *toplevel = gtk_widget_get_toplevel(widget);
+  if (GTK_IS_WINDOW(toplevel)) {
+    geom.min_width = width;
+    geom.min_height = height;
+    mask = GDK_HINT_MIN_SIZE;
+    gtk_window_set_geometry_hints(GTK_WINDOW(toplevel), widget, &geom, mask);
+    return TRUE;
+  }
 #endif
   return FALSE;
 }
@@ -1018,11 +1021,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
 #ifdef GUI_GTK
   GdkGeometry geom;
   GdkWindowHints mask;
-  geom.max_width = width;
-  geom.max_height = height;
-  mask = GDK_HINT_MAX_SIZE;
-  gtk_window_set_geometry_hints(GTK_WINDOW(gtk_widget_get_toplevel(widget)), widget, &geom, mask);
-  return TRUE;
+  GtkWidget *toplevel = gtk_widget_get_toplevel(widget);
+  if (GTK_IS_WINDOW(toplevel)) {
+    geom.max_width = width;
+    geom.max_height = height;
+    mask = GDK_HINT_MAX_SIZE;
+    gtk_window_set_geometry_hints(GTK_WINDOW(toplevel), widget, &geom, mask);
+    return TRUE;
+  }
 #endif
   return FALSE;
 }
@@ -1149,12 +1155,13 @@ static char *make_random_string(const char *prefix) {
   if (psize > RND_STRLEN) return NULL;
 
   str = (char *)malloc(rsize);
-  lives_snprintf(str, psize, "%s", prefix);
+  lives_snprintf(str, psize + 1, "%s", prefix);
 
   rsize--;
 
   for (i = psize; i < rsize; i++) str[i] = ((lives_random() & 15) + 65);
   str[rsize] = 0;
+
   return str;
 }
 #endif
@@ -1164,7 +1171,8 @@ static char *make_random_string(const char *prefix) {
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
-static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *detail, const char *value) {
+static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *selector, const char *detail,
+    const char *value) {
   GtkCssProvider *provider = gtk_css_provider_new();
   GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
 
@@ -1175,6 +1183,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
                                  (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
 
+  // seems like this isn't really necessary since each widget has its own style context anyway...
   widget_name = g_strdup(gtk_widget_get_name(widget));
 
   if (strncmp(widget_name, RND_STR_PREFIX, strlen(RND_STR_PREFIX))) {
@@ -1182,6 +1191,8 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     widget_name = make_random_string(RND_STR_PREFIX);
     gtk_widget_set_name(widget, widget_name);
   }
+
+  //////
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   if (GTK_IS_TEXT_VIEW(widget)) wname = g_strdup("GtkTextView");
@@ -1229,7 +1240,11 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     }
 
     if (GTK_IS_NOTEBOOK(widget)) wname = g_strdup_printf("#%s%s tab", widget_name, state_str);
-    else wname = g_strdup_printf("#%s%s", widget_name, state_str);
+    else {
+      // would be nice if CSS selectors worked, broken in at least 3.18.9
+      if (selector == NULL) wname = g_strdup_printf("#%s%s", widget_name, state_str);
+      else wname = g_strdup_printf("#%s%s %s", widget_name, state_str, selector);
+    }
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   }
@@ -1273,6 +1288,8 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     }
   }
 
+  if (selector != NULL) g_print("running CSS %s\n", css_string);
+
 #if GTK_CHECK_VERSION(4, 0, 0)
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                   css_string,
@@ -1290,23 +1307,35 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 }
 
 
-static boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const char *detail, const char *value) {
+boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const char *detail, const char *value) {
 #ifdef SEPARATE_GTK_STATES
-  if (state == GTK_STATE_FLAG_NORMAL) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_NORMAL, detail, value);
-  if (state & GTK_STATE_FLAG_ACTIVE) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_ACTIVE, detail, value);
-  if (state & GTK_STATE_FLAG_PRELIGHT) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_PRELIGHT, detail, value);
-  if (state & GTK_STATE_FLAG_SELECTED) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_SELECTED, detail, value);
-  if (state & GTK_STATE_FLAG_INSENSITIVE) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_INSENSITIVE, detail, value);
-  if (state & GTK_STATE_FLAG_INCONSISTENT) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_INCONSISTENT, detail, value);
-  if (state & GTK_STATE_FLAG_FOCUSED) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_FOCUSED, detail, value);
-  if (state & GTK_STATE_FLAG_BACKDROP) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_BACKDROP, detail, value);
+  if (state == GTK_STATE_FLAG_NORMAL) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_NORMAL, NULL, detail, value);
+  if (state & GTK_STATE_FLAG_ACTIVE) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_ACTIVE, NULL, detail, value);
+  if (state & GTK_STATE_FLAG_PRELIGHT) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_PRELIGHT, NULL, detail, value);
+  if (state & GTK_STATE_FLAG_SELECTED) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_SELECTED, NULL, detail, value);
+  if (state & GTK_STATE_FLAG_INSENSITIVE) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_INSENSITIVE, NULL, detail, value);
+  if (state & GTK_STATE_FLAG_INCONSISTENT) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_INCONSISTENT, NULL, detail, value);
+  if (state & GTK_STATE_FLAG_FOCUSED) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_FOCUSED, NULL, detail, value);
+  if (state & GTK_STATE_FLAG_BACKDROP) set_css_value_for_state_flag(widget, GTK_STATE_FLAG_BACKDROP, NULL, detail, value);
 #else
-  set_css_value_for_state_flag(widget, state, detail, value);
+  set_css_value_for_state_flag(widget, state, NULL, detail, value);
 #endif
   return TRUE;
 }
 #endif
 #endif
+
+
+boolean set_css_value_selected(LiVESWidget *widget, LiVESWidgetState state, const char *selector, const char *detail, const char *value) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(3, 16, 0)
+  return set_css_value_for_state_flag(widget, state, selector, detail, value);
+#endif
+#endif
+#endif
+  return FALSE;
+}
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
@@ -1583,7 +1612,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_new(void) {
 }
 
 
-static int get_real_size_from_icon_size(LiVESIconSize size) {
+WIDGET_HELPER_LOCAL_INLINE int get_real_size_from_icon_size(LiVESIconSize size) {
   switch (size) {
   case LIVES_ICON_SIZE_SMALL_TOOLBAR:
   case LIVES_ICON_SIZE_BUTTON:
@@ -3235,7 +3264,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_append_text(LiVESCombo *combo, c
 }
 
 
-static boolean lives_combo_remove_all_text(LiVESCombo *combo) {
+WIDGET_HELPER_LOCAL_INLINE boolean lives_combo_remove_all_text(LiVESCombo *combo) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(combo));
@@ -4487,7 +4516,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_foreach(LiVESContainer *cont
 }
 
 
-static WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_forall(LiVESContainer *cont, LiVESWidgetCallback callback,
+WIDGET_HELPER_LOCAL_INLINE boolean lives_container_forall(LiVESContainer *cont, LiVESWidgetCallback callback,
     livespointer cb_data) {
   // includes internal children
 #ifdef GUI_GTK
@@ -8381,6 +8410,11 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     eventbox = make_label_eventbox(labeltext, spinbutton);
   }
 
+  if (widget_opts.apply_theme) {
+    // would be nice if stuff like this worked...broken in 3.18.9 at least
+    // set_css_value_selected(spinbutton, LIVES_WIDGET_STATE_NORMAL, "entry", "background", "#00FF00");
+  }
+
   if (box != NULL) {
     int packing_width = 0;
 
@@ -8530,6 +8564,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
     lives_widget_set_halign(entry, LIVES_ALIGN_CENTER);
+    lives_entry_set_alignment(LIVES_ENTRY(entry), 0.5);
   }
 
   if (box != NULL) {

@@ -2367,7 +2367,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                                         (LIVES_WIDGET_OBJECT(eventbox), "layer_number"))));
 
       lives_container_add(LIVES_CONTAINER(labelbox), hbox);
-      lives_box_pack_start(LIVES_BOX(hbox), checkbutton, FALSE, FALSE, 0);
+      lives_box_pack_start(LIVES_BOX(hbox), checkbutton, FALSE, FALSE, widget_opts.border_width);
       lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
       lives_container_add(LIVES_CONTAINER(ahbox), arrow);
 
@@ -2670,7 +2670,7 @@ static void time_to_string(lives_mt *mt, double secs, int length) {
   secs = (int)secs * 1.;
   if (rest < 10) rests = lives_strdup_printf("%d0", rest);
   else rests = lives_strdup_printf("%d", rest);
-  string = lives_strdup_printf("  %02d:%02d:%02d.%s ", hours, mins, (int)secs, rests);
+  string = lives_strdup_printf("%02d:%02d:%02d.%s", hours, mins, (int)secs, rests);
   lives_free(rests);
   lives_entry_set_text(LIVES_ENTRY(mt->timecode), string);
   lives_free(string);
@@ -4535,7 +4535,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   lives_box_pack_start(LIVES_BOX(hbox), mt->amixb_eventbox, FALSE, FALSE, widget_opts.packing_width * 2);
 
   mt->btoolbar = lives_toolbar_new();
-  lives_widget_apply_theme2(mt->btoolbar, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  lives_widget_apply_theme(mt->btoolbar, LIVES_WIDGET_STATE_NORMAL);
   lives_container_add(LIVES_CONTAINER(mt->amixb_eventbox), mt->btoolbar);
 
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mt->btoolbar), FALSE);

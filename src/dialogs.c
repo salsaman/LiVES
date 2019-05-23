@@ -2802,9 +2802,11 @@ void threaded_dialog_spin(double fraction) {
       //#define GDB
 #ifndef GDB
       if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) {
+#if GTK_CHECK_VERSION(3, 0, 0)
         lives_widget_context_update();
         lives_widget_process_updates(procw->processing, TRUE);
         lives_widget_process_updates(mainw->LiVES, TRUE);
+#endif
         lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
       }
 #endif
@@ -2818,9 +2820,11 @@ void threaded_dialog_spin(double fraction) {
 
   if (!td_had_focus && lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
     if (LIVES_IS_WIDGET(procw->processing)) {
+#if GTK_CHECK_VERSION(3, 0, 0)
       lives_widget_context_update();
       lives_widget_show_all(procw->processing);
       lives_widget_queue_draw(procw->processing);
+#endif
     }
     td_had_focus = TRUE;
   }

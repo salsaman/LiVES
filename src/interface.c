@@ -4232,16 +4232,18 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
   last_height = height;
 
   if (recompute) {
-    double linesize = lh / nlines;
-    double page_size = (double)((int)((double)height / linesize));
-    //g_print("VALS3 lh = %d, nlines = %d, lsize = %f, height = %d, ps = %f\n", lh, nlines, linesize, height, page_size);
-    lives_object_freeze_notify(LIVES_WIDGET_OBJECT(adj));
-    lives_adjustment_set_lower(adj, page_size - 2);
-    lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 1));
-    lives_adjustment_set_page_size(adj, page_size);
-    lives_adjustment_set_value(adj, (double)msgno);
-    lives_object_thaw_notify(LIVES_WIDGET_OBJECT(adj));
-    //g_print("PAGE SIZE is %f\n", page_size);
+    if (nlines > 0) {
+      double linesize = lh / nlines;
+      double page_size = (double)((int)((double)height / linesize));
+      //g_print("VALS3 lh = %d, nlines = %d, lsize = %f, height = %d, ps = %f\n", lh, nlines, linesize, height, page_size);
+      lives_object_freeze_notify(LIVES_WIDGET_OBJECT(adj));
+      lives_adjustment_set_lower(adj, page_size - 2);
+      lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 1));
+      lives_adjustment_set_page_size(adj, page_size);
+      lives_adjustment_set_value(adj, (double)msgno);
+      lives_object_thaw_notify(LIVES_WIDGET_OBJECT(adj));
+      //g_print("PAGE SIZE is %f\n", page_size);
+    }
   }
 
   widget_color_to_lives_rgba(&fg, &palette->info_text);

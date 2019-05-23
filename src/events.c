@@ -5746,6 +5746,7 @@ render_details *create_render_details(int type) {
 
   mainw->no_context_update = FALSE;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
   // shrinkwrap to minimum
   spillover = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(top_vbox), spillover, TRUE, TRUE, 0); // mop up extra height
@@ -5767,7 +5768,9 @@ render_details *create_render_details(int type) {
     lives_window_set_resizable(LIVES_WINDOW(rdet->dialog), TRUE);
     lives_widget_process_updates(rdet->dialog, TRUE);
   }
-
+#else
+  lives_widget_show_all(rdet->dialog);
+#endif
   return rdet;
 }
 

@@ -417,6 +417,7 @@ boolean lives_alignment_set(LiVESWidget *, float xalign, float yalign, float xsc
 
 LiVESWidget *lives_expander_new(const char *label);
 LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expander);
+boolean lives_expander_set_use_markup(LiVESExpander *expander, boolean val);
 
 boolean lives_label_set_width_chars(LiVESLabel *label, int nchars);
 boolean lives_label_set_halignment(LiVESLabel *, float yalign);

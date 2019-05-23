@@ -298,6 +298,10 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     for (i = 0; i < cfile->achans; cfile->audio_waveform[i++] = NULL);
   }
 
+  if (mainw->playing_file == -1) {
+    lives_widget_context_update();
+  }
+
   // empirically we need to draw wider
   posx -= OVERDRAW_MARGIN;
   if (width > 0) width += OVERDRAW_MARGIN;
@@ -4302,9 +4306,9 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
         if (overflowx > 0 || overflowy > 0) {
           lives_widget_set_size_request(widget, mywidth, myheight);
           lives_widget_set_size_request(mainw->message_box, mywidth, myheight);
+          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+          lives_widget_context_update();
         }
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-        lives_widget_context_update();
 
         w = scr_width - bx;
         h = scr_height - by;
@@ -4374,7 +4378,7 @@ EXPOSE_FN_END
 
 LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget *widget, LiVESAdjustment *adj) {
   msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj);
-  //expose_msg_area(widget, NULL);
+  expose_msg_area(widget, NULL, NULL);
 }
 
 
@@ -4392,5 +4396,6 @@ boolean on_msg_area_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livesp
   LiVESAdjustment *adj = (LiVESAdjustment *)user_data;
   if (event->direction == LIVES_SCROLL_UP) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);
   else lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) + 1.);
+  expose_msg_area(widget, NULL, NULL);
   return FALSE;
 }

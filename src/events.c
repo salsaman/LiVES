@@ -5349,6 +5349,7 @@ render_details *create_render_details(int type) {
   LiVESWidget *cancelbutton;
   LiVESWidget *alabel;
   LiVESWidget *daa;
+  LiVESWidget *spillover;
 
   LiVESAccelGroup *rdet_accel_group;
 
@@ -5413,6 +5414,12 @@ render_details *create_render_details(int type) {
   width = scrw - SCR_WIDTH_SAFETY;
   height = scrh - SCR_HEIGHT_SAFETY;
 
+  if (type == 1) {
+    width /= 2;
+    height /= 2;
+  }
+
+  // needs to be set as large as possible, we will shrink it later, but it must not expand
   rdet->dialog = lives_standard_dialog_new(title, FALSE, width, height);
 
   lives_free(title);
@@ -5427,16 +5434,18 @@ render_details *create_render_details(int type) {
   if (!specified) {
     dbw = widget_opts.border_width;
     widget_opts.border_width = 0;
+    // need to set a large enough default here
     scrollw = lives_standard_scrolled_window_new(scrw * .8, scrh * .75, top_vbox);
     widget_opts.border_width = dbw;
   } else
-    scrollw = lives_standard_scrolled_window_new(scrw * .35, scrh * .4, top_vbox);
+    scrollw = lives_standard_scrolled_window_new(scrw * .3, scrh * .4, top_vbox);
 
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), scrollw, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), scrollw, FALSE, TRUE, 0);
 
   lives_container_set_border_width(LIVES_CONTAINER(top_vbox), 0);
 
   rdet->always_hbox = lives_hbox_new(TRUE, widget_opts.packing_width * 2);
+  if (type == 1 || type == 2) gtk_widget_set_no_show_all(rdet->always_hbox, TRUE);
   rdet->always_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Always use these values"))), FALSE,
                              LIVES_BOX(rdet->always_hbox),
                              (tmp2 = lives_strdup(
@@ -5445,13 +5454,14 @@ render_details *create_render_details(int type) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  add_fill_to_box(LIVES_BOX(rdet->always_hbox));
+  add_spring_to_box(LIVES_BOX(rdet->always_hbox), 0.);
+  add_spring_to_box(LIVES_BOX(rdet->always_hbox), 0.);
 
   daa = lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog));
 
   if (!LIVES_IS_BOX(daa)) {
     lives_box_pack_end(LIVES_BOX(top_vbox), rdet->always_hbox, TRUE, TRUE, 0);
-    lives_widget_set_valign(rdet->always_checkbutton, LIVES_ALIGN_START);
+    lives_widget_set_halign(rdet->always_checkbutton, LIVES_ALIGN_START);
   }
 
   hbox = NULL;
@@ -5470,7 +5480,9 @@ render_details *create_render_details(int type) {
 
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps, rdet->fps,
                             TRUE, hbox);
-  if (type != 1) lives_box_pack_start(LIVES_BOX(top_vbox), frame, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(top_vbox), frame, FALSE, TRUE, 0);
+
+  if (type == 1) gtk_widget_set_no_show_all(frame, TRUE);
 
   if (type == 2) {
     // add clip name entry
@@ -5504,8 +5516,9 @@ render_details *create_render_details(int type) {
   rdet->pertrack_checkbutton = lives_check_button_new();
   rdet->backaudio_checkbutton = lives_check_button_new();
 
-  if (type == 3) resaudw = create_resaudw(3, rdet, top_vbox);
-  else if (type != 1) resaudw = create_resaudw(10, rdet, top_vbox);
+  ////// add audio part
+  if (type == 3) resaudw = create_resaudw(3, rdet, top_vbox); // enter mt
+  else if (type != 1) resaudw = create_resaudw(10, rdet, top_vbox); // render to clip / change during mt
 
   if (type == 3) {
     // extra opts
@@ -5556,14 +5569,22 @@ render_details *create_render_details(int type) {
     }
   }
 
-  // add expander
+  /////////////////////// add expander ////////////////////////////
 
-  vbox = lives_vbox_new(FALSE, 0);
+  if (type != 1) {
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, 0);
+
+    vbox = lives_vbox_new(FALSE, 0);
+
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    lives_standard_expander_new(_("_Encoder preferences (optional)"), LIVES_BOX(hbox), vbox);
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  } else vbox = top_vbox;
 
   add_fill_to_box(LIVES_BOX(vbox));
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
-
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new(_("Target encoder"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
@@ -5674,9 +5695,7 @@ render_details *create_render_details(int type) {
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  lives_standard_expander_new(_("_Encoder preferences (optional)"), LIVES_BOX(top_vbox), vbox);
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  //////////////// end expander section ///////////////////
 
   if (LIVES_IS_BOX(daa)) {
     lives_box_pack_start(LIVES_BOX(daa), rdet->always_hbox, FALSE, FALSE, widget_opts.packing_width * 2);
@@ -5717,15 +5736,6 @@ render_details *create_render_details(int type) {
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, rdet_accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_widget_show_all(rdet->dialog);
-  lives_widget_hide(rdet->always_hbox);
-  /*if (aspect != NULL && type == 2) {
-    lives_widget_hide(aspect->checkbutton);
-    lives_widget_hide(aspect->label);
-    }*/
-
-  if (type == 4) lives_widget_hide(resaudw->aud_hbox);
-
   if (needs_new_encoder) {
     lives_widget_set_sensitive(rdet->okbutton, FALSE);
     lives_widget_process_updates(mainw->LiVES, TRUE); // force showing of transient window
@@ -5735,6 +5745,28 @@ render_details *create_render_details(int type) {
   lives_signal_connect_after(LIVES_COMBO(rdet->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(rdet_acodec_changed), rdet);
 
   mainw->no_context_update = FALSE;
+
+  // shrinkwrap to minimum
+  spillover = lives_vbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(top_vbox), spillover, TRUE, TRUE, 0); // mop up extra height
+  lives_widget_show_all(rdet->dialog);
+  lives_widget_process_updates(rdet->dialog, TRUE);
+  lives_widget_context_update();
+  height = lives_widget_get_allocation_height(scrollw) - lives_widget_get_allocation_height(spillover);
+  width = lives_widget_get_allocation_width(scrollw);
+  lives_widget_destroy(spillover); // remove extra height
+
+  if (height > 0) lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(scrollw), height);
+  if (width > 0) lives_scrolled_window_set_min_content_width(LIVES_SCROLLED_WINDOW(scrollw), width);
+
+  if (type != 1) {
+    // part for expander, need to show window at current size, then make it resizable
+    lives_widget_show_all(rdet->dialog);
+    lives_widget_process_updates(rdet->dialog, TRUE);
+    lives_widget_context_update();
+    lives_window_set_resizable(LIVES_WINDOW(rdet->dialog), TRUE);
+    lives_widget_process_updates(rdet->dialog, TRUE);
+  }
 
   return rdet;
 }

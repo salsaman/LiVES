@@ -25,13 +25,46 @@
 
 
 // mainw->playarea is reparented:
-// (mt->hbox -> preview_frame -> play_box) -> preview_eventbox -> (playarea -> plug -> play_image)
+// (mt->hbox -> preview_frame -> preview_eventbox -> (playarea -> plug -> play_image)
 // for gtk+ 3.x the frame_pixbuf is drawn into play_image in expose_pb when not playing
 
 // TODO: see if we can simplify, e.g
 // hbox -> preview_eventbox -> play_image
 // (removing play_box, playarea and plug)
 
+
+// MAP:
+
+// top_vbox
+//         - menu_hbox
+//                    - menubar
+//                            - menuitems
+//         - xtravbox
+//                    - top_eventbox
+//                            - hbox
+//                                 - btoolbar2
+//                    - hseparator
+//                    - mt_hbox
+//                             - preview_frame
+//                                     - preview_eventbox
+//                                     - play_box
+//                                              - mainw->playarea
+//                                                      - plug
+//                                                             - play_image
+////                             - hpaned
+//                                    - mt->nb (notebook)
+//                                    - context_box
+//                    - hseparator
+//                    - sepimage
+//                    - hbox
+//                            - amixb_eventbox
+//                                            - btoolbar
+//                                                    - amixer_button
+//
+//         - hseparator2
+//         - vpaned
+//                    - tl_vbox
+//                    - message_box
 
 //#define DEBUG_TTABLE
 
@@ -2555,8 +2588,12 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
 
   if (xlist != NULL) lives_list_free(xlist);
 
+  lives_paned_set_position(LIVES_PANED(mt->vpaned), 0.);
+
   lives_widget_show_all(mt->timeline_table);
   lives_widget_queue_draw(mt->vpaned);
+
+  reset_message_area(TRUE);
 
   if (mt->is_ready) {
     mt->no_expose = FALSE;
@@ -6166,7 +6203,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   int dph;
   int num_filters;
   int error;
-  int dpw = widget_opts.packing_width;
   int scr_width = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
   int scr_height = GUI_SCREEN_HEIGHT;
 
@@ -6372,10 +6408,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->xtravbox = lives_vbox_new(FALSE, 0);
 
-  lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->xtravbox, FALSE, FALSE, 6);
-
   mt->menu_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->menu_hbox, FALSE, FALSE, 0);
+
+  lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->xtravbox, FALSE, FALSE, 6);
 
   mt->menubar = lives_menu_bar_new();
   lives_box_pack_start(LIVES_BOX(mt->menu_hbox), mt->menubar, FALSE, FALSE, 0);
@@ -7868,23 +7904,29 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
+
   mt->insa_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Insert with _Audio  "))), mt->opts.insert_audio,
                          LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("Select whether video clips are inserted and moved with their audio or not"))), &mt->opts.insert_audio);
   lives_free(tmp);
   lives_free(tmp2);
 
-  mt->insa_label = widget_opts.last_label;
-
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
+  mt->insa_label = widget_opts.last_label;
+
   add_fill_to_box(LIVES_BOX(hbox));
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
   mt->snapo_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Select _Overlap  "))), mt->opts.snap_over,
                           LIVES_BOX(hbox),
                           (tmp2 = lives_strdup(_("Select whether timeline selection snaps to overlap between selected tracks or not"))), &mt->opts.snap_over);
   lives_free(tmp);
   lives_free(tmp2);
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   mt->overlap_label = widget_opts.last_label;
 
@@ -9178,7 +9220,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
       mainw->files[i]->event_list = NULL;
     }
   }
-  if (mainw->current_file > 0) sensitize();
+
   lives_widget_hide(mainw->playframe);
 
   mainw->is_rendering = FALSE;
@@ -9225,6 +9267,10 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   }
 
   lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
+
+  msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+
+  if (mainw->current_file > 0) sensitize();
 
   lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
 
@@ -10726,7 +10772,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     // WARNING:
     rdet = create_render_details(3); // WARNING !! - rdet is global in events.h
     rdet->enc_changed = FALSE;
-    lives_widget_show_all(rdet->always_hbox);
     do {
       rdet->suggestion_followed = FALSE;
       if ((response = lives_dialog_run(LIVES_DIALOG(rdet->dialog))) == LIVES_RESPONSE_OK) {
@@ -10986,13 +11031,15 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   // calls widget_context_update() ///////////////////////
-  //set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
+  set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
   ////////////////////////////////////////////////////////
 
   redraw_all_event_boxes(multi);
 
   lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->insa_checkbutton));
   lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->snapo_checkbutton));
+
+  lives_signal_handler_unblock(multi->msg_area, multi->sw_func);
 
   lives_widget_context_update();
   lives_widget_process_updates(mainw->LiVES, TRUE);
@@ -11005,10 +11052,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   else
     lives_paned_set_position(LIVES_PANED(multi->hpaned), (float)lives_widget_get_allocation_width(multi->hpaned) * .8); // 0 == top
 
-  if (multi->opts.vpaned_pos != -1)
-    lives_paned_set_position(LIVES_PANED(multi->vpaned), multi->opts.vpaned_pos);
-  else
-    lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .6); // 0 == top
+  lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .0); // 0 == top
 
   multi->no_expose = FALSE;
 
@@ -11031,7 +11075,9 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   d_print(_("====== Switched to Multitrack mode ======\n"));
 
-  reset_message_area(TRUE);
+  msg_area_scroll_to_end(multi->msg_area, multi->msg_adj);
+
+  mt_show_current_frame(multi, FALSE);
 
   lives_signal_connect(LIVES_GUI_OBJECT(multi->hpaned), LIVES_WIDGET_NOTIFY_SIGNAL "position",
                        LIVES_GUI_CALLBACK(hpaned_position),
@@ -19066,6 +19112,7 @@ boolean set_new_set_name(lives_mt *mt) {
     // prompt for a set name, advise user to save set
     renamew = create_rename_dialog(4);
     lives_widget_show(renamew->dialog);
+    lives_widget_context_update();
     response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
     if (response == LIVES_RESPONSE_CANCEL) {
       mainw->cancelled = CANCEL_USER;
@@ -21402,7 +21449,6 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *msg;
 
   rdet = create_render_details(4); // WARNING !! - rdet is global in events.h
-  lives_widget_show_all(rdet->always_hbox);
   rdet->enc_changed = FALSE;
   do {
     rdet->suggestion_followed = FALSE;

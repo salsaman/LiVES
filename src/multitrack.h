@@ -30,7 +30,7 @@
 #define FX_BLOCK_WIDTH ((int)(80.*widget_opts.scale))
 #define FX_BLOCK_HEIGHT ((int)(20.*widget_opts.scale))
 
-#define MT_TRACK_HEIGHT ((int)(25.*widget_opts.scale))
+#define MT_TRACK_HEIGHT ((int)(35.*widget_opts.scale))
 
 #define TIMECODE_LENGTH 14 ///< length of timecode text entry, must be >12
 

@@ -1094,14 +1094,14 @@ void on_resample_vid_ok(LiVESButton *button, LiVESEntry *entry) {
 _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox) {
   // type 1 == resample
   // type 2 == insert silence
-  // type 3 == enter multitrack or encode or render to clip
+  // type 3 == enter multitrack or encode or render to clip (?) (embedded)
   // type 4 == prefs/multitrack
   // type 5 == new clip record/record to selection with no existing audio
   // type 6 == record to clip with no existing audio
   // type 7 == record to clip with existing audio (show time only)
   // type 8 == grab external window, with audio
   // type 9 == grab external, no audio
-  // type 10 == change inside multitrack
+  // type 10 == change inside multitrack / render to clip (embedded)
   // type 11 == rte audio gen as rfx
 
   LiVESWidget *dialog_vbox = NULL;
@@ -1303,7 +1303,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_free(tmp);
 
     if (type == 4) lives_box_pack_start(LIVES_BOX(vboxx), frame, FALSE, FALSE, widget_opts.packing_height);
-    else lives_box_pack_start(LIVES_BOX(vboxx), frame, TRUE, TRUE, 0);
+    else lives_box_pack_start(LIVES_BOX(vboxx), frame, FALSE, TRUE, 0);
 
     vbox2 = lives_vbox_new(FALSE, 0);
     lives_container_add(LIVES_CONTAINER(frame), vbox2);

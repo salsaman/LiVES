@@ -2262,7 +2262,7 @@ void d_print(const char *fmt, ...) {
     }
   }
 
-  if (prefs->show_gui) {
+  if (prefs->show_gui && mainw->msg_area != NULL && mainw->msg_adj != NULL) {
     msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
     lives_widget_queue_draw_if_visible(mainw->msg_area);
   }

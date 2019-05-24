@@ -2265,10 +2265,11 @@ static void rb_tvcarddef_toggled(LiVESToggleButton *tbut, livespointer user_data
 }
 
 
-static void after_dialog_combo_changed(LiVESWidget *combo, livespointer user_data) {
-  LiVESList *list = (LiVESList *)user_data;
+static void after_dialog_combo_changed(LiVESWidget *combo, livespointer plist) {
+  // set mainw->fx1_val to the index of combo text in plist
+  LiVESList *list = (LiVESList *)plist;
   char *etext = lives_combo_get_active_text(LIVES_COMBO(combo));
-  mainw->fx1_val = lives_list_strcmp_index(list, etext);
+  mainw->fx1_val = lives_list_strcmp_index(list, etext, TRUE);
   lives_free(etext);
 }
 
@@ -4207,6 +4208,7 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
   int width;
   int height, lh;
   int nlines;
+
   static int last_height = -1;
 
   if (mainw->n_messages <= 0) return;
@@ -4218,20 +4220,25 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
   if (width < 32 || height < 32) return;
 
   if (msgno < 0) msgno = 0;
-  if (msgno > mainw->n_messages) msgno = mainw->n_messages;
+  if (msgno >= mainw->n_messages) msgno = mainw->n_messages - 1;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
   if (layout != NULL && LIVES_IS_OBJECT(layout)) lives_object_unref(layout);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout", NULL);
+
+  // redraw the layout ///////////////////////
+  lives_widget_set_font_size(widget, LIVES_WIDGET_STATE_NORMAL, lives_textsize_to_string(prefs->msg_textsize));
 
   layout = layout_nth_message_at_bottom(msgno, width, height, LIVES_WIDGET(widget), &nlines);
+  if (!LINGO_IS_LAYOUT(layout)) return;
 
   lingo_layout_get_size(layout, NULL, &lh, 0, 0);
   lh /= LINGO_SCALE;
-
   if (height != last_height) recompute = TRUE;
   last_height = height;
 
   if (recompute) {
+    // redjust the page size
     if (nlines > 0) {
       double linesize = lh / nlines;
       double page_size = (double)((int)((double)height / linesize));
@@ -4262,9 +4269,12 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
   int width, height;
   static int wiggle_room = 0;
   static int last_height = -1;
+  static int last_textsize = -1;
   LingoLayout *layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 
-  if (layout == NULL || !mainw->is_ready) return FALSE;
+  if (last_textsize == -1) last_textsize = prefs->msg_textsize;
+
+  if (layout == NULL || !LINGO_IS_LAYOUT(layout) || !mainw->is_ready) return FALSE;
   else {
     // the expose event for the message area is a good opportunity to recheck the window size
 
@@ -4335,6 +4345,9 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
         lives_signal_handlers_unblock_by_func(widget, (livespointer)expose_msg_area, NULL);
         return FALSE;
       }
+      // get again in case it changed
+      width = lives_widget_get_allocation_width(widget);
+      height = lives_widget_get_allocation_height(widget);
     }
 
     // check if we could request more
@@ -4348,14 +4361,16 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
 
     //g_print("VALS %d, %d %d\n", lheight, height, wiggle_room);
 
-    if (lheight < height - wiggle_room) {
+    if (lheight < height - wiggle_room || prefs->msg_textsize != last_textsize) {
       llines = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_lines"));
       lineheight = CEIL(lheight / llines, 1);
-      //g_print("VALS2 %d %d %d\n", height / lineheight, llines + 1, llast);
-      if (height / lineheight >= llines + 1 && llast > llines) {
-        // recompute if the window grew
+      //g_print("VALS2 %d %d %d : %d %d\n", height / lineheight, llines + 1, llast, prefs->msg_textsize, last_textsize);
+      if ((height / lineheight >= llines + 1 && llast > llines) || (prefs->msg_textsize != last_textsize)) {
+        // recompute if the window grew or the text size changed
+        last_textsize = prefs->msg_textsize;
         msg_area_scroll_to(widget, llast, TRUE, mainw->msg_adj); // window grew, re-get layout
         layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
+        if (layout == NULL || !LINGO_IS_LAYOUT(layout)) return TRUE;
         lheight = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_height"));
         wiggle_room = height - lheight;
       }
@@ -4395,6 +4410,7 @@ void msg_area_scroll(LiVESAdjustment *adj, livespointer userdata) {
 
 
 boolean on_msg_area_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespointer user_data) {
+  // mouse scroll callback
   LiVESAdjustment *adj = (LiVESAdjustment *)user_data;
   if (event->direction == LIVES_SCROLL_UP) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);
   else lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) + 1.);

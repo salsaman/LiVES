@@ -2223,7 +2223,6 @@ void create_LiVES(void) {
   lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
   lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
   lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
-  lives_widget_set_font_size(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL, LIVES_FONT_SIZE_LARGE);
 
   lives_widget_set_events(mainw->msg_area, LIVES_SCROLL_MASK);
 
@@ -3634,7 +3633,7 @@ void make_preview_box(void) {
   lives_widget_set_tooltip_text(mainw->p_playselbutton, _("Play Selection"));
   lives_widget_set_sensitive(mainw->p_playselbutton, CURRENT_CLIP_IS_VALID && cfile->frames > 0);
 
-#if 1
+#if 0
   // TODO !
   loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, 24);
 #else

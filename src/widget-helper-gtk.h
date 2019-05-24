@@ -165,6 +165,8 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define LIVES_NORMALIZE_DEFAULT G_NORMALIZE_DEFAULT
 
 #define lives_utf8_normalize(a, b, c) g_utf8_normalize(a, b, c)
+#define lives_utf8_collate(a, b) g_utf8_collate(a, b)
+#define lives_utf8_casefold(a, b) g_utf8_casefold(a, b)
 
 #define lives_list_nth_data(list, i) g_list_nth_data(list, i)
 #define lives_list_nth(list, i) g_list_nth(list, i)
@@ -346,13 +348,14 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_FILTER_CONTINUE GDK_FILTER_CONTINUE
 
 // font sizes
-#define LIVES_FONT_SIZE_XX_SMALL "xx-small"
-#define LIVES_FONT_SIZE_X_SMALL "x-small"
-#define LIVES_FONT_SIZE_SMALL "small"
-#define LIVES_FONT_SIZE_MEDIUM "medium"
-#define LIVES_FONT_SIZE_LARGE "large"
-#define LIVES_FONT_SIZE_X_LARGE "x-large"
-#define LIVES_FONT_SIZE_XX_LARGE "xx-large"
+#define LIVES_FONT_SIZE_XX_SMALL "xx-small" // 0
+#define LIVES_FONT_SIZE_X_SMALL "x-small"  // 1
+#define LIVES_FONT_SIZE_SMALL "small"      // 2
+#define LIVES_FONT_SIZE_MEDIUM "medium"   // 3
+#define LIVES_FONT_SIZE_LARGE "large"      // 4
+#define LIVES_FONT_SIZE_X_LARGE "x-large"    // 5
+#define LIVES_FONT_SIZE_XX_LARGE "xx-large"   // 6
+#define LIVES_FONT_SIZE_NORMAL LIVES_FONT_SIZE_MEDIUM
 
 // events
 #define LIVES_WIDGET_EVENT "event"

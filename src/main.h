@@ -1069,6 +1069,7 @@ void d_print(const char *fmt, ...);
 char *dump_messages(int start, int end); // utils.c
 weed_plant_t *get_nth_info_message(int n); // utils.c
 int add_messages_to_list(const char *text);
+int free_n_msgs(int frval);
 
 // d_print shortcuts
 void d_print_cancelled(void);
@@ -1274,6 +1275,7 @@ int lives_echo(const char *text, const char *to, boolean append);
 int lives_ln(const char *from, const char *to);
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2);
+int lives_utf8_strcmp(const char *s1, const char *s2);
 
 char *filename_from_fd(char *val, int fd);
 
@@ -1409,7 +1411,7 @@ int get_hex_digit(const char *c);
 uint32_t fastrand(void);
 void fastsrand(uint32_t seed);
 
-int lives_list_strcmp_index(LiVESList *list, livesconstpointer data);
+int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);
 
 lives_cancel_t check_for_bad_ffmpeg(void);
 

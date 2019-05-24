@@ -1,6 +1,6 @@
 // utils.c
 // LiVES
-// (c) G. Finch 2003 - 2017 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1628,7 +1628,7 @@ LIVES_GLOBAL_INLINE char *lives_strappend(char *string, int len, const char *xne
 
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add) {
-  if (lives_list_find_custom(xlist, add, (LiVESCompareFunc)strcmp) == NULL) return lives_list_append(xlist, lives_strdup(add));
+  if (lives_list_find_custom(xlist, add, (LiVESCompareFunc)lives_utf8_strcasecmp) == NULL) return lives_list_append(xlist, lives_strdup(add));
   return xlist;
 }
 
@@ -2067,7 +2067,9 @@ weed_plant_t *get_nth_info_message(int n) {
   int error;
   weed_plant_t *msg = mainw->msg_list;
 
-  if (n < 0 || n >= mainw->n_messages) return NULL;
+  if (n < 0) return NULL;
+
+  if (n >= mainw->n_messages) n = mainw->n_messages - 1;
 
   if (n >= (mainw->n_messages >> 1)) {
     m = mainw->n_messages - 1;
@@ -2136,11 +2138,46 @@ static weed_plant_t *make_msg(const char *text) {
 }
 
 
+int free_n_msgs(int frval) {
+  int error;
+  weed_plant_t *next, *end;
+
+  if (frval <= 0) return WEED_NO_ERROR;
+  if (frval > mainw->n_messages || mainw->msg_list == NULL) frval = mainw->n_messages;
+
+  end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error); // list end
+  if (error != WEED_NO_ERROR) {
+    return error;
+  }
+
+  while (frval-- && mainw->msg_list != NULL) {
+    next = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_NEXT, &error); // becomes new head
+    if (error != WEED_NO_ERROR) {
+      return error;
+    }
+    weed_plant_free(mainw->msg_list);
+    mainw->msg_list = next;
+    if (mainw->msg_list == end) weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, NULL);
+    else weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, end);
+    mainw->n_messages--;
+    if (mainw->ref_message != NULL) {
+      if (--mainw->ref_message_n < 0) mainw->ref_message = NULL;
+    }
+  }
+
+  if (mainw->msg_adj != NULL)
+    lives_adjustment_set_value(mainw->msg_adj, lives_adjustment_get_value(mainw->msg_adj) - 1.);
+  return WEED_NO_ERROR;
+}
+
+
+
+
 int add_messages_to_list(const char *text) {
   // append text to our message list, splitting it into lines
   // if we hit the max message limit then free the oldest one
   // returns a weed error
-  weed_plant_t *msg, *end, *next;
+  weed_plant_t *msg, *end;;
   char **lines;
   int error, i, numlines;
 
@@ -2184,27 +2221,17 @@ int add_messages_to_list(const char *text) {
       continue;
     }
 
-    if (prefs->max_messages != -1 && mainw->n_messages + 1 > prefs->max_messages) {
+    if (prefs->max_messages > 0 && mainw->n_messages + 1 > prefs->max_messages) {
       // retire the oldest if we reached the limit
-      next = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_NEXT, &error); // becomes new head
+      error = free_n_msgs(1);
       if (error != WEED_NO_ERROR) {
         lives_strfreev(lines);
         return error;
       }
-      weed_plant_free(mainw->msg_list);
-      mainw->msg_list = next;
-      mainw->n_messages--;
-      if (mainw->ref_message != NULL) {
-        if (--mainw->ref_message_n < 0) mainw->ref_message = NULL;
-      }
-      if (mainw->msg_adj != NULL)
-        lives_adjustment_set_value(mainw->msg_adj, lives_adjustment_get_value(mainw->msg_adj) - 1.);
       if (mainw->msg_list == NULL) {
         i = numlines - 2;
         continue;
       }
-      if (next == end) weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, NULL);
-      else weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, end);
     }
 
     msg = make_msg(lines[i]);
@@ -2972,7 +2999,7 @@ void remove_layout_files(LiVESList *map) {
   while (map != NULL) {
     map_next = map->next;
     if (map->data != NULL) {
-      if (!strcmp((char *)map->data, mainw->string_constants[LIVES_STRING_CONSTANT_CL])) {
+      if (!lives_utf8_strcasecmp((char *)map->data, mainw->string_constants[LIVES_STRING_CONSTANT_CL])) {
         is_current = TRUE;
         fname = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       } else {
@@ -2983,7 +3010,7 @@ void remove_layout_files(LiVESList *map) {
         cmap = mainw->current_layouts_map;
         while (cmap != NULL) {
           cmap_next = cmap->next;
-          if (!strcmp((char *)cmap->data, (char *)map->data)) {
+          if (!lives_utf8_strcasecmp((char *)cmap->data, (char *)map->data)) {
             lives_free((livespointer)cmap->data);
             mainw->current_layouts_map = lives_list_delete_link(mainw->current_layouts_map, cmap);
             break;
@@ -4244,17 +4271,24 @@ boolean create_event_space(int length) {
 }
 
 
-int lives_list_strcmp_index(LiVESList *list, livesconstpointer data) {
+int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive) {
   // find data in list, using strcmp
-
   int i;
   int len;
   if (list == NULL) return -1;
 
   len = lives_list_length(list);
 
-  for (i = 0; i < len; i++) {
-    if (!strcmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
+  if (case_sensitive) {
+    for (i = 0; i < len; i++) {
+      if (!lives_utf8_strcmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
+      if (!lives_utf8_strcmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
+    }
+  } else {
+    for (i = 0; i < len; i++) {
+      if (!lives_utf8_strcasecmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
+      if (!lives_utf8_strcasecmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
+    }
   }
   return -1;
 }
@@ -5050,12 +5084,17 @@ char *get_nth_token(const char *string, const char *delim, int pnumber) {
 
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2) {
-  char *s1u = lives_utf8_normalize(s1, strlen(s1), LIVES_NORMALIZE_DEFAULT);
-  char *s2u = lives_utf8_normalize(s1, strlen(s1), LIVES_NORMALIZE_DEFAULT);
-  int ret = strcmp(s1, s2);
+  char *s1u = lives_utf8_casefold(s1, -1);
+  char *s2u = lives_utf8_casefold(s2, -1);
+  int ret = lives_utf8_strcmp(s1u, s2u);
   lives_free(s1u);
   lives_free(s2u);
   return ret;
+}
+
+
+LIVES_GLOBAL_INLINE int lives_utf8_strcmp(const char *s1, const char *s2) {
+  return lives_utf8_collate(s1, s2);
 }
 
 
@@ -5305,7 +5344,7 @@ LiVESList *lives_list_delete_string(LiVESList *list, char *string) {
 
   LiVESList *xlist = list;
   while (xlist != NULL) {
-    if (!strcmp((char *)xlist->data, string)) {
+    if (!lives_utf8_strcasecmp((char *)xlist->data, string)) {
       lives_free((livespointer)xlist->data);
       list = lives_list_delete_link(list, xlist);
       return list;
@@ -5346,7 +5385,7 @@ boolean string_lists_differ(LiVESList *alist, LiVESList *blist) {
     LiVESList *qlist = blist;
     boolean matched = FALSE;
     while (qlist != NULL) {
-      if (!(strcmp((char *)plist->data, (char *)qlist->data))) {
+      if (!(lives_utf8_strcasecmp((char *)plist->data, (char *)qlist->data))) {
         matched = TRUE;
         break;
       }

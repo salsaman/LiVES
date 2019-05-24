@@ -205,8 +205,14 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 
   if (width < 32 || height < 32) return NULL;
 
-  ctx = lives_widget_get_lingo_context(widget);
+  ctx = lives_widget_create_lingo_context(widget);
+  if (ctx == NULL || !LINGO_IS_CONTEXT(ctx)) return NULL;
+
   layout = lingo_layout_new(ctx);
+  if (layout == NULL || !LINGO_IS_LAYOUT(layout)) {
+    lives_object_unref(ctx);
+    return NULL;
+  }
 
   readytext = lives_strdup("");
 
@@ -346,6 +352,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #ifdef DEBUG_MSGS
   g_print("|%s| FINAL !!\n", readytext);
 #endif
+  lives_object_unref(ctx);
   return layout;
 #endif
   return NULL;

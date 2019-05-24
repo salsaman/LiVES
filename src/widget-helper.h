@@ -61,13 +61,14 @@ typedef PangoContext LingoContext;
 #define lingo_painter_show_layout(a, b) pango_cairo_show_layout(a, b)
 #endif
 #ifdef GUI_GTK
-#define lives_widget_get_lingo_context(a) gtk_widget_get_pango_context(a)
+#define lives_widget_create_lingo_context(a) gtk_widget_create_pango_context(a)
 #endif
 #define lingo_layout_get_size(a, b, c, d, e) pango_layout_get_size(a, b, c)
 #define lingo_layout_new(a) pango_layout_new(a)
 #define lingo_layout_set_markup(a, b, c) pango_layout_set_markup(a, b, c)
 
 #define LINGO_IS_LAYOUT(a) PANGO_IS_LAYOUT(a)
+#define LINGO_IS_CONTEXT(a) PANGO_IS_CONTEXT(a)
 
 #define LINGO_SCALE PANGO_SCALE
 #endif
@@ -1048,6 +1049,9 @@ typedef int lives_expand_t;
 #define LIVES_SHOULD_EXPAND_EXTRA_FOR(box) ((LIVES_IS_HBOX(box) && LIVES_SHOULD_EXPAND_EXTRA_WIDTH) || (LIVES_IS_VBOX(box) && LIVES_SHOULD_EXPAND_EXTRA_HEIGHT))
 
 #define LIVES_SHOULD_EXPAND_FOR(box) (LIVES_SHOULD_EXPAND_DEFAULT_FOR(box) || LIVES_SHOULD_EXPAND_EXTRA_FOR(box))
+
+LiVESList *get_textsizes_list(void);
+const char *lives_textsize_to_string(int val);
 
 typedef struct {
   boolean no_gui; ///< show nothing !

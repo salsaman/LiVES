@@ -1,6 +1,6 @@
 // merge.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2018 (salsaman+lives@gmail.com)
+// (c) G. Finch 2003 - 2019 (salsaman+lives@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -245,7 +245,7 @@ void on_trans_method_changed(LiVESCombo *combo, livespointer user_data) {
 
   int idx;
 
-  if (!strlen(txt)) {
+  if (strlen(txt) == 0) {
     lives_free(txt);
     return;
   }
@@ -255,7 +255,7 @@ void on_trans_method_changed(LiVESCombo *combo, livespointer user_data) {
   lives_container_foreach(LIVES_CONTAINER(merge_opts->param_vbox), bang, NULL);
   on_paramwindow_cancel_clicked(NULL, rfx);
 
-  idx = lives_list_strcmp_index(merge_opts->trans_list, txt);
+  idx = lives_list_strcmp_index(merge_opts->trans_list, txt, TRUE);
 
   lives_free(txt);
 

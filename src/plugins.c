@@ -2219,7 +2219,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
   while (decoder_plugin != NULL) {
     lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
 
-    if (lives_list_strcmp_index(disabled, dpsys->name) != -1) {
+    if (lives_list_strcmp_index(disabled, dpsys->name, FALSE) != -1) {
       // check if (user) disabled this decoder
       decoder_plugin = decoder_plugin->next;
       continue;
@@ -2550,7 +2550,7 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
     ltext = lives_strdup_printf("%s   (%s)", dpsys->name, (*dpsys->version)());
 
     widget_opts.mnemonic_label = FALSE;
-    checkbutton = lives_standard_check_button_new(ltext, lives_list_strcmp_index(future_prefs->disabled_decoders, dpsys->name) == -1,
+    checkbutton = lives_standard_check_button_new(ltext, lives_list_strcmp_index(future_prefs->disabled_decoders, dpsys->name, FALSE) == -1,
                   LIVES_BOX(hbox), NULL);
     widget_opts.mnemonic_label = TRUE;
 

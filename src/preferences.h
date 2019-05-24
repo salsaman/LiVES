@@ -329,6 +329,9 @@ typedef struct {
 #define DEF_DS_CRIT_LEVEL 250000000 // 250MB
   uint64_t ds_crit_level; ///< diskspace critical level bytes
 
+#define DEF_MSG_TEXTSIZE 4 // LIVES_FONTSIZE_LARGE (via lives_textsize_to_string())
+#define DEF_MAX_MSGS 10000
+
 #define LIVES_CDISK_LEAVE_ORPHAN_SETS (1<<0)
 #define LIVES_CDISK_LEAVE_BFILES (1<<1)
 #define LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS (1<<2)
@@ -381,7 +384,7 @@ typedef struct {
 
   int max_messages;
 
-#define DEF_MAX_MESSAGES 10000
+  int msg_textsize;
 } _prefs;
 
 enum {
@@ -520,6 +523,8 @@ typedef struct {
   LiVESWidget *cbutton_mab;
   LiVESWidget *cbutton_infot;
   LiVESWidget *cbutton_infob;
+  LiVESWidget *fb_filebutton;
+  LiVESWidget *se_filebutton;
   LiVESWidget *theme_style2;
   LiVESWidget *theme_style3;
   LiVESWidget *theme_style4;
@@ -543,7 +548,7 @@ typedef struct {
   LiVESWidget *spinbutton_ocp;
   LiVESWidget *nmessages_spin;
   LiVESWidget *msgs_unlimited;
-  LiVESWidget *msg_fontsize_combo;
+  LiVESWidget *msg_textsize_combo;
   LiVESWidget *acodec_combo;
   LiVESWidget *spinbutton_osc_udp;
   LiVESWidget *spinbutton_rte_keys;
@@ -794,6 +799,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_CLEAR_DISK_OPTS "clear_disk_opts"
 
 #define PREF_MAX_DISP_VTRACKS "max_disp_vtracks"
+
+#define PREF_MAX_MSGS "max_text_messages"
+#define PREF_MSG_TEXTSIZE "msg_textsize"
 
 #define PREF_RTE_KEYS_VIRTUAL "rte_keys_virtual"
 

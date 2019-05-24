@@ -2453,7 +2453,7 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
   boolean was_reinited = FALSE;
 
   int old_index = get_int_param(param->value);
-  int new_index = lives_list_strcmp_index(param->list, txt);
+  int new_index = lives_list_strcmp_index(param->list, txt, TRUE);
   int copyto = -1;
 
   lives_free(txt);

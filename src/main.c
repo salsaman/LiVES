@@ -396,6 +396,8 @@ static boolean pre_init(void) {
   boolean needs_update = FALSE;
 #endif
 
+  char buff[64];
+
   double screen_scale;
 
   register int i;
@@ -594,7 +596,16 @@ static boolean pre_init(void) {
 
   weed_memory_init();
 
-  prefs->max_messages = DEF_MAX_MESSAGES;
+  get_pref(PREF_MAX_MSGS, buff, 64);
+  if (strlen(buff) == 0) {
+    prefs->max_messages = DEF_MAX_MSGS;
+  } else prefs->max_messages = atoi(buff);
+
+  get_pref(PREF_MSG_TEXTSIZE, buff, 64);
+  if (strlen(buff) == 0) {
+    prefs->msg_textsize = DEF_MSG_TEXTSIZE;
+  } else prefs->msg_textsize = atoi(buff);
+
   mainw->msg_list = NULL;
   mainw->n_messages = 0;
   mainw->ref_message = NULL;
@@ -1990,15 +2001,14 @@ boolean set_palette_colours(boolean force_reload) {
 
   lcol.red = 0;
 
-  // if theme is not "none" we dont find stuff in prefs then we must reload
-  if (lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]) &&
+  // if theme is not "none" and we dont find stuff in prefs then we must reload
+  if (lives_ascii_strcasecmp(future_prefs->theme, "none") &&
       !get_colour_pref(THEME_DETAIL_STYLE, &lcol)) {
     force_reload = TRUE;
   } else {
     // pull our colours from normal prefs
     palette->style = lcol.red;
-
-    if (lives_ascii_strcasecmp(future_prefs->theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
+    if (lives_ascii_strcasecmp(future_prefs->theme, "none")) {
       get_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path, PATH_MAX);
       get_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path, PATH_MAX);
 
@@ -3165,7 +3175,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");

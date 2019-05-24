@@ -1461,8 +1461,9 @@ void param_set_from_dialog(lives_param_t *copy_param, rfx_build_window_t *rfxbui
   case LIVES_PARAM_STRING_LIST:
     copy_param->dp = 0;
     copy_param->def = lives_malloc(sizdbl);
-    set_int_param(copy_param->def, lives_list_strcmp_index(copy_param->list,
-                  lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_def_combo))));
+    ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_def_combo));
+    set_int_param(copy_param->def, lives_list_strcmp_index(copy_param->list, ctext, TRUE));
+    lives_free(ctext);
     break;
   case LIVES_PARAM_COLRGB24:
     copy_param->def = lives_malloc(3 * sizint);
@@ -3209,7 +3210,9 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
       lives_free(buf);
       lives_fputs("\n</properties>\n\n", sfile);
       lives_fputs("<language_code>\n", sfile);
-      array = lives_strsplit(lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->langc_combo)), " ", -1);
+      tmp = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->langc_combo));
+      array = lives_strsplit(tmp, " ", -1);
+      lives_free(tmp);
       lives_fputs(array[0], sfile);
       lives_strfreev(array);
       lives_fputs("\n</language_code>\n\n", sfile);

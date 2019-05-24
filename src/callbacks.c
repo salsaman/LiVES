@@ -484,6 +484,9 @@ void lives_exit(int signum) {
   pconx_delete_all();
   cconx_delete_all();
 
+  mainw->msg_adj = NULL;
+  free_n_msgs(mainw->n_messages);
+
   if (mainw->multitrack != NULL) {
     event_list_free_undos(mainw->multitrack);
 

@@ -3708,7 +3708,7 @@ static void select_block(lives_mt *mt) {
 
 
 LIVES_LOCAL_INLINE int pkg_in_list(char *pkgstring) {
-  return lives_list_strcmp_index(pkg_list, pkgstring) + 1;
+  return lives_list_strcmp_index(pkg_list, pkgstring, FALSE) + 1;
 }
 
 
@@ -6396,6 +6396,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->user_signed_endian = xse;
     mt->opts.pertrack_audio = ptaud;
     mt->opts.back_audio_tracks = btaud;
+  }
+
+  if (rdet != NULL) {
     lives_free(rdet->encoder_name);
     lives_freep((void **)&rdet);
     lives_freep((void **)&resaudw);
@@ -8684,7 +8687,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_app_paintable(mt->msg_area, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mt->message_box), 0);
   lives_box_pack_start(LIVES_BOX(mt->message_box), mt->msg_area, TRUE, TRUE, 0);
-  lives_widget_set_font_size(mt->msg_area, LIVES_WIDGET_STATE_NORMAL, LIVES_FONT_SIZE_LARGE);
 
   mt->msg_scrollbar = mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
   lives_box_pack_start(LIVES_BOX(mt->message_box), mt->msg_scrollbar, FALSE, TRUE, 0);
@@ -10853,6 +10855,11 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   if (!get_new_handle(mainw->current_file, NULL)) {
     mainw->current_file = orig_file;
+    if (rdet != NULL) {
+      lives_free(rdet->encoder_name);
+      lives_freep((void **)&rdet);
+      lives_freep((void **)&resaudw);
+    }
     return FALSE; // show dialog again
   }
 
@@ -10875,7 +10882,14 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   // if we have an existing event list, we will quantise it to the selected fps
   if (event_list != NULL) {
     weed_plant_t *qevent_list = quantise_events(event_list, cfile->fps, FALSE);
-    if (qevent_list == NULL) return FALSE; // memory error
+    if (qevent_list == NULL) {
+      if (rdet != NULL) {
+        lives_free(rdet->encoder_name);
+        lives_freep((void **)&rdet);
+        lives_freep((void **)&resaudw);
+      }
+      return FALSE; // memory error
+    }
     event_list_replace_events(event_list, qevent_list);
     weed_set_double_value(event_list, WEED_LEAF_FPS, cfile->fps);
     event_list_rectify(NULL, event_list);
@@ -10901,7 +10915,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
 
   ///////// CREATE MULTITRACK CONTENTS ////////////
-  multi = multitrack(event_list, orig_file, cfile->fps);
+  multi = multitrack(event_list, orig_file, cfile->fps); // also frees rdet
   ////////////////////////////////////////////////
 
   if (mainw->stored_event_list != NULL) {

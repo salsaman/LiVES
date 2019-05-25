@@ -4508,6 +4508,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
     lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
     lives_widget_destroy(e_rec_dialog);
     lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_context_update();
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
       if (mainw->current_file > -1) cfile->redoable = FALSE;
@@ -5362,11 +5363,11 @@ render_details *create_render_details(int type) {
   char *tmp, *tmp2, *tmp3;
   char *title;
 
-  boolean specified = FALSE;
   boolean needs_new_encoder = FALSE;
 
   int width;
   int height;
+  int spht;
 
   int scrw = GUI_SCREEN_WIDTH;
   int scrh = GUI_SCREEN_HEIGHT;
@@ -5376,13 +5377,11 @@ render_details *create_render_details(int type) {
 
   mainw->no_context_update = TRUE;
 
-  if (type == 1) specified = TRUE;
-
   rdet = (render_details *)lives_malloc(sizeof(render_details));
 
   rdet->is_encoding = FALSE;
 
-  if (!specified && type != 4) {
+  if (type != 1 && type != 4) {
     rdet->height = prefs->mt_def_height;
     rdet->width = prefs->mt_def_width;
     rdet->fps = prefs->mt_def_fps;
@@ -5414,13 +5413,13 @@ render_details *create_render_details(int type) {
   width = scrw - SCR_WIDTH_SAFETY;
   height = scrh - SCR_HEIGHT_SAFETY;
 
-  if (type == 1) {
+  if (1 || type == 1) {
     width /= 2;
     height /= 2;
   }
 
   // needs to be set as large as possible, we will shrink it later, but it must not expand
-  rdet->dialog = lives_standard_dialog_new(title, FALSE, width, height);
+  rdet->dialog = lives_standard_dialog_new(title, FALSE, 8, 8);
 
   lives_free(title);
 
@@ -5431,11 +5430,11 @@ render_details *create_render_details(int type) {
 
   top_vbox = lives_vbox_new(FALSE, 0);
 
-  if (!specified) {
+  if (type != 1) {
     dbw = widget_opts.border_width;
     widget_opts.border_width = 0;
     // need to set a large enough default here
-    scrollw = lives_standard_scrolled_window_new(scrw * .8, scrh * .75, top_vbox);
+    scrollw = lives_standard_scrolled_window_new(scrw * .8, scrh * 1., top_vbox);
     widget_opts.border_width = dbw;
   } else
     scrollw = lives_standard_scrolled_window_new(scrw * .3, scrh * .4, top_vbox);
@@ -5518,7 +5517,11 @@ render_details *create_render_details(int type) {
 
   ////// add audio part
   if (type == 3) resaudw = create_resaudw(3, rdet, top_vbox); // enter mt
-  else if (type != 1) resaudw = create_resaudw(10, rdet, top_vbox); // render to clip / change during mt
+  else if (type != 1) {
+    if (!(type == 4 && cfile->achans == 0)) {
+      resaudw = create_resaudw(10, rdet, top_vbox); // render to clip / change during mt
+    }
+  }
 
   if (type == 3) {
     // extra opts
@@ -5548,7 +5551,7 @@ render_details *create_render_details(int type) {
   if (capable->has_encoder_plugins) encoders = get_plugin_list(PLUGIN_ENCODERS, TRUE, NULL, NULL);
 #endif
 
-  if (!specified) encoders = filter_encoders_by_img_ext(encoders, prefs->image_ext);
+  if (type != 1) encoders = filter_encoders_by_img_ext(encoders, prefs->image_ext);
   else {
     LiVESList *encs = encoders = filter_encoders_by_img_ext(encoders, get_image_ext_for_type(cfile->img_type));
     needs_new_encoder = TRUE;
@@ -5561,7 +5564,7 @@ render_details *create_render_details(int type) {
     }
   }
 
-  if (!specified) {
+  if (type != 1) {
     add_hsep_to_box(LIVES_BOX(top_vbox));
     if (type != 3) {
       label = lives_standard_label_new(_("Options"));
@@ -5590,7 +5593,7 @@ render_details *create_render_details(int type) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
 
-  if (!specified) {
+  if (type != 1) {
     rdet->encoder_name = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
     encoders = lives_list_prepend(encoders, lives_strdup(rdet->encoder_name));
   } else {
@@ -5613,7 +5616,7 @@ render_details *create_render_details(int type) {
 
   lives_list_free_all(&encoders);
 
-  if (!specified) {
+  if (type != 1) {
     ofmt = lives_list_append(ofmt, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
   } else {
     add_fill_to_box(LIVES_BOX(vbox));
@@ -5661,7 +5664,7 @@ render_details *create_render_details(int type) {
   alabel = lives_standard_label_new(_("Audio format"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  if (!specified) {
+  if (type != 1) {
     // add "Any" string
     lives_list_free_all(&prefs->acodec_list);
 
@@ -5706,7 +5709,7 @@ render_details *create_render_details(int type) {
   if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
     lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-    if (!specified) {
+    if (type != 1) {
       lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH * 2, -1);
     }
   } else if (LIVES_IS_BOX(daa)) add_fill_to_box(LIVES_BOX(daa));
@@ -5722,7 +5725,7 @@ render_details *create_render_details(int type) {
     }
   }
 
-  if (!specified) {
+  if (type != 1) {
     rdet->okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
     lives_widget_set_size_request(rdet->okbutton, DEF_BUTTON_WIDTH * 2, -1);
   } else  {
@@ -5747,26 +5750,35 @@ render_details *create_render_details(int type) {
   mainw->no_context_update = FALSE;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+
   // shrinkwrap to minimum
   spillover = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(top_vbox), spillover, TRUE, TRUE, 0); // mop up extra height
   lives_widget_show_all(rdet->dialog);
   lives_widget_process_updates(rdet->dialog, TRUE);
   lives_widget_context_update();
-  height = lives_widget_get_allocation_height(scrollw) - lives_widget_get_allocation_height(spillover);
+
+  height = lives_widget_get_allocation_height(scrollw) - (spht = lives_widget_get_allocation_height(spillover));
   width = lives_widget_get_allocation_width(scrollw);
+
   lives_widget_destroy(spillover); // remove extra height
+  lives_widget_process_updates(rdet->dialog, TRUE);
+  lives_widget_context_update();
 
   if (height > 0) lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(scrollw), height);
   if (width > 0) lives_scrolled_window_set_min_content_width(LIVES_SCROLLED_WINDOW(scrollw), width);
+  lives_widget_set_size_request(scrollw, width, height);
+
+  height = lives_widget_get_allocation_height(rdet->dialog) - spht;
+  width = lives_widget_get_allocation_width(rdet->dialog);
+  lives_widget_set_size_request(rdet->dialog, width, height);
+
+  /* lives_widget_process_updates(rdet->dialog, TRUE); */
+  /* lives_widget_context_update(); */
 
   if (type != 1) {
-    // part for expander, need to show window at current size, then make it resizable
-    lives_widget_show_all(rdet->dialog);
-    lives_widget_process_updates(rdet->dialog, TRUE);
-    lives_widget_context_update();
+    // for expander, need to make it resizable
     lives_window_set_resizable(LIVES_WINDOW(rdet->dialog), TRUE);
-    lives_widget_process_updates(rdet->dialog, TRUE);
   }
 #else
   lives_widget_show_all(rdet->dialog);

@@ -282,6 +282,8 @@ LiVESWidget *lives_label_get_mnemonic_widget(LiVESLabel *);
 
 boolean lives_label_set_selectable(LiVESLabel *, boolean setting);
 
+//////////
+
 LiVESWidget *lives_button_new(void);
 LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label);
 LiVESWidget *lives_button_new_with_label(const char *label);
@@ -292,6 +294,8 @@ LiVESWidget *lives_button_get_label_widget(LiVESButton *);
 boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
 boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);
 boolean lives_button_set_focus_on_click(LiVESButton *, boolean focus);
+
+/////////////////////////////
 
 LiVESWidget *lives_check_button_new(void);
 LiVESWidget *lives_check_button_new_with_label(const char *label);
@@ -883,6 +887,8 @@ boolean lives_lock_button_get_locked(LiVESButton *lockbutton);
 
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);
 
+LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *dialog, const char *stock_id, const char *label, int response_id);
+
 LiVESWidget *lives_standard_hruler_new(void);
 
 LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child);
@@ -969,12 +975,13 @@ boolean set_submenu_colours(LiVESMenu *, LiVESWidgetColor *colf, LiVESWidgetColo
 
 boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
 boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
+boolean widget_inact_toggle(LiVESWidget *, LiVESToggleButton *);
 boolean label_act_lockbutton(LiVESWidget *, LiVESXEventButton *, LiVESButton *);
 
 boolean toggle_button_toggle(LiVESToggleButton *);
 
 void funkify_dialog(LiVESWidget *dialog);
-boolean draw_cool_toggle(LiVESWidget *, lives_painter_t *, livespointer);
+EXPOSE_FN_PROTOTYPE(draw_cool_toggle);
 void lives_cool_toggled(LiVESWidget *tbutton, livespointer);
 
 boolean unhide_cursor(LiVESXWindow *);

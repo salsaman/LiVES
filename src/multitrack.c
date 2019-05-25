@@ -21462,7 +21462,7 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   boolean response;
   char *msg;
 
-  rdet = create_render_details(4); // WARNING !! - rdet is global in events.h
+  rdet = create_render_details(4);
   rdet->enc_changed = FALSE;
   do {
     rdet->suggestion_followed = FALSE;
@@ -21473,19 +21473,24 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
   } while (rdet->suggestion_followed);
 
-  xarate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
-  xachans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
-  xasamps = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
+  if (resaudw != NULL) {
+    xarate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
+    xachans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
+    xasamps = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
 
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
-    xse = AFORM_UNSIGNED;
-  } else cfile->signed_endian = 0;
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
-    xse |= AFORM_BIG_ENDIAN;
-  }
+    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
+      xse = AFORM_UNSIGNED;
+    } else xse = 0;
+    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
+      xse |= AFORM_BIG_ENDIAN;
+    }
 
-  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton))) {
-    xachans = 0;
+    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton))) {
+      xachans = 0;
+    }
+  } else {
+    xachans = xarate = xasamps = 0;
+    xse = cfile->signed_endian;
   }
 
   if (response == LIVES_RESPONSE_CANCEL) {

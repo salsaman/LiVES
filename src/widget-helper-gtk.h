@@ -303,7 +303,7 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #else
 // gtk+ 2
 #define EXPOSE_FN_DECL(fn, widget) boolean fn(LiVESWidget *widget, LiVESXEventExpose *event, livespointer user_data) { \
-    lives_painter_t *cairo = NULL;
+    lives_painter_t *cr = lives_painter_create_from_widget(widget);
 #define EXPOSE_FN_PAINTER
 #define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, LiVESXEventExpose *, livespointer);
 #endif

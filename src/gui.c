@@ -4460,7 +4460,7 @@ void splash_init(void) {
     mainw->splash_label = lives_standard_label_new("");
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-    lives_box_pack_start(LIVES_BOX(vbox), mainw->splash_label, TRUE, TRUE, 0);
+    lives_box_pack_start(LIVES_BOX(vbox), mainw->splash_label, TRUE, TRUE, 4. * widget_opts.scale);
     lives_widget_set_valign(vbox, LIVES_ALIGN_END);
 
     mainw->splash_progress = lives_progress_bar_new();

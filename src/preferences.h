@@ -420,6 +420,9 @@ enum {
 typedef struct {
   ulong encoder_ofmt_fn;
   ulong encoder_name_fn;
+  ulong close_func;
+  LiVESAccelGroup *accel_group;
+
   LiVESWidget *prefs_dialog;
 
   LiVESWidget *prefs_list;
@@ -453,7 +456,7 @@ typedef struct {
   LiVESWidget *scrollw_right_jack;
   LiVESWidget *scrollw_right_midi;
   LiVESWidget *right_shown;
-  LiVESWidget *cancelbutton;
+  LiVESWidget *revertbutton;
   LiVESWidget *applybutton;
   LiVESWidget *closebutton;
   LiVESWidget *stop_screensaver_check;
@@ -623,6 +626,7 @@ typedef struct {
   LiVESWidget *midi_hbox;
   LiVESWidget *frameblank_entry;
   LiVESWidget *sepimg_entry;
+  LiVESWidget *dialog_hpaned;
   LiVESTreeSelection *selection;
 
   boolean ignore_apply; ///< dont light the apply button when thing changes (for external calls), normally FALSE
@@ -679,7 +683,7 @@ _prefsw *prefsw;
 void set_acodec_list_from_allowed(_prefsw *, render_details *);
 void  rdet_acodec_changed(LiVESCombo *acodec_combo, livespointer user_data);
 
-_prefsw *create_prefs_dialog(void);
+_prefsw *create_prefs_dialog(LiVESWidget *saved_dialog);
 
 boolean on_prefs_delete_event(LiVESWidget *, LiVESXEvent *, livespointer prefsw);
 

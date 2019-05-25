@@ -27,6 +27,10 @@
 #include "omc-learn.h"
 #endif
 
+static LiVESWidget *saved_closebutton;
+static LiVESWidget *saved_applybutton;
+static LiVESWidget *saved_revertbutton;
+
 static int nmons;
 
 static uint32_t prefs_current_page;
@@ -2443,8 +2447,9 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data) {
   if (prefsw->ignore_apply) return;
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), TRUE);
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->revertbutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
+  lives_widget_grab_default_special(prefsw->applybutton);
 }
 
 
@@ -2520,10 +2525,9 @@ static void theme_widgets_set_sensitive(LiVESCombo *combo, livespointer xprefsw)
 /*
  * Function creates preferences dialog
  */
-_prefsw *create_prefs_dialog(void) {
+_prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   LiVESWidget *dialog_vbox_main;
   LiVESWidget *dialog_table;
-  LiVESWidget *dialog_hpaned;
   LiVESWidget *list_scroll;
 
   LiVESPixbuf *pixbuf_multitrack;
@@ -2588,8 +2592,6 @@ _prefsw *create_prefs_dialog(void) {
 
   LiVESSList *asrc_group = NULL;
 
-  LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-
   // drop down lists
   LiVESList *themes = NULL;
   LiVESList *ofmt = NULL;
@@ -2623,11 +2625,14 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->right_shown = NULL;
   mainw->prefs_need_restart = FALSE;
 
-  // Create new modal dialog window and set some attributes
-  prefsw->prefs_dialog = lives_standard_dialog_new(_("Preferences"), FALSE, PREFWIN_WIDTH, PREFWIN_HEIGHT);
-  lives_window_add_accel_group(LIVES_WINDOW(prefsw->prefs_dialog), accel_group);
+  prefsw->accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
-  lives_window_set_default_size(LIVES_WINDOW(prefsw->prefs_dialog), PREFWIN_WIDTH, PREFWIN_HEIGHT);
+  if (saved_dialog == NULL) {
+    // Create new modal dialog window and set some attributes
+    prefsw->prefs_dialog = lives_standard_dialog_new(_("Preferences"), FALSE, PREFWIN_WIDTH, PREFWIN_HEIGHT);
+    lives_window_add_accel_group(LIVES_WINDOW(prefsw->prefs_dialog), prefsw->accel_group);
+    lives_window_set_default_size(LIVES_WINDOW(prefsw->prefs_dialog), PREFWIN_WIDTH, PREFWIN_HEIGHT);
+  } else prefsw->prefs_dialog = saved_dialog;
 
   prefsw->ignore_apply = FALSE;
 
@@ -2636,8 +2641,8 @@ _prefsw *create_prefs_dialog(void) {
   lives_widget_show(dialog_vbox_main);
 
   // Create dialog horizontal panels
-  dialog_hpaned = lives_hpaned_new();
-  lives_widget_show(dialog_hpaned);
+  prefsw->dialog_hpaned = lives_hpaned_new();
+  lives_widget_show(prefsw->dialog_hpaned);
 
   // Create dialog table for the right panel controls placement
   dialog_table = lives_table_new(1, 1, FALSE);
@@ -2654,7 +2659,7 @@ _prefsw *create_prefs_dialog(void) {
   lives_tree_view_set_headers_visible(LIVES_TREE_VIEW(prefsw->prefs_list), FALSE);
 
   // Place panels into main vbox
-  lives_box_pack_start(LIVES_BOX(dialog_vbox_main), dialog_hpaned, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox_main), prefsw->dialog_hpaned, TRUE, TRUE, 0);
 
   // Place list on the left panel
   pref_init_list(prefsw->prefs_list);
@@ -2670,15 +2675,15 @@ _prefsw *create_prefs_dialog(void) {
 
   if (palette->style & STYLE_1) {
     lives_widget_apply_theme(dialog_table, LIVES_WIDGET_STATE_NORMAL);
-    lives_widget_apply_theme(dialog_hpaned, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(prefsw->dialog_hpaned, LIVES_WIDGET_STATE_NORMAL);
   }
 
-  lives_paned_pack(1, LIVES_PANED(dialog_hpaned), list_scroll, TRUE, FALSE);
+  lives_paned_pack(1, LIVES_PANED(prefsw->dialog_hpaned), list_scroll, TRUE, FALSE);
   // Place table on the right panel
 
-  lives_paned_pack(2, LIVES_PANED(dialog_hpaned), dialog_table, TRUE, FALSE);
+  lives_paned_pack(2, LIVES_PANED(prefsw->dialog_hpaned), dialog_table, TRUE, FALSE);
 
-  lives_paned_set_position(LIVES_PANED(dialog_hpaned), PREFS_PANED_POS);
+  lives_paned_set_position(LIVES_PANED(prefsw->dialog_hpaned), PREFS_PANED_POS);
 
   // -------------------,
   // gui controls       |
@@ -2850,10 +2855,16 @@ _prefsw *create_prefs_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->nmessages_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->nmessages_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+
   prefsw->msgs_unlimited = lives_standard_check_button_new(_("_Unlimited"),
                            prefs->max_messages < 0, LIVES_BOX(hbox), NULL);
 
   toggle_sets_insensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited), prefsw->nmessages_spin);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->nmessages_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                       LIVES_GUI_CALLBACK(widget_inact_toggle), prefsw->msgs_unlimited);
+
 
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->msgs_unlimited), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -4569,9 +4580,18 @@ _prefsw *create_prefs_dialog(void) {
 
 #endif
 
+  // expand FFS...
+  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
+  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
+  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
+
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_jack));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
+  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
+  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
 
   label = lives_standard_label_new(_("Jack audio"));
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
@@ -4800,41 +4820,41 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_signal_connect(prefsw->selection, LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_prefDomainChanged), (livespointer)prefsw);
 
-  // Preferences 'Revert' button
-  prefsw->cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED, NULL);
-  lives_widget_show(prefsw->cancelbutton);
-  lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->cancelbutton, LIVES_RESPONSE_CANCEL);
-  lives_widget_set_size_request(prefsw->cancelbutton, DEF_BUTTON_WIDTH * 2, -1);
-  lives_container_set_border_width(LIVES_CONTAINER(prefsw->cancelbutton), widget_opts.border_width);
+  if (saved_dialog == NULL) {
+    widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;
+    // Preferences 'Revert' button
+    prefsw->revertbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog), LIVES_STOCK_REVERT_TO_SAVED, NULL,
+                           LIVES_RESPONSE_CANCEL);
+    lives_widget_show(prefsw->revertbutton);
+    lives_widget_set_can_focus(prefsw->revertbutton, TRUE);
 
-  lives_widget_set_can_focus(prefsw->cancelbutton, TRUE);
+    // Preferences 'Apply' button
+    prefsw->applybutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog), LIVES_STOCK_APPLY, NULL,
+                          LIVES_RESPONSE_ACCEPT);
+    lives_widget_show(prefsw->applybutton);
+    lives_widget_set_can_focus_and_default(prefsw->applybutton);
+
+    // Preferences 'Close' button
+    prefsw->closebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog), LIVES_STOCK_CLOSE, NULL, LIVES_RESPONSE_OK);
+    lives_widget_show(prefsw->closebutton);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    lives_widget_set_can_focus_and_default(prefsw->closebutton);
+  } else {
+    prefsw->revertbutton = saved_revertbutton;
+    prefsw->applybutton = saved_applybutton;
+    prefsw->closebutton = saved_closebutton;
+    lives_widget_set_sensitive(prefsw->closebutton, TRUE);
+  }
+
+  lives_widget_add_accelerator(prefsw->closebutton, LIVES_WIDGET_CLICKED_SIGNAL, prefsw->accel_group,
+                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   // Set 'Close' button as inactive since there are no changes yet
-  lives_widget_set_sensitive(prefsw->cancelbutton, FALSE);
-
-  // Preferences 'Apply' button
-  prefsw->applybutton = lives_standard_button_new_from_stock(LIVES_STOCK_APPLY, NULL);
-  lives_widget_show(prefsw->applybutton);
-  lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->applybutton, 0);
-  lives_widget_set_size_request(prefsw->applybutton, DEF_BUTTON_WIDTH * 2, -1);
-  lives_container_set_border_width(LIVES_CONTAINER(prefsw->applybutton), widget_opts.border_width);
-
-  lives_widget_set_can_focus_and_default(prefsw->applybutton);
-  // Set 'Apply' button as inactive since there is no changes yet
+  lives_widget_set_sensitive(prefsw->revertbutton, FALSE);
+  // Set 'Apply' button as inactive since there are no changes yet
   lives_widget_set_sensitive(prefsw->applybutton, FALSE);
 
-  // Preferences 'Close' button
-  prefsw->closebutton = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, NULL);
-  lives_widget_show(prefsw->closebutton);
-  lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, LIVES_RESPONSE_OK);
-  lives_widget_set_size_request(prefsw->closebutton, DEF_BUTTON_WIDTH * 2, -1);
-  lives_container_set_border_width(LIVES_CONTAINER(prefsw->closebutton), widget_opts.border_width);
-
-  lives_widget_set_can_focus_and_default(prefsw->closebutton);
-  lives_widget_grab_default(prefsw->closebutton);
-
-  lives_widget_add_accelerator(prefsw->closebutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  lives_widget_grab_default_special(prefsw->closebutton);
 
   // Connect signals for 'Apply' button activity handling
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fore), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
@@ -5215,21 +5235,23 @@ _prefsw *create_prefs_dialog(void) {
                        LIVES_GUI_CALLBACK(on_osc_enable_toggled),
                        (livespointer)prefsw->enable_OSC_start);
 #endif
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_prefs_revert_clicked),
-                       NULL);
+  if (saved_dialog == NULL) {
+    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->revertbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_prefs_revert_clicked),
+                         NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->closebutton), LIVES_WIDGET_CLICKED_SIGNAL,
+    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->prefs_dialog), LIVES_WIDGET_DELETE_EVENT,
+                         LIVES_GUI_CALLBACK(on_prefs_close_clicked),
+                         NULL);
+
+    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->applybutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_prefs_apply_clicked),
+                         NULL);
+  }
+
+  prefsw->close_func = lives_signal_connect(LIVES_GUI_OBJECT(prefsw->closebutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_prefs_close_clicked),
                        prefsw);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->prefs_dialog), LIVES_WIDGET_DELETE_EVENT,
-                       LIVES_GUI_CALLBACK(on_prefs_close_clicked),
-                       NULL);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->applybutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_prefs_apply_clicked),
-                       NULL);
 
   lives_list_free_all(&audp);
 
@@ -5248,6 +5270,8 @@ _prefsw *create_prefs_dialog(void) {
 
 
 void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  LiVESWidget *saved_dialog = (LiVESWidget *)user_data;
+
   if (menuitem != NULL) prefs_current_page = -1;
 
   if (prefsw != NULL && prefsw->prefs_dialog != NULL) {
@@ -5258,7 +5282,7 @@ void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   future_prefs->disabled_decoders = lives_list_copy_strings(prefs->disabled_decoders);
 
-  prefsw = create_prefs_dialog();
+  prefsw = create_prefs_dialog(saved_dialog);
   lives_widget_show(prefsw->prefs_dialog);
   lives_window_set_position(LIVES_WINDOW(prefsw->prefs_dialog), LIVES_WIN_POS_CENTER_ALWAYS);
   lives_widget_queue_draw(prefsw->prefs_dialog);
@@ -5346,7 +5370,7 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY, prefsw->prefs_dialog);
 
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), FALSE);
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), FALSE);
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->revertbutton), FALSE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
 
   // Apply preferences
@@ -5430,6 +5454,7 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw) {
 
 
 void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
+  LiVESWidget *saved_dialog;
   register int i;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
@@ -5451,14 +5476,19 @@ void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_list_free_all(&future_prefs->disabled_decoders);
 
+  saved_dialog = prefsw->prefs_dialog;
+  saved_revertbutton = prefsw->revertbutton;
+  saved_applybutton = prefsw->applybutton;
+  saved_closebutton = prefsw->closebutton;
+  lives_signal_handler_disconnect(prefsw->closebutton, prefsw->close_func);
+  lives_widget_remove_accelerator(prefsw->closebutton, prefsw->accel_group, LIVES_KEY_Escape, (LiVESXModifierType)0);
+
+  lives_widget_destroy(prefsw->dialog_hpaned);
   lives_freep((void **)&prefsw);
 
-  on_preferences_activate(NULL, NULL);
-
-  lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
+  on_preferences_activate(NULL, saved_dialog);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-
 }
 
 

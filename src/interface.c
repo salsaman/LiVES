@@ -728,10 +728,10 @@ void redraw_timer_bars(double oldx, double newx, int which) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
   }
   if (newx > oldx) {
-    if ((int)(((newx - oldx) * scalex)) > 0) update_timer_bars(ROUND_I(oldx * scalex), 0, ROUND_I((newx - oldx) * scalex), 0, which);
+    update_timer_bars(ROUND_I(oldx * scalex), 0, ROUND_I((newx - oldx) * scalex), 0, which);
   } else {
     // not sure why we need to double the width, but otherwise we sometimes leave pixels on the RHS of end...
-    if ((int)(((oldx - newx) * scalex)) > 0) update_timer_bars(ROUND_I(newx * scalex), 0, ROUND_I((oldx - newx) * scalex  * 2.), 0, which);
+    update_timer_bars(ROUND_I(newx * scalex), 0, ROUND_I((oldx - newx) * scalex), 0, which);
   }
 }
 
@@ -3172,10 +3172,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 
         if (prefs->open_maximised) {
           lives_window_maximize(LIVES_WINDOW(chooser));
-          lives_widget_process_updates(chooser, TRUE);
-          lives_widget_context_update();
         }
-
         lives_widget_process_updates(chooser, TRUE);
         lives_widget_context_update();
       }
@@ -4270,7 +4267,11 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
   static int wiggle_room = 0;
   static int last_height = -1;
   static int last_textsize = -1;
-  LingoLayout *layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
+  LingoLayout *layout;
+
+  if (mainw->playing_file > -1) return FALSE;
+
+  layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 
   if (last_textsize == -1) last_textsize = prefs->msg_textsize;
 
@@ -4312,29 +4313,29 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
         lives_widget_hide(widget);
         lives_widget_hide(mainw->message_box);
 
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-        lives_widget_context_update();
+        /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
+        /* lives_widget_context_update(); */
 
         if (overflowx > 0 || overflowy > 0) {
           lives_widget_set_size_request(widget, mywidth, myheight);
           lives_widget_set_size_request(mainw->message_box, mywidth, myheight);
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-          lives_widget_context_update();
+          /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
+          /* lives_widget_context_update(); */
         }
 
         w = scr_width - bx;
         h = scr_height - by;
         lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-        lives_widget_context_update();
+        /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
+        /* lives_widget_context_update(); */
         lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-        lives_widget_context_update();
+        /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
+        /* lives_widget_context_update(); */
 
         if (prefs->open_maximised) {
           lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-          lives_widget_context_update();
+          /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
+          /* lives_widget_context_update(); */
         }
 
         lives_widget_show(widget);

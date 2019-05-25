@@ -2873,7 +2873,9 @@ void play_file(void) {
     if (mainw->sep_win) add_to_playframe();
 
     if (cfile->frames > 0) {
+      resize(1.);
       lives_widget_show_all(mainw->playframe);
+      lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
     }
 
     if (palette->style & STYLE_1) {

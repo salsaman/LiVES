@@ -401,7 +401,6 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
 LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame, boolean noblanks) {
   LiVESPixbuf *thumbnail = NULL, *pixbuf;
   LiVESError *error = NULL;
-  char *buf;
 
   boolean tried_all = FALSE;
   boolean needs_idlefunc = FALSE;
@@ -435,11 +434,7 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
       thumbnail = pull_lives_pixbuf_at_size(file, frame, get_image_ext_for_type(mainw->files[file]->img_type), tc,
                                             width, height, LIVES_INTERP_BEST);
     } else {
-      buf = lives_build_filename(prefs->prefix_dir, ICON_DIR, "audio.png", NULL);
-      pixbuf = lives_pixbuf_new_from_file_at_scale(buf, width, height, FALSE, &error);
-      // ...at_scale is inaccurate !
-
-      lives_free(buf);
+      pixbuf = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_AUDIO, LIVES_ICON_SIZE_CUSTOM, width, height);
       if (error != NULL || pixbuf == NULL) {
         lives_error_free(error);
         if (needs_idlefunc) {
@@ -3341,7 +3336,6 @@ boolean mt_tlback_frame(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
 static void scroll_track_on_screen(lives_mt *mt, int track) {
   if (track > mt->top_track) track = get_top_track_for(mt, track);
   scroll_tracks(mt, track, track != mt->top_track);
-  return;
 }
 
 
@@ -3459,7 +3453,6 @@ boolean mt_trup(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVES
 
   return TRUE;
 }
-
 
 
 LIVES_INLINE int poly_page_to_tab(uint32_t page) {
@@ -10909,14 +10902,14 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   if (prefs->show_gui) block_expose();
 
-  ce_sepwin_type = prefs->sepwin_type;
-  if (ce_sepwin_type == SEPWIN_TYPE_STICKY) on_sticky_activate(NULL, NULL);
-
   if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
 
   ///////// CREATE MULTITRACK CONTENTS ////////////
   multi = multitrack(event_list, orig_file, cfile->fps); // also frees rdet
   ////////////////////////////////////////////////
+
+  ce_sepwin_type = prefs->sepwin_type;
+  if (ce_sepwin_type == SEPWIN_TYPE_STICKY) on_sticky_activate(NULL, NULL);
 
   if (mainw->stored_event_list != NULL) {
     mainw->stored_event_list = NULL;

@@ -2544,7 +2544,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   LiVESPixbuf *pixbuf_net;
   LiVESPixbuf *pixbuf_jack;
   LiVESPixbuf *pixbuf_midi;
-  char *icon;
 
   LiVESWidget *ins_resample;
   LiVESWidget *hbox;
@@ -3012,9 +3011,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                         5., 15.,
                                         1., 1., 0, LIVES_BOX(hbox2), NULL);
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_multitrack.png", NULL);
-  pixbuf_multitrack = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_multitrack = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_MULTITRACK, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_multitrack, _("Multitrack/Render"), LIST_ENTRY_MULTITRACK);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_multitrack);
@@ -3140,9 +3137,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->checkbutton_concat_images = lives_standard_check_button_new(_("When opening multiple files, concatenate images into one clip"),
                                       prefs->concat_images, LIVES_BOX(hbox), NULL);
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_decoding.png", NULL);
-  pixbuf_decoding = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_decoding = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_DECODING, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_decoding, _("Decoding"), LIST_ENTRY_DECODING);
 
@@ -3390,9 +3385,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
   }
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_playback.png", NULL);
-  pixbuf_playback = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_playback = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_PLAYBACK, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_playback, _("Playback"), LIST_ENTRY_PLAYBACK);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_playback);
@@ -3517,9 +3510,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_record.png", NULL);
-  pixbuf_recording = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_recording = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_RECORD, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_recording, _("Recording"), LIST_ENTRY_RECORDING);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_recording);
@@ -3614,9 +3605,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   } else prefsw->acodec_combo = NULL;
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_encoding.png", NULL);
-  pixbuf_encoding = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_encoding = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_ENCODING, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_encoding, _("Encoding"), LIST_ENTRY_ENCODING);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_encoding);
@@ -3707,9 +3696,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   widget_opts.packing_height = dph;
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_effects.png", NULL);
-  pixbuf_effects = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_effects = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_EFFECTS, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_effects, _("Effects"), LIST_ENTRY_EFFECTS);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_effects);
@@ -3869,9 +3856,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_complex_clicked), prefsw->workdir_entry);
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_directory.png", NULL);
-  pixbuf_directories = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_directories = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_DIRECTORY, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_directories, _("Directories"), LIST_ENTRY_DIRECTORIES);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_directories);
@@ -4102,9 +4087,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_warning.png", NULL);
-  pixbuf_warnings = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_warnings = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_WARNING, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_warnings, _("Warnings"), LIST_ENTRY_WARNINGS);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_warnings);
@@ -4150,9 +4133,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  icon = lives_strdup_printf("%s%s/pref_misc.png", prefs->prefix_dir, ICON_DIR);
-  pixbuf_misc = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_misc = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_MISC, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_misc, _("Misc"), LIST_ENTRY_MISC);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_misc);
@@ -4430,9 +4411,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_combo_set_active_string(LIVES_COMBO(prefsw->theme_combo), theme);
   lives_free(theme);
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_themes.png", NULL);
-  pixbuf_themes = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_themes = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_THEMES, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_themes, _("Themes/Colors"), LIST_ENTRY_THEMES);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_themes);
@@ -4494,9 +4473,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   }
 #endif
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_net.png", NULL);
-  pixbuf_net = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_net = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_NET, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_net, _("Streaming/Networking"), LIST_ENTRY_NET);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_net);
@@ -4637,9 +4614,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
 #endif
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_jack.png", NULL);
-  pixbuf_jack = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_jack = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_JACK, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_jack, _("Jack Integration"), LIST_ENTRY_JACK);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_jack);
@@ -4808,9 +4783,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   lives_widget_set_sensitive(prefsw->check_midi, capable->has_midistartstop);
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_midi.png", NULL);
-  pixbuf_midi = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_midi = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_MIDI, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_midi, _("MIDI/Joystick learner"), LIST_ENTRY_MIDI);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_midi);

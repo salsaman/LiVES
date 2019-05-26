@@ -6632,7 +6632,6 @@ void on_full_screen_pressed(LiVESButton *button, livespointer user_data) {
 
 
 void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char buff[PATH_MAX];
   LiVESWidget *fs_img;
 
   // ignore if audio only clip
@@ -6644,10 +6643,10 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   // update the button icon
-  fs_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_FULLSCREEN, LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  fs_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_FULLSCREEN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
   lives_widget_show(fs_img);
   if (!mainw->fs) {
-    if (lives_file_test(buff, LIVES_FILE_TEST_EXISTS)) {
+    if (LIVES_IS_IMAGE(fs_img)) {
       LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(fs_img));
       lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     }
@@ -6790,9 +6789,7 @@ void on_double_size_pressed(LiVESButton *button, livespointer user_data) {
 
 
 void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char buff[PATH_MAX];
   LiVESWidget *sngl_img;
-  char *fnamex;
 
   if (mainw->multitrack != NULL || (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && user_data == NULL)) return;
 
@@ -6805,20 +6802,14 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (user_data != NULL) {
     // change the blank window icons
     if (!mainw->double_size) {
-      fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "zoom-in.png", NULL);
-      lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-      lives_free(fnamex);
-      sngl_img = lives_image_new_from_file(buff);
+      sngl_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_ZOOM_IN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
       lives_widget_set_tooltip_text(mainw->t_double, _("Double size (d)"));
     } else {
-      fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "zoom-out.png", NULL);
-      lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-      lives_free(fnamex);
-      sngl_img = lives_image_new_from_file(buff);
+      sngl_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_ZOOM_OUT, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
       lives_widget_set_tooltip_text(mainw->t_double, _("Single size (d)"));
     }
 
-    if (lives_file_test(buff, LIVES_FILE_TEST_EXISTS)) {
+    if (LIVES_IS_IMAGE(sngl_img)) {
       LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(sngl_img));
       if (pixbuf != NULL) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     }
@@ -6905,9 +6896,6 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESWidget *sep_img;
   LiVESWidget *sep_img2;
 
-  char buff[PATH_MAX];
-  char *fnamex;
-
   if (mainw->go_away) return;
 
   mainw->sep_win = !mainw->sep_win;
@@ -6920,18 +6908,14 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->multitrack->redraw_block = FALSE;
   }
 
-  fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "sepwin.png", NULL);
-  lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-  lives_free(fnamex);
-
-  sep_img = lives_image_new_from_file(buff);
-  sep_img2 = lives_image_new_from_file(buff);
+  sep_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  sep_img2 = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
   if (mainw->sep_win) {
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide the play window (s)"));
     lives_widget_set_tooltip_text(mainw->t_sepwin, _("Hide the play window (s)"));
   } else {
-    if (lives_file_test(buff, LIVES_FILE_TEST_EXISTS)) {
+    if (LIVES_IS_IMAGE(sep_img)) {
       LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(sep_img));
       if (pixbuf != NULL) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
       pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(sep_img2));
@@ -6952,9 +6936,9 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     } else {
       kill_play_window();
     }
-    if (mainw->multitrack != NULL && mainw->playing_file == -1) {
-      activate_mt_preview(mainw->multitrack); // show frame preview
-    }
+    /* if (mainw->multitrack != NULL && mainw->playing_file == -1) { */
+    /*   activate_mt_preview(mainw->multitrack); // show frame preview */
+    /* } */
   } else {
     if (mainw->playing_file > -1) {
       if (mainw->sep_win) {
@@ -7298,25 +7282,20 @@ boolean mute_audio_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
 
 
 void on_mute_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char buff[PATH_MAX];
   LiVESWidget *mute_img;
   LiVESWidget *mute_img2 = NULL;
-  char *fnamex;
 
   mainw->mute = !mainw->mute;
 
   // change the mute icon
-  fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "volume_mute.png", NULL);
-  lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-  lives_free(fnamex);
-
-  mute_img = lives_image_new_from_file(buff);
-  if (mainw->preview_box != NULL) mute_img2 = lives_image_new_from_file(buff);
+  mute_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  if (mainw->preview_box != NULL) mute_img2 = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_VOLUME_MUTE, LIVES_ICON_SIZE_CUSTOM, 24,
+        24);
   if (mainw->mute) {
     lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Unmute the audio (z)"));
     if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Unmute the audio (z)"));
   } else {
-    if (lives_file_test(buff, LIVES_FILE_TEST_EXISTS)) {
+    if (LIVES_IS_IMAGE(mute_img)) {
       LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(mute_img));
       if (pixbuf != NULL) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
       if (mainw->preview_box != NULL) {
@@ -7334,7 +7313,7 @@ void on_mute_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (mainw->preview_box != NULL) {
     lives_widget_show(mute_img2);
-    //lives_button_set_image(LIVES_BUTTON(mainw->p_mutebutton),mute_img2); // doesn't work (gtk+ bug ?)
+    lives_button_set_image(LIVES_BUTTON(mainw->p_mutebutton), mute_img2); // doesn't work (gtk+ bug ?)
     lives_widget_queue_draw(mainw->p_mutebutton);
     lives_widget_queue_draw(mute_img2);
   }

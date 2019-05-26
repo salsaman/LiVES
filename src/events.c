@@ -4230,10 +4230,10 @@ boolean render_to_clip(boolean new_clip) {
       do {
         rdet->suggestion_followed = FALSE;
         response = lives_dialog_run(LIVES_DIALOG(rdet->dialog));
-	if (response == LIVES_RESPONSE_RESET) continue; // reset to current clip values
-	if (response == LIVES_RESPONSE_OK && rdet->enc_changed) {
-	  check_encoder_restrictions(FALSE, TRUE, TRUE);
-	}
+        if (response == LIVES_RESPONSE_RESET) continue; // reset to current clip values
+        if (response == LIVES_RESPONSE_OK && rdet->enc_changed) {
+          check_encoder_restrictions(FALSE, TRUE, TRUE);
+        }
       } while (rdet->suggestion_followed || response == LIVES_RESPONSE_RESET);
 
       xarate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
@@ -5282,7 +5282,7 @@ LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertra
 static void rdet_use_current(LiVESButton *button, livespointer user_data) {
   render_details *rdet = (render_details *)user_data;
   const lives_special_aspect_t *aspect = NULL;
-char *arate, *achans, *asamps;
+  char *arate, *achans, *asamps;
   int aendian;
 
   if (!CURRENT_CLIP_IS_VALID) return;
@@ -5292,15 +5292,15 @@ char *arate, *achans, *asamps;
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_height), (double)cfile->vsize);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps), cfile->fps);
     lives_spin_button_update(LIVES_SPIN_BUTTON(rdet->spinbutton_width));
-    
+
     aspect = paramspecial_get_aspect();
-    
+
     if (aspect != NULL && aspect->lockbutton != NULL) lives_widget_show(aspect->lockbutton);
     if (aspect != NULL && aspect->label != NULL) lives_widget_show(aspect->label);
 
     rdet->ratio_fps = cfile->ratio_fps;
   }
-  
+
   if (cfile->achans > 0) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), TRUE);
 
@@ -5329,8 +5329,7 @@ char *arate, *achans, *asamps;
     } else {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_littleend), TRUE);
     }
-  }
-  else {
+  } else {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), FALSE);
   }
 }
@@ -5510,7 +5509,7 @@ render_details *create_render_details(int type) {
   else if (type == 4 && cfile->achans != 0) {
     resaudw = create_resaudw(10, rdet, top_vbox); // change during mt. Channels fixed.
   }
- 
+
   if (type == 3) {
     // extra opts
     label = lives_standard_label_new(_("Options"));
@@ -5702,10 +5701,10 @@ render_details *create_render_details(int type) {
   if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
     if (type == 2 || type == 3) {
       if (CURRENT_CLIP_HAS_VIDEO && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) {
-	rdet->usecur_button = lives_standard_button_new_with_label(_("_Set to current clip values"));
-	lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), rdet->usecur_button, LIVES_RESPONSE_RESET);
-	lives_signal_connect(LIVES_COMBO(rdet->usecur_button), LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current),
-			     (livespointer)rdet);
+        rdet->usecur_button = lives_standard_button_new_with_label(_("_Set to current clip values"));
+        lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), rdet->usecur_button, LIVES_RESPONSE_RESET);
+        lives_signal_connect(LIVES_COMBO(rdet->usecur_button), LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current),
+                             (livespointer)rdet);
       }
     }
   }
@@ -5762,9 +5761,9 @@ render_details *create_render_details(int type) {
     lives_window_set_resizable(LIVES_WINDOW(rdet->dialog), TRUE);
   }
   lives_widget_show_all(rdet->dialog);
-/* #else */
-/*   lives_widget_show_all(rdet->dialog); */
-/* #endif */
+  /* #else */
+  /*   lives_widget_show_all(rdet->dialog); */
+  /* #endif */
   return rdet;
 }
 

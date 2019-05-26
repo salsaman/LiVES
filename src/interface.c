@@ -4329,7 +4329,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
 
         lives_widget_show(widget);
         lives_widget_show(mainw->message_box);
-	// add this back in first if it breaks..
+        // add this back in first if it breaks..
         //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
         lives_widget_context_update();
         lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);

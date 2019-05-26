@@ -107,7 +107,7 @@ static void button_state_cb(LiVESObject *object, livespointer pspec, livespointe
   LiVESWidgetState state = lives_widget_get_state(widget);
   boolean woat = widget_opts.apply_theme;
   if (LIVES_IS_BUTTON(widget)) {
-    if (!LIVES_IS_TOGGLE_BUTTON(widget)) 
+    if (!LIVES_IS_TOGGLE_BUTTON(widget))
       default_changed_cb(object, NULL, NULL);
     return;
   }
@@ -155,21 +155,19 @@ static void button_state_cb(LiVESObject *object, livespointer pspec, livespointe
       return;
     }
   }
-  if ( LIVES_IS_LABEL(widget)) {
+  if (LIVES_IS_LABEL(widget)) {
     // other widgets get dimmed text
     widget_opts.apply_theme = TRUE;
     if (!lives_widget_is_sensitive(widget)) {
       set_child_dimmed_colour(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
-    }
-    else set_child_colour(widget, TRUE);
+    } else set_child_colour(widget, TRUE);
   }
-  if ( LIVES_IS_ENTRY(widget) || LIVES_IS_COMBO(widget)) {
+  if (LIVES_IS_ENTRY(widget) || LIVES_IS_COMBO(widget)) {
     // other widgets get dimmed text
     widget_opts.apply_theme = TRUE;
     if (!lives_widget_is_sensitive(widget)) {
       set_child_dimmed_colour(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
-    }
-    else set_child_colour3(widget, TRUE);
+    } else set_child_colour3(widget, TRUE);
   }
   widget_opts.apply_theme = woat;
 }
@@ -181,7 +179,7 @@ LiVESWidget *prettify_button(LiVESWidget *button) {
   lives_widget_apply_theme2(button, LIVES_WIDGET_STATE_NORMAL, TRUE);
 #if GTK_CHECK_VERSION(3, 0, 0)
   set_child_colour(button, TRUE);
-#endif  
+#endif
 #ifdef NO_ALT_VALUES
   // try to set the insensitive state colours
   lives_widget_apply_theme_dimmed2(button, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
@@ -189,8 +187,8 @@ LiVESWidget *prettify_button(LiVESWidget *button) {
 
   // brute force it if we have to
   lives_signal_connect_after(LIVES_GUI_OBJECT(button), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-                       LIVES_GUI_CALLBACK(button_state_cb),
-                       NULL);
+                             LIVES_GUI_CALLBACK(button_state_cb),
+                             NULL);
   button_state_cb(LIVES_WIDGET_OBJECT(button), NULL, NULL);
 #else
   lives_widget_set_fg_color(button, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -1673,20 +1671,20 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
     LiVESWidget *image = NULL;
     if (size == LIVES_ICON_SIZE_CUSTOM) {
       if (x == y) {
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR)) size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR)) size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR)) size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR)) size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
       }
     }
     if (size != LIVES_ICON_SIZE_CUSTOM) {
       if (lives_has_icon(stock_id, size)) {
 #if GTK_CHECK_VERSION(3, 10, 0)
-	image = gtk_image_new_from_icon_name(stock_id, size);
+        image = gtk_image_new_from_icon_name(stock_id, size);
 #else
-	image = gtk_image_new_from_stock(stock_id, size);
+        image = gtk_image_new_from_stock(stock_id, size);
 #endif
       }
       if (image != NULL) return lives_image_get_pixbuf(LIVES_IMAGE(image));
@@ -1695,30 +1693,19 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
     // try all sizes to see if we get one
     if (image == NULL) {
       if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DIALOG)) {
-	size = LIVES_ICON_SIZE_DIALOG;
-      }
-      else 
-	if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DND)) {
-	  size = LIVES_ICON_SIZE_DIALOG;
-	}
-	else 
-	  if (lives_has_icon(stock_id, LIVES_ICON_SIZE_LARGE_TOOLBAR)) {
-	    size = LIVES_ICON_SIZE_DIALOG;
-	  }
-	  else 
-	    if (lives_has_icon(stock_id, LIVES_ICON_SIZE_SMALL_TOOLBAR)) {
-	      size = LIVES_ICON_SIZE_DIALOG;
-	    }
-	    else 
-	      if (lives_has_icon(stock_id, LIVES_ICON_SIZE_BUTTON)) {
-		size = LIVES_ICON_SIZE_DIALOG;
-	      }
-	      else 
-		if (lives_has_icon(stock_id, LIVES_ICON_SIZE_MENU)) {
-		  size = LIVES_ICON_SIZE_DIALOG;
-		}
-		else return NULL;
-    
+        size = LIVES_ICON_SIZE_DIALOG;
+      } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DND)) {
+        size = LIVES_ICON_SIZE_DIALOG;
+      } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_LARGE_TOOLBAR)) {
+        size = LIVES_ICON_SIZE_DIALOG;
+      } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_SMALL_TOOLBAR)) {
+        size = LIVES_ICON_SIZE_DIALOG;
+      } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_BUTTON)) {
+        size = LIVES_ICON_SIZE_DIALOG;
+      } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_MENU)) {
+        size = LIVES_ICON_SIZE_DIALOG;
+      } else return NULL;
+
 #if GTK_CHECK_VERSION(3, 10, 0)
       image = gtk_image_new_from_icon_name(stock_id, size);
 #else
@@ -1727,8 +1714,7 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
     }
     if (image == NULL) return NULL;
     pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(image));
-  }
-  else {
+  } else {
     char *fname = lives_strdup_printf("%s.%s", stock_id, LIVES_FILE_EXT_PNG);
     char *fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, fname, NULL);
     LiVESError *error = NULL;
@@ -1742,16 +1728,16 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
     }
     if (x > 0 && y > 0) {
       if (x != lives_pixbuf_get_width(pixbuf) || y != lives_pixbuf_get_height(pixbuf)) {
-	LiVESPixbuf *new_pixbuf = lives_pixbuf_scale_simple(pixbuf, x, y, LIVES_INTERP_BEST);
-	lives_object_unref(pixbuf);
-	pixbuf = new_pixbuf;
+        LiVESPixbuf *new_pixbuf = lives_pixbuf_scale_simple(pixbuf, x, y, LIVES_INTERP_BEST);
+        lives_object_unref(pixbuf);
+        pixbuf = new_pixbuf;
       }
     }
   }
   return pixbuf;
 }
 
-  
+
 LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y) {
   LiVESWidget *image = NULL;
   LiVESPixbuf *pixbuf = NULL;
@@ -1759,20 +1745,20 @@ LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconS
   if (strncmp(stock_id, "lives-", 6)) {
     if (size == LIVES_ICON_SIZE_CUSTOM) {
       if (x == y) {
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR)) size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR)) size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
-	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR)) size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR)) size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
+        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
       }
     }
     if (size != LIVES_ICON_SIZE_CUSTOM) {
       if (lives_has_icon(stock_id, size)) {
 #if GTK_CHECK_VERSION(3, 10, 0)
-	image = gtk_image_new_from_icon_name(stock_id, size);
+        image = gtk_image_new_from_icon_name(stock_id, size);
 #else
-	image = gtk_image_new_from_stock(stock_id, size);
+        image = gtk_image_new_from_stock(stock_id, size);
 #endif
       }
       if (image != NULL) return image;
@@ -8016,11 +8002,11 @@ static void default_changed_cb(LiVESObject *object, livespointer pspec, livespoi
   LiVESWidget *button = (LiVESWidget *)object;
   widget_opts.apply_theme = TRUE;
   if (!lives_widget_is_sensitive(button)) set_child_dimmed_colour(button, BUTTON_DIM_VAL); // insens, themecols 1, child only
-    else {
-      if (lives_widget_has_default(button)) 
-        set_child_alt_colour(button, TRUE); // state normal, theme2
-      else set_child_colour(button, TRUE); // state normal, theme1
-    }
+  else {
+    if (lives_widget_has_default(button))
+      set_child_alt_colour(button, TRUE); // state normal, theme2
+    else set_child_colour(button, TRUE); // state normal, theme1
+  }
   widget_opts.apply_theme = woat;
 }
 
@@ -8032,8 +8018,8 @@ boolean lives_button_grab_default_special(LiVESWidget *button) {
 
   if (widget_opts.apply_theme) {
     lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_NOTIFY_SIGNAL "has_default",
-			 LIVES_GUI_CALLBACK(default_changed_cb),
-			 NULL);
+                         LIVES_GUI_CALLBACK(default_changed_cb),
+                         NULL);
     default_changed_cb(LIVES_WIDGET_OBJECT(button), NULL, NULL);
   }
   return TRUE;
@@ -8174,8 +8160,8 @@ LiVESWidget *lives_standard_label_new(const char *text) {
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
     lives_signal_connect_after(LIVES_GUI_OBJECT(label), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-			       LIVES_GUI_CALLBACK(button_state_cb),
-			       NULL);
+                               LIVES_GUI_CALLBACK(button_state_cb),
+                               NULL);
     button_state_cb(LIVES_WIDGET_OBJECT(label), NULL, NULL);
   }
   return label;
@@ -8233,7 +8219,7 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
 #ifndef NO_ALT_VALUES
   lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 #endif
-  
+
   if (xalign >= 0.) lives_frame_set_label_align(LIVES_FRAME(frame), xalign, 0.5);
 
   return frame;
@@ -8282,7 +8268,7 @@ static LiVESWidget *make_label_eventbox(const char *labeltext, LiVESWidget *widg
   /* if (widget_opts.justify == LIVES_JUSTIFY_LEFT) gtk_label_set_xalign(label, 0.); */
   /* if (widget_opts.justify == LIVES_JUSTIFY_CENTER) gtk_label_set_xalign(label, .5); */
   /* if (widget_opts.justify == LIVES_JUSTIFY_RIGHT) gtk_label_set_xalign(label, 1.); */
-  
+
   if (LIVES_IS_TOGGLE_BUTTON(widget)) {
     lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                          LIVES_GUI_CALLBACK(label_act_toggle),
@@ -8308,8 +8294,8 @@ static void sens_insens_cb(LiVESObject *object, livespointer pspec, livespointer
 WIDGET_HELPER_LOCAL_INLINE boolean lives_widget_set_sensitive_with(LiVESWidget *w1, LiVESWidget *w2) {
   // set w2 sensitivity == w1
   lives_signal_connect_after(LIVES_GUI_OBJECT(w1), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-                       LIVES_GUI_CALLBACK(sens_insens_cb),
-                       (livespointer)w2);
+                             LIVES_GUI_CALLBACK(sens_insens_cb),
+                             (livespointer)w2);
   return TRUE;
 }
 
@@ -8424,7 +8410,7 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, boolean activ
     lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
     lives_cool_toggled(checkbutton, &togglevalue);
-#ifdef NO_ALT_COLOURS
+#ifdef NO_ALT_VALUES
     lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                          LIVES_GUI_CALLBACK(draw_cool_toggle),
                          NULL);
@@ -8638,8 +8624,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (widget_opts.apply_theme) {
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-			       LIVES_GUI_CALLBACK(button_state_cb),
-			       NULL);
+                               LIVES_GUI_CALLBACK(button_state_cb),
+                               NULL);
     button_state_cb(LIVES_WIDGET_OBJECT(spinbutton), NULL, NULL);
   }
 #else
@@ -8744,12 +8730,12 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
 #endif
 #endif
       lives_signal_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-				 LIVES_GUI_CALLBACK(button_state_cb),
-				 NULL);
+                                 LIVES_GUI_CALLBACK(button_state_cb),
+                                 NULL);
       button_state_cb(LIVES_WIDGET_OBJECT(entry), NULL, NULL);
       lives_signal_connect_after(LIVES_GUI_OBJECT(combo), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-				 LIVES_GUI_CALLBACK(button_state_cb),
-				 NULL);
+                                 LIVES_GUI_CALLBACK(button_state_cb),
+                                 NULL);
       button_state_cb(LIVES_WIDGET_OBJECT(combo), NULL, NULL);
     }
   }
@@ -8802,7 +8788,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
     } else label = lives_standard_label_new(labeltext);
     widget_opts.last_label = label;
     lives_widget_set_sensitive_with(entry, label);
-    
+
     if (tooltip != NULL) lives_tooltips_copy(label, entry);
   }
 
@@ -8835,8 +8821,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   if (widget_opts.apply_theme) {
     lives_signal_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-			       LIVES_GUI_CALLBACK(button_state_cb),
-			       NULL);
+                               LIVES_GUI_CALLBACK(button_state_cb),
+                               NULL);
     button_state_cb(LIVES_WIDGET_OBJECT(entry), NULL, NULL);
   }
   return entry;
@@ -8911,9 +8897,9 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (add_std_buttons) {
     LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     LiVESWidget *cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-								   LIVES_RESPONSE_CANCEL);
+                                LIVES_RESPONSE_CANCEL);
     LiVESWidget *okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-							       LIVES_RESPONSE_OK);
+                            LIVES_RESPONSE_OK);
 
     lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
@@ -8926,13 +8912,13 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
     if (widget_opts.apply_theme) {
       lives_signal_connect_after(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-				 LIVES_GUI_CALLBACK(button_state_cb),
-				 NULL);
+                                 LIVES_GUI_CALLBACK(button_state_cb),
+                                 NULL);
       button_state_cb(LIVES_WIDGET_OBJECT(cancelbutton), NULL, NULL);
 
       lives_signal_connect_after(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-				 LIVES_GUI_CALLBACK(button_state_cb),
-				 NULL);
+                                 LIVES_GUI_CALLBACK(button_state_cb),
+                                 NULL);
       button_state_cb(LIVES_WIDGET_OBJECT(okbutton), NULL, NULL);
     }
   }
@@ -9160,13 +9146,13 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox *box, LiVES
 
   if (widget_opts.apply_theme) {
     lives_signal_connect_after(LIVES_GUI_OBJECT(expander), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-			       LIVES_GUI_CALLBACK(button_state_cb),
-			       NULL);
+                               LIVES_GUI_CALLBACK(button_state_cb),
+                               NULL);
     button_state_cb(LIVES_WIDGET_OBJECT(expander), NULL, NULL);
     if (label != NULL) {
       lives_signal_connect_after(LIVES_GUI_OBJECT(label), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-				 LIVES_GUI_CALLBACK(button_state_cb),
-				 NULL);
+                                 LIVES_GUI_CALLBACK(button_state_cb),
+                                 NULL);
       button_state_cb(LIVES_WIDGET_OBJECT(label), NULL, NULL);
     }
   }
@@ -9235,7 +9221,8 @@ static void _on_lock_button_clicked(LiVESButton *button, livespointer user_data)
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "is_locked", LIVES_INT_TO_POINTER(locked));
   lives_container_foreach(LIVES_CONTAINER(button), (LiVESWidgetCallback)lives_widget_destroy_if_image, NULL);
-  if (locked) image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_LOCKED, LIVES_ICON_SIZE_CUSTOM, LOCK_BUTTON_WIDTH, LOCK_BUTTON_HEIGHT);
+  if (locked) image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_LOCKED, LIVES_ICON_SIZE_CUSTOM, LOCK_BUTTON_WIDTH,
+                        LOCK_BUTTON_HEIGHT);
   else image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_UNLOCKED, LIVES_ICON_SIZE_CUSTOM, LOCK_BUTTON_WIDTH, LOCK_BUTTON_HEIGHT);
   if (!LIVES_IS_IMAGE(image)) return;
   lives_image_scale(LIVES_IMAGE(image), width, height, LIVES_INTERP_BEST);
@@ -10735,8 +10722,8 @@ LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *bar, GtkWidget *icon_w
   if (widget_opts.last_label != NULL) lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(tbutton), widget_opts.last_label);
   if (widget_opts.apply_theme) {
     lives_signal_connect_after(LIVES_GUI_OBJECT(tbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-			       LIVES_GUI_CALLBACK(button_state_cb),
-			       NULL);
+                               LIVES_GUI_CALLBACK(button_state_cb),
+                               NULL);
     button_state_cb(LIVES_WIDGET_OBJECT(tbutton), NULL, NULL);
   }
   if (tooltips != NULL) lives_widget_set_tooltip_text(LIVES_WIDGET(tbutton), tooltips);

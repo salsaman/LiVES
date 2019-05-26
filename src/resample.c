@@ -1318,8 +1318,8 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton),
                                             mainw->multitrack == NULL ? prefs->mt_def_achans > 0 : cfile->achans > 0);
       if (type == 4) {
-	lives_signal_connect(LIVES_GUI_OBJECT(resaudw->aud_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-			     LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+        lives_signal_connect(LIVES_GUI_OBJECT(resaudw->aud_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                             LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
       }
     }
 
@@ -1437,7 +1437,8 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
     if (type == 4) {
       lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_signed), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-      lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_unsigned), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+      lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_unsigned), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                           NULL);
     }
 
     vseparator = lives_vseparator_new();
@@ -1477,9 +1478,10 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
   }
 
   if (type == 4) {
-    lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_littleend), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_littleend), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                         NULL);
     lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_bigend), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-    }
+  }
 
   if (type > 7 && type != 11) {
     frame = lives_standard_frame_new(_("Video"), 0., FALSE);

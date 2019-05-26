@@ -1,6 +1,6 @@
 // startup.c
 // LiVES
-// (c) G. Finch 2010 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2010 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -260,6 +260,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
+  // TODO: add_param_label_to_box()
   label = lives_standard_label_new(msg);
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
   lives_free(msg);
@@ -355,16 +356,15 @@ boolean do_audio_choice_dialog(short startup_phase) {
                          LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER2));
   }
 
-  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-
-  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL, 
+						    LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_GO_FORWARD, _("_Next"));
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
+						  LIVES_RESPONSE_OK);
 
-  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -534,18 +534,18 @@ boolean do_startup_tests(boolean tshoot) {
   label = lives_standard_label_new(_("LiVES will now run some basic configuration tests\n"));
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
 
-  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-
-  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL, 
+						    LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (!tshoot) {
-    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_GO_FORWARD, _("_Next"));
-  } else okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
+						  LIVES_RESPONSE_OK);
+  } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL, 
+						       LIVES_RESPONSE_OK);
 
-  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -987,9 +987,9 @@ void do_startup_interface_query(void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
   }
 
-  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_GO_FORWARD, _("_Finish"));
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Finish"), 
+						  LIVES_RESPONSE_OK);
 
-  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);

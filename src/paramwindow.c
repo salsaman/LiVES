@@ -644,7 +644,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
   LiVESWidget *top_dialog_vbox = NULL;
   LiVESWidget *cancelbutton;
-  LiVESWidget *okbutton;
+  LiVESWidget *okbutton = NULL;
   LiVESWidget *resetbutton = NULL;
 
   LiVESAccelGroup *fxw_accel_group;
@@ -793,38 +793,38 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   has_param = make_param_box(LIVES_VBOX(pbox), rfx);
 
   // update widgets from onchange_init here
-
   if (top_dialog_vbox != NULL) {
-    cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-
     fxw_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     lives_window_add_accel_group(LIVES_WINDOW(fx_dialog[didx]), fxw_accel_group);
 
     if (!no_process || is_defaults || rfx->status == RFX_STATUS_SCRAP) {
-      lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);
+      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_CANCEL, NULL, 
+							LIVES_RESPONSE_CANCEL);
       lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
       if (is_defaults) {
-        okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_APPLY, _("Set as default"));
+        okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_APPLY, _("Set as default"), 
+						      LIVES_RESPONSE_OK);
         if (!has_param) lives_widget_set_sensitive(okbutton, FALSE);
-        resetbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED, _("Reset"));
+        resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_REVERT_TO_SAVED, _("Reset"), 
+						      LIVES_RESPONSE_RESET);
         if (!has_param) lives_widget_set_sensitive(resetbutton, FALSE);
-        lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), resetbutton, LIVES_RESPONSE_RESET);
-      } else okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
-      lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), okbutton, LIVES_RESPONSE_OK);
+      } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_OK, NULL,
+							   LIVES_RESPONSE_OK);
     } else {
-      okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_APPLY, _("Set as default"));
-      if (!has_param) lives_widget_set_sensitive(okbutton, FALSE);
-      cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
-
       if (rfx->status == RFX_STATUS_WEED) {
-        resetbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED, _("Reset"));
-        lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), resetbutton, LIVES_RESPONSE_RESET);
-        lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), okbutton, LIVES_RESPONSE_OK);
+        resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_REVERT_TO_SAVED, _("Reset"), 
+						      LIVES_RESPONSE_RESET);
+	okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_APPLY, _("Set as default"), 
+						      LIVES_RESPONSE_OK);
+	if (!has_param) {
+	  lives_widget_set_sensitive(resetbutton, FALSE);
+	  lives_widget_set_sensitive(okbutton, FALSE);
+	}
       }
 
-      lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);
+      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_CLOSE, _("_Close Window"), 
+							LIVES_RESPONSE_CANCEL);
       lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
@@ -842,7 +842,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     lives_widget_set_can_focus(cancelbutton, TRUE);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[didx]), "button", cancelbutton);
 
-    if (lives_widget_get_parent(okbutton) != NULL) {
+    if (okbutton != NULL) {
       lives_widget_set_can_focus_and_default(okbutton);
       lives_button_grab_default_special(okbutton);
     } else {
@@ -855,7 +855,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
     if (no_process && !is_defaults) {
       if (!is_realtime) {
-        if (lives_widget_get_parent(okbutton) != NULL)
+        if (okbutton != NULL)
           lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked),
                                rfx);
@@ -874,9 +874,10 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
                                LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked2),
                                rfx);
         else {
-          lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                               LIVES_GUI_CALLBACK(rte_set_key_defs),
-                               rfx);
+	  if (okbutton != NULL)
+	    lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+				 LIVES_GUI_CALLBACK(rte_set_key_defs),
+				 rfx);
           if (resetbutton != NULL) {
             lives_signal_connect_after(LIVES_GUI_OBJECT(resetbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                        LIVES_GUI_CALLBACK(rte_reset_defs_clicked),
@@ -889,9 +890,10 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       }
     } else {
       if (!is_defaults) {
-        lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_paramwindow_ok_clicked),
-                             (livespointer)rfx);
+	if (okbutton != NULL)
+	  lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+			       LIVES_GUI_CALLBACK(on_paramwindow_ok_clicked),
+			       (livespointer)rfx);
         lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked),
                              (livespointer)rfx);
@@ -899,9 +901,10 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
                              LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked),
                              (livespointer)rfx);
       } else {
-        lives_signal_connect_after(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                   LIVES_GUI_CALLBACK(rte_set_defs_ok),
-                                   rfx);
+	if (okbutton != NULL)
+	  lives_signal_connect_after(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+				     LIVES_GUI_CALLBACK(rte_set_defs_ok),
+				     rfx);
         if (resetbutton != NULL) {
           lives_signal_connect_after(LIVES_GUI_OBJECT(resetbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                      LIVES_GUI_CALLBACK(rte_reset_defs_clicked),
@@ -1575,8 +1578,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       widget_opts.apply_theme = woat;
 
       if (palette->style & STYLE_1) {
-        lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->white);
-        lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+        lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+        lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
       }
 
       lives_box_pack_start(LIVES_BOX(hbox), scrolledwindow, TRUE, TRUE, 0);

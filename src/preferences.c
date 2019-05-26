@@ -2896,7 +2896,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // -----------------------'
 
   prefsw->vbox_right_multitrack = lives_vbox_new(FALSE, 0);
-  lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_multitrack), widget_opts.border_width);
+  lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_multitrack), widget_opts.border_width * 2);
 
   prefsw->scrollw_right_multitrack = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_multitrack);
 
@@ -2954,7 +2954,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->spinbutton_mt_undo_buf = lives_standard_spin_button_new(_("    _Undo buffer size (MB)    "),
+  prefsw->spinbutton_mt_undo_buf = lives_standard_spin_button_new(_(" _Undo buffer size (MB)"),
                                    prefs->mt_undo_buf, 0., LIVES_MAXSIZE / (1024.*1024.), 1., 1., 0,
                                    LIVES_BOX(hbox), NULL);
 
@@ -3003,6 +3003,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_every), TRUE);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time), prefs->mt_auto_back);
   }
+
+  add_fill_to_box(LIVES_BOX(hbox2));
+  add_fill_to_box(LIVES_BOX(hbox2));
 
   hbox2 = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), hbox2, FALSE, FALSE, widget_opts.packing_height);
@@ -3085,7 +3088,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   widget_opts.swap_label = TRUE;
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
-  prefsw->spinbutton_ocp = lives_standard_spin_button_new(("%"), prefs->ocp, 0., 100., 1., 5., 0,
+  prefsw->spinbutton_ocp = lives_standard_spin_button_new(("  %  "), prefs->ocp, 0., 100., 1., 5., 0,
                            LIVES_BOX(hbox), NULL);
   widget_opts.swap_label = FALSE;
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
@@ -3094,6 +3097,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   label = lives_standard_label_new(_("( lower = slower, larger files; for jpeg, higher quality )"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
+  add_fill_to_box(LIVES_BOX(hbox));
+  add_fill_to_box(LIVES_BOX(hbox));
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
 
@@ -3359,7 +3365,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   add_fill_to_box(LIVES_BOX(vbox));
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
   label = lives_standard_label_new(_("Audio Source (clip editor only):"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
@@ -3520,7 +3526,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // ---------------'
 
   prefsw->vbox_right_encoding = lives_vbox_new(FALSE, 0);
-  lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_encoding), widget_opts.border_width);
+  lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_encoding), widget_opts.border_width * 2);
 
   prefsw->scrollw_right_encoding = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_encoding);
 
@@ -3615,7 +3621,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // ---------------'
 
   prefsw->vbox_right_effects = lives_vbox_new(FALSE, 0);
-  lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_effects), widget_opts.border_width);
+  lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_effects), widget_opts.border_width * 2);
 
   prefsw->scrollw_right_effects = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_effects);
 
@@ -3652,6 +3658,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_threads), prefsw->spinbutton_nfx_threads);
 
+  add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(hbox));
 
   if (future_prefs->nfx_threads == 1) lives_widget_set_sensitive(prefsw->spinbutton_nfx_threads, FALSE);
@@ -4421,7 +4428,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // --------------------------'
 
   prefsw->vbox_right_net = lives_vbox_new(FALSE, widget_opts.packing_height * 4);
-  lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_net), widget_opts.border_width);
+  lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_net), widget_opts.border_width * 2);
 
   prefsw->scrollw_right_net = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_net);
 
@@ -4483,7 +4490,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // ----------'
 
   prefsw->vbox_right_jack = lives_vbox_new(FALSE, 0);
-  lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_jack), widget_opts.packing_width * 2);
+  lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_jack), widget_opts.border_width * 2);
 
   prefsw->scrollw_right_jack = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_jack);
 
@@ -4557,8 +4564,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
 #endif
 
-  // expand FFS...
-  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
   add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
   add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
 
@@ -4566,7 +4571,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_jack));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
   add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
   add_fill_to_box(LIVES_BOX(prefsw->vbox_right_jack));
 

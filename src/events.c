@@ -5435,10 +5435,10 @@ render_details *create_render_details(int type) {
     dbw = widget_opts.border_width;
     widget_opts.border_width = 0;
     // need to set a large enough default here
-    scrollw = lives_standard_scrolled_window_new(scrw * .8, scrh * 1., top_vbox);
+    scrollw = lives_standard_scrolled_window_new(width * .8, height * 1., top_vbox);
     widget_opts.border_width = dbw;
   } else
-    scrollw = lives_standard_scrolled_window_new(scrw * .3, scrh * .4, top_vbox);
+    scrollw = lives_standard_scrolled_window_new(width * .3, height * .4, top_vbox);
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), scrollw, FALSE, TRUE, 0);
 
@@ -5505,6 +5505,7 @@ render_details *create_render_details(int type) {
   rdet->backaudio_checkbutton = lives_check_button_new();
 
   ////// add audio part
+  resaudw = NULL;
   if (type == 3 || type == 2) resaudw = create_resaudw(3, rdet, top_vbox); // enter mt, render to clip
   else if (type == 4 && cfile->achans != 0) {
     resaudw = create_resaudw(10, rdet, top_vbox); // change during mt. Channels fixed.

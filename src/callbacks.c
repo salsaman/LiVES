@@ -905,7 +905,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     mainw->com_failed = FALSE;
     lives_system(com, FALSE);
     lives_free(com);
-
+    
     if (mainw->com_failed) {
       if (current_file == -1) {
         close_temp_handle(mainw->current_file, -1);
@@ -952,14 +952,14 @@ void on_utube_select(lives_remote_clip_request_t *req) {
 
     if (req->matchsize == LIVES_MATCH_CHOICE && strlen(req->vidchoice) == 0)  {
       // show a list of the video formats and let the user pick one
-      /* if (!utube_select_format(req)) { */
-      /* 	if (current_file == -1) { */
-      /* 	  close_temp_handle(mainw->current_file, -1); */
-      /* 	} */
-      /* 	lives_free(dfile); */
-      /* 	d_print_failed(); */
-      /* 	return; */
-      /* } */
+      if (!youtube_select_format(req)) {
+      	if (current_file == -1) {
+      	  close_temp_handle(mainw->current_file, -1);
+      	}
+      	lives_free(dfile);
+      	d_print_failed();
+      	return;
+      }
       // we try again, this time with req->vidchoice set
     } else {
       // returned completed|vidchoice|audchoice

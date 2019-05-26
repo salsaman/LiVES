@@ -125,14 +125,13 @@ void add_warn_check(LiVESBox *box, int warn_mask_number) {
 
 
 static void add_clear_ds_button(LiVESDialog *dialog) {
-  LiVESWidget *button = lives_standard_button_new_from_stock(LIVES_STOCK_CLEAR, _("_Recover disk space"));
+  LiVESWidget *button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CLEAR, _("_Recover disk space"), 
+						  LIVES_RESPONSE_RETRY);
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button, FALSE);
 
   lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_cleardisk_activate),
                        (livespointer)button);
-
-  lives_dialog_add_action_widget(dialog, button, LIVES_RESPONSE_RETRY);
 }
 
 
@@ -176,8 +175,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_WARNING, LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Warning !"));
-    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+						  LIVES_RESPONSE_OK);
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),
                          NULL);
@@ -187,8 +186,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Error !"));
-    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+						  LIVES_RESPONSE_OK);
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),
                          NULL);
@@ -197,8 +196,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_INFO, LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Information"));
-    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+						  LIVES_RESPONSE_OK);
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),
                          NULL);
@@ -213,19 +212,19 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     }
 
     lives_window_set_title(LIVES_WINDOW(dialog), _("Warning !"));
-    cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_LABEL_CANCEL, NULL);
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
-    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_LABEL_OK, NULL);
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+						      LIVES_RESPONSE_CANCEL);
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+						  LIVES_RESPONSE_OK);
     break;
 
   case LIVES_DIALOG_YESNO:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_QUESTION, LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Question"));
-    cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_NO, NULL);
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_NO);
-    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_YES, NULL);
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_YES);
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_NO, NULL,
+						      LIVES_RESPONSE_NO);
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_YES, NULL,
+						  LIVES_RESPONSE_YES);
     break;
 
   case LIVES_DIALOG_QUESTION:
@@ -236,26 +235,27 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("File Error"));
-    abortbutton = lives_standard_button_new_from_stock(LIVES_STOCK_QUIT, _("_Abort"));
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), abortbutton, LIVES_RESPONSE_ABORT);
-    cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
-    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, _("_Retry"));
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_RETRY);
+    abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_QUIT, _("_Abort"),
+						      LIVES_RESPONSE_ABORT);
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+						      LIVES_RESPONSE_CANCEL);
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH, _("_Retry"),
+						  LIVES_RESPONSE_RETRY);
     break;
 
   case LIVES_DIALOG_CANCEL_RETRY_BROWSE:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Missing file"));
-    cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
-    okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, _("_Retry"));
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_RETRY);
-    abortbutton = lives_standard_button_new_from_stock(LIVES_STOCK_QUIT, _("_Browse"));
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), abortbutton, LIVES_RESPONSE_BROWSE);
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+						      LIVES_RESPONSE_CANCEL);
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH, _("_Retry"),
+						  LIVES_RESPONSE_RETRY);
+    abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_QUIT, _("_Browse"),
+						      LIVES_RESPONSE_BROWSE);
     break;
 
   default:
+    cancelbutton = abortbutton; // stop compiler complaining
     return NULL;
     break;
   }
@@ -317,8 +317,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   }
 
   if (mainw->iochan != NULL) {
-    LiVESWidget *details_button = lives_standard_button_new_with_label(_("Show _Details"));
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), details_button, LIVES_RESPONSE_SHOW_DETAILS);
+    LiVESWidget *details_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Show _Details"),
+						  LIVES_RESPONSE_SHOW_DETAILS);
 
     lives_signal_connect(LIVES_GUI_OBJECT(details_button), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),

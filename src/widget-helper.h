@@ -295,6 +295,7 @@ LiVESWidget *lives_button_get_label_widget(LiVESButton *);
 boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
 boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);
 boolean lives_button_set_focus_on_click(LiVESButton *, boolean focus);
+boolean lives_widget_set_focus_on_click(LiVESWidget *, boolean focus);
 
 /////////////////////////////
 

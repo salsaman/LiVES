@@ -194,7 +194,7 @@ text_window *textwindow;
 #define RW_ENTRY_DISPWIDTH ((int)(40.*widget_opts.scale))
 
 // download text entry
-#define STD_ENTRY_WIDTH ((int)(64.*widget_opts.scale))
+#define STD_ENTRY_WIDTH ((int)(128.*widget_opts.scale))
 #define SHORT_ENTRY_WIDTH ((int)(32.*widget_opts.scale))
 
 typedef enum {
@@ -225,5 +225,6 @@ typedef struct {
 } lives_remote_clip_request_t;
 
 lives_remote_clip_request_t *run_youtube_dialog(void);
+boolean youtube_select_format(lives_remote_clip_request_t *);
 
 #endif

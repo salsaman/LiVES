@@ -1694,9 +1694,8 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (LIVES_IS_BOX(abox)) add_spring_to_box(LIVES_BOX(abox), 0);
 #endif
-  ok_button = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
-  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), ok_button, LIVES_RESPONSE_OK);
-
+  ok_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+						 LIVES_RESPONSE_OK);
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);

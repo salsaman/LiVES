@@ -992,8 +992,6 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   widget_opts.no_gui = nogui;
 
-  lives_window_add_accel_group(LIVES_WINDOW(procw->processing), mainw->accel_group);
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
 
   vbox = lives_vbox_new(FALSE, 0);
@@ -4011,7 +4009,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   lives_free(tmp2);
 
   add_param_label_to_box(LIVES_BOX(hbox), FALSE, "------>");
-  
+
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_atmost), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(utsense),
                        LIVES_INT_TO_POINTER(TRUE));
@@ -4064,7 +4062,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(hbox));
-  
+
   radiobutton_choose = lives_standard_radio_button_new((tmp = lives_strdup(_("- Let me choose..."))),
                        &radiobutton_group2,
                        LIVES_BOX(hbox),
@@ -4076,6 +4074,8 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_choose), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(utsense),
                        LIVES_INT_TO_POINTER(FALSE));
+
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_choose), TRUE);
 
   ///////
 
@@ -4176,6 +4176,17 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 }
 
 
+static boolean on_ebox_click(LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
+  // want to get doubleclick and then exit somehow
+  int val = LIVES_POINTER_TO_INT(user_data);
+  if (event->type != LIVES_BUTTON_PRESS) {
+    lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(widget)), val);
+    lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(widget)));
+  }
+  return TRUE;
+}
+
+
 boolean youtube_select_format(lives_remote_clip_request_t *req) {
   // need to set req->vidchoice
   int numlines, npieces;
@@ -4183,17 +4194,24 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   int i, j, dbw, pdone;
   int scrw = GUI_SCREEN_WIDTH;
   int scrh = GUI_SCREEN_HEIGHT;
-  int row = 0;
+  int row = 1;
   int response;
 
+  size_t slen;
+
   char **lines, **pieces;
-  char *title;
+  char *title, *txt;
 
   char *notes;
-  
+
   LiVESWidget *dialog, *dialog_vbox, *scrollw, *table;
-  LiVESWidget *label;
-  
+  LiVESWidget *label, *eventbox, *cancelbutton;
+  LiVESWidget *abox;
+
+  LiVESList *allids = NULL;
+
+  LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+
   if (strlen(mainw->msg) < 10) return FALSE;
   numlines = get_token_count(mainw->msg, '|');
   if (numlines < 2) return FALSE;
@@ -4202,24 +4220,40 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
     lives_strfreev(lines);
     return FALSE;
   }
-  
+
   // create the dialog with a scrolledwindow
   width = scrw - SCR_WIDTH_SAFETY;
-  height = scrh - SCR_HEIGHT_SAFETY;
+  height = (scrh - SCR_HEIGHT_SAFETY) / 2;
 
-  // needs to be set as large as possible, we will shrink it later, but it must not expand
-  title = lives_strdup(_("Select video format to download"));
-  dialog = lives_standard_dialog_new(title, TRUE, 8, 8);
+  title = lives_strdup(_("Select Video Format to Download"));
+  dialog = lives_standard_dialog_new(title, FALSE, 8, 8);
   lives_free(title);
+
+  abox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
+  if (LIVES_IS_BOX(abox)) {
+    label = lives_standard_label_new(_("Double click on a format to load it, or click Cancel to exit."));
+    lives_box_pack_start(LIVES_BOX(abox), label, FALSE, TRUE, widget_opts.border_width);
+
+    add_fill_to_box(LIVES_BOX(abox));
+  }
+
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                 LIVES_RESPONSE_CANCEL);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                       NULL);
+
+  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
-  table = lives_table_new(numlines, 5, FALSE);
-  lives_table_set_row_homogeneous(LIVES_TABLE(table), TRUE);
+  table = lives_table_new(numlines + 1, 5, FALSE);
+  lives_table_set_row_spacings(LIVES_TABLE(table), widget_opts.packing_height * 2);
 
   dbw = widget_opts.border_width;
-  widget_opts.border_width = 0;
-  
+
   // need to set a large enough default here
   scrollw = lives_standard_scrolled_window_new(width * .8, height * 1., table);
   widget_opts.border_width = dbw;
@@ -4228,55 +4262,127 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   lives_container_set_border_width(LIVES_CONTAINER(table), 0);
 
   notes = lives_strdup("");
-  
+
+  // set the column headings
+  label = lives_standard_label_new(_("ID"));
+  lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
+                     (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
+                     (LiVESAttachOptions)(0), 0, 0);
+  lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
+  lives_widget_set_valign(label, LIVES_ALIGN_END);
+
+  label = lives_standard_label_new(_("Format"));
+  lives_table_attach(LIVES_TABLE(table), label, 1, 2, 0, 1,
+                     (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
+                     (LiVESAttachOptions)(0), 0, 0);
+  lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
+  lives_widget_set_valign(label, LIVES_ALIGN_END);
+
+  label = lives_standard_label_new(_("Resolution"));
+  lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
+                     (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
+                     (LiVESAttachOptions)(0), 0, 0);
+  lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
+  lives_widget_set_valign(label, LIVES_ALIGN_END);
+
+  label = lives_standard_label_new(_("Notes"));
+  lives_table_attach(LIVES_TABLE(table), label, 3, 4, 0, 1,
+                     (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
+                     (LiVESAttachOptions)(0), 0, 0);
+  lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
+  lives_widget_set_valign(label, LIVES_ALIGN_END);
+
+
   for (i = 1; i < numlines; i++) {
     npieces = get_token_count(lines[i], ' ');
     pieces = lives_strsplit(lines[i], " ", npieces);
     pdone = 0;
-    
+
     for (j = 0; j < npieces; j++) {
       if (pdone < 3 && strlen(pieces[j]) == 0) continue;
 
       if (pdone == 0) {
-	// id no
-	label = lives_standard_label_new(pieces[j]);
-	lives_widget_apply_theme3(label, TRUE);
-	lives_table_attach(LIVES_TABLE(table), label, 0, 1, row, row + 1,
-			   (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
-			   (LiVESAttachOptions)(0), 0, 0);
-	pdone = 1;
-	continue;
+        // id no
+        txt = lives_strdup_printf("\n%s\n", pieces[j]);
+        label = lives_standard_label_new(txt);
+        lives_free(txt);
+        lives_widget_apply_theme3(label, LIVES_WIDGET_STATE_NORMAL);
+        eventbox = lives_event_box_new();
+        lives_container_add(LIVES_CONTAINER(eventbox), label);
+        lives_event_box_set_above_child(LIVES_EVENT_BOX(eventbox), TRUE);
+        lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                             LIVES_GUI_CALLBACK(on_ebox_click),
+                             LIVES_INT_TO_POINTER(row - 1));
+        lives_table_attach(LIVES_TABLE(table), eventbox, 0, 1, row, row + 1,
+                           (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
+                           (LiVESAttachOptions)(0), 0, 0);
+        lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
+        allids = lives_list_append(allids, lives_strdup(pieces[j]));
+        pdone = 1;
+        continue;
       }
 
       if (pdone == 1) {
-	// format
-	label = lives_standard_label_new(pieces[j]);
-	lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row + 1,
-			   (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
-			   (LiVESAttachOptions)(0), 0, 0);
-	pdone = 2;
-	continue;
+        // format
+        txt = lives_strdup_printf("\n%s\n", pieces[j]);
+        label = lives_standard_label_new(txt);
+        lives_free(txt);
+        lives_widget_apply_theme3(label, LIVES_WIDGET_STATE_NORMAL);
+        eventbox = lives_event_box_new();
+        lives_container_add(LIVES_CONTAINER(eventbox), label);
+        lives_event_box_set_above_child(LIVES_EVENT_BOX(eventbox), TRUE);
+        lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                             LIVES_GUI_CALLBACK(on_ebox_click),
+                             LIVES_INT_TO_POINTER(row - 1));
+        lives_table_attach(LIVES_TABLE(table), eventbox, 1, 2, row, row + 1,
+                           (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
+                           (LiVESAttachOptions)(0), 0, 0);
+        lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
+        pdone = 2;
+        continue;
       }
 
       if (pdone == 2) {
-	// res
-	label = lives_standard_label_new(pieces[j]);
-	lives_table_attach(LIVES_TABLE(table), label, 2, 3, row, row + 1,
-			   (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
-			   (LiVESAttachOptions)(0), 0, 0);
-	pdone = 3;
-	continue;
+        // res
+        txt = lives_strdup_printf("\n%s\n", pieces[j]);
+        label = lives_standard_label_new(txt);
+        lives_free(txt);
+        lives_widget_apply_theme3(label, LIVES_WIDGET_STATE_NORMAL);
+        eventbox = lives_event_box_new();
+        lives_container_add(LIVES_CONTAINER(eventbox), label);
+        lives_event_box_set_above_child(LIVES_EVENT_BOX(eventbox), TRUE);
+        lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                             LIVES_GUI_CALLBACK(on_ebox_click),
+                             LIVES_INT_TO_POINTER(row - 1));
+        lives_table_attach(LIVES_TABLE(table), eventbox, 2, 3, row, row + 1,
+                           (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
+                           (LiVESAttachOptions)(0), 0, 0);
+        lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
+        pdone = 3;
+        continue;
       }
-      
       notes = lives_strdup_printf("%s %s", notes, pieces[j]);
     }
 
     lives_strfreev(pieces);
 
-    label = lives_standard_label_new(notes);
-    lives_table_attach(LIVES_TABLE(table), label, 3, 4, row, row + 1,
-		       (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
-		       (LiVESAttachOptions)(0), 0, 0);
+    slen = strlen(notes);
+    // strip trailing newline
+    if (slen > 0 && notes[slen - 1] == '\n') notes[slen - 1] = 0;
+
+    txt = lives_strdup_printf("\n%s\n", notes);
+    label = lives_standard_label_new(txt);
+    lives_free(txt);
+    lives_widget_apply_theme3(label, LIVES_WIDGET_STATE_NORMAL);
+    eventbox = lives_event_box_new();
+    lives_container_add(LIVES_CONTAINER(eventbox), label);
+    lives_event_box_set_above_child(LIVES_EVENT_BOX(eventbox), TRUE);
+    lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                         LIVES_GUI_CALLBACK(on_ebox_click),
+                         LIVES_INT_TO_POINTER(row - 1));
+    lives_table_attach(LIVES_TABLE(table), eventbox, 3, 4, row, row + 1,
+                       (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
+                       (LiVESAttachOptions)(0), 0, 0);
     lives_free(notes);
     notes = lives_strdup("");
     row++;
@@ -4287,16 +4393,20 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 
   lives_widget_show_all(dialog);
 
-  if ((response = lives_dialog_run(LIVES_DIALOG(dialog))) == LIVES_RESPONSE_OK) {
-    // TODO - get selected id no, set in req->vidchoice
-    
-    return FALSE; // TODO
+  response = lives_dialog_run(LIVES_DIALOG(dialog));
+  if (response < 0) {
+    // user cancelled
+    lives_list_free_all(&allids);
+    return FALSE;
   }
-  
-  return FALSE;
+
+  // set req->vidchoice and return
+  lives_snprintf(req->vidchoice, 512, "%s", (char *)lives_list_nth_data(allids, response));
+  lives_list_free_all(&allids);
+  return TRUE;
 }
 
- 
+
 //// message area functions
 
 static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute, LiVESAdjustment *adj) {

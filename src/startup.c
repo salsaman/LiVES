@@ -356,14 +356,14 @@ boolean do_audio_choice_dialog(short startup_phase) {
                          LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER2));
   }
 
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL, 
-						    LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                 LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
-						  LIVES_RESPONSE_OK);
+             LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);
@@ -534,17 +534,17 @@ boolean do_startup_tests(boolean tshoot) {
   label = lives_standard_label_new(_("LiVES will now run some basic configuration tests\n"));
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
 
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL, 
-						    LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                 LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (!tshoot) {
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
-						  LIVES_RESPONSE_OK);
-  } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL, 
-						       LIVES_RESPONSE_OK);
+               LIVES_RESPONSE_OK);
+  } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+                      LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);
@@ -987,8 +987,8 @@ void do_startup_interface_query(void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
   }
 
-  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Finish"), 
-						  LIVES_RESPONSE_OK);
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Finish"),
+             LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);

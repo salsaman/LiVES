@@ -10789,25 +10789,24 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
       xasamps = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
 
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
-	xse = AFORM_UNSIGNED;
+        xse = AFORM_UNSIGNED;
       }
 
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
-	xse |= AFORM_BIG_ENDIAN;
+        xse |= AFORM_BIG_ENDIAN;
       }
 
       if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton))) {
-	xachans = 0;
+        xachans = 0;
       }
 
       ptaud = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rdet->pertrack_checkbutton));
       btaud = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rdet->backaudio_checkbutton));
-    }
-    else {
+    } else {
       xarate = xachans = xasamps = 0;
       xse = cfile->signed_endian;
     }
-    
+
     if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rdet->always_checkbutton))) {
       prefs->mt_enter_prompt = FALSE;
       set_boolean_pref(PREF_MT_ENTER_PROMPT, prefs->mt_enter_prompt);
@@ -10831,11 +10830,11 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
       set_int_pref(PREF_MT_BACKAUDIO, prefs->mt_backaudio);
     } else {
       if (!prefs->mt_enter_prompt) {
-	prefs->mt_enter_prompt = TRUE;
-	set_boolean_pref(PREF_MT_ENTER_PROMPT, prefs->mt_enter_prompt);
+        prefs->mt_enter_prompt = TRUE;
+        set_boolean_pref(PREF_MT_ENTER_PROMPT, prefs->mt_enter_prompt);
       }
     }
-      
+
     lives_widget_destroy(rdet->dialog);
 
 

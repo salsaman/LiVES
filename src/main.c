@@ -7427,7 +7427,9 @@ void load_frame_image(int frame) {
     }
 
     if (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE) {
+      mainw->no_context_update = TRUE;
       reget_afilesize(mainw->current_file);
+      mainw->no_context_update = FALSE;
     }
 
     if (!mainw->switch_during_pb) {

@@ -204,7 +204,8 @@ typedef enum {
   LIVES_MATCH_AT_MOST,
   LIVES_MATCH_HIGHEST,
   LIVES_MATCH_LOWEST,
-  LIVES_MATCH_CHOICE
+  LIVES_MATCH_CHOICE,
+  LIVES_MATCH_SPECIFIED
 } lives_size_match_t;
 
 typedef struct {

@@ -3120,8 +3120,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_halign(LiVESWidget *widget,
     if (align == LIVES_ALIGN_START) gtk_label_set_xalign(LIVES_LABEL(widget), 0.);
     if (align == LIVES_ALIGN_CENTER) gtk_label_set_xalign(LIVES_LABEL(widget), 0.5);
     if (align == LIVES_ALIGN_END) gtk_label_set_xalign(LIVES_LABEL(widget), 1.);
-  }
-  else gtk_widget_set_halign(widget, align);
+  } else gtk_widget_set_halign(widget, align);
 #else
   gtk_widget_set_halign(widget, align);
 #endif
@@ -3366,10 +3365,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_model(LiVESCombo *combo, LiV
     GtkCellArea *celly;
     lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
     gtk_cell_area_foreach(celly, setcellbg, NULL);
-    
+
     // need to get the GtkCellView !
     //lives_widget_object_set(celly, "background", &palette->info_base);
-    
+
 #endif
   }
   return TRUE;
@@ -3390,10 +3389,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_append_text(LiVESCombo *combo, c
     GtkCellArea *celly;
     lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
     gtk_cell_area_foreach(celly, setcellbg, NULL);
-    
+
     // need to get the GtkCellView !
     //lives_widget_object_set(celly, "background", &palette->info_base);
-    
+
 #endif
   }
   return TRUE;
@@ -3834,86 +3833,108 @@ LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label
 #if GTK_CHECK_VERSION(3, 10, 0) || defined GUI_QT
   do {
     if (stock_id == NULL) {
-      button = lives_button_new_with_label(label); break;
+      button = lives_button_new_with_label(label);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_LABEL_CANCEL)) stock_id = LIVES_STOCK_CANCEL;
     if (!strcmp(stock_id, LIVES_STOCK_LABEL_OK)) stock_id = LIVES_STOCK_OK;
     // gtk 3.10 + -> we need to set the text ourselves
     if (!strcmp(stock_id, LIVES_STOCK_NO)) stock_id = "gtk-no";
     if (!strcmp(stock_id, LIVES_STOCK_APPLY)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_APPLY); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_APPLY);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_OK)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_OK); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_OK);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_CANCEL)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_CANCEL); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_CANCEL);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_YES)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_YES); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_YES);
+      break;
     }
     if (!strcmp(stock_id, "gtk-no")) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_NO); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_NO);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_CLOSE)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_CLOSE); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_CLOSE);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_REVERT_TO_SAVED)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_REVERT); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_REVERT);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_REFRESH)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_REFRESH); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_REFRESH);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_DELETE)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_DELETE); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_DELETE);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_SAVE)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_SAVE); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_SAVE);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_SAVE_AS)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_SAVE_AS); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_SAVE_AS);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_OPEN)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_OPEN); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_OPEN);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_SELECT_ALL)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_SELECT_ALL); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_SELECT_ALL);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_QUIT)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_QUIT); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_QUIT);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_GO_FORWARD)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_GO_FORWARD); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_GO_FORWARD);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_MEDIA_FORWARD)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_FORWARD); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_FORWARD);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_MEDIA_REWIND)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_REWIND); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_REWIND);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_MEDIA_STOP)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_STOP); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_STOP);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_MEDIA_PLAY)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_PLAY); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_PLAY);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_MEDIA_PAUSE)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_PAUSE); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_PAUSE);
+      break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_MEDIA_RECORD)) {
-      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_RECORD); break;
+      button = lives_button_new_with_label(LIVES_STOCK_LABEL_MEDIA_RECORD);
+      break;
     }
     // text not known
     button = lives_button_new();
   } while (FALSE);
 #ifdef GUI_GTK
   if (widget_opts.show_button_images
-					  || !strcmp(stock_id, LIVES_STOCK_ADD)
-					  || !strcmp(stock_id, LIVES_STOCK_REMOVE)
-					  ) {
-					LiVESWidget *image = gtk_image_new_from_icon_name(stock_id, GTK_ICON_SIZE_BUTTON);
-					if (LIVES_IS_IMAGE(image))
-					  gtk_button_set_image(GTK_BUTTON(button), image);
+      || !strcmp(stock_id, LIVES_STOCK_ADD)
+      || !strcmp(stock_id, LIVES_STOCK_REMOVE)
+     ) {
+    LiVESWidget *image = gtk_image_new_from_icon_name(stock_id, GTK_ICON_SIZE_BUTTON);
+    if (LIVES_IS_IMAGE(image))
+      gtk_button_set_image(GTK_BUTTON(button), image);
 #endif
 
 #ifdef GUI_QT
@@ -3931,7 +3952,7 @@ LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label
 
 #else
   // < 3.10
-    button = gtk_button_new_from_stock(stock_id);
+  button = gtk_button_new_from_stock(stock_id);
 #endif
 
     if (!LIVES_IS_BUTTON(button)) {
@@ -3939,7 +3960,7 @@ LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label
       LIVES_WARN(stock_id);
       button = lives_button_new();
     }
-      
+
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 6, 0)
     gtk_button_set_always_show_image(GTK_BUTTON(button), widget_opts.show_button_images);
@@ -8049,16 +8070,16 @@ boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
   for (i = 0; i < lives_list_length(list); i++) {
     if (!lives_combo_append_text(LIVES_COMBO(combo), (const char *)lives_list_nth_data(list, i))) return FALSE;
   }
-  
+
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     GtkCellArea *celly;
     lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
     gtk_cell_area_foreach(celly, setcellbg, NULL);
-    
+
     // need to get the GtkCellView !
     //lives_widget_object_set(celly, "background", &palette->info_base);
-    
+
 #endif
   }
   return TRUE;
@@ -8378,8 +8399,8 @@ static LiVESWidget *make_label_eventbox(const char *labeltext, LiVESWidget *widg
     lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_INSENSITIVE);
     //lives_widget_apply_theme(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL);
     lives_signal_connect_after(LIVES_GUI_OBJECT(label), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-			       LIVES_GUI_CALLBACK(button_state_cb),
-			       NULL);
+                               LIVES_GUI_CALLBACK(button_state_cb),
+                               NULL);
   }
   return eventbox;
 }
@@ -8516,8 +8537,8 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, boolean activ
       lives_cool_toggled(checkbutton, &togglevalue);
 #ifdef NO_ALT_VALUES
       lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
-			   LIVES_GUI_CALLBACK(draw_cool_toggle),
-			   NULL);
+                           LIVES_GUI_CALLBACK(draw_cool_toggle),
+                           NULL);
     }
 #endif
   }
@@ -8613,7 +8634,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
     lives_widget_apply_theme(radiobutton, LIVES_WIDGET_STATE_NORMAL);
 #endif
   }
-  
+
   return radiobutton;
 }
 
@@ -8801,12 +8822,12 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
     lives_widget_apply_theme(combo, LIVES_WIDGET_STATE_NORMAL);
     lives_widget_apply_theme(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL);
     lives_signal_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-			       LIVES_GUI_CALLBACK(button_state_cb),
-			       NULL);
+                               LIVES_GUI_CALLBACK(button_state_cb),
+                               NULL);
     button_state_cb(LIVES_WIDGET_OBJECT(entry), NULL, NULL);
     lives_signal_connect_after(LIVES_GUI_OBJECT(combo), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-			       LIVES_GUI_CALLBACK(button_state_cb),
-			       NULL);
+                               LIVES_GUI_CALLBACK(button_state_cb),
+                               NULL);
     button_state_cb(LIVES_WIDGET_OBJECT(combo), NULL, NULL);
   }
 
@@ -8863,7 +8884,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
     if (labeltext != NULL) {
       eventbox = make_label_eventbox(labeltext, entry);
     }
-    
+
     hbox = make_inner_hbox(LIVES_BOX(box));
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
 
@@ -8968,32 +8989,34 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (add_std_buttons) {
     LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     LiVESWidget *cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-								   LIVES_RESPONSE_CANCEL);
+                                LIVES_RESPONSE_CANCEL);
 
     LiVESWidget *okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-							       LIVES_RESPONSE_OK);
-    
+                            LIVES_RESPONSE_OK);
+
     lives_widget_set_can_focus_and_default(okbutton);
     lives_button_grab_default_special(okbutton);
 
     lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-			 LIVES_GUI_CALLBACK(lives_general_button_clicked),
-			 NULL);
+                         LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                         NULL);
 
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-				 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-  
+                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+
     if (widget_opts.apply_theme) {
       lives_signal_connect_after(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
                                  LIVES_GUI_CALLBACK(button_state_cb),
                                  NULL);
       button_state_cb(LIVES_WIDGET_OBJECT(cancelbutton), NULL, NULL);
-      
+
       lives_signal_connect_after(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
                                  LIVES_GUI_CALLBACK(button_state_cb),
                                  NULL);
       button_state_cb(LIVES_WIDGET_OBJECT(okbutton), NULL, NULL);
     }
+
+    lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DELETE_EVENT,
@@ -9212,7 +9235,7 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox *box, LiVES
     if (child != NULL) lives_container_add(LIVES_CONTAINER(expander), child);
     lives_container_set_border_width(LIVES_CONTAINER(expander), widget_opts.border_width);
   }
-    
+
   if (widget_opts.apply_theme) {
     lives_signal_connect_after(LIVES_GUI_OBJECT(expander), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
                                LIVES_GUI_CALLBACK(button_state_cb),
@@ -10663,7 +10686,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_can_focus_and_default(LiVES
 void lives_general_button_clicked(LiVESButton *button, livespointer data_to_free) {
   // destroy the button top-level and free data
   lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   lives_freep((void **)&data_to_free);
 }
 

@@ -343,7 +343,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   if (mainw->iochan == NULL && okbutton != NULL) {
     lives_widget_set_can_focus_and_default(okbutton);
-    lives_widget_grab_default_special(okbutton);
+    lives_button_grab_default_special(okbutton);
     lives_widget_grab_focus(okbutton);
   }
 
@@ -1874,7 +1874,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
 
       if (!cfile->opening && !cfile->nopreview) {
-        lives_widget_grab_default_special(cfile->proc_ptr->preview_button);
+        lives_button_grab_default_special(cfile->proc_ptr->preview_button);
         if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
         lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
         lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);

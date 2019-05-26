@@ -1094,14 +1094,14 @@ void on_resample_vid_ok(LiVESButton *button, LiVESEntry *entry) {
 _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox) {
   // type 1 == resample
   // type 2 == insert silence
-  // type 3 == enter multitrack or encode or render to clip (?) (embedded)
+  // type 3 == enter multitrack
   // type 4 == prefs/multitrack
   // type 5 == new clip record/record to selection with no existing audio
   // type 6 == record to clip with no existing audio
   // type 7 == record to clip with existing audio (show time only)
   // type 8 == grab external window, with audio
   // type 9 == grab external, no audio
-  // type 10 == change inside multitrack / render to clip (embedded)
+  // type 10 == change inside multitrack / render to clip (embedded) [resets to 3]
   // type 11 == rte audio gen as rfx
 
   LiVESWidget *dialog_vbox = NULL;
@@ -1153,7 +1153,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
   _resaudw *resaudw = (_resaudw *)(lives_malloc(sizeof(_resaudw)));
 
   if (type == 10) {
-    if (mainw->multitrack != NULL) chans_fixed = TRUE; // TODO *
+    chans_fixed = TRUE;
     type = 3;
   }
 
@@ -1308,7 +1308,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     vbox2 = lives_vbox_new(FALSE, 0);
     lives_container_add(LIVES_CONTAINER(frame), vbox2);
 
-    if (type > 2 && type < 5) {
+    if (type > 2 && type < 5 && !chans_fixed) {
       resaudw->aud_hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(vbox2), resaudw->aud_hbox, FALSE, FALSE, 0);
 
@@ -1317,7 +1317,11 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       if (rdet != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), rdet->achans > 0);
       else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton),
                                             mainw->multitrack == NULL ? prefs->mt_def_achans > 0 : cfile->achans > 0);
-    } else resaudw->aud_checkbutton = lives_check_button_new();
+      if (type == 4) {
+	lives_signal_connect(LIVES_GUI_OBJECT(resaudw->aud_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+			     LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+      }
+    }
 
     hbox2 = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox2), hbox2, FALSE, FALSE, widget_opts.packing_height);
@@ -1345,6 +1349,10 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_entry_set_text(LIVES_ENTRY(resaudw->entry_arate), tmp);
     lives_free(tmp);
 
+    if (type == 4) {
+      lives_signal_connect(LIVES_GUI_OBJECT(combo4), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+    }
+
     combo5 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Channels")) : (_("Channels"))),
                                       channels, LIVES_BOX(hbox), NULL);
 
@@ -1364,6 +1372,10 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     if (chans_fixed) {
       lives_widget_set_sensitive(resaudw->entry_achans, FALSE);
       lives_widget_set_sensitive(combo5, FALSE);
+    }
+
+    if (type == 4) {
+      lives_signal_connect(LIVES_GUI_OBJECT(combo5), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
     }
 
     combo6 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Sample Size")) : (_("Sample Size"))),
@@ -1386,6 +1398,10 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     else is_8bit = FALSE;
 
     lives_free(tmp);
+
+    if (type == 4) {
+      lives_signal_connect(LIVES_GUI_OBJECT(combo6), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+    }
 
     vseparator = lives_vseparator_new();
     if (type != 4) lives_box_pack_start(LIVES_BOX(hbox2), vseparator, FALSE, FALSE, widget_opts.packing_width);
@@ -1417,6 +1433,11 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned), TRUE);
     } else {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed), TRUE);
+    }
+
+    if (type == 4) {
+      lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_signed), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+      lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_unsigned), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
     }
 
     vseparator = lives_vseparator_new();
@@ -1454,6 +1475,11 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
                          LIVES_GUI_CALLBACK(on_resaudw_asamps_changed),
                          NULL);
   }
+
+  if (type == 4) {
+    lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_littleend), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_bigend), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+    }
 
   if (type > 7 && type != 11) {
     frame = lives_standard_frame_new(_("Video"), 0., FALSE);
@@ -1519,7 +1545,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
     lives_dialog_add_action_widget(LIVES_DIALOG(resaudw->dialog), okbutton, LIVES_RESPONSE_OK);
     lives_widget_set_can_focus_and_default(okbutton);
-    lives_widget_grab_default_special(okbutton);
+    lives_button_grab_default_special(okbutton);
 
     if (type < 8 || type == 11) {
       lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1547,9 +1573,8 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     }
 
     lives_widget_show_all(resaudw->dialog);
-
   } else {
-    if (type > 2 && type < 5) {
+    if (resaudw->aud_checkbutton != NULL) {
       lives_signal_connect_after(LIVES_GUI_OBJECT(resaudw->aud_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                  LIVES_GUI_CALLBACK(on_resaudw_achans_changed),
                                  (livespointer)resaudw);
@@ -1680,7 +1705,7 @@ void create_new_pb_speed(short type) {
   change_pb_ok = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(new_pb_speed), change_pb_ok, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(change_pb_ok);
-  lives_widget_grab_default_special(change_pb_ok);
+  lives_button_grab_default_special(change_pb_ok);
   lives_widget_grab_focus(spinbutton_pb_speed);
 
   reorder_leave_back = FALSE;

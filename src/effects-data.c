@@ -4869,7 +4869,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);

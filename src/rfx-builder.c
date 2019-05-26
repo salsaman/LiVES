@@ -977,7 +977,7 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -4061,7 +4061,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
   copy_script_okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), copy_script_okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(copy_script_okbutton);
-  lives_widget_grab_default_special(copy_script_okbutton);
+  lives_button_grab_default_special(copy_script_okbutton);
 
   lives_widget_show_all(dialog);
 

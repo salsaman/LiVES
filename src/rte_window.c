@@ -1705,7 +1705,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 #endif
 
   lives_widget_set_can_focus_and_default(ok_button);
-  lives_widget_grab_default_special(ok_button);
+  lives_button_grab_default_special(ok_button);
 
   lives_widget_set_size_request(ok_button, DEF_BUTTON_WIDTH * 4, -1);
 

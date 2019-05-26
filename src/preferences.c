@@ -539,7 +539,7 @@ static void set_workdir_label_text(LiVESLabel *label) {
             _("The work directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n"));
 
 #ifdef GUI_GTK
-  markup = g_markup_printf_escaped("<span background=\"white\" foreground=\"red\"><b>%s</b></span>%s", tmpx1, tmpx2);
+  markup = g_markup_printf_escaped("<span background=\"white\" foreground=\"red\"><big><b>%s</b></big></span>%s", tmpx1, tmpx2);
 #endif
 #ifdef GUI_QT
   QString qs = QString("<span background=\"white\" foreground=\"red\"><b>%s</b></span>%s").arg(tmpx1).arg(tmpx2);
@@ -2449,7 +2449,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data) {
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->revertbutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
-  lives_widget_grab_default_special(prefsw->applybutton);
+  lives_button_grab_default_special(prefsw->applybutton);
 }
 
 
@@ -2683,8 +2683,11 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   lives_paned_pack(2, LIVES_PANED(prefsw->dialog_hpaned), dialog_table, TRUE, FALSE);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_paned_set_position(LIVES_PANED(prefsw->dialog_hpaned), PREFS_PANED_POS);
-
+#else
+  lives_paned_set_position(LIVES_PANED(prefsw->dialog_hpaned), PREFS_PANED_POS / 2);
+#endif
   // -------------------,
   // gui controls       |
   // -------------------'
@@ -2884,10 +2887,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->msg_textsize_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
-  icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_gui.png", NULL
-                             );
-  pixbuf_gui = lives_pixbuf_new_from_file(icon, NULL);
-  lives_free(icon);
+  pixbuf_gui = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_GUI, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_gui, _("GUI"), LIST_ENTRY_GUI);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_gui);
@@ -3880,7 +3880,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // Warnings       |
   // ---------------'
 
-  prefsw->vbox_right_warnings = lives_vbox_new(FALSE, 0);
+  prefsw->vbox_right_warnings = lives_vbox_new(FALSE, widget_opts.packing_height >> 2);
 
   prefsw->scrollw_right_warnings = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_warnings);
 
@@ -4854,7 +4854,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // Set 'Apply' button as inactive since there are no changes yet
   lives_widget_set_sensitive(prefsw->applybutton, FALSE);
 
-  lives_widget_grab_default_special(prefsw->closebutton);
+  lives_button_grab_default_special(prefsw->closebutton);
 
   // Connect signals for 'Apply' button activity handling
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fore), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),

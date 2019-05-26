@@ -366,7 +366,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
 
   if (prefs->audio_player == -1) {
@@ -547,7 +547,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
 
   lives_widget_set_sensitive(okbutton, FALSE);
@@ -991,7 +991,7 @@ void do_startup_interface_query(void) {
 
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
 
   lives_widget_show_all(dialog);

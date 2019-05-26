@@ -13,8 +13,11 @@
 // TODO - add for other toolkits, e.g. qt
 
 // static defns
-static void set_child_colour_internal(LiVESWidget *widget, livespointer set_allx);
-static void set_child_alt_colour_internal(LiVESWidget *widget, livespointer set_allx);
+static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
+static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
+static void default_changed_cb(LiVESObject *, livespointer pspec, livespointer user_data);
+static boolean lives_widget_set_sensitive_with(LiVESWidget *w1, LiVESWidget *w2);
+static boolean lives_widget_set_show_hide_with(LiVESWidget *widget, LiVESWidget *other);
 
 
 #if 0
@@ -89,68 +92,86 @@ weed_plant_t *LiVESObject_to_weed_plant(LiVESObject *o) {
 #endif
 
 
-static void button_state_cb(LiVESWidget *button, LiVESWidgetState state, livespointer user_data) {
-  // cannot alter the text colour after the initial draw of a button
+static void button_state_cb(LiVESObject *object, livespointer pspec, livespointer user_data) {
+  // a) cannot alter the text colour of a button after the initial draw of a button
   // this is because it doesnt have a proper label widget
   // we can only change the background colour
 
   // thus if we need a button with changable text colour we must use a toolbar button instead !
-
-  // in addition, the various state colours of buttons are ignored, thus we need to set them in a
-  // state change callback
-
-  if (LIVES_IS_TOOL_BUTTON(button)) {
+  //
+  // b) CSS appears broken in gtk+ 3.18.9 and possibly other versions, preventing seeting of colours for
+  // non-default states (e.g. insensitive)
+  // thus we need to set a callback to listen to "sensitive" changes, and update the colours in response
+  //
+  LiVESWidget *widget = (LiVESWidget *)object;
+  LiVESWidgetState state = lives_widget_get_state(widget);
+  boolean woat = widget_opts.apply_theme;
+  if (LIVES_IS_BUTTON(widget)) {
+    if (!LIVES_IS_TOGGLE_BUTTON(widget)) 
+      default_changed_cb(object, NULL, NULL);
+    return;
+  }
+  widget_opts.apply_theme = TRUE;
+  if (LIVES_IS_TOOL_BUTTON(widget)) {
     LiVESWidget *label;
-    LiVESWidget *icon = gtk_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(button));
+    LiVESWidget *icon = gtk_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(widget));
     if (icon != NULL) {
-      lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-      lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-      lives_tool_button_set_border_colour(button, state, &palette->menu_and_bars);
+      // if we have an icon (no label) just update the border
+      lives_tool_button_set_border_colour(widget, state, &palette->menu_and_bars);
+      widget_opts.apply_theme = woat;
       return;
     }
-    label = gtk_tool_button_get_label_widget(LIVES_TOOL_BUTTON(button));
+    label = gtk_tool_button_get_label_widget(LIVES_TOOL_BUTTON(widget));
     if (label != NULL) {
       float dimval;
       LiVESWidgetColor dimmed_fg;
-      if (!lives_widget_is_sensitive(button)) {
+      LiVESList *list;
+      // if we have a label we CAN set the text colours for TOOL_buttons
+      // as well as the outline colour
+      if (!lives_widget_is_sensitive(widget)) {
         dimval = (0.2 * 65535.);
         lives_widget_color_copy(&dimmed_fg, &palette->normal_fore);
         lives_widget_color_mix(&dimmed_fg, &palette->normal_back, (float)dimval / 65535.);
-        lives_tool_button_set_border_colour(button, state, &dimmed_fg);
+        lives_tool_button_set_border_colour(widget, state, &dimmed_fg);
         lives_widget_apply_theme_dimmed2(label, state, BUTTON_DIM_VAL);
       } else {
         dimval = (0.6 * 65535.);
         lives_widget_color_copy(&dimmed_fg, &palette->normal_fore);
         lives_widget_color_mix(&dimmed_fg, &palette->normal_back, (float)dimval / 65535.);
-        lives_tool_button_set_border_colour(button, state, &dimmed_fg);
-        lives_tool_button_set_border_colour(button, LIVES_WIDGET_STATE_PRELIGHT, &dimmed_fg);
+        lives_tool_button_set_border_colour(widget, state, &dimmed_fg);
         lives_widget_apply_theme2(label, state, TRUE);
       }
       // menutoolbuttons will also have an arrow
-      LiVESList *children = lives_container_get_children(LIVES_CONTAINER(button)), *list = children;
+      // since CSS selectors are borked we have to find it by brute force
+      list = lives_container_get_children(LIVES_CONTAINER(widget));
       while (list != NULL) {
-        LiVESWidget *widget = (LiVESWidget *)list->data;
+        widget = (LiVESWidget *)list->data;
         if (LIVES_IS_VBOX(widget)) {
           lives_widget_set_bg_color(widget, state, &palette->menu_and_bars);
         }
         list = list->next;
       }
+      widget_opts.apply_theme = woat;
       return;
     }
   }
-  if (LIVES_IS_BUTTON(button) || LIVES_IS_ENTRY(button)) {
-    boolean woat = widget_opts.apply_theme;
+  if ( LIVES_IS_LABEL(widget)) {
+    // other widgets get dimmed text
     widget_opts.apply_theme = TRUE;
-    if (!lives_widget_is_sensitive(button)) {
-      // fwiw...
-      set_child_dimmed_colour(button, BUTTON_DIM_VAL); // insens, themecols 1, child only
-    } else {
-      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "default_grabbed")))
-        set_child_alt_colour(button, TRUE); // state normal, theme2
-      else set_child_colour(button, TRUE); // state normal, theme1
+    if (!lives_widget_is_sensitive(widget)) {
+      set_child_dimmed_colour(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
     }
-    widget_opts.apply_theme = woat;
+    else set_child_colour(widget, TRUE);
   }
+  if ( LIVES_IS_ENTRY(widget) || LIVES_IS_COMBO(widget)) {
+    // other widgets get dimmed text
+    widget_opts.apply_theme = TRUE;
+    if (!lives_widget_is_sensitive(widget)) {
+      set_child_dimmed_colour(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
+    }
+    else set_child_colour3(widget, TRUE);
+  }
+  widget_opts.apply_theme = woat;
 }
 
 
@@ -158,16 +179,22 @@ LiVESWidget *prettify_button(LiVESWidget *button) {
   if (!widget_opts.apply_theme || button == NULL) return button;
 
   lives_widget_apply_theme2(button, LIVES_WIDGET_STATE_NORMAL, TRUE);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "default_grabbed", LIVES_INT_TO_POINTER(FALSE));
+#if GTK_CHECK_VERSION(3, 0, 0)
   set_child_colour(button, TRUE);
-
-  // fwiw...
+#endif  
+#ifdef NO_ALT_VALUES
+  // try to set the insensitive state colours
   lives_widget_apply_theme_dimmed2(button, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
   set_child_dimmed_colour2(button, BUTTON_DIM_VAL); // insens, themecols 2, child only
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(button), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(button_state_cb),
-                             NULL);
+  // brute force it if we have to
+  lives_signal_connect_after(LIVES_GUI_OBJECT(button), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+                       LIVES_GUI_CALLBACK(button_state_cb),
+                       NULL);
+  button_state_cb(LIVES_WIDGET_OBJECT(button), NULL, NULL);
+#else
+  lives_widget_set_fg_color(button, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+#endif
   return button;
 }
 
@@ -899,6 +926,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_hide(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_show_all(widget);
+
+  // recommended to center the window again after adding all its widgets
+  if (LIVES_IS_DIALOG(widget))
+    lives_window_center(LIVES_WINDOW(widget));
+
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -1171,20 +1203,24 @@ static char *make_random_string(const char *prefix) {
 #if GTK_CHECK_VERSION(3, 16, 0)
 static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *selector, const char *detail,
     const char *value) {
-  GtkCssProvider *provider = gtk_css_provider_new();
-  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+  GtkCssProvider *provider;
+  GtkStyleContext *ctx;
 
   char *widget_name, *wname;
   char *css_string, *tmp;
   char *state_str;
 
+  if (widget == NULL || !LIVES_IS_WIDGET(widget)) return FALSE;
+
+  ctx = gtk_widget_get_style_context(widget);
+  provider = gtk_css_provider_new();
   gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
                                  (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
 
-  // seems like this isn't really necessary since each widget has its own style context anyway...
+  // seems like this isn't really necessary since, it apparently each widget has its own unique style context anyway...
   widget_name = g_strdup(gtk_widget_get_name(widget));
 
-  if (strncmp(widget_name, RND_STR_PREFIX, strlen(RND_STR_PREFIX))) {
+  if (widget_name == NULL || (strncmp(widget_name, RND_STR_PREFIX, strlen(RND_STR_PREFIX)))) {
     if (widget_name != NULL) g_free(widget_name);
     widget_name = make_random_string(RND_STR_PREFIX);
     gtk_widget_set_name(widget, widget_name);
@@ -1350,6 +1386,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widge
 #endif
 #else
   gtk_widget_modify_bg(widget, state, color);
+  gtk_widget_modify_base(widget, state, color);
 #endif
 #ifdef GUI_QT
   widget->set_bg_color(state, color);
@@ -1372,6 +1409,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widge
   gtk_widget_override_color(widget, state, color);
 #endif
 #else
+  gtk_widget_modify_text(widget, state, color);
   gtk_widget_modify_fg(widget, state, color);
 #endif
 #ifdef GUI_QT
@@ -1629,62 +1667,127 @@ WIDGET_HELPER_LOCAL_INLINE int get_real_size_from_icon_size(LiVESIconSize size) 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, LiVESIconSize size) {
-  LiVESWidget *image = NULL;
-#ifdef GUI_GTK
-  if (lives_has_icon(stock_id, size)) {
+LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y) {
+  LiVESPixbuf *pixbuf = NULL;
+  if (strncmp(stock_id, "lives-", 6)) {
+    LiVESWidget *image = NULL;
+    if (size == LIVES_ICON_SIZE_CUSTOM) {
+      if (x == y) {
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR)) size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR)) size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
+      }
+    }
+    if (size != LIVES_ICON_SIZE_CUSTOM) {
+      if (lives_has_icon(stock_id, size)) {
 #if GTK_CHECK_VERSION(3, 10, 0)
-    image = gtk_image_new_from_icon_name(stock_id, size);
+	image = gtk_image_new_from_icon_name(stock_id, size);
 #else
-    image = gtk_image_new_from_stock(stock_id, size);
+	image = gtk_image_new_from_stock(stock_id, size);
 #endif
-  } else {
+      }
+      if (image != NULL) return lives_image_get_pixbuf(LIVES_IMAGE(image));
+    }
+    // custom size, or failed at specified size
+    // try all sizes to see if we get one
+    if (image == NULL) {
+      if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DIALOG)) {
+	size = LIVES_ICON_SIZE_DIALOG;
+      }
+      else 
+	if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DND)) {
+	  size = LIVES_ICON_SIZE_DIALOG;
+	}
+	else 
+	  if (lives_has_icon(stock_id, LIVES_ICON_SIZE_LARGE_TOOLBAR)) {
+	    size = LIVES_ICON_SIZE_DIALOG;
+	  }
+	  else 
+	    if (lives_has_icon(stock_id, LIVES_ICON_SIZE_SMALL_TOOLBAR)) {
+	      size = LIVES_ICON_SIZE_DIALOG;
+	    }
+	    else 
+	      if (lives_has_icon(stock_id, LIVES_ICON_SIZE_BUTTON)) {
+		size = LIVES_ICON_SIZE_DIALOG;
+	      }
+	      else 
+		if (lives_has_icon(stock_id, LIVES_ICON_SIZE_MENU)) {
+		  size = LIVES_ICON_SIZE_DIALOG;
+		}
+		else return NULL;
+    
+#if GTK_CHECK_VERSION(3, 10, 0)
+      image = gtk_image_new_from_icon_name(stock_id, size);
+#else
+      image = gtk_image_new_from_stock(stock_id, size);
+#endif
+    }
+    if (image == NULL) return NULL;
+    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(image));
+  }
+  else {
     char *fname = lives_strdup_printf("%s.%s", stock_id, LIVES_FILE_EXT_PNG);
     char *fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, fname, NULL);
     LiVESError *error = NULL;
-    LiVESPixbuf *pixbuf = lives_pixbuf_new_from_file(fnamex, &error);
+    pixbuf = lives_pixbuf_new_from_file(fnamex, &error);
     lives_free(fnamex);
     lives_free(fname);
-    if (pixbuf != NULL) {
-      LiVESPixbuf *new_pixbuf = pixbuf;
-      if (size != LIVES_ICON_SIZE_CUSTOM) {
-        new_pixbuf = lives_pixbuf_scale_simple(pixbuf, get_real_size_from_icon_size(size), get_real_size_from_icon_size(size),
-                                               LIVES_INTERP_BEST);
-        lives_object_unref(pixbuf);
+  }
+  if (pixbuf != NULL) {
+    if (size != LIVES_ICON_SIZE_CUSTOM) {
+      x = y = get_real_size_from_icon_size(size);
+    }
+    if (x > 0 && y > 0) {
+      if (x != lives_pixbuf_get_width(pixbuf) || y != lives_pixbuf_get_height(pixbuf)) {
+	LiVESPixbuf *new_pixbuf = lives_pixbuf_scale_simple(pixbuf, x, y, LIVES_INTERP_BEST);
+	lives_object_unref(pixbuf);
+	pixbuf = new_pixbuf;
       }
-      image = lives_image_new_from_pixbuf(new_pixbuf);
-      lives_object_unref(new_pixbuf);
-    } else {
-#if GTK_CHECK_VERSION(3, 10, 0)
-      image = gtk_image_new_from_icon_name(LIVES_STOCK_MISSING_IMAGE, size);
-      if (image == NULL) image = gtk_image_new_from_icon_name(LIVES_STOCK_CLOSE, size);
-#else
-      image = gtk_image_new_from_stock(LIVES_STOCK_MISSING_IMAGE, size);
-      if (image == NULL) image = gtk_image_new_from_stock(GTK_STOCK_NO, size);
-      if (image == NULL) image = gtk_image_new_from_stock(LIVES_STOCK_CLOSE, size);
-#endif
     }
   }
+  return pixbuf;
+}
+
+  
+LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y) {
+  LiVESWidget *image = NULL;
+  LiVESPixbuf *pixbuf = NULL;
+#ifdef GUI_GTK
+  if (strncmp(stock_id, "lives-", 6)) {
+    if (size == LIVES_ICON_SIZE_CUSTOM) {
+      if (x == y) {
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR)) size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR)) size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
+	if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
+      }
+    }
+    if (size != LIVES_ICON_SIZE_CUSTOM) {
+      if (lives_has_icon(stock_id, size)) {
+#if GTK_CHECK_VERSION(3, 10, 0)
+	image = gtk_image_new_from_icon_name(stock_id, size);
+#else
+	image = gtk_image_new_from_stock(stock_id, size);
 #endif
-
-#ifdef GUI_QT
-  if (!QIcon::hasThemeIcon(stock_id)) lives_printerr("Missing icon %s\n", stock_id);
-  else {
-    QIcon qi = QIcon::fromTheme(stock_id);
-    QPixmap qp = qi.pixmap(size);
-
-    QImage qm = qp.toImage();
-    uint8_t *data = qm.bits();
-    int width = qm.width();
-    int height = qm.height();
-    int bpl = qm.bytesPerLine();
-    QImage::Format fmt = qm.format();
-
-    image = new LiVESImage(data, width, height, bpl, fmt, imclean, data);
+      }
+      if (image != NULL) return image;
+    }
   }
-
+  pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, size, x, y);
+  if (pixbuf == NULL) return NULL;
+  return lives_image_new_from_pixbuf(pixbuf);
 #endif
   return image;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, LiVESIconSize size) {
+  return lives_image_new_from_stock_at_size(stock_id, size, get_real_size_from_icon_size(size), get_real_size_from_icon_size(size));
 }
 
 
@@ -2366,6 +2469,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_add_accel_group(LiVESWindow *wi
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_has_focus(LiVESWidget *widget) {
 #ifdef GUI_GTK
   return gtk_widget_has_focus(widget);
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_has_default(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  return gtk_widget_has_default(widget);
 #endif
   return FALSE;
 }
@@ -7249,15 +7360,15 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_table_new(uint32_t rows, uint32_t
   gtk_grid_set_column_homogeneous(grid, homogeneous);
 
   for (i = 0; i < rows; i++) {
-    gtk_grid_insert_row(grid, 0);
+    lives_grid_insert_row(grid, 0);
   }
 
   for (i = 0; i < cols; i++) {
     gtk_grid_insert_column(grid, 0);
   }
 
-  g_object_set_data(LIVES_WIDGET_OBJECT(grid), "rows", LIVES_INT_TO_POINTER(rows));
-  g_object_set_data(LIVES_WIDGET_OBJECT(grid), "cols", LIVES_INT_TO_POINTER(cols));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(grid), "rows", LIVES_INT_TO_POINTER(rows));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(grid), "cols", LIVES_INT_TO_POINTER(cols));
   table = (LiVESWidget *)grid;
 #else
   table = gtk_table_new(rows, cols, homogeneous);
@@ -7335,17 +7446,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_table_resize(LiVESTable *table, uint32
 #if LIVES_TABLE_IS_GRID  // required for grid remove row
   register int i;
 
-  for (i = LIVES_POINTER_TO_INT(g_object_get_data(LIVES_WIDGET_OBJECT(table), "rows")); i < rows; i++) {
-    gtk_grid_insert_row(table, i);
+  for (i = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(table), "rows")); i < rows; i++) {
+    lives_grid_insert_row(table, i);
   }
 
-  for (i = LIVES_POINTER_TO_INT(g_object_get_data(LIVES_WIDGET_OBJECT(table), "cols")); i < cols; i++) {
+  for (i = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(table), "cols")); i < cols; i++) {
     gtk_grid_insert_column(table, i);
   }
 
-  g_object_set_data(LIVES_WIDGET_OBJECT(table), "rows", LIVES_INT_TO_POINTER(rows));
-  g_object_set_data(LIVES_WIDGET_OBJECT(table), "cols", LIVES_INT_TO_POINTER(cols));
-
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(table), "rows", LIVES_INT_TO_POINTER(rows));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(table), "cols", LIVES_INT_TO_POINTER(cols));
 #else
   gtk_table_resize(table, rows, cols);
 #endif
@@ -7807,9 +7917,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_editable(LiVESEntry *entry, 
 // compound functions
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_image_scale(LiVESImage *image, int width, int height, LiVESInterpType interp_type) {
-  LiVESPixbuf *pixbuf = lives_image_get_pixbuf(image);
+  LiVESPixbuf *pixbuf;
+  if (!LIVES_IS_IMAGE(image)) return FALSE;
+  pixbuf = lives_image_get_pixbuf(image);
   if (pixbuf != NULL) {
-    height = width = 16; // TODO !!!
     LiVESPixbuf *new_pixbuf = lives_pixbuf_scale_simple(pixbuf, width, height, interp_type);
     lives_image_set_from_pixbuf(image, new_pixbuf);
     //if (LIVES_IS_OBJECT(pixbuf)) lives_object_unref(pixbuf);
@@ -7899,13 +8010,31 @@ LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustme
 }
 
 
-boolean lives_widget_grab_default_special(LiVESWidget *widget) {
+static void default_changed_cb(LiVESObject *object, livespointer pspec, livespointer user_data) {
+  // change the background of the button if it is the default
+  boolean woat = widget_opts.apply_theme;
+  LiVESWidget *button = (LiVESWidget *)object;
+  widget_opts.apply_theme = TRUE;
+  if (!lives_widget_is_sensitive(button)) set_child_dimmed_colour(button, BUTTON_DIM_VAL); // insens, themecols 1, child only
+    else {
+      if (lives_widget_has_default(button)) 
+        set_child_alt_colour(button, TRUE); // state normal, theme2
+      else set_child_colour(button, TRUE); // state normal, theme1
+    }
+  widget_opts.apply_theme = woat;
+}
+
+
+boolean lives_button_grab_default_special(LiVESWidget *button) {
   // grab default and set colour scheme
-  if (!lives_widget_set_can_default(widget, TRUE)) return FALSE;
-  if (!lives_widget_grab_default(widget)) return FALSE;
-  if (widget_opts.apply_theme && LIVES_IS_BUTTON(widget)) {
-    set_child_alt_colour(widget, TRUE);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "default_grabbed", LIVES_INT_TO_POINTER(TRUE));
+  if (!lives_widget_set_can_default(button, TRUE)) return FALSE;
+  if (!lives_widget_grab_default(button)) return FALSE;
+
+  if (widget_opts.apply_theme) {
+    lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_NOTIFY_SIGNAL "has_default",
+			 LIVES_GUI_CALLBACK(default_changed_cb),
+			 NULL);
+    default_changed_cb(LIVES_WIDGET_OBJECT(button), NULL, NULL);
   }
   return TRUE;
 }
@@ -8042,7 +8171,13 @@ LiVESWidget *lives_standard_label_new(const char *text) {
   else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
   else if (widget_opts.justify == LIVES_JUSTIFY_FILL) lives_widget_set_halign(label, LIVES_ALIGN_FILL);
   else lives_widget_set_halign(label, LIVES_ALIGN_END);
-  lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
+    lives_signal_connect_after(LIVES_GUI_OBJECT(label), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+			       LIVES_GUI_CALLBACK(button_state_cb),
+			       NULL);
+    button_state_cb(LIVES_WIDGET_OBJECT(label), NULL, NULL);
+  }
   return label;
 }
 
@@ -8093,7 +8228,12 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
   if (invis) lives_frame_set_shadow_type(LIVES_FRAME(frame), LIVES_SHADOW_NONE);
 
   lives_widget_apply_theme(frame, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_set_text_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
+#ifndef NO_ALT_VALUES
+  lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+#endif
+  
   if (xalign >= 0.) lives_frame_set_label_align(LIVES_FRAME(frame), xalign, 0.5);
 
   return frame;
@@ -8128,44 +8268,55 @@ static LiVESWidget *make_label_eventbox(const char *labeltext, LiVESWidget *widg
   LiVESWidget *eventbox = lives_event_box_new();
   lives_tooltips_copy(eventbox, widget);
 
+  lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_INSENSITIVE);
+
   if (widget_opts.mnemonic_label) {
     label = lives_standard_label_new_with_mnemonic_widget(labeltext, widget);
   } else label = lives_standard_label_new(labeltext);
 
   widget_opts.last_label = label;
   lives_container_add(LIVES_CONTAINER(eventbox), label);
-
+  if (widget_opts.justify == LIVES_JUSTIFY_LEFT) lives_widget_set_halign(label, LIVES_ALIGN_START);
+  if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
+  if (widget_opts.justify == LIVES_JUSTIFY_RIGHT) lives_widget_set_halign(label, LIVES_ALIGN_END);
+  /* if (widget_opts.justify == LIVES_JUSTIFY_LEFT) gtk_label_set_xalign(label, 0.); */
+  /* if (widget_opts.justify == LIVES_JUSTIFY_CENTER) gtk_label_set_xalign(label, .5); */
+  /* if (widget_opts.justify == LIVES_JUSTIFY_RIGHT) gtk_label_set_xalign(label, 1.); */
+  
   if (LIVES_IS_TOGGLE_BUTTON(widget)) {
     lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                          LIVES_GUI_CALLBACK(label_act_toggle),
                          widget);
   }
-
+  lives_widget_set_sensitive_with(eventbox, label);
+  lives_widget_set_show_hide_with(eventbox, label);
   lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
   return eventbox;
 }
 
 
-static void state_change_cb(LiVESWidget *widget, LiVESWidgetState state, livespointer user_data) {
+static void sens_insens_cb(LiVESObject *object, livespointer pspec, livespointer user_data) {
+  LiVESWidget *widget = (LiVESWidget *)object;
   LiVESWidget *other = (LiVESWidget *)user_data;
-  lives_widget_set_sensitive(other, lives_widget_get_sensitive(widget));
+  boolean sensitive = lives_widget_get_sensitive(widget);
+  if (lives_widget_get_sensitive(other) != sensitive) {
+    lives_widget_set_sensitive(other, sensitive);
+  }
 }
 
 
 WIDGET_HELPER_LOCAL_INLINE boolean lives_widget_set_sensitive_with(LiVESWidget *w1, LiVESWidget *w2) {
   // set w2 sensitivity == w1
-  lives_signal_connect_after(LIVES_GUI_OBJECT(w1), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(state_change_cb),
-                             w2);
+  lives_signal_connect_after(LIVES_GUI_OBJECT(w1), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+                       LIVES_GUI_CALLBACK(sens_insens_cb),
+                       (livespointer)w2);
   return TRUE;
 }
 
 
 static void lives_widget_show_all_cb(LiVESWidget *widget, livespointer user_data) {
   LiVESWidget *parent = (LiVESWidget *)user_data;
-  //gtk_widget_set_no_show_all(parent, FALSE);
   lives_widget_show_all(parent);
-  //gtk_widget_set_no_show_all(parent, TRUE);
 }
 
 
@@ -8204,13 +8355,17 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
   // pack a themed check button into box
 
+  // seems like it is not possible to theme the checkbox
+
   LiVESWidget *eventbox = NULL;
   LiVESWidget *hbox;
 
   boolean expand;
 
   checkbutton = lives_check_button_new();
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_apply_theme(checkbutton, LIVES_WIDGET_STATE_NORMAL);
+#endif
   lives_widget_set_tooltip_text(checkbutton, tooltip);
 
   widget_opts.last_label = NULL;
@@ -8269,9 +8424,11 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, boolean activ
     lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
     lives_cool_toggled(checkbutton, &togglevalue);
+#ifdef NO_ALT_COLOURS
     lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                          LIVES_GUI_CALLBACK(draw_cool_toggle),
                          NULL);
+#endif
   }
   return checkbutton;
 }
@@ -8325,7 +8482,9 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
   boolean expand;
 
   radiobutton = lives_radio_button_new(*rbgroup);
+#if GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_apply_theme(radiobutton, LIVES_WIDGET_STATE_NORMAL);
+#endif
 
   *rbgroup = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
 
@@ -8430,10 +8589,11 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   lives_entry_set_width_chars(LIVES_ENTRY(spinbutton), maxlen);
 
   lives_entry_set_activates_default(LIVES_ENTRY(spinbutton), TRUE);
+  lives_entry_set_has_frame(LIVES_ENTRY(spinbutton), TRUE);
 
 #ifdef GUI_GTK
   gtk_spin_button_set_update_policy(LIVES_SPIN_BUTTON(spinbutton), GTK_UPDATE_ALWAYS);
-  //gtk_spin_button_set_numeric(LIVES_SPIN_BUTTON(spinbutton), TRUE);
+  gtk_spin_button_set_numeric(LIVES_SPIN_BUTTON(spinbutton), TRUE);
 #endif
 
   widget_opts.last_label = NULL;
@@ -8444,7 +8604,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
   if (widget_opts.apply_theme) {
     // would be nice if stuff like this worked...broken in 3.18.9 at least
-    // set_css_value_selected(spinbutton, LIVES_WIDGET_STATE_NORMAL, "entry", "background", "#00FF00");
+    //set_css_value_selected(spinbutton, LIVES_WIDGET_STATE_NORMAL, "spinbutton entry", "background-color", "#00FF00");
   }
 
   if (box != NULL) {
@@ -8475,21 +8635,41 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     lives_widget_set_show_hide_with(spinbutton, eventbox);
   }
 
+#if GTK_CHECK_VERSION(3, 0, 0)
   if (widget_opts.apply_theme) {
-    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(button_state_cb),
-                               NULL);
-    button_state_cb(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, NULL);
+    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+			       LIVES_GUI_CALLBACK(button_state_cb),
+			       NULL);
+    button_state_cb(LIVES_WIDGET_OBJECT(spinbutton), NULL, NULL);
   }
-
+#else
+  lives_widget_set_base_color(spinbutton, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_base_color(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
+  lives_widget_set_text_color(spinbutton, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+#endif
   return spinbutton;
 }
+
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 0, 0)
+static boolean setcellbg(LiVESCellRenderer *r, void *p) {
+  // set the pop-up colours
+  lives_widget_object_set(r, "cell-background-rgba", &palette->info_base);
+  lives_widget_object_set(r, "foreground-rgba", &palette->info_text);
+  return FALSE;
+}
+#endif
+#endif
 
 
 LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, LiVESBox *box, const char *tooltip) {
   LiVESWidget *combo = NULL;
 
   // pack a themed combo box into box
+
+  // seems like it is not possible to set the arrow colours
+  // nor the entireity of the background for the popup list
 
   LiVESWidget *eventbox = NULL;
   LiVESWidget *hbox;
@@ -8498,18 +8678,26 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
   boolean expand;
 
   combo = lives_combo_new();
-#if GTK_CHECK_VERSION(3, 0, 0)
+
   lives_widget_apply_theme(combo, LIVES_WIDGET_STATE_NORMAL);
-#endif
+
   if (tooltip != NULL) lives_widget_set_tooltip_text(combo, tooltip);
 
   entry = (LiVESEntry *)lives_combo_get_entry(LIVES_COMBO(combo));
+
   lives_widget_apply_theme(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL);
 
-  widget_opts.last_label = NULL;
+  lives_entry_set_has_frame(entry, TRUE);
+  lives_entry_set_editable(LIVES_ENTRY(entry), FALSE);
+  lives_entry_set_activates_default(entry, TRUE);
 
+  lives_widget_set_sensitive_with(LIVES_WIDGET(entry), combo);
+  lives_widget_set_sensitive_with(combo, LIVES_WIDGET(entry));
+
+  widget_opts.last_label = NULL;
   if (labeltext != NULL && box != NULL) {
     eventbox = make_label_eventbox(labeltext, LIVES_WIDGET(entry));
+    lives_widget_set_sensitive_with(combo, eventbox);
   }
 
   if (box != NULL) {
@@ -8538,12 +8726,32 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
     lives_widget_set_show_hide_parent(combo);
   }
 
-  lives_entry_set_editable(LIVES_ENTRY(entry), FALSE);
-  lives_entry_set_activates_default(entry, TRUE);
 
   if (list != NULL) {
     lives_combo_populate(LIVES_COMBO(combo), list);
     lives_combo_set_active_index(LIVES_COMBO(combo), 0);
+
+    if (widget_opts.apply_theme) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 0, 0)
+      GtkCellArea *celly;
+      lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
+      gtk_cell_area_foreach(celly, setcellbg, NULL);
+
+      // need to get the GtkCellView !
+      //lives_widget_object_set(celly, "background", &palette->info_base);
+
+#endif
+#endif
+      lives_signal_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+				 LIVES_GUI_CALLBACK(button_state_cb),
+				 NULL);
+      button_state_cb(LIVES_WIDGET_OBJECT(entry), NULL, NULL);
+      lives_signal_connect_after(LIVES_GUI_OBJECT(combo), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+				 LIVES_GUI_CALLBACK(button_state_cb),
+				 NULL);
+      button_state_cb(LIVES_WIDGET_OBJECT(combo), NULL, NULL);
+    }
   }
 
   return combo;
@@ -8569,6 +8777,10 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_apply_theme(entry, LIVES_WIDGET_STATE_NORMAL);
+#else
+  lives_widget_set_base_color(entry, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_text_color(entry, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_base_color(entry, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
 #endif
   lives_widget_set_font_size(entry, LIVES_WIDGET_STATE_NORMAL, widget_opts.font_size);
 
@@ -8581,16 +8793,16 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
   if (maxchars != -1) lives_entry_set_max_length(LIVES_ENTRY(entry), maxchars);
 
   lives_entry_set_activates_default(LIVES_ENTRY(entry), TRUE);
+  lives_entry_set_has_frame(LIVES_ENTRY(entry), TRUE);
 
   widget_opts.last_label = NULL;
-
   if (labeltext != NULL) {
     if (widget_opts.mnemonic_label) {
       label = lives_standard_label_new_with_mnemonic_widget(labeltext, entry);
     } else label = lives_standard_label_new(labeltext);
-
     widget_opts.last_label = label;
-
+    lives_widget_set_sensitive_with(entry, label);
+    
     if (tooltip != NULL) lives_tooltips_copy(label, entry);
   }
 
@@ -8621,6 +8833,12 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
     lives_widget_set_show_hide_parent(entry);
   }
 
+  if (widget_opts.apply_theme) {
+    lives_signal_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+			       LIVES_GUI_CALLBACK(button_state_cb),
+			       NULL);
+    button_state_cb(LIVES_WIDGET_OBJECT(entry), NULL, NULL);
+  }
   return entry;
 }
 
@@ -8675,13 +8893,13 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   lives_widget_set_hexpand(dialog, TRUE);
   lives_widget_set_vexpand(dialog, TRUE);
 
-  lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
 #endif
 
   if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
     funkify_dialog(dialog);
   } else {
     lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
@@ -8692,22 +8910,31 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   if (add_std_buttons) {
     LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-    LiVESWidget *cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-    LiVESWidget *okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
+    LiVESWidget *cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+								   LIVES_RESPONSE_CANCEL);
+    LiVESWidget *okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+							       LIVES_RESPONSE_OK);
 
     lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
-
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
-
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
     lives_widget_set_can_focus_and_default(cancelbutton);
 
-    lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
 
     lives_widget_set_can_focus_and_default(okbutton);
-    lives_widget_grab_default_special(okbutton);
+    lives_button_grab_default_special(okbutton);
+
+    if (widget_opts.apply_theme) {
+      lives_signal_connect_after(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+				 LIVES_GUI_CALLBACK(button_state_cb),
+				 NULL);
+      button_state_cb(LIVES_WIDGET_OBJECT(cancelbutton), NULL, NULL);
+
+      lives_signal_connect_after(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+				 LIVES_GUI_CALLBACK(button_state_cb),
+				 NULL);
+      button_state_cb(LIVES_WIDGET_OBJECT(okbutton), NULL, NULL);
+    }
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DELETE_EVENT,
@@ -8719,6 +8946,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_widget_show(dialog);
   }
 
+  // recommended to center the window again after adding all its widgets
   lives_window_center(LIVES_WINDOW(dialog));
 
   if (!widget_opts.non_modal)
@@ -8898,11 +9126,10 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox *box, LiVES
 
   expander = lives_expander_new(labeltext);
   lives_free(labeltext);
+
   lives_expander_set_use_markup(LIVES_EXPANDER(expander), TRUE);
-  label = lives_expander_get_label_widget(LIVES_EXPANDER(expander));
+  label = widget_opts.last_label = lives_expander_get_label_widget(LIVES_EXPANDER(expander));
   lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(label, LIVES_WIDGET_STATE_PRELIGHT);
-  lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_PRELIGHT);
   lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_NORMAL);
 
 #ifdef GUI_GTK
@@ -8913,23 +9140,36 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox *box, LiVES
     int packing_width = 0;
 
     if (LIVES_IS_HBOX(box)) hbox = LIVES_WIDGET(box);
-    else hbox = make_inner_hbox(LIVES_BOX(box));
+    else {
+      hbox = make_inner_hbox(LIVES_BOX(box));
+      lives_widget_set_show_hide_parent(expander);
+    }
 
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
 
     if (widget_opts.justify == LIVES_JUSTIFY_CENTER) add_fill_to_box(LIVES_BOX(hbox));
 
     lives_box_pack_start(LIVES_BOX(hbox), expander, TRUE, TRUE, packing_width);
-    lives_widget_set_show_hide_parent(expander);
 
     if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_widget_set_halign(expander, LIVES_ALIGN_CENTER);
-
     if (widget_opts.justify == LIVES_JUSTIFY_CENTER) add_fill_to_box(LIVES_BOX(hbox));
   }
 
   if (child != NULL) lives_container_add(LIVES_CONTAINER(expander), child);
   lives_container_set_border_width(LIVES_CONTAINER(expander), widget_opts.border_width);
 
+  if (widget_opts.apply_theme) {
+    lives_signal_connect_after(LIVES_GUI_OBJECT(expander), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+			       LIVES_GUI_CALLBACK(button_state_cb),
+			       NULL);
+    button_state_cb(LIVES_WIDGET_OBJECT(expander), NULL, NULL);
+    if (label != NULL) {
+      lives_signal_connect_after(LIVES_GUI_OBJECT(label), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+				 LIVES_GUI_CALLBACK(button_state_cb),
+				 NULL);
+      button_state_cb(LIVES_WIDGET_OBJECT(label), NULL, NULL);
+    }
+  }
 #endif
 
   return expander;
@@ -8995,8 +9235,9 @@ static void _on_lock_button_clicked(LiVESButton *button, livespointer user_data)
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "is_locked", LIVES_INT_TO_POINTER(locked));
   lives_container_foreach(LIVES_CONTAINER(button), (LiVESWidgetCallback)lives_widget_destroy_if_image, NULL);
-  if (locked) image = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOCKED, LIVES_ICON_SIZE_CUSTOM);
-  else image = lives_image_new_from_stock(LIVES_LIVES_STOCK_UNLOCKED, LIVES_ICON_SIZE_CUSTOM);
+  if (locked) image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_LOCKED, LIVES_ICON_SIZE_CUSTOM, LOCK_BUTTON_WIDTH, LOCK_BUTTON_HEIGHT);
+  else image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_UNLOCKED, LIVES_ICON_SIZE_CUSTOM, LOCK_BUTTON_WIDTH, LOCK_BUTTON_HEIGHT);
+  if (!LIVES_IS_IMAGE(image)) return;
   lives_image_scale(LIVES_IMAGE(image), width, height, LIVES_INTERP_BEST);
   lives_container_add(LIVES_CONTAINER(button), image);
   lives_widget_show(image);
@@ -9236,6 +9477,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     } else labelcname = lives_standard_label_new(name);
     widget_opts.last_label = labelcname;
     lives_widget_set_show_hide_with(cbutton, labelcname);
+    lives_widget_set_sensitive_with(cbutton, labelcname);
   }
 
   lives_widget_set_tooltip_text(cbutton, (_("Click to set the colour")));
@@ -9734,7 +9976,6 @@ static void set_child_alt_colour_internal(LiVESWidget *widget, livespointer set_
     lives_container_forall(LIVES_CONTAINER(widget), set_child_alt_colour_internal, set_allx);
     return;
   }
-
 }
 
 
@@ -10157,9 +10398,9 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
 EXPOSE_FN_DECL(draw_cool_toggle, widget) {
   // connect expose event to this
   lives_painter_t *cr;
+
   if (cairo == NULL) cr = lives_painter_create_from_widget(widget);
   else cr = cairo;
-
   double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
   double rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
 
@@ -10369,6 +10610,10 @@ LiVESWidget *add_hsep_to_box(LiVESBox *box) {
   if (LIVES_SHOULD_EXPAND_EXTRA_FOR(box)) packing_height *= 2;
   lives_box_pack_start(box, hseparator, LIVES_SHOULD_EXPAND_EXTRA_FOR(box), TRUE, packing_height);
   lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_NORMAL);
+  //lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_INSENSITIVE);
+#ifndef NO_ALT_VALUES
+  lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+#endif
   return hseparator;
 }
 
@@ -10489,10 +10734,10 @@ LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *bar, GtkWidget *icon_w
   tbutton = lives_tool_button_new(icon_widget, NULL);
   if (widget_opts.last_label != NULL) lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(tbutton), widget_opts.last_label);
   if (widget_opts.apply_theme) {
-    lives_signal_connect_after(LIVES_GUI_OBJECT(tbutton), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(button_state_cb),
-                               NULL);
-    button_state_cb(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_NORMAL, NULL);
+    lives_signal_connect_after(LIVES_GUI_OBJECT(tbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
+			       LIVES_GUI_CALLBACK(button_state_cb),
+			       NULL);
+    button_state_cb(LIVES_WIDGET_OBJECT(tbutton), NULL, NULL);
   }
   if (tooltips != NULL) lives_widget_set_tooltip_text(LIVES_WIDGET(tbutton), tooltips);
   if (bar != NULL) lives_toolbar_insert(bar, tbutton, -1);

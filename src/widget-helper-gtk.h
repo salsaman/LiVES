@@ -27,6 +27,11 @@
 #define GTK_TEXT_VIEW_CSS_BUG
 #endif
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+// a bug where CSS selectors (e.g. "entry" or ":insensitive") do nothing
+#define GTK_CSS_SELECTORS_BUG
+#endif
+
 #ifndef IS_MINGW
 typedef gboolean                          boolean;
 #else
@@ -303,7 +308,7 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #else
 // gtk+ 2
 #define EXPOSE_FN_DECL(fn, widget) boolean fn(LiVESWidget *widget, LiVESXEventExpose *event, livespointer user_data) { \
-    lives_painter_t *cr = lives_painter_create_from_widget(widget);
+    lives_painter_t *cairo = NULL;
 #define EXPOSE_FN_PAINTER
 #define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, LiVESXEventExpose *, livespointer);
 #endif
@@ -326,10 +331,13 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #define lives_widget_object_set_data(a, b, c) g_object_set_data(a, b, c)
 #define lives_widget_object_get_data(a, b) g_object_get_data(a, b)
 
+#define lives_widget_object_set(a, b, c) g_object_set(a, b, c, NULL)
+#define lives_widget_object_get(a, b, c) g_object_get(a, b, c, NULL)
+
 #define LIVES_WIDGET_OBJECT(a) G_OBJECT(a)
 
-#define lives_object_freeze_notify(a) g_object_freeze_notify(a)
-#define lives_object_thaw_notify(a) g_object_thaw_notify(a)
+#define lives_widget_object_freeze_notify(a) g_object_freeze_notify(a)
+#define lives_widget_object_thaw_notify(a) g_object_thaw_notify(a)
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 #define NO_MEM_OVERRIDE TRUE
@@ -541,17 +549,17 @@ typedef GtkStateType LiVESWidgetState;
 
 typedef int LiVESResponseType;
 #define LIVES_RESPONSE_NONE GTK_RESPONSE_NONE
-#define LIVES_RESPONSE_OK GTK_RESPONSE_OK
-#define LIVES_RESPONSE_CANCEL GTK_RESPONSE_CANCEL
-#define LIVES_RESPONSE_ACCEPT GTK_RESPONSE_ACCEPT
-#define LIVES_RESPONSE_YES GTK_RESPONSE_YES
-#define LIVES_RESPONSE_NO GTK_RESPONSE_NO
+#define LIVES_RESPONSE_OK GTK_RESPONSE_OK     // -6
+#define LIVES_RESPONSE_CANCEL GTK_RESPONSE_CANCEL  // -5
+#define LIVES_RESPONSE_ACCEPT GTK_RESPONSE_ACCEPT  // 
+#define LIVES_RESPONSE_YES GTK_RESPONSE_YES  // -8
+#define LIVES_RESPONSE_NO GTK_RESPONSE_NO  // -9
 
 // positive values for custom responses
 #define LIVES_RESPONSE_INVALID 0
 #define LIVES_RESPONSE_RETRY 1
 #define LIVES_RESPONSE_ABORT 2
-#define LIVES_RESPONSE_RESET 3
+#define LIVES_RESPONSE_RESET 3  // be careful NOT to confuse this with RETRY !!
 #define LIVES_RESPONSE_SHOW_DETAILS 4
 #define LIVES_RESPONSE_BROWSE 5
 
@@ -1035,16 +1043,8 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 
 #endif
 
-// custom values
-
-#define LIVES_LIVES_STOCK_FULLSCREEN "fullscreen"
-
-#if 0
-#define LIVES_LIVES_STOCK_VOLUME_MUTE "lives_volume_mute"
-#define LIVES_LIVES_STOCK_LOCKED "lives_locked"
-#define LIVES_LIVES_STOCK_UNLOCKED "lives_unlocked"
-#define LIVES_LIVES_STOCK_LOOP "lives_loop"
-#endif
+//#define LIVES_LIVES_STOCK_LOCKED "lives-locked"
+//#define LIVES_LIVES_STOCK_UNLOCKED "lives-unlocked"
 
 #if GTK_CHECK_VERSION(3, 2, 0)
 #define LIVES_LIVES_STOCK_LOCKED "changes-prevent"
@@ -1054,7 +1054,7 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 #define LIVES_LIVES_STOCK_UNLOCKED "unlocked"
 #endif
 
-#define LIVES_LIVES_STOCK_LOOP "loop"
+#define LIVES_LIVES_STOCK_LOOP "lives-loop"
 
 #define LIVES_DEFAULT_MOD_MASK (gtk_accelerator_get_default_mod_mask ())
 

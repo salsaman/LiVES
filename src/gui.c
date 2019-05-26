@@ -1573,12 +1573,9 @@ void create_LiVES(void) {
 
   if (capable->smog_version_correct) {
     lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->btoolbar, TRUE, TRUE, 0);
+    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
-    fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "sepwin.png", NULL);
-    lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-    lives_free(fnamex);
-    tmp_toolbar_icon = lives_image_new_from_file(buff);
-    if (lives_file_test(buff, LIVES_FILE_TEST_EXISTS)) {
+    if (tmp_toolbar_icon != NULL) {
       pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
       lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     }
@@ -1604,28 +1601,23 @@ void create_LiVES(void) {
                           _("Stop playback (q)"));
     lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
 
-    fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "playsel.png", NULL);
-    lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-    lives_free(fnamex);
-    tmp_toolbar_icon = lives_image_new_from_file(buff);
-
+    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_PLAY_SEL, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
     mainw->m_playselbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
                              _("Play selection (y)"));
 
     lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
 
     tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
+    if (tmp_toolbar_icon != NULL) {
+      pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
+      lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
+    }
 
     mainw->m_loopbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
                           _("Switch continuous looping on (o)"));
 
-    fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "volume_mute.png", NULL);
-    lives_snprintf(buff, PATH_MAX, "%s", fnamex);
-    lives_free(fnamex);
-    tmp_toolbar_icon = lives_image_new_from_file(buff);
-    if (lives_file_test(buff, LIVES_FILE_TEST_EXISTS)) {
+    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+    if (tmp_toolbar_icon != NULL) {
       pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
       lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     }
@@ -3633,9 +3625,9 @@ void make_preview_box(void) {
   lives_widget_set_tooltip_text(mainw->p_playselbutton, _("Play Selection"));
   lives_widget_set_sensitive(mainw->p_playselbutton, CURRENT_CLIP_IS_VALID && cfile->frames > 0);
 
-#if 0
+#if 1
   // TODO !
-  loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, 24);
+  loop_img = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_LOOP, LIVES_ICON_SIZE_CUSTOM, 24, 24);
 #else
   fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, "loop.png", NULL);
   lives_snprintf(buff, PATH_MAX, "%s", fnamex);
@@ -3646,7 +3638,7 @@ void make_preview_box(void) {
   mainw->p_loopbutton = lives_standard_button_new();
   lives_widget_set_bg_color(mainw->p_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   lives_button_set_relief(LIVES_BUTTON(mainw->p_loopbutton), LIVES_RELIEF_NONE);
-  lives_container_add(LIVES_CONTAINER(mainw->p_loopbutton), loop_img);
+  lives_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_loopbutton, TRUE, TRUE, 0);
   lives_widget_show(mainw->p_loopbutton);
   lives_widget_show(loop_img);

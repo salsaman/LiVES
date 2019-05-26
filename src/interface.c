@@ -1491,7 +1491,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 #endif
 
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
@@ -1598,7 +1598,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   lives_widget_show_all(dialog);
   return dialog;
@@ -1826,7 +1826,7 @@ _insertw *create_insert_dialog(void) {
   okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(insertw->insert_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(insertw->with_sound), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_insertwsound_toggled),
@@ -1922,7 +1922,7 @@ LiVESWidget *create_opensel_dialog(void) {
   okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(opensel_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   widget_add_preview(opensel_dialog, LIVES_BOX(dialog_vbox), LIVES_BOX(dialog_vbox), LIVES_BOX(dialog_vbox), LIVES_PREVIEW_TYPE_RANGE);
 
@@ -2005,7 +2005,7 @@ _entryw *create_location_dialog(void) {
   okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(locw->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
@@ -2207,7 +2207,7 @@ _entryw *create_rename_dialog(int type) {
 
   lives_dialog_add_action_widget(LIVES_DIALOG(renamew->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   if (type != 3) {
     lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -2563,7 +2563,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   lives_dialog_add_action_widget(LIVES_DIALOG(cd_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -3293,7 +3293,7 @@ _entryw *create_cds_dialog(int type) {
   else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));
   if (type != 4) lives_dialog_add_action_widget(LIVES_DIALOG(cdsw->dialog), savebutton, 2 - (type == 2));
   lives_widget_set_can_focus_and_default(savebutton);
-  if (type == 1 || type == 2)lives_widget_grab_default_special(savebutton);
+  if (type == 1 || type == 2)lives_button_grab_default_special(savebutton);
 
   lives_widget_show_all(cdsw->dialog);
 
@@ -3389,7 +3389,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   return dialog;
 }
@@ -4097,7 +4097,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
-  lives_widget_grab_default_special(okbutton);
+  lives_button_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
@@ -4240,12 +4240,12 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
       double linesize = lh / nlines;
       double page_size = (double)((int)((double)height / linesize));
       //g_print("VALS3 lh = %d, nlines = %d, lsize = %f, height = %d, ps = %f\n", lh, nlines, linesize, height, page_size);
-      lives_object_freeze_notify(LIVES_WIDGET_OBJECT(adj));
+      lives_widget_object_freeze_notify(LIVES_WIDGET_OBJECT(adj));
       lives_adjustment_set_lower(adj, page_size - 2);
       lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 1));
       lives_adjustment_set_page_size(adj, page_size);
       lives_adjustment_set_value(adj, (double)msgno);
-      lives_object_thaw_notify(LIVES_WIDGET_OBJECT(adj));
+      lives_widget_object_thaw_notify(LIVES_WIDGET_OBJECT(adj));
       //g_print("PAGE SIZE is %f\n", page_size);
     }
   }
@@ -4313,34 +4313,24 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
         lives_widget_hide(widget);
         lives_widget_hide(mainw->message_box);
 
-        /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
-        /* lives_widget_context_update(); */
-
         if (overflowx > 0 || overflowy > 0) {
           lives_widget_set_size_request(widget, mywidth, myheight);
           lives_widget_set_size_request(mainw->message_box, mywidth, myheight);
-          /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
-          /* lives_widget_context_update(); */
         }
 
         w = scr_width - bx;
         h = scr_height - by;
         lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-        /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
-        /* lives_widget_context_update(); */
         lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
-        /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
-        /* lives_widget_context_update(); */
 
         if (prefs->open_maximised) {
           lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-          /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
-          /* lives_widget_context_update(); */
         }
 
         lives_widget_show(widget);
         lives_widget_show(mainw->message_box);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+	// add this back in first if it breaks..
+        //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
         lives_widget_context_update();
         lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
         lives_signal_handlers_unblock_by_func(widget, (livespointer)expose_msg_area, NULL);

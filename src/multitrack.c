@@ -2910,12 +2910,12 @@ static void set_time_scrollbar(lives_mt *mt) {
 
   if (mt->tl_max > mt->end_secs) mt->end_secs = mt->tl_max;
 
-  lives_object_freeze_notify(LIVES_WIDGET_OBJECT(mt->hadjustment));
+  lives_widget_object_freeze_notify(LIVES_WIDGET_OBJECT(mt->hadjustment));
   lives_range_set_range(LIVES_RANGE(mt->time_scrollbar), 0., mt->end_secs);
   lives_range_set_increments(LIVES_RANGE(mt->time_scrollbar), page / 4., page);
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->hadjustment), page);
   lives_adjustment_set_value(LIVES_ADJUSTMENT(mt->hadjustment), mt->tl_min);
-  lives_object_thaw_notify(LIVES_WIDGET_OBJECT(mt->hadjustment));
+  lives_widget_object_thaw_notify(LIVES_WIDGET_OBJECT(mt->hadjustment));
   lives_widget_queue_draw(mt->time_scrollbar);
 }
 
@@ -5731,9 +5731,9 @@ static boolean timecode_string_validate(LiVESEntry *entry, lives_mt *mt) {
 
 static void cmi_set_inactive(LiVESWidget *widget, livespointer data) {
   if (widget == data) return;
-  lives_object_freeze_notify(LIVES_WIDGET_OBJECT(widget));
+  lives_widget_object_freeze_notify(LIVES_WIDGET_OBJECT(widget));
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(widget), FALSE);
-  lives_object_thaw_notify(LIVES_WIDGET_OBJECT(widget));
+  lives_widget_object_thaw_notify(LIVES_WIDGET_OBJECT(widget));
 }
 
 
@@ -8097,7 +8097,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbary), LIVES_TOOL_ITEM(mainw->m_mutebutton), -1);
   lives_object_unref(mainw->m_mutebutton);
 
-  if (!lives_scale_button_set_orientation(LIVES_SCALE_BUTTON(mainw->volume_scale), LIVES_ORIENTATION_VERTICAL)) {
+  if (!lives_scale_button_set_orientation(LIVES_SCALE_BUTTON(mainw->volume_scale), LIVES_ORIENTATION_HORIZONTAL)) {
     if (mainw->vol_label != NULL) {
       lives_object_ref(mainw->vol_label);
       lives_widget_unparent(mainw->vol_label);

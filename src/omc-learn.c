@@ -1410,7 +1410,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_widget_set_can_focus_and_default(ok_button);
 
-  lives_widget_grab_default_special(ok_button);
+  lives_button_grab_default_special(ok_button);
 
   lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(close_learner_dialog),

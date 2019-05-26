@@ -261,6 +261,7 @@ boolean lives_widget_is_ancestor(LiVESWidget *, LiVESWidget *ancestor);
 boolean lives_widget_set_app_paintable(LiVESWidget *, boolean paintable);
 
 boolean lives_widget_has_focus(LiVESWidget *);
+boolean lives_widget_has_default(LiVESWidget *);
 
 boolean lives_widget_set_halign(LiVESWidget *, LiVESAlign align);
 boolean lives_widget_set_valign(LiVESWidget *, LiVESAlign align);
@@ -273,7 +274,7 @@ LiVESWidget *lives_label_new(const char *text);
 const char *lives_label_get_text(LiVESLabel *);
 boolean lives_label_set_text(LiVESLabel *, const char *text);
 
-boolean lives_label_set_xalign(LiVESLabel *, double align);
+//boolean lives_label_set_xalign(LiVESLabel *, double align);
 
 boolean lives_label_set_markup(LiVESLabel *, const char *markup);
 
@@ -832,9 +833,12 @@ LiVESWidget *lives_layout_new(LiVESBox *);
 LiVESWidget *lives_layout_hbox_new(LiVESTable *);
 int lives_layout_add_row(LiVESTable *layout);
 
-boolean lives_widget_grab_default_special(LiVESWidget *);
+boolean lives_button_grab_default_special(LiVESWidget *);
 
-#define BUTTON_DIM_VAL (0.2 * 65535.) // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535)
+#define BUTTON_DIM_VAL (0.4 * 65535.) // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535) (lower is dimmer)
+
+#define LOCK_BUTTON_WIDTH 24 ///< sizes for the lock button
+#define LOCK_BUTTON_HEIGHT 24
 
 LiVESWidget *lives_standard_button_new(void);
 LiVESWidget *lives_standard_button_new_with_label(const char *labeltext);
@@ -931,6 +935,9 @@ void lives_widget_apply_theme3(LiVESWidget *, LiVESWidgetState state); // info b
 void set_child_colour3(LiVESWidget *, boolean set_all);
 
 boolean lives_image_scale(LiVESImage *, int width, int height, LiVESInterpType interp_type);
+
+LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y);
+LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y);
 
 boolean lives_widget_queue_draw_if_visible(LiVESWidget *);
 boolean lives_widget_queue_draw_and_update(LiVESWidget *widget);
@@ -1059,6 +1066,30 @@ typedef int lives_expand_t;
 
 LiVESList *get_textsizes_list(void);
 const char *lives_textsize_to_string(int val);
+
+// custom stock images
+#define LIVES_LIVES_STOCK_AUDIO "lives-audio"
+#define LIVES_LIVES_STOCK_PLAY_SEL "lives-playsel"
+#define LIVES_LIVES_STOCK_FULLSCREEN "lives-fullscreen"
+#define LIVES_LIVES_STOCK_SEPWIN "lives-sepwin"
+#define LIVES_LIVES_STOCK_VOLUME_MUTE "lives-volume_mute"
+#define LIVES_LIVES_STOCK_LOOP "lives-loop"
+#define LIVES_LIVES_STOCK_ZOOM_IN "lives-zoom-in"
+#define LIVES_LIVES_STOCK_ZOOM_OUT "lives-zoom-out"
+#define LIVES_LIVES_STOCK_PREF_GUI "lives-pref_gui"
+#define LIVES_LIVES_STOCK_PREF_DECODING "lives-pref_decoding"
+#define LIVES_LIVES_STOCK_PREF_DIRECTORY "lives-pref_directory"
+#define LIVES_LIVES_STOCK_PREF_EFFECTS "lives-pref_effects"
+#define LIVES_LIVES_STOCK_PREF_ENCODING "lives-pref_encoding"
+#define LIVES_LIVES_STOCK_PREF_JACK "lives-pref_jack"
+#define LIVES_LIVES_STOCK_PREF_MIDI "lives-pref_midi"
+#define LIVES_LIVES_STOCK_PREF_MISC "lives-pref_misc"
+#define LIVES_LIVES_STOCK_PREF_MULTITRACK "lives-pref_multitrack"
+#define LIVES_LIVES_STOCK_PREF_NET "lives-pref_net"
+#define LIVES_LIVES_STOCK_PREF_PLAYBACK "lives-pref_playback"
+#define LIVES_LIVES_STOCK_PREF_RECORD "lives-pref_record"
+#define LIVES_LIVES_STOCK_PREF_THEMES "lives-pref_themes"
+#define LIVES_LIVES_STOCK_PREF_WARNING "lives-pref_warning"
 
 typedef struct {
   boolean no_gui; ///< show nothing !

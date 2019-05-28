@@ -167,6 +167,7 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
   while (nbytes > 0) {
 #if HAVE_PA_STREAM_BEGIN_WRITE
     xbytes = -1;
+    // returns a buffer and size for us to write to
     pa_stream_begin_write(pdriver->pstream, (void **)&buff, &xbytes);
 #endif
     if (nbytes < xbytes) xbytes = nbytes;
@@ -275,6 +276,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     case ASERVER_CMD_FILE_CLOSE:
       //if (mainw->playing_file == -1) pulse_driver_cork(pulsed);
       if (pulsed->fd >= 0) close(pulsed->fd);
+      if (pulsed->sound_buffer == pulsed->aPlayPtr->data) pulsed->sound_buffer = NULL;
       lives_freep((void **)&pulsed->aPlayPtr->data);
       pulsed->aPlayPtr->max_size = 0;
       pulsed->aPlayPtr->size = 0;
@@ -393,9 +395,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             if (pulsed->aPlayPtr->data != NULL) {
               memset(pulsed->aPlayPtr->data, 0, in_bytes);
               pulsed->aPlayPtr->max_size = in_bytes;
+            } else {
+              pulsed->aPlayPtr->max_size = 0;
             }
-          } else {
-            pulsed->aPlayPtr->max_size = 0;
           }
           if (pulsed->mute || (pulsed->aPlayPtr->data == NULL && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) ||
                                mainw->multitrack != NULL))) {
@@ -614,9 +616,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             if (LIVES_UNLIKELY(nbytes > pulsed->aPlayPtr->max_size)) {
               pulsed->aPlayPtr->data = lives_try_realloc(pulsed->aPlayPtr->data, nbytes);
               if (pulsed->aPlayPtr->data != NULL) {
-                memset(pulsed->aPlayPtr->data, 0, nbytes);
+                memset(pulsed->aPlayPtr->data, 0, in_bytes);
                 pulsed->aPlayPtr->max_size = nbytes;
-              } else pl_error = TRUE;
+              } else {
+                pulsed->aPlayPtr->max_size = 0;
+                pl_error = TRUE;
+              }
             }
             pulsed->aPlayPtr->size = nbytes;
           }
@@ -647,9 +652,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   }
                   break;
                 }
-
                 lives_memcpy(fp[i], &fbuffer[i * numFramesToWrite], numFramesToWrite * sizeof(float));
-
               }
 
               if (memok) {
@@ -725,10 +728,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           } else {
 #if HAVE_PA_STREAM_BEGIN_WRITE
             xbytes = -1;
+            // returns a buffer and a max size fo us to write to
             pa_stream_begin_write(pulsed->pstream, (void **)&buffer, &xbytes);
             if (nbytes < xbytes) xbytes = nbytes;
 #else
-            buffer = (uint8_t *)lives_try_malloc(xbytes);
+            buffer = (uint8_t *)lives_try_malloc(nbytes);
 #endif
             if (!buffer || !pulsed->sound_buffer) {
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *

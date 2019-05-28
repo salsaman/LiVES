@@ -1720,15 +1720,15 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
       if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DIALOG)) {
         size = LIVES_ICON_SIZE_DIALOG;
       } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DND)) {
-        size = LIVES_ICON_SIZE_DIALOG;
+        size = LIVES_ICON_SIZE_DND;
       } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_LARGE_TOOLBAR)) {
-        size = LIVES_ICON_SIZE_DIALOG;
+        size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
       } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_SMALL_TOOLBAR)) {
-        size = LIVES_ICON_SIZE_DIALOG;
+        size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
       } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_BUTTON)) {
-        size = LIVES_ICON_SIZE_DIALOG;
+        size = LIVES_ICON_SIZE_BUTTON;
       } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_MENU)) {
-        size = LIVES_ICON_SIZE_DIALOG;
+        size = LIVES_ICON_SIZE_MENU;
       } else return NULL;
 
 #if GTK_CHECK_VERSION(3, 10, 0)

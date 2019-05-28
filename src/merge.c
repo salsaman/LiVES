@@ -199,13 +199,12 @@ void create_merge_dialog(void) {
 
   // done !
 
-  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-  lives_dialog_add_action_widget(LIVES_DIALOG(merge_opts->merge_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
-  lives_widget_set_can_focus(cancelbutton, TRUE);
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(merge_opts->merge_dialog), LIVES_STOCK_CANCEL, NULL,
+                 LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
-  lives_dialog_add_action_widget(LIVES_DIALOG(merge_opts->merge_dialog), okbutton, LIVES_RESPONSE_OK);
-  lives_widget_set_can_focus_and_default(okbutton);
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(merge_opts->merge_dialog), LIVES_STOCK_OK, NULL,
+             LIVES_RESPONSE_OK);
+
   lives_button_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,

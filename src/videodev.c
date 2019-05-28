@@ -464,25 +464,23 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
   }
 
-  for (i = 0; i < dev_count; i++) {
-    if (!unicap_is_stream_locked(&devices[i])) {
-      devlist = lives_list_prepend(devlist, devices[i].identifier);
-    }
-  }
-
-  if (devlist == NULL) {
-    do_locked_in_vdevs_error();
-    return FALSE;
-  }
-
   if (user_data == NULL) {
+    for (i = 0; i < dev_count; i++) {
+      if (!unicap_is_stream_locked(&devices[i])) {
+        devlist = lives_list_prepend(devlist, devices[i].identifier);
+      }
+    }
+
+    if (devlist == NULL) {
+      do_locked_in_vdevs_error();
+      return FALSE;
+    }
+
     mainw->fx1_val = 0;
     mainw->open_deint = FALSE;
     card_dialog = create_combo_dialog(1, (livespointer)devlist);
-    response = lives_dialog_run(LIVES_DIALOG(card_dialog));
     lives_list_free(devlist);
-    lives_widget_destroy(card_dialog);
-
+    response = lives_dialog_run(LIVES_DIALOG(card_dialog));
     if (response == LIVES_RESPONSE_CANCEL) {
       return FALSE;
     }

@@ -1036,7 +1036,6 @@ void on_open_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
     port = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(pandh->port_spin));
   }
 
-  lives_widget_destroy(pandh->dialog);
   lives_free(pandh);
 
   lives_widget_context_update();

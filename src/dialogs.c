@@ -298,7 +298,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   lives_free(pad);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-  lives_container_set_border_width(LIVES_CONTAINER(dialog_vbox), widget_opts.border_width * 2);
+  //lives_container_set_border_width(LIVES_CONTAINER(dialog_vbox), widget_opts.border_width * 2);
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
   lives_label_set_selectable(LIVES_LABEL(label), TRUE);
@@ -1566,7 +1566,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     if (!mainw->interactive) {
       lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
-      lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
+      if (cfile->proc_ptr->stop_button != NULL)
+        lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
     }
@@ -1867,10 +1868,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       // show buttons
       if (cfile->opening_loc) {
         lives_widget_hide(cfile->proc_ptr->pause_button);
-        lives_widget_show(cfile->proc_ptr->stop_button);
+        if (cfile->proc_ptr->stop_button != NULL)
+          lives_widget_show(cfile->proc_ptr->stop_button);
       } else {
         lives_widget_show(cfile->proc_ptr->pause_button);
-        lives_widget_hide(cfile->proc_ptr->stop_button);
+        if (cfile->proc_ptr->stop_button != NULL)
+          lives_widget_hide(cfile->proc_ptr->stop_button);
       }
 
       if (!cfile->opening && !cfile->nopreview) {
@@ -2038,7 +2041,8 @@ boolean do_auto_dialog(const char *text, int type) {
   proc_ptr = create_processing(mytext);
 
   lives_freep((void **)&mytext);
-  lives_widget_hide(proc_ptr->stop_button);
+  if (cfile->proc_ptr->stop_button != NULL)
+    lives_widget_hide(proc_ptr->stop_button);
   lives_window_set_modal(LIVES_WINDOW(proc_ptr->processing), TRUE);
 
   if (type == 2) {
@@ -2061,7 +2065,8 @@ boolean do_auto_dialog(const char *text, int type) {
     alarm_handle = lives_alarm_set(MIN_FLASH_TIME); // don't want to flash too fast...
   } else if (type == 1) {
     // show buttons
-    lives_widget_show(proc_ptr->stop_button);
+    if (cfile->proc_ptr->stop_button != NULL)
+      lives_widget_show(proc_ptr->stop_button);
     lives_widget_show(proc_ptr->cancel_button);
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed_read != NULL) {
@@ -2477,9 +2482,7 @@ boolean do_comments_dialog(int fileno, char *filename) {
     }
   }
 
-  lives_widget_destroy(commentsw->comments_dialog);
   lives_free(commentsw);
-
   return response;
 }
 

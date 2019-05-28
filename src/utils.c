@@ -1983,31 +1983,14 @@ void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
 
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
 
-  if (*cwidth > rwidth) {
-    // image too wide shrink it
-    aspect = (double)rwidth / (double)(*cwidth);
-    *cwidth = rwidth;
-    *cheight = (double)(*cheight) * aspect;
-  }
-  if (*cheight > rheight) {
-    // image too tall shrink it
-    aspect = (double)rheight / (double)(*cheight);
-    *cheight = rheight;
-    *cwidth = (double)(*cwidth) * aspect;
-  }
-
   aspect = (double) * cwidth / (double) * cheight;
 
-  if ((double)rheight * aspect <= rwidth) {
-    // bound by rheight
+  *cwidth = rwidth;
+  *cheight = (double)(*cwidth) / aspect;
+  if (*cheight > rheight) {
+    // image too tall shrink it
     *cheight = rheight;
-    *cwidth = ((double)rheight * aspect + .5);
-    if (*cwidth > rwidth) *cwidth = rwidth;
-  } else {
-    // bound by rwidth
-    *cwidth = rwidth;
-    *cheight = ((double)rwidth / aspect + .5);
-    if (*cheight > rheight) *cheight = rheight;
+    *cwidth = (double)(*cheight) * aspect;
   }
 }
 
@@ -2249,6 +2232,7 @@ int add_messages_to_list(const char *text) {
     // end will get new next (us)
     weed_set_plantptr_value(end, WEED_LEAF_NEXT, msg);
   }
+  lives_strfreev(lines);
   return WEED_NO_ERROR;
 }
 

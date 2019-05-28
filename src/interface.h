@@ -143,7 +143,7 @@ typedef struct {
 #define LIVES_FILE_SELECTION_IMAGE_ONLY 5
 
 aud_dialog_t *create_audfade_dialog(int type);
-LiVESWidget *create_combo_dialog(int type, livespointer user_data);
+LiVESWidget *create_combo_dialog(int type, LiVESList *list);
 
 xprocess *create_processing(const char *text);
 xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had_focus);
@@ -189,13 +189,6 @@ text_window *textwindow;
 #define TB_WIDTH ((int)(200.*widget_opts.scale))
 #define TB_HEIGHT_VID ((int)(80.*widget_opts.scale))
 #define TB_HEIGHT_AUD ((int)(50.*widget_opts.scale))
-
-// rename window entry
-#define RW_ENTRY_DISPWIDTH ((int)(40.*widget_opts.scale))
-
-// download text entry
-#define STD_ENTRY_WIDTH ((int)(128.*widget_opts.scale))
-#define SHORT_ENTRY_WIDTH ((int)(32.*widget_opts.scale))
 
 typedef enum {
   LIVES_MATCH_UNDEFINED = 0,

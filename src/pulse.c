@@ -527,6 +527,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             // no transformation needed
             pulsed->sound_buffer = buffer;
           } else {
+            lives_freep((void **)&pulsed->sound_buffer);
             pulsed->sound_buffer = (uint8_t *)lives_try_malloc0(pulsed->chunk_size);
             if (!pulsed->sound_buffer) {
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *

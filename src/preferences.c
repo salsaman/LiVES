@@ -2974,7 +2974,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->mt_autoback_every = lives_standard_radio_button_new(_("_Every"), &autoback_group, LIVES_BOX(hbox), NULL);
-  lives_box_pack_start(LIVES_BOX(hbox2), hbox, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox2), hbox, FALSE, TRUE, 0);
 
   hbox = lives_hbox_new(FALSE, 0);
   widget_opts.swap_label = TRUE;
@@ -3537,8 +3537,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
 
-  add_fill_to_box(LIVES_BOX(hbox));
-
   if (capable->has_encoder_plugins) {
     // scan for encoder plugins
     encoders = get_plugin_list(PLUGIN_ENCODERS, TRUE, NULL, NULL);
@@ -3554,6 +3552,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   prefsw->encoder_combo = lives_standard_combo_new(NULL, encoders,
                           LIVES_BOX(hbox), NULL);
+
+  lives_layout_hbox_new(LIVES_TABLE(layout));
+  lives_layout_hbox_new(LIVES_TABLE(layout));
 
   if (encoders != NULL) {
     lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
@@ -3681,13 +3682,13 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->wpp_entry = lives_standard_direntry_new(_("Weed plugin path: "), prefs->weed_plugin_path,
-                      STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
+                      LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->frei0r_entry = lives_standard_direntry_new(_("Frei0r plugin path"), prefs->frei0r_path,
-                         STD_ENTRY_WIDTH, PATH_MAX,
+                         LONG_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -3698,7 +3699,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
-  prefsw->ladspa_entry = lives_standard_direntry_new(_("LADSPA plugin path"), prefs->ladspa_path, STD_ENTRY_WIDTH, PATH_MAX,
+  prefsw->ladspa_entry = lives_standard_direntry_new(_("LADSPA plugin path"), prefs->ladspa_path, LONG_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
 
   widget_opts.packing_height = dph;
@@ -4124,7 +4125,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   prefsw->cdplay_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("CD device           "))),
                          (tmp2 = lives_filename_to_utf8(prefs->cdplay_device, -1, NULL, NULL, NULL)),
-                         LIVES_DEVICE_DIR, STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(prefsw->cdda_hbox),
+                         LIVES_DEVICE_DIR, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(prefsw->cdda_hbox),
                          (tmp3 = lives_strdup(_("LiVES can load audio tracks from this CD"))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -4275,7 +4276,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->frameblank_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("Frame blank image"))), mainw->frameblank_path,
-                             prefs->def_image_dir, STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
+                             prefs->def_image_dir, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                              (tmp2 = lives_strdup(_("The frame image which is shown when there is no clip loaded."))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -4290,7 +4291,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->sepimg_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("Separator image"))), mainw->sepimg_path,
-                         prefs->def_image_dir, STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
+                         prefs->def_image_dir, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("The image shown in the center of the interface."))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -4652,7 +4653,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->omc_js_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("_Joystick device")))
-                         , prefs->omc_js_fname, LIVES_DEVICE_DIR, STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
+                         , prefs->omc_js_fname, LIVES_DEVICE_DIR, LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("The joystick device, e.g. /dev/input/js0"))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -4729,7 +4730,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->omc_midi_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("_MIDI device"))), prefs->omc_midi_fname,
-                           LIVES_DEVICE_DIR, STD_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
+                           LIVES_DEVICE_DIR, LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                            (tmp2 = lives_strdup(_("The MIDI device, e.g. /dev/input/midi0"))));
 
   lives_free(tmp);
@@ -5395,8 +5396,10 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
     // force reshow of window
     pref_change_colours();
     on_prefs_revert_clicked(button, NULL);
-    lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-  } else lives_set_cursor_style(LIVES_CURSOR_NORMAL, prefsw->prefs_dialog);
+  }
+
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, prefsw->prefs_dialog);
 
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), TRUE);
 

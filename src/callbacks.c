@@ -1059,7 +1059,8 @@ void on_stop_clicked(LiVESMenuItem *menuitem, livespointer user_data) {
   if (CURRENT_CLIP_IS_VALID) {
     lives_kill_subprocesses(cfile->handle, FALSE);
     if (cfile->proc_ptr != NULL) {
-      lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
+      if (cfile->proc_ptr->stop_button != NULL)
+        lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
@@ -6495,7 +6496,8 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
   if (CURRENT_CLIP_IS_VALID && cfile->proc_ptr != NULL) {
     lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
     lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
-    lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
+    if (cfile->proc_ptr->stop_button != NULL)
+      lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
     lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
   }
   lives_widget_process_updates(mainw->LiVES, TRUE);
@@ -8315,9 +8317,9 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
 
   add_warn_check(LIVES_BOX(vbox), WARN_MASK_LAYOUT_POPUP);
 
-  button = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
 
-  lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), button, LIVES_RESPONSE_OK);
+  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
+           LIVES_RESPONSE_OK);
 
   lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
@@ -8326,9 +8328,8 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default(button);
 
-  textwindow->clear_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLEAR, _("Clear _Errors"));
-
-  lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), textwindow->clear_button, LIVES_RESPONSE_CANCEL);
+  textwindow->clear_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLEAR, _("Clear _Errors"),
+                             LIVES_RESPONSE_CANCEL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(textwindow->clear_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_lerrors_clear_clicked),
@@ -8337,9 +8338,8 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->clear_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default(textwindow->clear_button);
 
-  textwindow->delete_button = lives_standard_button_new_from_stock(LIVES_STOCK_DELETE, _("_Delete affected layouts"));
-
-  lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), textwindow->delete_button, LIVES_RESPONSE_CANCEL);
+  textwindow->delete_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_DELETE,
+                              _("_Delete affected layouts"), LIVES_RESPONSE_CANCEL);
 
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->delete_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default(textwindow->delete_button);
@@ -9099,11 +9099,13 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
       }
 #ifdef ENABLE_JACK
       if (mainw->jackd != NULL && mainw->jackd_read != NULL && mainw->jackd_read->in_use)
-        lives_widget_hide(cfile->proc_ptr->stop_button);
+        if (cfile->proc_ptr->stop_button != NULL)
+          lives_widget_hide(cfile->proc_ptr->stop_button);
 #endif
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed != NULL && mainw->pulsed_read != NULL && mainw->pulsed_read->in_use)
-        lives_widget_hide(cfile->proc_ptr->stop_button);
+        if (cfile->proc_ptr->stop_button != NULL)
+          lives_widget_hide(cfile->proc_ptr->stop_button);
 #endif
     } else {
       mainw->timeout_ticks += xticks;
@@ -9117,11 +9119,13 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
       }
 #ifdef ENABLE_JACK
       if (mainw->jackd != NULL && mainw->jackd_read != NULL && mainw->jackd_read->in_use)
-        lives_widget_show(cfile->proc_ptr->stop_button);
+        if (cfile->proc_ptr->stop_button != NULL)
+          lives_widget_show(cfile->proc_ptr->stop_button);
 #endif
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed != NULL && mainw->pulsed_read != NULL && mainw->pulsed_read->in_use)
-        lives_widget_show(cfile->proc_ptr->stop_button);
+        if (cfile->proc_ptr->stop_button != NULL)
+          lives_widget_show(cfile->proc_ptr->stop_button);
 #endif
     }
 
@@ -10707,7 +10711,6 @@ void on_fade_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     cfile->undo1_int = type = LIVES_POINTER_TO_INT(user_data);
     aud_d = create_audfade_dialog(type);
     if (lives_dialog_run(LIVES_DIALOG(aud_d->dialog)) == LIVES_RESPONSE_CANCEL) {
-      lives_widget_destroy(aud_d->dialog);
       lives_free(aud_d);
       return;
     }

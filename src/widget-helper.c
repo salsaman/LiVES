@@ -92,6 +92,16 @@ weed_plant_t *LiVESObject_to_weed_plant(LiVESObject *o) {
 #endif
 
 
+static void edit_state_cb(LiVESObject *object, livespointer pspec, livespointer user_data) {
+  LiVESWidget *entry = LIVES_WIDGET(object);
+  if (lives_entry_get_editable(LIVES_ENTRY(object))) {
+    lives_widget_apply_theme2(entry, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  } else {
+    lives_widget_apply_theme(entry, LIVES_WIDGET_STATE_NORMAL);
+  }
+}
+
+
 static void button_state_cb(LiVESObject *object, livespointer pspec, livespointer user_data) {
   // a) cannot alter the text colour of a button after the initial draw of a button
   // this is because it doesnt have a proper label widget
@@ -167,7 +177,12 @@ static void button_state_cb(LiVESObject *object, livespointer pspec, livespointe
     widget_opts.apply_theme = TRUE;
     if (!lives_widget_is_sensitive(widget)) {
       set_child_dimmed_colour(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
-    } else set_child_colour3(widget, TRUE);
+    } else {
+      if (LIVES_IS_ENTRY(widget) && !LIVES_IS_SPIN_BUTTON(widget))
+        edit_state_cb(LIVES_WIDGET_OBJECT(widget), NULL, NULL);
+      else
+        set_child_colour3(widget, TRUE);
+    }
   }
   widget_opts.apply_theme = woat;
 }
@@ -191,6 +206,7 @@ LiVESWidget *prettify_button(LiVESWidget *button) {
                              NULL);
   button_state_cb(LIVES_WIDGET_OBJECT(button), NULL, NULL);
 #else
+  lives_widget_set_text_color(button, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_fg_color(button, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 #endif
   return button;
@@ -972,6 +988,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_realize(LiVESWidget *widget) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget) {
 #ifdef GUI_GTK
+  if (!GTK_IS_WIDGET(widget)) {
+    LIVES_WARN("Draw queue invalid widget");
+    return FALSE;
+  }
   gtk_widget_queue_draw(widget);
   return TRUE;
 #endif
@@ -1170,6 +1190,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, i
 
 #if GTK_CHECK_VERSION(3, 16, 0)
 
+#ifdef WIDGET_UNIQUE_NAMES
+
 #define RND_STRLEN 16
 #define RND_STR_PREFIX "XXX"
 
@@ -1194,6 +1216,7 @@ static char *make_random_string(const char *prefix) {
 }
 #endif
 
+#endif
 
 #include "giw/giwled.h"
 
@@ -1218,12 +1241,13 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   // seems like this isn't really necessary since, it apparently each widget has its own unique style context anyway...
   widget_name = g_strdup(gtk_widget_get_name(widget));
 
+#ifdef WIDGET_UNIQUE_NAMES
   if (widget_name == NULL || (strncmp(widget_name, RND_STR_PREFIX, strlen(RND_STR_PREFIX)))) {
     if (widget_name != NULL) g_free(widget_name);
     widget_name = make_random_string(RND_STR_PREFIX);
     gtk_widget_set_name(widget, widget_name);
   }
-
+#endif
   //////
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
@@ -1271,12 +1295,13 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
       state_str = "";
     }
 
-    if (GTK_IS_NOTEBOOK(widget)) wname = g_strdup_printf("#%s%s tab", widget_name, state_str);
-    else {
-      // would be nice if CSS selectors worked, broken in at least 3.18.9
-      if (selector == NULL) wname = g_strdup_printf("#%s%s", widget_name, state_str);
-      else wname = g_strdup_printf("#%s%s %s", widget_name, state_str, selector);
-    }
+#ifdef WIDGET_UNIQUE_NAMES
+    if (selector == NULL) wname = g_strdup_printf("#%s%s", widget_name, state_str);
+    else wname = g_strdup_printf("#%s%s.%s", widget_name, state_str, selector);
+#else
+    if (selector == NULL) wname = g_strdup_printf("%s%s", widget_name, state_str);
+    else wname = g_strdup_printf("%s%s.%s", widget_name, state_str, selector);
+#endif
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   }
@@ -3347,10 +3372,15 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTreeModel *lives_combo_get_model(LiVESCombo *co
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
+
+#define COMBO_CELL_HEIGHT 24
+
 static boolean setcellbg(LiVESCellRenderer *r, void *p) {
   // set the pop-up colours
+  lives_widget_object_set(r, "border-width", 0);
   lives_widget_object_set(r, "cell-background-rgba", &palette->info_base);
   lives_widget_object_set(r, "foreground-rgba", &palette->info_text);
+  gtk_cell_renderer_set_fixed_size(r, -1, COMBO_CELL_HEIGHT);
   return FALSE;
 }
 #endif
@@ -3833,7 +3863,7 @@ LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label
 #if GTK_CHECK_VERSION(3, 10, 0) || defined GUI_QT
   do {
     if (stock_id == NULL) {
-      button = lives_button_new_with_label(label);
+      button = lives_button_new();
       break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_LABEL_CANCEL)) stock_id = LIVES_STOCK_CANCEL;
@@ -3928,10 +3958,10 @@ LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label
     button = lives_button_new();
   } while (FALSE);
 #ifdef GUI_GTK
-  if (widget_opts.show_button_images
-      || !strcmp(stock_id, LIVES_STOCK_ADD)
-      || !strcmp(stock_id, LIVES_STOCK_REMOVE)
-     ) {
+  if (stock_id != NULL && (widget_opts.show_button_images
+                           || !strcmp(stock_id, LIVES_STOCK_ADD)
+                           || !strcmp(stock_id, LIVES_STOCK_REMOVE)
+                          )) {
     LiVESWidget *image = gtk_image_new_from_icon_name(stock_id, GTK_ICON_SIZE_BUTTON);
     if (LIVES_IS_IMAGE(image))
       gtk_button_set_image(GTK_BUTTON(button), image);
@@ -6372,6 +6402,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_selectable(LiVESLabel *label
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_editable_get_editable(LiVESEditable *editable) {
+#ifdef GUI_GTK
+  return gtk_editable_get_editable(editable);
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_editable_set_editable(LiVESEditable *editable, boolean is_editable) {
 #ifdef GUI_GTK
   gtk_editable_set_editable(editable, is_editable);
@@ -8005,6 +8043,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_editable(LiVESEntry *entry, 
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_get_editable(LiVESEntry *entry) {
+  return lives_editable_get_editable(LIVES_EDITABLE(entry));
+}
+
+
 // compound functions
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_image_scale(LiVESImage *image, int width, int height, LiVESInterpType interp_type) {
@@ -8130,7 +8173,7 @@ static void default_changed_cb(LiVESObject *object, livespointer pspec, livespoi
 
 boolean lives_button_grab_default_special(LiVESWidget *button) {
   // grab default and set colour scheme
-  if (!lives_widget_set_can_default(button, TRUE)) return FALSE;
+  if (!lives_widget_set_can_focus_and_default(button)) return FALSE;
   if (!lives_widget_grab_default(button)) return FALSE;
 
   if (widget_opts.apply_theme) {
@@ -8539,8 +8582,8 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, boolean activ
       lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                            LIVES_GUI_CALLBACK(draw_cool_toggle),
                            NULL);
-    }
 #endif
+    }
   }
   return checkbutton;
 }
@@ -8707,7 +8750,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
   if (widget_opts.apply_theme) {
     // would be nice if stuff like this worked...broken in 3.18.9 at least
-    //set_css_value_selected(spinbutton, LIVES_WIDGET_STATE_NORMAL, "spinbutton entry", "background-color", "#00FF00");
+    //set_css_value_selected(spinbutton, LIVES_WIDGET_STATE_NORMAL, "spinbutton.entry", "background", "#00FF00");
   }
 
   if (box != NULL) {
@@ -8779,6 +8822,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
   lives_entry_set_has_frame(entry, TRUE);
   lives_entry_set_editable(LIVES_ENTRY(entry), FALSE);
   lives_entry_set_activates_default(entry, TRUE);
+  lives_entry_set_width_chars(LIVES_ENTRY(entry), SHORT_ENTRY_WIDTH);
 
   lives_widget_set_sensitive_with(LIVES_WIDGET(entry), combo);
   lives_widget_set_sensitive_with(combo, LIVES_WIDGET(entry));
@@ -8862,6 +8906,11 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
     lives_entry_set_text(LIVES_ENTRY(entry), txt);
 
   if (dispwidth != -1) lives_entry_set_width_chars(LIVES_ENTRY(entry), dispwidth);
+  else {
+    if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH) lives_entry_set_width_chars(LIVES_ENTRY(entry), MEDIUM_ENTRY_WIDTH);
+    else if (LIVES_SHOULD_EXPAND_WIDTH) lives_entry_set_width_chars(LIVES_ENTRY(entry), MEDIUM_ENTRY_WIDTH);
+  }
+
   if (maxchars != -1) lives_entry_set_max_length(LIVES_ENTRY(entry), maxchars);
 
   lives_entry_set_activates_default(LIVES_ENTRY(entry), TRUE);
@@ -8906,7 +8955,9 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
-    lives_widget_apply_theme(entry, LIVES_WIDGET_STATE_NORMAL);
+    lives_signal_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "editable",
+                               LIVES_GUI_CALLBACK(edit_state_cb),
+                               NULL);
 #else
     lives_widget_set_base_color(entry, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_text_color(entry, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -8922,12 +8973,12 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
 
 LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *dialog, const char *stock_id, const char *label, int response_id) {
-  int bwidth = LIVES_SHOULD_EXPAND_EXTRA_WIDTH ? DEF_BUTTON_WIDTH * 2 : DEF_BUTTON_WIDTH;
+  int bwidth = LIVES_SHOULD_EXPAND_EXTRA_WIDTH ? DEF_BUTTON_WIDTH * 4 : DEF_BUTTON_WIDTH * 2;
   LiVESWidget *button = lives_standard_button_new_from_stock(stock_id, label);
   lives_dialog_add_action_widget(dialog, button, response_id);
   lives_widget_set_size_request(button, bwidth, -1);
   if (LIVES_SHOULD_EXPAND_WIDTH) {
-    lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
+    //lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
   }
   return button;
 }
@@ -9533,8 +9584,10 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     if (parent != NULL && LIVES_IS_TABLE(parent) && lives_widget_object_get_data(LIVES_WIDGET_OBJECT(parent), "widgets_added") != NULL) {
       parent_is_layout = TRUE;
       lives_table_set_column_homogeneous(LIVES_TABLE(parent), FALSE);
+      hbox = LIVES_WIDGET(box);
+    } else {
+      hbox = LIVES_WIDGET(make_inner_hbox(LIVES_BOX(box)));
     }
-    hbox = make_inner_hbox(LIVES_BOX(box));
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
 
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
@@ -9575,8 +9628,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     if (labelcname != NULL) {
       lives_box_pack_start(LIVES_BOX(hbox), labelcname, FALSE, FALSE, packing_width);
       if (parent_is_layout) {
-        box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(parent)));
-        hbox = make_inner_hbox(LIVES_BOX(box));
+        hbox = lives_layout_hbox_new(LIVES_TABLE(parent));
       }
     }
 
@@ -9591,8 +9643,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
                            LIVES_GUI_CALLBACK(after_param_red_changedx),
                            NULL);
       if (parent_is_layout) {
-        box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(parent)));
-        hbox = make_inner_hbox(LIVES_BOX(box));
+        hbox = lives_layout_hbox_new(LIVES_TABLE(parent));
       } else if (expand) add_fill_to_box(LIVES_BOX(hbox));
       lives_widget_set_sensitive_with(cbutton, spinbutton_red);
       lives_widget_set_show_hide_with(cbutton, spinbutton_red);
@@ -9609,8 +9660,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
                            LIVES_GUI_CALLBACK(after_param_green_changedx),
                            NULL);
       if (parent_is_layout) {
-        box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(parent)));
-        hbox = make_inner_hbox(LIVES_BOX(box));
+        hbox = lives_layout_hbox_new(LIVES_TABLE(parent));
       } else if (expand) add_fill_to_box(LIVES_BOX(hbox));
       lives_widget_set_sensitive_with(cbutton, spinbutton_green);
       lives_widget_set_show_hide_with(cbutton, spinbutton_green);
@@ -9627,8 +9677,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
                            LIVES_GUI_CALLBACK(after_param_blue_changedx),
                            NULL);
       if (parent_is_layout) {
-        box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(parent)));
-        hbox = make_inner_hbox(LIVES_BOX(box));
+        hbox = lives_layout_hbox_new(LIVES_TABLE(parent));
       } else if (expand) add_fill_to_box(LIVES_BOX(hbox));
       lives_widget_set_sensitive_with(cbutton, spinbutton_blue);
       lives_widget_set_show_hide_with(cbutton, spinbutton_blue);
@@ -9645,13 +9694,15 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
                            LIVES_GUI_CALLBACK(after_param_alpha_changedx),
                            NULL);
       if (parent_is_layout) {
-        box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(parent)));
-        hbox = make_inner_hbox(LIVES_BOX(box));
+        hbox = lives_layout_hbox_new(LIVES_TABLE(parent));
       } else if (expand) add_fill_to_box(LIVES_BOX(hbox));
       lives_widget_set_sensitive_with(cbutton, spinbutton_alpha);
       lives_widget_set_show_hide_with(cbutton, spinbutton_alpha);
     }
 
+    if (parent_is_layout) {
+      hbox = make_inner_hbox(LIVES_BOX(hbox));
+    }
     lives_box_pack_start(LIVES_BOX(hbox), cbutton, TRUE, FALSE, packing_width * 2.);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "sp_red", spinbutton_red);
@@ -9992,7 +10043,8 @@ static void set_child_colour_internal(LiVESWidget *widget, livespointer set_allx
   if (!set_all && LIVES_IS_BUTTON(widget)) return; // avoids a problem with filechooser
   if (set_all || LIVES_IS_LABEL(widget)) {
     lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);
-    lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_INSENSITIVE);
+    if (!LIVES_IS_LABEL(widget))
+      lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_INSENSITIVE);
   }
   if (LIVES_IS_CONTAINER(widget)) {
     lives_container_forall(LIVES_CONTAINER(widget), set_child_colour_internal, set_allx);

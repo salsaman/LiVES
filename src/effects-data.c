@@ -4810,11 +4810,8 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   if (conxw.num_alpha > 0) {
     conxw.dispc = (int *)lives_malloc(conxw.num_alpha * sizint);
 
-    conxw.acbutton = lives_standard_button_new_with_label(_("Auto Connect Channels"));
-
-    lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.acbutton, LIVES_RESPONSE_NONE);
+    conxw.acbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(conxw.conx_dialog), NULL, _("Auto Connect Channels"), LIVES_RESPONSE_NONE);
     lives_container_set_border_width(LIVES_CONTAINER(conxw.acbutton), widget_opts.border_width);
-
     lives_widget_set_sensitive(conxw.acbutton, FALSE);
 
     lives_signal_connect(LIVES_GUI_OBJECT(conxw.acbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -4824,10 +4821,9 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   }
 
   if (conxw.num_params > EXTRA_PARAMS_OUT) {
-    conxw.apbutton = lives_standard_button_new_with_label(_("Auto Connect Parameters"));
-    lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.apbutton, LIVES_RESPONSE_NONE);
+    conxw.apbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(conxw.conx_dialog), NULL, _("Auto Connect Parameters"),
+                     LIVES_RESPONSE_NONE);
     lives_container_set_border_width(LIVES_CONTAINER(conxw.apbutton), widget_opts.border_width);
-
     lives_widget_set_sensitive(conxw.apbutton, FALSE);
 
     lives_signal_connect(LIVES_GUI_OBJECT(conxw.apbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -4836,8 +4832,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 
   }
 
-  conxw.disconbutton = lives_standard_button_new_with_label(_("Disconnect All"));
-  lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.disconbutton, LIVES_RESPONSE_NONE);
+  conxw.disconbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(conxw.conx_dialog), NULL, _("_Disconnect All"), LIVES_RESPONSE_NONE);
   //lives_container_set_border_width(LIVES_CONTAINER(conxw.disconbutton), widget_opts.border_width); !! dont - causes other buttons to exp. vert in gtk2
   lives_widget_set_sensitive(conxw.disconbutton, FALSE);
 
@@ -4862,11 +4857,12 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     if (cconx_get_nconns(conxw.cconx, 0) > 0) lives_widget_set_sensitive(conxw.acbutton, TRUE);
   }
 
-  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-  lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(conxw.conx_dialog), LIVES_STOCK_CANCEL, NULL,
+                 LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
-  lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), okbutton, LIVES_RESPONSE_OK);
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(conxw.conx_dialog), LIVES_STOCK_OK, NULL,
+             LIVES_RESPONSE_OK);
+
 
   lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);

@@ -182,6 +182,8 @@ struct _mt {
   LiVESWidget *in_out_box;
   LiVESWidget *in_hbox;
   LiVESWidget *out_hbox;
+  LiVESWidget *in_frame;
+  LiVESWidget *out_frame;
   LiVESWidget *in_image;
   LiVESWidget *out_image;
   LiVESWidget *scrolledwindow;

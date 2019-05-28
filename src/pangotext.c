@@ -324,6 +324,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         /*   nscale = 0.5; */
         /* } */
         /* if (jumpval > 1) jumpval = (int)(jumpval * nscale + .9); */
+        lives_free(tmp);
       }
 #ifdef DEBUG_MSGS
       g_print("Width OK now\n");

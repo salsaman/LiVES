@@ -1394,6 +1394,7 @@ void create_LiVES(void) {
   lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 
   mainw->send_lives2lives = lives_standard_menu_item_new_with_label(_("_Send LiVES Stream to..."));
+  lives_widget_set_sensitive(mainw->send_lives2lives, FALSE); // buggy for now
 
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->send_lives2lives);
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->open_lives2lives);
@@ -1915,6 +1916,7 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->banner, TRUE, TRUE, 0);
 
   mainw->framecounter = lives_standard_entry_new("", "", FCWIDTHCHARS, FCWIDTHCHARS, NULL, NULL);
+
 
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
   lives_entry_set_editable(LIVES_ENTRY(mainw->framecounter), FALSE);
@@ -3037,7 +3039,8 @@ void set_interactive(boolean interactive) {
 
     if (CURRENT_CLIP_IS_VALID && cfile->proc_ptr != NULL) {
       lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
-      lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
+      if (cfile->proc_ptr->stop_button != NULL)
+        lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
     }
@@ -3110,7 +3113,8 @@ void set_interactive(boolean interactive) {
 
     if (CURRENT_CLIP_IS_VALID && cfile->proc_ptr != NULL) {
       lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, TRUE);
-      lives_widget_set_sensitive(cfile->proc_ptr->stop_button, TRUE);
+      if (cfile->proc_ptr->stop_button != NULL)
+        lives_widget_set_sensitive(cfile->proc_ptr->stop_button, TRUE);
       lives_widget_set_sensitive(cfile->proc_ptr->pause_button, TRUE);
       lives_widget_set_sensitive(cfile->proc_ptr->preview_button, TRUE);
     }

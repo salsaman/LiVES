@@ -1378,11 +1378,8 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-  omclw->clear_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLEAR, _("Clear _unmatched"));
-  lives_widget_set_size_request(omclw->clear_button, DEF_BUTTON_WIDTH * 4, -1);
-  lives_container_set_border_width(LIVES_CONTAINER(omclw->clear_button), widget_opts.border_width);
-
-  lives_dialog_add_action_widget(LIVES_DIALOG(omclw->dialog), omclw->clear_button, LIVES_RESPONSE_NONE);
+  omclw->clear_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(omclw->dialog), LIVES_STOCK_CLEAR, _("Clear _unmatched"),
+                        LIVES_RESPONSE_NONE);
 
   lives_signal_connect(LIVES_GUI_OBJECT(omclw->clear_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(clear_unmatched),
@@ -1390,11 +1387,8 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_widget_set_sensitive(omclw->clear_button, FALSE);
 
-  omclw->del_all_button = lives_standard_button_new_from_stock(LIVES_STOCK_DELETE, _("_Delete all"));
-  lives_widget_set_size_request(omclw->del_all_button, DEF_BUTTON_WIDTH * 4, -1);
-  lives_container_set_border_width(LIVES_CONTAINER(omclw->del_all_button), widget_opts.border_width);
-
-  lives_dialog_add_action_widget(LIVES_DIALOG(omclw->dialog), omclw->del_all_button, LIVES_RESPONSE_NONE);
+  omclw->del_all_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(omclw->dialog), LIVES_STOCK_DELETE, _("_Delete all"),
+                          LIVES_RESPONSE_NONE);
 
   lives_signal_connect(LIVES_GUI_OBJECT(omclw->del_all_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(del_all),
@@ -1402,13 +1396,8 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_widget_set_sensitive(omclw->del_all_button, FALSE);
 
-  ok_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
-  lives_widget_set_size_request(ok_button, DEF_BUTTON_WIDTH * 4, -1);
-  lives_container_set_border_width(LIVES_CONTAINER(ok_button), widget_opts.border_width);
-
-  lives_dialog_add_action_widget(LIVES_DIALOG(omclw->dialog), ok_button, LIVES_RESPONSE_OK);
-
-  lives_widget_set_can_focus_and_default(ok_button);
+  ok_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(omclw->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
+              LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(ok_button);
 

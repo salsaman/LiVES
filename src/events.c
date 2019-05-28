@@ -2188,10 +2188,8 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
                        LIVES_GUI_CALLBACK(set_render_choice),
                        LIVES_INT_TO_POINTER(RENDER_CHOICE_EVENT_LIST));
 
-  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-  lives_widget_set_can_focus(cancelbutton, TRUE);
-
-  lives_dialog_add_action_widget(LIVES_DIALOG(e_rec_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(e_rec_dialog), LIVES_STOCK_CANCEL, NULL,
+                 LIVES_RESPONSE_CANCEL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(set_render_choice_button),
@@ -2203,8 +2201,9 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
 
   lives_window_add_accel_group(LIVES_WINDOW(e_rec_dialog), accel_group);
 
-  okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
-  lives_dialog_add_action_widget(LIVES_DIALOG(e_rec_dialog), okbutton, LIVES_RESPONSE_OK);
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(e_rec_dialog), LIVES_STOCK_OK, NULL,
+             LIVES_RESPONSE_OK);
+
   lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);
 
@@ -4234,7 +4233,7 @@ boolean render_to_clip(boolean new_clip) {
         if (response == LIVES_RESPONSE_OK && rdet->enc_changed) {
           check_encoder_restrictions(FALSE, TRUE, TRUE);
         }
-      } while (rdet->suggestion_followed || response == LIVES_RESPONSE_RESET);
+      } while (rdet->suggestion_followed || response == LIVES_RESPONSE_RETRY);
 
       xarate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
       xachans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
@@ -5366,9 +5365,7 @@ render_details *create_render_details(int type) {
 
   boolean needs_new_encoder = FALSE;
 
-  int width;
-  int height;
-  int spht;
+  int width, height, dwidth, dheight, spht;
 
   int scrw = GUI_SCREEN_WIDTH;
   int scrh = GUI_SCREEN_HEIGHT;
@@ -5414,13 +5411,13 @@ render_details *create_render_details(int type) {
   width = scrw - SCR_WIDTH_SAFETY;
   height = scrh - SCR_HEIGHT_SAFETY;
 
-  if (1 || type == 1) {
+  if (type == 1) {
     width /= 2;
     height /= 2;
   }
 
   // needs to be set as large as possible, we will shrink it later, but it must not expand
-  rdet->dialog = lives_standard_dialog_new(title, FALSE, 8, 8);
+  rdet->dialog = lives_standard_dialog_new(title, FALSE, 8., 8.);
 
   lives_free(title);
 
@@ -5476,7 +5473,7 @@ render_details *create_render_details(int type) {
     // add clip name entry
     rdet->clipname_entry = lives_standard_entry_new((tmp = lives_strdup(_("New clip name"))),
                            (tmp2 = get_untitled_name(mainw->untitled_number)),
-                           STD_ENTRY_WIDTH, 256, LIVES_BOX(top_vbox),
+                           MEDIUM_ENTRY_WIDTH, 256, LIVES_BOX(top_vbox),
                            (tmp3 = lives_strdup(_("The name to give the clip in the Clips menu"))));
     lives_free(tmp);
     lives_free(tmp2);
@@ -5688,22 +5685,21 @@ render_details *create_render_details(int type) {
     add_fill_to_box(LIVES_BOX(daa));
   }
 
-  cancelbutton = lives_standard_button_new_from_stock(LIVES_STOCK_CANCEL, NULL);
-  if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
-    lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+  cancelbutton = NULL;
 
+  if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_CANCEL, NULL,
+                   LIVES_RESPONSE_CANCEL);
     if (type != 1) {
       lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH * 2, -1);
     }
   } else if (LIVES_IS_BOX(daa)) add_fill_to_box(LIVES_BOX(daa));
 
-  lives_widget_set_can_focus(cancelbutton, TRUE);
-
   if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
     if (type == 2 || type == 3) {
       if (CURRENT_CLIP_HAS_VIDEO && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) {
-        rdet->usecur_button = lives_standard_button_new_with_label(_("_Set to current clip values"));
-        lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), rdet->usecur_button, LIVES_RESPONSE_RESET);
+        rdet->usecur_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), NULL, _("_Set to current clip values"),
+                              LIVES_RESPONSE_RESET);
         lives_signal_connect(LIVES_COMBO(rdet->usecur_button), LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current),
                              (livespointer)rdet);
       }
@@ -5711,18 +5707,16 @@ render_details *create_render_details(int type) {
   }
 
   if (type != 1) {
-    rdet->okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_OK, NULL);
-    lives_widget_set_size_request(rdet->okbutton, DEF_BUTTON_WIDTH * 2, -1);
+    rdet->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_OK, NULL, LIVES_RESPONSE_OK);
   } else  {
-    rdet->okbutton = lives_standard_button_new_from_stock(LIVES_STOCK_GO_FORWARD, _("_Next"));
+    rdet->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"), LIVES_RESPONSE_OK);
   }
 
-  lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), rdet->okbutton, LIVES_RESPONSE_OK);
-  lives_widget_set_can_focus_and_default(rdet->okbutton);
   lives_button_grab_default_special(rdet->okbutton);
 
-  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, rdet_accel_group,
-                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  if (cancelbutton != NULL)
+    lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, rdet_accel_group,
+                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (needs_new_encoder) {
     lives_widget_set_sensitive(rdet->okbutton, FALSE);
@@ -5745,17 +5739,18 @@ render_details *create_render_details(int type) {
   height = lives_widget_get_allocation_height(scrollw) - (spht = lives_widget_get_allocation_height(spillover));
   width = lives_widget_get_allocation_width(scrollw);
 
+  dheight = lives_widget_get_allocation_height(rdet->dialog) - spht;
+  dwidth = lives_widget_get_allocation_width(rdet->dialog);
+
   lives_widget_destroy(spillover); // remove extra height
   //lives_widget_process_updates(rdet->dialog, TRUE);
   lives_widget_context_update();
 
   if (height > 0) lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(scrollw), height);
   if (width > 0) lives_scrolled_window_set_min_content_width(LIVES_SCROLLED_WINDOW(scrollw), width);
-  lives_widget_set_size_request(scrollw, width, height);
+  lives_widget_set_size_request(scrollw, width, height + 100);
 
-  height = lives_widget_get_allocation_height(rdet->dialog) - spht;
-  width = lives_widget_get_allocation_width(rdet->dialog);
-  lives_widget_set_size_request(rdet->dialog, width, height);
+  lives_widget_set_size_request(rdet->dialog, dwidth, dheight);
 
   if (type != 1) {
     // for expander, need to make it resizable

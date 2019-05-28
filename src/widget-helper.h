@@ -25,6 +25,10 @@
 
 #define MIN_SPINBUTTON_SIZE 6 ///< min digits for spinbuttons
 
+#define LONG_ENTRY_WIDTH ((int)(120.*widget_opts.scale))
+#define SHORT_ENTRY_WIDTH ((int)(40.*widget_opts.scale))
+#define MEDIUM_ENTRY_WIDTH ((int)(60.*widget_opts.scale))
+
 typedef enum {
   LIVES_DISPLAY_TYPE_UNKNOWN = 0,
   LIVES_DISPLAY_TYPE_X11,
@@ -658,10 +662,12 @@ boolean lives_range_set_inverted(LiVESRange *, boolean invert);
 double lives_range_get_value(LiVESRange *);
 
 boolean lives_editable_set_editable(LiVESEditable *, boolean editable);
+boolean lives_editable_get_editable(LiVESEditable *);
 boolean lives_editable_select_region(LiVESEditable *, int start_pos, int end_pos);
 
 LiVESWidget *lives_entry_new(void);
 boolean lives_entry_set_editable(LiVESEntry *, boolean editable);
+boolean lives_entry_get_editable(LiVESEntry *);
 const char *lives_entry_get_text(LiVESEntry *);
 boolean lives_entry_set_text(LiVESEntry *, const char *text);
 boolean lives_entry_set_width_chars(LiVESEntry *, int nchars);

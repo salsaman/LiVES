@@ -337,6 +337,7 @@ void create_LiVES(void) {
   LiVESWidget *vbox4;
   LiVESWidget *vbox99;
   LiVESWidget *label;
+  LiVESWidget *hseparator;
   LiVESWidget *t_label;
 
 #if defined HAVE_YUV4MPEG || defined HAVE_UNICAP
@@ -520,7 +521,7 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->menu_hbox, FALSE, FALSE, 0);
   lives_widget_set_valign(mainw->menu_hbox, LIVES_ALIGN_START);
 
-  LiVESWidget *hseparator = lives_hseparator_new();
+  hseparator = lives_hseparator_new();
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), hseparator, FALSE, FALSE, 0);
 
   mainw->menubar = lives_menu_bar_new();
@@ -1572,7 +1573,7 @@ void create_LiVES(void) {
   lives_toolbar_set_icon_size(LIVES_TOOLBAR(mainw->btoolbar), LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
   if (capable->smog_version_correct) {
-    lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->btoolbar, TRUE, TRUE, 0);
+    lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->btoolbar, FALSE, TRUE, 0);
     tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
     if (tmp_toolbar_icon != NULL) {

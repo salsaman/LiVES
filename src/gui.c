@@ -170,6 +170,8 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_fg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colf2);
+  lives_widget_set_bg_color(mainw->menu_hbox, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->menu_hbox, LIVES_WIDGET_STATE_NORMAL, colf2);
 
   lives_widget_set_bg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->sa_toolbar, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -4282,6 +4284,7 @@ void add_to_playframe(void) {
       }
       lives_widget_show(mainw->plug);
       lives_box_pack_start(LIVES_BOX(mainw->plug), mainw->play_image, TRUE, FALSE, 0);
+      lives_widget_set_vexpand(mainw->play_image, TRUE); // centers it in mt
     }
   }
   resize(1);
@@ -4408,6 +4411,7 @@ void splash_init(void) {
   lives_window_set_auto_startup_notification(FALSE);
 
   mainw->splash_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+  lives_window_set_decorated(LIVES_WINDOW(mainw->splash_window), FALSE);
 
   widget_opts.default_justify = LIVES_JUSTIFY_LEFT;
 

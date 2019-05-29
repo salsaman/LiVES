@@ -75,7 +75,37 @@ static void handle_omc_events(void) {
 
 
 boolean ext_triggers_poll(livespointer data) {
+#ifdef USE_GLIB
+  static int priority = G_PRIORITY_DEFAULT;
+#endif
+  boolean needs_check = FALSE;
+
   if (mainw->is_exiting) return FALSE;
+
+  // check for external controller events
+#ifdef ENABLE_JACK
+#ifdef ENABLE_JACK_TRANSPORT
+  if (mainw->jack_trans_poll) {
+    needs_check = TRUE;
+    lives_jack_poll(); ///<   check for jack transport start/stop
+  }
+#endif
+#endif
+
+#ifdef ENABLE_OSC
+  if (mainw->ext_cntl[EXT_CNTL_MIDI] || mainw->ext_cntl[EXT_CNTL_JS]) {
+    needs_check = TRUE;
+    handle_omc_events(); ///< check for playback start triggered by js, MIDI, etc.
+  }
+#endif
+
+  /// if we have OSC we will poll it here,
+#ifdef ENABLE_OSC
+  if (prefs->osc_udp_started) {
+    needs_check = TRUE;
+    lives_osc_poll(NULL);
+  }
+#endif
 
   if (mainw->kb_timer_end) {
     mainw->kb_timer_end = FALSE;
@@ -85,26 +115,24 @@ boolean ext_triggers_poll(livespointer data) {
 #endif
   }
 
-  // check for external controller events
-#ifdef ENABLE_JACK
-#ifdef ENABLE_JACK_TRANSPORT
-  if (mainw->jack_trans_poll) lives_jack_poll(); ///<   check for jack transport start/stop
-#endif
-#endif
-
-#ifdef ENABLE_OSC
-  handle_omc_events(); ///< check for playback start triggered by js, MIDI, etc.
-#endif
-
-  /// if we have OSC we will poll it here,
-#ifdef ENABLE_OSC
-  if (prefs->osc_udp_started) lives_osc_poll(NULL);
+#ifdef USE_GLIB
+  if (needs_check) {
+    if (priority != G_PRIORITY_DEFAULT) {
+      g_source_set_priority(g_main_context_find_source_by_id(NULL, mainw->kb_timer), (priority = G_PRIORITY_DEFAULT));
+    }
+    return TRUE;
+  } else {
+    if (priority != G_PRIORITY_DEFAULT_IDLE) {
+      g_source_set_priority(g_main_context_find_source_by_id(NULL, mainw->kb_timer), (priority = G_PRIORITY_DEFAULT_IDLE));
+    }
+  }
 #endif
 
   return TRUE;
 }
 
 
+// unused, but left for future reference in case i becomes useful
 #if defined HAVE_X11 || defined IS_MINGW
 LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespointer data) {
   // filter events at X11 level and act on key press/release

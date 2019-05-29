@@ -103,19 +103,30 @@ static void edit_state_cb(LiVESObject *object, livespointer pspec, livespointer 
 
 
 static void button_state_cb(LiVESObject *object, livespointer pspec, livespointer user_data) {
+  // This callback is here because:
+  //
   // a) cannot alter the text colour of a button after the initial draw of a button
   // this is because it doesnt have a proper label widget
-  // we can only change the background colour
+  // we can only change the background colour, so here we change the border colour via updating the parent container
 
-  // thus if we need a button with changable text colour we must use a toolbar button instead !
+  // note: if we need a button with changable text colour we must use a toolbar button instead !
   //
   // b) CSS appears broken in gtk+ 3.18.9 and possibly other versions, preventing seeting of colours for
   // non-default states (e.g. insensitive)
   // thus we need to set a callback to listen to "sensitive" changes, and update the colours in response
   //
+  // c) it is also easier just to set the CSS colours when the widget state changes than to figure out ahead of time
+  //     what the colours should be for each state. Hopefully it doesn't add too much overhead listening for sensitivity
+  //     changes and then updating the CSS manually.
+  //
   LiVESWidget *widget = (LiVESWidget *)object;
-  LiVESWidgetState state = lives_widget_get_state(widget);
+  LiVESWidgetState state;
   boolean woat = widget_opts.apply_theme;
+
+  if (mainw->playing_file > -1 || !mainw->is_ready) return;
+
+  state = lives_widget_get_state(widget);
+
   if (LIVES_IS_BUTTON(widget)) {
     if (!LIVES_IS_TOGGLE_BUTTON(widget))
       default_changed_cb(object, NULL, NULL);

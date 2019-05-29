@@ -51,14 +51,27 @@ static boolean via_shortcut = FALSE;
 
 
 static boolean osc_playall(livespointer data) {
+  mainw->osc_auto = 1; ///< request notifiction of success
   on_playall_activate(NULL, NULL);
+  mainw->osc_auto = 0;
+  return FALSE;
+}
+
+
+static boolean osc_playsel(livespointer data) {
+  mainw->osc_auto = 1; ///< request notifiction of success
+  if (mainw->multitrack == NULL) on_playsel_activate(NULL, NULL);
+  else multitrack_play_sel(NULL, mainw->multitrack);
+  mainw->osc_auto = 0;
   return FALSE;
 }
 
 
 static boolean osc_init_generator(livespointer data) {
   // do this via an idle function, as it will trigger playback and hang
+  mainw->osc_auto = 1; ///< request notifiction of success
   rte_on_off_callback_hook(NULL, data);
+  mainw->osc_auto = 0;
   return FALSE;
 }
 
@@ -451,28 +464,18 @@ boolean lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeT
                                            entd);
     mainw->play_start = calc_frame_from_time(mainw->current_file,
                         sttd);
-
   }
 
-  lives_idle_add(osc_playall, NULL);
+  lives_timer_add(0, osc_playall, NULL);
 
-  return lives_osc_notify_success(NULL);
+  return TRUE;
 }
 
 
 boolean lives_osc_cb_playsel(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) return lives_osc_notify_failure();
-  if (mainw->playing_file == -1 && mainw->current_file > 0) {
-    mainw->osc_auto = 1; ///< request early notifiction of success
-
-    // re - add the timer, as we will hang here, and we want to receive messages still during playback
-    lives_timer_remove(mainw->kb_timer);
-    mainw->kb_timer = lives_timer_add(KEY_RPT_INTERVAL, &ext_triggers_poll, NULL);
-
-    if (mainw->multitrack == NULL) on_playsel_activate(NULL, NULL);
-    else multitrack_play_sel(NULL, mainw->multitrack);
-    mainw->kb_timer_end = TRUE;
-    mainw->osc_auto = 0; ///< request early notifiction of success
+  if (mainw->playing_file == -1 && mainw->current_file > 0 && !mainw->is_processing) {
+    lives_timer_add(0, osc_playsel, NULL);
   }
   return TRUE;
 }
@@ -511,10 +514,10 @@ boolean lives_osc_cb_play_forward(void *context, int arglen, const void *vargs, 
   if (mainw->current_file < 0 || (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE))
     if (mainw->playing_file == 1) return lives_osc_notify_failure();
 
-  if (mainw->playing_file == -1 && mainw->current_file > 0) {
-    lives_idle_add(osc_playall, NULL);
-    return lives_osc_notify_success(NULL);
-  } else if (mainw->current_file > 0) {
+  if (mainw->playing_file == -1 && mainw->current_file > 0 && !mainw->is_processing) {
+    lives_timer_add(0, osc_playall, NULL);
+    return TRUE;
+  } else if (mainw->playing_file > 0) {
     if (cfile->pb_fps < 0 || (cfile->play_paused && cfile->freeze_fps < 0))
       dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
     if (cfile->play_paused) freeze_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
@@ -532,11 +535,11 @@ boolean lives_osc_cb_play_backward(void *context, int arglen, const void *vargs,
   if (mainw->current_file < 0 || (cfile->clip_type != CLIP_TYPE_DISK &&
                                   cfile->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
-  if (mainw->playing_file == -1 && mainw->current_file > 0) {
+  if (mainw->playing_file == -1 && mainw->current_file > 0 && !mainw->is_processing) {
     mainw->reverse_pb = TRUE;
-    lives_idle_add(osc_playall, NULL);
-    return lives_osc_notify_success(NULL);
-  } else if (mainw->current_file > 0) {
+    lives_timer_add(0, osc_playall, NULL);
+    return TRUE;
+  } else if (mainw->playing_file > 0) {
     if (cfile->pb_fps > 0 || (cfile->play_paused && cfile->freeze_fps > 0))
       dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
     if (cfile->play_paused) freeze_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
@@ -838,7 +841,8 @@ static boolean osc_fx_on(int effect_key) {
     if (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL) || mainw->is_processing ||
         mainw->multitrack != NULL) return lives_osc_notify_failure();
     mainw->error = FALSE;
-    lives_idle_add(osc_init_generator, LIVES_INT_TO_POINTER(effect_key));
+    lives_timer_add(0, osc_init_generator, LIVES_INT_TO_POINTER(effect_key));
+    return TRUE;
   } else {
     rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(effect_key));
     mainw->last_grabbable_effect = grab;

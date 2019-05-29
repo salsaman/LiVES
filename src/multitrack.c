@@ -3874,18 +3874,18 @@ static boolean on_drag_filter_end(LiVESWidget *widget, LiVESXEventButton *event,
     nb_ignore = FALSE;
     // apply to block
     mt->putative_block = NULL;
-    lives_idle_add_full(G_PRIORITY_HIGH, mt_add_block_effect_idle, mt, NULL); // work around bug in gtk+
+    lives_timer_add(0, mt_add_block_effect_idle, mt); // work around issue in gtk+
   } else if (nins == 2) {
     // transition
     if (lives_list_length(mt->selected_tracks) == 2 && mt->region_start != mt->region_end) {
       // apply to region
-      lives_idle_add_full(G_PRIORITY_HIGH, mt_add_region_effect_idle, mt, NULL);
+      lives_timer_add(0, mt_add_region_effect_idle, mt);
     }
   } else if (nins >= 1000000) {
     // compositor
     if (mt->selected_tracks != NULL && mt->region_start != mt->region_end) {
       // apply to region
-      lives_idle_add_full(G_PRIORITY_HIGH, mt_add_region_effect_idle, mt, NULL);
+      lives_timer_add(0, mt_add_region_effect_idle, mt);
     }
   }
 
@@ -5829,6 +5829,9 @@ void set_mt_colours(lives_mt *mt) {
 
     lives_widget_set_bg_color(mt->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mt->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    lives_widget_set_bg_color(mt->menu_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->menu_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
     lives_widget_set_bg_color(mt->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_fg_color(mt->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -8414,7 +8417,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->in_image = lives_image_new();
   mt->in_frame = lives_frame_new(NULL);
-  lives_widget_set_vexpand(mt->in_frame, TRUE);
+  //lives_widget_set_vexpand(mt->in_frame, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mt->in_frame), 1);
 
   lives_container_add(LIVES_CONTAINER(mt->in_frame), mt->in_image);
@@ -10366,7 +10369,7 @@ static boolean fx_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event, 
     // double click
     mt->moving_fx = NULL;
     if (mainw->playing_file == -1) {
-      lives_idle_add_full(G_PRIORITY_LOW, mt_fx_edit_idle, mt, NULL); // work around bug in gtk+
+      lives_timer_add(0, mt_fx_edit_idle, mt); // work around issue in gtk+
     }
     return FALSE;
   }
@@ -10843,8 +10846,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     }
 
     lives_widget_destroy(rdet->dialog);
-
-
   }
 
   if (mainw->current_file > -1 && cfile != NULL && cfile->clip_type == CLIP_TYPE_GENERATOR) {
@@ -11517,6 +11518,7 @@ static void set_in_out_spin_ranges(lives_mt *mt, weed_timecode_t start_tc, weed_
 
 }
 
+
 static void update_in_image(lives_mt *mt) {
   LiVESPixbuf *thumb;
   track_rect *block = mt->block_selected;
@@ -11535,9 +11537,7 @@ static void update_in_image(lives_mt *mt) {
     frame_start = mainw->files[filenum]->start;
   }
 
-  calc_maxspect(lives_widget_get_allocation_width(mt->out_image),
-                lives_widget_get_allocation_height(mt->out_image),
-                &width, &height);
+  calc_maxspect(lives_widget_get_allocation_width(mt->in_image), lives_widget_get_allocation_height(mt->in_image), &width, &height);
 
   thumb = make_thumb(mt, filenum, width, height, frame_start, FALSE);
   lives_image_set_from_pixbuf(LIVES_IMAGE(mt->in_image), thumb);
@@ -11563,13 +11563,27 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
     frame_end = mainw->files[filenum]->end;
   }
 
-  calc_maxspect(lives_widget_get_allocation_width(mt->in_image),
-                lives_widget_get_allocation_height(mt->in_image),
-                &width, &height);
+  calc_maxspect(lives_widget_get_allocation_width(mt->in_image), lives_widget_get_allocation_height(mt->in_image), &width, &height);
 
   thumb = make_thumb(mt, filenum, width, height, frame_end, FALSE);
   lives_image_set_from_pixbuf(LIVES_IMAGE(mt->out_image), thumb);
   if (thumb != NULL) lives_object_unref(thumb);
+}
+
+
+static boolean show_in_out_images(livespointer user_data) {
+  lives_mt *mt = (lives_mt *)user_data;
+  track_rect *block = mt->block_selected;
+  weed_timecode_t end_tc;
+  int track;
+  if (block == NULL) return FALSE;
+  track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "layer_number"));
+  if (track < 0) return FALSE;
+  end_tc = block->offset_start + (weed_timecode_t)(TICKS_PER_SECOND_DBL / mt->fps) + (get_event_timecode(
+             block->end_event) - get_event_timecode(block->start_event));
+  update_in_image(mt);
+  update_out_image(mt, end_tc);
+  return FALSE;
 }
 
 
@@ -12518,7 +12532,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     while (xxwidth < 1 || xxheight < 1) {
       if (lives_widget_get_allocation_width(mt->poly_box) > 1 && lives_widget_get_allocation_height(mt->poly_box) > 1) {
         calc_maxspect(lives_widget_get_allocation_width(mt->poly_box) / 2 - POLY_WIDTH_MARGIN,
-                      lives_widget_get_allocation_height(mt->poly_box) - POLY_WIDTH_MARGIN -
+                      lives_widget_get_allocation_height(mt->poly_box) - POLY_WIDTH_MARGIN / 2 - 12 * widget_opts.packing_height -
                       ((block == NULL || block->ordered) ? lives_widget_get_allocation_height(mainw->spinbutton_start) : 0), &width, &height);
 
         xxwidth = width;
@@ -12538,6 +12552,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     if (block == NULL || block->ordered) {
       lives_widget_show(mt->in_hbox);
       lives_widget_show(mt->out_hbox);
+      lives_idle_add(show_in_out_images, (livespointer)mt);
     } else {
       lives_widget_hide(mt->in_hbox);
       lives_widget_hide(mt->out_hbox);

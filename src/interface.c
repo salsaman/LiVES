@@ -55,7 +55,6 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
     if (filler != NULL) lives_box_reorder_child(for_deint, filler, 1);
   } else lives_box_pack_start(for_deint, hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  lives_widget_set_can_focus_and_default(checkbutton);
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_boolean_toggled),
                              &mainw->open_deint);

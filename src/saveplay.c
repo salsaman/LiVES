@@ -2526,6 +2526,8 @@ void play_file(void) {
 
   if (mainw->foreign || weed_playback_gen_start()) {
 
+    if (mainw->osc_auto)
+      lives_notify(LIVES_OSC_NOTIFY_SUCCESS, "");
     lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STARTED, "");
 
 #ifdef ENABLE_JACK

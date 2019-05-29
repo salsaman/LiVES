@@ -37,6 +37,12 @@ static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int file
                                int nframes, double out_scale, boolean rev_endian, boolean out_unsigned, size_t rbytes);
 
 
+static boolean jack_playall(livespointer data) {
+  on_playall_activate(NULL, NULL);
+  return FALSE;
+}
+
+
 static boolean check_zero_buff(size_t check_size) {
   if (check_size > zero_buff_count) {
     zero_buff = (unsigned char *)lives_try_realloc(zero_buff, check_size);
@@ -198,14 +204,8 @@ static void jack_transport_check_state(void) {
       mainw->playing_file == -1 && mainw->current_file > 0 && !mainw->is_processing) {
     mainw->jack_can_start = FALSE;
     mainw->jack_can_stop = TRUE;
-    // re - add the timer, as we will hang here, and we want to receive messages still during playback
-    lives_timer_remove(mainw->kb_timer);
-    mainw->kb_timer = lives_timer_add(KEY_RPT_INTERVAL, &ext_triggers_poll, NULL);
-
-    on_playall_activate(NULL, NULL);
-
-    mainw->kb_timer_end = TRUE;
-
+    lives_timer_add(0, jack_playall, NULL);
+    return;
   }
 
   if (jacktstate == JackTransportStopped) {

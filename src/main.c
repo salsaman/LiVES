@@ -3008,10 +3008,6 @@ static boolean lives_startup(livespointer data) {
     }
   }
 
-  if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
-    mainw->is_ready = TRUE;
-  }
-
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer_end = FALSE;
   mainw->kb_timer = lives_timer_add(KEY_RPT_INTERVAL, &ext_triggers_poll, NULL);

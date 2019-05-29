@@ -6690,8 +6690,12 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_raise(LiVESXWindow *xwin) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_set_cursor(LiVESXWindow *xwin, LiVESXCursor *cursor) {
 #ifdef GUI_GTK
-  gdk_window_set_cursor(xwin, cursor);
-  return TRUE;
+  if (GDK_IS_WINDOW(xwin)) {
+    if (cursor == NULL || gdk_window_get_display(xwin) == gdk_cursor_get_display(cursor)) {
+      gdk_window_set_cursor(xwin, cursor);
+      return TRUE;
+    }
+  }
 #endif
 #ifdef GUI_QT
   if (cursor != NULL)
@@ -8404,6 +8408,7 @@ static LiVESWidget *make_inner_hbox(LiVESBox *box) {
   lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
   if (LIVES_IS_HBOX(box)) {
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box) ? widget_opts.packing_width : 0);
+    lives_widget_set_valign(hbox, LIVES_ALIGN_CENTER);
   } else {
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box) ? widget_opts.packing_height : 0);
     box = LIVES_BOX(hbox);
@@ -10401,7 +10406,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
   if (cursor != NULL && gdk_cursor_get_cursor_type(cursor) == ctype) return;
   cursor = NULL;
 #endif
-  disp = mainw->mgeom[widget_opts.monitor].disp;
+  disp = gdk_window_get_display(window);
   if (cstyle != LIVES_CURSOR_NORMAL) {
     cursor = gdk_cursor_new_for_display(disp, ctype);
     gdk_window_set_cursor(window, cursor);
@@ -10463,8 +10468,10 @@ void hide_cursor(LiVESXWindow *window) {
 #else
     GdkCursor *cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
 #endif
-    gdk_window_set_cursor(window, cursor);
-    lives_cursor_unref(cursor);
+    if (cursor != NULL) {
+      gdk_window_set_cursor(window, cursor);
+      lives_cursor_unref(cursor);
+    }
   }
 #else
   static GdkCursor *hidden_cursor = NULL;

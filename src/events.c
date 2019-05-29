@@ -5343,7 +5343,7 @@ render_details *create_render_details(int type) {
   LiVESWidget *label;
   LiVESWidget *top_vbox;
   LiVESWidget *dialog_vbox;
-  LiVESWidget *scrollw;
+  LiVESWidget *scrollw = NULL;
   LiVESWidget *hbox;
   LiVESWidget *vbox;
   LiVESWidget *frame;
@@ -5434,10 +5434,8 @@ render_details *create_render_details(int type) {
     // need to set a large enough default here
     scrollw = lives_standard_scrolled_window_new(width * .8, height * 1., top_vbox);
     widget_opts.border_width = dbw;
-  } else
-    scrollw = lives_standard_scrolled_window_new(width * .3, height * .4, top_vbox);
-
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), scrollw, FALSE, TRUE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), scrollw, FALSE, TRUE, 0);
+  } else lives_box_pack_start(LIVES_BOX(dialog_vbox), top_vbox, FALSE, TRUE, 0);
 
   lives_container_set_border_width(LIVES_CONTAINER(top_vbox), 0);
 
@@ -5567,11 +5565,10 @@ render_details *create_render_details(int type) {
 
   add_fill_to_box(LIVES_BOX(vbox));
 
-  widget_opts.expand = LIVES_EXPAND_EXTRA;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new(_("Target encoder"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-  lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   if (type != 1) {
     rdet->encoder_name = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
@@ -5623,7 +5620,7 @@ render_details *create_render_details(int type) {
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new(_("Output format"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-  lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new(FALSE, 0);
   add_spring_to_box(LIVES_BOX(hbox), 0);
@@ -5649,7 +5646,7 @@ render_details *create_render_details(int type) {
     lives_list_free_all(&prefs->acodec_list);
 
     prefs->acodec_list = lives_list_append(prefs->acodec_list, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
-    lives_box_pack_start(LIVES_BOX(vbox), alabel, FALSE, FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(vbox), alabel, FALSE, FALSE, widget_opts.packing_height);
 
     hbox = lives_hbox_new(FALSE, 0);
     add_spring_to_box(LIVES_BOX(hbox), 0);
@@ -5659,7 +5656,7 @@ render_details *create_render_details(int type) {
     add_spring_to_box(LIVES_BOX(hbox), 0);
   } else {
     add_fill_to_box(LIVES_BOX(vbox));
-    lives_box_pack_start(LIVES_BOX(vbox), alabel, FALSE, FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(vbox), alabel, FALSE, FALSE, widget_opts.packing_height);
     lives_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
     lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), prefs->encoder.of_desc);
     lives_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
@@ -5676,7 +5673,7 @@ render_details *create_render_details(int type) {
     set_acodec_list_from_allowed(NULL, rdet);
   }
 
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  add_fill_to_box(LIVES_BOX(vbox));
 
   //////////////// end expander section ///////////////////
 
@@ -5728,38 +5725,34 @@ render_details *create_render_details(int type) {
 
   mainw->no_context_update = FALSE;
 
-  //#if GTK_CHECK_VERSION(3, 0, 0)
-
-  // shrinkwrap to minimum
-  spillover = lives_vbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(top_vbox), spillover, TRUE, TRUE, 0); // mop up extra height
-  lives_widget_show_all(rdet->dialog);
-  lives_widget_context_update();
-
-  height = lives_widget_get_allocation_height(scrollw) - (spht = lives_widget_get_allocation_height(spillover));
-  width = lives_widget_get_allocation_width(scrollw);
-
-  dheight = lives_widget_get_allocation_height(rdet->dialog) - spht;
-  dwidth = lives_widget_get_allocation_width(rdet->dialog);
-
-  lives_widget_destroy(spillover); // remove extra height
-  //lives_widget_process_updates(rdet->dialog, TRUE);
-  lives_widget_context_update();
-
-  if (height > 0) lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(scrollw), height);
-  if (width > 0) lives_scrolled_window_set_min_content_width(LIVES_SCROLLED_WINDOW(scrollw), width);
-  lives_widget_set_size_request(scrollw, width, height + 100);
-
-  lives_widget_set_size_request(rdet->dialog, dwidth, dheight);
-
   if (type != 1) {
+    // shrinkwrap to minimum
+    spillover = lives_vbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(top_vbox), spillover, TRUE, TRUE, 0); // mop up extra height
+    lives_widget_show_all(rdet->dialog);
+    lives_widget_context_update();
+
+    height = lives_widget_get_allocation_height(scrollw) - (spht = lives_widget_get_allocation_height(spillover));
+    width = lives_widget_get_allocation_width(scrollw);
+
+    dheight = lives_widget_get_allocation_height(rdet->dialog) - spht;
+    dwidth = lives_widget_get_allocation_width(rdet->dialog);
+
+    lives_widget_destroy(spillover); // remove extra height
+    //lives_widget_process_updates(rdet->dialog, TRUE);
+    lives_widget_context_update();
+
+    if (height > 0) lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(scrollw), height);
+    if (width > 0) lives_scrolled_window_set_min_content_width(LIVES_SCROLLED_WINDOW(scrollw), width);
+    lives_widget_set_size_request(scrollw, width, height + 100);
+
+    lives_widget_set_size_request(rdet->dialog, dwidth, dheight);
+
     // for expander, need to make it resizable
     lives_window_set_resizable(LIVES_WINDOW(rdet->dialog), TRUE);
   }
+
   lives_widget_show_all(rdet->dialog);
-  /* #else */
-  /*   lives_widget_show_all(rdet->dialog); */
-  /* #endif */
   return rdet;
 }
 

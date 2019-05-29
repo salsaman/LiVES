@@ -4249,7 +4249,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                        NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
   prefsw->theme_style3 = lives_standard_check_button_new((tmp = lives_strdup(_("Theme is _light"))), (palette->style & STYLE_3),
                          LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("Affects some contrast details of the timeline"))));
@@ -4257,7 +4257,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_free(tmp2);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   prefsw->theme_style2 = NULL;
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -4267,7 +4267,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 #endif
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   prefsw->theme_style4 = lives_standard_check_button_new(_("Highlight horizontal separators in multitrack"),
                          (palette->style & STYLE_4), LIVES_BOX(hbox), NULL);

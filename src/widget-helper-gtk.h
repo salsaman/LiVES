@@ -869,7 +869,7 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 #define LIVES_IS_HBOX(widget) (GTK_IS_BOX(widget) && gtk_orientable_get_orientation(GTK_ORIENTABLE(widget)) == GTK_ORIENTATION_HORIZONTAL)
-#define LIVES_IS_VBOX(widget) (GTK_IS_BOX(widget) && gtk_orientable_get_orientation(GTK_ORIENTABLE(widget)) == GTK_ORIENTATION_HORIZONTAL)
+#define LIVES_IS_VBOX(widget) (GTK_IS_BOX(widget) && gtk_orientable_get_orientation(GTK_ORIENTABLE(widget)) == GTK_ORIENTATION_VERTICAL)
 #define LIVES_IS_SCROLLABLE(widget) GTK_IS_SCROLLABLE(widget)
 #else
 #define LIVES_IS_HBOX(widget) GTK_IS_HBOX(widget)

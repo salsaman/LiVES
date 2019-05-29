@@ -7889,7 +7889,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar2), LIVES_TOOL_ITEM(mainw->m_loopbutton), -1);
   lives_object_unref(mainw->m_loopbutton);
 
-  //  widget_opts.expand = LIVES_EXPAND_EXTRA_HEIGHT;
+  widget_opts.expand = LIVES_EXPAND_EXTRA_HEIGHT | LIVES_EXPAND_DEFAULT_WIDTH;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.apply_theme = FALSE;
   widget_opts.font_size = LIVES_FONT_SIZE_LARGE;

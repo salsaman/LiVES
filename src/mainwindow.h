@@ -90,7 +90,7 @@
 #define GUI_SCREEN_X (mainw->mgeom[widget_opts.monitor].x)
 #define GUI_SCREEN_Y (mainw->mgeom[widget_opts.monitor].y)
 
-#define SCREEN_SCALE_DEF_WIDTH 1200
+#define SCREEN_SCALE_DEF_WIDTH 1600
 
 #define DEFAULT_FRAME_HSIZE_UNSCALED 640
 #define DEFAULT_FRAME_VSIZE_UNSCALED 480
@@ -116,7 +116,7 @@
 #define MAX_MSG_WIDTH_CHARS ((int)(100. * widget_opts.scale)) ///< max width of text on warning/error labels
 
 /// size of the fx dialog windows scrollwindow
-#define RFX_WINSIZE_H ((int)(GUI_SCREEN_WIDTH >= SCREEN_SCALE_DEF_WIDTH ? (820. * widget_opts.scale) : 640))
+#define RFX_WINSIZE_H ((int)(GUI_SCREEN_WIDTH >= SCREEN_SCALE_DEF_WIDTH ? 210. + 210. * widget_opts.scale : 640))
 #define RFX_WINSIZE_V ((int)(480. * widget_opts.scale))
 
 #define DEF_BUTTON_WIDTH ((int)(80. * widget_opts.scale))

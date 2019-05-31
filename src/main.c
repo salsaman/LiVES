@@ -398,8 +398,6 @@ static boolean pre_init(void) {
 
   char buff[64];
 
-  double screen_scale;
-
   register int i;
 
   sizint = sizeof(int);
@@ -463,8 +461,10 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->audio_resync_mutex, NULL);
 
+  pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
   for (i = 0; i < FX_KEYS_MAX; i++) {
-    pthread_mutex_init(&mainw->data_mutex[i], &mattr); // because audio filters can enable/disable video filters and vice-versa
+    //pthread_mutex_init(&mainw->data_mutex[i], &mattr); // because audio filters can enable/disable video filters and vice-versa
+    pthread_mutex_init(&mainw->data_mutex[i], &mattr);
   }
 
   mainw->vrfx_update = NULL;
@@ -631,11 +631,16 @@ static boolean pre_init(void) {
 
   get_monitors();
 
-  screen_scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
-  if (screen_scale < 1.) screen_scale = 1.;
-  screen_scale = (screen_scale - 1.) / 2. + 1.;
+  prefs->screen_scale = get_double_pref(PREF_SCREEN_SCALE);
+  if (prefs->screen_scale == 0.) {
+    prefs->screen_scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
+    prefs->screen_scale = (prefs->screen_scale - 1.) * 1.5 + 1.;
+  }
 
-  widget_opts_rescale(screen_scale);
+  if (GUI_SCREEN_HEIGHT > 900) prefs->show_msg_area = TRUE;
+  else prefs->show_msg_area = FALSE;
+
+  widget_opts_rescale(prefs->screen_scale);
 
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate = -1;
@@ -1821,7 +1826,6 @@ static void show_detected_or_not(boolean cap, const char *pname) {
 
 void do_start_messages(void) {
   char *endian;
-
   d_print(_("\nChecking optional dependencies: "));
 
   show_detected_or_not(capable->has_mplayer, "mplayer");
@@ -1913,6 +1917,8 @@ void do_start_messages(void) {
   d_print(_("Compiled with pulse audio support, wonderful !\n"));
 #endif
 #endif
+
+  d_print(_("Gui screen size is %d X %d, scale was set to %.3f\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, widget_opts.scale);
 
   d_print(_("Welcome to LiVES version %s.\n\n"), LiVES_VERSION);
 }
@@ -3738,7 +3744,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->trim_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->fade_aud_in, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->fade_aud_out, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_TOTAL_TIME > 0.));
+  lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
   lives_widget_set_sensitive(mainw->trim_to_pstart, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO && cfile->pointer_time > 0.));
   lives_widget_set_sensitive(mainw->delaudio_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->delsel_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
@@ -7444,7 +7450,7 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO));
       lives_widget_set_sensitive(mainw->append_audio, (CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->trim_submenu, (CURRENT_CLIP_HAS_AUDIO));
-      lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD && (cfile->achans * CURRENT_CLIP_HAS_VIDEO));
+      lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->trim_to_pstart, (CURRENT_CLIP_HAS_AUDIO && cfile->pointer_time > 0.));
       lives_widget_set_sensitive(mainw->delaudio_submenu, (CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->delsel_audio, (CURRENT_CLIP_HAS_VIDEO));

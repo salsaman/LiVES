@@ -3113,7 +3113,7 @@ void get_total_time(lives_clip_t *file) {
     file->video_time = file->frames / file->fps;
   }
 
-  if (file->asampsize * file->arate * file->achans) {
+  if (file->asampsize > 0 && file->arate > 0 && file->achans > 0) {
     file->laudio_time = (double)(file->afilesize / (file->asampsize >> 3) / file->achans) / (double)file->arate;
     if (file->achans > 1) {
       file->raudio_time = file->laudio_time;

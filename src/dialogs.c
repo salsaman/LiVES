@@ -1321,7 +1321,6 @@ int process_one(boolean visible) {
           cfile->aseek_pos = mainw->pulsed->seek_pos;
         }
 #endif
-
         // load and display the new frame
         load_frame_image(cfile->frameno);
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = real_ticks;

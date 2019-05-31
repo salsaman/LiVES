@@ -684,8 +684,7 @@ void pref_factory_int(const char *prefidx, int newval) {
   // ...
 
   if (!strcmp(prefidx, PREF_MAX_MSGS)) {
-    if (newval != prefs->max_messages);
-    {
+    if (newval != prefs->max_messages) {
       if (newval < mainw->n_messages && newval >= 0) {
         free_n_msgs(mainw->n_messages - newval);
         msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);

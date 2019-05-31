@@ -1784,6 +1784,7 @@ void create_LiVES(void) {
 
   mainw->tb_hbox = lives_hbox_new(FALSE, 0);
   mainw->toolbar = lives_toolbar_new();
+  lives_widget_set_no_show_all(mainw->tb_hbox, TRUE);
 
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mainw->toolbar), FALSE);
 
@@ -1948,7 +1949,6 @@ void create_LiVES(void) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_START);
-  lives_widget_set_valign(mainw->eventbox3, LIVES_ALIGN_CENTER);
 
   // IMPORTANT: need to set a default size here (the actual size will be set later)
   lives_widget_set_size_request(mainw->eventbox3, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
@@ -1982,7 +1982,6 @@ void create_LiVES(void) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(mainw->playframe, LIVES_ALIGN_CENTER);
-  lives_widget_set_valign(mainw->playframe, LIVES_ALIGN_CENTER);
 
   mainw->eventbox4 = lives_event_box_new();
   lives_widget_set_size_request(mainw->eventbox4, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
@@ -1991,7 +1990,6 @@ void create_LiVES(void) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(mainw->eventbox4, LIVES_ALIGN_END);
-  lives_widget_set_valign(mainw->eventbox4, LIVES_ALIGN_CENTER);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   mainw->frame2 = lives_standard_frame_new(_("Last Frame"), 0.75, TRUE);
@@ -2161,12 +2159,13 @@ void create_LiVES(void) {
   lives_widget_set_margin_bottom(mainw->vidbar, widget_opts.packing_height / 2);
 
   mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_vid_event), &mainw->vidbar_func);
+  lives_widget_set_app_paintable(mainw->video_draw, TRUE);
+
   // need to set this even if theme is none
   lives_widget_set_bg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_fg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  lives_widget_set_app_paintable(mainw->video_draw, TRUE);
-  lives_widget_set_size_request(mainw->video_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_VIDBAR_HEIGHT);
+  lives_widget_set_size_request(mainw->video_draw, -1, CE_VIDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, FALSE, TRUE, widget_opts.packing_height / 2);
 
   tmp = get_achannel_name(2, 0);
@@ -2186,7 +2185,7 @@ void create_LiVES(void) {
   lives_widget_set_bg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_fg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  lives_widget_set_size_request(mainw->laudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_AUDBAR_HEIGHT);
+  lives_widget_set_size_request(mainw->laudio_draw, -1, CE_AUDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudio_draw, FALSE, TRUE, widget_opts.packing_height / 2);
 
   tmp = get_achannel_name(2, 1);
@@ -2201,16 +2200,20 @@ void create_LiVES(void) {
 
   mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_raud_event), &mainw->raudbar_func);
   lives_widget_set_app_paintable(mainw->raudio_draw, TRUE);
+
   // need to set this even if theme is none
   lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_fg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_size_request(mainw->raudio_draw, lives_widget_get_allocation_width(mainw->LiVES), CE_AUDBAR_HEIGHT);
+
+  lives_widget_set_size_request(mainw->raudio_draw, -1, CE_AUDBAR_HEIGHT);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, FALSE, 0);
+
   lives_widget_set_margin_top(mainw->raudio_draw, widget_opts.packing_height / 2);
   lives_widget_set_margin_bottom(mainw->raudio_draw, widget_opts.packing_height * 4);
 
   mainw->message_box = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
+  if (prefs->show_msg_area)
+    lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
 
   mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mainw->sw_func);
   lives_widget_set_app_paintable(mainw->msg_area, TRUE);
@@ -2218,21 +2221,24 @@ void create_LiVES(void) {
   lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
   lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
 
-  lives_widget_set_events(mainw->msg_area, LIVES_SCROLL_MASK);
+  if (prefs->show_msg_area)
+    lives_widget_set_events(mainw->msg_area, LIVES_SCROLL_MASK);
 
   mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
   lives_box_pack_end(LIVES_BOX(mainw->message_box), mainw->msg_scrollbar, FALSE, TRUE, 0);
 
   mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mainw->msg_scrollbar));
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj),
-                             LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(msg_area_scroll),
-                             (livespointer)mainw->msg_area);
+  if (prefs->show_msg_area) {
+    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj),
+                               LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                               LIVES_GUI_CALLBACK(msg_area_scroll),
+                               (livespointer)mainw->msg_area);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
-                       LIVES_GUI_CALLBACK(on_msg_area_scroll),
-                       (livespointer)mainw->msg_adj);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
+                         LIVES_GUI_CALLBACK(on_msg_area_scroll),
+                         (livespointer)mainw->msg_adj);
+  }
 
   // accel keys
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
@@ -4520,6 +4526,7 @@ void splash_end(void) {
 
 void reset_message_area(boolean expand) {
   int height;
+  if (!prefs->show_msg_area) return;
   if (!mainw->is_ready || !prefs->show_gui) return;
   if (!expand) {
     // need to shrink the message_box then re-expand it after redrawing the widgets

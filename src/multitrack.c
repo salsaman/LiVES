@@ -4553,6 +4553,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
                          NULL, NULL);
   lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(mt->spinbutton_start), TRUE);
   widget_opts.packing_width = dpw;
+  lives_widget_set_valign(mt->spinbutton_start, LIVES_ALIGN_CENTER);
 
   lives_box_pack_start(LIVES_BOX(hbox), mt->spinbutton_start, TRUE, FALSE, MAIN_SPIN_SPACER);
 
@@ -4572,6 +4573,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   mt->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 10000000., 1. / mt->fps, 1. / mt->fps, 3,
                        NULL, NULL);
   lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(mt->spinbutton_end), TRUE);
+  lives_widget_set_valign(mt->spinbutton_end, LIVES_ALIGN_CENTER);
 
   widget_opts.packing_width = dpw;
 
@@ -8176,7 +8178,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->hpaned = lives_hpaned_new();
   lives_box_pack_start(LIVES_BOX(mt->hbox), mt->hpaned, TRUE, TRUE, 0);
 
-  mt->nb = lives_notebook_new();
+  mt->nb = lives_standard_notebook_new(&palette->normal_back, &palette->menu_and_bars);
   lives_container_set_border_width(LIVES_CONTAINER(mt->nb), widget_opts.border_width);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -8695,14 +8697,16 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->msg_adj = mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mt->msg_scrollbar));
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(mt->msg_adj),
-                             LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(msg_area_scroll),
-                             (livespointer)mt->msg_area);
+  if (prefs->show_msg_area) {
+    lives_signal_connect_after(LIVES_GUI_OBJECT(mt->msg_adj),
+                               LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                               LIVES_GUI_CALLBACK(msg_area_scroll),
+                               (livespointer)mt->msg_area);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->msg_area), LIVES_WIDGET_SCROLL_EVENT,
-                       LIVES_GUI_CALLBACK(on_msg_area_scroll),
-                       (livespointer)mt->msg_adj);
+    lives_signal_connect(LIVES_GUI_OBJECT(mt->msg_area), LIVES_WIDGET_SCROLL_EVENT,
+                         LIVES_GUI_CALLBACK(on_msg_area_scroll),
+                         (livespointer)mt->msg_adj);
+  }
 
   lives_paned_pack(2, LIVES_PANED(mt->vpaned), mt->message_box, TRUE, TRUE);
 

@@ -730,7 +730,6 @@ void redraw_timer_bars(double oldx, double newx, int which) {
   if (newx > oldx) {
     update_timer_bars(ROUND_I(oldx * scalex), 0, ROUND_I((newx - oldx) * scalex), 0, which);
   } else {
-    // not sure why we need to double the width, but otherwise we sometimes leave pixels on the RHS of end...
     update_timer_bars(ROUND_I(newx * scalex), 0, ROUND_I((oldx - newx) * scalex), 0, which);
   }
 }
@@ -800,11 +799,13 @@ void draw_little_bars(double ptrtime, int which) {
         allocheight = (double)lives_widget_get_allocation_height(mainw->vidbar) + bar_height + widget_opts.packing_height * 2.5;
         allocy = lives_widget_get_allocation_y(mainw->vidbar) - widget_opts.packing_height;
 
-        if (offset > 0.) {
-          lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
-        }
-        if (offset < allocwidth) {
-          lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
+        if (mainw->playing_file > -1) {
+          if (offset > 0.) {
+            lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
+          }
+          if (offset < allocwidth) {
+            lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
+          }
         }
 
         lives_painter_move_to(creb, offset, allocy);
@@ -850,11 +851,13 @@ void draw_little_bars(double ptrtime, int which) {
         allocheight = (double)lives_widget_get_allocation_height(mainw->laudbar) + bar_height + widget_opts.packing_height * 2.5;
         allocy = lives_widget_get_allocation_y(mainw->laudbar) - widget_opts.packing_height;
 
-        if (offset > 0.) {
-          lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
-        }
-        if (offset < allocwidth) {
-          lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
+        if (mainw->playing_file > -1) {
+          if (offset > 0.) {
+            lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
+          }
+          if (offset < allocwidth) {
+            lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
+          }
         }
 
         lives_painter_move_to(creb, offset, allocy);
@@ -878,11 +881,13 @@ void draw_little_bars(double ptrtime, int which) {
           allocheight = (double)lives_widget_get_allocation_height(mainw->raudbar) + bar_height + widget_opts.packing_height * 2.5;
           allocy = lives_widget_get_allocation_y(mainw->raudbar) - widget_opts.packing_height;
 
-          if (offset > 0.) {
-            lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
-          }
-          if (offset < allocwidth) {
-            lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
+          if (mainw->playing_file > -1) {
+            if (offset > 0.) {
+              lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
+            }
+            if (offset < allocwidth) {
+              lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
+            }
           }
 
           lives_painter_move_to(creb, offset, allocy);
@@ -990,6 +995,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
   lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   widget_opts.no_gui = nogui;
+  lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
 
@@ -1090,6 +1096,7 @@ xprocess *create_processing(const char *text) {
   }
   widget_opts.non_modal = FALSE;
   widget_opts.no_gui = no_gui;
+  lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
 
   if (prefs->gui_monitor != 0) {
     lives_window_set_screen(LIVES_WINDOW(procw->processing), mainw->mgeom[prefs->gui_monitor - 1].screen);
@@ -1648,7 +1655,6 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
     if (palette->style & STYLE_1) {
       lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     }
-
   } else {
     textwindow->table = lives_table_new(1, 1, FALSE);
     scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->table);
@@ -1657,7 +1663,6 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
       lives_widget_set_fg_color(textwindow->table, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
       lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
-
   }
 
   widget_opts.apply_theme = woat;
@@ -3829,7 +3834,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 3);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   url_entry = lives_standard_entry_new(_("Clip URL : "), "", LONG_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
 
@@ -4331,7 +4336,7 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
   int nlines;
 
   static int last_height = -1;
-
+  if (!prefs->show_msg_area) return;
   if (mainw->n_messages <= 0) return;
 
   if (!LIVES_IS_WIDGET(widget)) return;
@@ -4393,6 +4398,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
   static int last_textsize = -1;
   LingoLayout *layout;
 
+  if (!prefs->show_msg_area) return FALSE;
   if (mainw->playing_file > -1) return FALSE;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");

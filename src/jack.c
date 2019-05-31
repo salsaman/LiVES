@@ -1789,7 +1789,7 @@ int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes) {
   if (seekstart > afile->afilesize) seekstart = afile->afilesize;
   jack_message.command = ASERVER_CMD_FILE_SEEK;
   jack_message.next = NULL;
-  jack_message.data = lives_strdup_printf("%ld", seekstart);
+  jack_message.data = lives_strdup_printf("%"PRId64, seekstart);
   jackd->msgq = &jack_message;
   return seekstart;
 }

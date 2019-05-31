@@ -5450,7 +5450,6 @@ render_details *create_render_details(int type) {
   lives_free(tmp2);
 
   add_spring_to_box(LIVES_BOX(rdet->always_hbox), 0.);
-  add_spring_to_box(LIVES_BOX(rdet->always_hbox), 0.);
 
   daa = lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog));
 
@@ -5744,7 +5743,7 @@ render_details *create_render_details(int type) {
 
     if (height > 0) lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(scrollw), height);
     if (width > 0) lives_scrolled_window_set_min_content_width(LIVES_SCROLLED_WINDOW(scrollw), width);
-    lives_widget_set_size_request(scrollw, width, height + 100);
+    lives_widget_set_size_request(scrollw, width, height);
 
     lives_widget_set_size_request(rdet->dialog, dwidth, dheight);
 

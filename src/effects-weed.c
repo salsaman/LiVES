@@ -7142,6 +7142,8 @@ void weed_deinit_effect(int hotkey) {
   // mainw->osc_block should be set before calling this function !
   // caller should also handle mainw->rte
 
+  // filter_mutex_locK(hotkey) must be be called before entering
+
   weed_plant_t *instance, *inst, *last_inst, *next_inst, *filter;
 
   boolean is_modeswitch = FALSE;
@@ -7150,6 +7152,8 @@ void weed_deinit_effect(int hotkey) {
   int num_in_chans, num_out_chans;
 
   int error;
+
+  boolean needs_unlock = FALSE;
 
   if (hotkey < 0) {
     is_modeswitch = TRUE;
@@ -7232,9 +7236,13 @@ void weed_deinit_effect(int hotkey) {
     }
   }
 
-  filter_mutex_lock(hotkey);
+  if (!pthread_mutex_trylock(&mainw->data_mutex[hotkey])) {
+    needs_unlock = TRUE;
+  }
   key_to_instance[hotkey][key_modes[hotkey]] = NULL;
-  filter_mutex_unlock(hotkey);
+  if (needs_unlock) {
+    filter_mutex_unlock(hotkey);
+  }
 
   if (mainw->whentostop == STOP_ON_VID_END && mainw->current_file > -1 &&
       (cfile->frames == 0 || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering && (mainw->audio_end / cfile->fps)

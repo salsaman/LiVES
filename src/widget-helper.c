@@ -1308,10 +1308,10 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
 #ifdef WIDGET_UNIQUE_NAMES
     if (selector == NULL) wname = g_strdup_printf("#%s%s", widget_name, state_str);
-    else wname = g_strdup_printf("#%s%s.%s", widget_name, state_str, selector);
+    else wname = g_strdup_printf("#%s%s %s", widget_name, state_str, selector);
 #else
     if (selector == NULL) wname = g_strdup_printf("%s%s", widget_name, state_str);
-    else wname = g_strdup_printf("%s%s.%s", widget_name, state_str, selector);
+    else wname = g_strdup_printf("%s%s %s", widget_name, state_str, selector);
 #endif
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
@@ -1356,7 +1356,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     }
   }
 
-  if (selector != NULL) g_print("running CSS %s\n", css_string);
+  //if (selector != NULL) g_print("running CSS %s\n", css_string);
 
 #if GTK_CHECK_VERSION(4, 0, 0)
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
@@ -1394,7 +1394,8 @@ boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const char *d
 #endif
 
 
-boolean set_css_value_selected(LiVESWidget *widget, LiVESWidgetState state, const char *selector, const char *detail, const char *value) {
+static boolean set_css_value_direct(LiVESWidget *widget, LiVESWidgetState state, const char *selector, const char *detail,
+                                    const char *value) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(3, 16, 0)
@@ -8325,6 +8326,22 @@ LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label, bo
 }
 
 
+LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const LiVESWidgetColor *act_color) {
+  LiVESWidget *notebook = lives_notebook_new();
+
+  // clear background image
+  if (widget_opts.apply_theme) {
+    char *colref = gdk_rgba_to_string(bg_color);
+    set_css_value_direct(notebook, LIVES_WIDGET_STATE_NORMAL, "*", "background", "none");
+    set_css_value_direct(notebook, LIVES_WIDGET_STATE_NORMAL, "*", "background-color", colref);
+    colref = gdk_rgba_to_string(act_color);
+    set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background", "none");
+    set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background-color", colref);
+  }
+  return notebook;
+}
+
+
 LiVESWidget *lives_standard_label_new(const char *text) {
   LiVESWidget *label = NULL;
   label = lives_label_new(text);
@@ -8345,15 +8362,22 @@ LiVESWidget *lives_standard_label_new(const char *text) {
 
 LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *ret_fn) {
   LiVESWidget *darea = NULL;
+  ulong ret;
 #ifdef GUI_GTK
   darea = gtk_drawing_area_new();
+  if (callback == NULL) {
+    if (ret_fn != NULL)
+      *ret_fn = 0;
+    return darea;
+  }
 #if GTK_CHECK_VERSION(4, 0, 0)
   gtk_drawing_area_set_draw_func(darea, callback, NULL, NULL);
-  *ret_fn = NULL; // TODO
+  *ret_fn = 0; // TODO
 #else
-  *ret_fn = lives_signal_connect_after(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
-                                       LIVES_GUI_CALLBACK(callback),
-                                       NULL);
+  ret = lives_signal_connect_after(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
+                                   LIVES_GUI_CALLBACK(callback),
+                                   NULL);
+  if (ret_fn != NULL) *ret_fn = ret;
 #endif
 #endif
   return darea;
@@ -9090,20 +9114,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
                        LIVES_GUI_CALLBACK(return_true),
                        NULL);
 
-  // must do this before setting modal !
-  if (!widget_opts.no_gui) {
-    lives_widget_show(dialog);
-  }
-
-  // recommended to center the window again after adding all its widgets
-  lives_window_center(LIVES_WINDOW(dialog));
-
   if (!widget_opts.non_modal)
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
-
-  if (!widget_opts.no_gui) {
-    lives_widget_hide(dialog);
-  }
 
   return dialog;
 }
@@ -10767,10 +10779,7 @@ LiVESWidget *add_hsep_to_box(LiVESBox *box) {
   if (LIVES_SHOULD_EXPAND_EXTRA_FOR(box)) packing_height *= 2;
   lives_box_pack_start(box, hseparator, LIVES_SHOULD_EXPAND_EXTRA_FOR(box), TRUE, packing_height);
   lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_NORMAL);
-  //lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_INSENSITIVE);
-#ifndef NO_ALT_VALUES
   lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-#endif
   return hseparator;
 }
 

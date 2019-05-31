@@ -861,6 +861,8 @@ LiVESWidget *lives_standard_radio_menu_item_new_with_label(LiVESSList *group, co
 
 LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *labeltext, boolean active);
 
+LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const LiVESWidgetColor *act_color);
+
 LiVESWidget *lives_standard_label_new(const char *labeltext);
 LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiVESWidget *mnemonic_widget);
 

@@ -8590,30 +8590,25 @@ void on_toy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_preview_spinbutton_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   // update the play window preview
   int preview_frame;
-  static volatile boolean updated;
+  static volatile boolean updated = FALSE;
 
-  // prevent multiple updates from interfering
-  lives_signal_handler_block(mainw->preview_spinbutton, mainw->preview_spin_func);
-  updated = FALSE;
-  lives_widget_process_updates(mainw->LiVES, TRUE);
-
-  if (updated) {
-    lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
-    return;
-  }
-  updated = TRUE;
+  if (updated) return;
 
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) {
-    lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
     return;
   }
   if ((preview_frame = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))) == mainw->preview_frame) {
-    lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
     return;
   }
+  // prevent multiple updates from interfering
+  updated = TRUE;
+  lives_signal_handler_block(mainw->preview_spinbutton, mainw->preview_spin_func);
+  lives_widget_process_updates(mainw->LiVES, TRUE);
+
   mainw->preview_frame = preview_frame;
   load_preview_image(TRUE);
   lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
+  updated = FALSE;
 }
 
 
@@ -8633,28 +8628,21 @@ void on_prv_link_toggled(LiVESToggleButton *togglebutton, livespointer user_data
 
 void on_spinbutton_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   int start, ostart;
+  static volatile boolean updated = FALSE;
 
-  static volatile boolean updated;
-
-  // prevent multiple updates from interfering
-  lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-  updated = FALSE;
-  lives_widget_process_updates(mainw->LiVES, TRUE);
-
-  if (updated) {
-    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
-    return;
-  }
-  updated = TRUE;
+  if (updated) return;
 
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) {
-    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
     return;
   }
   if ((start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))) == cfile->start) {
-    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
     return;
   }
+
+  // prevent multiple updates from interfering
+  updated = TRUE;
+  lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
+  lives_widget_process_updates(mainw->LiVES, TRUE);
 
   ostart = cfile->start;
   cfile->start = start;
@@ -8695,33 +8683,28 @@ void on_spinbutton_start_value_changed(LiVESSpinButton *spinbutton, livespointer
       load_preview_image(FALSE);
   }
   lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+  updated = FALSE;
 }
 
 
 void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   int end, oend;
+  static volatile boolean updated = FALSE;
 
-  static volatile boolean updated;
-
-  // prevent multiple updates from interfering
-  lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
-  updated = FALSE;
-  lives_widget_process_updates(mainw->LiVES, TRUE);
-
-  if (updated) {
-    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-    return;
-  }
-  updated = TRUE;
+  if (updated) return;
 
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) {
-    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
     return;
   }
   if ((end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))) == cfile->end) {
-    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
     return;
   }
+
+  // prevent multiple updates from interfering
+  updated = TRUE;
+
+  lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
+  lives_widget_process_updates(mainw->LiVES, TRUE);
 
   oend = cfile->end;
   cfile->end = end;
@@ -8767,6 +8750,7 @@ void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer u
       load_preview_image(FALSE);
   }
   lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+  updated = FALSE;
 }
 
 
@@ -8788,7 +8772,9 @@ EXPOSE_FN_DECL(expose_vid_event, widget) {
   }
 
   if (event != NULL) {
-    if (event->count > 0) return TRUE;
+    if (event->count > 0) {
+      return TRUE;
+    }
     ex = event->area.x;
     ey = event->area.y;
     ew = event->area.width;
@@ -8957,6 +8943,7 @@ EXPOSE_FN_DECL(expose_laud_event, widget) {
   if (event != NULL) lives_painter_destroy(cairo);
 
   if (mainw->playing_file == -1 && CURRENT_CLIP_IS_VALID) draw_little_bars(cfile->pointer_time, 2);
+
   return TRUE;
 }
 EXPOSE_FN_END
@@ -8995,6 +8982,7 @@ EXPOSE_FN_DECL(expose_raud_event, widget) {
   if (event != NULL) lives_painter_destroy(cairo);
 
   if (mainw->playing_file == -1 && CURRENT_CLIP_IS_VALID) draw_little_bars(cfile->pointer_time, 3);
+
   return TRUE;
 }
 EXPOSE_FN_END
@@ -9365,7 +9353,6 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
     // it may be the first time we have shown it
     block_expose();
     lives_widget_process_updates(mainw->LiVES, TRUE);
-
     unblock_expose();
 
   }
@@ -9649,6 +9636,8 @@ boolean on_hrule_reset(LiVESWidget *widget, LiVESXEventButton  *event, livespoin
                            widget, &x, NULL);
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
+
+  // TODO - need to draw over bg like when we are playing
   get_play_times();
 
   if (cfile->pointer_time > 0.) {
@@ -9682,7 +9671,9 @@ boolean on_hrule_set(LiVESWidget *widget, LiVESXEventButton *event, livespointer
 
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
+
   get_play_times();
+
 
   return TRUE;
 }

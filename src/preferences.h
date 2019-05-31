@@ -178,6 +178,8 @@ typedef struct {
 
   short rte_keys_virtual;
 
+  boolean show_msg_area;
+
   uint32_t jack_opts;
 #define JACK_OPTS_TRANSPORT_CLIENT (1<<0)   ///< jack can start/stop
 #define JACK_OPTS_TRANSPORT_MASTER (1<<1)  ///< transport master
@@ -385,6 +387,8 @@ typedef struct {
   int max_messages;
 
   int msg_textsize;
+
+  double screen_scale;
 } _prefs;
 
 enum {
@@ -763,6 +767,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_CURRENT_AUTOTRANS "current_autotrans"
 #define PREF_DEF_AUTOTRANS "def_autotrans"  // readonly
+
+#define PREF_SCREEN_SCALE "screen_scale"
 
 ////////////////////// utf8 values
 

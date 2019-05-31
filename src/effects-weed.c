@@ -8616,7 +8616,6 @@ void weed_set_blend_factor(int hotkey) {
   int pnum;
 
   int inc_count;
-  int key = -1;
 
   if (hotkey < 0) return;
 
@@ -8727,7 +8726,7 @@ void weed_set_blend_factor(int hotkey) {
     pthread_mutex_unlock(&mainw->event_list_mutex);
   }
   weed_instance_unref(inst);
-  filter_mutex_unlock(key);
+  filter_mutex_unlock(hotkey);
 }
 
 
@@ -8934,10 +8933,11 @@ boolean weed_delete_effectkey(int key, int mode) {
       }
       break; // quit the loop
     } else if (key < FX_KEYS_MAX_VIRTUAL) {
+      filter_mutex_unlock(key);
       rte_switch_keymode(key + 1, mode, (tmp = make_weed_hashname
                                          (key_to_fx[key][mode + 1], TRUE, FALSE)));
       lives_free(tmp);
-
+      filter_mutex_lock(key);
       key_defaults[key][mode] = key_defaults[key][mode + 1];
       key_defaults[key][mode + 1] = NULL;
     }
@@ -9311,6 +9311,7 @@ int weed_add_effectkey(int key, const char *hashname, boolean fullname) {
 
 int rte_switch_keymode(int key, int mode, const char *hashname) {
   // this is called when we switch the filter_class bound to an effect_key/mode
+  // filter mutex unlocked
   weed_plant_t *inst;
   int oldkeymode = key_modes[--key];
   int id = weed_get_idx_for_hashname(hashname, TRUE), tid;

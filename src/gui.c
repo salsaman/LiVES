@@ -2166,6 +2166,7 @@ void create_LiVES(void) {
   lives_widget_set_fg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
   lives_widget_set_size_request(mainw->video_draw, -1, CE_VIDBAR_HEIGHT);
+  lives_widget_set_hexpand(mainw->video_draw, TRUE);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, FALSE, TRUE, widget_opts.packing_height / 2);
 
   tmp = get_achannel_name(2, 0);
@@ -2186,6 +2187,7 @@ void create_LiVES(void) {
   lives_widget_set_fg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
   lives_widget_set_size_request(mainw->laudio_draw, -1, CE_AUDBAR_HEIGHT);
+  lives_widget_set_hexpand(mainw->laudio_draw, TRUE);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudio_draw, FALSE, TRUE, widget_opts.packing_height / 2);
 
   tmp = get_achannel_name(2, 1);
@@ -2206,6 +2208,7 @@ void create_LiVES(void) {
   lives_widget_set_fg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
   lives_widget_set_size_request(mainw->raudio_draw, -1, CE_AUDBAR_HEIGHT);
+  lives_widget_set_hexpand(mainw->raudio_draw, TRUE);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, FALSE, 0);
 
   lives_widget_set_margin_top(mainw->raudio_draw, widget_opts.packing_height / 2);

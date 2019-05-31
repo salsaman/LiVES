@@ -1179,7 +1179,7 @@ typedef struct {
 
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
   pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators
-  pthread_mutex_t data_mutex[FX_KEYS_MAX];  ///< used to prevent data being connected while it is possibly being updated
+  pthread_mutex_t fx_mutex[FX_KEYS_MAX];  ///< used to prevent fx processing when it is scheduled for deinit
   pthread_mutex_t fxd_active_mutex; ///< prevent simultaneous writing to active_dummy by audio and video threads
   pthread_mutex_t event_list_mutex; ///< prevent simultaneous writing to event_list by audio and video threads
   pthread_mutex_t clip_list_mutex; ///< prevent adding/removing to cliplist while another thread could be reading it

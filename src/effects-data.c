@@ -49,6 +49,7 @@ static LiVESTreeModel *cmodel;
 
 static char *lctext;
 
+
 static char *get_param_name(weed_plant_t *param, int pnum, boolean is_in) {
   int error;
   char *name = weed_get_string_value(param, WEED_LEAF_NAME, &error);
@@ -170,7 +171,7 @@ void pconx_delete_all(void) {
 
   register int i;
 
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->data_mutex[i]);
+  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->fx_mutex[i]);
 
   while (pconx != NULL) {
     pconx_next = pconx->next;
@@ -186,7 +187,7 @@ void pconx_delete_all(void) {
   }
   mainw->pconx = NULL;
 
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
 
 }
 
@@ -292,7 +293,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
   int totcons = 0, maxcons = 0;
 
-  if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->data_mutex[i]);
+  if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->fx_mutex[i]);
 
   while (pconx != NULL) {
     pconx_next = pconx->next;
@@ -311,7 +312,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
         lives_free(pconx);
         if (mainw->pconx == pconx) mainw->pconx = pconx_next;
         else pconx_prev->next = pconx_next;
-        if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+        if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
         return;
       }
 
@@ -384,7 +385,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
     pconx_prev = pconx;
     pconx = pconx_next;
   }
-  if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+  if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
 }
 
 
@@ -479,7 +480,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
   // delete any existing connection to the input param
   pconx_delete(FX_DATA_WILDCARD, 0, 0, ikey, imode, ipnum);
 
-  if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->data_mutex[i]);
+  if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->fx_mutex[i]);
 
   if (pconx == NULL) {
     // add whole new node
@@ -504,7 +505,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
         for (j = posn; j < posn + pconx->nconns[i]; j++) {
           if (pconx->ikey[j] == ikey && pconx->imode[j] == imode && pconx->ipnum[j] == ipnum) {
             pconx->autoscale[j] = autoscale;
-            if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+            if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
             return;
           }
 
@@ -540,7 +541,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
         pconx->ipnum[posn] = ipnum;
         pconx->autoscale[posn] = autoscale;
 
-        if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+        if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
 
         return;
       }
@@ -585,7 +586,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
     g_print("added another pconx from %d %d %d to %d %d %d\n", okey, omode, opnum, ikey, imode, ipnum);
 #endif
 
-    if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+    if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
 
     return;
   }
@@ -620,7 +621,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
   g_print("added new pconx from %d %d %d to %d %d %d (%d)\n", okey, omode, opnum, ikey, imode, ipnum, autoscale);
 #endif
 
-  if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
+  if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
 }
 
 

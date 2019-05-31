@@ -294,8 +294,9 @@ boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pla
 boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc);
 boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc);
 
-void filter_mutex_lock(int key);  // 0 based key
-void filter_mutex_unlock(int key); // 0 based key
+int filter_mutex_lock(int key);  // 0 based key
+int filter_mutex_trylock(int key);  // 0 based key
+int filter_mutex_unlock(int key); // 0 based key
 
 size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
 weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *plant);
@@ -453,10 +454,10 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot)
 
 int weed_general_error;
 
-#define DEBUG_FILTER_MUTEXES
+//#define DEBUG_FILTER_MUTEXES
 #ifdef DEBUG_FILTER_MUTEXES
-#define filter_mutex_lock(key) {if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_lock(&mainw->data_mutex[key]); g_print ("lock %d at line %d in file %s\n",key,__LINE__,__FILE__);}
-#define filter_mutex_unlock(key) {if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->data_mutex[key]); g_print ("unlock %d at line %d in file %s\n\n",key,__LINE__,__FILE__);}
+#define filter_mutex_lock(key) {g_print ("lock %d at line %d in file %s\n",key,__LINE__,__FILE__); if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_lock(&mainw->fx_mutex[key]); g_print("done\n");}
+#define filter_mutex_unlock(key) {g_print ("unlock %d at line %d in file %s\n\n",key,__LINE__,__FILE__); if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->fx_mutex[key]); g_print("done\n");}
 #endif
 
 //#define DEBUG_REFCOUNT

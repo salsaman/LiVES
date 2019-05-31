@@ -334,16 +334,17 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
   old_val = get_int_param(rfx->params[trans].value);
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
-  filter_mutex_lock(key);
-  if (hint == WEED_HINT_INTEGER) {
-    if (in) weed_set_int_value(tparam, WEED_LEAF_VALUE, weed_get_int_value(tparamtmpl, WEED_LEAF_MIN, &error));
-    else weed_set_int_value(tparam, WEED_LEAF_VALUE, weed_get_int_value(tparamtmpl, WEED_LEAF_MAX, &error));
-  } else {
-    if (in) weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MIN, &error));
-    else weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MAX, &error));
+  if (!filter_mutex_trylock(key)) {
+    if (hint == WEED_HINT_INTEGER) {
+      if (in) weed_set_int_value(tparam, WEED_LEAF_VALUE, weed_get_int_value(tparamtmpl, WEED_LEAF_MIN, &error));
+      else weed_set_int_value(tparam, WEED_LEAF_VALUE, weed_get_int_value(tparamtmpl, WEED_LEAF_MAX, &error));
+    } else {
+      if (in) weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MIN, &error));
+      else weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MAX, &error));
+    }
+    set_copy_to(inst, trans, TRUE);
+    filter_mutex_unlock(key);
   }
-  filter_mutex_unlock(key);
-  set_copy_to(inst, trans, TRUE);
   update_visual_params(rfx, FALSE);
   lives_free(in_params);
 
@@ -1750,11 +1751,11 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
       valis = weed_get_boolean_array(wparam, WEED_LEAF_VALUE, &error);
       valis[index] = new_bool;
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
-      filter_mutex_lock(key);
-      weed_set_boolean_array(wparam, WEED_LEAF_VALUE, numvals, valis);
-      filter_mutex_unlock(key);
-      copyto = set_copy_to(inst, param_number, TRUE);
-
+      if (!filter_mutex_trylock(key)) {
+        weed_set_boolean_array(wparam, WEED_LEAF_VALUE, numvals, valis);
+        copyto = set_copy_to(inst, param_number, TRUE);
+        filter_mutex_unlock(key);
+      }
       lives_free(valis);
 
       if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
@@ -1859,18 +1860,20 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
         valds = weed_get_double_array(wparam, WEED_LEAF_VALUE, &error);
         if (param->dp > 0) valds[index] = new_double;
         else valds[index] = (double)new_int;
-        filter_mutex_lock(key);
-        weed_set_double_array(wparam, WEED_LEAF_VALUE, numvals, valds);
-        filter_mutex_unlock(key);
-        copyto = set_copy_to(inst, param_number, TRUE);
+        if (!filter_mutex_trylock(key)) {
+          weed_set_double_array(wparam, WEED_LEAF_VALUE, numvals, valds);
+          copyto = set_copy_to(inst, param_number, TRUE);
+          filter_mutex_unlock(key);
+        }
         lives_freep((void **)&valds);
       } else {
         valis = weed_get_int_array(wparam, WEED_LEAF_VALUE, &error);
         valis[index] = new_int;
-        filter_mutex_lock(key);
-        weed_set_int_array(wparam, WEED_LEAF_VALUE, numvals, valis);
-        filter_mutex_unlock(key);
-        copyto = set_copy_to(inst, param_number, TRUE);
+        if (!filter_mutex_trylock(key)) {
+          weed_set_int_array(wparam, WEED_LEAF_VALUE, numvals, valis);
+          copyto = set_copy_to(inst, param_number, TRUE);
+          filter_mutex_unlock(key);
+        }
         lives_freep((void **)&valis);
       }
 
@@ -2393,10 +2396,11 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
       valss = weed_get_string_array(wparam, WEED_LEAF_VALUE, &error);
       valss[index] = lives_strdup((char *)param->value);
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
-      filter_mutex_lock(key);
-      weed_set_string_array(wparam, WEED_LEAF_VALUE, numvals, valss);
-      filter_mutex_unlock(key);
-      copyto = set_copy_to(inst, param_number, TRUE);
+      if (!filter_mutex_trylock(key)) {
+        weed_set_string_array(wparam, WEED_LEAF_VALUE, numvals, valss);
+        copyto = set_copy_to(inst, param_number, TRUE);
+        filter_mutex_unlock(key);
+      }
       for (i = 0; i < numvals; i++) lives_free(valss[i]);
       lives_free(valss);
 
@@ -2494,10 +2498,10 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
       valis = weed_get_int_array(wparam, WEED_LEAF_VALUE, &error);
       valis[index] = new_index;
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
-      filter_mutex_lock(key);
-      weed_set_int_array(wparam, WEED_LEAF_VALUE, numvals, valis);
-      filter_mutex_unlock(key);
-      copyto = set_copy_to(inst, param_number, TRUE);
+      if (!filter_mutex_trylock(key)) {
+        weed_set_int_array(wparam, WEED_LEAF_VALUE, numvals, valis);
+        copyto = set_copy_to(inst, param_number, TRUE);
+      }
       lives_free(valis);
 
       if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {

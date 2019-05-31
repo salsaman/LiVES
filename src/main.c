@@ -463,8 +463,7 @@ static boolean pre_init(void) {
 
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
   for (i = 0; i < FX_KEYS_MAX; i++) {
-    //pthread_mutex_init(&mainw->data_mutex[i], &mattr); // because audio filters can enable/disable video filters and vice-versa
-    pthread_mutex_init(&mainw->data_mutex[i], &mattr);
+    pthread_mutex_init(&mainw->fx_mutex[i], NULL);
   }
 
   mainw->vrfx_update = NULL;

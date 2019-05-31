@@ -1075,7 +1075,9 @@ boolean grabkeys_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
   if (rte_window != NULL) {
     if (group != NULL) rtew_set_keygr(mainw->rte_keys);
   }
+  filter_mutex_lock(mainw->rte_keys);
   mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
+  filter_mutex_unlock(mainw->rte_keys);
   mainw->osc_block = FALSE;
   return TRUE;
 }
@@ -1099,7 +1101,9 @@ boolean rtemode_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyv
   // "m" mode key
   if (mainw->rte_keys == -1) return TRUE;
   rte_key_setmode(0, -1);
+  filter_mutex_lock(mainw->rte_keys);
   mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
+  filter_mutex_unlock(mainw->rte_keys);
   return TRUE;
 }
 

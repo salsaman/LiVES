@@ -2747,7 +2747,7 @@ getaud1:
 
   if (mainw->pconx != NULL && !(mainw->preview || mainw->is_rendering)) {
     // chain any data pipelines
-    if (!pthread_mutex_trylock(&mainw->data_mutex[mainw->agen_key - 1])) {
+    if (!pthread_mutex_trylock(&mainw->fx_mutex[mainw->agen_key - 1])) {
       mainw->agen_needs_reinit = pconx_chain_data(mainw->agen_key - 1, rte_key_getmode(mainw->agen_key));
       filter_mutex_unlock(mainw->agen_key - 1);
 

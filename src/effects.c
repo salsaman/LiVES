@@ -995,6 +995,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
     if (!(mainw->rte & new_rte)) {
       // switch is ON
       // WARNING - if we start playing because a generator was started, we block here
+      filter_mutex_lock(key);
       if (!(weed_init_effect(key))) {
         // ran out of instance slots, no effect assigned, or some other error
         // or gen started playback and then stopped
@@ -1004,6 +1005,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
         if (rte_window != NULL) rtew_set_keych(key, FALSE);
         if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         mainw->osc_block = FALSE;
+        filter_mutex_unlock(key);
         return TRUE;
       }
 
@@ -1020,11 +1022,14 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
           if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key, !mainw->fx_is_auto);
         }
       }
+      filter_mutex_unlock(key);
     } else {
       // effect is OFF
       filter_mutex_lock(key);
       weed_deinit_effect(key);
+      pthread_mutex_lock(&mainw->event_list_mutex);
       if (mainw->rte & new_rte) mainw->rte ^= new_rte;
+      pthread_mutex_unlock(&mainw->event_list_mutex);
       filter_mutex_unlock(key);
       if (rte_window != NULL) rtew_set_keych(key, FALSE);
       if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);

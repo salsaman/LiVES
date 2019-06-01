@@ -129,7 +129,7 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
   }
   if (abuf->buffer16 == NULL) free_audio_frame_buffer(abuf);
 
-  nsampsize = (abuf->samples_filled + nsamples) * 2;
+  nsampsize = (abuf->samples_filled + nsamples);
   channum++;
   if (abuf->buffer16 == NULL || channum > abuf->out_achans) {
     register int i;
@@ -194,7 +194,7 @@ void init_audio_frame_buffers(short aplayer) {
     }
   }
 
-  mainw->audio_frame_buffer = mainw->afb[0];;
+  mainw->audio_frame_buffer = mainw->afb[0];
 
 #ifdef DEBUG_AFB
   g_print("init afb\n");

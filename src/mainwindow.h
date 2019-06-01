@@ -567,7 +567,7 @@ typedef struct {
   boolean last_transition_align_start;
   boolean last_transition_ins_frames;
 
-  uint64_t rte; ///< current max for VJ mode == 64 effects on fg clip
+  volatile uint64_t rte; ///< current max for VJ mode == 64 effects on fg clip
 
   uint32_t last_grabbable_effect;
   int rte_keys; ///< which effect is bound to keyboard

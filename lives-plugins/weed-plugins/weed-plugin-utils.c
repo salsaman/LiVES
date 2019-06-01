@@ -669,7 +669,7 @@ static weed_plant_t **weed_clone_plants(weed_plant_t **plants) {
 }
 
 
-#ifdef NEED_ALPHA_SORT // for wrappers, use this to sort fil
+#ifdef NEED_ALPHA_SORT // for wrappers, use this to sort files
 
 typedef struct dlink_list dlink_list_t;
 struct dlink_list {
@@ -685,7 +685,7 @@ static dlink_list_t *add_to_list_sorted(dlink_list_t *list, weed_plant_t *filter
   dlink_list_t *entry = (dlink_list_t *)weed_malloc(sizeof(dlink_list_t));
   if (entry == NULL) return list;
   entry->filter = filter;
-  entry->name = name;
+  entry->name = strdup(name);
   entry->next = entry->prev = NULL;
   if (list == NULL) return entry;
   while (lptr != NULL) {
@@ -731,9 +731,19 @@ static int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) 
 #include <sys/time.h>
 #include <stdio.h>
 
+
+static inline uint32_t fastrand(uint32_t oldval) {
+  // pseudo-random number generator
+#define rand_a 1073741789L
+#define rand_c 32749L
+  return (rand_a * oldval + rand_c);
+}
+
+
 static double drand(double max) {
   double denom = (double)(2ul << 30) / max;
   double num = (double)lrand48();
+  //fprintf(stderr, "rnd %f %f\n", num, denom);
   return (double)(num / denom);
 }
 
@@ -746,4 +756,305 @@ static void seed_rand(void) {
 
 #endif
 
+//utilities
 
+#ifndef ABS
+#define ABS(a)           (((a) < 0) ? -(a) : (a))
+#endif
+
+static inline int myround(double n) {
+  return (n >= 0.) ? (int)(n + 0.5) : (int)(n - 0.5);
+}
+
+
+#ifdef NEED_PALETTE_UTILS
+
+static inline int weed_palette_is_alpha_palette(int pal) {
+  return (pal >= 1024 && pal < 2048) ? 1 : 0;
+}
+
+
+static inline int weed_palette_is_rgb_palette(int pal) {
+  return (pal < 512) ? 1 : 0;
+}
+
+
+static inline int weed_palette_is_yuv_palette(int pal) {
+  return (pal >= 512 && pal < 1024) ? 1 : 0;
+}
+
+
+static inline int weed_palette_get_numplanes(int pal) {
+  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 ||
+      pal == WEED_PALETTE_ARGB32 || pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV411 ||
+      pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_AFLOAT || pal == WEED_PALETTE_A8 ||
+      pal == WEED_PALETTE_A1 || pal == WEED_PALETTE_RGBFLOAT || pal == WEED_PALETTE_RGBAFLOAT) return 1;
+  if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) return 3;
+  if (pal == WEED_PALETTE_YUVA4444P) return 4;
+  return 0; // unknown palette
+}
+
+
+static inline int weed_palette_is_valid_palette(int pal) {
+  if (weed_palette_get_numplanes(pal) == 0) return 0;
+  return 1;
+}
+
+
+static inline int weed_palette_get_bits_per_macropixel(int pal) {
+  if (pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P ||
+      pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P) return 8;
+  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) return 24;
+  if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 ||
+      pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
+    return 32;
+  if (pal == WEED_PALETTE_YUV411) return 48;
+  if (pal == WEED_PALETTE_AFLOAT) return sizeof(float);
+  if (pal == WEED_PALETTE_A1) return 1;
+  if (pal == WEED_PALETTE_RGBFLOAT) return (3 * sizeof(float));
+  if (pal == WEED_PALETTE_RGBAFLOAT) return (4 * sizeof(float));
+  return 0; // unknown palette
+}
+
+
+static inline int weed_palette_get_pixels_per_macropixel(int pal) {
+  if (pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888) return 2;
+  if (pal == WEED_PALETTE_YUV411) return 4;
+  return 1;
+}
+
+
+static inline int weed_palette_is_float_palette(int pal) {
+  return (pal == WEED_PALETTE_RGBAFLOAT || pal == WEED_PALETTE_AFLOAT || pal == WEED_PALETTE_RGBFLOAT) ? 1 : 0;
+}
+
+
+static inline int weed_palette_has_alpha_channel(int pal) {
+  return (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 ||
+          pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_RGBAFLOAT ||
+          weed_palette_is_alpha_palette(pal)) ? 1 : 0;
+}
+
+
+static inline double weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
+  // return ratio of plane[n] width/plane[0] width;
+  if (plane == 0) return 1.0;
+  if (plane == 1 || plane == 2) {
+    if (pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P) return 1.0;
+    if (pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P) return 0.5;
+  }
+  if (plane == 3) {
+    if (pal == WEED_PALETTE_YUVA4444P) return 1.0;
+  }
+  return 0.0;
+}
+
+
+static inline double weed_palette_get_plane_ratio_vertical(int pal, int plane) {
+  // return ratio of plane[n] height/plane[n] height
+  if (plane == 0) return 1.0;
+  if (plane == 1 || plane == 2) {
+    if (pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_YUV422P) return 1.0;
+    if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P) return 0.5;
+  }
+  if (plane == 3) {
+    if (pal == WEED_PALETTE_YUVA4444P) return 1.0;
+  }
+  return 0.0;
+}
+
+
+/* precomputed tables */
+#define FP_BITS 16
+
+static int Y_R[256];
+static int Y_G[256];
+static int Y_B[256];
+static int YCL_YUCL[256];
+static int YUCL_YCL[256];
+
+static int yuv_rgb_inited = 0;
+static int y_y_inited = 0;
+
+
+static void init_RGB_to_YCbCr_tables(void) {
+  int i;
+
+  /*
+   * Q_Z[i] =   (coefficient * i
+   *             * (Q-excursion) / (Z-excursion) * fixed-pogint-factor)
+   *
+   * to one of each, add the following:
+   *             + (fixed-pogint-factor / 2)         --- for rounding later
+   *             + (Q-offset * fixed-pogint-factor)  --- to add the offset
+   *
+   */
+  for (i = 0; i < 256; i++) {
+    Y_R[i] = myround(0.299 * (double)i
+                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
+    Y_G[i] = myround(0.587 * (double)i
+                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
+    Y_B[i] = myround((0.114 * (double)i
+                      * 219.0 / 255.0 * (double)(1 << FP_BITS))
+                     + (double)(1 << (FP_BITS - 1))
+                     + (16.0 * (double)(1 << FP_BITS)));
+
+  }
+  yuv_rgb_inited = 1;
+}
+
+
+static void init_Y_to_Y_tables(void) {
+  register int i;
+
+  for (i = 0; i < 17; i++) {
+    YCL_YUCL[i] = 0;
+    YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;
+  }
+
+  for (i = 17; i < 235; i++) {
+    YCL_YUCL[i] = (int)((float)(i - 16.) / 219. * 255. + .5);
+    YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;
+  }
+
+  for (i = 235; i < 256; i++) {
+    YCL_YUCL[i] = 255;
+    YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;
+  }
+
+  y_y_inited = 1;
+}
+
+
+static inline uint8_t calc_luma(uint8_t *pixel, int palette, int yuv_clamping) {
+  if (!yuv_rgb_inited) init_RGB_to_YCbCr_tables();
+
+  switch (palette) {
+  case WEED_PALETTE_RGB24:
+  case WEED_PALETTE_RGBA32:
+    return (Y_R[pixel[0]] + Y_G[pixel[1]] + Y_B[pixel[2]]) >> FP_BITS;
+  case WEED_PALETTE_BGR24:
+  case WEED_PALETTE_BGRA32:
+    return (Y_R[pixel[2]] + Y_G[pixel[1]] + Y_B[pixel[0]]) >> FP_BITS;
+  case WEED_PALETTE_ARGB32:
+    return (Y_R[pixel[1]] + Y_G[pixel[2]] + Y_B[pixel[3]]) >> FP_BITS;
+  default:
+    // yuv
+    if (yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED)
+      return pixel[0];
+    else {
+      if (!y_y_inited) init_Y_to_Y_tables();
+      return YCL_YUCL[pixel[0]];
+    }
+  }
+  return 0;
+}
+
+
+static size_t blank_pixel(uint8_t *dst, int pal, int yuv_clamping, uint8_t *src) {
+  // set src to non-null to preserve the alpha channel (if applicable)
+  // yuv_clamping
+  // only valid for non-planar (packed) palettes
+  unsigned char *idst = dst;
+  uint8_t y_black = yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED ? 0 : 16;
+
+  switch (pal) {
+  case WEED_PALETTE_RGB24:
+  case WEED_PALETTE_BGR24:
+    dst[0] = dst[1] = dst[2] = 0;
+    dst += 3;
+    break;
+  case WEED_PALETTE_RGBA32:
+  case WEED_PALETTE_BGRA32:
+    dst[0] = dst[1] = dst[2] = 0;
+    dst[3] = src == NULL ? 255 : src[3];
+    dst += 4;
+    if (src != NULL) src += 4;
+    break;
+  case WEED_PALETTE_ARGB32:
+    dst[1] = dst[2] = dst[3] = 0;
+    dst[0] = src == NULL ? 255 : src[0];
+    dst += 4;
+    if (src != NULL) src += 4;
+    break;
+  case WEED_PALETTE_UYVY8888:
+    dst[1] = dst[3] = y_black;
+    dst[0] = dst[2] = 128;
+    dst += 4;
+    break;
+  case WEED_PALETTE_YUYV8888:
+    dst[0] = dst[2] = y_black;
+    dst[1] = dst[3] = 128;
+    dst += 4;
+    break;
+  case WEED_PALETTE_YUV888:
+    dst[0] = y_black;
+    dst[1] = dst[2] = 128;
+    dst += 3;
+    break;
+  case WEED_PALETTE_YUVA8888:
+    dst[0] = y_black;
+    dst[1] = dst[2] = 128;
+    dst[3] = src == NULL ? 255 : src[3];
+    dst += 4;
+    break;
+  case WEED_PALETTE_YUV411:
+    dst[0] = dst[3] = 128;
+    dst[1] = dst[2] = dst[4] = dst[5] = y_black;
+    dst += 6;
+  default:
+    break;
+  }
+
+  return dst - idst;
+}
+
+
+static void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int ycopy, uint8_t **psrc) {
+  // for YUV420 and YVU420, only set ycopy for even rows, and increment pdst[1], pdst[2] on the odd rows
+  int nplanes, p, mpsize;
+  uint8_t *dst = *pdst, *src;
+  uint8_t black[3];
+  
+  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+    weed_memset(dst, 0, width * 3);
+    return;
+  }
+
+  nplanes = weed_palette_get_numplanes(pal);
+  if (!ycopy && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P)) nplanes = 1;
+
+  black[0] = yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED ? 0 : 16;
+  black[1] = black[2] = 128;
+  
+  for (p = 0; p < nplanes; p++) {
+    dst = pdst[p];
+    src = psrc[p];
+
+    if (p == 3) {
+      // copy planar alpha
+      weed_memcpy(dst, src, width);
+      break;
+    }
+    if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+	pal == WEED_PALETTE_YUVA4444P) {
+      // yuv plane, set to black
+      weed_memset(dst, black[p], width);
+    } else {
+      // RGBA, BGRA, ARGB, YUV888, YUVA8888, UYVY, YUYV, YUV411
+      int i;
+      for (i = 0; i < width; i++) {
+	mpsize = blank_pixel(dst, pal, yuv_clamping, src);
+	dst += mpsize;
+	if (src != NULL) src += mpsize;
+      }
+      break;
+    }
+
+    if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P)) {
+      width >>= 1;
+    }
+  }
+}
+
+#endif

@@ -31,6 +31,9 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "weed-utils-code.c" // optional
+
+#define NEED_PALETTE_UTILS
+#define NEED_RANDOM
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -41,68 +44,6 @@ typedef struct {
   uint32_t fastrand_val;
 } static_data;
 
-#define ABS(a)           (((a) < 0) ? -(a) : (a))
-
-/* precomputed tables */
-#define FP_BITS 16
-
-static int Y_R[256];
-static int Y_G[256];
-static int Y_B[256];
-static int conv_RY_inited = 0;
-
-
-static int myround(double n) {
-  if (n >= 0)
-    return (int)(n + 0.5);
-  else
-    return (int)(n - 0.5);
-}
-
-
-static void init_RGB_to_YCbCr_tables(void) {
-  int i;
-
-  /*
-   * Q_Z[i] =   (coefficient * i
-   *             * (Q-excursion) / (Z-excursion) * fixed-pogint-factor)
-   *
-   * to one of each, add the following:
-   *             + (fixed-pogint-factor / 2)         --- for rounding later
-   *             + (Q-offset * fixed-pogint-factor)  --- to add the offset
-   *
-   */
-  for (i = 0; i < 256; i++) {
-    Y_R[i] = myround(0.299 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_G[i] = myround(0.587 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_B[i] = myround((0.114 * (double)i
-                      * 219.0 / 255.0 * (double)(1 << FP_BITS))
-                     + (double)(1 << (FP_BITS - 1))
-                     + (16.0 * (double)(1 << FP_BITS)));
-  }
-  conv_RY_inited = 1;
-}
-
-
-static inline uint8_t
-calc_luma(uint8_t *pixel) {
-  return (Y_R[pixel[2]] + Y_G[pixel[1]] + Y_B[pixel[0]]) >> FP_BITS;
-}
-
-
-static inline uint32_t fastrand(static_data *sdata) {
-#define rand_a 1073741789L
-#define rand_c 32749L
-
-  return (sdata->fastrand_val = (rand_a * sdata->fastrand_val + rand_c));
-}
-
-static inline void
-make_black(uint8_t *pixel) {
-  pixel[0] = pixel[1] = pixel[2] = (uint8_t)0;
-}
 
 int common_init(weed_plant_t *inst) {
   weed_plant_t *in_channel;
@@ -171,10 +112,17 @@ int common_process(int type, weed_plant_t *inst, weed_timecode_t timestamp) {
   int height = weed_get_int_value(in_channel, "height", &error);
   int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
   int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+  int palette = weed_get_int_value(in_channel, "current_palette", &error);
   unsigned char *end = src + height * irowstride;
   int inplace = (src == dest);
+  int red = 0, blue =2;
   register int j;
 
+  if (palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32) {
+    red = 2;
+    blue = 0;
+  }
+  
   // new threading arch
   if (weed_plant_has_leaf(out_channel, "offset")) {
     int offset = weed_get_int_value(out_channel, "offset", &error);
@@ -197,7 +145,7 @@ int common_process(int type, weed_plant_t *inst, weed_timecode_t timestamp) {
   for (; src < end; src += irowstride) {
     for (j = 0; j < width - 2; j += 3) {
 
-      luma = calc_luma(&src[j]);
+      luma = calc_luma(&src[j], palette, 0);
       av_luma = (uint8_t)((double)luma / (double)sdata->av_count + (double)(av_luma_data[j / 3] * sdata->av_count) / (double)(
                             sdata->av_count + 1));
       sdata->av_count++;
@@ -206,18 +154,21 @@ int common_process(int type, weed_plant_t *inst, weed_timecode_t timestamp) {
         switch (type) {
         case 1:
           // fire-ish effect
-          dest[j] = (uint8_t)((uint8_t)((fastrand(sdata) & 0x7f00) >> 8) + (dest[j + 1] = (uint8_t)((fastrand(sdata) & 0x7f00) >> 8))); //R & G
-          dest[j + 2] = (uint8_t)0;                   //B
+	  sdata->fastrand_val = fastrand(sdata->fastrand_val);
+          dest[j + red] = (uint8_t)((uint8_t)((sdata->fastrand_val & 0x7f00) >> 8) + (dest[j + 1] = (uint8_t)((fastrand(sdata->fastrand_val) & 0x7f00) >> 8))); //R & G
+	  sdata->fastrand_val = fastrand(sdata->fastrand_val);
+          dest[j + blue] = (uint8_t)0;                   //B
           break;
         //
         case 2:
           // blue glow
-          dest[j] = dest[j + 1] = (uint8_t)((fastrand(sdata) & 0xff00) >> 8);                                       //R&G
-          dest[j + 2] = (uint8_t)255; //B
+	  sdata->fastrand_val = fastrand(sdata->fastrand_val);
+          dest[j + red] = dest[j + 1] = (uint8_t)((sdata->fastrand_val & 0xff00) >> 8);                                       //R&G
+          dest[j + blue] = (uint8_t)255; //B
           break;
         case 0:
           // make moving things black
-          make_black(&dest[j]);
+          blank_pixel(&dest[j], palette, 0, NULL);
           break;
         }
       } else {
@@ -284,6 +235,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_set_int_value(plugin_info, "version", package_version);
     init_RGB_to_YCbCr_tables();
+    init_Y_to_Y_tables();
   }
 
   return plugin_info;

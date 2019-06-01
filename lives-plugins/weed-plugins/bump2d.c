@@ -33,6 +33,7 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "weed-utils-code.c" // optional
+#define NEED_PALETTE_UTILS
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -49,55 +50,6 @@ typedef struct {
 typedef struct {
   short x, y;
 } BUMP;
-
-#define ABS(a)           (((a) < 0) ? -(a) : (a))
-
-/* precomputed tables */
-#define FP_BITS 16
-
-static int Y_R[256];
-static int Y_G[256];
-static int Y_B[256];
-
-
-static inline int myround(double n) {
-  if (n >= 0)
-    return (int)(n + 0.5);
-  else
-    return (int)(n - 0.5);
-}
-
-
-static void init_RGB_to_YCbCr_tables(void) {
-  int i;
-
-  /*
-   * Q_Z[i] =   (coefficient * i
-   *             * (Q-excursion) / (Z-excursion) * fixed-pogint-factor)
-   *
-   * to one of each, add the following:
-   *             + (fixed-pogint-factor / 2)         --- for rounding later
-   *             + (Q-offset * fixed-pogint-factor)  --- to add the offset
-   *
-   */
-  for (i = 0; i < 256; i++) {
-    Y_R[i] = myround(0.299 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_G[i] = myround(0.587 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_B[i] = myround((0.114 * (double)i
-                      * 219.0 / 255.0 * (double)(1 << FP_BITS))
-                     + (double)(1 << (FP_BITS - 1))
-                     + (16.0 * (double)(1 << FP_BITS)));
-
-  }
-}
-
-
-static inline uint8_t
-calc_luma(uint8_t *pixel) {
-  return (Y_R[pixel[2]] + Y_G[pixel[1]] + Y_B[pixel[0]]) >> FP_BITS;
-}
 
 
 int bumpmap_init(weed_plant_t *inst) {
@@ -129,72 +81,91 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
                              "out_channels",
                              &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
+  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error), *isrc = src;
   unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
   int width = weed_get_int_value(in_channel, "width", &error);
   int height = weed_get_int_value(in_channel, "height", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
-  int width3 = width * 3;
-  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
 
-  uint16_t lightx, lighty, temp;
-  short normalx, normaly, x, y, xx;
-  uint8_t *s1;
+  if (height == 0 || width == 0 || dst == NULL || src == NULL) return WEED_NO_ERROR;
+  else {
+    int palette = weed_get_int_value(in_channel, "current_palette", &error);
+    int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
+    int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+    int yuv_clamping = weed_get_int_value(in_channel, "yuv_clamping", &error);
+    int psize = weed_palette_get_bits_per_macropixel(palette) >> 3;
+    int widthx = width * psize;
+    int offs = palette == WEED_PALETTE_ARGB32 ? 1 : 0;
+    _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
 
-  float aspect = (float)width / (float)height;
+    uint16_t lightx, lighty, temp;
+    short normalx, normaly, x, y, xx;
 
-  BUMP bumpmap[width][height];
+    float aspect = (float)width / (float)height;
 
-  int yrow = irowstride;
+    BUMP bumpmap[width][height];
 
-  /* create bump map */
-  for (y = 1; y < height - 1; y++) {
-    xx = 0;
-    for (x = 0; x < width3 - 3; x += 3) {
-      bumpmap[xx][y].x = calc_luma(&src[yrow + x + 3]) - calc_luma(&src[yrow + x]);
-      bumpmap[xx][y].y = calc_luma(&src[yrow + x]) - calc_luma(&src[yrow - irowstride + x]);
-      xx++;
+    src += irowstride;
+
+    /* create bump map from src*/
+    for (y = 1; y < height - 1; y++) {
+      xx = 1;
+      for (x = 1; x < widthx - psize * 2; x += psize) {
+	bumpmap[xx][y].x = calc_luma(&src[x + psize], palette, yuv_clamping) - calc_luma(&src[x], palette, yuv_clamping);
+	bumpmap[xx][y].y = calc_luma(&src[x], palette, yuv_clamping) - calc_luma(&src[- irowstride + x], palette, yuv_clamping);
+	xx++;
+      }
+      src += irowstride;
     }
-    yrow += irowstride;
-  }
 
-  lightx = aSin[sdata->sin_index] / 100. * width / 2. + width / 2. + 128 * aspect;
-  lighty = aSin[sdata->sin_index2] / 100. * height / 2.  + height / 2 + 128;
+    // position of center; this is the lissajous coords scaled to the image center and bubble center
+    lightx = aSin[sdata->sin_index] / 100. * width / 2. + width / 2. + 128;
+    lighty = aSin[sdata->sin_index2] / 100. * height / 2.  + height / 2 + 128. / aspect;
 
-  weed_memset(dst, 0, width3);
-  s1 = dst + orowstride;
+    src = isrc;
+  
+    blank_row(&dst, width, palette, yuv_clamping, 1, &src);
+    dst += orowstride;
+    src += irowstride;
+  
+    orowstride -= widthx - psize;
+    irowstride -= widthx - psize;
 
-  orowstride -= width3 - 3;
+    for (y = 1; y < height - 1; ++y) {
+      temp = lighty - y;
+      blank_pixel(dst, palette, yuv_clamping, src);
+      dst += psize;
 
-  for (y = 1; y < height - 1; ++y) {
-    temp = lighty - y;
-    weed_memset(s1, 0, 3);
-    s1 += 3;
+      for (x = 1; x < width - 1; x++) {
+	normalx = bumpmap[x][y].x + (lightx - x) / aspect;
+	normaly = bumpmap[x][y].y + temp;
 
-    for (x = 1; x < width - 1; x++) {
-      normalx = bumpmap[x][y].x + (lightx - x) / aspect;
-      normaly = bumpmap[x][y].y + temp;
-
-      if (normalx < 0 || normalx > 255)
-        normalx = 0;
-      if (normaly < 0 || normaly > 255)
-        normaly = 0;
-
-      weed_memset(s1, reflectionmap[normalx][normaly], 3);
-      s1 += 3;
+	if (normalx < 0 || normalx > 255)
+	  normalx = 0;
+	if (normaly < 0 || normaly > 255)
+	  normaly = 0;
+	if (palette == WEED_PALETTE_YUV888 || palette == WEED_PALETTE_YUVA8888) {
+	  if (yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED) 
+	    *dst = reflectionmap[normalx][normaly];
+	  else *dst = YUCL_YCL[reflectionmap[normalx][normaly]];
+	  dst[1] = dst[2] = 128;
+	  if (palette == WEED_PALETTE_YUVA8888) dst[3] = src[3];
+	}
+	weed_memset(dst + offs, reflectionmap[normalx][normaly], 3);
+	dst += psize;
+      }
+      src += widthx - psize;
+      blank_pixel(dst, palette, yuv_clamping, src);
+      dst += orowstride;
+      src += irowstride;
     }
-    weed_memset(s1, 0, 3);
-    s1 += orowstride;
+
+    blank_row(&dst, width, palette, yuv_clamping, 1, &src);
+
+    sdata->sin_index += 3;
+    sdata->sin_index &= 511;
+    sdata->sin_index2 += 5;
+    sdata->sin_index2 &= 511;
   }
-
-  weed_memset(s1, 0, width3);
-
-  sdata->sin_index += 3;
-  sdata->sin_index &= 511;
-  sdata->sin_index2 += 5;
-  sdata->sin_index2 &= 511;
-
   return WEED_NO_ERROR;
 }
 
@@ -205,21 +176,22 @@ void bumpmap_x_init(void) {
   float rad;
 
   /*create sin lookup table */
+  // this is for the lissajous movement of the center point
   for (i = 0; i < 512; i++) {
     rad = (float)i * 0.0174532 * 0.703125;
     aSin[i] = (short)((sin(rad) * 100.0));
   }
 
   /* create reflection map */
-
   for (x = 0; x < 256; ++x) {
     for (y = 0; y < 256; ++y) {
       float X = (x - 128) / 128.0;
       float Y = (y - 128) / 128.0;
+      // Z is the height of an elipsoid centered at (128, 128) with radii minor = 128, major = 256
+      // this is projected on an edge-detected version of the original
       float Z =  1.0 - sqrt(X * X + Y * Y);
       Z *= 255.0;
-      if (Z < 0.0)
-        Z = 0.0;
+      if (Z < 0.0) Z = 0.0;
       reflectionmap[x][y] = Z;
     }
   }
@@ -229,8 +201,7 @@ void bumpmap_x_init(void) {
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
-
+    int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_YUV888, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUVA8888, WEED_PALETTE_END};
     weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
     weed_plant_t *filter_class = weed_filter_class_init("bumpmap", "salsaman", 1, 0, &bumpmap_init, &bumpmap_process, &bumpmap_deinit,
@@ -243,7 +214,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     bumpmap_x_init();
     init_RGB_to_YCbCr_tables();
+    init_Y_to_Y_tables();
   }
   return plugin_info;
 }
-

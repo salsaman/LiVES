@@ -64,6 +64,8 @@ static char *empty_string = "";
 static void set_param_and_con_buttons(int key, int mode);
 static void check_clear_all_button(void);
 
+static boolean rte_window_is_hidden;
+
 void rte_window_set_interactive(boolean interactive) {
   register int i, j;
   int modes = rte_getmodespk();
@@ -1857,6 +1859,7 @@ static boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *even
   if (user_data == NULL) {
     // first time around we come here, and just hide the window
     lives_widget_hide(rte_window);
+    rte_window_is_hidden = TRUE;
   } else {
     // when we reshow it we check if the number of fx keys has changed. If so we come back to this branch
     // and recreate the window from scratch
@@ -2004,7 +2007,11 @@ static LiVESTreeModel *rte_window_fx_model(void) {
   char *pkg = NULL, *pkgstring, *fxname;
 
   tstore = lives_tree_store_new(NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
-
+#ifdef GUI_GTK
+  // supposedly speeds things up a bit...
+  gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(tstore), GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID,
+                                       GTK_SORT_ASCENDING);
+#endif
   while (list != NULL) {
     weed_plant_t *filter = get_weed_filter(weed_get_idx_for_hashname((char *)lives_list_nth_data(hash_list, fx_idx), TRUE));
     int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, &error);
@@ -2097,16 +2104,16 @@ LiVESWidget *create_rte_window(void) {
 
   ///////////////////////////////////////////////////////////////////////////
 
-  mainw->no_context_update = TRUE;
-
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_context_update();
+  mainw->no_context_update = TRUE;
 
   winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
   winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
   if (irte_window != NULL) {
     if (prefs->rte_keys_virtual != old_rte_keys_virtual) {
+      // number of fx keys changed, rebuild the window
       mainw->no_context_update = FALSE;
       return refresh_rte_window();
     }
@@ -2352,18 +2359,20 @@ LiVESWidget *create_rte_window(void) {
 rte_window_ready:
   // TODO: ignore button clicks until window is fully shown
 
+  rte_window_is_hidden = FALSE;
+
   lives_widget_show_all(irte_window);
   lives_widget_hide(dummy_radio);
 
-  if (prefs->gui_monitor != 0) {
-    lives_window_center(LIVES_WINDOW(irte_window));
-  }
+  /* if (prefs->gui_monitor != 0) { */
+  /*   lives_window_center(LIVES_WINDOW(irte_window)); */
+  /* } */
 
   if (prefs->open_maximised) {
     lives_window_maximize(LIVES_WINDOW(irte_window));
   }
 
-  lives_widget_context_update();
+  // lives_widget_context_update();
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
@@ -2377,7 +2386,7 @@ LiVESWidget *refresh_rte_window(void) {
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
     lives_set_cursor_style(LIVES_CURSOR_BUSY, rte_window);
     lives_widget_context_update();
-    on_rtew_delete_event(NULL, NULL, LIVES_INT_TO_POINTER(1));
+    on_rtew_delete_event(NULL, NULL, NULL);
     lives_widget_destroy(rte_window);
     rte_window = create_rte_window();
     rte_window_set_interactive(mainw->interactive);
@@ -2387,9 +2396,12 @@ LiVESWidget *refresh_rte_window(void) {
 
 
 void on_assign_rte_keys_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  rte_window = create_rte_window();
-  rte_window_set_interactive(mainw->interactive);
-  lives_widget_show(rte_window);
+  if (rte_window != NULL && !rte_window_is_hidden) on_rtew_delete_event(NULL, NULL, NULL);
+  else {
+    rte_window = create_rte_window();
+    rte_window_set_interactive(mainw->interactive);
+    lives_widget_show(rte_window);
+  }
 }
 
 

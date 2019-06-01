@@ -7000,6 +7000,7 @@ deinit2:
     key_to_instance[hotkey][key_modes[hotkey]] = inst;
 
     filter_mutex_unlock(hotkey);
+
     if (!weed_generator_start(inst, hotkey)) {
       // TODO - be more descriptive with errors
       int weed_error;
@@ -7026,6 +7027,7 @@ deinit2:
       }
 
       mainw->error = TRUE;
+      filter_mutex_lock(hotkey);
       return FALSE;
     }
 
@@ -7210,7 +7212,7 @@ void weed_deinit_effect(int hotkey) {
   // mainw->osc_block should be set before calling this function !
   // caller should also handle mainw->rte
 
-  // filter_mutex_locK(hotkey) must be be called before entering
+  // filter_mutex_lock(hotkey) must be be called before entering
 
   weed_plant_t *instance, *inst, *last_inst, *next_inst, *filter;
 
@@ -9255,10 +9257,7 @@ boolean rte_key_setmode(int key, int newmode) {
     mainw->blend_file = blend_file;
 
     if (inst != NULL) {
-      // filter_mutex_unlock
-      filter_mutex_unlock(real_key);
       if (!weed_init_effect(key)) {
-        filter_mutex_lock(real_key);
         weed_instance_unref(inst);
         // TODO - unblock template channel changes
         mainw->whentostop = whentostop;
@@ -9270,7 +9269,6 @@ boolean rte_key_setmode(int key, int newmode) {
         mainw->osc_block = FALSE;
         return FALSE;
       }
-      filter_mutex_lock(real_key);
       weed_instance_unref(inst);
       if (mainw->ce_thumbs) ce_thumbs_add_param_box(real_key, TRUE);
     }

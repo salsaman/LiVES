@@ -537,8 +537,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
             if (!strcmp(f0rinfo.name, blacklist[i])) {
               fprintf(stderr, "Warning, frei0r plugin skipping blacklisted plugin %s\n", f0rinfo.name);
               blacklisted = 1;
-              dlclose(handle);
-              handle = NULL;
               break;
             }
           }

@@ -965,7 +965,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           weed_set_int_value(filter_class, "plugin_in_params", oninps);
           weed_set_int_value(filter_class, "plugin_out_params", onoutps);
 
-          list = add_to_list_sorted(list, filter_class, laddes->Name);
+          if (strlen(laddes->Name) > 0) list = add_to_list_sorted(list, filter_class, laddes->Name);
 
           num_plugins++;
           num_filters++;

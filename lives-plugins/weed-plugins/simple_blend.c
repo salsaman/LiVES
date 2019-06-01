@@ -32,18 +32,11 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "weed-utils-code.c" // optional
+#define NEED_PALETTE_UTILS
 #include "weed-plugin-utils.c" // optional
 
 
 /////////////////////////////////////////////////////////////
-
-/* precomputed tables */
-#define FP_BITS 16
-
-static int Y_R[256];
-static int Y_G[256];
-static int Y_B[256];
-static int conv_RY_inited = 0;
 
 typedef struct _sdata {
   unsigned char obf;
@@ -51,67 +44,25 @@ typedef struct _sdata {
 } _sdata;
 
 
-
-static int myround(double n) {
-  if (n >= 0)
-    return (int)(n + 0.5);
-  else
-    return (int)(n - 0.5);
-}
-
-
-
-static void init_RGB_to_YCbCr_tables(void) {
-  register int i;
-
-  for (i = 0; i < 256; i++) {
-    Y_R[i] = myround(0.299 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_G[i] = myround(0.587 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_B[i] = myround((0.114 * (double)i
-                      * 219.0 / 255.0 * (double)(1 << FP_BITS))
-                     + (double)(1 << (FP_BITS - 1))
-                     + (16.0 * (double)(1 << FP_BITS)));
-
-  }
-  conv_RY_inited = 1;
-}
-
-
-static inline unsigned char
-calc_luma(unsigned char *pixel) {
-  // TODO - RGB
-  return (Y_R[pixel[2]] + Y_G[pixel[1]] + Y_B[pixel[0]]) >> FP_BITS;
-}
-
-
-
-void make_blend_table(_sdata *sdata, unsigned char bf, unsigned char bfn) {
+static void make_blend_table(_sdata *sdata, unsigned char bf, unsigned char bfn) {
   register int i, j;
-
   for (i = 0; i < 256; i++) {
     for (j = 0; j < 256; j++) {
       sdata->blend[i][j] = (unsigned char)((bf * i + bfn * j) >> 8);
     }
   }
-
 }
 
 
 /////////////////////////////////////////////////////////////////////////
 
-int chroma_init(weed_plant_t *inst) {
+static int chroma_init(weed_plant_t *inst) {
   _sdata *sdata;
-
   sdata = weed_malloc(sizeof(_sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
-
   sdata->obf = 0;
   make_blend_table(sdata, 0, 255);
-
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
-
   return WEED_NO_ERROR;
 }
 
@@ -119,15 +70,10 @@ int chroma_init(weed_plant_t *inst) {
 static int chroma_deinit(weed_plant_t *inst) {
   _sdata *sdata;
   int error;
-
   sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
-
   if (sdata != NULL) weed_free(sdata);
-
   return WEED_NO_ERROR;
 }
-
-
 
 
 static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode) {
@@ -154,7 +100,7 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
   int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
   int inplace = (src1 == dst);
   int bf, psize = 4;
-  int start = 0;
+  int start = 0, row = 0;
 
   unsigned char *end = src1 + height * irowstride1;
 
@@ -183,12 +129,9 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
   if (weed_plant_has_leaf(out_channel, "offset")) {
     int offset = weed_get_int_value(out_channel, "offset", &error);
     int dheight = weed_get_int_value(out_channel, "height", &error);
-
     src1 += offset * irowstride1;
     end = src1 + dheight * irowstride1;
-
     src2 += offset * irowstride2;
-
     dst += offset * orowstride;
   }
 
@@ -201,19 +144,28 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
         dst[j + 1] = sdata->blend[src2[j + 1]][src1[j + 1]];
         dst[j + 2] = sdata->blend[src2[j + 2]][src1[j + 2]];
         break;
+      case 4:
+        // avg luma overlay
+	if (j > start && j < width - 1 && row > 0 && row < height - 1) {
+	  uint8_t av_luma = (calc_luma(&src1[j], pal, 0) + calc_luma(&src1[j - 1], pal, 0) + calc_luma(&src1[j + 1], pal, 0) + calc_luma(&src1[j - irowstride1], pal, 0) + calc_luma(&src1[j - 1 - irowstride1], pal, 0) + calc_luma(&src1[j + 1 - irowstride1], pal, 0) + calc_luma(&src1[j + irowstride1], pal, 0) + calc_luma(&src1[j - 1 + irowstride1], pal, 0) + calc_luma(&src1[j + 1 + irowstride1], pal, 0)) / 9; 
+	  if (av_luma < (blend_factor)) weed_memcpy(&dst[j], &src2[j], 3);
+	  else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
+	  row++;
+	  break;
+	}
       case 1:
-        // luma overlay (bang !!)
-        if (calc_luma(&src1[j]) < (blend_factor)) weed_memcpy(&dst[j], &src2[j], 3);
+        // luma overlay
+        if (calc_luma(&src1[j], pal, 0) < (blend_factor)) weed_memcpy(&dst[j], &src2[j], 3);
         else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
         break;
       case 2:
         // luma underlay
-        if (calc_luma(&src2[j]) > (blendneg)) weed_memcpy(&dst[j], &src2[j], 3);
+        if (calc_luma(&src2[j], pal, 0) > (blendneg)) weed_memcpy(&dst[j], &src2[j], 3);
         else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
         break;
       case 3:
         // neg lum overlay
-        if (calc_luma(&src1[j]) > (blendneg)) weed_memcpy(&dst[j], &src2[j], 3);
+        if (calc_luma(&src1[j], pal, 0) > (blendneg)) weed_memcpy(&dst[j], &src2[j], 3);
         else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
         break;
       }
@@ -226,21 +178,28 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
 }
 
 
-
-int chroma_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static int chroma_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(0, inst, timestamp);
 }
 
-int lumo_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static int lumo_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(1, inst, timestamp);
 }
 
-int lumu_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static int lumu_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(2, inst, timestamp);
 }
 
-int nlumo_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static int nlumo_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(3, inst, timestamp);
+}
+
+
+static int avlumo_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  return common_process(4, inst, timestamp);
 }
 
 
@@ -289,9 +248,18 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_free(clone2);
     weed_free(clone3);
 
-    weed_set_int_value(plugin_info, "version", package_version);
+    filter_class = weed_filter_class_init("averaged luma overlay", "salsaman", 1, 0,
+                                          NULL, &avlumo_process, NULL, (clone1 = weed_clone_plants(in_chantmpls)),
+                                          (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params2)), NULL);
 
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+    weed_free(clone1);
+    weed_free(clone2);
+    weed_free(clone3);
+
+    weed_set_int_value(plugin_info, "version", package_version);
     init_RGB_to_YCbCr_tables();
+    init_Y_to_Y_tables();
   }
   return plugin_info;
 }

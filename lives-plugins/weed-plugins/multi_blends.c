@@ -31,64 +31,13 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "weed-utils-code.c" // optional
+#define NEED_PALETTE_UTILS
 #include "weed-plugin-utils.c" // optional
 
-/////////////////////////////////////////////////////////////
-
-/* precomputed tables */
-#define FP_BITS 16
-
-static int Y_R[256];
-static int Y_G[256];
-static int Y_B[256];
-static int conv_RY_inited = 0;
-
-static int myround(double n) {
-  if (n >= 0)
-    return (int)(n + 0.5);
-  else
-    return (int)(n - 0.5);
-}
-
-
-
-static void init_RGB_to_YCbCr_tables(void) {
-  int i;
-
-  /*
-   * Q_Z[i] =   (coefficient * i
-   *             * (Q-excursion) / (Z-excursion) * fixed-pogint-factor)
-   *
-   * to one of each, add the following:
-   *             + (fixed-pogint-factor / 2)         --- for rounding later
-   *             + (Q-offset * fixed-pogint-factor)  --- to add the offset
-   *
-   */
-  for (i = 0; i < 256; i++) {
-    Y_R[i] = myround(0.299 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_G[i] = myround(0.587 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_B[i] = myround((0.114 * (double)i
-                      * 219.0 / 255.0 * (double)(1 << FP_BITS))
-                     + (double)(1 << (FP_BITS - 1))
-                     + (16.0 * (double)(1 << FP_BITS)));
-
-  }
-  conv_RY_inited = 1;
-}
-
-
-static inline unsigned char
-calc_luma(unsigned char *pixel) {
-  // TODO - RGB
-  return (Y_R[pixel[2]] + Y_G[pixel[1]] + Y_B[pixel[0]]) >> FP_BITS;
-}
 
 /////////////////////////////////////////////////////////////////////////
 
-int common_init(weed_plant_t *inst) {
-
+static int common_init(weed_plant_t *inst) {
   return WEED_NO_ERROR;
 }
 
@@ -103,6 +52,7 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
   unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
   int width = weed_get_int_value(in_channels[0], "width", &error) * 3;
   int height = weed_get_int_value(in_channels[0], "height", &error);
+  int palette = weed_get_int_value(in_channels[0], "current_palette", &error);
   int irowstride1 = weed_get_int_value(in_channels[0], "rowstrides", &error);
   int irowstride2 = weed_get_int_value(in_channels[1], "rowstrides", &error);
   int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
@@ -132,14 +82,10 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
   if (weed_plant_has_leaf(out_channel, "offset")) {
     int offset = weed_get_int_value(out_channel, "offset", &error);
     int dheight = weed_get_int_value(out_channel, "height", &error);
-
     src1 += offset * irowstride1;
     end = src1 + dheight * irowstride1;
-
     src2 += offset * irowstride2;
-
     dst += offset * orowstride;
-
   }
 
   for (; src1 < end; src1 += irowstride1) {
@@ -159,21 +105,21 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
         break;
       case 2:
         // darken
-        luma1 = (unsigned char)(calc_luma(&src1[j]));
-        luma2 = (unsigned char)(calc_luma(&src2[j]));
+        luma1 = (unsigned char)(calc_luma(&src1[j], palette, 0));
+        luma2 = (unsigned char)(calc_luma(&src2[j], palette, 0));
         if (luma1 <= luma2) weed_memcpy(pixel, &src1[j], 3);
         else weed_memcpy(pixel, &src2[j], 3);
         break;
       case 3:
         // lighten
-        luma1 = (unsigned char)(calc_luma(&src1[j]));
-        luma2 = (unsigned char)(calc_luma(&src2[j]));
+        luma1 = (unsigned char)(calc_luma(&src1[j], palette, 0));
+        luma2 = (unsigned char)(calc_luma(&src2[j], palette, 0));
         if (luma1 >= luma2) weed_memcpy(pixel, &src1[j], 3);
         else weed_memcpy(pixel, &src2[j], 3);
         break;
       case 4:
         // overlay
-        luma1 = calc_luma(&src1[j]);
+        luma1 = calc_luma(&src1[j], palette, 0);
         if (luma1 < 128) {
           // mpy
           pixel[0] = (unsigned char)((src2[j] * src1[j]) >> 8);
@@ -232,7 +178,6 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
         dst[j + 1] = (blend2 * pixel[1] + blendneg2 * src2[j + 1]) >> 8;
         dst[j + 2] = (blend2 * pixel[2] + blendneg2 * src2[j + 2]) >> 8;
       }
-
     }
     src2 += irowstride2;
     dst += orowstride;
@@ -241,37 +186,43 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
   return WEED_NO_ERROR;
 }
 
-int common_deinit(weed_plant_t *filter_instance) {
+
+static int common_deinit(weed_plant_t *filter_instance) {
   return WEED_NO_ERROR;
 }
 
 
-
-int mpy_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static int mpy_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(0, inst, timestamp);
 }
 
-int screen_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static int screen_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(1, inst, timestamp);
 }
 
-int darken_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static int darken_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(2, inst, timestamp);
 }
 
-int lighten_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static int lighten_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(3, inst, timestamp);
 }
 
-int overlay_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static int overlay_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(4, inst, timestamp);
 }
 
-int dodge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static int dodge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(5, inst, timestamp);
 }
 
-int burn_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static int burn_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(6, inst, timestamp);
 }
 
@@ -338,6 +289,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_set_int_value(plugin_info, "version", package_version);
 
     init_RGB_to_YCbCr_tables();
+    init_Y_to_Y_tables();
   }
   return plugin_info;
 }

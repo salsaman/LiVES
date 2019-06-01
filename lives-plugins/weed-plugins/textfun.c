@@ -32,6 +32,7 @@ static int package_version = 2; // version of this package
 #endif
 
 #include "weed-utils-code.c" // optional
+#define NEED_PALETTE_UTILS
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -50,6 +51,7 @@ typedef struct {
 
 static uint8_t onescount[65536];
 
+
 void makeonescount(void) {
   int i, j;
   for (i = 0; i < 65536; i++) {
@@ -59,6 +61,7 @@ void makeonescount(void) {
     }
   }
 }
+
 
 static int get_hex_digit(char *d) {
   char c[2];
@@ -74,7 +77,6 @@ static int get_hex_digit(char *d) {
   return (atoi(c));
 }
 
-
 #define NFONTMAPS 3
 
 static char *font_maps[NFONTMAPS];
@@ -89,7 +91,6 @@ static void make_font_tables(void) {
 
   font_maps[0] =
     "ANSI|8|0000183C3C3C18181800181800000000006666662400000000000000000000000000006C6CFE6C6C6CFE6C6C0000000018187CC6C2C07C060686C67C1818000000000000C2C60C183060C686000000000000386C6C3876DCCCCCCC76000000000030303060000000000000000000000000000C18303030303030180C00000000000030180C0C0C0C0C0C1830000000000000000000663CFF3C66000000000000000000000018187E181800000000000000000000000000000018181830000000000000000000007E0000000000000000000000000000000000001818000000000000000002060C183060C0800000000000007CC6C6CEDEF6E6C6C67C0000000000001838781818181818187E0000000000007CC6060C183060C0C6FE0000000000007CC606063C060606C67C0000000000000C1C3C6CCCFE0C0C0C1E000000000000FEC0C0C0FC060606C67C0000000000003860C0C0FCC6C6C6C67C000000000000FEC606060C18303030300000000000007CC6C6C67CC6C6C6C67C0000000000007CC6C6C67E0606060C78000000000000000018180000001818000000000000000000181800000018183000000000000000060C18306030180C060000000000000000007E00007E000000000000000000006030180C060C1830600000000000007CC6C60C1818180018180000000000007CC6C6C6DEDEDEDCC07C00000000000010386CC6C6FEC6C6C6C6000000000000FC6666667C66666666FC0000000000003C66C2C0C0C0C0C2663C000000000000F86C6666666666666CF8000000000000FE6662687868606266FE000000000000FE6662687868606060F00000000000003C66C2C0C0DEC6C6663A000000000000C6C6C6C6FEC6C6C6C6C60000000000003C18181818181818183C0000000000001E0C0C0C0C0CCCCCCC78000000000000E666666C78786C6666E6000000000000F06060606060606266FE000000000000C3E7FFFFDBC3C3C3C3C3000000000000C6E6F6FEDECEC6C6C6C60000000000007CC6C6C6C6C6C6C6C67C000000000000FC6666667C60606060F00000000000007CC6C6C6C6C6C6D6DE7C0C0E00000000FC6666667C6C666666E60000000000007CC6C660380C06C6C67C000000000000FFDB991818181818183C000000000000C6C6C6C6C6C6C6C6C67C000000000000C3C3C3C3C3C3C3663C18000000000000C3C3C3C3C3DBDBFF6666000000000000C3C3663C18183C66C3C3000000000000C3C3C3663C181818183C000000000000FFC3860C183060C1C3FF0000000000003C30303030303030303C0000000000000080C0E070381C0E06020000000000003C0C0C0C0C0C0C0C0C3C0000000010386CC600000000000000000000000000000000000000000000000000FF0000303018000000000000000000000000000000000000780C7CCCCCCC76000000000000E06060786C666666667C0000000000000000007CC6C0C0C0C67C0000000000001C0C0C3C6CCCCCCCCC760000000000000000007CC6FEC0C0C67C000000000000386C6460F060606060F000000000000000000076CCCCCCCCCC7C0CCC78000000E060606C7666666666E60000000000001818003818181818183C0000000000000606000E06060606060666663C000000E06060666C78786C66E60000000000003818181818181818183C000000000000000000E6FFDBDBDBDBDB000000000000000000DC6666666666660000000000000000007CC6C6C6C6C67C000000000000000000DC66666666667C6060F000000000000076CCCCCCCCCC7C0C0C1E000000000000DC7666606060F00000000000000000007CC660380CC67C000000000000103030FC30303030361C000000000000000000CCCCCCCCCCCC76000000000000000000C3C3C3C3663C18000000000000000000C3C3C3DBDBFF66000000000000000000C3663C183C66C3000000000000000000C6C6C6C6C6C67E060CF8000000000000FECC183060C6FE0000000000000E18181870181818180E00000000000018181818001818181818000000000000701818180E181818187000000000000076DC0000000000000000000000000000000010386CC6C6C6FE0000000000";
-
 
   // hex encoded font map - Hiragana
   font_maps[1] =
@@ -133,69 +134,20 @@ static void make_font_tables(void) {
 }
 
 
-/* precomputed tables */
-#define FP_BITS 16
-
-static int Y_R[256];
-static int Y_G[256];
-static int Y_B[256];
-
-
-static int myround(double n) {
-  if (n >= 0)
-    return (int)(n + 0.5);
-  else
-    return (int)(n - 0.5);
-}
-
-
-
-static void init_RGB_to_YCbCr_tables(void) {
-  int i;
-
-  /*
-   * Q_Z[i] =   (coefficient * i
-   *             * (Q-excursion) / (Z-excursion) * fixed-pogint-factor)
-   *
-   * to one of each, add the following:
-   *             + (fixed-pogint-factor / 2)         --- for rounding later
-   *             + (Q-offset * fixed-pogint-factor)  --- to add the offset
-   *
-   */
-  for (i = 0; i < 256; i++) {
-    Y_R[i] = myround(0.299 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_G[i] = myround(0.587 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_B[i] = myround((0.114 * (double)i
-                      * 219.0 / 255.0 * (double)(1 << FP_BITS))
-                     + (double)(1 << (FP_BITS - 1))
-                     + (16.0 * (double)(1 << FP_BITS)));
-
-  }
-}
-
-
-static inline uint8_t
-calc_luma(uint8_t *pixel) {
-  return (Y_R[pixel[0]] + Y_G[pixel[1]] + Y_B[pixel[2]]) >> FP_BITS;
-}
-
-
-static inline uint8_t make_lumbyte(unsigned char *img, uint8_t thresh) {
+static inline uint8_t make_lumbyte(unsigned char *img, uint8_t thresh, int pal, int psize) {
   // here we map 8 pixels to one byte; if the luma of a pixel is > THRESH we set a 1, otherwise a 0
   uint8_t lumbyte = 0;
   register int i;
 
   for (i = 7; i >= 0; i--) {
-    if (calc_luma(img) > thresh) lumbyte |= (1 << i);
-    img += 3;
+    if (calc_luma(img, pal, 0) > thresh) lumbyte |= (1 << i);
+    img += psize;
   }
   return lumbyte;
 }
 
 
-static inline void fill_line(int fontwidth, unsigned char *src, unsigned char *dst, unsigned char *fillval, unsigned short fontrow,
+static inline void fill_line(int fontwidth, unsigned char *src, unsigned char *dst, int psize, unsigned char *fillval, unsigned short fontrow,
                              int type) {
   register int i;
 
@@ -205,7 +157,6 @@ static inline void fill_line(int fontwidth, unsigned char *src, unsigned char *d
       // coloured pixels
       if (fontrow & (1 << i)) weed_memcpy(dst, src, 3);
       else weed_memset(dst, 0, 3);
-      src += 3;
       break;
     case 1:
       // monochrome
@@ -220,32 +171,36 @@ static inline void fill_line(int fontwidth, unsigned char *src, unsigned char *d
       else weed_memset(dst, 0, 3);
       break;
     }
-    dst += 3;
+    if (psize == 4) dst[3] = src[3];
+    src += psize;
+    dst += psize;
   }
 }
 
 
-static inline void fill_block(int fontnum, unsigned char *src, unsigned char *dst, int drow, int irow, int glyph, int type) {
+static inline void fill_block(int fontnum, unsigned char *src, unsigned char *dst, int psize, int drow, int irow, int glyph, int type) {
   // we will fill a 8x16 block of pixels in dst with a map of a character
   register int i;
-  unsigned char fillval[3];
+  unsigned char fillval[4];
 
   if (type == 2) weed_memset(fillval, (src[0] + src[1] + src[2]) / 3, 3);
   else if (type == 3) weed_memcpy(fillval, src, 3);
 
+  fillval[3] = src[3];
+  
   for (i = 0; i < 16; i++) {
-    fill_line(font_tables[fontnum].width, src, dst, fillval, font_tables[fontnum].fonttable[glyph * 16 + i], type);
+    fill_line(font_tables[fontnum].width, src, dst, psize, fillval, font_tables[fontnum].fonttable[glyph * 16 + i], type);
     dst += drow;
     if (type == 0) src += irow;
   }
 }
 
-/////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////
 
 int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  unsigned int width3, irow16, orow16;
+  unsigned int widthx, irow16, orow16;
   unsigned int startx, starty, endx;
   register int j, k, l, m;
   int minones, numones, minchar = 0;
@@ -259,14 +214,18 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
   int width = weed_get_int_value(in_channel, "width", &error);
   int height = weed_get_int_value(in_channel, "height", &error);
+  int palette = weed_get_int_value(in_channel, "current_palette", &error);
   int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
   int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
   weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
   unsigned char *end;
-  int skip, glyph16;
-
+  int skip, glyph16, glyphwidth;
+  int psize = 3;
+  
   uint8_t lb[16], lb2[16];
 
+  if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32) psize = 4;
+  
   thresh = weed_get_int_value(in_params[0], "value", &error) & 0xff;
   mode = weed_get_int_value(in_params[1], "value", &error);
   fontnum = weed_get_int_value(in_params[2], "value", &error);
@@ -275,13 +234,13 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   width = (width >> 4) << 4;
 
-  width3 = width * 3;
+  widthx = width * psize;
   irow16 = irowstride << 4;
   orow16 = orowstride << 4;
 
-  if (font_tables[fontnum].width == 8) startx = ((width - ((width >> 3) << 3)) >> 1) * 3;
-  else startx = ((width - ((width >> 4) << 4)) >> 1) * 3;
-  endx = width3 - startx;
+  if (font_tables[fontnum].width == 8) startx = ((width - ((width >> 3) << 3)) >> 1) * psize;
+  else startx = ((width - ((width >> 4) << 4)) >> 1) * psize;
+  endx = widthx - startx;
 
   starty = ((height - ((height >> 4) << 4)) >> 1);
   end = src + (height - 15 - starty) * irowstride;
@@ -289,26 +248,29 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   src += starty * irowstride;
   dst += starty * orowstride;
 
-  skip = font_tables[fontnum].width * 3;
+  skip = font_tables[fontnum].width * psize;
   glyph16 = font_tables[fontnum].nglyphs << 4;
-
+  glyphwidth = 8 * psize;
+  
   //printf("ok2 %d %d %d\n",startx,endx,skip);
-
 
   // get a FONT_WIDTH x 16 block, compare with each character and find the minimum difference
   for (; src < end; src += irow16) {
     for (j = startx; j < endx; j += skip) {
       minones = 256;
 
-      for (l = 0; l < 16; l++) lb[l] = make_lumbyte(&src[j + l * irowstride], thresh);
-      if (font_tables[fontnum].width == 16) for (l = 0; l < 16; l++) lb2[l] = make_lumbyte(&src[j + l * irowstride + 24], thresh);
-
+      for (l = 0; l < 16; l++) lb[l] = make_lumbyte(&src[j + l * irowstride], thresh, palette, psize);
+      if (font_tables[fontnum].width == 16) {
+	for (l = 0; l < 16; l++) {
+	  lb2[l] = make_lumbyte(&src[j + l * irowstride + glyphwidth], thresh, palette, psize);
+	}
+      }
       for (k = 0; k < glyph16; k += 16) {
         numones = m = 0;
         // xor'ing our lumbyte with a font row, and then looking this up in onescount gives us the number of different bits
         if (font_tables[fontnum].width == 16) {
-          for (l = 0; l < 16;
-               l++) if ((numones += onescount[(uint16_t)(((uint16_t)lb[l] << 8) + (uint16_t)lb2[l])^font_tables[fontnum].fonttable[k +
+          for (l = 0; l < 16; l++)
+	    if ((numones += onescount[(uint16_t)(((uint16_t)lb[l] << 8) + (uint16_t)lb2[l])^font_tables[fontnum].fonttable[k +
                                                 (m++)]]) >= minones) break;
         } else {
           for (l = 0; l < 16; l++) if ((numones += onescount[(lb[l] ^ (uint8_t)(font_tables[fontnum].fonttable[k + (m++)]))]) >= minones) break;
@@ -319,7 +281,7 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         }
       }
       // fill 8x16 block in dest with char
-      fill_block(fontnum, &src[j], &dst[j], orowstride, irowstride, minchar, mode);
+      fill_block(fontnum, &src[j], &dst[j], psize, orowstride, irowstride, minchar, mode);
     }
     dst += orow16;
   }
@@ -327,14 +289,12 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-
-
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
 
   if (plugin_info != NULL) {
     const char *modes[] = {"colour pixels", "monochrome", "greyscale", "solid colours", NULL};
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
+    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END};
     weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
     weed_plant_t *in_params[4];
@@ -350,7 +310,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     }
     fonts[i] = NULL;
 
-    in_params[0] = weed_integer_init("threshold", "Pixel _threshold", 128, 0, 255);
+    in_params[0] = weed_integer_init("threshold", "Pixel _threshold", 96, 0, 255);
     in_params[1] = weed_string_list_init("mode", "Colour _mode", 0, modes);
     in_params[2] = weed_string_list_init("font", "_Font", 0, fonts);
     in_params[3] = NULL;
@@ -363,6 +323,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_set_int_value(plugin_info, "version", package_version);
 
     init_RGB_to_YCbCr_tables();
+    init_Y_to_Y_tables();
 
     makeonescount();
   }

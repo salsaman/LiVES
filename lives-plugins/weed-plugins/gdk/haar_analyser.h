@@ -49,10 +49,6 @@ typedef int	Unit;
 
 typedef int Idx;
 
-gint myround(gdouble n) {
-  return (n >= 0.) ? (gint)(n + 0.5) : (gint)(n - 0.5);
-}
-
 /* signature structure */
 typedef struct valStruct_ {
   Unit d;			/* [f]abs(a[i]) */

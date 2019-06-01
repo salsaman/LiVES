@@ -57,6 +57,7 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "weed-utils-code.c" // optional
+#define NEED_PALETTE_UTILS
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -64,43 +65,17 @@ static int package_version = 1; // version of this package
 #include <stdlib.h>
 #include <stdio.h>
 
-#define FP_BITS 16
-
-int myround(double n) {
-  return (n >= 0.) ? (int)(n + 0.5) : (int)(n - 0.5);
-}
-
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/video/tracking.hpp"
-using namespace cv;
 
+using namespace cv;
 
 typedef struct {
   int inited;
   Mat *prevgrey;
 } _sdata;
 
-
-
-static uint8_t UNCLAMP_Y[256];
-
-
-static void init_luma_arrays(void) {
-  register int i;
-
-  for (i = 0; i < 17; i++) {
-    UNCLAMP_Y[i] = 0;
-  }
-
-  for (i = 17; i < 235; i++) {
-    UNCLAMP_Y[i] = (int)((float)(i - 16.) / 219.*255. + .5);
-  }
-
-  for (i = 235; i < 256; i++) {
-    UNCLAMP_Y[i] = 255;
-  }
-}
 
 static void unclamp_frame(uint8_t *data, int width, int row, int height) {
   register int i, j;
@@ -109,12 +84,13 @@ static void unclamp_frame(uint8_t *data, int width, int row, int height) {
 
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
-      *data = UNCLAMP_Y[*data];
+      *data = YCL_YUCL[*data];
       data++;
     }
     data += row;
   }
 }
+
 
 static uint8_t *copy_frame(const uint8_t *csrc, int width, int row, int height) {
   uint8_t *src = (uint8_t *)csrc;
@@ -135,9 +111,7 @@ static uint8_t *copy_frame(const uint8_t *csrc, int width, int row, int height) 
 }
 
 
-
-
-int farneback_init(weed_plant_t *inst) {
+static int farneback_init(weed_plant_t *inst) {
   _sdata *sdata;
 
   sdata = (_sdata *)weed_malloc(sizeof(_sdata));
@@ -152,8 +126,7 @@ int farneback_init(weed_plant_t *inst) {
 }
 
 
-
-int farneback_deinit(weed_plant_t *inst) {
+static int farneback_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
 
@@ -166,9 +139,7 @@ int farneback_deinit(weed_plant_t *inst) {
 }
 
 
-
-
-int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
+static int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   int error;
 
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
@@ -210,6 +181,7 @@ int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   case WEED_PALETTE_BGR24: {
     int from_to[] = {0, 2, 1, 1, 2, 0}; // convert bgr to rgb
     srcMat = Mat(height, width, CV_8UC3, src, irow);
+    mixMat = Mat(height, width, CV_8UC3);
     mixChannels(&srcMat, 1, &mixMat, 1, from_to, 3);
     cvtColor(mixMat, *cvgrey, CV_RGB2GRAY);
   }
@@ -221,6 +193,7 @@ int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   case WEED_PALETTE_BGRA32: {
     int from_to[] = {0, 2, 1, 1, 2, 0, 3, 3}; // convert bgra to rgba
     srcMat = Mat(height, width, CV_8UC4, src, irow);
+    mixMat = Mat(height, width, CV_8UC4);
     mixChannels(&srcMat, 1, &mixMat, 1, from_to, 4);
     cvtColor(mixMat, *cvgrey, CV_RGB2GRAY);
   }
@@ -228,6 +201,7 @@ int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   case WEED_PALETTE_ARGB32: {
     int from_to[] = {0, 3, 1, 0, 2, 1, 3, 2}; // convert argb to rgba
     srcMat = Mat(height, width, CV_8UC4, src, irow);
+    mixMat = Mat(height, width, CV_8UC4);
     mixChannels(&srcMat, 1, &mixMat, 1, from_to, 4);
     cvtColor(mixMat, *cvgrey, CV_RGB2GRAY);
   }
@@ -240,7 +214,7 @@ int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
     if (weed_plant_has_leaf(in_channel, "YUV_clamping") &&
         (weed_get_int_value(in_channel, "YUV_clamping", &error) == WEED_YUV_CLAMPING_CLAMPED)) {
       srcMat = Mat(height, width, CV_8U, src, irow);
-      ucMat = Mat(256, 1, CV_8U, UNCLAMP_Y);
+      ucMat = Mat(256, 1, CV_8U, YCL_YUCL);
       LUT(srcMat, ucMat, *cvgrey);
     } else {
       srcMat = Mat(height, width, CV_8U, src, irow);
@@ -250,7 +224,6 @@ int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   default:
     break;
   }
-
 
   if (sdata->inited == WEED_FALSE) {
     sdata->prevgrey = cvgrey;
@@ -338,7 +311,6 @@ int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
 }
 
 
-
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
@@ -372,7 +344,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_set_int_value(plugin_info, "version", package_version);
 
-    init_luma_arrays();
+    init_Y_to_Y_tables();
   }
   return plugin_info;
 }

@@ -1200,7 +1200,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, i
 
 
 #if GTK_CHECK_VERSION(3, 16, 0)
-
+#define WIDGET_UNIQUE_NAMES
 #ifdef WIDGET_UNIQUE_NAMES
 
 #define RND_STRLEN 16

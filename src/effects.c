@@ -1010,7 +1010,9 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
       }
 
       if (!mainw->gen_started_play) { // should always be the case
+        pthread_mutex_lock(&mainw->event_list_mutex);
         if (!(mainw->rte & new_rte)) mainw->rte |= new_rte;
+        pthread_mutex_unlock(&mainw->event_list_mutex);
 
         mainw->last_grabbable_effect = key;
         if (rte_window != NULL) rtew_set_keych(key, TRUE);

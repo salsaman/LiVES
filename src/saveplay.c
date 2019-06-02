@@ -264,7 +264,7 @@ static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event
 #define AUDIO_FRAMES_TO_READ 100
 
 ulong open_file_sel(const char *file_name, double start, int frames) {
-  char msg[256], loc[256];
+  char msg[256], loc[PATH_MAX];
   char *tmp = NULL;
   char *isubfname = NULL;
   char *fname = lives_strdup(file_name), *msgstr;

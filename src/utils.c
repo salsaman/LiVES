@@ -2140,8 +2140,10 @@ int free_n_msgs(int frval) {
     }
     weed_plant_free(mainw->msg_list);
     mainw->msg_list = next;
-    if (mainw->msg_list == end) weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, NULL);
-    else weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, end);
+    if (mainw->msg_list != NULL) {
+      if (mainw->msg_list == end) weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, NULL);
+      else weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, end);
+    }
     mainw->n_messages--;
     if (mainw->ref_message != NULL) {
       if (--mainw->ref_message_n < 0) mainw->ref_message = NULL;

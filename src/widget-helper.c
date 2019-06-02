@@ -1233,6 +1233,12 @@ static char *make_random_string(const char *prefix) {
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
+
+static void delev(LiVESWidget *widget, livespointer user_data) {
+  gtk_widget_set_name(widget, "");
+}
+
+
 static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *selector, const char *detail,
     const char *value) {
   GtkCssProvider *provider;
@@ -1250,13 +1256,16 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
                                  (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
 
   // seems like this isn't really necessary since, it apparently each widget has its own unique style context anyway...
-  widget_name = g_strdup(gtk_widget_get_name(widget));
+  widget_name = lives_strdup(gtk_widget_get_name(widget));
 
 #ifdef WIDGET_UNIQUE_NAMES
   if (widget_name == NULL || (strncmp(widget_name, RND_STR_PREFIX, strlen(RND_STR_PREFIX)))) {
-    if (widget_name != NULL) g_free(widget_name);
+    if (widget_name != NULL) lives_free(widget_name);
     widget_name = make_random_string(RND_STR_PREFIX);
     gtk_widget_set_name(widget, widget_name);
+    lives_signal_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_DESTROY_EVENT,
+                         LIVES_GUI_CALLBACK(delev),
+                         NULL);
   }
 #endif
   //////
@@ -1367,7 +1376,6 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
                                   css_string,
                                   -1, NULL);
 #endif
-  g_free(widget_name);
   g_free(wname);
   g_free(css_string);
   g_object_unref(provider);

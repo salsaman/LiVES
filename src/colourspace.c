@@ -10246,9 +10246,7 @@ static struct SwsContext *swscale_find_context(int iwidth, int iheight,
       }
       return swscale_ctx[0].ctx;
     }
-
   }
-
   return NULL;
 }
 
@@ -10453,9 +10451,13 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     width *= weed_palette_get_pixels_per_macropixel(opal_hint);
     iwidth *= weed_palette_get_pixels_per_macropixel(palette); // input width is in macropixels
 
+    // TODO - test with sws_getCachedContext
     if ((swscale = swscale_find_context(iwidth, iheight, width, height, ipixfmt, opixfmt, flags)) == NULL) {
       swscale = sws_getContext(iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL);
       store_ctx = TRUE;
+    } else {
+      swscale = sws_getCachedContext(swscale, iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL);
+      swscale_ctx[0].ctx = swscale;
     }
 
     if (swscale == NULL) {

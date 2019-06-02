@@ -3176,7 +3176,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -3939,7 +3939,6 @@ void desensitize(void) {
 
   lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
-
 
   if (mainw->current_file >= 0 && (mainw->playing_file == -1 || mainw->foreign)) {
     //  if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {
@@ -7288,6 +7287,7 @@ void load_frame_image(int frame) {
     }
 
     if (mainw->multitrack == NULL) {
+      reset_message_area(TRUE);
       resize(1);
       lives_widget_hide(mainw->playframe);
       load_start_image(0);

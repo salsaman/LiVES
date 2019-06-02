@@ -244,6 +244,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   priv->fmt = fmt;
   priv->inited = TRUE;
 
+  avformat_close_input(&fmt_ctx);
+
 skip_probe:
 
   priv->ic = NULL;

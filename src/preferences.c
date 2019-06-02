@@ -4407,6 +4407,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_TABLE(layout));
   prefsw->cbutton_fsur = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Frame surround"))),
                          FALSE, &palette->frame_surround, &sp_red, &sp_green, &sp_blue, NULL);
+  lives_free(tmp);
 
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fsur), LIVES_WIDGET_COLOR_SET_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled),
@@ -5271,6 +5272,8 @@ void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
  */
 void on_prefs_close_clicked(LiVESButton *button, livespointer user_data) {
   lives_list_free_all(&prefs->acodec_list);
+  lives_list_free_all(&prefsw->pbq_list);
+  lives_tree_view_set_model(LIVES_TREE_VIEW(prefsw->prefs_list), NULL);
   lives_free(prefsw->audp_name);
   lives_free(prefsw->orig_audp_name);
   lives_freep((void **)&resaudw);
@@ -5449,6 +5452,7 @@ void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_list_free_all(&prefs->acodec_list);
   lives_list_free_all(&prefsw->pbq_list);
+  lives_tree_view_set_model(LIVES_TREE_VIEW(prefsw->prefs_list), NULL);
 
   lives_free(prefsw->audp_name);
   lives_free(prefsw->orig_audp_name);

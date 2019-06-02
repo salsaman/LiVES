@@ -115,14 +115,14 @@ int common_process(int type, weed_plant_t *inst, weed_timecode_t timestamp) {
   int palette = weed_get_int_value(in_channel, "current_palette", &error);
   unsigned char *end = src + height * irowstride;
   int inplace = (src == dest);
-  int red = 0, blue =2;
+  int red = 0, blue = 2;
   register int j;
 
   if (palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32) {
     red = 2;
     blue = 0;
   }
-  
+
   // new threading arch
   if (weed_plant_has_leaf(out_channel, "offset")) {
     int offset = weed_get_int_value(out_channel, "offset", &error);
@@ -154,15 +154,16 @@ int common_process(int type, weed_plant_t *inst, weed_timecode_t timestamp) {
         switch (type) {
         case 1:
           // fire-ish effect
-	  sdata->fastrand_val = fastrand(sdata->fastrand_val);
-          dest[j + red] = (uint8_t)((uint8_t)((sdata->fastrand_val & 0x7f00) >> 8) + (dest[j + 1] = (uint8_t)((fastrand(sdata->fastrand_val) & 0x7f00) >> 8))); //R & G
-	  sdata->fastrand_val = fastrand(sdata->fastrand_val);
+          sdata->fastrand_val = fastrand(sdata->fastrand_val);
+          dest[j + red] = (uint8_t)((uint8_t)((sdata->fastrand_val & 0x7f00) >> 8) + (dest[j + 1] = (uint8_t)((fastrand(
+                                      sdata->fastrand_val) & 0x7f00) >> 8))); //R & G
+          sdata->fastrand_val = fastrand(sdata->fastrand_val);
           dest[j + blue] = (uint8_t)0;                   //B
           break;
         //
         case 2:
           // blue glow
-	  sdata->fastrand_val = fastrand(sdata->fastrand_val);
+          sdata->fastrand_val = fastrand(sdata->fastrand_val);
           dest[j + red] = dest[j + 1] = (uint8_t)((sdata->fastrand_val & 0xff00) >> 8);                                       //R&G
           dest[j + blue] = (uint8_t)255; //B
           break;

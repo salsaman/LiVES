@@ -870,7 +870,17 @@ static inline double weed_palette_get_plane_ratio_vertical(int pal, int plane) {
 static int Y_R[256];
 static int Y_G[256];
 static int Y_B[256];
+static int Y_Ru[256];
+static int Y_Gu[256];
+static int Y_Bu[256];
+static int Cb_Ru[256];
+static int Cb_Gu[256];
+static int Cb_Bu[256];
+static int Cr_Ru[256];
+static int Cr_Gu[256];
+static int Cr_Bu[256];
 static int YCL_YUCL[256];
+static int UVCL_UVUCL[256];
 static int YUCL_YCL[256];
 
 static int yuv_rgb_inited = 0;
@@ -900,25 +910,72 @@ static void init_RGB_to_YCbCr_tables(void) {
                      + (16.0 * (double)(1 << FP_BITS)));
 
   }
+
+  for (i = 0; i < 256; i++) {
+    Y_Ru[i] = myround(0.299 * (double)i
+                      * (1 << FP_BITS));
+    Y_Gu[i] = myround(0.587 * (double)i
+                      * (1 << FP_BITS));
+    Y_Bu[i] = myround(0.114 * (double)i
+                      * (1 << FP_BITS));
+
+
+    Cb_Bu[i] = myround(-0.168736 * (double)i
+                       * (1 << FP_BITS));
+    Cb_Gu[i] = myround(-0.331264 * (double)i
+                       * (1 << FP_BITS));
+    Cb_Ru[i] = myround((0.500 * (double)i
+                        + 128.) * (1 << FP_BITS));
+
+    Cr_Bu[i] = myround(0.500 * (double)i
+                       * (1 << FP_BITS));
+    Cr_Gu[i] = myround(-0.418688 * (double)i
+                       * (1 << FP_BITS));
+    Cr_Ru[i] = myround((-0.081312 * (double)i
+                        + 128.) * (1 << FP_BITS));
+  }
+
   yuv_rgb_inited = 1;
 }
+
+
+// unclamped values
+#define RGB_2_YIQ(a, b, c)			\
+  do { \
+    int i; \
+    register short x; \
+    \
+    for (i = 0; i < NUM_PIXELS_SQUARED; i++) { \
+      Unit Y, I, Q; \
+      if ((x=((Y_Ru[(int)a[i]]+Y_Gu[(int)b[i]]+Y_Bu[(int)(int)c[i]])>>FP_BITS))>255) x=255; \
+      Y=x<0?0:x; \
+      if ((x=((Cr_Ru[(int)a[i]]+Cr_Gu[(int)b[i]]+Cr_Bu[(int)c[i]])>>FP_BITS))>255) x=255; \
+      I=x<0?0:x; \
+      if ((x=((Cb_Ru[(int)a[i]]+Cb_Gu[(int)b[i]]+Cb_Bu[(int)c[i]])>>FP_BITS))>255) x=255; \
+      Q=x<0?0:x; \
+      a[i] = Y; \
+      b[i] = I; \
+      c[i] = Q; \
+    } \
+  } while(0)
 
 
 static void init_Y_to_Y_tables(void) {
   register int i;
 
   for (i = 0; i < 17; i++) {
-    YCL_YUCL[i] = 0;
+    UVCL_UVUCL[i] = YCL_YUCL[i] = 0;
     YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;
   }
 
   for (i = 17; i < 235; i++) {
     YCL_YUCL[i] = (int)((float)(i - 16.) / 219. * 255. + .5);
+    UVCL_UVUCL[i] = (int)((float)(i - 16.) / 224. * 255. + .5);
     YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;
   }
 
   for (i = 235; i < 256; i++) {
-    YCL_YUCL[i] = 255;
+    UVCL_UVUCL[i] = YCL_YUCL[i] = 255;
     YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;
   }
 
@@ -1015,7 +1072,7 @@ static void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int 
   int nplanes, p, mpsize;
   uint8_t *dst = *pdst, *src;
   uint8_t black[3];
-  
+
   if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
     weed_memset(dst, 0, width * 3);
     return;
@@ -1026,7 +1083,7 @@ static void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int 
 
   black[0] = yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED ? 0 : 16;
   black[1] = black[2] = 128;
-  
+
   for (p = 0; p < nplanes; p++) {
     dst = pdst[p];
     src = psrc[p];
@@ -1037,16 +1094,16 @@ static void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int 
       break;
     }
     if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
-	pal == WEED_PALETTE_YUVA4444P) {
+        pal == WEED_PALETTE_YUVA4444P) {
       // yuv plane, set to black
       weed_memset(dst, black[p], width);
     } else {
       // RGBA, BGRA, ARGB, YUV888, YUVA8888, UYVY, YUYV, YUV411
       int i;
       for (i = 0; i < width; i++) {
-	mpsize = blank_pixel(dst, pal, yuv_clamping, src);
-	dst += mpsize;
-	if (src != NULL) src += mpsize;
+        mpsize = blank_pixel(dst, pal, yuv_clamping, src);
+        dst += mpsize;
+        if (src != NULL) src += mpsize;
       }
       break;
     }

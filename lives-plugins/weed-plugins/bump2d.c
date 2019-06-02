@@ -110,9 +110,9 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     for (y = 1; y < height - 1; y++) {
       xx = 1;
       for (x = 1; x < widthx - psize * 2; x += psize) {
-	bumpmap[xx][y].x = calc_luma(&src[x + psize], palette, yuv_clamping) - calc_luma(&src[x], palette, yuv_clamping);
-	bumpmap[xx][y].y = calc_luma(&src[x], palette, yuv_clamping) - calc_luma(&src[- irowstride + x], palette, yuv_clamping);
-	xx++;
+        bumpmap[xx][y].x = calc_luma(&src[x + psize], palette, yuv_clamping) - calc_luma(&src[x], palette, yuv_clamping);
+        bumpmap[xx][y].y = calc_luma(&src[x], palette, yuv_clamping) - calc_luma(&src[- irowstride + x], palette, yuv_clamping);
+        xx++;
       }
       src += irowstride;
     }
@@ -122,11 +122,11 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     lighty = aSin[sdata->sin_index2] / 100. * height / 2.  + height / 2 + 128. / aspect;
 
     src = isrc;
-  
+
     blank_row(&dst, width, palette, yuv_clamping, 1, &src);
     dst += orowstride;
     src += irowstride;
-  
+
     orowstride -= widthx - psize;
     irowstride -= widthx - psize;
 
@@ -136,22 +136,22 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       dst += psize;
 
       for (x = 1; x < width - 1; x++) {
-	normalx = bumpmap[x][y].x + (lightx - x) / aspect;
-	normaly = bumpmap[x][y].y + temp;
+        normalx = bumpmap[x][y].x + (lightx - x) / aspect;
+        normaly = bumpmap[x][y].y + temp;
 
-	if (normalx < 0 || normalx > 255)
-	  normalx = 0;
-	if (normaly < 0 || normaly > 255)
-	  normaly = 0;
-	if (palette == WEED_PALETTE_YUV888 || palette == WEED_PALETTE_YUVA8888) {
-	  if (yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED) 
-	    *dst = reflectionmap[normalx][normaly];
-	  else *dst = YUCL_YCL[reflectionmap[normalx][normaly]];
-	  dst[1] = dst[2] = 128;
-	  if (palette == WEED_PALETTE_YUVA8888) dst[3] = src[3];
-	}
-	weed_memset(dst + offs, reflectionmap[normalx][normaly], 3);
-	dst += psize;
+        if (normalx < 0 || normalx > 255)
+          normalx = 0;
+        if (normaly < 0 || normaly > 255)
+          normaly = 0;
+        if (palette == WEED_PALETTE_YUV888 || palette == WEED_PALETTE_YUVA8888) {
+          if (yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED)
+            *dst = reflectionmap[normalx][normaly];
+          else *dst = YUCL_YCL[reflectionmap[normalx][normaly]];
+          dst[1] = dst[2] = 128;
+          if (palette == WEED_PALETTE_YUVA8888) dst[3] = src[3];
+        }
+        weed_memset(dst + offs, reflectionmap[normalx][normaly], 3);
+        dst += psize;
       }
       src += widthx - psize;
       blank_pixel(dst, palette, yuv_clamping, src);

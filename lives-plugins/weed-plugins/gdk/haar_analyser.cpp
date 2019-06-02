@@ -81,11 +81,10 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "../weed-utils-code.c" // optional
+#define NEED_PALETTE_UTILS
 #include "../weed-plugin-utils.c" // optional
 
-
 /////////////////////////////////////////////////////////////
-
 
 /* C Includes */
 #include <math.h>
@@ -95,92 +94,14 @@ static int package_version = 1; // version of this package
 
 #include <gdk/gdk.h>
 
-
 /* imgSeek Includes */
 #include "haar_analyser.h"
-
-static unsigned short UNCLAMP_Y[256];
-static unsigned short UNCLAMP_UV[256];
-
-// unclamped Y'CbCr
-static gint Y_Ru[256];
-static gint Y_Gu[256];
-static gint Y_Bu[256];
-static gint Cb_Ru[256];
-static gint Cb_Gu[256];
-static gint Cb_Bu[256];
-static gint Cr_Ru[256];
-static gint Cr_Gu[256];
-static gint Cr_Bu[256];
-
-
-static void init_luma_arrays(void) {
-  register int i;
-
-  for (i = 0; i < 256; i++) {
-    Y_Ru[i] = myround(0.299 * (gdouble)i
-                      * (1 << FP_BITS));
-    Y_Gu[i] = myround(0.587 * (gdouble)i
-                      * (1 << FP_BITS));
-    Y_Bu[i] = myround(0.114 * (gdouble)i
-                      * (1 << FP_BITS));
-
-
-    Cb_Bu[i] = myround(-0.168736 * (gdouble)i
-                       * (1 << FP_BITS));
-    Cb_Gu[i] = myround(-0.331264 * (gdouble)i
-                       * (1 << FP_BITS));
-    Cb_Ru[i] = myround((0.500 * (gdouble)i
-                        + 128.) * (1 << FP_BITS));
-
-    Cr_Bu[i] = myround(0.500 * (gdouble)i
-                       * (1 << FP_BITS));
-    Cr_Gu[i] = myround(-0.418688 * (gdouble)i
-                       * (1 << FP_BITS));
-    Cr_Ru[i] = myround((-0.081312 * (gdouble)i
-                        + 128.) * (1 << FP_BITS));
-  }
-
-  for (i = 0; i < 17; i++) {
-    UNCLAMP_Y[i] = UNCLAMP_UV[i] = 0;
-  }
-
-  for (i = 17; i < 235; i++) {
-    UNCLAMP_Y[i] = (int)((float)(i - 16.) / 219.*255. + .5);
-    UNCLAMP_UV[i] = (int)((float)(i - 16.) / 224.*255. + .5);
-  }
-
-  for (i = 235; i < 256; i++) {
-    UNCLAMP_Y[i] = UNCLAMP_UV[i] = 255;
-    if (i < 241) UNCLAMP_UV[i] = (int)((float)(i - 16.) / 224.*255. + .5);
-  }
-}
-
-#define RGB_2_Y(a, b, c)			\
-  do { \
-    int i; \
-    register short x; \
-    \
-    for (i = 0; i < NUM_PIXELS_SQUARED; i++) { \
-      Unit Y, I, Q; \
-      if ((x=((Y_Ru[(int)a[i]]+Y_Gu[(int)b[i]]+Y_Bu[(int)(int)c[i]])>>FP_BITS))>255) x=255; \
-      Y=x<0?0:x; \
-      if ((x=((Cr_Ru[(int)a[i]]+Cr_Gu[(int)b[i]]+Cr_Bu[(int)c[i]])>>FP_BITS))>255) x=255; \
-      I=x<0?0:x; \
-      if ((x=((Cb_Ru[(int)a[i]]+Cb_Gu[(int)b[i]]+Cb_Bu[(int)c[i]])>>FP_BITS))>255) x=255; \
-      Q=x<0?0:x; \
-      a[i] = Y; \
-      b[i] = I; \
-      c[i] = Q; \
-    } \
-  } while(0)
 
 
 // Do the Haar tensorial 2d transform itself.
 // Here input is RGB data [0..255] in Unit arrays
 // Computation is (almost) in-situ.
-static void
-haar2D(Unit a[]) {
+static void haar2D(Unit a[]) {
   int i;
   Unit t[NUM_PIXELS >> 1];
 
@@ -207,7 +128,7 @@ haar2D(Unit a[]) {
         a[j1] = (a[j2] + a[j21]);
       }
       // Write back subtraction results:
-      memcpy(a + i + h1, t, h1 * sizeof(a[0]));
+      weed_memcpy(a + i + h1, t, h1 * sizeof(a[0]));
     }
     // Fix first element of each row:
     a[i] *= C;	// C = 1/sqrt(NUM_PIXELS)
@@ -245,18 +166,18 @@ haar2D(Unit a[]) {
   }
 }
 
+
 /* Do the Haar tensorial 2d transform itself.
    Here input is unclamped YUV data [0..255] in Unit arrays.
    Results are available in a, b, and c.
    Fully inplace calculation; order of result is interleaved though,
    but we don't care about that.
 */
-void
-transform(Unit *a, Unit *b, Unit *c, int pal) {
+static void transform(Unit *a, Unit *b, Unit *c, int pal) {
   if (pal == WEED_PALETTE_RGB24) {
-    RGB_2_Y(a, b, c);
+    RGB_2_YIQ(a, b, c);
   } else if (pal == WEED_PALETTE_BGR24) {
-    RGB_2_Y(c, b, a);
+    RGB_2_YIQ(c, b, a);
   }
 
   haar2D(a);
@@ -272,8 +193,7 @@ transform(Unit *a, Unit *b, Unit *c, int pal) {
 
 // Find the NUM_COEFS largest numbers in cdata[] (in magnitude that is)
 // and store their indices in sig[].
-inline static void
-get_m_largests(Unit *cdata, Idx *sig, int num_coefs) {
+inline static void get_m_largests(Unit *cdata, Idx *sig, int num_coefs) {
   int cnt, i;
   valStruct val;
   valqueue vq;			// dynamic priority queue of valStruct's
@@ -315,14 +235,14 @@ get_m_largests(Unit *cdata, Idx *sig, int num_coefs) {
   // Must have cnt==NUM_COEFS here.
 }
 
+
 // Determines a total of NUM_COEFS positions in the image that have the
 // largest magnitude (absolute value) in color value. Returns linearized
 // coordinates in sig1, sig2, and sig3. avgl are the [0,0] values.
 // The order of occurrence of the coordinates in sig doesn't matter.
 // Complexity is 3 x NUM_PIXELS^2 x 2log(NUM_COEFS).
-int
-calcHaar(Unit *cdata1, Unit *cdata2, Unit *cdata3,
-         Idx *sig1, Idx *sig2, Idx *sig3, double *avgl, int num_coefs) {
+static int calcHaar(Unit *cdata1, Unit *cdata2, Unit *cdata3,
+                    Idx *sig1, Idx *sig2, Idx *sig3, double *avgl, int num_coefs) {
   avgl[0] = cdata1[0];
   avgl[1] = cdata2[0];
   avgl[2] = cdata3[0];
@@ -340,17 +260,17 @@ calcHaar(Unit *cdata1, Unit *cdata2, Unit *cdata3,
 }
 
 
-
 ///////////////////////////////////////
-
 
 inline G_GNUC_CONST int pl_gdk_rowstride_value(int rowstride) {
   return (rowstride + 3) & ~3;
 }
 
+
 inline int G_GNUC_CONST pl_gdk_last_rowstride_value(int width, int nchans) {
   return width * (((nchans << 3) + 7) >> 3);
 }
+
 
 static void plugin_free_buffer(guchar *pixels, gpointer data) {
   return;
@@ -363,7 +283,6 @@ static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alp
   int rowstride = pl_gdk_rowstride_value(width * channels);
   return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer, NULL);
 }
-
 
 
 static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
@@ -423,7 +342,6 @@ static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
 }
 
 
-
 static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
   int error;
   int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
@@ -452,11 +370,7 @@ static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
 }
 
 
-
-
-
 //////////////////////////
-
 
 typedef struct {
   int coefs;
@@ -464,7 +378,6 @@ typedef struct {
   Idx *sig2;
   Idx *sig3;
 } _sdata;
-
 
 
 static int make_sigs(_sdata *sdata, int num_coefs) {
@@ -491,8 +404,7 @@ static int make_sigs(_sdata *sdata, int num_coefs) {
 
 ////////////////////////////////////////////////////////////
 
-
-int haar_init(weed_plant_t *inst) {
+static int haar_init(weed_plant_t *inst) {
   int error, retval;
   _sdata *sdata;
   weed_plant_t **in_params = (weed_plant_t **)weed_get_plantptr_array(inst, "in_parameters", &error);
@@ -512,8 +424,7 @@ int haar_init(weed_plant_t *inst) {
 }
 
 
-
-int haar_deinit(weed_plant_t *inst) {
+static int haar_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
 
@@ -528,8 +439,7 @@ int haar_deinit(weed_plant_t *inst) {
 }
 
 
-
-int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *channel = weed_get_plantptr_value(inst, "in_channels", &error);
   unsigned char **orig_src, *src;
@@ -599,9 +509,9 @@ int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     for (j = 0; j < hmax; j += psize) {
       if (clamped) {
         // convert to unclamped
-        cdata1[cn] = UNCLAMP_Y[src[k + j]];
-        cdata2[cn] = UNCLAMP_UV[src[k + j + 1]];
-        cdata3[cn] = UNCLAMP_UV[src[k + j]];
+        cdata1[cn] = YCL_YUCL[src[k + j]];
+        cdata2[cn] = UVCL_UVUCL[src[k + j + 1]];
+        cdata3[cn] = UVCL_UVUCL[src[k + j]];
       } else {
         // unclamped YUV - pass through
         cdata1[cn] = src[k + j];
@@ -650,7 +560,6 @@ int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 #endif
 
-
   weed_free(out_params);
 
   return WEED_NO_ERROR;
@@ -672,7 +581,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *filter_class = weed_filter_class_init("haar_analyser", "salsaman and others", 1, 0, &haar_init,
                                  &haar_process, &haar_deinit, in_chantmpls, NULL, in_params, out_params);
 
-
     weed_set_int_value(out_params[0], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
     weed_set_int_value(out_params[1], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
     weed_set_int_value(out_params[2], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
@@ -681,8 +589,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_set_int_value(plugin_info, "version", package_version);
 
-    init_luma_arrays();
+    init_RGB_to_YCbCr_tables();
+    init_Y_to_Y_tables();
   }
   return plugin_info;
 }
-

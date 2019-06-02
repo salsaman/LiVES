@@ -146,13 +146,16 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
         break;
       case 4:
         // avg luma overlay
-	if (j > start && j < width - 1 && row > 0 && row < height - 1) {
-	  uint8_t av_luma = (calc_luma(&src1[j], pal, 0) + calc_luma(&src1[j - 1], pal, 0) + calc_luma(&src1[j + 1], pal, 0) + calc_luma(&src1[j - irowstride1], pal, 0) + calc_luma(&src1[j - 1 - irowstride1], pal, 0) + calc_luma(&src1[j + 1 - irowstride1], pal, 0) + calc_luma(&src1[j + irowstride1], pal, 0) + calc_luma(&src1[j - 1 + irowstride1], pal, 0) + calc_luma(&src1[j + 1 + irowstride1], pal, 0)) / 9; 
-	  if (av_luma < (blend_factor)) weed_memcpy(&dst[j], &src2[j], 3);
-	  else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
-	  row++;
-	  break;
-	}
+        if (j > start && j < width - 1 && row > 0 && row < height - 1) {
+          uint8_t av_luma = (calc_luma(&src1[j], pal, 0) + calc_luma(&src1[j - 1], pal, 0) + calc_luma(&src1[j + 1], pal,
+                             0) + calc_luma(&src1[j - irowstride1], pal, 0) + calc_luma(&src1[j - 1 - irowstride1], pal, 0) + calc_luma(&src1[j + 1 - irowstride1], pal,
+                                 0) + calc_luma(&src1[j + irowstride1], pal, 0) + calc_luma(&src1[j - 1 + irowstride1], pal, 0) + calc_luma(&src1[j + 1 + irowstride1], pal,
+                                     0)) / 9;
+          if (av_luma < (blend_factor)) weed_memcpy(&dst[j], &src2[j], 3);
+          else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
+          row++;
+          break;
+        }
       case 1:
         // luma overlay
         if (calc_luma(&src1[j], pal, 0) < (blend_factor)) weed_memcpy(&dst[j], &src2[j], 3);

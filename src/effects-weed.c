@@ -7848,6 +7848,7 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
 
     play_file();
 
+    filter_mutex_lock(key);
     // need to set this after playback ends; this stops the key from being activated (again) in effects.c
     mainw->gen_started_play = TRUE;
 
@@ -7894,7 +7895,6 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
       if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
         ce_thumbs_highlight_current_clip();
     }
-
     if (mainw->cancelled == CANCEL_GENERATOR_END) mainw->cancelled = CANCEL_NONE;
   }
 

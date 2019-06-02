@@ -147,7 +147,8 @@ static inline uint8_t make_lumbyte(unsigned char *img, uint8_t thresh, int pal, 
 }
 
 
-static inline void fill_line(int fontwidth, unsigned char *src, unsigned char *dst, int psize, unsigned char *fillval, unsigned short fontrow,
+static inline void fill_line(int fontwidth, unsigned char *src, unsigned char *dst, int psize, unsigned char *fillval,
+                             unsigned short fontrow,
                              int type) {
   register int i;
 
@@ -187,7 +188,7 @@ static inline void fill_block(int fontnum, unsigned char *src, unsigned char *ds
   else if (type == 3) weed_memcpy(fillval, src, 3);
 
   fillval[3] = src[3];
-  
+
   for (i = 0; i < 16; i++) {
     fill_line(font_tables[fontnum].width, src, dst, psize, fillval, font_tables[fontnum].fonttable[glyph * 16 + i], type);
     dst += drow;
@@ -221,11 +222,11 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   unsigned char *end;
   int skip, glyph16, glyphwidth;
   int psize = 3;
-  
+
   uint8_t lb[16], lb2[16];
 
   if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32) psize = 4;
-  
+
   thresh = weed_get_int_value(in_params[0], "value", &error) & 0xff;
   mode = weed_get_int_value(in_params[1], "value", &error);
   fontnum = weed_get_int_value(in_params[2], "value", &error);
@@ -251,7 +252,7 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   skip = font_tables[fontnum].width * psize;
   glyph16 = font_tables[fontnum].nglyphs << 4;
   glyphwidth = 8 * psize;
-  
+
   //printf("ok2 %d %d %d\n",startx,endx,skip);
 
   // get a FONT_WIDTH x 16 block, compare with each character and find the minimum difference
@@ -261,17 +262,17 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
       for (l = 0; l < 16; l++) lb[l] = make_lumbyte(&src[j + l * irowstride], thresh, palette, psize);
       if (font_tables[fontnum].width == 16) {
-	for (l = 0; l < 16; l++) {
-	  lb2[l] = make_lumbyte(&src[j + l * irowstride + glyphwidth], thresh, palette, psize);
-	}
+        for (l = 0; l < 16; l++) {
+          lb2[l] = make_lumbyte(&src[j + l * irowstride + glyphwidth], thresh, palette, psize);
+        }
       }
       for (k = 0; k < glyph16; k += 16) {
         numones = m = 0;
         // xor'ing our lumbyte with a font row, and then looking this up in onescount gives us the number of different bits
         if (font_tables[fontnum].width == 16) {
           for (l = 0; l < 16; l++)
-	    if ((numones += onescount[(uint16_t)(((uint16_t)lb[l] << 8) + (uint16_t)lb2[l])^font_tables[fontnum].fonttable[k +
-                                                (m++)]]) >= minones) break;
+            if ((numones += onescount[(uint16_t)(((uint16_t)lb[l] << 8) + (uint16_t)lb2[l])^font_tables[fontnum].fonttable[k +
+                                      (m++)]]) >= minones) break;
         } else {
           for (l = 0; l < 16; l++) if ((numones += onescount[(lb[l] ^ (uint8_t)(font_tables[fontnum].fonttable[k + (m++)]))]) >= minones) break;
         }

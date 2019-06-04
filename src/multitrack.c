@@ -1167,7 +1167,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
 
       if (needs_text) {
         const char *sfont = "Sans";
-        char *fname = lives_path_get_basename(mainw->files[filenum]->name);
+        char *fname = get_menu_name(mainw->files[filenum], FALSE);
         lives_colRGBA64_t col_white, col_black;
         LingoLayout *layout;
         lives_painter_surface_t *surface;
@@ -1986,7 +1986,7 @@ static void show_track_info(lives_mt *mt, LiVESWidget *eventbox, int track, doub
   if (block != NULL) {
     if (!is_audio_eventbox(eventbox)) filenum = get_frame_event_clip(block->start_event, track);
     else filenum = get_audio_frame_clip(block->start_event, track);
-    add_context_label(mt, (tmp = lives_strdup_printf(_("Source: %s"), (tmp1 = lives_path_get_basename(mainw->files[filenum]->name)))));
+    add_context_label(mt, (tmp = lives_strdup_printf(_("Source: %s"), (tmp1 = get_menu_name(mainw->files[filenum], FALSE)))));
     lives_free(tmp);
     lives_free(tmp1);
     add_context_label(mt, (_("Right click for context menu.\n")));
@@ -3677,7 +3677,7 @@ static void select_block(lives_mt *mt) {
                                   get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL,
                                   get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL + 1. / mt->fps)));
     lives_free(tmp2);
-    add_context_label(mt, (tmp2 = lives_strdup_printf(_("Source: %s"), (tmp = lives_path_get_basename(mainw->files[filenum]->name)))));
+    add_context_label(mt, (tmp2 = lives_strdup_printf(_("Source: %s"), (tmp = get_menu_name(mainw->files[filenum], FALSE)))));
     lives_free(tmp2);
     add_context_label(mt, (_("Right click for context menu.\n")));
     add_context_label(mt, (_("Single click on timeline\nto select a frame.\n")));
@@ -4621,17 +4621,17 @@ void mouse_mode_context(lives_mt *mt) {
 
 
 void update_insert_mode(lives_mt *mt) {
-  char text[255];
+  const char *mtext = NULL;
 
   if (mt->opts.insert_mode == INSERT_MODE_NORMAL) {
-    get_menu_text(mt->ins_normal, text);
+    mtext = lives_menu_item_get_text(mt->ins_normal);
   }
 
   if (mt->ins_label == NULL) {
-    set_menu_text(mt->ins_menuitem, text, TRUE);
+    lives_menu_item_set_text(mt->ins_menuitem, mtext, TRUE);
   } else {
     widget_opts.mnemonic_label = FALSE;
-    lives_label_set_text(LIVES_LABEL(mt->ins_label), text);
+    lives_label_set_text(LIVES_LABEL(mt->ins_label), mtext);
     widget_opts.mnemonic_label = TRUE;
   }
 
@@ -4655,7 +4655,7 @@ static void on_insert_mode_changed(LiVESMenuItem *menuitem, livespointer user_da
 
 static void on_mouse_mode_changed(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  char text[255];
+  const char *text;
 
   if (!mainw->interactive) return;
 
@@ -4665,10 +4665,10 @@ static void on_mouse_mode_changed(LiVESMenuItem *menuitem, livespointer user_dat
     mt->opts.mouse_mode = MOUSE_MODE_SELECT;
   }
 
-  get_menu_text(LIVES_WIDGET(menuitem), text);
+  text = lives_menu_item_get_text(LIVES_WIDGET(menuitem));
 
   if (mt->ins_label == NULL) {
-    set_menu_text(mt->mm_menuitem, text, TRUE);
+    lives_menu_item_set_text(mt->mm_menuitem, text, TRUE);
   } else {
     widget_opts.mnemonic_label = FALSE;
     lives_label_set_text(LIVES_LABEL(mt->mm_label), text);
@@ -4689,23 +4689,23 @@ static void on_mouse_mode_changed(LiVESMenuItem *menuitem, livespointer user_dat
 
 void update_grav_mode(lives_mt *mt) {
   // update GUI after grav mode change
-  char text[255];
+  const char *mtext = NULL;
 
   if (mt->opts.grav_mode == GRAV_MODE_NORMAL) {
-    get_menu_text(mt->grav_normal, text);
+    mtext = lives_menu_item_get_text(mt->grav_normal);
   } else if (mt->opts.grav_mode == GRAV_MODE_LEFT) {
-    get_menu_text(mt->grav_left, text);
+    mtext = lives_menu_item_get_text(mt->grav_left);
   }
 
   if (mt->opts.grav_mode == GRAV_MODE_RIGHT) {
-    get_menu_text(mt->grav_right, text);
-    set_menu_text(mt->remove_first_gaps, _("Close _last gap(s) in selected tracks/time"), TRUE);
+    mtext = lives_menu_item_get_text(mt->grav_right);
+    lives_menu_item_set_text(mt->remove_first_gaps, _("Close _last gap(s) in selected tracks/time"), TRUE);
   } else {
-    set_menu_text(mt->remove_first_gaps, _("Close _first gap(s) in selected tracks/time"), TRUE);
+    lives_menu_item_set_text(mt->remove_first_gaps, _("Close _first gap(s) in selected tracks/time"), TRUE);
   }
 
   widget_opts.mnemonic_label = FALSE;
-  lives_label_set_text(LIVES_LABEL(mt->grav_label), text);
+  lives_label_set_text(LIVES_LABEL(mt->grav_label), mtext);
   widget_opts.mnemonic_label = TRUE;
 
   lives_signal_handler_block(mt->grav_normal, mt->grav_normal_func);
@@ -4808,7 +4808,7 @@ static void mt_set_undoable(lives_mt *mt, int what, void *extra, boolean sensiti
     mt->undoable = FALSE;
     lives_snprintf(mt->undo_text, 32, "%s", _("_Undo"));
   }
-  set_menu_text(mt->undo, mt->undo_text, TRUE);
+  lives_menu_item_set_text(mt->undo, mt->undo_text, TRUE);
 
   lives_widget_set_sensitive(mt->undo, sensitive);
 }
@@ -4827,7 +4827,7 @@ static void mt_set_redoable(lives_mt *mt, int what, void *extra, boolean sensiti
     mt->redoable = FALSE;
     lives_snprintf(mt->redo_text, 32, "%s", _("_Redo"));
   }
-  set_menu_text(mt->redo, mt->redo_text, TRUE);
+  lives_menu_item_set_text(mt->redo, mt->redo_text, TRUE);
 
   lives_widget_set_sensitive(mt->redo, sensitive);
 }
@@ -6198,7 +6198,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESAdjustment *spinbutton_adj;
 
   char buff[32768];
-  char text[255];
+  const char *mtext;
 
   boolean in_menubar = TRUE;
 
@@ -7974,9 +7974,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_tool_button_set_use_underline(LIVES_TOOL_BUTTON(mt->grav_menuitem), TRUE);
 
   mt->grav_normal = lives_standard_check_menu_item_new_with_label(_("Gravity: _Normal"), mt->opts.grav_mode == GRAV_MODE_NORMAL);
-  get_menu_text(mt->grav_normal, text);
+  mtext = lives_menu_item_get_text(mt->grav_normal);
 
-  mt->grav_label = lives_label_new(text);
+  mt->grav_label = lives_label_new(mtext);
   lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(mt->grav_menuitem), mt->grav_label);
 
   lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar3), LIVES_TOOL_ITEM(mt->grav_menuitem), -1);
@@ -8029,8 +8029,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->mm_menuitem = LIVES_WIDGET(lives_standard_menu_tool_button_new(NULL, NULL));
     lives_tool_button_set_use_underline(LIVES_TOOL_BUTTON(mt->mm_menuitem), TRUE);
 
-    get_menu_text(mt->mm_move, text);
-    mt->mm_label = lives_label_new(text);
+    mtext = lives_menu_item_get_text(mt->mm_move);
+    mt->mm_label = lives_label_new(mtext);
     lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(mt->mm_menuitem), mt->mm_label);
     lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar3), LIVES_TOOL_ITEM(mt->mm_menuitem), -1);
     lives_menu_tool_button_set_menu(LIVES_MENU_TOOL_BUTTON(mt->mm_menuitem), mt->mm_submenu);
@@ -8070,8 +8070,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   } else {
     mt->ins_menuitem = LIVES_WIDGET(lives_standard_menu_tool_button_new(NULL, NULL));
     lives_tool_button_set_use_underline(LIVES_TOOL_BUTTON(mt->ins_menuitem), TRUE);
-    get_menu_text(mt->ins_normal, text);
-    mt->ins_label = lives_label_new(text);
+    mtext = lives_menu_item_get_text(mt->ins_normal);
+    mt->ins_label = lives_label_new(mtext);
     lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(mt->ins_menuitem), mt->ins_label);
     lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar3), LIVES_TOOL_ITEM(mt->ins_menuitem), -1);
     lives_menu_tool_button_set_menu(LIVES_MENU_TOOL_BUTTON(mt->ins_menuitem), mt->ins_submenu);
@@ -8746,13 +8746,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt_sensitise(mt);
   mt->is_ready = TRUE;
-  if (mainw->dp_cache != NULL) {
-    mainw->no_switch_dprint = TRUE;
-    d_print(mainw->dp_cache);
-    mainw->no_switch_dprint = FALSE;
-    lives_free(mainw->dp_cache);
-    mainw->dp_cache = NULL;
-  }
 
   lives_widget_set_can_focus(mt->message_box, TRUE);
   lives_widget_grab_focus(mt->message_box);
@@ -10658,7 +10651,7 @@ void mt_init_clips(lives_mt *mt, int orig_file, boolean add) {
       lives_container_add(LIVES_CONTAINER(eventbox), vbox);
       lives_box_pack_start(LIVES_BOX(mt->clip_inner_box), eventbox, FALSE, FALSE, 0);
 
-      lives_snprintf(filename, PATH_MAX, "%s", (tmp = lives_path_get_basename(mainw->files[i]->name)));
+      lives_snprintf(filename, PATH_MAX, "%s", (tmp = get_menu_name(mainw->files[i], FALSE)));
       lives_free(tmp);
       get_basename(filename);
       lives_snprintf(clip_name, CLIP_LABEL_LENGTH, "  %s  ", filename);
@@ -10761,7 +10754,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   //returns TRUE if we go into mt mode
   lives_mt *multi;
 
-  char buff[256];
+  const char *mtext;
 
   boolean response;
 
@@ -10975,14 +10968,14 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
       lives_widget_queue_resize(multi->nb_label);
     }
 
-    get_menu_text(multi->recent1, buff);
-    if (!strlen(buff)) lives_widget_hide(multi->recent1);
-    get_menu_text(multi->recent2, buff);
-    if (!strlen(buff)) lives_widget_hide(multi->recent2);
-    get_menu_text(multi->recent3, buff);
-    if (!strlen(buff)) lives_widget_hide(multi->recent3);
-    get_menu_text(multi->recent4, buff);
-    if (!strlen(buff)) lives_widget_hide(multi->recent4);
+    mtext = lives_menu_item_get_text(multi->recent1);
+    if (!strlen(mtext)) lives_widget_hide(multi->recent1);
+    mtext = lives_menu_item_get_text(multi->recent2);
+    if (!strlen(mtext)) lives_widget_hide(multi->recent2);
+    mtext = lives_menu_item_get_text(multi->recent3);
+    if (!strlen(mtext)) lives_widget_hide(multi->recent3);
+    mtext = lives_menu_item_get_text(multi->recent4);
+    if (!strlen(mtext)) lives_widget_hide(multi->recent4);
   }
 
   if (cfile->achans == 0) {
@@ -16670,13 +16663,13 @@ void mt_swap_play_pause(lives_mt *mt, boolean put_pause) {
 #if GTK_CHECK_VERSION(2, 6, 0)
     tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PAUSE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mt->btoolbar)));
 #endif
-    set_menu_text(mt->playall, _("_Pause"), TRUE);
+    lives_menu_item_set_text(mt->playall, _("_Pause"), TRUE);
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Pause (p)"));
     lives_widget_set_sensitive(mt->playall, TRUE);
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   } else {
     tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mt->btoolbar)));
-    set_menu_text(mt->playall, _("_Play from Timeline Position"), TRUE);
+    lives_menu_item_set_text(mt->playall, _("_Play from Timeline Position"), TRUE);
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all (p)"));
   }
 
@@ -17151,7 +17144,7 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
   mt->did_backup = did_backup;
 
   d_print(_("Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f to %.4f\n"),
-          ins_start / TICKS_PER_SECOND_DBL, ins_end / TICKS_PER_SECOND_DBL, (tmp = lives_path_get_basename(sfile->name)), secs,
+          ins_start / TICKS_PER_SECOND_DBL, ins_end / TICKS_PER_SECOND_DBL, (tmp = get_menu_name(sfile, FALSE)), secs,
           secs + (ins_end - ins_start) / TICKS_PER_SECOND_DBL);
   lives_free(tmp);
 
@@ -17413,7 +17406,7 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
   if (in_block == NULL) {
     char *tmp, *tmp1;
     d_print(_("Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"),
-            sfile->start, sfile->end, (tmp1 = lives_path_get_basename(sfile->name)),
+            sfile->start, sfile->end, (tmp1 = get_menu_name(sfile, FALSE)),
             (tmp = get_track_name(mt, mt->current_track, FALSE)),
             (orig_st + start_tc) / TICKS_PER_SECOND_DBL, (orig_end + start_tc) / TICKS_PER_SECOND_DBL);
     lives_free(tmp);

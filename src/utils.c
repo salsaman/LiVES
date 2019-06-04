@@ -2266,7 +2266,7 @@ void d_print(const char *fmt, ...) {
   if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && mainw->multitrack == NULL &&
       (mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
     if (mainw->current_file > 0) {
-      text = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile));
+      text = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile, TRUE));
       lives_free(tmp);
       add_messages_to_list(text);
       lives_free(text);
@@ -2753,6 +2753,8 @@ void get_frame_count(int idx) {
 
 
 void get_frames_sizes(int fileno, int frame) {
+  // get the actual physical frame size
+
   lives_clip_t *sfile = mainw->files[fileno];
   LiVESPixbuf *pixbuf;
 
@@ -2771,6 +2773,29 @@ void get_next_free_file(void) {
     mainw->first_free_file++;
     if (mainw->first_free_file >= MAX_FILES) mainw->first_free_file = -1;
   }
+}
+
+
+boolean lives_string_ends_with(const char *string, const char *fmt, ...) {
+  char *textx;
+  va_list xargs;
+  size_t slen, cklen;
+  boolean ret = FALSE;
+
+  if (string == NULL) return FALSE;
+
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  slen = strlen(string);
+  cklen = strlen(textx);
+  if (cklen == 0 || cklen > slen) {
+    lives_free(textx);
+    return FALSE;
+  }
+  if (!strncmp(string + slen - cklen, textx, cklen)) ret = TRUE;
+  lives_free(textx);
+  return ret;
 }
 
 
@@ -3749,24 +3774,6 @@ boolean after_foreign_play(void) {
 }
 
 
-void set_menu_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic) {
-  LiVESWidget *label;
-  if (LIVES_IS_MENU_ITEM(menuitem)) {
-    label = lives_bin_get_child(LIVES_BIN(menuitem));
-    widget_opts.mnemonic_label = use_mnemonic;
-    lives_label_set_text(LIVES_LABEL(label), text);
-    widget_opts.mnemonic_label = TRUE;
-  }
-}
-
-
-void get_menu_text(LiVESWidget *menuitem, char *text) {
-  // text MUST be at least 255 chars long
-  LiVESWidget *label = lives_bin_get_child(LIVES_BIN(menuitem));
-  lives_snprintf(text, 255, "%s", lives_label_get_text(LIVES_LABEL(label)));
-}
-
-
 LIVES_GLOBAL_INLINE boolean int_array_contains_value(int *array, int num_elems, int value) {
   int i;
   for (i = 0; i < num_elems; i++) {
@@ -4281,7 +4288,7 @@ int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean cas
 
 
 void add_to_recent(const char *filename, double start, int frames, const char *extra_params) {
-  char buff[PATH_MAX];
+  const char *mtext;
   char *file;
 
   if (frames > 0) {
@@ -4292,76 +4299,76 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
     else file = lives_strdup_printf("%s\n%s", filename, extra_params);
   }
 
-  get_menu_text(mainw->recent1, buff);
-  if (strcmp(file, buff)) {
-    get_menu_text(mainw->recent2, buff);
-    if (strcmp(file, buff)) {
-      get_menu_text(mainw->recent3, buff);
-      if (strcmp(file, buff)) {
+  mtext = lives_menu_item_get_text(mainw->recent1);
+  if (strcmp(file, mtext)) {
+    mtext = lives_menu_item_get_text(mainw->recent2);
+    if (strcmp(file, mtext)) {
+      mtext = lives_menu_item_get_text(mainw->recent3);
+      if (strcmp(file, mtext)) {
         // not in list, or at pos 4
-        get_menu_text(mainw->recent3, buff);
-        set_menu_text(mainw->recent4, buff, FALSE);
-        if (mainw->multitrack != NULL) set_menu_text(mainw->multitrack->recent4, buff, FALSE);
-        set_pref_utf8(PREF_RECENT4, buff);
+        mtext = lives_menu_item_get_text(mainw->recent3);
+        lives_menu_item_set_text(mainw->recent4, mtext, FALSE);
+        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent4, mtext, FALSE);
+        set_pref_utf8(PREF_RECENT4, mtext);
 
-        get_menu_text(mainw->recent2, buff);
-        set_menu_text(mainw->recent3, buff, FALSE);
-        if (mainw->multitrack != NULL) set_menu_text(mainw->multitrack->recent3, buff, FALSE);
-        set_pref_utf8(PREF_RECENT3, buff);
+        mtext = lives_menu_item_get_text(mainw->recent2);
+        lives_menu_item_set_text(mainw->recent3, mtext, FALSE);
+        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent3, mtext, FALSE);
+        set_pref_utf8(PREF_RECENT3, mtext);
 
-        get_menu_text(mainw->recent1, buff);
-        set_menu_text(mainw->recent2, buff, FALSE);
-        if (mainw->multitrack != NULL) set_menu_text(mainw->multitrack->recent2, buff, FALSE);
-        set_pref_utf8(PREF_RECENT2, buff);
+        mtext = lives_menu_item_get_text(mainw->recent1);
+        lives_menu_item_set_text(mainw->recent2, mtext, FALSE);
+        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent2, mtext, FALSE);
+        set_pref_utf8(PREF_RECENT2, mtext);
 
-        set_menu_text(mainw->recent1, file, FALSE);
-        if (mainw->multitrack != NULL) set_menu_text(mainw->multitrack->recent1, file, FALSE);
+        lives_menu_item_set_text(mainw->recent1, file, FALSE);
+        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent1, file, FALSE);
         set_pref_utf8(PREF_RECENT1, file);
       } else {
         // #3 in list
-        get_menu_text(mainw->recent2, buff);
-        set_menu_text(mainw->recent3, buff, FALSE);
-        if (mainw->multitrack != NULL) set_menu_text(mainw->multitrack->recent3, buff, FALSE);
-        set_pref_utf8(PREF_RECENT3, buff);
+        mtext = lives_menu_item_get_text(mainw->recent2);
+        lives_menu_item_set_text(mainw->recent3, mtext, FALSE);
+        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent3, mtext, FALSE);
+        set_pref_utf8(PREF_RECENT3, mtext);
 
-        get_menu_text(mainw->recent1, buff);
-        set_menu_text(mainw->recent2, buff, FALSE);
-        if (mainw->multitrack != NULL) set_menu_text(mainw->multitrack->recent2, buff, FALSE);
-        set_pref_utf8(PREF_RECENT2, buff);
+        mtext = lives_menu_item_get_text(mainw->recent1);
+        lives_menu_item_set_text(mainw->recent2, mtext, FALSE);
+        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent2, mtext, FALSE);
+        set_pref_utf8(PREF_RECENT2, mtext);
 
-        set_menu_text(mainw->recent1, file, FALSE);
-        if (mainw->multitrack != NULL) set_menu_text(mainw->multitrack->recent1, file, FALSE);
+        lives_menu_item_set_text(mainw->recent1, file, FALSE);
+        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent1, file, FALSE);
         set_pref_utf8(PREF_RECENT1, file);
       }
     } else {
       // #2 in list
-      get_menu_text(mainw->recent1, buff);
-      set_menu_text(mainw->recent2, buff, FALSE);
-      if (mainw->multitrack != NULL) set_menu_text(mainw->multitrack->recent2, buff, FALSE);
-      set_pref_utf8(PREF_RECENT2, buff);
+      mtext = lives_menu_item_get_text(mainw->recent1);
+      lives_menu_item_set_text(mainw->recent2, mtext, FALSE);
+      if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent2, mtext, FALSE);
+      set_pref_utf8(PREF_RECENT2, mtext);
 
-      set_menu_text(mainw->recent1, file, FALSE);
-      if (mainw->multitrack != NULL) set_menu_text(mainw->multitrack->recent1, file, FALSE);
+      lives_menu_item_set_text(mainw->recent1, file, FALSE);
+      if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent1, file, FALSE);
       set_pref_utf8(PREF_RECENT1, file);
     }
   } else {
     // I'm number 1, so why change ;-)
   }
 
-  get_menu_text(mainw->recent1, buff);
-  if (strlen(buff)) {
+  mtext = lives_menu_item_get_text(mainw->recent1);
+  if (strlen(mtext)) {
     lives_widget_show(mainw->recent1);
   }
-  get_menu_text(mainw->recent2, buff);
-  if (strlen(buff)) {
+  mtext = lives_menu_item_get_text(mainw->recent2);
+  if (strlen(mtext)) {
     lives_widget_show(mainw->recent2);
   }
-  get_menu_text(mainw->recent3, buff);
-  if (strlen(buff)) {
+  mtext = lives_menu_item_get_text(mainw->recent3);
+  if (strlen(mtext)) {
     lives_widget_show(mainw->recent3);
   }
-  get_menu_text(mainw->recent4, buff);
-  if (strlen(buff)) {
+  mtext = lives_menu_item_get_text(mainw->recent4);
+  if (strlen(mtext)) {
     lives_widget_show(mainw->recent4);
   }
 
@@ -4424,8 +4431,8 @@ void set_undoable(const char *what, boolean sensitive) {
       lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
       lives_snprintf(cfile->redo_text, 32, "%s", _("_Redo"));
     }
-    set_menu_text(mainw->undo, cfile->undo_text, TRUE);
-    set_menu_text(mainw->redo, cfile->redo_text, TRUE);
+    lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
+    lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
   }
 
   lives_widget_hide(mainw->redo);
@@ -4453,8 +4460,8 @@ void set_redoable(const char *what, boolean sensitive) {
       lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
       lives_snprintf(cfile->redo_text, 32, "%s", _("_Redo"));
     }
-    set_menu_text(mainw->undo, cfile->undo_text, TRUE);
-    set_menu_text(mainw->redo, cfile->redo_text, TRUE);
+    lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
+    lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
   }
 
   lives_widget_hide(mainw->undo);

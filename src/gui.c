@@ -684,7 +684,7 @@ void create_LiVES(void) {
   mainw->save_as = lives_standard_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_SAVE, mainw->accel_group);
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->save_as);
   lives_widget_set_sensitive(mainw->save_as, FALSE);
-  set_menu_text(mainw->save_as, _("_Encode Clip As..."), TRUE);
+  lives_menu_item_set_text(mainw->save_as, _("_Encode Clip As..."), TRUE);
 
   mainw->save_selection = lives_standard_menu_item_new_with_label(_("Encode _Selection As..."));
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->save_selection);
@@ -2950,7 +2950,7 @@ void create_LiVES(void) {
 
 
 void show_lives(void) {
-  char buff[PATH_MAX];
+  const char *mtext;
 
   lives_widget_show_all(mainw->top_vbox);
 
@@ -2984,14 +2984,14 @@ void show_lives(void) {
     lives_widget_hide(mainw->recent_menu);
   }
 
-  get_menu_text(mainw->recent1, buff);
-  if (!strlen(buff)) lives_widget_hide(mainw->recent1);
-  get_menu_text(mainw->recent2, buff);
-  if (!strlen(buff)) lives_widget_hide(mainw->recent2);
-  get_menu_text(mainw->recent3, buff);
-  if (!strlen(buff)) lives_widget_hide(mainw->recent3);
-  get_menu_text(mainw->recent4, buff);
-  if (!strlen(buff)) lives_widget_hide(mainw->recent4);
+  mtext = lives_menu_item_get_text(mainw->recent1);
+  if (!strlen(mtext)) lives_widget_hide(mainw->recent1);
+  mtext = lives_menu_item_get_text(mainw->recent2);
+  if (!strlen(mtext)) lives_widget_hide(mainw->recent2);
+  mtext = lives_menu_item_get_text(mainw->recent3);
+  if (!strlen(mtext)) lives_widget_hide(mainw->recent3);
+  mtext = lives_menu_item_get_text(mainw->recent4);
+  if (!strlen(mtext)) lives_widget_hide(mainw->recent4);
 
   if (!capable->has_composite || !capable->has_convert) {
     lives_widget_hide(mainw->merge);
@@ -3720,18 +3720,18 @@ void calibrate_sepwin_size(void) {
 #endif
 
 void enable_record(void) {
-  set_menu_text(mainw->record_perf, _("Start _recording"), TRUE);
+  lives_menu_item_set_text(mainw->record_perf, _("Start _recording"), TRUE);
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
 }
 
 
 void toggle_record(void) {
-  set_menu_text(mainw->record_perf, _("Stop _recording"), TRUE);
+  lives_menu_item_set_text(mainw->record_perf, _("Stop _recording"), TRUE);
 }
 
 
 void disable_record(void) {
-  set_menu_text(mainw->record_perf, _("_Record Performance"), TRUE);
+  lives_menu_item_set_text(mainw->record_perf, _("_Record Performance"), TRUE);
 }
 
 
@@ -4306,9 +4306,29 @@ LIVES_GLOBAL_INLINE void frame_size_update(void) {
 }
 
 
-char *get_menu_name(lives_clip_t *sfile) {
+#define MAX_DISP_SETNAME_LEN 10
+
+char *get_menu_name(lives_clip_t *sfile, boolean add_setname) {
+  const char *clipname;
+  char *extra, *menuname;
+
   if (sfile == NULL) return NULL;
-  return sfile->clip_type != CLIP_TYPE_VIDEODEV ? lives_path_get_basename(sfile->name) : lives_strdup(sfile->name);
+  if (sfile->was_in_set) {
+    char *shortened_set_name;
+    if (strlen(mainw->set_name) > MAX_DISP_SETNAME_LEN) {
+      char *tmp = lives_strndup(mainw->set_name, MAX_DISP_SETNAME_LEN);
+      shortened_set_name = lives_strdup_printf("%s...", tmp);
+      lives_free(tmp);
+    } else shortened_set_name = lives_strdup(mainw->set_name);
+    extra = lives_strdup_printf(" (%s)", shortened_set_name);
+    lives_free(shortened_set_name);
+  } else extra = lives_strdup("");
+  if (sfile->clip_type == CLIP_TYPE_FILE || sfile->clip_type == CLIP_TYPE_DISK)
+    clipname = lives_path_get_basename(sfile->name);
+  else clipname = sfile->name;
+  menuname = lives_strdup_printf("%s%s", clipname, extra);
+  lives_free(extra);
+  return menuname;
 }
 
 
@@ -4329,7 +4349,7 @@ void add_to_clipmenu(void) {
   mainw->clips_group = lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));
 #else
   widget_opts.mnemonic_label = FALSE;
-  cfile->menuentry = lives_standard_check_menu_item_new_with_label(fname = get_menu_name(cfile), FALSE);
+  cfile->menuentry = lives_standard_check_menu_item_new_with_label(fname = get_menu_name(cfile, TRUE), FALSE);
   lives_check_menu_item_set_draw_as_radio(LIVES_CHECK_MENU_ITEM(cfile->menuentry), TRUE);
 #endif
 

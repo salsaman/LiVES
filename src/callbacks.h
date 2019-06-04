@@ -65,9 +65,9 @@ void on_import_theme_activate(LiVESMenuItem *, livespointer);
 
 void on_quit_activate(LiVESMenuItem *, livespointer);
 
-void on_undo_activate(LiVESMenuItem *, livespointer);
+void on_undo_activate(LiVESWidget *, livespointer);
 
-void on_redo_activate(LiVESMenuItem *, livespointer);
+void on_redo_activate(LiVESWidget *, livespointer);
 
 void on_paste_as_new_activate(LiVESMenuItem *, livespointer);
 
@@ -169,7 +169,7 @@ void on_resize_activate(LiVESMenuItem *, livespointer);
 
 void on_rename_activate(LiVESMenuItem *, livespointer);
 
-void on_rename_set_name(LiVESButton *, livespointer);
+void on_rename_clip_name(LiVESButton *, livespointer);
 
 void on_spinbutton_start_value_changed(LiVESSpinButton *, livespointer);
 

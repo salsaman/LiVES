@@ -1407,8 +1407,6 @@ typedef struct {
 
   uint64_t aud_data_written;
 
-  char *dp_cache;
-
   LiVESPixbuf *scrap_pixbuf;
 
   volatile LiVESWidget *stop_emmission;

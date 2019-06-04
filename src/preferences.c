@@ -221,7 +221,7 @@ void get_pref_default(const char *key, char *val, int maxlen) {
 }
 
 
-boolean get_boolean_pref(const char *key) {
+LIVES_GLOBAL_INLINE boolean get_boolean_pref(const char *key) {
   char buffer[16];
   get_pref(key, buffer, 16);
   if (!strcmp(buffer, "true")) return TRUE;
@@ -229,7 +229,7 @@ boolean get_boolean_pref(const char *key) {
 }
 
 
-int get_int_pref(const char *key) {
+LIVES_GLOBAL_INLINE int get_int_pref(const char *key) {
   char buffer[64];
   get_pref(key, buffer, 64);
   if (strlen(buffer) == 0) return 0;
@@ -237,11 +237,19 @@ int get_int_pref(const char *key) {
 }
 
 
-double get_double_pref(const char *key) {
+LIVES_GLOBAL_INLINE double get_double_pref(const char *key) {
   char buffer[64];
   get_pref(key, buffer, 64);
   if (strlen(buffer) == 0) return 0.;
   return strtod(buffer, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE boolean has_pref(const char *key) {
+  char buffer[64];
+  get_pref(key, buffer, 64);
+  if (strlen(buffer) == 0) return FALSE;
+  return TRUE;
 }
 
 
@@ -631,6 +639,15 @@ void pref_factory_bool(const char *prefidx, boolean newval, boolean permanent) {
     if (prefsw != NULL)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
   }
+  if (!strcmp(prefidx, PREF_PUSH_AUDIO_TO_GENS)) {
+    if (prefs->push_audio_to_gens != newval) {
+      prefs->push_audio_to_gens = newval;
+      if (permanent)
+        set_boolean_pref(prefidx, newval);
+    }
+    if (prefsw != NULL)
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->pa_gens), prefs->push_audio_to_gens);
+  }
   if (!strcmp(prefidx, PREF_SHOW_ASRC)) {
     prefs->show_asrc = newval;
     set_boolean_pref(PREF_SHOW_ASRC, prefs->show_asrc);
@@ -876,6 +893,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean rec_effects = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->reffects));
   boolean rec_clips = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rclips));
   boolean rec_audio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->raudio));
+  boolean pa_gens = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->pa_gens));
   boolean rec_ext_audio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio));
 #ifdef RT_AUDIO
   boolean rec_desk_audio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rdesk_audio));
@@ -1203,6 +1221,8 @@ boolean apply_prefs(boolean skip_warn) {
     prefs->mouse_scroll_clips = mouse_scroll;
     set_boolean_pref(PREF_MOUSE_SCROLL_CLIPS, mouse_scroll);
   }
+
+  pref_factory_bool(PREF_PUSH_AUDIO_TO_GENS, pa_gens, TRUE);
 
   if (show_button_icons != (widget_opts.show_button_images)) {
     widget_opts.show_button_images = show_button_icons;
@@ -2195,10 +2215,14 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
   if (!strncmp(audp, AUDIO_PLAYER_JACK, 4) || !strncmp(audp, AUDIO_PLAYER_PULSE, 5)) {
     lives_widget_set_sensitive(prefsw->checkbutton_aclips, TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_afollow, TRUE);
+    lives_widget_set_sensitive(prefsw->raudio, TRUE);
+    lives_widget_set_sensitive(prefsw->pa_gens, TRUE);
+    lives_widget_set_sensitive(prefsw->rextaudio, TRUE);
   } else {
     lives_widget_set_sensitive(prefsw->checkbutton_aclips, FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_afollow, FALSE);
     lives_widget_set_sensitive(prefsw->raudio, FALSE);
+    lives_widget_set_sensitive(prefsw->pa_gens, FALSE);
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), FALSE);
   }
@@ -3663,6 +3687,13 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   if (future_prefs->nfx_threads == 1) lives_widget_set_sensitive(prefsw->spinbutton_nfx_threads, FALSE);
 
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->pa_gens = lives_standard_check_button_new(_("Push audio to video generators that support it"),
+                    prefs->push_audio_to_gens, LIVES_BOX(hbox),
+                    NULL);
+
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_effects));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -3675,7 +3706,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   add_fill_to_box(LIVES_BOX(hbox));
 
   dph = widget_opts.packing_height;
-  widget_opts.packing_height *= 4;
+  widget_opts.packing_height *= 2;
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -5009,6 +5040,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->reffects), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rclips), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->raudio), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->pa_gens), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rextaudio), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ext_aud_thresh), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);

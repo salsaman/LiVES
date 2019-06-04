@@ -82,7 +82,7 @@ typedef struct {
   off_t seek;
   weed_timecode_t start_tc;
 
-  double arate;
+  int arate;
 
   ssize_t bytesize; // file in/out length in bytes [write by server in case of eof]
 

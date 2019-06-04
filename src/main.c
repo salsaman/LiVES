@@ -388,6 +388,10 @@ static boolean pre_init(void) {
   // stuff which should be done *before* mainwindow is created
   // returns TRUE if we expect to load a theme
 
+  int randfd;
+  ssize_t randres = -1;
+  uint32_t rseed;
+
   pthread_mutexattr_t mattr;
 
   boolean expect_theme = FALSE;
@@ -395,8 +399,6 @@ static boolean pre_init(void) {
 #ifndef IS_MINGW
   boolean needs_update = FALSE;
 #endif
-
-  char buff[64];
 
   register int i;
 
@@ -408,7 +410,36 @@ static boolean pre_init(void) {
   mainw->is_ready = mainw->configured = mainw->fatal = FALSE;
   mainw->mgeom = NULL;
 
-  mainw->dp_cache = NULL;
+  // try to get randomness from /dev/urandom
+  randfd = lives_open2("/dev/urandom", O_RDONLY);
+
+  if (randfd > -1) {
+    randres = read(randfd, &rseed, sizint);
+    close(randfd);
+  }
+
+  if (randres != sizint) {
+    gettimeofday(&tv, NULL);
+    rseed = tv.tv_sec + tv.tv_usec;
+  }
+
+  lives_srandom(rseed);
+
+  randres = -1;
+
+  randfd = lives_open2("/dev/urandom", O_RDONLY);
+
+  if (randfd > -1) {
+    randres = read(randfd, &rseed, sizint);
+    close(randfd);
+  }
+
+  if (randres != sizint) {
+    gettimeofday(&tv, NULL);
+    rseed = tv.tv_sec + tv.tv_usec;
+  }
+
+  fastsrand(rseed);
 
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
   mainw->string_constants[LIVES_STRING_CONSTANT_ANY] = lives_strdup(_("Any"));
@@ -595,15 +626,11 @@ static boolean pre_init(void) {
 
   weed_memory_init();
 
-  get_pref(PREF_MAX_MSGS, buff, 64);
-  if (strlen(buff) == 0) {
-    prefs->max_messages = DEF_MAX_MSGS;
-  } else prefs->max_messages = atoi(buff);
+  if (!has_pref(PREF_MAX_MSGS)) prefs->max_messages = DEF_MAX_MSGS;
+  else prefs->max_messages = get_int_pref(PREF_MAX_MSGS);
 
-  get_pref(PREF_MSG_TEXTSIZE, buff, 64);
-  if (strlen(buff) == 0) {
-    prefs->msg_textsize = DEF_MSG_TEXTSIZE;
-  } else prefs->msg_textsize = atoi(buff);
+  if (!has_pref(PREF_MSG_TEXTSIZE)) prefs->msg_textsize = DEF_MSG_TEXTSIZE;
+  else prefs->msg_textsize = get_int_pref(PREF_MSG_TEXTSIZE);
 
   mainw->msg_list = NULL;
   mainw->n_messages = 0;
@@ -788,13 +815,8 @@ static void lives_init(_ign_opts *ign_opts) {
   char *frei0r_path;
   char *ladspa_path;
 
-  ssize_t randres;
-
-  uint32_t rseed;
-
   boolean needs_free;
 
-  int randfd;
   int naudp = 0;
 
   register int i;
@@ -1272,7 +1294,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     widget_opts.show_button_images = get_boolean_pref(PREF_SHOW_BUTTON_ICONS);
 
-    prefs->push_audio_to_gens = TRUE;
+    if (!has_pref(PREF_PUSH_AUDIO_TO_GENS)) prefs->push_audio_to_gens = TRUE;
+    else prefs->push_audio_to_gens = get_boolean_pref(PREF_PUSH_AUDIO_TO_GENS);
 
     prefs->perm_audio_reader = TRUE;
 
@@ -1287,40 +1310,6 @@ static void lives_init(_ign_opts *ign_opts) {
     //////////////////////////////////////////////////////////////////
 
     if (!mainw->foreign) {
-      // set random seeds
-
-      randres = -1;
-
-      // try to get randomness from /dev/urandom
-      randfd = lives_open2("/dev/urandom", O_RDONLY);
-
-      if (randfd > -1) {
-        randres = read(randfd, &rseed, sizint);
-        close(randfd);
-      }
-
-      if (randres != sizint) {
-        gettimeofday(&tv, NULL);
-        rseed = tv.tv_sec + tv.tv_usec;
-      }
-
-      lives_srandom(rseed);
-
-      randres = -1;
-
-      randfd = lives_open2("/dev/urandom", O_RDONLY);
-
-      if (randfd > -1) {
-        randres = read(randfd, &rseed, sizint);
-        close(randfd);
-      }
-      if (randres != sizint) {
-        gettimeofday(&tv, NULL);
-        rseed = tv.tv_sec + tv.tv_usec;
-      }
-
-      fastsrand(rseed);
-
       // set various prefs
 
       prefs->midi_check_rate = get_int_pref(PREF_MIDI_CHECK_RATE);
@@ -3176,7 +3165,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -3953,7 +3942,6 @@ void desensitize(void) {
       }
     }
   }
-  //}
 }
 
 
@@ -7255,8 +7243,8 @@ void load_frame_image(int frame) {
     if (mainw->multitrack != NULL) lives_widget_set_sensitive(mainw->multitrack->load_set, TRUE);
 
     // can't use set_undoable, as we don't have a cfile
-    set_menu_text(mainw->undo, _("_Undo"), TRUE);
-    set_menu_text(mainw->redo, _("_Redo"), TRUE);
+    lives_menu_item_set_text(mainw->undo, _("_Undo"), TRUE);
+    lives_menu_item_set_text(mainw->redo, _("_Redo"), TRUE);
     lives_widget_hide(mainw->redo);
     lives_widget_show(mainw->undo);
     lives_widget_set_sensitive(mainw->undo, FALSE);
@@ -7316,7 +7304,6 @@ void load_frame_image(int frame) {
 
     // calling this function directly is now deprecated in favour of switch_clip()
 
-    char title[256];
     int orig_file = mainw->current_file;
 
     // should use close_current_file
@@ -7366,7 +7353,7 @@ void load_frame_image(int frame) {
         //char menutext[32768];
         //get_menu_text_long(mainw->files[old_file]->menuentry,menutext);
 
-        //set_menu_text(mainw->files[old_file]->menuentry,menutext,FALSE);
+        //lives_menu_item_set_text(mainw->files[old_file]->menuentry,menutext,FALSE);
         //}
         lives_widget_set_sensitive(mainw->select_new, (cfile->insert_start > 0));
         lives_widget_set_sensitive(mainw->select_last, (cfile->undo_start > 0));
@@ -7460,8 +7447,8 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->loop_video, (CURRENT_CLIP_HAS_AUDIO && CURRENT_CLIP_HAS_VIDEO));
     }
 
-    set_menu_text(mainw->undo, cfile->undo_text, TRUE);
-    set_menu_text(mainw->redo, cfile->redo_text, TRUE);
+    lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
+    lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
 
     set_sel_label(mainw->sel_label);
 
@@ -7487,8 +7474,7 @@ void load_frame_image(int frame) {
 
     if (new_file > 0) {
       if (cfile->menuentry != NULL) {
-        get_menu_text(cfile->menuentry, title);
-        set_main_title(title, 0);
+        set_main_title(cfile->name, 0);
       } else set_main_title(cfile->file_name, 0);
     }
 
@@ -7809,9 +7795,7 @@ void load_frame_image(int frame) {
       if (!mainw->sep_win) {
         if (mainw->faded && mainw->double_size && !mainw->fs) resize(2);
         if (cfile->menuentry != NULL) {
-          char title[256];
-          get_menu_text(cfile->menuentry, title);
-          set_main_title(title, 0);
+          set_main_title(cfile->name, 0);
         } else set_main_title(cfile->file_name, 0);
       }
     } else {

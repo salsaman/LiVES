@@ -475,7 +475,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
         lives_snprintf(mainw->files[new_file]->name, CLIP_NAME_MAXLEN, "%s", cfile->name);
         lives_snprintf(mainw->files[new_file]->file_name, PATH_MAX, "%s", cfile->file_name);
-        set_menu_text(mainw->files[new_file]->menuentry, cfile->name, FALSE);
+
+        lives_menu_item_set_text(mainw->files[new_file]->menuentry, cfile->name, FALSE);
 
         mainw->files[new_file]->fps = mainw->files[new_file]->pb_fps = cfile->fps;
       } else got_no_frames = TRUE;

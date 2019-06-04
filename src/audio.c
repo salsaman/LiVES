@@ -152,6 +152,7 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
 void init_audio_frame_buffers(short aplayer) {
   // function should be called when the first video generator with audio input is enabled
   register int i;
+  pthread_mutex_lock(&mainw->abuf_mutex);
 
   for (i = 0; i < 2; i++) {
     lives_audio_buf_t *abuf;
@@ -195,6 +196,7 @@ void init_audio_frame_buffers(short aplayer) {
   }
 
   mainw->audio_frame_buffer = mainw->afb[0];
+  pthread_mutex_unlock(&mainw->abuf_mutex);
 
 #ifdef DEBUG_AFB
   g_print("init afb\n");
@@ -3128,6 +3130,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
   offs = samps - alen;
 
+  // abuf->arate can be zero ???
   scale = (float)trate / (float)abuf->arate;
   alen = (int)((float)alen * scale);
 
@@ -3147,7 +3150,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
     src = abuf->bufferf[i % abuf->in_achans] + offs;
     if (src != NULL) {
       if (!tinter) {
-        if ((int)abuf->arate == trate) {
+        if (abuf->arate == trate) {
           lives_memcpy(dst, src, alen * sizeof(float));
         } else {
           // needs resample

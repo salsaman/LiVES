@@ -482,6 +482,7 @@ typedef struct {
   LiVESWidget *pbq_combo;
   LiVESWidget *ofmt_combo;
   LiVESWidget *audp_combo;
+  LiVESWidget *pa_gens;
   LiVESWidget *rframes;
   LiVESWidget *rfps;
   LiVESWidget *rclips;
@@ -876,6 +877,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_CONCAT_IMAGES "concat_images"
 #define PREF_SAVE_DIRECTORIES "save_directories"
 #define PREF_CONSERVE_SPACE "conserve_space"
+#define PREF_PUSH_AUDIO_TO_GENS "push_audio_to_gens"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"
@@ -899,6 +901,7 @@ void pref_factory_int(const char *prefidx, int newval);
 void pref_factory_float(const char *prefidx, float newval);
 void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval);
 
+boolean has_pref(const char *key);
 int get_pref(const char *key, char *val, int maxlen);
 int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen);
 int get_pref_utf8(const char *key, char *val, int maxlen);

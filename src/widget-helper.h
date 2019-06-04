@@ -959,6 +959,9 @@ boolean lives_widget_context_update(void);
 
 LiVESWidget *lives_menu_add_separator(LiVESMenu *);
 
+void lives_menu_item_set_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic);
+const char *lives_menu_item_get_text(LiVESWidget *menuitem);
+
 boolean lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 
 boolean lives_widget_set_show_hide_parent(LiVESWidget *);

@@ -41,12 +41,12 @@ typedef struct {
   pa_stream_state_t state;
 
   // app side
-  volatile int64_t in_arate; /**< samples(frames) per second */
+  volatile int in_arate; /**< samples(frames) per second */
   uint64_t in_achans; /**< number of input channels(1 is mono, 2 stereo etc..) */
   uint64_t in_asamps;
 
   // server side
-  int64_t out_arate; /**< samples(frames) per second */
+  int out_arate; /**< samples(frames) per second */
   uint64_t out_achans; /**< number of output channels(1 is mono, 2 stereo etc..) */
   uint64_t out_asamps;
 

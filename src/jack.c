@@ -1341,7 +1341,7 @@ int jack_open_device_read(jack_driver_t *jackd) {
     lives_printerr("unique name `%s' assigned\n", client_name);
   }
 
-  jackd->sample_in_rate = jack_get_sample_rate(jackd->client);
+  jackd->sample_in_rate = jackd->sample_out_rate = jack_get_sample_rate(jackd->client);
 
   //lives_printerr (lives_strdup_printf("engine sample rate: %ld\n",jackd->sample_rate));
 

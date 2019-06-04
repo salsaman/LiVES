@@ -1273,7 +1273,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   char *title;
 
   if (mainw->multitrack == NULL)
-    title = lives_strdup(_(cfile->name));
+    title = get_menu_name(cfile, TRUE);
   else
     title = lives_strdup(_("Multitrack Details"));
 
@@ -2206,7 +2206,7 @@ _entryw *create_rename_dialog(int type) {
 
   if (type == 1) {
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_rename_set_name),
+                         LIVES_GUI_CALLBACK(on_rename_clip_name),
                          NULL);
   }
 

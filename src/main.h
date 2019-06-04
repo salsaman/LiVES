@@ -635,6 +635,7 @@ typedef struct {
   double pb_fps;
   double freeze_fps;
   boolean play_paused;
+  boolean was_in_set;
 
   //opening/restoring status
   boolean opening;
@@ -1104,7 +1105,7 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
 void wait_for_stop(const char *stop_command);
 boolean save_clip_values(int which_file);
 void add_to_recovery_file(const char *handle);
-void rewrite_recovery_file(void);
+boolean rewrite_recovery_file(void);
 boolean check_for_recovery_files(boolean auto_recover);
 void recover_layout_map(int numclips);
 const char *get_deinterlace_string(void);
@@ -1119,7 +1120,7 @@ ulong restore_file(const char *filename);
 boolean read_headers(const char *file_name);
 
 // saveplay.c sets
-void open_set_file(const char *set_name, int clipnum);
+void open_set_file(int clipnum);
 
 // saveplay.c scrap file
 boolean open_scrap_file(void);
@@ -1193,7 +1194,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 void set_preview_box_colours(void);
 void load_theme_images(void);
 void set_interactive(boolean interactive);
-char *get_menu_name(lives_clip_t *sfile);
+char *get_menu_name(lives_clip_t *sfile, boolean add_set);
 void enable_record(void);
 void toggle_record(void);
 void disable_record(void);
@@ -1277,6 +1278,8 @@ int lives_ln(const char *from, const char *to);
 int lives_utf8_strcasecmp(const char *s1, const char *s2);
 int lives_utf8_strcmp(const char *s1, const char *s2);
 
+boolean lives_string_ends_with(const char *string, const char *fmt, ...);
+
 char *filename_from_fd(char *val, int fd);
 
 int64_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs);
@@ -1309,8 +1312,6 @@ const char *get_image_ext_for_type(lives_image_type_t imgtype);
 lives_image_type_t lives_image_ext_to_type(const char *img_ext);
 lives_image_type_t lives_image_type_to_image_type(const char *lives_img_type);
 
-void set_menu_text(LiVESWidget *menu, const char *text, boolean use_mnemonic);
-void get_menu_text(LiVESWidget *menu, char *text);
 void reset_clipmenu(void);
 
 void get_total_time(lives_clip_t *file); ///< calculate laudio, raudio and video time (may be deprecated and replaced with macros)

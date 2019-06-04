@@ -2592,7 +2592,7 @@ boolean lives_osc_cb_clip_set_name(void *context, int arglen, const void *vargs,
   if (clip < 1 || clip > MAX_FILES || mainw->files[clip] == NULL) return lives_osc_notify_failure();
 
   mainw->current_file = clip;
-  on_rename_set_name(NULL, (livespointer)name);
+  on_rename_clip_name(NULL, (livespointer)name);
 
   if (clip == current_file) set_main_title(name, 0);
   else mainw->current_file = current_file;

@@ -10359,6 +10359,24 @@ LiVESWidget *lives_menu_add_separator(LiVESMenu *menu) {
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE void lives_menu_item_set_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic) {
+  LiVESWidget *label;
+  if (LIVES_IS_MENU_ITEM(menuitem)) {
+    label = lives_bin_get_child(LIVES_BIN(menuitem));
+    widget_opts.mnemonic_label = use_mnemonic;
+    lives_label_set_text(LIVES_LABEL(label), text);
+    widget_opts.mnemonic_label = TRUE;
+  }
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE const char *lives_menu_item_get_text(LiVESWidget *menuitem) {
+  // text MUST be at least 255 chars long
+  LiVESWidget *label = lives_bin_get_child(LIVES_BIN(menuitem));
+  return lives_label_get_text(LIVES_LABEL(label));
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE int lives_display_get_n_screens(LiVESXDisplay *disp) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 10, 0)
@@ -11020,5 +11038,3 @@ const char *lives_textsize_to_string(int val) {
     return LIVES_FONT_SIZE_NORMAL;
   }
 }
-
-

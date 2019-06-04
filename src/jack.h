@@ -58,8 +58,8 @@ typedef jack_nframes_t nframes_t;
 
 typedef struct {
   int      dev_idx;                      /**< id of this device ??? */
-  int64_t     sample_out_rate;                   /**< samples(frames) per second */
-  volatile int64_t     sample_in_rate;                   /**< samples(frames) per second */
+  int     sample_out_rate;                   /**< samples(frames) per second */
+  volatile int     sample_in_rate;                   /**< samples(frames) per second */
   uint64_t    num_input_channels;            /**< number of input channels(1 is mono, 2 stereo etc..) */
   uint64_t    num_output_channels;           /**< number of output channels(1 is mono, 2 stereo etc..) */
   uint64_t    bytes_per_channel;

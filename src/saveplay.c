@@ -1939,7 +1939,7 @@ void save_file(int clip, int start, int end, const char *filename) {
         sfile->is_untitled = FALSE;
       }
       if (!sfile->was_renamed) {
-        set_menu_text(sfile->menuentry, full_file_name, FALSE);
+        lives_menu_item_set_text(sfile->menuentry, full_file_name, FALSE);
         lives_snprintf(sfile->name, 256, "%s", full_file_name);
       }
       set_main_title(cfile->name, 0);
@@ -3235,6 +3235,7 @@ void create_cfile(void) {
   cfile->undoable = FALSE;
   cfile->redoable = FALSE;
   cfile->changed = FALSE;
+  cfile->was_in_set = FALSE;
   cfile->hsize = cfile->vsize = cfile->ohsize = cfile->ovsize = 0;
   cfile->fps = cfile->pb_fps = prefs->default_fps;
   cfile->events[0] = NULL;
@@ -3704,7 +3705,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   lives_clip_t *sfile = mainw->files[clip];
   char **array;
 
-  char title[256];
+  char *title;
   char full_file_name[PATH_MAX];
 
   char *com, *tmp;
@@ -3733,8 +3734,9 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   if (!retval) return;
 
   //...and backup
-  get_menu_text(sfile->menuentry, title);
+  title = get_menu_name(sfile, FALSE);
   d_print(_("Backing up %s to %s"), title, full_file_name);
+  lives_free(title);
 
   if (!mainw->save_with_sound) {
     d_print(_(" without sound"));
@@ -3822,7 +3824,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   if (!sfile->was_renamed) {
     lives_snprintf(sfile->name, CLIP_NAME_MAXLEN, "%s", full_file_name);
     set_main_title(cfile->name, 0);
-    set_menu_text(sfile->menuentry, full_file_name, FALSE);
+    lives_menu_item_set_text(sfile->menuentry, full_file_name, FALSE);
   }
   if (prefs->show_recent)
     add_to_recent(full_file_name, 0., 0, NULL);
@@ -4275,7 +4277,7 @@ boolean read_headers(const char *file_name) {
 }
 
 
-void open_set_file(const char *set_name, int clipnum) {
+void open_set_file(int clipnum) {
   char name[CLIP_NAME_MAXLEN];
 
   if (mainw->current_file < 1) return;
@@ -4320,7 +4322,7 @@ void open_set_file(const char *set_name, int clipnum) {
     int set_fd;
     int pb_fps;
     int retval;
-    char *setfile = lives_strdup_printf("%s/%s/set.%s", prefs->workdir, cfile->handle, set_name);
+    char *setfile = lives_strdup_printf("%s/%s/set.%s", prefs->workdir, cfile->handle, mainw->set_name);
 
     do {
       retval = 0;
@@ -4341,10 +4343,14 @@ void open_set_file(const char *set_name, int clipnum) {
 
   if (strlen(name) == 0) {
     lives_snprintf(name, CLIP_NAME_MAXLEN, "set_clip %.3d", clipnum);
-  }
-  if (strlen(mainw->set_name) && strcmp(name + strlen(name) - 1, ")")) {
-    lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "%s (%s)", name, set_name);
   } else {
+    // pre 3.x, files erroneously had the set name appended permanently, so here we undo that
+    if (lives_string_ends_with(name, " (%)", mainw->set_name)) {
+      char *remove = lives_strdup_printf(" (%s)", mainw->set_name);
+      if (strlen(name) > strlen(remove)) name[strlen(name) - strlen(remove)] = 0;
+      lives_free(remove);
+      cfile->needs_update = TRUE;
+    }
     lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "%s", name);
   }
 }
@@ -5201,15 +5207,23 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       break;
     }
 
-    memset(buff + strlen(buff) - strlen("\n"), 0, 1);
+    if (buff[strlen(buff) - 1] == '\n')
+      memset(buff + strlen(buff) - strlen("\n"), 0, 1);
 
     if (!strcmp(buff + strlen(buff) - 1, "*")) {
+      boolean crash_recovery = prefs->crash_recovery;
       // set to be opened
-      memset(buff + strlen(buff) - 2, 0, 1);
+      memset(buff + strlen(buff) - 1 - strlen(LIVES_DIR_SEP), 0, 1);
       last_was_normal_file = FALSE;
       if (!is_legal_set_name(buff, TRUE)) continue;
 
+      // dont write an entry yet, in case we were assigned the same pid as the recovery file
+      // otherwise we will end up in a loop of repeatedly loading the set
+      // in any case we will rewrite the new recovery file after loading all files
+      prefs->crash_recovery = FALSE;
+
       if (!reload_set(buff)) {
+        prefs->crash_recovery = crash_recovery; // reset to original value
         fclose(rfile);
         end_threaded_dialog();
 
@@ -5226,6 +5240,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         d_print_failed();
         return TRUE;
       }
+      prefs->crash_recovery = crash_recovery; // reset to original value
     } else {
       // load single file
       if (!strncmp(buff, "scrap|", 6)) {
@@ -5369,7 +5384,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         // read the playback fps, play frame, and name
         threaded_dialog_spin(0.);
 
-        open_set_file(mainw->set_name, ++clipnum);
+        // not really from a set, but let's pretend to get the details
+        open_set_file(++clipnum);
 
         threaded_dialog_spin(0.);
 
@@ -5501,25 +5517,34 @@ void add_to_recovery_file(const char *handle) {
 }
 
 
-void rewrite_recovery_file(void) {
+boolean rewrite_recovery_file(void) {
   // part of the crash recovery system
+  // returns TRUE if successful
   LiVESList *clist = mainw->cliplist;
   char *recovery_entry;
+  char *temp_recovery_file;
 
   boolean opened = FALSE;
+  boolean wrote_set_entry = FALSE;
 
   int recovery_fd = -1;
   int retval;
 
   register int i;
 
+  if (!prefs->crash_recovery) {
+    lives_rm(mainw->recovery_file);
+    return FALSE;
+  }
   if (clist == NULL) {
     lives_rm(mainw->recovery_file);
-    return;
+    return FALSE;
   }
 
+  temp_recovery_file = lives_strdup_printf("%s.tmp", mainw->recovery_file);
+
   do {
-    retval = 0;
+    retval = LIVES_RESPONSE_INVALID;
     mainw->write_failed = FALSE;
     opened = FALSE;
     recovery_fd = -1;
@@ -5527,29 +5552,51 @@ void rewrite_recovery_file(void) {
     while (clist != NULL) {
       i = LIVES_POINTER_TO_INT(clist->data);
       if (mainw->files[i]->clip_type == CLIP_TYPE_FILE || mainw->files[i]->clip_type == CLIP_TYPE_DISK) {
-        if (i != mainw->scrap_file) recovery_entry = lives_strdup_printf("%s\n", mainw->files[i]->handle);
-        else recovery_entry = lives_strdup_printf("scrap|%s\n", mainw->files[i]->handle);
+        if (i != mainw->scrap_file) {
+          if (mainw->files[i]->was_in_set && strlen(mainw->set_name) > 0) {
+            if (!wrote_set_entry) {
+              recovery_entry = lives_build_filename(mainw->set_name, "*\n", NULL);
+              wrote_set_entry = TRUE;
+            } else {
+              clist = clist->next;
+              continue;
+            }
+          } else recovery_entry = lives_strdup_printf("%s\n", mainw->files[i]->handle);
+        } else recovery_entry = lives_strdup_printf("scrap|%s\n", mainw->files[i]->handle);
 
-        if (!opened) recovery_fd = creat(mainw->recovery_file, S_IRUSR | S_IWUSR);
-        if (recovery_fd < 0) retval = do_write_failed_error_s_with_retry(mainw->recovery_file, lives_strerror(errno), NULL);
+        if (!opened) recovery_fd = creat(temp_recovery_file, S_IRUSR | S_IWUSR);
+        if (recovery_fd < 0) retval = do_write_failed_error_s_with_retry(temp_recovery_file, lives_strerror(errno), NULL);
         else {
           opened = TRUE;
           lives_write(recovery_fd, recovery_entry, strlen(recovery_entry), TRUE);
-          if (mainw->write_failed) retval = do_write_failed_error_s_with_retry(mainw->recovery_file, NULL, NULL);
+          if (mainw->write_failed) retval = do_write_failed_error_s_with_retry(temp_recovery_file, NULL, NULL);
         }
         lives_free(recovery_entry);
       }
       if (mainw->write_failed) break;
       clist = clist->next;
     }
-
   } while (retval == LIVES_RESPONSE_RETRY);
 
   if (!opened) lives_rm(mainw->recovery_file);
-  else if (recovery_fd >= 0) close(recovery_fd);
+  else if (recovery_fd >= 0) {
+    close(recovery_fd);
+    retval = LIVES_RESPONSE_INVALID;
+    do {
+      mainw->com_failed = FALSE;
+      lives_mv(temp_recovery_file, mainw->recovery_file);
+      if (mainw->com_failed) {
+        retval = do_write_failed_error_s_with_retry(temp_recovery_file, NULL, NULL);
+      }
+    } while (retval == LIVES_RESPONSE_RETRY);
+  }
+
+  lives_free(temp_recovery_file);
 
   if ((mainw->multitrack != NULL && mainw->multitrack->event_list != NULL) || mainw->stored_event_list != NULL)
     write_backup_layout_numbering(mainw->multitrack);
+
+  return TRUE;
 }
 
 
@@ -5567,8 +5614,9 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   lives_pgid_t lpid = capable->mainpid;
 
-  com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery", prefs->backend_sync, luid, lgid,
-                            capable->myname);
+  // ask backend to find the lates recovery file which is not owned by a running version of LiVES
+  com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery %d", prefs->backend_sync, luid, lgid,
+                            capable->myname, capable->mainpid);
 
   mainw->com_failed = FALSE;
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
@@ -5642,7 +5690,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
     return FALSE;
   }
 
-  com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\"", prefs->backend_sync, luid, lgid, capable->myname);
+  com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d", prefs->backend_sync, luid, lgid, capable->myname, capable->mainpid);
   lives_system(com, FALSE);
   lives_free(com);
 

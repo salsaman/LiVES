@@ -507,7 +507,6 @@ void lives_exit(int signum) {
   lives_freep((void **)&prefs->wm);
 
   lives_freep((void **)&mainw->recovery_file);
-  lives_freep((void **)&mainw->dp_cache);
 
   for (i = 0; i < NUM_LIVES_STRING_CONSTANTS; i++) lives_freep((void **)&mainw->string_constants[i]);
 
@@ -1114,7 +1113,6 @@ static void check_remove_layout_files(void) {
 
 void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *warn, *extra;
-  char title[256];
   boolean lmap_errors = FALSE, acurrent = FALSE, only_current = FALSE;
 
   if (mainw->multitrack != NULL) {
@@ -1137,13 +1135,17 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
     if (mainw->xlays != NULL) {
-      get_menu_text(cfile->menuentry, title);
-      if (strlen(title) > 128) lives_snprintf(title, 32, "%s", (_("This file")));
+      char *title = get_menu_name(cfile, FALSE);
+      if (strlen(title) > 128) {
+        lives_free(title);
+        title = lives_strdup(_("This file"));
+      }
       if (acurrent) extra = lives_strdup(_(",\n - including the current layout - "));
       else extra = lives_strdup("");
       if (!only_current) warn = lives_strdup_printf(_("\n%s\nis used in some multitrack layouts%s.\n\nReally close it ?"),
                                   title, extra);
       else warn = lives_strdup_printf(_("\n%s\nis used in the current layout.\n\nReally close it ?"), title);
+      lives_free(title);
       lives_free(extra);
       if (!do_warning_dialog(warn)) {
         lives_free(warn);
@@ -1164,18 +1166,14 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
   if (!lmap_errors) {
     if (cfile->changed) {
-      get_menu_text(cfile->menuentry, title);
-      if (strlen(title) > 128) lives_snprintf(title, 32, "%s", (_("This file")));
       warn = lives_strdup(_("Changes made to this clip have not been saved or backed up.\n\nReally close it ?"));
       if (!do_warning_dialog(warn)) {
         lives_free(warn);
-
         if (mainw->multitrack != NULL) {
           mainw->current_file = mainw->multitrack->render_file;
           mt_sensitise(mainw->multitrack);
           mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
         }
-
         return;
       }
       lives_free(warn);
@@ -1938,9 +1936,8 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 // TODO - split into undo.c
-void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
   char *com, *tmp;
-  char msg[256];
 
   boolean bad_header = FALSE;
   boolean retvalb;
@@ -1964,10 +1961,8 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   d_print("");
 
   if (menuitem != NULL) {
-    get_menu_text(mainw->undo, msg);
     mainw->no_switch_dprint = TRUE;
-    d_print(msg);
-    d_print("...");
+    d_print("%s...", lives_menu_item_get_text(LIVES_WIDGET(menuitem)));
     mainw->no_switch_dprint = FALSE;
   }
 
@@ -2484,8 +2479,7 @@ void on_undo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_redo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char msg[256];
+void on_redo_activate(LiVESWidget *menuitem, livespointer user_data) {
   char *com;
 
   int ostart = cfile->start;
@@ -2505,10 +2499,8 @@ void on_redo_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   d_print("");
 
   if (menuitem != NULL) {
-    get_menu_text(mainw->redo, msg);
     mainw->no_switch_dprint = TRUE;
-    d_print(msg);
-    d_print("...");
+    d_print("%s...", lives_menu_item_get_text(menuitem));
     mainw->no_switch_dprint = FALSE;
   }
 
@@ -2816,6 +2808,7 @@ void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
   char *msg;
+  boolean wrote_recovery_entry = FALSE;
   int old_file = mainw->current_file, current_file;
   int i;
 
@@ -2908,7 +2901,13 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
+  if (prefs->crash_recovery && !wrote_recovery_entry) {
+    char *recovery_entry = lives_build_filename(mainw->set_name, "*", NULL);
+    add_to_recovery_file(recovery_entry);
+    lives_free(recovery_entry);
+    wrote_recovery_entry = TRUE;
+  }
+
   switch_to_file((mainw->current_file = old_file), current_file);
   d_print_done();
 
@@ -4855,8 +4854,6 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             oldval = lives_build_path(prefs->workdir, mainw->files[i]->handle, NULL);
             newval = lives_build_path(prefs->workdir, new_handle, NULL);
 
-            g_print("MOVING %s to %s\n", oldval, newval);
-
             lives_mv(oldval, newval);
             lives_free(oldval);
             lives_free(newval);
@@ -5157,8 +5154,6 @@ boolean reload_set(const char *set_name) {
         reset_clipmenu();
         lives_widget_set_sensitive(mainw->vj_load_set, FALSE);
 
-        lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", set_name);
-
         // MUST set set_name before calling this
         recover_layout_map(MAX_FILES);
 
@@ -5277,9 +5272,17 @@ boolean reload_set(const char *set_name) {
 
     last_file = new_file;
 
+    if (++clipnum == 1) {
+      // we need to set the set_name before calling add_to_clipmenu, so that the clip gets the name of the set in
+      // its menuentry, and also prior to loading any layouts
+      lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", set_name);
+    }
+
     // read the playback fps, play frame, and name
-    open_set_file(set_name, ++clipnum); // must do before calling save_clip_values()
+    open_set_file(clipnum); // must do before calling save_clip_values()
+
     threaded_dialog_spin(0.);
+    cfile->was_in_set = TRUE;
 
     if (cfile->needs_update) {
       save_clip_values(mainw->current_file);
@@ -8496,7 +8499,7 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_rename_set_name(LiVESButton *button, livespointer user_data) {
+void on_rename_clip_name(LiVESButton *button, livespointer user_data) {
   char title[256];
   boolean bad_header = FALSE;
 
@@ -8513,7 +8516,8 @@ void on_rename_set_name(LiVESButton *button, livespointer user_data) {
   }
 
   if (CURRENT_CLIP_IS_VALID) {
-    set_menu_text(cfile->menuentry, title, FALSE);
+    lives_menu_item_set_text(cfile->menuentry, title, FALSE);
+
     lives_snprintf(cfile->name, 256, "%s", title);
 
     save_clip_value(mainw->current_file, CLIP_DETAILS_CLIPNAME, cfile->name);
@@ -9035,11 +9039,6 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
 #endif
     }
     mainw->configured = TRUE;
-    if (mainw->dp_cache != NULL) {
-      mainw->no_switch_dprint = TRUE;
-      d_print("");
-      mainw->no_switch_dprint = FALSE;
-    }
     if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
     if (!mainw->foreign) resize(1);
   }

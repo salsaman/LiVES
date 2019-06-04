@@ -982,6 +982,12 @@ if (defined($ARGV[0])) {
             my $gid = $ARGV[2];
             my $exename = $ARGV[3];
             my $filepart = $ARGV[4];
+	    my $pid = "";
+	    if (defined($ARGV[5])) {
+		# because we can pick up the same pid again...
+		$pid = $ARGV[5];
+	    }
+		
             opendir DIR, "$workdir";
             my @files = readdir(DIR);
 
@@ -995,16 +1001,16 @@ if (defined($ARGV[0])) {
                         unlink "$file";
                     } else {
 			# check to make sure pid is not a running LiVES
-                        my $exe = smog_system_direct("/bin/readlink -n /proc/$1/exe");
-			#allowed to fail
-                        my $short_exe = &my_basename($exe);
-
-                        unless($short_exe eq $exename) {
-                            $output = (split /\./, $file)[-1];
-                            print $output;
-                            closedir DIR;
-                            exit 0;
-                        }
+			if ($exename ne "" && ($pid eq "" || $pid ne $1)) {
+			    my $exe = smog_system_direct("/bin/readlink -n /proc/$1/exe");
+			    #allowed to fail
+			    my $short_exe = &my_basename($exe);
+			    next if ($short_exe eq $exename);
+			}
+			$output = (split /\./, $file)[-1];
+			print $output;
+			closedir DIR;
+			exit 0;
                     }
                 }
             }
@@ -1019,21 +1025,27 @@ if (defined($ARGV[0])) {
             my $uid = $ARGV[1];
             my $gid = $ARGV[2];
             my $exename = $ARGV[3];
-            opendir DIR, "$workdir";
+	    my $pid = "";
+	    if (defined($ARGV[4])) {
+		$pid = $ARGV[4];
+	    }
 
+            opendir DIR, "$workdir";
             smog_chdir("$workdir");
 
             while (my $file = readdir(DIR)) {
                 if ($file =~ /^recovery\.$uid\.$gid\.(.*)/ || $file =~ /^layout\.$uid\.$gid\.(.*)/ ||
 		    $file =~ /^layout_numbering\.$uid\.$gid\.(.*)/) {
-                    my $exe = smog_system_direct("/bin/readlink -n /proc/$1/exe");
-		    #allowed to fail
-                    my $short_exe = &my_basename($exe);
-                    unless($short_exe eq $exename) {
-                        unlink "$file";
-                    }
-                }
-            }
+		    if ($pid eq "" || $pid ne $p1) {
+			my $exe = smog_system_direct("/bin/readlink -n /proc/$1/exe");
+			#allowed to fail
+			my $short_exe = &my_basename($exe);
+			unless($short_exe eq $exename) {
+			    unlink "$file";
+			}
+		    }
+		}
+	    }
             closedir DIR;
             exit 0;
         }

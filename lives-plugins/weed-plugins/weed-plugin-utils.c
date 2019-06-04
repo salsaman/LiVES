@@ -867,9 +867,6 @@ static inline double weed_palette_get_plane_ratio_vertical(int pal, int plane) {
 /* precomputed tables */
 #define FP_BITS 16
 
-static int Y_R[256];
-static int Y_G[256];
-static int Y_B[256];
 static int Y_Ru[256];
 static int Y_Gu[256];
 static int Y_Bu[256];
@@ -899,18 +896,6 @@ static void init_RGB_to_YCbCr_tables(void) {
    *             + (Q-offset * fixed-pogint-factor)  --- to add the offset
    *
    */
-  for (i = 0; i < 256; i++) {
-    Y_R[i] = myround(0.299 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_G[i] = myround(0.587 * (double)i
-                     * 219.0 / 255.0 * (double)(1 << FP_BITS));
-    Y_B[i] = myround((0.114 * (double)i
-                      * 219.0 / 255.0 * (double)(1 << FP_BITS))
-                     + (double)(1 << (FP_BITS - 1))
-                     + (16.0 * (double)(1 << FP_BITS)));
-
-  }
-
   for (i = 0; i < 256; i++) {
     Y_Ru[i] = myround(0.299 * (double)i
                       * (1 << FP_BITS));
@@ -989,12 +974,12 @@ static inline uint8_t calc_luma(uint8_t *pixel, int palette, int yuv_clamping) {
   switch (palette) {
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_RGBA32:
-    return (Y_R[pixel[0]] + Y_G[pixel[1]] + Y_B[pixel[2]]) >> FP_BITS;
+    return (Y_Ru[pixel[0]] + Y_Gu[pixel[1]] + Y_Bu[pixel[2]]) >> FP_BITS;
   case WEED_PALETTE_BGR24:
   case WEED_PALETTE_BGRA32:
-    return (Y_R[pixel[2]] + Y_G[pixel[1]] + Y_B[pixel[0]]) >> FP_BITS;
+    return (Y_Ru[pixel[2]] + Y_Gu[pixel[1]] + Y_Bu[pixel[0]]) >> FP_BITS;
   case WEED_PALETTE_ARGB32:
-    return (Y_R[pixel[1]] + Y_G[pixel[2]] + Y_B[pixel[3]]) >> FP_BITS;
+    return (Y_Ru[pixel[1]] + Y_Gu[pixel[2]] + Y_Bu[pixel[3]]) >> FP_BITS;
   default:
     // yuv
     if (yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED)

@@ -1773,6 +1773,9 @@ static void lives_init(_ign_opts *ign_opts) {
           mainw->pulsed->whentostop = &mainw->whentostop;
           mainw->pulsed->cancelled = &mainw->cancelled;
           mainw->pulsed->in_use = FALSE;
+
+          pulse_driver_activate(mainw->pulsed);
+
           if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
             // create reader connection now, if permanent
             pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);

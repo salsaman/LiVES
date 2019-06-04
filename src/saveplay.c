@@ -4345,7 +4345,7 @@ void open_set_file(int clipnum) {
     lives_snprintf(name, CLIP_NAME_MAXLEN, "set_clip %.3d", clipnum);
   } else {
     // pre 3.x, files erroneously had the set name appended permanently, so here we undo that
-    if (lives_string_ends_with(name, " (%)", mainw->set_name)) {
+    if (lives_string_ends_with(name, " (%s)", mainw->set_name)) {
       char *remove = lives_strdup_printf(" (%s)", mainw->set_name);
       if (strlen(name) > strlen(remove)) name[strlen(name) - strlen(remove)] = 0;
       lives_free(remove);

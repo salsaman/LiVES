@@ -1086,8 +1086,10 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
 
 
 void pulse_shutdown(void) {
+  //g_print("pa shutdown\n");
   if (pa_mloop != NULL) pa_threaded_mainloop_stop(pa_mloop);
   if (pcon != NULL) {
+    //g_print("pa shutdown2\n");
     pa_context_disconnect(pcon);
     pa_context_unref(pcon);
   }
@@ -1098,7 +1100,9 @@ void pulse_shutdown(void) {
 
 
 void pulse_close_client(pulse_driver_t *pdriver) {
+  // g_print("pa close\n");
   if (pdriver->pstream != NULL) {
+    //g_print("pa close2\n");
     pa_threaded_mainloop_lock(pa_mloop);
     pa_stream_set_write_callback(pdriver->pstream, NULL, NULL);
     pa_stream_set_read_callback(pdriver->pstream, NULL, NULL);
@@ -1324,6 +1328,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
     pa_threaded_mainloop_lock(pa_mloop);
     // set write callback
+    //g_print("Setting writer cb\n");
     pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
 
     pdriver->volume_linear = -1;
@@ -1424,7 +1429,6 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
     pa_operation_unref(paop);
   }
 #endif
-
   pa_threaded_mainloop_lock(pa_mloop);
   pdriver->paop = pa_stream_cork(pdriver->pstream, 0, uncorked_cb, pdriver);
   pa_threaded_mainloop_unlock(pa_mloop);

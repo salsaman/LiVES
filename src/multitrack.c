@@ -10906,11 +10906,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     jack_driver_activate(mainw->jackd);
   }
 #endif
-#ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed != NULL) {
-    pulse_driver_activate(mainw->pulsed);
-  }
-#endif
 
   if (prefs->show_gui) block_expose();
 

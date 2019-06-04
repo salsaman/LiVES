@@ -9032,11 +9032,6 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
         jack_driver_activate(mainw->jackd);
       }
 #endif
-#ifdef HAVE_PULSE_AUDIO
-      if (mainw->pulsed != NULL) {
-        pulse_driver_activate(mainw->pulsed);
-      }
-#endif
     }
     mainw->configured = TRUE;
     if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;

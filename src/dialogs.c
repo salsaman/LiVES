@@ -2040,7 +2040,7 @@ boolean do_auto_dialog(const char *text, int type) {
   proc_ptr = create_processing(mytext);
 
   lives_freep((void **)&mytext);
-  if (cfile->proc_ptr->stop_button != NULL)
+  if (proc_ptr->stop_button != NULL)
     lives_widget_hide(proc_ptr->stop_button);
   lives_window_set_modal(LIVES_WINDOW(proc_ptr->processing), TRUE);
 

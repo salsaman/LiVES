@@ -2972,10 +2972,10 @@ void play_file(void) {
         lives_free(title);
         lives_free(xtrabit);
 
-        //lives_widget_queue_draw(mainw->LiVES);
+        lives_widget_queue_draw(mainw->LiVES);
         //mainw->noswitch = TRUE;
 
-        //lives_widget_context_update();
+        lives_widget_context_update();
 
         if (prefs->show_playwin) {
           lives_window_present(LIVES_WINDOW(mainw->play_window));

@@ -10900,13 +10900,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     event_list_rectify(NULL, event_list);
   }
 
-  // in case we are starting up in mt mode
-#ifdef ENABLE_JACK
-  if (mainw->jackd != NULL) {
-    jack_driver_activate(mainw->jackd);
-  }
-#endif
-
   if (prefs->show_gui) block_expose();
 
   if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;

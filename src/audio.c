@@ -1031,6 +1031,7 @@ static void audio_process_events_to(weed_timecode_t tc) {
   mainw->audio_event = event;
 }
 
+
 //#define DEBUG_ARENDER
 int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime,
                              weed_timecode_t tc_start, weed_timecode_t tc_end, double *chvol, double opvol_start,
@@ -1130,7 +1131,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   if (!storedfdsset) audio_reset_stored_fnames();
 
   if (!(is_fade) && (mainw->event_list == NULL || (mainw->multitrack == NULL && nfiles == 1 && from_files != NULL &&
-                     from_files[0] == mainw->ascrap_file))) render_block_size *= 100;
+                     from_files != NULL && from_files[0] == mainw->ascrap_file))) render_block_size *= 100;
 
   if (to_file > -1) {
     // prepare outfile stuff
@@ -1544,7 +1545,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
       mainw->jackd_read->reverse_endian = FALSE;
 
       // start jack "recording"
-      jack_open_device_read(mainw->jackd_read);
+      jack_create_client_reader(mainw->jackd_read);
       jack_read_driver_activate(mainw->jackd_read, FALSE);
     }
     return;
@@ -1574,7 +1575,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   } else {
     if (!jackd_read_started) {
       mainw->jackd_read = jack_get_driver(0, FALSE);
-      jack_open_device_read(mainw->jackd_read);
+      jack_create_client_reader(mainw->jackd_read);
       jack_read_driver_activate(mainw->jackd_read, FALSE);
       mainw->jackd_read->is_paused = TRUE;
       jack_time_reset(mainw->jackd_read, 0);
@@ -1629,7 +1630,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
     // start jack recording
     mainw->jackd_read = jack_get_driver(0, FALSE);
-    jack_open_device_read(mainw->jackd_read);
+    jack_create_client_reader(mainw->jackd_read);
     jack_read_driver_activate(mainw->jackd_read, TRUE);
     mainw->jackd_read->is_paused = TRUE;
     jack_time_reset(mainw->jackd_read, 0);

@@ -135,11 +135,11 @@ jack_driver_t *jack_get_driver(int dev_idx, boolean is_output); ///< get driver
 int jack_audio_init(void); ///< init jack for host output
 int jack_audio_read_init(void); ///< init jack for host input
 
-int jack_open_device(jack_driver_t *); ///< open device for host output
-int jack_open_device_read(jack_driver_t *); ///< open device for host input
+boolean jack_create_client_writer(jack_driver_t *); ///< open device for host output
+boolean jack_create_client_reader(jack_driver_t *); ///< open device for host input
 
-int jack_driver_activate(jack_driver_t *);  ///< activate for host playback
-int jack_read_driver_activate(jack_driver_t *, boolean autocon);  ///< activate for host recording
+boolean jack_write_driver_activate(jack_driver_t *);  ///< activate for host playback
+boolean jack_read_driver_activate(jack_driver_t *, boolean autocon);  ///< activate for host recording
 
 void jack_close_device(jack_driver_t *);
 

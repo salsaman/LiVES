@@ -9026,16 +9026,7 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
     mainw->old_scr_width = scr_width;
     mainw->old_scr_height = scr_height;
 
-    if (prefs->startup_interface == STARTUP_CE) {
-#ifdef ENABLE_JACK
-      if (mainw->jackd != NULL) {
-        jack_driver_activate(mainw->jackd);
-      }
-#endif
-    }
     mainw->configured = TRUE;
-    if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
-    if (!mainw->foreign) resize(1);
   }
   return FALSE;
 }

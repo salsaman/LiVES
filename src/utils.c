@@ -2787,6 +2787,7 @@ boolean lives_string_ends_with(const char *string, const char *fmt, ...) {
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
+  if (textx == NULL) return FALSE;
   slen = strlen(string);
   cklen = strlen(textx);
   if (cklen == 0 || cklen > slen) {
@@ -3256,7 +3257,7 @@ boolean switch_aud_to_jack(void) {
       jack_audio_init();
       jack_audio_read_init();
       mainw->jackd = jack_get_driver(0, TRUE);
-      if (jack_open_device(mainw->jackd)) {
+      if (!jack_create_client_writer(mainw->jackd)) {
         mainw->jackd = NULL;
         return FALSE;
       }
@@ -3264,7 +3265,7 @@ boolean switch_aud_to_jack(void) {
       mainw->jackd->cancelled = &mainw->cancelled;
       mainw->jackd->in_use = FALSE;
       mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED) ? FALSE : TRUE;
-      jack_driver_activate(mainw->jackd);
+      jack_write_driver_activate(mainw->jackd);
     }
 
     mainw->aplayer_broken = FALSE;

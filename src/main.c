@@ -1687,6 +1687,7 @@ static void lives_init(_ign_opts *ign_opts) {
           set_int_pref(PREF_STARTUP_PHASE, 4);
         }
 
+        // audio startup
 #ifdef ENABLE_JACK
         if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER || prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT ||
             prefs->jack_opts & JACK_OPTS_START_ASERVER ||
@@ -1695,7 +1696,7 @@ static void lives_init(_ign_opts *ign_opts) {
           if (prefs->jack_opts & JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."), SPLASH_LEVEL_LOAD_APLAYER);
           else {
             if (prefs->jack_opts & JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."), SPLASH_LEVEL_LOAD_APLAYER);
-            else splash_msg(_("Connecting to jack transport server..."), SPLASH_LEVEL_LOAD_APLAYER);
+            else splash_msg(_("Connecting to jack server..."), SPLASH_LEVEL_LOAD_APLAYER);
           }
           if (!lives_jack_init()) {
             if ((prefs->jack_opts & JACK_OPTS_START_ASERVER) || (prefs->jack_opts & JACK_OPTS_START_TSERVER)) do_jack_noopen_warn();
@@ -1714,7 +1715,7 @@ static void lives_init(_ign_opts *ign_opts) {
           jack_audio_read_init();
           mainw->jackd = jack_get_driver(0, TRUE);
           if (mainw->jackd != NULL) {
-            if (jack_open_device(mainw->jackd)) mainw->jackd = NULL;
+            if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
 
             if (mainw->jackd == NULL && prefs->startup_phase == 0) {
 #ifdef HAVE_PULSE_AUDIO
@@ -1747,6 +1748,8 @@ static void lives_init(_ign_opts *ign_opts) {
             mainw->jackd->cancelled = &mainw->cancelled;
             mainw->jackd->in_use = FALSE;
             mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED) ? FALSE : TRUE;
+
+            jack_write_driver_activate(mainw->jackd);
 
             if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
               // create reader connection now, if permanent
@@ -2689,7 +2692,7 @@ static boolean lives_startup(livespointer data) {
 
     if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
     create_LiVES();
-    widget_opts.apply_theme = FALSE;
+    //widget_opts.apply_theme = FALSE;
 
     set_interactive(mainw->interactive);
 
@@ -3555,19 +3558,15 @@ boolean startup_message_fatal(const char *msg) {
 }
 
 
-boolean startup_message_nonfatal(const char *msg) {
-  if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
+LIVES_GLOBAL_INLINE boolean startup_message_nonfatal(const char *msg) {
   do_error_dialog(msg);
-  widget_opts.apply_theme = FALSE;
   return TRUE;
 }
 
 
 boolean startup_message_choice(const char *msg, int msg_type) {
   boolean res;
-  if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
   res = do_yesno_dialog(msg);
-  widget_opts.apply_theme = FALSE;
   if (res && msg_type == 2) {
     // do chmod
     char *mode = lives_strdup_printf("-R %o", capable->umask);
@@ -3579,17 +3578,13 @@ boolean startup_message_choice(const char *msg, int msg_type) {
 
 
 boolean startup_message_info(const char *msg) {
-  if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
   do_info_dialog(msg);
-  widget_opts.apply_theme = FALSE;
   return TRUE;
 }
 
 
 boolean startup_message_nonfatal_dismissable(const char *msg, int warning_mask) {
-  if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
   do_error_dialog_with_check(msg, warning_mask);
-  widget_opts.apply_theme = FALSE;
   return TRUE;
 }
 

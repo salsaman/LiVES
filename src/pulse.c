@@ -1315,7 +1315,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_cvolume_set(&pdriver->volume, pdriver->out_achans, pavol);
 
     pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY |
-                               PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_START_CORKED |
+                               PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_START_CORKED | PA_STREAM_NOT_MONOTONIC |
                                PA_STREAM_AUTO_TIMING_UPDATE),
                                &pdriver->volume, NULL);
 #endif
@@ -1358,7 +1358,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, NULL);
 
     pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
-                             (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE));
+                             (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE |
+                                 PA_STREAM_NOT_MONOTONIC));
     pa_threaded_mainloop_unlock(pa_mloop);
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
@@ -1524,10 +1525,6 @@ pulse_driver_t *pulse_get_driver(boolean is_output) {
 
 
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
-  // force update - "volatile" doesn't seem to work...
-  // perhaps because the return type is also volatile
-  //char *tmp = lives_strdup_printf("%p %d", pulsed->msgq, pulsed->pulsed_died);
-  //lives_free(tmp);
   if (pulsed->pulsed_died || mainw->aplayer_broken) return NULL;
   return pulsed->msgq;
 }

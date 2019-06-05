@@ -358,7 +358,8 @@ static void *worker(void *data) {
     render_frame(sd);
   }
 
-  if (sd->globalPM != NULL) delete(sd->globalPM);
+  // TODO : segfault
+  //if (sd->globalPM != NULL) delete(sd->globalPM);
 
   SDL_Quit();
   return NULL;

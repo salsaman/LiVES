@@ -3319,7 +3319,7 @@ filterinit1:
       if (process_audio && !is_pure_audio(filter, FALSE)) break;
 
       if ((inst = rte_keymode_get_instance(key + 1, 0)) != NULL) {
-        weed_deinit_effect(key);
+        //weed_deinit_effect(key);
         weed_delete_effectkey(key + 1, 0);
         weed_instance_unref(inst);
       }
@@ -3961,16 +3961,16 @@ filterinit2:
       key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, &weed_error);
       key = atoi(key_string);
       lives_free(key_string);
-      filter_mutex_lock(key);
+      //filter_mutex_lock(key);
       if ((inst = rte_keymode_get_instance(key + 1, 0)) != NULL) {
-        weed_deinit_effect(key);
+        //weed_deinit_effect(key);
         weed_delete_effectkey(key + 1, 0);
         weed_instance_unref(inst);
       }
       // no freep !
       if (pchains[key] != NULL) lives_free(pchains[key]);
       pchains[key] = NULL;
-      filter_mutex_unlock(key);
+      //filter_mutex_unlock(key);
       break;
     case WEED_EVENT_HINT_PARAM_CHANGE:
       break;

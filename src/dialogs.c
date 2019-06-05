@@ -1356,8 +1356,8 @@ int process_one(boolean visible) {
   }
 
   if (visible) {
-    // fixes a problem with opening preview with bg generator
     if (cfile->proc_ptr == NULL) {
+      // fixes a problem with opening preview with bg generator
       if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_NO_PROPOGATE;
     } else {
       double fraction_done, timesofar;
@@ -1397,13 +1397,13 @@ int process_one(boolean visible) {
           }
         }
         shown_paused_frames = mainw->effects_paused;
-      }
-
-      else {
+      } else {
         if (visible && cfile->proc_ptr->frames_done >= cfile->progress_start) {
           if (progress_count == 0) check_storage_space(cfile, TRUE);
           // display progress fraction or pulse bar
           progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
+          sched_yield();
+          lives_usleep(prefs->sleep_time);
         }
       }
     }
@@ -1784,8 +1784,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
   while (1) {
-    while (!mainw->internal_messaging && (((!visible && (mainw->whentostop != STOP_ON_AUD_END ||
-                                            is_realtime_aplayer(prefs->audio_player)))) ||
+    while (!mainw->internal_messaging && ((!visible && (mainw->whentostop != STOP_ON_AUD_END ||
+                                           is_realtime_aplayer(prefs->audio_player))) ||
                                           !lives_file_test(cfile->info_file, LIVES_FILE_TEST_EXISTS))) {
       // just pulse the progress bar, or play video
       // returns a code if pb stopped

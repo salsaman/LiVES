@@ -3855,21 +3855,21 @@ if (defined($ARGV[0])) {
 		close $fh;
 
 		##print "SMOG OK $count\n";
+		if ($matchsize == 6 && $count > 0) {
+		    &sig_complete(@lines);
+		    exit 0;
+		}
+
+		if ($bestvideo eq "" || ($count == 0 && $matchsize != 7)) {
+		    &sig_error("The requested URL", $url, "could not be opened with the desired format.", "\nPlease try again.");
+		    exit 1;
+		}
+
 		if ($audchoice eq "" && $xbestaudio ne "") {
 		    $bestaudio = $xbestaudio;
 		}
 
-		if ($bestvideo eq "") {
-		    &sig_error("The requested URL", $url, "could not be opened with the requested format.", "\nPlease try again.");
-		    exit 1;
-		}
-
 		if ($vidchoice eq "") {
-		    if ($matchsize == 6) {
-			&sig_complete(@lines);
-			exit 0;
-		    }
-
 		    &sig_complete("$bestvideo", "$bestaudio");
 		    exit 0;
 		}
@@ -3889,8 +3889,9 @@ if (defined($ARGV[0])) {
 	    }
 	    
 	    if ($formreq eq "mp4") {
-		#$com = "youtube-dl -o \"$xdfile\" --merge-output-format mp4 --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
-		$com = "youtube-dl -o \"$xdfile\" --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
+		#$extra = "--merge-output-format mp4";
+		$extra = "";
+		$com = "youtube-dl -o \"$xdfile\" $extra --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
 	    } elsif ($formreq eq "webm") {
 		if ($bestaudio eq "") {
 		    $dfile = $xdfile;

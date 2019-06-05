@@ -741,7 +741,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
   if (pbox == NULL) {
     int scrw;
-    if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 && rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H;
+    if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 && rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 2;
     else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
     widget_opts.non_modal = TRUE;
     fx_dialog[didx] = lives_standard_dialog_new(_(rfx->menu_text[0] == '_' ? rfx->menu_text + 1 : rfx->menu_text), FALSE, scrw, RFX_WINSIZE_V);
@@ -1236,12 +1236,11 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     }
 
     if (mainw->multitrack == NULL || rfx->status != RFX_STATUS_WEED) {
-      if (GUI_SCREEN_HEIGHT >= mainw->overflow_height)
-        scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, top_hbox);
-      else
-        scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V >> 1, top_hbox);
-    } else
-      scrolledwindow = lives_standard_scrolled_window_new(-1, -1, top_hbox);
+      float box_scale = 1.;
+      // for resize effects we add the framedraw to get its widgets, but hide it, so the box should get extra width and less height
+      if (rfx->props & RFX_PROPS_MAY_RESIZE) box_scale = 2.;
+      scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H * box_scale, RFX_WINSIZE_V >> 1, top_hbox);
+    } else scrolledwindow = lives_standard_scrolled_window_new(-1, -1, top_hbox);
 
     lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, 0);
   }

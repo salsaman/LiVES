@@ -620,12 +620,13 @@ lives_render_error_t realfx_progress(boolean reset) {
 
   // skip resizing virtual frames
   if (resize_instance != NULL && is_virtual_frame(mainw->current_file, i)) {
+    mainw->rowstride_alignment_hint = 1;
     if (++i > cfile->end) {
       mainw->internal_messaging = FALSE;
       lives_snprintf(mainw->msg, 9, "completed");
+      return LIVES_RENDER_COMPLETE;
     }
-    mainw->rowstride_alignment_hint = 1;
-    return LIVES_RENDER_COMPLETE;
+    return LIVES_RENDER_PROCESSING;
   }
 
   if (has_video_filters(FALSE) || resize_instance != NULL) {
@@ -787,6 +788,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
     reget_afilesize(mainw->current_file);
   }
 
+  mainw->internal_messaging =FALSE;
   resize_instance = NULL;
   return retval;
 }

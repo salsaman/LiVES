@@ -36,7 +36,7 @@ extra_cflags =
 else
 extra_ldflags = -fPIC -DPIC
 
-extra_cflags = -fPIC -DPIC
+extra_cflags = -fPIC -DPIC -O3
 endif
 
 lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la libweed_slice_scripting.la libweed-utils_scripting.la

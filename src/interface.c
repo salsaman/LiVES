@@ -186,7 +186,7 @@ double lives_ce_update_timeline(int frame, double x) {
     return 0.;
   }
 
-  if (mainw->current_file < 0 || cfile == NULL) {
+  if (!CURRENT_CLIP_IS_VALID) {
     if (!prefs->hide_framebar) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");
       lives_widget_queue_draw_if_visible(mainw->framecounter);
@@ -227,6 +227,10 @@ double lives_ce_update_timeline(int frame, double x) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
   }
+
+  show_playbar_labels(mainw->current_file);
+  update_timer_bars(0, 0, 0, 0, 0);
+  lives_widget_queue_draw(mainw->eventbox2);
 
   last_current_file = mainw->current_file;
   return x;

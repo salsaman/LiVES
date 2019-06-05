@@ -62,6 +62,7 @@ static void stream_overflow_callback(pa_stream *s, void *userdata) {
   fprintf(stderr, "Stream overrun. \n");
 }
 
+
 boolean lives_pulse_init(short startup_phase) {
   // startup pulse audio server
   char *msg, *msg2;
@@ -174,7 +175,12 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
 #if !HAVE_PA_STREAM_BEGIN_WRITE
     buff = (uint8_t *)lives_try_malloc0(xbytes);
 #endif
-    if (!buff) return;
+    if (!buff) {
+#if HAVE_PA_STREAM_BEGIN_WRITE
+      pa_stream_cancel_write(pdriver->pstream);
+#endif
+      return;
+    }
 #if HAVE_PA_STREAM_BEGIN_WRITE
     memset(buff, 0, xbytes);
 #endif
@@ -210,11 +216,7 @@ static short *shortbuffer = NULL;
 
 static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *arg) {
   // PULSE AUDIO calls this periodically to get the next audio buffer
-
-  // note: unlike with jack, we have to actually write something with pa_stream_write, even if silent
-  // - otherwise the buffer size just increases
-
-  // note also, the buffer size can, and does, change on each call, making it inefficient to use ringbuffers
+  // note the buffer size can, and does, change on each call, making it inefficient to use ringbuffers
 
   pulse_driver_t *pulsed = (pulse_driver_t *)arg;
 
@@ -735,6 +737,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             buffer = (uint8_t *)lives_try_malloc(nbytes);
 #endif
             if (!buffer || !pulsed->sound_buffer) {
+#if HAVE_PA_STREAM_BEGIN_WRITE
+              pa_stream_cancel_write(pulsed->pstream);
+#endif
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
                                    (pulsed->out_asamps >> 3), nbytes);
               if (!pulsed->is_paused) pulsed->frames_written += nsamples;
@@ -771,6 +776,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             shortbuffer = (short *)lives_try_malloc0(xbytes);
 #endif
             if (!shortbuffer) {
+#if HAVE_PA_STREAM_BEGIN_WRITE
+              pa_stream_cancel_write(pulsed->pstream);
+#endif
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
                                    (pulsed->out_asamps >> 3), nbytes);
               if (!pulsed->is_paused) pulsed->frames_written += nsamples;
@@ -1104,9 +1112,12 @@ void pulse_close_client(pulse_driver_t *pdriver) {
   if (pdriver->pstream != NULL) {
     //g_print("pa close2\n");
     pa_threaded_mainloop_lock(pa_mloop);
+    pa_stream_disconnect(pdriver->pstream);
     pa_stream_set_write_callback(pdriver->pstream, NULL, NULL);
     pa_stream_set_read_callback(pdriver->pstream, NULL, NULL);
-    pa_stream_disconnect(pdriver->pstream);
+    pa_stream_set_underflow_callback(pdriver->pstream, NULL, NULL);
+    pa_stream_set_overflow_callback(pdriver->pstream, NULL, NULL);
+    pa_stream_unref(pdriver->pstream);
     pa_threaded_mainloop_unlock(pa_mloop);
   }
   if (pdriver->pa_props != NULL) pa_proplist_free(pdriver->pa_props);

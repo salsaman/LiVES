@@ -1096,9 +1096,11 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
       if (mainw->ext_playback) {
         pthread_mutex_lock(&mainw->vpp_stream_mutex);
         mainw->ext_audio = FALSE;
+        mainw->ext_playback = FALSE;
         pthread_mutex_unlock(&mainw->vpp_stream_mutex);
-        if (mainw->vpp->exit_screen != NULL)
+        if (mainw->vpp->exit_screen != NULL) {
           (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
+        }
 #ifdef RT_AUDIO
         stop_audio_stream();
 #endif
@@ -1457,7 +1459,9 @@ void vid_playback_plugin_exit(void) {
     pthread_mutex_unlock(&mainw->vpp_stream_mutex);
     mainw->ext_keyboard = FALSE;
     lives_grab_remove(mainw->LiVES);
-    if (mainw->vpp->exit_screen != NULL)(*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
+    if (mainw->vpp->exit_screen != NULL) {
+      (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
+    }
 #ifdef RT_AUDIO
     stop_audio_stream();
 #endif

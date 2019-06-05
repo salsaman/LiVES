@@ -262,6 +262,7 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions
 LIVES_GLOBAL_INLINE int filter_mutex_trylock(int key) {
 #ifdef DEBUG_FILTER_MUTEXES
   int retval;
+  if (key == -1) return 0;
   if (key >= 0 && key < FX_KEYS_MAX) retval = pthread_mutex_trylock(&mainw->fx_mutex[key]);
   else retval = EINVAL;
   g_print("trylock of %d returned %d\n", key, retval);
@@ -1487,7 +1488,7 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
 
-  filter_mutex_lock(key);
+  if (key != -1) filter_mutex_lock(key);
 
 reinit:
 
@@ -1533,7 +1534,7 @@ reinit:
         weed_instance_unref(orig_inst);
         lives_chdir(cwd, FALSE);
         lives_free(cwd);
-        filter_mutex_unlock(key);
+        if (key != -1) filter_mutex_unlock(key);
         return FILTER_ERROR_COULD_NOT_REINIT;
       }
 
@@ -1558,7 +1559,7 @@ reinit:
     if (inst != NULL) goto reinit;
   }
 
-  filter_mutex_unlock(key);
+  if (key != -1) filter_mutex_unlock(key);
   weed_instance_unref(orig_inst);
   return filter_error;
 }
@@ -1746,8 +1747,9 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   lives_freep((void **)&xinst);
   lives_freep((void **)&dthreads);
 
-  if (got_invalid) return FILTER_ERROR_MUST_RELOAD;
-
+  if (got_invalid) {
+    return FILTER_ERROR_MUST_RELOAD;
+  }
   return FILTER_NO_ERROR;
 }
 
@@ -1951,12 +1953,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       // see if we can multithread
       if ((prefs->nfx_threads = future_prefs->nfx_threads) > 1 &&
           filter_flags & WEED_FILTER_HINT_MAY_THREAD) {
-        if (!filter_mutex_trylock(key)) {
+        if (key == -1 || !filter_mutex_trylock(key)) {
           // data processing effect; just call the process_func
           if (mainw->current_file > -1)
             weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
           retval = process_func_threaded(inst, out_channels, tc);
-          filter_mutex_unlock(key);
+          if (key != -1) filter_mutex_unlock(key);
         } else retval = FILTER_ERROR_MUST_RELOAD;
         if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
       }
@@ -1965,11 +1967,11 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         int ret;
         weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
         process_func = process_func_ptr_ptr[0];
-        if (!filter_mutex_trylock(key)) {
+        if (key == -1 || !filter_mutex_trylock(key)) {
           if (mainw->current_file > -1)
             weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
           ret = (*process_func)(inst, tc);
-          filter_mutex_unlock(key);
+          if (key != -1) filter_mutex_unlock(key);
           if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_MUST_RELOAD;
         } else retval = FILTER_ERROR_MUST_RELOAD;
       }
@@ -2814,9 +2816,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   // see if we can multithread
   if ((prefs->nfx_threads = future_prefs->nfx_threads) > 1 &&
       filter_flags & WEED_FILTER_HINT_MAY_THREAD) {
-    if (!filter_mutex_trylock(key)) {
+    if (key == -1 || !filter_mutex_trylock(key)) {
       retval = process_func_threaded(inst, out_channels, tc);
-      filter_mutex_unlock(key);
+      if (key != -1) filter_mutex_unlock(key);
     } else retval = FILTER_ERROR_MUST_RELOAD;
     if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
   }
@@ -2825,9 +2827,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     int ret;
     weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
     process_func = process_func_ptr_ptr[0];
-    if (!filter_mutex_trylock(key)) {
+    if (key == -1 || !filter_mutex_trylock(key)) {
       ret = (*process_func)(inst, tc);
-      filter_mutex_unlock(key);
+      if (key != -1) filter_mutex_unlock(key);
     } else retval = FILTER_ERROR_MUST_RELOAD;
     if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_MUST_RELOAD;
   }
@@ -2883,6 +2885,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // set this in case it was a resize plugin
     width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error);
     height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
+
     weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
     weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
 
@@ -3001,9 +3004,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
       // see if we can multithread
       if ((prefs->nfx_threads = future_prefs->nfx_threads) > 1 &&
           filter_flags & WEED_FILTER_HINT_MAY_THREAD) {
-        if (!filter_mutex_trylock(key)) {
+        if (key == -1 || !filter_mutex_trylock(key)) {
           retval = process_func_threaded(inst, out_channels, tc);
-          filter_mutex_unlock(key);
+          if (key != -1) filter_mutex_unlock(key);
         } else retval = FILTER_ERROR_MUST_RELOAD;
         if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
       }
@@ -3012,9 +3015,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
         int ret;
         weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
         process_func = process_func_ptr_ptr[0];
-        if (!filter_mutex_trylock(key)) {
+        if (key == -1 || !filter_mutex_trylock(key)) {
           ret = (*process_func)(inst, tc);
-          filter_mutex_unlock(key);
+          if (key != -1) filter_mutex_unlock(key);
           if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_MUST_RELOAD;
         } else retval = FILTER_ERROR_MUST_RELOAD;
       }
@@ -3212,11 +3215,11 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
   pthread_mutex_lock(&mainw->interp_mutex); // stop video thread from possibly interpolating our audio effects
   weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
   process_func = process_func_ptr_ptr[0];
-  if (!filter_mutex_trylock(key)) {
+  if (key == -1 || !filter_mutex_trylock(key)) {
     if ((*process_func)(inst, tc) == WEED_ERROR_PLUGIN_INVALID) {
       retval = FILTER_ERROR_MUST_RELOAD;
     }
-    filter_mutex_unlock(key);
+    if (key != -1) filter_mutex_unlock(key);
   } else retval = FILTER_ERROR_MUST_RELOAD;
 
   pthread_mutex_unlock(&mainw->interp_mutex);
@@ -3449,9 +3452,9 @@ audinst1:
   if (needs_reinit) {
     // - deinit inst
     // mutex locked
-    filter_mutex_lock(key);
+    if (key != -1) filter_mutex_lock(key);
     weed_call_deinit_func(instance);
-    filter_mutex_unlock(key);
+    if (key != -1) filter_mutex_unlock(key);
 
     for (i = 0; i < numinchans; i++) {
       if ((channel = in_channels[i]) != NULL) {
@@ -6488,7 +6491,6 @@ static void set_default_channel_sizes(weed_plant_t **in_channels, weed_plant_t *
       set_channel_size(channel, width, height, numplanes, rowstrides);
       lives_free(rowstrides);
       weed_layer_pixel_data_free(channel);
-
     } else {
       if (mainw->current_file == -1 || !has_aud_in_chans) {
         weed_set_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, DEFAULT_AUDIO_CHANS);
@@ -8573,10 +8575,13 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
 
   if (update) {
     int key = -1;
-    if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
-    filter_mutex_lock(key);
+    if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
+      key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+      filter_mutex_lock(key);
+    }
     weed_leaf_copy(in_params[copyto], WEED_LEAF_VALUE, in_param, WEED_LEAF_VALUE);
-    filter_mutex_unlock(key);
+    if (key != -1)
+      filter_mutex_unlock(key);
   }
   lives_free(in_params);
   return copyto;

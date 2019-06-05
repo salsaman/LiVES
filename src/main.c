@@ -4600,7 +4600,6 @@ void load_preview_image(boolean update_always) {
         if (mainw->preview_box != NULL) {
           lives_widget_set_sensitive(mainw->p_rewindbutton, TRUE);
         }
-        get_play_times();
       }
       break;
 
@@ -6412,9 +6411,11 @@ void load_frame_image(int frame) {
                                        weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error),
                                        mainw->currticks - mainw->stream_ticks, pd_array, retdata, mainw->vpp->play_params)) {
         vid_playback_plugin_exit();
-        if (return_layer != NULL) weed_layer_free(return_layer);
-        lives_free(retdata);
-        return_layer = NULL;
+        if (return_layer != NULL) {
+          weed_layer_free(return_layer);
+          lives_free(retdata);
+          return_layer = NULL;
+        }
       }
       lives_free(pd_array);
 

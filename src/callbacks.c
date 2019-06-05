@@ -4002,7 +4002,6 @@ void on_playall_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     play_file();
     lives_ce_update_timeline(0, cfile->pointer_time);
-    get_play_times();
     mainw->noswitch = FALSE;
   }
 }
@@ -4040,7 +4039,7 @@ void on_playsel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // in case we are rendering and previewing, in case we now have audio
   if (mainw->preview && mainw->is_rendering && mainw->is_processing) reget_afilesize(mainw->current_file);
-  else get_play_times();
+  else update_timer_bars(0, 0, 0, 0, 0);
   mainw->noswitch = FALSE;
 }
 
@@ -4240,7 +4239,7 @@ void on_rewind_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_set_sensitive(mainw->rewind, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
   lives_widget_set_sensitive(mainw->trim_to_pstart, FALSE);
-  get_play_times();
+  update_timer_bars(0, 0, 0, 0, 0);
 }
 
 
@@ -9621,7 +9620,7 @@ boolean on_hrule_update(LiVESWidget *widget, LiVESXEventMotion *event, livespoin
   lives_widget_get_pointer(device, widget, &x, NULL);
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
-  get_play_times();
+  update_timer_bars(0, 0, 0, 0, 0);
   return TRUE;
 }
 
@@ -9638,8 +9637,7 @@ boolean on_hrule_reset(LiVESWidget *widget, LiVESXEventButton  *event, livespoin
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
 
-  // TODO - need to draw over bg like when we are playing
-  get_play_times();
+  update_timer_bars(0, 0, 0, 0, 0);
 
   if (cfile->pointer_time > 0.) {
     lives_widget_set_sensitive(mainw->rewind, TRUE);
@@ -9673,8 +9671,7 @@ boolean on_hrule_set(LiVESWidget *widget, LiVESXEventButton *event, livespointer
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
 
-  get_play_times();
-
+  update_timer_bars(0, 0, 0, 0, 0);
 
   return TRUE;
 }

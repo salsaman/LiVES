@@ -720,7 +720,6 @@ static boolean call_set_current_time(livespointer data) {
     } else {
       if (mainw->current_file > 0 && idata->stime >= 0. && idata->stime <= CLIP_TOTAL_TIME(mainw->current_file)) {
         cfile->pointer_time = lives_ce_update_timeline(0, idata->stime);
-        get_play_times();
       }
     }
     ext_caller_return_int(idata->id, TRUE);

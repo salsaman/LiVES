@@ -866,9 +866,7 @@ weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_
     weed_set_int_value(init_event, WEED_LEAF_IN_TRACKS, 0);
     weed_set_int_value(init_event, WEED_LEAF_OUT_TRACKS, 0);
 
-    g_print("screwing\n");
     ret = weed_apply_instance(resize_instance, init_event, layers, 0, 0, tc);
-    g_print("ret was %d %d\n", ret, FILTER_ERROR_MUST_RELOAD);
 
     retlayer = layers[0];
     weed_plant_free(init_event);

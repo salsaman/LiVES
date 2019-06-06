@@ -1811,16 +1811,18 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   // filter_mutex should be unlocked
 
   // here we:
-  // get our in_tracks and out_tracks that map filter_instance channels to layers
+  // get our in_tracks and out_tracks from the init_event, these map filter_instance channels to layers
 
   // clear WEED_LEAF_DISABLED if we have non-zero frame and there is no WEED_LEAF_DISABLED in template
-  // if we have a zero frame, set WEED_LEAF_DISABLED if WEED_LEAF_OPTIONAL, otherwise we cannot apply the filter
+  // if we have a zero (NULL) frame, set WEED_LEAF_DISABLED if WEED_LEAF_OPTIONAL, otherwise we cannot apply the filter
 
   // set channel timecodes
 
-  // pull pixel_data (unless it is there already)
+  // set the fps (data) in the instance
 
-  // set each channel width,height to match largest of in layers
+  // pull pixel_data or wait for threads to complete for all input layers (unless it is there already)
+
+  // set each channel width, height to match largest of in layers (unless the plugin allows differing sizes)
 
   // if width and height are wrong, resize in the layer
 
@@ -1830,6 +1832,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   // apply the effect, put result in output layer, set layer palette, width, height, rowstrides
 
   // if filter does not support inplace, we must create a new pixel_data; this will then replace the original layer
+  // (this is passed to the plugin as the output, so we do not need to memcpy)
 
   // for in/out alpha channels, there is no matching layer. These channels are passed around like data
   // using mainw->cconx as a guide. We will simply free any in alpha channels after processing (unless inplace was used)
@@ -1840,7 +1843,11 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   // however if all sources are smaller than this
   // then the output will be smaller also and need resizing by the caller
 
-  // TODO ** - handle return errors
+  // for purely audio filters, these are handled in weed_apply_audio_instance()
+
+  // for filters with mixed video / audio inputs (currently only generators) audio is added
+
+
   int *in_tracks, *out_tracks;
   int *rowstrides;
   int *layer_rows = NULL, *channel_rows;
@@ -6151,170 +6158,6 @@ LIVES_GLOBAL_INLINE weed_plant_t *weed_instance_obtain(int key, int mode) {
 #endif
 
 
-void wge_inner(weed_plant_t *inst, boolean unref) {
-  weed_plant_t *next_inst = NULL;
-  int error;
-  int key = -1;
-
-  // must NOT call this with filter_mutex locked
-
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
-    key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
-    filter_mutex_lock(key);
-    key_to_instance[key][key_modes[key]] = NULL;
-    filter_mutex_unlock(key);
-  }
-
-  next_inst = get_next_compound_inst(inst);
-
-  if (key != -1) filter_mutex_lock(key);
-  weed_call_deinit_func(inst);
-  if (key != -1) filter_mutex_unlock(key);
-
-  if (unref) weed_instance_unref(inst);
-
-  if (next_inst != NULL) {
-    // handle compound fx
-    inst = next_inst;
-    wge_inner(inst, unref);
-  }
-}
-
-
-void weed_generator_end(weed_plant_t *inst) {
-  // generator has stopped for one of the following reasons:
-  // efect was de-inited; clip (bg/fg) was changed; playback stopped with fg
-
-  // MUST be called with filter_mutex unlocked
-
-  lives_whentostop_t wts = mainw->whentostop;
-  boolean is_bg = FALSE;
-  boolean clip_switched = mainw->clip_switched;
-  int current_file = mainw->current_file, pre_src_file = mainw->pre_src_file;
-  register int i;
-
-  if (inst == NULL) {
-    LIVES_WARN("inst was NULL !");
-    //return;
-  }
-
-  if (mainw->blend_file != -1 && mainw->blend_file != current_file && mainw->files[mainw->blend_file] != NULL &&
-      mainw->files[mainw->blend_file]->ext_src == inst) is_bg = TRUE;
-  else mainw->new_blend_file = mainw->blend_file;
-
-  if (!is_bg && mainw->whentostop == STOP_ON_VID_END && mainw->playing_file > 0) {
-    // we will close the file after playback stops
-    mainw->cancelled = CANCEL_GENERATOR_END;
-    return;
-  }
-
-  if (rte_window != NULL && !mainw->is_rendering && mainw->multitrack == NULL) {
-    // update real time effects window if we are showing it
-    if (!is_bg) {
-      rtew_set_keych(fg_generator_key, FALSE);
-    } else {
-      rtew_set_keych(bg_generator_key, FALSE);
-    }
-  }
-
-  if (mainw->ce_thumbs) {
-    // update ce_thumbs window if we are showing it
-    if (!is_bg) {
-      ce_thumbs_set_keych(fg_generator_key, FALSE);
-    } else {
-      ce_thumbs_set_keych(bg_generator_key, FALSE);
-    }
-  }
-
-  if (inst != NULL && get_audio_channel_in(inst, 0) != NULL) {
-    mainw->afbuffer_clients--;
-    if (mainw->afbuffer_clients == 0) {
-      pthread_mutex_lock(&mainw->abuf_frame_mutex);
-      for (i = 0; i < 2; i++) {
-        if (mainw->afb[i] != NULL) {
-          free_audio_frame_buffer(mainw->afb[i]);
-          lives_free(mainw->afb[i]);
-          mainw->afb[i] = NULL;
-        }
-      }
-      mainw->audio_frame_buffer = NULL;
-      pthread_mutex_unlock(&mainw->abuf_frame_mutex);
-    }
-  }
-
-  if (is_bg) {
-    if (mainw->blend_layer != NULL) check_layer_ready(mainw->blend_layer);
-    filter_mutex_lock(bg_generator_key);
-    key_to_instance[bg_generator_key][bg_generator_mode] = NULL;
-    filter_mutex_unlock(bg_generator_key);
-    pthread_mutex_lock(&mainw->event_list_mutex);
-    if (rte_key_is_enabled(1 + bg_generator_key)) mainw->rte ^= (GU641 << bg_generator_key);
-    pthread_mutex_unlock(&mainw->event_list_mutex);
-    bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
-    pre_src_file = mainw->pre_src_file;
-    mainw->pre_src_file = mainw->current_file;
-    mainw->current_file = mainw->blend_file;
-  } else {
-    if (mainw->frame_layer != NULL) check_layer_ready(mainw->frame_layer);
-    filter_mutex_lock(fg_generator_key);
-    key_to_instance[fg_generator_key][fg_generator_mode] = NULL;
-    filter_mutex_unlock(fg_generator_key);
-    pthread_mutex_lock(&mainw->event_list_mutex);
-    if (rte_key_is_enabled(1 + fg_generator_key)) mainw->rte ^= (GU641 << fg_generator_key);
-    pthread_mutex_unlock(&mainw->event_list_mutex);
-    fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
-    if (mainw->blend_file == mainw->current_file) mainw->blend_file = -1;
-  }
-
-  // must NOT call this with filter_mutex locked
-  if (inst != NULL) wge_inner(inst, TRUE);
-
-  // if the param window is already open, show any reinits now
-  if (fx_dialog[1] != NULL) {
-    if (is_bg) redraw_pwindow(bg_generator_key, bg_generator_mode);
-    else redraw_pwindow(fg_generator_key, fg_generator_mode);
-  }
-
-  if (!is_bg && cfile->achans > 0 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
-    // we started playing from an audio clip
-    cfile->frames = cfile->start = cfile->end = 0;
-    cfile->ext_src = NULL;
-    cfile->clip_type = CLIP_TYPE_DISK;
-    cfile->hsize = cfile->vsize = 0;
-    cfile->pb_fps = cfile->fps = prefs->default_fps;
-    return;
-  }
-
-  if (mainw->new_blend_file != -1 && is_bg) {
-    mainw->blend_file = mainw->new_blend_file;
-    mainw->new_blend_file = -1;
-    // close generator file and switch to original file if possible
-    if (cfile == NULL || cfile->clip_type != CLIP_TYPE_GENERATOR) {
-      LIVES_WARN("Close non-generator file");
-    } else {
-      close_current_file(mainw->pre_src_file);
-    }
-    if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
-  } else {
-    // close generator file and switch to original file if possible
-    if (cfile == NULL || cfile->clip_type != CLIP_TYPE_GENERATOR) {
-      LIVES_WARN("Close non-generator file");
-    } else {
-      close_current_file(mainw->pre_src_file);
-    }
-    if (mainw->current_file == current_file) mainw->clip_switched = clip_switched;
-  }
-
-  if (is_bg) {
-    mainw->current_file = current_file;
-    mainw->pre_src_file = pre_src_file;
-    mainw->whentostop = wts;
-  }
-
-  if (mainw->current_file == -1) mainw->cancelled = CANCEL_GENERATOR_END;
-}
-
-
 static weed_plant_t **weed_channels_create(weed_plant_t *filter, boolean in) {
   weed_plant_t **channels, **chantmpls;
   int num_channels;
@@ -7459,6 +7302,90 @@ void weed_deinit_all(boolean shutdown) {
 }
 
 
+static int register_audio_channels(int nchannels) {
+  if (nchannels <= 0) return mainw->afbuffer_clients;
+  if (mainw->afbuffer_clients == 0) {
+    pthread_mutex_lock(&mainw->abuf_frame_mutex);
+    init_audio_frame_buffers(prefs->audio_player);
+    mainw->afbuffer_clients_read = 0;
+    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+  }
+  mainw->afbuffer_clients += nchannels;
+  return mainw->afbuffer_clients;
+}
+
+
+static int unregister_audio_channels(int nchannels) {
+  if (mainw->audio_frame_buffer == NULL) {
+    mainw->afbuffer_clients = 0;
+    return 0;
+  }
+
+  mainw->afbuffer_clients -= nchannels;
+  if (mainw->afbuffer_clients <= 0) {
+    int i;
+    // lock out the audio thread
+    pthread_mutex_lock(&mainw->abuf_frame_mutex);
+    for (i = 0; i < 2; i++) {
+      if (mainw->afb[i] != NULL) {
+        free_audio_frame_buffer(mainw->afb[i]);
+        lives_free(mainw->afb[i]);
+        mainw->afb[i] = NULL;
+      }
+    }
+    mainw->audio_frame_buffer = NULL;
+    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+  }
+  return mainw->afbuffer_clients;
+}
+
+
+static boolean fill_audio_channel(weed_plant_t *achan) {
+  // this is for filter instances with mixed audio / video inputs/outputs
+  // uneffected audio is buffered by the audio thread; here we copy / convert it to a video effect's audio channel
+
+  // for now, skips in the audio are permitted, only the last channel to read is guaranteed all of the audio
+
+  // purely audio filters run in the audio thread
+  lives_audio_buf_t *audbuf;
+
+  if (achan != NULL) {
+    weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, 0);
+    weed_set_voidptr_value(achan, WEED_LEAF_AUDIO_DATA, NULL);
+  }
+
+  if (mainw->audio_frame_buffer == NULL || mainw->audio_frame_buffer->samples_filled <= 0) {
+    // no audio has been buffered
+    return FALSE;
+  }
+
+  // lock the buffers
+  pthread_mutex_lock(&mainw->abuf_frame_mutex);
+
+  // cast away the (volatile)
+  audbuf = (lives_audio_buf_t *)mainw->audio_frame_buffer;
+
+  // push read buffer to channel
+  if (achan != NULL && audbuf != NULL) {
+    // convert audio to format requested, and copy it to the audio channel data
+    push_audio_to_channel(achan, audbuf);
+  }
+
+  if (++mainw->afbuffer_clients_read >= mainw->afbuffer_clients) {
+    // all clients have read the data
+    // swap buffers for writing
+    // TODO: clients which read earlier will miss any data added to the buffer since then
+    if (audbuf == mainw->afb[0]) mainw->audio_frame_buffer = mainw->afb[1];
+    else mainw->audio_frame_buffer = mainw->afb[0];
+    free_audio_frame_buffer(audbuf);
+    mainw->afbuffer_clients_read = 0;
+  }
+
+  pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+  return TRUE;
+}
+
+
 /////////////////////
 // special handling for generators (sources)
 
@@ -7571,33 +7498,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
 
   // if we have an optional audio channel, we can push audio to it
   if ((achan = get_enabled_audio_channel(inst, 0, TRUE)) != NULL) {
-    if (mainw->audio_frame_buffer != NULL && mainw->audio_frame_buffer->samples_filled > 0) {
-      lives_audio_buf_t *audbuf;
-      // lock the buffers
-      pthread_mutex_lock(&mainw->abuf_frame_mutex);
-
-      audbuf = mainw->audio_frame_buffer == mainw->afb[0] ? mainw->afb[0] : mainw->afb[1];
-
-      // push read buffer to generator
-      if (audbuf != NULL) {
-        // convert audio to format requested, and copy it to the audio channel data
-        push_audio_to_channel(achan, audbuf);
-      }
-
-      if (++mainw->afbuffer_clients_read >= mainw->afbuffer_clients) {
-        // swap buffers for writing
-        if (audbuf == mainw->afb[0]) mainw->audio_frame_buffer = mainw->afb[1];
-        else mainw->audio_frame_buffer = mainw->afb[0];
-        free_audio_frame_buffer(audbuf);
-        mainw->afbuffer_clients_read = 0;
-      }
-
-      pthread_mutex_unlock(&mainw->abuf_frame_mutex);
-    } else {
-      // no audio has been buffered
-      weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, 0);
-      weed_set_voidptr_value(achan, WEED_LEAF_AUDIO_DATA, NULL);
-    }
+    fill_audio_channel(achan);
   }
 
   if (CURRENT_CLIP_IS_VALID)
@@ -7799,13 +7700,7 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
   // if the generator has an optional audio in channel, enable it: TODO - make this configurable
   if ((achan = get_audio_channel_in(inst, 0)) != NULL) {
     if (weed_plant_has_leaf(achan, WEED_LEAF_DISABLED)) weed_leaf_delete(achan, WEED_LEAF_DISABLED);
-    mainw->afbuffer_clients++;
-    if (mainw->afbuffer_clients == 1) {
-      pthread_mutex_lock(&mainw->abuf_frame_mutex);
-      init_audio_frame_buffers(prefs->audio_player);
-      mainw->afbuffer_clients_read = 0;
-      pthread_mutex_unlock(&mainw->abuf_frame_mutex);
-    }
+    register_audio_channels(1);
   }
 
   // allow clip switching
@@ -7904,6 +7799,159 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
   filter_mutex_unlock(key);
 
   return TRUE;
+}
+
+
+void wge_inner(weed_plant_t *inst, boolean unref) {
+  weed_plant_t *next_inst = NULL;
+  int error;
+  int key = -1;
+
+  // called from weed_generator_end() below and also called directly after playback ends
+
+  // must NOT call this with filter_mutex locked
+
+  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
+    key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+    filter_mutex_lock(key);
+    key_to_instance[key][key_modes[key]] = NULL;
+    filter_mutex_unlock(key);
+  }
+
+  next_inst = get_next_compound_inst(inst);
+
+  if (key != -1) filter_mutex_lock(key);
+  weed_call_deinit_func(inst);
+  if (key != -1) filter_mutex_unlock(key);
+
+  if (unref) weed_instance_unref(inst);
+
+  if (next_inst != NULL) {
+    // handle compound fx
+    inst = next_inst;
+    wge_inner(inst, unref);
+  }
+}
+
+
+void weed_generator_end(weed_plant_t *inst) {
+  // generator has stopped for one of the following reasons:
+  // efect was de-inited; clip (bg/fg) was changed; playback stopped with fg
+
+  // MUST be called with filter_mutex unlocked
+
+  lives_whentostop_t wts = mainw->whentostop;
+  boolean is_bg = FALSE;
+  boolean clip_switched = mainw->clip_switched;
+  int current_file = mainw->current_file, pre_src_file = mainw->pre_src_file;
+
+  if (inst == NULL) {
+    LIVES_WARN("inst was NULL !");
+    //return;
+  }
+
+  if (mainw->blend_file != -1 && mainw->blend_file != current_file && mainw->files[mainw->blend_file] != NULL &&
+      mainw->files[mainw->blend_file]->ext_src == inst) is_bg = TRUE;
+  else mainw->new_blend_file = mainw->blend_file;
+
+  if (!is_bg && mainw->whentostop == STOP_ON_VID_END && mainw->playing_file > 0) {
+    // we will close the file after playback stops
+    mainw->cancelled = CANCEL_GENERATOR_END;
+    return;
+  }
+
+  if (rte_window != NULL && !mainw->is_rendering && mainw->multitrack == NULL) {
+    // update real time effects window if we are showing it
+    if (!is_bg) {
+      rtew_set_keych(fg_generator_key, FALSE);
+    } else {
+      rtew_set_keych(bg_generator_key, FALSE);
+    }
+  }
+
+  if (mainw->ce_thumbs) {
+    // update ce_thumbs window if we are showing it
+    if (!is_bg) {
+      ce_thumbs_set_keych(fg_generator_key, FALSE);
+    } else {
+      ce_thumbs_set_keych(bg_generator_key, FALSE);
+    }
+  }
+
+  if (inst != NULL && get_audio_channel_in(inst, 0) != NULL) {
+    unregister_audio_channels(1);
+  }
+
+  if (is_bg) {
+    if (mainw->blend_layer != NULL) check_layer_ready(mainw->blend_layer);
+    filter_mutex_lock(bg_generator_key);
+    key_to_instance[bg_generator_key][bg_generator_mode] = NULL;
+    filter_mutex_unlock(bg_generator_key);
+    pthread_mutex_lock(&mainw->event_list_mutex);
+    if (rte_key_is_enabled(1 + bg_generator_key)) mainw->rte ^= (GU641 << bg_generator_key);
+    pthread_mutex_unlock(&mainw->event_list_mutex);
+    bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
+    pre_src_file = mainw->pre_src_file;
+    mainw->pre_src_file = mainw->current_file;
+    mainw->current_file = mainw->blend_file;
+  } else {
+    if (mainw->frame_layer != NULL) check_layer_ready(mainw->frame_layer);
+    filter_mutex_lock(fg_generator_key);
+    key_to_instance[fg_generator_key][fg_generator_mode] = NULL;
+    filter_mutex_unlock(fg_generator_key);
+    pthread_mutex_lock(&mainw->event_list_mutex);
+    if (rte_key_is_enabled(1 + fg_generator_key)) mainw->rte ^= (GU641 << fg_generator_key);
+    pthread_mutex_unlock(&mainw->event_list_mutex);
+    fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
+    if (mainw->blend_file == mainw->current_file) mainw->blend_file = -1;
+  }
+
+  // must NOT call this with filter_mutex locked
+  if (inst != NULL) wge_inner(inst, TRUE);
+
+  // if the param window is already open, show any reinits now
+  if (fx_dialog[1] != NULL) {
+    if (is_bg) redraw_pwindow(bg_generator_key, bg_generator_mode);
+    else redraw_pwindow(fg_generator_key, fg_generator_mode);
+  }
+
+  if (!is_bg && cfile->achans > 0 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+    // we started playing from an audio clip
+    cfile->frames = cfile->start = cfile->end = 0;
+    cfile->ext_src = NULL;
+    cfile->clip_type = CLIP_TYPE_DISK;
+    cfile->hsize = cfile->vsize = 0;
+    cfile->pb_fps = cfile->fps = prefs->default_fps;
+    return;
+  }
+
+  if (mainw->new_blend_file != -1 && is_bg) {
+    mainw->blend_file = mainw->new_blend_file;
+    mainw->new_blend_file = -1;
+    // close generator file and switch to original file if possible
+    if (cfile == NULL || cfile->clip_type != CLIP_TYPE_GENERATOR) {
+      LIVES_WARN("Close non-generator file");
+    } else {
+      close_current_file(mainw->pre_src_file);
+    }
+    if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
+  } else {
+    // close generator file and switch to original file if possible
+    if (cfile == NULL || cfile->clip_type != CLIP_TYPE_GENERATOR) {
+      LIVES_WARN("Close non-generator file");
+    } else {
+      close_current_file(mainw->pre_src_file);
+    }
+    if (mainw->current_file == current_file) mainw->clip_switched = clip_switched;
+  }
+
+  if (is_bg) {
+    mainw->current_file = current_file;
+    mainw->pre_src_file = pre_src_file;
+    mainw->whentostop = wts;
+  }
+
+  if (mainw->current_file == -1) mainw->cancelled = CANCEL_GENERATOR_END;
 }
 
 

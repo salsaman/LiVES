@@ -35,7 +35,7 @@ $allow_dirchange = 0; ## should be automatic, depending on whether current clip 
 
 $play_dir = 0; ## assume forwards
 
-$timeout = 5;
+$timeout = 10;
 
 if (defined($ARGV[0])) {
     $remote_host=$ARGV[0];
@@ -281,14 +281,14 @@ while (1) {
 	# mess with effects
 	if ($allow_fxchanges) {
 	    $nexteffectkey=int(rand($numeffectkeys)+1);
-	    if ($action<11) {
-		# 6,7,8,9,10
+	    if ($action<10) {
+		# 6,7,8,9
 		if ($nexteffectkey!=$key_to_avoid) {
 		    send_command("/effect_key/disable,$nexteffectkey");
 		}
 	    }
 	    elsif ($action<13) {
-		#11,12
+		#10,11,12
 		if ($nexteffectkey!=$key_to_avoid) {
 		    send_command("/effect_key/enable,$nexteffectkey");
 		}
@@ -340,6 +340,7 @@ exit 0;
 
 #####################################################################
 sub send_command {
+    if ($DEBUG) {print STDERR "Autolives sending: @_\n";}
     my ($command)="$sendOMC @_";
     if (!$is_mingw) {
 	`$command`;

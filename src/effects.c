@@ -40,8 +40,6 @@
 
 #include "rte_window.h"
 
-static int framecount;
-
 static weed_plant_t *resize_instance = NULL;
 
 static boolean apply_audio_fx;
@@ -139,6 +137,8 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
 // Rendered effects
 
 boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
+  // apply a rendered effect to the current file
+
   // returns FALSE if the user cancelled
   // leave_info_file is set if a preview turned into actual processing: ie. no params were changed after the preview
   // preview generates .pre files instead of .mgk, so needs special post-processing
@@ -157,6 +157,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   boolean got_no_frames = FALSE;
   char *tmp;
+
+  if (!CURRENT_CLIP_IS_VALID) return FALSE;
 
   if (rfx->num_in_channels == 0 && !is_preview) current_file = mainw->pre_src_file;
 
@@ -752,7 +754,6 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
   else resize_instance = NULL;
 
   mainw->internal_messaging = TRUE;
-  framecount = 0;
 
   mainw->rowstride_alignment_hint = 1;
 
@@ -794,13 +795,13 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 }
 
 
-void on_realfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_realfx_activate(LiVESMenuItem *menuitem, livespointer rfx) {
   int type = 1;
 
   boolean has_lmap_error = FALSE;
 
   // type can be 0 - apply current realtime effects
-  // 1 - resize (using weed filter)
+  // 1 - resize (using weed filter) [menuitem == NULL]
 
   if (menuitem != NULL) {
     type = 0;
@@ -830,14 +831,20 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
   }
 
-  if (!on_realfx_activate_inner(type, (lives_rfx_t *)user_data)) return;
+  if (!on_realfx_activate_inner(type, (lives_rfx_t *)rfx)) return;
 
   if (has_lmap_error) popup_lmap_errors(NULL, NULL);
 }
 
 
 weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_timecode_t tc) {
-  // realtime effects
+  // apply realtime effects to a layer
+  // mainw->filter_map is used as a guide
+  // mainw->pchains holds the parameter values for interpolation
+  // creates a temporary mix layer from mainw->blend_file (correcting its value if necessary)
+
+  // returns the effected layer
+
   weed_plant_t **layers, *retlayer;
   int i;
 
@@ -866,7 +873,7 @@ weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_
     weed_set_int_value(init_event, WEED_LEAF_IN_TRACKS, 0);
     weed_set_int_value(init_event, WEED_LEAF_OUT_TRACKS, 0);
 
-    ret = weed_apply_instance(resize_instance, init_event, layers, 0, 0, tc);
+    (void)(ret = weed_apply_instance(resize_instance, init_event, layers, 0, 0, tc));
 
     retlayer = layers[0];
     weed_plant_free(init_event);

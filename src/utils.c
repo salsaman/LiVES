@@ -45,6 +45,7 @@ typedef struct {
   char *pathname;
 } lives_file_buffer_t;
 
+static lives_file_buffer_t *find_in_file_buffers(int fd);
 
 char *filename_from_fd(char *val, int fd) {
   // return filename from an open fd, freeing val first
@@ -53,36 +54,41 @@ char *filename_from_fd(char *val, int fd) {
 
   // call like: foo = filename_from_fd(foo,fd); lives_free(foo);
 
+  lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
+  if (fbuff != NULL) {
+    return lives_strdup(fbuff->pathname);
+  } else {
 #ifndef IS_MINGW
-  char *fdpath;
-  char *fidi;
-  char rfdpath[PATH_MAX];
-  struct stat stb0, stb1;
+    char *fdpath;
+    char *fidi;
+    char rfdpath[PATH_MAX];
+    struct stat stb0, stb1;
 
-  ssize_t slen;
+    ssize_t slen;
 
-  if (fstat(fd, &stb0)) return val;
+    if (fstat(fd, &stb0)) return val;
 
-  fidi = lives_strdup_printf("%d", fd);
-  fdpath = lives_build_filename("/proc", "self", "fd", fidi, NULL);
-  lives_free(fidi);
+    fidi = lives_strdup_printf("%d", fd);
+    fdpath = lives_build_filename("/proc", "self", "fd", fidi, NULL);
+    lives_free(fidi);
 
-  if ((slen = lives_readlink(fdpath, rfdpath, PATH_MAX)) == -1) return val;
-  lives_free(fdpath);
+    if ((slen = lives_readlink(fdpath, rfdpath, PATH_MAX)) == -1) return val;
+    lives_free(fdpath);
 
-  memset(rfdpath + slen, 0, 1);
+    memset(rfdpath + slen, 0, 1);
 
-  if (stat(rfdpath, &stb1)) return val;
+    if (stat(rfdpath, &stb1)) return val;
 
-  if (stb0.st_dev != stb1.st_dev) return val;
+    if (stb0.st_dev != stb1.st_dev) return val;
 
-  if (stb0.st_ino != stb1.st_ino) return val;
+    if (stb0.st_ino != stb1.st_ino) return val;
 
-  if (val != NULL) lives_free(val);
-  return lives_strdup(rfdpath);
+    if (val != NULL) lives_free(val);
+    return lives_strdup(rfdpath);
 #else
-  return lives_strdup("unknown");
+    return lives_strdup("unknown");
 #endif
+  }
 }
 
 

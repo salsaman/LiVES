@@ -3543,8 +3543,8 @@ audinst1:
       }
       if (!filter_mutex_trylock(key)) {
         weed_set_double_array(in_params[vmaster], WEED_LEAF_VALUE, nvals, fvols);
-        set_copy_to(instance, vmaster, TRUE);
         filter_mutex_unlock(key);
+        set_copy_to(instance, vmaster, TRUE);
       }
       lives_freep((void **)&fvols);
       lives_freep((void **)&in_params);
@@ -8579,6 +8579,7 @@ char *get_weed_display_string(weed_plant_t *inst, int pnum) {
 
 int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
   // if we update a plugin in_parameter, evaluate any WEED_LEAF_COPY_VALUE_TO
+  // filter_mutex MUST be unlocked
   int error;
   boolean copy_ok = FALSE;
   int copyto;
@@ -8719,8 +8720,10 @@ void weed_set_blend_factor(int hotkey) {
 
   inc_count = enabled_in_channels(inst, FALSE);
 
+  filter_mutex_unlock(hotkey);
   // record old value
   copyto = set_copy_to(inst, pnum, FALSE);
+  filter_mutex_lock(hotkey);
 
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS) && inc_count > 0) {
     pthread_mutex_lock(&mainw->event_list_mutex);
@@ -8789,7 +8792,9 @@ void weed_set_blend_factor(int hotkey) {
     break;
   }
 
+  filter_mutex_unlock(hotkey);
   set_copy_to(inst, pnum, TRUE);
+  filter_mutex_lock(hotkey);
 
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS) && inc_count > 0) {
     pthread_mutex_lock(&mainw->event_list_mutex);

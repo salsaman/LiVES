@@ -1011,13 +1011,11 @@ static size_t blank_pixel(uint8_t *dst, int pal, int yuv_clamping, uint8_t *src)
     dst[0] = dst[1] = dst[2] = 0;
     dst[3] = src == NULL ? 255 : src[3];
     dst += 4;
-    if (src != NULL) src += 4;
     break;
   case WEED_PALETTE_ARGB32:
     dst[1] = dst[2] = dst[3] = 0;
     dst[0] = src == NULL ? 255 : src[0];
     dst += 4;
-    if (src != NULL) src += 4;
     break;
   case WEED_PALETTE_UYVY8888:
     dst[1] = dst[3] = y_black;

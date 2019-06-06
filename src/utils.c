@@ -663,7 +663,7 @@ ssize_t file_buffer_flush(int fd) {
   if (!fbuff->allow_fail && res < fbuff->bytes) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
   } else {
-#ifdef TEST_FALLOCATE
+#ifdef HAVE_POSIX_FALLOCATE
     posix_fallocate(fbuff->fd, fbuff->offset, BUFFER_FILL_BYTES);
 #endif
   }

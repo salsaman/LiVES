@@ -133,6 +133,9 @@ AC_CHECK_FUNCS(posix_memalign)
 dnl Check for posix_fadvise
 AC_CHECK_FUNCS(posix_fadvise)
 
+dnl Check for posix_fallocate
+AC_CHECK_FUNCS(posix_fallocate)
+
 AC_PATH_PROGS(PERL, perl perl5)
 
 

@@ -342,8 +342,8 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
       if (in) weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MIN, &error));
       else weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MAX, &error));
     }
-    set_copy_to(inst, trans, TRUE);
     filter_mutex_unlock(key);
+    set_copy_to(inst, trans, TRUE);
   }
   update_visual_params(rfx, FALSE);
   lives_free(in_params);

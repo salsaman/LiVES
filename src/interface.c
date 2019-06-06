@@ -3817,8 +3817,9 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  checkbutton_update = lives_standard_check_button_new(_("<--- Auto update youtube-dl ? (will require your password.)"), FALSE,
-                       LIVES_BOX(hbox), NULL);
+  msg = lives_strdup_printf(_("<--- Auto update %s ? (will require your password.)"), BIN_YOUTUBE_DL);
+  checkbutton_update = lives_standard_check_button_new(msg, FALSE, LIVES_BOX(hbox), NULL);
+  lives_free(msg);
 
   if (!capable->has_ssh_askpass) {
     get_location("ssh-askpass", string, 256);

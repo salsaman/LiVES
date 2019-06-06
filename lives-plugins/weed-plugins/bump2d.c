@@ -134,6 +134,7 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       temp = lighty - y;
       blank_pixel(dst, palette, yuv_clamping, src);
       dst += psize;
+      src += psize;
 
       for (x = 1; x < width - 1; x++) {
         normalx = bumpmap[x][y].x + (lightx - x) / aspect;
@@ -148,12 +149,14 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
             *dst = reflectionmap[normalx][normaly];
           else *dst = YUCL_YCL[reflectionmap[normalx][normaly]];
           dst[1] = dst[2] = 128;
-          if (palette == WEED_PALETTE_YUVA8888) dst[3] = src[3];
+        } else {
+          if (palette == WEED_PALETTE_ARGB32) dst[0] = src[0];
+          weed_memset(dst + offs, reflectionmap[normalx][normaly], 3);
         }
-        weed_memset(dst + offs, reflectionmap[normalx][normaly], 3);
+        if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32 || palette == WEED_PALETTE_YUVA8888) dst[3] = src[3];
         dst += psize;
+        src += psize;
       }
-      src += widthx - psize;
       blank_pixel(dst, palette, yuv_clamping, src);
       dst += orowstride;
       src += irowstride;

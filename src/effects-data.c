@@ -83,15 +83,28 @@ static char *get_chan_name(weed_plant_t *chan, int cnum, boolean is_in) {
 static void switch_fx_state(int okey, int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabbable_effect = mainw->last_grabbable_effect;
+
+  boolean relock_hotkey = FALSE;
+  boolean relock_okey = FALSE;
+
+  if (filter_mutex_trylock(hotkey - 1)) {
+    relock_hotkey = TRUE;
+    filter_mutex_unlock(hotkey - 1);
+  }
+  if (okey > -1) {
+    if (filter_mutex_trylock(okey)) {
+      relock_okey = TRUE;
+      filter_mutex_unlock(okey);
+    }
+  }
+
   // use -hotkey to indicate auto
-
-  filter_mutex_unlock(hotkey - 1);
-  if (okey > -1) filter_mutex_unlock(okey);
-
   rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(-hotkey));
 
-  mainw->last_grabbable_effect = last_grabbable_effect;
+  if (relock_hotkey) filter_mutex_lock(hotkey - 1);
+  if (relock_okey) filter_mutex_lock(okey);
 
+  mainw->last_grabbable_effect = last_grabbable_effect;
 }
 
 

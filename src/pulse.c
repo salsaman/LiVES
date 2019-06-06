@@ -64,7 +64,7 @@ static void stream_overflow_callback(pa_stream *s, void *userdata) {
 
 
 boolean lives_pulse_init(short startup_phase) {
-  // startup pulse audio server
+  // startup pulseaudio server
   char *msg, *msg2;
 
   int64_t ntime = 0, stime;
@@ -94,28 +94,28 @@ boolean lives_pulse_init(short startup_phase) {
     pcon = NULL;
     pulse_shutdown();
 
-    LIVES_WARN("Unable to connect to pulseaudio server");
+    LIVES_WARN("Unable to connect to the pulseaudio server");
 
     if (!mainw->foreign) {
       if (startup_phase == 0 && capable->has_sox_play) {
         do_error_dialog_with_check(
-          _("\nUnable to connect to pulse audio server.\nFalling back to sox audio player.\nYou can change this in Preferences/Playback.\n"),
+          _("\nUnable to connect to the pulseaudio server.\nFalling back to sox audio player.\nYou can change this in Preferences/Playback.\n"),
           WARN_MASK_NO_PULSE_CONNECT);
         switch_aud_to_sox(prefs->warning_mask & WARN_MASK_NO_PULSE_CONNECT);
       } else if (startup_phase == 0) {
         if (capable->has_mplayer) {
           do_error_dialog_with_check(
-            _("\nUnable to connect to pulse audio server.\nFalling back to mplayer audio player.\nYou can change this in Preferences/Playback.\n"),
+            _("\nUnable to connect to the pulseaudio server.\nFalling back to mplayer audio player.\nYou can change this in Preferences/Playback.\n"),
             WARN_MASK_NO_PULSE_CONNECT);
           switch_aud_to_mplayer(prefs->warning_mask & WARN_MASK_NO_PULSE_CONNECT);
         } else if (capable->has_mplayer2) {
           do_error_dialog_with_check(
-            _("\nUnable to connect to pulse audio server.\nFalling back to mplayer2 audio player.\nYou can change this in Preferences/Playback.\n"),
+            _("\nUnable to connect to the pulseaudio server.\nFalling back to mplayer2 audio player.\nYou can change this in Preferences/Playback.\n"),
             WARN_MASK_NO_PULSE_CONNECT);
           switch_aud_to_mplayer2(prefs->warning_mask & WARN_MASK_NO_PULSE_CONNECT);
         }
       } else {
-        msg = lives_strdup(_("\nUnable to connect to pulse audio server.\n"));
+        msg = lives_strdup(_("\nUnable to connect to the pulseaudio server.\n"));
         if (startup_phase != 2) {
           do_blocking_error_dialog(msg);
           mainw->aplayer_broken = TRUE;
@@ -1563,6 +1563,7 @@ uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(pulsed) != NULL) {
       sched_yield(); // wait for seek
+      lives_usleep(prefs->sleep_time);
     }
     if (timeout) return -1;
     lives_alarm_clear(alarm_handle);
@@ -1673,7 +1674,7 @@ boolean pulse_try_reconnect(void) {
   if (pulse_driver_activate(mainw->pulsed)) { // activate driver
     goto err123;
   }
-  d_print(_("\nConnection to pulse audio was reset.\n"));
+  d_print(_("\nConnection to pulseaudio was reset.\n"));
   return TRUE;
 
 err123:
@@ -1730,6 +1731,7 @@ void pulse_aud_pb_ready(int fileno) {
       alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
       while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
         sched_yield(); // wait for seek
+        lives_usleep(prefs->sleep_time);
       }
 
       if (timeout) pulse_try_reconnect();

@@ -2684,7 +2684,7 @@ void do_mt_no_audchan_error(void) {
 
 void do_mt_no_jack_error(int warn_mask) {
   do_error_dialog_with_check(
-    _("Multitrack audio preview is only available with the\n\"jack\" or \"pulse audio\" audio player.\nYou can set this in Tools|Preferences|Playback."),
+    _("Multitrack audio preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\nYou can set this in Tools|Preferences|Playback."),
     warn_mask);
 }
 
@@ -2743,7 +2743,7 @@ void do_dvgrab_error(void) {
 
 void do_nojack_rec_error(void) {
   do_error_dialog(
-    _("\n\nAudio recording can only be done using either\nthe \"jack\" or the \"pulse audio\" audio player.\n"
+    _("\n\nAudio recording can only be done using either\nthe \"jack\" or the \"pulseaudio\" audio player.\n"
       "You may need to select one of these in Tools/Preferences/Playback.\n"));
 }
 

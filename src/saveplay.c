@@ -2707,14 +2707,16 @@ void play_file(void) {
       int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
       while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
         sched_yield(); // wait for seek
+        lives_usleep(prefs->sleep_time);
       }
-      if (timeout) jack_try_reconnect();
       lives_alarm_clear(alarm_handle);
-
       jack_message.command = ASERVER_CMD_FILE_CLOSE;
       jack_message.data = NULL;
       jack_message.next = NULL;
       mainw->jackd->msgq = &jack_message;
+      if (timeout)  {
+        handle_audio_timeout();
+      }
     }
     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
       weed_plant_t *event = get_last_frame_event(mainw->event_list);
@@ -2741,17 +2743,22 @@ void play_file(void) {
         int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
           sched_yield(); // wait for seek
+          lives_usleep(prefs->sleep_time);
         }
-        if (timeout) pulse_try_reconnect();
         lives_alarm_clear(alarm_handle);
-
         pulse_message.command = ASERVER_CMD_FILE_CLOSE;
         pulse_message.data = NULL;
         pulse_message.next = NULL;
         mainw->pulsed->msgq = &pulse_message;
-        while (mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0) {
-          sched_yield();
-          lives_usleep(prefs->sleep_time);
+        if (timeout)  {
+          handle_audio_timeout();
+          mainw->pulsed->playing_file = -1;
+          mainw->pulsed->fd = -1;
+        } else {
+          while (mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0) {
+            sched_yield();
+            lives_usleep(prefs->sleep_time);
+          }
         }
       }
       if (mainw->pulsed != NULL) {
@@ -3047,11 +3054,12 @@ void play_file(void) {
     int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
       sched_yield(); // wait for seek
+      lives_usleep(prefs->sleep_time);
     }
-    if (timeout) jack_try_reconnect();
-
     lives_alarm_clear(alarm_handle);
-
+    if (timeout)  {
+      handle_audio_timeout();
+    }
     mainw->jackd->in_use = FALSE;
 
     if (has_audio_buffers) {
@@ -3066,8 +3074,12 @@ void play_file(void) {
     int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
       sched_yield(); // wait for seek
+      lives_usleep(prefs->sleep_time);
     }
-
+    lives_alarm_clear(alarm_handle);
+    if (timeout)  {
+      handle_audio_timeout();
+    }
     if (timeout) pulse_try_reconnect();
 
     lives_alarm_clear(alarm_handle);

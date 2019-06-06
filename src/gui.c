@@ -2144,7 +2144,7 @@ void create_LiVES(void) {
   //
 
   mainw->eventbox2 = lives_event_box_new();
-  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox2, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox2, FALSE, TRUE, 0);
   lives_widget_add_events(mainw->eventbox2, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
 
   vbox2 = lives_vbox_new(FALSE, 0);

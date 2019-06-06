@@ -210,7 +210,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 #else
   if (!capable->has_pulse_audio) {
     txt2 = lives_strdup(
-             _(", but you do not have pulse audio installed on your system.\n You are advised to install pulse audio first before running LiVES.\n\n"));
+             _(", but you do not have pulseaudio installed on your system.\n You are advised to install pulseaudio first before running LiVES.\n\n"));
   } else txt2 = lives_strdup(".\n\n");
 #endif
 
@@ -231,15 +231,9 @@ boolean do_audio_choice_dialog(short startup_phase) {
   txt5 = lives_strdup(_("SOX may be used if neither of the preceding players work, "));
 
   if (capable->has_sox_play) {
-    txt6 = lives_strdup(_("but some audio features will be disabled.\n\n"));
+    txt6 = lives_strdup(_("but many audio features will be disabled.\n\n"));
   } else {
     txt6 = lives_strdup(_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
-  }
-
-  if (capable->has_mplayer || capable->has_mplayer2) {
-    txt7 = lives_strdup(_("The MPLAYER/MPLAYER2 audio player is only recommended for testing purposes.\n\n"));
-  } else {
-    txt7 = lives_strdup("");
   }
 
   msg = lives_strdup_printf("%s%s%s%s%s%s%s%s", txt0, txt1, txt2, txt3, txt4, txt5, txt6, txt7);
@@ -269,7 +263,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  radiobutton0 = lives_standard_radio_button_new(_("Use _pulse audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton0 = lives_standard_radio_button_new(_("Use _pulseaudio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
   if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_PULSE;
 
@@ -318,42 +312,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
                          LIVES_INT_TO_POINTER(AUD_PLAYER_SOX));
-  }
-
-  if (capable->has_mplayer) {
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-    radiobutton3 = lives_standard_radio_button_new(_("Use _mplayer audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
-
-    if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_MPLAYER;
-
-    if (prefs->audio_player == AUD_PLAYER_MPLAYER) {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton3), TRUE);
-      set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER);
-    }
-
-    lives_signal_connect(LIVES_GUI_OBJECT(radiobutton3), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
-                         LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER));
-  }
-
-  if (capable->has_mplayer2) {
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-    radiobutton4 = lives_standard_radio_button_new(_("Use _mplayer2 audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
-
-    if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_MPLAYER2;
-
-    if (prefs->audio_player == AUD_PLAYER_MPLAYER2) {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton4), TRUE);
-      set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER2);
-    }
-
-    lives_signal_connect(LIVES_GUI_OBJECT(radiobutton4), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
-                         LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER2));
   }
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,

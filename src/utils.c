@@ -42,6 +42,7 @@ typedef struct {
   boolean read;
   boolean allow_fail;
   off_t offset;
+  char *pathname;
 } lives_file_buffer_t;
 
 
@@ -667,7 +668,7 @@ ssize_t file_buffer_flush(int fd) {
 
 
 static int lives_open_real_buffered(const char *pathname, int flags, int mode, boolean isread) {
-  lives_file_buffer_t *fbuff;
+  lives_file_buffer_t *fbuff, *xbuff;
   int fd = lives_open3(pathname, flags, mode);
   if (fd >= 0) {
     fbuff = (lives_file_buffer_t *)lives_malloc(sizeof(lives_file_buffer_t));
@@ -678,6 +679,14 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     fbuff->buffer = NULL;
     fbuff->read = isread;
     fbuff->offset = 0;
+    fbuff->pathname = lives_strdup(pathname);
+    if ((xbuff = find_in_file_buffers(fd)) != NULL) {
+      char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd, xbuff->pathname,
+                                      fbuff->pathname);
+      LIVES_ERROR(msg);
+      lives_free(msg);
+      lives_close_buffered(fd);
+    }
     mainw->file_buffers = lives_list_append(mainw->file_buffers, (livespointer)fbuff);
   }
 
@@ -729,6 +738,8 @@ int lives_close_buffered(int fd) {
   }
 
   if (should_close && fbuff->fd >= 0) ret = close(fbuff->fd);
+
+  lives_free(fbuff->pathname);
 
   mainw->file_buffers = lives_list_remove(mainw->file_buffers, (livesconstpointer)fbuff);
   if (fbuff->buffer != NULL) lives_free(fbuff->buffer);

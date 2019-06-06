@@ -61,6 +61,12 @@ LIVES_GLOBAL_INLINE char *lives_get_audio_file_name(int fnum) {
 }
 
 
+LIVES_GLOBAL_INLINE const char *audio_player_get_display_name(const char *aplayer) {
+  if (!strcmp(aplayer, AUDIO_PLAYER_PULSE)) return AUDIO_PLAYER_PULSE_AUDIO;
+  return aplayer;
+}
+
+
 void audio_free_fnames(void) {
   // cleanup stored filehandles after playback/fade/render
 
@@ -3318,3 +3324,10 @@ LIVES_GLOBAL_INLINE void audio_stream(void *buff, size_t nbytes, int fd) {
   }
 }
 
+
+LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
+  do_blocking_error_dialogf(
+    _("LiVES was unable to connect to %s.\nPlease check your audio settings and restart %s\nand LiVES if necessary.\n"),
+    audio_player_get_display_name(prefs->aplayer), audio_player_get_display_name(prefs->aplayer));
+  return CANCEL_ERROR;
+}

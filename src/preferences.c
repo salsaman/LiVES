@@ -1715,11 +1715,11 @@ boolean apply_prefs(boolean skip_warn) {
       switch_aud_to_mplayer(TRUE);
     }
 
-    // switch to pulse audio
+    // switch to pulseaudio
     else if (!(strcmp(audio_player, AUDIO_PLAYER_PULSE)) && prefs->audio_player != AUD_PLAYER_PULSE) {
       if (!capable->has_pulse_audio) {
         do_error_dialog_with_check_transient
-        ((tmp = lives_strdup_printf(_("\nUnable to switch audio players to pulse audio\n"
+        ((tmp = lives_strdup_printf(_("\nUnable to switch audio players to pulseaudio\n"
                                       "pulseaudio must be installed first.\nSee %s\n"), PULSE_AUDIO_URL)),
          TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(mainw->LiVES));
         lives_free(tmp);
@@ -3437,7 +3437,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->scrollw_right_recording = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_recording);
 
   hbox = lives_hbox_new(FALSE, 0);
-  prefsw->rdesk_audio = lives_standard_check_button_new(_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"),
+  prefsw->rdesk_audio = lives_standard_check_button_new(_("Record audio when capturing an e_xternal window\n (requires jack or pulseaudio)"),
                         prefs->rec_desktop_audio, LIVES_BOX(hbox), NULL);
 
 #ifndef RT_AUDIO
@@ -3496,7 +3496,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     lives_widget_set_sensitive(prefsw->rclips, FALSE);
   }
 
-  prefsw->raudio = lives_standard_check_button_new(_("_Audio (requires jack or pulse audio player)"),
+  prefsw->raudio = lives_standard_check_button_new(_("_Audio (requires jack or pulseaudio player)"),
                    (prefs->rec_opts & REC_AUDIO), LIVES_BOX(prefsw->vbox_right_recording), NULL);
 
   if (mainw->playing_file > 0 && mainw->record) {
@@ -4069,7 +4069,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
   prefsw->checkbutton_warn_mt_no_jack = lives_standard_check_button_new
-                                        (_("Warn if multitrack has audio channels, and your audio player is not \"jack\" or \"pulse audio\"."),
+                                        (_("Warn if multitrack has audio channels, and your audio player is not \"jack\" or \"pulseaudio\"."),
                                          !(prefs->warning_mask & WARN_MASK_MT_NO_JACK), LIVES_BOX(hbox), NULL);
 
 #ifdef HAVE_LDVGRAB

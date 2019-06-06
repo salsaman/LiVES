@@ -46,7 +46,7 @@ typedef struct {
 #define AUDIO_PLAYER_SOX "sox"
 #define AUDIO_PLAYER_JACK "jack"
 #define AUDIO_PLAYER_PULSE "pulse"
-#define AUDIO_PLAYER_PULSE_AUDIO "pulse audio" // display version
+#define AUDIO_PLAYER_PULSE_AUDIO "pulseaudio" // display version
 
 #define AUDIO_PLAYER_MPLAYER "mplayer"
 #define AUDIO_PLAYER_MPLAYER2 "mplayer2"

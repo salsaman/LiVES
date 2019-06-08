@@ -2692,7 +2692,6 @@ static boolean lives_startup(livespointer data) {
 
     if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
     create_LiVES();
-    //widget_opts.apply_theme = FALSE;
 
     set_interactive(mainw->interactive);
 

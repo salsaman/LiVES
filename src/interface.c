@@ -434,6 +434,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         atime = (double)i / scalex;
         cfile->audio_waveform[0][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
       }
+
+      lives_close_buffered(afd);
+
       if (mainw->playing_file > -1) {
         offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
                                cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex);
@@ -538,16 +541,16 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     cfile->aw_sizes[1] = offset_end;
 
     if (cfile->audio_waveform[1] != NULL) {
-      if (afd == -1) {
-        filename = lives_get_audio_file_name(mainw->current_file);
-        afd = lives_open_buffered_rdonly(filename);
-        lives_free(filename);
-      }
+      filename = lives_get_audio_file_name(mainw->current_file);
+      afd = lives_open_buffered_rdonly(filename);
+      lives_free(filename);
 
       for (i = 0; i < offset_end; i++) {
         atime = (double)i / scalex;
         cfile->audio_waveform[1][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
       }
+
+      lives_close_buffered(afd);
 
       if (mainw->playing_file > -1) {
         offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
@@ -634,8 +637,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       }
     }
   }
-
-  if (afd != -1) lives_close_buffered(afd);
 
   if (which == 0) {
     // playback cursors

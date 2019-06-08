@@ -3162,7 +3162,7 @@ int close_temp_handle(int clipno, int new_clip) {
   com = lives_strdup_printf("%s close \"%s\"", prefs->backend, sfile->handle);
   lives_system(com, TRUE);
   lives_free(com);
-  lives_freep((void **)&sfile);
+  lives_freep((void **)&mainw->files[clipno]);
   if (mainw->first_free_file == -1 || mainw->first_free_file > clipno)
     mainw->first_free_file = clipno;
   return new_clip;

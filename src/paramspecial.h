@@ -45,6 +45,9 @@ typedef struct {
 } lives_special_mergealign_t;
 ////////////////////////////////
 
+#define ASPECT_BUTTON_WIDTH 32
+#define ASPECT_BUTTON_HEIGHT 32
+
 void init_special(void);
 
 void add_to_special(const char *special_string, lives_rfx_t *);

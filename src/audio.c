@@ -1,6 +1,6 @@
 // audio.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2016
+// (c) G. Finch 2005 - 2019
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -2337,7 +2337,7 @@ static void *cache_my_audio(void *arg) {
     }
 
     if (cbuffer->die) {
-      if (cbuffer->_fd != -1) close(cbuffer->_fd);
+      if (cbuffer->_fd != -1) lives_close_buffered(cbuffer->_fd);
       return cbuffer;
     }
 
@@ -2516,13 +2516,13 @@ static void *cache_my_audio(void *arg) {
     if (cbuffer->fileno != cbuffer->_cfileno) {
       lives_clip_t *afile = mainw->files[cbuffer->fileno];
 
-      if (cbuffer->_fd != -1) close(cbuffer->_fd);
+      if (cbuffer->_fd != -1) lives_close_buffered(cbuffer->_fd);
 
       if (afile->opening)
         filename = lives_strdup_printf("%s/%s/audiodump.pcm", prefs->workdir, mainw->files[cbuffer->fileno]->handle);
       else filename = lives_strdup_printf("%s/%s/audio", prefs->workdir, mainw->files[cbuffer->fileno]->handle);
 
-      cbuffer->_fd = lives_open2(filename, O_RDONLY);
+      cbuffer->_fd = lives_open_buffered_rdonly(filename);
       if (cbuffer->_fd == -1) {
         lives_printerr("audio cache thread: error opening %s\n", filename);
         cbuffer->in_achans = 0;
@@ -2540,7 +2540,7 @@ static void *cache_my_audio(void *arg) {
         posix_fadvise(cbuffer->_fd, cbuffer->seek, 0, POSIX_FADV_SEQUENTIAL);
       }
 #endif
-      lseek64(cbuffer->_fd, cbuffer->seek, SEEK_SET);
+      lives_lseek_buffered_rdonly_absolute(cbuffer->_fd, cbuffer->seek);
     }
 
     cbuffer->_cfileno = cbuffer->fileno;
@@ -2559,7 +2559,7 @@ static void *cache_my_audio(void *arg) {
     }
 
     // read from file
-    cbuffer->_cbytesize = read(cbuffer->_fd, cbuffer->_filebuffer, cbuffer->bytesize);
+    cbuffer->_cbytesize = lives_read_buffered(cbuffer->_fd, cbuffer->_filebuffer, cbuffer->bytesize, TRUE);
 
     if (cbuffer->_cbytesize < 0) {
       // there is not much we can do if we get a read error, since we are running in a realtime thread here

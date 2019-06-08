@@ -1164,7 +1164,6 @@ int pulse_audio_init(void) {
   pulsed.pa_props = NULL;
   pulsed.playing_file = -1;
   pulsed.sound_buffer = NULL;
-  pulsed.paop = NULL;
   return 0;
 }
 
@@ -1197,7 +1196,6 @@ int pulse_audio_read_init(void) {
   pulsed_reader.pstream = NULL;
   pulsed_reader.pa_props = NULL;
   pulsed_reader.sound_buffer = NULL;
-  pulsed_reader.paop = NULL;
   return 0;
 }
 
@@ -1355,7 +1353,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_operation_unref(pa_op);
 #endif
 
-    prefs->force_system_clock = FALSE;
   } else {
     // set read callback
     pdriver->frames_written = 0;
@@ -1393,11 +1390,8 @@ static void uncorked_cb(pa_stream *s, int success, void *userdata) {
 #ifdef DEBUG_PULSE_CORK
   g_print("uncorked %p\n", pdriver);
 #endif
-  if (pdriver->paop != NULL) {
-    pa_operation_unref((pa_operation *)pdriver->paop);
-    pdriver->paop = NULL;
-  }
   pdriver->is_corked = FALSE;
+  prefs->force_system_clock = FALSE;
 }
 
 
@@ -1406,22 +1400,22 @@ static void corked_cb(pa_stream *s, int success, void *userdata) {
 #ifdef DEBUG_PULSE_CORK
   g_print("corked %p\n", pdriver);
 #endif
-  if (pdriver->paop != NULL) {
-    pa_operation_unref((pa_operation *)pdriver->paop);
-    pdriver->paop = NULL;
-  }
   pdriver->is_corked = TRUE;
+  prefs->force_system_clock = TRUE;
 }
 
 
 void pulse_driver_uncork(pulse_driver_t *pdriver) {
 #if 0
+  // do we need to flush the read buffer ? before or after uncorking it ?
   int alarm_handle;
-  pa_operation *paop;
 #endif
+  pa_operation *paop;
+
   pdriver->abs_maxvol_heard = 0.;
 
   if (!pdriver->is_corked) return;
+
 #if 0
   if (!pdriver->is_output) {
     // flush the stream if we are reading from it
@@ -1437,16 +1431,28 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
     }
 
     lives_alarm_clear(alarm_handle);
-
     pa_operation_unref(paop);
   }
 #endif
+
   pa_threaded_mainloop_lock(pa_mloop);
-  pdriver->paop = pa_stream_cork(pdriver->pstream, 0, uncorked_cb, pdriver);
+  paop = pa_stream_cork(pdriver->pstream, 0, uncorked_cb, pdriver);
   pa_threaded_mainloop_unlock(pa_mloop);
 
+  if (pdriver->is_output) {
+    pa_operation_unref(paop);
+    return; // let it uncork in its own time...
+  }
+
 #if 0
-  if (pdriver->is_output) return; // let it uncork in its own time...
+  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+
+  while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && !lives_alarm_get(alarm_handle)) {
+    sched_yield();
+    lives_usleep(prefs->sleep_time);
+  }
+
+  lives_alarm_clear(alarm_handle);
 
   alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
@@ -1462,68 +1468,24 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
 
   lives_alarm_clear(alarm_handle);
 
-  pa_operation_unref(paop);
 #endif
+
+  pa_operation_unref(paop);
 }
 
 
 void pulse_driver_cork(pulse_driver_t *pdriver) {
-#if 0
-  int alarm_handle;
   pa_operation *paop;
-#endif
 
   if (pdriver->is_corked) return;
 
-#if 0
-  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-
-  if (!pdriver->is_output) {
-    pa_threaded_mainloop_lock(pa_mloop);
-    paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
-    pa_threaded_mainloop_unlock(pa_mloop);
-
-    while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && !lives_alarm_get(alarm_handle)) {
-      sched_yield();
-      lives_usleep(prefs->sleep_time);
-    }
-
-    lives_alarm_clear(alarm_handle);
-
-    pa_operation_unref(paop);
-  }
-
-  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-#endif
-
   pa_threaded_mainloop_lock(pa_mloop);
-  pdriver->paop = pa_stream_cork(pdriver->pstream, 1, corked_cb, pdriver);
-  pa_threaded_mainloop_unlock(pa_mloop);
+  paop = pa_stream_cork(pdriver->pstream, 1, corked_cb, pdriver);
+  pa_operation_unref(paop);
 
-#if 0
-  if (pdriver->is_output) return; // let it cork in its own time...
-
-  while (pdriver->paop != NULL  && !lives_alarm_get(alarm_handle)) {
-    sched_yield();
-    lives_usleep(prefs->sleep_time);
-  }
-  //pa_operation_unref(paop); // done in callback
-
-  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-
-  pa_threaded_mainloop_lock(pa_mloop);
   paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
   pa_threaded_mainloop_unlock(pa_mloop);
-
-  while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && !lives_alarm_get(alarm_handle)) {
-    sched_yield();
-    lives_usleep(prefs->sleep_time);
-  }
-
-  lives_alarm_clear(alarm_handle);
-
   pa_operation_unref(paop);
-#endif
 }
 
 

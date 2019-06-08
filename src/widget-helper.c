@@ -592,29 +592,6 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *widget,
-    lives_painter_content_t content,
-    int width, int height) {
-  lives_painter_surface_t *surf = NULL;
-#ifdef LIVES_PAINTER_IS_CAIRO
-  LiVESXWindow *window = lives_widget_get_xwindow(widget);
-  if (window != NULL) {
-#if G_ENCODE_VERSION(GDK_MAJOR_VERSION, GDK_MINOR_VERSION) >= G_ENCODE_VERSION(2, 22)
-    surf = gdk_window_create_similar_surface(window, content, width, height);
-#else
-    surf = cairo_image_surface_create(LIVES_PAINTER_FORMAT_ARGB32, width, height);
-#endif
-  }
-#endif
-
-#ifdef PAINTER_QPAINTER
-  surf = new lives_painter_surface_t(width, height, LIVES_PAINTER_FORMAT_ARGB32);
-#endif
-
-  return surf;
-}
-
-
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width,
     int height) {
   lives_painter_surface_t *surf = NULL;

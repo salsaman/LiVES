@@ -107,7 +107,6 @@ typedef struct {
   volatile float abs_maxvol_heard;
 
   volatile boolean is_corked;
-  volatile pa_operation *paop;
 } pulse_driver_t;
 
 // TODO - rationalise names

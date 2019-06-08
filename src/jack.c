@@ -1414,15 +1414,15 @@ boolean jack_write_driver_activate(jack_driver_t *jackd) {
     return FALSE;
   }
 
+  // start using soundcard as timer source
+  prefs->force_system_clock = FALSE;
+
   jackd->is_active = TRUE;
   jackd->jackd_died = FALSE;
   jackd->in_use = FALSE;
   jackd->is_paused = FALSE;
 
   d_print(_("Started jack audio subsystem.\n"));
-
-  // start using soundcard as timer source
-  prefs->force_system_clock = FALSE;
 
   return TRUE;
 }
@@ -1489,6 +1489,10 @@ boolean jack_read_driver_activate(jack_driver_t *jackd, boolean autocon) {
     jack_close_device(jackd);
     return FALSE;
   }
+
+  // do we need to be connected for this ?
+  // start using soundcard as timer source
+  //prefs->force_system_clock = FALSE;
 
 jackreadactive:
 

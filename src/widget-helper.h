@@ -92,6 +92,7 @@ typedef cairo_format_t lives_painter_format_t;
 
 #define LIVES_PAINTER_FORMAT_A1   CAIRO_FORMAT_A1
 #define LIVES_PAINTER_FORMAT_A8   CAIRO_FORMAT_A8
+#define LIVES_PAINTER_FORMAT_RGB24 CAIRO_FORMAT_RGB24
 #define LIVES_PAINTER_FORMAT_ARGB32 CAIRO_FORMAT_ARGB32
 
 typedef cairo_content_t lives_painter_content_t; // eg. color, alpha, color+alpha
@@ -128,8 +129,6 @@ boolean lives_painter_set_source_surface(lives_painter_t *, lives_painter_surfac
 lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
 lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t,
     int width, int height, int stride);
-lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *, lives_painter_content_t,
-    int width, int height);
 boolean lives_painter_surface_flush(lives_painter_surface_t *);
 
 boolean lives_painter_destroy(lives_painter_t *);

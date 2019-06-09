@@ -30,9 +30,6 @@ James Scott Jr <skoona@users.sourceforge.net>
 
 #include "giw/giwvslider.h"
 
-
-
-
 #define VSLIDER_DEFAULT_WIDTH 25
 #define VSLIDER_DEFAULT_HEIGHT 50
 
@@ -80,8 +77,8 @@ void vslider_calculate_sizes(GiwVSlider *vslider);
 // A function that calculates position and size of the button
 void vslider_calculate_button(GiwVSlider *vslider);
 
-// A function that calculates position and size of the phanton button
-void vslider_calculate_phanton_button(GiwVSlider *vslider);
+// A function that calculates position and size of the phantom button
+void vslider_calculate_phantom_button(GiwVSlider *vslider);
 
 // A function that creates the layout of legends and calculates it's sizes
 void vslider_build_legends(GiwVSlider *vslider);
@@ -167,8 +164,8 @@ giw_vslider_init(GiwVSlider *vslider) {
   vslider->major_ticks = 3;
   vslider->minor_ticks = 1;
 
-  // Default mouse policy : automatically
-  vslider->mouse_policy = GIW_VSLIDER_MOUSE_AUTOMATICALLY;
+  // Default mouse policy : automatic
+  vslider->mouse_policy = GIW_VSLIDER_MOUSE_AUTOMATIC;
 
   vslider->button = FALSE;
 
@@ -296,6 +293,7 @@ giw_vslider_realize(GtkWidget *widget) {
   widget->window = gdk_window_new(widget->parent->window, &attributes, attributes_mask);
 #endif
 
+
 #if GTK_CHECK_VERSION(3, 0, 0)
   stylecon = gtk_style_context_new();
   gtk_style_context_set_path(stylecon, gtk_widget_get_path(widget));
@@ -307,7 +305,6 @@ giw_vslider_realize(GtkWidget *widget) {
 #endif
 
   gdk_window_set_user_data(lives_widget_get_xwindow(widget), widget);
-
 
   // Creating the legends
   vslider_build_legends(vslider);
@@ -492,7 +489,7 @@ giw_vslider_expose(GtkWidget      *widget,
   cairo_fill(cairo);
 
 
-  // The phanton button
+  // The phantom button
   if ((vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED) && (vslider->button != 0))
     gtk_render_slider(gtk_widget_get_style_context(widget),
                       cairo,
@@ -589,7 +586,7 @@ giw_vslider_expose(GtkWidget      *widget,
                      vslider->button_w,
                      vslider->button_h);
 
-  // The phanton button
+  // The phantom button
   if ((vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED) && (vslider->button != 0))
     gtk_paint_slider(widget->style,
                      widget->window,
@@ -657,7 +654,7 @@ giw_vslider_button_release(GtkWidget        *widget,
   if (vslider->button == event->button) {
     // If the mouse policy is to update delayed, it's time to update the value (the button was released)
     if (vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED)
-      giw_vslider_set_value(vslider, vslider->phanton_value);
+      giw_vslider_set_value(vslider, vslider->phantom_value);
 
     vslider->button = FALSE;
 
@@ -696,7 +693,7 @@ giw_vslider_motion_notify(GtkWidget        *widget,
   y = event->y - vslider->y;
 
   // If the mouse policy is to update automatically, change the value now if it's valid
-  if (vslider->button != 0 && vslider->mouse_policy == GIW_VSLIDER_MOUSE_AUTOMATICALLY) {
+  if (vslider->button != 0 && vslider->mouse_policy == GIW_VSLIDER_MOUSE_AUTOMATIC) {
     new_value = lives_adjustment_get_lower(vslider->adjustment) + ((gdouble)(vslider->height - y)) /
                 ((gdouble)vslider->height) * (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment));
 
@@ -714,8 +711,8 @@ giw_vslider_motion_notify(GtkWidget        *widget,
     // If it's a valid value, update the false value
     if ((new_value <= lives_adjustment_get_upper(vslider->adjustment)) &&
         (new_value >= lives_adjustment_get_lower(vslider->adjustment))) {
-      vslider->phanton_value = new_value;
-      vslider_calculate_phanton_button(vslider);
+      vslider->phantom_value = new_value;
+      vslider_calculate_phantom_button(vslider);
       gtk_widget_queue_draw(GTK_WIDGET(vslider));
     }
   }
@@ -943,7 +940,7 @@ vslider_calculate_sizes(GiwVSlider *vslider) {
   vslider->minor_dy = vslider->major_dy / (vslider->minor_ticks + 1);
 
   vslider_calculate_button(vslider);
-  vslider_calculate_phanton_button(vslider);
+  vslider_calculate_phantom_button(vslider);
 }
 
 void
@@ -960,13 +957,13 @@ vslider_calculate_button(GiwVSlider *vslider) {
 }
 
 void
-vslider_calculate_phanton_button(GiwVSlider *vslider) {
+vslider_calculate_phantom_button(GiwVSlider *vslider) {
   g_return_if_fail(vslider != NULL);
 
-  // Getting phanton button's positon and dimensions
+  // Getting phantom button's positon and dimensions
   vslider->pbutton_x = vslider->x + 5;
   vslider->pbutton_y = vslider->y + vslider->height - vslider->height *
-                       ((vslider->phanton_value - lives_adjustment_get_lower(vslider->adjustment)) /
+                       ((vslider->phantom_value - lives_adjustment_get_lower(vslider->adjustment)) /
                         (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment))) - 5;
   vslider->pbutton_w = vslider->width - 10;
   vslider->pbutton_h = 10;
@@ -1047,8 +1044,8 @@ vslider_free_legends(GiwVSlider *vslider) {
   }
 }
 
-void
-vslider_calculate_legends_sizes(GiwVSlider *vslider) {
+
+void vslider_calculate_legends_sizes(GiwVSlider *vslider) {
   GtkWidget *widget;
 
 #if GTK_CHECK_VERSION(3,8,0)

@@ -9803,8 +9803,8 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
   int *valis = NULL, *nvalis, last_valuei;
   int num_values, xnum, num_pvals;
   int k;
-  int last_valueir, last_valueig, last_valueib;
-  double last_valuedr, last_valuedg, last_valuedb;
+  int last_valueir, last_valueig, last_valueib, last_valueia;
+  double last_valuedr, last_valuedg, last_valuedb, last_valueda;
   char **valss, **nvalss;
   int num_ign = 0;
 
@@ -9942,7 +9942,15 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
     cspace = weed_get_int_value(wtmpl, WEED_LEAF_COLORSPACE, &error);
     switch (cspace) {
     case WEED_COLORSPACE_RGB:
-      if (num_values % 3 != 0) return TRUE;
+      if (!(num_values & 3)) return TRUE;
+      if (weed_leaf_seed_type(wtmpl, WEED_LEAF_DEFAULT) == WEED_SEED_INT) {
+        valis = (int *)lives_malloc(num_values * sizint);
+      } else {
+        valds = (double *)lives_malloc(num_values * (sizeof(double)));
+      }
+      break;
+    case WEED_COLORSPACE_RGBA:
+      if (num_values & 3) return TRUE;
       if (weed_leaf_seed_type(wtmpl, WEED_LEAF_DEFAULT) == WEED_SEED_INT) {
         valis = (int *)lives_malloc(num_values * sizint);
       } else {
@@ -10100,7 +10108,124 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
         }
         j += 3;
         break;
-        // TODO - other colorspaces (e.g. RGBA32)
+      case WEED_COLORSPACE_RGBA:
+        k = j * 4;
+        if (weed_leaf_seed_type(wtmpl, WEED_LEAF_DEFAULT) == WEED_SEED_INT) {
+          if (lpc[j] == NULL) {
+            // before first change
+            valis[k] = get_default_element_int(param, j, 4, 0);
+            valis[k + 1] = get_default_element_int(param, j, 4, 1);
+            valis[k + 2] = get_default_element_int(param, j, 4, 2);
+            valis[k + 3] = get_default_element_int(param, j, 4, 3);
+            j += 4;
+            continue;
+          }
+          if (npc[j] == NULL) {
+            // after last change
+            xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
+            if (xnum > k) {
+              nvalis = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+              valis[k] = nvalis[k];
+              valis[k + 1] = nvalis[k + 1];
+              valis[k + 2] = nvalis[k + 2];
+              valis[k + 3] = nvalis[k + 3];
+              lives_free(nvalis);
+            } else {
+              valis[k] = get_default_element_int(param, j, 4, 0);
+              valis[k + 1] = get_default_element_int(param, j, 4, 1);
+              valis[k + 2] = get_default_element_int(param, j, 4, 2);
+              valis[k + 3] = get_default_element_int(param, j, 4, 3);
+            }
+            j += 4;
+            continue;
+          }
+
+          next_valuesi = weed_get_int_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
+          last_valuesi = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+          xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
+          if (xnum > k) {
+            last_valueir = last_valuesi[k];
+            last_valueig = last_valuesi[k + 1];
+            last_valueib = last_valuesi[k + 2];
+            last_valueia = last_valuesi[k + 3];
+          } else {
+            last_valueir = get_default_element_int(param, j, 4, 0);
+            last_valueig = get_default_element_int(param, j, 4, 1);
+            last_valueib = get_default_element_int(param, j, 4, 2);
+            last_valueia = get_default_element_int(param, j, 4, 3);
+          }
+
+          if (next_valuesi == NULL) continue; // can happen if we recorded a param change
+
+          valis[k] = last_valueir + (next_valuesi[k] - last_valueir) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / TICKS_PER_SECOND_DBL) + .5;
+          valis[k + 1] = last_valueig + (next_valuesi[k + 1] - last_valueig) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                         (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+          valis[k + 2] = last_valueib + (next_valuesi[k + 2] - last_valueib) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                         (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+          valis[k + 3] = last_valueia + (next_valuesi[k + 3] - last_valueia) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                         (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+
+          lives_free(last_valuesi);
+          lives_free(next_valuesi);
+        } else {
+          if (lpc[j] == NULL) {
+            // before first change
+            valds[k] = get_default_element_double(param, j, 4, 0);
+            valds[k + 1] = get_default_element_double(param, j, 4, 1);
+            valds[k + 2] = get_default_element_double(param, j, 4, 2);
+            valds[k + 3] = get_default_element_double(param, j, 4, 3);
+            j += 4;
+            continue;
+          }
+          if (npc[j] == NULL) {
+            // after last change
+            xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
+            if (xnum > k) {
+              nvalds = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+              valds[k] = nvalds[k];
+              valds[k + 1] = nvalds[k + 1];
+              valds[k + 2] = nvalds[k + 2];
+              valds[k + 3] = nvalds[k + 3];
+              lives_free(nvalds);
+            } else {
+              valds[k] = get_default_element_double(param, j, 4, 0);
+              valds[k + 1] = get_default_element_double(param, j, 4, 1);
+              valds[k + 2] = get_default_element_double(param, j, 4, 2);
+              valds[k + 3] = get_default_element_double(param, j, 4, 3);
+            }
+            j += 4;
+            continue;
+          }
+
+          next_valuesd = weed_get_double_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
+          last_valuesd = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+          xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
+          if (xnum > k) {
+            last_valuedr = last_valuesd[k];
+            last_valuedg = last_valuesd[k + 1];
+            last_valuedb = last_valuesd[k + 2];
+            last_valueda = last_valuesd[k + 3];
+          } else {
+            last_valuedr = get_default_element_double(param, j, 4, 0);
+            last_valuedg = get_default_element_double(param, j, 4, 1);
+            last_valuedb = get_default_element_double(param, j, 4, 2);
+            last_valueda = get_default_element_double(param, j, 4, 3);
+          }
+          valds[k] = last_valuedr + (next_valuesd[k] - last_valuedr) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / TICKS_PER_SECOND_DBL);
+          valds[k + 1] = last_valuedg + (next_valuesd[k + 1] - last_valuedg) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                         (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+          valds[k + 2] = last_valuedb + (next_valuesd[k + 2] - last_valuedb) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                         (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+          valds[k + 3] = last_valueda + (next_valuesd[k + 3] - last_valuedb) / (tc_diff / TICKS_PER_SECOND_DBL) *
+                         (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
+
+          lives_free(last_valuesd);
+          lives_free(next_valuesd);
+        }
+        j += 4;
+        break;
       } // cspace
       break; // color
     case WEED_HINT_INTEGER:

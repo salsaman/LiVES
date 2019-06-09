@@ -20,8 +20,6 @@ Alexandre Pereira Bueno - alpebu@yahoo.com.br
 James Scott Jr <skoona@users.sourceforge.net>
 */
 
-
-
 #ifndef __GIW_VSLIDER_H__
 #define __GIW_VSLIDER_H__
 
@@ -39,10 +37,9 @@ G_BEGIN_DECLS
 
 typedef enum {
   GIW_VSLIDER_MOUSE_DISABLED,
-  GIW_VSLIDER_MOUSE_AUTOMATICALLY,
+  GIW_VSLIDER_MOUSE_AUTOMATIC,
   GIW_VSLIDER_MOUSE_DELAYED
 } GiwVSliderMousePolicy;
-
 
 typedef struct _GiwVSlider        GiwVSlider;
 typedef struct _GiwVSliderClass   GiwVSliderClass;
@@ -62,11 +59,11 @@ struct _GiwVSlider {
   // Button currently pressed or 0 if none
   guint8 button;
 
-  // Policy of mouse (GIW_VSLIDER_MOUSE_DISABLED, GIW_VSLIDER_MOUSE_AUTOMATICALLY, GIW_VSLIDER_MOUSE_DELAYED)
+  // Policy of mouse (GIW_VSLIDER_MOUSE_DISABLED, GIW_VSLIDER_MOUSE_AUTOMATIC, GIW_VSLIDER_MOUSE_DELAYED)
   gint mouse_policy;
 
-  // phanton value, the phanton button's value when using the mouse delayed mouse policy
-  gdouble phanton_value;
+  // phantom value, the phantom button's value when using the mouse delayed mouse policy
+  gdouble phantom_value;
 
   // For drawing:
   gint height, width; // VSlider height and width
@@ -75,7 +72,7 @@ struct _GiwVSlider {
   gdouble minor_dy; //Space between minor ticks
   gint legend_width, legend_height;
   gint button_x, button_y, button_w, button_h; // The button position and dimensions
-  gint pbutton_x, pbutton_y, pbutton_w, pbutton_h; // The phanton button position and dimensions
+  gint pbutton_x, pbutton_y, pbutton_w, pbutton_h; // The phantom button position and dimensions
   PangoLayout **legends; // All the layouts of all the legends
 
   // Types for drawing the button (they change when the button in pressed, or the pointer is over it)
@@ -89,9 +86,6 @@ struct _GiwVSlider {
 struct _GiwVSliderClass {
   GtkWidgetClass parent_class;
 };
-
-
-
 
 GtkWidget     *giw_vslider_new(GtkAdjustment *adjustment);
 GtkWidget     *giw_vslider_new_with_adjustment(gdouble value, gdouble lower, gdouble upper);

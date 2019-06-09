@@ -9469,11 +9469,9 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
   if (mt->timeline_eb == NULL) {
 
 #ifdef ENABLE_GIW_3
-    mt->timeline = giw_timeline_new(LIVES_ORIENTATION_HORIZONTAL);
+    mt->timeline = giw_timeline_new_with_adjustment(LIVES_ORIENTATION_HORIZONTAL, 0., 0., 1000000., 1000000.);
     giw_timeline_set_unit(GIW_TIMELINE(mt->timeline), GIW_TIME_UNIT_SMH);
-    // need to set this even if theme is none
-    lives_widget_set_bg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    giw_timeline_set_mouse_policy(GIW_TIMELINE(mt->timeline), GIW_TIMELINE_MOUSE_DISABLED);
 #else
     mt->timeline = lives_standard_hruler_new();
 #endif

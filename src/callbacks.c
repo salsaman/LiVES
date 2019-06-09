@@ -4039,7 +4039,6 @@ void on_playsel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // in case we are rendering and previewing, in case we now have audio
   if (mainw->preview && mainw->is_rendering && mainw->is_processing) reget_afilesize(mainw->current_file);
-  else update_timer_bars(0, 0, 0, 0, 0);
   mainw->noswitch = FALSE;
 }
 
@@ -4239,7 +4238,6 @@ void on_rewind_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_set_sensitive(mainw->rewind, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
   lives_widget_set_sensitive(mainw->trim_to_pstart, FALSE);
-  update_timer_bars(0, 0, 0, 0, 0);
 }
 
 
@@ -9594,13 +9592,31 @@ boolean on_mouse_sel_start(LiVESWidget *widget, LiVESXEventButton *event, livesp
 }
 
 
-boolean on_hrule_enter(LiVESWidget *widget, LiVESXEventCrossing *event, livespointer user_data) {
-  if (!mainw->interactive) return FALSE;
-  if (mainw->cursor_style != LIVES_CURSOR_NORMAL) return FALSE;
-  lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR, widget);
-  return FALSE;
+#ifdef ENABLE_GIW_3
+void on_hrule_value_changed(LiVESWidget *widget, livespointer user_data) {
+  if (!mainw->interactive) return;
+  if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
+
+  cfile->pointer_time = lives_ce_update_timeline(0, giw_timeline_get_value(GIW_TIMELINE(widget)));
+
+  if (cfile->pointer_time > 0.) {
+    lives_widget_set_sensitive(mainw->rewind, TRUE);
+    lives_widget_set_sensitive(mainw->trim_to_pstart, (cfile->achans * cfile->frames > 0));
+    lives_widget_set_sensitive(mainw->m_rewindbutton, TRUE);
+    if (mainw->preview_box != NULL) {
+      lives_widget_set_sensitive(mainw->p_rewindbutton, TRUE);
+    }
+  } else {
+    lives_widget_set_sensitive(mainw->rewind, FALSE);
+    lives_widget_set_sensitive(mainw->trim_to_pstart, FALSE);
+    lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
+    if (mainw->preview_box != NULL) {
+      lives_widget_set_sensitive(mainw->p_rewindbutton, FALSE);
+    }
+  }
 }
 
+#else
 
 boolean on_hrule_update(LiVESWidget *widget, LiVESXEventMotion *event, livespointer user_data) {
   LiVESXModifierType modmask;
@@ -9618,7 +9634,6 @@ boolean on_hrule_update(LiVESWidget *widget, LiVESXEventMotion *event, livespoin
   lives_widget_get_pointer(device, widget, &x, NULL);
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
-  update_timer_bars(0, 0, 0, 0, 0);
   return TRUE;
 }
 
@@ -9634,8 +9649,6 @@ boolean on_hrule_reset(LiVESWidget *widget, LiVESXEventButton  *event, livespoin
                            widget, &x, NULL);
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
-
-  update_timer_bars(0, 0, 0, 0, 0);
 
   if (cfile->pointer_time > 0.) {
     lives_widget_set_sensitive(mainw->rewind, TRUE);
@@ -9669,10 +9682,10 @@ boolean on_hrule_set(LiVESWidget *widget, LiVESXEventButton *event, livespointer
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)lives_widget_get_allocation_width(widget) * CLIP_TOTAL_TIME(mainw->current_file));
 
-  update_timer_bars(0, 0, 0, 0, 0);
-
   return TRUE;
 }
+
+#endif
 
 
 boolean frame_context(LiVESWidget *widget, LiVESXEventButton *event, livespointer which) {

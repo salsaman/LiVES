@@ -778,8 +778,9 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 
     if (dhint == WEED_HINT_COLOR) {
       int cspace = weed_get_int_value(dptmpl, WEED_LEAF_COLORSPACE, &error);
-      if (cspace == WEED_COLORSPACE_RGB && (nsvals % 3 != 0)) return FALSE;
-      if (nsvals % 4 != 0) return FALSE;
+      if (cspace == WEED_COLORSPACE_RGB) {
+        if (!(nsvals & 3)) return FALSE;
+      } else if (nsvals & 3) return FALSE;
     }
   }
 

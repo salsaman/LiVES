@@ -1093,7 +1093,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
 }
 
 
-void pulse_shutdown(void) {
+void pulse_shutdown() {
   //g_print("pa shutdown\n");
   if (pa_mloop != NULL) pa_threaded_mainloop_stop(pa_mloop);
   if (pcon != NULL) {
@@ -1627,8 +1627,8 @@ int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip
 
 
 boolean pulse_try_reconnect(void) {
+  pulse_shutdown();
   mainw->pulsed = NULL;
-  pa_mloop = NULL;
   if (!lives_pulse_init(9999)) goto err123; // init server
   pulse_audio_init(); // reset vars
   pulse_audio_read_init(); // reset vars

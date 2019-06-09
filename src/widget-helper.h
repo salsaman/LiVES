@@ -222,6 +222,7 @@ boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *
 #ifdef GUI_GTK
 
 #define lives_signal_connect(instance, detailed_signal, c_handler, data) g_signal_connect(instance, detailed_signal, c_handler, data)
+#define lives_signal_connect_swapped(instance, detailed_signal, c_handler, data) g_signal_connect_swapped(instance, detailed_signal, c_handler, data)
 #define lives_signal_connect_after(instance, detailed_signal, c_handler, data) g_signal_connect_after(instance, detailed_signal, c_handler, data)
 #define lives_signal_handlers_disconnect_by_func(instance, func, data) g_signal_handlers_disconnect_by_func(instance, func, data)
 #define lives_signal_handlers_block_by_func(instance, func, data) g_signal_handlers_block_by_func(instance, func, data)

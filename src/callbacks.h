@@ -331,13 +331,13 @@ void on_showsubs_toggled(LiVESObject *, livespointer);
 
 void on_show_messages_activate(LiVESMenuItem *, livespointer);
 
-boolean on_hrule_enter(LiVESWidget *, LiVESXEventCrossing *, livespointer);
-
+#ifdef ENABLE_GIW_3
+void on_hrule_value_changed(LiVESWidget *widget, livespointer user_data);
+#else
 boolean on_hrule_update(LiVESWidget *, LiVESXEventMotion *, livespointer);
-
-boolean on_hrule_reset(LiVESWidget *, LiVESXEventButton *, livespointer);
-
 boolean on_hrule_set(LiVESWidget *, LiVESXEventButton *, livespointer);
+boolean on_hrule_reset(LiVESWidget *, LiVESXEventButton *, livespointer);
+#endif
 
 void on_rewind_activate(LiVESMenuItem *, livespointer);
 

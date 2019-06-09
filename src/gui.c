@@ -19,10 +19,6 @@
 #include "startup.h"
 #include "ce_thumbs.h"
 
-#ifdef ENABLE_GIW_3
-#include "giw/giwtimeline.h"
-#endif
-
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
 #endif
@@ -239,9 +235,8 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_apply_theme(mainw->end_image, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_set_fg_color(mainw->end_image, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_bg_color(mainw->eventbox5, LIVES_WIDGET_STATE_NORMAL, colb);
-
   lives_widget_apply_theme(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL);
+  if (mainw->eventbox5 != NULL) lives_widget_set_bg_color(mainw->eventbox5, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_apply_theme(mainw->hruler, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_set_fg_color(mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, colf);
@@ -503,8 +498,7 @@ void create_LiVES(void) {
   //                          - end_spinbutton
   //                  - sepimg / hseparator
   //
-  //            - eventbox5
-  //                  - hruler (timeline)
+  //               - hruler (timeline)
   // - eventbox2 (mouse clicks etc)
   //      - vidbar
   //           - video_draw
@@ -2122,26 +2116,21 @@ void create_LiVES(void) {
     lives_box_pack_start(LIVES_BOX(vbox4), mainw->hseparator, TRUE, TRUE, 0);
   }
 
+#ifdef ENABLE_GIW_3
+  mainw->hruler = giw_timeline_new_with_adjustment(LIVES_ORIENTATION_HORIZONTAL, 0., 0., 1000000., 1000000.);
+  lives_box_pack_start(LIVES_BOX(vbox99), mainw->hruler, FALSE, FALSE, 0);
+  mainw->eventbox5 = NULL;
+#else
   mainw->eventbox5 = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(vbox99), mainw->eventbox5, FALSE, FALSE, 0);
-
-#ifdef ENABLE_GIW_3
-  mainw->hruler = giw_timeline_new(LIVES_ORIENTATION_HORIZONTAL);
-  // need to set this even if theme is none
-  lives_widget_set_bg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-#else
   mainw->hruler = lives_standard_hruler_new();
-#endif
   lives_ruler_set_range(LIVES_RULER(mainw->hruler), 0., 1000000., 0., 1000000.);
+  lives_container_add(LIVES_CONTAINER(mainw->eventbox5), mainw->hruler);
+  lives_widget_add_events(mainw->eventbox5, LIVES_BUTTON1_MOTION_MASK | LIVES_POINTER_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK |
+                          LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
+#endif
 
   lives_widget_set_size_request(mainw->hruler, -1, CE_HRULE_HEIGHT);
-  lives_container_add(LIVES_CONTAINER(mainw->eventbox5), mainw->hruler);
-
-  lives_widget_add_events(mainw->eventbox5, LIVES_POINTER_MOTION_MASK | LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK |
-                          LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
-
-  //
 
   mainw->eventbox2 = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox2, FALSE, TRUE, 0);
@@ -2910,26 +2899,31 @@ void create_LiVES(void) {
                                             NULL);
     lives_signal_handler_block(mainw->eventbox2, mainw->mouse_fn1);
     mainw->mouse_blocked = TRUE;
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                         LIVES_GUI_CALLBACK(on_mouse_sel_reset),
-                         NULL);
+
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                          LIVES_GUI_CALLBACK(on_mouse_sel_start),
                          NULL);
+
+#ifdef ENABLE_GIW_3
+    adj = giw_timeline_get_adjustment(GIW_TIMELINE(mainw->hruler));
+    lives_signal_connect_swapped(LIVES_GUI_OBJECT(adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                 LIVES_GUI_CALLBACK(on_hrule_value_changed),
+                                 mainw->hruler);
+#else
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
                          LIVES_GUI_CALLBACK(on_hrule_update),
                          NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_hrule_enter), NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+                         LIVES_GUI_CALLBACK(on_hrule_reset),
+                         NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                         LIVES_GUI_CALLBACK(on_hrule_set),
+                         NULL);
+#endif
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->sa_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_all_activate),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                       LIVES_GUI_CALLBACK(on_hrule_reset),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                       LIVES_GUI_CALLBACK(on_hrule_set),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox3), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(frame_context),
@@ -3021,9 +3015,11 @@ void set_interactive(boolean interactive) {
     lives_widget_hide(mainw->btoolbar);
     lives_widget_set_sensitive(mainw->menubar, FALSE);
     lives_widget_set_sensitive(mainw->btoolbar, FALSE);
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->hruler);
     if (mainw->multitrack != NULL) {
       lives_object_ref(mainw->multitrack->menubar);
       lives_widget_unparent(mainw->multitrack->menubar);
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->multitrack->timeline);
       lives_widget_set_sensitive(mainw->multitrack->menubar, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->spinbutton_start, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->spinbutton_end, FALSE);
@@ -3065,7 +3061,10 @@ void set_interactive(boolean interactive) {
     lives_widget_set_sensitive(mainw->menubar, TRUE);
     lives_widget_set_sensitive(mainw->btoolbar, TRUE);
 
+    lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR, mainw->hruler);
+
     if (mainw->multitrack != NULL) {
+      lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR, mainw->multitrack->timeline);
       if (lives_widget_get_parent(mainw->multitrack->menubar) == NULL) {
         lives_box_pack_start(LIVES_BOX(mainw->multitrack->menu_hbox), mainw->multitrack->menubar, FALSE, FALSE, 0);
         lives_object_unref(mainw->multitrack->menubar);
@@ -3172,7 +3171,7 @@ void fade_background(void) {
   lives_widget_hide(mainw->menu_hbox);
   lives_widget_hide(mainw->framebar);
   lives_widget_hide(mainw->hbox3);
-  lives_widget_hide(mainw->eventbox5);
+  lives_widget_hide(mainw->hruler);
   lives_widget_hide(mainw->hseparator);
   lives_widget_hide(mainw->sep_image);
   lives_widget_hide(mainw->eventbox2);
@@ -3291,7 +3290,7 @@ void unfade_background(void) {
   lives_widget_show_all(mainw->eventbox4);
 
   if (!CURRENT_CLIP_IS_VALID || !cfile->opening) {
-    lives_widget_show_all(mainw->eventbox5);
+    lives_widget_show(mainw->hruler);
   }
 
   if (CURRENT_CLIP_HAS_VIDEO && !mainw->sep_win) {

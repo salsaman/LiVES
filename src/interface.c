@@ -93,13 +93,11 @@ void show_playbar_labels(int clipno) {
 
   if (palette->style & STYLE_1) {
     lives_widget_hide(mainw->hruler);
-    lives_widget_hide(mainw->eventbox5);
     lives_widget_hide(mainw->vidbar);
     lives_widget_hide(mainw->laudbar);
     lives_widget_hide(mainw->raudbar);
   } else {
     lives_widget_show(mainw->hruler);
-    lives_widget_show(mainw->eventbox5);
     lives_widget_show(mainw->vidbar);
     lives_widget_show(mainw->laudbar);
     lives_widget_show(mainw->raudbar);
@@ -131,14 +129,12 @@ void show_playbar_labels(int clipno) {
 
     lives_widget_show(mainw->vidbar);
     lives_widget_show(mainw->hruler);
-    lives_widget_show(mainw->eventbox5);
   }
 
   if (!CLIP_HAS_AUDIO(clipno)) {
     tmp = lives_strdup(_("(No audio)"));
   } else {
     lives_widget_show(mainw->hruler);
-    lives_widget_show(mainw->eventbox5);
 
     tmpch = get_achannel_name(sfile->achans, 0);
     if (sfile->opening_audio) {
@@ -201,8 +197,10 @@ double lives_ce_update_timeline(int frame, double x) {
   x = calc_time_from_frame(mainw->current_file, frame);
   if (x > CLIP_TOTAL_TIME(mainw->current_file)) x = CLIP_TOTAL_TIME(mainw->current_file);
 
+#ifndef ENABLE_GIW_3
   lives_ruler_set_value(LIVES_RULER(mainw->hruler), x);
   lives_widget_queue_draw_if_visible(mainw->hruler);
+#endif
 
   if (prefs->show_gui && !prefs->hide_framebar && cfile->frames > 0) {
     char *framecount;
@@ -228,9 +226,9 @@ double lives_ce_update_timeline(int frame, double x) {
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
   }
 
+  lives_widget_queue_draw(mainw->eventbox2);
   show_playbar_labels(mainw->current_file);
   update_timer_bars(0, 0, 0, 0, 0);
-  lives_widget_queue_draw(mainw->eventbox2);
 
   last_current_file = mainw->current_file;
   return x;
@@ -659,7 +657,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         }
 
         if (!lives_widget_is_visible(mainw->video_draw)) {
-          lives_widget_show(mainw->eventbox5);
+          lives_widget_show(mainw->hruler);
           lives_widget_show(mainw->video_draw);
           lives_widget_show(mainw->laudio_draw);
           lives_widget_show(mainw->raudio_draw);

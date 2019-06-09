@@ -2759,12 +2759,12 @@ void play_file(void) {
             sched_yield();
             lives_usleep(prefs->sleep_time);
           }
+          if (mainw->pulsed != NULL) {
+            pa_mloop_lock();
+            pulse_driver_cork(mainw->pulsed);
+            pa_mloop_unlock();
+          }
         }
-      }
-      if (mainw->pulsed != NULL) {
-        pa_mloop_lock();
-        pulse_driver_cork(mainw->pulsed);
-        pa_mloop_unlock();
       }
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);

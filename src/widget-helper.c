@@ -1206,8 +1206,6 @@ static char *make_random_string(const char *prefix) {
 
 #endif
 
-#include "giw/giwled.h"
-
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
 
@@ -1379,17 +1377,14 @@ boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const char *d
 #endif
 
 
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 16, 0)
 static boolean set_css_value_direct(LiVESWidget *widget, LiVESWidgetState state, const char *selector, const char *detail,
                                     const char *value) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 0, 0)
-#if GTK_CHECK_VERSION(3, 16, 0)
   return set_css_value_for_state_flag(widget, state, selector, detail, value);
-#endif
-#endif
-#endif
-  return FALSE;
 }
+#endif
+#endif
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
@@ -5157,7 +5152,12 @@ WIDGET_HELPER_GLOBAL_INLINE double lives_ruler_set_value(LiVESRuler *ruler, doub
 WIDGET_HELPER_GLOBAL_INLINE double lives_ruler_set_upper(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  gtk_adjustment_set_upper(gtk_range_get_adjustment(GTK_RANGE(ruler)), value);
+#ifdef ENABLE_GIW_3
+  if (GIW_IS_TIMELINE(ruler))
+    giw_timeline_set_range(GIW_TIMELINE(ruler), 0., value, giw_timeline_get_max_size(GIW_TIMELINE(ruler)));
+  else
+#endif
+    gtk_adjustment_set_upper(gtk_range_get_adjustment(GTK_RANGE(ruler)), value);
 #else
   ruler->upper = value;
 #endif
@@ -8314,15 +8314,17 @@ LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label, bo
 LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const LiVESWidgetColor *act_color) {
   LiVESWidget *notebook = lives_notebook_new();
 
-  // clear background image
+#if GTK_CHECK_VERSION(3, 0, 0)
   if (widget_opts.apply_theme) {
     char *colref = gdk_rgba_to_string(bg_color);
+    // clear background image
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_NORMAL, "*", "background", "none");
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_NORMAL, "*", "background-color", colref);
     colref = gdk_rgba_to_string(act_color);
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background", "none");
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background-color", colref);
   }
+#endif
   return notebook;
 }
 

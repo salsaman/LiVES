@@ -120,6 +120,8 @@ typedef int lives_pgid_t;
 #ifdef ENABLE_GIW
 #define ENABLE_GIW_3
 #endif
+#else
+#undef ENABLE_GIW_3
 #endif
 
 #endif

@@ -16,7 +16,14 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-// giwtimeline.c (c) 2013 - 2014 G. Finch salsaman@gmail.com
+// giwtimeline.c (c) 2013 - 2019 G. Finch salsaman+lives@gmail.com
+
+// TODO - has own window
+// - on click, update value
+// - on motion with button held, update val
+// - should work exaclt like vslider
+
+// add button_press, button_release, motion_notify
 
 #include <gtk/gtk.h>
 
@@ -29,8 +36,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "main.h"
 #include "giwtimeline.h"
-
 
 /**
  * SECTION: giwtimeline
@@ -39,7 +46,6 @@
  *
  * A timeline widget with configurable unit and orientation.
  **/
-
 
 #define DEFAULT_TIMELINE_FONT_SCALE  PANGO_SCALE_SMALL
 #define MINIMUM_INCR              5
@@ -52,29 +58,9 @@ enum {
   PROP_MAX_SIZE
 };
 
-
 /* All distances below are in 1/72nd's of an inch. (According to
  * Adobe that's a point, but points are really 1/72.27 in.)
  */
-typedef struct {
-  GtkOrientation   orientation;
-  GiwTimeUnit      unit;
-  gdouble          max_size;
-
-  GdkWindow       *input_window;
-  cairo_surface_t *backing_store;
-  PangoLayout     *layout;
-  gdouble          font_scale;
-
-  gint             xsrc;
-  gint             ysrc;
-
-  GList           *track_widgets;
-} GiwTimelinePrivate;
-
-#define GIW_TIMELINE_GET_PRIVATE(timeline) \
-  G_TYPE_INSTANCE_GET_PRIVATE (timeline, GIW_TYPE_TIMELINE, GiwTimelinePrivate)
-
 
 static const struct {
   const gdouble  timeline_scale[16];
@@ -84,8 +70,7 @@ static const struct {
   { 1, 5, 10, 50, 100 }
 };
 
-
-static void          giw_timeline_dispose(GObject        *object);
+//static void          giw_timeline_dispose(GObject        *object);
 static void          giw_timeline_set_property(GObject        *object,
     guint            prop_id,
     const GValue   *value,
@@ -118,22 +103,25 @@ static void          giw_timeline_make_pixmap(GiwTimeline      *timeline);
 static PangoLayout *giw_timeline_get_layout(GtkWidget      *widget,
     const gchar    *text);
 
+static void giw_timeline_style_set(GtkWidget *widget, GtkStyle *previous_style);
 
+static boolean giw_timeline_button_press(GtkWidget *widget, GdkEventButton *event);
+static gboolean giw_timeline_button_release(GtkWidget *widget, GdkEventButton *event);
+static gboolean giw_timeline_motion_notify(GtkWidget *widget, GdkEventMotion *event);
 
-//G_DEFINE_TYPE (GiwTimeline, giw_timeline, GTK_TYPE_WIDGET)
+static void giw_timeline_adjustment_changed(GtkAdjustment *adjustment, gpointer data);
+static void giw_timeline_adjustment_value_changed(GtkAdjustment *adjustment, gpointer data);
 
 G_DEFINE_TYPE(GiwTimeline, giw_timeline, GTK_TYPE_SCALE)
 
+
 #define parent_class giw_timeline_parent_class
 
-
-
-static void
-giw_timeline_class_init(GiwTimelineClass *klass) {
+static void giw_timeline_class_init(GiwTimelineClass *klass) {
   GObjectClass   *object_class = G_OBJECT_CLASS(klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
 
-  object_class->dispose              = giw_timeline_dispose;
+  //object_class->dispose              = giw_timeline_dispose;
   object_class->set_property         = giw_timeline_set_property;
   object_class->get_property         = giw_timeline_get_property;
 
@@ -146,16 +134,16 @@ giw_timeline_class_init(GiwTimelineClass *klass) {
   widget_class->size_allocate        = giw_timeline_size_allocate;
   widget_class->style_updated        = giw_timeline_style_updated;
   widget_class->draw                 = giw_timeline_draw;
-
-  g_type_class_add_private(object_class, sizeof(GiwTimelinePrivate));
+  widget_class->button_press_event = giw_timeline_button_press;
+  widget_class->button_release_event = giw_timeline_button_release;
+  widget_class->motion_notify_event = giw_timeline_motion_notify;
+  widget_class->style_set = giw_timeline_style_set;
 
 #ifndef GTK_PARAM_READABLE
 #define GTK_PARAM_READABLE (GParamFlags)(G_PARAM_READABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB)
 #define GTK_PARAM_WRITABLE (GParamFlags)(G_PARAM_WRITABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB)
 #define GTK_PARAM_READWRITE (GParamFlags)(G_PARAM_READWRITE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB)
 #endif
-
-
 
   g_object_class_install_property(object_class,
                                   PROP_ORIENTATION,
@@ -185,41 +173,37 @@ giw_timeline_class_init(GiwTimelineClass *klass) {
                                               GTK_PARAM_READABLE));
 }
 
-static void
-giw_timeline_init(GiwTimeline *timeline) {
-  GiwTimelinePrivate *priv = GIW_TIMELINE_GET_PRIVATE(timeline);
 
-  gtk_widget_set_has_window(GTK_WIDGET(timeline), FALSE);
+static void giw_timeline_init(GiwTimeline *timeline) {
+  gtk_widget_set_has_window(GTK_WIDGET(timeline), TRUE);
 
-  priv->orientation   = GTK_ORIENTATION_HORIZONTAL;
-  priv->unit          = GIW_TIME_UNIT_SECONDS;
-  priv->max_size      = DEFAULT_MAX_SIZE;
-  priv->backing_store = NULL;
-  priv->font_scale    = DEFAULT_TIMELINE_FONT_SCALE;
+  timeline->orientation   = GTK_ORIENTATION_HORIZONTAL;
+  timeline->unit          = GIW_TIME_UNIT_SECONDS;
+  timeline->max_size      = DEFAULT_MAX_SIZE;
+  timeline->backing_store = NULL;
+  timeline->font_scale    = DEFAULT_TIMELINE_FONT_SCALE;
+  timeline->button       = 0;
+  // Default mouse policy : automatic
+  timeline->mouse_policy = GIW_TIMELINE_MOUSE_AUTOMATIC;
 }
 
-static void
-giw_timeline_dispose(GObject *object) {
-  GiwTimeline        *timeline = GIW_TIMELINE(object);
-  GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE(timeline);
 
-  while (priv->track_widgets)
-    giw_timeline_remove_track_widget(timeline, (GtkWidget *)priv->track_widgets->data);
+/*static void giw_timeline_dispose(GObject *object) {
+  GiwTimeline        *timeline = GIW_TIMELINE(object);
+
+  while (timeline->track_widgets)
+    giw_timeline_remove_track_widget(timeline, (GtkWidget *)timeline->track_widgets->data);
 
   G_OBJECT_CLASS(parent_class)->dispose(object);
-}
+  }*/
 
-static void
-giw_timeline_set_property(GObject      *object,
-                          guint         prop_id,
-                          const GValue *value,
-                          GParamSpec   *pspec) {
+
+static void giw_timeline_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec) {
   GiwTimeline        *timeline = GIW_TIMELINE(object);
-  GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE(timeline);
 
   switch (prop_id) {
   case PROP_ORIENTATION:
-    priv->orientation = (GtkOrientation)g_value_get_enum(value);
+    timeline->orientation = (GtkOrientation)g_value_get_enum(value);
     gtk_widget_queue_resize(GTK_WIDGET(timeline));
     break;
 
@@ -238,25 +222,21 @@ giw_timeline_set_property(GObject      *object,
   }
 }
 
-static void
-giw_timeline_get_property(GObject    *object,
-                          guint       prop_id,
-                          GValue     *value,
-                          GParamSpec *pspec) {
+
+static void giw_timeline_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec) {
   GiwTimeline        *timeline = GIW_TIMELINE(object);
-  GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE(timeline);
 
   switch (prop_id) {
   case PROP_ORIENTATION:
-    g_value_set_enum(value, priv->orientation);
+    g_value_set_enum(value, timeline->orientation);
     break;
 
   case PROP_UNIT:
-    g_value_set_int(value, priv->unit);
+    g_value_set_int(value, timeline->unit);
     break;
 
   case PROP_MAX_SIZE:
-    g_value_set_double(value, priv->max_size);
+    g_value_set_double(value, timeline->max_size);
     break;
 
   default:
@@ -264,6 +244,7 @@ giw_timeline_get_property(GObject    *object,
     break;
   }
 }
+
 
 /**
  * giw_timeline_new:
@@ -274,14 +255,71 @@ giw_timeline_get_property(GObject    *object,
  * Return value: a new #GiwTimeline widget.
  *
  **/
-GtkWidget *
-giw_timeline_new(GtkOrientation orientation) {
+GtkWidget *giw_timeline_new(GtkOrientation orientation, GtkAdjustment *adjustment) {
   GiwTimeline *timeline;
 
   timeline = (GiwTimeline *)g_object_new(GIW_TYPE_TIMELINE,
                                          "orientation", orientation,
                                          NULL);
+
+  if (adjustment != NULL) giw_timeline_set_adjustment(timeline, adjustment);
   return GTK_WIDGET(timeline);
+}
+
+
+GtkWidget *giw_timeline_new_with_adjustment(GtkOrientation orientation, gdouble value, gdouble lower, gdouble upper, gdouble max_size) {
+  GiwTimeline *timeline;
+
+  timeline = (GiwTimeline *)g_object_new(GIW_TYPE_TIMELINE,
+                                         "orientation", orientation,
+                                         NULL);
+  giw_timeline_set_adjustment(timeline, (GtkAdjustment *) gtk_adjustment_new(value, lower, upper, 1.0, 1.0, 1.0));
+  giw_timeline_set_max_size(timeline, max_size);
+
+  return GTK_WIDGET(timeline);
+}
+
+
+void giw_timeline_set_adjustment(GiwTimeline *timeline, GtkAdjustment *adjustment) {
+  g_return_if_fail(timeline != NULL);
+  g_return_if_fail(GIW_IS_TIMELINE(timeline));
+  g_return_if_fail(adjustment != NULL);
+
+  // Freeing the last one
+  if (timeline->adjustment) {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    g_signal_handler_disconnect((gpointer)(timeline->adjustment), timeline->chsig);
+    g_signal_handler_disconnect((gpointer)(timeline->adjustment), timeline->vchsig);
+#else
+    gtk_signal_disconnect_by_data(LIVES_GUI_OBJECT(timeline->adjustment), (gpointer) timeline);
+#endif
+    g_object_unref(G_OBJECT(timeline->adjustment));
+    timeline->adjustment = NULL;
+  }
+
+  timeline->adjustment = adjustment;
+  g_object_ref(LIVES_GUI_OBJECT(timeline->adjustment));
+
+  timeline->chsig = g_signal_connect(LIVES_GUI_OBJECT(adjustment), "changed",
+                                     (GCallback) giw_timeline_adjustment_changed,
+                                     (gpointer) timeline);
+
+  timeline->vchsig = g_signal_connect(LIVES_GUI_OBJECT(adjustment), "value_changed",
+                                      (GCallback) giw_timeline_adjustment_value_changed,
+                                      (gpointer) timeline);
+
+#if !GTK_CHECK_VERSION(3,18,0)
+  gtk_adjustment_value_changed(timeline->adjustment);
+  gtk_adjustment_changed(timeline->adjustment);
+#endif
+}
+
+
+void giw_timeline_set_mouse_policy(GiwTimeline *timeline, GiwTimelineMousePolicy policy) {
+  g_return_if_fail(timeline != NULL);
+  g_return_if_fail(GIW_IS_TIMELINE(timeline));
+
+  timeline->mouse_policy = policy;
 }
 
 
@@ -297,19 +335,14 @@ giw_timeline_new(GtkOrientation orientation) {
  * ordinary children of off-screen children.
  *
  */
-void
-giw_timeline_add_track_widget(GiwTimeline *timeline,
-                              GtkWidget *widget) {
-  GiwTimelinePrivate *priv;
+void giw_timeline_add_track_widget(GiwTimeline *timeline, GtkWidget *widget) {
 
   g_return_if_fail(GIW_IS_TIMELINE(timeline));
   g_return_if_fail(GTK_IS_WIDGET(timeline));
 
-  priv = GIW_TIMELINE_GET_PRIVATE(timeline);
+  g_return_if_fail(g_list_find(timeline->track_widgets, widget) == NULL);
 
-  g_return_if_fail(g_list_find(priv->track_widgets, widget) == NULL);
-
-  priv->track_widgets = g_list_prepend(priv->track_widgets, widget);
+  timeline->track_widgets = g_list_prepend(timeline->track_widgets, widget);
 
   g_signal_connect_swapped(widget, "destroy",
                            G_CALLBACK(giw_timeline_remove_track_widget),
@@ -325,19 +358,14 @@ giw_timeline_add_track_widget(GiwTimeline *timeline,
  * giw_timeline_add_track_widget().
  *
  */
-void
-giw_timeline_remove_track_widget(GiwTimeline *timeline,
-                                 GtkWidget *widget) {
-  GiwTimelinePrivate *priv;
+void giw_timeline_remove_track_widget(GiwTimeline *timeline, GtkWidget *widget) {
 
   g_return_if_fail(GIW_IS_TIMELINE(timeline));
   g_return_if_fail(GTK_IS_WIDGET(timeline));
 
-  priv = GIW_TIMELINE_GET_PRIVATE(timeline);
+  g_return_if_fail(g_list_find(timeline->track_widgets, widget) != NULL);
 
-  g_return_if_fail(g_list_find(priv->track_widgets, widget) != NULL);
-
-  priv->track_widgets = g_list_remove(priv->track_widgets, widget);
+  timeline->track_widgets = g_list_remove(timeline->track_widgets, widget);
 
   g_signal_handlers_disconnect_by_func(widget,
                                        (gpointer)giw_timeline_remove_track_widget,
@@ -354,22 +382,18 @@ giw_timeline_remove_track_widget(GiwTimeline *timeline,
  */
 
 
-void
-giw_timeline_set_unit(GiwTimeline *timeline,
-                      GiwTimeUnit   unit) {
-  GiwTimelinePrivate *priv;
+void giw_timeline_set_unit(GiwTimeline *timeline, GiwTimeUnit unit) {
 
   g_return_if_fail(GIW_IS_TIMELINE(timeline));
 
-  priv = GIW_TIMELINE_GET_PRIVATE(timeline);
-
-  if (priv->unit != unit) {
-    priv->unit = unit;
+  if (timeline->unit != unit) {
+    timeline->unit = unit;
     g_object_notify(G_OBJECT(timeline), "unit");
 
     gtk_widget_queue_draw(GTK_WIDGET(timeline));
   }
 }
+
 
 /**
  * giw_timeline_get_unit:
@@ -378,14 +402,11 @@ giw_timeline_set_unit(GiwTimeline *timeline,
  * Return value: the unit currently used in the @timeline widget.
  *
  **/
-
-GiwTimeUnit
-giw_timeline_get_unit(GiwTimeline *timeline) {
+GiwTimeUnit giw_timeline_get_unit(GiwTimeline *timeline) {
   g_return_val_if_fail(GIW_IS_TIMELINE(timeline), (GiwTimeUnit)0);
 
-  return GIW_TIMELINE_GET_PRIVATE(timeline)->unit;
+  return timeline->unit;
 }
-
 
 
 /**
@@ -396,16 +417,13 @@ giw_timeline_get_unit(GiwTimeline *timeline) {
  *
  * Since: GIW 2.8
  **/
-static gdouble
-giw_timeline_get_position(GiwTimeline *timeline) {
+static gdouble giw_timeline_get_position(GiwTimeline *timeline) {
   GtkWidget *widget;
   GtkRange *range;
   g_return_val_if_fail(GIW_IS_TIMELINE(timeline), 0.0);
 
   widget = GTK_WIDGET(timeline);
   range = GTK_RANGE(widget);
-
-  //return GIW_TIMELINE_GET_PRIVATE (timeline)->position;
 
   return gtk_range_get_value(range);
 }
@@ -419,18 +437,13 @@ giw_timeline_get_position(GiwTimeline *timeline) {
  * This sets the max_size of the timeline.
  *
  */
-void
-giw_timeline_set_max_size(GiwTimeline *timeline,
-                          gdouble    max_size) {
-  GiwTimelinePrivate *priv;
+void giw_timeline_set_max_size(GiwTimeline *timeline,  gdouble max_size) {
 
   g_return_if_fail(GIW_IS_TIMELINE(timeline));
 
-  priv = GIW_TIMELINE_GET_PRIVATE(timeline);
-
   g_object_freeze_notify(G_OBJECT(timeline));
-  if (priv->max_size != max_size) {
-    priv->max_size = max_size;
+  if (timeline->max_size != max_size) {
+    timeline->max_size = max_size;
     g_object_notify(G_OBJECT(timeline), "max-size");
   }
   g_object_thaw_notify(G_OBJECT(timeline));
@@ -439,21 +452,12 @@ giw_timeline_set_max_size(GiwTimeline *timeline,
 }
 
 
-
-gdouble
-giw_timeline_get_max_size(GiwTimeline *timeline) {
-  GiwTimelinePrivate *priv;
-
+gdouble giw_timeline_get_max_size(GiwTimeline *timeline) {
+  GtkAdjustment *adjustment;
   g_return_val_if_fail(GIW_IS_TIMELINE(timeline), 0.0);
-
-  priv = GIW_TIMELINE_GET_PRIVATE(timeline);
-
-  return priv->max_size;
+  adjustment = gtk_range_get_adjustment(GTK_RANGE(timeline));
+  return gtk_adjustment_get_upper(adjustment);
 }
-
-
-
-
 
 
 /**
@@ -468,37 +472,36 @@ giw_timeline_get_max_size(GiwTimeline *timeline) {
  * See giw_timeline_set_range().
  *
  **/
-static void
-giw_timeline_get_range(GiwTimeline *timeline,
-                       gdouble   *lower,
-                       gdouble   *upper,
-                       gdouble   *max_size) {
-  GiwTimelinePrivate *priv;
-  GtkWidget *widget;
-  GtkRange *range;
+static void giw_timeline_get_range(GiwTimeline *timeline, gdouble *lower, gdouble *upper, gdouble *max_size) {
   GtkAdjustment *adj;
 
   g_return_if_fail(GIW_IS_TIMELINE(timeline));
 
-  priv = GIW_TIMELINE_GET_PRIVATE(timeline);
-
-  widget = GTK_WIDGET(timeline);
-  range = GTK_RANGE(widget);
-
-  adj = gtk_range_get_adjustment(range);
+  adj = timeline->adjustment;
   if (lower)
     *lower = gtk_adjustment_get_lower(adj);
   if (upper)
     *upper = gtk_adjustment_get_upper(adj);
   if (max_size)
-    *max_size = priv->max_size;
-
+    *max_size = timeline->max_size;
 }
 
-static void
-giw_timeline_realize(GtkWidget *widget) {
+
+void giw_timeline_set_range(GiwTimeline *timeline, gdouble lower, gdouble upper, gdouble max_size) {
+  GtkAdjustment *adj;
+
+  g_return_if_fail(GIW_IS_TIMELINE(timeline));
+
+  adj = timeline->adjustment;
+  gtk_adjustment_set_lower(adj, lower);
+  gtk_adjustment_set_upper(adj, upper);
+  giw_timeline_set_max_size(timeline, max_size);
+}
+
+
+static void giw_timeline_realize(GtkWidget *widget) {
+  GtkStyleContext *stylecon;
   GiwTimeline        *timeline = GIW_TIMELINE(widget);
-  GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE(timeline);
   GtkAllocation     allocation;
   GdkWindowAttr     attributes;
   gint              attributes_mask;
@@ -512,68 +515,67 @@ giw_timeline_realize(GtkWidget *widget) {
   attributes.y           = allocation.y;
   attributes.width       = allocation.width;
   attributes.height      = allocation.height;
-  attributes.wclass      = GDK_INPUT_ONLY;
-  attributes.event_mask  = (gtk_widget_get_events(widget) |
-                            GDK_EXPOSURE_MASK              |
-                            GDK_POINTER_MOTION_MASK);
+  attributes.wclass      = GDK_INPUT_OUTPUT;
+  attributes.event_mask = gtk_widget_get_events(widget) |
+                          GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK |
+                          GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK;
 
   attributes_mask = GDK_WA_X | GDK_WA_Y;
 
-  priv->input_window = gdk_window_new(gtk_widget_get_window(widget),
-                                      &attributes, attributes_mask);
-  gdk_window_set_user_data(priv->input_window, timeline);
+  gtk_widget_set_window(widget, (gdk_window_new(gtk_widget_get_window(gtk_widget_get_parent(widget)), &attributes, attributes_mask)));
+
+  stylecon = gtk_style_context_new();
+  gtk_style_context_set_path(stylecon, gtk_widget_get_path(widget));
+  gtk_style_context_set_state(stylecon, GTK_STATE_FLAG_ACTIVE);
+
+  gdk_window_set_user_data(gtk_widget_get_window(GTK_WIDGET(timeline)), timeline);
+  g_object_ref(LIVES_GUI_OBJECT(gtk_widget_get_window(GTK_WIDGET(timeline))));
 
   giw_timeline_make_pixmap(timeline);
 }
 
-static void
-giw_timeline_unrealize(GtkWidget *widget) {
-  GiwTimeline        *timeline = GIW_TIMELINE(widget);
-  GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE(timeline);
 
-  if (priv->backing_store) {
-    cairo_surface_destroy(priv->backing_store);
-    priv->backing_store = NULL;
+static void giw_timeline_unrealize(GtkWidget *widget) {
+  GiwTimeline *timeline = GIW_TIMELINE(widget);
+
+  if (timeline->backing_store) {
+    cairo_surface_destroy(timeline->backing_store);
+    timeline->backing_store = NULL;
   }
 
-  if (priv->layout) {
-    g_object_unref(priv->layout);
-    priv->layout = NULL;
+  if (timeline->layout) {
+    g_object_unref(timeline->layout);
+    timeline->layout = NULL;
   }
 
-  if (priv->input_window) {
-    gdk_window_destroy(priv->input_window);
-    priv->input_window = NULL;
-  }
+  /* if (gtk_widget_get_window(GTK_WIDGET(timeline)) != NULL) { */
+  /*   gdk_window_destroy(gtk_widget_get_window(GTK_WIDGET(timeline))); */
+  /*   gtk_widget_set_window(GTK_WIDGET(timeline), NULL); */
+  /* } */
 
   GTK_WIDGET_CLASS(giw_timeline_parent_class)->unrealize(widget);
 }
 
-static void
-giw_timeline_map(GtkWidget *widget) {
-  GiwTimelinePrivate *priv = GIW_TIMELINE_GET_PRIVATE(widget);
 
+static void giw_timeline_map(GtkWidget *widget) {
   GTK_WIDGET_CLASS(parent_class)->map(widget);
 
-  if (priv->input_window)
-    gdk_window_show(priv->input_window);
+  if (gtk_widget_get_window(widget) != NULL)
+    gdk_window_show(gtk_widget_get_window(widget));
 }
 
-static void
-giw_timeline_unmap(GtkWidget *widget) {
-  GiwTimelinePrivate *priv = GIW_TIMELINE_GET_PRIVATE(widget);
 
-  if (priv->input_window)
-    gdk_window_hide(priv->input_window);
+static void giw_timeline_unmap(GtkWidget *widget) {
+
+  if (gtk_widget_get_window(widget) != NULL)
+    gdk_window_hide(gtk_widget_get_window(widget));
 
   GTK_WIDGET_CLASS(parent_class)->unmap(widget);
 }
 
-static void
-giw_timeline_size_allocate(GtkWidget     *widget,
-                           GtkAllocation *allocation) {
+
+static void giw_timeline_size_allocate(GtkWidget *widget, GtkAllocation *allocation) {
   GiwTimeline        *timeline = GIW_TIMELINE(widget);
-  GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE(timeline);
   GtkAllocation     widget_allocation;
   gboolean          resized;
 
@@ -585,7 +587,7 @@ giw_timeline_size_allocate(GtkWidget     *widget,
   gtk_widget_set_allocation(widget, allocation);
 
   if (gtk_widget_get_realized(widget)) {
-    gdk_window_move_resize(priv->input_window,
+    gdk_window_move_resize(gtk_widget_get_window(widget),
                            allocation->x, allocation->y,
                            allocation->width, allocation->height);
 
@@ -594,10 +596,9 @@ giw_timeline_size_allocate(GtkWidget     *widget,
   }
 }
 
-static void
-giw_timeline_size_request(GtkWidget      *widget,
-                          GtkRequisition *requisition) {
-  GiwTimelinePrivate *priv    = GIW_TIMELINE_GET_PRIVATE(widget);
+
+static void giw_timeline_size_request(GtkWidget *widget, GtkRequisition *requisition) {
+  GiwTimeline        *timeline = GIW_TIMELINE(widget);
   GtkStyleContext  *context = gtk_widget_get_style_context(widget);
   PangoLayout      *layout;
   PangoRectangle    ink_rect;
@@ -614,7 +615,7 @@ giw_timeline_size_request(GtkWidget      *widget,
   requisition->width  = border.left + border.right;
   requisition->height = border.top + border.bottom;
 
-  if (priv->orientation == GTK_ORIENTATION_HORIZONTAL) {
+  if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
     requisition->width  += 1;
     requisition->height += size;
   } else {
@@ -623,10 +624,8 @@ giw_timeline_size_request(GtkWidget      *widget,
   }
 }
 
-static void
-giw_timeline_get_preferred_width(GtkWidget *widget,
-                                 gint      *minimum_width,
-                                 gint      *natural_width) {
+
+static void giw_timeline_get_preferred_width(GtkWidget *widget, gint *minimum_width, gint *natural_width) {
   GtkRequisition requisition;
 
   giw_timeline_size_request(widget, &requisition);
@@ -634,10 +633,8 @@ giw_timeline_get_preferred_width(GtkWidget *widget,
   *minimum_width = *natural_width = requisition.width;
 }
 
-static void
-giw_timeline_get_preferred_height(GtkWidget *widget,
-                                  gint      *minimum_height,
-                                  gint      *natural_height) {
+
+static void giw_timeline_get_preferred_height(GtkWidget *widget, gint *minimum_height, gint *natural_height) {
   GtkRequisition requisition;
 
   giw_timeline_size_request(widget, &requisition);
@@ -645,32 +642,33 @@ giw_timeline_get_preferred_height(GtkWidget *widget,
   *minimum_height = *natural_height = requisition.height;
 }
 
-static void
-giw_timeline_style_updated(GtkWidget *widget) {
-  GiwTimelinePrivate *priv = GIW_TIMELINE_GET_PRIVATE(widget);
 
+static void giw_timeline_style_updated(GtkWidget *widget) {
+  GiwTimeline        *timeline = GIW_TIMELINE(widget);
   GTK_WIDGET_CLASS(giw_timeline_parent_class)->style_updated(widget);
 
   gtk_widget_style_get(widget,
-                       "font-scale", &priv->font_scale,
+                       "font-scale", &timeline->font_scale,
                        NULL);
 
-  if (priv->layout) {
-    g_object_unref(priv->layout);
-    priv->layout = NULL;
+  if (timeline->layout) {
+    g_object_unref(timeline->layout);
+    timeline->layout = NULL;
   }
 }
 
 
-static gboolean
-giw_timeline_draw(GtkWidget *widget,
-                  cairo_t   *cr) {
+static void giw_timeline_style_set(GtkWidget *widget, GtkStyle *previous_style) {
+  giw_timeline_style_updated(widget);
+}
+
+
+static gboolean giw_timeline_draw(GtkWidget *widget, cairo_t *cr) {
   GiwTimeline        *timeline = GIW_TIMELINE(widget);
-  GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE(timeline);
 
   giw_timeline_draw_ticks(timeline);
 
-  cairo_set_source_surface(cr, priv->backing_store, 0, 0);
+  cairo_set_source_surface(cr, timeline->backing_store, 0, 0);
   cairo_paint(cr);
 
   giw_timeline_draw_pos(timeline);
@@ -678,11 +676,10 @@ giw_timeline_draw(GtkWidget *widget,
   return FALSE;
 }
 
-static void
-giw_timeline_draw_ticks(GiwTimeline *timeline) {
+
+static void giw_timeline_draw_ticks(GiwTimeline *timeline) {
   GtkWidget        *widget  = GTK_WIDGET(timeline);
   GtkStyleContext  *context = gtk_widget_get_style_context(widget);
-  GiwTimelinePrivate *priv    = GIW_TIMELINE_GET_PRIVATE(timeline);
   GtkAllocation     allocation;
   GtkBorder         border;
   GdkRGBA           color;
@@ -708,8 +705,7 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
   PangoLayout      *layout;
   PangoRectangle    logical_rect, ink_rect;
 
-  if (! gtk_widget_is_drawable(widget))
-    return;
+  if (! gtk_widget_is_drawable(widget)) return;
 
   gtk_widget_get_allocation(widget, &allocation);
   gtk_style_context_get_border(context, gtk_widget_get_state_flags(widget), &border);
@@ -720,7 +716,7 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
   digit_height = PANGO_PIXELS(ink_rect.height) + 2;
   digit_offset = ink_rect.y;
 
-  if (priv->orientation == GTK_ORIENTATION_HORIZONTAL) {
+  if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
     width  = allocation.width;
     height = allocation.height - (border.top + border.bottom);
   } else {
@@ -728,7 +724,7 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
     height = allocation.width - (border.top + border.bottom);
   }
 
-  cr = cairo_create(priv->backing_store);
+  cr = cairo_create(timeline->backing_store);
 
   gtk_render_background(context, cr, 0., 0., allocation.width, allocation.height);
 
@@ -738,7 +734,7 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
                               &color);
   gdk_cairo_set_source_rgba(cr, &color);
 
-  if (priv->orientation == GTK_ORIENTATION_HORIZONTAL) {
+  if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
     cairo_rectangle(cr,
                     border.left,
                     height - border.bottom,
@@ -765,14 +761,10 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
    *   possible number to be displayed.  Calculate the height in pixels
    *   of this displayed text. Use this height to find a scale which
    *   leaves sufficient room for drawing the timeline.
-   *
-   *   We calculate the text size as for the vtimeline instead of
-   *   actually measuring the text width, so that the result for the
-   *   scale looks consistent with an accompanying vtimeline.
    */
   scale = ceil(max_size);
 
-  if (priv->unit == GIW_TIME_UNIT_SECONDS) {
+  if (timeline->unit == GIW_TIME_UNIT_SECONDS) {
     g_snprintf(unit_str, sizeof(unit_str), "%d", scale);
   } else {
     scaleh = (int)((double)scale / 3600.);
@@ -786,7 +778,6 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
 
     g_snprintf(unit_str, sizeof(unit_str), "%02d:%02d:%02d", scaleh, scalem, scales);
   }
-
 
   text_size = strlen(unit_str) * digit_height + 1;
 
@@ -839,7 +830,7 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
     for (cur = start; cur <= end; cur += subd_incr) {
       pos = ROUND((cur - lower) * increment);
 
-      if (priv->orientation == GTK_ORIENTATION_HORIZONTAL) {
+      if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
         cairo_rectangle(cr,
                         pos, height + border.top - length,
                         1,   length);
@@ -853,7 +844,7 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
       /* draw label */
       if (i == 0) {
         curi = (int)cur;
-        if (priv->unit == GIW_TIME_UNIT_SECONDS) {
+        if (timeline->unit == GIW_TIME_UNIT_SECONDS) {
           g_snprintf(unit_str, sizeof(unit_str), "%d", curi);
         } else {
           curh = (int)(cur / 3600.);
@@ -868,7 +859,7 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
           g_snprintf(unit_str, sizeof(unit_str), "%02d:%02d:%02d", curh, curm, curs);
         }
 
-        if (priv->orientation == GTK_ORIENTATION_HORIZONTAL) {
+        if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
           pango_layout_set_text(layout, unit_str, -1);
           pango_layout_get_extents(layout, &logical_rect, NULL);
 
@@ -898,11 +889,13 @@ out:
   cairo_destroy(cr);
 }
 
-static void
-giw_timeline_draw_pos(GiwTimeline *timeline) {
+
+/** This is supposed to draw the timeline pointer,
+    it used to work at one point but now it has stopped working.
+*/
+static void giw_timeline_draw_pos(GiwTimeline *timeline) {
   GtkWidget        *widget  = GTK_WIDGET(timeline);
   GtkStyleContext  *context = gtk_widget_get_style_context(widget);
-  GiwTimelinePrivate *priv    = GIW_TIMELINE_GET_PRIVATE(timeline);
   GtkAllocation     allocation;
   GtkBorder         border;
   GdkRGBA           color;
@@ -910,13 +903,12 @@ giw_timeline_draw_pos(GiwTimeline *timeline) {
   gint              width, height;
   gint              bs_width, bs_height;
 
-  if (! gtk_widget_is_drawable(widget))
-    return;
+  if (!gtk_widget_is_drawable(widget)) return;
 
   gtk_widget_get_allocation(widget, &allocation);
   gtk_style_context_get_border(context, gtk_widget_get_state_flags(widget), &border);
 
-  if (priv->orientation == GTK_ORIENTATION_HORIZONTAL) {
+  if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
     width  = allocation.width;
     height = allocation.height - (border.top + border.bottom);
 
@@ -946,18 +938,20 @@ giw_timeline_draw_pos(GiwTimeline *timeline) {
 
     cairo_translate(cr, allocation.x, allocation.y);
 
-    /*  If a backing store exists, restore the timeline  */
-    if (priv->backing_store) {
-      cairo_set_source_surface(cr, priv->backing_store, 0, 0);
-      cairo_rectangle(cr, priv->xsrc, priv->ysrc, bs_width, bs_height);
+    //If a backing store exists, restore the timeline
+    if (timeline->backing_store) {
+      cairo_set_source_surface(cr, timeline->backing_store, 0, 0);
+      cairo_rectangle(cr, timeline->xsrc, timeline->ysrc, bs_width, bs_height);
       cairo_fill(cr);
     }
+
+    cairo_new_path(cr);
 
     position = giw_timeline_get_position(timeline);
 
     giw_timeline_get_range(timeline, &lower, &upper, NULL);
 
-    if (priv->orientation == GTK_ORIENTATION_HORIZONTAL) {
+    if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
       increment = (gdouble) width / (upper - lower);
 
       x = ROUND((position - lower) * increment) + (border.left - bs_width) / 2 - 1;
@@ -971,11 +965,12 @@ giw_timeline_draw_pos(GiwTimeline *timeline) {
 
     gtk_style_context_get_color(context, gtk_widget_get_state_flags(widget),
                                 &color);
+
     gdk_cairo_set_source_rgba(cr, &color);
 
     cairo_move_to(cr, x, y);
 
-    if (priv->orientation == GTK_ORIENTATION_HORIZONTAL) {
+    if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
       cairo_line_to(cr, x + bs_width / 2.0, y + bs_height);
       cairo_line_to(cr, x + bs_width,       y);
     } else {
@@ -987,36 +982,31 @@ giw_timeline_draw_pos(GiwTimeline *timeline) {
 
     cairo_destroy(cr);
 
-    priv->xsrc = x;
-    priv->ysrc = y;
+    timeline->xsrc = x;
+    timeline->ysrc = y;
   }
 }
 
 
-
-
-static void
-giw_timeline_make_pixmap(GiwTimeline *timeline) {
+static void giw_timeline_make_pixmap(GiwTimeline *timeline) {
   GtkWidget        *widget = GTK_WIDGET(timeline);
-  GiwTimelinePrivate *priv   = GIW_TIMELINE_GET_PRIVATE(timeline);
   GtkAllocation     allocation;
 
   gtk_widget_get_allocation(widget, &allocation);
 
-  if (priv->backing_store)
-    cairo_surface_destroy(priv->backing_store);
+  if (timeline->backing_store)
+    cairo_surface_destroy(timeline->backing_store);
 
-  priv->backing_store =
+  timeline->backing_store =
     gdk_window_create_similar_surface(gtk_widget_get_window(widget),
                                       CAIRO_CONTENT_COLOR,
                                       allocation.width,
                                       allocation.height);
 }
 
-static PangoLayout *
-giw_timeline_create_layout(GtkWidget   *widget,
-                           const gchar *text) {
-  GiwTimelinePrivate *priv = GIW_TIMELINE_GET_PRIVATE(widget);
+
+static PangoLayout *giw_timeline_create_layout(GtkWidget *widget, const gchar *text) {
+  GiwTimeline        *timeline = GIW_TIMELINE(widget);
   PangoLayout      *layout;
   PangoAttrList    *attrs;
   PangoAttribute   *attr;
@@ -1025,7 +1015,7 @@ giw_timeline_create_layout(GtkWidget   *widget,
 
   attrs = pango_attr_list_new();
 
-  attr = pango_attr_scale_new(priv->font_scale);
+  attr = pango_attr_scale_new(timeline->font_scale);
   attr->start_index = 0;
   attr->end_index   = -1;
   pango_attr_list_insert(attrs, attr);
@@ -1036,21 +1026,170 @@ giw_timeline_create_layout(GtkWidget   *widget,
   return layout;
 }
 
-static PangoLayout *
-giw_timeline_get_layout(GtkWidget   *widget,
-                        const gchar *text) {
-  GiwTimelinePrivate *priv = GIW_TIMELINE_GET_PRIVATE(widget);
 
-  if (priv->layout) {
-    pango_layout_set_text(priv->layout, text, -1);
-    return priv->layout;
+static PangoLayout *giw_timeline_get_layout(GtkWidget *widget, const gchar *text) {
+  GiwTimeline *timeline = GIW_TIMELINE(widget);
+
+  if (timeline->layout) {
+    pango_layout_set_text(timeline->layout, text, -1);
+    return timeline->layout;
   }
 
-  priv->layout = giw_timeline_create_layout(widget, text);
+  timeline->layout = giw_timeline_create_layout(widget, text);
 
-  return priv->layout;
+  return timeline->layout;
 }
 
 
+void giw_timeline_set_value(GiwTimeline *timeline, gdouble value) {
+  g_return_if_fail(timeline != NULL);
+  g_return_if_fail(GIW_IS_TIMELINE(timeline));
+
+  if (gtk_adjustment_get_value(timeline->adjustment) != value) {
+    gtk_adjustment_set_value(timeline->adjustment, value);
+
+#if !GTK_CHECK_VERSION(3,18,0)
+    gtk_adjustment_value_changed(timeline->adjustment);
+#endif
+  }
+}
+
+
+gdouble giw_timeline_get_value(GiwTimeline *timeline) {
+  g_return_val_if_fail(timeline != NULL, 0.0);
+  g_return_val_if_fail(GIW_IS_TIMELINE(timeline), 0.0);
+  g_return_val_if_fail(timeline->adjustment != NULL, 0.0);
+
+  return (gtk_adjustment_get_value(timeline->adjustment));
+}
+
+
+GtkAdjustment *giw_timeline_get_adjustment(GiwTimeline *timeline) {
+  g_return_val_if_fail(timeline != NULL, NULL);
+  g_return_val_if_fail(GIW_IS_TIMELINE(timeline), NULL);
+
+  return (timeline->adjustment);
+}
+
+
+static gboolean giw_timeline_button_press(GtkWidget *widget, GdkEventButton *event) {
+  GiwTimeline *timeline;
+  GtkAllocation allocation;
+
+  g_return_val_if_fail(widget != NULL, FALSE);
+  g_return_val_if_fail(GIW_IS_TIMELINE(widget), FALSE);
+  g_return_val_if_fail(event != NULL, FALSE);
+
+  timeline = GIW_TIMELINE(widget);
+  if (timeline->mouse_policy == GIW_TIMELINE_MOUSE_DISABLED) return (FALSE);
+
+  gtk_widget_get_allocation(widget, &allocation);
+
+  if (event->x < 0 || event->x >= allocation.width || event->y <
+      0 || event->y >= allocation.height) return FALSE;
+
+  if (event->button == 1) {
+    GtkAdjustment *adjustment = giw_timeline_get_adjustment(timeline);
+    gdouble new_value;
+    gint width, pos;
+
+    timeline->button = event->button;
+
+    if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
+      width  = allocation.width;
+    } else {
+      width  = allocation.height;
+    }
+
+    if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
+      pos = event->x;
+    } else {
+      pos = event->y;
+    }
+
+    new_value = gtk_adjustment_get_lower(adjustment) + (gdouble)pos / (gdouble)width *
+                (gtk_adjustment_get_upper(adjustment) - gtk_adjustment_get_lower(adjustment));
+    if ((new_value <= gtk_adjustment_get_upper(adjustment)) &&
+        (new_value >= gtk_adjustment_get_lower(adjustment)))
+      giw_timeline_set_value(timeline, new_value);
+
+    gtk_widget_queue_draw(GTK_WIDGET(timeline));
+  }
+
+  return TRUE;
+}
+
+
+static gboolean giw_timeline_button_release(GtkWidget *widget, GdkEventButton *event) {
+  GiwTimeline *timeline;
+
+  g_return_val_if_fail(widget != NULL, FALSE);
+  g_return_val_if_fail(GIW_IS_TIMELINE(widget), FALSE);
+  g_return_val_if_fail(event != NULL, FALSE);
+
+  timeline = GIW_TIMELINE(widget);
+
+  if (timeline->mouse_policy == GIW_TIMELINE_MOUSE_DISABLED) return (FALSE);
+
+  if (timeline->button == event->button) {
+    giw_timeline_button_press(widget, event);
+    timeline->button = 0;
+  }
+
+  return TRUE;
+}
+
+
+static gboolean giw_timeline_motion_notify(GtkWidget *widget, GdkEventMotion *event) {
+  GdkEventButton *ebutton = (GdkEventButton *)event;
+  GdkDevice *device;
+  GdkModifierType mask;
+  GiwTimeline *timeline;
+
+  g_return_val_if_fail(widget != NULL, FALSE);
+  g_return_val_if_fail(GIW_IS_TIMELINE(widget), FALSE);
+  g_return_val_if_fail(event != NULL, FALSE);
+
+  timeline = GIW_TIMELINE(widget);
+  if (timeline->mouse_policy == GIW_TIMELINE_MOUSE_DISABLED) return (FALSE);
+  if (timeline->button == 0) return TRUE;
+
+  device = event->device;
+  gdk_device_get_state(device, gtk_widget_get_window(widget), NULL, &mask);
+  if (!(mask & GDK_BUTTON1_MASK)) {
+    // handle the situation where the button release happened outside the window boundary
+    timeline->button = 0;
+    return TRUE;
+  }
+
+  ebutton->button = timeline->button;
+  ebutton->y = 0.;
+  giw_timeline_button_press(widget, ebutton);
+  return TRUE;
+}
+
+
+static void giw_timeline_adjustment_changed(GtkAdjustment *adjustment, gpointer data) {
+  GtkWidget *timeline;
+
+  g_return_if_fail(adjustment != NULL);
+  g_return_if_fail(data != NULL);
+  g_return_if_fail(GIW_IS_TIMELINE(data));
+
+  timeline = GTK_WIDGET(data);
+  gtk_widget_queue_draw(timeline);
+}
+
+
+static void giw_timeline_adjustment_value_changed(GtkAdjustment *adjustment, gpointer data) {
+  GiwTimeline *timeline;
+
+  g_return_if_fail(adjustment != NULL);
+  g_return_if_fail(data != NULL);
+  g_return_if_fail(GIW_IS_TIMELINE(data));
+
+  timeline = GIW_TIMELINE(data);
+  giw_timeline_draw_pos(timeline);
+}
 
 #endif // #if GTK_CHECK_VERSION(3, 0, 0)

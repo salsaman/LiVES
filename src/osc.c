@@ -2967,7 +2967,7 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
   if (!(weed_parameter_has_variable_elements_strict(inst, ptmpl))) {
     if (nargs > (defargs = weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT))) {
       if (!(hint == WEED_HINT_COLOR && defargs == 1 && ((cspace == WEED_COLORSPACE_RGB && (nargs % 3 == 0)) || (cspace == WEED_COLORSPACE_RGBA &&
-            (nargs % 4 == 0)))))
+            !(nargs & 3)))))
         // error: parameter does not have variable elements, and the user sent too many values
         return FALSE;
     }
@@ -3434,7 +3434,7 @@ grpinvalid:
     // RGBA colorspace
 
     case WEED_COLORSPACE_RGBA:
-      if (nargs % 4 != 0) return FALSE; //nargs must be a multiple of 4
+      if (nargs & 3) return FALSE; //nargs must be a multiple of 4
 
       if (weed_leaf_seed_type(ptmpl, WEED_LEAF_DEFAULT) == WEED_SEED_INT) {
         // RGBA, int type

@@ -11,6 +11,16 @@
 
 #ifdef GUI_GTK
 
+#ifdef ENABLE_GIW_3
+#include "giw/giwtimeline.h"
+#endif
+
+#ifdef ENABLE_GIW
+#include "giw/giwvslider.h"
+#include "giw/giwled.h"
+#endif
+
+
 // a bug where gtk_radio_menu_item_set_active() does not update visually
 // workaround: use check menuitems and update manually
 #define GTK_RADIO_MENU_BUG

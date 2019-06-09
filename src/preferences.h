@@ -720,6 +720,22 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 // NOTE: the following definitions must match with equivalent keys in smogrify
 // factories (pseudo prefs), called from cpp binding
 
+// TODO:
+/*typedef struct {
+  const char *pref_name;
+  int type;
+} lives_preference;
+
+const lives_preference [] = {
+  {PREF_REC_EXT_AUDIO, WEED_SEED_BOOL},
+};
+
+then:
+
+widget = lives_standard_widget_for_pref(const char *prefname, const char *label, val, min, max, step, page, dp, box, rb_group_or_combo_list, tooltip);
+*/
+
+
 #define PREF_REC_EXT_AUDIO "rec_ext_audio"
 #define PREF_AUDIO_OPTS "audio_opts"
 #define PREF_SEPWIN_STICKY "sepwin_sticky"

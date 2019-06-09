@@ -174,7 +174,7 @@ static void on_init_aplayer_toggled(LiVESToggleButton *tbutton, livespointer use
 
 
 boolean do_audio_choice_dialog(short startup_phase) {
-  LiVESWidget *dialog, *dialog_vbox, *radiobutton2, *radiobutton3, *radiobutton4, *label;
+  LiVESWidget *dialog, *dialog_vbox, *radiobutton2, *label;
   LiVESWidget *okbutton, *cancelbutton;
   LiVESWidget *hbox;
 
@@ -190,7 +190,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   LiVESSList *radiobutton_group = NULL;
 
-  char *txt0, *txt1, *txt2, *txt3, *txt4, *txt5, *txt6, *txt7, *msg;
+  char *txt0, *txt1, *txt2, *txt3, *txt4, *txt5, *txt6, *msg;
 
   int response;
 
@@ -236,7 +236,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     txt6 = lives_strdup(_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
   }
 
-  msg = lives_strdup_printf("%s%s%s%s%s%s%s%s", txt0, txt1, txt2, txt3, txt4, txt5, txt6, txt7);
+  msg = lives_strdup_printf("%s%s%s%s%s%s%s", txt0, txt1, txt2, txt3, txt4, txt5, txt6);
 
   lives_free(txt0);
   lives_free(txt1);
@@ -245,7 +245,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
   lives_free(txt4);
   lives_free(txt5);
   lives_free(txt6);
-  lives_free(txt7);
 
   dialog = lives_standard_dialog_new(_("Choose an audio player"), FALSE, -1, -1);
 

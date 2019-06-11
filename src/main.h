@@ -1238,7 +1238,6 @@ ssize_t lives_write(int fd, livesconstpointer buf, size_t count, boolean allow_f
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
-ssize_t file_buffer_flush(int fd);
 ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);

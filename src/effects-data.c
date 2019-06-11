@@ -310,7 +310,15 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
   while (pconx != NULL) {
     pconx_next = pconx->next;
+
+#ifdef DEBUG_PCONX
+    g_print("Deletion check, want %d / %d, found %d / %d\n", okey, omode, pconx->okey, pconx->omode);
+#endif
     if (okey == FX_DATA_WILDCARD || (pconx->okey == okey && pconx->omode == omode)) {
+
+#ifdef DEBUG_PCONX
+      g_print("GOT MATCH\n");
+#endif
       if (ikey == FX_DATA_WILDCARD) {
         //g_print("rem all cons from %d %d to any param\n",okey,omode);
 
@@ -338,6 +346,9 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
       }
 
       for (i = 0; pconx != NULL && i < pconx->nparams; i++) {
+#ifdef DEBUG_PCONX
+        g_print("Checking oparams, want %d, got %d with %d connections\n", opnum, pconx->params[i], pconx->nconns[i]);
+#endif
         totcons += pconx->nconns[i];
 
         if (okey != FX_DATA_WILDCARD && pconx->params[i] != opnum) {
@@ -346,7 +357,13 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
         }
 
         for (; j < totcons; j++) {
+#ifdef DEBUG_PCONX
+          g_print("For inputs, want %d / %d (%d), found %d / %d (%d)\n", ikey, imode, ipnum, pconx->ikey[j], pconx->imode[j], pconx->ipnum[j]);
+#endif
           if (pconx->ikey[j] == ikey && pconx->imode[j] == imode && (ipnum == FX_DATA_WILDCARD || pconx->ipnum[j] == ipnum)) {
+#ifdef DEBUG_PCONX
+            g_print("removing connection to %d / %d param (%d)\n", ikey, imode, ipnum);
+#endif
             maxcons--;
             for (k = j; k < maxcons; k++) {
               pconx->ikey[k] = pconx->ikey[k + 1];
@@ -1966,7 +1983,7 @@ static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int 
     cconx->imode[posn] = imode;
     cconx->icnum[posn] = icnum;
 
-#ifdef DEBUG_PCONX
+#ifdef DEBUG_CCONX
     g_print("added another cconx from %d %d %d to %d %d %d\n", okey, omode, ocnum, ikey, imode, icnum);
 #endif
 
@@ -1993,7 +2010,7 @@ static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int 
   cconx->icnum = (int *)lives_realloc(cconx->icnum, totcons * sizint);
   cconx->icnum[totcons - 1] = icnum;
 
-#ifdef DEBUG_PCONX
+#ifdef DEBUG_CCONX
   g_print("added new cconx from %d %d %d to %d %d %d\n", okey, omode, ocnum, ikey, imode, icnum);
 #endif
 }
@@ -2110,9 +2127,10 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
   spdata = (uint8_t *)weed_get_voidptr_value(schan, WEED_LEAF_PIXEL_DATA, &error);
 
+#ifdef DEBUG_CCONX
   g_print("spd is %p %d %d %d %d %d %d %d %d\n", spdata, ipal, opal, iwidth, owidth, iheight, oheight, irow, orow);
   if (spdata) g_print("spd2 is %p %d\n", spdata, spdata[0]);
-
+#endif
   if (ipal == opal && iwidth == owidth && iheight == oheight && irow == orow) {
     /// everything matches - we can just do a steal
     weed_set_voidptr_value(dchan, WEED_LEAF_PIXEL_DATA, spdata);
@@ -2146,7 +2164,9 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
     /// caller - do not free in dchan
     weed_set_boolean_value(dchan, WEED_LEAF_HOST_ORIG_PDATA, WEED_TRUE);
+#ifdef DEBUG_CCONX
     if (spdata) g_print("spd3 is %p %d\n", spdata, spdata[0]);
+#endif
     return FALSE;
   }
 
@@ -3331,6 +3351,7 @@ static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
     pidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "pidx"));
 
     if (fidx == -1) {
+      // connection deleted
       LiVESWidget *acheck = conxwp->acheck[ours];
       if (acheck != NULL) {
         lives_signal_handler_block(acheck, conxwp->acheck_func[ours]);
@@ -3523,7 +3544,7 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
   boolean setup = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "setup"));
 
   int nparams, nchans;
-  int okey, omode, opnum;
+  int okey, omode, opnum, ikey;
 
   int pidx, key, mode, ours = -1, ret;
   int idx = lives_combo_get_active(LIVES_COMBO(combo));
@@ -3544,6 +3565,7 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
   pidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "pidx"));
 
   if (idx == -1) {
+    // connection deleted
     if (setup) return;
     for (i = 0; i < nchans; i++) if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i])) > -1) {
         hasone = TRUE;
@@ -3557,15 +3579,16 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
 
     if (!hasone) lives_widget_set_sensitive(conxwp->disconbutton, FALSE);
 
-    if (conxwp->ikeys[nchans + ours] != 0) {
+    ikey = conxwp->ikeys[nchans + ours];
 
+    if (ikey != 0) {
+      if (ikey > 0) ikey--;
       pconx_delete(conxwp->okey, conxwp->omode, pidx,
-                   conxwp->ikeys[nchans + ours] - 1,
+                   ikey,
                    conxwp->imodes[nchans + ours],
                    conxwp->idx[nchans + ours]);
 
       conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
-
     }
     conxwp->ikeys[nchans + ours] = 0;
     conxwp->imodes[nchans + ours] = 0;

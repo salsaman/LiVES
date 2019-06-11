@@ -8258,7 +8258,9 @@ LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const ch
 LiVESWidget *lives_standard_menu_item_new(void) {
   LiVESWidget *menuitem = lives_menu_item_new();
   if (menuitem != NULL) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme_dimmed2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
+    set_child_dimmed_colour2(menuitem, BUTTON_DIM_VAL);
   }
   return menuitem;
 }
@@ -8267,7 +8269,9 @@ LiVESWidget *lives_standard_menu_item_new(void) {
 LiVESWidget *lives_standard_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem = lives_menu_item_new_with_label(label);
   if (menuitem != NULL) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme_dimmed2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
+    set_child_dimmed_colour2(menuitem, BUTTON_DIM_VAL);
   }
   return menuitem;
 }
@@ -8276,7 +8280,9 @@ LiVESWidget *lives_standard_menu_item_new_with_label(const char *label) {
 LiVESWidget *lives_standard_image_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem = lives_image_menu_item_new_with_label(label);
   if (menuitem != NULL) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme_dimmed2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
+    set_child_dimmed_colour2(menuitem, BUTTON_DIM_VAL);
   }
   return menuitem;
 }
@@ -8286,7 +8292,9 @@ LiVESWidget *lives_standard_image_menu_item_new_with_label(const char *label) {
 LiVESWidget *lives_standard_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group) {
   LiVESWidget *menuitem = lives_image_menu_item_new_from_stock(stock_id, accel_group);
   if (menuitem != NULL) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme_dimmed2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
+    set_child_dimmed_colour2(menuitem, BUTTON_DIM_VAL);
   }
   return menuitem;
 }
@@ -8295,7 +8303,9 @@ LiVESWidget *lives_standard_image_menu_item_new_from_stock(const char *stock_id,
 LiVESWidget *lives_standard_radio_menu_item_new_with_label(LiVESSList *group, const char *label) {
   LiVESWidget *menuitem = lives_radio_menu_item_new_with_label(group, label);
   if (menuitem != NULL) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme_dimmed2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
+    set_child_dimmed_colour2(menuitem, BUTTON_DIM_VAL);
   }
   return menuitem;
 }
@@ -8305,7 +8315,9 @@ LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label, bo
   LiVESWidget *menuitem = lives_check_menu_item_new_with_label(label);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem), active);
   if (menuitem != NULL) {
-    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, FALSE);
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme_dimmed2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
+    set_child_dimmed_colour2(menuitem, BUTTON_DIM_VAL);
   }
   return menuitem;
 }

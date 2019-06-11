@@ -646,7 +646,7 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 size_t buffer_fill_bytes;
 
-ssize_t file_buffer_flush(int fd) {
+static ssize_t file_buffer_flush(int fd) {
   // returns number of bytes written to file io, or error code
   ssize_t res = 0;
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
@@ -662,12 +662,7 @@ ssize_t file_buffer_flush(int fd) {
 
   if (!fbuff->allow_fail && res < fbuff->bytes) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
-  } else {
-#ifdef HAVE_POSIX_FALLOCATE
-    posix_fallocate(fbuff->fd, fbuff->offset, BUFFER_FILL_BYTES);
-#endif
   }
-
 
   return res;
 }
@@ -741,6 +736,9 @@ int lives_close_buffered(int fd) {
       ret = file_buffer_flush(fd);
       if (!allow_fail && ret < bytes) return ret; // this is correct, as flush will have called close again with should_close=FALSE;
     }
+#ifdef HAVE_POSIX_FALLOCATE
+    ftruncate(fbuff->fd, fbuff->offset);
+#endif
   }
 
   if (should_close && fbuff->fd >= 0) ret = close(fbuff->fd);
@@ -940,6 +938,10 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
       res = file_buffer_flush(fd);
       retval += res;
       if (res < BUFFER_FILL_BYTES) return (res < 0 ? res : retval);
+#ifdef HAVE_POSIX_FALLOCATE
+      // pre-allocate space for next buffer, we need to ftruncate this when closing the file
+      posix_fallocate(fbuff->fd, fbuff->offset, BUFFER_FILL_BYTES);
+#endif
       fbuff->bytes = 0;
       fbuff->ptr = fbuff->buffer;
       count -= space_left;

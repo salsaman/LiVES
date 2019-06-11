@@ -4065,7 +4065,7 @@ static void populate_filter_box(int ninchans, lives_mt *mt, int pkgnum) {
 }
 
 
-static void mt_selblock(LiVESMenuItem *menuitem, livespointer user_data) {
+static track_rect *mt_selblock(LiVESMenuItem *menuitem, livespointer user_data) {
   // ctrl-Enter - select block at current time/track
   lives_mt *mt = (lives_mt *)user_data;
   LiVESWidget *eventbox;
@@ -4076,12 +4076,16 @@ static void mt_selblock(LiVESMenuItem *menuitem, livespointer user_data) {
     eventbox = (LiVESWidget *)lives_list_nth_data(mt->audio_draws, mt->current_track + mt->opts.back_audio_tracks);
   else eventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, mt->current_track);
 
+  if (menuitem == NULL) return get_block_from_time(eventbox, timesecs, mt);
+
   mt->putative_block = get_block_from_time(eventbox, timesecs, mt);
 
   if (mt->putative_block != NULL && mt->putative_block->state == BLOCK_UNSELECTED) desel = FALSE;
 
   unselect_all(mt);
   if (!desel) select_block((lives_mt *)user_data);
+
+  return mt->putative_block;
 }
 
 
@@ -4151,7 +4155,7 @@ void mt_spin_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_
       mt->event_list != NULL && get_first_event(mt->event_list) != NULL) {
     lives_mt_poly_state_t statep = get_poly_state_from_page(mt);
     if (mt->selected_tracks != NULL) {
-      lives_widget_set_sensitive(mt->split_sel, TRUE);
+      lives_widget_set_sensitive(mt->split_sel, mt_selblock(LIVES_MENU_ITEM(mt->seldesel_menuitem), (livespointer)mt) != NULL);
       if (mt->region_start != mt->region_end) {
         lives_widget_set_sensitive(mt->playsel, TRUE);
         lives_widget_set_sensitive(mt->ins_gap_sel, TRUE);
@@ -12515,7 +12519,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     while (xxwidth < 1 || xxheight < 1) {
       if (lives_widget_get_allocation_width(mt->poly_box) > 1 && lives_widget_get_allocation_height(mt->poly_box) > 1) {
         calc_maxspect(lives_widget_get_allocation_width(mt->poly_box) / 2 - POLY_WIDTH_MARGIN,
-                      lives_widget_get_allocation_height(mt->poly_box) - POLY_WIDTH_MARGIN / 2 - 12 * widget_opts.packing_height -
+                      lives_widget_get_allocation_height(mt->poly_box) - POLY_WIDTH_MARGIN / 2 - 16 * widget_opts.packing_height -
                       ((block == NULL || block->ordered) ? lives_widget_get_allocation_height(mainw->spinbutton_start) : 0), &width, &height);
 
         xxwidth = width;
@@ -14857,7 +14861,7 @@ void multitrack_undo(LiVESMenuItem *menuitem, livespointer user_data) {
   d_print(_("Undid %s\n"), utxt);
   lives_free(utxt);
 
-  if (last_undo->action <= 1024 && block_is_selected) mt_selblock(NULL, (livespointer)mt);
+  if (last_undo->action <= 1024 && block_is_selected) mt_selblock(LIVES_MENU_ITEM(mt->seldesel_menuitem), (livespointer)mt);
 
   // TODO - make sure this is the effect which is now deleted/added...
   if (mt->poly_state == POLY_PARAMS) {
@@ -16407,7 +16411,7 @@ void on_seltrack_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (mt->selected_tracks != NULL) {
     if (mt->event_list != NULL && get_first_event(mt->event_list) != NULL) {
-      lives_widget_set_sensitive(mt->split_sel, TRUE);
+      lives_widget_set_sensitive(mt->split_sel, mt_selblock(LIVES_MENU_ITEM(mt->seldesel_menuitem), (livespointer)mt) != NULL);
     }
 
     if (mt->region_start != mt->region_end) {

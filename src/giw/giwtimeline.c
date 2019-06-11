@@ -105,7 +105,7 @@ static PangoLayout *giw_timeline_get_layout(GtkWidget      *widget,
 
 static void giw_timeline_style_set(GtkWidget *widget, GtkStyle *previous_style);
 
-static boolean giw_timeline_button_press(GtkWidget *widget, GdkEventButton *event);
+static gboolean giw_timeline_button_press(GtkWidget *widget, GdkEventButton *event);
 static gboolean giw_timeline_button_release(GtkWidget *widget, GdkEventButton *event);
 static gboolean giw_timeline_motion_notify(GtkWidget *widget, GdkEventMotion *event);
 

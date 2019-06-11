@@ -1193,3 +1193,4 @@ static void giw_timeline_adjustment_value_changed(GtkAdjustment *adjustment, gpo
 }
 
 #endif // #if GTK_CHECK_VERSION(3, 0, 0)
+

@@ -2900,6 +2900,10 @@ void create_LiVES(void) {
     lives_signal_handler_block(mainw->eventbox2, mainw->mouse_fn1);
     mainw->mouse_blocked = TRUE;
 
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+                         LIVES_GUI_CALLBACK(on_mouse_sel_reset),
+                         NULL);
+
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                          LIVES_GUI_CALLBACK(on_mouse_sel_start),
                          NULL);

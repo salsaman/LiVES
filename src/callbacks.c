@@ -9380,10 +9380,10 @@ void changed_fps_during_pb(LiVESSpinButton   *spinbutton, livespointer user_data
   }
 
   cfile->pb_fps = new_fps;
-
   mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+    // update our audio player
 #ifdef ENABLE_JACK
     if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
       mainw->jackd->sample_in_rate = cfile->arate * cfile->pb_fps / cfile->fps;
@@ -9405,11 +9405,13 @@ void changed_fps_during_pb(LiVESSpinButton   *spinbutton, livespointer user_data
 
   if (cfile->play_paused) {
     cfile->freeze_fps = new_fps;
+    // unfreeze the clip at the new (non-zero) fps rate
     freeze_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
     return;
   }
 
   if (cfile->pb_fps == 0.) {
+    // freeze the clip
     freeze_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
     return;
   }
@@ -9908,9 +9910,9 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
         jack_get_rec_avals(mainw->jackd);
       }
     }
+    if (cfile->play_paused) jack_pb_stop();
+    else jack_pb_start();
   }
-  if (cfile->play_paused) jack_pb_stop();
-  else jack_pb_start();
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {

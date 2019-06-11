@@ -215,6 +215,8 @@ void free_pulse_audio_buffers(void);
 
 void audio_free_fnames(void);
 
+boolean is_realtime_aplayer(int ptype);
+
 lives_audio_buf_t *audio_cache_init(void);
 void audio_cache_end(void);
 lives_audio_buf_t *audio_cache_get_buffer(void);

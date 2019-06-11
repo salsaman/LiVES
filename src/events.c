@@ -2135,10 +2135,10 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
 
   label = lives_standard_label_new(_("Events were recorded. What would you like to do with them ?"));
 
-  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, TRUE, widget_opts.packing_height * 2);
+  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, TRUE, 0 * 2);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   radiobutton = lives_standard_radio_button_new(_("_Preview events"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
@@ -2150,7 +2150,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
 
   if (!mainw->clip_switched && (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
     hbox = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     radiobutton = lives_standard_radio_button_new(_("Render events to _same clip"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
@@ -2160,7 +2160,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   }
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   radiobutton = lives_standard_radio_button_new(_("Render events to _new clip"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
@@ -2169,7 +2169,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
                        LIVES_INT_TO_POINTER(RENDER_CHOICE_NEW_CLIP));
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   radiobutton = lives_standard_radio_button_new(_("View/edit events in _multitrack window (test)"), &radiobutton_group, LIVES_BOX(hbox),
                 NULL);
@@ -2181,7 +2181,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   if (!allow_mt) lives_widget_set_sensitive(radiobutton, FALSE);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   radiobutton = lives_standard_radio_button_new(_("View/edit events in _event window"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
@@ -2261,7 +2261,7 @@ boolean event_list_to_block(weed_plant_t *event_list, int num_events) {
 
   while (event != NULL) {
     if (WEED_EVENT_IS_FRAME(event)) {
-      (cfile->events[0] + i++)->value = weed_get_int_value(event, WEED_LEAF_FRAMES, &error);
+      (cfile->resample_events + i++)->value = weed_get_int_value(event, WEED_LEAF_FRAMES, &error);
     }
     event = get_next_event(event);
   }

@@ -1430,6 +1430,7 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
             // construct string to pass
             char *msgstring = lives_strdup_printf("%d %d %d %s", OMC_INTERNAL, pconx->imode[j], pconx->ipnum[j], valstr);
             lives_free(valstr);
+            valstr = NULL;
             omc_process_string(OMC_INTERNAL, (const char *)msgstring, FALSE, NULL);
             actions++;
             lives_free(msgstring);

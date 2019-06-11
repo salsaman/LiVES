@@ -1321,6 +1321,11 @@ int process_one(boolean visible) {
           cfile->aseek_pos = mainw->pulsed->seek_pos;
         }
 #endif
+#if 0
+        if (prefs->audio_player == AUD_PLAYER_NONE) {
+          cfile->aseek_pos = nullaudio_get_seek_pos();
+        }
+#endif
         // load and display the new frame
         load_frame_image(cfile->frameno);
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = real_ticks;

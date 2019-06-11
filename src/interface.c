@@ -228,6 +228,9 @@ double lives_ce_update_timeline(int frame, double x) {
 
   lives_widget_queue_draw(mainw->eventbox2);
   show_playbar_labels(mainw->current_file);
+
+  cfile->pointer_time = x;
+
   update_timer_bars(0, 0, 0, 0, 0);
 
   last_current_file = mainw->current_file;

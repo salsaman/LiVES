@@ -30,6 +30,12 @@ static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
 static boolean storedfdsset = FALSE;
 
+
+LIVES_GLOBAL_INLINE boolean is_realtime_aplayer(int ptype) {
+  return (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE);
+}
+
+
 static void audio_reset_stored_fnames(void) {
   int i;
   for (i = 0; i < NSTOREDFDS; i++) {
@@ -3298,7 +3304,6 @@ void stop_audio_stream(void) {
     lives_free(astreamer);
     lives_free(com);
     lives_free(astream_name_out);
-
   }
 }
 
@@ -3331,3 +3336,91 @@ LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
     audio_player_get_display_name(prefs->aplayer), audio_player_get_display_name(prefs->aplayer));
   return CANCEL_ERROR;
 }
+
+
+#if 0
+void nullaudio_time_reset(int64_t offset) {
+  mainw->nullaudo_startticks = lives_get_current_ticks();
+  mainw->nullaudio_seek_posn = 0;
+  mainw->nullaudio_arate = DEF_AUDIO_RATE;
+  mainw->nullaudio_playing_file = -1;
+  mainw->deltaticks = mainw->startticks = 0;
+}
+
+
+void nullaudio_arate_set(int arate) {
+  mainw->nullaudio_arate = arate;
+}
+
+
+void nullaudio_seek_set(offs64_t seek_posn) {
+  // (virtual) seek posn in bytes
+  mainw->nullaudio_seek_posn = seek_posn;
+}
+
+
+void nullaudio_clip_set(int clipno) {
+  mainw->nullaudio_playing_file = clipno;
+}
+
+
+int64_t nullaudio_update_seek_posn() {
+  if (!CURRENT_CLIP_HAS_AUDIO) return mainw->nullaudio_seek_posn;
+  else {
+    int64_t current_ticks = lives_get_current_ticks();
+    mainw->nullaudio_seek_posn += ((int64_t)((double)(current_ticks - mainw->nullaudio_start_ticks) / USEC_TO_TICKS / 1000000. *
+                                   mainw->nullaudio_arate)) * afile->achans * (afile->asampsize >> 3);
+    mainw->nullaudo_startticks = current_ticks;
+    if (mainw->nullaudio_seek_posn < 0) {
+      if (mainw->nullaudio_loop == AUDIO_LOOP_NONE) {
+        if (mainw->whentostop == STOP_ON_AUD_END) {
+          mainw->cancelled = CANCEL_AUD_END;
+        }
+      } else {
+        if (mainw->nullaudio_loop == AUDIO_LOOP_PINGPONG) {
+          mainw->nullaudio_arate = -mainw->nullaudio->arate;
+          mainw->nullaudio_seek_posn = 0;
+        } else mainw->nullaudio_seek_posn += mainw->nullaudio_seek_end;
+      }
+    } else {
+      if (mainw->nullaudio_seek_posn > mainw->nullaudio_seek_end) {
+        // reached the end, forwards
+        if (mainw->nullaudio_loop == AUDIO_LOOP_NONE) {
+          if (mainw->whentostop == STOP_ON_AUD_END) {
+            mainw->cancelled = CANCEL_AUD_END;
+          }
+        } else {
+          if (mainw->nullaudio_loop == AUDIO_LOOP_PINGPONG) {
+            mainw->nullaudio_arate = -mainw->nullaudio_arate;
+            mainw->nullaudio_seek_posn = mainw->nullaudio_seek_end - (mainw->nullaudio_seek_pos - mainw->nullaudio_seek_end);
+          } else {
+            mainw->nullaudio_seek_posn -= mainw->nullaudio_seek_end;
+          }
+          nullaudio_set_rec_avals();
+        }
+      }
+    }
+  }
+}
+
+
+void nullaudio_get_rec_avals(void) {
+  lives_clip_t *afile = mainw->files[mainw->nullaudio_playing_file];
+  mainw->rec_aclip = mainw->nulllaudio_playing_file;
+
+  if (mainw->rec_aclip != -1) {
+    mainw->rec_aseek = (double)mainw->nullaudio_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+    mainw->rec_avel = SIGNED_DIVIDE((double)pulsed->in_arate, (double)afile->arate);
+  }
+}
+
+
+static void nullaudio_set_rec_avals(boolean is_forward) {
+  // record direction change (internal)
+  mainw->rec_aclip = mainw->nullaudio_playing_file;
+  if (mainw->rec_aclip != -1) {
+    nullaudio_get_rec_avals();
+  }
+}
+
+#endif

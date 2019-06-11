@@ -171,7 +171,7 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int chans, nsamps, onsamps, base, inter, rate, k;
 
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  float *src = (float *)weed_get_voidptr_value(in_channel, "audio_data", &error);
+  float *src = (float *)weed_get_voidptr_value(in_channel, "audio_data", &error), *osrc = src;
 
   weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
   weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", &error);
@@ -393,8 +393,8 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   //fprintf(stderr,"\n\n");
 
 done:
-  //if (beat_hold) printf("BEAT %p !\n",out_params[1]);
-  //else printf("NOBEAT %.2f\n",osrc!=NULL?osrc[0]:1.23);
+  if (beat_hold) printf("BEAT %p !\n",out_params[1]);
+  else printf("NOBEAT %.2f\n",osrc!=NULL?osrc[0]:1.23);
 
   weed_set_boolean_value(out_params[0], "value", beat_pulse);
   weed_set_int64_value(out_params[0], "timecode", timestamp);

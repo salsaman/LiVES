@@ -43,6 +43,7 @@ typedef struct {
 #define AUD_PLAYER_MPLAYER2 5
 
   // string forms
+#define AUDIO_PLAYER_NONE "none"
 #define AUDIO_PLAYER_SOX "sox"
 #define AUDIO_PLAYER_JACK "jack"
 #define AUDIO_PLAYER_PULSE "pulse"

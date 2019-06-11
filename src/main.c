@@ -2564,24 +2564,48 @@ void print_opthelp(void) {
 #ifdef ENABLE_OSC
   lives_printerr("%s", _("-oscstart <port> : start OSC listener on UDP port <port>\n"));
   lives_printerr("%s", _("-nooscstart      : do not start OSC listener\n"));
-  lives_printerr("%s",
-                 _("-asource <source>          : set the initial audio source; <source> can be 'internal' or 'external' (only for jack and pulseaudio players)\n"));
+  lives_printerr(
+    _("-asource <source>          : set the initial audio source; <source> can be 'internal' or 'external' (only valid for %s and %s players)\n"),
+    AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
 #endif
-  lives_printerr("%s", _("-aplayer <ap>    : start with selected audio player. <ap> can be mplayer, mplayer2"));
+  lives_printerr("%s", _("-aplayer <ap>    : start with selected audio player. <ap> can be "));
 #ifdef HAVE_PULSE_AUDIO
-  // TRANSLATORS: pulse (audio)
-  lives_printerr("%s", _(", pulse"));
+  lives_printerr("%s", AUDIO_PLAYER_PULSE);
 #endif
 #ifdef ENABLE_JACK
-  lives_printerr("%s", _(", sox or jack\n"));
-  lives_printerr("%s",
-                 _("-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack transport client,"
-                   "2 = jack transport master, 4 = start jack transport server, \n"
-                   "                      "
-                   "8 = pause audio when video paused, 16 = start jack audio server] \n"));
-#else
-  lives_printerr("%s", _(" or sox\n"));
+#ifdef HAVE_PULSE_AUDIO
+  lives_printerr(", ");
 #endif
+  lives_printerr("%s", AUDIO_PLAYER_JACK);
+  if (capable->has_sox_play) lives_printerr(", %s", AUDIO_PLAYER_SOX);
+  lives_printerr(" or %s\n", AUDIO_PLAYER_NONE);
+  lives_printerr("%s",
+                 _("-jackopts <opts>    : opts is a bitmap of jack startup options \n"
+                   "                      "
+                   "[1 = jack transport client, \n"
+                   "                      "
+                   "2 = jack transport master, \n"
+                   "                      "
+                   "4 = start/stop jack transport server, \n"
+                   "                      "
+                   "8 = pause transport when video paused, \n"
+                   "                      "
+                   "16 = start/stop jack audio server] \n"));
+#else // no jack
+  if (capable->has_sox_play) {
+#ifdef HAVE_PULSE_AUDIO
+    lives_printerr(", ");
+#endif
+    lives_printerr("%s or ", AUDIO_PLAYER_SOX);
+  }
+#ifdef HAVE_PULSE_AUDIO
+  else lives_printerr(_(" or "));
+#endif
+#endif
+  lives_printerr("%s\n", AUDIO_PLAYER_NONE);
+
+  //
+
   lives_printerr("%s", _("-devicemap <mapname>          : autoload devicemap\n"));
   lives_printerr("%s",
                  _("-vppdefaults <file>          : load video playback plugin defaults from <file> (Note: only sets the settings, not the plugin type)\n"));
@@ -2648,11 +2672,10 @@ static boolean lives_startup(livespointer data) {
 
     if (!ign_opts.ign_aplayer) {
       get_pref(PREF_AUDIO_PLAYER, buff, 256);
-
-      if (!strcmp(buff, AUDIO_PLAYER_MPLAYER))
-        prefs->audio_player = AUD_PLAYER_MPLAYER;
-      if (!strcmp(buff, AUDIO_PLAYER_MPLAYER2))
-        prefs->audio_player = AUD_PLAYER_MPLAYER2;
+      if (!strcmp(buff, AUDIO_PLAYER_NONE))
+        prefs->audio_player = AUD_PLAYER_NONE;  // experimental
+      if (!strcmp(buff, AUDIO_PLAYER_SOX))
+        prefs->audio_player = AUD_PLAYER_SOX;
       if (!strcmp(buff, AUDIO_PLAYER_JACK))
         prefs->audio_player = AUD_PLAYER_JACK;
       if (!strcmp(buff, AUDIO_PLAYER_PULSE))
@@ -2979,6 +3002,14 @@ static boolean lives_startup(livespointer data) {
 
   if (prefs->startup_phase == 0) show_lives();
   mainw->is_ready = TRUE;
+
+  if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
+    switch_aud_to_sox(FALSE);
+  }
+  if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
+    // still experimental
+    switch_aud_to_none(FALSE);
+  }
 
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
 
@@ -3382,12 +3413,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             switch_aud_to_sox(TRUE);
             apl_valid = TRUE;
           }
-          if (!strcmp(buff, AUDIO_PLAYER_MPLAYER)) {
-            switch_aud_to_mplayer(TRUE);
-            apl_valid = TRUE;
-          }
-          if (!strcmp(buff, AUDIO_PLAYER_MPLAYER2)) {
-            switch_aud_to_mplayer2(TRUE);
+          if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
+            // still experimental
+            switch_aud_to_none(TRUE);
             apl_valid = TRUE;
           }
           if (!strcmp(buff, AUDIO_PLAYER_JACK)) {
@@ -7586,14 +7614,14 @@ void load_frame_image(int frame) {
             }
           }
         }
-        if (new_file < 0 || mainw->files[new_file] == NULL) {
+        if (!IS_VALID_CLIP(new_file)) {
           mainw->jackd->in_use = FALSE;
           return;
         }
 
         if (activate) mainw->jackd->in_use = TRUE;
 
-        if (mainw->files[new_file]->achans > 0) {
+        if (CLIP_HAS_AUDIO(new_file)) {
           int asigned = !(mainw->files[new_file]->signed_endian & AFORM_UNSIGNED);
           int aendian = !(mainw->files[new_file]->signed_endian & AFORM_BIG_ENDIAN);
           mainw->jackd->num_input_channels = mainw->files[new_file]->achans;
@@ -7639,25 +7667,18 @@ void load_frame_image(int frame) {
           if (timeout)  {
             handle_audio_timeout();
           }
-          if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-            if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-              mainw->jackd->is_paused = mainw->files[new_file]->play_paused;
-              mainw->jackd->is_silent = FALSE;
-            }
-            jack_get_rec_avals(mainw->jackd);
-          }
+          mainw->jackd->is_paused = mainw->files[new_file]->play_paused;
+          mainw->jackd->is_silent = FALSE;
+          jack_get_rec_avals(mainw->jackd);
         } else {
-          if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-            mainw->rec_aclip = mainw->current_file;
-            mainw->rec_avel = 0.;
-            mainw->rec_aseek = 0.;
-          }
+          mainw->rec_aclip = mainw->current_file;
+          mainw->rec_avel = 0.;
+          mainw->rec_aseek = 0.;
         }
       }
 #endif
     }
 
-    // switch audio clip
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed != NULL) {
@@ -7693,14 +7714,14 @@ void load_frame_image(int frame) {
             }
           }
         }
-        if (new_file < 0 || mainw->files[new_file] == NULL) {
+        if (!IS_VALID_CLIP(new_file)) {
           mainw->pulsed->in_use = FALSE;
           return;
         }
 
         mainw->pulsed->in_use = TRUE;
 
-        if (mainw->files[new_file]->achans > 0) {
+        if (CLIP_HAS_AUDIO(new_file)) {
           int asigned = !(mainw->files[new_file]->signed_endian & AFORM_UNSIGNED);
           int aendian = !(mainw->files[new_file]->signed_endian & AFORM_BIG_ENDIAN);
           mainw->pulsed->in_achans = mainw->files[new_file]->achans;
@@ -7739,22 +7760,42 @@ void load_frame_image(int frame) {
             lives_usleep(prefs->sleep_time);
           }
 
-          if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-            if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-              mainw->pulsed->is_paused = mainw->files[new_file]->play_paused;
-            }
-            pulse_get_rec_avals(mainw->pulsed);
-          }
+          mainw->pulsed->is_paused = mainw->files[new_file]->play_paused;
+          pulse_get_rec_avals(mainw->pulsed);
         } else {
-          if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-            mainw->rec_aclip = mainw->current_file;
-            mainw->rec_avel = 0.;
-            mainw->rec_aseek = 0.;
-          }
+          mainw->rec_aclip = mainw->current_file;
+          mainw->rec_avel = 0.;
+          mainw->rec_aseek = 0.;
         }
       }
 #endif
     }
+
+#if 0
+    if (prefs->audio_player == AUD_PLAYER_NONE) {
+      if (!IS_VALID_CLIP(new_file)) {
+        mainw->nullaudio_playing_file = -1;
+        return;
+      }
+      if (mainw->nullaudio->playing_file == new_file) return;
+      nullaudio_clip_set(new_file);
+      if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
+        if (!mainw->files[new_file]->play_paused)
+          nullaudio_arate_set(mainw->files[new_file]->arate * mainw->files[new_file]->pb_fps /
+                              mainw->files[new_file]->fps);
+        else nullaudio_arate_set(mainw->files[new_file]->arate * mainw->files[new_file]->freeze_fps /
+                                   mainw->files[new_file]->fps);
+      } else nullaudio_arate_set(mainw->files[new_file]->arate);
+      nullaudio_seek_set(mainw->files[new_file]->aseek_pos);
+      if (CLIP_HAS_AUDIO(new_file)) {
+        nullaudio_get_rec_avals();
+      } else {
+        mainw->rec_aclip = mainw->current_file;
+        mainw->rec_avel = 0.;
+        mainw->rec_aseek = 0.;
+      }
+    }
+#endif
   }
 
 
@@ -7804,7 +7845,7 @@ void load_frame_image(int frame) {
 
     // switch audio clip
     if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
-        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || prefs->audio_src == AUDIO_SRC_EXT))) {
+        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit || prefs->audio_src == AUDIO_SRC_EXT))) {
       switch_audio_clip(new_file, TRUE);
     }
 

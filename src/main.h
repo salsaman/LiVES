@@ -332,11 +332,14 @@ typedef int lives_pgid_t;
 // clamp a between 0 and b; both values rounded to nearest int
 #define NORMAL_CLAMP(a, b) (ROUND_I(a)  < 0 ? 0 : ROUND_I(a) > ROUND_I(b) ? ROUND_I(b) : ROUND_I(a))
 
-// clamp 0 between 1 and b; both values rounded to nearest int; if rounded value of a
+// clamp a between 1 and b; both values rounded to nearest int; if rounded value of a is 0, return rounded b
 #define UTIL_CLAMP(a, b) (NORMAL_CLAMP(a, b) == 0 ? ROUND_I(b) : ROUND_I(a))
 
 // round (double) a up to next (integer) multiple of (double) b
 #define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
+
+// floating point division, maintains the sign of the dividend
+#define SIGNED_DIVIDE(a, b) (a < 0. ? (a / b > 0. ? -a / b : a / b) : (a / b < 0. ? -a / b : a / b))
 
 #ifdef NEED_ENDIAN_TEST
 #undef NEED_ENDIAN_TEST
@@ -581,20 +584,20 @@ typedef enum {
 /// corresponds to one clip in the GUI
 typedef struct {
   // basic info (saved during backup)
-  int bpp;
-  double fps;
-  int hsize; ///< in pixels (NOT macropixels !)
-  int vsize;
-  int arps; ///< audio sample rate
+  int bpp; ///< bits per pixel of the image frames, 24 or 32
+  double fps;  /// framerate of the clip
+  int hsize; ///< frame width (horizontal) in pixels (NOT macropixels !)
+  int vsize; ///< frame height (vertical) in pixels
+  int arps; ///< audio sample rate (the actual physical sample rate of the medium)
   uint32_t signed_endian; ///< bitfield
 
-  int arate; ///< audio playback rate
+  int arate; ///< current audio playback rate (may vary from arps), can even be 0 or negative
   uint64_t unique_id;    ///< this and the handle can be used to uniquely id a file
-  int achans;
-  int asampsize;
+  int achans; ///< number of audio channels (0, 1 or 2)
+  int asampsize; ///< audio sample size in bits (8 or 16)
 
   /////////////////
-  int frames;
+  int frames;  ///< number of video frames
   char title[256];
   char author[256];
   char comment[256];
@@ -634,8 +637,8 @@ typedef struct {
   boolean orig_file_name;
   boolean was_renamed;
   boolean is_untitled;
-  double pb_fps;
-  double freeze_fps;
+  double pb_fps;  ///< current playback rate, may vary from fps, can be 0. or negative
+  double freeze_fps; ///< pb_fps for paused / frozen clips
   boolean play_paused;
   boolean was_in_set;
 
@@ -657,7 +660,7 @@ typedef struct {
   double video_time; // TODO: deprecate, calculate CLIP_VIDEO_TIME from frames and fps
   double laudio_time;
   double raudio_time;
-  double pointer_time;
+  double pointer_time;  ///< pointer time in timeline, also the playback start position for clipeditor (unless playing the selection)
 
   // used only for insert_silence, holds pre-padding length for undo
   double old_laudio_time;
@@ -671,7 +674,7 @@ typedef struct {
   // see resample.c for new events system
 
   // events
-  event *events[1];  ///<for block resampler
+  event *resample_events;  ///<for block resampler
 
   weed_plant_t *event_list;
   weed_plant_t *event_list_back;
@@ -1323,6 +1326,7 @@ void update_play_times(void); ///< like get_play_times, but will force redraw of
 uint32_t get_signed_endian(boolean is_signed, boolean little_endian); ///< produce bitmapped value
 void switch_to_int_player(void);
 void switch_to_mplayer(void);
+void switch_aud_to_none(boolean set_pref);
 void switch_aud_to_sox(boolean set_pref);
 boolean switch_aud_to_jack(void);
 boolean switch_aud_to_pulse(void);
@@ -1400,8 +1404,6 @@ LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSE
 LiVESList *lives_list_delete_string(LiVESList *, char *string) WARN_UNUSED;
 LiVESList *lives_list_copy_strings(LiVESList *list);
 boolean string_lists_differ(LiVESList *, LiVESList *);
-
-boolean is_realtime_aplayer(int ptype);
 
 LiVESList *get_set_list(const char *dir, boolean utf8);
 

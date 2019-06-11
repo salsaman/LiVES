@@ -1473,7 +1473,8 @@ int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 #endif
   }
 
-  if (time_source == NULL || *time_source == LIVES_TIME_SOURCE_NONE || *time_source == LIVES_TIME_SOURCE_SOUNDCARD) {
+  if (is_realtime_aplayer(prefs->audio_player) && (time_source == NULL || *time_source == LIVES_TIME_SOURCE_NONE ||
+      *time_source == LIVES_TIME_SOURCE_SOUNDCARD)) {
     if (((prefs->audio_src == AUDIO_SRC_INT && cfile->achans > 0) || prefs->audio_src == AUDIO_SRC_EXT) &&
         (!mainw->is_rendering || (mainw->multitrack != NULL && !cfile->opening && !mainw->multitrack->is_rendering)) &&
         (!(mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
@@ -1707,11 +1708,6 @@ LIVES_GLOBAL_INLINE int calc_frame_from_time4(int filenum, double time) {
   if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
   frame = (int)(time * mainw->files[filenum]->fps + 1.49999);
   return frame;
-}
-
-
-LIVES_GLOBAL_INLINE boolean is_realtime_aplayer(int ptype) {
-  return (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE);
 }
 
 
@@ -3548,6 +3544,52 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
 }
 
 
+void switch_aud_to_none(boolean set_in_prefs) {
+  prefs->audio_player = AUD_PLAYER_NONE;
+  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_NONE);
+  lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
+
+  if (mainw->is_ready) {
+    lives_widget_hide(mainw->vol_toolitem);
+    if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
+    lives_widget_hide(mainw->recaudio_submenu);
+
+    if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
+      mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
+
+    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
+
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
+  }
+
+#ifdef ENABLE_JACK
+  if (mainw->jackd_read != NULL) {
+    jack_close_device(mainw->jackd_read);
+    mainw->jackd_read = NULL;
+  }
+
+  if (mainw->jackd != NULL) {
+    jack_close_device(mainw->jackd);
+    mainw->jackd = NULL;
+  }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed_read != NULL) {
+    pulse_close_client(mainw->pulsed_read);
+    mainw->pulsed_read = NULL;
+  }
+
+  if (mainw->pulsed != NULL) {
+    pulse_close_client(mainw->pulsed);
+    mainw->pulsed = NULL;
+    pulse_shutdown();
+  }
+#endif
+}
+
+
 boolean prepare_to_play_foreign(void) {
   // here we are going to 'play' a captured external window
 
@@ -4270,14 +4312,14 @@ boolean create_event_space(int length) {
 
   // NOTE: this is the OLD event system, it's only used for reordering in the clip editor
 
-  if (cfile->events[0] != NULL) {
-    lives_free(cfile->events[0]);
+  if (cfile->resample_events != NULL) {
+    lives_free(cfile->resample_events);
   }
-  if ((cfile->events[0] = (event *)(lives_try_malloc(sizeof(event) * length))) == NULL) {
+  if ((cfile->resample_events = (event *)(lives_try_malloc(sizeof(event) * length))) == NULL) {
     // memory overflow
     return FALSE;
   }
-  memset(cfile->events[0], 0, length * sizeof(event));
+  memset(cfile->resample_events, 0, length * sizeof(event));
   return TRUE;
 }
 

@@ -2397,8 +2397,8 @@ void play_file(void) {
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
 
   if (!mainw->foreign && (!(prefs->audio_src == AUDIO_SRC_EXT &&
-                            ((audio_player == AUD_PLAYER_JACK) ||
-                             (audio_player == AUD_PLAYER_PULSE))))) {
+                            (audio_player == AUD_PLAYER_JACK ||
+                             audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE)))) {
     cfile->aseek_pos = (long)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
 
     // start up our audio player (jack or pulse)
@@ -2410,7 +2410,7 @@ void play_file(void) {
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed != NULL) pulse_aud_pb_ready(mainw->current_file);
 #endif
-    } else if (cfile->achans > 0) {
+    } else if (audio_player != AUD_PLAYER_NONE && cfile->achans > 0) {
       // sox or mplayer audio - run as background process
 
       if (mainw->loop_cont) {
@@ -3250,7 +3250,7 @@ void create_cfile(void) {
   cfile->was_in_set = FALSE;
   cfile->hsize = cfile->vsize = cfile->ohsize = cfile->ovsize = 0;
   cfile->fps = cfile->pb_fps = prefs->default_fps;
-  cfile->events[0] = NULL;
+  cfile->resample_events = NULL;
   cfile->insert_start = cfile->insert_end = 0;
   cfile->is_untitled = TRUE;
   cfile->was_renamed = FALSE;
@@ -4545,7 +4545,7 @@ int save_event_frames(void) {
     create_frame_index(mainw->current_file, FALSE, 0, nevents);
 
     for (i = 0; i < nevents; i++) {
-      cfile->frame_index[i] = cfile->frame_index_back[(cfile->events[0] + i)->value - 1];
+      cfile->frame_index[i] = cfile->frame_index_back[(cfile->resample_events + i)->value - 1];
     }
 
     cfile->frames = nevents;
@@ -4565,12 +4565,12 @@ int save_event_frames(void) {
       mainw->write_failed = FALSE;
       lives_write(header_fd, &perf_start, 4, FALSE);
 
-      if (!(cfile->events[0] == NULL)) {
+      if (!(cfile->resample_events == NULL)) {
         for (i = 0; i <= perf_end - perf_start; i++) {
           if (mainw->write_failed) break;
-          lives_write(header_fd, &((cfile->events[0] + i)->value), 4, TRUE);
+          lives_write(header_fd, &((cfile->resample_events + i)->value), 4, TRUE);
         }
-        lives_freep((void **)&cfile->events[0]);
+        lives_freep((void **)&cfile->resample_events);
       }
 
       if (mainw->write_failed) {

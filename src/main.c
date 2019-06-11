@@ -2565,9 +2565,9 @@ void print_opthelp(void) {
   lives_printerr("%s", _("-oscstart <port> : start OSC listener on UDP port <port>\n"));
   lives_printerr("%s", _("-nooscstart      : do not start OSC listener\n"));
   lives_printerr(
+#endif
     _("-asource <source>          : set the initial audio source; <source> can be 'internal' or 'external' (only valid for %s and %s players)\n"),
     AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
-#endif
   lives_printerr("%s", _("-aplayer <ap>    : start with selected audio player. <ap> can be "));
 #ifdef HAVE_PULSE_AUDIO
   lives_printerr("%s", AUDIO_PLAYER_PULSE);
@@ -7571,15 +7571,17 @@ void load_frame_image(int frame) {
 
 
   void switch_audio_clip(int new_file, boolean activate) {
+    boolean timeout;
+    int alarm_handle;
+
     if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
       if (mainw->jackd != NULL) {
-        boolean timeout;
-        int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         if (!activate) mainw->jackd->in_use = FALSE;
 
         if (mainw->jackd->playing_file == new_file) return;
 
+        alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
           sched_yield(); // wait for seek
           lives_usleep(prefs->sleep_time);
@@ -7587,67 +7589,14 @@ void load_frame_image(int frame) {
         lives_alarm_clear(alarm_handle);
         if (timeout) {
           handle_audio_timeout();
-        } else {
-          if (mainw->jackd->playing_file > 0) {
-            jack_message.command = ASERVER_CMD_FILE_CLOSE;
-            jack_message.data = NULL;
-            jack_message.next = NULL;
-            mainw->jackd->msgq = &jack_message;
-
-            alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-            while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
-              sched_yield(); // wait for seek
-              lives_usleep(prefs->sleep_time);
-            }
-            lives_alarm_clear(alarm_handle);
-            if (timeout)  {
-              handle_audio_timeout();
-            }
-          }
-        }
-        if (!IS_VALID_CLIP(new_file)) {
-          mainw->jackd->in_use = FALSE;
           return;
         }
 
-        if (activate) mainw->jackd->in_use = TRUE;
-
-        if (CLIP_HAS_AUDIO(new_file)) {
-          int asigned = !(mainw->files[new_file]->signed_endian & AFORM_UNSIGNED);
-          int aendian = !(mainw->files[new_file]->signed_endian & AFORM_BIG_ENDIAN);
-          mainw->jackd->num_input_channels = mainw->files[new_file]->achans;
-          mainw->jackd->bytes_per_channel = mainw->files[new_file]->asampsize / 8;
-          if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-            if (!mainw->files[new_file]->play_paused)
-              mainw->jackd->sample_in_rate = mainw->files[new_file]->arate * mainw->files[new_file]->pb_fps /
-                                             mainw->files[new_file]->fps;
-            else mainw->jackd->sample_in_rate = mainw->files[new_file]->arate * mainw->files[new_file]->freeze_fps /
-                                                  mainw->files[new_file]->fps;
-          } else mainw->jackd->sample_in_rate = mainw->files[new_file]->arate;
-          mainw->jackd->usigned = !asigned;
-          mainw->jackd->seek_end = mainw->files[new_file]->afilesize;
-
-          if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
-              (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
-            mainw->jackd->reverse_endian = TRUE;
-          else mainw->jackd->reverse_endian = FALSE;
-
-          if (mainw->ping_pong) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
-          else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
-
-          // tell jack server to open audio file and start playing it
-
-          jack_message.command = ASERVER_CMD_FILE_OPEN;
-
-          jack_message.data = lives_strdup_printf("%d", new_file);
-
-          jack_message2.command = ASERVER_CMD_FILE_SEEK;
-          jack_message.next = &jack_message2;
-          jack_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
-          jack_message2.next = NULL;
-
+        if (mainw->jackd->playing_file > 0) {
+          jack_message.command = ASERVER_CMD_FILE_CLOSE;
+          jack_message.data = NULL;
+          jack_message.next = NULL;
           mainw->jackd->msgq = &jack_message;
-          mainw->jackd->in_use = TRUE;
 
           alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
           while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
@@ -7658,14 +7607,69 @@ void load_frame_image(int frame) {
           if (timeout)  {
             handle_audio_timeout();
           }
-          mainw->jackd->is_paused = mainw->files[new_file]->play_paused;
-          mainw->jackd->is_silent = FALSE;
-          jack_get_rec_avals(mainw->jackd);
-        } else {
-          mainw->rec_aclip = mainw->current_file;
-          mainw->rec_avel = 0.;
-          mainw->rec_aseek = 0.;
         }
+      }
+      if (!IS_VALID_CLIP(new_file)) {
+        mainw->jackd->in_use = FALSE;
+        return;
+      }
+
+      if (activate) mainw->jackd->in_use = TRUE;
+
+      if (CLIP_HAS_AUDIO(new_file)) {
+        int asigned = !(mainw->files[new_file]->signed_endian & AFORM_UNSIGNED);
+        int aendian = !(mainw->files[new_file]->signed_endian & AFORM_BIG_ENDIAN);
+        mainw->jackd->num_input_channels = mainw->files[new_file]->achans;
+        mainw->jackd->bytes_per_channel = mainw->files[new_file]->asampsize / 8;
+        if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
+          if (!mainw->files[new_file]->play_paused)
+            mainw->jackd->sample_in_rate = mainw->files[new_file]->arate * mainw->files[new_file]->pb_fps /
+                                           mainw->files[new_file]->fps;
+          else mainw->jackd->sample_in_rate = mainw->files[new_file]->arate * mainw->files[new_file]->freeze_fps /
+                                                mainw->files[new_file]->fps;
+        } else mainw->jackd->sample_in_rate = mainw->files[new_file]->arate;
+        mainw->jackd->usigned = !asigned;
+        mainw->jackd->seek_end = mainw->files[new_file]->afilesize;
+
+        if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
+            (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+          mainw->jackd->reverse_endian = TRUE;
+        else mainw->jackd->reverse_endian = FALSE;
+
+        if (mainw->ping_pong) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
+        else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
+
+        // tell jack server to open audio file and start playing it
+
+        jack_message.command = ASERVER_CMD_FILE_OPEN;
+
+        jack_message.data = lives_strdup_printf("%d", new_file);
+
+        jack_message2.command = ASERVER_CMD_FILE_SEEK;
+        jack_message.next = &jack_message2;
+        jack_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
+        jack_message2.next = NULL;
+
+        mainw->jackd->msgq = &jack_message;
+        mainw->jackd->in_use = TRUE;
+
+        alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+        while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
+          // wait for seek
+          sched_yield();
+          lives_usleep(prefs->sleep_time);
+        }
+        lives_alarm_clear(alarm_handle);
+        if (timeout)  {
+          handle_audio_timeout();
+        }
+        mainw->jackd->is_paused = mainw->files[new_file]->play_paused;
+        mainw->jackd->is_silent = FALSE;
+        jack_get_rec_avals(mainw->jackd);
+      } else {
+        mainw->rec_aclip = mainw->current_file;
+        mainw->rec_avel = 0.;
+        mainw->rec_aseek = 0.;
       }
 #endif
     }
@@ -7673,91 +7677,91 @@ void load_frame_image(int frame) {
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed != NULL) {
-        boolean timeout;
-        int alarm_handle;
-
         if (mainw->pulsed->playing_file == new_file) return;
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
+          // wait for seek
+          sched_yield();
           lives_usleep(prefs->sleep_time);
-          sched_yield(); // wait for seek
         }
         lives_alarm_clear(alarm_handle);
         if (timeout)  {
           handle_audio_timeout();
-        } else {
-          if (mainw->pulsed->fd > 0) {
-            pulse_message.command = ASERVER_CMD_FILE_CLOSE;
-            pulse_message.data = NULL;
-            pulse_message.next = NULL;
-            mainw->pulsed->msgq = &pulse_message;
-
-            alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-            while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
-              sched_yield(); // wait for seek
-              lives_usleep(prefs->sleep_time);
-            }
-            lives_alarm_clear(alarm_handle);
-            if (timeout)  {
-              handle_audio_timeout();
-              return;
-            }
-          }
-        }
-        if (!IS_VALID_CLIP(new_file)) {
-          mainw->pulsed->in_use = FALSE;
           return;
         }
 
-        mainw->pulsed->in_use = TRUE;
-
-        if (CLIP_HAS_AUDIO(new_file)) {
-          int asigned = !(mainw->files[new_file]->signed_endian & AFORM_UNSIGNED);
-          int aendian = !(mainw->files[new_file]->signed_endian & AFORM_BIG_ENDIAN);
-          mainw->pulsed->in_achans = mainw->files[new_file]->achans;
-          mainw->pulsed->in_asamps = mainw->files[new_file]->asampsize;
-          if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-            if (!mainw->files[new_file]->play_paused)
-              mainw->pulsed->in_arate = mainw->files[new_file]->arate * mainw->files[new_file]->pb_fps /
-                                        mainw->files[new_file]->fps;
-            else mainw->pulsed->in_arate = mainw->files[new_file]->arate * mainw->files[new_file]->freeze_fps /
-                                             mainw->files[new_file]->fps;
-          } else mainw->pulsed->in_arate = mainw->files[new_file]->arate;
-          mainw->pulsed->usigned = !asigned;
-          mainw->pulsed->seek_end = mainw->files[new_file]->afilesize;
-
-          if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
-              (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
-            mainw->pulsed->reverse_endian = TRUE;
-          else mainw->pulsed->reverse_endian = FALSE;
-
-          if (mainw->ping_pong) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
-          else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
-
-          // tell pulse server to open audio file and start playing it
-
-          pulse_message.command = ASERVER_CMD_FILE_OPEN;
-          pulse_message.data = lives_strdup_printf("%d", new_file);
-
-          pulse_message2.command = ASERVER_CMD_FILE_SEEK;
-          pulse_message.next = &pulse_message2;
-          pulse_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
-          pulse_message2.next = NULL;
+        if (mainw->pulsed->fd > 0) {
+          pulse_message.command = ASERVER_CMD_FILE_CLOSE;
+          pulse_message.data = NULL;
+          pulse_message.next = NULL;
           mainw->pulsed->msgq = &pulse_message;
-          mainw->pulsed->in_use = TRUE;
 
-          while (mainw->pulsed->msgq != NULL) {
+          alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+          while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
+            sched_yield(); // wait for seek
             lives_usleep(prefs->sleep_time);
           }
-
-          mainw->pulsed->is_paused = mainw->files[new_file]->play_paused;
-          pulse_get_rec_avals(mainw->pulsed);
-        } else {
-          mainw->rec_aclip = mainw->current_file;
-          mainw->rec_avel = 0.;
-          mainw->rec_aseek = 0.;
+          lives_alarm_clear(alarm_handle);
+          if (timeout)  {
+            handle_audio_timeout();
+            return;
+          }
         }
+      }
+
+      if (!IS_VALID_CLIP(new_file)) {
+        mainw->pulsed->in_use = FALSE;
+        return;
+      }
+
+      mainw->pulsed->in_use = TRUE;
+
+      if (CLIP_HAS_AUDIO(new_file)) {
+        int asigned = !(mainw->files[new_file]->signed_endian & AFORM_UNSIGNED);
+        int aendian = !(mainw->files[new_file]->signed_endian & AFORM_BIG_ENDIAN);
+        mainw->pulsed->in_achans = mainw->files[new_file]->achans;
+        mainw->pulsed->in_asamps = mainw->files[new_file]->asampsize;
+        if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
+          if (!mainw->files[new_file]->play_paused)
+            mainw->pulsed->in_arate = mainw->files[new_file]->arate * mainw->files[new_file]->pb_fps /
+                                      mainw->files[new_file]->fps;
+          else mainw->pulsed->in_arate = mainw->files[new_file]->arate * mainw->files[new_file]->freeze_fps /
+                                           mainw->files[new_file]->fps;
+        } else mainw->pulsed->in_arate = mainw->files[new_file]->arate;
+        mainw->pulsed->usigned = !asigned;
+        mainw->pulsed->seek_end = mainw->files[new_file]->afilesize;
+
+        if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
+            (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+          mainw->pulsed->reverse_endian = TRUE;
+        else mainw->pulsed->reverse_endian = FALSE;
+
+        if (mainw->ping_pong) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
+        else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
+
+        // tell pulse server to open audio file and start playing it
+
+        pulse_message.command = ASERVER_CMD_FILE_OPEN;
+        pulse_message.data = lives_strdup_printf("%d", new_file);
+
+        pulse_message2.command = ASERVER_CMD_FILE_SEEK;
+        pulse_message.next = &pulse_message2;
+        pulse_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
+        pulse_message2.next = NULL;
+        mainw->pulsed->msgq = &pulse_message;
+        mainw->pulsed->in_use = TRUE;
+
+        while (mainw->pulsed->msgq != NULL) {
+          lives_usleep(prefs->sleep_time);
+        }
+
+        mainw->pulsed->is_paused = mainw->files[new_file]->play_paused;
+        pulse_get_rec_avals(mainw->pulsed);
+      } else {
+        mainw->rec_aclip = mainw->current_file;
+        mainw->rec_avel = 0.;
+        mainw->rec_aseek = 0.;
       }
 #endif
     }

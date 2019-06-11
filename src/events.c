@@ -3020,7 +3020,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     g_print("event: frame event at tc %"PRId64" curr_tc=%"PRId64"\n", tc, curr_tc);
 #endif
 
-    if (mainw->multitrack == NULL && prefs->audio_player == AUD_PLAYER_JACK && WEED_EVENT_IS_AUDIO_FRAME(next_event)) {
+    if (mainw->multitrack == NULL && is_realtime_aplayer(prefs->audio_player) && WEED_EVENT_IS_AUDIO_FRAME(next_event)) {
       // keep track of current seek position, for animating playback pointers
       int *aclips = weed_get_int_array(next_event, WEED_LEAF_AUDIO_CLIPS, &error);
       double *aseeks = weed_get_double_array(next_event, WEED_LEAF_AUDIO_SEEKS, &error);

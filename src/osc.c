@@ -333,8 +333,7 @@ static const char *get_omc_const(const char *cname) {
   if (!strcmp(cname, "LIVES_DEFAULT_OVERRIDDEN"))
     return "2";
 
-  dummy = lives_osc_notify_failure();
-  dummy = dummy;
+  (void)(dummy = lives_osc_notify_failure());
 
   return "";
 }

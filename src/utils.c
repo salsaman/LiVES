@@ -737,7 +737,8 @@ int lives_close_buffered(int fd) {
       if (!allow_fail && ret < bytes) return ret; // this is correct, as flush will have called close again with should_close=FALSE;
     }
 #ifdef HAVE_POSIX_FALLOCATE
-    ftruncate(fbuff->fd, fbuff->offset);
+    int dummy;
+    (void)(dummy = ftruncate(fbuff->fd, fbuff->offset));
 #endif
   }
 
@@ -3264,7 +3265,7 @@ void zero_spinbuttons(void) {
 }
 
 
-boolean switch_aud_to_jack(void) {
+boolean switch_aud_to_jack(boolean set_in_prefs) {
 #ifdef ENABLE_JACK
   if (mainw->is_ready) {
     if (!mainw->jack_inited) lives_jack_init();
@@ -3287,6 +3288,7 @@ boolean switch_aud_to_jack(void) {
     lives_widget_show(mainw->vol_toolitem);
     if (mainw->vol_label != NULL) lives_widget_show(mainw->vol_label);
     lives_widget_show(mainw->recaudio_submenu);
+    lives_widget_set_sensitive(mainw->vol_toolitem, TRUE);
 
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
@@ -3305,7 +3307,7 @@ boolean switch_aud_to_jack(void) {
 #endif
   }
   prefs->audio_player = AUD_PLAYER_JACK;
-  set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
+  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
 
   if (mainw->is_ready && mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
@@ -3318,6 +3320,9 @@ boolean switch_aud_to_jack(void) {
 
   lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
+  lives_widget_set_sensitive(mainw->mute_audio, TRUE);
+  lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
+  lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
 
   return TRUE;
 #endif
@@ -3325,7 +3330,7 @@ boolean switch_aud_to_jack(void) {
 }
 
 
-boolean switch_aud_to_pulse(void) {
+boolean switch_aud_to_pulse(boolean set_in_prefs) {
 #ifdef HAVE_PULSE_AUDIO
   boolean retval;
 
@@ -3344,9 +3349,10 @@ boolean switch_aud_to_pulse(void) {
       lives_widget_show(mainw->vol_toolitem);
       if (mainw->vol_label != NULL) lives_widget_show(mainw->vol_label);
       lives_widget_show(mainw->recaudio_submenu);
+      lives_widget_set_sensitive(mainw->vol_toolitem, TRUE);
 
       prefs->audio_player = AUD_PLAYER_PULSE;
-      set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
+      if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
       lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
 
       if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
@@ -3372,6 +3378,9 @@ boolean switch_aud_to_pulse(void) {
 
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
+    lives_widget_set_sensitive(mainw->mute_audio, TRUE);
+    lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
+    lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
 
     return retval;
   }
@@ -3380,7 +3389,9 @@ boolean switch_aud_to_pulse(void) {
 }
 
 
-void switch_aud_to_sox(boolean set_in_prefs) {
+boolean switch_aud_to_sox(boolean set_in_prefs) {
+  if (!capable->has_sox_play) return FALSE; // TODO - show error
+
   prefs->audio_player = AUD_PLAYER_SOX;
   get_pref_default(PREF_SOX_COMMAND, prefs->audio_play_command, 256);
   if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
@@ -3388,8 +3399,11 @@ void switch_aud_to_sox(boolean set_in_prefs) {
   set_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
 
   if (mainw->is_ready) {
+    /* //ubuntu has a hissy fit if you hide things in the menu
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
+    */
+    lives_widget_set_sensitive(mainw->vol_toolitem, FALSE);
     lives_widget_hide(mainw->recaudio_submenu);
 
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
@@ -3399,6 +3413,9 @@ void switch_aud_to_sox(boolean set_in_prefs) {
 
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
+    lives_widget_set_sensitive(mainw->mute_audio, TRUE);
+    lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
+    lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
   }
 
 #ifdef ENABLE_JACK
@@ -3425,124 +3442,7 @@ void switch_aud_to_sox(boolean set_in_prefs) {
     pulse_shutdown();
   }
 #endif
-}
-
-
-void switch_aud_to_mplayer(boolean set_in_prefs) {
-  int i;
-  for (i = 1; i < MAX_FILES; i++) {
-    if (mainw->files[i] != NULL) {
-      if (i != mainw->current_file && mainw->files[i]->opening) {
-        do_error_dialog(_("LiVES cannot switch to mplayer whilst clips are loading."));
-        return;
-      }
-    }
-  }
-
-  prefs->audio_player = AUD_PLAYER_MPLAYER;
-  get_pref_default(PREF_MPLAYER_AUDIO_COMMAND, prefs->audio_play_command, 256);
-  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER);
-  lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_MPLAYER);
-  set_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
-
-  if (mainw->is_ready) {
-    lives_widget_hide(mainw->vol_toolitem);
-    if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
-    lives_widget_hide(mainw->recaudio_submenu);
-
-    if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
-      mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
-
-    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
-
-    lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
-    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
-  }
-
-#ifdef ENABLE_JACK
-  if (mainw->jackd_read != NULL) {
-    jack_close_device(mainw->jackd_read);
-    mainw->jackd_read = NULL;
-  }
-
-  if (mainw->jackd != NULL) {
-    jack_close_device(mainw->jackd);
-    mainw->jackd = NULL;
-  }
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed_read != NULL) {
-    pulse_close_client(mainw->pulsed_read);
-    mainw->pulsed_read = NULL;
-  }
-
-  if (mainw->pulsed != NULL) {
-    pulse_close_client(mainw->pulsed);
-    mainw->pulsed = NULL;
-    pulse_shutdown();
-  }
-#endif
-
-}
-
-
-void switch_aud_to_mplayer2(boolean set_in_prefs) {
-  int i;
-  for (i = 1; i < MAX_FILES; i++) {
-    if (mainw->files[i] != NULL) {
-      if (i != mainw->current_file && mainw->files[i]->opening) {
-        do_error_dialog(_("LiVES cannot switch to mplayer2 whilst clips are loading."));
-        return;
-      }
-    }
-  }
-
-  prefs->audio_player = AUD_PLAYER_MPLAYER2;
-  get_pref_default(PREF_MPLAYER2_AUDIO_COMMAND, prefs->audio_play_command, 256);
-  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER2);
-  lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_MPLAYER2);
-  set_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
-
-  if (mainw->is_ready) {
-    lives_widget_hide(mainw->vol_toolitem);
-    if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
-    lives_widget_hide(mainw->recaudio_submenu);
-
-    if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
-      mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
-
-    pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
-
-    lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
-    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
-  }
-
-#ifdef ENABLE_JACK
-  if (mainw->jackd_read != NULL) {
-    jack_close_device(mainw->jackd_read);
-    mainw->jackd_read = NULL;
-  }
-
-  if (mainw->jackd != NULL) {
-    jack_close_device(mainw->jackd);
-    mainw->jackd = NULL;
-  }
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed_read != NULL) {
-    pulse_close_client(mainw->pulsed_read);
-    mainw->pulsed_read = NULL;
-  }
-
-  if (mainw->pulsed != NULL) {
-    pulse_close_client(mainw->pulsed);
-    mainw->pulsed = NULL;
-    pulse_shutdown();
-  }
-#endif
-
+  return TRUE;
 }
 
 
@@ -3552,8 +3452,11 @@ void switch_aud_to_none(boolean set_in_prefs) {
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
 
   if (mainw->is_ready) {
+    /* //ubuntu has a hissy fit if you hide things in the menu
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
+    */
+    lives_widget_set_sensitive(mainw->vol_toolitem, FALSE);
     lives_widget_hide(mainw->recaudio_submenu);
 
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
@@ -3563,6 +3466,9 @@ void switch_aud_to_none(boolean set_in_prefs) {
 
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
+    lives_widget_set_sensitive(mainw->mute_audio, FALSE);
+    lives_widget_set_sensitive(mainw->m_mutebutton, FALSE);
+    lives_widget_set_sensitive(mainw->p_mutebutton, FALSE);
   }
 
 #ifdef ENABLE_JACK

@@ -37,10 +37,8 @@ typedef struct {
   short audio_player;
 #define AUD_PLAYER_NONE 0
 #define AUD_PLAYER_SOX 1
-#define AUD_PLAYER_MPLAYER 2
-#define AUD_PLAYER_JACK 3
-#define AUD_PLAYER_PULSE 4
-#define AUD_PLAYER_MPLAYER2 5
+#define AUD_PLAYER_JACK 2
+#define AUD_PLAYER_PULSE 3
 
   // string forms
 #define AUDIO_PLAYER_NONE "none"
@@ -52,7 +50,7 @@ typedef struct {
 #define AUDIO_PLAYER_MPLAYER "mplayer"
 #define AUDIO_PLAYER_MPLAYER2 "mplayer2"
 
-  char aplayer[512]; // name, eg. "jack","pulse","sox","mplayer","mplayer2"
+  char aplayer[512]; // name, eg. "jack","pulse","sox"
 
   /// frame quantisation type
   short q_type;
@@ -913,10 +911,12 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_MPLAYER_AUDIO_COMMAND "mplayer_audio_command"
 #define PREF_MPLAYER2_AUDIO_COMMAND "mplayer2_audio_command"
 
-void pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
-void pref_factory_int(const char *prefidx, int newval);
-void pref_factory_float(const char *prefidx, float newval);
-void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval);
+boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
+boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent);
+boolean pref_factory_int(const char *prefidx, int newval, boolean permanent);
+boolean pref_factory_float(const char *prefidx, float newval, boolean permanent);
+boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval, boolean permanent);
+boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const char *strval, boolean permanent);
 
 boolean has_pref(const char *key);
 int get_pref(const char *key, char *val, int maxlen);

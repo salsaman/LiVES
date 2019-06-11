@@ -1081,7 +1081,7 @@ static gboolean giw_timeline_button_press(GtkWidget *widget, GdkEventButton *eve
   g_return_val_if_fail(event != NULL, FALSE);
 
   timeline = GIW_TIMELINE(widget);
-  if (timeline->mouse_policy == GIW_TIMELINE_MOUSE_DISABLED) return (FALSE);
+  if (timeline->mouse_policy == GIW_TIMELINE_MOUSE_DISABLED) return FALSE;
 
   gtk_widget_get_allocation(widget, &allocation);
 
@@ -1129,7 +1129,7 @@ static gboolean giw_timeline_button_release(GtkWidget *widget, GdkEventButton *e
 
   timeline = GIW_TIMELINE(widget);
 
-  if (timeline->mouse_policy == GIW_TIMELINE_MOUSE_DISABLED) return (FALSE);
+  if (timeline->mouse_policy == GIW_TIMELINE_MOUSE_DISABLED) return FALSE;
 
   if (timeline->button == event->button) {
     giw_timeline_button_press(widget, event);
@@ -1151,7 +1151,7 @@ static gboolean giw_timeline_motion_notify(GtkWidget *widget, GdkEventMotion *ev
   g_return_val_if_fail(event != NULL, FALSE);
 
   timeline = GIW_TIMELINE(widget);
-  if (timeline->mouse_policy == GIW_TIMELINE_MOUSE_DISABLED) return (FALSE);
+  if (timeline->mouse_policy == GIW_TIMELINE_MOUSE_DISABLED) return FALSE;
   if (timeline->button == 0) return TRUE;
 
   device = event->device;

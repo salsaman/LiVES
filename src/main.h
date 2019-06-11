@@ -1323,14 +1323,12 @@ void get_play_times(void); ///< recalculate video / audio lengths and draw the t
 void update_play_times(void); ///< like get_play_times, but will force redraw of audio waveforms
 
 uint32_t get_signed_endian(boolean is_signed, boolean little_endian); ///< produce bitmapped value
-void switch_to_int_player(void);
-void switch_to_mplayer(void);
+
 void switch_aud_to_none(boolean set_pref);
-void switch_aud_to_sox(boolean set_pref);
-boolean switch_aud_to_jack(void);
-boolean switch_aud_to_pulse(void);
-void switch_aud_to_mplayer(boolean set_pref);
-void switch_aud_to_mplayer2(boolean set_pref);
+boolean switch_aud_to_sox(boolean set_pref);
+boolean switch_aud_to_jack(boolean set_pref);
+boolean switch_aud_to_pulse(boolean set_pref);
+
 boolean prepare_to_play_foreign(void);
 boolean after_foreign_play(void);
 boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists

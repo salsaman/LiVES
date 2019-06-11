@@ -688,12 +688,6 @@ void update_host_info(weed_plant_t *inst) {
   hinfo = weed_get_plantptr_value(pinfo, WEED_LEAF_HOST_INFO, &error);
 
   switch (prefs->audio_player) {
-  case AUD_PLAYER_MPLAYER:
-    weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER);
-    break;
-  case AUD_PLAYER_MPLAYER2:
-    weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER2);
-    break;
   case AUD_PLAYER_SOX:
     weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
     break;
@@ -701,7 +695,10 @@ void update_host_info(weed_plant_t *inst) {
     weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
     break;
   case AUD_PLAYER_PULSE:
-    weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, "pulseaudio");
+    weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_PULSE_AUDIO);
+    break;
+  case AUD_PLAYER_NONE:
+    weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_NONE);
     break;
   }
 }
@@ -7303,6 +7300,10 @@ void weed_deinit_all(boolean shutdown) {
 
 
 static int register_audio_channels(int nchannels) {
+  if (!is_realtime_aplayer(prefs->audio_player)) {
+    mainw->afbuffer_clients = 0;
+    return -1;
+  }
   if (nchannels <= 0) return mainw->afbuffer_clients;
   if (mainw->afbuffer_clients == 0) {
     pthread_mutex_lock(&mainw->abuf_frame_mutex);
@@ -7318,7 +7319,7 @@ static int register_audio_channels(int nchannels) {
 static int unregister_audio_channels(int nchannels) {
   if (mainw->audio_frame_buffer == NULL) {
     mainw->afbuffer_clients = 0;
-    return 0;
+    return -1;
   }
 
   mainw->afbuffer_clients -= nchannels;
@@ -7354,7 +7355,7 @@ static boolean fill_audio_channel(weed_plant_t *achan) {
     weed_set_voidptr_value(achan, WEED_LEAF_AUDIO_DATA, NULL);
   }
 
-  if (mainw->audio_frame_buffer == NULL || mainw->audio_frame_buffer->samples_filled <= 0) {
+  if (mainw->audio_frame_buffer == NULL || mainw->audio_frame_buffer->samples_filled <= 0 || mainw->afbuffer_clients == 0) {
     // no audio has been buffered
     return FALSE;
   }

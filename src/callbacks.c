@@ -9144,8 +9144,6 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
   weed_plant_t *afilter_map = mainw->afilter_map; // back this up in case we are rendering
   weed_plant_t *audio_event = mainw->audio_event;
 
-  short oaudp = prefs->audio_player;
-
   uint64_t old_rte; //TODO - block better
   int64_t xticks;
 
@@ -9184,11 +9182,6 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
 
   if (mainw->playing_file == -1) {
     if (cfile->opening) {
-      // set vid player to int, and audio player to sox
-
-      /*      if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
-      switch_aud_to_sox(FALSE);
-      }*/
       if (!cfile->opening_only_audio) {
         mainw->toy_type = LIVES_TOY_NONE;
         lives_widget_set_sensitive(mainw->toys_menu, FALSE);
@@ -9290,14 +9283,6 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
 
     // user_data is non-NULL if called from multitrack. We want to preserve the value of cancelled.
     if (user_data == NULL) mainw->cancelled = CANCEL_NONE;
-
-    if (oaudp == AUD_PLAYER_MPLAYER && prefs->audio_player != oaudp) {
-      switch_aud_to_mplayer(FALSE);
-    }
-
-    if (oaudp == AUD_PLAYER_MPLAYER2 && prefs->audio_player != oaudp) {
-      switch_aud_to_mplayer2(FALSE);
-    }
 
     cfile->start = ostart;
     cfile->end = oend;
@@ -10379,7 +10364,7 @@ void on_export_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(filename);
 
   // warn if arps!=arate
-  if ((prefs->audio_player == AUD_PLAYER_SOX || is_realtime_aplayer(prefs->audio_player)) && cfile->arate != cfile->arps) {
+  if (cfile->arate != cfile->arps) {
     if (do_warning_dialog(
           _("\n\nThe audio playback speed has been altered for this clip.\nClick 'OK' to export at the new speed, or 'Cancel' to export at the original rate.\n"))) {
       nrate = cfile->arate;

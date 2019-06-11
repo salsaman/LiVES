@@ -631,7 +631,7 @@ giw_vslider_button_press(GtkWidget        *widget,
 
   gtk_widget_queue_draw(GTK_WIDGET(vslider));
 
-  return (TRUE);
+  return TRUE;
 }
 
 static gboolean
@@ -670,7 +670,7 @@ giw_vslider_button_release(GtkWidget        *widget,
 
   gtk_widget_queue_draw(GTK_WIDGET(vslider));
 
-  return (TRUE);
+  return TRUE;
 }
 
 static gboolean
@@ -728,7 +728,7 @@ giw_vslider_motion_notify(GtkWidget        *widget,
 
   gtk_widget_queue_draw(GTK_WIDGET(vslider));
 
-  return (TRUE);
+  return TRUE;
 }
 
 static void

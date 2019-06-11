@@ -533,7 +533,7 @@ giw_led_button_press(GtkWidget      *widget,
 
   led = GIW_LED(widget);
 
-  if (led->enable_mouse == 0) return (FALSE);
+  if (led->enable_mouse == 0) return FALSE;
 
   dx = event->x - lives_widget_get_allocation_width(widget) / 2;
   dy = lives_widget_get_allocation_height(widget) / 2 - event->y;
@@ -551,7 +551,7 @@ giw_led_button_press(GtkWidget      *widget,
 
   gtk_widget_queue_draw(GTK_WIDGET(led));
 
-  return (FALSE);
+  return FALSE;
 }
 
 /******************

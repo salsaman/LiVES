@@ -163,12 +163,6 @@ static void on_init_aplayer_toggled(LiVESToggleButton *tbutton, livespointer use
   case AUD_PLAYER_SOX:
     set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
     break;
-  case AUD_PLAYER_MPLAYER:
-    set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER);
-    break;
-  case AUD_PLAYER_MPLAYER2:
-    set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_MPLAYER2);
-    break;
   }
 }
 

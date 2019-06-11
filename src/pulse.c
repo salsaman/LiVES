@@ -65,7 +65,7 @@ static void stream_overflow_callback(pa_stream *s, void *userdata) {
 
 boolean lives_pulse_init(short startup_phase) {
   // startup pulseaudio server
-  char *msg, *msg2;
+  char *msg;
 
   int64_t ntime = 0, stime;
 
@@ -103,26 +103,17 @@ boolean lives_pulse_init(short startup_phase) {
           WARN_MASK_NO_PULSE_CONNECT);
         switch_aud_to_sox(prefs->warning_mask & WARN_MASK_NO_PULSE_CONNECT);
       } else if (startup_phase == 0) {
-        if (capable->has_mplayer) {
-          do_error_dialog_with_check(
-            _("\nUnable to connect to the pulseaudio server.\nFalling back to mplayer audio player.\nYou can change this in Preferences/Playback.\n"),
-            WARN_MASK_NO_PULSE_CONNECT);
-          switch_aud_to_mplayer(prefs->warning_mask & WARN_MASK_NO_PULSE_CONNECT);
-        } else if (capable->has_mplayer2) {
-          do_error_dialog_with_check(
-            _("\nUnable to connect to the pulseaudio server.\nFalling back to mplayer2 audio player.\nYou can change this in Preferences/Playback.\n"),
-            WARN_MASK_NO_PULSE_CONNECT);
-          switch_aud_to_mplayer2(prefs->warning_mask & WARN_MASK_NO_PULSE_CONNECT);
-        }
+        do_error_dialog_with_check(
+          _("\nUnable to connect to the pulseaudio server.\nFalling back to none audio player.\nYou can change this in Preferences/Playback.\n"),
+          WARN_MASK_NO_PULSE_CONNECT);
+        switch_aud_to_none(TRUE);
       } else {
         msg = lives_strdup(_("\nUnable to connect to the pulseaudio server.\n"));
         if (startup_phase != 2) {
           do_blocking_error_dialog(msg);
           mainw->aplayer_broken = TRUE;
         } else {
-          msg2 = lives_strdup_printf("%s%s", msg, _("LiVES will exit and you can choose another audio player.\n"));
-          do_blocking_error_dialog(msg2);
-          lives_free(msg2);
+          do_blocking_error_dialogf("%s%s", msg, _("LiVES will exit and you can choose another audio player.\n"));
         }
         lives_free(msg);
       }

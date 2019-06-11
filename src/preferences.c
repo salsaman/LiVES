@@ -1,6 +1,6 @@
 // preferences.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 // functions dealing with getting/setting user preferences
@@ -119,12 +119,12 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
 }
 
 
-int get_pref(const char *key, char *val, int maxlen) {
+LIVES_GLOBAL_INLINE int get_pref(const char *key, char *val, int maxlen) {
   return get_pref_inner(NULL, key, val, maxlen);
 }
 
 
-int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen) {
+LIVES_GLOBAL_INLINE int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen) {
   return get_pref_inner(filename, key, val, maxlen);
 }
 
@@ -561,15 +561,104 @@ static void set_workdir_label_text(LiVESLabel *label) {
 }
 
 
-void pref_factory_bool(const char *prefidx, boolean newval, boolean permanent) {
+boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent) {
+  if (prefsw != NULL) prefsw->ignore_apply = TRUE;
+
+  if (!strcmp(prefidx, PREF_AUDIO_PLAYER)) {
+    const char *audio_player = newval;
+
+    if (!(strcmp(audio_player, AUDIO_PLAYER_NONE)) && prefs->audio_player != AUD_PLAYER_NONE) {
+      // switch to none
+      switch_aud_to_none(permanent);
+#if 0
+      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->nullaudio_loop = AUDIO_LOOP_PINGPONG;
+      else mainw->nullaudio_loop = AUDIO_LOOP_FORWARD;
+#endif
+      goto success1;
+    } else if (!(strcmp(audio_player, AUDIO_PLAYER_SOX)) && prefs->audio_player != AUD_PLAYER_SOX) {
+      // switch to sox
+      return switch_aud_to_sox(permanent);
+    }
+
+#ifdef ENABLE_JACK
+    else if (!(strcmp(audio_player, AUDIO_PLAYER_JACK)) && prefs->audio_player != AUD_PLAYER_JACK) {
+      // switch to jack
+      if (!capable->has_jackd) {
+        do_blocking_error_dialogf(_("\nUnable to switch audio players to jack\njackd must be installed first.\nSee %s\n"), JACK_URL);
+        goto fail1;
+      } else {
+        if (prefs->audio_player == AUD_PLAYER_JACK && strcmp(audio_player, AUDIO_PLAYER_JACK)) {
+          do_blocking_error_dialog(_("\nSwitching audio players requires restart (jackd must not be running)\n"));
+          goto fail1;
+        }
+      }
+      if (!switch_aud_to_jack(permanent)) {
+        // failed
+        do_jack_noopen_warn();
+        // revert text
+        if (prefsw != NULL) lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
+        goto fail1;
+      } else {
+        // success
+        if (mainw->loop_cont) {
+          if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
+          else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
+        }
+        goto success1;
+      }
+    }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+    else if (!(strcmp(audio_player, AUDIO_PLAYER_PULSE)) && prefs->audio_player != AUD_PLAYER_PULSE) {
+      // switch to pulseaudio
+      if (!capable->has_pulse_audio) {
+        do_blocking_error_dialogf(_("\nUnable to switch audio players to pulseaudio\npulseaudio must be installed first.\nSee %s\n"),
+                                  PULSE_AUDIO_URL);
+        goto fail1;
+      } else {
+        if (!switch_aud_to_pulse(permanent)) {
+          // revert text
+          if (prefsw != NULL) lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
+          goto fail1;
+        } else {
+          // success
+          if (mainw->loop_cont) {
+            if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
+            else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
+          }
+          goto success1;
+        }
+      }
+    }
+#endif
+  }
+
+fail1:
+  if (prefsw != NULL) {
+    lives_widget_process_updates(mainw->LiVES, TRUE);
+    prefsw->ignore_apply = FALSE;
+  }
+  return FALSE;
+
+success1:
+  if (prefsw != NULL) {
+    lives_widget_process_updates(mainw->LiVES, TRUE);
+    prefsw->ignore_apply = FALSE;
+  }
+  return TRUE;
+}
+
+
+boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent) {
   // this is called from lbindings.c which in turn is called from liblives.cpp
 
   // can also be called from other places
 
-  if (prefsw != NULL)
-    prefsw->ignore_apply = TRUE;
+  if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
   if (!strcmp(prefidx, PREF_REC_EXT_AUDIO)) {
+    boolean success = FALSE;
     boolean rec_ext_audio = newval;
     if (rec_ext_audio && prefs->audio_src == AUDIO_SRC_INT) {
       prefs->audio_src = AUDIO_SRC_EXT;
@@ -595,6 +684,7 @@ void pref_factory_bool(const char *prefidx, boolean newval, boolean permanent) {
         }
 #endif
       }
+      success = TRUE;
     } else if (!rec_ext_audio && prefs->audio_src == AUDIO_SRC_EXT) {
       prefs->audio_src = AUDIO_SRC_INT;
 
@@ -616,39 +706,55 @@ void pref_factory_bool(const char *prefidx, boolean newval, boolean permanent) {
         }
 #endif
       }
+      success = TRUE;
     }
-    if (prefsw != NULL && permanent) {
-      if (prefs->audio_src == AUDIO_SRC_EXT)
-        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), TRUE);
-      else
-        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rintaudio), TRUE);
-    }
-    lives_signal_handler_block(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
-    lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
-    lives_signal_handler_unblock(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
+    if (success) {
+      if (prefsw != NULL && permanent) {
+        if (prefs->audio_src == AUDIO_SRC_EXT)
+          lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), TRUE);
+        else
+          lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rintaudio), TRUE);
+      }
+      lives_signal_handler_block(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
+      lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
+      lives_signal_handler_unblock(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
 
-    lives_signal_handler_block(mainw->int_audio_checkbutton, mainw->int_audio_func);
-    lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
-    lives_signal_handler_unblock(mainw->int_audio_checkbutton, mainw->int_audio_func);
+      lives_signal_handler_block(mainw->int_audio_checkbutton, mainw->int_audio_func);
+      lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
+      lives_signal_handler_unblock(mainw->int_audio_checkbutton, mainw->int_audio_func);
+      goto success2;
+    }
+    goto fail2;
   }
+
   if (!strcmp(prefidx, PREF_SEPWIN_STICKY)) {
-    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sticky), newval);
+    if ((prefs->sepwin_type = SEPWIN_TYPE_STICKY && !newval) || (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY && newval)) {
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sticky), newval);
+      goto success2;
+    }
+    goto fail2;
   }
+
   if (!strcmp(prefidx, PREF_MT_EXIT_RENDER)) {
+    if (prefs->mt_exit_render == newval) goto fail2;
     prefs->mt_exit_render = newval;
     if (prefsw != NULL)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
+    goto success2;
   }
+
   if (!strcmp(prefidx, PREF_PUSH_AUDIO_TO_GENS)) {
-    if (prefs->push_audio_to_gens != newval) {
-      prefs->push_audio_to_gens = newval;
-      if (permanent)
-        set_boolean_pref(prefidx, newval);
-    }
+    if (prefs->push_audio_to_gens == newval) goto fail2;
+    prefs->push_audio_to_gens = newval;
+    if (permanent)
+      set_boolean_pref(prefidx, newval);
     if (prefsw != NULL)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->pa_gens), prefs->push_audio_to_gens);
+    goto success2;
   }
+
   if (!strcmp(prefidx, PREF_SHOW_ASRC)) {
+    if (prefs->show_asrc == newval) goto fail2;
     prefs->show_asrc = newval;
     set_boolean_pref(PREF_SHOW_ASRC, prefs->show_asrc);
     if (prefsw != NULL)
@@ -666,9 +772,11 @@ void pref_factory_bool(const char *prefidx, boolean newval, boolean permanent) {
       lives_widget_show(mainw->l2_tb);
       lives_widget_show(mainw->l3_tb);
     }
+    goto success2;
   }
+
   if (!strcmp(prefidx, PREF_HFBWNP)) {
-    if (prefs->hfbwnp == newval) return;
+    if (prefs->hfbwnp == newval) goto fail2;
     prefs->hfbwnp = newval;
     set_boolean_pref(PREF_HFBWNP, prefs->hfbwnp);
     if (prefsw != NULL)
@@ -685,84 +793,120 @@ void pref_factory_bool(const char *prefidx, boolean newval, boolean permanent) {
         lives_widget_show(mainw->framebar);
       }
     }
+    goto success2;
   }
 
+fail2:
   if (prefsw != NULL) {
     lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
+  return FALSE;
+
+success2:
+  if (prefsw != NULL) {
+    lives_widget_process_updates(mainw->LiVES, TRUE);
+    prefsw->ignore_apply = FALSE;
+  }
+  return TRUE;
 }
 
 
-void pref_factory_int(const char *prefidx, int newval) {
-  if (prefsw != NULL)
-    prefsw->ignore_apply = TRUE;
-
-  // ...
+boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
+  if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
   if (!strcmp(prefidx, PREF_MAX_MSGS)) {
-    if (newval != prefs->max_messages) {
-      if (newval < mainw->n_messages && newval >= 0) {
-        free_n_msgs(mainw->n_messages - newval);
-        msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
-      }
-      prefs->max_messages = newval;
-      set_int_pref(PREF_MAX_MSGS, newval);
+    if (newval == prefs->max_messages) goto fail3;
+    if (newval < mainw->n_messages && newval >= 0) {
+      free_n_msgs(mainw->n_messages - newval);
+      msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
+    prefs->max_messages = newval;
+    if (permanent) set_int_pref(PREF_MAX_MSGS, newval);
+    goto success3;
   }
 
+fail3:
   if (prefsw != NULL) {
     lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
+  return FALSE;
+
+success3:
+  if (prefsw != NULL) {
+    lives_widget_process_updates(mainw->LiVES, TRUE);
+    prefsw->ignore_apply = FALSE;
+  }
+  return TRUE;
 }
 
 
-void pref_factory_string_choice(const char *prefidx, LiVESList *list, const char *strval) {
+boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const char *strval, boolean permanent) {
+  if (prefsw != NULL) prefsw->ignore_apply = TRUE;
+
   int idx = lives_list_strcmp_index(list, (livesconstpointer)strval, TRUE);
   if (!strcmp(prefidx, PREF_MSG_TEXTSIZE)) {
-    if (idx != prefs->msg_textsize) {
-      prefs->msg_textsize = idx;
-      set_int_pref(PREF_MSG_TEXTSIZE, idx);
-      if (mainw->msg_adj != NULL) {
-        msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
-      }
+    if (idx == prefs->msg_textsize) goto fail4;
+    prefs->msg_textsize = idx;
+    if (permanent) set_int_pref(PREF_MSG_TEXTSIZE, idx);
+    if (mainw->msg_adj != NULL) {
+      msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
+    goto success4;
   }
 
+fail4:
   if (prefsw != NULL) {
     lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
+  return FALSE;
+
+success4:
+  if (prefsw != NULL) {
+    lives_widget_process_updates(mainw->LiVES, TRUE);
+    prefsw->ignore_apply = FALSE;
+  }
+  return TRUE;
 }
 
 
-void pref_factory_float(const char *prefidx, float newval) {
-  if (prefsw != NULL)
-    prefsw->ignore_apply = TRUE;
+boolean pref_factory_float(const char *prefidx, float newval, boolean permanent) {
+  if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
   if (!strcmp(prefidx, PREF_AHOLD_THRESHOLD)) {
-    if (prefs->ahold_threshold == newval) goto done_float;
+    if (prefs->ahold_threshold == newval) goto fail5;
     prefs->ahold_threshold = newval;
-    set_double_pref(PREF_AHOLD_THRESHOLD, prefs->ahold_threshold);
+    if (permanent) set_double_pref(PREF_AHOLD_THRESHOLD, prefs->ahold_threshold);
+    goto success5;
   }
 
-done_float:
-
+fail5:
   if (prefsw != NULL) {
     lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
+  return FALSE;
+
+success5:
+  if (prefsw != NULL) {
+    lives_widget_process_updates(mainw->LiVES, TRUE);
+    prefsw->ignore_apply = FALSE;
+  }
+  return TRUE;
 }
 
 
-void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval) {
-  if (prefsw != NULL)
-    prefsw->ignore_apply = TRUE;
+boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval, boolean permanent) {
+  if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
-  if (!strcmp(prefidx, PREF_MT_EXIT_RENDER)) {
+  if (!strcmp(prefidx, PREF_AUDIO_OPTS)) {
     if (newval && !(prefs->audio_opts & bitfield)) prefs->audio_opts &= bitfield;
     else if (!newval && (prefs->audio_opts & bitfield)) prefs->audio_opts ^= bitfield;
+    else goto fail6;
+    if (permanent) set_int_pref(PREF_AUDIO_OPTS, prefs->audio_opts);
+
     if (prefsw != NULL) {
       if (bitfield == AUDIO_OPTS_FOLLOW_FPS)
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_afollow),
@@ -771,12 +915,22 @@ void pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval) {
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aclips),
                                        (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE);
     }
+    goto success6;
   }
 
+fail6:
   if (prefsw != NULL) {
     lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
+  return FALSE;
+
+success6:
+  if (prefsw != NULL) {
+    lives_widget_process_updates(mainw->LiVES, TRUE);
+    prefsw->ignore_apply = FALSE;
+  }
+  return TRUE;
 }
 
 
@@ -1143,12 +1297,12 @@ boolean apply_prefs(boolean skip_warn) {
                  -1, NULL, NULL, NULL)));
   lives_free(tmp);
 
-  if (audp == NULL) memset(audio_player, 0, 1);
-  else if (!strncmp(audp, AUDIO_PLAYER_MPLAYER, 7)) lives_snprintf(audio_player, 256, AUDIO_PLAYER_MPLAYER);
-  else if (!strncmp(audp, AUDIO_PLAYER_MPLAYER2, 8)) lives_snprintf(audio_player, 256, AUDIO_PLAYER_MPLAYER2);
-  else if (!strncmp(audp, AUDIO_PLAYER_JACK, 4)) lives_snprintf(audio_player, 256, AUDIO_PLAYER_JACK);
-  else if (!strncmp(audp, AUDIO_PLAYER_SOX, 3)) lives_snprintf(audio_player, 256, AUDIO_PLAYER_SOX);
-  else if (!strncmp(audp, AUDIO_PLAYER_PULSE_AUDIO, 11)) lives_snprintf(audio_player, 256, AUDIO_PLAYER_PULSE);
+  if (audp == NULL ||
+      !strncmp(audp, mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
+               strlen(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))) lives_snprintf(audio_player, 256, AUDIO_PLAYER_NONE);
+  else if (!strncmp(audp, AUDIO_PLAYER_JACK, strlen(AUDIO_PLAYER_JACK))) lives_snprintf(audio_player, 256, AUDIO_PLAYER_JACK);
+  else if (!strncmp(audp, AUDIO_PLAYER_SOX, strlen(AUDIO_PLAYER_SOX))) lives_snprintf(audio_player, 256, AUDIO_PLAYER_SOX);
+  else if (!strncmp(audp, AUDIO_PLAYER_PULSE_AUDIO, strlen(AUDIO_PLAYER_PULSE_AUDIO))) lives_snprintf(audio_player, 256, AUDIO_PLAYER_PULSE);
 
   lives_free(audp);
 
@@ -1187,13 +1341,13 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   if (msgs_unlimited) {
-    pref_factory_int(PREF_MAX_MSGS, -max_msgs);
+    pref_factory_int(PREF_MAX_MSGS, -max_msgs, TRUE);
   } else {
-    pref_factory_int(PREF_MAX_MSGS, max_msgs);
+    pref_factory_int(PREF_MAX_MSGS, max_msgs, TRUE);
   }
 
   ulist = get_textsizes_list();
-  pref_factory_string_choice(PREF_MSG_TEXTSIZE, ulist, msgtextsize);
+  pref_factory_string_choice(PREF_MSG_TEXTSIZE, ulist, msgtextsize, TRUE);
   lives_list_free_all(&ulist);
   lives_free(msgtextsize);
 
@@ -1590,7 +1744,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   // ahold
-  pref_factory_float(PREF_AHOLD_THRESHOLD, ext_aud_thresh);
+  pref_factory_float(PREF_AHOLD_THRESHOLD, ext_aud_thresh, TRUE);
 
   // virtual rte keys
   if (prefs->rte_keys_virtual != rte_keys_virtual) {
@@ -1660,21 +1814,6 @@ boolean apply_prefs(boolean skip_warn) {
   if (prefs->audio_opts != audio_opts) {
     prefs->audio_opts = audio_opts;
     set_int_pref(PREF_AUDIO_OPTS, audio_opts);
-
-#ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->loop_cont) {
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
-      else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
-    }
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->loop_cont) {
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
-      else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
-    }
-#endif
-
   }
 
   if (rec_desk_audio != prefs->rec_desktop_audio) {
@@ -1683,60 +1822,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
 #endif
 
-  if (prefs->audio_player == AUD_PLAYER_JACK && !capable->has_jackd) {
-    do_error_dialog_with_check_transient
-    ((tmp = lives_strdup_printf(_("\nUnable to switch audio players to jack\n"
-                                  "jackd must be installed first.\nSee %s\n"), JACK_URL)),
-     TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(mainw->LiVES));
-    lives_free(tmp);
-  } else {
-    if (prefs->audio_player == AUD_PLAYER_JACK && strcmp(audio_player, AUDIO_PLAYER_JACK)) {
-      do_error_dialog_with_check_transient
-      (_("\nSwitching audio players requires restart (jackd must not be running)\n"),
-       TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(mainw->LiVES));
-    }
-
-    // switch to sox
-    if (!(strcmp(audio_player, AUDIO_PLAYER_SOX)) && prefs->audio_player != AUD_PLAYER_SOX) {
-      switch_aud_to_sox(TRUE);
-    }
-
-    // switch to jack
-    else if (!(strcmp(audio_player, AUDIO_PLAYER_JACK)) && prefs->audio_player != AUD_PLAYER_JACK) {
-      // may fail
-      if (!switch_aud_to_jack()) {
-        do_jack_noopen_warn();
-        lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-      }
-    }
-
-    // switch to mplayer audio
-    else if (!(strcmp(audio_player, AUDIO_PLAYER_MPLAYER)) && prefs->audio_player != AUD_PLAYER_MPLAYER) {
-      switch_aud_to_mplayer(TRUE);
-    }
-
-    // switch to pulseaudio
-    else if (!(strcmp(audio_player, AUDIO_PLAYER_PULSE)) && prefs->audio_player != AUD_PLAYER_PULSE) {
-      if (!capable->has_pulse_audio) {
-        do_error_dialog_with_check_transient
-        ((tmp = lives_strdup_printf(_("\nUnable to switch audio players to pulseaudio\n"
-                                      "pulseaudio must be installed first.\nSee %s\n"), PULSE_AUDIO_URL)),
-         TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(mainw->LiVES));
-        lives_free(tmp);
-      } else {
-        if (!switch_aud_to_pulse()) {
-          // revert text
-          lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-        }
-      }
-    }
-
-    // switch to mplayer2 audio
-    else if (!(strcmp(audio_player, AUDIO_PLAYER_MPLAYER2)) && prefs->audio_player != AUD_PLAYER_MPLAYER2) {
-      switch_aud_to_mplayer2(TRUE);
-    }
-    //
-  }
+  pref_factory_string(PREF_AUDIO_PLAYER, audio_player, TRUE);
 
 #ifdef ENABLE_JACK
   if (future_prefs->jack_opts != jack_opts) {
@@ -3283,6 +3369,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(frame), vbox);
 
+  audp = lives_list_append(audp, lives_strdup_printf("%s", mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
+
 #ifdef HAVE_PULSE_AUDIO
   audp = lives_list_append(audp, lives_strdup_printf("%s (%s)", AUDIO_PLAYER_PULSE_AUDIO,
                            mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
@@ -3302,14 +3390,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                     mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
   }
 
-  if (capable->has_mplayer) {
-    audp = lives_list_append(audp, lives_strdup(AUDIO_PLAYER_MPLAYER));
-  }
-
-  if (capable->has_mplayer2) {
-    audp = lives_list_append(audp, lives_strdup(AUDIO_PLAYER_MPLAYER2));
-  }
-
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   prefsw->audp_combo = lives_standard_combo_new(_("_Player"), audp, LIVES_BOX(vbox), NULL);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
@@ -3323,6 +3403,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(hbox), prefsw->jack_int_label, FALSE, FALSE, widget_opts.packing_width);
 
   prefsw->audp_name = NULL;
+
+  if (prefs->audio_player == AUD_PLAYER_NONE) {
+    prefsw->audp_name = lives_strdup_printf("%s", mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+  }
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
@@ -3346,25 +3430,18 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     else prefsw->audp_name = lives_strdup_printf(AUDIO_PLAYER_SOX);
   }
 
-  if (prefs->audio_player == AUD_PLAYER_MPLAYER) {
-    prefsw->audp_name = lives_strdup(_(AUDIO_PLAYER_MPLAYER));
-  }
-
   if (prefsw->audp_name != NULL)
     lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->audp_name);
   prefsw->orig_audp_name = lives_strdup(prefsw->audp_name);
 
   //---
 
-  if (prefs->audio_player == AUD_PLAYER_MPLAYER2) {
-    prefsw->audp_name = lives_strdup(_(AUDIO_PLAYER_MPLAYER2));
-  }
-
   prefsw->audio_command_entry = lives_standard_entry_new(_("Audio play _command"), "", -1, PATH_MAX * 2, LIVES_BOX(vbox), NULL);
 
   // get from prefs
   if (!is_realtime_aplayer(prefs->audio_player))
-    lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), prefs->audio_play_command);
+    if (prefs->audio_player == AUD_PLAYER_NONE) lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), (_("N/A")));
+    else lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), prefs->audio_play_command);
   else {
     lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), (_("- internal -")));
     lives_widget_set_sensitive(prefsw->audio_command_entry, FALSE);

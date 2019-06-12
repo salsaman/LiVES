@@ -1001,7 +1001,7 @@ boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pla
 
 
 LIVES_INLINE boolean rte_key_is_enabled(int key) {
-  return ~((mainw->rte & (GU641 << --key)) == 0ll);
+  return !((mainw->rte & (GU641 << --key)) == 0ll);
 }
 
 

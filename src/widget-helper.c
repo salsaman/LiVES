@@ -1312,6 +1312,12 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     css_string = tmp;
   }
 
+  if (GTK_IS_TEXT_VIEW(widget)) {
+    tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value);
+    lives_free(css_string);
+    css_string = tmp;
+  }
+
   // would be nice if this worked...
   /* if (GTK_IS_RANGE(widget)) { */
   /*   tmp = lives_strdup_printf("%s slider {min-width: 10px;		\ */

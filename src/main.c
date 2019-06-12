@@ -5776,6 +5776,10 @@ void load_frame_image(int frame) {
   int bad_frame_count = 0;
   int fg_file = mainw->current_file;
 
+#if defined ENABLE_JACK || defined HAVE_PULSE_AUDIO
+  int alarm_handle;
+#endif
+
 #define BFC_LIMIT 1000
 
   if (LIVES_UNLIKELY(cfile->frames == 0 && !mainw->foreign && !mainw->is_rendering)) {
@@ -6340,9 +6344,10 @@ void load_frame_image(int frame) {
     ////////////////////////
 #ifdef ENABLE_JACK
     if (!mainw->foreign && mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
-      int alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
+      alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
       while (!(audio_timed_out = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
-        sched_yield(); // wait for seek
+        // wait for seek
+        sched_yield();
         lives_usleep(prefs->sleep_time);
       }
       lives_alarm_clear(alarm_handle);
@@ -6350,9 +6355,10 @@ void load_frame_image(int frame) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
     if (!mainw->foreign && mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
-      int alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
+      alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
       while (!(audio_timed_out = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
-        sched_yield(); // wait for seek
+        // wait for seek
+        sched_yield();
         lives_usleep(prefs->sleep_time);
       }
       lives_alarm_clear(alarm_handle);
@@ -7585,7 +7591,8 @@ void load_frame_image(int frame) {
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
-          sched_yield(); // wait for seek
+          // wait for seek
+          sched_yield();
           lives_usleep(prefs->sleep_time);
         }
         lives_alarm_clear(alarm_handle);
@@ -7602,12 +7609,14 @@ void load_frame_image(int frame) {
 
           alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
           while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
-            sched_yield(); // wait for seek
+            // wait for seek
+            sched_yield();
             lives_usleep(prefs->sleep_time);
           }
           lives_alarm_clear(alarm_handle);
           if (timeout)  {
             handle_audio_timeout();
+            return;
           }
         }
       }
@@ -7664,6 +7673,7 @@ void load_frame_image(int frame) {
         lives_alarm_clear(alarm_handle);
         if (timeout)  {
           handle_audio_timeout();
+          return;
         }
         mainw->jackd->is_paused = mainw->files[new_file]->play_paused;
         mainw->jackd->is_silent = FALSE;
@@ -7701,7 +7711,8 @@ void load_frame_image(int frame) {
 
           alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
           while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
-            sched_yield(); // wait for seek
+            // wait for seek
+            sched_yield();
             lives_usleep(prefs->sleep_time);
           }
           lives_alarm_clear(alarm_handle);
@@ -7754,8 +7765,16 @@ void load_frame_image(int frame) {
         mainw->pulsed->msgq = &pulse_message;
         mainw->pulsed->in_use = TRUE;
 
-        while (mainw->pulsed->msgq != NULL) {
+        alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+        while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
+          // wait for seek
+          sched_yield();
           lives_usleep(prefs->sleep_time);
+        }
+        lives_alarm_clear(alarm_handle);
+        if (timeout)  {
+          handle_audio_timeout();
+          return;
         }
 
         mainw->pulsed->is_paused = mainw->files[new_file]->play_paused;

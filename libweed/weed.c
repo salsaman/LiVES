@@ -55,6 +55,20 @@
 #include "weed-host.h"
 #endif
 
+#ifdef __GNUC__
+// inline all function calls
+#  define GNU_FLATTEN  __attribute__((flatten))
+#  define GNU_CONST  __attribute__((const))
+#  define GNU_HOT  __attribute__((hot))
+#  define GNU_PURE  __attribute__((pure))
+#else
+#  define GNU_FLATTEN
+#  define GNU_CONST
+#  define GNU_HOT
+#  define GNU_PURE
+#endif
+
+#define FAST_APPEND
 
 extern weed_default_getter_f weed_default_get;
 extern weed_leaf_get_f weed_leaf_get;
@@ -80,20 +94,30 @@ extern weed_free_f weed_free;
 extern weed_memcpy_f weed_memcpy;
 extern weed_memset_f weed_memset;
 
-static weed_plant_t *_weed_plant_new(int plant_type);
-static char **_weed_plant_list_leaves(weed_plant_t *plant);
+static weed_plant_t *_weed_plant_new(int plant_type) GNU_FLATTEN;
+static char **_weed_plant_list_leaves(weed_plant_t *plant) GNU_FLATTEN;
 static int _weed_leaf_set_caller(weed_plant_t *plant, const char *key, int seed_type, int num_elems,
-                                 void *value, int caller);
-static int _weed_leaf_get(weed_plant_t *plant, const char *key, int idx, void *value);
-static int _weed_leaf_num_elements(weed_plant_t *plant, const char *key);
-static size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key, int idx);
-static int _weed_leaf_seed_type(weed_plant_t *plant, const char *key);
-static int _weed_leaf_get_flags(weed_plant_t *plant, const char *key);
+                                 void *value, int caller) GNU_FLATTEN;
+static int _weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int seed_type, int num_elems, void *value) GNU_FLATTEN;
+static int _weed_leaf_get(weed_plant_t *plant, const char *key, int idx, void *value) GNU_HOT;
+static int _weed_leaf_set(weed_plant_t *plant, const char *key, int seed_type, int num_elems, void *value) GNU_FLATTEN;
+static int _weed_leaf_num_elements(weed_plant_t *plant, const char *key) GNU_FLATTEN;
+static size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key, int idx) GNU_FLATTEN;
+static int _weed_leaf_seed_type(weed_plant_t *plant, const char *key) GNU_FLATTEN;
+static int _weed_leaf_get_flags(weed_plant_t *plant, const char *key) GNU_FLATTEN;
+static size_t weed_seed_get_size(int seed, void *value) GNU_FLATTEN GNU_HOT GNU_PURE;
+static weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key) GNU_FLATTEN GNU_HOT;
+static weed_leaf_t *weed_leaf_new(const char *key, int seed) GNU_FLATTEN;
+
+static int weed_seed_is_ptr(int seed) GNU_CONST;
+
+static int weed_strcmp(const char *st1, const char *st2) GNU_HOT;
+static size_t weed_strlen(const char *string) GNU_PURE;
 
 /* host only functions */
-static void _weed_plant_free(weed_plant_t *plant);
-static int _weed_leaf_set_flags(weed_plant_t *plant, const char *key, int flags);
-static int _weed_leaf_delete(weed_plant_t *plant, const char *key);
+static void _weed_plant_free(weed_plant_t *plant) GNU_FLATTEN;
+static int _weed_leaf_set_flags(weed_plant_t *plant, const char *key, int flags) GNU_FLATTEN;
+static int _weed_leaf_delete(weed_plant_t *plant, const char *key) GNU_FLATTEN;
 
 
 static inline size_t weed_strlen(const char *string) {
@@ -214,6 +238,12 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, int seed) {
 
 
 static inline void weed_leaf_append(weed_plant_t *leaf, weed_leaf_t *newleaf) {
+#ifdef FAST_APPEND
+  newleaf->next = leaf->next;
+  leaf->next = newleaf;
+  return;
+#endif
+
   weed_leaf_t *leafnext;
   while (leaf != NULL) {
     if ((leafnext = leaf->next) == NULL) {

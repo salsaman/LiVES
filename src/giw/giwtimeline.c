@@ -697,6 +697,7 @@ static void giw_timeline_draw_ticks(GiwTimeline *timeline) {
   gdouble           start, end, cur;
   gchar             unit_str[32];
   gint              digit_height;
+  gint              digit_width;
   gint              digit_offset;
   gint              text_size;
   gint              pos;
@@ -714,6 +715,7 @@ static void giw_timeline_draw_ticks(GiwTimeline *timeline) {
   pango_layout_get_extents(layout, &ink_rect, &logical_rect);
 
   digit_height = PANGO_PIXELS(ink_rect.height) + 2;
+  digit_width = PANGO_PIXELS(ink_rect.width) + 2;
   digit_offset = ink_rect.y;
 
   if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL) {
@@ -758,8 +760,8 @@ static void giw_timeline_draw_ticks(GiwTimeline *timeline) {
 
   /* determine the scale
    *   use the maximum extents of the timeline to determine the largest
-   *   possible number to be displayed.  Calculate the height in pixels
-   *   of this displayed text. Use this height to find a scale which
+   *   possible number to be displayed.  Calculate the width in pixels
+   *   of this displayed text. Use this width to find a scale which
    *   leaves sufficient room for drawing the timeline.
    */
   scale = ceil(max_size);
@@ -779,7 +781,10 @@ static void giw_timeline_draw_ticks(GiwTimeline *timeline) {
     g_snprintf(unit_str, sizeof(unit_str), "%02d:%02d:%02d", scaleh, scalem, scales);
   }
 
-  text_size = strlen(unit_str) * digit_height + 1;
+  if (timeline->orientation == GTK_ORIENTATION_HORIZONTAL)
+    text_size = strlen(unit_str) * digit_width + 1;
+  else
+    text_size = strlen(unit_str) * digit_height + 1;
 
   for (scale = 0; scale < G_N_ELEMENTS(timeline_metric.timeline_scale); scale++)
     if (timeline_metric.timeline_scale[scale] * fabs(increment) > 2 * text_size)

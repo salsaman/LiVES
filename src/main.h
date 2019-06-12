@@ -308,6 +308,7 @@ typedef int lives_pgid_t;
 #ifdef __GNUC__
 #  define WARN_UNUSED  __attribute__((warn_unused_result))
 #  define GNU_PURE  __attribute__((pure))
+#  define GNU_DEPRECATED(msg)  __attribute__((deprecated(msg)))
 #  define GNU_CONST  __attribute__((const))
 #  define GNU_MALLOC  __attribute__((malloc))
 #  define GNU_ALIGN(x) __attribute__((alloc_align(x)))
@@ -316,6 +317,7 @@ typedef int lives_pgid_t;
 #  define GNU_PURE
 #  define GNU_CONST
 #  define GNU_MALLOC
+#  define GNU_DEPRECATED(msg)
 #  define GNU_ALIGN(x)
 #endif
 
@@ -332,10 +334,10 @@ typedef int lives_pgid_t;
 // clamp a between 0 and b; both values rounded to nearest int
 #define NORMAL_CLAMP(a, b) (ROUND_I(a)  < 0 ? 0 : ROUND_I(a) > ROUND_I(b) ? ROUND_I(b) : ROUND_I(a))
 
-// clamp a between 1 and b; both values rounded to nearest int; if rounded value of a is 0, return rounded b
-#define UTIL_CLAMP(a, b) (NORMAL_CLAMP(a, b) == 0 ? ROUND_I(b) : ROUND_I(a))
+// clamp a between 1 and b; both values rounded to nearest int; if rounded value of a is <= 0, return rounded b
+#define UTIL_CLAMP(a, b) (NORMAL_CLAMP(a, b) <= 0 ? ROUND_I(b) : ROUND_I(a))
 
-// round (double) a up to next (integer) multiple of (double) b
+// round a up to next (integer) multiple of b
 #define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
 
 // floating point division, maintains the sign of the dividend
@@ -576,6 +578,8 @@ typedef enum {
 #define CLIP_AUDIO_TIME(clip) ((double)(CLIP_LEFT_AUDIO_TIME(clip) >= CLIP_RIGHT_AUDIO_TIME(clip) ? CLIP_LEFT_AUDIO_TIME(clip) : CLIP_RIGHT_AUDIO_TIME(clip)))
 
 #define CLIP_TOTAL_TIME(clip) ((double)(CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : CLIP_AUDIO_TIME(clip)))
+
+#define LIVES_IS_PLAYING (mainw->playing_file > -1)
 
 #define CURRENT_CLIP_TOTAL_TIME CLIP_TOTAL_TIME(mainw->current_file)
 
@@ -1297,7 +1301,7 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
 char *lives_format_storage_space_string(uint64_t space);
 char *lives_datetime(struct timeval *tv);
 
-int myround(double n);
+int myround(double n) GNU_CONST; // round up +ve or down -ve
 void get_dirname(char *filename);
 char *get_dir(const char *filename);
 void get_basename(char *filename);
@@ -1408,7 +1412,7 @@ char *subst(const char *string, const char *from, const char *to);
 char *insert_newlines(const char *text, int maxwidth);
 
 int hextodec(char *string);
-int get_hex_digit(const char *c);
+int get_hex_digit(const char *c) GNU_CONST;
 
 uint32_t fastrand(void);
 void fastsrand(uint32_t seed);

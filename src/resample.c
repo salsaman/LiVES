@@ -1871,7 +1871,12 @@ void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
   cfile->undo_action = UNDO_CHANGE_SPEED;
 
   if (mainw->fx1_val == 0.) mainw->fx1_val = 1.;
+
+  // update the frame rate
   cfile->pb_fps = cfile->fps = mainw->fx1_val;
+
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
+
   if (mainw->fx1_bool) {
     cfile->arate = (int)(arate * cfile->fps + .5);
     msg = lives_strdup_printf(_("Changed playback speed to %.3f frames per second and audio to %d Hz.\n"), cfile->fps, cfile->arate);
@@ -2092,6 +2097,7 @@ boolean resample_clipboard(double new_fps) {
     cfile->frames = new_frames;
     cfile->undo_action = UNDO_RESAMPLE;
     cfile->fps = cfile->undo1_dbl;
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->fps);
     cfile->undo1_dbl = old_fps;
     d_print(_("Clipboard was resampled to %d frames.\n"), cfile->frames);
     mainw->current_file = current_file;

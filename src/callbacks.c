@@ -9354,8 +9354,12 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-void changed_fps_during_pb(LiVESSpinButton   *spinbutton, livespointer user_data) {
-  double new_fps = (double)((int)(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)) * 1000) / 1000.);
+void changed_fps_during_pb(LiVESSpinButton *spinbutton, livespointer user_data) {
+  double new_fps;
+
+  if (!LIVES_IS_PLAYING) return;
+
+  new_fps = lives_fix(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)), 3);
 
   if (!CURRENT_CLIP_IS_VALID) return;
 

@@ -1991,9 +1991,9 @@ void fx_changed(LiVESCombo *combo, livespointer user_data) {
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
 }
 
+static LiVESTreeStore *tstore = NULL;
 
 static LiVESTreeModel *rte_window_fx_model(void) {
-  LiVESTreeStore *tstore;
 
   LiVESTreeIter iter1, iter2;
 
@@ -2001,10 +2001,14 @@ static LiVESTreeModel *rte_window_fx_model(void) {
   int fx_idx = 0;
 
   LiVESList *list = name_type_list;
+  LiVESList *pname_list = name_list;
+  LiVESList *phash_list = hash_list;
 
   int error;
 
   char *pkg = NULL, *pkgstring, *fxname;
+
+  if (tstore != NULL) return (LiVESTreeModel *)tstore;
 
   tstore = lives_tree_store_new(NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 #ifdef GUI_GTK
@@ -2013,7 +2017,7 @@ static LiVESTreeModel *rte_window_fx_model(void) {
                                        GTK_SORT_ASCENDING);
 #endif
   while (list != NULL) {
-    weed_plant_t *filter = get_weed_filter(weed_get_idx_for_hashname((char *)lives_list_nth_data(hash_list, fx_idx), TRUE));
+    weed_plant_t *filter = get_weed_filter(weed_get_idx_for_hashname((char *)phash_list->data, TRUE));
     int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, &error);
     if ((weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) && weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) ==
          WEED_TRUE && !prefs->unstable_fx) || ((enabled_in_channels(filter, FALSE) > 1 &&
@@ -2023,10 +2027,12 @@ static LiVESTreeModel *rte_window_fx_model(void) {
              || (filter_flags & WEED_FILTER_IS_CONVERTER))) {
       list = list->next;
       fx_idx++;
+      pname_list = pname_list->next;
+      phash_list = phash_list->next;
       continue; // skip audio transitions and hidden entries
     }
 
-    fxname = lives_strdup((char *)lives_list_nth_data(name_list, fx_idx));
+    fxname = lives_strdup((const char *)pname_list->data);
 
     if ((pkgstring = strstr(fxname, ": ")) != NULL) {
       // package effect
@@ -2061,6 +2067,8 @@ static LiVESTreeModel *rte_window_fx_model(void) {
 
     list = list->next;
     fx_idx++;
+    pname_list = pname_list->next;
+    phash_list = phash_list->next;
   }
 
   lives_freep((void **)&pkg);

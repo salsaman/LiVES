@@ -63,6 +63,21 @@
 #include <stdio.h>
 #endif
 
+#ifdef __GNUC__
+// inline all function calls
+#  define GNU_FLATTEN  __attribute__((flatten))
+#  define GNU_CONST  __attribute__((const))
+#  define GNU_HOT  __attribute__((hot))
+#  define GNU_PURE  __attribute__((pure))
+#else
+#  define GNU_FLATTEN
+#  define GNU_CONST
+#  define GNU_HOT
+#  define GNU_PURE
+#endif
+
+#define FAST_APPEND
+
 extern weed_default_getter_f weed_default_get;
 
 extern weed_leaf_get_f weed_leaf_get;
@@ -86,28 +101,37 @@ extern weed_free_f weed_free;
 extern weed_memcpy_f weed_memcpy;
 extern weed_memset_f weed_memset;
 
-static int _weed_default_get(weed_plant_t *plant, const char *key, int idx, void *value);
-
-static weed_plant_t *_weed_plant_new(int plant_type);
-static char **_weed_plant_list_leaves(weed_plant_t *plant);
+static weed_plant_t *_weed_plant_new(int plant_type) GNU_FLATTEN;
+static char **_weed_plant_list_leaves(weed_plant_t *plant) GNU_FLATTEN;
 static int _weed_leaf_set_caller(weed_plant_t *plant, const char *key, int seed_type, int num_elems,
-                                 void *value, int caller);
-static int _weed_leaf_get(weed_plant_t *plant, const char *key, int idx, void *value);
-static int _weed_leaf_num_elements(weed_plant_t *plant, const char *key);
-static size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key, int idx);
-static int _weed_leaf_seed_type(weed_plant_t *plant, const char *key);
-static int _weed_leaf_get_flags(weed_plant_t *plant, const char *key);
+                                 void *value, int caller) GNU_FLATTEN;
+static int _weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int seed_type, int num_elems, void *value) GNU_FLATTEN;
+static int _weed_leaf_get(weed_plant_t *plant, const char *key, int idx, void *value) GNU_HOT;
+static int _weed_leaf_set(weed_plant_t *plant, const char *key, int seed_type, int num_elems, void *value) GNU_FLATTEN;
+static int _weed_leaf_num_elements(weed_plant_t *plant, const char *key) GNU_FLATTEN;
+static size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key, int idx) GNU_FLATTEN;
+static int _weed_leaf_seed_type(weed_plant_t *plant, const char *key) GNU_FLATTEN;
+static int _weed_leaf_get_flags(weed_plant_t *plant, const char *key) GNU_FLATTEN;
+static size_t weed_seed_get_size(int seed, void *value) GNU_FLATTEN GNU_HOT GNU_PURE;
+static weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key) GNU_FLATTEN GNU_HOT;
+static weed_leaf_t *weed_leaf_new(const char *key, int seed) GNU_FLATTEN;
+
+static int weed_seed_is_ptr(int seed) GNU_CONST;
+
+static int weed_strcmp(const char *st1, const char *st2) GNU_HOT;
+static size_t weed_strlen(const char *string) GNU_PURE;
 
 /* host only functions */
-static void _weed_plant_free(weed_plant_t *plant);
-static int _weed_leaf_set_flags(weed_plant_t *plant, const char *key, int flags);
-static int _weed_leaf_delete(weed_plant_t *plant, const char *key);
+static void _weed_plant_free(weed_plant_t *plant) GNU_FLATTEN;
+static int _weed_leaf_set_flags(weed_plant_t *plant, const char *key, int flags) GNU_FLATTEN;
+static int _weed_leaf_delete(weed_plant_t *plant, const char *key) GNU_FLATTEN;
+static int _weed_default_get(weed_plant_t *plant, const char *key, int idx, void *value);
 
 
 #if !GLIB_CHECK_VERSION(2, 14, 0)
 static inline gpointer g_slice_copy(gsize bsize, gconstpointer block) {
   gpointer ret = g_slice_alloc(bsize);
-  memcpy(ret, block, bsize);
+  weed_memcpy(ret, block, bsize);
   return ret;
 }
 #endif
@@ -120,17 +144,19 @@ static inline size_t weed_strlen(const char *string) {
   return len;
 }
 
+
 static inline char *weed_strdup(const char *string) {
   size_t len;
   char *ret = (char *)weed_malloc((len = weed_strlen(string)) + 1);
-
   weed_memcpy(ret, string, len + 1);
   return ret;
 }
 
+
 static inline char *weed_slice_strdup(const char *string) {
   return (char *)g_slice_copy(weed_strlen(string) + 1, string);
 }
+
 
 static inline int weed_strcmp(const char *st1, const char *st2) {
   while (!(*st1 == 0 && *st2 == 0)) {
@@ -145,6 +171,7 @@ static inline int weed_seed_is_ptr(int seed) {
           WEED_SEED_INT64) ? 1 : 0;
 }
 
+
 static inline size_t weed_seed_get_size(int seed, void *value) {
   return weed_seed_is_ptr(seed) ? (sizeof(void *)) : \
          (seed == WEED_SEED_BOOLEAN || seed == WEED_SEED_INT) ? 4 : \
@@ -152,6 +179,7 @@ static inline size_t weed_seed_get_size(int seed, void *value) {
          (seed == WEED_SEED_INT64) ? 8 : \
          (seed == WEED_SEED_STRING) ? weed_strlen((const char *)value) : 0;
 }
+
 
 static inline void weed_data_free(weed_data_t **data, int num_elems, int seed_type) {
   register int i;
@@ -162,6 +190,7 @@ static inline void weed_data_free(weed_data_t **data, int num_elems, int seed_ty
   }
   g_slice_free1(num_elems * sizeof(weed_data_t *), data);
 }
+
 
 static inline weed_data_t **weed_data_new(int seed_type, int num_elems, void *value) {
   register int i;
@@ -198,6 +227,7 @@ static inline weed_data_t **weed_data_new(int seed_type, int num_elems, void *va
   return data;
 }
 
+
 static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key) {
   while (leaf != NULL) {
     if (!weed_strcmp((char *)leaf->key, (char *)key)) return leaf;
@@ -206,11 +236,13 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key) {
   return NULL;
 }
 
+
 static inline void weed_leaf_free(weed_leaf_t *leaf) {
   weed_data_free(leaf->data, leaf->num_elements, leaf->seed_type);
   g_slice_free1(weed_strlen(leaf->key) + 1, (void *)leaf->key);
   g_slice_free(weed_leaf_t, leaf);
 }
+
 
 static inline weed_leaf_t *weed_leaf_new(const char *key, int seed) {
   weed_leaf_t *leaf = g_slice_new(weed_leaf_t);
@@ -226,7 +258,13 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, int seed) {
   return leaf;
 }
 
+
 static inline void weed_leaf_append(weed_plant_t *leaf, weed_leaf_t *newleaf) {
+#ifdef FAST_APPEND
+  newleaf->next = leaf->next;
+  leaf->next = newleaf;
+  return;
+#endif
   weed_leaf_t *leafnext;
   while (leaf != NULL) {
     if ((leafnext = leaf->next) == NULL) {
@@ -236,6 +274,7 @@ static inline void weed_leaf_append(weed_plant_t *leaf, weed_leaf_t *newleaf) {
     leaf = leafnext;
   }
 }
+
 
 static void _weed_plant_free(weed_plant_t *leaf) {
   weed_leaf_t *leafnext;
@@ -270,6 +309,7 @@ static int _weed_leaf_set_flags(weed_plant_t *plant, const char *key, int flags)
   return WEED_NO_ERROR;
 }
 
+
 static weed_plant_t *_weed_plant_new(int plant_type) {
   weed_leaf_t *leaf;
   if ((leaf = weed_leaf_new("type", WEED_SEED_INT)) == NULL) return NULL;
@@ -283,6 +323,7 @@ static weed_plant_t *_weed_plant_new(int plant_type) {
   _weed_leaf_set_flags(leaf, "type", WEED_LEAF_READONLY_PLUGIN | WEED_LEAF_READONLY_HOST);
   return leaf;
 }
+
 
 static char **_weed_plant_list_leaves(weed_plant_t *plant) {
   weed_leaf_t *leaf = plant;
@@ -304,6 +345,7 @@ static char **_weed_plant_list_leaves(weed_plant_t *plant) {
   leaflist[i] = NULL;
   return leaflist;
 }
+
 
 static inline int _weed_leaf_set_caller(weed_plant_t *plant, const char *key, int seed_type, int num_elems,
                                         void *value, int caller) {
@@ -366,9 +408,7 @@ static int _weed_default_get(weed_plant_t *plant, const char *key, int idx, void
     } else memcpy(value, leaf->data[idx]->value, weed_seed_get_size(leaf->seed_type, leaf->data[idx]->value));
   }
   return WEED_NO_ERROR;
-
 }
-
 
 
 static int _weed_leaf_get(weed_plant_t *plant, const char *key, int idx, void *value) {
@@ -387,11 +427,13 @@ static int _weed_leaf_get(weed_plant_t *plant, const char *key, int idx, void *v
   return WEED_NO_ERROR;
 }
 
+
 static int _weed_leaf_num_elements(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf = weed_find_leaf(plant, key);
   if (leaf == NULL) return 0;
   return leaf->num_elements;
 }
+
 
 static size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key, int idx) {
   weed_leaf_t *leaf = weed_find_leaf(plant, key);
@@ -399,17 +441,20 @@ static size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key, int 
   return leaf->data[idx]->size;
 }
 
+
 static int _weed_leaf_seed_type(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf = weed_find_leaf(plant, key);
   if (leaf == NULL) return 0;
   return leaf->seed_type;
 }
 
+
 static int _weed_leaf_get_flags(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf = weed_find_leaf(plant, key);
   if (leaf == NULL) return 0;
   return leaf->flags;
 }
+
 
 void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_f _memcpyf, weed_memset_f _memsetf) {
   switch (api) {

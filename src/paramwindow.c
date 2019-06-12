@@ -1622,6 +1622,12 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   case LIVES_PARAM_STRING_LIST:
     widget_opts.expand = LIVES_EXPAND_EXTRA;
     widget_opts.mnemonic_label = use_mnemonic;
+    LiVESList *tlist = param->list;
+    while (tlist != NULL) {
+      g_print("VAL %s\n", (const char *)tlist->data);
+      tlist = tlist->next;
+    }
+
     combo = lives_standard_combo_new(name, param->list, (LiVESBox *)hbox, param->desc);
     widget_opts.mnemonic_label = TRUE;
     widget_opts.expand = LIVES_EXPAND_DEFAULT;

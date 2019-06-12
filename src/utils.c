@@ -4789,6 +4789,8 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
   case CLIP_DETAILS_FPS:
     if (!mainw->files[which]->ratio_fps) myval = lives_strdup_printf("%.3f", *(double *)val);
     else myval = lives_strdup_printf("%.8f", *(double *)val);
+    // dont need to block this because it does nothing during non-playback, and we shouldnt be updating clip details during playback
+    if (which == mainw->current_file) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), *(double *)myval);
     break;
   case CLIP_DETAILS_PB_FPS:
     if (mainw->files[which]->ratio_fps && (mainw->files[which]->pb_fps == mainw->files[which]->fps))
@@ -5235,6 +5237,7 @@ boolean is_writeable_dir(const char *dir) {
   if (statvfs(dir, &sbuf) == -1) return FALSE;
   if (sbuf.f_flag & ST_RDONLY) return FALSE;
 #else
+  //  TODO: is there a faster way of doing this ?
   mainw->com_failed = FALSE;
   tfile = lives_strdup_printf("%s\\xxxxfile.txt", dir);
   lives_touch(tfile);
@@ -5316,7 +5319,7 @@ LiVESList *lives_list_delete_string(LiVESList *list, char *string) {
 }
 
 
-LiVESList *lives_list_copy_strings(LiVESList *list) {
+LIVES_GLOBAL_INLINE LiVESList *lives_list_copy_strings(LiVESList *list) {
   // copy a list, copying the strings too
 
   LiVESList *xlist = NULL, *olist = list;

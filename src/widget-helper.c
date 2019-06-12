@@ -3382,17 +3382,6 @@ static boolean setcellbg(LiVESCellRenderer *r, void *p) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_model(LiVESCombo *combo, LiVESTreeModel *model) {
 #ifdef GUI_GTK
   gtk_combo_box_set_model(combo, model);
-  if (widget_opts.apply_theme) {
-#if GTK_CHECK_VERSION(3, 0, 0)
-    GtkCellArea *celly;
-    lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
-    gtk_cell_area_foreach(celly, setcellbg, NULL);
-
-    // need to get the GtkCellView !
-    //lives_widget_object_set(celly, "background", &palette->info_base);
-
-#endif
-  }
   return TRUE;
 #endif
   return FALSE;
@@ -3406,22 +3395,24 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_append_text(LiVESCombo *combo, c
 #else
   gtk_combo_box_append_text(GTK_COMBO_BOX(combo), text);
 #endif
-  if (widget_opts.apply_theme) {
-#if GTK_CHECK_VERSION(3, 0, 0)
-    GtkCellArea *celly;
-    lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
-    gtk_cell_area_foreach(celly, setcellbg, NULL);
-
-    // need to get the GtkCellView !
-    //lives_widget_object_set(celly, "background", &palette->info_base);
-
-#endif
-  }
   return TRUE;
 #endif
 #ifdef GUI_QT
   QString qs = QString::fromUtf8(text);
   (static_cast<QComboBox *>(combo))->addItem(qs);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_prepend_text(LiVESCombo *combo, const char *text) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2, 24, 0)
+  gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(combo), text);
+#else
+  gtk_combo_box_prepend_text(GTK_COMBO_BOX(combo), text);
+#endif
   return TRUE;
 #endif
   return FALSE;
@@ -8105,15 +8096,19 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 
 
 boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
-  register int i;
+  LiVESList *revlist;
+
   // remove any current list
   if (!lives_combo_set_active_index(combo, -1)) return FALSE;
   if (!lives_combo_remove_all_text(combo)) return FALSE;
 
-  // add the new list
-  for (i = 0; i < lives_list_length(list); i++) {
-    if (!lives_combo_append_text(LIVES_COMBO(combo), (const char *)lives_list_nth_data(list, i))) return FALSE;
+  // reverse the list and then prepend the items
+  // this is faster (O(1) than traversing the list and appending O(2))
+  for (revlist = lives_list_last(list); revlist != NULL; revlist = revlist->prev) {
+    if (!lives_combo_prepend_text(LIVES_COMBO(combo), (const char *)revlist->data)) return FALSE;
   }
+
+  lives_list_free_all(&revlist);
 
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -8921,6 +8916,19 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_combo_new_with_model(LiVESTreeModel *model, LiVESBox *box) {
   LiVESWidget *combo = lives_standard_combo_new(NULL, NULL, box, NULL);
   lives_combo_set_model(LIVES_COMBO(combo), model);
+
+  if (widget_opts.apply_theme) {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    GtkCellArea *celly;
+    lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
+    gtk_cell_area_foreach(celly, setcellbg, NULL);
+
+    // need to get the GtkCellView !
+    //lives_widget_object_set(celly, "background", &palette->info_base);
+
+#endif
+  }
+
   return combo;
 }
 

@@ -5216,9 +5216,11 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
     } else if (clip == mainw->scrap_file) {
       boolean res = load_from_scrap_file(layer, frame);
 
-      // clip width and height may vary dynamically
-      cfile->hsize = weed_layer_get_width(layer);
-      cfile->vsize = weed_layer_get_height(layer);
+      if (!mainw->is_rendering && mainw->multitrack == NULL) {
+        // clip width and height may vary dynamically
+        cfile->hsize = weed_layer_get_width(layer);
+        cfile->vsize = weed_layer_get_height(layer);
+      }
       mainw->osc_block = FALSE;
       return res;
     } else {
@@ -6338,7 +6340,7 @@ void load_frame_image(int frame) {
     ////////////////////////
 #ifdef ENABLE_JACK
     if (!mainw->foreign && mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
-      int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+      int alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
       while (!(audio_timed_out = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
         sched_yield(); // wait for seek
         lives_usleep(prefs->sleep_time);
@@ -6348,7 +6350,7 @@ void load_frame_image(int frame) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
     if (!mainw->foreign && mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
-      int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+      int alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
       while (!(audio_timed_out = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
         sched_yield(); // wait for seek
         lives_usleep(prefs->sleep_time);

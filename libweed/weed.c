@@ -55,9 +55,8 @@
 #include "weed-host.h"
 #endif
 
-#ifdef __GNUC__
-// inline all function calls
-#  define GNU_FLATTEN  __attribute__((flatten))
+#if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
+#  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
 #  define GNU_CONST  __attribute__((const))
 #  define GNU_HOT  __attribute__((hot))
 #  define GNU_PURE  __attribute__((pure))
@@ -68,7 +67,9 @@
 #  define GNU_PURE
 #endif
 
-#define FAST_APPEND
+#ifndef WEED_NO_FAST_APPEND
+# define WEED_FAST_APPEND
+#endif
 
 extern weed_default_getter_f weed_default_get;
 extern weed_leaf_get_f weed_leaf_get;
@@ -238,7 +239,7 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, int seed) {
 
 
 static inline void weed_leaf_append(weed_plant_t *leaf, weed_leaf_t *newleaf) {
-#ifdef FAST_APPEND
+#ifdef WEED_FAST_APPEND
   newleaf->next = leaf->next;
   leaf->next = newleaf;
   return;
@@ -473,3 +474,7 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
   if (_memsetf != NULL) weed_memset = _memsetf;
   else weed_memset = (weed_memset_f)memset;
 }
+
+#ifndef WEED_NO_FAST_APPEND
+# undef WEED_FAST_APPEND
+#endif

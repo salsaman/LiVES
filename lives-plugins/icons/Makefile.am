@@ -5,32 +5,31 @@
 
 install-exec-am:
 	/bin/rm -rf "$(DESTDIR)$(datadir)/$(PACKAGE)/"*
-
 iconsdir = "$(datadir)/$(PACKAGE)/icons"
 icons_DATA = \
-audio.png \
-fullscreen.png\
-loop.png \
-playsel.png \
-sepwin.png \
-volume_mute.png \
-zoom-in.png \
-zoom-out.png \
-locked.png \
-unlocked.png \
-pref_decoding.png \
-pref_directory.png \
-pref_effects.png \
-pref_encoding.png \
-pref_gui.png \
-pref_jack.png \
-pref_midi.png \
-pref_misc.png \
-pref_net.png \
-pref_playback.png \
-pref_record.png \
-pref_themes.png \
-pref_warning.png \
-pref_multitrack.png
+lives-audio.png \
+lives-fullscreen.png\
+lives-loop.png \
+lives-playsel.png \
+lives-sepwin.png \
+lives-volume_mute.png \
+lives-zoom-in.png \
+lives-zoom-out.png \
+lives-locked.png \
+lives-unlocked.png \
+lives-pref_decoding.png \
+lives-pref_directory.png \
+lives-pref_effects.png \
+lives-pref_encoding.png \
+lives-pref_gui.png \
+lives-pref_jack.png \
+lives-pref_midi.png \
+lives-pref_misc.png \
+lives-pref_net.png \
+lives-pref_playback.png \
+lives-pref_record.png \
+lives-pref_themes.png \
+lives-pref_warning.png \
+lives-pref_multitrack.png
 
 EXTRA_DIST = $(icons_DATA)

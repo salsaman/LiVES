@@ -49,8 +49,8 @@ install-data-local:
 	$(MAKE) -i install-data-local-remove-vcs-files
 
 install-data-local-remove-vcs-files:
-	rm -rf "$(DESTDIR)$(fxpluginslibdir)/data/".*
-	rm -rf "$(DESTDIR)$(fxpluginslibdir)/icons/".*
+	rm -rf "$(DESTDIR)$(fxpluginslibdir)/data/".gitignore
+	rm -rf "$(DESTDIR)$(fxpluginslibdir)/icons/".gitignore
 
 
 install-exec-local:

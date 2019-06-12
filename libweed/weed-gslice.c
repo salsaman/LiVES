@@ -63,20 +63,23 @@
 #include <stdio.h>
 #endif
 
-#ifdef __GNUC__
-// inline all function calls
-#  define GNU_FLATTEN  __attribute__((flatten))
+#if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
+#  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
 #  define GNU_CONST  __attribute__((const))
 #  define GNU_HOT  __attribute__((hot))
 #  define GNU_PURE  __attribute__((pure))
+#  define GNU_MALLOC  __attribute__((malloc))
 #else
 #  define GNU_FLATTEN
 #  define GNU_CONST
 #  define GNU_HOT
 #  define GNU_PURE
+#  define GNU_MALLOC
 #endif
 
-#define FAST_APPEND
+#ifndef WEED_NO_FAST_APPEND
+# define WEED_FAST_APPEND
+#endif
 
 extern weed_default_getter_f weed_default_get;
 
@@ -96,7 +99,7 @@ extern weed_leaf_set_flags_f weed_leaf_set_flags;
 #include <string.h> // for malloc, memset, memcpy
 #include <stdlib.h> // for free
 
-extern weed_malloc_f weed_malloc;
+extern weed_malloc_f weed_malloc GNU_MALLOC;
 extern weed_free_f weed_free;
 extern weed_memcpy_f weed_memcpy;
 extern weed_memset_f weed_memset;
@@ -120,6 +123,7 @@ static int weed_seed_is_ptr(int seed) GNU_CONST;
 
 static int weed_strcmp(const char *st1, const char *st2) GNU_HOT;
 static size_t weed_strlen(const char *string) GNU_PURE;
+static char *weed_slice_strdup(const char *string) GNU_PURE GNU_HOT GNU_FLATTEN;
 
 /* host only functions */
 static void _weed_plant_free(weed_plant_t *plant) GNU_FLATTEN;
@@ -260,7 +264,7 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, int seed) {
 
 
 static inline void weed_leaf_append(weed_plant_t *leaf, weed_leaf_t *newleaf) {
-#ifdef FAST_APPEND
+#ifdef WEED_FAST_APPEND
   newleaf->next = leaf->next;
   leaf->next = newleaf;
   return;
@@ -489,3 +493,7 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
   if (_memsetf != NULL) weed_memset = _memsetf;
   else weed_memset = (weed_memset_f)memset;
 }
+
+#ifndef WEED_NO_FAST_APPEND
+# undef WEED_FAST_APPEND
+#endif

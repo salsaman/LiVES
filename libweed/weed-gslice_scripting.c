@@ -68,6 +68,10 @@
 #include <string.h> // for malloc, memset, memcpy
 #include <stdlib.h> // for free
 
+#ifndef WEED_NO_FAST_APPEND
+# define WEED_FAST_APPEND
+#endif
+
 
 inline void weed_free(void *p) {
   free(p);
@@ -222,6 +226,11 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, int seed) {
 
 
 static inline void weed_leaf_append(weed_plant_t *leaf, weed_leaf_t *newleaf) {
+#ifdef WEED_FAST_APPEND
+  newleaf->next = leaf->next;
+  leaf->next = newleaf;
+  return;
+#endif
   weed_leaf_t *leafnext;
   while (leaf != NULL) {
     if ((leafnext = leaf->next) == NULL) {
@@ -412,3 +421,6 @@ int weed_leaf_get_flags(weed_plant_t *plant, const char *key) {
   return leaf->flags;
 }
 
+#ifndef WEED_NO_FAST_APPEND
+# undef WEED_FAST_APPEND
+#endif

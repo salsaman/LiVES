@@ -64,7 +64,13 @@ static char *empty_string = "";
 static void set_param_and_con_buttons(int key, int mode);
 static void check_clear_all_button(void);
 
-static boolean rte_window_is_hidden;
+static boolean rte_window_is_hidden = TRUE;
+
+
+boolean rte_window_hidden(void) {
+  return rte_window_is_hidden;
+}
+
 
 void rte_window_set_interactive(boolean interactive) {
   register int i, j;
@@ -143,9 +149,7 @@ boolean on_clear_all_clicked(LiVESButton *button, livespointer user_data) {
   ca_canc = FALSE;
 
   // prompt for "are you sure ?"
-  if (user_data != NULL) if (!do_warning_dialog_with_check_transient
-                               ((_("\n\nUnbind all effects from all keys/modes.\n\nAre you sure ?\n\n")),
-                                0, LIVES_WINDOW(rte_window))) {
+  if (user_data != NULL) if (!do_warning_dialog(_("\n\nUnbind all effects from all keys/modes.\n\nAre you sure ?\n\n"))) {
       ca_canc = TRUE;
       return FALSE;
     }
@@ -439,8 +443,7 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
   int retval;
 
   if (button != NULL) {
-    if (!do_warning_dialog_with_check_transient
-        ((_("\n\nClick 'OK' to save this keymap as your default\n\n")), 0, LIVES_WINDOW(rte_window))) {
+    if (!do_warning_dialog(_("\n\nClick 'OK' to save this keymap as your default\n\n"))) {
       lives_free(keymap_file3);
       lives_free(keymap_file2);
       lives_free(keymap_file);
@@ -1523,8 +1526,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
     if (mainw->is_ready) {
       check_clear_all_button();
-      if (notfound) do_warning_dialog_with_check_transient(_("\n\nSome effects could not be located.\n\n"),
-            0, LIVES_WINDOW(rte_window));
+      if (notfound) do_warning_dialog(_("\n\nSome effects could not be located.\n\n"));
     } else load_rte_defs(); // file errors shown inside
 
   }
@@ -1620,9 +1622,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 
   tmp = lives_strdup_printf(_("Information for %s"), filter_name);
 
-  widget_opts.transient = LIVES_WINDOW(rte_window);
   dialog = lives_standard_dialog_new(tmp, FALSE, RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
-  widget_opts.transient = NULL;
 
   lives_free(tmp);
 
@@ -1802,10 +1802,7 @@ static void on_datacon_clicked(LiVESButton *button, livespointer user_data) {
   int mode = idx - key * modes;
 
   //if (datacon_dialog!=NULL) on_datacon_cancel_clicked(NULL,NULL);
-
-  widget_opts.transient = LIVES_WINDOW(rte_window);
   datacon_dialog = make_datacon_window(key, mode);
-  widget_opts.transient = NULL;
 }
 
 
@@ -1841,9 +1838,8 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   rfx->min_frames = -1;
   keyw = key;
   modew = mode;
-  widget_opts.transient = LIVES_WINDOW(rte_window);
+
   on_fx_pre_activate(rfx, 1, NULL);
-  widget_opts.transient = NULL;
 
   // record the key so we know whose parameters to record later
   weed_set_int_value((weed_plant_t *)rfx->source, WEED_LEAF_HOST_KEY, key);
@@ -1891,10 +1887,8 @@ static void on_rtew_ok_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-static void do_mix_error(void) {
-  do_error_dialog_with_check_transient(
-    _("\n\nThis version of LiVES does not allowing mixing of generators and non-generators on the same key.\n\n"),
-    FALSE, 0, LIVES_WINDOW(rte_window));
+LIVES_LOCAL_INLINE void do_mix_error(void) {
+  do_error_dialog(_("\n\nThis version of LiVES does not allowing mixing of generators and non-generators on the same key.\n\n"));
   return;
 }
 
@@ -2145,6 +2139,8 @@ LiVESWidget *create_rte_window(void) {
   mode_ra_fns = (ulong *)lives_malloc((prefs->rte_keys_virtual) * modes * sizeof(ulong));
 
   irte_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+  lives_window_set_transient_for(LIVES_WINDOW(irte_window), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+
   if (palette->style & STYLE_1) {
     lives_widget_set_bg_color(irte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_text_color(irte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -2484,9 +2480,7 @@ void redraw_pwindow(int key, int mode) {
 
 void restore_pwindow(lives_rfx_t *rfx) {
   if (fx_dialog[1] != NULL) {
-    widget_opts.transient = LIVES_WINDOW(rte_window);
     make_param_box(LIVES_VBOX(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))), rfx);
-    widget_opts.transient = NULL;
     lives_widget_show_all(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1])));
     lives_widget_queue_draw(fx_dialog[1]);
   }

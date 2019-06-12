@@ -17,6 +17,7 @@
 #include "cvirtual.h"
 #include "audio.h" // for fill_abuffer_from
 #include "resample.h"
+#include "rte_window.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
 #include "callbacks.h"
@@ -468,11 +469,8 @@ LiVESWindow *get_transient_full(void) {
   LiVESWindow *transient = NULL;
   if (prefs->show_gui) {
     if (prefsw != NULL && prefsw->prefs_dialog != NULL) transient = LIVES_WINDOW(prefsw->prefs_dialog);
-    else {
-      if ((mainw->multitrack == NULL && mainw->is_ready) || (mainw->multitrack != NULL && mainw->multitrack->is_ready))
-        transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
-      else if (mainw->LiVES != NULL) transient = LIVES_WINDOW(mainw->LiVES);
-    }
+    else if (rte_window != NULL && !rte_window_hidden()) transient = LIVES_WINDOW(rte_window);
+    else if (LIVES_MAIN_WINDOW_WIDGET != NULL) transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
   }
   return transient;
 }
@@ -724,8 +722,7 @@ char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t n
 
 
 void do_aud_during_play_error(void) {
-  do_error_dialog_with_check_transient(_("Audio players cannot be switched during playback."),
-                                       TRUE, 0, LIVES_WINDOW(prefsw->prefs_dialog));
+  do_blocking_error_dialog(_("Audio players cannot be switched during playback."));
 }
 
 

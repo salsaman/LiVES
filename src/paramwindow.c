@@ -1238,7 +1238,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     if (mainw->multitrack == NULL || rfx->status != RFX_STATUS_WEED) {
       float box_scale = 1.;
       // for resize effects we add the framedraw to get its widgets, but hide it, so the box should get extra width and less height
-      if (rfx->props & RFX_PROPS_MAY_RESIZE) box_scale = 2.;
+      if (rfx->props & RFX_PROPS_MAY_RESIZE) box_scale = 1.5 * widget_opts.scale;
       scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H * box_scale, RFX_WINSIZE_V >> 1, top_hbox);
     } else scrolledwindow = lives_standard_scrolled_window_new(-1, -1, top_hbox);
 
@@ -1622,11 +1622,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   case LIVES_PARAM_STRING_LIST:
     widget_opts.expand = LIVES_EXPAND_EXTRA;
     widget_opts.mnemonic_label = use_mnemonic;
-    LiVESList *tlist = param->list;
-    while (tlist != NULL) {
-      g_print("VAL %s\n", (const char *)tlist->data);
-      tlist = tlist->next;
-    }
 
     combo = lives_standard_combo_new(name, param->list, (LiVESBox *)hbox, param->desc);
     widget_opts.mnemonic_label = TRUE;

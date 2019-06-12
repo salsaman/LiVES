@@ -3821,6 +3821,13 @@ void make_play_window(void) {
   mainw->play_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
   //  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),TRUE);
 
+  if (prefs->show_gui) {
+    LiVESWindow *transient;
+    if (rte_window != NULL && !rte_window_hidden()) transient = LIVES_WINDOW(rte_window);
+    else transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
+    lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), transient);
+  }
+
   lives_widget_set_events(mainw->play_window, LIVES_SCROLL_MASK);
 
   // cannot do this or it forces showing on the GUI monitor

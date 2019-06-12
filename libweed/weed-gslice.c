@@ -68,13 +68,11 @@
 #  define GNU_CONST  __attribute__((const))
 #  define GNU_HOT  __attribute__((hot))
 #  define GNU_PURE  __attribute__((pure))
-#  define GNU_MALLOC  __attribute__((malloc))
 #else
 #  define GNU_FLATTEN
 #  define GNU_CONST
 #  define GNU_HOT
 #  define GNU_PURE
-#  define GNU_MALLOC
 #endif
 
 #ifndef WEED_NO_FAST_APPEND
@@ -99,7 +97,7 @@ extern weed_leaf_set_flags_f weed_leaf_set_flags;
 #include <string.h> // for malloc, memset, memcpy
 #include <stdlib.h> // for free
 
-extern weed_malloc_f weed_malloc GNU_MALLOC;
+extern weed_malloc_f weed_malloc;
 extern weed_free_f weed_free;
 extern weed_memcpy_f weed_memcpy;
 extern weed_memset_f weed_memset;

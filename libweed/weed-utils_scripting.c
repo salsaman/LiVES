@@ -45,14 +45,6 @@
 
 /* (C) Gabriel "Salsaman" Finch, 2005 - 2010 */
 
-#include <string.h>
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#else
-#include "weed.h"
-#endif
-
 #include "weed-gslice_scripting.c"
 
 /////////////////////////////////////////////////////////////////

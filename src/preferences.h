@@ -945,6 +945,8 @@ void save_future_prefs(void);
 
 void set_palette_prefs(void);
 
+void toggle_button_sets_pref(LiVESToggleButton *button, livespointer prefidx);
+
 // permissions
 
 #define LIVES_PERM_OSC_PORTS 1

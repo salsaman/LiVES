@@ -262,27 +262,28 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions
 LIVES_GLOBAL_INLINE int filter_mutex_trylock(int key) {
 #ifdef DEBUG_FILTER_MUTEXES
   int retval;
+  g_print("trylock of %d\n", key);
   if (key == -1) return 0;
   if (key >= 0 && key < FX_KEYS_MAX) retval = pthread_mutex_trylock(&mainw->fx_mutex[key]);
-  else retval = EINVAL;
+  else retval = 0;
   g_print("trylock of %d returned %d\n", key, retval);
   return retval;
 #else
   if (key >= 0 && key < FX_KEYS_MAX) return pthread_mutex_trylock(&mainw->fx_mutex[key]);
-  return EINVAL;
+  return 0;
 #endif
 }
 
 #ifndef DEBUG_FILTER_MUTEXES
 LIVES_GLOBAL_INLINE int filter_mutex_lock(int key) {
   if (key >= 0 && key < FX_KEYS_MAX) return pthread_mutex_lock(&mainw->fx_mutex[key]);
-  return EINVAL;
+  return 0;
 }
 
 
 LIVES_GLOBAL_INLINE int filter_mutex_unlock(int key) {
   if (key >= 0 && key < FX_KEYS_MAX) return pthread_mutex_unlock(&mainw->fx_mutex[key]);
-  return EINVAL;
+  return 0;
 }
 #endif
 

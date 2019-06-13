@@ -761,7 +761,6 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   // the clip has been altered
 
   struct timeval otv;
-  lives_mt_poly_state_t poly_state;
 
   char *asave_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
                                          capable->mainpid, LIVES_FILE_EXT_LAYOUT);
@@ -802,10 +801,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
       lives_close_buffered(fd);
     } else mainw->write_failed = TRUE;
 
-    poly_state = mt->poly_state;
-    if (mt->poly_state != POLY_IN_OUT) mt->poly_state = POLY_NONE;
     mt_sensitise(mt);
-    mt->poly_state = poly_state;
 
     if (!mainw->write_failed) mt->auto_changed = FALSE;
     else mainw->write_failed = FALSE;
@@ -6231,6 +6227,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->playing_sel = FALSE;
 
+  mt->in_sensitise = FALSE;
+
   mt->render_file = mainw->current_file;
 
   if (mainw->sl_undo_mem == NULL) {
@@ -8286,7 +8284,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_fg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
   mt->apply_fx_button = lives_standard_button_new_with_label(_("_Apply"));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_box_pack_start(LIVES_BOX(hbox), mt->apply_fx_button, FALSE, FALSE, 0);
 
   lives_signal_connect(LIVES_GUI_OBJECT(mt->apply_fx_button), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -8317,7 +8317,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->fx_params_label = lives_standard_label_new("");
   lives_box_pack_start(LIVES_BOX(hbox), mt->fx_params_label, TRUE, TRUE, widget_opts.packing_width);
 
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
   mt->del_node_button = lives_standard_button_new_with_label(_("_Del. node"));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_box_pack_end(LIVES_BOX(hbox), mt->del_node_button, FALSE, FALSE, 0);
   lives_widget_set_sensitive(mt->del_node_button, FALSE);
 
@@ -8325,7 +8327,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_del_node_clicked),
                        (livespointer)mt);
 
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
   mt->next_node_button = lives_standard_button_new_with_label(_("_Next node"));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_box_pack_end(LIVES_BOX(hbox), mt->next_node_button, FALSE, FALSE, 0);
   lives_widget_set_sensitive(mt->next_node_button, FALSE);
 
@@ -8333,7 +8337,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_next_node_clicked),
                        (livespointer)mt);
 
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
   mt->prev_node_button = lives_standard_button_new_with_label(_("_Prev node"));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_box_pack_end(LIVES_BOX(hbox), mt->prev_node_button, FALSE, FALSE, 0);
   lives_widget_set_sensitive(mt->prev_node_button, FALSE);
 
@@ -8341,8 +8347,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_prev_node_clicked),
                        (livespointer)mt);
 
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mt->fx_label = lives_standard_label_new("");
   lives_box_pack_end(LIVES_BOX(hbox), mt->fx_label, FALSE, FALSE, widget_opts.packing_width * 2);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   // add a dummy hbox to nb
 
@@ -10472,7 +10480,8 @@ static void set_clip_labels_variable(lives_mt *mt, int i) {
   label1 = (LiVESLabel *)lives_list_nth_data(mt->clip_labels, i);
   label2 = (LiVESLabel *)lives_list_nth_data(mt->clip_labels, ++i);
 
-  lives_label_set_text(label1, (tmp = lives_strdup_printf(_("  %d to %d selected  "), sfile->start, sfile->end)));
+  // sets the width of the box
+  lives_label_set_text(label1, (tmp = lives_strdup_printf(_("%d to %d selected"), sfile->start, sfile->end)));
   lives_free(tmp);
 
   lives_label_set_text(label2, (tmp = lives_strdup_printf(_("%.2f sec."), (sfile->end - sfile->start + 1.) / sfile->fps)));
@@ -10600,7 +10609,7 @@ void mt_init_clips(lives_mt *mt, int orig_file, boolean add) {
   // mt_clip_select() should be called after this
 
   LiVESWidget *thumb_image = NULL;
-  LiVESWidget *vbox, *label;
+  LiVESWidget *vbox, *hbox, *label;
   LiVESWidget *eventbox;
 
   LiVESPixbuf *thumbnail;
@@ -10645,7 +10654,7 @@ void mt_init_clips(lives_mt *mt, int orig_file, boolean add) {
 
       clips_to_files[count] = i;
 
-      vbox = lives_vbox_new(FALSE, 6.*widget_opts.scale);
+      vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
 
       thumb_image = lives_image_new();
       lives_image_set_from_pixbuf(LIVES_IMAGE(thumb_image), thumbnail);
@@ -10656,37 +10665,44 @@ void mt_init_clips(lives_mt *mt, int orig_file, boolean add) {
       lives_snprintf(filename, PATH_MAX, "%s", (tmp = get_menu_name(mainw->files[i], FALSE)));
       lives_free(tmp);
       get_basename(filename);
-      lives_snprintf(clip_name, CLIP_LABEL_LENGTH, "  %s  ", filename);
-      label = lives_label_new(clip_name);
+      lives_snprintf(clip_name, CLIP_LABEL_LENGTH, "%s", filename);
+
+      widget_opts.justify = LIVES_JUSTIFY_CENTER;
+      label = lives_standard_label_new(clip_name);
       lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
       lives_box_pack_start(LIVES_BOX(vbox), thumb_image, FALSE, FALSE, 0);
 
       if (mainw->files[i]->frames > 0) {
-        char *tmp;
-        label = lives_label_new((tmp = lives_strdup_printf(_("%d frames"), mainw->files[i]->frames)));
-        lives_free(tmp);
+        label = lives_standard_label_new((tmp = lives_strdup_printf(_("%d frames"), mainw->files[i]->frames)));
         lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
 
-        label = lives_label_new("");
+        label = lives_standard_label_new("");
         mt->clip_labels = lives_list_append(mt->clip_labels, label);
 
-        lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
+        hbox = lives_hbox_new(FALSE, 0);
+        lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+        lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, TRUE, widget_opts.border_width);
 
-        label = lives_label_new("");
+        label = lives_standard_label_new("");
         mt->clip_labels = lives_list_append(mt->clip_labels, label);
 
         lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
 
         set_clip_labels_variable(mt, i);
       } else {
-        label = lives_label_new(lives_strdup(_("audio only")));
-        lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
+        label = lives_standard_label_new(_("audio only"));
         mt->clip_labels = lives_list_append(mt->clip_labels, label);
 
-        label = lives_label_new(lives_strdup_printf(_("%.2f sec."), mainw->files[i]->laudio_time));
+        hbox = lives_hbox_new(FALSE, 0);
+        lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+        lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, TRUE, widget_opts.border_width);
+
+        label = lives_standard_label_new((tmp = lives_strdup_printf(_("%.2f sec."), mainw->files[i]->laudio_time)));
         lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
         mt->clip_labels = lives_list_append(mt->clip_labels, label);
       }
+      lives_free(tmp);
+      widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
       count++;
 
@@ -11463,12 +11479,13 @@ static void set_in_out_spin_ranges(lives_mt *mt, weed_timecode_t start_tc, weed_
 
   if (track >= 0) {
     filenum = get_frame_event_clip(block->start_event, track);
-
+    if (!IS_VALID_CLIP(filenum)) return;
     // actually we should quantise this to the mt->fps, but we leave it in case clip has only
     // one frame -> otherwise we could quantise to zero frames
     out_end_range = count_resampled_frames(mainw->files[filenum]->frames, mainw->files[filenum]->fps, mt->fps) / mt->fps;
   } else {
     filenum = get_audio_frame_clip(block->start_event, track);
+    if (!IS_VALID_CLIP(filenum)) return;
     out_end_range = q_gint64(mainw->files[filenum]->laudio_time * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
     avel = get_audio_frame_vel(block->start_event, track);
   }
@@ -12430,6 +12447,8 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
 
   register int i, j;
 
+  if (mt->in_sensitise) return;
+
   if (poly == mt->poly_state && poly != POLY_PARAMS && poly != POLY_FX_STACK) {
     return;
   }
@@ -12913,7 +12932,9 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_SPREAD);
     lives_box_pack_end(LIVES_BOX(mt->fx_list_box), bbox, FALSE, FALSE, 0);
 
+    widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
     mt->prev_fm_button = lives_standard_button_new_with_label(_("_Prev filter map"));  // Note to translators: previous filter map
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_box_pack_start(LIVES_BOX(bbox), mt->prev_fm_button, FALSE, FALSE, 0);
 
     lives_widget_set_sensitive(mt->prev_fm_button, (prev_fm_event = get_prev_fm(mt, mt->current_track, frame_event)) != NULL &&
@@ -12924,7 +12945,9 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
                          (livespointer)mt);
 
     if (fxcount > 1) {
+      widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
       mt->fx_ibefore_button = lives_standard_button_new_with_label(_("Insert _before"));
+      widget_opts.expand = LIVES_EXPAND_DEFAULT;
       lives_box_pack_start(LIVES_BOX(bbox), mt->fx_ibefore_button, FALSE, FALSE, 0);
       lives_widget_set_sensitive(mt->fx_ibefore_button, mt->fx_order == FX_ORD_NONE &&
                                  get_event_timecode(mt->fm_edit_event) == get_event_timecode(frame_event) &&
@@ -12934,7 +12957,9 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
                            LIVES_GUI_CALLBACK(on_fx_insb_clicked),
                            (livespointer)mt);
 
+      widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
       mt->fx_iafter_button = lives_standard_button_new_with_label(_("Insert _after"));
+      widget_opts.expand = LIVES_EXPAND_DEFAULT;
       lives_box_pack_start(LIVES_BOX(bbox), mt->fx_iafter_button, FALSE, FALSE, 0);
       lives_widget_set_sensitive(mt->fx_iafter_button, mt->fx_order == FX_ORD_NONE &&
                                  get_event_timecode(mt->fm_edit_event) == get_event_timecode(frame_event) &&
@@ -12948,7 +12973,9 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
       mt->fx_ibefore_button = mt->fx_iafter_button = NULL;
     }
 
+    widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
     mt->next_fm_button = lives_standard_button_new_with_label(_("_Next filter map"));
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_box_pack_end(LIVES_BOX(bbox), mt->next_fm_button, FALSE, FALSE, 0);
 
     lives_widget_set_sensitive(mt->next_fm_button, (next_fm_event = get_next_fm(mt, mt->current_track, frame_event)) != NULL &&
@@ -16534,6 +16561,9 @@ void mt_desensitise(lives_mt *mt) {
 void mt_sensitise(lives_mt *mt) {
   LiVESWidget *eventbox = NULL;
 
+  if (mt->in_sensitise) return; // prevent infinite loops
+  mt->in_sensitise = TRUE;
+
   if (mt->event_list != NULL && get_first_event(mt->event_list) != NULL) {
     lives_widget_set_sensitive(mt->playall, TRUE);
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
@@ -16643,6 +16673,8 @@ void mt_sensitise(lives_mt *mt) {
   }
 
   track_select(mt);
+
+  mt->in_sensitise = FALSE;
 }
 
 
@@ -18648,6 +18680,8 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
 
   lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
 
+  g_print("apply params for src %p\n", inst);
+
   for (i = 0; ((param = weed_inst_in_param(inst, i, FALSE, FALSE)) != NULL); i++) {
     if (!mt->current_rfx->params[i].changed) continue; // set only user changed parameters
     pchange = weed_plant_new(WEED_PLANT_EVENT);
@@ -19254,11 +19288,10 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
 
   hbox = lives_hbox_new(FALSE, 0);
 
-  ar_checkbutton = lives_standard_check_button_new(_("_Autoreload each time"), prefs->ar_layout, LIVES_BOX(hbox), NULL);
-
+  ar_checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_layout);
   lives_signal_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_autoreload_toggled),
-                       LIVES_INT_TO_POINTER(2));
+                       LIVES_GUI_CALLBACK(toggle_button_sets_pref),
+                       (livespointer)PREF_AR_LAYOUT);
 
   lives_widget_show_all(hbox);
 
@@ -20783,11 +20816,10 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
   hbox = lives_hbox_new(FALSE, 0);
 
   if (allow_auto_reload) {
-    ar_checkbutton = lives_standard_check_button_new(_("_Autoreload each time"), prefs->ar_layout, LIVES_BOX(hbox), NULL);
-
+    ar_checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_layout);
     lives_signal_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_autoreload_toggled),
-                         LIVES_INT_TO_POINTER(2));
+                         LIVES_GUI_CALLBACK(toggle_button_sets_pref),
+                         (livespointer)PREF_AR_LAYOUT);
   }
 
   if (mt->idlefunc > 0) {
@@ -22404,7 +22436,7 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
   }
 
   // crossfade audio
-  if (mt->opts.autocross_audio)
+  if (mt->init_event != NULL && mt->opts.autocross_audio)
     weed_set_boolean_value(mt->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, WEED_TRUE);
 
   mt->is_atrans = FALSE;

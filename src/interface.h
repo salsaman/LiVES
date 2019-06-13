@@ -51,6 +51,8 @@ void do_mt_keys_window(void);
 
 LiVESWidget *create_cleardisk_advanced_dialog(void);
 
+LiVESWidget *make_autoreload_check(LiVESHBox *parent, boolean is_active);
+
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *textview_type;

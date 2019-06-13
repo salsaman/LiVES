@@ -3829,19 +3829,10 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new(void) {
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_with_label(const char *label) {
   LiVESWidget *button = NULL;
-  char *labeltext = (char *)label;
-  if (LIVES_SHOULD_EXPAND_HEIGHT) {
-    labeltext = lives_strdup_printf("\n%s\n", label);
-  }
 #ifdef GUI_GTK
-  button = gtk_button_new_with_label(labeltext);
-  gtk_button_set_use_underline(GTK_BUTTON(button), widget_opts.mnemonic_label);
+  button = lives_button_new();
+  lives_button_set_label(LIVES_BUTTON(button), label);
 #endif
-#ifdef GUI_QT
-  QString qlabel = QString::fromUtf8(labeltext);
-  button = new LiVESButton(qlabel);
-#endif
-  if (labeltext != label) lives_free(labeltext);
   return button;
 }
 

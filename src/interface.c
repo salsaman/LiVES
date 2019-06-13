@@ -3109,6 +3109,11 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 }
 
 
+LIVES_GLOBAL_INLINE LiVESWidget *make_autoreload_check(LiVESHBox *hbox, boolean is_active) {
+  return lives_standard_check_button_new(_("_Autoreload next time"), is_active, hbox, NULL);
+}
+
+
 //cancel/discard/save dialog
 _entryw *create_cds_dialog(int type) {
   // values for type are:
@@ -3173,22 +3178,14 @@ _entryw *create_cds_dialog(int type) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    checkbutton = lives_standard_check_button_new(_("_Auto reload next time"), FALSE, LIVES_BOX(hbox), NULL);
-
-    if ((type == 0 && prefs->ar_layout) || (type == 1 && !mainw->only_close)) {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), TRUE);
-      if (type == 1) prefs->ar_clipset = TRUE;
-      else prefs->ar_layout = TRUE;
-    } else {
-      if (type == 1) prefs->ar_clipset = FALSE;
-      else prefs->ar_layout = FALSE;
-    }
+    prefs->ar_clipset = !mainw->only_close;
+    checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_clipset);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "cdsw", (livespointer)cdsw);
 
     lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_autoreload_toggled),
-                         LIVES_INT_TO_POINTER(type));
+                         LIVES_GUI_CALLBACK(toggle_button_sets_pref),
+                         (livespointer)PREF_AR_CLIPSET);
   }
 
   if (type == 0 && !(prefs->warning_mask & WARN_MASK_EXIT_MT)) {

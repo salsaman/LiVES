@@ -514,6 +514,8 @@ struct _mt {
 
   boolean mt_frame_preview;
 
+  boolean in_sensitise;
+
   lives_rfx_t *current_rfx;
 
   char layout_name[PATH_MAX];

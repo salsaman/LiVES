@@ -133,8 +133,6 @@ void on_location_select(LiVESButton *, livespointer);
 
 void on_utube_select(lives_remote_clip_request_t *req);
 
-void on_autoreload_toggled(LiVESToggleButton *, livespointer);
-
 void on_opensel_range_ok_clicked(LiVESButton *, livespointer);
 
 void on_open_sel_ok_button_clicked(LiVESButton *, livespointer);

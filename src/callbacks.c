@@ -785,29 +785,6 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_autoreload_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
-  // type==0, autoreload layout
-  // type==1, autoreload clipset
-  // type==2, autoreload layout (from choose layout name and ...)
-
-  int type = LIVES_POINTER_TO_INT(user_data);
-  if (type == 0) {
-    _entryw *cdsw = (_entryw *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(togglebutton), "cdsw");
-    prefs->ar_layout = !prefs->ar_layout;
-    if (cdsw->warn_checkbutton != NULL) {
-      if (prefs->ar_layout) {
-        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(cdsw->warn_checkbutton), FALSE);
-        lives_widget_set_sensitive(cdsw->warn_checkbutton, FALSE);
-      } else {
-        lives_widget_set_sensitive(cdsw->warn_checkbutton, TRUE);
-      }
-    }
-  }
-  if (type == 1) prefs->ar_clipset = !prefs->ar_clipset;
-  if (type == 2) prefs->ar_layout = !prefs->ar_layout;
-}
-
-
 void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char file[PATH_MAX];
   double start = 0.;

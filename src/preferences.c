@@ -37,6 +37,12 @@ static uint32_t prefs_current_page;
 
 static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
+void toggle_button_sets_pref(LiVESToggleButton *button, livespointer prefidx) {
+  // callback to set to make a togglebutton directly control a boolean pref (non-permanent)
+  // pref must have entry in pref_factory_bool
+  pref_factory_bool((const char *)prefidx, lives_toggle_button_get_active(button), FALSE);
+}
+
 
 #ifdef ENABLE_OSC
 static void on_osc_enable_toggled(LiVESToggleButton *t1, livespointer t2) {
@@ -577,7 +583,13 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       goto success1;
     } else if (!(strcmp(audio_player, AUDIO_PLAYER_SOX)) && prefs->audio_player != AUD_PLAYER_SOX) {
       // switch to sox
-      return switch_aud_to_sox(permanent);
+      if (switch_aud_to_sox(permanent)) goto success1;
+      // revert text
+      if (prefsw != NULL) {
+        lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
+        lives_widget_process_updates(mainw->LiVES, TRUE);
+      }
+      goto fail1;
     }
 
 #ifdef ENABLE_JACK
@@ -589,6 +601,11 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       } else {
         if (prefs->audio_player == AUD_PLAYER_JACK && strcmp(audio_player, AUDIO_PLAYER_JACK)) {
           do_blocking_error_dialog(_("\nSwitching audio players requires restart (jackd must not be running)\n"));
+          // revert text
+          if (prefsw != NULL) {
+            lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
+            lives_widget_process_updates(mainw->LiVES, TRUE);
+          }
           goto fail1;
         }
       }
@@ -596,7 +613,10 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         // failed
         do_jack_noopen_warn();
         // revert text
-        if (prefsw != NULL) lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
+        if (prefsw != NULL) {
+          lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
+          lives_widget_process_updates(mainw->LiVES, TRUE);
+        }
         goto fail1;
       } else {
         // success
@@ -615,11 +635,19 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       if (!capable->has_pulse_audio) {
         do_blocking_error_dialogf(_("\nUnable to switch audio players to pulseaudio\npulseaudio must be installed first.\nSee %s\n"),
                                   PULSE_AUDIO_URL);
+        // revert text
+        if (prefsw != NULL) {
+          lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
+          lives_widget_process_updates(mainw->LiVES, TRUE);
+        }
         goto fail1;
       } else {
         if (!switch_aud_to_pulse(permanent)) {
           // revert text
-          if (prefsw != NULL) lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
+          if (prefsw != NULL) {
+            lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
+            lives_widget_process_updates(mainw->LiVES, TRUE);
+          }
           goto fail1;
         } else {
           // success
@@ -635,10 +663,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
   }
 
 fail1:
-  if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
-    prefsw->ignore_apply = FALSE;
-  }
+  if (prefsw != NULL) prefsw->ignore_apply = FALSE;
   return FALSE;
 
 success1:
@@ -746,8 +771,6 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
   if (!strcmp(prefidx, PREF_PUSH_AUDIO_TO_GENS)) {
     if (prefs->push_audio_to_gens == newval) goto fail2;
     prefs->push_audio_to_gens = newval;
-    if (permanent)
-      set_boolean_pref(prefidx, newval);
     if (prefsw != NULL)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->pa_gens), prefs->push_audio_to_gens);
     goto success2;
@@ -756,7 +779,6 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
   if (!strcmp(prefidx, PREF_SHOW_ASRC)) {
     if (prefs->show_asrc == newval) goto fail2;
     prefs->show_asrc = newval;
-    set_boolean_pref(PREF_SHOW_ASRC, prefs->show_asrc);
     if (prefsw != NULL)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_show_asrc), prefs->show_asrc);
     if (!newval) {
@@ -778,7 +800,6 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
   if (!strcmp(prefidx, PREF_HFBWNP)) {
     if (prefs->hfbwnp == newval) goto fail2;
     prefs->hfbwnp = newval;
-    set_boolean_pref(PREF_HFBWNP, prefs->hfbwnp);
     if (prefsw != NULL)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_hfbwnp), prefs->hfbwnp);
     if (newval) {
@@ -796,11 +817,20 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
-fail2:
-  if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
-    prefsw->ignore_apply = FALSE;
+  if (!strcmp(prefidx, PREF_AR_CLIPSET)) {
+    if (prefs->ar_clipset == newval) goto fail2;
+    prefs->ar_clipset = newval;
+    goto success2;
   }
+
+  if (!strcmp(prefidx, PREF_AR_LAYOUT)) {
+    if (prefs->ar_layout == newval) goto fail2;
+    prefs->ar_layout = newval;
+    goto success2;
+  }
+
+fail2:
+  if (prefsw != NULL) prefsw->ignore_apply = FALSE;
   return FALSE;
 
 success2:
@@ -808,6 +838,7 @@ success2:
     lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
+  if (permanent) set_boolean_pref(prefidx, newval);
   return TRUE;
 }
 
@@ -822,15 +853,11 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
       msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
     prefs->max_messages = newval;
-    if (permanent) set_int_pref(PREF_MAX_MSGS, newval);
     goto success3;
   }
 
 fail3:
-  if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
-    prefsw->ignore_apply = FALSE;
-  }
+  if (prefsw != NULL) prefsw->ignore_apply = FALSE;
   return FALSE;
 
 success3:
@@ -838,18 +865,18 @@ success3:
     lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
+  if (permanent) set_int_pref(prefidx, newval);
   return TRUE;
 }
 
 
 boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const char *strval, boolean permanent) {
+  int idx = lives_list_strcmp_index(list, (livesconstpointer)strval, TRUE);
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
-  int idx = lives_list_strcmp_index(list, (livesconstpointer)strval, TRUE);
   if (!strcmp(prefidx, PREF_MSG_TEXTSIZE)) {
     if (idx == prefs->msg_textsize) goto fail4;
     prefs->msg_textsize = idx;
-    if (permanent) set_int_pref(PREF_MSG_TEXTSIZE, idx);
     if (mainw->msg_adj != NULL) {
       msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
@@ -857,10 +884,7 @@ boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const c
   }
 
 fail4:
-  if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
-    prefsw->ignore_apply = FALSE;
-  }
+  if (prefsw != NULL) prefsw->ignore_apply = FALSE;
   return FALSE;
 
 success4:
@@ -868,6 +892,7 @@ success4:
     lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
+  if (permanent) set_int_pref(prefidx, idx);
   return TRUE;
 }
 
@@ -878,15 +903,11 @@ boolean pref_factory_float(const char *prefidx, float newval, boolean permanent)
   if (!strcmp(prefidx, PREF_AHOLD_THRESHOLD)) {
     if (prefs->ahold_threshold == newval) goto fail5;
     prefs->ahold_threshold = newval;
-    if (permanent) set_double_pref(PREF_AHOLD_THRESHOLD, prefs->ahold_threshold);
     goto success5;
   }
 
 fail5:
-  if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
-    prefsw->ignore_apply = FALSE;
-  }
+  if (prefsw != NULL) prefsw->ignore_apply = FALSE;
   return FALSE;
 
 success5:
@@ -894,6 +915,7 @@ success5:
     lives_widget_process_updates(mainw->LiVES, TRUE);
     prefsw->ignore_apply = FALSE;
   }
+  if (permanent) set_double_pref(prefidx, newval);
   return TRUE;
 }
 
@@ -905,6 +927,7 @@ boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval
     if (newval && !(prefs->audio_opts & bitfield)) prefs->audio_opts &= bitfield;
     else if (!newval && (prefs->audio_opts & bitfield)) prefs->audio_opts ^= bitfield;
     else goto fail6;
+
     if (permanent) set_int_pref(PREF_AUDIO_OPTS, prefs->audio_opts);
 
     if (prefsw != NULL) {
@@ -919,10 +942,7 @@ boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval
   }
 
 fail6:
-  if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
-    prefsw->ignore_apply = FALSE;
-  }
+  if (prefsw != NULL) prefsw->ignore_apply = FALSE;
   return FALSE;
 
 success6:
@@ -1934,10 +1954,7 @@ boolean apply_prefs(boolean skip_warn) {
     set_boolean_pref(PREF_MT_ENTER_PROMPT, mt_enter_prompt);
   }
 
-  if (mt_exit_render != prefs->mt_exit_render) {
-    prefs->mt_exit_render = mt_exit_render;
-    set_boolean_pref(PREF_MT_EXIT_RENDER, mt_exit_render);
-  }
+  pref_factory_bool(PREF_MT_EXIT_RENDER, mt_exit_render, TRUE);
 
   if (render_prompt != prefs->render_prompt) {
     prefs->render_prompt = render_prompt;

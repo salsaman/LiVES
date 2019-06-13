@@ -1835,6 +1835,7 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   if (rfx->status == RFX_STATUS_WEED) {
     int error;
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
+    g_print("set param for %p\n", inst);
     if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
       char *disp_string;
 
@@ -1869,7 +1870,9 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
       } else {
         valis = weed_get_int_array(wparam, WEED_LEAF_VALUE, &error);
         valis[index] = new_int;
+        g_print("here\n");
         if (!filter_mutex_trylock(key)) {
+          g_print("here 2 %p %d %d\n", wparam, numvals, valis[0]);
           weed_set_int_array(wparam, WEED_LEAF_VALUE, numvals, valis);
           copyto = set_copy_to(inst, param_number, TRUE);
           filter_mutex_unlock(key);

@@ -116,7 +116,7 @@ static char start_file[PATH_MAX];
 static double start = 0.;
 static int end = 0;
 
-static boolean theme_expected;
+static boolean theme_error;
 
 static _ign_opts ign_opts;
 
@@ -386,15 +386,13 @@ void get_monitors(void) {
 
 static boolean pre_init(void) {
   // stuff which should be done *before* mainwindow is created
-  // returns TRUE if we expect to load a theme
+  // returns TRUE if we got an error loading the theme
 
   int randfd;
   ssize_t randres = -1;
   uint32_t rseed;
 
   pthread_mutexattr_t mattr;
-
-  boolean expect_theme = FALSE;
 
 #ifndef IS_MINGW
   boolean needs_update = FALSE;
@@ -578,12 +576,6 @@ static boolean pre_init(void) {
 
   cache_file_contents(capable->rcfile);
 
-  get_pref(PREF_GUI_THEME, prefs->theme, 64);
-  if (!strlen(prefs->theme)) {
-    lives_snprintf(prefs->theme, 64, "none");
-  }
-  lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
-
   // get some prefs we need to set menu options
   future_prefs->show_recent = prefs->show_recent = get_boolean_pref(PREF_SHOW_RECENT_FILES);
 
@@ -638,7 +630,12 @@ static boolean pre_init(void) {
   mainw->ref_message_n = 0;
   add_messages_to_list(_("Starting...\n"));
 
-  expect_theme = TRUE;
+  get_pref(PREF_GUI_THEME, prefs->theme, 64);
+  if (!strlen(prefs->theme)) {
+    lives_snprintf(prefs->theme, 64, "none");
+  }
+  lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
+
   if (!set_palette_colours(FALSE)) {
     lives_snprintf(prefs->theme, 64, "none");
     set_palette_colours(FALSE);
@@ -746,9 +743,8 @@ static boolean pre_init(void) {
   create_devicemap_directory();
 #endif
 
-  if (!lives_ascii_strcasecmp(prefs->theme, "none")) return FALSE;
-
-  return expect_theme;
+  if (!lives_ascii_strcasecmp(prefs->theme, "none")) return TRUE;
+  return FALSE;
 }
 
 
@@ -2062,6 +2058,10 @@ boolean set_palette_colours(boolean force_reload) {
       // if not custom, check if builtin
       themedir = lives_build_filename(prefs->prefix_dir, THEME_DIR, prefs->theme, NULL);
       if (!lives_file_test(themedir, LIVES_FILE_TEST_IS_DIR)) {
+        if (!mainw->is_ready) {
+          lives_free(themedir);
+          return FALSE;
+        }
         is_OK = FALSE;
       }
     }
@@ -2737,7 +2737,7 @@ static boolean lives_startup(livespointer data) {
 
     mainw->startup_error = FALSE;
 
-    if (theme_expected && palette->style == STYLE_PLAIN && !mainw->foreign) {
+    if (theme_error && !mainw->foreign) {
       // non-fatal errors
       char *tmp2;
       char *err = lives_strdup_printf(
@@ -3209,7 +3209,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   g_log_set_default_handler(lives_log_handler, NULL);
 #endif
 
-  theme_expected = pre_init();
+  theme_error = pre_init();
 
   // mainw->foreign is set if we are grabbing an external window
   mainw->foreign = FALSE;

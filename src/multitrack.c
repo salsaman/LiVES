@@ -6201,6 +6201,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   const char *mtext;
 
   boolean in_menubar = TRUE;
+  boolean woat = widget_opts.apply_theme;
 
   char *cname, *tname, *msg;
   char *tmp, *tmp2;
@@ -7900,7 +7901,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->timecode = lives_standard_entry_new(NULL, NULL, TIMECODE_LENGTH, TIMECODE_LENGTH, LIVES_BOX(hbox), NULL);
   widget_opts.font_size = LIVES_FONT_SIZE_MEDIUM;
   lives_widget_set_valign(mt->timecode, LIVES_ALIGN_CENTER);
-  widget_opts.apply_theme = TRUE;
+  widget_opts.apply_theme = woat;
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
@@ -10787,7 +10788,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   if (prefs->mt_enter_prompt && mainw->stored_event_list == NULL && prefs->show_gui && !(mainw->recoverable_layout &&
       prefs->startup_interface == STARTUP_CE)) {
-    if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
     // WARNING:
     rdet = create_render_details(3); // WARNING !! - rdet is global in events.h
     rdet->enc_changed = FALSE;
@@ -10919,8 +10919,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   if (prefs->show_gui) block_expose();
-
-  if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
 
   ///////// CREATE MULTITRACK CONTENTS ////////////
   multi = multitrack(event_list, orig_file, cfile->fps); // also frees rdet

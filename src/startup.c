@@ -60,8 +60,6 @@ boolean do_workdir_query(void) {
 
   char *dirname;
 
-  widget_opts.apply_theme = TRUE;
-
 top:
   renamew = create_rename_dialog(6);
 
@@ -141,7 +139,6 @@ top:
 
   lives_free(dirname);
 
-  widget_opts.apply_theme = FALSE;
   return TRUE;
 }
 
@@ -187,8 +184,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
   char *txt0, *txt1, *txt2, *txt3, *txt4, *txt5, *txt6, *msg;
 
   int response;
-
-  widget_opts.apply_theme = TRUE;
 
   if (startup_phase == 2) {
     txt0 = lives_strdup(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
@@ -330,7 +325,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
   response = lives_dialog_run(LIVES_DIALOG(dialog));
 
   lives_widget_destroy(dialog);
-  widget_opts.apply_theme = FALSE;
 
   if (!is_realtime_aplayer(prefs->audio_player)) {
     lives_widget_hide(mainw->vol_toolitem);
@@ -451,8 +445,6 @@ boolean do_startup_tests(boolean tshoot) {
   int current_file = mainw->current_file;
 
   int out_fd, info_fd;
-
-  if (!tshoot) widget_opts.apply_theme = TRUE;
 
   allpassed = TRUE;
 
@@ -611,7 +603,6 @@ boolean do_startup_tests(boolean tshoot) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
 
-    if (!tshoot) widget_opts.apply_theme = FALSE;
     return FALSE;
   }
 
@@ -651,7 +642,6 @@ boolean do_startup_tests(boolean tshoot) {
         mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
       }
 
-      if (!tshoot) widget_opts.apply_theme = FALSE;
       return FALSE;
     }
   } else {
@@ -779,7 +769,6 @@ boolean do_startup_tests(boolean tshoot) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
 
-    if (!tshoot) widget_opts.apply_theme = FALSE;
     return FALSE;
   }
 
@@ -883,8 +872,6 @@ boolean do_startup_tests(boolean tshoot) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 
-  if (!tshoot) widget_opts.apply_theme = FALSE;
-
   return (response == LIVES_RESPONSE_OK);
 }
 
@@ -897,8 +884,6 @@ void do_startup_interface_query(void) {
   LiVESWidget *hbox;
   LiVESSList *radiobutton_group = NULL;
   char *txt1, *txt2, *txt3, *msg;
-
-  widget_opts.apply_theme = TRUE;
 
   txt1 = lives_strdup(_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
   txt2 = lives_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
@@ -956,7 +941,6 @@ void do_startup_interface_query(void) {
 
   lives_widget_destroy(dialog);
   lives_widget_process_updates(mainw->LiVES, TRUE);
-  widget_opts.apply_theme = FALSE;
 }
 
 

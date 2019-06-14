@@ -1060,10 +1060,9 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     return;
   }
 
-  if (mainw->playing_file != mainw->ascrap_file) {
-    if IS_VALID_CLIP(mainw->playing_file) mainw->files[mainw->playing_file]->aseek_pos += rbytes;
-    if (mainw->ascrap_file != -1 && !mainw->record_paused) mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
-  } else if (mainw->ascrap_file != -1 && !mainw->record_paused) mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
+  if (mainw->playing_file != mainw->ascrap_file && IS_VALID_CLIP(mainw->playing_file))
+    mainw->files[mainw->playing_file]->aseek_pos += rbytes;
+  if (mainw->ascrap_file != -1 && !mainw->record_paused) mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
 
   pulsed->seek_pos += rbytes;
 

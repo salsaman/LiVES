@@ -1119,12 +1119,11 @@ static int audio_read(nframes_t nframes, void *arg) {
   rbytes = audio_read_inner(jackd, in_buffer, jackd->playing_file, nframes, out_scale, jackd->reverse_endian,
                             out_unsigned, rbytes);
 
-  if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && mainw->ascrap_file != -1 && mainw->playing_file > 0 &&
-      IS_VALID_CLIP(mainw->playing_file)) {
+  if (mainw->playing_file != mainw->ascrap_file && IS_VALID_CLIP(mainw->playing_file))
     mainw->files[mainw->playing_file]->aseek_pos += rbytes;
-    if (!mainw->record_paused && mainw->ascrap_file != mainw->playing_file) mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
-    jackd->seek_pos += rbytes;
-  }
+  if (mainw->ascrap_file != -1 && !mainw->record_paused) mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
+
+  jackd->seek_pos += rbytes;
 
   pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
 

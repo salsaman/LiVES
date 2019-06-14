@@ -5233,8 +5233,10 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
                                LiVESWidget **spfps, double deffps, boolean add_aspect, LiVESWidget *extra) {
   // add video options to multitrack enter, etc
   LiVESWidget *vbox, *hbox;
-
   LiVESWidget *frame = lives_standard_frame_new(_("Video"), 0., FALSE);
+
+  double width_step = 4.;
+  double height_step = 4.;
 
   vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(frame), vbox);
@@ -5243,10 +5245,14 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   *spwidth = lives_standard_spin_button_new
-             (_("_Width"), defwidth, 4., MAX_FRAME_WIDTH, 4., 16., 0, LIVES_BOX(hbox), NULL);
+             (_("_Width"), defwidth, width_step, MAX_FRAME_WIDTH, width_step, width_step, 0, LIVES_BOX(hbox), NULL);
+  lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(*spwidth), width_step);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(*spwidth));
 
   *spheight = lives_standard_spin_button_new
-              (_("_Height"), defheight, 4., MAX_FRAME_WIDTH, 4., 16., 0, LIVES_BOX(hbox), NULL);
+              (_("_Height"), defheight, height_step, MAX_FRAME_WIDTH, height_step, height_step, 0, LIVES_BOX(hbox), NULL);
+  lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(*spheight), height_step);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(*spheight));
 
   // add aspect button ?
   if (add_aspect && CURRENT_CLIP_IS_VALID) {
@@ -5380,9 +5386,9 @@ render_details *create_render_details(int type) {
 
   rdet->is_encoding = FALSE;
 
-  if (type != 1 && type != 4) {
-    rdet->height = prefs->mt_def_height;
+  if ((type != 1 && type != 4) || !IS_VALID_CLIP(mainw->current_file) || mainw->current_file == mainw->scrap_file) {
     rdet->width = prefs->mt_def_width;
+    rdet->height = prefs->mt_def_height;
     rdet->fps = prefs->mt_def_fps;
     rdet->ratio_fps = FALSE;
 
@@ -5391,8 +5397,8 @@ render_details *create_render_details(int type) {
     rdet->asamps = prefs->mt_def_asamps;
     rdet->aendian = prefs->mt_def_signed_endian;
   } else {
-    rdet->height = cfile->vsize;
     rdet->width = cfile->hsize;
+    rdet->height = cfile->vsize;
     rdet->fps = cfile->fps;
     rdet->ratio_fps = cfile->ratio_fps;
 

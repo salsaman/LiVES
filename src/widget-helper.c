@@ -132,7 +132,9 @@ static void button_state_cb(LiVESObject *object, livespointer pspec, livespointe
       default_changed_cb(object, NULL, NULL);
     return;
   }
+
   widget_opts.apply_theme = TRUE;
+
   if (LIVES_IS_TOOL_BUTTON(widget)) {
     LiVESWidget *label;
     LiVESWidget *icon = gtk_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(widget));

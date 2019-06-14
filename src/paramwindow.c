@@ -550,9 +550,11 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     width_step = 4;
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_HSTEP)) width_step = weed_get_int_value(tmpl, WEED_LEAF_HSTEP, &error);
 
-    spinbuttonw = lives_standard_spin_button_new(_("_Width"), def_width, 4., max_width, width_step,
-                  width_step * 4, 0,
+    spinbuttonw = lives_standard_spin_button_new(_("_Width"), def_width, width_step, max_width, width_step,
+                  width_step, 0,
                   LIVES_BOX(hbox), NULL);
+    lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbuttonw), width_step);
+    lives_spin_button_update(LIVES_SPIN_BUTTON(spinbuttonw));
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbuttonw), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(gen_width_changed),
@@ -572,9 +574,11 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     height_step = 4;
     if (weed_plant_has_leaf(tmpl, WEED_LEAF_VSTEP)) height_step = weed_get_int_value(tmpl, WEED_LEAF_VSTEP, &error);
 
-    spinbuttonh = lives_standard_spin_button_new(_("_Height"), def_height, 4., max_height, height_step,
-                  height_step * 4, 0,
+    spinbuttonh = lives_standard_spin_button_new(_("_Height"), def_height, height_step, max_height, height_step,
+                  height_step, 0,
                   LIVES_BOX(hbox), NULL);
+    lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbuttonh), height_step);
+    lives_spin_button_update(LIVES_SPIN_BUTTON(spinbuttonh));
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbuttonh), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(gen_height_changed),

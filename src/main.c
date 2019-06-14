@@ -642,7 +642,7 @@ static boolean pre_init(void) {
   if (!set_palette_colours(FALSE)) {
     lives_snprintf(prefs->theme, 64, "none");
     set_palette_colours(FALSE);
-  }
+  } else if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
 
   get_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device, PATH_MAX);
   prefs->warning_mask = (uint32_t)get_int_pref(PREF_LIVES_WARNING_MASK);
@@ -2713,7 +2713,6 @@ static boolean lives_startup(livespointer data) {
 
     splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
 
-    if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
     create_LiVES();
 
     set_interactive(mainw->interactive);
@@ -7220,7 +7219,7 @@ void load_frame_image(int frame) {
         mainw->first_free_file = mainw->current_file;
 
       if (!mainw->only_close) {
-        if (file_to_switch_to > 0 && mainw->files[file_to_switch_to] != NULL) {
+        if (IS_VALID_CLIP(file_to_switch_to)) {
           if (mainw->playing_file == -1) {
             switch_to_file((mainw->current_file = 0), file_to_switch_to);
             d_print("");

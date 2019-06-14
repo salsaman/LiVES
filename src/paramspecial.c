@@ -244,9 +244,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
     }
 
     if (param == aspect.width_param) {
-      lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(param->widgets[0]), 4.);
-      if (CURRENT_CLIP_IS_VALID) lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)cfile->hsize);
-      lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
       aspect.width_func = lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(after_aspect_width_changed),
                           NULL);
@@ -254,9 +251,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
     }
 
     if (param == aspect.height_param) {
-      lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(param->widgets[0]), 4.);
-      if (CURRENT_CLIP_IS_VALID) lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)cfile->vsize);
-      lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
       aspect.height_func = lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_aspect_height_changed),
                            NULL);
@@ -447,7 +441,7 @@ void special_cleanup(void) {
 }
 
 
-void set_aspect_ratio_widgets(lives_param_t *w, lives_param_t *h) {
+LIVES_GLOBAL_INLINE void set_aspect_ratio_widgets(lives_param_t *w, lives_param_t *h) {
   aspect.width_param = w;
   aspect.height_param = h;
 }

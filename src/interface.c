@@ -3707,7 +3707,9 @@ const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width,
 
   aspect_width.widgets[0] = (LiVESWidget *)sp_width;
   aspect_height.widgets[0] = (LiVESWidget *)sp_height;
+
   set_aspect_ratio_widgets(&aspect_width, &aspect_height);
+
   check_for_special(NULL, &aspect_width, box);
   check_for_special(NULL, &aspect_height, box);
 
@@ -3766,6 +3768,9 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   LiVESWidget *radiobutton_smallest;
   LiVESWidget *radiobutton_largest;
   LiVESWidget *radiobutton_choose;
+
+  double width_step = 4.;
+  double height_step = 4.;
 
   char *fname;
 
@@ -3938,10 +3943,14 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   add_fill_to_box(LIVES_BOX(hbox));
 
   spinbutton_width = lives_standard_spin_button_new(_("_Width"), CURRENT_CLIP_HAS_VIDEO ? cfile->hsize : DEF_GEN_WIDTH,
-                     4., 100000., 4., 16., 0., LIVES_BOX(hbox), NULL);
+                     width_step, 100000., width_step, width_step, 0, LIVES_BOX(hbox), NULL);
+  lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbutton_width), width_step);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton_width));
 
   spinbutton_height = lives_standard_spin_button_new(_("X        _Height"), CURRENT_CLIP_HAS_VIDEO ? cfile->vsize : DEF_GEN_HEIGHT,
-                      4., 100000., 4., 16., 0., LIVES_BOX(hbox), NULL);
+                      height_step, 100000., height_step, height_step, 0, LIVES_BOX(hbox), NULL);
+  lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbutton_height), height_step);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton_height));
 
   label = lives_standard_label_new(_("    pixels"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);

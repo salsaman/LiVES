@@ -589,7 +589,6 @@ typedef struct {
 
   lives_toy_t toy_type;
   lives_pgid_t alives_pgid; // 0, or procid for autolives
-  boolean autolives_reset_fx;
 
   boolean toy_go_wild;
 

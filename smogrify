@@ -3591,7 +3591,7 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		}
-		$is_audio = TRUE;
+		$is_audio = 1;
 		&get_file_info;
 		if ($panic) {
 		    unlink "$pidfile";
@@ -7659,7 +7659,10 @@ sub rc_set {
             if ($priority==1) {
 		#if $priority was 1 we set it as first
                 $priority=2;
+		close IN;
+		close OUT;
                 &rc_set("$key","$value");
+		return;
             }
             else {
 		# otherwise set it as last

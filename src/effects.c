@@ -24,6 +24,7 @@
 #endif
 
 #include "effects.h"
+#include "effects-weed.h"
 #include "interface.h"
 #include "paramwindow.h"
 #include "support.h"
@@ -975,6 +976,10 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
 boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // this is the callback which happens when a rte is keyed
+  // key is 1 based, but if < 0 then this indicates auto mode (set via data connection)
+  // in automode we don't add the effect parameters in ce_thumbs mode
+  // if non-automode, the user overrides effect toggling
+
   int key = LIVES_POINTER_TO_INT(user_data);
   uint64_t new_rte;
 
@@ -1048,7 +1053,6 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
   }
 
   mainw->osc_block = FALSE;
-  mainw->fx_is_auto = FALSE;
 
   if (mainw->current_file > 0 && cfile->play_paused && !mainw->noswitch) {
     load_frame_image(cfile->frameno);
@@ -1070,6 +1074,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
     end_override_if_activate_output(key);
   }
 
+  mainw->fx_is_auto = FALSE;
   return TRUE;
 }
 
@@ -1161,3 +1166,63 @@ boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
 }
 
 //////////////////////////////////////////////////////////////
+
+
+LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key) {
+  // key starts at 1
+  return !((mainw->rte & (GU641 << --key)) == 0ll);
+}
+
+
+LIVES_GLOBAL_INLINE int rte_getmodespk(void) {
+  return prefs->max_modes_per_key;
+}
+
+
+LIVES_GLOBAL_INLINE boolean rte_key_toggle(int key) {
+  // key is 1 based, or < 0 for auto mode
+  rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
+  if (key < 0) key = -key;
+  return rte_key_is_enabled(key);
+}
+
+
+LIVES_GLOBAL_INLINE void rte_keys_reset(void) {
+  // switch off all realtime effects
+  rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(EFFECT_NONE));
+}
+
+
+static int backup_key_modes[FX_KEYS_MAX_VIRTUAL];
+static uint64_t backup_rte = 0;
+
+void rte_keymodes_backup(int nkeys) {
+  // backup the current key/mode state
+  int i;
+
+  backup_rte = mainw->rte;
+
+  for (i = 0; i < nkeys; i++) {
+    backup_key_modes[i] = rte_key_getmode(i + 1);
+  }
+}
+
+
+void rte_keymodes_restore(int nkeys) {
+  int i;
+
+  rte_keys_reset();
+  mainw->rte = backup_rte;
+
+  for (i = 0; i < nkeys; i++) {
+    // set the mode
+    rte_key_setmode(i + 1, backup_key_modes[i]);
+    // activate the key
+    if ((mainw->rte & GU641 << (i)) != 0) rte_key_toggle(i + 1);
+  }
+  if (mainw->rte_keys != -1) {
+    filter_mutex_lock(mainw->rte_keys);
+    mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
+    filter_mutex_unlock(mainw->rte_keys);
+  }
+}

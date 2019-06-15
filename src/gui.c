@@ -2206,6 +2206,7 @@ void create_LiVES(void) {
   mainw->message_box = lives_hbox_new(FALSE, 0);
   if (prefs->show_msg_area)
     lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
+  else lives_object_ref_sink(mainw->message_box);
 
   mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mainw->sw_func);
   lives_widget_set_app_paintable(mainw->msg_area, TRUE);

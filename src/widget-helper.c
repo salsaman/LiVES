@@ -8598,19 +8598,21 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 }
 
 
-LiVESWidget *lives_glowing_check_button_new(const char *labeltext, boolean active, LiVESBox *box,
+LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox *box,
     const char *tooltip, boolean *togglevalue) {
+  boolean active = FALSE;
+  if (togglevalue != NULL) active = *togglevalue;
   LiVESWidget *checkbutton = lives_standard_check_button_new(labeltext, active, box, tooltip);
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(lives_cool_toggled),
-                             &togglevalue);
+                             togglevalue);
 
   if (prefs->lamp_buttons) {
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(checkbutton), FALSE);
     if (widget_opts.apply_theme) {
       lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
       lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
-      lives_cool_toggled(checkbutton, &togglevalue);
+      lives_cool_toggled(checkbutton, togglevalue);
 #ifdef NO_ALT_VALUES
       lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                            LIVES_GUI_CALLBACK(draw_cool_toggle),

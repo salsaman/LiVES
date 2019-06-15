@@ -99,7 +99,7 @@ static void switch_fx_state(int okey, int hotkey) {
   }
 
   // use -hotkey to indicate auto
-  rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(-hotkey));
+  rte_key_toggle(-hotkey);
 
   if (relock_hotkey) filter_mutex_lock(hotkey - 1);
   if (relock_okey) filter_mutex_lock(okey);
@@ -1924,7 +1924,6 @@ static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int 
           // add in order key/mode/chan
           if (cconx->ikey[j] > ikey || (cconx->ikey[j] == ikey && cconx->imode[j] > imode) ||
               (cconx->ikey[j] == ikey && cconx->imode[j] == imode && cconx->icnum[j] > icnum)) break;
-
         }
 
         posn = j; // we will insert here
@@ -1950,7 +1949,6 @@ static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int 
 
         return;
       }
-
     }
 
     // so, we have data for key/mode but this is a new channel to be mapped
@@ -2569,7 +2567,6 @@ static void acbutton_clicked(LiVESButton *button, livespointer user_data) {
       if (!has_alpha_palette(chan)) continue;
       if (i == conxwp->idx[ours]) break;
     }
-
   }
 
   // set all ccombo with chans
@@ -2917,7 +2914,6 @@ static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
   conxwp->acheck_func = (ulong *)lives_realloc(conxwp->acheck_func, totparams * sizeof(ulong));
 
   conxwp->acheck = (LiVESWidget **)lives_realloc(conxwp->acheck, totparams * sizeof(LiVESWidget *));
-
 }
 
 
@@ -3028,7 +3024,6 @@ static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
     conxwp->idx[i + 1] = conxwp->idx[i];
 
     conxwp->dpc_func[i + 1] = conxwp->dpc_func[i];
-
   }
 
   ctable_row_add_variable_widgets(conxwp, ours + 1, ours + 2, cidx);
@@ -3040,7 +3035,6 @@ static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
   lives_widget_set_sensitive(conxwp->del_button[ours + 1], TRUE);
 
   lives_widget_show_all(conxwp->tablec);
-
 }
 
 
@@ -3190,7 +3184,6 @@ static void cdel_clicked(LiVESWidget *button, livespointer user_data) {
   conxwp->ccombo = (LiVESWidget **)lives_realloc(conxwp->ccombo, totchans * sizeof(LiVESWidget *));
 
   conxwp->dpc_func = (ulong *)lives_realloc(conxwp->dpc_func, totchans * sizeof(ulong));
-
 }
 
 
@@ -3265,7 +3258,6 @@ static void dfxc_changed(LiVESWidget *combo, livespointer user_data) {
   lives_widget_set_sensitive(conxwp->ccombo[ours], TRUE);
 
   lives_list_free_all(&clist);
-
 }
 
 
@@ -3433,7 +3425,6 @@ static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
   lives_widget_set_sensitive(conxwp->pcombo[ours], TRUE);
 
   lives_list_free_all(&plist);
-
 }
 
 
@@ -3567,15 +3558,20 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
   if (idx == -1) {
     // connection deleted
     if (setup) return;
-    for (i = 0; i < nchans; i++) if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i])) > -1) {
+    for (i = 0; i < nchans; i++) {
+      if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i])) > -1) {
         hasone = TRUE;
         break;
       }
-    if (!hasone) for (i = 0; i < nparams;
-                        i++) if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[i]), "idx")) > -1) {
+    }
+    if (!hasone) {
+      for (i = 0; i < nparams; i++) {
+        if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[i]), "idx")) > -1) {
           hasone = TRUE;
           break;
         }
+      }
+    }
 
     if (!hasone) lives_widget_set_sensitive(conxwp->disconbutton, FALSE);
 
@@ -3765,15 +3761,18 @@ static void dpc_changed(LiVESWidget *combo, livespointer user_data) {
   cidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "cidx"));
 
   if (idx == -1) {
-    for (i = 0; i < nchans; i++) if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i])) > -1) {
+    for (i = 0; i < nchans; i++) {
+      if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i])) > -1) {
         hasone = TRUE;
         break;
       }
-    if (!hasone) for (i = 0; i < nparams;
-                        i++) if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[i]), "idx")) > -1) {
+    }
+    if (!hasone) for (i = 0; i < nparams; i++) {
+        if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[i]), "idx")) > -1) {
           hasone = TRUE;
           break;
         }
+      }
 
     if (!hasone) lives_widget_set_sensitive(conxwp->disconbutton, FALSE);
 
@@ -4114,7 +4113,6 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->acheck[idx]), "pidx", LIVES_INT_TO_POINTER(pidx));
   }
-
 }
 
 
@@ -4165,7 +4163,6 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
                           LIVES_GUI_CALLBACK(dpc_changed), (livespointer)conxwp);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[idx]), "cidx", LIVES_INT_TO_POINTER(cidx));
-
 }
 
 
@@ -4208,7 +4205,6 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
                        (livespointer)conxwp);
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
-
 }
 
 
@@ -4251,7 +4247,6 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
                        (livespointer)conxwp);
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
-
 }
 
 
@@ -4317,7 +4312,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
   fname = weed_get_string_value(conxwp->filter, WEED_LEAF_NAME, &error);
 
   if (conxwp->num_alpha > 0) {
-
     weed_plant_t **ochans = weed_get_plantptr_array(conxwp->filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
 
     conxwp->dpc_func = (ulong *)lives_malloc(totchans * sizeof(ulong));
@@ -4353,7 +4347,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
       isfirst = TRUE;
 
       do {
-
         ctable_row_add_variable_widgets(conxwp, x, conxwp->trowsc - 1, i);
 
         ctable_row_add_standard_widgets(conxwp, x);
@@ -4377,7 +4370,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
     }
 
     lives_free(ochans);
-
   }
 
   if (conxwp->num_alpha > 0 && conxwp->num_params > 0) {
@@ -4608,7 +4600,6 @@ iter_found:
 
 
 static boolean show_existing(lives_conx_w *conxwp) {
-
   lives_cconnect_t *cconx = conxwp->cconx;
   lives_pconnect_t *pconx = conxwp->pconx;
 
@@ -4735,13 +4726,11 @@ show_ex_params:
       acheck = conxwp->acheck[l];
 
       if (acheck != NULL) {
-
         lives_widget_set_sensitive(acheck, TRUE);
 
         lives_signal_handler_block(acheck, conxwp->acheck_func[l]);
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck), pconx->autoscale[j]);
         lives_signal_handler_unblock(acheck, conxwp->acheck_func[l]);
-
       }
 
       ipnum = pconx->ipnum[j];

@@ -49,7 +49,7 @@ typedef enum {
   AF_TYPE_NONA
 } lives_af_t;
 
-char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) WARN_UNUSED;
+char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) WARN_UNUSED GNU_CONST;
 
 #include "effects-weed.h"
 
@@ -85,5 +85,16 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc);
 weed_plant_t *on_rte_apply(weed_plant_t *main_layer, int opwidth, int opheight, weed_timecode_t tc);
 
 void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc);
+
+// rte keys state
+void rte_keymodes_backup(int nkeys);
+void rte_keymodes_restore(int nkeys);
+
+boolean rte_key_toggle(int key);
+void rte_keys_reset(void);
+
+boolean rte_key_is_enabled(int key);
+
+int rte_getmodespk(void);
 
 #endif

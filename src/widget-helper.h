@@ -871,15 +871,13 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *r
 LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invisible_outline);
 
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean active, LiVESBox *, const char *tooltip);
-LiVESWidget *lives_glowing_check_button_new(const char *labeltext, boolean active, LiVESBox *box,
-    const char *tooltip, boolean *togglevalue);
+LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox *, const char *tooltip, boolean *togglevalue);
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList **rbgroup,
     LiVESBox *, const char *tooltip);
 LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, double min,
     double max, double step, double page, int dp, LiVESBox *,
     const char *tooltip);
-LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, LiVESBox *,
-                                      const char *tooltip);
+LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, LiVESBox *, const char *tooltip);
 
 LiVESWidget *lives_standard_combo_new_with_model(LiVESTreeModel *, LiVESBox *);
 

@@ -1,6 +1,6 @@
 // bindings.h
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman@gmail.com> 2015
+// (c) G. Finch <salsaman@gmail.com> 2015 - 2019
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 

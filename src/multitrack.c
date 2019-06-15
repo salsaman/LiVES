@@ -4151,7 +4151,7 @@ void mt_spin_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_
       mt->event_list != NULL && get_first_event(mt->event_list) != NULL) {
     lives_mt_poly_state_t statep = get_poly_state_from_page(mt);
     if (mt->selected_tracks != NULL) {
-      lives_widget_set_sensitive(mt->split_sel, mt_selblock(LIVES_MENU_ITEM(mt->seldesel_menuitem), (livespointer)mt) != NULL);
+      lives_widget_set_sensitive(mt->split_sel, mt_selblock(NULL, (livespointer)mt) != NULL);
       if (mt->region_start != mt->region_end) {
         lives_widget_set_sensitive(mt->playsel, TRUE);
         lives_widget_set_sensitive(mt->ins_gap_sel, TRUE);
@@ -5965,45 +5965,34 @@ void set_mt_colours(lives_mt *mt) {
       lives_widget_set_fg_color(mt->tl_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
     // needed for gtk+ 2.x
-    lives_widget_set_bg_color(lives_widget_get_parent(mt->insa_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(lives_widget_get_parent(mt->insa_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-    lives_widget_set_bg_color(mt->insa_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mt->insa_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_apply_theme2(lives_widget_get_parent(mt->insa_label), LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(mt->insa_label, LIVES_WIDGET_STATE_NORMAL, TRUE);
 
-    lives_widget_set_bg_color(lives_widget_get_parent(mt->overlap_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(lives_widget_get_parent(mt->overlap_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-    lives_widget_set_bg_color(mt->overlap_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mt->overlap_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_apply_theme2(lives_widget_get_parent(mt->overlap_label), LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(mt->overlap_label, LIVES_WIDGET_STATE_NORMAL, TRUE);
 
     lives_widget_set_bg_color(mt->preview_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-    lives_widget_set_bg_color(mt->btoolbar2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mt->btoolbar2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_apply_theme2(mt->btoolbar2, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, TRUE);
 
-    lives_widget_set_bg_color(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-    lives_widget_set_bg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_apply_theme2(lives_widget_get_parent(mt->grav_label), LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, TRUE);
 
     if (mt->ins_label != NULL) {
-      lives_widget_set_bg_color(mt->ins_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-      lives_widget_set_fg_color(mt->ins_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+      lives_widget_apply_theme2(lives_widget_get_parent(mt->ins_label), LIVES_WIDGET_STATE_NORMAL, TRUE);
+      lives_widget_apply_theme2(mt->ins_label, LIVES_WIDGET_STATE_NORMAL, TRUE);
     }
 
     if (mt->mm_label != NULL) {
-      lives_widget_set_bg_color(mt->mm_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-      lives_widget_set_fg_color(mt->mm_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+      lives_widget_apply_theme2(lives_widget_get_parent(mt->mm_label), LIVES_WIDGET_STATE_NORMAL, TRUE);
+      lives_widget_apply_theme2(mt->mm_label, LIVES_WIDGET_STATE_NORMAL, TRUE);
     }
 
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_normal)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_normal)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_apply_theme2(lives_bin_get_child(LIVES_BIN(mt->grav_normal)), LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(lives_bin_get_child(LIVES_BIN(mt->grav_left)), LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(lives_bin_get_child(LIVES_BIN(mt->grav_right)), LIVES_WIDGET_STATE_NORMAL, TRUE);
 
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_left)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_left)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_right)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_right)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
     lives_widget_set_bg_color(mt->hpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
     lives_widget_set_bg_color(mt->nb, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -7917,8 +7906,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
-  mt->insa_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Insert with _Audio  "))), mt->opts.insert_audio,
-                         LIVES_BOX(hbox),
+  mt->insa_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Insert with _Audio  "))), LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("Select whether video clips are inserted and moved with their audio or not"))), &mt->opts.insert_audio);
   lives_free(tmp);
   lives_free(tmp2);
@@ -7931,8 +7919,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
-  mt->snapo_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Select _Overlap  "))), mt->opts.snap_over,
-                          LIVES_BOX(hbox),
+  mt->snapo_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Select _Overlap  "))), LIVES_BOX(hbox),
                           (tmp2 = lives_strdup(_("Select whether timeline selection snaps to overlap between selected tracks or not"))), &mt->opts.snap_over);
   lives_free(tmp);
   lives_free(tmp2);
@@ -8719,9 +8706,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_signal_connect(LIVES_GUI_OBJECT(mt->msg_area), LIVES_WIDGET_SCROLL_EVENT,
                          LIVES_GUI_CALLBACK(on_msg_area_scroll),
                          (livespointer)mt->msg_adj);
-  }
 
-  lives_paned_pack(2, LIVES_PANED(mt->vpaned), mt->message_box, TRUE, TRUE);
+    lives_paned_pack(2, LIVES_PANED(mt->vpaned), mt->message_box, TRUE, TRUE);
+  } else lives_object_ref_sink(mt->message_box);
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_prevclip), mt, NULL));
@@ -9212,6 +9199,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   if (prefs->show_gui) {
     if (lives_widget_get_parent(mt->top_vbox) != NULL) {
+      lives_object_ref(mt->top_vbox);
       lives_widget_unparent(mt->top_vbox);
       lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
       lives_object_unref(mainw->top_vbox);
@@ -16436,7 +16424,7 @@ void on_seltrack_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (mt->selected_tracks != NULL) {
     if (mt->event_list != NULL && get_first_event(mt->event_list) != NULL) {
-      lives_widget_set_sensitive(mt->split_sel, mt_selblock(LIVES_MENU_ITEM(mt->seldesel_menuitem), (livespointer)mt) != NULL);
+      lives_widget_set_sensitive(mt->split_sel, mt_selblock(NULL, (livespointer)mt) != NULL);
     }
 
     if (mt->region_start != mt->region_end) {

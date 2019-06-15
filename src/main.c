@@ -1092,7 +1092,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->jack_trans_poll = FALSE;
 
   mainw->alives_pgid = 0;
-  mainw->autolives_reset_fx = FALSE;
 
   mainw->aplayer_broken = FALSE;
 
@@ -1916,13 +1915,14 @@ void do_start_messages(void) {
 
 boolean set_palette_colours(boolean force_reload) {
   // force_reload should only be set when the theme changes in prefs.
-
+  LiVESList *cache_backup = NULL;
   lives_colRGBA64_t lcol;
 
-  char *themedir, *themefile, *fname, *tmp;
+  char *themedir, *themefile, *othemefile, *fname, *tmp;
   char pstyle[8];
 
   boolean is_OK = TRUE;
+  boolean cached = FALSE;
 
   lcol.alpha = 65535;
 
@@ -2102,6 +2102,12 @@ boolean set_palette_colours(boolean force_reload) {
 
     lives_free(themedir);
 
+    // cache the themefile
+    othemefile = themefile;
+    cache_backup = mainw->cached_list;
+    mainw->cached_list = NULL;
+    if ((cached = cache_file_contents(themefile))) themefile = NULL;
+
     // mandatory for themes
 
     if (!is_OK || get_pref_from_file(themefile, THEME_DETAIL_STYLE, pstyle, 8) != LIVES_RESPONSE_NONE) {
@@ -2135,7 +2141,12 @@ boolean set_palette_colours(boolean force_reload) {
     } else lives_rgba_to_widget_color(&palette->info_base, &lcol);
 
     if (!is_OK) {
-      do_bad_theme_error(themefile);
+      if (cached) {
+        lives_list_free_all(&mainw->cached_list);
+        mainw->cached_list = cache_backup;
+        themefile = othemefile;
+      }
+      if (mainw->is_ready) do_bad_theme_error(themefile);
       lives_free(themefile);
       return FALSE;
     }
@@ -2161,6 +2172,12 @@ boolean set_palette_colours(boolean force_reload) {
 
     get_theme_colour_pref(themefile, THEME_DETAIL_CE_SEL, &palette->ce_sel);
     get_theme_colour_pref(themefile, THEME_DETAIL_CE_UNSEL, &palette->ce_unsel);
+
+    if (cached) {
+      lives_list_free_all(&mainw->cached_list);
+      mainw->cached_list = cache_backup;
+      themefile = othemefile;
+    }
 
     lives_free(themefile);
 
@@ -3591,8 +3608,7 @@ LIVES_GLOBAL_INLINE boolean startup_message_nonfatal(const char *msg) {
 
 
 boolean startup_message_choice(const char *msg, int msg_type) {
-  boolean res;
-  res = do_yesno_dialog(msg);
+  boolean res = do_yesno_dialog(msg);
   if (res && msg_type == 2) {
     // do chmod
     char *mode = lives_strdup_printf("-R %o", capable->umask);

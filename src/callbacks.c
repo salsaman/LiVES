@@ -8355,7 +8355,7 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   // TODO: allow mapping of change types to random ranges in the backend
   // TODO: allow user selection of all ports
 #ifdef ENABLE_OSC
-  autolives_window *alwindow;
+  autolives_window *alwindow = NULL;
   int trigtime;
   char *apb;
   char *mute;
@@ -8364,31 +8364,28 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
 #ifndef IS_MINGW
   char string[PATH_MAX];
 #endif
-  char *com;
+  char *com = NULL;
 
   if (mainw->alives_pgid > 0) {
+    // already running, kill the old process
     lives_killpg(mainw->alives_pgid, LIVES_SIGHUP);
     mainw->alives_pgid = 0;
 
-    // switch off rte so as not to cause alarm
-    if (mainw->autolives_reset_fx)
-      rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(0));
-    mainw->autolives_reset_fx = FALSE;
-    return;
+    // restore pre-playback rte state
+    rte_keymodes_restore(prefs->rte_keys_virtual);
+    goto autolives_fail;
   }
 
   if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->autolives))) return;
 
-  if (mainw->current_file < 1) {
+  if (!CURRENT_CLIP_IS_VALID) {
     do_autolives_needs_clips_error();
-    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
-    return;
+    goto autolives_fail;
   }
 
-  if ((CURRENT_CLIP_IS_VALID && (cfile->event_list != NULL || cfile->opening)) || mainw->multitrack != NULL || mainw->is_processing ||
-      mainw->preview) {
+  if (cfile->event_list != NULL || cfile->opening || mainw->multitrack != NULL || mainw->is_processing || mainw->preview) {
     // ignore if doing something more important
-    return;
+    goto autolives_fail;
   }
 
 #ifndef IS_MINGW
@@ -8398,23 +8395,35 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
     if (strlen(string)) capable->has_autolives = TRUE;
     else {
       do_no_autolives_error();
-      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
-      return;
+      goto autolives_fail;
     }
   }
 #endif
 
   alwindow = autolives_pre_dialog();
   if (alwindow == NULL) {
-    return;
+    goto autolives_fail;
   }
   if (lives_dialog_run(LIVES_DIALOG(alwindow->dialog)) == LIVES_RESPONSE_CANCEL) {
-    lives_widget_destroy(alwindow->dialog);
-    lives_free(alwindow);
-    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
-    return;
+    // user cancelled
+    goto autolives_fail;
   }
 
+  // check if osc is started; if not ask permission
+  if (!prefs->osc_udp_started) {
+    if (!lives_ask_permission(LIVES_PERM_OSC_PORTS)) {
+      // permission not given
+      goto autolives_fail;
+    }
+
+    // try: start up osc
+    prefs->osc_udp_started = lives_osc_init(prefs->osc_udp_port);
+    if (!prefs->osc_udp_started) {
+      goto autolives_fail;
+    }
+  }
+
+  // build the command to run
   trigtime = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(alwindow->atrigger_spin));
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(alwindow->apb_button))) apb = lives_strdup(" -waitforplay");
   else apb = lives_strdup("");
@@ -8435,26 +8444,8 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_destroy(alwindow->dialog);
   lives_free(alwindow);
 
-  // check if osc is started; if not ask permission
-  if (!prefs->osc_udp_started) {
-    if (!lives_ask_permission(LIVES_PERM_OSC_PORTS)) {
-      // permission not given
-      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
-      return;
-    }
-
-    // try: start up osc
-    prefs->osc_udp_started = lives_osc_init(prefs->osc_udp_port);
-    if (!prefs->osc_udp_started) {
-      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
-      return;
-    }
-  }
-
-  // TODO *** store full fx state and restore it
-  if (mainw->rte == EFFECT_NONE) {
-    mainw->autolives_reset_fx = TRUE;
-  }
+  // store the current key/mode state
+  rte_keymodes_backup(prefs->rte_keys_virtual);
 
 #ifndef IS_MINGW
   com = lives_strdup_printf("autolives.pl localhost %d %d%s%s%s%s", prefs->osc_udp_port, prefs->osc_udp_port - 1, apb, trigopt, mute, debug);
@@ -8468,7 +8459,17 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(trigopt);
   lives_free(apb);
   lives_free(mute);
-  lives_free(com);
+  if (com != NULL) lives_free(com);
+  return;
+
+autolives_fail:
+  if (alwindow != NULL) {
+    lives_widget_destroy(alwindow->dialog);
+    lives_free(alwindow);
+  }
+
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
+
 #endif
 }
 

@@ -1,6 +1,6 @@
 // lbindings.c
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman+lives@gmail.com> 2015 - 2017
+// (c) G. Finch <salsaman+lives@gmail.com> 2015 - 2019
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -130,7 +130,6 @@ typedef struct {
   int track;
   double time;
 } mblockdata;
-
 
 /////////////////////////////////////////
 /// extern functions with no headers
@@ -262,7 +261,7 @@ boolean start_player(void) {
   *vargs = lives_strdup(",");
   arglen = padup(vargs, arglen);
 
-  // this will set our idlefunc and return
+  // this will set our idlefunc and return (TODO: don't set osc_auto)
   ret = lives_osc_cb_play(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
   if (ret) {
     while (!mainw->error && mainw->playing_file < 0) lives_usleep(prefs->sleep_time);
@@ -282,13 +281,13 @@ enum {
 };
 
 
-inline int trans_rev(int consta, int a, int b) {
+LIVES_LOCAL_INLINE int trans_rev(int consta, int a, int b) {
   if (consta == a) return b;
   else return consta;
 }
 
 
-int trans_constant(int consta, int domain) {
+static int trans_constant(int consta, int domain) {
   int nconsta;
   if (domain == const_domain_notify) {
     nconsta = trans_rev(consta, LIVES_CALLBACK_FRAME_SYNCH, LIVES_OSC_NOTIFY_FRAME_SYNCH);
@@ -876,7 +875,6 @@ static boolean call_render_layout(livespointer data) {
 }
 
 
-
 static boolean call_reload_layout(livespointer data) {
   msginfo *mdata = (msginfo *)data;
   boolean resp = FALSE;
@@ -923,8 +921,6 @@ static boolean call_save_layout(livespointer data) {
   lives_free(mdata);
   return resp;
 }
-
-
 
 
 static boolean call_set_current_fps(livespointer data) {
@@ -1075,7 +1071,6 @@ static boolean call_insert_block(livespointer data) {
 }
 
 
-
 static boolean call_remove_block(livespointer data) {
   mblockdata *rdata = (mblockdata *)data;
 
@@ -1128,20 +1123,21 @@ static boolean call_fx_enable(livespointer data) {
         else {
           int count = enabled_in_channels(filter, FALSE);
           if (mainw->playing_file == -1 && count == 0) {
+            // TODO: use osc, but don't set osc_auto
             // return value first because...
             ext_caller_return_int(fxdata->id, (int)TRUE);
             // ...we are going to hang here until playback ends
-            ret = rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(effect_key));
+            ret = rte_key_toggle(effect_key);
             return FALSE;
           } else {
-            ret = rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(effect_key));
+            ret = rte_key_toggle(effect_key);
             mainw->last_grabbable_effect = grab;
           }
         }
       }
     } else {
       if (mainw->rte & (GU641 << (effect_key - 1))) {
-        ret = rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(effect_key));
+        ret = rte_key_toggle(effect_key);
       }
     }
   }

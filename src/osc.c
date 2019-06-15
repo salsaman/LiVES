@@ -70,7 +70,7 @@ static boolean osc_playsel(livespointer data) {
 static boolean osc_init_generator(livespointer data) {
   // do this via an idle function, as it will trigger playback and hang
   mainw->osc_auto = 1; ///< request notifiction of success
-  rte_on_off_callback_hook(NULL, data);
+  rte_key_toggle(LIVES_POINTER_TO_INT(data));
   mainw->osc_auto = 0;
   return FALSE;
 }
@@ -783,7 +783,7 @@ boolean lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *varg
 
 
 boolean lives_osc_cb_fx_reset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (!mainw->osc_block) rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(0));
+  if (!mainw->osc_block) rte_keys_reset();
   return lives_osc_notify_success(NULL);
 }
 
@@ -801,6 +801,7 @@ boolean lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTim
   if (!lives_osc_check_arguments(arglen, vargs, "is", TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs, &effect_key);
   lives_osc_parse_string_argument(vargs, effect_name);
+  if (effect_key < 1 || effect_key >= prefs->rte_keys_virtual) return lives_osc_notify_failure();
   if (!mainw->osc_block) {
     weed_add_effectkey(effect_key, effect_name, FALSE); // allow partial matches
     return lives_osc_notify_success(NULL);
@@ -843,7 +844,7 @@ static boolean osc_fx_on(int effect_key) {
     lives_timer_add(0, osc_init_generator, LIVES_INT_TO_POINTER(effect_key));
     return TRUE;
   } else {
-    rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(effect_key));
+    rte_key_toggle(effect_key);
     mainw->last_grabbable_effect = grab;
   }
   return lives_osc_notify_success(NULL);
@@ -857,6 +858,7 @@ boolean lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSC
   if (mainw->multitrack != NULL) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs, &effect_key);
+  if (effect_key < 1 || effect_key >= prefs->rte_keys_virtual) return lives_osc_notify_failure();
 
   if (!mainw->osc_block) {
     if (!(mainw->rte & (GU641 << (effect_key - 1)))) {
@@ -873,10 +875,14 @@ boolean lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OS
   if (mainw->multitrack != NULL) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs, &effect_key);
+  if (effect_key < 1 || effect_key >= prefs->rte_keys_virtual) return lives_osc_notify_failure();
   if (mainw->rte & (GU641 << (effect_key - 1))) {
-    if (!mainw->osc_block) rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(effect_key));
+    if (!mainw->osc_block) {
+      rte_key_toggle(effect_key);
+      return lives_osc_notify_success(NULL);
+    }
   }
-  return lives_osc_notify_success(NULL);
+  return lives_osc_notify_failure();
 }
 
 
@@ -886,12 +892,13 @@ boolean lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSC
   if (mainw->multitrack != NULL) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs, &effect_key);
+  if (effect_key < 1 || effect_key >= prefs->rte_keys_virtual) return lives_osc_notify_failure();
 
   if (!(mainw->rte & (GU641 << (effect_key - 1)))) {
     return osc_fx_on(effect_key);
   }
 
-  if (!mainw->osc_block) rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(effect_key));
+  if (!mainw->osc_block) rte_key_toggle(effect_key);
 
   return lives_osc_notify_success(NULL);
 }

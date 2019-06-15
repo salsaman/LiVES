@@ -2737,7 +2737,6 @@ void load_default_keymap(void) {
       }
 
       lives_cp(keymap_template, keymap_file);
-
     }
     if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
       // give up

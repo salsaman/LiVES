@@ -1001,11 +1001,6 @@ boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pla
 }
 
 
-LIVES_INLINE boolean rte_key_is_enabled(int key) {
-  return !((mainw->rte & (GU641 << --key)) == 0ll);
-}
-
-
 static void create_filter_map(uint64_t rteval) {
   /** here we create an effect map which defines the order in which effects are applied to a frame stack
    * this is done during recording, the keymap is from mainw->rte which is a bitmap of effect keys
@@ -9040,6 +9035,7 @@ boolean weed_delete_effectkey(int key, int mode) {
 /////////////////////////////////////////////////////////////////////////////
 
 boolean rte_key_valid(int key, boolean is_userkey) {
+  // key is 1 based
   key--;
 
   if (key < 0 || (is_userkey && key >= FX_KEYS_MAX_VIRTUAL) || key >= FX_KEYS_MAX) return FALSE;
@@ -9049,6 +9045,7 @@ boolean rte_key_valid(int key, boolean is_userkey) {
 
 
 boolean rte_keymode_valid(int key, int mode, boolean is_userkey) {
+  // key is 1 based
   if (key < 1 || (is_userkey && key > FX_KEYS_MAX_VIRTUAL) || key > FX_KEYS_MAX || mode < 0 ||
       mode >= (key < FX_KEYS_MAX_VIRTUAL ? prefs->max_modes_per_key : 1)) return FALSE;
   if (key_to_fx[--key][mode] == -1) return FALSE;
@@ -9057,6 +9054,7 @@ boolean rte_keymode_valid(int key, int mode, boolean is_userkey) {
 
 
 int rte_keymode_get_filter_idx(int key, int mode) {
+  // key is 1 based
   if (key < 1 || key > FX_KEYS_MAX || mode < 0 ||
       mode >= (key < FX_KEYS_MAX_VIRTUAL ? prefs->max_modes_per_key : 1)) return -1;
   return (key_to_fx[--key][mode]);
@@ -9064,12 +9062,18 @@ int rte_keymode_get_filter_idx(int key, int mode) {
 
 
 int rte_key_getmode(int key) {
+  // get current active mode for an rte key
+  // key is 1 based
+
   if (key < 1 || key > FX_KEYS_MAX) return -1;
   return key_modes[--key];
 }
 
 
 int rte_key_getmaxmode(int key) {
+  // gets the highest mode with filter mapped for a key
+  // not to be confused with rte_get_modespk() which returns the maximum possible
+
   register int i;
 
   if (key < 1 || key > FX_KEYS_MAX) return -1;
@@ -9099,6 +9103,7 @@ weed_plant_t *rte_keymode_get_instance(int key, int mode) {
 
 
 weed_plant_t *rte_keymode_get_filter(int key, int mode) {
+  // key is 1 based
   key--;
   if (!rte_keymode_valid(key + 1, mode, FALSE)) return NULL;
   return weed_filters[key_to_fx[key][mode]];
@@ -9133,6 +9138,7 @@ char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_par
 
 char *rte_keymode_get_filter_name(int key, int mode) {
   // return value should be lives_free'd after use
+  // key is 1 based
   key--;
   if (!rte_keymode_valid(key + 1, mode, TRUE)) return lives_strdup("");
   return (weed_filter_idx_get_name(key_to_fx[key][mode]));
@@ -9141,6 +9147,7 @@ char *rte_keymode_get_filter_name(int key, int mode) {
 
 char *rte_keymode_get_plugin_name(int key, int mode) {
   // return value should be lives_free'd after use
+  // key is 1 based
   weed_plant_t *filter, *plugin_info;
   char *name;
   int error;
@@ -9152,11 +9159,6 @@ char *rte_keymode_get_plugin_name(int key, int mode) {
   plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
   name = weed_get_string_value(plugin_info, WEED_LEAF_NAME, &error);
   return name;
-}
-
-
-int rte_getmodespk(void) {
-  return prefs->max_modes_per_key;
 }
 
 
@@ -9229,7 +9231,9 @@ weed_plant_t *get_textparm(void) {
 
 boolean rte_key_setmode(int key, int newmode) {
   // newmode has two special values, -1 = cycle forwards, -2 = cycle backwards
-  // filter mutex unlocked
+  // key is 1 based, but may be 0 to use the current mainw->rte_keys
+  // special handling ensures that if we switch transitions, any background generators survive the switchover
+  // call with filter mutex unlocked
   weed_plant_t *inst, *last_inst;
   int oldmode;
   int blend_file;
@@ -9271,7 +9275,7 @@ boolean rte_key_setmode(int key, int newmode) {
     }
   }
 
-  if (newmode < 0 || newmode >= prefs->max_modes_per_key) {
+  if (newmode < 0 || newmode > rte_key_getmaxmode(key + 1)) {
     filter_mutex_unlock(key);
     return FALSE;
   }

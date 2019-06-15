@@ -220,7 +220,7 @@ double lives_ce_update_timeline(int frame, double x) {
     }
   }
 
-  if (mainw->playing_file == -1 && !prefs->hide_framebar && mainw->current_file != last_current_file) {
+  if (mainw->is_ready && mainw->playing_file == -1 && !prefs->hide_framebar && mainw->current_file != last_current_file) {
     lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);

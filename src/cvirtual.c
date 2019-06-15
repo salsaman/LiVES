@@ -596,7 +596,9 @@ boolean is_virtual_frame(int sfileno, int frame) {
   // a CLIP_TYPE_FILE with no virtual frames becomes a CLIP_TYPE_DISK
 
   lives_clip_t *sfile = mainw->files[sfileno];
+  if (!IS_VALID_CLIP(sfileno)) return FALSE;
   if (sfile->frame_index == NULL) return FALSE;
+  if (frame < 1 || frame > sfile->frames) return FALSE;
   if (sfile->frame_index[frame - 1] != -1) return TRUE;
   return FALSE;
 }

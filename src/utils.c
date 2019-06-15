@@ -4790,7 +4790,8 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     if (!mainw->files[which]->ratio_fps) myval = lives_strdup_printf("%.3f", *(double *)val);
     else myval = lives_strdup_printf("%.8f", *(double *)val);
     // dont need to block this because it does nothing during non-playback, and we shouldnt be updating clip details during playback
-    if (which == mainw->current_file) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), *(double *)myval);
+    if (which == mainw->current_file &&
+        mainw->is_ready) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), *(double *)myval);
     break;
   case CLIP_DETAILS_PB_FPS:
     if (mainw->files[which]->ratio_fps && (mainw->files[which]->pb_fps == mainw->files[which]->fps))

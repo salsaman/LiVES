@@ -8361,9 +8361,7 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   char *mute;
   char *trigopt;
   char *debug;
-#ifndef IS_MINGW
   char string[PATH_MAX];
-#endif
   char *com = NULL;
 
   if (mainw->alives_pgid > 0) {
@@ -8388,7 +8386,6 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
     goto autolives_fail;
   }
 
-#ifndef IS_MINGW
   // search for autolives.pl
   if (!capable->has_autolives) {
     get_location("autolives.pl", string, PATH_MAX);
@@ -8398,7 +8395,6 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
       goto autolives_fail;
     }
   }
-#endif
 
   alwindow = autolives_pre_dialog();
   if (alwindow == NULL) {
@@ -8447,12 +8443,8 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   // store the current key/mode state
   rte_keymodes_backup(prefs->rte_keys_virtual);
 
-#ifndef IS_MINGW
   com = lives_strdup_printf("autolives.pl localhost %d %d%s%s%s%s", prefs->osc_udp_port, prefs->osc_udp_port - 1, apb, trigopt, mute, debug);
-#else
-  com = lives_strdup_printf("START /MIN /B perl \"%s\\bin\\autolives.pl\" localhost %d %d%s%s%s%s >NUL 2>&1",
-                            prefs->prefix_dir, prefs->osc_udp_port, prefs->osc_udp_port - 1, apb, trigopt, mute, debug);
-#endif
+
   mainw->alives_pgid = lives_fork(com);
 
   lives_free(debug);

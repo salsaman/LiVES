@@ -678,6 +678,8 @@ typedef struct {
 
   LiVESList *disabled_decoders;
   LiVESList *disabled_decoders_new;
+
+  short sepwin_type;
 } _future_prefs;
 
 _prefs *prefs;
@@ -737,7 +739,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 
 #define PREF_REC_EXT_AUDIO "rec_ext_audio"
 #define PREF_AUDIO_OPTS "audio_opts"
-#define PREF_SEPWIN_STICKY "sepwin_sticky"
+#define PREF_SEPWIN_TYPE "sepwin_type"
 #define PREF_MT_EXIT_RENDER "mt_exit_render"
 
 // factories non-cpp
@@ -908,8 +910,6 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 // defaults (readonly)
 /////////////// string values
 #define PREF_SOX_COMMAND "sox_command"
-#define PREF_MPLAYER_AUDIO_COMMAND "mplayer_audio_command"
-#define PREF_MPLAYER2_AUDIO_COMMAND "mplayer2_audio_command"
 
 boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent);

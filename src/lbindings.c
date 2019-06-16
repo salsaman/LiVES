@@ -591,7 +591,7 @@ static boolean call_set_pref_bool(livespointer data) {
 static boolean call_set_pref_int(livespointer data) {
   ipref *idata = (ipref *)data;
   if (mainw != NULL && !mainw->go_away) {
-    pref_factory_int(idata->prefidx, idata->val);
+    pref_factory_int(idata->prefidx, idata->val, TRUE);
     ext_caller_return_int(idata->id, TRUE);
   } else ext_caller_return_int(idata->id, FALSE);
   lives_free(data);
@@ -602,7 +602,7 @@ static boolean call_set_pref_int(livespointer data) {
 static boolean call_set_pref_bitmapped(livespointer data) {
   bmpref *bmdata = (bmpref *)data;
   if (mainw != NULL && !mainw->go_away) {
-    pref_factory_bitmapped(bmdata->prefidx, bmdata->bitfield, bmdata->val);
+    pref_factory_bitmapped(bmdata->prefidx, bmdata->bitfield, bmdata->val, TRUE);
     ext_caller_return_int(bmdata->id, TRUE);
   } else ext_caller_return_int(bmdata->id, FALSE);
   lives_free(data);

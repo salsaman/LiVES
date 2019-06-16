@@ -2305,7 +2305,7 @@ bool sepWinSticky(const livesApp &lives) {
 
 bool setSepWinSticky(const livesApp &lives, bool setting) {
   if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
-  return lives.setPref(PREF_SEPWIN_STICKY, setting);
+  return lives.setPref(PREF_SEPWIN_STICKY, setting ? SEPWIN_TYPE_STICKY : SEPWIN_TYPE_NON_STICKY);
 }
 
 bool mtExitRender(const livesApp &lives) {

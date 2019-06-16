@@ -4501,6 +4501,11 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // need to retain play_start for rendering to same clip
   oplay_start = mainw->play_start;
 
+  if (prefs->gui_monitor == 0 && mainw->sep_win) {
+    // avoid an annoyance
+    pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_NON_STICKY, FALSE);
+  }
+
   do {
     e_rec_dialog = events_rec_dialog(TRUE);
     lives_widget_show_all(e_rec_dialog);
@@ -4622,6 +4627,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
     event_list_free(mainw->event_list);
     mainw->event_list = NULL;
   }
+
+  pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
 
   return new_clip;
 }

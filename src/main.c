@@ -531,7 +531,13 @@ static boolean pre_init(void) {
   prefs->show_gui = TRUE;
   prefs->show_splash = FALSE;
   prefs->show_playwin = TRUE;
-  prefs->sepwin_type = 1;
+
+  prefs->sepwin_type = SEPWIN_TYPE_STICKY;
+  if (has_pref(PREF_SEPWIN_TYPE)) future_prefs->sepwin_type = get_int_pref(PREF_SEPWIN_TYPE);
+  if (future_prefs->sepwin_type == SEPWIN_TYPE_STICKY ||
+      future_prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) prefs->sepwin_type = future_prefs->sepwin_type;
+  else future_prefs->sepwin_type = prefs->sepwin_type;
+
   prefs->audio_player = AUD_PLAYER_SOX;
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
   prefs->open_decorated = TRUE;

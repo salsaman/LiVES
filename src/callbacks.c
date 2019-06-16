@@ -7091,28 +7091,10 @@ void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // type is SEPWIN_TYPE_STICKY (shown even when not playing)
   // or SEPWIN_TYPE_NON_STICKY (shown only when playing)
 
-  if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
-    prefs->sepwin_type = SEPWIN_TYPE_STICKY;
-    if (mainw->sep_win) {
-      if (mainw->playing_file == -1) {
-        make_play_window();
-      }
-    } else {
-      if (!(mainw->play_window == NULL)) {
-        play_window_set_title();
-      }
-    }
+  if (future_prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
+    pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_STICKY, TRUE);
   } else {
-    if (prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
-      prefs->sepwin_type = SEPWIN_TYPE_NON_STICKY;
-      if (mainw->sep_win) {
-        if (mainw->playing_file == -1) {
-          kill_play_window();
-        } else {
-          play_window_set_title();
-        }
-      }
-    }
+    pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_NON_STICKY, TRUE);
   }
 }
 

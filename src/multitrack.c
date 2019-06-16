@@ -154,8 +154,6 @@ static boolean doubleclick = FALSE;
 
 static uint32_t last_press_time = 0;
 
-static int ce_sepwin_type;
-
 static boolean needs_clear;
 
 static LiVESList *pkg_list;
@@ -9253,7 +9251,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     switch_to_file((mainw->current_file = 0), mt->file_selected);
   } else reset_message_area(TRUE);
 
-  if (ce_sepwin_type == SEPWIN_TYPE_STICKY) on_sticky_activate(NULL, NULL);
+  pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
 
   lives_free(mt);
 
@@ -10912,8 +10910,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   multi = multitrack(event_list, orig_file, cfile->fps); // also frees rdet
   ////////////////////////////////////////////////
 
-  ce_sepwin_type = prefs->sepwin_type;
-  if (ce_sepwin_type == SEPWIN_TYPE_STICKY) on_sticky_activate(NULL, NULL);
+  pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_NON_STICKY, FALSE);
 
   if (mainw->stored_event_list != NULL) {
     mainw->stored_event_list = NULL;

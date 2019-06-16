@@ -3144,6 +3144,7 @@ void play_file(void) {
     load_start_image(cfile->start);
     load_end_image(cfile->end);
   }
+  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 }
 
 

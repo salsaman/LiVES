@@ -752,14 +752,6 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto fail2;
   }
 
-  if (!strcmp(prefidx, PREF_SEPWIN_STICKY)) {
-    if ((prefs->sepwin_type = SEPWIN_TYPE_STICKY && !newval) || (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY && newval)) {
-      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sticky), newval);
-      goto success2;
-    }
-    goto fail2;
-  }
-
   if (!strcmp(prefidx, PREF_MT_EXIT_RENDER)) {
     if (prefs->mt_exit_render == newval) goto fail2;
     prefs->mt_exit_render = newval;
@@ -853,6 +845,33 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
       msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
     prefs->max_messages = newval;
+    goto success3;
+  }
+
+  if (!strcmp(prefidx, PREF_SEPWIN_TYPE)) {
+    if (prefs->sepwin_type == newval) goto fail3;
+    prefs->sepwin_type = newval;
+    if (newval == SEPWIN_TYPE_STICKY) {
+      if (mainw->sep_win) {
+        if (mainw->playing_file == -1) {
+          make_play_window();
+        }
+      } else {
+        if (mainw->play_window != NULL) {
+          play_window_set_title();
+        }
+      }
+    } else {
+      if (mainw->sep_win) {
+        if (mainw->playing_file == -1) {
+          kill_play_window();
+        } else {
+          play_window_set_title();
+        }
+      }
+    }
+
+    if (permanent) future_prefs->sepwin_type = prefs->sepwin_type;
     goto success3;
   }
 

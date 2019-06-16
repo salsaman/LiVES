@@ -2044,7 +2044,6 @@ boolean do_auto_dialog(const char *text, int type) {
   lives_freep((void **)&mytext);
   if (proc_ptr->stop_button != NULL)
     lives_widget_hide(proc_ptr->stop_button);
-  lives_window_set_modal(LIVES_WINDOW(proc_ptr->processing), TRUE);
 
   if (type == 2) {
     lives_widget_show(proc_ptr->cancel_button);

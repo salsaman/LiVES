@@ -991,16 +991,13 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   LiVESWidget *hbox;
   xprocess *procw;
   char tmp_label[256];
-  boolean nogui = widget_opts.no_gui;
 
   last_t = g_get_monotonic_time();
 
   procw = (xprocess *)(lives_calloc(1, sizeof(xprocess)));
 
-  if (!lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) widget_opts.no_gui = TRUE;
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
   lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  widget_opts.no_gui = nogui;
   lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
@@ -1091,8 +1088,6 @@ xprocess *create_processing(const char *text) {
   xprocess *procw = (xprocess *)(lives_malloc(sizeof(xprocess)));
 
   char tmp_label[256];
-
-  boolean no_gui = widget_opts.no_gui;
 
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
   if (prefs->show_gui) {
@@ -1870,14 +1865,10 @@ LiVESWidget *create_opensel_dialog(void) {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
-  boolean no_gui = widget_opts.no_gui;
-
-  widget_opts.no_gui = TRUE; // work around bugs in gtk+
   opensel_dialog = lives_standard_dialog_new(_("Open Selection"), FALSE, -1, -1);
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(opensel_dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
-  widget_opts.no_gui = no_gui;
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(opensel_dialog));
 

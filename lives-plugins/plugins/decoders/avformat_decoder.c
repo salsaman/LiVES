@@ -96,33 +96,57 @@ static int64_t get_current_ticks(void) {
 }
 
 
+#define FRAMES_GUESS 32768
+#define HALF_ROUND_UP(x) (x > 0 ? (int)(x / 2. + .5) : (int)(x / 2. - .5))
+
 static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longer_seek) {
   int64_t diff = 0;
-  int64_t olframe = (cdata->nframes == 0 ? 0 : cdata->nframes - 1), lframe = olframe;
+
+  // lframe is the frame we will check, olframe is the current seek base frame, maxframes is the largest found
+  int64_t olframe = cdata->nframes - 1, lframe = olframe;
   int64_t timex, tottime = 0;
-
-  int nseeks = 0;
-
   long no_seek_limit = NO_SEEK_LIMIT;
 
-  if (allow_longer_seek) no_seek_limit = LNO_SEEK_LIMIT;
+  int nseeks = 0;
+  boolean have_upper_bound = FALSE;
+  boolean have_lower_bound = FALSE;
 
+  if (allow_longer_seek) no_seek_limit = LNO_SEEK_LIMIT;
   cdata->seek_flag = LIVES_SEEK_FAST;
+
+  // check we can get at least one frame
+  if (!get_frame(cdata, 0, NULL, 0, NULL)) {
+    return -1;
+  }
+
+  if (cdata->nframes == 0) {
+    // if we got a broken file with 0 last frame, search for it
+    olframe = lframe = FRAMES_GUESS - 1;
+    diff = -FRAMES_GUESS;
+    have_lower_bound = TRUE;
+  }
 
   while (1) {
     nseeks++;
-    //    #define DEBUG_RLF
+#define DEBUG_RLF
 #ifdef DEBUG_RLF
-    fprintf(stderr, "will check frame %ld of %ld...", lframe + 1, cdata->nframes);
+    fprintf(stderr, "will check frame %ld of (allegedly) %ld...", lframe + 1, cdata->nframes);
 #endif
 
     timex = get_current_ticks();
+
+    // see if we can find lframe
     if (!get_frame(cdata, lframe, NULL, 0, NULL)) {
+      // lframe not found
+
+      have_upper_bound = TRUE; // we got an upper bound
+
       timex = get_current_ticks() - timex;
 
       if (timex > no_seek_limit) {
+        // seek took too long, give up
         //#ifdef DEBUG_RLF
-        fprintf(stderr, "avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n", timex, NO_SEEK_LIMIT);
+        fprintf(stderr, "avcodec_decoder: seek was %ld, longer than limit of %ld; giving up.\n", timex, no_seek_limit);
         //#endif
         return -1;
       }
@@ -131,27 +155,33 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
       fprintf(stderr, "no (%ld)\n", timex);
 #endif
       if (diff == 1) {
+        // this is the ideal situation, we got lframe - 1, but not lframe
         tottime /= nseeks;
 #ifdef DEBUG_RLF
-        fprintf(stderr, "av positive seek was %ld\n", tottime);
+        fprintf(stderr, "av seek was %ld\n", tottime);
 #endif
         return lframe - 1;
       }
-      if (diff < 0) diff *= 2;
-      else if (diff == 0) diff = -1;
-      else diff /= 2;
-      lframe = olframe + diff;
-      if (lframe < 0) {
-        diff = olframe;
-        lframe = 0;
-        if (diff == 0) diff = 1;
+      if (diff == 0) {
+        diff = -1; // initial frame not found, start a backwards scan
+        have_lower_bound = FALSE;
+      } else {
+        if (!have_lower_bound) diff *= 2; // found no frame yet, search backwards more
+        else diff = HALF_ROUND_UP(diff); // found a frame, or started with a guess, search backwards less
       }
+
+      if (diff > 0) diff = -diff;
+
+      if (diff < -olframe) diff = -olframe; // can't jump to a negative frame !
     } else {
+      // we did find a frame
+      have_lower_bound = TRUE;
+
       timex = get_current_ticks() - timex;
 
-      if (timex > NO_SEEK_LIMIT) {
+      if (timex > no_seek_limit) {
         //#ifdef DEBUG_RLF
-        fprintf(stderr, "avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n", timex, NO_SEEK_LIMIT);
+        fprintf(stderr, "avcodec_decoder: seek was %ld, longer than limit of %ld; giving up.\n", timex, no_seek_limit);
         //#endif
         return -1;
       }
@@ -163,20 +193,26 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 #ifdef DEBUG_RLF
       fprintf(stderr, "yes ! (%ld)\n", timex);
 #endif
-      if (diff < 2 && diff > -4) {
-        tottime /= nseeks;
+      if (diff == 0) diff = 1; // initial frame found, start a forward scan
+      else {
+        if (diff < 2 && diff > -2) {
+          // this is the ideal situation, we got lframe, but not lframe + 1
+          tottime /= nseeks;
 #ifdef DEBUG_RLF
-        fprintf(stderr, "av seek was %ld\n", tottime);
+          fprintf(stderr, "av seek was %ld\n", tottime);
 #endif
-        if (tottime > FAST_SEEK_LIMIT)
-          cdata->seek_flag |= LIVES_SEEK_NEEDS_CALCULATION;
-        return lframe;
+          if (tottime > FAST_SEEK_LIMIT)
+            cdata->seek_flag |= LIVES_SEEK_NEEDS_CALCULATION;
+          return lframe;
+        }
+        if (have_upper_bound) diff = HALF_ROUND_UP(diff); // we found a null frame
+        else diff *= 2;
+        if (diff < 0) diff = -diff; // we were searching backwards, now we want to go forwards
       }
-      diff /= 2;
-      if (diff < 0) diff = -diff / 2;
-      olframe = lframe;
-      lframe += diff;
+
     }
+    olframe = lframe;
+    lframe += diff;
   }
 }
 
@@ -839,10 +875,9 @@ rescan:
 
   real_frames = get_real_last_frame(cdata, priv->longer_seek) + 1;
 
-  if (cdata->nframes > 100 && real_frames < cdata->nframes * SEEK_SUCCESS_MIN_RATIO) {
+  if (real_frames <= 0) {
     fprintf(stderr,
-            "avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",
-            real_frames, cdata->nframes);
+            "avformat_decoder: ERROR - could not find the last frame\navformat_decoder: I will pass on this file as it may be broken.\n");
     detach_stream(cdata);
     free(cdata->URI);
     cdata->URI = NULL;
@@ -850,9 +885,10 @@ rescan:
     return NULL;
   }
 
-  if (real_frames <= 0) {
+  if (cdata->nframes > 100 && real_frames < cdata->nframes * SEEK_SUCCESS_MIN_RATIO) {
     fprintf(stderr,
-            "avformat_decoder: ERROR - could not find the last frame\navformat_decoder: I will pass on this file as it may be broken.\n");
+            "avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",
+            real_frames, cdata->nframes);
     detach_stream(cdata);
     free(cdata->URI);
     cdata->URI = NULL;
@@ -1035,7 +1071,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   register int p, i;
 
-  if (tframe < 0 || tframe >= cdata->nframes || cdata->fps == 0.) return FALSE;
+  // if pixel_data is NULL, just check if the frame exists
+  if (tframe < 0 || ((tframe >= cdata->nframes || cdata->fps == 0.) && pixel_data != NULL)) return FALSE;
 
   cc = s->codec;
 

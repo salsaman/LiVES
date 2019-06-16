@@ -1094,14 +1094,11 @@ xprocess *create_processing(const char *text) {
 
   boolean no_gui = widget_opts.no_gui;
 
-  widget_opts.no_gui = TRUE; // work around bugs in gtk+
-  widget_opts.non_modal = TRUE;
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
-  widget_opts.non_modal = FALSE;
-  widget_opts.no_gui = no_gui;
+
   lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
 
   if (prefs->gui_monitor != 0) {

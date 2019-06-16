@@ -8982,7 +8982,8 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
       mainw->old_scr_width = scr_width;
       mainw->old_scr_height = scr_height;
       resize_widgets_for_monitor(FALSE);
-    } else if (mainw->current_file > -1 && !mainw->recoverable_layout) {
+    } else if (CURRENT_CLIP_IS_VALID && !mainw->is_rendering && !mainw->is_processing && mainw->multitrack == NULL && !mainw->preview &&
+               !mainw->recoverable_layout) {
       get_play_times();
     }
   }

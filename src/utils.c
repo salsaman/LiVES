@@ -13,9 +13,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifndef IS_MINGW
 #include <sys/statvfs.h>
-#endif
 #include <sys/file.h>
 
 #include "main.h"
@@ -58,7 +56,6 @@ char *filename_from_fd(char *val, int fd) {
   if (fbuff != NULL) {
     return lives_strdup(fbuff->pathname);
   } else {
-#ifndef IS_MINGW
     char *fdpath;
     char *fidi;
     char rfdpath[PATH_MAX];
@@ -85,9 +82,6 @@ char *filename_from_fd(char *val, int fd) {
 
     if (val != NULL) lives_free(val);
     return lives_strdup(rfdpath);
-#else
-    return lives_strdup("unknown");
-#endif
   }
 }
 
@@ -103,209 +97,63 @@ LIVES_INLINE void reverse_bytes(char *out, const char *in, size_t count) {
 // system calls
 
 LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {
-#ifdef IS_MINGW
-  srand(seed);
-#else
   srandom(seed);
-#endif
 }
 
 
 LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
-#ifdef IS_MINGW
-  return (uint64_t)rand() * (uint64_t)fastrand();
-#else
   return random();
-#endif
 }
 
 
 LIVES_GLOBAL_INLINE pid_t lives_getpid(void) {
-#ifdef IS_MINGW
-  return _getpid();
-#else
   return getpid();
-#endif
 }
-
-
-#ifdef IS_MINGW
-LIVES_INLINE int sidhash(char *strsid) {
-  size_t slen;
-  int retval = 0;
-  register int i;
-
-  if (strsid == NULL) return 0;
-
-  slen = strlen(strsid);
-
-  g_print("\n\nval is %d %c\n", slen, strsid[0]);
-
-  for (i = 4; i < slen; i++) {
-    retval += (uint8_t)strsid[i];
-  }
-
-  g_print("\n\ngot token value %d\n", retval);
-  return retval;
-}
-#endif
-
-
-#ifdef IS_MINGW
-
-char *lives_win32_get_registry(HKEY key, LPCSTR subkey, LPCSTR value) {
-  char buf[255] = {0};
-  DWORD dwType = 0;
-  DWORD dwBufSize = sizeof(buf);
-  char *retval = NULL;
-
-  if (RegGetValueA(key, subkey, value, RRF_RT_REG_SZ, &dwType, (BYTE *)buf, &dwBufSize) == ERROR_SUCCESS) {
-    retval = strdup(buf);
-  }
-  return retval;
-}
-
-#endif
 
 
 LIVES_GLOBAL_INLINE int lives_open3(const char *pathname, int flags, mode_t mode) {
   int fd = open(pathname, flags, mode);
-#ifdef IS_MINGW
-  if (fd >= 0) setmode(fd, O_BINARY);
-#endif
   return fd;
 }
 
 
 LIVES_GLOBAL_INLINE int lives_open2(const char *pathname, int flags) {
   int fd = open(pathname, flags);
-#ifdef IS_MINGW
-  if (fd >= 0) setmode(fd, O_BINARY);
-#endif
   return fd;
 }
 
 
 LIVES_GLOBAL_INLINE int lives_getuid(void) {
-#ifdef IS_MINGW
-  HANDLE Thandle;
-  DWORD DAmask, size;
-  char *strsid;
-  int retval = 0;
-
-  DWORD dwIndex;
-  PTOKEN_GROUPS ptg = NULL;
-  PSID psid = NULL;
-
-  DAmask = TOKEN_READ;
-
-  if (!OpenProcessToken(GetCurrentProcess(), DAmask, &Thandle)) {
-    LIVES_ERROR("could not open token");
-    return 0;
-  }
-
-  if (!GetTokenInformation(Thandle, TokenGroups, ptg, 0, &size)) {
-    CloseHandle(Thandle);
-    LIVES_ERROR("could not open token info");
-    return 0;
-  }
-
-  ptg = (PTOKEN_GROUPS)HeapAlloc(GetProcessHeap(),
-                                 HEAP_ZERO_MEMORY, size);
-
-  if (ptg == NULL)
-    goto Cleanup;
-
-  // Loop through the groups to find the logon SID.
-
-  for (dwIndex = 0; dwIndex < ptg->GroupCount; dwIndex++) {
-    if ((ptg->Groups[dwIndex].Attributes & SE_GROUP_LOGON_ID)
-        ==  SE_GROUP_LOGON_ID) {
-      // Found the logon SID; make a copy of it.
-
-      size = GetLengthSid(ptg->Groups[dwIndex].Sid);
-      psid = (PSID) HeapAlloc(GetProcessHeap(),
-                              HEAP_ZERO_MEMORY, size);
-      if (psid == NULL)
-        goto Cleanup;
-      if (!CopySid(size, psid, ptg->Groups[dwIndex].Sid)) {
-        HeapFree(GetProcessHeap(), 0, (LPVOID)psid);
-        goto Cleanup;
-      }
-      break;
-    }
-  }
-
-  if (psid != NULL) {
-    ConvertSidToStringSid(psid, &strsid);
-    // string sid is eg: S-1-5-5-X-Y
-    retval = sidhash(strsid);
-    LocalFree(strsid);
-  }
-
-Cleanup:
-
-  if (ptg != NULL)
-    HeapFree(GetProcessHeap(), 0, (LPVOID)ptg);
-
-  //CloseHandle(Thandle);
-  return retval;
-#else
   return geteuid();
-#endif
-  return 0; // stop gcc complaining
 }
 
 
 LIVES_GLOBAL_INLINE int lives_getgid(void) {
-#ifdef IS_MINGW
-  return lives_getuid();
-#else
   return getegid();
-#endif
-  return 0; // stop gcc complaining
 }
 
 
 LIVES_GLOBAL_INLINE ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz) {
-#ifdef IS_MINGW
-  ssize_t sz = strlen(path);
-  if (sz > bufsiz) sz = bufsiz;
-  memcpy(buf, path, sz);
-  return sz;
-#else
   return readlink(path, buf, bufsiz);
-#endif
 }
 
 
 LIVES_GLOBAL_INLINE boolean lives_fsync(int fd) {
   // ret TRUE on success
-#ifndef IS_MINGW
   return !fsync(fd);
-#else
-  return _commit(fd);
-#endif
 }
 
 
 LIVES_GLOBAL_INLINE void lives_sync(int times) {
   int i;
   for (i = 0; i < times; i++) {
-#ifndef IS_MINGW
     sync();
-#else
-    lives_system("sync.exe", TRUE);
-#endif
   }
 }
 
 
 LIVES_GLOBAL_INLINE boolean lives_setenv(const char *name, const char *value) {
   // ret TRUE on success
-#if IS_MINGW
-  return SetEnvironmentVariable(name, value);
-#else
 #if IS_IRIX
   int len  = strlen(name) + strlen(value) + 2;
   char *env = malloc(len);
@@ -318,7 +166,6 @@ LIVES_GLOBAL_INLINE boolean lives_setenv(const char *name, const char *value) {
 }
 #else
   return !setenv(name, value, 1);
-#endif
 #endif
 }
 
@@ -340,11 +187,7 @@ int lives_system(const char *com, boolean allow_error) {
 
   retval = system(com);
 
-  if (retval
-#ifdef IS_MINGW
-      && retval != 9009
-#endif
-     ) {
+  if (retval) {
     char *msg = NULL;
     mainw->com_failed = TRUE;
     if (!allow_error) {
@@ -428,7 +271,6 @@ lives_pgid_t lives_fork(const char *com) {
   // to signal to sub process and all children
   // TODO *** - error check
 
-#ifndef IS_MINGW
   pid_t ret;
 
   if (!(ret = fork())) {
@@ -441,13 +283,6 @@ lives_pgid_t lives_fork(const char *com) {
   }
 
   return ret;
-#else
-  STARTUPINFO si;
-  PROCESS_INFORMATION *pi = malloc(sizeof(PROCESS_INFORMATION));
-
-  CreateProcess(NULL, (char *)com, NULL, NULL, FALSE, CREATE_NEW_PROCESS_GROUP, NULL, NULL, &si, pi);
-  return pi;
-#endif
 }
 
 
@@ -1043,368 +878,17 @@ LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
 }
 
 
-#ifdef IS_MINGW
-
-// should compile but it doesnt: http://msdn.microsoft.com/en-us/library/windows/desktop/ms683194%28v=vs.85%29.aspx
-/*
-typedef BOOL (WINAPI *LPFN_GLPI)(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION, PDWORD);
-
-// Helper function to count set bits in the processor mask.
-DWORD CountSetBits(ULONG_PTR bitMask) {
-  DWORD LSHIFT = sizeof(ULONG_PTR)*8 - 1;
-  DWORD bitSetCount = 0;
-  ULONG_PTR bitTest = (ULONG_PTR)1 << LSHIFT;
-  DWORD i;
-
-  for (i = 0; i <= LSHIFT; ++i) {
-    bitSetCount += ((bitMask & bitTest)?1:0);
-    bitTest/=2;
-  }
-
-  return bitSetCount;
-}
-
-int lives_win32_get_num_logical_cpus(void) {
-  LPFN_GLPI glpi;
-  BOOL done = FALSE;
-  PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer = NULL;
-  PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
-  DWORD returnLength = 0;
-  DWORD logicalProcessorCount = 0;
-  DWORD numaNodeCount = 0;
-  DWORD processorCoreCount = 0;
-  DWORD processorL1CacheCount = 0;
-  DWORD processorL2CacheCount = 0;
-  DWORD processorL3CacheCount = 0;
-  DWORD processorPackageCount = 0;
-  DWORD byteOffset = 0;
-  PCACHE_DESCRIPTOR Cache;
-
-  glpi = (LPFN_GLPI) GetProcAddress(
-				    GetModuleHandle(TEXT("kernel32")),
-				    "GetLogicalProcessorInformation");
-  if (NULL == glpi) {
-    LIVES_WARN("GetLogicalProcessorInformation is not supported.");
-    return 0;
-  }
-
-  while (!done) {
-    DWORD rc = glpi(buffer, &returnLength);
-
-    if (FALSE == rc) {
-      if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-	if (buffer) lives_free(buffer);
-
-	buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)lives_malloc(returnLength);
-
-	if (NULL == buffer) {
-	  LIVES_ERROR("Allocation failure");
-	  return 0;
-	}
-      }
-      else {
-	LIVES_ERROR("getting numprocs");
-	return 0;
-      }
-    }
-    else {
-      done = TRUE;
-    }
-  }
-
-  ptr = buffer;
-
-  while (byteOffset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= returnLength) {
-    switch (ptr->Relationship) {
-    case RelationNumaNode:
-      // Non-NUMA systems report a single record of this type.
-      numaNodeCount++;
-      break;
-
-    case RelationProcessorCore:
-      processorCoreCount++;
-
-      // A hyperthreaded core supplies more than one logical processor.
-      logicalProcessorCount += CountSetBits(ptr->ProcessorMask);
-      break;
-
-    case RelationCache:
-      // Cache data is in ptr->Cache, one CACHE_DESCRIPTOR structure for each cache.
-      Cache = &ptr->Cache;
-      if (Cache->Level == 1)
-	{
-	  processorL1CacheCount++;
-	}
-      else if (Cache->Level == 2)
-	{
-	  processorL2CacheCount++;
-	}
-      else if (Cache->Level == 3)
-	{
-	  processorL3CacheCount++;
-	}
-      break;
-
-    case RelationProcessorPackage:
-      // Logical processors share a physical package.
-      processorPackageCount++;
-      break;
-
-    default:
-      _tprintf(TEXT("\nError: Unsupported LOGICAL_PROCESSOR_RELATIONSHIP value.\n"));
-      break;
-    }
-    byteOffset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
-    ptr++;
-  }
-*/
-/*     _tprintf(TEXT("\nGetLogicalProcessorInformation results:\n"));
- _tprintf(TEXT("Number of NUMA nodes: %d\n"),
- numaNodeCount);
- _tprintf(TEXT("Number of physical processor packages: %d\n"),
- processorPackageCount);
- _tprintf(TEXT("Number of processor cores: %d\n"),
- processorCoreCount);
- _tprintf(TEXT("Number of logical processors: %d\n"),
- logicalProcessorCount);
- _tprintf(TEXT("Number of processor L1/L2/L3 caches: %d/%d/%d\n"),
- processorL1CacheCount,
- processorL2CacheCount,
- processorL3CacheCount);*/
-/*
-  lives_free(buffer);
-
-  return logicalProcessorCount;
-}
-
-*/
-
-
-static boolean lives_win32_suspend_resume_threads(DWORD pid, boolean suspend) {
-  HANDLE hThreadSnap;
-  HANDLE hThread;
-  THREADENTRY32 te32;
-
-  // Take a snapshot of all threads in the system.
-  hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-  if (hThreadSnap == INVALID_HANDLE_VALUE) {
-    LIVES_ERROR("CreateToolhelp32Snapshot (of threades)");
-    return FALSE;
-  }
-
-  // Set the size of the structure before using it.
-  te32.dwSize = sizeof(THREADENTRY32);
-
-  // Retrieve information about the first thread,
-  // and exit if unsuccessful
-  if (!Thread32First(hThreadSnap, &te32)) {
-    LIVES_ERROR("Thread32First"); // show cause of failure
-    CloseHandle(hThreadSnap);            // clean the snapshot object
-    return (FALSE);
-  }
-
-  // Now walk the snapshot of threads, and suspend/resume any owned by process
-
-  do {
-    hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, te32.th32ThreadID);
-    if (hThread == NULL) continue;
-
-    if (te32.th32OwnerProcessID == pid) {
-      if (suspend) {
-        SuspendThread(hThread);
-      } else {
-        ResumeThread(hThread);
-      }
-    }
-
-    CloseHandle(hThread);
-
-  } while (Thread32Next(hThreadSnap, &te32));
-
-  CloseHandle(hThreadSnap);
-
-  return TRUE;
-}
-
-
-boolean lives_win32_suspend_resume_process(DWORD pid, boolean suspend) {
-  HANDLE hProcessSnap;
-  HANDLE hProcess;
-  PROCESSENTRY32 pe32;
-
-  if (pid == 0) return TRUE;
-
-  // Take a snapshot of all processes in the system.
-  hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  if (hProcessSnap == INVALID_HANDLE_VALUE) {
-    LIVES_ERROR("CreateToolhelp32Snapshot (of processes)");
-    return FALSE;
-  }
-
-  // Set the size of the structure before using it.
-  pe32.dwSize = sizeof(PROCESSENTRY32);
-
-  // Retrieve information about the first process,
-  // and exit if unsuccessful
-  if (!Process32First(hProcessSnap, &pe32)) {
-    LIVES_ERROR("Process32First"); // show cause of failure
-    CloseHandle(hProcessSnap);            // clean the snapshot object
-    return (FALSE);
-  }
-
-  // resume this thread first
-  if (!suspend) lives_win32_suspend_resume_threads(pid, FALSE);
-
-  // Now walk the snapshot of processes, and
-  // display information about each process in turn
-
-  do {
-    hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe32.th32ProcessID);
-    if (hProcess == NULL) continue;
-
-    // TODO - find equivalent on "real" windows
-    if (!strcmp(pe32.szExeFile, "wineconsole.exe")) {
-      CloseHandle(hProcess);
-      continue;
-    }
-
-    if (pe32.th32ParentProcessID == pid && pe32.th32ProcessID != pid) {
-      // suspend subprocess
-      lives_win32_suspend_resume_process(pe32.th32ProcessID, suspend);
-    }
-
-    CloseHandle(hProcess);
-
-  } while (Process32Next(hProcessSnap, &pe32));
-
-  CloseHandle(hProcessSnap);
-
-  // suspend this thread last
-  if (suspend) lives_win32_suspend_resume_threads(pid, TRUE);
-
-  return TRUE;
-}
-
-
-boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent) {
-  HANDLE hProcessSnap;
-  HANDLE hProcess;
-  PROCESSENTRY32 pe32;
-
-  if (pid == 0) return TRUE;
-
-  // Take a snapshot of all processes in the system.
-  hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  if (hProcessSnap == INVALID_HANDLE_VALUE) {
-    LIVES_ERROR("CreateToolhelp32Snapshot (of processes)");
-    return FALSE;
-  }
-
-  // Set the size of the structure before using it.
-  pe32.dwSize = sizeof(PROCESSENTRY32);
-
-  // Retrieve information about the first process,
-  // and exit if unsuccessful
-  if (!Process32First(hProcessSnap, &pe32)) {
-    LIVES_ERROR("Process32First"); // show cause of failure
-    CloseHandle(hProcessSnap);            // clean the snapshot object
-    return (FALSE);
-  }
-
-  // Now walk the snapshot of processes, and
-  // display information about each process in turn
-
-  do {
-    hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe32.th32ProcessID);
-    if (hProcess == NULL) continue;
-
-    //g_print("handling process %d %d : %s\n",pe32.th32ParentProcessID,pe32.th32ProcessID,pe32.szExeFile);
-
-    // TODO - find equivalent on "real" windows
-    if (!strcmp(pe32.szExeFile, "wineconsole.exe")) {
-      CloseHandle(hProcess);
-      continue;
-    }
-
-    if (pe32.th32ParentProcessID == pid && pe32.th32ProcessID != pid) {
-      lives_win32_kill_subprocesses(pe32.th32ProcessID, TRUE);
-    }
-
-    CloseHandle(hProcess);
-
-  } while (Process32Next(hProcessSnap, &pe32));
-
-  CloseHandle(hProcessSnap);
-
-  if (kill_parent) {
-    hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hProcessSnap == INVALID_HANDLE_VALUE) {
-      LIVES_ERROR("CreateToolhelp32Snapshot (of processes)");
-      return FALSE;
-    }
-
-    // Set the size of the structure before using it.
-    pe32.dwSize = sizeof(PROCESSENTRY32);
-
-    // Retrieve information about the first process,
-    // and exit if unsuccessful
-    if (!Process32First(hProcessSnap, &pe32)) {
-      LIVES_ERROR("Process32First"); // show cause of failure
-      CloseHandle(hProcessSnap);            // clean the snapshot object
-      return (FALSE);
-    }
-
-    // Now walk the snapshot of processes, and
-    // display information about each process in turn
-
-    do {
-      hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe32.th32ProcessID);
-      if (hProcess == NULL) continue;
-
-      if (pe32.th32ProcessID == pid) {
-        //g_print("killing %d\n", pe32.th32ProcessID);
-        TerminateProcess(hProcess, 0);
-      }
-
-      CloseHandle(hProcess);
-
-    } while (Process32Next(hProcessSnap, &pe32));
-
-    CloseHandle(hProcessSnap);
-
-  }
-
-  return TRUE;
-}
-
-#endif
-
-
 LIVES_GLOBAL_INLINE int lives_kill(lives_pid_t pid, int sig) {
-#ifndef IS_MINGW
   if (pid == 0) {
     LIVES_ERROR("Tried to kill pid 0");
     return -1;
   }
   return kill(pid, sig);
-#else
-  CloseHandle(pid->hProcess);
-  CloseHandle(pid->hThread);
-  GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid->dwProcessId);
-#endif
-  return 0;
 }
 
 
 LIVES_GLOBAL_INLINE int lives_killpg(lives_pgid_t pgrp, int sig) {
-#ifndef IS_MINGW
   return killpg(pgrp, sig);
-#else
-  CloseHandle(pgrp->hProcess);
-  CloseHandle(pgrp->hThread);
-  GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pgrp->dwProcessId);
-#endif
-  return 0;
 }
 
 
@@ -3836,11 +3320,7 @@ int lives_rmdir(const char *dir, boolean force) {
     cmd = lives_strdup(capable->rmdir_cmd);
   }
 
-#ifndef IS_MINGW
   com = lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1", cmd, dir, prefs->cmd_log);
-#else
-  com = lives_strdup_printf("START /MIN /b %s \"%s/\" >\"%s\" 2>&1", cmd, dir, prefs->cmd_log);
-#endif
   retval = lives_system(com, TRUE);
   lives_free(com);
   lives_free(cmd);
@@ -3862,11 +3342,7 @@ int lives_rm(const char *file) {
   char *com;
   int retval;
 
-#ifndef IS_MINGW
   com = lives_strdup_printf("%s -f \"%s\" >\"%s\" 2>&1", capable->rm_cmd, file, prefs->cmd_log);
-#else
-  com = lives_strdup_printf("START /MIN /b %s -f \"%s\" >\"%s\" 2>&1", capable->rm_cmd, file, prefs->cmd_log);
-#endif
   retval = lives_system(com, TRUE);
   lives_free(com);
   return retval;
@@ -3878,11 +3354,7 @@ int lives_rmglob(const char *files) {
   // may fail
   char *com;
   int retval;
-#ifndef IS_MINGW
   com = lives_strdup_printf("%s \"%s\"* >\"%s\" 2>&1", capable->rm_cmd, files, prefs->cmd_log);
-#else
-  com = lives_strdup_printf("DEL \"%s*\" >\"%s\" 2>&1", files, prefs->cmd_log);
-#endif
   retval = lives_system(com, TRUE);
   lives_free(com);
   return retval;
@@ -3938,14 +3410,9 @@ int lives_ln(const char *from, const char *to) {
   // may not fail
   char *com;
   int retval;
-#ifndef IS_MINGW
   com = lives_strdup_printf("%s -s \"%s\" \"%s\" >\"%s\" 2>&1", capable->ln_cmd, from, to, prefs->cmd_log);
   retval = lives_system(com, FALSE);
   lives_free(com);
-#else
-  // TODO
-  retval = -1;
-#endif
   return retval;
 }
 
@@ -3993,49 +3460,22 @@ int lives_echo(const char *text, const char *to, boolean append) {
 
 void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
   char *com;
-#ifndef IS_MINGW
   if (kill_parent)
     com = lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null", prefs->backend_sync, dirname);
   else
     com = lives_strdup_printf("%s stopsubsubs \"%s\" 2>/dev/null", prefs->backend_sync, dirname);
   lives_system(com, TRUE);
-#else
-  // get pid from backend
-  char val[16];
-  int pid;
-  com = lives_strdup_printf("%s get_pid_for_handle \"%s\"", prefs->backend_sync, dirname);
-  lives_popen(com, FALSE, val, 16);
-  if (strcmp(val, " ")) {
-    pid = atoi(val);
-    lives_win32_kill_subprocesses(pid, kill_parent);
-  }
-#endif
-
   lives_free(com);
 }
 
 
 void lives_suspend_resume_process(const char *dirname, boolean suspend) {
   char *com;
-#ifndef IS_MINGW
   if (!suspend)
     com = lives_strdup_printf("%s stopsubsub \"%s\" SIGCONT 2>/dev/null", prefs->backend_sync, dirname);
   else
     com = lives_strdup_printf("%s stopsubsub \"%s\" SIGTSTP 2>/dev/null", prefs->backend_sync, dirname);
   lives_system(com, TRUE);
-#else
-  FILE *rfile;
-  ssize_t rlen;
-  char val[16];
-  lives_pid_t pid;
-
-  // get pid from backend
-  com = lives_strdup_printf("%s get_pid_for_handle \"%s\"", prefs->backend_sync, dirname);
-  lives_popen(com, FALSE, val, 16);
-  pid = atoi(val);
-
-  lives_win32_suspend_resume_process(pid, suspend);
-#endif
   lives_free(com);
 
   com = lives_strdup_printf("%s resume \"%s\"", prefs->backend_sync, dirname);
@@ -4079,7 +3519,6 @@ boolean check_dir_access(const char *dir) {
 
 
 boolean check_dev_busy(char *devstr) {
-#ifndef IS_MINGW
   int ret;
 #ifdef IS_SOLARIS
   struct flock lock;
@@ -4098,8 +3537,6 @@ boolean check_dev_busy(char *devstr) {
   close(fd);
   if (ret == -1) return FALSE;
   return TRUE;
-#endif
-  return FALSE;
 }
 
 
@@ -5220,12 +4657,7 @@ boolean is_writeable_dir(const char *dir) {
 
   // WARNING: this will actually create the directory (since we dont know if its parents are needed)
 
-#ifndef IS_MINGW
   struct statvfs sbuf;
-#else
-  char *tfile;
-#endif
-
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
     lives_mkdir_with_parents(dir, capable->umask);
     if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
@@ -5233,18 +4665,9 @@ boolean is_writeable_dir(const char *dir) {
     }
   }
 
-#ifndef IS_MINGW
   // use statvfs to get fs details
   if (statvfs(dir, &sbuf) == -1) return FALSE;
   if (sbuf.f_flag & ST_RDONLY) return FALSE;
-#else
-  //  TODO: is there a faster way of doing this ?
-  mainw->com_failed = FALSE;
-  tfile = lives_strdup_printf("%s\\xxxxfile.txt", dir);
-  lives_touch(tfile);
-  lives_rm(tfile);
-  if (mainw->com_failed) return FALSE;
-#endif
   return TRUE;
 }
 
@@ -5260,9 +4683,7 @@ uint64_t get_fs_free(const char *dir) {
 
   // WARNING: this will actually create the directory (since we dont know if its parents are needed)
 
-#ifndef IS_MINGW
   struct statvfs sbuf;
-#endif
 
   uint64_t bytes = 0;
   boolean must_delete = FALSE;
@@ -5270,18 +4691,12 @@ uint64_t get_fs_free(const char *dir) {
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) must_delete = TRUE;
   if (!is_writeable_dir(dir)) goto getfserr;
 
-#ifndef IS_MINGW
-
   // use statvfs to get fs details
   if (statvfs(dir, &sbuf) == -1) goto getfserr;
   if (sbuf.f_flag & ST_RDONLY) goto getfserr;
 
   // result is block size * blocks available
   bytes = sbuf.f_bsize * sbuf.f_bavail;
-
-#else
-  GetDiskFreeSpaceEx(dir, (PULARGE_INTEGER)&bytes, NULL, NULL);
-#endif
 
 getfserr:
   if (must_delete) lives_rmdir(dir, FALSE);

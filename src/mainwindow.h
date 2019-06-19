@@ -532,11 +532,7 @@ typedef struct {
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-#if IS_MINGW
-  HWND foreign_id;
-#else
   Window foreign_id;
-#endif
 #else
   GdkNativeWindow foreign_id;
   GdkColormap *foreign_cmap;

@@ -69,32 +69,6 @@ POSSIBILITY OF SUCH DAMAGES.
 #undef ENABLE_GIW
 #endif
 
-#ifdef IS_MINGW
-
-#ifndef WINVER
-#define WINVER 0x0500
-#endif
-
-#include <winsock2.h>
-#include <windows.h>
-#include <winbase.h>
-#include <tlhelp32.h>
-#include <sddl.h>
-#include <Knownfolders.h>
-
-#define O_SYNC (FILE_FLAG_NO_BUFFERING|FILE_FLAG_WRITE_THROUGH)
-
-typedef PROCESS_INFORMATION *lives_pid_t;
-typedef PROCESS_INFORMATION *lives_pgid_t;
-
-#ifdef GUI_GTK
-#ifndef GDK_WINDOWING_WIN32
-#define GDK_WINDOWING_WIN32
-#endif
-#endif
-
-#else // IS_MINGW
-
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -106,8 +80,6 @@ typedef int lives_pgid_t;
 #define GDK_WINDOWING_X11
 #endif
 #endif // GUI_GTK
-
-#endif // IS_MINGW
 
 #ifdef GUI_GTK
 
@@ -172,11 +144,7 @@ typedef int lives_pgid_t;
 /// this must match AC_PREFIX_DEFAULT in configure.in
 /// TODO - when lives-plugins is a separate package, use pkg-config to get PREFIX and remove PREFIX_DEFAULT
 #ifndef PREFIX_DEFAULT
-#ifndef IS_MINGW
 #define PREFIX_DEFAULT "/usr"
-#else
-#define PREFIX_DEFAULT "C:\\Program Files\\testlives"
-#endif
 #endif
 
 /// if --prefix= was not set, this is set to "NONE"
@@ -184,7 +152,6 @@ typedef int lives_pgid_t;
 #define PREFIX PREFIX_DEFAULT
 #endif
 
-#ifndef IS_MINGW
 #define LIVES_DIR_SEP "/"
 #define LIVES_STATUS_FILE_NAME ".status"
 #define LIVES_INFO_FILE_NAME ".info"
@@ -208,30 +175,6 @@ typedef int lives_pgid_t;
 #define LIVES_CONFIG_DIR ".lives-dir/"
 #define LIVES_DEVICEMAP_DIR "devicemaps"
 #define LIVES_WORK_NAME "livesprojects"
-
-#else // IS_MINGW
-#define LIVES_DIR_SEP "\\"
-#define LIVES_STATUS_FILE_NAME "status"
-#define LIVES_INFO_FILE_NAME "info"
-#define LIVES_BFILE_NAME "smogrify"
-#define LIVES_SMOGPLUGIN_FILE_NAME "smogplugin"
-#define LIVES_SMOGVAL_FILE_NAME "smogval"
-#define LIVES_ENC_DEBUG_FILE_NAME "debug_out"
-#define LIVES_DEVNULL "NUL"
-
-#define DLL_NAME "dll"
-
-#define DOC_DIR "\\Documents/"
-
-#define THEME_DIR "\\Themes/"
-#define PLUGIN_SCRIPTS_DIR "\\Plugins/"
-#define PLUGIN_COMPOUND_DIR "\\Plugins/"
-#define PLUGIN_EXEC_DIR "\\Plugins/"
-#define ICON_DIR "\\Icons/"
-#define DATA_DIR "\\Data/"
-#define LIVES_CONFIG_DIR "\\Config/"
-#define LIVES_WORK_NAME "livesprojects"
-#endif
 
 #define LIVES_DEVICE_DIR "/dev/"
 
@@ -1256,13 +1199,6 @@ int lives_getuid(void);
 boolean lives_freep(void **ptr);
 void lives_kill_subprocesses(const char *dirname, boolean kill_parent);
 void lives_suspend_resume_process(const char *dirname, boolean suspend);
-#ifdef IS_MINGW
-char *lives_win32_get_def_folder(const GUID rfid);
-char *lives_win32_get_registry(HKEY key, LPCSTR subkey, LPCSTR value);
-boolean lives_win32_suspend_resume_process(DWORD pid, boolean suspend);
-boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent);
-int lives_win32_get_num_logical_cpus(void);
-#endif
 int lives_kill(lives_pid_t pid, int sig);
 int lives_killpg(lives_pgid_t pgrp, int sig);
 ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);

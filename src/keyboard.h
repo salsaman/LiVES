@@ -26,7 +26,7 @@ boolean key_press_or_release(LiVESWidget *, LiVESXEventKey *, livespointer); ///
 
 boolean ext_triggers_poll(livespointer); ///< poll for external playback start
 
-#if defined HAVE_X11 || defined IS_MINGW
+#if defined HAVE_X11
 LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespointer data); ///< unused ?
 #endif
 

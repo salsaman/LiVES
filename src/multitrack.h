@@ -998,14 +998,8 @@ typedef enum {
 
 // array max: TODO - use dynamic arrays to bypass track limits
 
-#ifdef IS_MINGW
-#define MAX_TRACKS 32768
-#define MAX_VIDEO_TRACKS 32768
-#define MAX_AUDIO_TRACKS 32768
-#else
 #define MAX_TRACKS 65536
 #define MAX_VIDEO_TRACKS 65536
 #define MAX_AUDIO_TRACKS 65536
-#endif
 
 #endif

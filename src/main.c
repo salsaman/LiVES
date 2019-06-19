@@ -190,10 +190,6 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 
 #endif
 
-#ifdef IS_MINGW
-typedef void (*SignalHandlerPointer)(int);
-#endif
-
 
 void defer_sigint(int signum) {
   mainw->signal_caught = signum;
@@ -388,15 +384,18 @@ static boolean pre_init(void) {
   // stuff which should be done *before* mainwindow is created
   // returns TRUE if we got an error loading the theme
 
+#ifdef GUI_GTK
+  LiVESError *gerr = NULL;
+  char *icon;
+#endif
+
   int randfd;
   ssize_t randres = -1;
   uint32_t rseed;
 
   pthread_mutexattr_t mattr;
 
-#ifndef IS_MINGW
   boolean needs_update = FALSE;
-#endif
 
   register int i;
 
@@ -512,11 +511,6 @@ static boolean pre_init(void) {
 
   mainw->interactive = TRUE;
 
-#ifdef IS_MINGW
-  // TODO - for mingw we will get from the registry, whatever was set at install time
-  lives_snprintf(prefs->prefix_dir, PATH_MAX, "%s", PREFIX_DEFAULT);
-#endif
-
   info_only = FALSE;
 
   // check the backend is there, get some system details and prefs
@@ -558,11 +552,7 @@ static boolean pre_init(void) {
   memset(prefs->yuvin, 0, 1);
 #endif
 
-#ifndef IS_MINGW
   capable->rcfile = lives_strdup_printf("%s/.lives", capable->home_dir);
-#else
-  capable->rcfile = lives_strdup_printf("%s/LiVES.ini", capable->home_dir);
-#endif
 
   if (!capable->smog_version_correct || !capable->can_write_to_workdir) {
     lives_snprintf(prefs->theme, 64, "none");
@@ -585,7 +575,6 @@ static boolean pre_init(void) {
   // get some prefs we need to set menu options
   future_prefs->show_recent = prefs->show_recent = get_boolean_pref(PREF_SHOW_RECENT_FILES);
 
-#ifndef IS_MINGW
   get_pref(PREF_PREFIX_DIR, prefs->prefix_dir, PATH_MAX);
 
   if (!strlen(prefs->prefix_dir)) {
@@ -601,6 +590,14 @@ static boolean pre_init(void) {
 
   if (needs_update) set_pref(PREF_PREFIX_DIR, prefs->prefix_dir);
 
+#ifdef GUI_GTK
+    icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives.png", NULL);
+    gtk_window_set_default_icon_from_file(icon, &gerr);
+    lives_free(icon);
+
+    if (gerr != NULL) lives_error_free(gerr);
+#endif
+
   needs_update = FALSE;
 
   get_pref(PREF_LIB_DIR, prefs->lib_dir, PATH_MAX);
@@ -612,10 +609,6 @@ static boolean pre_init(void) {
 
   if (ensure_isdir(prefs->lib_dir)) needs_update = TRUE;
   if (needs_update) set_pref(PREF_LIB_DIR, prefs->lib_dir);
-
-#else
-  lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", prefs->prefix_dir);
-#endif
 
   memset(mainw->sepimg_path, 0, 1);
   memset(mainw->frameblank_path, 0, 1);
@@ -686,7 +679,6 @@ static boolean pre_init(void) {
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
-#ifndef IS_MINGW
   if (strlen(prefs->omc_js_fname) == 0) {
     const char *tmp = get_js_filename();
     if (tmp != NULL) {
@@ -695,19 +687,16 @@ static boolean pre_init(void) {
   }
 #endif
 #endif
-#endif
 
   get_pref_utf8(PREF_OMC_MIDI_FNAME, prefs->omc_midi_fname, PATH_MAX);
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
-#ifndef IS_MINGW
   if (strlen(prefs->omc_midi_fname) == 0) {
     const char *tmp = get_midi_filename();
     if (tmp != NULL) {
       lives_snprintf(prefs->omc_midi_fname, PATH_MAX, "%s", tmp);
     }
   }
-#endif
 #endif
 #endif
 
@@ -1409,11 +1398,7 @@ static void lives_init(_ign_opts *ign_opts) {
       }
 
       // scan for encoder plugins
-#ifndef IS_MINGW
       if ((encoders = get_plugin_list(PLUGIN_ENCODERS, FALSE, NULL, NULL)) != NULL) {
-#else
-      if ((encoders = get_plugin_list(PLUGIN_ENCODERS, TRUE, NULL, NULL)) != NULL) {
-#endif
         capable->has_encoder_plugins = TRUE;
         lives_list_free_all(&encoders);
       }
@@ -1852,9 +1837,6 @@ void do_start_messages(void) {
   if (GDK_IS_X11_DISPLAY(mainw->mgeom[0].disp))
     prefs->wm = lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
 #endif
-#ifdef IS_MINGW
-  prefs->wm = lives_strdup_printf(_("Windows version %04X"), WINVER);
-#endif
   if (prefs->wm == NULL)
     prefs->wm = lives_strdup((_("UNKNOWN - please patch me !")));
 
@@ -2234,15 +2216,10 @@ capability *get_capabilities(void) {
   capable->mainpid = lives_getpid();
 
   // this is the version we should pass into mkdir
-#ifndef IS_MINGW
   capable->umask = umask(0);
   umask(capable->umask);
   capable->umask = (0777 & ~capable->umask);
-#else
-  capable->umask = 0775;
-#endif
 
-#ifndef IS_MINGW
   get_location("rm", capable->rm_cmd, PATH_MAX);
   get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
   get_location("cp", capable->cp_cmd, PATH_MAX);
@@ -2253,18 +2230,6 @@ capability *get_capabilities(void) {
   get_location("cat", capable->cat_cmd, PATH_MAX);
   get_location("echo", capable->echo_cmd, PATH_MAX);
   get_location("eject", capable->eject_cmd, PATH_MAX);
-#else
-  lives_snprintf(capable->rm_cmd, PATH_MAX, "rm.exe");
-  lives_snprintf(capable->rmdir_cmd, PATH_MAX, "rmdir.exe");
-  lives_snprintf(capable->cp_cmd, PATH_MAX, "cp.exe");
-  lives_snprintf(capable->mv_cmd, PATH_MAX, "mv.exe");
-  lives_snprintf(capable->touch_cmd, PATH_MAX, "touch.exe");
-  // no ln_cmd !!!!
-  lives_snprintf(capable->chmod_cmd, PATH_MAX, "chmod.exe");
-  lives_snprintf(capable->cat_cmd, PATH_MAX, "cat.exe");
-  lives_snprintf(capable->echo_cmd, PATH_MAX, "echo.exe");
-  lives_snprintf(capable->eject_cmd, PATH_MAX, "eject.exe"); // does it exist ?
-#endif
 
   // required
   capable->can_write_to_home = FALSE;
@@ -2273,28 +2238,7 @@ capability *get_capabilities(void) {
   capable->can_read_from_config = FALSE;
 
 #ifdef GUI_GTK
-#ifndef IS_MINGW
   lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
-#else
-  if ((tmp = lives_win32_get_def_folder(FOLDERID_RoamingAppData)) == NULL || strlen(tmp) == 0) {
-    tmp = lives_win32_get_registry(HKEY_CURRENT_USER, "Volatile Environment", "APPDATA");
-  }
-
-  if (tmp == NULL || strlen(tmp) == 0) {
-    LIVES_FATAL("Could not get appdata directory");
-  }
-
-  lives_snprintf(capable->home_dir, PATH_MAX, "%s\\LiVES", tmp);
-  lives_free(tmp);
-
-  tmp = lives_strdup_printf("%s%s", capable->home_dir, LIVES_CONFIG_DIR);
-
-  if (!is_writeable_dir(tmp)) {
-    ShellExecute(NULL, "runas", "mkdir", tmp, NULL, SW_SHOWNORMAL);
-  }
-
-  lives_free(tmp);
-#endif
 #endif
 
 #ifdef GUI_QT
@@ -2338,20 +2282,10 @@ capability *get_capabilities(void) {
   if (!check_file(safer_bfile, FALSE)) return capable;
   capable->can_write_to_home = TRUE;
 
-#ifndef IS_MINGW
   lives_snprintf(prefs->backend_sync, PATH_MAX, "%s", BACKEND_NAME);
   lives_snprintf(prefs->backend, PATH_MAX, "%s", BACKEND_NAME);
   if ((tmp = lives_find_program_in_path(BACKEND_NAME)) == NULL) return capable;
   lives_free(tmp);
-
-#else
-
-  lives_snprintf(prefs->backend_sync, PATH_MAX, "perl -s -WINHOME=\"%s\" -- \"%s\\usr\\bin\\%s\"", capable->home_dir, prefs->prefix_dir,
-                 BACKEND_NAME);
-  lives_snprintf(prefs->backend, PATH_MAX, "START /MIN /B perl -s -WINHOME=\"%s\" -- \"%s\\usr\\bin\\%s\"", capable->home_dir,
-                 prefs->prefix_dir, BACKEND_NAME);
-
-#endif
   lives_snprintf(string, 256, "%s report \"%s\" 2>%s", prefs->backend_sync,
                  (tmp = lives_filename_from_utf8(safer_bfile, -1, NULL, NULL, NULL)),
                  LIVES_DEVNULL);
@@ -2458,11 +2392,8 @@ capability *get_capabilities(void) {
   if (strlen(string)) capable->has_mpv = TRUE;
 #endif
 
-#ifndef IS_MINGW
   get_location("convert", string, 256);
-#else
-  get_location("mgkvert", string, 256);
-#endif
+
   if (strlen(string)) capable->has_convert = TRUE;
 
   get_location("composite", string, 256);
@@ -2536,15 +2467,8 @@ capability *get_capabilities(void) {
   }
   capable->ncpus = (int)numProcessors;
 #else
-
-#ifdef IS_MINGW
-  // FIXME:
-
-  //capable->ncpus=lives_win32_get_num_logical_cpus();
-#else
   lives_popen("cat /proc/cpuinfo 2>/dev/null | grep processor 2>/dev/null | wc -l 2>/dev/null", TRUE, buffer, 1024);
   capable->ncpus = atoi(buffer);
-#endif
 #endif
 
   if (capable->ncpus == 0) capable->ncpus = 1;
@@ -2649,11 +2573,6 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 
 static boolean lives_startup(livespointer data) {
-#ifdef GUI_GTK
-  LiVESError *gerr = NULL;
-  char *icon;
-#endif
-
   boolean got_files = FALSE;
   boolean layout_recovered = FALSE;
   char *tmp;
@@ -2743,18 +2662,6 @@ static boolean lives_startup(livespointer data) {
     // needed to avoid priv->pulse2 > priv->pulse1 gtk error
     lives_widget_context_update();
 
-#ifdef GUI_GTK
-#ifndef IS_MINGW
-    icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives.png", NULL);
-#else
-    icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "lives.png", NULL);
-#endif
-    gtk_window_set_default_icon_from_file(icon, &gerr);
-    lives_free(icon);
-
-    if (gerr != NULL) lives_error_free(gerr);
-#endif
-
     lives_widget_queue_draw(mainw->LiVES);
     lives_widget_context_update();
 
@@ -2832,17 +2739,10 @@ static boolean lives_startup(livespointer data) {
                   _("\nAn incorrect version of smogrify was found in your path.\n\n"
                     "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
               } else {
-#ifndef IS_MINGW
                 if ((!capable->has_sox_sox || !capable->has_sox_play) && !capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
                   startup_message_fatal(
-                    _("\nLiVES currently requires 'mplayer', 'mplayer2' or 'sox' to function. Please install one or other of these, and try again.\n"));
+                    _("\nLiVES currently requires 'mplayer', 'mplayer2', 'mpv' or 'sox' to function. Please install one or other of these, and try again.\n"));
                 }
-#else
-                if (!capable->has_sox_sox || (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv)) {
-                  startup_message_fatal(
-                    _("\nLiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to function. Please install these, and try again.\n"));
-                }
-#endif
                 else {
                   if (strlen(capable->startup_msg)) {
                     if (startup_msgtype == 2) startup_message_choice(capable->startup_msg, startup_msgtype);
@@ -2943,14 +2843,10 @@ static boolean lives_startup(livespointer data) {
     // capture mode
     mainw->foreign_key = atoi(zargv[2]);
 
-#ifndef IS_MINGW
 #if GTK_CHECK_VERSION(3, 0, 0) || defined GUI_QT
     mainw->foreign_id = (Window)atoi(zargv[3]);
 #else
     mainw->foreign_id = (GdkNativeWindow)atoi(zargv[3]);
-#endif
-#else
-    mainw->foreign_id = (HWND)atoi(zargv[3]);
 #endif
 
     mainw->foreign_width = atoi(zargv[4]);
@@ -3004,11 +2900,9 @@ static boolean lives_startup(livespointer data) {
   if (!prefs->show_gui) lives_widget_hide(mainw->LiVES);
 
   if (prefs->startup_phase == 100) {
-#ifndef IS_MINGW
     if (upgrade_error) {
       do_upgrade_error_dialog();
     }
-#endif
     prefs->startup_phase = 0;
   }
 
@@ -3069,7 +2963,7 @@ static boolean lives_startup(livespointer data) {
 #endif
 
 #ifdef GUI_GTK
-#if defined HAVE_X11 || defined IS_MINGW
+#if defined HAVE_X11
   //gdk_window_add_filter(NULL, filter_func, NULL);
 #endif
 #endif
@@ -3111,7 +3005,6 @@ static boolean lives_startup(livespointer data) {
 
 
 void set_signal_handlers(SignalHandlerPointer sigfunc) {
-#ifndef IS_MINGW
   sigset_t smask;
 
   struct sigaction sact;
@@ -3132,17 +3025,6 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
   sigaction(LIVES_SIGSEGV, &sact, NULL);
   sigaction(LIVES_SIGABRT, &sact, NULL);
 
-#else
-  SignalHandlerPointer previousHandler;
-
-  previousHandler = signal(LIVES_SIGINT, (SignalHandlerPointer)catch_sigint);
-  previousHandler = signal(LIVES_SIGTERM, (SignalHandlerPointer)catch_sigint);
-  previousHandler = signal(LIVES_SIGSEGV, (SignalHandlerPointer)catch_sigint);
-  previousHandler = signal(LIVES_SIGABRT, (SignalHandlerPointer)catch_sigint);
-
-  previousHandler = previousHandler; // shut gcc up
-#endif
-
   if (mainw != NULL) {
     if (sigfunc == defer_sigint) mainw->signals_deferred = TRUE;
     else mainw->signals_deferred = FALSE;
@@ -3150,12 +3032,6 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 }
 
 int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
-#ifdef ENABLE_OSC
-#ifdef IS_MINGW
-  WSADATA wsaData;
-  int iResult;
-#endif
-#endif
   ssize_t mynsize;
   char fbuff[PATH_MAX];
   char *tmp;
@@ -3195,18 +3071,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   // force decimal point to be a "."
   putenv("LC_NUMERIC=C");
-
-#ifdef ENABLE_OSC
-#ifdef IS_MINGW
-
-  // Initialize Winsock
-  iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-  if (iResult != 0) {
-    printf("WSAStartup failed: %d\n", iResult);
-    exit(1);
-  }
-#endif
-#endif
 
 #ifdef GDK_WINDOWING_X11
   XInitThreads();
@@ -7187,10 +7051,6 @@ void load_frame_image(int frame) {
       lives_freep((void **)&cfile->op_dir);
 
       if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->close_keep_frames) {
-#ifdef IS_MINGW
-        // kill any active processes: for other OSes the backend does this
-        lives_kill_subprocesses(cfile->handle, TRUE);
-#endif
         com = lives_strdup_printf("%s close \"%s\"", prefs->backend_sync, cfile->handle);
         lives_system(com, TRUE);
         lives_free(com);

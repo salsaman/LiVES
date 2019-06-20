@@ -184,10 +184,6 @@ typedef enum {
 #define WEED_LEAF_HOST_REFS "host_refs" // host ref counting
 #define WEED_LEAF_HOST_REPEATS "host_repeats" // host channel repeats
 #define WEED_LEAF_HOST_INITED "host_inited" // inited or not
-#define WEED_LEAF_HOST_INTERNAL_CONNECTION "host_internal_connection" // for chain plugins
-#define WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE "host_internal_connection_autoscale" // for chain plugins
-#define WEED_LEAF_HOST_NEXT_INSTANCE "host_next_instance" // for chain plugins
-#define WEED_LEAF_HOST_COMPOUND_CLASS "host_compound_class" // for chain plugins
 #define WEED_LEAF_HOST_PLUGIN_PATH "host_plugin_path" // plugin path
 #define WEED_LEAF_HOST_HANDLE "host_handle" // dll handle
 #define WEED_LEAF_HOST_FILTER_LIST "host_filter_list" // host usable filters
@@ -197,6 +193,14 @@ typedef enum {
 #define WEED_LEAF_HOST_IDX "host_idx" // special value for text widgets
 
 #define WEED_LEAF_HOST_SCRAP_FILE_OFFSET "scrap_file_offset" // special value for scrap_file
+
+// compound plugins
+#define WEED_LEAF_HOST_INTERNAL_CONNECTION "host_internal_connection" // for chain plugins
+#define WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE "host_internal_connection_autoscale" // for chain plugins
+#define WEED_LEAF_HOST_NEXT_INSTANCE "host_next_instance" // for chain plugins
+#define WEED_LEAF_HOST_COMPOUND_CLASS "host_compound_class" // for chain plugins
+#define WEED_LEAF_HOST_CHANNEL_CONNECTION "host_channel_connection" // special value for text widgets
+
 
 // layer only values
 

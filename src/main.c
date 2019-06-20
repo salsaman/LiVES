@@ -591,11 +591,11 @@ static boolean pre_init(void) {
   if (needs_update) set_pref(PREF_PREFIX_DIR, prefs->prefix_dir);
 
 #ifdef GUI_GTK
-    icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives.png", NULL);
-    gtk_window_set_default_icon_from_file(icon, &gerr);
-    lives_free(icon);
+  icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives.png", NULL);
+  gtk_window_set_default_icon_from_file(icon, &gerr);
+  lives_free(icon);
 
-    if (gerr != NULL) lives_error_free(gerr);
+  if (gerr != NULL) lives_error_free(gerr);
 #endif
 
   needs_update = FALSE;
@@ -2742,8 +2742,7 @@ static boolean lives_startup(livespointer data) {
                 if ((!capable->has_sox_sox || !capable->has_sox_play) && !capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
                   startup_message_fatal(
                     _("\nLiVES currently requires 'mplayer', 'mplayer2', 'mpv' or 'sox' to function. Please install one or other of these, and try again.\n"));
-                }
-                else {
+                } else {
                   if (strlen(capable->startup_msg)) {
                     if (startup_msgtype == 2) startup_message_choice(capable->startup_msg, startup_msgtype);
                     else if (info_only) startup_message_info(capable->startup_msg);

@@ -1502,7 +1502,7 @@ void backup_host_tags(weed_plant_t *event_list, weed_timecode_t curr_tc) {
   weed_timecode_t tc;
 
   while (event != NULL && (tc = get_event_timecode(event)) <= curr_tc) {
-    if (WEED_EVENT_IS_FILTER_INIT(event)) weed_leaf_copy(event, "host_tag_copy", event, WEED_LEAF_HOST_TAG);
+    if (WEED_EVENT_IS_FILTER_INIT(event)) weed_leaf_copy(event, WEED_LEAF_HOST_TAG_COPY, event, WEED_LEAF_HOST_TAG);
     event = get_next_event(event);
   }
 }
@@ -1518,8 +1518,8 @@ void restore_host_tags(weed_plant_t *event_list, weed_timecode_t curr_tc) {
 
   while (event != NULL && (tc = get_event_timecode(event)) <= curr_tc) {
     if (WEED_EVENT_IS_FILTER_INIT(event)) {
-      weed_leaf_copy(event, WEED_LEAF_HOST_TAG, event, "host_tag_copy");
-      weed_leaf_delete(event, "host_tag_copy");
+      weed_leaf_copy(event, WEED_LEAF_HOST_TAG, event, WEED_LEAF_HOST_TAG_COPY);
+      weed_leaf_delete(event, WEED_LEAF_HOST_TAG_COPY);
     }
     event = get_next_event(event);
   }

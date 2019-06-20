@@ -66,6 +66,8 @@
 
 #define WEED_LEAF_HOST_AUDIO_TRANSITION "host_audio_transition"
 
+#define WEED_LEAF_HOST_TAG_COPY "host_tag_copy"
+
 #define LIVES_TRACK_ANY -1000000
 
 weed_plant_t *append_frame_event(weed_plant_t *event_list, weed_timecode_t tc, int numframes,

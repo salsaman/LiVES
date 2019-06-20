@@ -5778,7 +5778,7 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         // unlike with in_param_templates, which are copy by value, in_channel_templates are copy by ref.
         // so we need to add some extra leaves to the compound filter to note channel connections
         // - we will link the actual channels when we create an instance from the filter
-        key = lives_strdup_printf("host_channel_connection%d", xconx++);
+        key = lives_strdup_printf(WEED_LEAF_HOST_CHANNEL_CONNECTION "%d", xconx++);
         weed_set_int_array(filter, key, 4, xvals);
         lives_free(key);
 
@@ -6509,7 +6509,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 
     while (1) {
       // add channel connections
-      key = lives_strdup_printf("host_channel_connection%d", xcnumx++);
+      key = lives_strdup_printf(WEED_LEAF_HOST_CHANNEL_CONNECTION "%d", xcnumx++);
       if (weed_plant_has_leaf(filter, key)) {
         xvals = weed_get_int_array(filter, key, &error);
 

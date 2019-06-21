@@ -46,35 +46,21 @@ $gid = $);
 $gid =~ s/\W.*//;
 
 if ($^O eq "MSWin32" || $^O eq "msys") {
-    use File::Path qw(make_path);
-
-    #TODO - get this from the registry when needed
-    $login = getlogin;
-    $home = "C:\\users\\$login\\AppData\\Roaming\\LiVES";
-    $rc_filename = "LiVES.ini";
-    $lives_home_dir = "$home";
-
-    # default temporary directory (can be overridden from the GUI)
-    $default_workdir = "$home\\livesprojects\\";
-    $is_mingw = 1;
-    $nulfile = "NUL";
-
-    $encoder = "ffmpeg_encoder";
-    $smog_composite_command = "composite.exe -quiet";
-    $smog_convert_command = "mgkvert.exe -quiet";
-} else {
-    $home = $ENV {"HOME"};
-    $rc_filename = ".lives";
-    $lives_home_dir = "$home/.lives-dir";
-
-    # default temporary directory (can be overridden from the GUI)
-    $default_workdir = "$home";
-    $nulfile = "/dev/null";
-
-    $encoder = "ffmpeg_encoder";
-    $smog_composite_command = "composite -quiet";
-    $smog_convert_command = "convert -quiet";
+    print "This version of smogrify is not for Windows.\n";
+    exit 1;
 }
+
+$home = $ENV {"HOME"};
+$rc_filename = ".lives";
+$lives_home_dir = "$home/.lives-dir";
+
+# default temporary directory (can be overridden from the GUI)
+$default_workdir = "$home";
+$nulfile = "/dev/null";
+
+$encoder = "ffmpeg_encoder";
+$smog_composite_command = "composite -quiet";
+$smog_convert_command = "convert -quiet";
 
 #$DEBUG_SMOGRIFY=1;
 
@@ -113,11 +99,7 @@ if (defined($ARGV[0])) {
             $curworkdir = "$workdir/$handle";
             $target_pid = " ";
 
-            if ($is_mingw) {
-                $pidfile = "$curworkdir/pid";
-            } else {
-                $pidfile = "$curworkdir/.pid";
-            }
+	    $pidfile = "$curworkdir/.pid";
 
             if (defined(open IN, "< $pidfile")) {
                 read IN, $target_pid, 8;
@@ -206,12 +188,7 @@ if (defined($ARGV[0])) {
 
 	    # write mini-info file
 
-            if ($is_mingw) {
-                $infofile="$workdir/info.$key";
-            }
-            else {
-                $infofile="$workdir/.info.$key";
-            }
+	    $infofile="$workdir/.info.$key";
             do {
                 $handle=int(rand 1000000000)+65536;
                 $curworkdir="$workdir/$handle";
@@ -240,11 +217,7 @@ if (defined($ARGV[0])) {
             if (defined($ARGV[1])) {
                 $id = $ARGV[1];
 
-                if (!$is_mingw) {
-                    open OUT, "> /tmp/.smogrify.$id" or exit 1;
-                } else {
-                    open OUT, "> C:\\smogrify.$id" or exit 1;
-                }
+		open OUT, "> /tmp/.smogrify.$id" or exit 1;
                 print OUT "$workdir";
                 close OUT;
             } else {
@@ -280,11 +253,7 @@ if (defined($ARGV[0])) {
 
             if (! -d "$lives_home_dir") {
 		# this can fail here, but succeed later
-                if (!$is_mingw) {
-                    smog_system("/bin/mkdir -p \"$lives_home_dir\"");
-                } else {
-                    make_path("$lives_home_dir");
-                }
+		smog_system("/bin/mkdir -p \"$lives_home_dir\"");
             }
 
             $startup_phase = 0;
@@ -425,14 +394,9 @@ if (defined($ARGV[0])) {
                 close OUT;
             }
 
-	    #make sure we can write to tempir
-	    #open OUT,"> $workdir/testfile" or exit 5;
-	    #close OUT;
-	    #unlink "$workdir/testfile";
-
             exit 0;
         }
-
+    
         if ($command eq "set_clip_value") {
             $prefs_file = $ARGV[1];
             shift(@ARGV);
@@ -485,11 +449,7 @@ if (defined($ARGV[0])) {
                 print $value;
                 exit 0;
             }
-            if ($is_mingw) {
-                open OUT, "> $workdir/smogval.$first.$second" or exit 1;
-            } else {
-                open OUT, "> $workdir/.smogval.$first.$second" or exit 1;
-            }
+	    open OUT, "> $workdir/.smogval.$first.$second" or exit 1;
             print OUT $value;
             close OUT;
             exit 0;
@@ -513,11 +473,7 @@ if (defined($ARGV[0])) {
                 $value = "NULL";
             }
 
-            if ($is_mingw) {
-                open OUT, "> $workdir/smogval.$first.$second" or exit 1;
-            } else {
-                open OUT, "> $workdir/.smogval.$first.$second" or exit 1;
-            }
+	    open OUT, "> $workdir/.smogval.$first.$second" or exit 1;
             print OUT $value;
             close OUT;
             exit 0;
@@ -543,36 +499,19 @@ if (defined($ARGV[0])) {
             }
             $value = &location($exe);
 
-            if ($is_mingw) {
-                open OUT, "> $workdir/smogval.$first.$second" or exit 1;
-            } else {
-                open OUT, "> $workdir/.smogval.$first.$second" or exit 1;
-            }
-
+	    open OUT, "> $workdir/.smogval.$first.$second" or exit 1;
             print OUT $value;
             close OUT;
             exit 0;
         }
 
         if ($command eq "pause") {
-            if ($is_mingw) {
-                $smres = smog_system("touch.exe \"$workdir\\$ARGV[1]\\pause\"");
-                if ($smres) {
-                    sig_write_error("$workdir\\$ARGV[1]\\pause");
-                    exit 1;
-                }
-            } else {
-                $smres = smog_system("touch \"$workdir/$ARGV[1]/pause\"");
-                if ($smres) {
-                    sig_write_error("$workdir/$ARGV[1]/pause");
-                    exit 1;
-                }
-            }
-            if ($is_mingw) {
-		#smog_system("chmod.exe 600 \"$workdir\\$ARGV[1]\\pause\"");
-            } else {
-                smog_system("/bin/chmod 600 \"$workdir/$ARGV[1]/pause\"");
-            }
+	    $smres = smog_system("touch \"$workdir/$ARGV[1]/pause\"");
+	    if ($smres) {
+		sig_write_error("$workdir/$ARGV[1]/pause");
+		exit 1;
+	    }
+	    smog_system("/bin/chmod 600 \"$workdir/$ARGV[1]/pause\"");
             exit 0;
         }
 
@@ -603,12 +542,7 @@ if (defined($ARGV[0])) {
         if ($command eq "undo_audio") {
             $handle = $ARGV[1];
             $curworkdir = "$workdir/$handle";
-            if ($is_mingw) {
-                $statusfile = "$curworkdir/status";
-            } else {
-                $statusfile = "$curworkdir/.status";
-            }
-
+	    $statusfile = "$curworkdir/.status";
             &undo_audio;
 	    # will abort on failure
             &sig_complete;
@@ -618,11 +552,7 @@ if (defined($ARGV[0])) {
         if ($command eq "backup_audio") {
             $handle = $ARGV[1];
             $curworkdir = "$workdir/$handle";
-            if ($is_mingw) {
-                $statusfile = "$curworkdir/status";
-            } else {
-                $statusfile = "$curworkdir/.status";
-            }
+	    $statusfile = "$curworkdir/.status";
             smog_chdir("$curworkdir");
             &backup_audio;
             if ($panic) {
@@ -648,11 +578,7 @@ if (defined($ARGV[0])) {
                 $vsize = $ARGV[5];
             }
 
-            if ($is_mingw) {
-                $statusfile = "$curworkdir/status";
-            } else {
-                $statusfile = "$curworkdir/.status";
-            }
+	    $statusfile = "$curworkdir/.status";
 
 	    # check the file is writable
             unless(&is_writeable($nfile)) {
@@ -689,12 +615,7 @@ if (defined($ARGV[0])) {
             $leave_headers = $ARGV[3];
 
             $curworkdir = "$workdir/$handle";
-
-            if ($is_mingw) {
-                $statusfile = "$curworkdir/status";
-            } else {
-                $statusfile = "$curworkdir/.status";
-            }
+	    $statusfile = "$curworkdir/.status";
 
             smog_chdir("$curworkdir");
             $fsize = -s "$nfile";
@@ -802,34 +723,22 @@ if (defined($ARGV[0])) {
         }
 
         if ($command eq "build_rfx_plugins") {
-            if (!$is_mingw) {
-                if (&location($rfx_builder_multi) eq "") {
-                    &sig_error("Unable to locate the program $rfx_builder_multi");
-                    exit 1;
-                }
+	    if (&location($rfx_builder_multi) eq "") {
+		&sig_error("Unable to locate the program $rfx_builder_multi");
+		exit 1;
             }
 
             $type=$ARGV[1];
             $script_dir=$ARGV[2];
             $exec_dir=$ARGV[3];
-            if (!$is_mingw) {
-                smog_system("$rfx_builder_multi \"$type\" \"$script_dir\" \"$exec_dir\"");
-            }
-            else {
-                smog_system("perl \"$installdir\\$rfx_builder_multi\" \"$type\" \"$script_dir\" \"$exec_dir\"");
-            }
+	    smog_system("$rfx_builder_multi \"$type\" \"$script_dir\" \"$exec_dir\"");
             exit 0;
         }
 
         if ($command eq "make_thumb") {
             $handle=$ARGV[1];
             $curworkdir="$workdir/$handle";
-            if ($is_mingw) {
-                $statusfile="$curworkdir/status";
-            }
-            else {
-                $statusfile="$curworkdir/.status";
-            }
+	    $statusfile="$curworkdir/.status";
             $dwidth=$ARGV[2];
             $dheight=$ARGV[3];
             $img_ext=".".$ARGV[4];
@@ -878,12 +787,7 @@ if (defined($ARGV[0])) {
 	    #
             $handle=$ARGV[1];
             $curworkdir="$workdir/$handle";
-            if ($is_mingw) {
-                $statusfile="$curworkdir/status";
-            }
-            else {
-                $statusfile="$curworkdir/.status";
-            }
+	    $statusfile="$curworkdir/.status";
             smog_chdir("$curworkdir");
             $start=$ARGV[2];
             $end=$ARGV[3];
@@ -909,9 +813,7 @@ if (defined($ARGV[0])) {
                         unlink <audiodump.wav audioclip>;
                     }
                     if ($areq&4) {
-                        if (!$is_mingw) {
-                            &clear_symlinks;
-                        }
+			&clear_symlinks;
                     }
                 }
             }
@@ -919,20 +821,7 @@ if (defined($ARGV[0])) {
 	    #need this again - something resets us
             smog_chdir("$curworkdir");
 
-            if ($is_mingw) {
-		# filter by file ext
-                my $ext=&get_ext("$plugin");
-                if ($ext eq ".py") {
-                    $cmd="python";
-                }
-                else {
-                    $cmd="perl";
-                }
-                $com="$cmd \"$plugin\" clear $start $end $img_ext";
-            }
-            else {
-                $com="\"$plugin\" clear $start $end $img_ext";
-            }
+	    $com="\"$plugin\" clear $start $end $img_ext";
 
             $smerr=smog_system($com);
             if ($smerr) {
@@ -944,8 +833,6 @@ if (defined($ARGV[0])) {
         }
 
         if ($command eq "check_for_lock") {
-	    #TODO - mingw
-
 	    # check if there is a lock file for a set, and if so is it in use
             my $setname=$ARGV[1];
             my $exename=$ARGV[2];
@@ -975,7 +862,6 @@ if (defined($ARGV[0])) {
             exit 0;
         }
 
-	#TODO - mingw
         if ($command eq "get_recovery_file") {
 	    #find first non-in-use recovery file for given uid, gid and filepart
             my $uid = $ARGV[1];
@@ -1019,7 +905,6 @@ if (defined($ARGV[0])) {
             exit 0;
         }
 
-	#TODO - mingw
         if ($command eq "clean_recovery_files") {
 	    #remove non-in-use recovery/layout files for given uid, gid
             my $uid = $ARGV[1];
@@ -1079,11 +964,7 @@ if (defined($ARGV[0])) {
                 $found = "none";
             }
 
-            if ($is_mingw) {
-                $infofile = "$workdir/info.$pid";
-            } else {
-                $infofile = "$workdir/.info.$pid";
-            }
+	    $infofile = "$workdir/.info.$pid";
             smog_system_sync();
 
             if (-d $workdir) {
@@ -1163,11 +1044,7 @@ if (defined($ARGV[0])) {
         if ($command eq "mv_pre") {
             $handle = $ARGV[1];
             $curworkdir = "$workdir/$handle";
-            if ($is_mingw) {
-                $statusfile = "$curworkdir/status";
-            } else {
-                $statusfile = "$curworkdir/.status";
-            }
+	    $statusfile = "$curworkdir/.status";
             unlink "$curworkdir/pause";
             $start = $ARGV[2];
             $end = $ARGV[3];
@@ -1189,34 +1066,13 @@ if (defined($ARGV[0])) {
         if ($command eq "create_package") {
 	    # args are 1: pkg name, 2 dir to pack contents of
 
-            if (!$is_mingw) {
-                my $com = "tar czf \"$ARGV[1]\" -C \"$ARGV[2]\" .";
-
-                my $smerr = smog_system($com);
-                if ($smerr) {
-                    sig_system_error("$com", $smerr);
-                    exit 1;
-                };
-
-            } else {
-                chdir("$workdir");
-                unlink "temp.pakage";
-                my $com = "tar.exe -cf temp.pakage -C \"$ARGV[2]\"";
-                $smerr = smog_system($com);
-                if ($smerr) {
-                    sig_system_error("$com", $smerr);
-                    unlink "$pidfile";
-                    exit 1;
-                }
-                my $com = "gzip.exe -c temp.pakage > \"$ARGV[1]\" ";
-                $smerr = smog_system($com);
-                if ($smerr) {
-                    sig_system_error("$com", $smerr);
-                    unlink "$pidfile";
-                    exit 1;
-                }
-                unlink "temp.pakage";
-            }
+	    my $com = "tar czf \"$ARGV[1]\" -C \"$ARGV[2]\" .";
+	    
+	    my $smerr = smog_system($com);
+	    if ($smerr) {
+		sig_system_error("$com", $smerr);
+		exit 1;
+	    }
             exit 0;
         }
 
@@ -1227,50 +1083,23 @@ if (defined($ARGV[0])) {
             smog_system($com);
             chdir $ARGV[2];
 
-            if (!$is_mingw) {
-                $com = "tar xzf \"$ARGV[1]\" .";
+	    $com = "tar xzf \"$ARGV[1]\" .";
 
-                my $smerr = smog_system($com);
-                if ($smerr) {
-                    sig_system_error("$com", $smerr);
-                    exit 1;
-                };
-            } else {
-                unlink "temp.gz";
-                unlink "temp";
-                smog_copy("$ARGV[1]", "temp.gz");
-                if ($panic) {
-                    unlink "$pidfile";
-                    exit 1;
-                }
-                $com = "gzip.exe -d temp.gz";
-                $smerr = smog_system($com);
-                if ($smerr) {
-                    sig_system_error("$com", $smerr);
-                    unlink "$pidfile";
-                    exit 1;
-                }
-                $com = "tar.exe -xf temp";
-                $smerr = smog_system($com);
-                if ($smerr) {
-                    sig_system_error("$com", $smerr);
-                    unlink "$pidfile";
-                    exit 1;
-                }
-                unlink "temp";
-            }
+	    my $smerr = smog_system($com);
+	    if ($smerr) {
+		sig_system_error("$com", $smerr);
+		exit 1;
+	    }
 
             exit 0;
         }
 
 	####################################################################
-        if (!$is_mingw) {
-	    # run the rest in background
-            if ($background == 1) {
-                if (fork()) {
-                    exit 0;
-                }
-            }
+	# run the rest in background
+	if ($background == 1) {
+	    if (fork()) {
+		exit 0;
+	    }
         }
 	####################################################################
         umask $umask;
@@ -1284,24 +1113,12 @@ if (defined($ARGV[0])) {
 
         $curworkdir = "$workdir/$handle";
 
-        if ($is_mingw) {
-            $statusfile = $curworkdir."/status";
-        } else {
-            $statusfile = $curworkdir."/.status";
-        }
+	$statusfile = $curworkdir."/status";
 
         if ($command eq "play" || $command eq "play_opening_preview") {
-            if ($is_mingw) {
-                $pidfile = $curworkdir."/pidpb";
-            } else {
-                $pidfile = $curworkdir."/.pidpb";
-            }
+	    $pidfile = $curworkdir."/.pidpb";
         } else {
-            if ($is_mingw) {
-                $pidfile = $curworkdir."/pid";
-            } else {
-                $pidfile = $curworkdir."/.pid";
-            }
+	    $pidfile = $curworkdir."/.pid";
         }
 
         if ($command eq "play_opening_preview") {
@@ -1602,7 +1419,6 @@ if (defined($ARGV[0])) {
 		$aformnew="-audio-format=s16";
 	    }
 
-	    #TODO - mingw
 	    $threads=smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
 	    $threads=int($threads);
 	    if ($threads==0) {
@@ -1815,13 +1631,8 @@ if (defined($ARGV[0])) {
 			    print STDERR "\nMaybe you are missing a library in mpv (or it is not a valid media file) ?\n";
 			}
 		    }
-		    if ($is_mingw) {
-			&sig_error("This does not appear to be a valid video or image file","$GUI_NAME was unable to open it."," ");
-		    }
-		    else {
-			&sig_error("This does not appear to be a valid video or image file","$GUI_NAME was unable to open it.", \
-				   "","Check the terminal window for more details.");
-		    }
+		    &sig_error("This does not appear to be a valid video or image file","$GUI_NAME was unable to open it.", \
+			       "","Check the terminal window for more details.");
 		}
 	    }
 
@@ -1962,9 +1773,7 @@ if (defined($ARGV[0])) {
 	    if (defined(open IN,"< $pidfile")) {
 		close IN;
 		# cancel any processing
-		if (!$is_mingw) {
-		    smog_system("smogrify stopsubsub \"$handle\"");
-		}
+		smog_system("smogrify stopsubsub \"$handle\"");
 	    }
 	    if (chdir("$curworkdir")) {
 		unlink glob "* .* *.*";
@@ -2005,14 +1814,8 @@ if (defined($ARGV[0])) {
 		$handle=$ARGV[1];
 
 		$curworkdir="$workdir/$handle";
-		if ($is_mingw) {
-		    $statusfile="$curworkdir/status";
-		    $pidfile=$curworkdir."/pid";
-		}
-		else {
-		    $statusfile="$curworkdir/.status";
-		    $pidfile=$curworkdir."/.pid";
-		}
+		$statusfile="$curworkdir/.status";
+		$pidfile=$curworkdir."/.pid";
 
 	    }
 
@@ -2184,9 +1987,7 @@ if (defined($ARGV[0])) {
 			    exit 1;
 			};
 
-			if (!$is_mingw) {
-			    $fstype=&get_fs_type($curworkdir);
-			}
+			$fstype=&get_fs_type($curworkdir);
 
 			# need to make hard links, as some encoders complain about symbolic links
 
@@ -2194,23 +1995,14 @@ if (defined($ARGV[0])) {
 			    $name=&mkname($i);
 			    $from=&mkname($i+$start-1);
 			    if (-f "$curworkdir$from$img_ext") {
-				if ($is_mingw) {
-				    $smerr=smog_system ("cp.exe \"$curworkdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
+				if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
+				    $smerr=smog_system ("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
 				    if ($smerr) {
-					sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir$name$img_ext\"",$smerr);
+					sig_system_error("Copying \"$curworkdir/$from$img_ext\" from \"$linksdir$name$img_ext\"",$smerr);
 					unlink "$pidfile";
 					exit 1;
 				    }
 				}
-				else {
-				    if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
-					$smerr=smog_system ("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
-					if ($smerr) {
-					    sig_system_error("Copying \"$curworkdir/$from$img_ext\" from \"$linksdir$name$img_ext\"",$smerr);
-					    unlink "$pidfile";
-					    exit 1;
-					}
-				    }
 				    else {
 					$smerr=smog_system ("/bin/ln \"$curworkdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
 					if ($smerr) {
@@ -2225,33 +2017,22 @@ if (defined($ARGV[0])) {
 			if (-f $audiofile) {
 			    my $xaudiofile=(split(/\//,$audiofile))[-1];
 			    if (! -f "$linksdir$xaudiofile") {
-				if ($is_mingw) {
-				    $smerr=smog_system ("cp.exe \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
+				if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
+				    $smerr=smog_system("/bin/cp -f \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
 				    if ($smerr) {
-					sig_system_error("Copying \"$curworkdir/$audiofile\" to \"$linksdir$xaudiofile\"",$smerr);
+					sig_system_error("Copying \"$curworkdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
 					unlink "$pidfile";
 					exit 1;
 				    }
 				}
 				else {
-				    if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
-					$smerr=smog_system("/bin/cp -f \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
-					if ($smerr) {
-					    sig_system_error("Copying \"$curworkdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
-					    unlink "$pidfile";
-					    exit 1;
-					}
-				    }
-				    else {
-					$smerr=smog_system("/bin/ln \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
-					if ($smerr) {
-					    sig_system_error("Symlinking \"$curworkdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
-					    unlink "$pidfile";
-					    exit 1;
-					}
+				    $smerr=smog_system("/bin/ln \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
+				    if ($smerr) {
+					sig_system_error("Symlinking \"$curworkdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
+					unlink "$pidfile";
+					exit 1;
 				    }
 				}
-			    }
 			}
 			$is_linked=1;
 		    }
@@ -2262,7 +2043,7 @@ if (defined($ARGV[0])) {
 		}
 
 	    }
-
+    
 	    unless ($plugin eq "") {
 		$atype=&rc_get("encoder_acodec");
 		$fields="$fps \"$nfile\" $start $end $img_ext $otype $atype $hsize $vsize";
@@ -2273,32 +2054,12 @@ if (defined($ARGV[0])) {
 		    $extra_opts="-v";
 		}
 
-		if ($is_mingw) {
-		    # adjust depending on file ext
-		    my $ext=&get_ext("$plugin");
-		    if ($ext eq ".py") {
-			$cmd="python";
-		    }
-		    else {
-			$cmd="perl";
-		    }
-		    if ($get_rfx==0) {
-			$fields.=@ARGV[13..$#ARGV];
-			$com="$cmd \"$plugin\" $extra_opts encode $fields";
-
-		    }
-		    else {
-			$com="$cmd \"$plugin\" get_rfx $fields";
-		    }
+		if ($get_rfx==0) {
+		    $fields.=@ARGV[13..$#ARGV];
+		    $com="\"$plugin\" $extra_opts encode $fields";
 		}
 		else {
-		    if ($get_rfx==0) {
-			$fields.=@ARGV[13..$#ARGV];
-			$com="\"$plugin\" $extra_opts encode $fields";
-		    }
-		    else {
-			$com="\"$plugin\" get_rfx $fields";
-		    }
+		    $com="\"$plugin\" get_rfx $fields";
 		}
 
 		$smerr=smog_system("$com");
@@ -2329,7 +2090,7 @@ if (defined($ARGV[0])) {
 
 	    return 1;
 	    exit 0; # just in case
-        }
+	}
 
 	if ($command eq "link_frames") {
 	    unlink "$curworkdir/pause";
@@ -2356,21 +2117,10 @@ if (defined($ARGV[0])) {
 		$linksdir="$curworkdir/lives-symlinks/";
 
 		if (-d $linksdir) {
-		    if ($is_mingw) {
-			smog_system("DEL /q \"$linksdir\"");
-			smog_system("RMDIR \"$linksdir\"");
-		    }
-		    else {
-			smog_system("/bin/rm -rf \"$linksdir\"");
-		    }
+		    smog_system("/bin/rm -rf \"$linksdir\"");
 		}
 
-		if ($is_mingw) {
-		    $com="mkdir.exe -p \"$linksdir\"";
-		}
-		else {
-		    $com="/bin/mkdir -p \"$linksdir\"";
-		}
+		$com="/bin/mkdir -p \"$linksdir\"";
 		$smerr=smog_system($com);
 		if ($smerr) {
 		    sig_system_error("Creating directory \"$linksdir\"",$smerr);
@@ -2415,17 +2165,14 @@ if (defined($ARGV[0])) {
 	    }
 
 	    $img_ext=&get_img_ext($curworkdir,$start);
-
-	    if (!$is_mingw) {
-		$fstype=&get_fs_type($curworkdir);
-	    }
+	    $fstype=&get_fs_type($curworkdir);
 
 	    for ($i=1;$i<=($end-$start+1);$i++) {
 		$name=&mkname($i);
 		$from=&mkname($i+$start-1);
 		if (-f "$curworkdir/$from$img_ext") {
-		    if ($is_mingw) {
-			$smerr=smog_system ("cp.exe \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+		    if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
+			$smerr=smog_system ("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
 			if ($smerr) {
 			    sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
 			    unlink "$pidfile";
@@ -2433,21 +2180,11 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		    else {
-			if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
-			    $smerr=smog_system ("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
-			    if ($smerr) {
-				sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
-				unlink "$pidfile";
-				exit 1;
-			    }
-			}
-			else {
-			    $smerr=smog_system ("/bin/ln \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
-			    if ($smerr) {
-				sig_system_error("Linking \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
-				unlink "$pidfile";
-				exit 1;
-			    }
+			$smerr=smog_system ("/bin/ln \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+			if ($smerr) {
+			    sig_system_error("Linking \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
+			    unlink "$pidfile";
+			    exit 1;
 			}
 		    }
 
@@ -2622,12 +2359,7 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 
-	    if ($is_mingw) {
-		$com="gzip.exe -S .lv1 temp.tar";
-	    }
-	    else {
-		$com="gzip -S .lv1 temp.tar";
-	    }
+	    $com="gzip -S .lv1 temp.tar";
 
 	    $smerr=smog_system ($com);
 	    if ($smerr) {
@@ -2662,37 +2394,13 @@ if (defined($ARGV[0])) {
 
 	    smog_chdir("$curworkdir");
 
-	    if (!$is_mingw) {
-		$com="tar -zxf \"$nfile\" 2>$nulfile";
-		smog_system ($com);
+	    $com="tar -zxf \"$nfile\" 2>$nulfile";
+	    smog_system ($com);
 
-		if ($smerr) {
-		    sig_system_error("$com",$smerr);
-		    unlink "$pidfile";
-		    exit 1;
-		}
-	    }
-	    else {
-		smog_copy("$nfile","$curworkdir\\temp.gz");
-		if ($panic) {
-		    unlink "$pidfile";
-		    exit 1;
-		}
-		$com="gzip.exe -d temp.gz";
-		$smerr=smog_system ($com);
-		if ($smerr) {
-		    sig_system_error("$com",$smerr);
-		    unlink "$pidfile";
-		    exit 1;
-		}
-		$com="tar.exe -xf temp";
-		$smerr=smog_system ($com);
-		if ($smerr) {
-		    sig_system_error("$com",$smerr);
-		    unlink "$pidfile";
-		    exit 1;
-		}
-		unlink "temp";
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile";
+		exit 1;
 	    }
 
 	    unless (-f "header.tar"||-f "header"||-f "header.lives") {
@@ -3106,11 +2814,8 @@ if (defined($ARGV[0])) {
 	    $extra_params = $ARGV[8];
 	    $mplayer_command = &get_mplayer_location;
 
-	    if (!$is_mingw) {
-		$com = "\"$mplayer_command\" -quiet -wid $win -vo x11 -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile";
-	    } else {
-		$com = "\"$mplayer_command\" -quiet -wid $win -vo direct3d -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile";
-	    }
+	    $com = "\"$mplayer_command\" -quiet -wid $win -vo x11 -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile";
+
 	    smog_system($com);
 	    &sig_complete;
 	    exit 0;
@@ -3188,11 +2893,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    smog_rename("$audio_out", "$nfile");
-	    if ($is_mingw) {
-		smog_system("chmod.exe 644 \"$nfile\" >$nulfile 2>&1");
-	    } else {
-		smog_system("/bin/chmod 644 \"$nfile\" >$nulfile 2>&1");
-	    }
+	    smog_system("/bin/chmod 644 \"$nfile\" >$nulfile 2>&1");
 
 	    &sig_complete;
 	    exit 0;
@@ -3295,11 +2996,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    # cat audio audio.new -> audiodump
-	    if ($is_mingw) {
-		$smerr = smog_system("cat.exe \"$curworkdir/audio\" \"$audio_out\" > \"$curworkdir/audiodump\"");
-	    } else {
-		$smerr = smog_system("/bin/cat \"$curworkdir/audio\" \"$audio_out\" > \"$curworkdir/audiodump\"");
-	    }
+	    $smerr = smog_system("/bin/cat \"$curworkdir/audio\" \"$audio_out\" > \"$curworkdir/audiodump\"");
 
 	    if ($smerr) {
 		sig_system_error("Creating \"$curworkdir\audiodump\"", $smerr);
@@ -3543,11 +3240,7 @@ if (defined($ARGV[0])) {
 			unlink "$pidfile";
 			exit 1;
 		    }
-		    if ($is_mingw) {
-			smog_system("cat.exe \"$audio_out\">>\"$audio_in\"");
-		    } else {
-			smog_system("/bin/cat \"$audio_out\">>\"$audio_in\"");
-		    }
+		    smog_system("/bin/cat \"$audio_out\">>\"$audio_in\"");
 		    unlink "$audio_out";
 		}
 	    }
@@ -3579,11 +3272,7 @@ if (defined($ARGV[0])) {
 		    if (-f $audio_out) {
 			$smres = smog_rename("$audio_out", "$audio_bak");
 		    } else {
-			if ($is_mingw) {
-			    $smres = smog_system("touch.exe \"$audio_bak\"");
-			} else {
-			    $smres = smog_system("touch \"$audio_bak\"");
-			}
+			$smres = smog_system("touch \"$audio_bak\"");
 			if ($smres) {
 			    sig_write_error("$audio_bak");
 			    unlink "$pidfile";
@@ -3616,11 +3305,7 @@ if (defined($ARGV[0])) {
 			    $smres = smog_rename("$audio_out", "$audio_bak");
 			    #aborts on failure
 			} else {
-			    if ($is_mingw) {
-				$smres = smog_system("touch.exe \"$audio_bak\"");
-			    } else {
-				$smres = smog_system("touch \"$audio_bak\"");
-			    }
+			    $smres = smog_system("touch \"$audio_bak\"");
 			    if ($smres) {
 				sig_write_error("$audio_bak");
 				unlink "$pidfile";
@@ -4196,18 +3881,7 @@ if (defined($ARGV[0])) {
 		$plugin_dir = "$lives_home_dir/plugins/effects/rendered/test";
 		$plugin_name = "$plugin_dir/$command";
 	    }
-	    if ($is_mingw) {
-		# adjust depending on file ext
-		my $ext = &get_ext("$plugin_name");
-		if ($ext eq ".py") {
-		    $cmd = "python";
-		} else {
-		    $cmd = "perl";
-		}
-		$smcom = "$cmd \"$plugin_name\" get_description";
-	    } else {
-		$smcom = "\"$plugin_name\" get_description";
-	    }
+	    $smcom = "\"$plugin_name\" get_description";
 	    $fx_desc = smog_system_direct($smcom);
 	    if ($ ?) {
 		sig_system_error($smcom, $ ?);
@@ -4232,19 +3906,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    $fps = 0;
-
-	    if ($is_mingw) {
-		# adjust depending on file ext
-		my $ext = &get_ext("$plugin_name");
-		if ($ext eq ".py") {
-		    $cmd = "python";
-		} else {
-		    $cmd = "perl";
-		}
-		$fx_caps = smog_system_direct("$cmd \"$plugin_name\" get_capabilities");
-	    } else {
-		$fx_caps = smog_system_direct("\"$plugin_name\" get_capabilities");
-	    }
+	    $fx_caps = smog_system_direct("\"$plugin_name\" get_capabilities");
 	    if ($ ?) {
 		sig_system_error($smcom, $ ?);
 		unlink $pidfile;
@@ -4267,31 +3929,17 @@ if (defined($ARGV[0])) {
 		    shift;
 		}
 
-		if ($is_mingw) {
-		    push @INC, "$plugin_dir";
-		}
-
 		$ARGV[0] = "process";
 		if ($status > 1) {
 		    $error = "";
-		    if ($is_mingw) {
-			unless(eval "require (\"$command\")") {
-			    $error = $@;
-			}
-		    } else {
-			unless(eval "require (\"$plugin_name\")") {
-			    $error = $@;
-			}
+		    unless(eval "require (\"$plugin_name\")") {
+			$error = $@;
 		    }
 		    unless($error eq "") {
 			&sig_error("$plugin_name failed:", "$error");
 		    }
 		} else {
-		    if ($is_mingw) {
-			require("$command");
-		    } else {
-			require("$plugin_name");
-		    }
+		    require("$plugin_name");
 		}
 		if ($num_in_channels > 0) {
 		    unless(defined($fx_prev)) {
@@ -4319,46 +3967,13 @@ if (defined($ARGV[0])) {
 		#img_ext is also in ARGV, but never mind
 
 		if ($num_in_channels == 2) {
-		    if ($is_mingw) {
-			# adjust depending on file ext
-			my $ext = &get_ext("$plugin_name");
-			if ($ext eq ".py") {
-			    $cmd = "python";
-			} else {
-			    $cmd = "perl";
-			}
-			$err = smog_system("$cmd \"$plugin_name\" process \"$curworkdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
-		    } else {
-			$err = smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
-		    }
+		    $err = smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
 		}
 		elsif($num_in_channels == 1) {
-		    if ($is_mingw) {
-			# adjust depending on file ext
-			my $ext = &get_ext("$plugin_name");
-			if ($ext eq ".py") {
-			    $cmd = "python";
-			} else {
-			    $cmd = "perl";
-			}
-			$err = smog_system("$cmd \"$plugin_name\" process \"$curworkdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
-		    } else {
-			$err = smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
-		    }
+		    $err = smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
 		}
 		else {
-		    if ($is_mingw) {
-			# adjust depending on file ext
-			my $ext = &get_ext("$plugin_name");
-			if ($ext eq ".py") {
-			    $cmd = "python";
-			} else {
-			    $cmd = "perl";
-			}
-			$err = smog_system("$cmd \"$plugin_name\" process \"$curworkdir\" $out_ext @ARGV > \"$res_file\"");
-		    } else {
-			$err = smog_system("\"$plugin_name\" process \"$curworkdir\" $out_ext @ARGV > \"$res_file\"");
-		    }
+		    $err = smog_system("\"$plugin_name\" process \"$curworkdir\" $out_ext @ARGV > \"$res_file\"");
 		}
 		if (!$err) {
 		    if (defined(open IN, "< $res_file")) {
@@ -4511,20 +4126,11 @@ sub is_writeable {
     $exists=(-f "$nfile");
     if (!$exists) {
         umask 0;
-        if ($is_mingw) {
-            $ret=smog_system("touch.exe \"$nfile\"");
-        }
-        else {
-            $ret = smog_system("touch \"$nfile\"");
-        }
+	$ret = smog_system("touch \"$nfile\"");
         if ($ret) {
             return !$ret;
         }
-        if ($is_mingw) {
-            smog_system("chmod.exe o+w \"$nfile\"");
-        } else {
-            smog_system("/bin/chmod o+w \"$nfile\"");
-        }
+	smog_system("/bin/chmod o+w \"$nfile\"");
         umask $umask;
     }
     smog_system_sync();
@@ -4885,12 +4491,7 @@ sub smog_copy {
     my($smfrom, $smto) = @_;
     my $smcomret;
 
-    if ($is_mingw) {
-        $smcomret = system("cp.exe -f \"$smfrom\" \"$smto\"");
-
-    } else {
-        $smcomret = system("/bin/cp -f \"$smfrom\" \"$smto\"");
-    }
+    $smcomret = system("/bin/cp -f \"$smfrom\" \"$smto\"");
 
     if ($smcomret != 0 && -f $smfrom) {
         if ($DEBUG_SMOGRIFY) {
@@ -5802,13 +5403,8 @@ sub get_file_info {
     }
 
     if (!defined $mplay_command || $mplay_command eq "") {
-        if (!$is_mingw) {
-	    # try to force language to English
-            $mplay_command="LANGUAGE=en LANG=en $mp_command";
-        }
-        else {
-            $mplay_command = $mp_command;
-        }
+	# try to force language to English
+	$mplay_command="LANGUAGE=en LANG=en $mp_command";
     }
 
     $id_vid_form="";
@@ -6123,23 +5719,13 @@ sub clip_audio {
     $audio_out=$curworkdir."/audioclip";
 
     unlink "$audio_out";
-    if ($is_mingw) {
-        $smres=smog_system("touch.exe \"$audio_out\"");
-    }
-    else {
-        $smres=smog_system("touch \"$audio_out\"");
-    }
+    $smres=smog_system("touch \"$audio_out\"");
     if ($smres) {
         $panic=sig_write_error("$audio_out");
         return;
     }
 
-    if ($is_mingw) {
-	#smog_system("chmod.exe 600 \"$audio_out\"");
-    }
-    else {
-        smog_system("/bin/chmod 600 \"$audio_out\"");
-    }
+    smog_system("/bin/chmod 600 \"$audio_out\"");
 
     $align=$achans*$asamps/8;
 
@@ -6355,24 +5941,14 @@ sub insert_audio {
     my ($audio_temp)="$curworkdir/audio.temp";
 
     unlink "$audio_temp";
-    if ($is_mingw) {
-	$smres=smog_system("touch.exe \"$audio_temp\"");
-    }
-    else {
-	$smres=smog_system("touch \"$audio_temp\"");
-    }
+    $smres=smog_system("touch \"$audio_temp\"");
 
     if ($smres) {
 	$panic=sig_write_error("$audio_temp");
 	return;
     }
 
-    if ($is_mingw) {
-	#smog_system("chmod.exe 600 \"$audio_temp\"");
-    }
-    else {
-	smog_system("/bin/chmod 600 \"$audio_temp\"");
-    }
+    smog_system("/bin/chmod 600 \"$audio_temp\"");
 
     $silence=0;
     if ($arate<0) {
@@ -6537,22 +6113,12 @@ sub cut_audio {
         smog_rename("$audio_in","$audio_bak");
     }
     else {
-        if ($is_mingw) {
-            $smres=smog_system("touch.exe \"$audio_temp\"");
-        }
-        else {
-            $smres=smog_system("touch \"$audio_temp\"");
-        }
+	$smres=smog_system("touch \"$audio_temp\"");
         if ($smres) {
             $panic=sig_write_error("$audio_temp");
             return;
         }
-        if ($is_mingw) {
-	    #smog_system("chmod.exe 600 \"$audio_temp\"");
-        }
-        else {
-            smog_system("/bin/chmod 600 \"$audio_temp\"");
-        }
+	smog_system("/bin/chmod 600 \"$audio_temp\"");
 
         $align=$achans*$asamps/8;
 
@@ -6636,20 +6202,12 @@ sub append_silence {
     }
 
     unless(-f $audio_file) {
-        if ($is_mingw) {
-            $smres = smog_system("touch.exe \"$audio_file\"");
-        } else {
-            $smres = smog_system("touch \"$audio_file\"");
-        }
+	$smres = smog_system("touch \"$audio_file\"");
         if ($smres) {
             $panic = sig_write_error("$audio_file");
             return;
         }
-        if ($is_mingw) {
-	    #smog_system("chmod.exe 600 \"$audio_file\"");
-        } else {
-            smog_system("/bin/chmod 600 \"$audio_file\"");
-        }
+	smog_system("/bin/chmod 600 \"$audio_file\"");
     }
 
     my $gsize = -s $audio_file;
@@ -6661,31 +6219,11 @@ sub append_silence {
     if ($size > 0) {
         if ($asigned == 1) {
             $fdd_out = $audio_file;
-            if ($is_mingw) {
-                $smres = smog_system("touch.exe \"$audio_file\"");
-                if ($smres) {
-                    $panic = sig_write_error("$audio_file");
-                    return;
-                }
-                open AUD, "+<", "$audio_file" or $panic = sig_write_error("$audio_file");
-                return if $panic;
-		seek AUD, $gsize - $offset, SEEK_SET or $panic = sig_write_error("$audio_file");
-                return if $panic;
-		for ($i = 0; $i < $size; $i++) {
-                    print AUD chr(0) or $panic = sig_write_error("$audio_file");
-                    return if $panic;
-		}
-	    } else {
-		$fdd_in = "/dev/zero";
-		&fast_dd($size, 0, $fsize);
-            }
+	    $fdd_in = "/dev/zero";
+	    &fast_dd($size, 0, $fsize);
             return if $panic;
 	} else {
-	    if ($is_mingw) {
-                $smres = smog_system("touch.exe \"$audio_file\"");
-            } else {
-                $smres = smog_system("touch \"$audio_file\"");
-            }
+	    $smres = smog_system("touch \"$audio_file\"");
             if ($smres) {
                 $panic = sig_write_error("$audio_file");
                 return;
@@ -7511,11 +7049,6 @@ sub sig_clear {
 sub location {
     # return the location of an executable
     my ($command)=shift;
-
-    if ($is_mingw) {
-        return "$command.exe";
-    }
-
     my ($location)=smog_system_direct("which \"$command\" 2>$nulfile");
     chomp($location);
 
@@ -7758,12 +7291,7 @@ sub fast_dd {
     seek FFIN,$skip,SEEK_START or $panic=sig_read_error("$fdd_in");
     return if $panic;
 
-    if ($is_mingw) {
-        $smres=smog_system("touch.exe $fdd_out");
-    }
-    else {
-        $smres=smog_system("touch $fdd_out");
-    }
+    $smres=smog_system("touch $fdd_out");
     if ($smres) {
         $panic=sig_write_error("$fdd_out");
         return;
@@ -7850,12 +7378,7 @@ sub fndset {
     # check if a directory is in a set (old style)
     # but useful for frontend marking the currently opened clips, so we do not prune them by accident
 
-    if ($is_mingw) {
-        /^set/ or return;
-    }
-    else {
-        /^set\./ or return;
-    }
+    /^set\./ or return;
 
     $in_set=1;
 }
@@ -7935,10 +7458,8 @@ sub version_check_and_upgrade {
             $msg="!updmsg";
         }
 
-        if (!$is_mingw) {
-            if ($new_version_hash>2008000&&$version_hash<=2008000) {
-                $msg="!updmsg2";
-            }
+	if ($new_version_hash>2008000&&$version_hash<=2008000) {
+	    $msg="!updmsg2";
         }
 
         if ($version_hash<8005) {
@@ -8047,17 +7568,6 @@ sub get_form_request {
         return &get_format_request;
     }
     else {
-        if ($is_mingw) {
-	    # filter by file ext
-            my $ext=&get_ext("$plugin");
-            if ($ext eq ".py") {
-                $cmd="python";
-            }
-            else {
-                $cmd="perl";
-            }
-            return smog_system_direct("$cmd \"$plugin\" get_format_request");
-        }
         return smog_system_direct("\"$plugin\" get_format_request");
     }
 }
@@ -8124,16 +7634,7 @@ sub weed {
                     $in_set=0;
                     find (\&fndset,"$workdir/$file/");
                     if (!$in_set && !($opts & 0x01)) {
-                        if ($is_mingw) {
-                            if (chdir("$workdir/$file")) {
-                                unlink glob "* *.* .*";
-                                smog_chdir("$workdir");
-                                rmdir "$workdir/$file";
-                            }
-                        }
-                        else {
-                            smog_system("/bin/rm -rf \"$workdir/$file\"");
-                        }
+			smog_system("/bin/rm -rf \"$workdir/$file\"");
                     }
                     else {
                         unless ($opts & 0x02) {
@@ -8245,30 +7746,14 @@ sub clear_symlinks {
 
     if (-d $linksdir) {
 	# remove directory + contents
-        if ($is_mingw) {
-            smog_system("DEL /q \"$linksdir\"");
-            smog_system("RMDIR \"$linksdir\"");
-        }
-        else {
-            smog_system("/bin/rm -rf \"$linksdir\"");
-        }
+	smog_system("/bin/rm -rf \"$linksdir\"");
     }
 
     #create dir so next step works
-    if ($is_mingw) {
-        smog_system("mkdir.exe /p \"$linksdir\"");
-    }
-    else {
-        make_path("$linksdir");
-    }
+    smog_system("mkdir.exe /p \"$linksdir\"");
 
     # remove dir + any empty parents
-    if ($is_mingw) {
-        smog_system("rmdir.exe /p \"$linksdir\" 2>$nulfile");
-    }
-    else {
-        smog_system("/bin/rmdir -p \"$linksdir\" 2>$nulfile");
-    }
+    smog_system("/bin/rmdir -p \"$linksdir\" 2>$nulfile");
 }
 
 

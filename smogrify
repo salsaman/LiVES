@@ -1113,12 +1113,12 @@ if (defined($ARGV[0])) {
 
         $curworkdir = "$workdir/$handle";
 
-	$statusfile = $curworkdir."/status";
+	$statusfile = "$curworkdir/.status";
 
         if ($command eq "play" || $command eq "play_opening_preview") {
-	    $pidfile = $curworkdir."/.pidpb";
+	    $pidfile = "$curworkdir/.pidpb";
         } else {
-	    $pidfile = $curworkdir."/.pid";
+	    $pidfile = "$curworkdir/.pid";
         }
 
         if ($command eq "play_opening_preview") {

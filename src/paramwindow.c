@@ -846,10 +846,8 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[didx]), "button", cancelbutton);
 
     if (okbutton != NULL) {
-      lives_widget_set_can_focus_and_default(okbutton);
       lives_button_grab_default_special(okbutton);
     } else {
-      lives_widget_set_can_focus_and_default(cancelbutton);
       lives_button_grab_default_special(cancelbutton);
     }
 

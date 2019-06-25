@@ -332,26 +332,18 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   }
 
   if (cancelbutton != NULL) {
-    lives_widget_set_can_focus(cancelbutton, TRUE);
+    lives_widget_set_can_focus_and_default(cancelbutton);
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
   }
 
-  if (okbutton != NULL) {
-    lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                                 LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-  }
-
-  if (mainw->iochan == NULL && okbutton != NULL) {
-    lives_widget_set_can_focus_and_default(okbutton);
+  if (okbutton != NULL && mainw->iochan == NULL) {
     lives_button_grab_default_special(okbutton);
     lives_widget_grab_focus(okbutton);
   }
 
   lives_window_center(LIVES_WINDOW(dialog));
-
   lives_widget_show_all(dialog);
-
   lives_window_center(LIVES_WINDOW(dialog));
 
   if (is_blocking)

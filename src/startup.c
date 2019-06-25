@@ -311,7 +311,6 @@ boolean do_audio_choice_dialog(short startup_phase) {
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
              LIVES_RESPONSE_OK);
 
-  lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
 
@@ -489,7 +488,6 @@ boolean do_startup_tests(boolean tshoot) {
   } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                       LIVES_RESPONSE_OK);
 
-  lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
 
@@ -926,7 +924,6 @@ void do_startup_interface_query(void) {
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Finish"),
              LIVES_RESPONSE_OK);
 
-  lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
 

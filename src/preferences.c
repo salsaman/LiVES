@@ -2591,10 +2591,10 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
  */
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data) {
   if (prefsw->ignore_apply) return;
+  lives_button_grab_default_special(prefsw->applybutton); // need to do this first or the button doesnt get its colour
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->revertbutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
-  lives_button_grab_default_special(prefsw->applybutton);
 }
 
 
@@ -4948,7 +4948,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     prefsw->revertbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog), LIVES_STOCK_REVERT_TO_SAVED, NULL,
                            LIVES_RESPONSE_CANCEL);
     lives_widget_show(prefsw->revertbutton);
-    lives_widget_set_can_focus(prefsw->revertbutton, TRUE);
+    lives_widget_set_can_focus_and_default(prefsw->revertbutton);
 
     // Preferences 'Apply' button
     prefsw->applybutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog), LIVES_STOCK_APPLY, NULL,
@@ -4960,13 +4960,13 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     prefsw->closebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog), LIVES_STOCK_CLOSE, NULL, LIVES_RESPONSE_OK);
     lives_widget_show(prefsw->closebutton);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    lives_widget_set_can_focus_and_default(prefsw->closebutton);
   } else {
     prefsw->revertbutton = saved_revertbutton;
     prefsw->applybutton = saved_applybutton;
     prefsw->closebutton = saved_closebutton;
     lives_widget_set_sensitive(prefsw->closebutton, TRUE);
   }
+  lives_button_grab_default_special(prefsw->closebutton);
 
   lives_widget_add_accelerator(prefsw->closebutton, LIVES_WIDGET_CLICKED_SIGNAL, prefsw->accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -4975,8 +4975,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_widget_set_sensitive(prefsw->revertbutton, FALSE);
   // Set 'Apply' button as inactive since there are no changes yet
   lives_widget_set_sensitive(prefsw->applybutton, FALSE);
-
-  lives_button_grab_default_special(prefsw->closebutton);
 
   // Connect signals for 'Apply' button activity handling
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fore), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
@@ -5548,10 +5546,10 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, prefsw->prefs_dialog);
 
+  lives_button_grab_default_special(prefsw->closebutton);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), TRUE);
 
   mainw->prefs_changed = 0;
-
 }
 
 

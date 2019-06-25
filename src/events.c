@@ -2205,7 +2205,6 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(e_rec_dialog), LIVES_STOCK_OK, NULL,
              LIVES_RESPONSE_OK);
 
-  lives_widget_set_can_focus_and_default(okbutton);
   lives_button_grab_default_special(okbutton);
 
   return e_rec_dialog;
@@ -5193,7 +5192,6 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), ok_button, DEF_BUTTON_WIDTH * 4);
 
-  lives_widget_set_can_focus_and_default(ok_button);
   lives_button_grab_default_special(ok_button);
 
   lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,

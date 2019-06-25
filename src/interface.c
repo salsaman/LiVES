@@ -2539,9 +2539,6 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                               LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
   if (type != LIVES_DEVICE_TV_CARD && type != LIVES_DEVICE_FW_CARD) {
     lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),

@@ -1705,7 +1705,6 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   if (LIVES_IS_BOX(abox)) add_spring_to_box(LIVES_BOX(abox), 0);
 #endif
 
-  lives_widget_set_can_focus_and_default(ok_button);
   lives_button_grab_default_special(ok_button);
 
   lives_widget_set_size_request(ok_button, DEF_BUTTON_WIDTH * 4, -1);
@@ -2210,8 +2209,6 @@ LiVESWidget *create_rte_window(void) {
 
     mode_group = NULL;
 
-    clear_all_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLEAR, _("_Clear all effects"));
-
     for (j = 0; j < modes; j++) {
       idx = i * modes + j;
       hbox = lives_hbox_new(FALSE, 0);
@@ -2308,23 +2305,25 @@ LiVESWidget *create_rte_window(void) {
 
   lives_box_pack_start(LIVES_BOX(top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height * 2);
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox), clear_all_button);
-  lives_widget_set_can_focus_and_default(clear_all_button);
+  clear_all_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_CLEAR, _("_Clear all effects"),
+                     LIVES_RESPONSE_RESET);
 
-  save_keymap_button = lives_standard_button_new_from_stock(LIVES_STOCK_SAVE_AS, _("_Save as default keymap"));
+  lives_container_add(LIVES_CONTAINER(hbuttonbox), clear_all_button);
+
+  save_keymap_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_SAVE_AS, _("_Save as default keymap"),
+                       LIVES_RESPONSE_ACCEPT);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), save_keymap_button);
-  lives_widget_set_can_focus_and_default(save_keymap_button);
 
-  load_keymap_button = lives_standard_button_new_from_stock(LIVES_STOCK_OPEN, _("_Load default keymap"));
+  load_keymap_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_OPEN, _("_Load default keymap"),
+                       LIVES_RESPONSE_BROWSE);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), load_keymap_button);
-  lives_widget_set_can_focus_and_default(load_keymap_button);
 
-  ok_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("Close _window"));
+  ok_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_CLOSE, _("Close _window"),
+              LIVES_RESPONSE_OK);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
-  lives_widget_set_can_focus_and_default(ok_button);
 
   label = add_fill_to_box(LIVES_BOX(hbuttonbox));
 
@@ -2371,18 +2370,13 @@ rte_window_ready:
   lives_widget_show_all(irte_window);
   lives_widget_hide(dummy_radio);
 
-  /* if (prefs->gui_monitor != 0) { */
-  /*   lives_window_center(LIVES_WINDOW(irte_window)); */
-  /* } */
-
   if (prefs->open_maximised) {
     lives_window_maximize(LIVES_WINDOW(irte_window));
   }
 
-  // lives_widget_context_update();
-
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
+  lives_widget_show_now(irte_window);
   mainw->no_context_update = FALSE;
   return irte_window;
 }

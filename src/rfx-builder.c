@@ -315,9 +315,6 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  /* lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group, */
-  /*                              LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0); */
-
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_rfxbuilder_ok),
                        (livespointer)rfxbuilder);
@@ -982,9 +979,6 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
-  lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                               LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_properties_ok),

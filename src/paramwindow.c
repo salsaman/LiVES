@@ -826,8 +826,16 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
         }
       }
 
+
+      if (rfx->status != RFX_STATUS_WEED && no_process) {
+        widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+      }
+
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_CLOSE, _("_Close Window"),
                      LIVES_RESPONSE_CANCEL);
+
+      widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
       lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
@@ -838,11 +846,9 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 #else
         if (LIVES_IS_BOX(abox)) add_fill_to_box(LIVES_BOX(abox));
 #endif
-        lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH * 4, -1);
       }
     }
 
-    lives_widget_set_can_focus(cancelbutton, TRUE);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[didx]), "button", cancelbutton);
 
     if (okbutton != NULL) {

@@ -4948,13 +4948,11 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     prefsw->revertbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog), LIVES_STOCK_REVERT_TO_SAVED, NULL,
                            LIVES_RESPONSE_CANCEL);
     lives_widget_show(prefsw->revertbutton);
-    lives_widget_set_can_focus_and_default(prefsw->revertbutton);
 
     // Preferences 'Apply' button
     prefsw->applybutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog), LIVES_STOCK_APPLY, NULL,
                           LIVES_RESPONSE_ACCEPT);
     lives_widget_show(prefsw->applybutton);
-    lives_widget_set_can_focus_and_default(prefsw->applybutton);
 
     // Preferences 'Close' button
     prefsw->closebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog), LIVES_STOCK_CLOSE, NULL, LIVES_RESPONSE_OK);

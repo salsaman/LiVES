@@ -9130,7 +9130,6 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     LiVESWidget *okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                             LIVES_RESPONSE_OK);
 
-    lives_widget_set_can_focus_and_default(cancelbutton);
     lives_button_grab_default_special(okbutton);
 
     lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,

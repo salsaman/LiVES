@@ -79,6 +79,8 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   lives_box_pack_start(LIVES_BOX(vbox), hbuttonbox1, FALSE, FALSE, widget_opts.packing_height);
 
+  // TODO: use lives_dialog_add_button_from_stock()
+
   button3 = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_REWIND, NULL);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), button3);

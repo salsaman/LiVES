@@ -21925,19 +21925,18 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
   filler = add_fill_to_box(LIVES_BOX(hbuttonbox));
   lives_widget_apply_theme2(filler, LIVES_WIDGET_STATE_NORMAL, TRUE);
 
-  reset_button = lives_standard_button_new_with_label(_("_Reset values"));
-  lives_container_add(LIVES_CONTAINER(hbuttonbox), reset_button);
-  lives_widget_set_can_focus_and_default(reset_button);
+  reset_button = lives_dialog_add_button_from_stock(NULL, NULL, _("_Reset values"),
+                 LIVES_RESPONSE_RESET);
 
-  close_button = lives_standard_button_new_with_label(_("_Close mixer"));
+  lives_container_add(LIVES_CONTAINER(hbuttonbox), reset_button);
+
+  close_button = lives_dialog_add_button_from_stock(NULL, NULL, _("_Close mixer"),
+                 LIVES_RESPONSE_OK);
+
   lives_container_add(LIVES_CONTAINER(hbuttonbox), close_button);
-  lives_widget_set_can_focus_and_default(close_button);
 
   filler = add_fill_to_box(LIVES_BOX(hbuttonbox));
   lives_widget_apply_theme2(filler, LIVES_WIDGET_STATE_NORMAL, TRUE);
-
-  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), reset_button, DEF_BUTTON_WIDTH * 4);
-  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), close_button, DEF_BUTTON_WIDTH * 4);
 
   lives_widget_add_accelerator(close_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_m, LIVES_CONTROL_MASK,
@@ -21991,10 +21990,8 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
                          amixer->inv_checkbutton);
 
     if (palette->style & STYLE_1) {
-      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
     }
-
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -22030,8 +22027,7 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton), mt->opts.gang_audio);
 
     if (palette->style & STYLE_1) {
-      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
     }
 
     hbox = lives_hbox_new(FALSE, 0);

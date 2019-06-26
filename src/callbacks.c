@@ -8301,7 +8301,6 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
                        textwindow);
 
   lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
-  lives_widget_set_can_focus_and_default(button);
 
   textwindow->clear_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLEAR, _("Clear _Errors"),
                              LIVES_RESPONSE_CANCEL);
@@ -8311,13 +8310,11 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
                        LIVES_INT_TO_POINTER(FALSE));
 
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->clear_button), widget_opts.border_width);
-  lives_widget_set_can_focus_and_default(textwindow->clear_button);
 
   textwindow->delete_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_DELETE,
                               _("_Delete affected layouts"), LIVES_RESPONSE_CANCEL);
 
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->delete_button), widget_opts.border_width);
-  lives_widget_set_can_focus_and_default(textwindow->delete_button);
 
   lives_signal_connect(LIVES_GUI_OBJECT(textwindow->delete_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_lerrors_delete_clicked),

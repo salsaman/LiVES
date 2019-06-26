@@ -1696,8 +1696,11 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (LIVES_IS_BOX(abox)) add_spring_to_box(LIVES_BOX(abox), 0);
 #endif
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
   ok_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
               LIVES_RESPONSE_OK);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);
@@ -1706,8 +1709,6 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 #endif
 
   lives_button_grab_default_special(ok_button);
-
-  lives_widget_set_size_request(ok_button, DEF_BUTTON_WIDTH * 4, -1);
 
   lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),

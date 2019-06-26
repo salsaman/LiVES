@@ -25,7 +25,6 @@
 #include "interface.h"
 #include "callbacks.h"
 #include "resample.h"
-#include "paramwindow.h" // for DEF_BUTTON_WIDTH
 #include "audio.h"
 #include "cvirtual.h"
 
@@ -5186,17 +5185,13 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   lives_button_box_set_layout(LIVES_BUTTON_BOX(hbuttonbox), LIVES_BUTTONBOX_SPREAD);
 
-  ok_button = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("_Close Window"));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+  ok_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_CLOSE, _("_Close Window"), LIVES_RESPONSE_OK);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
 
-  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), ok_button, DEF_BUTTON_WIDTH * 4);
-
   lives_button_grab_default_special(ok_button);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(response_ok),
-                       NULL);
 
   lives_widget_add_accelerator(ok_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -5698,9 +5693,6 @@ render_details *create_render_details(int type) {
   if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_CANCEL, NULL,
                    LIVES_RESPONSE_CANCEL);
-    if (type != 1) {
-      lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH * 2, -1);
-    }
   } else if (LIVES_IS_BOX(daa)) add_fill_to_box(LIVES_BOX(daa));
 
   if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {

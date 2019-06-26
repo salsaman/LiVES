@@ -1486,8 +1486,10 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(filew->dialog));
 
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(filew->dialog), LIVES_STOCK_OK, NULL,
              LIVES_RESPONSE_OK);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);
@@ -1510,8 +1512,6 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
   lives_widget_show_all(filew->dialog);
 
-  lives_widget_set_size_request(okbutton, DEF_BUTTON_WIDTH * 4, -1);
-
   return filew;
 }
 
@@ -1532,7 +1532,6 @@ static void on_resizecb_toggled(LiVESToggleButton *t, livespointer user_data) {
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
-  LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *checkbutton = NULL;
   LiVESWidget *checkbutton2;
@@ -1590,18 +1589,17 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
   if (text2 != NULL) {
     label = lives_standard_label_new(text2);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
-    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                   LIVES_RESPONSE_CANCEL);
+    lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                                       LIVES_RESPONSE_CANCEL);
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                LIVES_RESPONSE_OK);
   } else {
-    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Keep _my settings"),
-                   LIVES_RESPONSE_CANCEL);
+    lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Keep _my settings"),
+                                       LIVES_RESPONSE_CANCEL);
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Use _recommended settings"),
                LIVES_RESPONSE_OK);
   }
-  lives_widget_set_can_default(cancelbutton, TRUE);
-  lives_widget_set_can_default(okbutton, TRUE);
+
   lives_button_grab_default_special(okbutton);
 
   lives_widget_show_all(dialog);

@@ -1212,11 +1212,6 @@ static char *make_random_string(const char *prefix) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
 
-static void delev(LiVESWidget *widget, livespointer user_data) {
-  gtk_widget_set_name(widget, "");
-}
-
-
 static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *selector, const char *detail,
     const char *value) {
   GtkCssProvider *provider;

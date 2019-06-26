@@ -127,7 +127,11 @@ static void widget_state_cb(LiVESObject *object, livespointer pspec, livespointe
 
   state = lives_widget_get_state(widget);
 
+  // backdrop state removes the focus, so ignore it
+  if (state & LIVES_WIDGET_STATE_BACKDROP) return;
+
   if (LIVES_IS_BUTTON(widget)) {
+    // this is only for non-dialog buttons, they have their own callback (state_changed_cb)
     if (!LIVES_IS_TOGGLE_BUTTON(widget))
       default_changed_cb(object, NULL, NULL);
     return;
@@ -1236,13 +1240,10 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     lives_freep((void **)&widget_name);
     widget_name = make_random_string(RND_STR_PREFIX);
     gtk_widget_set_name(widget, widget_name);
-    lives_signal_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_DESTROY_EVENT,
-                         LIVES_GUI_CALLBACK(delev),
-                         NULL);
   }
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
-  if (GTK_IS_TEXT_VIEW(widget)) wname = g_strdup("GtkTextView");
+  if (GTK_IS_TEXT_VIEW(widget)) wname = lives_strdup("GtkTextView");
   else {
 #endif
     switch (state) {
@@ -1289,14 +1290,14 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
       state_str = "";
     }
 
-    if (selector == NULL) wname = g_strdup_printf("#%s%s", widget_name, state_str);
-    else wname = g_strdup_printf("#%s%s %s", widget_name, state_str, selector);
+    if (selector == NULL) wname = lives_strdup_printf("#%s%s", widget_name, state_str);
+    else wname = lives_strdup_printf("#%s%s %s", widget_name, state_str, selector);
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   }
 #endif
 
-  g_free(widget_name);
+  lives_free(widget_name);
   css_string = g_strdup_printf(" %s {\n %s: %s;}\n", wname, detail, value);
 
   // special tweaks
@@ -1352,9 +1353,9 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
                                   css_string,
                                   -1, NULL);
 #endif
-  g_free(wname);
-  g_free(css_string);
-  g_object_unref(provider);
+  lives_free(wname);
+  lives_free(css_string);
+  lives_object_unref(provider);
   return TRUE;
 }
 
@@ -8151,7 +8152,7 @@ static void default_changed_cb(LiVESObject *object, livespointer pspec, livespoi
   if (!lives_widget_is_sensitive(button)) set_child_dimmed_colour(button, BUTTON_DIM_VAL);
   else {
     if (!lives_widget_has_default(button) && (state & LIVES_WIDGET_STATE_PRELIGHT)) {
-      // makes prelight work for only for non-def buttons
+      // makes prelight work for non-def buttons
       widget_opts.apply_theme = woat;
       return;
     }
@@ -8165,6 +8166,8 @@ static void default_changed_cb(LiVESObject *object, livespointer pspec, livespoi
 
 static void state_changed_cb(LiVESWidget *widget, LiVESWidgetState state, livespointer user_data) {
   // colour settings here are the exact opposite of what I would expect; however it seems to function in gtk+
+  // I think we need to set the WRONG colour here, then correct it in default_changed_cb in order for gtk+
+  // to update the background colour
   LiVESObject *toplevel;
   boolean woat = widget_opts.apply_theme;
 

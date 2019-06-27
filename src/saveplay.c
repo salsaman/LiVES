@@ -2875,7 +2875,7 @@ void play_file(void) {
   disable_record();
 
   if (mainw->multitrack == NULL) {
-    if ((mainw->faded || mainw->fs)) {
+    if (mainw->faded || mainw->fs) {
       unfade_background();
     }
 
@@ -3129,8 +3129,6 @@ void play_file(void) {
   if (mainw->multitrack == NULL) mainw->osc_block = FALSE;
 
   reset_clipmenu();
-
-  disable_record();
 
   lives_menu_item_set_accel_path(LIVES_MENU_ITEM(mainw->quit), LIVES_ACCEL_PATH_QUIT);
 

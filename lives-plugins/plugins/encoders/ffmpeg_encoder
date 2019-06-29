@@ -23,6 +23,9 @@
 # v 2.14 change qscale to q:v and b to b:v
 #######################################################################
 
+use POSIX;     # Needed for setlocale()
+setlocale(LC_NUMERIC, "C");
+
 if (!defined($standalone)) {
     my $smogrify;
     if ($^O eq "MSWin32") {

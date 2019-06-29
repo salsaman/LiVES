@@ -167,7 +167,8 @@ print OUT "# Also you must implement your own: &sig_error and &sig_progress\n\n\
 print OUT "#######################################################################\n\n";
 
 
-print OUT "use POSIX;\n\n";
+print OUT "use POSIX;\n";
+print OUT "setlocale(LC_NUMERIC, \"C\");\n\n";
 
 print OUT "my \$command=\$ARGV[0];\n\n";
 print OUT "if (\$command eq \"get_capabilities\") {\n";
@@ -232,10 +233,10 @@ print OUT "    exit 0;\n";
 print OUT "}\n\n";
 
 print OUT "#######################################################\n\n";
-print OUT "if (\$command eq \"process\") {\n\n";
-print OUT "# in case of error, you should do:\n";
-print OUT "# &sig_error(\"msg1\",\"msg2\",\"msg3\",\"msg4\"); [ msg's are optional, but must not\n"; 
-print OUT "# contain newlines (\\n) ]\n\n";
+print OUT "if (\$command eq \"process\") {\n";
+print OUT "    # in case of error, you should do:\n";
+print OUT "    # &sig_error(\"msg1\",\"msg2\",\"msg3\",\"msg4\"); [ msg's are optional, but must not\n"; 
+print OUT "    # contain newlines (\\n) ]\n\n";
 
 if (@requires) {
     &gen_requires(0);
@@ -253,22 +254,22 @@ for ($i=0;$i<@params;$i++) {
     unless ($params[$i] eq "") {
 	if (&param_get_type($i) eq "colRGB24") {
 	    $pname=&param_get_name($i);
-	    print OUT "\$p$i=int(\$p$i);\n";
-	    print OUT "if (\$p$i>0xFFFFFF||\$p$i<0) {\n";
-	    print OUT "    &sig_error(\"Invalid colour for $pname.\");\n";
-	    print OUT "    exit 1;\n";
-	    print OUT "}\n";
-	    print OUT "\$p$i"."_red=int(\$p$i/65536);\n";
-	    print OUT "\$p$i"."-=\$p$i"."_red*65536;\n";
-	    print OUT "\$p$i"."_green=int(\$p$i/256);\n";
-	    print OUT "\$p$i"."-=\$p$i"."_green*256;\n";
-	    print OUT "\$p$i"."_blue=\$p$i;\n";
+	    print OUT "    \$p$i=int(\$p$i);\n";
+	    print OUT "    if (\$p$i>0xFFFFFF||\$p$i<0) {\n";
+	    print OUT "        &sig_error(\"Invalid colour for $pname.\");\n";
+	    print OUT "        exit 1;\n";
+	    print OUT "    }\n";
+	    print OUT "    \$p$i"."_red=int(\$p$i/65536);\n";
+	    print OUT "    \$p$i"."-=\$p$i"."_red*65536;\n";
+	    print OUT "    \$p$i"."_green=int(\$p$i/256);\n";
+	    print OUT "    \$p$i"."-=\$p$i"."_green*256;\n";
+	    print OUT "    \$p$i"."_blue=\$p$i;\n";
 	}
     }
 }
 
 if ($in_channels==2) {
-    print OUT "   \$nwidth=\$width;\n\$nheight=\$height;\n\n";
+    print OUT "    \$nwidth=\$width;\n\$nheight=\$height;\n\n";
     print OUT "    if (\$img_ext2 eq \".png\") {\n";
     print OUT "        \$img_prefix2=\"PNG32:\";\n";
     print OUT "    } else {\n";
@@ -285,17 +286,17 @@ if ($in_channels==0&&!$is_batch_gen) {
     print OUT "    \$end=0;\n\n";
 }
 
-print OUT "   if (\$img_ext eq \".png\") {\n";
+print OUT "    if (\$img_ext eq \".png\") {\n";
 print OUT "        \$img_prefix=\"PNG32:\";\n";
-print OUT "   } else {\n";
+print OUT "    } else {\n";
 print OUT "        \$img_prefix=\"\";\n";
-print OUT "   }\n\n";
+print OUT "    }\n\n";
 
-print OUT "   if (\$out_ext eq \".png\") {\n";
+print OUT "    if (\$out_ext eq \".png\") {\n";
 print OUT "        \$out_prefix=\"PNG32:\";\n";
-print OUT "   } else {\n";
+print OUT "    } else {\n";
 print OUT "        \$out_prefix=\"\";\n";
-print OUT "   }\n\n";
+print OUT "    }\n\n";
 
 
 if (@pre) {
@@ -309,17 +310,17 @@ print OUT "\n";
 unless ($is_batch_gen) {
     print OUT "\n################# loop through frames #################\n";
 
-    print OUT "   if (\$img_ext eq \".png\") {\n";
+    print OUT "    if (\$img_ext eq \".png\") {\n";
     print OUT "        \$img_prefix=\"PNG32:\";\n";
-    print OUT "   } else {\n";
+    print OUT "    } else {\n";
     print OUT "        \$img_prefix=\"\";\n";
-    print OUT "   }\n\n";
+    print OUT "    }\n\n";
 
-    print OUT "   if (\$out_ext eq \".png\") {\n";
+    print OUT "    if (\$out_ext eq \".png\") {\n";
     print OUT "        \$out_prefix=\"PNG32:\";\n";
-    print OUT "   } else {\n";
+    print OUT "    } else {\n";
     print OUT "        \$out_prefix=\"\";\n";
-    print OUT "   }\n\n";
+    print OUT "    }\n\n";
 
 
 	if ($in_channels==2) {
@@ -329,8 +330,8 @@ unless ($is_batch_gen) {
 	    print OUT "    }\n\n";
 
 	    print OUT "    if (!(\$img_ext2 eq \$img_ext) && &location(\"convert\") eq \"\") {\n";
-	    print OUT "         &sig_error(\"'convert' is required by this plugin.\",\"Please install imagemagick and try again.\");\n";
-	    print OUT "         exit 1;\n";
+	    print OUT "        &sig_error(\"'convert' is required by this plugin.\",\"Please install imagemagick and try again.\");\n";
+	    print OUT "        exit 1;\n";
 	    print OUT "    }\n\n";
 
 
@@ -344,18 +345,18 @@ unless ($is_batch_gen) {
 	}
 
     print OUT "    for (\$frame=\$start;\$frame<=\$end;\$frame++) {\n";
-    print OUT "	# sig progress will update the progress bar from \$start->\$end\n";
-    print OUT "	\$name=&mkname(\$frame);\n";
+    print OUT "        # sig progress will update the progress bar from \$start->\$end\n";
+    print OUT "        \$name=&mkname(\$frame);\n";
 
-    unless ($in_channels==0) {
-	print OUT "	\$in=\"\$name\$img_ext\";\n\n";
-	print OUT "     if (!defined(\$end) || \$end==0) {\n";
-	print OUT "         print STDERR \"WARNING: generator plugin did not set \$end !\";\n";
-	print OUT "         &sig_error(\"Generator plugin did not set \$end.\");\n";
-	print OUT "     }\n";
+    unless ($in_channels == 0) {
+	print OUT "        \$in=\"\$name\$img_ext\";\n\n";
+	print OUT "        if (!defined(\$end) || \$end==0) {\n";
+	print OUT "            print STDERR \"WARNING: generator plugin did not set \$end !\";\n";
+	print OUT "            &sig_error(\"Generator plugin did not set \$end.\");\n";
+	print OUT "        }\n";
     }
     
-    if ($in_channels==2) {
+    if ($in_channels == 2) {
 	print OUT "        \$name2=&mkname(\$frame2);\n";
 
 	print OUT "        \$in2=\"\$clipboard/\$name2\$img_ext2\";\n";
@@ -366,7 +367,7 @@ unless ($is_batch_gen) {
 	print OUT "            \$frame2=\$start2;\n";
 	print OUT "            \$name2=&mkname(\$frame2);\n";
 	print OUT "            \$in2=\"\$clipboard/\$name2\$img_ext2\";\n";
-	print OUT "	}\n";
+	print OUT "        }\n";
 
 
 	print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
@@ -378,16 +379,24 @@ unless ($is_batch_gen) {
     }
 
 
-    print OUT "	\$out=\"\$name\$out_ext\";\n\n";
+    print OUT "        \$out=\"\$name\$out_ext\";\n\n";
 
-    if ($in_channels>0) {
-	print OUT "# wait for front end to create $in\n";
-	print OUT " while (!-f \$in) {\n";
-	print OUT "     sleep 1;\n";
-	print OUT " }\n\n";
+    if ($in_channels > 0) {
+	print OUT "        # wait for front end to create $in\n";
+	print OUT "        while (! -s \$in) {\n";
+	print OUT "            sleep 1;\n";
+	print OUT "        }\n\n";
+	print OUT "        `flock \$in true`;\n";
 
     }
 
+    if ($in_channels > 1) {
+	print OUT "        # wait for front end to create $in2\n";
+	print OUT "        while (! -s \$in2) {\n";
+	print OUT "            sleep 1;\n";
+	print OUT "        }\n\n";
+	print OUT "        `flock \$in2 true`;\n";
+    }
 }
 
 print OUT "##################### the all-important bit #######################\n\n";
@@ -398,30 +407,28 @@ print OUT "\n###################################################################
 
 unless ($is_batch_gen) {
     if ($in_channels==2) {
-
 	print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
 	print OUT "            unlink \$in2;\n";
 	print OUT "        }\n";
-
 	print OUT "        \$frame2++;\n";
     }
     
-    print OUT "        \$opfailed=0;\n";
-    print OUT "        if (! -f \$out) {\n";
+    print OUT "        for (my \$i = 0; \$i < 5; \$i++) {\n";
+    print OUT "            if (! -s \$out) {\n";
+    print OUT "                sleep 1;\n";
+    print OUT "            }\n";
+    print OUT "        }\n\n";
+    print OUT "        if (! -s \$out) {\n";
     print OUT "            print STDERR \"Warning: effect plugin $plugin_name skipped frame \$frame !\\n\";\n";
-    print OUT "            print STDERR \"Retrying\\n\";\n";
+    print OUT "            return 1;\n";
+    print OUT "        }\n\n";
 
-    print OUT "            \$frame--;\n";
-    print OUT "            \$opfailed=1;\n";
-    print OUT "        }\n";
-    print OUT "        unless (\$opfailed) {\n";
     if ($in_channels==0) {
-	print OUT "	    &sig_progress(\$frame,\$nwidth,\$nheight,\$fps,\$end);\n";
+	print OUT "        &sig_progress(\$frame, \$nwidth, \$nheight, \$fps, \$end);\n\n";
     }
     else {
-	print OUT "	    &sig_progress(\$frame);\n";
+	print OUT "        &sig_progress(\$frame);\n\n";
     }
-    print OUT "        }\n";
     
     for ($i=0;$i<@params;$i++) {
 	unless ($params[$i] eq "") {
@@ -449,7 +456,7 @@ unless ($is_batch_gen) {
 	}
     }
     
-    print OUT "    }\n";
+    print OUT "        }\n";
 }
 
 

@@ -18663,8 +18663,6 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
 
   lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
 
-  g_print("apply params for src %p\n", inst);
-
   for (i = 0; ((param = weed_inst_in_param(inst, i, FALSE, FALSE)) != NULL); i++) {
     if (!mt->current_rfx->params[i].changed) continue; // set only user changed parameters
     pchange = weed_plant_new(WEED_PLANT_EVENT);

@@ -1879,6 +1879,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
     }
 
+    //g_print("MSG is %s\n", mainw->msg);
+
     if (strncmp(mainw->msg, "completed", 8) && strncmp(mainw->msg, "error", 5) &&
         strncmp(mainw->msg, "killed", 6) && (visible ||
             ((strncmp(mainw->msg, "video_ended", 11) || mainw->whentostop != STOP_ON_VID_END)

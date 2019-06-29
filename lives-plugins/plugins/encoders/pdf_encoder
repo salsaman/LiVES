@@ -14,6 +14,9 @@
 # version 1.3 - more verbose
 #######################################################################
 
+use POSIX;     # Needed for setlocale()
+setlocale(LC_NUMERIC, "C");
+
 if (!defined($standalone)) {
     my $smogrify;
     if ($^O eq "MSWin32") {

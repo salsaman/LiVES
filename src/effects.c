@@ -374,14 +374,14 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   mainw->show_procd = TRUE;
 
-  if (rfx->props & RFX_PROPS_MAY_RESIZE || rfx->num_in_channels == 0) {
-    // get new frame size
-    if (rfx->status != RFX_STATUS_WEED) {
-      int numtok = get_token_count(mainw->msg, '|');
-
-      if (numtok > 1) {
-        char **array = lives_strsplit(mainw->msg, "|", numtok);
-        // [0] is "completed"
+  if (rfx->status != RFX_STATUS_WEED) {
+    int numtok = get_token_count(mainw->msg, '|');
+    if (numtok > 1) {
+      char **array = lives_strsplit(mainw->msg, "|", numtok);
+      // [0] is "completed"
+      cfile->end = cfile->progress_end = cfile->start + atoi(array[4]) - 1;
+      if (rfx->props & RFX_PROPS_MAY_RESIZE || rfx->num_in_channels == 0) {
+        // get new frame size
         cfile->hsize = atoi(array[1]);
         cfile->vsize = atoi(array[2]);
         if (rfx->num_in_channels == 0) {
@@ -390,31 +390,31 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
           cfile->end = cfile->frames = atoi(array[4]);
           cfile->bpp = cfile->img_type == IMG_TYPE_JPEG ? 24 : 32;
         }
-        lives_strfreev(array);
       }
-      if (rfx->num_in_channels == 0) {
-        cfile->progress_start = 1;
-        cfile->progress_end = cfile->frames;
-      }
-    } else {
-      int error;
-      weed_plant_t *first_out = get_enabled_channel((weed_plant_t *)rfx->source, 0, FALSE);
-      weed_plant_t *first_ot = weed_get_plantptr_value(first_out, WEED_LEAF_TEMPLATE, &error);
-      cfile->hsize = weed_get_int_value(first_ot, WEED_LEAF_HOST_WIDTH, &error);
-      cfile->vsize = weed_get_int_value(first_ot, WEED_LEAF_HOST_HEIGHT, &error);
+      lives_strfreev(array);
     }
+    if (rfx->num_in_channels == 0) {
+      cfile->progress_start = 1;
+      cfile->progress_end = cfile->frames;
+    }
+  } else {
+    int error;
+    weed_plant_t *first_out = get_enabled_channel((weed_plant_t *)rfx->source, 0, FALSE);
+    weed_plant_t *first_ot = weed_get_plantptr_value(first_out, WEED_LEAF_TEMPLATE, &error);
+    cfile->hsize = weed_get_int_value(first_ot, WEED_LEAF_HOST_WIDTH, &error);
+    cfile->vsize = weed_get_int_value(first_ot, WEED_LEAF_HOST_HEIGHT, &error);
+  }
 
-    if (rfx->num_in_channels > 0) {
-      if (cfile->hsize == cfile->ohsize && cfile->vsize == cfile->ovsize) cfile->undo_action = UNDO_EFFECT;
-      else {
-        boolean bad_header = FALSE;
-        save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        cfile->undo_action = UNDO_RESIZABLE;
-        if (bad_header) do_header_write_error(mainw->current_file);
-      }
+  if (rfx->num_in_channels > 0) {
+    if (cfile->hsize == cfile->ohsize && cfile->vsize == cfile->ovsize) cfile->undo_action = UNDO_EFFECT;
+    else {
+      boolean bad_header = FALSE;
+      save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize);
+      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+      save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize);
+      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+      cfile->undo_action = UNDO_RESIZABLE;
+      if (bad_header) do_header_write_error(mainw->current_file);
     }
   }
 
@@ -423,6 +423,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
+    // the processing is the same as usual, except we use a different file extension (.pre instead of .mgk)
     char *com = lives_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\"", prefs->backend_sync, cfile->handle, cfile->progress_start,
                                     cfile->progress_end, get_image_ext_for_type(cfile->img_type));
 
@@ -465,7 +466,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (rfx->num_in_channels == 0) {
     if (rfx->props & RFX_PROPS_BATCHG) {
       // batch mode generators need some extra processing
-      char *imgdir = lives_strdup_printf("%s%s", prefs->workdir, cfile->handle);
+      char *imgdir = lives_build_path(prefs->workdir, cfile->handle, NULL);
       int img_file = mainw->current_file;
 
       mainw->suppress_dprint = TRUE;
@@ -534,7 +535,6 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       new_file = current_file;
 
       mainw->untitled_number--;
-
     } else {
       if (!(rfx->props & RFX_PROPS_BATCHG)) {
         // gen to new file
@@ -562,7 +562,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (mainw->multitrack == NULL) {
     if (new_file != -1) {
       lives_sync(1);
-      switch_to_file((mainw->current_file = 0), new_file);
+      switch_clip(1, new_file, TRUE);
     }
   } else {
     mainw->current_file = mainw->multitrack->render_file;

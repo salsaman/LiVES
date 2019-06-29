@@ -13,6 +13,8 @@
 #######################################################################
 my $oggfile="audiodump.ogg";
 
+use POSIX;     # Needed for setlocale()
+setlocale(LC_NUMERIC, "C");
 
 if (!defined($standalone)) {
     my $smogrify;

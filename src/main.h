@@ -70,6 +70,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #endif
 
 #include <sys/types.h>
+#include <sys/file.h>
 #include <unistd.h>
 
 typedef pid_t lives_pid_t;

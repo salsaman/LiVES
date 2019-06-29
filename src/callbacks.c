@@ -5666,8 +5666,7 @@ void switch_clip(int type, int newclip, boolean force) {
   // This is the new single entry function for switching clips.
   // It should eventually replace switch_to_file() and do_quick_switch()
 
-  // prev clip
-  // type = 0 : if the effect is a transition, this will change the background clip
+  // type = 0 : if we are playing and a transition is active, this will change the background clip
   // type = 1 fg only
   // type = 2 bg only
 

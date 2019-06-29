@@ -3059,17 +3059,20 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw = NULL;
 
-#ifdef ENABLE_NLS
-  trString = NULL;
-  bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
-#ifdef UTF8_CHARSET
-  bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
-#endif
-  textdomain(GETTEXT_PACKAGE);
-#endif
+  //setlocale(LC_ALL, "");
 
   // force decimal point to be a "."
   putenv("LC_NUMERIC=C");
+  setlocale(LC_NUMERIC, "C");
+
+#ifdef ENABLE_NLS
+  trString = NULL;
+  textdomain(GETTEXT_PACKAGE);
+  bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+#ifdef UTF8_CHARSET
+  bind_textdomain_codeset(GETTEXT_PACKAGE, nl_langinfo(CODESET));
+#endif
+#endif
 
 #ifdef GDK_WINDOWING_X11
   XInitThreads();
@@ -6895,6 +6898,7 @@ void load_frame_image(int frame) {
 
   LiVESError *lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_image_type_t imgtype, int quality, boolean do_chmod,
                                 LiVESError **gerrorptr) {
+    int fd;
     // CALLER should check for errors
 
     // fname should be in local charset
@@ -6903,6 +6907,11 @@ void load_frame_image(int frame) {
 
     if (prefs->screen_gamma != -1) {
       // inverse gamma correction
+    }
+
+    fd = lives_open3(fname, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+    if (flock(fd, LOCK_EX)) {
+      return NULL;
     }
 
     if (imgtype == IMG_TYPE_JPEG) {
@@ -6926,6 +6935,8 @@ void load_frame_image(int frame) {
     } else {
       //gdk_pixbuf_save_to_callback(...);
     }
+
+    close(fd);
 
     return *gerrorptr;
   }

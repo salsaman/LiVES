@@ -5,11 +5,12 @@
 
 # (C) G. Finch 2011 - released under GPL v3 or higher
 
+use POSIX;     # Needed for setlocale()
+setlocale(LC_NUMERIC, "C");
 
 if (!defined($ARGV[0])) {exit 1;}
 
 my $command=$ARGV[0];
-
 
 if ($command eq "get_formats") {
     # list of formats we can handle, separated by |
@@ -20,8 +21,6 @@ if ($command eq "get_formats") {
     print "1|3";
     exit 0;
 }
-
-
 
 if ($command eq "check") {
     my $chkform=$ARGV[1];
@@ -45,9 +44,6 @@ if ($command eq "check") {
     print "\nUnknown audio format for streaming.\n";
     exit 1;
 }
-
-
-
 
 if ($command eq "play") {
     my $result;
@@ -88,10 +84,7 @@ if ($command eq "cleanup") {
     my $outfifo=$ARGV[2];
 
     unlink $outfifo;
-
 }
-
-
 
 ########################################33333333
 

@@ -128,7 +128,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 
   while (1) {
     nseeks++;
-#define DEBUG_RLF
+    //#define DEBUG_RLF
 #ifdef DEBUG_RLF
     fprintf(stderr, "will check frame %ld of (allegedly) %ld...", lframe + 1, cdata->nframes);
 #endif
@@ -145,9 +145,9 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 
       if (timex > no_seek_limit) {
         // seek took too long, give up
-        //#ifdef DEBUG_RLF
+#ifdef DEBUG_RLF
         fprintf(stderr, "avcodec_decoder: seek was %ld, longer than limit of %ld; giving up.\n", timex, no_seek_limit);
-        //#endif
+#endif
         return -1;
       }
 
@@ -180,9 +180,9 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
       timex = get_current_ticks() - timex;
 
       if (timex > no_seek_limit) {
-        //#ifdef DEBUG_RLF
+#ifdef DEBUG_RLF
         fprintf(stderr, "avcodec_decoder: seek was %ld, longer than limit of %ld; giving up.\n", timex, no_seek_limit);
-        //#endif
+#endif
         return -1;
       }
 
@@ -1223,7 +1223,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       priv->packet.size = 0;
 #endif
 
-      //#define DEBUG
 #ifdef DEBUG
       fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame ? priv->pFrame->best_effort_timestamp : 0,
               priv->pFrame->color_trc, priv->pFrame->color_range);

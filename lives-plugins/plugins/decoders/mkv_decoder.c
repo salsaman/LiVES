@@ -1381,7 +1381,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     if (track->codec_id == NULL)
       continue;
 
-    fprintf(stderr, "codid is %s\n", track->codec_id);
+    //fprintf(stderr, "codid is %s\n", track->codec_id);
 
     if (track->type == MATROSKA_TRACK_TYPE_VIDEO) {
 

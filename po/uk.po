@@ -3,21 +3,21 @@
 # This file is distributed under the same license as the lives package.
 #
 # Yuri Chornoivan <yurchor@gmail.com>, 2010, 2011.
-# Yuri Chornoivan <yurchor@ukr.net>, 2011, 2012, 2013, 2016.
+# Yuri Chornoivan <yurchor@ukr.net>, 2011, 2012, 2013, 2016, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-06-28 11:00-0300\n"
-"PO-Revision-Date: 2018-02-17 19:09+0000\n"
-"Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
+"POT-Creation-Date: 2019-07-01 13:15-0300\n"
+"PO-Revision-Date: 2019-06-25 13:55+0000\n"
+"Last-Translator: yurchor <Unknown>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2018-02-26 02:28+0000\n"
-"X-Generator: Launchpad (build 18561)\n"
+"X-Launchpad-Export-Date: 2019-07-01 16:04+0000\n"
+"X-Generator: Launchpad (build 18991)\n"
 
 #: src/main.c:146
 msgid ""
@@ -183,9 +183,8 @@ msgid "Starting jack transport server..."
 msgstr "Запуск сервера передавання даних jack…"
 
 #: src/main.c:1685
-#, fuzzy
 msgid "Connecting to jack server..."
-msgstr "Встановлення з’єднання з сервером передавання даних jack…"
+msgstr "Встановлюємо з'єднання із сервером jack…"
 
 #: src/main.c:1715
 #, c-format
@@ -207,9 +206,8 @@ msgstr ""
 "Alternatively, try to start lives with either \"lives -jackopts 16\", or "
 
 #: src/main.c:1751
-#, fuzzy
 msgid "Starting pulseaudio server..."
-msgstr "Запуск звукового сервера PulseAudio…"
+msgstr "Запускаємо сервер pulseaudio…"
 
 #: src/main.c:1802
 #, c-format
@@ -222,11 +220,12 @@ msgid "%s...NOT DETECTED... "
 msgstr "%s...НЕ ВИЯВЛЕНО… "
 
 #: src/main.c:1809
-#, fuzzy
 msgid ""
 "\n"
 "Checking optional dependencies: "
-msgstr "Шукаємо додаткові залежності: "
+msgstr ""
+"\n"
+"Перевіряємо додаткові залежності: "
 
 #: src/main.c:1841
 msgid "UNKNOWN - please patch me !"
@@ -285,36 +284,37 @@ msgid ", with cairo support"
 msgstr ", з підтримкою cairo"
 
 #: src/main.c:1884
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Working directory is %s\n"
-msgstr "Каталог тимчасових файлів — %s\n"
+msgstr ""
+"\n"
+"Робочий каталог: %s\n"
 
 #: src/main.c:1887
-#, fuzzy
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulseaudio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
-"ПОПЕРЕДЖЕННЯ: цю версію LiVES було зібрано без підтримки\n"
-"jack або PulseAudio.\n"
-"Ви не зможете скористатися багатьма можливостями з обробки звуку.\n"
+"УВАГА — цю версію LiVES зібрано без підтримки\n"
+"jack або pulseaudio.\n"
+"Багато можливостей роботи зі звуком будуть недоступними.\n"
 
 #: src/main.c:1891
 msgid "Compiled with jack support, good !\n"
 msgstr "Зібрано з підтримкою jack, добре!\n"
 
 #: src/main.c:1894
-#, fuzzy
 msgid "Compiled with pulseaudio support, wonderful !\n"
-msgstr "Зібрано з підтримкою PulseAudio, чудово!\n"
+msgstr "Зібрано із підтримкою pulseaudio, чудово!\n"
 
 #: src/main.c:1898
 #, c-format
 msgid "Gui screen size is %d X %d, scale was set to %.3f\n"
 msgstr ""
+"Розмір графічного інтерфейсу екрана — %d X %d, встановлено масштаб %.3f\n"
 
 #: src/main.c:1900
 #, c-format
@@ -439,16 +439,17 @@ msgid ""
 "-asource <source>          : set the initial audio source; <source> can be "
 "'internal' or 'external' (only valid for %s and %s players)\n"
 msgstr ""
+"-asource <джерело>          : встановити початкове джерело звуку; параметром "
+"<джерело> може бути рядок «internal» або «external» (можна скористатися лише "
+"для програвачів %s і %s)\n"
 
 #: src/main.c:2518
-#, fuzzy
 msgid "-aplayer <ap>    : start with selected audio player. <ap> can be "
 msgstr ""
-"-aplayer <ap>    : запустити вказану програму для відтворення звуку. Можливі "
-"варіанти <ap>: mplayer, mplayer2"
+"-aplayer <ap>    : запустити із вибраним аудіопрогравачем. Значенням <ap> "
+"може бути "
 
 #: src/main.c:2530
-#, fuzzy
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options \n"
 "                      [1 = jack transport client, \n"
@@ -457,15 +458,17 @@ msgid ""
 "                      8 = pause transport when video paused, \n"
 "                      16 = start/stop jack audio server] \n"
 msgstr ""
-"-jackopts <параметри>  : параметрами є бітова маска параметрів запуску jack "
-"[1 = клієнт передавання даних jack, 2 = джерело передавання даних jack, 4 = "
-"запуск сервера передавання даних jack, 8 = призупинка відтворення звуку, "
-"якщо призупинено відтворення відео, 16 = запуск звукового сервера jack] \n"
+"-jackopts <параметри> : параметри — бітова карта параметрів запуску jack \n"
+"                      [1 = клієнт передавання jack, \n"
+"                      2 = основний сервер передавання jack, \n"
+"                      4 = запустити/зупинити сервер передавання jack, \n"
+"                      8 = призупинити передавання, якщо призупинено "
+"відтворення відео,\n"
+"                      16 = запустити/зупинити звуковий сервер jack] \n"
 
 #: src/main.c:2549
-#, fuzzy
 msgid " or "
-msgstr " або sox\n"
+msgstr " або "
 
 #: src/main.c:2556
 msgid "-devicemap <mapname>          : autoload devicemap\n"
@@ -510,7 +513,7 @@ msgstr ""
 "файлі %s)\n"
 
 #: src/main.c:2693
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to write a small file to %s\n"
@@ -518,8 +521,8 @@ msgid ""
 msgstr ""
 "\n"
 "LiVES не вдалося записати малий файл до %s\n"
-"Будь ласка, переконайтеся, що маєте права доступу на запис до %s і повторіть "
-"спробу.\n"
+"Будь ласка, переконайтеся, що ви маєте доступ до запису до каталогу і "
+"повторіть спробу.\n"
 
 #: src/main.c:2699
 msgid ""
@@ -613,16 +616,14 @@ msgstr ""
 "Дякуємо.\n"
 
 #: src/main.c:2744
-#, fuzzy
 msgid ""
 "\n"
 "LiVES currently requires 'mplayer', 'mplayer2', 'mpv' or 'sox' to function. "
 "Please install one or other of these, and try again.\n"
 msgstr ""
 "\n"
-"Для забезпечення працездатності поточної версії LiVES потрібні «mplayer», "
-"«mplayer2» або «sox». Будь ласка, встановіть одну з цих програм, потім "
-"повторіть спробу.\n"
+"Поточна версія LiVES потребує для роботи mplayer, mplayer2, mpv або sox. "
+"Будь ласка, встановіть одну з цих програм, потім повторіть спробу запуску.\n"
 
 #: src/main.c:2755
 msgid ""
@@ -714,19 +715,17 @@ msgid "Invalid audio player %s\n"
 msgstr "Помилковий аудіопрогравач %s\n"
 
 #: src/main.c:3332
-#, fuzzy
 msgid "external"
-msgstr "Зовнішнє"
+msgstr "зовнішній"
 
 #: src/main.c:3335
-#, fuzzy
 msgid "internal"
-msgstr "Внутрішнє"
+msgstr "внутрішній"
 
 #: src/main.c:3336
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid audio source %s\n"
-msgstr "Помилковий аудіопрогравач %s\n"
+msgstr "Некоректне джерело звуку %s\n"
 
 #: src/main.c:3512 src/main.c:3521
 #, c-format
@@ -768,17 +767,17 @@ msgstr ""
 "LiVES не вдалося захопити це зображення.\n"
 "\n"
 
-#: src/main.c:7011
-#, fuzzy, c-format
+#: src/main.c:7019
+#, c-format
 msgid "Closed clip %s\n"
-msgstr "Закритий файл %s\n"
+msgstr "Закрито кліп %s\n"
 
-#: src/main.c:7188 src/gui.c:736 src/utils.c:3836 src/utils.c:3865
+#: src/main.c:7196 src/gui.c:736 src/utils.c:3836 src/utils.c:3865
 #: src/saveplay.c:3312 src/multitrack.c:4807 src/multitrack.c:6668
 msgid "_Undo"
 msgstr "В_ернути"
 
-#: src/main.c:7189 src/gui.c:751 src/utils.c:3837 src/utils.c:3866
+#: src/main.c:7197 src/gui.c:751 src/utils.c:3837 src/utils.c:3866
 #: src/saveplay.c:3313 src/multitrack.c:4826 src/multitrack.c:6691
 msgid "_Redo"
 msgstr "Повт_орити"
@@ -875,14 +874,13 @@ msgstr ""
 "\n"
 
 #: src/startup.c:202
-#, fuzzy
 msgid ""
 ", but you do not have pulseaudio installed on your system.\n"
 " You are advised to install pulseaudio first before running LiVES.\n"
 "\n"
 msgstr ""
-", але у вашій системі не встановлено PulseAudio.\n"
-" Радимо вам встановити PulseAudio, перед запуском LiVES.\n"
+", але у вашій системі не встановлено pulseaudio.\n"
+" Радимо встановити pulseaudio, перш ніж запускати LiVES.\n"
 "\n"
 
 #: src/startup.c:206
@@ -926,12 +924,11 @@ msgstr ""
 "програвачів, "
 
 #: src/startup.c:223
-#, fuzzy
 msgid ""
 "but many audio features will be disabled.\n"
 "\n"
 msgstr ""
-"але деякі з можливостей роботи зі звуком буде вимкнено.\n"
+"але багато можливостей із роботі зі звуком буде вимкнено.\n"
 "\n"
 
 #: src/startup.c:225
@@ -949,9 +946,8 @@ msgid "Choose an audio player"
 msgstr "Вибір звукового програвача"
 
 #: src/startup.c:254
-#, fuzzy
 msgid "Use _pulseaudio player"
-msgstr "Вик_ористовувати програвач PulseAudio"
+msgstr "Програва_ч pulseaudio"
 
 #: src/startup.c:273
 msgid "Use _jack audio player"
@@ -1230,19 +1226,18 @@ msgid "Video"
 msgstr "Відео"
 
 #: src/interface.c:111
-#, fuzzy
 msgid "[opening...]"
-msgstr "Відео [відкриття…]"
+msgstr "[відкриваємо…]"
 
 #: src/interface.c:115 src/interface.c:141 src/interface.c:154
 #, c-format
 msgid "%s %s"
-msgstr ""
+msgstr "%s %s"
 
 #: src/interface.c:118 src/interface.c:143 src/interface.c:156
-#, fuzzy, c-format
+#, c-format
 msgid "%s [%.2f sec]"
-msgstr "Моно [%.2f с]"
+msgstr "%s [%.2f сек.]"
 
 #: src/interface.c:121
 msgid "(Undefined)"
@@ -1256,8 +1251,8 @@ msgstr "(Немає відео)"
 msgid "(No audio)"
 msgstr "(Немає звуку)"
 
-#: src/interface.c:929 src/callbacks.c:9246 src/callbacks.c:9268
-#: src/callbacks.c:9269 src/gui.c:3271 src/gui.c:3864 src/saveplay.c:2133
+#: src/interface.c:929 src/callbacks.c:9245 src/callbacks.c:9267
+#: src/callbacks.c:9268 src/gui.c:3271 src/gui.c:3864 src/saveplay.c:2133
 #: src/dialogs.c:1603 src/dialogs.c:1604 src/dialogs.c:1873 src/dialogs.c:1874
 #: src/framedraw.c:223 src/multitrack.c:8118
 msgid "Preview"
@@ -1285,8 +1280,8 @@ msgstr "Натисніть, щоб _переглянути файл"
 msgid "Processing..."
 msgstr "Виконуємо обробку…"
 
-#: src/interface.c:1023 src/interface.c:1129 src/callbacks.c:9002
-#: src/callbacks.c:9051
+#: src/interface.c:1023 src/interface.c:1129 src/callbacks.c:9001
+#: src/callbacks.c:9050
 msgid ""
 "\n"
 "Please Wait"
@@ -1316,7 +1311,7 @@ msgstr ""
 msgid "Show Details"
 msgstr "Показати подробиці"
 
-#: src/interface.c:1178 src/callbacks.c:9048
+#: src/interface.c:1178 src/callbacks.c:9047
 msgid "Pause/_Enough"
 msgstr "Призупинити/_Досить"
 
@@ -1405,7 +1400,7 @@ msgstr "Використати _рекомендовані параметри"
 msgid "_Save to file"
 msgstr "_Зберегти до файла"
 
-#: src/interface.c:1677 src/callbacks.c:8296 src/paramwindow.c:834
+#: src/interface.c:1677 src/callbacks.c:8295 src/paramwindow.c:834
 #: src/omc-learn.c:1399
 msgid "_Close Window"
 msgstr "За_крити вікно"
@@ -1539,36 +1534,29 @@ msgid ""
 "In order to export this project, you must enter a name for this clip set.\n"
 "This will also be used for the project name.\n"
 msgstr ""
-"Щоб експортувати цей проект, вам слід ввести назву цього набору кліпів.\n"
-"Цю назву також буде використано для проекту.\n"
+"Щоб експортувати цей проєкт, вам слід ввести назву цього набору кліпів.\n"
+"Цю назву також буде використано для проєкту.\n"
 
 #: src/interface.c:2087
-#, fuzzy
 msgid "Welcome to LiVES !"
-msgstr ""
-"Вітаємо у LiVES версії %s.\n"
-"\n"
+msgstr "Вітаємо у LiVES!"
 
 #: src/interface.c:2092
-#, fuzzy
 msgid ""
 "This startup wizard will guide you through the\n"
 "initial install so that you can get the most from this application."
 msgstr ""
-"Вітаємо у LiVES !\n"
-"За допомогою цього початкового майстра налаштування\n"
-"ви зможете зробити так, щоб програма змогла працювати на максимумі "
-"потужностей.\n"
+"Цей початковий майстер налаштовування допоможе\n"
+"вам виконати початкові процедури і отримати доступ до найширшого спектра "
+"можливостей програми."
 
 #: src/interface.c:2096
-#, fuzzy
 msgid ""
 "First of all you need to choose a working directory for LiVES.\n"
 "This should be a directory with plenty of disk space available."
 msgstr ""
-"\n"
-"Спочатку вам слід вибрати робочий каталог для LiVES\n"
-"Цей каталог має зберігатися на диску, де дуже багато вільного місця.\n"
+"Спочатку, вам слід вибрати робочий каталог для LiVES.\n"
+"Це має бути каталог на диску, де багато вільного місця."
 
 #: src/interface.c:2111
 msgid "New name "
@@ -1774,9 +1762,8 @@ msgid "%sChoose a File"
 msgstr "%sВиберіть файл"
 
 #: src/interface.c:3096
-#, fuzzy
 msgid "_Autoreload next time"
-msgstr "_Автоматично перезавантажити наступного разу"
+msgstr "_Автоматично перезавантажувати надалі"
 
 #: src/interface.c:3126
 msgid ""
@@ -2220,81 +2207,72 @@ msgid "For other keys, see the menus.\n"
 msgstr "Інші клавіатурні скорочення можна знайти у меню.\n"
 
 #: src/interface.c:3594
-#, fuzzy
 msgid "Autolives Options"
-msgstr "_Автоматика"
+msgstr "Параметри Autolives"
 
 #: src/interface.c:3598
-#, fuzzy
 msgid "Trigger"
-msgstr "Перемикачі RFX"
+msgstr "Перемикач"
 
 #: src/interface.c:3608
-#, fuzzy
 msgid "Timed:"
-msgstr "Час"
+msgstr "Час:"
 
 #: src/interface.c:3610
 msgid "Trigger a change based on time"
-msgstr ""
+msgstr "Увімкнути зміну на основі часових даних"
 
 #: src/interface.c:3615
-#, fuzzy
 msgid "change time (seconds)"
-msgstr "Монтажний стіл (секунди)"
+msgstr "час зміни (у секундах)"
 
 #: src/interface.c:3619
 msgid "OMC"
-msgstr ""
+msgstr "OMC"
 
 #: src/interface.c:3621
 msgid "Trigger a change based on receiving an OSC message"
-msgstr ""
+msgstr "Увімкнути зміну на основі отримання повідомлення OSC"
 
 #: src/interface.c:3636
-#, fuzzy
 msgid "Playback start:"
-msgstr "Відтворення"
+msgstr "Початок відтворення:"
 
 #: src/interface.c:3643
-#, fuzzy
 msgid "Automatic"
-msgstr "Авторезервування"
+msgstr "Автоматично"
 
 #: src/interface.c:3645
 msgid "Start playback automatically"
-msgstr ""
+msgstr "Розпочинати відтворення автоматично"
 
 #: src/interface.c:3650
 msgid "Manual"
-msgstr ""
+msgstr "Вручну"
 
 #: src/interface.c:3652
-#, fuzzy
 msgid "Wait for the user to start playback"
-msgstr " кількість моніторів для відтворення"
+msgstr "Очікувати, доки відтворення не буде розпочато користувачем"
 
 #: src/interface.c:3661
-#, fuzzy
 msgid "Mute audio during playback"
-msgstr "Натисніть «m» під час відтворення"
+msgstr "Вимкнути звук під час відтворення"
 
 #: src/interface.c:3662
 msgid "Mute the audio in LiVES during playback."
-msgstr ""
+msgstr "Вимикати звук у LiVES під час відтворення."
 
 #: src/interface.c:3675
 msgid "Debug mode"
-msgstr ""
+msgstr "Режим діагностики"
 
 #: src/interface.c:3676
 msgid "Show debug output on stderr."
-msgstr ""
+msgstr "Виводити діагностичні повідомлення до stderr."
 
 #: src/interface.c:3785
-#, fuzzy
 msgid "Open Online Clip"
-msgstr "відкриття кліпу з Youtube"
+msgstr "Відкрити кліп з інтернету"
 
 #: src/interface.c:3795
 #, c-format
@@ -2303,140 +2281,137 @@ msgid ""
 "it with %s.\n"
 "PLEASE MAKE SURE YOU HAVE THE MOST RECENT VERSION OF THAT TOOL INSTALLED !"
 msgstr ""
+"Щоб відкрити кліп з Youtube або іншого сайта з відео, LiVES потрібно "
+"спочатку отримати дані кліпу за допомогою %s.\n"
+"БУДЬ ЛАСКА, ПЕРЕКОНАЙТЕСЯ, ЩО У ВАС ВСТАНОВЛЕНО НАЙСВІЖІШУ ВЕРСІЮ ЦІЄЇ "
+"ПРОГРАМИ!"
 
 #: src/interface.c:3807
 #, c-format
 msgid "<--- Auto update %s ? (will require your password.)"
-msgstr ""
+msgstr "<--- Автооновлення %s? (потребуватиме пароля.)"
 
 #: src/interface.c:3816
 msgid " (REQUIRES SSH-ASKPASS)."
-msgstr ""
+msgstr " (ПОТЕРБУЄ SSH-ASKPASS)."
 
 #: src/interface.c:3823
-#, fuzzy
 msgid ""
 "Enter the URL of the clip below.\n"
 "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8"
 msgstr ""
-"Нижче слід вказати адресу кліпу.\n"
-"Приклад: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
-"\n"
+"Введіть адресу кліпу нижче.\n"
+"Приклад: http://www.youtube.com/watch?v=WCR6f6WzjP8"
 
 #: src/interface.c:3831
-#, fuzzy
 msgid "Clip URL : "
-msgstr "URL: "
+msgstr "Адреса кліпу: "
 
 #: src/interface.c:3839
-#, fuzzy
 msgid "Format selection:"
-msgstr "позначене"
+msgstr "Вибір формату:"
 
 #: src/interface.c:3843
 msgid "_Free (eg. vp9 / opus / webm)"
-msgstr ""
+msgstr "_Вільний (наприклад vp9 / opus / webm)"
 
 #: src/interface.c:3845
 msgid "Download clip using Free codecs"
-msgstr ""
+msgstr "Отримати кліп із використанням вільних кодеків"
 
 #: src/interface.c:3853
-#, fuzzy
 msgid "_File Name : "
-msgstr "Назва файла: %s"
+msgstr "_Назва файла: "
 
 #: src/interface.c:3865
 msgid "_Non-free (eg. h264 / aac / mp4)"
-msgstr ""
+msgstr "_Пропрієтарний (наприклад h264 / aac / mp4)"
 
 #: src/interface.c:3867
 msgid "Download clip using non-free codecs"
-msgstr ""
+msgstr "Отримати кліп з використанням пропрієтарних кодеків"
 
 #: src/interface.c:3879
-#, fuzzy
 msgid "_Directory to save to: "
-msgstr "Назва каталогу занадто довга!"
+msgstr "_Каталог для зберігання: "
 
 #: src/interface.c:3887
-#, fuzzy
 msgid "Desired frame size:"
-msgstr "Розміри кадру"
+msgstr "Бажаний розмір кадру:"
 
 #: src/interface.c:3893
 msgid "- Approximately:"
-msgstr ""
+msgstr "- Приблизно:"
 
 #: src/interface.c:3895
 msgid "Download the closest to this size"
-msgstr ""
+msgstr "Отримати найближчий до цього розміру варіант"
 
 #: src/interface.c:3904
 msgid "- At _least"
-msgstr ""
+msgstr "- Прин_аймні"
 
 #: src/interface.c:3906
 msgid "Frame size should be at least this size"
-msgstr ""
+msgstr "Розмір кадру має бути не меншим за цей"
 
 #: src/interface.c:3914
 msgid "- At _most:"
-msgstr ""
+msgstr "- Не _більше:"
 
 #: src/interface.c:3916
 msgid "Frame size should be at most this size"
-msgstr ""
+msgstr "Розмір кадру має не перевищувати цей"
 
 #: src/interface.c:3928 src/paramwindow.c:553 src/plugins.c:979
 msgid "_Width"
 msgstr "_Ширина"
 
 #: src/interface.c:3933
-#, fuzzy
 msgid "X        _Height"
-msgstr "_Висота"
+msgstr "X        _Висота"
 
 #: src/interface.c:3938
 msgid "    pixels"
-msgstr ""
+msgstr "    пікселів"
 
 #: src/interface.c:3948
 msgid " or:"
-msgstr ""
+msgstr " або:"
 
 #: src/interface.c:3954
 msgid "- The _smallest"
-msgstr ""
+msgstr "- Най_менший"
 
 #: src/interface.c:3956
 msgid "Download the lowest resolution available"
-msgstr ""
+msgstr "Отримати у найменшій доступній роздільній здатності"
 
 #: src/interface.c:3965
 msgid "- The _largest"
-msgstr ""
+msgstr "- На_йбільший"
 
 #: src/interface.c:3967
 msgid "Download the highest resolution available"
-msgstr ""
+msgstr "Отримати кліп із найбільшою доступною роздільною здатністю"
 
 #: src/interface.c:3979
 msgid "- Let me choose..."
-msgstr ""
+msgstr "- Дайте вибрати…"
 
 #: src/interface.c:3982
 msgid "Choose the resolution from a list (opens in new window)"
-msgstr ""
+msgstr "Вибрати роздільну здатність зі списку (відкриває нове вікно)"
 
 #: src/interface.c:3999
 msgid "_Other options (e.g audio, subtitles)..."
-msgstr ""
+msgstr "_Інші параметри (зокрема звуку, субтитрів)…"
 
 #: src/interface.c:4016
-#, fuzzy
 msgid "Please enter the name of the file to save the downloaded clip as.\n"
-msgstr "Будь ласка, вкажіть назву файла, до якого слід зберегти кліп.\n"
+msgstr ""
+"Будь ласка, вкажіть назву файла, до якого буде збережено дані отриманого "
+"кліпу.\n"
 
 #: src/interface.c:4025
 msgid "Please enter a valid URL for the download.\n"
@@ -2449,27 +2424,25 @@ msgstr "Звантаження %s до %s…"
 
 #: src/interface.c:4141
 msgid "Select Video Format to Download"
-msgstr ""
+msgstr "Виберіть формат відео для отримання"
 
 #: src/interface.c:4147
-#, fuzzy
 msgid "Double click on a format to load it, or click Cancel to exit."
 msgstr ""
-"Двічі клацніть лівою кнопкою\n"
-"миші на блоці, щоб позначити його."
+"Двічі клацніть на пункті відповідного формату або натисніть кнопку "
+"«Скасувати», щоб закрити вікно."
 
 #: src/interface.c:4180
 msgid "ID"
-msgstr ""
+msgstr "Ід."
 
 #: src/interface.c:4194
-#, fuzzy
 msgid "Resolution"
-msgstr "Питання"
+msgstr "Роздільність"
 
 #: src/interface.c:4201
 msgid "Notes"
-msgstr ""
+msgstr "Нотатки"
 
 #: src/callbacks.c:61
 #, c-format
@@ -2487,9 +2460,8 @@ msgid "Saving as set %s..."
 msgstr "Зберігання набору %s…"
 
 #: src/callbacks.c:906
-#, fuzzy
 msgid "Getting format list"
-msgstr "Використовуємо формат «%s».\n"
+msgstr "Отримуємо список форматів"
 
 #: src/callbacks.c:929 src/callbacks.c:979
 msgid ""
@@ -2568,7 +2540,7 @@ msgstr ""
 #: src/callbacks.c:1193
 #, c-format
 msgid "Removing set %s since it is now empty..."
-msgstr ""
+msgstr "Вилучаємо набір %s, оскільки тепер він порожній…"
 
 #: src/callbacks.c:1231
 msgid ""
@@ -2576,7 +2548,7 @@ msgid ""
 "Invalid project file.\n"
 msgstr ""
 "\n"
-"Некоректний файл проекту.\n"
+"Некоректний файл проєкту.\n"
 
 #: src/callbacks.c:1242
 #, c-format
@@ -2592,32 +2564,32 @@ msgid ""
 msgstr ""
 "\n"
 "Набір з назвою %s вже існує.\n"
-"Якщо ви бажаєте імпортувати цей проект, вам слід перейменувати або вилучити "
+"Якщо ви бажаєте імпортувати цей проєкт, вам слід перейменувати або вилучити "
 "поточний набір.\n"
 "Зробити це можна за допомогою пункту меню «Файл|Перезавантажити набір». Ви "
 "зможете надати набору назву\n"
 "%s,\n"
 "а потім скористатися пунктом «Файл|Закрити/Зберегти всі кліпи», щоб надати "
 "нову назву або відкинути набір.\n"
-"Після завершення цих дій ви зможете імпортувати новий проект.\n"
+"Після завершення цих дій ви зможете імпортувати новий проєкт.\n"
 
 #: src/callbacks.c:1256
 #, c-format
 msgid "Importing the project %s as set %s..."
-msgstr "Імпортування проекту %s як набору %s…"
+msgstr "Імпортування проєкту %s як набору %s…"
 
 #: src/callbacks.c:1278
 msgid "Importing project"
-msgstr "Імпортування проекту"
+msgstr "Імпортування проєкту"
 
 #: src/callbacks.c:1347
 #, c-format
 msgid "Exporting project %s..."
-msgstr "Експортування проекту %s…"
+msgstr "Експортування проєкту %s…"
 
 #: src/callbacks.c:1363
 msgid "Exporting project"
-msgstr "Експортування проекту"
+msgstr "Експортування проєкту"
 
 #: src/callbacks.c:1400 src/callbacks.c:1607
 msgid "Theme"
@@ -2677,7 +2649,7 @@ msgstr "Вилучення набору"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "Набір %s було остаточно вилучено з диска.\n"
 
-#: src/callbacks.c:1952 src/callbacks.c:11376 src/resample.c:1189
+#: src/callbacks.c:1952 src/callbacks.c:11375 src/resample.c:1189
 msgid "Insert Silence"
 msgstr "Вставити тишу"
 
@@ -2686,9 +2658,8 @@ msgid "Undoing"
 msgstr "Скасування"
 
 #: src/callbacks.c:2112 src/callbacks.c:2324
-#, fuzzy
 msgid "Restoring audio"
-msgstr "Відновлення звуку…"
+msgstr "Відновлюємо звук"
 
 #: src/callbacks.c:2127
 msgid "Clearing frame images"
@@ -2731,10 +2702,9 @@ msgstr "Копіювання до буфера"
 msgid "Cut"
 msgstr "Вирізати"
 
-#: src/callbacks.c:2816 src/callbacks.c:3222 src/callbacks.c:7410
-#, fuzzy
+#: src/callbacks.c:2816 src/callbacks.c:3222 src/callbacks.c:7409
 msgid "Pulling frames from clipboard..."
-msgstr "Отримуємо кадри з буфера обміну даними"
+msgstr "Отримуємо кадри з буфера обміну…"
 
 #: src/callbacks.c:2827
 #, c-format
@@ -2793,7 +2763,7 @@ msgstr ""
 "компонувань.\n"
 "Ви саме цього і хотіли?\n"
 
-#: src/callbacks.c:3059 src/callbacks.c:11305
+#: src/callbacks.c:3059 src/callbacks.c:11304
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2853,9 +2823,9 @@ msgstr "Вставка %d копій даних з буфера%s…"
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "Вставка %d кадрів з буфера обміну даними%s…"
 
-#: src/callbacks.c:3397 src/callbacks.c:7814 src/callbacks.c:7866
-#: src/callbacks.c:8101 src/callbacks.c:8139 src/callbacks.c:8181
-#: src/callbacks.c:10483
+#: src/callbacks.c:3397 src/callbacks.c:7813 src/callbacks.c:7865
+#: src/callbacks.c:8100 src/callbacks.c:8138 src/callbacks.c:8180
+#: src/callbacks.c:10482
 msgid "Cancelling"
 msgstr "Скасування"
 
@@ -2880,8 +2850,8 @@ msgstr ""
 "компонувань.\n"
 "Ви справді бажаєте продовжувати?\n"
 
-#: src/callbacks.c:3649 src/callbacks.c:10567 src/callbacks.c:10788
-#: src/callbacks.c:10841
+#: src/callbacks.c:3649 src/callbacks.c:10566 src/callbacks.c:10787
+#: src/callbacks.c:10840
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2902,7 +2872,7 @@ msgstr ""
 "Вилучення призведе до зсуву кадрів у деяких з багатодоріжкових компонувань.\n"
 "Ви справді бажаєте продовжувати?\n"
 
-#: src/callbacks.c:3679 src/callbacks.c:10827
+#: src/callbacks.c:3679 src/callbacks.c:10826
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -3032,16 +3002,15 @@ msgid "%s of disk space was recovered.\n"
 msgstr "Звільнено %s місця на диску.\n"
 
 #: src/callbacks.c:5494
-#, fuzzy
 msgid "Pre-decoding all frames in this clip..."
-msgstr "Позначити усі кадри у цьому кліпі"
+msgstr "Виконуємо попереднє декодування усіх кадрів у цьому кліпі…"
 
 #: src/callbacks.c:5516
 msgid "Resetting frame rates and frame values..."
 msgstr "Відновлення частоти кадрів та параметрів кадрів…"
 
 #: src/callbacks.c:5558
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -3049,22 +3018,23 @@ msgid ""
 "Internal: %s (%d bpp) / %s"
 msgstr ""
 "\n"
-"Зовнішня: %s\n"
-"Внутрішня: %s (%d біт/тчк) / %s\n"
+"\n"
+"Зовнішній: %s\n"
+"Внутрішній: %s (%d бітів на точку) / %s"
 
 #: src/callbacks.c:5560
 msgid "buffered"
 msgstr "буферизовано"
 
 #: src/callbacks.c:5574 src/callbacks.c:5592 src/callbacks.c:5608
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "  Opening..."
 msgstr ""
 "\n"
-"  Відкриття…"
+"\n"
+"  Відкриваємо…"
 
 #: src/callbacks.c:5580
 #, c-format
@@ -3085,22 +3055,23 @@ msgstr ""
 "(%d декодовано)"
 
 #: src/callbacks.c:5594
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
 "  %.2f sec."
 msgstr ""
 "\n"
-"  %.2f с"
+"\n"
+"  %.2f сек."
 
 #: src/callbacks.c:5602
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "  Unknown"
 msgstr ""
+"\n"
 "\n"
 "  Невідомо"
 
@@ -3130,12 +3101,13 @@ msgid "little-endian"
 msgstr "little-endian"
 
 #: src/callbacks.c:5620 src/callbacks.c:5634
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "  %d Hz %d bit\n"
 "%s %s"
 msgstr ""
+"\n"
 "  %d Гц %d бітів\n"
 "%s %s"
 
@@ -3147,7 +3119,7 @@ msgstr ""
 "\n"
 "  Відкриття…"
 
-#: src/callbacks.c:5733
+#: src/callbacks.c:5732
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -3178,22 +3150,22 @@ msgstr ""
 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, "
 "USA\n"
 
-#: src/callbacks.c:5747
+#: src/callbacks.c:5746
 msgid "A video editor and VJ program."
 msgstr "Відеоредактор та програма для ві-джеїв."
 
-#: src/callbacks.c:5748
+#: src/callbacks.c:5747
 msgid "About LiVES"
 msgstr "Про LiVES"
 
-#: src/callbacks.c:5750
+#: src/callbacks.c:5749
 msgid "translator_credits"
 msgstr ""
 "Launchpad Contributions:\n"
 "  Yuri Chornoivan https://launchpad.net/~yurchor-gmail\n"
 "  yurchor https://launchpad.net/~yurchor-deactivatedaccount"
 
-#: src/callbacks.c:5785
+#: src/callbacks.c:5784
 #, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -3217,7 +3189,7 @@ msgstr ""
 "%s\n"
 "Домашня сторінка: %s"
 
-#: src/callbacks.c:6023
+#: src/callbacks.c:6022
 msgid ""
 "\n"
 "\n"
@@ -3228,7 +3200,7 @@ msgstr ""
 "Для попереднього перегляду цього файла вам слід встановити mplayer або "
 "mplayer2.\n"
 
-#: src/callbacks.c:6025
+#: src/callbacks.c:6024
 msgid ""
 "\n"
 "\n"
@@ -3240,7 +3212,7 @@ msgstr ""
 "Для попереднього перегляду вмісту цього файла вам слід встановити mplayer, "
 "mplayer2 або imageMagick.\n"
 
-#: src/callbacks.c:6438
+#: src/callbacks.c:6437
 #, c-format
 msgid ""
 "Text was saved as\n"
@@ -3249,85 +3221,85 @@ msgstr ""
 "Текст збережено як\n"
 "%s\n"
 
-#: src/callbacks.c:6616
+#: src/callbacks.c:6615
 msgid "Encoder Debug Output"
 msgstr "Дані зневаджування інструменту кодування"
 
-#: src/callbacks.c:6649 src/gui.c:1830
+#: src/callbacks.c:6648 src/gui.c:1830
 msgid "Fullscreen playback (f)"
 msgstr "Повноекранне відтворення (f)"
 
-#: src/callbacks.c:6650
+#: src/callbacks.c:6649
 msgid "Fullscreen playback off (f)"
 msgstr "Вимкнути повноекранне відтворення (f)"
 
-#: src/callbacks.c:6802 src/gui.c:1818
+#: src/callbacks.c:6801 src/gui.c:1818
 msgid "Double size (d)"
 msgstr "Подвійний розмір (d)"
 
-#: src/callbacks.c:6805
+#: src/callbacks.c:6804
 msgid "Single size (d)"
 msgstr "Одинарний розмір (d)"
 
-#: src/callbacks.c:6911 src/callbacks.c:6912
+#: src/callbacks.c:6910 src/callbacks.c:6911
 msgid "Hide the play window (s)"
 msgstr "Сховати вікно відтворення (s)"
 
-#: src/callbacks.c:6920 src/gui.c:1581
+#: src/callbacks.c:6919 src/gui.c:1581
 msgid "Show the play window (s)"
 msgstr "Показати вікно відтворення (s)"
 
-#: src/callbacks.c:6921 src/gui.c:1810
+#: src/callbacks.c:6920 src/gui.c:1810
 msgid "Play in separate window (s)"
 msgstr "Відтворити у окремому вікні (s)"
 
-#: src/callbacks.c:7187
+#: src/callbacks.c:7186
 msgid "Switch continuous looping off (o)"
 msgstr "Вимикання неперервного циклічного відтворення (o)"
 
-#: src/callbacks.c:7191 src/gui.c:1618
+#: src/callbacks.c:7190 src/gui.c:1618
 msgid "Switch continuous looping on (o)"
 msgstr "Вмикання неперервного циклічного відтворення (o)"
 
-#: src/callbacks.c:7240
+#: src/callbacks.c:7239
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "Гучність (%.2f)"
 
-#: src/callbacks.c:7273 src/callbacks.c:7274 src/gui.c:3671
+#: src/callbacks.c:7272 src/callbacks.c:7273 src/gui.c:3671
 msgid "Unmute the audio (z)"
 msgstr "Увімкнути звук (z)"
 
-#: src/callbacks.c:7284 src/callbacks.c:7285 src/gui.c:1628 src/gui.c:3670
+#: src/callbacks.c:7283 src/callbacks.c:7284 src/gui.c:1628 src/gui.c:3670
 msgid "Mute the audio (z)"
 msgstr "Вимкнути звук (z)"
 
-#: src/callbacks.c:7421
+#: src/callbacks.c:7420
 msgid "Reversing clipboard..."
 msgstr "Обернення за часом даних з буфера…"
 
-#: src/callbacks.c:7435
+#: src/callbacks.c:7434
 msgid "Reversing clipboard"
 msgstr "Обернення за часом даних з буфера"
 
-#: src/callbacks.c:7465
+#: src/callbacks.c:7464
 msgid "Load Subtitles"
 msgstr "Завантажити субтитри"
 
-#: src/callbacks.c:7523 src/saveplay.c:901
+#: src/callbacks.c:7522 src/saveplay.c:901
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr "Завантажений файл субтитрів: %s\n"
 
-#: src/callbacks.c:7582
+#: src/callbacks.c:7581
 msgid "Subtitles were erased.\n"
 msgstr "Субтитри було вилучено.\n"
 
-#: src/callbacks.c:7604
+#: src/callbacks.c:7603
 msgid "Select Audio File"
 msgstr "Вибір звукового файла"
 
-#: src/callbacks.c:7643 src/callbacks.c:8018
+#: src/callbacks.c:7642 src/callbacks.c:8017
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -3340,59 +3312,59 @@ msgstr ""
 "Бажаєте продовжити завантаження?\n"
 "."
 
-#: src/callbacks.c:7771
+#: src/callbacks.c:7770
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "Відкриття звукових даних %s, тип %s…"
 
-#: src/callbacks.c:7805 src/saveplay.c:458
+#: src/callbacks.c:7804 src/saveplay.c:458
 msgid "Opening audio"
 msgstr "Відкриття звукових даних"
 
-#: src/callbacks.c:7918 src/callbacks.c:8223 src/callbacks.c:10519
-#: src/callbacks.c:11153
+#: src/callbacks.c:7917 src/callbacks.c:8222 src/callbacks.c:10518
+#: src/callbacks.c:11152
 msgid "Committing audio"
 msgstr "Додавання звукових даних"
 
-#: src/callbacks.c:7933 src/callbacks.c:8252
+#: src/callbacks.c:7932 src/callbacks.c:8251
 msgid "New Audio"
 msgstr "Новий звук"
 
-#: src/callbacks.c:8042
+#: src/callbacks.c:8041
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "Відкриття доріжки КД №%d з %s…"
 
-#: src/callbacks.c:8045
+#: src/callbacks.c:8044
 #, c-format
 msgid "CD track %d"
 msgstr "Доріжка КД %d"
 
-#: src/callbacks.c:8088
+#: src/callbacks.c:8087
 msgid "Opening CD track..."
 msgstr "Відкриття доріжки КД…"
 
-#: src/callbacks.c:8126 src/callbacks.c:8170
+#: src/callbacks.c:8125 src/callbacks.c:8169
 msgid "Error loading CD track\n"
 msgstr "Помилка під час завантаження доріжки КД\n"
 
-#: src/callbacks.c:8285
+#: src/callbacks.c:8284
 msgid "Layout Errors"
 msgstr "Помилки компонування"
 
-#: src/callbacks.c:8305
+#: src/callbacks.c:8304
 msgid "Clear _Errors"
 msgstr "Вилучити записи про п_омилки"
 
-#: src/callbacks.c:8315
+#: src/callbacks.c:8314
 msgid "_Delete affected layouts"
 msgstr "Ви_лучити відповідні компонування"
 
-#: src/callbacks.c:8993 src/callbacks.c:9015
+#: src/callbacks.c:8992 src/callbacks.c:9014
 msgid "Resume"
 msgstr "Поновити"
 
-#: src/callbacks.c:8994
+#: src/callbacks.c:8993
 msgid ""
 "\n"
 "Paused\n"
@@ -3402,27 +3374,27 @@ msgstr ""
 "Призупинено\n"
 "(натисніть «Поновити», щоб продовжити обробку)"
 
-#: src/callbacks.c:8995 src/callbacks.c:9032
+#: src/callbacks.c:8994 src/callbacks.c:9031
 msgid "paused..."
 msgstr "призупинено…"
 
-#: src/callbacks.c:9001 src/callbacks.c:9049
+#: src/callbacks.c:9000 src/callbacks.c:9048
 msgid "Paus_e"
 msgstr "Приз_упинити"
 
-#: src/callbacks.c:9003 src/callbacks.c:9052
+#: src/callbacks.c:9002 src/callbacks.c:9051
 msgid "resumed..."
 msgstr "поновлено…"
 
-#: src/callbacks.c:9020
+#: src/callbacks.c:9019
 msgid "Keep"
 msgstr "Залишити"
 
-#: src/callbacks.c:9022
+#: src/callbacks.c:9021
 msgid "Enough"
 msgstr "Досить"
 
-#: src/callbacks.c:9027
+#: src/callbacks.c:9026
 #, c-format
 msgid ""
 "\n"
@@ -3435,29 +3407,29 @@ msgstr ""
 "(натисніть «%s», щоб зберегти поточне і зупинити обробку)\n"
 "(натисніть «Поновити», щоб продовжити обробку)"
 
-#: src/callbacks.c:9050
+#: src/callbacks.c:9049
 msgid "Cancel"
 msgstr "Скасувати"
 
-#: src/callbacks.c:9190
+#: src/callbacks.c:9189
 msgid "Stop"
 msgstr "Зупинити"
 
-#: src/callbacks.c:9667 src/multitrack.c:13304
+#: src/callbacks.c:9666 src/multitrack.c:13304
 msgid "Selected Frame"
 msgstr "Позначений кадр"
 
-#: src/callbacks.c:9675
+#: src/callbacks.c:9674
 msgid "_Save Frame as..."
 msgstr "_Зберегти кадр як…"
 
-#: src/callbacks.c:9916
+#: src/callbacks.c:9915
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 "Звук випереджає відео на %.4f секунд у кадрі %d, частота кадрів — %.4f\n"
 
-#: src/callbacks.c:9967
+#: src/callbacks.c:9966
 msgid ""
 "\n"
 "\n"
@@ -3471,7 +3443,7 @@ msgstr ""
 "Щоб змусити її працювати на інших платформах, надсилайте латки до коду.\n"
 "\n"
 
-#: src/callbacks.c:9973
+#: src/callbacks.c:9972
 msgid ""
 "\n"
 "\n"
@@ -3484,7 +3456,7 @@ msgstr ""
 "програму «xwininfo».\n"
 "\n"
 
-#: src/callbacks.c:10045 src/callbacks.c:11074
+#: src/callbacks.c:10044 src/callbacks.c:11073
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -3492,7 +3464,7 @@ msgstr ""
 "\n"
 "Час запису має бути більшим за 0.\n"
 
-#: src/callbacks.c:10060
+#: src/callbacks.c:10059
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -3507,11 +3479,11 @@ msgstr ""
 "Натисніть «Скасувати», щоб скасувати дію.\n"
 "\n"
 
-#: src/callbacks.c:10065
+#: src/callbacks.c:10064
 msgid "External window was released.\n"
 msgstr "Зовнішнє вікно було закрито.\n"
 
-#: src/callbacks.c:10108
+#: src/callbacks.c:10107
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -3519,7 +3491,7 @@ msgstr ""
 "Клацніть кнопкою миші у вікні, щоб почати захоплення зображення.\n"
 "Натисніть клавішу «q», щоб припинити запис."
 
-#: src/callbacks.c:10144
+#: src/callbacks.c:10143
 #, c-format
 msgid ""
 "\n"
@@ -3535,19 +3507,19 @@ msgstr ""
 "Натисніть «Зупинити» або клавішу «q», щоб завершити захоплення.\n"
 "(Типово, буде використано швидкість захоплення у %.3f кадрів на секунду.)\n"
 
-#: src/callbacks.c:10165
+#: src/callbacks.c:10164
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES не вдалося захопити дані з цього вікна. Вибачте.\n"
 
-#: src/callbacks.c:10310
+#: src/callbacks.c:10309
 msgid "Export Selected Audio as..."
 msgstr "Експортувати позначені звукові дані як…"
 
-#: src/callbacks.c:10313
+#: src/callbacks.c:10312
 msgid "Export Audio as..."
 msgstr "Експортувати звукові дані як…"
 
-#: src/callbacks.c:10323
+#: src/callbacks.c:10322
 msgid ""
 "\n"
 "\n"
@@ -3561,86 +3533,86 @@ msgstr ""
 "Натисніть кнопку «Гаразд», щоб експорт було виконано на новій швидкості, або "
 "кнопку «Скасувати», щоб експортувати його з початковою швидкістю.\n"
 
-#: src/callbacks.c:10329
+#: src/callbacks.c:10328
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Експортування звуку кадрів від %d до %d як %s…"
 
-#: src/callbacks.c:10333
+#: src/callbacks.c:10332
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Експортування звуку як %s…"
 
-#: src/callbacks.c:10359
+#: src/callbacks.c:10358
 msgid "Exporting audio"
 msgstr "Експортування звукових даних"
 
-#: src/callbacks.c:10403
+#: src/callbacks.c:10402
 msgid "Append Audio File"
 msgstr "долучення файла звукових даних"
 
-#: src/callbacks.c:10456
+#: src/callbacks.c:10455
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "Долучення звукового файла %s…"
 
-#: src/callbacks.c:10473
+#: src/callbacks.c:10472
 msgid "Appending audio"
 msgstr "Долучення звукових даних"
 
-#: src/callbacks.c:10533
+#: src/callbacks.c:10532
 msgid "Append Audio"
 msgstr "Долучення звуку"
 
-#: src/callbacks.c:10591
+#: src/callbacks.c:10590
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr "Доповнення звукових даних до %.2f секунд…"
 
-#: src/callbacks.c:10593
+#: src/callbacks.c:10592
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "Обрізання звукових даних від позиції %.2f с до позиції %.2f с…"
 
-#: src/callbacks.c:10612
+#: src/callbacks.c:10611
 msgid "Trimming/Padding audio"
 msgstr "Обрізання/Доповнення звукових даних"
 
-#: src/callbacks.c:10620
+#: src/callbacks.c:10619
 msgid "Trim/Pad Audio"
 msgstr "Обрізати/Доповнити звукові дані"
 
-#: src/callbacks.c:10687
+#: src/callbacks.c:10686
 msgid "Fading audio in"
 msgstr "Наростання звуку"
 
-#: src/callbacks.c:10688
+#: src/callbacks.c:10687
 msgid "Fade audio in"
 msgstr "Наростання звуку"
 
-#: src/callbacks.c:10692
+#: src/callbacks.c:10691
 msgid "Fading audio out"
 msgstr "Поступове зменшення гучності"
 
-#: src/callbacks.c:10693
+#: src/callbacks.c:10692
 msgid "Fade audio out"
 msgstr "Поступове зменшення гучності"
 
-#: src/callbacks.c:10712
+#: src/callbacks.c:10711
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s після %.1f секунд…"
 
-#: src/callbacks.c:10714
+#: src/callbacks.c:10713
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s від часу %.2f секунд до часу %.2f секунд…"
 
-#: src/callbacks.c:10721
+#: src/callbacks.c:10720
 msgid "Fading audio..."
 msgstr "Зміна гучності…"
 
-#: src/callbacks.c:10812
+#: src/callbacks.c:10811
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -3650,33 +3622,33 @@ msgstr ""
 "Вилучення всіх звукових даних призведе до закриття цього файла.\n"
 "Ви бажаєте саме цього?"
 
-#: src/callbacks.c:10815
+#: src/callbacks.c:10814
 msgid "Deleting all audio..."
 msgstr "Вилучення всіх звукових даних…"
 
-#: src/callbacks.c:10820
+#: src/callbacks.c:10819
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Вилучення звукових даних від позиції %.2f с до позиції %.2f с…"
 
-#: src/callbacks.c:10894
+#: src/callbacks.c:10893
 msgid "Deleting Audio"
 msgstr "Вилучення звуку"
 
-#: src/callbacks.c:10901
+#: src/callbacks.c:10900
 msgid "Delete Audio"
 msgstr "Вилучити звук"
 
-#: src/callbacks.c:11232
+#: src/callbacks.c:11231
 msgid "Record new audio"
 msgstr "Запис нових звукових даних"
 
-#: src/callbacks.c:11331
+#: src/callbacks.c:11330
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Вставка тиші від позиції %.2f с до позиції %.2f с…"
 
-#: src/callbacks.c:11361
+#: src/callbacks.c:11360
 msgid "Inserting Silence"
 msgstr "Вставка тиші"
 
@@ -3763,16 +3735,15 @@ msgstr "В_ідкрити частину файла…"
 
 #: src/gui.c:544
 msgid "Play Remote _Stream..."
-msgstr ""
+msgstr "Відтворити віддалений _потік…"
 
 #: src/gui.c:546
-#, fuzzy
 msgid "Open _Online Clip..."
-msgstr "Відкрити к_ліп Youtube…"
+msgstr "Відкрити кліп з _інтернету…"
 
 #: src/gui.c:552
 msgid "Download from _Youtube or other site..."
-msgstr ""
+msgstr "Отримати з _Youtube або іншого сайта…"
 
 #: src/gui.c:557
 msgid "Import from _dvd/vcd..."
@@ -4255,12 +4226,12 @@ msgstr "Відкрити _потік даних yuv4mpeg..."
 #: src/gui.c:1417
 #, c-format
 msgid "_Import Project (.%s)..."
-msgstr "_Імпортувати проект (.%s)…"
+msgstr "_Імпортувати проєкт (.%s)…"
 
 #: src/gui.c:1422
 #, c-format
 msgid "E_xport Project (.%s)..."
-msgstr "Е_кспортувати проект (.%s)…"
+msgstr "Е_кспортувати проєкт (.%s)…"
 
 #: src/gui.c:1430
 #, c-format
@@ -4305,9 +4276,8 @@ msgstr ""
 "їх кожного разу, коли ви користуєтеся LiVES."
 
 #: src/gui.c:1470
-#, fuzzy
 msgid "_Pre-decode all frames"
-msgstr "Позна_чити всі кадри"
+msgstr "_Попередньо декодувати усі кадри"
 
 #: src/gui.c:1473
 msgid ""
@@ -4315,6 +4285,9 @@ msgid ""
 "seek times,\n"
 "at the cost of diskspace."
 msgstr ""
+"Декодувати усі кадри до файлів зображень. Це може поліпшити можливості "
+"оберненого відтворення та позиціювання кадрів,\n"
+"але потребуватиме більше місця на диску."
 
 #: src/gui.c:1476
 msgid "_Reset All Playback Speeds and Positions"
@@ -4349,7 +4322,7 @@ msgstr "Показати _клавіші ві-джея"
 
 #: src/gui.c:1510
 msgid "_Automatic Mode (autolives)..."
-msgstr ""
+msgstr "_Автоматичний режим (autolives)…"
 
 #: src/gui.c:1515
 msgid "To_ys"
@@ -4377,7 +4350,7 @@ msgstr "_Підручник (буде відкрито у переглядачі
 
 #: src/gui.c:1542 src/multitrack.c:7613
 msgid "_Donate to the Project !"
-msgstr "Підтримати проект _фінансово!"
+msgstr "Підтримати проєкт _фінансово!"
 
 #: src/gui.c:1545 src/multitrack.c:7616
 msgid "_Email the Author"
@@ -4420,9 +4393,8 @@ msgid "Play selection (y)"
 msgstr "Відтворити позначене (y)"
 
 #: src/gui.c:1644
-#, fuzzy
 msgid "Audio Source:    "
-msgstr "Джерело звуку:"
+msgstr "Джерело звуку:    "
 
 #: src/gui.c:1678
 msgid "Internal"
@@ -4477,9 +4449,8 @@ msgstr ""
 "швидкодії, натискання «q» призведе до закриття вікна."
 
 #: src/gui.c:1897
-#, fuzzy
 msgid "Video playback speed (frames per second)"
-msgstr "     Швидкість відтворення відео (у кадрах на секунду)        "
+msgstr "Швидкість відтворення відео (у кадрах за секунду)"
 
 #: src/gui.c:1902
 msgid "Vary the video speed"
@@ -4498,9 +4469,8 @@ msgid "The first selected frame in this clip"
 msgstr "Перший позначений кадр цього кліпу"
 
 #: src/gui.c:2078
-#, fuzzy
 msgid " Select All Frames  "
-msgstr "Позна_чити всі кадри"
+msgstr " Позначити усі кадри  "
 
 #: src/gui.c:2079
 msgid "Select all frames in this clip"
@@ -5087,9 +5057,8 @@ msgstr ""
 
 #: src/saveplay.c:1423 src/saveplay.c:1543 src/saveplay.c:1614
 #: src/saveplay.c:3762
-#, fuzzy
 msgid "Pulling frames from clip..."
-msgstr "Отримання кадрів з кліпу"
+msgstr "Отримуємо кадри з кліпу…"
 
 #: src/saveplay.c:1479 src/saveplay.c:1584
 msgid "Linking selection"
@@ -5153,7 +5122,7 @@ msgid "Average FPS was %.4f\n"
 msgstr "Середня частота кадрів — %.4f\n"
 
 #: src/saveplay.c:3030
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -5165,10 +5134,11 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Розмір деяких з кадрів цього кліпу є помилковим.\n"
-"Вам слід скористатися пунктом меню «Інструменти -> Змінити розміри всіх "
-"кадрів»\n"
-"і змінити розміри всіх кадрів до поточного значення.\n"
+"Розмір деяких кадрів у кліпі\n"
+"%s\n"
+"є помилковим.\n"
+"Вам слід вибрати пункт меню Інструменти --> Змінити розмір всіх\n"
+"і змінити розмір усіх кадрів за розміром поточного кадру.\n"
 
 #: src/saveplay.c:3239
 msgid "Unknown"
@@ -5409,14 +5379,12 @@ msgid "_Retry"
 msgstr "П_овторити"
 
 #: src/dialogs.c:249
-#, fuzzy
 msgid "Missing file"
-msgstr "Поточний файл"
+msgstr "Не вистачає файла"
 
 #: src/dialogs.c:254
-#, fuzzy
 msgid "_Browse"
-msgstr "Вибрати..."
+msgstr "_Вибрати"
 
 #: src/dialogs.c:321
 msgid "Show _Details"
@@ -5806,6 +5774,8 @@ msgid ""
 "Current clips will be added to the clip set.\n"
 "Is that what you want ?\n"
 msgstr ""
+"Поточні кліпи буде додано до набору кліпів.\n"
+"Ви хочете саме цього?\n"
 
 #: src/dialogs.c:2425
 msgid ""
@@ -5919,7 +5889,7 @@ msgstr ""
 "."
 
 #: src/dialogs.c:2568
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "The original file\n"
@@ -5931,10 +5901,10 @@ msgstr ""
 "\n"
 "Не вдалося знайти початковий файл\n"
 "%s\n"
-"Якщо цей фал було пересунуто, натисніть кнопку «Гаразд», щоб вказати\n"
-"його нове розташування.\n"
-"Якщо файл втрачено, натисніть кнопку «Скасувати», щоб пропустити його "
-"завантаження.\n"
+"Натисніть кнопку «Повторити», щоб повторити спробу, або кнопку «Вибрати», "
+"щоб вказати нове розташування файла.\n"
+"Крім того, можете натиснути кнопку «Скасувати», щоб скасувати завантаження "
+"цього файла.\n"
 
 #: src/dialogs.c:2581
 #, c-format
@@ -5952,7 +5922,7 @@ msgstr ""
 "Отже, кліп не вдалося завантажити.\n"
 
 #: src/dialogs.c:2590
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Unable to start up jack. Please ensure that %s is set up correctly on your "
@@ -5961,10 +5931,10 @@ msgid ""
 "Automatic jack startup will be disabled now.\n"
 msgstr ""
 "\n"
-"Не вдалося запустити jack. Переконайтеся, що у системі належним\n"
-"чином налаштовано alsa, а також, що звукова картка не використовується\n"
-"сторонньою програмою.\n"
-"Автоматичний запуск jack буде вимкнено.\n"
+"Не вдалося запустити jack. Будь ласка, переконайтеся, що у вашій системі "
+"належно налаштовано %s\n"
+"і що звукову картку не використовує інша програма.\n"
+"Зараз же, автоматичний запуск jack буде вимкнено.\n"
 
 #: src/dialogs.c:2599
 msgid ""
@@ -6096,15 +6066,14 @@ msgstr ""
 "кількість каналів звуку.\n"
 
 #: src/dialogs.c:2681
-#, fuzzy
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulseaudio\" audio player.\n"
 "You can set this in Tools|Preferences|Playback."
 msgstr ""
-"Попереднє прослуховування у режимі з декількома доріжками доступне лише\n"
-"за використання звукових програвачів «Jack» або «PulseAudio».\n"
-"Змінити програвач можна за допомогою вкладки Інструменти|Параметри|"
+"Перегляд багатодоріжкового звуку можливий лише за використання\n"
+"звукового програвачів «jack» або «pulseaudio».\n"
+"Ви можете налаштувати програвач на сторінці Інструменти|Налаштування|"
 "Відтворення."
 
 #: src/dialogs.c:2688
@@ -6131,6 +6100,8 @@ msgid ""
 "The program %s is required to use this feature.\n"
 "Please install it and try again."
 msgstr ""
+"Для користування цією можливістю потрібна програма %s.\n"
+"Будь ласка, встановіть цю програму і повторіть спробу."
 
 #: src/dialogs.c:2707
 msgid ""
@@ -6190,7 +6161,6 @@ msgstr ""
 "Щоб скористатися цією можливістю, вам слід встановити програму «dvgrab».\n"
 
 #: src/dialogs.c:2740
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -6200,10 +6170,10 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Запис звуку можливий лише за використання звукових серверів\n"
-"«Jack» або «PulseAudio».\n"
-"Вам варто вибрати один з цих серверів на вкладці «Інструменти/Параметри/"
-"Відтворення».\n"
+"Запис звуку можливий лише за використання звукового\n"
+"програвача «jack» або «pulseaudio».\n"
+"Ймовірно, вам слід вибрати один з цих програвачів на сторінці Інструменти/"
+"Налаштування/Відтворення.\n"
 
 #: src/dialogs.c:2746
 msgid "Video playback plugin failed to initialise palette !\n"
@@ -6871,9 +6841,8 @@ msgid "video analyser"
 msgstr "відеоаналізатор"
 
 #: src/effects.c:127
-#, fuzzy
 msgid "Video Analysers"
-msgstr "Відеоаналізатори"
+msgstr "Аналізатори відео"
 
 #: src/effects.c:129
 msgid "audio analyser"
@@ -6932,7 +6901,7 @@ msgstr "%s до нового кліпу"
 msgid "%s frames %d to %d"
 msgstr "%s кадри від %d до %d"
 
-#: src/effects.c:439 src/effects.c:504
+#: src/effects.c:440 src/effects.c:505
 msgid ""
 "\n"
 "No frames were generated.\n"
@@ -7235,27 +7204,27 @@ msgstr "%s [нестабільний] (%s)"
 #: src/effects-data.c:61
 #, c-format
 msgid "In param %d"
-msgstr ""
+msgstr "Вхідний параметр %d"
 
 #: src/effects-data.c:62
 #, c-format
 msgid "Out param %d"
-msgstr ""
+msgstr "Вихідний параметр %d"
 
 #: src/effects-data.c:76
-#, fuzzy, c-format
+#, c-format
 msgid "In channel %d"
-msgstr "Канали"
+msgstr "Вхідний канал %d"
 
 #: src/effects-data.c:77
-#, fuzzy, c-format
+#, c-format
 msgid "Out channel %d"
-msgstr "Канали"
+msgstr "Вихідний канал %d"
 
 #: src/effects-data.c:3337
 #, c-format
 msgid "False to True -> TRIGGER (%s)"
-msgstr ""
+msgstr "False у True -> ПЕРЕМИКАЧ (%s)"
 
 #: src/effects-data.c:3379
 #, c-format
@@ -7264,7 +7233,7 @@ msgstr "ЗАДІЯТИ (%s)"
 
 #: src/effects-data.c:3651
 msgid "TRIGGER"
-msgstr ""
+msgstr "ПЕРЕМИКАЧ"
 
 #: src/effects-data.c:3652
 msgid "ACTIVATE"
@@ -7272,7 +7241,7 @@ msgstr "ЗАДІЯТИ"
 
 #: src/effects-data.c:3972
 msgid "OMC Macros"
-msgstr ""
+msgstr "Макрос OMC"
 
 #: src/effects-data.c:3991
 #, c-format
@@ -7330,9 +7299,8 @@ msgid "Auto Connect Parameters"
 msgstr "Автоз’єднання параметрів"
 
 #: src/effects-data.c:4863
-#, fuzzy
 msgid "_Disconnect All"
-msgstr "Від’єднати все"
+msgstr "_Від'єднати усі"
 
 #: src/effects-data.c:4927
 #, c-format
@@ -7360,26 +7328,23 @@ msgstr "Від_новити значення"
 
 #: src/framedraw.c:266
 msgid "Mask: opacity"
-msgstr ""
+msgstr "Маска: непрозорість"
 
 #: src/framedraw.c:272
-#, fuzzy
 msgid "color"
-msgstr "_Простір кольорів"
+msgstr "колір"
 
 #: src/framedraw.c:278
 msgid "_Frame"
 msgstr "_Кадр"
 
 #: src/paramspecial.c:262
-#, fuzzy
 msgid "    Maintain _Aspect Ratio    "
-msgstr "З_берігати співвідношення розмірів"
+msgstr "    Зберігати співвідно_шення розмірів    "
 
 #: src/paramspecial.c:266
-#, fuzzy
 msgid "Maintain aspect ratio"
-msgstr "З_берігати співвідношення розмірів"
+msgstr "Зберігати співвідношення розмірів"
 
 #: src/paramspecial.c:376
 msgid "Display Password"
@@ -8582,7 +8547,7 @@ msgstr ""
 "(доведеться запустити jackd)\n"
 
 #: src/preferences.c:636
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Unable to switch audio players to pulseaudio\n"
@@ -8590,8 +8555,8 @@ msgid ""
 "See %s\n"
 msgstr ""
 "\n"
-"Не вдалося перемкнути відтворення звуку на PulseAudio\n"
-"Слід спочатку встановити PulseAudio\n"
+"Не вдалося перемкнути звукові програвачі на pulseaudio.\n"
+"Слід спочатку встановити pulseaudio.\n"
 "Див. %s\n"
 
 #: src/preferences.c:1484
@@ -8742,16 +8707,15 @@ msgstr "Показувати мініатюри кліпу під час від�
 
 #: src/preferences.c:2998
 msgid "    Number of _Info Messages to Buffer    "
-msgstr ""
+msgstr "    Кількість ін_формаційних повідомлень до буфера    "
 
 #: src/preferences.c:3008
-#, fuzzy
 msgid "_Unlimited"
-msgstr "Не обмежено"
+msgstr "_Без обмежень"
 
 #: src/preferences.c:3024
 msgid "Message Area _Font Size"
-msgstr ""
+msgstr "Розмір _шрифту області повідомлень"
 
 #: src/preferences.c:3036
 msgid "GUI"
@@ -8774,9 +8738,8 @@ msgid "Use these same _values for rendering a new clip"
 msgstr "Використовувати ці з_начення для обробки нових кліпів"
 
 #: src/preferences.c:3102
-#, fuzzy
 msgid " _Undo buffer size (MB)"
-msgstr "    Розмір _буфера скасування (у МБ)    "
+msgstr " Розмір буфера с_касування (МБ)"
 
 #: src/preferences.c:3109
 msgid "_Exit multitrack mode after rendering"
@@ -8847,10 +8810,8 @@ msgid "Open/render compression"
 msgstr "Стискання відкриття/обробки"
 
 #: src/preferences.c:3243
-#, fuzzy
 msgid "( lower = slower, larger files; for jpeg, higher quality )"
-msgstr ""
-" %     ( менше значення = повільніше, більші файли; для jpeg — вища якість )"
+msgstr "( менше = повільніше, більші файли; для jpeg вища якість )"
 
 #: src/preferences.c:3254
 msgid "Enable automatic deinterlacing when possible"
@@ -8957,7 +8918,7 @@ msgstr "_Команда відтворення звуку"
 
 #: src/preferences.c:3479
 msgid "N/A"
-msgstr ""
+msgstr "н/д"
 
 #: src/preferences.c:3482
 msgid "- internal -"
@@ -8973,7 +8934,7 @@ msgstr "Параметри звуку змінюються за перемика
 
 #: src/preferences.c:3505
 msgid "Audio Source (clip editor only):"
-msgstr ""
+msgstr "Джерело звуку (лише редактор кліпів):"
 
 #: src/preferences.c:3509
 msgid "_Internal"
@@ -8988,13 +8949,12 @@ msgid "Playback"
 msgstr "Відтворення"
 
 #: src/preferences.c:3553
-#, fuzzy
 msgid ""
 "Record audio when capturing an e_xternal window\n"
 " (requires jack or pulseaudio)"
 msgstr ""
-"Записувати звук під час захоплення відео з з_овнішнього вікна\n"
-" (потрібен сервер Jack або PulseAudio)"
+"Записувати звук під час захоплення зображення зовні_шнього вікна\n"
+" (потребує jack або pulseaudio)"
 
 #: src/preferences.c:3567
 msgid "What to record when 'r' is pressed"
@@ -9017,9 +8977,8 @@ msgid "_Clip switches"
 msgstr "П_еремикання кліпів"
 
 #: src/preferences.c:3612
-#, fuzzy
 msgid "_Audio (requires jack or pulseaudio player)"
-msgstr "_Звук (потрібен звуковий програвач з підтримкою jack або pulse)"
+msgstr "Зв_ук (потребує програвача jack або pulseaudio)"
 
 #: src/preferences.c:3628
 msgid "Pause recording if free disk space falls below"
@@ -9090,6 +9049,7 @@ msgstr "Кількість _потоків"
 #: src/preferences.c:3806
 msgid "Push audio to video generators that support it"
 msgstr ""
+"Надсилати звукові дані до генераторів відео, у яких передбачено підтримку"
 
 #: src/preferences.c:3815
 msgid "Restart is required if any of the following paths are changed:"
@@ -9098,9 +9058,8 @@ msgstr ""
 "доведеться перезапустити:"
 
 #: src/preferences.c:3827
-#, fuzzy
 msgid "Weed plugin path: "
-msgstr "Шлях до додатків Weed"
+msgstr "Шлях до додатків Weed: "
 
 #: src/preferences.c:3833
 msgid "Frei0r plugin path"
@@ -9111,40 +9070,36 @@ msgid ""
 "(Frei0r directories should be separated by ':', ordered from lowest to "
 "highest priority)"
 msgstr ""
+"(Записи каталогів Frei0r слід відокремлювати символом «:» і впорядковувати "
+"від найнижчої до найвищої пріоритетності)"
 
 #: src/preferences.c:3845
 msgid "LADSPA plugin path"
 msgstr "Шлях до додатків LADSPA"
 
 #: src/preferences.c:3866
-#, fuzzy
 msgid "Video load directory (default)"
-msgstr "      Каталог завантаження відео (типовий)      "
+msgstr "Каталог завантаження відео (типовий)"
 
 #: src/preferences.c:3871
-#, fuzzy
 msgid "Video save directory (default)"
-msgstr "      Каталог збереження відео (типовий) "
+msgstr "Каталог збереження відео (типовий)"
 
 #: src/preferences.c:3876
-#, fuzzy
 msgid "Audio load directory (default)"
-msgstr "      Каталог завантаження звукових даних (типовий) "
+msgstr "Каталог завантаження звуку (типовий)"
 
 #: src/preferences.c:3881
-#, fuzzy
 msgid "Image directory (default)"
-msgstr "      Каталог зображень (типовий) "
+msgstr "Каталог зображень (типовий)"
 
 #: src/preferences.c:3886
-#, fuzzy
 msgid "Backup/Restore directory (default)"
-msgstr "      Каталог резервних копій/Відновлення (типовий) "
+msgstr "Каталог резервних копій/відновлення (типовий)"
 
 #: src/preferences.c:3891
-#, fuzzy
 msgid "Working directory (do not remove)"
-msgstr "   Робочий каталог (не вилучати) "
+msgstr "Робочий каталог (не вилучайте)"
 
 #: src/preferences.c:3898
 msgid "The default directory for loading video clips from"
@@ -9285,13 +9240,12 @@ msgstr ""
 "багатодоріжковому режимі без звуку."
 
 #: src/preferences.c:4185
-#, fuzzy
 msgid ""
 "Warn if multitrack has audio channels, and your audio player is not \"jack\" "
 "or \"pulseaudio\"."
 msgstr ""
-"Попереджати, якщо у багатодоріжковому режимі є звукові канали, а програвачем "
-"звуку не є «jack» або «PulseAudio»."
+"Попереджати, якщо у багатодоріжковому кліпі є декілька каналів звуку, а "
+"програвачем не є jack або pulseaudio."
 
 #: src/preferences.c:4193
 msgid "Show info message after importing from firewire device."
@@ -9371,14 +9325,12 @@ msgid "Main Theme Details"
 msgstr "Основні параметри теми"
 
 #: src/preferences.c:4333
-#, fuzzy
 msgid "_Foreground Color"
-msgstr "_Альтернативний колір переднього плану"
+msgstr "Колір _тексту"
 
 #: src/preferences.c:4344
-#, fuzzy
 msgid "_Background Color"
-msgstr "_Альтернативний колір тла"
+msgstr "Колір _тла"
 
 #: src/preferences.c:4355
 msgid "_Alt Foreground Color"
@@ -9389,14 +9341,12 @@ msgid "_Alt Background Color"
 msgstr "_Альтернативний колір тла"
 
 #: src/preferences.c:4375
-#, fuzzy
 msgid "Info _Text Color"
-msgstr "              Колір інформаційного _тексту"
+msgstr "Колір інформаційного _тексту"
 
 #: src/preferences.c:4386
-#, fuzzy
 msgid "Info _Base Color"
-msgstr "              _Базовий колір інформації"
+msgstr "_Базовий колір інформації"
 
 #: src/preferences.c:4396
 msgid "Theme is _light"
@@ -9612,13 +9562,12 @@ msgid "_MIDI events"
 msgstr "П_одії MIDI"
 
 #: src/preferences.c:4820
-#, fuzzy
 msgid "All channels"
-msgstr "Канали"
+msgstr "Усі канали"
 
 #: src/preferences.c:4828
 msgid "MIDI receive _channel"
-msgstr ""
+msgstr "_Канал отримання MIDI"
 
 #: src/preferences.c:4844
 msgid "Use _ALSA MIDI (recommended)"
@@ -9631,11 +9580,11 @@ msgstr ""
 
 #: src/preferences.c:4851
 msgid "Create dummy MIDI output"
-msgstr ""
+msgstr "Створити фіктивний вихід MIDI"
 
 #: src/preferences.c:4853
 msgid "Create a dummy ALSA MIDI output port."
-msgstr ""
+msgstr "Створити фіктивний порт виведення даних MIDI у ALSA."
 
 #: src/preferences.c:4863
 msgid "Use _raw MIDI"
@@ -9685,9 +9634,8 @@ msgstr ""
 "відтворення.)"
 
 #: src/preferences.c:4930
-#, fuzzy
 msgid "Midi program synch (requires the files midistart and midistop)"
-msgstr "MIDI-синхронізація (потрібні файли midistart і midistop)"
+msgstr "Синтезатор MIDI (потрібні файли midistart та midistop)"
 
 #: src/preferences.c:4937
 msgid "MIDI/Joystick learner"
@@ -9917,34 +9865,30 @@ msgid "Resample Video"
 msgstr "Зміна дискретизації відео"
 
 #: src/resample.c:1643
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Current playback speed is %.3f frames per second.\n"
 "\n"
 "Please enter the desired playback speed\n"
 "in _frames per second"
 msgstr ""
+"Поточна швидкість відтворення — %.3f кадрів за секунду.\n"
 "\n"
-"\n"
-"Поточна швидкість дорівнює %.3f кадрам на секунду.\n"
-"\n"
-"Будь ласка, введіть бажану швидкість відтворення\n"
-"у _кадрах на секунду"
+"Будь ласка, вкажіть бажану швидкість відтворення\n"
+"у _кадрах за секунду"
 
 #: src/resample.c:1647
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Current playback speed is %.3f frames per second.\n"
 "\n"
 "Please enter the _resampled rate\n"
 "in frames per second"
 msgstr ""
+"Поточна швидкість відтворення — %.3f кадрів за секунду.\n"
 "\n"
-"\n"
-"Поточна швидкість дорівнює %.3f кадрам на секунду.\n"
-"\n"
-"Будь ласка, введіть з_мінену частоту дискретизації\n"
-"у кадрах на секунду"
+"Будь ласка, вкажіть з_мінену швидкість відтворення\n"
+"у _кадрах за секунду"
 
 #: src/resample.c:1671
 msgid "OR enter the desired clip length in _seconds"
@@ -10618,9 +10562,8 @@ msgid "_Close this Clip"
 msgstr "_Закрити цей кліп"
 
 #: src/multitrack.c:4535
-#, fuzzy
 msgid "  Audio Mixer (ctrl-m)  "
-msgstr "Звуковий мікшер (ctrl-m)"
+msgstr "  Звуковий мікшер (Ctrl-M)  "
 
 #: src/multitrack.c:4597
 msgid "Single click on timeline"
@@ -10667,11 +10610,12 @@ msgid "to select tracks and time."
 msgstr "щоб позначити доріжки і часові ділянки."
 
 #: src/multitrack.c:4613
-#, fuzzy
 msgid ""
 "\n"
 "Autotransition effect is:"
-msgstr "Вибрати ефект _автопереходу…"
+msgstr ""
+"\n"
+"Ефект автопереходу:"
 
 #: src/multitrack.c:4700
 msgid "Close _last gap(s) in selected tracks/time"
@@ -11121,9 +11065,8 @@ msgid "Report a _bug"
 msgstr "Повідомити про _ваду"
 
 #: src/multitrack.c:7907
-#, fuzzy
 msgid "  Insert with _Audio  "
-msgstr "Вставляти зі _звуком"
+msgstr "  Вставити зі зв_уком  "
 
 #: src/multitrack.c:7908
 msgid ""
@@ -11131,9 +11074,8 @@ msgid ""
 msgstr "Визначає, вставлятиме програма відеокліпи зі звуковими даними чи ні"
 
 #: src/multitrack.c:7920
-#, fuzzy
 msgid "  Select _Overlap  "
-msgstr "Позначене пере_кривається"
+msgstr "  Позначити п_ерекриття  "
 
 #: src/multitrack.c:7921
 msgid ""
@@ -11216,12 +11158,8 @@ msgid "Scroll"
 msgstr "Гортання"
 
 #: src/multitrack.c:9245
-#, fuzzy
 msgid "====== Switched to Clip Edit mode ======\n"
-msgstr ""
-"\n"
-"==============================\n"
-"Перемкнено у режим редагування кліпів\n"
+msgstr "====== Перемикання до режиму редагування кліпів ======\n"
 
 #: src/multitrack.c:9446
 msgid "Timeline (seconds)"
@@ -11293,9 +11231,9 @@ msgid "This effect cannot be moved"
 msgstr "Цей ефект не вдалося пересунути"
 
 #: src/multitrack.c:10471
-#, fuzzy, c-format
+#, c-format
 msgid "%d to %d selected"
-msgstr "  позначено від %d до %d  "
+msgstr "Позначено від %d до %d"
 
 #: src/multitrack.c:10474 src/multitrack.c:10687
 #, c-format
@@ -11308,12 +11246,8 @@ msgid "%d frames"
 msgstr "%d кадрів"
 
 #: src/multitrack.c:11084
-#, fuzzy
 msgid "====== Switched to Multitrack mode ======\n"
-msgstr ""
-"\n"
-"==============================\n"
-"Перемкнено у режим роботи з багатьма доріжками\n"
+msgstr "====== Перехід до режиму багатьох доріжок ======\n"
 
 #: src/multitrack.c:12753
 msgid "Drag the time slider to where you"
@@ -11813,7 +11747,6 @@ msgstr ""
 "З’єднання зі звуковим каналом jack було розірвано.\n"
 
 #: src/pulse.c:102
-#, fuzzy
 msgid ""
 "\n"
 "Unable to connect to the pulseaudio server.\n"
@@ -11821,13 +11754,11 @@ msgid ""
 "You can change this in Preferences/Playback.\n"
 msgstr ""
 "\n"
-"Не вдалося встановити з’єднання з сервером PulseAudio.\n"
-"Повертаємося до використання програвача SOX.\n"
-"Змінити параметри звукових серверів можна на сторінці «Налаштування -> "
-"Відтворення»\n"
+"Не вдалося встановити з'єднання із сервером pulseaudio.\n"
+"Повертаємося до резервного програвача sox.\n"
+"Змінити програвач можна на сторінці «Налаштування/Відтворення».\n"
 
 #: src/pulse.c:107
-#, fuzzy
 msgid ""
 "\n"
 "Unable to connect to the pulseaudio server.\n"
@@ -11835,32 +11766,29 @@ msgid ""
 "You can change this in Preferences/Playback.\n"
 msgstr ""
 "\n"
-"Не вдалося встановити з’єднання з сервером PulseAudio.\n"
-"Повертаємося до використання програвача SOX.\n"
-"Змінити параметри звукових серверів можна на сторінці «Налаштування -> "
-"Відтворення»\n"
+"Не вдалося встановити з'єднання із сервером pulseaudio.\n"
+"Повертаємося до резервного програвача none (немає).\n"
+"Змінити програвач можна на сторінці «Налаштування/Відтворення».\n"
 
 #: src/pulse.c:111
-#, fuzzy
 msgid ""
 "\n"
 "Unable to connect to the pulseaudio server.\n"
 msgstr ""
 "\n"
-"Не вдалося встановити з’єднання з сервером PulseAudio.\n"
+"Не вдалося встановити з'єднання із сервером pulseaudio.\n"
 
 #: src/pulse.c:116
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES завершить роботу, ви зможете вибрати інший звуковий програвач.\n"
 
 #: src/pulse.c:1633
-#, fuzzy
 msgid ""
 "\n"
 "Connection to pulseaudio was reset.\n"
 msgstr ""
 "\n"
-"З’єднання зі звуковим сервером PulseAudio було розірвано.\n"
+"З'єднання із pulseaudio було скинуто.\n"
 
 #: src/colourspace.c:1160
 msgid "unclamped"
@@ -11873,7 +11801,7 @@ msgstr "затиснуте"
 #: src/colourspace.c:11306
 #, c-format
 msgid "Padding: Unable to write blank frame with size %d x %d to %s"
-msgstr ""
+msgstr "Фаска: не вдалося записати порожній кадр розміру %d x %d до %s"
 
 #: src/omc-learn.c:263
 #, c-format
@@ -11881,17 +11809,16 @@ msgid "Responding to joystick events from %s\n"
 msgstr "Відповідь на події з джойстика від %s\n"
 
 #: src/omc-learn.c:343
-#, fuzzy
 msgid "Creating ALSA MIDI port(s)..."
-msgstr "Створення порту seq ALSA…"
+msgstr "Створюємо порти MIDI ALSA…"
 
 #: src/omc-learn.c:355
 msgid "MIDI IN port..."
-msgstr ""
+msgstr "Вхідний порт MIDI…"
 
 #: src/omc-learn.c:366
 msgid "dummy MIDI OUT port..."
-msgstr ""
+msgstr "Фіктивний вихідний порт MIDI…"
 
 #: src/omc-learn.c:395
 #, c-format
@@ -11927,36 +11854,36 @@ msgstr "змінна"
 #: src/omc-learn.c:1008
 #, c-format
 msgid " ch %d"
-msgstr ""
+msgstr " кан %d"
 
 #: src/omc-learn.c:1039
 msgid "Vars."
 msgstr "Змінні"
 
 #: src/omc-learn.c:1091
-#, fuzzy, c-format
+#, c-format
 msgid "MIDI%s note on"
-msgstr "Увімкнено ноту каналу MIDI %d"
+msgstr "MIDI%s, ноту увімкнено"
 
 #: src/omc-learn.c:1095
-#, fuzzy, c-format
+#, c-format
 msgid "MIDI%s note off"
-msgstr "Вимкнено ноту каналу MIDI %d"
+msgstr "MIDI%s, ноту вимкнено"
 
 #: src/omc-learn.c:1099
-#, fuzzy, c-format
+#, c-format
 msgid "MIDI%s controller %d"
-msgstr "Канал MIDI %d контролер %d"
+msgstr "MIDI%s, контролер %d"
 
 #: src/omc-learn.c:1103
-#, fuzzy, c-format
+#, c-format
 msgid "MIDI%s pitch bend"
-msgstr "Канал MIDI %d смуга тону"
+msgstr "MIDI%s, зміна тону"
 
 #: src/omc-learn.c:1107
-#, fuzzy, c-format
+#, c-format
 msgid "MIDI%s pgm change"
-msgstr "Канал MIDI %d зміна pgm"
+msgstr "MIDI%s, зміна pgm"
 
 #: src/omc-learn.c:1110
 #, c-format
@@ -12171,13 +12098,15 @@ msgstr "Встановити <value> p-го параметра додатка в
 
 #: src/omc-learn.c:1538
 msgid "Send OSC notification message"
-msgstr ""
+msgstr "Надсилати сповіщення OSC"
 
 #: src/omc-learn.c:1539
 msgid ""
 "Send LIVES_OSC_NOTIFY_USER1 notification to all listeners, with variable "
 "<value>."
 msgstr ""
+"Надсилати сповіщення LIVES_OSC_NOTIFY_USER1 усім функціям, з використанням "
+"змінної <значення>."
 
 #. TRANSLATORS: short form of "clip number"
 #: src/omc-learn.c:1564 src/omc-learn.c:1633
@@ -12207,7 +12136,7 @@ msgstr "fps_ratio"
 
 #: src/omc-learn.c:1672
 msgid "discrimination"
-msgstr ""
+msgstr "утискання"
 
 #: src/omc-learn.c:2437
 #, c-format
@@ -12262,18 +12191,21 @@ msgstr ""
 
 #: src/omc-learn.c:2822
 msgid "MIDI receive channel was set to ALL CHANNELS\n"
-msgstr ""
+msgstr "Канал отримання даних MIDI було встановлено у значення УСІ КАНАЛИ\n"
 
 #: src/omc-learn.c:2823
 #, c-format
 msgid "MIDI receive channel was set to channel %d\n"
-msgstr ""
+msgstr "Канал отримання даних MIDI було встановлено у значення %d\n"
 
 #: src/omc-learn.c:2828
 msgid ""
 "The MIDI receive channel setting was updated by the device map.\n"
 "Please review the setting in Preferences and adjust it if necessary.\n"
 msgstr ""
+"У карті пристроїв оновлено параметр каналу отримання даних MIDI.\n"
+"Будь ласка, перегляньте параметр у Налаштуваннях і скоригуйте його, якщо "
+"потрібно.\n"
 
 #: src/videodev.c:521
 #, c-format
@@ -12287,818 +12219,710 @@ msgstr "Відкрито пристрій %s\n"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid " _Top  "
-msgstr ""
+msgstr " В_гору  "
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "180 _degrees             "
-msgstr "Пристрій КД           "
+msgstr "180 _градусів             "
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "90 degrees _Anticlockwise"
-msgstr ""
+msgstr "90° _проти годинникової стрілки"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "90 degrees _Clockwise    "
-msgstr ""
+msgstr "90° _за годинниковою стрілкою    "
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Active _animation"
-msgstr ""
+msgstr "Активна _анімація"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Add _Border"
-msgstr ""
+msgstr "Додати _рамку"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Add noise"
-msgstr ""
+msgstr "Додати шум"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "Adjust contrast"
-msgstr "_Коригувати %s"
+msgstr "Коригування контрастності"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "Adjusting contrast of"
-msgstr "_Коригувати %s"
+msgstr "Коригування контрастності"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "Adjusting noise on"
-msgstr "_Коригувати %s"
+msgstr "Коригування шумності"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
-msgstr ""
+msgstr "Застосування ефекту «вугільний олівець» до"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Applying forward skip to"
-msgstr ""
+msgstr "Застосування забігання наперед до"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Applying sepia to"
-msgstr ""
+msgstr "Застосування перетворення на сепію до"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "B/W Threshold"
-msgstr ""
+msgstr "Чорно-білий поділ за пороговим значенням"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "B/W thresholding"
-msgstr ""
+msgstr "Чорно-білий поділ за пороговим значенням"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank _Colour"
-msgstr "По_казати лічильник кадрів"
+msgstr "Ко_лір спорожнення"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank frames"
-msgstr "кліпи і кадри"
+msgstr "Спорожнити кадри"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blanking"
-msgstr "Створення резервної копії"
+msgstr "Очищення"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _height"
-msgstr "_Висота"
+msgstr "_Висота блоку"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _width"
-msgstr "_Висота"
+msgstr "_Ширина блоку"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "Blur"
-msgstr "рядок"
+msgstr "Розмивання"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "Bluring"
-msgstr "рядок"
+msgstr "Розмивання"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Border _Colour"
-msgstr "По_казати лічильник кадрів"
+msgstr "_Колір межі"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness _end"
-msgstr "Вирівняти по_чатки"
+msgstr "Яскравість напри_кінці"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness _start"
-msgstr "Вирівняти по_чатки"
+msgstr "Яскравість на_початку"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness change"
-msgstr "_Ігнорувати зміни"
+msgstr "Зміна яскравості"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness end"
-msgstr "_Ігнорувати зміни"
+msgstr "Яскравість наприкінці"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness start"
-msgstr "Вирівняти по_чатки"
+msgstr "Яскравість напочатку"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _X"
-msgstr ""
+msgstr "X _центра"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _Y"
-msgstr ""
+msgstr "Y ц_ентра"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 msgid "Changing brightness of"
-msgstr ""
+msgstr "Зміна яскравості"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Changing gamma of"
-msgstr ""
+msgstr "Зміна гами"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "Changing hue of"
-msgstr ""
+msgstr "Зміна відтінку"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "Changing saturation of"
-msgstr ""
+msgstr "Зміна насиченості"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Charcoal"
-msgstr ""
+msgstr "Вугільний олівець"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboard"
-msgstr "Запис"
+msgstr "Шахівниця"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboarding"
-msgstr "Запис"
+msgstr "Створення шахової дошки"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _over selection"
-msgstr "%s вміст буфера обміну даними з позначеною ділянкою"
+msgstr "Дані буфера _над позначеним"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _under selection"
-msgstr "%s вміст буфера обміну даними з позначеною ділянкою"
+msgstr "Дані буфера _під позначеним"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "Colorize"
-msgstr "_Простір кольорів"
+msgstr "Розфарбовування"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "Colorizing"
-msgstr "_Простір кольорів"
+msgstr "Розфарбовування"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycle"
-msgstr "_Простір кольорів"
+msgstr "Циклічна зміна кольорів"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycling"
-msgstr "_Простір кольорів"
+msgstr "Циклічна зміна кольорів"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filter"
-msgstr "_Простір кольорів"
+msgstr "Фільтрування кольорів"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filtering"
-msgstr "_Простір кольорів"
+msgstr "Фільтрування кольорів"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "_Простір кольорів"
+msgstr "Заміна кольорів"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
-msgstr ""
+msgstr "Сталий рівень шумності"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Cycle _Step"
-msgstr "П_очаток"
+msgstr "_Крок циклу"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "Deinterlace"
-msgstr "_Усунути черезрядковість"
+msgstr "Усунути черезрядковість"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "Deinterlacing"
-msgstr "_Усунути черезрядковість"
+msgstr "Усування черезрядковості"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "Despeckle"
-msgstr ""
+msgstr "Прибрати випадкові крапки"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "Despeckling"
-msgstr ""
+msgstr "Прибирання випадкових крапок"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "Dream"
-msgstr "Потокове мовлення"
+msgstr "Мрія"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "Dreamifying"
-msgstr "Потокове мовлення"
+msgstr "Надання мрійливого вигляду"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "E_nd %"
-msgstr ""
+msgstr "К_інець %"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "Edge detect"
-msgstr ""
+msgstr "Визначення меж"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "Edge detecting"
-msgstr ""
+msgstr "Виявлення меж"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
-msgstr ""
+msgstr "Барельєф"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Embossing"
-msgstr ""
+msgstr "Створення ефекту барельєфа"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "End _Alpha:"
-msgstr ""
+msgstr "Кінцева п_розорізсть:"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "End pos_X:"
-msgstr ""
+msgstr "Кінцева пози_ція за X:"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "End pos_Y:"
-msgstr ""
+msgstr "Кінцева позиці_я за Y:"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "Enhance"
-msgstr "Скасувати"
+msgstr "Покращення"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "Enhancing"
-msgstr "Скасувати"
+msgstr "Покращення"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Envelope length"
-msgstr ""
+msgstr "Тривалість обгортки"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _colour"
-msgstr "Поступове зменшення гучності"
+msgstr "_Кольорова зміна освітленості"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Fade _end"
-msgstr "Поступове наростання гучності"
+msgstr "_Кінцеве згасання"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _in"
-msgstr "Поступове наростання гучності"
+msgstr "_Освітлення"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _out"
-msgstr "Поступове зменшення гучності"
+msgstr "З_гасання"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "Fade video to or from color"
-msgstr ""
+msgstr "Поступове перевести відео до або з кольорового"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "Fade"
-msgstr "Поступове наростання гучності"
+msgstr "Згасання"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fading video"
-msgstr "Зміна дискретизації відео"
+msgstr "Зміна освітленості відео"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "Fading"
-msgstr "Зміна дискретизації відео"
+msgstr "Згасання"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "Fina_l frame"
-msgstr "Перший кадр"
+msgstr "Кінц_евий кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "Flash _colour"
-msgstr "Поступове зменшення гучності"
+msgstr "_Колір спалаху"
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
-msgstr ""
+msgstr "Віддзеркалити вертикально"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Flop horizontally"
-msgstr ""
+msgstr "Віддзеркалити горизонтально"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frame Calculator"
-msgstr "По_казати лічильник кадрів"
+msgstr "Калькулятор кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Frame _Colour"
-msgstr "По_казати лічильник кадрів"
+msgstr "К_олір кадру"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _height"
-msgstr "Розміри кадру"
+msgstr "_Висота кадру"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "Frame _in frame position of clipboard..."
-msgstr "Створити кадри у буфері обміну даними"
+msgstr "Розташування кадру буфера _у кадрі…"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr "Створити кадри у буфері обміну даними"
+msgstr "Розташування верхнього кадру _у кадрі…"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _width"
-msgstr "Розміри кадру"
+msgstr "_Ширина кадру"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr "_Кадрів на секунду "
+msgstr "_Частота кадрів (у кд/с)"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _end"
-msgstr "З_мінюється номер кадру"
+msgstr "_Кінцеве значення гами"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _start"
-msgstr "П_очаток"
+msgstr "П_очаткове значення гами"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma change"
-msgstr "З_мінюється номер кадру"
+msgstr "Зміна гами"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generate blank frames"
-msgstr "Зображення порожнього кадру"
+msgstr "Створити порожні кадри"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generate clip from image"
-msgstr "Створити до _буфера"
+msgstr "Створити кліп з зображення"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generate coloured frames"
-msgstr "Створити до _буфера"
+msgstr "Створити кольорові кадри"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generate title frames"
-msgstr "Створити кадри у новому кліпі"
+msgstr "Створити кадри титрів"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generating blank frames"
-msgstr "Перевпорядкування кадрів"
+msgstr "Створення порожніх кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generating clip from image"
-msgstr "Спорожнення зображень кадрів"
+msgstr "Створення кліпу з зображення"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generating coloured frames"
-msgstr "Вилучення зайвих кадрів"
+msgstr "Створення кольорових кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generating title frames"
-msgstr "Вилучення зайвих кадрів"
+msgstr "Створення кадрів титрів"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
-msgstr ""
+msgstr "Горизонтальне віддзеркалення"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Horizontal shifting"
-msgstr ""
+msgstr "Горизонтальний зсув"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "Поступове наростання гучності"
+msgstr "_Кінцеве значення відтінку"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _start"
-msgstr "П_очаток"
+msgstr "П_очаткове значення відтінку"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue change"
-msgstr "З_мінюється номер кадру"
+msgstr "Зміна відтінку"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue end"
-msgstr "Поступове наростання гучності"
+msgstr "Кінцеве значення відтінку"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue start"
-msgstr "П_очаток"
+msgstr "Початкове значення відтінку"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Image overlay"
-msgstr "Позначене пере_кривається"
+msgstr "Накладання зображень"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
-msgstr ""
+msgstr "Початкова про_зорість:"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init pos_X:"
-msgstr ""
+msgstr "Початкова пози_ція за X:"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init pos_Y:"
-msgstr ""
+msgstr "Початкова позиці_я за Y:"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "Jumble"
-msgstr ""
+msgstr "Плутанина"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "Jumbling"
-msgstr ""
+msgstr "Заплутування"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Keep _Centered"
-msgstr "Ctrl-Enter"
+msgstr "Зберігати _центрування"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Keep image aspect _ratio"
-msgstr ""
+msgstr "Зберігати _пропорції зображення"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "L_eft"
-msgstr ""
+msgstr "_Лівої частини"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Making monochrome"
-msgstr ""
+msgstr "Перетворення на чорно-біле"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "Вставка"
+msgstr "Модуляція (BSH)"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulating"
-msgstr "Вставка"
+msgstr "Модуляція"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
-msgstr ""
+msgstr "Чорно-біле"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negate"
-msgstr "Вставка"
+msgstr "Негатив"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negating"
-msgstr "Вставка"
+msgstr "Інверсія кольорів"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
-msgstr ""
+msgstr "Тип шуму"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noisify"
-msgstr ""
+msgstr "Зашумлення"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "Normalize"
-msgstr "Інформація"
+msgstr "Нормалізація"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "Normalizing"
-msgstr "Інформація"
+msgstr "Нормалізація"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Number of _frames"
-msgstr "Кількість _потоків"
+msgstr "Кількість _кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Overlaying an image onto video"
-msgstr ""
+msgstr "Накладання зображення на відео"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
-msgstr ""
+msgstr "Накладання тексту"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Photo/still"
-msgstr ""
+msgstr "Фотоспалах"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilate"
-msgstr "Вставка"
+msgstr "Пікселювання"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilating"
-msgstr "Вставка"
+msgstr "Пікселювання"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "Posterize"
-msgstr "Зміна розміру"
+msgstr "Постеризація"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "Posterizing"
-msgstr "Зміна розміру"
+msgstr "Постеризація"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
-msgstr ""
+msgstr "Випадкова зміна масштабу"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zooming"
-msgstr ""
+msgstr "Випадкова зміна масштабу"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Reduce noise"
-msgstr ""
+msgstr "Зменшити шум"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Reduction radius"
-msgstr ""
+msgstr "Радіус зменшення"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Replacing colours in"
-msgstr "Повторна дискретизація звукових даних буфера"
+msgstr "Заміна кольорів у"
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
-#, fuzzy
 msgid "Resize All Frames"
-msgstr "З_мінити розмір усіх кадрів…"
+msgstr "Змінити розміри всіх кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "Rotate Clip"
-msgstr "Перейменування кліпу"
+msgstr "Обертати кліп"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "Rotating"
-msgstr "Вставка"
+msgstr "Обертання"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "S_tart %"
-msgstr "П_очаток"
+msgstr "S_tart %"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "В_хідна позиція переходу"
+msgstr "_Кінцева насиченість"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "Вмикати OMC під час запуску програми"
+msgstr "П_очаткова насиченість"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "В_хідна позиція переходу"
+msgstr "Зміна насиченості"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "В_хідна позиція переходу"
+msgstr "Кінцева насиченість"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "Вмикати OMC під час запуску програми"
+msgstr "Початкова насиченість"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
-msgstr ""
+msgstr "Сепія"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "Shift horizontally"
-msgstr ""
+msgstr "Зсунути горизонтально"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "Shift vertically"
-msgstr ""
+msgstr "Зсунути вертикально"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Shrink/Expand"
-msgstr ""
+msgstr "Стиснути/Розтягнути"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Shrinking/Expanding"
-msgstr ""
+msgstr "Стискання/Розтягування"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Skip forward"
-msgstr "гортати вперед\n"
+msgstr "Забігання наперед"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarize"
-msgstr "_Простір кольорів"
+msgstr "Вигорання"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarizing"
-msgstr "Зміна розміру"
+msgstr "Вигорання"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
-msgstr ""
+msgstr "Обертання навколо осі"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spinning"
-msgstr ""
+msgstr "Обертання"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "Splice"
-msgstr "Роздільники"
+msgstr "Розрізати"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "Splicing"
-msgstr "Роздільники"
+msgstr "Розрізання"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "Spread"
-msgstr "Зупинити запис"
+msgstr "Розсіювання"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "Spreading"
-msgstr "Зупинити запис"
+msgstr "Розсіювання"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Step _Value"
-msgstr "Вказати _значення"
+msgstr "_Величин кроку"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "Step per _Frame"
-msgstr "Зберегти кадр"
+msgstr "Крок за _кадром"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl _start"
-msgstr "Зафіксувати по_чаток"
+msgstr "_Початок вихору"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl s_tep"
-msgstr "Зафіксувати по_чаток"
+msgstr "К_рок вихору"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl"
-msgstr "Зафіксувати по_чаток"
+msgstr "Вихор"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirling"
-msgstr "Зафіксувати по_чаток"
+msgstr "Закручування"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "Text Overlay"
-msgstr "Позначене пере_кривається"
+msgstr "Накладання тексту"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
-msgstr ""
+msgstr "По_ріг"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trim frames/Add Border"
-msgstr ""
+msgstr "Обрізати кадри/Додати рамку"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trimming"
-msgstr ""
+msgstr "Обрізання"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "Tunnel"
-msgstr "Скасування"
+msgstr "Тунель"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "Tunneling"
-msgstr "Скасування"
+msgstr "Тунелювання"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Use _Natural Size"
-msgstr "Використовувати під час зміни розмірів з_гладжування"
+msgstr "Використовувати по_чатковий розмір"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Use _Natural image size"
-msgstr "Використовувати під час зміни розмірів з_гладжування"
+msgstr "Використовувати _початкові розміри зображення"
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Vertical flipping"
-msgstr ""
+msgstr "Вертикальне віддзеркалення"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "Vertical shifting"
-msgstr ""
+msgstr "Вертикальне зсування"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "Wave"
-msgstr ""
+msgstr "Хвиля"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "Waving"
-msgstr ""
+msgstr "Вигинання"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
@@ -13106,959 +12930,658 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "_Background Colour"
-msgstr "_Альтернативний колір тла"
+msgstr "Колір _тла"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Background colour"
-msgstr "_Альтернативний колір тла"
+msgstr "Колір _тла"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
-msgstr ""
+msgstr "_Чорно-біла зйомка"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "_Black is transparent"
-msgstr "Передавання даних Jack"
+msgstr "_Чорний є прозорим"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Bottom"
-msgstr ""
+msgstr "Ни_жньої частини"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Calculate"
-msgstr "По_казати лічильник кадрів"
+msgstr "_Обчислити"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "_Cycle Start"
-msgstr "П_очаток"
+msgstr "Початок _циклу"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Decrease Contrast"
-msgstr "_Коригувати %s"
+msgstr "З_меншити контрастність"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "_Diffmax"
-msgstr ""
+msgstr "_Максимальна різниця"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "_End Colour"
-msgstr "_Простір кольорів"
+msgstr "_Кінцевий колір"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_End Size X:"
-msgstr ""
+msgstr "_Кінцевий розмір за X:"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_End Size Y:"
-msgstr ""
+msgstr "_Кінцевий розмір за Y:"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_End amount"
-msgstr "Лише _останній кадр"
+msgstr "_Кінцева величина"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "_Fade level"
-msgstr "Поступове наростання гучності"
+msgstr "Рівень з_гасання"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Fade start"
-msgstr "П_очаток"
+msgstr "П_очаткове згасання"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Fill colour"
-msgstr "Поступове зменшення гучності"
+msgstr "Колір _заповнення"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_First frame"
-msgstr "Перший кадр"
+msgstr "П_ерший кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Flash for"
-msgstr "Поступове зменшення гучності"
+msgstr "Сп_палах протягом"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
-msgstr ""
+msgstr "_Шрифт"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Frames per second"
-msgstr "_Кадрів на секунду "
+msgstr "_Кадрів на секунду"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Frames"
-msgstr "Кадри"
+msgstr "_Кадри"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Hold for"
-msgstr "Поступове зменшення гучності"
+msgstr "_Утримувати протягом"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
-msgstr ""
+msgstr "_Горизонтальні сегменти"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Image File"
-msgstr "_Файл"
+msgstr "Файл з_ображення"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "_Image"
-msgstr "_Файл"
+msgstr "_Зображення"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Increase Contrast"
-msgstr "_Коригувати %s"
+msgstr "З_більшити контрастність"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_Init Size X:"
-msgstr ""
+msgstr "По_чатковий розмір за X:"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_Init Size Y:"
-msgstr ""
+msgstr "По_чатковий розмір за Y:"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "_Levels"
-msgstr ""
+msgstr "_Рівні"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Link start and end colours"
-msgstr ""
+msgstr "З’_єднати початковий і кінцевий кольори"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "_Max zoom x 10"
-msgstr ""
+msgstr "_Максимальний масштаб x 10"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Middle"
-msgstr ""
+msgstr "_Середини"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "_Midtone"
-msgstr ""
+msgstr "_Напівтон"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "_Negate"
-msgstr "Вставка"
+msgstr "_Негатив"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Number of frames"
-msgstr "Кількість кадрів, які слід відкрити"
+msgstr "_Кількість кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Offset X"
-msgstr "+ зсув1"
+msgstr "В_ідступ за X"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Offset Y"
-msgstr "+ зсув1"
+msgstr "В_ідступ за Y"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Other Center"
-msgstr "Ctrl-Enter"
+msgstr "_Інший центр"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "_Other"
-msgstr "Ctrl-Enter"
+msgstr "_Інше"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Point size"
-msgstr "В_казівник"
+msgstr "Р_озмір точки"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius end"
-msgstr "П_очаток"
+msgstr "_Кінцевий радіус"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius start"
-msgstr "П_очаток"
+msgstr "Початковий _радіус"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "_Radius"
-msgstr "П_очаток"
+msgstr "_Радіус"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "_Random colour each frame"
-msgstr "Вилучення зайвих кадрів"
+msgstr "Вип_адкова зміна кольорів кожного кадру"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "_Randomness"
-msgstr ""
+msgstr "В_ипадковість"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Right"
-msgstr "_Висота"
+msgstr "П_равої частини"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "_Rotate Selection by"
-msgstr "Ви_різати позначене"
+msgstr "_Обернути позначене на"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
-msgstr ""
+msgstr "С_тиснути повернуте вікно відповідно до розмірів кадру"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma end"
-msgstr "big endian"
+msgstr "Кінцеве _сігма"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma start"
-msgstr "П_очаток"
+msgstr "По_чаткове сігма"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Skip ahead"
-msgstr "Пропущено"
+msgstr "_Забігання наперед"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "_Skip"
-msgstr "Пропущено"
+msgstr "Пр_опустити"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Source Colour"
-msgstr "П_очаток"
+msgstr "_Початковий колір"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "_Splice"
-msgstr "Роздільники"
+msgstr "_Розрізати"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "_Start Colour"
-msgstr "П_очаток"
+msgstr "_Початковий колір"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "_Start Value"
-msgstr "П_очаток"
+msgstr "_Початкове значення"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_Start amount"
-msgstr "_Лише перший кадр"
+msgstr "_Початкова величина"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Stroke colour"
-msgstr "П_очаток"
+msgstr "Колір _штриха"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Target Colour"
-msgstr "П_очаток"
+msgstr "_Кінцевий колір"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Text"
-msgstr ""
+msgstr "_Текст"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Time (seconds)"
-msgstr "Монтажний стіл (секунди)"
+msgstr "_Час (у секундах)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "_Top left is clipboard"
-msgstr "Копіювання до буфера"
+msgstr "В_горі ліворуч дані з буфера"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Vertical segments"
-msgstr ""
+msgstr "_Вертикальні сегменти"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "_Wavemax"
-msgstr ""
+msgstr "Максимум _хвилі"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "_White is transparent"
-msgstr "Передавання даних Jack"
+msgstr "_Білий є прозорим"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "_Wrap Around"
-msgstr "Окіл кадру"
+msgstr "За_гортання"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_X Center"
-msgstr "Ctrl-Enter"
+msgstr "_Центр за X"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
-msgstr ""
+msgstr "_Кінець за X"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_X Start"
-msgstr "П_очаток"
+msgstr "_Початок за X"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_X offset"
-msgstr "+ зсув1"
+msgstr "_Відступ за X"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Y Center"
-msgstr "Ctrl-Enter"
+msgstr "Ц_ентр за Y"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
-msgstr ""
+msgstr "Кі_нець за Y"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Y Start"
-msgstr "П_очаток"
+msgstr "П_очаток за Y"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Y offset"
-msgstr "+ зсув1"
+msgstr "В_ідступ за Y"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "_degrees"
-msgstr ""
+msgstr "_градусів"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "_then"
-msgstr ""
+msgstr "_тоді"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "blank_frames"
-msgstr "кадрів"
+msgstr "спорожнення_кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
-msgstr ""
+msgstr "розмивання"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "brightness_change"
-msgstr "_Ігнорувати зміни"
+msgstr "зміна_яскравості"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "charcoal"
-msgstr ""
+msgstr "вугільний_олівець"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "colorize"
-msgstr "_Простір кольорів"
+msgstr "розфарбовування"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "colour_filter"
-msgstr "_Простір кольорів"
+msgstr "фільтрування_кольору"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "_Простір кольорів"
+msgstr "заміна_кольору"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "contrast"
-msgstr "_Коригувати %s"
+msgstr "контрастність"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "cycle"
-msgstr ""
+msgstr "циклічність"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "deinterlace"
-msgstr "_Усунути черезрядковість"
+msgstr "усування_черезрядковості"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "despeckle"
-msgstr ""
+msgstr "прибирання_випадкових_крапок"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "dream"
-msgstr "Потокове мовлення"
+msgstr "мрія"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "edge_detect"
-msgstr ""
+msgstr "виявлення_країв"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "emboss"
-msgstr ""
+msgstr "барельєф"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "enhance"
-msgstr "Скасувати"
+msgstr "покращення"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "every"
-msgstr "_Кожні"
+msgstr "кожні"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "fade_in_out"
-msgstr "Поступове зменшення гучності"
+msgstr "fade_in_out"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
-msgstr ""
+msgstr "fc"
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "flip"
-msgstr ""
+msgstr "віддзеркалення"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "flop"
-msgstr ""
+msgstr "перекидання"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "frame_calculator"
-msgstr "По_казати лічильник кадрів"
+msgstr "обчислення_кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "gamma_change"
-msgstr "З_мінюється номер кадру"
+msgstr "зміна_коефіцієнту_контрастності"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "gen_blank_frames"
-msgstr "кадрів"
+msgstr "створення_порожніх_кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "gen_clip_from_image"
-msgstr "Створити до _буфера"
+msgstr "створення_кадру_з_зображення"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "gen_coloured_frames"
-msgstr "Створити до _буфера"
+msgstr "створення_кольорових_кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
-msgstr ""
+msgstr "створення_тексту"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "hue_change"
-msgstr "Змі_нюється частота кадрів"
+msgstr "зміна_відтінку"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "image_overlay"
-msgstr "Позначене пере_кривається"
+msgstr "накладання_зображень"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"
-msgstr ""
+msgstr "плутанина"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "Вставка"
+msgstr "модуляція"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
-msgstr ""
+msgstr "чорно-біле"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "negate"
-msgstr "Вставка"
+msgstr "негатив"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
-msgstr ""
+msgstr "зашумлення"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "normalize"
-msgstr "Інформація"
+msgstr "нормалізація"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
-msgstr ""
+msgstr "фотоспалах"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "Вставка"
+msgstr "пікселювання"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "posterize"
-msgstr "Зміна розміру"
+msgstr "постеризація"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
-msgstr ""
+msgstr "випадковий_масштаб"
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
-#, fuzzy
 msgid "resize"
-msgstr "Змінити розмір"
+msgstr "зміна_розмірів"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "rotate"
-msgstr "стан"
+msgstr "обертання"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "saturation_change"
-msgstr "В_хідна позиція переходу"
+msgstr "зміна_насиченості"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "sepia"
-msgstr ""
+msgstr "сепія"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 msgid "shift_horizontal"
-msgstr ""
+msgstr "горизонтальний_зсув"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "shift_vertical"
-msgstr ""
+msgstr "вертикальний_зсув"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "shrink_expand"
-msgstr ""
+msgstr "стиснення_розтягання"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "skip_forwards"
-msgstr "гортати вперед\n"
+msgstr "забігання_наперед"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "solarize"
-msgstr "_Простір кольорів"
+msgstr "вигорання"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
-msgstr ""
+msgstr "обертання_навколо_осі"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "spread"
-msgstr "Зупинити запис"
+msgstr "розсіювання"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "swirl"
-msgstr "Зафіксувати по_чаток"
+msgstr "вихор"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
-msgstr ""
+msgstr "накладання_тексту"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "transition_bwthresh"
-msgstr "перехід"
+msgstr "перехід_у_чорнобіле"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "transition_checkerboard"
-msgstr "перехід"
+msgstr "перехід_шахова_дошка"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "transition_fade2"
-msgstr "перехід"
+msgstr "перехід_згасання2"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "transition_splice"
-msgstr "перехід"
+msgstr "перехід_розрізання"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "trim_frames"
-msgstr "кадрів"
+msgstr "обрізання_кадрів"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "tunnel"
-msgstr "Скасування"
+msgstr "тунель"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "wave"
-msgstr ""
+msgstr "хвиля"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "Unable to open output file !"
-msgstr ""
-"\n"
-"Не вдалося завантажити файл компонування %s\n"
+msgstr "Не вдалося відкрити файл для виводу даних!"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES could not write to $nfile."
-msgstr "LiVES не вдалося знайти ефект %s.\n"
+msgstr "LiVES не вдалося виконати запис до $nfile."
 
 #: /usr/bin/smogrify:0
 msgid "Unable to locate the program $rfx_builder_multi"
-msgstr ""
+msgstr "Не вдалося встановити адресу програми $rfx_builder_multi"
 
 #: /usr/bin/smogrify:0
 msgid "$file"
-msgstr ""
+msgstr "$file"
 
 #: /usr/bin/smogrify:0
 msgid "could not be found"
-msgstr ""
+msgstr "не вдалося знайти"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES was unable to open it."
-msgstr ""
-"\n"
-"\n"
-"LiVES не вдалося перевпорядкувати кадри."
+msgstr "LiVES не вдалося його відкрити."
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "Please check the file name and try again."
 msgstr ""
-"Будь ласка, перевірте, чи правильно вказано параметр <tempdir> у \n"
-"%s\n"
-"і повторіть спробу.\n"
+"Будь ласка, перевірте, чи правильно вказано назву файла, і повторіть спробу."
 
 #: /usr/bin/smogrify:0
 msgid "Your version of mplayer/ffmpeg may be broken"
-msgstr ""
+msgstr "Ваша версія mplayer/ffmpeg може містити помилки"
 
 #: /usr/bin/smogrify:0
 msgid "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"
-msgstr ""
+msgstr "Див. http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"
 
 #: /usr/bin/smogrify:0
 msgid " "
-msgstr ""
+msgstr " "
 
 #: /usr/bin/smogrify:0
 msgid "This does not appear to be a valid video or image file"
-msgstr ""
+msgstr "Здається, цей файл не є коректним файлом відео або зображення"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "Error creating new backup."
-msgstr "Помилка під час завантаження доріжки КД\n"
+msgstr "Помилка під час спроби створення нової резервної копії."
 
 #: /usr/bin/smogrify:0
 msgid "This does not appear to be a valid backup file"
-msgstr ""
+msgstr "Здається, цей файл не є коректним файлом резервної копії"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES was not able to open the file"
-msgstr ""
-"\n"
-"\n"
-"LiVES не вдалося перевпорядкувати кадри."
+msgstr "LiVES не вдалося відкрити цей файл"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES audio error."
-msgstr "породжувач звуку"
+msgstr "Помилка обробки звуку у LiVES."
 
 #: /usr/bin/smogrify:0
 msgid "The requested URL"
-msgstr ""
+msgstr "Адресу, щодо якої надійшов запит,"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "could not be opened with the desired format."
-msgstr "LiVES не вдалося знайти ефект %s.\n"
+msgstr "не вдалося відкрити у бажаному форматі."
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid ""
 "\n"
 "Please try again."
 msgstr ""
 "\n"
-"Будь ласка, зачекайте"
+"Будь ласка, повторіть спробу."
 
 #: /usr/bin/smogrify:0
 msgid "cdda2wav or icedax is required for this function."
-msgstr ""
+msgstr "Для користування цією можливість слід встановити cdda2wav або icedax."
 
 #: /usr/bin/smogrify:0
 msgid "Please install it first."
-msgstr ""
+msgstr "Будь ласка, спершу встановіть її."
 
 #: /usr/bin/smogrify:0
 msgid "You must set the CD device first in Preferences."
-msgstr ""
+msgstr "Спочатку вам слід вказати пристрій КД у «Параметрах»."
 
 #: /usr/bin/smogrify:0
 msgid "$plugin_name failed:"
-msgstr ""
+msgstr "Помилка $plugin_name:"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "$error"
-msgstr "Немає помилок"
-
-#~ msgid "Windows version %04X"
-#~ msgstr "Версія Windows %04X"
-
-#~ msgid ""
-#~ "\n"
-#~ "LiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to "
-#~ "function. Please install these, and try again.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Для забезпечення працездатності поточної версії LiVES потрібні «mplayer» "
-#~ "або «mplayer2» і «sox». Будь ласка, встановіть ці програми, потім "
-#~ "повторіть спробу.\n"
-
-#~ msgid "_Autoreload each time"
-#~ msgstr "_Автоматично перезавантажувати кожного разу"
-
-#~ msgid ", pulse"
-#~ msgstr ", pulse"
-
-#~ msgid ", sox or jack\n"
-#~ msgstr ", sox або jack\n"
-
-#~ msgid "Left Audio"
-#~ msgstr "Лівий канал звуку"
-
-#~ msgid "Right Audio"
-#~ msgstr "Правий канал звуку"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "LiVES cannot switch clips whilst opening if the audio player is set to "
-#~ "mplayer or mplayer2.\n"
-#~ "Please adjust the playback options in Preferences and try again.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "LiVES не зможе перемикати кліпи під час їхнього відкриття, якщо визначено "
-#~ "програму для відтворення звуку mplayer або mplayer2.\n"
-#~ "Будь ласка, виправте параметри відтворення на сторінці налаштувань і "
-#~ "повторіть спробу.\n"
-
-#~ msgid ""
-#~ "The MPLAYER/MPLAYER2 audio player is only recommended for testing "
-#~ "purposes.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Програмами для відтворення звуку MPLAYER/MPLAYER2 рекомендовано "
-#~ "користуватися лише для тестування.\n"
-#~ "\n"
-
-#~ msgid "Use _mplayer audio player"
-#~ msgstr "В_икористовувати звуковий програвач mplayer"
-
-#~ msgid "Use _mplayer2 audio player"
-#~ msgstr "Використовувати програвач _mplayer2"
-
-#~ msgid "_Cancel"
-#~ msgstr "_Скасувати"
-
-#~ msgid "Youtube URL : "
-#~ msgstr "Адреса на Youtube: "
-
-#, fuzzy
-#~ msgid "Save to _Directory : "
-#~ msgstr "Звантаження до _каталогу: "
-
-#, fuzzy
-#~ msgid ""
-#~ "Unable to write to the file\n"
-#~ "%s\n"
-#~ "Please check the directory permissions and try again, or Cancel.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "LiVES не вдалося здійснити запис до файла\n"
-#~ "%s\n"
-#~ "Будь ласка, змініть права доступу до теки і повторіть спробу."
-
-#~ msgid "Video [%.2f sec]"
-#~ msgstr "Відео [%.2f с]"
-
-#~ msgid "Mono  [opening...]"
-#~ msgstr "Моно [відкриття…]"
-
-#~ msgid "Left Audio [opening...]"
-#~ msgstr "Лівий канал звуку [відкриття…]"
-
-#~ msgid "Left Audio [%.2f sec]"
-#~ msgstr "Лівий канал звуку [%.2f с]"
-
-#~ msgid "Right Audio [opening...]"
-#~ msgstr "Правий канал звуку [відкриття…]"
-
-#~ msgid "Right Audio [%.2f sec]"
-#~ msgstr "Правий канал звуку [%.2f с]"
-
-#~ msgid "LiVES cannot switch to mplayer whilst clips are loading."
-#~ msgstr "LiVES не може перемикатися на mplayer під час завантаження кліпів."
-
-#~ msgid "LiVES cannot switch to mplayer2 whilst clips are loading."
-#~ msgstr ""
-#~ "LiVES не може перемкнутися на mplayer2, доки триває завантаження кліпів."
-
-#~ msgid "        _Foreground Color"
-#~ msgstr "        Колір п_ереднього плану"
-
-#~ msgid "        _Background Color"
-#~ msgstr "        Колір т_ла"
-
-#~ msgid ""
-#~ "\n"
-#~ "Unable to connect to pulse audio server.\n"
-#~ "Falling back to mplayer audio player.\n"
-#~ "You can change this in Preferences/Playback.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Не вдалося встановити з’єднання з сервером PulseAudio.\n"
-#~ "Повертаємося до використання програвача mplayer.\n"
-#~ "Змінити параметри звукових серверів можна на сторінці «Налаштування -> "
-#~ "Відтворення»\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Unable to connect to pulse audio server.\n"
-#~ "Falling back to mplayer2 audio player.\n"
-#~ "You can change this in Preferences/Playback.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Не вдалося встановити з’єднання із сервером PulseAudio.\n"
-#~ "Використовуємо резервний спосіб відтворення за допомогою mplayer2.\n"
-#~ "Змінити спосіб відтворення можна за допомогою сторінки Налаштування/"
-#~ "Відтворення.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "To open a clip from Youtube, LiVES will first download it with youtube-"
-#~ "dl.\n"
-#~ "Please make sure you have the latest version of that tool installed.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Щоб мати змогу відкрити кліп з Youtube, LiVES спершу доведеться отримати\n"
-#~ "його за допомогою youtube-dl.\n"
-#~ "Будь ласка, переконайтеся, що встановлено найсвіжішу версію цієї "
-#~ "програми.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "Enter the URL of the clip below.\n"
-#~ "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Нижче слід вказати адресу кліпу.\n"
-#~ "Приклад: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
-#~ "\n"
-
-#~ msgid "Download to _Directory : "
-#~ msgstr "Звантаження до _каталогу: "
-
-#~ msgid "Download _File Name : "
-#~ msgstr "Назва звантаженого _файла: "
-
-#~ msgid "Maintain aspect ratio of original frame"
-#~ msgstr "Зберігати співвідношення розмірів початкового кадру"
-
-#~ msgid ""
-#~ "\n"
-#~ "Dear user, the jack developers decided to remove the -Z option from "
-#~ "jackd.\n"
-#~ "Please check your ~/.jackdrc file and remove this option if present.\n"
-#~ "Alternately, select a different audio player in Preferences.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Шановний користувачу, розробниками jack було вирішено вилучити\n"
-#~ "параметр -Z з переліку параметрів jackd. Будь ласка, вилучіть цей\n"
-#~ "параметр з файла ~/.jackdrc, якщо його там вказано.\n"
-#~ "Крім того, у вікні «Налаштування» ви можете вибрати інший звуковий\n"
-#~ "програвач.\n"
-
-#, fuzzy
-#~ msgid "Display mask: "
-#~ msgstr "Показувати пароль"
-
-#, fuzzy
-#~ msgid "mask color"
-#~ msgstr "Поступове зменшення гучності"
-
-#~ msgid ".webm"
-#~ msgstr ".webm"
+msgstr "$error"

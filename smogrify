@@ -4462,7 +4462,7 @@ sub smog_system_direct {
 
     $smcomret = `$smcommand`;
 
-    if ($DEBUG_SMOGRIFY && $ ? != 0) {
+    if ($DEBUG_SMOGRIFY && $? != 0) {
         print STDERR "smogrify debug: command was $smcommand\n";
         print STDERR "smogrify debug: result was $smcomret\n";
         print STDERR "smogrify debug: error was $?\n";

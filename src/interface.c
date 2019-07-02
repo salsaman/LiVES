@@ -1173,7 +1173,7 @@ xprocess *create_processing(const char *text) {
     }
 
 
-    if (cfile->nokeep) procw->pause_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("_Enough"),
+    if (cfile->nokeep) procw->pause_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("Paus_e"),
           LIVES_RESPONSE_ACCEPT);
     else procw->pause_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("Pause/_Enough"),
                                  LIVES_RESPONSE_ACCEPT);

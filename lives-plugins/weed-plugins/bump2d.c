@@ -130,7 +130,7 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     orowstride -= widthx - psize;
     irowstride -= widthx - psize;
 
-    for (y = 1; y < height - 1; ++y) {
+    for (y = 1; y < height - 1; y++) {
       temp = lighty - y;
       blank_pixel(dst, palette, yuv_clamping, src);
       dst += psize;

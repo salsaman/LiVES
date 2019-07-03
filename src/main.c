@@ -403,6 +403,9 @@ static boolean pre_init(void) {
   sizdbl = sizeof(double);
   sizshrt = sizeof(short);
 
+  /* TRANSLATORS: localised name may be used here */
+  lives_set_application_name(_("LiVES"));
+
   mainw = (mainwindow *)(calloc(1, sizeof(mainwindow)));
   mainw->is_ready = mainw->configured = mainw->fatal = FALSE;
   mainw->mgeom = NULL;
@@ -520,7 +523,7 @@ static boolean pre_init(void) {
 
   widget_helper_init();
 
-  widget_opts.title_prefix = lives_strdup(_("LiVES: - "));
+  widget_opts.title_prefix = lives_strdup_printf("%s: - ", lives_get_application_name());
 
   prefs->show_gui = TRUE;
   prefs->show_splash = FALSE;
@@ -3124,9 +3127,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   lives_snprintf(fbuff, PATH_MAX, "%s", capable->myname_full);
   get_basename(fbuff);
   capable->myname = lives_strdup(fbuff);
-
-  /* TRANSLATORS: localised name may be used here */
-  lives_set_application_name(_("LiVES"));
 
   // format is:
   // lives [opts] [filename [start_time] [frames]]

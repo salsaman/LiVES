@@ -49,6 +49,7 @@ IS_DARWIN="false"
 IS_IRIX="false"
 IS_SOLARIS="false"
 IS_LINUX_GNU="false"
+IS_LINUX_MUSL="false"
 IS_MINGW="false"
 
 case "{$target_os}" in
@@ -60,6 +61,9 @@ case "{$target_os}" in
   ;;
  *linux-gnu*)
    IS_LINUX_GNU="true"
+  ;;
+ *linux-musl*)
+   IS_LINUX_MUSL="true"
   ;;
  *solaris*)
    IS_SOLARIS="true"
@@ -77,6 +81,7 @@ esac
 AM_CONDITIONAL(IS_DARWIN,$IS_DARWIN)
 AM_CONDITIONAL(IS_IRIX,$IS_IRIX)
 AM_CONDITIONAL(IS_LINUX_GNU,$IS_LINUX_GNU)
+AM_CONDITIONAL(IS_LINUX_MUSL,$IS_LINUX_MUSL)
 AM_CONDITIONAL(IS_SOLARIS,$IS_SOLARIS)
 AM_CONDITIONAL(IS_MINGW,$IS_MINGW)
 
@@ -185,6 +190,21 @@ HAVE_OSC=false
 )
 AM_CONDITIONAL(ENABLE_OSC,$HAVE_OSC)
 
+if test "x$IS_LINUX_MUSL" != "xfalse" ; then
+if test "x$HAVE_OSC" != "xfalse" ; then
+
+HAVE_TIRPC=false
+dnl check for libtirpc
+PKG_CHECK_MODULES(TIRPC, libtirpc, HAVE_TIRPC=true, HAVE_TIRPC=false)
+AC_SUBST(TIRPC_CFLAGS)
+AC_SUBST(TIRPC_LIBS)
+
+if test "x$HAVE_TIRPC" != "xtrue" ; then
+AC_MSG_ERROR([libtirpc not found, necessary for build on musl with OSC enabled])
+fi
+
+fi
+fi
 
 dnl js_header
 AC_CHECK_HEADERS(linux/joystick.h, HAVE_JS_HEADER=true, HAVE_JS_HEADER=false)
@@ -395,7 +415,7 @@ dnl check for SDL
 ifdef([m4_pattern_allow],
 [m4_pattern_allow([^AM_PATH_SDL])])
 
-ifdef([$AM_PATH_SDL"],
+ifdef(["$AM_PATH_SDL"],
 
 [AM_PATH_SDL([1.2],[
 HAVE_SDL=true

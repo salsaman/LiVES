@@ -4645,7 +4645,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
     flags |= WEED_CHANNEL_ALPHA_PREMULT;
     png_set_alpha_mode(png_ptr, PNG_ALPHA_PREMULTIPLIED, PNG_DEFAULT_sRGB);
   }
-  weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_SRGB);
+  /* weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_SRGB); */
 #endif
 #endif
 

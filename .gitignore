@@ -106,5 +106,4 @@ Makefile.in
 libtool
 intl
 
-sendOSC
 lives-exe

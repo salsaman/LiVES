@@ -36,6 +36,8 @@ libdv2-apps/libdv-bin, cdda2wav, lame, python, youtube-dl
 
 Optional -  libvisual-actors, frei0r-plugins
 
+Required for build with musl libc: libtirpc
+
 
 
 

@@ -5,15 +5,20 @@ mingw_CFLAGS = -DIS_MINGW=1 -I/usr/i686-pc-mingw32/sys-root/mingw/include
 mingw_LIBFLAGS = -lws2_32
 endif
 
+if IS_LINUX_MUSL
+musl_CFLAGS = -DIS_LINUX_MUSL=1 @TIRPC_CFLAGS@
+musl_LIBFLAGS = @TIRPC_LIBS@
+endif
+
 sendOSC = sendOSC
 
 LIBOSCDIR = ../client
 
 sendOSCdir = $(bindir)
 
-sendOSC_LDFLAGS = $(mingw_LIBFLAGS) $(top_builddir)/libOSC/client/.libs/libOSC_client.a
+sendOSC_LDFLAGS = $(mingw_LIBFLAGS) $(musl_LIBFLAGS) $(top_builddir)/libOSC/client/.libs/libOSC_client.a
 
-sendOSC_CFLAGS = -I.. $(mingw_CFLAGS)
+sendOSC_CFLAGS = -I.. $(mingw_CFLAGS) $(musl_CFLAGS)
 
 sendOSC_SOURCES = htmsocket.c htmsocket.h sendOSC.c
 

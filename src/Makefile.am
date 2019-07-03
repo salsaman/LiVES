@@ -21,6 +21,10 @@ if IS_LINUX_GNU
 linux_CFLAGS=-DIS_LINUX_GNU=1
 endif
 
+if IS_LINUX_MUSL
+linux_CFLAGS=-DIS_LINUX_MUSL=1
+endif
+
 if IS_SOLARIS
 solaris_CFLAGS=-DIS_SOLARIS=1
 endif

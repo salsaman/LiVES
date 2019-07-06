@@ -11,10 +11,16 @@
 
 static boolean allpassed;
 
-static boolean prompt_existing_dir(char *dirname, uint64_t freespace, boolean wrtable) {
+static boolean prompt_existing_dir(const char *dirname, uint64_t freespace, boolean wrtable) {
   boolean res;
   if (wrtable) {
     char *fspstr = lives_format_storage_space_string(freespace);
+    if (!strcmp(dirname, capable->home_dir)) {
+      if (!do_yesno_dialog(
+            _("You have chosen to use your home directory as the LiVES working directory.\nThis is NOT recommended as it will likely result in the loss of unrelated files.\nClick Yes if you REALLY want to continue, or No to create or select another directory.\n")))
+        return FALSE;
+    }
+
     res = do_yesno_dialogf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"), dirname,
                            fspstr);
     lives_free(fspstr);

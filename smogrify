@@ -289,7 +289,10 @@ if (defined($ARGV[0])) {
             $default_keymap = "default.keymap";
 
             &rc_set_if_not_set("version", "$version");
-            &rc_set_if_not_set("tempdir", "$default_workdir");
+            if (&rc_set_if_not_set("tempdir", "$default_workdir") == 1) {
+                $startup_phase = -1;
+                &rc_set("startup_phase", -1);
+	    }
 
             if (defined($dyneversion)) {
                 &rc_set_if_not_set("lib_dir", "/opt/$dyneversion/lib/");
@@ -7079,7 +7082,7 @@ sub get_mplayer_location {
 sub rc_set_if_not_set {
     my ($key,$value)=@_;
     $skip_if_exist=1;
-    &rc_set("$key","$value");
+    return &rc_set("$key","$value");
 }
 
 
@@ -7160,7 +7163,7 @@ sub rc_set {
                         close OUT;
                         unlink "$rcfile.new";
                         $skip_if_exist=0;
-                        return;
+                        return 1;
                     }
                     if ($part==0) {
                         $part=1;
@@ -7199,7 +7202,7 @@ sub rc_set {
 		close IN;
 		close OUT;
                 &rc_set("$key","$value");
-		return;
+		return 0;
             }
             else {
 		# otherwise set it as last
@@ -7214,6 +7217,7 @@ sub rc_set {
     close OUT;
     smog_rename( "$rcfile.new","$rcfile") or exit 3;
     $delpref=0;
+    return 0;
 }
 
 

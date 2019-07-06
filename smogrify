@@ -288,11 +288,14 @@ if (defined($ARGV[0])) {
 
             $default_keymap = "default.keymap";
 
+	    $priority = 1; ## set it as first key if not found in rc file
             &rc_set_if_not_set("version", "$version");
+	    $priority = 1; ## set it as first key if not found in rc file
             if (!&rc_set_if_not_set("tempdir", "$default_workdir")) {
                 $startup_phase = -1;
                 &rc_set("startup_phase", -1);
 	    }
+	    $priority = 0;
 
             if (defined($dyneversion)) {
                 &rc_set_if_not_set("lib_dir", "/opt/$dyneversion/lib/");

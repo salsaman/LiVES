@@ -86,6 +86,8 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int width = weed_get_int_value(in_channel, "width", &error);
   int height = weed_get_int_value(in_channel, "height", &error);
 
+  boolean inplace = (src == dst);
+
   if (height == 0 || width == 0 || dst == NULL || src == NULL) return WEED_NO_ERROR;
   else {
     int palette = weed_get_int_value(in_channel, "current_palette", &error);
@@ -153,7 +155,7 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
           if (palette == WEED_PALETTE_ARGB32) dst[0] = src[0];
           weed_memset(dst + offs, reflectionmap[normalx][normaly], 3);
         }
-        if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32 || palette == WEED_PALETTE_YUVA8888) dst[3] = src[3];
+        if (!inplace && (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32 || palette == WEED_PALETTE_YUVA8888)) dst[3] = src[3];
         dst += psize;
         src += psize;
       }

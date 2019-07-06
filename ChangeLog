@@ -1,4 +1,4 @@
-Version 2.10.3
+Version 3.0.0
 --------------
 Fix for "Delete Set" not removing files from disk.
 Fix crash when selecting project directory with new install.
@@ -20,8 +20,8 @@ Extensively rewrote the main interface, cleaning up the code and making many vis
 Improvements to online video downloader, clip size and format can now be selected.
 Numerous optimisations and minor bugfixes.
 Optimised recording when video generators are running.
-
-
+Add support for musl (jorgenatz)
+Updated translations for Ukranian (Yuri Chornoivan) and Portuguese (Nany Cavalcante)
 
 
 Version 2.10.2 (9 Jan 2019)

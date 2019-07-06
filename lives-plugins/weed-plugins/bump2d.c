@@ -86,7 +86,7 @@ int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int width = weed_get_int_value(in_channel, "width", &error);
   int height = weed_get_int_value(in_channel, "height", &error);
 
-  boolean inplace = (src == dst);
+  int inplace = (src == dst);
 
   if (height == 0 || width == 0 || dst == NULL || src == NULL) return WEED_NO_ERROR;
   else {

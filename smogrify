@@ -289,7 +289,7 @@ if (defined($ARGV[0])) {
             $default_keymap = "default.keymap";
 
             &rc_set_if_not_set("version", "$version");
-            if (&rc_set_if_not_set("tempdir", "$default_workdir") == 1) {
+            if (!&rc_set_if_not_set("tempdir", "$default_workdir")) {
                 $startup_phase = -1;
                 &rc_set("startup_phase", -1);
 	    }

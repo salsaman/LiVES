@@ -1279,6 +1279,7 @@ uint64_t sget_file_size(const char *name);
 uint64_t get_fs_free(const char *dir);
 boolean is_writeable_dir(const char *dir);
 boolean ensure_isdir(char *fname);
+boolean dirs_equal(const char *dira, const char *dirb);
 char *ensure_extension(const char *fname, const char *ext) WARN_UNUSED;
 boolean check_dev_busy(char *devstr);
 void activate_url_inner(const char *link);

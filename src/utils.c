@@ -2392,17 +2392,57 @@ boolean ensure_isdir(char *fname) {
 
   // returns TRUE if fname was altered
 
-  size_t slen = strlen(fname);
-  size_t offs = slen - 1;
-  char *tmp;
+  size_t tlen = strlen(fname), slen, tlen2, offs;
+  size_t dslen = strlen(LIVES_DIR_SEP);
+  boolean ret = FALSE;
+  char *tmp = lives_strdup(fname), *tmp2;
 
-  while (offs >= 0 && !strcmp(fname + offs, LIVES_DIR_SEP)) offs--;
-  if (offs == slen - 2) return FALSE;
-  memset(fname + offs + 1, 0, 1);
+  while (1) {
+    // recursively remove double DIR_SEP
+    tmp2 = subst(tmp, LIVES_DIR_SEP LIVES_DIR_SEP, LIVES_DIR_SEP);
+    if ((tlen2 = strlen(tmp2)) < tlen) {
+      ret = TRUE;
+      lives_free(tmp);
+      tmp = tmp2;
+      tlen = tlen2;
+    } else {
+      lives_free(tmp2);
+      break;
+    }
+  }
+
+  if (ret) lives_snprintf(fname, PATH_MAX, "%s", tmp);
+  lives_free(tmp);
+
+  slen = tlen - 1;
+  offs = slen;
+
+  // we should now only have one or zero DIR_SEP at the end, but just in case we remove all but the last one
+  while (offs >= 0 && !strncmp(fname + offs, LIVES_DIR_SEP, dslen)) offs -= dslen;
+  if (offs == slen - dslen) return ret; // format is OK as-is
+
+  // strip off all terminating DIR_SEP and then append one
+  if (offs < slen) fname[offs + 1] = 0;
   tmp = lives_strdup_printf("%s%s", fname, LIVES_DIR_SEP);
   lives_snprintf(fname, PATH_MAX, "%s", tmp);
   lives_free(tmp);
   return TRUE;
+}
+
+
+boolean dirs_equal(const char *dira, const char *dirb) {
+  // filenames in locale encoding
+  char *tmp;
+  char dir1[PATH_MAX];
+  char dir2[PATH_MAX];
+  lives_snprintf(dir1, PATH_MAX, "%s", (tmp = F2U8(dira)));
+  lives_free(tmp);
+  lives_snprintf(dir2, PATH_MAX, "%s", (tmp = F2U8(dirb)));
+  lives_free(tmp);
+  ensure_isdir(dir1);
+  ensure_isdir(dir2);
+  // TODO: for some (Linux) fstypes we should use strcasecmp
+  return (!lives_utf8_strcmp(dir1, dir2));
 }
 
 

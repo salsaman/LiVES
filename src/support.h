@@ -25,6 +25,7 @@ char *translate(const char *String);
 char *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n);
 
 #  include <libintl.h>
+#  include <locale.h>
 #  undef _
 #  define _(String) (translate(String))
 #  define P_(String, StringPlural, n) (translate_with_plural(String, StringPlural, n))

@@ -275,7 +275,7 @@ if [ "x$VERSION_ONLY" = "x" ] ; then
     VERSION_ONLY=no
 fi
 if [ "x$DOWNLOAD" = "x" ] ; then
-    DOWNLOAD=no
+    DOWNLOAD=yes
 fi
 if [ "x$AUTORECONF_OPTIONS" = "x" ] ; then
     AUTORECONF_OPTIONS="-i -f"

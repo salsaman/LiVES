@@ -14,15 +14,19 @@ darwin_CFLAGS = -DIS_DARWIN=1
 endif
 
 if IS_IRIX
-irix_CFLAGS=-DIS_IRIX=1
+irix_CFLAGS = -DIS_IRIX=1
 endif
 
 if IS_LINUX_GNU
-linux_CFLAGS=-DIS_LINUX_GNU=1
+linux_CFLAGS = -DIS_LINUX_GNU=1
+endif
+
+if IS_LINUX_MUSL
+linux_CFLAGS = -DIS_LINUX_MUSL=1
 endif
 
 if IS_SOLARIS
-solaris_CFLAGS=-DIS_SOLARIS=1
+solaris_CFLAGS = -DIS_SOLARIS=1
 endif
 
 gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -pthread
@@ -42,18 +46,18 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = lives-exe
 
 if HAVE_MJPEGTOOLS
-yuv4mpeg_SOURCES=lives-yuv4mpeg.c lives-yuv4mpeg.h
+yuv4mpeg_SOURCES = lives-yuv4mpeg.c lives-yuv4mpeg.h
 yuv4mpeg_CFLAGS = -DHAVE_YUV4MPEG=1
 endif
 
 if HAVE_UNICAP
-unicap_SOURCES=videodev.c videodev.h
+unicap_SOURCES = videodev.c videodev.h
 unicap_CFLAGS = -DHAVE_UNICAP=1
 endif
 
 if ENABLE_OSC
-osc_SOURCES=osc.c osc.h omc-learn.c omc-learn.h osc_notify.h
-osc_LDADD=$(top_builddir)/libOSC/.libs/libOSC.a $(top_builddir)/libOSC/client/.libs/libOSC_client.a -lm
+osc_SOURCES = osc.c osc.h omc-learn.c omc-learn.h osc_notify.h
+osc_LDADD = $(top_builddir)/libOSC/.libs/libOSC.a $(top_builddir)/libOSC/client/.libs/libOSC_client.a -lm
 osc_CFLAGS = -DENABLE_OSC=1
 endif
 
@@ -66,7 +70,7 @@ endif
 if ENABLE_JACK
 jack_CFLAGS = -DENABLE_JACK
 jack_SOURCES = jack.c jack.h
-jack_LDADD=-ljack
+jack_LDADD = -ljack
 
 if ENABLE_JACK_TRANSPORT
 jack_CFLAGS += -DENABLE_JACK_TRANSPORT
@@ -79,7 +83,7 @@ oil_LIBFLAGS = @OIL_LIBS@
 else
 oil_LIBFLAGS = @OIL_LIBS@ -loil-0.3
 endif
-oil_CFLAGS =  @OIL_CFLAGS@ -DENABLE_OIL=1
+oil_CFLAGS = @OIL_CFLAGS@ -DENABLE_OIL=1
 
 else
 
@@ -89,7 +93,7 @@ oil_LIBFLAGS = @ORC_LIBS@
 else
 oil_LIBFLAGS = @ORC_LIBS@ -lorc-0.4
 endif
-oil_CFLAGS =  @ORC_CFLAGS@ -DENABLE_ORC=1
+oil_CFLAGS = @ORC_CFLAGS@ -DENABLE_ORC=1
 endif
 endif
 
@@ -99,11 +103,10 @@ alsa_CFLAGS = @ALSA_CFLAGS@ -DALSA_MIDI=1
 endif
 
 if HAVE_WAYLAND
-wayland_LDADD=@WAYLAND_LIBS@
-wayland_CFLAGS=@WAYLAND_CFLAGS@ -DHAVE_WAYLAND=1
+wayland_LDADD = @WAYLAND_LIBS@
+wayland_CFLAGS = @WAYLAND_CFLAGS@ -DHAVE_WAYLAND=1
 endif
 
-if !IS_MINGW
 if DISABLE_GLSLICE
 if HAVE_SYSTEM_WEED
 libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
@@ -117,7 +120,6 @@ libweed_LDADD = @WEED_SLICE_LIBS@ @WEED_UTILS_LIBS@
 libweed_CFLAGS = @WEED_CFLAGS@ -DHAVE_SYSTEM_WEED=1
 else
 libweed_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
-endif
 endif
 endif
 
@@ -135,19 +137,19 @@ endif
 endif
 
 if HAVE_LIBPNG
-png_LDADD=@PNG_LIBS@
-png_CFLAGS=@PNG_CFLAGS@ -DUSE_LIBPNG=1
+png_LDADD = @PNG_LIBS@
+png_CFLAGS = @PNG_CFLAGS@ -DUSE_LIBPNG=1
 endif
 
 if HAVE_SWSCALE
 if HAVE_AVCODEC
 if HAVE_AVUTIL
 if HAVE_SWSCALE
-swscale_LDADD=@LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
-swscale_CFLAGS=@LIBSWSCALE_CFLAGS@ @LIBAVUTIL_CFLAGS@ -DUSE_SWSCALE=1
+swscale_LDADD = @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
+swscale_CFLAGS = @LIBSWSCALE_CFLAGS@ @LIBAVUTIL_CFLAGS@ -DUSE_SWSCALE=1
 if HAVE_SWRESAMPLE
-transcode_SOURCES=transcode.c transcode.h
-transcode_CFLAGS=-DLIBAV_TRANSCODE=1
+transcode_SOURCES = transcode.c transcode.h
+transcode_CFLAGS = -DLIBAV_TRANSCODE=1
 endif
 endif
 endif
@@ -155,9 +157,9 @@ endif
 endif
 
 if ENABLE_GIW
-giw_SOURCES=giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h giw/giwled.c giw/giwled.h giw/giwtimeline.c giw/giwtimeline.h
-giw_LDADD=-lm
-giw_CFLAGS=-DENABLE_GIW=1
+giw_SOURCES = giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h giw/giwled.c giw/giwled.h giw/giwtimeline.c giw/giwtimeline.h
+giw_LDADD = -lm
+giw_CFLAGS = -DENABLE_GIW=1
 endif
 
 lives_exe_SOURCES = \
@@ -262,15 +264,13 @@ libweed_scripting_LDADD = $(abs_top_srcdir)/libweed/libweed_slice_scripting.la $
 libweed_scripting_CFLAGS = -D_WEED_VISIBLE_FUNCTIONS_
 endif
 
-liblives_la_LDFLAGS =  $(extra_LDFLAGS)  $(libweed_scripting_LDADD) $(osc_LDADD)
+liblives_la_LDFLAGS = $(extra_LDFLAGS) $(libweed_scripting_LDADD) $(osc_LDADD)
 
 liblives_la_CFLAGS += $(AM_CFLAGS) $(libweed_scripting_CFLAGS) -Wno-unused-function -DIS_LIBLIVES
-
 
 install-exec-local:
 	$(MKDIR_P) "$(DESTDIR)$(includedir)/liblives/"
 	cp -f "$(srcdir)/liblives.hpp" "$(DESTDIR)$(includedir)/liblives/"
-
 
 uninstall-local:
 	rm -rf "$(includedir)/liblives"

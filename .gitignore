@@ -19,6 +19,7 @@ autom4te.cache
 /config.log
 /config.status
 /config.sub
+/config.rpath
 /configure
 /configure.scan
 /depcomp
@@ -36,11 +37,9 @@ autom4te.cache
 
 # http://www.gnu.org/software/m4/
 
-m4/libtool.m4
-m4/ltoptions.m4
-m4/ltsugar.m4
-m4/ltversion.m4
-m4/lt~obsolete.m4
+m4/**
+!m4/inttypes.m4
+!m4/ulonglong.m4
 
 # Prerequisites
 *.d
@@ -97,7 +96,7 @@ dkms.conf
 
 
 # extras
-
+ABOUT-NLS
 Makefile
 Makefile.in
 *.gmo
@@ -106,5 +105,23 @@ Makefile.in
 libtool
 intl
 
-sendOSC
+po/POTFILES
+po/POTFILES_PLUGINS
+po/Makevars.template
+po/Makefile.in.in
+po/Rules-quot
+po/boldquot.sed
+po/en@boldquot.header
+po/en@quot.header
+po/insert-header.sin
+po/stamp-po
+po/quot.sed
+po/remove-potcdate.sed
+po/remove-potcdate.sin
+
+docs/doxygen
+weed-docs/doxygen
+
+
+libOSC/sendOSC/sendOSC
 lives-exe

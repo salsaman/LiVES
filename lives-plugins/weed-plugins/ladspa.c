@@ -578,7 +578,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       if (curvdir != NULL) closedir(curvdir);
       curvdir = NULL;
 
-      if (!strlen(vdir) || vdir == NULL) break;
+      if (!strlen(vdir)) break;
       curvdir = opendir(vdir);
       if (curvdir == NULL) break;
 

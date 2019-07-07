@@ -2392,8 +2392,9 @@ boolean ensure_isdir(char *fname) {
 
   // returns TRUE if fname was altered
 
-  size_t tlen = strlen(fname), slen, tlen2, offs;
+  size_t tlen = strlen(fname), slen, tlen2;
   size_t dslen = strlen(LIVES_DIR_SEP);
+  ssize_t offs;
   boolean ret = FALSE;
   char *tmp = lives_strdup(fname), *tmp2;
 
@@ -2422,10 +2423,9 @@ boolean ensure_isdir(char *fname) {
   if (offs == slen - dslen) return ret; // format is OK as-is
 
   // strip off all terminating DIR_SEP and then append one
-  if (offs < slen) fname[offs + 1] = 0;
-  tmp = lives_strdup_printf("%s%s", fname, LIVES_DIR_SEP);
-  lives_snprintf(fname, PATH_MAX, "%s", tmp);
-  lives_free(tmp);
+  if (++offs < 0) offs = 0;
+  if (offs < slen) fname[offs] = 0;
+  fname = strncat(fname, LIVES_DIR_SEP, PATH_MAX - offs - 1);
   return TRUE;
 }
 

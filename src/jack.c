@@ -1062,7 +1062,7 @@ static int audio_read(nframes_t nframes, void *arg) {
   int out_unsigned = AFORM_UNSIGNED;
   int i;
 
-  size_t rbytes;
+  size_t rbytes = 0;
 
   if (!jackd->in_use) return 0;
 

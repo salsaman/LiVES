@@ -2829,8 +2829,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (key == -1 || !filter_mutex_trylock(key)) {
       ret = (*process_func)(inst, tc);
       if (key != -1) filter_mutex_unlock(key);
+      if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_MUST_RELOAD;
     } else retval = FILTER_ERROR_MUST_RELOAD;
-    if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_MUST_RELOAD;
   }
 
   if (retval == FILTER_ERROR_MUST_RELOAD) {

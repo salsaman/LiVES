@@ -84,11 +84,10 @@ endif
 
 
 if HAVE_OPENCV
-## crashing and I don't have time to debug it now
-# farneback_analyser_libs = farneback_analyser.la
-# farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_core -lopencv_video -lopencv_imgproc
-# farneback_analyser_la_CPPFLAGS = $(AM_CPPFLAGS)
-# farneback_analyser_la_SOURCES = farneback_analyser.cpp
+farneback_analyser_libs = farneback_analyser.la
+farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_core -lopencv_video -lopencv_imgproc
+farneback_analyser_la_CPPFLAGS = $(AM_CPPFLAGS)
+farneback_analyser_la_SOURCES = farneback_analyser.cpp
 
 if ENABLE_TOONZ
 toonz_libs = toonz.la

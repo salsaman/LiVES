@@ -9406,8 +9406,8 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbu
 
   lives_text_view_set_justification(LIVES_TEXT_VIEW(textview), widget_opts.justify);
   if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
-    lives_widget_set_halign(textview, LIVES_JUSTIFY_CENTER);
-    lives_widget_set_valign(textview, LIVES_JUSTIFY_CENTER);
+    lives_widget_set_halign(textview, LIVES_ALIGN_CENTER);
+    lives_widget_set_valign(textview, LIVES_ALIGN_CENTER);
   }
   return textview;
 }

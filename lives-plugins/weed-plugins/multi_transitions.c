@@ -213,7 +213,7 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
         break;
       case 2:
         // four way split
-        if (abs(i - hheight) / hheight < bf || abs(j - hwidth) / hwidth < bf || bf == 1.f) {
+        if (fabsf(i - hheight) / hheight < bf || fabsf(j - hwidth) / hwidth < bf || bf == 1.f) {
           weed_memcpy(&dst[j], &src2[j], psize);
         } else {
           weed_memcpy(&dst[j], &src1[j + (j > ihwidth ? -yy : yy) + (i > ihheight ? -xx : xx)], psize);

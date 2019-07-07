@@ -18,6 +18,9 @@ Eliminate some race conditions between the audio and video threads.
 Implemented reference counting for realtime effect instances.
 Extensively rewrote the main interface, cleaning up the code and making many visual improvements.
 Improvements to online video downloader, clip size and format can now be selected.
+Bugfixes for pulseaudio and jack audio players.
+Improvements to the projectM filter wrapper.
+Eliminate race conditions when applying rendered effects.
 Numerous optimisations and minor bugfixes.
 Optimised recording when video generators are running.
 Add support for musl (jorgenatz)

@@ -17,14 +17,17 @@ Show correct effects state (on / off) when reshowing effect mapper window.
 Eliminate some race conditions between the audio and video threads.
 Implemented reference counting for realtime effect instances.
 Extensively rewrote the main interface, cleaning up the code and making many visual improvements.
-Improvements to online video downloader, clip size and format can now be selected.
+Improvements to online video downloader, clip size and format can now be selected, added an update option.
+Optimised recording when video generators are running.
 Bugfixes for pulseaudio and jack audio players.
 Improvements to the projectM filter wrapper.
 Eliminate race conditions when applying rendered effects.
-Numerous optimisations and minor bugfixes.
-Optimised recording when video generators are running.
+Optimisation for libweed.
+Numerous other optimisations and minor bugfixes.
 Add support for musl (jorgenatz)
 Updated translations for Ukranian (Yuri Chornoivan) and Portuguese (Nany Cavalcante)
+
+
 
 
 Version 2.10.2 (9 Jan 2019)

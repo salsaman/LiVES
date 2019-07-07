@@ -77,10 +77,9 @@ else {
     $is_util=0;
 }
 
+$builder_version="3.0.0-pre";
 
-$builder_version="2.10.2";
-
-if ($in_channels==0&&$properties&0x0004) {
+if ($in_channels == 0 && ($properties & 0x0004)) {
     #batch mode generator
     $is_batch_gen=1;
 }
@@ -92,7 +91,6 @@ else {
 if ($in_channels>0) {
     push(@requires,"convert");
 }
-
 
 #########################################################
 
@@ -165,7 +163,6 @@ print OUT "# after processing, you should leave no gaps in out frames, you shoul
 print OUT "# or change the palette from RGB24 (LiVES will check and autocorrect this soon)\n\n";
 print OUT "# Also you must implement your own: &sig_error and &sig_progress\n\n\n";
 print OUT "#######################################################################\n\n";
-
 
 print OUT "use POSIX;\n";
 print OUT "setlocale(LC_NUMERIC, \"C\");\n\n";
@@ -298,7 +295,6 @@ print OUT "    } else {\n";
 print OUT "        \$out_prefix=\"\";\n";
 print OUT "    }\n\n";
 
-
 if (@pre) {
     &gen_pre;
 }
@@ -322,7 +318,6 @@ unless ($is_batch_gen) {
     print OUT "        \$out_prefix=\"\";\n";
     print OUT "    }\n\n";
 
-
 	if ($in_channels==2) {
 	    print OUT "    \$frame2=\$start2;\n";
 	    print OUT "    unless (defined(\$img_ext2)) {\n";
@@ -340,8 +335,6 @@ unless ($is_batch_gen) {
 	    print OUT "    } else {\n";
 	    print OUT "        \$img_prefix2=\"\";\n";
 	    print OUT "    }\n\n";
-
-
 	}
 
     print OUT "    for (\$frame=\$start;\$frame<=\$end;\$frame++) {\n";
@@ -361,7 +354,6 @@ unless ($is_batch_gen) {
 
 	print OUT "        \$in2=\"\$clipboard/\$name2\$img_ext2\";\n";
 
-
 	print OUT "        unless (-f \$in2f) {\n";
 	print OUT "            # end of clipboard reached, loop back to start\n";
 	print OUT "            \$frame2=\$start2;\n";
@@ -369,15 +361,11 @@ unless ($is_batch_gen) {
 	print OUT "            \$in2=\"\$clipboard/\$name2\$img_ext2\";\n";
 	print OUT "        }\n";
 
-
 	print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
 	print OUT "            system(\"\$convert_command \$img_prefix2\\\"\$in2\\\" \$img_prefix\\\"\$clipboard/\$name2\$img_ext\\\"\");\n";
 	print OUT "            \$img_prefix2=\$img_prefix;\n";
 	print OUT "        }\n";
-
-
     }
-
 
     print OUT "        \$out=\"\$name\$out_ext\";\n\n";
 
@@ -479,7 +467,6 @@ if (@post) {
 print OUT "    exit 0;\n";
 print OUT "}\n";
 
-
 if (@onchange) {
     print OUT "\n########## Triggers ############\n";
     &gen_onchange(1);
@@ -490,7 +477,6 @@ close OUT;
 system ("chmod 755 \"$plugin_file\"");
 
 ####################################3
-
 
 
 sub gen_requires {
@@ -511,8 +497,6 @@ sub gen_requires {
 	}
     }
 }
-
-
 
 
 sub gen_get_params {
@@ -585,24 +569,26 @@ sub gen_param_checks {
     }
 }
 
+
 sub gen_pre {
     foreach (@pre) {
-	print OUT "    ".$_."\n";
+	print OUT "    $_\n";
     }
 }
+
 
 sub gen_loop {
     foreach (@loop) {
-	print OUT "        ".$_."\n";
+	print OUT "        $_\n";
     }
 }
+
 
 sub gen_post {
     foreach (@post) {
-	print OUT "    ".$_."\n";
+	print OUT "    $_\n";
     }
 }
-
 
 
 sub rc_read {
@@ -633,7 +619,6 @@ sub rc_read {
     }
     return @result;
 }
-
 
 
 sub gen_onchange {
@@ -741,15 +726,14 @@ sub gen_onchange {
 }
 
 
-
 sub param_get_type {
     (split(/$delim/,$params[$_[0]]))[2];
 }
 
+
 sub param_get_name {
     (split(/$delim/,$params[$_[0]]))[0];
 }
-
 
 
 sub escape {
@@ -757,6 +741,7 @@ sub escape {
     $string=~ s/\\/\\\\/g;
     return $string;
 }
+
 
 sub quotescape {
     my ($string)=$_[0];

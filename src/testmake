@@ -1,2 +1,0 @@
-g++ testb.cpp .libs/liblives.a -lweed_slice_static -lweed-utils_static -lX11 -lmjpegutils -L../libOSC/.libs -lOSC -L../libOSC/client/.libs -lOSC_client -lm -ljack -lasound -lpulse -lpng12 -lswscale -lavutil -lm -lunicap -lrt -lgtk-3 -lgdk-3 -latk-1.0 -lgio-2.0 -lpangocairo-1.0 -lgdk_pixbuf-2.0 -lcairo-gobject -lpango-1.0 -lcairo -lgobject-2.0 -lglib-2.0 -pthread -ldl
-

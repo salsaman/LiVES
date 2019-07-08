@@ -525,6 +525,63 @@ static boolean pre_init(void) {
 
   widget_opts.title_prefix = lives_strdup_printf("%s: - ", lives_get_application_name());
 
+  capable->rcfile = lives_build_filename(capable->home_dir, LIVES_RC_FILENAME, NULL);
+
+  if (!mainw->foreign) {
+    char *tmp, *tmp2, *err;
+    // fatal errors
+    if (!capable->smog_version_correct) {
+      startup_message_fatal(
+        _("\nAn incorrect version of smogrify was found in your path.\n\n"
+          "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
+    } else {
+      if (!capable->can_write_to_home) {
+        startup_message_fatal((tmp = lives_strdup_printf(
+                                       _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to the directory and try again.\n"),
+                                       capable->home_dir)));
+        lives_free(tmp);
+      } else {
+        if (!capable->has_smogrify) {
+          err = lives_strdup(
+                  _("\n`smogrify` must be in your path, and be executable\n\n"
+                    "Please review the README file which came with this package\nbefore running LiVES.\n"));
+          startup_message_fatal(err);
+          lives_free(err);
+        } else {
+          if (!capable->can_read_from_config) {
+            err = lives_strdup_printf(
+                    _("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),
+                    (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+            lives_free(tmp);
+            startup_message_fatal(err);
+            lives_free(err);
+          } else {
+            if (!capable->can_write_to_config) {
+              err = lives_strdup_printf(
+                      _("\nLiVES was unable to write to its configuration file\n%s\n\n"
+                        "Please check the file permissions for this file and directory\nand try again.\n"),
+                      (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+              lives_free(tmp);
+              startup_message_fatal(err);
+              lives_free(err);
+            } else {
+              if (!capable->can_write_to_config_new) {
+                err = lives_strdup_printf(
+                        _("\nLiVES was unable to write to the configuration file\n%s\n\n"
+                          "Please check the file permissions for this file and directory\nand try again.\n"),
+                        (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)), LIVES_FILE_EXT_NEW)));
+                lives_free(tmp);
+                lives_free(tmp2);
+                startup_message_fatal(err);
+                lives_free(err);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   prefs->show_gui = TRUE;
   prefs->show_splash = FALSE;
   prefs->show_playwin = TRUE;
@@ -554,8 +611,6 @@ static boolean pre_init(void) {
 #ifdef HAVE_YUV4MPEG
   memset(prefs->yuvin, 0, 1);
 #endif
-
-  capable->rcfile = lives_strdup_printf("%s/.lives", capable->home_dir);
 
   if (!capable->smog_version_correct || !capable->can_write_to_workdir) {
     lives_snprintf(prefs->theme, 64, "none");
@@ -2235,9 +2290,10 @@ capability *get_capabilities(void) {
   get_location("eject", capable->eject_cmd, PATH_MAX);
 
   // required
-  capable->can_write_to_home = FALSE;
   capable->can_write_to_workdir = FALSE;
+  capable->can_write_to_home = FALSE;
   capable->can_write_to_config = FALSE;
+  capable->can_write_to_config_new = FALSE;
   capable->can_read_from_config = FALSE;
 
 #ifdef GUI_GTK
@@ -2295,33 +2351,44 @@ capability *get_capabilities(void) {
 
   lives_free(tmp);
 
-  err = lives_system(string, TRUE);
+  err = lives_system(string, TRUE) >> 8;
 
-  if (err == 32512 || err == 32256) {
+  if (err == 127 || err == 126) {
     return capable;
   }
 
   capable->has_smogrify = TRUE;
+  capable->smog_version_correct = TRUE;
 
-  if (err == 512) {
+  if (err == 2) {
+    // couldnt read from rcfile
     return capable;
   }
 
   capable->can_read_from_config = TRUE;
 
-  if (err == 768) {
+  if (err == 3) {
+    // couldnt write to rcfile
     return capable;
   }
 
   capable->can_write_to_config = TRUE;
 
-  if (err == 1024) {
+  if (err == 4) {
+    // couldnt write to rcfile.new
     return capable;
   }
 
-  if (err != 1280) {
-    capable->can_write_to_workdir = TRUE;
+  capable->can_write_to_config_new = TRUE;
+
+  if (err == 5) {
+    // couldnt write to bootstrap file
+    capable->can_write_to_home = FALSE;
+    return capable;
   }
+
+  // TODO - do we actually test for this ?
+  capable->can_write_to_workdir = TRUE;
 
   if (!(bootfile = fopen(safer_bfile, "r"))) {
     lives_free(safer_bfile);
@@ -2342,6 +2409,8 @@ capability *get_capabilities(void) {
   array = lives_strsplit(buffer, "|", numtok);
 
   lives_snprintf(string, 256, "%s", array[0]);
+
+  capable->smog_version_correct = FALSE;
 
   if (strcmp(string, LiVES_VERSION)) {
     char *msg = lives_strdup_printf("Version mistmatch: smogrify = %s, LiVES = %s\n", string, LiVES_VERSION);
@@ -2690,158 +2759,108 @@ static boolean lives_startup(livespointer data) {
   }
 
   if (!mainw->foreign) {
-    // fatal errors
-    if (!capable->can_write_to_home) {
-      startup_message_fatal((tmp = lives_strdup_printf(
-                                     _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to the directory and try again.\n"),
-                                     capable->home_dir)));
-      lives_free(tmp);
-    } else {
-      if (!capable->has_smogrify) {
-        char *err = lives_strdup(
-                      _("\n`smogrify` must be in your path, and be executable\n\n"
-                        "Please review the README file which came with this package\nbefore running LiVES.\n"));
-        startup_message_fatal(err);
-        lives_free(err);
-      } else {
-        if (!capable->can_read_from_config) {
-          char *err = lives_strdup_printf(
-                        _("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),
-                        (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-          lives_free(tmp);
-          startup_message_fatal(err);
-          lives_free(err);
-        } else {
-          if (!capable->can_write_to_config) {
-            char *err = lives_strdup_printf(
-                          _("\nLiVES was unable to write to its configuration file\n%s\n\n"
-                            "Please check the file permissions for this file and directory\nand try again.\n"),
-                          (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-            lives_free(tmp);
-            startup_message_fatal(err);
-            lives_free(err);
-          } else {
-            if (!capable->can_write_to_workdir) {
-              char *extrabit;
-              char *err;
-              if (!mainw->has_session_workdir) {
-                extrabit = lives_strdup_printf(_("Please check the <tempdir> setting in \n%s\nand try again.\n"),
-                                               (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-                lives_free(tmp);
-              } else
-                extrabit = lives_strdup("");
+    char *err;
+    if (!capable->can_write_to_workdir) {
+      char *extrabit;
+      if (!mainw->has_session_workdir) {
+        extrabit = lives_strdup_printf(_("Please check the <tempdir> setting in \n%s\nand try again.\n"),
+                                       (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+        lives_free(tmp);
+      } else
+        extrabit = lives_strdup("");
 
-              err = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
-                                        prefs->workdir, extrabit);
-              lives_free(extrabit);
+      err = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
+                                prefs->workdir, extrabit);
+      lives_free(extrabit);
+      startup_message_fatal(err);
+      lives_free(err);
+    } else {
+      if ((!capable->has_sox_sox || !capable->has_sox_play) && !capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
+        startup_message_fatal(
+          _("\nLiVES currently requires 'mplayer', 'mplayer2', 'mpv' or 'sox' to function. Please install one or other of these, and try again.\n"));
+      } else {
+        if (strlen(capable->startup_msg)) {
+          if (startup_msgtype == 2) startup_message_choice(capable->startup_msg, startup_msgtype);
+          else if (info_only) startup_message_info(capable->startup_msg);
+          else startup_message_nonfatal(capable->startup_msg);
+        } else {
+          // non-fatal errors
+#ifdef ALLOW_MPV
+          if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
+            startup_message_nonfatal_dismissable(
+              _("\nLiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. "
+                "You may wish to install one of these to use LiVES more fully.\n"),
+              WARN_MASK_NO_MPLAYER);
+          }
+#else
+          if (!capable->has_mplayer && !capable->has_mplayer2 && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
+            startup_message_nonfatal_dismissable(
+              _("\nLiVES was unable to locate 'mplayer' or 'mplayer2'. "
+                "You may wish to install one of these to use LiVES more fully.\n"),
+              WARN_MASK_NO_MPLAYER);
+          }
+#endif
+          if (!capable->has_convert) {
+            startup_message_nonfatal_dismissable(
+              _("\nLiVES was unable to locate 'convert'. You should install convert and image-magick if you want to use rendered effects.\n"),
+              WARN_MASK_NO_MPLAYER);
+          }
+          if (!capable->has_composite) {
+            startup_message_nonfatal_dismissable(
+              _("\nLiVES was unable to locate 'composite'. You should install composite and image-magick if you want to use the merge function.\n"),
+              WARN_MASK_NO_MPLAYER);
+          }
+          if (!capable->has_sox_sox) {
+            startup_message_nonfatal_dismissable(_("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),
+                                                 WARN_MASK_NO_MPLAYER);
+          }
+          if (!capable->has_encoder_plugins) {
+            err = lives_strdup_printf(
+                    _("\nLiVES was unable to find any encoder plugins.\n"
+                      "Please check that you have them installed correctly in\n%s%s%s/\n"
+                      "You will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),
+                    prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+            lives_free(tmp);
+            startup_message_nonfatal_dismissable(err, WARN_MASK_NO_ENCODERS);
+            lives_free(err);
+            upgrade_error = TRUE;
+          }
+
+          if (mainw->next_ds_warn_level > 0) {
+            uint64_t dsval;
+            lives_storage_status_t ds = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
+            if (ds == LIVES_STORAGE_STATUS_WARNING) {
+              uint64_t curr_ds_warn = mainw->next_ds_warn_level;
+              mainw->next_ds_warn_level >>= 1;
+              if (mainw->next_ds_warn_level > (dsval >> 1)) mainw->next_ds_warn_level = dsval >> 1;
+              if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
+              tmp = ds_warning_msg(prefs->workdir, dsval, curr_ds_warn, mainw->next_ds_warn_level);
+              err = lives_strdup_printf("\n%s\n", tmp);
+              lives_free(tmp);
+              startup_message_nonfatal(err);
+              lives_free(err);
+            } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
+              tmp = ds_critical_msg(prefs->workdir, dsval);
+              err = lives_strdup_printf("\n%s\n", tmp);
+              lives_free(tmp);
               startup_message_fatal(err);
               lives_free(err);
-            } else {
-              if (!capable->smog_version_correct) {
-                startup_message_fatal(
-                  _("\nAn incorrect version of smogrify was found in your path.\n\n"
-                    "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
-              } else {
-                if ((!capable->has_sox_sox || !capable->has_sox_play) && !capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
-                  startup_message_fatal(
-                    _("\nLiVES currently requires 'mplayer', 'mplayer2', 'mpv' or 'sox' to function. Please install one or other of these, and try again.\n"));
-                } else {
-                  if (strlen(capable->startup_msg)) {
-                    if (startup_msgtype == 2) startup_message_choice(capable->startup_msg, startup_msgtype);
-                    else if (info_only) startup_message_info(capable->startup_msg);
-                    else startup_message_nonfatal(capable->startup_msg);
-                  } else {
-                    // non-fatal errors
-#ifdef ALLOW_MPV
-                    if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
-                      startup_message_nonfatal_dismissable(
-                        _("\nLiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. "
-                          "You may wish to install one of these to use LiVES more fully.\n"),
-                        WARN_MASK_NO_MPLAYER);
-#else
-                    if (!capable->has_mplayer && !capable->has_mplayer2 && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
-                      startup_message_nonfatal_dismissable(
-                        _("\nLiVES was unable to locate 'mplayer' or 'mplayer2'. "
-                          "You may wish to install one of these to use LiVES more fully.\n"),
-                        WARN_MASK_NO_MPLAYER);
-#endif
-                    }
-
-                    if (!capable->has_convert) {
-                      startup_message_nonfatal_dismissable(
-                        _("\nLiVES was unable to locate 'convert'. You should install convert and image-magick if you want to use rendered effects.\n"),
-                        WARN_MASK_NO_MPLAYER);
-                    }
-                    if (!capable->has_composite) {
-                      startup_message_nonfatal_dismissable(
-                        _("\nLiVES was unable to locate 'composite'. You should install composite and image-magick if you want to use the merge function.\n"),
-                        WARN_MASK_NO_MPLAYER);
-                    }
-                    if (!capable->has_sox_sox) {
-                      startup_message_nonfatal_dismissable(_("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),
-                                                           WARN_MASK_NO_MPLAYER);
-                    }
-                    if (!capable->has_encoder_plugins) {
-                      char *err = lives_strdup_printf(
-                                    _("\nLiVES was unable to find any encoder plugins.\n"
-                                      "Please check that you have them installed correctly in\n%s%s%s/\n"
-                                      "You will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),
-                                    prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-                      lives_free(tmp);
-                      startup_message_nonfatal_dismissable(err, WARN_MASK_NO_ENCODERS);
-                      lives_free(err);
-                      upgrade_error = TRUE;
-                    }
-
-                    if (mainw->next_ds_warn_level > 0) {
-                      uint64_t dsval;
-                      lives_storage_status_t ds = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
-                      if (ds == LIVES_STORAGE_STATUS_WARNING) {
-                        char *err;
-                        uint64_t curr_ds_warn = mainw->next_ds_warn_level;
-                        mainw->next_ds_warn_level >>= 1;
-                        if (mainw->next_ds_warn_level > (dsval >> 1)) mainw->next_ds_warn_level = dsval >> 1;
-                        if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
-                        tmp = ds_warning_msg(prefs->workdir, dsval, curr_ds_warn, mainw->next_ds_warn_level);
-                        err = lives_strdup_printf("\n%s\n", tmp);
-                        lives_free(tmp);
-                        startup_message_nonfatal(err);
-                        lives_free(err);
-                      } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
-                        char *err;
-                        tmp = ds_critical_msg(prefs->workdir, dsval);
-                        err = lives_strdup_printf("\n%s\n", tmp);
-                        lives_free(tmp);
-                        startup_message_fatal(err);
-                        lives_free(err);
-                      }
-                    }
-                  }
-
-                  if (!mainw->foreign && capable->smog_version_correct) {
-                    splash_msg(_("Loading rendered effect plugins..."), SPLASH_LEVEL_LOAD_RFX);
-                    // must call this at least to set up rendered_fx[0]
-                    add_rfx_effects();
-                  }
-
-                  if (prefs->startup_interface == STARTUP_CE) {
-                    msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
-                  }
-
-                  /* if (prefs->show_gui) { */
-                  /*   //show_lives(); */
-                  /* } */
-                  /* mainw->is_ready = TRUE; */
-                }
-              }
             }
           }
         }
+
+        if (!mainw->foreign && capable->smog_version_correct) {
+          splash_msg(_("Loading rendered effect plugins..."), SPLASH_LEVEL_LOAD_RFX);
+          // must call this at least to set up rendered_fx[0]
+          add_rfx_effects();
+        }
+
+        if (prefs->startup_interface == STARTUP_CE) {
+          msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+        }
       }
     }
-  }
-
-  else {
+  } else {
     // capture mode
     mainw->foreign_key = atoi(zargv[2]);
 
@@ -3465,7 +3484,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 
 boolean startup_message_fatal(const char *msg) {
-  splash_end();
+  if (mainw->splash_window != NULL) splash_end();
   do_blocking_error_dialog(msg);
   mainw->startup_error = TRUE;
   lives_exit(0);

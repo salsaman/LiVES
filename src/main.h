@@ -173,6 +173,7 @@ typedef int lives_pgid_t;
 #define ICON_DIR "/share/lives/icons/"
 #define DESKTOP_ICON_DIR "/share/icons/hicolor/256x256/apps"
 #define DATA_DIR "/share/lives/"
+#define LIVES_RC_FILENAME ".lives"
 #define LIVES_CONFIG_DIR ".lives-dir/"
 #define LIVES_DEVICEMAP_DIR "devicemaps"
 #define LIVES_WORK_NAME "livesprojects"
@@ -723,6 +724,7 @@ typedef struct {
   boolean smog_version_correct;
   boolean can_read_from_config;
   boolean can_write_to_config;
+  boolean can_write_to_config_new;
   boolean can_write_to_home;
   boolean can_write_to_workdir;
 

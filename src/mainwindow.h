@@ -335,6 +335,7 @@ enum {
 #define LIVES_FILE_EXT_JPG "jpg"
 #define LIVES_FILE_EXT_MGK "mgk"
 #define LIVES_FILE_EXT_PRE "pre"
+#define LIVES_FILE_EXT_NEW "new"
 #define LIVES_FILE_EXT_SCRAP "scrap"
 #define LIVES_FILE_EXT_TEXT "txt"
 #define LIVES_FILE_EXT_BAK "bak"

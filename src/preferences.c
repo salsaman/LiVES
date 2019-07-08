@@ -37,6 +37,7 @@ static uint32_t prefs_current_page;
 
 static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
+
 void toggle_button_sets_pref(LiVESToggleButton *button, livespointer prefidx) {
   // callback to set to make a togglebutton directly control a boolean pref (non-permanent)
   // pref must have entry in pref_factory_bool
@@ -301,90 +302,112 @@ boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colR
 }
 
 
-void delete_pref(const char *key) {
+static int run_prefs_command(const char *com) {
+  int ret = 0;
+  do {
+    ret = lives_system(com, TRUE) >> 8;
+    if (mainw != NULL && mainw->is_ready) {
+      if (ret == 4) {
+        // error writing to temp config file
+        char *newrcfile = ensure_extension(capable->rcfile, LIVES_FILE_EXT_NEW);
+        ret = do_write_failed_error_s_with_retry(newrcfile, NULL, NULL);
+        lives_free(newrcfile);
+      } else if (ret == 3) {
+        // error writing to config file
+        ret = do_write_failed_error_s_with_retry(capable->rcfile, NULL, NULL);
+      } else if (ret != 0) {
+        // error reading from config file
+        ret = do_read_failed_error_s_with_retry(capable->rcfile, NULL, NULL);
+      }
+    } else ret = 0;
+  } while (ret == LIVES_RESPONSE_RETRY);
+  return ret;
+}
+
+
+int delete_pref(const char *key) {
   char *com = lives_strdup_printf("%s delete_pref \"%s\"", prefs->backend_sync, key);
-  if (lives_system(com, TRUE)) workdir_warning();
+  int ret = run_prefs_command(com);
   lives_free(com);
+  return ret;
 }
 
 
-void set_pref(const char *key, const char *value) {
+int set_pref(const char *key, const char *value) {
   char *com = lives_strdup_printf("%s set_pref \"%s\" \"%s\"", prefs->backend_sync, key, value);
-  if (lives_system(com, TRUE)) {
-    workdir_warning();
-  }
+  int ret = run_prefs_command(com);
   lives_free(com);
+  return ret;
 }
 
 
-void set_pref_utf8(const char *key, const char *value) {
+int set_pref_utf8(const char *key, const char *value) {
   // convert to locale encoding
   char *tmp = U82F(value);
   char *com = lives_strdup_printf("%s set_pref \"%s\" \"%s\"", prefs->backend_sync, key, tmp);
-  if (lives_system(com, TRUE)) {
-    workdir_warning();
-  }
+  int ret = run_prefs_command(com);
   lives_free(com);
   lives_free(tmp);
+  return ret;
 }
 
 
 void set_theme_pref(const char *themefile, const char *key, const char *value) {
   char *com = lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"", prefs->backend_sync, themefile, key, value);
-  if (lives_system(com, TRUE)) {
-    workdir_warning();
-  }
+  int ret = 0;
+  do {
+    if (lives_system(com, TRUE)) {
+      ret = do_write_failed_error_s_with_retry(themefile, NULL, NULL);
+    }
+  } while (ret == LIVES_RESPONSE_RETRY);
   lives_free(com);
 }
 
 
-void set_int_pref(const char *key, int value) {
+int set_int_pref(const char *key, int value) {
   char *com = lives_strdup_printf("%s set_pref \"%s\" %d", prefs->backend_sync, key, value);
-  if (lives_system(com, TRUE)) {
-    workdir_warning();
-  }
+  int ret = run_prefs_command(com);
   lives_free(com);
+  return ret;
 }
 
 
-void set_int64_pref(const char *key, int64_t value) {
+int set_int64_pref(const char *key, int64_t value) {
   // not used
   char *com = lives_strdup_printf("%s set_pref \"%s\" %"PRId64, prefs->backend_sync, key, value);
-  if (lives_system(com, TRUE)) {
-    workdir_warning();
-  }
+  int ret = run_prefs_command(com);
   lives_free(com);
+  return ret;
 }
 
 
-void set_double_pref(const char *key, double value) {
+int set_double_pref(const char *key, double value) {
   char *com = lives_strdup_printf("%s set_pref \"%s\" %.3f", prefs->backend_sync, key, value);
-  if (lives_system(com, TRUE)) {
-    workdir_warning();
-  }
+  int ret = run_prefs_command(com);
   lives_free(com);
+  return ret;
 }
 
 
-void set_boolean_pref(const char *key, boolean value) {
+int set_boolean_pref(const char *key, boolean value) {
   char *com;
-
+  int ret;
   if (value) {
     com = lives_strdup_printf("%s set_pref \"%s\" true", prefs->backend_sync, key);
   } else {
     com = lives_strdup_printf("%s set_pref \"%s\" false", prefs->backend_sync, key);
   }
-  if (lives_system(com, TRUE)) {
-    workdir_warning();
-  }
+  ret = run_prefs_command(com);
   lives_free(com);
+  return ret;
 }
 
 
-void set_list_pref(const char *key, LiVESList *values) {
+int set_list_pref(const char *key, LiVESList *values) {
   // set pref from a list of values
   LiVESList *xlist = values;
   char *string = NULL, *tmp;
+  int ret;
 
   while (xlist != NULL) {
     if (string == NULL) string = lives_strdup((char *)xlist->data);
@@ -398,9 +421,10 @@ void set_list_pref(const char *key, LiVESList *values) {
 
   if (string == NULL) string = lives_strdup("");
 
-  set_pref(key, string);
+  ret = set_pref(key, string);
 
   lives_free(string);
+  return ret;
 }
 
 
@@ -413,12 +437,13 @@ void set_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA
 }
 
 
-void set_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
+int set_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
   char *myval = lives_strdup_printf("%d %d %d %d", lcol->red, lcol->green, lcol->blue, lcol->alpha);
   char *com = lives_strdup_printf("%s set_pref \"%s\" \"%s\"", prefs->backend_sync, key, myval);
-  lives_system(com, FALSE);
+  int ret = run_prefs_command(com);
   lives_free(com);
   lives_free(myval);
+  return ret;
 }
 
 
@@ -428,50 +453,50 @@ void set_palette_prefs(void) {
   lcol.red = palette->style;
   lcol.green = lcol.blue = lcol.alpha = 0;
 
-  set_colour_pref(THEME_DETAIL_STYLE, &lcol);
+  if (set_colour_pref(THEME_DETAIL_STYLE, &lcol)) return;
 
-  set_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path);
-  set_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path);
+  if (set_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path)) return;
+  if (set_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->normal_fore);
-  set_colour_pref(THEME_DETAIL_NORMAL_FORE, &lcol);
+  if (set_colour_pref(THEME_DETAIL_NORMAL_FORE, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->normal_back);
-  set_colour_pref(THEME_DETAIL_NORMAL_BACK, &lcol);
+  if (set_colour_pref(THEME_DETAIL_NORMAL_BACK, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->menu_and_bars_fore);
-  set_colour_pref(THEME_DETAIL_ALT_FORE, &lcol);
+  if (set_colour_pref(THEME_DETAIL_ALT_FORE, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->menu_and_bars);
-  set_colour_pref(THEME_DETAIL_ALT_BACK, &lcol);
+  if (set_colour_pref(THEME_DETAIL_ALT_BACK, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->info_text);
-  set_colour_pref(THEME_DETAIL_INFO_TEXT, &lcol);
+  if (set_colour_pref(THEME_DETAIL_INFO_TEXT, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->info_base);
-  set_colour_pref(THEME_DETAIL_INFO_BASE, &lcol);
+  if (set_colour_pref(THEME_DETAIL_INFO_BASE, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->mt_timecode_fg);
-  set_colour_pref(THEME_DETAIL_MT_TCFG, &lcol);
+  if (set_colour_pref(THEME_DETAIL_MT_TCFG, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->mt_timecode_bg);
-  set_colour_pref(THEME_DETAIL_MT_TCBG, &lcol);
+  if (set_colour_pref(THEME_DETAIL_MT_TCBG, &lcol)) return;
 
-  set_colour_pref(THEME_DETAIL_AUDCOL, &palette->audcol);
-  set_colour_pref(THEME_DETAIL_VIDCOL, &palette->vidcol);
-  set_colour_pref(THEME_DETAIL_FXCOL, &palette->fxcol);
+  if (set_colour_pref(THEME_DETAIL_AUDCOL, &palette->audcol)) return;
+  if (set_colour_pref(THEME_DETAIL_VIDCOL, &palette->vidcol)) return;
+  if (set_colour_pref(THEME_DETAIL_FXCOL, &palette->fxcol)) return;
 
-  set_colour_pref(THEME_DETAIL_MT_TLREG, &palette->mt_timeline_reg);
-  set_colour_pref(THEME_DETAIL_MT_MARK, &palette->mt_mark);
-  set_colour_pref(THEME_DETAIL_MT_EVBOX, &palette->mt_evbox);
+  if (set_colour_pref(THEME_DETAIL_MT_TLREG, &palette->mt_timeline_reg)) return;
+  if (set_colour_pref(THEME_DETAIL_MT_MARK, &palette->mt_mark)) return;
+  if (set_colour_pref(THEME_DETAIL_MT_EVBOX, &palette->mt_evbox)) return;
 
-  set_colour_pref(THEME_DETAIL_FRAME_SURROUND, &palette->frame_surround);
+  if (set_colour_pref(THEME_DETAIL_FRAME_SURROUND, &palette->frame_surround)) return;
 
-  set_colour_pref(THEME_DETAIL_CE_SEL, &palette->ce_sel);
-  set_colour_pref(THEME_DETAIL_CE_UNSEL, &palette->ce_unsel);
+  if (set_colour_pref(THEME_DETAIL_CE_SEL, &palette->ce_sel)) return;
+  if (set_colour_pref(THEME_DETAIL_CE_UNSEL, &palette->ce_unsel)) return;
 
-  set_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path);
-  set_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path);
+  if (set_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path)) return;
+  if (set_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path)) return;
 }
 
 

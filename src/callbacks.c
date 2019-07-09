@@ -547,6 +547,13 @@ void lives_exit(int signum) {
   lives_freep((void **)&trString);
 #endif
 
+  if (prefs->def_workdir != NULL) {
+    lives_rmdir(prefs->def_workdir, TRUE);
+    lives_free(prefs->def_workdir);
+    prefs->def_workdir = NULL;
+    lives_rm(capable->rcfile);
+  }
+
   tmp = lives_strdup_printf("%d", signum);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, tmp);
   lives_free(tmp);

@@ -57,7 +57,7 @@ $rc_filename = ".lives";
 $lives_home_dir = "$home/.lives-dir";
 
 # default temporary directory (can be overridden from the GUI)
-$default_workdir = "$home";
+$default_workdir = "$home/livestmp";
 $nulfile = "/dev/null";
 
 $encoder = "ffmpeg_encoder";
@@ -71,18 +71,19 @@ $smog_convert_command = "convert -quiet";
 if (defined($ARGV[0])) {
     $command = $ARGV[0];
 
-    unless($command eq "version") {
+    unless ($command eq "version") {
         my $rcfile = "$home/$rc_filename";
         if (-f $rcfile) {
             $workdir = &rc_get("session_tempdir");
 
             if ($workdir eq "" || $command eq "report") {
                 $workdir = &rc_get("tempdir");
-                $priority = 1; ## set it as first key if not found in rc file
-                &rc_set("session_tempdir", "$workdir");
-                $priority = 0;
-            }
-
+		unless ($workdir eq "") {
+		    $priority = 1; ## set it as first key if not found in rc file
+		    &rc_set("session_tempdir", "$workdir");
+		    $priority = 0;
+		}
+	    }
         }
     }
 
@@ -253,6 +254,10 @@ if (defined($ARGV[0])) {
                 $gui_bootstrap_file = $ARGV[1];
             }
 
+	    if (defined($ARGV[2])) {
+                $default_workdir = $ARGV[2];
+            }
+
             if (! -d "$lives_home_dir") {
 		# this can fail here, but succeed later
 		smog_system("/bin/mkdir -p \"$lives_home_dir\"");
@@ -292,10 +297,36 @@ if (defined($ARGV[0])) {
             &rc_set_if_not_set("version", "$version");
 	    $priority = 1; ## set it as first key if not found in rc file
             if (!&rc_set_if_not_set("tempdir", "$default_workdir")) {
+		# if working dir not set, then use default passed from frontend
+		# and force the user to change it in the GUI
+
+		$workdir = $default_workdir;
                 $startup_phase = -1;
                 &rc_set("startup_phase", -1);
 	    }
+	    # create the working directory if non existing
+	    if (! -d "$workdir") {
+		$smerr = smog_system("/bin/mkdir -p \"$workdir\"");
+		if ($smerr) {
+		    if ($workdir eq $default_workdir) {
+			exit 5;
+		    }
+		    else {
+			exit 6;
+		    }
+		}
+	    }
 	    $priority = 0;
+
+	    ## check we can write to workdir
+	    unlink "$workdir/liveswritetest";
+
+	    $smres = smog_system("touch \"$workdir/liveswritetest\"");
+	    if ($smres) {
+		exit 6;
+	    }
+	    
+	    unlink "$workdir/liveswritetest";
 
             if (defined($dyneversion)) {
                 &rc_set_if_not_set("lib_dir", "/opt/$dyneversion/lib/");
@@ -7708,6 +7739,7 @@ sub weed {
                             unless (-f "$workdir/$file/noprune") {
                                 smog_chdir("$workdir/$file");
                                 &prune;
+				unlink glob "$workdir/$file/lock.*";
                                 smog_chdir("$workdir");
                             }
                         }
@@ -7715,12 +7747,15 @@ sub weed {
                     }
                 }
                 else {
-		    # dir is of no interest
                     $in_set=0;
                     find (\&fndset,"$workdir/$file/");
-                    if (!$in_set && !($opts & 0x01)) {
-			smog_system("/bin/rm -rf \"$workdir/$file\"");
-                    }
+                    if (!$in_set) {
+			if (!($opts & 0x01)) {
+			    if (-f "$workdir/$file/order" || (int($file) > 65535 && $file =~ /^[0-9]*$/)) { 
+				smog_system("/bin/rm -rf \"$workdir/$file\"");
+			    }
+			}
+		    }
                     else {
                         unless ($opts & 0x02) {
                             unless (-f "$workdir/$file/noprune") {
@@ -7762,7 +7797,7 @@ sub weed {
     unless ($opts & 0x10) {
 	# clean up a few extra remnants
         smog_chdir("$workdir");
-        unlink glob ".* rfx.* smogplugin.* lock.* keep_layout*";
+        unlink glob "rfx.* .smogplugin.* .smogval.* keep_layout*";
         unless (!defined($new_work)||$new_work eq "") {
             unlink glob "firew.* encoder_log_* stream.*";
         }

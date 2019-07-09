@@ -2345,8 +2345,21 @@ capability *get_capabilities(void) {
   lives_snprintf(prefs->backend, PATH_MAX, "%s", BACKEND_NAME);
   if ((tmp = lives_find_program_in_path(BACKEND_NAME)) == NULL) return capable;
   lives_free(tmp);
-  lives_snprintf(string, 256, "%s report \"%s\" 2>%s", prefs->backend_sync,
-                 (tmp = lives_filename_from_utf8(safer_bfile, -1, NULL, NULL, NULL)),
+
+  prefs->def_workdir = lives_build_path(capable->home_dir, "livestmp-XXXXXX", NULL);
+
+  capable->smog_version_correct = TRUE;
+  capable->can_write_to_home = FALSE;
+  if (mkdtemp(prefs->def_workdir) == NULL) {
+    lives_free(prefs->def_workdir);
+    prefs->def_workdir = NULL;
+    return capable;
+  }
+  capable->smog_version_correct = FALSE;
+  capable->can_write_to_home = TRUE;
+
+  lives_snprintf(string, 256, "%s report \"%s\" \"%s\" 2>%s", prefs->backend_sync,
+                 (tmp = lives_filename_from_utf8(safer_bfile, -1, NULL, NULL, NULL)), prefs->def_workdir,
                  LIVES_DEVNULL);
 
   lives_free(tmp);
@@ -2382,12 +2395,16 @@ capability *get_capabilities(void) {
   capable->can_write_to_config_new = TRUE;
 
   if (err == 5) {
-    // couldnt write to bootstrap file
+    // couldnt write to home
     capable->can_write_to_home = FALSE;
     return capable;
   }
 
-  // TODO - do we actually test for this ?
+  if (err == 6) {
+    // couldnt write to workdir
+    return capable;
+  }
+
   capable->can_write_to_workdir = TRUE;
 
   if (!(bootfile = fopen(safer_bfile, "r"))) {
@@ -2424,6 +2441,12 @@ capability *get_capabilities(void) {
 
   lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
   lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
+
+  if (strcmp(prefs->workdir, prefs->def_workdir)) {
+    lives_rmdir(prefs->def_workdir, TRUE);
+    lives_free(prefs->def_workdir);
+    prefs->def_workdir = NULL;
+  }
 
   prefs->startup_phase = atoi(array[2]);
 
@@ -2654,6 +2677,11 @@ static boolean lives_startup(livespointer data) {
       // get initial workdir
       if (!do_workdir_query()) {
         lives_exit(0);
+      }
+      if (prefs->def_workdir != NULL) {
+        lives_rmdir(prefs->def_workdir, TRUE);
+        lives_free(prefs->def_workdir);
+        prefs->def_workdir = NULL;
       }
       prefs->startup_phase = 2;
       set_int_pref(PREF_STARTUP_PHASE, 2);

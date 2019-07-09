@@ -388,6 +388,8 @@ typedef struct {
   int msg_textsize;
 
   double screen_scale;
+
+  char *def_workdir;
 } _prefs;
 
 enum {

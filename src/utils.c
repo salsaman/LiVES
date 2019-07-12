@@ -4712,6 +4712,27 @@ boolean is_writeable_dir(const char *dir) {
 }
 
 
+boolean lives_make_writeable_dir(const char *newdir) {
+  int ret = lives_mkdir_with_parents(newdir, capable->umask);
+  int myerrno = errno;
+  if (!check_dir_access(newdir)) {
+    // abort if we cannot create the new subdir
+    if (myerrno == EINVAL) {
+      LIVES_ERROR("Could not write to directory");
+    } else LIVES_ERROR("Could not create directory");
+    LIVES_ERROR(newdir);
+    mainw->com_failed = FALSE;
+    return FALSE;
+  } else {
+    if (ret != -1) {
+      LIVES_INFO("Created directory");
+      LIVES_INFO(newdir);
+    }
+  }
+  return TRUE;
+}
+
+
 uint64_t get_fs_free(const char *dir) {
   // get free space in bytes for volume containing directory dir
   // return 0 if we cannot create/write to dir

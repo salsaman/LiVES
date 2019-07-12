@@ -7718,7 +7718,7 @@ sub weed {
     smog_chdir("$workdir");
 
     # get starting disk space
-    my $start_total=(split / /, (smog_system_direct("du -sb 2>$nulfile")))[0];
+    my $start_total=(split / /, (smog_system_direct("du -sb . 2>$nulfile")))[0];
 
     use File::Find;
     opendir DIR,$workdir;
@@ -7802,7 +7802,8 @@ sub weed {
     }
 
     # total disk space at end
-    my $end_total=(split / /, (smog_system_direct("du -sb")))[0];
+    smog_chdir("$workdir");
+    my $end_total=(split / /, (smog_system_direct("du -sb .")))[0];
 
     # return disk space gained (in bytes)
     return $start_total-$end_total;

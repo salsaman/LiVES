@@ -62,14 +62,13 @@ boolean do_workdir_query(void) {
   uint64_t freesp;
 
   int response;
-  boolean ok = FALSE;
 
   char *dirname;
 
 top:
   renamew = create_rename_dialog(6);
 
-  while (!ok) {
+  while (1) {
     response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
 
     if (response == LIVES_RESPONSE_CANCEL) return FALSE;
@@ -123,17 +122,17 @@ top:
         }
       }
     }
-    ok = TRUE;
+    if (!lives_make_writeable_dir(dirname)) {
+      do_blocking_error_dialogf(
+        _("LiVES could not write to the directory\n%s\nPlease check permissions for the parent directory,\nand try again.\n"), dirname);
+      lives_free(dirname);
+      continue;
+    }
+    break;
   }
 
   lives_widget_destroy(renamew->dialog);
   lives_freep((void **)&renamew);
-
-  mainw->com_failed = FALSE;
-
-  if (!lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) {
-    if (lives_mkdir_with_parents(dirname, capable->umask) == -1) goto top;
-  }
 
   lives_snprintf(prefs->workdir, PATH_MAX, "%s", dirname);
   lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);

@@ -4744,25 +4744,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (!is_append) {
       // create new dir, in case it doesn't already exist
       dfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
-      if (lives_mkdir_with_parents(dfile, capable->umask) == -1) {
-        if (!check_dir_access(dfile)) {
-          // abort if we cannot create the new subdir
-          LIVES_ERROR("Could not create directory");
-          LIVES_ERROR(dfile);
-          d_print_file_error_failed();
-          lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", old_set);
-          lives_free(dfile);
-          end_threaded_dialog();
-          return FALSE;
-        }
-      }
-      lives_free(dfile);
-    }
-  } else {
-    // saving as same name (or as new set)
-    dfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
-    if (lives_mkdir_with_parents(dfile, capable->umask) == -1) {
-      if (!check_dir_access(dfile)) {
+      if (!lives_make_writeable_dir(dfile)) {
         // abort if we cannot create the new subdir
         LIVES_ERROR("Could not create directory");
         LIVES_ERROR(dfile);
@@ -4772,6 +4754,20 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         end_threaded_dialog();
         return FALSE;
       }
+      lives_free(dfile);
+    }
+  } else {
+    // saving as same name (or as new set)
+    dfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
+    if (!lives_make_writeable_dir(dfile)) {
+      // abort if we cannot create the new subdir
+      LIVES_ERROR("Could not create directory");
+      LIVES_ERROR(dfile);
+      d_print_file_error_failed();
+      lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", old_set);
+      lives_free(dfile);
+      end_threaded_dialog();
+      return FALSE;
     }
     lives_free(dfile);
   }

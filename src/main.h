@@ -257,6 +257,7 @@ typedef int lives_pgid_t;
 #  define GNU_CONST  __attribute__((const))
 #  define GNU_MALLOC  __attribute__((malloc))
 #  define GNU_ALIGN(x) __attribute__((alloc_align(x)))
+#  define GNU_NORETURN __attribute__((noreturn))
 #else
 #  define WARN_UNUSED
 #  define GNU_PURE
@@ -264,6 +265,7 @@ typedef int lives_pgid_t;
 #  define GNU_MALLOC
 #  define GNU_DEPRECATED(msg)
 #  define GNU_ALIGN(x)
+#  define GNU_NORETURN
 #endif
 
 #ifdef PRODUCE_LOG
@@ -1094,7 +1096,7 @@ typedef void (*SignalHandlerPointer)(int);
 void set_signal_handlers(SignalHandlerPointer sigfunc);
 void catch_sigint(int signum);
 void defer_sigint(int signum);
-boolean startup_message_fatal(const char *msg);
+void startup_message_fatal(const char *msg) GNU_NORETURN;
 boolean startup_message_choice(const char *msg, int msgtype);
 boolean startup_message_nonfatal(const char *msg);
 boolean startup_message_info(const char *msg);
@@ -1276,6 +1278,7 @@ boolean prepare_to_play_foreign(void);
 boolean after_foreign_play(void);
 boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists
 boolean check_dir_access(const char *dir);
+boolean lives_make_writeable_dir(const char *newdir);
 uint64_t get_file_size(int fd);
 uint64_t sget_file_size(const char *name);
 uint64_t get_fs_free(const char *dir);

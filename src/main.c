@@ -3245,7 +3245,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           continue;
         }
         if (!strcmp(charopt, "tmpdir")) {
-          int ret,  myerrno;
           mainw->has_session_workdir = TRUE;
           // override tempdir (workdir) setting
           lives_snprintf(prefs->workdir, PATH_MAX, "%s", optarg);
@@ -3253,22 +3252,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           set_pref(PREF_SESSION_WORKDIR, prefs->workdir);
           lives_snprintf(mainw->first_info_file, PATH_MAX, "%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d", prefs->workdir, capable->mainpid);
 
-          ret = lives_mkdir_with_parents(prefs->workdir, capable->umask);
-          myerrno = errno;
-          if (!check_dir_access(prefs->workdir)) {
+          if (!lives_make_writeable_dir(prefs->workdir)) {
             // abort if we cannot create the new subdir
-            if (myerrno == EINVAL) {
-              LIVES_ERROR("Could not write to directory");
-            } else LIVES_ERROR("Could not create directory");
-            LIVES_ERROR(prefs->workdir);
             capable->can_write_to_workdir = FALSE;
-          } else {
-            if (ret != -1) {
-              LIVES_INFO("Created directory");
-              LIVES_INFO(prefs->workdir);
-            }
           }
-          mainw->com_failed = FALSE;
           continue;
         }
         if (!strcmp(charopt, "yuvin")) {
@@ -3464,7 +3451,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
           continue;
         }
-
       }
       if (optind < argc) {
         // remaining opts are filename [start_time] [end_frame]
@@ -3511,12 +3497,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 }
 
 
-boolean startup_message_fatal(const char *msg) {
+void startup_message_fatal(const char *msg) {
   if (mainw->splash_window != NULL) splash_end();
   do_blocking_error_dialog(msg);
   mainw->startup_error = TRUE;
   lives_exit(0);
-  return TRUE;
+  _exit(0);
 }
 
 

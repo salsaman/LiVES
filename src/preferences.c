@@ -2266,7 +2266,7 @@ static void on_forcesmon_toggled(LiVESToggleButton *tbutton, livespointer user_d
   lives_widget_set_sensitive(prefsw->spinbutton_pmoni, !lives_toggle_button_get_active(tbutton));
   lives_widget_set_sensitive(prefsw->ce_thumbs, !lives_toggle_button_get_active(tbutton) &&
                              play_monitor != gui_monitor &&
-                             play_monitor != 0 && capable->nmonitors > 0);
+                             play_monitor != 0 && capable->nmonitors > 1);
 }
 
 
@@ -2276,7 +2276,7 @@ static void pmoni_gmoni_changed(LiVESWidget *sbut, livespointer user_data) {
   int play_monitor = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   lives_widget_set_sensitive(prefsw->ce_thumbs, play_monitor != gui_monitor &&
                              play_monitor != 0 && !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->forcesmon)) &&
-                             capable->nmonitors > 0);
+                             capable->nmonitors > 1);
 }
 
 
@@ -3011,7 +3011,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   lives_widget_set_sensitive(prefsw->ce_thumbs, prefs->play_monitor != prefs->gui_monitor &&
                              prefs->play_monitor != 0 && !prefs->force_single_monitor &&
-                             capable->nmonitors > 0);
+                             capable->nmonitors > 1);
 
   pmoni_gmoni_changed(NULL, (livespointer)prefsw);
 

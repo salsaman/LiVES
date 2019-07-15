@@ -4024,8 +4024,9 @@ void load_start_image(int frame) {
 
   if (mainw->multitrack != NULL) return;
 
-  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
-      (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
+  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
+      (!mainw->ext_playback ||
+       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
@@ -4224,8 +4225,9 @@ void load_end_image(int frame) {
 
   if (mainw->multitrack != NULL) return;
 
-  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
-      (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
+  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
+      (!mainw->ext_playback ||
+       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
@@ -5914,7 +5916,7 @@ void load_frame_image(int frame) {
         }
       }
 
-      if ((!mainw->fs || prefs->play_monitor != prefs->gui_monitor ||
+      if ((!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && capable->nmonitors > 1) ||
            (mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)))
           && !prefs->hide_framebar) {
         lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
@@ -7758,7 +7760,8 @@ void load_frame_image(int frame) {
     }
 
     if (new_file == mainw->current_file && (mainw->playing_file == -1 || mainw->playing_file == mainw->current_file)) {
-      if (!((mainw->fs && prefs->gui_monitor == prefs->play_monitor) || (mainw->faded && mainw->double_size && !mainw->fs) ||
+      if (!((mainw->fs && (prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1)) || (mainw->faded && mainw->double_size &&
+            !mainw->fs) ||
             mainw->multitrack != NULL)) {
         switch_to_file(mainw->current_file = 0, new_file);
         if (mainw->play_window != NULL && !mainw->double_size && !mainw->fs && CURRENT_CLIP_IS_VALID &&

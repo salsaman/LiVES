@@ -117,8 +117,9 @@ void make_custom_submenus(void) {
 #if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
-  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
-      (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
+  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
+      (!mainw->ext_playback ||
+       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (CURRENT_CLIP_IS_VALID) {
@@ -132,8 +133,9 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 
 boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
-  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || (prefs->gui_monitor == prefs->play_monitor && (!mainw->ext_playback ||
-      (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
+  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1)  &&
+      (!mainw->ext_playback ||
+       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (CURRENT_CLIP_IS_VALID) {
@@ -4255,7 +4257,7 @@ void resize_play_window(void) {
     }
   }
 
-  if (!mainw->fs) lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+  if (!mainw->fs || mainw->playing_file == -1) lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
 
   lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
 

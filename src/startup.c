@@ -65,7 +65,6 @@ boolean do_workdir_query(void) {
 
   char *dirname;
 
-top:
   renamew = create_rename_dialog(6);
 
   while (1) {

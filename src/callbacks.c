@@ -6945,7 +6945,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           if (!prefs->hide_framebar && !mainw->faded && ((!mainw->preview && (CURRENT_CLIP_HAS_VIDEO || mainw->foreign)) || cfile->opening)) {
             lives_widget_show(mainw->framebar);
           }
-          if ((!mainw->faded && mainw->fs && ((prefs->play_monitor != prefs->gui_monitor && prefs->play_monitor > 0))) ||
+          if ((!mainw->faded && mainw->fs && ((prefs->play_monitor != prefs->gui_monitor && prefs->play_monitor > 0 && capable->nmonitors > 1))) ||
               (mainw->fs && mainw->vpp != NULL &&
                !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
             unfade_background();
@@ -7077,7 +7077,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_showfct_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   prefs->hide_framebar = !prefs->hide_framebar;
-  if (!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && mainw->play_window != NULL)) {
+  if (!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && mainw->play_window != NULL && capable->nmonitors > 1)) {
     if (!prefs->hide_framebar) {
       lives_widget_show(mainw->framebar);
     } else {
@@ -7103,14 +7103,15 @@ void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_fade_pressed(LiVESButton *button, livespointer user_data) {
   // toolbar button (unblank background)
-  if (mainw->fs && (mainw->play_window == NULL || prefs->play_monitor == prefs->gui_monitor)) return;
+  if (mainw->fs && (mainw->play_window == NULL || (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1))) return;
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->fade), !mainw->faded);
 }
 
 
 void on_fade_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->faded = !mainw->faded;
-  if (mainw->playing_file > -1 && (!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && mainw->play_window != NULL))) {
+  if (mainw->playing_file > -1 && (!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && mainw->play_window != NULL &&
+                                   capable->nmonitors > 1))) {
     if (mainw->faded) {
       lives_widget_hide(mainw->framebar);
       fade_background();
@@ -8732,7 +8733,7 @@ EXPOSE_FN_DECL(expose_vid_event, widget) {
   if (mainw->draw_blocked) return TRUE;
 
   if (!prefs->show_gui || mainw->multitrack != NULL ||
-      (mainw->fs && (prefs->play_monitor == prefs->gui_monitor ||
+      (mainw->fs && ((prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1) ||
                      prefs->play_monitor == 0) && mainw->playing_file > -1 &&
        !(mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) ||
       mainw->foreign) {
@@ -8883,7 +8884,7 @@ EXPOSE_FN_DECL(expose_laud_event, widget) {
   if (mainw->draw_blocked) return TRUE;
 
   if (!prefs->show_gui || mainw->multitrack != NULL ||
-      (mainw->fs && (prefs->play_monitor == prefs->gui_monitor ||
+      (mainw->fs && (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1 ||
                      prefs->play_monitor == 0) && mainw->playing_file > -1 &&
        !(mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) ||
       mainw->foreign) {
@@ -8923,7 +8924,7 @@ EXPOSE_FN_DECL(expose_raud_event, widget) {
   if (mainw->draw_blocked) return TRUE;
 
   if (!prefs->show_gui || mainw->multitrack != NULL ||
-      (mainw->fs && (prefs->play_monitor == prefs->gui_monitor ||
+      (mainw->fs && (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1 ||
                      prefs->play_monitor == 0) && mainw->playing_file > -1 &&
        !(mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) ||
       mainw->foreign) {

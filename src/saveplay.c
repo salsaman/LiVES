@@ -4840,7 +4840,7 @@ int save_to_scrap_file(weed_plant_t *layer) {
     lives_free(dir);
   }
 
-  if ((!mainw->fs || prefs->play_monitor != prefs->gui_monitor) && !prefs->hide_framebar && !mainw->faded) {
+  if ((!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && capable->nmonitors > 1)) && !prefs->hide_framebar && !mainw->faded) {
     double scrap_mb = (double)scrapfile->f_size / 1000000.;
     if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
       // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)

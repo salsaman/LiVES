@@ -197,10 +197,6 @@ static void weed_params_to_frei0r_params(weed_plant_t *inst, weed_plant_t **in_p
 }
 
 
-
-
-
-
 int frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
 

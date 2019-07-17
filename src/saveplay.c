@@ -1364,7 +1364,7 @@ void save_file(int clip, int start, int end, const char *filename) {
 
     // pull at least one frame so we know the file ext
     if (sfile->clip_type == CLIP_TYPE_FILE) {
-      resb = virtual_to_images(clip, start, end, TRUE, NULL);
+      resb = virtual_to_images(clip, start, start, TRUE, NULL);
 
       if (!resb) {
         lives_freep((void **)&mainw->subt_save_file);
@@ -1539,7 +1539,6 @@ void save_file(int clip, int start, int end, const char *filename) {
       mainw->cancelled = CANCEL_NONE;
       cfile->progress_start = 1;
       cfile->progress_end = count_virtual_frames(sfile->frame_index, start, end);
-
       do_threaded_dialog(_("Pulling frames from clip..."), TRUE);
       resb = virtual_to_images(clip, start, end, TRUE, NULL);
       end_threaded_dialog();

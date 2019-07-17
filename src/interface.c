@@ -1041,8 +1041,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 
   if (has_cancel) {
     LiVESWidget *cancelbutton;
-
-    if (mainw->current_file > -1 && cfile != NULL && cfile->opening_only_audio) {
+    if (CURRENT_CLIP_IS_VALID && cfile->opening_only_audio) {
       LiVESWidget *enoughbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("_Enough"), LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_default(enoughbutton, TRUE);
 

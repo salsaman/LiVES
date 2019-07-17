@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-07-08 23:10-0300\n"
+"POT-Creation-Date: 2019-07-17 17:37-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -540,7 +540,7 @@ msgstr ""
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 
-#: src/main.c:2756 src/gui.c:1118
+#: src/main.c:2756 src/gui.c:1120
 msgid "Starting GUI..."
 msgstr "מפעיל את מנשק המשתמש הגרפי..."
 
@@ -656,59 +656,59 @@ msgstr "טעינת תוספים לאפקטים מוכנים..."
 msgid "Autoloading set %s..."
 msgstr "מתבצעת טעינה אוטומטית של האוסף %s..."
 
-#: src/main.c:3373
+#: src/main.c:3360
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "נגן שמע בלתי תקין %s\n"
 
-#: src/main.c:3379
+#: src/main.c:3366
 #, fuzzy
 msgid "external"
 msgstr "- פנימי -"
 
-#: src/main.c:3382
+#: src/main.c:3369
 #, fuzzy
 msgid "internal"
 msgstr "- פנימי -"
 
-#: src/main.c:3383
+#: src/main.c:3370
 #, fuzzy, c-format
 msgid "Invalid audio source %s\n"
 msgstr "נגן שמע בלתי תקין %s\n"
 
-#: src/main.c:3559 src/main.c:3568
+#: src/main.c:3545 src/main.c:3554
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s <%s> %dx%d : %d שקופיות %d bpp %.3f שקופיות לשנייה"
 
-#: src/main.c:3565
+#: src/main.c:3551
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s <%s> %dx%d : ??? שקופיות ??? bpp %.3f שקופיות לשנייה"
 
-#: src/main.c:3575
+#: src/main.c:3561
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s <ללא קובץ>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:5899
+#: src/main.c:5887
 #, c-format
 msgid "rec %9d/%d"
 msgstr "הקלטה %9d/%d"
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:5904
+#: src/main.c:5892
 #, c-format
 msgid "!rec %9d/%d"
 msgstr "!הקלטה %9d/%d"
 
-#: src/main.c:6184 src/main.c:6185 src/gui.c:1962 src/gui.c:3269
+#: src/main.c:6172 src/main.c:6173 src/gui.c:1964 src/gui.c:3271
 #: src/saveplay.c:2131
 msgid "Play"
 msgstr "נגן"
 
-#: src/main.c:6934
+#: src/main.c:6922
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -716,18 +716,18 @@ msgstr ""
 "ל־LiVES לא הית אפשרות ללכוד תמונה זו\n"
 "\n"
 
-#: src/main.c:7066
+#: src/main.c:7054
 #, fuzzy, c-format
 msgid "Closed clip %s\n"
 msgstr "הקובץ %s נסגר\n"
 
-#: src/main.c:7243 src/gui.c:736 src/utils.c:3876 src/utils.c:3905
-#: src/saveplay.c:3312 src/multitrack.c:4807 src/multitrack.c:6668
+#: src/main.c:7231 src/gui.c:738 src/utils.c:3877 src/utils.c:3906
+#: src/saveplay.c:3313 src/multitrack.c:4807 src/multitrack.c:6668
 msgid "_Undo"
 msgstr "_ביטול"
 
-#: src/main.c:7244 src/gui.c:751 src/utils.c:3877 src/utils.c:3906
-#: src/saveplay.c:3313 src/multitrack.c:4826 src/multitrack.c:6691
+#: src/main.c:7232 src/gui.c:753 src/utils.c:3878 src/utils.c:3907
+#: src/saveplay.c:3314 src/multitrack.c:4826 src/multitrack.c:6691
 msgid "_Redo"
 msgstr "ב_צע שוב"
 
@@ -780,11 +780,24 @@ msgid ""
 "Please try again and choose a different location.\n"
 msgstr ""
 
-#: src/startup.c:86
+#: src/startup.c:84
 msgid "Directory name is too long !"
 msgstr "שם התיקייה ארוך מדי !"
 
-#: src/startup.c:195
+#: src/startup.c:126
+#, fuzzy, c-format
+msgid ""
+"LiVES could not write to the directory\n"
+"%s\n"
+"Please check permissions for the parent directory,\n"
+"and try again.\n"
+msgstr ""
+"\n"
+"ל־LiVES לא הייתה אפשרות לכתוב לקובץ:\n"
+"%s\n"
+"נא לבדוק את הרשאות הקובץ ולנסות שוב."
+
+#: src/startup.c:193
 msgid ""
 "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
 "\n"
@@ -792,7 +805,7 @@ msgstr ""
 "ארע כשלון בנסיון להפעיל את נגן השמע שנבחר !\n"
 "\n"
 
-#: src/startup.c:201
+#: src/startup.c:199
 msgid ""
 "Before starting LiVES, you need to choose an audio player.\n"
 "\n"
@@ -802,7 +815,7 @@ msgstr ""
 "\n"
 "Pulse Audio מומלץ לרוב המשתמשים."
 
-#: src/startup.c:204
+#: src/startup.c:202
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
@@ -810,7 +823,7 @@ msgstr ""
 ", אולם גרסה זו של LiVES לא הודרה עם תמיכה ב־pulse audio.\n"
 "\n"
 
-#: src/startup.c:208
+#: src/startup.c:206
 #, fuzzy
 msgid ""
 ", but you do not have pulseaudio installed on your system.\n"
@@ -821,11 +834,11 @@ msgstr ""
 " מומלץ להתקין אותו לפני הרצת LiVES.\n"
 "\n"
 
-#: src/startup.c:212
+#: src/startup.c:210
 msgid "JACK audio is recommended for pro users"
 msgstr "JACK מומלץ למשתמשים מקצועיים"
 
-#: src/startup.c:215
+#: src/startup.c:213
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
@@ -833,7 +846,7 @@ msgstr ""
 ", אולם גרסה זו של LiVES לא הודרה עם תמיכה ב־jack.\n"
 "\n"
 
-#: src/startup.c:218
+#: src/startup.c:216
 msgid ""
 ", but you do not have jackd installed. You may wish to install jackd first "
 "before running LiVES.\n"
@@ -843,7 +856,7 @@ msgstr ""
 "LiVES.\n"
 "\n"
 
-#: src/startup.c:221
+#: src/startup.c:219
 #, fuzzy
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
@@ -855,11 +868,11 @@ msgstr ""
 "אם LiVES לא יפעל עם jack, ניתן להפעילו מחדש עם נגן שמע אחר.\n"
 "\n"
 
-#: src/startup.c:226
+#: src/startup.c:224
 msgid "SOX may be used if neither of the preceding players work, "
 msgstr "ניתן להשתמש ב־SOX אם אף אחד מהנגנים האחרים לא עובד, "
 
-#: src/startup.c:229
+#: src/startup.c:227
 #, fuzzy
 msgid ""
 "but many audio features will be disabled.\n"
@@ -868,7 +881,7 @@ msgstr ""
 "אולם תכונות מסוימות הקשורות לשמע ינוטרלו.\n"
 "\n"
 
-#: src/startup.c:231
+#: src/startup.c:229
 msgid ""
 "but you do not have sox installed.\n"
 "You are advised to install it before running LiVES.\n"
@@ -878,169 +891,169 @@ msgstr ""
 "רצוי להתקינו לפני הרצת LiVES.\n"
 "\n"
 
-#: src/startup.c:244
+#: src/startup.c:242
 #, fuzzy
 msgid "Choose an audio player"
 msgstr "LiVES: - בחירת נגן שמע"
 
-#: src/startup.c:260
+#: src/startup.c:258
 #, fuzzy
 msgid "Use _pulseaudio player"
 msgstr "שימוש בנגן השמע _pulse"
 
-#: src/startup.c:279
+#: src/startup.c:277
 msgid "Use _jack audio player"
 msgstr "שימוש בנגן השמע _jack"
 
-#: src/startup.c:297
+#: src/startup.c:295
 msgid "Use _sox audio player"
 msgstr "שימוש בנגן השמע _sox"
 
-#: src/startup.c:317 src/startup.c:492 src/interface.c:2188
+#: src/startup.c:315 src/startup.c:490 src/interface.c:2191
 msgid "_Next"
 msgstr "_הבא"
 
-#: src/startup.c:355
+#: src/startup.c:353
 msgid "Skipped"
 msgstr "דולג"
 
-#: src/startup.c:370
+#: src/startup.c:368
 msgid "Passed"
 msgstr "עבר בהצלחה"
 
-#: src/startup.c:403
+#: src/startup.c:401
 msgid "Failed"
 msgstr "נכשל"
 
-#: src/startup.c:468
+#: src/startup.c:466
 #, fuzzy
 msgid "Testing Configuration"
 msgstr "LiVES: - בודק את התצורה"
 
-#: src/startup.c:470
+#: src/startup.c:468
 #, fuzzy
 msgid "Troubleshoot"
 msgstr "_איתור תקלות"
 
-#: src/startup.c:482
+#: src/startup.c:480
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr "LiVES יריץ כעת מספר בדיקות תצורה בסיסיות\n"
 
-#: src/startup.c:511
+#: src/startup.c:509
 msgid "Checking for \"sox\" presence"
 msgstr "בודק האם \"sox\" מותקן"
 
-#: src/startup.c:514
+#: src/startup.c:512
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr "יש להתקין את sox כדי להשתמש בכל תכונות השמע ב־LiVES."
 
-#: src/startup.c:521
+#: src/startup.c:519
 msgid "Checking if sox can convert audio"
 msgstr "בודק האם sox יכול להמיר שמע"
 
-#: src/startup.c:544
+#: src/startup.c:542
 #, c-format
 msgid "Unable to allocate %d bytes memory."
 msgstr ""
 
-#: src/startup.c:555
+#: src/startup.c:553
 #, c-format
 msgid "Unable to write to: %s"
 msgstr ""
 
-#: src/startup.c:569 src/startup.c:733
+#: src/startup.c:567 src/startup.c:731
 #, c-format
 msgid "Command failed: %s"
 msgstr ""
 
-#: src/startup.c:591
+#: src/startup.c:589
 msgid "You should install sox_fmt_all or similar"
 msgstr "יש להתקין את sox_fmt_all או דומה לו"
 
-#: src/startup.c:617
+#: src/startup.c:615
 #, fuzzy
 msgid "Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"
 msgstr "בודק אם \"mplayer\" מותקן"
 
-#: src/startup.c:620
+#: src/startup.c:618
 #, fuzzy
 msgid ""
 "You should install mplayer, mplayer2 or mpv to be able to use all the "
 "decoding features in LiVES"
 msgstr "יש להתקין את mplayer כדי להשתמש בכל תכונות הפענוח של LiVES."
 
-#: src/startup.c:628
+#: src/startup.c:626
 #, fuzzy
 msgid "Checking for \"mplayer\" or \"mplayer2\" presence"
 msgstr "בודק אם \"mplayer\" מותקן"
 
-#: src/startup.c:631
+#: src/startup.c:629
 #, fuzzy
 msgid ""
 "You should install mplayer or mplayer2 to be able to use all the decoding "
 "features in LiVES"
 msgstr "יש להתקין את mplayer כדי להשתמש בכל תכונות הפענוח של LiVES."
 
-#: src/startup.c:667
+#: src/startup.c:665
 #, fuzzy, c-format
 msgid "Checking if %s can convert audio"
 msgstr "בודק האם sox יכול להמיר שמע"
 
-#: src/startup.c:689
+#: src/startup.c:687
 #, fuzzy
 msgid "You should install mplayer,mplayer2 or mpv with pcm/wav support"
 msgstr "יש להתקין את mplayer עם תמיכה ב־pcm/wav"
 
-#: src/startup.c:691
+#: src/startup.c:689
 #, fuzzy
 msgid "You should install mplayer or mplayer2 with pcm/wav support"
 msgstr "יש להתקין את mplayer עם תמיכה ב־pcm/wav"
 
-#: src/startup.c:707
+#: src/startup.c:705
 #, fuzzy, c-format
 msgid "Checking if %s can decode to png"
 msgstr "בודק אם mplayer יכול לפענח ל־jpeg"
 
-#: src/startup.c:709
+#: src/startup.c:707
 #, fuzzy, c-format
 msgid "Checking if %s can decode to png/alpha"
 msgstr "בודק אם mplayer יכול לפענח ל־png/alpha"
 
-#: src/startup.c:753
+#: src/startup.c:751
 #, fuzzy, c-format
 msgid "You may wish to upgrade %s to a newer version"
 msgstr "אולי תבקשו לשדרג את mplayer לגרסה עדכנית יותר"
 
-#: src/startup.c:781
+#: src/startup.c:779
 #, fuzzy, c-format
 msgid "Checking if %s can decode to jpeg"
 msgstr "בודק אם mplayer יכול לפענח ל־jpeg"
 
-#: src/startup.c:812
+#: src/startup.c:810
 #, fuzzy, c-format
 msgid "You should install %s with either png or jpeg support"
 msgstr "יש להתקין את mplayer עם תמיכה ב־png/alpha או jpeg"
 
-#: src/startup.c:814
+#: src/startup.c:812
 #, fuzzy, c-format
 msgid "You should install %s with either png/alpha or jpeg support"
 msgstr "יש להתקין את mplayer עם תמיכה ב־png/alpha או jpeg"
 
-#: src/startup.c:819
+#: src/startup.c:817
 #, fuzzy, c-format
 msgid "You may wish to add jpeg output support to %s"
 msgstr "אולי תבקשו להוסיף תמיכה בפלט jpeg ל־mplayer"
 
-#: src/startup.c:829
+#: src/startup.c:827
 msgid "Checking for \"convert\" presence"
 msgstr "בודק האם \"convert\" מותקן"
 
-#: src/startup.c:832
+#: src/startup.c:830
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr "יש להתקין את imageMagick כדי להשתמש בכל האפקטים המוכנים"
 
-#: src/startup.c:850
+#: src/startup.c:848
 msgid ""
 "\n"
 "\n"
@@ -1048,7 +1061,7 @@ msgid ""
 "'mplayer' or 'mplayer2' in order to use all the features of LiVES"
 msgstr ""
 
-#: src/startup.c:859
+#: src/startup.c:857
 msgid ""
 "\n"
 "\n"
@@ -1056,7 +1069,7 @@ msgid ""
 "Preferences/Decoding.    \n"
 msgstr ""
 
-#: src/startup.c:864
+#: src/startup.c:862
 msgid ""
 "\n"
 "\n"
@@ -1068,7 +1081,7 @@ msgstr ""
 "    לחצו על \"ביטול\" כדי לצאת ולהתקין את הרכיבים החסרים, או על \"הבא\" כדי "
 "להמשיך    \n"
 
-#: src/startup.c:892
+#: src/startup.c:890
 msgid ""
 "\n"
 "\n"
@@ -1078,7 +1091,7 @@ msgstr ""
 "\n"
 "לבסוף, תוכלו לבחור את מנשק ההפעלה כברירת מחדל של LiVES.\n"
 
-#: src/startup.c:893
+#: src/startup.c:891
 msgid ""
 "\n"
 "\n"
@@ -1088,7 +1101,7 @@ msgstr ""
 "\n"
 "ל־LiVES ישנם שני מנשקים ראשיים ותוכלו להפעילו עם כל אחד מהם.\n"
 
-#: src/startup.c:894
+#: src/startup.c:892
 msgid ""
 "\n"
 "\n"
@@ -1098,29 +1111,29 @@ msgstr ""
 "\n"
 "ניתן לשנות את ברירת־המחדל בכל עת מההעדפות.\n"
 
-#: src/startup.c:902
+#: src/startup.c:900
 #, fuzzy
 msgid "Choose the Startup Interface"
 msgstr "LiVES: - בחירת מנשק ההפעלה"
 
-#: src/startup.c:912
+#: src/startup.c:910
 msgid "Start in _Clip Edit mode"
 msgstr "הפעלה במצב _עריכת קטע"
 
-#: src/startup.c:914
+#: src/startup.c:912
 msgid "This is the best choice for simple editing tasks and for VJs\n"
 msgstr ""
 
-#: src/startup.c:920
+#: src/startup.c:918
 msgid "Start in _Multitrack mode"
 msgstr "הפעלה במצב _ריבוי רצועות"
 
-#: src/startup.c:922
+#: src/startup.c:920
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr "זוהי בחירה טובה יותר עבור משימות עריכה מורכבות שכוללות קטעים מרובים.\n"
 
-#: src/startup.c:930
+#: src/startup.c:928
 msgid "_Finish"
 msgstr "_סיום"
 
@@ -1141,7 +1154,7 @@ msgstr ""
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr "באם מוגדר, תבוצע פעולת deinterlace על השקופיות בעת הייבוא."
 
-#: src/interface.c:84 src/interface.c:1289 src/gui.c:2143 src/resample.c:1487
+#: src/interface.c:84 src/interface.c:1292 src/gui.c:2145 src/resample.c:1487
 msgid "Video"
 msgstr "וידאו"
 
@@ -1150,12 +1163,12 @@ msgstr "וידאו"
 msgid "[opening...]"
 msgstr "וידאו [פותח...]"
 
-#: src/interface.c:115 src/interface.c:141 src/interface.c:154
+#: src/interface.c:115 src/interface.c:143 src/interface.c:157
 #, c-format
 msgid "%s %s"
 msgstr ""
 
-#: src/interface.c:118 src/interface.c:143 src/interface.c:156
+#: src/interface.c:118 src/interface.c:145 src/interface.c:159
 #, fuzzy, c-format
 msgid "%s [%.2f sec]"
 msgstr "ערוץ אחד [%.2f שניות]"
@@ -1168,41 +1181,41 @@ msgstr "(לא מוגדר)"
 msgid "(No video)"
 msgstr "(אין וידאו)"
 
-#: src/interface.c:135
+#: src/interface.c:137
 msgid "(No audio)"
 msgstr "(אין שמע)"
 
-#: src/interface.c:929 src/callbacks.c:9252 src/callbacks.c:9274
-#: src/callbacks.c:9275 src/gui.c:3271 src/gui.c:3864 src/saveplay.c:2133
+#: src/interface.c:932 src/callbacks.c:9249 src/callbacks.c:9271
+#: src/callbacks.c:9272 src/gui.c:3273 src/gui.c:3866 src/saveplay.c:2133
 #: src/dialogs.c:1603 src/dialogs.c:1604 src/dialogs.c:1873 src/dialogs.c:1874
 #: src/framedraw.c:223 src/multitrack.c:8118
 msgid "Preview"
 msgstr "תצוגה מקדימה"
 
-#: src/interface.c:951
+#: src/interface.c:954
 msgid "Click here to _Preview any selected video, image or audio file"
 msgstr "יש ללחוץ כאן כדי _להציג כל קטע וידאו, תמונה או שמע שנבחרו"
 
-#: src/interface.c:953
+#: src/interface.c:956
 msgid "Click here to _Preview any selected audio file"
 msgstr "יש ללחוץ כאן כדי _להציג כל קטע שמע שנבחר"
 
-#: src/interface.c:955
+#: src/interface.c:958
 msgid "Click here to _Preview the video"
 msgstr "יש ללחוץ כאן כדי _להציג את הוידאו"
 
-#: src/interface.c:957
+#: src/interface.c:960
 #, fuzzy
 msgid "Click here to _Preview the file"
 msgstr "יש ללחוץ כאן כדי _להציג את הוידאו"
 
-#: src/interface.c:999 src/interface.c:1092
+#: src/interface.c:1002 src/interface.c:1095
 #, fuzzy
 msgid "Processing..."
 msgstr "LiVES: - בתהליכי עיבוד..."
 
-#: src/interface.c:1023 src/interface.c:1129 src/callbacks.c:9008
-#: src/callbacks.c:9057
+#: src/interface.c:1026 src/interface.c:1132 src/callbacks.c:9005
+#: src/callbacks.c:9054
 msgid ""
 "\n"
 "Please Wait"
@@ -1210,11 +1223,11 @@ msgstr ""
 "\n"
 "נא להמתין"
 
-#: src/interface.c:1043 src/interface.c:1170
+#: src/interface.c:1046 src/interface.c:1173
 msgid "_Enough"
 msgstr "_מספיק"
 
-#: src/interface.c:1128
+#: src/interface.c:1131
 msgid ""
 "\n"
 "\n"
@@ -1228,167 +1241,167 @@ msgstr ""
 "\n"
 "נא לזכור לכבות את האפקטים (Ctrl-0) לאחר מכן !"
 
-#: src/interface.c:1155
+#: src/interface.c:1158
 msgid "Show Details"
 msgstr ""
 
-#: src/interface.c:1176 src/callbacks.c:9007 src/callbacks.c:9055
+#: src/interface.c:1179 src/callbacks.c:9004 src/callbacks.c:9052
 msgid "Paus_e"
 msgstr "הש_הייה"
 
-#: src/interface.c:1178 src/callbacks.c:9054
+#: src/interface.c:1181 src/callbacks.c:9051
 msgid "Pause/_Enough"
 msgstr "השהייה/_מספיק"
 
-#: src/interface.c:1183 src/framedraw.c:284
+#: src/interface.c:1186 src/framedraw.c:284
 msgid "_Preview"
 msgstr "_תצוגה מקדימה"
 
-#: src/interface.c:1276
+#: src/interface.c:1279
 #, fuzzy
 msgid "Multitrack Details"
 msgstr "_נתוני ריבוי רצועות"
 
-#: src/interface.c:1303 src/interface.c:4187
+#: src/interface.c:1306 src/interface.c:4191
 msgid "Format"
 msgstr "מבנה"
 
-#: src/interface.c:1312
+#: src/interface.c:1315
 msgid "Frame size"
 msgstr "גודל השקופית"
 
-#: src/interface.c:1321
+#: src/interface.c:1324
 msgid "File size"
 msgstr "גודל הקובץ"
 
-#: src/interface.c:1322
+#: src/interface.c:1325
 msgid "Byte size"
 msgstr "גודל הבית"
 
-#: src/interface.c:1331 src/interface.c:2504
+#: src/interface.c:1334 src/interface.c:2507
 msgid "FPS"
 msgstr "שקופיות לשנייה"
 
-#: src/interface.c:1340
+#: src/interface.c:1343
 msgid "Frames"
 msgstr "שקופיות"
 
-#: src/interface.c:1341
+#: src/interface.c:1344
 msgid "Events"
 msgstr "אירועים"
 
-#: src/interface.c:1350 src/interface.c:1411 src/interface.c:1455
+#: src/interface.c:1353 src/interface.c:1414 src/interface.c:1458
 msgid "Total time"
 msgstr "זמן כולל"
 
-#: src/interface.c:1395 src/resample.c:1298
+#: src/interface.c:1398 src/resample.c:1298
 msgid "Audio"
 msgstr "שמע"
 
-#: src/interface.c:1425 src/interface.c:1470
+#: src/interface.c:1428 src/interface.c:1473
 msgid "Rate/size"
 msgstr "קצב/גודל"
 
-#: src/interface.c:1543
+#: src/interface.c:1546
 #, fuzzy
 msgid "Encoding Options"
 msgstr "LiVES : - אפשרויות קידוד"
 
-#: src/interface.c:1547
+#: src/interface.c:1550
 msgid "<------------- (Check the box to re_size as suggested)"
 msgstr ""
 
-#: src/interface.c:1548
+#: src/interface.c:1551
 msgid "<------------- (Check the box to use the _size recommendation)"
 msgstr ""
 
-#: src/interface.c:1568
+#: src/interface.c:1571
 msgid "Use _letterboxing to maintain aspect ratio (optional)"
 msgstr ""
 
-#: src/interface.c:1569
+#: src/interface.c:1572
 msgid ""
 "Draw black rectangles either above or to the sides of the image, to prevent "
 "it from stretching."
 msgstr ""
 
-#: src/interface.c:1597
+#: src/interface.c:1600
 msgid "Keep _my settings"
 msgstr "ש_מירת ההגדרות האישיות"
 
-#: src/interface.c:1599
+#: src/interface.c:1602
 msgid "Use _recommended settings"
 msgstr "שימוש בהגדרות מ_ומלצות"
 
-#: src/interface.c:1670
+#: src/interface.c:1673
 msgid "_Save to file"
 msgstr "_שמירה לקובץ"
 
-#: src/interface.c:1677 src/callbacks.c:8302 src/paramwindow.c:834
+#: src/interface.c:1680 src/callbacks.c:8299 src/paramwindow.c:847
 #: src/omc-learn.c:1399
 msgid "_Close Window"
 msgstr "_סגירת החלון"
 
-#: src/interface.c:1713 src/callbacks.c:3565
+#: src/interface.c:1716 src/callbacks.c:3565
 msgid "Insert"
 msgstr "הכנסה"
 
-#: src/interface.c:1727
+#: src/interface.c:1730
 msgid "_Number of times to insert"
 msgstr "_מספר הפעמים להוספה"
 
-#: src/interface.c:1738
+#: src/interface.c:1741
 msgid "_Insert to fit audio"
 msgstr "הוס_פה להתאמת הצליל"
 
-#: src/interface.c:1751
+#: src/interface.c:1754
 msgid "Insert _before selection"
 msgstr "הוספה _לפני הבחירה"
 
-#: src/interface.c:1753
+#: src/interface.c:1756
 msgid "Insert clipboard before selected frames"
 msgstr "הוספת תוכן לוח הגזירים לפני השקופיות הנבחרות"
 
-#: src/interface.c:1768
+#: src/interface.c:1771
 msgid "Insert _after selection"
 msgstr "הוספה ל_אחר הבחירה"
 
-#: src/interface.c:1770
+#: src/interface.c:1773
 msgid "Insert clipboard after selected frames"
 msgstr "הוספת תוכן לוח הגזירים לאחר השקופיות הנבחרות"
 
-#: src/interface.c:1781
+#: src/interface.c:1784
 #, fuzzy
 msgid "Insert _with silence"
 msgstr "הוספה עם _צליל"
 
-#: src/interface.c:1784
+#: src/interface.c:1787
 msgid "Insert _with sound"
 msgstr "הוספה עם _צליל"
 
-#: src/interface.c:1795
+#: src/interface.c:1798
 msgid "Insert with_out sound"
 msgstr "הוספה ל_לא צליל"
 
-#: src/interface.c:1866
+#: src/interface.c:1869
 #, fuzzy
 msgid "Open Selection"
 msgstr "העתקת בחירה"
 
-#: src/interface.c:1881
+#: src/interface.c:1884
 msgid "Selection start time (sec)"
 msgstr ""
 
-#: src/interface.c:1886
+#: src/interface.c:1889
 msgid "Number of frames to open"
 msgstr ""
 
-#: src/interface.c:1949
+#: src/interface.c:1952
 #, fuzzy
 msgid "Open Location"
 msgstr "LiVES: - פתיחת מיקום"
 
-#: src/interface.c:1963
+#: src/interface.c:1966
 #, fuzzy
 msgid ""
 "\n"
@@ -1404,49 +1417,49 @@ msgstr ""
 "בנוסף, יש לוודא כי רוחב הפס העצמי הוגדר תחת העדפות|מדיה זורמת\n"
 "\n"
 
-#: src/interface.c:1973
+#: src/interface.c:1976
 msgid "URL : "
 msgstr "כתובת אינטרנט : "
 
-#: src/interface.c:1978
+#: src/interface.c:1981
 msgid "Do not send bandwidth information"
 msgstr "אין לשלוח מידע אודות רוחב הפס"
 
-#: src/interface.c:1980
+#: src/interface.c:1983
 msgid "Try this setting if you are having problems getting a stream"
 msgstr "ניתן לנסות הגדרה זו אם צצות בעיות בקבלת תזרים מדיה."
 
-#: src/interface.c:2049
+#: src/interface.c:2052
 #, fuzzy
 msgid "Rename Clip"
 msgstr "סיבוב קטע"
 
-#: src/interface.c:2051
+#: src/interface.c:2054
 #, fuzzy
 msgid "Enter Set Name to Save as"
 msgstr "LiVES: - הזנת שם לאוסף"
 
-#: src/interface.c:2053
+#: src/interface.c:2056
 #, fuzzy
 msgid "Enter a Set Name to Reload"
 msgstr "LiVES: - הזנת שם לאוסף"
 
-#: src/interface.c:2055
+#: src/interface.c:2058
 #, fuzzy
 msgid "Choose a Working Directory"
 msgstr "LiVES: - בחר מדריך עבודה"
 
-#: src/interface.c:2057 src/multitrack.c:7174
+#: src/interface.c:2060 src/multitrack.c:7174
 #, fuzzy
 msgid "Rename Current Track"
 msgstr "_בחירת הרצועה הנוכחית"
 
-#: src/interface.c:2059
+#: src/interface.c:2062
 #, fuzzy
 msgid "Enter a Name for Your Theme"
 msgstr "LiVES: - הזנת שם לאוסף"
 
-#: src/interface.c:2073
+#: src/interface.c:2076
 msgid ""
 "You need to enter a name for the current clip set.\n"
 "This will allow you reload the layout with the same clips later.\n"
@@ -1458,7 +1471,7 @@ msgstr ""
 "יש להזין את השם המבוקש עבור האוסף.\n"
 "ב־LiVES תופיע תזכורת לשמירת אוסף הקטעים עם כל נסיון ליציאה.\n"
 
-#: src/interface.c:2080
+#: src/interface.c:2083
 msgid ""
 "In order to export this project, you must enter a name for this clip set.\n"
 "This will also be used for the project name.\n"
@@ -1466,14 +1479,14 @@ msgstr ""
 "על מנת לייצא מיזם זה, יש להזין שם עבור אוסף קטעים זה.\n"
 "השם ישמש כמו כן כשם המיזם.\n"
 
-#: src/interface.c:2087
+#: src/interface.c:2090
 #, fuzzy
 msgid "Welcome to LiVES !"
 msgstr ""
 "ברוכים הבאים ל־LiVES גרסה %s.\n"
 "\n"
 
-#: src/interface.c:2092
+#: src/interface.c:2095
 #, fuzzy
 msgid ""
 "This startup wizard will guide you through the\n"
@@ -1483,231 +1496,231 @@ msgstr ""
 "אשף ההפעלה הזה ידריך אותך במהלך\n"
 "ההתקנה, כך שתוכל לקבל את המיטב מיישום זה.\n"
 
-#: src/interface.c:2096
+#: src/interface.c:2099
 msgid ""
 "First of all you need to choose a working directory for LiVES.\n"
 "This should be a directory with plenty of disk space available."
 msgstr ""
 
-#: src/interface.c:2111
+#: src/interface.c:2114
 msgid "New name "
 msgstr "שם חדש "
 
-#: src/interface.c:2113
+#: src/interface.c:2116
 msgid "Set name "
 msgstr "שם האוסף "
 
-#: src/interface.c:2115
+#: src/interface.c:2118
 #, fuzzy
 msgid "Theme name "
 msgstr "שם חדש "
 
-#: src/interface.c:2171
+#: src/interface.c:2174
 msgid "Save extended colors"
 msgstr ""
 
-#: src/interface.c:2222
+#: src/interface.c:2225
 msgid "Use def_aults"
 msgstr "שימוש בברי_רות המחדל"
 
-#: src/interface.c:2224 src/interface.c:2459 src/preferences.c:3213
+#: src/interface.c:2227 src/interface.c:2462 src/preferences.c:3213
 #: src/preferences.c:3378
 msgid "_Advanced"
 msgstr "_מתקדם"
 
-#: src/interface.c:2272
+#: src/interface.c:2275
 #, fuzzy
 msgid "Select input device"
 msgstr "בחירה ל_סוף"
 
-#: src/interface.c:2281
+#: src/interface.c:2284
 msgid "Select input device:"
 msgstr ""
 
-#: src/interface.c:2338
+#: src/interface.c:2341
 #, fuzzy
 msgid "Load CD Track"
 msgstr "טעינת רצועה מ_תקליטור..."
 
-#: src/interface.c:2340
+#: src/interface.c:2343
 #, fuzzy
 msgid "Select DVD Title/Chapter"
 msgstr "LiVES:- בחירת פרק/קטע מ־DVD"
 
-#: src/interface.c:2342
+#: src/interface.c:2345
 #, fuzzy
 msgid "Select VCD Title"
 msgstr "LiVES:- בחירת קטע מ־VCD"
 
-#: src/interface.c:2344
+#: src/interface.c:2347
 #, fuzzy
 msgid "Change Maximum Visible Tracks"
 msgstr "LiVES:- שינוי מספר הרצועות הגלויות המירבי"
 
-#: src/interface.c:2346
+#: src/interface.c:2349
 #, fuzzy
 msgid "Device details"
 msgstr "LiVES:- נתוני התקן"
 
-#: src/interface.c:2361
+#: src/interface.c:2364
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "רצועה לטעינה (מ־%s)"
 
-#: src/interface.c:2363
+#: src/interface.c:2366
 msgid "DVD Title"
 msgstr "כותרת ה־DVD"
 
-#: src/interface.c:2365
+#: src/interface.c:2368
 msgid "VCD Title"
 msgstr "כותרת ה־VCD"
 
-#: src/interface.c:2367
+#: src/interface.c:2370
 msgid "Maximum number of tracks to display"
 msgstr "מספר מירבי של רצועות לתצוגה"
 
-#: src/interface.c:2369
+#: src/interface.c:2372
 msgid "Device:        /dev/video"
 msgstr "התקן: /dev/video"
 
-#: src/interface.c:2371
+#: src/interface.c:2374
 msgid "Device:        fw:"
 msgstr "התקן: קושחה:"
 
-#: src/interface.c:2403
+#: src/interface.c:2406
 msgid "Chapter  "
 msgstr "פרק  "
 
-#: src/interface.c:2407
+#: src/interface.c:2410
 msgid "Channel  "
 msgstr "ערוץ  "
 
-#: src/interface.c:2421
+#: src/interface.c:2424
 msgid "Audio ID  "
 msgstr "מזהה השמע  "
 
-#: src/interface.c:2473
+#: src/interface.c:2476
 msgid "Input number"
 msgstr "מספר קלט"
 
-#: src/interface.c:2480
+#: src/interface.c:2483
 msgid "Use default width, height and FPS"
 msgstr "שימוש ברוחב, בגובה ובמספר השקופיות לשנייה המוגדרים כברירת מחדל"
 
-#: src/interface.c:2492
+#: src/interface.c:2495
 msgid "Width"
 msgstr "רוחב"
 
-#: src/interface.c:2498
+#: src/interface.c:2501
 msgid "Height"
 msgstr "גובה"
 
-#: src/interface.c:2512
+#: src/interface.c:2515
 msgid "_Driver"
 msgstr ""
 
-#: src/interface.c:2515
+#: src/interface.c:2518
 msgid "_Output format"
 msgstr ""
 
-#: src/interface.c:2595
+#: src/interface.c:2598
 #, fuzzy
 msgid "Fade Audio In"
 msgstr "החלת אפקט Fade _In על השמע"
 
-#: src/interface.c:2597
+#: src/interface.c:2600
 #, fuzzy
 msgid "Fade Audio Out"
 msgstr "החל אפקט Fade _Out על השמע..."
 
-#: src/interface.c:2610
+#: src/interface.c:2613
 msgid "Fade in over  "
 msgstr "החל אפקט עמעום פנימה מעבר  "
 
-#: src/interface.c:2611
+#: src/interface.c:2614
 msgid "first"
 msgstr "ראשון"
 
-#: src/interface.c:2613
+#: src/interface.c:2616
 msgid "Fade out over  "
 msgstr "החל אפקט עמעום עד להשתקה מעבר  "
 
-#: src/interface.c:2614
+#: src/interface.c:2617
 msgid "last"
 msgstr "אחרון"
 
-#: src/interface.c:2632
+#: src/interface.c:2635
 msgid "seconds."
 msgstr "שניות."
 
-#: src/interface.c:2640 src/saveplay.c:1414
+#: src/interface.c:2643 src/saveplay.c:1414
 msgid "selection"
 msgstr "בחירה"
 
-#: src/interface.c:2676
+#: src/interface.c:2679
 #, fuzzy
 msgid " (Optional)"
 msgstr "LiVES: - הערות קובץ (רשות)"
 
-#: src/interface.c:2679
+#: src/interface.c:2682
 #, fuzzy, c-format
 msgid "File Comments%s"
 msgstr "LiVES: - הערות קובץ (רשות)"
 
-#: src/interface.c:2689
+#: src/interface.c:2692
 #, fuzzy, c-format
 msgid "File Name: %s"
 msgstr "כותרת/שם : "
 
-#: src/interface.c:2701
+#: src/interface.c:2704
 msgid "Title/Name : "
 msgstr "כותרת/שם : "
 
-#: src/interface.c:2707
+#: src/interface.c:2710
 msgid "Author/Artist : "
 msgstr "יוצר/אמן : "
 
-#: src/interface.c:2713
+#: src/interface.c:2716
 msgid "Comments : "
 msgstr "הערות : "
 
-#: src/interface.c:2746
+#: src/interface.c:2749
 msgid "Save _subtitles to file"
 msgstr ""
 
-#: src/interface.c:2755
+#: src/interface.c:2758
 msgid "Subtitle file"
 msgstr ""
 
-#: src/interface.c:2757
+#: src/interface.c:2760
 msgid "Browse..."
 msgstr ""
 
-#: src/interface.c:2793
+#: src/interface.c:2796
 msgid "_Options"
 msgstr ""
 
-#: src/interface.c:2858
+#: src/interface.c:2861
 #, c-format
 msgid "%sChoose a Device"
 msgstr ""
 
-#: src/interface.c:2861
+#: src/interface.c:2864
 #, fuzzy, c-format
 msgid "%sChoose a Directory"
 msgstr "LiVES: - בחר מדריך עבודה"
 
-#: src/interface.c:2863
+#: src/interface.c:2866
 #, c-format
 msgid "%sChoose a File"
 msgstr ""
 
-#: src/interface.c:3096
+#: src/interface.c:3099
 #, fuzzy
 msgid "_Autoreload next time"
 msgstr "_טעינה אוטומטית בפעם הבאה"
 
-#: src/interface.c:3126
+#: src/interface.c:3129
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1717,7 +1730,7 @@ msgstr ""
 "הפריסה הנוכחית לא נשמרה.\n"
 "איזו פעולה יש לבצע?\n"
 
-#: src/interface.c:3129
+#: src/interface.c:3132
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -1727,7 +1740,7 @@ msgstr ""
 "הפריסה הנוכחית שונתה מאז שנשמרה לאחרונה.\n"
 "איזו פעולה יש לבצע?\n"
 
-#: src/interface.c:3133
+#: src/interface.c:3136
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -1737,7 +1750,7 @@ msgstr ""
 "ניתן לשמור את אוסף הקטעים הנוכחי.\n"
 "איזו פעולה יש לבצע?\n"
 
-#: src/interface.c:3134
+#: src/interface.c:3137
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1745,7 +1758,7 @@ msgstr ""
 "אוסף הקטעים הנוכחי לא נשמר.\n"
 "איזו פעולה יש לבצע ?\n"
 
-#: src/interface.c:3137
+#: src/interface.c:3140
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1753,7 +1766,7 @@ msgstr ""
 "הפריסה הנוכחית לא נשמרה.\n"
 "איזור פעולה יש לבצע ?\n"
 
-#: src/interface.c:3139
+#: src/interface.c:3142
 #, fuzzy
 msgid ""
 "The current layout has *NOT BEEN CHANGED* since it was last saved.\n"
@@ -1762,7 +1775,7 @@ msgstr ""
 "הפריסה הנוכחית השתנתה מאז שנשמרה לאחרונה.\n"
 "מה ברצונך לעשות ?\n"
 
-#: src/interface.c:3143
+#: src/interface.c:3146
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout contains generated frames and cannot be retained.\n"
@@ -1772,40 +1785,40 @@ msgstr ""
 "הפריסה הנוכחית כוללת שקופיות שנוצרו ולא ניתן לשמור אותן.\n"
 "מה ברצונכם לעשות ?"
 
-#: src/interface.c:3146
+#: src/interface.c:3149
 #, fuzzy
 msgid "Cancel/Discard/Save"
 msgstr "LiVES: - ביטול/התעלמות/שמירה"
 
-#: src/interface.c:3158
+#: src/interface.c:3161
 msgid "Clip set _name"
 msgstr "_שם אוסף הקטעים"
 
-#: src/interface.c:3190 src/interface.c:3198
+#: src/interface.c:3193 src/interface.c:3201
 msgid "_Wipe layout"
 msgstr "_מחיקת פריסה"
 
-#: src/interface.c:3191
+#: src/interface.c:3194
 msgid "_Ignore changes"
 msgstr "ה_תעלמות מהשינויים"
 
-#: src/interface.c:3192
+#: src/interface.c:3195
 msgid "_Delete clip set"
 msgstr "_מחיקת אוסף הקטעים"
 
-#: src/interface.c:3193
+#: src/interface.c:3196
 msgid "_Delete layout"
 msgstr "_מחיקת פריסה"
 
-#: src/interface.c:3196
+#: src/interface.c:3199
 msgid "_Save layout"
 msgstr "שמירת _פריסה"
 
-#: src/interface.c:3197
+#: src/interface.c:3200
 msgid "_Save clip set"
 msgstr "שמירת אוסף ה_קטעים"
 
-#: src/interface.c:3214
+#: src/interface.c:3217
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
@@ -1815,35 +1828,35 @@ msgstr ""
 "LiVES זיהה פריסה מרובת־רצועות מהפעלה קודמת.\n"
 "האם ברצונך לנסות לשחזרה ?/n\n"
 
-#: src/interface.c:3240
+#: src/interface.c:3243
 msgid "Disk Recovery Options"
 msgstr ""
 
-#: src/interface.c:3256
+#: src/interface.c:3259
 msgid "Delete _Orphaned Clips"
 msgstr ""
 
-#: src/interface.c:3258
+#: src/interface.c:3261
 msgid "Delete any clips which are not currently loaded or part of a set"
 msgstr ""
 
-#: src/interface.c:3270
+#: src/interface.c:3273
 msgid "Clear _Backup Files from Closed Clips"
 msgstr ""
 
-#: src/interface.c:3280
+#: src/interface.c:3283
 msgid "Remove Sets which have _Layouts but no Clips"
 msgstr ""
 
-#: src/interface.c:3288
+#: src/interface.c:3291
 msgid "_Reset to Defaults"
 msgstr ""
 
-#: src/interface.c:3395
+#: src/interface.c:3398
 msgid "Show Keys"
 msgstr "הצגת מקשים"
 
-#: src/interface.c:3402
+#: src/interface.c:3405
 msgid ""
 "You can use the following keys during playback to control LiVES:-\n"
 "\n"
@@ -1851,402 +1864,402 @@ msgid ""
 "-----------------------\n"
 msgstr ""
 
-#: src/interface.c:3406
+#: src/interface.c:3409
 #, fuzzy
 msgid "ctrl-left"
 msgstr "דילוג אחורה (ctrl-left)"
 
-#: src/interface.c:3406
+#: src/interface.c:3409
 msgid "skip back\n"
 msgstr ""
 
-#: src/interface.c:3409
+#: src/interface.c:3412
 msgid "ctrl-right"
 msgstr ""
 
-#: src/interface.c:3409
+#: src/interface.c:3412
 #, fuzzy
 msgid "skip forwards\n"
 msgstr "דילוג_קדימה"
 
-#: src/interface.c:3412
+#: src/interface.c:3415
 msgid "ctrl-up"
 msgstr ""
 
-#: src/interface.c:3412
+#: src/interface.c:3415
 msgid "faster/increase effect\n"
 msgstr ""
 
-#: src/interface.c:3415
+#: src/interface.c:3418
 #, fuzzy
 msgid "ctrl-down"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:3415
+#: src/interface.c:3418
 msgid "slower/decrease effect\n"
-msgstr ""
-
-#: src/interface.c:3418
-#, fuzzy
-msgid "ctrl-enter"
-msgstr "_מרכז אחר"
-
-#: src/interface.c:3418
-#, fuzzy
-msgid "reset frame rate\n"
-msgstr "_מסגרת ראשונה"
-
-#: src/interface.c:3421 src/interface.c:3550
-msgid "ctrl-space"
 msgstr ""
 
 #: src/interface.c:3421
 #, fuzzy
+msgid "ctrl-enter"
+msgstr "_מרכז אחר"
+
+#: src/interface.c:3421
+#, fuzzy
+msgid "reset frame rate\n"
+msgstr "_מסגרת ראשונה"
+
+#: src/interface.c:3424 src/interface.c:3553
+msgid "ctrl-space"
+msgstr ""
+
+#: src/interface.c:3424
+#, fuzzy
 msgid "reverse direction\n"
 msgstr "היפוך כיוון הנגינה"
 
-#: src/interface.c:3424
+#: src/interface.c:3427
 msgid "ctrl-alt-space"
 msgstr ""
 
-#: src/interface.c:3424
+#: src/interface.c:3427
 msgid "reverse direction (background clip)\n"
 msgstr ""
 
-#: src/interface.c:3427
+#: src/interface.c:3430
 msgid "ctrl-backspace"
 msgstr ""
 
-#: src/interface.c:3427
+#: src/interface.c:3430
 msgid "freeze frame\n"
 msgstr ""
 
-#: src/interface.c:3430
+#: src/interface.c:3433
 msgid "nervous\n"
 msgstr ""
 
-#: src/interface.c:3433 src/interface.c:3544
+#: src/interface.c:3436 src/interface.c:3547
 msgid "ctrl-page-up"
 msgstr ""
 
-#: src/interface.c:3433
+#: src/interface.c:3436
 msgid "previous clip\n"
 msgstr ""
 
-#: src/interface.c:3436 src/interface.c:3547
+#: src/interface.c:3439 src/interface.c:3550
 msgid "ctrl-page-down"
 msgstr ""
 
-#: src/interface.c:3436
+#: src/interface.c:3439
 msgid "next clip\n"
 msgstr ""
 
-#: src/interface.c:3441
+#: src/interface.c:3444
 #, fuzzy
 msgid "ctrl-1"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:3441
+#: src/interface.c:3444
 #, fuzzy
 msgid "toggle real-time effect 1\n"
 msgstr "אפקטים בזמן _אמת"
 
-#: src/interface.c:3444
+#: src/interface.c:3447
 #, fuzzy
 msgid "ctrl-2"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:3444
+#: src/interface.c:3447
 #, fuzzy
 msgid "toggle real-time effect 2\n"
 msgstr "אפקטים בזמן _אמת"
 
-#: src/interface.c:3447 src/interface.c:3477
+#: src/interface.c:3450 src/interface.c:3480
 msgid "...etc...\n"
 msgstr ""
 
-#: src/interface.c:3449
+#: src/interface.c:3452
 #, fuzzy
 msgid "ctrl-0"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:3449
+#: src/interface.c:3452
 #, fuzzy
 msgid "real-time effects off\n"
 msgstr "אפקטים בזמן _אמת"
 
-#: src/interface.c:3452
+#: src/interface.c:3455
 msgid "swap background/foreground\n"
 msgstr ""
 
-#: src/interface.c:3457
+#: src/interface.c:3460
 #, fuzzy
 msgid "grab keyboard for last activated effect\n"
 msgstr "קליטת המקלדת עבור מקש אפקט זה"
 
-#: src/interface.c:3460
+#: src/interface.c:3463
 msgid "switch effect mode (when effect has keyboard grab)\n"
 msgstr ""
 
-#: src/interface.c:3464
+#: src/interface.c:3467
 msgid "enter text parameter (when effect has keyboard grab)\n"
 msgstr ""
 
-#: src/interface.c:3467
+#: src/interface.c:3470
 #, fuzzy
 msgid "tab"
 msgstr "ברז"
 
-#: src/interface.c:3468
+#: src/interface.c:3471
 msgid "leave text parameter (when effect has keyboard grab)\n"
 msgstr ""
 
-#: src/interface.c:3471
+#: src/interface.c:3474
 msgid "f1"
 msgstr ""
 
-#: src/interface.c:3471
+#: src/interface.c:3474
 msgid "store/switch to clip mnemonic 1\n"
 msgstr ""
 
-#: src/interface.c:3474
+#: src/interface.c:3477
 msgid "f2"
 msgstr ""
 
-#: src/interface.c:3474
+#: src/interface.c:3477
 msgid "store/switch to clip mnemonic 2\n"
 msgstr ""
 
-#: src/interface.c:3479
+#: src/interface.c:3482
 msgid "f12"
 msgstr ""
 
-#: src/interface.c:3479
+#: src/interface.c:3482
 msgid "clear function keys\n"
 msgstr ""
 
-#: src/interface.c:3485
+#: src/interface.c:3488
 #, fuzzy
 msgid "Other playback keys\n"
 msgstr "_היפוך נגינה  "
 
-#: src/interface.c:3489
+#: src/interface.c:3492
 #, fuzzy
 msgid "play all\n"
 msgstr "נגן הכל"
 
-#: src/interface.c:3492
+#: src/interface.c:3495
 #, fuzzy
 msgid "play selection\n"
 msgstr "נגינת בחירה"
 
-#: src/interface.c:3495
+#: src/interface.c:3498
 msgid "stop\n"
 msgstr ""
 
-#: src/interface.c:3498
+#: src/interface.c:3501
 #, fuzzy
 msgid "fullscreen\n"
 msgstr "_מסך מלא"
 
-#: src/interface.c:3501
+#: src/interface.c:3504
 #, fuzzy
 msgid "separate window\n"
 msgstr "נגינה בחלון נפרד (s)"
 
-#: src/interface.c:3504
+#: src/interface.c:3507
 #, fuzzy
 msgid "double size\n"
 msgstr "גודל _כפול"
 
-#: src/interface.c:3507
+#: src/interface.c:3510
 #, fuzzy
 msgid "ping pong loops\n"
 msgstr "Pin_g Pong לולאות"
 
-#: src/interface.c:3514
+#: src/interface.c:3517
 msgid "Multitrack Keys"
 msgstr "מקשים רב־רצועתיים"
 
-#: src/interface.c:3523
+#: src/interface.c:3526
 msgid ""
 "You can use the following keys to control the multitrack window:-\n"
 "-----------------------\n"
 msgstr ""
 
-#: src/interface.c:3526
+#: src/interface.c:3529
 msgid "ctrl-left-arrow"
 msgstr ""
 
-#: src/interface.c:3526
+#: src/interface.c:3529
 msgid "move timeline cursor left 1 second\n"
 msgstr ""
 
-#: src/interface.c:3529
+#: src/interface.c:3532
 msgid "ctrl-right-arrow"
 msgstr ""
 
-#: src/interface.c:3529
+#: src/interface.c:3532
 msgid "move timeline cursor right 1 second\n"
 msgstr ""
 
-#: src/interface.c:3532
+#: src/interface.c:3535
 msgid "shift-left-arrow"
 msgstr ""
 
-#: src/interface.c:3532
+#: src/interface.c:3535
 msgid "move timeline cursor left 1 frame\n"
 msgstr ""
 
-#: src/interface.c:3535
+#: src/interface.c:3538
 msgid "shift-right-arrow"
 msgstr ""
 
-#: src/interface.c:3535
+#: src/interface.c:3538
 msgid "move timeline cursor right 1 frame\n"
 msgstr ""
 
-#: src/interface.c:3538
+#: src/interface.c:3541
 msgid "ctrl-up-arrow"
 msgstr ""
 
-#: src/interface.c:3538
+#: src/interface.c:3541
 #, fuzzy
 msgid "move current track up\n"
 msgstr "_בחירת הרצועה הנוכחית"
 
-#: src/interface.c:3541
+#: src/interface.c:3544
 msgid "ctrl-down-arrow"
 msgstr ""
 
-#: src/interface.c:3541
+#: src/interface.c:3544
 #, fuzzy
 msgid "move current track down\n"
 msgstr "_בחירת הרצועה הנוכחית"
 
-#: src/interface.c:3544
+#: src/interface.c:3547
 msgid "select previous clip\n"
 msgstr ""
 
-#: src/interface.c:3547
+#: src/interface.c:3550
 #, fuzzy
 msgid "select next clip\n"
 msgstr "LiVES: קטע נבחר"
 
-#: src/interface.c:3550
+#: src/interface.c:3553
 #, fuzzy
 msgid "select/deselect current track\n"
 msgstr "_בחירת הרצועה הנוכחית"
 
-#: src/interface.c:3553
+#: src/interface.c:3556
 msgid "ctrl-plus"
 msgstr ""
 
-#: src/interface.c:3553
+#: src/interface.c:3556
 #, fuzzy
 msgid "zoom in\n"
 msgstr "_התקרבות"
 
-#: src/interface.c:3556
+#: src/interface.c:3559
 msgid "ctrl-minus"
 msgstr ""
 
-#: src/interface.c:3556
+#: src/interface.c:3559
 #, fuzzy
 msgid "zoom out\n"
 msgstr "_התרחקות"
 
-#: src/interface.c:3559
+#: src/interface.c:3562
 #, fuzzy
 msgid "make a mark on the timeline (during playback)\n"
 msgstr "כדי לסמן את המיקום הנוכחי על ציר הזמן"
 
-#: src/interface.c:3562
+#: src/interface.c:3565
 #, fuzzy
 msgid "rewind to play start.\n"
 msgstr "חזרה להתחלה (w)"
 
-#: src/interface.c:3567
+#: src/interface.c:3570
 msgid "For other keys, see the menus.\n"
 msgstr ""
 
-#: src/interface.c:3594
+#: src/interface.c:3597
 #, fuzzy
 msgid "Autolives Options"
 msgstr "LiVES : - אפשרויות קידוד"
 
-#: src/interface.c:3598
+#: src/interface.c:3601
 #, fuzzy
 msgid "Trigger"
 msgstr "LiVES: - גורמי RFX"
 
-#: src/interface.c:3608
+#: src/interface.c:3611
 #, fuzzy
 msgid "Timed:"
 msgstr "זמן"
 
-#: src/interface.c:3610
+#: src/interface.c:3613
 msgid "Trigger a change based on time"
 msgstr ""
 
-#: src/interface.c:3615
+#: src/interface.c:3618
 #, fuzzy
 msgid "change time (seconds)"
 msgstr "_זמן (שניות)"
 
-#: src/interface.c:3619
+#: src/interface.c:3622
 msgid "OMC"
 msgstr ""
 
-#: src/interface.c:3621
+#: src/interface.c:3624
 msgid "Trigger a change based on receiving an OSC message"
 msgstr ""
 
-#: src/interface.c:3636
+#: src/interface.c:3639
 #, fuzzy
 msgid "Playback start:"
 msgstr "נגינה"
 
-#: src/interface.c:3643
+#: src/interface.c:3646
 #, fuzzy
 msgid "Automatic"
 msgstr "גיבוי אוטומטי"
 
-#: src/interface.c:3645
+#: src/interface.c:3648
 msgid "Start playback automatically"
 msgstr ""
 
-#: src/interface.c:3650
+#: src/interface.c:3653
 msgid "Manual"
 msgstr ""
 
-#: src/interface.c:3652
+#: src/interface.c:3655
 #, fuzzy
 msgid "Wait for the user to start playback"
 msgstr " מספר צגים לנגינה"
 
-#: src/interface.c:3661
+#: src/interface.c:3664
 #, fuzzy
 msgid "Mute audio during playback"
 msgstr "יש ללחוץ על 'm' בזמן נגינה"
 
-#: src/interface.c:3662
+#: src/interface.c:3665
 msgid "Mute the audio in LiVES during playback."
 msgstr ""
 
-#: src/interface.c:3675
+#: src/interface.c:3678
 msgid "Debug mode"
 msgstr ""
 
-#: src/interface.c:3676
+#: src/interface.c:3679
 msgid "Show debug output on stderr."
 msgstr ""
 
-#: src/interface.c:3785
+#: src/interface.c:3788
 msgid "Open Online Clip"
 msgstr ""
 
-#: src/interface.c:3795
+#: src/interface.c:3798
 #, c-format
 msgid ""
 "To open a clip from Youtube or another video site, LiVES will first download "
@@ -2254,162 +2267,162 @@ msgid ""
 "PLEASE MAKE SURE YOU HAVE THE MOST RECENT VERSION OF THAT TOOL INSTALLED !"
 msgstr ""
 
-#: src/interface.c:3807
+#: src/interface.c:3810
 #, c-format
 msgid "<--- Auto update %s ? (will require your password.)"
 msgstr ""
 
-#: src/interface.c:3816
+#: src/interface.c:3819
 msgid " (REQUIRES SSH-ASKPASS)."
 msgstr ""
 
-#: src/interface.c:3823
+#: src/interface.c:3826
 msgid ""
 "Enter the URL of the clip below.\n"
 "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8"
 msgstr ""
 
-#: src/interface.c:3831
+#: src/interface.c:3834
 #, fuzzy
 msgid "Clip URL : "
 msgstr "כתובת אינטרנט : "
 
-#: src/interface.c:3839
+#: src/interface.c:3842
 #, fuzzy
 msgid "Format selection:"
 msgstr "בחירה"
 
-#: src/interface.c:3843
+#: src/interface.c:3846
 msgid "_Free (eg. vp9 / opus / webm)"
 msgstr ""
 
-#: src/interface.c:3845
+#: src/interface.c:3848
 msgid "Download clip using Free codecs"
 msgstr ""
 
-#: src/interface.c:3853
+#: src/interface.c:3856
 #, fuzzy
 msgid "_File Name : "
 msgstr "כותרת/שם : "
 
-#: src/interface.c:3865
+#: src/interface.c:3868
 msgid "_Non-free (eg. h264 / aac / mp4)"
 msgstr ""
 
-#: src/interface.c:3867
+#: src/interface.c:3870
 msgid "Download clip using non-free codecs"
 msgstr ""
 
-#: src/interface.c:3879
+#: src/interface.c:3882
 #, fuzzy
 msgid "_Directory to save to: "
 msgstr "שם התיקייה ארוך מדי !"
 
-#: src/interface.c:3887
+#: src/interface.c:3890
 #, fuzzy
 msgid "Desired frame size:"
 msgstr "גודל השקופית"
 
-#: src/interface.c:3893
+#: src/interface.c:3896
 msgid "- Approximately:"
 msgstr ""
 
-#: src/interface.c:3895
+#: src/interface.c:3898
 msgid "Download the closest to this size"
 msgstr ""
 
-#: src/interface.c:3904
+#: src/interface.c:3907
 msgid "- At _least"
 msgstr ""
 
-#: src/interface.c:3906
+#: src/interface.c:3909
 msgid "Frame size should be at least this size"
 msgstr ""
 
-#: src/interface.c:3914
+#: src/interface.c:3917
 msgid "- At _most:"
 msgstr ""
 
-#: src/interface.c:3916
+#: src/interface.c:3919
 msgid "Frame size should be at most this size"
 msgstr ""
 
-#: src/interface.c:3928 src/paramwindow.c:553 src/plugins.c:979
+#: src/interface.c:3931 src/paramwindow.c:566 src/plugins.c:979
 msgid "_Width"
 msgstr "_רוחב"
 
-#: src/interface.c:3933
+#: src/interface.c:3936
 #, fuzzy
 msgid "X        _Height"
 msgstr "_גובה"
 
-#: src/interface.c:3938
+#: src/interface.c:3941
 msgid "    pixels"
 msgstr ""
 
-#: src/interface.c:3948
+#: src/interface.c:3951
 msgid " or:"
 msgstr ""
 
-#: src/interface.c:3954
+#: src/interface.c:3957
 msgid "- The _smallest"
 msgstr ""
 
-#: src/interface.c:3956
+#: src/interface.c:3959
 msgid "Download the lowest resolution available"
 msgstr ""
 
-#: src/interface.c:3965
+#: src/interface.c:3968
 msgid "- The _largest"
 msgstr ""
 
-#: src/interface.c:3967
+#: src/interface.c:3970
 msgid "Download the highest resolution available"
 msgstr ""
 
-#: src/interface.c:3979
+#: src/interface.c:3982
 msgid "- Let me choose..."
 msgstr ""
 
-#: src/interface.c:3982
+#: src/interface.c:3985
 msgid "Choose the resolution from a list (opens in new window)"
 msgstr ""
 
-#: src/interface.c:3999
+#: src/interface.c:4002
 msgid "_Other options (e.g audio, subtitles)..."
 msgstr ""
 
-#: src/interface.c:4016
+#: src/interface.c:4019
 msgid "Please enter the name of the file to save the downloaded clip as.\n"
 msgstr ""
 
-#: src/interface.c:4025
+#: src/interface.c:4028
 msgid "Please enter a valid URL for the download.\n"
 msgstr ""
 
-#: src/interface.c:4055
+#: src/interface.c:4059
 #, c-format
 msgid "Downloading %s to %s..."
 msgstr ""
 
-#: src/interface.c:4141
+#: src/interface.c:4145
 msgid "Select Video Format to Download"
 msgstr ""
 
-#: src/interface.c:4147
+#: src/interface.c:4151
 msgid "Double click on a format to load it, or click Cancel to exit."
 msgstr ""
 
-#: src/interface.c:4180
+#: src/interface.c:4184
 msgid "ID"
 msgstr ""
 
-#: src/interface.c:4194
+#: src/interface.c:4198
 #, fuzzy
 msgid "Resolution"
 msgstr "בחירה"
 
-#: src/interface.c:4201
+#: src/interface.c:4205
 msgid "Notes"
 msgstr ""
 
@@ -2608,7 +2621,7 @@ msgstr "מחיקת אוסף"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "האוסף %s נמחק לצמיתות מהכונן הקשיח.\n"
 
-#: src/callbacks.c:1959 src/callbacks.c:11382 src/resample.c:1189
+#: src/callbacks.c:1959 src/callbacks.c:11379 src/resample.c:1189
 msgid "Insert Silence"
 msgstr "הוספת שקט"
 
@@ -2661,7 +2674,7 @@ msgstr "מעתיק ללוח הגזירים"
 msgid "Cut"
 msgstr "גזירה"
 
-#: src/callbacks.c:2823 src/callbacks.c:3229 src/callbacks.c:7416
+#: src/callbacks.c:2823 src/callbacks.c:3229 src/callbacks.c:7413
 #, fuzzy
 msgid "Pulling frames from clipboard..."
 msgstr "מושך שקופיות מהקטע"
@@ -2721,7 +2734,7 @@ msgstr ""
 "הוספת הקובץ המבוקש תזיז את השקופיות בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:3066 src/callbacks.c:11311
+#: src/callbacks.c:3066 src/callbacks.c:11308
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2780,9 +2793,9 @@ msgstr "מכניס %d פעמים מלוח הגזירים %s..."
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "מכניס %d שקופיות  מלוח הגזירים %s..."
 
-#: src/callbacks.c:3404 src/callbacks.c:7820 src/callbacks.c:7872
-#: src/callbacks.c:8107 src/callbacks.c:8145 src/callbacks.c:8187
-#: src/callbacks.c:10489
+#: src/callbacks.c:3404 src/callbacks.c:7817 src/callbacks.c:7869
+#: src/callbacks.c:8104 src/callbacks.c:8142 src/callbacks.c:8184
+#: src/callbacks.c:10486
 msgid "Cancelling"
 msgstr "מבטל"
 
@@ -2806,8 +2819,8 @@ msgstr ""
 "עקב המחיקה תיתכנו שקופיות חסרות בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:3656 src/callbacks.c:10573 src/callbacks.c:10794
-#: src/callbacks.c:10847
+#: src/callbacks.c:3656 src/callbacks.c:10570 src/callbacks.c:10791
+#: src/callbacks.c:10844
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2827,7 +2840,7 @@ msgstr ""
 "המחיקה תזיז את השקופיות בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:3686 src/callbacks.c:10833
+#: src/callbacks.c:3686 src/callbacks.c:10830
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2917,17 +2930,17 @@ msgstr ""
 msgid "Saving set %s"
 msgstr "שומר אוסף %s"
 
-#: src/callbacks.c:5055
+#: src/callbacks.c:5051
 #, c-format
 msgid "Loading clips from set %s"
 msgstr "טוען קטע מהאוסף %s"
 
-#: src/callbacks.c:5141
+#: src/callbacks.c:5137
 #, c-format
 msgid "%d clips and %d layouts were recovered from set (%s).\n"
 msgstr ""
 
-#: src/callbacks.c:5350
+#: src/callbacks.c:5346
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -2938,29 +2951,29 @@ msgstr ""
 "עליך להריץ זאת רק אם אין לך עותקים של LiVES הרצים על מכונה זו.\n"
 "לחץ על אישור בכדי להמשיך.\n"
 
-#: src/callbacks.c:5357
+#: src/callbacks.c:5353
 msgid "Cleaning up disk space..."
 msgstr "מנקה שטח כונן..."
 
-#: src/callbacks.c:5424
+#: src/callbacks.c:5420
 msgid "Recovering disk space"
 msgstr ""
 
-#: src/callbacks.c:5466
+#: src/callbacks.c:5462
 #, c-format
 msgid "%s of disk space was recovered.\n"
 msgstr ""
 
-#: src/callbacks.c:5501
+#: src/callbacks.c:5497
 #, fuzzy
 msgid "Pre-decoding all frames in this clip..."
 msgstr "השקופית האחרונה שנבחרה בקטע זה"
 
-#: src/callbacks.c:5523
+#: src/callbacks.c:5519
 msgid "Resetting frame rates and frame values..."
 msgstr "מאפס את קצבי וערכי השקופיות..."
 
-#: src/callbacks.c:5565
+#: src/callbacks.c:5561
 #, c-format
 msgid ""
 "\n"
@@ -2969,11 +2982,11 @@ msgid ""
 "Internal: %s (%d bpp) / %s"
 msgstr ""
 
-#: src/callbacks.c:5567
+#: src/callbacks.c:5563
 msgid "buffered"
 msgstr "נאגר"
 
-#: src/callbacks.c:5581 src/callbacks.c:5599 src/callbacks.c:5615
+#: src/callbacks.c:5577 src/callbacks.c:5595 src/callbacks.c:5611
 #, fuzzy
 msgid ""
 "\n"
@@ -2983,7 +2996,7 @@ msgstr ""
 "\n"
 "  פותח..."
 
-#: src/callbacks.c:5587
+#: src/callbacks.c:5583
 #, c-format
 msgid ""
 "\n"
@@ -2992,7 +3005,7 @@ msgstr ""
 "\n"
 "(%d מדומה)"
 
-#: src/callbacks.c:5590
+#: src/callbacks.c:5586
 #, c-format
 msgid ""
 "\n"
@@ -3001,7 +3014,7 @@ msgstr ""
 "\n"
 "(%d פוענח)"
 
-#: src/callbacks.c:5601
+#: src/callbacks.c:5597
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -3011,7 +3024,7 @@ msgstr ""
 "\n"
 "  %.2f שניות."
 
-#: src/callbacks.c:5609
+#: src/callbacks.c:5605
 #, fuzzy
 msgid ""
 "\n"
@@ -3021,7 +3034,7 @@ msgstr ""
 "\n"
 "  לא ידוע"
 
-#: src/callbacks.c:5617 src/callbacks.c:5650
+#: src/callbacks.c:5613 src/callbacks.c:5646
 #, c-format
 msgid ""
 "\n"
@@ -3030,23 +3043,23 @@ msgstr ""
 "\n"
 "  %.2f שניות."
 
-#: src/callbacks.c:5621 src/callbacks.c:5635
+#: src/callbacks.c:5617 src/callbacks.c:5631
 msgid "unsigned"
 msgstr "לא מסומן"
 
-#: src/callbacks.c:5622 src/callbacks.c:5636
+#: src/callbacks.c:5618 src/callbacks.c:5632
 msgid "signed"
 msgstr "מסומן"
 
-#: src/callbacks.c:5624 src/callbacks.c:5638
+#: src/callbacks.c:5620 src/callbacks.c:5634
 msgid "big-endian"
 msgstr "סידור בתים עולה"
 
-#: src/callbacks.c:5625 src/callbacks.c:5639
+#: src/callbacks.c:5621 src/callbacks.c:5635
 msgid "little-endian"
 msgstr "סידור בתים יורד"
 
-#: src/callbacks.c:5627 src/callbacks.c:5641
+#: src/callbacks.c:5623 src/callbacks.c:5637
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -3056,7 +3069,7 @@ msgstr ""
 "  %d הרץ, %d סיביות\n"
 "%s %s"
 
-#: src/callbacks.c:5648
+#: src/callbacks.c:5644
 msgid ""
 "\n"
 "  Opening..."
@@ -3064,7 +3077,7 @@ msgstr ""
 "\n"
 "  פותח..."
 
-#: src/callbacks.c:5739
+#: src/callbacks.c:5735
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -3081,15 +3094,15 @@ msgid ""
 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"
 msgstr ""
 
-#: src/callbacks.c:5753
+#: src/callbacks.c:5749
 msgid "A video editor and VJ program."
 msgstr "עורך וידאו ותוכנת VJ."
 
-#: src/callbacks.c:5754
+#: src/callbacks.c:5750
 msgid "About LiVES"
 msgstr ""
 
-#: src/callbacks.c:5756
+#: src/callbacks.c:5752
 msgid "translator_credits"
 msgstr ""
 "Launchpad Contributions:\n"
@@ -3098,7 +3111,7 @@ msgstr ""
 "  Yaron https://launchpad.net/~sh-yaron\n"
 "  salsaman https://launchpad.net/~salsaman"
 
-#: src/callbacks.c:5791
+#: src/callbacks.c:5787
 #, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -3112,7 +3125,7 @@ msgid ""
 "Homepage: %s"
 msgstr ""
 
-#: src/callbacks.c:6029
+#: src/callbacks.c:6025
 #, fuzzy
 msgid ""
 "\n"
@@ -3123,7 +3136,7 @@ msgstr ""
 "\n"
 "יש להתקין את mplayer בכדי להציג את קובץ זה.\n"
 
-#: src/callbacks.c:6031
+#: src/callbacks.c:6027
 #, fuzzy
 msgid ""
 "\n"
@@ -3135,94 +3148,94 @@ msgstr ""
 "\n"
 "יש להתקין את mplayer בכדי להציג את קובץ זה.\n"
 
-#: src/callbacks.c:6444
+#: src/callbacks.c:6440
 #, c-format
 msgid ""
 "Text was saved as\n"
 "%s\n"
 msgstr ""
 
-#: src/callbacks.c:6622
+#: src/callbacks.c:6618
 #, fuzzy
 msgid "Encoder Debug Output"
 msgstr "LiVES: - פלט ניפוי שגיאות של המקודד"
 
-#: src/callbacks.c:6655 src/gui.c:1830
+#: src/callbacks.c:6651 src/gui.c:1832
 msgid "Fullscreen playback (f)"
 msgstr "נגינה במסך מלא (f)"
 
-#: src/callbacks.c:6656
+#: src/callbacks.c:6652
 msgid "Fullscreen playback off (f)"
 msgstr "כיבוי נגינה במסך מלא (f)"
 
-#: src/callbacks.c:6808 src/gui.c:1818
+#: src/callbacks.c:6804 src/gui.c:1820
 msgid "Double size (d)"
 msgstr "גודל כפול (d)"
 
-#: src/callbacks.c:6811
+#: src/callbacks.c:6807
 msgid "Single size (d)"
 msgstr "גודל יחיד (d)"
 
-#: src/callbacks.c:6917 src/callbacks.c:6918
+#: src/callbacks.c:6913 src/callbacks.c:6914
 msgid "Hide the play window (s)"
 msgstr "הסתרת חלון הנגינה (s)"
 
-#: src/callbacks.c:6926 src/gui.c:1581
+#: src/callbacks.c:6922 src/gui.c:1583
 msgid "Show the play window (s)"
 msgstr "הצגת חלון הנגינה (s)"
 
-#: src/callbacks.c:6927 src/gui.c:1810
+#: src/callbacks.c:6923 src/gui.c:1812
 msgid "Play in separate window (s)"
 msgstr "נגינה בחלון נפרד (s)"
 
-#: src/callbacks.c:7193
+#: src/callbacks.c:7190
 msgid "Switch continuous looping off (o)"
 msgstr "כיבוי הלולאה המתמשכת (o)"
 
-#: src/callbacks.c:7197 src/gui.c:1618
+#: src/callbacks.c:7194 src/gui.c:1620
 msgid "Switch continuous looping on (o)"
 msgstr "הפעלת את הלולאה המתמשכת (o)"
 
-#: src/callbacks.c:7246
+#: src/callbacks.c:7243
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "עוצמת הקול (%.2f)"
 
-#: src/callbacks.c:7279 src/callbacks.c:7280 src/gui.c:3671
+#: src/callbacks.c:7276 src/callbacks.c:7277 src/gui.c:3673
 msgid "Unmute the audio (z)"
 msgstr "הפעלת השמע שנית (z)"
 
-#: src/callbacks.c:7290 src/callbacks.c:7291 src/gui.c:1628 src/gui.c:3670
+#: src/callbacks.c:7287 src/callbacks.c:7288 src/gui.c:1630 src/gui.c:3672
 msgid "Mute the audio (z)"
 msgstr "השתקת השמע (z)"
 
-#: src/callbacks.c:7427
+#: src/callbacks.c:7424
 msgid "Reversing clipboard..."
 msgstr "הופך את לוח הגזירים..."
 
-#: src/callbacks.c:7441
+#: src/callbacks.c:7438
 msgid "Reversing clipboard"
 msgstr "הופך את לוח הגזירים"
 
-#: src/callbacks.c:7471
+#: src/callbacks.c:7468
 msgid "Load Subtitles"
 msgstr ""
 
-#: src/callbacks.c:7529 src/saveplay.c:901
+#: src/callbacks.c:7526 src/saveplay.c:901
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr ""
 
-#: src/callbacks.c:7588
+#: src/callbacks.c:7585
 msgid "Subtitles were erased.\n"
 msgstr ""
 
-#: src/callbacks.c:7610
+#: src/callbacks.c:7607
 #, fuzzy
 msgid "Select Audio File"
 msgstr "מחק שמע"
 
-#: src/callbacks.c:7649 src/callbacks.c:8024
+#: src/callbacks.c:7646 src/callbacks.c:8021
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -3233,60 +3246,60 @@ msgstr ""
 "טעינת שמע חדש תגרום לאיבוד שמע בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?"
 
-#: src/callbacks.c:7777
+#: src/callbacks.c:7774
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "פותח שמע %s, סוג %s..."
 
-#: src/callbacks.c:7811 src/saveplay.c:458
+#: src/callbacks.c:7808 src/saveplay.c:458
 msgid "Opening audio"
 msgstr "פותח שמע"
 
-#: src/callbacks.c:7924 src/callbacks.c:8229 src/callbacks.c:10525
-#: src/callbacks.c:11159
+#: src/callbacks.c:7921 src/callbacks.c:8226 src/callbacks.c:10522
+#: src/callbacks.c:11156
 msgid "Committing audio"
 msgstr "מפקיד שמע"
 
-#: src/callbacks.c:7939 src/callbacks.c:8258
+#: src/callbacks.c:7936 src/callbacks.c:8255
 msgid "New Audio"
 msgstr "שמע חדש"
 
-#: src/callbacks.c:8048
+#: src/callbacks.c:8045
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "פותח רצועה %d מתקליטור %s..."
 
-#: src/callbacks.c:8051
+#: src/callbacks.c:8048
 #, c-format
 msgid "CD track %d"
 msgstr "רצועת תקליטור %d"
 
-#: src/callbacks.c:8094
+#: src/callbacks.c:8091
 msgid "Opening CD track..."
 msgstr "פותח רצועת תקליטור..."
 
-#: src/callbacks.c:8132 src/callbacks.c:8176
+#: src/callbacks.c:8129 src/callbacks.c:8173
 msgid "Error loading CD track\n"
 msgstr "שגיאה בטעינת רצועת תקליטור\n"
 
-#: src/callbacks.c:8291
+#: src/callbacks.c:8288
 #, fuzzy
 msgid "Layout Errors"
 msgstr "שגיאות פריסה"
 
-#: src/callbacks.c:8311
+#: src/callbacks.c:8308
 msgid "Clear _Errors"
 msgstr "ניקוי _שגיאות"
 
-#: src/callbacks.c:8321
+#: src/callbacks.c:8318
 msgid "_Delete affected layouts"
 msgstr "_מחיקת פריסות ששונו"
 
-#: src/callbacks.c:8999 src/callbacks.c:9021
+#: src/callbacks.c:8996 src/callbacks.c:9018
 msgid "Resume"
 msgstr "המשך"
 
-#: src/callbacks.c:9000
+#: src/callbacks.c:8997
 msgid ""
 "\n"
 "Paused\n"
@@ -3296,23 +3309,23 @@ msgstr ""
 "מושהה\n"
 "(יש ללחוץ על כפתור ההמשך כדי להמשיך בתהליך)"
 
-#: src/callbacks.c:9001 src/callbacks.c:9038
+#: src/callbacks.c:8998 src/callbacks.c:9035
 msgid "paused..."
 msgstr "מושהה..."
 
-#: src/callbacks.c:9009 src/callbacks.c:9058
+#: src/callbacks.c:9006 src/callbacks.c:9055
 msgid "resumed..."
 msgstr "ממשיך..."
 
-#: src/callbacks.c:9026
+#: src/callbacks.c:9023
 msgid "Keep"
 msgstr "שמירה"
 
-#: src/callbacks.c:9028
+#: src/callbacks.c:9025
 msgid "Enough"
 msgstr "מספיק"
 
-#: src/callbacks.c:9033
+#: src/callbacks.c:9030
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -3325,30 +3338,30 @@ msgstr ""
 "(לחץ על כפתור השמירה כדי לשמור את העבודה ולהפסיק)\n"
 "(בנוסף, ישנה אפשרות ללחוץ על המשך כדי להמשיך בעיבוד)"
 
-#: src/callbacks.c:9056
+#: src/callbacks.c:9053
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/callbacks.c:9196
+#: src/callbacks.c:9193
 msgid "Stop"
 msgstr ""
 
-#: src/callbacks.c:9673 src/multitrack.c:13304
+#: src/callbacks.c:9670 src/multitrack.c:13304
 #, fuzzy
 msgid "Selected Frame"
 msgstr "בחירת _כל השקופיות"
 
-#: src/callbacks.c:9681
+#: src/callbacks.c:9678
 #, fuzzy
 msgid "_Save Frame as..."
 msgstr "_שמירת פריסה כ..."
 
-#: src/callbacks.c:9922
+#: src/callbacks.c:9919
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:9973
+#: src/callbacks.c:9970
 msgid ""
 "\n"
 "\n"
@@ -3357,7 +3370,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:9979
+#: src/callbacks.c:9976
 msgid ""
 "\n"
 "\n"
@@ -3369,7 +3382,7 @@ msgstr ""
 "עליך להתקין את \"xwininfo\" כדי להשתמש בתכונה זו\n"
 "\n"
 
-#: src/callbacks.c:10051 src/callbacks.c:11080
+#: src/callbacks.c:10048 src/callbacks.c:11077
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -3377,7 +3390,7 @@ msgstr ""
 "\n"
 "זמן ההקלטה חייב להיות גדול מ־0.\n"
 
-#: src/callbacks.c:10066
+#: src/callbacks.c:10063
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -3391,11 +3404,11 @@ msgstr ""
 "לאחר מכן ללחוץ על 'ביטול' לביטול\n"
 "\n"
 
-#: src/callbacks.c:10071
+#: src/callbacks.c:10068
 msgid "External window was released.\n"
 msgstr "החלון הנוסף שוחרר.\n"
 
-#: src/callbacks.c:10114
+#: src/callbacks.c:10111
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -3403,7 +3416,7 @@ msgstr ""
 "יש ללחוץ על חלון כדי ללכוד אותו\n"
 "יש ללחוץ על 'q' כדי להפסיק את ההקלטה"
 
-#: src/callbacks.c:10150
+#: src/callbacks.c:10147
 #, c-format
 msgid ""
 "\n"
@@ -3419,19 +3432,19 @@ msgstr ""
 "\n"
 "(LiVES ישתמש בברירת המחדל: %.3f שקופיות לשנייה.)\n"
 
-#: src/callbacks.c:10171
+#: src/callbacks.c:10168
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES כשל בלכידת חלון זה. עמכם הסליחה.\n"
 
-#: src/callbacks.c:10316
+#: src/callbacks.c:10313
 msgid "Export Selected Audio as..."
 msgstr "מייצא את השמע הנבחר כ..."
 
-#: src/callbacks.c:10319
+#: src/callbacks.c:10316
 msgid "Export Audio as..."
 msgstr "מייצא שמע כ..."
 
-#: src/callbacks.c:10329
+#: src/callbacks.c:10326
 msgid ""
 "\n"
 "\n"
@@ -3445,87 +3458,87 @@ msgstr ""
 "יש ללחוץ על 'אישור' כדי לייצא במהירות החדשה,או על 'ביטול' לייצוא בקצב "
 "המקורי.\n"
 
-#: src/callbacks.c:10335
+#: src/callbacks.c:10332
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "מייצא שקופיות שמע %d ל־%d כ־%s"
 
-#: src/callbacks.c:10339
+#: src/callbacks.c:10336
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "מייצא שמע כ־%s..."
 
-#: src/callbacks.c:10365
+#: src/callbacks.c:10362
 msgid "Exporting audio"
 msgstr "ייצוא שמע"
 
-#: src/callbacks.c:10409
+#: src/callbacks.c:10406
 #, fuzzy
 msgid "Append Audio File"
 msgstr "צירוף שמע"
 
-#: src/callbacks.c:10462
+#: src/callbacks.c:10459
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "מצרף את קובץ השמע %s..."
 
-#: src/callbacks.c:10479
+#: src/callbacks.c:10476
 msgid "Appending audio"
 msgstr "מצרף שמע"
 
-#: src/callbacks.c:10539
+#: src/callbacks.c:10536
 msgid "Append Audio"
 msgstr "צירוף שמע"
 
-#: src/callbacks.c:10597
+#: src/callbacks.c:10594
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10599
+#: src/callbacks.c:10596
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "מתקן שמע מ־%.2f ל־%.2f שניות..."
 
-#: src/callbacks.c:10618
+#: src/callbacks.c:10615
 msgid "Trimming/Padding audio"
 msgstr "מתקן\\מרפד שמע"
 
-#: src/callbacks.c:10626
+#: src/callbacks.c:10623
 msgid "Trim/Pad Audio"
 msgstr "תיקון\\ריפוד שמע"
 
-#: src/callbacks.c:10693
+#: src/callbacks.c:10690
 msgid "Fading audio in"
 msgstr "מחיל אפקט Fade In על השמע"
 
-#: src/callbacks.c:10694
+#: src/callbacks.c:10691
 msgid "Fade audio in"
 msgstr "החלת אפקט Fade In על השמע"
 
-#: src/callbacks.c:10698
+#: src/callbacks.c:10695
 msgid "Fading audio out"
 msgstr "מחיל אפקט Fade Out על השמע"
 
-#: src/callbacks.c:10699
+#: src/callbacks.c:10696
 msgid "Fade audio out"
 msgstr "החלת אפקט Fade Out על השמע"
 
-#: src/callbacks.c:10718
+#: src/callbacks.c:10715
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s מעל %.1f שניות..."
 
-#: src/callbacks.c:10720
+#: src/callbacks.c:10717
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s מזמן %.2f שניות ל־%.2f שניות..."
 
-#: src/callbacks.c:10727
+#: src/callbacks.c:10724
 msgid "Fading audio..."
 msgstr "מפעיל אפקט Fade על השמע"
 
-#: src/callbacks.c:10818
+#: src/callbacks.c:10815
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -3535,33 +3548,33 @@ msgstr ""
 "מחיקת כל השמע תסגור את קובץ זה.\n"
 "האם ברצונך להמשיך ?"
 
-#: src/callbacks.c:10821
+#: src/callbacks.c:10818
 msgid "Deleting all audio..."
 msgstr "מוחק את כל השמע"
 
-#: src/callbacks.c:10826
+#: src/callbacks.c:10823
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "מוחק שמע מ־%.2f ל־%.2f שניות..."
 
-#: src/callbacks.c:10900
+#: src/callbacks.c:10897
 msgid "Deleting Audio"
 msgstr "מוחק שמע"
 
-#: src/callbacks.c:10907
+#: src/callbacks.c:10904
 msgid "Delete Audio"
 msgstr "מחק שמע"
 
-#: src/callbacks.c:11238
+#: src/callbacks.c:11235
 msgid "Record new audio"
 msgstr "הקלט שמע חדש"
 
-#: src/callbacks.c:11337
+#: src/callbacks.c:11334
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "מכניס שקט מ־%.2f ל־%.2f שניות..."
 
-#: src/callbacks.c:11367
+#: src/callbacks.c:11364
 msgid "Inserting Silence"
 msgstr "מכניס שקט"
 
@@ -3633,558 +3646,558 @@ msgstr "אפקטים _מותאמים אישית"
 msgid "Custom _Utilities"
 msgstr "_כלי שירות מותאמים אישית"
 
-#: src/gui.c:526 src/multitrack.c:6418
+#: src/gui.c:528 src/multitrack.c:6418
 msgid "_File"
 msgstr "_קובץ"
 
-#: src/gui.c:534 src/multitrack.c:6430
+#: src/gui.c:536 src/multitrack.c:6430
 msgid "_Open File/Directory"
 msgstr "_פתיחת קובץ\\תיקייה"
 
-#: src/gui.c:540
+#: src/gui.c:542
 msgid "O_pen Part of File..."
 msgstr ""
 
-#: src/gui.c:544
+#: src/gui.c:546
 msgid "Play Remote _Stream..."
 msgstr ""
 
-#: src/gui.c:546
+#: src/gui.c:548
 #, fuzzy
 msgid "Open _Online Clip..."
 msgstr "פ_תיחת בחירת הקובץ..."
 
-#: src/gui.c:552
+#: src/gui.c:554
 msgid "Download from _Youtube or other site..."
 msgstr ""
 
-#: src/gui.c:557
+#: src/gui.c:559
 msgid "Import from _dvd/vcd..."
 msgstr ""
 
-#: src/gui.c:568
+#: src/gui.c:570
 msgid "Import from _dvd"
 msgstr ""
 
-#: src/gui.c:569
+#: src/gui.c:571
 msgid "Import from _vcd"
 msgstr ""
 
-#: src/gui.c:574
+#: src/gui.c:576
 msgid "_Import from Firewire"
 msgstr ""
 
-#: src/gui.c:579 src/multitrack.c:6510
+#: src/gui.c:581 src/multitrack.c:6510
 msgid "Import from _Firewire Device (dv)"
 msgstr "ייבוא מהתקן _Firewire (DV)"
 
-#: src/gui.c:580 src/multitrack.c:6517
+#: src/gui.c:582 src/multitrack.c:6517
 msgid "Import from _Firewire Device (hdv)"
 msgstr "ייבוא מהתקן _Firewire (hdv)"
 
-#: src/gui.c:587
+#: src/gui.c:589
 msgid "_Add Webcam/TV card..."
 msgstr ""
 
-#: src/gui.c:588
+#: src/gui.c:590
 msgid "Add _Unicap Device"
 msgstr ""
 
-#: src/gui.c:589
+#: src/gui.c:591
 msgid "Add Live _Firewire Device"
 msgstr "הוספת התקן _Firewire חי"
 
-#: src/gui.c:590
+#: src/gui.c:592
 msgid "Add _TV Device"
 msgstr ""
 
-#: src/gui.c:625 src/multitrack.c:6539
+#: src/gui.c:627 src/multitrack.c:6539
 msgid "_Recent Files..."
 msgstr "קבצים _אחרונים..."
 
-#: src/gui.c:661 src/multitrack.c:6587
+#: src/gui.c:663 src/multitrack.c:6587
 msgid "_Reload Clip Set..."
 msgstr "_טעינת אוסף הקטעים..."
 
-#: src/gui.c:664 src/multitrack.c:6594
+#: src/gui.c:666 src/multitrack.c:6594
 msgid "Close/Sa_ve All Clips"
 msgstr "סגירת\\שמ_ירת כל הקטעים"
 
-#: src/gui.c:671
+#: src/gui.c:673
 msgid "_Quick Transcode (beta)..."
 msgstr ""
 
-#: src/gui.c:681
+#: src/gui.c:683
 msgid "_Encode Clip As..."
 msgstr "_קידוד הקטע כ..."
 
-#: src/gui.c:683
+#: src/gui.c:685
 msgid "Encode _Selection As..."
 msgstr "קידוד _בחירה כ..."
 
-#: src/gui.c:687
+#: src/gui.c:689
 msgid "_Close This Clip"
 msgstr "_סגירת  קטע זה"
 
-#: src/gui.c:696
+#: src/gui.c:698
 #, fuzzy, c-format
 msgid "_Backup Clip as .%s..."
 msgstr "_גיבוי הקטע כ־.lv1"
 
-#: src/gui.c:705
+#: src/gui.c:707
 #, fuzzy, c-format
 msgid "_Restore Clip from .%s..."
 msgstr "_שיחזור קטע מ־.lv1"
 
-#: src/gui.c:716
+#: src/gui.c:718
 msgid "Encode/Load/Backup _with Sound"
 msgstr "קידוד\\טעינה\\גיבוי _עם קול"
 
-#: src/gui.c:719
+#: src/gui.c:721
 msgid "Auto load subtitles"
 msgstr ""
 
-#: src/gui.c:724 src/multitrack.c:6631
+#: src/gui.c:726 src/multitrack.c:6631
 msgid "Clean _up Diskspace"
 msgstr "_ניקוי שטח כונן"
 
-#: src/gui.c:730 src/multitrack.c:6662
+#: src/gui.c:732 src/multitrack.c:6662
 msgid "_Edit"
 msgstr "ע_ריכה"
 
-#: src/gui.c:767
+#: src/gui.c:769
 msgid "_MULTITRACK mode"
 msgstr "מצב _רב־רצועתי"
 
-#: src/gui.c:776
+#: src/gui.c:778
 msgid "_Copy Selection"
 msgstr "העתקת בחירה"
 
-#: src/gui.c:784
+#: src/gui.c:786
 msgid "Cu_t Selection"
 msgstr "גזירת בחירה"
 
-#: src/gui.c:792
+#: src/gui.c:794
 msgid "_Insert from Clipboard..."
 msgstr "_הכנסה מלוח הגזירים..."
 
-#: src/gui.c:806
+#: src/gui.c:808
 msgid "Paste as _New"
 msgstr "הדבקה כ־_חדש"
 
-#: src/gui.c:814
+#: src/gui.c:816
 msgid "_Merge Clipboard with Selection..."
 msgstr "_מיזוג לוח הגזירים עם הבחירה"
 
-#: src/gui.c:819
+#: src/gui.c:821
 msgid "_Delete Selection"
 msgstr "_מחיקת בחירה"
 
-#: src/gui.c:834
+#: src/gui.c:836
 msgid "Decouple _Video from Audio"
 msgstr "הפרד את ה_וידאו מהשמע"
 
-#: src/gui.c:839
+#: src/gui.c:841
 msgid "_Select..."
 msgstr "_בחירה..."
 
-#: src/gui.c:847
+#: src/gui.c:849
 msgid "Select _All Frames"
 msgstr "בחירת _כל השקופיות"
 
-#: src/gui.c:854
+#: src/gui.c:856
 msgid "_Start Frame Only"
 msgstr "שקופית _התחלה בלבד"
 
-#: src/gui.c:861
+#: src/gui.c:863
 msgid "_End Frame Only"
 msgstr "שקופית _סיום בלבד"
 
-#: src/gui.c:869
+#: src/gui.c:871
 msgid "Select from _First Frame"
 msgstr "בחירה מהמסגרת _הראשונה"
 
-#: src/gui.c:872
+#: src/gui.c:874
 msgid "Select to _Last Frame"
 msgstr "בחירה למסגרת _האחרונה"
 
-#: src/gui.c:875
+#: src/gui.c:877
 msgid "Select Last Insertion/_Merge"
 msgstr "בחירת הכנסה אחרונה/_מיזוג"
 
-#: src/gui.c:878
+#: src/gui.c:880
 msgid "Select Last _Effect"
 msgstr "בחירת _האפקט האחרון"
 
-#: src/gui.c:881
+#: src/gui.c:883
 msgid "_Invert Selection"
 msgstr "_הפיכת בחירה"
 
-#: src/gui.c:888
+#: src/gui.c:890
 msgid "_Lock Selection Width"
 msgstr "_נעילת אורך הבחירה"
 
-#: src/gui.c:892 src/multitrack.c:6802
+#: src/gui.c:894 src/multitrack.c:6802
 msgid "_Play"
 msgstr "_נגינה"
 
-#: src/gui.c:898
+#: src/gui.c:900
 msgid "_Play All"
 msgstr "_נגן הכל"
 
-#: src/gui.c:911
+#: src/gui.c:913
 msgid "Pla_y Selection"
 msgstr "נג_ינת בחירה"
 
-#: src/gui.c:918
+#: src/gui.c:920
 msgid "Play _Clipboard"
 msgstr "נגינה מ_לוח הגזירים"
 
-#: src/gui.c:938 src/multitrack.c:6828
+#: src/gui.c:940 src/multitrack.c:6828
 msgid "_Stop"
 msgstr "_עצירה"
 
-#: src/gui.c:950 src/multitrack.c:6840
+#: src/gui.c:952 src/multitrack.c:6840
 msgid "Re_wind"
 msgstr "_העברה _קדימה"
 
-#: src/gui.c:976 src/multitrack.c:6858
+#: src/gui.c:978 src/multitrack.c:6858
 msgid "_Full Screen"
 msgstr "_מסך מלא"
 
-#: src/gui.c:983
+#: src/gui.c:985
 msgid "_Double Size"
 msgstr "גודל _כפול"
 
-#: src/gui.c:990 src/multitrack.c:6865
+#: src/gui.c:992 src/multitrack.c:6865
 msgid "Play in _Separate Window"
 msgstr "נגינה בחלון _נוסף"
 
-#: src/gui.c:997
+#: src/gui.c:999
 msgid "_Blank Background"
 msgstr "רקע _שחור"
 
-#: src/gui.c:1006
+#: src/gui.c:1008
 msgid "(Auto)_loop Video (to fit audio track)"
 msgstr "(אוטומטי) _יצירת לולאת וידאו (כדי להתאימו לרצועת השמע)"
 
-#: src/gui.c:1013 src/multitrack.c:6872
+#: src/gui.c:1015 src/multitrack.c:6872
 msgid "L_oop Continuously"
 msgstr "יצירת לולאה מתמשכת"
 
-#: src/gui.c:1021
+#: src/gui.c:1023
 msgid "Pin_g Pong Loops"
 msgstr "Pin_g Pong לולאות"
 
-#: src/gui.c:1028 src/multitrack.c:6879
+#: src/gui.c:1030 src/multitrack.c:6879
 msgid "_Mute"
 msgstr "_השתק"
 
-#: src/gui.c:1038
+#: src/gui.c:1040
 msgid "Separate Window 'S_ticky' Mode"
 msgstr "הפרדת חלון במצב 'ד_ביק'"
 
-#: src/gui.c:1043
+#: src/gui.c:1045
 msgid "S_how Frame Counter"
 msgstr "ה_צגת מונה השקופיות"
 
-#: src/gui.c:1050
+#: src/gui.c:1052
 msgid "Show Subtitles"
 msgstr ""
 
-#: src/gui.c:1057
+#: src/gui.c:1059
 msgid "Letterbox Mode"
 msgstr ""
 
-#: src/gui.c:1060 src/multitrack.c:6888
+#: src/gui.c:1062 src/multitrack.c:6888
 msgid "Effect_s"
 msgstr "אפקט_ים"
 
-#: src/gui.c:1062
+#: src/gui.c:1064
 msgid "Effects are applied to the current selection."
 msgstr "האפקטים מוחלים על הבחירה הנוכחית"
 
-#: src/gui.c:1070
+#: src/gui.c:1072
 msgid "_Run Test Rendered Effect/Tool/Generator..."
 msgstr "_הרצת בדיקת האפקט, הכלי או המחולל..."
 
-#: src/gui.c:1075 src/multitrack.c:7383
+#: src/gui.c:1077 src/multitrack.c:7383
 msgid "_Tools"
 msgstr "_כלים"
 
-#: src/gui.c:1077
+#: src/gui.c:1079
 msgid "Tools are applied to complete clips."
 msgstr "הכלים חלים על קטעים שהושלמו."
 
-#: src/gui.c:1082
+#: src/gui.c:1084
 msgid "_Reverse Clipboard"
 msgstr "_הפיכת הגזירים"
 
-#: src/gui.c:1090
+#: src/gui.c:1092
 msgid "_Change Playback/Save Speed..."
 msgstr "_שינוי מהירות הנגינה או השמירה..."
 
-#: src/gui.c:1094
+#: src/gui.c:1096
 msgid "Resample _Video to New Frame Rate..."
 msgstr "_דגימה מחדש של ה_וידאו למהירות שקופיות חדשה..."
 
-#: src/gui.c:1099
+#: src/gui.c:1101
 msgid "_Utilities"
 msgstr "_כלי שירות"
 
-#: src/gui.c:1103
+#: src/gui.c:1105
 msgid "Custom _Tools"
 msgstr "_כלים מותאמים אישית"
 
-#: src/gui.c:1109 src/multitrack.c:7400
+#: src/gui.c:1111 src/multitrack.c:7400
 msgid "_Generate"
 msgstr "_ייצר"
 
-#: src/gui.c:1128
+#: src/gui.c:1130
 msgid "Load _Subtitles from File..."
 msgstr ""
 
-#: src/gui.c:1132
+#: src/gui.c:1134
 msgid "Erase subtitles"
 msgstr ""
 
-#: src/gui.c:1138 src/multitrack.c:7408
+#: src/gui.c:1140 src/multitrack.c:7408
 msgid "Capture _External Window... "
 msgstr "לכידת חלון _חיצוני... "
 
-#: src/gui.c:1143 src/multitrack.c:7419
+#: src/gui.c:1145 src/multitrack.c:7419
 msgid "_Preferences..."
 msgstr "_העדפות..."
 
-#: src/gui.c:1154
+#: src/gui.c:1156
 msgid "_Audio"
 msgstr "_שמע"
 
-#: src/gui.c:1160
+#: src/gui.c:1162
 msgid "Load _New Audio for Clip..."
 msgstr "טעינת שמע _חדש לקטע"
 
-#: src/gui.c:1165
+#: src/gui.c:1167
 msgid "Load _CD Track..."
 msgstr "טעינת רצועה מ_תקליטור..."
 
-#: src/gui.c:1166
+#: src/gui.c:1168
 msgid "E_ject CD"
 msgstr "ה_וצאת תקליטור"
 
-#: src/gui.c:1177
+#: src/gui.c:1179
 msgid "Record E_xternal Audio..."
 msgstr "הקלטת שמע _חיצוני..."
 
-#: src/gui.c:1184
+#: src/gui.c:1186
 msgid "to New _Clip..."
 msgstr "ל_קטע חדש..."
 
-#: src/gui.c:1187
+#: src/gui.c:1189
 msgid "to _Selection"
 msgstr "ל_בחירה"
 
-#: src/gui.c:1193
+#: src/gui.c:1195
 msgid "Fade Audio _In..."
 msgstr "החלת אפקט Fade _In על השמע"
 
-#: src/gui.c:1196
+#: src/gui.c:1198
 msgid "Fade Audio _Out..."
 msgstr "החל אפקט Fade _Out על השמע..."
 
-#: src/gui.c:1204
+#: src/gui.c:1206
 msgid "_Export Audio..."
 msgstr "_ייצוא שמע..."
 
-#: src/gui.c:1212
+#: src/gui.c:1214
 msgid "Export _Selected Audio..."
 msgstr "_ייצוא שמע _נבחר..."
 
-#: src/gui.c:1215
+#: src/gui.c:1217
 msgid "Export _All Audio..."
 msgstr "ייצוא _כל השמע..."
 
-#: src/gui.c:1218
+#: src/gui.c:1220
 msgid "_Append Audio..."
 msgstr "_צירוף שמע..."
 
-#: src/gui.c:1222
+#: src/gui.c:1224
 msgid "_Trim/Pad Audio..."
 msgstr "_תיקון\\ריפוד שמע"
 
-#: src/gui.c:1230
+#: src/gui.c:1232
 msgid "Trim/Pad Audio to _Selection"
 msgstr "_תיקון\\ריפוד שמע ל_בחירה"
 
-#: src/gui.c:1234
+#: src/gui.c:1236
 msgid "Trim/Pad Audio from Beginning to _Play Start"
 msgstr "תיקון\\ריפוד שמע מההתחלה ל_תחילת הנגינה"
 
-#: src/gui.c:1238
+#: src/gui.c:1240
 msgid "_Delete Audio..."
 msgstr "_מחיקת שמע..."
 
-#: src/gui.c:1246
+#: src/gui.c:1248
 msgid "Delete _Selected Audio"
 msgstr "מחיקת שמע _נבחר"
 
-#: src/gui.c:1249
+#: src/gui.c:1251
 msgid "Delete _All Audio"
 msgstr "מחיקת  _כל השמע"
 
-#: src/gui.c:1252
+#: src/gui.c:1254
 msgid "Insert _Silence in Selection"
 msgstr "הכנסת _שקט לבחירה"
 
-#: src/gui.c:1256
+#: src/gui.c:1258
 msgid "_Resample Audio..."
 msgstr "_דגימת שמע מחדש"
 
-#: src/gui.c:1264
+#: src/gui.c:1266
 #, fuzzy
 msgid "_Adjust Audio Sync..."
 msgstr "_צירוף שמע..."
 
-#: src/gui.c:1268
+#: src/gui.c:1270
 msgid "_Info"
 msgstr "_מידע"
 
-#: src/gui.c:1274
+#: src/gui.c:1276
 msgid "Show Clip _Info"
 msgstr "הצגת _מידע קטע"
 
-#: src/gui.c:1281
+#: src/gui.c:1283
 msgid "Show/_Edit File Comments"
 msgstr "הצגת\\_עריכת הערות הקובץ"
 
-#: src/gui.c:1285
+#: src/gui.c:1287
 msgid "Show _Clipboard Info"
 msgstr "הצגת מידע על _לוח הגזירים"
 
-#: src/gui.c:1294 src/multitrack.c:7511
+#: src/gui.c:1296 src/multitrack.c:7511
 msgid "Show _Messages"
 msgstr "הצגת _הודעות"
 
-#: src/gui.c:1297 src/multitrack.c:7573
+#: src/gui.c:1299 src/multitrack.c:7573
 msgid "Show _Layout Errors"
 msgstr "הצגת שגיאות _פריסה"
 
-#: src/gui.c:1301 src/multitrack.c:7488
+#: src/gui.c:1303 src/multitrack.c:7488
 msgid "_Clips"
 msgstr "_קטעים"
 
-#: src/gui.c:1307
+#: src/gui.c:1309
 msgid "_Rename Current Clip in Menu..."
 msgstr "_שינוי שם הקטע הנוכחי בתפריט..."
 
-#: src/gui.c:1317
+#: src/gui.c:1319
 msgid "A_dvanced"
 msgstr "מ_תקדם"
 
-#: src/gui.c:1323
+#: src/gui.c:1325
 msgid "_RFX Effects/Tools/Utilities"
 msgstr "אפקטים\\כלים\\כלי שירות של _RFX"
 
-#: src/gui.c:1329
+#: src/gui.c:1331
 msgid "_New Test RFX Script..."
 msgstr "תסריט בדיקת RFX _חדש..."
 
-#: src/gui.c:1332
+#: src/gui.c:1334
 msgid "_Copy RFX Script to Test..."
 msgstr "_העתקת תסריט RFX לבדיקה..."
 
-#: src/gui.c:1335
+#: src/gui.c:1337
 msgid "_Edit Test RFX Script..."
 msgstr "_עריכת תסריט בדיקת ה־RFX..."
 
-#: src/gui.c:1338
+#: src/gui.c:1340
 msgid "Rena_me Test RFX Script..."
 msgstr "שינוי _שם לתסריט בדיקת ה־RFX..."
 
-#: src/gui.c:1341
+#: src/gui.c:1343
 msgid "_Delete Test RFX Script..."
 msgstr "_מחקית תסריט בדיקת RFX..."
 
-#: src/gui.c:1348
+#: src/gui.c:1350
 msgid "_Promote Test Rendered Effect/Tool/Generator..."
 msgstr "העלאה לבדיקה של אפקט\\כלי\\מחולל מוכן..."
 
-#: src/gui.c:1353
+#: src/gui.c:1355
 msgid "_Import Custom RFX script..."
 msgstr "_ייבוא תסריט RFX מותאם אישית..."
 
-#: src/gui.c:1356
+#: src/gui.c:1358
 msgid "E_xport Custom RFX script..."
 msgstr "י_יצוא תסריט RFX מותאם אישית..."
 
-#: src/gui.c:1359
+#: src/gui.c:1361
 msgid "De_lete Custom RFX Script..."
 msgstr "מ_חיקת תסריט RFX מותאם אישית..."
 
-#: src/gui.c:1364
+#: src/gui.c:1366
 msgid "Re_build all RFX plugins"
 msgstr "בנ_ייה מחדש של כל תוספי ה־RFX"
 
-#: src/gui.c:1389
+#: src/gui.c:1391
 #, fuzzy
 msgid "Receive _LiVES Stream from..."
 msgstr "_קבלת זרימת _LiVES מ..."
 
-#: src/gui.c:1393
+#: src/gui.c:1395
 #, fuzzy
 msgid "_Send LiVES Stream to..."
 msgstr "_שליחת זרימת LiVES ל..."
 
-#: src/gui.c:1400
+#: src/gui.c:1402
 #, fuzzy
 msgid "Open _yuv4mpeg stream..."
 msgstr "פתיחת זרימת _yuv4mpeg מ־%sstream.yuv..."
 
-#: src/gui.c:1417
+#: src/gui.c:1419
 #, fuzzy, c-format
 msgid "_Import Project (.%s)..."
 msgstr "_ייבוא פרויקט (.lv2)..."
 
-#: src/gui.c:1422
+#: src/gui.c:1424
 #, fuzzy, c-format
 msgid "E_xport Project (.%s)..."
 msgstr "יי_צוא פרויקט (.lv2)..."
 
-#: src/gui.c:1430
+#: src/gui.c:1432
 #, fuzzy, c-format
 msgid "_Import Custom Theme (.%s)..."
 msgstr "_ייבוא פרויקט (.lv2)..."
 
-#: src/gui.c:1435
+#: src/gui.c:1437
 #, fuzzy, c-format
 msgid "E_xport Theme (.%s)..."
 msgstr "יי_צוא פרויקט (.lv2)..."
 
-#: src/gui.c:1443
+#: src/gui.c:1445
 msgid "_VJ"
 msgstr "_VJ"
 
-#: src/gui.c:1449
+#: src/gui.c:1451
 msgid "Real Time _Effect Mapping"
 msgstr "מיפוי _אפקט בזמן אמת"
 
-#: src/gui.c:1454
+#: src/gui.c:1456
 msgid "Bind real time effects to ctrl-number keys."
 msgstr "שיוך אפקטים בזמן אמת למקשי ctrl-number"
 
-#: src/gui.c:1456
+#: src/gui.c:1458
 msgid "Set Real Time Effect _Defaults"
 msgstr "קביעת אפקט בזמן אמת ל_ברירת מחדל"
 
-#: src/gui.c:1458
+#: src/gui.c:1460
 msgid "Set default parameter values for real time effects."
 msgstr "קביעת ערך ברירת המחדל עבור אפקטים בזמת אמת."
 
-#: src/gui.c:1463
+#: src/gui.c:1465
 msgid "Save Real Time Effect _Defaults"
 msgstr "שמירת _ברירת המחדל של אפקטים בזמן אמת"
 
-#: src/gui.c:1466
+#: src/gui.c:1468
 msgid ""
 "Save real time effect defaults so they will be restored each time you use "
 "LiVES."
@@ -4192,181 +4205,181 @@ msgstr ""
 "שמור את ברירת המחדל של אפקטים בזמן אמת כדי שיהיו ניתנים לשחזור בכל שימוש ב־"
 "LiVES."
 
-#: src/gui.c:1470
+#: src/gui.c:1472
 #, fuzzy
 msgid "_Pre-decode all frames"
 msgstr "בחירת _כל השקופיות"
 
-#: src/gui.c:1473
+#: src/gui.c:1475
 msgid ""
 "Decode all frames to images. This can improve reverse playback and random "
 "seek times,\n"
 "at the cost of diskspace."
 msgstr ""
 
-#: src/gui.c:1476
+#: src/gui.c:1478
 #, fuzzy
 msgid "_Reset All Playback Speeds and Positions"
 msgstr "_איפוס  כל מהירויות ומיקומי  הנגינה"
 
-#: src/gui.c:1478
+#: src/gui.c:1480
 msgid ""
 "Reset all playback positions to frame 1, and reset all playback frame rates."
 msgstr "איפוס את כל מיקומי הנגינה למסגרת 1 ואת כל מהירויות הנגינה."
 
-#: src/gui.c:1481
+#: src/gui.c:1483
 #, fuzzy
 msgid "_MIDI/Joystick Interface"
 msgstr "מנשק _MIDI\\מוט היגוי"
 
-#: src/gui.c:1490
+#: src/gui.c:1492
 #, fuzzy
 msgid "_MIDI/Joystick Learner..."
 msgstr "לומד _MIDI\\מוט היגוי"
 
-#: src/gui.c:1494
+#: src/gui.c:1496
 #, fuzzy
 msgid "_Save Device Mapping..."
 msgstr "_שמירת מיפוי התקן..."
 
-#: src/gui.c:1499
+#: src/gui.c:1501
 #, fuzzy
 msgid "_Load Device Mapping..."
 msgstr "_טעינת מיפוי התקן..."
 
-#: src/gui.c:1505
+#: src/gui.c:1507
 msgid "Show VJ _Keys"
 msgstr "הצגת _מקשי VJ"
 
-#: src/gui.c:1510
+#: src/gui.c:1512
 msgid "_Automatic Mode (autolives)..."
 msgstr ""
 
-#: src/gui.c:1515
+#: src/gui.c:1517
 msgid "To_ys"
 msgstr "צעצ_ועים"
 
-#: src/gui.c:1521
+#: src/gui.c:1523
 msgid "_None"
 msgstr "_ללא"
 
-#: src/gui.c:1524
+#: src/gui.c:1526
 msgid "_Mad Frames"
 msgstr "_שיגוע שקופיות"
 
-#: src/gui.c:1527
+#: src/gui.c:1529
 msgid "_LiVES TV (broadband)"
 msgstr "טלוויזית _LiVES (פס רחב)"
 
-#: src/gui.c:1531 src/multitrack.c:7593
+#: src/gui.c:1533 src/multitrack.c:7593
 msgid "_Help"
 msgstr "_עזרה"
 
-#: src/gui.c:1537 src/multitrack.c:7606
+#: src/gui.c:1539 src/multitrack.c:7606
 msgid "_Manual (opens in browser)"
 msgstr "_מדריך (נפתח בדפדפן)"
 
-#: src/gui.c:1542 src/multitrack.c:7613
+#: src/gui.c:1544 src/multitrack.c:7613
 #, fuzzy
 msgid "_Donate to the Project !"
 msgstr "_תרומה למיזם"
 
-#: src/gui.c:1545 src/multitrack.c:7616
+#: src/gui.c:1547 src/multitrack.c:7616
 #, fuzzy
 msgid "_Email the Author"
 msgstr "_שליחת דוא\"ל לכותב התוכנה"
 
-#: src/gui.c:1548
+#: src/gui.c:1550
 #, fuzzy
 msgid "Report a _Bug"
 msgstr "דיווח על _באג"
 
-#: src/gui.c:1551 src/multitrack.c:7622
+#: src/gui.c:1553 src/multitrack.c:7622
 #, fuzzy
 msgid "Suggest a _Feature"
 msgstr "הצעת _תכונה חדשה"
 
-#: src/gui.c:1554 src/multitrack.c:7625
+#: src/gui.c:1556 src/multitrack.c:7625
 #, fuzzy
 msgid "Assist with _Translating"
 msgstr "לסייע _בתרגום"
 
-#: src/gui.c:1559 src/multitrack.c:7630
+#: src/gui.c:1561 src/multitrack.c:7630
 msgid "_Troubleshoot"
 msgstr "_איתור תקלות"
 
-#: src/gui.c:1562 src/multitrack.c:7633
+#: src/gui.c:1564 src/multitrack.c:7633
 msgid "_About"
 msgstr "_אודות"
 
-#: src/gui.c:1587
+#: src/gui.c:1589
 msgid "Rewind to start (w)"
 msgstr "חזרה להתחלה (w)"
 
-#: src/gui.c:1594 src/multitrack.c:16678
+#: src/gui.c:1596 src/multitrack.c:16678
 msgid "Play all (p)"
 msgstr "נגן הכל (p)"
 
-#: src/gui.c:1600 src/gui.c:1794
+#: src/gui.c:1602 src/gui.c:1796
 msgid "Stop playback (q)"
 msgstr "הפסקת נגינה (q)"
 
-#: src/gui.c:1606
+#: src/gui.c:1608
 msgid "Play selection (y)"
 msgstr "נגן בחירה (y)"
 
-#: src/gui.c:1644
+#: src/gui.c:1646
 #, fuzzy
 msgid "Audio Source:    "
 msgstr "מקודד שמע"
 
-#: src/gui.c:1678
+#: src/gui.c:1680
 #, fuzzy
 msgid "Internal"
 msgstr "- פנימי -"
 
-#: src/gui.c:1710
+#: src/gui.c:1712
 #, fuzzy
 msgid "External"
 msgstr "- פנימי -"
 
-#: src/gui.c:1754
+#: src/gui.c:1756
 msgid "Volume"
 msgstr "עוצמת קול"
 
-#: src/gui.c:1771
+#: src/gui.c:1773
 msgid "Audio volume (1.00)"
 msgstr "עוצמת שמע (1.00)"
 
-#: src/gui.c:1800
+#: src/gui.c:1802
 msgid "Unblank background (b)"
 msgstr "רקע שאינו ריק (b)"
 
-#: src/gui.c:1836
+#: src/gui.c:1838
 msgid "Play slower (ctrl-down)"
 msgstr "נגינה איטית יותר (ctrl-down)"
 
-#: src/gui.c:1842
+#: src/gui.c:1844
 msgid "Play faster (ctrl-up)"
 msgstr "נגינה מהירה יותר (ctrl-up)"
 
-#: src/gui.c:1848
+#: src/gui.c:1850
 msgid "Skip back (ctrl-left)"
 msgstr "דילוג אחורה (ctrl-left)"
 
-#: src/gui.c:1854
+#: src/gui.c:1856
 msgid "Skip forward (ctrl-right)"
 msgstr "דילוג קדימה (ctrl-right)"
 
-#: src/gui.c:1860
+#: src/gui.c:1862
 msgid "Show clip info (i)"
 msgstr "הצגת מידע על הקטע (i)"
 
-#: src/gui.c:1866
+#: src/gui.c:1868
 msgid "Hide this toolbar"
 msgstr "החבאת סרגל כלים זה"
 
-#: src/gui.c:1868
+#: src/gui.c:1870
 msgid ""
 "Press \"s\" to toggle separate play window for improved performance, \"q\" "
 "to stop."
@@ -4374,141 +4387,141 @@ msgstr ""
 "יש ללחוץ על \"s\" כדי לפתוח או לסגור חלון נגינה נפרד לשם ביצועים משופרים, או "
 "על \"q\" כדי לעצור."
 
-#: src/gui.c:1897
+#: src/gui.c:1899
 #, fuzzy
 msgid "Video playback speed (frames per second)"
 msgstr "     מהירות נגינת הוידאו (שקופיות לשנייה)        "
 
-#: src/gui.c:1902
+#: src/gui.c:1904
 msgid "Vary the video speed"
 msgstr "שינוי מהירות הוידאו"
 
-#: src/gui.c:1951 src/gui.c:3267
+#: src/gui.c:1953 src/gui.c:3269
 msgid "First Frame"
 msgstr "שקופית ראשונה"
 
-#: src/gui.c:1989 src/gui.c:3274
+#: src/gui.c:1991 src/gui.c:3276
 msgid "Last Frame"
 msgstr "שקופית אחרונה"
 
-#: src/gui.c:2036
+#: src/gui.c:2038
 msgid "The first selected frame in this clip"
 msgstr "השקופית הראשונה שנבחרה בקטע זה"
 
-#: src/gui.c:2078
+#: src/gui.c:2080
 #, fuzzy
 msgid " Select All Frames  "
 msgstr "בחירת _כל השקופיות"
 
-#: src/gui.c:2079
+#: src/gui.c:2081
 #, fuzzy
 msgid "Select all frames in this clip"
 msgstr "השקופית האחרונה שנבחרה בקטע זה"
 
-#: src/gui.c:2099
+#: src/gui.c:2101
 msgid "The last selected frame in this clip"
 msgstr "השקופית האחרונה שנבחרה בקטע זה"
 
-#: src/gui.c:3149
+#: src/gui.c:3151
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr ""
 "    יש ללחוץ על 'q' כדי להפסיק את ההקלטה. אין לכסות את חלון הנגינה !   "
 
-#: src/gui.c:3564
+#: src/gui.c:3566
 msgid "Frame number to preview"
 msgstr "מספר שקופיות להצגה"
 
-#: src/gui.c:3573
+#: src/gui.c:3575
 msgid "_Free"
 msgstr "_פנוי"
 
-#: src/gui.c:3575
+#: src/gui.c:3577
 msgid "Free choice of frame number"
 msgstr "בחירה חופשית של מספרי שקופיות"
 
-#: src/gui.c:3579
+#: src/gui.c:3581
 msgid "_Start"
 msgstr "_התחלה"
 
-#: src/gui.c:3581
+#: src/gui.c:3583
 msgid "Frame number is linked to start frame"
 msgstr "מספר השקופיות מקושר לשקופית ההתחלה"
 
-#: src/gui.c:3587
+#: src/gui.c:3589
 msgid "_End"
 msgstr "_סוף"
 
-#: src/gui.c:3588
+#: src/gui.c:3590
 msgid "Frame number is linked to end frame"
 msgstr "מספר השקופיות מקושר לשקופית הסיום"
 
-#: src/gui.c:3594
+#: src/gui.c:3596
 msgid "_Pointer"
 msgstr "_מצביע"
 
-#: src/gui.c:3596
+#: src/gui.c:3598
 msgid "Frame number is linked to playback pointer"
 msgstr "מספר השקופיות מקושר למצביע הנגינה"
 
-#: src/gui.c:3616
+#: src/gui.c:3618
 msgid "Rewind"
 msgstr "הרצה אחורנית"
 
-#: src/gui.c:3628 src/dialogs.c:1017 src/dialogs.c:1019 src/dialogs.c:1956
+#: src/gui.c:3630 src/dialogs.c:1017 src/dialogs.c:1019 src/dialogs.c:1956
 #: src/dialogs.c:1958
 msgid "Play all"
 msgstr "נגן הכל"
 
-#: src/gui.c:3639
+#: src/gui.c:3641
 msgid "Play Selection"
 msgstr "נגינת בחירה"
 
-#: src/gui.c:3651
+#: src/gui.c:3653
 msgid "Loop On/Off"
 msgstr "הפעלת\\כיבוי לולאה"
 
-#: src/gui.c:3727
+#: src/gui.c:3729
 msgid "Start _recording"
 msgstr "התחלת _הקלטה"
 
-#: src/gui.c:3733
+#: src/gui.c:3735
 msgid "Stop _recording"
 msgstr "הפסקת _הקלטה"
 
-#: src/gui.c:3738
+#: src/gui.c:3740
 msgid "_Record Performance"
 msgstr "_הקלטת ביצועים"
 
-#: src/gui.c:3748 src/saveplay.c:2974 src/multitrack.c:9261
+#: src/gui.c:3750 src/saveplay.c:2975 src/multitrack.c:9261
 #: src/multitrack.c:11012
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/gui.c:3753
+#: src/gui.c:3755
 #, fuzzy
 msgid "Streaming"
 msgstr "חלום"
 
-#: src/gui.c:3755
+#: src/gui.c:3757
 #, fuzzy, c-format
 msgid "Play Window%s"
 msgstr "החבאת חלון נגינה"
 
-#: src/gui.c:3892
+#: src/gui.c:3894
 msgid "Hide Play Window"
 msgstr "החבאת חלון נגינה"
 
-#: src/gui.c:4291
+#: src/gui.c:4293
 msgid "Show Play Window"
 msgstr "הצגת חלון נגינה"
 
-#: src/gui.c:4385
+#: src/gui.c:4387
 #, fuzzy, c-format
 msgid "'LiVES opened the file' '%s'"
 msgstr "ל־LiVES לא היתה אפשרות לפתוח את הקובץ"
 
-#: src/gui.c:4404
+#: src/gui.c:4406
 #, fuzzy, c-format
 msgid "'LiVES closed the file' '%s'"
 msgstr "מתן האפשרות ל־LiVES להגדיר את סיומת ה_קובץ"
@@ -4780,16 +4793,16 @@ msgstr ""
 "האוסף %s כבר קיים.\n"
 "נא לבחור שם אחר לאוסף.\n"
 
-#: src/utils.c:2579
+#: src/utils.c:2580
 #, c-format
 msgid "Removing layout %s\n"
 msgstr "מסיר פריסה %s\n"
 
-#: src/utils.c:3227
+#: src/utils.c:3228
 msgid "Cleaning up clip"
 msgstr "מנקה קטע"
 
-#: src/utils.c:3312
+#: src/utils.c:3313
 #, c-format
 msgid ""
 "\n"
@@ -4804,29 +4817,29 @@ msgstr ""
 "\n"
 "לשכתבו ?\n"
 
-#: src/utils.c:3870 src/utils.c:3899 src/multitrack.c:4801
+#: src/utils.c:3871 src/utils.c:3900 src/multitrack.c:4801
 #, c-format
 msgid "_Undo %s"
 msgstr "_ביטול %s"
 
-#: src/utils.c:3871 src/utils.c:3900 src/multitrack.c:4821
+#: src/utils.c:3872 src/utils.c:3901 src/multitrack.c:4821
 #, c-format
 msgid "_Redo %s"
 msgstr "_ביצוע מחדש %s"
 
-#: src/utils.c:3923
+#: src/utils.c:3924
 msgid "-------------Selection------------"
 msgstr "------------בחירה----------"
 
-#: src/utils.c:3931
+#: src/utils.c:3932
 msgid " sec ] ----------Selection---------- [ "
 msgstr " שניות [ --------בחירה--------] "
 
-#: src/utils.c:3932
+#: src/utils.c:3933
 msgid " frames ] ----------"
 msgstr " שקופיות ] --------"
 
-#: src/utils.c:4853
+#: src/utils.c:4875
 msgid ""
 "Your version of mplayer/ffmpeg may be broken !\n"
 "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n"
@@ -4851,7 +4864,7 @@ msgstr "פותח את %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "פותח את %s בזמן התחלה %.2f שניות. %d שקופיות"
 
-#: src/saveplay.c:309 src/saveplay.c:3753
+#: src/saveplay.c:309 src/saveplay.c:3754
 msgid " without sound"
 msgstr " ללא קול"
 
@@ -4969,7 +4982,7 @@ msgstr ""
 "האם ברצונך להמשיך אף על פי כן?"
 
 #: src/saveplay.c:1423 src/saveplay.c:1543 src/saveplay.c:1614
-#: src/saveplay.c:3762
+#: src/saveplay.c:3763
 #, fuzzy
 msgid "Pulling frames from clip..."
 msgstr "מושך שקופיות מהקטע"
@@ -5027,12 +5040,12 @@ msgstr "ההקלטה נעצרה ע\"י נגינת לוח הגזירים.\n"
 msgid "Recording performance..."
 msgstr "מקליט ביצועים..."
 
-#: src/saveplay.c:3024
+#: src/saveplay.c:3025
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "קצב השקופיות לשנייה הממוצע היה %.4f\n"
 
-#: src/saveplay.c:3030
+#: src/saveplay.c:3031
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5049,21 +5062,21 @@ msgstr ""
 "באפשרותך ללחוץ על כלים--->שנה גודל כולל\n"
 "ולשנות את גודלן של כל השקופיות לגודל הנוכחי\n"
 
-#: src/saveplay.c:3239
+#: src/saveplay.c:3240
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/saveplay.c:3329
+#: src/saveplay.c:3330
 #, c-format
 msgid "Untitled%d"
 msgstr "חסר כותרת%d"
 
-#: src/saveplay.c:3390
+#: src/saveplay.c:3391
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d שקופיות מספיקות !\n"
 
-#: src/saveplay.c:3400
+#: src/saveplay.c:3401
 #, c-format
 msgid ""
 "\n"
@@ -5071,13 +5084,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/saveplay.c:3402
+#: src/saveplay.c:3403
 msgid ""
 "\n"
 "An error occurred opening the file\n"
 msgstr ""
 
-#: src/saveplay.c:3414
+#: src/saveplay.c:3415
 #, c-format
 msgid ""
 "\n"
@@ -5085,7 +5098,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3500
+#: src/saveplay.c:3501
 #, c-format
 msgid ""
 "\n"
@@ -5096,12 +5109,12 @@ msgstr ""
 "מהירות הנגינה לא נכונה ! משתמש במהירות ברירת המחדל של %.3f שקופיות לשנייה. \n"
 "ניתן לקבוע את ברירת המחדל לערך אחר בכלים | העדפות | שונות.\n"
 
-#: src/saveplay.c:3510
+#: src/saveplay.c:3511
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr "מהירות הנגינה כוונה ל־%.3f שקופיות לשנייה כדי להתאימו לשמע.\n"
 
-#: src/saveplay.c:3526
+#: src/saveplay.c:3527
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -5111,7 +5124,7 @@ msgstr ""
 "%.3f\n"
 "שמע:"
 
-#: src/saveplay.c:3530 src/saveplay.c:4479
+#: src/saveplay.c:3531 src/saveplay.c:4480
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -5120,54 +5133,54 @@ msgstr ""
 "שקופיות=%d סוג=%s גודל=%dx%d סיביות לפיקסל=%d שקופיות לשנייה=%.3f\n"
 "שמע:"
 
-#: src/saveplay.c:3535 src/saveplay.c:4484
+#: src/saveplay.c:3536 src/saveplay.c:4485
 #, c-format
 msgid "%s none\n"
 msgstr "ללא %s\n"
 
-#: src/saveplay.c:3546
+#: src/saveplay.c:3547
 #, fuzzy, c-format
 msgid " - Author: %s\n"
 msgstr "יוצר: %s"
 
-#: src/saveplay.c:3549
+#: src/saveplay.c:3550
 #, fuzzy, c-format
 msgid " - Title: %s\n"
 msgstr " - הערה: %s\n"
 
-#: src/saveplay.c:3552
+#: src/saveplay.c:3553
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - הערה: %s\n"
 
-#: src/saveplay.c:3655
+#: src/saveplay.c:3656
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "שומר שקופית %d כ־%s..."
 
-#: src/saveplay.c:3749
+#: src/saveplay.c:3750
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "מגבה את %s ל־%s"
 
-#: src/saveplay.c:3793
+#: src/saveplay.c:3794
 msgid "Backing up"
 msgstr "מגבה"
 
-#: src/saveplay.c:3827
+#: src/saveplay.c:3828
 msgid "performance data was backed up..."
 msgstr "נתוני הביצועים גובו..."
 
-#: src/saveplay.c:4387
+#: src/saveplay.c:4388
 #, c-format
 msgid "Restoring %s..."
 msgstr "משחזר את %s..."
 
-#: src/saveplay.c:4415
+#: src/saveplay.c:4416
 msgid "Restoring"
 msgstr "משחזר"
 
-#: src/saveplay.c:4433
+#: src/saveplay.c:4434
 #, c-format
 msgid ""
 "\n"
@@ -5180,7 +5193,7 @@ msgstr ""
 "הקובץ %s פגום.\n"
 "לא הייתה אפשרות לשחזרו.\n"
 
-#: src/saveplay.c:4775
+#: src/saveplay.c:4776
 #, c-format
 msgid ""
 "\n"
@@ -5189,22 +5202,22 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4847
+#: src/saveplay.c:4848
 #, c-format
 msgid "rec %.2f MB"
 msgstr "הקלטה %.2f מ\"ב"
 
-#: src/saveplay.c:4852
+#: src/saveplay.c:4853
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!הקלטה %.2f מ\"ב"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4855
+#: src/saveplay.c:4856
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:5165
+#: src/saveplay.c:5166
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -5214,11 +5227,11 @@ msgstr ""
 "נמצאו קבצים מהרצה קודמת של LiVES.\n"
 "האם ברצונך לשחזרם ?\n"
 
-#: src/saveplay.c:5189
+#: src/saveplay.c:5190
 msgid "Recovering files"
 msgstr "משחזר קבצים"
 
-#: src/saveplay.c:5190
+#: src/saveplay.c:5191
 msgid "Recovering files..."
 msgstr "משחזר קבצים..."
 
@@ -5657,18 +5670,18 @@ msgstr ""
 "LiVES יודיע לך כשהשקופיות יתקבלו.\n"
 "לחץ על אישור אם הבנת במה מדובר, אחרת, לחץ על ביטול."
 
-#: src/dialogs.c:2486
+#: src/dialogs.c:2485
 msgid "Message History"
 msgstr "היסטורית הודעות"
 
-#: src/dialogs.c:2494
+#: src/dialogs.c:2493
 #, c-format
 msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
 "in your %s file"
 msgstr ""
 
-#: src/dialogs.c:2505
+#: src/dialogs.c:2504
 #, c-format
 msgid ""
 "\n"
@@ -5679,7 +5692,7 @@ msgid ""
 "or change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/dialogs.c:2514
+#: src/dialogs.c:2513
 #, fuzzy
 msgid ""
 "Sorry, unknown audio type.\n"
@@ -5690,18 +5703,18 @@ msgstr ""
 "\n"
 "(שמות הקבצים חייבים להסתיים ב: .mp3, .ogg, .wav, .mod, .xm או .it)"
 
-#: src/dialogs.c:2536
+#: src/dialogs.c:2535
 msgid "failed (unknown type)\n"
 msgstr "נכשל (סוג לא ידוע)\n"
 
-#: src/dialogs.c:2542
+#: src/dialogs.c:2541
 msgid ""
 "\n"
 "Do you wish to remove the layout files associated with this set ?\n"
 "(They will not be usable without the set).\n"
 msgstr ""
 
-#: src/dialogs.c:2548
+#: src/dialogs.c:2547
 #, c-format
 msgid ""
 "\n"
@@ -5714,7 +5727,7 @@ msgstr ""
 "יש ללחוץ על אישור כדי להוסיף את הקטעים הנוכחיים והפריסות לאוסף הנוכחי. \n"
 "או לחילופין על ביטול כדי לבחור שם חדש.\n"
 
-#: src/dialogs.c:2557
+#: src/dialogs.c:2556
 msgid ""
 "\n"
 "Frames from this clip are used in some multitrack layouts.\n"
@@ -5726,7 +5739,7 @@ msgstr ""
 "האם ברצונך להמשיך בכל זאת ?\n"
 "."
 
-#: src/dialogs.c:2562
+#: src/dialogs.c:2561
 msgid ""
 "\n"
 "Audio from this clip is used in some multitrack layouts.\n"
@@ -5738,7 +5751,7 @@ msgstr ""
 "האם ברצונך להמשיך בכל זאת ?\n"
 "."
 
-#: src/dialogs.c:2568
+#: src/dialogs.c:2567
 #, c-format
 msgid ""
 "\n"
@@ -5749,7 +5762,7 @@ msgid ""
 "Otherwise click Cancel to skip loading this file.\n"
 msgstr ""
 
-#: src/dialogs.c:2581
+#: src/dialogs.c:2580
 #, c-format
 msgid ""
 "\n"
@@ -5764,7 +5777,7 @@ msgstr ""
 "%s\n"
 "לא ניתן לאתר את הקטע.\n"
 
-#: src/dialogs.c:2590
+#: src/dialogs.c:2589
 #, c-format
 msgid ""
 "\n"
@@ -5774,13 +5787,13 @@ msgid ""
 "Automatic jack startup will be disabled now.\n"
 msgstr ""
 
-#: src/dialogs.c:2599
+#: src/dialogs.c:2598
 msgid ""
 "\n"
 "Unable to connect to jack server. Please start jack before starting LiVES\n"
 msgstr ""
 
-#: src/dialogs.c:2609
+#: src/dialogs.c:2608
 #, c-format
 msgid ""
 "\n"
@@ -5791,7 +5804,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/dialogs.c:2616
+#: src/dialogs.c:2615
 msgid ""
 "\n"
 "Alternately, you can restart LiVES and select another audio player.\n"
@@ -5799,7 +5812,7 @@ msgstr ""
 "\n"
 "לחילופין, באפשרותך להפעיל מחדש את LiVES ולבחור בנגן שמע אחר.\n"
 
-#: src/dialogs.c:2622
+#: src/dialogs.c:2621
 #, c-format
 msgid ""
 "\n"
@@ -5814,7 +5827,7 @@ msgstr ""
 "באפשרותך לשנות את הערך בהעדפות\\רב־רצועתי\n"
 "מומלץ לשנותו ללפחות %d מ\"ב"
 
-#: src/dialogs.c:2632
+#: src/dialogs.c:2631
 #, c-format
 msgid ""
 "\n"
@@ -5823,7 +5836,7 @@ msgid ""
 "Do you wish to delete them ?\n"
 msgstr ""
 
-#: src/dialogs.c:2641
+#: src/dialogs.c:2640
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for multitrack undo.\n"
@@ -5835,7 +5848,7 @@ msgstr ""
 "ניתן לסגור יישומים אחדים, או להגדיל את מכסת הזיכרון\n"
 "בהעדפות\\רב־רצועתי\\זיכרון לביטול פעולות\n"
 
-#: src/dialogs.c:2647
+#: src/dialogs.c:2646
 msgid ""
 "\n"
 "Out of memory for undo.\n"
@@ -5847,7 +5860,7 @@ msgstr ""
 "ייתכן ויהיה צורך להגדיל את מכסת הזיכרון\n"
 "בהעדפות\\רב־רצועתי\\זיכרון לביטול פעולות\n"
 
-#: src/dialogs.c:2652
+#: src/dialogs.c:2651
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
@@ -5856,19 +5869,19 @@ msgstr ""
 "ל־LiVES לא הייתה אפשרות להשתמש במספיק זיכרון לחוצץ ביטול פעולות רב־"
 "רצועתיות.\n"
 
-#: src/dialogs.c:2654
+#: src/dialogs.c:2653
 msgid "or enter a smaller value.\n"
 msgstr "או להכניס ערך קטן יותר.\n"
 
-#: src/dialogs.c:2656
+#: src/dialogs.c:2655
 msgid "Try again from the clip editor, try closing some other applications\n"
 msgstr "אפשר לנסות שוב מעורך הקטעים, או לנסות לסגור יישומים אחרים\n"
 
-#: src/dialogs.c:2657
+#: src/dialogs.c:2656
 msgid "Try closing some other applications\n"
 msgstr "ניתן לנסות לסגור יישומים אחרים\n"
 
-#: src/dialogs.c:2669
+#: src/dialogs.c:2668
 msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
@@ -5876,12 +5889,12 @@ msgstr ""
 "המצב הרב־רצועתי נקבע ל־0 ערוצי שמע, אבל פריסה זו מכילה שמע.\n"
 "באפשרותך לכוון את הגדרות השמע מתפריט הכלים.\n"
 
-#: src/dialogs.c:2675
+#: src/dialogs.c:2674
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 msgstr "הפריסה הנוכחית מכילה אודיו, לכן לא מומלץ שמספר הערוצים ייקבע לאפס.\n"
 
-#: src/dialogs.c:2681
+#: src/dialogs.c:2680
 #, fuzzy
 msgid ""
 "Multitrack audio preview is only available with the\n"
@@ -5892,7 +5905,7 @@ msgstr ""
 "נגן השמע \"jack\" או \"pulse audio\".\n"
 "באפשרותך לקבוע זאת בתפריט כלים|העדפות|נגינה."
 
-#: src/dialogs.c:2688
+#: src/dialogs.c:2687
 msgid ""
 "Errors were detected in the layout (which may be due to transferring from "
 "another system, or from an older version of LiVES).\n"
@@ -5902,7 +5915,7 @@ msgstr ""
 "של LiVES).\n"
 "האם לנסות לתקן את עותק הכונן של הפריסה ?\n"
 
-#: src/dialogs.c:2694
+#: src/dialogs.c:2693
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
@@ -5910,14 +5923,14 @@ msgstr ""
 "LiVES אין אפשרות לטעון את הפריסה.\n"
 "מצטער.\n"
 
-#: src/dialogs.c:2699
+#: src/dialogs.c:2698
 #, c-format
 msgid ""
 "The program %s is required to use this feature.\n"
 "Please install it and try again."
 msgstr ""
 
-#: src/dialogs.c:2707
+#: src/dialogs.c:2706
 #, fuzzy
 msgid ""
 "LiVES currently requires composite from ImageMagick to do letterboxing.\n"
@@ -5927,7 +5940,7 @@ msgstr ""
 "LiVES מחייב שימוש ב־'mplayer' או 'sox' לפעולה תקינה. יש להתקין את אחד מאלה "
 "ולנסות שוב.\n"
 
-#: src/dialogs.c:2713
+#: src/dialogs.c:2712
 #, fuzzy
 msgid ""
 "LiVES currently requires convert from ImageMagick to do letterboxing.\n"
@@ -5937,7 +5950,7 @@ msgstr ""
 "LiVES מחייב שימוש ב־'mplayer' או 'sox' לפעולה תקינה. יש להתקין את אחד מאלה "
 "ולנסות שוב.\n"
 
-#: src/dialogs.c:2719
+#: src/dialogs.c:2718
 #, fuzzy
 msgid ""
 "LiVES currently requires convert from ImageMagick resize frames.\n"
@@ -5947,7 +5960,7 @@ msgstr ""
 "LiVES מחייב שימוש ב־'mplayer' או 'sox' לפעולה תקינה. יש להתקין את אחד מאלה "
 "ולנסות שוב.\n"
 
-#: src/dialogs.c:2724
+#: src/dialogs.c:2723
 msgid ""
 "\n"
 "\n"
@@ -5957,7 +5970,7 @@ msgstr ""
 "\n"
 "תדר השמע חייב להיות גדול מ־0.\n"
 
-#: src/dialogs.c:2729
+#: src/dialogs.c:2728
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -5969,7 +5982,7 @@ msgstr ""
 "והצגתה עלולה לקחת זמן רב.\n"
 "האם ברצונך להציגה בכל זאת ?\n"
 
-#: src/dialogs.c:2734
+#: src/dialogs.c:2733
 msgid ""
 "\n"
 "\n"
@@ -5979,7 +5992,7 @@ msgstr ""
 "\n"
 "מחובתך להתקין את 'dvgrab' כדי להשתמש בתכונה זו.\n"
 
-#: src/dialogs.c:2740
+#: src/dialogs.c:2739
 #, fuzzy
 msgid ""
 "\n"
@@ -5994,25 +6007,25 @@ msgstr ""
 "נגן השמע \"jack\" או \"pulse audio\".\n"
 "באפשרותך לבחור אחת מאפשרויות אלו בתפריט כלים|העדפות|נגינה.\n"
 
-#: src/dialogs.c:2746
+#: src/dialogs.c:2745
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr "תוסף נגינת הוידאו נכשל בהצגת הלוח !\n"
 
-#: src/dialogs.c:2752
+#: src/dialogs.c:2751
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr "תוסף המקודד נכשל בהצגת לוח הצבעים !\n"
 
-#: src/dialogs.c:2757
+#: src/dialogs.c:2756
 msgid "Unable to set framerate of video plugin\n"
 msgstr "ל־LiVES לא הייתה אפשרות לקבוע את קצב השקופיות של תוסף הוידאו\n"
 
-#: src/dialogs.c:2763
+#: src/dialogs.c:2762
 msgid ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 msgstr ""
 
-#: src/dialogs.c:2770
+#: src/dialogs.c:2769
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -6025,17 +6038,17 @@ msgstr ""
 "\n"
 "echo %d > /proc/sys/net/core/rmnem_max\n"
 
-#: src/dialogs.c:2915 src/dialogs.c:2968 src/dialogs.c:2992
+#: src/dialogs.c:2914 src/dialogs.c:2967 src/dialogs.c:2991
 #, c-format
 msgid "Additional info: %s\n"
 msgstr ""
 
-#: src/dialogs.c:2918
+#: src/dialogs.c:2917
 #, c-format
 msgid "The error value was %d%s\n"
 msgstr ""
 
-#: src/dialogs.c:2921
+#: src/dialogs.c:2920
 #, c-format
 msgid ""
 "\n"
@@ -6045,7 +6058,7 @@ msgid ""
 "%s%s%s"
 msgstr ""
 
-#: src/dialogs.c:2971
+#: src/dialogs.c:2970
 #, c-format
 msgid ""
 "\n"
@@ -6055,7 +6068,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:2995
+#: src/dialogs.c:2994
 #, c-format
 msgid ""
 "\n"
@@ -6065,7 +6078,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/dialogs.c:3042
+#: src/dialogs.c:3041
 #, c-format
 msgid ""
 "\n"
@@ -6074,7 +6087,7 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 
-#: src/dialogs.c:3045
+#: src/dialogs.c:3044
 #, c-format
 msgid ""
 "\n"
@@ -6084,7 +6097,7 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: src/dialogs.c:3074
+#: src/dialogs.c:3073
 #, c-format
 msgid ""
 "\n"
@@ -6093,7 +6106,7 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 
-#: src/dialogs.c:3077
+#: src/dialogs.c:3076
 #, c-format
 msgid ""
 "\n"
@@ -6103,12 +6116,12 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: src/dialogs.c:3142
+#: src/dialogs.c:3141
 #, c-format
 msgid "Value for \"%s\" could not be read."
 msgstr ""
 
-#: src/dialogs.c:3159
+#: src/dialogs.c:3158
 #, c-format
 msgid ""
 "\n"
@@ -6117,7 +6130,7 @@ msgid ""
 "Please check your system for errors.\n"
 msgstr ""
 
-#: src/dialogs.c:3167
+#: src/dialogs.c:3166
 #, c-format
 msgid ""
 "\n"
@@ -6130,7 +6143,7 @@ msgstr ""
 "%s\n"
 "נא לבדוק את הרשאות הקובץ ולנסות שוב."
 
-#: src/dialogs.c:3176
+#: src/dialogs.c:3175
 #, c-format
 msgid ""
 "\n"
@@ -6139,7 +6152,7 @@ msgid ""
 "Please check the directory permissions and try again."
 msgstr ""
 
-#: src/dialogs.c:3183
+#: src/dialogs.c:3182
 #, c-format
 msgid ""
 "\n"
@@ -6147,14 +6160,14 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/dialogs.c:3190
+#: src/dialogs.c:3189
 msgid ""
 "\n"
 "Abort and exit immediately from LiVES\n"
 "Are you sure ?\n"
 msgstr ""
 
-#: src/dialogs.c:3195
+#: src/dialogs.c:3194
 #, c-format
 msgid ""
 "\n"
@@ -6162,13 +6175,13 @@ msgid ""
 "Please select another encoder from the list.\n"
 msgstr ""
 
-#: src/dialogs.c:3205
+#: src/dialogs.c:3204
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 msgstr ""
 
-#: src/dialogs.c:3211
+#: src/dialogs.c:3210
 #, c-format
 msgid ""
 "\n"
@@ -6178,27 +6191,27 @@ msgid ""
 "- Check if the device actually exists.\n"
 msgstr ""
 
-#: src/dialogs.c:3220
+#: src/dialogs.c:3219
 msgid ""
 "\n"
 "This file already has subtitles loaded.\n"
 "Do you wish to overwrite the existing subtitles ?\n"
 msgstr ""
 
-#: src/dialogs.c:3225
+#: src/dialogs.c:3224
 msgid ""
 "\n"
 "LiVES currently only supports subtitles of type"
 msgstr ""
 
-#: src/dialogs.c:3251
+#: src/dialogs.c:3250
 msgid ""
 "\n"
 "Erase all subtitles from this clip.\n"
 "Are you sure ?\n"
 msgstr ""
 
-#: src/dialogs.c:3258
+#: src/dialogs.c:3257
 #, c-format
 msgid ""
 "\n"
@@ -6207,14 +6220,14 @@ msgid ""
 "or OK to continue and save as type \"%s\"\n"
 msgstr ""
 
-#: src/dialogs.c:3267
+#: src/dialogs.c:3266
 msgid ""
 "\n"
 "Do you wish to move the current clip sets to the new directory ?\n"
 "(If unsure, click Yes)\n"
 msgstr ""
 
-#: src/dialogs.c:3273
+#: src/dialogs.c:3272
 #, c-format
 msgid ""
 "\n"
@@ -6225,19 +6238,19 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:3281
+#: src/dialogs.c:3280
 msgid ""
 "\n"
 "No video input devices could be found.\n"
 msgstr ""
 
-#: src/dialogs.c:3286
+#: src/dialogs.c:3285
 msgid ""
 "\n"
 "All video input devices are already in use.\n"
 msgstr ""
 
-#: src/dialogs.c:3291
+#: src/dialogs.c:3290
 msgid ""
 "\n"
 "\n"
@@ -6245,7 +6258,7 @@ msgid ""
 "DO NOT SHUT DOWN OR CLOSE LIVES !\n"
 msgstr ""
 
-#: src/dialogs.c:3298
+#: src/dialogs.c:3297
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6256,14 +6269,14 @@ msgstr ""
 "כמה %s אינם נמצאים בפריסה %s\n"
 "בעקבות כך הוא לא ייטען כראוי.\n"
 
-#: src/dialogs.c:3305
+#: src/dialogs.c:3304
 #, c-format
 msgid ""
 "No clips were recovered for set (%s).\n"
 "Please check the spelling of the set name and try again.\n"
 msgstr ""
 
-#: src/dialogs.c:3318
+#: src/dialogs.c:3317
 #, c-format
 msgid ""
 "Some security issues have been fixed in this version of LiVES.\n"
@@ -6272,7 +6285,7 @@ msgid ""
 "directory. Would you like me to do this (recommended) ?"
 msgstr ""
 
-#: src/dialogs.c:3322
+#: src/dialogs.c:3321
 #, c-format
 msgid ""
 "\n"
@@ -6284,7 +6297,7 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:3331
+#: src/dialogs.c:3330
 #, c-format
 msgid ""
 "\n"
@@ -6293,38 +6306,38 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:3337
+#: src/dialogs.c:3336
 msgid ""
 "\n"
 "You must have autolives.pl installed and in your path to use this toy.\n"
 "Consult your package distributor.\n"
 msgstr ""
 
-#: src/dialogs.c:3342
+#: src/dialogs.c:3341
 msgid ""
 "\n"
 "You must have a minimum of one clip loaded to use this toy.\n"
 msgstr ""
 
-#: src/dialogs.c:3347
+#: src/dialogs.c:3346
 msgid ""
 "\n"
 "LiVES lost its connection to jack and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
 
-#: src/dialogs.c:3352
+#: src/dialogs.c:3351
 msgid ""
 "\n"
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
 
-#: src/dialogs.c:3357
+#: src/dialogs.c:3356
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr "נא לקבוע את התקן נגינת התקליטורים שלך בכלים | העדפות | שונות\n"
 
-#: src/dialogs.c:3362
+#: src/dialogs.c:3361
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6337,7 +6350,7 @@ msgstr ""
 "%s\n"
 "נא לבדוק את הרשאות הקובץ ולנסות שוב."
 
-#: src/dialogs.c:3370
+#: src/dialogs.c:3369
 #, c-format
 msgid ""
 "\n"
@@ -6346,7 +6359,7 @@ msgid ""
 "already exists. Would you like to overwrite it ?\n"
 msgstr ""
 
-#: src/dialogs.c:3386
+#: src/dialogs.c:3385
 #, c-format
 msgid ""
 "\n"
@@ -7013,64 +7026,67 @@ msgstr "אחזקת ה_יחס"
 msgid "Display Password"
 msgstr ""
 
-#: src/paramwindow.c:397
+#: src/paramwindow.c:405
 msgid "Transition _In"
 msgstr "מעבר _פנימה"
 
-#: src/paramwindow.c:399
+#: src/paramwindow.c:407
 msgid "Click to set the transition parameter to show only the front frame"
 msgstr ""
 
-#: src/paramwindow.c:418
+#: src/paramwindow.c:425
 msgid "Crossfade audio"
 msgstr "החלת מעבר Crossfade על השמע"
 
-#: src/paramwindow.c:421
-msgid "Check the box to make audio transition with the video"
-msgstr "יש ללחוץ על הקופסה כדי להחיל מעבר שמע עם הוידאו"
+#: src/paramwindow.c:429
+msgid ""
+"If checked, audio from both layers is mixed relative to the transition "
+"parameter.\n"
+"The setting is applied instantly to the entire transition."
+msgstr ""
 
-#: src/paramwindow.c:435
+#: src/paramwindow.c:443
 msgid "Transition _Out"
 msgstr "מעבר _החוצה"
 
-#: src/paramwindow.c:437
+#: src/paramwindow.c:445
 msgid "Click to set the transition parameter to show only the rear frame"
 msgstr ""
 
-#: src/paramwindow.c:504
+#: src/paramwindow.c:517
 msgid "Target _FPS (plugin may override this)"
 msgstr "מספר יעד של שקופיות לשנייה (תוסף אולי יסתור את הגדרות אלו)"
 
-#: src/paramwindow.c:532
+#: src/paramwindow.c:545
 #, c-format
 msgid "%s : size"
 msgstr "%s : גודל"
 
-#: src/paramwindow.c:535
+#: src/paramwindow.c:548
 msgid "New size (pixels)"
 msgstr "גודל חדש (פיקסלים)"
 
-#: src/paramwindow.c:577 src/plugins.c:989
+#: src/paramwindow.c:590 src/plugins.c:989
 msgid "_Height"
 msgstr "_גובה"
 
-#: src/paramwindow.c:612
+#: src/paramwindow.c:625
 msgid "Generate to _Clipboard"
 msgstr "יצירה ל_לוח הגזירים"
 
-#: src/paramwindow.c:614
+#: src/paramwindow.c:627
 msgid "Generate frames to the clipboard"
 msgstr "יצירת שקופיות ללוח הגזירים"
 
-#: src/paramwindow.c:620
+#: src/paramwindow.c:633
 msgid "Generate to _New Clip"
 msgstr "יצירה לקטע _חדש"
 
-#: src/paramwindow.c:622
+#: src/paramwindow.c:635
 msgid "Generate frames to a new clip"
 msgstr "יצירת שקופיות לקטע חדש"
 
-#: src/paramwindow.c:731
+#: src/paramwindow.c:744
 #, c-format
 msgid ""
 "\n"
@@ -7081,19 +7097,19 @@ msgstr ""
 "מחובתך לבחור לפחות %d שקופיות כדי להשתמש באפקט זה.\n"
 "\n"
 
-#: src/paramwindow.c:809 src/paramwindow.c:821
+#: src/paramwindow.c:822 src/paramwindow.c:834
 msgid "Set as default"
 msgstr "קביעה כברירת מחדל"
 
-#: src/paramwindow.c:812 src/paramwindow.c:819
+#: src/paramwindow.c:825 src/paramwindow.c:832
 msgid "Reset"
 msgstr ""
 
-#: src/paramwindow.c:1237
+#: src/paramwindow.c:1252
 msgid "No parameters"
 msgstr "אין פרמטרים"
 
-#: src/paramwindow.c:1311
+#: src/paramwindow.c:1326
 msgid "Invalid parameter"
 msgstr "פרמטר לא תקין"
 
@@ -7311,7 +7327,7 @@ msgstr ""
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "נכשל בטעינת %s, המעברים עלולים לא לשנות גודל.\n"
 
-#: src/plugins.c:3794
+#: src/plugins.c:3796
 #, c-format
 msgid "%s advanced settings"
 msgstr "הגדרות %s מתקדמות"
@@ -7502,40 +7518,40 @@ msgstr "LiVES: - פרמטר רמזי חלון של RFX"
 msgid "RFX Triggers"
 msgstr "LiVES: - גורמי RFX"
 
-#: src/rfx-builder.c:573
+#: src/rfx-builder.c:571
 msgid "_New Entry"
 msgstr "ערך _חדש"
 
-#: src/rfx-builder.c:577
+#: src/rfx-builder.c:575
 msgid "_Edit Entry"
 msgstr "_עריכת ערך"
 
-#: src/rfx-builder.c:581
+#: src/rfx-builder.c:579
 msgid "_Remove Entry"
 msgstr "_מחיקת ערך"
 
-#: src/rfx-builder.c:586
+#: src/rfx-builder.c:584
 msgid "Move _Up"
 msgstr "הזזה _למעלה"
 
-#: src/rfx-builder.c:590
+#: src/rfx-builder.c:588
 msgid "Move _Down"
 msgstr "הזזה _למטה"
 
-#: src/rfx-builder.c:950
+#: src/rfx-builder.c:948
 #, fuzzy
 msgid "RFX Properties"
 msgstr "LiVES: - מאפייני RFX"
 
-#: src/rfx-builder.c:955
+#: src/rfx-builder.c:953
 msgid "_Slow (hint to GUI)"
 msgstr "_איטי (רמז למנשק המשתמש הגרפי)"
 
-#: src/rfx-builder.c:966
+#: src/rfx-builder.c:964
 msgid "_Batch mode generator"
 msgstr "מחולל מצב _אצווה"
 
-#: src/rfx-builder.c:1723
+#: src/rfx-builder.c:1718
 msgid ""
 "\n"
 "\n"
@@ -7549,7 +7565,7 @@ msgstr ""
 "נא להסיר את הגורם קודם.\n"
 "\n"
 
-#: src/rfx-builder.c:1767
+#: src/rfx-builder.c:1762
 msgid ""
 "\n"
 "\n"
@@ -7561,194 +7577,194 @@ msgstr ""
 "גורמים אחדים כוונו.\n"
 "נא לבדוק את קוד הגורם.\n"
 
-#: src/rfx-builder.c:1879
+#: src/rfx-builder.c:1874
 #, fuzzy
 msgid "New RFX Parameter"
 msgstr "LiVES: - פרמטר RFX חדש"
 
-#: src/rfx-builder.c:1881
+#: src/rfx-builder.c:1876
 #, fuzzy
 msgid "Edit RFX Parameter"
 msgstr "LiVES: - עריכת פרמטר RFX"
 
-#: src/rfx-builder.c:1893
+#: src/rfx-builder.c:1888
 msgid "_Name:    "
 msgstr "_שם:    "
 
-#: src/rfx-builder.c:1896
+#: src/rfx-builder.c:1891
 msgid "Name of the parameter, must be unique in the plugin."
 msgstr "שם הפרמטר, חייב להיות יחודי בתוסף."
 
-#: src/rfx-builder.c:1905
+#: src/rfx-builder.c:1900
 msgid "_Label:    "
 msgstr "_תווית:    "
 
-#: src/rfx-builder.c:1908
+#: src/rfx-builder.c:1903
 msgid ""
 "Label to be shown by the parameter. An underscore represents mnemonic "
 "accelerator."
 msgstr "תווית שתוצג ע\"י הפרמטר. ייחודיות מציגה מאיץ זיכרון."
 
-#: src/rfx-builder.c:1920
+#: src/rfx-builder.c:1915
 msgid "_Type:         "
 msgstr "_סוג:         "
 
-#: src/rfx-builder.c:1921
+#: src/rfx-builder.c:1916
 msgid "Parameter type (select from list)."
 msgstr "סוג פרמטר (ניתן לבחירה מרשימה)"
 
-#: src/rfx-builder.c:1952
+#: src/rfx-builder.c:1947
 msgid "Decimal _places: "
 msgstr "_מקומות שבר עשרוני: "
 
-#: src/rfx-builder.c:1962 src/rfx-builder.c:2349 src/rfx-builder.c:2366
+#: src/rfx-builder.c:1957 src/rfx-builder.c:2344 src/rfx-builder.c:2361
 msgid "_Default value:    "
 msgstr "ערך _ברירת מחדל:    "
 
-#: src/rfx-builder.c:1978
+#: src/rfx-builder.c:1973
 msgid "_Default: "
 msgstr "_ברירת מחדל: "
 
-#: src/rfx-builder.c:2011
+#: src/rfx-builder.c:2006
 msgid "Button _Group: "
 msgstr "_קבוצת כפתורים: "
 
-#: src/rfx-builder.c:2014
+#: src/rfx-builder.c:2009
 msgid "A non-zero value can be used to group radio buttons."
 msgstr "ערך גדול מ־0 הניתן לשימוש כדי לקבץ כפתורי רדיו."
 
-#: src/rfx-builder.c:2022 src/rfx-builder.c:2350
+#: src/rfx-builder.c:2017 src/rfx-builder.c:2345
 msgid "_Minimum value: "
 msgstr "ערך _מינימלי: "
 
-#: src/rfx-builder.c:2028 src/rfx-builder.c:2351
+#: src/rfx-builder.c:2023 src/rfx-builder.c:2346
 msgid "Ma_ximum value: "
 msgstr "ערך מקס_ימלי: "
 
-#: src/rfx-builder.c:2035
+#: src/rfx-builder.c:2030
 msgid "     _Step size:   "
 msgstr "     גודל _צעד:   "
 
-#: src/rfx-builder.c:2040
+#: src/rfx-builder.c:2035
 msgid ""
 "How much the parameter is adjusted when the spinbutton arrows are pressed."
 msgstr "כמה הפרמטר מכוון כאשר חצי כפתור הסחרור נלחצים."
 
-#: src/rfx-builder.c:2051
+#: src/rfx-builder.c:2046
 msgid "_Wrap value"
 msgstr ""
 
-#: src/rfx-builder.c:2053
+#: src/rfx-builder.c:2048
 msgid "Whether the value wraps max->min and min->max."
 msgstr "אם הערך גולש לגבול העליון-> דקה ודקה->גבול עליון."
 
-#: src/rfx-builder.c:2343
+#: src/rfx-builder.c:2338
 msgid "Set _values"
 msgstr "קביעת _ערכים"
 
-#: src/rfx-builder.c:2382
+#: src/rfx-builder.c:2377
 msgid "Default _Red:  "
 msgstr "ברירת מחדל של _אדום:  "
 
-#: src/rfx-builder.c:2383
+#: src/rfx-builder.c:2378
 msgid "Default _Green:"
 msgstr "ברירת מחדל של _ירוק:"
 
-#: src/rfx-builder.c:2384
+#: src/rfx-builder.c:2379
 msgid "Default _Blue: "
 msgstr "ברירת מחדל של _כחול: "
 
-#: src/rfx-builder.c:2407
+#: src/rfx-builder.c:2402
 msgid "Set _default"
 msgstr "קביעה כ_ברירת מחדל"
 
-#: src/rfx-builder.c:2409
+#: src/rfx-builder.c:2404
 msgid "Default value:  "
 msgstr "ערך ברירת מחדל  "
 
-#: src/rfx-builder.c:2410
+#: src/rfx-builder.c:2405
 msgid "Maximum length (chars): "
 msgstr "אורך מקסימלי (תווים): "
 
-#: src/rfx-builder.c:2441
+#: src/rfx-builder.c:2436
 #, fuzzy
 msgid "New RFX Parameter Window Hint"
 msgstr "LiVES: - פרמטר RFX חדש של חלון רמז"
 
-#: src/rfx-builder.c:2443
+#: src/rfx-builder.c:2438
 #, fuzzy
 msgid "Edit RFX Parameter Window Hint"
 msgstr "LiVES: - עריכת פרמטר RFX של חלון רמז"
 
-#: src/rfx-builder.c:2480
+#: src/rfx-builder.c:2475
 msgid "_Keyword:         "
 msgstr ""
 
-#: src/rfx-builder.c:2496
+#: src/rfx-builder.c:2491
 msgid "Special _Type:         "
 msgstr ""
 
-#: src/rfx-builder.c:2509
+#: src/rfx-builder.c:2504
 msgid "Special _Subtype:         "
 msgstr ""
 
-#: src/rfx-builder.c:2518 src/rfx-builder.c:2554
+#: src/rfx-builder.c:2513 src/rfx-builder.c:2549
 msgid "Row:    "
 msgstr "שורה:    "
 
-#: src/rfx-builder.c:2578
+#: src/rfx-builder.c:2573
 #, c-format
 msgid "Linked parameters (%d):    "
 msgstr "פרמטרים מקושרים (%d):    "
 
-#: src/rfx-builder.c:2593
+#: src/rfx-builder.c:2588
 msgid "Linked parameters (4):    "
 msgstr "פרמטרים מקושרים (4):    "
 
-#: src/rfx-builder.c:2595
+#: src/rfx-builder.c:2590
 msgid "Linked parameters (2):    "
 msgstr "פרמטרים מקושרים (2):    "
 
-#: src/rfx-builder.c:2617
+#: src/rfx-builder.c:2612
 #, fuzzy
 msgid "New RFX Trigger"
 msgstr "LiVES: - גורם RFX חדש"
 
-#: src/rfx-builder.c:2619
+#: src/rfx-builder.c:2614
 #, fuzzy
 msgid "Edit RFX Trigger"
 msgstr "LiVES: עריכת גורם RFX"
 
-#: src/rfx-builder.c:2643
+#: src/rfx-builder.c:2638
 msgid "When:         "
 msgstr "כאשר:         "
 
-#: src/rfx-builder.c:2731
+#: src/rfx-builder.c:2726
 #, fuzzy
 msgid "Pre Loop Code"
 msgstr "LiVES: - קוד לפני לולאה"
 
-#: src/rfx-builder.c:2738
+#: src/rfx-builder.c:2733
 #, fuzzy
 msgid "Loop Code"
 msgstr "קוד _לולאה..."
 
-#: src/rfx-builder.c:2745
+#: src/rfx-builder.c:2740
 #, fuzzy
 msgid "Post Loop Code"
 msgstr "LiVES: - קוד אחרי לולאה"
 
-#: src/rfx-builder.c:2758
+#: src/rfx-builder.c:2753
 #, fuzzy, c-format
 msgid "Default text (max length %d)"
 msgstr "LiVES: -(%d טקסט ברירת מחדל (אורך מקסימלי"
 
-#: src/rfx-builder.c:2770
+#: src/rfx-builder.c:2765
 #, fuzzy
 msgid "Enter values, one per line"
 msgstr "LiVES: - הכנסת ערכים, אחד בכל שורה"
 
-#: src/rfx-builder.c:2875
+#: src/rfx-builder.c:2870
 msgid ""
 "\n"
 "\n"
@@ -7758,7 +7774,7 @@ msgstr ""
 "\n"
 "אין להכניס שם ריק.\n"
 
-#: src/rfx-builder.c:2880
+#: src/rfx-builder.c:2875
 msgid ""
 "\n"
 "\n"
@@ -7768,7 +7784,7 @@ msgstr ""
 "\n"
 "אין להכניס רווחים לשם.\n"
 
-#: src/rfx-builder.c:2885
+#: src/rfx-builder.c:2880
 msgid ""
 "\n"
 "\n"
@@ -7778,7 +7794,7 @@ msgstr ""
 "\n"
 "אין להשאיר את טקסט התפריט ריק.\n"
 
-#: src/rfx-builder.c:2891
+#: src/rfx-builder.c:2886
 msgid ""
 "\n"
 "\n"
@@ -7788,7 +7804,7 @@ msgstr ""
 "\n"
 "אין להשאיר את תיאור הפעולה ריק.\n"
 
-#: src/rfx-builder.c:2896
+#: src/rfx-builder.c:2891
 msgid ""
 "\n"
 "\n"
@@ -7798,7 +7814,7 @@ msgstr ""
 "\n"
 "אין להשאיר את שדה היוצר ריק.\n"
 
-#: src/rfx-builder.c:2905 src/rfx-builder.c:4074
+#: src/rfx-builder.c:2900 src/rfx-builder.c:4069
 msgid ""
 "\n"
 "\n"
@@ -7810,7 +7826,7 @@ msgstr ""
 "כבר יש תוסף עם שם זה.\n"
 "השם חייב להיות ייחודי.\n"
 
-#: src/rfx-builder.c:2912
+#: src/rfx-builder.c:2907
 msgid ""
 "\n"
 "\n"
@@ -7820,7 +7836,7 @@ msgstr ""
 "\n"
 "לא מומלץ להשאיר את קוד הלולאה ריק.\n"
 
-#: src/rfx-builder.c:2918
+#: src/rfx-builder.c:2913
 msgid ""
 "\n"
 "\n"
@@ -7830,7 +7846,7 @@ msgstr ""
 "\n"
 "לא מומלץ להשאיר את קוד הגורם ריק עבור כלי שירות.\n"
 
-#: src/rfx-builder.c:2932
+#: src/rfx-builder.c:2927
 msgid ""
 "\n"
 "\n"
@@ -7840,7 +7856,7 @@ msgstr ""
 "\n"
 "אין להשאיר את שם הפרמטר ריק.\n"
 
-#: src/rfx-builder.c:2938
+#: src/rfx-builder.c:2933
 msgid ""
 "\n"
 "\n"
@@ -7853,41 +7869,41 @@ msgstr ""
 "אותרו כפילויות בשמות פרמטרים. שמות הפרמטרים חייבים להיות ייחודיים בתוסף.\n"
 "\n"
 
-#: src/rfx-builder.c:2991
+#: src/rfx-builder.c:2986
 #, c-format
 msgid "Writing script file %s..."
 msgstr "כותב קובץ תסריט %s..."
 
-#: src/rfx-builder.c:3291
+#: src/rfx-builder.c:3286
 msgid "No <define> section found in script.\n"
 msgstr "לא נמצא אזור <define> בתסריט.\n"
 
-#: src/rfx-builder.c:3297 src/rfx-builder.c:3305
+#: src/rfx-builder.c:3292 src/rfx-builder.c:3300
 msgid "Bad script version.\n"
 msgstr "גרסת תסריט שגויה.\n"
 
-#: src/rfx-builder.c:3316
+#: src/rfx-builder.c:3311
 msgid "No <name> section found in script.\n"
 msgstr "לא נמצא אזור <name> בתסריט.\n"
 
-#: src/rfx-builder.c:3323
+#: src/rfx-builder.c:3318
 msgid "No <version> section found in script.\n"
 msgstr "לא נמצא אזור <version> בתסריט.\n"
 
-#: src/rfx-builder.c:3331
+#: src/rfx-builder.c:3326
 msgid "No <author> section found in script.\n"
 msgstr "לא נמצא אזור <author> בתסריט.\n"
 
-#: src/rfx-builder.c:3343
+#: src/rfx-builder.c:3338
 msgid "No <description> section found in script.\n"
 msgstr "לא נמצא אזור <description> בתסריט.\n"
 
-#: src/rfx-builder.c:3347
+#: src/rfx-builder.c:3342
 #, c-format
 msgid "Bad description. (%s)\n"
 msgstr "תיאור גרוע (%s)\n"
 
-#: src/rfx-builder.c:3495
+#: src/rfx-builder.c:3490
 #, c-format
 msgid ""
 "\n"
@@ -7902,27 +7918,27 @@ msgstr ""
 "נמצא בתסריט.\n"
 "\n"
 
-#: src/rfx-builder.c:3642
+#: src/rfx-builder.c:3637
 msgid "Rebuilding all RFX scripts...builtin..."
 msgstr "בונה מחדש את כל תסריטי ה־RFX...נבנה..."
 
-#: src/rfx-builder.c:3643
+#: src/rfx-builder.c:3638
 msgid "Rebuilding scripts"
 msgstr "בונה מחדש תסריטים"
 
-#: src/rfx-builder.c:3651
+#: src/rfx-builder.c:3646
 msgid "custom..."
 msgstr "מותאם אישית..."
 
-#: src/rfx-builder.c:3655
+#: src/rfx-builder.c:3650
 msgid "test..."
 msgstr "בדיקה..."
 
-#: src/rfx-builder.c:3660
+#: src/rfx-builder.c:3655
 msgid "rebuilding dynamic menu entries..."
 msgstr "בונה מחדש את ערכי התפריטים הפעילים..."
 
-#: src/rfx-builder.c:3685 src/rfx-builder.c:3693
+#: src/rfx-builder.c:3680 src/rfx-builder.c:3688
 #, c-format
 msgid ""
 "\n"
@@ -7935,7 +7951,7 @@ msgstr ""
 "ל־LiVES לא הייתה אפשרות למצוא את התוכנה %s.\n"
 "נא לבדוק שתוכנה זו נמצאת בנתיב הנכון וכן בעלת הרשאות הרצה.\n"
 
-#: src/rfx-builder.c:3732
+#: src/rfx-builder.c:3727
 #, c-format
 msgid ""
 "\n"
@@ -7950,12 +7966,12 @@ msgstr ""
 "%s ?\n"
 "\n"
 
-#: src/rfx-builder.c:3741
+#: src/rfx-builder.c:3736
 #, c-format
 msgid "Deleting rfx script %s..."
 msgstr "מוחק את תסריט הRFX %s..."
 
-#: src/rfx-builder.c:3749
+#: src/rfx-builder.c:3744
 #, c-format
 msgid ""
 "\n"
@@ -7970,7 +7986,7 @@ msgstr ""
 "%s\n"
 "קוד השגיאה היה %d\n"
 
-#: src/rfx-builder.c:3783
+#: src/rfx-builder.c:3778
 #, c-format
 msgid ""
 "\n"
@@ -7985,12 +8001,12 @@ msgstr ""
 "כבר קיים.\n"
 "נא למחוק אותו קודם, או לשנות את שם תסריט הבדיקה.\n"
 
-#: src/rfx-builder.c:3795
+#: src/rfx-builder.c:3790
 #, c-format
 msgid "Promoting rfx test plugin %s to custom..."
 msgstr "מקדם את תוסף הבדיקה של rfx %s למותאם אישית..."
 
-#: src/rfx-builder.c:3810
+#: src/rfx-builder.c:3805
 #, c-format
 msgid ""
 "\n"
@@ -8001,22 +8017,22 @@ msgid ""
 "Return code was %d (%s)\n"
 msgstr ""
 
-#: src/rfx-builder.c:3834
+#: src/rfx-builder.c:3829
 #, fuzzy
 msgid "Export Script"
 msgstr "ייצוא פרוייקט"
 
-#: src/rfx-builder.c:3841 src/rfx-builder.c:3913
+#: src/rfx-builder.c:3836 src/rfx-builder.c:3908
 #, c-format
 msgid "Copying %s to %s..."
 msgstr "מעתיק את %s ל%s..."
 
-#: src/rfx-builder.c:3863
+#: src/rfx-builder.c:3858
 #, fuzzy
 msgid "Import Script"
 msgstr "ייבוא פרוייקט"
 
-#: src/rfx-builder.c:3906
+#: src/rfx-builder.c:3901
 #, c-format
 msgid ""
 "\n"
@@ -8031,46 +8047,46 @@ msgstr ""
 "כבר קיים.\n"
 "נא למחוק אותו קודם, או לשנות את שם תסריט הייבוא.\n"
 
-#: src/rfx-builder.c:3994
+#: src/rfx-builder.c:3989
 #, fuzzy
 msgid "Copy RFX Script"
 msgstr "LiVES: העתקת תסריט RFX"
 
-#: src/rfx-builder.c:3996
+#: src/rfx-builder.c:3991
 msgid "_From type:    "
 msgstr ""
 
-#: src/rfx-builder.c:4002
+#: src/rfx-builder.c:3997
 msgid "   Script:    "
 msgstr "   תסריט:    "
 
-#: src/rfx-builder.c:4010
+#: src/rfx-builder.c:4005
 #, fuzzy
 msgid "Rename Test RFX Script"
 msgstr "שינוי _שם לתסריט בדיקת ה־RFX..."
 
-#: src/rfx-builder.c:4011
+#: src/rfx-builder.c:4006
 msgid "From script: "
 msgstr "מתסריט: "
 
-#: src/rfx-builder.c:4015
+#: src/rfx-builder.c:4010
 #, fuzzy
 msgid "RFX Script Name"
 msgstr "LiVES: - שם תסריט RFX"
 
-#: src/rfx-builder.c:4016
+#: src/rfx-builder.c:4011
 msgid "Script name: "
 msgstr "שם תסריט: "
 
-#: src/rfx-builder.c:4035
+#: src/rfx-builder.c:4030
 msgid "New name: "
 msgstr "שם חדש: "
 
-#: src/rfx-builder.c:4038
+#: src/rfx-builder.c:4033
 msgid "New script name: "
 msgstr "שם תסריט חדש: "
 
-#: src/rfx-builder.c:4107
+#: src/rfx-builder.c:4102
 msgid ""
 "\n"
 "\n"
@@ -8082,12 +8098,12 @@ msgstr ""
 "כבר יש תסריט בדיקה עם שם זה.\n"
 "שם התסריט חייב להיות ייחודי.\n"
 
-#: src/rfx-builder.c:4118
+#: src/rfx-builder.c:4113
 #, c-format
 msgid "Renaming RFX test script %s to %s..."
 msgstr "משנה את שם תסריט  בדיקת הRFX %s ל%s..."
 
-#: src/rfx-builder.c:4123
+#: src/rfx-builder.c:4118
 #, c-format
 msgid ""
 "\n"
@@ -8104,21 +8120,21 @@ msgstr ""
 "%s\n"
 "הקוד שהוחזר היה %d\n"
 
-#: src/rfx-builder.c:4333
+#: src/rfx-builder.c:4328
 msgid "_Apply Real Time Effects to Selection"
 msgstr "_החלת אפקטים בזמן אמת על הבחירה"
 
-#: src/rfx-builder.c:4334
+#: src/rfx-builder.c:4329
 #, fuzzy
 msgid "Applying Current Real Time Effects to"
 msgstr "_החלת אפקטים בזמן אמת על הבחירה"
 
-#: src/rfx-builder.c:4387
+#: src/rfx-builder.c:4382
 #, c-format
 msgid "Loading rendered effect %s..."
 msgstr "טוען אפקט מוכן %s..."
 
-#: src/rfx-builder.c:4484
+#: src/rfx-builder.c:4479
 msgid ""
 "See: VJ - show VJ keys. Set the realtime effects, and then apply them here."
 msgstr "ניתן לראות: VJ - הצגת מקשי VJ. קביעת אפקטים בזמן אמת והחלתם כאן."
@@ -9265,21 +9281,21 @@ msgstr "אפשרויות הJack לא יישתנו עד ההפעלה הבאה ש�
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "מסנכרן לקצב שקופיות חיצוני של %.8f שקופיות לשנייה.\n"
 
-#: src/osc.c:7076
+#: src/osc.c:7058
 msgid "Cannot initialize OSC receiver\n"
 msgstr "לא ניתן לאתחל את מקלט ה־OSC\n"
 
-#: src/osc.c:7098
+#: src/osc.c:7080
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "אזהרה: לא ניתן להפעיל את שרת הOSC בפותחת הUDP %d\n"
 
-#: src/osc.c:7100
+#: src/osc.c:7082
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "שרת הOSC הופעל בפותחת הUDP %d\n"
 
-#: src/osc.c:7195
+#: src/osc.c:7177
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "לא ניתן להפעיל את שרת הOSC/UDP בפותחה %d \n"
@@ -11788,12 +11804,12 @@ msgid ""
 "Please review the setting in Preferences and adjust it if necessary.\n"
 msgstr ""
 
-#: src/videodev.c:521
+#: src/videodev.c:522
 #, c-format
 msgid "Unable to open device %s\n"
 msgstr ""
 
-#: src/videodev.c:536
+#: src/videodev.c:537
 #, c-format
 msgid "Opened device %s\n"
 msgstr ""
@@ -13277,6 +13293,9 @@ msgstr "$plugin_name נכשל:"
 #, fuzzy
 msgid "$error"
 msgstr "$error"
+
+#~ msgid "Check the box to make audio transition with the video"
+#~ msgstr "יש ללחוץ על הקופסה כדי להחיל מעבר שמע עם הוידאו"
 
 #, fuzzy
 #~ msgid "LiVES: - "

@@ -384,15 +384,23 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   // add in/out radios for multitrack transitions
   LiVESWidget *radiobutton_in;
   LiVESWidget *radiobutton_out;
+  LiVESWidget *radiobutton_dummy;
   LiVESWidget *hbox, *hbox2;
   LiVESWidget *hseparator;
 
   LiVESSList *radiobutton_group = NULL;
 
+  weed_plant_t *filter = weed_instance_get_filter((weed_plant_t *)rfx->source, TRUE);
+  int trans = get_transition_param(filter, FALSE);
+
   char *tmp, *tmp2;
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
+
+  // dummy radiobutton so we can have neither in nor out set
+  radiobutton_dummy = lives_standard_radio_button_new(NULL, &radiobutton_group, LIVES_BOX(hbox), NULL);
+  lives_widget_set_no_show_all(radiobutton_dummy, TRUE);
 
   radiobutton_in = lives_standard_radio_button_new((tmp = lives_strdup(_("Transition _In"))),
                    &radiobutton_group, LIVES_BOX(hbox),
@@ -406,7 +414,6 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
 
   if (add_audio_check) {
     int error;
-    weed_plant_t *filter = weed_instance_get_filter((weed_plant_t *)rfx->source, FALSE);
 
     LiVESWidget *checkbutton;
 
@@ -418,7 +425,8 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
     checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Crossfade audio"))),
                   weed_plant_has_leaf(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION) &&
                   weed_get_boolean_value(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, &error) == WEED_TRUE,
-                  LIVES_BOX(hbox2), (tmp2 = lives_strdup(_("Check the box to make audio transition with the video"))));
+                  LIVES_BOX(hbox2), (tmp2 = lives_strdup(
+                      _("If checked, audio from both layers is mixed relative to the transition parameter.\nThe setting is applied instantly to the entire transition."))));
 
     lives_free(tmp);
     lives_free(tmp2);
@@ -445,12 +453,17 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
                              LIVES_GUI_CALLBACK(transition_out_pressed),
                              (livespointer)rfx);
 
+
   if (palette->style & STYLE_1) {
     lives_widget_set_fg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   hseparator = lives_hseparator_new();
   lives_box_pack_start(vbox, hseparator, FALSE, FALSE, 0);
+
+  rfx->params[trans].widgets[1] = radiobutton_in;
+  rfx->params[trans].widgets[2] = radiobutton_out;
+  rfx->params[trans].widgets[3] = radiobutton_dummy;
 }
 
 
@@ -1061,7 +1074,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     if (enabled_in_channels(filter, FALSE) == 2 && get_transition_param(filter, FALSE) != -1) {
       // add in/out for multitrack transition
       transition_add_in_out(LIVES_BOX(param_vbox), rfx, (mainw->multitrack->opts.pertrack_audio));
-      //trans_in_out_pressed(rfx,TRUE);
     }
   }
 
@@ -1116,7 +1128,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   for (i = 0; i < rfx->num_params; i++) {
     used[i] = FALSE;
-    for (j = 0; j < MAX_PARAM_WIDGETS; rfx->params[i].widgets[j++] = NULL);
+    for (j = 0; j < MAX_PARAM_WIDGETS; j++) {
+      if (rfx->params[i].transition && j > 0 && j < 4) continue;
+      rfx->params[i].widgets[j] = NULL;
+    }
   }
 
   mainw->block_param_updates = TRUE; // block framedraw updates until all parameter widgets have been created
@@ -1845,17 +1860,33 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
       char *disp_string;
 
       weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
+      weed_plant_t *paramtmpl = weed_get_plantptr_value(wparam, WEED_LEAF_TEMPLATE, &error);
       int index = 0, numvals;
       int key = -1;
       double *valds;
       int *valis;
+
+      // update transition in/out radios
+      if (mainw->multitrack != NULL) {
+        weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
+        if (enabled_in_channels(filter, FALSE) == 2 && param->transition) {
+          if (param->dp == 0) {
+            if (new_int == (int)param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[1]), TRUE);
+            else if (new_int == (int)param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[2]), TRUE);
+            else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[3]), TRUE);
+          } else {
+            if (new_double == param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[1]), TRUE);
+            else if (new_double == param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[2]), TRUE);
+            else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[3]), TRUE);
+          }
+        }
+      }
 
       if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
         index = mainw->multitrack->track_index;
       }
       numvals = weed_leaf_num_elements(wparam, WEED_LEAF_VALUE);
       if (index >= numvals) {
-        weed_plant_t *paramtmpl = weed_get_plantptr_value(wparam, WEED_LEAF_TEMPLATE, &error);
         fill_param_vals_to(wparam, paramtmpl, index);
         numvals = index + 1;
       }
@@ -2859,7 +2890,7 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
         if (param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
           lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]), "rfx");
           lives_signal_handlers_block_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
-          lives_spin_button_set_range(LIVES_SPIN_BUTTON(param->widgets[0]), (double)param->min, (double)param->max);
+          lives_spin_button_set_range(LIVES_SPIN_BUTTON(param->widgets[0]), param->min, param->max);
           lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
           lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), get_double_param(param->value));
@@ -2892,7 +2923,7 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
         if (param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
           lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]), "rfx");
           lives_signal_handlers_block_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
-          lives_spin_button_set_range(LIVES_SPIN_BUTTON(param->widgets[0]), (double)param->min, (double)param->max);
+          lives_spin_button_set_range(LIVES_SPIN_BUTTON(param->widgets[0]), param->min, param->max);
           lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
           lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)get_int_param(param->value));

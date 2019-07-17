@@ -6050,18 +6050,12 @@ boolean lives_osc_cb_rte_getnparamdef(void *context, int arglen, const void *var
 
 
 boolean lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  // check if nparam is the transition parameter
+  weed_plant_t *filter;
+
   int effect_key;
   int pnum;
-
-  // pick pnum which is numeric single valued, non-reinit
-  // i.e. simple numeric parameter
-
-  weed_plant_t *filter;
   int nparams;
-
-  boolean res = FALSE;
-
-  char *msg;
 
   if (!lives_osc_check_arguments(arglen, vargs, "ii", TRUE)) return lives_osc_notify_failure();
 
@@ -6077,29 +6071,21 @@ boolean lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *v
   nparams = num_in_params(filter, FALSE, TRUE);
   if (pnum < 0 || pnum >= nparams) return lives_osc_notify_failure();
 
-  if (pnum == get_transition_param(filter, TRUE)) res = TRUE;
-
-  msg = lives_strdup_printf("%d", res);
-  lives_status_send(msg);
-  lives_free(msg);
-
-  return TRUE;
+  if (pnum == get_transition_param(filter, TRUE)) return lives_status_send(get_omc_const("LIVES_TRUE"));
+  return lives_status_send(get_omc_const("LIVES_FALSE"));
 }
 
 
 boolean lives_osc_cb_rte_getparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  // check if param is the transition parameter
+  weed_plant_t *filter;
+  weed_plant_t *ptmpl;
+
   int effect_key;
   int mode;
   int pnum;
-
   int error;
-  weed_plant_t *filter;
-  weed_plant_t *ptmpl;
   int nparams;
-
-  boolean res = FALSE;
-
-  char *msg;
 
   if (!lives_osc_check_arguments(arglen, vargs, "iii", FALSE)) {
     if (!lives_osc_check_arguments(arglen, vargs, "ii", TRUE)) return lives_osc_notify_failure();
@@ -6128,12 +6114,8 @@ boolean lives_osc_cb_rte_getparamtrans(void *context, int arglen, const void *va
   ptmpl = weed_filter_in_paramtmpl(filter, pnum, TRUE);
 
   if (weed_plant_has_leaf(ptmpl, WEED_LEAF_TRANSITION) &&
-      weed_get_boolean_value(ptmpl, WEED_LEAF_TRANSITION, &error) == WEED_TRUE) res = TRUE;
-  msg = lives_strdup_printf("%d", res);
-  lives_status_send(msg);
-  lives_free(msg);
-
-  return TRUE;
+      weed_get_boolean_value(ptmpl, WEED_LEAF_TRANSITION, &error) == WEED_TRUE) return lives_status_send(get_omc_const("LIVES_TRUE"));
+  return lives_status_send(get_omc_const("LIVES_FALSE"));
 }
 
 

@@ -3188,6 +3188,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     weed_plant_t **wpars = NULL, *wpar = NULL;
 
     weed_plant_t *chann, *ctmpl;
+    weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
 
     if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) nwpars = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
     if (nwpars > 0) wpars = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
@@ -3224,7 +3225,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       rpar[i].interp_func = rpar[i].display_func = NULL;
       rpar[i].hidden = 0;
       rpar[i].step_size = 1.;
-      rpar[i].transition = FALSE;
+      if (enabled_in_channels(filter, FALSE) == 2 && get_transition_param(filter, FALSE) == i) rpar[i].transition = TRUE;
+      else rpar[i].transition = FALSE;
       rpar[i].wrap = FALSE;
       rpar[i].reinit = FALSE;
       rpar[i].change_blocked = FALSE;

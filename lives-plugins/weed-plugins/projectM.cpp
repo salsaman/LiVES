@@ -620,7 +620,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
 
 void weed_desetup(void) {
-  std::cout << "ProjectM EXITING3" << std::endl;
   if (inited && statsd != NULL) {
     statsd->die = true;
     pthread_join(statsd->thread, NULL);
@@ -638,5 +637,4 @@ void weed_desetup(void) {
     statsd = NULL;
   }
   inited = 0;
-  std::cout << "ProjectM EXITING4" << std::endl;
 }

@@ -9123,6 +9123,9 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   lives_window_set_position(LIVES_WINDOW(dialog), LIVES_WIN_POS_CENTER_ALWAYS);
 
   if (add_std_buttons) {
+    // cancel button will automatically destroy the dialog
+    // ok button needs manual destruction
+
     LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     LiVESWidget *cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                                 LIVES_RESPONSE_CANCEL);

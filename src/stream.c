@@ -1034,6 +1034,7 @@ void on_open_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
                                  lives_entry_get_text(LIVES_ENTRY(pandh->entry3)), lives_entry_get_text(LIVES_ENTRY(pandh->entry4)));
     } else host = lives_strdup("INADDR_ANY");
     port = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(pandh->port_spin));
+    lives_widget_destroy(pandh->dialog);
   }
 
   lives_free(pandh);

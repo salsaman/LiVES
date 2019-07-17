@@ -511,9 +511,7 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
     rfxbuilder->onum_triggers = rfxbuilder->num_triggers;
   }
 
-  //dialog = lives_standard_dialog_new(title,FALSE,RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4);
   dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
-  //lives_widget_set_size_request(dialog,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
   lives_signal_handlers_disconnect_by_func(dialog, return_true, NULL);
 
   if (title != NULL) lives_free(title);
@@ -1114,7 +1112,6 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
           lives_free(param->def);
           lives_widget_destroy(entry);
           lives_widget_destroy(entry2);
-          lives_widget_destroy(param_dialog);
           return;
         }
         param_ok = perform_param_checks(rfxbuilder, rfxbuilder->num_params, rfxbuilder->num_params + 1);
@@ -1195,17 +1192,16 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
                        (LiVESAttachOptions)(LIVES_FILL),
                        (LiVESAttachOptions)(0), 0, 0);
 
+    lives_widget_destroy(param_dialog);
     if (button == NULL) goto add_row_done;
 
     lives_widget_queue_resize(lives_widget_get_parent(LIVES_WIDGET(rfxbuilder->table)));
-    lives_widget_destroy(param_dialog);
     break;
 
   case RFX_TABLE_TYPE_PARAM_WINDOW:
     if (button != NULL) {
       param_window_dialog = make_param_window_dialog(-1, rfxbuilder);
       if (lives_dialog_run(LIVES_DIALOG(param_window_dialog)) == LIVES_RESPONSE_CANCEL) {
-        lives_widget_destroy(param_window_dialog);
         return;
       }
       entry = rfxbuilder->entry[rfxbuilder->table_rows] = lives_entry_new();
@@ -1270,9 +1266,9 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
                        (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
+    lives_widget_destroy(param_window_dialog);
     if (button == NULL) goto add_row_done;
 
-    lives_widget_destroy(param_window_dialog);
     lives_widget_queue_resize(lives_widget_get_parent(LIVES_WIDGET(rfxbuilder->table)));
     lives_widget_queue_resize(LIVES_WIDGET(rfxbuilder->table));
     break;
@@ -1283,7 +1279,6 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
     if (button != NULL) {
       trigger_dialog = make_trigger_dialog(-1, rfxbuilder);
       if (lives_dialog_run(LIVES_DIALOG(trigger_dialog)) == LIVES_RESPONSE_CANCEL) {
-        lives_widget_destroy(trigger_dialog);
         return;
       }
       lives_entry_set_text(LIVES_ENTRY(entry), lives_entry_get_text(LIVES_ENTRY(rfxbuilder->trigger_when_entry)));
@@ -1307,7 +1302,10 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
                        (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    if (button == NULL) goto add_row_done;
+    if (button == NULL) {
+      lives_widget_destroy(trigger_dialog);
+      goto add_row_done;
+    }
 
     if (rfxbuilder->num_triggers > rfxbuilder->num_params) {
       lives_widget_set_sensitive(rfxbuilder->new_entry_button, FALSE);
@@ -1513,7 +1511,6 @@ void on_table_edit_row(LiVESButton *button, livespointer user_data) {
     param_dialog = make_param_dialog(found, rfxbuilder);
     do {
       if (lives_dialog_run(LIVES_DIALOG(param_dialog)) == LIVES_RESPONSE_CANCEL) {
-        lives_widget_destroy(param_dialog);
         return;
       }
       param_ok = perform_param_checks(rfxbuilder, found, rfxbuilder->num_params);
@@ -1547,7 +1544,6 @@ void on_table_edit_row(LiVESButton *button, livespointer user_data) {
   case RFX_TABLE_TYPE_PARAM_WINDOW:
     paramw_dialog = make_param_window_dialog(found, rfxbuilder);
     if (lives_dialog_run(LIVES_DIALOG(paramw_dialog)) == LIVES_RESPONSE_CANCEL) {
-      lives_widget_destroy(paramw_dialog);
       return;
     }
     ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_kw_combo));
@@ -1578,7 +1574,6 @@ void on_table_edit_row(LiVESButton *button, livespointer user_data) {
   case RFX_TABLE_TYPE_TRIGGERS:
     trigger_dialog = make_trigger_dialog(found, rfxbuilder);
     if (lives_dialog_run(LIVES_DIALOG(trigger_dialog)) == LIVES_RESPONSE_CANCEL) {
-      lives_widget_destroy(trigger_dialog);
       return;
     }
 

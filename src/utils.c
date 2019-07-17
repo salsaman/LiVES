@@ -2442,6 +2442,7 @@ boolean dirs_equal(const char *dira, const char *dirb) {
   ensure_isdir(dir1);
   ensure_isdir(dir2);
   // TODO: for some (Linux) fstypes we should use strcasecmp
+  // can get this using "df -T"
   return (!lives_utf8_strcmp(dir1, dir2));
 }
 

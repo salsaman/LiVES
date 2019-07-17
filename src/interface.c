@@ -4046,6 +4046,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   req = (lives_remote_clip_request_t *)lives_try_malloc(sizeof(lives_remote_clip_request_t));
   if (req == NULL) {
+    lives_widget_destroy(dialog);
     lives_widget_process_updates(mainw->LiVES, TRUE);
     lives_free(url);
     lives_free(dfile);

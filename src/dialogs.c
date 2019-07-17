@@ -2436,7 +2436,6 @@ boolean do_comments_dialog(int fileno, char *filename) {
   lives_clip_t *sfile = mainw->files[fileno];
 
   boolean response;
-  boolean ok = FALSE;
   boolean encoding = FALSE;
 
   commentsw = create_comments_dialog(sfile, filename);
@@ -2444,8 +2443,7 @@ boolean do_comments_dialog(int fileno, char *filename) {
   if (sfile == NULL) sfile = cfile;
   else encoding = TRUE;
 
-  while (!ok) {
-    ok = TRUE;
+  while (1) {
     if ((response = (lives_dialog_run(LIVES_DIALOG(commentsw->comments_dialog)) == LIVES_RESPONSE_OK))) {
       lives_snprintf(sfile->title, 256, "%s", lives_entry_get_text(LIVES_ENTRY(commentsw->title_entry)));
       lives_snprintf(sfile->author, 256, "%s", lives_entry_get_text(LIVES_ENTRY(commentsw->author_entry)));
@@ -2460,7 +2458,6 @@ boolean do_comments_dialog(int fileno, char *filename) {
         if (strcmp(ext, LIVES_FILE_EXT_SUB) && strcmp(ext, LIVES_FILE_EXT_SRT)) {
           if (!do_sub_type_warning(ext, sfile->subt->type == SUBTITLE_TYPE_SRT ? LIVES_FILE_EXT_SRT : LIVES_FILE_EXT_SUB)) {
             lives_entry_set_text(LIVES_ENTRY(commentsw->subt_entry), mainw->subt_save_file);
-            ok = FALSE;
             lives_free(ext);
             continue;
           }
@@ -2472,7 +2469,9 @@ boolean do_comments_dialog(int fileno, char *filename) {
         lives_freep((void **)&mainw->subt_save_file);
         mainw->subt_save_file = NULL;
       }
+      lives_widget_destroy(commentsw->comments_dialog);
     }
+    break;
   }
 
   lives_free(commentsw);

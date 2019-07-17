@@ -1853,7 +1853,7 @@ if (defined($ARGV[0])) {
 
 		$curworkdir="$workdir/$handle";
 		$statusfile="$curworkdir/.status";
-		$pidfile=$curworkdir."/.pid";
+		$pidfile="$curworkdir/.pid";
 
 	    }
 
@@ -1866,7 +1866,7 @@ if (defined($ARGV[0])) {
 	    $nfile=$ARGV[4];
 
 	    # check the file is writable
-	    unless ($nfile eq ""||&is_writeable($nfile)) {
+	    unless ($nfile eq "" || &is_writeable($nfile)) {
 		&sig_error("Unable to open output file !","$GUI_NAME could not write to $nfile.");
 	    }
 
@@ -1922,16 +1922,16 @@ if (defined($ARGV[0])) {
 		$aud_start=$ARGV[11];
 	    }
 	    else {
-		$aud_start=($start-1.)/($fps*1.);
+		$aud_start=($start-1.) / ($fps*1.);
 	    }
 	    if (defined($ARGV[12])) {
 		$aud_end=$ARGV[12];
 	    }
 	    else {
-		$aud_end=($end*1.)/($fps*1.);
+		$aud_end=($end*1.) / ($fps*1.);
 	    }
 
-	    $img_ext=&get_img_ext($curworkdir,$start);
+	    $img_ext=&get_img_ext($curworkdir, $start);
 
 	    # get image size ($hsize x $vsize)
 	    $imresact="none";
@@ -1987,15 +1987,15 @@ if (defined($ARGV[0])) {
 				unlink "$origaudio";
 			    }
 			    else {
-				smog_rename( "$origaudio","$origaudio.origbak");
+				smog_rename( "$origaudio", "$origaudio.origbak");
 			    }
-			    smog_rename( "$curworkdir/$audiofile","$origaudio");
-			    $audio_file=$audio_in=$origaudio;
+			    smog_rename("$audiofile", "$origaudio");
+			    $audiofile=$audio_in=$origaudio;
 			}
 		    }
 		    if ($areq&2) {
 			# convert raw audio to wav
-			$audio_out=$curworkdir . "/audiodump.wav";
+			$audio_out="$curworkdir/audiodump.wav";
 			&convert_audio_to_wav;
 			if ($panic) {
 			    unlink "$pidfile";
@@ -2034,7 +2034,7 @@ if (defined($ARGV[0])) {
 			    $from=&mkname($i+$start-1);
 			    if (-f "$curworkdir$from$img_ext") {
 				if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
-				    $smerr=smog_system ("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
+				    $smerr=smog_system("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir$name$img_ext\"");
 				    if ($smerr) {
 					sig_system_error("Copying \"$curworkdir/$from$img_ext\" from \"$linksdir$name$img_ext\"",$smerr);
 					unlink "$pidfile";
@@ -2056,17 +2056,17 @@ if (defined($ARGV[0])) {
 			    my $xaudiofile=(split(/\//,$audiofile))[-1];
 			    if (! -f "$linksdir$xaudiofile") {
 				if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
-				    $smerr=smog_system("/bin/cp -f \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
+				    $smerr=smog_system("/bin/cp -f \"$audiofile\" \"$linksdir$xaudiofile\"");
 				    if ($smerr) {
-					sig_system_error("Copying \"$curworkdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
+					sig_system_error("Copying \"$audiofile\" to \"$linksdir$xaudiofile\"",$smerr);
 					unlink "$pidfile";
 					exit 1;
 				    }
 				}
 				else {
-				    $smerr=smog_system("/bin/ln \"$curworkdir/$audiofile\" \"$linksdir$xaudiofile\"");
+				    $smerr=smog_system("/bin/ln \"$audiofile\" \"$linksdir$xaudiofile\"");
 				    if ($smerr) {
-					sig_system_error("Symlinking \"$curworkdir/$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
+					sig_system_error("Symlinking \"$audiofile\" from \"$linksdir$xaudiofile\"",$smerr);
 					unlink "$pidfile";
 					exit 1;
 				    }
@@ -2079,7 +2079,6 @@ if (defined($ARGV[0])) {
 		if ($is_linked==1) {
 		    smog_chdir("$linksdir");
 		}
-
 	    }
     
 	    unless ($plugin eq "") {
@@ -2347,6 +2346,7 @@ if (defined($ARGV[0])) {
 	    &sig_complete;
 	    exit 0;
 	}
+
 
 	if ($command eq "backup") {
 	    $withaudio=$ARGV[2];

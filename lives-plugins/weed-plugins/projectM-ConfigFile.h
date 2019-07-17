@@ -49,6 +49,8 @@
 #include <fstream>
 #include <sstream>
 
+extern "C" void weed_desetup(void);
+
 using std::string;
 
 class ConfigFile {

@@ -5247,7 +5247,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         mainw->osc_block = FALSE;
         return res;
       } else {
-        // pullw frame from decoded images
+        // pull frame from decoded images
         boolean ret;
         char *fname = make_image_file_name(sfile, frame, image_ext);
         if (height * width == 0) {

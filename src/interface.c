@@ -131,6 +131,8 @@ void show_playbar_labels(int clipno) {
     lives_widget_show(mainw->hruler);
   }
 
+  lives_free(str_video);
+
   if (!CLIP_HAS_AUDIO(clipno)) {
     tmp = lives_strdup(_("(No audio)"));
   } else {
@@ -143,24 +145,25 @@ void show_playbar_labels(int clipno) {
       tmp = lives_strdup_printf(_("%s [%.2f sec]"), tmpch, sfile->laudio_time);
     }
     lives_free(tmpch);
-
-    lives_label_set_text(LIVES_LABEL(mainw->laudbar), tmp);
-    lives_widget_show(mainw->laudbar);
-    lives_free(tmp);
-
-    if (sfile->achans > 1) {
-      tmpch = get_achannel_name(sfile->achans, 1);
-      if (sfile->opening_audio) {
-        tmp = lives_strdup_printf(_("%s %s"), tmpch, str_opening);
-      } else {
-        tmp = lives_strdup_printf(_("%s [%.2f sec]"), tmpch, sfile->raudio_time);
-      }
-      lives_free(tmpch);
-      lives_label_set_text(LIVES_LABEL(mainw->raudbar), tmp);
-      lives_widget_show(mainw->raudbar);
-      lives_free(tmp);
-    }
   }
+
+  lives_label_set_text(LIVES_LABEL(mainw->laudbar), tmp);
+  lives_widget_show(mainw->laudbar);
+  lives_free(tmp);
+
+  if (sfile->achans > 1) {
+    tmpch = get_achannel_name(sfile->achans, 1);
+    if (sfile->opening_audio) {
+      tmp = lives_strdup_printf(_("%s %s"), tmpch, str_opening);
+    } else {
+      tmp = lives_strdup_printf(_("%s [%.2f sec]"), tmpch, sfile->raudio_time);
+    }
+    lives_free(tmpch);
+    lives_label_set_text(LIVES_LABEL(mainw->raudbar), tmp);
+    lives_widget_show(mainw->raudbar);
+    lives_free(tmp);
+  }
+
   lives_free(str_opening);
 }
 

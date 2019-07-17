@@ -434,6 +434,7 @@ static int projectM_init(weed_plant_t *inst) {
     sd->nprs = 0;
     sd->prnames = NULL;
     sd->worker_ready = false;
+    sd->rendering = false;
 
     // kick off a thread to init screean and render
     pthread_create(&sd->thread, NULL, worker, sd);

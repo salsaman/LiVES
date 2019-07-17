@@ -264,7 +264,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #ifdef DEBUG_MSGS
         g_print("Retry with (%d) |%s|\n", totlines, newtext);
 #endif
-        lives_free(testtxt);
+        lives_free(testtext);
         testtext = lives_strdup_printf("%s%s", newtext, readytext);
 #ifdef DEBUG_MSGS
         g_print("Testing with:%s:\n", testtext);
@@ -353,6 +353,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #ifdef DEBUG_MSGS
   g_print("|%s| FINAL !!\n", readytext);
 #endif
+  lives_free(readytext);
   lives_object_unref(ctx);
   return layout;
 #endif

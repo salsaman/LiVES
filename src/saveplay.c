@@ -2832,6 +2832,7 @@ void play_file(void) {
   if (!mainw->foreign && prefs->midisynch) lives_system("midistop", TRUE);
 
   if (mainw->ext_playback) {
+    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     vid_playback_plugin_exit();
   }
   // we could have started by playing a generator, which could've been closed

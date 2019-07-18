@@ -317,7 +317,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     add_xlays_widget(LIVES_BOX(dialog_vbox));
   }
 
-  if (mainw->iochan != NULL) {
+  if (mainw->iochan != NULL && is_blocking) {
     LiVESWidget *details_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Show _Details"),
                                   LIVES_RESPONSE_SHOW_DETAILS);
 

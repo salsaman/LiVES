@@ -1202,10 +1202,13 @@ void save_file(int clip, int start, int end, const char *filename) {
   LiVESWidget *hbox;
 
   boolean safe_symlinks = prefs->safe_symlinks;
-  boolean not_cancelled;
+  boolean not_cancelled = FALSE;
   boolean output_exists = FALSE;
   boolean save_all = FALSE;
   boolean resb;
+
+  lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+  lives_widget_context_update();
 
   if (start == 1 && end == sfile->frames) save_all = TRUE;
 
@@ -1220,6 +1223,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       int response;
       rdet = create_render_details(1); // WARNING !! - rdet is global in events.h
       response = lives_dialog_run(LIVES_DIALOG(rdet->dialog));
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
       lives_widget_hide(rdet->dialog);
 
       if (response == LIVES_RESPONSE_CANCEL) {
@@ -1739,11 +1743,9 @@ void save_file(int clip, int start, int end, const char *filename) {
   mainw->com_failed = FALSE;
   lives_system(com, FALSE);
   lives_free(com);
-
   mainw->error = FALSE;
 
   if (mainw->com_failed || mainw->write_failed) {
-    not_cancelled = FALSE;
     mainw->error = TRUE;
   }
 
@@ -1754,7 +1756,6 @@ void save_file(int clip, int start, int end, const char *filename) {
     cfile->progress_end = cfile->frames;
 
     not_cancelled = do_progress_dialog(TRUE, TRUE, _("Saving [can take a long time]"));
-    mesg = lives_strdup(mainw->msg);
 
     if (mainw->iochan != NULL) {
       // flush last of stdout/stderr from plugin
@@ -1813,7 +1814,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   lives_free(enc_exec_name);
   lives_free(cmd);
 
-  if (not_cancelled) {
+  if (not_cancelled || mainw->error) {
     if (mainw->error) {
       mainw->no_switch_dprint = TRUE;
       d_print_failed();
@@ -1832,20 +1833,17 @@ void save_file(int clip, int start, int end, const char *filename) {
         lives_free(com);
       }
 
-      switch_to_file(mainw->current_file, current_file);
-      do_blocking_error_dialog(mesg);
-      lives_free(mesg);
-
       if (mainw->iochan != NULL) {
         mainw->iochan = NULL;
         lives_object_unref(mainw->optextview);
       }
 
+      switch_to_file(mainw->current_file, current_file);
+
       lives_freep((void **)&mainw->subt_save_file);
       sensitize();
       return;
     }
-    lives_free(mesg);
 
     if (lives_file_test((tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)), LIVES_FILE_TEST_EXISTS)) {
       lives_free(tmp);
@@ -1888,7 +1886,6 @@ void save_file(int clip, int start, int end, const char *filename) {
 
       lives_freep((void **)&mainw->subt_save_file);
       sensitize();
-
       if (mainw->error) d_print_failed();
 
       return;
@@ -1998,6 +1995,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     lives_free(tmp);
     lives_free(mesg);
   } else {
+    d_print_failed();
     lives_rm((tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)));
     lives_free(tmp);
   }
@@ -2296,9 +2294,9 @@ void play_file(void) {
         mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST;
         if (mainw->pwidth * mainw->pheight == 0) {
           lives_widget_queue_draw(mainw->playframe);
-          //mainw->noswitch = TRUE;
-          //lives_widget_context_update();
-          //mainw->noswitch = FALSE;
+          mainw->noswitch = TRUE;
+          lives_widget_context_update();
+          mainw->noswitch = FALSE;
         }
       } while (mainw->pwidth * mainw->pheight == 0);
       // double size

@@ -99,6 +99,10 @@
 #include <setjmp.h>
 #endif
 
+#ifdef HAVE_PRCTL
+#include <sys/prctl.h>
+#endif
+
 ////////////////////////////////
 capability *capable;
 _palette *palette;
@@ -166,6 +170,16 @@ void *gtk_thread_wrapper(void *data) {
 static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
   char *msg;
 
+  if (!strncmp(message, "Theme parsing", strlen("Theme parsing"))) return;
+
+  //#define TRAP_ERRMSG ""
+#ifdef TRAP_ERRMSG
+  if (!strncmp(message, TRAP_ERRMSG, strlen(TRAP_ERRMSG))) {
+    lives_printerr("Trapped message %s\n", message);
+    raise(LIVES_SIGSEGV);
+  }
+#endif
+
 #ifdef LIVES_NO_DEBUG
   if (level >= LIVES_LOG_LEVEL_WARNING) return;
 #else
@@ -222,11 +236,20 @@ void catch_sigint(int signum) {
         } else {
           lives_printerr("%s", _("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
         }
-        if (mainw->debug) {
+
 #ifdef USE_GLIB
-          g_on_error_stack_trace(capable->myname_full);
+#ifdef LIVES_NO_DEBUG
+        if (mainw->debug) {
 #endif
+#ifdef HAVE_PRCTL
+          prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY);
+#endif
+          g_on_error_query(capable->myname_full);
+#ifdef LIVES_NO_DEBUG
         }
+#endif
+#endif
+
       }
 
       if (mainw->was_set) {

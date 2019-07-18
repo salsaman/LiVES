@@ -5700,7 +5700,7 @@ render_details *create_render_details(int type) {
       if (CURRENT_CLIP_HAS_VIDEO && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) {
         rdet->usecur_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), NULL, _("_Set to current clip values"),
                               LIVES_RESPONSE_RESET);
-        lives_signal_connect(LIVES_COMBO(rdet->usecur_button), LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current),
+        lives_signal_connect(rdet->usecur_button, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current),
                              (livespointer)rdet);
       }
     }

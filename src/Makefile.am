@@ -227,6 +227,14 @@ endif
 endif
 endif
 
+if HAVE_LINUX_JOYSTICK_H
+AM_CFLAGS += -DHAVE_LINUX_JOYSTICK_H=1
+endif
+
+if HAVE_PRCTL
+AM_CFLAGS += -DHAVE_PRCTL=1
+endif
+
 if ENABLE_PROFILING
 AM_CFLAGS += -pg
 endif

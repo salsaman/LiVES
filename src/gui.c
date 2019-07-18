@@ -4257,7 +4257,7 @@ void resize_play_window(void) {
     }
   }
 
-  if (!mainw->fs || mainw->playing_file == -1) lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+  if (!mainw->fs) lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
 
   lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
 

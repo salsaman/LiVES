@@ -3367,7 +3367,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTreeModel *lives_combo_get_model(LiVESCombo *co
 
 static boolean setcellbg(LiVESCellRenderer *r, void *p) {
   // set the pop-up colours
-  lives_widget_object_set(r, "border-width", 0);
+  //lives_widget_object_set(r, "border-width", 0);
   lives_widget_object_set(r, "cell-background-rgba", &palette->info_base);
   lives_widget_object_set(r, "foreground-rgba", &palette->info_text);
   gtk_cell_renderer_set_fixed_size(r, -1, COMBO_CELL_HEIGHT);

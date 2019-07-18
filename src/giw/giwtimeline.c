@@ -388,7 +388,7 @@ void giw_timeline_set_unit(GiwTimeline *timeline, GiwTimeUnit unit) {
 
   if (timeline->unit != unit) {
     timeline->unit = unit;
-    g_object_notify(G_OBJECT(timeline), "unit");
+    //g_object_notify(G_OBJECT(timeline), "unit");
 
     gtk_widget_queue_draw(GTK_WIDGET(timeline));
   }

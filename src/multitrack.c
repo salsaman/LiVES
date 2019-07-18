@@ -7851,7 +7851,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mt->btoolbar2), FALSE);
 
   lives_toolbar_set_style(LIVES_TOOLBAR(mt->btoolbar2), LIVES_TOOLBAR_ICONS);
-  lives_toolbar_set_icon_size(LIVES_TOOLBAR(mt->btoolbar2), LIVES_ICON_SIZE_LARGE_TOOLBAR + 4);
+  lives_toolbar_set_icon_size(LIVES_TOOLBAR(mt->btoolbar2), LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
   lives_object_ref(mainw->m_sepwinbutton);
   lives_widget_unparent(mainw->m_sepwinbutton);

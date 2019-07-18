@@ -122,6 +122,7 @@ static int weed_seed_is_ptr(int seed) GNU_CONST;
 static int weed_strcmp(const char *st1, const char *st2) GNU_HOT;
 static size_t weed_strlen(const char *string) GNU_PURE;
 static char *weed_slice_strdup(const char *string) GNU_PURE GNU_HOT GNU_FLATTEN;
+static uint32_t weed_hash(const char *string) GNU_PURE;
 
 /* host only functions */
 static void _weed_plant_free(weed_plant_t *plant) GNU_FLATTEN;
@@ -165,6 +166,14 @@ static inline int weed_strcmp(const char *st1, const char *st2) {
     if (*(st1) == 0 || *(st2) == 0 || *(st1++) != *(st2++)) return 1;
   }
   return 0;
+}
+
+
+static inline uint32_t weed_hash(const char *string) {
+  char c;
+  uint32_t hash = 5381;
+  while ((c = *(string++)) != 0) hash += (hash << 5) + c;
+  return hash;
 }
 
 
@@ -231,8 +240,10 @@ static inline weed_data_t **weed_data_new(int seed_type, int num_elems, void *va
 
 
 static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key) {
+  uint32_t hash = weed_hash(key);
   while (leaf != NULL) {
-    if (!weed_strcmp((char *)leaf->key, (char *)key)) return leaf;
+    if (hash == leaf->key_hash)
+      if (!weed_strcmp((char *)leaf->key, (char *)key)) return leaf;
     leaf = leaf->next;
   }
   return NULL;
@@ -253,6 +264,7 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, int seed) {
     g_slice_free(weed_leaf_t, leaf);
     return NULL;
   }
+  leaf->key_hash = weed_hash(key);
   leaf->seed_type = seed;
   leaf->data = NULL;
   leaf->next = NULL;
@@ -290,13 +302,16 @@ static void _weed_plant_free(weed_plant_t *leaf) {
 
 static int _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf = plant, *leafnext;
+  uint32_t hash = weed_hash(key);
   while (leaf->next != NULL) {
-    if (!weed_strcmp((char *)leaf->next->key, (char *)key)) {
-      if (leaf->next->flags & WEED_LEAF_READONLY_HOST) return WEED_ERROR_LEAF_READONLY;
-      leafnext = leaf->next;
-      leaf->next = leaf->next->next;
-      weed_leaf_free(leafnext);
-      return WEED_NO_ERROR;
+    if (leaf->next->key_hash == hash) {
+      if (!weed_strcmp((char *)leaf->next->key, (char *)key)) {
+        if (leaf->next->flags & WEED_LEAF_READONLY_HOST) return WEED_ERROR_LEAF_READONLY;
+        leafnext = leaf->next;
+        leaf->next = leaf->next->next;
+        weed_leaf_free(leafnext);
+        return WEED_NO_ERROR;
+      }
     }
     leaf = leaf->next;
   }

@@ -102,6 +102,7 @@ typedef size_t weed_size_t; // may be set to uint32_t or uint64_t
 /* private data - these fields must NOT be accessed directly ! */
 struct weed_leaf {
   const char *key;
+  uint32_t key_hash;
   int seed_type;
   int num_elements;
   weed_data_t **data;

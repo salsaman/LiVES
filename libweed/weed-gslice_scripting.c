@@ -132,6 +132,14 @@ static inline int weed_strcmp(const char *st1, const char *st2) {
 }
 
 
+static inline uint32_t weed_hash(const char *string) {
+  char c;
+  uint32_t hash = 5381;
+  while ((c = *(string++)) != 0) hash += (hash << 5) + c;
+  return hash;
+}
+
+
 static inline int weed_seed_is_ptr(int seed) {
   return (seed != WEED_SEED_BOOLEAN && seed != WEED_SEED_INT && seed != WEED_SEED_DOUBLE && seed != WEED_SEED_STRING && seed !=
           WEED_SEED_INT64) ? 1 : 0;
@@ -195,8 +203,10 @@ static inline weed_data_t **weed_data_new(int seed_type, int num_elems, void *va
 
 
 static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key) {
+  uint32_t hash = weed_hash(key);
   while (leaf != NULL) {
-    if (!weed_strcmp((char *)leaf->key, (char *)key)) return leaf;
+    if (hash == leaf->key_hash)
+      if (!weed_strcmp((char *)leaf->key, (char *)key)) return leaf;
     leaf = leaf->next;
   }
   return NULL;
@@ -217,6 +227,7 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, int seed) {
     g_slice_free(weed_leaf_t, leaf);
     return NULL;
   }
+  leaf->key_hash = weed_hash(key);
   leaf->seed_type = seed;
   leaf->data = NULL;
   leaf->next = NULL;
@@ -254,13 +265,16 @@ void weed_plant_free(weed_plant_t *leaf) {
 
 int weed_leaf_delete(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf = plant, *leafnext;
+  uint32_t hash = weed_hash(key);
   while (leaf->next != NULL) {
-    if (!weed_strcmp((char *)leaf->next->key, (char *)key)) {
-      if (leaf->next->flags & WEED_LEAF_READONLY_HOST) return WEED_ERROR_LEAF_READONLY;
-      leafnext = leaf->next;
-      leaf->next = leaf->next->next;
-      weed_leaf_free(leafnext);
-      return WEED_NO_ERROR;
+    if (leaf->next->key_hash == hash) {
+      if (!weed_strcmp((char *)leaf->next->key, (char *)key)) {
+        if (leaf->next->flags & WEED_LEAF_READONLY_HOST) return WEED_ERROR_LEAF_READONLY;
+        leafnext = leaf->next;
+        leaf->next = leaf->next->next;
+        weed_leaf_free(leafnext);
+        return WEED_NO_ERROR;
+      }
     }
     leaf = leaf->next;
   }

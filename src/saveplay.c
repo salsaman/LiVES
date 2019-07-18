@@ -2467,10 +2467,9 @@ void play_file(void) {
        (audio_player == AUD_PLAYER_PULSE))) {
     mainw->rec_samples = -1; // record unlimited
     if (mainw->record) {
-      // creat temp clip
+      // create temp clip
       open_ascrap_file();
       if (mainw->ascrap_file != -1) {
-
         mainw->rec_aclip = mainw->ascrap_file;
         mainw->rec_avel = 1.;
         mainw->rec_aseek = 0;
@@ -2524,7 +2523,6 @@ void play_file(void) {
   find_when_to_stop();
 
   if (mainw->foreign || weed_playback_gen_start()) {
-
     if (mainw->osc_auto)
       lives_notify(LIVES_OSC_NOTIFY_SUCCESS, "");
     lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STARTED, "");
@@ -2564,7 +2562,6 @@ void play_file(void) {
           init_track_decoders();
 
         if (has_audio_buffers) {
-
 #ifdef ENABLE_JACK
           if (audio_player == AUD_PLAYER_JACK) {
             int i;
@@ -2784,7 +2781,7 @@ void play_file(void) {
   }
 #endif
 
-  if (com != NULL) lives_free(com);
+  lives_freep((void **)&com);
   mainw->actual_frame = 0;
 
   if (audio_player == AUD_PLAYER_JACK) audio_cache_end();

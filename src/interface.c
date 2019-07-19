@@ -4442,7 +4442,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
         lives_widget_hide(widget);
         lives_widget_hide(mainw->message_box);
 
-        if ((overflowx > 0 || overflowy > 0) && myheight > 0) {
+        if ((overflowx > 0 || overflowy > 0) && myheight > 0 && mywidth > 0) {
           lives_widget_set_size_request(widget, mywidth, myheight);
           lives_widget_set_size_request(mainw->message_box, mywidth, myheight);
         }

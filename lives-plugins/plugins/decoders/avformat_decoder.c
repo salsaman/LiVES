@@ -1057,7 +1057,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   unsigned char black[4] = {0, 0, 0, 255};
 
   boolean hit_target = FALSE;
-  boolean did_seek = FALSE;
+  //boolean did_seek = FALSE;
 
   int gotFrame;
 

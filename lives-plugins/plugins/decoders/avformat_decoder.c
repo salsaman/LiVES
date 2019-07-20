@@ -1175,7 +1175,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       priv->black_fill = FALSE;
       MyPts = -1;
       priv->needs_packet = TRUE;
-      did_seek = TRUE;
+      //did_seek = TRUE;
     } else {
       MyPts = (priv->last_frame + 1.) / cdata->fps * (double)AV_TIME_BASE;
     }

@@ -2792,7 +2792,6 @@ void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
   char *msg;
-  boolean wrote_recovery_entry = FALSE;
   int old_file = mainw->current_file, current_file;
   int i;
 
@@ -2885,12 +2884,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  if (prefs->crash_recovery && !wrote_recovery_entry) {
-    char *recovery_entry = lives_build_filename(mainw->set_name, "*", NULL);
-    add_to_recovery_file(recovery_entry);
-    lives_free(recovery_entry);
-    wrote_recovery_entry = TRUE;
-  }
+  if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
   switch_to_file((mainw->current_file = old_file), current_file);
   d_print_done();

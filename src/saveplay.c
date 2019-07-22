@@ -1615,7 +1615,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   if (save_all) {
     if (sfile->clip_type == CLIP_TYPE_FILE) {
       char *msg = lives_strdup(_("Pulling frames from clip..."));
-      if (!realize_all_frames(clip, msg)) {
+      if (!realize_all_frames(clip, msg, FALSE)) {
         lives_free(msg);
         lives_freep((void **)&mainw->subt_save_file);
         if (!resb) d_print_cancelled();
@@ -3755,7 +3755,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
   if (sfile->clip_type == CLIP_TYPE_FILE) {
     char *msg = lives_strdup(_("Pulling frames from clip..."));
-    if (!realize_all_frames(clip, msg)) {
+    if (!realize_all_frames(clip, msg, FALSE)) {
       lives_free(msg);
       cfile->nopreview = FALSE;
       d_print_cancelled();
@@ -4629,7 +4629,7 @@ boolean open_scrap_file(void) {
   cfile->unique_id = 0;
 
   scrap_handle = lives_strdup_printf("scrap|%s", cfile->handle);
-  add_to_recovery_file(scrap_handle);
+  if (prefs->crash_recovery) add_to_recovery_file(scrap_handle);
   lives_free(scrap_handle);
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
@@ -4695,7 +4695,7 @@ boolean open_ascrap_file(void) {
 #endif
 
   ascrap_handle = lives_strdup_printf("ascrap|%s", cfile->handle);
-  add_to_recovery_file(ascrap_handle);
+  if (prefs->crash_recovery) add_to_recovery_file(ascrap_handle);
   lives_free(ascrap_handle);
 
   pthread_mutex_lock(&mainw->clip_list_mutex);

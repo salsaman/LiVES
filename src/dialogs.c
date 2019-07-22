@@ -2851,6 +2851,8 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   lives_free(copy_text);
 
   lives_widget_process_updates(mainw->LiVES, TRUE);
+
+  if (CURRENT_CLIP_IS_VALID) cfile->proc_ptr = procw;
 }
 
 

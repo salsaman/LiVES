@@ -20,7 +20,7 @@ void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_ind
 void del_frame_index(lives_clip_t *);
 void reverse_frame_index(int sfileno);
 
-boolean realize_all_frames(int clipno, const char *msg);
+boolean realize_all_frames(int clipno, const char *msg, boolean enough);
 
 /*
  * @brief remove rendered (real) frames from region oldsframe -> oldframes, when they are virtual in current frame_index

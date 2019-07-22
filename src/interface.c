@@ -1040,7 +1040,6 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   if (has_cancel) {
-    LiVESWidget *cancelbutton;
     if (CURRENT_CLIP_IS_VALID && cfile->opening_only_audio) {
       LiVESWidget *enoughbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("_Enough"), LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_default(enoughbutton, TRUE);
@@ -1052,14 +1051,14 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
       mainw->cancel_type = CANCEL_SOFT;
     }
 
-    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), LIVES_STOCK_CANCEL, NULL,
-                   LIVES_RESPONSE_CANCEL);
-    lives_widget_set_can_default(cancelbutton, TRUE);
+    procw->cancel_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), LIVES_STOCK_CANCEL, NULL,
+                           LIVES_RESPONSE_CANCEL);
+    lives_widget_set_can_default(procw->cancel_button, TRUE);
 
-    lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group,
+    lives_widget_add_accelerator(procw->cancel_button, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+    lives_signal_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
                          LIVES_INT_TO_POINTER(0));
 

@@ -2821,7 +2821,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   msg = lives_strdup(_("Pulling frames from clipboard..."));
 
-  if (!realize_all_frames(0, msg)) {
+  if (!realize_all_frames(0, msg, FALSE)) {
     lives_free(msg);
     sensitize();
     return;
@@ -3221,7 +3221,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
 
   if (!virtual_ins && clipboard->frame_index != NULL) {
     char *msg = lives_strdup(_("Pulling frames from clipboard..."));
-    if (!realize_all_frames(0, msg)) {
+    if (!realize_all_frames(0, msg, FALSE)) {
       lives_free(msg);
       sensitize();
       return;
@@ -5493,8 +5493,9 @@ void on_vj_realize_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   desensitize();
 
-  if (!realize_all_frames(mainw->current_file, msg)) d_print_cancelled();
-  else d_print_done();
+  if (!realize_all_frames(mainw->current_file, msg, TRUE)) {
+    d_print_cancelled();
+  } else d_print_done();
   lives_free(msg);
 
   sensitize();
@@ -7406,7 +7407,7 @@ void on_rev_clipboard_activate(LiVESMenuItem *menuitem, livespointer user_data) 
     lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
     char *msg = lives_strdup(_("Pulling frames from clipboard..."));
     if (!(cdata->seek_flag & LIVES_SEEK_FAST)) {
-      if (!realize_all_frames(0, msg)) {
+      if (!realize_all_frames(0, msg, FALSE)) {
         lives_free(msg);
         sensitize();
         return;

@@ -1760,20 +1760,20 @@ void d_print(const char *fmt, ...) {
   text = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
 
-  add_messages_to_list(text);
-  lives_free(text);
-
   if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && mainw->multitrack == NULL &&
       (mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
     if (mainw->current_file > 0) {
-      text = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile, TRUE));
+      char *swtext = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile, TRUE));
       lives_free(tmp);
-      add_messages_to_list(text);
-      lives_free(text);
+      add_messages_to_list(swtext);
+      lives_free(swtext);
     } else {
       add_messages_to_list(_("\n==============================\nSwitched to empty clip\n"));
     }
   }
+
+  add_messages_to_list(text);
+  lives_free(text);
 
   if (prefs->show_gui && mainw->msg_area != NULL && mainw->msg_adj != NULL) {
     msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);

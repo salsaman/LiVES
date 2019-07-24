@@ -9,11 +9,11 @@ OSC_CLIENT_LIB_FILE = libOSC_client.la
 
 lib_LTLIBRARIES = $(OSC_CLIENT_LIB_FILE)
 
-libOSC_client_la_CFLAGS = -I "$(srcdir)/.." $(DEBUG_CFLAGS) $(mingw_CFLAGS)
+libOSC_client_la_CFLAGS = -I "$(srcdir)/.." $(DEBUG_CFLAGS) $(mingw_CFLAGS) -fPIC -DPIC
 
 if ENABLE_OSC
 libOSC_client_la_SOURCES = OSC-client.c OSC-timetag.c
 endif
 
-libOSC_client_la_LDFLAGS = $(ALL_LIB_OPTS) -O2 -Wall $(mingw_LDFLAGS)
+libOSC_client_la_LDFLAGS = $(ALL_LIB_OPTS) -O2 -Wall $(mingw_LDFLAGS) -fPIC -DPIC
 

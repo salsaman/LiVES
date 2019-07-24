@@ -20,6 +20,9 @@ endif
 
 libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS) $(mingw_CFLAGS)
 
+AM_CPPFLAGS += -fPIC -DPIC
+AM_LDFLAGS = -fPIC -DPIC
+
 if ENABLE_OSC
 libOSC_la_SOURCES = OSC-address-space.c OSC-address-space.h\
 		 OSC-callbacklist.c OSC-callbacklist.h\

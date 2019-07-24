@@ -742,10 +742,7 @@ static int common_process(weed_plant_t *inst, weed_timecode_t tc, int filter_typ
       lglare_kernel<Vec3b>(mixMat, destMat, palette, in_params);
     break;
   case FILTER_PHATCH:
-    if (psize == 4)
-      phatch_kernel<Vec4b>(mixMat, destMat, palette, in_params);
-    else
-      phatch_kernel<Vec3b>(mixMat, destMat, palette, in_params);
+    phatch_kernel<Vec4b>(mixMat, destMat, palette, in_params);
     break;
   case FILTER_PARAFFIN:
     srcMat.copyTo(destMat);
@@ -872,10 +869,12 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
     int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
+    int palette_list4[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
 
     int opalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
 
     weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel", 0, palette_list), NULL};
+    weed_plant_t *in_chantmpls4[] = {weed_channel_template_init("in channel", 0, palette_list4), NULL};
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel", 0, palette_list), NULL};
 
     weed_plant_t *out_chantmplsx[] = {weed_channel_template_init("out channel", 0, opalette_list), NULL};
@@ -966,7 +965,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     // pencil hatching
     filter_class = weed_filter_class_init("Toonz: Pencil Hatching", "DWANGO co.", 1, 0, NULL,
                                           &phatch_process, NULL,
-                                          in_chantmpls, out_chantmpls, in_paramsa, NULL);
+                                          in_chantmpls4, out_chantmpls, in_paramsa, NULL);
 
     weed_set_boolean_value(in_paramsa[PARAMa_ANGLE], "wrap", WEED_TRUE);
 

@@ -856,7 +856,7 @@ int player::setVideoPlaybackFrame(int frame, bool bg) const {
 
 double player::elapsedTime() const {
   if (!isPlaying()) return 0.;
-  return mainw->currticks / U_SEC;
+  return mainw->currticks / TICKS_PER_SECOND_DBL;
 }
 
 
@@ -1240,7 +1240,7 @@ lives_endian_t clip::audioEndian() {
 livesString clip::name() {
   if (isValid()) {
     int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return livesString(get_menu_name(mainw->files[cnum]), LIVES_CHAR_ENCODING_UTF8);
+    if (cnum > -1 && mainw->files[cnum] != NULL) return livesString(get_menu_name(mainw->files[cnum], FALSE), LIVES_CHAR_ENCODING_UTF8);
   }
   return livesString();
 }
@@ -1677,15 +1677,15 @@ void block::invalidate() {
 double block::startTime() {
   track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
   if (tr == NULL) return -1.;
-  return (double)get_event_timecode(tr->start_event) / U_SEC;
+  return (double)get_event_timecode(tr->start_event) / TICKS_PER_SECOND_DBL;
 }
 
 
 double block::length() {
   track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
   if (tr == NULL) return -1.;
-  return (double)get_event_timecode(tr->end_event) / U_SEC + 1. / mainw->multitrack->fps -
-         (double)get_event_timecode(tr->start_event) / U_SEC;
+  return (double)get_event_timecode(tr->end_event) / TICKS_PER_SECOND_DBL + 1. / mainw->multitrack->fps -
+         (double)get_event_timecode(tr->start_event) / TICKS_PER_SECOND_DBL;
 }
 
 
@@ -2242,8 +2242,6 @@ lives_audio_player_t audioPlayer(const livesApp &lives) {
   if (::prefs->audio_player == AUD_PLAYER_SOX) return LIVES_AUDIO_PLAYER_SOX;
   if (::prefs->audio_player == AUD_PLAYER_JACK) return LIVES_AUDIO_PLAYER_JACK;
   if (::prefs->audio_player == AUD_PLAYER_PULSE) return LIVES_AUDIO_PLAYER_PULSE;
-  if (::prefs->audio_player == AUD_PLAYER_MPLAYER) return LIVES_AUDIO_PLAYER_MPLAYER;
-  if (::prefs->audio_player == AUD_PLAYER_MPLAYER2) return LIVES_AUDIO_PLAYER_MPLAYER2;
   return LIVES_AUDIO_PLAYER_UNKNOWN;
 }
 
@@ -2263,8 +2261,6 @@ bool isRealtimeAudioPlayer(lives_audio_player_t player_type) {
   if (player_type == LIVES_AUDIO_PLAYER_SOX) ptype = AUD_PLAYER_SOX;
   else if (player_type == LIVES_AUDIO_PLAYER_JACK) ptype = AUD_PLAYER_JACK;
   else if (player_type == LIVES_AUDIO_PLAYER_PULSE) ptype = AUD_PLAYER_PULSE;
-  else if (player_type == LIVES_AUDIO_PLAYER_MPLAYER) ptype = AUD_PLAYER_MPLAYER;
-  else if (player_type == LIVES_AUDIO_PLAYER_MPLAYER2) ptype = AUD_PLAYER_MPLAYER2;
   return is_realtime_aplayer(ptype);
 }
 
@@ -2305,7 +2301,7 @@ bool sepWinSticky(const livesApp &lives) {
 
 bool setSepWinSticky(const livesApp &lives, bool setting) {
   if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
-  return lives.setPref(PREF_SEPWIN_STICKY, setting ? SEPWIN_TYPE_STICKY : SEPWIN_TYPE_NON_STICKY);
+  return lives.setPref(PREF_SEPWIN_TYPE, setting ? SEPWIN_TYPE_STICKY : SEPWIN_TYPE_NON_STICKY);
 }
 
 bool mtExitRender(const livesApp &lives) {

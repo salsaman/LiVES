@@ -3029,13 +3029,11 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 
   widget_add_preview(chooser, LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
                      LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
-                     LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
+                     LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
                      preview_type);
 
 
   if (prefs->fileselmax) {
-    // the expose event for the message area is a good opportunity to recheck the window size
-
     int scr_width = GUI_SCREEN_WIDTH;
     int scr_height = GUI_SCREEN_HEIGHT;
     int bx, by, w, h;

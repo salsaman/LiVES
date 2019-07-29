@@ -5423,7 +5423,6 @@ render_details *create_render_details(int type) {
     height /= 2;
   }
 
-  // needs to be set as large as possible, we will shrink it later, but it must not expand
   rdet->dialog = lives_standard_dialog_new(title, FALSE, 8., 8.);
 
   lives_free(title);

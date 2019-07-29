@@ -458,6 +458,7 @@ void create_LiVES(void) {
 
   mainw->top_vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
+  lives_widget_set_valign(mainw->top_vbox, LIVES_ALIGN_START);
 
   // top_vbox contains the following:
   // - menu_hbox -> menubar -> menuitems

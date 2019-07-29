@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVES 0.9.5cvs\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-07-29 13:39-0300\n"
+"POT-Creation-Date: 2019-07-29 14:12-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: \n"
@@ -1105,7 +1105,7 @@ msgstr ""
 msgid "Multitrack Details"
 msgstr ""
 
-#: src/interface.c:1304 src/interface.c:4187
+#: src/interface.c:1304 src/interface.c:4189
 msgid "Format"
 msgstr ""
 
@@ -1522,124 +1522,124 @@ msgstr ""
 msgid "%sChoose a File"
 msgstr ""
 
-#: src/interface.c:3095
+#: src/interface.c:3097
 msgid "_Autoreload next time"
 msgstr ""
 
-#: src/interface.c:3125
+#: src/interface.c:3127
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
 msgstr ""
 
-#: src/interface.c:3128
+#: src/interface.c:3130
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
 "What would you like to do ?\n"
 msgstr ""
 
-#: src/interface.c:3132
+#: src/interface.c:3134
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
 "What would you like to do ?\n"
 msgstr ""
 
-#: src/interface.c:3133
+#: src/interface.c:3135
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
 msgstr ""
 
-#: src/interface.c:3136
+#: src/interface.c:3138
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
 msgstr ""
 
-#: src/interface.c:3138
+#: src/interface.c:3140
 msgid ""
 "The current layout has *NOT BEEN CHANGED* since it was last saved.\n"
 "What would you like to do ?\n"
 msgstr ""
 
-#: src/interface.c:3142
+#: src/interface.c:3144
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout contains generated frames and cannot be retained.\n"
 "What do you wish to do ?"
 msgstr ""
 
-#: src/interface.c:3145
+#: src/interface.c:3147
 msgid "Cancel/Discard/Save"
 msgstr ""
 
-#: src/interface.c:3157
+#: src/interface.c:3159
 msgid "Clip set _name"
 msgstr ""
 
-#: src/interface.c:3189 src/interface.c:3197
+#: src/interface.c:3191 src/interface.c:3199
 msgid "_Wipe layout"
 msgstr ""
 
-#: src/interface.c:3190
+#: src/interface.c:3192
 msgid "_Ignore changes"
 msgstr ""
 
-#: src/interface.c:3191
+#: src/interface.c:3193
 msgid "_Delete clip set"
 msgstr ""
 
-#: src/interface.c:3192
+#: src/interface.c:3194
 msgid "_Delete layout"
 msgstr ""
 
-#: src/interface.c:3195
+#: src/interface.c:3197
 msgid "_Save layout"
 msgstr ""
 
-#: src/interface.c:3196
+#: src/interface.c:3198
 msgid "_Save clip set"
 msgstr ""
 
-#: src/interface.c:3213
+#: src/interface.c:3215
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
 "Would you like to try and recover it ?\n"
 msgstr ""
 
-#: src/interface.c:3239
+#: src/interface.c:3241
 msgid "Disk Recovery Options"
 msgstr ""
 
-#: src/interface.c:3255
+#: src/interface.c:3257
 msgid "Delete _Orphaned Clips"
 msgstr ""
 
-#: src/interface.c:3257
+#: src/interface.c:3259
 msgid "Delete any clips which are not currently loaded or part of a set"
 msgstr ""
 
-#: src/interface.c:3269
+#: src/interface.c:3271
 msgid "Clear _Backup Files from Closed Clips"
 msgstr ""
 
-#: src/interface.c:3279
+#: src/interface.c:3281
 msgid "Remove Sets which have _Layouts but no Clips"
 msgstr ""
 
-#: src/interface.c:3287
+#: src/interface.c:3289
 msgid "_Reset to Defaults"
 msgstr ""
 
-#: src/interface.c:3394
+#: src/interface.c:3396
 msgid "Show Keys"
 msgstr ""
 
-#: src/interface.c:3401
+#: src/interface.c:3403
 msgid ""
 "You can use the following keys during playback to control LiVES:-\n"
 "\n"
@@ -1647,369 +1647,369 @@ msgid ""
 "-----------------------\n"
 msgstr ""
 
-#: src/interface.c:3405
+#: src/interface.c:3407
 msgid "ctrl-left"
 msgstr ""
 
-#: src/interface.c:3405
+#: src/interface.c:3407
 msgid "skip back\n"
 msgstr ""
 
-#: src/interface.c:3408
+#: src/interface.c:3410
 msgid "ctrl-right"
 msgstr ""
 
-#: src/interface.c:3408
+#: src/interface.c:3410
 #, fuzzy
 msgid "skip forwards\n"
 msgstr "Vooruitspoelen"
 
-#: src/interface.c:3411
+#: src/interface.c:3413
 msgid "ctrl-up"
 msgstr ""
 
-#: src/interface.c:3411
+#: src/interface.c:3413
 msgid "faster/increase effect\n"
 msgstr ""
 
-#: src/interface.c:3414
+#: src/interface.c:3416
 msgid "ctrl-down"
 msgstr ""
 
-#: src/interface.c:3414
+#: src/interface.c:3416
 msgid "slower/decrease effect\n"
 msgstr ""
 
-#: src/interface.c:3417
+#: src/interface.c:3419
 #, fuzzy
 msgid "ctrl-enter"
 msgstr "_Overig"
 
-#: src/interface.c:3417
+#: src/interface.c:3419
 #, fuzzy
 msgid "reset frame rate\n"
 msgstr "Verkleuren"
 
-#: src/interface.c:3420 src/interface.c:3549
+#: src/interface.c:3422 src/interface.c:3551
 msgid "ctrl-space"
 msgstr ""
 
-#: src/interface.c:3420
+#: src/interface.c:3422
 msgid "reverse direction\n"
 msgstr ""
 
-#: src/interface.c:3423
+#: src/interface.c:3425
 msgid "ctrl-alt-space"
 msgstr ""
 
-#: src/interface.c:3423
+#: src/interface.c:3425
 msgid "reverse direction (background clip)\n"
 msgstr ""
 
-#: src/interface.c:3426
+#: src/interface.c:3428
 msgid "ctrl-backspace"
 msgstr ""
 
-#: src/interface.c:3426
+#: src/interface.c:3428
 msgid "freeze frame\n"
 msgstr ""
 
-#: src/interface.c:3429
+#: src/interface.c:3431
 msgid "nervous\n"
 msgstr ""
 
-#: src/interface.c:3432 src/interface.c:3543
+#: src/interface.c:3434 src/interface.c:3545
 msgid "ctrl-page-up"
 msgstr ""
 
-#: src/interface.c:3432
+#: src/interface.c:3434
 msgid "previous clip\n"
 msgstr ""
 
-#: src/interface.c:3435 src/interface.c:3546
+#: src/interface.c:3437 src/interface.c:3548
 msgid "ctrl-page-down"
 msgstr ""
 
-#: src/interface.c:3435
+#: src/interface.c:3437
 msgid "next clip\n"
 msgstr ""
 
-#: src/interface.c:3440
+#: src/interface.c:3442
 msgid "ctrl-1"
 msgstr ""
 
-#: src/interface.c:3440
+#: src/interface.c:3442
 msgid "toggle real-time effect 1\n"
 msgstr ""
 
-#: src/interface.c:3443
+#: src/interface.c:3445
 msgid "ctrl-2"
 msgstr ""
 
-#: src/interface.c:3443
+#: src/interface.c:3445
 msgid "toggle real-time effect 2\n"
 msgstr ""
 
-#: src/interface.c:3446 src/interface.c:3476
+#: src/interface.c:3448 src/interface.c:3478
 msgid "...etc...\n"
 msgstr ""
 
-#: src/interface.c:3448
+#: src/interface.c:3450
 msgid "ctrl-0"
 msgstr ""
 
-#: src/interface.c:3448
+#: src/interface.c:3450
 msgid "real-time effects off\n"
 msgstr ""
 
-#: src/interface.c:3451
+#: src/interface.c:3453
 msgid "swap background/foreground\n"
 msgstr ""
 
-#: src/interface.c:3456
+#: src/interface.c:3458
 msgid "grab keyboard for last activated effect\n"
 msgstr ""
 
-#: src/interface.c:3459
+#: src/interface.c:3461
 msgid "switch effect mode (when effect has keyboard grab)\n"
 msgstr ""
 
-#: src/interface.c:3463
+#: src/interface.c:3465
 msgid "enter text parameter (when effect has keyboard grab)\n"
 msgstr ""
 
-#: src/interface.c:3466
+#: src/interface.c:3468
 msgid "tab"
 msgstr ""
 
-#: src/interface.c:3467
+#: src/interface.c:3469
 msgid "leave text parameter (when effect has keyboard grab)\n"
 msgstr ""
 
-#: src/interface.c:3470
+#: src/interface.c:3472
 msgid "f1"
 msgstr ""
 
-#: src/interface.c:3470
+#: src/interface.c:3472
 msgid "store/switch to clip mnemonic 1\n"
 msgstr ""
 
-#: src/interface.c:3473
+#: src/interface.c:3475
 msgid "f2"
 msgstr ""
 
-#: src/interface.c:3473
+#: src/interface.c:3475
 msgid "store/switch to clip mnemonic 2\n"
 msgstr ""
 
-#: src/interface.c:3478
+#: src/interface.c:3480
 msgid "f12"
 msgstr ""
 
-#: src/interface.c:3478
+#: src/interface.c:3480
 msgid "clear function keys\n"
 msgstr ""
 
-#: src/interface.c:3484
+#: src/interface.c:3486
 msgid "Other playback keys\n"
 msgstr ""
 
-#: src/interface.c:3488
+#: src/interface.c:3490
 msgid "play all\n"
 msgstr ""
 
-#: src/interface.c:3491
+#: src/interface.c:3493
 msgid "play selection\n"
 msgstr ""
 
-#: src/interface.c:3494
+#: src/interface.c:3496
 msgid "stop\n"
 msgstr ""
 
-#: src/interface.c:3497
+#: src/interface.c:3499
 msgid "fullscreen\n"
 msgstr ""
 
-#: src/interface.c:3500
+#: src/interface.c:3502
 msgid "separate window\n"
 msgstr ""
 
-#: src/interface.c:3503
+#: src/interface.c:3505
 msgid "double size\n"
 msgstr ""
 
-#: src/interface.c:3506
+#: src/interface.c:3508
 msgid "ping pong loops\n"
 msgstr ""
 
-#: src/interface.c:3513
+#: src/interface.c:3515
 msgid "Multitrack Keys"
 msgstr ""
 
-#: src/interface.c:3522
+#: src/interface.c:3524
 msgid ""
 "You can use the following keys to control the multitrack window:-\n"
 "-----------------------\n"
 msgstr ""
 
-#: src/interface.c:3525
+#: src/interface.c:3527
 msgid "ctrl-left-arrow"
 msgstr ""
 
-#: src/interface.c:3525
+#: src/interface.c:3527
 msgid "move timeline cursor left 1 second\n"
 msgstr ""
 
-#: src/interface.c:3528
+#: src/interface.c:3530
 msgid "ctrl-right-arrow"
 msgstr ""
 
-#: src/interface.c:3528
+#: src/interface.c:3530
 msgid "move timeline cursor right 1 second\n"
 msgstr ""
 
-#: src/interface.c:3531
+#: src/interface.c:3533
 msgid "shift-left-arrow"
 msgstr ""
 
-#: src/interface.c:3531
+#: src/interface.c:3533
 msgid "move timeline cursor left 1 frame\n"
 msgstr ""
 
-#: src/interface.c:3534
+#: src/interface.c:3536
 msgid "shift-right-arrow"
 msgstr ""
 
-#: src/interface.c:3534
+#: src/interface.c:3536
 msgid "move timeline cursor right 1 frame\n"
 msgstr ""
 
-#: src/interface.c:3537
+#: src/interface.c:3539
 msgid "ctrl-up-arrow"
 msgstr ""
 
-#: src/interface.c:3537
+#: src/interface.c:3539
 msgid "move current track up\n"
 msgstr ""
 
-#: src/interface.c:3540
+#: src/interface.c:3542
 msgid "ctrl-down-arrow"
 msgstr ""
 
-#: src/interface.c:3540
+#: src/interface.c:3542
 msgid "move current track down\n"
 msgstr ""
 
-#: src/interface.c:3543
+#: src/interface.c:3545
 msgid "select previous clip\n"
 msgstr ""
 
-#: src/interface.c:3546
+#: src/interface.c:3548
 msgid "select next clip\n"
 msgstr ""
 
-#: src/interface.c:3549
+#: src/interface.c:3551
 msgid "select/deselect current track\n"
 msgstr ""
 
-#: src/interface.c:3552
+#: src/interface.c:3554
 msgid "ctrl-plus"
 msgstr ""
 
-#: src/interface.c:3552
+#: src/interface.c:3554
 msgid "zoom in\n"
 msgstr ""
 
-#: src/interface.c:3555
+#: src/interface.c:3557
 msgid "ctrl-minus"
 msgstr ""
 
-#: src/interface.c:3555
+#: src/interface.c:3557
 msgid "zoom out\n"
 msgstr ""
 
-#: src/interface.c:3558
+#: src/interface.c:3560
 msgid "make a mark on the timeline (during playback)\n"
 msgstr ""
 
-#: src/interface.c:3561
+#: src/interface.c:3563
 msgid "rewind to play start.\n"
 msgstr ""
 
-#: src/interface.c:3566
+#: src/interface.c:3568
 msgid "For other keys, see the menus.\n"
 msgstr ""
 
-#: src/interface.c:3593
+#: src/interface.c:3595
 msgid "Autolives Options"
 msgstr ""
 
-#: src/interface.c:3597
+#: src/interface.c:3599
 msgid "Trigger"
 msgstr ""
 
-#: src/interface.c:3607
+#: src/interface.c:3609
 msgid "Timed:"
 msgstr ""
 
-#: src/interface.c:3609
+#: src/interface.c:3611
 msgid "Trigger a change based on time"
 msgstr ""
 
-#: src/interface.c:3614
+#: src/interface.c:3616
 #, fuzzy
 msgid "change time (seconds)"
 msgstr "Doo_rgaan na documenteinde"
 
-#: src/interface.c:3618
+#: src/interface.c:3620
 msgid "OMC"
 msgstr ""
 
-#: src/interface.c:3620
+#: src/interface.c:3622
 msgid "Trigger a change based on receiving an OSC message"
 msgstr ""
 
-#: src/interface.c:3635
+#: src/interface.c:3637
 msgid "Playback start:"
 msgstr ""
 
-#: src/interface.c:3642
+#: src/interface.c:3644
 msgid "Automatic"
 msgstr ""
 
-#: src/interface.c:3644
+#: src/interface.c:3646
 msgid "Start playback automatically"
 msgstr ""
 
-#: src/interface.c:3649
+#: src/interface.c:3651
 msgid "Manual"
 msgstr ""
 
-#: src/interface.c:3651
+#: src/interface.c:3653
 msgid "Wait for the user to start playback"
 msgstr ""
 
-#: src/interface.c:3660
+#: src/interface.c:3662
 msgid "Mute audio during playback"
 msgstr ""
 
-#: src/interface.c:3661
+#: src/interface.c:3663
 msgid "Mute the audio in LiVES during playback."
 msgstr ""
 
-#: src/interface.c:3674
+#: src/interface.c:3676
 msgid "Debug mode"
 msgstr ""
 
-#: src/interface.c:3675
+#: src/interface.c:3677
 msgid "Show debug output on stderr."
 msgstr ""
 
-#: src/interface.c:3784
+#: src/interface.c:3786
 msgid "Open Online Clip"
 msgstr ""
 
-#: src/interface.c:3794
+#: src/interface.c:3796
 #, c-format
 msgid ""
 "To open a clip from Youtube or another video site, LiVES will first download "
@@ -2017,157 +2017,157 @@ msgid ""
 "PLEASE MAKE SURE YOU HAVE THE MOST RECENT VERSION OF THAT TOOL INSTALLED !"
 msgstr ""
 
-#: src/interface.c:3806
+#: src/interface.c:3808
 #, c-format
 msgid "<--- Auto update %s ? (will require your password.)"
 msgstr ""
 
-#: src/interface.c:3815
+#: src/interface.c:3817
 msgid " (REQUIRES SSH-ASKPASS)."
 msgstr ""
 
-#: src/interface.c:3822
+#: src/interface.c:3824
 msgid ""
 "Enter the URL of the clip below.\n"
 "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8"
 msgstr ""
 
-#: src/interface.c:3830
+#: src/interface.c:3832
 msgid "Clip URL : "
 msgstr ""
 
-#: src/interface.c:3838
+#: src/interface.c:3840
 msgid "Format selection:"
 msgstr ""
 
-#: src/interface.c:3842
+#: src/interface.c:3844
 msgid "_Free (eg. vp9 / opus / webm)"
 msgstr ""
 
-#: src/interface.c:3844
+#: src/interface.c:3846
 msgid "Download clip using Free codecs"
 msgstr ""
 
-#: src/interface.c:3852
+#: src/interface.c:3854
 msgid "_File Name : "
 msgstr ""
 
-#: src/interface.c:3864
+#: src/interface.c:3866
 msgid "_Non-free (eg. h264 / aac / mp4)"
 msgstr ""
 
-#: src/interface.c:3866
+#: src/interface.c:3868
 msgid "Download clip using non-free codecs"
 msgstr ""
 
-#: src/interface.c:3878
+#: src/interface.c:3880
 msgid "_Directory to save to: "
 msgstr ""
 
-#: src/interface.c:3886
+#: src/interface.c:3888
 #, fuzzy
 msgid "Desired frame size:"
 msgstr "Verkleuren"
 
-#: src/interface.c:3892
+#: src/interface.c:3894
 msgid "- Approximately:"
 msgstr ""
 
-#: src/interface.c:3894
+#: src/interface.c:3896
 msgid "Download the closest to this size"
 msgstr ""
 
-#: src/interface.c:3903
+#: src/interface.c:3905
 msgid "- At _least"
 msgstr ""
 
-#: src/interface.c:3905
+#: src/interface.c:3907
 msgid "Frame size should be at least this size"
 msgstr ""
 
-#: src/interface.c:3913
+#: src/interface.c:3915
 msgid "- At _most:"
 msgstr ""
 
-#: src/interface.c:3915
+#: src/interface.c:3917
 msgid "Frame size should be at most this size"
 msgstr ""
 
-#: src/interface.c:3927 src/paramwindow.c:566 src/plugins.c:979
+#: src/interface.c:3929 src/paramwindow.c:566 src/plugins.c:979
 msgid "_Width"
 msgstr "_Breedte"
 
-#: src/interface.c:3932
+#: src/interface.c:3934
 #, fuzzy
 msgid "X        _Height"
 msgstr "_Hoogte"
 
-#: src/interface.c:3937
+#: src/interface.c:3939
 msgid "    pixels"
 msgstr ""
 
-#: src/interface.c:3947
+#: src/interface.c:3949
 msgid " or:"
 msgstr ""
 
-#: src/interface.c:3953
+#: src/interface.c:3955
 msgid "- The _smallest"
 msgstr ""
 
-#: src/interface.c:3955
+#: src/interface.c:3957
 msgid "Download the lowest resolution available"
 msgstr ""
 
-#: src/interface.c:3964
+#: src/interface.c:3966
 msgid "- The _largest"
 msgstr ""
 
-#: src/interface.c:3966
+#: src/interface.c:3968
 msgid "Download the highest resolution available"
 msgstr ""
 
-#: src/interface.c:3978
+#: src/interface.c:3980
 msgid "- Let me choose..."
 msgstr ""
 
-#: src/interface.c:3981
+#: src/interface.c:3983
 msgid "Choose the resolution from a list (opens in new window)"
 msgstr ""
 
-#: src/interface.c:3998
+#: src/interface.c:4000
 msgid "_Other options (e.g audio, subtitles)..."
 msgstr ""
 
-#: src/interface.c:4015
+#: src/interface.c:4017
 msgid "Please enter the name of the file to save the downloaded clip as.\n"
 msgstr ""
 
-#: src/interface.c:4024
+#: src/interface.c:4026
 msgid "Please enter a valid URL for the download.\n"
 msgstr ""
 
-#: src/interface.c:4055
+#: src/interface.c:4057
 #, c-format
 msgid "Downloading %s to %s..."
 msgstr ""
 
-#: src/interface.c:4141
+#: src/interface.c:4143
 msgid "Select Video Format to Download"
 msgstr ""
 
-#: src/interface.c:4147
+#: src/interface.c:4149
 msgid "Double click on a format to load it, or click Cancel to exit."
 msgstr ""
 
-#: src/interface.c:4180
+#: src/interface.c:4182
 msgid "ID"
 msgstr ""
 
-#: src/interface.c:4194
+#: src/interface.c:4196
 msgid "Resolution"
 msgstr ""
 
-#: src/interface.c:4201
+#: src/interface.c:4203
 msgid "Notes"
 msgstr ""
 

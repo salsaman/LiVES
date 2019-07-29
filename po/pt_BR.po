@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-07-24 18:33-0300\n"
+"POT-Creation-Date: 2019-07-24 18:36-0300\n"
 "PO-Revision-Date: 2019-07-19 11:00+0000\n"
 "Last-Translator: Nany Cavalcante <Unknown>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -12064,8 +12064,9 @@ msgid "Colorizing"
 msgstr "Redimensionando"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycle"
-msgstr ""
+msgstr "Redimensionando"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
@@ -12073,8 +12074,9 @@ msgid "Colour cycling"
 msgstr "Redimensionando"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "Colour filter"
-msgstr ""
+msgstr "Redimensionando"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
@@ -12082,8 +12084,9 @@ msgid "Colour filtering"
 msgstr "Redimensionando"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "Colour replace"
-msgstr ""
+msgstr "Gerar na Área de Transferên_cia"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
@@ -12341,8 +12344,9 @@ msgid "Hue change"
 msgstr "Mudanças de _frame"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue end"
-msgstr ""
+msgstr "Desvanecer Áudio Chegando"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -12391,8 +12395,9 @@ msgid "Making monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulate (BSH)"
-msgstr ""
+msgstr "Colando"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -12626,8 +12631,9 @@ msgid "Swirl"
 msgstr "Ancorar início [_S]"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirling"
-msgstr ""
+msgstr "Ancorar início [_S]"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Text Overlay"
@@ -12794,8 +12800,9 @@ msgid "_Frames"
 msgstr "Quadros"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Hold for"
-msgstr ""
+msgstr "Fade out do áudio"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
@@ -13089,8 +13096,9 @@ msgid "colorize"
 msgstr "Redimensionando"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "colour_filter"
-msgstr ""
+msgstr "Redimensionando"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
@@ -13289,8 +13297,9 @@ msgid "spread"
 msgstr "Parar gravação"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "swirl"
-msgstr ""
+msgstr "Ancorar início [_S]"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"

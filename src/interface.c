@@ -3082,10 +3082,12 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
         if (prefs->open_maximised) {
           lives_window_maximize(LIVES_WINDOW(chooser));
         }
-        lives_widget_process_updates(chooser, TRUE);
-        lives_widget_context_update();
       }
+    } else {
+      lives_window_maximize(LIVES_WINDOW(chooser));
     }
+    lives_widget_process_updates(chooser, TRUE);
+    lives_widget_context_update();
   }
   return chooser;
 }

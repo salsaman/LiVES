@@ -19,13 +19,10 @@ shared_ldflags = -shared -fPIC -DPIC -module -no-undefined --no-allow-shlib-unde
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 
-
-if IS_MINGW
-shared_cflags += -DIS_MINGW=1
-shared_ldflags += -no-undefined --no-allow-shlib-undefined -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libSDL.dll.a -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libSDLmain.a \
-	-mwindows -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libmingw32.a
+if HAVE_SDL2
 SDL_libs = SDL.la
-CFLAGS_SDL = @SDL_CFLAGS@
+CFLAGS_SDL = @SDL2_CFLAGS@
+LDFLAGS_SDL = @SDL2_LIBS@
 
 else
 
@@ -41,12 +38,9 @@ CFLAGS_SDL = -I $(SDL_PREFIX)
 LDFLAGS_SDL = -lSDL
 endif
 endif
-
 endif
 
-
 AM_LDFLAGS = $(shared_ldflags)
-
 
 weed_CFLAGS =
 
@@ -81,7 +75,6 @@ frei0r_la_CFLAGS = $(AM_CFLAGS)
 frei0rpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/frei0r"
 frei0rpluginslib_LTLIBRARIES = $(frei0r_libs)
 endif
-
 
 if HAVE_OPENCV
 farneback_analyser_libs = farneback_analyser.la

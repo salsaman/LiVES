@@ -35,15 +35,20 @@ static int package_version = 1; // version of this package
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
-
+#define HAVE_SDL2
 #define USE_DBLBUF 1
 
 #include <libprojectM/projectM.hpp>
 
 #include <GL/gl.h>
 
+#ifdef HAVE_SDL2
+#include <SDL2/SDL.h>
+#else
+
 #include <SDL/SDL.h>
 #include <SDL_syswm.h>
+#endif
 
 #include <pthread.h>
 
@@ -88,6 +93,10 @@ typedef struct {
   volatile bool failed;
   volatile bool update_size;
   volatile bool rendering;
+#ifdef HAVE_SDL2
+  SDL_Window *win;
+  SDL_GLContext glCtx;
+#endif
 } _sdata;
 
 static _sdata *statsd;
@@ -96,29 +105,7 @@ static int maxwidth, maxheight;
 
 static int inited = 0;
 
-static void winhide() {
-  // doesnt work !!
-  SDL_SysWMinfo info;
-
-  Atom atoms[2];
-  SDL_VERSION(&info.version);
-  if (SDL_GetWMInfo(&info)) {
-    Window win = info.info.x11.wmwindow;
-    Display *dpy = info.info.x11.display;
-    info.info.x11.lock_func();
-
-    atoms[0] = XInternAtom(dpy, "_NET_WM_STATE_BELOW", False);
-    atoms[1] = XInternAtom(dpy, "_NET_WM_STATE_DESKTOP", False);
-    XChangeProperty(dpy, win, XInternAtom(dpy, "_NET_WM_STATE", False), XA_ATOM, 32, PropModeReplace, (const unsigned char *) &atoms, 2);
-
-    XIconifyWindow(dpy, win, 0);
-
-    XFlush(dpy);
-    info.info.x11.unlock_func();
-  }
-}
-
-
+#ifndef HAVE_SDL2
 static int resize_display(int width, int height) {
   int flags = SDL_OPENGL | SDL_HWSURFACE | SDL_RESIZABLE;
 
@@ -128,25 +115,25 @@ static int resize_display(int width, int height) {
     return 1;
   }
 
-  winhide();
-
   return 0;
 }
-
+#endif
 
 static int change_size(_sdata *sdata) {
-  int ret;
+  int ret = 0;
   sdata->globalPM->projectM_resetGL(sdata->width, sdata->height);
   if (sdata->fbuffer != NULL) weed_free(sdata->fbuffer);
+#ifdef HAVE_SDL2
+  SDL_SetWindowSize(sdata->win, sdata->width, sdata->height);
+#else
   ret = resize_display(sdata->width, sdata->height);
+#endif
   sdata->fbuffer = (GLubyte *)weed_malloc(sizeof(GLubyte) * sdata->width * sdata->height * 3);
   return ret;
 }
 
 
 static int init_display(_sdata *sd) {
-  const SDL_VideoInfo *info;
-
   int defwidth = sd->width;
   int defheight = sd->height;
 
@@ -158,7 +145,13 @@ static int init_display(_sdata *sd) {
   }
 
   /* Let's get some video information. */
-  info = SDL_GetVideoInfo();
+#ifdef HAVE_SDL2
+  SDL_Rect rect;
+  SDL_GetDisplayBounds(0, &rect);
+  maxwidth = rect.w;
+  maxheight = rect.h;
+#else
+  const SDL_VideoInfo *info = SDL_GetVideoInfo();
   if (!info) {
     /* This should probably never happen. */
     fprintf(stderr, "Video query failed: %s\n",
@@ -166,23 +159,25 @@ static int init_display(_sdata *sd) {
 
     return 2;
   }
-
-  //printf("Screen Resolution: %d x %d\n", info->current_w, info->current_h);
   maxwidth = info->current_w;
   maxheight = info->current_h;
+#endif
+  printf("Screen Resolution: %d x %d\n", maxwidth, maxheight);
 
-  if (defwidth > maxwidth) defwidth = maxwidth;
-  if (defheight > maxheight) defheight = maxheight;
+  // if (defwidth > maxwidth) defwidth = maxwidth;
+  // if (defheight > maxheight) defheight = maxheight;
 
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, USE_DBLBUF);
 
-  //SDL_Window *win = SDL_CreateWindow("projectM", 0, 0, defwidth, defheight, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-  //SDL_GLContext glCtx = SDL_GL_CreateContext(win);
-
+#ifdef HAVE_SDL2
+  sd->win = SDL_CreateWindow("projectM", SDL_WINDOWPOS_UNDEFINED , SDL_WINDOWPOS_UNDEFINED, defwidth, defheight,
+                             SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
+  sd->glCtx = SDL_GL_CreateContext(sd->win);
+#else
   if (resize_display(defwidth, defheight)) return 3;
-
+#endif
   //if (change_size(sd)) return 4;
 
   return 0;
@@ -236,7 +231,11 @@ static int render_frame(_sdata *sdata) {
 #if USE_DBLBUF
   glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);
   pthread_mutex_lock(&sdata->mutex);
+#ifdef HAVE_SDL2
+  SDL_GL_SwapWindow(sdata->win);
+#else
   SDL_GL_SwapBuffers();
+#endif
   pthread_mutex_unlock(&sdata->mutex);
 #else
   pthread_mutex_lock(&sdata->mutex);

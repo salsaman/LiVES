@@ -409,10 +409,8 @@ TRY_SDL=false
 if test "x$force_sdl" != "xyes" ; then
 if test "$TRY_SDL" != "false" ; then
 
-dnl SDL2 does not work well, skip it
-dnl PKG_CHECK_MODULES(SDL2,sdl2 >= 1.2,HAVE_SDL2=true,HAVE_SDL2=false)
-
-if test "$HAVE_SDL2" = "false"; then
+dnl SDL2 only for projectM
+PKG_CHECK_MODULES(SDL2, sdl2, HAVE_SDL2=true, HAVE_SDL2=false)
 
 dnl check for SDL
 
@@ -429,12 +427,10 @@ SDL_CFLAGS=`$SDL_CONFIG --cflags`]
 
 [
 dnl if AM_PATH_SDL fails, try pkg-config
-PKG_CHECK_MODULES(SDL,sdl >= 1.2,HAVE_SDL=true,HAVE_SDL=false)
+PKG_CHECK_MODULES(SDL, sdl >= 1.2, HAVE_SDL=true, HAVE_SDL=false)
 
-fi
 ])
 fi
-
 else FORCE_SDL=true
 SDL_PREFIX=${with-sdl-prefix}
 fi
@@ -447,9 +443,9 @@ AC_SUBST(SDL2_LIBS)
 AC_SUBST(SDL2_CFLAGS)
 AC_SUBST(SDL2_PREFIX)
 
-AM_CONDITIONAL(HAVE_SDL,$HAVE_SDL)
-AM_CONDITIONAL(HAVE_SDL2,$HAVE_SDL2)
-AM_CONDITIONAL(FORCE_SDL,$FORCE_SDL)
+AM_CONDITIONAL(HAVE_SDL, $HAVE_SDL)
+AM_CONDITIONAL(HAVE_SDL2, $HAVE_SDL2)
+AM_CONDITIONAL(FORCE_SDL, $FORCE_SDL)
 
 HAVE_AVCODEC=false
 HAVE_AVFORMAT=false

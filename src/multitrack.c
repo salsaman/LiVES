@@ -17501,7 +17501,6 @@ void multitrack_view_events(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_process_updates(mainw->LiVES, TRUE);
   elist_dialog = create_event_list_dialog(mt->event_list, 0, 0);
   lives_dialog_run(LIVES_DIALOG(elist_dialog));
-  lives_widget_destroy(elist_dialog);
   mt_sensitise(mt);
 }
 
@@ -17522,7 +17521,6 @@ void multitrack_view_sel_events(LiVESMenuItem *menuitem, livespointer user_data)
   elist_dialog = create_event_list_dialog(mt->event_list, tc_start, tc_end);
   mt_sensitise(mt);
   lives_dialog_run(LIVES_DIALOG(elist_dialog));
-  lives_widget_destroy(elist_dialog);
 }
 
 

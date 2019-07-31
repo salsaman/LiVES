@@ -4605,6 +4605,9 @@ boolean deal_with_render_choice(boolean add_deinit) {
       elist_dialog = create_event_list_dialog(mainw->event_list, 0, 0);
       lives_dialog_run(LIVES_DIALOG(elist_dialog));
       lives_widget_destroy(elist_dialog);
+      g_print("DONE\n");
+      lives_widget_process_updates(mainw->LiVES, TRUE);
+      lives_widget_context_update();
       render_choice = RENDER_CHOICE_PREVIEW;
       break;
     }
@@ -5195,6 +5198,10 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   lives_widget_add_accelerator(ok_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                       NULL);
 
   if (prefs->gui_monitor != 0) {
     lives_window_center(LIVES_WINDOW(event_dialog));

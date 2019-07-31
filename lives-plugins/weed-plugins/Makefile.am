@@ -124,7 +124,7 @@ endif
 
 if HAVE_X11
 if HAVE_OPENGL
-if HAVE_SDL
+if HAVE_SDL_ANYVERSION
 if HAVE_PROJECTM
 projectM_libs = projectM.la
 projectM_la_LDFLAGS = $(AM_LDFLAGS) $(LDFLAGS_SDL) $(LIBPROJECTM_LIBS) -lpthread @X11_LIBS@ @GL_LIBS@

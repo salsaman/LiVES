@@ -3,13 +3,11 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
 // SDL2 does not work well: the window is not properly fullscreen, it goes grey after a few seconds, keys need extra translation
 // and it is impossible to grab an external window
 
-
-#if IS_MINGW
-#include <windows.h>
+#ifdef HAVE_SDL2
+#undef HAVE_SDL2
 #endif
 
 #include "videoplugin.h"
@@ -57,10 +55,7 @@ static  int ov_hsize;
 static  int ov_vsize;
 static  SDL_Event event;
 
-
-
 //////////////////////////////////////////////
-
 
 #ifdef HAVE_SDL
 static boolean my_setenv(const char *name, const char *value) {
@@ -85,6 +80,7 @@ static boolean my_setenv(const char *name, const char *value) {
 }
 #endif
 
+
 const char *module_check_init(void) {
 #if HAVE_SDL
   if (getenv("HAVE_SDL") == NULL && system("which sdl-config >/dev/null 2>&1") == 256) {
@@ -107,15 +103,14 @@ const char *module_check_init(void) {
 
   mypalette = WEED_PALETTE_END;
 
-
   return NULL;
 }
-
 
 
 const char *version(void) {
   return plugin_version;
 }
+
 
 const char *get_description(void) {
   return "The SDL plugin allows faster playback.\n";
@@ -214,8 +209,6 @@ const int *get_yuv_palette_clamping(int palette) {
 }
 
 
-
-
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   // screen size is in RGB pixels
 #ifdef HAVE_SDL2
@@ -232,7 +225,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   int hwaccel = 1;
   int fsover = 0;
-
 
   if (argc > 0) {
     hwaccel = atoi(argv[0]);
@@ -251,7 +243,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr, "SDL plugin error: No palette was set !\n");
     return FALSE;
   }
-
 
 #ifdef HAVE_SDL2
 
@@ -276,7 +267,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   SDL_ShowCursor(0);
 
-
   // if palette is RGB, create RGB surface the same size as the screen
   if (mypalette == WEED_PALETTE_RGB24) {
     RGBimage = SDL_CreateRGBSurface(0, width, height, 24,
@@ -289,8 +279,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   }
 
   screen = SDL_GetWindowSurface(window);
-
-
 
 #else
 
@@ -321,10 +309,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
-
   /* Enable Unicode translation */
   SDL_EnableUNICODE(1);
-
 
   // if palette is RGB, create RGB surface the same size as the screen
   if (mypalette == WEED_PALETTE_RGB24) {
@@ -336,7 +322,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     }
     return TRUE;
   }
-
 
   rect->x = rect->y = 0;
   rect->h = height;
@@ -351,6 +336,7 @@ boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void *
   // call the function which was set in set_palette
   return render_fn(hsize, vsize, pixel_data);
 }
+
 
 boolean render_frame_rgb(int hsize, int vsize, void **pixel_data) {
   // broken - crashes
@@ -418,7 +404,6 @@ boolean render_frame_yuv(int hsize, int vsize, void **pixel_data) {
 
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
-
 
 #else
 
@@ -517,8 +502,6 @@ void module_unload(void) {
 }
 
 
-
-
 boolean send_keycodes(keyfunc host_key_fn) {
   // poll for keyboard events, pass them back to the caller
   // return FALSE on error
@@ -550,9 +533,7 @@ boolean send_keycodes(keyfunc host_key_fn) {
         }
 #endif
         host_key_fn(TRUE, scancode, mod_mask);
-      }
-
-      else {
+      } else {
 #ifdef HAVE_SDL2
         host_key_fn(FALSE, (uint16_t)event.key.keysym.scancode, (mod_mask | MOD_NEEDS_TRANSLATION));
 #else

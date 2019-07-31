@@ -2869,6 +2869,7 @@ void end_threaded_dialog(void) {
   if (procw != NULL) {
     lives_free(procw);
     procw = NULL;
+    if (CURRENT_CLIP_IS_VALID) cfile->proc_ptr = NULL;
   }
 
   mainw->threaded_dialog = FALSE;

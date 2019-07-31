@@ -3535,8 +3535,9 @@ static void fubar(lives_mt *mt) {
       weed_get_voidptr_value(mt->selected_init_event, WEED_LEAF_IN_PARAMETERS, &error) != NULL) {
     npch = weed_leaf_num_elements(mt->init_event, WEED_LEAF_IN_PARAMETERS);
     pchainx = weed_get_voidptr_array(mt->init_event, WEED_LEAF_IN_PARAMETERS, &error);
-    pchain = (void **)lives_malloc(npch * sizeof(void *));
+    pchain = (void **)lives_malloc((npch + 1) * sizeof(void *));
     for (i = 0; i < npch; i++) pchain[i] = pchainx[i];
+    pchain[i] = NULL;
     lives_free(pchainx);
   }
 }
@@ -9244,6 +9245,8 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   d_print(_("====== Switched to Clip Edit mode ======\n"));
 
+  desensitize();
+
   // force the message area to get its correct space, in case we started in STARTUP_MT and haven't show it yet
   lives_widget_context_update();
 
@@ -9270,7 +9273,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
 
-  if (mainw->current_file > 0) sensitize();
+  if (mainw->current_file > 0 && !mainw->recoverable_layout) sensitize();
 
   lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
 
@@ -19697,7 +19700,7 @@ static char *add_filter_deinits(weed_plant_t *event_list, ttable *trans_table, v
   int i, j, error, num_params;
   char *filter_hash;
   int idx;
-  weed_plant_t *filter, *init_event, *event;
+  weed_plant_t *init_event, *event;
   void **in_pchanges;
 
   for (i = 0; i < FX_KEYS_MAX - FX_KEYS_MAX_VIRTUAL; i++) {
@@ -19708,8 +19711,7 @@ static char *add_filter_deinits(weed_plant_t *event_list, ttable *trans_table, v
 
       filter_hash = weed_get_string_value(init_event, WEED_LEAF_FILTER, &error);
       if ((idx = weed_get_idx_for_hashname(filter_hash, TRUE)) != -1) {
-        filter = get_weed_filter(idx);
-        if ((num_params = num_in_params(filter, FALSE, FALSE)) > 0) {
+        if ((num_params = weed_leaf_num_elements(init_event, WEED_LEAF_IN_PARAMETERS)) > 0) {
           in_pchanges = (void **)lives_malloc(num_params * sizeof(void *));
           for (j = 0; j < num_params; j++) {
             if (!WEED_EVENT_IS_FILTER_INIT((weed_plant_t *)pchains[i][j]))
@@ -20158,12 +20160,13 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
             // use pchain array
             if (weed_plant_has_leaf(event, WEED_LEAF_IN_PARAMETERS)) {
               num_params = weed_leaf_num_elements(event, WEED_LEAF_IN_PARAMETERS);
-              pchains[idx] = (void **)lives_malloc(num_params * sizeof(void *));
+              pchains[idx] = (void **)lives_malloc((num_params + 1) * sizeof(void *));
               in_pchanges = (void **)lives_malloc(num_params * sizeof(void *));
               for (i = 0; i < num_params; i++) {
                 pchains[idx][i] = event;
                 in_pchanges[i] = NULL;
               }
+              pchains[idx][i] = NULL;
               // set all to NULL, we will re-fill as we go along
               weed_leaf_delete(event, WEED_LEAF_IN_PARAMETERS);
               weed_set_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, num_params, in_pchanges);
@@ -20211,8 +20214,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 
           filter_hash = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_FILTER, &error);
           if ((filter_idx = weed_get_idx_for_hashname(filter_hash, TRUE)) != -1) {
-            filter = get_weed_filter(filter_idx);
-            if ((num_params = num_in_params(filter, FALSE, FALSE)) > 0) {
+            if ((num_params = weed_leaf_num_elements((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS)) > 0) {
               in_pchanges = (void **)lives_malloc(num_params * sizeof(void *));
               for (i = 0; i < num_params; i++) {
                 if (!WEED_EVENT_IS_FILTER_INIT((weed_plant_t *)pchains[idx][i]))
@@ -20325,7 +20327,8 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
               if ((filter_idx = weed_get_idx_for_hashname(filter_hash, TRUE)) != -1) {
                 filter = get_weed_filter(filter_idx);
                 pnum = weed_get_int_value(event, WEED_LEAF_INDEX, &error);
-                if (pnum < 0 || pnum >= (num_params = num_in_params(filter, FALSE, FALSE))) {
+                if (pnum < 0 || pnum >= num_in_params(filter, FALSE, FALSE) ||
+                    pnum >= (num_params = weed_leaf_num_elements((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS))) {
                   ebuf = rec_error_add(ebuf, "Param_change has invalid index", pnum, tc);
                   delete_event(event_list, event);
                   was_deleted = TRUE;

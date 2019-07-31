@@ -595,7 +595,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     if ((idx = weed_get_idx_for_hashname(filter_hash, TRUE)) != -1) {
       filter = get_weed_filter(idx);
       if ((num_params = num_in_params(filter, FALSE, FALSE)) > 0) {
-        in_pchanges = (void **)lives_try_malloc(num_params * sizeof(void *));
+        in_pchanges = (void **)lives_try_malloc((num_params + 1) * sizeof(void *));
         if (in_pchanges == NULL) return NULL;
         for (i = 0; i < num_params; i++) in_pchanges[i] = NULL;
         error = weed_set_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, num_params, in_pchanges); // set all to NULL, we will re-fill as we go along
@@ -2540,11 +2540,16 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
   num_params = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
   in_ptmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
 
-  pchain = (void **)lives_malloc(num_params * sizeof(void *));
+  pchain = (void **)lives_malloc((num_params + 1) * sizeof(void *));
+  pchain[num_params] = NULL;
 
   if (!is_inst) in_params = weed_params_create(filter, TRUE);
 
-  if (leave > 0) in_pchanges = weed_get_voidptr_array(init_event, WEED_LEAF_IN_PARAMETERS, &error);
+  if (leave > 0) {
+    in_pchanges = weed_get_voidptr_array(init_event, WEED_LEAF_IN_PARAMETERS, &error);
+    if (leave > weed_leaf_num_elements(init_event, WEED_LEAF_IN_PARAMETERS)) leave = weed_leaf_num_elements(init_event,
+          WEED_LEAF_IN_PARAMETERS);
+  }
 
   for (i = num_params - 1; i >= 0; i--) {
     if (i < leave && in_pchanges[i] != NULL) {
@@ -2773,13 +2778,9 @@ weed_plant_t *append_filter_deinit_event(weed_plant_t *event_list, weed_timecode
   weed_leaf_delete((weed_plant_t *)init_event, WEED_LEAF_DEINIT_EVENT); // delete since we assign a placeholder with int64 type
   weed_set_voidptr_value((weed_plant_t *)init_event, WEED_LEAF_DEINIT_EVENT, event);
   if (pchain != NULL) {
-    int error;
-    char *filter_hash = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_FILTER, &error);
-    int idx = weed_get_idx_for_hashname(filter_hash, TRUE);
-    weed_plant_t *filter = get_weed_filter(idx);
-    int num_params = num_in_params(filter, FALSE, FALSE);
+    int num_params = 0;
+    while (pchain[num_params] != NULL) num_params++;
     weed_set_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, num_params, pchain);
-    lives_free(filter_hash);
   }
 
   if (get_first_event(event_list) == NULL) {
@@ -3233,7 +3234,10 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       orig_inst = inst = rte_keymode_get_instance(key + 1, 0);
 
       if (weed_plant_has_leaf(next_event, WEED_LEAF_IN_PARAMETERS)) {
+        int nparams = weed_leaf_num_elements(next_event, WEED_LEAF_IN_PARAMETERS);
         pchains[key] = weed_get_voidptr_array(next_event, WEED_LEAF_IN_PARAMETERS, &error);
+        pchains[key] = (void **)lives_realloc(pchains[key], (nparams + 1) * sizeof(void *));
+        pchains[key][nparams] = NULL;
       } else pchains[key] = NULL;
 
 filterinit1:
@@ -3881,7 +3885,10 @@ lives_render_error_t render_events(boolean reset) {
       orig_inst = inst = rte_keymode_get_instance(key + 1, 0);
 
       if (weed_plant_has_leaf(event, WEED_LEAF_IN_PARAMETERS)) {
+        int nparams = weed_leaf_num_elements(event, WEED_LEAF_IN_PARAMETERS);
         pchains[key] = weed_get_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, &weed_error);
+        pchains[key] = (void **)lives_realloc(pchains[key], (nparams + 1) * sizeof(void *));
+        pchains[key][nparams] = NULL;
       } else pchains[key] = NULL;
 
 filterinit2:

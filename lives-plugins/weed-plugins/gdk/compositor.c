@@ -164,6 +164,10 @@ int compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
   int up_interp = GDK_INTERP_HYPER;
   int down_interp = GDK_INTERP_BILINEAR;
 
+  gboolean revz;
+
+  int starti, endi, stepi;
+
   if (weed_plant_has_leaf(inst, "in_channels")) {
     num_in_channels = weed_leaf_num_elements(inst, "in_channels");
     in_channels = weed_get_plantptr_array(inst, "in_channels", &error);
@@ -188,6 +192,10 @@ int compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
   bgcol = weed_get_int_array(in_params[5], "value", &error);
 
+  revz = weed_get_boolean_value(in_params[6], "value", &error);
+
+  weed_free(in_params);
+
   // set out frame to bgcol
 
   end = dst + oheight * orowstride;
@@ -202,8 +210,17 @@ int compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
   weed_free(bgcol);
 
   // add overlays in reverse order
+  if (revz == WEED_FALSE) {
+    starti = num_in_channels - 1;
+    endi = -1;
+    stepi = -1;
+  } else {
+    starti = 0;
+    endi = num_in_channels;
+    stepi = 1;
+  }
 
-  for (z = num_in_channels - 1; z >= 0; z--) {
+  for (z = starti; z != endi; z += stepi) {
     // check if host disabled this channel : this is allowed as we have set "max_repeats"
     if (weed_plant_has_leaf(in_channels[z], "disabled") && weed_get_boolean_value(in_channels[z], "disabled", &error) == WEED_TRUE) continue;
 
@@ -274,7 +291,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
 
-    weed_plant_t *in_params[] = {weed_float_init("xoffs", "_X offset", 0., 0., 1.), weed_float_init("yoffs", "_Y offset", 0., 0., 1.), weed_float_init("scalex", "Scale _width", 1., 0., 1.), weed_float_init("scaley", "Scale _height", 1., 0., 1.), weed_float_init("alpha", "_Alpha", 1.0, 0.0, 1.0), weed_colRGBi_init("bgcol", "_Background color", 0, 0, 0), NULL};
+    weed_plant_t *in_params[] = {weed_float_init("xoffs", "_X offset", 0., 0., 1.), weed_float_init("yoffs", "_Y offset", 0., 0., 1.), weed_float_init("scalex", "Scale _width", 1., 0., 1.), weed_float_init("scaley", "Scale _height", 1., 0., 1.), weed_float_init("alpha", "_Alpha", 1.0, 0.0, 1.0), weed_colRGBi_init("bgcol", "_Background color", 0, 0, 0), weed_switch_init("revz", "Invert _Z Index", WEED_FALSE), NULL};
 
     weed_plant_t *filter_class = weed_filter_class_init("compositor", "salsaman", 1, 0, NULL, &compositor_process, NULL, in_chantmpls,
                                  out_chantmpls,
@@ -283,7 +300,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *gui = weed_filter_class_get_gui(filter_class);
 
     // define RFX layout
-    char *rfx_strings[] = {"layout|p0|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|", "layout|p5|", "special|framedraw|multirect|0|1|2|3|4|"};
+    char *rfx_strings[] = {"layout|p6|", "layout|p0|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|", "layout|p5|", "special|framedraw|multirect|0|1|2|3|4|"};
 
     int api_used = weed_get_api_version(plugin_info);
     // set 0 to infinite repeats
@@ -313,10 +330,12 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_set_double_value(in_params[3], "new_default", 1.);
     weed_set_double_value(in_params[4], "new_default", 1.);
 
+    weed_set_string_value(in_params[5], "description", "If checked, the rear frames overlay the front ones.");
+
     // set RFX layout
     weed_set_string_value(gui, "layout_scheme", "RFX");
     weed_set_string_value(gui, "rfx_delim", "|");
-    weed_set_string_array(gui, "rfx_strings", 6, rfx_strings);
+    weed_set_string_array(gui, "rfx_strings", 7, rfx_strings);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

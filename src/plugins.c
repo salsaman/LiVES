@@ -3307,8 +3307,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
             listlen = weed_leaf_num_elements(gui, WEED_LEAF_CHOICES);
             list = weed_get_string_array(gui, WEED_LEAF_CHOICES, &error);
             for (j = 0; j < listlen; j++) {
-              gtk_list = lives_list_append(gtk_list, lives_strdup(list[j]));
-              lives_free(list[j]);
+              gtk_list = lives_list_append(gtk_list, list[j]);
             }
             lives_free(list);
             rpar[i].list = lives_list_copy(gtk_list);
@@ -3356,11 +3355,9 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) string = weed_get_string_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
         else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) string = weed_get_string_value(wtmpl, WEED_LEAF_DEFAULT, &error);
         else string = weed_get_string_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-        rpar[i].def = lives_strdup(string);
-        lives_free(string);
+        rpar[i].def = string;
         string = weed_get_string_value(wpar, WEED_LEAF_VALUE, &error);
-        rpar[i].value = lives_strdup(string);
-        lives_free(string);
+        rpar[i].value = string;
         rpar[i].max = 0.;
         if (gui != NULL && weed_plant_has_leaf(gui, WEED_LEAF_MAXCHARS)) {
           rpar[i].max = (double)weed_get_int_value(gui, WEED_LEAF_MAXCHARS, &error);
@@ -3483,14 +3480,12 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       }
 
       string = weed_get_string_value(wtmpl, WEED_LEAF_NAME, &error);
-      rpar[i].name = lives_strdup(string);
+      rpar[i].name = string;
       rpar[i].label = lives_strdup(string);
-      lives_free(string);
 
       if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DESCRIPTION)) {
         string = weed_get_string_value(wtmpl, WEED_LEAF_DESCRIPTION, &error);
-        rpar[i].desc = lives_strdup(string);
-        lives_free(string);
+        rpar[i].desc = string;
       } else rpar[i].desc = NULL;
 
       // gui part /////////////////////
@@ -3499,8 +3494,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         if (weed_plant_has_leaf(gui, WEED_LEAF_LABEL)) {
           string = weed_get_string_value(gui, WEED_LEAF_LABEL, &error);
           lives_free(rpar[i].label);
-          rpar[i].label = lives_strdup(string);
-          lives_free(string);
+          rpar[i].label = string;
         }
         if (weed_plant_has_leaf(gui, WEED_LEAF_USE_MNEMONIC)) rpar[i].use_mnemonic = weed_get_boolean_value(gui, WEED_LEAF_USE_MNEMONIC, &error);
         if (weed_plant_has_leaf(gui, WEED_LEAF_HIDDEN))
@@ -3555,9 +3549,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     }
 
     string = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
-    rfx->name = lives_strdup(string);
+    rfx->name = string;
     rfx->menu_text = lives_strdup(string);
-    lives_free(string);
     rfx->action_desc = lives_strdup("no action");
     rfx->min_frames = -1;
     rfx->num_in_channels = enabled_in_channels(filter, FALSE);
@@ -3627,8 +3620,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         rfx_strings = weed_get_string_array(gui, WEED_LEAF_RFX_STRINGS, &error);
 
         for (i = 0; i < num_hints; i++) {
-          hints = lives_list_append(hints, lives_strdup(rfx_strings[i]));
-          lives_free(rfx_strings[i]);
+          hints = lives_list_append(hints, rfx_strings[i]);
         }
         lives_free(rfx_strings);
 

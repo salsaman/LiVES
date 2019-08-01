@@ -21029,7 +21029,10 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
 
   if (free_eload_file) lives_free(eload_file);
 
-  if (!mainw->recoverable_layout) mt->idlefunc = mt_idle_add(mt);
+  if (!mainw->recoverable_layout) {
+    polymorph(mt, POLY_CLIPS);
+    mt->idlefunc = mt_idle_add(mt);
+  }
 
   return (event_list);
 }

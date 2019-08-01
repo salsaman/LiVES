@@ -26,7 +26,7 @@
 static int num_versions = 2; // number of different weed api versions supported
 static int api_versions[] = {131, 110, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
-static int package_version = 1; // version of this package
+static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
@@ -330,7 +330,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_set_double_value(in_params[3], "new_default", 1.);
     weed_set_double_value(in_params[4], "new_default", 1.);
 
-    weed_set_string_value(in_params[5], "description", "If checked, the rear frames overlay the front ones.");
+    weed_set_string_value(in_params[6], "description", "If checked, the rear frames overlay the front ones.");
 
     // set RFX layout
     weed_set_string_value(gui, "layout_scheme", "RFX");

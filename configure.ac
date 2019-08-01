@@ -378,7 +378,7 @@ if test "x$HAVE_GTK_VERSION206" = "xfalse"; then
 HAVE_GIW=false
 else
 HAVE_GIW=true
-AC_ARG_ENABLE(OSC,
+AC_ARG_ENABLE(GIW,
 [  --disable-GIW            Disable GTK+ Instrument Widgets.],
 [
 AC_DEFINE_UNQUOTED(DISABLE_GIW,1, [GIW])
@@ -393,21 +393,13 @@ AM_CONDITIONAL(ENABLE_GIW,$HAVE_GIW)
 HAVE_SDL=false
 HAVE_SDL2=false
 FORCE_SDL=false
-TRY_SDL=true
 
-AC_ARG_ENABLE(sdl, [  --enable-sdl             Enable SDL1.x playback plugin support without checking for it.] , force_sdl=yes)
+AC_ARG_ENABLE(sdl-force, [  --enable-sdl-force             Enable SDL1.x playback plugin support without checking for it.] , force_sdl=yes)
 
-
-AC_ARG_ENABLE(sdl,
-[  --disable-sdl            Disable SDL support.],
-[
-AC_DEFINE_UNQUOTED(disable_sdl,1, [sdl])
-TRY_SDL=false
-]
-)
+AC_ARG_ENABLE(sdl, [  --disable-sdl     Disable SDL support.] , disable_sdl=yes)
 
 if test "x$force_sdl" != "xyes" ; then
-if test "$TRY_SDL" != "false" ; then
+if test "x$disable_sdl" != "xyes" ; then
 
 dnl SDL2 only for projectM
 PKG_CHECK_MODULES(SDL2, sdl2, HAVE_SDL2=true, HAVE_SDL2=false)
@@ -431,7 +423,8 @@ PKG_CHECK_MODULES(SDL, sdl >= 1.2 sdl < 2, HAVE_SDL=true, HAVE_SDL=false)
 
 ])
 fi
-else FORCE_SDL=true
+else
+FORCE_SDL=true
 SDL_PREFIX=${with-sdl-prefix}
 fi
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-07-31 16:42-0300\n"
+"POT-Creation-Date: 2019-08-01 16:39-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -7387,7 +7387,7 @@ msgstr ""
 "Fallito il caricamento di %s, le transizioni non possono venire "
 "ridimensionate.\n"
 
-#: src/plugins.c:3796
+#: src/plugins.c:3788
 #, c-format
 msgid "%s advanced settings"
 msgstr "impostazioni avanzate %s"
@@ -11465,7 +11465,7 @@ msgstr "%d errori trovati.\n"
 msgid "Multitrack fps set to %.3f\n"
 msgstr "Fps multi-traccia impostato a %.3f\n"
 
-#: src/multitrack.c:21151
+#: src/multitrack.c:21154
 #, fuzzy
 msgid ""
 "The current layout has changes which have not been saved.\n"
@@ -11474,20 +11474,20 @@ msgstr ""
 "Il layout attuale non è stato salvato.\n"
 "Cosa vorresti fare ?\n"
 
-#: src/multitrack.c:21899
+#: src/multitrack.c:21902
 #, fuzzy
 msgid "Multitrack Audio Mixer"
 msgstr "LiVES: Mixer audio multi-traccia"
 
-#: src/multitrack.c:21927
+#: src/multitrack.c:21930
 msgid "_Reset values"
 msgstr "_Azzera valori"
 
-#: src/multitrack.c:21932
+#: src/multitrack.c:21935
 msgid "_Close mixer"
 msgstr "_Chiudi mixer"
 
-#: src/multitrack.c:21979
+#: src/multitrack.c:21982
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
@@ -11495,17 +11495,17 @@ msgstr ""
 "_Inverti l'audio di supporto\n"
 "e i volumi dei layer"
 
-#: src/multitrack.c:21981
+#: src/multitrack.c:21984
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 "Regola i valori dell'audio di sostegno e di livello in modo che la loro "
 "somma sia pari a 1.0"
 
-#: src/multitrack.c:22015
+#: src/multitrack.c:22018
 msgid "_Gang layer audio"
 msgstr "_Riunisci audio livello"
 
-#: src/multitrack.c:22017
+#: src/multitrack.c:22020
 msgid "Adjust all layer audio values to the same value"
 msgstr "Regola tutti i valori audio del layer allo stesso valore"
 

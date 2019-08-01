@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-07-31 16:42-0300\n"
+"POT-Creation-Date: 2019-08-01 16:39-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -6987,7 +6987,7 @@ msgstr ""
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:3796
+#: src/plugins.c:3788
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s gelişmiş ayarlar"
@@ -10680,7 +10680,7 @@ msgstr ""
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:21151
+#: src/multitrack.c:21154
 #, fuzzy
 msgid ""
 "The current layout has changes which have not been saved.\n"
@@ -10689,34 +10689,34 @@ msgstr ""
 "Mevcut düzen kaydedilmedi.\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/multitrack.c:21899
+#: src/multitrack.c:21902
 #, fuzzy
 msgid "Multitrack Audio Mixer"
 msgstr "Çoklu parça kip tuşları"
 
-#: src/multitrack.c:21927
+#: src/multitrack.c:21930
 msgid "_Reset values"
 msgstr "_Değerleri sıfırla"
 
-#: src/multitrack.c:21932
+#: src/multitrack.c:21935
 msgid "_Close mixer"
 msgstr ""
 
-#: src/multitrack.c:21979
+#: src/multitrack.c:21982
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr ""
 
-#: src/multitrack.c:21981
+#: src/multitrack.c:21984
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:22015
+#: src/multitrack.c:22018
 msgid "_Gang layer audio"
 msgstr ""
 
-#: src/multitrack.c:22017
+#: src/multitrack.c:22020
 msgid "Adjust all layer audio values to the same value"
 msgstr ""
 

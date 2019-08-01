@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-07-31 16:42-0300\n"
+"POT-Creation-Date: 2019-08-01 16:39-0300\n"
 "PO-Revision-Date: 2012-08-08 08:49+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -7359,7 +7359,7 @@ msgstr ""
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Nem lehet betölteni ezt: %s, az átmenet nem lesz átméretezve.\n"
 
-#: src/plugins.c:3796
+#: src/plugins.c:3788
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s haladó beállítások"
@@ -11433,7 +11433,7 @@ msgstr "%d hibákat találtam.\n"
 msgid "Multitrack fps set to %.3f\n"
 msgstr "Multitrack fps beállítása erre: %.3f\n"
 
-#: src/multitrack.c:21151
+#: src/multitrack.c:21154
 #, fuzzy
 msgid ""
 "The current layout has changes which have not been saved.\n"
@@ -11442,20 +11442,20 @@ msgstr ""
 "A jelenlegi kimenet még nincs elmentve.\n"
 "Mit szeretnél tenni?\n"
 
-#: src/multitrack.c:21899
+#: src/multitrack.c:21902
 #, fuzzy
 msgid "Multitrack Audio Mixer"
 msgstr "LiVES: Multitrack hangkeverő"
 
-#: src/multitrack.c:21927
+#: src/multitrack.c:21930
 msgid "_Reset values"
 msgstr "_Értékek visszaállítása"
 
-#: src/multitrack.c:21932
+#: src/multitrack.c:21935
 msgid "_Close mixer"
 msgstr "_Keverő bezárása"
 
-#: src/multitrack.c:21979
+#: src/multitrack.c:21982
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
@@ -11463,15 +11463,15 @@ msgstr ""
 "_Háttér hang\n"
 "és szűrő hangértékek felcserélése"
 
-#: src/multitrack.c:21981
+#: src/multitrack.c:21984
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr "Háttér hang és hangréteg értékek megadása, amely összesen 1.0 lehet"
 
-#: src/multitrack.c:22015
+#: src/multitrack.c:22018
 msgid "_Gang layer audio"
 msgstr "_Gang hang réteg"
 
-#: src/multitrack.c:22017
+#: src/multitrack.c:22020
 msgid "Adjust all layer audio values to the same value"
 msgstr "Minden hang réteg értékének beállítása ugyanarra az értékre"
 

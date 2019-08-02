@@ -3686,8 +3686,6 @@ autolives_window *autolives_pre_dialog(void) {
 
 const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height, LiVESBox *box) {
   static lives_param_t aspect_width, aspect_height;
-      g_print("ADDDING\n");
-      
 
   init_special();
 

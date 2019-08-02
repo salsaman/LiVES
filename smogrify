@@ -3421,9 +3421,9 @@ if (defined($ARGV[0])) {
 		my @lines;
 		my $count = 0;
 
-		##print "DOING .youtube-dl -F '$url'\n";
+		##print "DOING .youtube-dl --no-playlist -F '$url'\n";
 		
-		open (my $fh, "youtube-dl -F '$url' |");
+		open (my $fh, "youtube-dl --no-playlist -F '$url' |");
 		while (defined(my $line = <$fh>)) {
 		    ##print "WE GOT $line.";
 		    my ($fcode, $ext, $reso, @notes) = split ' ', $line;
@@ -3615,12 +3615,12 @@ if (defined($ARGV[0])) {
 	    if ($formreq eq "mp4") {
 		#$extra = "--merge-output-format mp4";
 		$extra = "";
-		$com = "youtube-dl -o \"$xdfile\" $extra --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
+		$com = "youtube-dl --no-playlist -o \"$xdfile\" $extra --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
 	    } elsif ($formreq eq "webm") {
 		if ($bestaudio eq "") {
 		    $dfile = $xdfile;
 		}
-		$com = "youtube-dl -o \"$dfile\" --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
+		$com = "youtube-dl --no-playlist -o \"$dfile\" --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
 	    }
 
 	    print ("RUNNING $com\n");

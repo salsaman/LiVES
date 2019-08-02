@@ -3686,6 +3686,8 @@ autolives_window *autolives_pre_dialog(void) {
 
 const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height, LiVESBox *box) {
   static lives_param_t aspect_width, aspect_height;
+      g_print("ADDDING\n");
+      
 
   init_special();
 
@@ -3718,7 +3720,7 @@ static void utsense(LiVESToggleButton *togglebutton, livespointer user_data) {
   if (!lives_toggle_button_get_active(togglebutton)) return;
   lives_widget_set_sensitive(spinbutton_width, sensitive);
   lives_widget_set_sensitive(spinbutton_height, sensitive);
-  lives_widget_set_sensitive(aspect->lockbutton, sensitive);
+  if (aspect != NULL) lives_widget_set_sensitive(aspect->lockbutton, sensitive);
 }
 
 
@@ -3940,8 +3942,10 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
   // add "aspectratio" widget
-  aspect = add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbutton_width), LIVES_SPIN_BUTTON(spinbutton_height), LIVES_BOX(hbox));
-  lives_widget_set_no_show_all(lives_widget_get_parent(aspect->label), TRUE);
+  if (mainw->current_file > -1) {
+    aspect = add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbutton_width), LIVES_SPIN_BUTTON(spinbutton_height), LIVES_BOX(hbox));
+    lives_widget_set_no_show_all(lives_widget_get_parent(aspect->label), TRUE);
+  } else aspect = NULL;
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
@@ -4461,7 +4465,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
         //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
         lives_widget_context_update();
 #if GTK_CHECK_VERSION(3, 0, 0)
-        lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
+        //lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
         lives_signal_handlers_unblock_by_func(widget, (livespointer)expose_msg_area, NULL);
         return FALSE;

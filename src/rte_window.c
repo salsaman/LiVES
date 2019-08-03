@@ -1885,8 +1885,9 @@ static boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *even
 }
 
 
-static void on_rtew_ok_clicked(LiVESButton *button, livespointer user_data) {
+static boolean on_rtew_ok_clicked(LiVESButton *button, livespointer user_data) {
   on_rtew_delete_event(NULL, NULL, NULL);
+  return TRUE;
 }
 
 
@@ -2021,12 +2022,12 @@ static LiVESTreeModel *rte_window_fx_model(void) {
              !has_video_chans_in(filter, FALSE)) ||
              (weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE) &&
               weed_get_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, &error) == WEED_TRUE)
-             || (filter_flags & WEED_FILTER_IS_CONVERTER))) {
+             || (filter_flags & WEED_FILTER_IS_CONVERTER)) || enabled_in_channels(filter, TRUE) == 1000000) {
       list = list->next;
       fx_idx++;
       pname_list = pname_list->next;
       phash_list = phash_list->next;
-      continue; // skip audio transitions and hidden entries
+      continue; // skip audio transitions, compositors and hidden entries
     }
 
     fxname = lives_strdup((const char *)pname_list->data);
@@ -2159,6 +2160,7 @@ LiVESWidget *create_rte_window(void) {
   // dummy button for "no grab", we dont show this...there is a button instead
   dummy_radio = lives_radio_button_new(grab_group);
   grab_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(dummy_radio));
+  lives_widget_set_no_show_all(dummy_radio, TRUE);
 
   name_list = weed_get_all_names(FX_LIST_NAME);
   name_type_list = weed_get_all_names(FX_LIST_NAME_AND_TYPE);
@@ -2369,15 +2371,15 @@ rte_window_ready:
   rte_window_is_hidden = FALSE;
 
   lives_widget_show_all(irte_window);
-  lives_widget_hide(dummy_radio);
 
   if (prefs->open_maximised) {
     lives_window_maximize(LIVES_WINDOW(irte_window));
   }
 
+  lives_widget_show_now(irte_window);
+
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
-  lives_widget_show_now(irte_window);
   mainw->no_context_update = FALSE;
   return irte_window;
 }

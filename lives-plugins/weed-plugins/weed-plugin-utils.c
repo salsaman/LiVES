@@ -60,6 +60,44 @@
 #include "../../libweed/weed-effects.h"
 #endif
 
+#ifndef ALLOW_UNUSED
+#ifdef __GNUC__
+#  define ALLOW_UNUSED  __attribute__((unused))
+#else
+#  define ALLOW_UNUSED
+#endif
+#endif
+
+static int weed_get_api_version(weed_plant_t *plugin_info) ALLOW_UNUSED;
+static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int num_versions, int *api_versions) ALLOW_UNUSED;
+static void weed_plugin_info_add_filter_class(weed_plant_t *plugin_info, weed_plant_t *filter_class) ALLOW_UNUSED;
+static weed_plant_t *weed_filter_class_init(const char *name, const char *author, int version, int flags, weed_init_f init_func,
+    weed_process_f process_func, weed_deinit_f deinit_func, weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls,
+    weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls) ALLOW_UNUSED;
+static weed_plant_t *weed_text_init(const char *name, const char *label, const char *def) ALLOW_UNUSED;
+static weed_plant_t *weed_float_init(const char *name, const char *label, double def, double min, double max) ALLOW_UNUSED;
+static weed_plant_t *weed_switch_init(const char *name, const char *label, int def) ALLOW_UNUSED;
+static weed_plant_t *weed_integer_init(const char *name, const char *label, int def, int min, int max) ALLOW_UNUSED;
+static weed_plant_t *weed_colRGBd_init(const char *name, const char *label, double red, double green, double blue) ALLOW_UNUSED;
+static weed_plant_t *weed_colRGBi_init(const char *name, const char *label, int red, int green, int blue) ALLOW_UNUSED;
+static weed_plant_t *weed_radio_init(const char *name, const char *label, int def, int group) ALLOW_UNUSED;
+static weed_plant_t *weed_string_list_init(const char *name, const char *label, int def, const char **const list) ALLOW_UNUSED;
+static weed_plant_t *weed_channel_template_init(const char *name, int flags, int *palettes) ALLOW_UNUSED;
+static weed_plant_t *weed_audio_channel_template_init(const char *name, int flags) ALLOW_UNUSED;
+static weed_plant_t *weed_filter_class_get_gui(weed_plant_t *filter) ALLOW_UNUSED;
+static weed_plant_t *weed_parameter_template_get_gui(weed_plant_t *paramt) ALLOW_UNUSED;
+static weed_plant_t *weed_parameter_get_gui(weed_plant_t *param) ALLOW_UNUSED;
+static weed_plant_t *weed_out_param_colRGBd_init(const char *name, double red, double green, double blue) ALLOW_UNUSED;
+static weed_plant_t *weed_out_param_colRGBi_init(const char *name, int red, int green, int blue) ALLOW_UNUSED;
+static weed_plant_t *weed_out_param_text_init(const char *name, const char *def) ALLOW_UNUSED;
+static weed_plant_t *weed_out_param_float_init_nominmax(const char *name, double def) ALLOW_UNUSED;
+static weed_plant_t *weed_out_param_float_init(const char *name, double def, double min, double max) ALLOW_UNUSED;
+static weed_plant_t *weed_out_param_switch_init(const char *name, int def) ALLOW_UNUSED;
+static weed_plant_t *weed_out_param_integer_init_nominmax(const char *name, int def) ALLOW_UNUSED;
+static weed_plant_t *weed_out_param_integer_init(const char *name, int def, int min, int max) ALLOW_UNUSED;
+static weed_plant_t **weed_clone_plants(weed_plant_t **plants) ALLOW_UNUSED;
+
+
 ///////////////////////////////////////////////////////////
 static inline int _leaf_exists(weed_plant_t *plant, const char *key) {
   if (weed_leaf_get(plant, key, 0, NULL) == WEED_ERROR_NOSUCH_LEAF) return 0;
@@ -102,10 +140,8 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int num_v
   weed_plant_t *host_info = weed_boot((weed_default_getter_f *)&weed_default_get, num_versions, api_versions), *plugin_info;
   if (host_info == NULL) return NULL; // matching version was not found
 
-
   //////////// get api version /////////
   weed_default_get(host_info, "api_version", 0, &api_version);
-
 
   // depending on the api version we could have different functions
 
@@ -217,7 +253,6 @@ static weed_plant_t *weed_filter_class_init(const char *name, const char *author
   else {
     for (i = 0; in_chantmpls[i] != NULL; i++);
     weed_leaf_set(filter_class, "in_channel_templates", WEED_SEED_PLANTPTR, i, in_chantmpls);
-
   }
 
   if (out_chantmpls == NULL || out_chantmpls[0] == NULL) weed_leaf_set(filter_class, "out_channel_templates", WEED_SEED_VOIDPTR, 0, NULL);

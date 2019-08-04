@@ -98,9 +98,8 @@ static int getenv_piece(char *target, size_t tlen, char *envvar, int num) {
   return 1;
 }
 
+
 ////////////////////////////////////////////////////////////////
-
-
 
 int frei0r_init(weed_plant_t *inst) {
   weed_plant_t *out_channel, *filter;
@@ -117,7 +116,6 @@ int frei0r_init(weed_plant_t *inst) {
 
   if (cpalette == WEED_PALETTE_UYVY || cpalette == WEED_PALETTE_YUYV) width >>= 1;
   else width >>= 2;
-
 
   f0r_construct = weed_get_voidptr_value(filter, "plugin_f0r_construct", &error);
 

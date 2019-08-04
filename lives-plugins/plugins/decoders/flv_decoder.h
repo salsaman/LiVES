@@ -41,6 +41,7 @@ enum {
 #define FLV_VIDEO_CODECID_MASK    0x0f
 #define FLV_VIDEO_FRAMETYPE_MASK  0xf0
 
+#define FLV_VIDEO_FRAMETYPE_OFFSET 4
 
 // amf data types for metadata
 typedef enum {

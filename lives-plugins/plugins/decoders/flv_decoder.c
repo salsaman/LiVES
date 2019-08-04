@@ -25,7 +25,6 @@
  *
  */
 
-
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -1725,7 +1724,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       }
 
       if (nextframe < tframe && (pack.data[0] & FLV_VIDEO_CODECID_MASK) == FLV_CODECID_H263
-          && (pack.data[0] & FLV_VIDEO_FRAMETYPE_MASK) == 0x03) {
+          && (pack.data[0] & FLV_VIDEO_FRAMETYPE_MASK) == (0x03 << FLV_VIDEO_FRAMETYPE_OFFSET)) {
         // disposable intra-frame
         free(pack.data);
         nextframe++;

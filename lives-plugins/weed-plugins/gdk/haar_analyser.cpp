@@ -442,7 +442,7 @@ static int haar_deinit(weed_plant_t *inst) {
 static int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  unsigned char **orig_src, *src;
+  unsigned char *orig_src = (unsigned char *)weed_get_voidptr_value(channel, "pixel_data", &error), *src;
   int width = weed_get_int_value(channel, "width", &error);
   int height = weed_get_int_value(channel, "height", &error);
   int pal = weed_get_int_value(channel, "current_palette", &error);
@@ -455,11 +455,10 @@ static int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int psize = 4;
   int clamped = 0;
 
-  int *orig_rows, orowstride, nplanes, hmax;
+  int hmax;
 
   int num_coefs = weed_get_int_value(in_params[0], "value", &error);
 
-  unsigned char *end = src + height * irowstride;
   register int i, j, k;
 
   int cn = 0;
@@ -469,9 +468,6 @@ static int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   double avgl[3];
 
-  GError **gerror;
-
-  GdkPixbuf *new_pixbuf;
   GdkPixbuf *out_pixbuf = NULL;
 
   weed_free(in_params);
@@ -495,12 +491,13 @@ static int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       out_pixbuf = gdk_pixbuf_scale_simple(in_pixbuf, NUM_PIXELS, NUM_PIXELS, down_interp);
     }
 
-    g_object_unref(in_pixbuf);
+    if (gdk_pixbuf_get_pixels(in_pixbuf) != orig_src)
+      g_object_unref(in_pixbuf);
 
     irowstride = gdk_pixbuf_get_rowstride(out_pixbuf);
 
     src = gdk_pixbuf_get_pixels(out_pixbuf);
-  } else src = orig_src[0];
+  } else src = orig_src;
 
   hmax = NUM_PIXELS * psize;
 
@@ -524,15 +521,7 @@ static int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (out_pixbuf != NULL) {
     g_object_unref(out_pixbuf);
-  } else {
-    if (src != orig_src[0]) {
-      weed_set_voidptr_array(channel, "pixel_data", nplanes, (void **)orig_src);
-      weed_set_int_array(channel, "rowstrides", nplanes, orig_rows);
-    }
   }
-
-  weed_free(orig_src);
-  weed_free(orig_rows);
 
   if (num_coefs != sdata->coefs) {
     weed_free(sdata->sig1);

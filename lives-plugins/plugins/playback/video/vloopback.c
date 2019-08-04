@@ -1,5 +1,5 @@
 // LiVES - vloopback playback engine
-// (c) G. Finch 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2010 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -9,7 +9,7 @@
 
 /////////////////////////////////////////////////////////////////
 
-static char plugin_version[64] = "LiVES vloopback output client 1.0.2";
+static char plugin_version[64] = "LiVES vloopback output client 1.0.3";
 static int palette_list[3];
 static int clampings[2];
 static int mypalette;
@@ -30,7 +30,7 @@ static int mypalette;
 #include <linux/videodev.h>
 #endif
 #endif
-
+y
 #include <sys/ioctl.h>
 
 static struct video_window x_vidwin;
@@ -40,8 +40,8 @@ static int vdevfd;
 
 static char *vdevname;
 
-//////////////////////////////////////////////
 
+//////////////////////////////////////////////
 
 static int file_filter(const struct dirent *a) {
   int match = 0;
@@ -49,9 +49,9 @@ static int file_filter(const struct dirent *a) {
   // match: 'videoXY' where X = {0..9} and Y = {0..9}
   if (!strncmp(a->d_name, "video", 5)) {
     if (strlen(a->d_name) > 5) {
-      if ((a->d_name[5] >= '0') && (a->d_name[5] <= '9'))      // match
+      if ((a->d_name[5] >= '0') && (a->d_name[5] <= '9')) {
+        // match
         // the 'X'
-      {
         match = 1;
       }
 
@@ -76,20 +76,17 @@ static int file_filter(const struct dirent *a) {
 #define MAX_DEVICES 65
 
 static char **get_vloopback_devices(void) {
-  char devname[256];
   struct dirent **namelist;
-  int n;
-  int fd;
-  int i = -1;
-  int ndevices = 0;
   struct video_capability v4lcap;
   char **devnames = malloc(MAX_DEVICES * sizeof(char *));
+
+  char devname[PATH_MAX];
+  int i, n, fd, ndevices = 0;
 
   for (i = 0; i < MAX_DEVICES; devnames[i++] = NULL);
 
   n = scandir("/dev", &namelist, file_filter, alphasort);
   if (n < 0) return devnames;
-
 
   for (i = 0; i < n && ndevices < MAX_DEVICES - 1; i++) {
     sprintf(devname, "/dev/%s", namelist[i]->d_name);
@@ -127,9 +124,7 @@ static char **get_vloopback_devices(void) {
 }
 
 
-
 ///////////////////////////////////////////////////
-
 
 const char *module_check_init(void) {
   char **vdevs = get_vloopback_devices();
@@ -146,17 +141,21 @@ const char *module_check_init(void) {
   return NULL;
 }
 
+
 const char *version(void) {
   return plugin_version;
 }
+
 
 const char *get_description(void) {
   return "The vloopback playback plugin makes LiVES appear as a video device in /dev.\n";
 }
 
+
 uint64_t get_capabilities(int palette) {
   return 0;
 }
+
 
 const char rfx[32768];
 
@@ -200,7 +199,6 @@ vdevname|Video _device|string_list|0|",
           );
 
   return rfx;
-
 }
 
 
@@ -210,6 +208,7 @@ const int *get_palette_list(void) {
   palette_list[2] = WEED_PALETTE_END;
   return palette_list;
 }
+
 
 boolean set_palette(int palette) {
   if (palette == WEED_PALETTE_UYVY) {
@@ -224,6 +223,7 @@ boolean set_palette(int palette) {
   return FALSE;
 }
 
+
 const int *get_yuv_palette_clamping(int palette) {
   if (palette == WEED_PALETTE_RGB24) clampings[0] = -1;
   else {
@@ -233,9 +233,10 @@ const int *get_yuv_palette_clamping(int palette) {
   return clampings;
 }
 
+
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
-  int i = 0, idx = 0;
   char **vdevs;
+  int i = 0, idx = 0;
 
   vdevfd = -1;
 
@@ -271,7 +272,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
-
   if (ioctl(vdevfd, VIDIOCGWIN, &x_vidwin) == -1) {
     fprintf(stderr, "vloopback output: cannot get dimensions for %s\n", vdevname);
     return FALSE;
@@ -305,10 +305,10 @@ boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void *
   return TRUE;
 }
 
+
 void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   int xval = 0;
   if (vdevfd != -1) xval = close(vdevfd);
   if (vdevname != NULL) free(vdevname);
   xval = xval;
 }
-

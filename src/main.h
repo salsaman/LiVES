@@ -549,9 +549,12 @@ typedef struct {
 
   /////////////////
   int frames;  ///< number of video frames
+
+  // TODO: make 1024 (to handle flv for example)
   char title[256];
   char author[256];
   char comment[256];
+
   char keywords[256];
   ////////////////
 

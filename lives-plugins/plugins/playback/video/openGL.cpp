@@ -37,7 +37,6 @@
 ////////////////////////////////////////////////////////////////////////////////////
 
 static char plugin_version[64] = "LiVES openGL playback engine version 1.1";
-static char error[256];
 
 static boolean(*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
 static boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return_data);
@@ -127,7 +126,6 @@ static pthread_mutex_t dpy_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static pthread_cond_t cond;
 static pthread_mutex_t cond_mutex;
-static struct timespec ts;
 
 static void *render_thread_func(void *data);
 
@@ -179,7 +177,6 @@ static int ctexture;
 static _texture *textures;
 
 static GLuint *texID;
-static GLuint video_pbo;
 
 static int type;
 static int typesize;
@@ -195,6 +192,13 @@ static int get_real_tnum(int tnum, bool do_assert) {
 }
 
 
+static int get_texture_texID(int tnum) {
+  tnum = get_real_tnum(tnum, FALSE);
+  return texID[tnum];
+}
+
+
+/*
 static int get_texture_width(int tnum) {
   tnum = get_real_tnum(tnum, TRUE);
   return textures[tnum].width;
@@ -207,19 +211,12 @@ static int get_texture_height(int tnum) {
 }
 
 
-static int get_texture_texID(int tnum) {
-  tnum = get_real_tnum(tnum, FALSE);
-  return texID[tnum];
-}
-
-
 static int get_texture_type(int tnum) {
   tnum = get_real_tnum(tnum, TRUE);
   return textures[tnum].type;
 }
 
-/*
-  static int get_texture_typesize(int tnum) {
+static int get_texture_typesize(int tnum) {
   tnum=get_real_tnum(tnum,TRUE);
   return textures[tnum].type;
   }

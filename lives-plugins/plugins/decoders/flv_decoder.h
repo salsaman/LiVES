@@ -43,6 +43,8 @@ enum {
 
 #define FLV_VIDEO_FRAMETYPE_OFFSET 4
 
+#define FLV_FRAME_DISP_INTRA 0x03
+
 // amf data types for metadata
 typedef enum {
   AMF_DATA_TYPE_NUMBER      = 0x00,

@@ -5467,7 +5467,6 @@ sub get_file_info {
             &get_mplayer_info;
 
         }
-
     }
 
     if (! -f $file_ident) {

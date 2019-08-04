@@ -2823,6 +2823,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (!realize_all_frames(0, msg, FALSE)) {
     lives_free(msg);
+    close_current_file(old_file);
     sensitize();
     return;
   }
@@ -2846,6 +2847,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (mainw->com_failed) {
     d_print_failed();
+    close_current_file(old_file);
     return;
   }
 
@@ -2853,9 +2855,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // show a progress dialog, not cancellable
   if (!do_progress_dialog(TRUE, TRUE, _("Pasting"))) {
-
     if (mainw->error) d_print_failed();
-
     close_current_file(old_file);
     return;
   }

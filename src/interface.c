@@ -274,9 +274,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   register int i;
 
-  if (current_file > -1 && cfile != NULL && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
+  if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
 
-  if (mainw->current_file == -1 || mainw->foreign || cfile == NULL || mainw->multitrack != NULL || mainw->recoverable_layout) {
+  if (!CURRENT_CLIP_IS_VALID || mainw->foreign || mainw->multitrack != NULL || mainw->recoverable_layout) {
     mainw->current_file = current_file;
     return;
   }

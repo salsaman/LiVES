@@ -149,7 +149,7 @@ unless ($retmsg eq "pong") {
     exit 2;
 }
 
-if ($allow_fxtoggle) {
+if ($allow_fxchanges) {
     # get number of realtime effect keys
     send_command("/effect_key/count");
 

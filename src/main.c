@@ -7068,6 +7068,7 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->open_yuv4m, TRUE);
 #endif
     }
+
     //update the bar text
     if (CURRENT_CLIP_IS_VALID) {
       register int i;
@@ -7094,7 +7095,7 @@ void load_frame_image(int frame) {
           if ((list_index = lives_list_previous(list_index)) == NULL) list_index = lives_list_last(mainw->cliplist);
           index = LIVES_POINTER_TO_INT(lives_list_nth_data(list_index, 0));
         } while ((mainw->files[index] == NULL || mainw->files[index]->opening || mainw->files[index]->restoring ||
-                  (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1) || (!mainw->files[index]->frames &&
+                  (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1) || (mainw->files[index]->frames == 0 &&
                       mainw->playing_file > -1)) &&
                  index != mainw->current_file);
         if (index == mainw->current_file) index = -1;
@@ -7169,7 +7170,7 @@ void load_frame_image(int frame) {
         mainw->first_free_file = mainw->current_file;
 
       if (!mainw->only_close) {
-        if (IS_VALID_CLIP(file_to_switch_to)) {
+        if (IS_VALID_CLIP(file_to_switch_to) && file_to_switch_to > 0) {
           if (mainw->playing_file == -1) {
             switch_to_file((mainw->current_file = 0), file_to_switch_to);
             d_print("");
@@ -7205,7 +7206,7 @@ void load_frame_image(int frame) {
         }
         if (mainw->clips_available > 0) {
           for (i = mainw->current_file - 1; i > 0; i--) {
-            if (!(mainw->files[i] == NULL)) {
+            if (mainw->files[i] != NULL) {
               if (mainw->playing_file == -1) {
                 switch_to_file((mainw->current_file = 0), i);
                 d_print("");
@@ -7220,7 +7221,7 @@ void load_frame_image(int frame) {
             }
           }
           for (i = 1; i < MAX_FILES; i++) {
-            if (!(mainw->files[i] == NULL)) {
+            if (mainw->files[i] != NULL) {
               if (mainw->playing_file == -1) {
                 switch_to_file((mainw->current_file = 0), i);
                 d_print("");
@@ -7239,8 +7240,7 @@ void load_frame_image(int frame) {
     }
 
     // no other clips
-    mainw->current_file = -1;
-    mainw->blend_file = -1;
+    mainw->current_file = mainw->blend_file = -1;
     set_main_title(NULL, 0);
 
     lives_widget_set_sensitive(mainw->vj_save_set, FALSE);

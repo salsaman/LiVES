@@ -30,7 +30,7 @@ static int mypalette;
 #include <linux/videodev.h>
 #endif
 #endif
-y
+
 #include <sys/ioctl.h>
 
 static struct video_window x_vidwin;

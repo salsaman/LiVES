@@ -801,10 +801,7 @@ typedef struct {
   LiVESWidget *tvdev;
   LiVESWidget *recent_menu;
   LiVESWidget *recent_submenu;
-  LiVESWidget *recent1;
-  LiVESWidget *recent2;
-  LiVESWidget *recent3;
-  LiVESWidget *recent4;
+  LiVESWidget *recent[N_RECENT_FILES];
   LiVESWidget *save_as;
 #ifdef LIBAV_TRANSCODE
   LiVESWidget *transcode;
@@ -1413,6 +1410,8 @@ typedef struct {
   int n_messages;
   weed_plant_t *ref_message; // weak ref
   int ref_message_n;
+
+  boolean recovering_files;
   ////////////////////
 } mainwindow;
 

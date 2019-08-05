@@ -371,6 +371,8 @@ typedef struct {
 #include "lbindings.h"
 #endif
 
+#define N_RECENT_FILES 4
+
 typedef enum {
   UNDO_NONE = 0,
   UNDO_EFFECT,
@@ -985,6 +987,7 @@ void do_decoder_palette_error(void);
 void do_rmem_max_error(int size);
 int do_original_lost_warning(const char *fname);
 void do_no_decoder_error(const char *fname);
+void do_no_loadfile_error(const char *fname);
 void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);
 void do_jack_noopen_warn3(void);
@@ -1002,7 +1005,7 @@ void do_invalid_subs_error(void);
 boolean do_erase_subs_warning(void);
 boolean do_sub_type_warning(const char *ext, const char *type_ext);
 boolean do_move_workdir_dialog(void);
-void do_set_locked_warning(const char *setname);
+boolean do_set_locked_warning(const char *setname);
 void do_no_in_vdevs_error(void);
 void do_locked_in_vdevs_error(void);
 void do_do_not_close_d(void);

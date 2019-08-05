@@ -10439,7 +10439,8 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
   GdkCursorType ctype = GDK_X_CURSOR;
 
   if (widget == NULL) {
-    if ((mainw->multitrack == NULL && mainw->is_ready) || (mainw->multitrack != NULL && mainw->multitrack->is_ready)) {
+    if (mainw->recovering_files || ((mainw->multitrack == NULL && mainw->is_ready) || (mainw->multitrack != NULL &&
+                                    mainw->multitrack->is_ready))) {
       if (cstyle != LIVES_CURSOR_NORMAL && mainw->cursor_style == cstyle) return;
       window = lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET);
     } else return;

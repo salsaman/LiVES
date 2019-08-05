@@ -2577,20 +2577,19 @@ int do_original_lost_warning(const char *fname) {
 
 
 void do_no_decoder_error(const char *fname) {
-  char *msg = lives_strdup_printf(_("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"),
-                                  fname);
-  do_error_dialog(msg);
-  lives_free(msg);
+  do_blocking_error_dialogf(_("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"), fname);
+}
+
+
+void do_no_loadfile_error(const char *fname) {
+  do_blocking_error_dialogf(_("\n\nThe file\n%s\nCould not be found.\n"), fname);
 }
 
 
 #ifdef ENABLE_JACK
 void do_jack_noopen_warn(void) {
-  char *tmp = lives_strdup_printf(_("\nUnable to start up jack. Please ensure that %s is set up correctly on your machine\n"
-                                    "and also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"), JACK_DRIVER_NAME);
-
-  do_blocking_error_dialog(tmp);
-  lives_free(tmp);
+  do_blocking_error_dialogf(_("\nUnable to start up jack. Please ensure that %s is set up correctly on your machine\n"
+                              "and also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"), JACK_DRIVER_NAME);
 }
 
 
@@ -2627,11 +2626,8 @@ void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
 
 
 boolean do_set_rename_old_layouts_warning(const char *new_set) {
-  char *msg = lives_strdup_printf(
-                _("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"), new_set);
-  boolean retcode = do_yesno_dialog(msg);
-  lives_free(msg);
-  return retcode;
+  return do_yesno_dialogf(
+           _("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"), new_set);
 }
 
 
@@ -3259,7 +3255,7 @@ boolean do_sub_type_warning(const char *ext, const char *type_ext) {
   char *msg = lives_strdup_printf(
                 _("\nLiVES does not recognise the subtitle file type \"%s\".\nClick Cancel to set another file name\nor OK to continue and save as type \"%s\"\n"),
                 ext, type_ext);
-  ret = do_warning_dialog(msg);
+  ret = do_warning_dialogf(msg);
   lives_free(msg);
   return ret;
 }
@@ -3270,12 +3266,10 @@ boolean do_move_workdir_dialog(void) {
 }
 
 
-void do_set_locked_warning(const char *setname) {
-  char *msg = lives_strdup_printf(
-                _("\nWarning - the set %s\nis in use by another copy of LiVES.\nYou are strongly advised to close the other copy before clicking OK to continue\n."),
-                setname);
-  do_warning_dialog(msg);
-  lives_free(msg);
+boolean do_set_locked_warning(const char *setname) {
+  return do_yesno_dialogf(
+           _("\nWarning - the set %s\nis in use by another copy of LiVES.\nYou are strongly advised to close the other copy before clicking Yes to continue\n.\nClick No to cancel loading the set.\n"),
+           setname);
 }
 
 
@@ -3297,9 +3291,7 @@ void do_do_not_close_d(void) {
 
 
 void do_bad_theme_error(const char *themefile) {
-  char *msg = lives_strdup_printf(_("\nThe theme file %s has missing elements.\nThe theme could not be loaded correctly.\n"), themefile);
-  do_error_dialog(msg);
-  lives_free(msg);
+  do_error_dialogf(_("\nThe theme file %s has missing elements.\nThe theme could not be loaded correctly.\n"), themefile);
 }
 
 
@@ -3361,36 +3353,23 @@ void do_cd_error_dialog(void) {
 
 
 void do_bad_theme_import_error(const char *theme_file) {
-  char *msg = lives_strdup_printf(_("\nLiVES was unable to import the theme file\n%s\n(Theme name not found).\n"), theme_file);
-  do_error_dialog(msg);
-  lives_free(msg);
+  do_error_dialogf(_("\nLiVES was unable to import the theme file\n%s\n(Theme name not found).\n"), theme_file);
 }
 
 
 boolean do_theme_exists_warn(const char *themename) {
-  boolean ret;
-  char *msg = lives_strdup_printf(_("\nA custom theme with the name\n%s\nalready exists. Would you like to overwrite it ?\n"), themename);
-  ret = do_yesno_dialog(msg);
-  lives_free(msg);
-  return ret;
+  return do_yesno_dialogf(_("\nA custom theme with the name\n%s\nalready exists. Would you like to overwrite it ?\n"), themename);
 }
 
 
 boolean ask_permission_dialog(int what) {
-  char *msg;
-  boolean ret;
-
   if (!prefs->show_gui) return FALSE;
 
   switch (what) {
   case LIVES_PERM_OSC_PORTS:
-    msg = lives_strdup_printf(
-            _("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\n"
-              "Do you wish to allow this (for this session only) ?\n"),
-            prefs->osc_udp_port);
-    ret = do_yesno_dialog(msg);
-    lives_free(msg);
-    return ret;
+    return do_yesno_dialogf(
+             _("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\nDo you wish to allow this (for this session only) ?\n"),
+             prefs->osc_udp_port);
   default:
     break;
   }

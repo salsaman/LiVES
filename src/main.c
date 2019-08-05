@@ -1260,6 +1260,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->no_context_update = FALSE;
 
+  mainw->recovering_files = FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -7280,7 +7282,7 @@ void load_frame_image(int frame) {
     lives_widget_show(mainw->undo);
     lives_widget_set_sensitive(mainw->undo, FALSE);
 
-    if (!mainw->is_ready) return;
+    if (!mainw->is_ready || mainw->recovering_files) return;
 
     if (mainw->playing_file == -1 && mainw->play_window != NULL) {
       // if the clip is loaded
@@ -7423,6 +7425,12 @@ void load_frame_image(int frame) {
       load_preview_image(FALSE);
     }
 
+    if (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE) {
+      mainw->no_context_update = TRUE;
+      reget_afilesize(mainw->current_file);
+      mainw->no_context_update = FALSE;
+    }
+
     if (new_file > 0) {
       lives_ce_update_timeline(0, cfile->pointer_time);
     }
@@ -7434,12 +7442,6 @@ void load_frame_image(int frame) {
 
     if (cfile->menuentry != NULL) {
       reset_clipmenu();
-    }
-
-    if (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE) {
-      mainw->no_context_update = TRUE;
-      reget_afilesize(mainw->current_file);
-      mainw->no_context_update = FALSE;
     }
 
     if (!mainw->switch_during_pb) {

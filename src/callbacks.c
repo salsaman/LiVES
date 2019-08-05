@@ -810,9 +810,9 @@ void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_widget_process_updates(mainw->LiVES, TRUE);
 
-  pref = lives_strdup_printf("recent%d", pno);
+  pref = lives_strdup_printf("%s%d", PREF_RECENT, pno);
 
-  get_pref(pref, file, PATH_MAX);
+  get_pref_utf8(pref, file, PATH_MAX);
 
   lives_free(pref);
 
@@ -5026,11 +5026,13 @@ boolean reload_set(const char *set_name) {
 
   // check if set is locked
   if (!check_for_lock_file(set_name, 0)) {
-    d_print_failed();
-    if (mainw->multitrack != NULL) {
-      mainw->current_file = mainw->multitrack->render_file;
-      mt_sensitise(mainw->multitrack);
-      mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+    if (!mainw->recovering_files) {
+      d_print_cancelled();
+      if (mainw->multitrack != NULL) {
+        mainw->current_file = mainw->multitrack->render_file;
+        mt_sensitise(mainw->multitrack);
+        mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+      }
     }
     return FALSE;
   }

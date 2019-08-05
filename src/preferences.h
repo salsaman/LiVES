@@ -803,6 +803,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_VID_SAVE_DIR "vid_save_dir"
 #define PREF_VID_LOAD_DIR "vid_load_dir"
 
+#define PREF_RECENT "recent"
 #define PREF_RECENT1 "recent1"
 #define PREF_RECENT2 "recent2"
 #define PREF_RECENT3 "recent3"

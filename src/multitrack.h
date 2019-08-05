@@ -401,10 +401,7 @@ struct _mt {
   LiVESWidget *device_menu;
 #endif
   LiVESWidget *recent_menu;
-  LiVESWidget *recent1;
-  LiVESWidget *recent2;
-  LiVESWidget *recent3;
-  LiVESWidget *recent4;
+  LiVESWidget *recent[N_RECENT_FILES];
 
   LiVESWidget *time_scrollbar;
   LiVESWidget *show_layout_errors;

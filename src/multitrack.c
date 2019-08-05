@@ -6547,37 +6547,37 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   get_pref_utf8(PREF_RECENT1, buff, 32768);
 
-  mt->recent1 = lives_standard_menu_item_new_with_label(buff);
+  mt->recent[0] = lives_standard_menu_item_new_with_label(buff);
 
   get_pref_utf8(PREF_RECENT2, buff, 32768);
 
-  mt->recent2 = lives_standard_menu_item_new_with_label(buff);
+  mt->recent[1] = lives_standard_menu_item_new_with_label(buff);
 
   get_pref_utf8(PREF_RECENT3, buff, 32768);
 
-  mt->recent3 = lives_standard_menu_item_new_with_label(buff);
+  mt->recent[2] = lives_standard_menu_item_new_with_label(buff);
 
   get_pref_utf8(PREF_RECENT4, buff, 32768);
 
-  mt->recent4 = lives_standard_menu_item_new_with_label(buff);
+  mt->recent[3] = lives_standard_menu_item_new_with_label(buff);
 
   widget_opts.mnemonic_label = TRUE;
 
-  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent1);
-  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent2);
-  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent3);
-  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent4);
+  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent[0]);
+  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent[1]);
+  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent[2]);
+  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent[3]);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent1), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent[0]), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_recent_activate),
                        LIVES_INT_TO_POINTER(1));
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent2), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent[1]), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_recent_activate),
                        LIVES_INT_TO_POINTER(2));
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent3), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent[2]), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_recent_activate),
                        LIVES_INT_TO_POINTER(3));
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent4), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent[3]), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_recent_activate),
                        LIVES_INT_TO_POINTER(4));
 
@@ -10967,14 +10967,14 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
       lives_widget_queue_resize(multi->nb_label);
     }
 
-    mtext = lives_menu_item_get_text(multi->recent1);
-    if (!strlen(mtext)) lives_widget_hide(multi->recent1);
-    mtext = lives_menu_item_get_text(multi->recent2);
-    if (!strlen(mtext)) lives_widget_hide(multi->recent2);
-    mtext = lives_menu_item_get_text(multi->recent3);
-    if (!strlen(mtext)) lives_widget_hide(multi->recent3);
-    mtext = lives_menu_item_get_text(multi->recent4);
-    if (!strlen(mtext)) lives_widget_hide(multi->recent4);
+    mtext = lives_menu_item_get_text(multi->recent[0]);
+    if (!strlen(mtext)) lives_widget_hide(multi->recent[0]);
+    mtext = lives_menu_item_get_text(multi->recent[1]);
+    if (!strlen(mtext)) lives_widget_hide(multi->recent[1]);
+    mtext = lives_menu_item_get_text(multi->recent[2]);
+    if (!strlen(mtext)) lives_widget_hide(multi->recent[2]);
+    mtext = lives_menu_item_get_text(multi->recent[3]);
+    if (!strlen(mtext)) lives_widget_hide(multi->recent[3]);
   }
 
   if (cfile->achans == 0) {

@@ -637,27 +637,27 @@ void create_LiVES(void) {
     get_pref_utf8(PREF_RECENT1, buff, 32768);
   }
   widget_opts.mnemonic_label = FALSE;
-  mainw->recent1 = lives_standard_menu_item_new_with_label(buff);
+  mainw->recent[0] = lives_standard_menu_item_new_with_label(buff);
   if (capable->smog_version_correct && capable->can_write_to_workdir) {
     get_pref_utf8(PREF_RECENT2, buff, 32768);
   }
-  mainw->recent2 = lives_standard_menu_item_new_with_label(buff);
+  mainw->recent[1] = lives_standard_menu_item_new_with_label(buff);
 
   if (capable->smog_version_correct && capable->can_write_to_workdir) {
     get_pref_utf8(PREF_RECENT3, buff, 32768);
   }
-  mainw->recent3 = lives_standard_menu_item_new_with_label(buff);
+  mainw->recent[2] = lives_standard_menu_item_new_with_label(buff);
 
   if (capable->smog_version_correct && capable->can_write_to_workdir) {
     get_pref_utf8(PREF_RECENT4, buff, 32768);
   }
-  mainw->recent4 = lives_standard_menu_item_new_with_label(buff);
+  mainw->recent[3] = lives_standard_menu_item_new_with_label(buff);
   widget_opts.mnemonic_label = TRUE;
 
-  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent1);
-  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent2);
-  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent3);
-  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent4);
+  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[0]);
+  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[1]);
+  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[2]);
+  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[3]);
 
   lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
@@ -2458,16 +2458,16 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->send_lives2lives), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_send_lives2lives_activate),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent1), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent[0]), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_recent_activate),
                        LIVES_INT_TO_POINTER(1));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent2), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent[1]), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_recent_activate),
                        LIVES_INT_TO_POINTER(2));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent3), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent[2]), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_recent_activate),
                        LIVES_INT_TO_POINTER(3));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent4), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent[3]), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_recent_activate),
                        LIVES_INT_TO_POINTER(4));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->backup), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2986,14 +2986,14 @@ void show_lives(void) {
     lives_widget_hide(mainw->recent_menu);
   }
 
-  mtext = lives_menu_item_get_text(mainw->recent1);
-  if (!strlen(mtext)) lives_widget_hide(mainw->recent1);
-  mtext = lives_menu_item_get_text(mainw->recent2);
-  if (!strlen(mtext)) lives_widget_hide(mainw->recent2);
-  mtext = lives_menu_item_get_text(mainw->recent3);
-  if (!strlen(mtext)) lives_widget_hide(mainw->recent3);
-  mtext = lives_menu_item_get_text(mainw->recent4);
-  if (!strlen(mtext)) lives_widget_hide(mainw->recent4);
+  mtext = lives_menu_item_get_text(mainw->recent[0]);
+  if (!strlen(mtext)) lives_widget_hide(mainw->recent[0]);
+  mtext = lives_menu_item_get_text(mainw->recent[1]);
+  if (!strlen(mtext)) lives_widget_hide(mainw->recent[1]);
+  mtext = lives_menu_item_get_text(mainw->recent[2]);
+  if (!strlen(mtext)) lives_widget_hide(mainw->recent[2]);
+  mtext = lives_menu_item_get_text(mainw->recent[3]);
+  if (!strlen(mtext)) lives_widget_hide(mainw->recent[3]);
 
   if (!capable->has_composite || !capable->has_convert) {
     lives_widget_hide(mainw->merge);

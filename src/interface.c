@@ -4328,6 +4328,9 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 
 static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute, LiVESAdjustment *adj) {
   // "scroll" the message area so that the last message appears at the bottom
+#if GTK_CHECK_VERSION(3, 18, 0)
+  GtkAllocation all;
+#endif
   LingoLayout *layout;
   lives_colRGBA64_t fg, bg;
 
@@ -4341,8 +4344,15 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
 
   if (!LIVES_IS_WIDGET(widget)) return;
 
+#if GTK_CHECK_VERSION(3, 18, 0)
+  gtk_widget_get_clip(mainw->top_vbox, &all);
+  height = lives_widget_get_allocation_height(mainw->LiVES) - all.height - MSG_AREA_VMARGIN;
+  if (height < 0) height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)) - MSG_AREA_VMARGIN;
+#else
   height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)) - MSG_AREA_VMARGIN;
+#endif
   width = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
+
   if (width < 32 || height < 32) return;
 
   if (msgno < 0) msgno = 0;
@@ -4461,10 +4471,10 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
         lives_widget_show(mainw->message_box);
         // add this back in first if it breaks..
         //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-        lives_widget_context_update();
 #if GTK_CHECK_VERSION(3, 0, 0)
-        //lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
+        lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
+        //lives_widget_context_update();
         lives_signal_handlers_unblock_by_func(widget, (livespointer)expose_msg_area, NULL);
         return FALSE;
       }

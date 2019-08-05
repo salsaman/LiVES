@@ -2687,7 +2687,19 @@ static boolean open_yuv4m_startup(livespointer data) {
 }
 #endif
 
+
 /////////////////////////////////
+static boolean lr(livespointer data) {
+  // workaround for GTK+ weirdness
+#if GTK_CHECK_VERSION(3, 18, 0)
+  GtkAllocation all;
+  gtk_widget_get_clip(mainw->top_vbox, &all);
+  if (all.height == lives_widget_get_allocation_height(mainw->LiVES)) return TRUE;
+#endif
+  reset_message_area(TRUE);
+  d_print("");
+  return FALSE;
+}
 
 
 static boolean lives_startup(livespointer data) {
@@ -2905,10 +2917,6 @@ static boolean lives_startup(livespointer data) {
           // must call this at least to set up rendered_fx[0]
           add_rfx_effects();
         }
-
-        if (prefs->startup_interface == STARTUP_CE) {
-          msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
-        }
       }
     }
   } else {
@@ -3066,7 +3074,7 @@ static boolean lives_startup(livespointer data) {
   lives_widget_context_update();
 
   reset_message_area(TRUE);
-  msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+  d_print("");
 
   draw_little_bars(0., 0);
 
@@ -7283,11 +7291,11 @@ void load_frame_image(int frame) {
     }
 
     if (mainw->multitrack == NULL) {
-      reset_message_area(TRUE);
       resize(1);
       lives_widget_hide(mainw->playframe);
       load_start_image(0);
       load_end_image(0);
+      if (prefs->show_msg_area) lives_idle_add(lr, NULL);
     }
 
     set_sel_label(mainw->sel_label);

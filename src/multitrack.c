@@ -9252,7 +9252,14 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   if (mt->file_selected != -1) {
     switch_to_file((mainw->current_file = 0), mt->file_selected);
-  } else reset_message_area(TRUE);
+  } else {
+    resize(1);
+    lives_widget_hide(mainw->playframe);
+    lives_widget_context_update();
+    load_start_image(0);
+    load_end_image(0);
+    reset_message_area(TRUE);
+  }
 
   pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
 
@@ -9273,7 +9280,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
 
-  if (mainw->current_file > 0 && !mainw->recoverable_layout) sensitize();
+  if (!mainw->recoverable_layout) sensitize();
 
   lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
 

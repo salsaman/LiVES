@@ -8968,7 +8968,6 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
   if (!mainw->configured) {
     mainw->old_scr_width = scr_width;
     mainw->old_scr_height = scr_height;
-
     mainw->configured = TRUE;
   }
   return FALSE;

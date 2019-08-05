@@ -3947,7 +3947,7 @@ boolean read_headers(const char *file_name) {
 
   if (old_time <= new_time) {
     do {
-      retval2 = 0;
+      retval2 = LIVES_RESPONSE_OK;
 
       detail = CLIP_DETAILS_FRAMES;
       if (get_clip_value(mainw->current_file, detail, &cfile->frames, 0)) {
@@ -3973,7 +3973,7 @@ boolean read_headers(const char *file_name) {
         }
 
         do {
-          retval2 = 0;
+          retval2 = LIVES_RESPONSE_OK;
           timeout = FALSE;
           memset(buff, 0, 1);
 
@@ -4018,13 +4018,15 @@ boolean read_headers(const char *file_name) {
         threaded_dialog_spin(0.);
 
         do {
-          retval2 = 0;
+          retval2 = LIVES_RESPONSE_OK;
           if (!cache_file_contents(lives_header)) {
             retval2 = do_read_failed_error_s_with_retry(lives_header, NULL, NULL);
           }
         } while (retval2 == LIVES_RESPONSE_RETRY);
 
         lives_free(lives_header);
+
+        if (retval2 == LIVES_RESPONSE_CANCEL) return FALSE;
 
         threaded_dialog_spin(0.);
 
@@ -4133,14 +4135,14 @@ boolean read_headers(const char *file_name) {
         }
       }
     } while (retval2 == LIVES_RESPONSE_RETRY);
-    return FALSE; // retval2==LIVES_RESPONSE_CANCEL
+    if (retval2 == LIVES_RESPONSE_CANCEL) return FALSE;
   }
 
   // old style headers (pre 0.9.6)
   lives_free(lives_header);
 
   do {
-    retval = 0;
+    retval = LIVES_RESPONSE_OK;
     mainw->read_failed = FALSE;
     memset(version, 0, 32);
     memset(buff, 0, 1024);
@@ -4205,6 +4207,8 @@ boolean read_headers(const char *file_name) {
 
   lives_free(old_hdrfile);
 
+  if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
+
   // handle version changes
   version_hash = verhash(version);
   if (version_hash < 7001) {
@@ -4225,7 +4229,7 @@ boolean read_headers(const char *file_name) {
   }
 
   do {
-    retval2 = 0;
+    retval2 = LIVES_RESPONSE_OK;
     timeout = FALSE;
 
     alarm_handle = lives_alarm_set(LIVES_LONGEST_TIMEOUT);
@@ -4246,7 +4250,6 @@ boolean read_headers(const char *file_name) {
     if (timeout || mainw->read_failed) {
       retval2 = do_read_failed_error_s_with_retry(cfile->info_file, NULL, NULL);
     }
-
   } while (retval2 == LIVES_RESPONSE_RETRY);
 
   if (retval2 == LIVES_RESPONSE_CANCEL) {
@@ -4321,7 +4324,6 @@ void open_set_file(int clipnum) {
       cfile->needs_update = TRUE;
     }
     if (cfile->interlace != LIVES_INTERLACE_NONE) cfile->deinterlace = TRUE;
-
   } else {
     // pre 0.9.6 <- ancient code
     ssize_t nlen;

@@ -3805,6 +3805,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   if (mainw->play_window != NULL) {
     resize_play_window();
   }
+  reset_message_area(TRUE);
 }
 
 
@@ -4576,7 +4577,17 @@ void reset_message_area(boolean expand) {
   if (expand) {
     // re-expand the message area to fit the empty space at the bottom
     if (mainw->multitrack == NULL) {
-      height = lives_widget_get_allocation_height(mainw->LiVES) - lives_widget_get_allocation_height(mainw->top_vbox) +
+      int tv_height;
+#if GTK_CHECK_VERSION(3, 18, 0)
+      GtkAllocation all;
+      gtk_widget_get_clip(mainw->top_vbox, &all);
+      if (lives_widget_get_allocation_height(mainw->LiVES) != all.height)
+        tv_height = all.height - MSG_AREA_VMARGIN;
+      else tv_height = lives_widget_get_allocation_height(LIVES_WIDGET(mainw->top_vbox)) - MSG_AREA_VMARGIN;
+#else
+      tv_height = lives_widget_get_allocation_height(LIVES_WIDGET(mainw->top_vbox)) - MSG_AREA_VMARGIN;
+#endif
+      height = lives_widget_get_allocation_height(mainw->LiVES) - tv_height +
                lives_widget_get_allocation_height(mainw->message_box) - lives_widget_get_allocation_height(mainw->menu_hbox);
     } else {
       height = lives_widget_get_allocation_height(mainw->multitrack->vpaned) - lives_paned_get_position(LIVES_PANED(mainw->multitrack->vpaned));

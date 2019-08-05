@@ -133,6 +133,8 @@ static int startup_msgtype = 0;
 static int xxwidth = 0, xxheight = 0;
 #endif
 
+static int idlemax;
+
 ////////////////////
 
 #ifdef GUI_GTK
@@ -2689,12 +2691,12 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 
 /////////////////////////////////
-static boolean lr(livespointer data) {
+static boolean resize_message_area(livespointer data) {
   // workaround for GTK+ weirdness
 #if GTK_CHECK_VERSION(3, 18, 0)
   GtkAllocation all;
   gtk_widget_get_clip(mainw->top_vbox, &all);
-  if (all.height == lives_widget_get_allocation_height(mainw->LiVES)) return TRUE;
+  if (idlemax-- > 0 && all.height == lives_widget_get_allocation_height(mainw->LiVES)) return TRUE;
 #endif
   reset_message_area(TRUE);
   d_print("");
@@ -7016,6 +7018,8 @@ void load_frame_image(int frame) {
     int index = -1;
     int old_file = mainw->current_file;
 
+    idlemax = 10000;
+
     if (mainw->playing_file == -1) {
       if (mainw->current_file != mainw->scrap_file) desensitize();
       lives_widget_set_sensitive(mainw->playall, FALSE);
@@ -7187,6 +7191,9 @@ void load_frame_image(int frame) {
           if (mainw->multitrack != NULL && old_file != mainw->multitrack->render_file) {
             mt_clip_select(mainw->multitrack, TRUE);
           }
+          if (mainw->multitrack == NULL) {
+            if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
+          }
           return;
         }
       }
@@ -7210,6 +7217,9 @@ void load_frame_image(int frame) {
             mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
             mt_clip_select(mainw->multitrack, TRUE);
           }
+          if (mainw->multitrack == NULL) {
+            if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
+          }
           return;
         }
         if (mainw->clips_available > 0) {
@@ -7225,6 +7235,9 @@ void load_frame_image(int frame) {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
                 mt_clip_select(mainw->multitrack, TRUE);
               }
+              if (mainw->multitrack == NULL) {
+                if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
+              }
               return;
             }
           }
@@ -7239,6 +7252,8 @@ void load_frame_image(int frame) {
               if (mainw->multitrack != NULL) {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
                 mt_clip_select(mainw->multitrack, TRUE);
+              } else {
+                if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
               }
               return;
             }
@@ -7295,7 +7310,7 @@ void load_frame_image(int frame) {
       lives_widget_hide(mainw->playframe);
       load_start_image(0);
       load_end_image(0);
-      if (prefs->show_msg_area) lives_idle_add(lr, NULL);
+      if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
     }
 
     set_sel_label(mainw->sel_label);

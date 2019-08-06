@@ -14,26 +14,23 @@ shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
 
 shared_cflags = -fno-common
 else
-shared_ldflags = -shared -fPIC -DPIC -module -no-undefined --no-allow-shlib-undefined -avoid-version --tag=disable-static
+shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
 
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 
 if HAVE_SDL2
-SDL_libs = SDL.la
-CFLAGS_SDL = @SDL2_CFLAGS@
+CFLAGS_SDL = @SDL2_CFLAGS@ -DHAVE_SDL2
 LDFLAGS_SDL = @SDL2_LIBS@
 
 else
 
 if HAVE_SDL
-SDL_libs = SDL.la
 CFLAGS_SDL = @SDL_CFLAGS@
 LDFLAGS_SDL = @SDL_LIBS@
 
 else
 if FORCE_SDL
-SDL_libs = SDL.la
 CFLAGS_SDL = -I $(SDL_PREFIX)
 LDFLAGS_SDL = -lSDL
 endif
@@ -55,7 +52,6 @@ endif
 if HAVE_SYSTEM_WEED_COMPAT
 weed_CFLAGS += -DHAVE_SYSTEM_WEED_COMPAT
 endif
-
 
 AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall
 AM_CPPFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall

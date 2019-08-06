@@ -35,7 +35,7 @@ static int package_version = 1; // version of this package
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
-#define HAVE_SDL2
+
 #define USE_DBLBUF 1
 
 #include <libprojectM/projectM.hpp>

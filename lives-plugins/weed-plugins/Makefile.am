@@ -25,17 +25,24 @@ LDFLAGS_SDL = @SDL2_LIBS@
 
 else
 
-if HAVE_SDL
-CFLAGS_SDL = @SDL_CFLAGS@
-LDFLAGS_SDL = @SDL_LIBS@
+if HAVE_X11
+if HAVE_SDL1
+CFLAGS_SDL = @SDL_CFLAGS@ @X11_CFLAGS@
+LDFLAGS_SDL = @SDL_LIBS@ @X11_LIBS@
 
 else
+
 if FORCE_SDL
-CFLAGS_SDL = -I $(SDL_PREFIX)
-LDFLAGS_SDL = -lSDL
+CFLAGS_SDL = -I $(SDL_PREFIX) @X11_CFLAGS@
+LDFLAGS_SDL = -lSDL @X11_LIBS@
+HAVE_SDL_ANYVERSION = true
 endif
 endif
 endif
+else
+HAVE_SDL_ANYVERSION = false
+endif
+
 
 AM_LDFLAGS = $(shared_ldflags)
 
@@ -91,7 +98,6 @@ opencvlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 opencvlib_LTLIBRARIES = $(farneback_analyser_libs) $(toonz_libs)
 endif
 
-
 if HAVE_FFTW3F
 audio_fft_libs = audio_fft.la beat_detector.la
 audio_fft_la_LDFLAGS = $(FFTW3F_LIBS) $(AM_LDFLAGS)
@@ -118,7 +124,6 @@ freenectdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 freenect_LTLIBRARIES = $(freenect_libs)
 endif
 
-if HAVE_X11
 if HAVE_OPENGL
 if HAVE_SDL_ANYVERSION
 if HAVE_PROJECTM
@@ -130,7 +135,6 @@ projectM_la_CPPFLAGS = $(LIBPROJECTM_CFLAGS) $(CFLAGS_SDL) \
 projectMdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 projectM_la_SOURCES = projectM.cpp projectM-getConfigFilename.cpp projectM-getConfigFilename.h projectM-ConfigFile.h
 projectM_LTLIBRARIES = $(projectM_libs)
-endif
 endif
 endif
 endif

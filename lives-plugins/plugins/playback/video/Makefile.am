@@ -16,7 +16,7 @@ if IS_IRIX
 shared_cflags +=-DIS_IRIX=1
 endif
 
-if HAVE_SDL
+if HAVE_SDL1
 SDL_libs = SDL.la
 CFLAGS_SDL = @SDL_CFLAGS@ -DHAVE_SDL=1
 LDFLAGS_SDL = @SDL_LIBS@
@@ -46,6 +46,7 @@ vjack_output_la_LDFLAGS = $(shared_ldflags) -ljack
 endif
 
 if HAVE_XRENDER
+if HAVE_X11
 if HAVE_OPENGL
 if HAVE_GLU
 openGL_libs = openGL.la
@@ -63,6 +64,7 @@ if HAVE_SYSTEM_WEED_PLUGIN
 openGL_la_CPPFLAGS += -DHAVE_SYSTEM_WEED_PLUGIN_H
 endif
 
+endif
 endif
 endif
 endif

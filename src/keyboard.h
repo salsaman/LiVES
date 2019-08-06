@@ -1,8 +1,7 @@
 // keyboard.h
 // LiVES
-// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2016 <salsaman+lives@gmail.com>
 // see file ../COPYING for licensing details
-
 
 #define LIVES_XEVENT_TYPE_KEYPRESS 2
 #define LIVES_XEVENT_TYPE_KEYRELEASE 3
@@ -21,22 +20,19 @@ uint16_t cached_mod;
 #define key_down 104
 #define key_down2 116
 
-
 boolean key_press_or_release(LiVESWidget *, LiVESXEventKey *, livespointer); ///< wrapper for pl_key_function
 
 boolean ext_triggers_poll(livespointer); ///< poll for external playback start
 
-#if defined HAVE_X11
-LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespointer data); ///< unused ?
-#endif
+/* #if defined HAVE_X11 */
+/* LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespointer data); ///< unused ? */
+/* #endif */
 
 void handle_cached_keys(void); ///< smooth the key repeat for scratching
 
 boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod); ///< all funky stuff with keys
 
-
 //////////////////////// callbacks ////////////////////////////////////////////
-
 
 boolean faster_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
@@ -68,14 +64,11 @@ boolean sepwin_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifi
 
 boolean fade_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-
 #define KEY_RPT_INTERVAL 4
-
 
 /** default MIDI checks per keyboard cycle (i.e. normally x checks per 4 ms - raw MIDI only) */
 /* can be over-ridden in prefs */
 #define DEF_MIDI_CHECK_RATE 1000
-
 
 /** allowed non-reads between reads (raw MIDI only) */
 #define DEF_MIDI_RPT 1000

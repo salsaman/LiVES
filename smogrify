@@ -5465,7 +5465,6 @@ sub get_file_info {
         }
         else {
             &get_mplayer_info;
-
         }
     }
 

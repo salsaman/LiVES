@@ -42,11 +42,9 @@ static int package_version = 1; // version of this package
 
 #include <GL/gl.h>
 
-#ifdef HAVE_SDL2
-#include <SDL2/SDL.h>
-#else
+#include <SDL.h>
 
-#include <SDL/SDL.h>
+#ifndef HAVE_SDL2
 #include <SDL_syswm.h>
 #endif
 
@@ -106,6 +104,28 @@ static int maxwidth, maxheight;
 static int inited = 0;
 
 #ifndef HAVE_SDL2
+static void winhide() {
+  SDL_SysWMinfo info;
+
+  Atom atoms[2];
+  SDL_VERSION(&info.version);
+  if (SDL_GetWMInfo(&info)) {
+    Window win = info.info.x11.wmwindow;
+    Display *dpy = info.info.x11.display;
+    info.info.x11.lock_func();
+
+    atoms[0] = XInternAtom(dpy, "_NET_WM_STATE_BELOW", False);
+    atoms[1] = XInternAtom(dpy, "_NET_WM_STATE_DESKTOP", False);
+    XChangeProperty(dpy, win, XInternAtom(dpy, "_NET_WM_STATE", False), XA_ATOM, 32, PropModeReplace, (const unsigned char *) &atoms, 2);
+
+    XIconifyWindow(dpy, win, 0);
+
+    XFlush(dpy);
+    info.info.x11.unlock_func();
+  }
+}
+
+
 static int resize_display(int width, int height) {
   int flags = SDL_OPENGL | SDL_HWSURFACE | SDL_RESIZABLE;
 
@@ -114,6 +134,8 @@ static int resize_display(int width, int height) {
     fprintf(stderr, "Video mode set failed: %s\n", SDL_GetError());
     return 1;
   }
+
+  winhide();
 
   return 0;
 }

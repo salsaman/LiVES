@@ -22,6 +22,8 @@ Optimised recording when video generators are running.
 Bugfixes for pulseaudio and jack audio players.
 Improvements to the projectM filter wrapper, including SDL2 support.
 Eliminate race conditions when applying rendered effects.
+Record audio looping correctly.
+Fixes for moved files during crash recovery.
 Optimisations for libweed.
 Added an option to invert the Z-order in multitrack compositor (rear layers can now overlay front ones).
 Added support for musl libc (jorgenatz)

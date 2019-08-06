@@ -94,7 +94,6 @@ exit
 ])
 fi
 
-
 GETTEXT_PACKAGE=lives
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [gtp])
@@ -110,7 +109,6 @@ AM_GNU_GETTEXT
 AM_GNU_GETTEXT_VERSION(0.17)
 
 AC_PROG_MKDIR_P
-
 
 dnl Use -Wall if we have gcc.
 changequote(,)dnl
@@ -143,13 +141,11 @@ AC_CHECK_FUNCS(posix_fallocate)
 
 AC_PATH_PROGS(PERL, perl perl5)
 
-
 dnl check for profiling
 
 AC_ARG_ENABLE(profiling, [  --enable-profiling     Enable profiling with gmon.] , profiling=yes, profiling=no)
 
 AM_CONDITIONAL(ENABLE_PROFILING, test $profiling != no)
-
 
 dnl Check for pkg-config
 
@@ -177,7 +173,6 @@ else
 fi
 
 AM_CONDITIONAL(HAVE_DOXYGEN, test $DOXYGEN != no)
-
 
 dnl OSC
 HAVE_OSC=true
@@ -231,7 +226,6 @@ if test "$have_jacklib" = "true"; then
 
 AC_CHECK_HEADERS(jack/jack.h, HAVE_JACK=true, HAVE_JACK=false)
 
-
 if test "$HAVE_JACK" != "false"; then
 if test "x$disable_jack_transport" != "xyes" ; then
 
@@ -258,8 +252,12 @@ AM_CONDITIONAL(ENABLE_JACK,$HAVE_JACK)
 AM_CONDITIONAL(ENABLE_JACK_TRANSPORT,$HAVE_JACK_TRANSPORT)
 AM_CONDITIONAL(ENABLE_VJACK,$HAVE_JACK_VIDEO)
 
-
 PKG_CHECK_MODULES(X11,x11,HAVE_X11=true,HAVE_X11=false)
+
+if test "$HAVE_X11" = "false" ; then
+AC_MSG_WARN("X11 libs not found, these are required if building LiVES for X11")
+fi
+
 AC_SUBST(X11_CFLAGS)
 AC_SUBST(X11_LIBS)
 
@@ -336,7 +334,6 @@ AC_SUBST(GTK_LIBS_NODYNAMIC)
 PKG_CHECK_EXISTS([glib-2.0 >= 2.14.0],[HAVE_GLIB_VERSION214=true],[HAVE_GLIB_VERSION214=false])
 PKG_CHECK_EXISTS([glib-2.0 >= 2.4.0],[HAVE_GLIB_VERSION24=true],[HAVE_GLIB_VERSION24=false])
 
-
 DISABLE_GLSLICE=true
 AC_ARG_ENABLE(glib-slice-allocator, [  --disable-glib-slice-allocator           Disable the glib slice allocator (not recommended).] , disable_glslice=yes)
 if test "x$disable_glslice" != "xyes" ; then
@@ -372,7 +369,6 @@ AC_SUBST(GLIB_LIBS)
 
 AM_CONDITIONAL(DISABLE_GLSLICE,$DISABLE_GLSLICE)
 
-
 dnl giw
 if test "x$HAVE_GTK_VERSION206" = "xfalse"; then
 HAVE_GIW=false
@@ -389,21 +385,27 @@ fi
 
 AM_CONDITIONAL(ENABLE_GIW,$HAVE_GIW)
 
-HAVE_SDL=false
+HAVE_SDL1=false
 HAVE_SDL2=false
 FORCE_SDL=false
 
-AC_ARG_ENABLE(sdl-force, [  --enable-sdl-force             Enable SDL1.x playback plugin support without checking for it.] , force_sdl=yes)
+AC_ARG_ENABLE(sdl-force, [  --enable-sdl-force             Enable SDL1.x support without checking for it (use --with-sdl-prefix to set the include path).] , force_sdl=yes)
 
 AC_ARG_ENABLE(sdl, [  --disable-sdl     Disable SDL support.] , disable_sdl=yes)
+AC_ARG_ENABLE(sdl2, [  --disable-sdl2     Disable SDL2 support.] , disable_sdl2=yes)
+AC_ARG_ENABLE(sdl1, [  --disable-sdl1     Disable SDL1 support.] , disable_sdl1=yes)
 
 if test "x$force_sdl" != "xyes" ; then
 if test "x$disable_sdl" != "xyes" ; then
 
 dnl SDL2 only for projectM
+if test "x$disable_sdl2" != "xyes" ; then
 PKG_CHECK_MODULES(SDL2, sdl2, HAVE_SDL2=true, HAVE_SDL2=false)
+fi
 
-dnl check for SDL
+dnl check for SDL 1.x
+
+if test "x$disable_sdl1" != "xyes" ; then
 
 ifdef([m4_pattern_allow],
 [m4_pattern_allow([^AM_PATH_SDL])])
@@ -411,35 +413,38 @@ ifdef([m4_pattern_allow],
 ifdef(["$AM_PATH_SDL"],
 
 [AM_PATH_SDL([1.2],[
-HAVE_SDL=true
+HAVE_SDL1=true
 SDL_LIBS=`$SDL_CONFIG --libs`
 SDL_CFLAGS=`$SDL_CONFIG --cflags`]
 ,[AC_MSG_WARN([*** Unable to find SDL ***])])],
 
 [
 dnl if AM_PATH_SDL fails, try pkg-config
-PKG_CHECK_MODULES(SDL, sdl >= 1.2 sdl < 2, HAVE_SDL=true, HAVE_SDL=false)
+PKG_CHECK_MODULES(SDL, sdl >= 1.2 sdl < 2, HAVE_SDL1=true, HAVE_SDL1=false)
 
 ])
 fi
 else
 FORCE_SDL=true
 SDL_PREFIX=${with-sdl-prefix}
+HAVE_SDL1=true
 fi
 
 AC_SUBST(SDL_LIBS)
 AC_SUBST(SDL_CFLAGS)
 AC_SUBST(SDL_PREFIX)
 
+fi
+
 AC_SUBST(SDL2_LIBS)
 AC_SUBST(SDL2_CFLAGS)
 AC_SUBST(SDL2_PREFIX)
 
-AM_CONDITIONAL(HAVE_SDL, $HAVE_SDL)
+AM_CONDITIONAL(HAVE_SDL1, $HAVE_SDL1)
 AM_CONDITIONAL(HAVE_SDL2, $HAVE_SDL2)
 AM_CONDITIONAL(FORCE_SDL, $FORCE_SDL)
 
-AM_CONDITIONAL([HAVE_SDL_ANYVERSION], [test $HAVE_SDL = "true" -o  $HAVE_SDL2 = "true"])
+AM_CONDITIONAL([HAVE_SDL_ANYVERSION], [test $HAVE_SDL1 = "true" -o  $HAVE_SDL2 = "true"])
 
 HAVE_AVCODEC=false
 HAVE_AVFORMAT=false
@@ -559,7 +564,6 @@ AC_SUBST(FFTW3F_LIBS)
 
 AM_CONDITIONAL(HAVE_FFTW3F,$HAVE_FFTW3F)
 
-
 dnl check for libfreenect
 
 HAVE_LIBFREENECT=false
@@ -588,14 +592,13 @@ HAVE_OPENGL=false
 AC_ARG_ENABLE(opengl, [  --disable-opengl     Disable openGL support.] , disable_opengl=yes)
 if test "x$disable_opengl" != "xyes" ; then
 
-PKG_CHECK_MODULES(GL,gl,HAVE_OPENGL=true,HAVE_OPENGL=false)
+PKG_CHECK_MODULES(GL, gl, HAVE_OPENGL=true, HAVE_OPENGL=false)
 fi
 
 AC_SUBST(GL_CFLAGS)
 AC_SUBST(GL_LIBS)
 
-AM_CONDITIONAL(HAVE_OPENGL,$HAVE_OPENGL)
-
+AM_CONDITIONAL(HAVE_OPENGL, $HAVE_OPENGL)
 
 dnl check for GLU
 PKG_CHECK_MODULES(GLU,glu,HAVE_GLU=true,HAVE_GLU=false)
@@ -603,7 +606,6 @@ AC_SUBST(GLU_CFLAGS)
 AC_SUBST(GLU_LIBS)
 
 AM_CONDITIONAL(HAVE_GLU,$HAVE_GLU)
-
 
 dnl check for mjpegtools
 HAVE_MJPEGTOOLS=false
@@ -617,7 +619,6 @@ AC_SUBST(MJPEGTOOLS_LIBS)
 
 AM_CONDITIONAL(HAVE_MJPEGTOOLS,$HAVE_MJPEGTOOLS)
 
-
 dnl check for libpng
 HAVE_LIBPNG=false
 AC_ARG_ENABLE(libpng, [  --disable-libpng    Disable direct libpng support.] , disable_libpng=yes)
@@ -629,7 +630,6 @@ AC_SUBST(PNG_CFLAGS)
 AC_SUBST(PNG_LIBS)
 
 AM_CONDITIONAL(HAVE_LIBPNG,$HAVE_LIBPNG)
-
 
 HAVE_ZLIB=false
 AC_ARG_ENABLE(libz, [  --disable-libz    Disable libz support.] , disable_libz=yes)
@@ -643,7 +643,6 @@ AC_SUBST(LIBZ_CFLAGS)
 AC_SUBST(LIBZ_LIBS)
 
 AM_CONDITIONAL(CONFIG_ZLIB,$HAVE_LIBZ)
-
 
 HAVE_BZLIB=false
 AC_ARG_ENABLE(libbz, [  --disable-libbz    Disable libbz support.] , disable_libbz=yes)
@@ -662,7 +661,6 @@ AC_SUBST(LIBBZ_LIBS)
 
 AM_CONDITIONAL(CONFIG_BZLIB,$HAVE_LIBBZ)
 
-
 HAVE_LADSPA=false
 AC_ARG_ENABLE(ladspa, [  --disable-ladspa    Disable LADSPA support.] , disable_ladspa=yes)
 if test "x$disable_ladspa" != "xyes" ; then
@@ -672,7 +670,6 @@ AC_CHECK_HEADERS(ladspa.h,HAVE_LADSPA=true,HAVE_LADSPA=false)
 fi
 
 AM_CONDITIONAL(HAVE_LADSPA,$HAVE_LADSPA)
-
 
 HAVE_UNICAP=false
 AC_ARG_ENABLE(unicap, [  --disable-unicap    Disable unicap support.] , disable_unicap=yes)
@@ -703,7 +700,6 @@ AC_SUBST(v4l1_INCFILE)
 AC_CHECK_HEADERS(linux/videodev2.h, HAVE_LIBv4l2=true, HAVE_LIBv4l2=false)
 AM_CONDITIONAL(HAVE_LIBv4l2,$HAVE_LIBv4l2)
 
-
 HAVE_LIBDV=false
 dnl check for libdv
 PKG_CHECK_MODULES(LIBDV,libdv,HAVE_LIBDV=true,HAVE_LIBDV=false)
@@ -711,7 +707,6 @@ AC_SUBST(LIBDV_CFLAGS)
 AC_SUBST(LIBDV_LIBS)
 
 AM_CONDITIONAL(HAVE_LIBDV,$HAVE_LIBDV)
-
 
 HAVE_OGG=false
 dnl check for ogg
@@ -721,7 +716,6 @@ AC_SUBST(OGG_LIBS)
 
 AM_CONDITIONAL(HAVE_OGG,$HAVE_OGG)
 
-
 HAVE_THEORA=false
 dnl check for libtheora
 PKG_CHECK_MODULES(THEORA,theora,HAVE_THEORA=true,HAVE_THEORA=false)
@@ -730,7 +724,6 @@ AC_SUBST(THEORA_LIBS)
 
 AM_CONDITIONAL(HAVE_THEORA,$HAVE_THEORA)
 
-
 HAVE_VORBIS=false
 dnl check for libvorbis
 PKG_CHECK_MODULES(VORBIS,vorbis,HAVE_VORBIS=true,HAVE_VORBIS=false)
@@ -738,7 +731,6 @@ AC_SUBST(VORBIS_CFLAGS)
 AC_SUBST(VORBIS_LIBS)
 
 AM_CONDITIONAL(HAVE_VORBIS,$HAVE_VORBIS)
-
 
 HAVE_DIRAC=false
 dnl check for dirac
@@ -749,7 +741,6 @@ AC_SUBST(DIRAC_LIBS)
 
 AM_CONDITIONAL(HAVE_DIRAC,$HAVE_DIRAC)
 
-
 HAVE_ALSA=false
 dnl check for libasound
 PKG_CHECK_MODULES(ALSA,alsa,HAVE_ALSA=true,HAVE_ALSA=false)
@@ -757,7 +748,6 @@ AC_SUBST(ALSA_CFLAGS)
 AC_SUBST(ALSA_LIBS)
 
 AM_CONDITIONAL(HAVE_ALSA,$HAVE_ALSA)
-
 
 HAVE_PULSE_AUDIO=false
 HAVE_PA_STREAM_BEGIN_WRITE=false
@@ -772,7 +762,6 @@ AC_SUBST(PULSE_LIBS)
 
 AM_CONDITIONAL(HAVE_PULSE_AUDIO,$HAVE_PULSE_AUDIO)
 AM_CONDITIONAL(HAVE_PA_STREAM_BEGIN_WRITE,$HAVE_PA_STREAM_BEGIN_WRITE)
-
 
 HAVE_LIBVISUAL=false
 AC_ARG_ENABLE(libvisual, [  --disable-libvisual     Disable libvisual support.] , disable_libvisual=yes)
@@ -789,19 +778,32 @@ fi
 
 AM_CONDITIONAL(HAVE_LIBVISUAL,$HAVE_LIBVISUAL)
 
-
 HAVE_PROJECTM=false
 AC_ARG_ENABLE(projectM, [  --disable-projectM     Disable projectM support.] , disable_projectM=yes)
 if test "x$disable_projectM" != "xyes" ; then
 
 dnl check for projectM
-PKG_CHECK_MODULES(LIBPROJECTM,libprojectM,HAVE_PROJECTM=true,HAVE_PROJECTM=false)
+PKG_CHECK_MODULES(LIBPROJECTM, libprojectM, HAVE_PROJECTM=true, HAVE_PROJECTM=false)
 AC_SUBST(LIBPROJECTM_CFLAGS)
 AC_SUBST(LIBPROJECTM_LIBS)
 fi
 
-AM_CONDITIONAL(HAVE_PROJECTM,$HAVE_PROJECTM)
+AM_CONDITIONAL(HAVE_PROJECTM, $HAVE_PROJECTM)
 
+if test "$HAVE_PROJECTM" = "true" ; then
+if test "$HAVE_OPENGL" = "false" ; then
+AC_MSG_WARN("openGL is required to build projectM")
+fi
+if test "$HAVE_SDL_ANYVERSION" = "false" ; then
+AC_MSG_WARN("SDL1 or SDL2 is required to build projectM")
+else
+if test "$HAVE_SDL2" = "false" ; then
+if test "$HAVE_X11" = "false" ; then
+AC_MSG_WARN("X11 is required to build projectM with SDL1")
+fi
+fi
+fi
+fi
 
 HAVE_LIBOIL=false
 HAVE_LIBORC=false
@@ -828,7 +830,6 @@ AM_CONDITIONAL(ENABLE_LIBOIL,$HAVE_LIBOIL)
 AM_CONDITIONAL(HAVE_LIBORC,$HAVE_LIBORC)
 AM_CONDITIONAL(ENABLE_LIBORC,$HAVE_LIBORC)
 
-
 HAVE_FREI0R=false
 AC_ARG_ENABLE(frei0r, [  --disable-frei0r     Disable frei0r support.] , disable_frei0r=yes)
 if test "x$disable_freior" != "xyes" ; then
@@ -837,7 +838,6 @@ dnl check for frei0r
 AC_CHECK_HEADERS(frei0r.h, HAVE_FREI0R=true, HAVE_FREI0R=false)
 AM_CONDITIONAL(HAVE_FREI0R,$HAVE_FREI0R)
 fi
-
 
 HAVE_LDVGRAB=false
 
@@ -876,7 +876,6 @@ fi
 AC_SUBST(WEED_CFLAGS)
 AC_SUBST(WEED_LIBS)
 
-
 PKG_CHECK_MODULES(WEED_SLICE, libweed_slice >= 0.8.0, HAVE_SYSTEM_WEED_SLICE=true, HAVE_SYSTEM_WEED_SLICE=false)
 
 if test "$HAVE_SYSTEM_WEED_SLICE" = "true"; then
@@ -888,8 +887,6 @@ fi
 dnl CFLAGS will be the same
 AC_SUBST(WEED_SLICE_LIBS)
 
-
-
 PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 0.8.0, HAVE_SYSTEM_WEED_UTILS=true, HAVE_SYSTEM_WEED_UTILS=false)
 
 if test "$HAVE_SYSTEM_WEED_UTILS" = "false"; then
@@ -898,7 +895,6 @@ fi
 
 AC_SUBST(WEED_UTILS_CFLAGS)
 AC_SUBST(WEED_UTILS_LIBS)
-
 
 PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.10.0, HAVE_SYSTEM_WEED_COMPAT=true, HAVE_SYSTEM_WEED_COMPAT=false)
 
@@ -909,7 +905,6 @@ AC_SUBST(WEED_COMPAT_LIBS)
 if test "$HAVE_SYSTEM_WEED_COMPAT" = "false"; then
 echo "...will try to build from included sources"
 fi
-
 
 PKG_CHECK_MODULES(WEED_PLUGIN, libweed-plugin >= 0.13.0, HAVE_SYSTEM_WEED_PLUGIN=true, HAVE_SYSTEM_WEED_PLUGIN=false)
 
@@ -933,10 +928,8 @@ if test "$disable_glslice" = "yes" ; then
 AC_MSG_ERROR("cannot disable glib-slice when building liblives")
 fi
 fi
- 
 
 AM_CONDITIONAL(BUILD_LIBLIVES, test $liblives != no)
-
 
 dnl find -name Makefile.am | sed "s/\.\///g" | sed "s/\.am//g" >> configure.in
 AC_CONFIG_FILES([
@@ -978,7 +971,6 @@ AC_OUTPUT
 dnl lives-plugins/weed-plugins/supercollider/Makefile
 dnl lives-plugins/weed-plugins/experimental/Makefile
 
-
 if test "$HAVE_JACK" != "true"; then
 echo
 echo "*******************************************************************"
@@ -1014,7 +1006,6 @@ echo "*******************************************************************"
 echo
 fi
 
-
 echo "*******************************************************************"
 echo "LiVES is now configured and ready for building."
 echo "If you are building for MULTILIBS on a 64 bit system, "
@@ -1023,5 +1014,4 @@ echo "In this case you MUST also manually update the library paths in libweed/*.
 echo ""
 echo "Remember to do \"sudo ldconfig\" or equivalent after installing."
 echo  "*******************************************************************"
-
 

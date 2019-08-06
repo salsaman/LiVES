@@ -3046,18 +3046,18 @@ static boolean lives_startup(livespointer data) {
   if (strlen(prefs->yuvin) > 0) lives_idle_add(open_yuv4m_startup, NULL);
 #endif
 
-#ifdef GUI_GTK
-#if defined HAVE_X11
-  //gdk_window_add_filter(NULL, filter_func, NULL);
-#endif
-#endif
+  /* #ifdef GUI_GTK */
+  /* #if defined HAVE_X11 */
+  /*   //gdk_window_add_filter(NULL, filter_func, NULL); */
+  /* #endif */
+  /* #endif */
 
-#ifdef GUI_QT
-#if defined HAVE_X11 || defined IS_MINGW
-  nevfilter *nf = new nevfilter;
-  qapp->installNativeEventFilter(nf);
-#endif
-#endif
+  /* #ifdef GUI_QT */
+  /* #if defined HAVE_X11 || defined IS_MINGW */
+  /*   nevfilter *nf = new nevfilter; */
+  /*   qapp->installNativeEventFilter(nf); */
+  /* #endif */
+  /* #endif */
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (!mainw->foreign && prefs->show_gui) {
@@ -3114,6 +3114,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
     else mainw->signals_deferred = FALSE;
   }
 }
+
 
 int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   ssize_t mynsize;
@@ -7218,8 +7219,7 @@ void load_frame_image(int frame) {
           if (mainw->multitrack != NULL) {
             mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
             mt_clip_select(mainw->multitrack, TRUE);
-          }
-          if (mainw->multitrack == NULL) {
+          } else {
             if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
           }
           return;

@@ -378,6 +378,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   pulsed->seek_pos = -pulsed->seek_pos;
                 } else pulsed->seek_pos += pulsed->seek_end;
               }
+              pulsed->real_seek_pos = pulsed->seek_pos;
               pulse_set_rec_avals(pulsed);
             }
             // rewind by in_bytes
@@ -448,6 +449,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                           loop_restart = FALSE;
                         }
                       }
+                      pulsed->real_seek_pos = pulsed->seek_pos;
                       pulse_set_rec_avals(pulsed);
                     }
                   } else {

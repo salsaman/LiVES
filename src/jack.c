@@ -544,6 +544,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                   jackd->seek_pos = -jackd->seek_pos;
                 } else jackd->seek_pos += jackd->seek_end;
               }
+              jackd->real_seek_pos = jackd->seek_pos;
               jack_set_rec_avals(jackd);
             }
           }
@@ -598,6 +599,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                         jackd->in_use = FALSE;
                       }
                     }
+                    jackd->real_seek_pos = jackd->seek_pos;
                     jack_set_rec_avals(jackd);
                   }
                 }

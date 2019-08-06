@@ -255,8 +255,11 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
 
   if (sfile->img_type != empirical_img_type) sfile->img_type = empirical_img_type;
 
+  /*
+    // ignore since we may have resampled audio
   if (sfile->achans != cdata->achans || sfile->arps != cdata->arate || sfile->asampsize != cdata->asamps ||
       cdata->asigned == (sfile->signed_endian & AFORM_UNSIGNED)) return FALSE;
+  */
 
   // all things equal as far as we can tell
   return TRUE;

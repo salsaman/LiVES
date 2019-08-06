@@ -171,41 +171,72 @@ void del_frame_index(lives_clip_t *sfile) {
 }
 
 
-boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
+static int scan_frames(lives_clip_t *sfile, int vframes, int last_real_frame) {
+  register int i;
+  for (i = 0; i < sfile->frames; i++) {
+    // assume all real frames up to last_real_frame are there
+    if ((sfile->frame_index[i] == -1 && i >= last_real_frame) || (sfile->frame_index[i] > vframes)) return i;
+  }
+  return i;
+}
+
+
+boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int maxframe) {
   lives_clip_t *sfile = mainw->files[fileno];
 
   lives_image_type_t empirical_img_type = sfile->img_type;
 
-  int first_real_frame = 0;
+  int last_real_frame = sfile->frames;
+
+  boolean has_missing_frames = FALSE;
+
+  char *fname;
 
   register int i;
 
   // check clip integrity upon loading
 
   // check that cached values match with sfile (on disk) values
-  // TODO: also check sfile->frame_index to make sure all frames are present
+  // also check sfile->frame_index to make sure all frames are present
 
   // return FALSE if we find any omissions/inconsistencies
 
   // check the image type
-  for (i = 0; i < sfile->frames; i++) {
+  for (i = sfile->frames - 1; i >= 0; i--) {
     if (sfile->frame_index[i] == -1) {
       // this is a non-virtual frame
-      char *frame = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_PNG);
-      if (lives_file_test(frame, LIVES_FILE_TEST_EXISTS)) empirical_img_type = IMG_TYPE_PNG;
-      else empirical_img_type = IMG_TYPE_JPEG;
-      lives_free(frame);
-      first_real_frame = i + 1;
-      break;
+      fname = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_PNG);
+      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+        empirical_img_type = IMG_TYPE_PNG;
+        lives_free(fname);
+        break;
+      }
+      lives_free(fname);
+      fname = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_JPG);
+      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+        empirical_img_type = IMG_TYPE_JPEG;
+        lives_free(fname);
+        break;
+      }
+      lives_free(fname);
+      last_real_frame = i;
+      has_missing_frames = TRUE;
     }
   }
 
-  // TODO *** check frame count
+  // check frame count
+  if (maxframe > cdata->nframes || has_missing_frames) {
+    has_missing_frames = TRUE;
+    sfile->frames = scan_frames(sfile, cdata->nframes, last_real_frame);
+  }
 
-  if (sfile->frames > 0 && (sfile->hsize * sfile->vsize == 0)) {
-    if (first_real_frame > 0) {
+  if (sfile->frames > 0) {
+    int hsize = sfile->hsize;
+    int vsize = sfile->vsize;
+
+    if (last_real_frame > 0) {
       sfile->img_type = empirical_img_type;
-      get_frames_sizes(fileno, first_real_frame);
+      get_frames_sizes(fileno, last_real_frame);
     } else {
       if (!prefs->auto_nobord) {
         sfile->hsize = cdata->frame_width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
@@ -215,14 +246,19 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
         sfile->vsize = cdata->height;
       }
     }
-    goto mismatch;
+    if (sfile->hsize != hsize || sfile->vsize != vsize) goto mismatch;
   }
 
-  if (sfile->fps != (double)cdata->fps) goto mismatch;
+  if (has_missing_frames) goto mismatch;
+
+  if (fabs(sfile->fps - (double)cdata->fps) > prefs->fps_tolerance) goto mismatch;
 
   if (sfile->img_type != empirical_img_type) sfile->img_type = empirical_img_type;
 
-  // and all else are equal
+  if (sfile->achans != cdata->achans || sfile->arps != cdata->arate || sfile->asampsize != cdata->asamps ||
+      cdata->asigned == (sfile->signed_endian & AFORM_UNSIGNED)) return FALSE;
+
+  // all things equal as far as we can tell
   return TRUE;
 
 mismatch:

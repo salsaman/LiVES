@@ -1016,7 +1016,7 @@ static void lives_init(_ign_opts *ign_opts) {
 #endif
   }
 
-  prefs->ignore_tiny_fps_diffs = 1;
+  prefs->fps_tolerance = .0005;
   prefs->rec_opts = get_int_pref(PREF_RECORD_OPTS);
 
   if (prefs->rec_opts == -1) {

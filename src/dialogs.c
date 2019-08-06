@@ -2570,7 +2570,7 @@ int do_original_lost_warning(const char *fname) {
   LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, TRUE);
   int response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_context_update();
   lives_free(msg);
   return response;
 }

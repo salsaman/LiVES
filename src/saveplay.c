@@ -5004,9 +5004,10 @@ boolean reload_clip(int fileno, int maxframe) {
   boolean was_renamed = FALSE;
 
   int response;
-  int orig_maxframe = maxframe;
 
-  int current_file = mainw->current_file;
+  int current_file;
+
+  double orig_fps = sfile->fps;
 
   lives_chdir(ppath, FALSE);
   lives_free(ppath);
@@ -5022,7 +5023,8 @@ boolean reload_clip(int fileno, int maxframe) {
 
     if ((cdata = get_decoder_cdata(fileno, prefs->disabled_decoders, fake_cdata->fps != 0. ? fake_cdata : NULL)) == NULL) {
       if (mainw->error) {
-        response = do_original_lost_warning(sfile->file_name);
+manual_locate:
+        response = do_original_lost_warning(orig_filename);
         if (response == LIVES_RESPONSE_RETRY) {
           lives_freep((void **)&fake_cdata->URI);
           continue;
@@ -5032,8 +5034,8 @@ boolean reload_clip(int fileno, int maxframe) {
           char fname[PATH_MAX], dirname[PATH_MAX], *newname;
           LiVESWidget *chooser;
 
-          lives_snprintf(dirname, PATH_MAX, "%s", sfile->file_name);
-          lives_snprintf(fname, PATH_MAX, "%s", sfile->file_name);
+          lives_snprintf(dirname, PATH_MAX, "%s", orig_filename);
+          lives_snprintf(fname, PATH_MAX, "%s", orig_filename);
 
           get_dirname(dirname);
           get_basename(fname);
@@ -5064,35 +5066,28 @@ boolean reload_clip(int fileno, int maxframe) {
             maxframe = 0;
 
             was_renamed = TRUE;
+            // try again with the new file
             continue;
           }
+          // cancelled from filechooser
           lives_widget_destroy(LIVES_WIDGET(chooser));
-        } else {
-          // deleted : TODO ** - show layout errors
+          goto manual_locate;
         }
+        // cancelled
       } else {
+        // unopenable
+        if (was_renamed) goto manual_locate;
         do_no_decoder_error(sfile->file_name);
       }
 
-      // NOT found, switch to another clip (if any)
+      // NOT openable, or not found and user cancelled, switch back to original clip
 
-      // index stuff
-      sfile = NULL;
+      // TODO ** - show layout errors
 
-      if (fileno == mainw->current_file) {
-        if (mainw->cliplist != NULL) {
-          LiVESList *list_index;
-          int index = -1;
-          list_index = lives_list_last(mainw->cliplist);
-          do {
-            if ((list_index = lives_list_previous(list_index)) == NULL) list_index = lives_list_last(mainw->cliplist);
-            index = LIVES_POINTER_TO_INT(list_index->data);
-          } while ((mainw->files[index] == NULL ||
-                    ((index == mainw->scrap_file || index == mainw->ascrap_file) && index > -1)) && index != fileno);
-          if (index == fileno) index = -1;
-          mainw->current_file = index;
-        } else mainw->current_file = -1;
-      }
+      current_file = mainw->current_file;
+      mainw->current_file = fileno;
+      close_current_file(current_file);
+
       lives_freep((void **)&fake_cdata->URI);
       lives_free(fake_cdata);
       lives_free(orig_filename);
@@ -5100,24 +5095,22 @@ boolean reload_clip(int fileno, int maxframe) {
     }
 
     // got cdata
-    if (fake_cdata->fps == 0.) {
-      sfile->needs_update = TRUE;
-      sfile->fps = sfile->pb_fps = cdata->fps;
-      sfile->frames = cdata->nframes;
-      // TODO ***: user relocated file; check to ensure all details are still valid
-      if (sfile->frames < orig_maxframe) {
-        // frames missing, close it
-        close_current_file(current_file);
-        return FALSE;
+    if (was_renamed) {
+      // manual relocation
+      sfile->fps = orig_fps;
+      if (!check_clip_integrity(fileno, cdata, maxframe)) {
+        // get correct img_type, fps, etc.
+        if (mainw->com_failed || mainw->write_failed) do_header_write_error(fileno);
+        goto manual_locate;
       }
-      if (sfile->frames > orig_maxframe + 1) sfile->frames = orig_maxframe + 1;
+      sfile->needs_update = TRUE; // force filename update in header
       if (prefs->show_recent) {
+        // replace in recent menu
         LiVESList *cache_backup = mainw->cached_list;
         char file[PATH_MAX];
         int i;
         mainw->cached_list = NULL;
         for (i = 0; i < 4; i++) {
-          // replace in recent menu
           char *tmp;
           char *pref = lives_strdup_printf("%s%d", PREF_RECENT, i + 1);
           get_pref_utf8(pref, file, PATH_MAX);
@@ -5150,8 +5143,9 @@ boolean reload_clip(int fileno, int maxframe) {
 
   if (sfile->ext_src != NULL) {
     boolean bad_header = FALSE;
-    boolean correct = check_clip_integrity(fileno, cdata); // get correct img_type, fps, etc.
-    if (!correct || was_renamed) {
+    boolean correct = TRUE;
+    if (!was_renamed) correct = check_clip_integrity(fileno, cdata, maxframe); // get correct img_type, fps, etc.
+    if (!correct) {
       if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
     } else {
       lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;

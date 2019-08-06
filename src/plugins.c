@@ -1717,7 +1717,6 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
   }
 
   if (strlen(prefs->encoder.of_restrict) > 0) {
-
     pieces = get_token_count(prefs->encoder.of_restrict, ',');
     checks = lives_strsplit(prefs->encoder.of_restrict, ",", pieces);
 
@@ -1781,7 +1780,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
               else rdet->ratio_fps = FALSE;
             }
           }
-          if (best_fps_delta < (.0005 * prefs->ignore_tiny_fps_diffs)) {
+          if (best_fps_delta <= prefs->fps_tolerance) {
             best_fps_delta = 0.;
             best_fps_denom = best_fps_num = 0;
           }
@@ -1962,7 +1961,6 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
     if (mainw->multitrack != NULL && mainw->multitrack->event_list != NULL) best_fps_delta = 0.;
 
     if (sizer) allow_aspect_override = FALSE;
-
   }
 
   // if we have min or max size, make sure we fit within that
@@ -2106,7 +2104,6 @@ LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext) 
   for (i = 0; blacklist[i] != NULL; i++) lives_free(blacklist[i]);
 
   return encoders;
-
 }
 
 
@@ -2181,7 +2178,6 @@ static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
 
   // all checks passed - OK
   return TRUE;
-
 }
 
 
@@ -2349,7 +2345,6 @@ void close_decoder_plugin(lives_decoder_t *dplug) {
   if (cdata != NULL)(*dplug->decoder->clip_data_free)(cdata);
 
   lives_free(dplug);
-
 }
 
 
@@ -2483,7 +2478,6 @@ static void dpa_ok_clicked(LiVESButton *button, livespointer user_data) {
   lives_list_free_all(&future_prefs->disabled_decoders);
 
   future_prefs->disabled_decoders = future_prefs->disabled_decoders_new;
-
 }
 
 
@@ -2496,7 +2490,6 @@ static void dpa_cancel_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   lives_list_free_all(&future_prefs->disabled_decoders_new);
-
 }
 
 

@@ -173,7 +173,7 @@ typedef struct {
 
   boolean antialias;
 
-  boolean ignore_tiny_fps_diffs;
+  double fps_tolerance;
 
   short rte_keys_virtual;
 

@@ -77,7 +77,7 @@ else {
     $is_util=0;
 }
 
-$builder_version="3.0.0-pre";
+$builder_version="3.0.0";
 
 if ($in_channels == 0 && ($properties & 0x0004)) {
     #batch mode generator

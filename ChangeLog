@@ -1,5 +1,5 @@
-Version 3.0.0
---------------
+Version 3.0.0 (7 Aug 2019)
+-------------------------
 Fix for "Delete Set" not removing files from disk.
 Fix crash when selecting project directory with new install.
 Fix crash when starting playback with some generators (e.g. plasma) [regression].

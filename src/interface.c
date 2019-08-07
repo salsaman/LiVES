@@ -3100,7 +3100,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 
 
 LIVES_GLOBAL_INLINE LiVESWidget *make_autoreload_check(LiVESHBox *hbox, boolean is_active) {
-  return lives_standard_check_button_new(_("_Autoreload next time"), is_active, hbox, NULL);
+  return lives_standard_check_button_new(_("_Autoreload next time"), is_active, LIVES_BOX(hbox), NULL);
 }
 
 

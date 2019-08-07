@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-08-06 12:09-0300\n"
+"POT-Creation-Date: 2019-08-07 14:27-0300\n"
 "PO-Revision-Date: 2012-08-08 08:49+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -11770,7 +11770,8 @@ msgid "Set video framerate to <fps>"
 msgstr "Videó sebességének beállítása erre: <fps>"
 
 #: src/omc-learn.c:1472
-msgid "Set framerate of foreground clip to <float fps>"
+#, fuzzy
+msgid "Set the framerate of foreground clip to <(float) fps>"
 msgstr ""
 "Az előtérben lévő videó sebességének beállítása a megadott értékre <float "
 "fps>"
@@ -11832,7 +11833,8 @@ msgid "Set video framerate to ratio <fps_ratio>"
 msgstr "Videó sebességének beállítása erre az arányra: <fps_ratio>"
 
 #: src/omc-learn.c:1516
-msgid "Set framerate ratio of foreground clip to <float fps_ratio>"
+#, fuzzy
+msgid "Set the framerate ratio of the foreground clip to <(float) fps_ratio>"
 msgstr ""
 "Előtérben lévő videó sebesség arányának beállítása erre: <float fps_ratio>"
 

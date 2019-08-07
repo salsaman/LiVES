@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-08-06 12:09-0300\n"
+"POT-Creation-Date: 2019-08-07 14:27-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -12064,7 +12064,8 @@ msgid "Set video framerate to <fps>"
 msgstr "映像のフレームレートを <fps> に設定"
 
 #: src/omc-learn.c:1472
-msgid "Set framerate of foreground clip to <float fps>"
+#, fuzzy
+msgid "Set the framerate of foreground clip to <(float) fps>"
 msgstr "前景クリップのフレームレートを <float fps> に設定"
 
 #: src/omc-learn.c:1476
@@ -12125,7 +12126,8 @@ msgid "Set video framerate to ratio <fps_ratio>"
 msgstr "映像のフレームレートを <fps_ratio> に設定"
 
 #: src/omc-learn.c:1516
-msgid "Set framerate ratio of foreground clip to <float fps_ratio>"
+#, fuzzy
+msgid "Set the framerate ratio of the foreground clip to <(float) fps_ratio>"
 msgstr "前景クリップのフレームレート比を <float fps_ratio> にセット"
 
 #: src/omc-learn.c:1520

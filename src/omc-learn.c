@@ -1469,7 +1469,7 @@ static void init_omc_macros(void) {
 
   omc_macros[SET_FRAMERATE].msg = lives_strdup("/video/fps/set");
   omc_macros[SET_FRAMERATE].macro_text = lives_strdup(_("Set video framerate to <fps>"));
-  omc_macros[SET_FRAMERATE].info_text = lives_strdup(_("Set framerate of foreground clip to <float fps>"));
+  omc_macros[SET_FRAMERATE].info_text = lives_strdup(_("Set the framerate of foreground clip to <(float) fps>"));
   omc_macros[SET_FRAMERATE].nparams = 1;
 
   omc_macros[START_RECORDING].msg = lives_strdup("/record/enable");
@@ -1513,7 +1513,7 @@ static void init_omc_macros(void) {
 
   omc_macros[SET_FPS_RATIO].msg = lives_strdup("/video/fps/ratio/set");
   omc_macros[SET_FPS_RATIO].macro_text = lives_strdup(_("Set video framerate to ratio <fps_ratio>"));
-  omc_macros[SET_FPS_RATIO].info_text = lives_strdup(_("Set framerate ratio of foreground clip to <float fps_ratio>"));
+  omc_macros[SET_FPS_RATIO].info_text = lives_strdup(_("Set the framerate ratio of the foreground clip to <(float) fps_ratio>"));
   omc_macros[SET_FPS_RATIO].nparams = 1;
 
   omc_macros[RETRIGGER_CLIP].msg = lives_strdup("/clip/foreground/retrigger");

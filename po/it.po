@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-08-06 12:09-0300\n"
+"POT-Creation-Date: 2019-08-07 14:27-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -11803,7 +11803,8 @@ msgid "Set video framerate to <fps>"
 msgstr "Imposta il rapporto dei fotogrammi del video a <fps>"
 
 #: src/omc-learn.c:1472
-msgid "Set framerate of foreground clip to <float fps>"
+#, fuzzy
+msgid "Set the framerate of foreground clip to <(float) fps>"
 msgstr "Imposta il valore dei fotogrammi del clip in primo piano a <float fps>"
 
 #: src/omc-learn.c:1476
@@ -11864,7 +11865,8 @@ msgid "Set video framerate to ratio <fps_ratio>"
 msgstr "Imposta il valore dei fotogrammi del video al rapporto <fps_ratio>"
 
 #: src/omc-learn.c:1516
-msgid "Set framerate ratio of foreground clip to <float fps_ratio>"
+#, fuzzy
+msgid "Set the framerate ratio of the foreground clip to <(float) fps_ratio>"
 msgstr ""
 "Imposta il rapporto del valore dei fotogrammi del clip in primo piano a "
 "<float fps_ratio>"

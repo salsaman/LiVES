@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-08-06 12:09-0300\n"
+"POT-Creation-Date: 2019-08-07 14:27-0300\n"
 "PO-Revision-Date: 2015-11-25 22:11+0000\n"
 "Last-Translator: Jean-Marc <Unknown>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -11458,7 +11458,7 @@ msgid "Set video framerate to <fps>"
 msgstr ""
 
 #: src/omc-learn.c:1472
-msgid "Set framerate of foreground clip to <float fps>"
+msgid "Set the framerate of foreground clip to <(float) fps>"
 msgstr ""
 
 #: src/omc-learn.c:1476
@@ -11518,7 +11518,7 @@ msgid "Set video framerate to ratio <fps_ratio>"
 msgstr ""
 
 #: src/omc-learn.c:1516
-msgid "Set framerate ratio of foreground clip to <float fps_ratio>"
+msgid "Set the framerate ratio of the foreground clip to <(float) fps_ratio>"
 msgstr ""
 
 #: src/omc-learn.c:1520

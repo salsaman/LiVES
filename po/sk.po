@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-08-06 12:09-0300\n"
+"POT-Creation-Date: 2019-08-07 14:27-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -11692,7 +11692,8 @@ msgid "Set video framerate to <fps>"
 msgstr "Nastaviť pomer videa na <fps>"
 
 #: src/omc-learn.c:1472
-msgid "Set framerate of foreground clip to <float fps>"
+#, fuzzy
+msgid "Set the framerate of foreground clip to <(float) fps>"
 msgstr "Nastaviť pomer výstupu klipu k <float fps>"
 
 #: src/omc-learn.c:1476
@@ -11752,8 +11753,9 @@ msgid "Set video framerate to ratio <fps_ratio>"
 msgstr ""
 
 #: src/omc-learn.c:1516
-msgid "Set framerate ratio of foreground clip to <float fps_ratio>"
-msgstr ""
+#, fuzzy
+msgid "Set the framerate ratio of the foreground clip to <(float) fps_ratio>"
+msgstr "Nastaviť pomer výstupu klipu k <float fps>"
 
 #: src/omc-learn.c:1520
 msgid "Retrigger clip <clipnum>"

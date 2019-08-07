@@ -8,16 +8,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2019-08-06 12:09-0300\n"
-"PO-Revision-Date: 2019-06-25 13:55+0000\n"
-"Last-Translator: yurchor <Unknown>\n"
+"POT-Creation-Date: 2019-08-07 14:27-0300\n"
+"PO-Revision-Date: 2019-07-22 18:27+0000\n"
+"Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2019-07-01 16:04+0000\n"
-"X-Generator: Launchpad (build 18991)\n"
+"X-Launchpad-Export-Date: 2019-08-07 17:24+0000\n"
+"X-Generator: Launchpad (build 19015)\n"
 
 #: src/main.c:152
 msgid ""
@@ -229,7 +229,7 @@ msgstr ""
 "а потім повторіть спробу.\n"
 
 #: src/main.c:595
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to write to the configuration file\n"
@@ -239,11 +239,12 @@ msgid ""
 "and try again.\n"
 msgstr ""
 "\n"
-"LiVES не вдалося записати файл налаштування програми\n"
+"LiVES не вдалося записати файл налаштувань\n"
 "%s\n"
 "\n"
-"Будь ласка, перевірте права доступу на цей файл і каталог,\n"
-"а потім повторіть спробу.\n"
+"Будь ласка, перевірте, чи є у вас права доступу до запису до цього файла і "
+"каталогу\n"
+"і повторіть спробу.\n"
 
 #: src/main.c:713
 msgid "Starting...\n"
@@ -803,6 +804,11 @@ msgid ""
 "Click Yes if you REALLY want to continue, or No to create or select another "
 "directory.\n"
 msgstr ""
+"Вами було визначено ваш домашній каталог як робочий каталог LiVES.\n"
+"Не рекомендуємо цього робити, оскільки це, ймовірно, призведе до втрати "
+"деяких непов'язаних із програмою файлів.\n"
+"Натисніть кнопку «Так», якщо ви справді хочете використовувати домашній "
+"каталог, або кнопку «Ні», щоб створити або вибрати інший каталог.\n"
 
 #: src/startup.c:24
 #, c-format
@@ -870,19 +876,17 @@ msgid "Directory name is too long !"
 msgstr "Назва каталогу занадто довга!"
 
 #: src/startup.c:126
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LiVES could not write to the directory\n"
 "%s\n"
 "Please check permissions for the parent directory,\n"
 "and try again.\n"
 msgstr ""
-"\n"
-"LiVES не вдалося записати файл налаштування програми\n"
+"LiVES не вдалося виконати запис до каталогу\n"
 "%s\n"
-"\n"
-"Будь ласка, перевірте права доступу на цей файл і каталог,\n"
-"а потім повторіть спробу.\n"
+"Будь ласка, перевірте, чи є у вас права доступу до батьківського каталогу,\n"
+"і повторіть спробу.\n"
 
 #: src/startup.c:193
 msgid ""
@@ -7418,6 +7422,9 @@ msgid ""
 "parameter.\n"
 "The setting is applied instantly to the entire transition."
 msgstr ""
+"Якщо позначено, звукові дані з обох шарів буде змікшовано відносно параметра "
+"переходу.\n"
+"Значення цього параметра буде застосовано негайно до всього переходу."
 
 #: src/paramwindow.c:443
 msgid "Transition _Out"
@@ -12053,7 +12060,8 @@ msgid "Set video framerate to <fps>"
 msgstr "Встановити значення частоти кадрів відео <fps>"
 
 #: src/omc-learn.c:1472
-msgid "Set framerate of foreground clip to <float fps>"
+#, fuzzy
+msgid "Set the framerate of foreground clip to <(float) fps>"
 msgstr "Встановити частоту кадрів для кліпу переднього плану <float fps>"
 
 #: src/omc-learn.c:1476
@@ -12113,7 +12121,8 @@ msgid "Set video framerate to ratio <fps_ratio>"
 msgstr "Встановити частоту кадрів відео у співвідношення <fps_ratio>"
 
 #: src/omc-learn.c:1516
-msgid "Set framerate ratio of foreground clip to <float fps_ratio>"
+#, fuzzy
+msgid "Set the framerate ratio of the foreground clip to <(float) fps_ratio>"
 msgstr ""
 "Встановити коефіцієнт частоти кадрів для кліпу переднього плану у <float "
 "fps_ratio>"
@@ -13635,11 +13644,3 @@ msgstr "Помилка $plugin_name:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
-
-#~ msgid "Check the box to make audio transition with the video"
-#~ msgstr ""
-#~ "Позначте цей пункт, щоб наказати програмі виконати перехід звуку разом з "
-#~ "переходом зображення"
-
-#~ msgid "LiVES: - "
-#~ msgstr "LiVES: - "

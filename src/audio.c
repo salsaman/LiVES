@@ -1666,6 +1666,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     on_playsel_activate(NULL, NULL);
     mainw->current_file = current_file;
   }
+  mainw->cancel_type = CANCEL_KILL;
   jack_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), TRUE);
 }
 
@@ -1691,7 +1692,6 @@ void jack_rec_audio_end(boolean close_device, boolean close_fd) {
     // close file
     close(mainw->aud_rec_fd);
     mainw->aud_rec_fd = -1;
-    mainw->cancel_type = CANCEL_KILL;
   }
 }
 #endif
@@ -1829,6 +1829,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     on_playsel_activate(NULL, NULL);
     mainw->current_file = current_file;
   }
+  mainw->cancel_type = CANCEL_KILL;
   pulse_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), TRUE);
 }
 
@@ -1857,7 +1858,6 @@ void pulse_rec_audio_end(boolean close_device, boolean close_fd) {
     // close file
     close(mainw->aud_rec_fd);
     mainw->aud_rec_fd = -1;
-    mainw->cancel_type = CANCEL_KILL;
   }
 }
 

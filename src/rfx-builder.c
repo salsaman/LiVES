@@ -2483,6 +2483,7 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
   splist = lives_list_append(splist, (livespointer)"aspect");
   splist = lives_list_append(splist, (livespointer)"framedraw");
   splist = lives_list_append(splist, (livespointer)"fileread");
+  splist = lives_list_append(splist, (livespointer)"filewrite");
   splist = lives_list_append(splist, (livespointer)"password");
   if (rfxbuilder->type == RFX_BUILD_TYPE_EFFECT2) {
     splist = lives_list_append(splist, (livespointer)"mergealign");
@@ -2567,7 +2568,7 @@ void on_paramw_sp_changed(LiVESCombo *combo, livespointer user_data) {
     on_paramw_spsub_changed(LIVES_COMBO(rfxbuilder->paramw_spsub_combo), (livespointer)rfxbuilder);
     lives_widget_grab_focus(lives_combo_get_entry(LIVES_COMBO(rfxbuilder->paramw_spsub_combo)));
   } else {
-    if (!strcmp(ctext, "fileread") || !strcmp(ctext, "password")) npars = 1;
+    if (!strcmp(ctext, "fileread") || !strcmp(ctext, "filewrite") || !strcmp(ctext, "password")) npars = 1;
     else npars = 2;
     lives_label_set_text(LIVES_LABEL(rfxbuilder->paramw_rest_label),
                          (tmpx = lives_strdup_printf(_("Linked parameters (%d):    "), npars)));

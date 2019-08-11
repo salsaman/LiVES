@@ -600,6 +600,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
   if (vpp == mainw->vpp) {
     if (vppw->spinbuttonw != NULL) mainw->vpp->fwidth = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));
     if (vppw->spinbuttonh != NULL) mainw->vpp->fheight = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));
+    if (vppw->apply_fx != NULL) mainw->vpp->apply_fx = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(vppw->apply_fx));
     if (vppw->fps_entry != NULL) fixed_fps = lives_entry_get_text(LIVES_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry != NULL) {
       cur_pal = lives_strdup(lives_entry_get_text(LIVES_ENTRY(vppw->pal_entry)));
@@ -901,7 +902,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   vppa->plugin = tmpvpp;
   vppa->rfx = NULL;
 
-  vppa->spinbuttonh = vppa->spinbuttonw = NULL;
+  vppa->spinbuttonh = vppa->spinbuttonw = vppa->apply_fx = NULL;
   vppa->pal_entry = vppa->fps_entry = NULL;
 
   vppa->keep_rfx = FALSE;
@@ -1031,9 +1032,11 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       lives_list_free_all(&pal_list_strings);
     }
   }
+  if (intention == 1) {
+    vppa->apply_fx = lives_standard_check_button_new(_("Apply current realtime effects"), FALSE, LIVES_BOX(dialog_vbox), NULL);
+  }
 
   // extra params
-
   if (tmpvpp->get_init_rfx != NULL) {
     LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
     LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V / 2, vbox);
@@ -3148,6 +3151,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
   lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
     int i;
+    if (rfx == NULL) return NULL;
     for (i = 0; i < rfx->num_params; i++) {
       if (!strcmp(name, rfx->params[i].name)) {
         return &rfx->params[i];
@@ -3648,6 +3652,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
     // NOTE: if vbox is not NULL, we create the window inside vbox, without running it
     // in this case, vbox should be packed in its own dialog window, which should then be run
+    // and we also return the name of the scrapfile, which should be removed after running the window
 
     // NOTE: pass in either get_com (command to be run to get rfx text), or else scrap_text, setting the unused value to NULL.
 
@@ -3665,6 +3670,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
     int res;
     int retval;
+
+    rfx->name = NULL;
 
     string = lives_strdup_printf("<name>\n%s\n</name>\n", rfx_scrapname);
 
@@ -3820,12 +3827,13 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       }
     }
 
+    lives_free(rfx_scrapname);
+
     if (fnamex != NULL) {
-      lives_rm(fnamex);
+      if (vbox == NULL) lives_rm(fnamex);
       lives_free(fnamex);
     }
 
-    lives_free(rfx_scrapname);
     return res_string;
   }
 

@@ -13,6 +13,7 @@
 #include "resample.h"
 #include "effects.h"
 #include "transcode.h"
+#include "paramwindow.h"
 
 #if HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -60,29 +61,6 @@ boolean send_layer(weed_plant_t *layer, _vid_playback_plugin *vpp, int64_t timec
 
 
 boolean transcode(int start, int end) {
-  int fd = -1;
-  int resp;
-  int asigned = 0, aendian = 0;
-  int nsamps;
-
-  register int i, j;
-
-  boolean audio = FALSE;
-  boolean swap_endian = FALSE;
-  boolean error = FALSE;
-
-  int64_t currticks;
-
-  ssize_t in_bytes;
-
-  const char *img_ext = NULL;
-
-  char *afname = NULL;
-  char *pname = NULL;
-  char *msg = NULL;
-
-  double spf = 0., ospf;
-
   _vid_playback_plugin *vpp, *ovpp;
   _vppaw *vppa;
   weed_plant_t *frame_layer = NULL;
@@ -94,6 +72,31 @@ boolean transcode(int start, int end) {
   short *sbuff = NULL;
 
   float **fltbuf = NULL;
+
+  int64_t currticks;
+
+  ssize_t in_bytes;
+
+  LiVESList *retvals = NULL;
+
+  const char *img_ext = NULL;
+
+  char *afname = NULL;
+  char *pname = NULL;
+  char *msg = NULL, *tmp;
+
+  double spf = 0., ospf;
+
+  boolean audio = FALSE;
+  boolean swap_endian = FALSE;
+  boolean error = FALSE;
+
+  int fd = -1;
+  int resp;
+  int asigned = 0, aendian = 0;
+  int nsamps;
+
+  register int i = 0, j;
 
   mainw->suppress_dprint = TRUE;
 
@@ -121,10 +124,18 @@ boolean transcode(int start, int end) {
 
   // keep this, stop it from being freed
   rfx = vppa->rfx;
+  if (rfx == NULL) goto tr_err2;
   vppa->keep_rfx = TRUE;
 
   // set the default value in the param window
   set_rfx_param_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, pname, TRUE);
+
+  retvals = do_onchange_init(rfx);
+  if (retvals != NULL) {
+    // now apply visually anything we got from onchange_init
+    param_demarshall(rfx, retvals, TRUE, TRUE);
+    lives_list_free_all(&retvals);
+  }
 
   // run the param window
   resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
@@ -132,6 +143,9 @@ boolean transcode(int start, int end) {
   // get the param value ourselves
   lives_freep((void **)&pname);
   get_rfx_param_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, (char **)&pname);
+  tmp = lives_build_filename(prefs->workdir, rfx->name, NULL);
+  lives_rm(tmp);
+  lives_free(tmp);
   rfx_free(rfx);
   lives_free(rfx);
 
@@ -246,6 +260,7 @@ goto tr_err:
     // need img_ext for pulling the frame
     img_ext = get_image_ext_for_type(cfile->img_type);
 
+    mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
     do_threaded_dialog(msg, TRUE);
 
     // encoding loop
@@ -254,10 +269,12 @@ goto tr_err:
       weed_set_int_value(frame_layer, WEED_LEAF_FRAME, i);
 
       // - pull next frame (thread)
-      pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)(currticks = lives_get_current_ticks()));
+      pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)(currticks = q_gint64((i - start) / cfile->fps * TICKS_PER_SECOND_DBL,
+                          cfile->fps)));
 
-      // TODO - allow user to select apply / dont apply effects
-      frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);
+      if (vpp->apply_fx) {
+        frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);
+      }
 
       if (audio) {
         // - read 1 frame worth of audio, to float, send
@@ -287,6 +304,10 @@ goto tr_err:
             }
           }
 
+          if (vpp->apply_fx) {
+            // apply any audio effects with in_channels
+            if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf, cfile->achans, nsamps, cfile->arate, currticks, FALSE);
+          }
           (*mainw->vpp->render_audio_frame_float)(fltbuf, nsamps);
         }
         // account for rounding errors
@@ -313,6 +334,8 @@ goto tr_err:
     }
 
 tr_err:
+    mainw->cancel_type = CANCEL_KILL;
+
     // flush streams, write headers, plugin cleanup
     if (vpp != NULL && vpp->exit_screen != NULL) {
       (*vpp->exit_screen)(0, 0);
@@ -337,7 +360,7 @@ tr_err2:
     mainw->vpp = ovpp;
 
     if (mainw->cancelled != CANCEL_NONE) {
-      d_print_cancelled();
+      d_print_enough(i - start + 1);
       mainw->cancelled = CANCEL_NONE;
     } else {
       if (!error) d_print_done();

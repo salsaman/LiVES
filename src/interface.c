@@ -1001,6 +1001,8 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   xprocess *procw;
   char tmp_label[256];
 
+  LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+
   last_t = g_get_monotonic_time();
 
   procw = (xprocess *)(lives_calloc(1, sizeof(xprocess)));
@@ -1008,6 +1010,8 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
   lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
+
+  lives_window_add_accel_group(LIVES_WINDOW(procw->processing), accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
 
@@ -1046,7 +1050,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   if (has_cancel) {
-    if (CURRENT_CLIP_IS_VALID && cfile->opening_only_audio) {
+    if (CURRENT_CLIP_IS_VALID && mainw->cancel_type == CANCEL_SOFT) {
       LiVESWidget *enoughbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("_Enough"), LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_default(enoughbutton, TRUE);
 
@@ -1054,21 +1058,20 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
                            LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
                            LIVES_INT_TO_POINTER(1));
 
-      mainw->cancel_type = CANCEL_SOFT;
+      lives_widget_add_accelerator(enoughbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                                   LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+    } else {
+      procw->cancel_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), LIVES_STOCK_CANCEL, NULL,
+                             LIVES_RESPONSE_CANCEL);
+      lives_widget_set_can_default(procw->cancel_button, TRUE);
+
+      lives_widget_add_accelerator(procw->cancel_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                                   LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+
+      lives_signal_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                           LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
+                           LIVES_INT_TO_POINTER(0));
     }
-
-    procw->cancel_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), LIVES_STOCK_CANCEL, NULL,
-                           LIVES_RESPONSE_CANCEL);
-    lives_widget_set_can_default(procw->cancel_button, TRUE);
-
-    lives_widget_add_accelerator(procw->cancel_button, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group,
-                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
-    lives_signal_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
-                         LIVES_INT_TO_POINTER(0));
-
-    mainw->cancel_type = CANCEL_SOFT;
   }
 
   if (lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {

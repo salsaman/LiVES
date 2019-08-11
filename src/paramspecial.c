@@ -28,6 +28,7 @@
 static lives_special_aspect_t aspect;
 static lives_special_framedraw_rect_t framedraw;
 static LiVESList *fileread;
+static LiVESList *filewrite;
 static LiVESList *passwd_widgets;
 
 
@@ -44,6 +45,7 @@ void init_special(void) {
   mergealign.start_param = mergealign.end_param = NULL;
   passwd_widgets = NULL;
   fileread = NULL;
+  filewrite = NULL;
 }
 
 
@@ -133,6 +135,12 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   else if (!strcmp(array[0], "fileread")) {
     int idx = atoi(array[1]);
     fileread = lives_list_append(fileread, (livespointer)&rfx->params[idx]);
+
+    // ensure we get an entry and not a text_view
+    if ((int)rfx->params[idx].max > RFX_TEXT_MAGIC) rfx->params[idx].max = (double)RFX_TEXT_MAGIC;
+  } else if (!strcmp(array[0], "filewrite")) {
+    int idx = atoi(array[1]);
+    filewrite = lives_list_append(filewrite, (livespointer)&rfx->params[idx]);
 
     // ensure we get an entry and not a text_view
     if ((int)rfx->params[idx].max > RFX_TEXT_MAGIC) rfx->params[idx].max = (double)RFX_TEXT_MAGIC;
@@ -340,6 +348,50 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
       lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)param->widgets[0]);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond, FALSE);
+      lives_widget_set_show_hide_with(param->widgets[0], buttond);
+      lives_widget_set_sensitive_with(param->widgets[0], buttond);
+
+      if (LIVES_IS_ENTRY(param->widgets[0])) {
+        lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]), FALSE);
+        if (param->widgets[1] != NULL &&
+            LIVES_IS_LABEL(param->widgets[1]) &&
+            lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
+          lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
+        lives_entry_set_max_length(LIVES_ENTRY(param->widgets[0]), PATH_MAX);
+      }
+    }
+
+    slist = slist->next;
+  }
+
+  slist = filewrite;
+  while (slist != NULL) {
+    if (param == (lives_param_t *)(slist->data)) {
+      int epos;
+
+      param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEWRITE;
+
+      if (param->widgets[0] == NULL) continue;
+
+      box = lives_widget_get_parent(param->widgets[0]);
+
+      while (box != NULL && !LIVES_IS_HBOX(box)) {
+        box = lives_widget_get_parent(box);
+      }
+
+      if (box == NULL) return;
+
+      epos = get_box_child_index(LIVES_BOX(box), param->widgets[0]);
+
+      buttond = lives_standard_file_button_new(FALSE, lives_get_current_dir());
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(buttond), "filesel_type", (livespointer)LIVES_FILE_SELECTION_SAVE);
+      lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_reorder_child(LIVES_BOX(box), buttond, epos); // insert after label, before textbox
+      lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)param->widgets[0]);
+
+      if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond, FALSE);
+      lives_widget_set_show_hide_with(param->widgets[0], buttond);
+      lives_widget_set_sensitive_with(param->widgets[0], buttond);
 
       if (LIVES_IS_ENTRY(param->widgets[0])) {
         lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]), FALSE);
@@ -435,6 +487,7 @@ void special_cleanup(void) {
   if (framedraw.extra_params != NULL) lives_free(framedraw.extra_params);
 
   if (fileread != NULL) lives_list_free(fileread);
+  if (filewrite != NULL) lives_list_free(filewrite);
   if (passwd_widgets != NULL) lives_list_free(passwd_widgets);
 
   framedraw.added = FALSE;

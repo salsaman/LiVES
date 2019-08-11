@@ -388,8 +388,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
           mainw->cancelled = CANCEL_NONE;
 
-          cfile->opening_only_audio = TRUE;
-          if (mainw->playing_file == -1) do_threaded_dialog(msgstr, TRUE);
+          if (mainw->playing_file == -1) {
+            mainw->cancel_type = CANCEL_SOFT;
+            do_threaded_dialog(msgstr, TRUE);
+            mainw->cancel_type = CANCEL_KILL;
+          }
 
           do {
             if (stframe + nframes > maxframe) nframes = maxframe - stframe;
@@ -412,8 +415,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
           end_threaded_dialog();
           lives_free(msgstr);
-
-          cfile->opening_only_audio = FALSE;
           lives_free(afile);
         } else {
           cfile->arate = 0.;
@@ -3388,7 +3389,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     wait_for_bg_audio_sync(mainw->current_file);
 
     reget_afilesize(mainw->current_file);
-    d_print(_("%d frames are enough !\n"), cfile->frames);
+    d_print_enough(cfile->frames);
   } else {
     if (check_handle != NULL) {
       int npieces = get_token_count(mainw->msg, '|');

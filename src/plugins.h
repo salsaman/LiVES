@@ -103,6 +103,7 @@ typedef struct {
 #define VPP_LOCAL_DISPLAY (1<<2)
 
   int fwidth, fheight;
+  boolean apply_fx;
 
   int palette;
   int YUV_sampling;
@@ -372,6 +373,7 @@ typedef enum {
 
   // text widget types
   LIVES_PARAM_SPECIAL_TYPE_FILEREAD,
+  LIVES_PARAM_SPECIAL_TYPE_FILEWRITE,
   LIVES_PARAM_SPECIAL_TYPE_PASSWORD,
 
   // misc types
@@ -556,6 +558,7 @@ typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *spinbuttonh;
   LiVESWidget *spinbuttonw;
+  LiVESWidget *apply_fx;
   LiVESWidget *fps_entry;
   LiVESWidget *pal_entry;
   lives_rfx_t *rfx;

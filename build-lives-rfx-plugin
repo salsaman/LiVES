@@ -49,10 +49,6 @@ if ($delim =~ /[\^\$\.\*\+\?\|\(\)\[\]\{\}\\]/) {
 my $plugin_name=(&rc_read("name",$file))[0];
 my $author_name=(&rc_read("author",$file))[0];
 my $lang_code=(&rc_read("language_code",$file))[0];
-unless ($lang_code eq "240"||hex($lang_code)==240) {
-    print "  - Invalid language code for this builder !\n";
-    exit 3;
-}
 
 my $plugin_version=(&rc_read("version",$file))[0];
 my $description=(&rc_read("description",$file))[0];
@@ -64,6 +60,13 @@ my @pre=&rc_read("pre",$file);
 my @loop=&rc_read("loop",$file);
 my @post=&rc_read("post",$file);
 my @onchange=&rc_read("onchange",$file);
+
+if (@pre || @loop || @post || @onchange) {
+    unless ($lang_code eq "240"||hex($lang_code)==240) {
+	print "  - Invalid language code for this builder !\n";
+	exit 3;
+    }
+}
 
 $properties=hex($properties)|0x8000; # mark as built with build-plugin
 
@@ -77,7 +80,7 @@ else {
     $is_util=0;
 }
 
-$builder_version="3.0.0";
+$builder_version="3.0.1-pre";
 
 if ($in_channels == 0 && ($properties & 0x0004)) {
     #batch mode generator

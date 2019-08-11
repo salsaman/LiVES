@@ -2,8 +2,8 @@
 ---------------------------------
 
 Author: salsaman+lives@gmail.com
-Last edit date: 13/09/2018
-API Version: 1.8 GPL
+Last edit date: 10/08/2018
+API Version: 1.8.1 GPL
 
 Changes
 1.0 First version salsaman@xs4all.nl
@@ -16,7 +16,7 @@ d1.6 Added string_list parameter type
 1.7 Updates for compatibility with realtime effects
 1.8 Add special multirect, deprecate multrect, and remove audiochannel.
 
---- API Version frozen ---
+--- API Major / Minor Version frozen ---
 
 - Add "special|framedraw|multirect|"; add some hints about interpreting "special" keyword in "<layout>"
 - Add "special|framedraw|singlepoint|"
@@ -33,6 +33,11 @@ d1.6 Added string_list parameter type
 - tighten up wording a little bit
 - Correct description of "multirect", remove mention of "multrect"
 
+1.8.1
+- Add "special|filewrite"
+- License amended to LGPL to allow its use in closed source components.
+
+
 TODO: 	- split into RFX layout and RFX plugin components (?)
 
 
@@ -42,10 +47,10 @@ TODO: 	- split into RFX layout and RFX plugin components (?)
 
 Note:
 This license documents a standard. The license of this document is the GNU FDL (GNU Free Documentation License) version 1.3 or higher. 
-The standard itself is released under the GPL v3 or higher.
+The standard itself is released under the LGPL v3 or higher.
 
 See: http://www.gnu.org/copyleft/fdl.html
-     http://www.gnu.org/licenses/gpl-3.0.html
+https://www.gnu.org/licenses/lgpl-3.0.en.html
 
 
 
@@ -57,8 +62,14 @@ effects from scripts. It currently has features for:
 - defining parameters
 - sending layout hints to a GUI about how to present a parameter window
 - allowing triggers when the parameter window is initialised, and/or when any 
-     of the parameter values are altered
+of the parameter values are altered
+
 - allowing definition of code for pre/loop/post processing (e.g. of blocks of frames)
+
+
+Note: The first 3 parts are generic for any type of plugin;
+the final part is specific to LiVES rendered effect plugins and may be ignored if necessary.
+
 
 
 ----------------------------------------------------------------------
@@ -160,11 +171,11 @@ Here are the RFX sections:
 
 <language_code>
 
-<pre> [plugins only] [optional] [list]
+<pre> [plugins only] [optional] [list] (LiVES rendered effects only)
 
-<loop> [plugins only] [optional] [list]
+<loop> [plugins only] [optional] [list] (LiVES rendered effects only)
 
-<post> [plugins only] [optional] [list]
+<post> [plugins only] [optional] [list] (LiVES rendered effects only)
 
 <onchange> [optional] [list]
 
@@ -173,14 +184,14 @@ The contents of each section are described below.
 
 <define>
 
-This section contains the following entities:
+This mandatory section contains the following entities:
 field delimiter
 RFX version
 
 E.g.:
 
 <define>
-|1.8
+|1.8.1
 </define>
 
 As noted, the following assumes the default field delimiter of |.
@@ -189,7 +200,7 @@ As noted, the following assumes the default field delimiter of |.
 
 <name>
 
-This section contains a single entry with the name of the effect. The name 
+This section is mandatory for effects, and contains a single entry with the name of the effect. The name 
 not contain spaces, newlines or the delimiter character (|). Each plugin name should be unique for that author.
 
 
@@ -204,7 +215,7 @@ blank_frames
 
 <version>
 
-This is a mandatory section for a version string for a plugin. It should be an integer. 
+This is a mandatory section for effects, a version string for a plugin. It should be an integer. 
 Do not confuse this with the RFX version in the <define> section.
 
 e.g.
@@ -215,7 +226,7 @@ e.g.
 
 <author>
 
-This is a mandatory section for an "author" string for a plugin. 
+This is a mandatory section for effects for an "author" string for a plugin. 
 Any format is acceptible, but it should not contain newlines or the 
 delimiter character. An optional second field may contain the author's URL.
 
@@ -229,7 +240,7 @@ somebody@somewhere.com|http://www.mysite.org|
 
 <description>
 
-This section consists of a single entry with 4 fields, it is mandatory for a plugin:
+This section consists of a single entry with 4 fields, it is mandatory for a rendered effects plugin:
 
 menu text|action description|minimum frames|num_channels
 
@@ -502,6 +513,8 @@ The mergealign special widget links together two num type parameters. It has two
 
 Special type "fileread" - 1 string parameter : the linked string parameter should point to a file to which the user has read permissions. In this case the maximum string length may be ignored by the host to avoid truncating longer filenames.
 
+Special type "filewrite" - 1 string parameter : the linked string parameter should point to a file to which the user has write / create permissions. In this case the maximum string length may be ignored by the host to avoid truncating longer filenames. The host should confirm with the user in the case that the file already exists as the existing file may be overwritten.
+
 Special type "password" - 1 string parameter : the host may hide/obscure the input to this string
 
 
@@ -516,7 +529,7 @@ Special type "password" - 1 string parameter : the host may hide/obscure the inp
 
 <properties> [optional]
 
-this is a bitmap field (currently 32 bit). Hexadecimal values are allowed.
+this is a bitmap field (currently 32 bit) for rendered effects. Hexadecimal values are allowed.
 some bits are defined already
 
 0x0001 == slow (hint to host)
@@ -563,7 +576,7 @@ Current values are:
 
 <pre> [optional] [list]
 
-This section contains code which will be executed before the processing loop.
+This section is for rendered effects and contains code which will be executed before the processing loop.
 
 e.g. (in LiVES-perl):
 
@@ -592,7 +605,7 @@ $fps=25.0;
 <loop> [list]
 
 IMPORTANT NOTE
-This section is optional for non-processing scripts (where min frames is set 
+This section is mandatory for rendered effect plugins (optional for non-processing scripts - where min frames is set 
 to -1, see above)
 
 This section contains code which will be executed for each frame in the 
@@ -640,7 +653,7 @@ generated clip.
 
 <post> [optional] [list]
 
-This section contains code which should be executed after all frames in the 
+This section is for rendered effects only, and contains code which should be executed after all frames in the 
 block have been processed.
 
 e.g. (in LiVES-perl):
@@ -673,9 +686,137 @@ trigger type is executed in the order in which it appears in this section. The f
 e.g. (in LiVES-perl):
 
 <onchange>
-init|$p0_min=-$width+1;$p0_max=$width-1;$p1_min=-$height+1;$p1_max=$height-1;
-0|if ($p0) {$p3=$p4*$p5;} elsif ($p1&&$p5>0.) {$p4=$p3/$p5;} elsif ($p4>0.) {$p5=$p3/$p4;}
+init|$p0_min=-$width+1; $p0_max=$width-1; $p1_min=-$height+1; $p1_max=$height-1;
+0|if ($p0) {$p3=$p4*$p5;} elsif ($p1&&$p5>0.) {$p4=$p3/$p5;}
+0| elsif ($p4>0.) {$p5=$p3/$p4;}
 </onchange>
 
 
 
+
+Examples:
+
+1) setup window for openGL playback plugin:
+
+const char *get_init_rfx(void) {
+  return 
+    "<define>\\n\
+|1.7\\n\
+</define>\\n\
+<params> \\n\
+mode|_Mode|string_list|0|Normal|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel|Particles|Dissolve\\n\
+tfps|Max render _Framerate|num2|" SE(DEF_FPS_MAX) "|1.|200.\\n\
+nbuf|Number of _texture buffers (ignored)|num0|" SE(DEF_NBUF) "|1|256\\n\
+dbuf|Use _double buffering|bool|1|0\\n\
+fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0\\n\
+</params> \\n\
+";
+}
+
+
+2) Setup window for a simple encoder:
+
+const char *get_init_rfx(void) {
+    return
+                    "<define>\\n\
+|1.8.1\\n\
+</define>\\n\
+<language_code>\\n\
+0xF0\\n\
+</language_code>\\n\
+<params> \\n\
+form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis||\\n\
+\
+mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
+\
+achans|Audio _layout|string_list|1|mono|stereo||\\n\
+arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
+mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
+\
+fname|_Output file|string|| \\n\
+</params> \\n\
+<param_window> \\n\
+special|filewrite|5| \\n\
+layout|p5|| \\n\
+</param_window> \\n\
+<onchange> \\n\
+init|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} else {$p5 .= \".ogm\";} \\n\
+0|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} else {$p5 .= \".ogm\";} \\n\
+</onchange> \\n\
+";
+}
+
+
+
+		    
+3) "negate" rendered effect, complete plugin script:
+
+<define>
+|1.7
+</define>
+
+<name>
+negate
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+<description>
+Negate|Negating|1|1|
+</description>
+
+<requires>
+convert
+</requires>
+
+<params>
+neg|_Negate|num0|1|1|10000|
+skip|_Skip|num0|0|0|10000|
+</params>
+
+<param_window>
+layout|p0|"frames, then "|p1|"frames"|
+</param_window>
+
+<properties>
+0x0000
+</properties>
+
+<language_code>
+0xF0
+</language_code>
+
+<pre>
+$to_do=$p0;
+</pre>
+
+<loop>
+if ($to_do<=0) {
+    if ($to_do<=-$p1) {
+        $to_do=$p0;
+    }
+    else {
+        #need continuous frames for preview
+        `cp $in $out`;
+    }
+}
+	 
+if ($to_do>0) {
+    system("$convert_command $img_prefix$in -negate $out_prefix$out");
+}
+$to_do--;
+</loop>
+
+<post>
+</post>
+
+<onchange>
+init|$p1_max=$length-$p0; $p0_max=$length-$p1;
+0|$p1_max=$length-$p0;
+</onchange>

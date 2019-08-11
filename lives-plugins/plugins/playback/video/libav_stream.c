@@ -42,7 +42,7 @@ static int avpalette;
 static int clampings[3];
 static int myclamp = WEED_YUV_CLAMPING_CLAMPED;
 
-static char plugin_version[64] = "LiVES libav stream engine version 1.0";
+static char plugin_version[64] = "LiVES libav stream engine version 1.1";
 
 static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
 
@@ -166,7 +166,7 @@ const char *get_init_rfx(int intention) {
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-form|_Format|string_list|0|flv/h264/mp3|ogg/theora/vorbis||\\n\
+form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis||\\n\
 \
 mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
 \
@@ -198,15 +198,15 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill| \\n\
 ";
 
   case 1: // LiVES transcoding (test)
-    return					\
+    return
                     "<define>\\n\
-|1.7\\n\
+|1.8.1\\n\
 </define>\\n\
 <language_code>\\n\
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-form|_Format|string_list|0|flv/h264/mp3|ogg/theora/vorbis||\\n\
+form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis||\\n\
 \
 mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
 \
@@ -217,9 +217,12 @@ mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 fname|_Output file|string|| \\n\
 </params> \\n\
 <param_window> \\n\
+special|filewrite|5| \\n\
 layout|p5|| \\n\
 </param_window> \\n\
 <onchange> \\n\
+init|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} else {$p5 .= \".ogm\";} \\n\
+0|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} else {$p5 .= \".ogm\";} \\n\
 </onchange> \\n\
 ";
   default:
@@ -350,7 +353,7 @@ static boolean open_audio() {
   c->channels        = out_nchans = av_get_channel_layout_nb_channels(c->channel_layout);
 
   c->bit_rate    = maxabitrate;
-
+  c->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
   ret = avcodec_open2(c, codec, &opt);
   if (ret < 0) {
     fprintf(stderr, "Could not open audio codec: %s\n", av_err2str(ret));
@@ -480,7 +483,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   const char *fmtstring;
 
-  //AVDictionary *opts = NULL;
+  AVDictionary *fmt_opts = NULL;
   char uri[PATH_MAX];
 
   int vcodec_id;
@@ -509,9 +512,10 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   if (argc > 0) {
     switch (atoi(argv[0])) {
     case 0:
-      fmtstring = "flv";
+      fmtstring = "mp4";
       vcodec_id = AV_CODEC_ID_H264;
-      acodec_id = AV_CODEC_ID_MP3;
+      //acodec_id = AV_CODEC_ID_MP3;
+      acodec_id = AV_CODEC_ID_AAC;
       break;
     case 1:
       fmtstring = "ogg";
@@ -557,7 +561,12 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   if (!fmtctx) return FALSE;
 
   // add the video stream
-  add_stream(&ostv, fmtctx, &codec, vcodec_id);
+  if (!add_stream(&ostv, fmtctx, &codec, vcodec_id)) {
+    avformat_free_context(fmtctx);
+    fmtctx = NULL;
+    return FALSE;
+  }
+
   vStream = ostv.st;
   ostv.codec = codec;
 
@@ -583,11 +592,13 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   vStream->codec->pix_fmt = avpalette;
 
   vStream->codec->bit_rate = maxvbitrate;
-  //if (vcodec_id == AV_CODEC_ID_H264) {
-  av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
-  av_opt_set(encctx->priv_data, "crf", "0", 0);
-  av_opt_set(encctx->priv_data, "qscale", "1", 0);
-  //}
+  if (vcodec_id == AV_CODEC_ID_H264) {
+    av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
+    //av_opt_set(encctx->priv_data, "crf", "0", 0);
+    av_opt_set(encctx->priv_data, "qscale", "1", 0);
+    av_opt_set(encctx->priv_data, "profile", "main", 0);
+    av_opt_set(encctx->priv_data, "crf", "1", 0);
+  }
   vStream->codec->gop_size = 10;
 
   if (vcodec_id == AV_CODEC_ID_MPEG2VIDEO) {
@@ -603,16 +614,22 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   fprintf(stderr, "init_screen2 %d x %d %d\n", width, height, argc);
 
-  /* open vido codec */
+  /* open video codec */
   if (avcodec_open2(encctx, codec, NULL) < 0) {
     fprintf(stderr, "Could not open codec\n");
+    avformat_free_context(fmtctx);
+    fmtctx = NULL;
     return FALSE;
   }
 
   // audio
 
   if (in_sample_rate > 0) {
-    add_stream(&osta, fmtctx, &acodec, acodec_id);
+    if (!add_stream(&osta, fmtctx, &acodec, acodec_id)) {
+      avformat_free_context(fmtctx);
+      fmtctx = NULL;
+      return FALSE;
+    }
     osta.codec = acodec;
     aStream = osta.st;
     osta.enc = aencctx = aStream->codec;
@@ -621,6 +638,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     ret = avcodec_parameters_from_context(aStream->codecpar, aencctx);
     if (ret < 0) {
       fprintf(stderr, "avcodec_decoder: avparms from context failed\n");
+      avformat_free_context(fmtctx);
+      fmtctx = NULL;
       return FALSE;
     }
 #endif
@@ -647,7 +666,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
       maxabitrate = atoi(argv[4]);
     }
     fprintf(stderr, "added audio stream\n");
-    open_audio();
+    if (!open_audio()) {
+      avformat_free_context(fmtctx);
+      fmtctx = NULL;
+      return FALSE;
+    }
   }
 
   av_dump_format(fmtctx, 0, uri , 1);
@@ -661,13 +684,19 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     if (ret < 0) {
       fprintf(stderr, "Could not open '%s': %s\n", uri,
               av_err2str(ret));
+      avformat_free_context(fmtctx);
+      fmtctx = NULL;
       return FALSE;
     }
 
-    ret = avformat_write_header(fmtctx, NULL);
+    av_dict_set(&fmt_opts, "movflags", "faststart", 0);
+    av_dict_set(&fmt_opts, "movflags", "frag_keyframe", 0);
+    ret = avformat_write_header(fmtctx, &fmt_opts);
     if (ret < 0) {
       fprintf(stderr, "Error occurred when writing header: %s\n",
               av_err2str(ret));
+      avformat_free_context(fmtctx);
+      fmtctx = NULL;
       return FALSE;
     }
   }
@@ -676,6 +705,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   ostv.frame = alloc_picture(avpalette, width, height);
   if (ostv.frame == NULL) {
     fprintf(stderr, "Could not allocate video frame\n");
+    avformat_free_context(fmtctx);
+    fmtctx = NULL;
     return FALSE;
   }
 
@@ -944,57 +975,57 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
   int i;
 
-  if (!stream_encode && !(fmtctx->oformat->flags & AVFMT_NOFILE)) {
+  if (fmtctx != NULL) {
+    if (!stream_encode && !(fmtctx->oformat->flags & AVFMT_NOFILE)) {
 
-    if (in_sample_rate != 0) {
-      // flush final audio
-      c = osta.enc;
+      if (in_sample_rate != 0) {
+	// flush final audio
+	c = osta.enc;
+
+	do {
+	  av_init_packet(&pkt);
+
+	  ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
+	  if (ret < 0) {
+	    fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), 0, 0, c->sample_rate, c->sample_fmt,
+		    c->channel_layout);
+	    break;
+	  }
+
+	  if (got_packet) {
+	    ret = write_frame(&c->time_base, aStream, &pkt);
+	    if (ret < 0) {
+	      fprintf(stderr, "Error while writing audio frame: %s\n",
+		      av_err2str(ret));
+	      break;
+	    }
+	  }
+	} while (got_packet);
+      }
+
+      // flush final few frames
+      c = ostv.enc;
 
       do {
-        av_init_packet(&pkt);
+	av_init_packet(&pkt);
 
-        ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
-        if (ret < 0) {
-          fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), 0, 0, c->sample_rate, c->sample_fmt,
-                  c->channel_layout);
-          break;
-        }
+	ret = avcodec_encode_video2(c, &pkt, NULL, &got_packet);
 
-        if (got_packet) {
-          ret = write_frame(&c->time_base, aStream, &pkt);
-          if (ret < 0) {
-            fprintf(stderr, "Error while writing audio frame: %s\n",
-                    av_err2str(ret));
-            break;
-          }
-        }
+	if (ret < 0) {
+	  fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(ret));
+	  break;
+	}
+	if (got_packet) {
+	  ret = write_frame(&c->time_base, vStream, &pkt);
+	} else {
+	  ret = 0;
+	}
+	if (ret < 0) {
+	  break;
+	}
       } while (got_packet);
     }
 
-    // flush final few frames
-    c = ostv.enc;
-
-    do {
-      av_init_packet(&pkt);
-
-      ret = avcodec_encode_video2(c, &pkt, NULL, &got_packet);
-
-      if (ret < 0) {
-        fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(ret));
-        break;
-      }
-      if (got_packet) {
-        ret = write_frame(&c->time_base, vStream, &pkt);
-      } else {
-        ret = 0;
-      }
-      if (ret < 0) {
-        break;
-      }
-    } while (got_packet);
-  }
-
-  if (fmtctx != NULL) {
     if (!(fmtctx->oformat->flags & AVFMT_NOFILE))
       /* Write the trailer, if any. The trailer must be written before you
        * close the CodecContexts open when you wrote the header; otherwise
@@ -1005,6 +1036,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     /* Close the output file. */
     avio_closep(&fmtctx->pb);
   }
+
 
   if (vStream != NULL) {
     avcodec_close(vStream->codec);

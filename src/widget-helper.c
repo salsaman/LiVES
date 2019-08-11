@@ -16,9 +16,6 @@
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
 static void default_changed_cb(LiVESObject *, livespointer pspec, livespointer user_data);
-static boolean lives_widget_set_sensitive_with(LiVESWidget *w1, LiVESWidget *w2);
-static boolean lives_widget_set_show_hide_with(LiVESWidget *widget, LiVESWidget *other);
-
 
 #if 0
 weed_plant_t *LiVESObject_to_weed_plant(LiVESObject *o) {
@@ -131,7 +128,7 @@ static void widget_state_cb(LiVESObject *object, livespointer pspec, livespointe
   if (state & LIVES_WIDGET_STATE_BACKDROP) return;
 
   if (LIVES_IS_BUTTON(widget)) {
-    // this is only for non-dialog buttons, they have their own callback (state_changed_cb)
+    // this is only for non-dialog buttons, they have their own callback (button_state_changed_cb)
     if (!LIVES_IS_TOGGLE_BUTTON(widget))
       default_changed_cb(object, NULL, NULL);
     return;
@@ -4782,6 +4779,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_set_focus_child(LiVESContain
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_container_get_focus_child(LiVESContainer *cont) {
+#ifdef GUI_GTK
+  return gtk_container_get_focus_child(cont);
+#endif
+  return NULL;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_progress_bar_new(void) {
   LiVESWidget *pbar = NULL;
 #ifdef GUI_GTK
@@ -6463,6 +6468,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_activates_default(LiVESEntry
 #ifdef GUI_QT
   // do nothing, enter is picked up by dialog
   return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_get_activates_default(LiVESEntry *entry) {
+#ifdef GUI_GTK
+  return gtk_entry_get_activates_default(entry);
 #endif
   return FALSE;
 }
@@ -8159,7 +8172,7 @@ static void default_changed_cb(LiVESObject *object, livespointer pspec, livespoi
 }
 
 
-static void state_changed_cb(LiVESWidget *widget, LiVESWidgetState state, livespointer user_data) {
+static void button_state_changed_cb(LiVESWidget *widget, LiVESWidgetState state, livespointer user_data) {
   // colour settings here are the exact opposite of what I would expect; however it seems to function in gtk+
   // I think we need to set the WRONG colour here, then correct it in default_changed_cb in order for gtk+
   // to update the background colour
@@ -8174,8 +8187,7 @@ static void state_changed_cb(LiVESWidget *widget, LiVESWidgetState state, livesp
 
   widget_opts.apply_theme = TRUE;
   if (lives_widget_is_sensitive(widget) && (state & LIVES_WIDGET_STATE_FOCUSED)) {
-    // focused button gets the default
-    lives_widget_grab_default(widget);
+    //lives_widget_grab_default(widget);
     lives_widget_object_set_data(toplevel, "current_default", widget);
     if (!(state & (LIVES_WIDGET_STATE_PRELIGHT))) set_child_colour(widget, TRUE);
     else set_child_alt_colour(widget, TRUE);
@@ -8522,7 +8534,7 @@ static void sens_insens_cb(LiVESObject *object, livespointer pspec, livespointer
 }
 
 
-WIDGET_HELPER_LOCAL_INLINE boolean lives_widget_set_sensitive_with(LiVESWidget *w1, LiVESWidget *w2) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive_with(LiVESWidget *w1, LiVESWidget *w2) {
   // set w2 sensitivity == w1
   lives_signal_connect_after(LIVES_GUI_OBJECT(w1), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
                              LIVES_GUI_CALLBACK(sens_insens_cb),
@@ -8543,7 +8555,7 @@ static void lives_widget_hide_cb(LiVESWidget *widget, livespointer user_data) {
 }
 
 
-static boolean lives_widget_set_show_hide_with(LiVESWidget *widget, LiVESWidget *other) {
+boolean lives_widget_set_show_hide_with(LiVESWidget *widget, LiVESWidget *other) {
   // show / hide the other widget when and only when the child is shown / hidden
   if (widget == NULL || other == NULL) return FALSE;
   if (!widget_opts.no_gui) {
@@ -9061,11 +9073,43 @@ LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *dialog, const char 
                          NULL);
     default_changed_cb(LIVES_WIDGET_OBJECT(button), NULL, NULL);
     lives_signal_connect_after(LIVES_GUI_OBJECT(button), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(state_changed_cb),
+                               LIVES_GUI_CALLBACK(button_state_changed_cb),
                                NULL);
-    state_changed_cb(button, lives_widget_get_state(button), NULL);
+    button_state_changed_cb(button, lives_widget_get_state(button), NULL);
   }
   return button;
+}
+
+
+WIDGET_HELPER_LOCAL_INLINE void dlg_focus_changed(LiVESContainer *c, LiVESWidget *widget, livespointer user_data) {
+#if GTK_CHECK_VERSION(2, 18, 0)
+  LiVESWidget *entry = NULL;
+  while (LIVES_IS_CONTAINER(widget)) {
+    LiVESWidget *fchild = lives_container_get_focus_child(LIVES_CONTAINER(widget));
+    if (fchild == NULL || fchild == widget) break;
+    widget = fchild;
+  }
+
+  if (LIVES_IS_COMBO(widget)) {
+    entry = lives_combo_get_entry(LIVES_COMBO(widget));
+  } else entry = widget;
+
+  if (entry != NULL && LIVES_IS_ENTRY(entry)) {
+    if (lives_entry_get_activates_default(LIVES_ENTRY(widget))) {
+      LiVESWidget *toplevel = lives_widget_get_toplevel(widget);
+      LiVESWidget *button = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), "default_button");
+      if (button != NULL && lives_widget_is_sensitive(button)) {
+        boolean woat = widget_opts.apply_theme;
+        widget_opts.apply_theme = TRUE;
+        // default button gets the default
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(toplevel), "current_default", NULL);
+        lives_widget_grab_default(button);
+        set_child_alt_colour(button, TRUE);
+        widget_opts.apply_theme = woat;
+      }
+    }
+  }
+#endif
 }
 
 
@@ -9107,7 +9151,6 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   lives_widget_set_hexpand(dialog, TRUE);
   lives_widget_set_vexpand(dialog, TRUE);
 
-
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
 #endif
@@ -9115,6 +9158,11 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
     funkify_dialog(dialog);
+#if GTK_CHECK_VERSION(2, 18, 0)
+    lives_signal_connect(LIVES_GUI_OBJECT(lives_dialog_get_content_area(LIVES_DIALOG(dialog))), LIVES_WIDGET_SET_FOCUS_CHILD_SIGNAL,
+                         LIVES_GUI_CALLBACK(dlg_focus_changed),
+                         NULL);
+#endif
   } else {
     lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
   }

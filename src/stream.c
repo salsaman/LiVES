@@ -458,8 +458,11 @@ void lives2lives_read_stream(const char *host, int port) {
 
   pthread_attr_init(&pattr);
   if (pthread_attr_setstacksize(&pattr, STREAM_BUF_SIZE * 4)) {
-    do_error_dialog(_("LiVES to LiVES stream error: Could not set buffer size !\n"));
+    end_threaded_dialog();
+    CloseHTMSocket(lstream->handle);
     lives_free(lstream);
+    d_print_failed();
+    do_error_dialog(_("LiVES to LiVES stream error: Could not set buffer size !\n"));
     lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);
     return;
   }
@@ -1001,6 +1004,12 @@ void on_send_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
   }
   vppa = on_vpp_advanced_clicked(NULL, NULL);
   resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
+
+  if (vppa->rfx != NULL) {
+    tmp = lives_build_filename(prefs->workdir, vppa->rfx->name, NULL);
+    lives_rm(tmp);
+    lives_free(tmp);
+  }
 
   if (resp == LIVES_RESPONSE_CANCEL) {
     lives_free(orig_name);

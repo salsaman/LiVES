@@ -266,24 +266,17 @@ uint64_t get_capabilities(int palette) {
 
 
 const char *get_init_rfx(int intention) {
-  return \
-         "<define>\\n\
+  return 
+    "<define>\\n\
 |1.7\\n\
 </define>\\n\
-<language_code>\\n\
-0xF0\\n\
-</language_code>\\n\
 <params> \\n\
 mode|_Mode|string_list|0|Normal|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel|Particles|Dissolve\\n\
-tfps|Max render _Framerate|num2|" SE(DEF_FPS_MAX) "|1.|200.\\n	\
-nbuf|Number of _texture buffers (ignored)|num0|" SE(DEF_NBUF) "|1|256\\n	\
-dbuf|Use _double buffering|bool|1|0 \\n\
-fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
+tfps|Max render _Framerate|num2|" SE(DEF_FPS_MAX) "|1.|200.\\n\
+nbuf|Number of _texture buffers (ignored)|num0|" SE(DEF_NBUF) "|1|256\\n\
+dbuf|Use _double buffering|bool|1|0\\n\
+fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0\\n\
 </params> \\n\
-<param_window> \\n\
-</param_window> \\n\
-<onchange> \\n\
-</onchange> \\n\
 ";
 }
 

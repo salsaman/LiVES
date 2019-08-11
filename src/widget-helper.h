@@ -568,6 +568,7 @@ boolean lives_container_set_border_width(LiVESContainer *, uint32_t width);
 boolean lives_container_foreach(LiVESContainer *, LiVESWidgetCallback callback, livespointer cb_data);
 LiVESList *lives_container_get_children(LiVESContainer *);
 boolean lives_container_set_focus_child(LiVESContainer *, LiVESWidget *child);
+LiVESWidget *lives_container_get_focus_child(LiVESContainer *);
 
 LiVESWidget *lives_progress_bar_new(void);
 boolean lives_progress_bar_set_fraction(LiVESProgressBar *, double fraction);
@@ -673,6 +674,7 @@ boolean lives_entry_set_text(LiVESEntry *, const char *text);
 boolean lives_entry_set_width_chars(LiVESEntry *, int nchars);
 boolean lives_entry_set_max_length(LiVESEntry *, int len);
 boolean lives_entry_set_activates_default(LiVESEntry *, boolean act);
+boolean lives_entry_get_activates_default(LiVESEntry *);
 boolean lives_entry_set_visibility(LiVESEntry *, boolean vis);
 boolean lives_entry_set_has_frame(LiVESEntry *, boolean has);
 boolean lives_entry_set_alignment(LiVESEntry *, float align);
@@ -940,6 +942,9 @@ void set_child_alt_colour(LiVESWidget *, boolean set_all);
 
 void lives_widget_apply_theme3(LiVESWidget *, LiVESWidgetState state); // info base/text
 void set_child_colour3(LiVESWidget *, boolean set_all);
+
+boolean lives_widget_set_sensitive_with(LiVESWidget *, LiVESWidget *other);
+boolean lives_widget_set_show_hide_with(LiVESWidget *, LiVESWidget *other);
 
 boolean lives_image_scale(LiVESImage *, int width, int height, LiVESInterpType interp_type);
 

@@ -1039,6 +1039,7 @@ int free_n_msgs(int frval);
 void d_print_cancelled(void);
 void d_print_failed(void);
 void d_print_done(void);
+void d_print_enough(int frames);
 void d_print_file_error_failed(void);
 
 // general

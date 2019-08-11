@@ -1817,6 +1817,16 @@ LIVES_GLOBAL_INLINE void d_print_file_error_failed(void) {
 }
 
 
+LIVES_GLOBAL_INLINE void d_print_enough(int frames) {
+  if (frames == 0) d_print_cancelled();
+  else {
+    char *msg = lives_strdup_printf(P_("%d frame is enough !\n", "%d frames are enough !\n", frames), frames);
+    d_print_utility(msg, 0, NULL);
+    lives_free(msg);
+  }
+}
+
+
 boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno,
                        int frameno, double atime, boolean affects_current) {
   // potentially add a layout map error to the layout textbuffer

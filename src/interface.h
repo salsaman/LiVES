@@ -143,6 +143,7 @@ typedef struct {
 #define LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI 3
 #define LIVES_FILE_SELECTION_VIDEO_RANGE 4
 #define LIVES_FILE_SELECTION_IMAGE_ONLY 5
+#define LIVES_FILE_SELECTION_SAVE 6
 
 aud_dialog_t *create_audfade_dialog(int type);
 LiVESWidget *create_combo_dialog(int type, LiVESList *list);

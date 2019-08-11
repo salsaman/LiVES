@@ -602,6 +602,8 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
                           (fname == def_dir && def_dir != NULL && !strcmp(def_dir, LIVES_DEVICE_DIR)) ? LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE :
                           LIVES_FILE_CHOOSER_ACTION_OPEN,
                           NULL, NULL);
+  } else if (filesel_type == LIVES_FILE_SELECTION_SAVE) {
+    dirname = choose_file(def_dir, fname, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
   } else {
     LiVESWidget *chooser = choose_file_with_preview(def_dir, fname, filt, filesel_type);
     int resp = lives_dialog_run(LIVES_DIALOG(chooser));
@@ -6560,9 +6562,7 @@ void on_cancel_keep_button_clicked(LiVESButton *button, livespointer user_data) 
         keep_frames = atoi(mainw->msg) - cfile->progress_start + cfile->start - 1 + 2;
     } else keep_frames = cfile->frames + 1;
     if (keep_frames > mainw->internal_messaging) {
-      d_print(P_("%d frame is enough !\n", "%d frames are enough !\n", keep_frames - cfile->start),
-              keep_frames - cfile->start);
-
+      d_print_enough(keep_frames - cfile->start);
       lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
       if (!mainw->internal_messaging) {
         lives_kill_subprocesses(cfile->handle, TRUE);

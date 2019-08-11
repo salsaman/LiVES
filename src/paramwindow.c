@@ -62,6 +62,9 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
   if (rfx->status == RFX_STATUS_WEED) return NULL;
 
   switch (rfx->status) {
+  case RFX_STATUS_SCRAP:
+    type = lives_strdup(PLUGIN_RFX_SCRAP);
+    break;
   case RFX_STATUS_BUILTIN:
     type = lives_strdup(PLUGIN_RENDERED_EFFECTS_BUILTIN);
     break;
@@ -1606,7 +1609,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       lives_box_pack_start(LIVES_BOX(hbox), scrolledwindow, TRUE, TRUE, 0);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(textbuffer), "textview", textview);
-
     } else {
       if (use_mnemonic) label = lives_standard_label_new_with_mnemonic_widget(_(name), NULL);
       else label = lives_standard_label_new(_(name));
@@ -1618,7 +1620,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         lives_signal_connect_after(LIVES_WIDGET_OBJECT(entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(after_param_text_changed),
                                    (livespointer) rfx);
       }
-
     }
 
     if (param->desc != NULL) lives_widget_set_tooltip_text(label, param->desc);

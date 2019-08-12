@@ -565,6 +565,8 @@ void lives_exit(int signum) {
 void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *tentry = LIVES_WIDGET(user_data);
 
+  lives_rfx_t *rfx;
+
   char **filt = NULL;
 
   char *dirname = NULL;
@@ -603,7 +605,30 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
                           LIVES_FILE_CHOOSER_ACTION_OPEN,
                           NULL, NULL);
   } else if (filesel_type == LIVES_FILE_SELECTION_SAVE) {
-    dirname = choose_file(def_dir, fname, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
+    char fnamex[PATH_MAX], dirnamex[PATH_MAX];
+    boolean free_filt = FALSE;
+
+    lives_snprintf(dirnamex, PATH_MAX, "%s", fname);
+    lives_snprintf(fnamex, PATH_MAX, "%s", fname);
+
+    get_dirname(dirnamex);
+    get_basename(fnamex);
+
+    if (!is_dir && filt == NULL && strlen(fnamex)) {
+      char *tmp;
+      filt = (char **)lives_malloc(2 * sizeof(char *));
+      filt[0] = lives_strdup_printf("*.%s", (tmp = get_extension(fnamex)));
+      filt[1] = NULL;
+      free_filt = TRUE;
+      lives_free(tmp);
+    }
+
+    dirname = choose_file(def_dir != NULL ? def_dir : dirnamex, fnamex, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
+
+    if (free_filt) {
+      lives_free(filt[0]);
+      lives_free(filt);
+    }
   } else {
     LiVESWidget *chooser = choose_file_with_preview(def_dir, fname, filt, filesel_type);
     int resp = lives_dialog_run(LIVES_DIALOG(chooser));
@@ -631,8 +656,11 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   // force update to be recognized
-  if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "rfx") != NULL)
-    after_param_text_changed(tentry, (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "rfx"));
+  if ((rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "rfx")) != NULL) {
+    int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "param_number"));
+    after_param_text_changed(tentry, rfx);
+    rfx->params[param_number].edited = FALSE;
+  }
 }
 
 
@@ -4784,6 +4812,8 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (retval == LIVES_RESPONSE_CANCEL) {
         end_threaded_dialog();
         lives_free(ordfile);
+        lives_chdir(cwd, FALSE);
+        lives_free(cwd);
         return FALSE;
       }
     }
@@ -4835,6 +4865,8 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
               close(ord_fd);
               end_threaded_dialog();
               lives_free(ordfile);
+              lives_chdir(cwd, FALSE);
+              lives_free(cwd);
               return FALSE;
             }
 
@@ -5313,6 +5345,8 @@ boolean reload_set(const char *set_name) {
   }
 
   // should never reach here
+  lives_chdir(cwd, FALSE);
+  lives_free(cwd);
   return TRUE;
 }
 

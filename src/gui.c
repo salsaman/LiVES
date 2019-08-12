@@ -671,7 +671,7 @@ void create_LiVES(void) {
   lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
 #ifdef LIBAV_TRANSCODE
-  mainw->transcode = lives_standard_menu_item_new_with_label(_("_Quick Transcode (beta)..."));
+  mainw->transcode = lives_standard_menu_item_new_with_label(_("_Quick Transcode..."));
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->transcode);
   lives_widget_set_sensitive(mainw->transcode, FALSE);
 

@@ -90,6 +90,8 @@ boolean transcode(int start, int end) {
   boolean audio = FALSE;
   boolean swap_endian = FALSE;
   boolean error = FALSE;
+  boolean fx1_bool = mainw->fx1_bool;
+  boolean needs_dprint = FALSE;
 
   int fd = -1;
   int resp;
@@ -113,7 +115,7 @@ boolean transcode(int start, int end) {
     return FALSE;
   }
 
-  pname = lives_build_filename(capable->home_dir, DEF_TRANSCODE_FILENAME, NULL);
+  pname = lives_build_filename(prefs->def_vid_save_dir, DEF_TRANSCODE_FILENAME, NULL);
 
   // for now we can only have one instance of a vpp: TODO - make vpp plugins re-entrant
   memset(future_prefs->vpp_name, 0, 1);
@@ -138,7 +140,9 @@ boolean transcode(int start, int end) {
   }
 
   // run the param window
-  resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
+  do {
+    resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
+  } while (resp == LIVES_RESPONSE_RETRY);
 
   // get the param value ourselves
   lives_freep((void **)&pname);
@@ -148,9 +152,6 @@ boolean transcode(int start, int end) {
   lives_free(tmp);
   rfx_free(rfx);
   lives_free(rfx);
-
-  msg = lives_strdup_printf(_("Quick transcoding to %s..."), pname);
-  d_print(msg);
 
   if (resp == LIVES_RESPONSE_CANCEL) {
     mainw->cancelled = CANCEL_USER;
@@ -222,143 +223,128 @@ boolean transcode(int start, int end) {
     goto tr_err;
   }
 
-#ifdef TEST_TRANSCODE_LAYOUT
-  // if we have an event_list we render via a different route
-  if (mainw->event_list != NULL) {
-    prefs->render_audio = rendaud;
+  ///////////////////////////////////////////////////////////////////////////////
+  /// plugin ready
 
-    init_track_decoders();
+  //av_log_set_level(AV_LOG_FATAL);
+  mainw->rowstride_alignment_hint = 16;
 
-    g_print("rendering at %d x %d\n", cfile->hsize, cfile->vsize);
+  // create a frame layer,
+  frame_layer = weed_layer_new();
+  weed_set_int_value(frame_layer, WEED_LEAF_CLIP, mainw->current_file);
 
-    if (start_render_effect_events(mainw->event_list)) { // re-render, applying effects
-      // and reordering/resampling/resizing if necessary
+  // need img_ext for pulling the frame
+  img_ext = get_image_ext_for_type(cfile->img_type);
 
-      if (mainw->multitrack == NULL && mainw->event_list != NULL) {
-        if (!new_clip) {
-          // this is needed in case we render to same clip, and then undo ///////
-          if (cfile->event_list_back != NULL) event_list_free(cfile->event_list_back);
-          cfile->event_list_back = mainw->event_list;
-          ///////////////////////////////////////////////////////////////////////
-        } else event_list_free(mainw->event_list);
-      }
+  mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
+  do_threaded_dialog(msg, TRUE);
 
-      mainw->effects_paused = FALSE;
-      free_track_decoders();
-      deinit_render_effects();
-      audio_free_fnames();
-goto tr_err:
+  msg = lives_strdup_printf(_("Quick transcoding to %s..."), pname);
+  d_print(msg);
+
+  needs_dprint = TRUE;
+
+  // encoding loop
+  for (i = start; i <= end; i++) {
+    // set the frame number to pull
+    weed_set_int_value(frame_layer, WEED_LEAF_FRAME, i);
+
+    // - pull next frame (thread)
+    pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)(currticks = q_gint64((i - start) / cfile->fps * TICKS_PER_SECOND_DBL,
+                        cfile->fps)));
+
+    if (mainw->fx1_bool) {
+      frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);
     }
-#endif
-    //av_log_set_level(AV_LOG_FATAL);
-    mainw->rowstride_alignment_hint = 16;
 
-    // create a frame layer,
-    frame_layer = weed_layer_new();
-    weed_set_int_value(frame_layer, WEED_LEAF_CLIP, mainw->current_file);
-
-    // need img_ext for pulling the frame
-    img_ext = get_image_ext_for_type(cfile->img_type);
-
-    mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
-    do_threaded_dialog(msg, TRUE);
-
-    // encoding loop
-    for (i = start; i <= end; i++) {
-      // set the frame number to pull
-      weed_set_int_value(frame_layer, WEED_LEAF_FRAME, i);
-
-      // - pull next frame (thread)
-      pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)(currticks = q_gint64((i - start) / cfile->fps * TICKS_PER_SECOND_DBL,
-                          cfile->fps)));
-
-      if (vpp->apply_fx) {
-        frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);
+    if (audio) {
+      // - read 1 frame worth of audio, to float, send
+      mainw->read_failed = FALSE;
+      in_bytes = lives_read_buffered(fd, abuff, (size_t)spf * cfile->achans * (cfile->asampsize >> 3), TRUE);
+      if (mainw->read_failed || in_bytes < 0) {
+        error = TRUE;
+        goto tr_err;
       }
 
-      if (audio) {
-        // - read 1 frame worth of audio, to float, send
-        mainw->read_failed = FALSE;
-        in_bytes = lives_read_buffered(fd, abuff, (size_t)spf * cfile->achans * (cfile->asampsize >> 3), TRUE);
-        if (mainw->read_failed || in_bytes < 0) {
-          error = TRUE;
-          goto tr_err;
+      if (in_bytes == 0) {
+        // eof, flush audio
+        // exit_screen() will flush anything left over
+        (*mainw->vpp->render_audio_frame_float)(NULL, 0);
+      } else {
+        nsamps = in_bytes / cfile->achans / (cfile->asampsize >> 3);
+
+        for (j = 0; j < cfile->achans; j++) {
+          // convert to float
+          if (cfile->asampsize == 16) {
+            sample_move_d16_float(fltbuf[j], (short *)abuff, (uint64_t)nsamps, cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian,
+                                  1.0);
+          } else {
+            sample_move_d8_d16(sbuff, (uint8_t *)abuff, (uint64_t)nsamps, in_bytes,
+                               1.0, cfile->achans, cfile->achans, !asigned ? SWAP_U_TO_S : 0);
+            sample_move_d16_float(fltbuf[j], sbuff, (uint64_t)nsamps, cfile->achans, AFORM_SIGNED, FALSE, 1.0);
+          }
         }
 
-        if (in_bytes == 0) {
-          // eof, flush audio
-          // exit_screen() will flush anything left over
-          (*mainw->vpp->render_audio_frame_float)(NULL, 0);
-        } else {
-          nsamps = in_bytes / cfile->achans / (cfile->asampsize >> 3);
-
-          for (j = 0; j < cfile->achans; j++) {
-            // convert to float
-            if (cfile->asampsize == 16) {
-              sample_move_d16_float(fltbuf[j], (short *)abuff, (uint64_t)nsamps, cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian,
-                                    1.0);
-            } else {
-              sample_move_d8_d16(sbuff, (uint8_t *)abuff, (uint64_t)nsamps, in_bytes,
-                                 1.0, cfile->achans, cfile->achans, !asigned ? SWAP_U_TO_S : 0);
-              sample_move_d16_float(fltbuf[j], sbuff, (uint64_t)nsamps, cfile->achans, AFORM_SIGNED, FALSE, 1.0);
-            }
-          }
-
-          if (vpp->apply_fx) {
-            // apply any audio effects with in_channels
-            if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf, cfile->achans, nsamps, cfile->arate, currticks, FALSE);
-          }
-          (*mainw->vpp->render_audio_frame_float)(fltbuf, nsamps);
+        if (mainw->fx1_bool) {
+          // apply any audio effects with in_channels
+          if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf, cfile->achans, nsamps, cfile->arate, currticks, FALSE);
         }
-        // account for rounding errors
-        spf = ospf + (spf - (double)((int)spf));
+        (*mainw->vpp->render_audio_frame_float)(fltbuf, nsamps);
       }
-
-      // get frame, send it
-      //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
-      check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
-
-      error = send_layer(frame_layer, vpp, currticks);
-
-      // free pixel_data, but keep same layer around
-      weed_layer_pixel_data_free(frame_layer);
-
-      if (error) goto tr_err;
-
-      // update progress dialog with fraction done
-      threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
-
-      if (mainw->cancelled != CANCEL_NONE) {
-        break;
-      }
+      // account for rounding errors
+      spf = ospf + (spf - (double)((int)spf));
     }
+
+    // get frame, send it
+    //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
+    check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
+
+    error = send_layer(frame_layer, vpp, currticks);
+
+    // free pixel_data, but keep same layer around
+    weed_layer_pixel_data_free(frame_layer);
+
+    if (error) goto tr_err;
+
+    // update progress dialog with fraction done
+    threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
+
+    if (mainw->cancelled != CANCEL_NONE) {
+      break;
+    }
+  }
+
+  //// encoding done
 
 tr_err:
-    mainw->cancel_type = CANCEL_KILL;
+  mainw->cancel_type = CANCEL_KILL;
 
-    // flush streams, write headers, plugin cleanup
-    if (vpp != NULL && vpp->exit_screen != NULL) {
-      (*vpp->exit_screen)(0, 0);
-    }
+  mainw->fx1_bool = fx1_bool;
 
-    // terminate the progress dialog
-    end_threaded_dialog();
+  // flush streams, write headers, plugin cleanup
+  if (vpp != NULL && vpp->exit_screen != NULL) {
+    (*vpp->exit_screen)(0, 0);
+  }
+
+  // terminate the progress dialog
+  end_threaded_dialog();
 
 tr_err2:
-    // close vpp, unless mainw->vpp
-    if (ovpp == NULL || (vpp->handle != ovpp->handle)) {
-      close_vid_playback_plugin(vpp);
-    }
+  // close vpp, unless mainw->vpp
+  if (ovpp == NULL || (vpp->handle != ovpp->handle)) {
+    close_vid_playback_plugin(vpp);
+  }
 
-    if (ovpp != NULL && (vpp->handle == ovpp->handle)) {
-      // we "borrowed" the playback plugin, so set these back how they were
-      if (ovpp->set_fps != NULL)(*ovpp->set_fps)(ovpp->fixed_fpsd);
-      if (ovpp->set_palette != NULL)(*ovpp->set_palette)(ovpp->palette);
-      if (ovpp->set_yuv_palette_clamping != NULL)(*ovpp->set_yuv_palette_clamping)(ovpp->YUV_clamping);
-    }
+  if (ovpp != NULL && (vpp->handle == ovpp->handle)) {
+    // we "borrowed" the playback plugin, so set these back how they were
+    if (ovpp->set_fps != NULL)(*ovpp->set_fps)(ovpp->fixed_fpsd);
+    if (ovpp->set_palette != NULL)(*ovpp->set_palette)(ovpp->palette);
+    if (ovpp->set_yuv_palette_clamping != NULL)(*ovpp->set_yuv_palette_clamping)(ovpp->YUV_clamping);
+  }
 
-    mainw->vpp = ovpp;
+  mainw->vpp = ovpp;
 
+  if (needs_dprint) {
     if (mainw->cancelled != CANCEL_NONE) {
       d_print_enough(i - start + 1);
       mainw->cancelled = CANCEL_NONE;
@@ -366,27 +352,28 @@ tr_err2:
       if (!error) d_print_done();
       else d_print_failed();
     }
-
-    mainw->no_switch_dprint = FALSE;
-
-    lives_freep((void **)&pname);
-    lives_freep((void **)&msg);
-
-    weed_layer_free(frame_layer);
-
-    if (fd >= 0) lives_close_buffered(fd);
-
-    lives_freep((void **)&afname);
-
-    lives_freep((void **)&abuff);
-    if (fltbuf != NULL) {
-      for (i = 0; i < cfile->achans; lives_freep((void **) & (fltbuf[i++])));
-      lives_free(fltbuf);
-    }
-
-    lives_freep((void **)&sbuff);
-
-    return !error;
   }
+
+  mainw->no_switch_dprint = FALSE;
+
+  lives_freep((void **)&pname);
+  lives_freep((void **)&msg);
+
+  weed_layer_free(frame_layer);
+
+  if (fd >= 0) lives_close_buffered(fd);
+
+  lives_freep((void **)&afname);
+
+  lives_freep((void **)&abuff);
+  if (fltbuf != NULL) {
+    for (i = 0; i < cfile->achans; lives_freep((void **) & (fltbuf[i++])));
+    lives_free(fltbuf);
+  }
+
+  lives_freep((void **)&sbuff);
+
+  return !error;
+}
 
 #endif

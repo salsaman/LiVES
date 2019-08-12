@@ -1,6 +1,6 @@
 // paramwindow.h
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for licensing details
 
@@ -12,7 +12,6 @@ typedef struct {
   LiVESSList *rbgroup;
   int active_param;
 } lives_widget_group_t;
-
 
 #define RFX_TEXT_MAGIC 80 ///< length at which entry turns into textview
 #define RFX_DEF_NUM_MAX 1000000. ///< default param max when not defined
@@ -29,7 +28,7 @@ void on_paramwindow_cancel_clicked2(LiVESButton *, lives_rfx_t *);
 void on_render_fx_pre_activate(LiVESMenuItem *, lives_rfx_t *);
 void on_render_fx_activate(LiVESMenuItem *, lives_rfx_t *);
 
-void on_fx_pre_activate(lives_rfx_t *, int didx, LiVESWidget *pbox);
+LiVESWidget *on_fx_pre_activate(lives_rfx_t *, int didx, LiVESWidget *pbox);
 
 boolean make_param_box(LiVESVBox *, lives_rfx_t *);
 
@@ -63,12 +62,8 @@ LiVESList *argv_to_marshalled_list(lives_rfx_t *, int argc, char **argv);
 LiVESList *do_onchange(LiVESObject *object, lives_rfx_t *) WARN_UNUSED;
 LiVESList *do_onchange_init(lives_rfx_t *) WARN_UNUSED;
 
-
-
 void update_weed_color_value(weed_plant_t *, int pnum, int c1, int c2, int c3, int c4);
 
 void update_visual_params(lives_rfx_t *r, boolean update_hidden);
-
-
 
 #endif

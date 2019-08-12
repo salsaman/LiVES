@@ -597,10 +597,16 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   _vid_playback_plugin *vpp = vppw->plugin;
 
+  if (!special_cleanup()) {
+    // check for file overwrites with special type "filewrite"
+    // will return with the original LIVES_RESPONSE_RETRY
+    return;
+  }
+
   if (vpp == mainw->vpp) {
     if (vppw->spinbuttonw != NULL) mainw->vpp->fwidth = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));
     if (vppw->spinbuttonh != NULL) mainw->vpp->fheight = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));
-    if (vppw->apply_fx != NULL) mainw->vpp->apply_fx = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(vppw->apply_fx));
+    if (vppw->apply_fx != NULL) mainw->fx1_bool = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(vppw->apply_fx));
     if (vppw->fps_entry != NULL) fixed_fps = lives_entry_get_text(LIVES_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry != NULL) {
       cur_pal = lives_strdup(lives_entry_get_text(LIVES_ENTRY(vppw->pal_entry)));
@@ -677,13 +683,15 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
               if (!(*vpp->set_palette)(vpp->palette)) {
                 do_vpp_palette_error();
                 mainw->error = TRUE;
-
               }
 
               if (prefs->play_monitor != 0) {
                 if (mainw->play_window != NULL) {
                   xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
-                  if (xwinid == -1) return;
+                  if (xwinid == -1) {
+                    lives_dialog_response(LIVES_DIALOG(vppw->dialog), LIVES_RESPONSE_CANCEL);
+                    return;
+                  }
                 }
               }
 
@@ -823,6 +831,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
   if (button != NULL && !mainw->error) on_vppa_cancel_clicked(button, user_data);
+  else lives_dialog_response(LIVES_DIALOG(vppw->dialog), LIVES_RESPONSE_OK);
   if (button != NULL) mainw->error = FALSE;
 }
 
@@ -888,6 +897,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   // TODO - set default values from tmpvpp
 
+  // intention 0 = video plugin, intention 1 = transcoder
   if (user_data != NULL) intention = LIVES_POINTER_TO_INT(user_data);
 
   if (strlen(future_prefs->vpp_name)) {
@@ -902,14 +912,18 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   vppa->plugin = tmpvpp;
   vppa->rfx = NULL;
 
-  vppa->spinbuttonh = vppa->spinbuttonw = vppa->apply_fx = NULL;
+  vppa->spinbuttonh = vppa->spinbuttonw = NULL;
+  vppa->apply_fx = NULL;
   vppa->pal_entry = vppa->fps_entry = NULL;
 
   vppa->keep_rfx = FALSE;
 
   pversion = (tmpvpp->version)();
 
-  title = lives_strdup_printf("%s", pversion);
+  if (intention == 0)
+    title = lives_strdup_printf("%s", pversion);
+  else
+    title = lives_strdup(_("Quick Transcoding"));
 
   vppa->dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
   lives_free(title);
@@ -920,12 +934,16 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(vppa->dialog));
 
   // the filling...
-  if (tmpvpp->get_description != NULL) {
+  if (intention == 0 && tmpvpp->get_description != NULL) {
     desc = (tmpvpp->get_description)();
     if (desc != NULL) {
       label = lives_standard_label_new(desc);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     }
+  }
+  if (intention == 1) {
+    label = lives_standard_label_new(_("Quick transcode provides a rapid, high quality preview of the selected frames and audio.\n"));
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }
 
   if (tmpvpp->get_fps_list != NULL && (fps_list = (*tmpvpp->get_fps_list)(tmpvpp->palette)) != NULL) {
@@ -1068,7 +1086,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(vppa->dialog), LIVES_STOCK_OK, NULL,
-             LIVES_RESPONSE_OK);
+             LIVES_RESPONSE_RETRY);
 
   lives_button_grab_default_special(okbutton);
 
@@ -2697,6 +2715,7 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
     cparam->max = 0.;
     cparam->reinit = FALSE;
     cparam->changed = FALSE;
+    cparam->edited = FALSE;
     cparam->change_blocked = FALSE;
     cparam->source = NULL;
     cparam->source_type = LIVES_RFX_SOURCE_RFX;
@@ -3802,7 +3821,11 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         }
         lives_window_set_modal(LIVES_WINDOW(fx_dialog[1]), TRUE);
 
-        if (lives_dialog_run(LIVES_DIALOG(fx_dialog[1])) == LIVES_RESPONSE_OK) {
+        do {
+          res = lives_dialog_run(LIVES_DIALOG(fx_dialog[1]));
+        } while (res == LIVES_RESPONSE_RETRY);
+
+        if (res == LIVES_RESPONSE_OK) {
           // marshall our params for passing to the plugin
           res_string = param_marshall(rfx, FALSE);
         }

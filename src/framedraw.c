@@ -49,6 +49,8 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
   int i;
   char *com;
 
+  if (!check_filewrite_overwrites()) return;
+
   lives_widget_set_sensitive(mainw->framedraw_preview, FALSE);
   lives_widget_context_update();
 

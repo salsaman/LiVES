@@ -1843,7 +1843,6 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   on_fx_pre_activate(rfx, 1, NULL);
   widget_opts.non_modal = FALSE;
 
-
   // record the key so we know whose parameters to record later
   weed_set_int_value((weed_plant_t *)rfx->source, WEED_LEAF_HOST_KEY, key);
 

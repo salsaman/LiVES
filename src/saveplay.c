@@ -5522,12 +5522,12 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   fclose(rfile);
 
-  lives_chdir(cwd, FALSE);
-  lives_free(cwd);
-
 recovery_done:
 
   end_threaded_dialog();
+
+  lives_chdir(cwd, FALSE);
+  lives_free(cwd);
 
   mainw->suppress_dprint = FALSE;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);

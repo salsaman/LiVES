@@ -21,6 +21,8 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   LiVESWidget *hbox;
   LiVESWidget *label;
 
+  char *tmp;
+
   struct _dvgrabw *dvgrabw = (struct _dvgrabw *)lives_malloc(sizeof(struct _dvgrabw));
 
   dvgrabw->filename = NULL;
@@ -40,9 +42,10 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   lives_box_pack_start(LIVES_BOX(hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
 
-  dvgrabw->dirname = lives_filename_to_utf8(lives_get_current_dir(), -1, NULL, NULL, NULL);
+  dvgrabw->dirname = lives_filename_to_utf8((tmp = lives_get_current_dir()), -1, NULL, NULL, NULL);
   dvgrabw->dirent = lives_standard_entry_new(NULL, dvgrabw->dirname, -1, PATH_MAX,
                     LIVES_BOX(hbox), NULL);
+  lives_free(tmp);
 
   lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)dvgrabw->dirent);
 

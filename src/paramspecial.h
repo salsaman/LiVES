@@ -1,6 +1,6 @@
 // paramspecial.h
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -64,7 +64,7 @@ void after_aspect_height_changed(LiVESToggleButton *, livespointer);
 
 const lives_special_aspect_t *paramspecial_get_aspect(void);
 
-void special_cleanup(void);
+boolean special_cleanup(void);
 
 void setmergealign(void);
 

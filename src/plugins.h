@@ -103,7 +103,6 @@ typedef struct {
 #define VPP_LOCAL_DISPLAY (1<<2)
 
   int fwidth, fheight;
-  boolean apply_fx;
 
   int palette;
   int YUV_sampling;
@@ -431,6 +430,7 @@ typedef struct {
   boolean onchange; ///< is there a trigger ?
 
   boolean changed;
+  boolean edited;
 
   boolean change_blocked;
 

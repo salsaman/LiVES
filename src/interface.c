@@ -2823,7 +2823,10 @@ static void chooser_check_dir(LiVESFileChooser *chooser, livespointer user_data)
   new_dir = qchooser->directory().path().toLocal8Bit().data();
 #endif
 
-  if (!strcmp(new_dir, last_good_folder)) return;
+  if (!strcmp(new_dir, last_good_folder)) {
+    lives_free(cwd);
+    return;
+  }
 
   if (lives_chdir(new_dir, TRUE)) {
     lives_free(cwd);

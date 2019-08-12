@@ -108,6 +108,12 @@ void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     after_param_text_changed(textwidget, rfx);
   }
 
+  if (fx_dialog[1] == NULL) {
+    if (!special_cleanup()) {
+      return;
+    }
+  }
+
   if (mainw->did_rfx_preview) {
     for (i = 0; i < rfx->num_params; i++) {
       if (rfx->params[i].changed) {
@@ -136,9 +142,12 @@ void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   if (usrgrp_to_livesgrp[0] != NULL) lives_slist_free(usrgrp_to_livesgrp[0]);
   usrgrp_to_livesgrp[0] = NULL;
-  if (fx_dialog[1] == NULL) special_cleanup();
 
-  if (rfx != NULL && rfx->status == RFX_STATUS_SCRAP) return;
+  if (rfx != NULL && rfx->status == RFX_STATUS_SCRAP) {
+    if (LIVES_IS_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))))
+      lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
+    return;
+  }
 
   if (rfx->status == RFX_STATUS_WEED) on_realfx_activate(NULL, rfx);
   else on_render_fx_activate(NULL, rfx);
@@ -152,6 +161,8 @@ void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
+  if (LIVES_IS_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))))
+    lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
 }
 
 
@@ -652,12 +663,18 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
 }
 
 
-void on_render_fx_pre_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
-  on_fx_pre_activate(rfx, 0, NULL);
+LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
+  int resp;
+  LiVESWidget *dialog = on_fx_pre_activate(rfx, 0, NULL);
+  if (dialog != NULL) {
+    do {
+      resp = lives_dialog_run(LIVES_DIALOG(dialog));
+    } while (resp == LIVES_RESPONSE_RETRY);
+  }
 }
 
 
-void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
+LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   // didx:
   // 0 == rendered fx
   // 1 == pbox==NULL : standalone window for mapper
@@ -683,7 +700,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
   boolean has_param;
 
-  if (didx == 0 && !check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) return;
+  if (didx == 0 && !check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) return NULL;
 
   // TODO - remove this and check in rfx / realfx activate
 
@@ -726,7 +743,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
       lives_list_free_all(&retvals);
 
-      return;
+      return NULL;
     }
 
     mainw->is_generating = TRUE;
@@ -740,14 +757,14 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     // check we have a real clip open
     if (mainw->current_file <= 0) {
       lives_list_free_all(&retvals);
-      return;
+      return NULL;
     }
     if (cfile->end - cfile->start + 1 < rfx->min_frames) {
       lives_list_free_all(&retvals);
       txt = lives_strdup_printf(_("\nYou must select at least %d frames to use this effect.\n\n"), rfx->min_frames);
       do_blocking_error_dialog(txt);
       lives_free(txt);
-      return;
+      return NULL;
     }
 
     // here we invalidate cfile->ohsize, cfile->ovsize
@@ -829,7 +846,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
                       LIVES_RESPONSE_RESET);
         if (!has_param) lives_widget_set_sensitive(resetbutton, FALSE);
       } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_OK, NULL,
-                          LIVES_RESPONSE_OK);
+                          LIVES_RESPONSE_RETRY);
     } else {
       if (rfx->status == RFX_STATUS_WEED) {
         resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_REVERT_TO_SAVED, _("Reset"),
@@ -841,7 +858,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
           lives_widget_set_sensitive(okbutton, FALSE);
         }
       }
-
 
       if (rfx->status != RFX_STATUS_WEED && no_process) {
         widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
@@ -953,6 +969,11 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     param_demarshall(rfx, retvals, TRUE, TRUE);
     lives_list_free_all(&retvals);
   }
+
+  if (pbox == NULL) {
+    return fx_dialog[didx];
+  }
+  return NULL;
 }
 
 
@@ -1563,7 +1584,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     }
 
     if (((int)param->max > RFX_TEXT_MAGIC || param->max == 0.) &&
-        param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
+        param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEWRITE) {
       LiVESWidget *vbox;
 
       boolean woat;
@@ -2476,7 +2497,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
   if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
-  param->changed = TRUE;
+  param->changed = param->edited = TRUE;
 }
 
 

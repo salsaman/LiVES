@@ -1,6 +1,6 @@
 // paramspecial.c
 // LiVES
-// (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -141,6 +141,7 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   } else if (!strcmp(array[0], "filewrite")) {
     int idx = atoi(array[1]);
     filewrite = lives_list_append(filewrite, (livespointer)&rfx->params[idx]);
+    rfx->params[idx].edited = TRUE;
 
     // ensure we get an entry and not a text_view
     if ((int)rfx->params[idx].max > RFX_TEXT_MAGIC) rfx->params[idx].max = (double)RFX_TEXT_MAGIC;
@@ -327,6 +328,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
   while (slist != NULL) {
     if (param == (lives_param_t *)(slist->data)) {
       int epos;
+      char *def_dir;
 
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEREAD;
 
@@ -340,9 +342,22 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
 
       if (box == NULL) return;
 
+      def_dir = lives_get_current_dir();
+
+      if (LIVES_IS_ENTRY(param->widgets[0])) {
+        if (strlen(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])))) {
+          char dirnamex[PATH_MAX];
+          lives_snprintf(dirnamex, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(param->widgets[0])));
+          get_dirname(dirnamex);
+          lives_free(def_dir);
+          def_dir = lives_strdup(dirnamex);
+        }
+      }
+
       epos = get_box_child_index(LIVES_BOX(box), param->widgets[0]);
 
-      buttond = lives_standard_file_button_new(FALSE, lives_get_current_dir());
+      param->widgets[1] = buttond = lives_standard_file_button_new(FALSE, def_dir);
+      lives_free(def_dir);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
       lives_box_reorder_child(LIVES_BOX(box), buttond, epos); // insert after label, before textbox
       lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)param->widgets[0]);
@@ -383,7 +398,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
 
       epos = get_box_child_index(LIVES_BOX(box), param->widgets[0]);
 
-      buttond = lives_standard_file_button_new(FALSE, lives_get_current_dir());
+      param->widgets[1] = buttond = lives_standard_file_button_new(FALSE, NULL);
+
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(buttond), "filesel_type", (livespointer)LIVES_FILE_SELECTION_SAVE);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
       lives_box_reorder_child(LIVES_BOX(box), buttond, epos); // insert after label, before textbox
@@ -394,7 +410,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
       lives_widget_set_sensitive_with(param->widgets[0], buttond);
 
       if (LIVES_IS_ENTRY(param->widgets[0])) {
-        lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]), FALSE);
+        lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]), TRUE);
         if (param->widgets[1] != NULL &&
             LIVES_IS_LABEL(param->widgets[1]) &&
             lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
@@ -470,8 +486,36 @@ void after_aspect_height_changed(LiVESToggleButton *spinbutton, livespointer use
 }
 
 
-void special_cleanup(void) {
+boolean check_filewrite_overwrites(void) {
+  // check all writeable files which were user edited (param->edited), to make sure we don't overwrite without permission
+  // if the value was set by the file button we would have checked there, and param->edited will be FALSE
+
+  if (filewrite != NULL) {
+    LiVESList *slist = filewrite;
+    while (slist != NULL) {
+      lives_param_t *param = (lives_param_t *)(slist->data);
+      if (param->edited) {
+        // check for overwrite
+        if (LIVES_IS_ENTRY(param->widgets[0])) {
+          if (strlen(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])))) {
+            if (!check_file(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])), TRUE)) {
+              return FALSE;
+            }
+          }
+        }
+      }
+      slist = slist->next;
+    }
+  }
+  return TRUE;
+}
+
+
+boolean special_cleanup(void) {
   // free some memory now
+  boolean ret = TRUE;
+
+  if (!check_filewrite_overwrites()) return FALSE;
 
   mainw->framedraw = mainw->framedraw_reset = NULL;
   mainw->framedraw_spinbutton = NULL;
@@ -485,12 +529,19 @@ void special_cleanup(void) {
   mainw->framedraw_preview = NULL;
 
   if (framedraw.extra_params != NULL) lives_free(framedraw.extra_params);
+  framedraw.extra_params = NULL;
 
   if (fileread != NULL) lives_list_free(fileread);
+  fileread = NULL;
+
   if (filewrite != NULL) lives_list_free(filewrite);
+  filewrite = NULL;
+
   if (passwd_widgets != NULL) lives_list_free(passwd_widgets);
+  passwd_widgets = NULL;
 
   framedraw.added = FALSE;
+  return ret;
 }
 
 

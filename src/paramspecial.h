@@ -64,6 +64,8 @@ void after_aspect_height_changed(LiVESToggleButton *, livespointer);
 
 const lives_special_aspect_t *paramspecial_get_aspect(void);
 
+boolean check_filewrite_overwrites(void);
+
 boolean special_cleanup(void);
 
 void setmergealign(void);

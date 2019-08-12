@@ -17,9 +17,6 @@
 
 #define TRANSCODE_PARAM_FILENAME "fname"
 
-#define TRANSCODE_INTENT_BASIC 1
-#define TRANSCODE_INTENT_ADVANCED 2
-
 boolean transcode(int start, int end);
 
 #endif // HAS_LIVES_TRANSCODE_H

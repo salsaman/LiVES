@@ -115,7 +115,7 @@ boolean transcode(int start, int end) {
     return FALSE;
   }
 
-  pname = lives_build_filename(prefs->def_vid_save_dir, DEF_TRANSCODE_FILENAME, NULL);
+  pname = lives_build_filename(mainw->vid_save_dir, DEF_TRANSCODE_FILENAME, NULL);
 
   // for now we can only have one instance of a vpp: TODO - make vpp plugins re-entrant
   memset(future_prefs->vpp_name, 0, 1);

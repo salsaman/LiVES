@@ -10327,7 +10327,6 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 
   if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) return FALSE;
 
-
   if (width <= 0 || height <= 0) {
     char *msg = lives_strdup_printf("unable to scale layer to %d x %d for palette %d\n", width, height, palette);
     LIVES_DEBUG(msg);
@@ -10412,6 +10411,14 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 
     int flags;
 
+    const uint8_t *ipd[4], *opd[4];
+    int irw[4], orw[4];
+
+    int i;
+
+    int inplanes = weed_palette_get_numplanes(palette);
+    int oplanes = weed_palette_get_numplanes(opal_hint);
+
     old_layer = weed_plant_copy(layer);
 
     av_log_set_level(AV_LOG_FATAL);
@@ -10428,6 +10435,16 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     // get current values
     in_pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
     irowstrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
+
+    for (i = 0; i < 4; i++) {
+      if (i < inplanes) {
+        ipd[i] = in_pixel_data[i];
+        irw[i] = irowstrides[i];
+      } else {
+        ipd[i] = NULL;
+        irw[i] = 0;
+      }
+    }
 
     // set new values
 
@@ -10448,6 +10465,16 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     out_pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
     orowstrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
 
+    for (i = 0; i < 4; i++) {
+      if (i < oplanes) {
+        opd[i] = out_pixel_data[i];
+        orw[i] = orowstrides[i];
+      } else {
+        opd[i] = NULL;
+        orw[i] = 0;
+      }
+    }
+
     width *= weed_palette_get_pixels_per_macropixel(opal_hint);
     iwidth *= weed_palette_get_pixels_per_macropixel(palette); // input width is in macropixels
 
@@ -10463,8 +10490,8 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     if (swscale == NULL) {
       LIVES_DEBUG("swscale is NULL !!");
     } else {
-      sws_scale(swscale, (const uint8_t *const *)in_pixel_data, irowstrides, 0, iheight,
-                (uint8_t *const *)out_pixel_data, orowstrides);
+      sws_scale(swscale, (const uint8_t *const *)ipd, irw, 0, iheight,
+                (uint8_t *const *)opd, orw);
       if (store_ctx) swscale_add_context(iwidth, iheight, width, height, ipixfmt, opixfmt, flags, swscale);
     }
 

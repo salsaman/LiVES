@@ -166,7 +166,8 @@ int ladspa_init(weed_plant_t *inst) {
 
   sdata->activated_l = sdata->activated_r = WEED_FALSE;
 
-  sdata->handle_l = (lad_instantiate_func)(laddes, rate);
+  sdata->handle_l = (*lad_instantiate_func)(laddes, rate);
+
   if (pinc == 1 || poutc == 1) sdata->handle_r = (lad_instantiate_func)(laddes, rate);
   else sdata->handle_r = NULL;
 
@@ -495,13 +496,13 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-
+static weed_plant_t *plugin_info;
+static int num_filters;
 
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   unsigned long num_plugins = 0;
-
-  int num_filters = 0;
+  plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+  num_filters = 0;
 
   if (plugin_info != NULL) {
     // get LADSPA path
@@ -598,8 +599,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
         snprintf(plug1, PATH_MAX, "%s/%s", vdir, plugin_name);
 
         //fprintf(stderr,"checking %s\n",plug1);
-        if (handle != NULL) dlclose(handle);
-
         handle = dlopen(plug1, RTLD_NOW);
         if (handle == NULL) continue;
 
@@ -726,7 +725,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
             out_params[noutps - 1] = NULL;
           } else out_params = NULL;
 
-          //fprintf(stderr,"%s has inc %d and outc %d\n",laddes->Name,ninchs,noutchs);
+          //fprintf(stderr,"%s %p %p has inc %d and outc %d\n",laddes->Name,laddes,lad_instantiate_func,ninchs,noutchs);
 
           if (ninchs > 0) {
             in_chantmpls = (weed_plant_t **)weed_malloc(2 * sizeof(weed_plant_t *));
@@ -925,7 +924,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
           weed_set_voidptr_value(filter_class, "plugin_lad_descriptor", laddes);
 
-          weed_set_voidptr_value(filter_class, "plugin_lad_descriptor_func", (void *)lad_descriptor_func);
           weed_set_voidptr_value(filter_class, "plugin_lad_instantiate_func", (void *)lad_instantiate_func);
           weed_set_voidptr_value(filter_class, "plugin_lad_activate_func", (void *)lad_activate_func);
           weed_set_voidptr_value(filter_class, "plugin_lad_deactivate_func", (void *)lad_deactivate_func);
@@ -989,5 +987,16 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   }
 
   return plugin_info;
+}
+
+
+void weed_desetup(void) {
+  int i, error;
+  weed_plant_t **filters = weed_get_plantptr_array(plugin_info, "filters", &error);
+  for (i = 0; i < num_filters; i++) {
+    void *handle = weed_get_voidptr_value(filters[i], "plugin_handle", &error);
+    dlclose(handle);
+  }
+  weed_free(filters);
 }
 

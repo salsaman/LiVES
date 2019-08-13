@@ -257,8 +257,10 @@ int frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
+static weed_plant_t *plugin_info;
+static int num_filters;
+
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info;
   if (FREI0R_MAJOR_VERSION < 1 || FREI0R_MINOR_VERSION < 1) return NULL;
 
   plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
@@ -277,7 +279,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *filter_class;
     f0r_plugin_info_t f0rinfo;
     f0r_param_info_t pinfo;
-    int num_filters = 0;
 
     int finished = 0;
     int pnum, wnum, num_weed_params;
@@ -341,6 +342,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     close(1);
     close(2);
 #endif
+
+    num_filters = 0;
 
     if (fpp != NULL) {
       vdirval = 10;
@@ -456,8 +459,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           snprintf(plug1, PATH_MAX, "%s/%s", dir1, plugin_name);
 
           if (vdirval < 10) {
-            if (handle != NULL) dlclose(handle);
-            handle = NULL;
 
             snprintf(plug2, PATH_MAX, "%s/%s", dir2, plugin_name);
             snprintf(plug3, PATH_MAX, "%s/%s", dir3, plugin_name);
@@ -900,6 +901,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           if (in_params != NULL) weed_free(in_params);
           in_params = NULL;
 
+          weed_set_voidptr_value(filter_class, "plugin_handle", handle);
+
           weed_set_voidptr_value(filter_class, "plugin_f0r_construct", f0r_construct);
           weed_set_voidptr_value(filter_class, "plugin_f0r_destruct", f0r_destruct);
           if (f0rinfo.num_params > 0) weed_set_voidptr_value(filter_class, "plugin_f0r_set_param_value", f0r_set_param_value);
@@ -935,9 +938,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     if (curdir != NULL) closedir(curdir);
     curdir = NULL;
 
-    if (handle != NULL) dlclose(handle);
-    handle = NULL;
-
 #ifndef DEBUG
     dup2(new_stdout, 1);
     dup2(new_stderr, 2);
@@ -956,4 +956,14 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   return plugin_info;
 }
 
+
+void weed_desetup(void) {
+  int i, error;
+  weed_plant_t **filters = weed_get_plantptr_array(plugin_info, "filters", &error);
+  for (i = 0; i < num_filters; i++) {
+    void *handle = weed_get_voidptr_value(filters[i], "plugin_handle", &error);
+    dlclose(handle);
+  }
+  weed_free(filters);
+}
 

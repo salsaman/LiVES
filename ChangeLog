@@ -1,6 +1,10 @@
 
-Version 3.0.1
--------------
+Version 3.0.1 (13 Aug 2019)
+---------------------------
+Update package-config for libweed.
+Fix hang after setting parameters with combo boxes for realtime effects.
+Fix crashes in frei0r and ladspa wrappers.
+Fix undefined values on startup and in swscale.
 Improve "quick transcode" functionality.
 
 

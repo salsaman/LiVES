@@ -1403,7 +1403,7 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 
-char *dummychar;
+const char *dummychar;
 
 void break_me(void);
 

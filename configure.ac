@@ -867,7 +867,7 @@ HAVE_SYSTEM_WEED_PLUGIN=false
 
 if test "$IS_MINGW" = "false"; then
 
-PKG_CHECK_MODULES(WEED, libweed >= 0.8.0, HAVE_SYSTEM_WEED=true, HAVE_SYSTEM_WEED=false)
+PKG_CHECK_MODULES(WEED, libweed >= 0.11.0, HAVE_SYSTEM_WEED=true, HAVE_SYSTEM_WEED=false)
 
 if test "$HAVE_SYSTEM_WEED" = "false"; then
 echo "...this is not a problem if we have WEED_SLICE"
@@ -876,7 +876,7 @@ fi
 AC_SUBST(WEED_CFLAGS)
 AC_SUBST(WEED_LIBS)
 
-PKG_CHECK_MODULES(WEED_SLICE, libweed_slice >= 0.8.0, HAVE_SYSTEM_WEED_SLICE=true, HAVE_SYSTEM_WEED_SLICE=false)
+PKG_CHECK_MODULES(WEED_SLICE, libweed_slice >= 0.11.0, HAVE_SYSTEM_WEED_SLICE=true, HAVE_SYSTEM_WEED_SLICE=false)
 
 if test "$HAVE_SYSTEM_WEED_SLICE" = "true"; then
 HAVE_SYSTEM_WEED=true
@@ -887,7 +887,7 @@ fi
 dnl CFLAGS will be the same
 AC_SUBST(WEED_SLICE_LIBS)
 
-PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 0.8.0, HAVE_SYSTEM_WEED_UTILS=true, HAVE_SYSTEM_WEED_UTILS=false)
+PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 0.11.0, HAVE_SYSTEM_WEED_UTILS=true, HAVE_SYSTEM_WEED_UTILS=false)
 
 if test "$HAVE_SYSTEM_WEED_UTILS" = "false"; then
 echo "...will try to build from included sources"

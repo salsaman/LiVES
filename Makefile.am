@@ -69,6 +69,7 @@ EXTRA_DIST = \
 	po/update_with_smogrify \
 	default.keymap \
 	COPYING \
+	COPYING.LGPL \
 	INSTALL \
 	menu-entries/LiVES.desktop \
 	menu-entries/*.png \

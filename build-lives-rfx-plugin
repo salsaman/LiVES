@@ -1,18 +1,15 @@
 #!/usr/bin/perl
 
-# build-lives-rfx-plugin - Copyright G. Finch (salsaman) 2005 - 2012
-# Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
+# build-lives-rfx-plugin - Copyright G. Finch (salsaman) 2005 - 2019
+# Released under the LGPL 3 or later - see file COPYING.LGPL or www.gnu.org for details
 
 #usage : build-lives-rfx-plugin <script_file> <output_directory>
 # if <output_directory> is omitted, plugins will be generated in /tmp
 
-
-
 ########################################################
 # this will auto-generate a LiVES-Perl plugin from the info in $file
 
-$rfx_version="1.8";
-
+$rfx_version="1.8.1";
 
 if ($ARGV[0] eq "-get") {
     $section=$ARGV[1];
@@ -23,7 +20,6 @@ if ($ARGV[0] eq "-get") {
     }
     exit 0;
 }
-
 
 $file=$ARGV[0];
 
@@ -89,7 +85,6 @@ if ($in_channels == 0 && ($properties & 0x0004)) {
 else {
     $is_batch_gen=0;
 }
-
 
 if ($in_channels>0) {
     push(@requires,"convert");
@@ -278,7 +273,6 @@ if ($in_channels==2) {
 
 }
 
-
 print OUT "\n";
 
 if ($in_channels==0&&!$is_batch_gen) {
@@ -449,7 +443,6 @@ unless ($is_batch_gen) {
     
     print OUT "        }\n";
 }
-
 
 print OUT "    return 1;\n";
 print OUT "}\n\n\n";

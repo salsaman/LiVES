@@ -1,15 +1,12 @@
 #!/usr/bin/perl
 
-
 # build-lives-rfx-plugin-multi - Copyright G. Finch (salsaman) 2005 - 2013
-# Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
-
+# Released under the LGPL 3 or later - see file COPYING.LGPL or www.gnu.org for details
 
 #########################################################
 
 if ($^O eq "MSWin32") {
     use File::Path qw(mkpath);
-
 
     $installdir="C:\\Program Files\\LiVES";
 
@@ -28,7 +25,6 @@ else {
     $builder="build-lives-rfx-plugin";
 }
 
-
 my $type="builtin"; # default
 
 #########################################################
@@ -40,7 +36,6 @@ my ($builder_location);
 if (defined $ARGV[0]) {
     $type=$ARGV[0];
 }
-
 
 if (defined $ARGV[1] && $ARGV[1] ne "") {
     $scripts_dir=$ARGV[1];
@@ -57,7 +52,6 @@ if (defined $ARGV[3] && $ARGV[3] ne "") {
 if (!defined($scripts_dir)) {
     if ($^O ne "MSWin32") {
 
-
 #get <tempdir>
     `\"$smogcmd\" get_tempdir rfx_builder`;
     open IN,"< /tmp/.smogrify.rfx_builder";
@@ -68,7 +62,6 @@ if (!defined($scripts_dir)) {
     if ($tmpdir eq "") {
 	$tmpdir="/tmp";
     }
-    
     
 # check we have the plugin builder
     `\"$smogcmd\" get_location $builder rfx builder`;
@@ -115,6 +108,7 @@ if ($type eq "builtin") {
     $exec_dir.=$dir_extra;
     $outdir=$exec_dir."rendered/";
 }
+
 elsif ($type eq "custom") {
     $scripts_dir.=$home_dir_extra;
     $indir=$scripts_dir."RFXscripts/custom/";
@@ -122,6 +116,7 @@ elsif ($type eq "custom") {
     $exec_dir.=$home_dir_extra;
     $outdir=$exec_dir."rendered/custom/";
 }
+
 elsif ($type eq "test") {
     $scripts_dir.=$home_dir_extra;
     $indir=$scripts_dir."RFXscripts/test/";
@@ -129,6 +124,7 @@ elsif ($type eq "test") {
     $exec_dir.=$home_dir_extra;
     $outdir=$exec_dir."rendered/test/";
 }
+
 elsif ($type eq "builtinx") {
     $indir=$scripts_dir;
     $outdir=$exec_dir;
@@ -239,5 +235,4 @@ sub get_ext {
 
     return ".".$ext;
 }
-
 

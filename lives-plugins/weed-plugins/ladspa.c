@@ -922,8 +922,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
           weed_set_string_value(filter_class, "extra_authors", laddes->Maker);
 
-          weed_set_voidptr_value(filter_class, "plugin_lad_descriptor", laddes);
+          weed_set_voidptr_value(filter_class, "plugin_handle", handle);
 
+          weed_set_voidptr_value(filter_class, "plugin_lad_descriptor", laddes);
           weed_set_voidptr_value(filter_class, "plugin_lad_instantiate_func", (void *)lad_instantiate_func);
           weed_set_voidptr_value(filter_class, "plugin_lad_activate_func", (void *)lad_activate_func);
           weed_set_voidptr_value(filter_class, "plugin_lad_deactivate_func", (void *)lad_deactivate_func);

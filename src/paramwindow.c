@@ -2560,6 +2560,7 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
       if (!filter_mutex_trylock(key)) {
         weed_set_int_array(wparam, WEED_LEAF_VALUE, numvals, valis);
         copyto = set_copy_to(inst, param_number, TRUE);
+        filter_mutex_unlock(key);
       }
       lives_free(valis);
 

@@ -199,7 +199,7 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill| \\n\
 
   case 1: // LiVES transcoding (test)
     return
-                    "<define>\\n\
+      "<define>\\n\
 |1.8.1\\n\
 </define>\\n\
 <language_code>\\n\
@@ -979,50 +979,50 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     if (!stream_encode && !(fmtctx->oformat->flags & AVFMT_NOFILE)) {
 
       if (in_sample_rate != 0) {
-	// flush final audio
-	c = osta.enc;
+        // flush final audio
+        c = osta.enc;
 
-	do {
-	  av_init_packet(&pkt);
+        do {
+          av_init_packet(&pkt);
 
-	  ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
-	  if (ret < 0) {
-	    fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), 0, 0, c->sample_rate, c->sample_fmt,
-		    c->channel_layout);
-	    break;
-	  }
+          ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
+          if (ret < 0) {
+            fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), 0, 0, c->sample_rate, c->sample_fmt,
+                    c->channel_layout);
+            break;
+          }
 
-	  if (got_packet) {
-	    ret = write_frame(&c->time_base, aStream, &pkt);
-	    if (ret < 0) {
-	      fprintf(stderr, "Error while writing audio frame: %s\n",
-		      av_err2str(ret));
-	      break;
-	    }
-	  }
-	} while (got_packet);
+          if (got_packet) {
+            ret = write_frame(&c->time_base, aStream, &pkt);
+            if (ret < 0) {
+              fprintf(stderr, "Error while writing audio frame: %s\n",
+                      av_err2str(ret));
+              break;
+            }
+          }
+        } while (got_packet);
       }
 
       // flush final few frames
       c = ostv.enc;
 
       do {
-	av_init_packet(&pkt);
+        av_init_packet(&pkt);
 
-	ret = avcodec_encode_video2(c, &pkt, NULL, &got_packet);
+        ret = avcodec_encode_video2(c, &pkt, NULL, &got_packet);
 
-	if (ret < 0) {
-	  fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(ret));
-	  break;
-	}
-	if (got_packet) {
-	  ret = write_frame(&c->time_base, vStream, &pkt);
-	} else {
-	  ret = 0;
-	}
-	if (ret < 0) {
-	  break;
-	}
+        if (ret < 0) {
+          fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(ret));
+          break;
+        }
+        if (got_packet) {
+          ret = write_frame(&c->time_base, vStream, &pkt);
+        } else {
+          ret = 0;
+        }
+        if (ret < 0) {
+          break;
+        }
       } while (got_packet);
     }
 

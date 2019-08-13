@@ -4739,8 +4739,8 @@ boolean lives_make_writeable_dir(const char *newdir) {
     return FALSE;
   } else {
     if (ret != -1) {
-      LIVES_INFO("Created directory");
-      LIVES_INFO(newdir);
+      LIVES_DEBUG("Created directory");
+      LIVES_DEBUG(newdir);
     }
   }
   return TRUE;

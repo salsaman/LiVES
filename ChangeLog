@@ -6,6 +6,7 @@ Fix hang after setting parameters with combo boxes for realtime effects.
 Fix crashes in frei0r and ladspa wrappers.
 Fix undefined values on startup and in swscale.
 Improve "quick transcode" functionality.
+Updated translations for Portuguese, Brazilian Portuguese (Nany Cavalcante)
 
 
 

@@ -158,14 +158,14 @@ const char *get_init_rfx(int intention) {
 
   switch (intent) {
   case 0: // LiVES VPP (streaming output)
-    return					\
-                    "<define>\\n\
+    return
+      "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
 0xF0\\n\
 </language_code>\\n\
-<params> \\n\
+<params>\\n\
 form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis||\\n\
 \
 mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
@@ -174,27 +174,27 @@ achans|Audio _layout|string_list|1|mono|stereo||\\n\
 arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
 mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 \
-ip1|_Address to stream to|string|127|3| \\n\
-ip2||string|0|3| \\n\
-ip3||string|0|3| \\n\
-ip4||string|1|3| \\n\
+ip1|_Address to stream to|string|127|3|\\n\
+ip2||string|0|3|\\n\
+ip3||string|0|3|\\n\
+ip4||string|1|3|\\n\
 port|_port|num0|8000|1024|65535|\\n\
-</params> \\n\
-<param_window> \\n\
-layout|\\\"Enter an IP address and port to stream to LiVES output to.\\\"| \\n\
-layout|\\\"You can play the stream on the remote / local machine with e.g:\\\"| \\n\
+</params>\\n\
+<param_window>\\n\
+layout|\\\"Enter an IP address and port to stream to LiVES output to.\\\"|\\n\
+layout|\\\"You can play the stream on the remote / local machine with e.g:\\\"|\\n\
 layout|\\\"mplayer udp://127.0.0.1:8000\\\"| \\n\
-layout|\\\"You are advised to start with a small frame size and low framerate,\\\"| \\n\
-layout|\\\"and increase this if your network bandwidth allows it.\\\"| \\n\
-layout|p0|| \\n\
-layout|p1|| \\n\
-layout|p2|| \\n\
-layout|p3|| \\n\
-layout|p4|| \\n\
-layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill| \\n\
-</param_window> \\n\
-<onchange> \\n\
-</onchange> \\n\
+layout|\\\"You are advised to start with a small frame size and low framerate,\\\"|\\n\
+layout|\\\"and increase this if your network bandwidth allows it.\\\"|\\n\
+layout|p0||\\n\
+layout|p1||\\n\
+layout|p2||\\n\
+layout|p3||\\n\
+layout|p4||\\n\
+layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
+</param_window>\\n\
+<onchange>\\n\
+</onchange>\\n\
 ";
 
   case 1: // LiVES transcoding (test)
@@ -205,7 +205,7 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill| \\n\
 <language_code>\\n\
 0xF0\\n\
 </language_code>\\n\
-<params> \\n\
+<params>\\n\
 form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis||\\n\
 \
 mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
@@ -214,16 +214,16 @@ achans|Audio _layout|string_list|1|mono|stereo||\\n\
 arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
 mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 \
-fname|_Output file|string|| \\n\
-</params> \\n\
-<param_window> \\n\
-special|filewrite|5| \\n\
-layout|p5|| \\n\
-</param_window> \\n\
-<onchange> \\n\
-init|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} else {$p5 .= \".ogm\";} \\n\
-0|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} else {$p5 .= \".ogm\";} \\n\
-</onchange> \\n\
+fname|_Output file|string||\\n\
+</params>\\n\
+<param_window>\\n\
+special|filewrite|5|\\n\
+layout|p5||\\n\
+</param_window>\\n\
+<onchange>\\n\
+init|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} else {$p5 .= \".ogm\";}\\n\
+0|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} else {$p5 .= \".ogm\";}\\n\
+</onchange>\\n\
 ";
   default:
     return "";

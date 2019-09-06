@@ -2,7 +2,7 @@
 ---------------------------------
 
 Author: salsaman+lives@gmail.com
-Last edit date: 10/08/2018
+Last edit date: 13/08/2019
 API Version: 1.8.1 GPL
 
 Changes

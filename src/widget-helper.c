@@ -1179,6 +1179,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, i
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_get_response_for_widget(LiVESDialog *dialog, LiVESWidget *widget) {
+#ifdef GUI_GTK
+  return gtk_dialog_get_response_for_widget(dialog, widget);
+#endif
+  return LIVES_RESPONSE_NONE;
+}
+
+
 #if GTK_CHECK_VERSION(3, 16, 0)
 
 #define RND_STRLEN 16

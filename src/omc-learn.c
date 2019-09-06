@@ -546,9 +546,9 @@ char *midi_mangle(void) {
       }
 
       if (!got_target) {
-	char *str = lives_strdup_printf("%d", xbuf[0]);
+        char *str = lives_strdup_printf("%d", xbuf[0]);
         target = get_midi_len((mtype = midi_msg_type(str)));
-	lives_free(str);
+        lives_free(str);
       }
 
       //g_print("midi pip %d %02X , tg=%d\n",bytes,xbuf[0],target);

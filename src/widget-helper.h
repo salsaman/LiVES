@@ -312,6 +312,7 @@ LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_
 
 LiVESResponseType lives_dialog_run(LiVESDialog *);
 boolean lives_dialog_response(LiVESDialog *, int response);
+int lives_dialog_get_response_for_widget(LiVESDialog *, LiVESWidget *);
 
 boolean lives_widget_set_bg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 boolean lives_widget_set_fg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);

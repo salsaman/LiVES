@@ -169,7 +169,7 @@ void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   boolean def_ok = FALSE;
 
   if (LIVES_IS_DIALOG(dialog)) {
-    if (gtk_dialog_get_response_for_widget(LIVES_DIALOG(dialog), LIVES_WIDGET(button)) == LIVES_RESPONSE_OK) {
+    if (lives_dialog_get_response_for_widget(LIVES_DIALOG(dialog), LIVES_WIDGET(button)) == LIVES_RESPONSE_OK) {
       def_ok = TRUE;
     }
   }
@@ -674,10 +674,10 @@ LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, live
   if (rfx->num_in_channels > 0) {
     if (CURRENT_CLIP_IS_VALID && !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES)) {
       if ((mainw->xlays = layout_frame_is_affected(mainw->current_file, 1)) != NULL) {
-	if (!do_layout_alter_frames_warning()) {
-	  lives_list_free_all(&mainw->xlays);
-	  return;
-	}
+        if (!do_layout_alter_frames_warning()) {
+          lives_list_free_all(&mainw->xlays);
+          return;
+        }
       }
     }
   }
@@ -722,8 +722,7 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidg
   if (is_realtime) {
     didx = 1;
     no_process = TRUE;
-  }
-  else if (rfx->status != RFX_STATUS_WEED) {
+  } else if (rfx->status != RFX_STATUS_WEED) {
     didx = 0;
     retvals = do_onchange_init(rfx);
   }

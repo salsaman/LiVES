@@ -3652,7 +3652,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   }
 
 
-  char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
+  char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVESVBox * vbox, lives_rfx_t **ret_rfx) {
     // called from plugins.c (vpp opts) and saveplay.c (encoder opts)
 
     // here we create an rfx script from some fixed values and values from the plugin;
@@ -3786,7 +3786,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         if (!sfile) {
           retval = do_read_failed_error_s_with_retry(rfxfile, lives_strerror(errno), NULL);
         } else {
-         mainw->read_failed = FALSE;
+          mainw->read_failed = FALSE;
           lives_fgets(buff, 32, sfile);
           fclose(sfile);
         }

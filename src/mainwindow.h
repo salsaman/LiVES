@@ -1445,9 +1445,7 @@ typedef struct {
 
 extern _merge_opts *merge_opts;
 
-/// note, we can only have two of these currently, one for rendered effects, one for real time effects
-/// 0 for rfx, 1 for rte
-extern LiVESWidget *fx_dialog[2];
+LiVESWidget *fx_dialog[2];
 
 #ifndef IS_MINGW
 #define LIVES_SIGKILL SIGKILL

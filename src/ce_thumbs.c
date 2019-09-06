@@ -525,7 +525,7 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   lives_signal_connect_after(LIVES_GUI_OBJECT(pin_check), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(pin_toggled), LIVES_INT_TO_POINTER(key));
 
-  on_fx_pre_activate(rfx, 1, vbox);
+  on_fx_pre_activate(rfx, TRUE, vbox);
 
   // record the key so we know whose parameters to record later
   weed_set_int_value((weed_plant_t *)rfx->source, WEED_LEAF_HOST_KEY, key);

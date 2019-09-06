@@ -3650,7 +3650,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   }
 
 
-  char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVESVBox * vbox, lives_rfx_t **ret_rfx) {
+  char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
+    // called from plugins.c (vpp opts) and saveplay.c (encoder opts)
 
     // here we create an rfx script from some fixed values and values from the plugin;
     // we will then compile the script to an rfx scrap and use the scrap to get info
@@ -3783,7 +3784,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
         if (!sfile) {
           retval = do_read_failed_error_s_with_retry(rfxfile, lives_strerror(errno), NULL);
         } else {
-          mainw->read_failed = FALSE;
+         mainw->read_failed = FALSE;
           lives_fgets(buff, 32, sfile);
           fclose(sfile);
         }
@@ -3814,15 +3815,14 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
       // now we build our window and get param values
       if (vbox == NULL) {
-        on_fx_pre_activate(rfx, 1, NULL);
-
+        LiVESWidget *dialog = on_fx_pre_activate(rfx, TRUE, NULL);
         if (prefs->show_gui) {
-          lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+          lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
         }
-        lives_window_set_modal(LIVES_WINDOW(fx_dialog[1]), TRUE);
+        lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
         do {
-          res = lives_dialog_run(LIVES_DIALOG(fx_dialog[1]));
+          res = lives_dialog_run(LIVES_DIALOG(dialog));
         } while (res == LIVES_RESPONSE_RETRY);
 
         if (res == LIVES_RESPONSE_OK) {

@@ -43,9 +43,6 @@ extern void on_realfx_activate(LiVESMenuItem *, livespointer rfx);  // effects.c
 
 static void after_param_text_buffer_changed(LiVESTextBuffer *textbuffer, lives_rfx_t *rfx);
 
-LiVESWidget *fx_dialog[2];
-
-
 // TODO -
 // use list of these in case we have multiple windows open
 // right now this is single threaded because of this
@@ -108,11 +105,7 @@ void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     after_param_text_changed(textwidget, rfx);
   }
 
-  if (fx_dialog[1] == NULL) {
-    if (!special_cleanup()) {
-      return;
-    }
-  }
+  if (!special_cleanup()) return;
 
   if (mainw->did_rfx_preview) {
     for (i = 0; i < rfx->num_params; i++) {
@@ -168,13 +161,24 @@ void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
 void on_paramwindow_cancel_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
   // close from rte window
-
   on_paramwindow_cancel_clicked(button, rfx);
   fx_dialog[1] = NULL;
 }
 
 
 void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
+  LiVESWidget *dialog = lives_widget_get_toplevel(LIVES_WIDGET(button));
+  boolean def_retry = FALSE;
+  if (LIVES_IS_DIALOG(dialog)) {
+    if (gtk_dialog_get_response_for_widget(LIVES_DIALOG(dialog), LIVES_WIDGET(button)) == LIVES_RESPONSE_RETRY) {
+      def_retry = TRUE;
+    }
+  }
+
+  if (!special_cleanup()) return;
+
+  if (def_retry) lives_dialog_response(LIVES_DIALOG(dialog), LIVES_RESPONSE_OK);
+
   mainw->block_param_updates = TRUE;
   if (mainw->did_rfx_preview) {
     lives_kill_subprocesses(cfile->handle, TRUE);
@@ -223,7 +227,6 @@ void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
       lives_free(rfx);
     }
   }
-  if (fx_dialog[1] == NULL) special_cleanup();
 
   mainw->block_param_updates = FALSE;
 
@@ -665,7 +668,20 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
 
 LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   int resp;
-  LiVESWidget *dialog = on_fx_pre_activate(rfx, 0, NULL);
+  LiVESWidget *dialog;
+  if (!check_storage_space(CURRENT_CLIP_IS_VALID ? cfile : NULL, FALSE)) return;
+
+  if (rfx->num_in_channels > 0) {
+    if (CURRENT_CLIP_IS_VALID && !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES)) {
+      if ((mainw->xlays = layout_frame_is_affected(mainw->current_file, 1)) != NULL) {
+	if (!do_layout_alter_frames_warning()) {
+	  lives_list_free_all(&mainw->xlays);
+	  return;
+	}
+      }
+    }
+  }
+  dialog = on_fx_pre_activate(rfx, FALSE, NULL);
   if (dialog != NULL) {
     do {
       resp = lives_dialog_run(LIVES_DIALOG(dialog));
@@ -674,12 +690,8 @@ LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, live
 }
 
 
-LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
-  // didx:
-  // 0 == rendered fx
-  // 1 == pbox==NULL : standalone window for mapper
-  // pbox != NULL: put params in box
-
+LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidget *pbox) {
+  // render a pre dialog for: rendered effects (fx_dialog[0]), or rte(fx_dialog[1]), or encoder plugin, or vpp (fx_dialog[1])
   LiVESWidget *top_dialog_vbox = NULL;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton = NULL;
@@ -693,25 +705,11 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
   boolean no_process = FALSE;
 
-  boolean is_realtime = FALSE;
   boolean is_defaults = FALSE;
-
-  //boolean has_lmap_error=FALSE;
 
   boolean has_param;
 
-  if (didx == 0 && !check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) return NULL;
-
-  // TODO - remove this and check in rfx / realfx activate
-
-  if (rfx->num_in_channels > 0) {
-    if (didx == 0 && !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES) &&
-        (mainw->xlays = layout_frame_is_affected(mainw->current_file, 1)) != NULL) {
-      if (!do_layout_alter_frames_warning()) {
-        lives_list_free_all(&mainw->xlays);
-      }
-    }
-  }
+  int scrw, didx;
 
   if (mainw->multitrack != NULL) {
     if (mainw->multitrack->idlefunc > 0) {
@@ -721,10 +719,12 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     mt_desensitise(mainw->multitrack);
   }
 
-  if (didx == 1) {
+  if (is_realtime) {
+    didx = 1;
     no_process = TRUE;
-    is_realtime = TRUE;
-  } else if (rfx->status != RFX_STATUS_WEED) {
+  }
+  else if (rfx->status != RFX_STATUS_WEED) {
+    didx = 0;
     retvals = do_onchange_init(rfx);
   }
 
@@ -755,7 +755,7 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
   if (!no_process && rfx->num_in_channels > 0) {
     // check we have a real clip open
-    if (mainw->current_file <= 0) {
+    if (!CURRENT_CLIP_IS_VALID) {
       lives_list_free_all(&retvals);
       return NULL;
     }
@@ -776,20 +776,19 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     }
   }
 
-  if (pbox == NULL) {
-    int scrw;
-    if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 && rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 2;
-    else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
-    fx_dialog[didx] = lives_standard_dialog_new(_(rfx->menu_text[0] == '_' ? rfx->menu_text + 1 : rfx->menu_text), FALSE, scrw, RFX_WINSIZE_V);
-  }
-
   if (rfx->status == RFX_STATUS_WEED && rfx->is_template) is_defaults = TRUE;
 
   if (pbox == NULL) {
+    if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 && rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 2;
+    else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
+
+    fx_dialog[didx] = lives_standard_dialog_new(_(rfx->menu_text[0] == '_' ? rfx->menu_text + 1 : rfx->menu_text), FALSE, scrw, RFX_WINSIZE_V);
+
     pbox = top_dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[didx]));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[didx]), "rfx", rfx);
     lives_widget_set_hexpand(pbox, TRUE);
     lives_widget_set_vexpand(pbox, TRUE);
+    g_print("setting to %p\n", fx_dialog[1]);
   }
 
   if (rfx->status != RFX_STATUS_WEED && !no_process) {
@@ -969,11 +968,7 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     param_demarshall(rfx, retvals, TRUE, TRUE);
     lives_list_free_all(&retvals);
   }
-
-  if (pbox == NULL) {
-    return fx_dialog[didx];
-  }
-  return NULL;
+  return fx_dialog[didx];
 }
 
 
@@ -1970,6 +1965,7 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   if (fx_dialog[1] != NULL) {
     // transfer param changes from rte_window to ce_thumbs window, and vice-versa
+    // TODO ***: check the logic here
     lives_rfx_t *rte_rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
     int key = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key"));
     int mode = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode"));

@@ -1840,7 +1840,7 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   modew = mode;
 
   widget_opts.non_modal = TRUE;
-  on_fx_pre_activate(rfx, 1, NULL);
+  on_fx_pre_activate(rfx, TRUE, NULL);
   widget_opts.non_modal = FALSE;
 
   // record the key so we know whose parameters to record later
@@ -2521,7 +2521,7 @@ void rte_set_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   rfx = weed_to_rfx(filter, TRUE);
   rfx->min_frames = -1;
-  on_fx_pre_activate(rfx, 1, NULL);
+  on_fx_pre_activate(rfx, TRUE, NULL);
 }
 
 

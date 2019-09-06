@@ -28,7 +28,7 @@ void on_paramwindow_cancel_clicked2(LiVESButton *, lives_rfx_t *);
 void on_render_fx_pre_activate(LiVESMenuItem *, lives_rfx_t *);
 void on_render_fx_activate(LiVESMenuItem *, lives_rfx_t *);
 
-LiVESWidget *on_fx_pre_activate(lives_rfx_t *, int didx, LiVESWidget *pbox);
+LiVESWidget *on_fx_pre_activate(lives_rfx_t *, boolean is_realtime, LiVESWidget *pbox);
 
 boolean make_param_box(LiVESVBox *, lives_rfx_t *);
 

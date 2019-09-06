@@ -105,7 +105,11 @@ void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     after_param_text_changed(textwidget, rfx);
   }
 
-  if (!special_cleanup()) return;
+  if (!special_cleanup()) {
+    if (LIVES_IS_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))))
+      lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_RETRY);
+    return;
+  }
 
   if (mainw->did_rfx_preview) {
     for (i = 0; i < rfx->num_params; i++) {
@@ -129,17 +133,13 @@ void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     mainw->show_procd = TRUE;
   }
 
-  if (button != NULL) {
-    lives_general_button_clicked(button, NULL);
-  }
-
   if (usrgrp_to_livesgrp[0] != NULL) lives_slist_free(usrgrp_to_livesgrp[0]);
   usrgrp_to_livesgrp[0] = NULL;
 
-  if (rfx != NULL && rfx->status == RFX_STATUS_SCRAP) {
-    if (LIVES_IS_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))))
-      lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
-    return;
+  if (rfx != NULL && rfx->status == RFX_STATUS_SCRAP) return;
+
+  if (button != NULL) {
+    lives_general_button_clicked(button, NULL);
   }
 
   if (rfx->status == RFX_STATUS_WEED) on_realfx_activate(NULL, rfx);
@@ -154,8 +154,6 @@ void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
-  if (LIVES_IS_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))))
-    lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
 }
 
 
@@ -168,16 +166,18 @@ void on_paramwindow_cancel_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
 
 void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   LiVESWidget *dialog = lives_widget_get_toplevel(LIVES_WIDGET(button));
-  boolean def_retry = FALSE;
+  boolean def_ok = FALSE;
+
   if (LIVES_IS_DIALOG(dialog)) {
-    if (gtk_dialog_get_response_for_widget(LIVES_DIALOG(dialog), LIVES_WIDGET(button)) == LIVES_RESPONSE_RETRY) {
-      def_retry = TRUE;
+    if (gtk_dialog_get_response_for_widget(LIVES_DIALOG(dialog), LIVES_WIDGET(button)) == LIVES_RESPONSE_OK) {
+      def_ok = TRUE;
     }
   }
 
-  if (!special_cleanup()) return;
-
-  if (def_retry) lives_dialog_response(LIVES_DIALOG(dialog), LIVES_RESPONSE_OK);
+  if (!special_cleanup()) {
+    if (def_ok) lives_dialog_response(LIVES_DIALOG(dialog), LIVES_RESPONSE_RETRY);
+    return;
+  }
 
   mainw->block_param_updates = TRUE;
   if (mainw->did_rfx_preview) {
@@ -788,7 +788,6 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidg
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[didx]), "rfx", rfx);
     lives_widget_set_hexpand(pbox, TRUE);
     lives_widget_set_vexpand(pbox, TRUE);
-    g_print("setting to %p\n", fx_dialog[1]);
   }
 
   if (rfx->status != RFX_STATUS_WEED && !no_process) {
@@ -845,7 +844,7 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidg
                       LIVES_RESPONSE_RESET);
         if (!has_param) lives_widget_set_sensitive(resetbutton, FALSE);
       } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_OK, NULL,
-                          LIVES_RESPONSE_RETRY);
+                          LIVES_RESPONSE_OK);
     } else {
       if (rfx->status == RFX_STATUS_WEED) {
         resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_REVERT_TO_SAVED, _("Reset"),

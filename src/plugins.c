@@ -599,7 +599,9 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   if (!special_cleanup()) {
     // check for file overwrites with special type "filewrite"
-    // will return with the original LIVES_RESPONSE_RETRY
+    // if user declines, will return with LIVES_RESPONSE_RETRY
+    if (LIVES_IS_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))))
+      lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_RETRY);
     return;
   }
 
@@ -1086,7 +1088,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(vppa->dialog), LIVES_STOCK_OK, NULL,
-             LIVES_RESPONSE_RETRY);
+             LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(okbutton);
 

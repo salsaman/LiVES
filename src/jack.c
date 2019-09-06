@@ -276,7 +276,7 @@ void jack_pb_stop(void) {
 // audio
 
 static jack_driver_t outdev[JACK_MAX_OUTDEVICES];
-static jack_driver_t indev[JACK_MAX_OUTDEVICES];
+static jack_driver_t indev[JACK_MAX_INDEVICES];
 
 
 /* not used yet */
@@ -1289,6 +1289,8 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
   jack_options_t options = (jack_options_t)((int)JackServerName | (int)JackNoStartServer);
   jack_status_t status;
   int i;
+
+  jackd->is_active = FALSE;
 
   /* set up an error handler */
   jack_set_error_function(jack_error_func);

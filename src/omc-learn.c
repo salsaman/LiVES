@@ -448,7 +448,6 @@ char *midi_mangle(void) {
   unsigned char midbuf[4], xbuf[4];
   int target = 1, mtype = 0, channel;
   boolean got_target = FALSE;
-  char *str;
 
 #ifdef ALSA_MIDI
   int npfd = 0;
@@ -546,14 +545,11 @@ char *midi_mangle(void) {
         continue;
       }
 
-      str = lives_strdup_printf("%d", xbuf[0]);
-
       if (!got_target) {
+	char *str = lives_strdup_printf("%d", xbuf[0]);
         target = get_midi_len((mtype = midi_msg_type(str)));
-        got_target = TRUE;
+	lives_free(str);
       }
-
-      lives_free(str);
 
       //g_print("midi pip %d %02X , tg=%d\n",bytes,xbuf[0],target);
 
@@ -574,7 +570,7 @@ char *midi_mangle(void) {
       else if (target == 3) string = lives_strdup_printf("%u %u %u %u", midbuf[0], channel, midbuf[1], midbuf[2]);
       else string = lives_strdup_printf("%u %u %u %u %u", midbuf[0], channel, midbuf[1], midbuf[2], midbuf[3]);
     } else {
-      midbuf[0] = midbuf[0] & 0xF0;
+      midbuf[0] &= 0xF0;
       if (target == 2) string = lives_strdup_printf("%u %u", midbuf[0], midbuf[1]);
       else if (target == 3) string = lives_strdup_printf("%u %u %u", midbuf[0], midbuf[1], midbuf[2]);
       else string = lives_strdup_printf("%u %u %u %u", midbuf[0], midbuf[1], midbuf[2], midbuf[3]);

@@ -42,7 +42,6 @@ static void handle_omc_events(void) {
     if (string != NULL) {
       omc_process_string(OMC_JS, string, FALSE, NULL);
       lives_free(string);
-      string = NULL;
     }
   }
 #endif // OMC_JS_IMPL
@@ -60,7 +59,6 @@ static void handle_omc_events(void) {
         if (string != NULL) {
           omc_process_string(OMC_MIDI, string, FALSE, NULL);
           lives_free(string);
-          string = NULL;
 #ifdef ALSA_MIDI
           if (prefs->use_alsa_midi) gotone = TRUE;
 #endif

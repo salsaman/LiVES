@@ -1214,6 +1214,8 @@ void save_file(int clip, int start, int end, const char *filename) {
   boolean save_all = FALSE;
   boolean resb;
 
+  if (!check_storage_space(CURRENT_CLIP_IS_VALID ? cfile : NULL, FALSE)) return;
+
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_context_update();
 

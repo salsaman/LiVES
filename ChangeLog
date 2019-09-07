@@ -1,8 +1,8 @@
 Version 3.0.2
 -------------
 Fix regression in okbutton handling which prevents encoding from actioning.
-
-
+Show splash screen earlier in startup.
+Code correctness fixes.
 
 
 

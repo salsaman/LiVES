@@ -618,7 +618,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     }
 
 #ifdef ENABLE_JACK
-    else if (!(strcmp(audio_player, AUDIO_PLAYER_JACK)) && prefs->audio_player != AUD_PLAYER_JACK) {
+    if (!(strcmp(audio_player, AUDIO_PLAYER_JACK)) && prefs->audio_player != AUD_PLAYER_JACK) {
       // switch to jack
       if (!capable->has_jackd) {
         do_blocking_error_dialogf(_("\nUnable to switch audio players to jack\njackd must be installed first.\nSee %s\n"), JACK_URL);
@@ -651,11 +651,12 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         }
         goto success1;
       }
+      goto fail1;
     }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    else if (!(strcmp(audio_player, AUDIO_PLAYER_PULSE)) && prefs->audio_player != AUD_PLAYER_PULSE) {
+    if (!(strcmp(audio_player, AUDIO_PLAYER_PULSE)) && prefs->audio_player != AUD_PLAYER_PULSE) {
       // switch to pulseaudio
       if (!capable->has_pulse_audio) {
         do_blocking_error_dialogf(_("\nUnable to switch audio players to pulseaudio\npulseaudio must be installed first.\nSee %s\n"),
@@ -685,6 +686,40 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       }
     }
 #endif
+    goto fail1;
+  }
+
+  if (!strcmp(prefidx, PREF_OMC_JS_FNAME)) {
+    if (strcmp(newval, prefs->omc_js_fname)) {
+      lives_snprintf(prefs->omc_js_fname, PATH_MAX, "%s", newval);
+      if (permanent) set_pref_utf8(PREF_OMC_JS_FNAME, newval);
+      goto success1;
+    }
+    goto fail1;
+  }
+
+  if (!strcmp(prefidx, PREF_OMC_MIDI_FNAME)) {
+    if (strcmp(newval, prefs->omc_midi_fname)) {
+      lives_snprintf(prefs->omc_midi_fname, PATH_MAX, "%s", newval);
+      if (permanent) set_pref_utf8(PREF_OMC_MIDI_FNAME, newval);
+      goto success1;
+    }
+    goto fail1;
+  }
+
+  if (!strcmp(prefidx, PREF_MIDI_RCV_CHANNEL)) {
+    if (strlen(newval) > 2) {
+      if (prefs->midi_rcv_channel != -1) {
+        prefs->midi_rcv_channel = -1;
+        if (permanent) set_int_pref(PREF_MIDI_RCV_CHANNEL, prefs->midi_rcv_channel);
+        goto success1;
+      }
+    } else if (prefs->midi_rcv_channel != atoi(newval)) {
+      prefs->midi_rcv_channel = atoi(newval);
+      if (permanent) set_int_pref(PREF_MIDI_RCV_CHANNEL, prefs->midi_rcv_channel);
+      goto success1;
+    }
+    goto fail1;
   }
 
 fail1:
@@ -900,6 +935,23 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
     goto success3;
   }
 
+  if (!strcmp(prefidx, PREF_MIDI_CHECK_RATE)) {
+    if (newval != prefs->midi_check_rate) {
+      prefs->midi_check_rate = newval;
+      goto success3;
+    }
+    goto fail3;
+  }
+
+  if (!strcmp(prefidx, PREF_MIDI_RPT)) {
+    if (newval != prefs->midi_rpt) {
+      prefs->midi_rpt = newval;
+      goto success3;
+    }
+    goto fail3;
+  }
+
+
 fail3:
   if (prefsw != NULL) prefsw->ignore_apply = FALSE;
   return FALSE;
@@ -975,13 +1027,38 @@ boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval
     if (permanent) set_int_pref(PREF_AUDIO_OPTS, prefs->audio_opts);
 
     if (prefsw != NULL) {
-      if (bitfield == AUDIO_OPTS_FOLLOW_FPS)
+      if (bitfield == AUDIO_OPTS_FOLLOW_FPS) {
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_afollow),
                                        (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) ? TRUE : FALSE);
-      else if (bitfield == AUDIO_OPTS_FOLLOW_CLIPS)
+      }
+      if (bitfield == AUDIO_OPTS_FOLLOW_CLIPS) {
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aclips),
                                        (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE);
+      }
     }
+    goto success6;
+  }
+
+  if (!strcmp(prefidx, PREF_OMC_DEV_OPTS)) {
+    if (newval && !(prefs->omc_dev_opts & bitfield)) prefs->omc_dev_opts &= bitfield;
+    else if (!newval && (prefs->omc_dev_opts & bitfield)) prefs->omc_dev_opts ^= bitfield;
+    else goto fail6;
+
+    if (permanent) set_int_pref(PREF_OMC_DEV_OPTS, prefs->omc_dev_opts);
+
+    if (bitfield == OMC_DEV_JS) {
+      if (newval) js_open();
+      else js_close();
+    } else if (bitfield == OMC_DEV_MIDI) {
+      if (!newval) midi_close();
+    }
+#ifdef ALSA_MIDI
+    else if (bitfield == OMC_DEV_FORCE_RAW_MIDI) {
+      prefs->use_alsa_midi = !newval;
+    } else if (bitfield == OMC_DEV_MIDI_DUMMY) {
+      prefs->alsa_midi_dummy = newval;
+    }
+#endif
     goto success6;
   }
 
@@ -1897,90 +1974,39 @@ boolean apply_prefs(boolean skip_warn) {
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
-  if (strcmp(omc_js_fname, prefs->omc_js_fname)) {
-    lives_snprintf(prefs->omc_js_fname, PATH_MAX, "%s", omc_js_fname);
-    set_pref_utf8(PREF_OMC_JS_FNAME, omc_js_fname);
-  }
-  if (omc_js_enable != ((prefs->omc_dev_opts & OMC_DEV_JS) / OMC_DEV_JS)) {
-    if (omc_js_enable) {
-      prefs->omc_dev_opts |= OMC_DEV_JS;
-      js_open();
-    } else {
-      prefs->omc_dev_opts ^= OMC_DEV_JS;
-      js_close();
-    }
+  pref_factory_string(PREF_OMC_JS_FNAME, omc_js_fname, TRUE);
+  if (pref_factory_bitmapped(PREF_OMC_DEV_OPTS, OMC_DEV_JS, omc_js_enable, FALSE))
     set_omc_dev_opts = TRUE;
-  }
 #endif
 
 #ifdef OMC_MIDI_IMPL
-  if (strlen(midichan) > 2) {
-    if (prefs->midi_rcv_channel != -1) {
-      prefs->midi_rcv_channel = -1;
-      set_int_pref(PREF_MIDI_RCV_CHANNEL, prefs->midi_rcv_channel);
-    }
-  } else if (prefs->midi_rcv_channel != atoi(midichan)) {
-    prefs->midi_rcv_channel = atoi(midichan);
-    set_int_pref(PREF_MIDI_RCV_CHANNEL, prefs->midi_rcv_channel);
-  }
-
+  pref_factory_string(PREF_MIDI_RCV_CHANNEL, midichan, TRUE);
   lives_free(midichan);
 
-  if (strcmp(omc_midi_fname, prefs->omc_midi_fname)) {
-    lives_snprintf(prefs->omc_midi_fname, PATH_MAX, "%s", omc_midi_fname);
-    set_pref_utf8(PREF_OMC_MIDI_FNAME, omc_midi_fname);
-  }
+  pref_factory_string(PREF_OMC_MIDI_FNAME, omc_midi_fname, TRUE);
 
-  if (midicr != prefs->midi_check_rate) {
-    prefs->midi_check_rate = midicr;
-    set_int_pref(PREF_MIDI_CHECK_RATE, prefs->midi_check_rate);
-  }
+  pref_factory_int(PREF_MIDI_CHECK_RATE, midicr, TRUE);
+  pref_factory_int(PREF_MIDI_RPT, midirpt, TRUE);
 
-  if (midirpt != prefs->midi_rpt) {
-    prefs->midi_rpt = midirpt;
-    set_int_pref(PREF_MIDI_RPT, prefs->midi_rpt);
-  }
-
-  if (omc_midi_enable != ((prefs->omc_dev_opts & OMC_DEV_MIDI) / OMC_DEV_MIDI)) {
-    if (omc_midi_enable) {
-      prefs->omc_dev_opts |= OMC_DEV_MIDI;
-      needs_midi_restart = TRUE;
-    } else {
-      prefs->omc_dev_opts ^= OMC_DEV_MIDI;
-      midi_close();
-    }
+  if (omc_midi_enable && !(prefs->omc_dev_opts & OMC_DEV_MIDI)) needs_midi_restart = TRUE;
+  if (pref_factory_bitmapped(PREF_OMC_DEV_OPTS, OMC_DEV_MIDI, omc_midi_enable, FALSE))
     set_omc_dev_opts = TRUE;
-  }
 
 #ifdef ALSA_MIDI
+  if (pref_factory_bitmapped(PREF_OMC_DEV_OPTS, OMC_DEV_FORCE_RAW_MIDI, !use_alsa_midi, FALSE))
+    set_omc_dev_opts = TRUE;
+
   if (use_alsa_midi == ((prefs->omc_dev_opts & OMC_DEV_FORCE_RAW_MIDI) / OMC_DEV_FORCE_RAW_MIDI)) {
     if (!needs_midi_restart) {
       needs_midi_restart = (mainw->ext_cntl[EXT_CNTL_MIDI]);
-      if (needs_midi_restart) midi_close();
     }
-
-    if (!use_alsa_midi) {
-      prefs->omc_dev_opts |= OMC_DEV_FORCE_RAW_MIDI;
-      prefs->use_alsa_midi = FALSE;
-    } else {
-      prefs->omc_dev_opts ^= OMC_DEV_FORCE_RAW_MIDI;
-      prefs->use_alsa_midi = TRUE;
-    }
-    set_omc_dev_opts = TRUE;
   }
-  if (alsa_midi_dummy != ((prefs->omc_dev_opts & OMC_DEV_MIDI_DUMMY) / OMC_DEV_MIDI_DUMMY)) {
+
+  if (pref_factory_bitmapped(PREF_OMC_DEV_OPTS, OMC_DEV_MIDI_DUMMY, alsa_midi_dummy, FALSE)) {
+    set_omc_dev_opts = TRUE;
     if (!needs_midi_restart) {
       needs_midi_restart = (mainw->ext_cntl[EXT_CNTL_MIDI]);
     }
-
-    if (!alsa_midi_dummy) {
-      prefs->omc_dev_opts |= OMC_DEV_MIDI_DUMMY;
-      prefs->alsa_midi_dummy = FALSE;
-    } else {
-      prefs->omc_dev_opts ^= OMC_DEV_MIDI_DUMMY;
-      prefs->alsa_midi_dummy = TRUE;
-    }
-    set_omc_dev_opts = TRUE;
   }
 #endif
 

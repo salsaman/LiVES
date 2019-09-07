@@ -1179,7 +1179,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, i
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_get_response_for_widget(LiVESDialog *dialog, LiVESWidget *widget) {
+WIDGET_HELPER_GLOBAL_INLINE int lives_dialog_get_response_for_widget(LiVESDialog *dialog, LiVESWidget *widget) {
 #ifdef GUI_GTK
   return gtk_dialog_get_response_for_widget(dialog, widget);
 #endif

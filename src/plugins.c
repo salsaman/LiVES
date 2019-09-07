@@ -3765,7 +3765,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       rfx->flags = RFX_FLAGS_NO_SLIDERS;
 
       // get the delimiter
-      rfxfile = lives_strdup_printf("%ssmdef.%d", prefs->workdir, capable->mainpid);
+      rfxfile = lives_strdup_printf("%s" LIVES_DIR_SEP "smdef.%d", prefs->workdir, capable->mainpid);
       fnamex = lives_build_filename(prefs->workdir, rfx_scrapname, NULL);
       com = lives_strdup_printf("\"%s\" get_define > \"%s\"", fnamex, rfxfile);
       retval = lives_system(com, FALSE);

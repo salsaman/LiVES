@@ -1,8 +1,9 @@
-Version 3.0.2
--------------
+Version 3.0.2 (7 Sep 2019)
+--------------------------
 Fix regression in okbutton handling which prevents encoding from actioning.
-Show splash screen earlier in startup.
+Display splash screen as early as possibley in startup.
 Code correctness fixes.
+Updated translations for Portuguese, Brazilian Portuguese (Nany Cavalcante)
 
 
 

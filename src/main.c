@@ -2737,11 +2737,6 @@ static boolean lives_startup(livespointer data) {
 
     get_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
 
-    if (!mainw->foreign) {
-      if (prefs->show_splash) splash_init();
-      print_notice();
-    }
-
     if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
       mainw->vpp = open_vid_playback_plugin(buff, TRUE);
     } else {
@@ -3506,6 +3501,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
       }
     }
+  }
+
+  if (!mainw->foreign) {
+    if (prefs->show_splash) splash_init();
+    print_notice();
   }
 
   // need to do this here, before startup but afer setting ign_opts

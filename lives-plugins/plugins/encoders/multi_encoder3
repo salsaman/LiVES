@@ -488,7 +488,7 @@ if __name__ == '__main__':
             quiet = '-q'
             tonull = '2> /dev/null'
 
-        encode_command = ' '.join(['lives_' + prog + '_encoder', '-o', \
+        encode_command = ' '.join(['lives_' + prog + '_encoder3', '-o', \
                                    outfile, '-w', tempdir, '-a', arc, \
                                    '-f', fpsc, quiet, '-t', \
                                    type, '-s ./audiodump.wav', \

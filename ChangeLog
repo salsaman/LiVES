@@ -1,3 +1,13 @@
+Version 3.0.3
+-------------
+Optimise communication with rendered plugins.
+Fix for multi_encoder3
+Improvements to RFX scripot builder tool.
+
+
+
+
+
 Version 3.0.2 (7 Sep 2019)
 --------------------------
 Fix regression in okbutton handling which prevents encoding from actioning.

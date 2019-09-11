@@ -37,128 +37,35 @@ static boolean list_plugins;
 ///////////////////////
 // command-line plugins
 
-static LiVESList *get_plugin_result(const char *command, const char *delim, boolean allow_blanks) {
-
+LiVESList *get_plugin_result(const char *command, const char *delim, boolean allow_blanks, boolean strip) {
   LiVESList *list = NULL;
   char **array;
-  ssize_t bytes = 0;
-  int pieces;
-  int outfile_fd, i;
-  int retval;
-  int alarm_handle;
-  int error;
-  boolean timeout;
+  char *buf;
 
-  char *msg, *buf;
-
-  char *outfile;
-  char *com;
   char buffer[65536];
 
+  int pieces, i;
+
   threaded_dialog_spin(0.);
 
-  outfile = lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGPLUGIN_FILE_NAME".%d", prefs->workdir, capable->mainpid);
+  mainw->com_failed = FALSE;
+  lives_popen(command, !mainw->is_ready && !list_plugins, buffer, 65535);
 
-  lives_rm(outfile);
-
-  com = lives_strconcat(command, " > \"", outfile, "\"", NULL);
-
-  mainw->error = FALSE;
-
-  if ((error = lives_system(com, TRUE)) != 0 && error != 126 * 256 && error != 256) {
-    if (!list_plugins) {
-      char *msg2;
-      lives_free(com);
-      if (mainw->is_ready) {
-        if ((outfile_fd = lives_open2(outfile, O_RDONLY)) > -1) {
-          bytes = read(outfile_fd, &buffer, 65535);
-          if (bytes < 0) bytes = 0;
-          close(outfile_fd);
-          lives_rm(outfile);
-          memset(buffer + bytes, 0, 1);
-        }
-        msg = lives_strdup_printf(_("\nPlugin error: %s failed with code %d"), command, error / 256);
-        if (bytes) {
-          msg2 = lives_strconcat(msg, lives_strdup_printf(_(" : message was %s\n"), buffer), NULL);
-          lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", buffer);
-        } else {
-          msg2 = lives_strconcat(msg, "\n", NULL);
-        }
-        d_print(msg2);
-        lives_free(msg2);
-        lives_free(msg);
-      }
-    }
-    threaded_dialog_spin(0.);
-    lives_rm(outfile);
-    lives_free(outfile);
-    return list;
-  }
-  lives_free(com);
-  if (!lives_file_test(outfile, LIVES_FILE_TEST_EXISTS)) {
-    lives_free(outfile);
-    threaded_dialog_spin(0.);
+  if (mainw->com_failed) {
     return NULL;
   }
+
   threaded_dialog_spin(0.);
-
-  do {
-    retval = 0;
-    timeout = FALSE;
-
-    alarm_handle = lives_alarm_set(LIVES_LONGER_TIMEOUT);
-
-    while ((outfile_fd = lives_open2(outfile, O_RDONLY)) == -1 && !(timeout = lives_alarm_get(alarm_handle))) {
-      lives_usleep(prefs->sleep_time);
-    }
-
-    lives_alarm_clear(alarm_handle);
-
-    if (timeout) {
-      msg = lives_strdup_printf(("Plugin timed out on message %s"), command);
-      LIVES_ERROR(msg);
-      lives_free(msg);
-      retval = do_read_failed_error_s_with_retry(outfile, NULL, NULL);
-    } else {
-      bytes = read(outfile_fd, &buffer, 65535);
-      close(outfile_fd);
-      lives_rm(outfile);
-
-      if (bytes < 0) {
-        retval = do_read_failed_error_s_with_retry(outfile, NULL, NULL);
-      } else {
-        threaded_dialog_spin(0.);
-        memset(buffer + bytes, 0, 1);
-      }
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
-  lives_rm(outfile);
-  lives_free(outfile);
-
-  if (retval == LIVES_RESPONSE_CANCEL) {
-    threaded_dialog_spin(0.);
-    return list;
-  }
-
-#ifdef DEBUG_PLUGINS
-  lives_printerr("plugin msg: %s %d\n", buffer, error);
-#endif
-
-  if (error == 256) {
-    mainw->error = TRUE;
-    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", buffer);
-    return list;
-  }
 
   pieces = get_token_count(buffer, delim[0]);
   array = lives_strsplit(buffer, delim, pieces);
   for (i = 0; i < pieces; i++) {
     if (array[i] != NULL) {
-      buf = lives_strdup(lives_strstrip(array[i]));
+      if (strip) buf = lives_strstrip(array[i]);
+      else buf = array[i];
       if (strlen(buf) || allow_blanks) {
-        list = lives_list_append(list, buf);
-      } else lives_free(buf);
+        list = lives_list_append(list, lives_strdup(buf));
+      }
     }
   }
   lives_strfreev(array);
@@ -200,12 +107,7 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
   LiVESList *reslist = NULL;
   char *com, *comfile;
 
-#ifdef IS_MINGW
-  char *ext, *cmd;
-#endif
-
   if (plugin_type != NULL) {
-
     if (plugin_name == NULL || !strlen(plugin_name)) {
       return reslist;
     }
@@ -220,7 +122,6 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
       comfile = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, plugin_type, plugin_name, NULL);
     }
 
-#ifndef IS_MINGW
     //#define DEBUG_PLUGINS
 #ifdef DEBUG_PLUGINS
     com = lives_strdup_printf("\"%s\" %s", comfile, request);
@@ -228,39 +129,10 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
 #else
     com = lives_strdup_printf("\"%s\" %s 2>/dev/null", comfile, request);
 #endif
-
-#else
-    // check by file extension
-
-    ext = get_extension(comfile);
-    if (!strcmp(ext, "py")) {
-      if (!capable->has_python) {
-        lives_free(ext);
-        lives_free(comfile);
-        return reslist;
-      }
-      cmd = lives_strdup("python");
-    }
-
-    else cmd = lives_strdup("perl");
-
-    //#define DEBUG_PLUGINS
-#ifdef DEBUG_PLUGINS
-    com = lives_strdup_printf("%s \"%s\" %s", cmd, comfile, request);
-    lives_printerr("will run: %s\n", com);
-#else
-    com = lives_strdup_printf("%s \"%s\" %s 2>NUL", cmd, comfile, request);
-#endif
-
-    lives_free(ext);
-    lives_free(cmd);
-
-#endif
-
     lives_free(comfile);
   } else com = lives_strdup(request);
   list_plugins = FALSE;
-  reslist = get_plugin_result(com, delim, allow_blanks);
+  reslist = get_plugin_result(com, delim, allow_blanks, TRUE);
   lives_free(com);
   threaded_dialog_spin(0.);
   return reslist;
@@ -321,7 +193,7 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 
   //g_print("\n\n\nLIST CMD: %s\n",com);
 
-  pluglist = get_plugin_result(com, "|", FALSE);
+  pluglist = get_plugin_result(com, "|", FALSE, TRUE);
   lives_free(com);
   threaded_dialog_spin(0.);
   return pluglist;
@@ -2869,7 +2741,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
   boolean used[num];
 
-  int start = 1, min_val = 0;
+  int min_val = 0;
   int sorted = 1;
 
   register int i;
@@ -2879,22 +2751,10 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   }
 
   rfx = mainw->rendered_fx = (lives_rfx_t *)lives_malloc((num + 1) * sizeof(lives_rfx_t));
-
-  rfx->name = lives_strdup(in[0].name);
-  rfx->menu_text = lives_strdup(in[0].menu_text);
-  rfx->action_desc = lives_strdup(in[0].action_desc);
-  rfx->props = in[0].props;
-  rfx->num_params = 0;
-  rfx->min_frames = 1;
-  rfx->params = NULL;
-  rfx->source = NULL;
-  rfx->source_type = LIVES_RFX_SOURCE_RFX;
-  rfx->is_template = FALSE;
-  rfx->extra = NULL;
-  rfx->flags = 0;
+  rfx_copy(rfx, in, FALSE);
 
   while (sorted <= num) {
-    for (i = start; i <= num; i++) {
+    for (i = 1; i <= num; i++) {
       if (!used[i - 1]) {
         if (min_string == NULL) {
 #ifdef GUI_GTK
@@ -2921,33 +2781,47 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
           }
         }
       }
-      rfx_copy(&in[min_val], &mainw->rendered_fx[sorted++], FALSE);
+      rfx_copy(&mainw->rendered_fx[sorted++], &in[min_val], FALSE);
       used[min_val - 1] = TRUE;
 #ifdef GUI_GTK
       lives_freep((void **)&min_string);
 #endif
     }
-
-    for (i = 0; i <= num; i++) {
-      rfx_free(&in[i]);
-    }
   }
 
 
-  void rfx_copy(lives_rfx_t *src, lives_rfx_t *dest, boolean full) {
+  void rfx_copy(lives_rfx_t *dest, lives_rfx_t *src, boolean full) {
     // Warning, does not copy all fields (full will do that)
-    dest->name = lives_strdup(src->name);
-    dest->menu_text = lives_strdup(src->menu_text);
-    dest->action_desc = lives_strdup(src->action_desc);
+    lives_memcpy(dest->delim, src->delim, 2);
+    dest->source = src->source;
+    if (!full) {
+      // ref. assigned memory
+      src->source = NULL;
+      dest->name = src->name;
+      src->name = NULL;
+      dest->menu_text = src->menu_text;
+      src->menu_text = NULL;
+      dest->action_desc = src->action_desc;
+      src->action_desc = NULL;
+      dest->params = src->params;
+      src->params = NULL;
+    } else {
+      // deep copy
+      if (dest->source_type == LIVES_RFX_SOURCE_WEED && dest->source != NULL) weed_instance_ref(dest->source);
+      dest->name = lives_strdup(src->name);
+      dest->menu_text = lives_strdup(src->menu_text);
+      dest->action_desc = lives_strdup(src->action_desc);
+      // TODO - copy params
+    }
+
     dest->min_frames = src->min_frames;
     dest->num_in_channels = src->num_in_channels;
     dest->status = src->status;
     dest->props = src->props;
     dest->source_type = src->source_type;
-    dest->source = src->source;
-    if (dest->source_type == LIVES_RFX_SOURCE_WEED && dest->source != NULL) weed_instance_ref(dest->source);
+    dest->num_params = src->num_params;
     dest->is_template = src->is_template;
-    lives_memcpy(dest->delim, src->delim, 2);
+    dest->menuitem = src->menuitem;
     if (!full) return;
 
     // TODO

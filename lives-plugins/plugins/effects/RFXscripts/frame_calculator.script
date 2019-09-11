@@ -46,7 +46,7 @@ layout|p2|fill|p5|
 # properties/capabilities (bitmap field)
 # 0x0001 == slow (hint to GUI)
 <properties>
-0x0002
+0
 </properties>
 
 # 0xF0 == LiVES-perl

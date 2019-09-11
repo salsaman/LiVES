@@ -266,12 +266,13 @@ void on_export_rfx_ok(LiVESButton *, char *script_name);
 void on_import_rfx_ok(LiVESButton *, livespointer status);
 
 /// add dynamic menu entries
-void add_rfx_effects(void);
+void add_rfx_effects(lives_rfx_status_t status);
+void update_rfx_menus(void);
 
 // utility functions
 char *prompt_for_script_name(const char *sname, lives_rfx_status_t status);
 boolean check_builder_programs(void);
-LiVESList *get_script_list(short status);
+LiVESList *get_script_list(lives_rfx_status_t status);
 
 boolean perform_rfxbuilder_checks(rfx_build_window_t *);
 boolean perform_param_checks(rfx_build_window_t *, int index, int rows);

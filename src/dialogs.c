@@ -2787,7 +2787,7 @@ void threaded_dialog_spin(double fraction) {
     lives_widget_process_updates(procw->processing, TRUE);
     lives_widget_process_updates(mainw->LiVES, TRUE);
   } else {
-    if (mainw->current_file < 0 || cfile == NULL || cfile->progress_start == 0 || cfile->progress_end == 0 ||
+    if (!CURRENT_CLIP_IS_VALID || cfile->progress_start == 0 || cfile->progress_end == 0 ||
         strlen(mainw->msg) == 0 || (progress = atoi(mainw->msg)) == 0) {
       // pulse the progress bar
       //#define GDB

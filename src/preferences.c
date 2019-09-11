@@ -1107,6 +1107,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   double default_fps = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_def_fps));
   double ext_aud_thresh = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_ext_aud_thresh)) / 100.;
+  boolean load_rfx = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_load_rfx));
   boolean antialias = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_antialias));
   boolean fx_threads = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_threads));
 
@@ -1635,6 +1636,12 @@ boolean apply_prefs(boolean skip_warn) {
   if (prefs->antialias != antialias) {
     prefs->antialias = antialias;
     set_boolean_pref(PREF_ANTIALIAS, antialias);
+  }
+
+  // load rfx
+  if (prefs->load_rfx_builtin != load_rfx) {
+    prefs->load_rfx_builtin = load_rfx;
+    set_boolean_pref(PREF_LOAD_RFX_BUILTIN, load_rfx);
   }
 
   // fx_threads
@@ -3816,6 +3823,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
+  prefsw->checkbutton_load_rfx = lives_standard_check_button_new(_("Load rendered effects on startup"), prefs->load_rfx_builtin,
+                                 LIVES_BOX(hbox), NULL);
+
   prefsw->checkbutton_antialias = lives_standard_check_button_new(_("Use _antialiasing when resizing"), prefs->antialias,
                                   LIVES_BOX(hbox), NULL);
 
@@ -5216,6 +5226,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                            NULL);
   }
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_antialias), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_load_rfx), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_rte_keys), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled),

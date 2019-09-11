@@ -389,6 +389,8 @@ typedef struct {
   double screen_scale;
 
   char *def_workdir;
+
+  boolean load_rfx_builtin;
 } _prefs;
 
 enum {
@@ -492,6 +494,7 @@ typedef struct {
   LiVESWidget *rintaudio;
   LiVESWidget *rdesk_audio;
   LiVESWidget *encoder_combo;
+  LiVESWidget *checkbutton_load_rfx;
   LiVESWidget *checkbutton_antialias;
   LiVESWidget *checkbutton_threads;
   LiVESWidget *spinbutton_warn_ds;
@@ -884,6 +887,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_SHOW_BUTTON_ICONS "show_button_icons"
 #define PREF_STREAM_AUDIO_OUT "stream_audio_out"
 #define PREF_CE_THUMB_MODE "ce_thumb_mode"
+#define PREF_LOAD_RFX_BUILTIN "load_rfx_builtin"
 #define PREF_ANTIALIAS "antialias"
 #define PREF_FILESEL_MAXIMISED "filesel_maximised"
 #define PREF_SHOW_PLAYER_STATS "show_player_stats"

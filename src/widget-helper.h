@@ -854,6 +854,8 @@ LiVESWidget *lives_standard_button_new(void);
 LiVESWidget *lives_standard_button_new_with_label(const char *labeltext);
 LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const char *labeltext);
 
+LiVESWidget *lives_standard_menu_new(void);
+
 LiVESWidget *lives_standard_menu_item_new(void);
 LiVESWidget *lives_standard_menu_item_new_with_label(const char *labeltext);
 

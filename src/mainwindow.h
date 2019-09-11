@@ -1280,6 +1280,7 @@ typedef struct {
   LiVESIOChannel *iochan;
   LiVESTextView *optextview;
 
+  boolean has_custom_effects;
   boolean has_custom_tools;
   boolean has_custom_gens;
   boolean has_custom_utilities;

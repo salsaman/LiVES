@@ -1160,6 +1160,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->camframe = NULL;
 
+  mainw->has_custom_effects = FALSE;
   mainw->has_custom_tools = FALSE;
   mainw->has_custom_gens = FALSE;
   mainw->has_custom_utilities = FALSE;
@@ -1262,6 +1263,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->no_context_update = FALSE;
 
   mainw->recovering_files = FALSE;
+
+  mainw->num_rendered_effects_builtin = mainw->num_rendered_effects_custom = mainw->num_rendered_effects_test = 0;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -1382,6 +1385,9 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->ahold_threshold = get_double_pref(PREF_AHOLD_THRESHOLD);
 
     prefs->screen_gamma = DEF_SCREEN_GAMMA;
+
+    if (!has_pref(PREF_LOAD_RFX_BUILTIN)) prefs->load_rfx_builtin = TRUE;
+    else prefs->load_rfx_builtin = get_boolean_pref(PREF_LOAD_RFX_BUILTIN);
 
     //////////////////////////////////////////////////////////////////
 
@@ -2915,7 +2921,7 @@ static boolean lives_startup(livespointer data) {
         if (!mainw->foreign && capable->smog_version_correct) {
           splash_msg(_("Loading rendered effect plugins..."), SPLASH_LEVEL_LOAD_RFX);
           // must call this at least to set up rendered_fx[0]
-          add_rfx_effects();
+          add_rfx_effects(RFX_STATUS_ANY);
         }
       }
     }
@@ -3171,7 +3177,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -3700,7 +3706,9 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->custom_tools_submenu, TRUE);
   }
 
-  lives_widget_set_sensitive(mainw->custom_effects_submenu, TRUE);
+  if (mainw->has_custom_effects) {
+    lives_widget_set_sensitive(mainw->custom_effects_submenu, TRUE);
+  }
 
   if (mainw->resize_menuitem != NULL) {
     lives_widget_set_sensitive(mainw->resize_menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
@@ -3861,7 +3869,9 @@ void desensitize(void) {
     lives_widget_set_sensitive(mainw->resize_menuitem, FALSE);
   }
 
-  lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE);
+  if (mainw->num_rendered_effects_test > 0) {
+    lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE);
+  }
 
   if (mainw->has_custom_gens) {
     lives_widget_set_sensitive(mainw->custom_gens_submenu, FALSE);
@@ -3872,7 +3882,9 @@ void desensitize(void) {
   }
 
   if (!mainw->foreign)
-    lives_widget_set_sensitive(mainw->custom_effects_submenu, FALSE);
+    if (mainw->has_custom_effects) {
+      lives_widget_set_sensitive(mainw->custom_effects_submenu, FALSE);
+    }
 
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);
   lives_widget_set_sensitive(mainw->recaudio_submenu, FALSE);

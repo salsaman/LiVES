@@ -34,6 +34,7 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 #define PLUGIN_EFFECTS_WEED "weed"
 #define PLUGIN_WEED_FX_BUILTIN "effects/realtime/weed"
 
+LiVESList *get_plugin_result(const char *command, const char *delim, boolean allow_blanks, boolean strip);
 LiVESList *plugin_request(const char *plugin_type, const char *plugin_name, const char *request);
 LiVESList *plugin_request_with_blanks(const char *plugin_type, const char *plugin_name, const char *request);
 LiVESList *plugin_request_by_line(const char *plugin_type, const char *plugin_name, const char *request);
@@ -497,7 +498,7 @@ void sort_rfx_array(lives_rfx_t *in_array, int num_elements);
 
 int find_rfx_plugin_by_name(const char *name, short status);
 
-void rfx_copy(lives_rfx_t *src, lives_rfx_t *dest, boolean full);
+void rfx_copy(lives_rfx_t *dest, lives_rfx_t *src, boolean full);
 
 void rfx_params_free(lives_rfx_t *);
 
@@ -505,7 +506,7 @@ void rfx_free(lives_rfx_t *);
 
 void rfx_free_all(void);
 
-void param_copy(lives_param_t *src, lives_param_t *dest, boolean full);
+void param_copy(lives_param_t *dest, lives_param_t *src, boolean full);
 
 lives_param_t *find_rfx_param_by_name(lives_rfx_t *, const char *name);
 

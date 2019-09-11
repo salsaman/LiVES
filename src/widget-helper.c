@@ -860,8 +860,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_grab_remove(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
   gtk_widget_set_sensitive(widget, state);
-
-#ifdef GTK_SUBMENU_SENS_BUG
+#ifdef GTK_SUBMENU_SENS_BUGx
   if (GTK_IS_MENU_ITEM(widget)) {
     LiVESWidget *sub;
     if ((sub = gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget))) != NULL) {
@@ -6956,7 +6955,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_menu_item_set_submenu(LiVESMenuItem *m
 
 #ifdef GTK_SUBMENU_SENS_BUG
   if (!lives_widget_is_sensitive(LIVES_WIDGET(menuitem))) {
-    g_print("Warning, adding submenu when insens!");
+    //g_print("Warning, adding submenu when insens!");
     //assert(FALSE);
   }
 #endif
@@ -8296,6 +8295,17 @@ LiVESWidget *lives_standard_button_new_with_label(const char *label) {
 
 LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const char *label) {
   return prettify_button(lives_button_new_from_stock(stock_id, label));
+}
+
+
+LiVESWidget *lives_standard_menu_new(void) {
+  LiVESWidget *menu = lives_menu_new();
+  if (menu != NULL) {
+    lives_widget_apply_theme2(menu, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme_dimmed2(menu, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
+    set_child_dimmed_colour2(menu, BUTTON_DIM_VAL);
+  }
+  return menu;
 }
 
 

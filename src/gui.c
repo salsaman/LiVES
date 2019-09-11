@@ -108,9 +108,12 @@ void load_theme_images(void) {
 
 
 void make_custom_submenus(void) {
-  mainw->custom_gens_submenu = lives_standard_menu_item_new_with_label(_("_Custom Generators"));
   mainw->custom_effects_submenu = lives_standard_menu_item_new_with_label(_("_Custom Effects"));
+  lives_widget_set_no_show_all(mainw->custom_effects_submenu, TRUE);
+  mainw->custom_gens_submenu = lives_standard_menu_item_new_with_label(_("_Custom Generators"));
+  lives_widget_set_no_show_all(mainw->custom_gens_submenu, TRUE);
   mainw->custom_utilities_submenu = lives_standard_menu_item_new_with_label(_("Custom _Utilities"));
+  lives_widget_set_no_show_all(mainw->custom_utilities_submenu, TRUE);
 }
 
 
@@ -1104,6 +1107,7 @@ void create_LiVES(void) {
   mainw->custom_utilities_menu = NULL;
 
   mainw->custom_tools_submenu = lives_standard_menu_item_new_with_label(_("Custom _Tools"));
+  lives_widget_set_no_show_all(mainw->custom_tools_submenu, TRUE);
 
   mainw->custom_tools_separator = lives_standard_menu_item_new();
   lives_widget_set_sensitive(mainw->custom_tools_separator, FALSE);
@@ -1364,30 +1368,8 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(rfx_menu));
 
-  rebuild_rfx = lives_standard_menu_item_new_with_label(_("Re_build all RFX plugins"));
+  rebuild_rfx = lives_standard_menu_item_new_with_label(_("Re_build test RFX plugins"));
   lives_container_add(LIVES_CONTAINER(rfx_menu), rebuild_rfx);
-
-  if (mainw->num_rendered_effects_custom > 0) {
-    lives_widget_set_sensitive(mainw->delete_custom_rfx, TRUE);
-    lives_widget_set_sensitive(mainw->export_custom_rfx, TRUE);
-  } else {
-    lives_widget_set_sensitive(mainw->delete_custom_rfx, FALSE);
-    lives_widget_set_sensitive(mainw->export_custom_rfx, FALSE);
-  }
-
-  if (mainw->num_rendered_effects_test > 0) {
-    if (mainw->run_test_rfx_menu != NULL) lives_widget_set_sensitive(mainw->run_test_rfx_menu, TRUE);
-    lives_widget_set_sensitive(mainw->promote_test_rfx, TRUE);
-    lives_widget_set_sensitive(mainw->delete_test_rfx, TRUE);
-    lives_widget_set_sensitive(mainw->rename_test_rfx, TRUE);
-    lives_widget_set_sensitive(mainw->edit_test_rfx, TRUE);
-  } else {
-    if (mainw->run_test_rfx_menu != NULL) lives_widget_set_sensitive(mainw->run_test_rfx_menu, FALSE);
-    lives_widget_set_sensitive(mainw->promote_test_rfx, FALSE);
-    lives_widget_set_sensitive(mainw->delete_test_rfx, FALSE);
-    lives_widget_set_sensitive(mainw->rename_test_rfx, FALSE);
-    lives_widget_set_sensitive(mainw->edit_test_rfx, FALSE);
-  }
 
   mainw->open_lives2lives = lives_standard_menu_item_new_with_label(_("Receive _LiVES Stream from..."));
 
@@ -2737,7 +2719,7 @@ void create_LiVES(void) {
                        LIVES_INT_TO_POINTER(RFX_STATUS_TEST));
   lives_signal_connect(LIVES_GUI_OBJECT(rebuild_rfx), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_rebuild_rfx_activate),
-                       NULL);
+                       LIVES_INT_TO_POINTER(RFX_STATUS_TEST));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->delete_test_rfx), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_delete_rfx_activate),
                        LIVES_INT_TO_POINTER(RFX_STATUS_TEST));
@@ -3008,6 +2990,8 @@ void show_lives(void) {
   if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) ||
         (prefs->audio_player == AUD_PLAYER_PULSE && capable->has_pulse_audio)))
     lives_widget_hide(mainw->vol_toolitem);
+
+  update_rfx_menus();
 
   if (prefs->present && prefs->show_gui)
     lives_window_present(LIVES_WINDOW(mainw->LiVES));

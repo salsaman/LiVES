@@ -53,22 +53,22 @@ if (!defined($scripts_dir)) {
     if ($^O ne "MSWin32") {
 
 #get <tempdir>
-    `\"$smogcmd\" get_tempdir rfx_builder`;
+    `\"$smogcmd\" get_workdir > /tmp/.smogrify.rfx_builder`;
     open IN,"< /tmp/.smogrify.rfx_builder";
-    read IN,$tmpdir,512;
+    read IN,$workdir,512;
     close IN;
     unlink "/tmp/.smogrify.rfx_builder";
     
-    if ($tmpdir eq "") {
-	$tmpdir="/tmp";
+    if ($workdir eq "") {
+	$workdir="/tmp";
     }
     
 # check we have the plugin builder
     `\"$smogcmd\" get_location $builder rfx builder`;
-    open IN,"< $tmpdir/.smogval.rfx.builder";
+    open IN,"< $workdir/.smogval.rfx.builder";
     read IN,$builder_location,512;
     close IN;
-    unlink "$tmpdir/.smogval.rfx.builder";
+    unlink "$workdir/.smogval.rfx.builder";
     
     if ($builder_location eq "") {
 	print "Unable to locate $builder. Exiting.\n";
@@ -80,10 +80,10 @@ if (!defined($scripts_dir)) {
     if ($type eq "builtin") {
 # get the prefix_dir from ~/.lives
 	`\"$smogcmd\" get_pref prefix_dir rfx builder`;
-	open IN,"< $tmpdir/.smogval.rfx.builder";
+	open IN,"< $workdir/.smogval.rfx.builder";
 	read IN,$dir,512;
 	close IN;
-	unlink "$tmpdir/.smogval.rfx.builder";
+	unlink "$workdir/.smogval.rfx.builder";
 	chomp($dir);
 	$scripts_dir="$dir/share";
 	$exec_dir="$dir/lib";  # guessing

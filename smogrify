@@ -38,7 +38,7 @@ $GUI_NAME = "LiVES";
 # Do not change these except for testing !
 
 $background = 1;
-$version = "3.0.2";
+$version = "3.0.3-pre";
 #$dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -736,16 +736,16 @@ if (defined($ARGV[0])) {
 
                 foreach my $plugname (@files) {
                     unless ($plugname =~ /^\./) {
-                        if ((-f $plugname && (-x $plugname||$allow_nonex))||($allow_subdirs==1&& -d $plugname)) {
+                        if ((-f $plugname && (-x $plugname || $allow_nonex)) || ($allow_subdirs == 1 && -d $plugname)) {
                             unless($allow_nonex) {
                                 next if ! -x "$plugindir/$plugname";
 			    }
 			    unless ($plugname eq "") {
-                                if ($ext eq ""|| $plugname =~ /$ext$/) {
-                                    if ($strip_ext==1) {
-                                        $plugname=(split(/\./,$plugname))[0];
+                                if ($ext eq "" || $plugname =~ /$ext$/) {
+                                    if ($strip_ext == 1) {
+                                        $plugname = (split(/\./,$plugname))[0];
                                     }
-                                    $string.="$plugname|";
+                                    $string .= "$plugname|";
                                 }
                             }
                         }

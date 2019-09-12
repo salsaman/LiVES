@@ -55,12 +55,7 @@ static void on_osc_enable_toggled(LiVESToggleButton *t1, livespointer t2) {
 
 
 static int get_pref_inner(const char *filename, const char *key, char *val, int maxlen) {
-  FILE *valfile;
-  char *vfile;
   char *com;
-  int retval;
-  int alarm_handle;
-  boolean timeout;
 
   memset(val, 0, maxlen);
 
@@ -73,56 +68,17 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
       }
       return LIVES_RESPONSE_NONE;
     }
-    com = lives_strdup_printf("%s get_pref \"%s\" %d %d", prefs->backend_sync, key, lives_getuid(), capable->mainpid);
+    com = lives_strdup_printf("%s get_pref \"%s\" -", prefs->backend_sync, key);
   } else {
-    com = lives_strdup_printf("%s get_clip_value \"%s\" %d %d \"%s\"", prefs->backend_sync, key,
-                              lives_getuid(), capable->mainpid, filename);
+    com = lives_strdup_printf("%s get_clip_value \"%s\" - - \"%s\"", prefs->backend_sync, key,
+                              filename);
 
   }
 
-  if (lives_system(com, TRUE)) {
-    workdir_warning();
-    lives_free(com);
-    return LIVES_RESPONSE_INVALID;
-  }
+  lives_popen(com, TRUE, val, maxlen);
 
-  vfile = lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGVAL_FILE_NAME".%d.%d", prefs->workdir, lives_getuid(), capable->mainpid);
-
-  do {
-    retval = LIVES_RESPONSE_NONE;
-    alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    timeout = FALSE;
-    mainw->read_failed = FALSE;
-
-    while (!((valfile = fopen(vfile, "r")) && !(timeout = lives_alarm_get(alarm_handle)))) {
-      if (mainw != NULL) {
-        weed_plant_t *frame_layer = mainw->frame_layer;
-        mainw->frame_layer = NULL;
-        lives_widget_context_update();
-        mainw->frame_layer = frame_layer;
-        lives_usleep(prefs->sleep_time);
-      }
-    }
-
-    lives_alarm_clear(alarm_handle);
-
-    if (timeout && valfile == NULL) {
-      if (mainw != NULL) retval = do_read_failed_error_s_with_retry(vfile, NULL, NULL);
-    } else {
-      if (mainw != NULL) mainw->read_failed = FALSE;
-      lives_fgets(val, maxlen, valfile);
-      if (valfile != NULL) fclose(valfile);
-      lives_rm(vfile);
-      if (mainw != NULL && mainw->read_failed) {
-        retval = do_read_failed_error_s_with_retry(vfile, NULL, NULL);
-      }
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
-  lives_free(vfile);
   lives_free(com);
-
-  return retval;
+  return LIVES_RESPONSE_NONE;
 }
 
 
@@ -171,59 +127,10 @@ LiVESList *get_list_pref(const char *key) {
 
 
 void get_pref_default(const char *key, char *val, int maxlen) {
-  FILE *valfile;
-  char *vfile;
-  char *com = lives_strdup_printf("%s get_pref_default \"%s\" %d %d", prefs->backend_sync, key, lives_getuid(), capable->mainpid);
-
-  int retval;
-  int alarm_handle;
-  boolean timeout;
-
+  char *com = lives_strdup_printf("%s get_pref_default \"%s\" -", prefs->backend_sync, key);
   memset(val, 0, 1);
-
-  if (lives_system(com, TRUE)) {
-    workdir_warning();
-    lives_free(com);
-    return;
-  }
-
-  vfile = lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_SMOGVAL_FILE_NAME".%d.%d", prefs->workdir, lives_getuid(), capable->mainpid);
-
-  do {
-    retval = 0;
-    timeout = FALSE;
-    mainw->read_failed = FALSE;
-
-    alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-
-    while (!((valfile = fopen(vfile, "r")) && !(timeout = lives_alarm_get(alarm_handle)))) {
-      if (mainw != NULL) {
-        weed_plant_t *frame_layer = mainw->frame_layer;
-        mainw->frame_layer = NULL;
-        lives_widget_context_update();
-        mainw->frame_layer = frame_layer;
-        lives_usleep(prefs->sleep_time);
-      }
-    }
-
-    lives_alarm_clear(alarm_handle);
-
-    if (timeout) {
-      if (mainw != NULL) retval = do_read_failed_error_s_with_retry(vfile, NULL, NULL);
-    } else {
-      if (mainw != NULL) mainw->read_failed = FALSE;
-      lives_fgets(val, maxlen, valfile);
-      fclose(valfile);
-      lives_rm(vfile);
-      if (mainw != NULL && mainw->read_failed) {
-        retval = do_read_failed_error_s_with_retry(vfile, NULL, NULL);
-      }
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
+  lives_popen(com, TRUE, val, maxlen);
   if (!strcmp(val, "NULL")) memset(val, 0, 1);
-
-  lives_free(vfile);
   lives_free(com);
 }
 

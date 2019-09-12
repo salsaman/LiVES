@@ -3638,42 +3638,18 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
       rfx->flags = RFX_FLAGS_NO_SLIDERS;
 
-      // get the delimiter
-      rfxfile = lives_strdup_printf("%s" LIVES_DIR_SEP "smdef.%d", prefs->workdir, capable->mainpid);
       fnamex = lives_build_filename(prefs->workdir, rfx_scrapname, NULL);
-      com = lives_strdup_printf("\"%s\" get_define > \"%s\"", fnamex, rfxfile);
-      retval = lives_system(com, FALSE);
+      com = lives_strdup_printf("\"%s\" get_define", fnamex);
+      mainw->com_failed = FALSE;
+
+      if (!lives_popen(com, TRUE, buff, 32)) {
+	mainw->com_failed = TRUE;
+      }
       lives_free(com);
 
       // command to get_define failed
-      if (retval) {
-        lives_rm(rfxfile);
-        lives_free(rfxfile);
-        lives_rm(fnamex);
-        lives_free(fnamex);
-        return NULL;
-      }
-
-      do {
-        retval = 0;
-        sfile = fopen(rfxfile, "r");
-        if (!sfile) {
-          retval = do_read_failed_error_s_with_retry(rfxfile, lives_strerror(errno), NULL);
-        } else {
-          mainw->read_failed = FALSE;
-          lives_fgets(buff, 32, sfile);
-          fclose(sfile);
-        }
-        if (mainw->read_failed) {
-          retval = do_read_failed_error_s_with_retry(rfxfile, NULL, NULL);
-        }
-      } while (retval == LIVES_RESPONSE_RETRY);
-
-      lives_rm(rfxfile);
-      lives_free(rfxfile);
-
-      if (retval == LIVES_RESPONSE_CANCEL) {
-        lives_rm(fnamex);
+      if (mainw->com_failed) {
+	lives_rm(fnamex);
         lives_free(fnamex);
         return NULL;
       }
@@ -3727,11 +3703,6 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     }
 
     lives_free(rfx_scrapname);
-
-    if (fnamex != NULL) {
-      if (vbox == NULL) lives_rm(fnamex);
-      lives_free(fnamex);
-    }
 
     return res_string;
   }

@@ -3643,13 +3643,13 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       mainw->com_failed = FALSE;
 
       if (!lives_popen(com, TRUE, buff, 32)) {
-	mainw->com_failed = TRUE;
+        mainw->com_failed = TRUE;
       }
       lives_free(com);
 
       // command to get_define failed
       if (mainw->com_failed) {
-	lives_rm(fnamex);
+        lives_rm(fnamex);
         lives_free(fnamex);
         return NULL;
       }

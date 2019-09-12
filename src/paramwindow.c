@@ -1108,7 +1108,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     // do onchange|init
     if ((onchange = plugin_request_by_line(type, rfx->name, "get_onchange")) != NULL) {
       for (i = 0; i < lives_list_length(onchange); i++) {
-	g_print("GOT %s %s\n", (char *)lives_list_nth_data(onchange, i), rfx->delim);
         array = lives_strsplit((char *)lives_list_nth_data(onchange, i), rfx->delim, -1);
         if (strcmp(array[0], "init")) {
           // note other onchanges so we don't have to keep parsing the list

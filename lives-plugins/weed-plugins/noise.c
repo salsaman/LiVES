@@ -114,9 +114,20 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
 
-    weed_plant_t *filter_class = weed_filter_class_init("noise", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, &noise_init, &noise_process,
-                                 &noise_deinit,
-                                 in_chantmpls, out_chantmpls, NULL, NULL);
+    weed_plant_t *filter_class;
+
+    int error;
+    weed_plant_t *host_info = weed_get_plantptr_value(plugin_info, "host_info", &error);
+    int api = weed_get_int_value(host_info, "api_version", &error);
+
+    int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
+
+    if (api >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
+
+
+    filter_class  = weed_filter_class_init("noise", "salsaman", 1, filter_flags, &noise_init, &noise_process,
+                                           &noise_deinit,
+                                           in_chantmpls, out_chantmpls, NULL, NULL);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

@@ -1389,6 +1389,9 @@ static void lives_init(_ign_opts *ign_opts) {
     if (!has_pref(PREF_LOAD_RFX_BUILTIN)) prefs->load_rfx_builtin = TRUE;
     else prefs->load_rfx_builtin = get_boolean_pref(PREF_LOAD_RFX_BUILTIN);
 
+    if (!has_pref(PREF_APPLY_GAMMA)) prefs->apply_gamma = FALSE;
+    else prefs->apply_gamma = get_boolean_pref(PREF_APPLY_GAMMA);
+
     //////////////////////////////////////////////////////////////////
 
     if (!mainw->foreign) {
@@ -4168,9 +4171,6 @@ void load_start_image(int frame) {
       resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       start_pixbuf = layer_to_pixbuf(layer);
-#ifdef TEST_GAMMA
-      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, start_pixbuf);
-#endif
     }
     weed_layer_free(layer);
 
@@ -4224,9 +4224,6 @@ void load_start_image(int frame) {
       resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       start_pixbuf = layer_to_pixbuf(layer);
-#ifdef TEST_GAMMA
-      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, start_pixbuf);
-#endif
     }
     weed_plant_free(layer);
 
@@ -4366,9 +4363,6 @@ void load_end_image(int frame) {
       resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       end_pixbuf = layer_to_pixbuf(layer);
-#ifdef TEST_GAMMA
-      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, end_pixbuf);
-#endif
     }
     weed_plant_free(layer);
 
@@ -4422,9 +4416,6 @@ void load_end_image(int frame) {
       resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       end_pixbuf = layer_to_pixbuf(layer);
-#ifdef TEST_GAMMA
-      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, end_pixbuf);
-#endif
     }
 
     weed_plant_free(layer);
@@ -4575,9 +4566,6 @@ void load_preview_image(boolean update_always) {
       resize_layer(layer, mainw->pwidth, mainw->pheight, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       pixbuf = layer_to_pixbuf(layer);
-#ifdef TEST_GAMMA
-      gamma_correct_pixbuf(TRUE, prefs->screen_gamma, pixbuf);
-#endif
     }
     weed_plant_free(layer);
   }
@@ -4664,8 +4652,6 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   size_t bsize = fread(ibuff, 1, 8, fp), framesize;
   boolean is_png = !png_sig_cmp(ibuff, 0, bsize);
 
-  //double file_gamma;
-
   int width, height;
   int color_type, bit_depth;
   int rowstrides[1];
@@ -4709,19 +4695,6 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
     flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, &error);
 
 #if PNG_LIBPNG_VER >= 10504
-#ifdef TEST_GAMMA
-  // once gamma correction is implemented we will want linear gamma
-  // then apply gamma encoding before displaying or saving to external files
-  if (prefs->alpha_post) {
-    if (flags & WEED_CHANNEL_ALPHA_PREMULT) flags ^= WEED_CHANNEL_ALPHA_PREMULT;
-    png_set_alpha_mode(png_ptr, PNG_ALPHA_PNG, PNG_DEFAULT_LINEAR);
-  } else {
-    flags |= WEED_CHANNEL_ALPHA_PREMULT;
-    png_set_alpha_mode(png_ptr, PNG_ALPHA_PREMULTIPLIED, PNG_DEFAULT_LINEAR);
-  }
-  weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_LINEAR);
-#else
-  // for now we get everything as sRGB (png default is with a gamma of 1.0 / 2.2)
   if (prefs->alpha_post) {
     if (flags & WEED_CHANNEL_ALPHA_PREMULT) flags ^= WEED_CHANNEL_ALPHA_PREMULT;
     png_set_alpha_mode(png_ptr, PNG_ALPHA_PNG, PNG_DEFAULT_sRGB);
@@ -4729,25 +4702,9 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
     flags |= WEED_CHANNEL_ALPHA_PREMULT;
     png_set_alpha_mode(png_ptr, PNG_ALPHA_PREMULTIPLIED, PNG_DEFAULT_sRGB);
   }
-  //weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_SRGB);
-#endif
 #endif
 
   weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
-
-  /*  if (png_get_gAMA(png_ptr, info_ptr, &file_gamma)) { */
-  /*     // loads frames with no gamma correction */
-  /*     //png_set_gamma(png_ptr, file_gamma, file_gamma); */
-  /*     //g_print("got file gamma !\n"); */
-  /*     // loads frames with no gamma correction */
-  /*     png_set_gamma(png_ptr, file_gamma, file_gamma); */
-  /*   } else { */
-  /*     // a) loads frames with no gamma correction */
-  /*     png_set_gamma(png_ptr, 1., 1.); // assume file_gamma is 1.0 */
-  /* #ifdef TEST_GAMMA */
-  /*     weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_SRGB); */
-  /* #endif */
-  /*   } */
 
   // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32 (or RGB24)
   color_type = png_get_color_type(png_ptr, info_ptr);
@@ -4765,10 +4722,6 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   if (color_type == PNG_COLOR_TYPE_GRAY ||
       color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
     png_set_gray_to_rgb(png_ptr);
-
-  // TODO: we should actually keep linear (non-gamma encoded) RGB as 16-bit RGB48 / BGR48 or RGBA64 / BGRA64 / ARGB64
-  // and only convert to 8 bits when gamma encoding for the display / output file, or to YUV (which applies gamma in the conversion)
-  // however there is currently no handling for these palettes within the palette conversions or effects
 
   if (bit_depth == 16) {
 #if PNG_LIBPNG_VER >= 10504
@@ -4909,30 +4862,12 @@ boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp) {
   png_set_write_status_fn(png_ptr, png_row_callback);
 
 #if PNG_LIBPNG_VER >= 10504
-#ifdef TEST_GAMMA
-  // this should remove the need to apply gamma encoding to the images (once gamma decoding of the input is enabled)
-  // in future when saving our pngs internally, we can use:
   if (flags & WEED_CHANNEL_ALPHA_PREMULT) {
-    // PNG_ALPHA_PNG means no alpha premultiplying, which is what LiVES uses by default
-    // the second value defines the gamma encoding
-    png_set_alpha_mode(pp, PNG_ALPHA_PNG, PNG_GAMMA_LINEAR);
-  }
-
-  else {
-    png_set_alpha_mode(pp, PNG_ALPHA_PREMULTIPLIED, PNG_GAMMA_LINEAR);
-  }
-
-  png_set_gAMA(png_ptr, info_ptr, 1.0);
-#else
-  // for saving for external files (and until gamma decoding is enabled)
-  // we should use the following:
-  if (flags & WEED_CHANNEL_ALPHA_PREMULT) {
-    png_set_alpha_mode(png_ptr, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
+    png_set_alpha_mode(png_ptr, PNG_ALPHA_PREMULTIPLIED, PNG_DEFAULT_sRGB);
   } else {
     png_set_alpha_mode(png_ptr, PNG_ALPHA_PNG, PNG_DEFAULT_sRGB);
   }
-#endif // test_gamma
-#endif // lib version
+#endif
 
   png_write_info(png_ptr, info_ptr);
 
@@ -5059,10 +4994,6 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
 
   if (!pixbuf_to_layer(layer, pixbuf)) {
     lives_object_unref(pixbuf);
-  } else {
-#ifdef TEST_GAMMA
-    weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_LINEAR);
-#endif
   }
 
   return TRUE;
@@ -5144,9 +5075,8 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 
   boolean is_thread = FALSE;
 
-#ifdef TEST_GAMMA
-  weed_set_int_value(layer, WEED_LEAF_GAMMA, WEED_GAMMA_LINEAR);
-#endif
+  // the default unless overridden
+  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
 
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PTHREAD)) is_thread = TRUE;
 
@@ -5259,6 +5189,9 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 
         create_empty_pixel_data(layer, FALSE, TRUE);
 
+        // the default unless overridden
+        weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+
         pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
         rowstrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
 
@@ -5269,6 +5202,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
           if (!is_thread) {
             weed_layer_pixel_data_free(layer);
             create_empty_pixel_data(layer, TRUE, TRUE);
+            weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
           }
           res = FALSE;
         }
@@ -5277,9 +5211,12 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         lives_free(rowstrides);
 
         if (res) {
-#ifdef TEST_GAMMA
-          weed_set_int_value(layer, WEED_LEAF_GAMMA, dplug->cdata->gamma);
-#endif
+          // TODO - only if plugin specifies this explicitly
+
+          //weed_set_int_value(layer, WEED_LEAF_GAMMA, dplug->cdata->gamma_type);
+          /* if (dplug->cdata->gamma_type == WEED_GAMMA_BT709) */
+          /*   gamma_correct_layer(WEED_GAMMA_LINEAR, layer); */
+
           // get_frame may now update YUV_clamping, YUV_sampling, YUV_subspace
           if (weed_palette_is_yuv_palette(dplug->cdata->current_palette)) {
             weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, dplug->cdata->YUV_sampling);
@@ -6412,6 +6349,7 @@ void load_frame_image(int frame) {
         // record output from playback plugin
         int retwidth = mainw->pwidth / weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
         int retheight = mainw->pheight;
+        int gamma_type = weed_get_int_value(frame_layer, WEED_LEAF_GAMMA_TYPE, &weed_error);
 
         return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
@@ -6422,6 +6360,7 @@ void load_frame_image(int frame) {
         }
 
         create_empty_pixel_data(return_layer, FALSE, TRUE);
+        weed_set_int_value(return_layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
 
         // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
         compact_rowstrides(return_layer);
@@ -6436,6 +6375,13 @@ void load_frame_image(int frame) {
           pconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0);
         }
         if (mainw->cconx != NULL) cconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0);
+      }
+
+      if (prefs->apply_gamma) {
+        // gamma correction
+        // TODO: let vpp set request
+        if (weed_palette_is_rgb_palette(mainw->vpp->palette))
+          gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
       }
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
@@ -6709,6 +6655,7 @@ void load_frame_image(int frame) {
         // record output from playback plugin
         int retwidth = mainw->pwidth / weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
         int retheight = mainw->pheight;
+        int gamma_type = weed_get_int_value(frame_layer, WEED_LEAF_GAMMA_TYPE, &weed_error);
 
         return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
@@ -6719,6 +6666,7 @@ void load_frame_image(int frame) {
         }
 
         create_empty_pixel_data(return_layer, FALSE, TRUE);
+        weed_set_int_value(return_layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
 
         // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
         compact_rowstrides(return_layer);
@@ -6733,6 +6681,13 @@ void load_frame_image(int frame) {
           pconx_chain_data(-2, 0);
         }
         if (mainw->cconx != NULL) cconx_chain_data(-2, 0);
+      }
+
+      if (prefs->apply_gamma) {
+        // gamma correction
+        // TODO: let vpp set request
+        if (weed_palette_is_rgb_palette(mainw->vpp->palette))
+          gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
       }
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
@@ -6863,9 +6818,6 @@ void load_frame_image(int frame) {
     pixbuf = layer_to_pixbuf(mainw->frame_layer);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
-#ifdef TEST_GAMMA
-    gamma_correct_pixbuf(TRUE, prefs->screen_gamma, pixbuf);
-#endif
 
     mainw->noswitch = noswitch;
 
@@ -6988,10 +6940,6 @@ void load_frame_image(int frame) {
     // fname should be in local charset
 
     // do_chmod is ignored now
-
-    if (prefs->screen_gamma != -1) {
-      // inverse gamma correction
-    }
 
     fd = lives_open3(fname, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
     if (flock(fd, LOCK_EX)) {

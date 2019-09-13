@@ -189,4 +189,6 @@ char *weed_palette_get_name_full(int pal, int clamped, int subspace);
 void sws_free_context(void);
 #endif
 
+boolean gamma_correct_layer(int gamma_type, weed_plant_t *layer);
+
 #endif

@@ -1407,8 +1407,6 @@ const char *dummychar;
 
 void break_me(void);
 
-//#define TEST_GAMMA
-
 #define LIVES_NO_DEBUG
 #ifndef LIVES_DEBUG
 #ifndef LIVES_NO_DEBUG

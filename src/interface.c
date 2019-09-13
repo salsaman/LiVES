@@ -4486,7 +4486,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
 #if GTK_CHECK_VERSION(3, 0, 0)
         lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
-        //lives_widget_context_update();
+        lives_widget_context_update();
         lives_signal_handlers_unblock_by_func(widget, (livespointer)expose_msg_area, NULL);
         return FALSE;
       }

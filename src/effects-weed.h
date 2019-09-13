@@ -114,10 +114,10 @@ typedef enum {
 #define WEED_LEAF_PIXEL_ASPECT_RATIO "pixel_aspect_ratio"
 #define WEED_LEAF_ROWSTRIDE_ALIGNMENT_HINT "rowstride_alignment_hint"
 #define WEED_LEAF_MAX_REPEATS "max_repeats"
-#ifdef TEST_GAMMA
 #define WEED_LEAF_GAMMA_TYPE "gamma_type"
-// values will be WEED_GAMMA_TYPE_SRGB, WEED_GAMMA_TYPE_LINEAR, WEED_GAMMA_TYPE_MONITOR
-#endif
+
+#define WEED_GAMMA_BT709 1024
+#define WEED_GAMMA_MONITOR 1025
 
 // params / param tmpl
 #define WEED_LEAF_IN_PARAMETERS "in_parameters"
@@ -200,7 +200,6 @@ typedef enum {
 #define WEED_LEAF_HOST_NEXT_INSTANCE "host_next_instance" // for chain plugins
 #define WEED_LEAF_HOST_COMPOUND_CLASS "host_compound_class" // for chain plugins
 #define WEED_LEAF_HOST_CHANNEL_CONNECTION "host_channel_connection" // special value for text widgets
-
 
 // layer only values
 

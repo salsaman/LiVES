@@ -5,7 +5,6 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -61,7 +60,6 @@ int avol_init(weed_plant_t *inst) {
 
   return WEED_NO_ERROR;
 }
-
 
 
 int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
@@ -155,7 +153,6 @@ int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
     chans = weed_get_int_value(in_channels[i], "audio_channels", &error);
 
-
     voll = volr = vol[i];
 
     if (chans == 2) {
@@ -189,8 +186,6 @@ int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-
-
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
@@ -200,9 +195,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *filter_class = weed_filter_class_init("audio volume and pan", "salsaman", 1, WEED_FILTER_IS_CONVERTER, &avol_init,
                                  &avol_process,
                                  NULL, in_chantmpls, out_chantmpls, in_params, NULL);
-    int error;
-    weed_plant_t *host_info = weed_get_plantptr_value(plugin_info, "host_info", &error);
-    int api = weed_get_int_value(host_info, "api_version", &error);
+    int api_used = weed_get_api_version(plugin_info);
 
     weed_set_int_value(in_chantmpls[0], "max_repeats", 0); // set optional repeats of this channel
 
@@ -217,7 +210,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     // set is_volume_master from weedaudio spec 110
     weed_set_boolean_value(in_params[0], "is_volume_master", WEED_TRUE);
 
-    if (api >= 131) weed_set_int_value(filter_class, "flags", WEED_FILTER_PROCESS_LAST | WEED_FILTER_IS_CONVERTER);
+    if (api_used >= 131) weed_set_int_value(filter_class, "flags", WEED_FILTER_PROCESS_LAST | WEED_FILTER_IS_CONVERTER);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

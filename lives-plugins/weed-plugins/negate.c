@@ -5,7 +5,6 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -18,8 +17,8 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int num_versions = 3; // number of different weed api versions supported
+static int api_versions[] = {133, 131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 1; // version of this package
 
@@ -60,7 +59,6 @@ int negate_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   width *= psize;
 
-
   // new threading arch
   if (weed_plant_has_leaf(out_channel, "offset")) {
     int offset = weed_get_int_value(out_channel, "offset", &error);
@@ -83,8 +81,6 @@ int negate_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-
-
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
@@ -93,9 +89,16 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
 
-    weed_plant_t *filter_class = weed_filter_class_init("negate", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &negate_process, NULL,
-                                 in_chantmpls,
-                                 out_chantmpls, NULL, NULL);
+    weed_plant_t *filter_class;
+    int api_used = weed_get_api_version(plugin_info);
+    int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
+
+    if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
+
+    filter_class = weed_filter_class_init("negate", "salsaman", 1, filter_flags, NULL,
+                                          &negate_process, NULL,
+                                          in_chantmpls,
+                                          out_chantmpls, NULL, NULL);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

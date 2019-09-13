@@ -118,6 +118,9 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
 
   create_empty_pixel_data(layer, TRUE, TRUE);
 
+  // TODO: allow plugin override
+  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+
   if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
 
     if (weed_palette_get_numplanes(ldev->current_palette) == 1 || ldev->is_really_grey) {

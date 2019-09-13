@@ -616,10 +616,6 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
     pixbuf = pull_lives_pixbuf_at_size(mainw->current_file, mainw->framedraw_frame, img_ext, tc,
                                        (double)cfile->hsize, (double)cfile->vsize,
                                        LIVES_INTERP_BEST);
-#ifdef TEST_GAMMA
-    // if pixbuf was from png it might already be corrected ?
-    gamma_correct_pixbuf(TRUE, prefs->screen_gamma, pixbuf);
-#endif
   }
 
   if (pixbuf != NULL) {

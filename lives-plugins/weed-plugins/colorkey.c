@@ -17,8 +17,8 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int num_versions = 3; // number of different weed api versions supported
+static int api_versions[] = {133, 131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 1; // version of this package
 
@@ -71,7 +71,6 @@ static int ckey_process(weed_plant_t *inst, weed_timecode_t timecode) {
   b_blue = carray[2];
   weed_free(carray);
 
-
   b_red_min = b_red - (int)(b_red * delta + .5);
   b_green_min = b_green - (int)(b_green * delta + .5);
   b_blue_min = b_blue - (int)(b_blue * delta + .5);
@@ -105,7 +104,6 @@ static int ckey_process(weed_plant_t *inst, weed_timecode_t timecode) {
 }
 
 
-
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
@@ -115,9 +113,15 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_params[] = {weed_float_init("delta", "_Delta", .2, 0., 1.), weed_float_init("opacity", "_Opacity", 1., 0., 1.), weed_colRGBi_init("col", "_Colour", 0, 0, 255), NULL};
 
-    weed_plant_t *filter_class = weed_filter_class_init("colour key", "salsaman", 1, 0, NULL, &ckey_process, NULL, in_chantmpls, out_chantmpls,
-                                 in_params,
-                                 NULL);
+    weed_plant_t *filter_class;
+    int api_used = weed_get_api_version(plugin_info);
+    int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
+
+    if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
+
+    filter_class = weed_filter_class_init("colour key", "salsaman", 1, filter_flags, NULL, &ckey_process, NULL, in_chantmpls, out_chantmpls,
+                                          in_params,
+                                          NULL);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

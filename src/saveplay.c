@@ -5469,8 +5469,12 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
         if (mainw->multitrack == NULL) {
           resize(1);
+          lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
+          lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+          lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
+          lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
           load_start_image(cfile->start);
           load_end_image(cfile->end);
         } else {

@@ -237,9 +237,9 @@ boolean transcode(int start, int end) {
   img_ext = get_image_ext_for_type(cfile->img_type);
 
   mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
-  do_threaded_dialog(msg, TRUE);
 
   msg = lives_strdup_printf(_("Quick transcoding to %s..."), pname);
+  do_threaded_dialog(msg, TRUE);
   d_print(msg);
 
   needs_dprint = TRUE;

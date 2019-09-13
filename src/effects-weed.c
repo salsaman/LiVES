@@ -202,7 +202,7 @@ weed_memset_f weedmemset;
 
 
 weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions, int *plugin_versions) {
-  int host_api_versions_supported[] = {131}; // must be ordered in ascending order
+  int host_api_versions_supported[] = {131, 133}; // must be ordered in ascending order
   int host_api_version;
 
   weed_plant_t *host_info = weed_plant_new(WEED_PLANT_HOST_INFO);
@@ -1934,6 +1934,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           // and update width and height if necessary
           create_empty_pixel_data(channel, FALSE, TRUE);
 
+          weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+
           // align memory if necessary
           chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, &error);
           if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT)) {
@@ -2352,7 +2354,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // try to match palettes with first enabled in channel:
     // TODO ** - we should see which palette causes the least palette conversions
 
-    // TODO: logic here was changed 22/09/2015. Check it is OK
     inpalette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
 
     if (i > 0 && !(channel_flags & WEED_CHANNEL_PALETTE_CAN_VARY))
@@ -2410,7 +2411,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   // now we do a second pass, and we change the palettes of in layers to match the channel, if necessary
 
   for (j = i = 0; i < num_in_tracks; i++) {
-
     do {
       channel = get_enabled_channel(inst, i, TRUE);
 
@@ -2586,6 +2586,15 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
                              weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error));
     else if (weed_plant_has_leaf(channel, WEED_LEAF_HOST_PIXBUF_SRC))
       weed_leaf_delete(channel, WEED_LEAF_HOST_PIXBUF_SRC);
+
+    if (prefs->apply_gamma) {
+      // gamma correction
+      if (filter_flags & WEED_FILTER_HINT_SRGB)
+        gamma_correct_layer(WEED_GAMMA_SRGB, layer);
+      else
+        gamma_correct_layer(WEED_GAMMA_LINEAR, layer);
+    }
+    weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, &error));
   }
 
   // we may need to disable some channels for the plugin
@@ -2769,6 +2778,11 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       // and update width and height if necessary
       create_empty_pixel_data(channel, FALSE, TRUE);
 
+      if (filter_flags & WEED_FILTER_HINT_SRGB)
+        weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+      else
+        weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+
       // align memory if necessary
       if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT)) {
         int alignment = weed_get_int_value(chantmpl, WEED_LEAF_ALIGNMENT, &error);
@@ -2887,6 +2901,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
     weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
+
+    weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, weed_get_int_value(channel, WEED_LEAF_GAMMA_TYPE, &error));
 
     palette = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, &error); // do we need this ?
 
@@ -7432,6 +7448,8 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   weed_set_int_value(channel, WEED_LEAF_CURRENT_PALETTE, palette);
 
   create_empty_pixel_data(channel, FALSE, TRUE);
+  // TODO: allow plugin override
+  weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
 
   // align memory if necessary
   if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT)) {
@@ -7486,6 +7504,8 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
           set_main_title(cfile->file_name, 0);
         }
         create_empty_pixel_data(channel, FALSE, TRUE);
+        // TODO: allow plugin override
+        weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
       }
     }
 
@@ -8634,6 +8654,7 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
 
 
 void rec_param_change(weed_plant_t *inst, int pnum) {
+  // should be called with event_list_mutex unlocked !
   uint64_t actual_ticks;
   weed_plant_t *in_param;
   int key;
@@ -8722,12 +8743,12 @@ void weed_set_blend_factor(int hotkey) {
   filter_mutex_lock(hotkey);
 
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS) && inc_count > 0) {
-    pthread_mutex_lock(&mainw->event_list_mutex);
+    //pthread_mutex_lock(&mainw->event_list_mutex);
     rec_param_change(inst, pnum);
     if (copyto > -1) {
       rec_param_change(inst, copyto);
     }
-    pthread_mutex_unlock(&mainw->event_list_mutex);
+    //pthread_mutex_unlock(&mainw->event_list_mutex);
   }
 
   if (weed_plant_has_leaf(paramtmpl, WEED_LEAF_WRAP) && weed_get_boolean_value(paramtmpl, WEED_LEAF_WRAP, &error) == WEED_TRUE) {
@@ -8793,12 +8814,12 @@ void weed_set_blend_factor(int hotkey) {
   filter_mutex_lock(hotkey);
 
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS) && inc_count > 0) {
-    pthread_mutex_lock(&mainw->event_list_mutex);
+    //pthread_mutex_lock(&mainw->event_list_mutex);
     rec_param_change(inst, pnum);
     if (copyto > -1) {
       rec_param_change(inst, copyto);
     }
-    pthread_mutex_unlock(&mainw->event_list_mutex);
+    //pthread_mutex_unlock(&mainw->event_list_mutex);
   }
   weed_instance_unref(inst);
   filter_mutex_unlock(hotkey);

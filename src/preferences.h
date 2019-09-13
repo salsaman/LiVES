@@ -391,6 +391,8 @@ typedef struct {
   char *def_workdir;
 
   boolean load_rfx_builtin;
+
+  boolean apply_gamma;
 } _prefs;
 
 enum {
@@ -495,6 +497,7 @@ typedef struct {
   LiVESWidget *rdesk_audio;
   LiVESWidget *encoder_combo;
   LiVESWidget *checkbutton_load_rfx;
+  LiVESWidget *checkbutton_apply_gamma;
   LiVESWidget *checkbutton_antialias;
   LiVESWidget *checkbutton_threads;
   LiVESWidget *spinbutton_warn_ds;
@@ -901,6 +904,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_SAVE_DIRECTORIES "save_directories"
 #define PREF_CONSERVE_SPACE "conserve_space"
 #define PREF_PUSH_AUDIO_TO_GENS "push_audio_to_gens"
+#define PREF_APPLY_GAMMA "apply_gamma"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

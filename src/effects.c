@@ -942,7 +942,6 @@ deint1:
 }
 
 
-
 weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   static weed_timecode_t blend_tc = 0;
 

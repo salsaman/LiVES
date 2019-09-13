@@ -24,8 +24,8 @@ docs-doxygen:
 	@echo "Doxygen not installed, skipping sourcecode documentation"
 endif
 
-WEED_SO_VERSION = 0:11:0
-WEED_PSO_VERSION = 0:14:0
+WEED_SO_VERSION = 0:12:0
+WEED_PSO_VERSION = 0:15:0
 
 LIBS =
 
@@ -49,11 +49,9 @@ libweed_slice_la_SOURCES = weed-gslice.c
 
 libweed_utils_la_SOURCES = weed-utils.c 
 
-
 libweed_slice_scripting_la_SOURCES = weed-gslice_scripting.c
 
 libweed_utils_scripting_la_SOURCES = weed-utils_scripting.c 
-
 
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
 	weed-compat.h
@@ -62,7 +60,6 @@ libweedincludedir = "$(includedir)/weed"
 
 libweed_ladir = "$(libdir)/weed"
 libweed_scripting_ladir = "$(libdir)/weed"
-
 
 libweed_la_CFLAGS = -fvisibility=hidden
 
@@ -77,7 +74,6 @@ libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared
 libweed_utils_la_CFLAGS = $(extra_cflags)
 
 libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
-
 
 libweed_slice_scripting_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS)
 

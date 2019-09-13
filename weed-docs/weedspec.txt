@@ -10,6 +10,7 @@ API Version Changes
 130 - added WEED_CHANNEL_RESIZE_ON_ROWSTRIDES_CHANGE
 131 - added WEED_FILTER_PROCESS_LAST, removed WEED_COLORSPACE_HSV
 132 - added threading hint, and later WEED_CHANNEL_ALPHA_PREMULT
+133 - added gamma correction
 
 Changelog:
 21/04/06 salsaman.
@@ -138,8 +139,11 @@ Add missing type documentation for "fps".
 04/03/2016 salsaman
 Add "copyright" leaf to plugin info.
 
+13/09/2017 salsaman
+Add gamma.
 
-(C) Gabriel "Salsaman" Finch 2005 - 2016
+
+(C) Gabriel "Salsaman" Finch 2005 - 2019
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
 Tori, and Oyvind "Pippin" Kolas.
@@ -151,7 +155,7 @@ timeline style events (weed-events).
 
 == WEED_API_VERSION ==
 
-This is defined as 131 for this version of the specification. This
+This is defined as 133 for this version of the specification. This
 number will be increased for future revisions of the spec. if a
 function or a symbol is changed or added.
 
@@ -476,9 +480,9 @@ WEED_TRUE is #defined as 1 in the header.
 
 WEED_FALSE is #defined as 0 in the header.
 
-WEED_API_VERSION is #defined as 131 in the header.
+WEED_API_VERSION is #defined as 133 in the header.
 
-WEED_API_VERSION_131 is also #defined in the header.
+WEED_API_VERSION_133 is also #defined in the header.
 
 
 
@@ -1529,8 +1533,17 @@ Parameter hints >=1024 are reserved for custom parameters.
 
  * WEED_COLORSPACE_RGBA  2
 
-
 Colorspaces >=1024 are reserved for custom color spaces.
+
+==== Gamma types (api 133 and above) ====
+
+ * WEED_GAMMA_UNKNOWN 0
+
+ * WEED_GAMMA_SRGB 1
+
+ * WEED_GAMMA_LINEAR 2
+
+Gamma types >=1024 are reserved for custom color gamma types.
 
 ==== Weed palette types ====
 
@@ -1669,7 +1682,12 @@ Palette numbers >=2048 are reserved for custom palettes.
    use the channel flag WEED_CHANNEL_SIZE_CAN_VARY.
 
 
- * WEED_FILTER_PROCESS_LAST  16  [[BR]]
+ * WEED_FILTER_HINT_SRGB  64  [BR]] (api 133 and above)
+   As of version 133, filters by default work with linear colourspace (grey = 55, 55, 55) which is better for luma and mixing.
+   If a filter needs SRGB colourspace (grey = 127, 127, 127) then it should set this flag. 
+
+
+* WEED_FILTER_PROCESS_LAST  16  [[BR]]
    This flag denotes that the host should process this filter after other filters have been 
    applied. Examples might be a subtitle filter or an audio mixer.
 

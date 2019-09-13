@@ -1,8 +1,9 @@
 Version 3.0.3
 -------------
+Implement auto gamma correction (needs testing).
 Optimise communication with rendered plugins.
 Fix for multi_encoder3
-Improvements to RFX scripot builder tool.
+Improvements to RFX script builder tool.
 
 
 

@@ -44,7 +44,6 @@
 
 /* (C) Gabriel "Salsaman" Finch, 2005 - 2010 */
 
-
 #ifndef __WEED_PALETTES_H__
 #define __WEED_PALETTES_H__
 
@@ -52,7 +51,6 @@
 extern "C"
 {
 #endif /* __cplusplus */
-
 
 /* Palette types */
 /* RGB palettes */
@@ -96,7 +94,6 @@ extern "C"
 #define WEED_PALETTE_A8 1026
 #define WEED_PALETTE_AFLOAT 1027
 
-
 /* YUV sampling types */
 // see http://www.mir.com/DMG/chroma.html
 #define WEED_YUV_SAMPLING_DEFAULT   0
@@ -114,6 +111,11 @@ extern "C"
 #define WEED_YUV_SUBSPACE_YCBCR 1
 #define WEED_YUV_SUBSPACE_BT709 2
 
+/* GAMMA Values */
+/* API version 133 */
+#define WEED_GAMMA_UNKNOWN 0
+#define WEED_GAMMA_SRGB 1
+#define WEED_GAMMA_LINEAR 2
 
 #ifdef __cplusplus
 }

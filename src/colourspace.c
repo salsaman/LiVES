@@ -266,10 +266,9 @@ static boolean conv_YY_inited = FALSE;
 
 // gamma correction
 
-#ifdef TEST_GAMMA
 uint8_t gamma_lut[256];
-int current_gamma = WEED_GAMMA_UNKNOWN;
-boolean current_gamma_fwd = FALSE;
+int current_gamma_type = WEED_GAMMA_UNKNOWN;
+boolean current_gamma_fwd = TRUE;
 
 /* Updates the gamma look-up-table. */
 
@@ -277,51 +276,53 @@ static inline void update_gamma_lut(boolean fwd, int gamma_type) {
   // fwd will convert linear to gamma type
   // otherwise do the inverse
   register int i;
-  float gamma, inv_gamma;
+  float gamma = (float)prefs->screen_gamma, inv_gamma = 0.;
   float a, x;
 
   gamma_lut[0] = 0;
 
   if (gamma_type == WEED_GAMMA_MONITOR) {
-    gamma = (float)prefs->screen_gamma;
     inv_gamma = 1. / gamma;
-  }
+  } else if (current_gamma_type == gamma_type && current_gamma_fwd == fwd) return;
 
   for (i = 1; i < 256; ++i) {
     a = (float)i / 255.;
 
+    switch (gamma_type) {
     // simple power law transformation
-    if (gamma_type == WEED_GAMMA_MONITOR) {
+    case WEED_GAMMA_MONITOR:
       if (fwd)
         x = powf(a, inv_gamma);
       else
         x = powf(a, gamma);
-    }
+      break;
 
     // rec 709 gamma (fwd is linear to gamma)
-    if (gamma_type == WEED_GAMMA_BT709) {
+    case WEED_GAMMA_BT709:
       if (fwd)
         x = (a <= 0.018) ? 4.5 * a : 1.099 * powf(a, 0.45) - 0.099;
       else
         x = (a <= 0.081) ? a / 4.5 : powf((a + 0.099) / 1.099, 1. / 0.045);
-    }
+      break;
 
-    // sRGB gamma (fwd is linear to gamma)
-    if (gamma_type == WEED_GAMMA_SRGB) {
+    // sRGB gamma (fwd is LINEAR to SRGB)
+    case WEED_GAMMA_SRGB:
       if (fwd)
         x = (a <= 0.0031308) ? 12.92 * a : 1.055 * powf(a, 1.0 / 2.4) - 0.055;
       else
         x = (a <= 0.04045) ? a / 12.92 : powf((a + 0.055) / 1.055, 2.4);
+      break;
+    default:
+      x = a;
+      break;
     }
-
-    gamma_lut[i] = CLAMP0255(255.*x);
+    gamma_lut[i] = CLAMP0255(255. * x);
   }
 
-  current_gamma = gamma;
-  current_gamma_dir = fwd;
+  current_gamma_type = gamma_type;
+  current_gamma_fwd = fwd;
 }
 
-#endif
 
 static void init_RGB_to_YUV_tables(void) {
   register int i;
@@ -7257,6 +7258,8 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   register int i, j;
 
+  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_UNKNOWN);
+
   weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS))
     weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
@@ -8096,6 +8099,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
   int width, height, orowstride, irowstride;
   int error, inpl, flags = 0;
   int isamtype, isubspace;
+  int new_gamma_type;
   boolean iclamped, contig = FALSE;
 
   if (layer == NULL) return FALSE;
@@ -8193,6 +8197,17 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
 
   width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
   height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
+
+  new_gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, & error);
+  if (weed_palette_is_rgb_palette(inpl) && !weed_palette_is_rgb_palette(outpl)) {
+    if (prefs->apply_gamma) {
+      // gamma correction
+      gamma_correct_layer(WEED_GAMMA_LINEAR, layer);
+    }
+    new_gamma_type = WEED_GAMMA_SRGB;
+  } else if (!weed_palette_is_rgb_palette(inpl) && weed_palette_is_rgb_palette(outpl)) {
+    new_gamma_type = WEED_GAMMA_LINEAR;
+  }
 
   switch (inpl) {
   case WEED_PALETTE_BGR24:
@@ -9816,6 +9831,9 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
     weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)pd_array);
     lives_free(pd_array);
   }
+
+  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, new_gamma_type); // after conversion
+
   return TRUE;
 }
 
@@ -9879,28 +9897,26 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int h
 
 
 int get_layer_gamma(weed_plant_t *layer) {
-  int gamma = 0; //WEED_GAMMA_LINEAR;
-#ifdef TEST_GAMMA
+  int gamma_type = WEED_GAMMA_UNKNOWN;
   int error;
-  if (weed_plant_has_leaf(layer, "gamma")) {
-    gamma = weed_get_int_value(layer, "gamma", &error);
+  if (weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) {
+    gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, &error);
   }
-#endif
-  return gamma;
+  if (gamma_type == WEED_GAMMA_UNKNOWN)  g_print("Layer with unknown gamma !!\n");
+  return gamma_type;
 }
 
 
-void gamma_correct_pixbuf(boolean fwd, int gamma, LiVESPixbuf *pixbuf) {
+static void gamma_correct_pixbuf(boolean fwd, int gamma_type, LiVESPixbuf *pixbuf) {
   // if fwd, convert from linear to "gamma"
   // otherwise do inverse conversion
-#ifdef TEST_GAMMA
   register int j, k;
 
   uint8_t *pixels, *end;
   int width, widthx, height, nchannels, orowstride;
   boolean done = FALSE;
 
-  if (current_gamma != gamma || current_gamma_direction != fwd) update_gamma_lut(fwd, gamma);
+  if (current_gamma_type != gamma_type || current_gamma_fwd != fwd) update_gamma_lut(fwd, gamma_type);
 
   nchannels = lives_pixbuf_get_n_channels(pixbuf);
 
@@ -9921,37 +9937,38 @@ void gamma_correct_pixbuf(boolean fwd, int gamma, LiVESPixbuf *pixbuf) {
       for (k = 0; k < 3; k++) pixels[j + k] = gamma_lut[pixels[j + k]];
     }
   }
-#endif
 }
 
 
-boolean gamma_correct_layer(int gamma, weed_plant_t *layer) {
+boolean gamma_correct_layer(int gamma_type, weed_plant_t *layer) {
   // convert layer from current gamma to target
-#ifdef TEST_GAMMA
   register int j, k;
 
   uint8_t *pixels, *end;
   int widthx;
   int error;
-  int pal;
   int start = 0;
-  int lgamma = get_layer_gamma(layer);
+  int lgamma_type = get_layer_gamma(layer);
 
-  boolean done = FALSE;
   boolean fwd = TRUE;
 
   int orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-  int pal = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
+  int pal = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error), nchannels;
   int width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
   int height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
 
   if (!weed_palette_is_rgb_palette(pal)) return FALSE; // yuv is always gammad
 
-  if (gamma == lgamma) return TRUE;
+  if (gamma_type == lgamma_type) return TRUE;
 
-  if (gamma != WEED_GAMMA_LINEAR && lgamma != WEED_GAMMA_LINEAR) return FALSE; // not handled
+  if (gamma_type != WEED_GAMMA_LINEAR && lgamma_type != WEED_GAMMA_LINEAR) return FALSE; // not handled
 
-  if (gamma == WEED_GAMMA_LINEAR) fwd = FALSE;
+  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
+
+  if (gamma_type == WEED_GAMMA_LINEAR) {
+    fwd = FALSE;
+    gamma_type = lgamma_type;
+  }
   nchannels = weed_palette_get_bits_per_macropixel(pal) >> 3;
   widthx = width * nchannels;
 
@@ -9961,15 +9978,14 @@ boolean gamma_correct_layer(int gamma, weed_plant_t *layer) {
   if (pal == WEED_PALETTE_ARGB32) start = 1;
 
   // TODO - mutex lock the gamma_lut
-  if (current_gamma != gamma || current_gamma_direction != fwd) update_gamma_lut(fwd, gamma);
+  if (current_gamma_type != gamma_type || current_gamma_fwd != fwd) update_gamma_lut(fwd, gamma_type);
   for (; pixels < end; pixels += orowstride) {
     for (j = start; j < widthx; j += nchannels) {
       for (k = 0; k < 3; k++) pixels[j + k] = gamma_lut[pixels[j + k]];
     }
   }
-
-  weed_set_int_value(layer, WEED_LEAF_GAMMA, gamma);
-#endif
+  if (fwd) weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
+  else weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
   return TRUE;
 }
 
@@ -10082,6 +10098,12 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
       pixel_data += irowstride;
     }
     weed_layer_pixel_data_free(layer);
+  }
+
+  if (pixbuf != NULL && weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, &error) == WEED_GAMMA_LINEAR) {
+    if (prefs->apply_gamma) {
+      gamma_correct_pixbuf(TRUE, WEED_GAMMA_SRGB, pixbuf);
+    }
   }
   return pixbuf;
 }
@@ -10312,6 +10334,8 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 
   // return FALSE if we were unable to resize
 
+  // TODO: - gamma correction ?
+
   LiVESPixbuf *pixbuf = NULL;
   LiVESPixbuf *new_pixbuf = NULL;
 
@@ -10324,6 +10348,10 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   int iwidth = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
   int iheight = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
   int iclamped = WEED_YUV_CLAMPING_UNCLAMPED;
+
+#ifdef USE_SWSCALE
+  int new_gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, &error);
+#endif
 
   if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) return FALSE;
 
@@ -10446,6 +10474,16 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       }
     }
 
+    if (weed_palette_is_rgb_palette(palette) && !weed_palette_is_rgb_palette(opal_hint)) {
+      // gamma correction
+      if (prefs->apply_gamma) {
+        gamma_correct_layer(WEED_GAMMA_LINEAR, layer);
+      }
+      new_gamma_type = WEED_GAMMA_SRGB;
+    } else if (!weed_palette_is_rgb_palette(palette) && weed_palette_is_rgb_palette(opal_hint)) {
+      new_gamma_type = WEED_GAMMA_LINEAR;
+    }
+
     // set new values
 
     if (palette != opal_hint) {
@@ -10461,6 +10499,8 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
 
     create_empty_pixel_data(layer, FALSE, TRUE);
+
+    weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, new_gamma_type);
 
     out_pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
     orowstrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
@@ -10940,6 +10980,9 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
   }
 
   weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
+
+  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+
   return FALSE;
 }
 
@@ -11200,6 +11243,7 @@ weed_plant_t *weed_layer_copy(weed_plant_t *dlayer, weed_plant_t *slayer) {
   weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
   weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
   weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, palette);
+  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, weed_get_int_value(slayer, WEED_LEAF_GAMMA_TYPE, &error));
   weed_set_int_array(layer, WEED_LEAF_ROWSTRIDES, pd_elements, rowstrides);
 
   if (weed_plant_has_leaf(slayer, WEED_LEAF_YUV_CLAMPING))

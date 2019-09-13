@@ -1,10 +1,9 @@
 // scribbler.c
 // weed plugin
-// (c) A. Penkov (salsaman) 2010
+// (c) A. Penkov (salsaman) 2010 - 2019
 // cloned and modified from livetext.c (author G. Finch aka salsaman)
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
-
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -18,8 +17,8 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int num_versions = 3; // number of different weed api versions supported
+static int api_versions[] = {133, 131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 2; // version of this package
 
@@ -46,7 +45,6 @@ union memtest {
   int32_t num;
   char chr[4];
 };
-
 
 static int is_big_endian() {
   union memtest mm;
@@ -77,10 +75,10 @@ typedef struct {
   int blue;
 } rgb_t;
 
-
 /////////////////////////////////////////////
 static int unal[256][256];
 static int al[256][256];
+
 
 static void init_unal(void) {
   // premult to postmult and vice-versa
@@ -94,6 +92,7 @@ static void init_unal(void) {
     }
   }
 }
+
 
 static void alpha_unpremult(guchar *ptr, int width, int height, int rowstride, int pal, int un) {
   int aoffs, coffs, psizel;
@@ -138,9 +137,7 @@ static void alpha_unpremult(guchar *ptr, int width, int height, int rowstride, i
       ptr += rowstride;
     }
   }
-
 }
-
 
 
 static cairo_t *channel_to_cairo(weed_plant_t *channel) {
@@ -214,7 +211,6 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 
   return cairo;
 }
-
 
 
 static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
@@ -295,6 +291,7 @@ int scribbler_init(weed_plant_t *inst) {
   return WEED_NO_ERROR;
 }
 
+
 static void getxypos(PangoLayout *layout, double *px, double *py, int width, int height, int cent, double *pw, double *ph) {
   int w_, h_;
   double d;
@@ -318,6 +315,7 @@ static void getxypos(PangoLayout *layout, double *px, double *py, int width, int
   if (py)
     *py = d;
 }
+
 
 static void fill_bckg(cairo_t *cr, double x, double y, double dx, double dy) {
   cairo_rectangle(cr, x, y, dx, dy);
@@ -475,7 +473,11 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *in_params[P_END + 1], *pgui;
     weed_plant_t *filter_class;
     PangoContext *ctx;
-    int flags = 0, error;
+
+    int api_used = weed_get_api_version(plugin_info);
+    int filter_flags = 0, param_flags, error;
+
+    if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
 
     if (is_big_endian())
       palette_list[0] = WEED_PALETTE_ARGB32;
@@ -524,13 +526,12 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       g_object_unref(ctx);
     }
 
-
     in_params[P_TEXT] = weed_text_init("text", "_Text", "");
     in_params[P_MODE] = weed_string_list_init("mode", "Colour _mode", 0, modes);
     if (weed_plant_has_leaf(in_params[P_MODE], "flags"))
-      flags = weed_get_int_value(in_params[P_MODE], "flags", &error);
-    flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
-    weed_set_int_value(in_params[P_MODE], "flags", flags);
+      param_flags = weed_get_int_value(in_params[P_MODE], "flags", &error);
+    param_flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
+    weed_set_int_value(in_params[P_MODE], "flags", param_flags);
 
     if (fonts_available)
       in_params[P_FONT] = weed_string_list_init("font", "_Font", 0, fonts_available);
@@ -552,13 +553,15 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     pgui = weed_parameter_template_get_gui(in_params[P_FGALPHA]);
     weed_set_int_value(pgui, "copy_value_to", P_BGALPHA);
 
-    filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, 0, &scribbler_init, &scribbler_process, NULL, in_chantmpls,
+    filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, filter_flags, &scribbler_init, &scribbler_process, NULL,
+                                          in_chantmpls,
                                           out_chantmpls,
                                           in_params, NULL);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    filter_class = weed_filter_class_init("scribbler_generator", "Aleksej Penkov", 1, 0, &scribbler_init, &scribbler_process, NULL, NULL,
+    filter_class = weed_filter_class_init("scribbler_generator", "Aleksej Penkov", 1, filter_flags, &scribbler_init, &scribbler_process, NULL,
+                                          NULL,
                                           (clone1 = weed_clone_plants(out_chantmpls)), (clone2 = weed_clone_plants(in_params)), NULL);
     weed_free(clone1);
     weed_free(clone2);
@@ -567,12 +570,10 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_set_double_value(filter_class, "target_fps", 25.); // set reasonable default fps
 
     weed_set_int_value(plugin_info, "version", package_version);
-
   }
 
   return plugin_info;
 }
-
 
 
 void weed_desetup(void) {

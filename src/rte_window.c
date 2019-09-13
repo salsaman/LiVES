@@ -2690,6 +2690,7 @@ resetdefs1:
   }
 
   fxdialog = lives_widget_get_toplevel(LIVES_WIDGET(button));
+  if (!LIVES_IS_WIDGET(fxdialog)) return;
   pbox = lives_dialog_get_content_area(LIVES_DIALOG(fxdialog));
 
   // redraw the window

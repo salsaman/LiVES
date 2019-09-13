@@ -9115,7 +9115,9 @@ WIDGET_HELPER_LOCAL_INLINE void dlg_focus_changed(LiVESContainer *c, LiVESWidget
   if (entry != NULL && LIVES_IS_ENTRY(entry)) {
     if (lives_entry_get_activates_default(LIVES_ENTRY(widget))) {
       LiVESWidget *toplevel = lives_widget_get_toplevel(widget);
-      LiVESWidget *button = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), "default_button");
+      LiVESWidget *button;
+      if (!LIVES_IS_WIDGET(toplevel)) return;
+      button = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), "default_button");
       if (button != NULL && lives_widget_is_sensitive(button)) {
         boolean woat = widget_opts.apply_theme;
         widget_opts.apply_theme = TRUE;
@@ -10899,8 +10901,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_can_focus_and_default(LiVES
 
 void lives_general_button_clicked(LiVESButton *button, livespointer data_to_free) {
   // destroy the button top-level and free data
-  lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  if (LIVES_IS_WIDGET(lives_widget_get_toplevel(LIVES_WIDGET(button)))) {
+    lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  }
   lives_freep((void **)&data_to_free);
 }
 

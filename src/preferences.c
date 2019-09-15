@@ -1071,6 +1071,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean warn_after_crash = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_crash));
   boolean warn_no_pulse = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_no_pulse));
   boolean warn_layout_wipe = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_wipe));
+  boolean warn_layout_gamma = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_gamma));
 
   boolean midisynch = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->check_midi));
   boolean instant_open = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
@@ -1383,7 +1384,7 @@ boolean apply_prefs(boolean skip_warn) {
               WARN_MASK_LAYOUT_SHIFT_AUDIO + !warn_layout_aalt * WARN_MASK_LAYOUT_ALTER_AUDIO + !warn_layout_popup *
               WARN_MASK_LAYOUT_POPUP + !warn_yuv4m_open * WARN_MASK_OPEN_YUV4M + !warn_mt_backup_space *
               WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT
-              + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE;
+              + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE + !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA;
 
   if (warn_mask != prefs->warning_mask) {
     prefs->warning_mask = warn_mask;
@@ -4220,6 +4221,13 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                          (_("Show a warning before wiping a layout which has unsaved changes."),
                                           !(prefs->warning_mask & WARN_MASK_LAYOUT_WIPE), LIVES_BOX(hbox), NULL);
 
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
+
+  prefsw->checkbutton_warn_layout_gamma = lives_standard_check_button_new
+                                          (_("Show a warning if a loaded layout has incompatible gamma settings."),
+                                              !(prefs->warning_mask & WARN_MASK_LAYOUT_GAMMA), LIVES_BOX(hbox), NULL);
+
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   pixbuf_warnings = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_WARNING, LIVES_ICON_SIZE_CUSTOM, -1, -1);
@@ -5248,6 +5256,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_no_pulse), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_wipe), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_gamma), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->check_midi), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->midichan_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),

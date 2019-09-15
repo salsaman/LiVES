@@ -471,9 +471,11 @@ static int get_size_for_type(int type) {
   switch (type) {
   case GL_RGBA:
   case GL_BGRA:
+  case GL_SRGB8_ALPHA8:
     return 4;
   case GL_RGB:
   case GL_BGR:
+  case GL_SRGB8:
     return 3;
   default:
     assert(0);
@@ -958,7 +960,6 @@ static int Upload(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glViewport(0, 0, window_width, window_height);
-  glEnable(GL_FRAMEBUFFER_SRGB);
 
   switch (mode) {
   case 0: {

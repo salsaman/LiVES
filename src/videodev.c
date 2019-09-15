@@ -97,7 +97,6 @@ static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
     lives_memcpy(ldev->buffer2.data, buffer->data, ldev->buffer2.buffer_size);
     ldev->buffer_ready = 2;
   }
-
 }
 
 
@@ -117,9 +116,6 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
   weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, ldev->YUV_clamping);
 
   create_empty_pixel_data(layer, TRUE, TRUE);
-
-  // TODO: allow plugin override
-  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
 
   if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
 

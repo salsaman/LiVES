@@ -1271,8 +1271,8 @@ framedone2:
 
   if (priv->black_fill) btop = cdata->frame_height;
   else {
-    // we are allowed to cast away const-ness just for this (and eventually gamma)
-    // yuv_subspace, yuv_clamping, yuv_sampling and interlace
+    // we are allowed to cast away const-ness for 
+    // yuv_subspace, yuv_clamping, yuv_sampling, frame_gamma and interlace
 
     if (priv->pFrame->interlaced_frame) {
       if (priv->pFrame->top_field_first)((lives_clip_data_t *)cdata)->interlace = LIVES_INTERLACE_TOP_FIRST;
@@ -1302,11 +1302,9 @@ framedone2:
       ((lives_clip_data_t *)cdata)->YUV_clamping = WEED_YUV_CLAMPING_CLAMPED;
     y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
 
-#ifdef TEST_GAMMA
-    ((lives_clip_data_t *)cdata)->gamma = WEED_GAMMA_LINEAR;
-    if (priv->pFrame->color_trc == AVCOL_TRC_IEC61966_2_1)
-      ((lives_clip_data_t *)cdata)->gamma = WEED_GAMMA_SRGB;
-#endif
+    ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_SRGB;
+    if (priv->pFrame->color_trc == AVCOL_TRC_LINEAR)
+      ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_LINEAR;
   }
   for (p = 0; p < nplanes; p++) {
     dst = pixel_data[p];

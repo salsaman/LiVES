@@ -553,7 +553,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     pgui = weed_parameter_template_get_gui(in_params[P_FGALPHA]);
     weed_set_int_value(pgui, "copy_value_to", P_BGALPHA);
 
-    filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, filter_flags, &scribbler_init, &scribbler_process, NULL,
+    filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, 0, &scribbler_init, &scribbler_process, NULL,
                                           in_chantmpls,
                                           out_chantmpls,
                                           in_params, NULL);

@@ -18,6 +18,8 @@
 #define WEED_LEAF_AUDIO_VOLUME_VALUES "audio_volume_values"
 #define WEED_LEAF_TRACK_LABEL_TRACKS "track_label_tracks"
 #define WEED_LEAF_TRACK_LABEL_VALUES "track_label_values"
+#define WEED_LEAF_LIVES_CREATED_VERSION "created_version"
+#define WEED_LEAF_LIVES_EDITED_VERSION "edited_version"
 
 // frame event
 #define WEED_LEAF_FRAMES "frames"
@@ -49,6 +51,7 @@
 #define WEED_LEAF_FIRST "first"
 #define WEED_LEAF_LAST "last"
 #define WEED_LEAF_NEEDS_SET "needs_set"
+#define WEED_LEAF_GAMMA_ENABLED "gamma_enabled"
 
 // param change
 #define WEED_LEAF_NEXT_CHANGE "next_change"

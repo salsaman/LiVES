@@ -3422,6 +3422,9 @@ lives_render_error_t render_events(boolean reset) {
     cfile->undo_arps = cfile->arps;
     cfile->undo_asampsize = cfile->asampsize;
 
+    // we set this to TRUE to stop the audio being clobbered, now we must reset it to get the correct audio filename
+    cfile->opening = FALSE;
+
     clear_mainw_msg();
     mainw->filter_map = NULL;
     mainw->afilter_map = NULL;
@@ -4295,6 +4298,8 @@ boolean render_to_clip(boolean new_clip) {
     }
 
     lives_freep((void **)&clipname);
+
+    cfile->opening = TRUE; // prevent audio from getting clobbered, it will be reset during rendering
 
     if (prefs->render_prompt) {
       cfile->hsize = rdet->width;

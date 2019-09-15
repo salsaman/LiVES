@@ -107,7 +107,6 @@ Corrected spelling error WEED_HINT_INT -> WEED_HINT_INTEGER
 7/01/12 salsaman
 Add clarifying notes about out parameters.
 
-
 19/01/12 salsaman
 Add channel flag WEED_CHANNEL_ALPHA_PREMULT. API unchanged.
 
@@ -158,6 +157,32 @@ timeline style events (weed-events).
 This is defined as 133 for this version of the specification. This
 number will be increased for future revisions of the spec. if a
 function or a symbol is changed or added.
+
+
+== NOTE ABOUT COLOUR SPACES ==
+As of API version 133, Weed effect plugins by preference operate in the LINEAR (i.e. perceptual) colour space. This means that
+for RGB type palettes, the component values (R, G, B) represent the values which are displayed on the monitor.
+
+For example, since the human eye perceives darker values more strongly than lighter values, a mid-grey in this colour space has
+an (R, G, B) value of (55, 55, 55). This colour space is used since it is much better for calculating accurate brightness (luma)
+values, and for mixing (adding) and multiplying colour values perceptually. The host will indicate this by setting the channel's
+"gamma_type" leaf to WEED_GAMMA_LINEAR.
+
+In addition to the pixel data values, the VALUEs any parameters of type RGB(A) with INTEGER component values will be converted to this
+colour space by the host. So for example if the user entered (127, 127, 127) for a colour value in the GUI, then the plugin would
+receive the values (55, 55, 55). The host will indicate this by setting the parameter's
+"gamma_type" leaf to WEED_GAMMA_LINEAR. When creating the parameter templates, the DEFAULT and NEW_DEFAULT values should be
+in SRGB (grey = 127, 127, 127).
+
+For out parameters, the inverse transformation should be performed by the host. This can be overridden by setting the parameter's
+"gamma_type" leaf to WEED_GAMMA_SRGB.
+
+Note that FLOAT type RGB(A) values are NOT converted in this manner (to preserve accuracy).
+
+If a plugin wants to override this behaviour it can set the flag bit WEED_FILTER_HINT_SRGB. In this mode, a mid-grey will have the
+value (127, 127, 127). This mode may be better for plugins that want to use colour values without consideration to luma values
+or colour mixing. Plugins which generate video probably want to set this, unless they are creating a lighting source for example.
+
 
 
 == WEED PLANTS ==
@@ -884,6 +909,19 @@ possible, and process video accordingly:
 					Generally not needed.
 
 
+For RGB type channels:
+
+ * "gamma_type" : WEED_SEED_INT : (optional) [api 133 and above]
+   		  		  	     set by the host to indicate the gamma function of the RGB(A)
+					     colour space in which the channel operates.
+   		  		  	     If not set, it can be assumed to be WEED_GAMMA_SRGB.
+
+					     * IF the plugin set the filter flag bit WEED_FILTER_HINT_SRGB, then all values will be in
+					     WEED_GAMMA_SRGB.
+
+
+
+
 '''Optional leaves for channel plants with audio''': [[BR]]
 
  See the weed AUDIO extension.
@@ -1004,6 +1042,20 @@ Additional leaves that hint causes:
  * "min" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: minimal value of the parameter, MANDATORY for in parameters (optional for out parameters)
  * "max" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: maximal value of the parameter, MANDATORY for in parameters (optional for out parameters)
  * "colorspace" : WEED_SEED_INT : colorspace (see below), MANDATORY
+ * "gamma_type" : WEED_SEED_INT : (optional) [api 133 and above]
+   		  		  	     for in_parameters: set by the host to indicate the gamma function of the RGB(A)
+					     colour space in which the parameter "value" operates.
+   		  		  	     If not set, it can be assumed to be WEED_GAMMA_SRGB.
+					     "dafault" and "new_default" are always in SRGB gamma.
+
+					     for out_parameters: set by the plugin to indicate the gamma function of the RGB(A)
+					     colour space in which the parameter "value" operates.
+   		  		  	     If not set, it can be assumed to be WEED_GAMMA_LINEAR* for integer types, and
+					     WEED_GAMMA_SRGB for float types.
+
+					     * IF the plugin set the filter flag bit WEED_FILTER_HINT_SRGB, then all values will be in
+					     WEED_GAMMA_SRGB.
+
 
 ==== Number of elements in the leaves ====
 The "default" leaf must contain at least one value* UNLESS the plugin sets the parameter flag

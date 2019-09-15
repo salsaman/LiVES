@@ -19,8 +19,6 @@
 
 // based on code from libavformat
 
-
-
 /**
  * @file
  * Matroska file demuxer
@@ -29,7 +27,6 @@
  * totally reworked by Aurelien Jacobs <aurel@gnuage.org>
  * Specs available on the Matroska project page: http://www.matroska.org/.
  */
-
 
 #include <stdio.h>
 #include <string.h>
@@ -74,7 +71,6 @@ const char *plugin_version = "LiVES mkv decoder version 1.3";
 #include <libavutil/lzo.h>
 #include <libavutil/dict.h>
 
-
 #include "mkv_decoder.h"
 
 #include "libav_helper.h"
@@ -86,10 +82,10 @@ const char *plugin_version = "LiVES mkv decoder version 1.3";
 #include <bzlib.h>
 #endif
 
-
 static index_container_t **indices;
 static int nidxc;
 static pthread_mutex_t indices_mutex;
+
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -99,11 +95,13 @@ static double lives_int2dbl(int64_t v) {
   return ldexp(((v & ((1LL << 52) - 1)) + (1LL << 52)) * (v >> 63 | 1), (v >> 52 & 0x7FF) - 1075);
 }
 
+
 static float lives_int2flt(int32_t v) {
   if ((uint32_t)v + v > 0xFF000000U)
     return NAN;
   return ldexp(((v & 0x7FFFFF) + (1 << 23)) * (v >> 31 | 1), (v >> 23 & 0xFF) - 150);
 }
+
 
 const uint8_t ff_log2_tab[256] = {
   0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -133,15 +131,12 @@ static enum AVCodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) 
   return AV_CODEC_ID_NONE;
 }
 
-
 #define MKV_TAG_TYPE_VIDEO 1
 
 boolean got_eof;
 int errval;
 
 static const char *matroska_doctypes[] = { "matroska", "webm" };
-
-
 
 
 static void lives_dynarray_add(void *tab_ptr, int *nb_ptr, void *elem) {
@@ -188,6 +183,7 @@ static int ebml_level_end(const lives_clip_data_t *cdata) {
   return 0;
 }
 
+
 /*
  * Read: an "EBML number", which is defined as a variable-length
  * array of bytes. The first byte indicates the length by giving a
@@ -224,7 +220,6 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t *data,
     total = data[0];
   }
 
-
   /* get the length of the EBML number */
   bread = 8 - ff_log2_tab[total];
 
@@ -238,9 +233,7 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t *data,
   /* read out length */
   total ^= 1 << ff_log2_tab[total];
 
-
   while (n++ < bread) {
-
     if (data == NULL) {
       if (read(priv->fd, buffer, 1) < 1) {
         if (!priv->expect_eof)
@@ -263,6 +256,7 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t *data,
   return bread;
 }
 
+
 /**
  * Read a EBML length value.
  * This needs special handling for the "unknown length" case which has multiple
@@ -275,6 +269,7 @@ static int ebml_read_length(const lives_clip_data_t *cdata,
     *number = 0xffffffffffffffULL;
   return res;
 }
+
 
 /*
  * Read the next element as an unsigned int.
@@ -311,6 +306,7 @@ static int ebml_read_uint(const lives_clip_data_t *cdata, int size, uint64_t *nu
   return 0;
 }
 
+
 /*
  * Read the next element as a float.
  * 0 is success, < 0 is failure.
@@ -324,7 +320,6 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
   if (size == 0) {
     *num = 0;
   } else if (size == 4) {
-
     if (read(priv->fd, buffer, 4) < 4) {
       if (!priv->expect_eof)
         fprintf(stderr, "mkv_decoder: read error in %s\n", cdata->URI);
@@ -337,9 +332,7 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
     val32 = AV_RB32(buffer);
 
     *num = lives_int2flt(val32);
-
   } else if (size == 8) {
-
     if (read(priv->fd, buffer, 8) < 8) {
       if (!priv->expect_eof)
         fprintf(stderr, "mkv_decoder: read error in %s\n", cdata->URI);
@@ -359,6 +352,7 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
 
   return 0;
 }
+
 
 /*
  * Read the next element as an ASCII string.
@@ -420,6 +414,7 @@ static int ebml_read_binary(const lives_clip_data_t *cdata, int length, EbmlBin 
   return 0;
 }
 
+
 /*
  * Read the next element, but only the header. The contents
  * are supposed to be sub-elements which can be read separately.
@@ -445,6 +440,7 @@ static int ebml_read_master(const lives_clip_data_t *cdata, uint64_t length) {
   return 0;
 }
 
+
 /*
  * Read signed/unsigned "EBML" numbers.
  * Return: number of bytes processed, < 0 on error
@@ -453,6 +449,7 @@ static int matroska_ebmlnum_uint(const lives_clip_data_t *cdata,
                                  uint8_t *data, uint32_t size, uint64_t *num) {
   return ebml_read_num(cdata, data, FFMIN(size, 8), num);
 }
+
 
 /*
  * Same as above, but signed.
@@ -471,6 +468,7 @@ static int matroska_ebmlnum_sint(const lives_clip_data_t *cdata,
 
   return res;
 }
+
 
 static int ebml_parse_id(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
                          uint32_t id, void *data) {
@@ -494,6 +492,7 @@ static int ebml_parse_id(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
 
   return reso;
 }
+
 
 static int ebml_parse(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
                       void *data) {
@@ -520,6 +519,7 @@ static int ebml_parse(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
   return res;
 }
 
+
 static int ebml_parse_nest(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
                            void *data) {
   int i, res = 0;
@@ -545,6 +545,7 @@ static int ebml_parse_nest(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
 
   return res;
 }
+
 
 static int ebml_parse_elem(const lives_clip_data_t *cdata, EbmlSyntax *syntax, void *data) {
   lives_mkv_priv_t *priv = cdata->priv;
@@ -676,6 +677,7 @@ void ff_update_cur_dts(AVFormatContext *s, AVStream *ref_st, int64_t timestamp)
 }
 */
 
+
 /*
  * Autodetecting...
  */
@@ -738,7 +740,6 @@ static boolean lives_mkv_probe(const lives_clip_data_t *cdata, unsigned char *p)
 }
 
 
-
 static MatroskaTrack *matroska_find_track_by_num(MatroskaDemuxContext *matroska,
     int num) {
   MatroskaTrack *tracks = matroska->tracks.elem;
@@ -751,8 +752,6 @@ static MatroskaTrack *matroska_find_track_by_num(MatroskaDemuxContext *matroska,
   //av_log(matroska->ctx, AV_LOG_ERROR, "Invalid track number %d\n", num);
   return NULL;
 }
-
-
 
 
 static int matroska_decode_buffer(uint8_t **buf, int *buf_size,
@@ -852,8 +851,6 @@ failed:
 }
 
 
-
-
 static void matroska_fix_ass_packet(MatroskaDemuxContext *matroska,
                                     AVPacket *pkt, uint64_t display_duration) {
   char *line;
@@ -893,6 +890,7 @@ static void matroska_fix_ass_packet(MatroskaDemuxContext *matroska,
     pkt->size = strlen(line);
   }
 }
+
 
 static int matroska_merge_packets(AVPacket *out, AVPacket *in) {
   void *newdata = av_realloc(out->data, out->size + in->size);
@@ -970,8 +968,6 @@ static int matroska_parse_seekhead_entry(const lives_clip_data_t *cdata, int idx
 }
 
 
-
-
 static void matroska_add_index_entries(const lives_clip_data_t *cdata) {
 
   lives_mkv_priv_t *priv = cdata->priv;
@@ -1025,7 +1021,6 @@ static void matroska_parse_cues(const lives_clip_data_t *cdata) {
 }
 
 
-
 static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
@@ -1040,7 +1035,6 @@ static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
       (matroska->ctx->flags & AVFMT_FLAG_IGNIDX))
       return;*/
 
-
   for (i = 0; i < seekhead_list->nb_elem; i++) {
     if (seekhead[i].pos <= before_pos)
       continue;
@@ -1054,8 +1048,6 @@ static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
     if (matroska_parse_seekhead_entry(cdata, i) < 0)
       break;
   }
-
-
 }
 
 
@@ -1065,13 +1057,13 @@ static int frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
   return (int)((double)(frame) * 1000. / cdata->fps);
 }
 
+
 static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
   return (int64_t)((double)dts / 1000.*cdata->fps + .5);
 }
 
 
 //////////////////////////////////////////////////////////////////
-
 
 static int get_last_video_dts(lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv = cdata->priv;
@@ -1133,10 +1125,7 @@ static int get_last_video_dts(lives_clip_data_t *cdata) {
   priv->expect_eof = FALSE;
 
   return frame_to_dts(cdata, frames);
-
 }
-
-
 
 
 static uint32_t calc_dts_delta(const lives_clip_data_t *cdata) {
@@ -1207,12 +1196,7 @@ static uint32_t calc_dts_delta(const lives_clip_data_t *cdata) {
   deltadts = ((double)(idxdts - origdts) / (double)(frames) + .5);
 
   return deltadts;
-
 }
-
-
-
-
 
 
 /////////////////////////////////////////////////////
@@ -1228,12 +1212,10 @@ static void index_free(index_entry *idx) {
 }
 
 
-
 /// here we assume that pts of interframes > pts of previous keyframe
 // should be true for most formats (except eg. dirac)
 
 // we further assume that pts == dts for all frames
-
 
 static index_entry *index_walk(index_entry *idx, uint32_t pts) {
   index_entry *xidx = idx;
@@ -1290,7 +1272,6 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint
 }
 
 
-
 static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, uint32_t pts) {
   lives_mkv_priv_t *priv = cdata->priv;
   return index_walk(priv->idxc->idxhh, pts);
@@ -1298,8 +1279,6 @@ static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, uint32_t pts
 
 
 //////////////////////////////////////////////
-
-
 
 static int lives_mkv_read_header(lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv = cdata->priv;
@@ -1443,10 +1422,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
            encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_LZO)) {
         encodings[0].scope = 0;
 
-
         fprintf(stderr, "mkv_decoder: Unsupported encoding type\n");
         return -2;
-
       } else if (track->codec_priv.size && encodings[0].scope & 2) {
         uint8_t *codec_priv = track->codec_priv.data;
         int offset = matroska_decode_buffer(&track->codec_priv.data,
@@ -1460,8 +1437,6 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
           fprintf(stderr,
                   "mkv_decoder: Failed to decode codec private data\n");
           return -3;
-
-
         } else if (offset > 0) {
           track->codec_priv.data = malloc(track->codec_priv.size + offset);
           memcpy(track->codec_priv.data,
@@ -1493,7 +1468,6 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       return -4;
     }
 
-
     if (!strcmp(track->codec_id, "V_MS/VFW/FOURCC")
         && track->codec_priv.size >= 40
         && track->codec_priv.data != NULL) {
@@ -1510,7 +1484,6 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
                codec_id == AV_CODEC_ID_RV30 || codec_id == AV_CODEC_ID_RV40) {
       extradata_offset = 26;
     }
-
 
     track->codec_priv.size -= extradata_offset;
 
@@ -1531,7 +1504,6 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
     st->codec->codec_id = codec_id;
     st->start_time = 0;
-
 
     /*    if (strcmp(track->language, "und"))
     av_dict_set(&st->metadata, "language", track->language, 0);
@@ -1681,12 +1653,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     break;
   }
 
-
   return 0;
 }
-
-
-
 
 
 static index_container_t *idxc_for(lives_clip_data_t *cdata) {
@@ -1825,8 +1793,6 @@ static void detach_stream(lives_clip_data_t *cdata) {
 
   close(priv->fd);
 }
-
-
 
 
 #define MKV_PROBE_SIZE 5
@@ -2035,7 +2001,6 @@ skip_probe:
   cdata->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
   if (ctx->colorspace == AVCOL_SPC_BT709) cdata->YUV_subspace = WEED_YUV_SUBSPACE_BT709;
 
-
   cdata->palettes[0] = avi_pix_fmt_to_weed_palette(ctx->pix_fmt,
                        &cdata->YUV_clamping);
 
@@ -2126,7 +2091,6 @@ skip_probe:
   }
   priv->expect_eof = FALSE;
 
-
 #ifdef DEBUG
   fprintf(stderr, "fps is %.4f %ld\n", cdata->fps, cdata->nframes);
 #endif
@@ -2137,8 +2101,6 @@ skip_probe:
 
 //////////////////////////////////////////
 // std functions
-
-
 
 const char *module_check_init(void) {
   avcodec_register_all();
@@ -2153,7 +2115,6 @@ const char *module_check_init(void) {
 const char *version(void) {
   return plugin_version;
 }
-
 
 
 static lives_clip_data_t *init_cdata(void) {
@@ -2181,6 +2142,7 @@ static lives_clip_data_t *init_cdata(void) {
   cdata->nframes = 0;
 
   cdata->sync_hint = 0;
+  cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
 
   cdata->video_start_time = 0.;
 
@@ -2215,6 +2177,7 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
   clone->frame_width = cdata->frame_width;
   clone->frame_height = cdata->frame_height;
   clone->par = cdata->par;
+  clone->frame_gamma = WEED_GAMMA_UNKNOWN;
   clone->fps = cdata->fps;
   if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
   clone->current_palette = cdata->current_palette;
@@ -2289,8 +2252,6 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
 
   return clone;
 }
-
-
 
 
 lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
@@ -2378,6 +2339,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   return cdata;
 }
 
+
 static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
   unsigned char *dst = idst;
   register int i;
@@ -2428,7 +2390,6 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 }
 
 
-
 /*
  * Put one packet in an application-supplied AVPacket struct.
  * Returns 0 on success or -1 on failure.
@@ -2460,8 +2421,6 @@ static int matroska_deliver_packet(const lives_clip_data_t *cdata, AVPacket *pkt
 }
 
 
-
-
 /*
  * Free all packets in our internal queue.
  */
@@ -2477,11 +2436,11 @@ static void matroska_clear_queue(MatroskaDemuxContext *matroska) {
   }
 }
 
+
 static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
                                 int size, int64_t pos, uint64_t cluster_time,
                                 uint64_t duration, int is_keyframe,
                                 int64_t cluster_pos) {
-
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
 
@@ -2689,7 +2648,6 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
           lives_dynarray_add(&matroska->packets, &matroska->num_packets, pkt);
           matroska->prev_pkt = pkt;
         }
-
       }
 
       if (timecode != AV_NOPTS_VALUE)
@@ -2705,7 +2663,6 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 
 
 static int matroska_parse_cluster(const lives_clip_data_t *cdata) {
-
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
 
@@ -2740,8 +2697,6 @@ static int matroska_parse_cluster(const lives_clip_data_t *cdata) {
 }
 
 
-
-
 static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pkt) {
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
@@ -2755,11 +2710,8 @@ static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pk
 }
 
 
-
-
 static index_entry *matroska_read_seek(const lives_clip_data_t *cdata,
                                        uint32_t timestamp) {
-
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
   //AVFormatContext *s=priv->s;
@@ -2805,9 +2757,7 @@ static index_entry *matroska_read_seek(const lives_clip_data_t *cdata,
 }
 
 
-
 static int matroska_read_close(const lives_clip_data_t *cdata) {
-
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
 
@@ -2888,7 +2838,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   ////////////////////////////////////////////////////////////////////
 
   if (tframe != priv->last_frame) {
-
     if (priv->last_frame == -1 || (tframe < priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
       pthread_mutex_lock(&priv->idxc->mutex);
       idx = matroska_read_seek(cdata, target_pts);
@@ -2909,7 +2858,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     if (priv->picture == NULL) priv->picture = av_frame_alloc();
 
     // do this until we reach target frame //////////////
-
 
     do {
 
@@ -2997,8 +2945,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 }
 
 
-
-
 void clip_data_free(lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv = cdata->priv;
 
@@ -3021,3 +2967,4 @@ void clip_data_free(lives_clip_data_t *cdata) {
 void module_unload(void) {
   idxc_release_all();
 }
+

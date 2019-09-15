@@ -254,12 +254,12 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
   weed_plant_t *event;
 
   void **ievs = NULL;
-
   void *next, *prev;
 
   int64_t *uievs;
-
   int64_t iev = 0l;
+
+  char *cversion;
 
   int count = 0;
   int nivs = 0;
@@ -281,6 +281,12 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
   weed_set_int_value(event_list, WEED_LEAF_AUDIO_SAMPLE_SIZE, cfile->asampsize);
 
   weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
+
+  cversion = lives_strdup_printf("LiVES version %s", LiVES_VERSION);
+  if (!weed_plant_has_leaf(event_list, WEED_LEAF_LIVES_CREATED_VERSION))
+    weed_set_string_value(event_list, WEED_LEAF_LIVES_CREATED_VERSION, cversion);
+  weed_set_string_value(event_list, WEED_LEAF_LIVES_EDITED_VERSION, cversion);
+  lives_free(cversion);
 
   if (cfile->signed_endian & AFORM_UNSIGNED) weed_set_boolean_value(event_list, WEED_LEAF_AUDIO_SIGNED, WEED_FALSE);
   else weed_set_boolean_value(event_list, WEED_LEAF_AUDIO_SIGNED, WEED_TRUE);
@@ -779,7 +785,6 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
     fd = lives_creat_buffered(asave_file, DEF_FILE_PERMS);
     if (fd >= 0) {
-
       add_markers(mt, mt->event_list, FALSE);
       do_threaded_dialog(_("Auto backup"), FALSE);
 
@@ -5233,9 +5238,13 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
     unsigned char **mem, unsigned char *mem_end) {
   weed_plant_t *event, *eventprev = NULL;
   weed_plant_t *event_list;
-  int error;
-  double fps = -1;
+
+  double fps = -1.;
+
   char *msg;
+  char *err;
+
+  int error;
 
   if (fd > 0 || mem != NULL) event_list = weed_plant_deserialise(fd, mem, NULL);
   else event_list = mainw->stored_event_list;
@@ -5257,7 +5266,6 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
   if (weed_plant_has_leaf(event_list, WEED_LEAF_NEEDS_SET)) {
     if (show_errors) {
       char *set_needed = weed_get_string_value(event_list, WEED_LEAF_NEEDS_SET, &error);
-      char *err;
       char *tmp = NULL;
       if (!mainw->was_set || strcmp((tmp = U82F(set_needed)), mainw->set_name)) {
         if (tmp != NULL) lives_free(tmp);
@@ -5304,7 +5312,7 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
       int achans = weed_get_int_value(event_list, WEED_LEAF_AUDIO_CHANNELS, &error);
       if (achans >= 0 && mt != NULL) {
         if (achans > 2) {
-          char *err = lives_strdup_printf(_("\nThis has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"), achans);
+          char *err = lives_strdup_printf(_("\nThis latout has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"), achans);
           d_print(err);
           do_error_dialog_with_check_transient(err, TRUE, 0, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
           lives_free(err);
@@ -5328,7 +5336,11 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
       if (asamps == 8 || asamps == 16) {
         cfile->asampsize = asamps;
         if (mt != NULL) mt->layout_set_properties = TRUE;
-      } else if (cfile->achans > 0) lives_printerr("Layout has invalid sample size %d\n", asamps);
+      } else if (cfile->achans > 0) {
+        msg = lives_strdup_printf("Layout has invalid sample size %d\n", asamps);
+        LIVES_ERROR(msg);
+        lives_free(msg);
+      }
     }
 
     if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_SIGNED)) {
@@ -5412,6 +5424,23 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
   } while (event != NULL);
 
   weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+
+  if (weed_plant_has_leaf(event_list, WEED_LEAF_GAMMA_ENABLED)) {
+    err = NULL;
+    if (weed_get_boolean_value(event_list, WEED_LEAF_GAMMA_ENABLED, &error) == WEED_TRUE) {
+      if (!prefs->apply_gamma) {
+        err = lives_strdup(_("This layout was created using automatic gamma correction.\nFor compatibility, you may wish to"
+                             "enable this feature in Tools -> Preferences -> Effects, whilst editing and rendering the layout."));
+      }
+    } else if (prefs->apply_gamma) {
+      err = lives_strdup(_("This layout was created without automatic gamma correction.\nFor compatibility, you may wish to"
+                           "disable this feature in Tools -> Preferences -> Effects, whilst editing and rendering the layout."));
+    }
+    if (err != NULL) {
+      do_error_dialog_with_check_transient(err, TRUE, WARN_MASK_LAYOUT_GAMMA, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      lives_free(err);
+    }
+  }
   return event_list;
 }
 
@@ -18635,7 +18664,10 @@ void activate_mt_preview(lives_mt *mt) {
       mt_show_current_frame(mt, FALSE);
       mainw->no_interp = FALSE;
     }
-    if (mt->apply_fx_button != NULL) lives_widget_set_sensitive(mt->apply_fx_button, TRUE);
+    if (mt->apply_fx_button != NULL) {
+      lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
+      lives_widget_set_sensitive(mt->apply_fx_button, TRUE);
+    }
   } else mt_show_current_frame(mt, FALSE);
 }
 

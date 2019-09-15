@@ -1,11 +1,11 @@
 Version 3.0.3
 -------------
-Implement auto gamma correction (needs testing).
+Implement auto gamma correction.
 Optimise communication with rendered plugins.
-Fix for multi_encoder3
+Fix new crashes with rendered effects generators.
+Fix for multi_encoder3 looking for wrong (python2) sub encoders.
 Improvements to RFX script builder tool.
-
-
+Ensure audio is always rendered when it should be after recording.
 
 
 

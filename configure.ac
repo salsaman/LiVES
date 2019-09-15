@@ -906,7 +906,7 @@ if test "$HAVE_SYSTEM_WEED_COMPAT" = "false"; then
 echo "...will try to build from included sources"
 fi
 
-PKG_CHECK_MODULES(WEED_PLUGIN, libweed-plugin >= 0.13.0, HAVE_SYSTEM_WEED_PLUGIN=true, HAVE_SYSTEM_WEED_PLUGIN=false)
+PKG_CHECK_MODULES(WEED_PLUGIN, libweed-plugin >= 0.15.0, HAVE_SYSTEM_WEED_PLUGIN=true, HAVE_SYSTEM_WEED_PLUGIN=false)
 
 AC_SUBST(WEED_PLUGIN_CFLAGS)
 AC_SUBST(WEED_PLUGIN_LIBS)

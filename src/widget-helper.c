@@ -860,7 +860,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_grab_remove(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
   gtk_widget_set_sensitive(widget, state);
-#ifdef GTK_SUBMENU_SENS_BUGx
+#ifdef GTK_SUBMENU_SENS_BUG
   if (GTK_IS_MENU_ITEM(widget)) {
     LiVESWidget *sub;
     if ((sub = gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget))) != NULL) {

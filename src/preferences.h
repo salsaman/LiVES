@@ -119,6 +119,9 @@ typedef struct {
 #define WARN_MASK_NO_PULSE_CONNECT (1<<25)
 
 #define WARN_MASK_LAYOUT_WIPE (1<<26)
+
+#define WARN_MASK_LAYOUT_GAMMA (1<<27)
+
   char cmd_log[PATH_MAX];
   char effect_command[PATH_MAX * 2];
   char video_open_command[PATH_MAX * 2];
@@ -521,6 +524,7 @@ typedef struct {
   LiVESWidget *checkbutton_warn_after_dvgrab;
   LiVESWidget *checkbutton_warn_no_pulse;
   LiVESWidget *checkbutton_warn_layout_wipe;
+  LiVESWidget *checkbutton_warn_layout_gamma;
   LiVESWidget *checkbutton_show_stats;
   LiVESWidget *checkbutton_warn_fsize;
   LiVESWidget *checkbutton_warn_mt_achans;

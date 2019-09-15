@@ -1,8 +1,7 @@
 // LiVES - decoder plugin header
-// (c) G. Finch 2008 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2008 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
-
 
 #ifndef __DECPLUGIN_H__
 #define __DECPLUGIN_H__
@@ -31,7 +30,6 @@ extern "C"
 #endif
 #endif
 
-
 typedef int boolean;
 #undef TRUE
 #undef FALSE
@@ -50,7 +48,6 @@ typedef enum {
 /// not so good
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
-
 
 typedef struct {
   char *URI; ///< the URI of this cdata
@@ -92,6 +89,7 @@ typedef struct {
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
+  int frame_gamma; // values WEED_GAMMA_UNKNOWN (0), WEED_GAMMA_SRGB (1), WEED_GAMMA_LINEAR (2)
   char video_name[512]; ///< name of video codec, e.g. "theora" or NULL
 
   /* audio data */
@@ -116,11 +114,8 @@ typedef struct {
   void *priv; ///< private data for demuxer/decoder
 } lives_clip_data_t;
 
-
-
 // std functions
 const char *version(void);
-
 
 /// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes)
 /// should reuse the previous value. If URI or current_clip are invalid, clip_data will be freed and NULL returned.
@@ -137,10 +132,8 @@ boolean get_frame(const lives_clip_data_t *, int64_t frame, int *rowstrides, int
 /// free clip data - this should be called for each instance before unloading the module
 void clip_data_free(lives_clip_data_t *);
 
+// opt fns //////////////////////////////////////////
 
-
-
-// opt fns
 const char *module_check_init(void);
 
 boolean set_palette(lives_clip_data_t *);
@@ -151,18 +144,14 @@ void rip_audio_cleanup(const lives_clip_data_t *);
 
 void module_unload(void);
 
-
 // little-endian
 #define get_le16int(p) (*(p + 1) << 8 | *(p))
 #define get_le32int(p) ((get_le16int(p + 2) << 16) | get_le16int(p))
 #define get_le64int(p) (int64_t)(((uint64_t)(get_le32int(p + 4)) << 32) | (uint64_t)(get_le32int(p)))
 
-
 #define MK_FOURCC(a, b, c, d) ((a << 24) | (b << 16) | (c << 8) | d)
 
-
 #define ABS(a) ((a) >= 0. ? (a) : -(a))
-
 
 double get_fps(const char *uri);
 
@@ -172,8 +161,6 @@ enum LiVESMediaType {
   LIVES_MEDIA_TYPE_AUDIO,
   LIVES_MEDIA_TYPE_DATA
 };
-
-
 
 #ifdef __cplusplus
 }

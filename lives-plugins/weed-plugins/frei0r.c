@@ -30,8 +30,8 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 1; // number of different weed api versions supported
-static int api_versions[] = {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int num_versions = 2; // number of different weed api versions supported
+static int api_versions[] = {133, 131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 1; // version of this package
 
@@ -321,6 +321,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     f0r_param_color_t valcol;
     f0r_param_position_t valpos;
+
+    int api_used = weed_get_api_version(plugin_info);
 
     int is_unstable;
 
@@ -911,6 +913,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           switch (f0rinfo.plugin_type) {
           case F0R_PLUGIN_TYPE_SOURCE:
             weed_set_double_value(filter_class, "target_fps", 25.); // set reasonable default fps
+            if (api_used >= 133) weed_set_int_value(filter_class, "flags", WEED_FILTER_HINT_SRGB);
           case F0R_PLUGIN_TYPE_FILTER:
             weed_set_voidptr_value(filter_class, "plugin_f0r_update", f0r_update);
             break;

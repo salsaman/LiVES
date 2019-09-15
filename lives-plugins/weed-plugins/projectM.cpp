@@ -5,7 +5,6 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -18,8 +17,8 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int num_versions = 3; // number of different weed api versions supported
+static int api_versions[] = {133, 131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 1; // version of this package
 
@@ -616,8 +615,14 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE |
                                      WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE, palette_list), NULL
                                     };
-    weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, &projectM_init,
-                                 &projectM_process, &projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+    weed_plant_t *filter_class;
+    int api_used = weed_get_api_version(plugin_info);
+    int filter_flags = 0;
+
+    if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
+
+    filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, filter_flags, &projectM_init,
+					  &projectM_process, &projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
     //weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 

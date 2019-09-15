@@ -89,7 +89,6 @@ static pthread_mutexattr_t mattr;
 
 ////////////////////////////////////////////////////////////////////////////
 
-
 /* can enable this later to handle pix_fmt (35) - YUVA4204P */
 /*
   static void convert_quad_chroma(guchar *src, int width, int height, guchar *dest) {
@@ -143,6 +142,7 @@ static int frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
   lives_asf_priv_t *priv = cdata->priv;
   return (int)((double)(frame) * 1000. / cdata->fps) + priv->start_dts;
 }
+
 
 static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
   lives_asf_priv_t *priv = cdata->priv;
@@ -233,7 +233,6 @@ static int get_value(const lives_clip_data_t *cdata, int type) {
     return INT_MIN;
   }
 }
-
 
 
 static boolean get_tag(const lives_clip_data_t *cdata, AVFormatContext *s, const char *key, int type, int len) {
@@ -334,7 +333,6 @@ got_0:
 }
 
 
-
 /////////////////////////////////////////////////////
 
 static void index_free(index_entry *idx) {
@@ -355,8 +353,6 @@ static index_entry *idx_alloc(int64_t offs, int frag, int dts) {
   nidx->frag = frag;
   return nidx;
 }
-
-
 
 
 /// here we assume that pts of interframes > pts of previous keyframe
@@ -398,8 +394,6 @@ static index_entry *add_keyframe(const lives_clip_data_t *cdata, int64_t offs, i
 }
 
 
-
-
 static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int64_t tdts) {
   lives_asf_priv_t *priv = cdata->priv;
   uint32_t packet_length, padsize;
@@ -437,7 +431,6 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
 
   // if we have target (tdts) we parse only, until we reach a video fragment with dts>=tdts
 
-
   if (tdts == -1) {
     priv->avpkt.size = priv->def_packet_size + AV_INPUT_BUFFER_PADDING_SIZE;
     priv->avpkt.data = malloc(priv->avpkt.size);
@@ -445,11 +438,9 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
   }
 
   while (1) {
-
     lseek(priv->fd, priv->input_position, SEEK_SET);
 
     if (tfrag >= 0 || asf->packet_segments == 0) {
-
       rsize = 8;
 
 #ifdef DEBUG
@@ -701,7 +692,6 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
         priv->fragnum++;
 
         if (tfrag <= 0 && tdts == -1) {
-
           if (asf->packet_frag_offset != 0 && pack_fill == 0) {
             // we reached our target, but it has a non-zero offset, which is not allowed
             // So skip this packet;
@@ -739,7 +729,6 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
 
       asf->packet_size_left -= asf->packet_frag_size + rsize;
       asf->packet_segments--;
-
     } while (asf->packet_segments > 0);
 
     // no more fragments left, skip remainder of asf packet
@@ -749,7 +738,6 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
 #endif
 
     priv->input_position += asf->packet_size_left + asf->packet_padsize - 2;
-
   }
 
   // will never reach here
@@ -776,8 +764,6 @@ static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts)
   if (ret != -2) return priv->kframe;
   return NULL;
 }
-
-
 
 
 static int get_last_video_dts(const lives_clip_data_t *cdata) {
@@ -886,7 +872,6 @@ static void idxc_release(lives_clip_data_t *cdata) {
   }
 
   pthread_mutex_unlock(&indices_mutex);
-
 }
 
 
@@ -940,8 +925,6 @@ static void detach_stream(lives_clip_data_t *cdata) {
 }
 
 
-
-
 static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get metadata
   lives_asf_priv_t *priv = cdata->priv;
@@ -985,7 +968,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     if (cdata->fps > 0. && cdata->nframes > 0)
       is_partial_clone = TRUE;
   }
-
 
   if ((priv->fd = open(cdata->URI, O_RDONLY)) == -1) {
     fprintf(stderr, "asf_decoder: unable to open %s\n", cdata->URI);
@@ -1041,6 +1023,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   cdata->offs_x = 0;
   cdata->offs_y = 0;
+
+  cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
 
   fstat(priv->fd, &sb);
   priv->filesize = sb.st_size;
@@ -1345,7 +1329,6 @@ seek_skip:
         }
       }
 
-
       if (type == LIVES_MEDIA_TYPE_AUDIO) {
         priv->st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
 
@@ -1488,7 +1471,6 @@ seek_skip:
       lseek(priv->fd, gsize, SEEK_CUR);
       priv->input_position += gsize;
       gsize += (pos2 - pos1 + 24);
-
     } else if (!guidcmp(&g, &lives_asf_comment_header)) {
       int len1, len2, len3, len4, len5;
 
@@ -1552,7 +1534,6 @@ seek_skip:
 #ifdef DEBUG
       fprintf(stderr, "skipping fwd %d bytes\n", len1 + len2 + len3 + len4 + len5);
 #endif
-
     } else if (!guidcmp(&g, &stream_bitrate_guid)) {
       int stream_count;
       int j;
@@ -1683,7 +1664,6 @@ seek_skip:
           value_len += 1;
         if (!get_tag(cdata, priv->s, name, value_type, value_len)) return FALSE;
       }
-
     } else if (!guidcmp(&g, &lives_asf_metadata_header)) {
       int n, stream_num, name_len, value_len, value_num;
 
@@ -1767,7 +1747,6 @@ seek_skip:
         priv->input_position += value_len - 2;
         lseek(priv->fd, value_len + 2, SEEK_CUR);
 
-
         if (stream_num < 128) {
           if (!strcmp(name, "AspectRatioX")) dar[stream_num].num =
               value_num;
@@ -1777,7 +1756,6 @@ seek_skip:
           // i think PAR == 1/DAR (gf)
           if (cdata->par == 1. && dar[stream_num].num != 0 && dar[stream_num].den != 0)
             cdata->par = (float)dar[stream_num].den / (float)dar[stream_num].num;
-
         }
       }
     } else if (!guidcmp(&g, &lives_asf_ext_stream_header)) {
@@ -1925,7 +1903,6 @@ seek_skip:
 
         lseek(priv->fd, ext_len, SEEK_CUR);
       }
-
       // there could be a optional stream properties object to follow
       // if so the next iteration will pick it up
     } else if (!guidcmp(&g, &lives_asf_head1_guid)) {
@@ -2011,8 +1988,6 @@ seek_skip:
         //ff_new_chapter(s, i, (AVRational){1, 10000000}, pres_time, AV_NOPTS_VALUE, name );
         priv->input_position += name_len;
       }
-
-
     } else if (check_eof(cdata)) {
       fprintf(stderr, "asf_decoder: EOF in %s\n", cdata->URI);
       detach_stream(cdata);
@@ -2036,7 +2011,6 @@ seek_skip:
 #endif
     priv->input_position = gpos + gsize;
   } // end for
-
 
   if (vidindex == -1) {
     fprintf(stderr, "asf_decoder: no video stream found in %s\n", cdata->URI);
@@ -2083,7 +2057,6 @@ seek_skip:
         }*/
     }
   }
-
 
   priv->inited = TRUE;
 
@@ -2137,12 +2110,10 @@ seek_skip:
     break;
   }
 
-
 #ifdef DEBUG
   fprintf(stderr, "video type is %s %d x %d (%d x %d +%d +%d)\n", cdata->video_name,
           cdata->width, cdata->height, cdata->frame_width, cdata->frame_height, cdata->offs_x, cdata->offs_y);
 #endif
-
 
   if (!vidst->codec) {
     if (strlen(cdata->video_name) > 0)
@@ -2151,13 +2122,11 @@ seek_skip:
     return FALSE;
   }
 
-
   if ((retval = avcodec_open2(vidst->codec, codec, NULL)) < 0) {
     fprintf(stderr, "asf_decoder: Could not open avcodec context (%d) %d\n", retval, vidst->codec->frame_number);
     detach_stream(cdata);
     return FALSE;
   }
-
 
   priv->input_position = priv->data_start;
   asf_reset_header(priv->s);
@@ -2220,7 +2189,6 @@ seek_skip:
     return FALSE;
   }
 
-
   do {
     free(priv->avpkt.data);
     retval = get_next_video_packet(cdata, -1, -1);
@@ -2253,7 +2221,6 @@ seek_skip:
       }
     }
   } while (retval < 0 && retval != -2);
-
 
   if (gotframe2) {
     do {
@@ -2306,7 +2273,6 @@ seek_skip:
 
   cdata->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
   if (ctx->colorspace == AVCOL_SPC_BT709) cdata->YUV_subspace = WEED_YUV_SUBSPACE_BT709;
-
 
   cdata->palettes[0] = avi_pix_fmt_to_weed_palette(ctx->pix_fmt,
                        &cdata->YUV_clamping);
@@ -2392,8 +2358,6 @@ seek_skip:
 //////////////////////////////////////////
 // std functions
 
-
-
 const char *module_check_init(void) {
   avcodec_register_all();
   indices = NULL;
@@ -2410,7 +2374,6 @@ const char *module_check_init(void) {
 const char *version(void) {
   return plugin_version;
 }
-
 
 
 static lives_clip_data_t *init_cdata(void) {
@@ -2458,6 +2421,7 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
   clone->height = cdata->height;
   clone->nframes = cdata->nframes;
   clone->interlace = cdata->interlace;
+  clone->frame_gamma = WEED_GAMMA_UNKNOWN;
   clone->offs_x = cdata->offs_x;
   clone->offs_y = cdata->offs_y;
   clone->frame_width = cdata->frame_width;
@@ -2529,7 +2493,6 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
 
     clone->asigned = TRUE;
     clone->ainterleaf = TRUE;
-
   }
 
   if (dpriv->picture != NULL) av_frame_unref(dpriv->picture);
@@ -2537,7 +2500,6 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
 
   return clone;
 }
-
 
 
 lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
@@ -2613,6 +2575,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   return cdata;
 }
+
 
 static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
   unsigned char *dst = idst;
@@ -2773,7 +2736,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
     // do this until we reach target frame //////////////
 
-
     while (1) {
       int ret;
 
@@ -2793,7 +2755,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
           continue;
         }
       }
-
 
       // decode any frames from this packet
       if (priv->picture == NULL) priv->picture = av_frame_alloc();
@@ -2821,7 +2782,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       }
     }
   }
-
 
   if (priv->picture == NULL || pixel_data == NULL) return TRUE;
 
@@ -2879,8 +2839,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 }
 
 
-
-
 void clip_data_free(lives_clip_data_t *cdata) {
   lives_asf_priv_t *priv = cdata->priv;
 
@@ -2905,7 +2863,4 @@ void clip_data_free(lives_clip_data_t *cdata) {
 void module_unload(void) {
   idxc_release_all();
 }
-
-
-
 

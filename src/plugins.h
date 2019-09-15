@@ -102,6 +102,7 @@ typedef struct {
 #define VPP_CAN_RESIZE    (1<<0)
 #define VPP_CAN_RETURN    (1<<1)
 #define VPP_LOCAL_DISPLAY (1<<2)
+#define VPP_LINEAR_GAMMA  (1<<3)
 
   int fwidth, fheight;
 
@@ -247,6 +248,7 @@ typedef struct {
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
+  int frame_gamma;
   char video_name[512]; ///< name of video codec, e.g. "theora" or NULL
 
   /* audio data */

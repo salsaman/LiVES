@@ -128,9 +128,11 @@ static int frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
   return (int)((double)(frame) * 1000. / cdata->fps);
 }
 
+
 static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
   return (int64_t)((double)dts / 1000.*cdata->fps + .5);
 }
+
 
 static double getfloat64(unsigned char *data) {
   int64_t v = (((int64_t)(data[0] & 0xFF) << 56) + ((int64_t)(data[1] & 0xFF) << 48) + ((int64_t)(data[2] & 0xFF) << 40) + ((int64_t)(
@@ -162,7 +164,6 @@ static boolean lives_flv_parse_pack_header(const lives_clip_data_t *cdata, lives
 
   pack->dts = ((data[7] & 0xFF) << 24) + ((data[4] & 0xFF) << 16) + ((data[5] & 0xFF) << 8) + (data[6] & 0xFF); // milliseconds
 
-
   //skip bytes 8,9,10 - stream id always 0
 
   //printf("pack size of %d\n",pack->size);
@@ -178,7 +179,6 @@ static int32_t get_last_tagsize(const lives_clip_data_t *cdata) {
   if (read(priv->fd, data, 4) < 4) return -1;
   return ((data[0] & 0xFF) << 24) + ((data[1] & 0xFF) << 16) + ((data[2] & 0xFF) << 8) + (data[3] & 0xFF);
 }
-
 
 
 static off_t get_last_packet_pos(const lives_clip_data_t *cdata) {
@@ -246,12 +246,10 @@ static void index_free(index_entry *idx) {
 }
 
 
-
 /// here we assume that pts of interframes > pts of previous keyframe
 // should be true for most formats (except eg. dirac)
 
 // we further assume that pts == dts for all frames
-
 
 static index_entry *index_walk(index_entry *idx, int pts) {
   while (idx != NULL) {
@@ -328,17 +326,14 @@ index_entry *index_upto(const lives_clip_data_t *cdata, int pts) {
         nidx = oldht;
         break;
       }
-
     }
 
     // get next packet
     priv->input_position += pack.size + 4;
-
   }
 
   return nidx;
 }
-
 
 
 index_entry *index_downto(const lives_clip_data_t *cdata, int pts) {
@@ -368,7 +363,6 @@ index_entry *index_downto(const lives_clip_data_t *cdata, int pts) {
       priv->input_position -= 15 + tagsize;
       continue;
     }
-
 
     if (pack.dts <= mid_dts || (priv->idxc->idxht != NULL && pack.dts <= priv->idxc->idxht->dts_max)) {
       // handle case where we cross the mid point, or head and tail list have met
@@ -420,8 +414,6 @@ index_entry *index_downto(const lives_clip_data_t *cdata, int pts) {
 }
 
 
-
-
 static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
   lives_flv_priv_t *priv = cdata->priv;
   int ldts;
@@ -451,13 +443,10 @@ static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts)
   // in second half
   if (idxth != NULL && pts > idxth->dts_max) return index_walk(idxth->next, pts);
   else return index_downto(cdata, pts);
-
-
 }
 
 
 //////////////////////////////////////////////
-
 
 static int flv_get_extradata(lives_clip_data_t *cdata, int size) {
   int dummy;
@@ -485,6 +474,7 @@ static int amf_get_string(unsigned char *inp, char *buf, size_t size) {
   memset(buf + len, 0, 1);
   return len + 2;
 }
+
 
 static index_container_t *idxc_for(lives_clip_data_t *cdata) {
   // check all idxc for string match with URI
@@ -592,6 +582,7 @@ static void idxc_release_all(void) {
   nidxc = 0;
 }
 
+
 static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_flv_priv_t *priv = cdata->priv;
@@ -617,7 +608,6 @@ static void detach_stream(lives_clip_data_t *cdata) {
 
   close(priv->fd);
 }
-
 
 
 static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
@@ -691,6 +681,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   if (!is_partial_clone) cdata->fps = 0.;
   cdata->width = cdata->frame_width = cdata->height = cdata->frame_height = 0;
   cdata->offs_x = cdata->offs_y = 0;
+  cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
 
   cdata->arate = 0;
   cdata->achans = 0;
@@ -760,9 +751,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
           fprintf(stderr, "%s\n", buffer);
 #endif
 
-
-
-
           // read eoo
           if (!in_array) offs++;
         } else {
@@ -784,7 +772,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #endif
 
         // TODO *** - check for "keyframes" (2 arrays, "filepositions", "times") and "seekPoints" (timestamps in ms)
-
 
         offs += 4; // max array elem
         if (key != NULL) free(key);
@@ -845,7 +832,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
         break;
 
       }
-
     }
 
     if (key != NULL) free(key);
@@ -864,7 +850,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     close(priv->fd);
     return FALSE;
     } */
-
 
   } else priv->input_position -= 11;
 
@@ -956,7 +941,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
         if ((flags & FLV_AUDIO_CHANNEL_MASK) == 0) cdata->achans = 1;
       }
 
-
       if (cdata->asamps == 0) {
         cdata->asamps = 16;
         if ((flags & FLV_AUDIO_SAMPLESIZE_MASK) == 0) cdata->asamps = 8;
@@ -974,7 +958,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
         free(pack.data);
         continue;
       }
-
 
       if (got_vstream) {
 #ifdef DEBUG
@@ -1045,20 +1028,15 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
         memset(cdata->video_name, 0, 1);
         break;
       }
-
     }
 
     free(pack.data);
-
   }
-
-
 
 #ifdef DEBUG
   fprintf(stderr, "video type is %s %d x %d (%d x %d +%d +%d)\n", cdata->video_name,
           cdata->width, cdata->height, cdata->frame_width, cdata->frame_height, cdata->offs_x, cdata->offs_y);
 #endif
-
 
   if (!codec) {
     if (strlen(cdata->video_name) > 0)
@@ -1086,7 +1064,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   if (vcodec == FLV_CODECID_H264) {
     // check for extradata
     while (1) {
-
       priv->input_position += pack.size + 4;
 
       if (pack.size == 0) {
@@ -1135,8 +1112,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
         lives_flv_parse_pack_header(cdata, &pack);
         continue;
       }
-
-
     }
   } else if (priv->pack_offset != 0) lseek(priv->fd, priv->pack_offset, SEEK_CUR);
 
@@ -1214,7 +1189,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
         }
       }
     }
-
   }
 
   free(pack.data);
@@ -1314,11 +1288,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     cdata->nframes--;
   }
 
-
 #ifdef DEBUG
   fprintf(stderr, "fps is %.4f %ld\n", cdata->fps, cdata->nframes);
 #endif
-
 
   return TRUE;
 }
@@ -1326,8 +1298,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 //////////////////////////////////////////
 // std functions
-
-
 
 const char *module_check_init(void) {
   avcodec_register_all();
@@ -1341,7 +1311,6 @@ const char *module_check_init(void) {
 const char *version(void) {
   return plugin_version;
 }
-
 
 
 static lives_clip_data_t *init_cdata(void) {
@@ -1393,6 +1362,7 @@ static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
   clone->frame_width = cdata->frame_width;
   clone->frame_height = cdata->frame_height;
   clone->par = cdata->par;
+  clone->frame_gamma = WEED_GAMMA_UNKNOWN;
   clone->fps = cdata->fps;
   if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
   clone->current_palette = cdata->current_palette;
@@ -1451,7 +1421,6 @@ static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
 
     clone->asigned = TRUE;
     clone->ainterleaf = TRUE;
-
   }
 
   if (dpriv->picture != NULL) av_frame_unref(dpriv->picture);
@@ -1463,9 +1432,6 @@ static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
 
   return clone;
 }
-
-
-
 
 
 lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
@@ -1546,6 +1512,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   return cdata;
 }
 
+
 static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
   unsigned char *dst = idst;
   register int i;
@@ -1619,7 +1586,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #endif
 
   if (pixel_data != NULL) {
-
     // calc frame width and height, including any border
 
     if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) {
@@ -1661,9 +1627,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   ////////////////////////////////////////////////////////////////////
 
   if (tframe != priv->last_frame) {
-
     if (priv->last_frame == -1 || (tframe < priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
-
       pthread_mutex_lock(&priv->idxc->mutex);
       if ((idx = get_idx_for_pts(cdata, target_pts)) != NULL) {
         priv->input_position = idx->offs;
@@ -1673,13 +1637,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       // we are now at the kframe before or at target - parse packets until we hit target
 
-
 #ifdef DEBUG_KFRAMES
       if (idx != NULL) printf("got kframe %ld for frame %ld\n", dts_to_frame(cdata, idx->dts), tframe);
 #endif
 
       avcodec_flush_buffers(priv->ctx);
-
     } else {
       nextframe = priv->last_frame + 1;
     }
@@ -1689,11 +1651,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     priv->last_frame = tframe;
     if (priv->picture == NULL) priv->picture = av_frame_alloc();
 
-
     // do this until we reach target frame //////////////
 
     do {
-
       // skip_idct and skip_frame. ???
 
       if (!lives_flv_parse_pack_header(cdata, &pack)) return FALSE;
@@ -1811,8 +1771,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 }
 
 
-
-
 void clip_data_free(lives_clip_data_t *cdata) {
   if (cdata->palettes != NULL) free(cdata->palettes);
   cdata->palettes = NULL;
@@ -1831,11 +1789,11 @@ void module_unload(void) {
   idxc_release_all();
 }
 
+
 int main(void) {
   // for testing
   module_check_init();
   get_clip_data("vid.flv", NULL);
   return 1;
 }
-
 

@@ -517,6 +517,8 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->audio_resync_mutex, NULL);
 
+  pthread_mutex_init(&mainw->gamma_lut_mutex, NULL);
+
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
   for (i = 0; i < FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->fx_mutex[i], NULL);
@@ -5004,7 +5006,7 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
   // render subtitles from whatever (.srt or .sub) file
   // uses default values for colours, fonts, size, etc.
 
-  // TODO - allow prefs settings for colours, fonts, size, alpha
+  // TODO - allow prefs settings for colours, fonts, size, alpha (use plugin for this)
 
   //char *sfont=mainw->font_list[prefs->sub_font];
   const char *sfont = "Sans";
@@ -5030,12 +5032,15 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
     return layer;
   }
 
-  /////////// use plugin //////////////
-
   size = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error) / 32;
 
   col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
   col_black_a = lives_rgba_col_new(0, 0, 0, 20480);
+
+  if (prefs->apply_gamma) {
+    // make it look nicer by dimming relative to luma
+    gamma_correct_layer(WEED_GAMMA_LINEAR, layer);
+  }
 
   if (sfile->subt->text != NULL) {
     char *tmp;
@@ -5189,9 +5194,6 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 
         create_empty_pixel_data(layer, FALSE, TRUE);
 
-        // the default unless overridden
-        weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
-
         pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
         rowstrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
 
@@ -5202,7 +5204,6 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
           if (!is_thread) {
             weed_layer_pixel_data_free(layer);
             create_empty_pixel_data(layer, TRUE, TRUE);
-            weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
           }
           res = FALSE;
         }
@@ -5211,11 +5212,11 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         lives_free(rowstrides);
 
         if (res) {
-          // TODO - only if plugin specifies this explicitly
-
-          //weed_set_int_value(layer, WEED_LEAF_GAMMA, dplug->cdata->gamma_type);
-          /* if (dplug->cdata->gamma_type == WEED_GAMMA_BT709) */
-          /*   gamma_correct_layer(WEED_GAMMA_LINEAR, layer); */
+          if (prefs->apply_gamma) {
+            if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {
+              weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, dplug->cdata->frame_gamma);
+            }
+          }
 
           // get_frame may now update YUV_clamping, YUV_sampling, YUV_subspace
           if (weed_palette_is_yuv_palette(dplug->cdata->current_palette)) {
@@ -6349,7 +6350,6 @@ void load_frame_image(int frame) {
         // record output from playback plugin
         int retwidth = mainw->pwidth / weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
         int retheight = mainw->pheight;
-        int gamma_type = weed_get_int_value(frame_layer, WEED_LEAF_GAMMA_TYPE, &weed_error);
 
         return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
@@ -6360,7 +6360,6 @@ void load_frame_image(int frame) {
         }
 
         create_empty_pixel_data(return_layer, FALSE, TRUE);
-        weed_set_int_value(return_layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
 
         // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
         compact_rowstrides(return_layer);
@@ -6379,10 +6378,15 @@ void load_frame_image(int frame) {
 
       if (prefs->apply_gamma) {
         // gamma correction
-        // TODO: let vpp set request
-        if (weed_palette_is_rgb_palette(mainw->vpp->palette))
-          gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
+        if (weed_palette_is_rgb_palette(mainw->vpp->palette)) {
+          if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
+            gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
+          else
+            gamma_correct_layer(WEED_GAMMA_SRGB, frame_layer);
+        }
       }
+
+      if (return_layer != NULL) weed_set_int_value(return_layer, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(frame_layer));
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
                                        weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error),
@@ -6655,7 +6659,6 @@ void load_frame_image(int frame) {
         // record output from playback plugin
         int retwidth = mainw->pwidth / weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
         int retheight = mainw->pheight;
-        int gamma_type = weed_get_int_value(frame_layer, WEED_LEAF_GAMMA_TYPE, &weed_error);
 
         return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
@@ -6666,7 +6669,6 @@ void load_frame_image(int frame) {
         }
 
         create_empty_pixel_data(return_layer, FALSE, TRUE);
-        weed_set_int_value(return_layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
 
         // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
         compact_rowstrides(return_layer);
@@ -6685,10 +6687,15 @@ void load_frame_image(int frame) {
 
       if (prefs->apply_gamma) {
         // gamma correction
-        // TODO: let vpp set request
-        if (weed_palette_is_rgb_palette(mainw->vpp->palette))
-          gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
+        if (weed_palette_is_rgb_palette(mainw->vpp->palette)) {
+          if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
+            gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
+          else
+            gamma_correct_layer(WEED_GAMMA_SRGB, frame_layer);
+        }
       }
+
+      if (return_layer != NULL) weed_set_int_value(return_layer, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(frame_layer));
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
                                        weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error),

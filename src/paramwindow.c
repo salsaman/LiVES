@@ -197,11 +197,13 @@ void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   if (rfx != NULL && rfx->name != NULL && rfx->status != RFX_STATUS_WEED && rfx->status != RFX_STATUS_SCRAP &&
       rfx->num_in_channels == 0 && rfx->min_frames >= 0 && !rfx->is_template) {
     // for a generator, we silently close the (now) temporary file we would have generated frames into
-    mainw->suppress_dprint = TRUE;
-    close_current_file(mainw->pre_src_file);
-    mainw->suppress_dprint = FALSE;
-    mainw->is_generating = FALSE;
-    if (mainw->multitrack != NULL) mainw->pre_src_file = -1;
+    if (!def_ok) {
+      mainw->suppress_dprint = TRUE;
+      close_current_file(mainw->pre_src_file);
+      mainw->suppress_dprint = FALSE;
+      mainw->is_generating = FALSE;
+      if (mainw->multitrack != NULL) mainw->pre_src_file = -1;
+    }
   }
 
   if (button != NULL) {

@@ -1,5 +1,5 @@
 /* libvisual plugin for Weed
-   authors: Salsaman (G. Finch) <salsaman@xs4all.nl,salsaman@gmail.com>
+   authors: Salsaman (G. Finch) <salsaman_lives@gmail.com>
             Dennis Smit  <synap@yourbase.nl>
             Duilio J. Protti <dprotti@users.sourceforge.net>
 
@@ -7,6 +7,9 @@
    See www.gnu.org for details
 
  (c) 2004, project authors
+
+ (c) 2004 - 2019 salsaman 
+
 */
 
 // WARNING ! Only "jack" and "host audio" inputs are multi threaded
@@ -23,8 +26,8 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int num_versions = 3; // number of different weed api versions supported
+static int api_versions[] = {133, 131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 2; // version of this package
 
@@ -285,6 +288,11 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     char *vdir;
 
+    int api_used = weed_get_api_version(plugin_info);
+    int filter_flags = 0;
+
+    if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
+
     if (lpp == NULL) return NULL;
 
     // set hints for host
@@ -330,7 +338,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       in_params[0] = weed_string_list_init("listener", "Audio _listener", 5, listeners);
       weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
       out_chantmpls[0] = weed_channel_template_init("out channel 0", 0, palette_list);
-      filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, 0, &libvis_init, &libvis_process, &libvis_deinit,
+      filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, &libvis_init, &libvis_process, &libvis_deinit,
                                             in_chantmpls, out_chantmpls, in_params, NULL);
       weed_set_double_value(filter_class, "target_fps", 50.); // set reasonable default fps
 

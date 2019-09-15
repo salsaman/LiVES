@@ -7,7 +7,6 @@
 
 #include "decplugin.h"
 
-
 ///////////////////////////////////////////////////////
 #include <stdio.h>
 #include <string.h>
@@ -26,6 +25,7 @@ static FILE *nulfile;
 
 extern void dv_parse_audio_header(dv_decoder_t *, uint8_t *);
 
+
 static void dv_dec_set_header(lives_clip_data_t *cdata, uint8_t *data) {
   lives_dv_priv_t *priv = cdata->priv;
 
@@ -39,7 +39,6 @@ static void dv_dec_set_header(lives_clip_data_t *cdata, uint8_t *data) {
 
   } else {
     // PAL
-
     priv->frame_size = 144000;
     priv->is_pal = 1;
     cdata->height = 576;
@@ -65,7 +64,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
   if (!isclone) {
-
     ext = rindex(cdata->URI, '.');
 
     if (ext == NULL || (strncmp(ext, ".dv", 3) && strncmp(ext, ".avi", 4))) return FALSE;
@@ -76,17 +74,14 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     }
   }
 
-
   if ((priv->fd = open(cdata->URI, O_RDONLY)) == -1) {
     fprintf(stderr, "dv_decoder: unable to open %s\n", cdata->URI);
     return FALSE;
   }
 
-
 #ifdef IS_MINGW
   setmode(priv->fd, O_BINARY);
 #endif
-
 
   if (read(priv->fd, header, DV_HEADER_SIZE) < DV_HEADER_SIZE) {
     fprintf(stderr, "dv_decoder: unable to read header for %s\n", cdata->URI);
@@ -140,6 +135,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   cdata->offs_y = 0;
   cdata->frame_width = cdata->width;
   cdata->frame_height = cdata->height;
+  cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
 
   // audio part
   priv = cdata->priv;
@@ -155,7 +151,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   priv->dv_dec->quality = DV_QUALITY_BEST;
 
-
   if (!isclone && !is_partial_clone) {
     fstat(priv->fd, &sb);
     if (sb.st_size) cdata->nframes = (int)(sb.st_size / priv->frame_size);
@@ -165,7 +160,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   return TRUE;
 }
-
 
 
 static void detach_stream(lives_clip_data_t *cdata) {
@@ -179,10 +173,7 @@ static void detach_stream(lives_clip_data_t *cdata) {
 //////////////////////////////////////////
 // std functions
 
-
-
 const char *module_check_init(void) {
-
   nulfile = fopen("/dev/null", "a");
 
   return NULL;
@@ -192,7 +183,6 @@ const char *module_check_init(void) {
 const char *version(void) {
   return plugin_version;
 }
-
 
 
 static lives_clip_data_t *init_cdata(void) {
@@ -251,6 +241,7 @@ static lives_clip_data_t *dv_clone(lives_clip_data_t *cdata) {
   clone->frame_width = cdata->frame_width;
   clone->frame_height = cdata->frame_height;
   clone->par = cdata->par;
+  clone->frame_gamma = WEED_GAMMA_UNKNOWN;
   clone->fps = cdata->fps;
   clone->current_palette = cdata->current_palette;
   clone->YUV_sampling = cdata->YUV_sampling;
@@ -285,10 +276,6 @@ static lives_clip_data_t *dv_clone(lives_clip_data_t *cdata) {
 
   return clone;
 }
-
-
-
-
 
 
 lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
@@ -328,10 +315,8 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     }
   }
 
-
   return cdata;
 }
-
 
 
 static boolean dv_pad_with_silence(int fd, unsigned char **abuff, size_t offs, int nchans, size_t nsamps) {
@@ -385,9 +370,7 @@ void rip_audio_cleanup(const lives_clip_data_t *cdata) {
   priv->audio = NULL;
 
   if (priv->audio_fd != -1) close(priv->audio_fd);
-
 }
-
 
 
 int64_t rip_audio(const lives_clip_data_t *cdata, const char *fname, int64_t stframe, int64_t nframes,
@@ -397,7 +380,6 @@ int64_t rip_audio(const lives_clip_data_t *cdata, const char *fname, int64_t stf
 
   // if nframes==0, rip all audio
   // stframe starts at 0
-
 
   // (output seems to be always 16bit per sample
 
@@ -412,7 +394,6 @@ int64_t rip_audio(const lives_clip_data_t *cdata, const char *fname, int64_t stf
   // return number of samples written
 
   // * if fname is NULL we write to abuff instead (unless abuff is NULL)
-
 
   int i, ch, channels, samples, samps_out;
   size_t j = 0, k = 0, bytes;
@@ -465,7 +446,6 @@ int64_t rip_audio(const lives_clip_data_t *cdata, const char *fname, int64_t stf
 
   /////////////////////////////////////////////////////////////////////////
 
-
   stbytes = stframe * priv->frame_size;
 
   channels = priv->dv_dec->audio->num_channels;
@@ -512,7 +492,6 @@ int64_t rip_audio(const lives_clip_data_t *cdata, const char *fname, int64_t stf
 
     // interleave the audio into a single buffer
     for (i = 0; i < samples && samps_expected; i++) {
-
       for (ch = 0; ch < channels; ch++) {
         if (fname != NULL) priv->audio[j++] = priv->audio_buffers[ch][i];
         else {
@@ -530,7 +509,6 @@ int64_t rip_audio(const lives_clip_data_t *cdata, const char *fname, int64_t stf
         offset_f += 1.;
         i--;
       }
-
 
       if (offset_f >= 1.) {
         // slipped forward a whole sample, process i+2
@@ -560,7 +538,6 @@ int64_t rip_audio(const lives_clip_data_t *cdata, const char *fname, int64_t stf
 
   free(buf);
 
-
   // not enough samples - pad to end with silence
   if (samps_expected && fname != NULL) {
     if (!dv_pad_with_silence(fname != NULL ? priv->audio_fd : -1, abuff, j, channels, samps_expected)) {
@@ -571,8 +548,6 @@ int64_t rip_audio(const lives_clip_data_t *cdata, const char *fname, int64_t stf
 
   return tot_samples;
 }
-
-
 
 
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
@@ -613,10 +588,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 }
 
 
-
-
 void clip_data_free(lives_clip_data_t *cdata) {
-
   if (cdata->URI != NULL) {
     detach_stream(cdata);
     free(cdata->URI);
@@ -632,3 +604,4 @@ void clip_data_free(lives_clip_data_t *cdata) {
 void module_unload(void) {
   fclose(nulfile);
 }
+

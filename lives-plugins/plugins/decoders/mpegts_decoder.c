@@ -158,6 +158,7 @@ static void index_free(index_entry *idx) {
   }
 }
 
+
 //////////////////////////////////////////////////////////////////////////
 
 /// here we assume that pts of interframes > pts of previous keyframe
@@ -3009,6 +3010,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   if (!is_partial_clone) cdata->fps = 0.;
   cdata->width = cdata->frame_width = cdata->height = cdata->frame_height = 0;
   cdata->offs_x = cdata->offs_y = 0;
+  cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
 
   cdata->arate = 0;
   cdata->achans = 0;
@@ -3340,6 +3342,7 @@ static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
   clone->frame_width = cdata->frame_width;
   clone->frame_height = cdata->frame_height;
   clone->par = cdata->par;
+  clone->frame_gamma = WEED_GAMMA_UNKNOWN;
   clone->fps = cdata->fps;
   if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
   clone->current_palette = cdata->current_palette;

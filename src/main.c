@@ -519,7 +519,6 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->gamma_lut_mutex, NULL);
 
-  pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
   for (i = 0; i < FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->fx_mutex[i], NULL);
   }
@@ -3925,9 +3924,6 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->recaudio_sel, FALSE);
   lives_widget_set_sensitive(mainw->mt_menu, FALSE);
 
-  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
-  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
-
   if (mainw->current_file >= 0 && (mainw->playing_file == -1 || mainw->foreign)) {
     //  if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {
     // disable the 'clips' menu entries
@@ -3950,6 +3946,9 @@ void procw_desensitize(void) {
   int current_file;
 
   if (mainw->multitrack != NULL) return;
+
+  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
 
   if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->menuentry != NULL || cfile->opening) && !mainw->preview) {
     // an effect etc,

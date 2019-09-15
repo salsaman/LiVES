@@ -1295,7 +1295,6 @@ static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int 
           dheight = vsize - (dheight * i);
         }
 
-
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = irowstride;
@@ -1375,7 +1374,6 @@ static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, i
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 
@@ -2019,7 +2017,6 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
           dheight = vsize - (dheight * i);
         }
 
-
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
@@ -2349,7 +2346,6 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
           dheight = vsize - (dheight * i);
         }
 
-
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
@@ -2423,7 +2419,6 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
         }
-
 
         ccparams[i].vsize = dheight;
 

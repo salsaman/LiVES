@@ -35,7 +35,7 @@
 static int intent;
 
 static int mypalette = WEED_PALETTE_END;
-static int palette_list[2];
+static int palette_list[3];
 
 static int avpalette;
 
@@ -137,9 +137,9 @@ const char *get_description(void) {
 
 
 const int *get_palette_list(void) {
-  //palette_list[0] = WEED_PALETTE_YUV420P;
   palette_list[0] = WEED_PALETTE_RGB24;
-  palette_list[1] = WEED_PALETTE_END;
+  palette_list[1] = WEED_PALETTE_YUV420P;
+  palette_list[2] = WEED_PALETTE_END;
   return palette_list;
 }
 
@@ -540,7 +540,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     default:
       break;
     }
-
   }
 
   if (strlen(uri) == 0) {
@@ -590,6 +589,9 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   vStream->codec->width = width;
   vStream->codec->height = height;
   vStream->codec->pix_fmt = avpalette;
+
+  // seems not to make a difference
+  //vStream->codec->color_trc = AVCOL_TRC_IEC61966_2_1;
 
   vStream->codec->bit_rate = maxvbitrate;
   if (vcodec_id == AV_CODEC_ID_H264) {
@@ -778,7 +780,7 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
     ostv.sws_ctx = NULL;
   }
 
-  if (hsize != c->width || vsize != c->height || mypalette != avpalette) {
+  if (hsize != c->width || vsize != c->height || mypalette != avpalette || ostv.sws_ctx == NULL) {
     if (ostv.sws_ctx == NULL) {
       ostv.sws_ctx = sws_getContext(hsize, vsize,
                                     weed_palette_to_avi_pix_fmt(mypalette, &myclamp),

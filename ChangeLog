@@ -1,13 +1,14 @@
 Version 3.0.3
 -------------
-Implement auto gamma correction.
+Implement experimental auto gamma correction.
 Optimise communication with rendered plugins.
 Fix new crashes with rendered effects generators.
 Fix for multi_encoder3 looking for wrong (python2) sub encoders.
 Improvements to RFX script builder tool.
 Ensure audio is always rendered when it should be after recording.
+Permit switching audio source with no clips loaded (bugfix).
 
-
+	
 
 Version 3.0.2 (7 Sep 2019)
 --------------------------

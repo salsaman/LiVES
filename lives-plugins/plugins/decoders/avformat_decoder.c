@@ -1305,6 +1305,8 @@ framedone2:
     ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_SRGB;
     if (priv->pFrame->color_trc == AVCOL_TRC_LINEAR)
       ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_LINEAR;
+    /* if (priv->pFrame->color_trc == AVCOL_TRC_BT709) */
+    /*   ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_BT709; */
   }
   for (p = 0; p < nplanes; p++) {
     dst = pixel_data[p];

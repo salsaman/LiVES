@@ -85,6 +85,8 @@ boolean transcode(int start, int end) {
   char *pname = NULL;
   char *msg = NULL, *tmp;
 
+  int *palette_list;
+
   double spf = 0., ospf;
 
   boolean audio = FALSE;
@@ -162,8 +164,10 @@ boolean transcode(int start, int end) {
 
   // (re)set these for the current clip
   if (vpp->set_fps != NULL)(*vpp->set_fps)(cfile->fps);
-  if (vpp->set_palette != NULL)(*vpp->set_palette)(WEED_PALETTE_RGB24);
-  if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(WEED_YUV_CLAMPING_CLAMPED);
+  palette_list = (*vpp->get_palette_list)();
+
+  if (vpp->set_palette != NULL)(*vpp->set_palette)(palette_list[0]);
+  if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(WEED_YUV_CLAMPING_UNCLAMPED);
 
   if (vpp->init_audio != NULL && mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
     int in_arate = (int)((float)cfile->arps / (float)cfile->arate * (float)cfile->arps);

@@ -8,8 +8,10 @@ Fix for multi_encoder3 looking for wrong (python2) sub encoders.
 Improvements to RFX script builder tool.
 Permit switching audio source with no clips loaded (bugfix).
 Fix refcounting bug with realtime effect parameter windows.
-	
-	
+Optimise combo boxes with long lists; categorise filter types in rte window.
+
+
+
 
 Version 3.0.2 (7 Sep 2019)
 --------------------------

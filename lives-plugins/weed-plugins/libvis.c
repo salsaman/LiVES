@@ -8,7 +8,7 @@
 
  (c) 2004, project authors
 
- (c) 2004 - 2019 salsaman 
+ (c) 2004 - 2019 salsaman
 
 */
 

@@ -2025,7 +2025,7 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
 
   lives_cconnect_t *cconx = mainw->cconx;
 
-  weed_plant_t *inst = NULL, *filter = NULL;
+  weed_plant_t *inst = NULL, *filter = NULL, *orig_inst = NULL;
 
   int totcons, error;
   register int i, j;
@@ -2041,7 +2041,6 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
         cconx = cconx->next;
         continue;
       }
-
       filter = weed_instance_get_filter(inst, TRUE);
     } else {
       inst = NULL;
@@ -2052,10 +2051,11 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
       }
     }
     if (!weed_plant_has_leaf(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) {
-      weed_instance_unref(inst);
+      if (inst != NULL) weed_instance_unref(inst);
       cconx = cconx->next;
       continue;
     }
+    orig_inst = inst;
     totcons = 0;
     j = 0;
     for (i = 0; i < cconx->nchans; i++) {
@@ -2080,7 +2080,7 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
           if (okey != NULL) *okey = cconx->okey;
           if (omode != NULL) *omode = cconx->omode;
           if (ocnum != NULL) *ocnum = cconx->chans[i];
-          weed_instance_unref(inst);
+          if (orig_inst != NULL) weed_instance_unref(orig_inst);
           return channel;
         }
       }
@@ -2224,7 +2224,7 @@ boolean cconx_chain_data(int key, int mode) {
       filter_mutex_unlock(key);
     }
   }
-  weed_instance_unref(inst);
+  if (inst != NULL) weed_instance_unref(inst);
   return needs_reinit;
 }
 

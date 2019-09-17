@@ -2645,7 +2645,6 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
         my_in_tracks++;
         weed_set_int_value(ctmpl[i], WEED_LEAF_HOST_REPEATS, 1);
       } else count[i] = 0;
-
     }
 
     // TODO ***

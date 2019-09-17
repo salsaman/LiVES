@@ -3678,10 +3678,10 @@ static void select_block(lives_mt *mt) {
                                   get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL + 1. / mt->fps)));
     lives_free(tmp2);
     add_context_label(mt, (tmp2 = lives_strdup_printf(_("Source: %s"), (tmp = get_menu_name(mainw->files[filenum], FALSE)))));
+    lives_free(tmp);
     lives_free(tmp2);
     add_context_label(mt, (_("Right click for context menu.\n")));
     add_context_label(mt, (_("Single click on timeline\nto select a frame.\n")));
-    lives_free(tmp);
 
     lives_widget_set_sensitive(mt->view_in_out, TRUE);
     lives_widget_set_sensitive(mt->fx_block, TRUE);

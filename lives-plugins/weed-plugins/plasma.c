@@ -182,8 +182,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
 
     filter_class = weed_filter_class_init("plasma", "salsaman/w.p van paasen", 1, filter_flags, &plasma_init, &plasma_process,
-					  &plasma_deinit, NULL,
-					  out_chantmpls, NULL, NULL);
+                                          &plasma_deinit, NULL,
+                                          out_chantmpls, NULL, NULL);
     weed_set_double_value(filter_class, "target_fps", 50.); // set reasonable default fps
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);

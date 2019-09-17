@@ -961,6 +961,8 @@ boolean global_recent_manager_add(const char *file_name);
 
 boolean lives_cursor_unref(LiVESXCursor *);
 
+boolean lives_tree_store_find_iter(LiVESTreeStore *, int col, const char *val, LiVESTreeIter *existing, LiVESTreeIter *new);
+
 boolean lives_widget_context_update(void);
 
 LiVESWidget *lives_menu_add_separator(LiVESMenu *);

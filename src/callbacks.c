@@ -7772,6 +7772,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
         mt_sensitise(mainw->multitrack);
         mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
       }
+      lives_free(a_type);
       return;
     }
 

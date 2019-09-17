@@ -358,7 +358,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     pgui = weed_parameter_template_get_gui(in_params[0]);
     weed_set_int_value(pgui, "maxchars", 65536);
 
-    filter_class = weed_filter_class_init("livetext", "salsaman", 1, filter_flags, NULL, &livetext_process, NULL, in_chantmpls, out_chantmpls, in_params,
+    filter_class = weed_filter_class_init("livetext", "salsaman", 1, filter_flags, NULL, &livetext_process, NULL, in_chantmpls, out_chantmpls,
+                                          in_params,
                                           NULL);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);

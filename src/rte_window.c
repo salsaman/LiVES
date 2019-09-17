@@ -53,7 +53,7 @@ static int keyw = -1, modew = -1;
 
 static LiVESList *hash_list = NULL;
 static LiVESList *name_list = NULL;
-static LiVESList *name_type_list = NULL;
+static LiVESList *extended_name_list = NULL;
 
 static boolean ca_canc;
 
@@ -122,10 +122,11 @@ void rtew_set_key_check_state(void) {
 void type_label_set_text(int key, int mode) {
   int modes = rte_getmodespk();
   int idx = key * modes + mode;
-  char *type = rte_keymode_get_type(key + 1, mode);
+  char *type = rte_keymode_get_type(key + 1, mode), *tmp;
 
   if (strlen(type)) {
-    lives_label_set_text(LIVES_LABEL(type_labels[idx]), lives_strdup_printf(_("Type: %s"), type));
+    lives_label_set_text(LIVES_LABEL(type_labels[idx]), (tmp = lives_strdup_printf(_("Type: %s"), type)));
+    lives_free(tmp);
     lives_widget_set_sensitive(info_buttons[idx], TRUE);
     lives_widget_set_sensitive(clear_buttons[idx], TRUE);
     lives_widget_set_sensitive(mode_radios[idx], TRUE);
@@ -539,8 +540,10 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
   numfx = rte_get_numfilters(FALSE);
 
   do {
-    retval = 0;
+    do_threaded_dialog(_("Saving real time effect defaults..."), FALSE);
+    retval = LIVES_RESPONSE_NONE;
     if ((fd = lives_creat_buffered(prefs->fxdefsfile, DEF_FILE_PERMS)) == -1) {
+      end_threaded_dialog();
       msg = lives_strdup_printf(_("\n\nUnable to write defaults file\n%s\nError code %d\n"), prefs->fxdefsfile, errno);
       retval = do_abort_cancel_retry_dialog(msg, LIVES_WINDOW(rte_window));
       lives_free(msg);
@@ -551,38 +554,14 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
       lives_free(msg);
 
       if (mainw->write_failed) {
+        end_threaded_dialog();
         retval = do_write_failed_error_s_with_retry(prefs->fxdefsfile, NULL, LIVES_WINDOW(rte_window));
       } else {
         // break on file write error
         for (i = 0; i < numfx; i++) {
           if (!write_filter_defaults(fd, i)) {
+            end_threaded_dialog();
             retval = do_write_failed_error_s_with_retry(prefs->fxdefsfile, NULL, LIVES_WINDOW(rte_window));
-            break;
-          }
-        }
-      }
-      lives_close_buffered(fd);
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
-  if (retval == LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
-
-  do {
-    retval = 0;
-    if ((fd = lives_creat_buffered(prefs->fxsizesfile, DEF_FILE_PERMS)) == -1) {
-      retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, lives_strerror(errno), LIVES_WINDOW(rte_window));
-      lives_free(msg);
-    } else {
-      msg = lives_strdup_printf("%s\n", FX_SIZES_VERSIONSTRING_2);
-      mainw->write_failed = FALSE;
-      lives_write_buffered(fd, msg, strlen(msg), TRUE);
-      lives_free(msg);
-      if (mainw->write_failed) {
-        retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, NULL, LIVES_WINDOW(rte_window));
-      } else {
-        for (i = 0; i < numfx; i++) {
-          if (!write_generator_sizes(fd, i)) {
-            retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, NULL, LIVES_WINDOW(rte_window));
             break;
           }
         }
@@ -593,11 +572,47 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 
   if (retval == LIVES_RESPONSE_CANCEL) {
     d_print_file_error_failed();
+    return;
+  }
+
+  threaded_dialog_spin(0.);
+
+  do {
+    retval = LIVES_RESPONSE_NONE;
+    if ((fd = lives_creat_buffered(prefs->fxsizesfile, DEF_FILE_PERMS)) == -1) {
+      end_threaded_dialog();
+      retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, lives_strerror(errno), LIVES_WINDOW(rte_window));
+      lives_free(msg);
+    } else {
+      msg = lives_strdup_printf("%s\n", FX_SIZES_VERSIONSTRING_2);
+      mainw->write_failed = FALSE;
+      lives_write_buffered(fd, msg, strlen(msg), TRUE);
+      lives_free(msg);
+      if (mainw->write_failed) {
+        end_threaded_dialog();
+        retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, NULL, LIVES_WINDOW(rte_window));
+      } else {
+        for (i = 0; i < numfx; i++) {
+          if (!write_generator_sizes(fd, i)) {
+            end_threaded_dialog();
+            retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, NULL, LIVES_WINDOW(rte_window));
+            break;
+          }
+        }
+      }
+      lives_close_buffered(fd);
+    }
+    if (retval == LIVES_RESPONSE_RETRY) do_threaded_dialog(_("Saving real time effect defaults..."), FALSE);
+  } while (retval == LIVES_RESPONSE_RETRY);
+
+  if (retval == LIVES_RESPONSE_CANCEL) {
+    d_print_file_error_failed();
     mainw->write_failed = FALSE;
     return;
   }
 
   d_print_done();
+  end_threaded_dialog();
 
   return;
 }
@@ -1815,26 +1830,37 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   weed_plant_t *inst;
   lives_rfx_t *rfx;
 
+  filter_mutex_lock(key);
   if ((inst = rte_keymode_get_instance(key + 1, mode)) == NULL) {
     // create a new detached instance for the dialog
     weed_plant_t *filter = rte_keymode_get_filter(key + 1, mode);
-    if (filter == NULL) return;
+    if (filter == NULL) {
+      filter_mutex_unlock(key);
+      return;
+    }
     inst = weed_instance_from_filter(filter);
     weed_set_boolean_value(inst, WEED_LEAF_HOST_NORECORD, WEED_TRUE);
 
     // do some fiddly stuff to show the key defs.
+    filter_mutex_unlock(key);
     weed_reinit_effect(inst, TRUE);
+    filter_mutex_lock(key);
     apply_key_defaults(inst, key, mode);
+    filter_mutex_unlock(key);
     weed_reinit_effect(inst, TRUE);
-  }
+    filter_mutex_lock(key);
+  } else weed_instance_ref(inst);
+
+  filter_mutex_unlock(key);
 
   if (fx_dialog[1] != NULL) {
     rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
     lives_widget_destroy(fx_dialog[1]);
-    on_paramwindow_cancel_clicked2(NULL, rfx);
+    on_paramwindow_cancel_clicked(NULL, rfx);
+    fx_dialog[1] = NULL;
   }
 
-  rfx = weed_to_rfx(inst, FALSE); // rfx inherits the refcount
+  rfx = weed_to_rfx(inst, FALSE);
   rfx->min_frames = -1;
   keyw = key;
   modew = mode;
@@ -1849,6 +1875,7 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key", LIVES_INT_TO_POINTER(key));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode", LIVES_INT_TO_POINTER(mode));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx", rfx);
+  weed_instance_unref(inst);
 }
 
 
@@ -1863,7 +1890,7 @@ static boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *even
     // and recreate the window from scratch
     lives_list_free_all(&hash_list);
     lives_list_free_all(&name_list);
-    lives_list_free_all(&name_type_list);
+    lives_list_free_all(&extended_name_list);
 
     lives_free(key_checks);
     lives_free(key_grabs);
@@ -1897,7 +1924,7 @@ LIVES_LOCAL_INLINE void do_mix_error(void) {
 
 
 enum {
-  NAME_TYPE_COLUMN,
+  EXTENDED_NAME_COLUMN,
   NAME_COLUMN,
   HASH_COLUMN,
   NUM_COLUMNS
@@ -1992,18 +2019,19 @@ static LiVESTreeStore *tstore = NULL;
 
 static LiVESTreeModel *rte_window_fx_model(void) {
 
-  LiVESTreeIter iter1, iter2;
+  LiVESTreeIter iter1, iter2, iter3;
 
   // fill names of our effects
   int fx_idx = 0;
 
-  LiVESList *list = name_type_list;
+  LiVESList *list = extended_name_list;
   LiVESList *pname_list = name_list;
   LiVESList *phash_list = hash_list;
 
+  lives_fx_cat_t cat;
   int error;
 
-  char *pkg = NULL, *pkgstring, *fxname;
+  char *pkg = NULL, *pkgstring, *fxname, *typestr;
 
   if (tstore != NULL) return (LiVESTreeModel *)tstore;
 
@@ -2030,37 +2058,48 @@ static LiVESTreeModel *rte_window_fx_model(void) {
     }
 
     fxname = lives_strdup((const char *)pname_list->data);
+    cat = weed_filter_categorise(filter,
+                                 enabled_in_channels(filter, TRUE),
+                                 enabled_out_channels(filter, TRUE));
+    typestr = lives_fx_cat_to_text(cat, TRUE);
 
     if ((pkgstring = strstr(fxname, ": ")) != NULL) {
       // package effect
       if (pkg != NULL && strncmp(pkg, fxname, strlen(pkg))) {
+        // new package
         lives_freep((void **)&pkg);
-        lives_tree_store_append(tstore, &iter1, NULL);   /* Acquire an iterator */
-        lives_tree_store_set(tstore, &iter1, NAME_TYPE_COLUMN, list->data, NAME_COLUMN, fxname,
-                             HASH_COLUMN, lives_list_nth_data(hash_list, fx_idx), -1);
       }
       if (pkg == NULL) {
+        // add package to menu
         pkg = fxname;
         fxname = lives_strdup(pkg);
         memset(pkgstring, 0, 1);
         /* TRANSLATORS: example " - LADSPA plugins -" */
         pkgstring = lives_strdup_printf(_(" - %s plugins -"), pkg);
         lives_tree_store_prepend(tstore, &iter1, NULL);
-        lives_tree_store_set(tstore, &iter1, NAME_TYPE_COLUMN, pkgstring, NAME_COLUMN, fxname,
-                             HASH_COLUMN, lives_list_nth_data(hash_list, fx_idx), -1);
+        lives_tree_store_set(tstore, &iter1, EXTENDED_NAME_COLUMN, pkgstring, -1);
         lives_free(pkgstring);
       }
-      lives_tree_store_append(tstore, &iter2, &iter1);
-      lives_tree_store_set(tstore, &iter2, NAME_TYPE_COLUMN, list->data, NAME_COLUMN, fxname,
+      // add to package submenu
+
+      // get a new or existing iterator for the category (set in iter2)
+      lives_tree_store_find_iter(tstore, EXTENDED_NAME_COLUMN, typestr, &iter1, &iter2);
+
+      lives_tree_store_append(tstore, &iter3, &iter2);
+      lives_tree_store_set(tstore, &iter3, EXTENDED_NAME_COLUMN, list->data, NAME_COLUMN, fxname,
                            HASH_COLUMN, lives_list_nth_data(hash_list, fx_idx), -1);
     } else {
       if (pkg != NULL) lives_freep((void **)&pkg);
-      lives_tree_store_append(tstore, &iter1, NULL);   /* Acquire an iterator */
-      lives_tree_store_set(tstore, &iter1, NAME_TYPE_COLUMN, list->data, NAME_COLUMN, fxname,
+      // get a new or existing iterator for the category
+      lives_tree_store_find_iter(tstore, EXTENDED_NAME_COLUMN, typestr, NULL, &iter1);
+
+      lives_tree_store_append(tstore, &iter2, &iter1);   /* Acquire an iterator */
+      lives_tree_store_set(tstore, &iter2, EXTENDED_NAME_COLUMN, list->data, NAME_COLUMN, fxname,
                            HASH_COLUMN, lives_list_nth_data(hash_list, fx_idx), -1);
     }
 
     lives_free(fxname);
+    lives_free(typestr);
 
     list = list->next;
     fx_idx++;
@@ -2161,8 +2200,8 @@ LiVESWidget *create_rte_window(void) {
   grab_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(dummy_radio));
   lives_widget_set_no_show_all(dummy_radio, TRUE);
 
-  name_list = weed_get_all_names(FX_LIST_NAME);
-  name_type_list = weed_get_all_names(FX_LIST_NAME_AND_TYPE);
+  if (name_list == NULL) name_list = weed_get_all_names(FX_LIST_NAME);
+  if (extended_name_list == NULL) extended_name_list = weed_get_all_names(FX_LIST_EXTENDED_NAME);
   if (hash_list == NULL) hash_list = weed_get_all_names(FX_LIST_HASHNAME);
 
   model = rte_window_fx_model();
@@ -2249,7 +2288,7 @@ LiVESWidget *create_rte_window(void) {
       lives_box_pack_start(LIVES_BOX(hbox), nlabels[idx], FALSE, FALSE, widget_opts.packing_width);
 
       combos[idx] = combo = lives_standard_combo_new_with_model(model, LIVES_BOX(hbox));
-      lives_combo_set_entry_text_column(LIVES_COMBO(combo), NAME_TYPE_COLUMN);
+      lives_combo_set_entry_text_column(LIVES_COMBO(combo), EXTENDED_NAME_COLUMN);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "hashname", empty_string);
       lives_box_pack_end(LIVES_BOX(hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
@@ -2467,7 +2506,7 @@ void redraw_pwindow(int key, int mode) {
       for (i = 0; i < lives_list_length(child_list); i++) {
         LiVESWidget *widget = (LiVESWidget *)lives_list_nth_data(child_list, i);
         if (lives_widget_is_ancestor(LIVES_WIDGET(button), widget)) continue;
-        lives_widget_destroy(widget);
+        lives_widget_unparent(widget);
       }
       if (child_list != NULL) lives_list_free(child_list);
       on_paramwindow_cancel_clicked(NULL, NULL);
@@ -2516,7 +2555,8 @@ void rte_set_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (fx_dialog[1] != NULL) {
     rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
     lives_widget_destroy(fx_dialog[1]);
-    on_paramwindow_cancel_clicked2(NULL, rfx);
+    on_paramwindow_cancel_clicked(NULL, rfx);
+    fx_dialog[1] = NULL;
   }
 
   rfx = weed_to_rfx(filter, TRUE);
@@ -2707,7 +2747,7 @@ resetdefs1:
 
   if (child_list != NULL) lives_list_free(child_list);
 
-  if (cancelbutton != NULL) lives_widget_set_sensitive(cancelbutton, FALSE);
+  //if (cancelbutton != NULL) lives_widget_set_sensitive(cancelbutton, FALSE);
 
   make_param_box(LIVES_VBOX(pbox), rfx);
   lives_widget_show_all(pbox);

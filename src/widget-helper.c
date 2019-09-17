@@ -3984,15 +3984,13 @@ LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_label(LiVESButton *button, const char *label) {
-  char *labeltext = (char *)label;
-
-  labeltext = lives_strdup_printf("%s%s%s%s%s", LIVES_SHOULD_EXPAND_HEIGHT ? "\n" : "", LIVES_SHOULD_EXPAND_WIDTH ? "    " : "",
-                                  label, LIVES_SHOULD_EXPAND_WIDTH ? "    " : "", LIVES_SHOULD_EXPAND_HEIGHT ? "\n" : "");
+  char *labeltext = lives_strdup_printf("%s%s%s%s%s", LIVES_SHOULD_EXPAND_HEIGHT ? "\n" : "", LIVES_SHOULD_EXPAND_WIDTH ? "    " : "",
+                                        label, LIVES_SHOULD_EXPAND_WIDTH ? "    " : "", LIVES_SHOULD_EXPAND_HEIGHT ? "\n" : "");
 
 #ifdef GUI_GTK
   gtk_button_set_label(button, labeltext);
   gtk_button_set_use_underline(button, widget_opts.mnemonic_label);
-  if (labeltext != label) lives_free(labeltext);
+  lives_free(labeltext);
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -8105,6 +8103,8 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 }
 
 
+#define COMBO_LIST_LIMIT 64
+
 boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
   LiVESList *revlist;
 
@@ -8112,13 +8112,26 @@ boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
   if (!lives_combo_set_active_index(combo, -1)) return FALSE;
   if (!lives_combo_remove_all_text(combo)) return FALSE;
 
-  // reverse the list and then prepend the items
-  // this is faster (O(1) than traversing the list and appending O(2))
-  for (revlist = lives_list_last(list); revlist != NULL; revlist = revlist->prev) {
-    if (!lives_combo_prepend_text(LIVES_COMBO(combo), (const char *)revlist->data)) return FALSE;
+  if (lives_list_length(list) > COMBO_LIST_LIMIT) {
+    // use a treestore
+    LiVESTreeIter iter1, iter2;
+    LiVESTreeStore *tstore = lives_tree_store_new(1, LIVES_COL_TYPE_STRING);
+    char *cat;
+    for (revlist = list; revlist != NULL; revlist = revlist->next) {
+      cat = lives_strndup((const char *)revlist->data, 1);
+      lives_tree_store_find_iter(tstore, 0, cat, NULL, &iter1);
+      lives_tree_store_append(tstore, &iter2, &iter1);   /* Acquire an iterator */
+      lives_tree_store_set(tstore, &iter2, 0, revlist->data, -1);
+      lives_free(cat);
+    }
+    lives_combo_set_model(LIVES_COMBO(combo), LIVES_TREE_MODEL(tstore));
+  } else {
+    // reverse the list and then prepend the items
+    // this is faster (O(1) than traversing the list and appending O(2))
+    for (revlist = lives_list_last(list); revlist != NULL; revlist = revlist->prev) {
+      if (!lives_combo_prepend_text(LIVES_COMBO(combo), (const char *)revlist->data)) return FALSE;
+    }
   }
-
-  lives_list_free_all(&revlist);
 
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -10394,6 +10407,28 @@ boolean lives_spin_button_configure(LiVESSpinButton *spinbutton,
   adj->set_value(value);
   adj->set_step_increment(step_increment);
   adj->set_page_increment(page_increment);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *val, LiVESTreeIter *titer1, LiVESTreeIter *titer2) {
+#ifdef GUI_GTK
+  if (gtk_tree_model_iter_children(LIVES_TREE_MODEL(tstore), titer2, titer1)) {
+    char *ret;
+    while (1) {
+      gtk_tree_model_get(LIVES_TREE_MODEL(tstore), titer2, col, &ret, -1);
+      if (!strcmp(ret, val)) {
+        lives_free(ret);
+        return TRUE;
+      }
+      lives_free(ret);
+      if (!gtk_tree_model_iter_next(LIVES_TREE_MODEL(tstore), titer2)) break;
+    }
+  }
+  lives_tree_store_append(tstore, titer2, titer1);
+  lives_tree_store_set(tstore, titer2, col, val, -1);
   return TRUE;
 #endif
   return FALSE;

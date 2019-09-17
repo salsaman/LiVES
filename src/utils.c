@@ -2366,8 +2366,14 @@ char *get_extension(const char *filename) {
   // return file extension without the "."
   char *tmp = lives_path_get_basename(filename);
   char *ptr = strrchr(tmp, '.');
-  if (ptr == NULL) return lives_strdup("");
-  return lives_strdup(ptr + 1);
+  if (ptr == NULL) {
+    lives_free(tmp);
+    return lives_strdup("");
+  } else {
+    char *ret = lives_strdup(ptr + 1);
+    lives_free(tmp);
+    return ret;
+  }
 }
 
 

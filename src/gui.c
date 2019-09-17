@@ -4309,7 +4309,7 @@ LIVES_GLOBAL_INLINE void frame_size_update(void) {
 #define MAX_DISP_SETNAME_LEN 10
 
 char *get_menu_name(lives_clip_t *sfile, boolean add_setname) {
-  const char *clipname;
+  char *clipname;
   char *extra, *menuname;
 
   if (sfile == NULL) return NULL;
@@ -4325,9 +4325,10 @@ char *get_menu_name(lives_clip_t *sfile, boolean add_setname) {
   } else extra = lives_strdup("");
   if (sfile->clip_type == CLIP_TYPE_FILE || sfile->clip_type == CLIP_TYPE_DISK)
     clipname = lives_path_get_basename(sfile->name);
-  else clipname = sfile->name;
+  else clipname = lives_strdup(sfile->name);
   menuname = lives_strdup_printf("%s%s", clipname, extra);
   lives_free(extra);
+  lives_free(clipname);
   return menuname;
 }
 
@@ -4341,10 +4342,9 @@ void add_to_clipmenu(void) {
 #endif
 
 #ifndef GTK_RADIO_MENU_BUG
-  char *tmp2;
   if (!CURRENT_CLIP_IS_VALID) return;
   widget_opts.mnemonic_label = FALSE;
-  cfile->menuentry = lives_standard_radio_menu_item_new_with_label(mainw->clips_group, tmp2 = get_menu_name(cfile));
+  cfile->menuentry = lives_standard_radio_menu_item_new_with_label(mainw->clips_group, tmp = get_menu_name(cfile));
   lives_free(tmp);
   mainw->clips_group = lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));
 #else

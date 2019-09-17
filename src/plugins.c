@@ -3437,6 +3437,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       // init and deinit the effect to allow the plugin to hide parameters, etc.
       // rfx will inherit the refcount
       weed_reinit_effect(inst, TRUE);
+      weed_instance_unref(inst);
       rfx->is_template = TRUE;
     }
 

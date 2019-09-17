@@ -37,7 +37,7 @@ typedef enum {
 
 typedef enum {
   FX_LIST_NAME,
-  FX_LIST_NAME_AND_TYPE,
+  FX_LIST_EXTENDED_NAME,
   FX_LIST_HASHNAME,
 } lives_fx_list_t;
 

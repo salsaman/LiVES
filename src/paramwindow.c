@@ -165,10 +165,12 @@ void on_paramwindow_cancel_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
 
 
 void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
-  LiVESWidget *dialog = lives_widget_get_toplevel(LIVES_WIDGET(button));
+  LiVESWidget *dialog = NULL;
   boolean def_ok = FALSE;
 
-  if (LIVES_IS_DIALOG(dialog)) {
+  if (button != NULL) lives_widget_get_toplevel(LIVES_WIDGET(button));
+
+  if (dialog != NULL && LIVES_IS_DIALOG(dialog)) {
     if (lives_dialog_get_response_for_widget(LIVES_DIALOG(dialog), LIVES_WIDGET(button)) == LIVES_RESPONSE_OK) {
       def_ok = TRUE;
     }
@@ -213,20 +215,22 @@ void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
       LiVESWidget *content_area = lives_dialog_get_content_area(LIVES_DIALOG(toplevel));
       lives_container_set_focus_child(LIVES_CONTAINER(content_area), NULL);
     }
-  }
-
-  if (button != NULL) {
     lives_general_button_clicked(button, NULL);
   }
   if (rfx == NULL) {
     if (usrgrp_to_livesgrp[1] != NULL) lives_slist_free(usrgrp_to_livesgrp[1]);
     usrgrp_to_livesgrp[1] = NULL;
   } else {
-    if (usrgrp_to_livesgrp[0] != NULL) lives_slist_free(usrgrp_to_livesgrp[0]);
-    usrgrp_to_livesgrp[0] = NULL;
-    if (rfx->status == RFX_STATUS_WEED && rfx != mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx) {
-      rfx_free(rfx);
-      lives_free(rfx);
+    if (rfx->status == RFX_STATUS_WEED) {
+      if (usrgrp_to_livesgrp[1] != NULL) lives_slist_free(usrgrp_to_livesgrp[1]);
+      usrgrp_to_livesgrp[1] = NULL;
+      if (rfx != mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx) {
+        rfx_free(rfx);
+        lives_free(rfx);
+      }
+    } else {
+      if (usrgrp_to_livesgrp[0] != NULL) lives_slist_free(usrgrp_to_livesgrp[0]);
+      usrgrp_to_livesgrp[0] = NULL;
     }
   }
 

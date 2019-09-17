@@ -6741,6 +6741,8 @@ boolean weed_init_effect(int hotkey) {
     lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
 
     new_instance = (weed_plant_t *)rfx->source;
+    // add 2 refs since we will remove one below
+    weed_instance_ref(new_instance);
     weed_instance_ref(new_instance);
     redraw_pwindow(hotkey, key_modes[hotkey]);
   } else {
@@ -6749,9 +6751,13 @@ boolean weed_init_effect(int hotkey) {
     // if it is a key effect, set key defaults
     if (hotkey < FX_KEYS_MAX_VIRTUAL && key_defaults[hotkey][key_modes[hotkey]] != NULL) {
       // TODO - handle compound fx
+      filter_mutex_unlock(hotkey);
       weed_reinit_effect(new_instance, FALSE);
+      filter_mutex_lock(hotkey);
       apply_key_defaults(new_instance, hotkey, key_modes[hotkey]);
+      filter_mutex_unlock(hotkey);
       weed_reinit_effect(new_instance, FALSE);
+      filter_mutex_lock(hotkey);
     }
   }
 
@@ -6803,9 +6809,7 @@ deinit2:
               &error);
         else next_inst = NULL;
 
-        filter_mutex_lock(hotkey);
         weed_call_deinit_func(inst);
-        filter_mutex_unlock(hotkey);
 
         if (next_inst != NULL && weed_get_boolean_value(next_inst, WEED_LEAF_HOST_INITED, &error) == WEED_TRUE) {
           // handle compound fx
@@ -6866,6 +6870,9 @@ deinit2:
 
     filter_mutex_unlock(hotkey);
 
+    // enable param recording, in case the instance was obtained from a param window
+    if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
+
     if (!weed_generator_start(inst, hotkey)) {
       // TODO - be more descriptive with errors
       int weed_error;
@@ -6895,9 +6902,6 @@ deinit2:
       filter_mutex_lock(hotkey);
       return FALSE;
     }
-
-    filter_mutex_lock(hotkey);
-    // weed_instance_unref(inst);
 
     if (playing_file == -1 && mainw->gen_started_play) return FALSE;
 
@@ -6933,6 +6937,9 @@ deinit2:
 
   // need to do this *before* calling append_filter_map_event
   key_to_instance[hotkey][key_modes[hotkey]] = inst;
+
+  // enable param recording, in case the instance was obtained from a param window
+  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
 
   if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS) && (inc_count > 0 ||
       outc_count == 0)) {
@@ -7099,6 +7106,9 @@ void weed_deinit_effect(int hotkey) {
   if (hotkey >= FX_KEYS_MAX) return;
 
   if ((instance = weed_instance_obtain(hotkey, key_modes[hotkey])) == NULL) return;
+
+  // disable param recording, in case the instance is still attached to a param window
+  weed_set_boolean_value(instance, WEED_LEAF_HOST_NORECORD, WEED_TRUE);
 
   num_in_chans = enabled_in_channels(instance, FALSE);
 
@@ -7774,6 +7784,7 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
     }
     filter_mutex_unlock(key);
 
+    weed_instance_unref(inst);
     play_file();
 
     filter_mutex_lock(key);
@@ -9500,28 +9511,37 @@ void rte_swap_fg_bg(void) {
 LiVESList *weed_get_all_names(lives_fx_list_t list_type) {
   // remember to free list after use, if non-NULL
   LiVESList *list = NULL;
+  char *filter_name, *hashname, *string;
   int i, error;
-  char *filter_name, *filter_type, *hashname, *string;
 
   for (i = 0; i < num_weed_filters - num_weed_dupes; i++) {
-    filter_name = weed_get_string_value(weed_filters[i], WEED_LEAF_NAME, &error);
+    weed_plant_t *filter = weed_filters[i];
+    filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
     switch (list_type) {
     case FX_LIST_NAME:
       // just name
       string = lives_strdup(filter_name);
       list = lives_list_append(list, (livespointer)string);
       break;
-    case FX_LIST_NAME_AND_TYPE:
-      // name and type
-      filter_type = weed_filter_get_type(weed_filters[i], TRUE, FALSE);
+    case FX_LIST_EXTENDED_NAME: {
+      // name and observations
+      lives_fx_cat_t cat = weed_filter_categorise(filter,
+                           enabled_in_channels(filter, TRUE),
+                           enabled_out_channels(filter, TRUE));
 
-      if (weed_plant_has_leaf(weed_filters[i], WEED_LEAF_PLUGIN_UNSTABLE) &&
-          weed_get_boolean_value(weed_filters[i], WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
-        string = lives_strdup_printf(_("%s [unstable] (%s)"), filter_name, filter_type);
-      } else string = lives_strdup_printf("%s (%s)", filter_name, filter_type);
+      lives_fx_cat_t sub = weed_filter_subcategorise(filter, cat, FALSE);
+      char *subcat = NULL;
+      if (sub != LIVES_FX_CAT_NONE)
+        subcat = lives_strdup_printf(" (%s)", lives_fx_cat_to_text(sub, FALSE));
+
+      if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
+          weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
+        string = lives_strdup_printf(_("%s%s [unstable]"), filter_name, sub == LIVES_FX_CAT_NONE ? "" : subcat);
+      } else string = lives_strdup_printf("%s%s", filter_name, sub == LIVES_FX_CAT_NONE ? "" : subcat);
+      if (subcat != NULL) lives_free(subcat);
       list = lives_list_append(list, (livespointer)string);
-      lives_free(filter_type);
-      break;
+    }
+    break;
     case FX_LIST_HASHNAME:
       // hashnames
       hashname = make_weed_hashname(i, TRUE, FALSE);
@@ -11614,6 +11634,7 @@ err123:
 
 
 void apply_key_defaults(weed_plant_t *inst, int key, int mode) {
+  // call with filter_mutex locked
   // apply key/mode param defaults to a filter instance
   int error;
   int nparams;

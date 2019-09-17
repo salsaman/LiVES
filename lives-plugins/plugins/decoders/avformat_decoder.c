@@ -1271,7 +1271,7 @@ framedone2:
 
   if (priv->black_fill) btop = cdata->frame_height;
   else {
-    // we are allowed to cast away const-ness for 
+    // we are allowed to cast away const-ness for
     // yuv_subspace, yuv_clamping, yuv_sampling, frame_gamma and interlace
 
     if (priv->pFrame->interlaced_frame) {

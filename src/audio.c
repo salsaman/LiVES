@@ -2705,7 +2705,10 @@ boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps)
   weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
 
-  if (mainw->agen_needs_reinit) return FALSE; // wait for other thread to reinit us
+  if (mainw->agen_needs_reinit) {
+    weed_instance_unref(inst);
+    return FALSE; // wait for other thread to reinit us
+  }
   tc = (double)mainw->agen_samps_count / (double)arate * TICKS_PER_SECOND_DBL; // we take our timing from the number of samples read
 
 getaud1:

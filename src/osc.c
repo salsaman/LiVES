@@ -4500,8 +4500,10 @@ boolean lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, 
   if (inst == NULL) return lives_osc_notify_failure();
 
   nparams = num_in_params(filter, FALSE, TRUE);
-  if (nparams == 0) return lives_osc_notify_failure();
-  if (pnum < 0 || pnum >= nparams) return lives_osc_notify_failure();
+  if (pnum < 0 || pnum >= nparams) {
+    weed_instance_unref(inst);
+    return lives_osc_notify_failure();
+  }
 
   tparam = weed_inst_in_param(inst, pnum, FALSE, TRUE);
 
@@ -5786,7 +5788,11 @@ boolean lives_osc_cb_rte_getoparamval(void *context, int arglen, const void *var
     filter_mutex_unlock(effect_key - 1);
     lives_status_send(msg);
     lives_free(msg);
-  } else return lives_osc_notify_failure();
+  } else {
+    weed_instance_unref(inst);
+    return lives_osc_notify_failure();
+  }
+  weed_instance_unref(inst);
   return TRUE;
 }
 

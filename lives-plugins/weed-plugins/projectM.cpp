@@ -622,7 +622,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
 
     filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, filter_flags, &projectM_init,
-					  &projectM_process, &projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+                                          &projectM_process, &projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
     //weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 

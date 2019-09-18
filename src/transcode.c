@@ -133,6 +133,7 @@ boolean transcode(int start, int end) {
 
   // set the default value in the param window
   set_rfx_param_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, pname, TRUE);
+  lives_freep((void **)&pname);
 
   retvals = do_onchange_init(rfx);
   if (retvals != NULL) {
@@ -146,8 +147,15 @@ boolean transcode(int start, int end) {
     resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
   } while (resp == LIVES_RESPONSE_RETRY);
 
+  if (resp == LIVES_RESPONSE_CANCEL) {
+    mainw->cancelled = CANCEL_USER;
+    rfx_free(rfx);
+    lives_free(rfx);
+    goto tr_err2;
+  }
+
+  mainw->cancelled = CANCEL_NONE;
   // get the param value ourselves
-  lives_freep((void **)&pname);
   get_rfx_param_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, (char **)&pname);
   tmp = lives_build_filename(prefs->workdir, rfx->name, NULL);
   lives_rm(tmp);
@@ -155,19 +163,11 @@ boolean transcode(int start, int end) {
   rfx_free(rfx);
   lives_free(rfx);
 
-  if (resp == LIVES_RESPONSE_CANCEL) {
-    mainw->cancelled = CANCEL_USER;
-    goto tr_err2;
-  }
-
-  mainw->cancelled = CANCEL_NONE;
-
   // (re)set these for the current clip
   if (vpp->set_fps != NULL)(*vpp->set_fps)(cfile->fps);
-  palette_list = (*vpp->get_palette_list)();
 
-  if (vpp->set_palette != NULL)(*vpp->set_palette)(palette_list[0]);
-  if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(WEED_YUV_CLAMPING_UNCLAMPED);
+  if (vpp->set_palette != NULL)(*vpp->set_palette)(vpp->palette);
+  if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
 
   if (vpp->init_audio != NULL && mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
     int in_arate = (int)((float)cfile->arps / (float)cfile->arate * (float)cfile->arps);

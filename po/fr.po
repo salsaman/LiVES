@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2019-09-17 11:13-0300\n"
+"POT-Creation-Date: 2019-09-18 01:14-0300\n"
 "PO-Revision-Date: 2015-11-25 22:11+0000\n"
 "Last-Translator: Jean-Marc <Unknown>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -7004,11 +7004,11 @@ msgstr "Utiliser par défault"
 msgid "Reset"
 msgstr "Réinitialiser"
 
-#: src/paramwindow.c:1275
+#: src/paramwindow.c:1276
 msgid "No parameters"
 msgstr "Pas de paramètre"
 
-#: src/paramwindow.c:1349
+#: src/paramwindow.c:1350
 msgid "Invalid parameter"
 msgstr "Paramètre non valide"
 
@@ -11279,15 +11279,15 @@ msgstr ""
 "\n"
 "La connexion à pulse audio a été réinitialisée.\n"
 
-#: src/colourspace.c:1161
+#: src/colourspace.c:1159
 msgid "unclamped"
 msgstr ""
 
-#: src/colourspace.c:1162
+#: src/colourspace.c:1160
 msgid "clamped"
 msgstr ""
 
-#: src/colourspace.c:11444
+#: src/colourspace.c:11563
 #, c-format
 msgid "Padding: Unable to write blank frame with size %d x %d to %s"
 msgstr ""

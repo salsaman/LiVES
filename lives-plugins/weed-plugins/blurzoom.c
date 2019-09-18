@@ -29,7 +29,7 @@
 static int num_versions = 2; // number of different weed api versions supported
 static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
-static int package_version = 1; // version of this package
+static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
@@ -72,14 +72,11 @@ typedef struct _sdata {
   int threshold;
 } sdata;
 
-
-
 static RGB32 *palette;
 static RGB32 palettes[256];
 
 #define VIDEO_HWIDTH (buf_width/2)
 #define VIDEO_HHEIGHT (buf_height/2)
-
 
 
 static void image_bgsubtract_update_y(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata) {
@@ -177,7 +174,6 @@ static void blur(struct _sdata *sdata) {
 }
 
 
-
 static void zoom(struct _sdata *sdata) {
   register int b, x, y;
   register unsigned char *p, *q;
@@ -203,7 +199,6 @@ static void zoom(struct _sdata *sdata) {
 }
 
 
-
 static inline void blurzoomcore(struct _sdata *sdata) {
   blur(sdata);
   zoom(sdata);
@@ -219,26 +214,25 @@ static void makePalette(int pal) {
     palettes[i] = 0;
   }
 
-
   for (i = 0; i < COLORS / 2; i++) {
     if (pal == WEED_PALETTE_RGBA32) {
-      palettes[COLORS * 2 + i] = i * DELTA;
       palettes[i] = (i * DELTA) << 16;
+      palettes[COLORS * 2 + i] = i * DELTA;
     } else {
       palettes[i] = i * DELTA;
       palettes[COLORS * 2 + i] = (i * DELTA) << 16;
     }
-    palettes[COLORS   + i] = (i * DELTA) << 8;
+    palettes[COLORS + i] = (i * DELTA) << 8;
   }
   for (i = 0; i < COLORS / 2; i++) {
     if (pal == WEED_PALETTE_RGBA32) {
-      palettes[COLORS * 2         + i + COLORS / 2] = 255 | (i * DELTA) << 16 | (i * DELTA) << 8;
       palettes[i + COLORS / 2] = (255 << 16) | (i * DELTA) << 8 | i * DELTA;
+      palettes[COLORS * 2 + i + COLORS / 2] = 255 | (i * DELTA) << 16 | (i * DELTA) << 8;
     } else {
       palettes[i + COLORS / 2] = 255 | (i * DELTA) << 16 | (i * DELTA) << 8;
       palettes[COLORS * 2 + i + COLORS / 2] = (255 << 16) | (i * DELTA) << 8 | i * DELTA;
     }
-    palettes[COLORS   + i + COLORS / 2] = (255 << 8) | (i * DELTA) << 16 | i * DELTA;
+    palettes[COLORS + i + COLORS / 2] = (255 << 8) | (i * DELTA) << 16 | i * DELTA;
   }
   for (i = 0; i < COLORS; i++) {
     palettes[COLORS * 3 + i] = (255 * i / COLORS) * 0x10101;
@@ -249,8 +243,7 @@ static void makePalette(int pal) {
 }
 
 
-
-int blurzoom_init(weed_plant_t *inst) {
+static int blurzoom_init(weed_plant_t *inst) {
   struct _sdata *sdata;
   int video_height, video_width, video_area;
   int buf_area;
@@ -311,7 +304,6 @@ int blurzoom_init(weed_plant_t *inst) {
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-
   sdata->background = (short *)weed_malloc(video_height * video_width * sizeof(short));
   if (sdata->background == NULL) {
     weed_free(sdata->blurzoombuf);
@@ -348,10 +340,7 @@ int blurzoom_init(weed_plant_t *inst) {
 }
 
 
-
-
-
-int blurzoom_deinit(weed_plant_t *inst) {
+static int blurzoom_deinit(weed_plant_t *inst) {
   struct _sdata *sdata;
   int error;
 
@@ -370,10 +359,8 @@ int blurzoom_deinit(weed_plant_t *inst) {
 }
 
 
-
-
-int blurzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
-  weed_plant_t *in_channel, *out_channel, *in_param;
+static int blurzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
+  weed_plant_t *in_channel, *out_channel, **in_params;
 
   register int x, y;
   register RGB32 a, b;
@@ -387,9 +374,8 @@ int blurzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
   size_t snap_offs = 0, src_offs = 0;
 
   int video_width, video_height, irow, orow;
-  int mode = 0;
+  int mode = 0, pattern;
   int error;
-
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
   in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
@@ -406,8 +392,10 @@ int blurzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
   diff = sdata->diff;
 
-  in_param = weed_get_plantptr_value(inst, "in_parameters", &error);
-  mode = weed_get_int_value(in_param, "value", &error);
+  in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  mode = weed_get_int_value(in_params[0], "value", &error);
+  pattern = weed_get_int_value(in_params[1], "value", &error);
+  weed_free(in_params);
 
   if (mode != 2 || sdata->snapTime <= 0) {
     image_bgsubtract_update_y(src, video_width, video_height, irow, sdata);
@@ -446,9 +434,9 @@ int blurzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
     }
     for (x = 0; x < sdata->buf_width; x++) {
       a = *src & 0xfefeff;
-      b = palette[*p++];
+      b = palette[COLORS * pattern + *p++];
       a += b;
-      b = a & 0x1010100;
+      b = a & 0x10101;
       *dest++ = (*src++ & 0xff000000) | ((a | (b - (b >> 8))) & 0xffffff);
     }
     for (x = 0; x < sdata->buf_margin_right; x++) {
@@ -457,7 +445,6 @@ int blurzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
     src += irow;
     dest += orow;
-
   }
 
   if (mode == 1 || mode == 2) {
@@ -474,12 +461,13 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
     const char *modes[] = {"normal", "strobe", "strobe2", "trigger", NULL};
+    const char *patterns[] = {"blue", "green", "red", "white", NULL};
 
     int palette_list[] = {WEED_PALETTE_BGRA32, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
 
     weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-    weed_plant_t *in_params[] = {weed_string_list_init("mode", "Trigger _Mode", 0, modes), NULL};
+    weed_plant_t *in_params[] = {weed_string_list_init("mode", "Trigger _Mode", 0, modes), weed_string_list_init("color", "_Color", 0, patterns), NULL};
     weed_plant_t *filter_class = weed_filter_class_init("blurzoom", "effectTV", 1, 0, &blurzoom_init, &blurzoom_process, &blurzoom_deinit,
                                  in_chantmpls,
                                  out_chantmpls, in_params, NULL);

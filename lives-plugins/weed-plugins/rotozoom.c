@@ -161,8 +161,6 @@ int rotozoom_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   if (palette == WEED_PALETTE_ARGB32 || palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32 ||
       palette == WEED_PALETTE_YUVA8888 || palette == WEED_PALETTE_UYVY || palette == WEED_PALETTE_YUYV) psize = 4;
 
-  if (palette == WEED_PALETTE_UYVY || palette == WEED_PALETTE_YUYV) width >>= 1; // 2 pixels per macropixel
-
   draw_tile(roto[path], roto[(path + 128) & 0xFF], zoom, src, dst, width, irowstride, orowstride, height, dheight, offset, psize);
 
   weed_set_int_value(inst, "plugin_path", (path - 1) & 255);

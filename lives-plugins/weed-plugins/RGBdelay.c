@@ -5,7 +5,6 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
 #include <stdio.h>
 
 #ifdef HAVE_SYSTEM_WEED
@@ -46,7 +45,7 @@ typedef struct {
 } _sdata;
 
 
-int RGBd_init(weed_plant_t *inst) {
+static int RGBd_init(weed_plant_t *inst) {
   int error;
   weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error), *gui, *ptmpl;
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
@@ -92,7 +91,6 @@ int RGBd_init(weed_plant_t *inst) {
     }
   }
 
-
   sdata->ccache = 0;
   sdata->tcache = ncache;
 
@@ -112,8 +110,7 @@ int RGBd_init(weed_plant_t *inst) {
 }
 
 
-
-int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
                              "out_channels",
@@ -161,7 +158,6 @@ int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         tstra += weed_get_double_value(in_params[(i + 1) * 4], "value", &error);
       else tstrc += weed_get_double_value(in_params[(i + 1) * 4], "value", &error);
     }
-
   }
 
   if (tmptr != NULL) sdata->cache[1] = tmptr; // value of cache[0] got squished
@@ -174,7 +170,6 @@ int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   } else sdata->is_bgr[0] = 0;
 
   sdata->ccache += (sdata->ccache < sdata->tcache);
-
 
   osrc = src;
   odst = dst;
@@ -193,7 +188,6 @@ int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   b3 = weed_get_boolean_value(in_params[c], "value", &error);
 
   if (b1 == WEED_TRUE || b2 == WEED_TRUE || b3 == WEED_TRUE || inplace) {
-
     if (b1 == WEED_TRUE)
       tstra += weed_get_double_value(in_params[4], "value", &error);
     if (b2 == WEED_TRUE)
@@ -207,7 +201,6 @@ int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     cstrc = cstr / tstrc;
 
     for (; src < end; src += irowstride) {
-
       weed_memcpy(sdata->cache[0] + x, src, width);
 
       for (i = 0; i < width; i += 3) {
@@ -217,7 +210,6 @@ int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         else if (inplace) dst[i + 1] = 0;
         if (b3 == WEED_TRUE) dst[i + 2] = ((double)src[i + 2] * cstrc + .5);
         else if (inplace) dst[i + 2] = 0;
-
       }
       x += width;
       dst += orowstride;
@@ -226,7 +218,6 @@ int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     dst = odst;
     x = 0;
   }
-
 
   for (j = 1; j < sdata->ccache; j++) {
     // maybe overlay something from j frames ago
@@ -270,12 +261,23 @@ int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     dst = odst;
     x = 0;
   }
-
+  if (palette == WEED_PALETTE_YUV888) {
+    // YUV black
+    int clamping = weed_get_int_value(in_channel, "YUV_clamping", &error);
+    for (; src < end; src += irowstride) {
+      for (i = 0; i < width; i += 3) {
+        if (dst[i] == 0 && clamping == WEED_YUV_CLAMPING_CLAMPED) dst[i] = 16;
+        if (dst[i + 1] == 0) dst[i + 1] = 128;
+        if (dst[i + 2] == 0) dst[i + 2] = 128;
+      }
+      dst += orowstride;
+    }
+  }
   return WEED_NO_ERROR;
 }
 
 
-int RGBd_deinit(weed_plant_t *inst) {
+static int RGBd_deinit(weed_plant_t *inst) {
   int error, i;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
 
@@ -344,7 +346,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     gui = weed_filter_class_get_gui(filter_class);
     rfx_strings[0] = "layout|p0";
     rfx_strings[1] = "layout|hseparator|";
-    rfx_strings[2] = "layout|\"  R\"|\"         G \"|\"         B \"|fill|\"Blend Strength\"|fill|";
+    rfx_strings[2] = "layout|\"  R\"|fill|\"         G \"|fill|\"         B \"|fill|\"Blend Strength\"|fill|";
 
     for (i = 3; i < 54; i++) {
       rfx_strings[i] = weed_malloc(1024);
@@ -357,8 +359,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-
-    rfx_strings[2] = "layout|\"  Y\"|\"         U \"|\"         V \"|fill|\"Blend Strength\"|fill|";
+    rfx_strings[2] = "layout|\"  Y\"|fill|\"         U \"|fill|\"         V \"|fill|\"Blend Strength\"|fill|";
 
     filter_class = weed_filter_class_init("YUVdelay", "salsaman", 1, 0, &RGBd_init, &RGBd_process, &RGBd_deinit, in_chantmpls2, out_chantmpls2,
                                           (clone = weed_clone_plants(in_params)), NULL);

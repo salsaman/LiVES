@@ -1223,6 +1223,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           hbox = lives_hbox_new(FALSE, 0);
           lives_box_pack_start(LIVES_BOX(param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
           last_label = NULL;
+          has_box = TRUE;
         }
         lives_snprintf(label_text, 256, "%s", array[j] + 1);
         while (strcmp(array[j] + strlen(array[j]) - 1, "\"") && j < num_tok - 1) {

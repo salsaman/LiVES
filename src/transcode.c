@@ -85,8 +85,6 @@ boolean transcode(int start, int end) {
   char *pname = NULL;
   char *msg = NULL, *tmp;
 
-  int *palette_list;
-
   double spf = 0., ospf;
 
   boolean audio = FALSE;

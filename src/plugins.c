@@ -2822,6 +2822,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     dest->num_params = src->num_params;
     dest->is_template = src->is_template;
     dest->menuitem = src->menuitem;
+    dest->extra = NULL;
     if (!full) return;
 
     // TODO
@@ -2867,7 +2868,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
 
   void rfx_free_all(void) {
     register int i;
-    for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test; i++) {
+    for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test; i++) {
       rfx_free(&mainw->rendered_fx[i]);
     }
     lives_freep((void **)&mainw->rendered_fx);

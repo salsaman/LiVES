@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2019-09-18 01:14-0300\n"
+"POT-Creation-Date: 2019-09-18 10:18-0300\n"
 "PO-Revision-Date: 2019-09-16 09:58+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -7637,7 +7637,7 @@ msgstr "Decodificadores de Vídeo Habilitados (desmarque para desativar)"
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Falhou em carregar %s, as transições podem não redimensionar.\n"
 
-#: src/plugins.c:3661
+#: src/plugins.c:3662
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s configurações avançadas"

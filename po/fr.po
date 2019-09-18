@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2019-09-18 01:14-0300\n"
+"POT-Creation-Date: 2019-09-18 10:18-0300\n"
 "PO-Revision-Date: 2015-11-25 22:11+0000\n"
 "Last-Translator: Jean-Marc <Unknown>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -7209,7 +7209,7 @@ msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 "Chargement de %s échoué, les transitions ne peuvent être redimensionnées.\n"
 
-#: src/plugins.c:3661
+#: src/plugins.c:3662
 #, c-format
 msgid "%s advanced settings"
 msgstr "paramètres avancés %s"

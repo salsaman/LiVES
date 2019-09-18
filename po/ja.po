@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2019-09-18 01:14-0300\n"
+"POT-Creation-Date: 2019-09-18 10:18-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -7638,7 +7638,7 @@ msgstr "映像デコーダーを有効にする（チェックを外すと無効
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "%sの読み込みに失敗しました。トランジションはリサイズされません。\n"
 
-#: src/plugins.c:3661
+#: src/plugins.c:3662
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s 高度な設定"

@@ -48,15 +48,17 @@ int negate_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int pal = weed_get_int_value(in_channel, "current_palette", &error);
   int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
   int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
-  int psize = 4, start = 0;
+  int psize = 4, start = 0, alpha = 3;
 
   unsigned char *end = src + height * irowstride;
 
   register int i;
 
   if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) psize = 3;
-  if (pal == WEED_PALETTE_ARGB32) start = 1;
-
+  if (pal == WEED_PALETTE_ARGB32) {
+    start = 1;
+    alpha = -1;
+  }
   width *= psize;
 
   // new threading arch
@@ -74,6 +76,7 @@ int negate_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       dst[i] = src[i] ^ 0xFF;
       dst[i + 1] = src[i + 1] ^ 0xFF;
       dst[i + 2] = src[i + 2] ^ 0xFF;
+      if (psize == 4) dst[i + alpha] = src[i + alpha];
     }
     dst += orowstride;
   }

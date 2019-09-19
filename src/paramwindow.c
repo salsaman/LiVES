@@ -864,9 +864,6 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidg
     if (cancelbutton == NULL) {
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_CLOSE, _("_Close Window"),
                      LIVES_RESPONSE_CANCEL);
-
-      if (rfx->status != RFX_STATUS_WEED && no_process) {
-      }
     }
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);

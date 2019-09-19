@@ -1266,7 +1266,6 @@ static LiVESWidget *aud_text_view_new(void) {
 
 lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   LiVESWidget *dialog_vbox;
-  LiVESWidget *abox;
   LiVESWidget *table;
   LiVESWidget *label;
   LiVESWidget *vidframe;
@@ -1489,24 +1488,10 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
       lives_table_attach(LIVES_TABLE(table), filew->textview_rrate, 3, 4, 0, 1,
                          (LiVESAttachOptions)(0),
                          (LiVESAttachOptions)(0), 0, 0);
-
     }
   }
 
-  abox = lives_dialog_get_action_area(LIVES_DIALOG(filew->dialog));
-
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(filew->dialog), LIVES_STOCK_OK, NULL,
-             LIVES_RESPONSE_OK);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-
-#if !GTK_CHECK_VERSION(3, 0, 0)
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);
-#else
-  LiVESWidget *spring = add_spring_to_box(LIVES_BOX(abox), 0);
-  lives_widget_set_hexpand(spring, TRUE);
-#endif
-
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(filew->dialog), LIVES_STOCK_CLOSE, _("_Close Window"), LIVES_RESPONSE_OK);
   lives_button_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1642,9 +1627,13 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   boolean woat;
 
+  int window_width = RFX_WINSIZE_H;
+
   textwindow = (text_window *)lives_malloc(sizeof(text_window));
 
-  textwindow->dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
+  if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH) window_width = RFX_WINSIZE_H * 2;
+
+  textwindow->dialog = lives_standard_dialog_new(title, FALSE, window_width, DEF_DIALOG_HEIGHT);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
@@ -1656,18 +1645,17 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   widget_opts.apply_theme = FALSE;
 
   if (textwindow->textview != NULL) {
-    scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->textview);
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+    scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V, textwindow->textview);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
     if (palette->style & STYLE_1) {
       lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     }
   } else {
-    textwindow->table = lives_table_new(1, 1, FALSE);
-    scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->table);
-    if (palette->style & STYLE_1) {
-      lives_widget_set_bg_color(textwindow->table, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-      lives_widget_set_fg_color(textwindow->table, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    }
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH;
+    textwindow->table = lives_standard_table_new(1, 1, FALSE);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V, textwindow->table);
   }
 
   widget_opts.apply_theme = woat;
@@ -3405,8 +3393,11 @@ static void pair_add(LiVESWidget *table, const char *key, const char *meaning) {
 
 void do_keys_window(void) {
   char *tmp = lives_strdup(_("Show Keys")), *tmp2;
-  text_window *textwindow = create_text_window(tmp, NULL, NULL);
+  text_window *textwindow;
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  textwindow = create_text_window(tmp, NULL, NULL);
   lives_free(tmp);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;;
 
   lives_table_resize(LIVES_TABLE(textwindow->table), 1, 40);
   currow = 0;

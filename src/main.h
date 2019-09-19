@@ -258,6 +258,8 @@ typedef int lives_pgid_t;
 #  define GNU_MALLOC  __attribute__((malloc))
 #  define GNU_ALIGN(x) __attribute__((alloc_align(x)))
 #  define GNU_NORETURN __attribute__((noreturn))
+#  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
+#  define GNU_HOT  __attribute__((hot))
 #else
 #  define WARN_UNUSED
 #  define GNU_PURE
@@ -266,6 +268,8 @@ typedef int lives_pgid_t;
 #  define GNU_DEPRECATED(msg)
 #  define GNU_ALIGN(x)
 #  define GNU_NORETURN
+#  define GNU_FLATTEN
+#  define GNU_HOT
 #endif
 
 #ifdef PRODUCE_LOG

@@ -624,8 +624,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       if (cfile->f_size > prefs->warn_file_size * 1000000. && mainw->is_ready && frames == 0) {
         char *fsize_ds = lives_format_storage_space_string((uint64_t)cfile->f_size);
         char *warn = lives_strdup_printf(
-                       _("\nLiVES is not currently optimised for larger file sizes.\nYou are advised (for now) to start with a smaller file, "
-                         "or to use the 'Open File Selection' option.\n(Filesize=%s)\n\nAre you sure you wish to continue ?"),
+                       _("\nLiVES cannot Instant Open this file, it may take some time to load.\nAre you sure you wish to continue ?"),
                        fsize_ds);
         lives_free(fsize_ds);
         if (!do_warning_dialog_with_check(warn, WARN_MASK_FSIZE)) {

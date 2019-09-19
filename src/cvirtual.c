@@ -369,8 +369,9 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
     if (i > sfile->frames) break;
 
     if (update_progress) {
-      threaded_dialog_spin(0.);
+      threaded_dialog_spin((double)(i - sframe) / (double)(eframe - sframe + 1));
       lives_widget_process_updates(mainw->LiVES, TRUE);
+      lives_widget_context_update();
     }
 
     if (sfile->frame_index[i - 1] >= 0) {
@@ -386,7 +387,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       oname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
 
       do {
-        retval = 0;
+        retval = LIVES_RESPONSE_NONE;
         lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, TRUE, &error);
         if (error != NULL && pbr == NULL) {
           retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);
@@ -417,7 +418,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       if (update_progress) {
         // sig_progress...
         lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
-        threaded_dialog_spin(0.);
+        threaded_dialog_spin((double)(i - sframe) / (double)(eframe - sframe + 1));
         lives_widget_context_update();
       }
 
@@ -450,6 +451,7 @@ boolean realize_all_frames(int clipno, const char *msg, boolean enough) {
     cfile->progress_end = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
     if (enough) mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
     do_threaded_dialog((char *)msg, TRUE);
+    lives_widget_show_all(mainw->files[clipno]->proc_ptr->processing);
     mainw->cancel_type = CANCEL_KILL;
     retb = virtual_to_images(mainw->current_file, 1, cfile->frames, TRUE, NULL);
     end_threaded_dialog();

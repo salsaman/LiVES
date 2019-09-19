@@ -3450,7 +3450,7 @@ void block_expose(void) {
   lives_signal_handler_block(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_block(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_block(mainw->raudio_draw, mainw->raudbar_func);
-  lives_signal_handler_block(mainw->message_area, mainw->sw_func);
+  lives_signal_handler_block(mainw->msg_area, mainw->sw_func);
 #endif
 }
 
@@ -3463,7 +3463,7 @@ void unblock_expose(void) {
   lives_signal_handler_unblock(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_unblock(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_unblock(mainw->raudio_draw, mainw->raudbar_func);
-  lives_signal_handler_unblock(mainw->message_area, mainw->sw_func);
+  lives_signal_handler_unblock(mainw->msg_area, mainw->sw_func);
 #endif
 }
 

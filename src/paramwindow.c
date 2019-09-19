@@ -862,21 +862,10 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidg
     }
 
     if (cancelbutton == NULL) {
-      if (rfx->status != RFX_STATUS_WEED && no_process) {
-        widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-      }
-
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_CLOSE, _("_Close Window"),
                      LIVES_RESPONSE_CANCEL);
 
       if (rfx->status != RFX_STATUS_WEED && no_process) {
-        widget_opts.expand = LIVES_EXPAND_DEFAULT;
-        LiVESWidget *abox = lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[didx]));
-#if !GTK_CHECK_VERSION(3, 0, 0)
-        lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);
-#else
-        if (LIVES_IS_BOX(abox)) add_fill_to_box(LIVES_BOX(abox));
-#endif
       }
     }
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,

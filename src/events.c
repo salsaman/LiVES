@@ -4615,8 +4615,6 @@ boolean deal_with_render_choice(boolean add_deinit) {
         }
       elist_dialog = create_event_list_dialog(mainw->event_list, 0, 0);
       lives_dialog_run(LIVES_DIALOG(elist_dialog));
-      lives_widget_destroy(elist_dialog);
-      g_print("DONE\n");
       lives_widget_process_updates(mainw->LiVES, TRUE);
       lives_widget_context_update();
       render_choice = RENDER_CHOICE_PREVIEW;
@@ -4845,7 +4843,6 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   LiVESWidget *top_vbox;
   LiVESWidget *label;
   LiVESWidget *ok_button;
-  LiVESWidget *hbuttonbox;
   LiVESWidget *scrolledwindow;
 
   LiVESCellRenderer *renderer;
@@ -5193,17 +5190,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
-  hbuttonbox = lives_hbutton_box_new();
-
-  lives_box_pack_start(LIVES_BOX(top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height);
-
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(hbuttonbox), LIVES_BUTTONBOX_SPREAD);
-
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-  ok_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_CLOSE, _("_Close Window"), LIVES_RESPONSE_OK);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-
-  lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
+  ok_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(event_dialog), LIVES_STOCK_CLOSE, _("_Close Window"), LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(ok_button);
 

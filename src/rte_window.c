@@ -1572,7 +1572,6 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *dialog;
 
   LiVESWidget *vbox;
-  LiVESWidget *abox;
   LiVESWidget *hbox;
   LiVESWidget *label;
   LiVESWidget *textview;
@@ -1707,21 +1706,8 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  abox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-#if GTK_CHECK_VERSION(3, 0, 0)
-  if (LIVES_IS_BOX(abox)) add_spring_to_box(LIVES_BOX(abox), 0);
-#endif
-
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-  ok_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+  ok_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
               LIVES_RESPONSE_OK);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-
-#if !GTK_CHECK_VERSION(3, 0, 0)
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);
-#else
-  if (LIVES_IS_BOX(abox)) add_spring_to_box(LIVES_BOX(abox), 0);
-#endif
 
   lives_button_grab_default_special(ok_button);
 
@@ -1962,6 +1948,11 @@ void fx_changed(LiVESCombo *combo, livespointer user_data) {
   model = lives_combo_get_model(combo);
 
   lives_tree_model_get(model, &iter1, HASH_COLUMN, &hashname1, -1);
+  if (hashname1 == NULL) {
+    lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode)));
+    lives_free(tmp);
+    return;
+  }
 
   if (!strcmp(hashname1, hashname2)) {
     lives_free(hashname1);

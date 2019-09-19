@@ -539,6 +539,7 @@ void lives_exit(int signum) {
   lives_list_free_all(&prefs->disabled_decoders);
 
   if (mainw->fonts_array != NULL) lives_strfreev(mainw->fonts_array);
+
 #ifdef USE_SWSCALE
   sws_free_context();
 #endif
@@ -8310,23 +8311,19 @@ void on_load_vcd_ok_clicked(LiVESButton *button, livespointer user_data) {
 
 void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
   // popup layout map errors dialog
-  LiVESWidget *dialog_action_area, *vbox;
+  LiVESWidget *vbox;
   LiVESWidget *button;
   text_window *textwindow;
 
   if (prefs->warning_mask & WARN_MASK_LAYOUT_POPUP) return;
 
-  widget_opts.expand = LIVES_EXPAND_EXTRA;
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
   textwindow = create_text_window(_("Layout Errors"), NULL, mainw->layout_textbuffer);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(textwindow->dialog));
-  if (LIVES_IS_BUTTON_BOX(dialog_action_area)) lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_SPREAD);
 
   vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
   add_warn_check(LIVES_BOX(vbox), WARN_MASK_LAYOUT_POPUP);
-
 
   button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
            LIVES_RESPONSE_OK);
@@ -8348,6 +8345,12 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
 
   textwindow->delete_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_DELETE,
                               _("_Delete affected layouts"), LIVES_RESPONSE_CANCEL);
+
+#if !GTK_CHECK_VERSION(3, 0, 0)
+  lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(textwindow->delete_button)), LIVES_BUTTONBOX_SPREAD);
+#else
+  lives_widget_set_halign(lives_widget_get_parent(textwindow->delete_button), LIVES_ALIGN_FILL);
+#endif
 
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->delete_button), widget_opts.border_width);
 

@@ -3365,16 +3365,12 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   prefsw_set_rec_after_settings(mainw->vpp, prefsw);
 
-  if (palette->style & STYLE_1) {
-    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
   //-
 
   frame = lives_standard_frame_new(_("AUDIO"), 0., FALSE);
 
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_playback), frame, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_playback), frame, FALSE, FALSE, widget_opts.packing_height);
+  //lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_playback), frame, TRUE, TRUE, 0);
 
   vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(frame), vbox);
@@ -4042,8 +4038,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
-  prefsw->checkbutton_warn_fsize = lives_standard_check_button_new(_("Warn on Open if file _size exceeds "),
-                                   !(prefs->warning_mask & WARN_MASK_FSIZE), LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_warn_fsize = lives_standard_check_button_new(
+                                     _("Warn on Open if Instant Opening is not available, and the file _size exceeds "),
+                                     !(prefs->warning_mask & WARN_MASK_FSIZE), LIVES_BOX(hbox), NULL);
 
   prefsw->spinbutton_warn_fsize = lives_standard_spin_button_new(NULL,
                                   prefs->warn_file_size, 1., 2048., 1., 10., 0,
@@ -4828,6 +4825,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_free(midichan);
 
   if (mainw->midi_channel_lock && prefs->midi_rcv_channel == -1) lives_widget_set_sensitive(prefsw->midichan_combo, FALSE);
+
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_midi));
 
   prefsw->midi_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), prefsw->midi_hbox, FALSE, FALSE, widget_opts.packing_height);

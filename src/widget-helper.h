@@ -408,6 +408,8 @@ boolean lives_button_box_set_layout(LiVESButtonBox *, LiVESButtonBoxStyle bstyle
 boolean lives_button_box_set_button_width(LiVESButtonBox *, LiVESWidget *button, int min_width);
 
 boolean lives_button_set_border_colour(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
+boolean lives_button_center(LiVESWidget *);
+boolean lives_button_uncenter(LiVESWidget *, int normal_width);
 
 LiVESWidget *lives_standard_hscale_new(LiVESAdjustment *);
 LiVESWidget *lives_vscale_new(LiVESAdjustment *);
@@ -920,6 +922,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, const char *name,
 
 LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbuff);
 
+LiVESWidget *lives_standard_table_new(uint32_t rows, uint32_t cols, boolean homogeneous);
+
 LiVESToolItem *lives_standard_menu_tool_button_new(LiVESWidget *icon, const char *label);
 
 LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x, int y);
@@ -974,7 +978,7 @@ boolean lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 
 boolean lives_widget_set_show_hide_parent(LiVESWidget *);
 
-void lives_window_center(LiVESWindow *);
+boolean lives_window_center(LiVESWindow *);
 
 boolean lives_entry_set_completion_from_list(LiVESEntry *, LiVESList *);
 

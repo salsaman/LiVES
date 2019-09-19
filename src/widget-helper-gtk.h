@@ -325,7 +325,6 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #define EXPOSE_FN_END }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-#define NO_ALT_VALUES
 #if GTK_CHECK_VERSION(4, 0, 0)
 #define LIVES_WIDGET_EXPOSE_EVENT "snapshot"
 #else

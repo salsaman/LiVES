@@ -699,7 +699,7 @@ LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, live
 LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidget *pbox) {
   // render a pre dialog for: rendered effects (fx_dialog[0]), or rte(fx_dialog[1]), or encoder plugin, or vpp (fx_dialog[1])
   LiVESWidget *top_dialog_vbox = NULL;
-  LiVESWidget *cancelbutton;
+  LiVESWidget *cancelbutton = NULL;
   LiVESWidget *okbutton = NULL;
   LiVESWidget *resetbutton = NULL;
 
@@ -712,6 +712,7 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidg
   boolean no_process = FALSE;
 
   boolean is_defaults = FALSE;
+  boolean add_reset_ok = FALSE;
 
   boolean has_param;
 
@@ -837,31 +838,30 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidg
     lives_window_add_accel_group(LIVES_WINDOW(fx_dialog[didx]), fxw_accel_group);
 
     if (!no_process || is_defaults || rfx->status == RFX_STATUS_SCRAP) {
-      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_CANCEL, NULL,
-                     LIVES_RESPONSE_CANCEL);
-      lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
-                                   LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-      if (is_defaults) {
-        okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_APPLY, _("Set as default"),
+      if (!is_defaults) {
+        cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_CANCEL, NULL,
+                       LIVES_RESPONSE_CANCEL);
+        okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_OK, NULL,
                    LIVES_RESPONSE_OK);
-        if (!has_param) lives_widget_set_sensitive(okbutton, FALSE);
-        resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_REVERT_TO_SAVED, _("Reset"),
-                      LIVES_RESPONSE_RESET);
-        if (!has_param) lives_widget_set_sensitive(resetbutton, FALSE);
-      } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_OK, NULL,
-                          LIVES_RESPONSE_OK);
+      } else add_reset_ok = TRUE;
     } else {
       if (rfx->status == RFX_STATUS_WEED) {
-        resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_REVERT_TO_SAVED, _("Reset"),
-                      LIVES_RESPONSE_RESET);
-        okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_APPLY, _("Set as default"),
-                   LIVES_RESPONSE_OK);
-        if (!has_param) {
-          lives_widget_set_sensitive(resetbutton, FALSE);
-          lives_widget_set_sensitive(okbutton, FALSE);
-        }
+        add_reset_ok = TRUE;
       }
+    }
 
+    if (add_reset_ok) {
+      resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_REVERT_TO_SAVED, _("Reset"),
+                    LIVES_RESPONSE_RESET);
+      okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_APPLY, _("Set as default"),
+                 LIVES_RESPONSE_OK);
+      if (!has_param) {
+        lives_widget_set_sensitive(resetbutton, FALSE);
+        lives_widget_set_sensitive(okbutton, FALSE);
+      }
+    }
+
+    if (cancelbutton == NULL) {
       if (rfx->status != RFX_STATUS_WEED && no_process) {
         widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
       }
@@ -869,12 +869,8 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidg
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]), LIVES_STOCK_CLOSE, _("_Close Window"),
                      LIVES_RESPONSE_CANCEL);
 
-      widget_opts.expand = LIVES_EXPAND_DEFAULT;
-
-      lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
-                                   LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
       if (rfx->status != RFX_STATUS_WEED && no_process) {
+        widget_opts.expand = LIVES_EXPAND_DEFAULT;
         LiVESWidget *abox = lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[didx]));
 #if !GTK_CHECK_VERSION(3, 0, 0)
         lives_button_box_set_layout(LIVES_BUTTON_BOX(abox), LIVES_BUTTONBOX_CENTER);
@@ -883,7 +879,8 @@ LiVESWidget *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidg
 #endif
       }
     }
-
+    lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
+                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[didx]), "button", cancelbutton);
 
     if (okbutton != NULL) {

@@ -2621,8 +2621,8 @@ void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
     }
   }
 
-  on_paramwindow_cancel_clicked(button, rfx);
-  fx_dialog[1] = NULL;
+  //on_paramwindow_cancel_clicked(button, rfx);
+  //fx_dialog[1] = NULL;
 }
 
 

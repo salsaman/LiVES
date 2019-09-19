@@ -13,7 +13,9 @@ Permit switching audio source with no clips loaded (bugfix).
 Fix refcounting bugs with realtime effect parameter windows, and with generators which trigger playback.
 Optimise combo boxes with long lists; categorise filter types in rte window.
 Fix label layouts for RFX windows.
-Add colour selection for blurzoom effect.
+Add colour selection for blurzoom effect, improve the effect.
+Various minor fixes and interface tweaks.
+Updated translations for Portuguese, Brazilian Portuguese (Nany Cavalcante)
 
 
 

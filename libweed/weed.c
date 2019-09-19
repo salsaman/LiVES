@@ -279,7 +279,8 @@ static void _weed_plant_free(weed_plant_t *leaf) {
 
 
 static int _weed_leaf_delete(weed_plant_t *plant, const char *key) {
-  weed_leaf_t *leaf = plant, *leafnext, *leafprev = leaf;
+  // don't delete the first ("type") leaf
+  weed_leaf_t *leaf = plant->next, *leafprev = plant;
   uint32_t hash = weed_hash(key);
   while (leaf != NULL) {
     if (leaf->key_hash == hash) {
@@ -460,11 +461,6 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
   switch (api) {
   // higher API versions may use different functions, or add to them
 
-  case 100:
-  case 110:
-  case 120:
-  case 130:
-  case 131:
   default:
     weed_default_get = _weed_default_get;
     weed_leaf_get = _weed_leaf_get;

@@ -263,21 +263,23 @@ void weed_plant_free(weed_plant_t *leaf) {
 }
 
 
-int weed_leaf_delete(weed_plant_t *plant, const char *key) {
-  weed_leaf_t *leaf = plant, *leafnext;
+static int _weed_leaf_delete(weed_plant_t *plant, const char *key) {
+  // don't delete the first ("type") leaf
+  weed_leaf_t *leaf = plant->next, *leafprev = plant;
   uint32_t hash = weed_hash(key);
-  while (leaf->next != NULL) {
-    if (leaf->next->key_hash == hash) {
-      if (!weed_strcmp((char *)leaf->next->key, (char *)key)) {
-        if (leaf->next->flags & WEED_LEAF_READONLY_HOST) return WEED_ERROR_LEAF_READONLY;
-        leafnext = leaf->next;
-        leaf->next = leaf->next->next;
-        weed_leaf_free(leafnext);
+  while (leaf != NULL) {
+    if (leaf->key_hash == hash) {
+      if (!weed_strcmp((char *)leaf->key, (char *)key)) {
+        if (leaf->flags & WEED_LEAF_READONLY_HOST) return WEED_ERROR_LEAF_READONLY;
+        leafprev->next = leaf->next;
+        weed_leaf_free(leaf);
         return WEED_NO_ERROR;
       }
     }
+    leafprev = leaf;
     leaf = leaf->next;
   }
+
   return WEED_ERROR_NOSUCH_LEAF;
 }
 

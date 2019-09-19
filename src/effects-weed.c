@@ -233,6 +233,7 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions
   case 120:
   case 130:
   case 131:
+  case 133:
     value[0] = wdg; // bootstrap weed_default_get (the plugin's default_getter)
 
     weed_set_int_value(host_info, WEED_LEAF_API_VERSION, host_api_version);
@@ -2330,6 +2331,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           return FILTER_ERROR_UNABLE_TO_RESIZE;
         }
       }
+
       // check palette again in case it changed during resize
       inpalette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
 

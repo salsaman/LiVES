@@ -9564,6 +9564,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
     // fall through
     case WEED_PALETTE_YUV420P:
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
+      lives_free(gusrc_array);
       gusrc_array = NULL;
       break;
     case WEED_PALETTE_YUV888:
@@ -10503,6 +10504,12 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 
   if (iwidth == width && iheight == height) return TRUE; // no resize needed
 
+  // prevent a crash in swscale
+  height = (height >> 1) << 1;
+  width = (width >> 1) << 1;
+
+  if (iwidth == width && iheight == height) return TRUE; // no resize needed
+
   // if in palette is a YUV palette which we cannot scale, convert to YUV888 (unclamped) or YUVA8888 (unclamped)
   // we can always scale these
   if (weed_palette_is_yuv_palette(palette)) {
@@ -10602,6 +10609,10 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     }
   }
 
+  // reget these after conversion
+  iwidth = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
+  iheight = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
+
   if (opal_hint == WEED_PALETTE_YUV888) opal_hint = xopal_hint = WEED_PALETTE_YUV444P;
   else if (opal_hint == WEED_PALETTE_YUVA8888) opal_hint = xopal_hint = WEED_PALETTE_YUVA4444P;
 
@@ -10633,7 +10644,8 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     int inplanes = weed_palette_get_numplanes(palette);
     int oplanes = weed_palette_get_numplanes(opal_hint);
 
-    old_layer = weed_plant_copy(layer);
+    old_layer = weed_layer_new();
+    weed_layer_copy(old_layer, layer);
 
     av_log_set_level(AV_LOG_FATAL);
 
@@ -10732,6 +10744,10 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     return TRUE;
   }
 #endif
+
+  // reget these after conversion
+  iwidth = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
+  iheight = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
 
   switch (palette) {
   // anything with 3 or 4 channels (alpha must be last)

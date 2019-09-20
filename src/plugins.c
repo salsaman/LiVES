@@ -3288,7 +3288,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
           if (colsd[0] > red_maxd) colsd[0] = red_maxd;
           if (colsd[1] > green_maxd) colsd[1] = green_maxd;
           if (colsd[2] > blue_maxd) colsd[2] = blue_maxd;
-          cols = (int *)lives_malloc(3 * sizshrt);
+          cols = (int *)lives_malloc(3 * sizint);
           cols[0] = (colsd[0] - red_mind) / (red_maxd - red_mind) * 255. + .49999;
           cols[1] = (colsd[1] - green_mind) / (green_maxd - green_mind) * 255. + .49999;
           cols[2] = (colsd[2] - blue_mind) / (blue_maxd - blue_mind) * 255. + .49999;

@@ -3342,8 +3342,8 @@ LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
                 audio_player_get_display_name(prefs->aplayer),
                 audio_player_get_display_name(prefs->aplayer), msg2);
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
-    int retval = do_abort_cancel_retry_dialog(msg, NULL);
 #ifdef HAVE_PULSE_AUDIO
+    int retval = do_abort_cancel_retry_dialog(msg, NULL);
     if (retval == LIVES_RESPONSE_RETRY) pulse_try_reconnect();
     else {
       mainw->aplayer_broken = TRUE;

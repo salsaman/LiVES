@@ -922,7 +922,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
           weed_set_string_value(filter_class, "extra_authors", laddes->Maker);
 
-          weed_set_voidptr_value(filter_class, "plugin_handle", handle);
+          if (num_plugins == 0) weed_set_voidptr_value(filter_class, "plugin_handle", handle);
 
           weed_set_voidptr_value(filter_class, "plugin_lad_descriptor", laddes);
           weed_set_voidptr_value(filter_class, "plugin_lad_instantiate_func", (void *)lad_instantiate_func);
@@ -995,8 +995,10 @@ void weed_desetup(void) {
   int i, error;
   weed_plant_t **filters = weed_get_plantptr_array(plugin_info, "filters", &error);
   for (i = 0; i < num_filters; i++) {
-    void *handle = weed_get_voidptr_value(filters[i], "plugin_handle", &error);
-    dlclose(handle);
+    if (weed_plant_has_leaf(filters[i], "plugin_handle")) {
+      void *handle = weed_get_voidptr_value(filters[i], "plugin_handle", &error);
+      dlclose(handle);
+    }
   }
   weed_free(filters);
 }

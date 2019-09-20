@@ -2943,7 +2943,7 @@ boolean switch_aud_to_sox(boolean set_in_prefs) {
   set_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
 
   if (mainw->is_ready) {
-    /* //ubuntu has a hissy fit if you hide things in the menu
+    /* //ubuntu / Unity has a hissy fit if you hide things in the menu !
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
     */
@@ -3001,7 +3001,7 @@ void switch_aud_to_none(boolean set_in_prefs) {
     if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
     */
     lives_widget_set_sensitive(mainw->vol_toolitem, FALSE);
-    lives_widget_hide(mainw->recaudio_submenu);
+    // lives_widget_hide(mainw->recaudio_submenu);
 
     if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
@@ -4545,6 +4545,7 @@ char *get_nth_token(const char *string, const char *delim, int pnumber) {
 
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2) {
+  // ignore case
   char *s1u = lives_utf8_casefold(s1, -1);
   char *s2u = lives_utf8_casefold(s2, -1);
   int ret = lives_utf8_strcmp(s1u, s2u);
@@ -4556,6 +4557,18 @@ int lives_utf8_strcasecmp(const char *s1, const char *s2) {
 
 LIVES_GLOBAL_INLINE int lives_utf8_strcmp(const char *s1, const char *s2) {
   return lives_utf8_collate(s1, s2);
+}
+
+
+static int lives_utf8_strcmpfunc(livesconstpointer a, livesconstpointer b, livespointer fwd) {
+  if (LIVES_POINTER_TO_INT(fwd))
+    return strcmp(lives_utf8_collate_key(a, -1), lives_utf8_collate_key(b, -1));
+  return strcmp(lives_utf8_collate_key(b, -1), lives_utf8_collate_key(a, -1));
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fwd) {
+  return lives_list_sort_with_data(list, lives_utf8_strcmpfunc, LIVES_INT_TO_POINTER(fwd));
 }
 
 

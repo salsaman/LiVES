@@ -5112,7 +5112,6 @@ boolean reload_set(const char *set_name) {
       lives_free(com);
 
       if (strlen(mainw->msg) > 0 && (strncmp(mainw->msg, "none", 4))) {
-
         if ((new_file = mainw->first_free_file) == -1) {
           recover_layout_map(MAX_FILES);
 
@@ -5140,7 +5139,7 @@ boolean reload_set(const char *set_name) {
     }
 
     if (strlen(mainw->msg) == 0 || (!strncmp(mainw->msg, "none", 4))) {
-      mainw->suppress_dprint = FALSE;
+      if (!mainw->recovering_files) mainw->suppress_dprint = FALSE;
 
       if (!keep_threaded_dialog) end_threaded_dialog();
 
@@ -7345,9 +7344,8 @@ void on_mute_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->pulsed->mute = mainw->mute;
     if (mainw->pulsed->playing_file == mainw->current_file && CURRENT_CLIP_HAS_AUDIO && !mainw->is_rendering) {
       if (!pulse_audio_seek_bytes(mainw->pulsed, mainw->pulsed->seek_pos, cfile)) {
-        if (pulse_try_reconnect()) pulse_audio_seek_bytes(mainw->pulsed, mainw->pulsed->seek_pos, cfile);
-      }
-      mainw->pulsed->in_use = TRUE;
+        handle_audio_timeout();
+      } else mainw->pulsed->in_use = TRUE;
     }
   }
 #endif
@@ -9355,12 +9353,16 @@ void changed_fps_during_pb(LiVESSpinButton *spinbutton, livespointer user_data) 
 
   if (new_fps * cfile->pb_fps < 0.) {
     // update the current frame number, we will rebase our time on this
-    uint64_t new_ticks;
+    uint64_t new_ticks, xnew_ticks, delta;
     mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
-    new_ticks = mainw->currticks + mainw->deltaticks; // deltaticks are set by scratch and other methods
+    xnew_ticks = new_ticks = mainw->currticks + mainw->deltaticks; // deltaticks are set by scratch and other methods
     pthread_mutex_lock(&mainw->audio_resync_mutex);
     cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
     mainw->startticks = new_ticks;
+    // delta is the fractional frame part
+    delta = xnew_ticks - new_ticks;
+    // but it was in the opposite direction
+    mainw->deltaticks -= delta * 2;
     pthread_mutex_unlock(&mainw->audio_resync_mutex);
   }
 

@@ -66,10 +66,9 @@ static void stream_overflow_callback(pa_stream *s, void *userdata) {
 boolean lives_pulse_init(short startup_phase) {
   // startup pulseaudio server
   char *msg;
-
-  int64_t ntime = 0, stime;
-
   pa_context_state_t pa_state;
+  boolean timeout;
+  int alarm_handle;
 
   if (pa_mloop != NULL) return TRUE;
 
@@ -80,16 +79,18 @@ boolean lives_pulse_init(short startup_phase) {
 
   pa_state = pa_context_get_state(pcon);
 
-  stime = lives_get_current_ticks();
-
-  while (pa_state != PA_CONTEXT_READY && ntime < LIVES_SHORT_TIMEOUT) {
+  alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
+  while (pa_state != PA_CONTEXT_READY && !(timeout = lives_alarm_get(alarm_handle))) {
     sched_yield();
     lives_usleep(prefs->sleep_time);
     pa_state = pa_context_get_state(pcon);
-    ntime = lives_get_current_ticks() - stime;
   }
 
-  if (ntime >= LIVES_SHORT_TIMEOUT) {
+  lives_alarm_clear(alarm_handle);
+
+  if (pa_context_get_state(pcon) == PA_CONTEXT_READY) timeout = FALSE;
+
+  if (timeout) {
     pa_context_unref(pcon);
     pcon = NULL;
     pulse_shutdown();
@@ -207,7 +208,6 @@ static short *shortbuffer = NULL;
 static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *arg) {
   // PULSE AUDIO calls this periodically to get the next audio buffer
   // note the buffer size can, and does, change on each call, making it inefficient to use ringbuffers
-
   pulse_driver_t *pulsed = (pulse_driver_t *)arg;
 
   uint64_t nsamples = nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
@@ -1091,22 +1091,22 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
 
 void pulse_shutdown(void) {
   //g_print("pa shutdown\n");
-  if (pa_mloop != NULL) pa_threaded_mainloop_stop(pa_mloop);
   if (pcon != NULL) {
     //g_print("pa shutdown2\n");
     pa_context_disconnect(pcon);
     pa_context_unref(pcon);
   }
-  if (pa_mloop != NULL) pa_threaded_mainloop_free(pa_mloop);
+  if (pa_mloop != NULL) {
+    pa_threaded_mainloop_stop(pa_mloop);
+    pa_threaded_mainloop_free(pa_mloop);
+  }
   pcon = NULL;
   pa_mloop = NULL;
 }
 
 
 void pulse_close_client(pulse_driver_t *pdriver) {
-  // g_print("pa close\n");
   if (pdriver->pstream != NULL) {
-    //g_print("pa close2\n");
     pa_threaded_mainloop_lock(pa_mloop);
     pa_stream_disconnect(pdriver->pstream);
     pa_stream_set_write_callback(pdriver->pstream, NULL, NULL);
@@ -1333,7 +1333,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
     pa_threaded_mainloop_lock(pa_mloop);
     // set write callback
-    //g_print("Setting writer cb\n");
     pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
 
     pdriver->volume_linear = -1;
@@ -1473,7 +1472,10 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
 void pulse_driver_cork(pulse_driver_t *pdriver) {
   pa_operation *paop;
 
-  if (pdriver->is_corked) return;
+  if (pdriver->is_corked) {
+    //g_print("IS CORKED\n");
+    return;
+  }
 
   pa_threaded_mainloop_lock(pa_mloop);
   paop = pa_stream_cork(pdriver->pstream, 1, corked_cb, pdriver);
@@ -1523,8 +1525,8 @@ uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
       sched_yield(); // wait for seek
       lives_usleep(prefs->sleep_time);
     }
-    if (timeout) return -1;
     lives_alarm_clear(alarm_handle);
+    if (timeout) return -1;
   }
 
   do {
@@ -1556,11 +1558,6 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, int frame) {
   int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
   boolean timeout;
 
-  if (alarm_handle == -1) {
-    LIVES_WARN("Invalid alarm handle");
-    return FALSE;
-  }
-
   if (frame < 1) frame = 1;
 
   do {
@@ -1591,11 +1588,6 @@ int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip
     boolean timeout;
     int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
-    if (alarm_handle == -1) {
-      LIVES_WARN("Invalid alarm handle");
-      return 0;
-    }
-
     do {
       pmsg = pulse_get_msgq(pulsed);
     } while (!(timeout = lives_alarm_get(alarm_handle)) && pmsg != NULL && pmsg->command != ASERVER_CMD_FILE_SEEK);
@@ -1623,15 +1615,37 @@ int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip
 
 
 boolean pulse_try_reconnect(void) {
+  boolean timeout;
+  int alarm_handle;
+  do_threaded_dialog(_("Resetting pulseaudio connection..."), FALSE);
+
   pulse_shutdown();
   mainw->pulsed = NULL;
-  if (!lives_pulse_init(9999)) goto err123; // init server
+
+  lives_system("pulseaudio -k", TRUE);
+  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+  while (!(timeout = lives_alarm_get(alarm_handle))) {
+    sched_yield();
+    lives_usleep(prefs->sleep_time);
+    threaded_dialog_spin(0.);
+  }
+  lives_alarm_clear(alarm_handle);
+
+  if (!lives_pulse_init(9999)) {
+    end_threaded_dialog();
+    goto err123; // init server failed
+  }
   pulse_audio_init(); // reset vars
   pulse_audio_read_init(); // reset vars
   mainw->pulsed = pulse_get_driver(TRUE);
   if (pulse_driver_activate(mainw->pulsed)) { // activate driver
     goto err123;
   }
+  if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
+    // create reader connection now, if permanent
+    pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
+  }
+  end_threaded_dialog();
   d_print(_("\nConnection to pulseaudio was reset.\n"));
   return TRUE;
 

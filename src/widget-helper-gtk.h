@@ -180,6 +180,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define lives_utf8_normalize(a, b, c) g_utf8_normalize(a, b, c)
 #define lives_utf8_collate(a, b) g_utf8_collate(a, b)
+#define lives_utf8_collate_key(a, b) g_utf8_collate_key(a, b)
 #define lives_utf8_casefold(a, b) g_utf8_casefold(a, b)
 
 #define lives_list_nth_data(list, i) g_list_nth_data(list, i)
@@ -200,6 +201,8 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_list_concat(list, data) g_list_concat(list, data)
 #define lives_list_insert(list, data, pos) g_list_insert(list, data, pos)
 #define lives_list_index(list, data) g_list_index(list, data)
+#define lives_list_sort(list, cmp_func) g_list_sort(list, cmp_func)
+#define lives_list_sort_with_data(list, cmp_func, userdata) g_list_sort_with_data(list, cmp_func, userdata)
 #define lives_list_find_custom(list, data, func) g_list_find_custom(list, data, func)
 
 #define lives_slist_free(list) g_slist_free(list)

@@ -1237,6 +1237,7 @@ int lives_ln(const char *from, const char *to);
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2);
 int lives_utf8_strcmp(const char *s1, const char *s2);
+LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fwd);
 
 boolean lives_string_ends_with(const char *string, const char *fmt, ...);
 

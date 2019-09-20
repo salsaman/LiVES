@@ -2726,986 +2726,949 @@ LiVESList *array_to_string_list(char **array, int offset, int len) {
 }
 
 
+static int cmp_menu_entries(livesconstpointer a, livesconstpointer b) {
+  return strcmp(lives_utf8_collate_key(((lives_rfx_t *)a)->menu_text, -1), lives_utf8_collate_key(((lives_rfx_t *)b)->menu_text, -1));
+}
+
+
 void sort_rfx_array(lives_rfx_t *in, int num) {
   // sort rfx array into UTF-8 order by menu entry
-#ifdef GUI_QT
-  QString min_string, str;
-#endif
-
   lives_rfx_t *rfx;
-
-#ifdef GUI_GTK
-  char *min_string = NULL;
-#endif
-  char *tmp = NULL;
-
-  boolean used[num];
-
-  int min_val = 0;
   int sorted = 1;
-
   register int i;
 
-  for (i = 0; i < num; i++) {
-    used[i] = FALSE;
+  LiVESList *rfx_list = NULL, *xrfx_list;
+  for (i = num; i > 0; i--) {
+    rfx_list = lives_list_prepend(rfx_list, (livespointer)&in[i]);
   }
-
+  rfx_list = lives_list_sort(rfx_list, cmp_menu_entries);
   rfx = mainw->rendered_fx = (lives_rfx_t *)lives_malloc((num + 1) * sizeof(lives_rfx_t));
   rfx_copy(rfx, in, FALSE);
-
-  while (sorted <= num) {
-    for (i = 1; i <= num; i++) {
-      if (!used[i - 1]) {
-        if (min_string == NULL) {
-#ifdef GUI_GTK
-          min_string = g_utf8_collate_key(in[i].menu_text, -1);
-#endif
-#ifdef GUI_QT
-          min_string = QString::fromUtf8(in[i].menu_text);
-#endif
-          min_val = i;
-        } else {
-#ifdef GUI_GTK
-          if (strcmp(min_string, (tmp = g_utf8_collate_key(in[i].menu_text, -1))) == 1) {
-            lives_free(min_string);
-            min_string = g_utf8_collate_key(in[i].menu_text, -1);
-#endif
-#ifdef GUI_QT
-            str = QString::fromUtf8(in[i].menu_text);
-            if (str.compare(min_string) < 0) {
-              min_string = str;
-#endif
-              min_val = i;
-            }
-            lives_freep((void **)&tmp);
-          }
-        }
-      }
-      rfx_copy(&mainw->rendered_fx[sorted++], &in[min_val], FALSE);
-      used[min_val - 1] = TRUE;
-#ifdef GUI_GTK
-      lives_freep((void **)&min_string);
-#endif
-    }
+  xrfx_list = rfx_list;
+  while (xrfx_list != NULL) {
+    rfx_copy(&mainw->rendered_fx[sorted++], (lives_rfx_t *)(xrfx_list->data), FALSE);
+    xrfx_list = xrfx_list->next;
   }
+  lives_list_free(rfx_list);
+}
 
 
-  void rfx_copy(lives_rfx_t *dest, lives_rfx_t *src, boolean full) {
-    // Warning, does not copy all fields (full will do that)
-    lives_memcpy(dest->delim, src->delim, 2);
-    dest->source = src->source;
-    if (!full) {
-      // ref. assigned memory
-      src->source = NULL;
-      dest->name = src->name;
-      src->name = NULL;
-      dest->menu_text = src->menu_text;
-      src->menu_text = NULL;
-      dest->action_desc = src->action_desc;
-      src->action_desc = NULL;
-      dest->params = src->params;
-      src->params = NULL;
-    } else {
-      // deep copy
-      if (dest->source_type == LIVES_RFX_SOURCE_WEED && dest->source != NULL) weed_instance_ref(dest->source);
-      dest->name = lives_strdup(src->name);
-      dest->menu_text = lives_strdup(src->menu_text);
-      dest->action_desc = lives_strdup(src->action_desc);
-      // TODO - copy params
-    }
-
-    dest->min_frames = src->min_frames;
-    dest->num_in_channels = src->num_in_channels;
-    dest->status = src->status;
-    dest->props = src->props;
-    dest->source_type = src->source_type;
-    dest->num_params = src->num_params;
-    dest->is_template = src->is_template;
-    dest->menuitem = src->menuitem;
-    dest->extra = NULL;
-    if (!full) return;
-
-    // TODO
-
-  }
-
-
-  void rfx_params_free(lives_rfx_t *rfx) {
-    register int i;
-    for (i = 0; i < rfx->num_params; i++) {
-      if (rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
-      lives_free(rfx->params[i].name);
-      lives_freep((void **)&rfx->params[i].def);
-      lives_freep((void **)&rfx->params[i].value);
-      lives_freep((void **)&rfx->params[i].label);
-      lives_freep((void **)&rfx->params[i].desc);
-      lives_list_free_all(&rfx->params[i].list);
-    }
-  }
-
-
-  void rfx_free(lives_rfx_t *rfx) {
-    if (rfx == NULL) return;
-
-    if (mainw->vrfx_update == rfx) mainw->vrfx_update = NULL;
-
-    lives_freep((void **)&rfx->name);
-    lives_freep((void **)&rfx->menu_text);
-    lives_freep((void **)&rfx->action_desc);
-
-    if (rfx->params != NULL) {
-      rfx_params_free(rfx);
-      lives_free(rfx->params);
-    }
-    if (rfx->extra != NULL) {
-      free(rfx->extra);
-    }
-    if (rfx->source_type == LIVES_RFX_SOURCE_WEED && rfx->source != NULL) {
-      weed_instance_unref((weed_plant_t *)rfx->source); // remove the ref we held
-    }
-  }
-
-
-  void rfx_free_all(void) {
-    register int i;
-    for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test; i++) {
-      rfx_free(&mainw->rendered_fx[i]);
-    }
-    lives_freep((void **)&mainw->rendered_fx);
-  }
-
-
-  void param_copy(lives_param_t *src, lives_param_t *dest, boolean full) {
-    // rfxbuilder.c uses this to copy params to a temporary copy and back again
-
+void rfx_copy(lives_rfx_t *dest, lives_rfx_t *src, boolean full) {
+  // Warning, does not copy all fields (full will do that)
+  lives_memcpy(dest->delim, src->delim, 2);
+  dest->source = src->source;
+  if (!full) {
+    // ref. assigned memory
+    src->source = NULL;
+    dest->name = src->name;
+    src->name = NULL;
+    dest->menu_text = src->menu_text;
+    src->menu_text = NULL;
+    dest->action_desc = src->action_desc;
+    src->action_desc = NULL;
+    dest->params = src->params;
+    src->params = NULL;
+  } else {
+    // deep copy
+    if (dest->source_type == LIVES_RFX_SOURCE_WEED && dest->source != NULL) weed_instance_ref(dest->source);
     dest->name = lives_strdup(src->name);
-    dest->label = lives_strdup(src->label);
-    dest->group = src->group;
-    dest->onchange = src->onchange;
-    dest->type = src->type;
-    dest->dp = src->dp;
-    dest->min = src->min;
-    dest->max = src->max;
-    dest->step_size = src->step_size;
-    dest->wrap = src->wrap;
-    dest->source = src->source;
-    dest->reinit = src->reinit;
-    dest->source_type = src->source_type;
-    dest->value = dest->def = NULL;
-    dest->list = NULL;
+    dest->menu_text = lives_strdup(src->menu_text);
+    dest->action_desc = lives_strdup(src->action_desc);
+    // TODO - copy params
+  }
 
-    switch (dest->type) {
-    case LIVES_PARAM_BOOL:
-      dest->dp = 0;
-    case LIVES_PARAM_NUM:
-      if (!dest->dp) {
-        dest->def = lives_malloc(sizint);
-        lives_memcpy(dest->def, src->def, sizint);
-      } else {
-        dest->def = lives_malloc(sizdbl);
-        lives_memcpy(dest->def, src->def, sizdbl);
-      }
-      break;
-    case LIVES_PARAM_COLRGB24:
-      dest->def = lives_malloc(sizeof(lives_colRGB48_t));
-      lives_memcpy(dest->def, src->def, sizeof(lives_colRGB48_t));
-      break;
-    case LIVES_PARAM_STRING:
-      dest->def = lives_strdup((char *)src->def);
-      break;
-    case LIVES_PARAM_STRING_LIST:
+  dest->min_frames = src->min_frames;
+  dest->num_in_channels = src->num_in_channels;
+  dest->status = src->status;
+  dest->props = src->props;
+  dest->source_type = src->source_type;
+  dest->num_params = src->num_params;
+  dest->is_template = src->is_template;
+  dest->menuitem = src->menuitem;
+  dest->extra = NULL;
+  if (!full) return;
+
+  // TODO
+
+}
+
+
+void rfx_params_free(lives_rfx_t *rfx) {
+  register int i;
+  for (i = 0; i < rfx->num_params; i++) {
+    if (rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
+    lives_free(rfx->params[i].name);
+    lives_freep((void **)&rfx->params[i].def);
+    lives_freep((void **)&rfx->params[i].value);
+    lives_freep((void **)&rfx->params[i].label);
+    lives_freep((void **)&rfx->params[i].desc);
+    lives_list_free_all(&rfx->params[i].list);
+  }
+}
+
+
+void rfx_free(lives_rfx_t *rfx) {
+  if (rfx == NULL) return;
+
+  if (mainw->vrfx_update == rfx) mainw->vrfx_update = NULL;
+
+  lives_freep((void **)&rfx->name);
+  lives_freep((void **)&rfx->menu_text);
+  lives_freep((void **)&rfx->action_desc);
+
+  if (rfx->params != NULL) {
+    rfx_params_free(rfx);
+    lives_free(rfx->params);
+  }
+  if (rfx->extra != NULL) {
+    free(rfx->extra);
+  }
+  if (rfx->source_type == LIVES_RFX_SOURCE_WEED && rfx->source != NULL) {
+    weed_instance_unref((weed_plant_t *)rfx->source); // remove the ref we held
+  }
+}
+
+
+void rfx_free_all(void) {
+  register int i;
+  for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test; i++) {
+    rfx_free(&mainw->rendered_fx[i]);
+  }
+  lives_freep((void **)&mainw->rendered_fx);
+}
+
+
+void param_copy(lives_param_t *src, lives_param_t *dest, boolean full) {
+  // rfxbuilder.c uses this to copy params to a temporary copy and back again
+
+  dest->name = lives_strdup(src->name);
+  dest->label = lives_strdup(src->label);
+  dest->group = src->group;
+  dest->onchange = src->onchange;
+  dest->type = src->type;
+  dest->dp = src->dp;
+  dest->min = src->min;
+  dest->max = src->max;
+  dest->step_size = src->step_size;
+  dest->wrap = src->wrap;
+  dest->source = src->source;
+  dest->reinit = src->reinit;
+  dest->source_type = src->source_type;
+  dest->value = dest->def = NULL;
+  dest->list = NULL;
+
+  switch (dest->type) {
+  case LIVES_PARAM_BOOL:
+    dest->dp = 0;
+  case LIVES_PARAM_NUM:
+    if (!dest->dp) {
       dest->def = lives_malloc(sizint);
-      set_int_param(dest->def, get_int_param(src->def));
-      if (src->list != NULL) dest->list = lives_list_copy(src->list);
+      lives_memcpy(dest->def, src->def, sizint);
+    } else {
+      dest->def = lives_malloc(sizdbl);
+      lives_memcpy(dest->def, src->def, sizdbl);
+    }
+    break;
+  case LIVES_PARAM_COLRGB24:
+    dest->def = lives_malloc(sizeof(lives_colRGB48_t));
+    lives_memcpy(dest->def, src->def, sizeof(lives_colRGB48_t));
+    break;
+  case LIVES_PARAM_STRING:
+    dest->def = lives_strdup((char *)src->def);
+    break;
+  case LIVES_PARAM_STRING_LIST:
+    dest->def = lives_malloc(sizint);
+    set_int_param(dest->def, get_int_param(src->def));
+    if (src->list != NULL) dest->list = lives_list_copy(src->list);
+    break;
+  default:
+    break;
+  }
+  if (!full) return;
+  // TODO - copy value, copy widgets
+
+}
+
+
+boolean get_bool_param(void *value) {
+  boolean ret;
+  lives_memcpy(&ret, value, 4);
+  return ret;
+}
+
+
+int get_int_param(void *value) {
+  int ret;
+  lives_memcpy(&ret, value, sizint);
+  return ret;
+}
+
+
+double get_double_param(void *value) {
+  double ret;
+  lives_memcpy(&ret, value, sizdbl);
+  return ret;
+}
+
+
+void get_colRGB24_param(void *value, lives_colRGB48_t *rgb) {
+  lives_memcpy(rgb, value, sizeof(lives_colRGB48_t));
+}
+
+
+void get_colRGBA32_param(void *value, lives_colRGBA64_t *rgba) {
+  lives_memcpy(rgba, value, sizeof(lives_colRGBA64_t));
+}
+
+
+void set_bool_param(void *value, boolean _const) {
+  set_int_param(value, !!_const);
+}
+
+
+void set_string_param(void **value_ptr, const char *_const, size_t maxlen) {
+  lives_freep(value_ptr);
+  *value_ptr = lives_strndup(_const, maxlen);
+}
+
+
+void set_int_param(void *value, int _const) {
+  lives_memcpy(value, &_const, sizint);
+}
+
+
+void set_double_param(void *value, double _const) {
+  lives_memcpy(value, &_const, sizdbl);
+}
+
+
+boolean set_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, const char *value, boolean update_visual) {
+  size_t len = strlen(value);
+  lives_param_t *param = find_rfx_param_by_name(rfx, name);
+  if (param == NULL) return FALSE;
+  set_string_param((void **)&param->value, value, len > RFX_MAXSTRINGLEN ? RFX_MAXSTRINGLEN : len);
+  if (update_visual) {
+    LiVESList *list = NULL;
+    char *tmp, *tmp2;
+    list = lives_list_append(list, lives_strdup_printf("\"%s\"", (tmp = U82L(tmp2 = subst(value, "\"", "\\\"")))));
+    lives_free(tmp);
+    lives_free(tmp2);
+    set_param_from_list(list, param, 0, FALSE, TRUE);
+    lives_list_free_all(&list);
+  }
+  return TRUE;
+}
+
+
+boolean get_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, char **return_value) {
+  lives_param_t *param = find_rfx_param_by_name(rfx, name);
+  if (param == NULL) return FALSE;
+  *return_value = lives_strndup(param->value, RFX_MAXSTRINGLEN);
+  return TRUE;
+}
+
+
+void set_colRGB24_param(void *value, short red, short green, short blue) {
+  lives_colRGB48_t *rgbp = (lives_colRGB48_t *)value;
+
+  if (red < 0) red = 0;
+  if (red > 255) red = 255;
+  if (green < 0) green = 0;
+  if (green > 255) green = 255;
+  if (blue < 0) blue = 0;
+  if (blue > 255) blue = 255;
+
+  rgbp->red = red;
+  rgbp->green = green;
+  rgbp->blue = blue;
+
+}
+
+
+void set_colRGBA32_param(void *value, short red, short green, short blue, short alpha) {
+  lives_colRGBA64_t *rgbap = (lives_colRGBA64_t *)value;
+  rgbap->red = red;
+  rgbap->green = green;
+  rgbap->blue = blue;
+  rgbap->alpha = alpha;
+}
+
+
+///////////////////////////////////////////////////////////////
+
+int find_rfx_plugin_by_name(const char *name, short status) {
+  int i;
+  for (i = 1; i < mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
+       mainw->num_rendered_effects_test; i++) {
+    if (mainw->rendered_fx[i].name != NULL && !strcmp(mainw->rendered_fx[i].name, name)
+        && mainw->rendered_fx[i].status == status)
+      return (int)i;
+  }
+  return -1;
+}
+
+
+lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
+  int i;
+  if (rfx == NULL) return NULL;
+  for (i = 0; i < rfx->num_params; i++) {
+    if (!strcmp(name, rfx->params[i].name)) {
+      return &rfx->params[i];
+    }
+  }
+  return NULL;
+}
+
+
+lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_reinits) {
+  int i, j;
+  lives_param_t *rpar = (lives_param_t *)lives_malloc(npar * sizeof(lives_param_t));
+  int param_hint;
+  char **list;
+  LiVESList *gtk_list = NULL;
+  char *string;
+  int error;
+  int vali;
+  double vald;
+  weed_plant_t *gui = NULL;
+  int listlen;
+  int cspace, *cols = NULL, red_min = 0, red_max = 255, green_min = 0, green_max = 255, blue_min = 0, blue_max = 255, *maxi = NULL,
+               *mini = NULL;
+  double *colsd;
+  double red_mind = 0., red_maxd = 1., green_mind = 0., green_maxd = 1., blue_mind = 0., blue_maxd = 1., *maxd = NULL, *mind = NULL;
+  int flags = 0;
+  int nwpars = 0, poffset = 0;
+  boolean col_int;
+
+  weed_plant_t *wtmpl;
+  weed_plant_t **wpars = NULL, *wpar = NULL;
+
+  weed_plant_t *chann, *ctmpl;
+  weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
+
+  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) nwpars = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
+  if (nwpars > 0) wpars = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+
+  for (i = 0; i < npar; i++) {
+    if (i - poffset >= nwpars) {
+      // handling for compound fx
+      poffset += nwpars;
+      if (wpars != NULL) lives_free(wpars);
+      inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+      if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) nwpars = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
+      else nwpars = 0;
+      if (nwpars > 0) wpars = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+      else wpars = NULL;
+      i--;
+      continue;
+    }
+
+    wpar = wpars[i - poffset];
+    wtmpl = weed_get_plantptr_value(wpar, WEED_LEAF_TEMPLATE, &error);
+
+    if (weed_plant_has_leaf(wtmpl, WEED_LEAF_FLAGS)) flags = weed_get_int_value(wtmpl, WEED_LEAF_FLAGS, &error);
+    else flags = 0;
+
+    rpar[i].flags = flags;
+
+    gui = NULL;
+
+    if (weed_plant_has_leaf(wtmpl, WEED_LEAF_GUI)) gui = weed_get_plantptr_value(wtmpl, WEED_LEAF_GUI, &error);
+
+    rpar[i].group = 0;
+
+    rpar[i].use_mnemonic = FALSE;
+    rpar[i].interp_func = rpar[i].display_func = NULL;
+    rpar[i].hidden = 0;
+    rpar[i].step_size = 1.;
+    if (enabled_in_channels(filter, FALSE) == 2 && get_transition_param(filter, FALSE) == i) rpar[i].transition = TRUE;
+    else rpar[i].transition = FALSE;
+    rpar[i].wrap = FALSE;
+    rpar[i].reinit = FALSE;
+    rpar[i].change_blocked = FALSE;
+    rpar[i].source = wtmpl;
+    rpar[i].source_type = LIVES_RFX_SOURCE_WEED;
+    rpar[i].special_type = LIVES_PARAM_SPECIAL_TYPE_NONE;
+    rpar[i].special_type_index = 0;
+    rpar[i].value = NULL;
+    rpar[i].def = NULL;
+
+    if (flags & WEED_PARAMETER_VARIABLE_ELEMENTS && !(flags & WEED_PARAMETER_ELEMENT_PER_CHANNEL)) {
+      rpar[i].hidden |= HIDDEN_MULTI;
+      rpar[i].multi = PVAL_MULTI_ANY;
+    } else if (flags & WEED_PARAMETER_ELEMENT_PER_CHANNEL) {
+      rpar[i].hidden |= HIDDEN_MULTI;
+      rpar[i].multi = PVAL_MULTI_PER_CHANNEL;
+    } else rpar[i].multi = PVAL_MULTI_NONE;
+
+    chann = get_enabled_channel(inst, 0, TRUE);
+    ctmpl = weed_get_plantptr_value(chann, WEED_LEAF_TEMPLATE, &error);
+
+    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_IS_AUDIO) && weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE) {
+      // dont hide multivalued params for audio effects
+      rpar[i].hidden = 0;
+    }
+
+    rpar[i].dp = 0;
+    rpar[i].min = 0.;
+    rpar[i].max = 0.;
+    rpar[i].list = NULL;
+
+    if (flags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) {
+      rpar[i].reinit = TRUE;
+      if (!show_reinits) rpar[i].hidden |= HIDDEN_NEEDS_REINIT;
+    } else rpar[i].reinit = FALSE;
+
+    // hide internally connected params for compound fx
+    if (weed_plant_has_leaf(wpar, WEED_LEAF_HOST_INTERNAL_CONNECTION)) rpar[i].hidden |= HIDDEN_COMPOUND_INTERNAL;
+
+    ///////////////////////////////
+    param_hint = weed_get_int_value(wtmpl, WEED_LEAF_HINT, &error);
+
+    switch (param_hint) {
+    case WEED_HINT_SWITCH:
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 1) {
+        rpar[i].hidden |= HIDDEN_MULTI;
+      }
+      rpar[i].type = LIVES_PARAM_BOOL;
+      rpar[i].value = lives_malloc(sizint);
+      rpar[i].def = lives_malloc(sizint);
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) vali = weed_get_boolean_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+      else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) vali = weed_get_boolean_value(wtmpl, WEED_LEAF_DEFAULT, &error);
+      else vali = weed_get_boolean_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+      set_int_param(rpar[i].def, vali);
+      vali = weed_get_boolean_value(wpar, WEED_LEAF_VALUE, &error);
+      set_int_param(rpar[i].value, vali);
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_GROUP)) rpar[i].group = weed_get_int_value(wtmpl, WEED_LEAF_GROUP, &error);
       break;
+    case WEED_HINT_INTEGER:
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 1) {
+        rpar[i].hidden |= HIDDEN_MULTI;
+      }
+      rpar[i].type = LIVES_PARAM_NUM;
+      rpar[i].value = lives_malloc(sizint);
+      rpar[i].def = lives_malloc(sizint);
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) {
+        vali = weed_get_int_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+      } else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) vali = weed_get_int_value(wtmpl, WEED_LEAF_DEFAULT, &error);
+      else vali = weed_get_int_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+      set_int_param(rpar[i].def, vali);
+      vali = weed_get_int_value(wpar, WEED_LEAF_VALUE, &error);
+      set_int_param(rpar[i].value, vali);
+      rpar[i].min = (double)weed_get_int_value(wtmpl, WEED_LEAF_MIN, &error);
+      rpar[i].max = (double)weed_get_int_value(wtmpl, WEED_LEAF_MAX, &error);
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_WRAP) && weed_get_boolean_value(wtmpl, WEED_LEAF_WRAP, &error) == WEED_TRUE) rpar[i].wrap = TRUE;
+      if (gui != NULL) {
+        if (weed_plant_has_leaf(gui, WEED_LEAF_CHOICES)) {
+          listlen = weed_leaf_num_elements(gui, WEED_LEAF_CHOICES);
+          list = weed_get_string_array(gui, WEED_LEAF_CHOICES, &error);
+          for (j = 0; j < listlen; j++) {
+            gtk_list = lives_list_append(gtk_list, list[j]);
+          }
+          lives_free(list);
+          rpar[i].list = lives_list_copy(gtk_list);
+          lives_list_free(gtk_list);
+          gtk_list = NULL;
+          rpar[i].type = LIVES_PARAM_STRING_LIST;
+          rpar[i].max = listlen;
+        } else if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE))
+          rpar[i].step_size = (double)weed_get_int_value(gui, WEED_LEAF_STEP_SIZE, &error);
+        if (rpar[i].step_size == 0.) rpar[i].step_size = 1.;
+      }
+      break;
+    case WEED_HINT_FLOAT:
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 1) {
+        rpar[i].hidden |= HIDDEN_MULTI;
+      }
+      rpar[i].type = LIVES_PARAM_NUM;
+      rpar[i].value = lives_malloc(sizdbl);
+      rpar[i].def = lives_malloc(sizdbl);
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) vald = weed_get_double_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+      else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) vald = weed_get_double_value(wtmpl, WEED_LEAF_DEFAULT, &error);
+      else vald = weed_get_double_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+      set_double_param(rpar[i].def, vald);
+      vald = weed_get_double_value(wpar, WEED_LEAF_VALUE, &error);
+      set_double_param(rpar[i].value, vald);
+      rpar[i].min = weed_get_double_value(wtmpl, WEED_LEAF_MIN, &error);
+      rpar[i].max = weed_get_double_value(wtmpl, WEED_LEAF_MAX, &error);
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_WRAP) && weed_get_boolean_value(wtmpl, WEED_LEAF_WRAP, &error) == WEED_TRUE) rpar[i].wrap = TRUE;
+      rpar[i].step_size = 0.;
+      rpar[i].dp = 2;
+      if (gui != NULL) {
+        if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE)) rpar[i].step_size = weed_get_double_value(gui, WEED_LEAF_STEP_SIZE, &error);
+        if (weed_plant_has_leaf(gui, WEED_LEAF_DECIMALS)) rpar[i].dp = weed_get_int_value(gui, WEED_LEAF_DECIMALS, &error);
+      }
+      if (rpar[i].step_size == 0.) {
+        if (rpar[i].max - rpar[i].min > 1.) rpar[i].step_size = 1.;
+        else rpar[i].step_size = 1. / (double)lives_10pow(rpar[i].dp);
+      }
+      break;
+    case WEED_HINT_TEXT:
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 1) {
+        rpar[i].hidden |= HIDDEN_MULTI;
+      }
+      rpar[i].type = LIVES_PARAM_STRING;
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) string = weed_get_string_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+      else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) string = weed_get_string_value(wtmpl, WEED_LEAF_DEFAULT, &error);
+      else string = weed_get_string_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+      rpar[i].def = string;
+      string = weed_get_string_value(wpar, WEED_LEAF_VALUE, &error);
+      rpar[i].value = string;
+      rpar[i].max = 0.;
+      if (gui != NULL && weed_plant_has_leaf(gui, WEED_LEAF_MAXCHARS)) {
+        rpar[i].max = (double)weed_get_int_value(gui, WEED_LEAF_MAXCHARS, &error);
+        if (rpar[i].max < 0.) rpar[i].max = 0.;
+      }
+      break;
+    case WEED_HINT_COLOR:
+      cspace = weed_get_int_value(wtmpl, WEED_LEAF_COLORSPACE, &error);
+      switch (cspace) {
+      case WEED_COLORSPACE_RGB:
+        if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 3) {
+          rpar[i].hidden |= HIDDEN_MULTI;
+        }
+        rpar[i].type = LIVES_PARAM_COLRGB24;
+        rpar[i].value = lives_malloc(3 * sizint);
+        rpar[i].def = lives_malloc(3 * sizint);
+
+        if (weed_leaf_seed_type(wtmpl, WEED_LEAF_DEFAULT) == WEED_SEED_INT) {
+          if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) {
+            cols = weed_get_int_array(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+          } else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) cols = weed_get_int_array(wtmpl, WEED_LEAF_DEFAULT, &error);
+          else cols = weed_get_int_array(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+          if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MAX) == 1) {
+            red_max = green_max = blue_max = weed_get_int_value(wtmpl, WEED_LEAF_MAX, &error);
+          } else {
+            maxi = weed_get_int_array(wtmpl, WEED_LEAF_MAX, &error);
+            red_max = maxi[0];
+            green_max = maxi[1];
+            blue_max = maxi[2];
+          }
+          if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MIN) == 1) {
+            red_min = green_min = blue_min = weed_get_int_value(wtmpl, WEED_LEAF_MIN, &error);
+          } else {
+            mini = weed_get_int_array(wtmpl, WEED_LEAF_MIN, &error);
+            red_min = mini[0];
+            green_min = mini[1];
+            blue_min = mini[2];
+          }
+          if (cols[0] < red_min) cols[0] = red_min;
+          if (cols[1] < green_min) cols[1] = green_min;
+          if (cols[2] < blue_min) cols[2] = blue_min;
+          if (cols[0] > red_max) cols[0] = red_max;
+          if (cols[1] > green_max) cols[1] = green_max;
+          if (cols[2] > blue_max) cols[2] = blue_max;
+          cols[0] = (double)(cols[0] - red_min) / (double)(red_max - red_min) * 255. + .49999;
+          cols[1] = (double)(cols[1] - green_min) / (double)(green_max - green_min) * 255. + .49999;
+          cols[2] = (double)(cols[2] - blue_min) / (double)(blue_max - blue_min) * 255. + .49999;
+          col_int = TRUE;
+        } else {
+          if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) colsd = weed_get_double_array(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+          else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) colsd = weed_get_double_array(wtmpl, WEED_LEAF_DEFAULT, &error);
+          else colsd = weed_get_double_array(wtmpl, WEED_LEAF_DEFAULT, &error);
+          if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MAX) == 1) {
+            red_maxd = green_maxd = blue_maxd = weed_get_double_value(wtmpl, WEED_LEAF_MAX, &error);
+          } else {
+            maxd = weed_get_double_array(wtmpl, WEED_LEAF_MAX, &error);
+            red_maxd = maxd[0];
+            green_maxd = maxd[1];
+            blue_maxd = maxd[2];
+          }
+          if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MIN) == 1) {
+            red_mind = green_mind = blue_mind = weed_get_double_value(wtmpl, WEED_LEAF_MIN, &error);
+          } else {
+            mind = weed_get_double_array(wtmpl, WEED_LEAF_MIN, &error);
+            red_mind = mind[0];
+            green_mind = mind[1];
+            blue_mind = mind[2];
+          }
+          if (colsd[0] < red_mind) colsd[0] = red_mind;
+          if (colsd[1] < green_mind) colsd[1] = green_mind;
+          if (colsd[2] < blue_mind) colsd[2] = blue_mind;
+          if (colsd[0] > red_maxd) colsd[0] = red_maxd;
+          if (colsd[1] > green_maxd) colsd[1] = green_maxd;
+          if (colsd[2] > blue_maxd) colsd[2] = blue_maxd;
+          cols = (int *)lives_malloc(3 * sizshrt);
+          cols[0] = (colsd[0] - red_mind) / (red_maxd - red_mind) * 255. + .49999;
+          cols[1] = (colsd[1] - green_mind) / (green_maxd - green_mind) * 255. + .49999;
+          cols[2] = (colsd[2] - blue_mind) / (blue_maxd - blue_mind) * 255. + .49999;
+          col_int = FALSE;
+        }
+        set_colRGB24_param(rpar[i].def, cols[0], cols[1], cols[2]);
+
+        if (col_int) {
+          lives_free(cols);
+          cols = weed_get_int_array(wpar, WEED_LEAF_VALUE, &error);
+          if (cols[0] < red_min) cols[0] = red_min;
+          if (cols[1] < green_min) cols[1] = green_min;
+          if (cols[2] < blue_min) cols[2] = blue_min;
+          if (cols[0] > red_max) cols[0] = red_max;
+          if (cols[1] > green_max) cols[1] = green_max;
+          if (cols[2] > blue_max) cols[2] = blue_max;
+          cols[0] = (double)(cols[0] - red_min) / (double)(red_max - red_min) * 255. + .49999;
+          cols[1] = (double)(cols[1] - green_min) / (double)(green_max - green_min) * 255. + .49999;
+          cols[2] = (double)(cols[2] - blue_min) / (double)(blue_max - blue_min) * 255. + .49999;
+        } else {
+          colsd = weed_get_double_array(wpar, WEED_LEAF_VALUE, &error);
+          if (colsd[0] < red_mind) colsd[0] = red_mind;
+          if (colsd[1] < green_mind) colsd[1] = green_mind;
+          if (colsd[2] < blue_mind) colsd[2] = blue_mind;
+          if (colsd[0] > red_maxd) colsd[0] = red_maxd;
+          if (colsd[1] > green_maxd) colsd[1] = green_maxd;
+          if (colsd[2] > blue_maxd) colsd[2] = blue_maxd;
+          cols[0] = (colsd[0] - red_mind) / (red_maxd - red_mind) * 255. + .49999;
+          cols[1] = (colsd[1] - green_mind) / (green_maxd - green_mind) * 255. + .49999;
+          cols[2] = (colsd[2] - blue_mind) / (blue_maxd - blue_mind) * 255. + .49999;
+        }
+        set_colRGB24_param(rpar[i].value, (short)cols[0], (short)cols[1], (short)cols[2]);
+        lives_free(cols);
+
+        lives_freep((void **)&maxi);
+        lives_freep((void **)&mini);
+        lives_freep((void **)&maxd);
+        lives_freep((void **)&mind);
+        break;
+      }
+      break;
+
     default:
-      break;
+      rpar[i].type = LIVES_PARAM_UNKNOWN; // TODO - try to get default
     }
-    if (!full) return;
-    // TODO - copy value, copy widgets
 
-  }
+    string = weed_get_string_value(wtmpl, WEED_LEAF_NAME, &error);
+    rpar[i].name = string;
+    rpar[i].label = lives_strdup(string);
 
+    if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DESCRIPTION)) {
+      string = weed_get_string_value(wtmpl, WEED_LEAF_DESCRIPTION, &error);
+      rpar[i].desc = string;
+    } else rpar[i].desc = NULL;
 
-  boolean get_bool_param(void *value) {
-    boolean ret;
-    lives_memcpy(&ret, value, 4);
-    return ret;
-  }
+    // gui part /////////////////////
 
-
-  int get_int_param(void *value) {
-    int ret;
-    lives_memcpy(&ret, value, sizint);
-    return ret;
-  }
-
-
-  double get_double_param(void *value) {
-    double ret;
-    lives_memcpy(&ret, value, sizdbl);
-    return ret;
-  }
-
-
-  void get_colRGB24_param(void *value, lives_colRGB48_t *rgb) {
-    lives_memcpy(rgb, value, sizeof(lives_colRGB48_t));
-  }
-
-
-  void get_colRGBA32_param(void *value, lives_colRGBA64_t *rgba) {
-    lives_memcpy(rgba, value, sizeof(lives_colRGBA64_t));
-  }
-
-
-  void set_bool_param(void *value, boolean _const) {
-    set_int_param(value, !!_const);
-  }
-
-
-  void set_string_param(void **value_ptr, const char *_const, size_t maxlen) {
-    lives_freep(value_ptr);
-    *value_ptr = lives_strndup(_const, maxlen);
-  }
-
-
-  void set_int_param(void *value, int _const) {
-    lives_memcpy(value, &_const, sizint);
-  }
-
-
-  void set_double_param(void *value, double _const) {
-    lives_memcpy(value, &_const, sizdbl);
-  }
-
-
-  boolean set_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, const char *value, boolean update_visual) {
-    size_t len = strlen(value);
-    lives_param_t *param = find_rfx_param_by_name(rfx, name);
-    if (param == NULL) return FALSE;
-    set_string_param((void **)&param->value, value, len > RFX_MAXSTRINGLEN ? RFX_MAXSTRINGLEN : len);
-    if (update_visual) {
-      LiVESList *list = NULL;
-      char *tmp, *tmp2;
-      list = lives_list_append(list, lives_strdup_printf("\"%s\"", (tmp = U82L(tmp2 = subst(value, "\"", "\\\"")))));
-      lives_free(tmp);
-      lives_free(tmp2);
-      set_param_from_list(list, param, 0, FALSE, TRUE);
-      lives_list_free_all(&list);
-    }
-    return TRUE;
-  }
-
-
-  boolean get_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, char **return_value) {
-    lives_param_t *param = find_rfx_param_by_name(rfx, name);
-    if (param == NULL) return FALSE;
-    *return_value = lives_strndup(param->value, RFX_MAXSTRINGLEN);
-    return TRUE;
-  }
-
-
-  void set_colRGB24_param(void *value, short red, short green, short blue) {
-    lives_colRGB48_t *rgbp = (lives_colRGB48_t *)value;
-
-    if (red < 0) red = 0;
-    if (red > 255) red = 255;
-    if (green < 0) green = 0;
-    if (green > 255) green = 255;
-    if (blue < 0) blue = 0;
-    if (blue > 255) blue = 255;
-
-    rgbp->red = red;
-    rgbp->green = green;
-    rgbp->blue = blue;
-
-  }
-
-
-  void set_colRGBA32_param(void *value, short red, short green, short blue, short alpha) {
-    lives_colRGBA64_t *rgbap = (lives_colRGBA64_t *)value;
-    rgbap->red = red;
-    rgbap->green = green;
-    rgbap->blue = blue;
-    rgbap->alpha = alpha;
-  }
-
-
-  ///////////////////////////////////////////////////////////////
-
-  int find_rfx_plugin_by_name(const char *name, short status) {
-    int i;
-    for (i = 1; i < mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-         mainw->num_rendered_effects_test; i++) {
-      if (mainw->rendered_fx[i].name != NULL && !strcmp(mainw->rendered_fx[i].name, name)
-          && mainw->rendered_fx[i].status == status)
-        return (int)i;
-    }
-    return -1;
-  }
-
-
-  lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
-    int i;
-    if (rfx == NULL) return NULL;
-    for (i = 0; i < rfx->num_params; i++) {
-      if (!strcmp(name, rfx->params[i].name)) {
-        return &rfx->params[i];
+    if (gui != NULL) {
+      if (weed_plant_has_leaf(gui, WEED_LEAF_LABEL)) {
+        string = weed_get_string_value(gui, WEED_LEAF_LABEL, &error);
+        lives_free(rpar[i].label);
+        rpar[i].label = string;
+      }
+      if (weed_plant_has_leaf(gui, WEED_LEAF_USE_MNEMONIC)) rpar[i].use_mnemonic = weed_get_boolean_value(gui, WEED_LEAF_USE_MNEMONIC, &error);
+      if (weed_plant_has_leaf(gui, WEED_LEAF_HIDDEN))
+        rpar[i].hidden |= ((weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, &error) == WEED_TRUE) * HIDDEN_GUI);
+      if (weed_plant_has_leaf(gui, WEED_LEAF_DISPLAY_FUNC)) {
+        weed_display_f *display_func_ptr_ptr;
+        weed_display_f display_func;
+        weed_leaf_get(gui, WEED_LEAF_DISPLAY_FUNC, 0, (void *)&display_func_ptr_ptr);
+        display_func = *display_func_ptr_ptr;
+        rpar[i].display_func = (fn_ptr)display_func;
+      }
+      if (weed_plant_has_leaf(gui, WEED_LEAF_INTERPOLATE_FUNC)) {
+        weed_interpolate_f *interp_func_ptr_ptr;
+        weed_interpolate_f interp_func;
+        weed_leaf_get(gui, WEED_LEAF_INTERPOLATE_FUNC, 0, (void *)&interp_func_ptr_ptr);
+        interp_func = *interp_func_ptr_ptr;
+        rpar[i].interp_func = (fn_ptr)interp_func;
       }
     }
-    return NULL;
+
+    for (j = 0; j < MAX_PARAM_WIDGETS; j++) {
+      rpar[i].widgets[j] = NULL;
+    }
+    rpar[i].onchange = FALSE;
   }
 
+  lives_free(wpars);
 
-  lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_reinits) {
-    int i, j;
-    lives_param_t *rpar = (lives_param_t *)lives_malloc(npar * sizeof(lives_param_t));
-    int param_hint;
-    char **list;
-    LiVESList *gtk_list = NULL;
-    char *string;
-    int error;
-    int vali;
-    double vald;
-    weed_plant_t *gui = NULL;
-    int listlen;
-    int cspace, *cols = NULL, red_min = 0, red_max = 255, green_min = 0, green_max = 255, blue_min = 0, blue_max = 255, *maxi = NULL,
-                 *mini = NULL;
-    double *colsd;
-    double red_mind = 0., red_maxd = 1., green_mind = 0., green_maxd = 1., blue_mind = 0., blue_maxd = 1., *maxd = NULL, *mind = NULL;
-    int flags = 0;
-    int nwpars = 0, poffset = 0;
-    boolean col_int;
+  return rpar;
+}
 
-    weed_plant_t *wtmpl;
-    weed_plant_t **wpars = NULL, *wpar = NULL;
 
-    weed_plant_t *chann, *ctmpl;
+lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
+  // return an RFX for a weed effect; set rfx->source to an INSTANCE of the filter (first instance for compound fx)
+  // instance should be refcounted
+  int error;
+  weed_plant_t *filter, *inst;
+
+  char *string;
+  lives_rfx_t *rfx = (lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
+  rfx->is_template = FALSE;
+  if (weed_get_int_value(plant, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
+    filter = weed_instance_get_filter(plant, TRUE);
+    inst = plant;
+  } else {
+    filter = plant;
+    inst = weed_instance_from_filter(filter);
+    // init and deinit the effect to allow the plugin to hide parameters, etc.
+    // rfx will inherit the refcount
+    weed_reinit_effect(inst, TRUE);
+    weed_instance_unref(inst);
+    rfx->is_template = TRUE;
+  }
+
+  string = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
+  rfx->name = string;
+  rfx->menu_text = lives_strdup(string);
+  rfx->action_desc = lives_strdup("no action");
+  rfx->min_frames = -1;
+  rfx->num_in_channels = enabled_in_channels(filter, FALSE);
+  rfx->status = RFX_STATUS_WEED;
+  rfx->props = 0;
+  rfx->menuitem = NULL;
+  if (!weed_plant_has_leaf(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES) ||
+      weed_get_plantptr_value(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error) == NULL) rfx->num_params = 0;
+  else rfx->num_params = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
+  if (rfx->num_params > 0) rfx->params = weed_params_to_rfx(rfx->num_params, inst, show_reinits);
+  else rfx->params = NULL;
+  rfx->source = (void *)inst;
+  rfx->source_type = LIVES_RFX_SOURCE_WEED;
+  rfx->extra = NULL;
+  rfx->flags = 0;
+  return rfx;
+}
+
+
+LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
+  LiVESList *hints = NULL;
+
+  if (rfx->status == RFX_STATUS_WEED) {
+    int nfilters, error;
+    int num_hints;
+    weed_plant_t *gui;
+    weed_plant_t *inst = (weed_plant_t *)rfx->source;
     weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
+    int *filters = NULL;
+    char *string, **rfx_strings, *delim;
 
-    if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) nwpars = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
-    if (nwpars > 0) wpars = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+    register int i;
 
-    for (i = 0; i < npar; i++) {
-      if (i - poffset >= nwpars) {
-        // handling for compound fx
-        poffset += nwpars;
-        if (wpars != NULL) lives_free(wpars);
-        inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
-        if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) nwpars = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
-        else nwpars = 0;
-        if (nwpars > 0) wpars = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-        else wpars = NULL;
-        i--;
+    if ((nfilters = num_compound_fx(filter)) > 1) {
+      // handle compound fx
+      filters = weed_get_int_array(filter, WEED_LEAF_HOST_FILTER_LIST, &error);
+    }
+
+    for (i = 0; i < nfilters; i++) {
+
+      if (filters != NULL) {
+        filter = get_weed_filter(filters[i]);
+      }
+
+      if (!weed_plant_has_leaf(filter, WEED_LEAF_GUI)) continue;
+      gui = weed_get_plantptr_value(filter, WEED_LEAF_GUI, &error);
+
+      if (!weed_plant_has_leaf(gui, WEED_LEAF_LAYOUT_SCHEME)) continue;
+
+      string = weed_get_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, &error);
+      if (strcmp(string, "RFX")) {
+        lives_free(string);
         continue;
       }
+      lives_free(string);
 
-      wpar = wpars[i - poffset];
-      wtmpl = weed_get_plantptr_value(wpar, WEED_LEAF_TEMPLATE, &error);
+      if (!weed_plant_has_leaf(gui, WEED_LEAF_RFX_DELIM)) continue;
+      delim = weed_get_string_value(gui, WEED_LEAF_RFX_DELIM, &error);
+      lives_snprintf(rfx->delim, 2, "%s", delim);
+      lives_free(delim);
 
-      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_FLAGS)) flags = weed_get_int_value(wtmpl, WEED_LEAF_FLAGS, &error);
-      else flags = 0;
+      if (!weed_plant_has_leaf(gui, WEED_LEAF_RFX_STRINGS)) continue;
 
-      rpar[i].flags = flags;
+      num_hints = weed_leaf_num_elements(gui, WEED_LEAF_RFX_STRINGS);
 
-      gui = NULL;
+      if (num_hints == 0) continue;
+      rfx_strings = weed_get_string_array(gui, WEED_LEAF_RFX_STRINGS, &error);
 
-      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_GUI)) gui = weed_get_plantptr_value(wtmpl, WEED_LEAF_GUI, &error);
-
-      rpar[i].group = 0;
-
-      rpar[i].use_mnemonic = FALSE;
-      rpar[i].interp_func = rpar[i].display_func = NULL;
-      rpar[i].hidden = 0;
-      rpar[i].step_size = 1.;
-      if (enabled_in_channels(filter, FALSE) == 2 && get_transition_param(filter, FALSE) == i) rpar[i].transition = TRUE;
-      else rpar[i].transition = FALSE;
-      rpar[i].wrap = FALSE;
-      rpar[i].reinit = FALSE;
-      rpar[i].change_blocked = FALSE;
-      rpar[i].source = wtmpl;
-      rpar[i].source_type = LIVES_RFX_SOURCE_WEED;
-      rpar[i].special_type = LIVES_PARAM_SPECIAL_TYPE_NONE;
-      rpar[i].special_type_index = 0;
-      rpar[i].value = NULL;
-      rpar[i].def = NULL;
-
-      if (flags & WEED_PARAMETER_VARIABLE_ELEMENTS && !(flags & WEED_PARAMETER_ELEMENT_PER_CHANNEL)) {
-        rpar[i].hidden |= HIDDEN_MULTI;
-        rpar[i].multi = PVAL_MULTI_ANY;
-      } else if (flags & WEED_PARAMETER_ELEMENT_PER_CHANNEL) {
-        rpar[i].hidden |= HIDDEN_MULTI;
-        rpar[i].multi = PVAL_MULTI_PER_CHANNEL;
-      } else rpar[i].multi = PVAL_MULTI_NONE;
-
-      chann = get_enabled_channel(inst, 0, TRUE);
-      ctmpl = weed_get_plantptr_value(chann, WEED_LEAF_TEMPLATE, &error);
-
-      if (weed_plant_has_leaf(ctmpl, WEED_LEAF_IS_AUDIO) && weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE) {
-        // dont hide multivalued params for audio effects
-        rpar[i].hidden = 0;
+      for (i = 0; i < num_hints; i++) {
+        hints = lives_list_append(hints, rfx_strings[i]);
       }
+      lives_free(rfx_strings);
 
-      rpar[i].dp = 0;
-      rpar[i].min = 0.;
-      rpar[i].max = 0.;
-      rpar[i].list = NULL;
-
-      if (flags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) {
-        rpar[i].reinit = TRUE;
-        if (!show_reinits) rpar[i].hidden |= HIDDEN_NEEDS_REINIT;
-      } else rpar[i].reinit = FALSE;
-
-      // hide internally connected params for compound fx
-      if (weed_plant_has_leaf(wpar, WEED_LEAF_HOST_INTERNAL_CONNECTION)) rpar[i].hidden |= HIDDEN_COMPOUND_INTERNAL;
-
-      ///////////////////////////////
-      param_hint = weed_get_int_value(wtmpl, WEED_LEAF_HINT, &error);
-
-      switch (param_hint) {
-      case WEED_HINT_SWITCH:
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 1) {
-          rpar[i].hidden |= HIDDEN_MULTI;
-        }
-        rpar[i].type = LIVES_PARAM_BOOL;
-        rpar[i].value = lives_malloc(sizint);
-        rpar[i].def = lives_malloc(sizint);
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) vali = weed_get_boolean_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
-        else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) vali = weed_get_boolean_value(wtmpl, WEED_LEAF_DEFAULT, &error);
-        else vali = weed_get_boolean_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-        set_int_param(rpar[i].def, vali);
-        vali = weed_get_boolean_value(wpar, WEED_LEAF_VALUE, &error);
-        set_int_param(rpar[i].value, vali);
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_GROUP)) rpar[i].group = weed_get_int_value(wtmpl, WEED_LEAF_GROUP, &error);
-        break;
-      case WEED_HINT_INTEGER:
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 1) {
-          rpar[i].hidden |= HIDDEN_MULTI;
-        }
-        rpar[i].type = LIVES_PARAM_NUM;
-        rpar[i].value = lives_malloc(sizint);
-        rpar[i].def = lives_malloc(sizint);
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) {
-          vali = weed_get_int_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
-        } else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) vali = weed_get_int_value(wtmpl, WEED_LEAF_DEFAULT, &error);
-        else vali = weed_get_int_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-        set_int_param(rpar[i].def, vali);
-        vali = weed_get_int_value(wpar, WEED_LEAF_VALUE, &error);
-        set_int_param(rpar[i].value, vali);
-        rpar[i].min = (double)weed_get_int_value(wtmpl, WEED_LEAF_MIN, &error);
-        rpar[i].max = (double)weed_get_int_value(wtmpl, WEED_LEAF_MAX, &error);
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_WRAP) && weed_get_boolean_value(wtmpl, WEED_LEAF_WRAP, &error) == WEED_TRUE) rpar[i].wrap = TRUE;
-        if (gui != NULL) {
-          if (weed_plant_has_leaf(gui, WEED_LEAF_CHOICES)) {
-            listlen = weed_leaf_num_elements(gui, WEED_LEAF_CHOICES);
-            list = weed_get_string_array(gui, WEED_LEAF_CHOICES, &error);
-            for (j = 0; j < listlen; j++) {
-              gtk_list = lives_list_append(gtk_list, list[j]);
-            }
-            lives_free(list);
-            rpar[i].list = lives_list_copy(gtk_list);
-            lives_list_free(gtk_list);
-            gtk_list = NULL;
-            rpar[i].type = LIVES_PARAM_STRING_LIST;
-            rpar[i].max = listlen;
-          } else if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE))
-            rpar[i].step_size = (double)weed_get_int_value(gui, WEED_LEAF_STEP_SIZE, &error);
-          if (rpar[i].step_size == 0.) rpar[i].step_size = 1.;
-        }
-        break;
-      case WEED_HINT_FLOAT:
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 1) {
-          rpar[i].hidden |= HIDDEN_MULTI;
-        }
-        rpar[i].type = LIVES_PARAM_NUM;
-        rpar[i].value = lives_malloc(sizdbl);
-        rpar[i].def = lives_malloc(sizdbl);
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) vald = weed_get_double_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
-        else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) vald = weed_get_double_value(wtmpl, WEED_LEAF_DEFAULT, &error);
-        else vald = weed_get_double_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-        set_double_param(rpar[i].def, vald);
-        vald = weed_get_double_value(wpar, WEED_LEAF_VALUE, &error);
-        set_double_param(rpar[i].value, vald);
-        rpar[i].min = weed_get_double_value(wtmpl, WEED_LEAF_MIN, &error);
-        rpar[i].max = weed_get_double_value(wtmpl, WEED_LEAF_MAX, &error);
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_WRAP) && weed_get_boolean_value(wtmpl, WEED_LEAF_WRAP, &error) == WEED_TRUE) rpar[i].wrap = TRUE;
-        rpar[i].step_size = 0.;
-        rpar[i].dp = 2;
-        if (gui != NULL) {
-          if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE)) rpar[i].step_size = weed_get_double_value(gui, WEED_LEAF_STEP_SIZE, &error);
-          if (weed_plant_has_leaf(gui, WEED_LEAF_DECIMALS)) rpar[i].dp = weed_get_int_value(gui, WEED_LEAF_DECIMALS, &error);
-        }
-        if (rpar[i].step_size == 0.) {
-          if (rpar[i].max - rpar[i].min > 1.) rpar[i].step_size = 1.;
-          else rpar[i].step_size = 1. / (double)lives_10pow(rpar[i].dp);
-        }
-        break;
-      case WEED_HINT_TEXT:
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 1) {
-          rpar[i].hidden |= HIDDEN_MULTI;
-        }
-        rpar[i].type = LIVES_PARAM_STRING;
-        if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) string = weed_get_string_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
-        else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) string = weed_get_string_value(wtmpl, WEED_LEAF_DEFAULT, &error);
-        else string = weed_get_string_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-        rpar[i].def = string;
-        string = weed_get_string_value(wpar, WEED_LEAF_VALUE, &error);
-        rpar[i].value = string;
-        rpar[i].max = 0.;
-        if (gui != NULL && weed_plant_has_leaf(gui, WEED_LEAF_MAXCHARS)) {
-          rpar[i].max = (double)weed_get_int_value(gui, WEED_LEAF_MAXCHARS, &error);
-          if (rpar[i].max < 0.) rpar[i].max = 0.;
-        }
-        break;
-      case WEED_HINT_COLOR:
-        cspace = weed_get_int_value(wtmpl, WEED_LEAF_COLORSPACE, &error);
-        switch (cspace) {
-        case WEED_COLORSPACE_RGB:
-          if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 3) {
-            rpar[i].hidden |= HIDDEN_MULTI;
-          }
-          rpar[i].type = LIVES_PARAM_COLRGB24;
-          rpar[i].value = lives_malloc(3 * sizint);
-          rpar[i].def = lives_malloc(3 * sizint);
-
-          if (weed_leaf_seed_type(wtmpl, WEED_LEAF_DEFAULT) == WEED_SEED_INT) {
-            if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) {
-              cols = weed_get_int_array(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
-            } else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) cols = weed_get_int_array(wtmpl, WEED_LEAF_DEFAULT, &error);
-            else cols = weed_get_int_array(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-            if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MAX) == 1) {
-              red_max = green_max = blue_max = weed_get_int_value(wtmpl, WEED_LEAF_MAX, &error);
-            } else {
-              maxi = weed_get_int_array(wtmpl, WEED_LEAF_MAX, &error);
-              red_max = maxi[0];
-              green_max = maxi[1];
-              blue_max = maxi[2];
-            }
-            if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MIN) == 1) {
-              red_min = green_min = blue_min = weed_get_int_value(wtmpl, WEED_LEAF_MIN, &error);
-            } else {
-              mini = weed_get_int_array(wtmpl, WEED_LEAF_MIN, &error);
-              red_min = mini[0];
-              green_min = mini[1];
-              blue_min = mini[2];
-            }
-            if (cols[0] < red_min) cols[0] = red_min;
-            if (cols[1] < green_min) cols[1] = green_min;
-            if (cols[2] < blue_min) cols[2] = blue_min;
-            if (cols[0] > red_max) cols[0] = red_max;
-            if (cols[1] > green_max) cols[1] = green_max;
-            if (cols[2] > blue_max) cols[2] = blue_max;
-            cols[0] = (double)(cols[0] - red_min) / (double)(red_max - red_min) * 255. + .49999;
-            cols[1] = (double)(cols[1] - green_min) / (double)(green_max - green_min) * 255. + .49999;
-            cols[2] = (double)(cols[2] - blue_min) / (double)(blue_max - blue_min) * 255. + .49999;
-            col_int = TRUE;
-          } else {
-            if (weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) colsd = weed_get_double_array(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
-            else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0) colsd = weed_get_double_array(wtmpl, WEED_LEAF_DEFAULT, &error);
-            else colsd = weed_get_double_array(wtmpl, WEED_LEAF_DEFAULT, &error);
-            if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MAX) == 1) {
-              red_maxd = green_maxd = blue_maxd = weed_get_double_value(wtmpl, WEED_LEAF_MAX, &error);
-            } else {
-              maxd = weed_get_double_array(wtmpl, WEED_LEAF_MAX, &error);
-              red_maxd = maxd[0];
-              green_maxd = maxd[1];
-              blue_maxd = maxd[2];
-            }
-            if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MIN) == 1) {
-              red_mind = green_mind = blue_mind = weed_get_double_value(wtmpl, WEED_LEAF_MIN, &error);
-            } else {
-              mind = weed_get_double_array(wtmpl, WEED_LEAF_MIN, &error);
-              red_mind = mind[0];
-              green_mind = mind[1];
-              blue_mind = mind[2];
-            }
-            if (colsd[0] < red_mind) colsd[0] = red_mind;
-            if (colsd[1] < green_mind) colsd[1] = green_mind;
-            if (colsd[2] < blue_mind) colsd[2] = blue_mind;
-            if (colsd[0] > red_maxd) colsd[0] = red_maxd;
-            if (colsd[1] > green_maxd) colsd[1] = green_maxd;
-            if (colsd[2] > blue_maxd) colsd[2] = blue_maxd;
-            cols = (int *)lives_malloc(3 * sizshrt);
-            cols[0] = (colsd[0] - red_mind) / (red_maxd - red_mind) * 255. + .49999;
-            cols[1] = (colsd[1] - green_mind) / (green_maxd - green_mind) * 255. + .49999;
-            cols[2] = (colsd[2] - blue_mind) / (blue_maxd - blue_mind) * 255. + .49999;
-            col_int = FALSE;
-          }
-          set_colRGB24_param(rpar[i].def, cols[0], cols[1], cols[2]);
-
-          if (col_int) {
-            lives_free(cols);
-            cols = weed_get_int_array(wpar, WEED_LEAF_VALUE, &error);
-            if (cols[0] < red_min) cols[0] = red_min;
-            if (cols[1] < green_min) cols[1] = green_min;
-            if (cols[2] < blue_min) cols[2] = blue_min;
-            if (cols[0] > red_max) cols[0] = red_max;
-            if (cols[1] > green_max) cols[1] = green_max;
-            if (cols[2] > blue_max) cols[2] = blue_max;
-            cols[0] = (double)(cols[0] - red_min) / (double)(red_max - red_min) * 255. + .49999;
-            cols[1] = (double)(cols[1] - green_min) / (double)(green_max - green_min) * 255. + .49999;
-            cols[2] = (double)(cols[2] - blue_min) / (double)(blue_max - blue_min) * 255. + .49999;
-          } else {
-            colsd = weed_get_double_array(wpar, WEED_LEAF_VALUE, &error);
-            if (colsd[0] < red_mind) colsd[0] = red_mind;
-            if (colsd[1] < green_mind) colsd[1] = green_mind;
-            if (colsd[2] < blue_mind) colsd[2] = blue_mind;
-            if (colsd[0] > red_maxd) colsd[0] = red_maxd;
-            if (colsd[1] > green_maxd) colsd[1] = green_maxd;
-            if (colsd[2] > blue_maxd) colsd[2] = blue_maxd;
-            cols[0] = (colsd[0] - red_mind) / (red_maxd - red_mind) * 255. + .49999;
-            cols[1] = (colsd[1] - green_mind) / (green_maxd - green_mind) * 255. + .49999;
-            cols[2] = (colsd[2] - blue_mind) / (blue_maxd - blue_mind) * 255. + .49999;
-          }
-          set_colRGB24_param(rpar[i].value, (short)cols[0], (short)cols[1], (short)cols[2]);
-          lives_free(cols);
-
-          lives_freep((void **)&maxi);
-          lives_freep((void **)&mini);
-          lives_freep((void **)&maxd);
-          lives_freep((void **)&mind);
-          break;
-        }
-        break;
-
-      default:
-        rpar[i].type = LIVES_PARAM_UNKNOWN; // TODO - try to get default
-      }
-
-      string = weed_get_string_value(wtmpl, WEED_LEAF_NAME, &error);
-      rpar[i].name = string;
-      rpar[i].label = lives_strdup(string);
-
-      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DESCRIPTION)) {
-        string = weed_get_string_value(wtmpl, WEED_LEAF_DESCRIPTION, &error);
-        rpar[i].desc = string;
-      } else rpar[i].desc = NULL;
-
-      // gui part /////////////////////
-
-      if (gui != NULL) {
-        if (weed_plant_has_leaf(gui, WEED_LEAF_LABEL)) {
-          string = weed_get_string_value(gui, WEED_LEAF_LABEL, &error);
-          lives_free(rpar[i].label);
-          rpar[i].label = string;
-        }
-        if (weed_plant_has_leaf(gui, WEED_LEAF_USE_MNEMONIC)) rpar[i].use_mnemonic = weed_get_boolean_value(gui, WEED_LEAF_USE_MNEMONIC, &error);
-        if (weed_plant_has_leaf(gui, WEED_LEAF_HIDDEN))
-          rpar[i].hidden |= ((weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, &error) == WEED_TRUE) * HIDDEN_GUI);
-        if (weed_plant_has_leaf(gui, WEED_LEAF_DISPLAY_FUNC)) {
-          weed_display_f *display_func_ptr_ptr;
-          weed_display_f display_func;
-          weed_leaf_get(gui, WEED_LEAF_DISPLAY_FUNC, 0, (void *)&display_func_ptr_ptr);
-          display_func = *display_func_ptr_ptr;
-          rpar[i].display_func = (fn_ptr)display_func;
-        }
-        if (weed_plant_has_leaf(gui, WEED_LEAF_INTERPOLATE_FUNC)) {
-          weed_interpolate_f *interp_func_ptr_ptr;
-          weed_interpolate_f interp_func;
-          weed_leaf_get(gui, WEED_LEAF_INTERPOLATE_FUNC, 0, (void *)&interp_func_ptr_ptr);
-          interp_func = *interp_func_ptr_ptr;
-          rpar[i].interp_func = (fn_ptr)interp_func;
-        }
-      }
-
-      for (j = 0; j < MAX_PARAM_WIDGETS; j++) {
-        rpar[i].widgets[j] = NULL;
-      }
-      rpar[i].onchange = FALSE;
+      if (filters != NULL) hints = lives_list_append(hints, lives_strdup("internal|nextfilter"));
     }
 
-    lives_free(wpars);
-
-    return rpar;
+    lives_freep((void **)&filters);
   }
 
-
-  lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
-    // return an RFX for a weed effect; set rfx->source to an INSTANCE of the filter (first instance for compound fx)
-    // instance should be refcounted
-    int error;
-    weed_plant_t *filter, *inst;
-
-    char *string;
-    lives_rfx_t *rfx = (lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
-    rfx->is_template = FALSE;
-    if (weed_get_int_value(plant, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      filter = weed_instance_get_filter(plant, TRUE);
-      inst = plant;
-    } else {
-      filter = plant;
-      inst = weed_instance_from_filter(filter);
-      // init and deinit the effect to allow the plugin to hide parameters, etc.
-      // rfx will inherit the refcount
-      weed_reinit_effect(inst, TRUE);
-      weed_instance_unref(inst);
-      rfx->is_template = TRUE;
-    }
-
-    string = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
-    rfx->name = string;
-    rfx->menu_text = lives_strdup(string);
-    rfx->action_desc = lives_strdup("no action");
-    rfx->min_frames = -1;
-    rfx->num_in_channels = enabled_in_channels(filter, FALSE);
-    rfx->status = RFX_STATUS_WEED;
-    rfx->props = 0;
-    rfx->menuitem = NULL;
-    if (!weed_plant_has_leaf(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES) ||
-        weed_get_plantptr_value(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error) == NULL) rfx->num_params = 0;
-    else rfx->num_params = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
-    if (rfx->num_params > 0) rfx->params = weed_params_to_rfx(rfx->num_params, inst, show_reinits);
-    else rfx->params = NULL;
-    rfx->source = (void *)inst;
-    rfx->source_type = LIVES_RFX_SOURCE_WEED;
-    rfx->extra = NULL;
-    rfx->flags = 0;
-    return rfx;
-  }
+  return hints;
+}
 
 
-  LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
-    LiVESList *hints = NULL;
+char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
+  // called from plugins.c (vpp opts) and saveplay.c (encoder opts)
 
-    if (rfx->status == RFX_STATUS_WEED) {
-      int nfilters, error;
-      int num_hints;
-      weed_plant_t *gui;
-      weed_plant_t *inst = (weed_plant_t *)rfx->source;
-      weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
-      int *filters = NULL;
-      char *string, **rfx_strings, *delim;
+  // here we create an rfx script from some fixed values and values from the plugin;
+  // we will then compile the script to an rfx scrap and use the scrap to get info
+  // about additional parameters, and create the parameter window
 
-      register int i;
+  // this is done like so to allow use of plugins written in any language;
+  // they need only output an RFX scriptlet on stdout when called from the commandline
 
-      if ((nfilters = num_compound_fx(filter)) > 1) {
-        // handle compound fx
-        filters = weed_get_int_array(filter, WEED_LEAF_HOST_FILTER_LIST, &error);
-      }
+  // the param window is run, and the marshalled values are returned
 
-      for (i = 0; i < nfilters; i++) {
+  // if the user closes the window with Cancel, NULL is returned instead
 
-        if (filters != NULL) {
-          filter = get_weed_filter(filters[i]);
-        }
+  // in parameters: get_com - command to be run to produce rfx output on stdout
+  //              : vbox - a vbox where we will display the parameters
+  // out parameters: ret_rfx - the value is set to point to an rfx_t effect
 
-        if (!weed_plant_has_leaf(filter, WEED_LEAF_GUI)) continue;
-        gui = weed_get_plantptr_value(filter, WEED_LEAF_GUI, &error);
+  // the string which is returned is the marshalled values of the parameters
 
-        if (!weed_plant_has_leaf(gui, WEED_LEAF_LAYOUT_SCHEME)) continue;
+  // NOTE: if vbox is not NULL, we create the window inside vbox, without running it
+  // in this case, vbox should be packed in its own dialog window, which should then be run
+  // and we also return the name of the scrapfile, which should be removed after running the window
 
-        string = weed_get_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, &error);
-        if (strcmp(string, "RFX")) {
-          lives_free(string);
-          continue;
-        }
+  // NOTE: pass in either get_com (command to be run to get rfx text), or else scrap_text, setting the unused value to NULL.
+
+  FILE *sfile;
+
+  lives_rfx_t *rfx = (lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
+
+  char *string;
+  char *rfx_scrapname = lives_strdup_printf("rfx.%d", capable->mainpid);
+  char *rfxfile = lives_strdup_printf("%s/.%s.script", prefs->workdir, rfx_scrapname);
+  char *com;
+  char *fnamex = NULL;
+  char *res_string = NULL;
+  char buff[32];
+
+  int res;
+  int retval;
+
+  rfx->name = NULL;
+
+  string = lives_strdup_printf("<name>\n%s\n</name>\n", rfx_scrapname);
+
+  do {
+    retval = 0;
+    sfile = fopen(rfxfile, "w");
+    if (sfile == NULL) {
+      retval = do_write_failed_error_s_with_retry(rfxfile, lives_strerror(errno), NULL);
+      if (retval == LIVES_RESPONSE_CANCEL) {
         lives_free(string);
-
-        if (!weed_plant_has_leaf(gui, WEED_LEAF_RFX_DELIM)) continue;
-        delim = weed_get_string_value(gui, WEED_LEAF_RFX_DELIM, &error);
-        lives_snprintf(rfx->delim, 2, "%s", delim);
-        lives_free(delim);
-
-        if (!weed_plant_has_leaf(gui, WEED_LEAF_RFX_STRINGS)) continue;
-
-        num_hints = weed_leaf_num_elements(gui, WEED_LEAF_RFX_STRINGS);
-
-        if (num_hints == 0) continue;
-        rfx_strings = weed_get_string_array(gui, WEED_LEAF_RFX_STRINGS, &error);
-
-        for (i = 0; i < num_hints; i++) {
-          hints = lives_list_append(hints, rfx_strings[i]);
-        }
-        lives_free(rfx_strings);
-
-        if (filters != NULL) hints = lives_list_append(hints, lives_strdup("internal|nextfilter"));
-      }
-
-      lives_freep((void **)&filters);
-    }
-
-    return hints;
-  }
-
-
-  char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVESVBox * vbox, lives_rfx_t **ret_rfx) {
-    // called from plugins.c (vpp opts) and saveplay.c (encoder opts)
-
-    // here we create an rfx script from some fixed values and values from the plugin;
-    // we will then compile the script to an rfx scrap and use the scrap to get info
-    // about additional parameters, and create the parameter window
-
-    // this is done like so to allow use of plugins written in any language;
-    // they need only output an RFX scriptlet on stdout when called from the commandline
-
-    // the param window is run, and the marshalled values are returned
-
-    // if the user closes the window with Cancel, NULL is returned instead
-
-    // in parameters: get_com - command to be run to produce rfx output on stdout
-    //              : vbox - a vbox where we will display the parameters
-    // out parameters: ret_rfx - the value is set to point to an rfx_t effect
-
-    // the string which is returned is the marshalled values of the parameters
-
-    // NOTE: if vbox is not NULL, we create the window inside vbox, without running it
-    // in this case, vbox should be packed in its own dialog window, which should then be run
-    // and we also return the name of the scrapfile, which should be removed after running the window
-
-    // NOTE: pass in either get_com (command to be run to get rfx text), or else scrap_text, setting the unused value to NULL.
-
-    FILE *sfile;
-
-    lives_rfx_t *rfx = (lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
-
-    char *string;
-    char *rfx_scrapname = lives_strdup_printf("rfx.%d", capable->mainpid);
-    char *rfxfile = lives_strdup_printf("%s/.%s.script", prefs->workdir, rfx_scrapname);
-    char *com;
-    char *fnamex = NULL;
-    char *res_string = NULL;
-    char buff[32];
-
-    int res;
-    int retval;
-
-    rfx->name = NULL;
-
-    string = lives_strdup_printf("<name>\n%s\n</name>\n", rfx_scrapname);
-
-    do {
-      retval = 0;
-      sfile = fopen(rfxfile, "w");
-      if (sfile == NULL) {
-        retval = do_write_failed_error_s_with_retry(rfxfile, lives_strerror(errno), NULL);
-        if (retval == LIVES_RESPONSE_CANCEL) {
-          lives_free(string);
-          return NULL;
-        }
-      } else {
-        mainw->write_failed = FALSE;
-        lives_fputs(string, sfile);
-        if (scrap_text != NULL) {
-          char *data = subst(scrap_text, "\\n", "\n");
-          lives_fputs(data, sfile);
-          lives_free(data);
-        }
-        fclose(sfile);
-        lives_free(string);
-        if (mainw->write_failed) {
-          retval = do_write_failed_error_s_with_retry(rfxfile, NULL, NULL);
-          if (retval == LIVES_RESPONSE_CANCEL) return NULL;
-        }
-      }
-    } while (retval == LIVES_RESPONSE_RETRY);
-
-    if (scrap_text == NULL) {
-      com = lives_strdup_printf("%s >> \"%s\"", get_com, rfxfile);
-      retval = lives_system(com, FALSE);
-      lives_free(com);
-
-      // command failed
-      if (retval) {
-        lives_rm(rfxfile);
-        lives_free(rfxfile);
         return NULL;
       }
+    } else {
+      mainw->write_failed = FALSE;
+      lives_fputs(string, sfile);
+      if (scrap_text != NULL) {
+        char *data = subst(scrap_text, "\\n", "\n");
+        lives_fputs(data, sfile);
+        lives_free(data);
+      }
+      fclose(sfile);
+      lives_free(string);
+      if (mainw->write_failed) {
+        retval = do_write_failed_error_s_with_retry(rfxfile, NULL, NULL);
+        if (retval == LIVES_RESPONSE_CANCEL) return NULL;
+      }
     }
+  } while (retval == LIVES_RESPONSE_RETRY);
 
-    // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
-
-    // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
-    com = lives_strdup_printf("\"%s\" \"%s\" \"%s\" >%s", RFX_BUILDER, rfxfile, prefs->workdir, LIVES_DEVNULL);
-    res = lives_system(com, TRUE);
+  if (scrap_text == NULL) {
+    com = lives_strdup_printf("%s >> \"%s\"", get_com, rfxfile);
+    retval = lives_system(com, FALSE);
     lives_free(com);
 
-    lives_rm(rfxfile);
-    lives_free(rfxfile);
+    // command failed
+    if (retval) {
+      lives_rm(rfxfile);
+      lives_free(rfxfile);
+      return NULL;
+    }
+  }
 
-    if (res == 0) {
-      // the script compiled correctly
+  // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
 
-      // now we pop up the parameter window, get the values of our parameters, and marshall them as extra_params
+  // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
+  com = lives_strdup_printf("\"%s\" \"%s\" \"%s\" >%s", RFX_BUILDER, rfxfile, prefs->workdir, LIVES_DEVNULL);
+  res = lives_system(com, TRUE);
+  lives_free(com);
 
-      // first create a lives_rfx_t from the scrap
-      rfx->name = lives_strdup(rfx_scrapname);
-      rfx->menu_text = NULL;
-      rfx->action_desc = NULL;
-      rfx->extra = NULL;
-      rfx->flags = 0;
-      rfx->status = RFX_STATUS_SCRAP;
+  lives_rm(rfxfile);
+  lives_free(rfxfile);
 
-      rfx->num_in_channels = 0;
-      rfx->min_frames = -1;
+  if (res == 0) {
+    // the script compiled correctly
 
-      rfx->flags = RFX_FLAGS_NO_SLIDERS;
+    // now we pop up the parameter window, get the values of our parameters, and marshall them as extra_params
 
-      fnamex = lives_build_filename(prefs->workdir, rfx_scrapname, NULL);
-      com = lives_strdup_printf("\"%s\" get_define", fnamex);
-      mainw->com_failed = FALSE;
+    // first create a lives_rfx_t from the scrap
+    rfx->name = lives_strdup(rfx_scrapname);
+    rfx->menu_text = NULL;
+    rfx->action_desc = NULL;
+    rfx->extra = NULL;
+    rfx->flags = 0;
+    rfx->status = RFX_STATUS_SCRAP;
 
-      if (!lives_popen(com, TRUE, buff, 32)) {
-        mainw->com_failed = TRUE;
-      }
-      lives_free(com);
+    rfx->num_in_channels = 0;
+    rfx->min_frames = -1;
 
-      // command to get_define failed
-      if (mainw->com_failed) {
-        lives_rm(fnamex);
-        lives_free(fnamex);
-        return NULL;
-      }
+    rfx->flags = RFX_FLAGS_NO_SLIDERS;
 
-      lives_snprintf(rfx->delim, 2, "%s", buff);
+    fnamex = lives_build_filename(prefs->workdir, rfx_scrapname, NULL);
+    com = lives_strdup_printf("\"%s\" get_define", fnamex);
+    mainw->com_failed = FALSE;
 
-      // ok, this might need adjusting afterwards
-      rfx->menu_text = (vbox == NULL ? lives_strdup_printf(_("%s advanced settings"), prefs->encoder.of_desc) : lives_strdup(""));
-      rfx->is_template = FALSE;
+    if (!lives_popen(com, TRUE, buff, 32)) {
+      mainw->com_failed = TRUE;
+    }
+    lives_free(com);
 
-      rfx->source = NULL;
-      rfx->source_type = LIVES_RFX_SOURCE_RFX;
-
-      render_fx_get_params(rfx, rfx_scrapname, RFX_STATUS_SCRAP);
-
-      // now we build our window and get param values
-      if (vbox == NULL) {
-        LiVESWidget *dialog = on_fx_pre_activate(rfx, TRUE, NULL);
-        if (prefs->show_gui) {
-          lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-        }
-        lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
-
-        do {
-          res = lives_dialog_run(LIVES_DIALOG(dialog));
-        } while (res == LIVES_RESPONSE_RETRY);
-
-        if (res == LIVES_RESPONSE_OK) {
-          // marshall our params for passing to the plugin
-          res_string = param_marshall(rfx, FALSE);
-        }
-      } else {
-        make_param_box(vbox, rfx);
-      }
-
-      if (ret_rfx != NULL) {
-        *ret_rfx = rfx;
-      } else {
-        rfx_free(rfx);
-        lives_free(rfx);
-      }
-    } else {
-      if (ret_rfx != NULL) {
-        *ret_rfx = NULL;
-      } else {
-        res_string = lives_strdup("");
-      }
-      if (rfx != NULL) {
-        lives_free(rfx);
-      }
+    // command to get_define failed
+    if (mainw->com_failed) {
+      lives_rm(fnamex);
+      lives_free(fnamex);
+      return NULL;
     }
 
-    lives_free(rfx_scrapname);
+    lives_snprintf(rfx->delim, 2, "%s", buff);
 
-    return res_string;
+    // ok, this might need adjusting afterwards
+    rfx->menu_text = (vbox == NULL ? lives_strdup_printf(_("%s advanced settings"), prefs->encoder.of_desc) : lives_strdup(""));
+    rfx->is_template = FALSE;
+
+    rfx->source = NULL;
+    rfx->source_type = LIVES_RFX_SOURCE_RFX;
+
+    render_fx_get_params(rfx, rfx_scrapname, RFX_STATUS_SCRAP);
+
+    // now we build our window and get param values
+    if (vbox == NULL) {
+      LiVESWidget *dialog = on_fx_pre_activate(rfx, TRUE, NULL);
+      if (prefs->show_gui) {
+        lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      }
+      lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
+
+      do {
+        res = lives_dialog_run(LIVES_DIALOG(dialog));
+      } while (res == LIVES_RESPONSE_RETRY);
+
+      if (res == LIVES_RESPONSE_OK) {
+        // marshall our params for passing to the plugin
+        res_string = param_marshall(rfx, FALSE);
+      }
+    } else {
+      make_param_box(vbox, rfx);
+    }
+
+    if (ret_rfx != NULL) {
+      *ret_rfx = rfx;
+    } else {
+      rfx_free(rfx);
+      lives_free(rfx);
+    }
+  } else {
+    if (ret_rfx != NULL) {
+      *ret_rfx = NULL;
+    } else {
+      res_string = lives_strdup("");
+    }
+    if (rfx != NULL) {
+      lives_free(rfx);
+    }
   }
+
+  lives_free(rfx_scrapname);
+
+  return res_string;
+}
 

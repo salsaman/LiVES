@@ -2117,21 +2117,16 @@ _entryw *create_rename_dialog(int type) {
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width * 4);
 
   if (type == 3) {
-    set_combo = lives_combo_new();
-
-    renamew->setlist = get_set_list(prefs->workdir, TRUE);
-
-    lives_combo_populate(LIVES_COMBO(set_combo), renamew->setlist);
-
+    renamew->setlist = lives_list_sort_alpha(get_set_list(prefs->workdir, TRUE), TRUE);
+    set_combo = lives_standard_combo_new(NULL, renamew->setlist, LIVES_BOX(hbox), NULL);
     renamew->entry = lives_combo_get_entry(LIVES_COMBO(set_combo));
+    lives_entry_set_editable(LIVES_ENTRY(renamew->entry), TRUE);
+    lives_entry_set_max_length(LIVES_ENTRY(renamew->entry), MAX_SET_NAME_LEN);
 
     if (strlen(prefs->ar_clipset_name)) {
       // set default to our auto-reload clipset
       lives_entry_set_text(LIVES_ENTRY(renamew->entry), prefs->ar_clipset_name);
     }
-
-    lives_box_pack_start(LIVES_BOX(hbox), set_combo, TRUE, TRUE, 0);
-
     lives_entry_set_completion_from_list(LIVES_ENTRY(renamew->entry), renamew->setlist);
   } else {
     char *tmp;

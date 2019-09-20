@@ -14,6 +14,7 @@ Fix refcounting bugs with realtime effect parameter windows, and with generators
 Optimise combo boxes with long lists; categorise filter types in rte window.
 Fix label layouts for RFX windows.
 Add colour selection for blurzoom effect, improve the effect.
+Improve a/v sync when changing playback direction.
 Various minor fixes and interface tweaks.
 Updated translations for Portuguese, Brazilian Portuguese (Nany Cavalcante)
 
@@ -22,7 +23,7 @@ Updated translations for Portuguese, Brazilian Portuguese (Nany Cavalcante)
 Version 3.0.2 (7 Sep 2019)
 --------------------------
 Fix regression in okbutton handling which prevents encoding from actioning.
-Display splash screen as early as possibley in startup.
+Display splash screen as early as possible in startup.
 Code correctness fixes.
 Updated translations for Portuguese, Brazilian Portuguese (Nany Cavalcante)
 

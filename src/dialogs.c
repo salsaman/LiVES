@@ -1729,7 +1729,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed != NULL && mainw->pulsed->playing_file > -1) {
     if (!pulse_audio_seek_frame(mainw->pulsed, mainw->play_start)) {
-      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, mainw->play_start);
+      handle_audio_timeout();
+      return FALSE;
     }
 
     if (!(mainw->record && (prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit)))

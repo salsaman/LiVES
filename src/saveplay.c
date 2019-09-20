@@ -2716,9 +2716,7 @@ void play_file(void) {
       jack_message.data = NULL;
       jack_message.next = NULL;
       mainw->jackd->msgq = &jack_message;
-      if (timeout)  {
-        handle_audio_timeout();
-      }
+      if (timeout) handle_audio_timeout();
     }
     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
       weed_plant_t *event = get_last_frame_event(mainw->event_list);
@@ -3083,7 +3081,6 @@ void play_file(void) {
     if (timeout)  {
       handle_audio_timeout();
     }
-    if (timeout) pulse_try_reconnect();
 
     lives_alarm_clear(alarm_handle);
 

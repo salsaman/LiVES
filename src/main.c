@@ -5748,8 +5748,7 @@ void load_frame_image(int frame) {
               mainw->pulsed != NULL && CURRENT_CLIP_HAS_AUDIO &&
               !(prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0)) {
             if (mainw->pulsed->playing_file == mainw->playing_file && !pulse_audio_seek_frame(mainw->pulsed, frame)) {
-              if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, frame);
-              else mainw->aplayer_broken = TRUE;
+              handle_audio_timeout();
             }
             if (mainw->record && !mainw->record_paused) {
               pulse_get_rec_avals(mainw->pulsed);

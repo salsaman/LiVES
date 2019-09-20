@@ -1122,9 +1122,6 @@ int process_one(boolean visible) {
     //   so, between updates we interpolate with the system clock and then adjust when we get a new value
     //   from the card
 
-    // TODO ***: if the app is suspended then we get a big time jump in pa_usecs, followed by the same value repeated until
-    // the soundcard catches up. So if we get a big jump, we should switch to system clock time until we get a new value from pa
-
     time_source = LIVES_TIME_SOURCE_NONE;
     mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &time_source);
     if (last_time_source != LIVES_TIME_SOURCE_NONE && time_source != last_time_source) {

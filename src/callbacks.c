@@ -9344,14 +9344,24 @@ void changed_fps_during_pb(LiVESSpinButton *spinbutton, livespointer user_data) 
   double new_fps;
 
   if (!LIVES_IS_PLAYING) return;
+  if (!CURRENT_CLIP_IS_VALID) return;
 
   new_fps = lives_fix(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)), 3);
-
-  if (!CURRENT_CLIP_IS_VALID) return;
 
   if ((!cfile->play_paused && cfile->pb_fps == new_fps) || (cfile->play_paused && new_fps == 0.)) {
     mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
     return;
+  }
+
+  if (new_fps * cfile->pb_fps < 0.) {
+    // update the current frame number, we will rebase our time on this
+    uint64_t new_ticks;
+    mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+    new_ticks = mainw->currticks + mainw->deltaticks; // deltaticks are set by scratch and other methods
+    pthread_mutex_lock(&mainw->audio_resync_mutex);
+    cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
+    mainw->startticks = new_ticks;
+    pthread_mutex_unlock(&mainw->audio_resync_mutex);
   }
 
   cfile->pb_fps = new_fps;

@@ -10580,42 +10580,44 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   xpalette = palette;
   xopal_hint = opal_hint;
 
-  if (palette == WEED_PALETTE_YUV888 && (opal_hint == WEED_PALETTE_YUV888 || opal_hint == WEED_PALETTE_YUVA8888)) {
-    if (iclamped == WEED_YUV_CLAMPING_CLAMPED) {
-      convert_layer_palette(layer, WEED_PALETTE_YUV888, WEED_YUV_CLAMPING_UNCLAMPED);
-      iclamped = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error));
-    }
-    if (iclamped == WEED_YUV_CLAMPING_UNCLAMPED) {
-      xpalette = WEED_PALETTE_RGB24;
-      oclamp_hint = WEED_YUV_CLAMPING_UNCLAMPED;
-      resolved = TRUE;
-      if (opal_hint == WEED_PALETTE_YUV888) {
-        xopal_hint = WEED_PALETTE_RGB24;
-      } else {
-        xopal_hint = WEED_PALETTE_RGBA32;
+  if (palette == WEED_PALETTE_YUV888) {
+    if (opal_hint == WEED_PALETTE_YUV888 || opal_hint == WEED_PALETTE_YUVA8888) {
+      if (iclamped == WEED_YUV_CLAMPING_CLAMPED) {
+        convert_layer_palette(layer, WEED_PALETTE_YUV888, WEED_YUV_CLAMPING_UNCLAMPED);
+        iclamped = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error));
+      }
+      if (iclamped == WEED_YUV_CLAMPING_UNCLAMPED) {
+        xpalette = WEED_PALETTE_RGB24;
+        oclamp_hint = WEED_YUV_CLAMPING_UNCLAMPED;
+        resolved = TRUE;
+        if (opal_hint == WEED_PALETTE_YUV888) {
+          xopal_hint = WEED_PALETTE_RGB24;
+        } else {
+          xopal_hint = WEED_PALETTE_RGBA32;
+        }
       }
     }
-
     if (!resolved) {
       convert_layer_palette(layer, WEED_PALETTE_YUV444P, iclamped);
       xpalette = palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
     }
-  } else if (palette == WEED_PALETTE_YUVA8888 && (opal_hint == WEED_PALETTE_YUV888 || opal_hint == WEED_PALETTE_YUVA8888)) {
-    if (iclamped == WEED_YUV_CLAMPING_CLAMPED) {
-      convert_layer_palette(layer, WEED_PALETTE_YUVA8888, WEED_YUV_CLAMPING_UNCLAMPED);
-      iclamped = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error));
-    }
-    if (iclamped == WEED_YUV_CLAMPING_UNCLAMPED) {
-      xpalette = WEED_PALETTE_RGBA32;
-      oclamp_hint = WEED_YUV_CLAMPING_UNCLAMPED;
-      resolved = TRUE;
-      if (opal_hint == WEED_PALETTE_YUVA8888) {
-        xopal_hint = WEED_PALETTE_RGBA32;
-      } else {
-        xopal_hint = WEED_PALETTE_RGB24;
+  } else if (palette == WEED_PALETTE_YUVA8888) {
+    if (opal_hint == WEED_PALETTE_YUV888 || opal_hint == WEED_PALETTE_YUVA8888) {
+      if (iclamped == WEED_YUV_CLAMPING_CLAMPED) {
+        convert_layer_palette(layer, WEED_PALETTE_YUVA8888, WEED_YUV_CLAMPING_UNCLAMPED);
+        iclamped = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error));
+      }
+      if (iclamped == WEED_YUV_CLAMPING_UNCLAMPED) {
+        xpalette = WEED_PALETTE_RGBA32;
+        oclamp_hint = WEED_YUV_CLAMPING_UNCLAMPED;
+        resolved = TRUE;
+        if (opal_hint == WEED_PALETTE_YUVA8888) {
+          xopal_hint = WEED_PALETTE_RGBA32;
+        } else {
+          xopal_hint = WEED_PALETTE_RGB24;
+        }
       }
     }
-
     if (!resolved) {
       convert_layer_palette(layer, WEED_PALETTE_YUVA4444P, iclamped);
       xpalette = palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);

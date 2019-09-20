@@ -993,7 +993,6 @@ void on_utube_select(lives_remote_clip_request_t *req) {
   // backend should now be downloading the clip
 
   cfile->nopreview = TRUE;
-  cfile->keep_without_preview = TRUE;
   cfile->no_proc_sys_errors = TRUE; ///< do not show processing error dialogs, we will show our own msg
 
   if (!do_progress_dialog(TRUE, TRUE, _("Downloading clip")) || mainw->error) {

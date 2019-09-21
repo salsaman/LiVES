@@ -450,6 +450,7 @@ typedef GtkLabel                          LiVESLabel;
 typedef GtkImage                          LiVESImage;
 typedef GtkFileChooser                    LiVESFileChooser;
 typedef GtkAlignment                      LiVESAlignment;
+typedef GtkAllocation                     LiVESAllocation;
 typedef GtkMenu                           LiVESMenu;
 typedef GtkMenuShell                      LiVESMenuShell;
 typedef GtkMenuItem                       LiVESMenuItem;

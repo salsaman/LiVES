@@ -2707,7 +2707,7 @@ static boolean open_yuv4m_startup(livespointer data) {
 static boolean resize_message_area(livespointer data) {
   // workaround for GTK+ weirdness
 #if GTK_CHECK_VERSION(3, 18, 0)
-  GtkAllocation all;
+  LiVESAllocation all;
   gtk_widget_get_clip(mainw->top_vbox, &all);
   if (idlemax-- > 0 && all.height == lives_widget_get_allocation_height(mainw->LiVES)) return TRUE;
 #endif

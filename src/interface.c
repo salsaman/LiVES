@@ -4325,7 +4325,7 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute, LiVESAdjustment *adj) {
   // "scroll" the message area so that the last message appears at the bottom
 #if GTK_CHECK_VERSION(3, 18, 0)
-  GtkAllocation all;
+  LiVESAllocation all;
 #endif
   LingoLayout *layout;
   lives_colRGBA64_t fg, bg;

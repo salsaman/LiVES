@@ -4564,7 +4564,7 @@ void reset_message_area(boolean expand) {
     if (mainw->multitrack == NULL) {
       int tv_height;
 #if GTK_CHECK_VERSION(3, 18, 0)
-      GtkAllocation all;
+      LiVESAllocation all;
       gtk_widget_get_clip(mainw->top_vbox, &all);
       if (lives_widget_get_allocation_height(mainw->LiVES) != all.height)
         tv_height = all.height - MSG_AREA_VMARGIN;

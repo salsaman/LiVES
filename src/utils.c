@@ -1261,7 +1261,6 @@ void calc_aframeno(int fileno) {
 }
 
 
-
 int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
   // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes

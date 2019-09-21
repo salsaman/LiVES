@@ -211,6 +211,7 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions
 
 weed_plant_t *get_weed_filter(int filter_idx); // TODO: make const
 char *weed_filter_idx_get_name(int filter_idx) WARN_UNUSED;
+char *weed_filter_extended_name(weed_plant_t *filter, boolean add_subcats) WARN_UNUSED;
 char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) WARN_UNUSED;
 char *make_weed_hashname(int filter_idx, boolean fullname,
                          boolean use_extra_authors) WARN_UNUSED;  ///< fullname includes author and version
@@ -230,7 +231,6 @@ weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_
 
 int num_compound_fx(weed_plant_t
                     *plant); ///< return number of filters in a compound fx (1 if it is not compound) - works for filter or inst
-void load_compound_fx(void);
 
 boolean has_non_alpha_palette(weed_plant_t *ctmpl);
 boolean has_alpha_palette(weed_plant_t *ctmpl);
@@ -392,6 +392,7 @@ int rte_switch_keymode(int key, int mode, const char *hashname);
 
 LiVESList *weed_get_all_names(lives_fx_list_t list_type);
 int rte_get_numfilters(boolean inc_dupes);
+int weed_get_sorted_filter(int i);
 
 /////////////////////////////////////////////////////////
 // key starts at 0

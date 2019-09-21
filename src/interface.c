@@ -1551,7 +1551,6 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
     lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(on_boolean_toggled),
                                &mainw->fx1_bool);
-
   } else if (text2 == NULL) mainw->fx1_bool = TRUE;
 
   if (text2 != NULL && (mainw->fx1_bool || opt_resize)) {

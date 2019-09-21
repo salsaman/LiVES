@@ -1124,6 +1124,11 @@ int process_one(boolean visible) {
 
     time_source = LIVES_TIME_SOURCE_NONE;
     mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &time_source);
+    if (mainw->currticks == -1) {
+      if (time_source == LIVES_TIME_SOURCE_SOUNDCARD) handle_audio_timeout();
+      mainw->cancelled = CANCEL_ERROR;
+      return mainw->cancelled;
+    }
     if (last_time_source != LIVES_TIME_SOURCE_NONE && time_source != last_time_source) {
       // time source changed, make sure there is no discontinuity by adjusting deltaticks
       int64_t delta = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &last_time_source);
@@ -1173,6 +1178,10 @@ int process_one(boolean visible) {
           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
           (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && (audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
           mainw->offsetticks) {
+        if (audio_ticks == -1) {
+          mainw->cancelled = CANCEL_ERROR;
+          return mainw->cancelled;
+        }
         // fps is synched to external source, so we adjust the audio rate to fit
         if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
             audio_stretch > 0.5) {

@@ -18,7 +18,7 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 1; // number of different weed api versions supported
+static int num_versions = 2; // number of different weed api versions supported
 static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 1; // version of this package
@@ -41,17 +41,7 @@ typedef struct _sdata {
   int *ymap; // x offset in src0 to map to point (or -1 to map src1)
 } sdata;
 
-
-
 #include <gdk/gdk.h>
-
-
-
-//inline int calc_luma(unsigned char *pt) {
-// return luma 0<=x<=256
-//  return 0.21*(float)pt[0]+0.587*(float)pt[1]+0.114*(float)pt[2];
-//}
-
 
 
 static void make_mask(GdkPixbuf *pbuf, int mode, int owidth, int oheight, int *xmap, int *ymap) {
@@ -113,7 +103,6 @@ static void make_mask(GdkPixbuf *pbuf, int mode, int owidth, int oheight, int *x
   }
 
   for (i = 0; i < oheight; i++) {
-
     for (j = 0; j < owidth; j++) {
       if (*(pdata + (int)(i * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) {
         // map front frame
@@ -131,18 +120,10 @@ static void make_mask(GdkPixbuf *pbuf, int mode, int owidth, int oheight, int *x
         // map back frame
         xmap[i * owidth + j] = ymap[i * owidth + j] = -1;
       }
-
     }
     if (i >= top) ypos += yscale2;
   }
-
 }
-
-
-
-
-
-
 
 
 int masko_init(weed_plant_t *inst) {
@@ -163,7 +144,6 @@ int masko_init(weed_plant_t *inst) {
   video_height = weed_get_int_value(in_channel, "height", &error);
   video_width = weed_get_int_value(in_channel, "width", &error);
   video_area = video_width * video_height;
-
 
   sdata->xmap = (int *)weed_malloc(video_area * sizeof(int));
 
@@ -190,7 +170,7 @@ int masko_init(weed_plant_t *inst) {
   if (gerr != NULL) {
     weed_free(sdata->xmap);
     weed_free(sdata->ymap);
-    g_object_unref(gerr);
+    //g_object_unref(gerr);
     sdata->xmap = sdata->ymap = NULL;
   } else {
     make_mask(pbuf, mode, video_width, video_height, sdata->xmap, sdata->ymap);
@@ -203,7 +183,6 @@ int masko_init(weed_plant_t *inst) {
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
   return WEED_NO_ERROR;
-
 }
 
 
@@ -218,12 +197,7 @@ int masko_deinit(weed_plant_t *inst) {
   weed_free(sdata);
 
   return WEED_NO_ERROR;
-
 }
-
-
-
-
 
 
 int masko_process(weed_plant_t *inst, weed_timecode_t timestamp) {
@@ -296,8 +270,6 @@ int masko_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-
-
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
   if (plugin_info != NULL) {
@@ -345,7 +317,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
     weed_set_int_value(plugin_info, "version", package_version);
-
   }
   return plugin_info;
 }

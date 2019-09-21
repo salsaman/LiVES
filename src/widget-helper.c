@@ -10019,6 +10019,34 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidg
 }
 
 
+static int lives_utf8_menu_strcmpfunc(livesconstpointer a, livesconstpointer b, livespointer fwd) {
+  if (LIVES_POINTER_TO_INT(fwd))
+    return strcmp(lives_utf8_collate_key(lives_menu_item_get_text((LiVESWidget *)a), -1),
+                  lives_utf8_collate_key(lives_menu_item_get_text((LiVESWidget *)b), -1));
+  return strcmp(lives_utf8_collate_key(lives_menu_item_get_text((LiVESWidget *)b), -1),
+                lives_utf8_collate_key(lives_menu_item_get_text((LiVESWidget *)a), -1));
+}
+
+
+WIDGET_HELPER_LOCAL_INLINE LiVESList *lives_menu_list_sort_alpha(LiVESList *list, boolean fwd) {
+  return lives_list_sort_with_data(list, lives_utf8_menu_strcmpfunc, LIVES_INT_TO_POINTER(fwd));
+}
+
+
+LiVESList *add_sorted_list_to_menu(LiVESMenu *menu, LiVESList *menu_list) {
+  LiVESList **seclist;
+  LiVESList *xmenu_list = menu_list = lives_menu_list_sort_alpha(menu_list, TRUE);
+  while (menu_list != NULL) {
+    if (!(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "hidden"))))
+      lives_container_add(LIVES_CONTAINER(menu), (LiVESWidget *)menu_list->data);
+    if ((seclist = (LiVESList **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "secondary_list")) != NULL)
+      * seclist = lives_list_prepend(*seclist, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "secondary_list_value"));
+    menu_list = menu_list->next;
+  }
+  return xmenu_list;
+}
+
+
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
   boolean has_icon = FALSE;
 #ifdef GUI_GTK

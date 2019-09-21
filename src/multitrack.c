@@ -3115,7 +3115,10 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
             if (mt->current_rfx->source != NULL) {
               weed_in_parameters_free((weed_plant_t *)mt->current_rfx->source);
               weed_leaf_copy((weed_plant_t *)mt->current_rfx->source, WEED_LEAF_IN_PARAMETERS, vanilla_inst, WEED_LEAF_IN_PARAMETERS);
-              mt->solo_inst = mt->current_rfx->source;  // TODO: add a checkbutton for this
+              if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mt->solo_check)))
+                mt->solo_inst = mt->current_rfx->source;
+              else
+                mt->solo_inst = NULL;
               mt->preview_layer = weed_get_int_value(mt->init_event, WEED_LEAF_OUT_TRACKS, &error); // want to see the image from first output track
               weed_instance_unref((weed_plant_t *)mt->current_rfx->source); // remove the ref
             }
@@ -3935,12 +3938,8 @@ static void populate_filter_box(int ninchans, lives_mt *mt, int pkgnum) {
 
   LiVESWidget *eventbox = NULL, *xeventbox;
   char *fname, *pkgstring = NULL, *pkg_name = NULL, *catstring;
-  char *tmp;
-
-  lives_fx_cat_t cat, subcat;
-
   int nfilts = rte_get_numfilters(FALSE);
-  int error, nins;
+  int nins;
 
   register int i;
 
@@ -3975,7 +3974,8 @@ static void populate_filter_box(int ninchans, lives_mt *mt, int pkgnum) {
                lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR, TRUE));
 
   for (i = 0; i < nfilts; i++) {
-    weed_plant_t *filter = get_weed_filter(i);
+    int sorted = weed_get_sorted_filter(i);
+    weed_plant_t *filter = get_weed_filter(sorted);
     if (filter != NULL && !weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE)) {
 
       if ((is_pure_audio(filter, FALSE) && (eventbox == NULL || !is_audio_eventbox(eventbox))) ||
@@ -3985,7 +3985,7 @@ static void populate_filter_box(int ninchans, lives_mt *mt, int pkgnum) {
 
       if ((nins == ninchans || (ninchans == 1000000 && nins >= ninchans)) && enabled_out_channels(filter, FALSE) == 1) {
         pkgnum = 0;
-        fname = weed_filter_idx_get_name(i);
+        fname = weed_filter_idx_get_name(sorted);
 
         if ((pkgstring = strstr(fname, ": ")) != NULL) {
           pkgstring = lives_strndup(fname, pkgstring - fname);
@@ -4021,33 +4021,15 @@ static void populate_filter_box(int ninchans, lives_mt *mt, int pkgnum) {
             lives_free(fname);
             continue;
           }
-
-          cat = weed_filter_categorise(filter, enabled_in_channels(filter, TRUE), enabled_out_channels(filter, FALSE));
-          if ((subcat = weed_filter_subcategorise(filter, cat, (cat == LIVES_FX_CAT_COMPOSITOR))) != 0) {
-            char *tmp2;
-            tmp = lives_strdup_printf("%s (%s)", fname, (tmp2 = lives_fx_cat_to_text(subcat, FALSE)));
-            lives_free(tmp2);
-            lives_free(fname);
-            fname = tmp;
-          }
-
-          if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
-              weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
-            if (!prefs->unstable_fx) {
-              lives_free(fname);
-              continue;
-            }
-            tmp = lives_strdup_printf(_("%s [unstable]"), fname);
-            lives_free(fname);
-            fname = tmp;
-          }
+          fname = weed_filter_extended_name(filter, FALSE);
         }
 
         xeventbox = lives_event_box_new();
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "fxid", LIVES_INT_TO_POINTER(i));
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "fxid", LIVES_INT_TO_POINTER(sorted));
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "pkgnum", LIVES_INT_TO_POINTER(pkgnum));
 
-        add_to_listbox(mt, xeventbox, fname, (pkgnum != 0 || get_transition_param(filter, FALSE) == -1 || !has_video_chans_in(filter, FALSE)));
+        //add_to_listbox(mt, xeventbox, fname, (pkgnum != 0 || get_transition_param(filter, FALSE) == -1 || !has_video_chans_in(filter, FALSE)));
+        add_to_listbox(mt, xeventbox, fname, TRUE);
         lives_free(fname);
       }
     }
@@ -6155,6 +6137,12 @@ void set_mt_colours(lives_mt *mt) {
 }
 
 
+static void on_solo_check_toggled(LiVESWidget *widg, livespointer user_data) {
+  lives_mt *mt = (lives_mt *)user_data;
+  mt_show_current_frame(mt, FALSE);
+}
+
+
 lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *hseparator;
   LiVESWidget *menuitem;
@@ -7089,10 +7077,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   num_filters = rte_get_numfilters(FALSE);
   for (i = 0; i < num_filters; i++) {
-    weed_plant_t *filter = get_weed_filter(i);
+    int sorted = weed_get_sorted_filter(i);
+    weed_plant_t *filter = get_weed_filter(sorted);
     if (filter != NULL && !weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE)) {
       LiVESWidget *menuitem;
-      char *fname = weed_filter_idx_get_name(i), *fxname;
+      char *fname = weed_filter_idx_get_name(sorted), *fxname;
       if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
           weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
         if (!prefs->unstable_fx) {
@@ -7107,7 +7096,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
       if (enabled_in_channels(filter, TRUE) >= 1000000 && enabled_out_channels(filter, FALSE) == 1) {
         menuitem = lives_standard_image_menu_item_new_with_label(fxname);
         lives_container_add(LIVES_CONTAINER(submenu_menu5), menuitem);
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(i));
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
         lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
                              LIVES_GUI_CALLBACK(mt_add_region_effect),
                              (livespointer)mt);
@@ -7117,27 +7106,27 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
         if (!is_pure_audio(filter, FALSE)) {
           lives_container_add(LIVES_CONTAINER(submenu_menuv), menuitem);
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(i));
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
           lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
                                LIVES_GUI_CALLBACK(mt_add_block_effect),
                                (livespointer)mt);
 
           menuitem = lives_standard_image_menu_item_new_with_label(fxname);
           lives_container_add(LIVES_CONTAINER(submenu_menu4v), menuitem);
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(i));
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
           lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
                                LIVES_GUI_CALLBACK(mt_add_region_effect),
                                (livespointer)mt);
         } else {
           lives_container_add(LIVES_CONTAINER(submenu_menua), menuitem);
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(i));
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
           lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
                                LIVES_GUI_CALLBACK(mt_add_block_effect),
                                (livespointer)mt);
 
           menuitem = lives_standard_image_menu_item_new_with_label(fxname);
           lives_container_add(LIVES_CONTAINER(submenu_menu4a), menuitem);
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(i));
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
           lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
                                LIVES_GUI_CALLBACK(mt_add_region_effect),
                                (livespointer)mt);
@@ -7146,13 +7135,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
       } else if (enabled_in_channels(filter, FALSE) == 2 && enabled_out_channels(filter, FALSE) == 1) {
         // add all transitions to submenus
         menuitem = lives_standard_image_menu_item_new_with_label(fxname);
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(i));
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
         if (get_transition_param(filter, FALSE) == -1) lives_container_add(LIVES_CONTAINER(submenu_menu11), menuitem);
         else {
           if (has_video_chans_in(filter, FALSE)) {
             /// the autotransitions menu
             menuitem2 = lives_standard_check_menu_item_new_with_label(fxname, prefs->atrans_fx == i);
-            lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem2), "idx", LIVES_INT_TO_POINTER(i));
+            lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem2), "idx", LIVES_INT_TO_POINTER(sorted));
 
             lives_signal_connect(LIVES_GUI_OBJECT(menuitem2), LIVES_WIDGET_ACTIVATE_SIGNAL,
                                  LIVES_GUI_CALLBACK(mt_set_atrans_effect),
@@ -8332,6 +8321,14 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->fx_params_label = lives_standard_label_new("");
   lives_box_pack_start(LIVES_BOX(hbox), mt->fx_params_label, TRUE, TRUE, widget_opts.packing_width);
+
+  mt->solo_check = lives_standard_check_button_new(_("Solo"), TRUE, LIVES_BOX(hbox),
+                   (tmp = lives_strdup(_("Preview only the selected effect"))));
+  lives_free(tmp);
+
+  lives_signal_connect_after(LIVES_GUI_OBJECT(mt->solo_check), LIVES_WIDGET_TOGGLED_SIGNAL,
+                             LIVES_GUI_CALLBACK(on_solo_check_toggled),
+                             (livespointer)mt);
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
   mt->del_node_button = lives_standard_button_new_with_label(_("_Del. node"));

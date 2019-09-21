@@ -196,6 +196,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_list_copy(list) g_list_copy(list)
 #define lives_list_next(list) g_list_next(list)
 #define lives_list_first(list) g_list_first(list)
+#define lives_list_reverse(list) g_list_reverse(list)
 #define lives_list_remove(list, data) g_list_remove(list, data)
 #define lives_list_remove_link(list, data) g_list_remove_link(list, data)
 #define lives_list_concat(list, data) g_list_concat(list, data)

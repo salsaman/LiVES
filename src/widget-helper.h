@@ -542,6 +542,8 @@ LiVESWidget *lives_toggle_tool_button_new(void);
 boolean lives_toggle_tool_button_get_active(LiVESToggleToolButton *);
 boolean lives_toggle_tool_button_set_active(LiVESToggleToolButton *, boolean active);
 
+LiVESList *add_sorted_list_to_menu(LiVESMenu *, LiVESList *);
+
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size);
 
 LiVESSList *lives_radio_button_get_group(LiVESRadioButton *);

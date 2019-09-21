@@ -327,6 +327,7 @@ struct _mt {
   LiVESWidget *quit;
   LiVESWidget *troubleshoot;
   LiVESWidget *fx_params_label;
+  LiVESWidget *solo_check;
   LiVESWidget *amixer_button;
   LiVESWidget *view_sel_events;
   LiVESWidget *adjust_start_end;

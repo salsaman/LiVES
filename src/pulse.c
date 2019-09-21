@@ -1517,10 +1517,11 @@ uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // get the time in ticks since either playback started
   volatile aserver_message_t *msg = pulsed->msgq;
   pa_usec_t usec;
+  boolean timeout;
+  int alarm_handle;
   int err;
   if (msg != NULL && (msg->command == ASERVER_CMD_FILE_SEEK || msg->command == ASERVER_CMD_FILE_OPEN)) {
-    boolean timeout;
-    int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+    alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
     while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(pulsed) != NULL) {
       sched_yield(); // wait for seek
       lives_usleep(prefs->sleep_time);
@@ -1529,17 +1530,20 @@ uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     if (timeout) return -1;
   }
 
+  alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   do {
     pa_threaded_mainloop_lock(pa_mloop);
     err = pa_stream_get_time(pulsed->pstream, &usec);
     pa_threaded_mainloop_unlock(pa_mloop);
     sched_yield();
     lives_usleep(prefs->sleep_time);
-  } while (usec == 0 && err == 0);
+  } while (!(timeout = lives_alarm_get(alarm_handle)) && usec == 0 && err == 0);
 #ifdef DEBUG_PA_TIME
   g_print("gettime3 %d %ld %ld %ld %f\n", err, usec, pulsed->usec_start, (usec - pulsed->usec_start) * USEC_TO_TICKS,
           (usec - pulsed->usec_start) * USEC_TO_TICKS / 100000000.);
 #endif
+  lives_alarm_clear(alarm_handle);
+  if (timeout) return -1;
   return (uint64_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
 }
 
@@ -1555,7 +1559,7 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, int frame) {
   // position will be adjusted to (floor) nearest sample
   int64_t seekstart;
   volatile aserver_message_t *pmsg;
-  int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+  int alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
   boolean timeout;
 
   if (frame < 1) frame = 1;
@@ -1586,7 +1590,7 @@ int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip
 
   if (!pulsed->is_corked) {
     boolean timeout;
-    int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+    int alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
     do {
       pmsg = pulse_get_msgq(pulsed);
@@ -1623,7 +1627,7 @@ boolean pulse_try_reconnect(void) {
   mainw->pulsed = NULL;
 
   lives_system("pulseaudio -k", TRUE);
-  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+  alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   while (!(timeout = lives_alarm_get(alarm_handle))) {
     sched_yield();
     lives_usleep(prefs->sleep_time);
@@ -1700,7 +1704,7 @@ void pulse_aud_pb_ready(int fileno) {
         mainw->pulsed->reverse_endian = TRUE;
       else mainw->pulsed->reverse_endian = FALSE;
 
-      alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+      alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
       while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
         sched_yield(); // wait for seek
         lives_usleep(prefs->sleep_time);

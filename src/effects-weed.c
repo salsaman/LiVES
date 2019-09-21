@@ -49,6 +49,8 @@ struct _procvals {
   int ret;
 };
 
+static int load_compound_fx(void);
+
 #define OIL_MEMCPY_MAX_BYTES 1024 // this can be tuned to provide optimal performance
 
 #ifdef ENABLE_ORC
@@ -597,6 +599,8 @@ static int fg_generator_clip;
 
 static weed_plant_t **weed_filters; // array of filter_classes
 static weed_plant_t **dupe_weed_filters; // array of duplicate filter_classes (only used during loading)
+
+static LiVESList *weed_fx_sorted_list;
 
 // each 'hotkey' controls n instances, selectable as 'modes' or banks
 static weed_plant_t **key_to_instance[FX_KEYS_MAX];
@@ -4897,7 +4901,6 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       lives_freep((void **)&phashnames);
       lives_freep((void **)&filters);
     }
-
   } else lives_printerr(_("Info: Unable to load plugin %s\nError was: %s\n"), plugin_path, dlerror());
 
   if (mainw->chdir_failed) {
@@ -4928,6 +4931,7 @@ static void merge_dupes(void) {
   for (i = num_weed_filters; i < num_weed_filters + num_weed_dupes; i++) {
     weed_filters[i] = dupe_weed_filters[i - num_weed_filters];
     hashnames[i] = dupe_hashnames[i - num_weed_filters];
+    weed_fx_sorted_list = lives_list_prepend(weed_fx_sorted_list, LIVES_INT_TO_POINTER(i));
   }
 
   if (dupe_weed_filters != NULL) lives_freep((void **)&dupe_weed_filters);
@@ -4937,93 +4941,118 @@ static void merge_dupes(void) {
 }
 
 
-static void make_fx_defs_menu(void) {
+static void make_fx_defs_menu(int num_weed_compounds) {
   weed_plant_t *filter;
 
-  LiVESWidget *menuitem, *menu;
+  LiVESWidget *menuitem, *menu = mainw->rte_defs;
   LiVESWidget *pkg_menu;
   LiVESWidget *pkg_submenu = NULL;
 
+  LiVESList *menu_list = NULL;
+  LiVESList *pkg_menu_list = NULL;
+  LiVESList *compound_list = NULL;
+
   char *string, *filter_type, *filter_name;
   char *pkg = NULL, *pkgstring;
+  boolean hidden;
 
-  int pkg_posn = 0, error;
+  int error;
 
   register int i;
+
+  weed_fx_sorted_list = NULL;
 
   // menu entries for vj/set defs
   for (i = 0; i < num_weed_filters - num_weed_dupes; i++) {
     filter = weed_filters[i];
+    filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
 
     // skip hidden filters
-    if (!weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE) ||
-        (weed_get_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, &error) == WEED_FALSE)) {
-      if ((!has_video_chans_in(filter, FALSE) && has_video_chans_out(filter, FALSE)) ||
-          num_in_params(filter, TRUE, TRUE) > 0) {
-        if (enabled_in_channels(filter, TRUE) > 2 && enabled_out_channels(filter, TRUE) > 0) continue; // don't list compositors
-        filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
-        if ((pkgstring = strstr(filter_name, ": ")) != NULL) {
-          // package effect
-          if (pkg != NULL && strncmp(pkg, filter_name, strlen(pkg))) {
-            lives_free(pkg);
-            pkg = NULL;
-            menu = mainw->rte_defs;
-          }
-          if (pkg == NULL) {
-            pkg = filter_name;
-            filter_name = lives_strdup(pkg);
-            memset(pkgstring, 0, 1);
-            /* TRANSLATORS: example " - LADSPA plugins -" */
-            pkgstring = lives_strdup_printf(_(" - %s plugins -"), pkg);
-            // create new submenu
+    if ((weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE) &&
+         weed_get_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, &error) == WEED_TRUE) ||
+        (num_in_params(filter, TRUE, TRUE) == 0 && !(!has_video_chans_in(filter, FALSE) && has_video_chans_out(filter, FALSE))) ||
+        (enabled_in_channels(filter, TRUE) > 2 && enabled_out_channels(filter, TRUE) > 0))
+      hidden = TRUE;
+    else hidden = FALSE;
 
-            widget_opts.mnemonic_label = FALSE;
-            pkg_menu = lives_standard_menu_item_new_with_label(pkgstring);
-            widget_opts.mnemonic_label = TRUE;
-            lives_container_add(LIVES_CONTAINER(mainw->rte_defs), pkg_menu);
-            lives_menu_reorder_child(LIVES_MENU(mainw->rte_defs), pkg_menu, pkg_posn++);
-
-            pkg_submenu = lives_menu_new();
-            lives_menu_item_set_submenu(LIVES_MENU_ITEM(pkg_menu), pkg_submenu);
-
-            if (palette->style & STYLE_1) {
-              lives_widget_set_bg_color(pkg_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-              lives_widget_set_fg_color(pkg_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-            }
-
-            lives_widget_show(pkg_menu);
-            lives_widget_show(pkg_submenu);
-            lives_free(pkgstring);
-          }
-          // add to submenu
-          menu = pkg_submenu;
-        } else {
-          lives_freep((void **)&pkg);
-          menu = mainw->rte_defs;
-        }
-
-        filter_type = weed_filter_get_type(filter, TRUE, FALSE);
-        string = lives_strdup_printf("%s (%s)", filter_name, filter_type);
+    if ((pkgstring = strstr(filter_name, ": ")) != NULL) {
+      // package effect
+      if (pkg != NULL && strncmp(pkg, filter_name, strlen(pkg))) {
+        lives_free(pkg);
+        pkg = NULL;
+        menu = mainw->rte_defs;
+      }
+      if (pkg == NULL) {
+        pkg = filter_name;
+        filter_name = lives_strdup(pkg);
+        memset(pkgstring, 0, 1);
+        /* TRANSLATORS: example " - LADSPA plugins -" */
+        pkgstring = lives_strdup_printf(_(" - %s plugins -"), pkg);
+        // create new submenu
 
         widget_opts.mnemonic_label = FALSE;
-        menuitem = lives_standard_menu_item_new_with_label(string);
+        pkg_menu = lives_standard_menu_item_new_with_label(pkgstring);
         widget_opts.mnemonic_label = TRUE;
-        if (prefs->show_gui) {
-          lives_widget_show(menuitem);
+        lives_container_add(LIVES_CONTAINER(mainw->rte_defs), pkg_menu);
+        //lives_menu_reorder_child(LIVES_MENU(mainw->rte_defs), pkg_menu, pkg_posn++);
+
+        pkg_submenu = lives_menu_new();
+        lives_menu_item_set_submenu(LIVES_MENU_ITEM(pkg_menu), pkg_submenu);
+
+        if (palette->style & STYLE_1) {
+          lives_widget_set_bg_color(pkg_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+          lives_widget_set_fg_color(pkg_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
         }
-        lives_free(string);
-        lives_free(filter_type);
 
-        lives_container_add(LIVES_CONTAINER(menu), menuitem);
-
-        lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                             LIVES_GUI_CALLBACK(rte_set_defs_activate),
-                             LIVES_INT_TO_POINTER(i));
-
-        lives_freep((void **)&filter_name);
+        lives_widget_show(pkg_menu);
+        lives_widget_show(pkg_submenu);
+        lives_free(pkgstring);
       }
+      // add to submenu
+      menu = pkg_submenu;
+    } else {
+      pkg_menu_list = add_sorted_list_to_menu(LIVES_MENU(menu), pkg_menu_list);
+      lives_list_free(pkg_menu_list);
+      pkg_menu_list = NULL;
+      lives_freep((void **)&pkg);
+      menu = mainw->rte_defs;
     }
+
+    filter_type = weed_filter_get_type(filter, TRUE, FALSE);
+    string = lives_strdup_printf("%s (%s)", filter_name, filter_type);
+
+    widget_opts.mnemonic_label = FALSE;
+    menuitem = lives_standard_menu_item_new_with_label(string);
+    widget_opts.mnemonic_label = TRUE;
+    lives_free(string);
+    lives_free(filter_type);
+
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "hidden", LIVES_INT_TO_POINTER((int)hidden));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "secondary_list", &weed_fx_sorted_list);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "secondary_list_value", LIVES_INT_TO_POINTER(i));
+
+    if (pkg != NULL) pkg_menu_list = lives_list_prepend(pkg_menu_list, (livespointer)menuitem);
+    else {
+      if (i >= num_weed_filters - num_weed_compounds) compound_list = lives_list_prepend(compound_list, (livespointer)menuitem);
+      else menu_list = lives_list_prepend(menu_list, (livespointer)menuitem);
+    }
+
+    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                         LIVES_GUI_CALLBACK(rte_set_defs_activate),
+                         LIVES_INT_TO_POINTER(i));
+
+    lives_freep((void **)&filter_name);
   }
+
+  if (pkg != NULL) {
+    pkg_menu_list = add_sorted_list_to_menu(LIVES_MENU(menu), pkg_menu_list);
+    lives_list_free(pkg_menu_list);
+    lives_free(pkg);
+  }
+  menu_list = add_sorted_list_to_menu(LIVES_MENU(mainw->rte_defs), menu_list);
+  lives_list_free(menu_list);
+  compound_list = add_sorted_list_to_menu(LIVES_MENU(mainw->rte_defs), compound_list);
+  lives_list_free(compound_list);
 }
 
 
@@ -5038,7 +5067,7 @@ void weed_load_all(void) {
   int numdirs;
   char **dirs;
 
-  int listlen;
+  int listlen, ncompounds;
 
   num_weed_filters = 0;
   num_weed_dupes = 0;
@@ -5161,11 +5190,12 @@ void weed_load_all(void) {
   d_print(_("Successfully loaded %d Weed filters\n"), num_weed_filters);
 
   threaded_dialog_spin(0.);
-  load_compound_fx();
+  ncompounds = load_compound_fx();
   threaded_dialog_spin(0.);
-  make_fx_defs_menu();
+  make_fx_defs_menu(ncompounds);
   threaded_dialog_spin(0.);
   if (num_weed_dupes > 0) merge_dupes();
+  weed_fx_sorted_list = lives_list_reverse(weed_fx_sorted_list);
   fx_inited = TRUE;
 }
 
@@ -5849,7 +5879,7 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 }
 
 
-void load_compound_fx(void) {
+static int load_compound_fx(void) {
   LiVESList *compound_plugin_list;
 
   int plugin_idx, onum_filters = num_weed_filters;
@@ -5893,6 +5923,7 @@ void load_compound_fx(void) {
 
   lives_free(lives_compound_plugin_path);
   threaded_dialog_spin(0.);
+  return num_weed_filters - onum_filters;
 }
 
 
@@ -5972,6 +6003,9 @@ void weed_unload_all(void) {
 
   if (hashnames != NULL) lives_free(hashnames);
   if (weed_filters != NULL) lives_free(weed_filters);
+
+  lives_list_free(weed_fx_sorted_list);
+  weed_fx_sorted_list = NULL;
 
   for (i = 0; i < FX_KEYS_MAX; i++) {
     lives_free(key_to_fx[i]);
@@ -6990,7 +7024,12 @@ deinit2:
         if (mainw->pulsed_read != NULL && mainw->pulsed_read->in_use &&
             (mainw->pulsed_read->playing_file == -1 || mainw->pulsed_read->playing_file == mainw->ascrap_file)) {
           // if playing external audio, switch over to internal for an audio gen
-          pa_time_reset(mainw->pulsed, -lives_pulse_get_time(mainw->pulsed_read));
+          int64_t audio_ticks = lives_pulse_get_time(mainw->pulsed_read);
+          if (audio_ticks == -1) {
+            mainw->cancelled = handle_audio_timeout();
+            return mainw->cancelled;
+          }
+          pa_time_reset(mainw->pulsed, -audio_ticks);
           pulse_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), FALSE);
           pa_mloop_lock();
           pulse_driver_uncork(mainw->pulsed);
@@ -7166,7 +7205,12 @@ void weed_deinit_effect(int hotkey) {
           if (mainw->pulsed != NULL) mainw->pulsed->in_use = FALSE; // deactivate writer
           pulse_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
           if (mainw->pulsed != NULL) {
-            pa_time_reset(mainw->pulsed_read, -lives_pulse_get_time(mainw->pulsed)); // ensure time continues monotonically
+            int64_t audio_ticks = lives_pulse_get_time(mainw->pulsed_read);
+            if (audio_ticks == -1) {
+              mainw->cancelled = handle_audio_timeout();
+              return;
+            }
+            pa_time_reset(mainw->pulsed_read, -audio_ticks); // ensure time continues monotonically
             pa_mloop_lock();
             pulse_driver_uncork(mainw->pulsed_read);
             if (mainw->pulsed != NULL) pulse_driver_cork(mainw->pulsed);
@@ -9510,6 +9554,40 @@ void rte_swap_fg_bg(void) {
 }
 
 
+char *weed_filter_extended_name(weed_plant_t *filter, boolean add_subcats) {
+  // name and observations
+  int error;
+  char *string, *tmp, *subcat = lives_strdup("");
+  char *filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
+
+  if (add_subcats) {
+    lives_fx_cat_t cat = weed_filter_categorise(filter,
+                         enabled_in_channels(filter, TRUE),
+                         enabled_out_channels(filter, TRUE));
+
+    lives_fx_cat_t sub = weed_filter_subcategorise(filter, cat, FALSE);
+    if (sub != LIVES_FX_CAT_NONE)
+      subcat = lives_strdup_printf(" (%s)", lives_fx_cat_to_text(sub, FALSE));
+  }
+  tmp = lives_strdup_printf("%s%s", filter_name, subcat == NULL ? "" : subcat);
+
+  if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
+      weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
+    string = lives_strdup_printf(_("%s [unstable]"), tmp);
+    lives_free(tmp);
+  } else string = tmp;
+
+  if (subcat != NULL) lives_free(subcat);
+  lives_free(filter_name);
+  return string;
+}
+
+
+LIVES_GLOBAL_INLINE int weed_get_sorted_filter(int i) {
+  return LIVES_POINTER_TO_INT(lives_list_nth_data(weed_fx_sorted_list, i));
+}
+
+
 LiVESList *weed_get_all_names(lives_fx_list_t list_type) {
   // remember to free list after use, if non-NULL
   LiVESList *list = NULL;
@@ -9517,7 +9595,8 @@ LiVESList *weed_get_all_names(lives_fx_list_t list_type) {
   int i, error;
 
   for (i = 0; i < num_weed_filters - num_weed_dupes; i++) {
-    weed_plant_t *filter = weed_filters[i];
+    int sorted = weed_get_sorted_filter(i);
+    weed_plant_t *filter = weed_filters[sorted];
     filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
     switch (list_type) {
     case FX_LIST_NAME:
@@ -9526,27 +9605,13 @@ LiVESList *weed_get_all_names(lives_fx_list_t list_type) {
       list = lives_list_append(list, (livespointer)string);
       break;
     case FX_LIST_EXTENDED_NAME: {
-      // name and observations
-      lives_fx_cat_t cat = weed_filter_categorise(filter,
-                           enabled_in_channels(filter, TRUE),
-                           enabled_out_channels(filter, TRUE));
-
-      lives_fx_cat_t sub = weed_filter_subcategorise(filter, cat, FALSE);
-      char *subcat = NULL;
-      if (sub != LIVES_FX_CAT_NONE)
-        subcat = lives_strdup_printf(" (%s)", lives_fx_cat_to_text(sub, FALSE));
-
-      if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
-          weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
-        string = lives_strdup_printf(_("%s%s [unstable]"), filter_name, sub == LIVES_FX_CAT_NONE ? "" : subcat);
-      } else string = lives_strdup_printf("%s%s", filter_name, sub == LIVES_FX_CAT_NONE ? "" : subcat);
-      if (subcat != NULL) lives_free(subcat);
+      string = weed_filter_extended_name(filter, TRUE);
       list = lives_list_append(list, (livespointer)string);
     }
     break;
     case FX_LIST_HASHNAME:
       // hashnames
-      hashname = make_weed_hashname(i, TRUE, FALSE);
+      hashname = make_weed_hashname(sorted, TRUE, FALSE);
       list = lives_list_append(list, (livespointer)hashname);
       break;
     }

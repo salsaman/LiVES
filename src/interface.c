@@ -4340,13 +4340,15 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
 
   if (!LIVES_IS_WIDGET(widget)) return;
 
+  if (mainw->multitrack == NULL) {
 #if GTK_CHECK_VERSION(3, 18, 0)
-  gtk_widget_get_clip(mainw->top_vbox, &all);
-  height = lives_widget_get_allocation_height(mainw->LiVES) - all.height - MSG_AREA_VMARGIN;
-  if (height < 0) height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)) - MSG_AREA_VMARGIN;
+    gtk_widget_get_clip(mainw->top_vbox, &all);
+    height = lives_widget_get_allocation_height(mainw->LiVES) - all.height - MSG_AREA_VMARGIN;
+    if (height < 0) height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)) - MSG_AREA_VMARGIN;
 #else
-  height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)) - MSG_AREA_VMARGIN;
+    height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)) - MSG_AREA_VMARGIN;
 #endif
+  } else height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)) - MSG_AREA_VMARGIN;
   width = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
 
   if (width < 32 || height < 32) return;

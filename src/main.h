@@ -1118,6 +1118,7 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
 void load_start_image(int frame);
 void load_end_image(int frame);
 void load_preview_image(boolean update_always);
+boolean resize_message_area(livespointer data);
 
 boolean pull_frame(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc);
 void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode_t tc);

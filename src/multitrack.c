@@ -8612,6 +8612,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_sensitive(scrollbar, FALSE);
   lives_box_pack_start(LIVES_BOX(hbox), mt->timeline_table_header, TRUE, TRUE, 0);
   lives_box_pack_end(LIVES_BOX(hbox), scrollbar, FALSE, FALSE, widget_opts.packing_width);
+#if GTK_CHECK_VERSION(3, 8, 0)
+  gtk_widget_set_opacity(scrollbar, 0.);
+#endif
 
   mt->tl_hbox = lives_hbox_new(FALSE, 0);
   lives_container_set_border_width(LIVES_CONTAINER(mt->tl_hbox), 0);
@@ -9233,6 +9236,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
       mainw->msg_area = mainw_msg_area;
       mainw->msg_adj = mainw_msg_adj;
       mainw->msg_scrollbar = mainw_msg_scrollbar;
+      mainw->overflowx = mainw->overflowy = 1000000;
       show_lives();
       unblock_expose();
       resize(1.);
@@ -11068,6 +11072,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   if (prefs->show_gui && prefs->open_maximised) {
     int wx, wy;
+    mainw->overflowx = mainw->overflowy = 1000000;
     lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
     lives_window_get_position(LIVES_WINDOW(mainw->LiVES), &wx, &wy);
     if (prefs->gui_monitor == 0 && (wx > 0 || wy > 0)) lives_window_move(LIVES_WINDOW(mainw->LiVES), 0, 0);

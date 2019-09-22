@@ -3135,14 +3135,14 @@ void play_file(void) {
   if (mainw->multitrack == NULL && mainw->current_file > -1)
     set_main_title(cfile->name, 0);
 
-  reset_message_area(TRUE);
-
   if (mainw->multitrack == NULL && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
       cfile->clip_type == CLIP_TYPE_FILE)) {
     load_start_image(cfile->start);
     load_end_image(cfile->end);
   }
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+  mainw->overflowx = mainw->overflowy = 1000000;
+  reset_message_area(TRUE);
 }
 
 

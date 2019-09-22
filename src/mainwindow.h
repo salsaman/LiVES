@@ -1414,6 +1414,10 @@ typedef struct {
   int ref_message_n;
 
   boolean recovering_files;
+
+  int overflowx;
+  int overflowy;
+
   ////////////////////
 } mainwindow;
 

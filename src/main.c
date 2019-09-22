@@ -1267,6 +1267,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->num_rendered_effects_builtin = mainw->num_rendered_effects_custom = mainw->num_rendered_effects_test = 0;
 
+  mainw->overflowx = mainw->overflowy = 1000000;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -2704,7 +2706,7 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 
 /////////////////////////////////
-static boolean resize_message_area(livespointer data) {
+boolean resize_message_area(livespointer data) {
   // workaround for GTK+ weirdness
 #if GTK_CHECK_VERSION(3, 18, 0)
   LiVESAllocation all;
@@ -4084,7 +4086,7 @@ void load_start_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  //lives_widget_process_updates(mainw->LiVES, TRUE);
 #endif
 
   threaded_dialog_spin(0.);
@@ -4110,7 +4112,7 @@ void load_start_image(int frame) {
     lives_widget_set_vexpand(mainw->frame1, FALSE);
 
     lives_widget_set_hexpand(mainw->eventbox3, TRUE);
-    lives_widget_set_vexpand(mainw->eventbox3, TRUE);
+    //lives_widget_set_vexpand(mainw->eventbox3, TRUE);
   }
 
   if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -4279,7 +4281,7 @@ void load_end_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  //lives_widget_process_updates(mainw->LiVES, TRUE);
 #endif
 
   threaded_dialog_spin(0.);
@@ -4305,7 +4307,7 @@ void load_end_image(int frame) {
     lives_widget_set_vexpand(mainw->frame2, FALSE);
 
     lives_widget_set_hexpand(mainw->eventbox4, TRUE);
-    lives_widget_set_vexpand(mainw->eventbox4, TRUE);
+    //lives_widget_set_vexpand(mainw->eventbox4, TRUE);
   }
 
   if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -7161,7 +7163,7 @@ void load_frame_image(int frame) {
             mt_clip_select(mainw->multitrack, TRUE);
           }
           if (mainw->multitrack == NULL) {
-            if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
+            if (prefs->show_msg_area && !mainw->only_close) lives_idle_add(resize_message_area, NULL);
           }
           return;
         }
@@ -7186,7 +7188,7 @@ void load_frame_image(int frame) {
             mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
             mt_clip_select(mainw->multitrack, TRUE);
           } else {
-            if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
+            if (prefs->show_msg_area && !mainw->only_close) lives_idle_add(resize_message_area, NULL);
           }
           return;
         }
@@ -7204,7 +7206,7 @@ void load_frame_image(int frame) {
                 mt_clip_select(mainw->multitrack, TRUE);
               }
               if (mainw->multitrack == NULL) {
-                if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
+                if (prefs->show_msg_area && !mainw->only_close) lives_idle_add(resize_message_area, NULL);
               }
               return;
             }
@@ -7221,7 +7223,7 @@ void load_frame_image(int frame) {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
                 mt_clip_select(mainw->multitrack, TRUE);
               } else {
-                if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
+                if (prefs->show_msg_area && !mainw->only_close) lives_idle_add(resize_message_area, NULL);
               }
               return;
             }
@@ -7274,11 +7276,11 @@ void load_frame_image(int frame) {
     }
 
     if (mainw->multitrack == NULL) {
-      resize(1);
+      //resize(1);
       lives_widget_hide(mainw->playframe);
       load_start_image(0);
       load_end_image(0);
-      if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
+      if (prefs->show_msg_area && !mainw->only_close) lives_idle_add(resize_message_area, NULL);
     }
 
     set_sel_label(mainw->sel_label);

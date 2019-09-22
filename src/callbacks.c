@@ -435,6 +435,7 @@ void lives_exit(int signum) {
         polymorph(mainw->multitrack, POLY_CLIPS);
         mt_sensitise(mainw->multitrack);
       }
+      if (prefs->show_msg_area) lives_idle_add(resize_message_area, NULL);
       return;
     }
 

@@ -4400,7 +4400,8 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
 EXPOSE_FN_DECL(expose_msg_area, widget) {
   lives_painter_t *cr;
   int lheight, llines, llast, lineheight;
-  int width, height;
+  int width, height, overflowx, overflowy;
+
   static int wiggle_room = 0;
   static int last_height = -1;
   static int last_textsize = -1;
@@ -4412,7 +4413,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
   LingoLayout *layout;
 
   if (!prefs->show_msg_area) return FALSE;
-  if (mainw->playing_file > -1) return FALSE;
+  if (LIVES_IS_PLAYING) return FALSE;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 
@@ -4433,12 +4434,16 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
   w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
   h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
 
-  by -= 4;
+  overflowx = w - (scr_width - bx);
+  overflowy = h - (scr_height - by);
+
+  if (overflowx <= OVERFLOW_MIN_X && mainw->overflowx <= overflowx) bx -= overflowx;
+  if (overflowy <= OVERFLOW_MIN_Y && mainw->overflowy <= overflowy) by -= overflowy;
+
+  mainw->overflowx = overflowx;
+  mainw->overflowy = overflowy;
 
   if (w > scr_width - bx || h > scr_height - by) {
-    int overflowx = w - (scr_width - bx);
-    int overflowy = h - (scr_height - by);
-
     int mywidth = lives_widget_get_allocation_width(widget);
     int myheight = lives_widget_get_allocation_height(widget);
 
@@ -4471,7 +4476,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
     // add this back in first if it breaks..
     //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 #if GTK_CHECK_VERSION(3, 0, 0)
-    lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
+    //lives_signal_stop_emission_by_name(widget, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
     lives_widget_context_update();
     lives_signal_handler_unblock(widget, mainw->sw_func);

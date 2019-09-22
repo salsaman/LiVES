@@ -1951,7 +1951,7 @@ void create_LiVES(void) {
   mainw->pl_eventbox = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
   lives_widget_set_size_request(mainw->playframe, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
-  lives_widget_set_hexpand(mainw->pl_eventbox, TRUE);
+  lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
   lives_widget_set_vexpand(mainw->pl_eventbox, TRUE);
 
   mainw->playarea = lives_hbox_new(FALSE, 0);
@@ -4282,7 +4282,7 @@ void kill_play_window(void) {
 
 
 void add_to_playframe(void) {
-  lives_widget_show(mainw->playarea);
+  if (LIVES_IS_PLAYING) lives_widget_show(mainw->playarea);
   if (mainw->plug == NULL) {
     if (!mainw->foreign && (!mainw->sep_win || prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY)) {
       mainw->plug = lives_hbox_new(FALSE, 0);

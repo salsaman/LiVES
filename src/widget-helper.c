@@ -92,9 +92,9 @@ weed_plant_t *LiVESObject_to_weed_plant(LiVESObject *o) {
 static void edit_state_cb(LiVESObject *object, livespointer pspec, livespointer user_data) {
   LiVESWidget *entry = LIVES_WIDGET(object);
   if (lives_entry_get_editable(LIVES_ENTRY(object))) {
-    lives_widget_apply_theme2(entry, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme3(entry, LIVES_WIDGET_STATE_NORMAL);
   } else {
-    lives_widget_apply_theme(entry, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme2(entry, LIVES_WIDGET_STATE_NORMAL, TRUE);
   }
 }
 
@@ -192,12 +192,17 @@ static void widget_state_cb(LiVESObject *object, livespointer pspec, livespointe
     // other widgets get dimmed text
     widget_opts.apply_theme = TRUE;
     if (!lives_widget_is_sensitive(widget)) {
-      set_child_dimmed_colour(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
+      set_child_dimmed_colour2(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
+      lives_widget_apply_theme_dimmed2(widget, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
     } else {
       if (LIVES_IS_ENTRY(widget) && !LIVES_IS_SPIN_BUTTON(widget))
         edit_state_cb(LIVES_WIDGET_OBJECT(widget), NULL, NULL);
       else {
-        set_child_colour3(widget, TRUE);
+        if (LIVES_IS_COMBO(widget)) {
+          LiVESWidget *entry = lives_combo_get_entry(LIVES_COMBO(widget));
+          lives_widget_apply_theme2(entry, LIVES_WIDGET_STATE_NORMAL, TRUE);
+          lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, TRUE);
+        } else set_child_colour(widget, TRUE);
       }
     }
   }
@@ -1288,8 +1293,34 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
       state_str = "";
     }
 
+#if GTK_CHECK_VERSION(3, 24, 0)
+    // special tweaks
+    if (GTK_IS_FRAME(widget)) {
+      selector = "label";
+    }
+
+    if (GTK_IS_TEXT_VIEW(widget)) {
+      selector = "text";
+      /* tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value); */
+      /* lives_free(css_string); */
+      /* css_string = tmp; */
+    }
+
+    if (GTK_IS_SPIN_BUTTON(widget)) {
+      selector = "*";
+      /* tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value); */
+      /* lives_free(css_string); */
+      /* css_string = tmp; */
+    }
+
+#endif
+
     if (selector == NULL) wname = lives_strdup_printf("#%s%s", widget_name, state_str);
+#if !GTK_CHECK_VERSION(3, 24, 0)
     else wname = lives_strdup_printf("#%s%s %s", widget_name, state_str, selector);
+#else
+    else wname = lives_strdup_printf("#%s %s%s", widget_name, selector, state_str);
+#endif
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   }
@@ -1298,8 +1329,9 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   lives_free(widget_name);
   css_string = g_strdup_printf(" %s {\n %s: %s;}\n", wname, detail, value);
 
-  // special tweaks
 
+#if !GTK_CHECK_VERSION(3, 24, 0)
+  // special tweaks
   if (GTK_IS_FRAME(widget)) {
     tmp = lives_strdup_printf("%s %s label {\n %s: %s;}\n", css_string, wname, detail, value);
     lives_free(css_string);
@@ -1311,6 +1343,13 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     lives_free(css_string);
     css_string = tmp;
   }
+
+  if (GTK_IS_SPIN_BUTTON(widget)) {
+    tmp = lives_strdup_printf("%s %s * {\n %s: %s;}\n", css_string, wname, detail, value);
+    lives_free(css_string);
+    css_string = tmp;
+  }
+#endif
 
   // would be nice if this worked...
   /* if (GTK_IS_RANGE(widget)) { */
@@ -8897,18 +8936,10 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   }
 
   if (widget_opts.apply_theme) {
-#if GTK_CHECK_VERSION(3, 0, 0)
-    lives_widget_apply_theme(spinbutton, LIVES_WIDGET_STATE_NORMAL);
-    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
-                               LIVES_GUI_CALLBACK(widget_state_cb),
-                               NULL);
-    widget_state_cb(LIVES_WIDGET_OBJECT(spinbutton), NULL, NULL);
-#else
-    set_child_colour(spinbutton, TRUE);
-    set_child_dimmed_colour(spinbutton, BUTTON_DIM_VAL); // insens, themecols 1, child only
+    set_child_alt_colour(spinbutton, TRUE);
+    set_child_dimmed_colour2(spinbutton, BUTTON_DIM_VAL); // insens, themecols 1, child only
     lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, TRUE);
-    lives_widget_apply_theme_dimmed(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
-#endif
+    lives_widget_apply_theme_dimmed2(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
   }
   return spinbutton;
 }
@@ -8980,17 +9011,12 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
   }
 
   if (widget_opts.apply_theme) {
-    lives_widget_apply_theme(combo, LIVES_WIDGET_STATE_NORMAL);
-#if GTK_CHECK_VERSION(4, 0, 0)
-    lives_widget_apply_theme(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL);
-#else
     set_child_colour(combo, TRUE);
     set_child_dimmed_colour(combo, BUTTON_DIM_VAL); // insens, themecols 1, child only
     lives_widget_apply_theme2(combo, LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme2(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme_dimmed(combo, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
     lives_widget_apply_theme_dimmed(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
-#endif
     lives_signal_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
                                LIVES_GUI_CALLBACK(widget_state_cb),
                                NULL);

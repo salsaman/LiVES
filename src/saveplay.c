@@ -384,11 +384,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
           msgstr = lives_strdup_printf(_("Opening audio for %s"), file_name);
 
-          if (mainw->playing_file == -1) resize(1);
+          if (!LIVES_IS_PLAYING) resize(1);
 
           mainw->cancelled = CANCEL_NONE;
 
-          if (mainw->playing_file == -1) {
+          if (!LIVES_IS_PLAYING) {
             mainw->cancel_type = CANCEL_SOFT;
             do_threaded_dialog(msgstr, TRUE);
             mainw->cancel_type = CANCEL_KILL;
@@ -458,7 +458,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
               // if we have a quick-opening file, display the first and last frames now
               // for some codecs this can be helpful since we can locate the last frame while audio is loading
-              if (cfile->clip_type == CLIP_TYPE_FILE && mainw->playing_file == -1) resize(1);
+              if (cfile->clip_type == CLIP_TYPE_FILE && !LIVES_IS_PLAYING) resize(1);
 
               mainw->effects_paused = FALSE; // set to TRUE if user clicks "Enough"
 
@@ -670,7 +670,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     // force a resize
     current_file = mainw->current_file;
 
-    if (mainw->playing_file > -1) {
+    if (LIVES_IS_PLAYING) {
       do_quick_switch(current_file);
     } else {
       switch_to_file((mainw->current_file = (cfile->clip_type != CLIP_TYPE_FILE) ? old_file : current_file), current_file);

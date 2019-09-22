@@ -648,7 +648,7 @@ void lives2lives_read_stream(const char *host, int port) {
   has_last_delta_ticks = FALSE;
 
   // if not playing, start playing
-  if (mainw->playing_file == -1) {
+  if (!LIVES_IS_PLAYING) {
     mainw->play_start = 1;
     mainw->play_end = INT_MAX;
     play_file();

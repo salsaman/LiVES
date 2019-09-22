@@ -3617,7 +3617,7 @@ void set_main_title(const char *file, int untitled) {
 
   lives_free(title);
 
-  if (mainw->playing_file == -1 && mainw->play_window != NULL) play_window_set_title();
+  if (!LIVES_IS_PLAYING && mainw->play_window != NULL) play_window_set_title();
 }
 
 
@@ -3926,7 +3926,7 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->recaudio_sel, FALSE);
   lives_widget_set_sensitive(mainw->mt_menu, FALSE);
 
-  if (mainw->current_file >= 0 && (mainw->playing_file == -1 || mainw->foreign)) {
+  if (mainw->current_file >= 0 && (!LIVES_IS_PLAYING || mainw->foreign)) {
     //  if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {
     // disable the 'clips' menu entries
     for (i = 1; i < MAX_FILES; i++) {
@@ -4079,9 +4079,9 @@ void load_start_image(int frame) {
 
   if (mainw->multitrack != NULL) return;
 
-  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
-      (!mainw->ext_playback ||
-       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
+                                        (!mainw->ext_playback ||
+                                         (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
@@ -4100,7 +4100,7 @@ void load_start_image(int frame) {
     get_border_size(mainw->LiVES, &bx, &by);
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
     vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
-    if (mainw->playing_file > -1 && mainw->double_size) {
+    if (LIVES_IS_PLAYING && mainw->double_size) {
       hsize /= 2;
       vsize /= 2;
     }
@@ -4158,7 +4158,7 @@ void load_start_image(int frame) {
 
   if (!prefs->ce_maxspect) {
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
-    if (mainw->playing_file == -1 && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
+    if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
@@ -4213,7 +4213,7 @@ void load_start_image(int frame) {
     calc_maxspect(rwidth, rheight, &width, &height);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
-    if (mainw->playing_file == -1 && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
+    if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
@@ -4274,9 +4274,9 @@ void load_end_image(int frame) {
 
   if (mainw->multitrack != NULL) return;
 
-  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
-      (!mainw->ext_playback ||
-       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
+                                        (!mainw->ext_playback ||
+                                         (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
@@ -4295,7 +4295,7 @@ void load_end_image(int frame) {
     get_border_size(mainw->LiVES, &bx, &by);
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
     vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
-    if (mainw->playing_file > -1 && mainw->double_size) {
+    if (LIVES_IS_PLAYING && mainw->double_size) {
       hsize /= 2;
       vsize /= 2;
     }
@@ -4351,7 +4351,7 @@ void load_end_image(int frame) {
 
   if (!prefs->ce_maxspect) {
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
-    if (mainw->playing_file == -1 && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
+    if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
@@ -4405,7 +4405,7 @@ void load_end_image(int frame) {
     calc_maxspect(rwidth, rheight, &width, &height);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
-    if (mainw->playing_file == -1 && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
+    if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
@@ -4471,7 +4471,7 @@ void load_preview_image(boolean update_always) {
 
   if (!prefs->show_gui) return;
 
-  if (mainw->playing_file > -1) return;
+  if (LIVES_IS_PLAYING) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->preview_image, (livespointer)expose_pim, NULL);
@@ -4555,7 +4555,7 @@ void load_preview_image(boolean update_always) {
     weed_timecode_t tc = ((mainw->preview_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
-    if (mainw->playing_file == -1 && cfile->clip_type == CLIP_TYPE_FILE &&
+    if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE &&
         is_virtual_frame(mainw->current_file, mainw->preview_frame) && cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
@@ -6288,7 +6288,7 @@ void load_frame_image(int frame) {
       get_max_opsize(&opwidth, &opheight);
     }
 
-    if (mainw->playing_file > -1 && prefs->letterbox && mainw->fs &&
+    if (LIVES_IS_PLAYING && prefs->letterbox && mainw->fs &&
         (mainw->multitrack == NULL || mainw->sep_win) &&
         (!mainw->ext_playback || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
       // consider letterboxing
@@ -6991,7 +6991,7 @@ void load_frame_image(int frame) {
 
     idlemax = 10000;
 
-    if (mainw->playing_file == -1) {
+    if (!LIVES_IS_PLAYING) {
       if (mainw->current_file != mainw->scrap_file) desensitize();
       lives_widget_set_sensitive(mainw->playall, FALSE);
       lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
@@ -7079,7 +7079,7 @@ void load_frame_image(int frame) {
           index = LIVES_POINTER_TO_INT(lives_list_nth_data(list_index, 0));
         } while ((mainw->files[index] == NULL || mainw->files[index]->opening || mainw->files[index]->restoring ||
                   (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1) || (mainw->files[index]->frames == 0 &&
-                      mainw->playing_file > -1)) &&
+                      LIVES_IS_PLAYING)) &&
                  index != mainw->current_file);
         if (index == mainw->current_file) index = -1;
         if (mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) remove_from_clipmenu();
@@ -7154,7 +7154,7 @@ void load_frame_image(int frame) {
 
       if (!mainw->only_close) {
         if (IS_VALID_CLIP(file_to_switch_to) && file_to_switch_to > 0) {
-          if (mainw->playing_file == -1) {
+          if (!LIVES_IS_PLAYING) {
             switch_to_file((mainw->current_file = 0), file_to_switch_to);
             d_print("");
           } else do_quick_switch(file_to_switch_to);
@@ -7178,7 +7178,7 @@ void load_frame_image(int frame) {
       if (!mainw->only_close) {
         // find another clip to switch to
         if (index > -1) {
-          if (mainw->playing_file == -1) {
+          if (!LIVES_IS_PLAYING) {
             switch_to_file((mainw->current_file = 0), index);
             d_print("");
           } else do_quick_switch(index);
@@ -7195,7 +7195,7 @@ void load_frame_image(int frame) {
         if (mainw->clips_available > 0) {
           for (i = mainw->current_file - 1; i > 0; i--) {
             if (mainw->files[i] != NULL) {
-              if (mainw->playing_file == -1) {
+              if (!LIVES_IS_PLAYING) {
                 switch_to_file((mainw->current_file = 0), i);
                 d_print("");
               } else do_quick_switch(index);
@@ -7213,7 +7213,7 @@ void load_frame_image(int frame) {
           }
           for (i = 1; i < MAX_FILES; i++) {
             if (mainw->files[i] != NULL) {
-              if (mainw->playing_file == -1) {
+              if (!LIVES_IS_PLAYING) {
                 switch_to_file((mainw->current_file = 0), i);
                 d_print("");
               } else do_quick_switch(index);
@@ -7252,7 +7252,7 @@ void load_frame_image(int frame) {
 
     if (!mainw->is_ready || mainw->recovering_files) return;
 
-    if (mainw->playing_file == -1 && mainw->play_window != NULL) {
+    if (!LIVES_IS_PLAYING && mainw->play_window != NULL) {
       // if the clip is loaded
       if (mainw->preview_box == NULL) {
         // create the preview box that shows frames...
@@ -7290,7 +7290,7 @@ void load_frame_image(int frame) {
 
     if (!mainw->only_close) {
       lives_widget_queue_draw(mainw->LiVES);
-      if (mainw->playing_file == -1) d_print("");
+      if (!LIVES_IS_PLAYING) d_print("");
 
       if (mainw->multitrack != NULL) {
         mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
@@ -7317,7 +7317,7 @@ void load_frame_image(int frame) {
 
     mainw->current_file = new_file;
 
-    if (mainw->playing_file == -1 && mainw->multitrack != NULL) return;
+    if (!LIVES_IS_PLAYING && mainw->multitrack != NULL) return;
 
     if (CURRENT_CLIP_HAS_VIDEO) {
       mainw->pwidth = cfile->hsize;
@@ -7326,7 +7326,7 @@ void load_frame_image(int frame) {
       mainw->play_start = 1;
       mainw->play_end = cfile->frames;
 
-      if (mainw->playing_file > -1) {
+      if (LIVES_IS_PLAYING) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
         changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
       }
@@ -7368,7 +7368,7 @@ void load_frame_image(int frame) {
       sensitize();
     }
 
-    if ((mainw->playing_file == -1 && mainw->play_window != NULL && cfile->is_loaded)
+    if ((!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded)
         && orig_file != new_file) {
       // if the clip is loaded
       if (mainw->preview_box == NULL) {
@@ -7473,13 +7473,13 @@ void load_frame_image(int frame) {
     if (cfile->frames == 0) {
       zero_spinbuttons();
     }
-    if (mainw->playing_file == -1) {
+    if (!LIVES_IS_PLAYING) {
       reset_message_area(FALSE);
       lives_widget_process_updates(mainw->LiVES, TRUE);
     }
     resize(1);
 
-    if (mainw->playing_file > -1) {
+    if (LIVES_IS_PLAYING) {
       if (mainw->fs) {
         //on_full_screen_activate (NULL,LIVES_INT_TO_POINTER (1));
       } else {
@@ -7512,9 +7512,9 @@ void load_frame_image(int frame) {
     } else {
       load_start_image(cfile->start);
       load_end_image(cfile->end);
-      if (mainw->playing_file > -1) load_frame_image(cfile->frameno);
+      if (LIVES_IS_PLAYING) load_frame_image(cfile->frameno);
     }
-    if (mainw->playing_file == -1) {
+    if (!LIVES_IS_PLAYING) {
       reset_message_area(TRUE);
     }
   }
@@ -7775,7 +7775,7 @@ void load_frame_image(int frame) {
       lives_widget_show(mainw->playframe);
     }
 
-    if (new_file == mainw->current_file && (mainw->playing_file == -1 || mainw->playing_file == mainw->current_file)) {
+    if (new_file == mainw->current_file && (!LIVES_IS_PLAYING || mainw->playing_file == mainw->current_file)) {
       if (!((mainw->fs && (prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1)) || (mainw->faded && mainw->double_size &&
             !mainw->fs) ||
             mainw->multitrack != NULL)) {
@@ -7988,7 +7988,7 @@ void load_frame_image(int frame) {
         }
       }
 
-      if (mainw->playing_file > -1 && mainw->fs && !mainw->sep_win && CURRENT_CLIP_HAS_VIDEO) {
+      if (LIVES_IS_PLAYING && mainw->fs && !mainw->sep_win && CURRENT_CLIP_HAS_VIDEO) {
         mainw->ce_frame_width = w;
         mainw->ce_frame_height = h - lives_widget_get_allocation_height(mainw->btoolbar);
       }

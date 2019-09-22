@@ -85,7 +85,7 @@ static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
 static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
                          unicap_data_buffer_t *buffer, void *usr_data) {
   lives_vdev_t *ldev = (lives_vdev_t *)usr_data;
-  if (mainw->playing_file == -1 || (mainw->playing_file != ldev->fileno && mainw->blend_file != ldev->fileno)) {
+  if (!LIVES_IS_PLAYING || (mainw->playing_file != ldev->fileno && mainw->blend_file != ldev->fileno)) {
     ldev->buffer_ready = 0;
     return;
   }

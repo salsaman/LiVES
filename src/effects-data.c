@@ -948,7 +948,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
       if (retval) {
 
-        if (inst != NULL && mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+        if (inst != NULL && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           copyto = set_copy_to(inst, pnum, FALSE);
@@ -1124,7 +1124,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
       if (retval) {
 
-        if (inst != NULL && mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+        if (inst != NULL && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           copyto = set_copy_to(inst, pnum, FALSE);
@@ -1182,7 +1182,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
       if (retval) {
 
-        if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+        if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           copyto = set_copy_to(inst, pnum, FALSE);
@@ -1298,7 +1298,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
       }
       if (retval) {
 
-        if (inst != NULL && mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+        if (inst != NULL && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           copyto = set_copy_to(inst, pnum, FALSE);
@@ -1338,7 +1338,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
       }
       if (retval) {
 
-        if (inst != NULL && mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+        if (inst != NULL && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           copyto = set_copy_to(inst, pnum, FALSE);
@@ -1367,7 +1367,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
       }
       if (retval) {
 
-        if (inst != NULL && mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+        if (inst != NULL && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           copyto = set_copy_to(inst, pnum, FALSE);
@@ -1534,7 +1534,7 @@ boolean pconx_chain_data(int key, int mode) {
         // only store value if it changed; for int, double or colour, store old value too
 
         copyto = set_copy_to(inst, i, TRUE);
-        if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+        if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, i);
           if (copyto != -1) rec_param_change(inst, copyto);

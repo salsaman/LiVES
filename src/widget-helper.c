@@ -120,7 +120,7 @@ static void widget_state_cb(LiVESObject *object, livespointer pspec, livespointe
   LiVESWidgetState state;
   boolean woat = widget_opts.apply_theme;
 
-  if (mainw->playing_file > -1 || !mainw->is_ready) return;
+  if (LIVES_IS_PLAYING || !mainw->is_ready) return;
 
   state = lives_widget_get_state(widget);
 

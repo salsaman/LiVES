@@ -1136,14 +1136,14 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
               lives_painter_rectangle(cr, i, 0, width, lives_widget_get_allocation_height(eventbox));
               lives_painter_fill(cr);
             }
-            if (mainw->playing_file > -1) {
+            if (LIVES_IS_PLAYING) {
               mt->no_expose = TRUE;
               // expose is not re-entrant due to bgimg refs
               unpaint_lines(mt);
               mt->no_expose = FALSE;
             }
             mt->redraw_block = TRUE; // stop drawing cursor during playback
-            if (mainw->playing_file > -1 && mainw->cancelled == CANCEL_NONE) {
+            if (LIVES_IS_PLAYING && mainw->cancelled == CANCEL_NONE) {
               // expose is not re-entrant
               mt->no_expose = TRUE;
               process_one(FALSE);
@@ -1194,13 +1194,13 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
         lives_painter_fill(cr);
       }
 
-      if (mainw->playing_file > -1) {
+      if (LIVES_IS_PLAYING) {
         mt->no_expose = TRUE; // expose is not re-entrant due to bgimg refs.
         unpaint_lines(mt);
         mt->no_expose = FALSE;
       }
       mt->redraw_block = TRUE; // stop drawing cursor during playback
-      if (mainw->playing_file > -1 && mainw->cancelled == CANCEL_NONE) {
+      if (LIVES_IS_PLAYING && mainw->cancelled == CANCEL_NONE) {
         mt->no_expose = TRUE;
         process_one(FALSE);
         mt->no_expose = FALSE;
@@ -1497,7 +1497,7 @@ draw1:
       draw_block(mt, NULL, bgimage, block, startx, width);
       block = block->next;
       mt->redraw_block = TRUE; // stop drawing cursor during playback
-      if (mainw->playing_file > -1 && mainw->cancelled == CANCEL_NONE) {
+      if (LIVES_IS_PLAYING && mainw->cancelled == CANCEL_NONE) {
         mt->no_expose = TRUE;
         process_one(FALSE);
         mt->no_expose = FALSE;
@@ -3040,7 +3040,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     }
   }
 
-  if (mainw->playing_file > -1) {
+  if (LIVES_IS_PLAYING) {
     if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
 #if GTK_CHECK_VERSION(3, 0, 0)
       if (mt->frame_pixbuf == NULL || mt->frame_pixbuf != mainw->imframe) {
@@ -3237,7 +3237,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
 
 void mt_tl_move(lives_mt *mt, double pos) {
-  if (mainw->playing_file > -1) return;
+  if (LIVES_IS_PLAYING) return;
 
   if (mt->is_ready) unpaint_lines(mt);
 
@@ -3742,7 +3742,7 @@ static boolean filter_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *eve
     return FALSE;
   }
 
-  if (mainw->playing_file == -1) {
+  if (!LIVES_IS_PLAYING) {
     // change cursor to mini block
     if (mt->video_draws == NULL && mt->audio_draws == NULL) {
       return FALSE;
@@ -3780,7 +3780,7 @@ static boolean on_drag_filter_end(LiVESWidget *widget, LiVESXEventButton *event,
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  if (mt->is_rendering || mainw->playing_file > -1 || mt->selected_filter == -1) {
+  if (mt->is_rendering || LIVES_IS_PLAYING || mt->selected_filter == -1) {
     mt->selected_filter = -1;
     return FALSE;
   }
@@ -4081,7 +4081,7 @@ void mt_center_on_cursor(LiVESMenuItem *menuitem, livespointer user_data) {
 void mt_zoom_in(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   mt_zoom(mt, 0.5);
-  if (mainw->playing_file > -1 && mt->opts.follow_playback) {
+  if (LIVES_IS_PLAYING && mt->opts.follow_playback) {
     mt_zoom(mt, 1.);
   }
   paint_lines(mt, mt->ptr_time, TRUE);
@@ -4091,7 +4091,7 @@ void mt_zoom_in(LiVESMenuItem *menuitem, livespointer user_data) {
 void mt_zoom_out(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   mt_zoom(mt, 2.);
-  if (mainw->playing_file > -1 && mt->opts.follow_playback) {
+  if (LIVES_IS_PLAYING && mt->opts.follow_playback) {
     mt_zoom(mt, 1.);
   }
   paint_lines(mt, mt->ptr_time, TRUE);
@@ -4338,7 +4338,7 @@ static boolean clip_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event
   if (event->type != LIVES_BUTTON_PRESS && !mt->is_rendering) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     // double click, open up in clip editor
-    if (mainw->playing_file == -1) multitrack_delete(mt, !(prefs->warning_mask & WARN_MASK_EXIT_MT));
+    if (!LIVES_IS_PLAYING) multitrack_delete(mt, !(prefs->warning_mask & WARN_MASK_EXIT_MT));
     return FALSE;
   }
 
@@ -4425,7 +4425,7 @@ static boolean on_drag_clip_end(LiVESWidget *widget, LiVESXEventButton *event, l
       mt->current_track = -1;
       track_select(mt);
 
-      if (mainw->playing_file == -1) {
+      if (!LIVES_IS_PLAYING) {
         mt->ptr_time = lives_ruler_set_value(LIVES_RULER(mt->timeline), timesecs);
         if (!mt->is_paused) {
           if (mt->poly_state == POLY_FX_STACK) {
@@ -4440,9 +4440,9 @@ static boolean on_drag_clip_end(LiVESWidget *widget, LiVESXEventButton *event, l
         lives_widget_queue_draw(mt->timeline);
       }
 
-      if (mainw->playing_file == -1 && (mainw->files[mt->file_selected]->laudio_time >
-                                        ((mainw->files[mt->file_selected]->start - 1.) / mainw->files[mt->file_selected]->fps) ||
-                                        (mainw->files[mt->file_selected]->laudio_time > 0. && mt->opts.ign_ins_sel)))
+      if (!LIVES_IS_PLAYING && (mainw->files[mt->file_selected]->laudio_time >
+                                ((mainw->files[mt->file_selected]->start - 1.) / mainw->files[mt->file_selected]->fps) ||
+                                (mainw->files[mt->file_selected]->laudio_time > 0. && mt->opts.ign_ins_sel)))
         insert_audio_here_cb(NULL, (livespointer)mt);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
       if (mt->is_paused) mt->ptr_time = lives_ruler_set_value(LIVES_RULER(mt->timeline), osecs);
@@ -4468,7 +4468,7 @@ static boolean on_drag_clip_end(LiVESWidget *widget, LiVESXEventButton *event, l
 
       track_select(mt);
 
-      if (mainw->playing_file == -1) {
+      if (!LIVES_IS_PLAYING) {
         mt->ptr_time = lives_ruler_set_value(LIVES_RULER(mt->timeline), timesecs);
         if (!mt->is_paused) {
           mt_show_current_frame(mt, FALSE);
@@ -4479,7 +4479,7 @@ static boolean on_drag_clip_end(LiVESWidget *widget, LiVESXEventButton *event, l
         }
         lives_widget_queue_draw(mt->timeline);
       }
-      if (mainw->playing_file == -1 && mainw->files[mt->file_selected]->frames > 0) insert_here_cb(NULL, mt);
+      if (!LIVES_IS_PLAYING && mainw->files[mt->file_selected]->frames > 0) insert_here_cb(NULL, mt);
       break;
     }
   }
@@ -5779,7 +5779,7 @@ static void after_timecode_changed(LiVESWidget *entry, LiVESXEventFocus *dir, li
 static boolean expose_pb(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   if (mt->no_expose) return TRUE;
-  if (mainw->playing_file > -1) return TRUE;
+  if (LIVES_IS_PLAYING) return TRUE;
   //lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
   //lives_widget_set_size_request(mt->play_box, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
   //lives_widget_set_size_request(mainw->plug, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
@@ -10402,13 +10402,13 @@ static boolean fx_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event, 
   if (event->type == LIVES_BUTTON2_PRESS) {
     // double click
     mt->moving_fx = NULL;
-    if (mainw->playing_file == -1) {
+    if (!LIVES_IS_PLAYING) {
       lives_timer_add(0, mt_fx_edit_idle, mt); // work around issue in gtk+
     }
     return FALSE;
   }
 
-  if (mainw->playing_file == -1) {
+  if (!LIVES_IS_PLAYING) {
     if (mt->fx_order != FX_ORD_NONE) {
       if (osel != mt->selected_init_event && osel != mt->avol_init_event) {
         switch (mt->fx_order) {
@@ -10486,7 +10486,7 @@ static boolean fx_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event, 
     }
     if (xlist != NULL) lives_list_free(xlist);
   }
-  if (event->button == 3 && mainw->playing_file == -1) {
+  if (event->button == 3 && !LIVES_IS_PLAYING) {
     do_effect_context(mt, event);
   }
 
@@ -12346,7 +12346,7 @@ void in_anchor_toggled(LiVESToggleButton *togglebutton, livespointer user_data) 
 
   set_in_out_spin_ranges(mt, block->offset_start, offset_end);
 
-  if ((block->start_anchored && block->end_anchored) || mainw->playing_file > -1) {
+  if ((block->start_anchored && block->end_anchored) || LIVES_IS_PLAYING) {
     lives_widget_set_sensitive(mt->spinbutton_avel, FALSE);
     lives_widget_set_sensitive(mt->avel_scale, FALSE);
   } else {
@@ -12392,7 +12392,7 @@ void out_anchor_toggled(LiVESToggleButton *togglebutton, livespointer user_data)
 
   set_in_out_spin_ranges(mt, block->offset_start, offset_end);
 
-  if ((block->start_anchored && block->end_anchored) || mainw->playing_file > -1) {
+  if ((block->start_anchored && block->end_anchored) || LIVES_IS_PLAYING) {
     lives_widget_set_sensitive(mt->spinbutton_avel, FALSE);
     lives_widget_set_sensitive(mt->avel_scale, FALSE);
   } else {
@@ -12744,7 +12744,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     lives_signal_handler_unblock(mt->spinbutton_in, mt->spin_in_func);
     lives_signal_handler_unblock(mt->spinbutton_out, mt->spin_out_func);
 
-    if (mainw->playing_file > -1) mt_desensitise(mt);
+    if (LIVES_IS_PLAYING) mt_desensitise(mt);
     else {
       mt_sensitise(mt);
       lives_widget_grab_focus(mt->spinbutton_in);
@@ -13504,7 +13504,7 @@ boolean on_track_release(LiVESWidget *eventbox, LiVESXEventButton *event, livesp
       goto track_rel_done;
     }
 
-    if (got_track && !mt->is_rendering && mt->putative_block != NULL && mainw->playing_file == -1 &&
+    if (got_track && !mt->is_rendering && mt->putative_block != NULL && !LIVES_IS_PLAYING &&
         event->button == 1) {
       weed_timecode_t start_tc;
 
@@ -13533,7 +13533,7 @@ boolean on_track_release(LiVESWidget *eventbox, LiVESXEventButton *event, livesp
 
 track_rel_done:
 
-  if (mainw->playing_file == -1) mt_sensitise(mt);
+  if (!LIVES_IS_PLAYING) mt_sensitise(mt);
   mt->hotspot_x = mt->hotspot_y = 0;
   mt->putative_block = NULL;
 
@@ -13633,7 +13633,7 @@ boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *event, livespoi
     } else {
       // single click, TODO - locate the frame for the track in event_list
       if (event->button == 1) {
-        if (mainw->playing_file == -1) {
+        if (!LIVES_IS_PLAYING) {
           mt->fm_edit_event = NULL;
           mt_tl_move(mt, timesecs);
         }
@@ -13713,7 +13713,7 @@ boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *event, livespoi
   mt->current_track = track;
   track_select(mt);
 
-  if (event->button == 3 && mainw->playing_file == -1) {
+  if (event->button == 3 && !LIVES_IS_PLAYING) {
     lives_widget_set_sensitive(mt->mm_menuitem, TRUE);
     mt->context_time = timesecs;
     if (block != NULL) {
@@ -16728,7 +16728,7 @@ void multitrack_preview_clicked(LiVESWidget *button, livespointer user_data) {
   //preview during rendering
   lives_mt *mt = (lives_mt *)user_data;
 
-  if (mainw->playing_file == -1) multitrack_playall(mt);
+  if (!LIVES_IS_PLAYING) multitrack_playall(mt);
   else mainw->cancelled = CANCEL_NO_PROPOGATE;
 }
 
@@ -17637,7 +17637,7 @@ static EXPOSE_FN_DECL(expose_timeline_reg_event, timeline) {
   int offset;
 
   if (event != NULL && event->count > 0) return FALSE;
-  if (mainw->playing_file > -1 || mt->is_rendering) return FALSE;
+  if (LIVES_IS_PLAYING || mt->is_rendering) return FALSE;
   draw_region(mt);
 
   if (event != NULL) cairo = lives_painter_create_from_widget(timeline);
@@ -17867,7 +17867,7 @@ boolean on_timeline_update(LiVESWidget *widget, LiVESXEventMotion *event, livesp
   int x;
   double pos;
 
-  if (mainw->playing_file > -1) return TRUE;
+  if (LIVES_IS_PLAYING) return TRUE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
                            widget, &x, NULL);
@@ -18027,7 +18027,7 @@ boolean on_timeline_release(LiVESWidget *eventbox, LiVESXEventButton *event, liv
 
   if (!mainw->interactive) return FALSE;
 
-  if (mainw->playing_file > -1) return FALSE;
+  if (LIVES_IS_PLAYING) return FALSE;
 
   mt->tl_mouse = FALSE;
 
@@ -18155,7 +18155,7 @@ boolean on_timeline_press(LiVESWidget *widget, LiVESXEventButton *event, livespo
 
   if (!mainw->interactive) return FALSE;
 
-  if (mainw->playing_file > -1) return FALSE;
+  if (LIVES_IS_PLAYING) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &x, NULL);
@@ -18298,7 +18298,7 @@ boolean mt_mark_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyv
   lives_mt *mt = (lives_mt *)user_data;
   double cur_time;
 
-  if (mainw->playing_file == -1) return TRUE;
+  if (!LIVES_IS_PLAYING) return TRUE;
 
   cur_time = mt->ptr_time;
 

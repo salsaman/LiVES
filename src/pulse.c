@@ -234,7 +234,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
   if (xbytes > nbytes) xbytes = nbytes;
 
-  if (!mainw->is_ready || pulsed == NULL || (mainw->playing_file == -1 && pulsed->msgq == NULL) || nbytes > 1000000) {
+  if (!mainw->is_ready || pulsed == NULL || (!LIVES_IS_PLAYING && pulsed->msgq == NULL) || nbytes > 1000000) {
     sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3), xbytes);
     //g_print("pt a1 %ld %d %p %d %p %ld\n",nsamples, mainw->is_ready, pulsed, mainw->playing_file, pulsed->msgq, nbytes);
     return;
@@ -266,7 +266,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       }
       break;
     case ASERVER_CMD_FILE_CLOSE:
-      //if (mainw->playing_file == -1) pulse_driver_cork(pulsed);
+      //if (!LIVES_IS_PLAYING) pulse_driver_cork(pulsed);
       if (pulsed->fd >= 0) close(pulsed->fd);
       if (pulsed->sound_buffer == pulsed->aPlayPtr->data) pulsed->sound_buffer = NULL;
       lives_freep((void **)&pulsed->aPlayPtr->data);
@@ -340,7 +340,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                       && pulsed->in_achans > 0) ||
                      ((mainw->agen_key != 0 || mainw->agen_needs_reinit) && mainw->multitrack == NULL)
                                                  ))) {
-      if (mainw->playing_file > -1 && pulsed->read_abuf > -1) {
+      if (LIVES_IS_PLAYING && pulsed->read_abuf > -1) {
         // playing back from memory buffers instead of from file
         // this is used in multitrack
         from_memory = TRUE;

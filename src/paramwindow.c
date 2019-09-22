@@ -1784,7 +1784,7 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
       }
       lives_free(valis);
 
-      if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+      if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
         if (copyto != -1) rec_param_change(inst, copyto);
@@ -1837,7 +1837,7 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
 
-  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && mainw->playing_file > -1 &&
+  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this (pre)change to our event_list
     // however, we need to use the actual instance and not the one generated for the rte_window
@@ -1919,7 +1919,7 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
         lives_freep((void **)&valis);
       }
 
-      if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+      if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
         if (copyto != -1) rec_param_change(inst, copyto);
@@ -2114,7 +2114,7 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   new_red = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   if (old_value.red == new_red) return;
 
-  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && mainw->playing_file > -1 &&
+  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source, param_number);
@@ -2135,7 +2135,7 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
                               new_red, old_value.green, old_value.blue, 0);
       copyto = set_copy_to(inst, param_number, TRUE);
 
-      if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+      if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
         if (copyto != -1) rec_param_change(inst, copyto);
@@ -2183,7 +2183,7 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   new_green = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   if (old_value.green == new_green) return;
 
-  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && mainw->playing_file > -1 &&
+  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source, param_number);
@@ -2204,7 +2204,7 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
       copyto = set_copy_to(inst, param_number, TRUE);
 
-      if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+      if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
         if (copyto != -1) rec_param_change(inst, copyto);
@@ -2251,7 +2251,7 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   new_blue = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   if (old_value.blue == new_blue) return;
 
-  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && mainw->playing_file > -1 &&
+  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source, param_number);
@@ -2271,7 +2271,7 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
       update_weed_color_value(inst, param_number, old_value.red, old_value.green, new_blue, 0);
       copyto = set_copy_to(inst, param_number, TRUE);
 
-      if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+      if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
         if (copyto != -1) rec_param_change(inst, copyto);
@@ -2315,7 +2315,7 @@ void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
-  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && mainw->playing_file > -1 &&
+  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source, param_number);
@@ -2329,7 +2329,7 @@ void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   set_colRGBA32_param(param->value, old_value.red, old_value.green, old_value.blue, new_alpha);
 
-  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && mainw->playing_file > -1 &&
+  if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source, param_number);
@@ -2447,7 +2447,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
       for (i = 0; i < numvals; i++) lives_free(valss[i]);
       lives_free(valss);
 
-      if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+      if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
         if (copyto != -1) rec_param_change(inst, copyto);
@@ -2548,7 +2548,7 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
       }
       lives_free(valis);
 
-      if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+      if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
         if (copyto != -1) rec_param_change(inst, copyto);

@@ -429,7 +429,7 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   // if not playing, start playing
-  if (mainw->playing_file == -1) {
+  if (!LIVES_IS_PLAYING) {
     // temp kludge, symlink audiodump.pcm to wav file, then pretend we are playing
     // an opening preview . Doesn't work with fifo.
     // and we dont really care if it doesnt work

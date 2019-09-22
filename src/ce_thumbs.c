@@ -65,7 +65,7 @@ void ce_thumbs_set_interactive(boolean interactive) {
 #if LIVES_HAS_GRID_WIDGET
 static boolean switch_clip_cb(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
   int i = LIVES_POINTER_TO_INT(user_data);
-  if (mainw->playing_file == -1) return FALSE;
+  if (!LIVES_IS_PLAYING) return FALSE;
   if (!mainw->interactive) return FALSE;
   switch_clip(0, i, FALSE);
   return FALSE;

@@ -212,7 +212,7 @@ static void jack_transport_check_state(void) {
   jacktstate = jack_transport_query(jack_transport_client, &pos);
 
   if (mainw->jack_can_start && (jacktstate == JackTransportRolling || jacktstate == JackTransportStarting) &&
-      mainw->playing_file == -1 && mainw->current_file > 0 && !mainw->is_processing) {
+      !LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
     mainw->jack_can_start = FALSE;
     mainw->jack_can_stop = TRUE;
     lives_timer_add(0, jack_playall, NULL);
@@ -220,7 +220,7 @@ static void jack_transport_check_state(void) {
   }
 
   if (jacktstate == JackTransportStopped) {
-    if (mainw->playing_file > -1 && mainw->jack_can_stop) {
+    if (LIVES_IS_PLAYING && mainw->jack_can_stop) {
       on_stop_activate(NULL, NULL);
     }
     mainw->jack_can_start = TRUE;
@@ -405,7 +405,7 @@ static int audio_process(nframes_t nframes, void *arg) {
   lives_printerr("nframes %ld, sizeof(float) == %d\n", (int64_t)nframes, sizeof(float));
 #endif
 
-  if (!mainw->is_ready || jackd == NULL || (mainw->playing_file == -1 && jackd->is_silent && jackd->msgq == NULL)) return 0;
+  if (!mainw->is_ready || jackd == NULL || (!LIVES_IS_PLAYING && jackd->is_silent && jackd->msgq == NULL)) return 0;
 
   /* process one message */
   while ((msg = (aserver_message_t *)jackd->msgq) != NULL) {
@@ -453,7 +453,7 @@ static int audio_process(nframes_t nframes, void *arg) {
     // if a plugin is generating audio we do not use cache_buffers, otherwise:
     if (jackd->read_abuf == -1) {
       // assign local copy from cache_buffers
-      if (mainw->playing_file == -1 || (cache_buffer = pop_cache_buffer()) == NULL) {
+      if (!LIVES_IS_PLAYING || (cache_buffer = pop_cache_buffer()) == NULL) {
         // audio buffer is not ready yet
         output_silence(0, nframes, jackd, out_buffer);
         jackd->is_silent = TRUE;
@@ -509,7 +509,7 @@ static int audio_process(nframes_t nframes, void *arg) {
 
     if (LIVES_LIKELY(jackFramesAvailable > 0)) {
       /* (bytes of data) / (2 bytes(16 bits) * X input channels) == frames */
-      if (mainw->playing_file > -1 && jackd->read_abuf > -1) {
+      if (LIVES_IS_PLAYING && jackd->read_abuf > -1) {
         // playing back from memory buffers instead of from file
         // this is used in multitrack
         from_memory = TRUE;

@@ -1605,7 +1605,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     }
 
     if (cfile->opening && (capable->has_sox_play || (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) ||
-                           (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL)) && mainw->playing_file == -1) {
+                           (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL)) && !LIVES_IS_PLAYING) {
       if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
       lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
       lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);

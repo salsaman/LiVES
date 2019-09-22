@@ -120,9 +120,9 @@ void make_custom_submenus(void) {
 #if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
-  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
-      (!mainw->ext_playback ||
-       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
+                                        (!mainw->ext_playback ||
+                                         (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (CURRENT_CLIP_IS_VALID) {
@@ -136,9 +136,9 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 
 boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
-  if (mainw->playing_file > -1 && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1)  &&
-      (!mainw->ext_playback ||
-       (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1)  &&
+                                        (!mainw->ext_playback ||
+                                         (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (CURRENT_CLIP_IS_VALID) {
@@ -3261,7 +3261,7 @@ void unfade_background(void) {
 
   lives_frame_set_label(LIVES_FRAME(mainw->frame2), _("Last Frame"));
 
-  if (!prefs->hide_framebar && !(mainw->playing_file == -1 && prefs->hfbwnp)) {
+  if (!prefs->hide_framebar && !(!LIVES_IS_PLAYING && prefs->hfbwnp)) {
     lives_widget_show(mainw->framebar);
   }
 
@@ -3421,7 +3421,7 @@ void fullscreen_internal(void) {
     mainw->ce_frame_width = width;
     mainw->ce_frame_height = height;
 
-    if (mainw->playing_file == -1) {
+    if (!LIVES_IS_PLAYING) {
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL);
     }
 
@@ -3736,7 +3736,7 @@ void play_window_set_title(void) {
   if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
   else xtrabit = lives_strdup("");
 
-  if (mainw->playing_file > -1) {
+  if (LIVES_IS_PLAYING) {
     if (mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && mainw->fs)
       lives_window_set_title(LIVES_WINDOW(mainw->play_window), _("Streaming"));
     else {
@@ -3797,7 +3797,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
 void make_play_window(void) {
   //  separate window
 
-  if (mainw->playing_file > -1) {
+  if (LIVES_IS_PLAYING) {
     unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
   }
 
@@ -3832,7 +3832,7 @@ void make_play_window(void) {
 
   if (prefs->show_playwin) {
     // show the window (so we can hide its cursor !), and get its xwin
-    if (!(mainw->fs && mainw->playing_file > -1 && mainw->vpp != NULL)) {
+    if (!(mainw->fs && LIVES_IS_PLAYING && mainw->vpp != NULL)) {
       lives_widget_show(mainw->play_window);
     }
   }
@@ -3840,7 +3840,7 @@ void make_play_window(void) {
   resize_play_window();
   if (mainw->play_window == NULL) return;
 
-  if (mainw->multitrack == NULL && mainw->playing_file == -1) {
+  if (mainw->multitrack == NULL && !LIVES_IS_PLAYING) {
     if (mainw->preview_box == NULL) {
       // create the preview box that shows frames
       make_preview_box();
@@ -3858,7 +3858,7 @@ void make_play_window(void) {
       lives_widget_hide(mainw->preview_controls);
     }
 
-    if (mainw->playing_file > -1) {
+    if (LIVES_IS_PLAYING) {
       lives_widget_hide(mainw->preview_box);
     } else {
       if (mainw->is_processing && (mainw->prv_link == PRV_START || mainw->prv_link == PRV_END)) {
@@ -3871,7 +3871,7 @@ void make_play_window(void) {
   play_window_set_title();
 
   if ((!CURRENT_CLIP_IS_VALID || (!cfile->is_loaded && !mainw->preview) ||
-       (cfile->frames == 0 && (mainw->multitrack == NULL || mainw->playing_file == -1))) && mainw->imframe != NULL) {
+       (cfile->frames == 0 && (mainw->multitrack == NULL || !LIVES_IS_PLAYING))) && mainw->imframe != NULL) {
     lives_painter_t *cr = lives_painter_create_from_widget(mainw->play_window);
     lives_painter_set_source_pixbuf(cr, mainw->imframe, (LiVESXModifierType)0, 0);
     lives_painter_paint(cr);
@@ -3940,7 +3940,7 @@ void resize_play_window(void) {
     }
   }
 
-  if (mainw->playing_file > -1) {
+  if (LIVES_IS_PLAYING) {
     if (mainw->double_size && !mainw->fs && mainw->multitrack == NULL) {
       mainw->pheight *= 2;
       mainw->pwidth *= 2;
@@ -4222,13 +4222,13 @@ void resize_play_window(void) {
 
   nheight += mainw->pheight;
 
-  if (mainw->playing_file == -1 && CURRENT_CLIP_HAS_VIDEO &&
+  if (!LIVES_IS_PLAYING && CURRENT_CLIP_HAS_VIDEO &&
       (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE))
     nwidth = MAX(mainw->pwidth, mainw->sepwin_minwidth);
   else nwidth = mainw->pwidth;
 
   pmonitor = prefs->play_monitor;
-  if (pmonitor == 0 || mainw->playing_file == -1) {
+  if (pmonitor == 0 || !LIVES_IS_PLAYING) {
     while (nwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY ||
            nheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY) {
       nheight = (nheight >> 2) << 1;
@@ -4249,7 +4249,7 @@ void resize_play_window(void) {
   lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
 
   if (width != -1 && (width != nwidth || height != nheight) && mainw->preview_spinbutton != NULL) {
-    if (mainw->playing_file == -1) {
+    if (!LIVES_IS_PLAYING) {
       load_preview_image(FALSE);
     }
   }
@@ -4274,7 +4274,7 @@ void kill_play_window(void) {
   if (mainw->multitrack == NULL) {
     add_to_playframe();
   } else mainw->must_resize = TRUE;
-  if ((!CURRENT_CLIP_IS_VALID || cfile->frames > 0) && mainw->multitrack == NULL && mainw->playing_file > -1) {
+  if ((!CURRENT_CLIP_IS_VALID || cfile->frames > 0) && mainw->multitrack == NULL && LIVES_IS_PLAYING) {
     lives_widget_show_all(mainw->playframe);
   }
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show Play Window"));

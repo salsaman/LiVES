@@ -333,7 +333,7 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
         inst = weed_get_plantptr_value(mainw->rte_textparm, WEED_LEAF_HOST_INSTANCE, &error);
         param_number = weed_get_int_value(mainw->rte_textparm, WEED_LEAF_HOST_IDX, &error);
         copyto = set_copy_to(inst, param_number, TRUE);
-        if (mainw->record && !mainw->record_paused && mainw->playing_file > -1 && (prefs->rec_opts & REC_EFFECTS)) {
+        if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, param_number);
           if (copyto != -1) rec_param_change(inst, copyto);

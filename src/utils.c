@@ -1302,7 +1302,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
 
   fps = sfile->pb_fps;
 
-  if (mainw->playing_file == -1) fps = sfile->fps;
+  if (!LIVES_IS_PLAYING) fps = sfile->fps;
 
   cframe = sfile->last_frameno;
 

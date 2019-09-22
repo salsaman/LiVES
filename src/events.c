@@ -3035,7 +3035,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     if ((next_frame_event = get_next_frame_event(next_event)) != NULL) {
       next_tc = get_event_timecode(next_frame_event);
       // drop frame if it is too far behind
-      if (mainw->playing_file > -1 && !mainw->noframedrop && next_tc <= curr_tc) break;
+      if (LIVES_IS_PLAYING && !mainw->noframedrop && next_tc <= curr_tc) break;
       if (!mainw->fs && !prefs->hide_framebar) {
         lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
@@ -3117,7 +3117,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           mainw->pchains = pchains;
           load_frame_image(cfile->frameno);
           mainw->pchains = NULL;
-          if (mainw->playing_file > -1) lives_widget_process_updates(mainw->LiVES, TRUE);
+          if (LIVES_IS_PLAYING) lives_widget_process_updates(mainw->LiVES, TRUE);
           mainw->current_file = current_file;
         }
         break;
@@ -3131,7 +3131,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         mainw->pchains = NULL;
       }
     }
-    if (mainw->playing_file > -1 && mainw->multitrack == NULL) lives_widget_process_updates(mainw->LiVES, TRUE);
+    if (LIVES_IS_PLAYING && mainw->multitrack == NULL) lives_widget_process_updates(mainw->LiVES, TRUE);
     cfile->next_event = get_next_event(next_event);
     break;
   case WEED_EVENT_HINT_FILTER_INIT:

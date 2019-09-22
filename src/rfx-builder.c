@@ -4454,7 +4454,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
     mainw->rte_separator = lives_menu_add_separator(LIVES_MENU(mainw->effects_menu));
 
-    if (mainw->playing_file == -1 && mainw->current_file > 0 &&
+    if (!LIVES_IS_PLAYING && mainw->current_file > 0 &&
         ((has_video_filters(TRUE) && !has_video_filters(FALSE)) ||
          (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
          mainw->agen_key != 0)) {
@@ -4682,7 +4682,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
   update_rfx_menus();
   threaded_dialog_spin(0.);
 
-  if (mainw->current_file > 0 && mainw->playing_file == -1) sensitize();
+  if (mainw->current_file > 0 && !LIVES_IS_PLAYING) sensitize();
   threaded_dialog_spin(0.);
 }
 

@@ -1366,7 +1366,7 @@ void vid_playback_plugin_exit(void) {
   }
   mainw->stream_ticks = -1;
 
-  if (mainw->playing_file > -1 && mainw->fs && mainw->sep_win) lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
+  if (LIVES_IS_PLAYING && mainw->fs && mainw->sep_win) lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
   if (mainw->play_window != NULL) {
     play_window_set_title();
   }

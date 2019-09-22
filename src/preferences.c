@@ -762,14 +762,14 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     if (prefsw != NULL)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_hfbwnp), prefs->hfbwnp);
     if (newval) {
-      if (mainw->playing_file == -1) {
+      if (!LIVES_IS_PLAYING) {
         lives_widget_hide(mainw->framebar);
       }
     } else {
-      if (mainw->playing_file == -1 || (mainw->playing_file > -1 && !prefs->hide_framebar &&
-                                        (!mainw->fs || (mainw->ext_playback && mainw->vpp != NULL &&
-                                            !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
-                                            !(mainw->vpp->capabilities & VPP_CAN_RESIZE))))) {
+      if (!LIVES_IS_PLAYING || (LIVES_IS_PLAYING && !prefs->hide_framebar &&
+                                (!mainw->fs || (mainw->ext_playback && mainw->vpp != NULL &&
+                                    !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
+                                    !(mainw->vpp->capabilities & VPP_CAN_RESIZE))))) {
         lives_widget_show(mainw->framebar);
       }
     }
@@ -820,7 +820,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
     prefs->sepwin_type = newval;
     if (newval == SEPWIN_TYPE_STICKY) {
       if (mainw->sep_win) {
-        if (mainw->playing_file == -1) {
+        if (!LIVES_IS_PLAYING) {
           make_play_window();
         }
       } else {
@@ -830,7 +830,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
       }
     } else {
       if (mainw->sep_win) {
-        if (mainw->playing_file == -1) {
+        if (!LIVES_IS_PLAYING) {
           kill_play_window();
         } else {
           play_window_set_title();
@@ -2295,7 +2295,7 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
     return;
   }
 
-  if (mainw->playing_file > -1) {
+  if (LIVES_IS_PLAYING) {
     do_aud_during_play_error();
     lives_signal_handler_block(audp_combo, prefsw->audp_entry_func);
 

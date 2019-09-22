@@ -2067,7 +2067,7 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
       // further checks are performed when enabling/toggling an effect to see whether it is a generator
 
       if (oscbuf != NULL && !OSC_isBufferEmpty(oscbuf)) {
-        if (mainw->playing_file == -1
+        if (!LIVES_IS_PLAYING
             && strcmp(oscbuf->buffer, "/video/play")
             && strcmp(oscbuf->buffer, "/clip/foreground/retrigger")
             && strcmp(oscbuf->buffer, "/effect_key/enable")

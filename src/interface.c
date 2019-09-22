@@ -214,7 +214,7 @@ double lives_ce_update_timeline(int frame, double x) {
     lives_widget_queue_draw_if_visible(mainw->framecounter);
   }
 
-  if (mainw->playing_file == -1 && mainw->play_window != NULL && cfile->is_loaded && mainw->multitrack == NULL) {
+  if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded && mainw->multitrack == NULL) {
     if (mainw->prv_link == PRV_PTR && mainw->preview_frame != calc_frame_from_time(mainw->current_file, x)) {
       double pointer_time = cfile->pointer_time;
       cfile->pointer_time = x;
@@ -223,7 +223,7 @@ double lives_ce_update_timeline(int frame, double x) {
     }
   }
 
-  if (mainw->is_ready && mainw->playing_file == -1 && !prefs->hide_framebar && mainw->current_file != last_current_file) {
+  if (mainw->is_ready && !LIVES_IS_PLAYING && !prefs->hide_framebar && mainw->current_file != last_current_file) {
     lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
@@ -281,7 +281,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     return;
   }
 
-  if (mainw->playing_file == -1) {
+  if (!LIVES_IS_PLAYING) {
     get_total_time(cfile);
   }
 
@@ -309,7 +309,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     }
   }
 
-  if (mainw->playing_file == -1) {
+  if (!LIVES_IS_PLAYING) {
     lives_widget_context_update();
   }
 
@@ -446,7 +446,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
       lives_close_buffered(afd);
 
-      if (mainw->playing_file > -1) {
+      if (LIVES_IS_PLAYING) {
         offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
                                cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex);
         if (mainw->audio_end && !mainw->loop) {
@@ -562,7 +562,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
       lives_close_buffered(afd);
 
-      if (mainw->playing_file > -1) {
+      if (LIVES_IS_PLAYING) {
         offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
                                cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex);
         if (mainw->audio_end && !mainw->loop) {
@@ -650,7 +650,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (which == 0) {
     // playback cursors
-    if (mainw->playing_file > -1) {
+    if (LIVES_IS_PLAYING) {
       if (cfile->frames > 0) {
         draw_little_bars((mainw->actual_frame - 1.) / cfile->fps, 0);
       }
@@ -659,7 +659,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       }
     }
 
-    if (mainw->playing_file == -1 || (mainw->switch_during_pb && !mainw->faded)) {
+    if (!LIVES_IS_PLAYING || (mainw->switch_during_pb && !mainw->faded)) {
       if (CURRENT_CLIP_TOTAL_TIME > 0.) {
         // set the range of the timeline
         if (!cfile->opening_loc && which == 0) {
@@ -680,7 +680,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
         draw_little_bars(cfile->pointer_time, 0);
 
-        if (mainw->playing_file == -1 && mainw->play_window != NULL && cfile->is_loaded) {
+        if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded) {
           if (mainw->preview_box == NULL) {
             // create the preview box that shows frames
             make_preview_box();
@@ -706,7 +706,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     lives_widget_queue_draw_if_visible(mainw->vidbar);
     lives_widget_queue_draw_if_visible(mainw->hruler);
   } else {
-    if (mainw->playing_file > -1) {
+    if (LIVES_IS_PLAYING) {
       ptrtime = (mainw->actual_frame - .5) / cfile->fps;
       if (ptrtime < 0.) ptrtime = 0.;
       draw_little_bars(ptrtime, which);
@@ -814,7 +814,7 @@ void draw_little_bars(double ptrtime, int which) {
         allocheight = (double)lives_widget_get_allocation_height(mainw->vidbar) + bar_height + widget_opts.packing_height * 2.5;
         allocy = lives_widget_get_allocation_y(mainw->vidbar) - widget_opts.packing_height;
 
-        if (mainw->playing_file > -1) {
+        if (LIVES_IS_PLAYING) {
           if (offset > 0.) {
             lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
           }
@@ -840,7 +840,7 @@ void draw_little_bars(double ptrtime, int which) {
       }
     }
 
-    if (mainw->playing_file > -1) {
+    if (LIVES_IS_PLAYING) {
       if (which == 0) lives_ruler_set_value(LIVES_RULER(mainw->hruler), ptrtime);
       if (cfile->achans > 0 && cfile->is_loaded && prefs->audio_src != AUDIO_SRC_EXT) {
         if (is_realtime_aplayer(prefs->audio_player) && (mainw->event_list == NULL || !mainw->preview)) {
@@ -866,7 +866,7 @@ void draw_little_bars(double ptrtime, int which) {
         allocheight = (double)lives_widget_get_allocation_height(mainw->laudbar) + bar_height + widget_opts.packing_height * 2.5;
         allocy = lives_widget_get_allocation_y(mainw->laudbar) - widget_opts.packing_height;
 
-        if (mainw->playing_file > -1) {
+        if (LIVES_IS_PLAYING) {
           if (offset > 0.) {
             lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
           }
@@ -896,7 +896,7 @@ void draw_little_bars(double ptrtime, int which) {
           allocheight = (double)lives_widget_get_allocation_height(mainw->raudbar) + bar_height + widget_opts.packing_height * 2.5;
           allocy = lives_widget_get_allocation_y(mainw->raudbar) - widget_opts.packing_height;
 
-          if (mainw->playing_file > -1) {
+          if (LIVES_IS_PLAYING) {
             if (offset > 0.) {
               lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
             }

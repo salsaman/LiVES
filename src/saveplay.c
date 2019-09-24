@@ -5172,7 +5172,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   int maxframe;
   int last_good_file = -1;
 
-  boolean last_was_normal_file = FALSE;
   boolean is_scrap;
   boolean is_ascrap;
   boolean did_set_check = FALSE;
@@ -5242,12 +5241,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     mainw->read_failed = FALSE;
 
     if (lives_fgets(buff, 256, rfile) == NULL) {
-      int current_file = mainw->current_file;
-      if (last_was_normal_file && mainw->multitrack == NULL) {
-        if (current_file != -1) switch_to_file((mainw->current_file = 0), current_file);
-      }
       reset_clipmenu();
-      lives_widget_process_updates(mainw->LiVES, TRUE);
       threaded_dialog_spin(0.);
 
       mainw->suppress_dprint = FALSE;
@@ -5268,7 +5262,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       boolean crash_recovery = prefs->crash_recovery;
       // set to be opened
       memset(buff + strlen(buff) - 1 - strlen(LIVES_DIR_SEP), 0, 1);
-      last_was_normal_file = FALSE;
       if (!is_legal_set_name(buff, TRUE)) continue;
 
       // dont write an entry yet, in case we were assigned the same pid as the recovery file
@@ -5289,6 +5282,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         is_scrap = TRUE;
         buffptr = buff + 6;
       } else if (!strncmp(buff, "ascrap|", 7)) {
+        continue;
         is_ascrap = TRUE;
         buffptr = buff + 7;
       } else {
@@ -5329,7 +5323,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
         threaded_dialog_spin(0.);
       }
-      last_was_normal_file = TRUE;
       mainw->current_file = new_file;
       threaded_dialog_spin(0.);
       cfile = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));

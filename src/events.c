@@ -3993,9 +3993,6 @@ filterinit2:
     }
     event = eventnext;
   } else {
-    lives_mt *multi;
-    int current_file;
-
     if (cfile->old_frames == 0) cfile->undo_start = cfile->undo_end = 0;
     if (mainw->multitrack == NULL || !mainw->multitrack->pr_audio) {
       com = lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\"", prefs->backend, cfile->handle, cfile->undo_start,

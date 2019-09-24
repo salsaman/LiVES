@@ -814,6 +814,7 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
       errmsg = lives_strdup_printf("Invalid YUV subspace conversion %d to %d", isubspace, osubspace);
       LIVES_ERROR(errmsg);
     }
+    break;
   default:
     errmsg = lives_strdup_printf("Invalid YUV subspace conversion %d to %d", isubspace, osubspace);
     LIVES_ERROR(errmsg);

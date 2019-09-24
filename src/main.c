@@ -1,6 +1,6 @@
 // main.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
 
 /*  This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 3 or higher as published by
@@ -1228,8 +1228,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->file_buffers = NULL;
 
-  mainw->no_recurse = FALSE;
-
   mainw->blend_layer = NULL;
 
   mainw->ce_upd_clip = FALSE;
@@ -1573,9 +1571,10 @@ static void lives_init(_ign_opts *ign_opts) {
           lives_list_free_all(&encoder_capabilities);
           if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS, prefs->encoder.name, "get_formats")) != NULL) {
             // get any restrictions for the current format
-            for (i = 0; i < lives_list_length(ofmt_all); i++) {
-              if ((numtok = get_token_count((char *)lives_list_nth_data(ofmt_all, i), '|')) > 2) {
-                array = lives_strsplit((char *)lives_list_nth_data(ofmt_all, i), "|", -1);
+            LiVESList *list = ofmt_all;
+            while (list != NULL) {
+              if ((numtok = get_token_count((char *)list->data, '|')) > 2) {
+                array = lives_strsplit((char *)list->data, "|", -1);
                 if (!strcmp(array[0], prefs->encoder.of_name)) {
                   if (numtok > 1) {
                     lives_snprintf(prefs->encoder.of_desc, 128, "%s", array[1]);
@@ -1585,6 +1584,7 @@ static void lives_init(_ign_opts *ign_opts) {
                 }
                 lives_strfreev(array);
               }
+              list = list->next;
             }
             lives_list_free_all(&ofmt_all);
           }

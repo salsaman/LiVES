@@ -1900,7 +1900,6 @@ void create_LiVES(void) {
 
   mainw->framecounter = lives_standard_entry_new("", "", FCWIDTHCHARS, FCWIDTHCHARS, NULL, NULL);
 
-
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
   lives_entry_set_editable(LIVES_ENTRY(mainw->framecounter), FALSE);
   lives_entry_set_has_frame(LIVES_ENTRY(mainw->framecounter), FALSE);

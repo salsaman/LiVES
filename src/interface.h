@@ -46,8 +46,6 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 
 boolean do_audio_choice_dialog(short startup_phase);
 
-boolean do_layout_recover_dialog(void);
-
 void do_keys_window(void);
 
 void do_mt_keys_window(void);

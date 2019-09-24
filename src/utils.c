@@ -3678,6 +3678,7 @@ void reget_afilesize(int fileno) {
   boolean bad_header = FALSE;
 
   if (mainw->multitrack != NULL) return; // otherwise achans gets set to 0...
+  if (!IS_VALID_CLIP(fileno)) return;
 
   afile = lives_get_audio_file_name(fileno);
 

@@ -691,7 +691,7 @@ typedef struct {
 
   boolean ratio_fps; ///< if the fps was set by a ratio
 
-  int64_t aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
+  volatile int64_t aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
 
   // decoder data
 
@@ -1022,6 +1022,7 @@ void do_cd_error_dialog(void);
 void do_bad_theme_error(const char *themefile);
 void do_bad_theme_import_error(const char *theme_file);
 boolean do_theme_exists_warn(const char *themename);
+boolean do_layout_recover_dialog(void);
 
 int process_one(boolean visible);
 void do_threaded_dialog(const char *translated_text, boolean has_cancel);

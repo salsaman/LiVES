@@ -767,7 +767,6 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
 
       pthread_mutex_unlock(&mainw->abuf_mutex);
     }
-
   }
 #endif
 
@@ -869,7 +868,6 @@ int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arat
 
       pthread_mutex_unlock(&mainw->abuf_mutex);
     }
-
   }
 
 #endif
@@ -1072,8 +1070,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   // TODO - allow MAX_AUDIO_MEM to be configurable; currently this is fixed at 8 MB
   // 16 or 32 may be a more sensible default for realtime previewing
-
   // return (audio) frames rendered
+
   weed_plant_t *shortcut = NULL;
   lives_clip_t *outfile = to_file > -1 ? mainw->files[to_file] : NULL;
   uint8_t *in_buff;
@@ -1411,7 +1409,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (mainw->event_list != NULL && mainw->filter_map != NULL && !(mainw->multitrack == NULL && from_files[0] == mainw->ascrap_file)) {
         // we need to apply all audio effects with output here.
         // even in clipedit mode (for preview/rendering with an event list)
-        // also, we will need to keep updating the mainw->filter_map from mainw->event_list, as filters may switched on and off during the block
+        // also, we will need to keep updating the mainw->filter_map from mainw->event_list,
+        // as filters may switched on and off during the block
 
         int nbtracks = 0;
 
@@ -1439,7 +1438,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
                                  out_achans, blocksize, out_arate, tc, vis);
 
         lives_freep((void **)&vis);
-
       }
 
       if (mainw->multitrack == NULL && opvol_end != opvol_start) {

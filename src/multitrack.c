@@ -7140,7 +7140,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
         else {
           if (has_video_chans_in(filter, FALSE)) {
             /// the autotransitions menu
-            menuitem2 = lives_standard_check_menu_item_new_with_label(fxname, prefs->atrans_fx == i);
+            menuitem2 = lives_standard_check_menu_item_new_with_label(fxname, prefs->atrans_fx == sorted);
             lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem2), "idx", LIVES_INT_TO_POINTER(sorted));
 
             lives_signal_connect(LIVES_GUI_OBJECT(menuitem2), LIVES_WIDGET_ACTIVATE_SIGNAL,

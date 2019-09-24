@@ -1,6 +1,6 @@
 // audio.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2016
+// (c) G. Finch (salsaman+lives@gmail.com) 2005 - 2019
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -151,27 +151,28 @@ void sample_silence_dS(float *dst, uint64_t nsamples);
 void sample_silence_stream(int nchans, int nframes);
 
 void sample_move_d8_d16(short *dst, uint8_t *src,
-                        uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
+                        uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
 void sample_move_d16_d16(short *dst, short *src,
-                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign);
+                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign) GNU_HOT;
 
 void sample_move_d16_d8(uint8_t *dst, short *src,
-                        uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
+                        uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
-float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian, float vol);
+float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian,
+                            float vol) GNU_HOT;
 
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned,
-                              boolean swap_endian, boolean float_interleaved, float vol); ///< returns frames output
+                              boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns frames output
 
-int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_arate, float vol);
+int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_arate, float vol) GNU_HOT;
 
-int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate);
+int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate) GNU_HOT;
 
-void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float scale, int dst_skip);
+void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float scale, int dst_skip) GNU_HOT;
 
-boolean float_deinterleave(float *fbuffer, int nsamps, int nchans);
-boolean float_interleave(float *fbuffer, int nsamps, int nchans);
+boolean float_deinterleave(float *fbuffer, int nsamps, int nchans) GNU_HOT;
+boolean float_interleave(float *fbuffer, int nsamps, int nchans) GNU_HOT;
 
 int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime, weed_timecode_t tc_start,
                              weed_timecode_t tc_end, double *chvol, double opvol_start, double opvol_end, lives_audio_buf_t *obuf);

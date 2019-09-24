@@ -3384,3 +3384,11 @@ boolean ask_permission_dialog(int what) {
   return FALSE;
 }
 
+
+boolean do_layout_recover_dialog(void) {
+  if (!do_yesno_dialog(_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"))) {
+    recover_layout_cancelled(TRUE);
+    return FALSE;
+  } else return recover_layout();
+}
+

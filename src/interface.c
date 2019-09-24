@@ -3204,14 +3204,6 @@ _entryw *create_cds_dialog(int type) {
 }
 
 
-boolean do_layout_recover_dialog(void) {
-  if (!do_yesno_dialog(_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"))) {
-    recover_layout_cancelled(TRUE);
-    return FALSE;
-  } else return recover_layout();
-}
-
-
 static void flip_cdisk_bit(LiVESToggleButton *t, livespointer user_data) {
   uint32_t bitmask = LIVES_POINTER_TO_INT(user_data);
   prefs->clear_disk_opts ^= bitmask;

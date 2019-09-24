@@ -485,7 +485,7 @@ typedef struct {
   boolean dvgrab_preview;
   boolean switch_during_pb;
   boolean clip_switched; ///< for recording - did we switch clips ?
-  boolean record;
+  volatile boolean record;
 
   boolean in_fs_preview;
   volatile lives_cancel_t cancelled;
@@ -1207,8 +1207,6 @@ typedef struct {
 
   boolean suppress_dprint; ///< tidy up, e.g. by blocking "switched to file..." and "closed file..." messages
 
-  boolean no_recurse; ///< flag to prevent recursive function calls
-
   char *string_constants[NUM_LIVES_STRING_CONSTANTS];
   char *any_string;  ///< localised text saying "Any", for encoder and output format
   char *none_string;  ///< localised text saying "None", for playback plugin name, etc.
@@ -1227,7 +1225,7 @@ typedef struct {
 
   boolean opening_multi; ///< flag to indicate multiple file selection
 
-  boolean record_paused; ///< pause during recording
+  volatile boolean record_paused; ///< pause during recording
 
   boolean record_starting; ///< start recording at next frame
 

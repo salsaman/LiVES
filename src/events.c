@@ -33,8 +33,6 @@
 
 static int render_choice;
 
-static weed_timecode_t flush_audio_tc = 0;
-
 static void **pchains[FX_KEYS_MAX]; // each pchain is an array of void *, these are parameter changes used for rendering
 ///////////////////////////////////////////////////////
 
@@ -3359,7 +3357,7 @@ lives_render_error_t render_events(boolean reset) {
   // this is called repeatedly when we are rendering effect changes and/or clip switches
   // if we have clip switches we will resize and build a new clip
 
-  // call with flush_audio_tc set to non-zero to render audio up to that tc
+  // call with mainw->flush_audio_tc set to non-zero to render audio up to that tc
 
   char oname[PATH_MAX];
   LiVESError *error = NULL;
@@ -3375,7 +3373,7 @@ lives_render_error_t render_events(boolean reset) {
   weed_plant_t **citmpl = NULL, **cotmpl = NULL;
   weed_plant_t **bitmpl = NULL, **botmpl = NULL;
   weed_plant_t *inst, *orig_inst;
-  weed_plant_t *next_frame_event;
+  weed_plant_t *next_frame_event = NULL;
   static weed_plant_t *event, *eventnext;
 
   int *in_count = NULL;
@@ -3409,10 +3407,10 @@ lives_render_error_t render_events(boolean reset) {
   boolean is_blank = TRUE;
   boolean firstframe = TRUE;
   boolean completed = FALSE;
-  static boolean has_audio;
 
   static double chvols[MAX_AUDIO_TRACKS];
   static double xaseek[MAX_AUDIO_TRACKS], xavel[MAX_AUDIO_TRACKS], atime;
+  double deltatime;
 
   static lives_render_error_t read_write_error;
 
@@ -3466,7 +3464,6 @@ lives_render_error_t render_events(boolean reset) {
       chvols[0] = 1.;
     }
     atime = (double)(out_frame - 1.) / cfile->fps;
-    has_audio = FALSE;
     lives_snprintf(nlabel, 128, "%s", _("Rendering audio..."));
     read_write_error = LIVES_RENDER_ERROR_NONE;
     return LIVES_RENDER_READY;
@@ -3477,18 +3474,16 @@ lives_render_error_t render_events(boolean reset) {
   mainw->rowstride_alignment = mainw->rowstride_alignment_hint;
   mainw->rowstride_alignment_hint = 1;
 
-  if (flush_audio_tc != 0) {
-    event = get_next_audio_frame_event(event);
-  }
-
-  if (event != NULL) {
-    eventnext = get_next_event(event);
-
-    hint = get_event_hint(event);
+  if (mainw->flush_audio_tc != 0 || event != NULL) {
+    if (mainw->flush_audio_tc == 0) {
+      is_blank = FALSE;
+      eventnext = get_next_event(event);
+      hint = get_event_hint(event);
+    } else hint = WEED_EVENT_HINT_FRAME;
 
     switch (hint) {
     case WEED_EVENT_HINT_FRAME:
-      if (flush_audio_tc == 0) {
+      if (mainw->flush_audio_tc == 0) {
         tc = get_event_timecode(event);
 
         if ((mainw->multitrack == NULL || (mainw->multitrack->opts.render_vidp && !mainw->multitrack->pr_audio)) &&
@@ -3626,16 +3621,17 @@ lives_render_error_t render_events(boolean reset) {
           }
           mainw->blend_file = blend_file;
         }
-      } else tc = flush_audio_tc;
-
-      next_frame_event = get_next_frame_event(event);
+        next_frame_event = get_next_frame_event(event);
+      } else tc = mainw->flush_audio_tc;
 
       // get tc of next frame event
       if (next_frame_event != NULL) next_tc = get_event_timecode(next_frame_event);
       else {
         // reached end of event_list
-        if (has_audio && !WEED_EVENT_IS_AUDIO_FRAME(event)) {
-          has_audio = FALSE;
+        if (((mainw->multitrack == NULL && prefs->render_audio) || (mainw->multitrack != NULL && mainw->multitrack->opts.render_audp)) &&
+            (!WEED_EVENT_IS_AUDIO_FRAME(event) || mainw->flush_audio_tc != 0) &&
+            tc > q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5), cfile->fps)) {
+          boolean has_audio = FALSE;
           for (i = 0; i < MAX_AUDIO_TRACKS; i++) {
             // see if we have any audio left to render
             if (xavel[i] != 0.) has_audio = TRUE;
@@ -3681,6 +3677,18 @@ lives_render_error_t render_events(boolean reset) {
           set_proc_label(cfile->proc_ptr, blabel, FALSE);
           lives_freep((void **)&blabel);
         }
+        if (mainw->flush_audio_tc != 0) {
+          deltatime = (double)(q_gint64(tc + (weed_timecode_t)((next_frame_event == NULL && !is_blank) ? TICKS_PER_SECOND_DBL / cfile->fps : 0),
+                                        cfile->fps)) / TICKS_PER_SECOND_DBL - atime;
+          for (i = 0; i < natracks; i++) {
+            if (xaclips[i] > 0) {
+              xaseek[i] += deltatime * xavel[i];
+            }
+          }
+          atime += deltatime;
+          if (read_write_error) return read_write_error;
+          return LIVES_RENDER_COMPLETE;
+        }
       }
 
       while (cfile->fps > 0.) {
@@ -3691,9 +3699,7 @@ lives_render_error_t render_events(boolean reset) {
               int num_aclips = weed_leaf_num_elements(event, WEED_LEAF_AUDIO_CLIPS);
               int *aclips = weed_get_int_array(event, WEED_LEAF_AUDIO_CLIPS, &weed_error);
               double *aseeks = weed_get_double_array(event, WEED_LEAF_AUDIO_SEEKS, &weed_error);
-              has_audio = TRUE;
-              if (flush_audio_tc > 0 || q_gint64(tc, cfile->fps) / TICKS_PER_SECOND_DBL > atime) {
-                double deltatime;
+              if (tc > q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5), cfile->fps)) {
                 cfile->achans = cfile->undo_achans;
                 cfile->arate = cfile->undo_arate;
                 cfile->arps = cfile->undo_arps;
@@ -4009,13 +4015,7 @@ filterinit2:
       }
     } else lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "completed");
 
-    multi = mainw->multitrack;
-    current_file = mainw->current_file;
-    mainw->current_file = -1;
-    mainw->multitrack = NULL; // allow getting of audio file size
-    reget_afilesize(current_file);
-    mainw->current_file = current_file;
-    mainw->multitrack = multi;
+    cfile->afilesize = reget_afilesize_inner(mainw->current_file);
     mainw->filter_map = NULL;
     mainw->afilter_map = NULL;
     completed = TRUE;
@@ -4075,7 +4075,6 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
       do_error_dialog(mainw->msg);
       d_print_failed();
     } else if (mainw->render_error >= LIVES_RENDER_ERROR) d_print_failed();
-    //else d_print_cancelled();
     cfile->undo_start = oundo_start;
     cfile->undo_end = oundo_end;
     cfile->pb_fps = old_pb_fps;
@@ -4084,15 +4083,6 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
     mainw->resizing = FALSE;
     cfile->next_event = NULL;
     return FALSE;
-  }
-
-  if (mainw->effects_paused) {
-    // pressed "Keep", render audio to end of segment
-    mainw->effects_paused = FALSE;
-    flush_audio_tc = q_gint64((double)cfile->undo_end / cfile->fps * TICKS_PER_SECOND_DBL, cfile->fps);
-
-    render_events(FALSE);
-    flush_audio_tc = 0;
   }
 
   mainw->cancel_type = CANCEL_KILL;

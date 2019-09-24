@@ -1267,6 +1267,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->overflowx = mainw->overflowy = 1000000;
 
+  mainw->flush_audio_tc = 0;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -6110,7 +6111,7 @@ void load_frame_image(int frame) {
         }
         if ((cfile->next_event == NULL && mainw->is_rendering && !mainw->switch_during_pb &&
              (mainw->multitrack == NULL || (!mainw->multitrack->is_rendering && !mainw->is_generating))) ||
-            ((!mainw->is_rendering || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)) &&
+            ((mainw->multitrack == NULL || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)) &&
              mainw->preview && mainw->frame_layer == NULL)) {
           // preview ended
           if (!cfile->opening) mainw->cancelled = CANCEL_NO_MORE_PREVIEW;

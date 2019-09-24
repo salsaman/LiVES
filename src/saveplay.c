@@ -2109,7 +2109,9 @@ void play_file(void) {
   mainw->audio_start = mainw->audio_end = 0;
 
   if (cfile->achans > 0) {
-    if (mainw->event_list != NULL) {
+    if (mainw->event_list != NULL &&
+        !(mainw->preview && mainw->is_rendering) &&
+        !(mainw->multitrack != NULL && mainw->preview && mainw->multitrack->is_rendering)) {
       // play performance data
       if (event_list_get_end_secs(mainw->event_list) > cfile->frames / cfile->fps && !mainw->playing_sel) {
         mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.) * cfile->arate / cfile->arps;

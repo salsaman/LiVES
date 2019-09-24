@@ -9064,6 +9064,18 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
           lives_free(tmp);
           lives_free(ltext);
         }
+        if ((mainw->multitrack == NULL && mainw->is_rendering && prefs->render_audio) || (mainw->multitrack != NULL &&
+            mainw->multitrack->opts.render_audp)) {
+          // render audio up to current tc
+          mainw->flush_audio_tc = q_gint64((double)cfile->undo_end / cfile->fps * TICKS_PER_SECOND_DBL, cfile->fps);
+          render_events(FALSE);
+          mainw->flush_audio_tc = 0;
+          cfile->afilesize = reget_afilesize_inner(mainw->current_file);
+          cfile->laudio_time = (double)(cfile->afilesize / (cfile->asampsize >> 3) / cfile->achans) / (double)cfile->arate;
+          if (cfile->achans > 1) {
+            cfile->raudio_time = cfile->laudio_time;
+          }
+        }
         d_print(_("paused..."));
       }
 #ifdef ENABLE_JACK
@@ -9209,6 +9221,17 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
         mainw->play_start = cfile->start = cfile->undo_start;
         mainw->play_end = cfile->end = cfile->undo_end;
       } else {
+        if (mainw->is_processing && mainw->is_rendering && prefs->render_audio) {
+          // render audio up to current tc
+          mainw->flush_audio_tc = q_gint64((double)cfile->undo_end / cfile->fps * TICKS_PER_SECOND_DBL, cfile->fps);
+          render_events(FALSE);
+          mainw->flush_audio_tc = 0;
+          cfile->afilesize = reget_afilesize_inner(mainw->current_file);
+          cfile->laudio_time = (double)(cfile->afilesize / (cfile->asampsize >> 3) / cfile->achans) / (double)cfile->arate;
+          if (cfile->achans > 1) {
+            cfile->raudio_time = cfile->laudio_time;
+          }
+        }
         mainw->play_start = calc_frame_from_time(mainw->current_file, event_list_get_start_secs(cfile->event_list));
         mainw->play_end = INT_MAX;
       }

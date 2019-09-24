@@ -3671,6 +3671,17 @@ void wait_for_bg_audio_sync(int fileno) {
 }
 
 
+uint64_t reget_afilesize_inner(int fileno) {
+  // safe version that just returns the audio file size
+  uint64_t filesize;
+  char *afile = lives_get_audio_file_name(fileno);
+  lives_sync(1);
+  filesize = sget_file_size(afile);
+  lives_free(afile);
+  return filesize;
+}
+
+
 void reget_afilesize(int fileno) {
   // re-get the audio file size
   char *afile;
@@ -3678,13 +3689,10 @@ void reget_afilesize(int fileno) {
   boolean bad_header = FALSE;
 
   if (mainw->multitrack != NULL) return; // otherwise achans gets set to 0...
-  if (!IS_VALID_CLIP(fileno)) return;
 
-  afile = lives_get_audio_file_name(fileno);
+  sfile->afilesize = reget_afilesize_inner(fileno);
 
-  lives_sync(1);
-
-  if ((sfile->afilesize = sget_file_size(afile)) == 0l) {
+  if (sfile->afilesize == 0l) {
     if (!sfile->opening && fileno != mainw->ascrap_file && fileno != mainw->scrap_file) {
       if (sfile->arate != 0 || sfile->achans != 0 || sfile->asampsize != 0 || sfile->arps != 0) {
         sfile->arate = sfile->achans = sfile->asampsize = sfile->arps = 0;
@@ -3700,8 +3708,6 @@ void reget_afilesize(int fileno) {
       }
     }
   }
-
-  lives_free(afile);
 
   if (mainw->is_ready && fileno > 0 && fileno == mainw->current_file) {
     // force a redraw

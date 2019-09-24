@@ -1416,6 +1416,7 @@ typedef struct {
   int overflowx;
   int overflowy;
 
+  weed_timecode_t flush_audio_tc;
   ////////////////////
 } mainwindow;
 

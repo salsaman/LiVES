@@ -226,6 +226,7 @@ LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertra
 
 boolean render_to_clip(boolean new_clip);  ///< render to clip
 boolean start_render_effect_events(weed_plant_t *event_list);  ///< render to clip
+lives_render_error_t render_events(boolean reset);
 
 // effect insertion/updating
 void insert_filter_init_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);

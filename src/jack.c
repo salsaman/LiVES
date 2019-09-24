@@ -1106,6 +1106,10 @@ static int audio_read(nframes_t nframes, void *arg) {
 
   pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
 
+  if (mainw->record && mainw->record_paused && jrb > 0) {
+    jack_flush_read_data(jrb, jrbuf);
+  }
+
   if (jackd->playing_file == -1 || (mainw->record && mainw->record_paused)) {
     jrb = 0;
     pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);

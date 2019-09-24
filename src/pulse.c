@@ -973,9 +973,18 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     out_scale = (float)afile->arate / (float)pulsed->in_arate; // recording to ascrap_file
   }
 
-  prb += rbytes;
+  if (mainw->record && mainw->record_paused && prb > 0) {
+    // flush audio when recording is paused
+    if (prb <= PULSE_READ_BYTES * 2) {
+      lives_memcpy(&prbuf[prb - rbytes], data, rbytes);
+      pulse_flush_read_data(pulsed, pulsed->playing_file, prb, pulsed->reverse_endian, prbuf);
+    } else {
+      pulse_flush_read_data(pulsed, pulsed->playing_file, rbytes, pulsed->reverse_endian, data);
+    }
+  }
 
   if (pulsed->playing_file == -1 || (mainw->record && mainw->record_paused)) prb = 0;
+  else prb += rbytes;
 
   frames_out = (size_t)((double)((prb / (pulsed->in_asamps >> 3) / pulsed->in_achans)) / out_scale + .5);
 

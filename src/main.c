@@ -280,6 +280,7 @@ void get_monitors(void) {
   register int k;
 #endif
 
+  double scale, dpi;
   int nscreens, nmonitors;
   register int i, j, idx = 0;
 
@@ -318,6 +319,11 @@ void get_monitors(void) {
     nscreens = lives_display_get_n_screens(disp);
     for (i = 0; i < nscreens; i++) {
       screen = gdk_display_get_screen(disp, i);
+      scale = 1.0;
+      dpi = gdk_screen_get_resolution(screen);
+      if (dpi == 120.) scale = 1.25;
+      else if (dpi == 144.) scale = 1.5;
+      else if (dpi == 192.) scale = 2.0;
       nmonitors = gdk_screen_get_n_monitors(screen);
       for (j = 0; j < nmonitors; j++) {
         GdkRectangle rect;
@@ -327,6 +333,8 @@ void get_monitors(void) {
         mainw->mgeom[idx].width = rect.width;
         mainw->mgeom[idx].height = rect.height;
         mainw->mgeom[idx].mouse_device = NULL;
+        mainw->mgeom[idx].dpi = dpi;
+        mainw->mgeom[idx].scale = scale;
 #if LIVES_HAS_DEVICE_MANAGER
         // get (virtual) mouse device for this screen
         for (k = 0; k < lives_list_length(devlist); k++) {

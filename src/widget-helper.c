@@ -10995,11 +10995,13 @@ boolean get_border_size(LiVESWidget *win, int *bx, int *by) {
   gdk_window_get_frame_extents(lives_widget_get_xwindow(win), &rect);
   gdk_window_get_origin(lives_widget_get_xwindow(win), &wx, &wy);
   if (bx != NULL) {
-    *bx = wx - rect.x;
+    //*bx = wx - rect.x;
+    *bx = rect.x;
     if (rect.x == 0) *bx = 0;
   }
   if (by != NULL) {
-    *by = wy - rect.y;
+    //*by = wy - rect.y;
+    *by = rect.y;
     if (rect.y == 0) *by = 0;
   }
   return TRUE;

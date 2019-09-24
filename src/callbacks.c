@@ -9042,7 +9042,7 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
 
   if (mainw->iochan == NULL) {
     // pause during effects processing or opening
-    xticks = lives_get_current_ticks();
+    xticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
     if (!mainw->effects_paused) {
       mainw->timeout_ticks -= xticks;
       com = lives_strdup_printf("%s pause \"%s\"", prefs->backend_sync, cfile->handle);
@@ -9167,7 +9167,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
 
   mainw->preview = TRUE;
   old_rte = mainw->rte;
-  xticks = lives_get_current_ticks();
+  xticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
   mainw->timeout_ticks -= xticks;
 
   if (mainw->internal_messaging) {
@@ -9345,7 +9345,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
     unblock_expose();
 
   }
-  xticks = lives_get_current_ticks();
+  xticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
   mainw->timeout_ticks += xticks;
   mainw->filter_map = filter_map;
   mainw->afilter_map = afilter_map;

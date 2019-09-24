@@ -3684,7 +3684,6 @@ uint64_t reget_afilesize_inner(int fileno) {
 
 void reget_afilesize(int fileno) {
   // re-get the audio file size
-  char *afile;
   lives_clip_t *sfile = mainw->files[fileno];
   boolean bad_header = FALSE;
 

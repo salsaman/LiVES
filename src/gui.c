@@ -4460,6 +4460,9 @@ void splash_init(void) {
 
     vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
     lives_container_add(LIVES_CONTAINER(mainw->splash_window), vbox);
+    lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width * 2);
+
+    add_fill_to_box(LIVES_BOX(vbox));
 
     splash_pix = lives_pixbuf_new_from_file(tmp, &error);
     lives_free(tmp);

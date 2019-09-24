@@ -306,6 +306,8 @@ typedef struct {
   LiVESXDevice *mouse_device; ///< unused for gtk+ < 3.0.0
   LiVESXDisplay *disp;
   LiVESXScreen *screen;
+  double dpi;
+  double scale;
 } lives_mgeometry_t;
 
 /// constant strings

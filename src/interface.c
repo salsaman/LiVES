@@ -4428,6 +4428,9 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
 
   overflowx = w - (scr_width - bx);
   overflowy = h - (scr_height - by);
+#ifdef DEBUG_OVERFLOW
+  g_print("overflow2 is %d X %d : %d %d %d\n", overflowx, overflowy, h, scr_height, by);
+#endif
 
   if (overflowx <= OVERFLOW_MIN_X && mainw->overflowx <= overflowx) bx -= overflowx;
   if (overflowy <= OVERFLOW_MIN_Y && mainw->overflowy <= overflowy) by -= overflowy;
@@ -4460,7 +4463,9 @@ EXPOSE_FN_DECL(expose_msg_area, widget) {
     }
 
     if ((overflowx > 0 || overflowy > 0) && myheight > 0 && mywidth > 0) {
-      lives_widget_set_size_request(widget, mywidth, myheight);
+      lives_widget_set_size_request(widget, -1, myheight - 4);
+      lives_widget_set_size_request(mainw->msg_scrollbar, -1, myheight - 4);
+      lives_widget_set_size_request(mainw->message_box, mywidth, myheight);
     }
 
     lives_widget_show(widget);

@@ -1326,6 +1326,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   cached_key = cached_mod = 0;
 
+  // TODO: - support other YUV subspaces
   d_print(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"), name,
           vpp->palette, (tmp = weed_palette_get_name_full(vpp->palette, vpp->YUV_clamping,
                                WEED_YUV_SUBSPACE_YCBCR)));

@@ -662,7 +662,7 @@ static void set_conversion_arrays(int clamping, int subspace) {
   // depending on clamping and subspace
 
   switch (subspace) {
-  case WEED_YUV_SUBSPACE_YUV:
+  case WEED_YUV_SUBSPACE_YUV: // assume YCBCR
   case WEED_YUV_SUBSPACE_YCBCR:
     if (clamping == WEED_YUV_CLAMPING_CLAMPED) {
       Y_R = Y_Rc;
@@ -767,16 +767,17 @@ static void set_conversion_arrays(int clamping, int subspace) {
 static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int oclamping, int osubspace) {
   // get conversion arrays for YUV -> YUV depending on in/out clamping and subspace
   // currently only clamped <-> unclamped conversions are catered for, subspace conversions are not yet done
-
+  char *errmsg = NULL;
   if (!conv_YY_inited) init_YUV_to_YUV_tables();
 
   switch (isubspace) {
   case WEED_YUV_SUBSPACE_YUV:
-    LIVES_WARN("YUV subspace not specified, assuming Y'CbCr");
+    LIVES_WARN("YUV subspace input not specified, assuming Y'CbCr");
   case WEED_YUV_SUBSPACE_YCBCR:
     switch (osubspace) {
-    case WEED_YUV_SUBSPACE_YCBCR:
     case WEED_YUV_SUBSPACE_YUV:
+      LIVES_WARN("YUV subspace output not specified, assuming Y'CbCr");
+    case WEED_YUV_SUBSPACE_YCBCR:
       if (iclamping == WEED_YUV_CLAMPING_CLAMPED) {
         //Y'CbCr clamped -> Y'CbCr unclamped
         Y_to_Y = Yclamped_to_Yunclamped;
@@ -789,13 +790,15 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
       break;
     // TODO - other subspaces
     default:
-      LIVES_ERROR("Invalid YUV subspace conversion");
+      errmsg = lives_strdup_printf("Invalid YUV subspace conversion %d to %d", isubspace, osubspace);
+      LIVES_ERROR(errmsg);
     }
     break;
   case WEED_YUV_SUBSPACE_BT709:
     switch (osubspace) {
-    case WEED_YUV_SUBSPACE_BT709:
     case WEED_YUV_SUBSPACE_YUV:
+      LIVES_WARN("YUV subspace output not specified, assuming BT709");
+    case WEED_YUV_SUBSPACE_BT709:
       if (iclamping == WEED_YUV_CLAMPING_CLAMPED) {
         //BT.709 clamped -> BT.709 unclamped
         Y_to_Y = Yclamped_to_Yunclamped;
@@ -808,12 +811,15 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
       break;
     // TODO - other subspaces
     default:
-      LIVES_ERROR("Invalid YUV subspace conversion");
+      errmsg = lives_strdup_printf("Invalid YUV subspace conversion %d to %d", isubspace, osubspace);
+      LIVES_ERROR(errmsg);
     }
   default:
-    LIVES_ERROR("Invalid YUV subspace conversion");
+    errmsg = lives_strdup_printf("Invalid YUV subspace conversion %d to %d", isubspace, osubspace);
+    LIVES_ERROR(errmsg);
     break;
   }
+  if (errmsg != NULL) lives_free(errmsg);
 }
 
 //////////////////////////
@@ -1176,8 +1182,8 @@ const char *weed_palette_get_name(int pal) {
 
 const char *weed_yuv_clamping_get_name(int clamping) {
   // 1 (TRUE) == unclamped
-  if (clamping == WEED_YUV_CLAMPING_UNCLAMPED) return (_("unclamped"));
-  if (clamping == WEED_YUV_CLAMPING_CLAMPED) return (_("clamped"));
+  if (clamping == WEED_YUV_CLAMPING_UNCLAMPED) return "unclamped";
+  if (clamping == WEED_YUV_CLAMPING_CLAMPED) return "clamped";
   return NULL;
 }
 
@@ -1199,6 +1205,15 @@ char *weed_palette_get_name_full(int pal, int clamped, int subspace) {
     const char *sspace = weed_yuv_subspace_get_name(subspace);
     return lives_strdup_printf("%s:%s (%s)", pname, sspace, clamp);
   }
+}
+
+
+const char *weed_gamma_get_name(int gamma) {
+  if (gamma == WEED_GAMMA_LINEAR) return "linear";
+  if (gamma == WEED_GAMMA_SRGB) return "sRGB";
+  if (gamma == WEED_GAMMA_BT709) return "bt709";
+  if (gamma == WEED_GAMMA_MONITOR) return "monitor";
+  return "unknown";
 }
 
 
@@ -8200,13 +8215,10 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
 
   //#define DEBUG_PCONV
 #ifdef DEBUG_PCONV
-  char *tmp2, *tmp3;
   g_print("converting palette %s(%s) to %s(%s)\n", weed_palette_get_name(inpl),
-          (tmp2 = lives_strdup(weed_yuv_clamping_get_name(iclamped))),
+          weed_yuv_clamping_get_name(iclamped),
           weed_palette_get_name(outpl),
-          (tmp3 = lives_strdup(weed_yuv_clamping_get_name(oclamping))));
-  lives_free(tmp2);
-  lives_free(tmp3);
+          weed_yuv_clamping_get_name(oclamping));
 #endif
 
   if (weed_palette_is_yuv_palette(inpl) && weed_palette_is_yuv_palette(outpl) && (iclamped != oclamping || isubspace != osubspace)) {
@@ -8219,9 +8231,9 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
     } else {
       // convert first to RGB(A)
       if (weed_palette_has_alpha_channel(inpl)) {
-        convert_layer_palette_full(layer, WEED_PALETTE_RGBA32, WEED_YUV_SAMPLING_DEFAULT, FALSE, WEED_YUV_SUBSPACE_YUV);
+        convert_layer_palette(layer, WEED_PALETTE_RGBA32, 0);
       } else {
-        convert_layer_palette_full(layer, WEED_PALETTE_RGB24, WEED_YUV_SAMPLING_DEFAULT, FALSE, WEED_YUV_SUBSPACE_YUV);
+        convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       }
       inpl = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
       isubspace = osubspace;
@@ -9923,7 +9935,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
 
 boolean convert_layer_palette(weed_plant_t *layer, int outpl, int op_clamping) {
   return convert_layer_palette_full(layer, outpl, WEED_YUV_SAMPLING_DEFAULT,
-                                    op_clamping == WEED_YUV_CLAMPING_CLAMPED, WEED_YUV_SUBSPACE_YCBCR);
+                                    op_clamping == WEED_YUV_CLAMPING_CLAMPED, WEED_YUV_SUBSPACE_YUV);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

@@ -778,6 +778,8 @@ boolean lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
 boolean lives_widget_process_updates(LiVESWidget *, boolean upd_children);
 boolean lives_xwindow_process_all_updates(void);
 
+boolean lives_xwindow_get_origin(LiVESXWindow *, int *posx, int *posy);
+
 LiVESAccelGroup *lives_accel_group_new(void);
 boolean lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags,
                                   LiVESWidgetClosure *closure);

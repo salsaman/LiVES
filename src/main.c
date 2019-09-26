@@ -133,8 +133,6 @@ static int startup_msgtype = 0;
 static int xxwidth = 0, xxheight = 0;
 #endif
 
-static int idlemax;
-
 ////////////////////
 
 #ifdef GUI_GTK
@@ -1213,8 +1211,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->ce_frame_height = mainw->ce_frame_width = -1;
 
-  mainw->overflow_height = 0;
-
   mainw->cursor_style = LIVES_CURSOR_NORMAL;
 
   mainw->rowstride_alignment = mainw->rowstride_alignment_hint = 1;
@@ -1273,9 +1269,11 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->num_rendered_effects_builtin = mainw->num_rendered_effects_custom = mainw->num_rendered_effects_test = 0;
 
-  mainw->overflowx = mainw->overflowy = 1000000;
-
   mainw->flush_audio_tc = 0;
+
+  mainw->assumed_height = mainw->assumed_width = -1;
+  mainw->gui_posx = mainw->gui_posy = 1000000;
+  mainw->idlemax = 0;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -2715,15 +2713,36 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 
 /////////////////////////////////
+
 boolean resize_message_area(livespointer data) {
-  // workaround for GTK+ weirdness
-#if GTK_CHECK_VERSION(3, 18, 0)
-  LiVESAllocation all;
-  gtk_widget_get_clip(mainw->top_vbox, &all);
-  if (idlemax-- > 0 && all.height == lives_widget_get_allocation_height(mainw->LiVES)) return TRUE;
-#endif
+  // workaround because the window manager will resize the window asynchronously
+  int bx, by;
+
+  if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || mainw->multitrack != NULL ||
+      !prefs->show_msg_area) return FALSE;
+
+  get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+  if (--mainw->idlemax == DEF_IDLE_MAX / 2 && prefs->open_maximised && (by > 0 || bx > 0)) {
+    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    return TRUE;
+  }
+  if (mainw->assumed_height != -1 &&
+      mainw->assumed_height != lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) &&
+      mainw->idlemax > 0) return TRUE;
+  if (mainw->idlemax > 0 && lives_widget_get_allocation_height(mainw->end_image) != mainw->ce_frame_height) return TRUE;
+  if (data != NULL) {
+    LingoLayout *layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->msg_area), "layout");
+    if (layout != NULL && LIVES_IS_OBJECT(layout)) lives_object_unref(layout);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->msg_area), "layout", NULL);
+  }
+  g_print("IDLE CALL\n");
+  mainw->idlemax = 0;
+  mainw->assumed_height = mainw->assumed_width = -1;
   reset_message_area(TRUE);
-  d_print("");
+  if (data != NULL) {
+    g_print("CALL DPRINT\n");
+    d_print("");
+  }
   return FALSE;
 }
 
@@ -3063,19 +3082,6 @@ static boolean lives_startup(livespointer data) {
   if (strlen(prefs->yuvin) > 0) lives_idle_add(open_yuv4m_startup, NULL);
 #endif
 
-  /* #ifdef GUI_GTK */
-  /* #if defined HAVE_X11 */
-  /*   //gdk_window_add_filter(NULL, filter_func, NULL); */
-  /* #endif */
-  /* #endif */
-
-  /* #ifdef GUI_QT */
-  /* #if defined HAVE_X11 || defined IS_MINGW */
-  /*   nevfilter *nf = new nevfilter; */
-  /*   qapp->installNativeEventFilter(nf); */
-  /* #endif */
-  /* #endif */
-
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (!mainw->foreign && prefs->show_gui) {
     calibrate_sepwin_size();
@@ -3088,19 +3094,25 @@ static boolean lives_startup(livespointer data) {
 
   mainw->go_away = FALSE;
 
-  if (mainw->current_file == -1) {
-    resize(1.);
+  if (mainw->multitrack == NULL) {
+    if (mainw->current_file == -1) {
+      resize(1.);
+    }
+    lives_widget_context_update();
+
+    draw_little_bars(0., 0);
+
+    lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
+  } else {
+    lives_idle_add(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
+
+    // this must be done right at the end
+    // it slows down every single call to g_main_context_iteration - therefore it should be disabled before calling that
+    if (mainw->multitrack->idlefunc == 0) {
+      mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+    }
+    lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
   }
-
-  lives_widget_context_update();
-
-  reset_message_area(TRUE);
-  d_print("");
-
-  draw_little_bars(0., 0);
-
-  lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
-
   return FALSE;
 } // end lives_startup()
 
@@ -6998,8 +7010,6 @@ void load_frame_image(int frame) {
     int index = -1;
     int old_file = mainw->current_file;
 
-    idlemax = 10000;
-
     if (!LIVES_IS_PLAYING) {
       if (mainw->current_file != mainw->scrap_file) desensitize();
       lives_widget_set_sensitive(mainw->playall, FALSE);
@@ -7171,9 +7181,6 @@ void load_frame_image(int frame) {
           if (mainw->multitrack != NULL && old_file != mainw->multitrack->render_file) {
             mt_clip_select(mainw->multitrack, TRUE);
           }
-          if (mainw->multitrack == NULL) {
-            if (prefs->show_msg_area && !mainw->only_close) lives_idle_add(resize_message_area, NULL);
-          }
           return;
         }
       }
@@ -7196,8 +7203,6 @@ void load_frame_image(int frame) {
           if (mainw->multitrack != NULL) {
             mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
             mt_clip_select(mainw->multitrack, TRUE);
-          } else {
-            if (prefs->show_msg_area && !mainw->only_close) lives_idle_add(resize_message_area, NULL);
           }
           return;
         }
@@ -7214,9 +7219,6 @@ void load_frame_image(int frame) {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
                 mt_clip_select(mainw->multitrack, TRUE);
               }
-              if (mainw->multitrack == NULL) {
-                if (prefs->show_msg_area && !mainw->only_close) lives_idle_add(resize_message_area, NULL);
-              }
               return;
             }
           }
@@ -7231,8 +7233,6 @@ void load_frame_image(int frame) {
               if (mainw->multitrack != NULL) {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
                 mt_clip_select(mainw->multitrack, TRUE);
-              } else {
-                if (prefs->show_msg_area && !mainw->only_close) lives_idle_add(resize_message_area, NULL);
               }
               return;
             }
@@ -7289,7 +7289,12 @@ void load_frame_image(int frame) {
       lives_widget_hide(mainw->playframe);
       load_start_image(0);
       load_end_image(0);
-      if (prefs->show_msg_area && !mainw->only_close) lives_idle_add(resize_message_area, NULL);
+      if (prefs->show_msg_area && !mainw->only_close) {
+        if (mainw->idlemax == 0) {
+          lives_idle_add(resize_message_area, NULL);
+        }
+        mainw->idlemax = DEF_IDLE_MAX;
+      }
     }
 
     set_sel_label(mainw->sel_label);
@@ -7524,7 +7529,16 @@ void load_frame_image(int frame) {
       if (LIVES_IS_PLAYING) load_frame_image(cfile->frameno);
     }
     if (!LIVES_IS_PLAYING) {
-      reset_message_area(TRUE);
+      //lives_widget_queue_resize(mainw->LiVES);
+      //lives_widget_context_update();
+      if (mainw->multitrack == NULL) {
+        if (prefs->show_msg_area && !mainw->only_close) {
+          if (mainw->idlemax == 0) {
+            lives_idle_add(resize_message_area, NULL);
+          }
+          mainw->idlemax = DEF_IDLE_MAX;
+        }
+      }
     }
   }
 
@@ -7926,15 +7940,13 @@ void load_frame_image(int frame) {
     w = lives_widget_get_allocation_width(mainw->LiVES);
     h = lives_widget_get_allocation_height(mainw->LiVES);
 
-    if (prefs->open_maximised || w > scr_width - bx || h > scr_height - by) {
-      if (w > scr_width - bx || h > scr_height - by) {
-        w = scr_width - bx;
-        h = scr_height - by;
-        lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
-        lives_window_resize(LIVES_WINDOW(mainw->LiVES), w, h);
-      }
-      if (prefs->open_maximised)
-        lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
+    if (prefs->open_maximised)
+      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
+    else if (w > scr_width - bx || h > scr_height - by) {
+      w = scr_width - bx;
+      h = scr_height - by;
+      lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
+      lives_window_resize(LIVES_WINDOW(mainw->LiVES), w, h);
     }
 
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)

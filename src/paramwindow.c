@@ -1247,7 +1247,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       // out channel size(s) and target_fps for generators
       if (!chk_params) {
         needs_sizes = TRUE;
-        if (mainw->overflow_height < 900) mainw->overflow_height = 900;
       }
       chk_params = TRUE;
     }
@@ -1279,7 +1278,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   }
 
   mainw->block_param_updates = FALSE;
-  mainw->overflow_height = 0;
 
   return has_param;
 }

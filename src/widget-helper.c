@@ -1107,6 +1107,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_process_all_updates(void) {
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_get_origin(LiVESXWindow *xwin, int *posx, int *posy) {
+#ifdef GUI_GTK
+  gdk_window_get_origin(xwin, posx, posy);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_reparent(LiVESWidget *widget, LiVESWidget *new_parent) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 14, 0)
@@ -10995,13 +11004,13 @@ boolean get_border_size(LiVESWidget *win, int *bx, int *by) {
   gdk_window_get_frame_extents(lives_widget_get_xwindow(win), &rect);
   gdk_window_get_origin(lives_widget_get_xwindow(win), &wx, &wy);
   if (bx != NULL) {
-    //*bx = wx - rect.x;
-    *bx = rect.x;
-    if (rect.x == 0) *bx = 0;
+    *bx = wx - rect.x;
+    //*bx = rect.x;
+    //if (rect.x == 0) *bx = 0;
   }
   if (by != NULL) {
-    //*by = wy - rect.y;
-    *by = rect.y;
+    *by = wy - rect.y;
+    //*by = rect.y;
     if (rect.y == 0) *by = 0;
   }
   return TRUE;

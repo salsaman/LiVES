@@ -379,7 +379,7 @@ void create_LiVES(void) {
   mute_audio_closure = NULL;
   ping_pong_closure = NULL;
 
-  mainw->LiVES = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+  LIVES_MAIN_WINDOW_WIDGET = lives_window_new(LIVES_WINDOW_TOPLEVEL);
   if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(mainw->LiVES), widget_opts.screen);
 
   ////////////////////////////////////
@@ -2188,6 +2188,7 @@ void create_LiVES(void) {
   lives_widget_set_margin_bottom(mainw->raudio_draw, widget_opts.packing_height * 4);
 
   mainw->message_box = lives_hbox_new(FALSE, 0);
+  lives_widget_set_vexpand(mainw->message_box, TRUE);
   if (prefs->show_msg_area)
     lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
   else lives_object_ref_sink(mainw->message_box);
@@ -2990,7 +2991,8 @@ void show_lives(void) {
         (prefs->audio_player == AUD_PLAYER_PULSE && capable->has_pulse_audio)))
     lives_widget_hide(mainw->vol_toolitem);
 
-  update_rfx_menus();
+  if (mainw->go_away)
+    update_rfx_menus();
 
   if (prefs->present && prefs->show_gui)
     lives_window_present(LIVES_WINDOW(mainw->LiVES));
@@ -3369,10 +3371,6 @@ void unfade_background(void) {
                 &palette->info_base, &palette->info_text);
   }
   lives_widget_process_updates(mainw->LiVES, TRUE);
-  if (!mainw->double_size) {
-    reset_message_area(TRUE);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
-  }
 }
 
 
@@ -3985,6 +3983,7 @@ void resize_play_window(void) {
           // spread over all monitors
           mainw->pwidth = GUI_SCREEN_WIDTH;
           mainw->pheight = GUI_SCREEN_HEIGHT;
+          // TODO:  gdk_window_set_fullscreen_mode
         }
       } else {
         mainw->pwidth = mainw->mgeom[pmonitor - 1].width;
@@ -4542,7 +4541,7 @@ void splash_end(void) {
 
   if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && mainw->multitrack == NULL) {
     // realize the window so it gets added to wm toplevels
-    lives_widget_realize(mainw->LiVES);
+    //lives_widget_realize(mainw->LiVES);
     on_multitrack_activate(NULL, NULL);
     mainw->is_ready = TRUE;
   }
@@ -4589,9 +4588,10 @@ void reset_message_area(boolean expand) {
       lives_widget_hide(mainw->message_box);
     }
     lives_widget_context_update();
+    mainw->assumed_height = mainw->assumed_width = -1;
     msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
 #if !GTK_CHECK_VERSION(3, 0, 0)
-    expose_msg_area(mainw->msg_area, NULL, &mainw->sw_func);
+    expose_msg_area(mainw->msg_area, NULL, NULL);
 #endif
   }
 }

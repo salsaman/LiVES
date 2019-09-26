@@ -1353,8 +1353,6 @@ typedef struct {
   lives_pconnect_t *pconx; ///< list of out -> in param connections
   lives_cconnect_t *cconx; ///< list of out -> in alpha channel connections
 
-  int overflow_height;
-
   int rowstride_alignment;
   int rowstride_alignment_hint;
 
@@ -1415,10 +1413,18 @@ typedef struct {
 
   boolean recovering_files;
 
-  int overflowx;
-  int overflowy;
-
   weed_timecode_t flush_audio_tc;
+
+  // mainw window resizing
+  int assumed_width;
+  int assumed_height;
+
+  int gui_posx;
+  int gui_posy;
+
+#define DEF_IDLE_MAX 10000
+
+  int idlemax;
   ////////////////////
 } mainwindow;
 

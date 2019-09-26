@@ -3142,9 +3142,13 @@ void play_file(void) {
     load_start_image(cfile->start);
     load_end_image(cfile->end);
   }
+  if (prefs->show_msg_area) {
+    if (mainw->idlemax == 0) {
+      lives_idle_add(resize_message_area, NULL);
+    }
+    mainw->idlemax = DEF_IDLE_MAX;
+  }
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-  mainw->overflowx = mainw->overflowy = 1000000;
-  reset_message_area(TRUE);
 }
 
 
@@ -5204,6 +5208,10 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   }
 
   if (!auto_recover) {
+    if (mainw->multitrack != NULL) {
+      lives_widget_show_all(mainw->LiVES);
+      lives_widget_context_update();
+    }
     if (!do_yesno_dialog
         (_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
       lives_rm(recovery_file);

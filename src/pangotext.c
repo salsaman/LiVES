@@ -245,7 +245,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     w /= LINGO_SCALE;
 
 #ifdef DEBUG_MSGS
-    g_print("Sizes %d %d window, %d %d layout (%s)\n", width, height, w, h, testtext);
+    g_print("Sizes %d %d window, %d %d layout ()\n", width, height, w, h);
 #endif
 
     if (h > height) {
@@ -261,9 +261,9 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         newtext = tmp;
         totlines--;
         if (newtext == NULL) break; // no more to remove, we are done !
-#ifdef DEBUG_MSGS
+        //#ifdef DEBUG_MSGS
         g_print("Retry with (%d) |%s|\n", totlines, newtext);
-#endif
+        //#endif
         lives_free(testtext);
         testtext = lives_strdup_printf("%s%s", newtext, readytext);
 #ifdef DEBUG_MSGS

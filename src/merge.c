@@ -184,9 +184,7 @@ void create_merge_dialog(void) {
   lives_box_pack_start(LIVES_BOX(vbox), merge_opts->param_vbox, TRUE, TRUE, 0);
 
   rfx = &mainw->rendered_fx[mainw->last_transition_idx];
-  mainw->overflow_height = 900;
   make_param_box(LIVES_VBOX(merge_opts->param_vbox), rfx);
-  mainw->overflow_height = 0;
   lives_widget_show_all(merge_opts->param_vbox);
 
   retvals = do_onchange_init(rfx);

@@ -291,6 +291,9 @@ typedef int lives_pgid_t;
 // round a up to next (integer) multiple of b
 #define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
 
+// round a down to nearest (integer) multiple of b
+#define FLOOR(a, b) ((int)(((double)a - .000000001) / ((double)b)) * b)
+
 // floating point division, maintains the sign of the dividend
 #define SIGNED_DIVIDE(a, b) (a < 0. ? (a / b > 0. ? -a / b : a / b) : (a / b < 0. ? -a / b : a / b))
 

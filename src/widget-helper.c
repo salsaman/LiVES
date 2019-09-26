@@ -6823,7 +6823,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_item_new(void) {
   menuitem = gtk_menu_item_new();
 #endif
 #ifdef GUI_QT
-  menuitem = new LiVESMenuItem(mainw->LiVES);
+  menuitem = new LiVESMenuItem(LIVES_MAIN_WINDOW_WIDGET);
 #endif
   return menuitem;
 }
@@ -6836,7 +6836,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_item_new_with_label(const ch
   else menuitem = gtk_menu_item_new_with_mnemonic(label);
 #endif
 #ifdef GUI_QT
-  menuitem = new LiVESMenuItem(QString::fromUtf8(label), mainw->LiVES);
+  menuitem = new LiVESMenuItem(QString::fromUtf8(label), LIVES_MAIN_WINDOW_WIDGET);
 #endif
   return menuitem;
 }
@@ -6871,7 +6871,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_with_label(co
 #endif
 #endif
 #ifdef GUI_QT
-  menuitem = new LiVESMenuItem(QString::fromUtf8(label), mainw->LiVES);
+  menuitem = new LiVESMenuItem(QString::fromUtf8(label), LIVES_MAIN_WINDOW_WIDGET);
 #endif
   return menuitem;
 }
@@ -6885,7 +6885,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_radio_menu_item_new_with_label(Li
 #endif
 #ifdef GUI_QT
   QActionGroup *qag;
-  LiVESRadioMenuItem *xmenuitem = new LiVESRadioMenuItem(QString::fromUtf8(label), mainw->LiVES);
+  LiVESRadioMenuItem *xmenuitem = new LiVESRadioMenuItem(QString::fromUtf8(label), LIVES_MAIN_WINDOW_WIDGET);
   if (group == NULL) {
     qag = new QActionGroup(NULL);
     group = lives_slist_append(group, (void *)qag);
@@ -6920,7 +6920,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_menu_item_new_with_label(co
   else menuitem = gtk_check_menu_item_new_with_mnemonic(label);   // TODO - deprecated
 #endif
 #ifdef GUI_QT
-  menuitem = new LiVESCheckMenuItem(QString::fromUtf8(label), mainw->LiVES);
+  menuitem = new LiVESCheckMenuItem(QString::fromUtf8(label), LIVES_MAIN_WINDOW_WIDGET);
 #endif
   return menuitem;
 }
@@ -6956,7 +6956,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(co
 #endif
 #ifdef GUI_QT
   char *xstock_id = lives_strdup(stock_id); // need to back this up as we will use translation functions
-  LiVESMenuItem *xmenuitem = new LiVESMenuItem(qmake_mnemonic(QString::fromUtf8(xstock_id)), mainw->LiVES);
+  LiVESMenuItem *xmenuitem = new LiVESMenuItem(qmake_mnemonic(QString::fromUtf8(xstock_id)), LIVES_MAIN_WINDOW_WIDGET);
 
   if (!strcmp(xstock_id, LIVES_STOCK_LABEL_SAVE)) {
     xmenuitem->setShortcut(make_qkey_sequence(LIVES_KEY_s, LIVES_CONTROL_MASK));
@@ -6980,7 +6980,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESToolItem *lives_menu_tool_button_new(LiVESWidge
   toolitem = gtk_menu_tool_button_new(icon, label);
 #endif
 #ifdef GUI_QT
-  toolitem = new LiVESMenuToolButton(QString::fromUtf8(label), mainw->LiVES, icon);
+  toolitem = new LiVESMenuToolButton(QString::fromUtf8(label), LIVES_MAIN_WINDOW_WIDGET, icon);
 #endif
   return toolitem;
 }
@@ -8784,7 +8784,7 @@ LiVESToolItem *lives_standard_menu_tool_button_new(LiVESWidget *icon, const char
   }
 #endif
 #ifdef GUI_QT
-  toolitem = new LiVESMenuToolButton(QString::fromUtf8(label), mainw->LiVES, icon);
+  toolitem = new LiVESMenuToolButton(QString::fromUtf8(label), LIVES_MAIN_WINDOW_WIDGET, icon);
 #endif
   return toolitem;
 }
@@ -10709,7 +10709,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
   if (widget == NULL) {
     if (mainw->multitrack == NULL && mainw->is_ready) {
       if (cstyle != LIVES_CURSOR_NORMAL && mainw->cursor_style == cstyle) return;
-      widget = mainw->LiVES;
+      widget = LIVES_MAIN_WINDOW_WIDGET;
     } else if (mainw->multitrack != NULL && mainw->multitrack->is_ready) {
       if (cstyle != LIVES_CURSOR_NORMAL && mainw->multitrack->cursor_style == cstyle) return;
       widget = mainw->multitrack->window;

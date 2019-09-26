@@ -85,7 +85,7 @@ static void add_xlays_widget(LiVESBox *box) {
   lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
 
   lives_widget_set_size_request(scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
   expander = lives_standard_expander_new(_("Show affeced _layouts"), LIVES_BOX(box), scrolledwindow);
 
@@ -424,7 +424,7 @@ boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_n
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);
 
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   lives_freep((void **)&mytext);
 
   return (response == LIVES_RESPONSE_OK);
@@ -449,7 +449,7 @@ boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_num
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);
 
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   lives_freep((void **)&mytext);
 
   return (response == LIVES_RESPONSE_YES);
@@ -482,7 +482,7 @@ boolean do_yesno_dialogf(const char *fmt, ...) {
   lives_free(textx);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   return (response == LIVES_RESPONSE_YES);
 }
 
@@ -496,7 +496,7 @@ boolean do_yesno_dialog(const char *text) {
   warning = create_message_dialog(LIVES_DIALOG_YESNO, text, transient, 0, TRUE);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   return (response == LIVES_RESPONSE_YES);
 }
 
@@ -516,7 +516,7 @@ int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
 
     response = lives_dialog_run(LIVES_DIALOG(warning));
     lives_widget_destroy(warning);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
     if (response == LIVES_RESPONSE_ABORT) {
       if (do_abort_check()) {
@@ -1597,7 +1597,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
             if (mainw->current_file > -1 && cfile != NULL) lives_freep((void **)&cfile->op_dir);
             return FALSE;
           }
-          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           if (cfile->clip_type != CLIP_TYPE_FILE) break;
         }
         cfile->fx_frame_pump += FX_FRAME_PUMP_VAL >> 1;
@@ -2084,7 +2084,7 @@ boolean do_auto_dialog(const char *text, int type) {
   while (mainw->cancelled == CANCEL_NONE && !(infofile = fopen(cfile->info_file, "r"))) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
     lives_widget_context_update();
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     lives_widget_process_updates(proc_ptr->processing, TRUE);
     lives_usleep(prefs->sleep_time);
     if (type == 1 && mainw->rec_end_time != -1.) {
@@ -2746,7 +2746,7 @@ void do_nojack_rec_error(void) {
 
 void do_vpp_palette_error(void) {
   do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"), TRUE, 0,
-                                       prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(mainw->LiVES));
+                                       prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
 }
 
 
@@ -2757,7 +2757,7 @@ void do_decoder_palette_error(void) {
 
 void do_vpp_fps_error(void) {
   do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"), TRUE, 0,
-                                       prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(mainw->LiVES));
+                                       prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
 }
 
 
@@ -2792,7 +2792,7 @@ void threaded_dialog_spin(double fraction) {
     disp_fraction(fraction, timesofar, procw);
     lives_widget_context_update();
     lives_widget_process_updates(procw->processing, TRUE);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   } else {
     if (!CURRENT_CLIP_IS_VALID || cfile->progress_start == 0 || cfile->progress_end == 0 ||
         strlen(mainw->msg) == 0 || (progress = atoi(mainw->msg)) == 0) {
@@ -2803,7 +2803,7 @@ void threaded_dialog_spin(double fraction) {
 #if GTK_CHECK_VERSION(3, 0, 0)
         lives_widget_context_update();
         lives_widget_process_updates(procw->processing, TRUE);
-        lives_widget_process_updates(mainw->LiVES, TRUE);
+        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 #endif
         lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
       }
@@ -2853,7 +2853,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   procw = create_threaded_dialog(copy_text, has_cancel, &td_had_focus);
   lives_free(copy_text);
 
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
   if (CURRENT_CLIP_IS_VALID) cfile->proc_ptr = procw;
 }
@@ -2878,7 +2878,7 @@ void end_threaded_dialog(void) {
   mainw->threaded_dialog = FALSE;
 
   if (mainw->is_ready && prefs->show_gui)
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 }
 
 

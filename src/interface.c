@@ -1534,7 +1534,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
   char *labeltext, *tmp, *tmp2;
 
-  dialog = create_question_dialog(_("Encoding Options"), text1, LIVES_WINDOW(mainw->LiVES));
+  dialog = create_question_dialog(_("Encoding Options"), text1, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   if (opt_resize) {
@@ -2780,7 +2780,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
     }
 
     lives_widget_set_size_request(vbox, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     lives_standard_expander_new(_("_Options"), LIVES_BOX(dialog_vbox), vbox);
   }
 
@@ -2862,16 +2862,16 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   if (act != LIVES_FILE_CHOOSER_ACTION_SAVE) {
     if (mainw->interactive)
-      chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(mainw->LiVES), (LiVESFileChooserAction)act,
+      chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                             LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
                                             LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
                                             NULL);
     else
-      chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(mainw->LiVES), (LiVESFileChooserAction)act,
+      chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                             LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
                                             NULL);
   } else {
-    chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(mainw->LiVES), (LiVESFileChooserAction)act,
+    chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                           LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
                                           LIVES_STOCK_LABEL_SAVE, LIVES_RESPONSE_ACCEPT,
                                           NULL);
@@ -2904,7 +2904,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     }
   }
 
-  if (extra_widget != NULL && extra_widget != mainw->LiVES) {
+  if (extra_widget != NULL && extra_widget != LIVES_MAIN_WINDOW_WIDGET) {
     gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser), extra_widget);
     if (palette->style & STYLE_1) {
       GtkWidget *parent = lives_widget_get_parent(extra_widget);
@@ -2946,7 +2946,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   mainw->fc_buttonresponse = LIVES_RESPONSE_NONE;
   lives_signal_connect(chooser, LIVES_WIDGET_RESPONSE_SIGNAL, LIVES_GUI_CALLBACK(chooser_response), NULL);
 
-  if (extra_widget == mainw->LiVES && mainw->LiVES != NULL) {
+  if (extra_widget == LIVES_MAIN_WINDOW_WIDGET && LIVES_MAIN_WINDOW_WIDGET != NULL) {
     return (char *)chooser; // kludge to allow custom adding of extra widgets
   }
 
@@ -2996,7 +2996,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 
   int preview_type;
 
-  chooser = (LiVESWidget *)choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, title, mainw->LiVES);
+  chooser = (LiVESWidget *)choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, title, LIVES_MAIN_WINDOW_WIDGET);
 
   if (filesel_type == LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI) {
 #ifdef GUI_GTK
@@ -3848,7 +3848,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
 
   lives_widget_show_all(dialog);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), align_horizontal_with(hbox, radiobutton_free), TRUE, FALSE, widget_opts.packing_height);
 
   radiobutton_nonfree = lives_standard_radio_button_new((tmp = lives_strdup(_("_Non-free (eg. h264 / aac / mp4)"))), &radiobutton_group,
@@ -4035,7 +4035,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   req = (lives_remote_clip_request_t *)lives_try_malloc(sizeof(lives_remote_clip_request_t));
   if (req == NULL) {
     lives_widget_destroy(dialog);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     lives_free(url);
     lives_free(dfile);
     LIVES_ERROR("Could not alloc memory for remote clip request");
@@ -4075,7 +4075,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   *req->audchoice = 0;
 
   lives_widget_destroy(dialog);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
   return req;
 }

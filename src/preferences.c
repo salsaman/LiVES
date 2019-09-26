@@ -427,7 +427,7 @@ void set_vpp(boolean set_in_prefs) {
           if (!mainw->ext_playback)
             do_error_dialog_with_check_transient
             (_("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"),
-             TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(mainw->LiVES));
+             TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
         }
       }
     }
@@ -519,7 +519,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       // revert text
       if (prefsw != NULL) {
         lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-        lives_widget_process_updates(mainw->LiVES, TRUE);
+        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
       }
       goto fail1;
     }
@@ -536,7 +536,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           // revert text
           if (prefsw != NULL) {
             lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-            lives_widget_process_updates(mainw->LiVES, TRUE);
+            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           }
           goto fail1;
         }
@@ -547,7 +547,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         // revert text
         if (prefsw != NULL) {
           lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
         }
         goto fail1;
       } else {
@@ -571,7 +571,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         // revert text
         if (prefsw != NULL) {
           lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-          lives_widget_process_updates(mainw->LiVES, TRUE);
+          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
         }
         goto fail1;
       } else {
@@ -579,7 +579,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           // revert text
           if (prefsw != NULL) {
             lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-            lives_widget_process_updates(mainw->LiVES, TRUE);
+            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           }
           goto fail1;
         } else {
@@ -635,7 +635,7 @@ fail1:
 
 success1:
   if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     prefsw->ignore_apply = FALSE;
   }
   return TRUE;
@@ -794,7 +794,7 @@ fail2:
 
 success2:
   if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_boolean_pref(prefidx, newval);
@@ -865,7 +865,7 @@ fail3:
 
 success3:
   if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_int_pref(prefidx, newval);
@@ -892,7 +892,7 @@ fail4:
 
 success4:
   if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_int_pref(prefidx, idx);
@@ -915,7 +915,7 @@ fail5:
 
 success5:
   if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_double_pref(prefidx, newval);
@@ -975,7 +975,7 @@ fail6:
 
 success6:
   if (prefsw != NULL) {
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     prefsw->ignore_apply = FALSE;
   }
   return TRUE;
@@ -5437,7 +5437,7 @@ void pref_change_images(void) {
       load_end_image(0);
       if (mainw->preview_box != NULL) load_preview_image(FALSE);
     }
-    lives_widget_queue_draw(mainw->LiVES);
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
     if (mainw->multitrack != NULL) {
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->multitrack->sep_image), mainw->imsep);
       mt_show_current_frame(mainw->multitrack, FALSE);
@@ -5455,7 +5455,7 @@ void pref_change_xcolours(void) {
       set_mt_colours(mainw->multitrack);
     } else {
       update_play_times();
-      lives_widget_queue_draw(mainw->LiVES);
+      lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
     }
   }
 }

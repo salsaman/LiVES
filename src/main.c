@@ -214,7 +214,7 @@ void defer_sigint(int signum) {
 void catch_sigint(int signum) {
   // trap for ctrl-C and others
   if (mainw != NULL) {
-    if (mainw->LiVES != NULL) {
+    if (LIVES_MAIN_WINDOW_WIDGET != NULL) {
       if (mainw->foreign) {
         exit(signum);
       }
@@ -1307,11 +1307,11 @@ static void lives_init(_ign_opts *ign_opts) {
     future_prefs->show_tool = prefs->show_tool = get_boolean_pref(PREF_SHOW_TOOLBAR);
 
     if (prefs->gui_monitor != 0) {
-      lives_window_center(LIVES_WINDOW(mainw->LiVES));
+      lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     }
 
     if (prefs->open_maximised && prefs->show_gui) {
-      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     }
 
     prefs->default_fps = get_double_pref(PREF_DEFAULT_FPS);
@@ -2837,7 +2837,7 @@ static boolean lives_startup(livespointer data) {
     // needed to avoid priv->pulse2 > priv->pulse1 gtk error
     lives_widget_context_update();
 
-    lives_widget_queue_draw(mainw->LiVES);
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
 
     mainw->startup_error = FALSE;
@@ -3000,7 +3000,7 @@ static boolean lives_startup(livespointer data) {
       pulse_audio_read_init();
     }
 #endif
-    lives_widget_show(mainw->LiVES);
+    lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
     mainw->go_away = FALSE;
     on_capture2_activate();  // exits
@@ -3017,7 +3017,7 @@ static boolean lives_startup(livespointer data) {
 
   lives_list_free_all(&mainw->cached_list);
 
-  if (!prefs->show_gui) lives_widget_hide(mainw->LiVES);
+  if (!prefs->show_gui) lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 
   if (prefs->startup_phase == 100) {
     if (upgrade_error) {
@@ -3633,7 +3633,7 @@ void set_main_title(const char *file, int untitled) {
 
   tmp = widget_opts.title_prefix;
   widget_opts.title_prefix = "";
-  lives_window_set_title(LIVES_WINDOW(mainw->LiVES), title);
+  lives_window_set_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), title);
   widget_opts.title_prefix = tmp;
 
   lives_free(title);
@@ -4107,7 +4107,7 @@ void load_start_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-  //lives_widget_process_updates(mainw->LiVES, TRUE);
+  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 #endif
 
   threaded_dialog_spin(0.);
@@ -4118,7 +4118,7 @@ void load_start_image(int frame) {
     int scr_width = GUI_SCREEN_WIDTH;
     int scr_height = GUI_SCREEN_HEIGHT;
     int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
-    get_border_size(mainw->LiVES, &bx, &by);
+    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
     vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
     if (LIVES_IS_PLAYING && mainw->double_size) {
@@ -4264,7 +4264,7 @@ void load_start_image(int frame) {
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_queue_resize(mainw->start_image);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   } while (rwidth != lives_widget_get_allocation_width(mainw->start_image) ||
            rheight != lives_widget_get_allocation_height(mainw->start_image));
 #else
@@ -4302,7 +4302,7 @@ void load_end_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-  //lives_widget_process_updates(mainw->LiVES, TRUE);
+  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 #endif
 
   threaded_dialog_spin(0.);
@@ -4313,7 +4313,7 @@ void load_end_image(int frame) {
     int scr_width = GUI_SCREEN_WIDTH;
     int scr_height = GUI_SCREEN_HEIGHT;
     int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
-    get_border_size(mainw->LiVES, &bx, &by);
+    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
     vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
     if (LIVES_IS_PLAYING && mainw->double_size) {
@@ -4457,7 +4457,7 @@ void load_end_image(int frame) {
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_queue_resize(mainw->end_image);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     threaded_dialog_spin(0.);
   } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) || rheight != lives_widget_get_allocation_height(mainw->end_image));
 #else
@@ -5562,7 +5562,7 @@ static void get_max_opsize(int *opwidth, int *opheight) {
           *opwidth = lives_widget_get_allocation_width(mainw->playframe);
           *opheight = lives_widget_get_allocation_height(mainw->playframe);
           if (*opwidth * (*opheight) == 0) {
-            lives_widget_process_updates(mainw->LiVES, TRUE);
+            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           }
         } while (*opwidth * (*opheight) == 0);
       } else {
@@ -5605,7 +5605,7 @@ static void get_max_opsize(int *opwidth, int *opheight) {
             *opwidth = lives_widget_get_allocation_width(mainw->playframe);
             *opheight = lives_widget_get_allocation_height(mainw->playframe);
             if (*opwidth * (*opheight) == 0) {
-              lives_widget_process_updates(mainw->LiVES, TRUE);
+              lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
             }
           } while (*opwidth * (*opheight) == 0);
 #endif
@@ -6783,7 +6783,7 @@ void load_frame_image(int frame) {
           mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe);
           mainw->pheight = lives_widget_get_allocation_height(mainw->playframe);
           if (mainw->pwidth * mainw->pheight == 0) {
-            lives_widget_process_updates(mainw->LiVES, TRUE);
+            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           }
         } while (mainw->pwidth * mainw->pheight == 0);
       } else {
@@ -7303,7 +7303,7 @@ void load_frame_image(int frame) {
     show_playbar_labels(-1);
 
     if (!mainw->only_close) {
-      lives_widget_queue_draw(mainw->LiVES);
+      lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
       if (!LIVES_IS_PLAYING) d_print("");
 
       if (mainw->multitrack != NULL) {
@@ -7489,7 +7489,7 @@ void load_frame_image(int frame) {
     }
     if (!LIVES_IS_PLAYING) {
       reset_message_area(FALSE);
-      lives_widget_process_updates(mainw->LiVES, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     }
     resize(1);
 
@@ -7529,7 +7529,7 @@ void load_frame_image(int frame) {
       if (LIVES_IS_PLAYING) load_frame_image(cfile->frameno);
     }
     if (!LIVES_IS_PLAYING) {
-      //lives_widget_queue_resize(mainw->LiVES);
+      //lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
       //lives_widget_context_update();
       if (mainw->multitrack == NULL) {
         if (prefs->show_msg_area && !mainw->only_close) {
@@ -7936,17 +7936,17 @@ void load_frame_image(int frame) {
 
     if (!prefs->show_gui || mainw->multitrack != NULL) return;
 
-    get_border_size(mainw->LiVES, &bx, &by);
-    w = lives_widget_get_allocation_width(mainw->LiVES);
-    h = lives_widget_get_allocation_height(mainw->LiVES);
+    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+    w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
+    h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
 
     if (prefs->open_maximised)
-      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     else if (w > scr_width - bx || h > scr_height - by) {
       w = scr_width - bx;
       h = scr_height - by;
-      lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
-      lives_window_resize(LIVES_WINDOW(mainw->LiVES), w, h);
+      lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
     }
 
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)

@@ -3115,7 +3115,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           mainw->pchains = pchains;
           load_frame_image(cfile->frameno);
           mainw->pchains = NULL;
-          if (LIVES_IS_PLAYING) lives_widget_process_updates(mainw->LiVES, TRUE);
+          if (LIVES_IS_PLAYING) lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           mainw->current_file = current_file;
         }
         break;
@@ -3129,7 +3129,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         mainw->pchains = NULL;
       }
     }
-    if (LIVES_IS_PLAYING && mainw->multitrack == NULL) lives_widget_process_updates(mainw->LiVES, TRUE);
+    if (LIVES_IS_PLAYING && mainw->multitrack == NULL) lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     cfile->next_event = get_next_event(next_event);
     break;
   case WEED_EVENT_HINT_FILTER_INIT:
@@ -4503,7 +4503,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
     lives_widget_show_all(e_rec_dialog);
     lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
     lives_widget_destroy(e_rec_dialog);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     lives_widget_context_update();
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
@@ -4598,7 +4598,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
         }
       elist_dialog = create_event_list_dialog(mainw->event_list, 0, 0);
       lives_dialog_run(LIVES_DIALOG(elist_dialog));
-      lives_widget_process_updates(mainw->LiVES, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
       lives_widget_context_update();
       render_choice = RENDER_CHOICE_PREVIEW;
       break;
@@ -5706,7 +5706,7 @@ render_details *create_render_details(int type) {
 
   if (needs_new_encoder) {
     lives_widget_set_sensitive(rdet->okbutton, FALSE);
-    lives_widget_process_updates(mainw->LiVES, TRUE); // force showing of transient window
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); // force showing of transient window
     do_encoder_img_fmt_error(rdet);
   }
 

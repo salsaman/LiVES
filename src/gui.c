@@ -167,8 +167,8 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
                  LiVESWidgetColor *colb2, LiVESWidgetColor *coli, LiVESWidgetColor *colt) {
 
-  lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_fg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_bg_color(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colf2);
   lives_widget_set_bg_color(mainw->menu_hbox, LIVES_WIDGET_STATE_NORMAL, colb2);
@@ -380,7 +380,7 @@ void create_LiVES(void) {
   ping_pong_closure = NULL;
 
   LIVES_MAIN_WINDOW_WIDGET = lives_window_new(LIVES_WINDOW_TOPLEVEL);
-  if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(mainw->LiVES), widget_opts.screen);
+  if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.screen);
 
   ////////////////////////////////////
 
@@ -409,15 +409,15 @@ void create_LiVES(void) {
     LiVESWidgetColor normal;
 #if !GTK_CHECK_VERSION(3, 0, 0)
     if (!mainw->foreign) {
-      gtk_widget_ensure_style(mainw->LiVES);
+      gtk_widget_ensure_style(LIVES_MAIN_WINDOW_WIDGET);
     }
 #endif
 #endif
 
-    lives_widget_get_bg_state_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &normal);
+    lives_widget_get_bg_state_color(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL, &normal);
     lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_back), &normal);
 
-    lives_widget_get_fg_color(mainw->LiVES, &normal);
+    lives_widget_get_fg_color(LIVES_MAIN_WINDOW_WIDGET, &normal);
     lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_fore), &normal);
   }
 
@@ -444,23 +444,23 @@ void create_LiVES(void) {
   lives_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map = NULL;
 
-  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES), FALSE);
+  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), FALSE);
 
 #ifdef GUI_GTK
   // TODO - can we use just DEFAULT_DROP ?
-  gtk_drag_dest_set(mainw->LiVES, GTK_DEST_DEFAULT_ALL, mainw->target_table, 2,
+  gtk_drag_dest_set(LIVES_MAIN_WINDOW_WIDGET, GTK_DEST_DEFAULT_ALL, mainw->target_table, 2,
                     (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_LINK));
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->LiVES), LIVES_WIDGET_DRAG_DATA_RECEIVED_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DRAG_DATA_RECEIVED_SIGNAL,
                        LIVES_GUI_CALLBACK(drag_from_outside),
                        NULL);
 
 #endif
 
-  if (capable->smog_version_correct) lives_window_set_decorated(LIVES_WINDOW(mainw->LiVES), prefs->open_decorated);
+  if (capable->smog_version_correct) lives_window_set_decorated(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), prefs->open_decorated);
 
   mainw->top_vbox = lives_vbox_new(FALSE, 0);
-  lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->top_vbox);
+  lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), mainw->top_vbox);
   lives_widget_set_valign(mainw->top_vbox, LIVES_ALIGN_START);
 
   // top_vbox contains the following:
@@ -2380,14 +2380,14 @@ void create_LiVES(void) {
     }
   }
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->LiVES), LIVES_WIDGET_DELETE_EVENT,
+  lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DELETE_EVENT,
                        LIVES_GUI_CALLBACK(on_LiVES_delete_event),
                        NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->LiVES), LIVES_WIDGET_KEY_PRESS_EVENT,
+  lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_KEY_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(key_press_or_release),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->LiVES), LIVES_WIDGET_KEY_RELEASE_EVENT,
+  lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_KEY_RELEASE_EVENT,
                        LIVES_GUI_CALLBACK(key_press_or_release),
                        NULL);
 
@@ -2922,7 +2922,7 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(frame_context),
                        LIVES_INT_TO_POINTER(2));
 
-  lives_window_add_accel_group(LIVES_WINDOW(mainw->LiVES), mainw->accel_group);
+  lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
   mainw->laudio_drawable = NULL;
   mainw->raudio_drawable = NULL;
   mainw->video_drawable = NULL;
@@ -2939,9 +2939,9 @@ void show_lives(void) {
   lives_widget_show_all(mainw->top_vbox);
 
   if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
-    lives_widget_show_now(mainw->LiVES); //this calls the config_event()
+    lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET); //this calls the config_event()
   } else {
-    lives_widget_show_all(mainw->LiVES);
+    lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
   }
 
   if (prefs->show_gui)
@@ -2995,7 +2995,7 @@ void show_lives(void) {
     update_rfx_menus();
 
   if (prefs->present && prefs->show_gui)
-    lives_window_present(LIVES_WINDOW(mainw->LiVES));
+    lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
 }
 
 
@@ -3240,7 +3240,7 @@ void fade_background(void) {
   }
 
   lives_widget_queue_draw(mainw->top_vbox);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 }
 
 
@@ -3370,7 +3370,7 @@ void unfade_background(void) {
     set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars,
                 &palette->info_base, &palette->info_text);
   }
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 }
 
 
@@ -3395,21 +3395,21 @@ void fullscreen_internal(void) {
     lives_widget_hide(mainw->t_bckground);
     lives_widget_hide(mainw->t_double);
 
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
     if (prefs->open_maximised) {
-      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
-      lives_widget_queue_resize(mainw->LiVES);
-      lives_widget_process_updates(mainw->LiVES, TRUE);
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     }
 
     // try to get exact inner size of the main window
-    lives_window_get_inner_size(LIVES_WINDOW(mainw->LiVES), &width, &height);
+    lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &width, &height);
 
     // expand the inner box to fit this
     lives_widget_set_size_request(mainw->top_vbox, width, height);
     lives_widget_queue_resize(mainw->top_vbox);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
     // this and pf_grid should be the only other widgets still visible
     if (future_prefs->show_tool) height -= lives_widget_get_allocation_height(mainw->tb_hbox);
@@ -3428,7 +3428,7 @@ void fullscreen_internal(void) {
     lives_widget_set_size_request(mainw->playarea, width, height);
     lives_widget_set_size_request(mainw->play_image, width, height);
     lives_widget_queue_resize(mainw->pf_grid);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   } else {
     make_play_window();
   }
@@ -3764,7 +3764,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   widget_opts_rescale(widget_opts.scale);
 
   if (prefs->gui_monitor != 0) {
-    lives_window_center(LIVES_WINDOW(mainw->LiVES));
+    lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
   if (mainw->multitrack == NULL) {
@@ -3806,7 +3806,7 @@ void make_play_window(void) {
   }
 
   mainw->play_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
-  //  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),TRUE);
+  //  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET),TRUE);
 
   if (prefs->show_gui) {
     LiVESWindow *transient;
@@ -3964,7 +3964,7 @@ void resize_play_window(void) {
         if (prefs->show_playwin) {
           lives_widget_show(mainw->play_window);
         }
-        lives_widget_process_updates(mainw->LiVES, TRUE);
+        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
         mainw->opwx = mainw->opwy = -1;
       } else {
         if (pmonitor == 0) {
@@ -4541,7 +4541,7 @@ void splash_end(void) {
 
   if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && mainw->multitrack == NULL) {
     // realize the window so it gets added to wm toplevels
-    //lives_widget_realize(mainw->LiVES);
+    //lives_widget_realize(LIVES_MAIN_WINDOW_WIDGET);
     on_multitrack_activate(NULL, NULL);
     mainw->is_ready = TRUE;
   }
@@ -4567,13 +4567,13 @@ void reset_message_area(boolean expand) {
 #if GTK_CHECK_VERSION(3, 18, 0)
       LiVESAllocation all;
       gtk_widget_get_clip(mainw->top_vbox, &all);
-      if (lives_widget_get_allocation_height(mainw->LiVES) != all.height)
+      if (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) != all.height)
         tv_height = all.height - MSG_AREA_VMARGIN;
       else tv_height = lives_widget_get_allocation_height(LIVES_WIDGET(mainw->top_vbox)) - MSG_AREA_VMARGIN;
 #else
       tv_height = lives_widget_get_allocation_height(LIVES_WIDGET(mainw->top_vbox)) - MSG_AREA_VMARGIN;
 #endif
-      height = lives_widget_get_allocation_height(mainw->LiVES) - tv_height +
+      height = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) - tv_height +
                lives_widget_get_allocation_height(mainw->message_box) - lives_widget_get_allocation_height(mainw->menu_hbox);
     } else {
       height = lives_widget_get_allocation_height(mainw->multitrack->vpaned) - lives_paned_get_position(LIVES_PANED(mainw->multitrack->vpaned));

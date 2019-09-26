@@ -3638,7 +3638,7 @@ void on_rebuild_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   threaded_dialog_spin(0.);
   d_print_done();
   end_threaded_dialog();
-  lives_widget_queue_draw(mainw->LiVES);
+  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   lives_widget_context_update();
 }
 

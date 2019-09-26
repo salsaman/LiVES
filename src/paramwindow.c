@@ -1805,7 +1805,7 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(togglebutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     param->change_blocked = FALSE;
   }
   if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
@@ -1944,7 +1944,7 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     param->change_blocked = FALSE;
   }
   if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
@@ -2150,7 +2150,7 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     param->change_blocked = FALSE;
   }
   if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
@@ -2219,7 +2219,7 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     param->change_blocked = FALSE;
   }
   if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
@@ -2286,7 +2286,7 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     param->change_blocked = FALSE;
   }
   if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
@@ -2338,7 +2338,7 @@ void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     param->change_blocked = FALSE;
   }
   if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
@@ -2471,7 +2471,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(textwidget), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     param->change_blocked = FALSE;
   }
   lives_free(old_text);
@@ -2570,7 +2570,7 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(combo), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(mainw->LiVES, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     param->change_blocked = FALSE;
   }
   if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);

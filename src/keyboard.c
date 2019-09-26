@@ -154,7 +154,7 @@ void handle_cached_keys(void) {
 
   if (cached_key && current_kb_time - last_kb_time > KEY_RPT_INTERVAL * 10) {
     last_kb_time = current_kb_time;
-    lives_accel_groups_activate(LIVES_WIDGET_OBJECT(mainw->LiVES), (uint32_t)cached_key, (LiVESXModifierType)cached_mod);
+    lives_accel_groups_activate(LIVES_WIDGET_OBJECT(LIVES_MAIN_WINDOW_WIDGET), (uint32_t)cached_key, (LiVESXModifierType)cached_mod);
   }
 }
 

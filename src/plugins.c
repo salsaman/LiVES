@@ -543,7 +543,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
               pthread_mutex_lock(&mainw->vpp_stream_mutex);
               mainw->ext_audio = FALSE;
               pthread_mutex_unlock(&mainw->vpp_stream_mutex);
-              lives_grab_remove(mainw->LiVES);
+              lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
               mainw->ext_keyboard = FALSE;
               if (mainw->vpp->exit_screen != NULL) {
                 (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
@@ -986,7 +986,7 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
   if (vpp != NULL) {
     if (vpp == mainw->vpp) {
       mainw->ext_keyboard = FALSE;
-      lives_grab_remove(mainw->LiVES);
+      lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
       if (mainw->ext_playback) {
         pthread_mutex_lock(&mainw->vpp_stream_mutex);
         mainw->ext_audio = FALSE;
@@ -1074,7 +1074,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     char *msg = lives_strdup_printf(_("\n\nFailed to open playback plugin %s\nError was %s\n"), plugname, dlerror());
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
       if (prefsw != NULL) do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
-            LIVES_WINDOW(mainw->LiVES));
+            LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
       else do_error_dialog(msg);
     }
     LIVES_ERROR(msg);
@@ -1122,7 +1122,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
                 (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"), plugname);
     set_pref(PREF_VID_PLAYBACK_PLUGIN, "none");
     do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
-                                         LIVES_WINDOW(mainw->LiVES));
+                                         LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_free(msg);
     dlclose(handle);
     lives_free(vpp);
@@ -1135,7 +1135,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     msg = lives_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"), pl_error);
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
       do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
-                                           LIVES_WINDOW(mainw->LiVES));
+                                           LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     } else {
       LIVES_ERROR(msg);
     }
@@ -1353,7 +1353,7 @@ void vid_playback_plugin_exit(void) {
     mainw->ext_audio = FALSE;
     pthread_mutex_unlock(&mainw->vpp_stream_mutex);
     mainw->ext_keyboard = FALSE;
-    lives_grab_remove(mainw->LiVES);
+    lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
     if (mainw->vpp->exit_screen != NULL) {
       (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
     }

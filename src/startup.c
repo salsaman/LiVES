@@ -335,7 +335,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     lives_widget_hide(mainw->recaudio_submenu);
   }
 
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
   return (response == LIVES_RESPONSE_OK);
 }
@@ -359,7 +359,7 @@ static void add_test(LiVESWidget *table, int row, char *ttext, boolean noskip) {
     lives_widget_show(image);
   }
 
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 }
 
 
@@ -379,7 +379,7 @@ static boolean pass_test(LiVESWidget *table, int row) {
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   return TRUE;
 }
 
@@ -406,7 +406,7 @@ static boolean fail_test(LiVESWidget *table, int row, char *ftext) {
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   allpassed = FALSE;
   return FALSE;
 }
@@ -633,7 +633,7 @@ boolean do_startup_tests(boolean tshoot) {
   if (!success2) {
     if (!success) {
       lives_widget_destroy(dialog);
-      lives_widget_process_updates(mainw->LiVES, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
       do_no_mplayer_sox_error();
       close_file(current_file, tshoot);
@@ -941,7 +941,7 @@ void do_startup_interface_query(void) {
   set_int_pref(PREF_STARTUP_INTERFACE, prefs->startup_interface);
 
   lives_widget_destroy(dialog);
-  lives_widget_process_updates(mainw->LiVES, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 }
 
 
